@@ -1,0 +1,155 @@
+MovStitch sample
+
+  This code allows to stitch two h264 encoded movies together. The movies are stitched the way the result has only one stsd
+  which is required for web streaming.
+  
+  {{{http://git.jcodec.org/?p=jcodec-samples.git;a=blob;f=src/main/java/org/jcodec/samples/mashup/MovStitch2.java}Source code}}
+
+* Compiling and running
+
++----------
+
+git clone git://jcodec.org/jcodec.git
+cd jcodec
+mvn -Dmaven.test.skip=true clean install
+cd ..
+
+// Only with jcodec 0.0.5
+git clone git://jcodec.org/movtool.git
+cd movtool
+mvn -Dmaven.test.skip=true clean install
+cd ..
+
+git clone git://jcodec.org/jcodec-samples.git
+cd jcodec-samples
+mvn -Dmaven.test.skip=true clean assembly:assembly
+
+java -cp target/jcodec-samples-<version>-uberjar.jar org.jcodec.samples.mashup.MovStitch2 <in mov> <in mov> <out mov>
+
++----------
+  
+* Implementation details
+  
+  In order to achieve one stsd the h264 elementary streams get concatenated ( as opposed to container based ). To do this
+  the stream parameters of the second stream ( sps/pps ) are assigned a different unique id and after that all the NAL units
+  of the second stream are changed to reference the stream parameters by new ids.
+    
+  Consequently NAL units of the first stream reference their sps/pps and NAL units of the second stream reference a different
+  set of sps/pps which makes it possible to playback both.
+    
+* Code explanation
+
+  Create demuxers to read compressed frames from the original movies. Create muxer to write modified frames to the result file.
+
++------------------
+MP4Muxer muxer = new MP4Muxer(new RandomAccessFile(out, "rw"));
+MP4Demuxer demuxer1 = new MP4Demuxer(new FileInput(in1));
+DemuxerTrack vt1 = demuxer1.getVideoTrack();
+MP4Demuxer demuxer2 = new MP4Demuxer(new FileInput(in2));
+DemuxerTrack vt2 = demuxer2.getVideoTrack();
++------------------
+
+  Both movies should have only one stream inside, both should be h264, both should have same encoded dimensions.
+
++-------------------
+Assert.assertEquals(vt1.getSampleEntries().length, 1);
+Assert.assertEquals(vt2.getSampleEntries().length, 1);
+Assert.assertEquals(se1.getFourcc(), "avc1");
+Assert.assertEquals(se2.getFourcc(), "avc1");
+Assert.assertEquals(se1.getWidth(), se2.getWidth());
+Assert.assertEquals(se1.getHeight(), se2.getHeight());
++-------------------
+
+  Add a track to the result movie, set track type to 'VIDEO', set chunk duration equal to half a second, set timescale of
+  a new track equal to the timescale of the video track from the first movie.
+
++-------------------
+TrackForCompressed outTrack = muxer.addTrackForCompressed(VIDEO, vt1.getTimescale() / 2,
+            (int) vt1.getTimescale());
+outTrack.addSampleEntry(vt1.getSampleEntries()[0]);
++-------------------
+
+  Copy all packets from the first stream unchanged to the result movie.
+
++-------------------
+for (int i = 0; i < vt1.getFrameCount(); i++) {
+  Packet packet = vt1.getFrames(1);
+  outTrack.addFrame(packet.getData(), 1, packet.getDuration());
+}
++-------------------
+
+  Take avcC box from the sample entry of a second stream ( avcC box holds a list of SPS/PPS structures which are stream
+  parameters for h264 stream ) and update all the sps/pps ids to be 1. This is done so that they dont interfere with SPS/PPS
+  of the first stream which would normally have ids of 0.
+
++--------------------
+AvcCBox avcC = Box.findFirst(se, AvcCBox.class, AvcCBox.fourcc());
+AvcCBox old = avcC.copy();
+
+for (PictureParameterSet pps : avcC.getPpsList()) {
+    Assert.assertTrue(pps.entropy_coding_mode_flag);
+    pps.seq_parameter_set_id = 1;
+    pps.pic_parameter_set_id = 1;
+}
+
+for (SeqParameterSet sps : avcC.getSpsList()) {
+    sps.seq_parameter_set_id = 1;
+}
++-------------------
+
+  Transform each frame of the second stream. Each frame of an MOV container can contain one or more NAL units of h264 stream.
+  Typically it contains one Access Unit (AU) which is a picture NAL unit (IDR or non-IDR) and supplimentary NAL units (
+  like SEI ). So for each sample of an MOV we iterate through NAL units contained within and in case of a picture 
+  NAL unit we parse a slice header and rewrite a reference to PPS to be '1'. This makes the pictures reference the correct SPS/PPS
+  from the second stream. Then we serialize the modified slice header into the new NAL unit followed by a copy of picture data.
+
++-------------------
+ByteArrayOutputStream out1 = new ByteArrayOutputStream();
+for (int off = 0; off < data.length;) {
+    int i = ((data[off++] & 0xff) << 24) | ((data[off++] & 0xff) << 16) | ((data[off++] & 0xff) << 8)
+            | (data[off++] & 0xff);
+
+    InputStream in = new ByteArrayInputStream(data, off, i);
+    NALUnit nu = NALUnit.read(in);
+    if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
+        CAVLCReader reader = new CAVLCReader(in);
+        SliceHeader sh = shr.read(nu, reader);
+
+        sh.pic_parameter_set_id = 1;
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        nu.write(out);
+        CAVLCWriter writer = new CAVLCWriter(out);
+        shw.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
+
+        copyCABAC(writer, reader);
+
+        byte[] byteArray = out.toByteArray();
+
+        DataOutputStream dout = new DataOutputStream(out1);
+        dout.writeInt(byteArray.length);
+        dout.write(byteArray);
+    }
+    off += i;
+}
++-----------------
+    
+  This copies CABAC-encoded picture data that follows the slice header. Since CABAC code words should start from a byte
+  boundary we skip the fillter bits from the CAVLC reader and add filler bits to CAVLC writer. The filler bits should be
+  all 1, we check this to determine errors in slice reading. When both CAVLC reader and writer are at byte boundary we copy
+  each byte of CABAC payload.
+   
+  Note. the reason CAVLC reader/writer is used to copy bytes is because they provide a proper handling for Annex B
+  emulation prevention.
+
++------------------
+long bp = r.getCurBit();
+long rem = r.readNBit(8 - (int) bp);
+Assert.assertEquals((1 << (8 - bp)) - 1, rem);
+
+w.writeRemainingOne();
+int b;
+while ((b = r.readByte()) != -1)
+    w.writeByte(b);
+        
++------------------

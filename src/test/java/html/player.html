@@ -1,0 +1,16 @@
+<html>
+<head>
+<title>Player test page</title>
+</head>
+<body>
+	<h1>Player testpage</h1>
+	<applet id="player" width="640" height="480"
+		archive="file://../../../../target/jcodec-0.0.6-uberjar.jar"
+		code="org.jcodec.player.app.PlayerApplet">
+		<param name="java_arguments" value="-Xmx1024m">
+		<param name="separate_jvm" value="true">
+		<param name="src" value="http://localhost:8085/test.m2t">
+		<param name="play" value="true">
+	</applet>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<html>
+<head>
+	<script type="text/javascript" src="$baseUrl/resource/swfobject.js"></script>
+	<script type="text/javascript" src="$baseUrl/resource/prototype.js"></script>
+	<script language="javascript">
+	
+	Function.prototype.bind = function(obj) {
+	    var __method = this;
+    	return function() {
+      		return __method.apply(obj, arguments);
+    	}
+	}
+	
+	var controllers = {};
+	
+	function playerReady(thePlayer) {
+		processPlayer(thePlayer.id);
+	}
+	
+	function processPlayer(id) {
+		var player = document.getElementById(id);
+		if(player) {
+			var controller = new ClipController(player, id);
+			controllers[id] = controller;
+		} else {
+			setTimeout(processPlayer, 100);
+		}
+	}
+	
+	function positionListener(obj) { 
+		controllers[obj.id].currentPosition = obj.position;
+	}
+	
+	
+	function ClipController(player, name) {
+		this.name = name;
+		this.player = player;
+		this.currentPosition = 0;
+		this.inPoint = null;
+		this.outPoint = null;
+		this.sel = false;
+		this.inCtl = document.getElementById('in_' + this.name);
+		this.outCtl = document.getElementById('out_' + this.name);
+		this.doClipCtl = document.getElementById('doClip_' + this.name);
+		this.selCtl = document.getElementById('sel_' + this.name);
+		this.addListeners();
+	}
+	
+	ClipController.prototype.addListeners = function() {
+		this.player.addModelListener("TIME", "positionListener");
+		this.inCtl.addEventListener('click', function(e) {
+			this.setInPoint();
+		}.bind(this), false);
+		this.outCtl.addEventListener('click', function(e) {
+			this.setOutPoint();
+		}.bind(this), false);
+		this.doClipCtl.addEventListener('click', function(e) {
+			this.doClip();
+		}.bind(this), false);
+		this.selCtl.addEventListener('click', function(e) {
+			this.sel = e.target.checked;
+		}.bind(this), false);
+	}
+	
+	ClipController.prototype.setInPoint = function() {
+		this.inPoint = this.currentPosition;
+		this.updateStatus();
+	}
+	
+	ClipController.prototype.setOutPoint = function() {
+		this.outPoint = this.currentPosition;
+		this.updateStatus();
+	}
+	
+	ClipController.prototype.updateStatus = function() {
+		var str = '';
+		if(this.inPoint != null) {
+			str += 'In: ' + this.inPoint + ' ';
+			this.outCtl.disabled = false;
+		}
+		if(this.outPoint != null) {
+			str += 'Out: ' + this.outPoint + ' '; 
+			this.doClipCtl.disabled = false;
+		}
+		
+		document.getElementById('status_' + this.name).innerHTML = str;
+	}
+	
+	ClipController.prototype.doClip = function() {
+		addMovie(this.name + '.' + Math.floor(this.inPoint) + '-' + Math.ceil(this.outPoint));
+		this.inPoint = null;
+		this.outPoint = null;
+		this.updateStatus();
+	}
+	
+	function createPlayer(name) {
+		var flashvars = {
+        	file: name + '.mp4', 
+            autostart: 'false',
+            streamer: '$baseUrl/stream'
+       	};
+		var params = {
+		        allowfullscreen: 'true', 
+		        allowscriptaccess: 'always'
+		};
+        var attributes = {
+            id: name,  
+            name: name
+    	};
+        swfobject.embedSWF('$baseUrl/resource/player-viral.swf', 'ph_' + name, '470', '320', '9.0.115', false, flashvars, params, attributes);
+    }
+	
+	function addMovie(name) {
+		var str = '<div style="clear: both;"><h3><input type="checkbox" id="sel_' + name + '">' + name + '</h3></div>';
+		str += '<div style="float: left;"><div id="ph_' + name + '">&nbsp</div></div>';
+		str += '<div style="float: left;">';
+		str += '<div id="status_' + name + '">&nbsp</div>';
+		str += '<input id="in_' + name + '" type="button" name="in" value="In point" />'
+		str += '<input id="out_' + name + '" type="button" name="out" value="Out point" disabled="disabled" /><br>'
+		str += '<input id="doClip_' + name + '" type="button" disabled="disabled" name="doClip" value="do a clip" />'
+		str += '</div>';
+		var elem = document.createElement('div');
+		elem.style.width='100%';
+		elem.innerHTML = str;
+		document.getElementById('clips').appendChild(elem);
+		createPlayer(name);
+	}
+	
+	function mashup() {
+		var slices  = [];
+		for(name in controllers) {
+			if(controllers[name].sel) {
+				slices.push(controllers[name].name + '.mp4');
+			}		
+		}
+		var str = slices.join(',');
+		
+		
+		new Ajax.Request('$baseUrl/mashup?slices=' + str,
+  			{
+    			method:'get',
+    			onSuccess: function(transport, json) {
+    				var newMovieName = json.name;
+		
+					addMovie(newMovieName);
+      
+    			},
+    			onFailure: function(){ alert('Something went wrong...') }
+  			});
+  
+	}
+	
+	function load() {
+	
+	#foreach ( $mv in $movies )
+		addMovie('$mv');
+	#end
+	}
+	
+	
+	</script>
+</head>
+<body onLoad="load();">
+<div id="clips" style="width: 100%;">&nbsp</a>
+<input type="button" name="mashup" value="mashup" onClick="mashup(); return false;" />
+</body>
+</html>

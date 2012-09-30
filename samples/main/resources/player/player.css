@@ -1,0 +1,34 @@
+.level .progress {
+	width: 100%;
+	height: 1%;
+	position: absolute;
+	background-color: green;
+	bottom: 0px;
+}
+
+.level.inactive .progress {
+	width: 100%;
+	height: 1%;
+	position: absolute;
+	background-color: gray;
+	bottom: 0px;
+}
+
+.error-message {
+	font-family: verdana, arial;
+	background-color: lightgray;
+}
+
+.error-message p {
+	font-size: 10pt;
+	padding: 0px 0px 0px 20px;
+}
+
+.error-message p:first-child {
+	padding-top: 40px;
+}
+
+.error-message a {
+	font-size: 9pt;
+	padding: 10px 0px 0px 40px;
+}
