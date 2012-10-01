@@ -3,11 +3,9 @@
 	<body>
 		<links>
 			<item name="Home" href="index.html" />
-			<item name="Mailing list" href="http://groups.google.com/group/jcodec" />
-			<item name="Source code" href="http://git.jcodec.org/" />
+			<item name="Source code" href="https://github.com/jcodec/jcodec" />
 			<item name="Downloads" href="downloads.html" />
 			<item name="Documentation" href="docindex.html" />
-			<item name="Issues" href="http://code.google.com/p/jcodec/issues/list" />
 		</links>
 
 		<menu name="Guides">

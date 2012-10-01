@@ -8,19 +8,11 @@ Reading h264 (avc) frames from mp4 container
 
 +----------
 
-git clone git://jcodec.org/jcodec.git
+git clone git://github.com/jcodec/jcodec.git
 cd jcodec
 mvn -Dmaven.test.skip=true clean install
-cd ..
 
-// Only with jcodec 0.0.5
-git clone git://jcodec.org/movtool.git
-cd movtool
-mvn -Dmaven.test.skip=true clean install
-cd ..
-
-git clone git://jcodec.org/jcodec-samples.git
-cd jcodec-samples
+cd samples
 mvn -Dmaven.test.skip=true clean assembly:assembly
 
 java -cp target/jcodec-samples-<version>-uberjar.jar org.jcodec.samples.mux.AVCMP4Demux <in mov> <in mov> <out mov>

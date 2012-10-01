@@ -16,7 +16,7 @@
 		</license>
 	</licenses>
 	<scm>
-		<connection>scm:git:git://git.jcodec.org/jcodec.git</connection>
+		<connection>scm:git:git://github.com/jcodec/jcodec.git</connection>
 		<developerConnection>scm:ssh:gitolite@git.jcodec.org:jcodec.git</developerConnection>
 		<url>http://git.jcodec.org</url>
 	</scm>
