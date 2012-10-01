@@ -481,26 +481,32 @@ public class CABACReader {
 
     public int readRefIdx() {
         // 54
+        throw new UnsupportedOperationException();
     }
 
     public int readMBQpDelta() {
         // 60
+        throw new UnsupportedOperationException();
     }
 
     public int readIntraChromaPredMode() {
         // 64
+        throw new UnsupportedOperationException();
     }
 
     public int readPrevIntraPredModeFlag() {
         // 68
+        throw new UnsupportedOperationException();
     }
 
     public int readRemIntraPredMode() {
         // 69
+        throw new UnsupportedOperationException();
     }
 
     public int readMBFieldDecodingFlag() {
         // 70
+        throw new UnsupportedOperationException();
     }
 
     public int readCBPLuma(Macroblock left, Macroblock top, Macroblock cur, int blkIdx) throws IOException {
