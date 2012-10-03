@@ -1,6 +1,5 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.containers.mp4.TrackType.TIMECODE;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
 import java.io.File;
@@ -55,10 +54,6 @@ public class Remux {
             MP4Demuxer demuxer = new MP4Demuxer(input);
             MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
 
-            DemuxerTrack tt = demuxer.getTimecodeTrack();
-            if (tt != null)
-                addTimecode(muxer, tt);
-
             List<DemuxerTrack> at = demuxer.getAudioTracks();
             List<MP4Muxer.UncompressedTrack> audioTracks = new ArrayList<MP4Muxer.UncompressedTrack>();
             for (DemuxerTrack demuxerTrack : at) {
@@ -71,6 +66,7 @@ public class Remux {
 
             DemuxerTrack vt = demuxer.getVideoTrack();
             CompressedTrack video = muxer.addTrackForCompressed(VIDEO, (int) vt.getTimescale());
+            video.setTimecode(muxer.addTimecodeTrack((int)vt.getTimescale()));
             video.setEdits(vt.getEdits());
             video.addSampleEntries(vt.getSampleEntries());
             MP4Packet pkt = null;
@@ -109,16 +105,5 @@ public class Remux {
             } while (src.exists());
         }
         return src;
-    }
-
-    private static void addTimecode(MP4Muxer muxer, DemuxerTrack tt) throws IOException {
-        CompressedTrack timecode = muxer.addTrackForCompressed(TIMECODE, (int) tt.getTimescale());
-
-        MP4Packet pkt = null;
-        while ((pkt = tt.getFrames(1)) != null)
-            timecode.addFrame(pkt);
-        timecode.addSampleEntries(tt.getSampleEntries());
-
-        timecode.setEdits(tt.getEdits());
     }
 }

@@ -32,6 +32,7 @@ import org.jcodec.player.filters.ChannelSelector;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
 import org.jcodec.player.filters.Resampler24To16;
+import org.jcodec.player.filters.ToStereo;
 import org.jcodec.player.filters.VideoOutput;
 import org.jcodec.player.filters.VideoSource;
 import org.jcodec.scale.ColorUtil;

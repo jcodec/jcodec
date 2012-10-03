@@ -3,10 +3,8 @@ package org.jcodec.containers.mp4.boxes;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 
 import org.jcodec.common.io.ReaderBE;
-import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -72,5 +70,9 @@ public class CompositionOffsetsBox extends FullBox {
             out.writeInt(entries[i].count);
             out.writeInt(entries[i].offset);
         }
+    }
+
+    public Entry[] getEntries() {
+        return entries;
     }
 }

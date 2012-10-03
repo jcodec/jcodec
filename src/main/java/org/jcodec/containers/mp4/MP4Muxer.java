@@ -20,7 +20,6 @@ import org.jcodec.common.io.Buffer;
 import org.jcodec.common.io.RandomAccessOutputStream;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
-import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.common.model.Unit;
@@ -28,6 +27,7 @@ import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ClearApertureBox;
+import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
 import org.jcodec.containers.mp4.boxes.DataInfoBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
@@ -36,7 +36,6 @@ import org.jcodec.containers.mp4.boxes.EditListBox;
 import org.jcodec.containers.mp4.boxes.EncodedPixelBox;
 import org.jcodec.containers.mp4.boxes.EndianBox;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
-import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.FormatBox;
 import org.jcodec.containers.mp4.boxes.GenericMediaInfoBox;
@@ -420,7 +419,7 @@ public class MP4Muxer {
         public void addTimecode(Packet packet) throws IOException {
             if (packet.isKeyFrame())
                 processGop();
-            gop.add(new Packet(packet, null));
+            gop.add(new Packet(packet, (Buffer)null));
         }
 
         private void processGop() throws IOException {
@@ -515,7 +514,7 @@ public class MP4Muxer {
                     Buffer sample = new Buffer(4);
                     sample.dout().writeInt(toCounter(firstTimecode, fpsEstimate));
                     addFrame(new MP4Packet(new Buffer(sample.buffer, 0, 4), samplePts, timescale, sampleDuration, 0,
-                            true, null, sampleEntries.size() - 1));
+                            true, null, samplePts, sampleEntries.size() - 1));
 
                     lower.add(new Edit(sampleDuration, samplePts, 1.0f));
                 } else {
@@ -725,16 +724,6 @@ public class MP4Muxer {
 
         public long getTrackTotalDuration() {
             return trackTotalDuration;
-        }
-
-        public void addTimecode(SampleEntry sampleEntry, int counter, RationalLarge dur) throws IOException {
-            addSampleEntry(sampleEntry);
-
-            Buffer sample = new Buffer(4);
-            sample.dout().writeInt(counter);
-
-            addFrame(new MP4Packet(sample, 0, getTimescale(), (dur.getNum() * getTimescale()) / dur.getDen(), 0, false,
-                    null, getEntries().size() - 1));
         }
 
         public void addSampleEntries(SampleEntry[] sampleEntries) {

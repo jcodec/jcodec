@@ -32,8 +32,7 @@ public class ReExport extends Remux {
             }
             Buffer out = proresFix.transcode(pkt.getData(), outBuf);
 
-            return new MP4Packet(out, pkt.getPts(), pkt.getTimescale(), pkt.getDuration(), pkt.getFrameNo(),
-                    pkt.isKeyFrame(), pkt.getTapeTimecode(),pkt.getEntryNo());
+            return new MP4Packet(pkt, out);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

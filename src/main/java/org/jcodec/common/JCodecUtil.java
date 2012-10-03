@@ -42,7 +42,7 @@ public class JCodecUtil {
     }
 
     public static AudioDecoder getAudioDecoder(String fourcc, MediaInfo.AudioInfo info) {
-        if ("sowt".equals(fourcc))
+        if ("sowt".equals(fourcc) || "in24".equals(fourcc) || "twos".equals(fourcc) || "in32".equals(fourcc))
             return new PCMDecoder(info);
         else if ("s302".equals(fourcc))
             return new S302MDecoder();

@@ -13,6 +13,8 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Demuxer;
 import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
+import org.jcodec.containers.mp4.MP4Demuxer.TimecodeTrack;
+import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
@@ -41,7 +43,7 @@ public class QTAdapter implements Adapter {
             if (demuxerTrack.getBox().isAudio())
                 tracks.add(new QTAudioAdaptorTrack(demuxerTrack));
             else if (demuxerTrack.getBox().isVideo())
-                tracks.add(new QTVideoAdaptorTrack(demuxerTrack));
+                tracks.add(new QTVideoAdaptorTrack(demuxerTrack, demuxer.getTimecodeTrack()));
         }
     }
 
@@ -57,9 +59,11 @@ public class QTAdapter implements Adapter {
 
     public static class QTVideoAdaptorTrack implements VideoAdapterTrack {
         protected DemuxerTrack demuxerTrack;
+        private TimecodeTrack timecodeTrack;
 
-        public QTVideoAdaptorTrack(DemuxerTrack demuxerTrack) {
+        public QTVideoAdaptorTrack(DemuxerTrack demuxerTrack, TimecodeTrack timecodeTrack) {
             this.demuxerTrack = demuxerTrack;
+            this.timecodeTrack = timecodeTrack;
         }
 
         public synchronized int search(long pts) throws IOException {
@@ -85,7 +89,12 @@ public class QTAdapter implements Adapter {
 
         @Override
         public Packet[] getGOP(int gopId) throws IOException {
-            return null;
+            if (!demuxerTrack.gotoFrame(gopId))
+                return null;
+            MP4Packet frames = demuxerTrack.getFrames(1);
+
+            return frames == null ? null : new Packet[] { timecodeTrack == null ? frames : timecodeTrack
+                    .getTimecode(frames) };
         }
     }
 

@@ -53,16 +53,6 @@ public class MovDump {
                     atom.copy(raf, daos);
                 }
             }
-            MP4Demuxer demuxer = new MP4Demuxer(raf);
-            DemuxerTrack tt = demuxer.getTimecodeTrack();
-            if (tt != null) {
-                daos.writeInt((int) (8 + tt.getFrameCount() * 4));
-                daos.write(new byte[] { 'm', 'd', 'a', 't' });
-                for (int i = 0; i < tt.getFrameCount(); i++) {
-                    MP4Packet packet = tt.getFrames(1);
-                    packet.getData().writeTo(daos);
-                }
-            }
         } finally {
             IOUtils.closeQuietly(raf);
             IOUtils.closeQuietly(daos);

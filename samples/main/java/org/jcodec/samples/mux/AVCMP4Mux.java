@@ -83,7 +83,7 @@ public class AVCMP4Mux {
                 if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
 
                     track.addFrame(new MP4Packet(formPacket(nu, nextNALUnit), i, 25, 1, i,
-                            nu.type == NALUnitType.IDR_SLICE, null, 0));
+                            nu.type == NALUnitType.IDR_SLICE, null, i, 0));
                     i++;
                 } else if (nu.type == NALUnitType.SPS) {
                     spsList.add(SeqParameterSet.read(nextNALUnit));

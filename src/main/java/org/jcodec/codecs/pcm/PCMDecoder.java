@@ -24,6 +24,9 @@ public class PCMDecoder implements AudioDecoder {
     }
 
     public AudioBuffer decodeFrame(Buffer frame, byte[] dst) throws IOException {
-        return new AudioBuffer(frame, audioInfo.getFormat(), audioInfo.getFramesPerPacket());
+        int tgt = Math.min(dst.length, frame.remaining());
+        frame.toArray(dst, 0, tgt);
+
+        return new AudioBuffer(new Buffer(dst, 0, tgt), audioInfo.getFormat(), audioInfo.getFramesPerPacket());
     }
 }

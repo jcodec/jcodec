@@ -47,7 +47,7 @@ public class GradGen {
         CompressedTrack videoTrack = muxer.addVideoTrack("v210", new Size(width, height), "jcodec", 24000);
 
         for (int i = 0; i < Integer.parseInt(args[1]); i++) {
-            videoTrack.addFrame(new MP4Packet(new Buffer(baos.toByteArray()), i * 1001, 24000, 1001, i, true, null, 0));
+            videoTrack.addFrame(new MP4Packet(new Buffer(baos.toByteArray()), i * 1001, 24000, 1001, i, true, null, i * 1001, 0));
         }
         muxer.writeHeader();
     }

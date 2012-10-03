@@ -111,7 +111,7 @@ public class TranscodeMain {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 encoder.encodeFrame(baos, picture);
                 videoTrack.addFrame(new MP4Packet(new Buffer(baos.toByteArray()), i * fps.getDen(), fps.getNum(), fps
-                        .getDen(), i, true, null, 0));
+                        .getDen(), i, true, null, i * fps.getDen(), 0));
                 i++;
             }
         } finally {
@@ -191,7 +191,7 @@ public class TranscodeMain {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 encoder.encodeFrame(baos, yuv);
                 videoTrack.addFrame(new MP4Packet(new Buffer(baos.toByteArray()), i * 1001, 24000, 1001, i, true, null,
-                        0));
+                        i * 1001, 0));
             }
             if (i == 1) {
                 System.out.println("Image sequence not found");

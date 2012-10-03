@@ -1,6 +1,10 @@
 package org.jcodec.containers.mp4;
 
+import static org.jcodec.containers.mp4.QTTimeUtil.editedToMedia;
+import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
+
+import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,10 +14,13 @@ import java.util.List;
 import org.jcodec.common.io.Buffer;
 import org.jcodec.common.io.RandomAccessInputStream;
 import org.jcodec.common.model.RationalLarge;
+import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
+import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
+import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.EditListBox;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
@@ -43,6 +50,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 public class MP4Demuxer {
 
     private List<DemuxerTrack> tracks;
+    private TimecodeTrack timecodeTrack;
     private RandomAccessInputStream input;
     private MovieBox movie;
 
@@ -174,6 +182,8 @@ public class MP4Demuxer {
                 throw new IllegalArgumentException("negative frame number");
             if (frameNo >= getFrameCount())
                 return false;
+            if (frameNo == curFrame)
+                return true;
 
             seekPointer(frameNo);
             seekPts(frameNo);
@@ -311,8 +321,9 @@ public class MP4Demuxer {
             int doneFrames = rOff / frameSize;
             shiftPts(doneFrames);
 
-            MP4Packet pkt = new MP4Packet(new Buffer(result), _pts, timescale, (int) (pts - _pts), curFrame, true, null,
-                    se - 1);
+            MP4Packet pkt = new MP4Packet(new Buffer(result),
+                    QTTimeUtil.mediaToEdited(box, _pts, movie.getTimescale()), timescale, (int) (pts - _pts), curFrame,
+                    true, null, _pts, se - 1);
 
             curFrame += doneFrames;
 
@@ -346,6 +357,74 @@ public class MP4Demuxer {
     }
 
     /**
+     * Timecode track, provides timecode information for video track
+     * 
+     */
+    public class TimecodeTrack {
+
+        private TrakBox box;
+        private TimeToSampleEntry[] timeToSamples;
+        private int[] samples;
+
+        public TimecodeTrack(TrakBox trak) throws IOException {
+            this.box = trak;
+
+            NodeBox stbl = trak.getMdia().getMinf().getStbl();
+
+            TimeToSampleBox stts = findFirst(stbl, TimeToSampleBox.class, "stts");
+            SampleToChunkBox stsc = findFirst(stbl, SampleToChunkBox.class, "stsc");
+            ChunkOffsetsBox stco = findFirst(stbl, ChunkOffsetsBox.class, "stco");
+            ChunkOffsets64Box co64 = findFirst(stbl, ChunkOffsets64Box.class, "co64");
+
+            timeToSamples = stts.getEntries();
+            readSamples(stsc.getSampleToChunk(), stco != null ? stco.getChunkOffsets() : co64.getChunkOffsets());
+        }
+
+        public MP4Packet getTimecode(MP4Packet pkt) throws IOException {
+
+            long tv = editedToMedia(box, box.rescale(pkt.getPts(), pkt.getTimescale()), movie.getTimescale());
+
+            int ttsInd, sample = 0;
+            for (ttsInd = 0; ttsInd < timeToSamples.length - 1; ttsInd++) {
+                int a = timeToSamples[ttsInd].getSampleCount() * timeToSamples[ttsInd].getSampleDuration();
+                if (tv < a)
+                    break;
+                tv -= a;
+                sample += timeToSamples[ttsInd].getSampleCount();
+            }
+            sample += tv / timeToSamples[ttsInd].getSampleDuration();
+            return new MP4Packet(pkt, getTimecode(samples[sample], pkt.getPts(), pkt.getTimescale(),
+                    (TimecodeSampleEntry) box.getSampleEntries()[0]));
+
+        }
+
+        private TapeTimecode getTimecode(int startCounter, long videoPts, long videoTimescale, TimecodeSampleEntry entry) {
+            int frame = (int) (videoPts * entry.getNumFrames() / videoTimescale) + startCounter;
+            int sec = frame / entry.getNumFrames();
+            return new TapeTimecode((short) (sec / 3600), (byte) ((sec / 60) % 60), (byte) (sec % 60),
+                    (byte) (frame % entry.getNumFrames()), false);
+        }
+
+        private void readSamples(SampleToChunkEntry[] sampleToChunks, long[] chunkOffsets) throws IOException {
+            synchronized (input) {
+                int stscInd = 0;
+                TIntArrayList ss = new TIntArrayList();
+                for (int chunkNo = 0; chunkNo < chunkOffsets.length; chunkNo++) {
+                    int nSamples = sampleToChunks[stscInd].getCount();
+                    if (stscInd < sampleToChunks.length - 1 && chunkNo + 1 >= sampleToChunks[stscInd + 1].getFirst())
+                        stscInd++;
+                    long offset = chunkOffsets[chunkNo];
+                    input.seek(offset);
+                    for (int i = 0; i < nSamples; i++) {
+                        ss.add((input.read() << 24) | (input.read() << 16) | (input.read() << 8) | input.read());
+                    }
+                }
+                samples = ss.toArray();
+            }
+        }
+    }
+
+    /**
      * Track of video frames
      * 
      */
@@ -360,11 +439,18 @@ public class MP4Demuxer {
         private int[] syncSamples;
         private int ssOff;
 
+        private Entry[] compOffsets;
+        private int cttsInd;
+        private int cttsSubInd;
+
         public FramesTrack(TrakBox trak) {
             super(trak);
 
             SampleSizesBox stsz = findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
             SyncSamplesBox stss = Box.findFirst(trak, SyncSamplesBox.class, "mdia", "minf", "stbl", "stss");
+            CompositionOffsetsBox ctts = Box.findFirst(trak, CompositionOffsetsBox.class, "mdia", "minf", "stbl",
+                    "ctts");
+            compOffsets = ctts == null ? null : ctts.getEntries();
             if (stss != null) {
                 syncSamples = stss.getSyncSamples();
             }
@@ -408,8 +494,18 @@ public class MP4Demuxer {
                 ssOff++;
             }
 
-            MP4Packet pkt = new MP4Packet(new Buffer(result), pts, timescale, duration, curFrame, sync, null,
-                    sampleToChunks[stscInd].getEntry() - 1);
+            long realPts = pts;
+            if (compOffsets != null) {
+                realPts = pts + compOffsets[cttsInd].getOffset();
+                cttsSubInd++;
+                if (cttsInd < compOffsets.length - 1 && cttsSubInd == compOffsets[cttsInd].getCount()) {
+                    cttsInd++;
+                    cttsSubInd = 0;
+                }
+            }
+
+            MP4Packet pkt = new MP4Packet(new Buffer(result), mediaToEdited(box, realPts, movie.getTimescale()),
+                    timescale, duration, curFrame, sync, null, realPts, sampleToChunks[stscInd].getEntry() - 1);
 
             offInChunk += size;
 
@@ -428,6 +524,15 @@ public class MP4Demuxer {
         }
 
         protected void seekPointer(long frameNo) {
+            if (compOffsets != null) {
+                cttsSubInd = (int) frameNo;
+                cttsInd = 0;
+                while (cttsSubInd >= compOffsets[cttsInd].getCount()) {
+                    cttsSubInd -= compOffsets[cttsInd].getCount();
+                    cttsInd++;
+                }
+            }
+
             curFrame = (int) frameNo;
             stcoInd = 0;
             stscInd = 0;
@@ -470,7 +575,12 @@ public class MP4Demuxer {
 
     private void processHeader(NodeBox moov) throws IOException {
         for (TrakBox trak : Box.findAll(moov, TrakBox.class, "trak")) {
-            tracks.add(create(trak));
+            SampleEntry se = Box.findFirst(trak, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
+            if ("tmcd".equals(se.getFourcc())) {
+                timecodeTrack = new TimecodeTrack(trak);
+            } else {
+                tracks.add(create(trak));
+            }
         }
     }
 
@@ -508,11 +618,7 @@ public class MP4Demuxer {
         return result;
     }
 
-    public DemuxerTrack getTimecodeTrack() {
-        for (DemuxerTrack demuxerTrack : tracks) {
-            if (demuxerTrack.box.isTimecode())
-                return (DemuxerTrack) demuxerTrack;
-        }
-        return null;
+    public TimecodeTrack getTimecodeTrack() {
+        return timecodeTrack;
     }
 }

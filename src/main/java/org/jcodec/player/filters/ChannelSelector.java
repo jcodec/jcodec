@@ -26,7 +26,7 @@ public class ChannelSelector implements AudioSource {
         this.src = src;
         AudioInfo audioInfo = src.getAudioInfo();
         this.srcFormat = audioInfo.getFormat();
-        buffer = new byte[audioInfo.getFramesPerPacket() * 2 * srcFormat.getFrameSize()];
+        buffer = new byte[audioInfo.getFramesPerPacket() * 2 * (srcFormat.getSampleSizeInBits() >> 3)];
         newFormat = new AudioFormat(srcFormat.getSampleRate(), srcFormat.getSampleSizeInBits(), 2, true,
                 srcFormat.isBigEndian());
     }

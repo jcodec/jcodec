@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.jcodec</groupId>
 	<artifactId>jcodec-samples</artifactId>
-	<version>0.0.4</version>
+	<version>0.0.5</version>
 	<build>
 		<sourceDirectory>main/java</sourceDirectory>
 		<testSourceDirectory>tests/java</testSourceDirectory>
@@ -69,7 +69,7 @@
 		<dependency>
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec</artifactId>
-			<version>0.0.6</version>
+			<version>0.0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>

@@ -239,6 +239,10 @@ public class Buffer {
         System.arraycopy(buffer, pos, result, 0, result.length);
         return result;
     }
+    
+    public void toArray(byte[] result, int off, int len) {
+        System.arraycopy(buffer, pos, result, off, len);
+    }
 
     public void writeTo(RandomAccessFile file) throws IOException {
         file.write(buffer, pos, limit - pos);

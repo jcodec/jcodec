@@ -95,9 +95,6 @@ public class Prefetcher extends Thread {
     }
 
     private static Packet readFrame(HttpURLConnection c, byte[] bfr) throws IOException {
-        if (c.getResponseCode() != 200)
-            return null;
-
         Buffer buffer;
         if (bfr == null)
             buffer = new Buffer(IOUtils.toByteArray(c.getInputStream()));

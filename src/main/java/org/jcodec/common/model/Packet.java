@@ -31,14 +31,19 @@ public class Packet {
         this.keyFrame = keyFrame;
         this.tapeTimecode = tapeTimecode;
     }
-    
+
     public Packet(Packet other) {
         this(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, other.tapeTimecode);
         this.displayOrder = other.displayOrder;
     }
-    
+
     public Packet(Packet other, Buffer data) {
         this(data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, other.tapeTimecode);
+        this.displayOrder = other.displayOrder;
+    }
+
+    public Packet(Packet other, TapeTimecode timecode) {
+        this(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, timecode);
         this.displayOrder = other.displayOrder;
     }
 
