@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.jcodec.player.filters.MediaInfo;
+import org.jcodec.player.filters.MediaInfo.VideoInfo;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,36 +24,30 @@ import org.jcodec.player.filters.MediaInfo;
 public class HttpMedia {
 
     private List<HttpPacketSource> tracks = new ArrayList<HttpPacketSource>();
+    private HttpPacketSource videoTrack;
+    private List<HttpPacketSource> audioTracks = new ArrayList<HttpPacketSource>();
 
-    public HttpMedia(URL url, File cacheWhere) {
-        try {
-            cacheWhere = new File(cacheWhere, url.getHost() + "_" + url.getPath().replace("/", "_"));
+    public HttpMedia(URL url, File cacheWhere) throws IOException {
+        cacheWhere = new File(cacheWhere, url.getHost() + "_" + url.getPath().replace("/", "_"));
 
-            URLConnection con = url.openConnection();
-            String data = IOUtils.toString(con.getInputStream());
+        URLConnection con = url.openConnection();
+        String data = IOUtils.toString(con.getInputStream());
 
-            for (int i = 0; i < Integer.parseInt(trim(data)); i++) {
-                tracks.add(new HttpPacketSource(new URL(url.toExternalForm() + "/" + i), new File(cacheWhere + "_" + i)));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (int i = 0; i < Integer.parseInt(trim(data)); i++) {
+            HttpPacketSource ps = new HttpPacketSource(url.toExternalForm() + "/" + i, new File(cacheWhere + "_" + i));
+            tracks.add(ps);
+            if (ps.getMediaInfo() instanceof VideoInfo)
+                videoTrack = ps;
+            else
+                audioTracks.add(ps);
         }
     }
 
     public HttpPacketSource getVideoTrack() {
-        for (HttpPacketSource packetSource : tracks) {
-            if (packetSource.getMediaInfo() instanceof MediaInfo.VideoInfo)
-                return packetSource;
-        }
-        return null;
+        return videoTrack;
     }
 
     public List<HttpPacketSource> getAudioTracks() {
-        ArrayList<HttpPacketSource> result = new ArrayList<HttpPacketSource>();
-        for (HttpPacketSource packetSource : tracks) {
-            if (packetSource.getMediaInfo() instanceof MediaInfo.AudioInfo)
-                result.add(packetSource);
-        }
-        return result;
+        return audioTracks;
     }
 }

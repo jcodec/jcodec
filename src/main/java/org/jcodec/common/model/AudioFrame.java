@@ -15,19 +15,22 @@ public class AudioFrame extends AudioBuffer {
     private long pts;
     private long duration;
     private long timescale;
+    private int frameNo;
 
-    public AudioFrame(AudioBuffer other, long pts, long duration, long timescale) {
+    public AudioFrame(AudioBuffer other, long pts, long duration, long timescale, int frameNo) {
         super(other);
         this.pts = pts;
         this.duration = duration;
         this.timescale = timescale;
+        this.frameNo = frameNo;
     }
 
-    public AudioFrame(Buffer buffer, AudioFormat format, int nFrames, long pts, long duration, long timescale) {
+    public AudioFrame(Buffer buffer, AudioFormat format, int nFrames, long pts, long duration, long timescale, int frameNo) {
         super(buffer, format, nFrames);
         this.pts = pts;
         this.duration = duration;
         this.timescale = timescale;
+        this.frameNo = frameNo;
     }
 
     public long getPts() {
@@ -40,5 +43,9 @@ public class AudioFrame extends AudioBuffer {
 
     public long getTimescale() {
         return timescale;
+    }
+
+    public int getFrameNo() {
+        return frameNo;
     }
 }

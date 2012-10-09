@@ -24,7 +24,7 @@ public class JCodecAudioSource implements AudioSource {
     private MediaInfo.AudioInfo mediaInfo;
     private List<byte[]> drain = new ArrayList<byte[]>();
 
-    public JCodecAudioSource(PacketSource pkt) {
+    public JCodecAudioSource(PacketSource pkt) throws IOException {
         Debug.println("Creating audio source");
 
         this.pkt = pkt;
@@ -47,19 +47,23 @@ public class JCodecAudioSource implements AudioSource {
         if (packet == null)
             return null;
         return new AudioFrame(decoder.decodeFrame(packet.getData(), out), packet.getPts(), packet.getDuration(),
-                packet.getTimescale());
+                packet.getTimescale(), (int)packet.getFrameNo());
     }
 
     private byte[] allocateBuffer() {
         return new byte[mediaInfo.getFramesPerPacket() * mediaInfo.getFormat().getFrameSize() * 10];
     }
 
-    public boolean seek(long clock, long timescale) throws IOException {
-        return pkt.seek(clock * mediaInfo.getTimescale() / timescale);
+    public boolean drySeek(long clock, long timescale) throws IOException {
+        return pkt.drySeek(clock * mediaInfo.getTimescale() / timescale);
+    }
+
+    public void seek(long clock, long timescale) throws IOException {
+        pkt.seek(clock * mediaInfo.getTimescale() / timescale);
     }
 
     @Override
-    public MediaInfo.AudioInfo getAudioInfo() {
+    public MediaInfo.AudioInfo getAudioInfo() throws IOException {
         return (MediaInfo.AudioInfo) pkt.getMediaInfo();
     }
 

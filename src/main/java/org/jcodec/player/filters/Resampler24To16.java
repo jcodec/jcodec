@@ -22,7 +22,7 @@ public class Resampler24To16 implements AudioSource {
     private AudioFormat srcFormat;
     private AudioFormat newFormat;
 
-    public Resampler24To16(AudioSource src) {
+    public Resampler24To16(AudioSource src) throws IOException {
         this.src = src;
         AudioInfo audioInfo = src.getAudioInfo();
         this.srcFormat = audioInfo.getFormat();
@@ -31,10 +31,11 @@ public class Resampler24To16 implements AudioSource {
                 srcFormat.isBigEndian());
     }
 
-    public MediaInfo.AudioInfo getAudioInfo() {
+    public MediaInfo.AudioInfo getAudioInfo() throws IOException {
         AudioInfo audioInfo = src.getAudioInfo();
         return new AudioInfo(audioInfo.getFourcc(), audioInfo.getTimescale(), audioInfo.getDuration(),
-                audioInfo.getNFrames(), newFormat, audioInfo.getFramesPerPacket());
+                audioInfo.getNFrames(), audioInfo.getName(), newFormat, audioInfo.getFramesPerPacket(),
+                audioInfo.getLabels());
     }
 
     public AudioFrame getFrame(byte[] result) throws IOException {
@@ -58,11 +59,15 @@ public class Resampler24To16 implements AudioSource {
             }
         }
         return new AudioFrame(new Buffer(result, 0, j), newFormat, from.getNFrames(), from.getPts(),
-                from.getDuration(), from.getTimescale());
+                from.getDuration(), from.getTimescale(), from.getFrameNo());
     }
 
-    public boolean seek(long clock, long timescale) throws IOException {
-        return src.seek(clock, timescale);
+    public boolean drySeek(long clock, long timescale) throws IOException {
+        return src.drySeek(clock, timescale);
+    }
+
+    public void seek(long clock, long timescale) throws IOException {
+        src.seek(clock, timescale);
     }
 
     @Override

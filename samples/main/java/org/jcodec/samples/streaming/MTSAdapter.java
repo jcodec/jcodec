@@ -18,6 +18,7 @@ import org.jcodec.codecs.s302.S302MDecoder;
 import org.jcodec.common.io.AutoRandomAccessFileInputStream;
 import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioBuffer;
+import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -126,7 +127,39 @@ public class MTSAdapter implements Adapter {
             int frames = index.getNumFrames(sid);
             FrameEntry e = index.frame(sid, frames - 1);
             long duration = e.pts;
-            return new MediaInfo.AudioInfo("s302", 90000, duration, frames, decoded.getFormat(), decoded.getNFrames());
+            return new MediaInfo.AudioInfo("s302", 90000, duration, frames, name(decoded.getFormat().getChannels()),
+                    decoded.getFormat(), decoded.getNFrames(), labels(decoded.getFormat().getChannels()));
+        }
+
+        private String name(int channels) {
+            switch (channels) {
+            case 1:
+                return "Mono";
+            case 2:
+                return "Stereo 2.0";
+            case 4:
+                return "Surround 4.0";
+            case 8:
+                return "Stereo 2.0 + Surround 5.1";
+            }
+            return null;
+        }
+
+        private ChannelLabel[] labels(int channels) {
+            switch (channels) {
+            case 1:
+                return new ChannelLabel[] { ChannelLabel.MONO };
+            case 2:
+                return new ChannelLabel[] { ChannelLabel.STEREO_LEFT, ChannelLabel.STEREO_RIGHT };
+            case 4:
+                return new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.REAR_LEFT,
+                        ChannelLabel.REAR_RIGHT };
+            case 8:
+                return new ChannelLabel[] { ChannelLabel.STEREO_LEFT, ChannelLabel.STEREO_RIGHT,
+                        ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.REAR_LEFT,
+                        ChannelLabel.REAR_RIGHT, ChannelLabel.CENTER, ChannelLabel.LFE };
+            }
+            return null;
         }
 
         @Override
@@ -271,7 +304,7 @@ public class MTSAdapter implements Adapter {
             FrameEntry e = index.frame(sid, frames - 1);
             long duration = e.pts;
 
-            return new MediaInfo.VideoInfo("m2v1", 90000, duration, frames, new Rational(1, 1), sz);
+            return new MediaInfo.VideoInfo("m2v1", 90000, duration, frames, "", new Rational(1, 1), sz);
         }
     }
 }

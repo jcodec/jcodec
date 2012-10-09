@@ -3,16 +3,21 @@ package org.jcodec.containers.mp4.boxes;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.sound.sampled.AudioFormat;
 
 import org.jcodec.common.io.ReaderBE;
+import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
+import org.jcodec.containers.mp4.boxes.channel.ChannelUtils;
+import org.jcodec.containers.mp4.boxes.channel.Label;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -202,7 +207,7 @@ public class AudioSampleEntry extends SampleEntry {
                 return Endian.BIG_ENDIAN;
             else if ("lpcm".equals(header.getFourcc()))
                 return (lpcmFlags & kAudioFormatFlagIsBigEndian) != 0 ? Endian.BIG_ENDIAN : Endian.LITTLE_ENDIAN;
-            else if("sowt".equals(header.getFourcc()))
+            else if ("sowt".equals(header.getFourcc()))
                 return Endian.LITTLE_ENDIAN;
             else
                 return Endian.BIG_ENDIAN;
@@ -245,5 +250,73 @@ public class AudioSampleEntry extends SampleEntry {
         dumpBoxes(sb);
         sb.append("\n]\n");
         sb.append("}\n");
+    }
+
+    public ChannelLabel[] getLabels() {
+        ChannelBox channelBox = Box.findFirst(this, ChannelBox.class, "chan");
+        if (channelBox != null) {
+            List<Label> labels = ChannelUtils.getLabels(channelBox);
+            if (channelCount == 2)
+                return translate(translationStereo, labels);
+            else
+                return translate(translationSurround, labels);
+        } else {
+            switch (channelCount) {
+            case 1:
+                return new ChannelLabel[] { ChannelLabel.MONO };
+            case 2:
+                return new ChannelLabel[] { ChannelLabel.STEREO_LEFT, ChannelLabel.STEREO_RIGHT };
+            case 6:
+                return new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.CENTER,
+                        ChannelLabel.LFE, ChannelLabel.REAR_LEFT, ChannelLabel.REAR_RIGHT };
+            default:
+                ChannelLabel[] lbl = new ChannelLabel[channelCount];
+                Arrays.fill(lbl, ChannelLabel.MONO);
+                return lbl;
+            }
+        }
+    }
+
+    private ChannelLabel[] translate(Map<Label, ChannelLabel> translation, List<Label> labels) {
+        ChannelLabel[] result = new ChannelLabel[labels.size()];
+        int i = 0;
+        for (Label label : labels) {
+            result[i++] = translation.get(label);
+        }
+        return result;
+    }
+
+    private static Map<Label, ChannelLabel> translationStereo = new HashMap<Label, ChannelLabel>();
+    private static Map<Label, ChannelLabel> translationSurround = new HashMap<Label, ChannelLabel>();
+
+    static {
+        translationStereo.put(Label.Left, ChannelLabel.STEREO_LEFT);
+        translationStereo.put(Label.Right, ChannelLabel.STEREO_RIGHT);
+        translationStereo.put(Label.HeadphonesLeft, ChannelLabel.STEREO_LEFT);
+        translationStereo.put(Label.HeadphonesRight, ChannelLabel.STEREO_RIGHT);
+        translationStereo.put(Label.LeftTotal, ChannelLabel.STEREO_LEFT);
+        translationStereo.put(Label.RightTotal, ChannelLabel.STEREO_RIGHT);
+        translationStereo.put(Label.LeftWide, ChannelLabel.STEREO_LEFT);
+        translationStereo.put(Label.RightWide, ChannelLabel.STEREO_RIGHT);
+
+        translationSurround.put(Label.Left, ChannelLabel.FRONT_LEFT);
+        translationSurround.put(Label.Right, ChannelLabel.FRONT_RIGHT);
+        translationSurround.put(Label.LeftCenter, ChannelLabel.FRONT_CENTER_LEFT);
+        translationSurround.put(Label.RightCenter, ChannelLabel.FRONT_CENTER_RIGHT);
+        translationSurround.put(Label.Center, ChannelLabel.CENTER);
+        translationSurround.put(Label.CenterSurround, ChannelLabel.REAR_CENTER);
+        translationSurround.put(Label.CenterSurroundDirect, ChannelLabel.REAR_CENTER);
+        translationSurround.put(Label.LeftSurround, ChannelLabel.REAR_LEFT);
+        translationSurround.put(Label.LeftSurroundDirect, ChannelLabel.REAR_LEFT);
+        translationSurround.put(Label.RightSurround, ChannelLabel.REAR_RIGHT);
+        translationSurround.put(Label.RightSurroundDirect, ChannelLabel.REAR_RIGHT);
+        translationSurround.put(Label.RearSurroundLeft, ChannelLabel.SIDE_LEFT);
+        translationSurround.put(Label.RearSurroundRight, ChannelLabel.SIDE_RIGHT);
+        translationSurround.put(Label.LFE2, ChannelLabel.LFE);
+        translationSurround.put(Label.LFEScreen, ChannelLabel.LFE);
+        translationSurround.put(Label.LeftTotal, ChannelLabel.STEREO_LEFT);
+        translationSurround.put(Label.RightTotal, ChannelLabel.STEREO_RIGHT);
+        translationSurround.put(Label.LeftWide, ChannelLabel.STEREO_LEFT);
+        translationSurround.put(Label.RightWide, ChannelLabel.STEREO_RIGHT);
     }
 }

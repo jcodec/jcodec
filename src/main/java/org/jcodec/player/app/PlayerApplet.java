@@ -5,9 +5,11 @@ import static java.lang.Math.round;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -17,16 +19,22 @@ import javax.swing.JApplet;
 import netscape.javascript.JSObject;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.common.tools.Debug;
 import org.jcodec.player.Player;
 import org.jcodec.player.Player.Listener;
 import org.jcodec.player.Player.Status;
+import org.jcodec.player.filters.AudioSource;
 import org.jcodec.player.filters.JCodecAudioSource;
 import org.jcodec.player.filters.JCodecVideoSource;
 import org.jcodec.player.filters.JSoundAudioOut;
+import org.jcodec.player.filters.MediaInfo.AudioInfo;
 import org.jcodec.player.filters.MediaInfo.VideoInfo;
+import org.jcodec.player.filters.audio.AudioMixer;
+import org.jcodec.player.filters.audio.AudioMixer.Pin;
 import org.jcodec.player.filters.http.HttpMedia;
 import org.jcodec.player.filters.http.HttpPacketSource;
 import org.jcodec.player.ui.SwingVO;
@@ -51,17 +59,44 @@ public class PlayerApplet extends JApplet {
 
     private JCodecVideoSource video;
 
-    private JCodecAudioSource audio;
-
     private SwingVO vo;
 
-    public JSObject onTimeChanged;
-    public JSObject onStatusChanged;
-    public JSObject onCacheChanged;
+    public JSObject onStatus1;
+    public JSObject onStatus2;
+    public JSObject onStateChanged;
 
-    private Timer cacheEvent = new Timer(true);
+    private Timer status2Timer = new Timer(true);
+
+    private AudioMixer audio;
 
     // private Stepper stepper;
+
+    public class Status1 {
+        public double time;
+        public int frame;
+        public int[] tapeTimecode;
+
+        public Status1(double time, int frame, int[] tapeTimecode) {
+            this.time = time;
+            this.frame = frame;
+            this.tapeTimecode = tapeTimecode;
+        }
+    };
+
+    public class Status2 {
+
+        public double duration;
+        public int nFrames;
+        public int[][] cache;
+        public int[][] audio;
+
+        public Status2(double duration, int nFrames, int[][] cache, int[][] audio) {
+            this.duration = duration;
+            this.nFrames = nFrames;
+            this.cache = cache;
+            this.audio = audio;
+        }
+    };
 
     public void open(final String src) {
         Debug.println("Opening source: " + src);
@@ -84,44 +119,105 @@ public class PlayerApplet extends JApplet {
             Debug.println("Creating player");
             final HttpPacketSource videoTrack = http.getVideoTrack();
             video = new JCodecVideoSource(videoTrack);
-            audio = new JCodecAudioSource(http.getAudioTracks().get(0));
+            audio = audio(http);
             player = new Player(video, audio, vo, new JSoundAudioOut());
 
             player.addListener(new Listener() {
                 public void timeChanged(RationalLarge pts, int frameNo, TapeTimecode tt) {
-                    if (onTimeChanged == null)
+                    if (onStatus1 == null)
                         return;
-                    VideoInfo videoInfo;
-                    videoInfo = player.getVideoSource().getMediaInfo();
-                    onTimeChanged.call("call", new Object[] {
-                            null,
-                            (double) pts.getNum() / pts.getDen(),
-                            (double) videoInfo.getDuration() / videoInfo.getTimescale(),
-                            frameNo,
-                            tt == null ? null
-                                    : new int[] { tt.getHour(), tt.getMinute(), tt.getSecond(), tt.getFrame() } });
+                    onStatus1.call("call",
+                            new Object[] {
+                                    null,
+                                    new Status1((double) pts.getNum() / pts.getDen(), frameNo, tt != null ? new int[] {
+                                            tt.getHour(), tt.getMinute(), +tt.getSecond(), tt.getFrame() } : null) });
                 }
 
                 public void statusChanged(Status status) {
-                    if (onStatusChanged != null)
-                        onStatusChanged.call("call", new Object[] { null, status.toString() });
+                    if (onStateChanged != null)
+                        onStateChanged.call("call", new Object[] { null, status.toString() });
                 }
             });
-            cacheEvent.scheduleAtFixedRate(new TimerTask() {
+            status2Timer.scheduleAtFixedRate(new TimerTask() {
                 public void run() {
-                    if (onCacheChanged == null)
+                    if (onStatus2 == null)
                         return;
-                    List<int[]> cached = videoTrack.getCached(100);
-                    onCacheChanged.call("call", new Object[] { null, cached.toArray(new int[0][]),
-                            videoTrack.getMediaInfo().getNFrames() });
+
+                    try {
+                        VideoInfo videoInfo = player.getVideoSource().getMediaInfo();
+                        onStatus2.call("call", new Object[] {
+                                null,
+                                new Status2((double) videoInfo.getDuration() / videoInfo.getTimescale(),
+                                        (int) videoInfo.getNFrames(), videoTrack.getCached(), enabledChannels()) });
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }, 5000, 5000);
+            }, 0, 1000);
             // stepper = new Stepper(video, audio, new SwingVO(this), new
             // JSoundAudioOut());
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Could not open source", e);
         }
+    }
+
+    private AudioMixer audio(HttpMedia http) throws IOException {
+        List<HttpPacketSource> audioTracks = http.getAudioTracks();
+        AudioSource[] audios = new AudioSource[audioTracks.size()];
+        for (int i = 0; i < audioTracks.size(); i++) {
+            audios[i] = new JCodecAudioSource(audioTracks.get(0));
+        }
+        AudioMixer audio = new AudioMixer(2, audios);
+        return audio;
+    }
+
+    public class AudioTrack {
+        public AudioTrack(String name, String[] channels) {
+            this.name = name;
+            this.channels = channels;
+        }
+
+        public String name;
+        public String[] channels;
+    }
+
+    public AudioTrack[] getAudioConfig() {
+        try {
+            Pin[] pins = audio.getPins();
+            AudioTrack[] ats = new AudioTrack[pins.length];
+            for (int i = 0; i < pins.length; i++) {
+                AudioInfo ai = pins[i].getSource().getAudioInfo();
+                ats[i] = new AudioTrack(ai.getName(), channels(ai.getLabels()));
+            }
+            return ats;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new AudioTrack[0];
+    }
+
+    private String[] channels(ChannelLabel[] labels) {
+        String[] strs = new String[labels.length];
+        for (int i = 0; i < labels.length; i++) {
+            strs[i] = StringUtils.capitaliseAllWords(labels[i].toString().toLowerCase().replace("_", " "));
+        }
+        return strs;
+    }
+
+    public void toggleChannel(int trackId, int channelId) {
+        System.out.println("Toggle " + trackId + ", " + channelId);
+        audio.getPins()[trackId].toggle(channelId);
+    }
+
+    private int[][] enabledChannels() {
+        Pin[] pins = audio.getPins();
+        int[][] result = new int[pins.length][];
+        for (int i = 0; i < pins.length; i++) {
+            result[i] = pins[i].getSoloChannels();
+            System.out.println("Returning enabled channels" + Arrays.toString(result[i]));
+        }
+        return result;
     }
 
     @Override

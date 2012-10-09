@@ -1,5 +1,7 @@
 package org.jcodec.samples.streaming;
 
+import static org.apache.commons.lang.StringUtils.join;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -16,6 +18,7 @@ import javax.sound.sampled.AudioFormat;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.util.MultiPartOutputStream;
+import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.player.filters.MediaInfo;
@@ -76,7 +79,7 @@ public class StreamingServlet extends HttpServlet {
             e2.printStackTrace();
         }
     }
-    
+
     protected AdapterFactory factory = new AdapterFactory();
 
     protected Adapter getAdapter(File mvFile) throws IOException {
@@ -94,7 +97,7 @@ public class StreamingServlet extends HttpServlet {
         if (frameNo == -1)
             resp.sendError(404);
         else
-            resp.getOutputStream().print(frameNo);
+            frame(demuxer, trackNo, frameNo, resp);
     }
 
     protected void frame(Adapter demuxer, int trackNo, int frame, HttpServletResponse resp) throws IOException {
@@ -189,12 +192,25 @@ public class StreamingServlet extends HttpServlet {
         bldr.append(String.valueOf(format.isBigEndian()));
         bldr.append(':');
         bldr.append(info.getFramesPerPacket());
+        bldr.append(':');
+        bldr.append(labels(info));
 
         return bldr.toString();
     }
 
+    private String labels(MediaInfo.AudioInfo info) {
+        ChannelLabel[] labels = info.getLabels();
+        String[] str = new String[labels.length];
+        for (int i = 0; i < labels.length; i++) {
+            str[i] = labels[i].toString();
+        }
+
+        return join(str, ",");
+    }
+
     private String media(MediaInfo info) {
-        return info.getDuration() + ":" + info.getTimescale() + ":" + info.getNFrames() + ":" + info.getFourcc() + ":";
+        return info.getDuration() + ":" + info.getTimescale() + ":" + info.getNFrames() + ":" + info.getFourcc() + ":"
+                + (info.getName() == null ? "" : info.getName()) + ":";
     }
 
     private String video(MediaInfo.VideoInfo v) {

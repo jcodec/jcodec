@@ -62,7 +62,7 @@ public class JCodecVideoSource implements VideoSource {
 
         Frame frm = new FutureFrame(job, new RationalLarge(nextPacket.getPts(), nextPacket.getTimescale()),
                 new RationalLarge(nextPacket.getDuration(), nextPacket.getTimescale()), mi.getPAR(),
-                (int)nextPacket.getFrameNo(), nextPacket.getTapeTimecode(), null);
+                (int) nextPacket.getFrameNo(), nextPacket.getTapeTimecode(), null);
 
         return frm;
     }
@@ -123,11 +123,14 @@ public class JCodecVideoSource implements VideoSource {
     }
 
     @Override
-    public boolean seek(long clock, long timescale) throws IOException {
-        if (!src.seek(mi.getTimescale() * clock / timescale))
-            return false;
+    public boolean drySeek(long clock, long timescale) throws IOException {
+        return src.drySeek(mi.getTimescale() * clock / timescale);
+    }
+
+    @Override
+    public void seek(long clock, long timescale) throws IOException {
+        src.seek(mi.getTimescale() * clock / timescale);
         pickNextPacket();
-        return true;
     }
 
     private byte[] allocateBuffer() {
@@ -135,13 +138,8 @@ public class JCodecVideoSource implements VideoSource {
         return new byte[dim.getWidth() * dim.getHeight() * 2];
     }
 
-    public MediaInfo.VideoInfo getMediaInfo() {
+    public MediaInfo.VideoInfo getMediaInfo() throws IOException {
         return (MediaInfo.VideoInfo) src.getMediaInfo();
-    }
-
-    @Override
-    public boolean canPlayThrough(Rational sec) {
-        return src instanceof CachingPacketSource ? ((CachingPacketSource) src).canPlayThrough(sec) : true;
     }
 
     public void close() throws IOException {

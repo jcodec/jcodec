@@ -48,7 +48,7 @@ public class SwingVO extends JPanel implements VideoOutput {
 
     @Override
     public void paint(Graphics g) {
-        if (img == null)
+        if (img == null || pasp == null)
             return;
 
         int width = pasp.getNum() * img.getWidth() / pasp.getDen();

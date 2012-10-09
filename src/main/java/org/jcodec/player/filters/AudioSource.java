@@ -13,11 +13,13 @@ import org.jcodec.common.model.AudioFrame;
  */
 public interface AudioSource {
 
-    MediaInfo.AudioInfo getAudioInfo();
+    MediaInfo.AudioInfo getAudioInfo() throws IOException;
 
     AudioFrame getFrame(byte[] buf) throws IOException;
 
-    boolean seek(long clock, long timescale) throws IOException;
+    boolean drySeek(long clock, long timescale) throws IOException;
+    
+    void seek(long clock, long timescale) throws IOException;
 
     void close() throws IOException;
 }

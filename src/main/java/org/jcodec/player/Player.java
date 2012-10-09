@@ -28,11 +28,8 @@ import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.common.tools.Debug;
 import org.jcodec.player.filters.AudioOut;
 import org.jcodec.player.filters.AudioSource;
-import org.jcodec.player.filters.ChannelSelector;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
-import org.jcodec.player.filters.Resampler24To16;
-import org.jcodec.player.filters.ToStereo;
 import org.jcodec.player.filters.VideoOutput;
 import org.jcodec.player.filters.VideoSource;
 import org.jcodec.scale.ColorUtil;
@@ -112,7 +109,6 @@ public class Player {
         video.clear();
         audio.clear();
 
-        prepareAudioSource();
         AudioInfo ai = audioSource.getAudioInfo();
         af = ai.getFormat();
         audioPacketSize = ai.getFramesPerPacket();
@@ -377,10 +373,6 @@ public class Player {
         Debug.println("Playing autio done");
     }
 
-    private void prepareAudioSource() {
-        audioSource = insertResampler(audioSource);
-    }
-
     private void pauseNoWait() {
         try {
             if (!pause.getAndSet(true)) {
@@ -411,7 +403,7 @@ public class Player {
         Picture src = frame.getPic();
 
         notifyTime(frame);
-        
+
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
                 dst = Picture.create(src.getWidth(), src.getHeight(), vo.getColorSpace());
@@ -424,38 +416,22 @@ public class Player {
         }
     }
 
-    private AudioSource insertResampler(AudioSource src) {
-        AudioFormat format = src.getAudioInfo().getFormat();
-
-        AudioSource result = src;
-
-        if (format.getSampleSizeInBits() == 24) {
-            result = new Resampler24To16(result);
-        }
-
-        if (format.getChannels() > 2) {
-            result = new ChannelSelector(result);
-        }
-        return result;
-    }
-
     private boolean seekVideo(long pts, int timescale) throws IOException {
-        boolean seek;
+        if (!videoSource.drySeek(pts, timescale))
+            return false;
         synchronized (seekLock) {
 
             decodingLocked = true;
-            seek = videoSource.seek(pts, timescale);
+            videoSource.seek(pts, timescale);
             drainVideo();
 
-            if (seek) {
-                decodeJustOneFrame();
-                if (video.size() > 0)
-                    show(video.get(0));
-            }
+            decodeJustOneFrame();
+            if (video.size() > 0)
+                show(video.get(0));
 
             decodingLocked = false;
         }
-        return seek;
+        return true;
     }
 
     public void seek(final RationalLarge where) {
@@ -480,7 +456,8 @@ public class Player {
             pauseWait();
             decodingLocked = true;
 
-            if (audioSource.seek(clk, timescale)) {
+            if (audioSource.drySeek(clk, timescale)) {
+                audioSource.seek(clk, timescale);
                 drainAudio();
                 ao.flush();
             }

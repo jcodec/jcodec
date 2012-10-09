@@ -126,6 +126,10 @@ public class MP4Demuxer {
         public abstract MP4Packet getFrames(int n) throws IOException;
 
         protected abstract void seekPointer(long frameNo);
+        
+        public boolean canSeek(long pts) {
+            return pts >= 0 && pts < duration;
+        }
 
         public synchronized boolean seek(long pts) {
             if (pts < 0)

@@ -30,17 +30,26 @@ public interface PacketSource {
      * 
      * @return Media info object
      */
-    MediaInfo getMediaInfo();
+    MediaInfo getMediaInfo() throws IOException;
 
     /**
      * Seek to a random point in a stream.Tries to seek to a frame having the
      * closest PTS to the one requested.
      * 
+     * If the seek can not be performed my throw an exception
+     * 
      * @param pts
      *            Presentation timestamp represented in stream's timescale
-     * @return Weather seek was successfull
      */
-    boolean seek(long pts);
+    void seek(long pts) throws IOException;
+
+    /**
+     * Verifies if seek will be successful if performed
+     * 
+     * @param l
+     * @return
+     */
+    boolean drySeek(long l) throws IOException;
 
     /**
      * Closes this stream

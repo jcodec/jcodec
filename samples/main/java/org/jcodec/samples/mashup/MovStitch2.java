@@ -107,7 +107,6 @@ public class MovStitch2 {
 
     public static Buffer doFrame(Buffer data, SliceHeaderReader shr, SliceHeaderWriter shw) throws IOException {
         Buffer result = new Buffer(data.remaining() + 24);
-        Buffer start = result.fork();
         while (data.remaining() > 0) {
             int len = data.dinp().readInt();
 
@@ -127,7 +126,7 @@ public class MovStitch2 {
             }
         }
 
-        return result.minus(start);
+        return result.flip();
     }
 
     public static void copyNU(SliceHeaderReader shr, SliceHeaderWriter shw, NALUnit nu, InputStream is, OutputStream os)

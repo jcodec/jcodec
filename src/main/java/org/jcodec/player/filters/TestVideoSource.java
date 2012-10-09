@@ -61,26 +61,25 @@ public class TestVideoSource implements VideoSource {
                 1001, 24000), new Rational(1, 1), 0, null, null);
     }
 
-    public boolean seek(long clock, long timescale) {
+    public void seek(long clock, long timescale) {
         pts = (clock * 24000 / (timescale * 1001)) * 1001;
         if (pts > DURATION_TV)
             pts = DURATION_TV - 1001;
         if (pts < 0)
             pts = 0;
-        return true;
     }
 
     public MediaInfo.VideoInfo getMediaInfo() {
-        return new MediaInfo.VideoInfo("test", 24000, DURATION_TV, DURATION_TV / 1001, new Rational(1, 1), new Size(
+        return new MediaInfo.VideoInfo("test", 24000, DURATION_TV, DURATION_TV / 1001, "", new Rational(1, 1), new Size(
                 WIDTH, HEIGHT));
     }
 
     @Override
-    public boolean canPlayThrough(Rational sec) {
-        return true;
+    public void close() throws IOException {
     }
 
     @Override
-    public void close() throws IOException {
+    public boolean drySeek(long clock, long timescale) throws IOException {
+        return true;
     }
 }

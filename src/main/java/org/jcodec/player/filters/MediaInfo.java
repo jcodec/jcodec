@@ -1,9 +1,11 @@
 package org.jcodec.player.filters;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 import javax.sound.sampled.AudioFormat;
 
+import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 
@@ -22,6 +24,7 @@ public class MediaInfo implements Serializable {
     private int timescale;
     private long duration;
     private long nFrames;
+    private String name;
 
     public static class VideoInfo extends MediaInfo {
         private static final long serialVersionUID = 423837425262959380L;
@@ -29,8 +32,8 @@ public class MediaInfo implements Serializable {
         private Rational par;
         private Size dim;
 
-        public VideoInfo(String fourcc, int timescale, long duration, long nFrames, Rational par, Size dim) {
-            super(fourcc, timescale, duration, nFrames);
+        public VideoInfo(String fourcc, int timescale, long duration, long nFrames, String name, Rational par, Size dim) {
+            super(fourcc, timescale, duration, nFrames, name);
             this.par = par;
             this.dim = dim;
         }
@@ -70,11 +73,14 @@ public class MediaInfo implements Serializable {
 
         private AudioFormat af;
         private int framesPerPacket;
+        private ChannelLabel[] labels;
 
-        public AudioInfo(String fourcc, int timescale, long duration, long nFrames, AudioFormat af, int framesPerPacket) {
-            super(fourcc, timescale, duration, nFrames);
+        public AudioInfo(String fourcc, int timescale, long duration, long nFrames, String name, AudioFormat af,
+                int framesPerPacket, ChannelLabel[] labels) {
+            super(fourcc, timescale, duration, nFrames, name);
             this.af = af;
             this.framesPerPacket = framesPerPacket;
+            this.labels = labels;
         }
 
         public AudioFormat getFormat() {
@@ -83,6 +89,10 @@ public class MediaInfo implements Serializable {
 
         public int getFramesPerPacket() {
             return framesPerPacket;
+        }
+
+        public ChannelLabel[] getLabels() {
+            return labels;
         }
 
         @Override
@@ -101,15 +111,18 @@ public class MediaInfo implements Serializable {
                 return false;
             if (framesPerPacket != other.framesPerPacket)
                 return false;
+            if (!Arrays.equals(labels, other.labels))
+                return false;
             return true;
         }
     }
 
-    public MediaInfo(String fourcc, int timescale, long duration, long nFrames) {
+    public MediaInfo(String fourcc, int timescale, long duration, long nFrames, String name) {
         this.fourcc = fourcc;
         this.timescale = timescale;
         this.duration = duration;
         this.nFrames = nFrames;
+        this.name = name;
     }
 
     public String getFourcc() {
@@ -130,6 +143,10 @@ public class MediaInfo implements Serializable {
 
     public long getNFrames() {
         return nFrames;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public boolean equals(Object obj) {

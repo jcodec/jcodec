@@ -1,5 +1,6 @@
 package org.jcodec.player.filters.http;
 
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TLongIntHashMap;
@@ -51,7 +52,8 @@ public class FrameCache {
         public boolean key;
         public TapeTimecode tapeTimecode;
 
-        public IndexRecord(int frameNo, long pos, int dataLen, long pts, int duration, boolean key, TapeTimecode tapeTimecode) {
+        public IndexRecord(int frameNo, long pos, int dataLen, long pts, int duration, boolean key,
+                TapeTimecode tapeTimecode) {
             this.frameNo = frameNo;
             this.pos = pos;
             this.dataLen = dataLen;
@@ -205,6 +207,9 @@ public class FrameCache {
         synchronized (pts2frame) {
             pts2frame.put(packet.getPts(), (int) packet.getFrameNo());
         }
+        synchronized (starts) {
+            updateCached((int) packet.getFrameNo());
+        }
     }
 
     private void addDataSegment() throws IOException {
@@ -237,7 +242,27 @@ public class FrameCache {
         return mediaInfo;
     }
 
-    public int[] getFrames() {
-        return index.keys();
+    TIntArrayList starts = new TIntArrayList();;
+    TIntArrayList ends = new TIntArrayList();
+
+    private void updateCached(int frame) {
+        for (int i = 0; i < starts.size(); i++) {
+            if (frame >= starts.get(i) && frame <= ends.get(i))
+                return;
+            if (frame == starts.get(i) - 1) {
+                starts.set(i, frame);
+                return;
+            }
+            if (frame == ends.get(i) + 1) {
+                ends.set(i, frame);
+                return;
+            }
+        }
+        starts.add(frame);
+        ends.add(frame);
+    }
+
+    public int[][] getCached() {
+        return new int[][] { starts.toArray(), ends.toArray() };
     }
 }

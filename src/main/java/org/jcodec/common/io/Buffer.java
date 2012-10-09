@@ -136,11 +136,10 @@ public class Buffer {
             size += byteBuffer.remaining();
         }
         Buffer result = new Buffer(size);
-        Buffer fork = result.fork();
         for (Buffer byteBuffer : picture) {
             result.write(byteBuffer);
         }
-        return result.minus(fork);
+        return result.flip();
     }
 
     public void write(Buffer other) {
@@ -267,12 +266,6 @@ public class Buffer {
         return combine(Arrays.asList(buffers));
     }
 
-    public Buffer minus(Buffer start) {
-        if (buffer != start.buffer)
-            throw new IllegalArgumentException("shit");
-        return new Buffer(buffer, start.pos, pos);
-    }
-
     public boolean startsWith(Buffer other) {
         int i, j;
         for (i = other.pos, j = pos; i < other.limit && j < limit; i++, j++)
@@ -298,5 +291,9 @@ public class Buffer {
         for(int i = 0; i < ints.length; i++)
             bytes[i] = (byte)ints[i];
         return bytes;
+    }
+
+    public Buffer flip() {
+        return new Buffer(buffer, 0, pos);
     }
 }

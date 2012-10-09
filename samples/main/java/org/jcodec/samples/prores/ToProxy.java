@@ -53,9 +53,8 @@ public class ToProxy {
         MP4Packet pkt = null;
         while ((pkt = inVideo.getFrames(1)) != null) {
             Buffer out = new Buffer(pkt.getData().remaining());
-            Buffer copy = out.fork();
             toProxy.transcode(pkt.getData(), out);
-            outVideo.addFrame(new MP4Packet(pkt, out.minus(copy)));
+            outVideo.addFrame(new MP4Packet(pkt, out.flip()));
             frame++;
             long cur = System.currentTimeMillis();
             if (cur - last > 5000) {

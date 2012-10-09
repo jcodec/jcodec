@@ -6,7 +6,8 @@ import javax.sound.sampled.AudioFormat;
 
 import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioFrame;
-import org.jcodec.common.model.RationalLarge;
+import org.jcodec.common.model.ChannelLabel;
+import org.jcodec.containers.mp4.boxes.channel.Label;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,7 +33,8 @@ public class ToneAudioSource implements AudioSource {
     @Override
     public MediaInfo.AudioInfo getAudioInfo() {
         format = new AudioFormat(SAMPLE_RATE, 16, 2, true, false);
-        return new MediaInfo.AudioInfo("pcm", SAMPLE_RATE, Long.MAX_VALUE, Long.MAX_VALUE, format, FRAMES_PER_PACKET);
+        return new MediaInfo.AudioInfo("pcm", SAMPLE_RATE, Long.MAX_VALUE, Long.MAX_VALUE, "Main Stereo", format,
+                FRAMES_PER_PACKET, new ChannelLabel[] { ChannelLabel.STEREO_LEFT, ChannelLabel.STEREO_LEFT });
     }
 
     @Override
@@ -54,13 +56,18 @@ public class ToneAudioSource implements AudioSource {
         lastSample += FRAMES_PER_PACKET;
 
         return new AudioFrame(new Buffer(result, 0, 4 * FRAMES_PER_PACKET), format, FRAMES_PER_PACKET, lastSample,
-                FRAMES_PER_PACKET, SAMPLE_RATE);
+                FRAMES_PER_PACKET, SAMPLE_RATE, (int)(lastSample / FRAMES_PER_PACKET));
+    }
+
+    
+    @Override
+    public boolean drySeek(long clock, long timescale) throws IOException {
+        return true;
     }
 
     @Override
-    public boolean seek(long clock, long timescale) {
+    public void seek(long clock, long timescale) {
         lastSample = (clock * SAMPLE_RATE) / timescale;
-        return true;
     }
 
     @Override

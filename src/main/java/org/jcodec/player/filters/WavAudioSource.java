@@ -42,7 +42,7 @@ public class WavAudioSource implements AudioSource {
         format = new AudioFormat(header.fmt.sampleRate, header.fmt.bitsPerSample, header.fmt.numChannels, true, false);
 
         return new MediaInfo.AudioInfo("pcm", header.fmt.sampleRate, header.dataSize / frameSize, header.dataSize
-                / frameSize, format, FRAMES_PER_PACKET);
+                / frameSize, "", format, FRAMES_PER_PACKET, header.getChannelLabels());
     }
 
     public AudioFrame getFrame(byte[] data) throws IOException {
@@ -53,22 +53,23 @@ public class WavAudioSource implements AudioSource {
         if ((read = StringReader.sureRead(src, data, toRead)) != toRead) {
             Arrays.fill(data, read, toRead, (byte) 0);
         }
-        return new AudioFrame(new Buffer(data, 0, toRead), format, FRAMES_PER_PACKET, (src.getPos() - headerSize)
-                / header.fmt.blockAlign, FRAMES_PER_PACKET, header.fmt.sampleRate);
+        long pts = (src.getPos() - headerSize) / header.fmt.blockAlign;
+        return new AudioFrame(new Buffer(data, 0, toRead), format, FRAMES_PER_PACKET, pts, FRAMES_PER_PACKET,
+                header.fmt.sampleRate, (int)(pts / FRAMES_PER_PACKET));
     }
 
-    public boolean seek(long clock, long timescale) {
-        try {
-            int frameSize = header.fmt.numChannels * (header.fmt.bitsPerSample >> 3);
-            long off = ((long) header.fmt.sampleRate * frameSize * clock) / timescale;
-            long where = header.dataOffset + off - (off % frameSize);
-            if (where >= src.length())
-                return false;
-            src.seek(where);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return true;
+    public boolean drySeek(long clock, long timescale) throws IOException {
+        int frameSize = header.fmt.numChannels * (header.fmt.bitsPerSample >> 3);
+        long off = ((long) header.fmt.sampleRate * frameSize * clock) / timescale;
+        long where = header.dataOffset + off - (off % frameSize);
+        return where < src.length();
+    }
+
+    public void seek(long clock, long timescale) throws IOException {
+        int frameSize = header.fmt.numChannels * (header.fmt.bitsPerSample >> 3);
+        long off = ((long) header.fmt.sampleRate * frameSize * clock) / timescale;
+        long where = header.dataOffset + off - (off % frameSize);
+        src.seek(where);
     }
 
     public RationalLarge getPos() {

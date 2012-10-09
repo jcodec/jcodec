@@ -3,7 +3,9 @@ package org.jcodec.player.filters;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
+import javax.sound.sampled.Line.Info;
 import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 
 import org.jcodec.common.io.Buffer;
@@ -22,6 +24,20 @@ public class JSoundAudioOut implements AudioOut {
     public void open(AudioFormat fmt, int frames) {
         DataLine.Info info = new DataLine.Info(SourceDataLine.class, fmt);
         if (!AudioSystem.isLineSupported(info)) {
+            Mixer.Info[] mixers = AudioSystem.getMixerInfo();
+            for (Mixer.Info mixerInfo : mixers) {
+                System.out.println("Found Mixer: " + mixerInfo);
+
+                Mixer m = AudioSystem.getMixer(mixerInfo);
+
+                for (Info li : m.getSourceLineInfo()) {
+                    AudioFormat[] formats = ((DataLine.Info) li).getFormats();
+                    for (AudioFormat audioFormat : formats) {
+                        System.out.println(audioFormat);
+                    }
+                }
+            }
+
             throw new RuntimeException("Line matching " + info + " not supported.");
         }
         try {
@@ -41,7 +57,7 @@ public class JSoundAudioOut implements AudioOut {
     public long playedMs() {
         return line.getMicrosecondPosition();
     }
-    
+
     public long playedFrames() {
         return line.getLongFramePosition();
     }

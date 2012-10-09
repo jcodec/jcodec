@@ -308,9 +308,8 @@ public class Mpeg2Prores extends MPEGDecoder {
         CompressedTrack vt = muxer.addVideoTrack("apco", new Size(sh.horizontal_size, sh.vertical_size), "JCodec", 25);
         for (int i = 0; frame != null && i < 1000; i++) {
             Buffer buf = new Buffer(frame.getData().remaining() * 6);
-            Buffer copy = buf.fork();
             decoder.transcode(frame.getData(), buf.os());
-            vt.addFrame(new MP4Packet(buf.minus(copy), i, 25, 1, i, true, null, i, 0));
+            vt.addFrame(new MP4Packet(buf.flip(), i, 25, 1, i, true, null, i, 0));
             frame = pes.getFrame();
         }
         muxer.writeHeader();

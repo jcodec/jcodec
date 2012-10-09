@@ -12,12 +12,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
+import org.jcodec.common.model.ChannelLabel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -59,7 +62,23 @@ public class WavHeader {
         public int size() {
             return super.size() + 12;
         }
+
+        public ChannelLabel[] getLabels() {
+            List<ChannelLabel> labels = new ArrayList<ChannelLabel>();
+            for (int i = 0; i < mapping.length; i++) {
+                if ((channelLayout & (1 << i)) != 0)
+                    labels.add(mapping[i]);
+            }
+            return labels.toArray(new ChannelLabel[0]);
+        }
     }
+
+    static ChannelLabel[] mapping = new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT,
+            ChannelLabel.CENTER, ChannelLabel.LFE, ChannelLabel.REAR_LEFT, ChannelLabel.REAR_RIGHT,
+            ChannelLabel.FRONT_CENTER_LEFT, ChannelLabel.FRONT_CENTER_RIGHT, ChannelLabel.REAR_CENTER,
+            ChannelLabel.SIDE_LEFT, ChannelLabel.SIDE_RIGHT, ChannelLabel.CENTER, ChannelLabel.FRONT_LEFT,
+            ChannelLabel.CENTER, ChannelLabel.FRONT_RIGHT, ChannelLabel.REAR_LEFT, ChannelLabel.REAR_CENTER,
+            ChannelLabel.REAR_RIGHT, ChannelLabel.STEREO_LEFT, ChannelLabel.STEREO_RIGHT };
 
     public static class FmtChunk {
         public short audioFormat;
@@ -297,5 +316,40 @@ public class WavHeader {
         w.fmt.numChannels = (short) af.getChannels();
         w.fmt.sampleRate = (int) af.getSampleRate();
         return w;
+    }
+
+    public ChannelLabel[] getChannelLabels() {
+        if (fmt instanceof FmtChunkExtended) {
+            return ((FmtChunkExtended) fmt).getLabels();
+        } else {
+            switch (fmt.numChannels) {
+            case 1:
+                return new ChannelLabel[] { ChannelLabel.MONO };
+            case 2:
+                return new ChannelLabel[] { ChannelLabel.STEREO_LEFT, ChannelLabel.STEREO_RIGHT };
+            case 3:
+                return new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.REAR_CENTER };
+            case 4:
+                return new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.REAR_LEFT,
+                        ChannelLabel.REAR_RIGHT };
+            case 5:
+                return new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.CENTER,
+                        ChannelLabel.REAR_LEFT, ChannelLabel.REAR_RIGHT };
+            case 6:
+                return new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.CENTER,
+                        ChannelLabel.LFE, ChannelLabel.REAR_LEFT, ChannelLabel.REAR_RIGHT };
+            case 7:
+                return new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.CENTER,
+                        ChannelLabel.LFE, ChannelLabel.REAR_LEFT, ChannelLabel.REAR_RIGHT, ChannelLabel.REAR_CENTER };
+            case 8:
+                return new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.CENTER,
+                        ChannelLabel.LFE, ChannelLabel.REAR_LEFT, ChannelLabel.REAR_RIGHT, ChannelLabel.REAR_LEFT,
+                        ChannelLabel.REAR_RIGHT };
+            default:
+                ChannelLabel[] labels = new ChannelLabel[fmt.numChannels];
+                Arrays.fill(labels, ChannelLabel.MONO);
+                return labels;
+            }
+        }
     }
 }

@@ -9,8 +9,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.net.URL;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.swing.JFrame;
 
@@ -18,9 +16,12 @@ import org.apache.commons.io.FileUtils;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.player.Player;
 import org.jcodec.player.Stepper;
+import org.jcodec.player.filters.AudioSource;
 import org.jcodec.player.filters.JCodecAudioSource;
 import org.jcodec.player.filters.JCodecVideoSource;
 import org.jcodec.player.filters.JSoundAudioOut;
+import org.jcodec.player.filters.audio.AudioMixer;
+import org.jcodec.player.filters.audio.AudioMixer.Pin;
 import org.jcodec.player.filters.http.HttpMedia;
 import org.jcodec.player.filters.http.HttpPacketSource;
 import org.jcodec.player.ui.SwingVO;
@@ -35,8 +36,6 @@ import org.jcodec.player.ui.SwingVO;
 public class PlayerMain {
     public static void main(String[] args) throws Exception {
         JFrame frame = new JFrame("Player");
-
-        Timer cacheEvent = new Timer(true);
 
         SwingVO vo = new SwingVO();
         frame.getContentPane().add(vo, BorderLayout.CENTER);
@@ -56,9 +55,16 @@ public class PlayerMain {
 
         final HttpPacketSource videoTrack = http.getVideoTrack();
         JCodecVideoSource video = new JCodecVideoSource(videoTrack);
-        JCodecAudioSource audio = new JCodecAudioSource(http.getAudioTracks().get(0));
-        final Player player = new Player(video, audio, vo, new JSoundAudioOut());
-        final Stepper stepper = new Stepper(video, audio, vo, new JSoundAudioOut());
+
+        List<HttpPacketSource> audioTracks = http.getAudioTracks();
+        AudioSource[] audio = new AudioSource[audioTracks.size()];
+        for (int i = 0; i < audioTracks.size(); i++) {
+            audio[i] = new JCodecAudioSource(audioTracks.get(i));
+        }
+        final AudioMixer mixer = new AudioMixer(2, audio);
+
+        final Player player = new Player(video, mixer, vo, new JSoundAudioOut());
+        final Stepper stepper = new Stepper(video, mixer, vo, new JSoundAudioOut());
 
         frame.addKeyListener(new KeyListener() {
             public void keyTyped(KeyEvent e) {
@@ -92,6 +98,15 @@ public class PlayerMain {
                 } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     player.destroy();
                     System.exit(-1);
+                } else if (e.getKeyChar() >= '0' && e.getKeyChar() < '9') {
+                    int ch = e.getKeyChar() - '0';
+                    for (Pin pin : mixer.getPins()) {
+                        if (ch < pin.getLabels().length) {
+                            pin.toggle(ch);
+                            break;
+                        } else
+                            ch -= pin.getLabels().length;
+                    }
                 }
             }
         });
@@ -99,16 +114,6 @@ public class PlayerMain {
         frame.pack();
         frame.setVisible(true);
         frame.setSize(new Dimension(768, 596));
-
-        cacheEvent.scheduleAtFixedRate(new TimerTask() {
-            public void run() {
-                List<int[]> cached = videoTrack.getCached(100);
-                for (int[] is : cached) {
-                    System.out.println(is[0] + ":" + is[1]);
-                }
-
-            }
-        }, 5000, 5000);
 
         player.play();
     }

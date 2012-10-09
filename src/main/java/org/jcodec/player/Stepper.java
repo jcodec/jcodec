@@ -55,7 +55,7 @@ public class Stepper {
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    public Stepper(VideoSource videoSource, AudioSource audioSource, VideoOutput vo, AudioOut ao) {
+    public Stepper(VideoSource videoSource, AudioSource audioSource, VideoOutput vo, AudioOut ao) throws IOException {
         this.videoSource = videoSource;
         this.vo = vo;
         this.ao = ao;
@@ -78,7 +78,7 @@ public class Stepper {
         next();
     }
 
-    private AudioSource insertResampler(AudioSource src) {
+    private AudioSource insertResampler(AudioSource src) throws IOException {
         AudioFormat format = src.getAudioInfo().getFormat();
 
         AudioSource result = src;
@@ -88,7 +88,7 @@ public class Stepper {
         }
 
         if (format.getChannels() > 2) {
-            result = new ChannelSelector(result);
+            result = new ChannelSelector(result, 0x3);
         }
         return result;
     }
@@ -101,8 +101,9 @@ public class Stepper {
 
     public void seek(RationalLarge where) {
         try {
-            if (!videoSource.seek(where.getNum(), where.getDen()))
+            if (!videoSource.drySeek(where.getNum(), where.getDen()))
                 return;
+            videoSource.seek(where.getNum(), where.getDen());
 
             video = new ArrayList<Frame>();
             while (video.size() < MAX_FRAMES) {
