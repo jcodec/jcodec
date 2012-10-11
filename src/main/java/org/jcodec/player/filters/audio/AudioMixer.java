@@ -263,12 +263,11 @@ public class AudioMixer implements AudioSource {
 
         int frame;
         for (frame = 0; frame < maxFrames; frame++, curFrame++) {
-            int doneTracks = 0;
             for (int track = 0; track < in.length; track++) {
-                if (in[track] == null || curFrame < in[track].startFrame
-                        || curFrame >= in[track].startFrame + in[track].frames)
+                if (in[track] == null || curFrame < in[track].startFrame)
                     continue;
-                doneTracks++;
+                if (curFrame >= in[track].startFrame + in[track].frames)
+                    return frame;
                 FloatFrame floatFrame = in[track];
                 int channels = floatFrame.labels.length;
                 for (int channel = 0; channel < channels; channel++) {
@@ -287,9 +286,6 @@ public class AudioMixer implements AudioSource {
                     }
                 }
             }
-
-            if (doneTracks == 0)
-                break;
 
             for (int i = 0; i < dstChannels; i++) {
                 float val = count[i] > 1 ? clamp1f(sum[i] - mul[i]) : sum[i];

@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -65,9 +64,11 @@ public class PlayerApplet extends JApplet {
     public JSObject onStatus2;
     public JSObject onStateChanged;
 
-    private Timer status2Timer = new Timer(true);
+    private Timer timer = new Timer(true);
 
     private AudioMixer audio;
+
+    private TimerTask status2Task;
 
     // private Stepper stepper;
 
@@ -100,8 +101,16 @@ public class PlayerApplet extends JApplet {
 
     public void open(final String src) {
         Debug.println("Opening source: " + src);
-        destroy();
         try {
+            if(player != null) {
+                Debug.println("Destroying old player.");
+                player.destroy();
+                video.close();
+                audio.close();
+                status2Task.cancel();
+                status2Task = null;
+            }
+            
             HttpMedia http = AccessController.doPrivileged(new PrivilegedAction<HttpMedia>() {
                 public HttpMedia run() {
                     try {
@@ -138,7 +147,7 @@ public class PlayerApplet extends JApplet {
                         onStateChanged.call("call", new Object[] { null, status.toString() });
                 }
             });
-            status2Timer.scheduleAtFixedRate(new TimerTask() {
+            status2Task = new TimerTask() {
                 public void run() {
                     if (onStatus2 == null)
                         return;
@@ -153,7 +162,8 @@ public class PlayerApplet extends JApplet {
                         e.printStackTrace();
                     }
                 }
-            }, 0, 1000);
+            };
+            timer.scheduleAtFixedRate(status2Task, 0, 1000);
             // stepper = new Stepper(video, audio, new SwingVO(this), new
             // JSoundAudioOut());
         } catch (Exception e) {
@@ -166,7 +176,7 @@ public class PlayerApplet extends JApplet {
         List<HttpPacketSource> audioTracks = http.getAudioTracks();
         AudioSource[] audios = new AudioSource[audioTracks.size()];
         for (int i = 0; i < audioTracks.size(); i++) {
-            audios[i] = new JCodecAudioSource(audioTracks.get(0));
+            audios[i] = new JCodecAudioSource(audioTracks.get(i));
         }
         AudioMixer audio = new AudioMixer(2, audios);
         return audio;
@@ -206,8 +216,15 @@ public class PlayerApplet extends JApplet {
     }
 
     public void toggleChannel(int trackId, int channelId) {
-        System.out.println("Toggle " + trackId + ", " + channelId);
         audio.getPins()[trackId].toggle(channelId);
+    }
+    
+    public void muteChannel(int trackId, int channelId) {
+        audio.getPins()[trackId].mute(channelId);
+    }
+    
+    public void unmuteChannel(int trackId, int channelId) {
+        audio.getPins()[trackId].unmute(channelId);
     }
 
     private int[][] enabledChannels() {
@@ -215,7 +232,6 @@ public class PlayerApplet extends JApplet {
         int[][] result = new int[pins.length][];
         for (int i = 0; i < pins.length; i++) {
             result[i] = pins[i].getSoloChannels();
-            System.out.println("Returning enabled channels" + Arrays.toString(result[i]));
         }
         return result;
     }
@@ -255,6 +271,7 @@ public class PlayerApplet extends JApplet {
     public void play() {
         if (player == null)
             throw new IllegalArgumentException("player is not initialized");
+        Debug.println("Starting playback.");
 
         // player.seek(stepper.getPos());
         player.play();

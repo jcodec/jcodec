@@ -3,7 +3,7 @@ package org.jcodec.player;
 import static org.jcodec.player.util.ThreadUtil.joinForSure;
 import static org.jcodec.player.util.ThreadUtil.sleepNoShit;
 import static org.jcodec.player.util.ThreadUtil.surePut;
-import static org.jcodec.player.util.ThreadUtil.sureTake;
+import static org.jcodec.player.util.ThreadUtil.take;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -140,8 +141,12 @@ public class Player {
      * Resumes player playback as soon as possible
      */
     public void play() {
-        resume = true;
-        notifyStatus();
+        executor.submit(new Runnable() {
+            public void run() {
+                resume = true;
+                notifyStatus();
+            }
+        });
     }
 
     /**
@@ -152,8 +157,16 @@ public class Player {
      * @return Wheather playback was already paused
      */
     public boolean pause() {
-        resume = false;
-        return pauseWait();
+        try {
+            return executor.submit(new Callable<Boolean>() {
+                public Boolean call() throws Exception {
+                    resume = false;
+                    return pauseWait();
+                }
+            }).get();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void startResumeThread() {
@@ -169,6 +182,7 @@ public class Player {
                     }
                     sleepNoShit(500000);
                 }
+                Debug.println("Resume thread done");
             }
         };
         resumeThread.setDaemon(true);
@@ -290,7 +304,9 @@ public class Player {
                 continue;
             }
 
-            byte[] buf = sureTake(audioDrain);
+            byte[] buf = take(audioDrain, 20);
+            if (buf == null)
+                continue;
             AudioFrame frame = audioSource.getFrame(buf);
 
             if (frame != null) {
@@ -327,7 +343,9 @@ public class Player {
     }
 
     private void decodeJustOneFrame() throws IOException {
-        int[][] buf = sureTake(videoDrain);
+        int[][] buf = take(videoDrain, 20);
+        if (buf == null)
+            return;
         Frame frame = videoSource.decode(buf);
         if (frame != null) {
             video.add(frame);

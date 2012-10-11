@@ -1,6 +1,7 @@
 package org.jcodec.player.util;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -60,6 +61,14 @@ public class ThreadUtil {
         try {
             o.wait();
         } catch (InterruptedException e) {
+        }
+    }
+
+    public static <T> T take(BlockingQueue<T> videoDrain, int ms) {
+        try {
+            return videoDrain.poll(ms, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            return null;
         }
     }
 }

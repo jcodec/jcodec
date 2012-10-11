@@ -223,4 +223,8 @@ public class Downloader {
 
         return lines;
     }
+
+    public void close() {
+//        client.getConnectionManager().shutdown();
+    }
 }

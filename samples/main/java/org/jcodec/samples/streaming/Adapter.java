@@ -77,4 +77,9 @@ public interface Adapter {
      * @return
      */
     List<AdapterTrack> getTracks();
+
+    /**
+     * Closes this adapter and all associated resources
+     */
+    void close();
 }

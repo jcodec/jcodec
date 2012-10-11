@@ -8,6 +8,7 @@ import java.util.List;
 import javax.sound.sampled.AudioFormat;
 
 import org.jcodec.common.io.AutoRandomAccessFileInputStream;
+import org.jcodec.common.io.RandomAccessFileInputStream;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -35,9 +36,11 @@ import org.jcodec.player.filters.MediaInfo;
 public class QTAdapter implements Adapter {
     private MP4Demuxer demuxer;
     private ArrayList<AdapterTrack> tracks;
+    private RandomAccessFileInputStream is;
 
     public QTAdapter(File file) throws IOException {
-        demuxer = new MP4Demuxer(new AutoRandomAccessFileInputStream(file));
+        is = new RandomAccessFileInputStream(file);
+        demuxer = new MP4Demuxer(is);
         tracks = new ArrayList<AdapterTrack>();
         for (DemuxerTrack demuxerTrack : demuxer.getTracks()) {
             if (demuxerTrack.getBox().isAudio())
@@ -171,6 +174,15 @@ public class QTAdapter implements Adapter {
             } else {
                 return getFrameNonPCM(frameId);
             }
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            is.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

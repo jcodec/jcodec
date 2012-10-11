@@ -67,6 +67,7 @@ public class JCodecAudioSource implements AudioSource {
         return (MediaInfo.AudioInfo) pkt.getMediaInfo();
     }
 
-    public void close() {
+    public void close() throws IOException {
+        pkt.close();
     }
 }

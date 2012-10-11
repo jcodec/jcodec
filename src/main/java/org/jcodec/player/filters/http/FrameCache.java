@@ -71,7 +71,10 @@ public class FrameCache {
     }
 
     public void close() throws IOException {
-        fd.close();
+        synchronized (fd) {
+            fd.close();
+            fd = null;
+        }
     }
 
     public void loadData(RandomAccessFile f) throws IOException {
@@ -114,7 +117,11 @@ public class FrameCache {
         if (record == null)
             return null;
 
+        if (fd == null)
+            return null;
         synchronized (fd) {
+            if (fd == null)
+                return null;
 
             fd.seek(record.pos);
 
@@ -178,7 +185,11 @@ public class FrameCache {
     }
 
     public void addFrame(Packet packet) throws IOException {
+        if (fd == null)
+            return;
         synchronized (fd) {
+            if (fd == null)
+                return;
             fd.seek(dataSegments.get(dataSegments.size() - 1) + dsFill);
             long pos = fd.getFilePointer();
             Buffer data = packet.getData().fork();

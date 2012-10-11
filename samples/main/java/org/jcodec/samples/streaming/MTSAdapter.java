@@ -15,8 +15,8 @@ import junit.framework.Assert;
 
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
-import org.jcodec.common.io.AutoRandomAccessFileInputStream;
 import org.jcodec.common.io.Buffer;
+import org.jcodec.common.io.RandomAccessFileInputStream;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Packet;
@@ -75,11 +75,11 @@ public class MTSAdapter implements Adapter {
 
     public class AudioAdapterTrack implements Adapter.AudioAdapterTrack {
         protected int sid;
-        protected AutoRandomAccessFileInputStream is;
+        protected RandomAccessFileInputStream is;
 
         public AudioAdapterTrack(int sid) throws IOException {
             this.sid = sid;
-            is = new AutoRandomAccessFileInputStream(mtsFile);
+            is = new RandomAccessFileInputStream(mtsFile);
             is.seek(index.frame(sid, 0).dataOffset);
         }
 
@@ -173,15 +173,19 @@ public class MTSAdapter implements Adapter {
             FrameEntry e = index.frame(sid, frameId);
             return e == null ? null : frame(e);
         }
+
+        void close() throws IOException {
+            is.close();
+        }
     }
 
     public class VideoAdapterTrack implements Adapter.VideoAdapterTrack {
         protected int sid;
-        protected AutoRandomAccessFileInputStream is;
+        protected RandomAccessFileInputStream is;
 
         public VideoAdapterTrack(int sid) throws IOException {
             this.sid = sid;
-            is = new AutoRandomAccessFileInputStream(mtsFile);
+            is = new RandomAccessFileInputStream(mtsFile);
             is.seek(index.frame(sid, 0).dataOffset);
         }
 
@@ -305,6 +309,25 @@ public class MTSAdapter implements Adapter {
             long duration = e.pts;
 
             return new MediaInfo.VideoInfo("m2v1", 90000, duration, frames, "", new Rational(1, 1), sz);
+        }
+
+        void close() throws IOException {
+            is.close();
+        }
+    }
+
+    @Override
+    public void close() {
+        List<AdapterTrack> tracks2 = tracks;
+        for (AdapterTrack adapterTrack : tracks2) {
+            try {
+                if (adapterTrack instanceof VideoAdapterTrack)
+                    ((VideoAdapterTrack) adapterTrack).close();
+                else
+                    ((AudioAdapterTrack) adapterTrack).close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

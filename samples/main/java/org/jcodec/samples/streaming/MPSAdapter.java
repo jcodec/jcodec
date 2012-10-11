@@ -24,4 +24,10 @@ public class MPSAdapter implements Adapter {
         // TODO Auto-generated method stub
         return null;
     }
+
+    @Override
+    public void close() {
+        // TODO Auto-generated method stub
+        
+    }
 }

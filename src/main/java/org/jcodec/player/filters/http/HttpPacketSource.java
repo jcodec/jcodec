@@ -121,6 +121,7 @@ public class HttpPacketSource implements PacketSource {
     public void close() throws IOException {
         prefetcher.cancel();
         cache.close();
+        downloader.close();
     }
 
     public int[][] getCached() {
