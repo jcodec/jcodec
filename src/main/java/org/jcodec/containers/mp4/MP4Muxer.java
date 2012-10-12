@@ -419,7 +419,7 @@ public class MP4Muxer {
         public void addTimecode(Packet packet) throws IOException {
             if (packet.isKeyFrame())
                 processGop();
-            gop.add(new Packet(packet, (Buffer)null));
+            gop.add(new Packet(packet, (Buffer) null));
         }
 
         private void processGop() throws IOException {
@@ -434,6 +434,10 @@ public class MP4Muxer {
         protected Box finish(MovieHeaderBox mvhd) throws IOException {
             processGop();
             outTimecodeSample();
+
+            if (sampleEntries.size() == 0)
+                return null;
+
             if (edits != null) {
                 edits = Util.editsOnEdits(new Rational(1, 1), lower, edits);
             } else
@@ -747,7 +751,9 @@ public class MP4Muxer {
         movie.addFirst(mvhd);
 
         for (MuxerTrack track : tracks) {
-            movie.add(track.finish(mvhd));
+            Box trak = track.finish(mvhd);
+            if (trak != null)
+                movie.add(trak);
         }
 
         long mdatSize = out.getPos() - mdatOffset + 8;
