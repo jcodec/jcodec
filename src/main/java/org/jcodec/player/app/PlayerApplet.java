@@ -26,14 +26,15 @@ import org.jcodec.common.tools.Debug;
 import org.jcodec.player.Player;
 import org.jcodec.player.Player.Listener;
 import org.jcodec.player.Player.Status;
-import org.jcodec.player.filters.AudioSource;
-import org.jcodec.player.filters.JCodecAudioSource;
+import org.jcodec.player.Stepper;
 import org.jcodec.player.filters.JCodecVideoSource;
 import org.jcodec.player.filters.JSoundAudioOut;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
 import org.jcodec.player.filters.MediaInfo.VideoInfo;
 import org.jcodec.player.filters.audio.AudioMixer;
 import org.jcodec.player.filters.audio.AudioMixer.Pin;
+import org.jcodec.player.filters.audio.AudioSource;
+import org.jcodec.player.filters.audio.JCodecAudioSource;
 import org.jcodec.player.filters.http.HttpMedia;
 import org.jcodec.player.filters.http.HttpPacketSource;
 import org.jcodec.player.ui.SwingVO;
@@ -70,7 +71,7 @@ public class PlayerApplet extends JApplet {
 
     private TimerTask status2Task;
 
-    // private Stepper stepper;
+    private Stepper stepper;
 
     public class Status1 {
         public double time;
@@ -102,7 +103,7 @@ public class PlayerApplet extends JApplet {
     public void open(final String src) {
         Debug.println("Opening source: " + src);
         try {
-            if(player != null) {
+            if (player != null) {
                 Debug.println("Destroying old player.");
                 player.destroy();
                 video.close();
@@ -110,7 +111,7 @@ public class PlayerApplet extends JApplet {
                 status2Task.cancel();
                 status2Task = null;
             }
-            
+
             HttpMedia http = AccessController.doPrivileged(new PrivilegedAction<HttpMedia>() {
                 public HttpMedia run() {
                     try {
@@ -164,8 +165,6 @@ public class PlayerApplet extends JApplet {
                 }
             };
             timer.scheduleAtFixedRate(status2Task, 0, 1000);
-            // stepper = new Stepper(video, audio, new SwingVO(this), new
-            // JSoundAudioOut());
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Could not open source", e);
@@ -218,11 +217,11 @@ public class PlayerApplet extends JApplet {
     public void toggleChannel(int trackId, int channelId) {
         audio.getPins()[trackId].toggle(channelId);
     }
-    
+
     public void muteChannel(int trackId, int channelId) {
         audio.getPins()[trackId].mute(channelId);
     }
-    
+
     public void unmuteChannel(int trackId, int channelId) {
         audio.getPins()[trackId].unmute(channelId);
     }
@@ -273,7 +272,10 @@ public class PlayerApplet extends JApplet {
             throw new IllegalArgumentException("player is not initialized");
         Debug.println("Starting playback.");
 
-        // player.seek(stepper.getPos());
+        if (stepper != null) {
+            player.seek(stepper.getPos());
+            stepper = null;
+        }
         player.play();
     }
 
@@ -281,21 +283,21 @@ public class PlayerApplet extends JApplet {
         if (player == null)
             throw new IllegalArgumentException("player is not initialized");
 
-        if (!player.pause()) {
-            // stepper.seek(player.getPos());
-        }
+        player.pause();
     }
 
     public void togglePause() {
         if (player == null)
             throw new IllegalArgumentException("player is not initialized");
 
-        if (!player.pause()) {
-            // stepper.seek(player.getPos());
-        } else {
-            // player.seek(stepper.getPos());
+        if (player.getStatus() == Player.Status.PAUSED) {
+            if (stepper != null) {
+                player.seek(stepper.getPos());
+                stepper = null;
+            }
             player.play();
-        }
+        } else
+            player.pause();
     }
 
     public void seekRel(int sec) {
@@ -323,15 +325,30 @@ public class PlayerApplet extends JApplet {
         }
     }
 
-    public void step() {
-        if (player == null)
-            throw new IllegalArgumentException("player is not initialized");
+    public void stepForward() {
+        try {
+            if (stepper == null) {
+                stepper = new Stepper(video, audio, vo, new JSoundAudioOut());
+                stepper.setListeners(player.getListeners());
+                stepper.gotoFrame(player.getFrameNo());
+            }
+            stepper.next();
+        } catch (Exception e) {
+            throw new RuntimeException("Could not step", e);
+        }
+    }
 
-        // try {
-        // player.step();
-        // } catch (Exception e) {
-        // throw new RuntimeException("Could not step", e);
-        // }
+    public void stepBackward() {
+//        try {
+//            if (stepper == null) {
+//                stepper = new Stepper(video, audio, vo, new JSoundAudioOut());
+//                stepper.setListeners(player.getListeners());
+//                stepper.gotoFrame(player.getFrameNo());
+//            }
+//            stepper.prev();
+//        } catch (Exception e) {
+//            throw new RuntimeException("Could not step", e);
+//        }
     }
 
     private File determineCacheLocation() {

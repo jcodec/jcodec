@@ -98,19 +98,23 @@ public class JCodecPacketSource {
             }
             throw new RuntimeException("This shouldn't happen");
         }
-        
-        
-        public boolean drySeek(long l) {
-            return track.canSeek(l);
+
+        public boolean drySeek(RationalLarge second) {
+            return track.canSeek(second.multiplyS(track.getTimescale()));
         }
 
-        public void seek(long l) {
-            track.seek(l);
+        public void seek(RationalLarge second) {
+            track.seek(second.multiplyS(track.getTimescale()));
         }
 
         public void close() throws IOException {
             this.closed = true;
             checkClose();
+        }
+
+        @Override
+        public void gotoFrame(int frameNo) {
+            track.gotoFrame(frameNo);
         }
     }
 

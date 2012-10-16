@@ -6,6 +6,7 @@ import java.net.URL;
 
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.tools.Debug;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.PacketSource;
@@ -87,7 +88,8 @@ public class HttpPacketSource implements PacketSource {
         prefetcher.start();
     }
 
-    public synchronized void seek(long pts) throws IOException {
+    public synchronized void seek(RationalLarge second) throws IOException {
+        long pts = second.multiplyS(mi.getTimescale());
         if (cache.pts2frame(pts) == -1) {
             Packet pkt = downloader.seekFrame(pts, null);
             if (pkt == null)
@@ -101,7 +103,8 @@ public class HttpPacketSource implements PacketSource {
         restartDownloader(frameNo + 15);
     }
 
-    public boolean drySeek(long pts) throws IOException {
+    public boolean drySeek(RationalLarge second) throws IOException {
+        long pts = second.multiplyS(mi.getTimescale());
         if (cache.pts2frame(pts) == -1) {
             Packet pkt = downloader.seekFrame(pts, null);
             if (pkt == null)
@@ -126,5 +129,14 @@ public class HttpPacketSource implements PacketSource {
 
     public int[][] getCached() {
         return cache.getCached();
+    }
+
+    @Override
+    public void gotoFrame(int frame) {
+        if(frameNo == frame)
+            return;
+        frameNo = frame;
+        
+        restartDownloader(frameNo + 15);
     }
 }

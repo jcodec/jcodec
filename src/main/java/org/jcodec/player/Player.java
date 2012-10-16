@@ -1,5 +1,6 @@
 package org.jcodec.player;
 
+import static org.jcodec.common.model.RationalLarge.R;
 import static org.jcodec.player.util.ThreadUtil.joinForSure;
 import static org.jcodec.player.util.ThreadUtil.sleepNoShit;
 import static org.jcodec.player.util.ThreadUtil.surePut;
@@ -11,7 +12,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -28,11 +28,11 @@ import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.common.tools.Debug;
 import org.jcodec.player.filters.AudioOut;
-import org.jcodec.player.filters.AudioSource;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
 import org.jcodec.player.filters.VideoOutput;
 import org.jcodec.player.filters.VideoSource;
+import org.jcodec.player.filters.audio.AudioSource;
 import org.jcodec.scale.ColorUtil;
 
 /**
@@ -49,8 +49,8 @@ public class Player {
         STOPPED, PAUSED, BUFFERING, PLAYING
     }
 
-    private static final int VIDEO_QUEUE_SIZE = 50;
-    private static final int AUDIO_QUEUE_SIZE = 50;
+    private static final int VIDEO_QUEUE_SIZE = 20;
+    private static final int AUDIO_QUEUE_SIZE = 20;
     public static final int PACKETS_IN_BUFFER = 8;
     public static int TIMESCALE = 96000;
 
@@ -83,6 +83,9 @@ public class Player {
 
     private volatile boolean resume;
     private volatile boolean decodingLocked;
+
+    Frame[] EMPTY = new Frame[0];
+    private int curFrameNo = -1;
 
     private Thread resumeThread;
     private Thread videoPlaybackThread;
@@ -156,17 +159,13 @@ public class Player {
      * 
      * @return Wheather playback was already paused
      */
-    public boolean pause() {
-        try {
-            return executor.submit(new Callable<Boolean>() {
-                public Boolean call() throws Exception {
-                    resume = false;
-                    return pauseWait();
-                }
-            }).get();
-        } catch (Exception e) {
-            return false;
-        }
+    public void pause() {
+        executor.submit(new Runnable() {
+            public void run() {
+                resume = false;
+                pauseNoWait();
+            }
+        });
     }
 
     private void startResumeThread() {
@@ -174,7 +173,7 @@ public class Player {
             public void run() {
                 while (!stop) {
                     if (resume && pause.get()) {
-                        if (audio.size() >= AUDIO_QUEUE_SIZE / 2 && video.size() >= VIDEO_QUEUE_SIZE / 2) {
+                        if (audio.size() >= AUDIO_QUEUE_SIZE / 2 && video.size() >= VIDEO_QUEUE_SIZE - 1) {
                             pause.set(false);
                             ao.resume();
                             notifyStatus();
@@ -204,9 +203,8 @@ public class Player {
         videoPlaybackThread.start();
     }
 
-    Frame[] EMPTY = new Frame[0];
-
     private void playVideo() throws IOException {
+        int late = 0;
         while (!stop) {
             if (!pause.get()) {
                 long newAudio = ao.playedMs();
@@ -215,13 +213,17 @@ public class Player {
 
                 long pts = (clock * 96) / 1000;
 
+                late += dropLateFrames(pts);
                 Frame selected = selectFrame(pts);
                 if (selected == null) {
-                    if (video.size() > 0)
+                    if (late < 4) {
                         sleepNoShit(2000000);
-                    else
+                    } else {
+                        System.out.println("Video late, pausing");
                         pauseNoWait();
+                    }
                 } else {
+                    late = 0;
                     show(selected);
                     surePut(videoDrain, selected.getPic().getData());
                 }
@@ -234,30 +236,43 @@ public class Player {
         }
     }
 
-    private Frame selectFrame(long pts) {
-        List<Frame> remove = new ArrayList<Frame>();
-        Frame closest = null;
-        long closestPts = 0;
+    private int dropLateFrames(long pts) {
+        List<Frame> late = new ArrayList<Frame>();
         for (Frame frame : video.toArray(EMPTY)) {
-            long framePts = (frame.getPts().getNum() * TIMESCALE) / frame.getPts().getDen();
-            if (framePts > pts)
-                continue;
-
-            if (closest == null || framePts > closestPts) {
-                if (closest != null)
-                    remove.add(closest);
-                closest = frame;
-                closestPts = framePts;
-            }
+            long frameEnd = frame.getPts().multiplyS(TIMESCALE) + frame.getDuration().multiplyS(TIMESCALE);
+            if (pts > frameEnd)
+                late.add(frame);
         }
-        video.removeAll(remove);
-        for (Frame frame : remove) {
+        removeFrames(late);
+
+        return late.size();
+    }
+
+    private Frame selectFrame(long pts) {
+        List<Frame> junk = new ArrayList<Frame>();
+        Frame found = null;
+        for (Frame frame : video.toArray(EMPTY)) {
+            long framePts = frame.getPts().multiplyS(TIMESCALE);
+            long frameDuration = frame.getDuration().multiplyS(TIMESCALE);
+            if (pts >= framePts && pts < framePts + frameDuration) {
+                found = frame;
+                break;
+            }
+            junk.add(frame);
+        }
+        if (found != null) {
+            removeFrames(junk);
+            video.remove(found);
+        }
+
+        return found;
+    }
+
+    private void removeFrames(List<Frame> remove1) {
+        video.removeAll(remove1);
+        for (Frame frame : remove1) {
             surePut(videoDrain, frame.getPic().getData());
         }
-        if (closest != null)
-            video.remove(closest);
-
-        return closest;
     }
 
     private int[][] createTarget() {
@@ -316,8 +331,8 @@ public class Player {
                     while (pause.get() != true)
                         sleepNoShit(500000);
                     clock = (1000000 * frame.getPts()) / frame.getTimescale();
-                    if (!seekVideo(pts, TIMESCALE))
-                        seekVideo(pts + TIMESCALE / 100, TIMESCALE);
+                    if (!seekVideo(R(pts, TIMESCALE)))
+                        seekVideo(R(pts + TIMESCALE / 100, TIMESCALE));
                 }
 
                 predPts = (frame.getPts() * TIMESCALE) / frame.getTimescale() + (frame.getDuration() * TIMESCALE)
@@ -422,6 +437,8 @@ public class Player {
 
         notifyTime(frame);
 
+        curFrameNo = frame.getFrameNo();
+
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
                 dst = Picture.create(src.getWidth(), src.getHeight(), vo.getColorSpace());
@@ -434,13 +451,13 @@ public class Player {
         }
     }
 
-    private boolean seekVideo(long pts, int timescale) throws IOException {
-        if (!videoSource.drySeek(pts, timescale))
+    private boolean seekVideo(RationalLarge second) throws IOException {
+        if (!videoSource.drySeek(second))
             return false;
         synchronized (seekLock) {
 
             decodingLocked = true;
-            videoSource.seek(pts, timescale);
+            videoSource.seek(second);
             drainVideo();
 
             decodeJustOneFrame();
@@ -456,7 +473,7 @@ public class Player {
         executor.submit(new Runnable() {
             public void run() {
                 try {
-                    seekInt(where.getNum(), where.getDen());
+                    seekInt(where);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -464,8 +481,8 @@ public class Player {
         });
     }
 
-    private void seekInt(long clk, long timescale) throws IOException {
-        if (clk < 0)
+    private void seekInt(RationalLarge second) throws IOException {
+        if (second.lessThen(RationalLarge.ZERO) || !audioSource.drySeek(second))
             return;
 
         synchronized (seekLock) {
@@ -474,11 +491,9 @@ public class Player {
             pauseWait();
             decodingLocked = true;
 
-            if (audioSource.drySeek(clk, timescale)) {
-                audioSource.seek(clk, timescale);
-                drainAudio();
-                ao.flush();
-            }
+            audioSource.seek(second);
+            drainAudio();
+            ao.flush();
 
             decodingLocked = false;
 
@@ -533,7 +548,7 @@ public class Player {
     }
 
     private void notifyStatus() {
-        final Status status = pause.get() ? (resume ? Status.BUFFERING : Status.PAUSED) : Status.PLAYING;
+        final Status status = getStatus();
         executor.execute(new Runnable() {
             public void run() {
                 for (Listener listener : listeners) {
@@ -577,5 +592,17 @@ public class Player {
 
     public AudioSource getAudioSources() {
         return audioSource;
+    }
+
+    public int getFrameNo() {
+        return curFrameNo;
+    }
+
+    public Status getStatus() {
+        return pause.get() ? (resume ? Status.BUFFERING : Status.PAUSED) : Status.PLAYING;
+    }
+
+    public List<Listener> getListeners() {
+        return listeners;
     }
 }

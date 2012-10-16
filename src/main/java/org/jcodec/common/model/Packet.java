@@ -90,4 +90,8 @@ public class Packet {
     public boolean isKeyFrame() {
         return keyFrame;
     }
+
+    public RationalLarge getPtsR() {
+        return RationalLarge.R(pts, timescale);
+    }
 }

@@ -3,6 +3,8 @@ package org.jcodec.player;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -14,17 +16,14 @@ import org.jcodec.common.model.Frame;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
+import org.jcodec.player.Player.Listener;
 import org.jcodec.player.filters.AudioOut;
-import org.jcodec.player.filters.AudioSource;
-import org.jcodec.player.filters.ChannelSelector;
-import org.jcodec.player.filters.Resampler24To16;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
 import org.jcodec.player.filters.MediaInfo.VideoInfo;
 import org.jcodec.player.filters.VideoOutput;
 import org.jcodec.player.filters.VideoSource;
+import org.jcodec.player.filters.audio.AudioSource;
 import org.jcodec.scale.ColorUtil;
-
-import ch.lambdaj.Lambda;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,9 +36,6 @@ import ch.lambdaj.Lambda;
  */
 public class Stepper {
 
-    public static final int PACKETS_IN_BUFFER = 8;
-    public static final int MAX_FRAMES = 10;
-
     private VideoSource videoSource;
     private AudioSource audioSource;
     private VideoOutput vo;
@@ -48,49 +44,25 @@ public class Stepper {
     private AudioInfo ai;
     private Picture dst;
 
-    private Object seekLock = new Object();
-    private List<Frame> video;
-
     private RationalLarge pts;
+    // private int frameNo;
+    private int[][] target;
+    private List<Player.Listener> listeners = new ArrayList<Player.Listener>();
+    private Timer timer = new Timer();
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private AudioFormat af;
 
     public Stepper(VideoSource videoSource, AudioSource audioSource, VideoOutput vo, AudioOut ao) throws IOException {
         this.videoSource = videoSource;
         this.vo = vo;
         this.ao = ao;
+        this.audioSource = audioSource;
         this.mi = videoSource.getMediaInfo();
 
-        this.audioSource = insertResampler(audioSource);
-        this.ai = this.audioSource.getAudioInfo();
-
-        AudioInfo ai = this.audioSource.getAudioInfo();
-        ao.open(ai.getFormat(), ai.getFramesPerPacket() * PACKETS_IN_BUFFER);
-
-        try {
-            video = new ArrayList<Frame>();
-            for (int i = 0; i < MAX_FRAMES; i++)
-                video.add(videoSource.decode(createTarget()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        next();
-    }
-
-    private AudioSource insertResampler(AudioSource src) throws IOException {
-        AudioFormat format = src.getAudioInfo().getFormat();
-
-        AudioSource result = src;
-
-        if (format.getSampleSizeInBits() == 24) {
-            result = new Resampler24To16(result);
-        }
-
-        if (format.getChannels() > 2) {
-            result = new ChannelSelector(result, 0x3);
-        }
-        return result;
+        ai = this.audioSource.getAudioInfo();
+        af = ai.getFormat();
+        ao.open(af, af.getFrameSize() * (int) af.getFrameRate());
     }
 
     private int[][] createTarget() {
@@ -99,43 +71,33 @@ public class Stepper {
         return new int[][] { new int[sz], new int[sz], new int[sz] };
     }
 
-    public void seek(RationalLarge where) {
-        try {
-            if (!videoSource.drySeek(where.getNum(), where.getDen()))
-                return;
-            videoSource.seek(where.getNum(), where.getDen());
-
-            video = new ArrayList<Frame>();
-            while (video.size() < MAX_FRAMES) {
-                Frame frame = videoSource.decode(createTarget());
-                if (frame == null)
-                    break;
-                RationalLarge framePts = frame.getPts();
-                if (framePts.getNum() * where.getDen() >= where.getNum() * framePts.getDen())
-                    video.add(frame);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        next();
-    }
-
     private void nextInt() throws IOException {
-        synchronized (seekLock) {
-            video = Lambda.sort(video, Lambda.on(Frame.class).getPts().getNum());
-            Frame frame = video.remove(0);
-            show(frame);
-            pts = frame.getPts();
-            audioSource.seek(pts.getNum(), pts.getDen());
-            frame = videoSource.decode(frame.getPic().getData());
-            if (frame != null)
-                video.add(frame);
+        // frameNo++;
+        // curInt();
+        // }
 
+        // private void curInt() throws IOException {
+        if (target == null)
+            target = createTarget();
+        // System.out.println(frameNo);
+        // videoSource.gotoFrame(frameNo);
+        Frame decode = videoSource.decode(target);
+        RationalLarge pts = decode.getPts();
+        if (audioSource.drySeek(pts)) {
+            audioSource.seek(pts);
             playSound(150);
         }
+        show(decode);
     }
 
+    // private void prevInt() throws IOException {
+    // frameNo--;
+    // curInt();
+    // }
+
     private void show(Frame frame) {
+        pts = frame.getPts();
+        fireTimeEvent(frame);
         Picture src = frame.getPic();
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
@@ -149,9 +111,22 @@ public class Stepper {
         }
     }
 
+    private void fireTimeEvent(final Frame frame) {
+        timer.schedule(new TimerTask() {
+            public void run() {
+                for (final Listener listener : listeners) {
+                    try {
+                        listener.timeChanged(frame.getPts(), frame.getFrameNo(), frame.getTapeTimecode());
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                    }
+                }
+            }
+        }, 0);
+    }
+
     private void playSound(int ms) throws IOException {
-        AudioFormat af = ai.getFormat();
-        Buffer sound = new Buffer((int) (ms * af.getFrameRate() / 1000) * af.getFrameSize()), fork = sound.fork();
+        Buffer sound = new Buffer((int) (ms * af.getFrameRate() / 1000) * af.getFrameSize());
         byte[] buf = new byte[ai.getFramesPerPacket() * af.getFrameSize()];
         while (sound.remaining() > 0) {
             AudioFrame frame = audioSource.getFrame(buf);
@@ -163,7 +138,7 @@ public class Stepper {
 
         ao.flush();
         ao.resume();
-        ao.write(fork);
+        ao.write(sound.flip());
         ao.drain();
         ao.pause();
     }
@@ -173,14 +148,35 @@ public class Stepper {
             public void run() {
                 try {
                     nextInt();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (Throwable t) {
+                    t.printStackTrace();
                 }
             }
         });
     }
 
+    public void prev() {
+        // executor.submit(new Runnable() {
+        // public void run() {
+        // try {
+        // prevInt();
+        // } catch (Throwable t) {
+        // t.printStackTrace();
+        // }
+        // }
+        // });
+    }
+
     public RationalLarge getPos() {
         return pts;
+    }
+
+    public void gotoFrame(int frame) {
+        videoSource.gotoFrame(frame);
+        // frameNo = frame;
+    }
+
+    public void setListeners(List<Player.Listener> listeners) {
+        this.listeners = listeners;
     }
 }

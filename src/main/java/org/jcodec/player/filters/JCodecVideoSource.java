@@ -2,12 +2,16 @@ package org.jcodec.player.filters;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.VideoDecoder;
@@ -36,11 +40,17 @@ public class JCodecVideoSource implements VideoSource {
     private MediaInfo.VideoInfo mi;
     private PacketSource src;
 
+    private ReentrantLock seekLock = new ReentrantLock();
+
+    private TreeSet<Packet> reordering;
+
     public JCodecVideoSource(PacketSource src) throws IOException {
         Debug.println("Creating video source");
         this.src = src;
         mi = (MediaInfo.VideoInfo) src.getMediaInfo();
         decoder = JCodecUtil.getVideoDecoder(mi.getFourcc());
+
+        reordering = createReordering();
 
         tp = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
             public Thread newThread(Runnable r) {
@@ -51,9 +61,23 @@ public class JCodecVideoSource implements VideoSource {
         });
     }
 
+    private TreeSet<Packet> createReordering() {
+        return new TreeSet<Packet>(new Comparator<Packet>() {
+            public int compare(Packet o1, Packet o2) {
+                return o1.getPts() > o2.getPts() ? 1 : (o1.getPts() == o2.getPts() ? 0 : -1);
+            }
+        });
+    }
+
     @Override
     public Frame decode(int[][] buf) throws IOException {
-        Packet nextPacket = pickNextPacket();
+        seekLock.lock();
+        Packet nextPacket;
+        try {
+            nextPacket = selectNextPacket();
+        } finally {
+            seekLock.unlock();
+        }
 
         if (nextPacket == null)
             return null;
@@ -65,6 +89,23 @@ public class JCodecVideoSource implements VideoSource {
                 (int) nextPacket.getFrameNo(), nextPacket.getTapeTimecode(), null);
 
         return frm;
+    }
+
+    public Packet selectNextPacket() throws IOException {
+        fillReordering();
+        Packet first = reordering.first();
+        if (first != null)
+            reordering.remove(first);
+        return first;
+    }
+
+    private void fillReordering() throws IOException {
+        while (reordering.size() < 5) {
+            Packet pkt = pickNextPacket();
+            if (pkt == null)
+                break;
+            reordering.add(pkt);
+        }
     }
 
     public Packet pickNextPacket() throws IOException {
@@ -123,14 +164,35 @@ public class JCodecVideoSource implements VideoSource {
     }
 
     @Override
-    public boolean drySeek(long clock, long timescale) throws IOException {
-        return src.drySeek(mi.getTimescale() * clock / timescale);
+    public boolean drySeek(RationalLarge sec) throws IOException {
+        return src.drySeek(sec);
     }
 
     @Override
-    public void seek(long clock, long timescale) throws IOException {
-        src.seek(mi.getTimescale() * clock / timescale);
-        pickNextPacket();
+    public void seek(RationalLarge sec) throws IOException {
+        seekLock.lock();
+        try {
+            clearReordering();
+            src.seek(sec);
+            fillReordering();
+            Iterator<Packet> it = reordering.iterator();
+            while (it.hasNext()) {
+                if (it.next().getPtsR().lessThen(sec))
+                    it.remove();
+                else
+                    break;
+            }
+        } finally {
+            seekLock.unlock();
+        }
+    }
+
+    private void clearReordering() {
+        TreeSet<Packet> old = reordering;
+        reordering = createReordering();
+        for (Packet packet : old) {
+            drain.add(packet.getData().buffer);
+        }
     }
 
     private byte[] allocateBuffer() {
@@ -144,5 +206,11 @@ public class JCodecVideoSource implements VideoSource {
 
     public void close() throws IOException {
         src.close();
+    }
+
+    @Override
+    public void gotoFrame(int frame) {
+        clearReordering();
+        src.gotoFrame(frame);
     }
 }

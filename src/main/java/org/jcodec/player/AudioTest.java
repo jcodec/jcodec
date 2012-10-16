@@ -13,11 +13,11 @@ import javax.sound.sampled.SourceDataLine;
 
 import org.jcodec.common.io.RandomAccessFileInputStream;
 import org.jcodec.player.filters.AudioOut;
-import org.jcodec.player.filters.AudioSource;
 import org.jcodec.player.filters.JSoundAudioOut;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
-import org.jcodec.player.filters.ToneAudioSource;
-import org.jcodec.player.filters.WavAudioSource;
+import org.jcodec.player.filters.audio.AudioSource;
+import org.jcodec.player.filters.audio.ToneAudioSource;
+import org.jcodec.player.filters.audio.WavAudioSource;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

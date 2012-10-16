@@ -1,4 +1,4 @@
-package org.jcodec.player.filters;
+package org.jcodec.player.filters.audio;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,7 +8,10 @@ import org.jcodec.common.AudioDecoder;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.tools.Debug;
+import org.jcodec.player.filters.MediaInfo;
+import org.jcodec.player.filters.PacketSource;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -54,12 +57,12 @@ public class JCodecAudioSource implements AudioSource {
         return new byte[mediaInfo.getFramesPerPacket() * mediaInfo.getFormat().getFrameSize() * 10];
     }
 
-    public boolean drySeek(long clock, long timescale) throws IOException {
-        return pkt.drySeek(clock * mediaInfo.getTimescale() / timescale);
+    public boolean drySeek(RationalLarge second) throws IOException {
+        return pkt.drySeek(second);
     }
 
-    public void seek(long clock, long timescale) throws IOException {
-        pkt.seek(clock * mediaInfo.getTimescale() / timescale);
+    public void seek(RationalLarge second) throws IOException {
+        pkt.seek(second);
     }
 
     @Override

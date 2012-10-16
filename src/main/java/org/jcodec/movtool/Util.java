@@ -64,7 +64,7 @@ public class Util {
             Edit edit = lit.next();
             if (total + edit.getDuration() > tvMv) {
                 int leftDurMV = (int) (tvMv - total);
-                int leftDurMedia = trackByMv.multiply(leftDurMV);
+                int leftDurMedia = trackByMv.multiplyS(leftDurMV);
 
                 Edit left = new Edit(leftDurMV, edit.getMediaTime(), 1.0f);
                 Edit right = new Edit(edit.getDuration() - leftDurMV, leftDurMedia + edit.getMediaTime(), 1.0f);

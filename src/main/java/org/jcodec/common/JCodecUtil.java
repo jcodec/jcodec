@@ -1,10 +1,17 @@
 package org.jcodec.common;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.pcm.PCMDecoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
 import org.jcodec.common.io.Buffer;
+import org.jcodec.containers.mp4.MP4Demuxer;
+import org.jcodec.containers.mps.MPSDemuxer;
+import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.player.filters.MediaInfo;
 
 /**
@@ -18,7 +25,34 @@ public class JCodecUtil {
 
     private static final VideoDecoder[] knownDecoders = new VideoDecoder[] { new ProresDecoder(), new MPEGDecoder() };
 
-    public static VideoDecoder findDecoder(Buffer b) {
+    public enum Format {
+        MOV, MPEG_PS, MPEG_TS
+    }
+
+    public static Format detectFormat(File f) throws IOException {
+        RandomAccessFile ff = null;
+        try {
+            ff = new RandomAccessFile(f, "r");
+            return detectFormat(Buffer.fetchFrom(ff, 200 * 1024));
+        } finally {
+            if (ff != null)
+                ff.close();
+        }
+    }
+
+    public static Format detectFormat(Buffer b) {
+        int movScore = MP4Demuxer.probe(b.fork());
+        int psScore = MPSDemuxer.probe(b.fork());
+        int tsScore = MTSDemuxer.probe(b.fork());
+
+        if (movScore == 0 && psScore == 0 && tsScore == 0)
+            return null;
+
+        return movScore > psScore ? (movScore > tsScore ? Format.MOV : Format.MPEG_TS)
+                : (psScore > tsScore ? Format.MPEG_PS : Format.MPEG_TS);
+    }
+
+    public static VideoDecoder detectDecoder(Buffer b) {
         int maxProbe = 0;
         VideoDecoder selected = null;
         for (VideoDecoder vd : knownDecoders) {

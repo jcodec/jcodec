@@ -3,6 +3,7 @@ package org.jcodec.player.filters;
 import java.io.IOException;
 
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.RationalLarge;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -41,15 +42,22 @@ public interface PacketSource {
      * @param pts
      *            Presentation timestamp represented in stream's timescale
      */
-    void seek(long pts) throws IOException;
+    void seek(RationalLarge second) throws IOException;
+
+    /**
+     * Goes to a specific frame in the video
+     * 
+     * @param frameNo
+     */
+    void gotoFrame(int frameNo);
 
     /**
      * Verifies if seek will be successful if performed
      * 
-     * @param l
+     * @param second
      * @return
      */
-    boolean drySeek(long l) throws IOException;
+    boolean drySeek(RationalLarge second) throws IOException;
 
     /**
      * Closes this stream

@@ -1,10 +1,14 @@
 package org.jcodec.containers.mps;
 
+import gnu.trove.map.hash.TIntObjectHashMap;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jcodec.common.io.Buffer;
 import org.jcodec.common.io.ReaderBE;
@@ -100,5 +104,33 @@ public class MTSDemuxer extends MPSDemuxer {
             payload = Buffer.fetchFrom(iis, 184 - taken);
         }
         return new MTSPacket(guid, payloadStart == 1, payload);
+    }
+
+    public static int probe(final Buffer b) {
+        InputStream iis = b.is();
+        TIntObjectHashMap<List<Buffer>> streams = new TIntObjectHashMap<List<Buffer>>();
+        while (true) {
+            try {
+                MTSPacket tsPkt = readPacket(iis);
+                if (tsPkt == null)
+                    break;
+                List<Buffer> data = streams.get(tsPkt.pid);
+                if (data == null) {
+                    data = new ArrayList<Buffer>();
+                    streams.put(tsPkt.pid, data);
+                }
+                data.add(tsPkt.payload);
+            } catch (Throwable t) {
+                break;
+            }
+        }
+        int maxScore = 0;
+        int[] keys = streams.keys();
+        for (int i : keys) {
+            int score = MPSDemuxer.probe(Buffer.combine(streams.get(i)));
+            if (score > maxScore)
+                maxScore = score;
+        }
+        return maxScore;
     }
 }

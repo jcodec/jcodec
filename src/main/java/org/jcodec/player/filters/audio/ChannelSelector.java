@@ -1,4 +1,4 @@
-package org.jcodec.player.filters;
+package org.jcodec.player.filters.audio;
 
 import java.io.IOException;
 
@@ -7,6 +7,8 @@ import javax.sound.sampled.AudioFormat;
 import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.ChannelLabel;
+import org.jcodec.common.model.RationalLarge;
+import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
 
 /**
@@ -80,12 +82,12 @@ public class ChannelSelector implements AudioSource {
                 from.getDuration(), from.getTimescale(), from.getFrameNo());
     }
     
-    public boolean drySeek(long clock, long timescale) throws IOException {
-        return src.drySeek(clock, timescale);
+    public boolean drySeek(RationalLarge second) throws IOException {
+        return src.drySeek(second);
     }
 
-    public void seek(long clock, long timescale) throws IOException {
-        src.seek(clock, timescale);
+    public void seek(RationalLarge second) throws IOException {
+        src.seek(second);
     }
 
     @Override

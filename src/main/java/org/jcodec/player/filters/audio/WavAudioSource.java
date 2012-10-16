@@ -1,4 +1,4 @@
-package org.jcodec.player.filters;
+package org.jcodec.player.filters.audio;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +13,7 @@ import org.jcodec.common.io.RandomAccessFileInputStream;
 import org.jcodec.common.io.RandomAccessInputStream;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.RationalLarge;
+import org.jcodec.player.filters.MediaInfo;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -55,19 +56,19 @@ public class WavAudioSource implements AudioSource {
         }
         long pts = (src.getPos() - headerSize) / header.fmt.blockAlign;
         return new AudioFrame(new Buffer(data, 0, toRead), format, FRAMES_PER_PACKET, pts, FRAMES_PER_PACKET,
-                header.fmt.sampleRate, (int)(pts / FRAMES_PER_PACKET));
+                header.fmt.sampleRate, (int) (pts / FRAMES_PER_PACKET));
     }
 
-    public boolean drySeek(long clock, long timescale) throws IOException {
+    public boolean drySeek(RationalLarge second) throws IOException {
         int frameSize = header.fmt.numChannels * (header.fmt.bitsPerSample >> 3);
-        long off = ((long) header.fmt.sampleRate * frameSize * clock) / timescale;
+        long off = second.multiplyS((long) header.fmt.sampleRate) * frameSize;
         long where = header.dataOffset + off - (off % frameSize);
         return where < src.length();
     }
 
-    public void seek(long clock, long timescale) throws IOException {
+    public void seek(RationalLarge second) throws IOException {
         int frameSize = header.fmt.numChannels * (header.fmt.bitsPerSample >> 3);
-        long off = ((long) header.fmt.sampleRate * frameSize * clock) / timescale;
+        long off = second.multiplyS((long) header.fmt.sampleRate) * frameSize;
         long where = header.dataOffset + off - (off % frameSize);
         src.seek(where);
     }

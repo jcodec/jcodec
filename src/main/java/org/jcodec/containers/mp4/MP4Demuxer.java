@@ -6,6 +6,7 @@ import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 
 import gnu.trove.list.array.TIntArrayList;
 
+import java.io.DataInput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -126,7 +127,7 @@ public class MP4Demuxer {
         public abstract MP4Packet getFrames(int n) throws IOException;
 
         protected abstract void seekPointer(long frameNo);
-        
+
         public boolean canSeek(long pts) {
             return pts >= 0 && pts < duration;
         }
@@ -426,6 +427,16 @@ public class MP4Demuxer {
                 samples = ss.toArray();
             }
         }
+
+        /**
+         * 
+         * @return
+         * @deprecated Use getTimecode to automatically populate tape timecode
+         *             for each frame
+         */
+        public int getStartTimecode() {
+            return samples[0];
+        }
     }
 
     /**
@@ -624,5 +635,29 @@ public class MP4Demuxer {
 
     public TimecodeTrack getTimecodeTrack() {
         return timecodeTrack;
+    }
+
+    private static int ftyp = ('f' << 24) | ('t' << 16) | ('y' << 8) | 'p';
+    private static int free = ('f' << 24) | ('r' << 16) | ('e' << 8) | 'e';
+    private static int moov = ('m' << 24) | ('o' << 16) | ('o' << 8) | 'v';
+    private static int mdat = ('m' << 24) | ('d' << 16) | ('a' << 8) | 't';
+
+    public static int probe(final Buffer b) {
+
+        int score = 0;
+        try {
+            DataInput dinp = b.dinp();
+            int len = dinp.readInt();
+            if (dinp.readInt() == ftyp && len < 64)
+                score += 50;
+            dinp.skipBytes(len - 8);
+            len = dinp.readInt();
+            int fcc = dinp.readInt();
+            if (fcc == moov && len < 100 * 1024 * 1024 || fcc == free || fcc == mdat)
+                score += 50;
+        } catch (IOException e) {
+        }
+
+        return score;
     }
 }

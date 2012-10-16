@@ -1,8 +1,10 @@
-package org.jcodec.player.filters;
+package org.jcodec.player.filters.audio;
 
 import java.io.IOException;
 
 import org.jcodec.common.model.AudioFrame;
+import org.jcodec.common.model.RationalLarge;
+import org.jcodec.player.filters.MediaInfo;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -17,9 +19,9 @@ public interface AudioSource {
 
     AudioFrame getFrame(byte[] buf) throws IOException;
 
-    boolean drySeek(long clock, long timescale) throws IOException;
+    boolean drySeek(RationalLarge second) throws IOException;
     
-    void seek(long clock, long timescale) throws IOException;
+    void seek(RationalLarge second) throws IOException;
 
     void close() throws IOException;
 }

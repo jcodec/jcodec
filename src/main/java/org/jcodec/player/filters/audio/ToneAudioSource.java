@@ -1,4 +1,4 @@
-package org.jcodec.player.filters;
+package org.jcodec.player.filters.audio;
 
 import java.io.IOException;
 
@@ -7,7 +7,10 @@ import javax.sound.sampled.AudioFormat;
 import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.ChannelLabel;
+import org.jcodec.common.model.RationalLarge;
 import org.jcodec.containers.mp4.boxes.channel.Label;
+import org.jcodec.player.filters.MediaInfo;
+import org.jcodec.player.filters.MediaInfo.AudioInfo;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -61,13 +64,13 @@ public class ToneAudioSource implements AudioSource {
 
     
     @Override
-    public boolean drySeek(long clock, long timescale) throws IOException {
+    public boolean drySeek(RationalLarge second) throws IOException {
         return true;
     }
 
     @Override
-    public void seek(long clock, long timescale) {
-        lastSample = (clock * SAMPLE_RATE) / timescale;
+    public void seek(RationalLarge second) {
+        lastSample = second.multiplyS(SAMPLE_RATE);
     }
 
     @Override

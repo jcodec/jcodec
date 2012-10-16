@@ -56,7 +56,7 @@ public class Debug {
         // System.out.printf("> " + format + "\n", args);
     }
 
-    public final static boolean debug = false;
+    public final static boolean debug = true;
 
     public static void print(int i) {
         if (debug)

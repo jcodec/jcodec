@@ -145,7 +145,7 @@ public class MPSDemuxer {
     public static final boolean videoStream(int streamId) {
         return streamId >= VIDEO_MIN && streamId <= VIDEO_MAX;
     }
-    
+
     public static boolean audioStream(Integer streamId) {
         return streamId >= AUDIO_MIN && streamId <= AUDIO_MAX || streamId == PRIVATE_1 || streamId == PRIVATE_2;
     }
@@ -392,5 +392,43 @@ public class MPSDemuxer {
 
         PESPacket pkt = readPES(streamId, buf.is());
         return pkt;
+    }
+
+    public static int probe(final Buffer b) {
+        int marker = 0xffffffff;
+
+        int score = 0;
+        boolean inVideoPes = false, hasHeader = false, slicesStarted = false;
+        for (int i = b.pos; i < b.limit; i++) {
+            int code = b.buffer[i] & 0xff;
+            marker = (marker << 8) | code;
+            if (marker < 0x100 || marker > 0x1ff)
+                continue;
+
+            if (code >= VIDEO_MIN && code <= VIDEO_MAX) {
+                if (inVideoPes)
+                    break;
+                else
+                    inVideoPes = true;
+            } else if (code >= 0xB0 && code <= 0xB8 && inVideoPes) {
+                if ((hasHeader && code != 0xB5 && code != 0xB2) || slicesStarted)
+                    break;
+                score += 5;
+            } else if (code == 0 && inVideoPes) {
+                if (slicesStarted)
+                    break;
+                hasHeader = true;
+            } else if (code > 0 && code < 0xB0) {
+                if (!hasHeader)
+                    break;
+                if (!slicesStarted) {
+                    score += 50;
+                    slicesStarted = true;
+                }
+                score += 1;
+            }
+        }
+
+        return score;
     }
 }

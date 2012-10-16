@@ -59,12 +59,16 @@ public class Rational {
         return true;
     }
 
-    public int multiply(int val) {
+    public int multiplyS(int val) {
         return (num * val) / den;
     }
     
-    public int divide(int val) {
+    public int divideS(int val) {
         return (den * val) / num;
+    }
+    
+    public int divideByS(int val) {
+        return num / (den * val);
     }
     
     public long multiply(long val) {
@@ -77,5 +81,69 @@ public class Rational {
     
     public Rational flip() {
         return new Rational(den, num);
+    }
+    
+    public static RationalLarge R(long num, long den) {
+        return new RationalLarge(num, den);
+    }
+
+    public boolean smallerThen(Rational sec) {
+        return num * sec.den < sec.num * den;
+    }
+
+    public boolean greaterThen(Rational sec) {
+        return num * sec.den > sec.num * den;
+    }
+
+    public boolean smallerOrEqualTo(Rational sec) {
+        return num * sec.den <= sec.num * den;
+    }
+
+    public boolean greaterOrEqualTo(Rational sec) {
+        return num * sec.den >= sec.num * den;
+    }
+
+    public boolean equals(Rational other) {
+        return num * other.den == other.num * den;
+    }
+    
+    public Rational plus(Rational other) {
+        return new Rational(num * other.den + other.num * den, den * other.den);
+    }
+
+    public Rational minus(Rational other) {
+        return new Rational(num * other.den - other.num * den, den * other.den);
+    }
+
+    public Rational plus(int scalar) {
+        return new Rational(num + scalar * den, den);
+    }
+
+    public Rational minus(int scalar) {
+        return new Rational(num - scalar * den, den);
+    }
+
+    public Rational multiply(int scalar) {
+        return new Rational(num * scalar, den);
+    }
+
+    public Rational divide(int scalar) {
+        return new Rational(den * scalar, num);
+    }
+
+    public Rational divideBy(int scalar) {
+        return new Rational(num, den * scalar);
+    }
+
+    public Rational multiply(Rational other) {
+        return new Rational(num * other.num, den * other.den);
+    }
+
+    public Rational divide(Rational other) {
+        return new Rational(other.num * den, other.den * num);
+    }
+
+    public Rational divideBy(Rational other) {
+        return new Rational(num * other.den, den * other.num);
     }
 }

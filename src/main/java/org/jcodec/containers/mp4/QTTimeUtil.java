@@ -94,6 +94,8 @@ public class QTTimeUtil {
      * @return
      */
     public static long mediaToEdited(TrakBox trak, long mediaTv, int movieTimescale) {
+        if (trak.getEdits() == null)
+            return mediaTv;
         long accum = 0;
         for (Edit edit : trak.getEdits()) {
             long duration = trak.rescale(edit.getDuration(), movieTimescale);
@@ -117,6 +119,8 @@ public class QTTimeUtil {
      * @return
      */
     public static long editedToMedia(TrakBox trak, long editedTv, int movieTimescale) {
+        if (trak.getEdits() == null)
+            return editedTv;
         long accum = 0;
         for (Edit edit : trak.getEdits()) {
             long duration = trak.rescale(edit.getDuration(), movieTimescale);

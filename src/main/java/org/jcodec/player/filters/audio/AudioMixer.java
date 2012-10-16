@@ -11,7 +11,7 @@ import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.ChannelLabel;
-import org.jcodec.player.filters.AudioSource;
+import org.jcodec.common.model.RationalLarge;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
 
 /**
@@ -174,6 +174,8 @@ public class AudioMixer implements AudioSource {
     }
 
     public AudioMixer(int channels, AudioSource... src) throws IOException {
+        if(src.length < 1)
+            throw new IllegalArgumentException("Must be at least one audio source");
         pins = new Pin[src.length];
         this.dstChannels = channels;
         for (int i = 0; i < src.length; i++) {
@@ -313,18 +315,18 @@ public class AudioMixer implements AudioSource {
     }
 
     @Override
-    public boolean drySeek(long clock, long timescale) throws IOException {
+    public boolean drySeek(RationalLarge second) throws IOException {
         boolean success = true;
         for (Pin pin : pins) {
-            success &= pin.getSource().drySeek(clock, timescale);
+            success &= pin.getSource().drySeek(second);
         }
         return success;
     }
 
     @Override
-    public synchronized void seek(long clock, long timescale) throws IOException {
+    public synchronized void seek(RationalLarge second) throws IOException {
         for (Pin pin : pins)
-            pin.getSource().seek(clock, timescale);
+            pin.getSource().seek(second);
         nextFrame = null;
         curFrame = 0;
     }
