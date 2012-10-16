@@ -326,6 +326,10 @@ public class PlayerApplet extends JApplet {
     }
 
     public void stepForward() {
+        if (player.getStatus() != Player.Status.PAUSED) {
+            player.pause();
+            return;
+        }
         try {
             if (stepper == null) {
                 stepper = new Stepper(video, audio, vo, new JSoundAudioOut());
@@ -339,6 +343,10 @@ public class PlayerApplet extends JApplet {
     }
 
     public void stepBackward() {
+//        if (player.getStatus() != Player.Status.PAUSED) {
+//            player.pause();
+//            return;
+//        }
 //        try {
 //            if (stepper == null) {
 //                stepper = new Stepper(video, audio, vo, new JSoundAudioOut());
