@@ -12,6 +12,7 @@ import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.RationalLarge;
+import org.jcodec.common.tools.Debug;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
 
 /**
@@ -61,14 +62,21 @@ public class AudioMixer implements AudioSource {
         public final static float r24 = 1f / 8388608f;
         private int channels;
         private AudioInfo audioInfo;
+        private ChannelLabel[] labels;
 
         private Pin(AudioSource src) throws IOException {
             this.src = src;
             this.audioInfo = src.getAudioInfo();
             this.channels = audioInfo.getFormat().getChannels();
-            this.pattern = (1 << channels) - 1;
             this.byteBuf = new byte[audioInfo.getFormat().getFrameSize() * audioInfo.getFramesPerPacket() * 2];
             this.floatBuf = new float[NUM_FRAMES * channels];
+            this.labels = audioInfo.getLabels();
+
+            this.pattern = 0;
+            for (int i = 0; i < labels.length; i++) {
+                if (labels[i] != null)
+                    pattern |= 1 << i;
+            }
         }
 
         public void mute(int channel) {
@@ -80,12 +88,23 @@ public class AudioMixer implements AudioSource {
         public void unmute(int channel) {
             if (channel >= audioInfo.getFormat().getChannels())
                 throw new IllegalArgumentException("Invalid channel " + channel);
+            if (labels[channel] == null) {
+                Debug.println("Can't unmute channel: no label");
+                return;
+            }
+
             pattern |= 1 << channel;
         }
 
         public void toggle(int channel) {
             if (channel >= audioInfo.getFormat().getChannels())
                 throw new IllegalArgumentException("Invalid channel " + channel);
+
+            if (labels[channel] == null) {
+                Debug.println("Can't unmute channel: no label");
+                return;
+            }
+
             pattern ^= 1 << channel;
         }
 
@@ -174,7 +193,7 @@ public class AudioMixer implements AudioSource {
     }
 
     public AudioMixer(int channels, AudioSource... src) throws IOException {
-        if(src.length < 1)
+        if (src.length < 1)
             throw new IllegalArgumentException("Must be at least one audio source");
         pins = new Pin[src.length];
         this.dstChannels = channels;
@@ -203,7 +222,7 @@ public class AudioMixer implements AudioSource {
                 maxFrames = ai.getNFrames();
         }
 
-        return new AudioInfo("sowt", sampleRate, maxDuration, maxFrames, "", dstFormat, NUM_FRAMES,
+        return new AudioInfo("sowt", sampleRate, maxDuration, maxFrames, "", null, dstFormat, NUM_FRAMES,
                 dstChannels == 2 ? new ChannelLabel[] { ChannelLabel.STEREO_LEFT, ChannelLabel.STEREO_RIGHT }
                         : new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.CENTER,
                                 ChannelLabel.LFE, ChannelLabel.REAR_LEFT, ChannelLabel.REAR_RIGHT });

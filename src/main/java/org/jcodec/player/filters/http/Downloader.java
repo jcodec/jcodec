@@ -1,6 +1,8 @@
 package org.jcodec.player.filters.http;
 
+import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
 import static org.apache.commons.lang.StringUtils.trim;
+import static org.jcodec.player.filters.http.HttpUtils.privilegedExecute;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,7 +61,7 @@ public class Downloader {
 
     private Packet extractFrame(byte[] bfr, HttpGet get) throws IOException, ClientProtocolException {
         get.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
-        HttpResponse response = client.execute(get);
+        HttpResponse response = privilegedExecute(client, get);
         HttpEntity entity = response.getEntity();
         if (response.getStatusLine().getStatusCode() != 200) {
             if (entity != null)
@@ -77,16 +79,7 @@ public class Downloader {
         Header contentType = response.getLastHeader("Content-Type");
 
         if (contentType != null && contentType.getValue().startsWith("multipart/mixed")) {
-            byte[] sep1 = ("\r\n--" + contentType.getValue().split(";")[1].split("=")[1]).getBytes();
-
-            List<Packet> result = new ArrayList<Packet>();
-            int to;
-            do {
-                buffer.read(buffer.search(13, 10) + 2);
-                to = buffer.search(sep1);
-                if (to != -1)
-                    result.add(part(buffer.read(to)));
-            } while (to != -1);
+            List<Packet> result = parseMultipart(buffer, contentType.getValue());
 
             return result.get(0);
         } else {
@@ -94,28 +87,52 @@ public class Downloader {
         }
     }
 
+    private static List<Packet> parseMultipart(Buffer buffer, String contentType) {
+        byte[] sep1 = ("\r\n--" + contentType.split(";")[1].split("=")[1]).getBytes();
+
+        List<Packet> result = new ArrayList<Packet>();
+        int to;
+        do {
+            buffer.read(buffer.search(13, 10) + 2);
+            to = buffer.search(sep1);
+            if (to != -1) {
+                result.add(part(buffer.read(to)));
+                buffer.read(2);
+            }
+        } while (to != -1);
+        return result;
+    }
+
     public synchronized MediaInfo downloadMediaInfo() throws IOException {
         HttpGet get = new HttpGet(url);
         get.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
-        HttpResponse response = client.execute(get);
+        HttpResponse response = privilegedExecute(client, get);
         if (response.getStatusLine().getStatusCode() != 200) {
             if (response.getEntity() != null)
                 EntityUtils.toByteArray(response.getEntity());
             return null;
         }
-        return parseHeader(StringUtils.splitPreserveAllTokens(EntityUtils.toString(response.getEntity()), ':'));
+        return parseHeaders(splitPreserveAllTokens(EntityUtils.toString(response.getEntity()), ';'));
     }
 
-    private static MediaInfo parseHeader(String[] params) throws IOException {
+    private MediaInfo parseHeaders(String[] headers) throws IOException {
+        MediaInfo transcodedFrom = null;
+        for (int i = headers.length - 1; i >= 0; i--) {
+            transcodedFrom = parseHeader(splitPreserveAllTokens(headers[i], ":"), transcodedFrom);
+        }
+        return transcodedFrom;
+    }
+
+    private static MediaInfo parseHeader(String[] params, MediaInfo transcodedFrom) throws IOException {
         for (int i = 0; i < params.length; i++)
             params[i] = trim(params[i]);
 
         if (params[0].equals("video")) {
             return new MediaInfo.VideoInfo(params[4], Integer.parseInt(params[2]), Long.parseLong(params[1]),
-                    Long.parseLong(params[3]), params[5], parOr1x1(params[7]), dimOrNull(params[6]));
+                    Long.parseLong(params[3]), params[5], transcodedFrom, parOr1x1(params[7]), dimOrNull(params[6]));
         } else {
             return new MediaInfo.AudioInfo(params[4], Integer.parseInt(params[2]), Long.parseLong(params[1]),
-                    Long.parseLong(params[3]), params[5], new AudioFormat(Integer.parseInt(params[6]),
+                    Long.parseLong(params[3]), params[5], transcodedFrom, new AudioFormat(Integer.parseInt(params[6]),
                             Integer.parseInt(params[7]) << 3, Integer.parseInt(params[8]), true,
                             Boolean.parseBoolean(params[9])), Integer.parseInt(params[10]), parseLabels(params[11]));
         }
@@ -125,7 +142,11 @@ public class Downloader {
         String[] split = StringUtils.split(string, ",");
         ChannelLabel[] labels = new ChannelLabel[split.length];
         for (int i = 0; i < split.length; i++) {
-            labels[i] = ChannelLabel.valueOf(split[i]);
+            if ("N/A".equalsIgnoreCase(split[i])) {
+                labels[i] = null;
+            } else {
+                labels[i] = ChannelLabel.valueOf(split[i]);
+            }
         }
         return labels;
     }
@@ -145,9 +166,16 @@ public class Downloader {
         if (StringUtils.isEmpty(timecodeRaw))
             return null;
         String[] split = StringUtils.split(timecodeRaw, ":");
-
-        return new TapeTimecode(Short.parseShort(split[0]), Byte.parseByte(split[1]), Byte.parseByte(split[2]),
-                Byte.parseByte(split[3]), false);
+        if (split.length == 4) {
+            return new TapeTimecode(Short.parseShort(split[0]), Byte.parseByte(split[1]), Byte.parseByte(split[2]),
+                    Byte.parseByte(split[3]), false);
+        } else if (split.length == 3) {
+            String[] split1 = StringUtils.split(split[2], ";");
+            if (split1.length == 2)
+                return new TapeTimecode(Short.parseShort(split[0]), Byte.parseByte(split[1]),
+                        Byte.parseByte(split1[0]), Byte.parseByte(split1[1]), true);
+        }
+        return null;
     }
 
     private static long longOr0(String val) {
@@ -162,7 +190,7 @@ public class Downloader {
         return val == null ? false : Boolean.parseBoolean(val);
     }
 
-    private Map<String, String> parseHeaders(Buffer read) {
+    private static Map<String, String> parseHeaders(Buffer read) {
         HashMap<String, String> result = new HashMap<String, String>();
         for (String line : getLines(read)) {
             String[] split = line.split(": ");
@@ -191,7 +219,7 @@ public class Downloader {
         return map;
     }
 
-    private Packet part(Buffer read) {
+    private static Packet part(Buffer read) {
         int data = read.search(13, 10, 13, 10);
         Map<String, String> headers = parseHeaders(read.read(data));
         read.read(4);
@@ -199,7 +227,7 @@ public class Downloader {
         return pkt(headers, read);
     }
 
-    private Packet pkt(Map<String, String> headers, Buffer data) {
+    private static Packet pkt(Map<String, String> headers, Buffer data) {
         long pts = longOr0(headers.get("JCodec-PTS"));
         long duration = longOr0(headers.get("JCodec-Duration"));
         int frameNo = intOr0(headers.get("JCodec-FrameNo"));
@@ -209,7 +237,7 @@ public class Downloader {
         return new Packet(data, pts, 0, duration, frameNo, key, timecode);
     }
 
-    private List<String> getLines(Buffer buffer) {
+    private static List<String> getLines(Buffer buffer) {
         ArrayList<String> lines = new ArrayList<String>();
         int next = buffer.search(13, 10);
         while (next != -1) {
@@ -225,6 +253,6 @@ public class Downloader {
     }
 
     public void close() {
-//        client.getConnectionManager().shutdown();
+        // client.getConnectionManager().shutdown();
     }
 }

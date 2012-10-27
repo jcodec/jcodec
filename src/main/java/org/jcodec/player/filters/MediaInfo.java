@@ -26,14 +26,17 @@ public class MediaInfo implements Serializable {
     private long nFrames;
     private String name;
 
+    private MediaInfo transcodedFrom;
+
     public static class VideoInfo extends MediaInfo {
         private static final long serialVersionUID = 423837425262959380L;
 
         private Rational par;
         private Size dim;
 
-        public VideoInfo(String fourcc, int timescale, long duration, long nFrames, String name, Rational par, Size dim) {
-            super(fourcc, timescale, duration, nFrames, name);
+        public VideoInfo(String fourcc, int timescale, long duration, long nFrames, String name,
+                MediaInfo transcodedFrom, Rational par, Size dim) {
+            super(fourcc, timescale, duration, nFrames, name, transcodedFrom);
             this.par = par;
             this.dim = dim;
         }
@@ -75,9 +78,9 @@ public class MediaInfo implements Serializable {
         private int framesPerPacket;
         private ChannelLabel[] labels;
 
-        public AudioInfo(String fourcc, int timescale, long duration, long nFrames, String name, AudioFormat af,
-                int framesPerPacket, ChannelLabel[] labels) {
-            super(fourcc, timescale, duration, nFrames, name);
+        public AudioInfo(String fourcc, int timescale, long duration, long nFrames, String name,
+                MediaInfo transcodedFrom, AudioFormat af, int framesPerPacket, ChannelLabel[] labels) {
+            super(fourcc, timescale, duration, nFrames, name, transcodedFrom);
             this.af = af;
             this.framesPerPacket = framesPerPacket;
             this.labels = labels;
@@ -117,12 +120,13 @@ public class MediaInfo implements Serializable {
         }
     }
 
-    public MediaInfo(String fourcc, int timescale, long duration, long nFrames, String name) {
+    public MediaInfo(String fourcc, int timescale, long duration, long nFrames, String name, MediaInfo transcodedFrom) {
         this.fourcc = fourcc;
         this.timescale = timescale;
         this.duration = duration;
         this.nFrames = nFrames;
         this.name = name;
+        this.transcodedFrom = transcodedFrom;
     }
 
     public String getFourcc() {
@@ -147,6 +151,10 @@ public class MediaInfo implements Serializable {
 
     public String getName() {
         return name;
+    }
+
+    public MediaInfo getTranscodedFrom() {
+        return transcodedFrom;
     }
 
     public boolean equals(Object obj) {

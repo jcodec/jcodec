@@ -3,8 +3,15 @@ package org.jcodec.samples.streaming;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Random access interface to media resource. Abstracts out the specific
+ * container details.
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class AdapterFactory {
-    private MTSAdapterFactory mtsAdapterFactory;
+    private MTSAdapterFactory mtsAdapterFactory = new MTSAdapterFactory();
 
     public Adapter createAdaptor(File mvFile) throws IOException {
         if (mvFile.getName().endsWith("m2t")) {

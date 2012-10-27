@@ -3,7 +3,6 @@ package org.jcodec.containers.mp4;
 import static org.jcodec.containers.mp4.QTTimeUtil.editedToMedia;
 import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.DataInput;
@@ -100,6 +99,19 @@ public class MP4Demuxer {
             box = trak;
 
             timescale = trak.getTimescale();
+        }
+
+        public int pts2Sample(long _tv, int _timescale) {
+            long tv = _tv * timescale / _timescale;
+            int ttsInd, sample = 0;
+            for (ttsInd = 0; ttsInd < timeToSamples.length - 1; ttsInd++) {
+                int a = timeToSamples[ttsInd].getSampleCount() * timeToSamples[ttsInd].getSampleDuration();
+                if (tv < a)
+                    break;
+                tv -= a;
+                sample += timeToSamples[ttsInd].getSampleCount();
+            }
+            return sample + (int) (tv / timeToSamples[ttsInd].getSampleDuration());
         }
 
         public TrackType getType() {
@@ -370,8 +382,11 @@ public class MP4Demuxer {
         private TrakBox box;
         private TimeToSampleEntry[] timeToSamples;
         private int[] samples;
+        private long[] samplesTv;
+        private int[] samplesDur;
+        private int[] samplesStartFrame;
 
-        public TimecodeTrack(TrakBox trak) throws IOException {
+        public TimecodeTrack(TrakBox trak, DemuxerTrack video) throws IOException {
             this.box = trak;
 
             NodeBox stbl = trak.getMdia().getMinf().getStbl();
@@ -383,31 +398,56 @@ public class MP4Demuxer {
 
             timeToSamples = stts.getEntries();
             readSamples(stsc.getSampleToChunk(), stco != null ? stco.getChunkOffsets() : co64.getChunkOffsets());
+
+            cacheEntryPoints(video);
+        }
+
+        private void cacheEntryPoints(DemuxerTrack video) {
+            samplesTv = new long[samples.length];
+            samplesDur = new int[samples.length];
+            samplesStartFrame = new int[samples.length];
+            int ttsInd = 0, ttsSubInd = 0;
+
+            long tv = 0;
+            for (int i = 0; i < samples.length; i++) {
+                samplesTv[i] = tv;
+                samplesStartFrame[i] = video.pts2Sample(tv, box.getTimescale());
+                int dur = timeToSamples[ttsInd].getSampleDuration();
+                samplesDur[i] = dur;
+                tv += dur;
+                ttsSubInd++;
+                if (ttsInd < timeToSamples.length - 1 && ttsSubInd >= timeToSamples[ttsInd].getSampleCount())
+                    ttsInd++;
+            }
         }
 
         public MP4Packet getTimecode(MP4Packet pkt) throws IOException {
 
-            long tv = editedToMedia(box, box.rescale(pkt.getPts(), pkt.getTimescale()), movie.getTimescale());
-
-            int ttsInd, sample = 0;
-            for (ttsInd = 0; ttsInd < timeToSamples.length - 1; ttsInd++) {
-                int a = timeToSamples[ttsInd].getSampleCount() * timeToSamples[ttsInd].getSampleDuration();
-                if (tv < a)
+            long tv = pkt.getMediaPts();
+            int sample;
+            for (sample = 0; sample < samples.length; sample++) {
+                if (samplesTv[sample] <= tv && samplesTv[sample] + samplesDur[sample] > tv)
                     break;
-                tv -= a;
-                sample += timeToSamples[ttsInd].getSampleCount();
             }
-            sample += tv / timeToSamples[ttsInd].getSampleDuration();
-            return new MP4Packet(pkt, getTimecode(samples[sample], pkt.getPts(), pkt.getTimescale(),
-                    (TimecodeSampleEntry) box.getSampleEntries()[0]));
 
+            return new MP4Packet(pkt, getTimecode(samples[sample], (int) pkt.getFrameNo() - samplesStartFrame[sample],
+                    (TimecodeSampleEntry) box.getSampleEntries()[0]));
         }
 
-        private TapeTimecode getTimecode(int startCounter, long videoPts, long videoTimescale, TimecodeSampleEntry entry) {
-            int frame = (int) (videoPts * entry.getNumFrames() / videoTimescale) + startCounter;
+        private TapeTimecode getTimecode(int startCounter, int frameNo, TimecodeSampleEntry entry) {
+            int frame = dropFrameAdjust(frameNo + startCounter, entry);
             int sec = frame / entry.getNumFrames();
             return new TapeTimecode((short) (sec / 3600), (byte) ((sec / 60) % 60), (byte) (sec % 60),
-                    (byte) (frame % entry.getNumFrames()), false);
+                    (byte) (frame % entry.getNumFrames()), entry.isDropFrame());
+        }
+
+        private int dropFrameAdjust(int frame, TimecodeSampleEntry entry) {
+            if (entry.isDropFrame()) {
+                long D = frame / 17982;
+                long M = frame % 17982;
+                frame += 18 * D + 2 * ((M - 2) / 1798);
+            }
+            return frame;
         }
 
         private void readSamples(SampleToChunkEntry[] sampleToChunks, long[] chunkOffsets) throws IOException {
@@ -589,13 +629,19 @@ public class MP4Demuxer {
     }
 
     private void processHeader(NodeBox moov) throws IOException {
+        TrakBox tt = null;
         for (TrakBox trak : Box.findAll(moov, TrakBox.class, "trak")) {
             SampleEntry se = Box.findFirst(trak, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
             if ("tmcd".equals(se.getFourcc())) {
-                timecodeTrack = new TimecodeTrack(trak);
+                tt = trak;
             } else {
                 tracks.add(create(trak));
             }
+        }
+        if (tt != null) {
+            DemuxerTrack video = getVideoTrack();
+            if (video != null)
+                timecodeTrack = new TimecodeTrack(tt, video);
         }
     }
 
@@ -643,21 +689,31 @@ public class MP4Demuxer {
     private static int mdat = ('m' << 24) | ('d' << 16) | ('a' << 8) | 't';
 
     public static int probe(final Buffer b) {
-
-        int score = 0;
+        Buffer fork = b.fork();
+        DataInput dinp = fork.dinp();
+        int success = 0;
+        int total = 0;
         try {
-            DataInput dinp = b.dinp();
-            int len = dinp.readInt();
-            if (dinp.readInt() == ftyp && len < 64)
-                score += 50;
-            dinp.skipBytes(len - 8);
-            len = dinp.readInt();
-            int fcc = dinp.readInt();
-            if (fcc == moov && len < 100 * 1024 * 1024 || fcc == free || fcc == mdat)
-                score += 50;
+            while (fork.remaining() >= 8) {
+                long len = dinp.readInt();
+                int fcc = dinp.readInt();
+                int hdrLen = 8;
+                if (len == 1) {
+                    len = dinp.readLong();
+                    hdrLen = 16;
+                } else if (len < 8)
+                    break;
+                if (fcc == ftyp && len < 64 || fcc == moov && len < 100 * 1024 * 1024 || fcc == free || fcc == mdat)
+                    success++;
+                total++;
+                if (len >= Integer.MAX_VALUE)
+                    break;
+                fork.read((int) len - hdrLen);
+            }
         } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        return score;
+        return success * 100 / total;
     }
 }

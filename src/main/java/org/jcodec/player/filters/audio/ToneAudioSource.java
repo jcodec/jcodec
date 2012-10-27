@@ -36,7 +36,7 @@ public class ToneAudioSource implements AudioSource {
     @Override
     public MediaInfo.AudioInfo getAudioInfo() {
         format = new AudioFormat(SAMPLE_RATE, 16, 2, true, false);
-        return new MediaInfo.AudioInfo("pcm", SAMPLE_RATE, Long.MAX_VALUE, Long.MAX_VALUE, "Main Stereo", format,
+        return new MediaInfo.AudioInfo("pcm", SAMPLE_RATE, Long.MAX_VALUE, Long.MAX_VALUE, "Main Stereo", null, format,
                 FRAMES_PER_PACKET, new ChannelLabel[] { ChannelLabel.STEREO_LEFT, ChannelLabel.STEREO_LEFT });
     }
 

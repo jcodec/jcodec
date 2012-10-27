@@ -7,7 +7,6 @@ import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.common.io.AutoRandomAccessFileInputStream;
 import org.jcodec.common.io.RandomAccessFileInputStream;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
@@ -86,7 +85,7 @@ public class QTAdapter implements Adapter {
                 r = pasp.getRational();
             }
             return new MediaInfo.VideoInfo(vse.getFourcc(), box.getTimescale(), box.getMediaDuration(),
-                    box.getFrameCount(), box.getName(), r, new Size(vse.getWidth(), vse.getHeight()));
+                    box.getFrameCount(), box.getName(), null, r, new Size(vse.getWidth(), vse.getHeight()));
 
         }
 
@@ -143,8 +142,8 @@ public class QTAdapter implements Adapter {
             AudioSampleEntry se = (AudioSampleEntry) box.getSampleEntries()[0];
             boolean pcm = isPCM(box);
             return new MediaInfo.AudioInfo(se.getFourcc(), box.getTimescale(), box.getMediaDuration(),
-                    (box.getFrameCount() >> (pcm ? 11 : 0)), box.getName(), se.getFormat(), pcm ? FRAMES_PER_PCM_PACKET
-                            : 1, se.getLabels());
+                    (box.getFrameCount() >> (pcm ? 11 : 0)), box.getName(), null, se.getFormat(),
+                    pcm ? FRAMES_PER_PCM_PACKET : 1, se.getLabels());
         }
 
         private boolean isPCM(DemuxerTrack track) {

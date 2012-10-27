@@ -36,7 +36,7 @@ public class Resampler24To16 implements AudioSource {
     public MediaInfo.AudioInfo getAudioInfo() throws IOException {
         AudioInfo audioInfo = src.getAudioInfo();
         return new AudioInfo(audioInfo.getFourcc(), audioInfo.getTimescale(), audioInfo.getDuration(),
-                audioInfo.getNFrames(), audioInfo.getName(), newFormat, audioInfo.getFramesPerPacket(),
+                audioInfo.getNFrames(), audioInfo.getName(), null, newFormat, audioInfo.getFramesPerPacket(),
                 audioInfo.getLabels());
     }
 

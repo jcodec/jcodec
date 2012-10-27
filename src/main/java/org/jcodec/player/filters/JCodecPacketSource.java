@@ -89,12 +89,12 @@ public class JCodecPacketSource {
             if (track.getBox().isVideo()) {
                 VideoSampleEntry se = (VideoSampleEntry) track.getSampleEntries()[0];
                 return new MediaInfo.VideoInfo(se.getFourcc(), (int) duration.getDen(), duration.getNum(),
-                        track.getFrameCount(), track.getName(), track.getBox().getPAR(), new Size((int) se.getWidth(),
+                        track.getFrameCount(), track.getName(), null, track.getBox().getPAR(), new Size((int) se.getWidth(),
                                 (int) se.getHeight()));
             } else if (track.getBox().isAudio()) {
                 AudioSampleEntry se = (AudioSampleEntry) track.getSampleEntries()[0];
                 return new MediaInfo.AudioInfo(se.getFourcc(), (int) duration.getDen(), duration.getNum(),
-                        track.getFrameCount(), track.getName(), se.getFormat(), framesPerPkt, se.getLabels());
+                        track.getFrameCount(), track.getName(), null, se.getFormat(), framesPerPkt, se.getLabels());
             }
             throw new RuntimeException("This shouldn't happen");
         }

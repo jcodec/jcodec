@@ -21,6 +21,11 @@ import org.jcodec.common.tools.ToJSON;
  */
 public class TimecodeSampleEntry extends SampleEntry {
 
+    public static final int FLAG_DROPFRAME = 0x1;
+    public static final int FLAG_24HOURMAX = 0x2;
+    public static final int FLAG_NEGATIVETIMEOK = 0x4;
+    public static final int FLAG_COUNTER = 0x8;
+
     private static final MyFactory FACTORY = new MyFactory();
     private int flags;
     private int timescale;
@@ -31,19 +36,18 @@ public class TimecodeSampleEntry extends SampleEntry {
         super(header);
         factory = FACTORY;
     }
-    
+
     public TimecodeSampleEntry() {
         super(new Header("tmcd"));
         factory = FACTORY;
     }
-    
-    
+
     public TimecodeSampleEntry(int flags, int timescale, int frameDuration, int numFrames) {
         super(new Header("tmcd"));
         this.flags = flags;
         this.timescale = timescale;
         this.frameDuration = frameDuration;
-        this.numFrames = (byte)numFrames;
+        this.numFrames = (byte) numFrames;
     }
 
     public void parse(InputStream input) throws IOException {
@@ -92,6 +96,10 @@ public class TimecodeSampleEntry extends SampleEntry {
 
     public byte getNumFrames() {
         return numFrames;
+    }
+
+    public boolean isDropFrame() {
+        return (flags & FLAG_DROPFRAME) != 0;
     }
 
     @Override

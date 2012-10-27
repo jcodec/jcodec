@@ -54,7 +54,7 @@ public class ChannelSelector implements AudioSource {
         }
 
         return new AudioInfo(audioInfo.getFourcc(), audioInfo.getTimescale(), audioInfo.getDuration(),
-                audioInfo.getNFrames(), audioInfo.getName(), newFormat, audioInfo.getFramesPerPacket(), resultLabels);
+                audioInfo.getNFrames(), audioInfo.getName(), null, newFormat, audioInfo.getFramesPerPacket(), resultLabels);
     }
 
     public AudioFrame getFrame(byte[] result) throws IOException {

@@ -1,6 +1,7 @@
 package org.jcodec.player.app;
 
 import static java.lang.Math.round;
+import static org.apache.commons.lang.StringUtils.capitaliseAllWords;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -18,7 +20,6 @@ import javax.swing.JApplet;
 import netscape.javascript.JSObject;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.TapeTimecode;
@@ -29,6 +30,7 @@ import org.jcodec.player.Player.Status;
 import org.jcodec.player.Stepper;
 import org.jcodec.player.filters.JCodecVideoSource;
 import org.jcodec.player.filters.JSoundAudioOut;
+import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
 import org.jcodec.player.filters.MediaInfo.VideoInfo;
 import org.jcodec.player.filters.audio.AudioMixer;
@@ -136,11 +138,13 @@ public class PlayerApplet extends JApplet {
                 public void timeChanged(RationalLarge pts, int frameNo, TapeTimecode tt) {
                     if (onStatus1 == null)
                         return;
-                    onStatus1.call("call",
+                    onStatus1.call(
+                            "call",
                             new Object[] {
                                     null,
                                     new Status1((double) pts.getNum() / pts.getDen(), frameNo, tt != null ? new int[] {
-                                            tt.getHour(), tt.getMinute(), +tt.getSecond(), tt.getFrame() } : null) });
+                                            tt.getHour(), tt.getMinute(), tt.getSecond(), tt.getFrame(),
+                                            tt.isDropFrame() ? 1 : 0 } : null) });
                 }
 
                 public void statusChanged(Status status) {
@@ -177,8 +181,7 @@ public class PlayerApplet extends JApplet {
         for (int i = 0; i < audioTracks.size(); i++) {
             audios[i] = new JCodecAudioSource(audioTracks.get(i));
         }
-        AudioMixer audio = new AudioMixer(2, audios);
-        return audio;
+        return new AudioMixer(2, audios);
     }
 
     public class AudioTrack {
@@ -209,7 +212,8 @@ public class PlayerApplet extends JApplet {
     private String[] channels(ChannelLabel[] labels) {
         String[] strs = new String[labels.length];
         for (int i = 0; i < labels.length; i++) {
-            strs[i] = StringUtils.capitaliseAllWords(labels[i].toString().toLowerCase().replace("_", " "));
+            strs[i] = labels[i] != null ? capitaliseAllWords(labels[i].toString().toLowerCase().replace("_", " "))
+                    : "N/A";
         }
         return strs;
     }
@@ -343,20 +347,20 @@ public class PlayerApplet extends JApplet {
     }
 
     public void stepBackward() {
-//        if (player.getStatus() != Player.Status.PAUSED) {
-//            player.pause();
-//            return;
-//        }
-//        try {
-//            if (stepper == null) {
-//                stepper = new Stepper(video, audio, vo, new JSoundAudioOut());
-//                stepper.setListeners(player.getListeners());
-//                stepper.gotoFrame(player.getFrameNo());
-//            }
-//            stepper.prev();
-//        } catch (Exception e) {
-//            throw new RuntimeException("Could not step", e);
-//        }
+        // if (player.getStatus() != Player.Status.PAUSED) {
+        // player.pause();
+        // return;
+        // }
+        // try {
+        // if (stepper == null) {
+        // stepper = new Stepper(video, audio, vo, new JSoundAudioOut());
+        // stepper.setListeners(player.getListeners());
+        // stepper.gotoFrame(player.getFrameNo());
+        // }
+        // stepper.prev();
+        // } catch (Exception e) {
+        // throw new RuntimeException("Could not step", e);
+        // }
     }
 
     private File determineCacheLocation() {
@@ -375,5 +379,22 @@ public class PlayerApplet extends JApplet {
     public double getTime() {
         RationalLarge t = player.getPos();
         return ((double) t.getNum()) / t.getDen();
+    }
+
+    public MediaInfo[] getMediaInfo() throws IOException {
+        ArrayList<MediaInfo> info = new ArrayList<MediaInfo>();
+        info.add(sourceInfo(video.getMediaInfo()));
+        Pin[] pins = audio.getPins();
+        for (Pin pin : pins) {
+            info.add(sourceInfo(pin.getSource().getAudioInfo()));
+        }
+        return info.toArray(new MediaInfo[0]);
+    }
+
+    private MediaInfo sourceInfo(MediaInfo mediaInfo) {
+        MediaInfo result = mediaInfo;
+        while (result.getTranscodedFrom() != null)
+            result = result.getTranscodedFrom();
+        return result;
     }
 }

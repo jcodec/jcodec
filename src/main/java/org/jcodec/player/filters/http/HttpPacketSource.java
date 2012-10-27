@@ -1,10 +1,11 @@
 package org.jcodec.player.filters.http;
 
+import static org.jcodec.player.filters.http.HttpUtils.getHttpClient;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.tools.Debug;
@@ -32,9 +33,12 @@ public class HttpPacketSource implements PacketSource {
     private Downloader downloader;
 
     public HttpPacketSource(String trackUrl, File trackCache) throws IOException {
-        this.downloader = new Downloader(new DefaultHttpClient(), trackUrl);
+        this.downloader = new Downloader(getHttpClient(trackUrl), trackUrl);
 
         updateMediaInfo();
+
+        if (mi == null)
+            throw new IOException("Could not get media info for the track: " + trackUrl);
 
         if (trackCache.exists())
             trackCache.delete();
@@ -133,10 +137,10 @@ public class HttpPacketSource implements PacketSource {
 
     @Override
     public void gotoFrame(int frame) {
-        if(frameNo == frame)
+        if (frameNo == frame)
             return;
         frameNo = frame;
-        
+
         restartDownloader(frameNo + 15);
     }
 }

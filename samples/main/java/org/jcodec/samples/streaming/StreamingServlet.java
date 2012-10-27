@@ -153,7 +153,7 @@ public class StreamingServlet extends HttpServlet {
 
     private String formatTapeTimecode(TapeTimecode tapeTimecode) {
         return String.format("%02d", tapeTimecode.getHour()) + ":" + String.format("%02d", tapeTimecode.getMinute())
-                + ":" + String.format("%02d", tapeTimecode.getSecond()) + ":"
+                + ":" + String.format("%02d", tapeTimecode.getSecond()) + (tapeTimecode.isDropFrame() ? ";" : ":")
                 + String.format("%02d", tapeTimecode.getFrame());
     }
 
@@ -169,15 +169,23 @@ public class StreamingServlet extends HttpServlet {
     }
 
     protected String mediaInfo2String(MediaInfo info) {
-        if (info instanceof MediaInfo.VideoInfo)
-            return video((MediaInfo.VideoInfo) info);
-        else if (info instanceof MediaInfo.AudioInfo)
-            return audio((MediaInfo.AudioInfo) info);
-        throw new RuntimeException("Track should be video or audio");
+        StringBuilder bldr = new StringBuilder();
+
+        while (info != null) {
+            if (info instanceof MediaInfo.VideoInfo)
+                video(bldr, (MediaInfo.VideoInfo) info);
+            else if (info instanceof MediaInfo.AudioInfo)
+                audio(bldr, (MediaInfo.AudioInfo) info);
+            else
+                throw new RuntimeException("Track should be video or audio");
+            info = info.getTranscodedFrom();
+            if (info != null)
+                bldr.append(";");
+        }
+        return bldr.toString();
     }
 
-    private String audio(MediaInfo.AudioInfo info) {
-        StringBuilder bldr = new StringBuilder();
+    private void audio(StringBuilder bldr, MediaInfo.AudioInfo info) {
         bldr.append("audio:");
         bldr.append(media(info));
 
@@ -194,15 +202,14 @@ public class StreamingServlet extends HttpServlet {
         bldr.append(info.getFramesPerPacket());
         bldr.append(':');
         bldr.append(labels(info));
-
-        return bldr.toString();
     }
 
     private String labels(MediaInfo.AudioInfo info) {
         ChannelLabel[] labels = info.getLabels();
         String[] str = new String[labels.length];
         for (int i = 0; i < labels.length; i++) {
-            str[i] = labels[i].toString();
+            ChannelLabel label = labels[i];
+            str[i] = label == null ? "N/A" : label.toString();
         }
 
         return join(str, ",");
@@ -213,14 +220,12 @@ public class StreamingServlet extends HttpServlet {
                 + (info.getName() == null ? "" : info.getName()) + ":";
     }
 
-    private String video(MediaInfo.VideoInfo v) {
-        StringBuilder bldr = new StringBuilder();
+    private void video(StringBuilder bldr, MediaInfo.VideoInfo v) {
         bldr.append("video:");
         bldr.append(media(v));
 
         bldr.append(v.getDim().getWidth() + "x" + v.getDim().getHeight());
         bldr.append(':');
         bldr.append(v.getPAR().getNum() + "x" + v.getPAR().getDen());
-        return bldr.toString();
     }
 }

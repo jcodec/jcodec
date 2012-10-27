@@ -70,7 +70,7 @@ public class TestVideoSource implements VideoSource {
     }
 
     public MediaInfo.VideoInfo getMediaInfo() {
-        return new MediaInfo.VideoInfo("test", 24000, DURATION_TV, DURATION_TV / 1001, "", new Rational(1, 1),
+        return new MediaInfo.VideoInfo("test", 24000, DURATION_TV, DURATION_TV / 1001, "", null, new Rational(1, 1),
                 new Size(WIDTH, HEIGHT));
     }
 

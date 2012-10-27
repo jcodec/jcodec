@@ -127,7 +127,7 @@ public class MTSAdapter implements Adapter {
             int frames = index.getNumFrames(sid);
             FrameEntry e = index.frame(sid, frames - 1);
             long duration = e.pts;
-            return new MediaInfo.AudioInfo("s302", 90000, duration, frames, name(decoded.getFormat().getChannels()),
+            return new MediaInfo.AudioInfo("s302", 90000, duration, frames, name(decoded.getFormat().getChannels()), null,
                     decoded.getFormat(), decoded.getNFrames(), labels(decoded.getFormat().getChannels()));
         }
 
@@ -308,7 +308,7 @@ public class MTSAdapter implements Adapter {
             FrameEntry e = index.frame(sid, frames - 1);
             long duration = e.pts;
 
-            return new MediaInfo.VideoInfo("m2v1", 90000, duration, frames, "", new Rational(1, 1), sz);
+            return new MediaInfo.VideoInfo("m2v1", 90000, duration, frames, "", null, new Rational(1, 1), sz);
         }
 
         void close() throws IOException {

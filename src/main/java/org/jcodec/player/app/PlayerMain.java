@@ -14,6 +14,7 @@ import java.util.List;
 import javax.swing.JFrame;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.player.Player;
 import org.jcodec.player.Stepper;
@@ -42,6 +43,10 @@ public class PlayerMain implements KeyListener {
     private AudioMixer mixer;
 
     public static void main(String[] args) throws Exception {
+        if (args.length < 1) {
+            System.out.println("Syntax: <url>");
+            return;
+        }
         new PlayerMain(new URL(args[0]));
     }
 
@@ -108,21 +113,21 @@ public class PlayerMain implements KeyListener {
             RationalLarge pos = player.getPos();
             player.seek(new RationalLarge(pos.getNum() + pos.getDen() * 100, pos.getDen()));
         } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-//            if (player.getStatus() != Player.Status.PAUSED) {
-//                player.pause();
-//                return;
-//            }
-//
-//            try {
-//                if (stepper == null) {
-//                    stepper = new Stepper(video, mixer, vo, new JSoundAudioOut());
-//                    stepper.setListeners(player.getListeners());
-//                    stepper.gotoFrame(player.getFrameNo());
-//                }
-//                stepper.prev();
-//            } catch (IOException e1) {
-//                System.out.println("Couldn't step " + e1.getMessage());
-//            }
+            // if (player.getStatus() != Player.Status.PAUSED) {
+            // player.pause();
+            // return;
+            // }
+            //
+            // try {
+            // if (stepper == null) {
+            // stepper = new Stepper(video, mixer, vo, new JSoundAudioOut());
+            // stepper.setListeners(player.getListeners());
+            // stepper.gotoFrame(player.getFrameNo());
+            // }
+            // stepper.prev();
+            // } catch (IOException e1) {
+            // System.out.println("Couldn't step " + e1.getMessage());
+            // }
         } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             if (player.getStatus() != Player.Status.PAUSED) {
                 player.pause();
