@@ -482,10 +482,10 @@ public class MP4Muxer {
             return gap;
         }
 
-        // TODO: support drop frame timecode
         private boolean isTimeGap(TapeTimecode prevTimecode, TapeTimecode tapeTimecode) {
             boolean gap = false;
-            int secDiff = toSec(tapeTimecode) - toSec(prevTimecode);
+            int sec = toSec(tapeTimecode);
+            int secDiff = sec - toSec(prevTimecode);
             if (secDiff == 0) {
                 int frameDiff = tapeTimecode.getFrame() - prevTimecode.getFrame();
                 if (fpsEstimate != -1)
@@ -498,7 +498,9 @@ public class MP4Muxer {
                     else
                         gap = true;
                 } else {
-                    if (tapeTimecode.getFrame() != 0 || prevTimecode.getFrame() != fpsEstimate - 1)
+                    int firstFrame = tapeTimecode.isDropFrame() && (sec % 60) == 0 && (sec % 600) != 0 ? 2 : 0;
+
+                    if (tapeTimecode.getFrame() != firstFrame || prevTimecode.getFrame() != fpsEstimate - 1)
                         gap = true;
                 }
             } else {
@@ -528,7 +530,14 @@ public class MP4Muxer {
         }
 
         private int toCounter(TapeTimecode tc, int fps) {
-            return toSec(tc) * fps + tc.getFrame();
+            int frames = toSec(tc) * fps + tc.getFrame();
+            if(tc.isDropFrame()) {
+                long D = frames / 18000;
+                long M = frames % 18000;
+                frames -= 18 * D + 2 * ((M - 2) / 1800);
+            }
+            
+            return frames;
         }
 
         private int toSec(TapeTimecode tc) {

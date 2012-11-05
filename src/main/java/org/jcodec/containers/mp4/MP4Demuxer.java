@@ -1,6 +1,5 @@
 package org.jcodec.containers.mp4;
 
-import static org.jcodec.containers.mp4.QTTimeUtil.editedToMedia;
 import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 import gnu.trove.list.array.TIntArrayList;

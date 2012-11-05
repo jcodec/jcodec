@@ -6,13 +6,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
-import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 
