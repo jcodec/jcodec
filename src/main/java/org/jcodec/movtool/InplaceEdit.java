@@ -1,12 +1,14 @@
 package org.jcodec.movtool;
 
+import static org.jcodec.common.JCodecUtil.bufin;
+
 import java.io.File;
 import java.io.IOException;
 
 import junit.framework.Assert;
 
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessFileOutputStream;
+import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.io.FileRAOutputStream;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -23,17 +25,17 @@ public abstract class InplaceEdit {
     protected abstract void apply(MovieBox mov);
 
     public boolean save(File f) throws IOException, Exception {
-        RandomAccessFileInputStream fi = null;
-        RandomAccessFileOutputStream out = null;
+        RAInputStream fi = null;
+        FileRAOutputStream out = null;
         try {
-            fi = new RandomAccessFileInputStream(f);
+            fi = bufin(f);
             Atom moov = getMoov(fi);
             Assert.assertNotNull(moov);
             MovieBox movBox = (MovieBox) moov.parseBox(fi);
             apply(movBox);
             if (movBox.calcSize() <= moov.getHeader().getSize())
                 return false;
-            out = new RandomAccessFileOutputStream(f);
+            out = new FileRAOutputStream(f);
             out.seek(moov.getOffset());
             movBox.write(out);
             
@@ -46,7 +48,7 @@ public abstract class InplaceEdit {
         }
     }
 
-    private Atom getMoov(RandomAccessFileInputStream f) throws IOException {
+    private Atom getMoov(RAInputStream f) throws IOException {
         for (Atom atom : MP4Util.getRootAtoms(f)) {
             if ("moov".equals(atom.getHeader().getFourcc())) {
                 return atom;

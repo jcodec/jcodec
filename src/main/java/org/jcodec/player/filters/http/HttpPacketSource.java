@@ -5,7 +5,9 @@ import static org.jcodec.player.filters.http.HttpUtils.getHttpClient;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 
+import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.tools.Debug;
@@ -32,13 +34,10 @@ public class HttpPacketSource implements PacketSource {
     private int fetchSpeed;
     private Downloader downloader;
 
-    public HttpPacketSource(String trackUrl, File trackCache) throws IOException {
+    public HttpPacketSource(String trackUrl, File trackCache, MediaInfo mediaInfos) throws IOException {
         this.downloader = new Downloader(getHttpClient(trackUrl), trackUrl);
 
-        updateMediaInfo();
-
-        if (mi == null)
-            throw new IOException("Could not get media info for the track: " + trackUrl);
+        mi = mediaInfos;
 
         if (trackCache.exists())
             trackCache.delete();
@@ -68,10 +67,13 @@ public class HttpPacketSource implements PacketSource {
         Packet pkt = cache.getFrame(frameNo, buffer);
         if (pkt == null) {
             try {
-                pkt = downloader.getFrame(frameNo, buffer);
-                if (pkt == null)
+                List<Packet> frames = downloader.getFrames(frameNo, frameNo + 15, null);
+                if (frames == null)
                     return null;
-                cache.addFrame(pkt);
+                for (Packet packet : frames) {
+                    cache.addFrame(packet);
+                }
+                pkt = copyPkt(buffer, frames.get(0));
             } catch (IOException e) {
                 e.printStackTrace();
                 return null;
@@ -85,6 +87,12 @@ public class HttpPacketSource implements PacketSource {
         return pkt;
     }
 
+    private Packet copyPkt(byte[] buffer, Packet pkt) {
+        Buffer data = pkt.getData();
+        data.toArray(buffer, 0, data.remaining());
+        return new Packet(pkt, new Buffer(buffer, 0, data.remaining()));
+    }
+
     private void restartDownloader(int frameNo) {
         prefetcher.cancel();
 
@@ -95,25 +103,28 @@ public class HttpPacketSource implements PacketSource {
     public synchronized void seek(RationalLarge second) throws IOException {
         long pts = second.multiplyS(mi.getTimescale());
         if (cache.pts2frame(pts) == -1) {
-            Packet pkt = downloader.seekFrame(pts, null);
-            if (pkt == null)
+            List<Packet> frames = downloader.seekFrame(pts, null);
+            if (frames == null)
                 throw new RuntimeException("Can not seek to pts " + pts);
-            cache.addFrame(pkt);
-            frameNo = (int) pkt.getFrameNo();
+            frameNo = (int) frames.get(0).getFrameNo();
+            for (Packet packet : frames) {
+                cache.addFrame(packet);
+            }
         } else {
             frameNo = cache.pts2frame(pts);
         }
-
         restartDownloader(frameNo + 15);
     }
 
     public boolean drySeek(RationalLarge second) throws IOException {
         long pts = second.multiplyS(mi.getTimescale());
         if (cache.pts2frame(pts) == -1) {
-            Packet pkt = downloader.seekFrame(pts, null);
-            if (pkt == null)
+            List<Packet> frames = downloader.seekFrame(pts, null);
+            if (frames == null)
                 return false;
-            cache.addFrame(pkt);
+            for (Packet packet : frames) {
+                cache.addFrame(packet);
+            }
         }
 
         return true;

@@ -31,7 +31,7 @@ public class MBlockWriter {
 
     private void write8x8(CAVLCWriter writer) {
         // TODO: do it!!
-        throw new UnsupportedOperationException("Stan");
+        throw new UnsupportedOperationException("Unsupported");
     }
 
     private void write4x4(CAVLCWriter writer) {

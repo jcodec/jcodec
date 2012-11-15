@@ -1,12 +1,16 @@
 package org.jcodec.samples.prores;
 
+import static org.jcodec.common.JCodecUtil.bufin;
+
 import java.io.File;
 
 import org.jcodec.codecs.prores.ProresToProxy;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessFileOutputStream;
-import org.jcodec.common.io.RandomAccessOutputStream;
+import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.io.FileRAOutputStream;
+import org.jcodec.common.io.RAOutputStream;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Demuxer;
 import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
@@ -33,9 +37,9 @@ public class ToProxy {
             return;
         }
 
-        RandomAccessFileInputStream input = new RandomAccessFileInputStream(new File(args[0]));
+        RAInputStream input = bufin(new File(args[0]));
         MP4Demuxer demuxer = new MP4Demuxer(input);
-        RandomAccessOutputStream output = new RandomAccessFileOutputStream(new File(args[1]));
+        RAOutputStream output = new FileRAOutputStream(new File(args[1]));
         MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
 
         DemuxerTrack inVideo = demuxer.getVideoTrack();

@@ -76,7 +76,7 @@ public class CAVLCReader {
     }
 
     public static boolean readAE(InBits bits) {
-        throw new UnsupportedOperationException("Stan");
+        throw new UnsupportedOperationException("Unsupported");
     }
 
     public static int readTE(InBits bits, int max) throws IOException {
@@ -86,7 +86,7 @@ public class CAVLCReader {
     }
 
     public static int readAEI(InBits bits) {
-        throw new UnsupportedOperationException("Stan");
+        throw new UnsupportedOperationException("Unsupported");
     }
 
     public static int readME(InBits bits, String string) throws IOException {

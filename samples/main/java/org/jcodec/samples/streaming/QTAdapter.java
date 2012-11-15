@@ -7,7 +7,8 @@ import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.common.io.RandomAccessFileInputStream;
+import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -35,17 +36,19 @@ import org.jcodec.player.filters.MediaInfo;
 public class QTAdapter implements Adapter {
     private MP4Demuxer demuxer;
     private ArrayList<AdapterTrack> tracks;
-    private RandomAccessFileInputStream is;
+    private RAInputStream is;
 
     public QTAdapter(File file) throws IOException {
-        is = new RandomAccessFileInputStream(file);
+        is = JCodecUtil.mapin(file);
+
         demuxer = new MP4Demuxer(is);
         tracks = new ArrayList<AdapterTrack>();
         for (DemuxerTrack demuxerTrack : demuxer.getTracks()) {
-            if (demuxerTrack.getBox().isAudio())
+            if (demuxerTrack.getBox().isAudio()) {
                 tracks.add(new QTAudioAdaptorTrack(demuxerTrack));
-            else if (demuxerTrack.getBox().isVideo())
+            } else if (demuxerTrack.getBox().isVideo()) {
                 tracks.add(new QTVideoAdaptorTrack(demuxerTrack, demuxer.getTimecodeTrack()));
+            }
         }
     }
 
@@ -97,6 +100,11 @@ public class QTAdapter implements Adapter {
 
             return frames == null ? null : new Packet[] { timecodeTrack == null ? frames : timecodeTrack
                     .getTimecode(frames) };
+        }
+
+        @Override
+        public int gopId(int frameNo) {
+            return frameNo;
         }
     }
 

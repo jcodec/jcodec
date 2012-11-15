@@ -1,5 +1,7 @@
 package org.jcodec.movtool;
 
+import static org.jcodec.common.JCodecUtil.bufin;
+
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -8,7 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
-import org.jcodec.common.io.RandomAccessFileInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 
@@ -37,10 +39,10 @@ public class MovDump {
     }
 
     private static void dumpHeader(File headerFile, File source) throws IOException, FileNotFoundException {
-        RandomAccessFileInputStream raf = null;
+        RAInputStream raf = null;
         DataOutputStream daos = null;
         try {
-            raf = new RandomAccessFileInputStream(source);
+            raf = bufin(source);
             daos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(headerFile)));
 
             for (Atom atom : MP4Util.getRootAtoms(raf)) {

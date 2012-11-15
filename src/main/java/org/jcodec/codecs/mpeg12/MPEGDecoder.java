@@ -27,12 +27,8 @@ import static org.jcodec.common.model.ColorSpace.YUV420;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.model.ColorSpace.YUV444;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.jcodec.codecs.mpeg12.MPEGConst.MBType;
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
@@ -40,17 +36,14 @@ import org.jcodec.codecs.mpeg12.bitstream.SequenceExtension;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension;
 import org.jcodec.common.VideoDecoder;
-import org.jcodec.common.dct.SimpleIDCT10Bit;
+import org.jcodec.common.dct.SparseIDCT;
 import org.jcodec.common.io.BitstreamReaderBB;
 import org.jcodec.common.io.Buffer;
 import org.jcodec.common.io.InBits;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mps.MPSDemuxer.PES;
-import org.jcodec.containers.mps.MTSDemuxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -63,6 +56,7 @@ public class MPEGDecoder implements VideoDecoder {
 
     protected SequenceHeader sh;
     protected GOPHeader gh;
+    private int maxCoeff;
 
     public MPEGDecoder(SequenceHeader sh, GOPHeader gh) {
         this.sh = sh;
@@ -70,6 +64,11 @@ public class MPEGDecoder implements VideoDecoder {
     }
 
     public MPEGDecoder() {
+        this(64);
+    }
+
+    public MPEGDecoder(int maxCoeff) {
+        this.maxCoeff = maxCoeff;
     }
 
     public class Context {
@@ -314,23 +313,20 @@ public class MPEGDecoder implements VideoDecoder {
                 continue;
             int[] qmat = getQmat(i < 4, mbType.macroblock_intra == 1, ph);
 
-            Arrays.fill(block, 0);
-            block(in, vlcCoeff, mbType.macroblock_intra == 1, block, context.intra_dc_predictor, i, scan,
-                    sh.hasExtensions() || ph.hasExtensions() ? 12 : 8);
             if (mbType.macroblock_intra == 1)
-                dequantIntra(block, intra_dc_mult, qScale, qmat);
+                blockIntra(in, vlcCoeff, block, context.intra_dc_predictor, i, scan,
+                        sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, intra_dc_mult, qScale, qmat);
             else
-                dequantInter(block, qScale, qmat);
-            idctPut(block, buf, stride, chromaFormat, i, mbX, mbY, dctType, context.clipVal);
+                blockInter(in, vlcCoeff, block, context.intra_dc_predictor, i, scan,
+                        sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, qScale, qmat);
+            put(block, buf, stride, chromaFormat, i, mbX, mbY, dctType, context.clipVal);
         }
 
         return mbAddr;
     }
 
-    protected void idctPut(int[] block, int[][] buf, int stride, int chromaFormat, int blkNo, int mbX, int mbY,
+    protected void put(int[] block, int[][] buf, int stride, int chromaFormat, int blkNo, int mbX, int mbY,
             int dctType, int clipVal) {
-        SimpleIDCT10Bit.idct10(block, 0);
-
         int chromaStride = (stride >> SQUEEZE_X[chromaFormat]);
 
         int strd = stride, mbW = 4, mbH = 4;
@@ -340,11 +336,11 @@ public class MPEGDecoder implements VideoDecoder {
             mbH -= SQUEEZE_Y[chromaFormat];
         }
 
-        put(buf[BLOCK_TO_CC[blkNo]], ((mbY << mbH) + BLOCK_POS_Y[blkNo + (dctType << 4)]) * strd + (mbX << mbW)
+        putSub(buf[BLOCK_TO_CC[blkNo]], ((mbY << mbH) + BLOCK_POS_Y[blkNo + (dctType << 4)]) * strd + (mbX << mbW)
                 + BLOCK_POS_X[blkNo + (dctType << 4)], strd, block, dctType, clipVal);
     }
 
-    private final void put(int[] big, int off, int stride, int[] block, int dctType, int clipVal) {
+    private final void putSub(int[] big, int off, int stride, int[] block, int dctType, int clipVal) {
         int blOff = 0;
         stride = (stride << dctType) - 8;
         for (int i = 0; i < 8; i++) {
@@ -394,50 +390,60 @@ public class MPEGDecoder implements VideoDecoder {
     public static int[] SQUEEZE_X = new int[] { 0, 1, 1, 0 };
     public static int[] SQUEEZE_Y = new int[] { 0, 1, 0, 0 };
 
-    private final void dequantIntra(int[] block, int intra_dc_mult, int qScale, int[] qmat) {
-        block[0] *= intra_dc_mult;
-        for (int i = 1; i < 64; i++) {
-            block[i] = (block[i] * qScale * qmat[i]) >> 4;
-        }
+    private static final int quantInter(int level, int quant) {
+        return level == 0 ? 0 : (((level << 1) + ((level >> 31) << 1) + 1) * quant) >> 5;
     }
 
-    private final void dequantInter(int[] block, int qScale, int[] qmat) {
-        for (int i = 0; i < 64; i++) {
-            block[i] = block[i] == 0 ? 0 : (((block[i] << 1) + ((block[i] >> 31) << 1) + 1) * qScale * qmat[i]) >> 5;
-        }
-    }
+    private final void blockIntra(InBits in, VLC vlcCoeff, int[] block, int[] intra_dc_predictor, int blkIdx,
+            int[] scan, int escSize, int intra_dc_mult, int qScale, int[] qmat) throws IOException {
+        int cc = BLOCK_TO_CC[blkIdx];
+        int size = (cc == 0 ? vlcDCSizeLuma : vlcDCSizeChroma).readVLC(in);
+        int delta = (size != 0) ? mpegSigned(in, size) : 0;
+        intra_dc_predictor[cc] = intra_dc_predictor[cc] + delta;
+        int dc = intra_dc_predictor[cc] * intra_dc_mult;
+        SparseIDCT.dc(block, dc);
 
-    private final void block(InBits in, VLC vlcCoeff, boolean mbIntra, int[] block, int[] intra_dc_predictor,
-            int blkIdx, int[] scan, int escSize) throws IOException {
-        if (mbIntra) {
-            int cc = BLOCK_TO_CC[blkIdx];
-            int size = (cc == 0 ? vlcDCSizeLuma : vlcDCSizeChroma).readVLC(in);
-            int delta = (size != 0) ? mpegSigned(in, size) : 0;
-            block[0] = intra_dc_predictor[cc] = intra_dc_predictor[cc] + delta;
-        } else {
-            if (vlcCoeff == vlcCoeff0 && in.checkNBit(1) == 1) {
-                block[0] = 1;
-                in.read1Bit();
-            } else {
-                int readVLC = vlcCoeff.readVLC(in);
-                if (readVLC >= 0)
-                    block[0] = toSigned(readVLC & 0xfff, in.read1Bit());
-                else {
-                    in.readNBit(6);
-                    block[0] = twosSigned(in, escSize);
-                }
-            }
-        }
-
-        int idx = 0;
-        while (true) {
+        for (int idx = 0; idx < maxCoeff;) {
             int readVLC = vlcCoeff.readVLC(in);
             if (readVLC >= 0) {
                 idx += (readVLC >> 12) + 1;
-                block[scan[idx]] = toSigned(readVLC & 0xfff, in.read1Bit());
+                int ridx = scan[idx];
+                SparseIDCT.ac(block, ridx, (toSigned(readVLC & 0xfff, in.read1Bit()) * qScale * qmat[ridx]) >> 4);
             } else if (readVLC == -2) {
                 idx += in.readNBit(6) + 1;
-                block[scan[idx]] = twosSigned(in, escSize);
+                int ridx = scan[idx];
+                SparseIDCT.ac(block, ridx, (twosSigned(in, escSize) * qScale * qmat[ridx]) >> 4);
+            } else
+                break;
+        }
+    }
+
+    private final void blockInter(InBits in, VLC vlcCoeff, int[] block, int[] intra_dc_predictor, int blkIdx,
+            int[] scan, int escSize, int qScale, int[] qmat) throws IOException {
+
+        if (vlcCoeff == vlcCoeff0 && in.checkNBit(1) == 1) {
+            SparseIDCT.dc(block, quantInter(1, qScale * qmat[0]));
+            in.read1Bit();
+        } else {
+            int readVLC = vlcCoeff.readVLC(in);
+            if (readVLC >= 0) {
+                SparseIDCT.dc(block, quantInter(toSigned(readVLC & 0xfff, in.read1Bit()), qScale * qmat[0]));
+            } else {
+                in.readNBit(6);
+                SparseIDCT.dc(block, quantInter(twosSigned(in, escSize), qScale * qmat[0]));
+            }
+        }
+
+        for (int idx = 0; idx < maxCoeff;) {
+            int readVLC = vlcCoeff.readVLC(in);
+            if (readVLC >= 0) {
+                idx += (readVLC >> 12) + 1;
+                int rind = scan[idx];
+                SparseIDCT.ac(block, rind, quantInter(toSigned(readVLC & 0xfff, in.read1Bit()), qScale * qmat[rind]));
+            } else if (readVLC == -2) {
+                idx += in.readNBit(6) + 1;
+                int rind = scan[idx];
+                SparseIDCT.ac(block, rind, quantInter(twosSigned(in, escSize), qScale * qmat[rind]));
             } else
                 break;
         }

@@ -1,5 +1,6 @@
 package org.jcodec.samples.streaming;
 
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.common.io.ReaderBE.readInt16;
 import static org.jcodec.common.io.ReaderBE.readInt32;
 import static org.jcodec.common.io.ReaderBE.readInt64;
@@ -18,11 +19,10 @@ import junit.framework.Assert;
 
 import org.apache.commons.io.IOUtils;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessFileOutputStream;
+import org.jcodec.common.io.FileRAOutputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.io.ReaderBE;
 import org.jcodec.common.model.TapeTimecode;
-import org.jcodec.containers.mps.MPSDemuxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -112,8 +112,8 @@ public class MTSIndex {
                 extraData.add(ed);
             }
 
-            VideoFrameEntry e = new VideoFrameEntry(offset, pts, duration, frames.size(), extraData.size() - 1, gopId,
-                    timecode, displayOrder, frameType);
+            VideoFrameEntry e = new VideoFrameEntry(offset, pts, duration, frames.size(), extraData.size() - 1,
+                    gopId == -1 ? frames.size() : gopId, timecode, displayOrder, frameType);
 
             frames.add(e);
 
@@ -187,7 +187,7 @@ public class MTSIndex {
     }
 
     public static MTSIndex read(File indexFile) throws IOException {
-        RandomAccessFileInputStream is = new RandomAccessFileInputStream(indexFile);
+        RAInputStream is = bufin(indexFile);
         try {
             List<StreamEntry> streams = new ArrayList<StreamEntry>();
             int nStreams = is.read();
@@ -229,9 +229,9 @@ public class MTSIndex {
     }
 
     public void write(File indexFile) throws IOException {
-        RandomAccessFileOutputStream out = null;
+        FileRAOutputStream out = null;
         try {
-            out = new RandomAccessFileOutputStream(indexFile);
+            out = new FileRAOutputStream(indexFile);
             out.writeByte(streams.size());
             for (StreamEntry streamEntry : streams.values()) {
                 long before = out.getPos();
@@ -247,7 +247,7 @@ public class MTSIndex {
         }
     }
 
-    private void writeStream(StreamEntry streamEntry, RandomAccessFileOutputStream out) throws IOException {
+    private void writeStream(StreamEntry streamEntry, FileRAOutputStream out) throws IOException {
         out.writeByte(streamEntry.sid);
         for (Buffer buffer : streamEntry.extraData) {
             out.writeByte(0);
@@ -261,7 +261,7 @@ public class MTSIndex {
         }
     }
 
-    private void writeFrame(FrameEntry frameEntry, RandomAccessFileOutputStream out) throws IOException {
+    private void writeFrame(FrameEntry frameEntry, FileRAOutputStream out) throws IOException {
         out.writeLong(frameEntry.dataOffset);
         out.writeLong(frameEntry.pts);
         out.writeInt(frameEntry.duration);

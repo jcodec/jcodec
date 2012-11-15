@@ -1,5 +1,6 @@
 package org.jcodec.containers.mp4;
 
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.containers.mp4.TrackType.SOUND;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
@@ -22,10 +23,11 @@ import org.apache.commons.io.FileUtils;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.codecs.wav.WavHeader.FmtChunk;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessFileOutputStream;
-import org.jcodec.common.io.RandomAccessInputStream;
+import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.io.FileRAOutputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
@@ -43,7 +45,7 @@ import org.junit.Assert;
 public class TestDemuxer {
 
     private static void testAll(File src, File base) throws Exception {
-        MP4Demuxer demuxer = new MP4Demuxer(new RandomAccessFileInputStream(src));
+        MP4Demuxer demuxer = new MP4Demuxer(bufin(src));
         DemuxerTrack vt = demuxer.getVideoTrack();
         ProresDecoder decoder = new ProresDecoder();
 
@@ -93,7 +95,7 @@ public class TestDemuxer {
     }
 
     private static void testAudio(File src, File wavFile) throws Exception {
-        MP4Demuxer demuxer = new MP4Demuxer(new RandomAccessFileInputStream(src));
+        MP4Demuxer demuxer = new MP4Demuxer(bufin(src));
         DemuxerTrack demuxerTrack = demuxer.getAudioTracks().get(0);
 
         BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(wavFile));
@@ -126,7 +128,7 @@ public class TestDemuxer {
 
     private static void testVideo(File src, File base) throws IOException, MP4DemuxerException, FileNotFoundException {
         int startFn = 7572;
-        MP4Demuxer demuxer = new MP4Demuxer(new RandomAccessFileInputStream(src));
+        MP4Demuxer demuxer = new MP4Demuxer(bufin(src));
         DemuxerTrack vt = demuxer.getVideoTrack();
         vt.gotoFrame(startFn);
         for (int i = 0;; i++) {
@@ -144,7 +146,7 @@ public class TestDemuxer {
         WavHeader header = WavHeader.read(wav);
         RandomAccessFile in = new RandomAccessFile(wav, "r");
         in.seek(header.dataOffset);
-        MP4Muxer muxer = new MP4Muxer(new RandomAccessFileOutputStream(out));
+        MP4Muxer muxer = new MP4Muxer(new FileRAOutputStream(out));
         UncompressedTrack track = muxer.addTrackForUncompressed(SOUND, 48000, 1, 3,
                 MP4Muxer.audioSampleEntry("in24", 1, 3, 1, 48000, Endian.LITTLE_ENDIAN));
 
@@ -161,9 +163,9 @@ public class TestDemuxer {
     }
 
     private static void testRemux(File src, File dst) throws Exception {
-        MP4Muxer muxer = new MP4Muxer(new RandomAccessFileOutputStream(dst));
+        MP4Muxer muxer = new MP4Muxer(new FileRAOutputStream(dst));
 
-        MP4Demuxer demuxer1 = new MP4Demuxer(new RandomAccessFileInputStream(src));
+        MP4Demuxer demuxer1 = new MP4Demuxer(bufin(src));
         DemuxerTrack vt1 = demuxer1.getVideoTrack();
 
         CompressedTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) vt1.getTimescale());
@@ -176,7 +178,7 @@ public class TestDemuxer {
     }
 
     private static void storeMdat(File src, File dst) throws Exception {
-        List<Atom> rootAtoms = MP4Util.getRootAtoms(new RandomAccessFileInputStream(src));
+        List<Atom> rootAtoms = MP4Util.getRootAtoms(bufin(src));
         long mdatOff = -1, mdatSize = 0;
         for (Atom atom : rootAtoms) {
             if ("mdat".equals(atom.getHeader().getFourcc())) {
@@ -201,8 +203,8 @@ public class TestDemuxer {
 
     private static void narrowDown(File src, File dst) throws Exception {
         RandomAccessFile rw = new RandomAccessFile(dst, "rw");
-        RandomAccessInputStream inp = new RandomAccessFileInputStream(src);
-        List<Atom> rootAtoms = MP4Util.getRootAtoms(new RandomAccessFileInputStream(src));
+        RAInputStream inp = bufin(src);
+        List<Atom> rootAtoms = MP4Util.getRootAtoms(bufin(src));
         for (Atom atom : rootAtoms) {
             if ("moov".equals(atom.getHeader().getFourcc())) {
                 Box box = atom.parseBox(inp);

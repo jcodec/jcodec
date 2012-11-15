@@ -8,10 +8,16 @@ import java.io.InputStream;
 
 import org.jcodec.codecs.common.biari.Context;
 import org.jcodec.codecs.common.biari.MDecoder;
+import org.jcodec.codecs.h264.decode.MBlockDecoderInter;
+import org.jcodec.codecs.h264.decode.model.MVMatrix;
 import org.jcodec.codecs.h264.io.model.CodedMacroblock;
+import org.jcodec.codecs.h264.io.model.Inter8x8Prediction;
+import org.jcodec.codecs.h264.io.model.InterPrediction;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.MBlockBDirect16x16;
 import org.jcodec.codecs.h264.io.model.MBlockIPCM;
+import org.jcodec.codecs.h264.io.model.MBlockInter;
+import org.jcodec.codecs.h264.io.model.MBlockInter8x8;
 import org.jcodec.codecs.h264.io.model.MBlockIntra16x16;
 import org.jcodec.codecs.h264.io.model.MBlockIntraNxN;
 import org.jcodec.codecs.h264.io.model.MBlockWithResidual;
@@ -19,6 +25,8 @@ import org.jcodec.codecs.h264.io.model.Macroblock;
 import org.jcodec.codecs.h264.io.model.ResidualBlock;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.h264.io.model.SubMBType;
+import org.jcodec.codecs.h264.io.model.Vector;
+import org.jcodec.common.model.Point;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -214,10 +222,19 @@ public class CABACReader {
             return decoder.decodeBin(contexts[11]) == 1;
     }
 
-    public int readMVD(int baseCtx) throws IOException {
-        int leftPredEqual = 0; // todo
-        int topPredEqual = 0; // todo
-        int bit = decoder.decodeBin(contexts[baseCtx + leftPredEqual + topPredEqual]);
+    public int readMVD(int baseCtx, Macroblock left, Macroblock top, Macroblock cur, int blkIdx, int subBlkIdx, int comp)
+            throws IOException {
+
+        Vector[] cool = cool(left, top, cur, blkIdx, subBlkIdx);
+
+        // todo: should be mvd, not a full vector
+        int absMVDLeft = left == null ? 0 : (comp == 0 ? cool[0].getX() : cool[0].getY());
+        int absMVDTop = top == null ? 0 : (comp == 0 ? cool[1].getX() : cool[1].getY());
+
+        int tot = absMVDLeft + absMVDTop;
+        int inc = tot < 3 ? 0 : (tot > 32 ? 2 : 1);
+
+        int bit = decoder.decodeBin(contexts[baseCtx + inc]);
         int n = 0, ctx = baseCtx + 3, ctxMax = baseCtx + 6;
         while (bit == 1) {
             n++;
@@ -231,7 +248,7 @@ public class CABACReader {
         return n < 9 ? n : n + readGolomb(3);
     }
 
-    public int readCodedBlockFlagChromaDC(BlockType blkType, Macroblock left, Macroblock top, boolean cb)
+    public int readCodedBlockFlagChromaDC(BlockType blkType, Macroblock left, Macroblock top, Macroblock cur, boolean cb)
             throws IOException {
 
         ResidualBlock dcLeft = left != null && left instanceof CodedMacroblock ? (cb ? ((CodedMacroblock) left)
@@ -239,8 +256,8 @@ public class CABACReader {
         ResidualBlock dcTop = top != null && top instanceof CodedMacroblock ? (cb ? ((CodedMacroblock) top).getChroma()
                 .getCbDC() : ((CodedMacroblock) top).getChroma().getCrDC()) : null;
 
-        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(blkType, dcLeft) + 2
-                * transBlockToCBF(blkType, dcTop)]);
+        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(left, cur, dcLeft) + 2
+                * transBlockToCBF(top, cur, dcTop)]);
 
     }
 
@@ -258,11 +275,12 @@ public class CABACReader {
             ResidualBlock[] AC = cb ? mb.getChroma().getCbAC() : mb.getChroma().getCrAC();
             blkLeft = AC[topChromaIdx[blkIdx]];
         }
-        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(blkType, blkLeft) + 2
-                * transBlockToCBF(blkType, blkTop)]);
+        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(left, cur, blkLeft) + 2
+                * transBlockToCBF(top, cur, blkTop)]);
     }
 
-    public int readCodedBlockFlag16x16DC(BlockType blkType, Macroblock left, Macroblock top) throws IOException {
+    public int readCodedBlockFlag16x16DC(BlockType blkType, Macroblock left, Macroblock top, Macroblock cur)
+            throws IOException {
         if (blkType != BlockType.LUMA_16_DC)
             throw new RuntimeException("Chroma 444 not supported");
 
@@ -271,8 +289,8 @@ public class CABACReader {
         ResidualBlock dcTop = top != null && top instanceof MBlockIntra16x16 ? ((MBlockIntra16x16) top).getLumaDC()
                 : null;
 
-        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(blkType, dcLeft) + 2
-                * transBlockToCBF(blkType, dcTop)]);
+        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(left, cur, dcLeft) + 2
+                * transBlockToCBF(top, cur, dcTop)]);
     }
 
     public int readCodedBlockFlag16x16AC(BlockType blkType, int blkIdx, Macroblock cur, Macroblock left, Macroblock top)
@@ -290,8 +308,8 @@ public class CABACReader {
         if (srcTop instanceof MBlockIntra16x16) {
             blkTop = ((MBlockIntra16x16) srcTop).getLumaAC()[topBlockIdx[blkIdx]];
         }
-        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(blkType, blkLeft) + 2
-                * transBlockToCBF(blkType, blkTop)]);
+        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(left, cur, blkLeft) + 2
+                * transBlockToCBF(top, cur, blkTop)]);
     }
 
     public int readCodedBlockFlagNxN(BlockType blkType, int blkIdx, Macroblock cur, Macroblock left, Macroblock top)
@@ -308,13 +326,18 @@ public class CABACReader {
         if (srcTop instanceof MBlockWithResidual) {
             blkTop = ((MBlockWithResidual) srcTop).getLuma()[topBlockIdx[blkIdx]];
         }
-        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(blkType, blkLeft) + 2
-                * transBlockToCBF(blkType, blkTop)]);
+        return decoder.decodeBin(contexts[blkType.codedBlockFlagCtx + transBlockToCBF(left, cur, blkLeft) + 2
+                * transBlockToCBF(top, cur, blkTop)]);
     }
 
-    private int transBlockToCBF(BlockType blkType, ResidualBlock blkTop) {
-        // TODO Auto-generated method stub
-        return 0;
+    private int transBlockToCBF(Macroblock mbN, Macroblock mbCur, ResidualBlock transBlk) {
+        if (mbN == null && ((mbCur instanceof MBlockIntraNxN) || (mbCur instanceof MBlockIntra16x16))
+                || (mbN instanceof MBlockIPCM))
+            return 1;
+        if (mbN == null && ((mbCur instanceof MBlockInter) || (mbCur instanceof MBlockInter8x8)) || mbN != null
+                && transBlk == null && !(mbN instanceof MBlockIPCM))
+            return 0;
+        return transBlk == null ? 0 : 1;
     }
 
     boolean[] leftBlockSameMB = new boolean[] { false, true, false, true, true, true, true, true, false, true, false,
@@ -479,9 +502,92 @@ public class CABACReader {
         }
     }
 
-    public int readRefIdx() {
-        // 54
-        throw new UnsupportedOperationException();
+    public Vector[] cool(Macroblock left, Macroblock top, Macroblock cur, int blkIdx, int subBlkIdx) {
+        MVMatrix leftMvs = getMvs(left);
+        MVMatrix topMvs = getMvs(top);
+        MVMatrix curMvs = getMvs(cur);
+        Point coord = getBlockCoord(cur, blkIdx, subBlkIdx);
+        Vector topVect = new Vector[] { topMvs.getVectors()[12], topMvs.getVectors()[13], topMvs.getVectors()[14],
+                topMvs.getVectors()[15], curMvs.getVectors()[0], curMvs.getVectors()[1], curMvs.getVectors()[2],
+                curMvs.getVectors()[3], curMvs.getVectors()[4], curMvs.getVectors()[5], curMvs.getVectors()[6],
+                curMvs.getVectors()[7], curMvs.getVectors()[8], curMvs.getVectors()[9], curMvs.getVectors()[10],
+                curMvs.getVectors()[11] }[(coord.getY() << 2) + coord.getX()];
+
+        Vector leftVect = new Vector[] { leftMvs.getVectors()[3], curMvs.getVectors()[0], curMvs.getVectors()[1],
+                curMvs.getVectors()[2], leftMvs.getVectors()[7], curMvs.getVectors()[4], curMvs.getVectors()[5],
+                curMvs.getVectors()[6], leftMvs.getVectors()[11], curMvs.getVectors()[8], curMvs.getVectors()[9],
+                curMvs.getVectors()[10], leftMvs.getVectors()[15], curMvs.getVectors()[12], curMvs.getVectors()[13],
+                curMvs.getVectors()[14] }[(coord.getY() << 2) + coord.getX()];
+
+        return new Vector[] { leftVect, topVect };
+    }
+
+    public int readRefIdx(Macroblock left, Macroblock top, Macroblock cur, int blkIdx, int subBlkIdx)
+            throws IOException {
+
+        Vector[] cool = cool(left, top, cur, blkIdx, subBlkIdx);
+
+        int bin0Off = (cool[0] == null || cool[0].getRefId() == 0 ? 0 : 1)
+                + ((cool[1] == null || cool[1].getRefId() == 0 ? 0 : 1) << 1);
+        if (decoder.decodeBin(contexts[54 + bin0Off]) == 0)
+            return 0;
+        if (decoder.decodeBin(contexts[58]) == 0)
+            return 1;
+        int num = 2;
+        while (decoder.decodeBin(contexts[59]) == 1)
+            num++;
+        return num;
+    }
+
+    private Point getBlockCoord(Macroblock mb, int blkIdx, int subBlkIdx) {
+        if (mb instanceof MBlockInter8x8) {
+            Inter8x8Prediction prediction = ((MBlockInter8x8) mb).getPrediction();
+            return getSubBlockCoord(prediction.getSubMbTypes()[blkIdx], subBlkIdx, (blkIdx & 0x1) << 1,
+                    (blkIdx >> 1) << 1);
+        } else if (mb instanceof MBlockInter) {
+            switch (((MBlockInter) mb).getType()) {
+            case MB_16x8:
+                return new Point[] { new Point(0, 0), new Point(0, 2) }[blkIdx];
+            case MB_8x16:
+                return new Point[] { new Point(0, 0), new Point(2, 0) }[blkIdx];
+            case MB_16x16:
+                return new Point(0, 0);
+            }
+        }
+        return null;
+    }
+
+    private Point getSubBlockCoord(SubMBType subMBType, int subBlkIdx, int baseX, int baseY) {
+        switch (subMBType) {
+        case L0_8x8:
+            return new Point(baseX, baseY);
+        case L0_8x4:
+            return new Point[] { new Point(baseX, baseY), new Point(baseX, baseY + 1) }[subBlkIdx];
+        case L0_4x8:
+            return new Point[] { new Point(baseX, baseY), new Point(baseX + 1, baseY) }[subBlkIdx];
+        case L0_4x4:
+            return new Point[] { new Point(baseX, baseY), new Point(baseX + 1, baseY), new Point(baseX, baseY + 1),
+                    new Point(baseX + 1, baseY + 1) }[subBlkIdx];
+        }
+        return null;
+    }
+
+    private MVMatrix getMvs(Macroblock mb) {
+        if (mb instanceof MBlockInter8x8) {
+            Inter8x8Prediction prediction = ((MBlockInter8x8) mb).getPrediction();
+            return MBlockDecoderInter.calcFor8x8(prediction.getSubMbTypes(), prediction.getDecodedMVsL0());
+        } else if (mb instanceof MBlockInter) {
+            InterPrediction prediction = ((MBlockInter) mb).getPrediction();
+            switch (((MBlockInter) mb).getType()) {
+            case MB_16x8:
+                return MBlockDecoderInter.calcForInter16x8(prediction.getDecodedMVsL0());
+            case MB_8x16:
+                return MBlockDecoderInter.calcForInter8x16(prediction.getDecodedMVsL0());
+            case MB_16x16:
+                return MBlockDecoderInter.calcForInter16x16(prediction.getDecodedMVsL0());
+            }
+        }
+        return new MVMatrix(new Vector[16]);
     }
 
     public int readMBQpDelta() {

@@ -9,6 +9,10 @@ import org.jcodec.codecs.pcm.PCMDecoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
 import org.jcodec.common.io.Buffer;
+import org.jcodec.common.io.BufferedRAInputStream;
+import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.io.MappedRAInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.containers.mp4.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
@@ -82,5 +86,13 @@ public class JCodecUtil {
             return new S302MDecoder();
         else
             return null;
+    }
+
+    public static RAInputStream bufin(File f) throws IOException {
+        return new BufferedRAInputStream(new FileRAInputStream(f));
+    }
+
+    public static RAInputStream mapin(File f) throws IOException {
+        return new MappedRAInputStream(new FileRAInputStream(f), 16, 20);
     }
 }

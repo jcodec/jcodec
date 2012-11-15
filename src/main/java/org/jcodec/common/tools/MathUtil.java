@@ -50,6 +50,25 @@ public class MathUtil {
 
         return n;
     }
+    
+    public static int log2(long v) {
+        int n = 0;
+        if ((v & 0xffffffff00000000L) != 0) {
+            v >>= 32;
+            n += 32;
+        }
+        if ((v & 0xffff0000L) != 0) {
+            v >>= 16;
+            n += 16;
+        }
+        if ((v & 0xff00L) != 0) {
+            v >>= 8;
+            n += 8;
+        }
+        n += logTab[(int)v];
+
+        return n;
+    }
 
     public static int log2Slow(int val) {
         int i = 0;
@@ -95,5 +114,4 @@ public class MathUtil {
         n = n + 1;
         return n;
     }
-    
 }

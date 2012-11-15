@@ -1,6 +1,7 @@
 package org.jcodec.samples.transcode;
 
 import static java.lang.String.format;
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.common.model.ColorSpace.YUV420;
 import static org.jcodec.common.model.Rational.HALF;
@@ -23,10 +24,11 @@ import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.codecs.y4m.Y4MDecoder;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessFileOutputStream;
-import org.jcodec.common.io.RandomAccessOutputStream;
+import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.io.FileRAOutputStream;
+import org.jcodec.common.io.RAOutputStream;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
@@ -87,10 +89,10 @@ public class TranscodeMain {
 
         Y4MDecoder frames = new Y4MDecoder(y4m);
 
-        RandomAccessOutputStream sink = null;
+        RAOutputStream sink = null;
         MP4Muxer muxer = null;
         try {
-            sink = new RandomAccessFileOutputStream(new File(output));
+            sink = new FileRAOutputStream(new File(output));
             Rational fps = frames.getFps();
             if (fps == null) {
                 System.out.println("Can't get fps from the input, assuming 24");
@@ -130,7 +132,7 @@ public class TranscodeMain {
             return;
         }
 
-        MP4Demuxer rawDemuxer = new MP4Demuxer(new RandomAccessFileInputStream(file));
+        MP4Demuxer rawDemuxer = new MP4Demuxer(bufin(file));
         FramesTrack videoTrack = (FramesTrack) rawDemuxer.getVideoTrack();
         if (videoTrack == null) {
             System.out.println("Video track not found");
@@ -163,9 +165,9 @@ public class TranscodeMain {
             return;
         }
 
-        RandomAccessOutputStream sink = null;
+        RAOutputStream sink = null;
         try {
-            sink = new RandomAccessFileOutputStream(new File(out));
+            sink = new FileRAOutputStream(new File(out));
             MP4Muxer muxer = new MP4Muxer(sink);
             ProresEncoder encoder = new ProresEncoder(profile);
             RgbToYuv422 transform = new RgbToYuv422(2, 0);

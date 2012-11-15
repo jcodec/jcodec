@@ -1,17 +1,15 @@
 package org.jcodec.player.filters.http;
 
-import static org.apache.commons.lang.StringUtils.splitPreserveAllTokens;
-import static org.apache.commons.lang.StringUtils.trim;
 import static org.jcodec.player.filters.http.HttpUtils.privilegedExecute;
+import static org.jcodec.player.filters.http.MediaInfoParser.parseMediaInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.sound.sampled.AudioFormat;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -25,10 +23,7 @@ import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.util.EntityUtils;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Rational;
-import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.player.filters.MediaInfo;
 
@@ -51,15 +46,19 @@ public class Downloader {
         this.url = url;
     }
 
-    public synchronized Packet seekFrame(long pts, byte[] bfr) throws IOException {
+    public synchronized List<Packet> seekFrame(long pts, byte[] bfr) throws IOException {
         return extractFrame(bfr, new HttpGet(url + "?pts=" + pts));
     }
 
-    public synchronized Packet getFrame(int frameNo, byte[] bfr) throws IOException {
+    public synchronized List<Packet> getFrame(int frameNo, byte[] bfr) throws IOException {
         return extractFrame(bfr, new HttpGet(url + "/" + frameNo));
     }
 
-    private Packet extractFrame(byte[] bfr, HttpGet get) throws IOException, ClientProtocolException {
+    public synchronized List<Packet> getFrames(int frameS, int frameE, byte[] bfr) throws IOException {
+        return extractFrame(bfr, new HttpGet(url + "/" + frameS + ":" + frameE));
+    }
+
+    private List<Packet> extractFrame(byte[] bfr, HttpGet get) throws IOException, ClientProtocolException {
         get.getParams().setParameter(ClientPNames.COOKIE_POLICY, CookiePolicy.IGNORE_COOKIES);
         HttpResponse response = privilegedExecute(client, get);
         HttpEntity entity = response.getEntity();
@@ -79,11 +78,9 @@ public class Downloader {
         Header contentType = response.getLastHeader("Content-Type");
 
         if (contentType != null && contentType.getValue().startsWith("multipart/mixed")) {
-            List<Packet> result = parseMultipart(buffer, contentType.getValue());
-
-            return result.get(0);
+            return parseMultipart(buffer, contentType.getValue());
         } else {
-            return pkt(toMap(response.getAllHeaders()), buffer);
+            return Arrays.asList(new Packet[] { pkt(toMap(response.getAllHeaders()), buffer) });
         }
     }
 
@@ -112,54 +109,7 @@ public class Downloader {
                 EntityUtils.toByteArray(response.getEntity());
             return null;
         }
-        return parseHeaders(splitPreserveAllTokens(EntityUtils.toString(response.getEntity()), ';'));
-    }
-
-    private MediaInfo parseHeaders(String[] headers) throws IOException {
-        MediaInfo transcodedFrom = null;
-        for (int i = headers.length - 1; i >= 0; i--) {
-            transcodedFrom = parseHeader(splitPreserveAllTokens(headers[i], ":"), transcodedFrom);
-        }
-        return transcodedFrom;
-    }
-
-    private static MediaInfo parseHeader(String[] params, MediaInfo transcodedFrom) throws IOException {
-        for (int i = 0; i < params.length; i++)
-            params[i] = trim(params[i]);
-
-        if (params[0].equals("video")) {
-            return new MediaInfo.VideoInfo(params[4], Integer.parseInt(params[2]), Long.parseLong(params[1]),
-                    Long.parseLong(params[3]), params[5], transcodedFrom, parOr1x1(params[7]), dimOrNull(params[6]));
-        } else {
-            return new MediaInfo.AudioInfo(params[4], Integer.parseInt(params[2]), Long.parseLong(params[1]),
-                    Long.parseLong(params[3]), params[5], transcodedFrom, new AudioFormat(Integer.parseInt(params[6]),
-                            Integer.parseInt(params[7]) << 3, Integer.parseInt(params[8]), true,
-                            Boolean.parseBoolean(params[9])), Integer.parseInt(params[10]), parseLabels(params[11]));
-        }
-    }
-
-    private static ChannelLabel[] parseLabels(String string) {
-        String[] split = StringUtils.split(string, ",");
-        ChannelLabel[] labels = new ChannelLabel[split.length];
-        for (int i = 0; i < split.length; i++) {
-            if ("N/A".equalsIgnoreCase(split[i])) {
-                labels[i] = null;
-            } else {
-                labels[i] = ChannelLabel.valueOf(split[i]);
-            }
-        }
-        return labels;
-    }
-
-    private static Size dimOrNull(String value) {
-        String[] split = StringUtils.split(value, "x");
-
-        return new Size(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
-    }
-
-    private static Rational parOr1x1(String value) {
-        String[] split = StringUtils.split(value, "x");
-        return new Rational(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+        return parseMediaInfo(EntityUtils.toString(response.getEntity()));
     }
 
     private static TapeTimecode parseTimecode(String timecodeRaw) {

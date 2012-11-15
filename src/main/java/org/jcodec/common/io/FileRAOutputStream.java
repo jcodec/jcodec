@@ -14,14 +14,14 @@ import java.io.RandomAccessFile;
  * @author The JCodec project
  *
  */
-public class RandomAccessFileOutputStream extends RandomAccessOutputStream {
+public class FileRAOutputStream extends RAOutputStream {
 
     private RandomAccessFile raf;
     private DataOutputStream dos;
     private long start;
     private long count;
 
-    public RandomAccessFileOutputStream(File file) throws IOException {
+    public FileRAOutputStream(File file) throws IOException {
         raf = new RandomAccessFile(file, "rw");
         dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(raf.getFD())));
     }

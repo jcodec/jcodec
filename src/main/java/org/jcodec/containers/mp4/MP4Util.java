@@ -1,13 +1,16 @@
 package org.jcodec.containers.mp4;
 
+import static org.jcodec.common.JCodecUtil.bufin;
+
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessInputStream;
+import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.io.WindowInputStream;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -27,7 +30,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  */
 public class MP4Util {
 
-    public static MovieBox createRefMovie(RandomAccessInputStream input, String url) throws IOException {
+    public static MovieBox createRefMovie(RAInputStream input, String url) throws IOException {
         MovieBox movie = parseMovie(input);
 
         for (TrakBox trakBox : movie.getTracks()) {
@@ -36,7 +39,7 @@ public class MP4Util {
         return movie;
     }
 
-    public static MovieBox parseMovie(RandomAccessInputStream input) throws IOException {
+    public static MovieBox parseMovie(RAInputStream input) throws IOException {
         List<Atom> rootAtoms = getRootAtoms(input);
         for (Atom atom : rootAtoms) {
             if ("moov".equals(atom.getHeader().getFourcc())) {
@@ -46,7 +49,7 @@ public class MP4Util {
         return null;
     }
 
-    public static List<Atom> getRootAtoms(RandomAccessInputStream input) throws IOException {
+    public static List<Atom> getRootAtoms(RAInputStream input) throws IOException {
         input.seek(0);
         List<Atom> result = new ArrayList<Atom>();
         long off = 0;
@@ -80,12 +83,12 @@ public class MP4Util {
             return header;
         }
 
-        public Box parseBox(RandomAccessInputStream input) throws IOException {
+        public Box parseBox(RAInputStream input) throws IOException {
             input.seek(offset + header.headerSize());
             return NodeBox.parseBox(input, header, BoxFactory.getDefault());
         }
 
-        public void copy(RandomAccessInputStream input, DataOutput out) throws IOException {
+        public void copy(RAInputStream input, DataOutput out) throws IOException {
             input.seek(offset);
             WindowInputStream wnd = new WindowInputStream(input, header.getSize());
             byte[] buf = new byte[8096];
@@ -96,9 +99,9 @@ public class MP4Util {
     }
 
     public static MovieBox parseMovie(File source) throws IOException {
-        RandomAccessFileInputStream input = null;
+        RAInputStream input = null;
         try {
-            input = new RandomAccessFileInputStream(source);
+            input = bufin(source);
             return parseMovie(input);
         } finally {
             if (input != null)
@@ -107,9 +110,9 @@ public class MP4Util {
     }
 
     public static MovieBox createRefMovie(File source) throws IOException {
-        RandomAccessFileInputStream input = null;
+        RAInputStream input = null;
         try {
-            input = new RandomAccessFileInputStream(source);
+            input = bufin(source);
             return createRefMovie(input, "file://" + source.getCanonicalPath());
         } finally {
             if (input != null)

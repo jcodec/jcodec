@@ -1,6 +1,7 @@
 package org.jcodec.common.io;
 
 import static java.util.Arrays.copyOfRange;
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.io.File;
@@ -30,7 +31,7 @@ public class TestRandomAccessFileInputStream extends TestCase {
 
     @Test
     public void testStream() throws Exception {
-        RandomAccessFileInputStream is = new RandomAccessFileInputStream(tmp);
+        RAInputStream is = bufin(tmp);
         byte[] buf = new byte[10];
         assertEquals(exps[(int)is.getPos()] & 0xff, is.read());
         is.read(buf);
@@ -63,7 +64,7 @@ public class TestRandomAccessFileInputStream extends TestCase {
     
     @Test
     public void testAutoStream() throws Exception {
-        RandomAccessInputStream is = new AutoRandomAccessFileInputStream(tmp);
+        RAInputStream is = new AutoFileRAInputStream(tmp);
         byte[] buf = new byte[10];
         assertEquals(exps[(int)is.getPos()] & 0xff, is.read());
         is.close();

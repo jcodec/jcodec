@@ -1,5 +1,6 @@
 package org.jcodec.samples.mashup;
 
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 import static org.jcodec.samples.mashup.MovStitch2.doFrame;
 
@@ -14,10 +15,11 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.read.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.InBits;
 import org.jcodec.common.io.OutBits;
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessFileOutputStream;
+import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.io.FileRAOutputStream;
 import org.jcodec.containers.mp4.MP4Demuxer;
 import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
 import org.jcodec.containers.mp4.MP4DemuxerException;
@@ -48,8 +50,8 @@ public class MovChangePPS {
     }
 
     public static void changePPS(File in, File out) throws IOException, MP4DemuxerException, FileNotFoundException {
-        MP4Demuxer demuxer = new MP4Demuxer(new RandomAccessFileInputStream(in));
-        MP4Muxer muxer = new MP4Muxer(new RandomAccessFileOutputStream(out));
+        MP4Demuxer demuxer = new MP4Demuxer(bufin(in));
+        MP4Muxer muxer = new MP4Muxer(new FileRAOutputStream(out));
 
         DemuxerTrack videoTrack = demuxer.getVideoTrack();
         CompressedTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) videoTrack.getTimescale());

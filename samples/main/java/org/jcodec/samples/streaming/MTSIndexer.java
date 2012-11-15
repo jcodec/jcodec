@@ -2,8 +2,8 @@ package org.jcodec.samples.streaming;
 
 import static ch.lambdaj.Lambda.extract;
 import static ch.lambdaj.Lambda.on;
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.containers.mps.MPSDemuxer.videoStream;
-
 import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.io.File;
@@ -17,7 +17,7 @@ import org.apache.commons.io.IOUtils;
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessFileInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
@@ -38,20 +38,20 @@ import ch.lambdaj.Lambda;
  * 
  */
 public class MTSIndexer {
-    
+
     private File mtsFile;
     private MTSIndex index;
     private volatile boolean done;
-    
+
     public MTSIndexer(File mtsFile, MTSIndex index) {
         this.mtsFile = mtsFile;
         this.index = index;
     }
 
     public void index() throws IOException {
-        RandomAccessFileInputStream is = null;
+        RAInputStream is = null;
         try {
-            is = new RandomAccessFileInputStream(mtsFile);
+            is = bufin(mtsFile);
 
             TIntObjectHashMap<PESProgram> programs = new TIntObjectHashMap<PESProgram>();
             while (true) {
@@ -87,7 +87,8 @@ public class MTSIndexer {
         private long pesOffset = 0;
 
         private List<VideoFrameEntry> gop;
-        private GOPHeader prevGop;
+        private List<VideoFrameEntry> prevGop;
+        private GOPHeader prevGopHeader;
         private FrameEntry lastVideoFrame;
 
         public PESProgram(MTSIndex index) {
@@ -146,28 +147,32 @@ public class MTSIndexer {
             }
         }
 
-        private void videoFrame(MTSIndex index, long pesOffset, PESPacket pes, Buffer seqHeader, Buffer gopHeader,
-                Buffer pictureHeader) throws IOException {
+        private void videoFrame(MTSIndex index, long pesOffset, PESPacket pes, Buffer seqHeaderBuf,
+                Buffer gopHeaderBuf, Buffer pictureHeader) throws IOException {
 
             PictureHeader ph = PictureHeader.read(pictureHeader.from(4));
 
-            GOPHeader curGop = gopHeader == null ? null : GOPHeader.read(gopHeader.from(4));
+            GOPHeader gopHeader = gopHeaderBuf == null ? null : GOPHeader.read(gopHeaderBuf.from(4));
 
             if (ph.picture_coding_type == PictureHeader.IntraCoded) {
-                processGOP(gop, curGop, prevGop);
-                prevGop = curGop;
+                assignTimecodes(gop, gopHeader, prevGopHeader);
+                prevGopHeader = gopHeader;
+                prevGop = gop;
                 gop = new ArrayList<VideoFrameEntry>();
             }
 
             if (gop != null) {
-                VideoFrameEntry entry = index.addVideo(pes.streamId, pesOffset, pes.pts, 0, seqHeader, 0, 0,
-                        (short) ph.temporal_reference, (byte) ph.picture_coding_type);
-                gop.add(entry);
-                entry.gopId = gop.get(0).frameNo;
+                if (ph.picture_coding_type == PictureHeader.BiPredictiveCoded && gop.size() == 1 && prevGop != null) {
+                    prevGop.add(index.addVideo(pes.streamId, pesOffset, pes.pts, 0, seqHeaderBuf,
+                            prevGop.get(0).frameNo, 0, (short) ph.temporal_reference, (byte) ph.picture_coding_type));
+                } else {
+                    gop.add(index.addVideo(pes.streamId, pesOffset, pes.pts, 0, seqHeaderBuf, gop.size() > 0 ? gop.get(0).frameNo : -1, 0,
+                            (short) ph.temporal_reference, (byte) ph.picture_coding_type));
+                }
             }
         }
 
-        private void processGOP(List<VideoFrameEntry> gop, GOPHeader nextGop, GOPHeader prevGop) {
+        private void assignTimecodes(List<VideoFrameEntry> gop, GOPHeader nextGop, GOPHeader prevGop) {
             if (gop == null)
                 return;
 
@@ -212,7 +217,7 @@ public class MTSIndexer {
     public MTSIndex getIndex() {
         return index;
     }
-    
+
     public boolean isDone() {
         return done;
     }

@@ -1,6 +1,6 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.movtool.Remux.hidFile;
+import static org.jcodec.common.JCodecUtil.bufin;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
-import org.jcodec.common.io.RandomAccessFileInputStream;
+import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -63,9 +65,9 @@ public class Undo {
 
     private List<Atom> list(String fileName) throws IOException {
         ArrayList<Atom> result = new ArrayList<Atom>();
-        RandomAccessFileInputStream is = null;
+        RAInputStream is = null;
         try {
-            is = new RandomAccessFileInputStream(new File(fileName));
+            is = bufin(new File(fileName));
             int version = 0;
             for (Atom atom : MP4Util.getRootAtoms(is)) {
                 if ("free".equals(atom.getHeader().getFourcc()) && isMoov(is, atom)) {
@@ -82,7 +84,7 @@ public class Undo {
         return result;
     }
 
-    private boolean isMoov(RandomAccessFileInputStream is, Atom atom) throws IOException {
+    private boolean isMoov(RAInputStream is, Atom atom) throws IOException {
         is.seek(atom.getOffset() + atom.getHeader().headerSize());
         try {
             Box mov = NodeBox.parseBox(is, new Header("moov", atom.getHeader().getSize()), BoxFactory.getDefault());

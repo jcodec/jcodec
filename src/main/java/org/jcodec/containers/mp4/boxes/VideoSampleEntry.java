@@ -156,7 +156,7 @@ public class VideoSampleEntry extends SampleEntry {
 
         public MyFactory() {
             mappings.put(PixelAspectExt.fourcc(), PixelAspectExt.class);
-            mappings.put(AvcCBox.fourcc(), AvcCBox.class);
+//            mappings.put(AvcCBox.fourcc(), AvcCBox.class);
             mappings.put(ColorExtension.fourcc(), ColorExtension.class);
             mappings.put(GamaExtension.fourcc(), GamaExtension.class);
             mappings.put(CleanApertureExtension.fourcc(), CleanApertureExtension.class);

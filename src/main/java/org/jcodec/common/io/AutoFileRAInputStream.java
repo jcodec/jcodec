@@ -1,7 +1,11 @@
 package org.jcodec.common.io;
 
+import static org.jcodec.common.JCodecUtil.bufin;
+
 import java.io.File;
 import java.io.IOException;
+
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -11,16 +15,16 @@ import java.io.IOException;
  * 
  * @author The JCodec project
  */
-public class AutoRandomAccessFileInputStream extends RandomAccessInputStream implements AutoResource {
+public class AutoFileRAInputStream extends RAInputStream implements AutoResource {
 
     private static final long THRESHOLD = 5000; // five seconds
     private File file;
-    private RandomAccessFileInputStream stream;
+    private RAInputStream stream;
     private long accessTime;
     private long curTime;
     private long savedPos;
 
-    public AutoRandomAccessFileInputStream(File file) throws IOException {
+    public AutoFileRAInputStream(File file) throws IOException {
         this.file = file;
         this.curTime = System.currentTimeMillis();
         AutoPool.getInstance().add(this);
@@ -36,7 +40,7 @@ public class AutoRandomAccessFileInputStream extends RandomAccessInputStream imp
         accessTime = curTime;
         if (stream == null) {
 //            System.out.println("Re-opening stream");
-            stream = new RandomAccessFileInputStream(file);
+            stream = bufin(file);
             if (savedPos != 0)
                 stream.seek(savedPos);
         }

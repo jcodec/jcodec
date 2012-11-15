@@ -108,10 +108,10 @@ public class PlayerMain implements KeyListener {
                 player.pause();
         } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
             RationalLarge pos = player.getPos();
-            player.seek(new RationalLarge(pos.getNum() - pos.getDen() * 100, pos.getDen()));
+            player.seek(new RationalLarge(pos.getNum() - pos.getDen() * 15, pos.getDen()));
         } else if (e.getKeyCode() == KeyEvent.VK_UP) {
             RationalLarge pos = player.getPos();
-            player.seek(new RationalLarge(pos.getNum() + pos.getDen() * 100, pos.getDen()));
+            player.seek(new RationalLarge(pos.getNum() + pos.getDen() * 15, pos.getDen()));
         } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             // if (player.getStatus() != Player.Status.PAUSED) {
             // player.pause();

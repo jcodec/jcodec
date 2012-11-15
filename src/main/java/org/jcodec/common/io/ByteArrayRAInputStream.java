@@ -9,18 +9,18 @@ import java.io.IOException;
  * @author The JCodec project
  * 
  */
-public class RandomAccessByteArrayInputStream extends RandomAccessInputStream {
+public class ByteArrayRAInputStream extends RAInputStream {
 
     private byte[] bytes;
     private int pos;
 
-    public RandomAccessByteArrayInputStream(byte[] bytes) {
+    public ByteArrayRAInputStream(byte[] bytes) {
         this.bytes = bytes;
     }
 
     @Override
     public int read() throws IOException {
-        return pos < bytes.length ? bytes[pos++] & 0xff : -1;
+        return pos < bytes.length ? (bytes[pos++] & 0xff) : -1;
     }
 
     @Override
@@ -34,7 +34,7 @@ public class RandomAccessByteArrayInputStream extends RandomAccessInputStream {
         System.arraycopy(bytes, pos, buf, off, toRead);
         pos += toRead;
 
-        return pos == bytes.length ? -1 : toRead;
+        return pos == bytes.length && toRead == 0 ? -1 : toRead;
     }
 
     @Override
@@ -46,7 +46,7 @@ public class RandomAccessByteArrayInputStream extends RandomAccessInputStream {
 
     @Override
     public void seek(long where) throws IOException {
-        if (pos < bytes.length)
+        if (where < bytes.length)
             pos = (int) where;
     }
 

@@ -54,6 +54,13 @@ public interface Adapter {
          * @throws IOException
          */
         Packet[] getGOP(int gopId) throws IOException;
+
+        /**
+         * Returns GOP id by frame number
+         * 
+         * @return
+         */
+        int gopId(int frameNo);
     }
 
     public interface AudioAdapterTrack extends AdapterTrack {

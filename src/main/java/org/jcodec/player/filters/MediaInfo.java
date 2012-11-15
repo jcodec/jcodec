@@ -41,6 +41,12 @@ public class MediaInfo implements Serializable {
             this.dim = dim;
         }
 
+        public VideoInfo(MediaInfo mi, Rational par, Size dim) {
+            super(mi);
+            this.par = par;
+            this.dim = dim;
+        }
+
         public Rational getPAR() {
             return par;
         }
@@ -81,6 +87,13 @@ public class MediaInfo implements Serializable {
         public AudioInfo(String fourcc, int timescale, long duration, long nFrames, String name,
                 MediaInfo transcodedFrom, AudioFormat af, int framesPerPacket, ChannelLabel[] labels) {
             super(fourcc, timescale, duration, nFrames, name, transcodedFrom);
+            this.af = af;
+            this.framesPerPacket = framesPerPacket;
+            this.labels = labels;
+        }
+
+        public AudioInfo(MediaInfo mi, AudioFormat af, int framesPerPacket, ChannelLabel[] labels) {
+            super(mi);
             this.af = af;
             this.framesPerPacket = framesPerPacket;
             this.labels = labels;
@@ -127,6 +140,15 @@ public class MediaInfo implements Serializable {
         this.nFrames = nFrames;
         this.name = name;
         this.transcodedFrom = transcodedFrom;
+    }
+
+    public MediaInfo(MediaInfo mi) {
+        this.fourcc = mi.fourcc;
+        this.timescale = mi.timescale;
+        this.duration = mi.duration;
+        this.nFrames = mi.nFrames;
+        this.name = mi.name;
+        this.transcodedFrom = mi.transcodedFrom;
     }
 
     public String getFourcc() {
@@ -177,5 +199,9 @@ public class MediaInfo implements Serializable {
         if (timescale != other.timescale)
             return false;
         return true;
+    }
+
+    public void setTranscodedFrom(MediaInfo transcodedFrom) {
+        this.transcodedFrom = transcodedFrom;
     }
 }

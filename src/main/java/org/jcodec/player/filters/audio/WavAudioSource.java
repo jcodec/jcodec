@@ -1,5 +1,7 @@
 package org.jcodec.player.filters.audio;
 
+import static org.jcodec.common.JCodecUtil.bufin;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -9,8 +11,7 @@ import javax.sound.sampled.AudioFormat;
 import org.jcodec.codecs.wav.StringReader;
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.player.filters.MediaInfo;
@@ -26,7 +27,7 @@ public class WavAudioSource implements AudioSource {
 
     private static final int FRAMES_PER_PACKET = 2048;
     private WavHeader header;
-    private RandomAccessInputStream src;
+    private RAInputStream src;
     private int frameSize;
     private AudioFormat format;
     private long headerSize;
@@ -34,7 +35,7 @@ public class WavAudioSource implements AudioSource {
     public WavAudioSource(File src) throws IOException {
         header = WavHeader.read(src);
         headerSize = src.length() - header.dataSize;
-        this.src = new RandomAccessFileInputStream(src);
+        this.src = bufin(src);
         this.src.seek(header.dataOffset);
         frameSize = header.fmt.numChannels * (header.fmt.bitsPerSample >> 3);
     }

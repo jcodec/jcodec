@@ -1,7 +1,7 @@
 package org.jcodec.samples.streaming;
 
-import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.BiPredictiveCoded;
 import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.IntraCoded;
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.containers.mps.MPSDemuxer.mediaStream;
 import static org.jcodec.containers.mps.MPSDemuxer.videoStream;
 
@@ -16,7 +16,7 @@ import junit.framework.Assert;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessFileInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Packet;
@@ -75,11 +75,11 @@ public class MTSAdapter implements Adapter {
 
     public class AudioAdapterTrack implements Adapter.AudioAdapterTrack {
         protected int sid;
-        protected RandomAccessFileInputStream is;
+        protected RAInputStream is;
 
         public AudioAdapterTrack(int sid) throws IOException {
             this.sid = sid;
-            is = new RandomAccessFileInputStream(mtsFile);
+            is = bufin(mtsFile);
             is.seek(index.frame(sid, 0).dataOffset);
         }
 
@@ -127,8 +127,8 @@ public class MTSAdapter implements Adapter {
             int frames = index.getNumFrames(sid);
             FrameEntry e = index.frame(sid, frames - 1);
             long duration = e.pts;
-            return new MediaInfo.AudioInfo("s302", 90000, duration, frames, name(decoded.getFormat().getChannels()), null,
-                    decoded.getFormat(), decoded.getNFrames(), labels(decoded.getFormat().getChannels()));
+            return new MediaInfo.AudioInfo("s302", 90000, duration, frames, name(decoded.getFormat().getChannels()),
+                    null, decoded.getFormat(), decoded.getNFrames(), labels(decoded.getFormat().getChannels()));
         }
 
         private String name(int channels) {
@@ -181,11 +181,11 @@ public class MTSAdapter implements Adapter {
 
     public class VideoAdapterTrack implements Adapter.VideoAdapterTrack {
         protected int sid;
-        protected RandomAccessFileInputStream is;
+        protected RAInputStream is;
 
         public VideoAdapterTrack(int sid) throws IOException {
             this.sid = sid;
-            is = new RandomAccessFileInputStream(mtsFile);
+            is = bufin(mtsFile);
             is.seek(index.frame(sid, 0).dataOffset);
         }
 
@@ -203,31 +203,32 @@ public class MTSAdapter implements Adapter {
             return e == null ? null : frames(gop((VideoFrameEntry) e));
         }
 
+        @Override
+        public int gopId(int frameNo) {
+            return ((VideoFrameEntry) index.frame(sid, frameNo)).gopId;
+        }
+
         private List<VideoFrameEntry> gop(VideoFrameEntry cur) throws IOException {
             List<VideoFrameEntry> result = new ArrayList<VideoFrameEntry>();
 
-            int i, refs = 0;
-            VideoFrameEntry fe;
-            for (i = cur.gopId; (fe = (VideoFrameEntry) index.frame(sid, i)) != null && fe.gopId == cur.gopId; i++) {
-                if (fe.frameType != BiPredictiveCoded)
-                    refs++;
-                else if (refs < 2) {
-                    if (fe.frameNo != cur.frameNo)
-                        continue;
-                    else {
-                        FrameEntry frame = index.frame(sid, cur.gopId - 1);
-                        if (frame != null)
-                            return gop((VideoFrameEntry) frame);
+            int nextGop = Integer.MAX_VALUE;
+            boolean ngAdded = false;
+            for (int i = cur.gopId;; i++) {
+                VideoFrameEntry fe = (VideoFrameEntry) index.frame(sid, i);
+                if (fe == null)
+                    break;
+                if (fe.gopId == cur.gopId) {
+                    if (i > nextGop && !ngAdded) {
+                        result.add((VideoFrameEntry) index.frame(sid, nextGop));
+                        ngAdded = true;
                     }
+                    result.add(fe);
                 }
-                result.add(fe);
-            }
-            if (fe != null) {
-                result.add(fe);
-                i++;
-            }
-            for (; (fe = (VideoFrameEntry) index.frame(sid, i)) != null && fe.frameType == BiPredictiveCoded; i++) {
-                result.add(fe);
+                if (fe.gopId > nextGop)
+                    break;
+                if (fe.gopId > cur.gopId && nextGop != fe.gopId) {
+                    nextGop = fe.gopId;
+                }
             }
 
             return result;

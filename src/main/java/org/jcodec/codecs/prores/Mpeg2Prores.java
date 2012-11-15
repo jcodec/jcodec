@@ -1,5 +1,6 @@
 package org.jcodec.codecs.prores;
 
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.common.model.ColorSpace.YUV422_10;
 
 import java.io.File;
@@ -14,8 +15,8 @@ import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.common.dct.DCTRef;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessFileOutputStream;
+import org.jcodec.common.io.FileRAOutputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
@@ -279,9 +280,9 @@ public class Mpeg2Prores extends MPEGDecoder {
     public static void main(String[] args) throws Exception {
         File src = new File(args[0]);
         for (long i = 0; i < 9720000000L; i += 100) {
-            RandomAccessFileInputStream input = null;
+            RAInputStream input = null;
             try {
-                input = new RandomAccessFileInputStream(src);
+                input = bufin(src);
                 MPSDemuxer mtsDemuxer = new MPSDemuxer(input);
                 System.out.print("Seeking to " + i + ": ");
                 System.out.println(mtsDemuxer.seek(i));
@@ -294,7 +295,7 @@ public class Mpeg2Prores extends MPEGDecoder {
     public static void main1(String[] args) throws Exception {
         File src = new File(args[0]);
         // MTSDemuxer mtsDemuxer = new MTSDemuxer(src);
-        MPSDemuxer mtsDemuxer = new MPSDemuxer(new RandomAccessFileInputStream(src));
+        MPSDemuxer mtsDemuxer = new MPSDemuxer(bufin(src));
         System.out.println(mtsDemuxer.seek(90010));
 
         PES pes = mtsDemuxer.getVideoTracks().get(0);
@@ -303,7 +304,7 @@ public class Mpeg2Prores extends MPEGDecoder {
         SequenceHeader sh = pes.getSequenceHeader();
         Mpeg2Prores decoder = new Mpeg2Prores(sh, pes.getGroupHeader(), Profile.PROXY);
         long t1 = System.currentTimeMillis();
-        RandomAccessFileOutputStream output = new RandomAccessFileOutputStream(new File(args[1]));
+        FileRAOutputStream output = new FileRAOutputStream(new File(args[1]));
         MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
         CompressedTrack vt = muxer.addVideoTrack("apco", new Size(sh.horizontal_size, sh.vertical_size), "JCodec", 25);
         for (int i = 0; frame != null && i < 1000; i++) {

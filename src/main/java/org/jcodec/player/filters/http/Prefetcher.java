@@ -1,6 +1,7 @@
 package org.jcodec.player.filters.http;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.jcodec.common.model.Packet;
 
@@ -23,11 +24,18 @@ public class Prefetcher extends Thread {
     private int fetchSpeed;
     private Downloader downloader;
 
+    private int batchSize;
+
     public Prefetcher(FrameCache cache, Downloader downloader, int frame, int fetchSpeed) {
+        this(cache, downloader, frame, fetchSpeed, 100);
+    }
+
+    public Prefetcher(FrameCache cache, Downloader downloader, int frame, int fetchSpeed, int batchSize) {
         this.cache = cache;
         this.downloader = downloader;
         this.lastFrame = frame;
         this.fetchSpeed = fetchSpeed;
+        this.batchSize = batchSize;
     }
 
     private void oneCycle() throws IOException {
@@ -36,18 +44,20 @@ public class Prefetcher extends Thread {
                 lastFrame++;
                 return;
             }
-            Packet packet = downloader.getFrame(lastFrame + 1, null);
+            List<Packet> frames = downloader.getFrames(lastFrame + 1, lastFrame + 1 + batchSize, null);
 
-            if (packet == null) {
+            if (frames == null) {
                 cancelled = true;
                 return;
             }
 
-            cache.addFrame(packet);
+            for (Packet packet : frames) {
+                cache.addFrame(packet);
+                lastFrame = (int) packet.getFrameNo();
+                pktCounter++;
+            }
 
-            lastFrame = (int) packet.getFrameNo();
-
-            if (++pktCounter >= 100) {
+            if (pktCounter >= 100) {
                 Thread.sleep(Math.max((1000 * pktCounter) / fetchSpeed - (System.currentTimeMillis() - intervalStart),
                         0));
                 intervalStart = System.currentTimeMillis();

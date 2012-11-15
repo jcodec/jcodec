@@ -63,7 +63,7 @@ public class NALUnitWriter implements ElementaryStreamWriter {
         WritableTransportUnit unit = new WritableTransportUnit() {
 
             public void getContents(ByteBuffer newContents) {
-                throw new UnsupportedOperationException("Stan");
+                throw new UnsupportedOperationException("Unsupported");
             }
 
             public NALUnit getNu() {

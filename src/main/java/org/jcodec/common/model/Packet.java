@@ -94,4 +94,8 @@ public class Packet {
     public RationalLarge getPtsR() {
         return RationalLarge.R(pts, timescale);
     }
+
+    public void setData(Buffer data) {
+        this.data = data;
+    }
 }

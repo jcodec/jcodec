@@ -17,13 +17,13 @@ import org.apache.commons.io.IOUtils;
  * @author The JCodec project
  * 
  */
-public class HttpInput extends RandomAccessInputStream {
+public class HttpRAInputStream extends RAInputStream {
 	private URL url;
 	private InputStream is;
 	private long length;
 	private long pos;
 
-	public HttpInput(URL url) throws IOException {
+	public HttpRAInputStream(URL url) throws IOException {
 		this.url = url;
 		URLConnection connection = url.openConnection();
 		is = connection.getInputStream();

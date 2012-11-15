@@ -18,8 +18,8 @@ import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessFileOutputStream;
-import org.jcodec.common.io.RandomAccessOutputStream;
+import org.jcodec.common.io.FileRAOutputStream;
+import org.jcodec.common.io.RAOutputStream;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Muxer;
 import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
@@ -48,7 +48,7 @@ public class AVCMP4Mux {
         List<SeqParameterSet> spsList = new ArrayList<SeqParameterSet>();
         List<PictureParameterSet> ppsList = new ArrayList<PictureParameterSet>();
 
-        RandomAccessOutputStream file = new RandomAccessFileOutputStream(out);
+        RAOutputStream file = new FileRAOutputStream(out);
         MP4Muxer muxer = new MP4Muxer(file);
         CompressedTrack track = muxer.addTrackForCompressed(TrackType.VIDEO, 25);
 

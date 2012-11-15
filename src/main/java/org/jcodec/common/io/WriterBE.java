@@ -24,17 +24,17 @@ public class WriterBE {
                 (byte) (code & 0xff) };
     }
 
-    public static void writeLong(RandomAccessFileOutputStream ros, long pts) {
+    public static void writeLong(FileRAOutputStream ros, long pts) {
         // TODO Auto-generated method stub
         
     }
 
-    public static void writeInt(RandomAccessFileOutputStream ros, long duration) {
+    public static void writeInt(FileRAOutputStream ros, long duration) {
         // TODO Auto-generated method stub
         
     }
 
-    public static void writeByte(RandomAccessFileOutputStream ros, int i) {
+    public static void writeByte(FileRAOutputStream ros, int i) {
         // TODO Auto-generated method stub
         
     }

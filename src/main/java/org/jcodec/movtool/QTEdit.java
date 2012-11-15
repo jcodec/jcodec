@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.common.io.RandomAccessInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -36,11 +36,11 @@ public class QTEdit {
          * 
          * @param movie
          */
-        void apply(MovieBox movie, RandomAccessInputStream[][] refs) throws IOException;
+        void apply(MovieBox movie, RAInputStream[][] refs) throws IOException;
     }
 
     public static abstract class BaseCommand implements Command {
-        public void apply(MovieBox movie, RandomAccessInputStream[][] refs) {
+        public void apply(MovieBox movie, RAInputStream[][] refs) {
             apply(movie);
         }
 
@@ -89,13 +89,13 @@ public class QTEdit {
 
         MovieBox movie = MP4Util.createRefMovie(input);
 
-        final RandomAccessInputStream[][] inputs = new Flattern().getInputs(movie);
+        final RAInputStream[][] inputs = new Flattern().getInputs(movie);
 
         applyCommands(movie, inputs, commands);
 
         File out = new File(input.getParentFile(), "." + input.getName());
         new Flattern() {
-            protected RandomAccessInputStream[][] getInputs(MovieBox movie) throws IOException {
+            protected RAInputStream[][] getInputs(MovieBox movie) throws IOException {
                 return inputs;
             }
         }.flattern(movie, out);
@@ -103,7 +103,7 @@ public class QTEdit {
         out.renameTo(input);
     }
 
-    private static void applyCommands(MovieBox mov, RandomAccessInputStream[][] refs, List<Command> commands) throws IOException {
+    private static void applyCommands(MovieBox mov, RAInputStream[][] refs, List<Command> commands) throws IOException {
         for (Command command : commands) {
             command.apply(mov, refs);
         }

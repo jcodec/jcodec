@@ -1,13 +1,16 @@
 package org.jcodec.movtool;
 
+import static org.jcodec.common.JCodecUtil.bufin;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.List;
 
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessInputStream;
+import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.ChunkWriter;
@@ -41,9 +44,9 @@ public class Flattern {
         }
         File outFile = new File(args[1]);
         outFile.delete();
-        RandomAccessFileInputStream input = null;
+        RAInputStream input = null;
         try {
-            input = new RandomAccessFileInputStream(new File(args[0]));
+            input = bufin(new File(args[0]));
             MovieBox movie = MP4Util.parseMovie(input);
             new Flattern().flattern(movie, outFile);
         } finally {
@@ -67,7 +70,7 @@ public class Flattern {
         long mdatOff = out.getFilePointer();
         new Header("mdat", 0x100000001L).write(out);
 
-        RandomAccessInputStream[][] inputs = getInputs(movie);
+        RAInputStream[][] inputs = getInputs(movie);
 
         TrakBox[] tracks = movie.getTracks();
         ChunkReader[] readers = new ChunkReader[tracks.length];
@@ -119,17 +122,17 @@ public class Flattern {
         out.writeLong(mdatSize);
     }
 
-    protected RandomAccessInputStream[][] getInputs(MovieBox movie) throws IOException {
+    protected RAInputStream[][] getInputs(MovieBox movie) throws IOException {
         TrakBox[] tracks = movie.getTracks();
-        RandomAccessInputStream[][] result = new RandomAccessInputStream[tracks.length][];
+        RAInputStream[][] result = new RAInputStream[tracks.length][];
         for (int i = 0; i < tracks.length; i++) {
             DataRefBox drefs = NodeBox.findFirst(tracks[i], DataRefBox.class, "mdia", "minf", "dinf", "dref");
             if (drefs == null) {
                 throw new RuntimeException("No data references");
             }
             List<Box> entries = drefs.getBoxes();
-            RandomAccessInputStream[] e = new RandomAccessFileInputStream[entries.size()];
-            RandomAccessInputStream[] inputs = new RandomAccessInputStream[entries.size()];
+            RAInputStream[] e = new RAInputStream[entries.size()];
+            RAInputStream[] inputs = new RAInputStream[entries.size()];
             for (int j = 0; j < e.length; j++) {
                 inputs[j] = Flattern.resolveDataRef(entries.get(j));
             }
@@ -148,17 +151,17 @@ public class Flattern {
         return sum;
     }
 
-    public static RandomAccessInputStream resolveDataRef(Box box) throws IOException {
+    public static RAInputStream resolveDataRef(Box box) throws IOException {
         if (box instanceof UrlBox) {
             String url = ((UrlBox) box).getUrl();
             if (!url.startsWith("file://"))
                 throw new RuntimeException("Only file:// urls are supported in data reference");
-            return new RandomAccessFileInputStream(new File(url.substring(7)));
+            return bufin(new File(url.substring(7)));
         } else if (box instanceof AliasBox) {
             String uxPath = ((AliasBox) box).getUnixPath();
             if (uxPath == null)
                 throw new RuntimeException("Could not resolve alias");
-            return new RandomAccessFileInputStream(new File(uxPath));
+            return bufin(new File(uxPath));
         } else {
             throw new RuntimeException(box.getHeader().getFourcc() + " dataref type is not supported");
         }

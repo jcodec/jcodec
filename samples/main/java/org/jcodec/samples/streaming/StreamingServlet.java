@@ -1,7 +1,5 @@
 package org.jcodec.samples.streaming;
 
-import static org.apache.commons.lang.StringUtils.join;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -14,17 +12,19 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.sound.sampled.AudioFormat;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.util.MultiPartOutputStream;
-import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.player.filters.MediaInfo;
+import org.jcodec.player.filters.MediaInfo.VideoInfo;
 import org.jcodec.samples.streaming.Adapter.AdapterTrack;
 import org.jcodec.samples.streaming.Adapter.AudioAdapterTrack;
 import org.jcodec.samples.streaming.Adapter.VideoAdapterTrack;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -48,12 +48,20 @@ public class StreamingServlet extends HttpServlet {
         String[] path = StringUtils.split(req.getPathInfo(), "/");
 
         File file = null;
-        Integer track = null, frame = null;
+        Integer track = null, frameS = null, frameE = null;
         for (int i = path.length - 1; i >= 0; i--) {
             File test = new File(base, StringUtils.join(path, "/", 0, i + 1));
             if (test.exists() && !test.isDirectory()) {
                 track = i < path.length - 1 ? Integer.parseInt(path[i + 1]) : null;
-                frame = i < path.length - 2 ? Integer.parseInt(path[i + 2]) : null;
+                if (i < path.length - 2) {
+                    String[] split = StringUtils.split(path[i + 2], ':');
+                    if (split.length == 1) {
+                        frameS = frameE = Integer.parseInt(split[0]);
+                    } else {
+                        frameS = Integer.parseInt(split[0]);
+                        frameE = Integer.parseInt(split[1]);
+                    }
+                }
                 file = test;
                 break;
             }
@@ -62,13 +70,13 @@ public class StreamingServlet extends HttpServlet {
         Adapter adapter = getAdapter(file);
 
         try {
-            if (frame != null) {
-                frame(adapter, track, frame, resp);
+            if (frameS != null) {
+                frame(adapter, track, frameS, frameE, resp);
             } else if (track != null) {
                 if (req.getParameter("pts") != null)
                     search(adapter, track, Long.parseLong(req.getParameter("pts")), resp);
                 else
-                    info(adapter, track, resp);
+                    info(adapter, resp, track);
             } else {
                 info(adapter, resp);
             }
@@ -97,42 +105,82 @@ public class StreamingServlet extends HttpServlet {
         if (frameNo == -1)
             resp.sendError(404);
         else
-            frame(demuxer, trackNo, frameNo, resp);
+            frame(demuxer, trackNo, frameNo, frameNo, resp);
     }
 
-    protected void frame(Adapter demuxer, int trackNo, int frame, HttpServletResponse resp) throws IOException {
+    protected void frame(Adapter demuxer, int trackNo, int frameS, int frameE, HttpServletResponse resp)
+            throws IOException {
         AdapterTrack track = demuxer.getTrack(trackNo);
 
         if (track instanceof VideoAdapterTrack) {
-            outGOP(resp, ((VideoAdapterTrack) track).getGOP(frame));
+            outGOPs(resp, (VideoAdapterTrack) track, frameS, frameE);
         } else {
-            outFrame(resp, ((AudioAdapterTrack) track).getFrame(frame));
+            outFrames(resp, (AudioAdapterTrack) track, frameS, frameE);
         }
     }
 
-    private void outFrame(HttpServletResponse resp, Packet packet) throws IOException {
+    private void outFrames(HttpServletResponse resp, AudioAdapterTrack track, int frameS, int frameE)
+            throws IOException {
+        Packet packet = ((AudioAdapterTrack) track).getFrame(frameS++);
         if (packet == null) {
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
-        resp.addHeader("JCodec-PTS", String.valueOf(packet.getPts()));
-        resp.addHeader("JCodec-Duration", String.valueOf(packet.getDuration()));
-        resp.addHeader("JCodec-FrameNo", String.valueOf(packet.getFrameNo()));
-        resp.setContentType("application/octet-stream");
-
-        packet.getData().writeTo(resp.getOutputStream());
-    }
-
-    private void outGOP(HttpServletResponse resp, Packet[] packets) throws IOException {
-        if (packets == null) {
             resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
         MultiPartOutputStream out = new MultiPartOutputStream(resp.getOutputStream());
         resp.setContentType("multipart/mixed; boundary=" + out.getBoundary());
 
-        for (int i = 0; i < packets.length; i++) {
-            Packet packet = packets[i];
+        outFrame(out, packet);
+        while (frameS < frameE) {
+            packet = ((AudioAdapterTrack) track).getFrame(frameS++);
+            outFrame(out, packet);
+        }
+
+        out.close();
+    }
+
+    private void outFrame(MultiPartOutputStream out, Packet packet) throws IOException {
+        List<String> headers = new ArrayList<String>();
+        headers.add("JCodec-PTS: " + packet.getPts());
+        headers.add("JCodec-Duration: " + packet.getDuration());
+        headers.add("JCodec-FrameNo: " + packet.getFrameNo());
+        headers.add(String.format("Content-Disposition: attachment; filename=frame%08d.raw", packet.getFrameNo()));
+
+        out.startPart("application/octet-stream", headers.toArray(new String[0]));
+
+        packet.getData().writeTo(out);
+    }
+
+    private void outGOPs(HttpServletResponse resp, VideoAdapterTrack track, int frameS, int frameE) throws IOException {
+        Packet[] gop = ((VideoAdapterTrack) track).getGOP(frameS);
+        if (gop == null) {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        MultiPartOutputStream out = new MultiPartOutputStream(resp.getOutputStream());
+        resp.setContentType("multipart/mixed; boundary=" + out.getBoundary());
+        
+        outGOP(gop, out);
+        frameS = nextGop(track, frameS);
+
+        while (frameS < frameE) {
+            gop = ((VideoAdapterTrack) track).getGOP(frameS);
+            outGOP(gop, out);
+            frameS = nextGop(track, frameS);
+        }
+
+        out.close();
+    }
+
+    private int nextGop(VideoAdapterTrack track, int frameS) {
+        int curGop = track.gopId(frameS);
+        while (curGop == track.gopId(frameS))
+            frameS++;
+        return frameS;
+    }
+
+    private void outGOP(Packet[] gop, MultiPartOutputStream out) throws IOException {
+        for (int i = 0; i < gop.length; i++) {
+            Packet packet = gop[i];
 
             List<String> headers = new ArrayList<String>();
             headers.add("JCodec-PTS: " + packet.getPts());
@@ -148,7 +196,6 @@ public class StreamingServlet extends HttpServlet {
 
             packet.getData().writeTo(out);
         }
-        out.close();
     }
 
     private String formatTapeTimecode(TapeTimecode tapeTimecode) {
@@ -157,75 +204,29 @@ public class StreamingServlet extends HttpServlet {
                 + String.format("%02d", tapeTimecode.getFrame());
     }
 
-    protected void info(Adapter demuxer, int trackNo, HttpServletResponse resp) throws IOException {
-        PrintStream out = new PrintStream(resp.getOutputStream());
-        AdapterTrack track = demuxer.getTracks().get(trackNo);
-        out.println(mediaInfo2String(track.getMediaInfo()));
-    }
-
     protected void info(Adapter demuxer, HttpServletResponse resp) throws IOException {
         PrintStream out = new PrintStream(resp.getOutputStream());
-        out.println(demuxer.getTracks().size());
-    }
-
-    protected String mediaInfo2String(MediaInfo info) {
-        StringBuilder bldr = new StringBuilder();
-
-        while (info != null) {
-            if (info instanceof MediaInfo.VideoInfo)
-                video(bldr, (MediaInfo.VideoInfo) info);
-            else if (info instanceof MediaInfo.AudioInfo)
-                audio(bldr, (MediaInfo.AudioInfo) info);
-            else
-                throw new RuntimeException("Track should be video or audio");
-            info = info.getTranscodedFrom();
-            if (info != null)
-                bldr.append(";");
+        out.println("[");
+        List<AdapterTrack> tracks = demuxer.getTracks();
+        for (int i = 0; i < tracks.size(); i++) {
+            MediaInfo mediaInfo = tracks.get(i).getMediaInfo();
+            trackInfo(out, mediaInfo, i);
+            out.print(",");
         }
-        return bldr.toString();
+        out.println("]");
     }
 
-    private void audio(StringBuilder bldr, MediaInfo.AudioInfo info) {
-        bldr.append("audio:");
-        bldr.append(media(info));
-
-        AudioFormat format = info.getFormat();
-
-        bldr.append(String.valueOf((int) format.getSampleRate()));
-        bldr.append(':');
-        bldr.append(String.valueOf(format.getSampleSizeInBits() >> 3));
-        bldr.append(':');
-        bldr.append(String.valueOf(format.getChannels()));
-        bldr.append(':');
-        bldr.append(String.valueOf(format.isBigEndian()));
-        bldr.append(':');
-        bldr.append(info.getFramesPerPacket());
-        bldr.append(':');
-        bldr.append(labels(info));
+    private void trackInfo(PrintStream out, MediaInfo mediaInfo, int ind) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        out.println("{");
+        out.println("\"id\": \"" + ind + "\",");
+        out.println("\"type\": \"" + (mediaInfo instanceof VideoInfo ? "video" : "audio") + "\",");
+        out.print("\"info\":");
+        out.println(gson.toJson(mediaInfo));
+        out.println("}");
     }
 
-    private String labels(MediaInfo.AudioInfo info) {
-        ChannelLabel[] labels = info.getLabels();
-        String[] str = new String[labels.length];
-        for (int i = 0; i < labels.length; i++) {
-            ChannelLabel label = labels[i];
-            str[i] = label == null ? "N/A" : label.toString();
-        }
-
-        return join(str, ",");
-    }
-
-    private String media(MediaInfo info) {
-        return info.getDuration() + ":" + info.getTimescale() + ":" + info.getNFrames() + ":" + info.getFourcc() + ":"
-                + (info.getName() == null ? "" : info.getName()) + ":";
-    }
-
-    private void video(StringBuilder bldr, MediaInfo.VideoInfo v) {
-        bldr.append("video:");
-        bldr.append(media(v));
-
-        bldr.append(v.getDim().getWidth() + "x" + v.getDim().getHeight());
-        bldr.append(':');
-        bldr.append(v.getPAR().getNum() + "x" + v.getPAR().getDen());
+    protected void info(Adapter adapter, HttpServletResponse resp, int trackNo) throws IOException {
+        trackInfo(new PrintStream(resp.getOutputStream()), adapter.getTrack(trackNo).getMediaInfo(), trackNo);
     }
 }

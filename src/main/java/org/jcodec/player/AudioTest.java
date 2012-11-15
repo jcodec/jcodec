@@ -11,7 +11,7 @@ import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-import org.jcodec.common.io.RandomAccessFileInputStream;
+import org.jcodec.common.io.FileRAInputStream;
 import org.jcodec.player.filters.AudioOut;
 import org.jcodec.player.filters.JSoundAudioOut;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;

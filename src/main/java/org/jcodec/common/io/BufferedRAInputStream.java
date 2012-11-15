@@ -1,32 +1,17 @@
 package org.jcodec.common.io;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
-/**
- * This class is part of JCodec ( www.jcodec.org ) This software is distributed
- * under FreeBSD License
- * 
- * A source that internally reads from random access file
- * 
- * @author The JCodec project
- * 
- */
-public class RandomAccessFileInputStream extends RandomAccessInputStream {
-
-    private RandomAccessFile src;
-    private FileInputStream fin;
+public class BufferedRAInputStream extends RAInputStream {
+    private RAInputStream src;
     private BufferedInputStream bin;
     private long count;
     private long start;
 
-    public RandomAccessFileInputStream(File file) throws IOException {
-        src = new RandomAccessFile(file, "r");
-        fin = new FileInputStream(src.getFD());
-        bin = new BufferedInputStream(fin, 0x10000);
+    public BufferedRAInputStream(RAInputStream src) throws IOException {
+        this.src = src;
+        bin = new BufferedInputStream(src, 0x10000);
     }
 
     @Override
@@ -59,8 +44,8 @@ public class RandomAccessFileInputStream extends RandomAccessInputStream {
     public void seek(long where) throws IOException {
         src.seek(where);
         count = 0;
-        start = src.getFilePointer();
-        bin = new BufferedInputStream(fin);
+        start = src.getPos();
+        bin = new BufferedInputStream(src);
     }
 
     @Override
@@ -69,7 +54,7 @@ public class RandomAccessFileInputStream extends RandomAccessInputStream {
         count += skip;
         return skip;
     }
-    
+
     @Override
     public void close() throws IOException {
         src.close();

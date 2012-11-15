@@ -1,6 +1,5 @@
 package org.jcodec.player.filters.http;
 
-import static org.apache.commons.lang.StringUtils.trim;
 import static org.jcodec.player.filters.http.HttpUtils.getHttpClient;
 import static org.jcodec.player.filters.http.HttpUtils.privilegedExecute;
 
@@ -16,6 +15,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.util.EntityUtils;
+import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.MediaInfo.VideoInfo;
 
 /**
@@ -38,12 +38,15 @@ public class HttpMedia {
 
         String data = requestInfo(url, getHttpClient(url.toExternalForm()));
 
-        for (int i = 0; i < Integer.parseInt(trim(data)); i++) {
+        MediaInfo[] mediaInfos = MediaInfoParser.parseMediaInfos(data);
+        for (int i = 0; i < mediaInfos.length; i++) {
+            if (mediaInfos[i] == null)
+                continue;
             try {
                 HttpPacketSource ps = new HttpPacketSource(url.toExternalForm() + "/" + i, new File(cacheWhere + "_"
-                        + i));
+                        + i), mediaInfos[i]);
                 tracks.add(ps);
-                if (ps.getMediaInfo() instanceof VideoInfo)
+                if (mediaInfos[i] instanceof VideoInfo)
                     videoTrack = ps;
                 else
                     audioTracks.add(ps);

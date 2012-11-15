@@ -11,7 +11,7 @@ import java.io.OutputStream;
  * @author The JCodec project
  * 
  */
-public abstract class RandomAccessOutputStream extends OutputStream implements DataOutput {
+public abstract class RAOutputStream extends OutputStream implements DataOutput {
     
     public abstract long getPos();
     

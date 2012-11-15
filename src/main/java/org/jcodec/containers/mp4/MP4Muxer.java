@@ -17,7 +17,7 @@ import javax.sound.sampled.AudioFormat;
 import junit.framework.Assert;
 
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessOutputStream;
+import org.jcodec.common.io.RAOutputStream;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -84,17 +84,17 @@ public class MP4Muxer {
     private long mdatOffset;
 
     private int nextTrackId = 1;
-    private RandomAccessOutputStream out;
+    private RAOutputStream out;
 
-    public MP4Muxer(RandomAccessOutputStream output) throws IOException {
+    public MP4Muxer(RAOutputStream output) throws IOException {
         this(output, Brand.MP4);
     }
 
-    public MP4Muxer(RandomAccessOutputStream output, Brand brand) throws IOException {
+    public MP4Muxer(RAOutputStream output, Brand brand) throws IOException {
         this(output, brand.getFileTypeBox());
     }
 
-    public MP4Muxer(RandomAccessOutputStream output, FileTypeBox ftyp) throws IOException {
+    public MP4Muxer(RAOutputStream output, FileTypeBox ftyp) throws IOException {
         this.out = output;
 
         ftyp.write(out);

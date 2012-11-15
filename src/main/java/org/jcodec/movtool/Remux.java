@@ -1,5 +1,6 @@
 package org.jcodec.movtool;
 
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
 import java.io.File;
@@ -7,9 +8,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessFileOutputStream;
-import org.jcodec.common.io.RandomAccessOutputStream;
+import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.io.FileRAOutputStream;
+import org.jcodec.common.io.RAOutputStream;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Demuxer;
 import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
@@ -46,11 +49,11 @@ public class Remux {
     }
 
     public void remux(File tgt, File src) throws IOException {
-        RandomAccessFileInputStream input = null;
-        RandomAccessOutputStream output = null;
+        RAInputStream input = null;
+        RAOutputStream output = null;
         try {
-            input = new RandomAccessFileInputStream(src);
-            output = new RandomAccessFileOutputStream(tgt);
+            input = bufin(src);
+            output = new FileRAOutputStream(tgt);
             MP4Demuxer demuxer = new MP4Demuxer(input);
             MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
 
@@ -66,6 +69,7 @@ public class Remux {
 
             DemuxerTrack vt = demuxer.getVideoTrack();
             CompressedTrack video = muxer.addTrackForCompressed(VIDEO, (int) vt.getTimescale());
+//            vt.open(input);
             video.setTimecode(muxer.addTimecodeTrack((int)vt.getTimescale()));
             video.setEdits(vt.getEdits());
             video.addSampleEntries(vt.getSampleEntries());

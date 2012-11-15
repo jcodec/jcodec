@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
@@ -50,7 +50,7 @@ public class MP4Demuxer {
 
     private List<DemuxerTrack> tracks;
     private TimecodeTrack timecodeTrack;
-    private RandomAccessInputStream input;
+    private RAInputStream input;
     private MovieBox movie;
 
     public abstract class DemuxerTrack {
@@ -609,17 +609,17 @@ public class MP4Demuxer {
         }
     };
 
-    public MP4Demuxer(RandomAccessInputStream input) throws IOException {
+    public MP4Demuxer(RAInputStream input) throws IOException {
         this.input = input;
         tracks = new LinkedList<DemuxerTrack>();
         findMovieBox(input);
     }
-
+    
     public DemuxerTrack[] getTracks() {
         return tracks.toArray(new DemuxerTrack[] {});
     }
 
-    private void findMovieBox(RandomAccessInputStream input) throws IOException {
+    private void findMovieBox(RAInputStream input) throws IOException {
         movie = MP4Util.parseMovie(input);
         if (movie == null)
             throw new IOException("Could not find movie meta information box");

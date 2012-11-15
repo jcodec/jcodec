@@ -15,7 +15,7 @@ import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RandomAccessInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.io.ReaderBE;
 import org.jcodec.common.model.Packet;
 
@@ -41,10 +41,10 @@ public class MPSDemuxer {
     private static final int TIMESCALE = 90000;
 
     private Map<Integer, PES> streams = new HashMap<Integer, PES>();
-    private RandomAccessInputStream input;
+    private RAInputStream input;
     private Buffer buf;
 
-    public MPSDemuxer(RandomAccessInputStream input) throws IOException {
+    public MPSDemuxer(RAInputStream input) throws IOException {
         this.input = input;
         buf = fetchBuffer();
         findStreams();

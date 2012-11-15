@@ -108,7 +108,7 @@ public class MBlockDecoderInter {
         return new DecodedMBlock(luma, decodeChroma, qp, mvMat, reference, mb);
     }
 
-    protected MVMatrix calcFor8x8(SubMBType[] subMBTypes, Vector[][] mvs) {
+    public static MVMatrix calcFor8x8(SubMBType[] subMBTypes, Vector[][] mvs) {
         Vector[] dmvs = new Vector[16];
 
         for (int blk8x8 = 0; blk8x8 < 4; blk8x8++) {
@@ -131,19 +131,19 @@ public class MBlockDecoderInter {
         return new MVMatrix(dmvs);
     }
 
-    protected MVMatrix calcForInter16x8(Vector[] mvs) {
+    public static MVMatrix calcForInter16x8(Vector[] mvs) {
         Vector[] dmvs = new Vector[] { mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[1], mvs[1],
                 mvs[1], mvs[1], mvs[1], mvs[1], mvs[1], mvs[1] };
         return new MVMatrix(dmvs);
     }
 
-    protected MVMatrix calcForInter8x16(Vector[] mvs) {
+    public static MVMatrix calcForInter8x16(Vector[] mvs) {
         Vector[] dmvs = new Vector[] { mvs[0], mvs[0], mvs[0], mvs[0], mvs[1], mvs[1], mvs[1], mvs[1], mvs[0], mvs[0],
                 mvs[0], mvs[0], mvs[1], mvs[1], mvs[1], mvs[1] };
         return new MVMatrix(dmvs);
     }
 
-    protected MVMatrix calcForInter16x16(Vector[] mvs) {
+    public static MVMatrix calcForInter16x16(Vector[] mvs) {
         Vector[] dmvs = new Vector[] { mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[0],
                 mvs[0], mvs[0], mvs[0], mvs[0], mvs[0], mvs[0] };
         return new MVMatrix(dmvs);

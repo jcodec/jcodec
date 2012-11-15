@@ -5,7 +5,7 @@ import static org.jcodec.containers.mp4.boxes.Box.not;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-import org.jcodec.common.io.RandomAccessInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.io.WindowInputStream;
 import org.jcodec.containers.mp4.boxes.AliasBox;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
@@ -27,13 +27,13 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 public class ChunkWriter {
     private long[] offsets;
     private SampleEntry[] entries;
-    private RandomAccessInputStream[] inputs;
+    private RAInputStream[] inputs;
     private int curChunk;
     private RandomAccessFile out;
     byte[] buf = new byte[8092];
     private TrakBox trak;
 
-    public ChunkWriter(TrakBox trak, RandomAccessInputStream[] inputs, RandomAccessFile out) {
+    public ChunkWriter(TrakBox trak, RAInputStream[] inputs, RandomAccessFile out) {
         entries = NodeBox.findAll(trak, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
         ChunkOffsetsBox stco = NodeBox.findFirst(trak, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
         ChunkOffsets64Box co64 = NodeBox.findFirst(trak, ChunkOffsets64Box.class, "mdia", "minf", "stbl", "co64");
@@ -80,13 +80,13 @@ public class ChunkWriter {
         }
     }
 
-    private RandomAccessInputStream getInput(Chunk chunk) {
+    private RAInputStream getInput(Chunk chunk) {
         SampleEntry se = entries[chunk.getEntry() - 1];
         return inputs[se.getDrefInd() - 1];
     }
 
     public void write(Chunk chunk) throws IOException {
-        RandomAccessInputStream input = getInput(chunk);
+        RAInputStream input = getInput(chunk);
         input.seek(chunk.getOffset());
         long filePointer = out.getFilePointer();
         WindowInputStream inp = new WindowInputStream(input, chunk.getSize());

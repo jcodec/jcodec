@@ -15,7 +15,7 @@ import java.io.InputStream;
  * @author The JCodec project
  * 
  */
-public abstract class RandomAccessInputStream extends InputStream {
+public abstract class RAInputStream extends InputStream {
 	/**
 	 * Seeks to the certain absolute position in this input
 	 * 

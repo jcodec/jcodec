@@ -1,12 +1,13 @@
 package org.jcodec.player.filters;
 
+import static org.jcodec.common.JCodecUtil.bufin;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.io.RandomAccessFileInputStream;
-import org.jcodec.common.io.RandomAccessInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
@@ -27,10 +28,10 @@ public class JCodecPacketSource {
 
     private MP4Demuxer demuxer;
     private List<Track> tracks;
-    private RandomAccessInputStream is;
+    private RAInputStream is;
 
     public JCodecPacketSource(File file) throws IOException {
-        is = new RandomAccessFileInputStream(file);
+        is = bufin(file);
         demuxer = new MP4Demuxer(is);
 
         tracks = new ArrayList<Track>();
@@ -89,8 +90,8 @@ public class JCodecPacketSource {
             if (track.getBox().isVideo()) {
                 VideoSampleEntry se = (VideoSampleEntry) track.getSampleEntries()[0];
                 return new MediaInfo.VideoInfo(se.getFourcc(), (int) duration.getDen(), duration.getNum(),
-                        track.getFrameCount(), track.getName(), null, track.getBox().getPAR(), new Size((int) se.getWidth(),
-                                (int) se.getHeight()));
+                        track.getFrameCount(), track.getName(), null, track.getBox().getPAR(), new Size(
+                                (int) se.getWidth(), (int) se.getHeight()));
             } else if (track.getBox().isAudio()) {
                 AudioSampleEntry se = (AudioSampleEntry) track.getSampleEntries()[0];
                 return new MediaInfo.AudioInfo(se.getFourcc(), (int) duration.getDen(), duration.getNum(),

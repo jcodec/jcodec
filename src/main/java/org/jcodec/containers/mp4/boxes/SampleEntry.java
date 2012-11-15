@@ -56,7 +56,7 @@ public class SampleEntry extends NodeBox {
         this.drefInd = ind;
     }
 
-    public void setMediaType(String string) {
-        header = new Header("apco");
+    public void setMediaType(String mediaType) {
+        header = new Header(mediaType);
     }
 }

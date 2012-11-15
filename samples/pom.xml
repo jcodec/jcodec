@@ -3,7 +3,19 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.jcodec</groupId>
 	<artifactId>jcodec-samples</artifactId>
-	<version>0.0.6</version>
+	<version>0.0.7</version>
+	<repositories>
+		<repository>
+			<id>gson</id>
+			<url>http://google-gson.googlecode.com/svn/mavenrepo</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+		</repository>
+	</repositories>
 	<build>
 		<sourceDirectory>main/java</sourceDirectory>
 		<testSourceDirectory>tests/java</testSourceDirectory>
@@ -69,7 +81,7 @@
 		<dependency>
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec</artifactId>
-			<version>0.0.8</version>
+			<version>0.0.9</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
@@ -81,6 +93,14 @@
 			<groupId>org.apache.velocity</groupId>
 			<artifactId>velocity</artifactId>
 			<version>1.6.2</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>1.6</version>
+			<type>jar</type>
+			<scope>compile</scope>
 		</dependency>
 
 		<dependency>

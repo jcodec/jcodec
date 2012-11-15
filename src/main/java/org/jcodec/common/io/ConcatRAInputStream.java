@@ -14,21 +14,21 @@ import java.util.List;
  * @author The JCodec project
  * 
  */
-public class RandomAccessConcatInputStream extends RandomAccessInputStream {
+public class ConcatRAInputStream extends RAInputStream {
 
-    private RandomAccessInputStream[] streams;
+    private RAInputStream[] streams;
     private long[] offsets;
     private int cur;
     private long total;
 
-    public RandomAccessConcatInputStream(RandomAccessInputStream... _streams) throws IOException {
+    public ConcatRAInputStream(RAInputStream... _streams) throws IOException {
         this(Arrays.asList(_streams));
     }
 
-    public RandomAccessConcatInputStream(List<RandomAccessInputStream> _streams) throws IOException {
+    public ConcatRAInputStream(List<RAInputStream> _streams) throws IOException {
         if (_streams.size() == 0)
             throw new IllegalArgumentException("Empty set of streams");
-        streams = _streams.toArray(new RandomAccessInputStream[0]);
+        streams = _streams.toArray(new RAInputStream[0]);
         offsets = new long[this.streams.length];
         total = 0;
         for (int i = 0; i < streams.length; i++) {

@@ -1,6 +1,7 @@
 package org.jcodec.movtool;
 
 import static java.lang.System.arraycopy;
+import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 
 import java.io.File;
@@ -10,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.jcodec.common.io.RandomAccessFileInputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.MP4Util;
@@ -29,8 +30,8 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
 /**
- * This class is part of JCodec ( www.jcodec.org )
- * This software is distributed under FreeBSD License
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
  * 
  * Strips movie to editlist
  * 
@@ -43,10 +44,10 @@ public class Strip {
             System.out.println("Syntax: strip <ref movie> <out movie>");
             System.exit(-1);
         }
-        RandomAccessFileInputStream input = null;
+        RAInputStream input = null;
         RandomAccessFile out = null;
         try {
-            input = new RandomAccessFileInputStream(new File(args[0]));
+            input = bufin(new File(args[0]));
             File file = new File(args[1]);
             file.delete();
             out = new RandomAccessFile(file, "rw");

@@ -4,7 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class RandomAccessByteOutputStream extends RandomAccessOutputStream {
+public class ByteRAOutputStream extends RAOutputStream {
 
     private static final int INC_SIZE = 65536 << 3;
     private byte[] buffer = new byte[INC_SIZE];
