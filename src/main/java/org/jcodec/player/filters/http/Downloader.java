@@ -78,7 +78,8 @@ public class Downloader {
         Header contentType = response.getLastHeader("Content-Type");
 
         if (contentType != null && contentType.getValue().startsWith("multipart/mixed")) {
-            return parseMultipart(buffer, contentType.getValue());
+            List<Packet> result = parseMultipart(buffer, contentType.getValue());
+            return result.size() == 0 ? null : result;
         } else {
             return Arrays.asList(new Packet[] { pkt(toMap(response.getAllHeaders()), buffer) });
         }

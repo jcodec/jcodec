@@ -47,6 +47,12 @@ public class MediaInfo implements Serializable {
             this.dim = dim;
         }
 
+        public VideoInfo(VideoInfo mi) {
+            super(mi);
+            this.par = mi.par;
+            this.dim = mi.dim;
+        }
+
         public Rational getPAR() {
             return par;
         }
@@ -97,6 +103,13 @@ public class MediaInfo implements Serializable {
             this.af = af;
             this.framesPerPacket = framesPerPacket;
             this.labels = labels;
+        }
+
+        public AudioInfo(AudioInfo ai) {
+            super(ai);
+            this.af = ai.af;
+            this.framesPerPacket = ai.framesPerPacket;
+            this.labels = ai.labels;
         }
 
         public AudioFormat getFormat() {

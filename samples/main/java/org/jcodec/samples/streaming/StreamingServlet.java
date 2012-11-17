@@ -132,6 +132,8 @@ public class StreamingServlet extends HttpServlet {
         outFrame(out, packet);
         while (frameS < frameE) {
             packet = ((AudioAdapterTrack) track).getFrame(frameS++);
+            if (packet == null)
+                break;
             outFrame(out, packet);
         }
 
@@ -158,7 +160,7 @@ public class StreamingServlet extends HttpServlet {
         }
         MultiPartOutputStream out = new MultiPartOutputStream(resp.getOutputStream());
         resp.setContentType("multipart/mixed; boundary=" + out.getBoundary());
-        
+
         outGOP(gop, out);
         frameS = nextGop(track, frameS);
 

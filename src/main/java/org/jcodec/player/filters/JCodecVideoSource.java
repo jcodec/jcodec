@@ -93,6 +93,8 @@ public class JCodecVideoSource implements VideoSource {
 
     public Packet selectNextPacket() throws IOException {
         fillReordering();
+        if (reordering.size() == 0)
+            return null;
         Packet first = reordering.first();
         if (first != null)
             reordering.remove(first);
