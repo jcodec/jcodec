@@ -14,7 +14,7 @@ public class Yuv420pToRgb implements Transform {
         this.downShift = downShift;
     }
 
-    public void transform(Picture src, Picture dst) {
+    public final void transform(Picture src, Picture dst) {
         int[] y = src.getPlaneData(0);
         int[] u = src.getPlaneData(1);
         int[] v = src.getPlaneData(2);
@@ -22,23 +22,55 @@ public class Yuv420pToRgb implements Transform {
 
         int offLuma = 0, offChroma = 0;
         int stride = dst.getWidth();
-        for (int i = 0; i < dst.getHeight(); i +=2 ) {
-            for (int j = 0; j < stride; j += 2) {
+        for (int i = 0; i < (dst.getHeight() >> 1); i++) {
+            for (int k = 0; k < (dst.getWidth() >> 1); k++) {
+                int j = k << 1;
                 YUV444toRGB888((y[offLuma + j] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
                         (v[offChroma] << upShift) >> downShift, data, (offLuma + j) * 3);
                 YUV444toRGB888((y[offLuma + j + 1] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
                         (v[offChroma] << upShift) >> downShift, data, (offLuma + j + 1) * 3);
 
                 YUV444toRGB888((y[offLuma + j + stride] << upShift) >> downShift,
-                        (u[offChroma] << upShift) >> downShift, (v[offChroma] << upShift) >> downShift, data,
-                        (offLuma + j + stride) * 3);
+                        (u[offChroma] << upShift) >> downShift, (v[offChroma] << upShift) >> downShift, data, (offLuma
+                                + j + stride) * 3);
                 YUV444toRGB888((y[offLuma + j + stride + 1] << upShift) >> downShift,
-                        (u[offChroma] << upShift) >> downShift, (v[offChroma] << upShift) >> downShift, data,
-                        (offLuma + j + stride + 1) * 3);
+                        (u[offChroma] << upShift) >> downShift, (v[offChroma] << upShift) >> downShift, data, (offLuma
+                                + j + stride + 1) * 3);
 
                 ++offChroma;
             }
+            if((dst.getWidth() & 0x1) != 0) {
+                int j = dst.getWidth() - 1;
+
+                YUV444toRGB888((y[offLuma + j] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
+                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j) * 3);
+                YUV444toRGB888((y[offLuma + j + stride] << upShift) >> downShift,
+                        (u[offChroma] << upShift) >> downShift, (v[offChroma] << upShift) >> downShift, data, (offLuma
+                                + j + stride) * 3);
+                
+                ++offChroma;
+            }
+
             offLuma += 2 * stride;
+        }
+        if((dst.getHeight() & 0x1) != 0) {
+            for (int k = 0; k < (dst.getWidth() >> 1); k++) {
+                int j = k << 1;
+                YUV444toRGB888((y[offLuma + j] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
+                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j) * 3);
+                YUV444toRGB888((y[offLuma + j + 1] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
+                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j + 1) * 3);
+
+                ++offChroma;
+            }
+            if((dst.getWidth() & 0x1) != 0) {
+                int j = dst.getWidth() - 1;
+
+                YUV444toRGB888((y[offLuma + j] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
+                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j) * 3);
+                
+                ++offChroma;
+            }
         }
     }
 }

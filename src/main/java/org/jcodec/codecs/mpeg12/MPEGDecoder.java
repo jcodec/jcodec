@@ -128,7 +128,7 @@ public class MPEGDecoder implements VideoDecoder {
         if (!contextInit)
             throw new RuntimeException("Frame not decoded!");
 
-        return new Picture(context.codedWidth, context.codedHeight, buf, context.color);
+        return new Picture(sh.horizontal_size, sh.vertical_size, buf, context.color);
     }
 
     private void initContext(Context context, int[][] buf) {
@@ -179,7 +179,7 @@ public class MPEGDecoder implements VideoDecoder {
     public void decodeSlice(PictureHeader ph, int verticalPos, Context context, int[][] buf, InBits in)
             throws IOException {
 
-        int stride = context.codedWidth;
+        int stride = sh.horizontal_size;
 
         resetDCPredictors(context, ph);
 
@@ -319,25 +319,46 @@ public class MPEGDecoder implements VideoDecoder {
             else
                 blockInter(in, vlcCoeff, block, context.intra_dc_predictor, i, scan,
                         sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, qScale, qmat);
-            put(block, buf, stride, chromaFormat, i, mbX, mbY, dctType, context.clipVal);
+            put(block, buf, stride, chromaFormat, i, mbX, mbY, dctType, context.clipVal, sh.horizontal_size,
+                    sh.vertical_size);
         }
 
         return mbAddr;
     }
 
     protected void put(int[] block, int[][] buf, int stride, int chromaFormat, int blkNo, int mbX, int mbY,
-            int dctType, int clipVal) {
-        int chromaStride = (stride >> SQUEEZE_X[chromaFormat]);
+            int dctType, int clipVal, int width, int height) {
+        int chromaStride = (stride + (1 << SQUEEZE_X[chromaFormat]) - 1) >> SQUEEZE_X[chromaFormat];
 
         int strd = stride, mbW = 4, mbH = 4;
         if (blkNo >= 4) {
             strd = chromaStride;
             mbW -= SQUEEZE_X[chromaFormat];
             mbH -= SQUEEZE_Y[chromaFormat];
+            width = (width + (1 << SQUEEZE_X[chromaFormat]) - 1) >> SQUEEZE_X[chromaFormat];
+            height = (height + (1 << SQUEEZE_Y[chromaFormat]) - 1) >> SQUEEZE_Y[chromaFormat];
         }
 
-        putSub(buf[BLOCK_TO_CC[blkNo]], ((mbY << mbH) + BLOCK_POS_Y[blkNo + (dctType << 4)]) * strd + (mbX << mbW)
-                + BLOCK_POS_X[blkNo + (dctType << 4)], strd, block, dctType, clipVal);
+        int w = width - ((mbX << mbW) + BLOCK_POS_X[blkNo + (dctType << 4)]);
+        int h = height - ((mbY << mbH) + BLOCK_POS_Y[blkNo + (dctType << 4)]);
+
+        if (w >= 8 && h >= 8)
+            putSub(buf[BLOCK_TO_CC[blkNo]], ((mbY << mbH) + BLOCK_POS_Y[blkNo + (dctType << 4)]) * strd + (mbX << mbW)
+                    + BLOCK_POS_X[blkNo + (dctType << 4)], strd, block, dctType, clipVal);
+        else if(w > 0 && h > 0)
+            putEdge(buf[BLOCK_TO_CC[blkNo]], ((mbY << mbH) + BLOCK_POS_Y[blkNo + (dctType << 4)]) * strd + (mbX << mbW)
+                    + BLOCK_POS_X[blkNo + (dctType << 4)], strd, block, dctType, clipVal, Math.min(w, 8), Math.min(h, 8));
+    }
+
+    private final void putEdge(int[] big, int off, int stride, int[] block, int dctType, int clipVal, int w, int h) {
+        int blkOff = 0, blkLf = 8 - w, picLf = (stride << dctType) - w;
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                big[off++] = clip(block[blkOff++], clipVal);
+            }
+            blkOff += blkLf;
+            off += picLf;
+        }
     }
 
     private final void putSub(int[] big, int off, int stride, int[] block, int dctType, int clipVal) {
@@ -542,8 +563,6 @@ public class MPEGDecoder implements VideoDecoder {
     }
 
     public Size getSize() {
-        int codedWidth = (sh.horizontal_size + 15) & ~0xf;
-        int codedHeight = (sh.vertical_size + 15) & ~0xf;
-        return new Size(codedWidth, codedHeight);
+        return new Size(sh.horizontal_size, sh.vertical_size);
     }
 }
