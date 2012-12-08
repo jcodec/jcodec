@@ -7,6 +7,8 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,6 +17,7 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -96,6 +99,17 @@ public class Buffer {
     public static Buffer fetchFrom(RandomAccessFile file, int size) throws IOException {
         byte[] buffer = new byte[size];
         return new Buffer(buffer, 0, read(buffer, 0, size, file));
+    }
+
+    public static Buffer fetchFrom(File file) throws IOException {
+        long len = file.length();
+        InputStream is = null;
+        try {
+            is = new FileInputStream(file);
+            return fetchFrom(is, (int)len);
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
     }
 
     private static int read(byte[] buffer, int pos, int size, InputStream is) throws IOException {
@@ -209,7 +223,7 @@ public class Buffer {
         int found = from(from).search(params);
         return found == -1 ? -1 : from + found;
     }
-    
+
     public int searchFrom(int from, int... params) {
         return searchFrom(from, toIntArray(params));
     }
@@ -238,7 +252,7 @@ public class Buffer {
         System.arraycopy(buffer, pos, result, 0, result.length);
         return result;
     }
-    
+
     public void toArray(byte[] result, int off, int len) {
         System.arraycopy(buffer, pos, result, off, len);
     }
@@ -279,7 +293,7 @@ public class Buffer {
     }
 
     public void write(int i) {
-        buffer[pos++] = (byte)i;
+        buffer[pos++] = (byte) i;
     }
 
     public int search(int... ints) {
@@ -288,8 +302,8 @@ public class Buffer {
 
     private byte[] toIntArray(int... ints) {
         byte[] bytes = new byte[ints.length];
-        for(int i = 0; i < ints.length; i++)
-            bytes[i] = (byte)ints[i];
+        for (int i = 0; i < ints.length; i++)
+            bytes[i] = (byte) ints[i];
         return bytes;
     }
 

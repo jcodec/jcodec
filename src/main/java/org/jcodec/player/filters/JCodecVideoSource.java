@@ -33,7 +33,7 @@ import org.jcodec.common.tools.Debug;
  */
 public class JCodecVideoSource implements VideoSource {
 
-    private VideoDecoder decoder;
+    private ThreadLocal<VideoDecoder> decoders = new ThreadLocal<VideoDecoder>();
     private ExecutorService tp;
 
     private List<byte[]> drain = new ArrayList<byte[]>();
@@ -48,7 +48,6 @@ public class JCodecVideoSource implements VideoSource {
         Debug.println("Creating video source");
         this.src = src;
         mi = (MediaInfo.VideoInfo) src.getMediaInfo();
-        decoder = JCodecUtil.getVideoDecoder(mi.getFourcc());
 
         reordering = createReordering();
 
@@ -68,6 +67,8 @@ public class JCodecVideoSource implements VideoSource {
             }
         });
     }
+
+    static int cnt = 0;
 
     @Override
     public Frame decode(int[][] buf) throws IOException {
@@ -157,6 +158,12 @@ public class JCodecVideoSource implements VideoSource {
         }
 
         public Picture call() {
+            VideoDecoder decoder = decoders.get();
+            if (decoder == null) {
+                decoder = JCodecUtil.getVideoDecoder(mi.getFourcc());
+                decoders.set(decoder);
+            }
+
             Picture pic = decoder.decodeFrame(pkt.getData(), out);
             synchronized (drain) {
                 drain.add(pkt.getData().buffer);

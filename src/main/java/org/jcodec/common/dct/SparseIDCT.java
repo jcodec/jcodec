@@ -1,7 +1,5 @@
 package org.jcodec.common.dct;
 
-import java.util.Arrays;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -21,13 +19,36 @@ public class SparseIDCT {
         }
     }
 
-    public static final void dc(int[] block, int dc) {
-        Arrays.fill(block, dc >> 3);
+    public static final void dc(int[] block, int log2stride, int x, int y, int step, int dc) {
+        dc >>= 3;
+        int off = (y << log2stride) + x, stride = 1 << (log2stride + step);
+        for (int i = 0; i < 8; i++) {
+            block[off + 0] += dc;
+            block[off + 1] += dc;
+            block[off + 2] += dc;
+            block[off + 3] += dc;
+            block[off + 4] += dc;
+            block[off + 5] += dc;
+            block[off + 6] += dc;
+            block[off + 7] += dc;
+
+            off += stride;
+        }
     }
 
-    public static final void ac(int[] block, int ind, int level) {
-        for (int i = 0; i < 64; i++) {
-            block[i] += (COEFFS[ind][i] * level) >> 10;
+    public static final void ac(int[] block, int log2stride, int x, int y, int step, int ind, int level) {
+        int off = (y << log2stride) + x, stride = 1 << (log2stride + step);
+        for (int i = 0, coeff = 0; i < 8; i++, coeff += 8) {
+            block[off] += (COEFFS[ind][coeff] * level) >> 10;
+            block[off + 1] += (COEFFS[ind][coeff + 1] * level) >> 10;
+            block[off + 2] += (COEFFS[ind][coeff + 2] * level) >> 10;
+            block[off + 3] += (COEFFS[ind][coeff + 3] * level) >> 10;
+            block[off + 4] += (COEFFS[ind][coeff + 4] * level) >> 10;
+            block[off + 5] += (COEFFS[ind][coeff + 5] * level) >> 10;
+            block[off + 6] += (COEFFS[ind][coeff + 6] * level) >> 10;
+            block[off + 7] += (COEFFS[ind][coeff + 7] * level) >> 10;
+
+            off += stride;
         }
     }
 }

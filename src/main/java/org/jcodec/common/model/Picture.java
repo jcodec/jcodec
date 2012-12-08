@@ -73,4 +73,27 @@ public class Picture {
     public int getPlaneWidth(int plane) {
         return width >> color.compWidth[plane];
     }
+
+    public int getPlaneHeight(int plane) {
+        return height >> color.compHeight[plane];
+    }
+
+    public boolean compatible(Picture src) {
+        return src.color == color && src.width == width && src.height == height;
+    }
+
+    public Picture createCompatible() {
+        return Picture.create(width, height, color);
+    }
+
+    public void copyFrom(Picture src) {
+        if (!compatible(src))
+            throw new IllegalArgumentException("Can not copy to incompatible picture");
+        for (int plane = 0; plane < color.nComp; plane++) {
+            if (data[plane] == null)
+                continue;
+            System.arraycopy(src.data[plane], 0, data[plane], 0, (width >> color.compWidth[plane])
+                    * (height >> color.compHeight[plane]));
+        }
+    }
 }

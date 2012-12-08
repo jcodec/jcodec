@@ -153,6 +153,7 @@ public class TranscodeMain {
             if (rgb == null)
                 rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
             transform.transform(pic, rgb);
+            AWTUtil.toBufferedImage(rgb, bi);
             ImageIO.write(bi, "png", new File(format(out, i++)));
         }
     }

@@ -19,7 +19,7 @@ public class PictureCodingExtension {
     public static final int Bottom_Field = 2;
     public static final int Frame = 3;
     
-    public int[] f_code;
+    public int[][] f_code;
     public int intra_dc_precision;
     public int picture_structure;
     public int top_field_first;
@@ -61,11 +61,11 @@ public class PictureCodingExtension {
 
     public static PictureCodingExtension read(InBits in) throws IOException {
         PictureCodingExtension pce = new PictureCodingExtension();
-        pce.f_code = new int[4];
-        pce.f_code[0] = in.readNBit(4);
-        pce.f_code[1] = in.readNBit(4);
-        pce.f_code[2] = in.readNBit(4);
-        pce.f_code[3] = in.readNBit(4);
+        pce.f_code = new int[2][2];
+        pce.f_code[0][0] = in.readNBit(4);
+        pce.f_code[0][1] = in.readNBit(4);
+        pce.f_code[1][0] = in.readNBit(4);
+        pce.f_code[1][1] = in.readNBit(4);
         pce.intra_dc_precision = in.readNBit(2);
         pce.picture_structure = in.readNBit(2);
         pce.top_field_first = in.read1Bit();
@@ -85,10 +85,10 @@ public class PictureCodingExtension {
     }
 
     public void write(OutBits out) throws IOException {
-        out.writeNBit(f_code[0], 4);
-        out.writeNBit(f_code[1], 4);
-        out.writeNBit(f_code[2], 4);
-        out.writeNBit(f_code[3], 4);
+        out.writeNBit(f_code[0][0], 4);
+        out.writeNBit(f_code[0][1], 4);
+        out.writeNBit(f_code[1][0], 4);
+        out.writeNBit(f_code[1][1], 4);
         out.writeNBit(intra_dc_precision, 2);
         out.writeNBit(picture_structure, 2);
         out.write1Bit(top_field_first);

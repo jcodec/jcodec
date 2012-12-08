@@ -5,8 +5,6 @@ import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.PredictiveCoded;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension.SNR_SCALABILITY;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension.SPATIAL_SCALABILITY;
 
-import org.jcodec.codecs.mpeg12.MPEGConst.MBType;
-import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
@@ -29,7 +27,7 @@ public class MPEGConst {
     public static final int EXTENSION_START_CODE = 0xB5;
     public static final int SEQUENCE_END_CODE = 0xB7;
     public static final int GROUP_START_CODE = 0xB8;
-    
+
     public static VLC vlcAddressIncrement;
     public static VLC vlcMBTypeI;
     public static MBType[] mbTypeValI;
@@ -135,11 +133,9 @@ public class MPEGConst {
                 "00000101", "000000101", "01100", "00001000", "00000100", "000000100", "111", "01010", "01000",
                 "001100");
 
-        vlcMotionCode = new VLC("00000011001", "00000011011", "00000011101", "00000011111", "00000100001",
-                "00000100011", "0000010011", "0000010101", "0000010111", "00000111", "00001001", "00001011", "0000111",
-                "00011", "0011", "011", "1", "010", "0010", "00010", "0000110", "00001010", "00001000", "00000110",
-                "0000010110", "0000010100", "0000010010", "00000100010", "00000100000", "00000011110", "00000011100",
-                "00000011010", "00000011000");
+        vlcMotionCode = new VLC("1", "01", "001", "0001", "000011", "0000101", "0000100", "0000011",
+                "000001011", "000001010", "000001001", "0000010001", "0000010000", "0000001111", "0000001110",
+                "0000001101", "0000001100");
 
         vlcDualPrime = new VLC("11", "0", "10");
 
@@ -394,13 +390,24 @@ public class MPEGConst {
             16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
             16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 };
 
-    public static int[] zigzagFrame = new int[] { 0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26,
-            33, 40, 48, 41, 34, 27, 20, 13, 6, 7, 14, 21, 28, 35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37,
-            44, 51, 58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63 };
+    public static int[][] scan = new int[][] {
+            new int[] { 0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26, 33, 40, 48, 41, 34, 27, 20,
+                    13, 6, 7, 14, 21, 28, 35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51, 58, 59, 52,
+                    45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63 },
 
-    public static int[] zigzagAlternate = new int[] { 0, 8, 16, 24, 1, 9, 2, 10, 17, 25, 32, 40, 48, 56, 57, 49, 41, 33,
-            26, 18, 3, 11, 4, 12, 19, 27, 34, 42, 50, 58, 35, 43, 51, 59, 20, 28, 5, 13, 6, 14, 21, 29, 36, 44, 52, 60,
-            37, 45, 53, 61, 22, 30, 7, 15, 23, 31, 38, 46, 54, 62, 39, 47, 55, 63 };
+            new int[] { 0, 8, 16, 24, 1, 9, 2, 10, 17, 25, 32, 40, 48, 56, 57, 49, 41, 33, 26, 18, 3, 11, 4, 12, 19,
+                    27, 34, 42, 50, 58, 35, 43, 51, 59, 20, 28, 5, 13, 6, 14, 21, 29, 36, 44, 52, 60, 37, 45, 53, 61,
+                    22, 30, 7, 15, 23, 31, 38, 46, 54, 62, 39, 47, 55, 63 } };
+
+    public static int[] BLOCK_TO_CC = new int[] { 0, 0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2 };
+    public static int[] BLOCK_POS_X = new int[] { 0, 8, 0, 8, 0, 0, 0, 0, 8, 8, 8, 8, 0, 0, 0, 0, 0, 8, 0, 8, 0, 0, 0,
+            0, 8, 8, 8, 8 };
+    public static int[] BLOCK_POS_Y = new int[] { 0, 0, 8, 8, 0, 0, 8, 8, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
+            1, 0, 0, 1, 1 };
+    public static int[] STEP_Y = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1 };
+    public static int[] SQUEEZE_X = new int[] { 0, 1, 1, 0 };
+    public static int[] SQUEEZE_Y = new int[] { 0, 1, 0, 0 };
 
     public static VLC vlcMBType(int picture_coding_type, SequenceScalableExtension sse) {
         if (sse != null && sse.scalable_mode == SNR_SCALABILITY) {
@@ -426,11 +433,11 @@ public class MPEGConst {
         }
     }
 
-//    public static void main(String[] args) {
-//        for (int i = 0; i < 64; i++) {
-//            for (int j = 0; j < 64; j++)
-//                if (zigzagFrame[j] == i)
-//                    System.out.println(j + ",");
-//        }
-//    }
+    // public static void main(String[] args) {
+    // for (int i = 0; i < 64; i++) {
+    // for (int j = 0; j < 64; j++)
+    // if (zigzagFrame[j] == i)
+    // System.out.println(j + ",");
+    // }
+    // }
 }
