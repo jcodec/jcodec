@@ -39,14 +39,14 @@ public class SparseIDCT {
     public static final void ac(int[] block, int log2stride, int x, int y, int step, int ind, int level) {
         int off = (y << log2stride) + x, stride = 1 << (log2stride + step);
         for (int i = 0, coeff = 0; i < 8; i++, coeff += 8) {
-            block[off] += (COEFFS[ind][coeff] * level) >> 10;
-            block[off + 1] += (COEFFS[ind][coeff + 1] * level) >> 10;
-            block[off + 2] += (COEFFS[ind][coeff + 2] * level) >> 10;
-            block[off + 3] += (COEFFS[ind][coeff + 3] * level) >> 10;
-            block[off + 4] += (COEFFS[ind][coeff + 4] * level) >> 10;
-            block[off + 5] += (COEFFS[ind][coeff + 5] * level) >> 10;
-            block[off + 6] += (COEFFS[ind][coeff + 6] * level) >> 10;
-            block[off + 7] += (COEFFS[ind][coeff + 7] * level) >> 10;
+            block[off] += (COEFFS[ind][coeff] * level) / 1024;
+            block[off + 1] += (COEFFS[ind][coeff + 1] * level) / 1024;
+            block[off + 2] += (COEFFS[ind][coeff + 2] * level) / 1024;
+            block[off + 3] += (COEFFS[ind][coeff + 3] * level) / 1024;
+            block[off + 4] += (COEFFS[ind][coeff + 4] * level) / 1024;
+            block[off + 5] += (COEFFS[ind][coeff + 5] * level) / 1024;
+            block[off + 6] += (COEFFS[ind][coeff + 6] * level) / 1024;
+            block[off + 7] += (COEFFS[ind][coeff + 7] * level) / 1024;
 
             off += stride;
         }

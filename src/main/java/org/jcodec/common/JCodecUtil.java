@@ -1,8 +1,11 @@
 package org.jcodec.common;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+
+import javax.imageio.ImageIO;
 
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.pcm.PCMDecoder;
@@ -13,10 +16,18 @@ import org.jcodec.common.io.BufferedRAInputStream;
 import org.jcodec.common.io.FileRAInputStream;
 import org.jcodec.common.io.MappedRAInputStream;
 import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.MP4Demuxer;
+import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.player.filters.MediaInfo;
+import org.jcodec.scale.AWTUtil;
+import org.jcodec.scale.ColorUtil;
+import org.jcodec.scale.Transform;
+import org.jcodec.scale.Yuv420pToRgb;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -94,5 +105,13 @@ public class JCodecUtil {
 
     public static RAInputStream mapin(File f) throws IOException {
         return new MappedRAInputStream(new FileRAInputStream(f), 16, 20);
+    }
+
+    public static void savePicture(Picture pic, String format, File file) throws IOException {
+        Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
+        Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB);
+        transform.transform(pic, rgb);
+        BufferedImage bi = AWTUtil.toBufferedImage(rgb);
+        ImageIO.write(bi, format, file);
     }
 }

@@ -82,10 +82,10 @@ public class MPEGPred {
     }
 
     private final int getPix(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2) {
-        x1 = MathUtil.clip(x1, 0, refW);
-        y1 = MathUtil.clip(y1, 0, refH);
-        x2 = MathUtil.clip(x2, 0, refW);
-        y2 = MathUtil.clip(y2, 0, refH);
+        x1 = MathUtil.clip(x1, 0, refW - 1);
+        y1 = MathUtil.clip(y1, 0, refH - 1);
+        x2 = MathUtil.clip(x2, 0, refW - 1);
+        y2 = MathUtil.clip(y2, 0, refH - 1);
 
         return (ref[y1 * refW + x1] + ref[y2 * refW + x2]) >> 1;
     }
@@ -138,7 +138,7 @@ public class MPEGPred {
             int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int rx = refX >> 1, ry = refY >> 1;
 
-        boolean safe = rx >= 0 && ry >= 0 && rx + tgtW <= refW && ry + tgtH <= refH;
+        boolean safe = rx >= 0 && ry >= 0 && rx + tgtW < refW && ry + tgtH < refH;
         if ((refX & 0x1) == 0) {
             if ((refY & 0x1) == 0) {
                 if (safe)
@@ -315,7 +315,6 @@ public class MPEGPred {
             val = -val;
         val += pred;
 
-        /* modulo decoding */
         return sign_extend(val, 5 + shift);
     }
 
@@ -365,11 +364,13 @@ public class MPEGPred {
                 refVertStep, tgt[2], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
     }
 
-    public void predict16x16NoMV(Picture picture, int x, int y, int pictureStructure, int[][] mbPix) {
-        if (pictureStructure == 3)
-            predictMB(picture, x, y, 16, 16, 0, mbPix, 0, 0);
-        else
-            predictMB(picture, x, (y << 1) + pictureStructure - 1, 16, 16, 1, mbPix, 0, 0);
+    public void predict16x16NoMV(Picture picture, int x, int y, int pictureStructure, int backward, int[][] mbPix) {
+        int predX = (x << 1) + mvPred[0][backward][0];
+        int predY = (y << 1) + mvPred[0][backward][1];
+        if (pictureStructure == 3) {
+            predictMB(picture, predX, predY, 16, 16, 0, mbPix, 0, 0);
+        } else
+            predictMB(picture, predX, (predY << 1) + pictureStructure - 1, 16, 16, 1, mbPix, 0, 0);
     }
 
     public void reset() {

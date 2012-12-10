@@ -84,6 +84,7 @@ public class MPEGDecoder implements VideoDecoder {
         public int mbHeight;
         public ColorSpace color;
         public int clipVal;
+        public MBType lastPredB;
     }
 
     public Picture decodeFrame(Buffer buffer, int[][] buf) {
@@ -281,8 +282,20 @@ public class MPEGDecoder implements VideoDecoder {
         }
         mbAddr += vlcAddressIncrement.readVLC(in) + 1;
 
+        int chromaFormat = Chroma420;
+        if (sh.sequenceExtension != null)
+            chromaFormat = sh.sequenceExtension.chroma_format;
+
         for (int i = prevAddr + 1; i < mbAddr; i++) {
-            mvZero(ph, pred, i % context.mbWidth, i / context.mbWidth, buf);
+            int[][] predFwd = new int[][] { new int[256], new int[1 << (chromaFormat + 5)],
+                    new int[1 << (chromaFormat + 5)] };
+            int mbX = i % context.mbWidth;
+            int mbY = i / context.mbWidth;
+            if(ph.picture_coding_type == PictureHeader.PredictiveCoded)
+                pred.reset();
+            mvZero(context, ph, pred, mbX, mbY, predFwd);
+            put(predFwd, buf, stride, chromaFormat, mbX, mbY, context.clipVal, sh.horizontal_size >> vertStep,
+                    sh.vertical_size >> vertStep, vertOff, vertStep);
         }
 
         VLC vlcMBType = vlcMBType(ph.picture_coding_type, sh.sequenceScalableExtension);
@@ -290,11 +303,11 @@ public class MPEGDecoder implements VideoDecoder {
 
         MBType mbType = mbTypeVal[vlcMBType.readVLC(in)];
 
-        // System.out.println(mbAddr
-        // + ": "
-        // + (mbType.macroblock_intra == 1 ? "intra" : "inter, "
-        // + (mbType.macroblock_motion_forward == 1 ? "forward" : "")
-        // + (mbType.macroblock_motion_backward == 1 ? "backward" : "")));
+//        System.out.println(mbAddr
+//                + ": "
+//                + (mbType.macroblock_intra == 1 ? "intra" : "inter, "
+//                        + (mbType.macroblock_motion_forward == 1 ? "forward" : "")
+//                        + (mbType.macroblock_motion_backward == 1 ? "backward" : "")));
 
         if (mbType.macroblock_intra != 1 || (mbAddr - prevAddr) > 1) {
             resetDCPredictors(context, ph);
@@ -329,44 +342,50 @@ public class MPEGDecoder implements VideoDecoder {
         boolean concealmentMv = ph.pictureCodingExtension != null
                 && ph.pictureCodingExtension.concealment_motion_vectors != 0;
 
-        int chromaFormat = Chroma420;
-        if (sh.sequenceExtension != null)
-            chromaFormat = sh.sequenceExtension.chroma_format;
-
+        int[][] predFwd = null;
         int mbX = mbAddr % context.mbWidth;
         int mbY = mbAddr / context.mbWidth;
-        int[][] mbPix = new int[][] { new int[256], new int[1 << (chromaFormat + 5)], new int[1 << (chromaFormat + 5)] };
         if (mbType.macroblock_intra == 1) {
             if (concealmentMv) {
                 // TODO read consealment vectors
             } else
                 pred.reset();
         } else if (mbType.macroblock_motion_forward != 0) {
+            int refIdx = ph.picture_coding_type == PictureHeader.PredictiveCoded ? 0 : 1;
+            predFwd = new int[][] { new int[256], new int[1 << (chromaFormat + 5)], new int[1 << (chromaFormat + 5)] };
             if (ph.pictureCodingExtension == null || ph.pictureCodingExtension.picture_structure == Frame) {
-                pred.predictInFrame(refFrames[0], mbX << 4, mbY << 4, mbPix, in, motion_type, 0,
+                pred.predictInFrame(refFrames[refIdx], mbX << 4, mbY << 4, predFwd, in, motion_type, 0,
                         spatial_temporal_weight_code);
             } else {
                 if (ph.picture_coding_type == PictureHeader.PredictiveCoded) {
-                    pred.predictInField(refFields, mbX << 4, mbY << 4, mbPix, in, motion_type, 0,
+                    pred.predictInField(refFields, mbX << 4, mbY << 4, predFwd, in, motion_type, 0,
                             ph.pictureCodingExtension.picture_structure - 1);
                 } else {
-                    pred.predictInField(new Picture[] { refFrames[0], refFrames[0] }, mbX << 4, mbY << 4, mbPix, in,
-                            motion_type, 0, ph.pictureCodingExtension.picture_structure - 1);
+                    pred.predictInField(new Picture[] { refFrames[refIdx], refFrames[refIdx] }, mbX << 4, mbY << 4,
+                            predFwd, in, motion_type, 0, ph.pictureCodingExtension.picture_structure - 1);
                 }
             }
         } else if (ph.picture_coding_type == PictureHeader.PredictiveCoded) {
-            mvZero(ph, pred, mbX, mbY, mbPix);
+            predFwd = new int[][] { new int[256], new int[1 << (chromaFormat + 5)], new int[1 << (chromaFormat + 5)] };
+            pred.reset();
+            mvZero(context, ph, pred, mbX, mbY, predFwd);
         }
 
+        int[][] predBack = null;
         if (mbType.macroblock_motion_backward != 0) {
+            predBack = new int[][] { new int[256], new int[1 << (chromaFormat + 5)], new int[1 << (chromaFormat + 5)] };
             if (ph.pictureCodingExtension == null || ph.pictureCodingExtension.picture_structure == Frame) {
-                pred.predictInFrame(refFrames[1], mbX << 4, mbY << 4, mbPix, in, motion_type, 1,
+                pred.predictInFrame(refFrames[0], mbX << 4, mbY << 4, predBack, in, motion_type, 1,
                         spatial_temporal_weight_code);
             } else {
-                pred.predictInField(new Picture[] { refFrames[1], refFrames[1] }, mbX << 4, mbY << 4, mbPix, in,
+                pred.predictInField(new Picture[] { refFrames[0], refFrames[0] }, mbX << 4, mbY << 4, predBack, in,
                         motion_type, 1, ph.pictureCodingExtension.picture_structure - 1);
             }
         }
+        context.lastPredB = mbType;
+        int[][] pp = mbType.macroblock_intra == 1 ? new int[][] { new int[256], new int[1 << (chromaFormat + 5)],
+                new int[1 << (chromaFormat + 5)] } : buildPred(predFwd, predBack);
+
         if (mbType.macroblock_intra != 0 && concealmentMv)
             assertEquals(1, in.read1Bit()); // Marker
 
@@ -396,23 +415,64 @@ public class MPEGDecoder implements VideoDecoder {
             int[] qmat = getQmat(i < 4, mbType.macroblock_intra == 1, ph);
 
             if (mbType.macroblock_intra == 1)
-                blockIntra(in, vlcCoeff, mbPix[BLOCK_TO_CC[i]], context.intra_dc_predictor, i, dctType, scan,
+                blockIntra(in, vlcCoeff, pp[BLOCK_TO_CC[i]], context.intra_dc_predictor, i, dctType, scan,
                         sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, intra_dc_mult, qScale, qmat, chromaFormat);
             else
-                blockInter(in, vlcCoeff, mbPix[BLOCK_TO_CC[i]], i, dctType, scan,
+                blockInter(in, vlcCoeff, pp[BLOCK_TO_CC[i]], i, dctType, scan,
                         sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, qScale, qmat, chromaFormat);
         }
+        // System.out.println(mbX + ":" + mbY);
 
-        put(mbPix, buf, stride, chromaFormat, mbX, mbY, context.clipVal, sh.horizontal_size >> vertStep,
+        // Arrays.fill(mbPix[1], 128);
+        // Arrays.fill(mbPix[2], 128);
+
+        put(pp, buf, stride, chromaFormat, mbX, mbY, context.clipVal, sh.horizontal_size >> vertStep,
                 sh.vertical_size >> vertStep, vertOff, vertStep);
 
         return mbAddr;
     }
 
-    private void mvZero(PictureHeader ph, MPEGPred pred, int mbX, int mbY, int[][] mbPix) {
-        pred.reset();
-        pred.predict16x16NoMV(refFrames[0], mbX << 4, mbY << 4, ph.pictureCodingExtension == null ? Frame
-                : ph.pictureCodingExtension.picture_structure, mbPix);
+    private static final int[][] buildPred(int[][] predFwd, int[][] predBack) {
+        if (predFwd != null && predBack != null) {
+            avgPred(predFwd, predBack);
+            return predFwd;
+        } else if (predFwd != null)
+            return predFwd;
+        else if (predBack != null)
+            return predBack;
+        else
+            throw new RuntimeException("Stan");
+    }
+
+    private static final void avgPred(int[][] predFwd, int[][] predBack) {
+        for (int i = 0; i < predFwd.length; i++) {
+            for (int j = 0; j < predFwd[i].length; j += 4) {
+                predFwd[i][j] = (predFwd[i][j] + predBack[i][j]) >> 1;
+                predFwd[i][j + 1] = (predFwd[i][j + 1] + predBack[i][j + 1]) >> 1;
+                predFwd[i][j + 2] = (predFwd[i][j + 2] + predBack[i][j + 2]) >> 1;
+                predFwd[i][j + 3] = (predFwd[i][j + 3] + predBack[i][j + 3]) >> 1;
+            }
+        }
+    }
+
+    private void mvZero(Context context, PictureHeader ph, MPEGPred pred, int mbX, int mbY, int[][] mbPix) {
+        if (ph.picture_coding_type == PictureHeader.PredictiveCoded) {
+            pred.predict16x16NoMV(refFrames[0], mbX << 4, mbY << 4, ph.pictureCodingExtension == null ? Frame
+                    : ph.pictureCodingExtension.picture_structure, 0, mbPix);
+        } else {
+            int[][] pp = mbPix;
+            if (context.lastPredB.macroblock_motion_backward == 1) {
+                pred.predict16x16NoMV(refFrames[0], mbX << 4, mbY << 4, ph.pictureCodingExtension == null ? Frame
+                        : ph.pictureCodingExtension.picture_structure, 1, pp);
+                pp = new int[][] { new int[mbPix[0].length], new int[mbPix[1].length], new int[mbPix[2].length] };
+            }
+            if (context.lastPredB.macroblock_motion_forward == 1) {
+                pred.predict16x16NoMV(refFrames[1], mbX << 4, mbY << 4, ph.pictureCodingExtension == null ? Frame
+                        : ph.pictureCodingExtension.picture_structure, 0, pp);
+                if (mbPix != pp)
+                    avgPred(mbPix, pp);
+            }
+        }
     }
 
     protected void put(int[][] mbPix, int[][] buf, int stride, int chromaFormat, int mbX, int mbY, int clipVal,
