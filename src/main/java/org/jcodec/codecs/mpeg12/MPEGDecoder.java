@@ -1,6 +1,5 @@
 package org.jcodec.codecs.mpeg12;
 
-import static java.lang.Math.min;
 import static junit.framework.Assert.assertEquals;
 import static org.jcodec.codecs.mpeg12.MPEGConst.BLOCK_TO_CC;
 import static org.jcodec.codecs.mpeg12.MPEGConst.EXTENSION_START_CODE;
@@ -10,6 +9,7 @@ import static org.jcodec.codecs.mpeg12.MPEGConst.SLICE_START_CODE_FIRST;
 import static org.jcodec.codecs.mpeg12.MPEGConst.SLICE_START_CODE_LAST;
 import static org.jcodec.codecs.mpeg12.MPEGConst.SQUEEZE_X;
 import static org.jcodec.codecs.mpeg12.MPEGConst.SQUEEZE_Y;
+import static org.jcodec.codecs.mpeg12.MPEGConst.USER_DATA_START_CODE;
 import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeVal;
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcAddressIncrement;
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcCBP;
@@ -45,7 +45,7 @@ import org.jcodec.common.io.InBits;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Rect;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -56,8 +56,8 @@ import org.jcodec.common.model.Size;
  */
 public class MPEGDecoder implements VideoDecoder {
 
-    private SequenceHeader sh;
-    private GOPHeader gh;
+    protected SequenceHeader sh;
+    protected GOPHeader gh;
     private int maxCoeff;
     private Picture[] refFrames = new Picture[2];
     private Picture[] refFields = new Picture[2];
@@ -83,7 +83,6 @@ public class MPEGDecoder implements VideoDecoder {
         public int codedHeight;
         public int mbHeight;
         public ColorSpace color;
-        public int clipVal;
         public MBType lastPredB;
     }
 
@@ -91,12 +90,13 @@ public class MPEGDecoder implements VideoDecoder {
 
         try {
             PictureHeader ph = readHeader(buffer);
-            Context context = initContext(sh);
-            Picture pic = new Picture(sh.horizontal_size, sh.vertical_size, buf, context.color);
+            Context context = initContext(sh, ph);
+            Picture pic = new Picture(context.codedWidth, context.codedHeight, buf, context.color, new Rect(0, 0,
+                    sh.horizontal_size, sh.vertical_size));
             if (ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
                 decodePicture(context, ph, buffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
                 ph = readHeader(buffer);
-                context = initContext(sh);
+                context = initContext(sh, ph);
                 decodePicture(context, ph, buffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
             } else {
                 decodePicture(context, ph, buffer, buf, 0, 0);
@@ -116,8 +116,9 @@ public class MPEGDecoder implements VideoDecoder {
     }
 
     private Picture copyAndCreateIfNeeded(Picture src, Picture dst) {
-        if (dst == null || !dst.compatible(src))
+        if (dst == null || !dst.compatible(src)) {
             dst = src.createCompatible();
+        }
         dst.copyFrom(src);
         return dst;
     }
@@ -143,6 +144,8 @@ public class MPEGDecoder implements VideoDecoder {
                     SequenceHeader.readExtension(segment.from(4), sh);
                 else
                     PictureHeader.readExtension(segment.from(4), ph, sh);
+            } else if (segment.get(3) == USER_DATA_START_CODE) {
+                // do nothing
             } else {
                 buffer.pos = segment.pos;
                 break;
@@ -151,10 +154,10 @@ public class MPEGDecoder implements VideoDecoder {
         return ph;
     }
 
-    private Context initContext(SequenceHeader sh) {
+    private Context initContext(SequenceHeader sh, PictureHeader ph) {
         Context context = new Context();
         context.codedWidth = (sh.horizontal_size + 15) & ~0xf;
-        context.codedHeight = (sh.vertical_size + 15) & ~0xf;
+        context.codedHeight = getCodedHeight(sh, ph);
         context.mbWidth = (sh.horizontal_size + 15) >> 4;
         context.mbHeight = (sh.vertical_size + 15) >> 4;
 
@@ -164,9 +167,13 @@ public class MPEGDecoder implements VideoDecoder {
 
         context.color = getColor(chromaFormat);
 
-        context.clipVal = (1 << (10 - chromaFormat)) - 1;
-
         return context;
+    }
+
+    public static int getCodedHeight(SequenceHeader sh, PictureHeader ph) {
+        int field = ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame ? 1 : 0;
+
+        return (((sh.vertical_size >> field) + 15) & ~0xf) << field;
     }
 
     public Picture decodePicture(Context context, PictureHeader ph, Buffer buffer, int[][] buf, int vertOff,
@@ -174,7 +181,8 @@ public class MPEGDecoder implements VideoDecoder {
 
         int planeSize = context.codedWidth * context.codedHeight;
         if (buf.length < 3 || buf[0].length < planeSize || buf[1].length < planeSize || buf[2].length < planeSize) {
-            throw new RuntimeException("Buffer too small to hold output picture");
+            throw new RuntimeException("Buffer too small to hold output picture [" + context.codedWidth + "x"
+                    + context.codedHeight + "]");
         }
 
         try {
@@ -183,12 +191,15 @@ public class MPEGDecoder implements VideoDecoder {
                 if (segment.get(3) >= SLICE_START_CODE_FIRST && segment.get(3) <= SLICE_START_CODE_LAST) {
                     decodeSlice(ph, segment.get(3) & 0xff, context, buf, new BitstreamReaderBB(segment.from(4)),
                             vertOff, vertStep);
-                } else if (segment.get(3) >= 0xB3 && segment.get(3) != 0xB6) {
+                } else if (segment.get(3) >= 0xB3 && segment.get(3) != 0xB6 && segment.get(3) != 0xB7) {
                     throw new RuntimeException("Unexpected start code " + segment.get(3));
+                } else if (segment.get(3) == 0x0) {
+                    buffer.pos = segment.pos;
+                    break;
                 }
             }
 
-            Picture pic = new Picture(sh.horizontal_size, sh.vertical_size, buf, context.color);
+            Picture pic = new Picture(context.codedWidth, context.codedHeight, buf, context.color);
             if ((ph.picture_coding_type == PictureHeader.IntraCoded || ph.picture_coding_type == PictureHeader.PredictiveCoded)
                     && ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
                 refFields[ph.pictureCodingExtension.picture_structure - 1] = copyAndCreateIfNeeded(pic,
@@ -236,7 +247,6 @@ public class MPEGDecoder implements VideoDecoder {
 
         int[] scan = MPEGConst.scan[ph.pictureCodingExtension == null ? 0 : ph.pictureCodingExtension.alternate_scan];
 
-        // System.out.print(verticalPos + ", ");
         int mbRow = verticalPos - 1;
         if (sh.vertical_size > 2800) {
             mbRow += (in.readNBit(3) << 7);
@@ -258,10 +268,11 @@ public class MPEGDecoder implements VideoDecoder {
                         new int[] { ph.backward_f_code, ph.backward_f_code } },
                 sh.sequenceExtension != null ? sh.sequenceExtension.chroma_format : Chroma420);
 
+        int[] ctx = new int[] { qScaleCode };
+
         for (int prevAddr = mbRow * context.mbWidth - 1; in.checkNBit(23) != 0;) {
             // TODO: decode skipped!!!
-            prevAddr = decodeMacroblock(ph, context, prevAddr, qScaleCode, scan, buf, stride, in, vertOff, vertStep,
-                    pred);
+            prevAddr = decodeMacroblock(ph, context, prevAddr, ctx, scan, buf, stride, in, vertOff, vertStep, pred);
             context.mbNo++;
         }
     }
@@ -273,7 +284,7 @@ public class MPEGDecoder implements VideoDecoder {
         context.intra_dc_predictor[0] = context.intra_dc_predictor[1] = context.intra_dc_predictor[2] = rval;
     }
 
-    public int decodeMacroblock(PictureHeader ph, Context context, int prevAddr, int qScaleCode, int[] scan,
+    public int decodeMacroblock(PictureHeader ph, Context context, int prevAddr, int[] qScaleCode, int[] scan,
             int[][] buf, int stride, InBits in, int vertOff, int vertStep, MPEGPred pred) throws IOException {
         int mbAddr = prevAddr;
         while (in.checkNBit(11) == 0x8) {
@@ -291,23 +302,17 @@ public class MPEGDecoder implements VideoDecoder {
                     new int[1 << (chromaFormat + 5)] };
             int mbX = i % context.mbWidth;
             int mbY = i / context.mbWidth;
-            if(ph.picture_coding_type == PictureHeader.PredictiveCoded)
+            if (ph.picture_coding_type == PictureHeader.PredictiveCoded)
                 pred.reset();
             mvZero(context, ph, pred, mbX, mbY, predFwd);
-            put(predFwd, buf, stride, chromaFormat, mbX, mbY, context.clipVal, sh.horizontal_size >> vertStep,
-                    sh.vertical_size >> vertStep, vertOff, vertStep);
+            put(predFwd, buf, stride, chromaFormat, mbX, mbY, context.codedWidth, context.codedHeight >> vertStep,
+                    vertOff, vertStep);
         }
 
         VLC vlcMBType = vlcMBType(ph.picture_coding_type, sh.sequenceScalableExtension);
         MBType[] mbTypeVal = mbTypeVal(ph.picture_coding_type, sh.sequenceScalableExtension);
 
         MBType mbType = mbTypeVal[vlcMBType.readVLC(in)];
-
-//        System.out.println(mbAddr
-//                + ": "
-//                + (mbType.macroblock_intra == 1 ? "intra" : "inter, "
-//                        + (mbType.macroblock_motion_forward == 1 ? "forward" : "")
-//                        + (mbType.macroblock_motion_backward == 1 ? "backward" : "")));
 
         if (mbType.macroblock_intra != 1 || (mbAddr - prevAddr) > 1) {
             resetDCPredictors(context, ph);
@@ -334,10 +339,9 @@ public class MPEGDecoder implements VideoDecoder {
                 && (mbType.macroblock_intra != 0 || mbType.macroblock_pattern != 0)) {
             dctType = in.read1Bit();
         }
-        // buf[3][mbAddr] = dctType;
 
         if (mbType.macroblock_quant != 0) {
-            qScaleCode = in.readNBit(5);
+            qScaleCode[0] = in.readNBit(5);
         }
         boolean concealmentMv = ph.pictureCodingExtension != null
                 && ph.pictureCodingExtension.concealment_motion_vectors != 0;
@@ -401,13 +405,12 @@ public class MPEGDecoder implements VideoDecoder {
 
         int[] qScaleTab = ph.pictureCodingExtension != null && ph.pictureCodingExtension.q_scale_type == 1 ? MPEGConst.qScaleTab2
                 : MPEGConst.qScaleTab1;
-        int qScale = qScaleTab[qScaleCode];
+        int qScale = qScaleTab[qScaleCode[0]];
 
         int intra_dc_mult = 8;
         if (ph.pictureCodingExtension != null)
             intra_dc_mult = 8 >> ph.pictureCodingExtension.intra_dc_precision;
 
-        // int chromaStride = (stride >> SQUEEZE_X[chromaFormat]);
         int blkCount = 6 + (chromaFormat == Chroma420 ? 0 : (chromaFormat == Chroma422 ? 2 : 6));
         for (int i = 0, cbpMask = 1 << (blkCount - 1); i < blkCount; i++, cbpMask >>= 1) {
             if ((cbp & cbpMask) == 0)
@@ -421,13 +424,9 @@ public class MPEGDecoder implements VideoDecoder {
                 blockInter(in, vlcCoeff, pp[BLOCK_TO_CC[i]], i, dctType, scan,
                         sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, qScale, qmat, chromaFormat);
         }
-        // System.out.println(mbX + ":" + mbY);
 
-        // Arrays.fill(mbPix[1], 128);
-        // Arrays.fill(mbPix[2], 128);
-
-        put(pp, buf, stride, chromaFormat, mbX, mbY, context.clipVal, sh.horizontal_size >> vertStep,
-                sh.vertical_size >> vertStep, vertOff, vertStep);
+        put(pp, buf, stride, chromaFormat, mbX, mbY, context.codedWidth, context.codedHeight >> vertStep, vertOff,
+                vertStep);
 
         return mbAddr;
     }
@@ -441,16 +440,16 @@ public class MPEGDecoder implements VideoDecoder {
         else if (predBack != null)
             return predBack;
         else
-            throw new RuntimeException("Stan");
+            throw new RuntimeException("No pred in B-frames --> infalid");
     }
 
     private static final void avgPred(int[][] predFwd, int[][] predBack) {
         for (int i = 0; i < predFwd.length; i++) {
             for (int j = 0; j < predFwd[i].length; j += 4) {
-                predFwd[i][j] = (predFwd[i][j] + predBack[i][j]) >> 1;
-                predFwd[i][j + 1] = (predFwd[i][j + 1] + predBack[i][j + 1]) >> 1;
-                predFwd[i][j + 2] = (predFwd[i][j + 2] + predBack[i][j + 2]) >> 1;
-                predFwd[i][j + 3] = (predFwd[i][j + 3] + predBack[i][j + 3]) >> 1;
+                predFwd[i][j] = (predFwd[i][j] + predBack[i][j] + 1) >> 1;
+                predFwd[i][j + 1] = (predFwd[i][j + 1] + predBack[i][j + 1] + 1) >> 1;
+                predFwd[i][j + 2] = (predFwd[i][j + 2] + predBack[i][j + 2] + 1) >> 1;
+                predFwd[i][j + 3] = (predFwd[i][j + 3] + predBack[i][j + 3] + 1) >> 1;
             }
         }
     }
@@ -475,82 +474,56 @@ public class MPEGDecoder implements VideoDecoder {
         }
     }
 
-    protected void put(int[][] mbPix, int[][] buf, int stride, int chromaFormat, int mbX, int mbY, int clipVal,
-            int width, int height, int vertOff, int vertStep) {
+    protected void put(int[][] mbPix, int[][] buf, int stride, int chromaFormat, int mbX, int mbY, int width,
+            int height, int vertOff, int vertStep) {
 
         int chromaStride = (stride + (1 << SQUEEZE_X[chromaFormat]) - 1) >> SQUEEZE_X[chromaFormat];
         int chromaMBW = 4 - SQUEEZE_X[chromaFormat];
         int chromaMBH = 4 - SQUEEZE_Y[chromaFormat];
 
-        if (width > ((mbX + 1) << 4) && height > ((mbY + 1) << 4)) {
-            putSub(buf[0], (mbY << 4) * (stride << vertStep) + vertOff * stride + (mbX << 4), stride << vertStep,
-                    mbPix[0], clipVal, 4, 4);
-            putSub(buf[1], (mbY << chromaMBH) * (chromaStride << vertStep) + vertOff * chromaStride
-                    + (mbX << chromaMBW), chromaStride << vertStep, mbPix[1], clipVal, chromaMBW, chromaMBH);
-            putSub(buf[2], (mbY << chromaMBH) * (chromaStride << vertStep) + vertOff * chromaStride
-                    + (mbX << chromaMBW), chromaStride << vertStep, mbPix[2], clipVal, chromaMBW, chromaMBH);
-        } else {
-            int chromaHeight = (height + (1 << SQUEEZE_Y[chromaFormat]) - 1) >> SQUEEZE_Y[chromaFormat];
-            putEdge(buf[0], (mbY << 4) * (stride << vertStep) + vertOff * stride + (mbX << 4), stride << vertStep,
-                    mbPix[0], 16, min(16, width - (mbX << 4)), min(16, height - (mbY << 4)), clipVal);
-            putEdge(buf[1], (mbY << chromaMBH) * (chromaStride << vertStep) + vertOff * chromaStride
-                    + (mbX << chromaMBW), chromaStride << vertStep, mbPix[1], 1 << chromaMBW,
-                    min(1 << chromaMBW, chromaStride - (mbX << chromaMBW)),
-                    min(1 << chromaMBH, chromaHeight - (mbY << chromaMBH)), clipVal);
-            putEdge(buf[2], (mbY << chromaMBH) * (chromaStride << vertStep) + vertOff * chromaStride
-                    + (mbX << chromaMBW), chromaStride << vertStep, mbPix[2], 1 << chromaMBW,
-                    min(1 << chromaMBW, chromaStride - (mbX << chromaMBW)),
-                    min(1 << chromaMBH, chromaHeight - (mbY << chromaMBH)), clipVal);
-        }
+        putSub(buf[0], (mbY << 4) * (stride << vertStep) + vertOff * stride + (mbX << 4), stride << vertStep, mbPix[0],
+                4, 4);
+        putSub(buf[1], (mbY << chromaMBH) * (chromaStride << vertStep) + vertOff * chromaStride + (mbX << chromaMBW),
+                chromaStride << vertStep, mbPix[1], chromaMBW, chromaMBH);
+        putSub(buf[2], (mbY << chromaMBH) * (chromaStride << vertStep) + vertOff * chromaStride + (mbX << chromaMBW),
+                chromaStride << vertStep, mbPix[2], chromaMBW, chromaMBH);
     }
 
-    private final void putEdge(int[] tgt, int tgtOff, int tgtStride, int[] blk, int blkStride, int blkW, int blkH,
-            int clipVal) {
-        int blkOff = 0, blkLf = blkStride - blkW, picLf = tgtStride - blkW;
-        for (int i = 0; i < blkH; i++) {
-            for (int j = 0; j < blkW; j++) {
-                tgt[tgtOff++] = clip(blk[blkOff++], clipVal);
-            }
-            blkOff += blkLf;
-            tgtOff += picLf;
-        }
-    }
-
-    private final void putSub(int[] big, int off, int stride, int[] block, int clipVal, int mbW, int mbH) {
+    private final void putSub(int[] big, int off, int stride, int[] block, int mbW, int mbH) {
         int blOff = 0;
 
         if (mbW == 3) {
             for (int i = 0; i < (1 << mbH); i++) {
-                big[off] = clip(block[blOff], clipVal);
-                big[off + 1] = clip(block[blOff + 1], clipVal);
-                big[off + 2] = clip(block[blOff + 2], clipVal);
-                big[off + 3] = clip(block[blOff + 3], clipVal);
-                big[off + 4] = clip(block[blOff + 4], clipVal);
-                big[off + 5] = clip(block[blOff + 5], clipVal);
-                big[off + 6] = clip(block[blOff + 6], clipVal);
-                big[off + 7] = clip(block[blOff + 7], clipVal);
+                big[off] = clip(block[blOff]);
+                big[off + 1] = clip(block[blOff + 1]);
+                big[off + 2] = clip(block[blOff + 2]);
+                big[off + 3] = clip(block[blOff + 3]);
+                big[off + 4] = clip(block[blOff + 4]);
+                big[off + 5] = clip(block[blOff + 5]);
+                big[off + 6] = clip(block[blOff + 6]);
+                big[off + 7] = clip(block[blOff + 7]);
 
                 blOff += 8;
                 off += stride;
             }
         } else {
             for (int i = 0; i < (1 << mbH); i++) {
-                big[off] = clip(block[blOff], clipVal);
-                big[off + 1] = clip(block[blOff + 1], clipVal);
-                big[off + 2] = clip(block[blOff + 2], clipVal);
-                big[off + 3] = clip(block[blOff + 3], clipVal);
-                big[off + 4] = clip(block[blOff + 4], clipVal);
-                big[off + 5] = clip(block[blOff + 5], clipVal);
-                big[off + 6] = clip(block[blOff + 6], clipVal);
-                big[off + 7] = clip(block[blOff + 7], clipVal);
-                big[off + 8] = clip(block[blOff + 8], clipVal);
-                big[off + 9] = clip(block[blOff + 9], clipVal);
-                big[off + 10] = clip(block[blOff + 10], clipVal);
-                big[off + 11] = clip(block[blOff + 11], clipVal);
-                big[off + 12] = clip(block[blOff + 12], clipVal);
-                big[off + 13] = clip(block[blOff + 13], clipVal);
-                big[off + 14] = clip(block[blOff + 14], clipVal);
-                big[off + 15] = clip(block[blOff + 15], clipVal);
+                big[off] = clip(block[blOff]);
+                big[off + 1] = clip(block[blOff + 1]);
+                big[off + 2] = clip(block[blOff + 2]);
+                big[off + 3] = clip(block[blOff + 3]);
+                big[off + 4] = clip(block[blOff + 4]);
+                big[off + 5] = clip(block[blOff + 5]);
+                big[off + 6] = clip(block[blOff + 6]);
+                big[off + 7] = clip(block[blOff + 7]);
+                big[off + 8] = clip(block[blOff + 8]);
+                big[off + 9] = clip(block[blOff + 9]);
+                big[off + 10] = clip(block[blOff + 10]);
+                big[off + 11] = clip(block[blOff + 11]);
+                big[off + 12] = clip(block[blOff + 12]);
+                big[off + 13] = clip(block[blOff + 13]);
+                big[off + 14] = clip(block[blOff + 14]);
+                big[off + 15] = clip(block[blOff + 15]);
 
                 blOff += 16;
                 off += stride;
@@ -558,8 +531,8 @@ public class MPEGDecoder implements VideoDecoder {
         }
     }
 
-    private static final int clip(int val, int clipVal) {
-        return val < 0 ? 0 : (val > clipVal ? clipVal : val);
+    private static final int clip(int val) {
+        return val < 0 ? 0 : (val > 255 ? 255 : val);
     }
 
     private final int[] getQmat(boolean luma, boolean intra, PictureHeader ph) {
@@ -576,80 +549,85 @@ public class MPEGDecoder implements VideoDecoder {
                 : MPEGConst.defaultQMatInter));
     }
 
-    private void printBlk(int[] block, int off) {
-        for (int i = 0; i < 64; i++) {
-            System.out.print(block[off + i] + ",");
-        }
-        System.out.println();
+    private static final int quantInter(int level, int quant) {
+        return (((level << 1) + 1) * quant) >> 5;
     }
 
-    private static final int quantInter(int level, int quant) {
-        return level == 0 ? 0 : (((level << 1) + ((level >> 31) << 1) + 1) * quant) >> 5;
+    private static final int quantInterSigned(int level, int quant) {
+        return level >= 0 ? quantInter(level, quant) : -quantInter(-level, quant);
     }
 
     private final void blockIntra(InBits in, VLC vlcCoeff, int[] block, int[] intra_dc_predictor, int blkIdx,
             int dctType, int[] scan, int escSize, int intra_dc_mult, int qScale, int[] qmat, int chromaFormat)
             throws IOException {
+        int[] debug = new int[64];
         int cc = BLOCK_TO_CC[blkIdx];
         int blkStride = blkIdx < 4 ? 4 : 4 - SQUEEZE_X[chromaFormat];
         int size = (cc == 0 ? vlcDCSizeLuma : vlcDCSizeChroma).readVLC(in);
         int delta = (size != 0) ? mpegSigned(in, size) : 0;
         intra_dc_predictor[cc] = intra_dc_predictor[cc] + delta;
         int dc = intra_dc_predictor[cc] * intra_dc_mult;
-        SparseIDCT.dc(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx], MPEGConst.BLOCK_POS_Y[blkIdx], dctType, dc);
+        int stepVert = chromaFormat == Chroma420 && (blkIdx == 4 || blkIdx == 5) ? 0 : dctType;
+        int blkIdxExt = blkIdx + (dctType << 4);
+        SparseIDCT.dc(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdxExt],
+                MPEGConst.BLOCK_POS_Y[blkIdx + (dctType << 4)], stepVert, dc);
+        debug[0] = dc;
 
         for (int idx = 0; idx < maxCoeff;) {
             int readVLC = vlcCoeff.readVLC(in);
+            int ac, ridx;
             if (readVLC >= 0) {
                 idx += (readVLC >> 12) + 1;
-                int ridx = scan[idx];
-                SparseIDCT.ac(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx], MPEGConst.BLOCK_POS_Y[blkIdx], dctType,
-                        ridx, (toSigned(readVLC & 0xfff, in.read1Bit()) * qScale * qmat[ridx]) >> 4);
+                ridx = scan[idx];
+                ac = toSigned(((readVLC & 0xfff) * qScale * qmat[ridx]) >> 4, in.read1Bit());
             } else if (readVLC == -2) {
                 idx += in.readNBit(6) + 1;
-                int ridx = scan[idx];
-                SparseIDCT.ac(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx], MPEGConst.BLOCK_POS_Y[blkIdx], dctType,
-                        ridx, (twosSigned(in, escSize) * qScale * qmat[ridx]) >> 4);
+                ridx = scan[idx];
+                ac = twosSigned(in, escSize) * qScale * qmat[ridx];
+                ac = ac >= 0 ? (ac >> 4) : -(-ac >> 4);
             } else
                 break;
+            debug[ridx] = ac;
+            SparseIDCT.ac(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx + (dctType << 4)],
+                    MPEGConst.BLOCK_POS_Y[blkIdx + (dctType << 4)], stepVert, ridx, ac);
         }
     }
 
     private final void blockInter(InBits in, VLC vlcCoeff, int[] block, int blkIdx, int dctType, int[] scan,
             int escSize, int qScale, int[] qmat, int chromaFormat) throws IOException {
 
+        int[] debug = new int[64];
+
+        int stepVert = chromaFormat == Chroma420 && (blkIdx == 4 || blkIdx == 5) ? 0 : dctType;
+        int blkIdxExt = blkIdx + (dctType << 4);
+
         int blkStride = blkIdx < 4 ? 4 : 4 - SQUEEZE_X[chromaFormat];
+        int idx = -1;
         if (vlcCoeff == vlcCoeff0 && in.checkNBit(1) == 1) {
             in.read1Bit();
-            SparseIDCT.dc(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx], MPEGConst.BLOCK_POS_Y[blkIdx], dctType,
-                    quantInter(1 - (in.read1Bit() << 1), qScale * qmat[0]));
-        } else {
-            int readVLC = vlcCoeff.readVLC(in);
-            if (readVLC >= 0) {
-                SparseIDCT.dc(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx], MPEGConst.BLOCK_POS_Y[blkIdx], dctType,
-                        quantInter(toSigned(readVLC & 0xfff, in.read1Bit()), qScale * qmat[0]));
-            } else {
-                in.readNBit(6);
-                SparseIDCT.dc(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx], MPEGConst.BLOCK_POS_Y[blkIdx], dctType,
-                        quantInter(twosSigned(in, escSize), qScale * qmat[0]));
-            }
+            int dc = toSigned(quantInter(1, qScale * qmat[0]), in.read1Bit());
+            SparseIDCT.dc(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdxExt], MPEGConst.BLOCK_POS_Y[blkIdxExt],
+                    stepVert, dc);
+            idx++;
+            debug[0] = dc;
         }
 
-        for (int idx = 0; idx < maxCoeff;) {
+        for (; idx < maxCoeff;) {
             int readVLC = vlcCoeff.readVLC(in);
+            int ac, rind;
             if (readVLC >= 0) {
                 idx += (readVLC >> 12) + 1;
-                int rind = scan[idx];
-                SparseIDCT.ac(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx], MPEGConst.BLOCK_POS_Y[blkIdx], dctType,
-                        rind, quantInter(toSigned(readVLC & 0xfff, in.read1Bit()), qScale * qmat[rind]));
+                rind = scan[idx];
+                ac = toSigned(quantInter(readVLC & 0xfff, qScale * qmat[rind]), in.read1Bit());
             } else if (readVLC == -2) {
-                int j = in.readNBit(6) + 1;
-                idx += j;
-                int rind = scan[idx];
-                SparseIDCT.ac(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx], MPEGConst.BLOCK_POS_Y[blkIdx], dctType,
-                        rind, quantInter(twosSigned(in, escSize), qScale * qmat[rind]));
+                idx += in.readNBit(6) + 1;
+                rind = scan[idx];
+                ac = quantInterSigned(twosSigned(in, escSize), qScale * qmat[rind]);
             } else
                 break;
+            debug[rind] = ac;
+            SparseIDCT.ac(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdxExt], MPEGConst.BLOCK_POS_Y[blkIdxExt],
+                    stepVert, rind, ac);
         }
     }
 
@@ -671,7 +649,7 @@ public class MPEGDecoder implements VideoDecoder {
 
     private final int readCbPattern(InBits in) throws IOException {
         int cbp420 = vlcCBP.readVLC(in);
-        if (sh.sequenceExtension.chroma_format == SequenceExtension.Chroma420)
+        if (sh.sequenceExtension == null || sh.sequenceExtension.chroma_format == SequenceExtension.Chroma420)
             return cbp420;
         else if (sh.sequenceExtension.chroma_format == SequenceExtension.Chroma422)
             return (cbp420 << 2) | in.readNBit(2);
@@ -696,25 +674,5 @@ public class MPEGDecoder implements VideoDecoder {
             return 10;
 
         return 0;
-    }
-
-    public static Size getSize(Buffer data) {
-        SequenceHeader sh = getSequenceHeader(data);
-        return new Size(sh.horizontal_size, sh.vertical_size);
-    }
-
-    private static SequenceHeader getSequenceHeader(Buffer data) {
-        Buffer segment = nextSegment(data);
-        while (segment != null) {
-            if (segment.get(3) == MPEGConst.SEQUENCE_HEADER_CODE) {
-                return SequenceHeader.read(segment.from(4));
-            }
-            segment = nextSegment(data);
-        }
-        return null;
-    }
-
-    public Size getSize() {
-        return new Size(sh.horizontal_size, sh.vertical_size);
     }
 }

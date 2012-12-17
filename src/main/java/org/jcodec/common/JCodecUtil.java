@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.pcm.PCMDecoder;
+import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
 import org.jcodec.common.io.Buffer;
@@ -113,5 +114,12 @@ public class JCodecUtil {
         transform.transform(pic, rgb);
         BufferedImage bi = AWTUtil.toBufferedImage(rgb);
         ImageIO.write(bi, format, file);
+    }
+
+    public static void savePictureAsPPM(Picture pic, File file) throws IOException {
+        Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
+        Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB);
+        transform.transform(pic, rgb);
+        new PPMEncoder().encodeFrame(rgb).writeTo(file);
     }
 }

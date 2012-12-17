@@ -19,11 +19,18 @@ public class Picture {
 
     private int[][] data;
 
+    private Rect crop;
+
     public Picture(int width, int height, int[][] data, ColorSpace color) {
+        this(width, height, data, color, new Rect(0, 0, width, height));
+    }
+
+    public Picture(int width, int height, int[][] data, ColorSpace color, Rect crop) {
         this.width = width;
         this.height = height;
         this.data = data;
         this.color = color;
+        this.crop = crop;
     }
 
     public Picture(Picture other) {
@@ -70,6 +77,10 @@ public class Picture {
         return data;
     }
 
+    public Rect getCrop() {
+        return crop;
+    }
+
     public int getPlaneWidth(int plane) {
         return width >> color.compWidth[plane];
     }
@@ -94,6 +105,34 @@ public class Picture {
                 continue;
             System.arraycopy(src.data[plane], 0, data[plane], 0, (width >> color.compWidth[plane])
                     * (height >> color.compHeight[plane]));
+        }
+    }
+
+    public Picture cropped() {
+        if (crop == null
+                || (crop.getX() == 0 && crop.getY() == 0 && crop.getWidth() == width && crop.getHeight() == height))
+            return this;
+        Picture result = Picture.create(crop.getWidth(), crop.getHeight(), color);
+
+        for (int plane = 0; plane < color.nComp; plane++) {
+            if (data[plane] == null)
+                continue;
+            cropSub(data[plane], crop.getX() >> color.compWidth[plane], crop.getY() >> color.compHeight[plane],
+                    crop.getWidth() >> color.compWidth[plane], crop.getHeight() >> color.compHeight[plane],
+                    width >> color.compWidth[plane], result.data[plane]);
+        }
+
+        return result;
+    }
+
+    private void cropSub(int[] src, int x, int y, int w, int h, int srcStride, int[] tgt) {
+        int srcOff = y * srcStride + x, dstOff = 0;
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++)
+                tgt[dstOff + j] = src[srcOff + j];
+
+            srcOff += srcStride;
+            dstOff += w;
         }
     }
 }

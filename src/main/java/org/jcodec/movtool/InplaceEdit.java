@@ -33,7 +33,7 @@ public abstract class InplaceEdit {
             Assert.assertNotNull(moov);
             MovieBox movBox = (MovieBox) moov.parseBox(fi);
             apply(movBox);
-            if (movBox.calcSize() <= moov.getHeader().getSize())
+            if (movBox.calcSize() > moov.getHeader().getSize())
                 return false;
             out = new FileRAOutputStream(f);
             out.seek(moov.getOffset());

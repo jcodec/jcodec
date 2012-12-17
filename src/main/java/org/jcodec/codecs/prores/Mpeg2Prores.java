@@ -1,5 +1,6 @@
 package org.jcodec.codecs.prores;
 
+import static org.jcodec.codecs.mpeg12.MPEGConst.BLOCK_TO_CC;
 import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.common.model.ColorSpace.YUV422_10;
 
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.commons.io.IOUtils;
+import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
@@ -275,46 +277,5 @@ public class Mpeg2Prores extends MPEGDecoder {
         }
 
         return out;
-    }
-
-    public static void main(String[] args) throws Exception {
-        File src = new File(args[0]);
-        for (long i = 0; i < 9720000000L; i += 100) {
-            RAInputStream input = null;
-            try {
-                input = bufin(src);
-                MPSDemuxer mtsDemuxer = new MPSDemuxer(input);
-                System.out.print("Seeking to " + i + ": ");
-                System.out.println(mtsDemuxer.seek(i));
-            } finally {
-                IOUtils.closeQuietly(input);
-            }
-        }
-    }
-
-    public static void main1(String[] args) throws Exception {
-        File src = new File(args[0]);
-        // MTSDemuxer mtsDemuxer = new MTSDemuxer(src);
-        MPSDemuxer mtsDemuxer = new MPSDemuxer(bufin(src));
-        System.out.println(mtsDemuxer.seek(90010));
-
-        PES pes = mtsDemuxer.getVideoTracks().get(0);
-
-        Packet frame = pes.getFrame();
-        SequenceHeader sh = pes.getSequenceHeader();
-        Mpeg2Prores decoder = new Mpeg2Prores(sh, pes.getGroupHeader(), Profile.PROXY);
-        long t1 = System.currentTimeMillis();
-        FileRAOutputStream output = new FileRAOutputStream(new File(args[1]));
-        MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
-        CompressedTrack vt = muxer.addVideoTrack("apco", new Size(sh.horizontal_size, sh.vertical_size), "JCodec", 25);
-        for (int i = 0; frame != null && i < 1000; i++) {
-            Buffer buf = new Buffer(frame.getData().remaining() * 6);
-            decoder.transcode(frame.getData(), buf.os());
-            vt.addFrame(new MP4Packet(buf.flip(), i, 25, 1, i, true, null, i, 0));
-            frame = pes.getFrame();
-        }
-        muxer.writeHeader();
-        output.close();
-        System.out.println(System.currentTimeMillis() - t1);
     }
 }

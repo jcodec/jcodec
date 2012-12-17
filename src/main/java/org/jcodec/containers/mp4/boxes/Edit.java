@@ -43,4 +43,8 @@ public class Edit {
     public void setMediaTime(long l) {
         mediaTime = l;
     }
+
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
 }

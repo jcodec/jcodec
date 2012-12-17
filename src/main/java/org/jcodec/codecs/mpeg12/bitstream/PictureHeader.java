@@ -159,13 +159,6 @@ public class PictureHeader {
         }
     }
 
-    public final int fCode(int ind) {
-        if (pictureCodingExtension != null)
-            return pictureCodingExtension.f_code[ind];
-        else
-            return ind < 2 ? forward_f_code : backward_f_code;
-    }
-
     public boolean hasExtensions() {
         return hasExtensions;
     }

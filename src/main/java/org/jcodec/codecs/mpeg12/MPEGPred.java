@@ -28,9 +28,9 @@ public class MPEGPred {
     }
 
     public final void predictEvenEvenSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
-            int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int offRef = refY * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep) - tgtW, lfTgt = tgtVertStep
-                * tgtW;
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+        int offRef = ((refY << refVertStep) + refVertOff) * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
+                - tgtW, lfTgt = tgtVertStep * tgtW;
 
         for (int i = 0; i < tgtH; i++) {
             for (int j = 0; j < tgtW; j++)
@@ -40,27 +40,14 @@ public class MPEGPred {
         }
     }
 
-    public final void predictEvenOddSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int[] tgt,
-            int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int offRef = refY * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep) - tgtW, lfTgt = tgtVertStep
-                * tgtW;
-
-        for (int i = 0; i < tgtH; i++) {
-            for (int j = 0; j < tgtW; j++)
-                tgt[offTgt++] = (ref[offRef++] + ref[offRef]) >> 1;
-            offRef += lfRef;
-            offTgt += lfTgt;
-        }
-    }
-
-    public final void predictOddEvenSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int[] tgt,
-            int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int offRef = refY * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep) - tgtW, lfTgt = tgtVertStep
-                * tgtW;
+    public final void predictEvenOddSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+        int offRef = ((refY << refVertStep) + refVertOff) * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
+                - tgtW, lfTgt = tgtVertStep * tgtW;
 
         for (int i = 0; i < tgtH; i++) {
             for (int j = 0; j < tgtW; j++) {
-                tgt[offTgt++] = (ref[offRef] + ref[offRef + refW]) >> 1;
+                tgt[offTgt++] = (ref[offRef] + ref[offRef + 1] + 1) >> 1;
                 ++offRef;
             }
             offRef += lfRef;
@@ -68,99 +55,154 @@ public class MPEGPred {
         }
     }
 
-    public final void predictOddOddSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int[] tgt,
-            int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int offRef = refY * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep) - tgtW, lfTgt = tgtVertStep
-                * tgtW;
+    public final void predictOddEvenSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+        int offRef = ((refY << refVertStep) + refVertOff) * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
+                - tgtW, lfTgt = tgtVertStep * tgtW, stride = refW << refVertStep;
 
         for (int i = 0; i < tgtH; i++) {
-            for (int j = 0; j < tgtW; j++)
-                tgt[offTgt++] = (ref[offRef++] + ref[offRef + refW]) >> 1;
+            for (int j = 0; j < tgtW; j++) {
+                tgt[offTgt++] = (ref[offRef] + ref[offRef + stride] + 1) >> 1;
+                ++offRef;
+            }
             offRef += lfRef;
             offTgt += lfTgt;
         }
     }
 
-    private final int getPix(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2) {
-        x1 = MathUtil.clip(x1, 0, refW - 1);
-        y1 = MathUtil.clip(y1, 0, refH - 1);
-        x2 = MathUtil.clip(x2, 0, refW - 1);
-        y2 = MathUtil.clip(y2, 0, refH - 1);
+    public final void predictOddOddSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+        int offRef = ((refY << refVertStep) + refVertOff) * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
+                - tgtW, lfTgt = tgtVertStep * tgtW, stride = refW << refVertStep;
 
-        return (ref[y1 * refW + x1] + ref[y2 * refW + x2]) >> 1;
+        for (int i = 0; i < tgtH; i++) {
+            for (int j = 0; j < tgtW; j++) {
+                tgt[offTgt++] = (ref[offRef] + ref[offRef + 1] + ref[offRef + stride] + ref[offRef + stride + 1] + 3) >> 2;
+                ++offRef;
+            }
+            offRef += lfRef;
+            offTgt += lfTgt;
+        }
+    }
+
+    private final int getPix1(int[] ref, int refW, int refH, int x, int y, int refVertStep, int refVertOff) {
+        x = MathUtil.clip(x, 0, refW - 1);
+        y = MathUtil.clip(y, 0, refH - (1 << refVertStep) + refVertOff);
+
+        return ref[y * refW + x];
+    }
+
+    private final int getPix2(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2, int refVertStep,
+            int refVertOff) {
+        x1 = MathUtil.clip(x1, 0, refW - 1);
+        int lastLine = refH - (1 << refVertStep) + refVertOff;
+        y1 = MathUtil.clip(y1, 0, lastLine);
+        x2 = MathUtil.clip(x2, 0, refW - 1);
+        y2 = MathUtil.clip(y2, 0, lastLine);
+
+        return (ref[y1 * refW + x1] + ref[y2 * refW + x2] + 1) >> 1;
+    }
+
+    private final int getPix4(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2, int x3, int y3, int x4,
+            int y4, int refVertStep, int refVertOff) {
+        int lastLine = refH - (1 << refVertStep) + refVertOff;
+        x1 = MathUtil.clip(x1, 0, refW - 1);
+        y1 = MathUtil.clip(y1, 0, lastLine);
+        x2 = MathUtil.clip(x2, 0, refW - 1);
+        y2 = MathUtil.clip(y2, 0, lastLine);
+        x3 = MathUtil.clip(x3, 0, refW - 1);
+        y3 = MathUtil.clip(y3, 0, lastLine);
+        x4 = MathUtil.clip(x4, 0, refW - 1);
+        y4 = MathUtil.clip(y4, 0, lastLine);
+
+        return (ref[y1 * refW + x1] + ref[y2 * refW + x2] + ref[y3 * refW + x3] + ref[y4 * refW + x4] + 3) >> 2;
     }
 
     public final void predictEvenEvenUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
-            int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
-        for (int j = 0; j < tgtH; j += refVertStep + 1) {
+        for (int j = 0; j < tgtH; j++) {
+            int y = ((j + refY) << refVertStep) + refVertOff;
             for (int i = 0; i < tgtW; i++) {
-                tgt[tgtOff++] = getPix(ref, refW, refH, i + refX, j + refY, i + refX, j + refY);
+                tgt[tgtOff++] = getPix1(ref, refW, refH, i + refX, y, refVertStep, refVertOff);
             }
             tgtOff += jump;
         }
     }
 
     public final void predictEvenOddUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
-            int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
-        for (int j = 0; j < tgtH; j += refVertStep + 1) {
+        for (int j = 0; j < tgtH; j++) {
+            int y = ((j + refY) << refVertStep) + refVertOff;
             for (int i = 0; i < tgtW; i++) {
-                tgt[tgtOff++] = getPix(ref, refW, refH, i + refX, j + refY, i + refX + 1, j + refY);
+                tgt[tgtOff++] = getPix2(ref, refW, refH, i + refX, y, i + refX + 1, y, refVertStep, refVertOff);
             }
             tgtOff += jump;
         }
     }
 
     public final void predictOddEvenUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
-            int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
-        for (int j = 0; j < tgtH; j += refVertStep + 1) {
+        for (int j = 0; j < tgtH; j++) {
+            int y1 = ((j + refY) << refVertStep) + refVertOff;
+            int y2 = ((j + refY + 1) << refVertStep) + refVertOff;
             for (int i = 0; i < tgtW; i++) {
-                tgt[tgtOff++] = getPix(ref, refW, refH, i + refX, j + refY, i + refX, j + refY + refVertStep + 1);
+                tgt[tgtOff++] = getPix2(ref, refW, refH, i + refX, y1, i + refX, y2, refVertStep, refVertOff);
             }
             tgtOff += jump;
         }
     }
 
     public final void predictOddOddUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
-            int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
-        for (int j = 0; j < tgtH; j += refVertStep + 1) {
+        for (int j = 0; j < tgtH; j++) {
+            int y1 = ((j + refY) << refVertStep) + refVertOff;
+            int y2 = ((j + refY + 1) << refVertStep) + refVertOff;
             for (int i = 0; i < tgtW; i++) {
-                tgt[tgtOff++] = getPix(ref, refW, refH, i + refX, j + refY, i + refX + 1, j + refY + refVertStep + 1);
+                int ptX = i + refX;
+                tgt[tgtOff++] = getPix4(ref, refW, refH, ptX, y1, ptX + 1, y1, ptX, y2, ptX + 1, y2, refVertStep,
+                        refVertOff);
             }
             tgtOff += jump;
         }
     }
 
-    public final void predictPlane(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int[] tgt,
-            int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+    public final void predictPlane(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int refVertOff,
+            int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int rx = refX >> 1, ry = refY >> 1;
 
-        boolean safe = rx >= 0 && ry >= 0 && rx + tgtW < refW && ry + tgtH < refH;
+        boolean safe = rx >= 0 && ry >= 0 && rx + tgtW < refW && (ry + tgtH << refVertStep) < refH;
         if ((refX & 0x1) == 0) {
             if ((refY & 0x1) == 0) {
                 if (safe)
-                    predictEvenEvenSafe(ref, rx, ry, refW, refH, refVertStep, tgt, tgtY, tgtW, tgtH, tgtVertStep);
+                    predictEvenEvenSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                            tgtVertStep);
                 else
-                    predictEvenEvenUnSafe(ref, rx, ry, refW, refH, refVertStep, tgt, tgtY, tgtW, tgtH, tgtVertStep);
+                    predictEvenEvenUnSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                            tgtVertStep);
             } else {
                 if (safe)
-                    predictOddEvenSafe(ref, rx, ry, refW, refH, refVertStep, tgt, tgtY, tgtW, tgtH, tgtVertStep);
+                    predictOddEvenSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                            tgtVertStep);
                 else
-                    predictOddEvenUnSafe(ref, rx, ry, refW, refH, refVertStep, tgt, tgtY, tgtW, tgtH, tgtVertStep);
+                    predictOddEvenUnSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                            tgtVertStep);
             }
         } else if ((refY & 0x1) == 0) {
             if (safe)
-                predictEvenOddSafe(ref, rx, ry, refW, refH, refVertStep, tgt, tgtY, tgtW, tgtH, tgtVertStep);
+                predictEvenOddSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH, tgtVertStep);
             else
-                predictEvenOddUnSafe(ref, rx, ry, refW, refH, refVertStep, tgt, tgtY, tgtW, tgtH, tgtVertStep);
+                predictEvenOddUnSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                        tgtVertStep);
         } else {
             if (safe)
-                predictOddOddSafe(ref, rx, ry, refW, refH, refVertStep, tgt, tgtY, tgtW, tgtH, tgtVertStep);
+                predictOddOddSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH, tgtVertStep);
             else
-                predictOddOddUnSafe(ref, rx, ry, refW, refH, refVertStep, tgt, tgtY, tgtW, tgtH, tgtVertStep);
+                predictOddOddUnSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                        tgtVertStep);
         }
     }
 
@@ -197,18 +239,11 @@ public class MPEGPred {
 
     private void predict16x16DualPrimeField(Picture[] reference, int x, int y, InBits in, int[][] mbPix, int topField)
             throws IOException {
-        int codeX = vlcMotionCode.readVLC(in) - 16, residialX = 0;
-        if (fCode[0][0] != 1 && codeX != 0)
-            residialX = in.readNBit(fCode[0][0] - 1);
+        int vect1X = mvectDecode(in, fCode[0][0], mvPred[0][0][0]);
         int dmX = MPEGConst.vlcDualPrime.readVLC(in);
 
-        int codeY = vlcMotionCode.readVLC(in) - 16, residialY = 0;
-        if (fCode[0][1] != 1 && codeY != 0)
-            residialY = in.readNBit(fCode[0][1] - 1);
+        int vect1Y = mvectDecode(in, fCode[0][1], mvPred[0][0][1]);
         int dmY = MPEGConst.vlcDualPrime.readVLC(in);
-
-        int vect1X = mvPred[0][0][0] + (1 << fCode[0][0]) * codeX + residialX;
-        int vect1Y = mvPred[0][0][1] + (1 << fCode[0][1]) * codeY + residialY;
 
         int vect2X = dpXField(vect1X, dmX, topField);
         int vect2Y = dpYField(vect1Y, dmY, topField);
@@ -218,23 +253,23 @@ public class MPEGPred {
 
         int[][] mbPix1 = new int[3][256], mbPix2 = new int[3][256];
 
-        predictPlane(reference[topField].getPlaneData(0), x + vect1X, ((y + vect1Y) << 1) + (1 - topField),
-                reference[topField].getPlaneWidth(0), reference[topField].getPlaneHeight(0), 1, mbPix1[0], 0, 16, 16, 0);
-        predictPlane(reference[topField].getPlaneData(1), (x + vect1X) >> cw, (((y + vect1Y) >> ch) << 1)
-                + (1 - topField), reference[topField].getPlaneWidth(1), reference[topField].getPlaneHeight(1), 1,
+        predictPlane(reference[topField].getPlaneData(0), x + vect1X, y + vect1Y, reference[topField].getPlaneWidth(0),
+                reference[topField].getPlaneHeight(0), 1, 1 - topField, mbPix1[0], 0, 16, 16, 0);
+        predictPlane(reference[topField].getPlaneData(1), (x + vect1X) >> cw, (y + vect1Y) >> ch,
+                reference[topField].getPlaneWidth(1), reference[topField].getPlaneHeight(1), 1, 1 - topField,
                 mbPix1[1], 0, 16 >> cw, 16 >> ch, 0);
-        predictPlane(reference[topField].getPlaneData(2), (x + vect1X) >> cw, (((y + vect1Y) >> ch) << 1)
-                + (1 - topField), reference[topField].getPlaneWidth(2), reference[topField].getPlaneHeight(2), 1,
+        predictPlane(reference[topField].getPlaneData(2), (x + vect1X) >> cw, (y + vect1Y) >> ch,
+                reference[topField].getPlaneWidth(2), reference[topField].getPlaneHeight(2), 1, 1 - topField,
                 mbPix1[2], 0, 16 >> cw, 16 >> ch, 0);
 
-        predictPlane(reference[1 - topField].getPlaneData(0), x + vect2X, ((y + vect2Y) << 1) + topField,
-                reference[1 - topField].getPlaneWidth(0), reference[1 - topField].getPlaneHeight(0), 1, mbPix2[0], 0,
-                16, 16, 0);
-        predictPlane(reference[1 - topField].getPlaneData(1), (x + vect2X) >> cw, (((y + vect2Y) >> ch) << 1)
-                + topField, reference[1 - topField].getPlaneWidth(1), reference[1 - topField].getPlaneHeight(1), 1,
+        predictPlane(reference[1 - topField].getPlaneData(0), x + vect2X, y + vect2Y,
+                reference[1 - topField].getPlaneWidth(0), reference[1 - topField].getPlaneHeight(0), 1, topField,
+                mbPix2[0], 0, 16, 16, 0);
+        predictPlane(reference[1 - topField].getPlaneData(1), (x + vect2X) >> cw, (y + vect2Y) >> ch,
+                reference[1 - topField].getPlaneWidth(1), reference[1 - topField].getPlaneHeight(1), 1, topField,
                 mbPix2[1], 0, 16 >> cw, 16 >> ch, 0);
-        predictPlane(reference[1 - topField].getPlaneData(2), (x + vect2X) >> cw, (((y + vect2Y) >> ch) << 1)
-                + topField, reference[1 - topField].getPlaneWidth(2), reference[1 - topField].getPlaneHeight(2), 1,
+        predictPlane(reference[1 - topField].getPlaneData(2), (x + vect2X) >> cw, (y + vect2Y) >> ch,
+                reference[1 - topField].getPlaneWidth(2), reference[1 - topField].getPlaneHeight(2), 1, topField,
                 mbPix2[2], 0, 16 >> cw, 16 >> ch, 0);
 
         for (int i = 0; i < 3; i++) {
@@ -268,26 +303,26 @@ public class MPEGPred {
             int vectIdx) throws IOException {
         int field = in.read1Bit();
 
-        predictGeneric(reference[field], x, ((y + vertPos) << 1) + field, in, backward, mbPix, 0, 16, 8, 1, 0, vectIdx);
+        predictGeneric(reference[field], x, y + vertPos, in, backward, mbPix, vertPos, 16, 8, 1, field, 0, vectIdx, 1);
     }
 
     private void predict16x16Field(Picture[] reference, int x, int y, InBits in, int backward, int[][] mbPix)
             throws IOException {
         int field = in.read1Bit();
 
-        predictGeneric(reference[field], x, (y << 1) + field, in, backward, mbPix, 0, 16, 16, 1, 0, 0);
+        predictGeneric(reference[field], x, y, in, backward, mbPix, 0, 16, 16, 1, field, 0, 0, 1);
 
         mvPred[1][backward][0] = mvPred[0][backward][0];
         mvPred[1][backward][1] = mvPred[0][backward][1];
     }
 
     private void predict16x16DualPrimeFrame(Picture[] refs, int x, int y, InBits in, int backward, int[][] mbPix) {
-        throw new RuntimeException();
+        throw new RuntimeException("Dual prime");
     }
 
     private void predict16x16Frame(Picture reference, int x, int y, InBits in, int backward, int[][] mbPix)
             throws IOException {
-        predictGeneric(reference, x, y, in, backward, mbPix, 0, 16, 16, 0, 0, 0);
+        predictGeneric(reference, x, y, in, backward, mbPix, 0, 16, 16, 0, 0, 0, 0, 1);
 
         mvPred[1][backward][0] = mvPred[0][backward][0];
         mvPred[1][backward][1] = mvPred[0][backward][1];
@@ -324,53 +359,53 @@ public class MPEGPred {
     }
 
     private void predictGeneric(Picture reference, int x, int y, InBits in, int backward, int[][] mbPix, int tgtY,
-            int blkW, int blkH, int isSrcField, int isDstField, int vectIdx) throws IOException {
-        int vectX = mvectDecode(in, fCode[backward][0], mvPred[0][backward][0]);
-        int vectY = mvectDecode(in, fCode[backward][1], mvPred[0][backward][1]);
+            int blkW, int blkH, int isSrcField, int srcField, int isDstField, int vectIdx, int predScale)
+            throws IOException {
+        int vectX = mvectDecode(in, fCode[backward][0], mvPred[vectIdx][backward][0]);
+        int vectY = mvectDecode(in, fCode[backward][1], mvPred[vectIdx][backward][1] / predScale);
 
-//        System.out.println("MV: (" + vectX + "," + vectY + ")");
-
-        predictMB(reference, (x << 1) + vectX, (y << 1) + vectY, blkW, blkH, isSrcField, mbPix, tgtY, isDstField);
+        predictMB(reference, (x << 1) + vectX, (y << 1) + vectY, blkW, blkH, isSrcField, srcField, mbPix, tgtY,
+                isDstField);
 
         mvPred[vectIdx][backward][0] = vectX;
-        mvPred[vectIdx][backward][1] = vectY;
+        mvPred[vectIdx][backward][1] = vectY * predScale;
     }
 
     private void predictFieldInFrame(Picture reference, int x, int y, int[][] mbPix, InBits in, int backward,
             int spatial_temporal_weight_code) throws IOException {
+        y >>= 1;
         int field = in.read1Bit();
-        predictGeneric(reference, x, (y << 1) + field, in, backward, mbPix, 0, 16, 8, 1, 1, 0);
+        predictGeneric(reference, x, y, in, backward, mbPix, 0, 16, 8, 1, field, 1, 0, 2);
         if (spatial_temporal_weight_code == 0 || spatial_temporal_weight_code == 1) {
             field = in.read1Bit();
-            predictGeneric(reference, x, (y << 1) + field, in, backward, mbPix, 1, 16, 8, 1, 1, 1);
+            predictGeneric(reference, x, y, in, backward, mbPix, 1, 16, 8, 1, field, 1, 1, 2);
         } else {
             mvPred[1][backward][0] = mvPred[0][backward][0];
             mvPred[1][backward][1] = mvPred[0][backward][1];
-            predictMB(reference, mvPred[1][backward][0], (mvPred[1][backward][1] << 1) + (1 - field), 16, 8, 1, mbPix,
-                    1, 1);
+            predictMB(reference, mvPred[1][backward][0], mvPred[1][backward][1], 16, 8, 1, 1 - field, mbPix, 1, 1);
         }
     }
 
-    public void predictMB(Picture ref, int refX, int refY, int blkW, int blkH, int refVertStep, int[][] tgt, int tgtY,
-            int tgtVertStep) {
-        int cw = chromaFormat == Chroma420 ? 1 : 0;
-        int ch = chromaFormat == Chroma444 ? 0 : 1;
+    public void predictMB(Picture ref, int refX, int refY, int blkW, int blkH, int refVertStep, int refVertOff,
+            int[][] tgt, int tgtY, int tgtVertStep) {
+        int ch = chromaFormat == Chroma420 ? 1 : 0;
+        int cw = chromaFormat == Chroma444 ? 0 : 1;
 
-        predictPlane(ref.getPlaneData(0), refX, refY, ref.getPlaneWidth(0), ref.getPlaneHeight(0), refVertStep, tgt[0],
-                tgtY, blkW, blkH, tgtVertStep);
+        predictPlane(ref.getPlaneData(0), refX, refY, ref.getPlaneWidth(0), ref.getPlaneHeight(0), refVertStep,
+                refVertOff, tgt[0], tgtY, blkW, blkH, tgtVertStep);
         predictPlane(ref.getPlaneData(1), refX >> cw, refY >> ch, ref.getPlaneWidth(1), ref.getPlaneHeight(1),
-                refVertStep, tgt[1], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
+                refVertStep, refVertOff, tgt[1], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
         predictPlane(ref.getPlaneData(2), refX >> cw, refY >> ch, ref.getPlaneWidth(2), ref.getPlaneHeight(2),
-                refVertStep, tgt[2], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
+                refVertStep, refVertOff, tgt[2], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
     }
 
     public void predict16x16NoMV(Picture picture, int x, int y, int pictureStructure, int backward, int[][] mbPix) {
         int predX = (x << 1) + mvPred[0][backward][0];
         int predY = (y << 1) + mvPred[0][backward][1];
         if (pictureStructure == 3) {
-            predictMB(picture, predX, predY, 16, 16, 0, mbPix, 0, 0);
+            predictMB(picture, predX, predY, 16, 16, 0, 0, mbPix, 0, 0);
         } else
-            predictMB(picture, predX, (predY << 1) + pictureStructure - 1, 16, 16, 1, mbPix, 0, 0);
+            predictMB(picture, predX, predY, 16, 16, 1, pictureStructure - 1, mbPix, 0, 0);
     }
 
     public void reset() {
