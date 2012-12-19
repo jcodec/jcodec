@@ -14,6 +14,8 @@ import org.jcodec.common.tools.MathUtil;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
+ * MPEG 1/2 decoder interframe motion compensation routines
+ * 
  * @author The JCodec project
  * 
  */
@@ -21,10 +23,12 @@ public class MPEGPred {
     private int[][][] mvPred = new int[2][2][2];
     private int chromaFormat;
     private int[][] fCode;
+    private boolean topFieldFirst;
 
-    public MPEGPred(int[][] fCode, int chromaFormat) {
+    public MPEGPred(int[][] fCode, int chromaFormat, boolean topFieldFirst) {
         this.fCode = fCode;
         this.chromaFormat = chromaFormat;
+        this.topFieldFirst = topFieldFirst;
     }
 
     public final void predictEvenEvenSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
@@ -207,7 +211,7 @@ public class MPEGPred {
     }
 
     public void predictInField(Picture[] reference, int x, int y, int[][] mbPix, InBits in, int motionType,
-            int backward, int topField) throws IOException {
+            int backward, int fieldNo) throws IOException {
         switch (motionType) {
         case 1:
             predict16x16Field(reference, x, y, in, backward, mbPix);
@@ -217,7 +221,7 @@ public class MPEGPred {
             predict16x8MC(reference, x, y, in, backward, mbPix, 8, 1);
             break;
         case 3:
-            predict16x16DualPrimeField(reference, x, y, in, mbPix, topField);
+            predict16x16DualPrimeField(reference, x, y, in, mbPix, fieldNo);
         }
     }
 
@@ -237,44 +241,51 @@ public class MPEGPred {
         }
     }
 
-    private void predict16x16DualPrimeField(Picture[] reference, int x, int y, InBits in, int[][] mbPix, int topField)
+    private void predict16x16DualPrimeField(Picture[] reference, int x, int y, InBits in, int[][] mbPix, int fieldNo)
             throws IOException {
         int vect1X = mvectDecode(in, fCode[0][0], mvPred[0][0][0]);
-        int dmX = MPEGConst.vlcDualPrime.readVLC(in);
+        int dmX = MPEGConst.vlcDualPrime.readVLC(in) - 1;
 
         int vect1Y = mvectDecode(in, fCode[0][1], mvPred[0][0][1]);
-        int dmY = MPEGConst.vlcDualPrime.readVLC(in);
+        int dmY = MPEGConst.vlcDualPrime.readVLC(in) - 1;
 
-        int vect2X = dpXField(vect1X, dmX, topField);
-        int vect2Y = dpYField(vect1Y, dmY, topField);
+        int vect2X = dpXField(vect1X, dmX, 1 - fieldNo);
+        int vect2Y = dpYField(vect1Y, dmY, 1 - fieldNo);
 
-        int cw = chromaFormat == Chroma420 ? 1 : 0;
-        int ch = chromaFormat == Chroma444 ? 0 : 1;
+        int ch = chromaFormat == Chroma420 ? 1 : 0;
+        int cw = chromaFormat == Chroma444 ? 0 : 1;
+        int sh = chromaFormat == Chroma420 ? 2 : 1;
+        int sw = chromaFormat == Chroma444 ? 1 : 2;
 
         int[][] mbPix1 = new int[3][256], mbPix2 = new int[3][256];
 
-        predictPlane(reference[topField].getPlaneData(0), x + vect1X, y + vect1Y, reference[topField].getPlaneWidth(0),
-                reference[topField].getPlaneHeight(0), 1, 1 - topField, mbPix1[0], 0, 16, 16, 0);
-        predictPlane(reference[topField].getPlaneData(1), (x + vect1X) >> cw, (y + vect1Y) >> ch,
-                reference[topField].getPlaneWidth(1), reference[topField].getPlaneHeight(1), 1, 1 - topField,
-                mbPix1[1], 0, 16 >> cw, 16 >> ch, 0);
-        predictPlane(reference[topField].getPlaneData(2), (x + vect1X) >> cw, (y + vect1Y) >> ch,
-                reference[topField].getPlaneWidth(2), reference[topField].getPlaneHeight(2), 1, 1 - topField,
-                mbPix1[2], 0, 16 >> cw, 16 >> ch, 0);
+        int refX1 = (x << 1) + vect1X;
+        int refY1 = (y << 1) + vect1Y;
+        int refX1Chr = ((x << 1) >> cw) + vect1X / sw;
+        int refY1Chr = ((y << 1) >> ch) + vect1Y / sh;
 
-        predictPlane(reference[1 - topField].getPlaneData(0), x + vect2X, y + vect2Y,
-                reference[1 - topField].getPlaneWidth(0), reference[1 - topField].getPlaneHeight(0), 1, topField,
-                mbPix2[0], 0, 16, 16, 0);
-        predictPlane(reference[1 - topField].getPlaneData(1), (x + vect2X) >> cw, (y + vect2Y) >> ch,
-                reference[1 - topField].getPlaneWidth(1), reference[1 - topField].getPlaneHeight(1), 1, topField,
-                mbPix2[1], 0, 16 >> cw, 16 >> ch, 0);
-        predictPlane(reference[1 - topField].getPlaneData(2), (x + vect2X) >> cw, (y + vect2Y) >> ch,
-                reference[1 - topField].getPlaneWidth(2), reference[1 - topField].getPlaneHeight(2), 1, topField,
-                mbPix2[2], 0, 16 >> cw, 16 >> ch, 0);
+        predictPlane(reference[fieldNo].getPlaneData(0), refX1, refY1, reference[fieldNo].getPlaneWidth(0),
+                reference[fieldNo].getPlaneHeight(0), 1, fieldNo, mbPix1[0], 0, 16, 16, 0);
+        predictPlane(reference[fieldNo].getPlaneData(1), refX1Chr, refY1Chr, reference[fieldNo].getPlaneWidth(1),
+                reference[fieldNo].getPlaneHeight(1), 1, fieldNo, mbPix1[1], 0, 16 >> cw, 16 >> ch, 0);
+        predictPlane(reference[fieldNo].getPlaneData(2), refX1Chr, refY1Chr, reference[fieldNo].getPlaneWidth(2),
+                reference[fieldNo].getPlaneHeight(2), 1, fieldNo, mbPix1[2], 0, 16 >> cw, 16 >> ch, 0);
+
+        int refX2 = (x << 1) + vect2X;
+        int refY2 = (y << 1) + vect2Y;
+        int refX2Chr = ((x << 1) >> cw) + vect2X / sw;
+        int refY2Chr = ((y << 1) >> ch) + vect2Y / sh;
+        int opposite = 1 - fieldNo;
+        predictPlane(reference[opposite].getPlaneData(0), refX2, refY2, reference[opposite].getPlaneWidth(0),
+                reference[opposite].getPlaneHeight(0), 1, opposite, mbPix2[0], 0, 16, 16, 0);
+        predictPlane(reference[opposite].getPlaneData(1), refX2Chr, refY2Chr, reference[opposite].getPlaneWidth(1),
+                reference[opposite].getPlaneHeight(1), 1, opposite, mbPix2[1], 0, 16 >> cw, 16 >> ch, 0);
+        predictPlane(reference[opposite].getPlaneData(2), refX2Chr, refY2Chr, reference[opposite].getPlaneWidth(2),
+                reference[opposite].getPlaneHeight(2), 1, opposite, mbPix2[2], 0, 16 >> cw, 16 >> ch, 0);
 
         for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 256; j++)
-                mbPix[i][j] = (mbPix1[i][j] + mbPix2[i][j]) >> 1;
+            for (int j = 0; j < mbPix[i].length; j++)
+                mbPix[i][j] = (mbPix1[i][j] + mbPix2[i][j] + 1) >> 1;
         }
 
         mvPred[1][0][0] = mvPred[0][0][0] = vect1X;
@@ -282,47 +293,106 @@ public class MPEGPred {
     }
 
     private final int dpYField(int vect1y, int dmY, int topField) {
-        return ((vect1y + 1) >> 1) + ((topField << 1) - 1) + dmY;
+        return ((vect1y + (vect1y > 0 ? 1 : 0)) >> 1) + (1 - (topField << 1)) + dmY;
     }
 
     private final int dpXField(int vect1x, int dmX, int topField) {
-        return ((vect1x + 1) >> 1) + dmX;
-    }
-
-    private final int dpYFrame(int vect1y, int dmY, int topField, int topFieldFirst) {
-        int dist = 3 - (Math.abs(topFieldFirst - topField) << 1);
-        return ((vect1y * dist + 1) >> 1) + ((topField << 1) - 1) + dmY;
-    }
-
-    private final int dpXFrame(int vect1x, int dmX, int topField, int topFieldFirst) {
-        int dist = 3 - (Math.abs(topFieldFirst - topField) << 1);
-        return ((vect1x * dist + 1) >> 1) + dmX;
+        return ((vect1x + (vect1x > 0 ? 1 : 0)) >> 1) + dmX;
     }
 
     private void predict16x8MC(Picture[] reference, int x, int y, InBits in, int backward, int[][] mbPix, int vertPos,
             int vectIdx) throws IOException {
         int field = in.read1Bit();
 
-        predictGeneric(reference[field], x, y + vertPos, in, backward, mbPix, vertPos, 16, 8, 1, field, 0, vectIdx, 1);
+        predictGeneric(reference[field], x, y + vertPos, in, backward, mbPix, vertPos, 16, 8, 1, field, 0, vectIdx, 0);
     }
 
     private void predict16x16Field(Picture[] reference, int x, int y, InBits in, int backward, int[][] mbPix)
             throws IOException {
         int field = in.read1Bit();
 
-        predictGeneric(reference[field], x, y, in, backward, mbPix, 0, 16, 16, 1, field, 0, 0, 1);
+        predictGeneric(reference[field], x, y, in, backward, mbPix, 0, 16, 16, 1, field, 0, 0, 0);
 
         mvPred[1][backward][0] = mvPred[0][backward][0];
         mvPred[1][backward][1] = mvPred[0][backward][1];
     }
 
-    private void predict16x16DualPrimeFrame(Picture[] refs, int x, int y, InBits in, int backward, int[][] mbPix) {
-        throw new RuntimeException("Dual prime");
+    private void predict16x16DualPrimeFrame(Picture[] reference, int x, int y, InBits in, int backward, int[][] mbPix)
+            throws IOException {
+        int vect1X = mvectDecode(in, fCode[0][0], mvPred[0][0][0]);
+        int dmX = MPEGConst.vlcDualPrime.readVLC(in) - 1;
+
+        int vect1Y = mvectDecode(in, fCode[0][1], mvPred[0][0][1] >> 1);
+        int dmY = MPEGConst.vlcDualPrime.readVLC(in) - 1;
+
+        int m = topFieldFirst ? 1 : 3;
+
+        int vect2X = ((vect1X * m + (vect1X > 0 ? 1 : 0)) >> 1) + dmX;
+        int vect2Y = ((vect1Y * m + (vect1Y > 0 ? 1 : 0)) >> 1) + dmY - 1;
+        m = 4 - m;
+        int vect3X = ((vect1X * m + (vect1X > 0 ? 1 : 0)) >> 1) + dmX;
+        int vect3Y = ((vect1Y * m + (vect1Y > 0 ? 1 : 0)) >> 1) + dmY + 1;
+
+        int ch = chromaFormat == Chroma420 ? 1 : 0;
+        int cw = chromaFormat == Chroma444 ? 0 : 1;
+        int sh = chromaFormat == Chroma420 ? 2 : 1;
+        int sw = chromaFormat == Chroma444 ? 1 : 2;
+
+        int[][] mbPix1 = new int[3][256], mbPix2 = new int[3][256];
+
+        int refX1 = (x << 1) + vect1X;
+        int refY1 = y + vect1Y;
+        int refX1Chr = ((x << 1) >> cw) + vect1X / sw;
+        int refY1Chr = (y >> ch) + vect1Y / sh;
+
+        predictPlane(reference[0].getPlaneData(0), refX1, refY1, reference[0].getPlaneWidth(0),
+                reference[0].getPlaneHeight(0), 1, 0, mbPix1[0], 0, 16, 8, 1);
+        predictPlane(reference[0].getPlaneData(1), refX1Chr, refY1Chr, reference[0].getPlaneWidth(1),
+                reference[0].getPlaneHeight(1), 1, 0, mbPix1[1], 0, 16 >> cw, 8 >> ch, 1);
+        predictPlane(reference[0].getPlaneData(2), refX1Chr, refY1Chr, reference[0].getPlaneWidth(2),
+                reference[0].getPlaneHeight(2), 1, 0, mbPix1[2], 0, 16 >> cw, 8 >> ch, 1);
+
+        predictPlane(reference[1].getPlaneData(0), refX1, refY1, reference[1].getPlaneWidth(0),
+                reference[1].getPlaneHeight(0), 1, 1, mbPix1[0], 1, 16, 8, 1);
+        predictPlane(reference[1].getPlaneData(1), refX1Chr, refY1Chr, reference[1].getPlaneWidth(1),
+                reference[1].getPlaneHeight(1), 1, 1, mbPix1[1], 1, 16 >> cw, 8 >> ch, 1);
+        predictPlane(reference[1].getPlaneData(2), refX1Chr, refY1Chr, reference[1].getPlaneWidth(2),
+                reference[1].getPlaneHeight(2), 1, 1, mbPix1[2], 1, 16 >> cw, 8 >> ch, 1);
+
+        int refX2 = (x << 1) + vect2X;
+        int refY2 = y + vect2Y;
+        int refX2Chr = ((x << 1) >> cw) + vect2X / sw;
+        int refY2Chr = (y >> ch) + vect2Y / sh;
+        predictPlane(reference[1].getPlaneData(0), refX2, refY2, reference[1].getPlaneWidth(0),
+                reference[1].getPlaneHeight(0), 1, 1, mbPix2[0], 0, 16, 8, 1);
+        predictPlane(reference[1].getPlaneData(1), refX2Chr, refY2Chr, reference[1].getPlaneWidth(1),
+                reference[1].getPlaneHeight(1), 1, 1, mbPix2[1], 0, 16 >> cw, 8 >> ch, 1);
+        predictPlane(reference[1].getPlaneData(2), refX2Chr, refY2Chr, reference[1].getPlaneWidth(2),
+                reference[1].getPlaneHeight(2), 1, 1, mbPix2[2], 0, 16 >> cw, 8 >> ch, 1);
+
+        int refX3 = (x << 1) + vect3X;
+        int refY3 = y + vect3Y;
+        int refX3Chr = ((x << 1) >> cw) + vect3X / sw;
+        int refY3Chr = (y >> ch) + vect3Y / sh;
+        predictPlane(reference[0].getPlaneData(0), refX3, refY3, reference[0].getPlaneWidth(0),
+                reference[0].getPlaneHeight(0), 1, 0, mbPix2[0], 1, 16, 8, 1);
+        predictPlane(reference[0].getPlaneData(1), refX3Chr, refY3Chr, reference[0].getPlaneWidth(1),
+                reference[0].getPlaneHeight(1), 1, 0, mbPix2[1], 1, 16 >> cw, 8 >> ch, 1);
+        predictPlane(reference[0].getPlaneData(2), refX3Chr, refY3Chr, reference[0].getPlaneWidth(2),
+                reference[0].getPlaneHeight(2), 1, 0, mbPix2[2], 1, 16 >> cw, 8 >> ch, 1);
+
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < mbPix[i].length; j++)
+                mbPix[i][j] = (mbPix1[i][j] + mbPix2[i][j] + 1) >> 1;
+        }
+
+        mvPred[1][0][0] = mvPred[0][0][0] = vect1X;
+        mvPred[1][0][1] = mvPred[0][0][1] = vect1Y << 1;
     }
 
     private void predict16x16Frame(Picture reference, int x, int y, InBits in, int backward, int[][] mbPix)
             throws IOException {
-        predictGeneric(reference, x, y, in, backward, mbPix, 0, 16, 16, 0, 0, 0, 0, 1);
+        predictGeneric(reference, x, y, in, backward, mbPix, 0, 16, 16, 0, 0, 0, 0, 0);
 
         mvPred[1][backward][0] = mvPred[0][backward][0];
         mvPred[1][backward][1] = mvPred[0][backward][1];
@@ -362,50 +432,53 @@ public class MPEGPred {
             int blkW, int blkH, int isSrcField, int srcField, int isDstField, int vectIdx, int predScale)
             throws IOException {
         int vectX = mvectDecode(in, fCode[backward][0], mvPred[vectIdx][backward][0]);
-        int vectY = mvectDecode(in, fCode[backward][1], mvPred[vectIdx][backward][1] / predScale);
+        int vectY = mvectDecode(in, fCode[backward][1], mvPred[vectIdx][backward][1] >> predScale);
 
-        predictMB(reference, (x << 1) + vectX, (y << 1) + vectY, blkW, blkH, isSrcField, srcField, mbPix, tgtY,
+        predictMB(reference, (x << 1), vectX, (y << 1), vectY, blkW, blkH, isSrcField, srcField, mbPix, tgtY,
                 isDstField);
 
         mvPred[vectIdx][backward][0] = vectX;
-        mvPred[vectIdx][backward][1] = vectY * predScale;
+        mvPred[vectIdx][backward][1] = vectY << predScale;
     }
 
     private void predictFieldInFrame(Picture reference, int x, int y, int[][] mbPix, InBits in, int backward,
             int spatial_temporal_weight_code) throws IOException {
         y >>= 1;
         int field = in.read1Bit();
-        predictGeneric(reference, x, y, in, backward, mbPix, 0, 16, 8, 1, field, 1, 0, 2);
+        predictGeneric(reference, x, y, in, backward, mbPix, 0, 16, 8, 1, field, 1, 0, 1);
         if (spatial_temporal_weight_code == 0 || spatial_temporal_weight_code == 1) {
             field = in.read1Bit();
-            predictGeneric(reference, x, y, in, backward, mbPix, 1, 16, 8, 1, field, 1, 1, 2);
+            predictGeneric(reference, x, y, in, backward, mbPix, 1, 16, 8, 1, field, 1, 1, 1);
         } else {
             mvPred[1][backward][0] = mvPred[0][backward][0];
             mvPred[1][backward][1] = mvPred[0][backward][1];
-            predictMB(reference, mvPred[1][backward][0], mvPred[1][backward][1], 16, 8, 1, 1 - field, mbPix, 1, 1);
+            predictMB(reference, mvPred[1][backward][0], 0, mvPred[1][backward][1], 0, 16, 8, 1, 1 - field, mbPix, 1, 1);
         }
     }
 
-    public void predictMB(Picture ref, int refX, int refY, int blkW, int blkH, int refVertStep, int refVertOff,
-            int[][] tgt, int tgtY, int tgtVertStep) {
+    public void predictMB(Picture ref, int refX, int vectX, int refY, int vectY, int blkW, int blkH, int refVertStep,
+            int refVertOff, int[][] tgt, int tgtY, int tgtVertStep) {
         int ch = chromaFormat == Chroma420 ? 1 : 0;
         int cw = chromaFormat == Chroma444 ? 0 : 1;
 
-        predictPlane(ref.getPlaneData(0), refX, refY, ref.getPlaneWidth(0), ref.getPlaneHeight(0), refVertStep,
-                refVertOff, tgt[0], tgtY, blkW, blkH, tgtVertStep);
-        predictPlane(ref.getPlaneData(1), refX >> cw, refY >> ch, ref.getPlaneWidth(1), ref.getPlaneHeight(1),
-                refVertStep, refVertOff, tgt[1], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
-        predictPlane(ref.getPlaneData(2), refX >> cw, refY >> ch, ref.getPlaneWidth(2), ref.getPlaneHeight(2),
-                refVertStep, refVertOff, tgt[2], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
+        int sh = chromaFormat == Chroma420 ? 2 : 1;
+        int sw = chromaFormat == Chroma444 ? 1 : 2;
+
+        predictPlane(ref.getPlaneData(0), refX + vectX, refY + vectY, ref.getPlaneWidth(0), ref.getPlaneHeight(0),
+                refVertStep, refVertOff, tgt[0], tgtY, blkW, blkH, tgtVertStep);
+        predictPlane(ref.getPlaneData(1), (refX >> cw) + vectX / sw, (refY >> ch) + vectY / sh, ref.getPlaneWidth(1),
+                ref.getPlaneHeight(1), refVertStep, refVertOff, tgt[1], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
+        predictPlane(ref.getPlaneData(2), (refX >> cw) + vectX / sw, (refY >> ch) + vectY / sh, ref.getPlaneWidth(2),
+                ref.getPlaneHeight(2), refVertStep, refVertOff, tgt[2], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
     }
 
     public void predict16x16NoMV(Picture picture, int x, int y, int pictureStructure, int backward, int[][] mbPix) {
-        int predX = (x << 1) + mvPred[0][backward][0];
-        int predY = (y << 1) + mvPred[0][backward][1];
         if (pictureStructure == 3) {
-            predictMB(picture, predX, predY, 16, 16, 0, 0, mbPix, 0, 0);
+            predictMB(picture, (x << 1), mvPred[0][backward][0], (y << 1), mvPred[0][backward][1], 16, 16, 0, 0, mbPix,
+                    0, 0);
         } else
-            predictMB(picture, predX, predY, 16, 16, 1, pictureStructure - 1, mbPix, 0, 0);
+            predictMB(picture, (x << 1), mvPred[0][backward][0], (y << 1), mvPred[0][backward][1], 16, 16, 1,
+                    pictureStructure - 1, mbPix, 0, 0);
     }
 
     public void reset() {
