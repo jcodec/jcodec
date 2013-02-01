@@ -58,8 +58,10 @@ public class Header {
     }
 
     public static Header read(InputStream input) throws IOException {
-        long size = ReaderBE.readInt32(input);
-        if (size < 1)
+        long size;
+        while ((size = ReaderBE.readInt32(input)) == 0)
+            ;
+        if (size < 0)
             return null;
         size &= 0xffffffffL;
         String fourcc = ReaderBE.readString(input, 4);

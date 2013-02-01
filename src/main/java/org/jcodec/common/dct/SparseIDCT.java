@@ -6,54 +6,82 @@ import java.util.Arrays;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
+ * Performs IDCT of 8x8 block.
+ * 
+ * See MPEGDecoder for example.
+ * 
  * @author The JCodec project
  * 
  */
 public class SparseIDCT {
 
-    public final static int[][] TAB = new int[64][];
+    public final static int[][] COEFF = new int[64][];
+    public final static int PRECISION = 13;
+    public final static int DC_SHIFT = PRECISION - 3;
 
     static {
-        TAB[0] = new int[64];
-        Arrays.fill(TAB[0], 128);
+        COEFF[0] = new int[64];
+        Arrays.fill(COEFF[0], 1 << DC_SHIFT);
 
+        int ac = 1 << PRECISION;
         for (int i = 1; i < 64; i++) {
-            TAB[i] = new int[64];
-            TAB[i][i] = 1024;
-            SimpleIDCT10Bit.idct10(TAB[i], 0);
+            COEFF[i] = new int[64];
+            COEFF[i][i] = ac;
+            SimpleIDCT10Bit.idct10(COEFF[i], 0);
         }
     }
 
-    public static final void dc(int[] block, int log2stride, int x, int y, int step, int dc) {
-        dc /= 8;
-        int off = (y << log2stride) + x, stride = 1 << (log2stride + step);
-        for (int i = 0; i < 8; i++) {
-            block[off + 0] += dc;
-            block[off + 1] += dc;
-            block[off + 2] += dc;
-            block[off + 3] += dc;
-            block[off + 4] += dc;
-            block[off + 5] += dc;
-            block[off + 6] += dc;
-            block[off + 7] += dc;
-
-            off += stride;
+    /**
+     * Starts DCT reconstruction
+     * 
+     * Faster then call to 'coeff' with ind = 0
+     * 
+     * @param block
+     * @param dc
+     */
+    public static final void start(int[] block, int dc) {
+        dc <<= DC_SHIFT;
+        for (int i = 0; i < 64; i += 4) {
+            block[i + 0] = dc;
+            block[i + 1] = dc;
+            block[i + 2] = dc;
+            block[i + 3] = dc;
         }
     }
 
-    public static final void ac(int[] block, int log2stride, int x, int y, int step, int ind, int level) {
-        int off = (y << log2stride) + x, stride = 1 << (log2stride + step);
-        for (int i = 0, coeff = 0; i < 8; i++, coeff += 8) {
-            block[off] += ((TAB[ind][coeff] * level) / 1024);
-            block[off + 1] += ((TAB[ind][coeff + 1] * level) / 1024);
-            block[off + 2] += ((TAB[ind][coeff + 2] * level) / 1024);
-            block[off + 3] += ((TAB[ind][coeff + 3] * level) / 1024);
-            block[off + 4] += ((TAB[ind][coeff + 4] * level) / 1024);
-            block[off + 5] += ((TAB[ind][coeff + 5] * level) / 1024);
-            block[off + 6] += ((TAB[ind][coeff + 6] * level) / 1024);
-            block[off + 7] += ((TAB[ind][coeff + 7] * level) / 1024);
-
-            off += stride;
+    /**
+     * Recalculates image based on new DCT coefficient
+     * 
+     * @param block
+     * @param ind
+     * @param level
+     */
+    public static final void coeff(int[] block, int ind, int level) {
+        for (int i = 0; i < 64; i += 4) {
+            block[i] += COEFF[ind][i] * level;
+            block[i + 1] += COEFF[ind][i + 1] * level;
+            block[i + 2] += COEFF[ind][i + 2] * level;
+            block[i + 3] += COEFF[ind][i + 3] * level;
         }
+    }
+
+    /**
+     * Finalizes DCT calculation
+     * 
+     * @param block
+     */
+    public static final void finish(int block[]) {
+        for (int i = 0; i < 64; i += 4) {
+            block[i] = div(block[i]);
+            block[i + 1] = div(block[i + 1]);
+            block[i + 2] = div(block[i + 2]);
+            block[i + 3] = div(block[i + 3]);
+        }
+    }
+
+    private final static int div(int x) {
+        int m = x >> 31;
+        int n = x >>> 31;
+        return ((((x ^ m) + n) >> PRECISION) ^ m) + n;
     }
 }

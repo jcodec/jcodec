@@ -98,6 +98,8 @@ public class QTTimeUtil {
             return mediaTv;
         long accum = 0;
         for (Edit edit : trak.getEdits()) {
+            if(mediaTv < edit.getMediaTime())
+                return accum;
             long duration = trak.rescale(edit.getDuration(), movieTimescale);
             if (edit.getMediaTime() != -1
                     && (mediaTv >= edit.getMediaTime() && mediaTv < edit.getMediaTime() + duration)) {
@@ -132,7 +134,7 @@ public class QTTimeUtil {
             accum += duration;
         }
 
-        throw new RuntimeException("Timevalue is outside of the track.");
+        return accum;
     }
 
     /**

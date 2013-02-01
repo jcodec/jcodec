@@ -384,8 +384,9 @@ public class MP4Demuxer {
         private long[] samplesTv;
         private int[] samplesDur;
         private int[] samplesStartFrame;
+        private TimecodeSampleEntry tse;
 
-        public TimecodeTrack(TrakBox trak, DemuxerTrack video) throws IOException {
+        public TimecodeTrack(TrakBox trak) throws IOException {
             this.box = trak;
 
             NodeBox stbl = trak.getMdia().getMinf().getStbl();
@@ -397,11 +398,13 @@ public class MP4Demuxer {
 
             timeToSamples = stts.getEntries();
             readSamples(stsc.getSampleToChunk(), stco != null ? stco.getChunkOffsets() : co64.getChunkOffsets());
+            
+            tse = (TimecodeSampleEntry) box.getSampleEntries()[0];
 
-            cacheEntryPoints(video);
+            cacheEntryPoints();
         }
 
-        private void cacheEntryPoints(DemuxerTrack video) {
+        private void cacheEntryPoints() {
             samplesTv = new long[samples.length];
             samplesDur = new int[samples.length];
             samplesStartFrame = new int[samples.length];
@@ -410,7 +413,7 @@ public class MP4Demuxer {
             long tv = 0;
             for (int i = 0; i < samples.length; i++) {
                 samplesTv[i] = tv;
-                samplesStartFrame[i] = video.pts2Sample(tv, box.getTimescale());
+                samplesStartFrame[i] = (int) ((tv * tse.getNumFrames()) / box.getTimescale());
                 int dur = timeToSamples[ttsInd].getSampleDuration();
                 samplesDur[i] = dur;
                 tv += dur;
@@ -422,15 +425,17 @@ public class MP4Demuxer {
 
         public MP4Packet getTimecode(MP4Packet pkt) throws IOException {
 
-            long tv = pkt.getMediaPts();
+            long tv = QTTimeUtil
+                    .editedToMedia(box, box.rescale(pkt.getPts(), pkt.getTimescale()), movie.getTimescale());
             int sample;
-            for (sample = 0; sample < samples.length; sample++) {
+            for (sample = 0; sample < samples.length - 1; sample++) {
                 if (samplesTv[sample] <= tv && samplesTv[sample] + samplesDur[sample] > tv)
                     break;
             }
 
-            return new MP4Packet(pkt, getTimecode(samples[sample], (int) pkt.getFrameNo() - samplesStartFrame[sample],
-                    (TimecodeSampleEntry) box.getSampleEntries()[0]));
+            int frameNo = (int) ((tv * tse.getNumFrames()) / box.getTimescale());
+
+            return new MP4Packet(pkt, getTimecode(samples[sample], frameNo - samplesStartFrame[sample], tse));
         }
 
         private TapeTimecode getTimecode(int startCounter, int frameNo, TimecodeSampleEntry entry) {
@@ -640,7 +645,7 @@ public class MP4Demuxer {
         if (tt != null) {
             DemuxerTrack video = getVideoTrack();
             if (video != null)
-                timecodeTrack = new TimecodeTrack(tt, video);
+                timecodeTrack = new TimecodeTrack(tt);
         }
     }
 

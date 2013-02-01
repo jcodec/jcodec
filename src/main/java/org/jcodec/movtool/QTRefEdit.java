@@ -81,7 +81,7 @@ public class QTRefEdit {
     
     private static void applyCommands(MovieBox mov, List<Command> commands) throws IOException {
         for (Command command : commands) {
-            command.apply(mov, null);
+            command.apply(mov);
         }
     }
 

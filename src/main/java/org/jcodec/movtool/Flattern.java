@@ -5,11 +5,10 @@ import static org.jcodec.common.JCodecUtil.bufin;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.FileRAInputStream;
 import org.jcodec.common.io.RAInputStream;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
@@ -55,6 +54,16 @@ public class Flattern {
         }
     }
 
+    public List<ProgressListener> listeners = new ArrayList<Flattern.ProgressListener>();
+
+    public interface ProgressListener {
+        public void trigger(int progress);
+    }
+
+    public void addProgressListener(ProgressListener listener) {
+        this.listeners.add(listener);
+    }
+
     public void flattern(MovieBox movie, RandomAccessFile out) throws IOException {
         if (!movie.isPureRefMovie(movie))
             throw new IllegalArgumentException("movie should be reference");
@@ -77,8 +86,12 @@ public class Flattern {
         ChunkWriter[] writers = new ChunkWriter[tracks.length];
         Chunk[] head = new Chunk[tracks.length];
         long[] off = new long[tracks.length];
+        int totalChunks = 0, writtenChunks = 0, lastProgress = 0;
+
         for (int i = 0; i < tracks.length; i++) {
             readers[i] = new ChunkReader(tracks[i]);
+            totalChunks += readers[i].size();
+
             writers[i] = new ChunkWriter(tracks[i], inputs[i], out);
             head[i] = readers[i].next();
             if (tracks[i].isVideo())
@@ -104,6 +117,9 @@ public class Flattern {
                 break;
             writers[min].write(head[min]);
             head[min] = readers[min].next();
+            writtenChunks++;
+
+            lastProgress = calcProgress(totalChunks, writtenChunks, lastProgress);
         }
         long mdatSize = out.getFilePointer() - mdatOff;
 
@@ -120,6 +136,16 @@ public class Flattern {
 
         out.seek(mdatOff + 8);
         out.writeLong(mdatSize);
+    }
+
+    private int calcProgress(int totalChunks, int writtenChunks, int lastProgress) {
+        int curProgress = 100 * writtenChunks / totalChunks;
+        if (lastProgress < curProgress) {
+            lastProgress = curProgress;
+            for (ProgressListener pl : this.listeners)
+                pl.trigger(lastProgress);
+        }
+        return lastProgress;
     }
 
     protected RAInputStream[][] getInputs(MovieBox movie) throws IOException {

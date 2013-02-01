@@ -46,6 +46,7 @@ import org.jcodec.common.io.VLC;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
+import org.jcodec.common.model.Size;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -454,23 +455,48 @@ public class MPEGDecoder implements VideoDecoder {
             intra_dc_mult = 8 >> ph.pictureCodingExtension.intra_dc_precision;
 
         int blkCount = 6 + (chromaFormat == Chroma420 ? 0 : (chromaFormat == Chroma422 ? 2 : 6));
+        int[] block = new int[64];
         for (int i = 0, cbpMask = 1 << (blkCount - 1); i < blkCount; i++, cbpMask >>= 1) {
             if ((cbp & cbpMask) == 0)
                 continue;
             int[] qmat = context.qMats[(i >= 4 ? 1 : 0) + (mbType.macroblock_intra << 1)];
 
             if (mbType.macroblock_intra == 1)
-                blockIntra(in, vlcCoeff, pp[BLOCK_TO_CC[i]], context.intra_dc_predictor, i, dctType, context.scan,
-                        sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, intra_dc_mult, qScale, qmat, chromaFormat);
+                blockIntra(in, vlcCoeff, pp[BLOCK_TO_CC[i]], context.intra_dc_predictor, i, context.scan,
+                        sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, intra_dc_mult, qScale, qmat);
             else
-                blockInter(in, vlcCoeff, pp[BLOCK_TO_CC[i]], i, dctType, context.scan,
-                        sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, qScale, qmat, chromaFormat);
+                blockInter(in, vlcCoeff, pp[BLOCK_TO_CC[i]], context.scan,
+                        sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, qScale, qmat);
+
+            mapBlock(block, pp[BLOCK_TO_CC[i]], i, dctType, chromaFormat);
         }
 
         put(pp, buf, stride, chromaFormat, mbX, mbY, context.codedWidth, context.codedHeight >> vertStep, vertOff,
                 vertStep);
 
         return mbAddr;
+    }
+    
+    private void mapBlock(int[] block, int[] out, int blkIdx, int dctType, int chromaFormat) {
+        int stepVert = chromaFormat == Chroma420 && (blkIdx == 4 || blkIdx == 5) ? 0 : dctType;
+        int log2stride = blkIdx < 4 ? 4 : 4 - SQUEEZE_X[chromaFormat];
+
+        int blkIdxExt = blkIdx + (dctType << 4);
+        int x = MPEGConst.BLOCK_POS_X[blkIdxExt];
+        int y = MPEGConst.BLOCK_POS_Y[blkIdxExt];
+        int off = (y << log2stride) + x, stride = 1 << (log2stride + stepVert);
+        for (int i = 0, coeff = 0; i < 8; i++, coeff += 8) {
+            out[off] += block[coeff];
+            out[off + 1] += block[coeff + 1];
+            out[off + 2] += block[coeff + 2];
+            out[off + 3] += block[coeff + 3];
+            out[off + 4] += block[coeff + 4];
+            out[off + 5] += block[coeff + 5];
+            out[off + 6] += block[coeff + 6];
+            out[off + 7] += block[coeff + 7];
+
+            off += stride;
+        }
     }
 
     private static final int[][] buildPred(int[][] predFwd, int[][] predBack) {
@@ -586,18 +612,13 @@ public class MPEGDecoder implements VideoDecoder {
     }
 
     private final void blockIntra(InBits in, VLC vlcCoeff, int[] block, int[] intra_dc_predictor, int blkIdx,
-            int dctType, int[] scan, int escSize, int intra_dc_mult, int qScale, int[] qmat, int chromaFormat)
-            throws IOException {
+            int[] scan, int escSize, int intra_dc_mult, int qScale, int[] qmat) throws IOException {
         int cc = BLOCK_TO_CC[blkIdx];
-        int blkStride = blkIdx < 4 ? 4 : 4 - SQUEEZE_X[chromaFormat];
         int size = (cc == 0 ? vlcDCSizeLuma : vlcDCSizeChroma).readVLC(in);
         int delta = (size != 0) ? mpegSigned(in, size) : 0;
         intra_dc_predictor[cc] = intra_dc_predictor[cc] + delta;
         int dc = intra_dc_predictor[cc] * intra_dc_mult;
-        int stepVert = chromaFormat == Chroma420 && (blkIdx == 4 || blkIdx == 5) ? 0 : dctType;
-        int blkIdxExt = blkIdx + (dctType << 4);
-        SparseIDCT.dc(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdxExt],
-                MPEGConst.BLOCK_POS_Y[blkIdx + (dctType << 4)], stepVert, dc);
+        SparseIDCT.start(block, dc);
 
         for (int idx = 0; idx < maxCoeff;) {
             int readVLC = vlcCoeff.readVLC(in);
@@ -611,25 +632,22 @@ public class MPEGDecoder implements VideoDecoder {
                 level = level >= 0 ? (level >> 4) : -(-level >> 4);
             } else
                 break;
-            SparseIDCT.ac(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdx + (dctType << 4)],
-                    MPEGConst.BLOCK_POS_Y[blkIdx + (dctType << 4)], stepVert, scan[idx], level);
+            SparseIDCT.coeff(block, scan[idx], level);
         }
+        SparseIDCT.finish(block);
     }
 
-    private final void blockInter(InBits in, VLC vlcCoeff, int[] block, int blkIdx, int dctType, int[] scan,
-            int escSize, int qScale, int[] qmat, int chromaFormat) throws IOException {
+    private final void blockInter(InBits in, VLC vlcCoeff, int[] block, int[] scan, int escSize, int qScale,
+            int[] qmat) throws IOException {
 
-        int stepVert = chromaFormat == Chroma420 && (blkIdx == 4 || blkIdx == 5) ? 0 : dctType;
-        int blkIdxExt = blkIdx + (dctType << 4);
-
-        int blkStride = blkIdx < 4 ? 4 : 4 - SQUEEZE_X[chromaFormat];
         int idx = -1;
         if (vlcCoeff == vlcCoeff0 && in.checkNBit(1) == 1) {
             in.read1Bit();
             int dc = toSigned(quantInter(1, qScale * qmat[0]), in.read1Bit());
-            SparseIDCT.dc(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdxExt], MPEGConst.BLOCK_POS_Y[blkIdxExt],
-                    stepVert, dc);
+            SparseIDCT.start(block, dc);
             idx++;
+        } else {
+            SparseIDCT.start(block, 0);
         }
 
         for (; idx < maxCoeff;) {
@@ -643,9 +661,9 @@ public class MPEGDecoder implements VideoDecoder {
                 ac = quantInterSigned(twosSigned(in, escSize), qScale * qmat[idx]);
             } else
                 break;
-            SparseIDCT.ac(block, blkStride, MPEGConst.BLOCK_POS_X[blkIdxExt], MPEGConst.BLOCK_POS_Y[blkIdxExt],
-                    stepVert, scan[idx], ac);
+            SparseIDCT.coeff(block, scan[idx], ac);
         }
+        SparseIDCT.finish(block);
     }
 
     private static final int twosSigned(InBits in, int size) throws IOException {
@@ -673,6 +691,22 @@ public class MPEGDecoder implements VideoDecoder {
         else if (sh.sequenceExtension.chroma_format == SequenceExtension.Chroma444)
             return (cbp420 << 6) | in.readNBit(6);
         throw new RuntimeException("Unsupported chroma format: " + sh.sequenceExtension.chroma_format);
+    }
+    
+    public static Size getSize(Buffer data) {
+        SequenceHeader sh = getSequenceHeader(data);
+        return new Size(sh.horizontal_size, sh.vertical_size);
+    }
+    
+    private static SequenceHeader getSequenceHeader(Buffer data) {
+        Buffer segment = nextSegment(data);
+        while (segment != null) {
+            if (segment.get(3) == MPEGConst.SEQUENCE_HEADER_CODE) {
+                return SequenceHeader.read(segment.from(4));
+            }
+            segment = nextSegment(data);
+        }
+        return null;
     }
 
     @Override

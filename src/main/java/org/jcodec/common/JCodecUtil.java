@@ -20,15 +20,12 @@ import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
-import org.jcodec.scale.Yuv420pToRgb;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
