@@ -60,11 +60,11 @@ public class Rational {
     }
 
     public int multiplyS(int val) {
-        return (num * val) / den;
+        return (int)(((long)num * val) / den);
     }
     
     public int divideS(int val) {
-        return (den * val) / num;
+        return (int)(((long)den * val) / num);
     }
     
     public int divideByS(int val) {
