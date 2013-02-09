@@ -381,9 +381,6 @@ public class MP4Demuxer {
         private TrakBox box;
         private TimeToSampleEntry[] timeToSamples;
         private int[] samples;
-        private long[] samplesTv;
-        private int[] samplesDur;
-        private int[] samplesStartFrame;
         private TimecodeSampleEntry tse;
 
         public TimecodeTrack(TrakBox trak) throws IOException {
@@ -400,27 +397,6 @@ public class MP4Demuxer {
             readSamples(stsc.getSampleToChunk(), stco != null ? stco.getChunkOffsets() : co64.getChunkOffsets());
             
             tse = (TimecodeSampleEntry) box.getSampleEntries()[0];
-
-            cacheEntryPoints();
-        }
-
-        private void cacheEntryPoints() {
-            samplesTv = new long[samples.length];
-            samplesDur = new int[samples.length];
-            samplesStartFrame = new int[samples.length];
-            int ttsInd = 0, ttsSubInd = 0;
-
-            long tv = 0;
-            for (int i = 0; i < samples.length; i++) {
-                samplesTv[i] = tv;
-                samplesStartFrame[i] = (int) ((tv * tse.getNumFrames()) / box.getTimescale());
-                int dur = timeToSamples[ttsInd].getSampleDuration();
-                samplesDur[i] = dur;
-                tv += dur;
-                ttsSubInd++;
-                if (ttsInd < timeToSamples.length - 1 && ttsSubInd >= timeToSamples[ttsInd].getSampleCount())
-                    ttsInd++;
-            }
         }
 
         public MP4Packet getTimecode(MP4Packet pkt) throws IOException {
@@ -428,14 +404,20 @@ public class MP4Demuxer {
             long tv = QTTimeUtil
                     .editedToMedia(box, box.rescale(pkt.getPts(), pkt.getTimescale()), movie.getTimescale());
             int sample;
+            int ttsInd = 0, ttsSubInd = 0;
             for (sample = 0; sample < samples.length - 1; sample++) {
-                if (samplesTv[sample] <= tv && samplesTv[sample] + samplesDur[sample] > tv)
+                int dur = timeToSamples[ttsInd].getSampleDuration();
+                if (tv < dur)
                     break;
+                tv -= dur;
+                ttsSubInd++;
+                if (ttsInd < timeToSamples.length - 1 && ttsSubInd >= timeToSamples[ttsInd].getSampleCount())
+                    ttsInd++;
             }
+            
+            int frameNo = (int) ((((2 * tv * tse.getTimescale()) / box.getTimescale()) / tse.getFrameDuration()) + 1) / 2;
 
-            int frameNo = (int) ((tv * tse.getNumFrames()) / box.getTimescale());
-
-            return new MP4Packet(pkt, getTimecode(samples[sample], frameNo - samplesStartFrame[sample], tse));
+            return new MP4Packet(pkt, getTimecode(samples[sample], frameNo, tse));
         }
 
         private TapeTimecode getTimecode(int startCounter, int frameNo, TimecodeSampleEntry entry) {

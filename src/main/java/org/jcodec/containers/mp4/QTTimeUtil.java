@@ -98,7 +98,7 @@ public class QTTimeUtil {
             return mediaTv;
         long accum = 0;
         for (Edit edit : trak.getEdits()) {
-            if(mediaTv < edit.getMediaTime())
+            if (mediaTv < edit.getMediaTime())
                 return accum;
             long duration = trak.rescale(edit.getDuration(), movieTimescale);
             if (edit.getMediaTime() != -1
@@ -151,7 +151,8 @@ public class QTTimeUtil {
         long editedTv = mediaToEdited(videoTrack, frameToTimevalue(videoTrack, mediaFrameNo), movie.getTimescale());
 
         if (timecodeTrack != null && Box.findFirst(videoTrack, "tref", "tmcd") != null) {
-            return timevalueToTimecodeFrame(timecodeTrack, new RationalLarge(editedTv, videoTrack.getTimescale()));
+            return timevalueToTimecodeFrame(timecodeTrack, new RationalLarge(editedTv, videoTrack.getTimescale()),
+                    movie.getTimescale());
         } else {
             return timevalueToFrame(videoTrack, editedTv);
         }
@@ -187,11 +188,15 @@ public class QTTimeUtil {
         TrakBox videoTrack = movie.getVideoTrack();
         long editedTv = mediaToEdited(videoTrack, frameToTimevalue(videoTrack, mediaFrameNo), movie.getTimescale());
 
+        TrakBox tt = timecodeTrack.getBox();
+        int ttTimescale = tt.getTimescale();
+        long ttTv = editedToMedia(tt, editedTv * ttTimescale / videoTrack.getTimescale(), movie.getTimescale());
+
         return formatTimecode(
                 timecodeTrack.getBox(),
                 timecodeTrack.getStartTimecode()
-                        + timevalueToTimecodeFrame(timecodeTrack.getBox(),
-                                new RationalLarge(editedTv, videoTrack.getTimescale())));
+                        + timevalueToTimecodeFrame(timecodeTrack.getBox(), new RationalLarge(ttTv, ttTimescale),
+                                movie.getTimescale()));
     }
 
     /**
@@ -203,9 +208,17 @@ public class QTTimeUtil {
      * @return
      * @throws IOException
      */
-    public static String qtPlayerTimecode(DemuxerTrack timecodeTrack, RationalLarge tv) throws IOException {
-        return formatTimecode(timecodeTrack.getBox(),
-                timecodeTrack.getStartTimecode() + timevalueToTimecodeFrame(timecodeTrack.getBox(), tv));
+    public static String qtPlayerTimecode(DemuxerTrack timecodeTrack, RationalLarge tv, int movieTimescale)
+            throws IOException {
+        TrakBox tt = timecodeTrack.getBox();
+        int ttTimescale = tt.getTimescale();
+        long ttTv = editedToMedia(tt, tv.multiplyS(ttTimescale), movieTimescale);
+
+        return formatTimecode(
+                timecodeTrack.getBox(),
+                timecodeTrack.getStartTimecode()
+                        + timevalueToTimecodeFrame(timecodeTrack.getBox(), new RationalLarge(ttTv, ttTimescale),
+                                movieTimescale));
     }
 
     /**
@@ -215,9 +228,9 @@ public class QTTimeUtil {
      * @param tv
      * @return
      */
-    public static int timevalueToTimecodeFrame(TrakBox timecodeTrack, RationalLarge tv) {
+    public static int timevalueToTimecodeFrame(TrakBox timecodeTrack, RationalLarge tv, int movieTimescale) {
         TimecodeSampleEntry se = (TimecodeSampleEntry) timecodeTrack.getSampleEntries()[0];
-        return (int) ((tv.getNum() * se.getNumFrames()) / tv.getDen());
+        return (int) ((2 * tv.multiplyS(se.getTimescale()) / se.getFrameDuration()) + 1) / 2;
     }
 
     /**
