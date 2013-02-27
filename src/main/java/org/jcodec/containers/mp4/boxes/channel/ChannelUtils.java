@@ -5,15 +5,15 @@ import static ch.lambdaj.Lambda.on;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChannelBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.ChannelBox.ChannelDescription;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.containers.mp4.boxes.ChannelBox.ChannelDescription;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -71,7 +71,7 @@ public class ChannelUtils {
             channel = new ChannelBox();
             Box.findFirst(trakBox, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null).add(channel);
         }
-        channel.setChannelLayout(ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions);
+        channel.setChannelLayout(ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions.getCode());
         List<ChannelDescription> list = new ArrayList<ChannelDescription>();
         for (Label label : labels) {
             list.add(new ChannelBox.ChannelDescription(label.getVal(), 0, new float[] { 0, 0, 0 }));
@@ -81,26 +81,17 @@ public class ChannelUtils {
 
     public static List<Label> getLabels(ChannelBox box) {
         long tag = box.getChannelLayout();
-        if (tag == ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions) {
-            return extract(box.getDescriptions(), on(ChannelDescription.class).getLabel());
-        } else if (tag == ChannelLayout.kCAFChannelLayoutTag_UseChannelBitmap) {
-            return getLabelsByBitmap(box.getChannelBitmap());
-        } else if (tag == ChannelLayout.kCAFChannelLayoutTag_Mono) {
-            return MONO;
-        } else if (tag == ChannelLayout.kCAFChannelLayoutTag_Stereo) {
-            return STEREO;
-        } else if (tag == ChannelLayout.kCAFChannelLayoutTag_MatrixStereo) {
-            return MATRIX_STEREO;
-        } else if (tag > ChannelLayout.kCAFChannelLayoutTag_Stereo) {
-            int numChannels = (int) (tag & 0xffff);
-            List<Label> labels = new ArrayList<Label>(numChannels);
-            labels.add(Label.Left);
-            labels.add(Label.Right);
-            for (int i = 2; i < numChannels; i++) {
-                // TODO: should handle all ChannelLayoutTag constants
-                labels.add(Label.Mono);
+        for (ChannelLayout layout : EnumSet.allOf(ChannelLayout.class)) {
+            if (layout.getCode() == tag) {
+                switch (layout) {
+                case kCAFChannelLayoutTag_UseChannelDescriptions:
+                    return extract(box.getDescriptions(), on(ChannelDescription.class).getLabel());
+                case kCAFChannelLayoutTag_UseChannelBitmap:
+                    return getLabelsByBitmap(box.getChannelBitmap());
+                default:
+                    return Arrays.asList(layout.getLabels());
+                }
             }
-            return labels;
         }
         return EMPTY;
     }
