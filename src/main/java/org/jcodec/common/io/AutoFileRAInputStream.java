@@ -3,6 +3,7 @@ package org.jcodec.common.io;
 import static org.jcodec.common.JCodecUtil.bufin;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.jcodec.common.JCodecUtil;
@@ -28,6 +29,8 @@ public class AutoFileRAInputStream extends RAInputStream implements AutoResource
         this.file = file;
         this.curTime = System.currentTimeMillis();
         AutoPool.getInstance().add(this);
+        // TO ENSURE it can be opened
+        new FileInputStream(file).close();
     }
 
     @Override
@@ -39,7 +42,7 @@ public class AutoFileRAInputStream extends RAInputStream implements AutoResource
     private final void ensureOpen() throws IOException {
         accessTime = curTime;
         if (stream == null) {
-//            System.out.println("Re-opening stream");
+            // System.out.println("Re-opening stream");
             stream = bufin(file);
             if (savedPos != 0)
                 stream.seek(savedPos);
@@ -79,7 +82,7 @@ public class AutoFileRAInputStream extends RAInputStream implements AutoResource
     public void close() throws IOException {
         if (stream == null)
             return;
-//        System.out.println("Closing stream");
+        // System.out.println("Closing stream");
         savedPos = stream.getPos();
         stream.close();
         stream = null;
@@ -99,6 +102,7 @@ public class AutoFileRAInputStream extends RAInputStream implements AutoResource
 
     @Override
     public long length() throws IOException {
+        ensureOpen();
         return stream.length();
     }
 }
