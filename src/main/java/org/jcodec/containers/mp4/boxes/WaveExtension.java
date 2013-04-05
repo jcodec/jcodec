@@ -33,7 +33,7 @@ public class WaveExtension extends NodeBox {
         public MyFactory() {
             mappings.put(FormatBox.fourcc(), FormatBox.class);
             mappings.put(EndianBox.fourcc(), EndianBox.class);
-            mappings.put(EsdsBox.fourcc(), EsdsBox.class);
+//            mappings.put(EsdsBox.fourcc(), EsdsBox.class);
         }
 
         public Class<? extends Box> toClass(String fourcc) {

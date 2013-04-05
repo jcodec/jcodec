@@ -157,7 +157,7 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public int calcFrameSize() {
-        if (version == 0)
+        if (version == 0 || bytesPerFrame == 0)
             return (sampleSize >> 3) * channelCount;
         else
             return bytesPerFrame;

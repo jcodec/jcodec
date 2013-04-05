@@ -107,6 +107,7 @@ public class SampleDescriptionBox extends NodeBox {
 
             handlers.put("c608", SampleEntry.class);
             handlers.put("c708", SampleEntry.class);
+            handlers.put("text", SampleEntry.class);
         }
 
         public Class<? extends Box> toClass(String fourcc) {
