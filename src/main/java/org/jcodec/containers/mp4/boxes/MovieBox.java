@@ -1,6 +1,5 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -158,7 +157,7 @@ public class MovieBox extends NodeBox {
         ClearApertureBox clef = NodeBox.findFirst(videoTrack, ClearApertureBox.class, "tapt", "clef");
 
         if (clef != null) {
-            return new Size((int) clef.getWidth(), (int) clef.getHeight());
+            return applyMatrix(videoTrack, new Size((int) clef.getWidth(), (int) clef.getHeight()));
         }
 
         Box box = NodeBox.findFirst(videoTrack, SampleDescriptionBox.class, "mdia", "minf", "stbl", "stsd").getBoxes()
@@ -169,7 +168,14 @@ public class MovieBox extends NodeBox {
         VideoSampleEntry vs = (VideoSampleEntry) box;
         Rational par = videoTrack.getPAR();
 
-        return new Size((int) ((vs.getWidth() * par.getNum()) / par.getDen()), (int) vs.getHeight());
+        return applyMatrix(videoTrack,
+                new Size((int) ((vs.getWidth() * par.getNum()) / par.getDen()), (int) vs.getHeight()));
+    }
+
+    private Size applyMatrix(TrakBox videoTrack, Size size) {
+        int[] matrix = videoTrack.getTrackHeader().getMatrix();
+        return new Size((int) ((double) size.getWidth() * matrix[0] / 65536), (int) ((double) size.getHeight()
+                * matrix[4] / 65536));
     }
 
     public Size getStoredSize() {

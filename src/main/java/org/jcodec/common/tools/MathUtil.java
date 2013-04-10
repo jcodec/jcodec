@@ -85,6 +85,13 @@ public class MathUtil {
         else
             return a;
     }
+    
+    public static long gcd(long a, long b) {
+        if (b != 0)
+            return gcd(b, a % b);
+        else
+            return a;
+    }
 
     public static Rational reduce(Rational r) {
         int gcd = gcd(r.getNum(), r.getDen());
