@@ -12,6 +12,7 @@ import org.jcodec.codecs.pcm.PCMDecoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
+import org.jcodec.common.io.AutoFileRAInputStream;
 import org.jcodec.common.io.Buffer;
 import org.jcodec.common.io.BufferedRAInputStream;
 import org.jcodec.common.io.FileRAInputStream;
@@ -99,6 +100,10 @@ public class JCodecUtil {
 
     public static RAInputStream bufin(File f) throws IOException {
         return new BufferedRAInputStream(new FileRAInputStream(f));
+    }
+    
+    public static RAInputStream autoBufin(File f) throws IOException {
+        return new BufferedRAInputStream(new AutoFileRAInputStream(f));
     }
 
     public static RAInputStream mapin(File f) throws IOException {

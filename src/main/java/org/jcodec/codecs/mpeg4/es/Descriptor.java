@@ -1,11 +1,14 @@
 package org.jcodec.codecs.mpeg4.es;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.jcodec.common.io.Buffer;
+import org.jcodec.common.io.ReaderBE;
 import org.jcodec.common.io.WindowInputStream;
 
 /**
@@ -46,15 +49,21 @@ public abstract class Descriptor {
     protected abstract void doWrite(DataOutput out) throws IOException;
 
     public static Descriptor read(InputStream input) throws IOException {
-        int tag = input.read();
-        if (tag == -1)
+        Buffer header = Buffer.fetchFrom(input, 5);
+        if(header.remaining() != 5)
             return null;
-        long size = 0;
-        size |= (input.read() << 21) & 0x7f;
-        size |= (input.read() << 14) & 0x7f;
-        size |= (input.read() << 7) & 0x7f;
-        size |= (input.read()) & 0x7f;
+        int tag = header.get(0);
+        
+        int size = 0;
+        size |= (header.get(1) << 21) & 0x7f;
+        size |= (header.get(2) << 14) & 0x7f;
+        size |= (header.get(3) << 7) & 0x7f;
+        size |= header.get(4) & 0x7f;
 
+        Buffer data = Buffer.fetchFrom(input, size);
+        if(data.remaining() != size)
+            return null;
+        
         Class<? extends Descriptor> cls = factory.byTag(tag);
         Descriptor descriptor;
         try {
@@ -62,7 +71,7 @@ public abstract class Descriptor {
         } catch (Exception e) {
             throw new IOException(e);
         }
-        descriptor.parse(new WindowInputStream(input, size));
+        descriptor.parse(data.is());
         return descriptor;
     }
 

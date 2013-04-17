@@ -97,8 +97,6 @@ public class AudioSampleEntry extends SampleEntry {
             bytesPerPkt = (int) ReaderBE.readInt32(input);
             bytesPerFrame = (int) ReaderBE.readInt32(input);
             bytesPerSample = (int) ReaderBE.readInt32(input);
-
-            parseExtensions(input);
         } else if (version == 2) {
             ReaderBE.readInt32(input); /* sizeof struct only */
             sampleRate = (float) Double.longBitsToDouble(ReaderBE.readInt64(input));
@@ -108,9 +106,8 @@ public class AudioSampleEntry extends SampleEntry {
             lpcmFlags = (int) ReaderBE.readInt32(input);
             bytesPerFrame = (int) ReaderBE.readInt32(input);
             samplesPerPkt = (int) ReaderBE.readInt32(input);
-
-            parseExtensions(input);
         }
+        parseExtensions(input);
     }
 
     protected void doWrite(DataOutput out) throws IOException {
@@ -193,6 +190,7 @@ public class AudioSampleEntry extends SampleEntry {
         public MyFactory() {
             mappings.put(WaveExtension.fourcc(), WaveExtension.class);
             mappings.put(ChannelBox.fourcc(), ChannelBox.class);
+            mappings.put("esds", LeafBox.class);
         }
 
         public Class<? extends Box> toClass(String fourcc) {
