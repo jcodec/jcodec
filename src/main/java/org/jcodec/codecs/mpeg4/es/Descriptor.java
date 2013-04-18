@@ -49,21 +49,22 @@ public abstract class Descriptor {
     protected abstract void doWrite(DataOutput out) throws IOException;
 
     public static Descriptor read(InputStream input) throws IOException {
-        Buffer header = Buffer.fetchFrom(input, 5);
-        if(header.remaining() != 5)
+        int tag = input.read();
+        if (tag == -1)
             return null;
-        int tag = header.get(0);
-        
-        int size = 0;
-        size |= (header.get(1) << 21) & 0x7f;
-        size |= (header.get(2) << 14) & 0x7f;
-        size |= (header.get(3) << 7) & 0x7f;
-        size |= header.get(4) & 0x7f;
+        int size = 0, b = 0, i = 0;
+        do {
+            b = input.read();
+            i++;
+            if (b == -1)
+                return null;
+            size = (size << 7) | (b & 0x7f);
+        } while ((b >> 7) == 1 && i < 4);
 
         Buffer data = Buffer.fetchFrom(input, size);
-        if(data.remaining() != size)
+        if (data.remaining() != size)
             return null;
-        
+
         Class<? extends Descriptor> cls = factory.byTag(tag);
         Descriptor descriptor;
         try {
