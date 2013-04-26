@@ -1,6 +1,5 @@
 package org.jcodec.codecs.mpeg4.es;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
@@ -8,8 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.ReaderBE;
-import org.jcodec.common.io.WindowInputStream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -67,10 +64,14 @@ public abstract class Descriptor {
 
         Class<? extends Descriptor> cls = factory.byTag(tag);
         Descriptor descriptor;
-        try {
-            descriptor = cls.getConstructor(Integer.TYPE, Integer.TYPE).newInstance(tag, (int) size);
-        } catch (Exception e) {
-            throw new IOException(e);
+        if (cls != null) {
+            try {
+                descriptor = cls.getConstructor(Integer.TYPE, Integer.TYPE).newInstance(tag, (int) size);
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+        } else {
+            descriptor = new UnknownDescriptor(tag, (int)size);
         }
         descriptor.parse(data.is());
         return descriptor;

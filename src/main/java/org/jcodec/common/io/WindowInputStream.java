@@ -46,13 +46,17 @@ public class WindowInputStream extends InputStream {
         if (remaining == 0)
             return -1;
 
-        long toRead = remaining > buf.length ? buf.length : remaining;
-        int res = proxied.read(buf, 0, (int) toRead);
+        int toRead = (int) Math.min(remaining, buf.length), totalRead = 0;
+        while (toRead > 0) {
+            int read = proxied.read(buf, totalRead, toRead);
+            if (read == -1)
+                break;
+            toRead -= read;
+            remaining -= read;
+            totalRead += read;
+        }
 
-        if (res != -1)
-            remaining -= res;
-
-        return res;
+        return totalRead;
     }
 
     @Override
