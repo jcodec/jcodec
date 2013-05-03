@@ -7,6 +7,7 @@ import static org.jcodec.player.util.ThreadUtil.surePut;
 import static org.jcodec.player.util.ThreadUtil.take;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -19,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Frame;
 import org.jcodec.common.model.Picture;
@@ -68,8 +68,8 @@ public class Player {
 
     private volatile boolean stop;
 
-    private BlockingQueue<Buffer> audio = new LinkedBlockingQueue<Buffer>();
-    private BlockingQueue<byte[]> audioDrain = new LinkedBlockingQueue<byte[]>();
+    private BlockingQueue<ByteBuffer> audio = new LinkedBlockingQueue<ByteBuffer>();
+    private BlockingQueue<ByteBuffer> audioDrain = new LinkedBlockingQueue<ByteBuffer>();
 
     private AudioFormat af;
     private Picture dst;
@@ -132,7 +132,7 @@ public class Player {
         }
 
         for (int i = 0; i < AUDIO_QUEUE_SIZE; i++) {
-            surePut(audioDrain, new byte[af.getFrameSize() * (audioPacketSize + 10)]);
+            surePut(audioDrain, ByteBuffer.allocate(af.getFrameSize() * (audioPacketSize + 10)));
         }
 
         startVideoPlayback();
@@ -319,7 +319,8 @@ public class Player {
                 continue;
             }
 
-            byte[] buf = take(audioDrain, 20);
+            ByteBuffer buf = take(audioDrain, 20);
+            buf.rewind();
             if (buf == null)
                 continue;
             AudioFrame frame = audioSource.getFrame(buf);
@@ -383,7 +384,7 @@ public class Player {
 
     private void playAudio() {
         Debug.println("Starting audio playback");
-        Buffer pkt = null;
+        ByteBuffer pkt = null;
         while (!stop) {
             if (!pause.get()) {
                 if (pkt == null) {
@@ -394,9 +395,9 @@ public class Player {
                         continue;
                     }
                 }
-                pkt.pos += ao.write(pkt.buffer, pkt.pos, pkt.remaining());
+                ao.write(pkt);
                 if (pkt.remaining() == 0) {
-                    surePut(audioDrain, pkt.buffer);
+                    surePut(audioDrain, pkt);
                     pkt = null;
                 }
             } else {
@@ -441,7 +442,7 @@ public class Player {
 
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
-                dst = Picture.create(src.getWidth(), src.getHeight(), vo.getColorSpace());
+                dst = Picture.create(src.getWidth(), src.getHeight(), vo.getColorSpace(), src.getCrop());
 
             ColorUtil.getTransform(src.getColor(), vo.getColorSpace()).transform(src, dst);
 
@@ -512,10 +513,10 @@ public class Player {
     }
 
     private void drainAudio() {
-        List<Buffer> list = new LinkedList<Buffer>();
+        List<ByteBuffer> list = new LinkedList<ByteBuffer>();
         audio.drainTo(list);
-        for (Buffer frame : list) {
-            audioDrain.add(frame.buffer);
+        for (ByteBuffer frame : list) {
+            audioDrain.add(frame);
         }
     }
 

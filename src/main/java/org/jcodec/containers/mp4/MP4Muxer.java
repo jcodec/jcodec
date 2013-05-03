@@ -1,6 +1,5 @@
 package org.jcodec.containers.mp4;
 
-import static ch.lambdaj.Lambda.on;
 import static org.jcodec.containers.mp4.TrackType.SOUND;
 import static org.jcodec.containers.mp4.TrackType.TIMECODE;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
@@ -8,7 +7,10 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TLongArrayList;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -16,8 +18,8 @@ import javax.sound.sampled.AudioFormat;
 
 import junit.framework.Assert;
 
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RAOutputStream;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -68,8 +70,6 @@ import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.movtool.Util;
 
-import ch.lambdaj.Lambda;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -84,24 +84,27 @@ public class MP4Muxer {
     private long mdatOffset;
 
     private int nextTrackId = 1;
-    private RAOutputStream out;
+    private SeekableByteChannel out;
 
-    public MP4Muxer(RAOutputStream output) throws IOException {
+    public MP4Muxer(SeekableByteChannel output) throws IOException {
         this(output, Brand.MP4);
     }
 
-    public MP4Muxer(RAOutputStream output, Brand brand) throws IOException {
+    public MP4Muxer(SeekableByteChannel output, Brand brand) throws IOException {
         this(output, brand.getFileTypeBox());
     }
 
-    public MP4Muxer(RAOutputStream output, FileTypeBox ftyp) throws IOException {
+    public MP4Muxer(SeekableByteChannel output, FileTypeBox ftyp) throws IOException {
         this.out = output;
 
-        ftyp.write(out);
-        new Header("wide", 8).write(output);
-        new Header("mdat", 1).write(output);
-        mdatOffset = output.getPos();
-        output.writeLong(0);
+        ByteBuffer buf = ByteBuffer.allocate(1024);
+        ftyp.write(buf);
+        new Header("wide", 8).write(buf);
+        new Header("mdat", 1).write(buf);
+        mdatOffset = buf.position();
+        buf.putLong(0);
+        buf.flip();
+        output.write(buf);
     }
 
     public CompressedTrack addVideoTrackWithTimecode(String fourcc, Size size, String encoderName, int timescale) {
@@ -146,7 +149,7 @@ public class MP4Muxer {
     }
 
     public static LeafBox terminatorAtom() {
-        return new LeafBox(new Header(new String(new byte[4])), new byte[0]);
+        return new LeafBox(new Header(new String(new byte[4])), ByteBuffer.allocate(0));
     }
 
     public TimecodeTrack addTimecodeTrack(int timescale) {
@@ -181,7 +184,7 @@ public class MP4Muxer {
         protected Unit tgtChunkDurationUnit;
 
         protected long chunkDuration;
-        protected List<Buffer> curChunk = new ArrayList<Buffer>();
+        protected List<ByteBuffer> curChunk = new ArrayList<ByteBuffer>();
 
         protected List<SampleToChunkEntry> samplesInChunks = new ArrayList<SampleToChunkEntry>();
         protected int samplesInLastChunk = -1;
@@ -301,7 +304,7 @@ public class MP4Muxer {
             setTgtChunkDuration(new Rational(1, 2), Unit.SEC);
         }
 
-        public void addSamples(Buffer buffer) throws IOException {
+        public void addSamples(ByteBuffer buffer) throws IOException {
             curChunk.add(buffer);
 
             int frames = buffer.remaining() / frameSize;
@@ -329,10 +332,10 @@ public class MP4Muxer {
             if (framesInCurChunk == 0)
                 return;
 
-            chunkOffsets.add(out.getPos());
+            chunkOffsets.add(out.position());
 
-            for (Buffer b : curChunk) {
-                b.writeTo(out);
+            for (ByteBuffer b : curChunk) {
+                out.write(b);
             }
             curChunk.clear();
 
@@ -419,16 +422,34 @@ public class MP4Muxer {
         public void addTimecode(Packet packet) throws IOException {
             if (packet.isKeyFrame())
                 processGop();
-            gop.add(new Packet(packet, (Buffer) null));
+            gop.add(new Packet(packet, (ByteBuffer) null));
         }
 
         private void processGop() throws IOException {
             if (gop.size() > 0) {
-                for (Packet pkt : Lambda.<Packet> sort(gop, on(Packet.class).getDisplayOrder())) {
+                for (Packet pkt : sortByDisplay(gop)) {
                     addTimecodeInt(pkt);
                 }
                 gop.clear();
             }
+        }
+
+        private List<Packet> sortByDisplay(List<Packet> gop) {
+            ArrayList<Packet> result = new ArrayList<Packet>(gop);
+            Collections.sort(result, new Comparator<Packet>() {
+                public int compare(Packet o1, Packet o2) {
+                    if (o1 == null && o2 == null)
+                        return 0;
+                    else if (o1 == null)
+                        return -1;
+                    else if (o2 == null)
+                        return 1;
+                    else
+                        return o1.getDisplayOrder() > o2.getDisplayOrder() ? 1 : (o1.getDisplayOrder() == o2
+                                .getDisplayOrder() ? 0 : -1);
+                }
+            });
+            return result;
         }
 
         protected Box finish(MovieHeaderBox mvhd) throws IOException {
@@ -517,10 +538,11 @@ public class MP4Muxer {
                     TimecodeSampleEntry tmcd = new TimecodeSampleEntry((firstTimecode.isDropFrame() ? 1 : 0),
                             timescale, (int) (sampleDuration / tcFrames), fpsEstimate);
                     sampleEntries.add(tmcd);
-                    Buffer sample = new Buffer(4);
-                    sample.dout().writeInt(toCounter(firstTimecode, fpsEstimate));
-                    addFrame(new MP4Packet(new Buffer(sample.buffer, 0, 4), samplePts, timescale, sampleDuration, 0,
-                            true, null, samplePts, sampleEntries.size() - 1));
+                    ByteBuffer sample = ByteBuffer.allocate(4);
+                    sample.putInt(toCounter(firstTimecode, fpsEstimate));
+                    sample.flip();
+                    addFrame(new MP4Packet(sample, samplePts, timescale, sampleDuration, 0, true, null, samplePts,
+                            sampleEntries.size() - 1));
 
                     lower.add(new Edit(sampleDuration, samplePts, 1.0f));
                 } else {
@@ -531,12 +553,12 @@ public class MP4Muxer {
 
         private int toCounter(TapeTimecode tc, int fps) {
             int frames = toSec(tc) * fps + tc.getFrame();
-            if(tc.isDropFrame()) {
+            if (tc.isDropFrame()) {
                 long D = frames / 18000;
                 long M = frames % 18000;
                 frames -= 18 * D + 2 * ((M - 2) / 1800);
             }
-            
+
             return frames;
         }
 
@@ -639,11 +661,11 @@ public class MP4Muxer {
             if (curChunk.size() == 0)
                 return;
 
-            chunkOffsets.add(out.getPos());
+            chunkOffsets.add(out.position());
 
-            for (Buffer bs : curChunk) {
+            for (ByteBuffer bs : curChunk) {
                 sampleSizes.add(bs.remaining());
-                bs.writeTo(out);
+                out.write(bs);
             }
 
             if (samplesInLastChunk == -1 || samplesInLastChunk != curChunk.size()) {
@@ -712,7 +734,7 @@ public class MP4Muxer {
             if (compositionOffsets.size() > 0) {
                 compositionOffsets.add(new Entry(lastCompositionSamples, lastCompositionOffset));
 
-                Integer min = Lambda.min(compositionOffsets, Lambda.on(Entry.class).getOffset());
+                int min = minOffset(compositionOffsets);
                 if (min > 0) {
                     for (Entry entry : compositionOffsets) {
                         entry.offset -= min;
@@ -735,6 +757,15 @@ public class MP4Muxer {
             }
         }
 
+        private int minOffset(List<Entry> offs) {
+            int min = Integer.MAX_VALUE;
+            for (Entry entry : offs) {
+                if (entry.getOffset() < min)
+                    min = entry.getOffset();
+            }
+            return min;
+        }
+
         public long getTrackTotalDuration() {
             return trackTotalDuration;
         }
@@ -755,7 +786,7 @@ public class MP4Muxer {
     }
 
     public void writeHeader() throws IOException {
-        NodeBox movie = new MovieBox();
+        MovieBox movie = new MovieBox();
         MovieHeaderBox mvhd = movieHeader(movie);
         movie.addFirst(mvhd);
 
@@ -765,11 +796,11 @@ public class MP4Muxer {
                 movie.add(trak);
         }
 
-        long mdatSize = out.getPos() - mdatOffset + 8;
-        movie.write(out);
+        long mdatSize = out.position() - mdatOffset + 8;
+        MP4Util.writeMovie(out, movie);
 
-        out.seek(mdatOffset);
-        out.writeLong(mdatSize);
+        out.position(mdatOffset);
+        NIOUtils.writeLong(out, mdatSize);
     }
 
     private void mediaHeader(MediaInfoBox minf, TrackType type) {
@@ -803,7 +834,7 @@ public class MP4Muxer {
         minf.add(dinf);
         DataRefBox dref = new DataRefBox();
         dinf.add(dref);
-        dref.add(new LeafBox(new Header("alis", 0), new byte[] { 0, 0, 0, 1 }));
+        dref.add(new LeafBox(new Header("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
     }
 
     public MuxerTrack getVideoTrack() {

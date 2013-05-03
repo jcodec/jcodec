@@ -1,14 +1,11 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.io.ReaderBE;
-import org.jcodec.common.io.WriterBE;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.tools.ToJSON;
 
 /**
@@ -61,60 +58,60 @@ public class VideoSampleEntry extends SampleEntry {
         factory = FACTORY;
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
 
-        version = (short) ReaderBE.readInt16(input);
-        revision = (short) ReaderBE.readInt16(input);
-        vendor = ReaderBE.readString(input, 4);
-        temporalQual = (int) ReaderBE.readInt32(input);
-        spacialQual = (int) ReaderBE.readInt32(input);
+        version = input.getShort();
+        revision = input.getShort();
+        vendor = NIOUtils.readString(input, 4);
+        temporalQual = input.getInt();
+        spacialQual = input.getInt();
 
-        width = (short)ReaderBE.readInt16(input);
-        height = (short)ReaderBE.readInt16(input);
+        width = input.getShort();
+        height = input.getShort();
 
-        hRes = (float) ReaderBE.readInt32(input) / 65536f;
-        vRes = (float) ReaderBE.readInt32(input) / 65536f;
+        hRes = (float) input.getInt() / 65536f;
+        vRes = (float) input.getInt() / 65536f;
 
-        ReaderBE.readInt32(input); // Reserved
+        input.getInt(); // Reserved
 
-        frameCount = (short) ReaderBE.readInt16(input);
+        frameCount = input.getShort();
 
-        compressorName = ReaderBE.readPascalString(input, 31);
+        compressorName = NIOUtils.readPascalString(input, 31);
 
-        depth = (short) ReaderBE.readInt16(input);
+        depth = input.getShort();
 
-        clrTbl = (short) ReaderBE.readInt16(input);
+        clrTbl = input.getShort();
 
         parseExtensions(input);
     }
 
     @Override
-    public void doWrite(DataOutput out) throws IOException {
+    public void doWrite(ByteBuffer out) {
 
         super.doWrite(out);
 
-        out.writeShort(version);
-        out.writeShort(revision);
-        out.write(vendor.getBytes(), 0, 4);
-        out.writeInt(temporalQual);
-        out.writeInt(spacialQual);
+        out.putShort(version);
+        out.putShort(revision);
+        out.put(JCodecUtil.asciiString(vendor), 0, 4);
+        out.putInt(temporalQual);
+        out.putInt(spacialQual);
 
-        out.writeShort((short) width);
-        out.writeShort((short) height);
+        out.putShort((short) width);
+        out.putShort((short) height);
 
-        out.writeInt((int) (hRes * 65536));
-        out.writeInt((int) (vRes * 65536));
+        out.putInt((int) (hRes * 65536));
+        out.putInt((int) (vRes * 65536));
 
-        out.writeInt(0); // data size
+        out.putInt(0); // data size
 
-        out.writeShort(frameCount);
+        out.putShort(frameCount);
 
-        WriterBE.writePascalString(out, compressorName, 31);
+        NIOUtils.writePascalString(out, compressorName, 31);
 
-        out.writeShort(depth);
+        out.putShort(depth);
 
-        out.writeShort(clrTbl);
+        out.putShort(clrTbl);
 
         writeExtensions(out);
     }
@@ -146,7 +143,7 @@ public class VideoSampleEntry extends SampleEntry {
     public long getDepth() {
         return depth;
     }
-    
+
     public String getVendor() {
         return vendor;
     }
@@ -156,7 +153,7 @@ public class VideoSampleEntry extends SampleEntry {
 
         public MyFactory() {
             mappings.put(PixelAspectExt.fourcc(), PixelAspectExt.class);
-//            mappings.put(AvcCBox.fourcc(), AvcCBox.class);
+            // mappings.put(AvcCBox.fourcc(), AvcCBox.class);
             mappings.put(ColorExtension.fourcc(), ColorExtension.class);
             mappings.put(GamaExtension.fourcc(), GamaExtension.class);
             mappings.put(CleanApertureExtension.fourcc(), CleanApertureExtension.class);

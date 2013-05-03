@@ -3,11 +3,11 @@ package org.jcodec.common.tools;
 import java.nio.ShortBuffer;
 
 /**
- * This class is part of JCodec ( www.jcodec.org )
- * This software is distributed under FreeBSD License
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
  * 
  * @author Jay Codec
- *
+ * 
  */
 public class Debug {
     public final static void print8x8(int[] output) {
@@ -53,7 +53,8 @@ public class Debug {
     }
 
     public static void trace(String format, Object... args) {
-        // System.out.printf("> " + format + "\n", args);
+        if (debug)
+            System.out.printf("> " + format + "\n", args);
     }
 
     public final static boolean debug = false;

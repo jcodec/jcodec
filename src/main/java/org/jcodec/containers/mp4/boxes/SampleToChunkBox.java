@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -68,14 +64,14 @@ public class SampleToChunkBox extends FullBox {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
-        int size = (int) ReaderBE.readInt32(input);
+        int size = input.getInt();
 
         sampleToChunk = new SampleToChunkEntry[size];
         for (int i = 0; i < size; i++) {
-            sampleToChunk[i] = new SampleToChunkEntry(ReaderBE.readInt32(input), (int) ReaderBE.readInt32(input),
-                    (int) ReaderBE.readInt32(input));
+            sampleToChunk[i] = new SampleToChunkEntry(input.getInt(), input.getInt(),
+                    input.getInt());
         }
     }
 
@@ -84,14 +80,14 @@ public class SampleToChunkBox extends FullBox {
     }
 
     @Override
-    public void doWrite(DataOutput out) throws IOException {
+    public void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeInt(sampleToChunk.length);
+        out.putInt(sampleToChunk.length);
 
         for (SampleToChunkEntry stc : sampleToChunk) {
-            out.writeInt((int) stc.getFirst());
-            out.writeInt((int) stc.getCount());
-            out.writeInt((int) stc.getEntry());
+            out.putInt((int) stc.getFirst());
+            out.putInt((int) stc.getCount());
+            out.putInt((int) stc.getEntry());
         }
     }
 

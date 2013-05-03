@@ -5,15 +5,15 @@ import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.map.hash.TLongIntHashMap;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.io.Buffer;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.player.filters.MediaInfo;
@@ -34,7 +34,7 @@ public class FrameCache {
 
     private static int DATASEG_SIZE = 1024 * 1024 * 10;
 
-    private RandomAccessFile fd;
+    private FileChannel fd;
     private TIntObjectHashMap<IndexRecord> index;
     private List<Long> dataSegments = new ArrayList<Long>();
     private MediaInfo mediaInfo;
@@ -65,7 +65,7 @@ public class FrameCache {
     }
 
     public FrameCache(File cacheWhere) throws IOException {
-        fd = new RandomAccessFile(cacheWhere, "rwd");
+        fd = new FileInputStream(cacheWhere).getChannel();
         loadData(fd);
         addDataSegment();
     }
@@ -77,45 +77,48 @@ public class FrameCache {
         }
     }
 
-    public void loadData(RandomAccessFile f) throws IOException {
+    public void loadData(FileChannel f) throws IOException {
         index = new TIntObjectHashMap<IndexRecord>();
         pts2frame = new TLongIntHashMap(1, 0.5f, -1, -1);
 
-        while (f.getFilePointer() + 5 <= f.length()) {
-            int segmentType = f.read();
-            int segmentSize = f.readInt();
+        while (f.position() + 5 <= f.size()) {
+            int segmentType = NIOUtils.readByte(f);
+            int segmentSize = NIOUtils.readInt(f);
 
-            if (f.getFilePointer() + segmentSize > f.length()) {
+            if (f.position() + segmentSize > f.size()) {
                 // invelid segment, file corruption starts here
-                f.seek(f.getFilePointer() - 5);
+                f.position(f.position() - 5);
                 break;
             }
 
             if (segmentType == DATA_SEGMENT) {
-                dataSegments.add(f.getFilePointer());
-                f.seek(f.getFilePointer() + segmentSize);
+                dataSegments.add(f.position());
+                f.position(f.position() + segmentSize);
             } else if (segmentType == INDEX_SEGMENT) {
-                Buffer buffer = Buffer.fetchFrom(f, segmentSize);
-                DataInput dinp = buffer.dinp();
+                ByteBuffer buffer = NIOUtils.fetchFrom(f, segmentSize);
                 while (buffer.remaining() >= 29) {
-                    int frameNo = dinp.readInt();
-                    IndexRecord rec = new IndexRecord(frameNo, dinp.readLong(), dinp.readInt(), dinp.readLong(),
-                            dinp.readInt(), dinp.readByte() == 1, null);
+                    int frameNo = buffer.getInt();
+                    IndexRecord rec = new IndexRecord(frameNo, buffer.getLong(), buffer.getInt(), buffer.getLong(),
+                            buffer.getInt(), buffer.get() == 1, null);
                     index.put(frameNo, rec);
                     pts2frame.put(rec.pts, frameNo);
                 }
             } else {
                 // invalid segment, file corruption starts here
-                f.seek(f.getFilePointer() - 5);
+                f.position(f.position() - 5);
                 break;
             }
         }
     }
 
-    public Packet getFrame(int frameNo, byte[] buffer) throws IOException {
+    public Packet getFrame(int frameNo, ByteBuffer buffer) throws IOException {
+
         IndexRecord record = index.get(frameNo);
         if (record == null)
             return null;
+
+        ByteBuffer out = buffer.duplicate();
+        out.limit(out.position() + record.dataLen);
 
         if (fd == null)
             return null;
@@ -123,34 +126,33 @@ public class FrameCache {
             if (fd == null)
                 return null;
 
-            fd.seek(record.pos);
+            fd.position(record.pos);
 
-            int remaining = record.dataLen;
             int dsOff = (int) (record.pos - getDataSegmentOff(record));
-            while (remaining > 0) {
-                int toRead = Math.min(remaining, DATASEG_SIZE - dsOff);
-                fd.readFully(buffer, record.dataLen - remaining, toRead);
-                remaining -= toRead;
-                if (remaining > 0) {
+            while (out.remaining() > 0) {
+                int toRead = Math.min(out.remaining(), DATASEG_SIZE - dsOff);
+                NIOUtils.read(fd, out, toRead);
+                if (out.remaining() > 0) {
                     skipToDataseg();
                     dsOff = 0;
                 }
             }
 
-            return new Packet(new Buffer(buffer, 0, record.dataLen), record.pts, 0, record.duration, frameNo,
-                    record.key, record.tapeTimecode);
+            out.flip();
+
+            return new Packet(out, record.pts, 0, record.duration, frameNo, record.key, record.tapeTimecode);
         }
     }
 
     private void skipToDataseg() throws IOException {
-        while (fd.getFilePointer() + 5 <= fd.length()) {
-            int segType = fd.read();
-            int segSize = fd.readInt();
+        while (fd.position() + 5 <= fd.size()) {
+            int segType = NIOUtils.readByte(fd);
+            int segSize = NIOUtils.readInt(fd);
             if (segType != DATA_SEGMENT && segType != INDEX_SEGMENT)
                 throw new IOException("Invalid segment: " + segType);
             if (segType == DATA_SEGMENT)
                 return;
-            fd.seek(fd.getFilePointer() + segSize);
+            fd.position(fd.position() + segSize);
         }
     }
 
@@ -190,17 +192,17 @@ public class FrameCache {
         synchronized (fd) {
             if (fd == null)
                 return;
-            fd.seek(dataSegments.get(dataSegments.size() - 1) + dsFill);
-            long pos = fd.getFilePointer();
-            Buffer data = packet.getData().fork();
+            fd.position(dataSegments.get(dataSegments.size() - 1) + dsFill);
+            long pos = fd.position();
+            ByteBuffer data = packet.getData().duplicate();
 
             IndexRecord record = new IndexRecord((int) packet.getFrameNo(), pos, packet.getData().remaining(),
                     packet.getPts(), (int) packet.getDuration(), packet.isKeyFrame(), packet.getTapeTimecode());
             index.put((int) packet.getFrameNo(), record);
 
             while (data.remaining() > 0) {
-                Buffer piece = data.read(Math.min(data.remaining(), DATASEG_SIZE - dsFill));
-                piece.writeTo(fd);
+                ByteBuffer piece = NIOUtils.read(data, Math.min(data.remaining(), DATASEG_SIZE - dsFill));
+                fd.write(piece);
                 dsFill += piece.remaining();
 
                 if (dsFill == DATASEG_SIZE) {
@@ -224,25 +226,25 @@ public class FrameCache {
     }
 
     private void addDataSegment() throws IOException {
-        fd.write(DATA_SEGMENT);
-        fd.writeInt(DATASEG_SIZE);
-        dataSegments.add(fd.getFilePointer());
+        NIOUtils.writeByte(fd, (byte) DATA_SEGMENT);
+        NIOUtils.writeInt(fd, DATASEG_SIZE);
+        dataSegments.add(fd.position());
     }
 
-    private void writeIndex(RandomAccessFile fd, List<IndexRecord> dsFrames) throws IOException {
-        fd.write(INDEX_SEGMENT);
-        fd.writeInt(dsFrames.size() * 29);
-        Buffer buf = new Buffer(dsFrames.size() * 29), fork = buf.fork();
-        DataOutput dout = buf.dout();
+    private void writeIndex(FileChannel fd, List<IndexRecord> dsFrames) throws IOException {
+        NIOUtils.writeByte(fd, (byte) INDEX_SEGMENT);
+        NIOUtils.writeInt(fd, dsFrames.size() * 29);
+        ByteBuffer buf = ByteBuffer.allocate(dsFrames.size() * 29);
         for (IndexRecord indexRecord : dsFrames) {
-            dout.writeInt(indexRecord.frameNo);
-            dout.writeLong(indexRecord.pos);
-            dout.writeInt(indexRecord.dataLen);
-            dout.writeLong(indexRecord.pts);
-            dout.writeInt(indexRecord.duration);
-            dout.write(indexRecord.key ? 1 : 0);
+            buf.putInt(indexRecord.frameNo);
+            buf.putLong(indexRecord.pos);
+            buf.putInt(indexRecord.dataLen);
+            buf.putLong(indexRecord.pts);
+            buf.putInt(indexRecord.duration);
+            buf.put((byte) (indexRecord.key ? 1 : 0));
         }
-        fork.writeTo(fd);
+        buf.flip();
+        fd.write(buf);
     }
 
     public boolean hasFrame(int i) {

@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -30,16 +26,16 @@ public class SoundMediaHeaderBox extends FullBox {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
-        balance = (short)ReaderBE.readInt16(input);
-        ReaderBE.readInt16(input);
+        balance = input.getShort();
+        input.getShort();
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeShort(balance);
-        out.writeShort(0);
+        out.putShort(balance);
+        out.putShort((short)0);
     }
 
     public short getBalance() {

@@ -1,18 +1,18 @@
 package org.jcodec.player.filters;
 
-import static org.jcodec.common.JCodecUtil.bufin;
-
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
+import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
@@ -28,14 +28,14 @@ public class JCodecPacketSource {
 
     private MP4Demuxer demuxer;
     private List<Track> tracks;
-    private RAInputStream is;
+    private SeekableByteChannel is;
 
     public JCodecPacketSource(File file) throws IOException {
-        is = bufin(file);
+        is = new FileChannelWrapper(file);
         demuxer = new MP4Demuxer(is);
 
         tracks = new ArrayList<Track>();
-        for (DemuxerTrack demuxerTrack : demuxer.getTracks()) {
+        for (MP4DemuxerTrack demuxerTrack : demuxer.getTracks()) {
             if (demuxerTrack.getBox().isVideo() || demuxerTrack.getBox().isAudio())
                 tracks.add(new Track(demuxerTrack));
         }
@@ -63,12 +63,12 @@ public class JCodecPacketSource {
     }
 
     public class Track implements PacketSource {
-        private DemuxerTrack track;
+        private MP4DemuxerTrack track;
         private static final int FRAMES_PER_PACKET = 2048;
         private int framesPerPkt;
         private boolean closed;
 
-        public Track(DemuxerTrack track) {
+        public Track(MP4DemuxerTrack track) {
             this.track = track;
             SampleEntry sampleEntry = track.getSampleEntries()[0];
             this.framesPerPkt = 1;
@@ -77,7 +77,7 @@ public class JCodecPacketSource {
             }
         }
 
-        public Packet getPacket(byte[] buffer) {
+        public Packet getPacket(ByteBuffer buffer) {
             try {
                 return track.getFrames(buffer, framesPerPkt);
             } catch (IOException e) {

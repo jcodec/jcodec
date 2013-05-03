@@ -1,10 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.ReaderBE;
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -34,19 +32,19 @@ public class ColorExtension extends Box {
     }
 
     @Override
-    public void parse(InputStream input) throws IOException {
-        long type = ReaderBE.readInt32(input);
-        primariesIndex = (short) ReaderBE.readInt16(input);
-        transferFunctionIndex = (short) ReaderBE.readInt16(input);
-        matrixIndex = (short) ReaderBE.readInt16(input);
+    public void parse(ByteBuffer input) {
+        long type = input.getInt();
+        primariesIndex = input.getShort();
+        transferFunctionIndex = input.getShort();
+        matrixIndex = input.getShort();
     }
 
     @Override
-    public void doWrite(DataOutput out) throws IOException {
-        out.write(type.getBytes());
-        out.writeShort(primariesIndex);
-        out.writeShort(transferFunctionIndex);
-        out.writeShort(matrixIndex);
+    public void doWrite(ByteBuffer out) {
+        out.put(JCodecUtil.asciiString(type));
+        out.putShort(primariesIndex);
+        out.putShort(transferFunctionIndex);
+        out.putShort(matrixIndex);
     }
 
     public static String fourcc() {

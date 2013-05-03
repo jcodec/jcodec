@@ -4,20 +4,16 @@ import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeBool;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeU;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUE;
+import static org.jcodec.common.model.ColorSpace.MONO;
 
-import java.io.IOException;
-
-import org.jcodec.codecs.h264.io.model.ChromaFormat;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.RefPicMarking;
 import org.jcodec.codecs.h264.io.model.RefPicMarking.Instruction;
 import org.jcodec.codecs.h264.io.model.RefPicMarkingIDR;
-import org.jcodec.codecs.h264.io.model.RefPicReordering;
-import org.jcodec.codecs.h264.io.model.RefPicReordering.ReorderOp;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,7 +33,7 @@ public class SliceHeaderWriter {
         this.pps = pps;
     }
 
-    public void write(SliceHeader sliceHeader, boolean idrSlice, int nalRefIdc, OutBits writer) throws IOException {
+    public void write(SliceHeader sliceHeader, boolean idrSlice, int nalRefIdc, BitWriter writer) {
         writeUE(writer, sliceHeader.first_mb_in_slice, "SH: first_mb_in_slice");
         writeUE(writer, sliceHeader.slice_type.ordinal() + (sliceHeader.slice_type_restr ? 5 : 0), "SH: slice_type");
         writeUE(writer, sliceHeader.pic_parameter_set_id, "SH: pic_parameter_set_id");
@@ -72,9 +68,9 @@ public class SliceHeaderWriter {
                 || sliceHeader.slice_type == SliceType.B) {
             writeBool(writer, sliceHeader.num_ref_idx_active_override_flag, "SH: num_ref_idx_active_override_flag");
             if (sliceHeader.num_ref_idx_active_override_flag) {
-                writeUE(writer, sliceHeader.num_ref_idx_l0_active_minus1, "SH: num_ref_idx_l0_active_minus1");
+                writeUE(writer, sliceHeader.num_ref_idx_active_minus1[0], "SH: num_ref_idx_l0_active_minus1");
                 if (sliceHeader.slice_type == SliceType.B) {
-                    writeUE(writer, sliceHeader.num_ref_idx_l1_active_minus1, "SH: num_ref_idx_l1_active_minus1");
+                    writeUE(writer, sliceHeader.num_ref_idx_active_minus1[1], "SH: num_ref_idx_l1_active_minus1");
                 }
             }
         }
@@ -125,7 +121,7 @@ public class SliceHeaderWriter {
         return uiRet;
     }
 
-    private void writeDecRefPicMarking(SliceHeader sliceHeader, boolean idrSlice, OutBits writer) throws IOException {
+    private void writeDecRefPicMarking(SliceHeader sliceHeader, boolean idrSlice, BitWriter writer) {
         if (idrSlice) {
             RefPicMarkingIDR drpmidr = sliceHeader.refPicMarkingIDR;
             writeBool(writer, drpmidr.isDiscardDecodedPics(), "SH: no_output_of_prior_pics_flag");
@@ -167,79 +163,60 @@ public class SliceHeaderWriter {
         }
     }
 
-    private void writePredWeightTable(SliceHeader sliceHeader, OutBits writer) throws IOException {
+    private void writePredWeightTable(SliceHeader sliceHeader, BitWriter writer) {
         writeUE(writer, sliceHeader.pred_weight_table.luma_log2_weight_denom, "SH: luma_log2_weight_denom");
-        if (sps.chroma_format_idc != ChromaFormat.MONOCHROME) {
+        if (sps.chroma_format_idc != MONO) {
             writeUE(writer, sliceHeader.pred_weight_table.chroma_log2_weight_denom, "SH: chroma_log2_weight_denom");
         }
 
-        for (int i = 0; i < sliceHeader.pred_weight_table.luma_offset_weight_l0.length; i++) {
-            writeBool(writer, sliceHeader.pred_weight_table.luma_offset_weight_l0[i] != null, "SH: luma_weight_l0_flag");
-            if (sliceHeader.pred_weight_table.luma_offset_weight_l0[i] != null) {
-                writeSE(writer, sliceHeader.pred_weight_table.luma_offset_weight_l0[i].weight, "SH: ");
-                writeSE(writer, sliceHeader.pred_weight_table.luma_offset_weight_l0[i].offset, "SH: ");
+        writeOffsetWeight(sliceHeader, writer, 0);
+        if (sliceHeader.slice_type == SliceType.B) {
+            writeOffsetWeight(sliceHeader, writer, 1);
+        }
+    }
+
+    private void writeOffsetWeight(SliceHeader sliceHeader, BitWriter writer, int list) {
+        for (int i = 0; i < sliceHeader.pred_weight_table.luma_weight[list].length; i++) {
+            boolean flagLuma = sliceHeader.pred_weight_table.luma_weight[list][i] == 128
+                    && sliceHeader.pred_weight_table.luma_offset[list][i] == 0;
+            writeBool(writer, flagLuma, "SH: luma_weight_l0_flag");
+            if (flagLuma) {
+                writeSE(writer, sliceHeader.pred_weight_table.luma_weight[list][i], "SH: ");
+                writeSE(writer, sliceHeader.pred_weight_table.luma_offset[list][i], "SH: ");
             }
-            if (sps.chroma_format_idc != ChromaFormat.MONOCHROME) {
-                writeBool(writer, sliceHeader.pred_weight_table.chroma_offset_weight_l0[i] != null,
-                        "SH: chroma_weight_l0_flag");
-                if (sliceHeader.pred_weight_table.chroma_offset_weight_l0[i] != null)
+            if (sps.chroma_format_idc != MONO) {
+                boolean flagChroma = sliceHeader.pred_weight_table.chroma_weight[list][0][i] == 128
+                        && sliceHeader.pred_weight_table.chroma_offset[list][0][i] == 0
+                        && sliceHeader.pred_weight_table.chroma_weight[list][1][i] == 128
+                        && sliceHeader.pred_weight_table.chroma_offset[list][1][i] == 0;
+                writeBool(writer, flagChroma, "SH: chroma_weight_l0_flag");
+                if (flagChroma)
                     for (int j = 0; j < 2; j++) {
-                        writeSE(writer, sliceHeader.pred_weight_table.chroma_offset_weight_l0[i][j].weight, "SH: ");
-                        writeSE(writer, sliceHeader.pred_weight_table.chroma_offset_weight_l0[i][j].offset, "SH: ");
+                        writeSE(writer, sliceHeader.pred_weight_table.chroma_weight[list][i][j], "SH: ");
+                        writeSE(writer, sliceHeader.pred_weight_table.chroma_offset[list][i][j], "SH: ");
                     }
             }
         }
-        if (sliceHeader.slice_type == SliceType.B) {
-            for (int i = 0; i < sliceHeader.pred_weight_table.luma_offset_weight_l1.length; i++) {
-                writeBool(writer, sliceHeader.pred_weight_table.luma_offset_weight_l1[i] != null,
-                        "SH: luma_weight_l0_flag");
-                if (sliceHeader.pred_weight_table.luma_offset_weight_l1[i] != null) {
-                    writeSE(writer, sliceHeader.pred_weight_table.luma_offset_weight_l1[i].weight, "SH: ");
-                    writeSE(writer, sliceHeader.pred_weight_table.luma_offset_weight_l1[i].offset, "SH: ");
-                }
-                if (sps.chroma_format_idc != ChromaFormat.MONOCHROME) {
-                    writeBool(writer, sliceHeader.pred_weight_table.chroma_offset_weight_l1[i] != null,
-                            "SH: chroma_weight_l0_flag");
-                    if (sliceHeader.pred_weight_table.chroma_offset_weight_l1[i] != null)
-                        for (int j = 0; j < 2; j++) {
-                            writeSE(writer, sliceHeader.pred_weight_table.chroma_offset_weight_l1[i][j].weight, "SH: ");
-                            writeSE(writer, sliceHeader.pred_weight_table.chroma_offset_weight_l1[i][j].offset, "SH: ");
-                        }
-                }
-            }
-        }
     }
 
-    private void writeRefPicListReordering(SliceHeader sliceHeader, OutBits writer) throws IOException {
+    private void writeRefPicListReordering(SliceHeader sliceHeader, BitWriter writer) {
         if (sliceHeader.slice_type.isInter()) {
-            writeBool(writer, sliceHeader.refPicReorderingL0 != null, "SH: ref_pic_list_reordering_flag_l0");
-            writeReorderingList(sliceHeader.refPicReorderingL0, writer);
+            writeBool(writer, sliceHeader.refPicReordering[0] != null, "SH: ref_pic_list_reordering_flag_l0");
+            writeReorderingList(sliceHeader.refPicReordering[0], writer);
         }
         if (sliceHeader.slice_type == SliceType.B) {
-            writeBool(writer, sliceHeader.refPicReorderingL1 != null, "SH: ref_pic_list_reordering_flag_l1");
-            writeReorderingList(sliceHeader.refPicReorderingL1, writer);
+            writeBool(writer, sliceHeader.refPicReordering[1] != null, "SH: ref_pic_list_reordering_flag_l1");
+            writeReorderingList(sliceHeader.refPicReordering[1], writer);
         }
     }
 
-    private void writeReorderingList(RefPicReordering reordering, OutBits writer) throws IOException {
+    private void writeReorderingList(int[][] reordering, BitWriter writer) {
         if (reordering == null)
             return;
 
-        for (ReorderOp op : reordering.getInstructions()) {
-            switch (op.getType()) {
-            case BACKWARD:
-                writeUE(writer, 0, "SH: reordering_of_pic_nums_idc");
-                writeUE(writer, op.getParam() - 1, "SH: abs_diff_pic_num_minus1");
-                break;
-            case FORWARD:
-                writeUE(writer, 1, "SH: reordering_of_pic_nums_idc");
-                writeUE(writer, op.getParam() - 1, "SH: abs_diff_pic_num_minus1");
-                break;
-            case LONG_TERM:
-                writeUE(writer, 2, "SH: reordering_of_pic_nums_idc");
-                writeUE(writer, op.getParam(), "SH: long_term_pic_num");
-                break;
-            }
+        for (int i = 0; i < reordering.length; i++) {
+            writeUE(writer, reordering[0][i], "SH: reordering_of_pic_nums_idc");
+            writeUE(writer, reordering[1][i], "SH: abs_diff_pic_num_minus1");
         }
         writeUE(writer, 3, "SH: reordering_of_pic_nums_idc");
     }

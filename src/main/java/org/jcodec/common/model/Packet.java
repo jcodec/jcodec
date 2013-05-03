@@ -1,6 +1,6 @@
 package org.jcodec.common.model;
 
-import org.jcodec.common.io.Buffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -12,7 +12,7 @@ import org.jcodec.common.io.Buffer;
  * 
  */
 public class Packet {
-    private Buffer data;
+    private ByteBuffer data;
     private long pts;
     private long timescale;
     private long duration;
@@ -21,15 +21,9 @@ public class Packet {
     private TapeTimecode tapeTimecode;
     private int displayOrder;
 
-    public Packet(Buffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
+    public Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
             TapeTimecode tapeTimecode) {
-        this.data = data;
-        this.pts = pts;
-        this.timescale = timescale;
-        this.duration = duration;
-        this.frameNo = frameNo;
-        this.keyFrame = keyFrame;
-        this.tapeTimecode = tapeTimecode;
+        this(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
     }
 
     public Packet(Packet other) {
@@ -37,7 +31,7 @@ public class Packet {
         this.displayOrder = other.displayOrder;
     }
 
-    public Packet(Packet other, Buffer data) {
+    public Packet(Packet other, ByteBuffer data) {
         this(data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, other.tapeTimecode);
         this.displayOrder = other.displayOrder;
     }
@@ -47,7 +41,19 @@ public class Packet {
         this.displayOrder = other.displayOrder;
     }
 
-    public Buffer getData() {
+    public Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
+            TapeTimecode tapeTimecode, int displayOrder) {
+        this.data = data;
+        this.pts = pts;
+        this.timescale = timescale;
+        this.duration = duration;
+        this.frameNo = frameNo;
+        this.keyFrame = keyFrame;
+        this.tapeTimecode = tapeTimecode;
+        this.displayOrder = displayOrder;
+    }
+
+    public ByteBuffer getData() {
         return data;
     }
 
@@ -95,7 +101,7 @@ public class Packet {
         return RationalLarge.R(pts, timescale);
     }
 
-    public void setData(Buffer data) {
+    public void setData(ByteBuffer data) {
         this.data = data;
     }
 }

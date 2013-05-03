@@ -2,14 +2,11 @@ package org.jcodec.codecs.h264.io.model;
 
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeTrailingBits;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.io.BitstreamWriter;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -22,7 +19,7 @@ import org.jcodec.common.io.OutBits;
  * @author Jay Codec
  * 
  */
-public class SEI extends BitstreamElement {
+public class SEI {
 
     public static class SEIMessage {
         public int payloadType;
@@ -43,7 +40,7 @@ public class SEI extends BitstreamElement {
         this.messages = messages;
     }
 
-    public static SEI read(InputStream is) throws IOException {
+    public static SEI read(ByteBuffer is) {
 
         List<SEIMessage> messages = new ArrayList<SEIMessage>();
         SEIMessage msg;
@@ -56,17 +53,17 @@ public class SEI extends BitstreamElement {
         return new SEI((SEIMessage[]) messages.toArray(new SEIMessage[] {}));
     }
 
-    private static SEIMessage sei_message(InputStream is) throws IOException {
+    private static SEIMessage sei_message(ByteBuffer is) {
         int payloadType = 0;
         int b;
-        while ((b = is.read()) == 0xff) {
+        while ((b = is.get() & 0xff) == 0xff) {
             payloadType += 255;
         }
         if (b == -1)
             return null;
         payloadType += b;
         int payloadSize = 0;
-        while ((b = is.read()) == 0xff) {
+        while ((b = is.get() & 0xff) == 0xff) {
             payloadSize += 255;
         }
         if (b == -1)
@@ -80,13 +77,14 @@ public class SEI extends BitstreamElement {
 
     }
 
-    private static byte[] sei_payload(int payloadType, int payloadSize, InputStream is) throws IOException {
+    private static byte[] sei_payload(int payloadType, int payloadSize, ByteBuffer is) {
         byte[] res = new byte[payloadSize];
-        return is.read(res) == payloadSize ? res : null;
+        is.get(res);
+        return res;
     }
 
-    public void write(OutputStream out) throws IOException {
-        OutBits writer = new BitstreamWriter(out);
+    public void write(ByteBuffer out) {
+        BitWriter writer = new BitWriter(out);
         // TODO Auto-generated method stub
 
         writeTrailingBits(writer);

@@ -1,9 +1,7 @@
 package org.jcodec.codecs.aac.blocks;
 
-import java.io.IOException;
-
 import org.jcodec.codecs.aac.BlockType;
-import org.jcodec.common.io.InBits;
+import org.jcodec.common.io.BitReader;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,5 +19,5 @@ public abstract class Block {
         return type;
     }
     
-    public abstract void parse(InBits in) throws IOException;
+    public abstract void parse(BitReader in);
 }

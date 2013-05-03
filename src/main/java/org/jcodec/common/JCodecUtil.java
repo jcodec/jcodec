@@ -3,7 +3,7 @@ package org.jcodec.common;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
@@ -12,12 +12,6 @@ import org.jcodec.codecs.pcm.PCMDecoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
-import org.jcodec.common.io.AutoFileRAInputStream;
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.BufferedRAInputStream;
-import org.jcodec.common.io.FileRAInputStream;
-import org.jcodec.common.io.MappedRAInputStream;
-import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.MP4Demuxer;
@@ -44,20 +38,13 @@ public class JCodecUtil {
     }
 
     public static Format detectFormat(File f) throws IOException {
-        RandomAccessFile ff = null;
-        try {
-            ff = new RandomAccessFile(f, "r");
-            return detectFormat(Buffer.fetchFrom(ff, 200 * 1024));
-        } finally {
-            if (ff != null)
-                ff.close();
-        }
+        return detectFormat(NIOUtils.fetchFrom(f, 200 * 1024));
     }
 
-    public static Format detectFormat(Buffer b) {
-        int movScore = MP4Demuxer.probe(b.fork());
-        int psScore = MPSDemuxer.probe(b.fork());
-        int tsScore = MTSDemuxer.probe(b.fork());
+    public static Format detectFormat(ByteBuffer b) {
+        int movScore = MP4Demuxer.probe(b.duplicate());
+        int psScore = MPSDemuxer.probe(b.duplicate());
+        int tsScore = MTSDemuxer.probe(b.duplicate());
 
         if (movScore == 0 && psScore == 0 && tsScore == 0)
             return null;
@@ -66,7 +53,7 @@ public class JCodecUtil {
                 : (psScore > tsScore ? Format.MPEG_PS : Format.MPEG_TS);
     }
 
-    public static VideoDecoder detectDecoder(Buffer b) {
+    public static VideoDecoder detectDecoder(ByteBuffer b) {
         int maxProbe = 0;
         VideoDecoder selected = null;
         for (VideoDecoder vd : knownDecoders) {
@@ -98,18 +85,6 @@ public class JCodecUtil {
             return null;
     }
 
-    public static RAInputStream bufin(File f) throws IOException {
-        return new BufferedRAInputStream(new FileRAInputStream(f));
-    }
-    
-    public static RAInputStream autoBufin(File f) throws IOException {
-        return new BufferedRAInputStream(new AutoFileRAInputStream(f));
-    }
-
-    public static RAInputStream mapin(File f) throws IOException {
-        return new MappedRAInputStream(new FileRAInputStream(f), 16, 20);
-    }
-
     public static void savePicture(Picture pic, String format, File file) throws IOException {
         Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
         Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB);
@@ -122,6 +97,43 @@ public class JCodecUtil {
         Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
         Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB);
         transform.transform(pic, rgb);
-        new PPMEncoder().encodeFrame(rgb).writeTo(file);
+        NIOUtils.writeTo(new PPMEncoder().encodeFrame(rgb), file);
+    }
+
+    public static byte[] asciiString(String fourcc) {
+        char[] ch = fourcc.toCharArray();
+        byte[] result = new byte[ch.length];
+        for (int i = 0; i < ch.length; i++) {
+            result[i] = (byte) ch[i];
+        }
+        return result;
+    }
+
+    public static void writeBER32(ByteBuffer buffer, int value) {
+        buffer.put((byte) ((value >> 21) | 0x80));
+        buffer.put((byte) ((value >> 14) | 0x80));
+        buffer.put((byte) ((value >> 7) | 0x80));
+        buffer.put((byte) (value & 0x7F));
+    }
+
+    public static int readBER32(ByteBuffer input) {
+        int size = 0;
+        for (int i = 0; i < 4; i++) {
+            byte b = input.get();
+            size = (size << 7) | (b & 0x7f);
+            if (((b & 0xff) >> 7) == 0)
+                break;
+        }
+        return size;
+    }
+
+    public static int[] getAsIntArray(ByteBuffer yuv, int size) {
+        byte[] b = new byte[size];
+        int[] result = new int[size];
+        yuv.get(b);
+        for (int i = 0; i < b.length; i++) {
+            result[i] = b[i] & 0xff;
+        }
+        return result;
     }
 }

@@ -2,22 +2,24 @@ package org.jcodec.samples.streaming;
 
 import static ch.lambdaj.Lambda.extract;
 import static ch.lambdaj.Lambda.on;
-import static org.jcodec.common.JCodecUtil.bufin;
+import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.BiPredictiveCoded;
+import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.IntraCoded;
+import static org.jcodec.common.NIOUtils.from;
 import static org.jcodec.containers.mps.MPSDemuxer.videoStream;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.io.IOUtils;
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
@@ -49,17 +51,17 @@ public class MTSIndexer {
     }
 
     public void index() throws IOException {
-        RAInputStream is = null;
+        FileChannel channel = null;
         try {
-            is = bufin(mtsFile);
+            channel = new FileInputStream(mtsFile).getChannel();
 
             TIntObjectHashMap<PESProgram> programs = new TIntObjectHashMap<PESProgram>();
             while (true) {
-                long offset = is.getPos();
-                if (is.length() - offset < 188)
+                long offset = channel.position();
+                if (channel.size() - offset < 188)
                     break;
-                MTSPacket pkt = MTSDemuxer.readPacket(is);
-                Buffer data = pkt.payload;
+                MTSPacket pkt = MTSDemuxer.readPacket(channel);
+                ByteBuffer data = pkt.payload;
 
                 if (data == null)
                     continue;
@@ -73,7 +75,7 @@ public class MTSIndexer {
                     program.packet(pkt, offset);
             }
         } finally {
-            IOUtils.closeQuietly(is);
+            channel.close();
             done = true;
         }
     }
@@ -81,7 +83,7 @@ public class MTSIndexer {
     private class PESProgram {
         private MTSIndex index;
         private PESPacket pes = null;
-        private Buffer buffer = null, seqHeader = null, gopHeader = null, pictureHeader = null;
+        private ByteBuffer buffer = null, seqHeader = null, gopHeader = null, pictureHeader = null;
         private int marker = 0xffffffff, curMarker = marker;
         private boolean skipPES = false;
         private long pesOffset = 0;
@@ -96,12 +98,11 @@ public class MTSIndexer {
         }
 
         public void packet(MTSPacket pkt, long offset) throws IOException {
-            Buffer data = pkt.payload;
+            ByteBuffer data = pkt.payload;
 
             if (pkt.payloadStart && markerStart(data)) {
                 int streamId = data.get(3);
-                data.read(4);
-                pes = MPSDemuxer.readPES(streamId, data.is());
+                pes = MPSDemuxer.readPES(data, 0);
 
                 if (!videoStream(streamId)) {
                     FrameEntry last = index.last(pes.streamId);
@@ -115,31 +116,35 @@ public class MTSIndexer {
             }
 
             if (!skipPES) {
-                for (int i = data.pos; i < data.limit; i++) {
-                    marker = (marker << 8) | (data.buffer[i] & 0xff);
+                while (data.hasRemaining()) {
+                    byte b = data.get();
+                    marker = (marker << 8) | (b & 0xff);
 
                     if (buffer != null)
-                        buffer.write(data.buffer[i]);
+                        buffer.put(b);
 
                     if (marker < 0x100 || marker >= 0x1b9 || marker == 0x1b5 || marker == 0x1b2)
                         continue;
 
                     if (curMarker == 0x1b3) {
-                        seqHeader = new Buffer(buffer.buffer, 0, buffer.pos - 4);
+                        seqHeader = buffer;
+                        buffer.flip().limit(buffer.limit() - 4);
                         buffer = null;
                     } else if (curMarker == 0x1b8) {
-                        gopHeader = new Buffer(buffer.buffer, 0, buffer.pos - 4);
+                        gopHeader = buffer;
+                        buffer.flip().limit(buffer.limit() - 4);
                         buffer = null;
                     } else if (curMarker == 0x100) {
-                        pictureHeader = new Buffer(buffer.buffer, 0, buffer.pos - 4);
+                        pictureHeader = buffer;
+                        buffer.flip().limit(buffer.limit() - 4);
                         buffer = null;
 
                         videoFrame(index, pesOffset, pes, seqHeader, gopHeader, pictureHeader);
                     }
 
                     if (marker == 0x1b3 || marker == 0x1b8 || marker == 0x100) {
-                        buffer = new Buffer(1024);
-                        buffer.dout().writeInt(marker);
+                        buffer = ByteBuffer.allocate(1024);
+                        buffer.putInt(marker);
                     }
 
                     curMarker = marker;
@@ -147,14 +152,14 @@ public class MTSIndexer {
             }
         }
 
-        private void videoFrame(MTSIndex index, long pesOffset, PESPacket pes, Buffer seqHeaderBuf,
-                Buffer gopHeaderBuf, Buffer pictureHeader) throws IOException {
+        private void videoFrame(MTSIndex index, long pesOffset, PESPacket pes, ByteBuffer seqHeaderBuf,
+                ByteBuffer gopHeaderBuf, ByteBuffer pictureHeader) throws IOException {
 
-            PictureHeader ph = PictureHeader.read(pictureHeader.from(4));
+            PictureHeader ph = PictureHeader.read(from(pictureHeader, 4));
 
-            GOPHeader gopHeader = gopHeaderBuf == null ? null : GOPHeader.read(gopHeaderBuf.from(4));
+            GOPHeader gopHeader = gopHeaderBuf == null ? null : GOPHeader.read(from(gopHeaderBuf, 4));
 
-            if (ph.picture_coding_type == PictureHeader.IntraCoded) {
+            if (ph.picture_coding_type == IntraCoded) {
                 assignTimecodes(gop, gopHeader, prevGopHeader);
                 prevGopHeader = gopHeader;
                 prevGop = gop;
@@ -162,12 +167,13 @@ public class MTSIndexer {
             }
 
             if (gop != null) {
-                if (ph.picture_coding_type == PictureHeader.BiPredictiveCoded && gop.size() == 1 && prevGop != null) {
+                if (ph.picture_coding_type == BiPredictiveCoded && gop.size() == 1 && prevGop != null) {
                     prevGop.add(index.addVideo(pes.streamId, pesOffset, pes.pts, 0, seqHeaderBuf,
                             prevGop.get(0).frameNo, 0, (short) ph.temporal_reference, (byte) ph.picture_coding_type));
                 } else {
-                    gop.add(index.addVideo(pes.streamId, pesOffset, pes.pts, 0, seqHeaderBuf, gop.size() > 0 ? gop.get(0).frameNo : -1, 0,
-                            (short) ph.temporal_reference, (byte) ph.picture_coding_type));
+                    gop.add(index.addVideo(pes.streamId, pesOffset, pes.pts, 0, seqHeaderBuf,
+                            gop.size() > 0 ? gop.get(0).frameNo : -1, 0, (short) ph.temporal_reference,
+                            (byte) ph.picture_coding_type));
                 }
             }
         }
@@ -210,7 +216,7 @@ public class MTSIndexer {
         }
     }
 
-    private static final boolean markerStart(Buffer buf) {
+    private static final boolean markerStart(ByteBuffer buf) {
         return buf.get(0) == 0 && buf.get(1) == 0 && buf.get(2) == 1;
     }
 

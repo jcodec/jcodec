@@ -1,5 +1,7 @@
 package org.jcodec.player.filters;
 
+import java.nio.ByteBuffer;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -8,7 +10,7 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 
-import org.jcodec.common.io.Buffer;
+import org.jcodec.common.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -62,10 +64,6 @@ public class JSoundAudioOut implements AudioOut {
         return line.getLongFramePosition();
     }
 
-    public int write(byte[] pkt, int off, int length) {
-        return line.write(pkt, off, length);
-    }
-
     public int available() {
         return line.available();
     }
@@ -90,7 +88,14 @@ public class JSoundAudioOut implements AudioOut {
         line.drain();
     }
 
-    public void write(Buffer sound) {
-        write(sound.buffer, sound.pos, sound.remaining());
+    public void write(ByteBuffer sound) {
+        int written;
+        if (sound.hasArray()) {
+            written = line.write(sound.array(), sound.arrayOffset() + sound.position(), sound.remaining());
+        } else {
+            byte[] array = NIOUtils.toArray(sound);
+            written = line.write(array, 0, array.length);
+        }
+        sound.position(sound.position() + written);
     }
 }

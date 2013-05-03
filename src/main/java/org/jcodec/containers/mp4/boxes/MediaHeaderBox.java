@@ -3,11 +3,8 @@ package org.jcodec.containers.mp4.boxes;
 import static org.jcodec.containers.mp4.TimeUtil.fromMovTime;
 import static org.jcodec.containers.mp4.TimeUtil.toMovTime;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.ReaderBE;
 import org.jcodec.common.tools.ToJSON;
 
 /**
@@ -45,18 +42,18 @@ public class MediaHeaderBox extends FullBox {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
         if (version == 0) {
-            created = fromMovTime((int) ReaderBE.readInt32(input));
-            modified = fromMovTime((int) ReaderBE.readInt32(input));
-            timescale = (int) ReaderBE.readInt32(input);
-            duration = ReaderBE.readInt32(input);
+            created = fromMovTime(input.getInt());
+            modified = fromMovTime(input.getInt());
+            timescale = input.getInt();
+            duration = input.getInt();
         } else if (version == 1) {
-            created = fromMovTime((int) ReaderBE.readInt64(input));
-            modified = fromMovTime((int) ReaderBE.readInt64(input));
-            timescale = (int) ReaderBE.readInt32(input);
-            duration = ReaderBE.readInt64(input);
+            created = fromMovTime((int) input.getLong());
+            modified = fromMovTime((int) input.getLong());
+            timescale = input.getInt();
+            duration = input.getLong();
         } else {
             throw new RuntimeException("Unsupported version");
         }
@@ -70,14 +67,14 @@ public class MediaHeaderBox extends FullBox {
         return duration;
     }
 
-    public void doWrite(DataOutput out) throws IOException {
+    public void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeInt(toMovTime(created));
-        out.writeInt(toMovTime(modified));
-        out.writeInt(timescale);
-        out.writeInt((int) duration);
-        out.writeShort((short) language);
-        out.writeShort((short) quality);
+        out.putInt(toMovTime(created));
+        out.putInt(toMovTime(modified));
+        out.putInt(timescale);
+        out.putInt((int) duration);
+        out.putShort((short) language);
+        out.putShort((short) quality);
     }
 
     public void setDuration(long duration) {

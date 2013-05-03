@@ -1,8 +1,8 @@
 package org.jcodec.common.model;
 
-import javax.sound.sampled.AudioFormat;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.Buffer;
+import javax.sound.sampled.AudioFormat;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -14,11 +14,11 @@ import org.jcodec.common.io.Buffer;
  * 
  */
 public class AudioBuffer {
-    private Buffer data;
+    private ByteBuffer data;
     private AudioFormat format;
     private int nFrames;
 
-    public AudioBuffer(Buffer data, AudioFormat format, int nFrames) {
+    public AudioBuffer(ByteBuffer data, AudioFormat format, int nFrames) {
         this.data = data;
         this.format = format;
         this.nFrames = nFrames;
@@ -30,7 +30,7 @@ public class AudioBuffer {
         this.nFrames = other.nFrames;
     }
 
-    public Buffer getData() {
+    public ByteBuffer getData() {
         return data;
     }
 

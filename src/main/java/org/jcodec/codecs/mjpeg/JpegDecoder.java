@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.nio.IntBuffer;
 
 import org.apache.commons.io.FileUtils;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.dct.DCT;
 import org.jcodec.common.dct.IntDCT;
 import org.junit.Test;
@@ -22,7 +23,7 @@ import org.junit.Test;
  */
 public class JpegDecoder {
 
-    private static final byte[] JFIF = "JFIF".getBytes();
+    private static final byte[] JFIF = JCodecUtil.asciiString("JFIF");
 
     public static void main(String[] args) throws Exception {
         new JpegDecoder().testPerformance();

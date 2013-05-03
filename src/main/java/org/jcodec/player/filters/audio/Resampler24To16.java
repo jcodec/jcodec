@@ -1,10 +1,10 @@
 package org.jcodec.player.filters.audio;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.player.filters.MediaInfo;
@@ -20,7 +20,7 @@ import org.jcodec.player.filters.MediaInfo.AudioInfo;
 public class Resampler24To16 implements AudioSource {
 
     private AudioSource src;
-    private byte[] buffer;
+    private ByteBuffer buffer;
     private AudioFormat srcFormat;
     private AudioFormat newFormat;
 
@@ -28,7 +28,7 @@ public class Resampler24To16 implements AudioSource {
         this.src = src;
         AudioInfo audioInfo = src.getAudioInfo();
         this.srcFormat = audioInfo.getFormat();
-        buffer = new byte[audioInfo.getFramesPerPacket() * 2 * srcFormat.getFrameSize()];
+        buffer = ByteBuffer.allocate(audioInfo.getFramesPerPacket() * 2 * srcFormat.getFrameSize());
         newFormat = new AudioFormat(srcFormat.getSampleRate(), 16, srcFormat.getChannels(), true,
                 srcFormat.isBigEndian());
     }
@@ -40,27 +40,29 @@ public class Resampler24To16 implements AudioSource {
                 audioInfo.getLabels());
     }
 
-    public AudioFrame getFrame(byte[] result) throws IOException {
+    public AudioFrame getFrame(ByteBuffer result) throws IOException {
+        buffer.rewind();
         AudioFrame from = src.getFrame(buffer);
         if (from == null)
             return null;
 
-        Buffer data = from.getData();
-        int j = 0;
+        ByteBuffer dup = result.duplicate();
+        ByteBuffer data = from.getData();
         if (!srcFormat.isBigEndian()) {
-            for (int k = data.pos; k < data.limit;) {
-                k++;
-                result[j++] = buffer[k++];
-                result[j++] = buffer[k++];
+            while(data.hasRemaining()) {
+                buffer.get();
+                dup.put(buffer.get());
+                dup.put(buffer.get());
             }
         } else {
-            for (int k = data.pos; k < data.limit;) {
-                result[j++] = buffer[k++];
-                result[j++] = buffer[k++];
-                k++;
+            while(data.hasRemaining()) {
+                dup.put(buffer.get());
+                dup.put(buffer.get());
+                buffer.get();
             }
         }
-        return new AudioFrame(new Buffer(result, 0, j), newFormat, from.getNFrames(), from.getPts(),
+        dup.flip();
+        return new AudioFrame(dup, newFormat, from.getNFrames(), from.getPts(),
                 from.getDuration(), from.getTimescale(), from.getFrameNo());
     }
 

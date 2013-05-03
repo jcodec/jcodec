@@ -1,40 +1,33 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
- * This class is part of JCodec ( www.jcodec.org )
- * This software is distributed under FreeBSD License
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
  * 
  * @author The JCodec project
- *
+ * 
  */
 public class VideoMediaHeaderBox extends FullBox {
     int graphicsMode;
     int rOpColor;
     int gOpColor;
     int bOpColor;
-    
+
     public static String fourcc() {
         return "vmhd";
     }
-    
+
     public VideoMediaHeaderBox() {
         super(new Header(fourcc()));
     }
-    
+
     public VideoMediaHeaderBox(Header header) {
         super(header);
     }
 
-    public VideoMediaHeaderBox(int graphicsMode,
-            int rOpColor,
-            int gOpColor,
-            int bOpColor) {
+    public VideoMediaHeaderBox(int graphicsMode, int rOpColor, int gOpColor, int bOpColor) {
         super(new Header(fourcc()));
 
         this.graphicsMode = graphicsMode;
@@ -44,21 +37,21 @@ public class VideoMediaHeaderBox extends FullBox {
     }
 
     @Override
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
-        graphicsMode = (int) ReaderBE.readInt16(input);
-        rOpColor = (int) ReaderBE.readInt16(input);
-        gOpColor = (int) ReaderBE.readInt16(input);
-        bOpColor = (int) ReaderBE.readInt16(input);
+        graphicsMode = input.getShort();
+        rOpColor = input.getShort();
+        gOpColor = input.getShort();
+        bOpColor = input.getShort();
     }
 
     @Override
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeShort(graphicsMode);
-        out.writeShort(rOpColor);
-        out.writeShort(gOpColor);
-        out.writeShort(bOpColor);
+        out.putShort((short) graphicsMode);
+        out.putShort((short) rOpColor);
+        out.putShort((short) gOpColor);
+        out.putShort((short) bOpColor);
     }
 
     public int getGraphicsMode() {

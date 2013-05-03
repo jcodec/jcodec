@@ -1,8 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,7 +10,6 @@ import java.util.Set;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.common.io.ReaderBE;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
@@ -77,73 +74,74 @@ public class AudioSampleEntry extends SampleEntry {
         this.version = version;
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
 
-        version = (short) ReaderBE.readInt16(input);
-        revision = (short) ReaderBE.readInt16(input);
-        vendor = (int) ReaderBE.readInt32(input);
+        version = input.getShort();
+        revision = input.getShort();
+        vendor = input.getInt();
 
-        channelCount = (short) ReaderBE.readInt16(input);
-        sampleSize = (short) ReaderBE.readInt16(input);
+        channelCount = input.getShort();
+        sampleSize = input.getShort();
 
-        compressionId = (int) ReaderBE.readInt16(input);
-        pktSize = (int) ReaderBE.readInt16(input);
+        compressionId = input.getShort();
+        pktSize = input.getShort();
 
-        sampleRate = (float) ReaderBE.readInt32(input) / 65536f;
+        long sr = input.getInt() & 0xffffffffL;
+        sampleRate = (float) sr / 65536f;
 
         if (version == 1) {
-            samplesPerPkt = (int) ReaderBE.readInt32(input);
-            bytesPerPkt = (int) ReaderBE.readInt32(input);
-            bytesPerFrame = (int) ReaderBE.readInt32(input);
-            bytesPerSample = (int) ReaderBE.readInt32(input);
+            samplesPerPkt = input.getInt();
+            bytesPerPkt = input.getInt();
+            bytesPerFrame = input.getInt();
+            bytesPerSample = input.getInt();
         } else if (version == 2) {
-            ReaderBE.readInt32(input); /* sizeof struct only */
-            sampleRate = (float) Double.longBitsToDouble(ReaderBE.readInt64(input));
-            channelCount = (short) ReaderBE.readInt32(input);
-            ReaderBE.readInt32(input); /* always 0x7F000000 */
-            sampleSize = (short) ReaderBE.readInt32(input);
-            lpcmFlags = (int) ReaderBE.readInt32(input);
-            bytesPerFrame = (int) ReaderBE.readInt32(input);
-            samplesPerPkt = (int) ReaderBE.readInt32(input);
+            input.getInt(); /* sizeof struct only */
+            sampleRate = (float) Double.longBitsToDouble(input.getLong());
+            channelCount = (short) input.getInt();
+            input.getInt(); /* always 0x7F000000 */
+            sampleSize = (short) input.getInt();
+            lpcmFlags = (int) input.getInt();
+            bytesPerFrame = (int) input.getInt();
+            samplesPerPkt = (int) input.getInt();
         }
         parseExtensions(input);
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        out.writeShort(version);
-        out.writeShort(revision);
-        out.writeInt(vendor);
+        out.putShort(version);
+        out.putShort(revision);
+        out.putInt(vendor);
 
-        out.writeShort(channelCount);
+        out.putShort(channelCount);
         if (version == 0)
-            out.writeShort(sampleSize);
+            out.putShort(sampleSize);
         else
-            out.writeShort(16);
+            out.putShort((short) 16);
 
-        out.writeShort(compressionId);
-        out.writeShort(pktSize);
+        out.putShort((short) compressionId);
+        out.putShort((short) pktSize);
 
-        out.writeInt((int) Math.round(sampleRate * 65536d));
+        out.putInt((int) Math.round(sampleRate * 65536d));
 
         if (version == 1) {
-            out.writeInt(samplesPerPkt);
-            out.writeInt(bytesPerPkt);
-            out.writeInt(bytesPerFrame);
-            out.writeInt(bytesPerSample);
+            out.putInt(samplesPerPkt);
+            out.putInt(bytesPerPkt);
+            out.putInt(bytesPerFrame);
+            out.putInt(bytesPerSample);
 
             writeExtensions(out);
         } else if (version == 2) {
-            out.writeInt(36);
-            out.writeLong(Double.doubleToLongBits(sampleRate));
-            out.writeInt(channelCount);
-            out.writeInt(0x7F000000);
-            out.writeInt(sampleSize);
-            out.writeInt(lpcmFlags);
-            out.writeInt(bytesPerFrame);
-            out.writeInt(samplesPerPkt);
+            out.putInt(36);
+            out.putLong(Double.doubleToLongBits(sampleRate));
+            out.putInt(channelCount);
+            out.putInt(0x7F000000);
+            out.putInt(sampleSize);
+            out.putInt(lpcmFlags);
+            out.putInt(bytesPerFrame);
+            out.putInt(samplesPerPkt);
 
             writeExtensions(out);
         }

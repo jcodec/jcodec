@@ -1,17 +1,14 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.JCodecUtil.bufin;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.FileRAInputStream;
-import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -65,9 +62,9 @@ public class Undo {
 
     private List<Atom> list(String fileName) throws IOException {
         ArrayList<Atom> result = new ArrayList<Atom>();
-        RAInputStream is = null;
+        SeekableByteChannel is = null;
         try {
-            is = bufin(new File(fileName));
+            is = new FileChannelWrapper(new File(fileName));
             int version = 0;
             for (Atom atom : MP4Util.getRootAtoms(is)) {
                 if ("free".equals(atom.getHeader().getFourcc()) && isMoov(is, atom)) {
@@ -79,15 +76,16 @@ public class Undo {
                 }
             }
         } finally {
-            IOUtils.closeQuietly(is);
+            is.close();
         }
         return result;
     }
 
-    private boolean isMoov(RAInputStream is, Atom atom) throws IOException {
-        is.seek(atom.getOffset() + atom.getHeader().headerSize());
+    private boolean isMoov(SeekableByteChannel is, Atom atom) throws IOException {
+        is.position(atom.getOffset() + atom.getHeader().headerSize());
         try {
-            Box mov = NodeBox.parseBox(is, new Header("moov", atom.getHeader().getSize()), BoxFactory.getDefault());
+            Box mov = NodeBox.parseBox(NIOUtils.fetchFrom(is, (int) atom.getHeader().getSize()), new Header("moov", atom
+                    .getHeader().getSize()), BoxFactory.getDefault());
             return (mov instanceof MovieBox) && Box.findFirst((NodeBox) mov, "mvhd") != null;
         } catch (Throwable t) {
             return false;

@@ -1,13 +1,10 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jcodec.codecs.wav.StringReader;
-import org.jcodec.common.io.ReaderBE;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.tools.ToJSON;
 
 /**
@@ -50,25 +47,25 @@ public class TimecodeSampleEntry extends SampleEntry {
         this.numFrames = (byte) numFrames;
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
 
-        StringReader.sureSkip(input, 4);
-        flags = (int) ReaderBE.readInt32(input);
-        timescale = (int) ReaderBE.readInt32(input);
-        frameDuration = (int) ReaderBE.readInt32(input);
-        numFrames = (byte) input.read();
-        StringReader.sureSkip(input, 1);
+        NIOUtils.skip(input, 4);
+        flags = input.getInt();
+        timescale = input.getInt();
+        frameDuration = input.getInt();
+        numFrames = input.get();
+        NIOUtils.skip(input, 1);
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeInt(0);
-        out.writeInt(flags);
-        out.writeInt(timescale);
-        out.writeInt(frameDuration);
-        out.writeByte(numFrames);
-        out.write(207);
+        out.putInt(0);
+        out.putInt(flags);
+        out.putInt(timescale);
+        out.putInt(frameDuration);
+        out.put(numFrames);
+        out.put((byte) 207);
     }
 
     public static class MyFactory extends BoxFactory {

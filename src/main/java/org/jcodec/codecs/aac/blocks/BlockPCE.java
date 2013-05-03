@@ -3,7 +3,7 @@ package org.jcodec.codecs.aac.blocks;
 import java.io.IOException;
 
 import org.jcodec.codecs.aac.ChannelPosition;
-import org.jcodec.common.io.InBits;
+import org.jcodec.common.io.BitReader;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,7 +24,7 @@ public class BlockPCE extends Block {
         ChannelPosition position;
     }
 
-    public void parse(InBits in) throws IOException {
+    public void parse(BitReader in) {
 
         in.readNBit(2); // object_type
 
@@ -45,9 +45,10 @@ public class BlockPCE extends Block {
         if (in.read1Bit() != 0)
             in.readNBit(3); // mixdown_coeff_index and pseudo_surround
 
-//        if (!in.moreData(4 * (num_front + num_side + num_back + num_lfe + num_assoc_data + num_cc))) {
-//            throw new RuntimeException("Overread");
-//        }
+        // if (!in.moreData(4 * (num_front + num_side + num_back + num_lfe +
+        // num_assoc_data + num_cc))) {
+        // throw new RuntimeException("Overread");
+        // }
         ChannelMapping[] layout_map = new ChannelMapping[MAX_ELEM_ID * 4];
 
         int tags = 0;
@@ -69,9 +70,9 @@ public class BlockPCE extends Block {
 
         /* comment field, first byte is length */
         int comment_len = (int) in.readNBit(8) * 8;
-//        if (!in.moreData(comment_len)) {
-//            throw new RuntimeException("Overread");
-//        }
+        // if (!in.moreData(comment_len)) {
+        // throw new RuntimeException("Overread");
+        // }
         in.skip(comment_len);
     }
 
@@ -81,8 +82,7 @@ public class BlockPCE extends Block {
      * 
      * @throws IOException
      */
-    private void decodeChannelMap(ChannelMapping layout_map[], int offset, ChannelPosition type, InBits in, int n)
-            throws IOException {
+    private void decodeChannelMap(ChannelMapping layout_map[], int offset, ChannelPosition type, BitReader in, int n) {
         while (n-- > 0) {
             RawDataBlockType syn_ele = null;
             switch (type) {

@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
@@ -12,6 +13,8 @@ import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.VUIParameters;
+import org.jcodec.common.NIOUtils;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestSPS extends TestCase {
@@ -72,8 +75,7 @@ public class TestSPS extends TestCase {
         String path = "src/test/resources/h264/sps/sps1.dat";
         BufferedInputStream is = null;
         try {
-            is = new BufferedInputStream(new FileInputStream(path));
-            SeqParameterSet sps = SeqParameterSet.read(is);
+            SeqParameterSet sps = SeqParameterSet.read(NIOUtils.fetchFrom(new File(path)));
 
             assertEquals(sps.profile_idc, 66);
 
@@ -107,25 +109,13 @@ public class TestSPS extends TestCase {
             assertNull(sps.vuiParams.vclHRDParams);
             assertEquals(sps.vuiParams.pic_struct_present_flag, false);
             assertNotNull(sps.vuiParams.bitstreamRestriction);
-            assertEquals(
-                    sps.vuiParams.bitstreamRestriction.motion_vectors_over_pic_boundaries_flag,
-                    true);
-            assertEquals(
-                    sps.vuiParams.bitstreamRestriction.max_bytes_per_pic_denom,
-                    0);
-            assertEquals(
-                    sps.vuiParams.bitstreamRestriction.max_bits_per_mb_denom, 0);
-            assertEquals(
-                    sps.vuiParams.bitstreamRestriction.log2_max_mv_length_horizontal,
-                    10);
-            assertEquals(
-                    sps.vuiParams.bitstreamRestriction.log2_max_mv_length_vertical,
-                    10);
-            assertEquals(sps.vuiParams.bitstreamRestriction.num_reorder_frames,
-                    0);
-            assertEquals(
-                    sps.vuiParams.bitstreamRestriction.max_dec_frame_buffering,
-                    1);
+            assertEquals(sps.vuiParams.bitstreamRestriction.motion_vectors_over_pic_boundaries_flag, true);
+            assertEquals(sps.vuiParams.bitstreamRestriction.max_bytes_per_pic_denom, 0);
+            assertEquals(sps.vuiParams.bitstreamRestriction.max_bits_per_mb_denom, 0);
+            assertEquals(sps.vuiParams.bitstreamRestriction.log2_max_mv_length_horizontal, 10);
+            assertEquals(sps.vuiParams.bitstreamRestriction.log2_max_mv_length_vertical, 10);
+            assertEquals(sps.vuiParams.bitstreamRestriction.num_reorder_frames, 0);
+            assertEquals(sps.vuiParams.bitstreamRestriction.max_dec_frame_buffering, 1);
 
         } finally {
             IOUtils.closeQuietly(is);
@@ -135,19 +125,14 @@ public class TestSPS extends TestCase {
     @Test
     public void testWrite() throws Exception {
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
         String path = "src/test/resources/h264/sps/sps1.dat";
-        sps1.write(baos);
+        ByteBuffer bb = ByteBuffer.allocate(1024);
+        sps1.write(bb);
+        bb.flip();
 
-        InputStream is = null;
-        try {
-            is = new BufferedInputStream(new FileInputStream(path));
+        ByteBuffer expect = NIOUtils.fetchFrom(new File(path));
 
-            assertTrue(Arrays.equals(baos.toByteArray(),
-                    IOUtils.toByteArray(is)));
-        } finally {
-            IOUtils.closeQuietly(is);
-        }
+        Assert.assertArrayEquals(NIOUtils.toArray(bb), NIOUtils.toArray(expect));
+
     }
 }

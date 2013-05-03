@@ -46,7 +46,7 @@ public class BoxFactory {
         mappings.put("traf", NodeBox.class);
         mappings.put("mfra", NodeBox.class);
         mappings.put("skip", NodeBox.class);
-        mappings.put("meta", NodeBox.class);
+        mappings.put("meta", LeafBox.class);
         mappings.put(DataRefBox.fourcc(), DataRefBox.class);
         mappings.put("ipro", NodeBox.class);
         mappings.put("sinf", NodeBox.class);

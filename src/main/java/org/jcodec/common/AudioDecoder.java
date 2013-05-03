@@ -1,8 +1,8 @@
 package org.jcodec.common;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioBuffer;
 
 /**
@@ -13,5 +13,5 @@ import org.jcodec.common.model.AudioBuffer;
  * 
  */
 public interface AudioDecoder {
-    AudioBuffer decodeFrame(Buffer frame, byte[] dst) throws IOException;
+    AudioBuffer decodeFrame(ByteBuffer frame, ByteBuffer dst) throws IOException;
 }

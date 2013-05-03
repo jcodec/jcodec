@@ -1,13 +1,13 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutput;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.wav.StringReader;
-import org.jcodec.common.io.ReaderBE;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,6 +20,7 @@ import org.jcodec.common.io.ReaderBE;
  */
 public class Header {
 
+    private static final long MAX_UNSIGNED_INT = 0x100000000L;
     private String fourcc;
     private long size;
     private boolean lng;
@@ -43,32 +44,14 @@ public class Header {
         this.lng = lng;
     }
 
-    public void serialize(OutputStream dos) throws IOException {
-        long b1 = (size >> 24) & 0xff;
-        long b2 = (size >> 16) & 0xff;
-        long b3 = (size >> 8) & 0xff;
-        long b4 = size & 0xff;
-
-        dos.write((byte) b1);
-        dos.write((byte) b2);
-        dos.write((byte) b3);
-        dos.write((byte) b4);
-
-        dos.write(fourcc.getBytes());
-    }
-
-    public static Header read(InputStream input) throws IOException {
-        long size;
-        while ((size = ReaderBE.readInt32(input)) == 0)
-            ;
-        if (size < 0)
-            return null;
+    public static Header read(ByteBuffer input) {
+        long size = input.getInt();
         size &= 0xffffffffL;
-        String fourcc = ReaderBE.readString(input, 4);
+        String fourcc = NIOUtils.readString(input, 4);
         boolean lng = false;
-        if (size == 1) {
+        if (size == 1 && input.remaining() >= 8) {
             lng = true;
-            size = ReaderBE.readInt64(input);
+            size = input.getLong();
         }
 
         return new Header(fourcc, size, lng);
@@ -83,7 +66,7 @@ public class Header {
     }
 
     public long headerSize() {
-        return lng || (size > 0x100000000L) ? 16 : 8;
+        return lng || (size > MAX_UNSIGNED_INT) ? 16 : 8;
     }
 
     public byte[] readContents(InputStream di) throws IOException {
@@ -106,14 +89,14 @@ public class Header {
         size = length + headerSize();
     }
 
-    public void write(DataOutput out) throws IOException {
-        if (size > 0x100000000L)
-            out.writeInt(1);
+    public void write(ByteBuffer out) {
+        if (size > MAX_UNSIGNED_INT)
+            out.putInt(1);
         else
-            out.writeInt((int) size);
-        out.write(fourcc.getBytes("iso8859-1"));
-        if (size > 0x100000000L) {
-            out.writeLong(size);
+            out.putInt((int) size);
+        out.put(JCodecUtil.asciiString(fourcc));
+        if (size > MAX_UNSIGNED_INT) {
+            out.putLong(size);
         }
     }
 

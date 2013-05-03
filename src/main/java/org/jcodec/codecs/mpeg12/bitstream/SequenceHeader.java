@@ -1,14 +1,11 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
 import static org.jcodec.codecs.mpeg12.MPEGConst.EXTENSION_START_CODE;
-import static org.jcodec.common.io.WriterBE.intBytes;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.BitstreamReaderBB;
-import org.jcodec.common.io.BitstreamWriter;
-import org.jcodec.common.io.Buffer;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -39,8 +36,8 @@ public class SequenceHeader {
     public SequenceScalableExtension sequenceScalableExtension;
     public SequenceDisplayExtension sequenceDisplayExtension;
 
-    public static SequenceHeader read(Buffer bb) {
-        BitstreamReaderBB in = new BitstreamReaderBB(bb);
+    public static SequenceHeader read(ByteBuffer bb) {
+        BitReader in = new BitReader(bb);
         SequenceHeader sh = new SequenceHeader();
         sh.horizontal_size = in.readNBit(12);
         sh.vertical_size = in.readNBit(12);
@@ -66,10 +63,10 @@ public class SequenceHeader {
         return sh;
     }
 
-    public static void readExtension(Buffer bb, SequenceHeader sh) {
+    public static void readExtension(ByteBuffer bb, SequenceHeader sh) {
         hasExtensions = true;
 
-        BitstreamReaderBB in = new BitstreamReaderBB(bb);
+        BitReader in = new BitReader(bb);
         int extType = in.readNBit(4);
         switch (extType) {
         case Sequence_Extension:
@@ -86,8 +83,8 @@ public class SequenceHeader {
         }
     }
 
-    public void write(OutputStream os) throws IOException {
-        BitstreamWriter out = new BitstreamWriter(os);
+    public void write(ByteBuffer os) {
+        BitWriter out = new BitWriter(os);
         out.writeNBit(horizontal_size, 12);
         out.writeNBit(vertical_size, 12);
         out.writeNBit(aspect_ratio_information, 4);
@@ -112,24 +109,24 @@ public class SequenceHeader {
         writeExtensions(os);
     }
 
-    private void writeExtensions(OutputStream out) throws IOException {
+    private void writeExtensions(ByteBuffer out) {
         if (sequenceExtension != null) {
-            out.write(intBytes(EXTENSION_START_CODE));
-            BitstreamWriter os = new BitstreamWriter(out);
+            out.putInt(EXTENSION_START_CODE);
+            BitWriter os = new BitWriter(out);
             os.writeNBit(Sequence_Extension, 4);
             sequenceExtension.write(os);
         }
 
         if (sequenceScalableExtension != null) {
-            out.write(intBytes(EXTENSION_START_CODE));
-            BitstreamWriter os = new BitstreamWriter(out);
+            out.putInt(EXTENSION_START_CODE);
+            BitWriter os = new BitWriter(out);
             os.writeNBit(Sequence_Scalable_Extension, 4);
             sequenceScalableExtension.write(os);
         }
 
         if (sequenceDisplayExtension != null) {
-            out.write(intBytes(EXTENSION_START_CODE));
-            BitstreamWriter os = new BitstreamWriter(out);
+            out.putInt(EXTENSION_START_CODE);
+            BitWriter os = new BitWriter(out);
             os.writeNBit(Sequence_Display_Extension, 4);
             sequenceDisplayExtension.write(os);
         }

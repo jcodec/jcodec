@@ -1,39 +1,29 @@
 package org.jcodec.codecs.prores;
 
 import static org.jcodec.codecs.mpeg12.MPEGConst.BLOCK_TO_CC;
-import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.common.model.ColorSpace.YUV422_10;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
-import org.apache.commons.io.IOUtils;
-import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.common.dct.DCTRef;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.FileRAOutputStream;
-import org.jcodec.common.io.RAInputStream;
-import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mps.MPSDemuxer;
-import org.jcodec.containers.mps.MPSDemuxer.PES;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
+ * 
+ * Converts MPEG 2 I-frame to a ProRes frame without re-transcoding ( without
+ * inverse and forward DCT step and frame reconstruction ).
+ * 
+ * This is possible due to MPEG 2 and ProRes use similar DCT 8x8 based
+ * compression with macroblocks of 16x16 pixels
  * 
  * @author The JCodec project
  * 
@@ -58,13 +48,14 @@ public class Mpeg2Prores extends MPEGDecoder {
         buf[3][mbAddr] = dctType;
     }
 
-    public void transcode(Buffer data, OutputStream out) throws IOException {
+    public ByteBuffer transcode(ByteBuffer in, ByteBuffer _out) {
+        ByteBuffer out = _out.slice();
         int width = (sh.horizontal_size + 15) & ~0xf;
         int height = (sh.vertical_size + 15) & ~0xf;
 
         int[][] buffer = new int[][] { new int[width * height], new int[width * height], new int[width * height],
                 new int[(width >> 4) * (height >> 4)] };
-        Picture dct = decodeFrame(data, buffer);
+        Picture dct = decodeFrame(in, buffer);
 
         Picture[] pic = convert(dct);
 
@@ -72,6 +63,8 @@ public class Mpeg2Prores extends MPEGDecoder {
             dct2Prores.encodeFrame(out, pic[0]);
         else
             dct2Prores.encodeFrame(out, pic[0], pic[1]);
+        out.flip();
+        return out;
     }
 
     private Picture[] convert(Picture dct) {

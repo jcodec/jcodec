@@ -1,8 +1,8 @@
 package org.jcodec.player.filters;
 
-import javax.sound.sampled.AudioFormat;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.Buffer;
+import javax.sound.sampled.AudioFormat;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,8 +20,6 @@ public interface AudioOut {
     
     long playedFrames();
 
-    int write(byte[] pkt, int i, int length);
-
     int available();
     
     int bufferSize();
@@ -34,5 +32,5 @@ public interface AudioOut {
 
     void drain();
 
-    void write(Buffer sound);
+    void write(ByteBuffer sound);
 }

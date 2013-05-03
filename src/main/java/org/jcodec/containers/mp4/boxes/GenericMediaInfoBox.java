@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -41,23 +37,23 @@ public class GenericMediaInfoBox extends FullBox {
         this(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
-        graphicsMode = (short) ReaderBE.readInt16(input);
-        rOpColor = (short) ReaderBE.readInt16(input);
-        gOpColor = (short) ReaderBE.readInt16(input);
-        bOpColor = (short) ReaderBE.readInt16(input);
-        balance = (short) ReaderBE.readInt16(input);
-        ReaderBE.readInt16(input);
+        graphicsMode = input.getShort();
+        rOpColor = input.getShort();
+        gOpColor = input.getShort();
+        bOpColor = input.getShort();
+        balance = input.getShort();
+        input.getShort();
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeShort(graphicsMode);
-        out.writeShort(rOpColor);
-        out.writeShort(gOpColor);
-        out.writeShort(bOpColor);
-        out.writeShort(balance);
-        out.writeShort(0);
+        out.putShort(graphicsMode);
+        out.putShort(rOpColor);
+        out.putShort(gOpColor);
+        out.putShort(bOpColor);
+        out.putShort(balance);
+        out.putShort((short)0);
     }
 }

@@ -1,10 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.ReaderBE;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -33,11 +32,11 @@ public class FormatBox extends Box {
         return "frma";
     }
 
-    public void parse(InputStream input) throws IOException {
-        this.fmt = ReaderBE.readString(input, 4);
+    public void parse(ByteBuffer input) {
+        this.fmt = NIOUtils.readString(input, 4);
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.write(fmt.getBytes());
+    protected void doWrite(ByteBuffer out) {
+        out.put(JCodecUtil.asciiString(fmt));
     }
 }

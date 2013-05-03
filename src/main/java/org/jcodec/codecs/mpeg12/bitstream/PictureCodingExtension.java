@@ -2,8 +2,8 @@ package org.jcodec.codecs.mpeg12.bitstream;
 
 import java.io.IOException;
 
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -13,12 +13,11 @@ import org.jcodec.common.io.OutBits;
  * 
  */
 public class PictureCodingExtension {
-    
-    
+
     public static final int Top_Field = 1;
     public static final int Bottom_Field = 2;
     public static final int Frame = 3;
-    
+
     public int[][] f_code;
     public int intra_dc_precision;
     public int picture_structure;
@@ -40,7 +39,7 @@ public class PictureCodingExtension {
         public int burst_amplitude;
         public int sub_carrier_phase;
 
-        public static CompositeDisplay read(InBits in) throws IOException {
+        public static CompositeDisplay read(BitReader in) {
             CompositeDisplay cd = new CompositeDisplay();
             cd.v_axis = in.read1Bit();
             cd.field_sequence = in.readNBit(3);
@@ -50,7 +49,7 @@ public class PictureCodingExtension {
             return cd;
         }
 
-        public void write(OutBits out) throws IOException {
+        public void write(BitWriter out) throws IOException {
             out.write1Bit(v_axis);
             out.writeNBit(field_sequence, 3);
             out.write1Bit(sub_carrier);
@@ -59,7 +58,7 @@ public class PictureCodingExtension {
         }
     }
 
-    public static PictureCodingExtension read(InBits in) throws IOException {
+    public static PictureCodingExtension read(BitReader in) {
         PictureCodingExtension pce = new PictureCodingExtension();
         pce.f_code = new int[2][2];
         pce.f_code[0][0] = in.readNBit(4);
@@ -84,7 +83,7 @@ public class PictureCodingExtension {
         return pce;
     }
 
-    public void write(OutBits out) throws IOException {
+    public void write(BitWriter out) throws IOException {
         out.writeNBit(f_code[0][0], 4);
         out.writeNBit(f_code[0][1], 4);
         out.writeNBit(f_code[1][0], 4);

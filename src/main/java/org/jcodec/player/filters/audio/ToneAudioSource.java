@@ -1,16 +1,14 @@
 package org.jcodec.player.filters.audio;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.RationalLarge;
-import org.jcodec.containers.mp4.boxes.channel.Label;
 import org.jcodec.player.filters.MediaInfo;
-import org.jcodec.player.filters.MediaInfo.AudioInfo;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -41,28 +39,28 @@ public class ToneAudioSource implements AudioSource {
     }
 
     @Override
-    public AudioFrame getFrame(byte[] result) throws IOException {
-        if (result.length < (FRAMES_PER_PACKET << 2))
+    public AudioFrame getFrame(ByteBuffer result) throws IOException {
+        if (result.remaining() < (FRAMES_PER_PACKET << 2))
             throw new IllegalArgumentException("Data won't fit into the buffer");
+        ByteBuffer dd = result.duplicate();
 
-        int off = 0;
         long ss = lastSample;
         for (int i = 0; i < FRAMES_PER_PACKET; i++) {
             int fr = (int) (((ss + i) / SAMPLE_RATE) % 50);
             short sl = (short) (Short.MAX_VALUE * Math.sin(((150 + fr * 10) * 2 * Math.PI * (ss + i)) / SAMPLE_RATE));
-            result[off++] = (byte) (sl & 0xff);
-            result[off++] = (byte) (sl >> 8);
+            dd.put((byte) (sl & 0xff));
+            dd.put((byte) (sl >> 8));
             short sr = (short) (Short.MAX_VALUE * Math.sin(((150 + fr * 10) * 2 * Math.PI * (ss + i)) / SAMPLE_RATE));
-            result[off++] = (byte) (sr & 0xff);
-            result[off++] = (byte) (sr >> 8);
+            dd.put((byte) (sr & 0xff));
+            dd.put((byte) (sr >> 8));
         }
         lastSample += FRAMES_PER_PACKET;
+        dd.flip();
 
-        return new AudioFrame(new Buffer(result, 0, 4 * FRAMES_PER_PACKET), format, FRAMES_PER_PACKET, lastSample,
-                FRAMES_PER_PACKET, SAMPLE_RATE, (int)(lastSample / FRAMES_PER_PACKET));
+        return new AudioFrame(dd, format, FRAMES_PER_PACKET, lastSample, FRAMES_PER_PACKET, SAMPLE_RATE,
+                (int) (lastSample / FRAMES_PER_PACKET));
     }
 
-    
     @Override
     public boolean drySeek(RationalLarge second) throws IOException {
         return true;

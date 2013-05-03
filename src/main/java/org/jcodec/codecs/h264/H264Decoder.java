@@ -1,52 +1,331 @@
 package org.jcodec.codecs.h264;
 
-import java.io.IOException;
+import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
+import static org.jcodec.codecs.h264.H264Utils.unescapeNAL;
+import static org.jcodec.common.tools.MathUtil.wrap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
-import org.jcodec.codecs.h264.decode.ErrorResilence;
-import org.jcodec.codecs.h264.decode.SequenceDecoder;
-import org.jcodec.codecs.h264.decode.SequenceDecoder.Sequence;
-import org.jcodec.codecs.h264.decode.resilence.SimpleErrorResilence;
-import org.jcodec.common.model.Picture;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.jcodec.codecs.h264.decode.SliceDecoder;
+import org.jcodec.codecs.h264.decode.SliceHeaderReader;
+import org.jcodec.codecs.h264.decode.deblock.DeblockingFilter;
+import org.jcodec.codecs.h264.io.model.Frame;
+import org.jcodec.codecs.h264.io.model.MBType;
+import org.jcodec.codecs.h264.io.model.NALUnit;
+import org.jcodec.codecs.h264.io.model.NALUnitType;
+import org.jcodec.codecs.h264.io.model.PictureParameterSet;
+import org.jcodec.codecs.h264.io.model.RefPicMarking;
+import org.jcodec.codecs.h264.io.model.RefPicMarkingIDR;
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
+import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.common.VideoDecoder;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Rect;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * Decodes frames from H264 bit stream
+ * MPEG 4 AVC ( H.264 ) Decoder
  * 
- * Provides frame-by-frame reading interface
+ * Conforms to H.264 ( ISO/IEC 14496-10 ) specifications
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
-public class H264Decoder {
+public class H264Decoder implements VideoDecoder {
 
-    private SequenceDecoder streamDecoder;
-    private Sequence curSequence;
+    private TIntObjectHashMap<SeqParameterSet> sps = new TIntObjectHashMap<SeqParameterSet>();
+    private TIntObjectHashMap<PictureParameterSet> pps = new TIntObjectHashMap<PictureParameterSet>();
+    private Frame[] sRefs;
+    private TIntObjectHashMap<Frame> lRefs;
+    private List<Frame> pictureBuffer;
+    private POCManager poc;
 
-    public H264Decoder(H264Demuxer auSource) throws IOException {
-        ErrorResilence resilence = new SimpleErrorResilence();
-
-        this.streamDecoder = new SequenceDecoder(auSource, resilence);
+    public H264Decoder() {
+        pictureBuffer = new ArrayList<Frame>();
+        poc = new POCManager();
     }
 
-    public Picture nextPicture() throws IOException {
-        if (curSequence == null) {
-            curSequence = streamDecoder.nextSequence();
+    @Override
+    public Frame decodeFrame(ByteBuffer data, int[][] buffer) {
+        return new FrameDecoder().decodeFrame(data, buffer);
+    }
 
-            if (curSequence == null) {
-                // end of stream, no more frames
-                return null;
+    class FrameDecoder {
+        private SliceHeaderReader shr;
+        private PictureParameterSet activePps;
+        private SeqParameterSet activeSps;
+        private DeblockingFilter filter;
+        private SliceHeader firstSliceHeader;
+        private NALUnit firstNu;
+        private SliceDecoder decoder;
+        private int[][][][] mvs;
+
+        public Frame decodeFrame(ByteBuffer data, int[][] buffer) {
+            Frame result = null;
+
+            ByteBuffer segment;
+            while ((segment = H264Utils.nextNALUnit(data)) != null) {
+                // NIOUtils.skip(segment, 4);
+                NALUnit marker = NALUnit.read(segment);
+
+                unescapeNAL(segment);
+
+                switch (marker.type) {
+                case NON_IDR_SLICE:
+                case IDR_SLICE:
+                    if (result == null)
+                        result = init(buffer, segment, marker);
+                    decoder.decode(segment, marker);
+                    break;
+                case SPS:
+                    SeqParameterSet _sps = SeqParameterSet.read(segment);
+                    sps.put(_sps.seq_parameter_set_id, _sps);
+                    break;
+                case PPS:
+                    PictureParameterSet _pps = PictureParameterSet.read(segment);
+                    pps.put(_pps.pic_parameter_set_id, _pps);
+                    break;
+                default:
+                }
+            }
+
+            filter.deblockFrame(result);
+
+            updateReferences(result);
+
+            return result;
+        }
+
+        private void updateReferences(Frame picture) {
+            if (firstNu.nal_ref_idc != 0) {
+                if (firstNu.type == NALUnitType.IDR_SLICE) {
+                    performIDRMarking(firstSliceHeader.refPicMarkingIDR, picture);
+                } else {
+                    performMarking(firstSliceHeader.refPicMarkingNonIDR, picture);
+                }
             }
         }
 
-        Picture picture = curSequence.nextPicture();
+        private Frame init(int[][] buffer, ByteBuffer segment, NALUnit marker) {
+            firstNu = marker;
 
-        if (picture == null) {
-            curSequence = null;
-            return nextPicture();
+            shr = new SliceHeaderReader();
+            BitReader br = new BitReader(segment.duplicate());
+            firstSliceHeader = shr.readPart1(br);
+            activePps = pps.get(firstSliceHeader.pic_parameter_set_id);
+            activeSps = sps.get(activePps.seq_parameter_set_id);
+            shr.readPart2(firstSliceHeader, marker, activeSps, activePps, br);
+            int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
+            int picHeightInMbs = getPicHeightInMbs(activeSps);
+
+            int[][] nCoeff = new int[picHeightInMbs << 2][picWidthInMbs << 2];
+            mvs = new int[2][picHeightInMbs << 2][picWidthInMbs << 2][3];
+            MBType[] mbTypes = new MBType[picHeightInMbs * picWidthInMbs];
+            boolean[] tr8x8Used = new boolean[picHeightInMbs * picWidthInMbs];
+            int[][] mbQps = new int[3][picHeightInMbs * picWidthInMbs];
+            SliceHeader[] shs = new SliceHeader[picHeightInMbs * picWidthInMbs];
+            Frame[][][] refsUsed = new Frame[picHeightInMbs * picWidthInMbs][][];
+
+            if (sRefs == null) {
+                sRefs = new Frame[1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4)];
+                lRefs = new TIntObjectHashMap<Frame>();
+            }
+
+            Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, mvs, refsUsed,
+                    poc.calcPOC(firstSliceHeader, firstNu));
+
+            decoder = new SliceDecoder(activeSps, activePps, nCoeff, mvs, mbTypes, mbQps, shs, tr8x8Used, refsUsed,
+                    result, sRefs, lRefs);
+
+            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, nCoeff, mvs, mbTypes,
+                    mbQps, shs, tr8x8Used, refsUsed);
+
+//            if (firstSliceHeader.slice_type == SliceType.B) {
+//                System.out.println("B frame");
+//            }
+
+            return result;
         }
 
-        return picture;
+        public void performIDRMarking(RefPicMarkingIDR refPicMarkingIDR, Frame picture) {
+            clearAll();
+
+            Frame saved = saveRef(picture);
+            if (refPicMarkingIDR.isUseForlongTerm()) {
+                lRefs.put(0, saved);
+                saved.setShortTerm(false);
+            } else
+                sRefs[firstSliceHeader.frame_num] = saved;
+        }
+
+        private Frame saveRef(Frame decoded) {
+            Frame frame = pictureBuffer.size() > 0 ? pictureBuffer.remove(0) : Frame.createFrame(decoded);
+            frame.copyFrom(decoded);
+            return frame;
+        }
+
+        private void releaseRef(Frame picture) {
+            if (picture != null) {
+                pictureBuffer.add(picture);
+            }
+        }
+
+        public void clearAll() {
+            for (int i = 0; i < sRefs.length; i++) {
+                releaseRef(sRefs[i]);
+                sRefs[i] = null;
+            }
+            int[] keys = lRefs.keys();
+            for (int i = 0; i < keys.length; i++) {
+                releaseRef(lRefs.get(keys[i]));
+            }
+            lRefs.clear();
+        }
+
+        public void performMarking(RefPicMarking refPicMarking, Frame picture) {
+            Frame saved = saveRef(picture);
+
+            if (refPicMarking != null) {
+                for (RefPicMarking.Instruction instr : refPicMarking.getInstructions()) {
+                    switch (instr.getType()) {
+                    case REMOVE_SHORT:
+                        unrefShortTerm(instr.getArg1());
+                        break;
+                    case REMOVE_LONG:
+                        unrefLongTerm(instr.getArg1());
+                        break;
+                    case CONVERT_INTO_LONG:
+                        convert(instr.getArg1(), instr.getArg2());
+                        break;
+                    case TRUNK_LONG:
+                        truncateLongTerm(instr.getArg1() - 1);
+                        break;
+                    case CLEAR:
+                        clearAll();
+                        break;
+                    case MARK_LONG:
+                        saveLong(saved, instr.getArg1());
+                        saved = null;
+                    }
+                }
+            }
+            if (saved != null)
+                saveShort(saved);
+
+            int maxFrames = 1 << (activeSps.log2_max_frame_num_minus4 + 4);
+            if (refPicMarking == null) {
+                int maxShort = Math.max(1, activeSps.num_ref_frames - lRefs.size());
+                int min = Integer.MAX_VALUE, num = 0, minFn = 0;
+                for (int i = 0; i < sRefs.length; i++) {
+                    if (sRefs[i] != null) {
+                        int fnWrap = unwrap(firstSliceHeader.frame_num, sRefs[i].getFrameNo(), maxFrames);
+                        if (fnWrap < min) {
+                            min = fnWrap;
+                            minFn = sRefs[i].getFrameNo();
+                        }
+                        num++;
+                    }
+                }
+                if (num > maxShort) {
+//                    System.out.println("Removing: " + minFn + ", POC: " + sRefs[minFn].getPOC());
+                    releaseRef(sRefs[minFn]);
+                    sRefs[minFn] = null;
+                }
+            }
+        }
+
+        private int unwrap(int thisFrameNo, int refFrameNo, int maxFrames) {
+            return refFrameNo > thisFrameNo ? refFrameNo - maxFrames : refFrameNo;
+        }
+
+        private void saveShort(Frame saved) {
+            sRefs[firstSliceHeader.frame_num] = saved;
+        }
+
+        private void saveLong(Frame saved, int longNo) {
+            Frame prev = lRefs.get(longNo);
+            if (prev != null)
+                releaseRef(prev);
+            saved.setShortTerm(false);
+
+            lRefs.put(longNo, saved);
+        }
+
+        private void truncateLongTerm(int maxLongNo) {
+            int[] keys = lRefs.keys();
+            for (int i = 0; i < keys.length; i++) {
+                if (keys[i] > maxLongNo) {
+                    releaseRef(lRefs.get(keys[i]));
+                    lRefs.remove(keys[i]);
+                }
+            }
+        }
+
+        private void convert(int shortNo, int longNo) {
+            int ind = wrap(firstSliceHeader.frame_num - shortNo,
+                    1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4));
+            releaseRef(lRefs.get(longNo));
+            lRefs.put(longNo, sRefs[ind]);
+            sRefs[ind] = null;
+            lRefs.get(longNo).setShortTerm(false);
+        }
+
+        private void unrefLongTerm(int longNo) {
+            releaseRef(lRefs.get(longNo));
+            lRefs.remove(longNo);
+        }
+
+        private void unrefShortTerm(int shortNo) {
+            int ind = wrap(firstSliceHeader.frame_num - shortNo,
+                    1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4));
+            releaseRef(sRefs[ind]);
+            sRefs[ind] = null;
+        }
+    }
+
+    public static Frame createFrame(SeqParameterSet sps, int[][] buffer, int frame_num, int[][][][] mvs,
+            Frame[][][] refsUsed, int POC) {
+        int width = sps.pic_width_in_mbs_minus1 + 1 << 4;
+        int height = getPicHeightInMbs(sps) << 4;
+
+        Rect crop = null;
+        if (sps.frame_cropping_flag) {
+            int sX = sps.frame_crop_left_offset << 1;
+            int sY = sps.frame_crop_top_offset << 1;
+            int w = width - (sps.frame_crop_right_offset << 1) - sX;
+            int h = height - (sps.frame_crop_bottom_offset << 1) - sY;
+            crop = new Rect(sX, sY, w, h);
+        }
+        return new Frame(width, height, buffer, ColorSpace.YUV420, crop, frame_num, mvs, refsUsed, POC);
+    }
+
+    public void addSps(List<ByteBuffer> spsList) {
+        for (ByteBuffer byteBuffer : spsList) {
+            ByteBuffer dup = byteBuffer.duplicate();
+            unescapeNAL(dup);
+            SeqParameterSet s = SeqParameterSet.read(dup);
+            sps.put(s.seq_parameter_set_id, s);
+        }
+    }
+
+    public void addPps(List<ByteBuffer> ppsList) {
+        for (ByteBuffer byteBuffer : ppsList) {
+            ByteBuffer dup = byteBuffer.duplicate();
+            unescapeNAL(dup);
+            PictureParameterSet p = PictureParameterSet.read(dup);
+            pps.put(p.pic_parameter_set_id, p);
+        }
+    }
+
+    @Override
+    public int probe(ByteBuffer data) {
+        // TODO Auto-generated method stub
+        return 0;
     }
 }

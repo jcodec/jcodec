@@ -1,16 +1,14 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.JCodecUtil.bufin;
-
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 
-import org.apache.commons.io.IOUtils;
-import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 
@@ -39,11 +37,11 @@ public class MovDump {
     }
 
     private static void dumpHeader(File headerFile, File source) throws IOException, FileNotFoundException {
-        RAInputStream raf = null;
-        DataOutputStream daos = null;
+        SeekableByteChannel raf = null;
+        SeekableByteChannel daos = null;
         try {
-            raf = bufin(source);
-            daos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(headerFile)));
+            raf = new FileChannelWrapper(source);
+            daos = new FileChannelWrapper(headerFile);
 
             for (Atom atom : MP4Util.getRootAtoms(raf)) {
                 String fourcc = atom.getHeader().getFourcc();
@@ -52,8 +50,8 @@ public class MovDump {
                 }
             }
         } finally {
-            IOUtils.closeQuietly(raf);
-            IOUtils.closeQuietly(daos);
+            raf.close();
+            daos.close();
         }
     }
 

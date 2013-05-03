@@ -1,10 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.ReaderBE;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,36 +41,29 @@ public class HandlerBox extends FullBox {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
 
-        componentType = readType(input);
-        componentSubType = readType(input);
-        componentManufacturer = readType(input);
+        componentType = NIOUtils.readString(input, 4);
+        componentSubType = NIOUtils.readString(input, 4);
+        componentManufacturer = NIOUtils.readString(input, 4);
 
-        componentFlags = (int) ReaderBE.readInt32(input);
-        componentFlagsMask = (int) ReaderBE.readInt32(input);
-        componentName = ReaderBE.readPascalString(input);
+        componentFlags = input.getInt();
+        componentFlagsMask = input.getInt();
+        componentName = NIOUtils.readString(input, input.remaining());
     }
 
-    private String readType(InputStream input) throws IOException {
-        byte[] b = new byte[4];
-        input.read(b);
-        return new String(b);
-    }
-
-    public void doWrite(DataOutput out) throws IOException {
+    public void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        out.write(componentType.getBytes());
-        out.write(componentSubType.getBytes());
-        out.write(componentManufacturer.getBytes());
+        out.put(JCodecUtil.asciiString(componentType));
+        out.put(JCodecUtil.asciiString(componentSubType));
+        out.put(JCodecUtil.asciiString(componentManufacturer));
 
-        out.writeInt(componentFlags);
-        out.writeInt(componentFlagsMask);
+        out.putInt(componentFlags);
+        out.putInt(componentFlagsMask);
         if (componentName != null) {
-            out.write(componentName.length());
-            out.write(componentName.getBytes());
+            out.put(JCodecUtil.asciiString(componentName));
         }
     }
 

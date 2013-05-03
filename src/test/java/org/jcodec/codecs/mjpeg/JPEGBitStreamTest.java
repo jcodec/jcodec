@@ -2,7 +2,6 @@ package org.jcodec.codecs.mjpeg;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
@@ -10,7 +9,6 @@ import java.nio.ByteBuffer;
 
 import junit.framework.Assert;
 
-import org.jcodec.codecs.h264.JAVCTestCase;
 import org.jcodec.common.tools.MD5;
 import org.junit.Test;
 

@@ -2,8 +2,8 @@ package org.jcodec.codecs.mpeg12.bitstream;
 
 import java.io.IOException;
 
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Point;
 
 /**
@@ -16,15 +16,14 @@ import org.jcodec.common.model.Point;
 public class PictureDisplayExtension {
     public Point[] frame_centre_offsets;
 
-    public static PictureDisplayExtension read(InBits in, SequenceExtension se, PictureCodingExtension pce)
-            throws IOException {
+    public static PictureDisplayExtension read(BitReader bits, SequenceExtension se, PictureCodingExtension pce) {
         PictureDisplayExtension pde = new PictureDisplayExtension();
         pde.frame_centre_offsets = new Point[numberOfFrameCentreOffsets(se, pce)];
         for (int i = 0; i < pde.frame_centre_offsets.length; i++) {
-            int frame_centre_horizontal_offset = in.readNBit(16);
-            in.read1Bit();
-            int frame_centre_vertical_offset = in.readNBit(16);
-            in.read1Bit();
+            int frame_centre_horizontal_offset = bits.readNBit(16);
+            bits.read1Bit();
+            int frame_centre_vertical_offset = bits.readNBit(16);
+            bits.read1Bit();
             pde.frame_centre_offsets[i] = new Point(frame_centre_horizontal_offset, frame_centre_vertical_offset);
         }
         return pde;
@@ -55,7 +54,7 @@ public class PictureDisplayExtension {
         }
     }
 
-    public void write(OutBits out) throws IOException {
+    public void write(BitWriter out) throws IOException {
         for (Point point : frame_centre_offsets) {
             out.writeNBit(point.getX(), 16);
             out.writeNBit(point.getY(), 16);

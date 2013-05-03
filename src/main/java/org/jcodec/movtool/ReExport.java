@@ -1,10 +1,9 @@
 package org.jcodec.movtool;
 
 import java.io.File;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresFix;
-import org.jcodec.common.io.Buffer;
 import org.jcodec.containers.mp4.MP4Packet;
 
 /**
@@ -18,24 +17,15 @@ import org.jcodec.containers.mp4.MP4Packet;
  */
 public class ReExport extends Remux {
 
-    private ProresFix proresFix;
-    private byte[] outBuf;
-
-    public ReExport() {
-        proresFix = new ProresFix();
-    }
+    private ByteBuffer outBuf;
 
     protected MP4Packet processFrame(MP4Packet pkt) {
-        try {
-            if (outBuf == null) {
-                outBuf = new byte[pkt.getData().remaining() * 2];
-            }
-            Buffer out = proresFix.transcode(pkt.getData(), outBuf);
-
-            return new MP4Packet(pkt, out);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (outBuf == null) {
+            outBuf = ByteBuffer.allocate(pkt.getData().remaining() * 2);
         }
+        ByteBuffer out = ProresFix.transcode(pkt.getData(), outBuf);
+
+        return new MP4Packet(pkt, out);
     }
 
     public static void main(String[] args) throws Exception {

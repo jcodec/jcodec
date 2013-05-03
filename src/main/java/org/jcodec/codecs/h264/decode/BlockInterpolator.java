@@ -1,8 +1,6 @@
 package org.jcodec.codecs.h264.decode;
 
-import org.jcodec.codecs.h264.decode.model.PixelBuffer;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Rect;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,71 +13,33 @@ import org.jcodec.common.model.Rect;
  */
 public class BlockInterpolator {
 
-    private int[] tmp1 = new int[1024];
+    private static int[] tmp1 = new int[1024];
 
     /**
      * Get block of ( possibly interpolated ) luma pixels
      */
-    public void getBlockLuma(Picture pic, PixelBuffer blk, Rect rect) {
-        int x = rect.getX();
-        int y = rect.getY();
-
+    public static void getBlockLuma(Picture pic, Picture out, int off, int x, int y, int w, int h) {
         int xInd = x & 0x3;
         int yInd = y & 0x3;
 
         int xFp = x >> 2;
         int yFp = y >> 2;
-        if (xFp < 2 || yFp < 2 || xFp > pic.getWidth() - rect.getWidth() - 5
-                || yFp > pic.getHeight() - rect.getHeight() - 5) {
-            unsafe[(yInd << 2) + xInd].getLuma(pic.getData()[0], pic.getWidth(), pic.getHeight(), blk.getPred(),
-                    blk.getStart(), 1 << blk.getLogStride(), xFp, yFp, rect.getWidth(), rect.getHeight());
+        if (xFp < 2 || yFp < 2 || xFp > pic.getWidth() - w - 5 || yFp > pic.getHeight() - h - 5) {
+            unsafe[(yInd << 2) + xInd].getLuma(pic.getData()[0], pic.getWidth(), pic.getHeight(), out.getPlaneData(0),
+                    off, out.getPlaneWidth(0), xFp, yFp, w, h);
         } else {
-            safe[(yInd << 2) + xInd].getLuma(pic.getData()[0], pic.getWidth(), pic.getHeight(), blk.getPred(),
-                    blk.getStart(), 1 << blk.getLogStride(), xFp, yFp, rect.getWidth(), rect.getHeight());
+            safe[(yInd << 2) + xInd].getLuma(pic.getData()[0], pic.getWidth(), pic.getHeight(), out.getPlaneData(0),
+                    off, out.getPlaneWidth(0), xFp, yFp, w, h);
         }
     }
 
-    /**
-     * Get block of ( possibly interpolated ) cb pixels
-     * 
-     * @param x
-     *            - qpel left coordinate of block
-     * @param y
-     *            - qpel top coordinate of block
-     * @param blk
-     *            - bu
-     * @param blkW
-     * @param blkH
-     */
-    public void getBlockCb(Picture pic, PixelBuffer blk, Rect rect) {
-        getBlockChroma(pic.getData()[1], pic.getWidth() >> 1, pic.getHeight() >> 1, blk.getPred(), blk.getStart(),
-                1 << blk.getLogStride(), rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight());
-    }
-
-    /**
-     * Get block of ( possibly interpolated ) cr pixels
-     * 
-     * @param x
-     *            - qpel left coordinate of block
-     * @param y
-     *            - qpel top coordinate of block
-     * @param blk
-     *            - bu
-     * @param blkW
-     * @param blkH
-     */
-    public void getBlockCr(Picture pic, PixelBuffer blk, Rect rect) {
-        getBlockChroma(pic.getData()[2], pic.getWidth() >> 1, pic.getHeight() >> 1, blk.getPred(), blk.getStart(),
-                1 << blk.getLogStride(), rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight());
-    }
-
-    private void getBlockChroma(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
-        int xInd = x & 0x7;
-        int yInd = y & 0x7;
-
-        int xFull = x >> 3;
-        int yFull = y >> 3;
+    public static void getBlockChroma(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
+         int xInd = x & 0x7;
+         int yInd = y & 0x7;
+        
+         int xFull = x >> 3;
+         int yFull = y >> 3;
 
         if (xFull < 0 || xFull > picW - blkW - 1 || yFull < 0 || yFull > picH - blkH - 1) {
             if (xInd == 0 && yInd == 0) {
@@ -111,7 +71,8 @@ public class BlockInterpolator {
     /**
      * Fullpel (0, 0)
      */
-    private void getLuma00(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma00(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
 
         int off = y * picW + x;
         for (int j = 0; j < blkH; j++) {
@@ -124,8 +85,8 @@ public class BlockInterpolator {
     /**
      * Fullpel (0, 0) unsafe
      */
-    private void getLuma00Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma00Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         int maxH = picH - 1;
         int maxW = picW - 1;
 
@@ -142,8 +103,8 @@ public class BlockInterpolator {
     /**
      * Halfpel (2,0) horizontal
      */
-    private void getLuma20NoRound(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
-            int blkH) {
+    private static void getLuma20NoRound(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y,
+            int blkW, int blkH) {
 
         int off = y * picW + x;
         for (int j = 0; j < blkH; j++) {
@@ -161,7 +122,8 @@ public class BlockInterpolator {
         }
     }
 
-    private void getLuma20(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma20(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
 
         getLuma20NoRound(pic, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
 
@@ -176,8 +138,8 @@ public class BlockInterpolator {
     /**
      * Halfpel (2, 0) horizontal unsafe
      */
-    private void getLuma20UnsafeNoRound(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
-            int y, int blkW, int blkH) {
+    private static void getLuma20UnsafeNoRound(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride,
+            int x, int y, int blkW, int blkH) {
         int maxW = picW - 1;
         int maxH = picH - 1;
 
@@ -203,8 +165,8 @@ public class BlockInterpolator {
         }
     }
 
-    private void getLuma20Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma20Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
 
         getLuma20UnsafeNoRound(pic, picW, picH, blk, blkOff, blkStride, x, y, blkW, blkH);
 
@@ -220,8 +182,8 @@ public class BlockInterpolator {
     /**
      * Halfpel (0, 2) vertical
      */
-    private void getLuma02NoRound(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
-            int blkH) {
+    private static void getLuma02NoRound(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y,
+            int blkW, int blkH) {
         int off = (y - 2) * picW + x;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
@@ -235,7 +197,8 @@ public class BlockInterpolator {
         }
     }
 
-    private void getLuma02(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma02(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
         getLuma02NoRound(pic, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
 
         for (int j = 0; j < blkH; j++) {
@@ -250,8 +213,8 @@ public class BlockInterpolator {
     /**
      * Hpel (0, 2) vertical unsafe
      */
-    private void getLuma02UnsafeNoRound(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
-            int y, int blkW, int blkH) {
+    private static void getLuma02UnsafeNoRound(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride,
+            int x, int y, int blkW, int blkH) {
         int maxH = picH - 1;
         int maxW = picW - 1;
 
@@ -274,8 +237,8 @@ public class BlockInterpolator {
         }
     }
 
-    private void getLuma02Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma02Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
 
         getLuma02UnsafeNoRound(pic, picW, picH, blk, blkOff, blkStride, x, y, blkW, blkH);
 
@@ -290,7 +253,8 @@ public class BlockInterpolator {
     /**
      * Qpel: (1,0) horizontal
      */
-    private void getLuma10(int[] oic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma10(int[] oic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
 
         getLuma20(oic, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
 
@@ -309,8 +273,8 @@ public class BlockInterpolator {
     /**
      * Qpel: (1,0) horizontal unsafe
      */
-    private void getLuma10Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma10Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         int maxH = picH - 1;
         int maxW = picW - 1;
 
@@ -329,7 +293,8 @@ public class BlockInterpolator {
     /**
      * Qpel (3,0) horizontal
      */
-    private void getLuma30(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma30(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
 
         getLuma20(pic, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
 
@@ -346,8 +311,8 @@ public class BlockInterpolator {
     /**
      * Qpel horizontal (3, 0) unsafe
      */
-    private void getLuma30Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma30Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         int maxH = picH - 1;
         int maxW = picW - 1;
 
@@ -366,7 +331,8 @@ public class BlockInterpolator {
     /**
      * Qpel vertical (0, 1)
      */
-    private void getLuma01(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma01(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
 
         getLuma02(pic, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
 
@@ -383,8 +349,8 @@ public class BlockInterpolator {
     /**
      * Qpel vertical (0, 1) unsafe
      */
-    private void getLuma01Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma01Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         int maxH = picH - 1;
         int maxW = picW - 1;
 
@@ -402,7 +368,8 @@ public class BlockInterpolator {
     /**
      * Qpel vertical (0, 3)
      */
-    private void getLuma03(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma03(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
 
         getLuma02(pic, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
 
@@ -420,8 +387,8 @@ public class BlockInterpolator {
     /**
      * Qpel vertical (0, 3) unsafe
      */
-    private void getLuma03Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma03Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         int maxH = picH - 1;
         int maxW = picW - 1;
 
@@ -440,7 +407,8 @@ public class BlockInterpolator {
      * Hpel horizontal, Qpel vertical (2, 1)
      * 
      */
-    private void getLuma21(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma21(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
         getLuma20NoRound(pic, picW, tmp1, 0, blkW, x, y - 2, blkW, blkH + 7);
         getLuma02NoRound(tmp1, blkW, blk, blkOff, blkStride, 0, 2, blkW, blkH);
 
@@ -459,8 +427,8 @@ public class BlockInterpolator {
     /**
      * Qpel vertical (2, 1) unsafe
      */
-    private void getLuma21Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma21Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         getLuma20UnsafeNoRound(pic, picW, imgH, tmp1, 0, blkW, x, y - 2, blkW, blkH + 7);
         getLuma02NoRound(tmp1, blkW, blk, blkOff, blkStride, 0, 2, blkW, blkH);
 
@@ -479,7 +447,8 @@ public class BlockInterpolator {
     /**
      * Hpel horizontal, Hpel vertical (2, 2)
      */
-    private void getLuma22(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma22(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
         getLuma20NoRound(pic, picW, tmp1, 0, blkW, x, y - 2, blkW, blkH + 7);
         getLuma02NoRound(tmp1, blkW, blk, blkOff, blkStride, 0, 2, blkW, blkH);
 
@@ -494,8 +463,8 @@ public class BlockInterpolator {
     /**
      * Hpel (2, 2) unsafe
      */
-    private void getLuma22Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma22Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         getLuma20UnsafeNoRound(pic, picW, imgH, tmp1, 0, blkW, x, y - 2, blkW, blkH + 7);
         getLuma02NoRound(tmp1, blkW, blk, blkOff, blkStride, 0, 2, blkW, blkH);
 
@@ -511,7 +480,8 @@ public class BlockInterpolator {
      * Hpel horizontal, Qpel vertical (2, 3)
      * 
      */
-    private void getLuma23(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma23(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
         getLuma20NoRound(pic, picW, tmp1, 0, blkW, x, y - 2, blkW, blkH + 7);
         getLuma02NoRound(tmp1, blkW, blk, blkOff, blkStride, 0, 2, blkW, blkH);
 
@@ -530,8 +500,8 @@ public class BlockInterpolator {
     /**
      * Qpel (2, 3) unsafe
      */
-    private void getLuma23Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma23Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         getLuma20UnsafeNoRound(pic, picW, imgH, tmp1, 0, blkW, x, y - 2, blkW, blkH + 7);
         getLuma02NoRound(tmp1, blkW, blk, blkOff, blkStride, 0, 2, blkW, blkH);
 
@@ -550,7 +520,8 @@ public class BlockInterpolator {
     /**
      * Qpel horizontal, Hpel vertical (1, 2)
      */
-    private void getLuma12(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma12(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
 
         int tmpW = blkW + 7;
 
@@ -572,8 +543,8 @@ public class BlockInterpolator {
     /**
      * Qpel (1, 2) unsafe
      */
-    private void getLuma12Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma12Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         int tmpW = blkW + 7;
 
         getLuma02UnsafeNoRound(pic, picW, imgH, tmp1, 0, tmpW, x - 2, y, tmpW, blkH);
@@ -594,7 +565,8 @@ public class BlockInterpolator {
     /**
      * Qpel horizontal, Hpel vertical (3, 2)
      */
-    private void getLuma32(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma32(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
         int tmpW = blkW + 7;
 
         getLuma02NoRound(pic, picW, tmp1, 0, tmpW, x - 2, y, tmpW, blkH);
@@ -615,8 +587,8 @@ public class BlockInterpolator {
     /**
      * Qpel (3, 2) unsafe
      */
-    private void getLuma32Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma32Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         int tmpW = blkW + 7;
 
         getLuma02UnsafeNoRound(pic, picW, imgH, tmp1, 0, tmpW, x - 2, y, tmpW, blkH);
@@ -637,7 +609,8 @@ public class BlockInterpolator {
     /**
      * Qpel horizontal, Qpel vertical (3, 3)
      */
-    private void getLuma33(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma33(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
         getLuma20(pic, picW, blk, blkOff, blkStride, x, y + 1, blkW, blkH);
         getLuma02(pic, picW, tmp1, 0, blkW, x + 1, y, blkW, blkH);
 
@@ -647,8 +620,8 @@ public class BlockInterpolator {
     /**
      * Qpel (3, 3) unsafe
      */
-    private void getLuma33Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma33Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         getLuma20Unsafe(pic, picW, imgH, blk, blkOff, blkStride, x, y + 1, blkW, blkH);
         getLuma02Unsafe(pic, picW, imgH, tmp1, 0, blkW, x + 1, y, blkW, blkH);
 
@@ -658,7 +631,8 @@ public class BlockInterpolator {
     /**
      * Qpel horizontal, Qpel vertical (1, 1)
      */
-    private void getLuma11(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma11(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
         getLuma20(pic, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         getLuma02(pic, picW, tmp1, 0, blkW, x, y, blkW, blkH);
 
@@ -668,8 +642,8 @@ public class BlockInterpolator {
     /**
      * Qpel (1, 1) unsafe
      */
-    private void getLuma11Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma11Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         getLuma20Unsafe(pic, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         getLuma02Unsafe(pic, picW, imgH, tmp1, 0, blkW, x, y, blkW, blkH);
 
@@ -679,7 +653,8 @@ public class BlockInterpolator {
     /**
      * Qpel horizontal, Qpel vertical (1, 3)
      */
-    private void getLuma13(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma13(int[] pic, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
         getLuma20(pic, picW, blk, blkOff, blkStride, x, y + 1, blkW, blkH);
         getLuma02(pic, picW, tmp1, 0, blkW, x, y, blkW, blkH);
 
@@ -689,8 +664,8 @@ public class BlockInterpolator {
     /**
      * Qpel (1, 3) unsafe
      */
-    private void getLuma13Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma13Unsafe(int[] pic, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         getLuma20Unsafe(pic, picW, imgH, blk, blkOff, blkStride, x, y + 1, blkW, blkH);
         getLuma02Unsafe(pic, picW, imgH, tmp1, 0, blkW, x, y, blkW, blkH);
 
@@ -700,7 +675,8 @@ public class BlockInterpolator {
     /**
      * Qpel horizontal, Qpel vertical (3, 1)
      */
-    private void getLuma31(int[] pels, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW, int blkH) {
+    private static void getLuma31(int[] pels, int picW, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
+            int blkH) {
         getLuma20(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         getLuma02(pels, picW, tmp1, 0, blkW, x + 1, y, blkW, blkH);
 
@@ -710,19 +686,19 @@ public class BlockInterpolator {
     /**
      * Qpel (3, 1) unsafe
      */
-    private void getLuma31Unsafe(int[] pels, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getLuma31Unsafe(int[] pels, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         getLuma20Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         getLuma02Unsafe(pels, picW, imgH, tmp1, 0, blkW, x + 1, y, blkW, blkH);
 
         mergeCrap(blk, blkOff, blkStride, blkW, blkH);
     }
 
-    private int iClip3(int min, int max, int val) {
+    private static int iClip3(int min, int max, int val) {
         return val < min ? min : (val > max ? max : val);
     }
 
-    private void mergeCrap(int[] blk, int blkOff, int blkStride, int blkW, int blkH) {
+    private static void mergeCrap(int[] blk, int blkOff, int blkStride, int blkW, int blkH) {
         int tOff = 0;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
@@ -736,7 +712,7 @@ public class BlockInterpolator {
     /**
      * Chroma (0,0)
      */
-    private void getChroma00(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
+    private static void getChroma00(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
             int blkW, int blkH) {
         int off = y * picW + x;
         for (int j = 0; j < blkH; j++) {
@@ -746,8 +722,8 @@ public class BlockInterpolator {
         }
     }
 
-    private void getChroma00Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x, int y,
-            int blkW, int blkH) {
+    private static void getChroma00Unsafe(int[] pic, int picW, int picH, int[] blk, int blkOff, int blkStride, int x,
+            int y, int blkW, int blkH) {
         int maxH = picH - 1;
         int maxW = picW - 1;
 
@@ -764,7 +740,7 @@ public class BlockInterpolator {
     /**
      * Chroma (X,0)
      */
-    private void getChroma0X(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride, int fullX,
+    private static void getChroma0X(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride, int fullX,
             int fullY, int fracY, int blkW, int blkH) {
         int w00 = fullY * picW + fullX;
         int w01 = w00 + (fullY < picH - 1 ? picW : 0);
@@ -781,8 +757,8 @@ public class BlockInterpolator {
         }
     }
 
-    private void getChroma0XUnsafe(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride, int fullX,
-            int fullY, int fracY, int blkW, int blkH) {
+    private static void getChroma0XUnsafe(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride,
+            int fullX, int fullY, int fracY, int blkW, int blkH) {
 
         int maxW = picW - 1;
         int maxH = picH - 1;
@@ -805,7 +781,7 @@ public class BlockInterpolator {
     /**
      * Chroma (X,0)
      */
-    private void getChromaX0(int[] pels, int picW, int imgH, int[] blk, int blkOff, int blkStride, int fullX,
+    private static void getChromaX0(int[] pels, int picW, int imgH, int[] blk, int blkOff, int blkStride, int fullX,
             int fullY, int fracX, int blkW, int blkH) {
         int w00 = fullY * picW + fullX;
         int w10 = w00 + (fullX < picW - 1 ? 1 : 0);
@@ -821,8 +797,8 @@ public class BlockInterpolator {
         }
     }
 
-    private void getChromaX0Unsafe(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride, int fullX,
-            int fullY, int fracX, int blkW, int blkH) {
+    private static void getChromaX0Unsafe(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride,
+            int fullX, int fullY, int fracX, int blkW, int blkH) {
         int eMx = 8 - fracX;
         int maxW = picW - 1;
         int maxH = picH - 1;
@@ -841,7 +817,7 @@ public class BlockInterpolator {
     /**
      * Chroma (X,X)
      */
-    private void getChromaXX(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride, int fullX,
+    private static void getChromaXX(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride, int fullX,
             int fullY, int fracX, int fracY, int blkW, int blkH) {
         int w00 = fullY * picW + fullX;
         int w01 = w00 + (fullY < picH - 1 ? picW : 0);
@@ -864,8 +840,8 @@ public class BlockInterpolator {
         }
     }
 
-    private void getChromaXXUnsafe(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride, int fullX,
-            int fullY, int fracX, int fracY, int blkW, int blkH) {
+    private static void getChromaXXUnsafe(int[] pels, int picW, int picH, int[] blk, int blkOff, int blkStride,
+            int fullX, int fullY, int fracX, int fracY, int blkW, int blkH) {
         int maxH = picH - 1;
         int maxW = picW - 1;
 
@@ -886,12 +862,12 @@ public class BlockInterpolator {
         }
     }
 
-    private interface LumaInterpolator {
+    private static interface LumaInterpolator {
         void getLuma(int[] pels, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y, int blkW,
                 int blkH);
     }
 
-    private LumaInterpolator[] safe = new LumaInterpolator[] {
+    private static LumaInterpolator[] safe = new LumaInterpolator[] {
 
     new LumaInterpolator() {
         public void getLuma(int[] pels, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,
@@ -991,7 +967,7 @@ public class BlockInterpolator {
         }
     } };
 
-    private LumaInterpolator[] unsafe = new LumaInterpolator[] {
+    private static LumaInterpolator[] unsafe = new LumaInterpolator[] {
 
     new LumaInterpolator() {
         public void getLuma(int[] pels, int picW, int imgH, int[] blk, int blkOff, int blkStride, int x, int y,

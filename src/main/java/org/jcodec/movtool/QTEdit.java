@@ -2,14 +2,14 @@ package org.jcodec.movtool;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.movtool.Flattern.ProgressListener;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,7 +21,6 @@ import org.jcodec.movtool.Flattern.ProgressListener;
 public class QTEdit {
 
     protected final CommandFactory[] factories;
-    private final List<ProgressListener> listeners = new ArrayList<ProgressListener>();
 
     public static interface CommandFactory {
         String getName();
@@ -37,15 +36,19 @@ public class QTEdit {
          * 
          * @param movie
          */
-        void apply(MovieBox movie);
+        void apply(MovieBox movie, SeekableByteChannel[][] refs) throws IOException;
+    }
+
+    public static abstract class BaseCommand implements Command {
+        public void apply(MovieBox movie, FileChannel[][] refs) {
+            apply(movie);
+        }
+
+        public abstract void apply(MovieBox movie);
     }
 
     public QTEdit(CommandFactory... factories) {
         this.factories = factories;
-    }
-
-    public void addProgressListener(ProgressListener listener) {
-        listeners.add(listener);
     }
 
     public void execute(String[] args) throws Exception {
@@ -84,30 +87,25 @@ public class QTEdit {
             help();
         }
 
-        boolean inplace = new InplaceEdit() {
-            protected void apply(MovieBox mov) {
-                applyCommands(mov, commands);
+        MovieBox movie = MP4Util.createRefMovie(input);
+
+        final SeekableByteChannel[][] inputs = new Flattern().getInputs(movie);
+
+        applyCommands(movie, inputs, commands);
+
+        File out = new File(input.getParentFile(), "." + input.getName());
+        new Flattern() {
+            protected SeekableByteChannel[][] getInputs(MovieBox movie) throws IOException {
+                return inputs;
             }
-        }.save(input);
+        }.flattern(movie, out);
 
-        if (!inplace) {
-            final MovieBox movie = MP4Util.createRefMovie(input);
-            applyCommands(movie, commands);
-            File out = new File(input.getParentFile(), "." + input.getName());
-            Flattern fl = new Flattern();
-
-            for (ProgressListener pl : this.listeners)
-                fl.addProgressListener(pl);
-
-            fl.flattern(movie, out);
-
-            out.renameTo(input);
-        }
+        out.renameTo(input);
     }
 
-    private static void applyCommands(MovieBox mov, List<Command> commands) {
+    private static void applyCommands(MovieBox mov, SeekableByteChannel[][] refs, List<Command> commands) throws IOException {
         for (Command command : commands) {
-            command.apply(mov);
+            command.apply(mov, refs);
         }
     }
 

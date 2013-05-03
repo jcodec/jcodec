@@ -1,7 +1,7 @@
 package org.jcodec.codecs.common.biari;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -14,14 +14,16 @@ import java.io.InputStream;
  */
 public class MDecoder {
 
-    private InputStream in;
+    private ByteBuffer in;
     private int range;
     private int code;
     private int nBitsPending;
+    private int[][] cm;
 
-    public MDecoder(InputStream in) throws IOException {
+    public MDecoder(ByteBuffer in, int[][] cm) {
         this.in = in;
-        range = 510;
+        this.range = 510;
+        this.cm = cm;
 
         initCodeRegister();
     }
@@ -33,22 +35,22 @@ public class MDecoder {
      * 
      * @throws IOException
      */
-    private void initCodeRegister() throws IOException {
+    protected void initCodeRegister() {
         readOneByte();
         if (nBitsPending != 8)
-            throw new IOException("Empty stream");
+            throw new RuntimeException("Empty stream");
         code <<= 8;
         readOneByte();
         code <<= 1;
         nBitsPending -= 9;
     }
 
-    private void readOneByte() throws IOException {
-        int b = in.read();
-        if (b != -1) {
-            code |= b;
-            nBitsPending += 8;
-        }
+    protected void readOneByte() {
+        if (!in.hasRemaining())
+            return;
+        int b = in.get() & 0xff;
+        code |= b;
+        nBitsPending += 8;
     }
 
     /**
@@ -58,22 +60,22 @@ public class MDecoder {
      * @return
      * @throws IOException
      */
-    public int decodeBin(Context cm) throws IOException {
+    public int decodeBin(int m) {
         int bin;
 
         int qIdx = (range >> 6) & 0x3;
-        int rLPS = MConst.rangeLPS[qIdx][cm.getState()];
+        int rLPS = MConst.rangeLPS[qIdx][cm[0][m]];
         range -= rLPS;
         int rs8 = range << 8;
 
         if (code < rs8) {
             // MPS
-            if (cm.getState() < 62)
-                cm.setState(cm.getState() + 1);
+            if (cm[0][m] < 62)
+                cm[0][m]++;
 
             renormalize();
 
-            bin = cm.getMps();
+            bin = cm[1][m];
         } else {
             // LPS
             range = rLPS;
@@ -81,14 +83,15 @@ public class MDecoder {
 
             renormalize();
 
-            bin = 1 - cm.getMps();
+            bin = 1 - cm[1][m];
 
-            if (cm.getState() == 0)
-                cm.setMps(1 - cm.getMps());
+            if (cm[0][m] == 0)
+                cm[1][m] = 1 - cm[1][m];
 
-            cm.setState(MConst.transitLPS[cm.getState()]);
+            cm[0][m] = MConst.transitLPS[cm[0][m]];
         }
 
+//        System.out.println("CABAC BIT [" + m + "]: " + bin);
         return bin;
     }
 
@@ -100,13 +103,15 @@ public class MDecoder {
      * @return
      * @throws IOException
      */
-    public int decodeFinalBin() throws IOException {
+    public int decodeFinalBin() {
         range -= 2;
 
         if (code < (range << 8)) {
             renormalize();
+//            System.out.println("CABAC BIT [-2]: 0");
             return 0;
         } else {
+//            System.out.println("CABAC BIT [-2]: 1");
             return 1;
         }
     }
@@ -117,7 +122,7 @@ public class MDecoder {
      * @return
      * @throws IOException
      */
-    public int decodeBinBypass() throws IOException {
+    public int decodeBinBypass() {
         code <<= 1;
 
         --nBitsPending;
@@ -126,8 +131,10 @@ public class MDecoder {
 
         int tmp = code - (range << 8);
         if (tmp < 0) {
+//            System.out.println("CABAC BIT [-1]: 0");
             return 0;
         } else {
+//            System.out.println("CABAC BIT [-1]: 1");
             code = tmp;
             return 1;
         }
@@ -142,7 +149,7 @@ public class MDecoder {
      * 
      * @throws IOException
      */
-    private void renormalize() throws IOException {
+    private void renormalize() {
         while (range < 256) {
             range <<= 1;
             code <<= 1;

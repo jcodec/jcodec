@@ -1,21 +1,19 @@
 package org.jcodec.containers.mp4;
 
-import static org.jcodec.common.JCodecUtil.bufin;
-
-import java.io.DataOutput;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.FileRAInputStream;
-import org.jcodec.common.io.RAInputStream;
-import org.jcodec.common.io.WindowInputStream;
-import org.jcodec.common.model.RationalLarge;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.BoxFactory;
-import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
@@ -30,7 +28,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  */
 public class MP4Util {
 
-    public static MovieBox createRefMovie(RAInputStream input, String url) throws IOException {
+    public static MovieBox createRefMovie(SeekableByteChannel input, String url) throws IOException {
         MovieBox movie = parseMovie(input);
 
         for (TrakBox trakBox : movie.getTracks()) {
@@ -39,9 +37,8 @@ public class MP4Util {
         return movie;
     }
 
-    public static MovieBox parseMovie(RAInputStream input) throws IOException {
-        List<Atom> rootAtoms = getRootAtoms(input);
-        for (Atom atom : rootAtoms) {
+    public static MovieBox parseMovie(SeekableByteChannel input) throws IOException {
+        for (Atom atom : getRootAtoms(input)) {
             if ("moov".equals(atom.getHeader().getFourcc())) {
                 return (MovieBox) atom.parseBox(input);
             }
@@ -49,23 +46,21 @@ public class MP4Util {
         return null;
     }
 
-    public static List<Atom> getRootAtoms(RAInputStream input) throws IOException {
-        input.seek(0);
+    public static List<Atom> getRootAtoms(SeekableByteChannel input) throws IOException {
+        input.position(0);
         List<Atom> result = new ArrayList<Atom>();
         long off = 0;
         Header atom;
-        do {
-            atom = Header.read(input);
-            if (atom == null)
-                break;
+        while (off < input.size()) {
+            input.position(off);
+            atom = Header.read(NIOUtils.fetchFrom(input, 16));
             result.add(new Atom(atom, off));
             if (atom.getSize() < 8) {
-                System.out.println("Broken atom '" + atom.getFourcc() + "': size " + atom.getSize());
+                System.out.println("Broken atom '" + atom.getFourcc() + "' of size " + atom.getSize());
                 break;
             }
             off += atom.getSize();
-            input.seek(off);
-        } while (true);
+        }
 
         return result;
     }
@@ -87,25 +82,21 @@ public class MP4Util {
             return header;
         }
 
-        public Box parseBox(RAInputStream input) throws IOException {
-            input.seek(offset + header.headerSize());
-            return NodeBox.parseBox(input, header, BoxFactory.getDefault());
+        public Box parseBox(SeekableByteChannel input) throws IOException {
+            input.position(offset + header.headerSize());
+            return NodeBox.parseBox(NIOUtils.fetchFrom(input, (int) header.getSize()), header, BoxFactory.getDefault());
         }
 
-        public void copy(RAInputStream input, DataOutput out) throws IOException {
-            input.seek(offset);
-            WindowInputStream wnd = new WindowInputStream(input, header.getSize());
-            byte[] buf = new byte[8096];
-            int read;
-            while ((read = wnd.read(buf)) != -1)
-                out.write(buf, 0, read);
+        public void copy(SeekableByteChannel input, WritableByteChannel out) throws IOException {
+            input.position(offset);
+            NIOUtils.copy(input, out, header.getSize());
         }
     }
 
     public static MovieBox parseMovie(File source) throws IOException {
-        RAInputStream input = null;
+        SeekableByteChannel input = null;
         try {
-            input = bufin(source);
+            input = new FileChannelWrapper(source);
             return parseMovie(input);
         } finally {
             if (input != null)
@@ -114,13 +105,37 @@ public class MP4Util {
     }
 
     public static MovieBox createRefMovie(File source) throws IOException {
-        RAInputStream input = null;
+        SeekableByteChannel input = null;
         try {
-            input = bufin(source);
+            input = new FileChannelWrapper(source);
             return createRefMovie(input, "file://" + source.getCanonicalPath());
         } finally {
             if (input != null)
                 input.close();
         }
+    }
+
+    public static void writeMovie(File f, MovieBox movie) throws IOException {
+        FileChannel out = null;
+        try {
+            out = new FileInputStream(f).getChannel();
+            writeMovie(f, movie);
+        } finally {
+            out.close();
+        }
+    }
+
+    public static void writeMovie(SeekableByteChannel out, MovieBox movie) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(16 * 1024 * 1024);
+        movie.write(buf);
+        buf.flip();
+        out.write(buf);
+    }
+
+    public static Box cloneBox(Box track, int approxSize) {
+        ByteBuffer buf = ByteBuffer.allocate(approxSize);
+        track.write(buf);
+        buf.flip();
+        return NodeBox.parseBox(buf, track.getHeader(), BoxFactory.getDefault());
     }
 }

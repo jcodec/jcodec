@@ -50,7 +50,7 @@ public class MathUtil {
 
         return n;
     }
-    
+
     public static int log2(long v) {
         int n = 0;
         if ((v & 0xffffffff00000000L) != 0) {
@@ -65,7 +65,7 @@ public class MathUtil {
             v >>= 8;
             n += 8;
         }
-        n += logTab[(int)v];
+        n += logTab[(int) v];
 
         return n;
     }
@@ -85,13 +85,6 @@ public class MathUtil {
         else
             return a;
     }
-    
-    public static long gcd(long a, long b) {
-        if (b != 0)
-            return gcd(b, a % b);
-        else
-            return a;
-    }
 
     public static Rational reduce(Rational r) {
         int gcd = gcd(r.getNum(), r.getDen());
@@ -100,6 +93,10 @@ public class MathUtil {
 
     public static final int clip(int val, int from, int to) {
         return val < from ? from : (val > to ? to : val);
+    }
+    
+    public static final int clip(int val, int max) {
+        return val < max ? val : max;
     }
 
     public static int cubeRoot(int n) {
@@ -110,7 +107,7 @@ public class MathUtil {
     public static final int reverse(int b) {
         return reverseTab[b & 0xff];
     }
-    
+
     public static int nextPowerOfTwo(int n) {
         n = n - 1;
         n = n | (n >> 1);
@@ -120,5 +117,28 @@ public class MathUtil {
         n = n | (n >> 16);
         n = n + 1;
         return n;
+    }
+
+    public static final int abs(int val) {
+        int sign = (val >> 31);
+        return (val ^ sign) - sign;
+    }
+
+    public static final int golomb(int signedLevel) {
+        if (signedLevel == 0)
+            return 0;
+        return (abs(signedLevel) << 1) - (~signedLevel >>> 31);
+    }
+    
+    public static final int toSigned(int val, int sign) {
+        return (val ^ sign) - sign;
+    }
+    
+    public static final int sign(int val) {
+        return -(val >> 31);
+    }
+
+    public static int wrap(int picNo, int maxFrames) {
+        return picNo < 0 ? picNo + maxFrames : (picNo >= maxFrames ? picNo - maxFrames : picNo);
     }
 }

@@ -1,10 +1,10 @@
 package org.jcodec.player.filters.audio;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.RationalLarge;
@@ -22,7 +22,7 @@ public class ChannelSelector implements AudioSource {
 
     private AudioSource src;
     private AudioFormat srcFormat;
-    private byte[] buffer;
+    private ByteBuffer buffer;
     private AudioFormat newFormat;
     private int pattern;
     private int channels;
@@ -32,7 +32,7 @@ public class ChannelSelector implements AudioSource {
         this.pattern = pattern;
         AudioInfo audioInfo = src.getAudioInfo();
         this.srcFormat = audioInfo.getFormat();
-        buffer = new byte[audioInfo.getFramesPerPacket() * 2 * srcFormat.getFrameSize()];
+        buffer = ByteBuffer.allocate(audioInfo.getFramesPerPacket() * 2 * srcFormat.getFrameSize());
         channels = 0;
         for (int i = 0; i < 32; i++) {
             channels += pattern & 0x1;
@@ -57,28 +57,30 @@ public class ChannelSelector implements AudioSource {
                 audioInfo.getNFrames(), audioInfo.getName(), null, newFormat, audioInfo.getFramesPerPacket(), resultLabels);
     }
 
-    public AudioFrame getFrame(byte[] result) throws IOException {
+    public AudioFrame getFrame(ByteBuffer result) throws IOException {
 
         AudioFrame from = src.getFrame(buffer);
         if (from == null)
             return null;
 
-        Buffer data = from.getData();
-        int j = 0, channels = srcFormat.getChannels(), sampleSize = srcFormat.getSampleSizeInBits() >> 3;
-        for (int k = data.pos; k < data.limit;) {
+        ByteBuffer dd = result.duplicate();
+        ByteBuffer data = from.getData();
+        int channels = srcFormat.getChannels(), sampleSize = srcFormat.getSampleSizeInBits() >> 3;
+        while(data.hasRemaining()) {
             for (int z = 0; z < channels; z++) {
                 if (((pattern >> z) & 0x1) == 1) {
-                    result[j++] = buffer[k++];
+                    dd.put(buffer.get());
                     if (sampleSize > 1)
-                        result[j++] = buffer[k++];
+                        dd.put(buffer.get());
                     if (sampleSize > 2)
-                        result[j++] = buffer[k++];
+                        dd.put(buffer.get());
                 } else {
-                    k += sampleSize;
+                    buffer.position(buffer.position() + sampleSize);
                 }
             }
         }
-        return new AudioFrame(new Buffer(result, 0, j), newFormat, from.getNFrames(), from.getPts(),
+        dd.flip();
+        return new AudioFrame(dd, newFormat, from.getNFrames(), from.getPts(),
                 from.getDuration(), from.getTimescale(), from.getFrameNo());
     }
     

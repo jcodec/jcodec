@@ -1,10 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.ReaderBE;
+import org.jcodec.common.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -41,35 +39,34 @@ public class TimecodeMediaInfoBox extends FullBox {
     }
 
     @Override
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
-        font = (short) ReaderBE.readInt16(input);
-        face = (short) ReaderBE.readInt16(input);
-        size = (short) ReaderBE.readInt16(input);
-        ReaderBE.readInt16(input);
-        color[0] = (short) ReaderBE.readInt16(input);
-        color[1] = (short) ReaderBE.readInt16(input);
-        color[2] = (short) ReaderBE.readInt16(input);
-        bgcolor[0] = (short) ReaderBE.readInt16(input);
-        bgcolor[1] = (short) ReaderBE.readInt16(input);
-        bgcolor[2] = (short) ReaderBE.readInt16(input);
-        name = ReaderBE.readPascalString(input);
+        font = input.getShort();
+        face = input.getShort();
+        size = input.getShort();
+        input.getShort();
+        color[0] = input.getShort();
+        color[1] = input.getShort();
+        color[2] = input.getShort();
+        bgcolor[0] = input.getShort();
+        bgcolor[1] = input.getShort();
+        bgcolor[2] = input.getShort();
+        name = NIOUtils.readPascalString(input);
     }
 
     @Override
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeShort(font);
-        out.writeShort(face);
-        out.writeShort(size);
-        out.writeShort(0);
-        out.writeShort(color[0]);
-        out.writeShort(color[1]);
-        out.writeShort(color[2]);
-        out.writeShort(bgcolor[0]);
-        out.writeShort(bgcolor[1]);
-        out.writeShort(bgcolor[2]);
-        out.writeByte(name.length());
-        out.write(name.getBytes());
+        out.putShort(font);
+        out.putShort(face);
+        out.putShort(size);
+        out.putShort((short) 0);
+        out.putShort(color[0]);
+        out.putShort(color[1]);
+        out.putShort(color[2]);
+        out.putShort(bgcolor[0]);
+        out.putShort(bgcolor[1]);
+        out.putShort(bgcolor[2]);
+        NIOUtils.writePascalString(out, name);
     }
 }

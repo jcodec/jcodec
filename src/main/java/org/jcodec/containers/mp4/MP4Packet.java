@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4;
 
-import org.jcodec.common.io.Buffer;
+import java.nio.ByteBuffer;
+
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 
@@ -14,14 +15,14 @@ public class MP4Packet extends Packet {
     private long mediaPts;
     private int entryNo;
 
-    public MP4Packet(Buffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
+    public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
             TapeTimecode tapeTimecode, long mediaPts, int entryNo) {
         super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode);
         this.mediaPts = mediaPts;
         this.entryNo = entryNo;
     }
 
-    public MP4Packet(MP4Packet packet, Buffer frm) {
+    public MP4Packet(MP4Packet packet, ByteBuffer frm) {
         super(packet, frm);
         this.mediaPts = packet.mediaPts;
         this.entryNo = packet.entryNo;

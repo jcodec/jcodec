@@ -1,6 +1,7 @@
 package org.jcodec.player.filters.audio;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class JCodecAudioSource implements AudioSource {
     private PacketSource pkt;
     private AudioDecoder decoder;
     private MediaInfo.AudioInfo mediaInfo;
-    private List<byte[]> drain = new ArrayList<byte[]>();
+    private List<ByteBuffer> drain = new ArrayList<ByteBuffer>();
 
     public JCodecAudioSource(PacketSource pkt) throws IOException {
         Debug.println("Creating audio source");
@@ -38,23 +39,24 @@ public class JCodecAudioSource implements AudioSource {
     }
 
     @Override
-    public AudioFrame getFrame(byte[] out) throws IOException {
-        byte[] buffer;
+    public AudioFrame getFrame(ByteBuffer out) throws IOException {
+        ByteBuffer buffer;
         synchronized (drain) {
             if (drain.size() == 0) {
                 drain.add(allocateBuffer());
             }
             buffer = drain.remove(0);
         }
+        buffer.rewind();
         Packet packet = pkt.getPacket(buffer);
         if (packet == null)
             return null;
         return new AudioFrame(decoder.decodeFrame(packet.getData(), out), packet.getPts(), packet.getDuration(),
-                packet.getTimescale(), (int)packet.getFrameNo());
+                packet.getTimescale(), (int) packet.getFrameNo());
     }
 
-    private byte[] allocateBuffer() {
-        return new byte[mediaInfo.getFramesPerPacket() * mediaInfo.getFormat().getFrameSize() * 10];
+    private ByteBuffer allocateBuffer() {
+        return ByteBuffer.allocate(mediaInfo.getFramesPerPacket() * mediaInfo.getFormat().getFrameSize() * 10);
     }
 
     public boolean drySeek(RationalLarge second) throws IOException {

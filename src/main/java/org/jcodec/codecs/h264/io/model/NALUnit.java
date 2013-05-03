@@ -1,8 +1,6 @@
 package org.jcodec.codecs.h264.io.model;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,8 +21,8 @@ public class NALUnit {
         this.nal_ref_idc = nal_ref_idc;
     }
 
-    public static NALUnit read(InputStream is) throws IOException {
-        int nalu = is.read();
+    public static NALUnit read(ByteBuffer in) {
+        int nalu = in.get() & 0xff;
         int nal_ref_idc = (nalu >> 5) & 0x3;
         int nb = nalu & 0x1f;
 
@@ -32,8 +30,8 @@ public class NALUnit {
         return new NALUnit(type, nal_ref_idc);
     }
 
-    public void write(OutputStream out) throws IOException {
+    public void write(ByteBuffer out) {
         int nalu = type.getValue() | (nal_ref_idc << 5);
-        out.write(nalu);
+        out.put((byte) nalu);
     }
 }

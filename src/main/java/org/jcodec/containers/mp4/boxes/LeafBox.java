@@ -1,8 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
+
+import org.jcodec.common.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -16,29 +16,27 @@ import java.io.InputStream;
  * 
  */
 public class LeafBox extends Box {
-    private byte[] data;
+    private ByteBuffer data;
 
     public LeafBox(Header atom) {
         super(atom);
     }
 
-    public LeafBox(Header atom, byte[] data) {
+    public LeafBox(Header atom, ByteBuffer data) {
         super(atom);
         this.data = data;
     }
 
-    public void parse(InputStream input) throws IOException {
-        data = new byte[(int) header.getBodySize()];
-
-        input.read(data);
+    public void parse(ByteBuffer input) {
+        data = NIOUtils.read(input, (int) header.getBodySize());
     }
 
-    public byte[] getData() {
-        return data;
+    public ByteBuffer getData() {
+        return data.duplicate();
     }
 
     @Override
-    protected void doWrite(DataOutput out) throws IOException {
-        out.write(data);
+    protected void doWrite(ByteBuffer out) {
+        NIOUtils.write(out, data);
     }
 }

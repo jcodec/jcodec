@@ -5,9 +5,10 @@ import static org.jcodec.player.filters.http.HttpUtils.getHttpClient;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.jcodec.common.io.Buffer;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.tools.Debug;
@@ -63,7 +64,7 @@ public class HttpPacketSource implements PacketSource {
         }
     }
 
-    public synchronized Packet getPacket(byte[] buffer) throws IOException {
+    public synchronized Packet getPacket(ByteBuffer buffer) throws IOException {
         Packet pkt = cache.getFrame(frameNo, buffer);
         if (pkt == null) {
             try {
@@ -87,10 +88,11 @@ public class HttpPacketSource implements PacketSource {
         return pkt;
     }
 
-    private Packet copyPkt(byte[] buffer, Packet pkt) {
-        Buffer data = pkt.getData();
-        data.toArray(buffer, 0, data.remaining());
-        return new Packet(pkt, new Buffer(buffer, 0, data.remaining()));
+    private Packet copyPkt(ByteBuffer buffer, Packet pkt) {
+        ByteBuffer out = buffer.duplicate();
+        NIOUtils.write(out, pkt.getData());
+        out.flip();
+        return new Packet(pkt, out);
     }
 
     private void restartDownloader(int frameNo) {

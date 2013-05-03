@@ -1,8 +1,8 @@
 package org.jcodec.common;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.Buffer;
 import org.jcodec.common.model.Picture;
 
 /**
@@ -21,7 +21,7 @@ public interface VideoDecoder {
      *            Compressed frame data
      * @throws IOException
      */
-    Picture decodeFrame(Buffer data, int[][] buffer);
+    Picture decodeFrame(ByteBuffer data, int[][] buffer);
 
     /**
      * Tests if compressed frame can be decoded with this decoder
@@ -30,5 +30,5 @@ public interface VideoDecoder {
      *            Compressed frame data
      * @return
      */
-    int probe(Buffer data);
+    int probe(ByteBuffer data);
 }

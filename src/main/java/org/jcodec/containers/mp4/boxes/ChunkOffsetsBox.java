@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -32,21 +28,21 @@ public class ChunkOffsetsBox extends FullBox {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
-        int length = (int) ReaderBE.readInt32(input);
+        int length = input.getInt();
         chunkOffsets = new long[length];
         for (int i = 0; i < length; i++) {
-            chunkOffsets[i] = ReaderBE.readInt32(input);
+            chunkOffsets[i] = input.getInt() & 0xffffffffL;
         }
     }
 
     @Override
-    public void doWrite(DataOutput out) throws IOException {
+    public void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeInt(chunkOffsets.length);
+        out.putInt(chunkOffsets.length);
         for (long offset : chunkOffsets) {
-            out.writeInt((int) offset);
+            out.putInt((int) offset);
         }
     }
 

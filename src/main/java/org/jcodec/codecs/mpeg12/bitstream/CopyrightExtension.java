@@ -2,8 +2,8 @@ package org.jcodec.codecs.mpeg12.bitstream;
 
 import java.io.IOException;
 
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,7 +20,7 @@ public class CopyrightExtension {
     public int copyright_number_2;
     public int copyright_number_3;
 
-    public static CopyrightExtension read(InBits in) throws IOException {
+    public static CopyrightExtension read(BitReader in) {
         CopyrightExtension ce = new CopyrightExtension();
         ce.copyright_flag = in.read1Bit();
         ce.copyright_identifier = in.readNBit(8);
@@ -35,7 +35,7 @@ public class CopyrightExtension {
         return ce;
     }
 
-    public void write(OutBits out) throws IOException {
+    public void write(BitWriter out) throws IOException {
         out.write1Bit(copyright_flag);
         out.writeNBit(copyright_identifier, 8);
         out.write1Bit(original_or_copy);

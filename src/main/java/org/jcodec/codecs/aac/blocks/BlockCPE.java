@@ -1,8 +1,6 @@
 package org.jcodec.codecs.aac.blocks;
 
-import java.io.IOException;
-
-import org.jcodec.common.io.InBits;
+import org.jcodec.common.io.BitReader;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -17,7 +15,7 @@ public class BlockCPE extends BlockICS {
 
     private int[] ms_mask;
 
-    public void parse(InBits in) throws IOException {
+    public void parse(BitReader in) {
 
         // int i, ret, common_window, ms_present = 0;
         //
@@ -44,7 +42,7 @@ public class BlockCPE extends BlockICS {
 
     }
 
-    private void decodeMidSideStereo(InBits in, int ms_present, int numWindowGroups, int maxSfb) throws IOException {
+    private void decodeMidSideStereo(BitReader in, int ms_present, int numWindowGroups, int maxSfb) {
         if (ms_present == 1) {
             for (int idx = 0; idx < numWindowGroups * maxSfb; idx++)
                 ms_mask[idx] = in.read1Bit();

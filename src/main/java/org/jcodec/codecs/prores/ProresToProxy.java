@@ -10,16 +10,12 @@ import static org.jcodec.codecs.prores.ProresDecoder.scaleMat;
 import static org.jcodec.codecs.prores.ProresEncoder.writeACCoeffs;
 import static org.jcodec.codecs.prores.ProresEncoder.writeDCCoeffs;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
-import org.jcodec.common.io.BitstreamWriter;
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -61,12 +57,12 @@ public class ProresToProxy {
         return frameSize;
     }
 
-    void requant(InBits ib, OutBits ob, int blocksPerSlice, int[] qMatFrom, int[] qMatTo, int[] scan, int mbX, int mbY,
-            int plane) throws IOException {
+    void requant(BitReader ib, BitWriter ob, int blocksPerSlice, int[] qMatFrom, int[] qMatTo, int[] scan, int mbX,
+            int mbY, int plane) {
         int[] out = new int[blocksPerSlice << 6];
         try {
-            readDCCoeffs(ib, qMatFrom, out, blocksPerSlice);
-            readACCoeffs(ib, qMatFrom, out, blocksPerSlice, scan, nCoeffs);
+            readDCCoeffs(ib, qMatFrom, out, blocksPerSlice, 64);
+            readACCoeffs(ib, qMatFrom, out, blocksPerSlice, scan, nCoeffs, 6);
         } catch (RuntimeException e) {
         }
         for (int i = 0; i < out.length; i++)
@@ -76,15 +72,13 @@ public class ProresToProxy {
         ob.flush();
     }
 
-    public void transcode(Buffer inBuf, Buffer outBuf) throws IOException {
-        DataInput inp = inBuf.dinp();
-        DataOutput out = outBuf.dout();
-        Buffer fork = outBuf.from(0);
+    public void transcode(ByteBuffer inBuf, ByteBuffer outBuf) {
+        ByteBuffer fork = outBuf.duplicate();
 
-        FrameHeader fh = ProresDecoder.readFrameHeader(inp);
-        ProresEncoder.writeFrameHeader(out, fh);
+        FrameHeader fh = ProresDecoder.readFrameHeader(inBuf);
+        ProresEncoder.writeFrameHeader(outBuf, fh);
 
-        int beforePicture = outBuf.pos;
+        int beforePicture = outBuf.position();
         if (fh.frameType == 0) {
             transcodePicture(inBuf, outBuf, fh);
         } else {
@@ -93,15 +87,16 @@ public class ProresToProxy {
         }
         fh.qMatLuma = qMatLumaTo;
         fh.qMatChroma = qMatChromaTo;
-        fh.payloadSize = outBuf.pos - beforePicture;
-        ProresEncoder.writeFrameHeader(fork.dout(), fh);
+        fh.payloadSize = outBuf.position() - beforePicture;
+        ProresEncoder.writeFrameHeader(fork, fh);
     }
 
-    private void transcodePicture(Buffer inBuf, Buffer outBuf, FrameHeader fh) throws IOException {
-        Buffer fork = outBuf.fork();
+    private void transcodePicture(ByteBuffer inBuf, ByteBuffer outBuf, FrameHeader fh) {
 
-        PictureHeader ph = ProresDecoder.readPictureHeader(inBuf.dinp());
-        ProresEncoder.writePictureHeader(ph, outBuf.dout());
+        PictureHeader ph = ProresDecoder.readPictureHeader(inBuf);
+        ProresEncoder.writePictureHeader(ph.log2SliceMbWidth, ph.sliceSizes.length, outBuf);
+        ByteBuffer sliceSizes = outBuf.duplicate();
+        outBuf.position(outBuf.position() + (ph.sliceSizes.length << 1));
 
         int mbX = 0, mbY = 0;
         int mbWidth = (fh.width + 15) >> 4;
@@ -112,11 +107,11 @@ public class ProresToProxy {
             while (mbWidth - mbX < sliceMbCount)
                 sliceMbCount >>= 1;
 
-            int savedPoint = outBuf.pos;
+            int savedPoint = outBuf.position();
 
             transcodeSlice(inBuf, outBuf, fh.qMatLuma, fh.qMatChroma, fh.scan, sliceMbCount, mbX, mbY,
                     ph.sliceSizes[i], qp);
-            ph.sliceSizes[i] = (short) (outBuf.pos - savedPoint);
+            sliceSizes.putShort((short) (outBuf.position() - savedPoint));
 
             int max = (sliceMbCount * bitsPer1024High >> 5) + 6;
             int low = (sliceMbCount * bitsPer1024Low >> 5) + 6;
@@ -138,40 +133,35 @@ public class ProresToProxy {
                 mbY++;
             }
         }
-        ProresEncoder.writePictureHeader(ph, fork.dout());
     }
 
-    private void transcodeSlice(Buffer inBuf, Buffer outBuf, int[] qMatLuma, int[] qMatChroma, int[] scan,
-            int sliceMbCount, int mbX, int mbY, short sliceSize, int qp) throws IOException {
-        DataInput inp = inBuf.dinp();
-        DataOutput out = outBuf.dout();
+    private void transcodeSlice(ByteBuffer inBuf, ByteBuffer outBuf, int[] qMatLuma, int[] qMatChroma, int[] scan,
+            int sliceMbCount, int mbX, int mbY, short sliceSize, int qp) {
 
-        int hdrSize = (inp.readByte() & 0xff) >> 3;
-        int qScaleOrig = clip(inp.readByte() & 0xff, 1, 224);
+        int hdrSize = (inBuf.get() & 0xff) >> 3;
+        int qScaleOrig = clip(inBuf.get() & 0xff, 1, 224);
         int qScale = qScaleOrig > 128 ? qScaleOrig - 96 << 2 : qScaleOrig;
-        int yDataSize = inp.readShort();
-        int uDataSize = inp.readShort();
+        int yDataSize = inBuf.getShort();
+        int uDataSize = inBuf.getShort();
         int vDataSize = sliceSize - uDataSize - yDataSize - hdrSize;
 
-        out.write(6 << 3); // hdr size
-        out.write(qp); // qscale
-        Buffer beforeSizes = outBuf.from(0);
-        out.writeShort(0);
-        out.writeShort(0);
+        outBuf.put((byte) (6 << 3)); // hdr size
+        outBuf.put((byte) qp); // qscale
+        ByteBuffer beforeSizes = outBuf.duplicate();
+        outBuf.putInt(0);
 
-        int beforeY = outBuf.pos;
+        int beforeY = outBuf.position();
 
-        requant(bitstream(inBuf, yDataSize), new BitstreamWriter(outBuf.os()), sliceMbCount << 2,
-                scaleMat(qMatLuma, qScale), scaleMat(qMatLumaTo, qp), scan, mbX, mbY, 0);
-        int beforeCb = outBuf.pos;
-        requant(bitstream(inBuf, uDataSize), new BitstreamWriter(outBuf.os()), sliceMbCount << 1,
-                scaleMat(qMatChroma, qScale), scaleMat(qMatChromaTo, qp), scan, mbX, mbY, 1);
-        int beforeCr = outBuf.pos;
-        requant(bitstream(inBuf, vDataSize), new BitstreamWriter(outBuf.os()), sliceMbCount << 1,
-                scaleMat(qMatChroma, qScale), scaleMat(qMatChromaTo, qp), scan, mbX, mbY, 2);
+        requant(bitstream(inBuf, yDataSize), new BitWriter(outBuf), sliceMbCount << 2, scaleMat(qMatLuma, qScale),
+                scaleMat(qMatLumaTo, qp), scan, mbX, mbY, 0);
+        int beforeCb = outBuf.position();
+        requant(bitstream(inBuf, uDataSize), new BitWriter(outBuf), sliceMbCount << 1, scaleMat(qMatChroma, qScale),
+                scaleMat(qMatChromaTo, qp), scan, mbX, mbY, 1);
+        int beforeCr = outBuf.position();
+        requant(bitstream(inBuf, vDataSize), new BitWriter(outBuf), sliceMbCount << 1, scaleMat(qMatChroma, qScale),
+                scaleMat(qMatChromaTo, qp), scan, mbX, mbY, 2);
 
-        out = beforeSizes.dout();
-        out.writeShort(beforeCb - beforeY);
-        out.writeShort(beforeCr - beforeCb);
+        beforeSizes.putShort((short) (beforeCb - beforeY));
+        beforeSizes.putShort((short) (beforeCr - beforeCb));
     }
 }

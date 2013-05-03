@@ -3,9 +3,9 @@ package org.jcodec.codecs.raw;
 import static java.lang.System.arraycopy;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
-import org.jcodec.common.io.LittleEndianDataOutputStream;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
@@ -23,15 +23,15 @@ import org.jcodec.common.tools.MathUtil;
  * 
  */
 public class V210Encoder {
-    public void encodeFrame(OutputStream out, Picture frame) throws IOException {
+    public ByteBuffer encodeFrame(ByteBuffer _out, Picture frame) throws IOException {
+        ByteBuffer out = _out.duplicate();
+        out.order(ByteOrder.LITTLE_ENDIAN);
         int tgtStride = ((frame.getPlaneWidth(0) + 47) / 48) * 48;
         int[][] data = frame.getData();
 
         int[] tmpY = new int[tgtStride];
         int[] tmpCb = new int[tgtStride >> 1];
         int[] tmpCr = new int[tgtStride >> 1];
-
-        LittleEndianDataOutputStream daos = new LittleEndianDataOutputStream(out);
 
         int yOff = 0, cbOff = 0, crOff = 0;
         for (int yy = 0; yy < frame.getHeight(); yy++) {
@@ -44,30 +44,33 @@ public class V210Encoder {
                 i |= clip(tmpCr[cri++]) << 20;
                 i |= clip(tmpY[yi++]) << 10;
                 i |= clip(tmpCb[cbi++]);
-                daos.writeInt(i);
+                out.putInt(i);
 
                 i = 0;
                 i |= clip(tmpY[yi++]);
                 i |= clip(tmpY[yi++]) << 20;
                 i |= clip(tmpCb[cbi++]) << 10;
-                daos.writeInt(i);
+                out.putInt(i);
 
                 i = 0;
                 i |= clip(tmpCb[cbi++]) << 20;
                 i |= clip(tmpY[yi++]) << 10;
                 i |= clip(tmpCr[cri++]);
-                daos.writeInt(i);
+                out.putInt(i);
 
                 i = 0;
                 i |= clip(tmpY[yi++]);
                 i |= clip(tmpY[yi++]) << 20;
                 i |= clip(tmpCr[cri++]) << 10;
-                daos.writeInt(i);
+                out.putInt(i);
             }
             yOff += frame.getPlaneWidth(0);
             cbOff += frame.getPlaneWidth(1);
             crOff += frame.getPlaneWidth(2);
         }
+        out.flip();
+
+        return out;
     }
 
     static final int clip(int val) {

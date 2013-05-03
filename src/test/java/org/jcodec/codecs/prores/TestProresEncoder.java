@@ -1,16 +1,13 @@
 package org.jcodec.codecs.prores;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.common.dct.DCTRef;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
-import org.jcodec.common.io.BitstreamReader;
-import org.jcodec.common.io.BitstreamWriter;
-import org.jcodec.common.io.Buffer;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.junit.Assert;
@@ -27,7 +24,7 @@ public class TestProresEncoder {
         int[] qMat = new int[64];
         Arrays.fill(qMat, 4);
 
-        onePlaneTest(slice, 2, qMat);
+        onePlaneTest(ByteBuffer.allocate(1024), slice, 2, qMat);
     }
 
     public void testSlice2() throws Exception {
@@ -44,14 +41,12 @@ public class TestProresEncoder {
         int[] qMat = new int[64];
         Arrays.fill(qMat, 4);
 
-        onePlaneTest(slice, 4, qMat);
+        onePlaneTest(ByteBuffer.allocate(1024), slice, 4, qMat);
     }
 
-    private void onePlaneTest(int[] slice, int blocksPerSlice, int[] qMat) throws IOException {
+    private void onePlaneTest(ByteBuffer out, int[] slice, int blocksPerSlice, int[] qMat) {
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        BitstreamWriter writer = new BitstreamWriter(out);
+        BitWriter writer = new BitWriter(out);
         ProresEncoder encoder = new ProresEncoder(Profile.HQ);
 
         encoder.writeDCCoeffs(writer, qMat, slice, blocksPerSlice);
@@ -60,15 +55,13 @@ public class TestProresEncoder {
 
         System.out.println("result");
 
-        byte[] byteArray = out.toByteArray();
-
-        ByteArrayInputStream input = new ByteArrayInputStream(byteArray);
+        out.flip();
 
         ProresDecoder decoder = new ProresDecoder();
-        BitstreamReader bits = new BitstreamReader(input);
+        BitReader bits = new BitReader(out);
         int[] result = new int[blocksPerSlice << 6];
-        decoder.readDCCoeffs(bits, qMat, result, blocksPerSlice);
-        decoder.readACCoeffs(bits, qMat, result, blocksPerSlice, ProresConsts.progressive_scan, 64);
+        decoder.readDCCoeffs(bits, qMat, result, blocksPerSlice, 64);
+        decoder.readACCoeffs(bits, qMat, result, blocksPerSlice, ProresConsts.progressive_scan, 64, 6);
 
         Assert.assertArrayEquals(slice, result);
     }
@@ -78,15 +71,14 @@ public class TestProresEncoder {
         int[] Y = randomArray(4096, 4, 1019);
         int[] U = randomArray(2048, 4, 1019);
         int[] V = randomArray(2048, 4, 1019);
-        Picture picture = new Picture(64, 64, new int[][] {Y, U, V}, ColorSpace.YUV422_10);
+        Picture picture = new Picture(64, 64, new int[][] { Y, U, V }, ColorSpace.YUV422_10);
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        new ProresEncoder(Profile.HQ).encodeFrame(out, picture);
+        ByteBuffer buf = ByteBuffer.allocate(64 * 64 * 6);
+        new ProresEncoder(Profile.HQ).encodeFrame(buf, picture);
 
         ProresDecoder decoder = new ProresDecoder();
 
-        Buffer buffer = new Buffer(out.toByteArray());
-        Picture result = decoder.decodeFrame(buffer, new int[][] { new int[4096], new int[2048], new int[2048] });
+        Picture result = decoder.decodeFrame(buf, new int[][] { new int[4096], new int[2048], new int[2048] });
 
         System.out.println("Y");
         diffArray(Y, result.getPlaneData(0));
@@ -121,8 +113,13 @@ public class TestProresEncoder {
     }
 
     private void diffArray(int[] rand, int[] newRand) {
-        for (int i = 0; i < rand.length; i++)
-            System.out.println((Math.abs(rand[i] - newRand[i])));
+        int maxDiff = 0;
+        for (int i = 0; i < rand.length; i++) {
+            int diff = Math.abs(rand[i] - newRand[i]);
+            if (diff > maxDiff)
+                maxDiff = diff;
+        }
+        Assert.assertTrue(maxDiff < 50);
     }
 
 }

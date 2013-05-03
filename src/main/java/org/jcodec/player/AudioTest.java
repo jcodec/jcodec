@@ -1,23 +1,21 @@
 package org.jcodec.player;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
-import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-import org.jcodec.common.io.FileRAInputStream;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.player.filters.AudioOut;
 import org.jcodec.player.filters.JSoundAudioOut;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
 import org.jcodec.player.filters.audio.AudioSource;
 import org.jcodec.player.filters.audio.ToneAudioSource;
-import org.jcodec.player.filters.audio.WavAudioSource;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,7 +35,7 @@ public class AudioTest {
         // * tone.getAudioFormat().getFrameSize();
         AudioInfo audioInfo = tone.getAudioInfo();
         AudioFormat af = audioInfo.getFormat();
-        byte[] pkt = new byte[af.getFrameSize() * audioInfo.getFramesPerPacket()];
+        ByteBuffer pkt = ByteBuffer.allocate(af.getFrameSize() * audioInfo.getFramesPerPacket());
         qqq.open(af, audioInfo.getFramesPerPacket() * Player.PACKETS_IN_BUFFER);
         // int i = 0;
         // System.gc();
@@ -57,9 +55,9 @@ public class AudioTest {
             // }
             // qqq.write(pkt, 0, thisTime *
             // tone.getAudioFormat().getFrameSize());
-//            while (qqq.available() < (qqq.bufferSize() / 2))
-//                Thread.sleep(1);
-            qqq.write(pkt, 0, audioInfo.getFramesPerPacket() * af.getFrameSize());
+            // while (qqq.available() < (qqq.bufferSize() / 2))
+            // Thread.sleep(1);
+            qqq.write(pkt);
             // i++;
         }
         // qqq.close();
@@ -77,9 +75,10 @@ public class AudioTest {
             throw new RuntimeException("Line matching " + info + " not supported.");
         }
         Clip clip = AudioSystem.getClip();
-        byte[] pkt = new byte[af.getFrameSize() * audioInfo.getFramesPerPacket() * 2000];
-        tone.getFrame(pkt);
-        clip.open(af, pkt, 0, pkt.length);
+        ByteBuffer bb = ByteBuffer.allocate(af.getFrameSize() * audioInfo.getFramesPerPacket() * 2000);
+        tone.getFrame(bb);
+        byte[] array = NIOUtils.toArray(bb);
+        clip.open(af, array, 0, array.length);
         clip.start();
         clip.drain();
 

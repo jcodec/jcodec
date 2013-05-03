@@ -1,7 +1,6 @@
 package org.jcodec.movtool;
 
 import static java.util.Arrays.fill;
-import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
 import static org.jcodec.movtool.Util.forceEditList;
 import static org.jcodec.movtool.Util.insertTo;
@@ -9,12 +8,11 @@ import static org.jcodec.movtool.Util.shift;
 import static org.jcodec.movtool.Util.spread;
 
 import java.io.File;
-import java.io.RandomAccessFile;
 import java.util.Arrays;
 
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.FileRAInputStream;
-import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.ClipRegionBox;
 import org.jcodec.containers.mp4.boxes.LoadSettingsBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -42,16 +40,16 @@ public class Paste {
             System.exit(-1);
         }
         File toFile = new File(args[0]);
-        RAInputStream to = null;
-        RAInputStream from = null;
-        RandomAccessFile out = null;
+        SeekableByteChannel to = null;
+        SeekableByteChannel from = null;
+        SeekableByteChannel out = null;
         try {
             File outFile = new File(toFile.getParentFile(), toFile.getName().replaceAll("\\.mov$", "") + ".paste.mov");
             outFile.delete();
-            out = new RandomAccessFile(outFile, "rw");
-            to = bufin(toFile);
+            out = new FileChannelWrapper(outFile);
+            to = new FileChannelWrapper(toFile);
             File fromFile = new File(args[1]);
-            from = bufin(fromFile);
+            from = new FileChannelWrapper(fromFile);
             MovieBox toMov = createRefMovie(to, "file://" + toFile.getCanonicalPath());
             MovieBox fromMov = createRefMovie(from, "file://" + fromFile.getCanonicalPath());
             new Strip().strip(fromMov);
@@ -60,7 +58,7 @@ public class Paste {
             } else {
                 new Paste().addToMovie(toMov, fromMov);
             }
-            toMov.write(out);
+            MP4Util.writeMovie(out, toMov);
         } finally {
             if (to != null)
                 to.close();
@@ -76,7 +74,7 @@ public class Paste {
         if (videoTrack != null && videoTrack.getTimescale() != to.getTimescale())
             to.fixTimescale(videoTrack.getTimescale());
 
-        long displayTv = (long)(to.getTimescale() * sec);
+        long displayTv = (long) (to.getTimescale() * sec);
 
         forceEditList(to);
         forceEditList(from);

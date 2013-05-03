@@ -2,11 +2,15 @@ package org.jcodec.codecs.y4m;
 
 import static org.apache.commons.lang.StringUtils.split;
 
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
 
 import org.apache.commons.lang.StringUtils;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
@@ -21,18 +25,16 @@ import org.jcodec.common.model.Size;
  */
 public class Y4MDecoder {
 
-    private DataInputStream is;
+    private FileChannel is;
     private int width;
     private int height;
     private String invalidFormat;
-    private byte[] y;
-    private byte[] cb;
-    private byte[] cr;
     private Rational fps;
+    private int bufSize;
 
-    public Y4MDecoder(InputStream is) throws IOException {
-        this.is = new DataInputStream(is);
-        String[] header = split(readLine(is), ' ');
+    public Y4MDecoder(SeekableByteChannel is) throws IOException {
+        ByteBuffer buf = NIOUtils.fetchFrom(is, 2048);
+        String[] header = split(readLine(buf), ' ');
 
         if (!"YUV4MPEG2".equals(header[0])) {
             invalidFormat = "Not yuv4mpeg stream";
@@ -53,33 +55,33 @@ public class Y4MDecoder {
             fps = new Rational(Integer.parseInt(numden[0]), Integer.parseInt(numden[1]));
         }
 
-        y = new byte[width * height];
-        cb = new byte[(width * height) >> 2];
-        cr = new byte[(width * height) >> 2];
+        is.position(buf.position());
+        bufSize = width * height * 2;
     }
 
-    public Picture nextFrame() throws IOException {
+    public Picture nextFrame(int[][] buffer) throws IOException {
         if (invalidFormat != null)
             throw new RuntimeException("Invalid input: " + invalidFormat);
-        String frame = readLine(is);
+        long pos = is.position();
+        ByteBuffer buf = NIOUtils.fetchFrom(is, 2048);
+        String frame = readLine(buf);
         if (frame == null || !frame.startsWith("FRAME"))
             return null;
 
-        is.readFully(y);
-        is.readFully(cb);
-        is.readFully(cr);
+        MappedByteBuffer pix = is.map(MapMode.READ_ONLY, pos + buf.position(), bufSize);
+        is.position(pos + buf.position() + bufSize);
 
         Picture create = Picture.create(width, height, ColorSpace.YUV420);
-        copy(y, create.getPlaneData(0));
-        copy(cb, create.getPlaneData(1));
-        copy(cr, create.getPlaneData(2));
+        copy(pix, create.getPlaneData(0));
+        copy(pix, create.getPlaneData(1));
+        copy(pix, create.getPlaneData(2));
 
         return create;
     }
 
-    void copy(byte[] b, int[] ii) {
-        for (int i = 0; i < b.length; i++) {
-            ii[i] = b[i];
+    void copy(ByteBuffer b, int[] ii) {
+        for (int i = 0; b.hasRemaining(); i++) {
+            ii[i] = b.get() & 0xff;
         }
     }
 
@@ -91,15 +93,13 @@ public class Y4MDecoder {
         return null;
     }
 
-    private static String readLine(InputStream y4m) throws IOException {
-        byte[] buf = new byte[1024];
-        int ch, i = 0;
-        while ((ch = y4m.read()) != -1) {
-            if (ch == '\n')
-                break;
-            buf[i++] = (byte) ch;
-        }
-        return ch == -1 ? null : new String(buf, 0, i);
+    private static String readLine(ByteBuffer y4m) {
+        ByteBuffer duplicate = y4m.duplicate();
+        while (y4m.hasRemaining() && y4m.get() != '\n')
+            ;
+        if (y4m.hasRemaining())
+            duplicate.limit(y4m.position() - 1);
+        return new String(NIOUtils.toArray(duplicate));
     }
 
     public int getWidth() {

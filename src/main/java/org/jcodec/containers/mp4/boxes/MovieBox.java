@@ -8,6 +8,7 @@ import java.util.ListIterator;
 import org.apache.commons.collections15.Predicate;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.MP4Util;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -110,7 +111,7 @@ public class MovieBox extends NodeBox {
     }
 
     public TrakBox importTrack(MovieBox movie, TrakBox track) {
-        TrakBox newTrack = (TrakBox) track.cloneBox();
+        TrakBox newTrack = (TrakBox) MP4Util.cloneBox(track, 1024 * 1024);
 
         List<Edit> edits = newTrack.getEdits();
 

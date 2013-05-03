@@ -1,9 +1,9 @@
 package org.jcodec.codecs.pcm;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.AudioDecoder;
-import org.jcodec.common.io.Buffer;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
@@ -23,10 +23,11 @@ public class PCMDecoder implements AudioDecoder {
         this.audioInfo = audioInfo;
     }
 
-    public AudioBuffer decodeFrame(Buffer frame, byte[] dst) throws IOException {
-        int tgt = Math.min(dst.length, frame.remaining());
-        frame.toArray(dst, 0, tgt);
+    public AudioBuffer decodeFrame(ByteBuffer frame, ByteBuffer dst) {
+        ByteBuffer dup = dst.duplicate();
+        NIOUtils.write(dst, frame);
 
-        return new AudioBuffer(new Buffer(dst, 0, tgt), audioInfo.getFormat(), audioInfo.getFramesPerPacket());
+        dup.flip();
+        return new AudioBuffer(dup, audioInfo.getFormat(), audioInfo.getFramesPerPacket());
     }
 }

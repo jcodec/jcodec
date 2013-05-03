@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -37,15 +33,15 @@ public class SampleSizesBox extends FullBox {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
-        defaultSize = (int)ReaderBE.readInt32(input);
-        count = (int)ReaderBE.readInt32(input);
+        defaultSize = input.getInt();
+        count = input.getInt();
 
         if (defaultSize == 0) {
             sizes = new int[count];
             for (int i = 0; i < count; i++) {
-                sizes[i] = (int)ReaderBE.readInt32(input);
+                sizes[i] = input.getInt();
             }
         }
     }
@@ -67,17 +63,17 @@ public class SampleSizesBox extends FullBox {
     }
 
     @Override
-    public void doWrite(DataOutput out) throws IOException {
+    public void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeInt((int) defaultSize);
+        out.putInt((int) defaultSize);
 
         if (defaultSize == 0) {
-            out.writeInt(sizes.length);
+            out.putInt(sizes.length);
             for (long size : sizes) {
-                out.writeInt((int) size);
+                out.putInt((int) size);
             }
         } else {
-            out.writeInt((int)count);
+            out.putInt((int)count);
         }
     }
 }

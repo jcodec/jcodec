@@ -5,11 +5,9 @@ import static org.jcodec.codecs.aac.BlockType.TYPE_SCE;
 import static org.jcodec.codecs.aac.blocks.BlockCCE.CouplingPoint.AFTER_IMDCT;
 import static org.jcodec.codecs.aac.blocks.BlockICS.BandType.ZERO_BT;
 
-import java.io.IOException;
-
 import org.jcodec.codecs.aac.BlockType;
 import org.jcodec.codecs.aac.blocks.BlockICS.BandType;
-import org.jcodec.common.io.InBits;
+import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 
 /**
@@ -38,12 +36,12 @@ public class BlockCCE extends Block {
     static {
         vlc = new VLC(AACTab.ff_aac_scalefactor_code, AACTab.ff_aac_scalefactor_bits);
     }
-    
+
     public BlockCCE(BandType[] bandType) {
         this.bandType = bandType;
     }
 
-    public void parse(InBits in) throws IOException {
+    public void parse(BitReader in) {
         int num_gain = 0;
         coupling_point = 2 * in.read1Bit();
         num_coupled = in.readNBit(3);
@@ -60,20 +58,20 @@ public class BlockCCE extends Block {
         }
         coupling_point += in.read1Bit() | (coupling_point >> 1);
 
-        sign  = in.read1Bit();
+        sign = in.read1Bit();
         scale = cce_scale[in.readNBit(2)];
 
         blockICS = new BlockICS();
         blockICS.parse(in);
 
         for (int c = 0; c < num_gain; c++) {
-            int idx  = 0;
-            int cge  = 1;
+            int idx = 0;
+            int cge = 1;
             int gain = 0;
             if (c != 0) {
                 cge = coupling_point == AFTER_IMDCT.ordinal() ? 1 : in.read1Bit();
-                gain = cge != 0 ? vlc.readVLC(in) - 60: 0;
-//                gain_cache = powf(scale, -gain);
+                gain = cge != 0 ? vlc.readVLC(in) - 60 : 0;
+                // gain_cache = powf(scale, -gain);
             }
             if (coupling_point != AFTER_IMDCT.ordinal()) {
                 for (int g = 0; g < blockICS.num_window_groups; g++) {

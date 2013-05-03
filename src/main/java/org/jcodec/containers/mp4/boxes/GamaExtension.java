@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import static org.jcodec.common.io.ReaderBE.readInt32;
-
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -31,13 +27,13 @@ public class GamaExtension extends Box {
         super(other);
     }
 
-    public void parse(InputStream input) throws IOException {
-        float g = readInt32(input);
+    public void parse(ByteBuffer input) {
+        float g = input.getInt();
         gamma = g / 65536f;
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.writeInt((int) (gamma * 65536));
+    protected void doWrite(ByteBuffer out) {
+        out.putInt((int) (gamma * 65536));
     }
     
     public float getGamma(){

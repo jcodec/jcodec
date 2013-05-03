@@ -1,12 +1,10 @@
 package org.jcodec.codecs.h264.io.model;
 
-import static org.jcodec.codecs.h264.io.read.CAVLCReader.readSE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE;
 
-import java.io.IOException;
-
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -25,7 +23,7 @@ public class ScalingList {
     public int[] scalingList;
     public boolean useDefaultScalingMatrixFlag;
 
-    public void write(OutBits out) throws IOException {
+    public void write(BitWriter out)  {
         if (useDefaultScalingMatrixFlag) {
             writeSE(out, 0, "SPS: ");
             return;
@@ -42,7 +40,7 @@ public class ScalingList {
         }
     }
 
-    public static ScalingList read(InBits in, int sizeOfScalingList) throws IOException {
+    public static ScalingList read(BitReader in, int sizeOfScalingList)  {
 
         ScalingList sl = new ScalingList();
         sl.scalingList = new int[sizeOfScalingList];

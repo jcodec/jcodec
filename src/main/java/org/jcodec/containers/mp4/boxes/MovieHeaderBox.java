@@ -1,16 +1,11 @@
 package org.jcodec.containers.mp4.boxes;
 
-import static org.jcodec.common.io.ReaderBE.readInt16;
-import static org.jcodec.common.io.ReaderBE.readInt32;
-import static org.jcodec.common.io.ReaderBE.readInt64;
 import static org.jcodec.containers.mp4.TimeUtil.fromMovTime;
 import static org.jcodec.containers.mp4.TimeUtil.toMovTime;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.codecs.wav.StringReader;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.tools.ToJSON;
 
 /**
@@ -54,73 +49,71 @@ public class MovieHeaderBox extends FullBox {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
         if (version == 0) {
-            created = fromMovTime((int) readInt32(input));
-            modified = fromMovTime((int) readInt32(input));
-            timescale = (int) readInt32(input);
-            duration = readInt32(input);
+            created = fromMovTime(input.getInt());
+            modified = fromMovTime(input.getInt());
+            timescale = input.getInt();
+            duration = input.getInt();
         } else if (version == 1) {
-            created = fromMovTime((int) readInt64(input));
-            modified = fromMovTime((int) readInt64(input));
-            timescale = (int) readInt32(input);
-            duration = readInt64(input);
+            created = fromMovTime((int) input.getLong());
+            modified = fromMovTime((int) input.getLong());
+            timescale = input.getInt();
+            duration = input.getLong();
         } else {
             throw new RuntimeException("Unsupported version");
         }
         rate = readRate(input);
         volume = readVolume(input);
-        StringReader.sureSkip(input, 10);
+        NIOUtils.skip(input, 10);
         matrix = readMatrix(input);
-        StringReader.sureSkip(input, 24);
-        nextTrackId = (int) readInt32(input);
+        NIOUtils.skip(input, 24);
+        nextTrackId = input.getInt();
     }
 
-    private int[] readMatrix(InputStream input) throws IOException {
+    private int[] readMatrix(ByteBuffer input) {
         int[] matrix = new int[9];
         for (int i = 0; i < 9; i++)
-            matrix[i] = (int) readInt32(input);
+            matrix[i] = input.getInt();
         return matrix;
     }
 
-    private float readVolume(InputStream input) throws IOException {
-        long val = readInt16(input);
-        return (float) val / 256f;
+    private float readVolume(ByteBuffer input) {
+        return (float) input.getShort() / 256f;
     }
 
-    private float readRate(InputStream input) throws IOException {
-        long val = readInt32(input);
-        return (float) val / 65536f;
+    private float readRate(ByteBuffer input) {
+        return (float) input.getInt() / 65536f;
     }
 
-    public void doWrite(DataOutput out) throws IOException {
+    public void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeInt(toMovTime(created));
-        out.writeInt(toMovTime(modified));
-        out.writeInt(timescale);
-        out.writeInt((int) duration);
+        out.putInt(toMovTime(created));
+        out.putInt(toMovTime(modified));
+        out.putInt(timescale);
+        out.putInt((int) duration);
         writeFixed1616(out, rate);
         writeFixed88(out, volume);
-        out.write(new byte[10]);
+        out.put(new byte[10]);
         writeMatrix(out);
-        out.write(new byte[24]);
-        out.writeInt(nextTrackId);
+        out.put(new byte[24]);
+        out.putInt(nextTrackId);
     }
 
-    private void writeMatrix(DataOutput out) throws IOException {
+    private void writeMatrix(ByteBuffer out) {
         for (int i = 0; i < Math.min(9, matrix.length); i++)
-            out.writeInt(matrix[i]);
+            out.putInt(matrix[i]);
         for (int i = Math.min(9, matrix.length); i < 9; i++)
-            out.writeInt(0);
+            out.putInt(0);
     }
 
-    private void writeFixed88(DataOutput out, float volume) throws IOException {
-        out.writeShort((int) (volume * 256.));
+    private void writeFixed88(ByteBuffer out, float volume) {
+        out.putShort((short) (volume * 256.));
     }
 
-    private void writeFixed1616(DataOutput out, float rate) throws IOException {
-        out.writeInt((int) (rate * 65536.));
+    private void writeFixed1616(ByteBuffer out, float rate) {
+        out.putInt((int) (rate * 65536.));
     }
 
     public int getTimescale() {

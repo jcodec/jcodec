@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,11 +17,11 @@ public class MP4ABox extends Box {
         super(new Header("mp4a"));
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.writeInt(val);
+    protected void doWrite(ByteBuffer out) {
+        out.putInt(val);
     }
 
-    public void parse(InputStream input) throws IOException {
-        val = (int) ReaderBE.readInt32(input);
+    public void parse(ByteBuffer input) {
+        val = input.getInt();
     }
 }

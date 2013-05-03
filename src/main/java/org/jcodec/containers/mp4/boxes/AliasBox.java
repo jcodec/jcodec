@@ -1,22 +1,14 @@
 package org.jcodec.containers.mp4.boxes;
 
-import static org.jcodec.common.io.ReaderBE.readInt16;
-import static org.jcodec.common.io.ReaderBE.readInt32;
-import static org.jcodec.common.io.ReaderBE.readPascalString;
-import static org.jcodec.common.io.ReaderBE.readString;
-import static org.jcodec.common.io.ReaderBE.sureRead;
-import static org.jcodec.common.io.WriterBE.writePascalString;
-
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.jcodec.codecs.wav.StringReader;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -100,73 +92,73 @@ public class AliasBox extends FullBox {
         super(atom);
     }
 
-    public void parse(InputStream is) throws IOException {
+    public void parse(ByteBuffer is) {
         super.parse(is);
         if ((flags & 0x1) != 0) // self ref
             return;
-        type = readString(is, 4);
-        recordSize = (short) readInt16(is);
-        version = (short) readInt16(is);
-        kind = (short) readInt16(is);
-        volumeName = readPascalString(is, 27);
-        volumeCreateDate = (int) readInt32(is);
-        volumeSignature = (short) readInt16(is);
-        volumeType = (short) readInt16(is);
-        parentDirId = (int) readInt32(is);
-        fileName = readPascalString(is, 63);
-        fileNumber = (int) readInt32(is);
-        createdLocalDate = (int) readInt32(is);
-        fileTypeName = readString(is, 4);
-        creatorName = readString(is, 4);
-        nlvlFrom = (short) readInt16(is);
-        nlvlTo = (short) readInt16(is);
-        volumeAttributes = (int) readInt32(is);
-        fsId = (short) readInt16(is);
-        StringReader.sureSkip(is, 10);
+        type = NIOUtils.readString(is, 4);
+        recordSize = is.getShort();
+        version = is.getShort();
+        kind = is.getShort();
+        volumeName = NIOUtils.readPascalString(is, 27);
+        volumeCreateDate = is.getInt();
+        volumeSignature = is.getShort();
+        volumeType = is.getShort();
+        parentDirId = is.getInt();
+        fileName = NIOUtils.readPascalString(is, 63);
+        fileNumber = is.getInt();
+        createdLocalDate = is.getInt();
+        fileTypeName = NIOUtils.readString(is, 4);
+        creatorName = NIOUtils.readString(is, 4);
+        nlvlFrom = is.getShort();
+        nlvlTo = is.getShort();
+        volumeAttributes = is.getInt();
+        fsId = is.getShort();
+        NIOUtils.skip(is, 10);
 
         extra = new ArrayList<ExtraField>();
         while (true) {
-            short type = (short) readInt16(is);
+            short type = is.getShort();
             if (type == -1)
                 break;
-            int len = (int) readInt16(is);
-            byte[] bs = sureRead(is, (len + 1) & 0xfffffffe);
+            int len = is.getShort();
+            byte[] bs = NIOUtils.toArray(NIOUtils.read(is, (len + 1) & 0xfffffffe));
             if (bs == null)
                 break;
             extra.add(new ExtraField(type, len, bs));
         }
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
         if ((flags & 0x1) != 0) // self ref
             return;
-        out.write(type.getBytes(), 0, 4);
-        out.writeShort(recordSize);
-        out.writeShort(version);
-        out.writeShort(kind);
-        writePascalString(out, volumeName, 27);
-        out.writeInt(volumeCreateDate);
-        out.writeShort(volumeSignature);
-        out.writeShort(volumeType);
-        out.writeInt(parentDirId);
-        writePascalString(out, fileName, 63);
-        out.writeInt(fileNumber);
-        out.writeInt(createdLocalDate);
-        out.write(fileTypeName.getBytes(), 0, 4);
-        out.write(creatorName.getBytes(), 0, 4);
-        out.writeShort(nlvlFrom);
-        out.writeShort(nlvlTo);
-        out.writeInt(volumeAttributes);
-        out.writeShort(fsId);
-        out.write(new byte[10]);
+        out.put(JCodecUtil.asciiString(type), 0, 4);
+        out.putShort(recordSize);
+        out.putShort(version);
+        out.putShort(kind);
+        NIOUtils.writePascalString(out, volumeName, 27);
+        out.putInt(volumeCreateDate);
+        out.putShort(volumeSignature);
+        out.putShort(volumeType);
+        out.putInt(parentDirId);
+        NIOUtils.writePascalString(out, fileName, 63);
+        out.putInt(fileNumber);
+        out.putInt(createdLocalDate);
+        out.put(JCodecUtil.asciiString(fileTypeName), 0, 4);
+        out.put(JCodecUtil.asciiString(creatorName), 0, 4);
+        out.putShort(nlvlFrom);
+        out.putShort(nlvlTo);
+        out.putInt(volumeAttributes);
+        out.putShort(fsId);
+        out.put(new byte[10]);
         for (ExtraField extraField : extra) {
-            out.writeShort(extraField.type);
-            out.writeShort(extraField.len);
-            out.write(extraField.data);
+            out.putShort(extraField.type);
+            out.putShort((short) extraField.len);
+            out.put(extraField.data);
         }
-        out.writeShort(-1);
-        out.writeShort(0);
+        out.putShort((short) -1);
+        out.putShort((short) 0);
     }
 
     public int getRecordSize() {

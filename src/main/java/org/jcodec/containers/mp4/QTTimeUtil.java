@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.jcodec.common.model.RationalLarge;
-import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
+import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -146,15 +146,21 @@ public class QTTimeUtil {
      */
     public static int qtPlayerFrameNo(MovieBox movie, int mediaFrameNo) {
         TrakBox videoTrack = movie.getVideoTrack();
-        TrakBox timecodeTrack = movie.getTimecodeTrack();
 
         long editedTv = mediaToEdited(videoTrack, frameToTimevalue(videoTrack, mediaFrameNo), movie.getTimescale());
 
+        return tv2QTFrameNo(movie, editedTv);
+    }
+
+    public static int tv2QTFrameNo(MovieBox movie, long tv) {
+        TrakBox videoTrack = movie.getVideoTrack();
+        TrakBox timecodeTrack = movie.getTimecodeTrack();
+        
         if (timecodeTrack != null && Box.findFirst(videoTrack, "tref", "tmcd") != null) {
-            return timevalueToTimecodeFrame(timecodeTrack, new RationalLarge(editedTv, videoTrack.getTimescale()),
+            return timevalueToTimecodeFrame(timecodeTrack, new RationalLarge(tv, videoTrack.getTimescale()),
                     movie.getTimescale());
         } else {
-            return timevalueToFrame(videoTrack, editedTv);
+            return timevalueToFrame(videoTrack, tv);
         }
     }
 
@@ -183,7 +189,7 @@ public class QTTimeUtil {
      * @return
      * @throws IOException
      */
-    public static String qtPlayerTimecode(MovieBox movie, DemuxerTrack timecodeTrack, int mediaFrameNo)
+    public static String qtPlayerTimecode(MovieBox movie, MP4DemuxerTrack timecodeTrack, int mediaFrameNo)
             throws IOException {
         TrakBox videoTrack = movie.getVideoTrack();
         long editedTv = mediaToEdited(videoTrack, frameToTimevalue(videoTrack, mediaFrameNo), movie.getTimescale());
@@ -208,7 +214,7 @@ public class QTTimeUtil {
      * @return
      * @throws IOException
      */
-    public static String qtPlayerTimecode(DemuxerTrack timecodeTrack, RationalLarge tv, int movieTimescale)
+    public static String qtPlayerTimecode(MP4DemuxerTrack timecodeTrack, RationalLarge tv, int movieTimescale)
             throws IOException {
         TrakBox tt = timecodeTrack.getBox();
         int ttTimescale = tt.getTimescale();

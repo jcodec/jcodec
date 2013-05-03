@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -38,8 +34,8 @@ public class EndianBox extends Box {
         this.endian = endian;
     }
 
-    public void parse(InputStream input) throws IOException {
-        long end = ReaderBE.readInt16(input);
+    public void parse(ByteBuffer input) {
+        long end = input.getShort();
         if (end == 1) {
             this.endian = Endian.LITTLE_ENDIAN;
         } else {
@@ -47,11 +43,15 @@ public class EndianBox extends Box {
         }
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.writeShort(endian == Endian.LITTLE_ENDIAN ? 1 : 0);
+    protected void doWrite(ByteBuffer out) {
+        out.putShort((short)(endian == Endian.LITTLE_ENDIAN ? 1 : 0));
     }
 
     public Endian getEndian() {
         return endian;
+    }
+
+    protected int calcSize() {
+        return 2;
     }
 }

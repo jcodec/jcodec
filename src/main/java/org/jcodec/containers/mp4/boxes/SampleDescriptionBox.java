@@ -1,12 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jcodec.common.io.ReaderBE;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -135,16 +131,16 @@ public class SampleDescriptionBox extends NodeBox {
         }
     }
 
-    public void parse(InputStream input) throws IOException {
-        ReaderBE.readInt32(input);
-        ReaderBE.readInt32(input);
+    public void parse(ByteBuffer input) {
+        input.getInt();
+        input.getInt();
         super.parse(input);
     }
 
     @Override
-    public void doWrite(DataOutput out) throws IOException {
-        out.writeInt(0);
-        out.writeInt(boxes.size());
+    public void doWrite(ByteBuffer out) {
+        out.putInt(0);
+        out.putInt(boxes.size());
         super.doWrite(out);
     }
 }

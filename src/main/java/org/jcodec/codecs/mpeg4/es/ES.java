@@ -1,10 +1,6 @@
 package org.jcodec.codecs.mpeg4.es;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,15 +25,15 @@ public class ES extends NodeDescriptor {
         return 0x03;
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.writeShort(trackId);
-        out.write(0);
+    protected void doWrite(ByteBuffer out) {
+        out.putShort((short)trackId);
+        out.put((byte)0);
         super.doWrite(out);
     }
     
-    protected void parse(InputStream input) throws IOException {
-        trackId = (int)ReaderBE.readInt16(input);
-        input.read();
+    protected void parse(ByteBuffer input) {
+        trackId = input.getShort();
+        input.get();
         super.parse(input);
     }
 

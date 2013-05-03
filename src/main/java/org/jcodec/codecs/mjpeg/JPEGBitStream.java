@@ -1,10 +1,9 @@
 package org.jcodec.codecs.mjpeg;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.BitstreamReader;
+import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 
 /**
@@ -21,19 +20,19 @@ public class JPEGBitStream {
     private VLC huffCDC;
     private VLC huffYAC;
     private VLC huffCAC;
-    private BitstreamReader in;
+    private BitReader in;
 
     /**
      * @deprecated
      * @param coded
      * @throws IOException
      */
-    public JPEGBitStream(CodedImage coded) throws IOException {
-        this(coded, new ByteArrayInputStream(coded.getData()));
+    public JPEGBitStream(CodedImage coded) {
+        this(coded, ByteBuffer.wrap(coded.getData()));
     }
 
-    public JPEGBitStream(CodedImage coded, InputStream in) throws IOException {
-        this.in = new BitstreamReader(in);
+    public JPEGBitStream(CodedImage coded, ByteBuffer b) {
+        this.in = new BitReader(b);
         this.huffYDC = coded.getYdc();
         this.huffCDC = coded.getCdc();
         this.huffYAC = coded.getYac();
@@ -61,7 +60,7 @@ public class JPEGBitStream {
         return block;
     }
 
-    public void readDCValue(int[] target, int[] prevDC, VLC table) throws IOException {
+    public void readDCValue(int[] target, int[] prevDC, VLC table) {
         int code = table.readVLC(in);
         if (code != 0) {
             target[0] = toValue(in.readNBit(code), code);
@@ -88,7 +87,7 @@ public class JPEGBitStream {
             }
         } while (code != 0 && curOff < 64);
     }
-    
+
     public final int toValue(int raw, int length) {
         return (length >= 1 && raw < (1 << length - 1)) ? -(1 << length) + 1 + raw : raw;
     }

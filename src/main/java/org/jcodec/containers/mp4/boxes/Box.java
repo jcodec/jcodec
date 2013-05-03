@@ -1,21 +1,14 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.collections15.Predicate;
-import org.apache.commons.io.IOUtils;
+import org.jcodec.common.NIOUtils;
+import org.junit.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -41,7 +34,7 @@ public abstract class Box {
         return header;
     }
 
-    public abstract void parse(InputStream input) throws IOException;
+    public abstract void parse(ByteBuffer buf);
 
     public static Box findFirst(NodeBox box, String... path) {
         return findFirst(box, Box.class, path);
@@ -85,28 +78,14 @@ public abstract class Box {
         return result.toArray((T[]) Array.newInstance(class1, 0));
     }
 
-    public void write(DataOutput out) throws IOException {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        doWrite(new DataOutputStream(bout));
-        byte[] bytes = bout.toByteArray();
+    public void write(ByteBuffer buf) {
+        ByteBuffer dup = buf.duplicate();
+        NIOUtils.skip(buf, 8);
+        doWrite(buf);
 
-        header.setBodySize(bytes.length);
-        header.write(out);
-        out.write(bytes);
-    }
-
-    public void write(File dst) throws IOException {
-        DataOutputStream dout = null;
-        try {
-            dout = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(dst)));
-            write(dout);
-        } finally {
-            IOUtils.closeQuietly(dout);
-        }
-    }
-
-    protected void doWrite(DataOutput out) throws IOException {
-        throw new RuntimeException(header.getFourcc() + " not implemented, must override");
+        header.setBodySize(buf.position() - dup.position() - 8);
+        Assert.assertEquals(header.headerSize(), 8);
+        header.write(dup);
     }
 
     public static Predicate<Box> not(final String type) {
@@ -117,24 +96,7 @@ public abstract class Box {
         };
     }
 
-    public Box cloneBox() {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            write(new DataOutputStream(baos));
-            return NodeBox.parseChildBox(new ByteArrayInputStream(baos.toByteArray()), BoxFactory.getDefault());
-        } catch (IOException e) {
-        }
-        return null;
-    }
-
-    public long calcSize() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            write(new DataOutputStream(baos));
-        } catch (IOException e) {
-        }
-        return baos.size();
-    }
+    protected abstract void doWrite(ByteBuffer out);
 
     public String getFourcc() {
         return header.getFourcc();
@@ -149,5 +111,15 @@ public abstract class Box {
 
     protected void dump(StringBuilder sb) {
         sb.append("'" + header.getFourcc() + "'");
+    }
+
+    public static <T extends Box> T as(Class<T> class1, LeafBox box) {
+        try {
+            T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
+            res.parse(box.getData());
+            return res;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

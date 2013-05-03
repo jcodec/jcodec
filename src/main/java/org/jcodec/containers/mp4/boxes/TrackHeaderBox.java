@@ -1,15 +1,10 @@
 package org.jcodec.containers.mp4.boxes;
 
-import static org.jcodec.common.io.ReaderBE.readInt32;
-import static org.jcodec.common.io.ReaderBE.readInt64;
 import static org.jcodec.containers.mp4.TimeUtil.fromMovTime;
 import static org.jcodec.containers.mp4.TimeUtil.toMovTime;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.ReaderBE;
 import org.jcodec.common.tools.ToJSON;
 
 /**
@@ -54,49 +49,49 @@ public class TrackHeaderBox extends FullBox {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
 
         if (version == 0) {
-            created = fromMovTime((int) readInt32(input)); // Creation time
-            modified = fromMovTime((int) readInt32(input)); // Modification time
+            created = fromMovTime(input.getInt()); // Creation time
+            modified = fromMovTime(input.getInt()); // Modification time
         } else {
-            created = fromMovTime((int) readInt64(input));
-            modified = fromMovTime((int) readInt64(input));
+            created = fromMovTime((int) input.getLong());
+            modified = fromMovTime((int) input.getLong());
         }
-        trackId = (int) readInt32(input);
-        readInt32(input);
+        trackId = input.getInt();
+        input.getInt();
 
         if (version == 0) {
-            duration = readInt32(input);
+            duration = input.getInt();
         } else {
-            duration = readInt64(input);
+            duration = input.getLong();
         }
 
-        ReaderBE.readInt32(input); // Reserved
-        ReaderBE.readInt32(input);
+        input.getInt(); // Reserved
+        input.getInt();
 
-        layer = (short) ReaderBE.readInt16(input);
-        altGroup = ReaderBE.readInt16(input);
+        layer = input.getShort();
+        altGroup = input.getShort();
 
         volume = readVolume(input);
 
-        ReaderBE.readInt16(input);
+        input.getShort();
 
         readMatrix(input);
 
-        width = ReaderBE.readInt32(input) / 65536f;
-        height = ReaderBE.readInt32(input) / 65536f;
+        width = input.getInt() / 65536f;
+        height = input.getInt() / 65536f;
     }
 
-    private void readMatrix(InputStream input) throws IOException {
+    private void readMatrix(ByteBuffer input) {
         matrix = new int[9];
         for (int i = 0; i < 9; i++)
-            matrix[i] = (int) ReaderBE.readInt32(input);
+            matrix[i] = input.getInt();
     }
 
-    private float readVolume(InputStream input) throws IOException {
-        return (float) (ReaderBE.readInt16(input) / 256.);
+    private float readVolume(ByteBuffer input) {
+        return (float) (input.getShort() / 256.);
     }
 
     public int getNo() {
@@ -115,41 +110,41 @@ public class TrackHeaderBox extends FullBox {
         return height;
     }
 
-    public void doWrite(DataOutput out) throws IOException {
+    public void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        out.writeInt(toMovTime(created));
-        out.writeInt(toMovTime(modified));
+        out.putInt(toMovTime(created));
+        out.putInt(toMovTime(modified));
 
-        out.writeInt(trackId);
-        out.writeInt(0);
+        out.putInt(trackId);
+        out.putInt(0);
 
-        out.writeInt((int) duration);
+        out.putInt((int) duration);
 
-        out.writeInt(0);
-        out.writeInt(0);
+        out.putInt(0);
+        out.putInt(0);
 
-        out.writeShort((short) layer);
-        out.writeShort((short) altGroup);
+        out.putShort((short) layer);
+        out.putShort((short) altGroup);
 
         writeVolume(out);
 
-        out.writeShort(0);
+        out.putShort((short) 0);
 
         writeMatrix(out);
 
-        out.writeInt((int) (width * 65536));
-        out.writeInt((int) (height * 65536));
+        out.putInt((int) (width * 65536));
+        out.putInt((int) (height * 65536));
     }
 
-    private void writeMatrix(DataOutput out) throws IOException {
+    private void writeMatrix(ByteBuffer out) {
         for (int i = 0; i < 9; i++)
-            out.writeInt(matrix[i]);
+            out.putInt(matrix[i]);
 
     }
 
-    private void writeVolume(DataOutput out) throws IOException {
-        out.writeShort((short) (volume * 256.));
+    private void writeVolume(ByteBuffer out) {
+        out.putShort((short) (volume * 256.));
     }
 
     public void setDuration(long duration) {

@@ -1,15 +1,13 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.collections15.Predicate;
-import org.jcodec.common.io.WindowInputStream;
+import org.jcodec.common.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,21 +35,25 @@ public class NodeBox extends Box {
         this.factory = other.factory;
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
 
-        Box box;
-        while ((box = parseChildBox(input, factory)) != null)
-            boxes.add(box);
+        while (input.remaining() >= 8) {
+            Box child = parseChildBox(input, factory);
+            if (child != null)
+                boxes.add(child);
+        }
     }
 
-    protected static Box parseChildBox(InputStream input, BoxFactory factory) throws IOException {
-        Header childAtom = Header.read(input);
-        
-        if (childAtom == null)
-            return null;
+    protected static Box parseChildBox(ByteBuffer input, BoxFactory factory) {
+        ByteBuffer fork = input.duplicate();
+        while (fork.getInt() == 0)
+            input.getInt();
 
-        WindowInputStream wi = new WindowInputStream(input, childAtom.getBodySize());
-        return parseBox(wi, childAtom, factory);
+        Header childAtom = Header.read(input);
+        if (input.remaining() >= childAtom.getBodySize())
+            return parseBox(NIOUtils.read(input, (int) childAtom.getBodySize()), childAtom, factory);
+        else
+            return null;
     }
 
     public static Box newBox(Header header, BoxFactory factory) {
@@ -69,13 +71,11 @@ public class NodeBox extends Box {
         }
     }
 
-    public static Box parseBox(InputStream input, Header childAtom, BoxFactory factory) throws IOException {
+    public static Box parseBox(ByteBuffer input, Header childAtom, BoxFactory factory) {
         Box box = newBox(childAtom, factory);
-        
+
         if (childAtom.getBodySize() < MAX_BOX_SIZE) {
-            WindowInputStream window = new WindowInputStream(input, (int) childAtom.getBodySize());
-            box.parse(window);
-            window.skipRemaining();
+            box.parse(input);
             return box;
         } else {
             return new LeafBox(new Header("free", 8));
@@ -90,7 +90,7 @@ public class NodeBox extends Box {
         boxes.add(box);
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         for (Box box : boxes) {
             box.write(out);
         }

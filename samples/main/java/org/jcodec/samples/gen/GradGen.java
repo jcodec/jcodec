@@ -1,12 +1,11 @@
 package org.jcodec.samples.gen;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.jcodec.codecs.raw.V210Encoder;
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.FileRAOutputStream;
+import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
@@ -39,15 +38,15 @@ public class GradGen {
         drawGrad(pic.getPlaneData(0), new Size(pic.getWidth(), pic.getHeight()));
 
         V210Encoder encoder = new V210Encoder();
-        MP4Muxer muxer = new MP4Muxer(new FileRAOutputStream(new File(args[0])));
+        MP4Muxer muxer = new MP4Muxer(new FileChannelWrapper(new File(args[0])));
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        encoder.encodeFrame(baos, pic);
+        ByteBuffer out = ByteBuffer.allocate(width * height * 10);
+        ByteBuffer frame = encoder.encodeFrame(out, pic);
 
         CompressedTrack videoTrack = muxer.addVideoTrack("v210", new Size(width, height), "jcodec", 24000);
 
         for (int i = 0; i < Integer.parseInt(args[1]); i++) {
-            videoTrack.addFrame(new MP4Packet(new Buffer(baos.toByteArray()), i * 1001, 24000, 1001, i, true, null, i * 1001, 0));
+            videoTrack.addFrame(new MP4Packet(frame, i * 1001, 24000, 1001, i, true, null, i * 1001, 0));
         }
         muxer.writeHeader();
     }

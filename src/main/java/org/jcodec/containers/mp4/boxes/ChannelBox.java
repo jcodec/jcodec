@@ -1,12 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.io.ReaderBE;
 import org.jcodec.containers.mp4.boxes.channel.Label;
 
 /**
@@ -43,7 +40,7 @@ public class ChannelBox extends FullBox {
         public float[] getCoordinates() {
             return coordinates;
         }
-        
+
         public Label getLabel() {
             return Label.getByVal(channelLabel);
         }
@@ -61,35 +58,34 @@ public class ChannelBox extends FullBox {
         return "chan";
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
 
-        channelLayout = (int) ReaderBE.readInt32(input);
-        channelBitmap = (int) ReaderBE.readInt32(input);
-        long numDescriptions = ReaderBE.readInt32(input);
+        channelLayout = input.getInt();
+        channelBitmap = input.getInt();
+        long numDescriptions = input.getInt();
 
         for (int i = 0; i < numDescriptions; i++) {
-            descriptions.add(new ChannelDescription((int) ReaderBE.readInt32(input), (int) ReaderBE.readInt32(input),
-                    new float[] { Float.intBitsToFloat((int) ReaderBE.readInt32(input)),
-                            Float.intBitsToFloat((int) ReaderBE.readInt32(input)),
-                            Float.intBitsToFloat((int) ReaderBE.readInt32(input)) }));
+            descriptions.add(new ChannelDescription(input.getInt(), input.getInt(), new float[] {
+                    Float.intBitsToFloat(input.getInt()), Float.intBitsToFloat(input.getInt()),
+                    Float.intBitsToFloat(input.getInt()) }));
         }
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeInt(channelLayout);
-        out.writeInt(channelBitmap);
-        out.writeInt(descriptions.size());
+        out.putInt(channelLayout);
+        out.putInt(channelBitmap);
+        out.putInt(descriptions.size());
 
         List<ChannelDescription> descriptions2 = descriptions;
         for (ChannelDescription channelDescription : descriptions2) {
-            out.writeInt(channelDescription.getChannelLabel());
-            out.writeInt(channelDescription.getChannelFlags());
+            out.putInt(channelDescription.getChannelLabel());
+            out.putInt(channelDescription.getChannelFlags());
 
-            out.writeFloat(channelDescription.getCoordinates()[0]);
-            out.writeFloat(channelDescription.getCoordinates()[1]);
-            out.writeFloat(channelDescription.getCoordinates()[2]);
+            out.putFloat(channelDescription.getCoordinates()[0]);
+            out.putFloat(channelDescription.getCoordinates()[1]);
+            out.putFloat(channelDescription.getCoordinates()[2]);
         }
     }
 

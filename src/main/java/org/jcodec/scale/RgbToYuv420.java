@@ -6,6 +6,10 @@ import org.jcodec.common.model.Picture;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
+ * Transforms Picture in RGB colorspace ( one plane, 3 integers per pixel ) to
+ * Yuv420 colorspace output picture ( 3 planes, luma - 0th plane, cb - 1th
+ * plane, cr - 2nd plane; cb and cr planes are half width and half haight )
+ * 
  * @author The JCodec project
  * 
  */
@@ -24,27 +28,39 @@ public class RgbToYuv420 implements Transform {
     public void transform(Picture img, Picture dst) {
 
         int[] y = img.getData()[0];
-        int[][] dstData = img.getData();
+        int[][] dstData = dst.getData();
 
-        int off = 0, offSrc = 0;
-        for (int i = 0; i < img.getHeight(); i++) {
+        int offChr = 0, offLuma = 0, offSrc = 0, strideSrc = img.getWidth() * 3, strideDst = dst.getWidth();
+        for (int i = 0; i < img.getHeight() >> 1; i++) {
             for (int j = 0; j < img.getWidth() >> 1; j++) {
-                int offY = off << 2;
 
-                rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY, dstData[1], off, dstData[2], off);
-                dstData[0][offY] = (dstData[0][offY] << upShift) >> downShift;
-                rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY + 1, dstData[1], off, dstData[2], off);
-                dstData[0][offY + 1] = (dstData[0][offY + 1] << upShift) >> downShift;
-                rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY + 2, dstData[1], off, dstData[2], off);
-                dstData[0][offY + 2] = (dstData[0][offY + 2] << upShift) >> downShift;
-                rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY + 3, dstData[1], off, dstData[2], off);
-                dstData[0][offY + 3] = (dstData[0][offY + 3] << upShift) >> downShift;
+                rgb2yuv(y[offSrc], y[offSrc + 1], y[offSrc + 2], dstData[0], offLuma, dstData[1], offChr, dstData[2],
+                        offChr);
+                dstData[0][offLuma] = (dstData[0][offLuma] << upShift) >> downShift;
 
-                dstData[1][off] = (dstData[1][off] << upShift) >> downShiftChr;
-                dstData[2][off] = (dstData[2][off] << upShift) >> downShiftChr;
+                rgb2yuv(y[offSrc + strideSrc], y[offSrc + strideSrc + 1], y[offSrc + strideSrc + 2], dstData[0],
+                        offLuma + strideDst, dstData[1], offChr, dstData[2], offChr);
+                dstData[0][offLuma + strideDst] = (dstData[0][offLuma + strideDst] << upShift) >> downShift;
 
-                ++off;
+                ++offLuma;
+
+                rgb2yuv(y[offSrc + 3], y[offSrc + 4], y[offSrc + 5], dstData[0], offLuma, dstData[1], offChr,
+                        dstData[2], offChr);
+                dstData[0][offLuma] = (dstData[0][offLuma] << upShift) >> downShift;
+
+                rgb2yuv(y[offSrc + strideSrc + 3], y[offSrc + strideSrc + 4], y[offSrc + strideSrc + 5], dstData[0],
+                        offLuma + strideDst, dstData[1], offChr, dstData[2], offChr);
+                dstData[0][offLuma + strideDst] = (dstData[0][offLuma + strideDst] << upShift) >> downShift;
+                ++offLuma;
+
+                dstData[1][offChr] = (dstData[1][offChr] << upShift) >> downShiftChr;
+                dstData[2][offChr] = (dstData[2][offChr] << upShift) >> downShiftChr;
+
+                ++offChr;
+                offSrc += 6;
             }
+            offLuma += strideDst;
+            offSrc += strideSrc;
         }
     }
 

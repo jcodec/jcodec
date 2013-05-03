@@ -10,7 +10,7 @@ package org.jcodec.codecs.h264.decode.aso;
  * @author Jay Codec
  * 
  */
-public class PrebuiltMBlockMapper implements MBlockMapper {
+public class PrebuiltMBlockMapper implements Mapper {
 
     private MBToSliceGroupMap map;
     private int firstMBInSlice;
@@ -26,55 +26,43 @@ public class PrebuiltMBlockMapper implements MBlockMapper {
         this.indexOfFirstMb = map.getIndices()[firstMBInSlice];
     }
 
-    public int[] getAddresses(int count) {
-
-        int[] result = new int[count];
-        for (int i = 0; i < count; i++) {
-            result[i] = map.getInverse()[groupId][i + indexOfFirstMb];
-        }
-
-        return result;
+    public int getAddress(int mbIndex) {
+        return map.getInverse()[groupId][mbIndex + indexOfFirstMb];
     }
 
-    public int getLeftMBIdx(int mbIndex) {
+    public boolean leftAvailable(int mbIndex) {
         int mbAddr = map.getInverse()[groupId][mbIndex + indexOfFirstMb];
         int leftMBAddr = mbAddr - 1;
 
-        if ((leftMBAddr < firstMBInSlice) || (mbAddr % picWidthInMbs == 0) || (map.getGroups()[leftMBAddr] != groupId))
-            return -1;
-
-        return map.getIndices()[leftMBAddr] - indexOfFirstMb;
+        return !((leftMBAddr < firstMBInSlice) || ((mbAddr % picWidthInMbs) == 0) || (map.getGroups()[leftMBAddr] != groupId));
     }
 
-    public int getTopLeftMBIndex(int mbIndex) {
-        int mbAddr = map.getInverse()[groupId][mbIndex + indexOfFirstMb];
-        int topLeftMBAddr = mbAddr - picWidthInMbs - 1;
-
-        if ((topLeftMBAddr < firstMBInSlice) || (mbAddr % picWidthInMbs == 0)
-                || (map.getGroups()[topLeftMBAddr] != groupId))
-            return -1;
-
-        return map.getIndices()[topLeftMBAddr] - indexOfFirstMb;
-    }
-
-    public int getTopMBIdx(int mbIndex) {
+    public boolean topAvailable(int mbIndex) {
         int mbAddr = map.getInverse()[groupId][mbIndex + indexOfFirstMb];
         int topMBAddr = mbAddr - picWidthInMbs;
 
-        if ((topMBAddr < firstMBInSlice) || (map.getGroups()[topMBAddr] != groupId))
-            return -1;
-
-        return map.getIndices()[topMBAddr] - indexOfFirstMb;
+        return !((topMBAddr < firstMBInSlice) || (map.getGroups()[topMBAddr] != groupId));
     }
 
-    public int getTopRightMBIndex(int mbIndex) {
+    public int getMbX(int index) {
+        return getAddress(index) % picWidthInMbs;
+    }
+
+    public int getMbY(int index) {
+        return getAddress(index) / picWidthInMbs;
+    }
+
+    public boolean topRightAvailable(int mbIndex) {
         int mbAddr = map.getInverse()[groupId][mbIndex + indexOfFirstMb];
-        int topRightMBAddr = mbAddr - picWidthInMbs + 1;
+        int topRMBAddr = mbAddr - picWidthInMbs + 1;
 
-        if ((topRightMBAddr < firstMBInSlice) || (mbAddr % picWidthInMbs == picWidthInMbs - 1)
-                || (map.getGroups()[topRightMBAddr] != groupId))
-            return -1;
+        return !((topRMBAddr < firstMBInSlice) || (((mbAddr + 1) % picWidthInMbs) == 0) || (map.getGroups()[topRMBAddr] != groupId));
+    }
 
-        return map.getIndices()[topRightMBAddr] - indexOfFirstMb;
+    public boolean topLeftAvailable(int mbIndex) {
+        int mbAddr = map.getInverse()[groupId][mbIndex + indexOfFirstMb];
+        int topLMBAddr = mbAddr - picWidthInMbs - 1;
+
+        return !((topLMBAddr < firstMBInSlice) || ((mbAddr % picWidthInMbs) == 0) || (map.getGroups()[topLMBAddr] != groupId));
     }
 }

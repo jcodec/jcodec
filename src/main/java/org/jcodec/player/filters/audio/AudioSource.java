@@ -1,6 +1,7 @@
 package org.jcodec.player.filters.audio;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.RationalLarge;
@@ -17,7 +18,7 @@ public interface AudioSource {
 
     MediaInfo.AudioInfo getAudioInfo() throws IOException;
 
-    AudioFrame getFrame(byte[] buf) throws IOException;
+    AudioFrame getFrame(ByteBuffer buf) throws IOException;
 
     boolean drySeek(RationalLarge second) throws IOException;
     

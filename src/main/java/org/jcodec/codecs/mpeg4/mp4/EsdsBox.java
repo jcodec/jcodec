@@ -1,8 +1,6 @@
 package org.jcodec.codecs.mpeg4.mp4;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.mpeg4.es.DecoderConfig;
 import org.jcodec.codecs.mpeg4.es.DecoderSpecific;
@@ -23,7 +21,7 @@ import org.jcodec.containers.mp4.boxes.Header;
  */
 public class EsdsBox extends FullBox {
 
-    private byte[] streamInfo;
+    private ByteBuffer streamInfo;
     private int objectType;
     private int bufSize;
     private int maxBitrate;
@@ -42,7 +40,7 @@ public class EsdsBox extends FullBox {
         super(new Header(fourcc()));
     }
 
-    public EsdsBox(byte[] streamInfo, int objectType, int bufSize, int maxBitrate, int avgBitrate, int trackId) {
+    public EsdsBox(ByteBuffer streamInfo, int objectType, int bufSize, int maxBitrate, int avgBitrate, int trackId) {
         super(new Header(fourcc()));
         this.objectType = objectType;
         this.bufSize = bufSize;
@@ -53,17 +51,17 @@ public class EsdsBox extends FullBox {
     }
 
     @Override
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        if (streamInfo != null && streamInfo.length > 0)
+        if (streamInfo != null && streamInfo.remaining() > 0)
             new ES(trackId, new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, new DecoderSpecific(
                     streamInfo)), new SL()).write(out);
         else
             new ES(trackId, new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate), new SL()).write(out);
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
         ES es = (ES) Descriptor.read(input);
 
@@ -74,10 +72,10 @@ public class EsdsBox extends FullBox {
         maxBitrate = decoderConfig.getMaxBitrate();
         avgBitrate = decoderConfig.getAvgBitrate();
         DecoderSpecific decoderSpecific = Descriptor.find(decoderConfig, DecoderSpecific.class, DecoderSpecific.tag());
-        streamInfo = decoderSpecific == null ? null : decoderSpecific.getData();
+        streamInfo = decoderSpecific.getData();
     }
 
-    public byte[] getStreamInfo() {
+    public ByteBuffer getStreamInfo() {
         return streamInfo;
     }
 

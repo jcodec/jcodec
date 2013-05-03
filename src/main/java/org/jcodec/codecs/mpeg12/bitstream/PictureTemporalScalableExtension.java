@@ -2,8 +2,8 @@ package org.jcodec.codecs.mpeg12.bitstream;
 
 import java.io.IOException;
 
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -17,7 +17,7 @@ public class PictureTemporalScalableExtension {
     public int forward_temporal_reference;
     public int backward_temporal_reference;
 
-    public static PictureTemporalScalableExtension read(InBits in) throws IOException {
+    public static PictureTemporalScalableExtension read(BitReader in) {
         PictureTemporalScalableExtension ptse = new PictureTemporalScalableExtension();
         ptse.reference_select_code = in.readNBit(2);
         ptse.forward_temporal_reference = in.readNBit(10);
@@ -27,7 +27,7 @@ public class PictureTemporalScalableExtension {
         return ptse;
     }
 
-    public void write(OutBits out) throws IOException {
+    public void write(BitWriter out) throws IOException {
         out.writeNBit(reference_select_code, 2);
         out.writeNBit(forward_temporal_reference, 10);
         out.write1Bit(1); // todo: verify this

@@ -1,8 +1,6 @@
 package org.jcodec.codecs.mpeg4.es;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 import org.junit.Assert;
 
@@ -23,12 +21,12 @@ public class SL extends Descriptor {
         super(tag());
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.write(0x2);
+    protected void doWrite(ByteBuffer out) {
+        out.put((byte)0x2);
     }
 
-    protected void parse(InputStream input) throws IOException {
-        Assert.assertEquals(0x2, input.read());
+    protected void parse(ByteBuffer input) {
+        Assert.assertEquals(0x2, input.get() & 0xff);
     }
 
     public static int tag() {

@@ -1,6 +1,7 @@
 package org.jcodec.player.filters;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -36,7 +37,7 @@ public class JCodecVideoSource implements VideoSource {
     private ThreadLocal<VideoDecoder> decoders = new ThreadLocal<VideoDecoder>();
     private ExecutorService tp;
 
-    private List<byte[]> drain = new ArrayList<byte[]>();
+    private List<ByteBuffer> drain = new ArrayList<ByteBuffer>();
     private MediaInfo.VideoInfo mi;
     private PacketSource src;
 
@@ -112,12 +113,13 @@ public class JCodecVideoSource implements VideoSource {
     }
 
     public Packet pickNextPacket() throws IOException {
-        byte[] buffer;
+        ByteBuffer buffer;
         synchronized (drain) {
             if (drain.size() == 0) {
                 drain.add(allocateBuffer());
             }
             buffer = drain.remove(0);
+            buffer.rewind();
         }
 
         return src.getPacket(buffer);
@@ -166,7 +168,7 @@ public class JCodecVideoSource implements VideoSource {
 
             Picture pic = decoder.decodeFrame(pkt.getData(), out);
             synchronized (drain) {
-                drain.add(pkt.getData().buffer);
+                drain.add(pkt.getData());
             }
             return pic;
         }
@@ -200,13 +202,13 @@ public class JCodecVideoSource implements VideoSource {
         TreeSet<Packet> old = reordering;
         reordering = createReordering();
         for (Packet packet : old) {
-            drain.add(packet.getData().buffer);
+            drain.add(packet.getData());
         }
     }
 
-    private byte[] allocateBuffer() {
+    private ByteBuffer allocateBuffer() {
         Size dim = mi.getDim();
-        return new byte[dim.getWidth() * dim.getHeight() * 2];
+        return ByteBuffer.allocate(dim.getWidth() * dim.getHeight() * 2);
     }
 
     public MediaInfo.VideoInfo getMediaInfo() throws IOException {

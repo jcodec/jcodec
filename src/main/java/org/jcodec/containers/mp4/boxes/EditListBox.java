@@ -1,12 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.io.ReaderBE;
 import org.jcodec.common.tools.ToJSON;
 
 /**
@@ -36,27 +33,27 @@ public class EditListBox extends FullBox {
         this.edits = edits;
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
 
         edits = new ArrayList<Edit>();
-        long num = ReaderBE.readInt32(input);
+        long num = input.getInt();
         for (int i = 0; i < num; i++) {
-            int duration = (int) ReaderBE.readInt32(input);
-            int mediaTime = (int) ReaderBE.readInt32(input);
-            float rate = ReaderBE.readInt32(input) / 65536f;
+            int duration = input.getInt();
+            int mediaTime = input.getInt();
+            float rate = input.getInt() / 65536f;
             edits.add(new Edit(duration, mediaTime, rate));
         }
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        out.writeInt(edits.size());
+        out.putInt(edits.size());
         for (Edit edit : edits) {
-            out.writeInt((int) edit.getDuration());
-            out.writeInt((int) edit.getMediaTime());
-            out.writeInt((int) (edit.getRate() * 65536));
+            out.putInt((int) edit.getDuration());
+            out.putInt((int) edit.getMediaTime());
+            out.putInt((int) (edit.getRate() * 65536));
         }
     }
 

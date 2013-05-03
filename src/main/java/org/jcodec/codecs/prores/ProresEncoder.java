@@ -18,17 +18,12 @@ import static org.jcodec.codecs.prores.ProresConsts.runCodebooks;
 import static org.jcodec.common.dct.DCTRef.fdct;
 import static org.jcodec.common.model.ColorSpace.YUV422_10;
 import static org.jcodec.common.tools.MathUtil.log2;
-import gnu.trove.list.array.TShortArrayList;
+import static org.jcodec.common.tools.MathUtil.sign;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
-import org.jcodec.common.io.BitstreamWriter;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.ImageOP;
@@ -45,7 +40,8 @@ import org.jcodec.common.tools.ImageOP;
  */
 public class ProresEncoder {
 
-    private static final int DEFAULT_SLICE_MB_WIDTH = 8;
+    private static final int LOG_DEFAULT_SLICE_MB_WIDTH = 3;
+    private static final int DEFAULT_SLICE_MB_WIDTH = 1 << LOG_DEFAULT_SLICE_MB_WIDTH;
 
     public static enum Profile {
         PROXY(QMAT_LUMA_APCO, QMAT_CHROMA_APCO, "apco", 1000, 4, 8), LT(QMAT_LUMA_APCS, QMAT_CHROMA_APCS, "apcs", 2100,
@@ -90,7 +86,7 @@ public class ProresEncoder {
         return result;
     }
 
-    public static final void writeCodeword(OutBits writer, Codebook codebook, int val) throws IOException {
+    public static final void writeCodeword(BitWriter writer, Codebook codebook, int val) {
         int firstExp = ((codebook.switchBits + 1) << codebook.riceOrder);
         if (val >= firstExp) {
             val -= firstExp;
@@ -133,16 +129,12 @@ public class ProresEncoder {
         return (val >> 31) ^ sign;
     }
 
-    public static final int isNegative(int val) {
-        return ((val >> 31) ^ -1) + 1;
-    }
-
     public static final int getLevel(int val) {
         int sign = (val >> 31);
         return (val ^ sign) - sign;
     }
 
-    static final void writeDCCoeffs(OutBits bits, int[] qMat, int[] in, int blocksPerSlice) throws IOException {
+    static final void writeDCCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice) {
         int prevDc = qScale(qMat, 0, in[0] - 16384);
         writeCodeword(bits, firstDCCodebook, toGolumb(prevDc));
 
@@ -158,8 +150,7 @@ public class ProresEncoder {
         }
     }
 
-    static final void writeACCoeffs(OutBits bits, int[] qMat, int[] in, int blocksPerSlice, int[] scan, int maxCoeff)
-            throws IOException {
+    static final void writeACCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice, int[] scan, int maxCoeff) {
         int prevRun = 4;
         int prevLevel = 2;
 
@@ -177,14 +168,13 @@ public class ProresEncoder {
                     int level = getLevel(val);
                     writeCodeword(bits, levCodebooks[min(prevLevel, 9)], level - 1);
                     prevLevel = level;
-                    bits.write1Bit(isNegative(val));
+                    bits.write1Bit(sign(val));
                 }
             }
         }
     }
 
-    static final void encodeOnePlane(OutBits bits, int blocksPerSlice, int[] qMat, int[] scan, int[] in)
-            throws IOException {
+    static final void encodeOnePlane(BitWriter bits, int blocksPerSlice, int[] qMat, int[] scan, int[] in) {
 
         writeDCCoeffs(bits, qMat, in, blocksPerSlice);
         writeACCoeffs(bits, qMat, in, blocksPerSlice, scan, 64);
@@ -196,8 +186,8 @@ public class ProresEncoder {
         }
     }
 
-    protected int encodeSlice(DataOutput out, int[][] scaledLuma, int[][] scaledChroma, int[] scan, int sliceMbCount,
-            int mbX, int mbY, Picture result, int prevQp, int mbWidth, int mbHeight, boolean unsafe) throws IOException {
+    protected int encodeSlice(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan, int sliceMbCount,
+            int mbX, int mbY, Picture result, int prevQp, int mbWidth, int mbHeight, boolean unsafe) {
 
         Picture striped = splitSlice(result, mbX, mbY, sliceMbCount, unsafe);
         dctOnePlane(sliceMbCount << 2, striped.getPlaneData(0));
@@ -209,61 +199,67 @@ public class ProresEncoder {
         int high = est + (est >> 3);
 
         int qp = prevQp;
-        byte[][] data = encodeSliceData(scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp);
-        if (bits(data) > high && qp < profile.lastQp) {
+
+        out.put((byte) (6 << 3)); // hdr size
+        ByteBuffer fork = out.duplicate();
+        NIOUtils.skip(out, 5);
+        int rem = out.position();
+        int[] sizes = new int[3];
+        encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp, sizes);
+        if (bits(sizes) > high && qp < profile.lastQp) {
             do {
                 ++qp;
-                data = encodeSliceData(scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp);
-            } while (bits(data) > high && qp < profile.lastQp);
-        } else if (bits(data) < low && qp > profile.firstQp) {
+                out.position(rem);
+                encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp, sizes);
+            } while (bits(sizes) > high && qp < profile.lastQp);
+        } else if (bits(sizes) < low && qp > profile.firstQp) {
             do {
                 --qp;
-                data = encodeSliceData(scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp);
-            } while (bits(data) < low && qp > profile.firstQp);
+                out.position(rem);
+                encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp, sizes);
+            } while (bits(sizes) < low && qp > profile.firstQp);
         }
 
-        out.write(6 << 3); // hdr size
-        out.write(qp); // qscale
-        out.writeShort(data[0].length);
-        out.writeShort(data[1].length);
-
-        out.write(data[0]);
-        out.write(data[1]);
-        out.write(data[2]);
+        fork.put((byte) qp);
+        fork.putShort((short) sizes[0]);
+        fork.putShort((short) sizes[1]);
 
         return qp;
     }
 
-    protected int bits(byte[][] data) {
-        return (data[0].length + data[1].length + data[2].length) << 3;
+    static final int bits(int[] sizes) {
+        return sizes[0] + sizes[1] + sizes[2] << 3;
     }
 
-    protected static final byte[][] encodeSliceData(int[] qmatLuma, int[] qmatChroma, int[] scan, int sliceMbCount,
-            Picture striped, int qp) throws IOException {
+    protected static final void encodeSliceData(ByteBuffer out, int[] qmatLuma, int[] qmatChroma, int[] scan,
+            int sliceMbCount, Picture striped, int qp, int[] sizes) {
 
-        return new byte[][] { onePlane(sliceMbCount << 2, qmatLuma, scan, striped.getPlaneData(0)),
-                onePlane(sliceMbCount << 1, qmatChroma, scan, striped.getPlaneData(1)),
-                onePlane(sliceMbCount << 1, qmatChroma, scan, striped.getPlaneData(2)) };
+        sizes[0] = onePlane(out, sliceMbCount << 2, qmatLuma, scan, striped.getPlaneData(0));
+        sizes[1] = onePlane(out, sliceMbCount << 1, qmatChroma, scan, striped.getPlaneData(1));
+        sizes[2] = onePlane(out, sliceMbCount << 1, qmatChroma, scan, striped.getPlaneData(2));
     }
 
-    static final byte[] onePlane(int blocksPerSlice, int[] qmatLuma, int[] scan, int[] data) throws IOException {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        BitstreamWriter bits = new BitstreamWriter(bytes);
+    static final int onePlane(ByteBuffer out, int blocksPerSlice, int[] qmatLuma, int[] scan, int[] data) {
+        int rem = out.position();
+        BitWriter bits = new BitWriter(out);
         encodeOnePlane(bits, blocksPerSlice, qmatLuma, scan, data);
         bits.flush();
-        return bytes.toByteArray();
+        return out.position() - rem;
     }
 
-    protected byte[][] encodePicture(int[][] scaledLuma, int[][] scaledChroma, int[] scan, Picture picture)
-            throws IOException {
+    protected void encodePicture(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan, Picture picture) {
 
         int mbWidth = (picture.getWidth() + 15) >> 4;
         int mbHeight = (picture.getHeight() + 15) >> 4;
         int qp = profile.firstQp;
 
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        DataOutputStream dout = new DataOutputStream(buffer);
-        TShortArrayList sliceSizes = new TShortArrayList();
+        int nSlices = calcNSlices(mbWidth, mbHeight);
+        writePictureHeader(LOG_DEFAULT_SLICE_MB_WIDTH, nSlices, out);
+        ByteBuffer fork = out.duplicate();
+        NIOUtils.skip(out, nSlices << 1);
+
+        int i = 0;
+        int[] total = new int[nSlices];
         for (int mbY = 0; mbY < mbHeight; mbY++) {
             int mbX = 0;
             int sliceMbCount = DEFAULT_SLICE_MB_WIDTH;
@@ -271,35 +267,33 @@ public class ProresEncoder {
                 while (mbWidth - mbX < sliceMbCount)
                     sliceMbCount >>= 1;
 
-                int sliceStart = buffer.size();
+                int sliceStart = out.position();
                 boolean unsafeBottom = (picture.getHeight() % 16) != 0 && mbY == mbHeight - 1;
                 boolean unsafeRight = (picture.getWidth() % 16) != 0 && mbX + sliceMbCount == mbWidth;
-                qp = encodeSlice(dout, scaledLuma, scaledChroma, scan, sliceMbCount, mbX, mbY, picture, qp, mbWidth,
+                qp = encodeSlice(out, scaledLuma, scaledChroma, scan, sliceMbCount, mbX, mbY, picture, qp, mbWidth,
                         mbHeight, unsafeBottom || unsafeRight);
-                sliceSizes.add((short) (buffer.size() - sliceStart));
+                fork.putShort((short) (out.position() - sliceStart));
+                total[i++] = (short) (out.position() - sliceStart);
 
                 mbX += sliceMbCount;
             }
         }
-
-        ByteArrayOutputStream header = new ByteArrayOutputStream();
-        writePictureHeader(new PictureHeader(log2(DEFAULT_SLICE_MB_WIDTH), sliceSizes.toArray()), new DataOutputStream(
-                header));
-
-        return new byte[][] { header.toByteArray(), buffer.toByteArray() };
     }
 
-    public static void writePictureHeader(PictureHeader ph, DataOutput out) throws IOException {
+    public static void writePictureHeader(int logDefaultSliceMbWidth, int nSlices, ByteBuffer out) {
         int headerLen = 8;
-        out.write(headerLen << 3);
-        out.writeInt(0);
-        out.writeShort(ph.sliceSizes.length);
+        out.put((byte) (headerLen << 3));
+        out.putInt(0);
+        out.putShort((short) nSlices);
+        out.put((byte) (logDefaultSliceMbWidth << 4));
+    }
 
-        out.writeByte(ph.log2SliceMbWidth << 4);
-
-        for (int size : ph.sliceSizes) {
-            out.writeShort(size);
+    private int calcNSlices(int mbWidth, int mbHeight) {
+        int nSlices = mbWidth >> LOG_DEFAULT_SLICE_MB_WIDTH;
+        for (int i = 0; i < LOG_DEFAULT_SLICE_MB_WIDTH; i++) {
+            nSlices += (mbWidth >> i) & 0x1;
         }
+        return nSlices * mbHeight;
     }
 
     private Picture splitSlice(Picture result, int mbX, int mbY, int sliceMbCount, boolean unsafe) {
@@ -352,53 +346,45 @@ public class ProresEncoder {
         }
     }
 
-    public void encodeFrame(OutputStream out, Picture... pics) throws IOException {
+    public void encodeFrame(ByteBuffer out, Picture... pics) {
+        ByteBuffer fork = out.duplicate();
 
         int[] scan = pics.length > 1 ? interlaced_scan : progressive_scan;
-        byte[][] picture1 = encodePicture(scaledLuma, scaledChroma, scan, pics[0]);
-        byte[][] picture2 = pics.length == 1 ? null : encodePicture(scaledLuma, scaledChroma, scan, pics[1]);
-
-        DataOutput outp = new DataOutputStream(out);
-
-        int payloadSize = picture1[0].length + picture1[1].length
-                + (picture2 != null ? picture2[0].length + picture2[1].length : 0);
-        writeFrameHeader(outp, new ProresConsts.FrameHeader(payloadSize, pics[0].getWidth(), pics[0].getHeight()
+        writeFrameHeader(out, new ProresConsts.FrameHeader(0, pics[0].getCroppedWidth(), pics[0].getCroppedHeight()
                 * pics.length, pics.length == 1 ? 0 : 1, true, scan, profile.qmatLuma, profile.qmatChroma));
 
-        out.write(picture1[0]);
-        out.write(picture1[1]);
-
-        if (picture2 != null) {
-            out.write(picture2[0]);
-            out.write(picture2[1]);
-        }
+        encodePicture(out, scaledLuma, scaledChroma, scan, pics[0]);
+        if (pics.length > 1)
+            encodePicture(out, scaledLuma, scaledChroma, scan, pics[1]);
+        out.flip();
+        fork.putInt(out.remaining());
     }
 
-    public static void writeFrameHeader(DataOutput outp, ProresConsts.FrameHeader header) throws IOException {
+    public static void writeFrameHeader(ByteBuffer outp, ProresConsts.FrameHeader header) {
 
-        int headerSize = 148;
-        outp.writeInt(headerSize + 8 + header.payloadSize);
-        outp.write(new byte[] { 'i', 'c', 'p', 'f' });
+        short headerSize = 148;
+        outp.putInt(headerSize + 8 + header.payloadSize);
+        outp.put(new byte[] { 'i', 'c', 'p', 'f' });
 
-        outp.writeShort(headerSize); // header size
-        outp.writeShort(0);
+        outp.putShort(headerSize); // header size
+        outp.putShort((short) 0);
 
-        outp.write(new byte[] { 'a', 'p', 'l', '0' });
+        outp.put(new byte[] { 'a', 'p', 'l', '0' });
 
-        outp.writeShort(header.width);
-        outp.writeShort(header.height);
+        outp.putShort((short) header.width);
+        outp.putShort((short) header.height);
 
-        outp.write(header.frameType == 0 ? 0x83 : 0x87); // {10}(422){00}[{00}(frame),{01}(field)}{11}
+        outp.put((byte) (header.frameType == 0 ? 0x83 : 0x87)); // {10}(422){00}[{00}(frame),{01}(field)}{11}
 
-        outp.write(new byte[] { 0, 2, 2, 6, 32, 0 });
+        outp.put(new byte[] { 0, 2, 2, 6, 32, 0 });
 
-        outp.write(3); // flags2
+        outp.put((byte) 3); // flags2
         writeQMat(outp, header.qMatLuma);
         writeQMat(outp, header.qMatChroma);
     }
 
-    static final void writeQMat(DataOutput out, int[] qmat) throws IOException {
+    static final void writeQMat(ByteBuffer out, int[] qmat) {
         for (int i = 0; i < 64; i++)
-            out.write(qmat[i]);
+            out.put((byte) qmat[i]);
     }
 }

@@ -1,17 +1,16 @@
 package org.jcodec.movtool;
 
 import static java.lang.System.arraycopy;
-import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.MP4Util;
@@ -44,16 +43,16 @@ public class Strip {
             System.out.println("Syntax: strip <ref movie> <out movie>");
             System.exit(-1);
         }
-        RAInputStream input = null;
-        RandomAccessFile out = null;
+        SeekableByteChannel input = null;
+        SeekableByteChannel out = null;
         try {
-            input = bufin(new File(args[0]));
+            input = new FileChannelWrapper(new File(args[0]));
             File file = new File(args[1]);
             file.delete();
-            out = new RandomAccessFile(file, "rw");
+            out = new FileChannelWrapper(file);
             MovieBox movie = MP4Util.createRefMovie(input, "file://" + new File(args[0]).getAbsolutePath());
             new Strip().strip(movie);
-            movie.write(out);
+            MP4Util.writeMovie(out, movie);
         } finally {
             if (input != null)
                 input.close();

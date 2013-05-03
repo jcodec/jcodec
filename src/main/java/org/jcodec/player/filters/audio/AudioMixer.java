@@ -3,11 +3,13 @@ package org.jcodec.player.filters.audio;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.common.io.Buffer;
+import org.jcodec.common.AudioUtil;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.ChannelLabel;
@@ -57,9 +59,7 @@ public class AudioMixer implements AudioSource {
         private int pattern;
         private AudioSource src;
         private float[] floatBuf;
-        private byte[] byteBuf;
-        public final static float r16 = 1f / 32768f;
-        public final static float r24 = 1f / 8388608f;
+        private ByteBuffer byteBuf;
         private int channels;
         private AudioInfo audioInfo;
         private ChannelLabel[] labels;
@@ -68,7 +68,8 @@ public class AudioMixer implements AudioSource {
             this.src = src;
             this.audioInfo = src.getAudioInfo();
             this.channels = audioInfo.getFormat().getChannels();
-            this.byteBuf = new byte[audioInfo.getFormat().getFrameSize() * audioInfo.getFramesPerPacket() * 2];
+            this.byteBuf = ByteBuffer.allocate(audioInfo.getFormat().getFrameSize() * audioInfo.getFramesPerPacket()
+                    * 2);
             this.floatBuf = new float[NUM_FRAMES * channels];
             this.labels = audioInfo.getLabels();
 
@@ -112,59 +113,9 @@ public class AudioMixer implements AudioSource {
             AudioFrame frame = src.getFrame(byteBuf);
             if (frame == null)
                 return null;
-            int samples = toFloat(frame.getData(), floatBuf);
+            int samples = AudioUtil.toFloat(audioInfo.getFormat(), frame.getData(), floatBuf);
             return new FloatFrame((frame.getPts() * sampleRate) / frame.getTimescale(), samples / channels, pattern,
                     audioInfo.getLabels(), floatBuf);
-        }
-
-        private int toFloat(Buffer buf, float[] floatBuf) {
-            if (audioInfo.getFormat().isBigEndian()) {
-                if (audioInfo.getFormat().getSampleSizeInBits() == 16) {
-                    return toFloat16BE(buf, floatBuf);
-                } else {
-                    return toFloat24BE(buf, floatBuf);
-                }
-            } else {
-                if (audioInfo.getFormat().getSampleSizeInBits() == 16) {
-                    return toFloat16LE(buf, floatBuf);
-                } else {
-                    return toFloat24LE(buf, floatBuf);
-                }
-            }
-        }
-
-        private int toFloat24LE(Buffer buf, float[] out) {
-            int samples = 0;
-            while (buf.limit - buf.pos >= 3 && samples < out.length) {
-                out[samples++] = r24
-                        * ((((buf.buffer[buf.pos++] & 0xff) << 8) | ((buf.buffer[buf.pos++] & 0xff) << 16) | ((buf.buffer[buf.pos++] & 0xff) << 24)) >> 8);
-            }
-            return samples;
-        }
-
-        private int toFloat16LE(Buffer buf, float[] out) {
-            int samples = 0;
-            while (buf.limit - buf.pos >= 2 && samples < out.length) {
-                out[samples++] = r16 * (short) ((buf.buffer[buf.pos++] & 0xff) | ((buf.buffer[buf.pos++] & 0xff) << 8));
-            }
-            return samples;
-        }
-
-        private int toFloat24BE(Buffer buf, float[] out) {
-            int samples = 0;
-            while (buf.limit - buf.pos >= 3 && samples < out.length) {
-                out[samples++] = r24
-                        * ((((buf.buffer[buf.pos++] & 0xff) << 24) | ((buf.buffer[buf.pos++] & 0xff) << 16) | ((buf.buffer[buf.pos++] & 0xff) << 8)) >> 8);
-            }
-            return samples;
-        }
-
-        private int toFloat16BE(Buffer buf, float[] out) {
-            int samples = 0;
-            while (buf.limit - buf.pos >= 2 && samples < out.length) {
-                out[samples++] = r16 * (short) (((buf.buffer[buf.pos++] & 0xff) << 8) | (buf.buffer[buf.pos++] & 0xff));
-            }
-            return samples;
         }
 
         public void close() throws IOException {
@@ -229,8 +180,9 @@ public class AudioMixer implements AudioSource {
     }
 
     @Override
-    public synchronized AudioFrame getFrame(byte[] buf) throws IOException {
-        Buffer out = new Buffer(buf);
+    public synchronized AudioFrame getFrame(ByteBuffer buf) throws IOException {
+        ByteBuffer out = buf.duplicate();
+        out.order(ByteOrder.LITTLE_ENDIAN);
 
         if (nextFrame == null) {
             nextFrame = new FloatFrame[pins.length];
@@ -260,8 +212,9 @@ public class AudioMixer implements AudioSource {
                     nextFrame[i] = pins[i].getFrame();
             }
         }
+        out.flip();
 
-        return new AudioFrame(new AudioBuffer(out.flip(), dstFormat, NUM_FRAMES), startFrame, NUM_FRAMES, sampleRate,
+        return new AudioFrame(new AudioBuffer(out, dstFormat, NUM_FRAMES), startFrame, NUM_FRAMES, sampleRate,
                 (int) (startFrame / NUM_FRAMES));
     }
 
@@ -274,7 +227,7 @@ public class AudioMixer implements AudioSource {
             new float[] { .7f, 1, 1, 0, 0, 0, 0, .7f, .7f }, new float[] { .7f, .7f, 0, 0, 0, 0, 0, 1, 0 },
             new float[] { .7f, 0, .7f, 0, 0, 0, 0, 0, 1 } };
 
-    private int mix(Buffer out, FloatFrame[] in, long curFrame, int maxFrames) throws IOException {
+    private int mix(ByteBuffer out, FloatFrame[] in, long curFrame, int maxFrames) throws IOException {
 
         float[] sum = new float[dstChannels];
         float[] mul = new float[dstChannels];
@@ -311,8 +264,7 @@ public class AudioMixer implements AudioSource {
             for (int i = 0; i < dstChannels; i++) {
                 float val = count[i] > 1 ? clamp1f(sum[i] - mul[i]) : sum[i];
                 int sample = floatToSigned16Pack(val);
-                out.write(sample & 0xff);
-                out.write(sample >> 8);
+                out.putShort((short) sample);
                 count[i] = 0;
                 sum[i] = 0f;
                 mul[i] = 1f;

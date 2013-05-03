@@ -1,6 +1,7 @@
 package org.jcodec.player.filters;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.RationalLarge;
@@ -24,7 +25,7 @@ public interface PacketSource {
      * @return Encoded frame data with meta-information
      * @throws IOException
      */
-    Packet getPacket(byte[] buffer) throws IOException;
+    Packet getPacket(ByteBuffer buffer) throws IOException;
 
     /**
      * Get media info for this stream

@@ -1,10 +1,7 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
-import java.io.IOException;
-
-import org.jcodec.common.io.BitstreamReaderBB;
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,7 +21,7 @@ public class SequenceDisplayExtension {
         int transfer_characteristics;
         int matrix_coefficients;
 
-        public static ColorDescription read(BitstreamReaderBB in) {
+        public static ColorDescription read(BitReader in) {
             ColorDescription cd = new ColorDescription();
             cd.colour_primaries = in.readNBit(8);
             cd.transfer_characteristics = in.readNBit(8);
@@ -32,14 +29,14 @@ public class SequenceDisplayExtension {
             return cd;
         }
 
-        public void write(OutBits out) throws IOException {
+        public void write(BitWriter out) {
             out.writeNBit(colour_primaries, 8);
             out.writeNBit(transfer_characteristics, 8);
             out.writeNBit(matrix_coefficients, 8);
         }
     }
 
-    public static SequenceDisplayExtension read(BitstreamReaderBB in) {
+    public static SequenceDisplayExtension read(BitReader in) {
         SequenceDisplayExtension sde = new SequenceDisplayExtension();
         sde.video_format = in.readNBit(3);
         if (in.read1Bit() == 1) {
@@ -52,7 +49,7 @@ public class SequenceDisplayExtension {
         return sde;
     }
 
-    public void write(OutBits out) throws IOException {
+    public void write(BitWriter out) {
         out.writeNBit(video_format, 3);
         out.write1Bit(colorDescription != null ? 1 : 0);
         if (colorDescription != null)

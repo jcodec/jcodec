@@ -1,7 +1,7 @@
 package org.jcodec.codecs.common.biari;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -13,7 +13,7 @@ import java.io.OutputStream;
  * 
  */
 public class MEncoder {
-    private OutputStream out;
+    private ByteBuffer out;
 
     // Encoder state
     private int range;
@@ -27,9 +27,12 @@ public class MEncoder {
     private int outReg;
     private int bitsInOutReg;
 
-    public MEncoder(OutputStream out) {
+    private int[][] models;
+
+    public MEncoder(ByteBuffer out, int[][] models) {
         range = 510;
 
+        this.models = models;
         this.out = out;
     }
 
@@ -40,22 +43,22 @@ public class MEncoder {
      * @param cm
      * @throws IOException
      */
-    public void encodeBin(int bin, Context cm) throws IOException {
+    public void encodeBin(int model, int bin) {
 
         int qs = (range >> 6) & 0x3;
-        int rangeLPS = MConst.rangeLPS[qs][cm.getState()];
+        int rangeLPS = MConst.rangeLPS[qs][models[0][model]];
         range -= rangeLPS;
 
-        if (bin != cm.getMps()) {
+        if (bin != models[1][model]) {
             offset += range;
             range = rangeLPS;
-            if (cm.getState() == 0)
-                cm.setMps(1 - cm.getMps());
+            if (models[0][model] == 0)
+                models[1][model] = 1 - models[1][model];
 
-            cm.setState(MConst.transitLPS[cm.getState()]);
+            models[0][model] = MConst.transitLPS[models[0][model]];
         } else {
-            if (cm.getState() < 62)
-                cm.setState(cm.getState() + 1);
+            if (models[0][model] < 62)
+                models[0][model] ++;
         }
 
         renormalize();
@@ -68,7 +71,7 @@ public class MEncoder {
      * @param bin
      * @throws IOException
      */
-    public void encodeBinBypass(int bin) throws IOException {
+    public void encodeBinBypass(int bin) {
         offset <<= 1;
         if (bin == 1) {
             offset += range;
@@ -91,7 +94,7 @@ public class MEncoder {
      * @param bin
      * @throws IOException
      */
-    public void encodeBinFinal(int bin) throws IOException {
+    public void encodeBinFinal(int bin) {
         range -= 2;
         if (bin == 0) {
             renormalize();
@@ -102,13 +105,13 @@ public class MEncoder {
         }
     }
 
-    public void finishEncoding() throws IOException {
+    public void finishEncoding() {
         flushOutstanding((offset >> 9) & 0x1);
         putBit((offset >> 8) & 0x1);
         stuffBits();
     }
 
-    private void renormalize() throws IOException {
+    private void renormalize() {
         while (range < 256) {
             if (offset < 256) {
                 flushOutstanding(0);
@@ -125,7 +128,7 @@ public class MEncoder {
         }
     }
 
-    private void flushOutstanding(int hasCarry) throws IOException {
+    private void flushOutstanding(int hasCarry) {
         if (zeroBorrowed)
             putBit(hasCarry);
 
@@ -136,24 +139,24 @@ public class MEncoder {
         zeroBorrowed = true;
     }
 
-    private void putBit(int bit) throws IOException {
+    private void putBit(int bit) {
         outReg = (outReg << 1) | bit;
         ++bitsInOutReg;
 
         if (bitsInOutReg == 8) {
-            out.write(outReg);
+            out.put((byte) outReg);
             outReg = 0;
             bitsInOutReg = 0;
         }
     }
 
-    private void stuffBits() throws IOException {
+    private void stuffBits() {
         if (bitsInOutReg == 0) {
-            out.write(128);
+            out.put((byte) 128);
         } else {
             outReg = (outReg << 1) | 1;
             outReg <<= (8 - (bitsInOutReg + 1));
-            out.write(outReg);
+            out.put((byte) outReg);
             outReg = 0;
             bitsInOutReg = 0;
         }

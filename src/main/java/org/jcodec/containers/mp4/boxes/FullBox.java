@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -22,14 +18,14 @@ public class FullBox extends Box {
     protected byte version;
     protected int flags;
 
-    public void parse(InputStream input) throws IOException {
-        int vf = (int)ReaderBE.readInt32(input);
+    public void parse(ByteBuffer input) {
+        int vf = input.getInt();
         version = (byte)((vf >> 24) & 0xff);
         flags = vf & 0xffffff;
     }
     
-    protected void doWrite(DataOutput out) throws IOException {
-        out.writeInt((version << 24) | (flags & 0xffffff));
+    protected void doWrite(ByteBuffer out) {
+        out.putInt((version << 24) | (flags & 0xffffff));
     }
 
     public byte getVersion() {

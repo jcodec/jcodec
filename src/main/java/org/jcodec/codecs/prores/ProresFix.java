@@ -5,26 +5,23 @@ import static org.jcodec.codecs.prores.ProresConsts.dcCodebooks;
 import static org.jcodec.codecs.prores.ProresConsts.firstDCCodebook;
 import static org.jcodec.codecs.prores.ProresConsts.levCodebooks;
 import static org.jcodec.codecs.prores.ProresConsts.runCodebooks;
+import static org.jcodec.codecs.prores.ProresDecoder.bitstream;
 import static org.jcodec.codecs.prores.ProresDecoder.readCodeword;
-import static org.jcodec.codecs.prores.ProresDecoder.toSigned;
 import static org.jcodec.codecs.prores.ProresEncoder.getLevel;
-import static org.jcodec.codecs.prores.ProresEncoder.isNegative;
 import static org.jcodec.codecs.prores.ProresEncoder.writeCodeword;
 import static org.jcodec.common.tools.MathUtil.log2;
+import static org.jcodec.common.tools.MathUtil.sign;
+import static org.jcodec.common.tools.MathUtil.toSigned;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
-import org.jcodec.common.io.BitstreamReaderBB;
-import org.jcodec.common.io.BitstreamWriter;
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,7 +34,7 @@ import org.jcodec.common.io.OutBits;
  */
 public class ProresFix {
 
-    static final void readDCCoeffs(InBits bits, int[] out, int blocksPerSlice) throws IOException {
+    static final void readDCCoeffs(BitReader bits, int[] out, int blocksPerSlice) {
         out[0] = readCodeword(bits, firstDCCodebook);
         if (out[0] < 0) {
             throw new RuntimeException("First DC coeff damaged");
@@ -54,8 +51,7 @@ public class ProresFix {
         }
     }
 
-    static final void readACCoeffs(BitstreamReaderBB bits, int[] out, int blocksPerSlice, int[] scan)
-            throws IOException {
+    static final void readACCoeffs(BitReader bits, int[] out, int blocksPerSlice, int[] scan) {
         int run = 4;
         int level = 2;
 
@@ -81,7 +77,7 @@ public class ProresFix {
         }
     }
 
-    static final void writeDCCoeffs(OutBits bits, int[] in, int blocksPerSlice) throws IOException {
+    static final void writeDCCoeffs(BitWriter bits, int[] in, int blocksPerSlice) {
         writeCodeword(bits, firstDCCodebook, in[0]);
 
         int code = 5, idx = 64;
@@ -91,7 +87,7 @@ public class ProresFix {
         }
     }
 
-    static final void writeACCoeffs(OutBits bits, int[] in, int blocksPerSlice, int[] scan) throws IOException {
+    static final void writeACCoeffs(BitWriter bits, int[] in, int blocksPerSlice, int[] scan) {
         int prevRun = 4;
         int prevLevel = 2;
 
@@ -109,13 +105,13 @@ public class ProresFix {
                     int level = getLevel(val);
                     writeCodeword(bits, levCodebooks[min(prevLevel, 9)], level - 1);
                     prevLevel = level;
-                    bits.write1Bit(isNegative(val));
+                    bits.write1Bit(sign(val));
                 }
             }
         }
     }
 
-    static void copyCoeff(BitstreamReaderBB ib, OutBits ob, int blocksPerSlice, int[] scan) throws IOException {
+    static void copyCoeff(BitReader ib, BitWriter ob, int blocksPerSlice, int[] scan) {
         int[] out = new int[blocksPerSlice << 6];
         try {
             readDCCoeffs(ib, out, blocksPerSlice);
@@ -127,15 +123,12 @@ public class ProresFix {
         ob.flush();
     }
 
-    public static Buffer transcode(Buffer inBuf, byte[] buf) throws IOException {
-        Buffer outBuf = new Buffer(buf);
-        Buffer fork = outBuf.fork();
+    public static ByteBuffer transcode(ByteBuffer inBuf, ByteBuffer _outBuf) {
+        ByteBuffer outBuf = _outBuf.slice();
+        ByteBuffer fork = outBuf.duplicate();
 
-        DataOutput out = outBuf.dout();
-        DataInput inp = inBuf.dinp();
-
-        FrameHeader fh = ProresDecoder.readFrameHeader(inp);
-        ProresEncoder.writeFrameHeader(out, fh);
+        FrameHeader fh = ProresDecoder.readFrameHeader(inBuf);
+        ProresEncoder.writeFrameHeader(outBuf, fh);
 
         if (fh.frameType == 0) {
             transcodePicture(inBuf, outBuf, fh);
@@ -145,107 +138,95 @@ public class ProresFix {
             transcodePicture(inBuf, outBuf, fh);
         }
 
-        ProresEncoder.writeFrameHeader(fork.dout(), fh);
+        ProresEncoder.writeFrameHeader(fork, fh);
 
-        return new Buffer(buf, 0, outBuf.pos);
+        outBuf.flip();
+
+        return outBuf;
     }
 
-    private static void transcodePicture(Buffer inBuf, Buffer outBuf, FrameHeader fh) throws IOException {
-        DataOutput out = outBuf.dout();
-        DataInput inp = inBuf.dinp();
+    private static void transcodePicture(ByteBuffer inBuf, ByteBuffer outBuf, FrameHeader fh) {
 
-        PictureHeader ph = ProresDecoder.readPictureHeader(inp);
-        Buffer fork = outBuf.from(0);
-        ProresEncoder.writePictureHeader(ph, out);
+        PictureHeader ph = ProresDecoder.readPictureHeader(inBuf);
+        ProresEncoder.writePictureHeader(ph.log2SliceMbWidth, ph.sliceSizes.length, outBuf);
+        ByteBuffer fork = outBuf.duplicate();
+        outBuf.position(outBuf.position() + (ph.sliceSizes.length << 1));
 
         int mbWidth = (fh.width + 15) >> 4;
-        int mbHeight = (fh.height + 15) >> 4;
 
         int sliceMbCount = 1 << ph.log2SliceMbWidth;
-        int mbX = 0, mbY = 0;
+        int mbX = 0;
         for (int i = 0; i < ph.sliceSizes.length; i++) {
 
             while (mbWidth - mbX < sliceMbCount)
                 sliceMbCount >>= 1;
 
-            int savedPoint = outBuf.pos;
+            int savedPoint = outBuf.position();
 
             transcodeSlice(inBuf, outBuf, sliceMbCount, ph.sliceSizes[i], fh);
-            ph.sliceSizes[i] = (short) (outBuf.pos - savedPoint);
+            fork.putShort((short) (outBuf.position() - savedPoint));
 
             mbX += sliceMbCount;
             if (mbX == mbWidth) {
                 sliceMbCount = 1 << ph.log2SliceMbWidth;
                 mbX = 0;
-                mbY++;
             }
         }
-
-        ProresEncoder.writePictureHeader(ph, fork.dout());
     }
 
-    private static void transcodeSlice(Buffer inBuf, Buffer outBuf, int sliceMbCount, short sliceSize, FrameHeader fh)
-            throws IOException {
-        DataInput inp = inBuf.dinp();
-        DataOutput out = outBuf.dout();
+    private static void transcodeSlice(ByteBuffer inBuf, ByteBuffer outBuf, int sliceMbCount, short sliceSize,
+            FrameHeader fh) {
 
-        int hdrSize = (inp.readByte() & 0xff) >> 3;
-        int qScaleOrig = inp.readByte() & 0xff;
-        int yDataSize = inp.readShort();
-        int uDataSize = inp.readShort();
+        int hdrSize = (inBuf.get() & 0xff) >> 3;
+        int qScaleOrig = inBuf.get() & 0xff;
+        int yDataSize = inBuf.getShort();
+        int uDataSize = inBuf.getShort();
         int vDataSize = sliceSize - uDataSize - yDataSize - hdrSize;
 
-        out.write(6 << 3); // hdr size
-        out.write(qScaleOrig); // qscale
-        Buffer beforeSizes = outBuf.fork();
-        out.writeShort(0);
-        out.writeShort(0);
+        outBuf.put((byte) (6 << 3)); // hdr size
+        outBuf.put((byte) qScaleOrig); // qscale
+        ByteBuffer beforeSizes = outBuf.duplicate();
+        outBuf.putInt(0);
 
-        int beforeY = outBuf.pos;
-        copyCoeff(bitstream(inBuf, yDataSize), new BitstreamWriter(outBuf.os()), sliceMbCount << 2, fh.scan);
-        int beforeCb = outBuf.pos;
-        copyCoeff(bitstream(inBuf, uDataSize), new BitstreamWriter(outBuf.os()), sliceMbCount << 1, fh.scan);
-        int beforeCr = outBuf.pos;
-        copyCoeff(bitstream(inBuf, vDataSize), new BitstreamWriter(outBuf.os()), sliceMbCount << 1, fh.scan);
+        int beforeY = outBuf.position();
+        copyCoeff(bitstream(inBuf, yDataSize), new BitWriter(outBuf), sliceMbCount << 2, fh.scan);
+        int beforeCb = outBuf.position();
+        copyCoeff(bitstream(inBuf, uDataSize), new BitWriter(outBuf), sliceMbCount << 1, fh.scan);
+        int beforeCr = outBuf.position();
+        copyCoeff(bitstream(inBuf, vDataSize), new BitWriter(outBuf), sliceMbCount << 1, fh.scan);
 
-        out = beforeSizes.dout();
-        out.writeShort(beforeCb - beforeY);
-        out.writeShort(beforeCr - beforeCb);
+        beforeSizes.putShort((short) (beforeCb - beforeY));
+        beforeSizes.putShort((short) (beforeCr - beforeCb));
     }
 
-    static final BitstreamReaderBB bitstream(Buffer data, int dataSize) throws IOException {
-        return new BitstreamReaderBB(data.read(dataSize));
-    }
-
-    public static List<String> check(Buffer data) throws IOException {
+    public static List<String> check(ByteBuffer data) {
         List<String> messages = new ArrayList<String>();
-        DataInput inp = data.dinp();
-        int frameSize = inp.readInt();
+        int frameSize = data.getInt();
 
-        if (!"icpf".equals(ProresDecoder.readSig(inp))) {
+        if (!"icpf".equals(ProresDecoder.readSig(data))) {
             messages.add("[ERROR] Missing ProRes signature (icpf).");
             return messages;
         }
 
-        short headerSize = inp.readShort();
+        short headerSize = data.getShort();
         if (headerSize > 148) {
             messages.add("[ERROR] Wrong ProRes frame header.");
             return messages;
         }
-        short version = inp.readShort();
+        short version = data.getShort();
 
-        int res1 = inp.readInt();
+        int res1 = data.getInt();
 
-        short width = inp.readShort();
-        short height = inp.readShort();
+        short width = data.getShort();
+        short height = data.getShort();
         if (width < 0 || width > 10000 || height < 0 || height > 10000) {
             messages.add("[ERROR] Wrong ProRes frame header, invalid image size [" + width + "x" + height + "].");
             return messages;
         }
 
-        int flags1 = inp.readByte();
+        int flags1 = data.get();
 
-        inp.skipBytes(headerSize - 13);
+        data.position(data.position() + headerSize - 13);
 
         if (((flags1 >> 2) & 3) == 0) {
             checkPicture(data, width, height, messages);
@@ -257,10 +238,9 @@ public class ProresFix {
         return messages;
     }
 
-    private static void checkPicture(Buffer data, int width, int height, List<String> messages) throws IOException {
-        DataInput inp = data.dinp();
+    private static void checkPicture(ByteBuffer data, int width, int height, List<String> messages) {
 
-        PictureHeader ph = ProresDecoder.readPictureHeader(inp);
+        PictureHeader ph = ProresDecoder.readPictureHeader(data);
 
         int mbWidth = (width + 15) >> 4;
         int mbHeight = (height + 15) >> 4;
@@ -273,7 +253,7 @@ public class ProresFix {
                 sliceMbCount >>= 1;
 
             try {
-                checkSlice(data.read(ph.sliceSizes[i]), sliceMbCount);
+                checkSlice(NIOUtils.read(data, ph.sliceSizes[i]), sliceMbCount);
             } catch (Exception e) {
                 messages.add("[ERROR] Slice data corrupt: mbX = " + mbX + ", mbY = " + mbY + ". " + e.getMessage());
             }
@@ -287,14 +267,13 @@ public class ProresFix {
         }
     }
 
-    private static void checkSlice(Buffer sliceData, int sliceMbCount) throws IOException {
-        DataInput inp = sliceData.dinp();
+    private static void checkSlice(ByteBuffer sliceData, int sliceMbCount) {
         int sliceSize = sliceData.remaining();
 
-        int hdrSize = (inp.readByte() & 0xff) >> 3;
-        int qScaleOrig = inp.readByte() & 0xff;
-        int yDataSize = inp.readShort();
-        int uDataSize = inp.readShort();
+        int hdrSize = (sliceData.get() & 0xff) >> 3;
+        int qScaleOrig = sliceData.get() & 0xff;
+        int yDataSize = sliceData.getShort();
+        int uDataSize = sliceData.getShort();
         int vDataSize = sliceSize - uDataSize - yDataSize - hdrSize;
 
         checkCoeff(bitstream(sliceData, yDataSize), sliceMbCount << 2);
@@ -302,7 +281,7 @@ public class ProresFix {
         checkCoeff(bitstream(sliceData, vDataSize), sliceMbCount << 1);
     }
 
-    private static void checkCoeff(BitstreamReaderBB ib, int blocksPerSlice) throws IOException {
+    private static void checkCoeff(BitReader ib, int blocksPerSlice) {
         int[] scan = new int[64];
         int[] out = new int[blocksPerSlice << 6];
         readDCCoeffs(ib, out, blocksPerSlice);

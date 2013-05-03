@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,23 +24,23 @@ public class SampleEntry extends NodeBox {
         this.drefInd = drefInd;
     }
 
-    public void parse(InputStream input) throws IOException {
-        ReaderBE.readInt32(input);
-        ReaderBE.readInt16(input);
+    public void parse(ByteBuffer input) {
+        input.getInt();
+        input.getShort();
         
-        drefInd = (short) ReaderBE.readInt16(input);
+        drefInd = input.getShort();
     }
     
-    protected void parseExtensions(InputStream input) throws IOException {
+    protected void parseExtensions(ByteBuffer input) {
         super.parse(input);
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.write(new byte[] { 0, 0, 0, 0, 0, 0 });
-        out.writeShort(drefInd); // data ref index
+    protected void doWrite(ByteBuffer out) {
+        out.put(new byte[] { 0, 0, 0, 0, 0, 0 });
+        out.putShort(drefInd); // data ref index
     }
     
-    protected void writeExtensions(DataOutput out) throws IOException {
+    protected void writeExtensions(ByteBuffer out) {
         super.doWrite(out);
     }
 

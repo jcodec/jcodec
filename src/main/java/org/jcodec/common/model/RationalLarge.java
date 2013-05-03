@@ -140,4 +140,8 @@ public class RationalLarge {
     public RationalLarge divideBy(RationalLarge other) {
         return new RationalLarge(num * other.den, den * other.num);
     }
+
+    public double scalar() {
+        return ((double) num) / den;
+    }
 }

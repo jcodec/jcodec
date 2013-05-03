@@ -1,8 +1,6 @@
 package org.jcodec.codecs.aac.blocks;
 
-import java.io.IOException;
-
-import org.jcodec.common.io.InBits;
+import org.jcodec.common.io.BitReader;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,7 +13,7 @@ import org.jcodec.common.io.InBits;
  */
 public class BlockDSE extends Block {
 
-    public void parse(InBits in) throws IOException {
+    public void parse(BitReader in) {
         int elemType = (int) in.readNBit(4);
         int byte_align = in.read1Bit();
         int count = (int) in.readNBit(8);

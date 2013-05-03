@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -51,24 +47,24 @@ public class CompositionOffsetsBox extends FullBox {
     }
 
     @Override
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
-        int num = (int) ReaderBE.readInt32(input);
+        int num = input.getInt();
 
         entries = new Entry[num];
         for (int i = 0; i < num; i++) {
-            entries[i] = new Entry((int) ReaderBE.readInt32(input), (int) ReaderBE.readInt32(input));
+            entries[i] = new Entry(input.getInt(), input.getInt());
         }
     }
 
     @Override
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        out.writeInt(entries.length);
+        out.putInt(entries.length);
         for (int i = 0; i < entries.length; i++) {
-            out.writeInt(entries[i].count);
-            out.writeInt(entries[i].offset);
+            out.putInt(entries[i].count);
+            out.putInt(entries[i].offset);
         }
     }
 

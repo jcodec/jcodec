@@ -20,6 +20,7 @@ import javax.sound.sampled.AudioFormat;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CountingInputStream;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.model.ChannelLabel;
 
 /**
@@ -260,14 +261,14 @@ public class WavHeader {
             chunkSize = 40;
         }
 
-        out.write("RIFF".getBytes());
+        out.write(JCodecUtil.asciiString("RIFF"));
         writeInt(out, (int) chunkSize);
-        out.write("WAVE".getBytes());
+        out.write(JCodecUtil.asciiString("WAVE"));
 
-        out.write("fmt ".getBytes());
+        out.write(JCodecUtil.asciiString("fmt "));
         writeInt(out, fmt.size());
         fmt.write(out);
-        out.write("data".getBytes());
+        out.write(JCodecUtil.asciiString("data"));
         if (dataSize <= 0xffffffffL) {
             writeInt(out, (int) dataSize);
         } else {
@@ -283,14 +284,14 @@ public class WavHeader {
             chunkSize = 40;
         }
 
-        out.write("RIFF".getBytes());
+        out.write(JCodecUtil.asciiString("RIFF"));
         writeInt(out, (int) chunkSize);
-        out.write("WAVE".getBytes());
+        out.write(JCodecUtil.asciiString("WAVE"));
 
-        out.write("fmt ".getBytes());
+        out.write(JCodecUtil.asciiString("fmt "));
         writeInt(out, fmt.size());
         fmt.write(out);
-        out.write("data".getBytes());
+        out.write(JCodecUtil.asciiString("data"));
 
         if (dataSize <= 0xffffffffL) {
             writeInt(out, (int) dataSize);

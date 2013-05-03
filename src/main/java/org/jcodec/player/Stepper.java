@@ -1,6 +1,7 @@
 package org.jcodec.player;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -10,7 +11,7 @@ import java.util.concurrent.Executors;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.common.io.Buffer;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Frame;
 import org.jcodec.common.model.Picture;
@@ -126,19 +127,20 @@ public class Stepper {
     }
 
     private void playSound(int ms) throws IOException {
-        Buffer sound = new Buffer((int) (ms * af.getFrameRate() / 1000) * af.getFrameSize());
-        byte[] buf = new byte[ai.getFramesPerPacket() * af.getFrameSize()];
+        ByteBuffer sound = ByteBuffer.allocate(((int) (ms * af.getFrameRate() / 1000) * af.getFrameSize()));
+        ByteBuffer buf = ByteBuffer.allocate(ai.getFramesPerPacket() * af.getFrameSize());
         while (sound.remaining() > 0) {
             AudioFrame frame = audioSource.getFrame(buf);
             if (frame == null)
                 break;
-            Buffer data = frame.getData();
-            sound.write(data.read(Math.min(data.remaining(), sound.remaining())));
+            ByteBuffer data = frame.getData();
+            NIOUtils.write(sound, NIOUtils.read(data, Math.min(data.remaining(), sound.remaining())));
         }
+        sound.flip();
 
         ao.flush();
         ao.resume();
-        ao.write(sound.flip());
+        ao.write(sound);
         ao.drain();
         ao.pause();
     }

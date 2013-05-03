@@ -1,12 +1,14 @@
 package org.jcodec.samples.streaming;
 
 import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.IntraCoded;
-import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.containers.mps.MPSDemuxer.mediaStream;
 import static org.jcodec.containers.mps.MPSDemuxer.videoStream;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,8 +17,7 @@ import junit.framework.Assert;
 
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Packet;
@@ -69,43 +70,42 @@ public class MTSAdapter implements Adapter {
         return tracks;
     }
 
-    private static final boolean markerStart(Buffer buf) {
+    private static final boolean markerStart(ByteBuffer buf) {
         return buf.get(0) == 0 && buf.get(1) == 0 && buf.get(2) == 1;
     }
 
     public class AudioAdapterTrack implements Adapter.AudioAdapterTrack {
         protected int sid;
-        protected RAInputStream is;
+        protected FileChannel channel;
 
         public AudioAdapterTrack(int sid) throws IOException {
             this.sid = sid;
-            is = bufin(mtsFile);
-            is.seek(index.frame(sid, 0).dataOffset);
+            channel = new FileInputStream(mtsFile).getChannel();
+            channel.position(index.frame(sid, 0).dataOffset);
         }
 
         protected synchronized Packet frame(FrameEntry e) throws IOException {
-            is.seek(e.dataOffset);
+            channel.position(e.dataOffset);
 
-            MTSPacket ts = MTSDemuxer.readPacket(is);
+            MTSPacket ts = MTSDemuxer.readPacket(channel);
             if (ts == null)
                 return null;
             int guid = ts.pid;
             Assert.assertEquals(sid, ts.payload.get(3));
 
-            List<Buffer> packets = new LinkedList<Buffer>();
-            ts.payload.skip(4);
-            PESPacket pes = MPSDemuxer.readPES(sid, ts.payload.is());
+            List<ByteBuffer> packets = new LinkedList<ByteBuffer>();
+            PESPacket pes = MPSDemuxer.readPES(ts.payload, 0);
             int remaining = pes.length <= 0 ? Integer.MAX_VALUE : pes.length;
 
             while (remaining > 0) {
 
                 if (ts.pid == guid && ts.payload != null) {
-                    Buffer part = ts.payload.read(Math.min(remaining, ts.payload.remaining()));
+                    ByteBuffer part = NIOUtils.read(ts.payload, Math.min(remaining, ts.payload.remaining()));
                     packets.add(part);
                     remaining -= part.remaining();
                 }
 
-                ts = MTSDemuxer.readPacket(is);
+                ts = MTSDemuxer.readPacket(channel);
 
                 if (ts == null)
                     return null;
@@ -114,7 +114,7 @@ public class MTSAdapter implements Adapter {
                     break;
             }
 
-            Buffer data = Buffer.combine(packets);
+            ByteBuffer data = NIOUtils.combine(packets);
 
             return new Packet(data, e.pts, 90000, e.duration, e.frameNo, true, null);
         }
@@ -122,8 +122,8 @@ public class MTSAdapter implements Adapter {
         @Override
         public MediaInfo getMediaInfo() throws IOException {
             Packet frame = getFrame(0);
-            AudioBuffer decoded = new S302MDecoder()
-                    .decodeFrame(frame.getData(), new byte[frame.getData().remaining()]);
+            AudioBuffer decoded = new S302MDecoder().decodeFrame(frame.getData(),
+                    ByteBuffer.allocate(frame.getData().remaining()));
             int frames = index.getNumFrames(sid);
             FrameEntry e = index.frame(sid, frames - 1);
             long duration = e.pts;
@@ -175,18 +175,18 @@ public class MTSAdapter implements Adapter {
         }
 
         void close() throws IOException {
-            is.close();
+            channel.close();
         }
     }
 
     public class VideoAdapterTrack implements Adapter.VideoAdapterTrack {
         protected int sid;
-        protected RAInputStream is;
+        protected FileChannel channel;
 
         public VideoAdapterTrack(int sid) throws IOException {
             this.sid = sid;
-            is = bufin(mtsFile);
-            is.seek(index.frame(sid, 0).dataOffset);
+            channel = new FileInputStream(mtsFile).getChannel();
+            channel.position(index.frame(sid, 0).dataOffset);
         }
 
         @Override
@@ -205,7 +205,8 @@ public class MTSAdapter implements Adapter {
 
         @Override
         public int gopId(int frameNo) {
-            return ((VideoFrameEntry) index.frame(sid, frameNo)).gopId;
+            VideoFrameEntry vfe = (VideoFrameEntry) index.frame(sid, frameNo);
+            return vfe == null ? -1 : vfe.gopId;
         }
 
         private List<VideoFrameEntry> gop(VideoFrameEntry cur) throws IOException {
@@ -243,15 +244,15 @@ public class MTSAdapter implements Adapter {
         }
 
         protected synchronized Packet frame(VideoFrameEntry e) throws IOException {
-            is.seek(e.dataOffset);
+            channel.position(e.dataOffset);
 
-            MTSPacket ts = MTSDemuxer.readPacket(is);
+            MTSPacket ts = MTSDemuxer.readPacket(channel);
             if (ts == null)
                 return null;
             int guid = ts.pid;
             Assert.assertEquals(sid, ts.payload.get(3));
 
-            List<Buffer> packets = null;
+            List<ByteBuffer> packets = null;
             PESPacket pes = null;
             boolean skip = false;
             int marker = 0xffffffff;
@@ -259,25 +260,25 @@ public class MTSAdapter implements Adapter {
                 int streamId = ts.payload.get(3);
                 if (ts.payloadStart || (pes.length <= 0 && markerStart(ts.payload) && mediaStream(streamId))) {
                     skip = streamId != sid;
-                    ts.payload.skip(4);
-                    pes = MPSDemuxer.readPES(streamId, ts.payload.is());
+                    pes = MPSDemuxer.readPES(ts.payload, 0);
                 }
 
-                Buffer data = ts.payload;
-                for (int i = data.pos; i < data.limit; i++) {
-                    marker = (marker << 8) | (data.buffer[i] & 0xff);
+                ByteBuffer data = ts.payload;
+                ByteBuffer leading = data.duplicate();
+                while (data.hasRemaining()) {
+                    marker = (marker << 8) | (data.get() & 0xff);
 
                     if (marker < 0x100 || marker > 0x1b9)
                         continue;
 
                     if (packets == null && marker == 0x100) {
-                        packets = new ArrayList<Buffer>();
+                        packets = new ArrayList<ByteBuffer>();
                     } else if (packets != null
                             && (marker == 0x100 || (marker >= 0x1b0 && marker != 0x1b2 && marker != 0x1b5))) {
-                        Buffer leading = data.read(i - data.pos - 3);
+                        leading.limit(data.position() - 3);
                         packets.add(leading);
                         packets.add(0, index.getExtraData(sid, e.edInd));
-                        Packet pkt = new Packet(Buffer.combine(packets), e.pts, 90000, e.duration, e.frameNo,
+                        Packet pkt = new Packet(NIOUtils.combine(packets), e.pts, 90000, e.duration, e.frameNo,
                                 e.frameType == IntraCoded, e.getTapeTimecode());
                         pkt.setDisplayOrder(e.displayOrder);
                         return pkt;
@@ -288,7 +289,7 @@ public class MTSAdapter implements Adapter {
                     packets.add(data);
 
                 do {
-                    ts = MTSDemuxer.readPacket(is);
+                    ts = MTSDemuxer.readPacket(channel);
                 } while (ts != null && (ts.pid != guid || ts.payload == null));
             }
 
@@ -313,7 +314,7 @@ public class MTSAdapter implements Adapter {
         }
 
         void close() throws IOException {
-            is.close();
+            channel.close();
         }
     }
 

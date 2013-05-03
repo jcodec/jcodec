@@ -11,11 +11,9 @@ import static org.jcodec.codecs.aac.blocks.BlockICS.BandType.NOISE_BT;
 import static org.jcodec.codecs.aac.blocks.BlockICS.BandType.ZERO_BT;
 import static org.jcodec.common.tools.MathUtil.clip;
 
-import java.io.IOException;
-
 import org.jcodec.codecs.aac.Profile;
 import org.jcodec.codecs.prores.ProresDecoder;
-import org.jcodec.common.io.InBits;
+import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
 import org.jcodec.common.tools.MathUtil;
@@ -72,7 +70,7 @@ public class BlockICS extends Block {
         ONLY_LONG_SEQUENCE, LONG_START_SEQUENCE, EIGHT_SHORT_SEQUENCE, LONG_STOP_SEQUENCE;
     }
 
-    protected int parseICSInfo(InBits in) throws IOException {
+    protected int parseICSInfo(BitReader in) {
         in.read1Bit();
         windowSequence = (int) in.readNBit(2);
         int useKbWindow = in.read1Bit();
@@ -115,7 +113,7 @@ public class BlockICS extends Block {
         return 0;
     }
 
-    private void decodePrediction(InBits in, int maxSfb) throws IOException {
+    private void decodePrediction(BitReader in, int maxSfb) {
         if (in.read1Bit() != 0) {
             int predictorResetGroup = (int) in.readNBit(5);
         }
@@ -124,7 +122,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void decodeLtp(InBits in, int maxSfb) throws IOException {
+    private void decodeLtp(BitReader in, int maxSfb) {
 
         int lag = (int) in.readNBit(11);
         float coef = AACTab.ltpCoefTab[(int) in.readNBit(3)];
@@ -132,7 +130,7 @@ public class BlockICS extends Block {
             in.read1Bit();
     }
 
-    private void decodeBandTypes(InBits in) throws IOException {
+    private void decodeBandTypes(BitReader in) {
         int g, idx = 0;
         int bits = (windowSequence == WindowSequence.EIGHT_SHORT_SEQUENCE.ordinal()) ? 3 : 5;
         for (g = 0; g < num_window_groups; g++) {
@@ -178,7 +176,7 @@ public class BlockICS extends Block {
             ff_aac_pow2sf_tab[i] = (float) pow(2, (i - POW_SF2_ZERO) / 4.);
     }
 
-    private void decodeScalefactors(InBits in) throws IOException {
+    private void decodeScalefactors(BitReader in) {
         int[] offset = new int[] { globalGain, globalGain - 90, 0 };
         int clipped_offset;
         int noise_flag = 1;
@@ -254,7 +252,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private Pulse decodePulses(InBits in) throws IOException {
+    private Pulse decodePulses(BitReader in) {
         int[] pos = new int[4];
         int[] amp = new int[4];
 
@@ -293,7 +291,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private Tns decodeTns(InBits in) throws IOException {
+    private Tns decodeTns(BitReader in) {
         int is8 = windowSequence == WindowSequence.EIGHT_SHORT_SEQUENCE.ordinal() ? 1 : 0;
         int tns_max_order = is8 != 0 ? 7 : profile == Profile.MAIN ? 20 : 12;
         int[] nFilt = new int[numWindows];
@@ -367,7 +365,7 @@ public class BlockICS extends Block {
         result[idx + 1] = v[code >> 4 & 15] * scale;
     }
 
-    private void decodeSpectrum(InBits in) throws IOException {
+    private void decodeSpectrum(BitReader in) {
         float[] coef = new float[1024];
         int idx = 0;
 
@@ -402,8 +400,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void readBandType3And4(InBits in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc)
-            throws IOException {
+    private void readBandType3And4(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -423,8 +420,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void readBandType7Through10(InBits in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc)
-            throws IOException {
+    private void readBandType7Through10(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -444,7 +440,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void readOther(InBits in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) throws IOException {
+    private void readOther(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -496,8 +492,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void readBandType1And2(InBits in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc)
-            throws IOException {
+    private void readBandType1And2(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -515,8 +510,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void readBandType5And6(InBits in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc)
-            throws IOException {
+    private void readBandType5And6(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -533,7 +527,7 @@ public class BlockICS extends Block {
         }
     }
 
-    public void parse(InBits in) throws IOException {
+    public void parse(BitReader in) {
         globalGain = (int) in.readNBit(8);
 
         if (!commonWindow && !scaleFlag) {

@@ -1,26 +1,25 @@
 package org.jcodec.codecs.h264.io.model;
 
-import static org.jcodec.codecs.h264.io.read.CAVLCReader.readBool;
-import static org.jcodec.codecs.h264.io.read.CAVLCReader.readNBit;
-import static org.jcodec.codecs.h264.io.read.CAVLCReader.readSE;
-import static org.jcodec.codecs.h264.io.read.CAVLCReader.readUE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readNBit;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeBool;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeNBit;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeTrailingBits;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUE;
+import static org.jcodec.common.model.ColorSpace.MONO;
+import static org.jcodec.common.model.ColorSpace.YUV420;
+import static org.jcodec.common.model.ColorSpace.YUV422;
+import static org.jcodec.common.model.ColorSpace.YUV444;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
-import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.jcodec.codecs.h264.io.read.CAVLCReader;
-import org.jcodec.common.io.BitstreamReader;
-import org.jcodec.common.io.BitstreamWriter;
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.codecs.h264.decode.CAVLCReader;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
+import org.jcodec.common.model.ColorSpace;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -33,13 +32,13 @@ import org.jcodec.common.io.OutBits;
  * @author Jay Codec
  * 
  */
-public class SeqParameterSet extends BitstreamElement {
+public class SeqParameterSet {
     public int pic_order_cnt_type;
     public boolean field_pic_flag;
     public boolean delta_pic_order_always_zero_flag;
     public boolean mb_adaptive_frame_field_flag;
     public boolean direct_8x8_inference_flag;
-    public ChromaFormat chroma_format_idc;
+    public ColorSpace chroma_format_idc;
     public int log2_max_frame_num_minus4;
     public int log2_max_pic_order_cnt_lsb_minus4;
     public int pic_height_in_map_units_minus1;
@@ -70,8 +69,36 @@ public class SeqParameterSet extends BitstreamElement {
     public ScalingMatrix scalingMatrix;
     public int num_ref_frames_in_pic_order_cnt_cycle;
 
-    public static SeqParameterSet read(InputStream is) throws IOException {
-        InBits in = new BitstreamReader(is);
+    public static ColorSpace getColor(int id) {
+        switch (id) {
+        case 0:
+            return MONO;
+        case 1:
+            return YUV420;
+        case 2:
+            return YUV422;
+        case 3:
+            return YUV444;
+        }
+        throw new RuntimeException("Colorspace not supported");
+    }
+
+    public static int fromColor(ColorSpace color) {
+        switch (color) {
+        case MONO:
+            return 0;
+        case YUV420:
+            return 1;
+        case YUV422:
+            return 2;
+        case YUV444:
+            return 3;
+        }
+        throw new RuntimeException("Colorspace not supported");
+    }
+
+    public static SeqParameterSet read(ByteBuffer is) {
+        BitReader in = new BitReader(is);
         SeqParameterSet sps = new SeqParameterSet();
 
         sps.profile_idc = readNBit(in, 8, "SPS: profile_idc");
@@ -84,8 +111,8 @@ public class SeqParameterSet extends BitstreamElement {
         sps.seq_parameter_set_id = readUE(in, "SPS: seq_parameter_set_id");
 
         if (sps.profile_idc == 100 || sps.profile_idc == 110 || sps.profile_idc == 122 || sps.profile_idc == 144) {
-            sps.chroma_format_idc = ChromaFormat.fromId(readUE(in, "SPS: chroma_format_idc"));
-            if (sps.chroma_format_idc == ChromaFormat.YUV_444) {
+            sps.chroma_format_idc = getColor(readUE(in, "SPS: chroma_format_idc"));
+            if (sps.chroma_format_idc == YUV444) {
                 sps.residual_color_transform_flag = readBool(in, "SPS: residual_color_transform_flag");
             }
             sps.bit_depth_luma_minus8 = readUE(in, "SPS: bit_depth_luma_minus8");
@@ -96,7 +123,7 @@ public class SeqParameterSet extends BitstreamElement {
                 readScalingListMatrix(in, sps);
             }
         } else {
-            sps.chroma_format_idc = ChromaFormat.YUV_420;
+            sps.chroma_format_idc = YUV420;
         }
         sps.log2_max_frame_num_minus4 = readUE(in, "SPS: log2_max_frame_num_minus4");
         sps.pic_order_cnt_type = readUE(in, "SPS: pic_order_cnt_type");
@@ -132,12 +159,10 @@ public class SeqParameterSet extends BitstreamElement {
         if (vui_parameters_present_flag)
             sps.vuiParams = readVUIParameters(in);
 
-        CAVLCReader.readTrailingBits(in);
-
         return sps;
     }
 
-    private static void readScalingListMatrix(InBits in, SeqParameterSet sps) throws IOException {
+    private static void readScalingListMatrix(BitReader in, SeqParameterSet sps) {
         sps.scalingMatrix = new ScalingMatrix();
         for (int i = 0; i < 8; i++) {
             boolean seqScalingListPresentFlag = readBool(in, "SPS: seqScalingListPresentFlag");
@@ -153,7 +178,7 @@ public class SeqParameterSet extends BitstreamElement {
         }
     }
 
-    private static VUIParameters readVUIParameters(InBits in) throws IOException {
+    private static VUIParameters readVUIParameters(BitReader in) {
         VUIParameters vuip = new VUIParameters();
         vuip.aspect_ratio_info_present_flag = readBool(in, "VUI: aspect_ratio_info_present_flag");
         if (vuip.aspect_ratio_info_present_flag) {
@@ -215,7 +240,7 @@ public class SeqParameterSet extends BitstreamElement {
         return vuip;
     }
 
-    private static HRDParameters readHRDParameters(InBits in) throws IOException {
+    private static HRDParameters readHRDParameters(BitReader in) {
         HRDParameters hrd = new HRDParameters();
         hrd.cpb_cnt_minus1 = readUE(in, "SPS: cpb_cnt_minus1");
         hrd.bit_rate_scale = (int) readNBit(in, 4, "HRD: bit_rate_scale");
@@ -237,8 +262,8 @@ public class SeqParameterSet extends BitstreamElement {
         return hrd;
     }
 
-    public void write(OutputStream out) throws IOException {
-        OutBits writer = new BitstreamWriter(out);
+    public void write(ByteBuffer out) {
+        BitWriter writer = new BitWriter(out);
 
         writeNBit(writer, profile_idc, 8, "SPS: profile_idc");
         writeBool(writer, constraint_set_0_flag, "SPS: constraint_set_0_flag");
@@ -250,8 +275,8 @@ public class SeqParameterSet extends BitstreamElement {
         writeUE(writer, seq_parameter_set_id, "SPS: seq_parameter_set_id");
 
         if (profile_idc == 100 || profile_idc == 110 || profile_idc == 122 || profile_idc == 144) {
-            writeUE(writer, chroma_format_idc.getId(), "SPS: chroma_format_idc");
-            if (chroma_format_idc == ChromaFormat.YUV_444) {
+            writeUE(writer, fromColor(chroma_format_idc), "SPS: chroma_format_idc");
+            if (chroma_format_idc == YUV444) {
                 writeBool(writer, residual_color_transform_flag, "SPS: residual_color_transform_flag");
             }
             writeUE(writer, bit_depth_luma_minus8, "SPS: ");
@@ -309,7 +334,7 @@ public class SeqParameterSet extends BitstreamElement {
         writeTrailingBits(writer);
     }
 
-    private void writeVUIParameters(VUIParameters vuip, OutBits writer) throws IOException {
+    private void writeVUIParameters(VUIParameters vuip, BitWriter writer) {
         writeBool(writer, vuip.aspect_ratio_info_present_flag, "VUI: aspect_ratio_info_present_flag");
         if (vuip.aspect_ratio_info_present_flag) {
             writeNBit(writer, vuip.aspect_ratio.getValue(), 8, "VUI: aspect_ratio");
@@ -372,7 +397,7 @@ public class SeqParameterSet extends BitstreamElement {
 
     }
 
-    private void writeHRDParameters(HRDParameters hrd, OutBits writer) throws IOException {
+    private void writeHRDParameters(HRDParameters hrd, BitWriter writer) {
         writeUE(writer, hrd.cpb_cnt_minus1, "HRD: cpb_cnt_minus1");
         writeNBit(writer, hrd.bit_rate_scale, 4, "HRD: bit_rate_scale");
         writeNBit(writer, hrd.cpb_size_scale, 4, "HRD: cpb_size_scale");
@@ -390,12 +415,9 @@ public class SeqParameterSet extends BitstreamElement {
     }
 
     public SeqParameterSet copy() {
-        try {
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            write(bytes);
-            return read(new ByteArrayInputStream(bytes.toByteArray()));
-        } catch (IOException e) {
-            return null;
-        }
+        ByteBuffer buf = ByteBuffer.allocate(2048);
+        write(buf);
+        buf.flip();
+        return read(buf);
     }
 }

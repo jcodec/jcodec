@@ -1,10 +1,6 @@
 package org.jcodec.codecs.mpeg4.es;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -22,7 +18,7 @@ public class DecoderConfig extends NodeDescriptor {
     public DecoderConfig(int tag, int size) {
         super(tag, size);
     }
-    
+
     public DecoderConfig(int objectType, int bufSize, int maxBitrate, int avgBitrate, Descriptor... children) {
         super(tag(), children);
         this.objectType = objectType;
@@ -31,25 +27,25 @@ public class DecoderConfig extends NodeDescriptor {
         this.avgBitrate = avgBitrate;
     }
 
-    protected void parse(InputStream input) throws IOException {
+    protected void parse(ByteBuffer input) {
 
-        objectType = input.read();
-        input.read();
-        bufSize = (input.read() << 16) | (int) ReaderBE.readInt16(input);
-        maxBitrate = (int)ReaderBE.readInt32(input);
-        avgBitrate = (int)ReaderBE.readInt32(input);
+        objectType = input.get() & 0xff;
+        input.get();
+        bufSize = ((input.get() & 0xff) << 16) | (input.getShort() & 0xffff);
+        maxBitrate = input.getInt();
+        avgBitrate = input.getInt();
 
         super.parse(input);
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.write(objectType);
+    protected void doWrite(ByteBuffer out) {
+        out.put((byte) objectType);
         // flags (= Audiostream)
-        out.write(0x15);
-        out.write(bufSize >> 16);
-        out.writeShort(bufSize & 0xffff);
-        out.writeInt(maxBitrate);
-        out.writeInt(avgBitrate);
+        out.put((byte) 0x15);
+        out.put((byte) (bufSize >> 16));
+        out.putShort((short) bufSize);
+        out.putInt(maxBitrate);
+        out.putInt(avgBitrate);
 
         super.doWrite(out);
     }

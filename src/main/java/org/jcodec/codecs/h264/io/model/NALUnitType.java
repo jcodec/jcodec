@@ -1,5 +1,7 @@
 package org.jcodec.codecs.h264.io.model;
 
+import java.util.EnumSet;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -9,21 +11,12 @@ package org.jcodec.codecs.h264.io.model;
  * @author Jay Codec
  * 
  */
-public class NALUnitType {
-    public static final NALUnitType NON_IDR_SLICE = new NALUnitType(1, "non IDR slice");
-    public static final NALUnitType SLICE_PART_A = new NALUnitType(2, "slice part a");
-    public static final NALUnitType SLICE_PART_B = new NALUnitType(3, "slice part b");
-    public static final NALUnitType SLICE_PART_C = new NALUnitType(4, "slice part c");
-    public static final NALUnitType IDR_SLICE = new NALUnitType(5, "idr slice");
-    public static final NALUnitType SEI = new NALUnitType(6, "sei");
-    public static final NALUnitType SPS = new NALUnitType(7, "sequence parameter set");
-    public static final NALUnitType PPS = new NALUnitType(8, "picture parameter set");
-    public static final NALUnitType ACC_UNIT_DELIM = new NALUnitType(9, "access unit delimiter");
-    public static final NALUnitType END_OF_SEQ = new NALUnitType(10, "end of sequence");
-    public static final NALUnitType END_OF_STREAM = new NALUnitType(11, "end of stream");
-    public static final NALUnitType FILTER_DATA = new NALUnitType(12, "filter data");
-    public static final NALUnitType SEQ_PAR_SET_EXT = new NALUnitType(13, "sequence parameter set extension");
-    public static final NALUnitType AUX_SLICE = new NALUnitType(19, "auxilary slice");
+public enum NALUnitType {
+    NON_IDR_SLICE(1, "non IDR slice"), SLICE_PART_A(2, "slice part a"), SLICE_PART_B(3, "slice part b"), SLICE_PART_C(
+            4, "slice part c"), IDR_SLICE(5, "idr slice"), SEI(6, "sei"), SPS(7, "sequence parameter set"), PPS(8,
+            "picture parameter set"), ACC_UNIT_DELIM(9, "access unit delimiter"), END_OF_SEQ(10, "end of sequence"), END_OF_STREAM(
+            11, "end of stream"), FILTER_DATA(12, "filter data"), SEQ_PAR_SET_EXT(13,
+            "sequence parameter set extension"), AUX_SLICE(19, "auxilary slice");
 
     private final int value;
     private final String name;
@@ -42,34 +35,10 @@ public class NALUnitType {
     }
 
     public static NALUnitType fromValue(int value) {
-        if (value == NON_IDR_SLICE.value)
-            return NON_IDR_SLICE;
-        else if (value == SLICE_PART_A.value)
-            return SLICE_PART_A;
-        else if (value == SLICE_PART_B.value)
-            return SLICE_PART_B;
-        else if (value == SLICE_PART_C.value)
-            return SLICE_PART_C;
-        else if (value == IDR_SLICE.value)
-            return IDR_SLICE;
-        else if (value == SEI.value)
-            return SEI;
-        else if (value == SPS.value)
-            return SPS;
-        else if (value == PPS.value)
-            return PPS;
-        else if (value == ACC_UNIT_DELIM.value)
-            return ACC_UNIT_DELIM;
-        else if (value == END_OF_SEQ.value)
-            return END_OF_SEQ;
-        else if (value == END_OF_STREAM.value)
-            return END_OF_STREAM;
-        else if (value == FILTER_DATA.value)
-            return FILTER_DATA;
-        else if (value == SEQ_PAR_SET_EXT.value)
-            return SEQ_PAR_SET_EXT;
-        else if (value == AUX_SLICE.value)
-            return AUX_SLICE;
+        for (NALUnitType nalUnitType : EnumSet.allOf(NALUnitType.class)) {
+            if (nalUnitType.value == value)
+                return nalUnitType;
+        }
         return null;
     }
 }

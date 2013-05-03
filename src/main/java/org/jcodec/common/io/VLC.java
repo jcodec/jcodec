@@ -1,12 +1,8 @@
 package org.jcodec.common.io;
 
-import static junit.framework.Assert.assertTrue;
 import gnu.trove.list.array.TIntArrayList;
 
-import java.io.IOException;
 import java.io.PrintStream;
-
-import junit.framework.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -83,9 +79,9 @@ public class VLC {
         return tableEnd;
     }
 
-    public int readVLC(InBits in) throws IOException {
+    public int readVLC(BitReader in) {
 
-        int code = 0, len = 0, overall = 0;
+        int code = 0, len = 0, overall = 0, total = 0;
         for (int i = 0; len == 0; i++) {
             int string = in.checkNBit(8);
             int ind = string + code;
@@ -93,12 +89,15 @@ public class VLC {
             len = valueSizes[ind];
 
             int bits = len != 0 ? len : 8;
-            overall = (overall << bits) | string;
+            total += bits;
+            overall = (overall << bits) | (string >> (8 - bits));
             in.skip(bits);
 
             if (code == -1)
                 throw new RuntimeException("Invalid code prefix " + binary(overall, (i << 3) + bits));
         }
+        
+//        System.out.println("VLC: " + binary(overall, total));
 
         return code;
     }
@@ -111,7 +110,7 @@ public class VLC {
         return new String(symb);
     }
 
-    public void writeVLC(OutBits out, int code) throws IOException {
+    public void writeVLC(BitWriter out, int code) {
         out.writeNBit(codes[code] >>> (32 - codeSizes[code]), codeSizes[code]);
     }
 

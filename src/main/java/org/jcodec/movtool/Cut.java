@@ -3,21 +3,20 @@ package org.jcodec.movtool;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.max;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
-import static org.jcodec.common.JCodecUtil.bufin;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
 import static org.jcodec.movtool.Util.forceEditList;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
 import org.apache.commons.lang.StringUtils;
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.FileRAInputStream;
-import org.jcodec.common.io.RAInputStream;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
@@ -62,21 +61,21 @@ public class Cut {
         }
         File source = new File(args[shift]);
 
-        RAInputStream input = null;
-        RandomAccessFile out = null;
-        List<RandomAccessFile> outs = new ArrayList<RandomAccessFile>();
+        SeekableByteChannel input = null;
+        SeekableByteChannel out = null;
+        List<SeekableByteChannel> outs = new ArrayList<SeekableByteChannel>();
         try {
-            input = bufin(source);
+            input = new FileChannelWrapper(source);
             MovieBox movie = createRefMovie(input, "file://" + source.getCanonicalPath());
             List<MovieBox> slicesMovs;
             if (!selfContained) {
-                out = new RandomAccessFile(new File(source.getParentFile(), removeExtension(source.getName())
-                        + ".ref.mov"), "rw");
+                out = new FileChannelWrapper(new File(source.getParentFile(), removeExtension(source.getName())
+                        + ".ref.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
-                movie.write(out);
+                MP4Util.writeMovie(out, movie);
             } else {
-                out = new RandomAccessFile(new File(source.getParentFile(), removeExtension(source.getName())
-                        + ".self.mov"), "rw");
+                out = new FileChannelWrapper(new File(source.getParentFile(), removeExtension(source.getName())
+                        + ".self.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
                 new Strip().strip(movie);
                 new Flattern().flattern(movie, out);
@@ -87,7 +86,7 @@ public class Cut {
                 input.close();
             if (out != null)
                 out.close();
-            for (RandomAccessFile o : outs) {
+            for (SeekableByteChannel o : outs) {
                 o.close();
             }
         }
@@ -97,13 +96,12 @@ public class Cut {
         for (int i = 0; i < slices.size(); i++) {
             if (names.get(i) == null)
                 continue;
-            RandomAccessFile out = null;
+            SeekableByteChannel out = null;
             try {
-                out = new RandomAccessFile(new File(parentFile, names.get(i)), "rw");
-                slices.get(i).write(out);
+                out = new FileChannelWrapper(new File(parentFile, names.get(i)));
+                MP4Util.writeMovie(out, slices.get(i));
             } finally {
-                if (out != null)
-                    out.close();
+                NIOUtils.closeQuietly(out);
             }
         }
     }
@@ -136,7 +134,7 @@ public class Cut {
         }
         ArrayList<MovieBox> result = new ArrayList<MovieBox>();
         for (Slice cut : commands) {
-            MovieBox clone = (MovieBox) movie.cloneBox();
+            MovieBox clone = (MovieBox) MP4Util.cloneBox(movie, 16 * 1024 * 1024);
             for (TrakBox trakBox : clone.getTracks()) {
                 selectInner(trakBox.getEdits(), cut, movie, trakBox);
             }

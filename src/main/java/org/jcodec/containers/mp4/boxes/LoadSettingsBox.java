@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -33,18 +29,18 @@ public class LoadSettingsBox extends Box {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
-        preloadStartTime = (int) ReaderBE.readInt32(input);
-        preloadDuration = (int) ReaderBE.readInt32(input);
-        preloadFlags = (int) ReaderBE.readInt32(input);
-        defaultHints = (int) ReaderBE.readInt32(input);
+    public void parse(ByteBuffer input) {
+        preloadStartTime = input.getInt();
+        preloadDuration = input.getInt();
+        preloadFlags = input.getInt();
+        defaultHints = input.getInt();
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.writeInt(preloadStartTime);
-        out.writeInt(preloadDuration);
-        out.writeInt(preloadFlags);
-        out.writeInt(defaultHints);
+    protected void doWrite(ByteBuffer out) {
+        out.putInt(preloadStartTime);
+        out.putInt(preloadDuration);
+        out.putInt(preloadFlags);
+        out.putInt(defaultHints);
     }
 
     public int getPreloadStartTime() {

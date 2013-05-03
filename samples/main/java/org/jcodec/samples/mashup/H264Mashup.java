@@ -1,32 +1,26 @@
 package org.jcodec.samples.mashup;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 
 import junit.framework.Assert;
 
 import org.apache.commons.io.IOUtils;
-import org.jcodec.codecs.h264.StreamParams;
-import org.jcodec.codecs.h264.annexb.NALUnitReader;
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.codecs.h264.io.read.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.write.NALUnitWriter;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
-import org.jcodec.codecs.h264.io.write.WritableTransportUnit;
-import org.jcodec.common.io.BitstreamReader;
-import org.jcodec.common.io.BitstreamWriter;
-import org.jcodec.common.io.InBits;
-import org.jcodec.common.io.OutBits;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -51,98 +45,79 @@ public class H264Mashup {
 
     public void mashup(File if1, File if2, File of) throws IOException {
         {
-            InputStream is = null;
-            OutputStream os = null;
+            MappedByteBuffer map = NIOUtils.map(if1);
+            FileOutputStream os = null;
             try {
-                is = new BufferedInputStream(new FileInputStream(if1));
-                os = new BufferedOutputStream(new FileOutputStream(of));
-
-                NALUnitWriter out = new NALUnitWriter(os);
-                NALUnitReader in = new NALUnitReader(is);
-                justCopy(out, in);
+                os = new FileOutputStream(of);
+                NALUnitWriter out = new NALUnitWriter(os.getChannel());
+                justCopy(out, map);
             } finally {
-                IOUtils.closeQuietly(is);
                 IOUtils.closeQuietly(os);
             }
         }
 
         {
-            InputStream is = null;
-            OutputStream os = null;
+            FileOutputStream os = null;
             try {
-                is = new BufferedInputStream(new FileInputStream(if2));
-                os = new BufferedOutputStream(new FileOutputStream(of, true));
+                MappedByteBuffer map = NIOUtils.map(if1);
+                os = new FileOutputStream(of, true);
 
-                NALUnitWriter out = new NALUnitWriter(os);
-                NALUnitReader in = new NALUnitReader(is);
+                NALUnitWriter out = new NALUnitWriter(os.getChannel());
 
-                copyModify(out, in);
+                copyModify(out, map);
             } finally {
-                IOUtils.closeQuietly(is);
                 IOUtils.closeQuietly(os);
             }
         }
 
     }
 
-    private void justCopy(NALUnitWriter out, NALUnitReader in) throws IOException {
-        InputStream nus;
-        while ((nus = in.nextNALUnit()) != null) {
+    private void justCopy(NALUnitWriter out, ByteBuffer buf) throws IOException {
+        ByteBuffer nus;
+        while ((nus = H264Utils.nextNALUnit(buf)) != null) {
             NALUnit nu = NALUnit.read(nus);
             if (nu.type == NALUnitType.SPS) {
-                WritableTransportUnit ounit = out.writeUnit(nu);
+                out.writeUnit(nu, nus.duplicate());
                 sps = SeqParameterSet.read(nus);
-                sps.write(ounit.getOutputStream());
                 if (sps.seq_parameter_set_id > lastSPS)
                     lastSPS = sps.seq_parameter_set_id;
             } else if (nu.type == NALUnitType.PPS) {
-                WritableTransportUnit ounit = out.writeUnit(nu);
+                out.writeUnit(nu, nus.duplicate());
                 pps = PictureParameterSet.read(nus);
-                pps.write(ounit.getOutputStream());
                 if (pps.pic_parameter_set_id > lastPPS)
                     lastPPS = pps.pic_parameter_set_id;
             } else {
-                WritableTransportUnit ounit = out.writeUnit(nu);
-                IOUtils.copy(nus, ounit.getOutputStream());
+                out.writeUnit(nu, nus);
             }
         }
     }
 
-    private void copyModify(NALUnitWriter out, NALUnitReader in) throws IOException {
+    private void copyModify(NALUnitWriter out, ByteBuffer buf) throws IOException {
         SliceHeaderReader reader = null;
         SliceHeaderWriter writer = null;
-        InputStream nus;
-        while ((nus = in.nextNALUnit()) != null) {
+        ByteBuffer nus;
+        while ((nus = H264Utils.nextNALUnit(buf)) != null) {
             NALUnit nu = NALUnit.read(nus);
             if (nu.type == NALUnitType.SPS) {
-                WritableTransportUnit ounit = out.writeUnit(nu);
+                out.writeUnit(nu, nus.duplicate());
                 sps = SeqParameterSet.read(nus);
                 sps.seq_parameter_set_id = ++lastSPS;
-                sps.write(ounit.getOutputStream());
                 System.out.println("SPS");
             } else if (nu.type == NALUnitType.PPS) {
-                WritableTransportUnit ounit = out.writeUnit(nu);
+                out.writeUnit(nu, nus.duplicate());
                 pps = PictureParameterSet.read(nus);
                 pps.seq_parameter_set_id = lastSPS;
                 pps.pic_parameter_set_id = ++lastPPS;
-                pps.write(ounit.getOutputStream());
-                reader = new SliceHeaderReader(new StreamParams() {
-                    public SeqParameterSet getSPS(int id) {
-                        return sps;
-                    }
-
-                    public PictureParameterSet getPPS(int id) {
-                        return pps;
-                    }
-                });
+                reader = new SliceHeaderReader();
                 writer = new SliceHeaderWriter(sps, pps);
                 System.out.println("PPS");
             } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
-                WritableTransportUnit ounit = out.writeUnit(nu);
-                OutBits w = new BitstreamWriter(ounit.getOutputStream());
-                InBits r = new BitstreamReader(nus);
-                SliceHeader header = reader.read(nu, r);
+                ByteBuffer res = ByteBuffer.allocate(nus.remaining() + 10);
+                BitReader r = new BitReader(nus);
+                SliceHeader header = reader.readPart1(r);
+                reader.readPart2(header, nu, sps, pps, r);
                 header.pic_parameter_set_id = lastPPS;
+                BitWriter w = new BitWriter(res);
                 writer.write(header, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, w);
 
                 if (pps.entropy_coding_mode_flag) {
@@ -150,14 +125,15 @@ public class H264Mashup {
                 } else {
                     copyCAVLC(w, r);
                 }
+                res.flip();
+                out.writeUnit(nu, res);
             } else {
-                WritableTransportUnit ounit = out.writeUnit(nu);
-                IOUtils.copy(nus, ounit.getOutputStream());
+                out.writeUnit(nu, nus);
             }
         }
     }
 
-    private void copyCAVLC(OutBits w, InBits r) throws IOException {
+    private void copyCAVLC(BitWriter w, BitReader r) {
         int rem = 8 - r.curBit();
         int l = r.readNBit(rem);
         w.writeNBit(l, rem);
@@ -176,7 +152,7 @@ public class H264Mashup {
         w.flush();
     }
 
-    private void copyCABAC(OutBits w, InBits r) throws IOException {
+    private void copyCABAC(BitWriter w, BitReader r) {
         long bp = r.curBit();
         long rem = r.readNBit(8 - (int) bp);
         Assert.assertEquals(rem, (1 << (8 - bp)) - 1);

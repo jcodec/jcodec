@@ -1,10 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.jcodec.common.io.ReaderBE;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -31,20 +27,20 @@ public class SyncSamplesBox extends FullBox {
         this.syncSamples = array;
     }
 
-    public void parse(InputStream input) throws IOException {
+    public void parse(ByteBuffer input) {
         super.parse(input);
-        int len = (int) ReaderBE.readInt32(input);
+        int len = input.getInt();
         syncSamples = new int[len];
         for (int i = 0; i < len; i++) {
-            syncSamples[i] = (int)ReaderBE.readInt32(input);
+            syncSamples[i] = input.getInt();
         }
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.writeInt(syncSamples.length);
+        out.putInt(syncSamples.length);
         for (int i = 0; i < syncSamples.length; i++)
-            out.writeInt((int) syncSamples[i]);
+            out.putInt((int) syncSamples[i]);
     }
 
     public int[] getSyncSamples() {

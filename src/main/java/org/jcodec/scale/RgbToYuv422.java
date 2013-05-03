@@ -24,7 +24,7 @@ public class RgbToYuv422 implements Transform {
     public void transform(Picture img, Picture dst) {
 
         int[] y = img.getData()[0];
-        int[][] dstData = img.getData();
+        int[][] dstData = dst.getData();
 
         int off = 0, offSrc = 0;
         for (int i = 0; i < img.getHeight(); i++) {

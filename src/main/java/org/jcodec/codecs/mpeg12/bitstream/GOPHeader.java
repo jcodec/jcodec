@@ -1,12 +1,9 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.BitstreamReaderBB;
-import org.jcodec.common.io.BitstreamWriter;
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.InBits;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.TapeTimecode;
 
 /**
@@ -29,8 +26,8 @@ public class GOPHeader {
         this.brokenLink = brokenLink;
     }
 
-    public static GOPHeader read(Buffer bb) throws IOException {
-        InBits in = new BitstreamReaderBB(bb);
+    public static GOPHeader read(ByteBuffer bb) {
+        BitReader in = new BitReader(bb);
         boolean dropFrame = in.read1Bit() == 1;
         short hours = (short) in.readNBit(5);
         byte minutes = (byte) in.readNBit(6);
@@ -45,8 +42,8 @@ public class GOPHeader {
         return new GOPHeader(new TapeTimecode(hours, minutes, seconds, frames, dropFrame), closedGop, brokenLink);
     }
 
-    public void write(OutputStream os) throws IOException {
-        BitstreamWriter out = new BitstreamWriter(os);
+    public void write(ByteBuffer os) {
+        BitWriter out = new BitWriter(os);
         if (timeCode == null)
             out.writeNBit(0, 25);
         else {

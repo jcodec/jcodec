@@ -2,8 +2,7 @@ package org.jcodec.codecs.prores;
 
 import static org.jcodec.common.model.ColorSpace.YUV422_10;
 
-import java.io.DataOutput;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.model.Picture;
 
@@ -14,8 +13,8 @@ public class DCT2Prores extends ProresEncoder {
     }
 
     @Override
-    protected int encodeSlice(DataOutput out, int[][] scaledLuma, int[][] scaledChroma, int[] scan, int sliceMbCount,
-            int mbX, int mbY, Picture source, int prevQp, int mbWidth, int mbHeight, boolean unsafe) throws IOException {
+    protected int encodeSlice(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan, int sliceMbCount,
+            int mbX, int mbY, Picture source, int prevQp, int mbWidth, int mbHeight, boolean unsafe) {
 
         Picture striped = sliceData(source, mbX, mbY, mbWidth, sliceMbCount);
 
@@ -24,27 +23,30 @@ public class DCT2Prores extends ProresEncoder {
         int high = est + (est >> 3);
 
         int qp = prevQp;
-        byte[][] data = encodeSliceData(scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp);
-        if (bits(data) > high && qp < profile.lastQp) {
+
+        out.put((byte) (6 << 3)); // hdr size
+        out.put((byte) qp); // qscale
+        ByteBuffer fork = out.duplicate();
+        out.putInt(0);
+        int rem = out.position();
+        int[] sizes = new int[3];
+        encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp, sizes);
+        if (bits(sizes) > high && qp < profile.lastQp) {
             do {
                 ++qp;
-                data = encodeSliceData(scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp);
-            } while (bits(data) > high && qp < profile.lastQp);
-        } else if (bits(data) < low && qp > profile.firstQp) {
+                out.position(rem);
+                encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp, sizes);
+            } while (bits(sizes) > high && qp < profile.lastQp);
+        } else if (bits(sizes) < low && qp > profile.firstQp) {
             do {
                 --qp;
-                data = encodeSliceData(scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp);
-            } while (bits(data) < low && qp > profile.firstQp);
+                out.position(rem);
+                encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp, sizes);
+            } while (bits(sizes) < low && qp > profile.firstQp);
         }
 
-        out.write(6 << 3); // hdr size
-        out.write(qp); // qscale
-        out.writeShort(data[0].length);
-        out.writeShort(data[1].length);
-
-        out.write(data[0]);
-        out.write(data[1]);
-        out.write(data[2]);
+        fork.putShort((short) sizes[0]);
+        fork.putShort((short) sizes[1]);
 
         return qp;
     }

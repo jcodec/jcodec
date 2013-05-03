@@ -19,8 +19,7 @@ public class SliceHeader {
     public RefPicMarking refPicMarkingNonIDR;
     public RefPicMarkingIDR refPicMarkingIDR;
 
-    public RefPicReordering refPicReorderingL0;
-    public RefPicReordering refPicReorderingL1;
+    public int[][][] refPicReordering;
 
     public PredictionWeightTable pred_weight_table;
     public int first_mb_in_slice;
@@ -50,9 +49,7 @@ public class SliceHeader {
 
     public boolean num_ref_idx_active_override_flag;
 
-    public int num_ref_idx_l0_active_minus1;
-
-    public int num_ref_idx_l1_active_minus1;
+    public int[] num_ref_idx_active_minus1 = new int[2];
 
     public int cabac_init_idc;
 

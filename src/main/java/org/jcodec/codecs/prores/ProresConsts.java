@@ -104,7 +104,7 @@ public class ProresConsts {
             7, 9, 11, 13, 15, 15, 17, 7, 7, 9, 11, 13, 15, 17, 19, 7, 9, 11, 13, 14, 16, 19, 23, 9, 11, 13, 14, 16, 19,
             23, 29, 9, 11, 13, 15, 17, 21, 28, 35, 11, 13, 16, 17, 21, 28, 35, 41 };
     
-    static class FrameHeader {
+    public static class FrameHeader {
         public int payloadSize;
         public int width;
         public int height;
@@ -128,7 +128,7 @@ public class ProresConsts {
         }
     }
     
-    static class PictureHeader {
+    public static class PictureHeader {
 
         public int log2SliceMbWidth;
         public short[] sliceSizes;

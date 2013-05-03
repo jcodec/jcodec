@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.io.PushbackInputStream;
 
 import org.apache.commons.io.input.CountingInputStream;
-import org.jcodec.codecs.h264.JAVCTestCase;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -19,7 +18,7 @@ import org.junit.Test;
  * @author Jay Codec
  *
  */
-public class MJPEGParser extends JAVCTestCase {
+public class MJPEGParser {
     public static void main(String[] args) throws Exception {
         new MJPEGParser().testPerformance();
     }

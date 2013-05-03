@@ -1,10 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.ReaderBE;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -33,13 +32,13 @@ public class NameBox extends Box {
         super(header);
     }
 
-    public void parse(InputStream input) throws IOException {
-        name = ReaderBE.readNullTermString(input);
+    public void parse(ByteBuffer input) {
+        name = NIOUtils.readNullTermString(input);
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.write(name.getBytes());
-        out.writeInt(0);
+    protected void doWrite(ByteBuffer out) {
+        out.put(JCodecUtil.asciiString(name));
+        out.putInt(0);
     }
 
     public String getName() {

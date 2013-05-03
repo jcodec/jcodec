@@ -1,10 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.io.ReaderBE;
 import org.jcodec.common.model.Rational;
 
 /**
@@ -34,14 +31,14 @@ public class PixelAspectExt extends Box {
         this.vSpacing = par.getDen();
     }
 
-    public void parse(InputStream input) throws IOException {
-        hSpacing = (int) ReaderBE.readInt32(input);
-        vSpacing = (int) ReaderBE.readInt32(input);
+    public void parse(ByteBuffer input) {
+        hSpacing = input.getInt();
+        vSpacing = input.getInt();
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
-        out.writeInt(hSpacing);
-        out.writeInt(vSpacing);
+    protected void doWrite(ByteBuffer out) {
+        out.putInt(hSpacing);
+        out.putInt(vSpacing);
     }
 
     public int gethSpacing() {

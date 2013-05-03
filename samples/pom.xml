@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.jcodec</groupId>
 	<artifactId>jcodec-samples</artifactId>
-	<version>0.0.7</version>
+	<version>0.1.0</version>
 	<repositories>
 		<repository>
 			<id>gson</id>
@@ -70,8 +70,8 @@
 				<version>2.3.2</version>
 				<configuration>
 					<encoding>UTF-8</encoding>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -81,7 +81,7 @@
 		<dependency>
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec</artifactId>
-			<version>0.0.9</version>
+			<version>0.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>

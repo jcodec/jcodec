@@ -2,9 +2,7 @@ package org.jcodec.codecs.mpeg4.es;
 
 import static java.util.Arrays.asList;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -31,7 +29,7 @@ public class NodeDescriptor extends Descriptor {
         this.children.addAll(asList(children));
     }
 
-    protected void doWrite(DataOutput out) throws IOException {
+    protected void doWrite(ByteBuffer out) {
         for (Descriptor descr : children) {
             descr.write(out);
         }
@@ -41,7 +39,7 @@ public class NodeDescriptor extends Descriptor {
         return children;
     }
 
-    protected void parse(InputStream input) throws IOException {
+    protected void parse(ByteBuffer input) {
         Descriptor d;
         do {
             d = Descriptor.read(input);

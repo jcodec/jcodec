@@ -1,12 +1,11 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import org.jcodec.common.io.ReaderBE;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -38,12 +37,12 @@ public class FileTypeBox extends Box {
         super(new Header(fourcc()));
     }
 
-    public void parse(InputStream input) throws IOException {
-        majorBrand = ReaderBE.readString(input, 4);
-        minorVersion = (int) ReaderBE.readInt32(input);
+    public void parse(ByteBuffer input) {
+        majorBrand = NIOUtils.readString(input, 4);
+        minorVersion = input.getInt();
 
         String brand;
-        while ((brand = ReaderBE.readString(input, 4)) != null) {
+        while ((brand = NIOUtils.readString(input, 4)) != null) {
             compBrands.add(brand);
         }
     }
@@ -56,12 +55,12 @@ public class FileTypeBox extends Box {
         return compBrands;
     }
 
-    public void doWrite(DataOutput out) throws IOException {
-        out.write(majorBrand.getBytes());
-        out.writeInt(minorVersion);
+    public void doWrite(ByteBuffer out) {
+        out.put(JCodecUtil.asciiString(majorBrand));
+        out.putInt(minorVersion);
 
         for (String string : compBrands) {
-            out.write(string.getBytes());
+            out.put(JCodecUtil.asciiString(string));
         }
     }
 }

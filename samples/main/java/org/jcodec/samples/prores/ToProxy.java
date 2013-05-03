@@ -1,19 +1,14 @@
 package org.jcodec.samples.prores;
 
-import static org.jcodec.common.JCodecUtil.bufin;
-
 import java.io.File;
+import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresToProxy;
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.Buffer;
-import org.jcodec.common.io.FileRAInputStream;
-import org.jcodec.common.io.RAInputStream;
-import org.jcodec.common.io.FileRAOutputStream;
-import org.jcodec.common.io.RAOutputStream;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.DemuxerTrack;
+import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.MP4Muxer;
 import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
@@ -37,12 +32,12 @@ public class ToProxy {
             return;
         }
 
-        RAInputStream input = bufin(new File(args[0]));
+        SeekableByteChannel input = new FileChannelWrapper(new File(args[0]));
         MP4Demuxer demuxer = new MP4Demuxer(input);
-        RAOutputStream output = new FileRAOutputStream(new File(args[1]));
+        SeekableByteChannel output = new FileChannelWrapper(new File(args[1]));
         MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
 
-        DemuxerTrack inVideo = demuxer.getVideoTrack();
+        MP4DemuxerTrack inVideo = demuxer.getVideoTrack();
         VideoSampleEntry entry = (VideoSampleEntry) inVideo.getSampleEntries()[0];
         int width = (int) entry.getWidth();
         int height = (int) entry.getHeight();
@@ -55,10 +50,11 @@ public class ToProxy {
         long from = System.currentTimeMillis();
         long last = from;
         MP4Packet pkt = null;
-        while ((pkt = inVideo.getFrames(1)) != null) {
-            Buffer out = new Buffer(pkt.getData().remaining());
+        while ((pkt = (MP4Packet)inVideo.getFrames(1)) != null) {
+            ByteBuffer out = ByteBuffer.allocate(pkt.getData().remaining());
             toProxy.transcode(pkt.getData(), out);
-            outVideo.addFrame(new MP4Packet(pkt, out.flip()));
+            out.flip();
+            outVideo.addFrame(new MP4Packet(pkt, out));
             frame++;
             long cur = System.currentTimeMillis();
             if (cur - last > 5000) {
