@@ -1,15 +1,15 @@
 package org.jcodec.movtool;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.movtool.Flattern.ProgressListener;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,103 +20,115 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
  */
 public class QTEdit {
 
-    protected final CommandFactory[] factories;
+	protected final CommandFactory[] factories;
+	private final List<ProgressListener> listeners = new ArrayList<ProgressListener>();
 
-    public static interface CommandFactory {
-        String getName();
+	public static interface CommandFactory {
+		String getName();
 
-        Command parseArgs(List<String> args);
+		Command parseArgs(List<String> args);
 
-        String getHelp();
-    }
+		String getHelp();
+	}
 
-    public static interface Command {
-        /**
-         * Performs changes on movie header
-         * 
-         * @param movie
-         */
-        void apply(MovieBox movie, SeekableByteChannel[][] refs) throws IOException;
-    }
+	public static interface Command {
+		/**
+		 * Performs changes on movie header
+		 * 
+		 * @param movie
+		 */
+		void apply(MovieBox movie);
+	}
 
-    public static abstract class BaseCommand implements Command {
-        public void apply(MovieBox movie, FileChannel[][] refs) {
-            apply(movie);
-        }
+	public static abstract class BaseCommand implements Command {
+		public void apply(MovieBox movie, FileChannel[][] refs) {
+			apply(movie);
+		}
 
-        public abstract void apply(MovieBox movie);
-    }
+		public abstract void apply(MovieBox movie);
+	}
 
-    public QTEdit(CommandFactory... factories) {
-        this.factories = factories;
-    }
+	public QTEdit(CommandFactory... factories) {
+		this.factories = factories;
+	}
 
-    public void execute(String[] args) throws Exception {
-        LinkedList<String> aa = new LinkedList<String>(Arrays.asList(args));
+	public void addProgressListener(ProgressListener listener) {
+		listeners.add(listener);
+	}
 
-        final List<Command> commands = new LinkedList<Command>();
-        while (aa.size() > 0) {
-            int i;
-            for (i = 0; i < factories.length; i++) {
-                if (aa.get(0).equals(factories[i].getName())) {
-                    aa.remove(0);
-                    try {
-                        commands.add(factories[i].parseArgs(aa));
-                    } catch (Exception e) {
-                        System.err.println("ERROR: " + e.getMessage());
-                        return;
-                    }
-                    break;
-                }
-            }
-            if (i == factories.length)
-                break;
-        }
-        if (aa.size() == 0) {
-            System.err.println("ERROR: A movie file should be specified");
-            help();
-        }
-        if (commands.size() == 0) {
-            System.err.println("ERROR: At least one command should be specified");
-            help();
-        }
-        File input = new File(aa.remove(0));
+	public void execute(String[] args) throws Exception {
+		LinkedList<String> aa = new LinkedList<String>(Arrays.asList(args));
 
-        if (!input.exists()) {
-            System.err.println("ERROR: Input file '" + input.getAbsolutePath() + "' doesn't exist");
-            help();
-        }
+		final List<Command> commands = new LinkedList<Command>();
+		while (aa.size() > 0) {
+			int i;
+			for (i = 0; i < factories.length; i++) {
+				if (aa.get(0).equals(factories[i].getName())) {
+					aa.remove(0);
+					try {
+						commands.add(factories[i].parseArgs(aa));
+					} catch (Exception e) {
+						System.err.println("ERROR: " + e.getMessage());
+						return;
+					}
+					break;
+				}
+			}
+			if (i == factories.length)
+				break;
+		}
+		if (aa.size() == 0) {
+			System.err.println("ERROR: A movie file should be specified");
+			help();
+		}
+		if (commands.size() == 0) {
+			System.err
+					.println("ERROR: At least one command should be specified");
+			help();
+		}
+		File input = new File(aa.remove(0));
 
-        MovieBox movie = MP4Util.createRefMovie(input);
+		if (!input.exists()) {
+			System.err.println("ERROR: Input file '" + input.getAbsolutePath()
+					+ "' doesn't exist");
+			help();
+		}
 
-        final SeekableByteChannel[][] inputs = new Flattern().getInputs(movie);
+		boolean inplace = new InplaceEdit() {
+			protected void apply(MovieBox mov) {
+				applyCommands(mov, commands);
+			}
+		}.save(input);
+		if (!inplace) {
+			final MovieBox movie = MP4Util.createRefMovie(input);
+			applyCommands(movie, commands);
+			File out = new File(input.getParentFile(), "." + input.getName());
+			Flattern fl = new Flattern();
 
-        applyCommands(movie, inputs, commands);
+			for (ProgressListener pl : this.listeners)
+				fl.addProgressListener(pl);
 
-        File out = new File(input.getParentFile(), "." + input.getName());
-        new Flattern() {
-            protected SeekableByteChannel[][] getInputs(MovieBox movie) throws IOException {
-                return inputs;
-            }
-        }.flattern(movie, out);
+			fl.flattern(movie, out);
 
-        out.renameTo(input);
-    }
+			out.renameTo(input);
+		}
+	}
 
-    private static void applyCommands(MovieBox mov, SeekableByteChannel[][] refs, List<Command> commands) throws IOException {
-        for (Command command : commands) {
-            command.apply(mov, refs);
-        }
-    }
+	private static void applyCommands(MovieBox mov, List<Command> commands) {
+		for (Command command : commands) {
+			command.apply(mov);
+		}
+	}
 
-    protected void help() {
-        System.out.println("Quicktime movie editor");
-        System.out.println("Syntax: qtedit <command1> <options> ... <commandN> <options> <movie>");
-        System.out.println("Where options:");
-        for (CommandFactory commandFactory : factories) {
-            System.out.println("\t" + commandFactory.getHelp());
-        }
+	protected void help() {
+		System.out.println("Quicktime movie editor");
+		System.out
+				.println("Syntax: qtedit <command1> <options> ... <commandN> <options> <movie>");
+		System.out.println("Where options:");
+		for (CommandFactory commandFactory : factories) {
+			System.out.println("\t" + commandFactory.getHelp());
+		}
 
-        System.exit(-1);
-    }
+		System.exit(-1);
+	}
 }
