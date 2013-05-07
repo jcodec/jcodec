@@ -152,7 +152,7 @@ public class TranscodeMain {
             Frame[] gop = new Frame[1000];
             Packet inFrame;
 
-            int sf = 90000;
+            int sf = 1000;
             if (!raw) {
                 MP4DemuxerTrack dt = (MP4DemuxerTrack) videoTrack;
                 dt.gotoFrame(sf);
@@ -162,7 +162,7 @@ public class TranscodeMain {
                 // inFrame.isKeyFrame());
                 dt.gotoFrame(inFrame.getFrameNo());
             }
-            for (i = 0; (inFrame = videoTrack.getFrames(1)) != null && i < 2000;) {
+            for (i = 0; (inFrame = videoTrack.getFrames(1)) != null;) {
                 ByteBuffer data = inFrame.getData();
                 Picture target1;
                 Frame dec;

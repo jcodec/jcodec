@@ -236,4 +236,11 @@ public class H264Utils {
 
         return result;
     }
+
+    public static void joinNALUnits(List<ByteBuffer> nalUnits, ByteBuffer out) {
+        for (ByteBuffer nal : nalUnits) {
+            out.putInt(1);
+            out.put(nal.duplicate());
+        }
+    }
 }
