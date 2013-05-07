@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
@@ -122,12 +123,29 @@ public class H264Utils {
         return val;
     }
 
-    public static void decodeMOVPacket(ByteBuffer buf) {
+    public static List<ByteBuffer> splitMOVPacket(ByteBuffer buf, AvcCBox avcC) {
+        List<ByteBuffer> result = new ArrayList<ByteBuffer>();
+        int nls = avcC.getNalLengthSize();
         ByteBuffer dup = buf.duplicate();
         while (dup.hasRemaining()) {
-            int len = dup.duplicate().getInt();
-            dup.putInt(1);
-            NIOUtils.skip(dup, len);
+            int len = readLen(dup, nls);
+            result.add(NIOUtils.read(dup, len));
+        }
+        return result;
+    }
+
+    private static int readLen(ByteBuffer dup, int nls) {
+        switch (nls) {
+        case 1:
+            return dup.get() & 0xff;
+        case 2:
+            return dup.getShort() & 0xffff;
+        case 3:
+            return ((dup.getShort() & 0xffff) << 8) | (dup.get() & 0xff);
+        case 4:
+            return dup.getInt();
+        default:
+            throw new IllegalArgumentException("NAL Unit length size can not be " + nls);
         }
     }
 
@@ -166,7 +184,7 @@ public class H264Utils {
 
         return se;
     }
-    
+
     public static boolean idrSlice(ByteBuffer _data) {
         ByteBuffer data = _data.duplicate();
         ByteBuffer segment;
@@ -176,7 +194,7 @@ public class H264Utils {
         }
         return false;
     }
-    
+
     public static void saveRawFrame(ByteBuffer data, AvcCBox avcC, File f) throws IOException {
         SeekableByteChannel raw = new FileChannelWrapper(f);
         saveStreamParams(avcC, raw);
@@ -202,9 +220,20 @@ public class H264Utils {
             bb.clear();
         }
     }
-    
+
     public static int getPicHeightInMbs(SeqParameterSet sps) {
         int picHeightInMbs = (sps.pic_height_in_map_units_minus1 + 1) << (sps.frame_mbs_only_flag ? 0 : 1);
         return picHeightInMbs;
+    }
+
+    public static List<ByteBuffer> splitFrame(ByteBuffer frame) {
+        ArrayList<ByteBuffer> result = new ArrayList<ByteBuffer>();
+
+        ByteBuffer segment;
+        while ((segment = H264Utils.nextNALUnit(frame)) != null) {
+            result.add(segment);
+        }
+
+        return result;
     }
 }

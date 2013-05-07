@@ -27,6 +27,7 @@ public class AvcCBox extends Box {
 
     private List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
     private List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+    private int nalLengthSize;
 
     public AvcCBox(Box other) {
         super(other);
@@ -59,7 +60,8 @@ public class AvcCBox extends Box {
         profile = input.get() & 0xff;
         profileCompat = input.get() & 0xff;
         level = input.get() & 0xff;
-        NIOUtils.skip(input, 1);
+        int flags = input.get() & 0xff;
+        nalLengthSize = (flags & 0x03) + 1;
 
         int nSPS = input.get() & 0x1f; // 3 bits reserved + 5 bits number of
                                        // sps
@@ -107,5 +109,9 @@ public class AvcCBox extends Box {
 
     public List<ByteBuffer> getPpsList() {
         return ppsList;
+    }
+
+    public int getNalLengthSize() {
+        return nalLengthSize;
     }
 }

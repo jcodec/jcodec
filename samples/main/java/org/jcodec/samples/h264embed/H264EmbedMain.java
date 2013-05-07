@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -15,6 +16,8 @@ import org.jcodec.containers.mp4.MP4Muxer;
 import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
 /**
@@ -55,14 +58,14 @@ public class H264EmbedMain {
             outTrack.addSampleEntry(ine);
 
             ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
+            AvcCBox avcC = Box.as(AvcCBox.class, Box.findFirst(ine, LeafBox.class, "avcC"));
 
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
             for (int i = 0; (inFrame = inTrack.getFrames(1)) != null; i++) {
                 ByteBuffer data = inFrame.getData();
-                H264Utils.decodeMOVPacket(data);
                 _out.clear();
-                ByteBuffer result = transcoder.transcode(data, _out);
+                ByteBuffer result = transcoder.transcode(H264Utils.splitMOVPacket(data, avcC), _out);
                 outTrack.addFrame(new MP4Packet((MP4Packet)inFrame, result));
 
                 if (i % 100 == 0)

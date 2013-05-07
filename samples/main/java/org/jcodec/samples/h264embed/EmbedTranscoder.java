@@ -3,6 +3,7 @@ package org.jcodec.samples.h264embed;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.NALUnit;
@@ -16,23 +17,26 @@ public class EmbedTranscoder {
     private TIntObjectHashMap<PictureParameterSet> pps = new TIntObjectHashMap<PictureParameterSet>();
 
     public ByteBuffer transcode(ByteBuffer data, ByteBuffer _out) {
-        ByteBuffer segment;
-        while ((segment = H264Utils.nextNALUnit(data)) != null) {
-            NIOUtils.skip(segment, 4);
-            NALUnit marker = NALUnit.read(segment);
+        return transcode(H264Utils.splitFrame(data), _out);
+    }
+    
+    public ByteBuffer transcode(List<ByteBuffer> data, ByteBuffer _out) {
+        for (ByteBuffer nalUnit : data) {
+            NIOUtils.skip(nalUnit, 4);
+            NALUnit marker = NALUnit.read(nalUnit);
             _out.putInt(1);
             marker.write(_out);
             if (marker.type == NALUnitType.NON_IDR_SLICE || marker.type == NALUnitType.IDR_SLICE) {
-                transcodeSlice(segment, marker);
+                transcodeSlice(nalUnit, marker);
             } else {
                 if (marker.type == NALUnitType.SPS) {
-                    SeqParameterSet _sps = SeqParameterSet.read(segment.duplicate());
+                    SeqParameterSet _sps = SeqParameterSet.read(nalUnit.duplicate());
                     sps.put(_sps.seq_parameter_set_id, _sps);
                 } else if (marker.type == NALUnitType.PPS) {
-                    PictureParameterSet _pps = PictureParameterSet.read(segment.duplicate());
+                    PictureParameterSet _pps = PictureParameterSet.read(nalUnit.duplicate());
                     pps.put(_pps.pic_parameter_set_id, _pps);
                 }
-                NIOUtils.write(_out, segment);
+                NIOUtils.write(_out, nalUnit);
             }
         }
 

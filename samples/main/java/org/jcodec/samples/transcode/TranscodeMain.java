@@ -1,7 +1,7 @@
 package org.jcodec.samples.transcode;
 
 import static java.lang.String.format;
-import static org.jcodec.codecs.h264.H264Utils.decodeMOVPacket;
+import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.common.model.Rational.HALF;
 import static org.jcodec.common.model.Unit.SEC;
@@ -118,6 +118,7 @@ public class TranscodeMain {
             PixelAspectExt pasp = null;
             DemuxerTrack videoTrack;
             int width = 0, height = 0;
+            AvcCBox avcC = null;
             if (!raw) {
                 source = new FileChannelWrapper(new File(in));
                 MP4Demuxer demux = new MP4Demuxer(source);
@@ -127,7 +128,7 @@ public class TranscodeMain {
                 totalFrames = (int) inTrack.getFrameCount();
                 pasp = Box.findFirst(inTrack.getSampleEntries()[0], PixelAspectExt.class, "pasp");
 
-                AvcCBox avcC = Box.as(AvcCBox.class, Box.findFirst(ine, LeafBox.class, "avcC"));
+                avcC = Box.as(AvcCBox.class, Box.findFirst(ine, LeafBox.class, "avcC"));
                 decoder.addSps(avcC.getSpsList());
                 decoder.addPps(avcC.getPpsList());
                 videoTrack = inTrack;
@@ -164,17 +165,18 @@ public class TranscodeMain {
             for (i = 0; (inFrame = videoTrack.getFrames(1)) != null && i < 2000;) {
                 ByteBuffer data = inFrame.getData();
                 Picture target1;
+                Frame dec;
                 if (!raw) {
-                    decodeMOVPacket(data);
                     target1 = Picture.create(width, height, ColorSpace.YUV420);
+                    dec = decoder.decodeFrame(splitMOVPacket(data, avcC), target1.getData());
                 } else {
                     // data = ByteBuffer.wrap(NIOUtils.toArray(data));
                     SeqParameterSet sps = ((MappedH264ES) videoTrack).getSps()[0];
                     width = (sps.pic_width_in_mbs_minus1 + 1) << 4;
                     height = H264Utils.getPicHeightInMbs(sps) << 4;
                     target1 = Picture.create(width, height, ColorSpace.YUV420);
+                    dec = decoder.decodeFrame(data, target1.getData());
                 }
-                Frame dec = decoder.decodeFrame(data, target1.getData());
                 if (outTrack == null) {
                     outTrack = muxer.addVideoTrack("apch", new Size(dec.getCroppedWidth(), dec.getCroppedHeight()),
                             APPLE_PRO_RES_422, timescale);
@@ -255,9 +257,8 @@ public class TranscodeMain {
             int totalFrames = (int) inTrack.getFrameCount();
             for (int i = 0; (inFrame = inTrack.getFrames(1)) != null; i++) {
                 ByteBuffer data = inFrame.getData();
-                decodeMOVPacket(data);
 
-                Picture dec = decoder.decodeFrame(data, target1.getData());
+                Picture dec = decoder.decodeFrame(splitMOVPacket(data, avcC), target1.getData());
                 transform.transform(dec, rgb);
                 _out.clear();
 
