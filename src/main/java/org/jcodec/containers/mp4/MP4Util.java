@@ -55,11 +55,9 @@ public class MP4Util {
         while (off < input.size()) {
             input.position(off);
             atom = Header.read(NIOUtils.fetchFrom(input, 16));
-            result.add(new Atom(atom, off));
-            if (atom.getSize() < 8) {
-                System.out.println("Broken atom '" + atom.getFourcc() + "' of size " + atom.getSize());
+            if (atom == null)
                 break;
-            }
+            result.add(new Atom(atom, off));
             off += atom.getSize();
         }
 

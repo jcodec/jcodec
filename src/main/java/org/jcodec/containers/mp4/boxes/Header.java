@@ -20,91 +20,98 @@ import org.jcodec.common.JCodecUtil;
  */
 public class Header {
 
-	private static final long MAX_UNSIGNED_INT = 0x100000000L;
-	private String fourcc;
-	private long size;
-	private boolean lng;
+    private static final long MAX_UNSIGNED_INT = 0x100000000L;
+    private String fourcc;
+    private long size;
+    private boolean lng;
 
-	public Header(String fourcc) {
-		this.fourcc = fourcc;
-	}
+    public Header(String fourcc) {
+        this.fourcc = fourcc;
+    }
 
-	public Header(String fourcc, long size) {
-		this.size = size;
-		this.fourcc = fourcc;
-	}
+    public Header(String fourcc, long size) {
+        this.size = size;
+        this.fourcc = fourcc;
+    }
 
-	public Header(Header h) {
-		this.fourcc = h.fourcc;
-		this.size = h.size;
-	}
+    public Header(Header h) {
+        this.fourcc = h.fourcc;
+        this.size = h.size;
+    }
 
-	public Header(String fourcc, long size, boolean lng) {
-		this(fourcc, size);
-		this.lng = lng;
-	}
+    public Header(String fourcc, long size, boolean lng) {
+        this(fourcc, size);
+        this.lng = lng;
+    }
 
-	public static Header read(ByteBuffer input) {
-		long size;
-		while ((size = (((long) input.getInt()) & 0xffffffffL)) == 0)
-			;
-		if(size < 8)
-			return null;
-		
-		String fourcc = NIOUtils.readString(input, 4);
-		boolean lng = false;
-		if (size == 1 && input.remaining() >= 8) {
-			lng = true;
-			size = input.getLong();
-		}
+    public static Header read(ByteBuffer input) {
+        long size = 0;
+        while (input.remaining() >= 4 && (size = (((long) input.getInt()) & 0xffffffffL)) == 0)
+            ;
+        if (input.remaining() < 4 || size < 8 && size != 1) {
+            System.out.println("Broken atom of size " + size);
+            return null;
+        }
 
-		return new Header(fourcc, size, lng);
-	}
+        String fourcc = NIOUtils.readString(input, 4);
+        boolean lng = false;
+        if (size == 1) {
+            if (input.remaining() >= 8) {
+                lng = true;
+                size = input.getLong();
+            } else {
+                System.out.println("Broken atom of size " + size);
+                return null;
+            }
+        }
 
-	public void print() {
-		System.out.println(fourcc + "," + size);
-	}
+        return new Header(fourcc, size, lng);
+    }
 
-	public void skip(InputStream di) throws IOException {
-		StringReader.sureSkip(di, size - headerSize());
-	}
+    public void print() {
+        System.out.println(fourcc + "," + size);
+    }
 
-	public long headerSize() {
-		return lng || (size > MAX_UNSIGNED_INT) ? 16 : 8;
-	}
+    public void skip(InputStream di) throws IOException {
+        StringReader.sureSkip(di, size - headerSize());
+    }
 
-	public byte[] readContents(InputStream di) throws IOException {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		for (int i = 0; i < size - headerSize(); i++) {
-			baos.write(di.read());
-		}
-		return baos.toByteArray();
-	}
+    public long headerSize() {
+        return lng || (size > MAX_UNSIGNED_INT) ? 16 : 8;
+    }
 
-	public String getFourcc() {
-		return fourcc;
-	}
+    public byte[] readContents(InputStream di) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        for (int i = 0; i < size - headerSize(); i++) {
+            baos.write(di.read());
+        }
+        return baos.toByteArray();
+    }
 
-	public long getBodySize() {
-		return size - headerSize();
-	}
+    public String getFourcc() {
+        return fourcc;
+    }
 
-	public void setBodySize(int length) {
-		size = length + headerSize();
-	}
+    public long getBodySize() {
+        return size - headerSize();
+    }
 
-	public void write(ByteBuffer out) {
-		if (size > MAX_UNSIGNED_INT)
-			out.putInt(1);
-		else
-			out.putInt((int) size);
-		out.put(JCodecUtil.asciiString(fourcc));
-		if (size > MAX_UNSIGNED_INT) {
-			out.putLong(size);
-		}
-	}
+    public void setBodySize(int length) {
+        size = length + headerSize();
+    }
 
-	public long getSize() {
-		return size;
-	}
+    public void write(ByteBuffer out) {
+        if (size > MAX_UNSIGNED_INT)
+            out.putInt(1);
+        else
+            out.putInt((int) size);
+        out.put(JCodecUtil.asciiString(fourcc));
+        if (size > MAX_UNSIGNED_INT) {
+            out.putLong(size);
+        }
+    }
+
+    public long getSize() {
+        return size;
+    }
 }

@@ -46,8 +46,10 @@ public class NodeBox extends Box {
 
     protected static Box parseChildBox(ByteBuffer input, BoxFactory factory) {
         ByteBuffer fork = input.duplicate();
-        while (fork.getInt() == 0)
+        while (input.remaining() >= 4 && fork.getInt() == 0)
             input.getInt();
+        if (input.remaining() < 4)
+            return null;
 
         Header childAtom = Header.read(input);
         if (input.remaining() >= childAtom.getBodySize())
