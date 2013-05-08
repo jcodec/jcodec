@@ -3,6 +3,8 @@ package org.jcodec.movtool;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.max;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
 import static org.jcodec.movtool.Util.forceEditList;
 
@@ -13,7 +15,6 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.apache.commons.lang.StringUtils;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
@@ -65,16 +66,16 @@ public class Cut {
         SeekableByteChannel out = null;
         List<SeekableByteChannel> outs = new ArrayList<SeekableByteChannel>();
         try {
-            input = new FileChannelWrapper(source);
+            input = readableFileChannel(source);
             MovieBox movie = createRefMovie(input, "file://" + source.getCanonicalPath());
             List<MovieBox> slicesMovs;
             if (!selfContained) {
-                out = new FileChannelWrapper(new File(source.getParentFile(), removeExtension(source.getName())
+                out = writableFileChannel(new File(source.getParentFile(), removeExtension(source.getName())
                         + ".ref.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
                 MP4Util.writeMovie(out, movie);
             } else {
-                out = new FileChannelWrapper(new File(source.getParentFile(), removeExtension(source.getName())
+                out = writableFileChannel(new File(source.getParentFile(), removeExtension(source.getName())
                         + ".self.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
                 new Strip().strip(movie);
@@ -98,7 +99,7 @@ public class Cut {
                 continue;
             SeekableByteChannel out = null;
             try {
-                out = new FileChannelWrapper(new File(parentFile, names.get(i)));
+                out = writableFileChannel(new File(parentFile, names.get(i)));
                 MP4Util.writeMovie(out, slices.get(i));
             } finally {
                 NIOUtils.closeQuietly(out);

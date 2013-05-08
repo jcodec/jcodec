@@ -5,6 +5,7 @@ import static org.jcodec.common.JCodecUtil.asciiString;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -267,5 +268,29 @@ public class NIOUtils {
 
     public static void writeLong(WritableByteChannel channel, long value) throws IOException {
         channel.write((ByteBuffer) ByteBuffer.allocate(8).putLong(value).flip());
+    }
+
+    public static FileChannelWrapper readableFileChannel(File file) throws FileNotFoundException {
+        return new FileChannelWrapper(new FileInputStream(file).getChannel());
+    }
+
+    public static FileChannelWrapper writableFileChannel(File file) throws FileNotFoundException {
+        return new FileChannelWrapper(new FileOutputStream(file).getChannel());
+    }
+
+    public static FileChannelWrapper rwFileChannel(File file) throws FileNotFoundException {
+        return new FileChannelWrapper(new RandomAccessFile(file, "rw").getChannel());
+    }
+    
+    public static FileChannelWrapper readableFileChannel(String file) throws FileNotFoundException {
+        return new FileChannelWrapper(new FileInputStream(file).getChannel());
+    }
+
+    public static FileChannelWrapper writableFileChannel(String file) throws FileNotFoundException {
+        return new FileChannelWrapper(new FileOutputStream(file).getChannel());
+    }
+
+    public static FileChannelWrapper rwFileChannel(String file) throws FileNotFoundException {
+        return new FileChannelWrapper(new RandomAccessFile(file, "rw").getChannel());
     }
 }

@@ -1,12 +1,14 @@
 package org.jcodec.samples.h264embed;
 
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.NIOUtils.writableFileChannel;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.Brand;
@@ -43,8 +45,8 @@ public class H264EmbedMain {
         SeekableByteChannel sink = null;
         SeekableByteChannel source = null;
         try {
-            source = new FileChannelWrapper(new File(args[0]));
-            sink = new FileChannelWrapper(new File(args[1]));
+            source = readableFileChannel(new File(args[0]));
+            sink = writableFileChannel(new File(args[1]));
 
             MP4Demuxer demux = new MP4Demuxer(source);
             MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);

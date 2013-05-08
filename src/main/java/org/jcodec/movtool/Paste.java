@@ -1,6 +1,8 @@
 package org.jcodec.movtool;
 
 import static java.util.Arrays.fill;
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
 import static org.jcodec.movtool.Util.forceEditList;
 import static org.jcodec.movtool.Util.insertTo;
@@ -11,6 +13,7 @@ import java.io.File;
 import java.util.Arrays;
 
 import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.ClipRegionBox;
@@ -46,10 +49,10 @@ public class Paste {
         try {
             File outFile = new File(toFile.getParentFile(), toFile.getName().replaceAll("\\.mov$", "") + ".paste.mov");
             outFile.delete();
-            out = new FileChannelWrapper(outFile);
-            to = new FileChannelWrapper(toFile);
+            out = writableFileChannel(outFile);
+            to = writableFileChannel(toFile);
             File fromFile = new File(args[1]);
-            from = new FileChannelWrapper(fromFile);
+            from = readableFileChannel(fromFile);
             MovieBox toMov = createRefMovie(to, "file://" + toFile.getCanonicalPath());
             MovieBox fromMov = createRefMovie(from, "file://" + fromFile.getCanonicalPath());
             new Strip().strip(fromMov);

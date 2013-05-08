@@ -1,6 +1,8 @@
 package org.jcodec.movtool;
 
 import static java.lang.System.arraycopy;
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 
 import java.io.File;
@@ -9,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
@@ -46,10 +47,10 @@ public class Strip {
         SeekableByteChannel input = null;
         SeekableByteChannel out = null;
         try {
-            input = new FileChannelWrapper(new File(args[0]));
+            input = readableFileChannel(new File(args[0]));
             File file = new File(args[1]);
             file.delete();
-            out = new FileChannelWrapper(file);
+            out = writableFileChannel(file);
             MovieBox movie = MP4Util.createRefMovie(input, "file://" + new File(args[0]).getAbsolutePath());
             new Strip().strip(movie);
             MP4Util.writeMovie(out, movie);

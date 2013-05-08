@@ -1,5 +1,7 @@
 package org.jcodec.movtool;
 
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
 import java.io.File;
@@ -7,7 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Demuxer;
@@ -48,8 +49,8 @@ public class Remux {
         SeekableByteChannel input = null;
         SeekableByteChannel output = null;
         try {
-            input = new FileChannelWrapper(src);
-            output = new FileChannelWrapper(tgt);
+            input = readableFileChannel(src);
+            output = writableFileChannel(tgt);
             MP4Demuxer demuxer = new MP4Demuxer(input);
             MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
 

@@ -4,6 +4,8 @@ import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
 import static org.jcodec.common.JCodecUtil.getAsIntArray;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -61,7 +63,7 @@ public class TestTool {
         SeekableByteChannel raw = null;
         SeekableByteChannel source = null;
         try {
-            source = new FileChannelWrapper(new File(in));
+            source = new FileChannelWrapper(new FileInputStream(in).getChannel());
 
             MP4Demuxer demux = new MP4Demuxer(source);
 
@@ -71,22 +73,32 @@ public class TestTool {
 
             VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
             AvcCBox avcC = Box.as(AvcCBox.class, Box.findFirst(ine, LeafBox.class, "avcC"));
-            
-            ByteBuffer _rawData = ByteBuffer.allocate(1920*1088*6);
+
+            ByteBuffer _rawData = ByteBuffer.allocate(1920 * 1088 * 6);
 
             decoder.addSps(avcC.getSpsList());
             decoder.addPps(avcC.getPpsList());
 
             Packet inFrame;
+
+            int sf = 90000;
+            MP4DemuxerTrack dt = (MP4DemuxerTrack) inTrack;
+            dt.gotoFrame(sf);
+            while ((inFrame = inTrack.getFrames(1)) != null && !inFrame.isKeyFrame())
+                ;
+            // System.out.println(inFrame.getFrameNo() + " - " +
+            // inFrame.isKeyFrame());
+            dt.gotoFrame(inFrame.getFrameNo());
+
             List<Picture> decodedPics = new ArrayList<Picture>();
             int totalFrames = (int) inTrack.getFrameCount(), seqNo = 0;
-            for (int i = 0; (inFrame = inTrack.getFrames(1)) != null; i++) {
+            for (int i = sf; (inFrame = inTrack.getFrames(1)) != null; i++) {
                 ByteBuffer data = inFrame.getData();
                 List<ByteBuffer> nalUnits = splitMOVPacket(data, avcC);
                 _rawData.clear();
                 H264Utils.joinNALUnits(nalUnits, _rawData);
                 _rawData.flip();
-                
+
                 if (H264Utils.idrSlice(_rawData)) {
                     if (raw != null) {
                         raw.close();
@@ -94,7 +106,7 @@ public class TestTool {
                         decodedPics = new ArrayList<Picture>();
                         seqNo = i;
                     }
-                    raw = new FileChannelWrapper(coded);
+                    raw = new FileChannelWrapper(new FileOutputStream(coded).getChannel());
                     H264Utils.saveStreamParams(avcC, raw);
                 }
                 raw.write(_rawData);
@@ -117,24 +129,31 @@ public class TestTool {
 
     private void runJMCompareResults(List<Picture> decodedPics, int seqNo) throws Exception {
 
-        Process process = Runtime.getRuntime().exec(jm + " -d " + jmconf.getAbsolutePath());
-        process.waitFor();
+        try {
+            Process process = Runtime.getRuntime().exec(jm + " -d " + jmconf.getAbsolutePath());
+            process.waitFor();
 
-        ByteBuffer yuv = NIOUtils.fetchFrom(decoded);
-        for (Picture pic : decodedPics) {
-            pic = pic.cropped();
-            boolean equals = Arrays.equals(getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0)),
-                    pic.getPlaneData(0));
-            equals &= Arrays.equals(getAsIntArray(yuv, pic.getPlaneWidth(1) * pic.getPlaneHeight(1)),
-                    pic.getPlaneData(1));
-            equals &= Arrays.equals(getAsIntArray(yuv, pic.getPlaneWidth(2) * pic.getPlaneHeight(2)),
-                    pic.getPlaneData(2));
-            if (!equals) {
-                System.out.println(seqNo + ": DIFF!!!");
-                coded.renameTo(new File(errs, String.format("seq%08d.264", seqNo)));
-                decoded.renameTo(new File(errs, String.format("seq%08d_dec.yuv", seqNo)));
+            ByteBuffer yuv = NIOUtils.fetchFrom(decoded);
+            for (Picture pic : decodedPics) {
+                pic = pic.cropped();
+                boolean equals = Arrays.equals(getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0)),
+                        pic.getPlaneData(0));
+                equals &= Arrays.equals(getAsIntArray(yuv, pic.getPlaneWidth(1) * pic.getPlaneHeight(1)),
+                        pic.getPlaneData(1));
+                equals &= Arrays.equals(getAsIntArray(yuv, pic.getPlaneWidth(2) * pic.getPlaneHeight(2)),
+                        pic.getPlaneData(2));
+                if (!equals)
+                    diff(seqNo);
             }
+        } catch (Exception e) {
+            diff(seqNo);
         }
+    }
+
+    private void diff(int seqNo) {
+        System.out.println(seqNo + ": DIFF!!!");
+        coded.renameTo(new File(errs, String.format("seq%08d.264", seqNo)));
+        decoded.renameTo(new File(errs, String.format("seq%08d_dec.yuv", seqNo)));
     }
 
     private void prepareJMConf() throws IOException {

@@ -196,7 +196,7 @@ public class H264Utils {
     }
 
     public static void saveRawFrame(ByteBuffer data, AvcCBox avcC, File f) throws IOException {
-        SeekableByteChannel raw = new FileChannelWrapper(f);
+        SeekableByteChannel raw = NIOUtils.writableFileChannel(f);
         saveStreamParams(avcC, raw);
         raw.write(data.duplicate());
         raw.close();

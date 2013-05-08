@@ -1,10 +1,12 @@
 package org.jcodec.samples.prores;
 
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.NIOUtils.writableFileChannel;
+
 import java.io.File;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresToProxy;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Demuxer;
@@ -32,9 +34,9 @@ public class ToProxy {
             return;
         }
 
-        SeekableByteChannel input = new FileChannelWrapper(new File(args[0]));
+        SeekableByteChannel input = readableFileChannel(new File(args[0]));
         MP4Demuxer demuxer = new MP4Demuxer(input);
-        SeekableByteChannel output = new FileChannelWrapper(new File(args[1]));
+        SeekableByteChannel output = writableFileChannel(new File(args[1]));
         MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
 
         MP4DemuxerTrack inVideo = demuxer.getVideoTrack();

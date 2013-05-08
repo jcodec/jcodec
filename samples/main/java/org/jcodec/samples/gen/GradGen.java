@@ -1,11 +1,12 @@
 package org.jcodec.samples.gen;
 
+import static org.jcodec.common.NIOUtils.writableFileChannel;
+
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.jcodec.codecs.raw.V210Encoder;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
@@ -38,7 +39,7 @@ public class GradGen {
         drawGrad(pic.getPlaneData(0), new Size(pic.getWidth(), pic.getHeight()));
 
         V210Encoder encoder = new V210Encoder();
-        MP4Muxer muxer = new MP4Muxer(new FileChannelWrapper(new File(args[0])));
+        MP4Muxer muxer = new MP4Muxer(writableFileChannel(new File(args[0])));
 
         ByteBuffer out = ByteBuffer.allocate(width * height * 10);
         ByteBuffer frame = encoder.encodeFrame(out, pic);

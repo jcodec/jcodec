@@ -45,6 +45,7 @@ public class H264Decoder implements VideoDecoder {
     private TIntObjectHashMap<Frame> lRefs;
     private List<Frame> pictureBuffer;
     private POCManager poc;
+    private boolean debug;
 
     public H264Decoder() {
         pictureBuffer = new ArrayList<Frame>();
@@ -144,13 +145,10 @@ public class H264Decoder implements VideoDecoder {
 
             decoder = new SliceDecoder(activeSps, activePps, nCoeff, mvs, mbTypes, mbQps, shs, tr8x8Used, refsUsed,
                     result, sRefs, lRefs);
+            decoder.setDebug(debug);
 
             filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, nCoeff, mvs, mbTypes,
                     mbQps, shs, tr8x8Used, refsUsed);
-
-            // if (firstSliceHeader.slice_type == SliceType.B) {
-            // System.out.println("B frame");
-            // }
 
             return result;
         }
@@ -330,5 +328,9 @@ public class H264Decoder implements VideoDecoder {
     public int probe(ByteBuffer data) {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    public void setDebug(boolean b) {
+        this.debug = b;
     }
 }

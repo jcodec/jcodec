@@ -123,6 +123,7 @@ public class SliceDecoder {
     private boolean[] tr8x8Used;
     private Frame[][][] refsUsed;
     private Prediction prediction;
+    private boolean debug;
 
     public SliceDecoder(SeqParameterSet activeSps, PictureParameterSet activePps, int[][] nCoeff, int[][][][] mvs,
             MBType[] mbTypes, int[][] mbQps, SliceHeader[] shs, boolean[] tr8x8Used, Frame[][][] refsUsed,
@@ -196,7 +197,8 @@ public class SliceDecoder {
         else
             numRef = new int[] { activePps.num_ref_idx_active_minus1[0] + 1, activePps.num_ref_idx_active_minus1[1] + 1 };
 
-//        System.out.println("============" + thisFrame.getPOC() + "=============");
+        debugPrint("============" + thisFrame.getPOC() + "============= " + sh.slice_type.name());
+        
         Frame[][] refList = null;
         if (sh.slice_type == SliceType.P) {
             refList = new Frame[][] { buildRefListP(), null };
@@ -222,8 +224,9 @@ public class SliceDecoder {
             if (sh.slice_type.isInter() && !activePps.entropy_coding_mode_flag) {
                 int mbSkipRun = readUE(in, "mb_skip_run");
                 for (int j = 0; j < mbSkipRun; j++, i++) {
-                    decodeSkip(refList, i, mb, sh.slice_type);
                     int mbAddr = mapper.getAddress(i);
+                    debugPrint("---------------------- MB (" + (mbAddr % mbWidth) + "," + (mbAddr / mbWidth) + ") ---------------------");
+                    decodeSkip(refList, i, mb, sh.slice_type);
                     shs[mbAddr] = sh;
                     refsUsed[mbAddr] = refList;
                     put(thisFrame, mb, mapper.getMbX(i), mapper.getMbY(i));
@@ -242,7 +245,7 @@ public class SliceDecoder {
             refsUsed[mbAddr] = refList;
             int mbX = mbAddr % mbWidth;
             int mbY = mbAddr / mbWidth;
-//            System.out.println("---------------------- MB (" + mbX + "," + mbY + ") ---------------------");
+            debugPrint("---------------------- MB (" + mbX + "," + mbY + ") ---------------------");
 
             if (sh.slice_type.isIntra()
                     || (!activePps.entropy_coding_mode_flag || !cabac.readMBSkipFlag(mDecoder, sh.slice_type,
@@ -305,29 +308,30 @@ public class SliceDecoder {
             l1[1] = l1[0];
             l1[0] = frame;
         }
-        
+
         Frame[][] result = { Arrays.copyOf(l0, numRef[0]), Arrays.copyOf(l1, numRef[1]) };
 
-//        System.out.println("----------" + thisFrame.getPOC() + "------------");
-//        printList("List 0: ", result[0]);
-//        printList("List 1: ", result[1]);
+        // System.out.println("----------" + thisFrame.getPOC() +
+        // "------------");
+        // printList("List 0: ", result[0]);
+        // printList("List 1: ", result[1]);
 
         reorder(result[0], 0);
         reorder(result[1], 1);
 
-//        printList("Reorder List 0: ", result[0]);
-//        printList("Reorder List 1: ", result[1]);
+        // printList("Reorder List 0: ", result[0]);
+        // printList("Reorder List 1: ", result[1]);
 
         return result;
     }
 
-//    private void printList(String label, Frame[] frames) {
-//        System.out.print(label);
-//        for (Frame frame : frames) {
-//            System.out.print(frame.getPOC() + ", ");
-//        }
-//        System.out.println();
-//    }
+    // private void printList(String label, Frame[] frames) {
+    // System.out.print(label);
+    // for (Frame frame : frames) {
+    // System.out.print(frame.getPOC() + ", ");
+    // }
+    // System.out.println();
+    // }
 
     private Frame[] buildList(Comparator<Frame> cmpFwd, Comparator<Frame> cmpInv) {
         Frame[] refs = new Frame[sRefs.length + lRefs.size()];
@@ -346,7 +350,7 @@ public class SliceDecoder {
         Arrays.sort(keys);
         for (int i = 0; i < keys.length; i++, ref++)
             refs[ref] = lRefs.get(keys[i]);
-        
+
         return refs;
     }
 
@@ -1131,8 +1135,8 @@ public class SliceDecoder {
             mvX1 = mvdX1 + mvpX1;
             mvY1 = mvdY1 + mvpY1;
 
-//            System.out.println("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + mvX1
-//                    + "," + mvY1 + "," + refIdx1[list] + ")");
+            debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + mvX1 + ","
+                    + mvY1 + "," + refIdx1[list] + ")");
 
             BlockInterpolator.getBlockLuma(references[list][refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
                     (mbY << 6) + mvY1, 16, 8);
@@ -1154,8 +1158,8 @@ public class SliceDecoder {
             mvX2 = mvdX2 + mvpX2;
             mvY2 = mvdY2 + mvpY2;
 
-//            System.out.println("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + mvX2
-//                    + "," + mvY2 + "," + refIdx2[list] + ")");
+            debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + mvX2 + ","
+                    + mvY2 + "," + refIdx2[list] + ")");
 
             BlockInterpolator.getBlockLuma(references[list][refIdx2[list]], mb, 128, (mbX << 6) + mvX2, (mbY << 6) + 32
                     + mvY2, 16, 8);
@@ -1291,8 +1295,8 @@ public class SliceDecoder {
             mvX1 = mvdX1 + mvpX1;
             mvY1 = mvdY1 + mvpY1;
 
-//            System.out.println("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + mvX1
-//                    + "," + mvY1 + "," + refIdx1[list] + ")");
+            debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + mvX1 + ","
+                    + mvY1 + "," + refIdx1[list] + ")");
 
             BlockInterpolator.getBlockLuma(references[list][refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
                     (mbY << 6) + mvY1, 8, 16);
@@ -1314,8 +1318,8 @@ public class SliceDecoder {
             mvX2 = mvdX2 + mvpX2;
             mvY2 = mvdY2 + mvpY2;
 
-//            System.out.println("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + mvX2
-//                    + "," + mvY2 + "," + refIdx2[list] + ")");
+            debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + mvX2 + ","
+                    + mvY2 + "," + refIdx2[list] + ")");
 
             BlockInterpolator.getBlockLuma(references[list][refIdx2[list]], mb, 8, (mbX << 6) + 32 + mvX2, (mbY << 6)
                     + mvY2, 8, 16);
@@ -1387,8 +1391,8 @@ public class SliceDecoder {
             mvX = mvdX + mvpX;
             mvY = mvdY + mvpY;
 
-//            System.out.println("MVP: (" + mvpX + ", " + mvpY + "), MVD: (" + mvdX + ", " + mvdY + "), MV: (" + mvX
-//                    + "," + mvY + "," + refIdx[list] + ")");
+            debugPrint("MVP: (" + mvpX + ", " + mvpY + "), MVD: (" + mvdX + ", " + mvdY + "), MV: (" + mvX + "," + mvY
+                    + "," + refIdx[list] + ")");
             r = refIdx[list];
 
             BlockInterpolator.getBlockLuma(references[list][r], mb, 0, (mbX << 6) + mvX, (mbY << 6) + mvY, 16, 16);
@@ -1826,8 +1830,8 @@ public class SliceDecoder {
         x00[0] = x01[0] = x10[0] = x11[0] = mvdX + mvpX;
         x00[1] = x01[1] = x10[1] = x11[1] = mvpY + mvdY;
 
-//        System.out.println("MVP: (" + mvpX + ", " + mvpY + "), MVD: (" + mvdX + ", " + mvdY + "), MV: (" + x00[0] + ","
-//                + x00[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX + ", " + mvpY + "), MVD: (" + mvdX + ", " + mvdY + "), MV: (" + x00[0] + ","
+                + x00[1] + "," + refIdx + ")");
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 8);
     }
 
@@ -1848,8 +1852,8 @@ public class SliceDecoder {
         x00[0] = x01[0] = mvdX1 + mvpX1;
         x00[1] = x01[1] = mvdY1 + mvpY1;
 
-//        System.out.println("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + x00[0]
-//                + "," + x00[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + x00[0] + ","
+                + x00[1] + "," + refIdx + ")");
 
         int mvdX2 = readMVD(reader, 0, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred, mbX, blk8x8X,
                 blk8x8Y + 1, 2, 1, list);
@@ -1862,8 +1866,8 @@ public class SliceDecoder {
         x10[0] = x11[0] = mvdX2 + mvpX2;
         x10[1] = x11[1] = mvdY2 + mvpY2;
 
-//        System.out.println("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + x10[0]
-//                + "," + x10[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + x10[0] + ","
+                + x10[1] + "," + refIdx + ")");
 
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 4);
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4, offX + x10[0], offY + x10[1]
@@ -1887,8 +1891,8 @@ public class SliceDecoder {
         x00[0] = x10[0] = mvdX1 + mvpX1;
         x00[1] = x10[1] = mvdY1 + mvpY1;
 
-//        System.out.println("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + x00[0]
-//                + "," + x00[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + x00[0] + ","
+                + x00[1] + "," + refIdx + ")");
 
         int mvdX2 = readMVD(reader, 0, true, tAvb, curMBType, topMBType, partPred, topPred, partPred, mbX, blk8x8X + 1,
                 blk8x8Y, 1, 2, list);
@@ -1901,8 +1905,8 @@ public class SliceDecoder {
         x01[0] = x11[0] = mvdX2 + mvpX2;
         x01[1] = x11[1] = mvdY2 + mvpY2;
 
-//        System.out.println("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + x01[0]
-//                + "," + x01[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + x01[0] + ","
+                + x01[1] + "," + refIdx + ")");
 
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 4, 8);
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 8);
@@ -1923,8 +1927,8 @@ public class SliceDecoder {
 
         x00[0] = mvdX1 + mvpX1;
         x00[1] = mvdY1 + mvpY1;
-//        System.out.println("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + x00[0]
-//                + "," + x00[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + x00[0] + ","
+                + x00[1] + "," + refIdx + ")");
 
         int mvdX2 = readMVD(reader, 0, true, tAvb, curMBType, topMBType, partPred, topPred, partPred, mbX, blk8x8X + 1,
                 blk8x8Y, 1, 1, list);
@@ -1936,8 +1940,8 @@ public class SliceDecoder {
 
         x01[0] = mvdX2 + mvpX2;
         x01[1] = mvdY2 + mvpY2;
-//        System.out.println("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + x01[0]
-//                + "," + x01[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + x01[0] + ","
+                + x01[1] + "," + refIdx + ")");
 
         int mvdX3 = readMVD(reader, 0, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred, mbX, blk8x8X,
                 blk8x8Y + 1, 1, 1, list);
@@ -1950,8 +1954,8 @@ public class SliceDecoder {
         x10[0] = mvdX3 + mvpX3;
         x10[1] = mvdY3 + mvpY3;
 
-//        System.out.println("MVP: (" + mvpX3 + ", " + mvpY3 + "), MVD: (" + mvdX3 + ", " + mvdY3 + "), MV: (" + x10[0]
-//                + "," + x10[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX3 + ", " + mvpY3 + "), MVD: (" + mvdX3 + ", " + mvdY3 + "), MV: (" + x10[0] + ","
+                + x10[1] + "," + refIdx + ")");
 
         int mvdX4 = readMVD(reader, 0, true, true, curMBType, curMBType, partPred, partPred, partPred, mbX,
                 blk8x8X + 1, blk8x8Y + 1, 1, 1, list);
@@ -1964,8 +1968,8 @@ public class SliceDecoder {
         x11[0] = mvdX4 + mvpX4;
         x11[1] = mvdY4 + mvpY4;
 
-//        System.out.println("MVP: (" + mvpX4 + ", " + mvpY4 + "), MVD: (" + mvdX4 + ", " + mvdY4 + "), MV: (" + x11[0]
-//                + "," + x11[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX4 + ", " + mvpY4 + "), MVD: (" + mvdX4 + ", " + mvdY4 + "), MV: (" + x11[0] + ","
+                + x11[1] + "," + refIdx + ")");
 
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 4, 4);
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 4);
@@ -2077,16 +2081,16 @@ public class SliceDecoder {
             predictPSkip(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
                     mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, mb);
             Arrays.fill(pp, PartPred.L0);
-        } else
+        } else {
             predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
                     mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, pp, mb, identityMapping4);
+            savePrediction8x8(mbX, x[0], 0);
+            savePrediction8x8(mbX, x[1], 1);
+        }
 
         decodeChromaSkip(refs, x, pp, mbX, mbY, mb);
 
         collectPredictors(mb, mbX);
-
-        savePrediction8x8(mbX, x[0], 0);
-        savePrediction8x8(mbX, x[1], 1);
 
         saveMvs(x, mbX, mbY);
         mbTypes[mbAddr] = topMBType[mbX] = leftMBType = null;
@@ -2118,9 +2122,9 @@ public class SliceDecoder {
                     int blkIndX = blk4x4 & 3;
                     int blkIndY = blk4x4 >> 2;
 
-//                    System.out.println("DIRECT_4x4 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4][0] + ","
-//                            + x[0][blk4x4][1] + "," + x[0][blk4x4][2] + "), (" + x[1][blk4x4][0] + ","
-//                            + x[1][blk4x4][1] + "," + x[1][blk4x4][2] + ")");
+                    debugPrint("DIRECT_4x4 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4][0] + ","
+                            + x[0][blk4x4][1] + "," + x[0][blk4x4][2] + "), (" + x[1][blk4x4][0] + ","
+                            + x[1][blk4x4][1] + "," + x[1][blk4x4][2] + ")");
 
                     int blkPredX = (mbX << 6) + (blkIndX << 4);
                     int blkPredY = (mbY << 6) + (blkIndY << 4);
@@ -2138,9 +2142,9 @@ public class SliceDecoder {
                 int blkIndX = blk4x4_0 & 3;
                 int blkIndY = blk4x4_0 >> 2;
 
-//                System.out.println("DIRECT_8x8 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4_0][0] + ","
-//                        + x[0][blk4x4_0][1] + "," + x[0][blk4x4_0][2] + "), (" + x[1][blk4x4_0][0] + ","
-//                        + x[1][blk4x4_0][1] + "," + x[0][blk4x4_0][2] + ")");
+                debugPrint("DIRECT_8x8 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4_0][0] + ","
+                        + x[0][blk4x4_0][1] + "," + x[0][blk4x4_0][2] + "), (" + x[1][blk4x4_0][0] + ","
+                        + x[1][blk4x4_0][1] + "," + x[0][blk4x4_0][2] + ")");
 
                 int blkPredX = (mbX << 6) + (blkIndX << 4);
                 int blkPredY = (mbY << 6) + (blkIndY << 4);
@@ -2238,7 +2242,7 @@ public class SliceDecoder {
                         8);
                 prediction.mergePrediction(0, 0, PartPred.Bi, 0, mb0.getPlaneData(0), mb1.getPlaneData(0),
                         BLK_8x8_MB_OFF_LUMA[blk8x8], 16, 8, 8, mb.getPlaneData(0), refs, thisFrame);
-//                System.out.println("DIRECT_8x8 [" + (blk8x8 & 2) + ", " + ((blk8x8 << 1) & 2) + "]: (0,0,0), (0,0,0)");
+                debugPrint("DIRECT_8x8 [" + (blk8x8 & 2) + ", " + ((blk8x8 << 1) & 2) + "]: (0,0,0), (0,0,0)");
             }
             return;
         }
@@ -2259,9 +2263,9 @@ public class SliceDecoder {
                     int blkIndX = blk4x4 & 3;
                     int blkIndY = blk4x4 >> 2;
 
-//                    System.out.println("DIRECT_4x4 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4][0] + ","
-//                            + x[0][blk4x4][1] + "," + refIdxL0 + "), (" + x[1][blk4x4][0] + "," + x[1][blk4x4][1] + ","
-//                            + refIdxL1 + ")");
+                    debugPrint("DIRECT_4x4 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4][0] + ","
+                            + x[0][blk4x4][1] + "," + refIdxL0 + "), (" + x[1][blk4x4][0] + "," + x[1][blk4x4][1] + ","
+                            + refIdxL1 + ")");
 
                     int blkPredX = (mbX << 6) + (blkIndX << 4);
                     int blkPredY = (mbY << 6) + (blkIndY << 4);
@@ -2281,9 +2285,9 @@ public class SliceDecoder {
                 int blkIndX = blk4x4_0 & 3;
                 int blkIndY = blk4x4_0 >> 2;
 
-//                System.out.println("DIRECT_8x8 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4_0][0] + ","
-//                        + x[0][blk4x4_0][1] + "," + refIdxL0 + "), (" + x[1][blk4x4_0][0] + "," + x[1][blk4x4_0][1]
-//                        + "," + refIdxL1 + ")");
+                debugPrint("DIRECT_8x8 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4_0][0] + ","
+                        + x[0][blk4x4_0][1] + "," + refIdxL0 + "), (" + x[1][blk4x4_0][0] + "," + x[1][blk4x4_0][1]
+                        + "," + refIdxL1 + ")");
 
                 int blkPredX = (mbX << 6) + (blkIndX << 4);
                 int blkPredY = (mbY << 6) + (blkIndY << 4);
@@ -2366,7 +2370,7 @@ public class SliceDecoder {
                         1);
             }
         }
-        // System.out.println("MV_SKIP: (" + mvX + "," + mvY + ")");
+        debugPrint("MV_SKIP: (" + mvX + "," + mvY + ")");
         int blk8x8X = mbX << 1;
         predModeLeft[0] = predModeLeft[1] = predModeTop[blk8x8X] = predModeTop[blk8x8X + 1] = L0;
 
@@ -2389,5 +2393,14 @@ public class SliceDecoder {
     public void decodeChromaSkip(Frame[][] reference, int[][][] vectors, PartPred[] pp, int mbX, int mbY, Picture mb) {
         predictChromaInter(reference, vectors, mbX << 3, mbY << 3, 1, mb, pp);
         predictChromaInter(reference, vectors, mbX << 3, mbY << 3, 2, mb, pp);
+    }
+
+    private void debugPrint(String str) {
+        if (debug)
+            System.out.println(str);
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 }

@@ -1,10 +1,11 @@
 package org.jcodec.samples.streaming;
 
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MPSDemuxer.MPEGPacket;
@@ -34,7 +35,7 @@ public class MPSIndexer {
     public void index() throws IOException {
         SeekableByteChannel channel = null;
         try {
-            channel = new FileChannelWrapper(mtsFile);
+            channel = readableFileChannel(mtsFile);
             MPSDemuxer demuxer = new MPSDemuxer(channel);
             while (true) {
                 for (Track track : demuxer.getVideoTracks()) {

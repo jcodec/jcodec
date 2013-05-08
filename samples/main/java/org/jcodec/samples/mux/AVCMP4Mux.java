@@ -1,6 +1,7 @@
 package org.jcodec.samples.mux;
 
 import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
+import static org.jcodec.common.NIOUtils.writableFileChannel;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +14,6 @@ import org.jcodec.codecs.h264.MappedH264ES;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -47,7 +47,7 @@ public class AVCMP4Mux {
         File in = new File(args[0]);
         File out = new File(args[1]);
 
-        SeekableByteChannel file = new FileChannelWrapper(out);
+        SeekableByteChannel file = writableFileChannel(out);
         MP4Muxer muxer = new MP4Muxer(file);
         CompressedTrack track = muxer.addTrackForCompressed(TrackType.VIDEO, 25);
 

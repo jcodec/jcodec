@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 
 import junit.framework.Assert;
 
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
@@ -30,7 +29,7 @@ public abstract class InplaceEdit {
     public boolean save(File f) throws IOException, Exception {
         SeekableByteChannel fi = null;
         try {
-            fi = new FileChannelWrapper(f);
+            fi = NIOUtils.rwFileChannel(f);
             Atom moov = getMoov(fi);
             Assert.assertNotNull(moov);
 

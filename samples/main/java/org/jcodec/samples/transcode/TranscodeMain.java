@@ -2,6 +2,8 @@ package org.jcodec.samples.transcode;
 
 import static java.lang.String.format;
 import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.common.model.Rational.HALF;
 import static org.jcodec.common.model.Unit.SEC;
@@ -31,7 +33,6 @@ import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.codecs.prores.ProresToThumb;
 import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
@@ -110,7 +111,7 @@ public class TranscodeMain {
         SeekableByteChannel source = null;
         try {
 
-            sink = new FileChannelWrapper(new File(out));
+            sink = writableFileChannel(out);
 
             H264Decoder decoder = new H264Decoder();
 
@@ -120,7 +121,7 @@ public class TranscodeMain {
             int width = 0, height = 0;
             AvcCBox avcC = null;
             if (!raw) {
-                source = new FileChannelWrapper(new File(in));
+                source = readableFileChannel(in);
                 MP4Demuxer demux = new MP4Demuxer(source);
                 MP4DemuxerTrack inTrack = demux.getVideoTrack();
                 VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
@@ -152,7 +153,7 @@ public class TranscodeMain {
             Frame[] gop = new Frame[1000];
             Packet inFrame;
 
-            int sf = 1000;
+            int sf = 90000;
             if (!raw) {
                 MP4DemuxerTrack dt = (MP4DemuxerTrack) videoTrack;
                 dt.gotoFrame(sf);
@@ -162,7 +163,7 @@ public class TranscodeMain {
                 // inFrame.isKeyFrame());
                 dt.gotoFrame(inFrame.getFrameNo());
             }
-            for (i = 0; (inFrame = videoTrack.getFrames(1)) != null;) {
+            for (i = 0; (inFrame = videoTrack.getFrames(1)) != null && i < 2000;) {
                 ByteBuffer data = inFrame.getData();
                 Picture target1;
                 Frame dec;
@@ -231,8 +232,8 @@ public class TranscodeMain {
         SeekableByteChannel sink = null;
         SeekableByteChannel source = null;
         try {
-            source = new FileChannelWrapper(new File(in));
-            sink = new FileChannelWrapper(new File(out));
+            source = readableFileChannel(in);
+            sink = writableFileChannel(out);
 
             MP4Demuxer demux = new MP4Demuxer(source);
 
@@ -279,8 +280,8 @@ public class TranscodeMain {
         SeekableByteChannel sink = null;
         SeekableByteChannel source = null;
         try {
-            sink = new FileChannelWrapper(new File(out));
-            source = new FileChannelWrapper(new File(in));
+            sink = readableFileChannel(out);
+            source = writableFileChannel(in);
 
             MP4Demuxer demux = new MP4Demuxer(source);
             MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
@@ -361,7 +362,7 @@ public class TranscodeMain {
     }
 
     static void y4m2prores(String input, String output) throws Exception {
-        SeekableByteChannel y4m = new FileChannelWrapper(new File(input));
+        SeekableByteChannel y4m = readableFileChannel(input);
 
         Y4MDecoder frames = new Y4MDecoder(y4m);
 
@@ -370,7 +371,7 @@ public class TranscodeMain {
         SeekableByteChannel sink = null;
         MP4Muxer muxer = null;
         try {
-            sink = new FileChannelWrapper(new File(output));
+            sink = writableFileChannel(output);
             Rational fps = frames.getFps();
             if (fps == null) {
                 System.out.println("Can't get fps from the input, assuming 24");
@@ -411,7 +412,7 @@ public class TranscodeMain {
             return;
         }
 
-        MP4Demuxer rawDemuxer = new MP4Demuxer(new FileChannelWrapper(file));
+        MP4Demuxer rawDemuxer = new MP4Demuxer(readableFileChannel(file));
         FramesTrack videoTrack = (FramesTrack) rawDemuxer.getVideoTrack();
         if (videoTrack == null) {
             System.out.println("Video track not found");
@@ -444,7 +445,7 @@ public class TranscodeMain {
             return;
         }
 
-        MP4Demuxer rawDemuxer = new MP4Demuxer(new FileChannelWrapper(file));
+        MP4Demuxer rawDemuxer = new MP4Demuxer(readableFileChannel(file));
         FramesTrack videoTrack = (FramesTrack) rawDemuxer.getVideoTrack();
         if (videoTrack == null) {
             System.out.println("Video track not found");
@@ -480,7 +481,7 @@ public class TranscodeMain {
 
         SeekableByteChannel sink = null;
         try {
-            sink = new FileChannelWrapper(new File(out));
+            sink = writableFileChannel(new File(out));
             MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
             ProresEncoder encoder = new ProresEncoder(profile);
             RgbToYuv422 transform = new RgbToYuv422(2, 0);

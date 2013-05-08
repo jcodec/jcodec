@@ -1,5 +1,7 @@
 package org.jcodec.samples.mashup;
 
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
 import java.io.File;
@@ -17,7 +19,6 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
@@ -56,11 +57,11 @@ public class MovStitch2 {
 
     public static void changePPS(File in1, File in2, File out) throws IOException, MP4DemuxerException,
             FileNotFoundException {
-        MP4Muxer muxer = new MP4Muxer(new FileChannelWrapper(out), Brand.MOV);
+        MP4Muxer muxer = new MP4Muxer(writableFileChannel(out), Brand.MOV);
 
-        MP4Demuxer demuxer1 = new MP4Demuxer(new FileChannelWrapper(in1));
+        MP4Demuxer demuxer1 = new MP4Demuxer(readableFileChannel(in1));
         MP4DemuxerTrack vt1 = demuxer1.getVideoTrack();
-        MP4Demuxer demuxer2 = new MP4Demuxer(new FileChannelWrapper(in2));
+        MP4Demuxer demuxer2 = new MP4Demuxer(readableFileChannel(in2));
         MP4DemuxerTrack vt2 = demuxer2.getVideoTrack();
         checkCompatible(vt1, vt2);
 

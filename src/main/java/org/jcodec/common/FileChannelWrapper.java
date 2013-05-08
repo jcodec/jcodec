@@ -1,9 +1,7 @@
 package org.jcodec.common;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -17,10 +15,6 @@ import java.nio.channels.FileChannel;
 public class FileChannelWrapper implements SeekableByteChannel {
 
     private FileChannel ch;
-
-    public FileChannelWrapper(File file) throws FileNotFoundException {
-        ch = new RandomAccessFile(file, "rw").getChannel();
-    }
 
     public FileChannelWrapper(FileChannel ch) throws FileNotFoundException {
         this.ch = ch;

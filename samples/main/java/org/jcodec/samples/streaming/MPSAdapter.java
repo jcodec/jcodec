@@ -3,6 +3,7 @@ package org.jcodec.samples.streaming;
 import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.IntraCoded;
 import static org.jcodec.codecs.s302.S302MUtils.labels;
 import static org.jcodec.codecs.s302.S302MUtils.name;
+import static org.jcodec.common.NIOUtils.readableFileChannel;
 import static org.jcodec.containers.mps.MPSDemuxer.videoStream;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class MPSAdapter implements Adapter {
     private FileChannelWrapper channel;
 
     public MPSAdapter(File mtsFile, MTSIndex index) throws IOException {
-        channel = new FileChannelWrapper(mtsFile);
+        channel = readableFileChannel(mtsFile);
         demuxer = new MPSDemuxer(channel);
         List<Track> tracks2 = demuxer.getTracks();
         for (Track track : tracks2) {

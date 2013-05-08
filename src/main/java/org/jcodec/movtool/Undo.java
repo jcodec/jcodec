@@ -1,12 +1,13 @@
 package org.jcodec.movtool;
 
+import static org.jcodec.common.NIOUtils.readableFileChannel;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
@@ -64,7 +65,7 @@ public class Undo {
         ArrayList<Atom> result = new ArrayList<Atom>();
         SeekableByteChannel is = null;
         try {
-            is = new FileChannelWrapper(new File(fileName));
+            is = readableFileChannel(new File(fileName));
             int version = 0;
             for (Atom atom : MP4Util.getRootAtoms(is)) {
                 if ("free".equals(atom.getHeader().getFourcc()) && isMoov(is, atom)) {
