@@ -12,8 +12,9 @@ import static org.jcodec.common.tools.MathUtil.clip;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
+import org.jcodec.codecs.h264.encode.DumbRateControl;
+import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.CAVLC;
-import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
@@ -41,15 +42,21 @@ import org.jcodec.common.model.Picture;
  */
 public class H264Encoder {
 
-    private static final int QP = 20;
+    // private static final int QP = 20;
 
     private CAVLC[] cavlc;
     private CoeffTransformer coeffTransformer;
     private int[][] leftRow;
     private int[][] topLine;
+    private RateControl rc;
 
     public H264Encoder() {
+        this(new DumbRateControl());
+    }
+
+    public H264Encoder(RateControl rc) {
         coeffTransformer = new CoeffTransformer(null);
+        this.rc = rc;
     }
 
     public ByteBuffer encodeFrame(ByteBuffer _out, Picture pic) {
@@ -87,7 +94,7 @@ public class H264Encoder {
 
     private PictureParameterSet initPPS() {
         PictureParameterSet pps = new PictureParameterSet();
-        pps.pic_init_qp_minus26 = QP - 26;
+        pps.pic_init_qp_minus26 = rc.getInitQp() - 26;
         return pps;
     }
 
@@ -110,6 +117,9 @@ public class H264Encoder {
     private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture pic, ByteBuffer dup) {
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
 
+        rc.reset();
+        int qp = rc.getInitQp();
+
         dup.putInt(0x1);
         new NALUnit(NALUnitType.IDR_SLICE, 2).write(dup);
         SliceHeader sh = new SliceHeader();
@@ -125,13 +135,24 @@ public class H264Encoder {
         for (int mbY = 0; mbY < sps.pic_height_in_map_units_minus1 + 1; mbY++) {
             for (int mbX = 0; mbX < sps.pic_width_in_mbs_minus1 + 1; mbX++) {
                 CAVLCWriter.writeUE(sliceData, 23); // I_16x16_2_2_1
-                encodeMacroblock(pic, mbX, mbY, sliceData, outMB);
+                BitWriter candidate;
+                int qpDelta;
+                do {
+                    candidate = sliceData.fork();
+                    qpDelta = rc.getQpDelta();
+                    encodeMacroblock(pic, mbX, mbY, candidate, outMB, qp + qpDelta, qpDelta);
+                } while (!rc.accept(candidate.position() - sliceData.position()));
+                sliceData = candidate;
+                qp += qpDelta;
+
                 collectPredictors(outMB, mbX);
             }
         }
         sliceData.write1Bit(1);
         sliceData.flush();
+        buf = sliceData.getBuffer();
         buf.flip();
+
         escapeNAL(buf, dup);
     }
 
@@ -152,11 +173,9 @@ public class H264Encoder {
         }
     }
 
-    private void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, Picture outMB) {
+    private void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, Picture outMB, int qp, int qpDelta) {
         CAVLCWriter.writeUE(out, 0); // Chroma prediction mode -- DC
-        CAVLCWriter.writeUE(out, 0); // MB QP delta
-
-        int qp = QP;
+        CAVLCWriter.writeSE(out, qpDelta); // MB QP delta
 
         luma(pic, mbX, mbY, out, qp, outMB);
         chroma(pic, mbX, mbY, out, qp, outMB);

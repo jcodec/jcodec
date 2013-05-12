@@ -13,27 +13,36 @@ import java.nio.ByteBuffer;
  */
 public class BitWriter {
 
-    private final ByteBuffer os;
+    private final ByteBuffer buf;
     private int curInt;
     private int curBit;
+    private int initPos;
 
-    public BitWriter(ByteBuffer out) {
-        os = out;
+    public BitWriter(ByteBuffer buf) {
+        this.buf = buf;
+        initPos = buf.position();
+    }
+
+    private BitWriter(ByteBuffer os, int curBit, int curInt, int initPos) {
+        this.buf = os;
+        this.curBit = curBit;
+        this.curInt = curInt;
+        this.initPos = initPos;
     }
 
     public void flush() {
         int toWrite = (curBit + 7) >> 3;
         for (int i = 0; i < toWrite; i++) {
-            os.put((byte) (curInt >>> 24));
+            buf.put((byte) (curInt >>> 24));
             curInt <<= 8;
         }
     }
 
     private final void putInt(int i) {
-        os.put((byte) (i >>> 24));
-        os.put((byte) (i >> 16));
-        os.put((byte) (i >> 8));
-        os.put((byte) i);
+        buf.put((byte) (i >>> 24));
+        buf.put((byte) (i >> 16));
+        buf.put((byte) (i >> 8));
+        buf.put((byte) i);
     }
 
     public final void writeNBit(int value, int n) {
@@ -71,5 +80,17 @@ public class BitWriter {
 
     public int curBit() {
         return curBit & 0x7;
+    }
+
+    public BitWriter fork() {
+        return new BitWriter(buf.duplicate(), curBit, curInt, initPos);
+    }
+
+    public int position() {
+        return ((buf.position() - initPos) << 3) + curBit;
+    }
+
+    public ByteBuffer getBuffer() {
+        return buf;
     }
 }

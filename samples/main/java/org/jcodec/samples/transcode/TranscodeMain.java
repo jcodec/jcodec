@@ -24,6 +24,9 @@ import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.MappedH264ES;
+import org.jcodec.codecs.h264.encode.ConstantRateControl;
+import org.jcodec.codecs.h264.encode.DumbRateControl;
+import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
@@ -94,9 +97,11 @@ public class TranscodeMain {
         else if ("png2avc".equals(args[0])) {
             png2avc(args[1], args[2]);
         } else if ("prores2avc".equals(args[0])) {
-            prores2avc(args[1], args[2], new ProresDecoder());
+            prores2avc(args[1], args[2], new ProresDecoder(), new DumbRateControl());
         } else if ("prores2avct".equals(args[0])) {
-            prores2avc(args[1], args[2], new ProresToThumb());
+            ConstantRateControl rc = new ConstantRateControl(512);
+            System.out.println("Target frame size: " + rc.calcFrameSize(510));
+            prores2avc(args[1], args[2], new ProresToThumb(), rc);
         } else if ("avc2png".equals(args[0])) {
             avc2png(args[1], args[2]);
         } else if ("avc2prores".equals(args[0])) {
@@ -276,19 +281,19 @@ public class TranscodeMain {
         }
     }
 
-    private static void prores2avc(String in, String out, ProresDecoder decoder) throws IOException {
+    private static void prores2avc(String in, String out, ProresDecoder decoder, RateControl rc) throws IOException {
         SeekableByteChannel sink = null;
         SeekableByteChannel source = null;
         try {
-            sink = readableFileChannel(out);
-            source = writableFileChannel(in);
+            sink = writableFileChannel(out);
+            source = readableFileChannel(in);
 
             MP4Demuxer demux = new MP4Demuxer(source);
             MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
 
-            H264Encoder encoder = new H264Encoder();
-
             Transform transform = new Yuv422pToYuv420p(0, 2);
+
+            H264Encoder encoder = new H264Encoder(rc);
 
             MP4DemuxerTrack inTrack = demux.getVideoTrack();
             CompressedTrack outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inTrack.getTimescale());
@@ -303,7 +308,7 @@ public class TranscodeMain {
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
             long start = System.currentTimeMillis();
-            for (int i = 0; (inFrame = inTrack.getFrames(1)) != null; i++) {
+            for (int i = 0; (inFrame = inTrack.getFrames(1)) != null && i < 100; i++) {
                 Picture dec = decoder.decodeFrame(inFrame.getData(), target1.getData());
                 if (target2 == null) {
                     target2 = Picture.create(dec.getWidth(), dec.getHeight(), ColorSpace.YUV420);
@@ -311,6 +316,11 @@ public class TranscodeMain {
                 transform.transform(dec, target2);
                 _out.clear();
                 ByteBuffer result = encoder.encodeFrame(_out, target2);
+                if (rc instanceof ConstantRateControl) {
+                    int mbWidth = (dec.getWidth() + 15) >> 4;
+                    int mbHeight = (dec.getHeight() + 15) >> 4;
+                    result.limit(((ConstantRateControl) rc).calcFrameSize(mbWidth * mbHeight));
+                }
                 spsList.clear();
                 ppsList.clear();
                 H264Utils.encodeMOVPacket(result, spsList, ppsList);

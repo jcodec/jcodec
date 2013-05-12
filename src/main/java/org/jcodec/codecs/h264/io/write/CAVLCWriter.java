@@ -40,6 +40,10 @@ public class CAVLCWriter {
         out.write1Bit(1);
         out.writeNBit(value - cumul, bits);
     }
+    
+    public static void writeSE(BitWriter out, int value)  {
+        writeUE(out, MathUtil.golomb(value));
+    }
 
     public static void writeUE(BitWriter out, int value, String string)  {
         print(string + "\t");
