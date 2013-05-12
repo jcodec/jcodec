@@ -2,6 +2,7 @@ package org.jcodec.codecs.h264;
 
 import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
 import static org.jcodec.codecs.h264.H264Utils.unescapeNAL;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
 import static org.jcodec.common.tools.MathUtil.wrap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
@@ -21,6 +22,7 @@ import org.jcodec.codecs.h264.io.model.RefPicMarking;
 import org.jcodec.codecs.h264.io.model.RefPicMarkingIDR;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
@@ -326,8 +328,34 @@ public class H264Decoder implements VideoDecoder {
 
     @Override
     public int probe(ByteBuffer data) {
-        // TODO Auto-generated method stub
-        return 0;
+        boolean validSps = false, validPps = false, validSh = false;
+        for (ByteBuffer nalUnit : H264Utils.splitFrame(data.duplicate())) {
+            NALUnit marker = NALUnit.read(nalUnit);
+            if (marker.type == NALUnitType.IDR_SLICE || marker.type == NALUnitType.NON_IDR_SLICE) {
+                BitReader reader = new BitReader(nalUnit);
+                validSh = validSh(new SliceHeaderReader().readPart1(reader));
+                break;
+            } else if (marker.type == NALUnitType.SPS) {
+                validSps = validSps(SeqParameterSet.read(nalUnit));
+            } else if (marker.type == NALUnitType.PPS) {
+                validPps = validPps(PictureParameterSet.read(nalUnit));
+            }
+        }
+
+        return (validSh ? 60 : 0) + (validSps ? 20 : 0) + (validPps ? 20 : 0);
+    }
+
+    private boolean validSh(SliceHeader sh) {
+        return sh.first_mb_in_slice == 0 && sh.slice_type != null && sh.pic_parameter_set_id < 2;
+    }
+
+    private boolean validSps(SeqParameterSet sps) {
+        return sps.bit_depth_chroma_minus8 < 4 && sps.bit_depth_luma_minus8 < 4 && sps.chroma_format_idc != null
+                && sps.seq_parameter_set_id < 2 && sps.pic_order_cnt_type <= 2;
+    }
+
+    private boolean validPps(PictureParameterSet pps) {
+        return pps.pic_init_qp_minus26 <= 26 && pps.seq_parameter_set_id <= 2 && pps.pic_parameter_set_id <= 2;
     }
 
     public void setDebug(boolean b) {

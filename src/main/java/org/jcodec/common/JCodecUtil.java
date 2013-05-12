@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
+import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.pcm.PCMDecoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
@@ -31,7 +32,7 @@ import org.jcodec.scale.Transform;
  */
 public class JCodecUtil {
 
-    private static final VideoDecoder[] knownDecoders = new VideoDecoder[] { new ProresDecoder(), new MPEGDecoder() };
+    private static final VideoDecoder[] knownDecoders = new VideoDecoder[] { new ProresDecoder(), new MPEGDecoder(), new H264Decoder() };
 
     public enum Format {
         MOV, MPEG_PS, MPEG_TS

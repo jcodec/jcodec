@@ -209,7 +209,7 @@ public class MP4Demuxer {
 
         @Override
         public void seek(double second) {
-            seek(second * timescale);
+            seek((long)second * timescale);
         }
 
         private void seekPts(long frameNo) {

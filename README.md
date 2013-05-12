@@ -62,6 +62,26 @@ OR download it from here:
 
 There is virtually no documentation right now but the plan is to catch up on this so stay tuned.
 
+# Sample code
+
+Getting a single frame from a movie ( supports only AVC, H.264 in MP4, ISO BMF, Quicktime container ):
+```java
+    int frameNumber = 150;
+	BufferedImage frame = FrameGrab.getFrame(new File("filename.mp4"), frameNumber);
+    ImageIO.write(frame, "png", new File("frame_150.png"));
+```
+
+Getting a sequence of frames from a movie ( supports only AVC, H.264 in MP4, ISO BMF, Quicktime container ):
+```java
+    double startSec = 51.632;
+	FrameGrab grab = new FrameGrab(new File("filename.mp4"));
+	grab.seek(startSec);
+    for (int i = 0; i < 100; i++) {
+        ImageIO.write(grab.getFrame(), "png",
+                new File(System.getProperty("user.home"), String.format("Desktop/frame_%08d.png", i)));
+    }
+```
+
 # Contact
 
 Feel free to communicate any questions or concerns to us. Dev team email: jcodecproject@gmail.com
