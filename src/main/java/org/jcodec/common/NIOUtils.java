@@ -281,7 +281,7 @@ public class NIOUtils {
     public static FileChannelWrapper rwFileChannel(File file) throws FileNotFoundException {
         return new FileChannelWrapper(new RandomAccessFile(file, "rw").getChannel());
     }
-    
+
     public static FileChannelWrapper readableFileChannel(String file) throws FileNotFoundException {
         return new FileChannelWrapper(new FileInputStream(file).getChannel());
     }
@@ -292,5 +292,9 @@ public class NIOUtils {
 
     public static FileChannelWrapper rwFileChannel(String file) throws FileNotFoundException {
         return new FileChannelWrapper(new RandomAccessFile(file, "rw").getChannel());
+    }
+
+    public static AutoFileChannelWrapper autoChannel(File file) throws IOException {
+        return new AutoFileChannelWrapper(file);
     }
 }

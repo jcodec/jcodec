@@ -245,4 +245,22 @@ public class MappedH264ES implements DemuxerTrack {
     public Packet getFrames(int n) {
         return nextFrame();
     }
+
+    @Override
+    public boolean gotoFrame(long i) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public long getCurFrame() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public void seek(double second) {
+        // TODO Auto-generated method stub
+        
+    }
 }

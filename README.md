@@ -53,7 +53,7 @@ You can get JCodec automatically with maven. For this just add below snippet to 
 <dependency>
     <groupId>org.jcodec</groupId>
     <artifactId>jcodec</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.2</version>
 </dependency>
 ```
 OR download it from here:

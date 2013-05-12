@@ -1,6 +1,7 @@
 package org.jcodec.common.model;
 
 import java.nio.ByteBuffer;
+import java.util.Comparator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -104,4 +105,16 @@ public class Packet {
     public void setData(ByteBuffer data) {
         this.data = data;
     }
+
+    public static final Comparator<Packet> FRAME_ASC = new Comparator<Packet>() {
+        public int compare(Packet o1, Packet o2) {
+            if (o1 == null && o2 == null)
+                return 0;
+            if (o1 == null)
+                return -1;
+            if (o2 == null)
+                return 1;
+            return o1.frameNo < o2.frameNo ? -1 : (o1.frameNo == o2.frameNo ? 0 : 1);
+        }
+    };
 }

@@ -6,7 +6,7 @@
 	<name>JCodec</name>
 	<url>http://jcodec.org</url>
 	<packaging>jar</packaging>
-	<version>0.1.1</version>
+	<version>0.1.2</version>
 	<description>Pure Java implementation of video/audio codecs and formats</description>
 	<licenses>
 		<license>
@@ -156,6 +156,11 @@
 			<artifactId>json-simple</artifactId>
 			<version>1.1</version>
 			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>jmxflib</groupId>
+			<artifactId>jmxflib</artifactId>
+			<version>0.0.11</version>
 		</dependency>
 	</dependencies>
 </project>

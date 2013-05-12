@@ -86,11 +86,15 @@ public class JCodecUtil {
     }
 
     public static void savePicture(Picture pic, String format, File file) throws IOException {
+        ImageIO.write(toBufferedImage(pic), format, file);
+    }
+    
+    public static BufferedImage toBufferedImage(Picture pic) {
         Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
         Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB);
         transform.transform(pic, rgb);
         BufferedImage bi = AWTUtil.toBufferedImage(rgb);
-        ImageIO.write(bi, format, file);
+        return bi;
     }
 
     public static void savePictureAsPPM(Picture pic, File file) throws IOException {

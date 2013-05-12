@@ -52,7 +52,7 @@ public class NodeBox extends Box {
             return null;
 
         Header childAtom = Header.read(input);
-        if (input.remaining() >= childAtom.getBodySize())
+        if (childAtom != null && input.remaining() >= childAtom.getBodySize())
             return parseBox(NIOUtils.read(input, (int) childAtom.getBodySize()), childAtom, factory);
         else
             return null;

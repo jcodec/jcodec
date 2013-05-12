@@ -207,6 +207,11 @@ public class MP4Demuxer {
             return true;
         }
 
+        @Override
+        public void seek(double second) {
+            seek(second * timescale);
+        }
+
         private void seekPts(long frameNo) {
             pts = sttsInd = sttsSubInd = 0;
             shiftPts(frameNo);
@@ -595,8 +600,9 @@ public class MP4Demuxer {
                 offInChunk += sizes[(int) frameNo - noInChunk + i];
             }
 
-            for (ssOff = 0; syncSamples[ssOff] < curFrame + 1; ssOff++)
-                ;
+            if (syncSamples != null)
+                for (ssOff = 0; syncSamples[ssOff] < curFrame + 1; ssOff++)
+                    ;
 
         }
 

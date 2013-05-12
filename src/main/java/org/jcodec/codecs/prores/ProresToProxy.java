@@ -111,20 +111,21 @@ public class ProresToProxy {
 
             transcodeSlice(inBuf, outBuf, fh.qMatLuma, fh.qMatChroma, fh.scan, sliceMbCount, mbX, mbY,
                     ph.sliceSizes[i], qp);
-            sliceSizes.putShort((short) (outBuf.position() - savedPoint));
+            short encodedSize = (short) (outBuf.position() - savedPoint);
+            sliceSizes.putShort(encodedSize);
 
             int max = (sliceMbCount * bitsPer1024High >> 5) + 6;
             int low = (sliceMbCount * bitsPer1024Low >> 5) + 6;
 
-            if (ph.sliceSizes[i] > max && qp < 128) {
+            if (encodedSize > max && qp < 128) {
                 qp++;
-                if ((ph.sliceSizes[i] > max + balance) && qp < 128)
+                if ((encodedSize > max + balance) && qp < 128)
                     qp++;
             } else {
-                if (ph.sliceSizes[i] < low && qp > 2 && balance > 0)
+                if (encodedSize < low && qp > 2 && balance > 0)
                     qp--;
             }
-            balance += max - ph.sliceSizes[i];
+            balance += max - encodedSize;
 
             mbX += sliceMbCount;
             if (mbX == mbWidth) {
