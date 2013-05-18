@@ -1,8 +1,8 @@
 package org.jcodec.common.io;
 
-import gnu.trove.list.array.TIntArrayList;
-
 import java.io.PrintStream;
+
+import org.jcodec.common.IntArrayList;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,8 +29,8 @@ public class VLC {
     }
 
     public VLC(String... codes) {
-        TIntArrayList _codes = new TIntArrayList();
-        TIntArrayList _codeSizes = new TIntArrayList();
+        IntArrayList _codes = new IntArrayList();
+        IntArrayList _codeSizes = new IntArrayList();
         for (String string : codes) {
             _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
             _codeSizes.add(string.length());
@@ -42,14 +42,14 @@ public class VLC {
     }
 
     private void invert() {
-        TIntArrayList values = new TIntArrayList();
-        TIntArrayList valueSizes = new TIntArrayList();
+        IntArrayList values = new IntArrayList();
+        IntArrayList valueSizes = new IntArrayList();
         invert(0, 0, 0, values, valueSizes);
         this.values = values.toArray();
         this.valueSizes = valueSizes.toArray();
     }
 
-    private int invert(int startOff, int level, int prefix, TIntArrayList values, TIntArrayList valueSizes) {
+    private int invert(int startOff, int level, int prefix, IntArrayList values, IntArrayList valueSizes) {
 
         int tableEnd = startOff + 256;
         values.fill(startOff, tableEnd, -1);

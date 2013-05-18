@@ -2,7 +2,7 @@ package org.jcodec.codecs.h264.decode;
 
 import static org.jcodec.common.tools.MathUtil.clip;
 
-import org.junit.Assert;
+import org.jcodec.common.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

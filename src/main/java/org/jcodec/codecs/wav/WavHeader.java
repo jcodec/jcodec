@@ -1,7 +1,7 @@
 package org.jcodec.codecs.wav;
 
-import static org.jcodec.codecs.wav.ReaderLE.readShort;
 import static org.jcodec.codecs.wav.ReaderLE.readInt;
+import static org.jcodec.codecs.wav.ReaderLE.readShort;
 import static org.jcodec.codecs.wav.StringReader.readString;
 import static org.jcodec.codecs.wav.WriterLE.writeInt;
 import static org.jcodec.codecs.wav.WriterLE.writeShort;
@@ -18,8 +18,8 @@ import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.CountingInputStream;
+import org.jcodec.common.CountingInputStream;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.model.ChannelLabel;
 

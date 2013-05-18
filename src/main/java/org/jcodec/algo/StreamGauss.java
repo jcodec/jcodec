@@ -1,6 +1,6 @@
 package org.jcodec.algo;
 
-import org.junit.Assert;
+import org.jcodec.common.Assert;
 
 /**
  * A filter which applies Gaussian blur to an image. This is a subclass of

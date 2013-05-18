@@ -2,7 +2,6 @@ package org.jcodec.containers.mp4;
 
 import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -444,7 +444,7 @@ public class MP4Demuxer {
         private void readSamples(SampleToChunkEntry[] sampleToChunks, long[] chunkOffsets) throws IOException {
             synchronized (input) {
                 int stscInd = 0;
-                TIntArrayList ss = new TIntArrayList();
+                IntArrayList ss = new IntArrayList();
                 for (int chunkNo = 0; chunkNo < chunkOffsets.length; chunkNo++) {
                     int nSamples = sampleToChunks[stscInd].getCount();
                     if (stscInd < sampleToChunks.length - 1 && chunkNo + 1 >= sampleToChunks[stscInd + 1].getFirst())

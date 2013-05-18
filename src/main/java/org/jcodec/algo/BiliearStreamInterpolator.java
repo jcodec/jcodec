@@ -8,8 +8,8 @@ import java.io.IOException;
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.codecs.wav.WavInput;
 import org.jcodec.codecs.wav.WavOutput;
+import org.jcodec.common.Assert;
 import org.jcodec.common.model.Rational;
-import org.junit.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

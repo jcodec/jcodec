@@ -11,9 +11,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.jcodec.common.NIOUtils;
+import org.jcodec.common.StringUtils;
 import org.junit.Test;
 
 public class TestBitReader {
@@ -204,11 +203,11 @@ public class TestBitReader {
     }
 
     public void testReader5() throws Exception {
-        BitReader in = new BitReader(ByteBuffer.wrap(FileUtils.readFileToByteArray(new File(
-                "src/test/resources/h264/bitstream/data.dat"))));
+        BitReader in = new BitReader(NIOUtils.fetchFrom(new File(
+                "src/test/resources/h264/bitstream/data.dat")));
         DummyBitstreamReader in1 = new DummyBitstreamReader(new BufferedInputStream(new FileInputStream(
                 "src/test/resources/h264/bitstream/data.dat")));
-        String readFileToString = IOUtils.toString(new FileInputStream("src/test/resources/h264/bitstream/reads.csv"));
+        String readFileToString = new String(NIOUtils.toArray(NIOUtils.fetchFrom(new File("src/test/resources/h264/bitstream/reads.csv"))));
 
         String[] split = StringUtils.split(readFileToString, ",");
         for (String string : split) {

@@ -1,7 +1,8 @@
 package org.jcodec.common.io;
 
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.hash.TIntIntHashMap;
+import org.jcodec.common.IntArrayList;
+import org.jcodec.common.IntIntMap;
+
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -14,10 +15,10 @@ import gnu.trove.map.hash.TIntIntHashMap;
  */
 public class VLCBuilder {
 
-    private TIntIntHashMap forward = new TIntIntHashMap();
-    private TIntIntHashMap inverse = new TIntIntHashMap();
-    private TIntArrayList codes = new TIntArrayList();
-    private TIntArrayList codesSizes = new TIntArrayList();
+    private IntIntMap forward = new IntIntMap();
+    private IntIntMap inverse = new IntIntMap();
+    private IntArrayList codes = new IntArrayList();
+    private IntArrayList codesSizes = new IntArrayList();
 
     public VLCBuilder() {
     }

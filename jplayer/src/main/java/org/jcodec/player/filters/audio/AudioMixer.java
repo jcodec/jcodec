@@ -1,7 +1,5 @@
 package org.jcodec.player.filters.audio;
 
-import gnu.trove.list.array.TIntArrayList;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -10,6 +8,7 @@ import java.util.Arrays;
 import javax.sound.sampled.AudioFormat;
 
 import org.jcodec.common.AudioUtil;
+import org.jcodec.common.IntArrayList;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.ChannelLabel;
@@ -131,7 +130,7 @@ public class AudioMixer implements AudioSource {
         }
 
         public int[] getSoloChannels() {
-            TIntArrayList result = new TIntArrayList();
+            IntArrayList result = new IntArrayList();
             for (int i = 0; i < 32; i++)
                 if (((pattern >> i) & 0x1) == 1)
                     result.add(i);

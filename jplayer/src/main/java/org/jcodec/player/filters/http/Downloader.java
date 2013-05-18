@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -25,6 +24,7 @@ import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.util.EntityUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.StringUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.player.filters.MediaInfo;

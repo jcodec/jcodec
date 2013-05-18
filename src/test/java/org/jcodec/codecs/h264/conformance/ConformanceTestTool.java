@@ -9,9 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
-import org.apache.commons.io.IOUtils;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.MappedH264ES;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
@@ -51,10 +51,7 @@ public class ConformanceTestTool {
         sb.append("</table>");
 
         System.out.println("TESTING DONE");
-
-        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(args[1]));
-        IOUtils.write(sb.toString().getBytes(), out);
-        out.flush();
+        NIOUtils.writeTo(ByteBuffer.wrap(sb.toString().getBytes()), new File(args[1]));
     }
 
     private void processOneDir(File file, StringBuilder sb, int i) throws IOException {

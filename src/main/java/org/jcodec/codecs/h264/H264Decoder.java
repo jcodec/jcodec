@@ -2,9 +2,7 @@ package org.jcodec.codecs.h264;
 
 import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
 import static org.jcodec.codecs.h264.H264Utils.unescapeNAL;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
 import static org.jcodec.common.tools.MathUtil.wrap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -22,7 +20,7 @@ import org.jcodec.codecs.h264.io.model.RefPicMarking;
 import org.jcodec.codecs.h264.io.model.RefPicMarkingIDR;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.codecs.h264.io.model.SliceType;
+import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
@@ -41,10 +39,10 @@ import org.jcodec.common.model.Rect;
  */
 public class H264Decoder implements VideoDecoder {
 
-    private TIntObjectHashMap<SeqParameterSet> sps = new TIntObjectHashMap<SeqParameterSet>();
-    private TIntObjectHashMap<PictureParameterSet> pps = new TIntObjectHashMap<PictureParameterSet>();
+    private IntObjectMap<SeqParameterSet> sps = new IntObjectMap<SeqParameterSet>();
+    private IntObjectMap<PictureParameterSet> pps = new IntObjectMap<PictureParameterSet>();
     private Frame[] sRefs;
-    private TIntObjectHashMap<Frame> lRefs;
+    private IntObjectMap<Frame> lRefs;
     private List<Frame> pictureBuffer;
     private POCManager poc;
     private boolean debug;
@@ -139,7 +137,7 @@ public class H264Decoder implements VideoDecoder {
 
             if (sRefs == null) {
                 sRefs = new Frame[1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4)];
-                lRefs = new TIntObjectHashMap<Frame>();
+                lRefs = new IntObjectMap<Frame>();
             }
 
             Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, mvs, refsUsed,

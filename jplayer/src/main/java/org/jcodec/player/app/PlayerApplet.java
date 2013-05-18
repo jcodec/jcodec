@@ -1,7 +1,7 @@
 package org.jcodec.player.app;
 
 import static java.lang.Math.round;
-import static org.apache.commons.lang.StringUtils.capitaliseAllWords;
+import static org.jcodec.common.IOUtils.forceMkdir;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -19,7 +19,8 @@ import javax.swing.JApplet;
 
 import netscape.javascript.JSObject;
 
-import org.apache.commons.io.FileUtils;
+import org.jcodec.common.IOUtils;
+import org.jcodec.common.StringUtils;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.TapeTimecode;
@@ -118,7 +119,7 @@ public class PlayerApplet extends JApplet {
                 public HttpMedia run() {
                     try {
                         File cacheWhere = determineCacheLocation();
-                        FileUtils.forceMkdir(cacheWhere);
+                        forceMkdir(cacheWhere);
                         return new HttpMedia(new URL(src), cacheWhere);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -212,7 +213,7 @@ public class PlayerApplet extends JApplet {
     private String[] channels(ChannelLabel[] labels) {
         String[] strs = new String[labels.length];
         for (int i = 0; i < labels.length; i++) {
-            strs[i] = labels[i] != null ? capitaliseAllWords(labels[i].toString().toLowerCase().replace("_", " "))
+            strs[i] = labels[i] != null ? StringUtils.capitaliseAllWords(labels[i].toString().toLowerCase().replace("_", " "))
                     : "N/A";
         }
         return strs;

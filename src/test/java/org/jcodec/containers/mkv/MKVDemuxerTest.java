@@ -1,9 +1,7 @@
 package org.jcodec.containers.mkv;
 
-import static org.apache.commons.io.FileUtils.readFileToByteArray;
-import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.jcodec.common.IOUtils.closeQuietly;
 import static org.jcodec.containers.mkv.MKVMuxerTest.tildeExpand;
-import gnu.trove.list.array.TLongArrayList;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -14,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.common.IOUtils;
+import org.jcodec.common.LongArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
@@ -68,7 +68,7 @@ public class MKVDemuxerTest {
         Assert.assertNotNull(video);
         System.out.println(video.getFrameCount());
         System.out.println(video.getNo());
-        byte[] vp8Frame = readFileToByteArray(tildeExpand("./src/test/resources/mkv/10frames01.vp8"));
+        byte[] vp8Frame = NIOUtils.toArray(NIOUtils.fetchFrom(tildeExpand("./src/test/resources/mkv/10frames01.vp8")));
         Assert.assertArrayEquals(vp8Frame, frame.getData().array());
     }
 
@@ -87,7 +87,7 @@ public class MKVDemuxerTest {
         System.out.println(video.getFrameCount());
         System.out.println(video.getNo());
         
-        byte[] vp8Frame = readFileToByteArray(tildeExpand("./src/test/resources/mkv/10frames02.vp8"));
+        byte[] vp8Frame = NIOUtils.toArray(NIOUtils.fetchFrom(tildeExpand("./src/test/resources/mkv/10frames02.vp8")));
         Assert.assertArrayEquals(vp8Frame, frame.getData().array());
     }
     
@@ -269,11 +269,11 @@ public class MKVDemuxerTest {
 
             public AudioTrack(TrackEntryElement track, long no, List<BlockElement> bes) {
                 this.no = no;
-                TLongArrayList offsets = new TLongArrayList();
-                TLongArrayList sizes = new TLongArrayList();
+                LongArrayList offsets = new LongArrayList();
+                LongArrayList sizes = new LongArrayList();
                 for(BlockElement be : bes){
-                    offsets.add(be.frameOffsets);
-                    sizes.add(be.frameSizes);
+                    offsets.addAll(be.frameOffsets);
+                    sizes.addAll(be.frameSizes);
                 }
                 
                 sampleOffsets = offsets.toArray();

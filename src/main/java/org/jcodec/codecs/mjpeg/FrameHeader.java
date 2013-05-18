@@ -3,9 +3,6 @@ package org.jcodec.codecs.mjpeg;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
-
 /**
  * This class is part of JCodec ( www.jcodec.org )
  * This software is distributed under FreeBSD License
@@ -88,11 +85,6 @@ public class FrameHeader {
          * contents changed, until all scans containing Ci have been completed.
          */
         int tq;
-
-        public String toString() {
-            return ToStringBuilder.reflectionToString(this,
-                    ToStringStyle.SHORT_PREFIX_STYLE);
-        }
     }
 
     public int getHmax() {
@@ -130,11 +122,6 @@ public class FrameHeader {
             c.tq = is.read();
         }
         return frame;
-    }
-
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this,
-                ToStringStyle.SHORT_PREFIX_STYLE);
     }
 
     private static int readShort(InputStream is) throws IOException {

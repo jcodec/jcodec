@@ -1,6 +1,6 @@
 package org.jcodec.common.model;
 
-import org.apache.commons.lang.StringUtils;
+import static org.jcodec.common.StringUtils.split;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,7 +32,7 @@ public class RationalLarge {
     }
 
     public static Rational parse(String string) {
-        String[] split = StringUtils.split(string, ":");
+        String[] split = split(string, ":");
         return new Rational(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
     }
 

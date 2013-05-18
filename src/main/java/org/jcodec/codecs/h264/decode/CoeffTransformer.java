@@ -119,7 +119,7 @@ public class CoeffTransformer {
         }
     }
 
-    public void fdct4x4(int[] block) {
+    public static void fdct4x4(int[] block) {
         // Horizontal
         for (int i = 0; i < 16; i += 4) {
             int t0 = block[i] + block[i + 3];
@@ -184,7 +184,7 @@ public class CoeffTransformer {
      * 
      * @param scaled
      */
-    public void fvdDC4x4(int[] scaled) {
+    public static void fvdDC4x4(int[] scaled) {
         // Horizontal
         for (int i = 0; i < 16; i += 4) {
             int t0 = scaled[i] + scaled[i + 3];
@@ -227,7 +227,7 @@ public class CoeffTransformer {
         }
     }
 
-    public void quantizeAC(int[] coeffs, int qp) {
+    public static void quantizeAC(int[] coeffs, int qp) {
         int level = qp / 6;
         int offset = qp % 6;
 
@@ -248,7 +248,7 @@ public class CoeffTransformer {
         }
     }
 
-    public int[] unzigzagAC(int[] coeffs) {
+    public static int[] unzigzagAC(int[] coeffs) {
         int[] tab;
         if (coeffs.length == 16) {
             tab = zigzag4x4;
@@ -280,7 +280,7 @@ public class CoeffTransformer {
         }
     }
 
-    public void quantizeDC4x4(int[] coeffs, int qp) {
+    public static void quantizeDC4x4(int[] coeffs, int qp) {
 
         int level = qp / 6;
         int offset = qp % 6;
@@ -326,7 +326,7 @@ public class CoeffTransformer {
      * 
      * @param dc2
      */
-    public void fvdDC2x2(int[] block) {
+    public static void fvdDC2x2(int[] block) {
         invDC2x2(block);
     }
 
@@ -340,7 +340,7 @@ public class CoeffTransformer {
         }
     }
 
-    public void quantizeDC2x2(int[] coeffs, int qp) {
+    public static void quantizeDC2x2(int[] coeffs, int qp) {
 
         int level = qp / 6;
         int offset = qp % 6;
@@ -369,20 +369,20 @@ public class CoeffTransformer {
         ArrayUtil.swap(dc, 11, 13);
     }
 
-    public void fvdDC4x2(int[] dc) {
+    public static void fvdDC4x2(int[] dc) {
 
     }
 
-    public void quantizeDC4x2(int[] dc, int qp) {
+    public static void quantizeDC4x2(int[] dc, int qp) {
 
     }
 
-    public void invDC4x2(int[] dc) {
+    public static void invDC4x2(int[] dc) {
         // TODO Auto-generated method stub
 
     }
 
-    public void dequantizeDC4x2(int[] dc, int qp) {
+    public static void dequantizeDC4x2(int[] dc, int qp) {
         // TODO Auto-generated method stub
 
     }

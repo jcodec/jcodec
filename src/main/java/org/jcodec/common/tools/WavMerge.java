@@ -10,8 +10,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.jcodec.codecs.wav.WavHeader;
+import org.jcodec.common.IOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

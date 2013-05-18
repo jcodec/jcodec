@@ -102,8 +102,7 @@ public class Strip {
         stbl.replace("stts", getTimeToSamples(result));
         stbl.replace("stsz", getSampleSizes(result));
         stbl.replace("stsc", getSamplesToChunk(result));
-        stbl.filter(Box.not("stco"));
-        stbl.filter(Box.not("co64"));
+        stbl.removeChildren("stco", "co64");
         stbl.add(getChunkOffsets(result));
         findFirst(track, MediaHeaderBox.class, "mdia", "mdhd").setDuration(totalDuration(result));
     }

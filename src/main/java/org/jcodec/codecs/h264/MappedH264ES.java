@@ -1,7 +1,5 @@
 package org.jcodec.codecs.h264;
 
-import gnu.trove.map.hash.TIntObjectHashMap;
-
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
@@ -13,6 +11,7 @@ import org.jcodec.codecs.h264.io.model.RefPicMarking.InstrType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.Packet;
 
@@ -28,8 +27,8 @@ import org.jcodec.common.model.Packet;
 public class MappedH264ES implements DemuxerTrack {
     private ByteBuffer bb;
     private SliceHeaderReader shr;
-    private TIntObjectHashMap<PictureParameterSet> pps = new TIntObjectHashMap<PictureParameterSet>();
-    private TIntObjectHashMap<SeqParameterSet> sps = new TIntObjectHashMap<SeqParameterSet>();
+    private IntObjectMap<PictureParameterSet> pps = new IntObjectMap<PictureParameterSet>();
+    private IntObjectMap<SeqParameterSet> sps = new IntObjectMap<SeqParameterSet>();
 
     // POC and framenum detection
     private int prevFrameNumOffset;

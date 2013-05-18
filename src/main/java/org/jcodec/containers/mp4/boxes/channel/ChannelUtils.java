@@ -1,8 +1,5 @@
 package org.jcodec.containers.mp4.boxes.channel;
 
-import static ch.lambdaj.Lambda.extract;
-import static ch.lambdaj.Lambda.on;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -85,7 +82,7 @@ public class ChannelUtils {
             if (layout.getCode() == tag) {
                 switch (layout) {
                 case kCAFChannelLayoutTag_UseChannelDescriptions:
-                    return extract(box.getDescriptions(), on(ChannelDescription.class).getLabel());
+                    return extractLabels(box.getDescriptions());
                 case kCAFChannelLayoutTag_UseChannelBitmap:
                     return getLabelsByBitmap(box.getChannelBitmap());
                 default:
@@ -94,6 +91,14 @@ public class ChannelUtils {
             }
         }
         return EMPTY;
+    }
+
+    private static List<Label> extractLabels(List<ChannelDescription> descriptions) {
+        ArrayList<Label> result = new ArrayList<Label>(descriptions.size());
+        for (ChannelDescription d : descriptions) {
+            result.add(d.getLabel());
+        }
+        return result;
     }
 
     /**

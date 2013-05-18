@@ -45,7 +45,6 @@ public class H264Encoder {
     // private static final int QP = 20;
 
     private CAVLC[] cavlc;
-    private CoeffTransformer coeffTransformer;
     private int[][] leftRow;
     private int[][] topLine;
     private RateControl rc;
@@ -55,7 +54,6 @@ public class H264Encoder {
     }
 
     public H264Encoder(RateControl rc) {
-        coeffTransformer = new CoeffTransformer(null);
         this.rc = rc;
     }
 
@@ -245,20 +243,20 @@ public class H264Encoder {
 
     private void restorePlane(int[] dc, int[][] ac, int qp) {
         if (dc.length == 4) {
-            coeffTransformer.invDC2x2(dc);
-            coeffTransformer.dequantizeDC2x2(dc, qp);
+            CoeffTransformer.invDC2x2(dc);
+            CoeffTransformer.dequantizeDC2x2(dc, qp);
         } else if (dc.length == 8) {
-            coeffTransformer.invDC4x2(dc);
-            coeffTransformer.dequantizeDC4x2(dc, qp);
+            CoeffTransformer.invDC4x2(dc);
+            CoeffTransformer.dequantizeDC4x2(dc, qp);
         } else {
-            coeffTransformer.invDC4x4(dc);
-            coeffTransformer.dequantizeDC4x4(dc, qp);
+            CoeffTransformer.invDC4x4(dc);
+            CoeffTransformer.dequantizeDC4x4(dc, qp);
             reorderDC4x4(dc);
         }
         for (int i = 0; i < ac.length; i++) {
-            coeffTransformer.dequantizeAC(ac[i], qp);
+            CoeffTransformer.dequantizeAC(ac[i], qp);
             ac[i][0] = dc[i];
-            coeffTransformer.idct4x4(ac[i]);
+            CoeffTransformer.idct4x4(ac[i]);
         }
     }
 
@@ -273,7 +271,7 @@ public class H264Encoder {
 
     private void writeAC(int comp, int mbX, int mbY, BitWriter out, int mbLeftBlk, int mbTopBlk, int[][] ac, int qp) {
         for (int i = 0; i < ac.length; i++) {
-            coeffTransformer.quantizeAC(ac[i], qp);
+            CoeffTransformer.quantizeAC(ac[i], qp);
             // TODO: calc here
             cavlc[comp].writeACBlock(out, mbLeftBlk + MB_BLK_OFF_LEFT[i], mbTopBlk + MB_BLK_OFF_TOP[i], I_16x16,
                     I_16x16, ac[i], H264Const.totalZeros16, 1, 15, CoeffTransformer.zigzag4x4);
@@ -282,18 +280,18 @@ public class H264Encoder {
 
     private void writeDC(int comp, int mbX, int mbY, BitWriter out, int qp, int mbLeftBlk, int mbTopBlk, int[] dc) {
         if (dc.length == 4) {
-            coeffTransformer.quantizeDC2x2(dc, qp);
-            coeffTransformer.fvdDC2x2(dc);
+            CoeffTransformer.quantizeDC2x2(dc, qp);
+            CoeffTransformer.fvdDC2x2(dc);
             cavlc[comp].writeChrDCBlock(out, dc, H264Const.totalZeros4, 0, dc.length, new int[] { 0, 1, 2, 3 });
         } else if (dc.length == 8) {
-            coeffTransformer.quantizeDC4x2(dc, qp);
-            coeffTransformer.fvdDC4x2(dc);
+            CoeffTransformer.quantizeDC4x2(dc, qp);
+            CoeffTransformer.fvdDC4x2(dc);
             cavlc[comp].writeChrDCBlock(out, dc, H264Const.totalZeros8, 0, dc.length, new int[] { 0, 1, 2, 3, 4, 5, 6,
                     7 });
         } else {
             reorderDC4x4(dc);
-            coeffTransformer.quantizeDC4x4(dc, qp);
-            coeffTransformer.fvdDC4x4(dc);
+            CoeffTransformer.quantizeDC4x4(dc, qp);
+            CoeffTransformer.fvdDC4x4(dc);
             // TODO: calc here
             cavlc[comp].writeLumaDCBlock(out, mbLeftBlk, mbTopBlk, I_16x16, I_16x16, dc, H264Const.totalZeros16, 0, 16,
                     CoeffTransformer.zigzag4x4);
@@ -305,19 +303,19 @@ public class H264Encoder {
 
         takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x, y, ac[0],
                 chromaPredBlk0(comp, x, y));
-        coeffTransformer.fdct4x4(ac[0]);
+        CoeffTransformer.fdct4x4(ac[0]);
 
         takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + 4, y, ac[1],
                 chromaPredBlk1(comp, x, y));
-        coeffTransformer.fdct4x4(ac[1]);
+        CoeffTransformer.fdct4x4(ac[1]);
 
         takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x, y + 4, ac[2],
                 chromaPredBlk2(comp, x, y));
-        coeffTransformer.fdct4x4(ac[2]);
+        CoeffTransformer.fdct4x4(ac[2]);
 
         takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + 4, y + 4, ac[3],
                 chromaPredBlk3(comp, x, y));
-        coeffTransformer.fdct4x4(ac[3]);
+        CoeffTransformer.fdct4x4(ac[3]);
 
         return ac;
     }
@@ -394,7 +392,7 @@ public class H264Encoder {
             int[] coeff = ac[i];
             takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + BLK_X[i], y
                     + BLK_Y[i], coeff, dcc);
-            coeffTransformer.fdct4x4(coeff);
+            CoeffTransformer.fdct4x4(coeff);
         }
         return ac;
     }

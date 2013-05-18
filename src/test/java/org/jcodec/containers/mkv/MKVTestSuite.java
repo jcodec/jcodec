@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Properties;
 
-import org.apache.commons.io.IOUtils;
+import org.jcodec.common.IOUtils;
 
 public class MKVTestSuite {
     

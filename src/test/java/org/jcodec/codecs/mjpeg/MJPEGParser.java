@@ -7,7 +7,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
 
-import org.apache.commons.io.input.CountingInputStream;
+import org.jcodec.common.CountingInputStream;
 import org.junit.Ignore;
 import org.junit.Test;
 

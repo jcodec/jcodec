@@ -1,5 +1,6 @@
 package org.jcodec.containers.mp4;
 
+import static org.jcodec.common.IOUtils.readFileToByteArray;
 import static org.jcodec.common.NIOUtils.readableFileChannel;
 import static org.jcodec.common.NIOUtils.rwFileChannel;
 import static org.jcodec.common.NIOUtils.writableFileChannel;
@@ -23,10 +24,10 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.io.FileUtils;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.codecs.wav.WavHeader.FmtChunk;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -133,7 +134,7 @@ public class TestDemuxer {
         MP4DemuxerTrack vt = demuxer.getVideoTrack();
         vt.gotoFrame(startFn);
         for (int i = 0;; i++) {
-            byte[] expected = FileUtils.readFileToByteArray(new File(base, String.format("frame%08d.raw", i + startFn
+            byte[] expected = readFileToByteArray(new File(base, String.format("frame%08d.raw", i + startFn
                     + 1)));
             Packet pkt = vt.getFrames(1);
             Assert.assertArrayEquals(expected, NIOUtils.toArray(pkt.getData()));

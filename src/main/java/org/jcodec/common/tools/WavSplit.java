@@ -11,7 +11,7 @@ import java.io.OutputStream;
 
 import org.jcodec.codecs.wav.StringReader;
 import org.jcodec.codecs.wav.WavHeader;
-import org.junit.Assert;
+import org.jcodec.common.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

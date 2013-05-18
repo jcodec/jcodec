@@ -5,6 +5,7 @@ import static junit.framework.Assert.assertTrue;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import javax.imageio.ImageIO;
 
 import org.jcodec.codecs.mjpeg.tools.Asserts;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.dct.IntDCT;
 import org.jcodec.common.dct.SlowDCT;
 import org.junit.Test;
@@ -146,4 +148,25 @@ public class JpegDecoderTest {
         return ((DataBufferByte) bi.getData().getDataBuffer()).getData();
     }
 
+    @Test
+    public void testPerformance() throws IOException {
+        byte[] jpg = NIOUtils.toArray(NIOUtils.fetchFrom(new File(
+                "src/test/resources/fr.jpg")));
+        JpegParser parser = new JpegParser();
+        JpegDecoder decoder = new JpegDecoder();
+        CodedImage image = parser.parse(new ByteArrayInputStream(jpg));
+        DecodedImage decoded = new DecodedImage(image.getWidth(), image
+                .getHeight(), new int[image.getWidth() * image.getHeight()]);
+        long start = System.currentTimeMillis();
+        int count = 1000;
+        for (int i = 0; i < count; i++) {
+            decoder
+                    .decode(parser.parse(new ByteArrayInputStream(jpg)),
+                            decoded);
+        }
+        long time = System.currentTimeMillis() - start;
+        System.out.println(count * 1000 / time + " imgs/sec");
+        System.out.println(time / count + " msec/img");
+
+    }
 }

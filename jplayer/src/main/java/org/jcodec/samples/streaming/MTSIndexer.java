@@ -1,7 +1,5 @@
 package org.jcodec.samples.streaming;
 
-import static ch.lambdaj.Lambda.extract;
-import static ch.lambdaj.Lambda.on;
 import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.BiPredictiveCoded;
 import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.IntraCoded;
 import static org.jcodec.common.NIOUtils.from;
@@ -14,6 +12,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,8 +28,6 @@ import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer.MTSPacket;
 import org.jcodec.samples.streaming.MTSIndex.FrameEntry;
 import org.jcodec.samples.streaming.MTSIndex.VideoFrameEntry;
-
-import ch.lambdaj.Lambda;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -182,8 +181,7 @@ public class MTSIndexer {
             if (gop == null)
                 return;
 
-            for (VideoFrameEntry frameEntry : Lambda.<VideoFrameEntry> sort(gop, on(VideoFrameEntry.class)
-                    .getDisplayOrder())) {
+            for (VideoFrameEntry frameEntry : sortFrames(gop)) {
                 if (lastVideoFrame != null)
                     lastVideoFrame.duration = (int) (frameEntry.pts - lastVideoFrame.pts);
                 lastVideoFrame = frameEntry;
@@ -196,7 +194,7 @@ public class MTSIndexer {
                     + (tt2.getSecond() - tt1.getSecond());
 
             if (secDiff > 0) {
-                Set<Integer> unique = new HashSet<Integer>(extract(gop, on(VideoFrameEntry.class).getDisplayOrder()));
+                Set<Integer> unique = new HashSet<Integer>(extractDisplayOrder(gop));
                 int frameDiff = unique.size() - (tt2.getFrame() - tt1.getFrame());
                 int fps = frameDiff / secDiff;
                 int baseCounter = tt1.getHour() * 3600 * fps + tt1.getMinute() * 60 * fps + tt1.getSecond() * fps
@@ -213,6 +211,26 @@ public class MTSIndexer {
                             tt1.getFrame() + packet.getDisplayOrder(), tt1.isDropFrame());
                 }
             }
+        }
+
+        private Collection<Integer> extractDisplayOrder(List<VideoFrameEntry> gop) {
+            ArrayList<Integer> result = new ArrayList<Integer>(gop.size());
+            for (VideoFrameEntry vfe : gop) {
+                result.add(vfe.getDisplayOrder());
+            }
+            return result;
+        }
+
+        private List<VideoFrameEntry> sortFrames(List<VideoFrameEntry> gop) {
+            ArrayList<VideoFrameEntry> result = new ArrayList<VideoFrameEntry>(gop);
+            Collections.sort(result, new Comparator<VideoFrameEntry>() {
+                public int compare(VideoFrameEntry o1, VideoFrameEntry o2) {
+                    return o1 == null && o2 == null ? 0 : (o1 == null ? -1 : (o2 == null ? 1
+                            : (o1.getDisplayOrder() == o2.getDisplayOrder() ? 0 : (o1.getDisplayOrder() < o2
+                                    .getDisplayOrder() ? -1 : 1))));
+                }
+            });
+            return result;
         }
     }
 

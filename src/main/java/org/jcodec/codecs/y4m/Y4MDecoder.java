@@ -1,6 +1,6 @@
 package org.jcodec.codecs.y4m;
 
-import static org.apache.commons.lang.StringUtils.split;
+import static org.jcodec.common.StringUtils.split;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -8,7 +8,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 
-import org.apache.commons.lang.StringUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
@@ -51,7 +50,7 @@ public class Y4MDecoder {
 
         String fpsStr = find(header, 'F');
         if (fpsStr != null) {
-            String[] numden = StringUtils.split(fpsStr, ':');
+            String[] numden = split(fpsStr, ':');
             fps = new Rational(Integer.parseInt(numden[0]), Integer.parseInt(numden[1]));
         }
 

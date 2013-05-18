@@ -4,8 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import junit.framework.Assert;
-
+import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;

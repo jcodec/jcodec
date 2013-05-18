@@ -1,7 +1,5 @@
 package org.jcodec.containers.mp4;
 
-import static org.jcodec.containers.mp4.boxes.Box.not;
-
 import java.io.IOException;
 
 import org.jcodec.common.NIOUtils;
@@ -50,8 +48,7 @@ public class ChunkWriter {
 
     public void apply() {
         NodeBox stbl = NodeBox.findFirst(trak, NodeBox.class, "mdia", "minf", "stbl");
-        stbl.filter(not("stco"));
-        stbl.filter(not("co64"));
+        stbl.removeChildren("stco", "co64");
 
         stbl.add(new ChunkOffsets64Box(offsets));
         cleanDrefs(trak);

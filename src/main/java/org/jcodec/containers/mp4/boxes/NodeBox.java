@@ -5,8 +5,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.collections15.CollectionUtils;
-import org.apache.commons.collections15.Predicate;
 import org.jcodec.common.NIOUtils;
 
 /**
@@ -102,12 +100,8 @@ public class NodeBox extends Box {
         boxes.add(0, box);
     }
 
-    public void filter(Predicate<Box> predicate) {
-        CollectionUtils.filter(boxes, predicate);
-    }
-
     public void replace(String fourcc, Box box) {
-        filter(not(fourcc));
+        removeChildren(fourcc);
         add(box);
     }
 
@@ -128,5 +122,18 @@ public class NodeBox extends Box {
                 sb1.append(",\n");
         }
         sb.append(sb1.toString().replaceAll("([^\n]*)\n", "  $1\n"));
+    }
+
+    public void removeChildren(String... fourcc) {
+        for (Iterator<Box> it = boxes.iterator(); it.hasNext();) {
+            Box box = it.next();
+            String fcc = box.getFourcc();
+            for (String cand : fourcc) {
+                if (cand.equals(fcc)) {
+                    it.remove();
+                    break;
+                }
+            }
+        }
     }
 }

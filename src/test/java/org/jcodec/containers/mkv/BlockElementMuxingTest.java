@@ -6,7 +6,7 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 
-import org.apache.commons.io.IOUtils;
+import org.jcodec.common.IOUtils;
 import org.jcodec.containers.mkv.ebml.SignedIntegerElement;
 import org.jcodec.containers.mkv.elements.BlockElement;
 import org.junit.Assert;

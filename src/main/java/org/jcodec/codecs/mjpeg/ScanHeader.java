@@ -3,9 +3,6 @@ package org.jcodec.codecs.mjpeg;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
-
 /**
  * This class is part of JCodec ( www.jcodec.org )
  * This software is distributed under FreeBSD License
@@ -84,12 +81,6 @@ public class ScanHeader {
          * lossless processes.
          */
         int ta;
-
-        public String toString() {
-            return ToStringBuilder.reflectionToString(this,
-                    ToStringStyle.SHORT_PREFIX_STYLE);
-        }
-
     }
 
     Component[] components;
@@ -149,11 +140,6 @@ public class ScanHeader {
         scan.ah = (ahal & 0xf0) >>> 4;
         scan.al = (ahal & 0x0f);
         return scan;
-    }
-
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this,
-                ToStringStyle.SHORT_PREFIX_STYLE);
     }
 
     private static int readShort(InputStream is) throws IOException {

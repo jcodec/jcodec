@@ -1,13 +1,14 @@
 package org.jcodec.movtool;
 
+import static org.jcodec.common.ArrayUtil.addAll;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-import static org.jcodec.containers.mp4.boxes.Box.not;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
@@ -176,7 +177,7 @@ public class Util {
         if (stsz1.getDefaultSize() > 0) {
             stszr = new SampleSizesBox(stsz1.getDefaultSize(), stsz1.getCount() + stsz2.getCount());
         } else {
-            stszr = new SampleSizesBox(ArrayUtils.addAll(stsz1.getSizes(), stsz2.getSizes()));
+            stszr = new SampleSizesBox(addAll(stsz1.getSizes(), stsz2.getSizes()));
         }
         NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stsz", stszr);
     }
@@ -192,7 +193,7 @@ public class Util {
                     orig[i].getCount(), orig[i].getEntry() + off);
         }
         NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stsc",
-                new SampleToChunkBox((SampleToChunkEntry[]) ArrayUtils.addAll(stsc1.getSampleToChunk(), shifted)));
+                new SampleToChunkBox((SampleToChunkEntry[]) ArrayUtil.addAll(stsc1.getSampleToChunk(), shifted)));
     }
 
     private static int appendEntries(TrakBox trakBox1, TrakBox trakBox2) {
@@ -220,7 +221,7 @@ public class Util {
     private static void appendTimeToSamples(TrakBox trakBox1, TrakBox trakBox2) {
         TimeToSampleBox stts1 = NodeBox.findFirst(trakBox1, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
         TimeToSampleBox stts2 = NodeBox.findFirst(trakBox2, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
-        TimeToSampleBox sttsNew = new TimeToSampleBox((TimeToSampleEntry[]) ArrayUtils.addAll(stts1.getEntries(),
+        TimeToSampleBox sttsNew = new TimeToSampleBox((TimeToSampleEntry[]) addAll(stts1.getEntries(),
                 stts2.getEntries()));
         NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stts", sttsNew);
     }
@@ -234,10 +235,9 @@ public class Util {
         long[] off1 = stco1 == null ? co641.getChunkOffsets() : stco1.getChunkOffsets();
         long[] off2 = stco2 == null ? co642.getChunkOffsets() : stco2.getChunkOffsets();
         NodeBox stbl1 = NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl");
-        stbl1.filter(not("stco"));
-        stbl1.filter(not("co64"));
-        stbl1.add(co641 == null && co642 == null ? new ChunkOffsetsBox(ArrayUtils.addAll(off1, off2))
-                : new ChunkOffsets64Box(ArrayUtils.addAll(off1, off2)));
+        stbl1.removeChildren("stco", "co64");
+        stbl1.add(co641 == null && co642 == null ? new ChunkOffsetsBox(addAll(off1, off2)) : new ChunkOffsets64Box(
+                addAll(off1, off2)));
     }
 
     public static void forceEditList(MovieBox movie, TrakBox trakBox) {

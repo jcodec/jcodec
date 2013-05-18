@@ -29,6 +29,9 @@ public class RgbToYuv422 implements Transform {
         int off = 0, offSrc = 0;
         for (int i = 0; i < img.getHeight(); i++) {
             for (int j = 0; j < img.getWidth() >> 1; j++) {
+                dstData[1][off] = 0;
+                dstData[2][off] = 0;
+                
                 int offY = off << 1;
 
                 RgbToYuv420.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY, dstData[1], off,

@@ -1,13 +1,14 @@
 package org.jcodec.containers.mkv;
 
-import static org.apache.commons.io.FileUtils.readFileToByteArray;
-import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.jcodec.common.IOUtils.closeQuietly;
 import static org.jcodec.containers.mkv.MKVMuxerTest.tildeExpand;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.jcodec.common.IOUtils;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mkv.MKVDemuxerTest.MKVDemuxer;
 import org.jcodec.containers.mkv.MKVDemuxerTest.MKVDemuxer.AudioTrack;
@@ -15,7 +16,6 @@ import org.jcodec.containers.mkv.elements.BlockElement;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 
 public class AudioTrackTest {
 
@@ -30,7 +30,7 @@ public class AudioTrackTest {
         audio.seekPointer(9);
         
         Packet p = audio.getFrames(1);
-        byte[] audioSample = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
+        byte[] audioSample = NIOUtils.toArray(NIOUtils.fetchFrom((tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"))));
         Assert.assertArrayEquals(audioSample, p.getData().array());
     }
     
@@ -40,8 +40,8 @@ public class AudioTrackTest {
         audio.seekPointer(8);
         
         Packet p = audio.getFrames(2);
-        byte[] sample08 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3"));
-        byte[] sample09 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
+        byte[] sample08 = NIOUtils.toArray(NIOUtils.fetchFrom(tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3")));
+        byte[] sample09 = NIOUtils.toArray(NIOUtils.fetchFrom(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3")));
         byte[] twoSamples = new byte[sample08.length+sample09.length];
         System.arraycopy(sample08, 0, twoSamples, 0, sample08.length);
         System.arraycopy(sample09, 0, twoSamples, sample08.length, sample09.length);

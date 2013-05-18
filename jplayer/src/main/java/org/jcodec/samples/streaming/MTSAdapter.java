@@ -13,8 +13,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import junit.framework.Assert;
-
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
 import org.jcodec.common.NIOUtils;
@@ -30,6 +28,7 @@ import org.jcodec.containers.mps.MTSDemuxer.MTSPacket;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.samples.streaming.MTSIndex.FrameEntry;
 import org.jcodec.samples.streaming.MTSIndex.VideoFrameEntry;
+import org.junit.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

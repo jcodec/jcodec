@@ -1,5 +1,7 @@
 package org.jcodec.common;
 
+import java.lang.reflect.Array;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -70,5 +72,77 @@ public class ArrayUtil {
     public static void add(int[] array, int val) {
         for (int i = 0; i < array.length; i++)
             array[i] += val;
+    }
+
+    public static int[] addAll(int[] array1, int[] array2) {
+        if (array1 == null) {
+            return clone(array2);
+        } else if (array2 == null) {
+            return clone(array1);
+        }
+        int[] joinedArray = new int[array1.length + array2.length];
+        System.arraycopy(array1, 0, joinedArray, 0, array1.length);
+        System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+        return joinedArray;
+    }
+
+    public static long[] addAll(long[] array1, long[] array2) {
+        if (array1 == null) {
+            return clone(array2);
+        } else if (array2 == null) {
+            return clone(array1);
+        }
+        long[] joinedArray = new long[array1.length + array2.length];
+        System.arraycopy(array1, 0, joinedArray, 0, array1.length);
+        System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+        return joinedArray;
+    }
+
+    public static Object[] addAll(Object[] array1, Object[] array2) {
+        if (array1 == null) {
+            return clone(array2);
+        } else if (array2 == null) {
+            return clone(array1);
+        }
+        Object[] joinedArray = (Object[]) Array.newInstance(array1.getClass().getComponentType(), array1.length
+                + array2.length);
+        System.arraycopy(array1, 0, joinedArray, 0, array1.length);
+        System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+        return joinedArray;
+    }
+
+    public static int[] clone(int[] array) {
+        if (array == null) {
+            return null;
+        }
+        return (int[]) array.clone();
+    }
+
+    public static long[] clone(long[] array) {
+        if (array == null) {
+            return null;
+        }
+        return (long[]) array.clone();
+    }
+
+    public static Object[] clone(Object[] array) {
+        if (array == null) {
+            return null;
+        }
+        return (Object[]) array.clone();
+    }
+
+    public static byte[] toByteArray(int[] val) {
+        byte[] result = new byte[val.length];
+        for (int i = 0; i < val.length; i++)
+            result[i] = (byte) val[i];
+        return result;
+    }
+    
+    public static int[] toUnsignedIntArray(byte[] val) {
+        int[] result = new int[val.length];
+        for (int i = 0; i < val.length; i++)
+            result[i] = val[i] & 0xff;
+        return result;
     }
 }

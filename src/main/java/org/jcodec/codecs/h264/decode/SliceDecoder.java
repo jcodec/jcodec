@@ -36,7 +36,6 @@ import static org.jcodec.common.model.ColorSpace.MONO;
 import static org.jcodec.common.tools.MathUtil.abs;
 import static org.jcodec.common.tools.MathUtil.clip;
 import static org.jcodec.common.tools.MathUtil.wrap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -57,6 +56,7 @@ import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
+import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
@@ -104,7 +104,7 @@ public class SliceDecoder {
     private int[][] mbQps;
     private Frame thisFrame;
     private Frame[] sRefs;
-    private TIntObjectHashMap<Frame> lRefs;
+    private IntObjectMap<Frame> lRefs;
     private MDecoder mDecoder;
     private SliceHeader[] shs;
 
@@ -127,7 +127,7 @@ public class SliceDecoder {
 
     public SliceDecoder(SeqParameterSet activeSps, PictureParameterSet activePps, int[][] nCoeff, int[][][][] mvs,
             MBType[] mbTypes, int[][] mbQps, SliceHeader[] shs, boolean[] tr8x8Used, Frame[][][] refsUsed,
-            Frame result, Frame[] sRefs, TIntObjectHashMap<Frame> lRefs) {
+            Frame result, Frame[] sRefs, IntObjectMap<Frame> lRefs) {
 
         this.activeSps = activeSps;
         this.activePps = activePps;

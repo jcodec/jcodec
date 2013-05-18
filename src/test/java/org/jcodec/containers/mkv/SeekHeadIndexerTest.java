@@ -1,6 +1,6 @@
 package org.jcodec.containers.mkv;
 
-import static org.apache.commons.io.FileUtils.readFileToByteArray;
+import static org.jcodec.common.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.Type.Audio;
 import static org.jcodec.containers.mkv.Type.Channels;
 import static org.jcodec.containers.mkv.Type.CodecID;
@@ -38,7 +38,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.commons.io.IOUtils;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mkv.SeekHeadIndexer.SeekMock;
 import org.jcodec.containers.mkv.ebml.BinaryElement;
@@ -76,7 +76,6 @@ public class SeekHeadIndexerTest {
         // # Segment
         MasterElement segmentElem = (MasterElement) Type.createElementByType(Segment);
 
-
         addFakeInfo(segmentElem);
 
         // Tracks Info
@@ -88,7 +87,7 @@ public class SeekHeadIndexerTest {
         addFakeCues(segmentElem);
         // # Meta Seek
         muxSeeks(segmentElem);
-        
+
         tree.add(segmentElem);
         return tree;
     }
@@ -152,68 +151,71 @@ public class SeekHeadIndexerTest {
         s += SeekHeadIndexer.estimeteSeekSize(4, 3);
         int z = Element.getEbmlSize(s);
         s += 4 + z;
-        System.out.println("size:" + s + " can be encoded in " + z + " byte(s) using ebml, with seekhead size eq to:" + z);
+        System.out.println("size:" + s + " can be encoded in " + z + " byte(s) using ebml, with seekhead size eq to:"
+                + z);
     }
-    
+
     @Test
     public void printVariousSeekSizes() throws Exception {
-        System.out.println("seekSize(1): "+SeekHeadIndexer.estimeteSeekSize(4, 1));
-        System.out.println("seekSize(2): "+SeekHeadIndexer.estimeteSeekSize(4, 2));
-        System.out.println("seekSize(3): "+SeekHeadIndexer.estimeteSeekSize(4, 3));
+        System.out.println("seekSize(1): " + SeekHeadIndexer.estimeteSeekSize(4, 1));
+        System.out.println("seekSize(2): " + SeekHeadIndexer.estimeteSeekSize(4, 2));
+        System.out.println("seekSize(3): " + SeekHeadIndexer.estimeteSeekSize(4, 3));
     }
 
     public static int fakeZOffset = 0;
-    public static SeekMock createFakeZ(byte id[], int size){
+
+    public static SeekMock createFakeZ(byte id[], int size) {
         SeekMock z = new SeekMock();
         z.id = id;
         z.size = size;
         z.dataOffset = fakeZOffset;
         z.seekPointerSize = longToBytes(z.dataOffset).length;
         fakeZOffset += z.size;
-        System.out.println("Added id:"+Reader.printAsHex(z.id)+" offset:"+z.dataOffset+" seekpointer size:"+z.seekPointerSize);
+        System.out.println("Added id:" + Reader.printAsHex(z.id) + " offset:" + z.dataOffset + " seekpointer size:"
+                + z.seekPointerSize);
         return z;
     }
-    
+
     @Test
     public void testEdgeCasesWithFakeZ() throws Exception {
         SeekHeadIndexer a = new SeekHeadIndexer();
-        a.a.add(createFakeZ(Info.id,   0xFF));
+        a.a.add(createFakeZ(Info.id, 0xFF));
         a.a.add(createFakeZ(Tracks.id, 0xFF05));
-        a.a.add(createFakeZ(Tags.id,   0xFEFFC0));
-        a.a.add(createFakeZ(Cues.id,   0xFF));
+        a.a.add(createFakeZ(Tags.id, 0xFEFFC0));
+        a.a.add(createFakeZ(Cues.id, 0xFF));
         int computeSize = a.computeSeekHeadSize();
-        System.out.println("SeekHeadSize: "+computeSize);
+        System.out.println("SeekHeadSize: " + computeSize);
         Assert.assertEquals(a.estimateSize(), computeSize);
-        
+
     }
-    
-    public static Element createFakeElement(byte[] id, int size){
+
+    public static Element createFakeElement(byte[] id, int size) {
         Element e = new Element(id);
         e.size = size;
         return e;
     }
-    
+
     @Test
     public void testSeekHeadSize() throws Exception {
         SeekHeadIndexer a = new SeekHeadIndexer();
-        a.add(createFakeElement(Info.id,   0xFF-4-2));
-        a.add(createFakeElement(Tracks.id, 0xFF05-4-2));
-        a.add(createFakeElement(Cues.id,   0xFEFFFF-4-3));
+        a.add(createFakeElement(Info.id, 0xFF - 4 - 2));
+        a.add(createFakeElement(Tracks.id, 0xFF05 - 4 - 2));
+        a.add(createFakeElement(Cues.id, 0xFEFFFF - 4 - 3));
         int computeSize = a.computeSeekHeadSize();
-        System.out.println("SeekHeadSize: "+computeSize);
+        System.out.println("SeekHeadSize: " + computeSize);
         Assert.assertEquals(a.estimateSize(), computeSize);
-        
+
     }
-    
+
     @Test
     public void testSeekHeadMuxing() throws Exception {
         SeekHeadIndexer a = new SeekHeadIndexer();
-        a.add(createFakeElement(Info.id,   0xFF-4-2));
-        a.add(createFakeElement(Tracks.id, 0xFF00-4-3));
-        a.add(createFakeElement(Cues.id,   0xFF0000-4-4));
-        a.add(createFakeElement(Tags.id,   0xFF-4-4));
+        a.add(createFakeElement(Info.id, 0xFF - 4 - 2));
+        a.add(createFakeElement(Tracks.id, 0xFF00 - 4 - 3));
+        a.add(createFakeElement(Cues.id, 0xFF0000 - 4 - 4));
+        a.add(createFakeElement(Tags.id, 0xFF - 4 - 4));
         int computeSize = a.computeSeekHeadSize();
-        System.out.println("SeekHeadSize: "+computeSize);
+        System.out.println("SeekHeadSize: " + computeSize);
         Assert.assertEquals(a.estimateSize(), computeSize);
         ByteBuffer mux = a.indexSeekHead().mux();
         Assert.assertEquals(a.estimateSize(), mux.limit());
@@ -229,10 +231,12 @@ public class SeekHeadIndexerTest {
         StringElement docTypeElem = (StringElement) Type.createElementByType(Type.DocType);
         docTypeElem.set("matroska");
 
-        UnsignedIntegerElement docTypeVersionElem = (UnsignedIntegerElement) Type.createElementByType(Type.DocTypeVersion);
+        UnsignedIntegerElement docTypeVersionElem = (UnsignedIntegerElement) Type
+                .createElementByType(Type.DocTypeVersion);
         docTypeVersionElem.set(2);
 
-        UnsignedIntegerElement docTypeReadVersionElem = (UnsignedIntegerElement) Type.createElementByType(Type.DocTypeReadVersion);
+        UnsignedIntegerElement docTypeReadVersionElem = (UnsignedIntegerElement) Type
+                .createElementByType(Type.DocTypeReadVersion);
         docTypeReadVersionElem.set(2);
 
         ebmlHeaderElem.addChildElement(docTypeElem);

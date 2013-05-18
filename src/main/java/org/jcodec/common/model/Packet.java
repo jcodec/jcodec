@@ -101,6 +101,10 @@ public class Packet {
     public RationalLarge getPtsR() {
         return RationalLarge.R(pts, timescale);
     }
+    
+    public double getPtsD() {
+        return ((double) pts) / timescale;
+    }
 
     public void setData(ByteBuffer data) {
         this.data = data;

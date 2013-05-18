@@ -1,6 +1,5 @@
 package org.jcodec.containers.mkv;
 
-import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.Type.Cluster;
 import static org.jcodec.containers.mkv.Type.Segment;
 
@@ -10,6 +9,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.List;
 
+import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mkv.ebml.MasterElement;
 import org.jcodec.containers.mkv.elements.BlockElement;
 import org.jcodec.containers.mkv.elements.Cluster;
@@ -20,7 +20,7 @@ public class CompareFramesTest {
 
     @Test
     public void test() throws IOException {
-        byte[] rawFrame = readFileToByteArray(new File("src/test/resources/mkv/single-frame01.vp8"));
+        byte[] rawFrame = NIOUtils.toArray(NIOUtils.fetchFrom(new File("src/test/resources/mkv/single-frame01.vp8")));
         FileChannel channel = new FileInputStream("src/test/resources/mkv/single-frame.webm").getChannel();
         SimpleEBMLParser p = new SimpleEBMLParser(channel);
         p.parse();

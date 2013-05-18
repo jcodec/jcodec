@@ -3,13 +3,11 @@ package org.jcodec.testing;
 import static org.jcodec.common.JCodecUtil.getAsIntArray;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.MappedH264ES;
 import org.jcodec.common.NIOUtils;
@@ -28,9 +26,13 @@ public class VerifyTool {
     }
 
     private void doIt(String location) throws IOException {
-        for (Object object : FileUtils.listFiles(new File(location), FileFilterUtils.suffixFileFilter(".264"),
-                TrueFileFilter.INSTANCE)) {
-            File coded = (File) object;
+        File[] h264 = new File(location).listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".264");
+            }
+        });
+        for (File coded : h264) {
             File ref = new File(coded.getParentFile(), coded.getName().replaceAll(".264$", "_dec.yuv"));
             if (coded.exists() && ref.exists()) {
                 try {

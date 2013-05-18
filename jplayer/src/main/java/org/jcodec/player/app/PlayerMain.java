@@ -13,17 +13,16 @@ import java.util.List;
 
 import javax.swing.JFrame;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.player.Player;
 import org.jcodec.player.Stepper;
 import org.jcodec.player.filters.JCodecVideoSource;
 import org.jcodec.player.filters.JSoundAudioOut;
 import org.jcodec.player.filters.audio.AudioMixer;
+import org.jcodec.player.filters.audio.AudioMixer.Pin;
 import org.jcodec.player.filters.audio.AudioSource;
 import org.jcodec.player.filters.audio.JCodecAudioSource;
-import org.jcodec.player.filters.audio.AudioMixer.Pin;
 import org.jcodec.player.filters.http.HttpMedia;
 import org.jcodec.player.filters.http.HttpPacketSource;
 import org.jcodec.player.ui.SwingVO;
@@ -65,7 +64,7 @@ public class PlayerMain implements KeyListener {
         vo.setVisible(true);
 
         File cacheWhere = new File(System.getProperty("user.home"), "Library/JCodec");
-        FileUtils.forceMkdir(cacheWhere);
+        IOUtils.forceMkdir(cacheWhere);
 
         HttpMedia http = new HttpMedia(url, cacheWhere);
 

@@ -1,11 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.apache.commons.collections15.Predicate;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Util;
@@ -197,14 +195,5 @@ public class MovieBox extends NodeBox {
         VideoSampleEntry vs = (VideoSampleEntry) box;
 
         return new Size((int) vs.getWidth(), (int) vs.getHeight());
-    }
-
-    public void filterTracks(Predicate<TrakBox> pred) {
-        Iterator<Box> it = boxes.iterator();
-        while (it.hasNext()) {
-            Box next = it.next();
-            if ((next instanceof TrakBox) && !pred.evaluate((TrakBox) next))
-                it.remove();
-        }
     }
 }

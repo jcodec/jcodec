@@ -26,4 +26,18 @@ public class TestBitstreamWriter {
                         (byte) Short.parseShort("00001100", 2), (byte) Short.parseShort("01010111", 2),
                         (byte) Short.parseShort("01000000", 2) }, NIOUtils.toArray(buf));
     }
+
+    @Test
+    public void testWrite1Bit() throws Exception {
+        ByteBuffer buf = ByteBuffer.allocate(1024);
+        BitWriter bw = new BitWriter(buf.duplicate());
+        bw.write1Bit(1);
+        bw.flush();
+        // bw.writeNBit(Integer.MAX_VALUE, 32);
+        byte[] dst = new byte[4];
+        buf.get(dst);
+        for (int i = 0; i < dst.length; i++) {
+            System.out.println(String.format("%02x", dst[i] & 0xff));
+        }
+    }
 }

@@ -2,10 +2,6 @@ package org.jcodec.codecs.mjpeg;
 
 import java.nio.ByteBuffer;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-
 /**
  * This class is part of JCodec ( www.jcodec.org )
  * This software is distributed under FreeBSD License
@@ -83,11 +79,6 @@ public class ImageConvert {
 
     public final static byte crop(final int i) {
         return cropTable[i + CROP];
-    }
-
-    @Test
-    public void testCrop() throws Exception {
-        Assert.assertEquals(0, crop(-1));
     }
 
     public final static byte y_ccir_to_jpeg(final byte y) {

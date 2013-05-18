@@ -1,18 +1,14 @@
 package org.jcodec.codecs.h264;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.io.IOUtils;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.VUIParameters;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.junit.Assert;
 import org.junit.Test;

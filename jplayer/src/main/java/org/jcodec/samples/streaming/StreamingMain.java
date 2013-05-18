@@ -4,10 +4,10 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.jcodec.common.IOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

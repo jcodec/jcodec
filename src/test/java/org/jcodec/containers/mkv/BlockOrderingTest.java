@@ -1,6 +1,5 @@
 package org.jcodec.containers.mkv;
 
-import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.Type.Block;
 import static org.jcodec.containers.mkv.Type.BlockGroup;
 
@@ -10,7 +9,8 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
+import org.jcodec.common.IOUtils;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mkv.ebml.Element;
 import org.jcodec.containers.mkv.ebml.MasterElement;
 import org.jcodec.containers.mkv.ebml.UnsignedIntegerElement;
@@ -24,7 +24,7 @@ public class BlockOrderingTest {
     @Test
     public void testMuxingFixedLacingFrame() throws IOException {
         File file = new File("src/test/resources/mkv/fixed_lacing_simple_block.ebml");
-        byte[] rawFrame = readFileToByteArray(file);
+        byte[] rawFrame = NIOUtils.toArray(NIOUtils.fetchFrom(file));
         BlockElement be = new BlockElement(Type.SimpleBlock.id);
         be.offset = 0x00;
         be.size = 0xC05;
@@ -45,7 +45,7 @@ public class BlockOrderingTest {
     @Test
     public void testMuxingEbmlLacingFrame() throws IOException {
         File file = new File("src/test/resources/mkv/ebml_lacing_block.ebml");
-        byte[] rawFrame = readFileToByteArray(file);
+        byte[] rawFrame = NIOUtils.toArray(NIOUtils.fetchFrom(file));
         BlockElement be = new BlockElement(Type.Block.id);
         be.offset = 0x00;
         be.size = 0xF22;
@@ -66,7 +66,7 @@ public class BlockOrderingTest {
     @Test
     public void testMuxingXiphLacingFrame() throws IOException {
         File file = new File("src/test/resources/mkv/xiph_lacing_block.ebml");
-        byte[] rawFrame = readFileToByteArray(file);
+        byte[] rawFrame = NIOUtils.toArray(NIOUtils.fetchFrom(file));
         BlockElement be = new BlockElement(Type.Block.id);
         be.offset = 0x00;
         be.size = 0x353;
@@ -87,7 +87,7 @@ public class BlockOrderingTest {
     @Test
     public void testMuxingNoLacingFrame() throws IOException {
         File file = new File("src/test/resources/mkv/no_lacing_simple_block.ebml");
-        byte[] rawFrame = readFileToByteArray(file);
+        byte[] rawFrame = NIOUtils.toArray(NIOUtils.fetchFrom(file));
         BlockElement be = new BlockElement(Type.SimpleBlock.id);
         be.offset = 0x00;
         be.size = 0x304;

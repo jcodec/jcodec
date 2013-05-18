@@ -1,17 +1,16 @@
 package org.jcodec.containers.mps;
 
-import gnu.trove.map.hash.TIntObjectHashMap;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.common.Assert;
+import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mps.MPSDemuxer.Track;
-import org.junit.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -145,7 +144,7 @@ public class MTSDemuxer {
     }
 
     public static int probe(final ByteBuffer b) {
-        TIntObjectHashMap<List<ByteBuffer>> streams = new TIntObjectHashMap<List<ByteBuffer>>();
+        IntObjectMap<List<ByteBuffer>> streams = new IntObjectMap<List<ByteBuffer>>();
         while (true) {
             try {
                 ByteBuffer sub = NIOUtils.read(b, 188);

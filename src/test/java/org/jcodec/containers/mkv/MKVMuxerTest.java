@@ -1,6 +1,6 @@
 package org.jcodec.containers.mkv;
 
-import static org.apache.commons.io.FileUtils.readFileToByteArray;
+import static org.jcodec.common.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.Type.Cluster;
 import static org.jcodec.containers.mkv.Type.Segment;
 import static org.jcodec.containers.mkv.Type.SimpleBlock;
@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
+import org.jcodec.common.IOUtils;
 import org.jcodec.containers.mkv.ebml.Element;
 import org.jcodec.containers.mkv.ebml.MasterElement;
 import org.jcodec.containers.mkv.ebml.StringElement;

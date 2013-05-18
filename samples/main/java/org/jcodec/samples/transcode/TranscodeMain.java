@@ -299,7 +299,7 @@ public class TranscodeMain {
             CompressedTrack outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inTrack.getTimescale());
 
             VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
-            Picture target1 = Picture.create(ine.getWidth(), ine.getHeight(), ColorSpace.YUV422_10);
+            Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
             Picture target2 = null;
             ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
 

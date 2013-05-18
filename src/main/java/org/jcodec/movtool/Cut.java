@@ -2,7 +2,7 @@ package org.jcodec.movtool;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.max;
-import static org.apache.commons.io.FilenameUtils.removeExtension;
+import static org.jcodec.common.JCodecUtil.removeExtension;
 import static org.jcodec.common.NIOUtils.readableFileChannel;
 import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.apache.commons.lang.StringUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.StringUtils;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieBox;

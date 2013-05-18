@@ -1,6 +1,5 @@
 package org.jcodec.containers.mkv;
 
-import static org.apache.commons.io.FileUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.CuesIndexer.CuePointMock.make;
 
 import java.io.File;
@@ -9,7 +8,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
-import org.apache.commons.io.IOUtils;
+import org.jcodec.common.IOUtils;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mkv.CuesIndexer.CuePointMock;
 import org.jcodec.containers.mkv.ebml.Element;
 import org.jcodec.containers.mkv.ebml.MasterElement;
@@ -23,7 +23,7 @@ public class CuesIndexerTest {
     @Test
     public void test() throws IOException {
         File file = new File("src/test/resources/mkv/cues.ebml");
-        byte[] rawCue = readFileToByteArray(file);
+        byte[] rawCue = NIOUtils.toArray(NIOUtils.fetchFrom(file));
         CuesIndexer indexer = new CuesIndexer(0, 1);
         indexer.add(make(new byte[] { 0x00, 0x01 }, 0, 1000));
         indexer.add(make(new byte[] { 0x00, 0x02 }, 1209, 2000));

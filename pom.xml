@@ -6,7 +6,7 @@
 	<name>JCodec</name>
 	<url>http://jcodec.org</url>
 	<packaging>jar</packaging>
-	<version>0.1.3</version>
+	<version>0.1.4</version>
 	<description>Pure Java implementation of video/audio codecs and formats</description>
 	<licenses>
 		<license>
@@ -102,65 +102,10 @@
 	</build>
 	<dependencies>
 		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>1.3.2</version>
-		</dependency>
-		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.5</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.4</version>
-		</dependency>
-		<dependency>
-			<groupId>net.sourceforge.collections</groupId>
-			<artifactId>collections-generic</artifactId>
-			<version>4.01</version>
-		</dependency>
-		<dependency>
-			<groupId>com.googlecode.lambdaj</groupId>
-			<artifactId>lambdaj</artifactId>
-			<version>2.3.1</version>
-			<type>jar</type>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>net.sf.trove4j</groupId>
-			<artifactId>trove4j</artifactId>
-			<version>3.0.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.unitils</groupId>
-			<artifactId>unitils-core</artifactId>
-			<version>3.3</version>
+			<version>4.8.1</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>sun.plugin</groupId>
-			<artifactId>plugin</artifactId>
-			<version>1.6</version>
-			<scope>system</scope>
-			<systemPath>${java.home}/lib/plugin.jar</systemPath>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>4.2</version>
-		</dependency>
-		<dependency>
-			<groupId>com.googlecode.json-simple</groupId>
-			<artifactId>json-simple</artifactId>
-			<version>1.1</version>
-			<type>jar</type>
-		</dependency>
-		<dependency>
-			<groupId>jmxflib</groupId>
-			<artifactId>jmxflib</artifactId>
-			<version>0.0.11</version>
 		</dependency>
 	</dependencies>
 </project>

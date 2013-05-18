@@ -5,7 +5,6 @@ import static org.jcodec.containers.mp4.QTTimeUtil.getEditedDuration;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.apache.commons.collections15.Predicate;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
@@ -77,7 +76,7 @@ public class TrakBox extends NodeBox {
             edts = new NodeBox(new Header("edts"));
             this.add(edts);
         }
-        edts.filter(Box.not("elst"));
+        edts.removeChildren("elst");
 
         edts.add(new EditListBox(edits));
         getTrackHeader().setDuration(getEditedDuration(this));
@@ -119,26 +118,6 @@ public class TrakBox extends NodeBox {
 
     public long getDuration() {
         return getTrackHeader().getDuration();
-    }
-
-    public static Predicate<TrakBox> videoTrack() {
-        return new Predicate<TrakBox>() {
-            public boolean evaluate(TrakBox box) {
-                return box.isVideo();
-            }
-        };
-    }
-
-    public static Predicate<Box> audioTrack() {
-        return new Predicate<Box>() {
-            public boolean evaluate(Box box) {
-                if (!(box instanceof TrakBox))
-                    return false;
-                if (((TrakBox) box).isAudio())
-                    return true;
-                return false;
-            }
-        };
     }
 
     public long getMediaDuration() {
@@ -186,7 +165,7 @@ public class TrakBox extends NodeBox {
 
     public void setPAR(Rational par) {
         for (SampleEntry sampleEntry : getSampleEntries()) {
-            sampleEntry.filter(not("pasp"));
+            sampleEntry.removeChildren("pasp");
             sampleEntry.add(new PixelAspectExt(par));
         }
     }
@@ -209,7 +188,7 @@ public class TrakBox extends NodeBox {
     }
 
     public void setAperture(Size sar, Size dar) {
-        filter(Box.not("tapt"));
+        removeChildren("tapt");
         NodeBox tapt = new NodeBox(new Header("tapt"));
         tapt.add(new ClearApertureBox(dar.getWidth(), dar.getHeight()));
         tapt.add(new ProductionApertureBox(dar.getWidth(), dar.getHeight()));
@@ -257,7 +236,7 @@ public class TrakBox extends NodeBox {
             udta = new NodeBox(new Header("udta"));
             this.add(udta);
         }
-        udta.filter(Box.not("name"));
+        udta.removeChildren("name");
         udta.add(new NameBox(string));
     }
 }

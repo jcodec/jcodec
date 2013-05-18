@@ -13,12 +13,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
@@ -163,7 +162,7 @@ public class TestTool {
             String str = IOUtils.toString(cool);
             str = str.replace("%input_file%", coded.getAbsolutePath());
             str = str.replace("%output_file%", decoded.getAbsolutePath());
-            FileUtils.writeStringToFile(jmconf, str);
+            IOUtils.writeStringToFile(jmconf, str);
         } finally {
             IOUtils.closeQuietly(cool);
         }

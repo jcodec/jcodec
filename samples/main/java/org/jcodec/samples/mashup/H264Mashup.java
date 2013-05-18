@@ -6,9 +6,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
-import junit.framework.Assert;
-
-import org.apache.commons.io.IOUtils;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
@@ -18,9 +15,11 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.write.NALUnitWriter;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
+import org.junit.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

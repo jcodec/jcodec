@@ -3,8 +3,6 @@ package org.jcodec.containers.mp4;
 import static org.jcodec.containers.mp4.TrackType.SOUND;
 import static org.jcodec.containers.mp4.TrackType.TIMECODE;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.list.array.TLongArrayList;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,8 +14,9 @@ import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
 
-import junit.framework.Assert;
-
+import org.jcodec.common.Assert;
+import org.jcodec.common.IntArrayList;
+import org.jcodec.common.LongArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -291,7 +290,7 @@ public class MP4Muxer {
         private int frameSize;
         private int framesInCurChunk;
 
-        private TLongArrayList chunkOffsets = new TLongArrayList();
+        private LongArrayList chunkOffsets = new LongArrayList();
         private int totalFrames;
 
         public UncompressedTrack(int trackId, TrackType type, int timescale, int frameDuration, int frameSize,
@@ -573,9 +572,9 @@ public class MP4Muxer {
         private long sameDurCount = 0;
         private long curDuration = -1;
 
-        private TLongArrayList chunkOffsets = new TLongArrayList();
-        private TIntArrayList sampleSizes = new TIntArrayList();
-        private TIntArrayList iframes = new TIntArrayList();
+        private LongArrayList chunkOffsets = new LongArrayList();
+        private IntArrayList sampleSizes = new IntArrayList();
+        private IntArrayList iframes = new IntArrayList();
 
         private List<Entry> compositionOffsets = new ArrayList<Entry>();
         private int lastCompositionOffset = 0;

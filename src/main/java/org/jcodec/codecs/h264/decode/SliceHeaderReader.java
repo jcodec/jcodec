@@ -6,11 +6,9 @@ import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readU;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
 import static org.jcodec.common.model.ColorSpace.MONO;
-import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
 
-import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
@@ -22,6 +20,7 @@ import org.jcodec.codecs.h264.io.model.RefPicMarkingIDR;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
+import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.BitReader;
 
 /**
@@ -261,8 +260,8 @@ public class SliceHeaderReader {
     }
 
     private static int[][] readReorderingEntries(BitReader in) {
-        TIntArrayList ops = new TIntArrayList();
-        TIntArrayList args = new TIntArrayList();
+        IntArrayList ops = new IntArrayList();
+        IntArrayList args = new IntArrayList();
         do {
             int idc = readUE(in, "SH: reordering_of_pic_nums_idc");
             if (idc == 3)

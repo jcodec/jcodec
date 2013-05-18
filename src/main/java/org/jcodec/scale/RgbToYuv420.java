@@ -33,6 +33,8 @@ public class RgbToYuv420 implements Transform {
         int offChr = 0, offLuma = 0, offSrc = 0, strideSrc = img.getWidth() * 3, strideDst = dst.getWidth();
         for (int i = 0; i < img.getHeight() >> 1; i++) {
             for (int j = 0; j < img.getWidth() >> 1; j++) {
+                dstData[1][offChr] = 0;
+                dstData[2][offChr] = 0;
 
                 rgb2yuv(y[offSrc], y[offSrc + 1], y[offSrc + 2], dstData[0], offLuma, dstData[1], offChr, dstData[2],
                         offChr);
@@ -72,7 +74,7 @@ public class RgbToYuv420 implements Transform {
         u = (u + 128) >> 8;
         v = (v + 128) >> 8;
 
-        Y[offY] += clip(y + 16);
+        Y[offY] = clip(y + 16);
         U[offU] += clip(u + 128);
         V[offV] += clip(v + 128);
     }

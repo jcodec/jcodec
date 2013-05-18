@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.common.AudioDecoder;
-import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.tools.Debug;
+import org.jcodec.player.PlayerUtils;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.player.filters.PacketSource;
 
@@ -33,7 +33,7 @@ public class JCodecAudioSource implements AudioSource {
 
         this.pkt = pkt;
         mediaInfo = (MediaInfo.AudioInfo) pkt.getMediaInfo();
-        decoder = JCodecUtil.getAudioDecoder(mediaInfo.getFourcc(), mediaInfo);
+        decoder = PlayerUtils.getAudioDecoder(mediaInfo.getFourcc(), mediaInfo);
 
         Debug.println("Created audio source");
     }

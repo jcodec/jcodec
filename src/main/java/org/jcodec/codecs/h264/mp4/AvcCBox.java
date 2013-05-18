@@ -4,8 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.Assert;
-
+import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;

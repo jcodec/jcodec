@@ -1,6 +1,5 @@
 package org.jcodec.codecs.mpeg12;
 
-import static junit.framework.Assert.assertEquals;
 import static org.jcodec.codecs.mpeg12.MPEGConst.BLOCK_TO_CC;
 import static org.jcodec.codecs.mpeg12.MPEGConst.EXTENSION_START_CODE;
 import static org.jcodec.codecs.mpeg12.MPEGConst.GROUP_START_CODE;
@@ -42,6 +41,7 @@ import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceExtension;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension;
+import org.jcodec.common.Assert;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SparseIDCT;
 import org.jcodec.common.io.BitReader;
@@ -427,7 +427,7 @@ public class MPEGDecoder implements VideoDecoder {
                 new int[1 << (chromaFormat + 5)] } : buildPred(predFwd, predBack);
 
         if (mbType.macroblock_intra != 0 && concealmentMv)
-            assertEquals(1, bits.read1Bit()); // Marker
+            Assert.assertEquals(1, bits.read1Bit()); // Marker
 
         int cbp = mbType.macroblock_intra == 1 ? 0xfff : 0;
         if (mbType.macroblock_pattern != 0) {

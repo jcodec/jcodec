@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.CountingInputStream;
 import org.jcodec.codecs.mjpeg.tools.Asserts;
 import org.jcodec.codecs.wav.StringReader;
+import org.jcodec.common.CountingInputStream;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.io.VLCBuilder;
 import org.jcodec.common.tools.Debug;
 
@@ -40,7 +40,7 @@ public class JpegParser {
             if (marker == 0)
                 continue;
             if (marker != 0xFF)
-                throw new RuntimeException("@" + Long.toHexString(counter.getByteCount()) + " Marker expected: 0x"
+                throw new RuntimeException("@" + Long.toHexString(counter.getCount()) + " Marker expected: 0x"
                         + Integer.toHexString(marker));
 
             int b = is.read();

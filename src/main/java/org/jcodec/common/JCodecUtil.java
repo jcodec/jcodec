@@ -4,21 +4,23 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.Callable;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
 
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
-import org.jcodec.codecs.pcm.PCMDecoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
-import org.jcodec.codecs.s302.S302MDecoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
-import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
@@ -32,7 +34,8 @@ import org.jcodec.scale.Transform;
  */
 public class JCodecUtil {
 
-    private static final VideoDecoder[] knownDecoders = new VideoDecoder[] { new ProresDecoder(), new MPEGDecoder(), new H264Decoder() };
+    private static final VideoDecoder[] knownDecoders = new VideoDecoder[] { new ProresDecoder(), new MPEGDecoder(),
+            new H264Decoder() };
 
     public enum Format {
         MOV, MPEG_PS, MPEG_TS
@@ -77,19 +80,10 @@ public class JCodecUtil {
             return null;
     }
 
-    public static AudioDecoder getAudioDecoder(String fourcc, MediaInfo.AudioInfo info) {
-        if ("sowt".equals(fourcc) || "in24".equals(fourcc) || "twos".equals(fourcc) || "in32".equals(fourcc))
-            return new PCMDecoder(info);
-        else if ("s302".equals(fourcc))
-            return new S302MDecoder();
-        else
-            return null;
-    }
-
     public static void savePicture(Picture pic, String format, File file) throws IOException {
         ImageIO.write(toBufferedImage(pic), format, file);
     }
-    
+
     public static BufferedImage toBufferedImage(Picture pic) {
         Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
         Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB);
@@ -140,5 +134,22 @@ public class JCodecUtil {
             result[i] = b[i] & 0xff;
         }
         return result;
+    }
+
+    public static ThreadPoolExecutor getPriorityExecutor(int nThreads) {
+        return new ThreadPoolExecutor(nThreads, nThreads, 0L, TimeUnit.MILLISECONDS,
+                new PriorityBlockingQueue<Runnable>(10, PriorityFuture.COMP)) {
+
+            protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
+                RunnableFuture<T> newTaskFor = super.newTaskFor(callable);
+                return new PriorityFuture<T>(newTaskFor, ((PriorityCallable<T>) callable).getPriority());
+            }
+        };
+    }
+
+    public static String removeExtension(String name) {
+        if(name == null)
+            return null;
+        return name.replaceAll("\\.[^\\.]+$", "");
     }
 }

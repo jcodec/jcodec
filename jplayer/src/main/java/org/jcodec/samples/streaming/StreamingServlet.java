@@ -14,8 +14,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.util.MultiPartOutputStream;
+import org.jcodec.common.StringUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.player.filters.MediaInfo;

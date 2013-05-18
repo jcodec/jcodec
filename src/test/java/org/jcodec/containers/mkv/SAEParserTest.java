@@ -10,19 +10,18 @@ import java.nio.channels.FileChannel;
 
 import junit.framework.Assert;
 
-import org.apache.commons.io.IOUtils;
+import org.jcodec.common.IOUtils;
 import org.jcodec.containers.mkv.ebml.MasterElement;
 import org.jcodec.containers.mkv.ebml.UnsignedIntegerElement;
 import org.jcodec.containers.mkv.elements.Cluster;
 import org.junit.Before;
-import org.junit.Test;
 
 public class SAEParserTest {
-    
+
     MKVTestSuite suite;
-    
+
     @Before
-    public void setUp() throws IOException{
+    public void setUp() throws IOException {
         suite = MKVTestSuite.read();
     }
 
@@ -45,9 +44,10 @@ public class SAEParserTest {
             } finally {
                 IOUtils.closeQuietly(stream);
             }
-            UnsignedIntegerElement[] durations = Type.findAll(reader.getTree(), UnsignedIntegerElement.class, Type.Segment, Type.Cluster, Type.BlockGroup, Type.BlockDuration);
+            UnsignedIntegerElement[] durations = Type.findAll(reader.getTree(), UnsignedIntegerElement.class,
+                    Type.Segment, Type.Cluster, Type.BlockGroup, Type.BlockDuration);
             for (UnsignedIntegerElement d : durations)
-                System.out.println("block duration: "+d.get());
+                System.out.println("block duration: " + d.get());
         }
     }
 
@@ -63,7 +63,7 @@ public class SAEParserTest {
             MasterElement[] allSegments = Type.findAll(reader.getTree(), MasterElement.class, Segment);
             Assert.assertNotNull(allSegments);
             Assert.assertEquals(1, allSegments.length);
-            
+
             Cluster[] allClusters = Type.findAll(reader.getTree(), Cluster.class, Segment, Cluster);
             Assert.assertNotNull(allClusters);
             Assert.assertEquals(36, allClusters.length);
@@ -71,5 +71,5 @@ public class SAEParserTest {
             stream.close();
         }
     }
-    
+
 }

@@ -6,9 +6,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.collections15.Predicate;
+import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
-import org.junit.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -86,14 +85,6 @@ public abstract class Box {
         header.setBodySize(buf.position() - dup.position() - 8);
         Assert.assertEquals(header.headerSize(), 8);
         header.write(dup);
-    }
-
-    public static Predicate<Box> not(final String type) {
-        return new Predicate<Box>() {
-            public boolean evaluate(Box object) {
-                return !object.getHeader().getFourcc().equals(type);
-            }
-        };
     }
 
     protected abstract void doWrite(ByteBuffer out);

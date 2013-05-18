@@ -2,17 +2,13 @@ package org.jcodec.codecs.mjpeg;
 
 import static org.jcodec.codecs.mjpeg.JpegUtils.zigzagDecodeAll;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.IntBuffer;
 
-import org.apache.commons.io.FileUtils;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.dct.DCT;
 import org.jcodec.common.dct.IntDCT;
-import org.junit.Test;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -24,10 +20,6 @@ import org.junit.Test;
 public class JpegDecoder {
 
     private static final byte[] JFIF = JCodecUtil.asciiString("JFIF");
-
-    public static void main(String[] args) throws Exception {
-        new JpegDecoder().testPerformance();
-    }
 
     public static DecodedImage doIt(InputStream is) throws IOException {
         JpegDecoder decoder = new JpegDecoder();
@@ -129,28 +121,6 @@ public class JpegDecoder {
             MCU block) throws IOException {
         jbs.readBlock(block);
         decodeBlock(block, coded.getQuantLum(), coded.getQuantChrom());
-    }
-
-    @Test
-    public void testPerformance() throws IOException {
-        byte[] jpg = FileUtils.readFileToByteArray(new File(
-                "src/test/resources/fr.jpg"));
-        JpegParser parser = new JpegParser();
-        JpegDecoder decoder = new JpegDecoder();
-        CodedImage image = parser.parse(new ByteArrayInputStream(jpg));
-        DecodedImage decoded = new DecodedImage(image.getWidth(), image
-                .getHeight(), new int[image.getWidth() * image.getHeight()]);
-        long start = System.currentTimeMillis();
-        int count = 1000;
-        for (int i = 0; i < count; i++) {
-            decoder
-                    .decode(parser.parse(new ByteArrayInputStream(jpg)),
-                            decoded);
-        }
-        long time = System.currentTimeMillis() - start;
-        System.out.println(count * 1000 / time + " imgs/sec");
-        System.out.println(time / count + " msec/img");
-
     }
 
     protected static DCT dct = new IntDCT();
