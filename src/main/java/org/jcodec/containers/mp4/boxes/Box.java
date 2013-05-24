@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.io.IOUtils;
+import org.jcodec.common.io.BackedOutputStream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -93,6 +94,19 @@ public abstract class Box {
         header.setBodySize(bytes.length);
         header.write(out);
         out.write(bytes);
+    }
+
+    public int write(byte[] out) throws IOException {
+        BackedOutputStream bos = new BackedOutputStream(out);
+        DataOutputStream dos = new DataOutputStream(bos);
+
+        bos.setPos(8);
+        doWrite(dos);
+        int len = bos.getPos();
+        header.setBodySize(bos.getPos() - 8);
+        bos.setPos(0);
+        header.write(dos);
+        return len;
     }
 
     public void write(File dst) throws IOException {

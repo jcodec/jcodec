@@ -81,10 +81,10 @@ import ch.lambdaj.Lambda;
  */
 public class MP4Muxer {
     private List<MuxerTrack> tracks = new ArrayList<MuxerTrack>();
-    private long mdatOffset;
+    protected long mdatOffset;
 
     private int nextTrackId = 1;
-    private RAOutputStream out;
+    protected RAOutputStream out;
 
     public MP4Muxer(RAOutputStream output) throws IOException {
         this(output, Brand.MP4);
@@ -755,7 +755,21 @@ public class MP4Muxer {
     }
 
     public void writeHeader() throws IOException {
-        NodeBox movie = new MovieBox();
+        MovieBox movie = finalizeHeader();
+
+        storeHeader(movie);
+    }
+
+    public void storeHeader(MovieBox movie) throws IOException {
+        long mdatSize = out.getPos() - mdatOffset + 8;
+        movie.write(out);
+
+        out.seek(mdatOffset);
+        out.writeLong(mdatSize);
+    }
+
+    public MovieBox finalizeHeader() throws IOException {
+        MovieBox movie = new MovieBox();
         MovieHeaderBox mvhd = movieHeader(movie);
         movie.addFirst(mvhd);
 
@@ -764,12 +778,7 @@ public class MP4Muxer {
             if (trak != null)
                 movie.add(trak);
         }
-
-        long mdatSize = out.getPos() - mdatOffset + 8;
-        movie.write(out);
-
-        out.seek(mdatOffset);
-        out.writeLong(mdatSize);
+        return movie;
     }
 
     private void mediaHeader(MediaInfoBox minf, TrackType type) {
@@ -835,9 +844,9 @@ public class MP4Muxer {
     }
 
     private MovieHeaderBox movieHeader(NodeBox movie) {
-        int timescale = tracks.get(0).getTimescale();
-        long duration = tracks.get(0).getTrackTotalDuration();
         MuxerTrack videoTrack = getVideoTrack();
+        int timescale = videoTrack.getTimescale();
+        long duration = videoTrack.getTrackTotalDuration();
         if (videoTrack != null) {
             timescale = videoTrack.getTimescale();
             duration = videoTrack.getTrackTotalDuration();

@@ -8,10 +8,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.FileRAInputStream;
-import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.io.FileRAOutputStream;
+import org.jcodec.common.io.RAInputStream;
 import org.jcodec.common.io.RAOutputStream;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Demuxer;
@@ -20,7 +18,9 @@ import org.jcodec.containers.mp4.MP4Muxer;
 import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Muxer.UncompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.containers.mp4.WebOptimizedMP4Muxer;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
+import org.jcodec.containers.mp4.boxes.MovieBox;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -39,23 +39,28 @@ public class Remux {
         File tgt = new File(args[0]);
         File src = hidFile(tgt);
         tgt.renameTo(src);
-        
+
         try {
-            new Remux().remux(tgt, src);
+            new Remux().remux(tgt, src, null);
         } catch (Throwable t) {
             tgt.renameTo(new File(tgt.getParentFile(), tgt.getName() + ".error"));
             src.renameTo(tgt);
         }
     }
 
-    public void remux(File tgt, File src) throws IOException {
+    public interface Handler {
+        public void handle(MovieBox mov) throws IOException;
+    }
+
+    public void remux(File tgt, File src, Handler handler) throws IOException {
         RAInputStream input = null;
         RAOutputStream output = null;
         try {
             input = bufin(src);
             output = new FileRAOutputStream(tgt);
             MP4Demuxer demuxer = new MP4Demuxer(input);
-            MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
+
+            MP4Muxer muxer = WebOptimizedMP4Muxer.withOldHeader(output, Brand.MOV, demuxer.getMovie());
 
             List<DemuxerTrack> at = demuxer.getAudioTracks();
             List<MP4Muxer.UncompressedTrack> audioTracks = new ArrayList<MP4Muxer.UncompressedTrack>();
@@ -69,8 +74,8 @@ public class Remux {
 
             DemuxerTrack vt = demuxer.getVideoTrack();
             CompressedTrack video = muxer.addTrackForCompressed(VIDEO, (int) vt.getTimescale());
-//            vt.open(input);
-            video.setTimecode(muxer.addTimecodeTrack((int)vt.getTimescale()));
+            // vt.open(input);
+            video.setTimecode(muxer.addTimecodeTrack((int) vt.getTimescale()));
             video.setEdits(vt.getEdits());
             video.addSampleEntries(vt.getSampleEntries());
             MP4Packet pkt = null;
@@ -86,7 +91,14 @@ public class Remux {
                 }
             }
 
-            muxer.writeHeader();
+            MovieBox movie = muxer.finalizeHeader();
+            movie.setTimescale(demuxer.getMovie().getTimescale());
+            movie.setDuration(demuxer.getMovie().getDuration());
+            if (handler != null) {
+                handler.handle(movie);
+            }
+            muxer.storeHeader(movie);
+
             output.flush();
         } finally {
             if (input != null)

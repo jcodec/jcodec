@@ -84,7 +84,7 @@ public class MovieBox extends NodeBox {
         setDuration(rescale(getDuration(), oldTs));
     }
 
-    private void setTimescale(int newTs) {
+    public void setTimescale(int newTs) {
         findFirst(this, MovieHeaderBox.class, "mvhd").setTimescale(newTs);
     }
 
