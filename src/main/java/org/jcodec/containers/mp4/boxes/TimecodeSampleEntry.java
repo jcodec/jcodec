@@ -58,7 +58,7 @@ public class TimecodeSampleEntry extends SampleEntry {
         timescale = (int) ReaderBE.readInt32(input);
         frameDuration = (int) ReaderBE.readInt32(input);
         numFrames = (byte) input.read();
-        StringReader.sureSkip(input, 1);
+        int reserved = input.read();
     }
 
     protected void doWrite(DataOutput out) throws IOException {
@@ -68,7 +68,7 @@ public class TimecodeSampleEntry extends SampleEntry {
         out.writeInt(timescale);
         out.writeInt(frameDuration);
         out.writeByte(numFrames);
-        out.write(207);
+        out.write(0);
     }
 
     public static class MyFactory extends BoxFactory {

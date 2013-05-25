@@ -50,12 +50,13 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
 
     public WebOptimizedMP4Muxer(RAOutputStream output, Brand brand, int headerSize) throws IOException {
         super(output, brand);
-        headerPos = output.getPos() - 16;
+        headerPos = output.getPos() - 24;
         output.seek(headerPos);
 
         header = new byte[headerSize];
         output.write(header);
 
+        new Header("wide", 8).write(output);
         new Header("mdat", 1).write(output);
         mdatOffset = output.getPos();
         output.writeLong(0);

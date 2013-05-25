@@ -463,6 +463,10 @@ public class MP4Demuxer {
         public int getStartTimecode() {
             return samples[0];
         }
+
+        public int getTimescale() {
+            return box.getTimescale();
+        }
     }
 
     /**

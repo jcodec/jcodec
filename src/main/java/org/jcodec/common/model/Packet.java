@@ -62,6 +62,10 @@ public class Packet {
     public long getDuration() {
         return duration;
     }
+    
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
 
     public long getFrameNo() {
         return frameNo;
