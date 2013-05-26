@@ -120,6 +120,8 @@ public class Remux {
 
     private void copyEdits(DemuxerTrack from, CompressedTrack two, Rational tsRatio) {
         List<Edit> edits = from.getEdits(), result = new ArrayList<Edit>();
+        if(edits == null)
+            return;
         for (Edit edit : edits) {
             result.add(new Edit(tsRatio.multiply(edit.getDuration()), edit.getMediaTime(), edit.getRate()));
         }
