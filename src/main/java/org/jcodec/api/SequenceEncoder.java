@@ -61,7 +61,7 @@ public class SequenceEncoder {
         encodeNativeFrame(AWTUtil.fromBufferedImage(bi));        
     }
     
-    public void encodeNativeFrame(Picture pic) {
+    public void encodeNativeFrame(Picture pic) throws IOException {
         if (toEncode == null) {
             toEncode = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.YUV420);
         }
