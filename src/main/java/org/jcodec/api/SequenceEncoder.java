@@ -58,13 +58,17 @@ public class SequenceEncoder {
     }
 
     public void encodeImage(BufferedImage bi) throws IOException {
+        encodeNativeFrame(AWTUtil.fromBufferedImage(bi));        
+    }
+    
+    public void encodeNativeFrame(Picture pic) {
         if (toEncode == null) {
             toEncode = Picture.create(bi.getWidth(), bi.getHeight(), ColorSpace.YUV420);
         }
-
+        
         // Perform conversion
-        transform.transform(AWTUtil.fromBufferedImage(bi), toEncode);
-
+        transform.transform(pic, toEncode);
+        
         // Encode image into H.264 frame, the result is stored in '_out' buffer
         _out.clear();
         ByteBuffer result = encoder.encodeFrame(_out, toEncode);
