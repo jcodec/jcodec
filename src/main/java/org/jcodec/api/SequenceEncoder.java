@@ -63,7 +63,7 @@ public class SequenceEncoder {
     
     public void encodeNativeFrame(Picture pic) {
         if (toEncode == null) {
-            toEncode = Picture.create(bi.getWidth(), bi.getHeight(), ColorSpace.YUV420);
+            toEncode = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.YUV420);
         }
         
         // Perform conversion
