@@ -9,14 +9,14 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.prores.ProresToProxy;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -39,12 +39,12 @@ public class ToProxy {
         SeekableByteChannel output = writableFileChannel(new File(args[1]));
         MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
 
-        MP4DemuxerTrack inVideo = demuxer.getVideoTrack();
+        AbstractMP4DemuxerTrack inVideo = demuxer.getVideoTrack();
         VideoSampleEntry entry = (VideoSampleEntry) inVideo.getSampleEntries()[0];
         int width = (int) entry.getWidth();
         int height = (int) entry.getHeight();
         ProresToProxy toProxy = new ProresToProxy(width, height, 65536);
-        CompressedTrack outVideo = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inVideo.getTimescale());
+        FramesMP4MuxerTrack outVideo = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inVideo.getTimescale());
 
         TrackHeaderBox th = inVideo.getBox().getTrackHeader();
         System.out.println(toProxy.getFrameSize());
@@ -52,7 +52,7 @@ public class ToProxy {
         long from = System.currentTimeMillis();
         long last = from;
         MP4Packet pkt = null;
-        while ((pkt = (MP4Packet)inVideo.getFrames(1)) != null) {
+        while ((pkt = (MP4Packet)inVideo.nextFrame()) != null) {
             ByteBuffer out = ByteBuffer.allocate(pkt.getData().remaining());
             toProxy.transcode(pkt.getData(), out);
             out.flip();

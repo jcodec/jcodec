@@ -35,8 +35,8 @@ public class AudioTest {
         // * tone.getAudioFormat().getFrameSize();
         AudioInfo audioInfo = tone.getAudioInfo();
         AudioFormat af = audioInfo.getFormat();
-        ByteBuffer pkt = ByteBuffer.allocate(af.getFrameSize() * audioInfo.getFramesPerPacket());
-        qqq.open(af, audioInfo.getFramesPerPacket() * Player.PACKETS_IN_BUFFER);
+        ByteBuffer pkt = ByteBuffer.allocate(af.getFrameSize() * 96000);
+        qqq.open(af, 1024 * Player.PACKETS_IN_BUFFER);
         // int i = 0;
         // System.gc();
         while (true) {
@@ -75,7 +75,7 @@ public class AudioTest {
             throw new RuntimeException("Line matching " + info + " not supported.");
         }
         Clip clip = AudioSystem.getClip();
-        ByteBuffer bb = ByteBuffer.allocate(af.getFrameSize() * audioInfo.getFramesPerPacket() * 2000);
+        ByteBuffer bb = ByteBuffer.allocate(af.getFrameSize() * 96000);
         tone.getFrame(bb);
         byte[] array = NIOUtils.toArray(bb);
         clip.open(af, array, 0, array.length);

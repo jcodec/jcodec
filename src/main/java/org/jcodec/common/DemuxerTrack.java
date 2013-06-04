@@ -6,7 +6,7 @@ import org.jcodec.common.model.Packet;
 
 public interface DemuxerTrack {
 
-    Packet getFrames(int n) throws IOException;
+    Packet nextFrame() throws IOException;
 
     boolean gotoFrame(long i);
 

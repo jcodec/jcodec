@@ -128,7 +128,7 @@ public class Stepper {
 
     private void playSound(int ms) throws IOException {
         ByteBuffer sound = ByteBuffer.allocate(((int) (ms * af.getFrameRate() / 1000) * af.getFrameSize()));
-        ByteBuffer buf = ByteBuffer.allocate(ai.getFramesPerPacket() * af.getFrameSize());
+        ByteBuffer buf = ByteBuffer.allocate(48000 * af.getFrameSize());
         while (sound.remaining() > 0) {
             AudioFrame frame = audioSource.getFrame(buf);
             if (frame == null)

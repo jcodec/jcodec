@@ -7,15 +7,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sound.sampled.AudioFormat;
-
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
-import org.jcodec.containers.mp4.MP4Demuxer.TimecodeTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -23,6 +18,10 @@ import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.PCMMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.TimecodeMP4DemuxerTrack;
 import org.jcodec.player.filters.MediaInfo;
 
 /**
@@ -44,7 +43,7 @@ public class QTAdapter implements Adapter {
 
         demuxer = new MP4Demuxer(is);
         tracks = new ArrayList<AdapterTrack>();
-        for (MP4DemuxerTrack demuxerTrack : demuxer.getTracks()) {
+        for (AbstractMP4DemuxerTrack demuxerTrack : demuxer.getTracks()) {
             if (demuxerTrack.getBox().isAudio()) {
                 tracks.add(new QTAudioAdaptorTrack(demuxerTrack));
             } else if (demuxerTrack.getBox().isVideo()) {
@@ -64,10 +63,10 @@ public class QTAdapter implements Adapter {
     }
 
     public static class QTVideoAdaptorTrack implements VideoAdapterTrack {
-        protected MP4DemuxerTrack demuxerTrack;
-        private TimecodeTrack timecodeTrack;
+        protected AbstractMP4DemuxerTrack demuxerTrack;
+        private TimecodeMP4DemuxerTrack timecodeTrack;
 
-        public QTVideoAdaptorTrack(MP4DemuxerTrack demuxerTrack, TimecodeTrack timecodeTrack) {
+        public QTVideoAdaptorTrack(AbstractMP4DemuxerTrack demuxerTrack, TimecodeMP4DemuxerTrack timecodeTrack) {
             this.demuxerTrack = demuxerTrack;
             this.timecodeTrack = timecodeTrack;
         }
@@ -97,7 +96,7 @@ public class QTAdapter implements Adapter {
         public Packet[] getGOP(int gopId) throws IOException {
             if (!demuxerTrack.gotoFrame(gopId))
                 return null;
-            MP4Packet frames = (MP4Packet)demuxerTrack.getFrames(1);
+            MP4Packet frames = (MP4Packet) demuxerTrack.nextFrame();
 
             return frames == null ? null : new Packet[] { timecodeTrack == null ? frames : timecodeTrack
                     .getTimecode(frames) };
@@ -110,26 +109,20 @@ public class QTAdapter implements Adapter {
     }
 
     public static class QTAudioAdaptorTrack implements AudioAdapterTrack {
-        private static final int FRAMES_PER_PCM_PACKET = 2048;
+        protected AbstractMP4DemuxerTrack demuxerTrack;
 
-        protected MP4DemuxerTrack demuxerTrack;
-
-        public QTAudioAdaptorTrack(MP4DemuxerTrack demuxerTrack) {
+        public QTAudioAdaptorTrack(AbstractMP4DemuxerTrack demuxerTrack) {
             this.demuxerTrack = demuxerTrack;
         }
 
         private Packet getFrameNonPCM(int frameNo) throws IOException {
             if (demuxerTrack.getCurFrame() != frameNo)
                 demuxerTrack.gotoFrame(frameNo);
-            return demuxerTrack.getFrames(1);
+            return demuxerTrack.nextFrame();
         }
 
         private int searchFramePCM(long pts) throws IOException {
-            AudioFormat format = ((AudioSampleEntry) demuxerTrack.getSampleEntries()[0]).getFormat();
-            long frameNo = ((pts * (int) format.getFrameRate()) / demuxerTrack.getTimescale() + FRAMES_PER_PCM_PACKET - 1)
-                    & ~0x7ff;
-            demuxerTrack.gotoFrame(frameNo);
-
+            demuxerTrack.seek(pts);
             return (int) (demuxerTrack.getCurFrame() >> 11);
         }
 
@@ -137,7 +130,7 @@ public class QTAdapter implements Adapter {
             frameNo <<= 11;
             if (demuxerTrack.getCurFrame() != frameNo)
                 demuxerTrack.gotoFrame(frameNo);
-            Packet packet = demuxerTrack.getFrames(FRAMES_PER_PCM_PACKET);
+            Packet packet = demuxerTrack.nextFrame();
             if (packet == null)
                 return null;
             return new Packet(packet.getData(), packet.getPts(), packet.getTimescale(), packet.getDuration(),
@@ -149,13 +142,12 @@ public class QTAdapter implements Adapter {
             TrakBox box = demuxerTrack.getBox();
 
             AudioSampleEntry se = (AudioSampleEntry) box.getSampleEntries()[0];
-            boolean pcm = isPCM(box);
+            boolean pcm = demuxerTrack instanceof PCMMP4DemuxerTrack;
             return new MediaInfo.AudioInfo(se.getFourcc(), box.getTimescale(), box.getMediaDuration(),
-                    (box.getFrameCount() >> (pcm ? 11 : 0)), box.getName(), null, se.getFormat(),
-                    pcm ? FRAMES_PER_PCM_PACKET : 1, se.getLabels());
+                    (box.getFrameCount() >> (pcm ? 11 : 0)), box.getName(), null, se.getFormat(), se.getLabels());
         }
 
-        private boolean isPCM(MP4DemuxerTrack track) {
+        private boolean isPCM(AbstractMP4DemuxerTrack track) {
             SampleEntry se = track.getSampleEntries()[0];
             return (se instanceof AudioSampleEntry) && ((AudioSampleEntry) se).isPCM();
         }

@@ -42,7 +42,7 @@ public class WavAudioSource implements AudioSource {
         format = new AudioFormat(header.fmt.sampleRate, header.fmt.bitsPerSample, header.fmt.numChannels, true, false);
 
         return new MediaInfo.AudioInfo("pcm", header.fmt.sampleRate, header.dataSize / frameSize, header.dataSize
-                / frameSize, "", null, format, FRAMES_PER_PACKET, header.getChannelLabels());
+                / frameSize, "", null, format, header.getChannelLabels());
     }
 
     public AudioFrame getFrame(ByteBuffer data) throws IOException {

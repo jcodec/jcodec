@@ -11,13 +11,13 @@ import java.util.List;
 
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
-import org.jcodec.containers.mp4.MP4Muxer.UncompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -54,31 +54,31 @@ public class Remux {
             MP4Demuxer demuxer = new MP4Demuxer(input);
             MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
 
-            List<MP4DemuxerTrack> at = demuxer.getAudioTracks();
-            List<MP4Muxer.UncompressedTrack> audioTracks = new ArrayList<MP4Muxer.UncompressedTrack>();
-            for (MP4DemuxerTrack demuxerTrack : at) {
-                UncompressedTrack att = muxer.addUncompressedAudioTrack(((AudioSampleEntry) demuxerTrack
+            List<AbstractMP4DemuxerTrack> at = demuxer.getAudioTracks();
+            List<PCMMP4MuxerTrack> audioTracks = new ArrayList<PCMMP4MuxerTrack>();
+            for (AbstractMP4DemuxerTrack demuxerTrack : at) {
+                PCMMP4MuxerTrack att = muxer.addUncompressedAudioTrack(((AudioSampleEntry) demuxerTrack
                         .getSampleEntries()[0]).getFormat());
                 audioTracks.add(att);
                 att.setEdits(demuxerTrack.getEdits());
                 att.setName(demuxerTrack.getName());
             }
 
-            MP4DemuxerTrack vt = demuxer.getVideoTrack();
-            CompressedTrack video = muxer.addTrackForCompressed(VIDEO, (int) vt.getTimescale());
+            AbstractMP4DemuxerTrack vt = demuxer.getVideoTrack();
+            FramesMP4MuxerTrack video = muxer.addTrackForCompressed(VIDEO, (int) vt.getTimescale());
             // vt.open(input);
             video.setTimecode(muxer.addTimecodeTrack((int) vt.getTimescale()));
             video.setEdits(vt.getEdits());
             video.addSampleEntries(vt.getSampleEntries());
             MP4Packet pkt = null;
-            while ((pkt = (MP4Packet)vt.getFrames(1)) != null) {
+            while ((pkt = (MP4Packet)vt.nextFrame()) != null) {
                 pkt = processFrame(pkt);
                 video.addFrame(pkt);
 
                 for (int i = 0; i < at.size(); i++) {
                     AudioSampleEntry ase = (AudioSampleEntry) at.get(i).getSampleEntries()[0];
                     int frames = (int) (ase.getSampleRate() * pkt.getDuration() / vt.getTimescale());
-                    MP4Packet apkt = (MP4Packet)at.get(i).getFrames(frames);
+                    MP4Packet apkt = (MP4Packet)at.get(i).nextFrame();
                     audioTracks.get(i).addSamples(apkt.getData());
                 }
             }

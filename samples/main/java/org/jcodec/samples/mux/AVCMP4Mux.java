@@ -18,11 +18,11 @@ import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -49,7 +49,7 @@ public class AVCMP4Mux {
 
         SeekableByteChannel file = writableFileChannel(out);
         MP4Muxer muxer = new MP4Muxer(file);
-        CompressedTrack track = muxer.addTrackForCompressed(TrackType.VIDEO, 25);
+        FramesMP4MuxerTrack track = muxer.addTrackForCompressed(TrackType.VIDEO, 25);
 
         mux(track, in);
 
@@ -58,7 +58,7 @@ public class AVCMP4Mux {
         file.close();
     }
 
-    private static void mux(CompressedTrack track, File f) throws IOException {
+    private static void mux(FramesMP4MuxerTrack track, File f) throws IOException {
         MappedH264ES es = new MappedH264ES(NIOUtils.map(f));
 
         ArrayList<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
@@ -74,7 +74,7 @@ public class AVCMP4Mux {
         addSampleEntry(track, es.getSps(), es.getPps());
     }
 
-    private static void addSampleEntry(CompressedTrack track, SeqParameterSet[] spss, PictureParameterSet[] ppss) {
+    private static void addSampleEntry(FramesMP4MuxerTrack track, SeqParameterSet[] spss, PictureParameterSet[] ppss) {
         SeqParameterSet sps = spss[0];
         Size size = new Size((sps.pic_width_in_mbs_minus1 + 1) << 4, getPicHeightInMbs(sps) << 4);
 

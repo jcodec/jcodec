@@ -1,8 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jcodec.containers.mp4.boxes.channel.Label;
 
@@ -16,7 +14,7 @@ import org.jcodec.containers.mp4.boxes.channel.Label;
 public class ChannelBox extends FullBox {
     private int channelLayout;
     private int channelBitmap;
-    private List<ChannelDescription> descriptions = new ArrayList<ChannelDescription>();
+    private ChannelDescription[] descriptions;
 
     public static class ChannelDescription {
         private int channelLabel;
@@ -63,12 +61,13 @@ public class ChannelBox extends FullBox {
 
         channelLayout = input.getInt();
         channelBitmap = input.getInt();
-        long numDescriptions = input.getInt();
+        int numDescriptions = input.getInt();
 
+        descriptions = new ChannelDescription[numDescriptions];
         for (int i = 0; i < numDescriptions; i++) {
-            descriptions.add(new ChannelDescription(input.getInt(), input.getInt(), new float[] {
+            descriptions[i] = new ChannelDescription(input.getInt(), input.getInt(), new float[] {
                     Float.intBitsToFloat(input.getInt()), Float.intBitsToFloat(input.getInt()),
-                    Float.intBitsToFloat(input.getInt()) }));
+                    Float.intBitsToFloat(input.getInt()) });
         }
     }
 
@@ -76,10 +75,9 @@ public class ChannelBox extends FullBox {
         super.doWrite(out);
         out.putInt(channelLayout);
         out.putInt(channelBitmap);
-        out.putInt(descriptions.size());
+        out.putInt(descriptions.length);
 
-        List<ChannelDescription> descriptions2 = descriptions;
-        for (ChannelDescription channelDescription : descriptions2) {
+        for (ChannelDescription channelDescription : descriptions) {
             out.putInt(channelDescription.getChannelLabel());
             out.putInt(channelDescription.getChannelFlags());
 
@@ -97,7 +95,7 @@ public class ChannelBox extends FullBox {
         return channelBitmap;
     }
 
-    public List<ChannelDescription> getDescriptions() {
+    public ChannelDescription[] getDescriptions() {
         return descriptions;
     }
 
@@ -105,7 +103,7 @@ public class ChannelBox extends FullBox {
         this.channelLayout = channelLayout;
     }
 
-    public void setDescriptions(List<ChannelDescription> descriptions) {
+    public void setDescriptions(ChannelDescription[] descriptions) {
         this.descriptions = descriptions;
     }
 }

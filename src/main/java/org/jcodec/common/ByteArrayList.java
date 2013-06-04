@@ -10,12 +10,18 @@ import java.util.Arrays;
  * 
  */
 public class ByteArrayList {
-    private static final int GROW_AMOUNT = 2048;
+    private static final int DEFAULT_GROW_AMOUNT = 2048;
     private byte[] storage;
     private int size;
+    private int growAmount;
 
     public ByteArrayList() {
-        this.storage = new byte[GROW_AMOUNT];
+        this(DEFAULT_GROW_AMOUNT);
+    }
+
+    public ByteArrayList(int growAmount) {
+        this.growAmount = growAmount;
+        this.storage = new byte[growAmount];
     }
 
     public byte[] toArray() {
@@ -26,7 +32,7 @@ public class ByteArrayList {
 
     public void add(byte val) {
         if (size >= storage.length) {
-            byte[] ns = new byte[storage.length + GROW_AMOUNT];
+            byte[] ns = new byte[storage.length + growAmount];
             System.arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
@@ -43,7 +49,7 @@ public class ByteArrayList {
 
     public void fill(int start, int end, byte val) {
         if (end > storage.length) {
-            byte[] ns = new byte[end + GROW_AMOUNT];
+            byte[] ns = new byte[end + growAmount];
             System.arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
@@ -57,7 +63,7 @@ public class ByteArrayList {
 
     public void addAll(byte[] other) {
         if (size + other.length >= storage.length) {
-            byte[] ns = new byte[size + GROW_AMOUNT + other.length];
+            byte[] ns = new byte[size + growAmount + other.length];
             System.arraycopy(storage, 0, ns, 0, size);
             storage = ns;
         }

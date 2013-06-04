@@ -1,5 +1,7 @@
 package org.jcodec.api.specific;
 
+import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
+
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
@@ -33,15 +35,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     }
 
     public Picture decodeFrame(Packet packet, int[][] data) {
-        int eNo = ((MP4Packet) packet).getEntryNo();
-        if (eNo != curENo) {
-            curENo = eNo;
-            avcCBox = new AvcCBox();
-            avcCBox.parse(Box.findFirst(ses[curENo], LeafBox.class, "avcC").getData());
-            decoder = new H264Decoder();
-            ((H264Decoder) decoder).addSps(avcCBox.getSpsList());
-            ((H264Decoder) decoder).addPps(avcCBox.getPpsList());
-        }
+        updateState(packet);
 
         Picture pic = ((H264Decoder) decoder).decodeFrame(H264Utils.splitMOVPacket(packet.getData(), avcCBox), data);
         PixelAspectExt pasp = Box.findFirst(ses[curENo], PixelAspectExt.class, "pasp");
@@ -51,5 +45,23 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         }
 
         return pic;
+    }
+
+    private void updateState(Packet packet) {
+        int eNo = ((MP4Packet) packet).getEntryNo();
+        if (eNo != curENo) {
+            curENo = eNo;
+            avcCBox = new AvcCBox();
+            avcCBox.parse(Box.findFirst(ses[curENo], LeafBox.class, "avcC").getData());
+            decoder = new H264Decoder();
+            ((H264Decoder) decoder).addSps(avcCBox.getSpsList());
+            ((H264Decoder) decoder).addPps(avcCBox.getPpsList());
+        }
+    }
+
+    @Override
+    public boolean canSeek(Packet pkt) {
+        updateState(pkt);
+        return H264Utils.idrSlice(splitMOVPacket(pkt.getData(), avcCBox));
     }
 }

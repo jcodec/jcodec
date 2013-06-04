@@ -82,8 +82,6 @@ public class TrakBox extends NodeBox {
         getTrackHeader().setDuration(getEditedDuration(this));
     }
 
-    
-
     public boolean isVideo() {
         return "vide".equals(getHandlerType());
     }
@@ -238,5 +236,21 @@ public class TrakBox extends NodeBox {
         }
         udta.removeChildren("name");
         udta.add(new NameBox(string));
+    }
+
+    /**
+     * Retrieves coded size of this video track.
+     * 
+     * Note: May be different from video display dimension.
+     * 
+     * @return
+     */
+    public Size getCodedSize() {
+        SampleEntry se = getSampleEntries()[0];
+        if (!(se instanceof VideoSampleEntry))
+            throw new IllegalArgumentException("Not a video track");
+        VideoSampleEntry vse = (VideoSampleEntry) se;
+
+        return new Size(vse.getWidth(), vse.getHeight());
     }
 }

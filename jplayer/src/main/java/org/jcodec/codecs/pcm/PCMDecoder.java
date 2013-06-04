@@ -28,6 +28,6 @@ public class PCMDecoder implements AudioDecoder {
         NIOUtils.write(dst, frame);
 
         dup.flip();
-        return new AudioBuffer(dup, audioInfo.getFormat(), audioInfo.getFramesPerPacket());
+        return new AudioBuffer(dup, audioInfo.getFormat(), dup.remaining() / audioInfo.getFormat().getFrameSize());
     }
 }

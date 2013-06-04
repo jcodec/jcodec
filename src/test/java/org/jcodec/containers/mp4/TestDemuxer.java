@@ -32,14 +32,16 @@ import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
-import org.jcodec.containers.mp4.MP4Muxer.UncompressedTrack;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
 import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.Yuv422pToRgb;
 import org.junit.Assert;
@@ -48,7 +50,7 @@ public class TestDemuxer {
 
     private static void testAll(File src, File base) throws Exception {
         MP4Demuxer demuxer = new MP4Demuxer(readableFileChannel(src));
-        MP4DemuxerTrack vt = demuxer.getVideoTrack();
+        AbstractMP4DemuxerTrack vt = demuxer.getVideoTrack();
         ProresDecoder decoder = new ProresDecoder();
 
         long duration = vt.getDuration().getNum();
@@ -60,13 +62,13 @@ public class TestDemuxer {
         }
     }
 
-    private static void randomPts(MP4DemuxerTrack vt, ProresDecoder decoder, long duration, Yuv422pToRgb transform,
+    private static void randomPts(AbstractMP4DemuxerTrack vt, ProresDecoder decoder, long duration, Yuv422pToRgb transform,
             File base) throws IOException {
 
         long pts = (long) (Math.random() * duration);
         vt.seek(pts);
         for (int i = 0; i < 10; i++) {
-            Packet frames = vt.getFrames(1);
+            Packet frames = vt.nextFrame();
             Picture pic = decoder.decodeFrame(frames.getData(), allocBuffer(vt));
             Picture dest = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
             transform.transform(pic, dest);
@@ -75,19 +77,19 @@ public class TestDemuxer {
         }
     }
 
-    private static int[][] allocBuffer(MP4DemuxerTrack vt) {
+    private static int[][] allocBuffer(AbstractMP4DemuxerTrack vt) {
         VideoSampleEntry vse = (VideoSampleEntry) vt.getSampleEntries()[0];
         int size = (int) ((11 * vse.getWidth() * vse.getHeight()) / 10);
         return new int[][] { new int[size], new int[size], new int[size] };
     }
 
-    private static void randomFrame(MP4DemuxerTrack vt, ProresDecoder decoder, long frameCount, Yuv422pToRgb transform,
+    private static void randomFrame(AbstractMP4DemuxerTrack vt, ProresDecoder decoder, long frameCount, Yuv422pToRgb transform,
             File base) throws IOException {
         long frame = (long) (Math.random() * frameCount);
         System.out.println(frame);
         vt.gotoFrame((int) frame);
         for (int i = 0; i < 10; i++) {
-            Packet frames = vt.getFrames(1);
+            Packet frames = vt.nextFrame();
             Picture pic = decoder.decodeFrame(frames.getData(), allocBuffer(vt));
             Picture dest = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
 
@@ -98,7 +100,7 @@ public class TestDemuxer {
 
     private static void testAudio(File src, File wavFile) throws Exception {
         MP4Demuxer demuxer = new MP4Demuxer(readableFileChannel(src));
-        MP4DemuxerTrack demuxerTrack = demuxer.getAudioTracks().get(0);
+        AbstractMP4DemuxerTrack demuxerTrack = demuxer.getAudioTracks().get(0);
 
         FileOutputStream fos = new FileOutputStream(wavFile);
         FileChannel ch = fos.getChannel();
@@ -112,7 +114,7 @@ public class TestDemuxer {
         wav.write(fos);
 
         while (true) {
-            Packet packet = demuxerTrack.getFrames(15000);
+            Packet packet = demuxerTrack.nextFrame();
             ch.write(packet.getData());
         }
     }
@@ -128,15 +130,15 @@ public class TestDemuxer {
         }
     }
 
-    private static void testVideo(File src, File base) throws IOException, MP4DemuxerException, FileNotFoundException {
+    private static void testVideo(File src, File base) throws IOException, FileNotFoundException {
         int startFn = 7572;
         MP4Demuxer demuxer = new MP4Demuxer(readableFileChannel(src));
-        MP4DemuxerTrack vt = demuxer.getVideoTrack();
+        AbstractMP4DemuxerTrack vt = demuxer.getVideoTrack();
         vt.gotoFrame(startFn);
         for (int i = 0;; i++) {
             byte[] expected = readFileToByteArray(new File(base, String.format("frame%08d.raw", i + startFn
                     + 1)));
-            Packet pkt = vt.getFrames(1);
+            Packet pkt = vt.nextFrame();
             Assert.assertArrayEquals(expected, NIOUtils.toArray(pkt.getData()));
             System.out.print(".");
             if ((i % 100) == 0)
@@ -150,7 +152,7 @@ public class TestDemuxer {
         in.seek(header.dataOffset);
         FileChannel ch = in.getChannel();
         MP4Muxer muxer = new MP4Muxer(writableFileChannel(out));
-        UncompressedTrack track = muxer.addTrackForUncompressed(SOUND, 48000, 1, 3,
+        PCMMP4MuxerTrack track = muxer.addTrackForUncompressed(SOUND, 48000, 1, 3,
                 MP4Muxer.audioSampleEntry("in24", 1, 3, 1, 48000, Endian.LITTLE_ENDIAN));
 
         ByteBuffer buffer = ByteBuffer.allocate(3 * 24000);
@@ -164,12 +166,12 @@ public class TestDemuxer {
         MP4Muxer muxer = new MP4Muxer(writableFileChannel(dst));
 
         MP4Demuxer demuxer1 = new MP4Demuxer(readableFileChannel(src));
-        MP4DemuxerTrack vt1 = demuxer1.getVideoTrack();
+        AbstractMP4DemuxerTrack vt1 = demuxer1.getVideoTrack();
 
-        CompressedTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) vt1.getTimescale());
+        FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) vt1.getTimescale());
         outTrack.addSampleEntry(vt1.getSampleEntries()[0]);
         for (int i = 0; i < vt1.getFrameCount(); i++) {
-            outTrack.addFrame((MP4Packet)vt1.getFrames(1));
+            outTrack.addFrame((MP4Packet)vt1.nextFrame());
         }
 
         muxer.writeHeader();

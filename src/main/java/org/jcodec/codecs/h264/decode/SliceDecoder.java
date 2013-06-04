@@ -289,7 +289,7 @@ public class SliceDecoder {
         }
         int[] keys = lRefs.keys();
         Arrays.sort(keys);
-        for (int i = 0; refs < numRef[0]; i++) {
+        for (int i = 0; i < keys.length && refs < numRef[0]; i++) {
             result[refs++] = lRefs.get(keys[i]);
         }
 

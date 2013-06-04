@@ -23,11 +23,11 @@ import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 
 public class TestTool {
 
@@ -68,7 +68,7 @@ public class TestTool {
 
             H264Decoder decoder = new H264Decoder();
 
-            MP4DemuxerTrack inTrack = demux.getVideoTrack();
+            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
 
             VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
             AvcCBox avcC = Box.as(AvcCBox.class, Box.findFirst(ine, LeafBox.class, "avcC"));
@@ -80,10 +80,10 @@ public class TestTool {
 
             Packet inFrame;
 
-            int sf = 90000;
-            MP4DemuxerTrack dt = (MP4DemuxerTrack) inTrack;
+            int sf = 2600;
+            AbstractMP4DemuxerTrack dt = (AbstractMP4DemuxerTrack) inTrack;
             dt.gotoFrame(sf);
-            while ((inFrame = inTrack.getFrames(1)) != null && !inFrame.isKeyFrame())
+            while ((inFrame = inTrack.nextFrame()) != null && !inFrame.isKeyFrame())
                 ;
             // System.out.println(inFrame.getFrameNo() + " - " +
             // inFrame.isKeyFrame());
@@ -91,7 +91,7 @@ public class TestTool {
 
             List<Picture> decodedPics = new ArrayList<Picture>();
             int totalFrames = (int) inTrack.getFrameCount(), seqNo = 0;
-            for (int i = sf; (inFrame = inTrack.getFrames(1)) != null; i++) {
+            for (int i = sf; (inFrame = inTrack.nextFrame()) != null; i++) {
                 ByteBuffer data = inFrame.getData();
                 List<ByteBuffer> nalUnits = splitMOVPacket(data, avcC);
                 _rawData.clear();

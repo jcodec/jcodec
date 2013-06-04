@@ -28,7 +28,7 @@ public class Resampler24To16 implements AudioSource {
         this.src = src;
         AudioInfo audioInfo = src.getAudioInfo();
         this.srcFormat = audioInfo.getFormat();
-        buffer = ByteBuffer.allocate(audioInfo.getFramesPerPacket() * 2 * srcFormat.getFrameSize());
+        buffer = ByteBuffer.allocate(96000 * 2 * srcFormat.getFrameSize());
         newFormat = new AudioFormat(srcFormat.getSampleRate(), 16, srcFormat.getChannels(), true,
                 srcFormat.isBigEndian());
     }
@@ -36,8 +36,7 @@ public class Resampler24To16 implements AudioSource {
     public MediaInfo.AudioInfo getAudioInfo() throws IOException {
         AudioInfo audioInfo = src.getAudioInfo();
         return new AudioInfo(audioInfo.getFourcc(), audioInfo.getTimescale(), audioInfo.getDuration(),
-                audioInfo.getNFrames(), audioInfo.getName(), null, newFormat, audioInfo.getFramesPerPacket(),
-                audioInfo.getLabels());
+                audioInfo.getNFrames(), audioInfo.getName(), null, newFormat, audioInfo.getLabels());
     }
 
     public AudioFrame getFrame(ByteBuffer result) throws IOException {
@@ -49,21 +48,21 @@ public class Resampler24To16 implements AudioSource {
         ByteBuffer dup = result.duplicate();
         ByteBuffer data = from.getData();
         if (!srcFormat.isBigEndian()) {
-            while(data.hasRemaining()) {
+            while (data.hasRemaining()) {
                 buffer.get();
                 dup.put(buffer.get());
                 dup.put(buffer.get());
             }
         } else {
-            while(data.hasRemaining()) {
+            while (data.hasRemaining()) {
                 dup.put(buffer.get());
                 dup.put(buffer.get());
                 buffer.get();
             }
         }
         dup.flip();
-        return new AudioFrame(dup, newFormat, from.getNFrames(), from.getPts(),
-                from.getDuration(), from.getTimescale(), from.getFrameNo());
+        return new AudioFrame(dup, newFormat, from.getNFrames(), from.getPts(), from.getDuration(),
+                from.getTimescale(), from.getFrameNo());
     }
 
     public boolean drySeek(RationalLarge second) throws IOException {

@@ -28,6 +28,7 @@ import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Size;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -62,13 +63,18 @@ public class H264Encoder {
 
         dup.putInt(0x1);
         new NALUnit(NALUnitType.SPS, 3).write(dup);
-        SeqParameterSet sps = initSPS(pic);
+        SeqParameterSet sps = initSPS(new Size(pic.getWidth(), pic.getHeight()));
         writeSPS(dup, sps);
 
         dup.putInt(0x1);
         new NALUnit(NALUnitType.PPS, 3).write(dup);
         PictureParameterSet pps = initPPS();
         writePPS(dup, pps);
+        
+        int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
+
+        leftRow = new int[][] { new int[16], new int[8], new int[8] };
+        topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
 
         encodeSlice(sps, pps, pic, dup);
 
@@ -90,24 +96,20 @@ public class H264Encoder {
         escapeNAL(tmp, dup);
     }
 
-    private PictureParameterSet initPPS() {
+    public PictureParameterSet initPPS() {
         PictureParameterSet pps = new PictureParameterSet();
         pps.pic_init_qp_minus26 = rc.getInitQp() - 26;
         return pps;
     }
 
-    private SeqParameterSet initSPS(Picture pic) {
+    public SeqParameterSet initSPS(Size sz) {
         SeqParameterSet sps = new SeqParameterSet();
-        sps.pic_width_in_mbs_minus1 = (pic.getWidth() + 15 >> 4) - 1;
-        sps.pic_height_in_map_units_minus1 = (pic.getHeight() + 15 >> 4) - 1;
+        sps.pic_width_in_mbs_minus1 = (sz.getWidth() + 15 >> 4) - 1;
+        sps.pic_height_in_map_units_minus1 = (sz.getHeight() + 15 >> 4) - 1;
         sps.chroma_format_idc = ColorSpace.YUV420;
         sps.profile_idc = 66;
         sps.level_idc = 40;
         sps.frame_mbs_only_flag = true;
-        int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
-
-        leftRow = new int[][] { new int[16], new int[8], new int[8] };
-        topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
 
         return sps;
     }

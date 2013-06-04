@@ -12,15 +12,15 @@ import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -53,10 +53,10 @@ public class H264EmbedMain {
 
             EmbedTranscoder transcoder = new EmbedTranscoder();
 
-            MP4DemuxerTrack inTrack = demux.getVideoTrack();
+            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
             VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
 
-            CompressedTrack outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inTrack.getTimescale());
+            FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inTrack.getTimescale());
             outTrack.addSampleEntry(ine);
 
             ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
@@ -64,7 +64,7 @@ public class H264EmbedMain {
 
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
-            for (int i = 0; (inFrame = inTrack.getFrames(1)) != null; i++) {
+            for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                 ByteBuffer data = inFrame.getData();
                 _out.clear();
                 ByteBuffer result = transcoder.transcode(H264Utils.splitMOVPacket(data, avcC), _out);

@@ -13,10 +13,10 @@ import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.RgbToYuv420;
 
@@ -27,7 +27,7 @@ public class SequenceEncoder {
     private H264Encoder encoder;
     private ArrayList<ByteBuffer> spsList;
     private ArrayList<ByteBuffer> ppsList;
-    private CompressedTrack outTrack;
+    private FramesMP4MuxerTrack outTrack;
     private ByteBuffer _out;
     private int frameNo;
     private MP4Muxer muxer;

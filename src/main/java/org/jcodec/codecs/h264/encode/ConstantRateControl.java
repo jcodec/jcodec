@@ -49,12 +49,15 @@ public class ConstantRateControl implements RateControl {
 
     @Override
     public void reset() {
-        System.out.println(balance);
         balance = 0;
         curQp = INIT_QP;
     }
 
     public int calcFrameSize(int nMB) {
         return ((256 + nMB * (perMb + 9)) >> 3) + (nMB >> 6);
+    }
+
+    public void setRate(int rate) {
+        perMb = rate;
     }
 }

@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -115,26 +114,33 @@ public class AudioSampleEntry extends SampleEntry {
         out.putShort(revision);
         out.putInt(vendor);
 
-        out.putShort(channelCount);
-        if (version == 0)
-            out.putShort(sampleSize);
-        else
-            out.putShort((short) 16);
+        if (version < 2) {
+            out.putShort(channelCount);
+            if (version == 0)
+                out.putShort(sampleSize);
+            else
+                out.putShort((short) 16);
 
-        out.putShort((short) compressionId);
-        out.putShort((short) pktSize);
+            out.putShort((short) compressionId);
+            out.putShort((short) pktSize);
 
-        out.putInt((int) Math.round(sampleRate * 65536d));
+            out.putInt((int) Math.round(sampleRate * 65536d));
 
-        if (version == 1) {
-            out.putInt(samplesPerPkt);
-            out.putInt(bytesPerPkt);
-            out.putInt(bytesPerFrame);
-            out.putInt(bytesPerSample);
+            if (version == 1) {
+                out.putInt(samplesPerPkt);
+                out.putInt(bytesPerPkt);
+                out.putInt(bytesPerFrame);
+                out.putInt(bytesPerSample);
 
-            writeExtensions(out);
+                writeExtensions(out);
+            }
         } else if (version == 2) {
-            out.putInt(36);
+            out.putShort((short)3);
+            out.putShort((short)16);
+            out.putShort((short)-2);
+            out.putShort((short)0);
+            out.putInt(65536);
+            out.putInt(72);
             out.putLong(Double.doubleToLongBits(sampleRate));
             out.putInt(channelCount);
             out.putInt(0x7F000000);
@@ -251,7 +257,7 @@ public class AudioSampleEntry extends SampleEntry {
     public ChannelLabel[] getLabels() {
         ChannelBox channelBox = Box.findFirst(this, ChannelBox.class, "chan");
         if (channelBox != null) {
-            List<Label> labels = ChannelUtils.getLabels(channelBox);
+            Label[] labels = ChannelUtils.getLabels(channelBox);
             if (channelCount == 2)
                 return translate(translationStereo, labels);
             else
@@ -273,8 +279,8 @@ public class AudioSampleEntry extends SampleEntry {
         }
     }
 
-    private ChannelLabel[] translate(Map<Label, ChannelLabel> translation, List<Label> labels) {
-        ChannelLabel[] result = new ChannelLabel[labels.size()];
+    private ChannelLabel[] translate(Map<Label, ChannelLabel> translation, Label[] labels) {
+        ChannelLabel[] result = new ChannelLabel[labels.length];
         int i = 0;
         for (Label label : labels) {
             result[i++] = translation.get(label);

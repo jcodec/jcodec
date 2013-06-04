@@ -11,12 +11,18 @@ import java.util.Arrays;
  */
 public class LongArrayList {
 
-    private static final int GROW_AMOUNT = 128;
+    private static final int DEFAULT_GROW_AMOUNT = 128;
     private long[] storage;
     private int size;
+    private int growAmount;
 
     public LongArrayList() {
-        this.storage = new long[GROW_AMOUNT];
+        this(DEFAULT_GROW_AMOUNT);
+    }
+
+    public LongArrayList(int growAmount) {
+        this.growAmount = growAmount;
+        this.storage = new long[growAmount];
     }
 
     public long[] toArray() {
@@ -27,7 +33,7 @@ public class LongArrayList {
 
     public void add(long val) {
         if (size >= storage.length) {
-            long[] ns = new long[storage.length + GROW_AMOUNT];
+            long[] ns = new long[storage.length + growAmount];
             System.arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
@@ -44,7 +50,7 @@ public class LongArrayList {
 
     public void fill(int start, int end, int val) {
         if (end > storage.length) {
-            long[] ns = new long[end + GROW_AMOUNT];
+            long[] ns = new long[end + growAmount];
             System.arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
@@ -58,7 +64,7 @@ public class LongArrayList {
 
     public void addAll(long[] other) {
         if (size + other.length >= storage.length) {
-            long[] ns = new long[size + GROW_AMOUNT + other.length];
+            long[] ns = new long[size + growAmount + other.length];
             System.arraycopy(storage, 0, ns, 0, size);
             storage = ns;
         }

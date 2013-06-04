@@ -87,37 +87,29 @@ public class MediaInfo implements Serializable {
         private static final long serialVersionUID = 8555059625746056969L;
 
         private AudioFormat af;
-        private int framesPerPacket;
         private ChannelLabel[] labels;
 
         public AudioInfo(String fourcc, int timescale, long duration, long nFrames, String name,
-                MediaInfo transcodedFrom, AudioFormat af, int framesPerPacket, ChannelLabel[] labels) {
+                MediaInfo transcodedFrom, AudioFormat af, ChannelLabel[] labels) {
             super(fourcc, timescale, duration, nFrames, name, transcodedFrom);
             this.af = af;
-            this.framesPerPacket = framesPerPacket;
             this.labels = labels;
         }
 
         public AudioInfo(MediaInfo mi, AudioFormat af, int framesPerPacket, ChannelLabel[] labels) {
             super(mi);
             this.af = af;
-            this.framesPerPacket = framesPerPacket;
             this.labels = labels;
         }
 
         public AudioInfo(AudioInfo ai) {
             super(ai);
             this.af = ai.af;
-            this.framesPerPacket = ai.framesPerPacket;
             this.labels = ai.labels;
         }
 
         public AudioFormat getFormat() {
             return af;
-        }
-
-        public int getFramesPerPacket() {
-            return framesPerPacket;
         }
 
         public ChannelLabel[] getLabels() {
@@ -137,8 +129,6 @@ public class MediaInfo implements Serializable {
                 if (other.af != null)
                     return false;
             } else if (!af.equals(other.af))
-                return false;
-            if (framesPerPacket != other.framesPerPacket)
                 return false;
             if (!Arrays.equals(labels, other.labels))
                 return false;

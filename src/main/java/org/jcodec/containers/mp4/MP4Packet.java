@@ -14,12 +14,23 @@ import org.jcodec.common.model.TapeTimecode;
 public class MP4Packet extends Packet {
     private long mediaPts;
     private int entryNo;
+    private long fileOff;
+    private int size;
 
     public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
             TapeTimecode tapeTimecode, long mediaPts, int entryNo) {
         super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode);
         this.mediaPts = mediaPts;
         this.entryNo = entryNo;
+    }
+    
+    public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
+            TapeTimecode tapeTimecode, long mediaPts, int entryNo, long fileOff, int size) {
+        super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode);
+        this.mediaPts = mediaPts;
+        this.entryNo = entryNo;
+        this.fileOff = fileOff;
+        this.size = size;
     }
 
     public MP4Packet(MP4Packet packet, ByteBuffer frm) {
@@ -40,6 +51,12 @@ public class MP4Packet extends Packet {
         this.entryNo = entryNo;
     }
 
+    public MP4Packet(MP4Packet packet) {
+        super(packet);
+        this.mediaPts = packet.mediaPts;
+        this.entryNo = packet.entryNo;
+    }
+
     /**
      * Zero-offset sample entry index
      * 
@@ -51,5 +68,13 @@ public class MP4Packet extends Packet {
 
     public long getMediaPts() {
         return mediaPts;
+    }
+
+    public long getFileOff() {
+        return fileOff;
+    }
+
+    public int getSize() {
+        return size;
     }
 }

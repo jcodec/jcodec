@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jplayer</groupId>
 	<artifactId>jplayer</artifactId>
-	<version>0.1.4</version>
+	<version>0.1.5</version>
 	<repositories>
 		<repository>
 			<id>gson</id>
@@ -91,7 +91,7 @@
 		<dependency>
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec</artifactId>
-			<version>0.1.4</version>
+			<version>0.1.5</version>
 		</dependency>
 
 		<dependency>

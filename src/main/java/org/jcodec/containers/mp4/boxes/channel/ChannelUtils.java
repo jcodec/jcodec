@@ -24,59 +24,60 @@ public class ChannelUtils {
     private static final List<Label> MONO = Arrays.asList(Label.Mono);
     private static final List<Label> STEREO = Arrays.asList(Label.Left, Label.Right);
     private static final List<Label> MATRIX_STEREO = Arrays.asList(Label.LeftTotal, Label.RightTotal);
-    private static final ArrayList<Label> EMPTY = new ArrayList<Label>();
+    private static final Label[] EMPTY = new Label[0];
 
-    public static List<Label> getLabels(TrakBox trakBox) {
-        ChannelBox channel = Box.findFirst(trakBox, ChannelBox.class, "mdia", "minf", "stbl", "stsd", null, "chan");
+    public static Label[] getLabels(AudioSampleEntry se) {
+        ChannelBox channel = Box.findFirst(se, ChannelBox.class, "chan");
         if (channel != null)
             return ChannelUtils.getLabels(channel);
         else {
-            AudioSampleEntry se = Box.findFirst(trakBox, AudioSampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
             short channelCount = se.getChannelCount();
             switch (channelCount) {
             case 1:
-                return Arrays.asList(new Label[] { Label.Mono });
+                return new Label[] { Label.Mono };
             case 2:
-                return Arrays.asList(new Label[] { Label.Left, Label.Right });
+                return new Label[] { Label.Left, Label.Right };
             case 3:
-                return Arrays.asList(new Label[] { Label.Left, Label.Right, Label.Center });
+                return new Label[] { Label.Left, Label.Right, Label.Center };
             case 4:
-                return Arrays.asList(new Label[] { Label.Left, Label.Right, Label.LeftSurround, Label.RightSurround });
+                return new Label[] { Label.Left, Label.Right, Label.LeftSurround, Label.RightSurround };
             case 5:
-                return Arrays.asList(new Label[] { Label.Left, Label.Right, Label.Center, Label.LeftSurround,
-                        Label.RightSurround });
+                return new Label[] { Label.Left, Label.Right, Label.Center, Label.LeftSurround, Label.RightSurround };
             case 6:
-                return Arrays.asList(new Label[] { Label.Left, Label.Right, Label.Center, Label.LFEScreen,
-                        Label.LeftSurround, Label.RightSurround });
+                return new Label[] { Label.Left, Label.Right, Label.Center, Label.LFEScreen, Label.LeftSurround,
+                        Label.RightSurround };
             default:
                 Label[] res = new Label[channelCount];
                 Arrays.fill(res, Label.Mono);
-                return Arrays.asList(res);
+                return res;
             }
         }
     }
 
+    public static Label[] getLabels(TrakBox trakBox) {
+        return getLabels((AudioSampleEntry) trakBox.getSampleEntries()[0]);
+    }
+
     public static void setLabel(TrakBox trakBox, int channel, Label label) {
-        List<Label> labels = getLabels(trakBox);
-        labels.set(channel, label);
+        Label[] labels = getLabels(trakBox);
+        labels[channel] = label;
         setLabels(trakBox, labels);
     }
 
-    private static void setLabels(TrakBox trakBox, List<Label> labels) {
+    private static void setLabels(TrakBox trakBox, Label[] labels) {
         ChannelBox channel = Box.findFirst(trakBox, ChannelBox.class, "mdia", "minf", "stbl", "stsd", null, "chan");
         if (channel == null) {
             channel = new ChannelBox();
             Box.findFirst(trakBox, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null).add(channel);
         }
         channel.setChannelLayout(ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions.getCode());
-        List<ChannelDescription> list = new ArrayList<ChannelDescription>();
-        for (Label label : labels) {
-            list.add(new ChannelBox.ChannelDescription(label.getVal(), 0, new float[] { 0, 0, 0 }));
-        }
+        ChannelDescription[] list = new ChannelDescription[labels.length];
+        for (int i = 0; i < labels.length; i++)
+            list[i] = new ChannelBox.ChannelDescription(labels[i].getVal(), 0, new float[] { 0, 0, 0 });
         channel.setDescriptions(list);
     }
 
-    public static List<Label> getLabels(ChannelBox box) {
+    public static Label[] getLabels(ChannelBox box) {
         long tag = box.getChannelLayout();
         for (ChannelLayout layout : EnumSet.allOf(ChannelLayout.class)) {
             if (layout.getCode() == tag) {
@@ -86,18 +87,17 @@ public class ChannelUtils {
                 case kCAFChannelLayoutTag_UseChannelBitmap:
                     return getLabelsByBitmap(box.getChannelBitmap());
                 default:
-                    return Arrays.asList(layout.getLabels());
+                    return layout.getLabels();
                 }
             }
         }
         return EMPTY;
     }
 
-    private static List<Label> extractLabels(List<ChannelDescription> descriptions) {
-        ArrayList<Label> result = new ArrayList<Label>(descriptions.size());
-        for (ChannelDescription d : descriptions) {
-            result.add(d.getLabel());
-        }
+    private static Label[] extractLabels(ChannelDescription[] descriptions) {
+        Label[] result = new Label[descriptions.length];
+        for (int i = 0; i < descriptions.length; i++)
+            result[i] = descriptions[i].getLabel();
         return result;
     }
 
@@ -129,12 +129,12 @@ public class ChannelUtils {
      * @param channelBitmap
      * @return
      */
-    public static List<Label> getLabelsByBitmap(long channelBitmap) {
+    public static Label[] getLabelsByBitmap(long channelBitmap) {
         List<Label> result = new ArrayList<Label>();
         for (Label label : Label.values()) {
             if ((label.bitmapVal & channelBitmap) != 0)
                 result.add(label);
         }
-        return result;
+        return result.toArray(new Label[0]);
     }
 }

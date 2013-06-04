@@ -5,18 +5,19 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
+import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.MP4Muxer;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -149,11 +150,27 @@ public class H264Utils {
         }
     }
 
-    public static void encodeMOVPacket(ByteBuffer _avcFrame, ArrayList<ByteBuffer> spsList,
-            ArrayList<ByteBuffer> ppsList) {
+    /**
+     * Encodes AVC frame in ISO BMF format. Takes Annex B format.
+     * 
+     * Scans the packet for each NAL Unit starting with 00 00 00 01 and replaces
+     * this 4 byte sequence with 4 byte integer representing this NAL unit
+     * length. Removes any leading SPS/PPS structures and collects them into a
+     * provided storaae.
+     * 
+     * @param avcFrame
+     *            AVC frame encoded in Annex B NAL unit format
+     * @param spsList
+     *            Storage for leading SPS structures ( can be null, then all
+     *            leading SPSs are discarded ).
+     * @param ppsList
+     *            Storage for leading PPS structures ( can be null, then all
+     *            leading PPSs are discarded ).
+     */
+    public static void encodeMOVPacket(ByteBuffer avcFrame, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
 
-        ByteBuffer dup = _avcFrame.duplicate();
-        ByteBuffer d1 = _avcFrame.duplicate();
+        ByteBuffer dup = avcFrame.duplicate();
+        ByteBuffer d1 = avcFrame.duplicate();
 
         for (int tot = 0;;) {
             ByteBuffer buf = H264Utils.nextNALUnit(dup);
@@ -165,15 +182,15 @@ public class H264Utils {
 
             NALUnit nu = NALUnit.read(buf);
 
-            if (nu.type == NALUnitType.PPS) {
+            if (nu.type == NALUnitType.PPS && ppsList != null) {
                 ppsList.add(buf);
-            } else if (nu.type == NALUnitType.SPS) {
+            } else if (nu.type == NALUnitType.SPS && spsList != null) {
                 spsList.add(buf);
             }
         }
     }
 
-    public static SampleEntry createMOVSampleEntry(ArrayList<ByteBuffer> spsList, ArrayList<ByteBuffer> ppsList) {
+    public static SampleEntry createMOVSampleEntry(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
         SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
         AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, spsList, ppsList);
 
@@ -185,11 +202,28 @@ public class H264Utils {
         return se;
     }
 
+    public static SampleEntry createMOVSampleEntry(SeqParameterSet initSPS, PictureParameterSet initPPS) {
+        ByteBuffer bb1 = ByteBuffer.allocate(512), bb2 = ByteBuffer.allocate(512);
+        initSPS.write(bb1);
+        initPPS.write(bb2);
+        bb1.flip();
+        bb2.flip();
+        return createMOVSampleEntry(Arrays.asList(new ByteBuffer[] { bb1 }), Arrays.asList(new ByteBuffer[] { bb2 }));
+    }
+
     public static boolean idrSlice(ByteBuffer _data) {
         ByteBuffer data = _data.duplicate();
         ByteBuffer segment;
         while ((segment = H264Utils.nextNALUnit(data)) != null) {
             if (NALUnit.read(segment).type == NALUnitType.IDR_SLICE)
+                return true;
+        }
+        return false;
+    }
+
+    public static boolean idrSlice(List<ByteBuffer> _data) {
+        for (ByteBuffer segment : _data) {
+            if (NALUnit.read(segment.duplicate()).type == NALUnitType.IDR_SLICE)
                 return true;
         }
         return false;

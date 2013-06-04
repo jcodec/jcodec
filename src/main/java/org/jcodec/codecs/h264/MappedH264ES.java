@@ -43,6 +43,7 @@ public class MappedH264ES implements DemuxerTrack {
         this.frameNo = 0;
     }
 
+    @Override
     public Packet nextFrame() {
         ByteBuffer result = bb.duplicate();
 
@@ -238,11 +239,6 @@ public class MappedH264ES implements DemuxerTrack {
 
     public PictureParameterSet[] getPps() {
         return pps.values(new PictureParameterSet[0]);
-    }
-
-    @Override
-    public Packet getFrames(int n) {
-        return nextFrame();
     }
 
     @Override

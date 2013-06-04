@@ -56,7 +56,7 @@ public class JCodecAudioSource implements AudioSource {
     }
 
     private ByteBuffer allocateBuffer() {
-        return ByteBuffer.allocate(mediaInfo.getFramesPerPacket() * mediaInfo.getFormat().getFrameSize() * 10);
+        return ByteBuffer.allocate(96000 * mediaInfo.getFormat().getFrameSize() * 10);
     }
 
     public boolean drySeek(RationalLarge second) throws IOException {

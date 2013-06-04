@@ -67,7 +67,7 @@ public class AudioMixer implements AudioSource {
             this.src = src;
             this.audioInfo = src.getAudioInfo();
             this.channels = audioInfo.getFormat().getChannels();
-            this.byteBuf = ByteBuffer.allocate(audioInfo.getFormat().getFrameSize() * audioInfo.getFramesPerPacket()
+            this.byteBuf = ByteBuffer.allocate(audioInfo.getFormat().getFrameSize() * 96000
                     * 2);
             this.floatBuf = new float[NUM_FRAMES * channels];
             this.labels = audioInfo.getLabels();
@@ -172,7 +172,7 @@ public class AudioMixer implements AudioSource {
                 maxFrames = ai.getNFrames();
         }
 
-        return new AudioInfo("sowt", sampleRate, maxDuration, maxFrames, "", null, dstFormat, NUM_FRAMES,
+        return new AudioInfo("sowt", sampleRate, maxDuration, maxFrames, "", null, dstFormat,
                 dstChannels == 2 ? new ChannelLabel[] { ChannelLabel.STEREO_LEFT, ChannelLabel.STEREO_RIGHT }
                         : new ChannelLabel[] { ChannelLabel.FRONT_LEFT, ChannelLabel.FRONT_RIGHT, ChannelLabel.CENTER,
                                 ChannelLabel.LFE, ChannelLabel.REAR_LEFT, ChannelLabel.REAR_RIGHT });

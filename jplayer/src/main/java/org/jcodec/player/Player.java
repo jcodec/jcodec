@@ -76,7 +76,6 @@ public class Player {
     private Object seekLock = new Object();
     private Object pausedEvent = new Object();
     private MediaInfo.VideoInfo mi;
-    private int audioPacketSize;
 
     private List<Listener> listeners = new ArrayList<Listener>();
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -115,8 +114,7 @@ public class Player {
 
         AudioInfo ai = audioSource.getAudioInfo();
         af = ai.getFormat();
-        audioPacketSize = ai.getFramesPerPacket();
-        ao.open(af, audioPacketSize * PACKETS_IN_BUFFER);
+        ao.open(af, 1024 * PACKETS_IN_BUFFER);
 
         mi = videoSource.getMediaInfo();
 
@@ -132,7 +130,7 @@ public class Player {
         }
 
         for (int i = 0; i < AUDIO_QUEUE_SIZE; i++) {
-            surePut(audioDrain, ByteBuffer.allocate(af.getFrameSize() * (audioPacketSize + 10)));
+            surePut(audioDrain, ByteBuffer.allocate(af.getFrameSize() * 1034));
         }
 
         startVideoPlayback();

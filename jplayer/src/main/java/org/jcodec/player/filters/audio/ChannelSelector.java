@@ -32,7 +32,7 @@ public class ChannelSelector implements AudioSource {
         this.pattern = pattern;
         AudioInfo audioInfo = src.getAudioInfo();
         this.srcFormat = audioInfo.getFormat();
-        buffer = ByteBuffer.allocate(audioInfo.getFramesPerPacket() * 2 * srcFormat.getFrameSize());
+        buffer = ByteBuffer.allocate(96000 * 2 * srcFormat.getFrameSize());
         channels = 0;
         for (int i = 0; i < 32; i++) {
             channels += pattern & 0x1;
@@ -54,7 +54,7 @@ public class ChannelSelector implements AudioSource {
         }
 
         return new AudioInfo(audioInfo.getFourcc(), audioInfo.getTimescale(), audioInfo.getDuration(),
-                audioInfo.getNFrames(), audioInfo.getName(), null, newFormat, audioInfo.getFramesPerPacket(), resultLabels);
+                audioInfo.getNFrames(), audioInfo.getName(), null, newFormat, resultLabels);
     }
 
     public AudioFrame getFrame(ByteBuffer result) throws IOException {

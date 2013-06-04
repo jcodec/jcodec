@@ -127,7 +127,7 @@ public class MTSAdapter implements Adapter {
             FrameEntry e = index.frame(sid, frames - 1);
             long duration = e.pts;
             return new MediaInfo.AudioInfo("s302", 90000, duration, frames, name(decoded.getFormat().getChannels()),
-                    null, decoded.getFormat(), decoded.getNFrames(), labels(decoded.getFormat().getChannels()));
+                    null, decoded.getFormat(), labels(decoded.getFormat().getChannels()));
         }
 
         private String name(int channels) {

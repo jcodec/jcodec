@@ -25,4 +25,9 @@ public class GenericAdaptor implements ContainerAdaptor {
     public Picture decodeFrame(Packet packet, int[][] data) {
         return decoder.decodeFrame(packet.getData(), data);
     }
+
+    @Override
+    public boolean canSeek(Packet data) {
+        return true;
+    }
 }

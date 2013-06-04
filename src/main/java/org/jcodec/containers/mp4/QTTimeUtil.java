@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.List;
 
 import org.jcodec.common.model.RationalLarge;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -14,6 +13,7 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.containers.mp4.demuxer.TimecodeMP4DemuxerTrack;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -189,7 +189,7 @@ public class QTTimeUtil {
      * @return
      * @throws IOException
      */
-    public static String qtPlayerTimecode(MovieBox movie, MP4DemuxerTrack timecodeTrack, int mediaFrameNo)
+    public static String qtPlayerTimecode(MovieBox movie, TimecodeMP4DemuxerTrack timecodeTrack, int mediaFrameNo)
             throws IOException {
         TrakBox videoTrack = movie.getVideoTrack();
         long editedTv = mediaToEdited(videoTrack, frameToTimevalue(videoTrack, mediaFrameNo), movie.getTimescale());
@@ -214,7 +214,7 @@ public class QTTimeUtil {
      * @return
      * @throws IOException
      */
-    public static String qtPlayerTimecode(MP4DemuxerTrack timecodeTrack, RationalLarge tv, int movieTimescale)
+    public static String qtPlayerTimecode(TimecodeMP4DemuxerTrack timecodeTrack, RationalLarge tv, int movieTimescale)
             throws IOException {
         TrakBox tt = timecodeTrack.getBox();
         int ttTimescale = tt.getTimescale();

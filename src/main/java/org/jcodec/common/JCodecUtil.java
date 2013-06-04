@@ -18,7 +18,7 @@ import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.containers.mp4.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.scale.AWTUtil;

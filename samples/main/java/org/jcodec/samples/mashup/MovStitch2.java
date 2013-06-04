@@ -23,16 +23,16 @@ import org.jcodec.common.NIOUtils;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.MP4DemuxerException;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -60,15 +60,15 @@ public class MovStitch2 {
         MP4Muxer muxer = new MP4Muxer(writableFileChannel(out), Brand.MOV);
 
         MP4Demuxer demuxer1 = new MP4Demuxer(readableFileChannel(in1));
-        MP4DemuxerTrack vt1 = demuxer1.getVideoTrack();
+        AbstractMP4DemuxerTrack vt1 = demuxer1.getVideoTrack();
         MP4Demuxer demuxer2 = new MP4Demuxer(readableFileChannel(in2));
-        MP4DemuxerTrack vt2 = demuxer2.getVideoTrack();
+        AbstractMP4DemuxerTrack vt2 = demuxer2.getVideoTrack();
         checkCompatible(vt1, vt2);
 
-        CompressedTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) vt1.getTimescale());
+        FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) vt1.getTimescale());
         outTrack.addSampleEntry(vt1.getSampleEntries()[0]);
         for (int i = 0; i < vt1.getFrameCount(); i++) {
-            outTrack.addFrame((MP4Packet)vt1.getFrames(1));
+            outTrack.addFrame((MP4Packet)vt1.nextFrame());
         }
 
         AvcCBox avcC = doSampleEntry(vt2, outTrack);
@@ -79,7 +79,7 @@ public class MovStitch2 {
         SliceHeaderWriter shw = new SliceHeaderWriter(sps, pps);
 
         for (int i = 0; i < vt2.getFrameCount(); i++) {
-            MP4Packet packet = (MP4Packet)vt2.getFrames(1);
+            MP4Packet packet = (MP4Packet)vt2.nextFrame();
             ByteBuffer frm = doFrame(packet.getData(), shr, shw, sps, pps);
             outTrack.addFrame(new MP4Packet(packet, frm));
         }
@@ -92,7 +92,7 @@ public class MovStitch2 {
         muxer.writeHeader();
     }
 
-    private static void checkCompatible(MP4DemuxerTrack vt1, MP4DemuxerTrack vt2) {
+    private static void checkCompatible(AbstractMP4DemuxerTrack vt1, AbstractMP4DemuxerTrack vt2) {
         VideoSampleEntry se1 = (VideoSampleEntry) vt1.getSampleEntries()[0];
         VideoSampleEntry se2 = (VideoSampleEntry) vt2.getSampleEntries()[0];
 
@@ -145,7 +145,7 @@ public class MovStitch2 {
         copyCABAC(writer, reader);
     }
 
-    private static AvcCBox doSampleEntry(MP4DemuxerTrack videoTrack, CompressedTrack outTrack) {
+    private static AvcCBox doSampleEntry(AbstractMP4DemuxerTrack videoTrack, FramesMP4MuxerTrack outTrack) {
         SampleEntry se = videoTrack.getSampleEntries()[0];
 
         AvcCBox avcC = Box.findFirst(se, AvcCBox.class, AvcCBox.fourcc());

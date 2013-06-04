@@ -10,12 +10,18 @@ import java.util.Arrays;
  * 
  */
 public class IntArrayList {
-    private static final int GROW_AMOUNT = 128;
+    private static final int DEFAULT_GROW_AMOUNT = 128;
     private int[] storage;
     private int size;
+    private int growAmount;
 
     public IntArrayList() {
-        this.storage = new int[GROW_AMOUNT];
+        this(DEFAULT_GROW_AMOUNT);
+    }
+
+    public IntArrayList(int growAmount) {
+        this.growAmount = growAmount;
+        this.storage = new int[growAmount];
     }
 
     public int[] toArray() {
@@ -26,7 +32,7 @@ public class IntArrayList {
 
     public void add(int val) {
         if (size >= storage.length) {
-            int[] ns = new int[storage.length + GROW_AMOUNT];
+            int[] ns = new int[storage.length + growAmount];
             System.arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
@@ -43,7 +49,7 @@ public class IntArrayList {
 
     public void fill(int start, int end, int val) {
         if (end > storage.length) {
-            int[] ns = new int[end + GROW_AMOUNT];
+            int[] ns = new int[end + growAmount];
             System.arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
@@ -57,7 +63,7 @@ public class IntArrayList {
 
     public void addAll(int[] other) {
         if (size + other.length >= storage.length) {
-            int[] ns = new int[size + GROW_AMOUNT + other.length];
+            int[] ns = new int[size + growAmount + other.length];
             System.arraycopy(storage, 0, ns, 0, size);
             storage = ns;
         }

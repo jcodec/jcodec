@@ -44,18 +44,18 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.FramesTrack;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.MP4DemuxerException;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.RgbToYuv420;
 import org.jcodec.scale.RgbToYuv422;
@@ -128,7 +128,7 @@ public class TranscodeMain {
             if (!raw) {
                 source = readableFileChannel(in);
                 MP4Demuxer demux = new MP4Demuxer(source);
-                MP4DemuxerTrack inTrack = demux.getVideoTrack();
+                AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
                 VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
 
                 totalFrames = (int) inTrack.getFrameCount();
@@ -152,7 +152,7 @@ public class TranscodeMain {
 
             int timescale = 24000;
             int frameDuration = 1000;
-            CompressedTrack outTrack = null;
+            FramesMP4MuxerTrack outTrack = null;
 
             int gopLen = 0, i;
             Frame[] gop = new Frame[1000];
@@ -160,15 +160,15 @@ public class TranscodeMain {
 
             int sf = 90000;
             if (!raw) {
-                MP4DemuxerTrack dt = (MP4DemuxerTrack) videoTrack;
+                AbstractMP4DemuxerTrack dt = (AbstractMP4DemuxerTrack) videoTrack;
                 dt.gotoFrame(sf);
-                while ((inFrame = videoTrack.getFrames(1)) != null && !inFrame.isKeyFrame())
+                while ((inFrame = videoTrack.nextFrame()) != null && !inFrame.isKeyFrame())
                     ;
                 // System.out.println(inFrame.getFrameNo() + " - " +
                 // inFrame.isKeyFrame());
                 dt.gotoFrame(inFrame.getFrameNo());
             }
-            for (i = 0; (inFrame = videoTrack.getFrames(1)) != null && i < 2000;) {
+            for (i = 0; (inFrame = videoTrack.nextFrame()) != null && i < 2000;) {
                 ByteBuffer data = inFrame.getData();
                 Picture target1;
                 Frame dec;
@@ -211,7 +211,7 @@ public class TranscodeMain {
     }
 
     private static void outGOP(ProresEncoder encoder, Transform transform, int timescale, int frameDuration,
-            CompressedTrack outTrack, int gopLen, Frame[] gop, int totalFrames, int i, int codedWidth, int codedHeight)
+            FramesMP4MuxerTrack outTrack, int gopLen, Frame[] gop, int totalFrames, int i, int codedWidth, int codedHeight)
             throws IOException {
 
         ByteBuffer _out = ByteBuffer.allocate(codedWidth * codedHeight * 6);
@@ -246,7 +246,7 @@ public class TranscodeMain {
 
             Transform transform = new Yuv420pToRgb(0, 0);
 
-            MP4DemuxerTrack inTrack = demux.getVideoTrack();
+            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
 
             VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
             Picture target1 = Picture.create((ine.getWidth() + 15) & ~0xf, (ine.getHeight() + 15) & ~0xf,
@@ -261,7 +261,7 @@ public class TranscodeMain {
 
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
-            for (int i = 0; (inFrame = inTrack.getFrames(1)) != null; i++) {
+            for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                 ByteBuffer data = inFrame.getData();
 
                 Picture dec = decoder.decodeFrame(splitMOVPacket(data, avcC), target1.getData());
@@ -295,8 +295,8 @@ public class TranscodeMain {
 
             H264Encoder encoder = new H264Encoder(rc);
 
-            MP4DemuxerTrack inTrack = demux.getVideoTrack();
-            CompressedTrack outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inTrack.getTimescale());
+            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
+            FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inTrack.getTimescale());
 
             VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
             Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
@@ -308,7 +308,7 @@ public class TranscodeMain {
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
             long start = System.currentTimeMillis();
-            for (int i = 0; (inFrame = inTrack.getFrames(1)) != null && i < 100; i++) {
+            for (int i = 0; (inFrame = inTrack.nextFrame()) != null && i < 100; i++) {
                 Picture dec = decoder.decodeFrame(inFrame.getData(), target1.getData());
                 if (target2 == null) {
                     target2 = Picture.create(dec.getWidth(), dec.getHeight(), ColorSpace.YUV420);
@@ -391,7 +391,7 @@ public class TranscodeMain {
             ProresEncoder encoder = new ProresEncoder(Profile.HQ);
 
             Yuv420pToYuv422p color = new Yuv420pToYuv422p(2, 0);
-            CompressedTrack videoTrack = muxer.addVideoTrack("apch", frames.getSize(), APPLE_PRO_RES_422, fps.getNum());
+            FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("apch", frames.getSize(), APPLE_PRO_RES_422, fps.getNum());
             videoTrack.setTgtChunkDuration(HALF, SEC);
             Picture picture = Picture.create(frames.getSize().getWidth(), frames.getSize().getHeight(),
                     ColorSpace.YUV422_10);
@@ -423,7 +423,7 @@ public class TranscodeMain {
         }
 
         MP4Demuxer rawDemuxer = new MP4Demuxer(readableFileChannel(file));
-        FramesTrack videoTrack = (FramesTrack) rawDemuxer.getVideoTrack();
+        FramesMP4DemuxerTrack videoTrack = (FramesMP4DemuxerTrack) rawDemuxer.getVideoTrack();
         if (videoTrack == null) {
             System.out.println("Video track not found");
             return;
@@ -435,7 +435,7 @@ public class TranscodeMain {
         Picture rgb = null;
         int i = 0;
         Packet pkt;
-        while ((pkt = videoTrack.getFrames(1)) != null) {
+        while ((pkt = videoTrack.nextFrame()) != null) {
             Picture buf = Picture.create(1920, 1088, ColorSpace.YUV422_10);
             Picture pic = decoder.decodeFrame(pkt.getData(), buf.getData());
             if (bi == null)
@@ -456,7 +456,7 @@ public class TranscodeMain {
         }
 
         MP4Demuxer rawDemuxer = new MP4Demuxer(readableFileChannel(file));
-        FramesTrack videoTrack = (FramesTrack) rawDemuxer.getVideoTrack();
+        FramesMP4DemuxerTrack videoTrack = (FramesMP4DemuxerTrack) rawDemuxer.getVideoTrack();
         if (videoTrack == null) {
             System.out.println("Video track not found");
             return;
@@ -468,7 +468,7 @@ public class TranscodeMain {
         Picture rgb = null;
         int i = 0;
         Packet pkt;
-        while ((pkt = videoTrack.getFrames(1)) != null) {
+        while ((pkt = videoTrack.nextFrame()) != null) {
             Picture buf = Picture.create(1920, 1080, ColorSpace.YUV422_10);
             Picture pic = decoder.decodeFrame(pkt.getData(), buf.getData());
             if (bi == null)
@@ -496,7 +496,7 @@ public class TranscodeMain {
             ProresEncoder encoder = new ProresEncoder(profile);
             RgbToYuv422 transform = new RgbToYuv422(2, 0);
 
-            CompressedTrack videoTrack = null;
+            FramesMP4MuxerTrack videoTrack = null;
             int i;
             for (i = 1;; i++) {
                 File nextImg = new File(String.format(pattern, i));

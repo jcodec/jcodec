@@ -10,8 +10,8 @@ import org.jcodec.codecs.raw.V210Encoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mp4.MP4Packet;
 
 /**
@@ -44,7 +44,7 @@ public class GradGen {
         ByteBuffer out = ByteBuffer.allocate(width * height * 10);
         ByteBuffer frame = encoder.encodeFrame(out, pic);
 
-        CompressedTrack videoTrack = muxer.addVideoTrack("v210", new Size(width, height), "jcodec", 24000);
+        FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("v210", new Size(width, height), "jcodec", 24000);
 
         for (int i = 0; i < Integer.parseInt(args[1]); i++) {
             videoTrack.addFrame(new MP4Packet(frame, i * 1001, 24000, 1001, i, true, null, i * 1001, 0));

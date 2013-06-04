@@ -14,15 +14,15 @@ import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.MP4DemuxerException;
-import org.jcodec.containers.mp4.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Muxer.CompressedTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -48,8 +48,8 @@ public class MovChangePPS {
         MP4Demuxer demuxer = new MP4Demuxer(readableFileChannel(in));
         MP4Muxer muxer = new MP4Muxer(writableFileChannel(out));
 
-        MP4DemuxerTrack videoTrack = demuxer.getVideoTrack();
-        CompressedTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) videoTrack.getTimescale());
+        AbstractMP4DemuxerTrack videoTrack = demuxer.getVideoTrack();
+        FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) videoTrack.getTimescale());
 
         AvcCBox avcC = doSampleEntry(videoTrack, outTrack);
 
@@ -59,14 +59,14 @@ public class MovChangePPS {
         SliceHeaderWriter shw = new SliceHeaderWriter(sps, pps);
 
         for (int i = 0; i < videoTrack.getFrameCount(); i++) {
-            MP4Packet packet = (MP4Packet)videoTrack.getFrames(1);
+            MP4Packet packet = (MP4Packet)videoTrack.nextFrame();
             outTrack.addFrame(new MP4Packet(packet, doFrame(packet.getData(), shr, shw, sps, pps)));
         }
 
         muxer.writeHeader();
     }
 
-    private static AvcCBox doSampleEntry(MP4DemuxerTrack videoTrack, CompressedTrack outTrack) throws IOException {
+    private static AvcCBox doSampleEntry(AbstractMP4DemuxerTrack videoTrack, FramesMP4MuxerTrack outTrack) throws IOException {
         SampleEntry se = videoTrack.getSampleEntries()[0];
 
         AvcCBox avcC = Box.findFirst(se, AvcCBox.class, AvcCBox.fourcc());

@@ -7,4 +7,6 @@ public interface ContainerAdaptor {
 
     Picture decodeFrame(Packet packet, int[][] data);
 
+    boolean canSeek(Packet data);
+
 }

@@ -1,14 +1,12 @@
 package org.jcodec.containers.mxf;
 
 import java.awt.Dimension;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
 import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
@@ -41,7 +39,7 @@ public class MXFDemuxer {
 
     public class MXFTrack implements DemuxerTrack {
         @Override
-        public Packet getFrames(int n) throws IOException {
+        public Packet nextFrame() throws IOException {
             try {
                 do {
                     KLV k = KLV.readKL(in);

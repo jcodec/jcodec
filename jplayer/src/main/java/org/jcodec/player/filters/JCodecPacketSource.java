@@ -12,11 +12,10 @@ import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -36,7 +35,7 @@ public class JCodecPacketSource {
         demuxer = new MP4Demuxer(is);
 
         tracks = new ArrayList<Track>();
-        for (MP4DemuxerTrack demuxerTrack : demuxer.getTracks()) {
+        for (AbstractMP4DemuxerTrack demuxerTrack : demuxer.getTracks()) {
             if (demuxerTrack.getBox().isVideo() || demuxerTrack.getBox().isAudio())
                 tracks.add(new Track(demuxerTrack));
         }
@@ -64,23 +63,16 @@ public class JCodecPacketSource {
     }
 
     public class Track implements PacketSource {
-        private MP4DemuxerTrack track;
-        private static final int FRAMES_PER_PACKET = 2048;
-        private int framesPerPkt;
+        private AbstractMP4DemuxerTrack track;
         private boolean closed;
 
-        public Track(MP4DemuxerTrack track) {
+        public Track(AbstractMP4DemuxerTrack track) {
             this.track = track;
-            SampleEntry sampleEntry = track.getSampleEntries()[0];
-            this.framesPerPkt = 1;
-            if ((sampleEntry instanceof AudioSampleEntry) && ((AudioSampleEntry) sampleEntry).isPCM()) {
-                framesPerPkt = FRAMES_PER_PACKET;
-            }
         }
 
         public Packet getPacket(ByteBuffer buffer) {
             try {
-                return track.getFrames(buffer, framesPerPkt);
+                return track.nextFrame();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -96,7 +88,7 @@ public class JCodecPacketSource {
             } else if (track.getBox().isAudio()) {
                 AudioSampleEntry se = (AudioSampleEntry) track.getSampleEntries()[0];
                 return new MediaInfo.AudioInfo(se.getFourcc(), (int) duration.getDen(), duration.getNum(),
-                        track.getFrameCount(), track.getName(), null, se.getFormat(), framesPerPkt, se.getLabels());
+                        track.getFrameCount(), track.getName(), null, se.getFormat(), se.getLabels());
             }
             throw new RuntimeException("This shouldn't happen");
         }

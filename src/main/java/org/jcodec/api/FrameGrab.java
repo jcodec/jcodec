@@ -9,8 +9,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.codecs.h264.H264Decoder;
@@ -26,18 +24,20 @@ import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
-import org.jcodec.containers.mp4.MP4Demuxer;
-import org.jcodec.containers.mp4.MP4Demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * High level frame grabber helper.
+ * Extracts frames from a movie into uncompressed images suitable for processing.
  * 
- * Supports only AVC ( H.264 ) in MP4 ( ISO BMF, QuickTime ) at this point
+ * Supports going to random points inside of a movie ( seeking ) by frame number of by second.
+ * 
+ * NOTE: Supports only AVC ( H.264 ) in MP4 ( ISO BMF, QuickTime ) at this point.
  * 
  * @author The JCodec project
  * 
@@ -73,75 +73,145 @@ public class FrameGrab {
     }
 
     /**
-     * Position frame grabber to a specific second in a movie.
+     * Position frame grabber to a specific second in a movie. As a result the
+     * next decoded frame will be precisely at the requested second.
+     * 
+     * WARNING: potentially very slow. Use only when you absolutely need precise
+     * seek. Tries to seek to exactly the requested second and for this it might
+     * have to decode a sequence of frames from the closes key frame. Depending
+     * on GOP structure this may be as many as 500 frames.
      * 
      * @param second
      * @return
      * @throws IOException
      * @throws JCodecException
      */
-    public FrameGrab seek(double second) throws IOException, JCodecException {
+    public FrameGrab seekToSecondPrecise(double second) throws IOException, JCodecException {
         videoTrack.seek(second);
         decodeLeadingFrames();
         return this;
     }
 
     /**
-     * Position frame grabber to a specific frame in a movie
+     * Position frame grabber to a specific frame in a movie. As a result the
+     * next decoded frame will be precisely the requested frame number.
+     * 
+     * WARNING: potentially very slow. Use only when you absolutely need precise
+     * seek. Tries to seek to exactly the requested frame and for this it might
+     * have to decode a sequence of frames from the closes key frame. Depending
+     * on GOP structure this may be as many as 500 frames.
      * 
      * @param frameNumber
      * @return
      * @throws IOException
      * @throws JCodecException
      */
-    public FrameGrab seek(int frameNumber) throws IOException, JCodecException {
+    public FrameGrab seekToFramePrecise(int frameNumber) throws IOException, JCodecException {
         videoTrack.gotoFrame(frameNumber);
         decodeLeadingFrames();
         return this;
     }
 
-    private void decodeLeadingFrames() throws IOException, JCodecException {
-        Packet frame = videoTrack.getFrames(1);
+    /**
+     * Position frame grabber to a specific second in a movie.
+     * 
+     * Performs a sloppy seek, meaning that it may actually not seek to exact
+     * second requested, instead it will seek to the closest key frame
+     * 
+     * NOTE: fast, as it just seeks to the closest previous key frame and
+     * doesn't try to decode frames in the middle
+     * 
+     * @param second
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public FrameGrab seekToSecondSloppy(double second) throws IOException, JCodecException {
+        videoTrack.seek(second);
+        goToPrevKeyframe();
+        return this;
+    }
+
+    /**
+     * Position frame grabber to a specific frame in a movie
+     * 
+     * Performs a sloppy seek, meaning that it may actually not seek to exact
+     * frame requested, instead it will seek to the closest key frame
+     * 
+     * NOTE: fast, as it just seeks to the closest previous key frame and
+     * doesn't try to decode frames in the middle
+     * 
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public FrameGrab seekToFrameSloppy(int frameNumber) throws IOException, JCodecException {
+        videoTrack.gotoFrame(frameNumber);
+        goToPrevKeyframe();
+        return this;
+    }
+
+    private void goToPrevKeyframe() throws IOException, JCodecException {
+        Packet frame = videoTrack.nextFrame();
+        int orig = (int) frame.getFrameNo();
 
         decoder = detectDecoder(videoTrack, frame);
 
-        List<Packet> packets = new ArrayList<Packet>();
-        if (!frame.isKeyFrame()) {
-            int keyFrame = -1, start = (int) frame.getFrameNo();
-            while (keyFrame == -1 && start > 0) {
-                int prevStart = Math.min(start - KEYFRAME_TEST_STEP, 0);
-                videoTrack.gotoFrame(prevStart);
-                while (videoTrack.getCurFrame() < start) {
-                    frame = videoTrack.getFrames(1);
-                    if (frame.isKeyFrame())
-                        keyFrame = (int) frame.getFrameNo();
-                    packets.add(frame);
-                }
-                start = prevStart;
-            }
-            if (keyFrame != -1) {
+        if (!frame.isKeyFrame() || !decoder.canSeek(frame)) {
+            List<Packet> packets = new ArrayList<Packet>();
+            int keyFrame = detectKeyFrame((int) frame.getFrameNo(), packets);
+            videoTrack.gotoFrame(keyFrame == -1 ? 0 : keyFrame);
+        } else
+            videoTrack.gotoFrame(orig);
+    }
 
-            } else {
-                videoTrack.gotoFrame(0);
-            }
-            Collections.sort(packets, Packet.FRAME_ASC);
-            for (Iterator<Packet> it = packets.iterator(); it.hasNext() && it.next().getFrameNo() != keyFrame;)
-                it.remove();
-            Picture buf = Picture.create(1920, 1088, ColorSpace.YUV444);
-            for (Packet packet : packets) {
-                decoder.decodeFrame(packet, buf.getData());
-            }
-        } else {
-            videoTrack.gotoFrame((int) frame.getFrameNo());
+    private void decodeLeadingFrames() throws IOException, JCodecException {
+        Packet frame = videoTrack.nextFrame();
+        int orig = (int) frame.getFrameNo();
+
+        decoder = detectDecoder(videoTrack, frame);
+
+        if (!frame.isKeyFrame() || !decoder.canSeek(frame)) {
+            List<Packet> packets = new ArrayList<Packet>();
+            int keyFrame = detectKeyFrame((int) frame.getFrameNo(), packets);
+            if (keyFrame != -1) {
+                Collections.sort(packets, Packet.FRAME_ASC);
+                for (Iterator<Packet> it = packets.iterator(); it.hasNext() && it.next().getFrameNo() != keyFrame;)
+                    it.remove();
+                Picture buf = Picture.create(1920, 1088, ColorSpace.YUV444);
+                for (Packet packet : packets) {
+                    decoder.decodeFrame(packet, buf.getData());
+                }
+            } else
+                orig = 0;
         }
+        videoTrack.gotoFrame(orig);
+    }
+
+    private int detectKeyFrame(int start, List<Packet> packets) throws IOException {
+        int keyFrame = -1;
+        Packet frame;
+        while (keyFrame == -1 && start > 0) {
+            int prevStart = Math.max(start - KEYFRAME_TEST_STEP, 0);
+            videoTrack.gotoFrame(prevStart);
+            while (videoTrack.getCurFrame() < start) {
+                frame = videoTrack.nextFrame();
+                if (frame.isKeyFrame() && decoder.canSeek(frame))
+                    keyFrame = (int) frame.getFrameNo();
+                packets.add(frame);
+            }
+            start = prevStart;
+        }
+        return keyFrame;
     }
 
     private ContainerAdaptor detectDecoder(DemuxerTrack videoTrack, Packet frame) throws JCodecException {
-        if (videoTrack instanceof MP4DemuxerTrack) {
-            SampleEntry se = ((MP4DemuxerTrack) videoTrack).getSampleEntries()[((MP4Packet) frame).getEntryNo()];
+        if (videoTrack instanceof AbstractMP4DemuxerTrack) {
+            SampleEntry se = ((AbstractMP4DemuxerTrack) videoTrack).getSampleEntries()[((MP4Packet) frame).getEntryNo()];
             VideoDecoder byFourcc = byFourcc(se.getHeader().getFourcc());
             if (byFourcc instanceof H264Decoder)
-                return new AVCMP4Adaptor(((MP4DemuxerTrack) videoTrack).getSampleEntries());
+                return new AVCMP4Adaptor(((AbstractMP4DemuxerTrack) videoTrack).getSampleEntries());
         }
 
         throw new UnsupportedFormatException("Codec is not supported");
@@ -176,7 +246,7 @@ public class FrameGrab {
      * @throws IOException
      */
     public Picture getNativeFrame() throws IOException {
-        Packet frames = videoTrack.getFrames(1);
+        Packet frames = videoTrack.nextFrame();
         Picture buffer = Picture.create(1920, 1088, ColorSpace.YUV444);
         return decoder.decodeFrame(frames, buffer.getData());
     }
@@ -194,7 +264,7 @@ public class FrameGrab {
         FileChannelWrapper ch = null;
         try {
             ch = NIOUtils.readableFileChannel(file);
-            return new FrameGrab(ch).seek(second).getFrame();
+            return new FrameGrab(ch).seekToSecondPrecise(second).getFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -210,7 +280,7 @@ public class FrameGrab {
      * @throws IOException
      */
     public static BufferedImage getFrame(SeekableByteChannel file, double second) throws JCodecException, IOException {
-        return new FrameGrab(file).seek(second).getFrame();
+        return new FrameGrab(file).seekToSecondPrecise(second).getFrame();
     }
 
     /**
@@ -226,7 +296,7 @@ public class FrameGrab {
         FileChannelWrapper ch = null;
         try {
             ch = NIOUtils.readableFileChannel(file);
-            return new FrameGrab(ch).seek(second).getNativeFrame();
+            return new FrameGrab(ch).seekToSecondPrecise(second).getNativeFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -242,7 +312,7 @@ public class FrameGrab {
      * @throws JCodecException
      */
     public static Picture getNativeFrame(SeekableByteChannel file, double second) throws JCodecException, IOException {
-        return new FrameGrab(file).seek(second).getNativeFrame();
+        return new FrameGrab(file).seekToSecondPrecise(second).getNativeFrame();
     }
 
     /**
@@ -258,7 +328,7 @@ public class FrameGrab {
         FileChannelWrapper ch = null;
         try {
             ch = NIOUtils.readableFileChannel(file);
-            return new FrameGrab(ch).seek(frameNumber).getFrame();
+            return new FrameGrab(ch).seekToFramePrecise(frameNumber).getFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -274,7 +344,7 @@ public class FrameGrab {
      * @throws JCodecException
      */
     public static BufferedImage getFrame(SeekableByteChannel file, int frameNumber) throws JCodecException, IOException {
-        return new FrameGrab(file).seek(frameNumber).getFrame();
+        return new FrameGrab(file).seekToFramePrecise(frameNumber).getFrame();
     }
 
     /**
@@ -290,7 +360,7 @@ public class FrameGrab {
         FileChannelWrapper ch = null;
         try {
             ch = NIOUtils.readableFileChannel(file);
-            return new FrameGrab(ch).seek(frameNumber).getNativeFrame();
+            return new FrameGrab(ch).seekToFramePrecise(frameNumber).getNativeFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -306,6 +376,6 @@ public class FrameGrab {
      * @throws JCodecException
      */
     public static Picture getNativeFrame(SeekableByteChannel file, int frameNumber) throws JCodecException, IOException {
-        return new FrameGrab(file).seek(frameNumber).getNativeFrame();
+        return new FrameGrab(file).seekToFramePrecise(frameNumber).getNativeFrame();
     }
 }
