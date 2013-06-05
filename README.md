@@ -53,9 +53,10 @@ You can get JCodec automatically with maven. For this just add below snippet to 
 <dependency>
     <groupId>org.jcodec</groupId>
     <artifactId>jcodec</artifactId>
-    <version>0.1.4</version>
+    <version>0.1.3</version>
 </dependency>
 ```
+
 OR download it from here:
 * [JCodec 0.1.4 JAR](http://jcodec.org/downloads/jcodec-0.1.4.jar), [GPG Sign](http://jcodec.org/downloads/jcodec-0.1.4.jar.asc), [POM](http://jcodec.org/downloads/jcodec-0.1.4.pom)
 
