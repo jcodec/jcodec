@@ -8,7 +8,7 @@ import org.jcodec.common.model.Picture;
  * 
  * Transforms Picture in RGB colorspace ( one plane, 3 integers per pixel ) to
  * Yuv420 colorspace output picture ( 3 planes, luma - 0th plane, cb - 1th
- * plane, cr - 2nd plane; cb and cr planes are half width and half haight )
+ * plane, cr - 2nd plane; cb and cr planes are half width and half height )
  * 
  * @author The JCodec project
  * 
