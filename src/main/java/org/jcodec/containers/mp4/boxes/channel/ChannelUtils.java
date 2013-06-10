@@ -70,6 +70,10 @@ public class ChannelUtils {
             channel = new ChannelBox();
             Box.findFirst(trakBox, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null).add(channel);
         }
+        setLabels(labels, channel);
+    }
+
+    public static void setLabels(Label[] labels, ChannelBox channel) {
         channel.setChannelLayout(ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions.getCode());
         ChannelDescription[] list = new ChannelDescription[labels.length];
         for (int i = 0; i < labels.length; i++)

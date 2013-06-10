@@ -22,7 +22,6 @@ public class MovieRange extends InputStream {
     private ByteBuffer chunkData;
 
     public MovieRange(VirtualMovie movie, long from, long to) throws IOException {
-        movie.take();
         if(to < from)
             throw new IllegalArgumentException ("from < to");
         this.movie = movie;
@@ -69,11 +68,6 @@ public class MovieRange extends InputStream {
             } else
                 chunkData = null;
         }
-    }
-
-    @Override
-    public void close() throws IOException {
-        movie.release();
     }
 
     @Override

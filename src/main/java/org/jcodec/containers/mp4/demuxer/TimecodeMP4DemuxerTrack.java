@@ -4,6 +4,8 @@ import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
@@ -11,6 +13,7 @@ import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.QTTimeUtil;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -120,5 +123,37 @@ public class TimecodeMP4DemuxerTrack {
 
     public TrakBox getBox() {
         return box;
+    }
+    
+    public int parseTimecode(String tc) {
+        String[] split = tc.split(":");
+
+        TimecodeSampleEntry tmcd = Box.findFirst(box, TimecodeSampleEntry.class, "mdia", "minf", "stbl", "stsd",
+                "tmcd");
+        byte nf = tmcd.getNumFrames();
+
+        return Integer.parseInt(split[3]) + Integer.parseInt(split[2]) * nf + Integer.parseInt(split[1]) * 60 * nf
+                + Integer.parseInt(split[0]) * 3600 * nf;
+    }
+    
+    public int timeCodeToFrameNo(String timeCode) throws Exception {
+        if (isValidTimeCode(timeCode)) {
+            int movieFrame = parseTimecode(timeCode.trim()) - samples[0];
+            int frameRate = tse.getNumFrames();
+            long framesInTimescale = movieFrame * tse.getTimescale();
+            long mediaToEdited = QTTimeUtil.mediaToEdited(box, framesInTimescale / frameRate, movie.getTimescale())
+                    * frameRate;
+            return (int) (mediaToEdited / box.getTimescale());
+        }
+        return -1;
+    }
+
+    private static boolean isValidTimeCode(String input) {
+        Pattern p = Pattern.compile("[0-9][0-9]:[0-5][0-9]:[0-5][0-9]:[0-2][0-9]");
+        Matcher m = p.matcher(input);
+        if (input != null && !input.trim().equals("") && m.matches()) {
+            return true;
+        }
+        return false;
     }
 }

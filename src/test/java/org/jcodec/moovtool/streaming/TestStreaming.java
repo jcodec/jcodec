@@ -7,9 +7,7 @@ import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IOUtils;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
@@ -17,6 +15,7 @@ import org.jcodec.movtool.streaming.MovieRange;
 import org.jcodec.movtool.streaming.VirtualMovie;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.movtool.streaming.tracks.CachingTrack;
+import org.jcodec.movtool.streaming.tracks.FilePool;
 import org.jcodec.movtool.streaming.tracks.Prores2AVCTrack;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
 import org.jcodec.movtool.streaming.tracks.StereoDownmixTrack;
@@ -27,8 +26,7 @@ public class TestStreaming {
 
         File m1 = new File(System.getProperty("user.home") + "/Desktop/supercool.mov");
 
-        FileChannelWrapper ch1 = NIOUtils.readableFileChannel(m1);
-
+        FilePool ch1 = new FilePool(m1, 10);
         MovieBox mov1 = MP4Util.parseMovie(m1);
         TrakBox v1 = mov1.getVideoTrack();
 
@@ -65,8 +63,8 @@ public class TestStreaming {
             mr.close();
             off = to;
         }
-
-        vm.release();
+        
+        vm.close();
 
         os.close();
     }

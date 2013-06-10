@@ -9,10 +9,6 @@ package org.jcodec.common.dct;
  */
 public class IDCT2x2 {
 
-    public static int C2MC6 = 784;
-    public static int C6 = 554;
-    public static int C2PC6 = 1892;
-
     public static void idct(int[] blk, int off) {
         int x0 = blk[off], x1 = blk[off + 1], x2 = blk[off + 2], x3 = blk[off + 3];
         

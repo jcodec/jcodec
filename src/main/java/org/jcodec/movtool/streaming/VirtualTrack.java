@@ -18,6 +18,26 @@ public interface VirtualTrack {
     VirtualPacket nextPacket() throws IOException;
 
     SampleEntry getSampleEntry();
-
+    
+    VirtualEdit[] getEdits();
+    
     void close();
+    
+    public static class VirtualEdit {
+        private double in;
+        private double duration;
+
+        public VirtualEdit(double in, double duration) {
+            this.in = in;
+            this.duration = duration;
+        }
+
+        public double getIn() {
+            return in;
+        }
+
+        public double getDuration() {
+            return duration;
+        }
+    }
 }

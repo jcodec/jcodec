@@ -33,7 +33,7 @@ import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
-import org.jcodec.codecs.prores.ProresToThumb;
+import org.jcodec.codecs.prores.ProresToThumb2x2;
 import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.NIOUtils;
@@ -101,7 +101,7 @@ public class TranscodeMain {
         } else if ("prores2avct".equals(args[0])) {
             ConstantRateControl rc = new ConstantRateControl(512);
             System.out.println("Target frame size: " + rc.calcFrameSize(510));
-            prores2avc(args[1], args[2], new ProresToThumb(), rc);
+            prores2avc(args[1], args[2], new ProresToThumb2x2(), rc);
         } else if ("avc2png".equals(args[0])) {
             avc2png(args[1], args[2]);
         } else if ("avc2prores".equals(args[0])) {

@@ -29,7 +29,7 @@ public class DownmixHelper {
     private int[] nChan;
     private AudioSampleEntry[] se;
 
-    public DownmixHelper(AudioSampleEntry[] se, int nSamples) {
+    public DownmixHelper(AudioSampleEntry[] se, int nSamples, boolean[][] solo) {
         this.nSamples = nSamples;
         this.se = se;
 
@@ -38,8 +38,10 @@ public class DownmixHelper {
         nChan = new int[se.length];
         for (int tr = 0; tr < se.length; tr++) {
             Label[] channels = ChannelUtils.getLabels(se[tr]);
-            this.nChan[tr] = channels.length;
             for (int ch = 0; ch < channels.length; ch++) {
+                if (solo != null && !solo[tr][ch])
+                    continue;
+                this.nChan[tr]++;
                 switch (channels[ch]) {
                 case Left:
                 case LeftTotal:
@@ -162,7 +164,7 @@ public class DownmixHelper {
                 }
             }
         }
-        for(int s = maxSamples; s < nSamples; s++)
+        for (int s = maxSamples; s < nSamples; s++)
             fSamples[s] = 0;
     }
 
@@ -189,6 +191,6 @@ public class DownmixHelper {
     }
 
     private static final float nextSample16LE(byte[] ba, int bi) {
-        return rev * (((ba[bi + 1] & 0xff) << 16) | ((ba[bi + 2] & 0xff) << 24));
+        return rev * (((ba[bi] & 0xff) << 16) | ((ba[bi + 1] & 0xff) << 24));
     }
 }

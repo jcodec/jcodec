@@ -20,11 +20,9 @@ public class VirtualMovie {
     private PacketChunk[] chunks;
     private MovieSegment headerChunk;
     private long size;
-    private int refs;
     private VirtualTrack[] tracks;
 
     public VirtualMovie(VirtualTrack... tracks) throws IOException {
-        refs = 1;
         this.tracks = tracks;
 
         muxTracks();
@@ -126,16 +124,9 @@ public class VirtualMovie {
         }
     }
 
-    public void take() {
-        refs++;
-    }
-
-    public void release() {
-        refs--;
-        if (refs == 0) {
-            for (VirtualTrack virtualTrack : tracks) {
-                virtualTrack.close();
-            }
+    public void close() {
+        for (VirtualTrack virtualTrack : tracks) {
+            virtualTrack.close();
         }
     }
 

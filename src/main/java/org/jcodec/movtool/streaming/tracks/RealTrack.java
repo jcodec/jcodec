@@ -2,11 +2,12 @@ package org.jcodec.movtool.streaming.tracks;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
@@ -29,15 +30,15 @@ import org.jcodec.movtool.streaming.VirtualTrack;
 public class RealTrack implements VirtualTrack {
 
     private TrakBox trak;
-    private SeekableByteChannel ch;
+    private FilePool pool;
     private AbstractMP4DemuxerTrack demuxer;
     private ByteBuffer dummy;
 
-    public RealTrack(MovieBox movie, TrakBox trak, SeekableByteChannel ch) {
+    public RealTrack(MovieBox movie, TrakBox trak, FilePool pool) {
         dummy = ByteBuffer.allocate(1024 * 1024 * 2);
         SampleSizesBox stsz = Box.findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
         if (stsz.getDefaultSize() == 0) {
-            this.demuxer = new FramesMP4DemuxerTrack(movie, trak, ch) {
+            this.demuxer = new FramesMP4DemuxerTrack(movie, trak, null) {
                 @Override
                 protected ByteBuffer readPacketData(SeekableByteChannel ch, ByteBuffer buffer, long position, int size)
                         throws IOException {
@@ -45,7 +46,7 @@ public class RealTrack implements VirtualTrack {
                 }
             };
         } else {
-            this.demuxer = new PCMMP4DemuxerTrack(movie, trak, ch) {
+            this.demuxer = new PCMMP4DemuxerTrack(movie, trak, null) {
                 @Override
                 protected ByteBuffer readPacketData(SeekableByteChannel ch, ByteBuffer buffer, long position, int size)
                         throws IOException {
@@ -54,7 +55,7 @@ public class RealTrack implements VirtualTrack {
             };
         }
         this.trak = trak;
-        this.ch = ch;
+        this.pool = pool;
     }
 
     @Override
@@ -72,7 +73,8 @@ public class RealTrack implements VirtualTrack {
 
     @Override
     public void close() {
-        NIOUtils.closeQuietly(ch);
+        System.out.println("CLOSING FILE");
+        pool.close();
     }
 
     public class RealPacket implements VirtualPacket {
@@ -86,12 +88,16 @@ public class RealTrack implements VirtualTrack {
         @Override
         public ByteBuffer getData() throws IOException {
             ByteBuffer bb = ByteBuffer.allocate(packet.getSize());
-            
-            synchronized (ch) {
+            SeekableByteChannel ch = null;
+            try {
+                ch = pool.getChannel();
                 ch.position(packet.getFileOff());
                 ch.read(bb);
                 bb.flip();
                 return bb;
+            } finally {
+                if (ch != null)
+                    ch.close();
             }
         }
 
@@ -119,5 +125,17 @@ public class RealTrack implements VirtualTrack {
         public int getFrameNo() {
             return (int) packet.getFrameNo();
         }
+    }
+
+    @Override
+    public VirtualEdit[] getEdits() {
+        List<Edit> edits = demuxer.getEdits();
+        VirtualEdit[] result = new VirtualEdit[edits.size()];
+        for (int i = 0; i < edits.size(); i++) {
+            Edit ee = edits.get(i);
+            result[i] = new VirtualEdit((double) ee.getMediaTime() / trak.getTimescale(), (double) ee.getDuration()
+                    / demuxer.getTimescale());
+        }
+        return result;
     }
 }

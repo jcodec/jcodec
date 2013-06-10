@@ -15,6 +15,7 @@ import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.DataInfoBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
+import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.GenericMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.Header;
@@ -40,6 +41,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.movtool.streaming.VirtualMovie.PacketChunk;
+import org.jcodec.movtool.streaming.VirtualTrack.VirtualEdit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -57,7 +59,7 @@ public class MovieHelper {
     public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize) {
         int defaultTimescale = 48000;
 
-        ByteBuffer buf = ByteBuffer.allocate(2 * MEBABYTE);
+        ByteBuffer buf = ByteBuffer.allocate(6 * MEBABYTE);
         MovieBox movie = new MovieBox();
 
         double[] trackDurations = calcTrackDurations(chunks, tracks);
@@ -112,6 +114,8 @@ public class MovieHelper {
                 populateStblGeneric(stbl, chunks, trackId, se, trackTimescale);
             }
 
+            addEdits(trak, track, defaultTimescale, trackTimescale);
+
             movie.add(trak);
         }
 
@@ -121,6 +125,18 @@ public class MovieHelper {
         buf.flip();
 
         return buf;
+    }
+
+    private static void addEdits(TrakBox trak, VirtualTrack track, int defaultTimescale, int trackTimescale) {
+        VirtualEdit[] edits = track.getEdits();
+        if (edits == null)
+            return;
+        List<Edit> result = new ArrayList<Edit>();
+        for (VirtualEdit virtualEdit : edits) {
+            result.add(new Edit((int) (virtualEdit.getDuration() * defaultTimescale),
+                    (int) (virtualEdit.getIn() * trackTimescale), 1f));
+        }
+        trak.setEdits(result);
     }
 
     private static long calcMovieDuration(VirtualTrack[] tracks, int defaultTimescale, double[] dur) {

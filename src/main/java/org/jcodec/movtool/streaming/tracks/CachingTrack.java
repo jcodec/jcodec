@@ -81,4 +81,9 @@ public class CachingTrack implements VirtualTrack {
     public void close() {
         src.close();
     }
+
+    @Override
+    public VirtualEdit[] getEdits() {
+        return src.getEdits();
+    }
 }

@@ -194,7 +194,17 @@ public class H264Utils {
         SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
         AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, spsList, ppsList);
 
-        Size size = new Size((sps.pic_width_in_mbs_minus1 + 1) << 4, getPicHeightInMbs(sps) << 4);
+        int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
+        int codedHeight = getPicHeightInMbs(sps) << 4;
+
+        int width = sps.frame_cropping_flag ? codedWidth
+                - ((sps.frame_crop_right_offset + sps.frame_crop_left_offset) << sps.chroma_format_idc.compWidth[0])
+                : codedWidth;
+        int height = sps.frame_cropping_flag ? codedHeight
+                - ((sps.frame_crop_bottom_offset + sps.frame_crop_top_offset) << sps.chroma_format_idc.compHeight[0])
+                : codedHeight;
+
+        Size size = new Size(width, height);
 
         SampleEntry se = MP4Muxer.videoSampleEntry("avc1", size, "JCodec");
         se.add(avcC);

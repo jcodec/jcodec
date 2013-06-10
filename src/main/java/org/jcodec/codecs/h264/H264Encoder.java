@@ -63,14 +63,14 @@ public class H264Encoder {
 
         dup.putInt(0x1);
         new NALUnit(NALUnitType.SPS, 3).write(dup);
-        SeqParameterSet sps = initSPS(new Size(pic.getWidth(), pic.getHeight()));
+        SeqParameterSet sps = initSPS(new Size(pic.getCroppedWidth(), pic.getCroppedHeight()));
         writeSPS(dup, sps);
 
         dup.putInt(0x1);
         new NALUnit(NALUnitType.PPS, 3).write(dup);
         PictureParameterSet pps = initPPS();
         writePPS(dup, pps);
-        
+
         int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
 
         leftRow = new int[][] { new int[16], new int[8], new int[8] };
@@ -104,12 +104,18 @@ public class H264Encoder {
 
     public SeqParameterSet initSPS(Size sz) {
         SeqParameterSet sps = new SeqParameterSet();
-        sps.pic_width_in_mbs_minus1 = (sz.getWidth() + 15 >> 4) - 1;
-        sps.pic_height_in_map_units_minus1 = (sz.getHeight() + 15 >> 4) - 1;
+        sps.pic_width_in_mbs_minus1 = ((sz.getWidth() + 15) >> 4) - 1;
+        sps.pic_height_in_map_units_minus1 = ((sz.getHeight() + 15) >> 4) - 1;
         sps.chroma_format_idc = ColorSpace.YUV420;
         sps.profile_idc = 66;
         sps.level_idc = 40;
         sps.frame_mbs_only_flag = true;
+
+        int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
+        int codedHeight = (sps.pic_height_in_map_units_minus1 + 1) << 4;
+        sps.frame_cropping_flag = codedWidth != sz.getWidth() || codedHeight != sz.getHeight();
+        sps.frame_crop_right_offset = (codedWidth - sz.getWidth() + 1) >> 1;
+        sps.frame_crop_bottom_offset = (codedHeight - sz.getHeight() + 1) >> 1;
 
         return sps;
     }

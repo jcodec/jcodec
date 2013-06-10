@@ -54,11 +54,8 @@ public class ConcurrentMovieService {
 
     public static class ConcurrentMovieRange extends InputStream {
         private List<Future<ByteBuffer>> chunks;
-        private VirtualMovie movie;
 
         public ConcurrentMovieRange(ExecutorService exec, VirtualMovie movie, long from, long to) {
-            this.movie = movie;
-            movie.take();
             MovieSegment chunk = movie.getPacketAt(from);
             int initial = chunk.getNo();
             do {
@@ -107,7 +104,6 @@ public class ConcurrentMovieService {
             for (Future<ByteBuffer> future : chunks) {
                 future.cancel(false);
             }
-            movie.release();
         }
 
         @Override

@@ -31,12 +31,14 @@ public class StereoDownmixTrack implements VirtualTrack {
     private AudioSampleEntry[] sampleEntries;
     private int rate;
     private int frameNo;
+    private boolean[][] solo;
     private DownmixHelper downmix;
 
     public StereoDownmixTrack(VirtualTrack... tracks) {
         this.rate = -1;
         sources = new VirtualTrack[tracks.length];
         sampleEntries = new AudioSampleEntry[sources.length];
+        solo = new boolean[tracks.length][];
         for (int i = 0; i < tracks.length; i++) {
             SampleEntry se = tracks[i].getSampleEntry();
             if (!(se instanceof AudioSampleEntry))
@@ -50,8 +52,35 @@ public class StereoDownmixTrack implements VirtualTrack {
             rate = (int) format.getFrameRate();
             sampleEntries[i] = ase;
             sources[i] = new PCMFlatternTrack(tracks[i], FRAMES_IN_OUT_PACKET);
+            solo[i] = new boolean[format.getChannels()];
         }
-        downmix = new DownmixHelper(sampleEntries, FRAMES_IN_OUT_PACKET);
+        
+        downmix = new DownmixHelper(sampleEntries, FRAMES_IN_OUT_PACKET, null);
+    }
+
+    public void soloTrack(int track, boolean s) {
+        for (int ch = 0; ch < solo[track].length; ch++) {
+            solo[track][ch] = s;
+        }
+        downmix = new DownmixHelper(sampleEntries, FRAMES_IN_OUT_PACKET, solo);
+    }
+    
+    public void soloChannel(int track, int channel, boolean s) {
+        solo[track][channel] = s;
+        downmix = new DownmixHelper(sampleEntries, FRAMES_IN_OUT_PACKET, solo);
+    }
+
+    public boolean isChannelMute(int track, int channel) {
+        return solo[track][channel];
+    }
+    
+    public boolean[][] bulkGetSolo() {
+        return solo;
+    }
+    
+    public void bulkSetSolo(boolean[][] solo) {
+        this.solo = solo;
+        downmix = new DownmixHelper(sampleEntries, FRAMES_IN_OUT_PACKET, solo);
     }
 
     @Override
@@ -79,7 +108,6 @@ public class StereoDownmixTrack implements VirtualTrack {
 
     @Override
     public void close() {
-//        System.out.println("CLOSE: STEREO DOWNMIX");
         for (VirtualTrack virtualTrack : this.sources) {
             virtualTrack.close();
         }
@@ -130,5 +158,11 @@ public class StereoDownmixTrack implements VirtualTrack {
         public int getFrameNo() {
             return frameNo;
         }
+    }
+
+    @Override
+    public VirtualEdit[] getEdits() {
+        // TODO: edits will have to be applied
+        return null;
     }
 }

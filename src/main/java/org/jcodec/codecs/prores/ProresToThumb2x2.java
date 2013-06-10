@@ -18,9 +18,9 @@ import org.jcodec.common.model.Picture;
  * @author The JCodec project
  * 
  */
-public class ProresToThumb extends ProresDecoder {
+public class ProresToThumb2x2 extends ProresDecoder {
 
-    public ProresToThumb() {
+    public ProresToThumb2x2() {
     }
 
     protected int[] decodeOnePlane(BitReader bits, int blocksPerSlice, int[] qMat, int[] scan, int mbX, int mbY,

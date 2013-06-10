@@ -196,17 +196,6 @@ public abstract class AbstractMP4DemuxerTrack implements DemuxerTrack {
         shiftPts(frameNo);
     }
 
-    public int parseTimecode(String tc) {
-        String[] split = tc.split(":");
-
-        TimecodeSampleEntry tmcd = Box.findFirst(box, TimecodeSampleEntry.class, "mdia", "minf", "stbl", "stsd",
-                "tmcd");
-        byte nf = tmcd.getNumFrames();
-
-        return Integer.parseInt(split[3]) + Integer.parseInt(split[2]) * nf + Integer.parseInt(split[1]) * 60 * nf
-                + Integer.parseInt(split[0]) * 3600 * nf;
-    }
-
     public RationalLarge getDuration() {
         return new RationalLarge(box.getMediaDuration(), box.getTimescale());
     }

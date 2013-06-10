@@ -135,4 +135,9 @@ public class PCMFlatternTrack implements VirtualTrack {
             return frameNo;
         }
     }
+
+    @Override
+    public VirtualEdit[] getEdits() {
+        return src.getEdits();
+    }
 }

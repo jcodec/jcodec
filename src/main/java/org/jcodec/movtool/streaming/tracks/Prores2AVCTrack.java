@@ -8,12 +8,17 @@ import java.util.EnumSet;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.encode.ConstantRateControl;
+import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
-import org.jcodec.codecs.prores.ProresToThumb;
+import org.jcodec.codecs.prores.ProresToThumb2x2;
+import org.jcodec.codecs.prores.ProresToThumb4x4;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
@@ -36,15 +41,28 @@ public class Prores2AVCTrack implements VirtualTrack {
     private ThreadLocal<Transcoder> transcoders = new ThreadLocal<Transcoder>();
     private int mbW;
     private int mbH;
+    private int scaleFactor;
+    private int thumbWidth;
+    private int thumbHeight;
 
     public Prores2AVCTrack(VirtualTrack proresTrack, Size frameDim) {
         checkFourCC(proresTrack);
         this.proresTrack = proresTrack;
         ConstantRateControl rc = new ConstantRateControl(TARGET_RATE);
         H264Encoder encoder = new H264Encoder(rc);
-        mbW = (frameDim.getWidth() >> 2) + 15 >> 4;
-        mbH = (frameDim.getHeight() >> 2) + 15 >> 4;
-        se = H264Utils.createMOVSampleEntry(encoder.initSPS(new Size(mbW << 4, mbH << 4)), encoder.initPPS());
+
+        scaleFactor = frameDim.getWidth() >= 960 ? 2 : 1;
+        thumbWidth = frameDim.getWidth() >> scaleFactor;
+        thumbHeight = (frameDim.getHeight() >> scaleFactor) & ~1;
+
+        mbW = (thumbWidth + 15) >> 4;
+        mbH = (thumbHeight + 15) >> 4;
+
+        se = H264Utils.createMOVSampleEntry(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS());
+        PixelAspectExt pasp = Box.findFirst(proresTrack.getSampleEntry(), PixelAspectExt.class, "pasp");
+        if (pasp != null)
+            se.add(pasp);
+
         frameSize = rc.calcFrameSize(mbW * mbH);
         frameSize += frameSize >> 4;
     }
@@ -97,7 +115,7 @@ public class Prores2AVCTrack implements VirtualTrack {
     }
 
     class Transcoder {
-        private ProresToThumb decoder;
+        private ProresDecoder decoder;
         private H264Encoder encoder;
         private Picture pic0;
         private Picture pic1;
@@ -106,17 +124,19 @@ public class Prores2AVCTrack implements VirtualTrack {
 
         public Transcoder() {
             rc = new ConstantRateControl(TARGET_RATE);
-            this.decoder = new ProresToThumb();
+            this.decoder = scaleFactor == 2 ? new ProresToThumb2x2() : new ProresToThumb4x4();
             this.encoder = new H264Encoder(rc);
             this.pic0 = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV422_10);
-            this.pic1 = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV420);
             transform = new Yuv422pToYuv420p(0, 2);
         }
 
         public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst) throws IOException {
             Picture decoded = decoder.decodeFrame(src, pic0.getData());
+            if (pic1 == null) {
+                pic1 = Picture.create(decoded.getWidth(), decoded.getHeight(), ColorSpace.YUV420);
+            }
             transform.transform(decoded, pic1);
-            pic1.setCrop(decoded.getCrop());
+            pic1.setCrop(new Rect(0, 0, thumbWidth, thumbHeight));
             int rate = TARGET_RATE;
             do {
                 try {
@@ -127,9 +147,9 @@ public class Prores2AVCTrack implements VirtualTrack {
                     rate -= 10;
                     rc.setRate(rate);
                 }
-            } while(rate > 10);
+            } while (rate > 10);
             rc.setRate(TARGET_RATE);
-            
+
             H264Utils.encodeMOVPacket(dst, null, null);
             return dst;
         }
@@ -138,5 +158,10 @@ public class Prores2AVCTrack implements VirtualTrack {
     @Override
     public void close() {
         proresTrack.close();
+    }
+
+    @Override
+    public VirtualEdit[] getEdits() {
+        return proresTrack.getEdits();
     }
 }
