@@ -13,7 +13,7 @@ import org.jcodec.common.model.Picture;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * Decodes a ProRes file in low res
+ * Decodes a ProRes file in low res. Decodes each 8x8 block as downscaled 4x4 block.
  * 
  * @author The JCodec project
  * 

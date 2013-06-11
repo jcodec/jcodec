@@ -5,6 +5,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
@@ -26,7 +27,7 @@ public class DownmixHelper {
     private ThreadLocal<float[][]> fltBuf = new ThreadLocal<float[][]>();
     private float[][] matrix;
     private int[][] counts;
-    private int[] nChan;
+    private int[][] channels;
     private AudioSampleEntry[] se;
 
     public DownmixHelper(AudioSampleEntry[] se, int nSamples, boolean[][] solo) {
@@ -35,13 +36,14 @@ public class DownmixHelper {
 
         List<float[]> matrixBuilder = new ArrayList<float[]>();
         List<int[]> countsBuilder = new ArrayList<int[]>();
-        nChan = new int[se.length];
+        List<int[]> channelsBuilder = new ArrayList<int[]>();
         for (int tr = 0; tr < se.length; tr++) {
             Label[] channels = ChannelUtils.getLabels(se[tr]);
+            IntArrayList tmp = new IntArrayList();
             for (int ch = 0; ch < channels.length; ch++) {
                 if (solo != null && !solo[tr][ch])
                     continue;
-                this.nChan[tr]++;
+                tmp.add(ch);
                 switch (channels[ch]) {
                 case Left:
                 case LeftTotal:
@@ -77,9 +79,11 @@ public class DownmixHelper {
                 default:
                 }
             }
+            channelsBuilder.add(tmp.toArray());
         }
         matrix = matrixBuilder.toArray(new float[0][]);
         counts = countsBuilder.toArray(new int[0][]);
+        channels = channelsBuilder.toArray(new int[0][]);
     }
 
     public void downmix(ByteBuffer[] data, ByteBuffer out) {
@@ -92,8 +96,8 @@ public class DownmixHelper {
         }
 
         for (int tr = 0, i = 0; tr < se.length; tr++) {
-            for (int ch = 0; ch < nChan[tr]; ch++, i++) {
-                toFloat(flt[i], se[tr], data[tr], ch, nChan[tr]);
+            for (int ch = 0; ch < channels[tr].length; ch++, i++) {
+                toFloat(flt[i], se[tr], data[tr], channels[tr][ch], se[tr].getChannelCount());
             }
         }
 

@@ -198,10 +198,10 @@ public class H264Utils {
         int codedHeight = getPicHeightInMbs(sps) << 4;
 
         int width = sps.frame_cropping_flag ? codedWidth
-                - ((sps.frame_crop_right_offset + sps.frame_crop_left_offset) << sps.chroma_format_idc.compWidth[0])
+                - ((sps.frame_crop_right_offset + sps.frame_crop_left_offset) << sps.chroma_format_idc.compWidth[1])
                 : codedWidth;
         int height = sps.frame_cropping_flag ? codedHeight
-                - ((sps.frame_crop_bottom_offset + sps.frame_crop_top_offset) << sps.chroma_format_idc.compHeight[0])
+                - ((sps.frame_crop_bottom_offset + sps.frame_crop_top_offset) << sps.chroma_format_idc.compHeight[1])
                 : codedHeight;
 
         Size size = new Size(width, height);

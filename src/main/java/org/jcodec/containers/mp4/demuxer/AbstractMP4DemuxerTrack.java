@@ -225,7 +225,7 @@ public abstract class AbstractMP4DemuxerTrack implements DemuxerTrack {
     protected ByteBuffer readPacketData(SeekableByteChannel input, ByteBuffer buffer, long offset, int size) throws IOException {
         ByteBuffer result = buffer.duplicate();
         synchronized (input) {
-            input.position();
+            input.position(offset);
             NIOUtils.read(input, result, size);
         }
         result.flip();
