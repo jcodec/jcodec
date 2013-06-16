@@ -148,9 +148,16 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             offInChunk += sizes[(int) frameNo - noInChunk + i];
         }
 
-        if (syncSamples != null)
-            for (ssOff = 0; syncSamples[ssOff] < curFrame + 1; ssOff++)
-                ;
+        if (syncSamples != null){
+			ssOff = 0;
+			for(int i = 0; i < syncSamples.length; i++){
+				if(syncSamples[i] < curFrame + 1){
+					ssOff++;
+				} else {
+					break;
+				}
+			}
+		}
 
     }
 
