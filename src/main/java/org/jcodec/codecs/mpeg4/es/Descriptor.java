@@ -39,11 +39,11 @@ public abstract class Descriptor {
     protected abstract void doWrite(ByteBuffer out);
 
     public static Descriptor read(ByteBuffer input) {
-        if(input.remaining() < 5)
+        if(input.remaining() < 2)
             return null;
         int tag = input.get() & 0xff;
         int size = JCodecUtil.readBER32(input);
-
+        
         Class<? extends Descriptor> cls = factory.byTag(tag);
         Descriptor descriptor;
         try {

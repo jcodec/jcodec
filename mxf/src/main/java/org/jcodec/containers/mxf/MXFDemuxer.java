@@ -48,11 +48,9 @@ public class MXFDemuxer {
                         // frameRate.getDen(), mm.getFrameDuration());
                         // Frame f = new Frame(time, null);
                         // ByteBuffer buffer = pool.take();
-                        ByteBuffer buffer = ByteBuffer.allocate((int) k.len);
                         // buffer.limit((int) k.len);
                         // Assert.assertNotNull(buffer);
-                        ch.read(buffer);
-                        buffer.flip();
+                        ByteBuffer buffer = readPacket(k);
                         // f.setEncoded(buffer);
                         fn++;
                         return new Packet(buffer, 0, 0, 0, 0, true, null);
@@ -69,6 +67,13 @@ public class MXFDemuxer {
                 throw new RuntimeException(e);
             }
             return null;
+        }
+
+        protected ByteBuffer readPacket(KLV k) throws IOException {
+            ByteBuffer buffer = ByteBuffer.allocate((int) k.len);
+            ch.read(buffer);
+            buffer.flip();
+            return buffer;
         }
 
         @Override
@@ -112,23 +117,11 @@ public class MXFDemuxer {
         dimension = mm.getStoredDimension();
         frameRate = mm.editRate;
         duration = mm.getMediaDuration();
-        // pool.setSize(dimension.width * dimension.height * 2 * 2);
         length = ch.size();
     }
 
-    // @Override
-    // public Interlacing getInterlaceType() {
-    // int fieldDominance =
-    // mxf.getPictureEssenceDescriptor().getFieldDominance();
-    // if (mxf.getPictureEssenceDescriptor().getFrameLayout() != 0) {
-    // switch (fieldDominance) {
-    // case 1:
-    // return Interlacing.TopFieldFirst;
-    // case 2:
-    // return Interlacing.BottomFieldFirst;
-    // }
-    //
-    // }
-    // return Interlacing.Progressive;
-    // }
+    public void close() {
+        // TODO Auto-generated method stub
+        
+    }
 }

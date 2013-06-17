@@ -9,8 +9,6 @@ import org.jcodec.common.model.Picture;
  * 
  * @author The JCodec project
  *
- * @param <F>
- * @param <T>
  */
 public interface Transform {
     public void transform(Picture src, Picture dst);

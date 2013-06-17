@@ -137,11 +137,13 @@ public class VirtualMovie {
             if (chunks[i + 1].getPos() > position)
                 return chunks[i];
         }
+        if (position < size)
+            return chunks[chunks.length - 1];
         return null;
     }
 
     public MovieSegment getPacketByNo(int no) {
-        if (no >= chunks.length)
+        if (no > chunks.length)
             return null;
         if (no == 0)
             return headerChunk;

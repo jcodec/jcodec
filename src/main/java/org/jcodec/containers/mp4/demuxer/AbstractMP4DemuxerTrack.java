@@ -30,7 +30,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- *
+ * 
  * Shared routines between PCM and Frames tracks
  * 
  * @author The JCodec project
@@ -128,10 +128,11 @@ public abstract class AbstractMP4DemuxerTrack implements DemuxerTrack {
         if (pts >= duration)
             return false;
 
-        sttsInd = 0;
         long prevDur = 0;
         int frameNo = 0;
-        while (pts > prevDur + timeToSamples[sttsInd].getSampleCount() * timeToSamples[sttsInd].getSampleDuration()) {
+        for (sttsInd = 0; pts > prevDur + timeToSamples[sttsInd].getSampleCount()
+                * timeToSamples[sttsInd].getSampleDuration()
+                && sttsInd < timeToSamples.length - 1; sttsInd++) {
             prevDur += timeToSamples[sttsInd].getSampleCount() * timeToSamples[sttsInd].getSampleDuration();
             frameNo += timeToSamples[sttsInd].getSampleCount();
         }
@@ -221,8 +222,9 @@ public abstract class AbstractMP4DemuxerTrack implements DemuxerTrack {
     public String getFourcc() {
         return getSampleEntries()[0].getFourcc();
     }
-    
-    protected ByteBuffer readPacketData(SeekableByteChannel input, ByteBuffer buffer, long offset, int size) throws IOException {
+
+    protected ByteBuffer readPacketData(SeekableByteChannel input, ByteBuffer buffer, long offset, int size)
+            throws IOException {
         ByteBuffer result = buffer.duplicate();
         synchronized (input) {
             input.position(offset);
@@ -231,6 +233,6 @@ public abstract class AbstractMP4DemuxerTrack implements DemuxerTrack {
         result.flip();
         return result;
     }
-    
+
     public abstract MP4Packet nextFrame(ByteBuffer storage) throws IOException;
 }

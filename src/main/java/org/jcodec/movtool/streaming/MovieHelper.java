@@ -56,8 +56,10 @@ public class MovieHelper {
 
     private static final int MEBABYTE = 1024 * 1024;
 
+    private static int timescales[] = { 10000, 12000, 15000, 24000, 25000, 30000, 50000, 41000, 48000, 96000 };
+
     public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize) {
-        int defaultTimescale = 48000;
+        int defaultTimescale = 1000;
 
         ByteBuffer buf = ByteBuffer.allocate(6 * MEBABYTE);
         MovieBox movie = new MovieBox();
@@ -67,13 +69,25 @@ public class MovieHelper {
         movie.add(movieHeader(movie, tracks.length, movieDur, defaultTimescale));
 
         for (int trackId = 0; trackId < tracks.length; trackId++) {
+
+            // TODO: optimal timescale selection
             VirtualTrack track = tracks[trackId];
             SampleEntry se = track.getSampleEntry();
 
             boolean pcm = (se instanceof AudioSampleEntry) && ((AudioSampleEntry) se).isPCM();
-            int trackTimescale = defaultTimescale;
-            if (pcm)
-                trackTimescale = getPCMTs((AudioSampleEntry) se, chunks, trackId);
+            int trackTimescale = track.getPreferredTimescale();
+            if (trackTimescale <= 0) {
+                if (pcm)
+                    trackTimescale = getPCMTs((AudioSampleEntry) se, chunks, trackId);
+                else
+                    trackTimescale = chooseTimescale(chunks, trackId);
+            } else if (trackTimescale < 100) {
+                trackTimescale *= 1000;
+            } else if (trackTimescale < 1000) {
+                trackTimescale *= 100;
+            } else if (trackTimescale < 10000) {
+                trackTimescale *= 10;
+            }
 
             long totalDur = (long) (trackTimescale * trackDurations[trackId]);
 
@@ -125,6 +139,25 @@ public class MovieHelper {
         buf.flip();
 
         return buf;
+    }
+
+    private static int chooseTimescale(PacketChunk[] chunks, int trackId) {
+        for (int ch = 0; ch < chunks.length; ch++) {
+            if (chunks[ch].getTrack() == trackId) {
+                double dur = chunks[ch].getPacket().getDuration(), min = Double.MAX_VALUE;
+                int minTs = -1;
+                for (int ts = 0; ts < timescales.length; ts++) {
+                    double dd = timescales[ts] * dur;
+                    double diff = dd - (int) dd;
+                    if (diff < min) {
+                        minTs = ts;
+                        min = diff;
+                    }
+                }
+                return timescales[minTs];
+            }
+        }
+        return 0;
     }
 
     private static void addEdits(TrakBox trak, VirtualTrack track, int defaultTimescale, int trackTimescale) {
@@ -182,7 +215,7 @@ public class MovieHelper {
                 double dur = chunk.getPacket().getDuration();
                 if (dur != prevDur) {
                     if (prevCount != -1)
-                        stts.add(new TimeToSampleEntry(prevCount, (int) (prevDur * timescale)));
+                        stts.add(new TimeToSampleEntry(prevCount, (int)Math.round(prevDur * timescale)));
                     prevDur = dur;
                     prevCount = 0;
                 }
@@ -196,7 +229,7 @@ public class MovieHelper {
         }
 
         if (prevCount > 0)
-            stts.add(new TimeToSampleEntry(prevCount, (int) (prevDur * timescale)));
+            stts.add(new TimeToSampleEntry(prevCount, (int) Math.round(prevDur * timescale)));
 
         if (!allKey)
             stbl.add(new SyncSamplesBox(stss.toArray()));

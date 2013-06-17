@@ -73,7 +73,7 @@ public class MovieRange extends InputStream {
     @Override
     public int read() throws IOException {
         tryFetch();
-        if (chunkData == null)
+        if (chunkData == null || remaining == 0)
             return -1;
 
         --remaining;

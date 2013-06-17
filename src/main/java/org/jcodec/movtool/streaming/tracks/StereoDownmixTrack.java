@@ -162,7 +162,11 @@ public class StereoDownmixTrack implements VirtualTrack {
 
     @Override
     public VirtualEdit[] getEdits() {
-        // TODO: edits will have to be applied
         return null;
+    }
+
+    @Override
+    public int getPreferredTimescale() {
+        return rate;
     }
 }

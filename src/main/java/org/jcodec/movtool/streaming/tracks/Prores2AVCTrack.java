@@ -164,4 +164,9 @@ public class Prores2AVCTrack implements VirtualTrack {
     public VirtualEdit[] getEdits() {
         return proresTrack.getEdits();
     }
+
+    @Override
+    public int getPreferredTimescale() {
+        return proresTrack.getPreferredTimescale();
+    }
 }

@@ -30,7 +30,7 @@ public class IDCT4x4 {
 
     public static final int C1 = C_FIX(0.6532814824);
     public static final int C2 = C_FIX(0.2705980501);
-    public static final int C3 = C_FIX(0.5);;
+    public static final int C3 = C_FIX(0.5);
     public static final int C_SHIFT = (4 + 2 + 12);
 
     private static void idct4col_add(int[] blk, int off) {

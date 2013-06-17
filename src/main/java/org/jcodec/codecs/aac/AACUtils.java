@@ -81,6 +81,8 @@ public class AACUtils {
             throw new IllegalArgumentException("Not mp4a sample entry");
         LeafBox b = Box.findFirst(mp4a, LeafBox.class, "esds");
         if (b == null)
+            b = Box.findFirst(mp4a, LeafBox.class, null, "esds");
+        if (b == null)
             return null;
         EsdsBox esds = new EsdsBox();
         esds.parse(b.getData());

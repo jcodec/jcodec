@@ -86,4 +86,9 @@ public class CachingTrack implements VirtualTrack {
     public VirtualEdit[] getEdits() {
         return src.getEdits();
     }
+
+    @Override
+    public int getPreferredTimescale() {
+        return src.getPreferredTimescale();
+    }
 }

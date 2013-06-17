@@ -21,6 +21,8 @@ public interface VirtualTrack {
     
     VirtualEdit[] getEdits();
     
+    int getPreferredTimescale();
+    
     void close();
     
     public static class VirtualEdit {

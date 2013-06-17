@@ -33,8 +33,10 @@ public class RealTrack implements VirtualTrack {
     private FilePool pool;
     private AbstractMP4DemuxerTrack demuxer;
     private ByteBuffer dummy;
+    private MovieBox movie;
 
     public RealTrack(MovieBox movie, TrakBox trak, FilePool pool) {
+        this.movie = movie;
         dummy = ByteBuffer.allocate(1024 * 1024 * 2);
         SampleSizesBox stsz = Box.findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
         if (stsz.getDefaultSize() == 0) {
@@ -108,7 +110,7 @@ public class RealTrack implements VirtualTrack {
 
         @Override
         public double getPts() {
-            return packet.getPtsD();
+            return (double)packet.getMediaPts() / packet.getTimescale();
         }
 
         @Override
@@ -130,12 +132,19 @@ public class RealTrack implements VirtualTrack {
     @Override
     public VirtualEdit[] getEdits() {
         List<Edit> edits = demuxer.getEdits();
+        if(edits == null)
+            return null;
         VirtualEdit[] result = new VirtualEdit[edits.size()];
         for (int i = 0; i < edits.size(); i++) {
             Edit ee = edits.get(i);
             result[i] = new VirtualEdit((double) ee.getMediaTime() / trak.getTimescale(), (double) ee.getDuration()
-                    / demuxer.getTimescale());
+                    / movie.getTimescale());
         }
         return result;
+    }
+
+    @Override
+    public int getPreferredTimescale() {
+        return (int)demuxer.getTimescale();
     }
 }
