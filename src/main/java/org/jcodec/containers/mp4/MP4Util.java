@@ -131,10 +131,10 @@ public class MP4Util {
         out.write(buf);
     }
 
-    public static Box cloneBox(Box track, int approxSize) {
+    public static Box cloneBox(Box box, int approxSize) {
         ByteBuffer buf = ByteBuffer.allocate(approxSize);
-        track.write(buf);
+        box.write(buf);
         buf.flip();
-        return NodeBox.parseBox(buf, track.getHeader(), BoxFactory.getDefault());
+        return NodeBox.parseChildBox(buf, BoxFactory.getDefault());
     }
 }

@@ -41,7 +41,8 @@ public class UrlBox extends FullBox {
         super.doWrite(out);
 
         if (url != null) {
-            NIOUtils.writePascalString(out, url);
+            NIOUtils.write(out, ByteBuffer.wrap(url.getBytes()));
+            out.put((byte) 0);
         }
     }
 

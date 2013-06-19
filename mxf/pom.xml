@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>mxf</artifactId>
-	<version>0.1.5</version>
+	<version>0.1.6</version>
 	<repositories>
 		<repository>
 			<id>gson</id>
@@ -61,7 +61,7 @@
 		<dependency>
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec</artifactId>
-			<version>0.1.5</version>
+			<version>0.1.6</version>
 		</dependency>
 		<dependency>
 			<groupId>jmxflib</groupId>

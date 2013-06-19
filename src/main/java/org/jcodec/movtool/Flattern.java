@@ -38,189 +38,174 @@ import org.jcodec.containers.mp4.boxes.UrlBox;
  */
 public class Flattern {
 
-	public static void main(String[] args) throws Exception {
-		if (args.length < 2) {
-			System.out.println("Syntax: self <ref movie> <out movie>");
-			System.exit(-1);
-		}
-		File outFile = new File(args[1]);
-		outFile.delete();
-		SeekableByteChannel input = null;
-		try {
-			input = readableFileChannel(new File(args[0]));
-			MovieBox movie = MP4Util.parseMovie(input);
-			new Flattern().flattern(movie, outFile);
-		} finally {
-			if (input != null)
-				input.close();
-		}
-	}
+    public static void main(String[] args) throws Exception {
+        if (args.length < 2) {
+            System.out.println("Syntax: self <ref movie> <out movie>");
+            System.exit(-1);
+        }
+        File outFile = new File(args[1]);
+        outFile.delete();
+        SeekableByteChannel input = null;
+        try {
+            input = readableFileChannel(new File(args[0]));
+            MovieBox movie = MP4Util.parseMovie(input);
+            new Flattern().flattern(movie, outFile);
+        } finally {
+            if (input != null)
+                input.close();
+        }
+    }
 
-	public List<ProgressListener> listeners = new ArrayList<Flattern.ProgressListener>();
+    public List<ProgressListener> listeners = new ArrayList<Flattern.ProgressListener>();
 
-	public interface ProgressListener {
-		public void trigger(int progress);
-	}
+    public interface ProgressListener {
+        public void trigger(int progress);
+    }
 
-	public void addProgressListener(ProgressListener listener) {
-		this.listeners.add(listener);
-	}
+    public void addProgressListener(ProgressListener listener) {
+        this.listeners.add(listener);
+    }
 
-	public void flattern(MovieBox movie, SeekableByteChannel out)
-			throws IOException {
-		if (!movie.isPureRefMovie(movie))
-			throw new IllegalArgumentException("movie should be reference");
-		ByteBuffer buf = ByteBuffer.allocate(16 * 1024 * 1024);
-		FileTypeBox ftyp = new FileTypeBox("qt  ", 0x20050300,
-				Arrays.asList(new String[] { "qt  " }));
-		ftyp.write(buf);
-		long movieOff = buf.position();
-		movie.write(buf);
+    public void flattern(MovieBox movie, SeekableByteChannel out) throws IOException {
+        if (!movie.isPureRefMovie(movie))
+            throw new IllegalArgumentException("movie should be reference");
+        ByteBuffer buf = ByteBuffer.allocate(16 * 1024 * 1024);
+        FileTypeBox ftyp = new FileTypeBox("qt  ", 0x20050300, Arrays.asList(new String[] { "qt  " }));
+        ftyp.write(buf);
+        long movieOff = buf.position();
+        movie.write(buf);
 
-		int extraSpace = calcSpaceReq(movie);
-		new Header("free", 8 + extraSpace).write(buf);
-		NIOUtils.skip(buf, extraSpace);
+        int extraSpace = calcSpaceReq(movie);
+        new Header("free", 8 + extraSpace).write(buf);
+        NIOUtils.skip(buf, extraSpace);
 
-		long mdatOff = buf.position();
-		new Header("mdat", 0x100000001L).write(buf);
-		buf.flip();
-		out.write(buf);
+        long mdatOff = buf.position();
+        new Header("mdat", 0x100000001L).write(buf);
+        buf.flip();
+        out.write(buf);
 
-		SeekableByteChannel[][] inputs = getInputs(movie);
+        SeekableByteChannel[][] inputs = getInputs(movie);
 
-		TrakBox[] tracks = movie.getTracks();
-		ChunkReader[] readers = new ChunkReader[tracks.length];
-		ChunkWriter[] writers = new ChunkWriter[tracks.length];
-		Chunk[] head = new Chunk[tracks.length];
-		int totalChunks = 0, writtenChunks = 0, lastProgress = 0;
-		long[] off = new long[tracks.length];
-		for (int i = 0; i < tracks.length; i++) {
-			readers[i] = new ChunkReader(tracks[i]);
-			totalChunks += readers[i].size();
+        TrakBox[] tracks = movie.getTracks();
+        ChunkReader[] readers = new ChunkReader[tracks.length];
+        ChunkWriter[] writers = new ChunkWriter[tracks.length];
+        Chunk[] head = new Chunk[tracks.length];
+        int totalChunks = 0, writtenChunks = 0, lastProgress = 0;
+        long[] off = new long[tracks.length];
+        for (int i = 0; i < tracks.length; i++) {
+            readers[i] = new ChunkReader(tracks[i]);
+            totalChunks += readers[i].size();
 
-			writers[i] = new ChunkWriter(tracks[i], inputs[i], out);
-			head[i] = readers[i].next();
-			if (tracks[i].isVideo())
-				off[i] = 2 * movie.getTimescale();
-		}
+            writers[i] = new ChunkWriter(tracks[i], inputs[i], out);
+            head[i] = readers[i].next();
+            if (tracks[i].isVideo())
+                off[i] = 2 * movie.getTimescale();
+        }
 
-		while (true) {
-			int min = -1;
-			for (int i = 0; i < readers.length; i++) {
-				if (head[i] == null)
-					continue;
+        while (true) {
+            int min = -1;
+            for (int i = 0; i < readers.length; i++) {
+                if (head[i] == null)
+                    continue;
 
-				if (min == -1)
-					min = i;
-				else {
-					long iTv = movie.rescale(head[i].getStartTv(),
-							tracks[i].getTimescale())
-							+ off[i];
-					long minTv = movie.rescale(head[min].getStartTv(),
-							tracks[min].getTimescale()) + off[min];
-					if (iTv < minTv)
-						min = i;
-				}
-			}
-			if (min == -1)
-				break;
-			writers[min].write(head[min]);
-			head[min] = readers[min].next();
-			writtenChunks++;
+                if (min == -1)
+                    min = i;
+                else {
+                    long iTv = movie.rescale(head[i].getStartTv(), tracks[i].getTimescale()) + off[i];
+                    long minTv = movie.rescale(head[min].getStartTv(), tracks[min].getTimescale()) + off[min];
+                    if (iTv < minTv)
+                        min = i;
+                }
+            }
+            if (min == -1)
+                break;
+            writers[min].write(head[min]);
+            head[min] = readers[min].next();
+            writtenChunks++;
 
-			lastProgress = calcProgress(totalChunks, writtenChunks,
-					lastProgress);
-		}
-		long mdatSize = out.position() - mdatOff;
+            lastProgress = calcProgress(totalChunks, writtenChunks, lastProgress);
+        }
+        long mdatSize = out.position() - mdatOff;
 
-		for (int i = 0; i < tracks.length; i++) {
-			writers[i].apply();
-		}
-		out.position(movieOff);
-		MP4Util.writeMovie(out, movie);
+        for (int i = 0; i < tracks.length; i++) {
+            writers[i].apply();
+        }
+        out.position(movieOff);
+        MP4Util.writeMovie(out, movie);
 
-		long extra = mdatOff - out.position();
-		if (extra < 0)
-			throw new RuntimeException("Not enough space to write the header");
-		out.write((ByteBuffer) ByteBuffer.allocate(8).putInt((int) extra)
-				.put(new byte[] { 'f', 'r', 'e', 'e' }).flip());
+        long extra = mdatOff - out.position();
+        if (extra < 0)
+            throw new RuntimeException("Not enough space to write the header");
+        out.write((ByteBuffer) ByteBuffer.allocate(8).putInt((int) extra).put(new byte[] { 'f', 'r', 'e', 'e' }).flip());
 
-		out.position(mdatOff + 8);
-		out.write(ByteBuffer.allocate(8).putLong(mdatSize));
-	}
+        out.position(mdatOff + 8);
+        out.write(ByteBuffer.allocate(8).putLong(mdatSize));
+    }
 
-	private int calcProgress(int totalChunks, int writtenChunks,
-			int lastProgress) {
-		int curProgress = 100 * writtenChunks / totalChunks;
-		if (lastProgress < curProgress) {
-			lastProgress = curProgress;
-			for (ProgressListener pl : this.listeners)
-				pl.trigger(lastProgress);
-		}
-		return lastProgress;
-	}
+    private int calcProgress(int totalChunks, int writtenChunks, int lastProgress) {
+        int curProgress = 100 * writtenChunks / totalChunks;
+        if (lastProgress < curProgress) {
+            lastProgress = curProgress;
+            for (ProgressListener pl : this.listeners)
+                pl.trigger(lastProgress);
+        }
+        return lastProgress;
+    }
 
-	protected SeekableByteChannel[][] getInputs(MovieBox movie)
-			throws IOException {
-		TrakBox[] tracks = movie.getTracks();
-		SeekableByteChannel[][] result = new SeekableByteChannel[tracks.length][];
-		for (int i = 0; i < tracks.length; i++) {
-			DataRefBox drefs = NodeBox.findFirst(tracks[i], DataRefBox.class,
-					"mdia", "minf", "dinf", "dref");
-			if (drefs == null) {
-				throw new RuntimeException("No data references");
-			}
-			List<Box> entries = drefs.getBoxes();
-			SeekableByteChannel[] e = new SeekableByteChannel[entries.size()];
-			SeekableByteChannel[] inputs = new SeekableByteChannel[entries
-					.size()];
-			for (int j = 0; j < e.length; j++) {
-				inputs[j] = Flattern.resolveDataRef(entries.get(j));
-			}
-			result[i] = inputs;
-		}
-		return result;
-	}
+    protected SeekableByteChannel[][] getInputs(MovieBox movie) throws IOException {
+        TrakBox[] tracks = movie.getTracks();
+        SeekableByteChannel[][] result = new SeekableByteChannel[tracks.length][];
+        for (int i = 0; i < tracks.length; i++) {
+            DataRefBox drefs = NodeBox.findFirst(tracks[i], DataRefBox.class, "mdia", "minf", "dinf", "dref");
+            if (drefs == null) {
+                throw new RuntimeException("No data references");
+            }
+            List<Box> entries = drefs.getBoxes();
+            SeekableByteChannel[] e = new SeekableByteChannel[entries.size()];
+            SeekableByteChannel[] inputs = new SeekableByteChannel[entries.size()];
+            for (int j = 0; j < e.length; j++) {
+                inputs[j] = Flattern.resolveDataRef(entries.get(j));
+            }
+            result[i] = inputs;
+        }
+        return result;
+    }
 
-	private int calcSpaceReq(MovieBox movie) {
-		int sum = 0;
-		for (TrakBox trakBox : movie.getTracks()) {
-			ChunkOffsetsBox stco = Box.findFirst(trakBox,
-					ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
-			if (stco != null)
-				sum += stco.getChunkOffsets().length * 4;
-		}
-		return sum;
-	}
+    private int calcSpaceReq(MovieBox movie) {
+        int sum = 0;
+        for (TrakBox trakBox : movie.getTracks()) {
+            ChunkOffsetsBox stco = Box.findFirst(trakBox, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
+            if (stco != null)
+                sum += stco.getChunkOffsets().length * 4;
+        }
+        return sum;
+    }
 
-	public static SeekableByteChannel resolveDataRef(Box box)
-			throws IOException {
-		if (box instanceof UrlBox) {
-			String url = ((UrlBox) box).getUrl();
-			if (!url.startsWith("file://"))
-				throw new RuntimeException(
-						"Only file:// urls are supported in data reference");
-			return readableFileChannel(new File(url.substring(7)));
-		} else if (box instanceof AliasBox) {
-			String uxPath = ((AliasBox) box).getUnixPath();
-			if (uxPath == null)
-				throw new RuntimeException("Could not resolve alias");
-			return readableFileChannel(new File(uxPath));
-		} else {
-			throw new RuntimeException(box.getHeader().getFourcc()
-					+ " dataref type is not supported");
-		}
-	}
+    public static SeekableByteChannel resolveDataRef(Box box) throws IOException {
+        if (box instanceof UrlBox) {
+            String url = ((UrlBox) box).getUrl();
+            if (!url.startsWith("file://"))
+                throw new RuntimeException("Only file:// urls are supported in data reference");
+            return readableFileChannel(new File(url.substring(7)));
+        } else if (box instanceof AliasBox) {
+            String uxPath = ((AliasBox) box).getUnixPath();
+            if (uxPath == null)
+                throw new RuntimeException("Could not resolve alias");
+            return readableFileChannel(new File(uxPath));
+        } else {
+            throw new RuntimeException(box.getHeader().getFourcc() + " dataref type is not supported");
+        }
+    }
 
-	public void flattern(MovieBox movie, File video) throws IOException {
-		video.delete();
-		SeekableByteChannel out = null;
-		try {
-			out = writableFileChannel(video);
-			flattern(movie, out);
-		} finally {
-			if (out != null)
-				out.close();
-		}
-	}
+    public void flattern(MovieBox movie, File video) throws IOException {
+        video.delete();
+        SeekableByteChannel out = null;
+        try {
+            out = writableFileChannel(video);
+            flattern(movie, out);
+        } finally {
+            if (out != null)
+                out.close();
+        }
+    }
 }
