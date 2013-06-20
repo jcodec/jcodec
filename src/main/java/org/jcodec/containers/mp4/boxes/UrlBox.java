@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 import org.jcodec.common.NIOUtils;
 
@@ -33,15 +34,19 @@ public class UrlBox extends FullBox {
         super.parse(input);
         if ((flags & 0x1) != 0)
             return;
-        url = NIOUtils.readNullTermString(input);
+        Charset utf8 = Charset.forName("utf-8");
+        
+        url = NIOUtils.readNullTermString(input, utf8);
     }
 
     @Override
     protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
+        Charset utf8 = Charset.forName("utf-8");
+
         if (url != null) {
-            NIOUtils.write(out, ByteBuffer.wrap(url.getBytes()));
+            NIOUtils.write(out, ByteBuffer.wrap(url.getBytes(utf8)));
             out.put((byte) 0);
         }
     }

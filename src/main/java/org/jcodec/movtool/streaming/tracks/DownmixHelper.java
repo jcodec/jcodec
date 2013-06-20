@@ -71,12 +71,18 @@ public class DownmixHelper {
                 case LFEScreen:
                 case Center:
                 case LFE2:
+                case Discrete:
                     matrixBuilder.add(new float[] { .7f, .7f });
                     countsBuilder.add(new int[] { 1, 1 });
                     break;
                 case Unused:
                     break;
                 default:
+                    if((channels[ch].getVal() >>> 16) == 1) {
+                        matrixBuilder.add(new float[] { .7f, .7f });
+                        countsBuilder.add(new int[] { 1, 1 });
+                        System.out.println("Discrete" + (channels[ch].getVal() & 0xffff));
+                    }
                 }
             }
             channelsBuilder.add(tmp.toArray());
@@ -88,6 +94,11 @@ public class DownmixHelper {
 
     public void downmix(ByteBuffer[] data, ByteBuffer out) {
         out.order(ByteOrder.LITTLE_ENDIAN);
+        
+        if (matrix.length == 0) {
+            out.limit(nSamples << 2);
+            return;
+        }
 
         float[][] flt = fltBuf.get();
         if (flt == null) {

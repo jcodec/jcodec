@@ -52,6 +52,8 @@ public class SampleDescriptionBox extends NodeBox {
             handlers.put("v210", VideoSampleEntry.class);
             handlers.put("m2v1", VideoSampleEntry.class);
             handlers.put("m1v1", VideoSampleEntry.class);
+            handlers.put("xd5b", VideoSampleEntry.class);
+            handlers.put("dv5n", VideoSampleEntry.class);
 
             handlers.put("ac-3", AudioSampleEntry.class);
             handlers.put("cac3", AudioSampleEntry.class);

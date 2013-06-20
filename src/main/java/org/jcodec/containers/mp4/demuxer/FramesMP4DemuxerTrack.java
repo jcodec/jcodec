@@ -3,10 +3,14 @@ package org.jcodec.containers.mp4.demuxer;
 import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
@@ -81,7 +85,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
         ByteBuffer result = readPacketData(input, storage, pktPos, size);
 
-        if (result.remaining() < size)
+        if (result != null && result.remaining() < size)
             return null;
 
         int duration = timeToSamples[sttsInd].getSampleDuration();
@@ -149,7 +153,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
 
         if (syncSamples != null)
-            for (ssOff = 0; syncSamples[ssOff] < curFrame + 1; ssOff++)
+            for (ssOff = 0; ssOff < syncSamples.length && syncSamples[ssOff] < curFrame + 1; ssOff++)
                 ;
 
     }

@@ -15,6 +15,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.Charset;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -207,12 +208,16 @@ public class NIOUtils {
     }
 
     public static String readNullTermString(ByteBuffer buffer) {
+        return readNullTermString(buffer, Charset.defaultCharset());
+    }
+    
+    public static String readNullTermString(ByteBuffer buffer, Charset charset) {
         ByteBuffer fork = buffer.duplicate();
         while (buffer.hasRemaining() && buffer.get() != 0)
             ;
         if (buffer.hasRemaining())
             fork.limit(buffer.position() - 1);
-        return new String(toArray(fork));
+        return new String(toArray(fork), charset);
     }
 
     public static ByteBuffer read(ByteBuffer buffer) {

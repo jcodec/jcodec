@@ -48,6 +48,7 @@ public class DataRefBox extends NodeBox {
         public MyFactory() {
             mappings.put(UrlBox.fourcc(), UrlBox.class);
             mappings.put(AliasBox.fourcc(), AliasBox.class);
+            mappings.put("cios", AliasBox.class);
         }
 
         public Class<? extends Box> toClass(String fourcc) {

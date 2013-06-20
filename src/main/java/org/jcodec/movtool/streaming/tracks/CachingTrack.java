@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -24,12 +25,13 @@ import org.jcodec.movtool.streaming.VirtualTrack;
 public class CachingTrack implements VirtualTrack {
     private VirtualTrack src;
     private List<CachingPacket> cachedPackets = Collections.synchronizedList(new ArrayList<CachingPacket>());
+    private ScheduledFuture<?> policyFuture;
 
     public CachingTrack(VirtualTrack src, final int policy, ScheduledExecutorService policyExecutor) {
         if (policy < 1)
             throw new IllegalArgumentException("Caching track with less then 1 entry.");
         this.src = src;
-        policyExecutor.scheduleAtFixedRate(new Runnable() {
+        policyFuture = policyExecutor.scheduleAtFixedRate(new Runnable() {
             public void run() {
                 while (cachedPackets.size() > policy) {
                     cachedPackets.get(0).wipe();
@@ -79,6 +81,9 @@ public class CachingTrack implements VirtualTrack {
 
     @Override
     public void close() {
+        if (policyFuture != null)
+            policyFuture.cancel(false);
+        cachedPackets.clear();
         src.close();
     }
 

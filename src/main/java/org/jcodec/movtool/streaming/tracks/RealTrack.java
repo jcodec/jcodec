@@ -32,12 +32,10 @@ public class RealTrack implements VirtualTrack {
     private TrakBox trak;
     private FilePool pool;
     private AbstractMP4DemuxerTrack demuxer;
-    private ByteBuffer dummy;
     private MovieBox movie;
 
     public RealTrack(MovieBox movie, TrakBox trak, FilePool pool) {
         this.movie = movie;
-        dummy = ByteBuffer.allocate(1024 * 1024 * 2);
         SampleSizesBox stsz = Box.findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
         if (stsz.getDefaultSize() == 0) {
             this.demuxer = new FramesMP4DemuxerTrack(movie, trak, null) {
@@ -62,7 +60,7 @@ public class RealTrack implements VirtualTrack {
 
     @Override
     public VirtualPacket nextPacket() throws IOException {
-        MP4Packet pkt = demuxer.nextFrame(dummy);
+        MP4Packet pkt = demuxer.nextFrame(null);
         if (pkt == null)
             return null;
         return new RealPacket(pkt);

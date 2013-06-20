@@ -143,6 +143,6 @@ public class MP4Demuxer {
             NIOUtils.skip(fork, (int) (len - hdrLen));
         }
 
-        return success * 100 / total;
+        return total == 0 ? 0 : success * 100 / total;
     }
 }

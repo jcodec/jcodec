@@ -83,6 +83,13 @@ public class ChannelUtils {
 
     public static Label[] getLabels(ChannelBox box) {
         long tag = box.getChannelLayout();
+        if ((tag >> 16) == 147) {
+            int n = (int) tag & 0xffff;
+            Label[] res = new Label[n];
+            for (int i = 0; i < n; i++)
+                res[i] = Label.getByVal((1 << 16) | i);
+            return res;
+        }
         for (ChannelLayout layout : EnumSet.allOf(ChannelLayout.class)) {
             if (layout.getCode() == tag) {
                 switch (layout) {
