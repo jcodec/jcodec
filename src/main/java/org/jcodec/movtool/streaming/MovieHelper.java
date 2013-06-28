@@ -1,5 +1,6 @@
 package org.jcodec.movtool.streaming;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +59,7 @@ public class MovieHelper {
 
     private static int timescales[] = { 10000, 12000, 15000, 24000, 25000, 30000, 50000, 41000, 48000, 96000 };
 
-    public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize) {
+    public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize) throws IOException {
         int defaultTimescale = 1000;
 
         ByteBuffer buf = ByteBuffer.allocate(6 * MEBABYTE);
@@ -195,7 +196,7 @@ public class MovieHelper {
     }
 
     private static void populateStblGeneric(NodeBox stbl, PacketChunk[] chunks, int trackId, SampleEntry se,
-            int timescale) {
+            int timescale) throws IOException {
         LongArrayList stco = new LongArrayList(250 << 10);
         IntArrayList stsz = new IntArrayList(250 << 10);
         List<TimeToSampleEntry> stts = new ArrayList<TimeToSampleEntry>();
@@ -240,7 +241,7 @@ public class MovieHelper {
         stbl.add(new TimeToSampleBox(stts.toArray(new TimeToSampleEntry[0])));
     }
 
-    private static void populateStblPCM(NodeBox stbl, PacketChunk[] chunks, int trackId, SampleEntry se) {
+    private static void populateStblPCM(NodeBox stbl, PacketChunk[] chunks, int trackId, SampleEntry se) throws IOException {
         AudioSampleEntry ase = (AudioSampleEntry) se;
         int frameSize = ase.calcFrameSize();
 
@@ -275,7 +276,7 @@ public class MovieHelper {
         stbl.add(new TimeToSampleBox(new TimeToSampleEntry[] { new TimeToSampleEntry(totalFrames, 1) }));
     }
 
-    private static int getPCMTs(AudioSampleEntry se, PacketChunk[] chunks, int trackId) {
+    private static int getPCMTs(AudioSampleEntry se, PacketChunk[] chunks, int trackId) throws IOException {
         for (int chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
             if (chunks[chunkNo].getTrack() == trackId) {
                 return (int) Math.round(chunks[chunkNo].getDataLen()

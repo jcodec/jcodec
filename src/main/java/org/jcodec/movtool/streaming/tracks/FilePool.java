@@ -60,8 +60,9 @@ public class FilePool {
     }
 
     public class PoolChannel extends SeekableByteChannelWrapper {
-        public PoolChannel(SeekableByteChannel src) {
+        public PoolChannel(SeekableByteChannel src) throws IOException {
             super(src);
+            src.position(0);
         }
 
         public boolean isOpen() {

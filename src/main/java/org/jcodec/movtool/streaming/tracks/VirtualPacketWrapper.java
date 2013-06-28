@@ -27,7 +27,7 @@ public class VirtualPacketWrapper implements VirtualPacket {
     }
 
     @Override
-    public int getDataLen() {
+    public int getDataLen() throws IOException {
         return src.getDataLen();
     }
 

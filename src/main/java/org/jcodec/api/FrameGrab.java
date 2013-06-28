@@ -33,11 +33,14 @@ import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * Extracts frames from a movie into uncompressed images suitable for processing.
+ * Extracts frames from a movie into uncompressed images suitable for
+ * processing.
  * 
- * Supports going to random points inside of a movie ( seeking ) by frame number of by second.
+ * Supports going to random points inside of a movie ( seeking ) by frame number
+ * of by second.
  * 
- * NOTE: Supports only AVC ( H.264 ) in MP4 ( ISO BMF, QuickTime ) at this point.
+ * NOTE: Supports only AVC ( H.264 ) in MP4 ( ISO BMF, QuickTime ) at this
+ * point.
  * 
  * @author The JCodec project
  * 
@@ -47,18 +50,16 @@ public class FrameGrab {
     private static final int KEYFRAME_TEST_STEP = 24;
     private DemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
-    private SeekableByteChannel ch;
 
     public FrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
-        this.ch = in;
         ByteBuffer header = ByteBuffer.allocate(65536);
-        ch.read(header);
+        in.read(header);
         header.flip();
         Format detectFormat = JCodecUtil.detectFormat(header);
 
         switch (detectFormat) {
         case MOV:
-            MP4Demuxer demuxer = new MP4Demuxer(ch);
+            MP4Demuxer demuxer = new MP4Demuxer(in);
             videoTrack = demuxer.getVideoTrack();
             break;
         case MPEG_PS:
@@ -70,6 +71,11 @@ public class FrameGrab {
         }
 
         decodeLeadingFrames();
+    }
+
+    public FrameGrab(DemuxerTrack videoTrack, ContainerAdaptor decoder) {
+        this.videoTrack = videoTrack;
+        this.decoder = decoder;
     }
 
     /**
@@ -377,5 +383,129 @@ public class FrameGrab {
      */
     public static Picture getNativeFrame(SeekableByteChannel file, int frameNumber) throws JCodecException, IOException {
         return new FrameGrab(file).seekToFramePrecise(frameNumber).getNativeFrame();
+    }
+
+    /**
+     * Get a specified frame by number from an already open demuxer track
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static BufferedImage getFrame(DemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToFramePrecise(frameNumber).getFrame();
+    }
+
+    /**
+     * Get a specified frame by second from an already open demuxer track
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static BufferedImage getFrame(DemuxerTrack vt, ContainerAdaptor decoder, double second) throws IOException,
+            JCodecException {
+        return new FrameGrab(vt, decoder).seekToSecondPrecise(second).getFrame();
+    }
+
+    /**
+     * Get a specified frame by number from an already open demuxer track (
+     * sloppy mode, i.e. nearest keyframe )
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static BufferedImage getFrameSloppy(DemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToFrameSloppy(frameNumber).getFrame();
+    }
+
+    /**
+     * Get a specified frame by second from an already open demuxer track (
+     * sloppy mode, i.e. nearest keyframe )
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static BufferedImage getFrameSloppy(DemuxerTrack vt, ContainerAdaptor decoder, double second)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToSecondSloppy(second).getFrame();
+    }
+
+    /**
+     * Get a specified frame by number from an already open demuxer track
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static Picture getNativeFrame(DemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToFramePrecise(frameNumber).getNativeFrame();
+    }
+
+    /**
+     * Get a specified frame by second from an already open demuxer track
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static Picture getNativeFrame(DemuxerTrack vt, ContainerAdaptor decoder, double second) throws IOException,
+            JCodecException {
+        return new FrameGrab(vt, decoder).seekToSecondPrecise(second).getNativeFrame();
+    }
+
+    /**
+     * Get a specified frame by number from an already open demuxer track (
+     * sloppy mode, i.e. nearest keyframe )
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static Picture getNativeFrameSloppy(DemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToFrameSloppy(frameNumber).getNativeFrame();
+    }
+
+    /**
+     * Get a specified frame by second from an already open demuxer track (
+     * sloppy mode, i.e. nearest keyframe )
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static Picture getNativeFrameSloppy(DemuxerTrack vt, ContainerAdaptor decoder, double second)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToSecondSloppy(second).getNativeFrame();
     }
 }

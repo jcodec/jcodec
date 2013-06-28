@@ -23,7 +23,7 @@ public interface VirtualTrack {
     
     int getPreferredTimescale();
     
-    void close();
+    void close() throws IOException;
     
     public static class VirtualEdit {
         private double in;

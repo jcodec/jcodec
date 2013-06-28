@@ -15,7 +15,7 @@ import java.nio.ByteBuffer;
 public interface VirtualPacket {
     ByteBuffer getData() throws IOException;
 
-    int getDataLen();
+    int getDataLen() throws IOException;
 
     double getPts();
 

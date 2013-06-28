@@ -9,8 +9,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -28,6 +31,14 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class MP4Util {
+    
+    private static Map<Codec, String> codecMapping = new HashMap<Codec, String>();
+    
+    static {
+        codecMapping.put(Codec.MPEG2, "m2v1");
+        codecMapping.put(Codec.H264, "avc1");
+        codecMapping.put(Codec.J2K, "mjp2");
+    }
 
     public static MovieBox createRefMovie(SeekableByteChannel input, String url) throws IOException {
         MovieBox movie = parseMovie(input);
@@ -136,5 +147,9 @@ public class MP4Util {
         box.write(buf);
         buf.flip();
         return NodeBox.parseChildBox(buf, BoxFactory.getDefault());
+    }
+    
+    public static String getFourcc(Codec codec) {
+        return codecMapping.get(codec);
     }
 }

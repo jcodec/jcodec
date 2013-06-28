@@ -107,7 +107,7 @@ public class StereoDownmixTrack implements VirtualTrack {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         for (VirtualTrack virtualTrack : this.sources) {
             virtualTrack.close();
         }

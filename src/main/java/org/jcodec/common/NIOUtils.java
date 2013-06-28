@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -253,12 +254,27 @@ public class NIOUtils {
     public static byte readByte(ReadableByteChannel channel) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(1);
         channel.read(buf);
+        buf.flip();
         return buf.get();
+    }
+    
+    public static byte[] readNByte(ReadableByteChannel channel, int n) throws IOException {
+        byte[] result = new byte[n];
+        channel.read(ByteBuffer.wrap(result));
+        return result;
     }
 
     public static int readInt(ReadableByteChannel channel) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(4);
         channel.read(buf);
+        buf.flip();
+        return buf.getInt();
+    }
+    
+    public static int readInt(ReadableByteChannel channel, ByteOrder order) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(4).order(order);
+        channel.read(buf);
+        buf.flip();
         return buf.getInt();
     }
 
@@ -266,6 +282,10 @@ public class NIOUtils {
         channel.write((ByteBuffer) ByteBuffer.allocate(1).put(value).flip());
     }
 
+    public static void writeInt(WritableByteChannel channel, int value, ByteOrder order) throws IOException {
+        channel.write((ByteBuffer) ByteBuffer.allocate(4).order(order).putInt(value).flip());
+    }
+    
     public static void writeInt(WritableByteChannel channel, int value) throws IOException {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).putInt(value).flip());
     }

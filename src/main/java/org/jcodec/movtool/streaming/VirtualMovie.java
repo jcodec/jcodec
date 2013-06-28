@@ -111,7 +111,7 @@ public class VirtualMovie {
             pos += off;
         }
 
-        public int getDataLen() {
+        public int getDataLen() throws IOException {
             return packet.getDataLen();
         }
 
@@ -124,13 +124,13 @@ public class VirtualMovie {
         }
     }
 
-    public void close() {
+    public void close() throws IOException {
         for (VirtualTrack virtualTrack : tracks) {
             virtualTrack.close();
         }
     }
 
-    public MovieSegment getPacketAt(long position) {
+    public MovieSegment getPacketAt(long position) throws IOException {
         if (position >= 0 && position < headerChunk.getDataLen())
             return headerChunk;
         for (int i = 0; i < chunks.length - 1; i++) {

@@ -120,7 +120,7 @@ public class EditedFramesTrack implements VirtualTrack {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         src.close();
     }
 

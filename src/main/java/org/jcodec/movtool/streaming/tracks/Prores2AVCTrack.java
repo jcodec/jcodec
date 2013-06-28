@@ -22,6 +22,8 @@ import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
+import org.jcodec.scale.ColorUtil;
+import org.jcodec.scale.Transform;
 import org.jcodec.scale.Yuv422pToYuv420p;
 
 /**
@@ -119,21 +121,21 @@ public class Prores2AVCTrack implements VirtualTrack {
         private H264Encoder encoder;
         private Picture pic0;
         private Picture pic1;
-        private Yuv422pToYuv420p transform;
+        private Transform transform;
         private ConstantRateControl rc;
 
         public Transcoder() {
             rc = new ConstantRateControl(TARGET_RATE);
             this.decoder = scaleFactor == 2 ? new ProresToThumb2x2() : new ProresToThumb4x4();
             this.encoder = new H264Encoder(rc);
-            this.pic0 = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV422_10);
-            transform = new Yuv422pToYuv420p(0, 2);
+            pic0 = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV444);
         }
 
         public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst) throws IOException {
             Picture decoded = decoder.decodeFrame(src, pic0.getData());
             if (pic1 == null) {
                 pic1 = Picture.create(decoded.getWidth(), decoded.getHeight(), ColorSpace.YUV420);
+                transform = ColorUtil.getTransform(decoded.getColor(), ColorSpace.YUV420);
             }
             transform.transform(decoded, pic1);
             pic1.setCrop(new Rect(0, 0, thumbWidth, thumbHeight));
@@ -156,7 +158,7 @@ public class Prores2AVCTrack implements VirtualTrack {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         proresTrack.close();
     }
 

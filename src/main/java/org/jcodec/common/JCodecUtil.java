@@ -86,7 +86,7 @@ public class JCodecUtil {
 
     public static BufferedImage toBufferedImage(Picture pic) {
         Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
-        Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB);
+        Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
         transform.transform(pic, rgb);
         BufferedImage bi = AWTUtil.toBufferedImage(rgb);
         return bi;

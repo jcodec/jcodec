@@ -13,7 +13,8 @@ import org.jcodec.common.model.Picture;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * Decodes a ProRes file in low res. Decodes each 8x8 block as downscaled 4x4 block.
+ * Decodes a ProRes file in low res. Decodes each 8x8 block as downscaled 4x4
+ * block.
  * 
  * @author The JCodec project
  * 
@@ -23,9 +24,11 @@ public class ProresToThumb4x4 extends ProresDecoder {
     public ProresToThumb4x4() {
     }
 
+    @Override
     protected int[] decodeOnePlane(BitReader bits, int blocksPerSlice, int[] qMat, int[] scan, int mbX, int mbY,
             int plane) {
         int[] out = new int[blocksPerSlice << 4];
+
         readDCCoeffs(bits, qMat, out, blocksPerSlice, 16);
         readACCoeffs(bits, qMat, out, blocksPerSlice, scan, 16, 4);
 
@@ -56,27 +59,34 @@ public class ProresToThumb4x4 extends ProresDecoder {
 
         if (fh.frameType == 0) {
             decodePicture(data, target, codedWidth, codedHeight, codedWidth >> 3, fh.qMatLuma, fh.qMatChroma,
-                    progressive_scan_4x4, 0);
+                    progressive_scan_4x4, 0, fh.chromaType);
         } else {
             decodePicture(data, target, codedWidth, codedHeight >> 1, codedWidth >> 3, fh.qMatLuma, fh.qMatChroma,
-                    interlaced_scan_4x4, fh.topFieldFirst ? 1 : 2);
+                    interlaced_scan_4x4, fh.topFieldFirst ? 1 : 2, fh.chromaType);
 
             decodePicture(data, target, codedWidth, codedHeight >> 1, codedWidth >> 3, fh.qMatLuma, fh.qMatChroma,
-                    interlaced_scan_4x4, fh.topFieldFirst ? 2 : 1);
+                    interlaced_scan_4x4, fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
 
-        return new Picture(codedWidth, codedHeight, target, ColorSpace.YUV422_10);
+        return new Picture(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422_10
+                : ColorSpace.YUV444_10);
     }
 
+    @Override
     protected void putSlice(int[][] result, int lumaStride, int mbX, int mbY, int[] y, int[] u, int[] v, int dist,
-            int shift) {
+            int shift, int chromaType) {
         int mbPerSlice = y.length >> 6;
 
         int chromaStride = lumaStride >> 1;
 
         putLuma(result[0], shift * lumaStride, lumaStride << dist, mbX, mbY, y, mbPerSlice, dist, shift);
-        putChroma(result[1], shift * chromaStride, chromaStride << dist, mbX, mbY, u, mbPerSlice, dist, shift);
-        putChroma(result[2], shift * chromaStride, chromaStride << dist, mbX, mbY, v, mbPerSlice, dist, shift);
+        if (chromaType == 2) {
+            putChroma(result[1], shift * chromaStride, chromaStride << dist, mbX, mbY, u, mbPerSlice, dist, shift);
+            putChroma(result[2], shift * chromaStride, chromaStride << dist, mbX, mbY, v, mbPerSlice, dist, shift);
+        } else {
+            putLuma(result[1], shift * lumaStride, lumaStride << dist, mbX, mbY, u, mbPerSlice, dist, shift);
+            putLuma(result[2], shift * lumaStride, lumaStride << dist, mbX, mbY, v, mbPerSlice, dist, shift);
+        }
     }
 
     private static final int srcIncLuma[] = { 4, 4, 4, 20, 4, 4, 4, 20 };

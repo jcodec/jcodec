@@ -12,15 +12,24 @@ import static org.jcodec.common.dct.SimpleIDCT10Bit.idct10;
 import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.toSigned;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.scale.Yuv422pToRgb;
 
 /**
  * 
@@ -149,16 +158,12 @@ public class ProresDecoder implements VideoDecoder {
     protected int[] decodeOnePlane(BitReader bits, int blocksPerSlice, int[] qMat, int[] scan, int mbX, int mbY,
             int plane) {
         int[] out = new int[blocksPerSlice << 6];
-        // try {
-        readDCCoeffs(bits, qMat, out, blocksPerSlice, 64);
-        readACCoeffs(bits, qMat, out, blocksPerSlice, scan, 64, 6);
-        // } catch (RuntimeException e) {
-        // int x = mbX << 4;
-        // int y = mbY << 4;
-        // System.out.println(e.getMessage() + " at (" + x + ", " + y + ", " +
-        // (x + (blocksPerSlice << 2)) + ", "
-        // + (y + 16) + "), plane " + plane);
-        // }
+        try {
+            readDCCoeffs(bits, qMat, out, blocksPerSlice, 64);
+            readACCoeffs(bits, qMat, out, blocksPerSlice, scan, 64, 6);
+        } catch (RuntimeException e) {
+            System.err.println("Suppressing slice error at [" + mbX + ", " + mbY + "].");
+        }
 
         for (int i = 0; i < blocksPerSlice; i++) {
             idct10(out, i << 6);
@@ -174,7 +179,7 @@ public class ProresDecoder implements VideoDecoder {
         int codedHeight = (fh.height + 15) & ~0xf;
 
         int lumaSize = codedWidth * codedHeight;
-        int chromaSize = lumaSize >> 1;
+        int chromaSize = lumaSize >> (3 - fh.chromaType);
 
         if (target == null || target[0].length < lumaSize || target[1].length < chromaSize
                 || target[2].length < chromaSize) {
@@ -182,16 +187,18 @@ public class ProresDecoder implements VideoDecoder {
         }
 
         if (fh.frameType == 0) {
-            decodePicture(data, target, fh.width, fh.height, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan, 0);
+            decodePicture(data, target, fh.width, fh.height, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan, 0,
+                    fh.chromaType);
         } else {
             decodePicture(data, target, fh.width, fh.height >> 1, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan,
-                    fh.topFieldFirst ? 1 : 2);
+                    fh.topFieldFirst ? 1 : 2, fh.chromaType);
 
             decodePicture(data, target, fh.width, fh.height >> 1, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan,
-                    fh.topFieldFirst ? 2 : 1);
+                    fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
 
-        return new Picture(codedWidth, codedHeight, target, ColorSpace.YUV422_10);
+        return new Picture(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422_10
+                : ColorSpace.YUV444_10);
     }
 
     public Picture[] decodeFields(ByteBuffer data, int[][][] target) {
@@ -209,7 +216,8 @@ public class ProresDecoder implements VideoDecoder {
                 throw new RuntimeException("Provided output picture won't fit into provided buffer");
             }
 
-            decodePicture(data, target[0], fh.width, fh.height, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan, 0);
+            decodePicture(data, target[0], fh.width, fh.height, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan,
+                    0, fh.chromaType);
             return new Picture[] { new Picture(codedWidth, codedHeight, target[0], ColorSpace.YUV422_10) };
         } else {
             lumaSize >>= 1;
@@ -221,10 +229,10 @@ public class ProresDecoder implements VideoDecoder {
             }
 
             decodePicture(data, target[fh.topFieldFirst ? 0 : 1], fh.width, fh.height >> 1, codedWidth >> 4,
-                    fh.qMatLuma, fh.qMatChroma, fh.scan, 0);
+                    fh.qMatLuma, fh.qMatChroma, fh.scan, 0, fh.chromaType);
 
             decodePicture(data, target[fh.topFieldFirst ? 1 : 0], fh.width, fh.height >> 1, codedWidth >> 4,
-                    fh.qMatLuma, fh.qMatChroma, fh.scan, 0);
+                    fh.qMatLuma, fh.qMatChroma, fh.scan, 0, fh.chromaType);
 
             return new Picture[] { new Picture(codedWidth, codedHeight >> 1, target[0], ColorSpace.YUV422_10),
                     new Picture(codedWidth, codedHeight >> 1, target[1], ColorSpace.YUV422_10) };
@@ -248,6 +256,7 @@ public class ProresDecoder implements VideoDecoder {
         int flags1 = inp.get();
 
         int frameType = (flags1 >> 2) & 3;
+        int chromaType = (flags1 >> 6) & 3;
 
         int[] scan;
         boolean topFieldFirst = false;
@@ -288,7 +297,7 @@ public class ProresDecoder implements VideoDecoder {
                 - (20 + (hasQMatLuma(flags2) ? 64 : 0) + (hasQMatChroma(flags2) ? 64 : 0)));
 
         return new FrameHeader(frameSize - hdrSize - 8, width, height, frameType, topFieldFirst, scan, qMatLuma,
-                qMatChroma);
+                qMatChroma, chromaType);
     }
 
     static final String readSig(ByteBuffer inp) {
@@ -298,7 +307,7 @@ public class ProresDecoder implements VideoDecoder {
     }
 
     protected void decodePicture(ByteBuffer data, int[][] result, int width, int height, int mbWidth, int[] qMatLuma,
-            int[] qMatChroma, int[] scan, int pictureType) {
+            int[] qMatChroma, int[] scan, int pictureType, int chromaType) {
         ProresConsts.PictureHeader ph = readPictureHeader(data);
 
         // int mbWidth = (width + 15) >> 4;
@@ -311,8 +320,8 @@ public class ProresDecoder implements VideoDecoder {
             while (mbWidth - mbX < sliceMbCount)
                 sliceMbCount >>= 1;
 
-            decodeSlice(data, qMatLuma, qMatChroma, scan, sliceMbCount, mbX, mbY, ph.sliceSizes[i], result, width,
-                    pictureType);
+            decodeSlice(NIOUtils.read(data, ph.sliceSizes[i]), qMatLuma, qMatChroma, scan, sliceMbCount, mbX, mbY,
+                    ph.sliceSizes[i], result, width, pictureType, chromaType);
 
             mbX += sliceMbCount;
             if (mbX == mbWidth) {
@@ -339,23 +348,24 @@ public class ProresDecoder implements VideoDecoder {
     }
 
     private void decodeSlice(ByteBuffer data, int[] qMatLuma, int[] qMatChroma, int[] scan, int sliceMbCount, int mbX,
-            int mbY, short sliceSize, int[][] result, int lumaStride, int pictureType) {
+            int mbY, short sliceSize, int[][] result, int lumaStride, int pictureType, int chromaType) {
 
         int hdrSize = (data.get() & 0xff) >> 3;
         int qScale = clip(data.get() & 0xff, 1, 224);
         qScale = qScale > 128 ? qScale - 96 << 2 : qScale;
         int yDataSize = data.getShort();
         int uDataSize = data.getShort();
-        int vDataSize = sliceSize - uDataSize - yDataSize - hdrSize;
+        int vDataSize = hdrSize > 7 ? data.getShort() : sliceSize - uDataSize - yDataSize - hdrSize;
 
         int[] y = decodeOnePlane(bitstream(data, yDataSize), sliceMbCount << 2, scaleMat(qMatLuma, qScale), scan, mbX,
                 mbY, 0);
-        int[] u = decodeOnePlane(bitstream(data, uDataSize), sliceMbCount << 1, scaleMat(qMatChroma, qScale), scan,
-                mbX, mbY, 1);
-        int[] v = decodeOnePlane(bitstream(data, vDataSize), sliceMbCount << 1, scaleMat(qMatChroma, qScale), scan,
-                mbX, mbY, 2);
+        int chromaBlkCount = (sliceMbCount << chromaType) >> 1;
+        int[] u = decodeOnePlane(bitstream(data, uDataSize), chromaBlkCount, scaleMat(qMatChroma, qScale), scan, mbX,
+                mbY, 1);
+        int[] v = decodeOnePlane(bitstream(data, vDataSize), chromaBlkCount, scaleMat(qMatChroma, qScale), scan, mbX,
+                mbY, 2);
 
-        putSlice(result, lumaStride, mbX, mbY, y, u, v, pictureType == 0 ? 0 : 1, pictureType == 2 ? 1 : 0);
+        putSlice(result, lumaStride, mbX, mbY, y, u, v, pictureType == 0 ? 0 : 1, pictureType == 2 ? 1 : 0, chromaType);
     }
 
     public static final int[] scaleMat(int[] qMatLuma, int qScale) {
@@ -375,14 +385,19 @@ public class ProresDecoder implements VideoDecoder {
     }
 
     protected void putSlice(int[][] result, int lumaStride, int mbX, int mbY, int[] y, int[] u, int[] v, int dist,
-            int shift) {
+            int shift, int chromaType) {
         int mbPerSlice = y.length >> 8;
 
         int chromaStride = lumaStride >> 1;
 
         putLuma(result[0], shift * lumaStride, lumaStride << dist, mbX, mbY, y, mbPerSlice, dist, shift);
-        putChroma(result[1], shift * chromaStride, chromaStride << dist, mbX, mbY, u, mbPerSlice, dist, shift);
-        putChroma(result[2], shift * chromaStride, chromaStride << dist, mbX, mbY, v, mbPerSlice, dist, shift);
+        if (chromaType == 2) {
+            putChroma(result[1], shift * chromaStride, chromaStride << dist, mbX, mbY, u, mbPerSlice, dist, shift);
+            putChroma(result[2], shift * chromaStride, chromaStride << dist, mbX, mbY, v, mbPerSlice, dist, shift);
+        } else {
+            putLuma(result[1], shift * lumaStride, lumaStride << dist, mbX, mbY, u, mbPerSlice, dist, shift);
+            putLuma(result[2], shift * lumaStride, lumaStride << dist, mbX, mbY, v, mbPerSlice, dist, shift);
+        }
     }
 
     private void putLuma(int[] y, int off, int stride, int mbX, int mbY, int[] luma, int mbPerSlice, int dist, int shift) {

@@ -19,5 +19,5 @@ public interface MovieSegment {
 
     long getPos();
 
-    int getDataLen();
+    int getDataLen() throws IOException;
 }

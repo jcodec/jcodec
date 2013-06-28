@@ -80,7 +80,7 @@ public class CachingTrack implements VirtualTrack {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         if (policyFuture != null)
             policyFuture.cancel(false);
         cachedPackets.clear();

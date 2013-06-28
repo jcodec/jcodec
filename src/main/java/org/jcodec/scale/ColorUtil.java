@@ -23,6 +23,8 @@ public class ColorUtil {
                 return new RgbToYuv422(2, 0);
             case YUV444:
                 return null;
+            case YUV444_10:
+                return null;
             }
         case YUV420:
             switch (to) {
@@ -34,14 +36,18 @@ public class ColorUtil {
                 return new Yuv420pToYuv422p(0, 2);
             case YUV444:
                 return null;
+            case YUV444_10:
+                return null;
             }
         case YUV422:
             switch (to) {
             case RGB:
                 return new Yuv422pToRgb(0, 0);
             case YUV420:
-                return null;
+                return new Yuv422pToYuv420p(0, 0);
             case YUV444:
+                return null;
+            case YUV444_10:
                 return null;
             }
         case YUV422_10:
@@ -49,8 +55,32 @@ public class ColorUtil {
             case RGB:
                 return new Yuv422pToRgb(2, 0);
             case YUV420:
-                return null;
+                return new Yuv422pToYuv420p(0, 2);
             case YUV444:
+                return null;
+            case YUV444_10:
+                return null;
+            }
+        case YUV444:
+            switch (to) {
+            case RGB:
+                return new Yuv444pToRgb(0, 0);
+            case YUV420:
+                return new Yuv444pToYuv420p(0, 0);
+            case YUV444:
+                return null;
+            case YUV444_10:
+                return null;
+            }
+        case YUV444_10:
+            switch (to) {
+            case RGB:
+                return new Yuv444pToRgb(2, 0);
+            case YUV420:
+                return new Yuv444pToYuv420p(0, 2);
+            case YUV444:
+                return null;
+            case YUV444_10:
                 return null;
             }
         }

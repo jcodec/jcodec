@@ -110,13 +110,14 @@ public class ProresConsts {
         public int height;
         public int frameType;
         public boolean topFieldFirst;
+        public int chromaType;
 
         public int[] scan;
         public int[] qMatLuma;
         public int[] qMatChroma;
 
         public FrameHeader(int frameSize, int width, int height, int frameType, boolean topFieldFirst, int[] scan, int[] qMatLuma,
-                int[] qMatChroma) {
+                int[] qMatChroma, int chromaType) {
             this.payloadSize = frameSize;
             this.width = width;
             this.height = height;
@@ -125,6 +126,7 @@ public class ProresConsts {
             this.scan = scan;
             this.qMatChroma = qMatChroma;
             this.qMatLuma = qMatLuma;
+            this.chromaType = chromaType;
         }
     }
     

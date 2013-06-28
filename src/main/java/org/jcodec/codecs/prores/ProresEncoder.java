@@ -351,7 +351,7 @@ public class ProresEncoder {
 
         int[] scan = pics.length > 1 ? interlaced_scan : progressive_scan;
         writeFrameHeader(out, new ProresConsts.FrameHeader(0, pics[0].getCroppedWidth(), pics[0].getCroppedHeight()
-                * pics.length, pics.length == 1 ? 0 : 1, true, scan, profile.qmatLuma, profile.qmatChroma));
+                * pics.length, pics.length == 1 ? 0 : 1, true, scan, profile.qmatLuma, profile.qmatChroma, 2));
 
         encodePicture(out, scaledLuma, scaledChroma, scan, pics[0]);
         if (pics.length > 1)

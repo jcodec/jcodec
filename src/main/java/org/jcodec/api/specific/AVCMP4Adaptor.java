@@ -12,6 +12,7 @@ import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,6 +33,10 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     public AVCMP4Adaptor(SampleEntry[] ses) {
         this.ses = ses;
         this.curENo = -1;
+    }
+
+    public AVCMP4Adaptor(AbstractMP4DemuxerTrack vt) {
+        this(((AbstractMP4DemuxerTrack) vt).getSampleEntries());
     }
 
     public Picture decodeFrame(Packet packet, int[][] data) {

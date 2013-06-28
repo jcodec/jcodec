@@ -95,7 +95,7 @@ public class EditedPCMTrack implements VirtualTrack {
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
         src.close();
     }
 
