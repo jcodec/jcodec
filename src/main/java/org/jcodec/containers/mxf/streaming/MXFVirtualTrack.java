@@ -166,4 +166,8 @@ public class MXFVirtualTrack implements VirtualTrack {
             };
         }
     }
+
+    public int getTrackId() {
+        return track.getTrackId();
+    }
 }

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
@@ -23,7 +22,7 @@ import org.jcodec.containers.mxf.read.KLV;
 import org.jcodec.containers.mxf.read.MXFMetadata;
 import org.jcodec.containers.mxf.read.MXFPartition;
 import org.jcodec.containers.mxf.read.MXFUtil;
-import org.jcodec.containers.mxf.read.Sequence;
+import org.jcodec.containers.mxf.read.TimecodeComponent;
 import org.jcodec.containers.mxf.read.Track;
 import org.jcodec.containers.mxf.read.UL;
 
@@ -43,6 +42,9 @@ public class MXFDemuxer {
     private SeekableByteChannel ch;
     private MXFDemuxerTrack[] tracks;
     private List<MXFMetadata> metadata;
+    private int totalFrames;
+    private double duration;
+    private TimecodeComponent timecode;
 
     public MXFDemuxer(SeekableByteChannel ch) throws IOException {
         this.ch = ch;
@@ -50,6 +52,7 @@ public class MXFDemuxer {
         parseHeader(ch);
         findIndex();
         tracks = findTracks();
+        timecode = MXFUtil.findMeta(metadata, TimecodeComponent.class);
     }
 
     private MXFDemuxerTrack[] findTracks() throws IOException {
@@ -97,19 +100,13 @@ public class MXFDemuxer {
         return partitions;
     }
 
+    public TimecodeComponent getTimecode() {
+        return timecode;
+    }
+
     public void parseHeader(SeekableByteChannel ff) throws IOException {
         KLV kl;
-        MXFPartition header = null;
-
-        while ((kl = KLV.readKL(ff)) != null) {
-            if (MXFConst.HEADER_PARTITION_KLV.equals(kl.key)) {
-                ByteBuffer data = NIOUtils.fetchFrom(ff, (int) kl.len);
-                header = MXFPartition.read(kl.key, data, ff.position() - kl.offset, 0);
-                break;
-            } else {
-                ff.position(ff.position() + kl.len);
-            }
-        }
+        MXFPartition header = readHeaderPartition(ff);
 
         metadata = new ArrayList<MXFMetadata>();
 
@@ -140,6 +137,21 @@ public class MXFDemuxer {
         } while (header.getPack().getThisPartition() != 0);
     }
 
+    public static MXFPartition readHeaderPartition(SeekableByteChannel ff) throws IOException {
+        KLV kl;
+        MXFPartition header = null;
+        while ((kl = KLV.readKL(ff)) != null) {
+            if (MXFConst.HEADER_PARTITION_KLV.equals(kl.key)) {
+                ByteBuffer data = NIOUtils.fetchFrom(ff, (int) kl.len);
+                header = MXFPartition.read(kl.key, data, ff.position() - kl.offset, 0);
+                break;
+            } else {
+                ff.position(ff.position() + kl.len);
+            }
+        }
+        return header;
+    }
+
     private MXFMetadata parseMeta(UL ul, ByteBuffer _bb) {
         Class<? extends MXFMetadata> class1 = klMetadataMapping.get(ul);
         if (class1 == null)
@@ -161,8 +173,12 @@ public class MXFDemuxer {
     private void findIndex() {
         indexSegments = new ArrayList<IndexSegment>();
         for (MXFMetadata meta : metadata) {
-            if (meta instanceof IndexSegment)
-                indexSegments.add((IndexSegment) meta);
+            if (meta instanceof IndexSegment) {
+                IndexSegment is = (IndexSegment) meta;
+                indexSegments.add(is);
+                totalFrames += is.getIndexDuration();
+                duration += ((double) is.getIndexEditRateDen() * is.getIndexDuration()) / is.getIndexEditRateNum();
+            }
         }
     }
 
@@ -233,6 +249,14 @@ public class MXFDemuxer {
 
         public boolean isVideo() {
             return video;
+        }
+
+        public double getDuration() {
+            return duration;
+        }
+
+        public int getNumFrames() {
+            return totalFrames;
         }
 
         private void cacheAudioFrameSizes(SeekableByteChannel ch) throws IOException {
@@ -355,13 +379,18 @@ public class MXFDemuxer {
 
         private MXFCodecMapping resolveCodec() {
             for (MXFCodecMapping codec : EnumSet.allOf(MXFConst.MXFCodecMapping.class)) {
-                if (codec.getUl().equals(descriptor.getPictureUl(), 0xff7f) || codec.getUl().equals(descriptor.getSoundUl(), 0xff7f))
+                if (codec.getUl().equals(descriptor.getPictureUl(), 0xff7f)
+                        || codec.getUl().equals(descriptor.getSoundUl(), 0xff7f))
                     return codec;
             }
             System.out.println("Unknown codec: "
                     + (descriptor.getPictureUl() != null ? descriptor.getPictureUl() : descriptor.getSoundUl()));
 
             return null;
+        }
+
+        public int getTrackId() {
+            return track.getTrackId();
         }
     }
 
