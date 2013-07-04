@@ -1,4 +1,4 @@
-package org.jcodec.containers.mxf.read;
+package org.jcodec.containers.mxf.model;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

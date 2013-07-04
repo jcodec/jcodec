@@ -1,6 +1,7 @@
-package org.jcodec.containers.mxf.read;
+package org.jcodec.containers.mxf.model;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -11,8 +12,7 @@ import java.util.Map.Entry;
  * @author The JCodec project
  * 
  */
-public class SourceClip extends MXFMetadataSet {
-    private long duration;
+public class SourceClip extends MXFStructuralComponent {
     private long startPosition;
     private int sourceTrackId;
     private UL sourcePackageUid;
@@ -23,13 +23,14 @@ public class SourceClip extends MXFMetadataSet {
 
     @Override
     protected void read(Map<Integer, ByteBuffer> tags) {
-        for (Entry<Integer, ByteBuffer> entry : tags.entrySet()) {
+        super.read(tags);
+        
+        for (Iterator<Entry<Integer, ByteBuffer>> it = tags.entrySet().iterator(); it.hasNext();) {
+            Entry<Integer, ByteBuffer> entry = it.next();
+            
             ByteBuffer _bb = entry.getValue();
 
             switch (entry.getKey()) {
-            case 0x0202:
-                duration = _bb.getLong();
-                break;
             case 0x1201:
                 startPosition = _bb.getLong();
                 break;
@@ -39,16 +40,16 @@ public class SourceClip extends MXFMetadataSet {
             case 0x1102:
                 sourceTrackId = _bb.getInt();
                 break;
+            default:
+                System.out.println(String.format("Unknown tag [ SourceClip: " + ul + "]: %04x", entry.getKey()));
+                continue;
             }
+            it.remove();
         }
     }
     
     public UL getSourcePackageUid() {
         return sourcePackageUid;
-    }
-
-    public long getDuration() {
-        return duration;
     }
 
     public long getStartPosition() {

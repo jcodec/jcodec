@@ -1,6 +1,7 @@
-package org.jcodec.containers.mxf.read;
+package org.jcodec.containers.mxf.model;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -14,7 +15,7 @@ import java.util.Map.Entry;
  * @author The JCodec project
  * 
  */
-public class IndexSegment extends MXFMetadataSet {
+public class IndexSegment extends MXFInterchangeObject {
     private IndexEntries ie;
     private int editUnitByteCount;
     private DeltaEntries deltaEntries;
@@ -34,7 +35,9 @@ public class IndexSegment extends MXFMetadataSet {
 
     @Override
     protected void read(Map<Integer, ByteBuffer> tags) {
-        for (Entry<Integer, ByteBuffer> entry : tags.entrySet()) {
+        for (Iterator<Entry<Integer, ByteBuffer>> it = tags.entrySet().iterator(); it.hasNext();) {
+            Entry<Integer, ByteBuffer> entry = it.next();
+            
             ByteBuffer _bb = entry.getValue();
 
             switch (entry.getKey()) {
@@ -73,8 +76,10 @@ public class IndexSegment extends MXFMetadataSet {
                 posTableCount = _bb.get() & 0xff;
                 break;
             default:
-                System.out.println(String.format("Unknown index entry: %04x", entry.getKey()));
+                System.out.println(String.format("Unknown tag [IndexSegment: " + ul + "]: %04x", entry.getKey()));
+                continue;
             }
+            it.remove();
         }
     }
 
