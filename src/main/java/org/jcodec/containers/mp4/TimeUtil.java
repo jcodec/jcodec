@@ -19,7 +19,17 @@ public class TimeUtil {
     }
 
     public static long fromMovTime(int movSec) {
-        return ((long)movSec) * 1000L + MOV_TIME_OFFSET;
+      final long longTime;
+      if (movSec < 0) {
+      	longTime = movSec + (1l<<32);
+      } else {
+      	longTime = movSec;
+      }
+     return fromMovTime(longTime);
+    }
+    
+    public static long fromMovTime(long movSec) {
+    	return ((long)movSec) * 1000L + MOV_TIME_OFFSET;
     }
 
     public static int toMovTime(long millis) {
