@@ -97,9 +97,17 @@ public class TrackHeaderBox extends FullBox {
     public int getNo() {
         return trackId;
     }
+    
+    public long getCreated() {
+    	return created;
+    }
 
     public long getDuration() {
-        return duration;
+    	return duration;
+    }
+    
+    public long getModified() {
+    	return modified;
     }
 
     public float getWidth() {
