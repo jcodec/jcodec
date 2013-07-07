@@ -57,8 +57,8 @@ public class MovieHeaderBox extends FullBox {
             timescale = input.getInt();
             duration = input.getInt();
         } else if (version == 1) {
-            created = fromMovTime((int) input.getLong());
-            modified = fromMovTime((int) input.getLong());
+            created = fromMovTime(input.getLong());
+            modified = fromMovTime(input.getLong());
             timescale = input.getInt();
             duration = input.getLong();
         } else {

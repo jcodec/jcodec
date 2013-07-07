@@ -56,8 +56,8 @@ public class TrackHeaderBox extends FullBox {
             created = fromMovTime(input.getInt()); // Creation time
             modified = fromMovTime(input.getInt()); // Modification time
         } else {
-            created = fromMovTime((int) input.getLong());
-            modified = fromMovTime((int) input.getLong());
+            created = fromMovTime(input.getLong());
+            modified = fromMovTime(input.getLong());
         }
         trackId = input.getInt();
         input.getInt();
