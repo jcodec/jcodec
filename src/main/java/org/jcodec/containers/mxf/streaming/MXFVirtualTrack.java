@@ -17,10 +17,12 @@ import org.jcodec.containers.mxf.MXFConst.MXFCodecMapping;
 import org.jcodec.containers.mxf.MXFDemuxer;
 import org.jcodec.containers.mxf.MXFDemuxer.MXFDemuxerTrack;
 import org.jcodec.containers.mxf.MXFDemuxer.MXFPacket;
-import org.jcodec.containers.mxf.read.GenericDescriptor;
-import org.jcodec.containers.mxf.read.KLV;
-import org.jcodec.containers.mxf.read.Track;
-import org.jcodec.containers.mxf.read.UL;
+import org.jcodec.containers.mxf.model.GenericDescriptor;
+import org.jcodec.containers.mxf.model.GenericPictureEssenceDescriptor;
+import org.jcodec.containers.mxf.model.GenericSoundEssenceDescriptor;
+import org.jcodec.containers.mxf.model.KLV;
+import org.jcodec.containers.mxf.model.TimelineTrack;
+import org.jcodec.containers.mxf.model.UL;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.movtool.streaming.tracks.FilePool;
@@ -117,19 +119,23 @@ public class MXFVirtualTrack implements VirtualTrack {
 
     private SampleEntry toSampleEntry(GenericDescriptor d) {
         if (track.isVideo()) {
+            GenericPictureEssenceDescriptor ped = (GenericPictureEssenceDescriptor) d;
 
-            VideoSampleEntry se = MP4Muxer.videoSampleEntry(MP4Util.getFourcc(track.getCodec().getCodec()),
-                    new Size(d.getWidth(), d.getHeight()), "JCodec");
-            se.add(new PixelAspectExt(new Rational((int) ((1000 * d.getArNum() * d.getHeight()) / (d.getArDen() * d
-                    .getWidth())), 1000)));
+            VideoSampleEntry se = MP4Muxer.videoSampleEntry(MP4Util.getFourcc(track.getCodec().getCodec()), new Size(
+                    ped.getDisplayWidth(), ped.getDisplayHeight()), "JCodec");
+            Rational ar = ped.getAspectRatio();
+            se.add(new PixelAspectExt(
+                    new Rational((int) ((1000 * ar.getNum() * ped.getDisplayHeight()) / (ar.getDen() * ped
+                            .getDisplayWidth())), 1000)));
 
             return se;
         } else if (track.isAudio()) {
-            int sampleSize = d.getBitsPerSample() >> 3;
+            GenericSoundEssenceDescriptor sed = (GenericSoundEssenceDescriptor) d;
+            int sampleSize = sed.getQuantizationBits() >> 3;
             MXFCodecMapping codec = track.getCodec();
 
-            return MP4Muxer.audioSampleEntry(sampleSize == 3 ? "in24" : "sowt", 0, sampleSize, d.getChannels(),
-                    d.getSrNum() / d.getSrDen(), codec == MXFCodecMapping.PCM_S16BE ? Endian.BIG_ENDIAN
+            return MP4Muxer.audioSampleEntry(sampleSize == 3 ? "in24" : "sowt", 0, sampleSize, sed.getChannelCount(),
+                    (int) sed.getAudioSamplingRate().asFloat(), codec == MXFCodecMapping.PCM_S16BE ? Endian.BIG_ENDIAN
                             : Endian.LITTLE_ENDIAN);
         }
         throw new RuntimeException("Can't get sample entry");
@@ -156,7 +162,8 @@ public class MXFVirtualTrack implements VirtualTrack {
         }
 
         @Override
-        protected MXFDemuxerTrack createTrack(UL ul, Track track, GenericDescriptor descriptor) throws IOException {
+        protected MXFDemuxerTrack createTrack(UL ul, TimelineTrack track, GenericDescriptor descriptor)
+                throws IOException {
             return new MXFDemuxerTrack(ul, track, descriptor) {
                 @Override
                 public MXFPacket readPacket(long off, int len, long pts, int timescale, int duration, int frameNo)

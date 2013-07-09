@@ -1,6 +1,7 @@
-package org.jcodec.containers.mxf.read;
+package org.jcodec.containers.mxf.model;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -11,19 +12,21 @@ import java.util.Map.Entry;
  * @author The JCodec project
  * 
  */
-public class Sequence extends MXFMetadataSet {
-    private long duration;
-    private UL[] structuralComponentsRefs;
-    private UL dataDefinitionUL;
+public class MXFStructuralComponent extends MXFInterchangeObject {
     
-    public Sequence(UL ul) {
+    private long duration;
+    private UL dataDefinitionUL;
+
+    public MXFStructuralComponent(UL ul) {
         super(ul);
     }
-
+    
     @Override
     protected void read(Map<Integer, ByteBuffer> tags) {
 
-        for (Entry<Integer, ByteBuffer> entry : tags.entrySet()) {
+        for (Iterator<Entry<Integer, ByteBuffer>> it = tags.entrySet().iterator(); it.hasNext();) {
+            Entry<Integer, ByteBuffer> entry = it.next();
+            
             switch (entry.getKey()) {
             case 0x0202:
                 duration = entry.getValue().getLong();
@@ -31,10 +34,11 @@ public class Sequence extends MXFMetadataSet {
             case 0x0201:
                 dataDefinitionUL = UL.read(entry.getValue());
                 break;
-            case 0x1001:
-                structuralComponentsRefs = readULs(entry.getValue());
-                break;
+            default:
+//                System.out.println(String.format("Unknown tag [ MXFStructuralComponent: " + ul + "]: %04x", entry.getKey()));
+                continue;
             }
+            it.remove();
         }
     }
 
@@ -44,9 +48,5 @@ public class Sequence extends MXFMetadataSet {
 
     public UL getDataDefinitionUL() {
         return dataDefinitionUL;
-    }
-
-    public UL[] getStructuralComponentsRefs() {
-        return structuralComponentsRefs;
     }
 }

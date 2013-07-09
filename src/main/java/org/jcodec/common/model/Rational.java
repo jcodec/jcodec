@@ -60,29 +60,29 @@ public class Rational {
     }
 
     public int multiplyS(int val) {
-        return (int)(((long)num * val) / den);
+        return (int) (((long) num * val) / den);
     }
-    
+
     public int divideS(int val) {
-        return (int)(((long)den * val) / num);
+        return (int) (((long) den * val) / num);
     }
-    
+
     public int divideByS(int val) {
         return num / (den * val);
     }
-    
+
     public long multiply(long val) {
         return (num * val) / den;
     }
-    
+
     public long divide(long val) {
         return (den * val) / num;
     }
-    
+
     public Rational flip() {
         return new Rational(den, num);
     }
-    
+
     public static RationalLarge R(long num, long den) {
         return new RationalLarge(num, den);
     }
@@ -106,7 +106,7 @@ public class Rational {
     public boolean equals(Rational other) {
         return num * other.den == other.num * den;
     }
-    
+
     public Rational plus(Rational other) {
         return new Rational(num * other.den + other.num * den, den * other.den);
     }
@@ -145,5 +145,9 @@ public class Rational {
 
     public Rational divideBy(Rational other) {
         return new Rational(num * other.den, den * other.num);
+    }
+
+    public float asFloat() {
+        return (float) num / den;
     }
 }

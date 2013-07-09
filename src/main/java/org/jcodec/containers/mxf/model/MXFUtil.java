@@ -1,4 +1,4 @@
-package org.jcodec.containers.mxf.read;
+package org.jcodec.containers.mxf.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -50,7 +50,7 @@ public class MXFUtil {
     public static <T> List<T> findAllMeta(Collection<MXFMetadata> metadata, Class<T> class1) {
         List result = new ArrayList();
         for (MXFMetadata mxfMetadata : metadata) {
-            if (mxfMetadata.getClass().isAssignableFrom(class1))
+            if (class1.isAssignableFrom(mxfMetadata.getClass()))
                 result.add((T) mxfMetadata);
         }
         return result;

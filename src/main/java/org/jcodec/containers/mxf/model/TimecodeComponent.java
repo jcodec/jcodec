@@ -1,10 +1,18 @@
-package org.jcodec.containers.mxf.read;
+package org.jcodec.containers.mxf.model;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class TimecodeComponent extends MXFMetadataSet {
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
+public class TimecodeComponent extends MXFStructuralComponent {
     private long start;
     private int base;
     private int dropFrame;
@@ -15,7 +23,11 @@ public class TimecodeComponent extends MXFMetadataSet {
 
     @Override
     protected void read(Map<Integer, ByteBuffer> tags) {
-        for (Entry<Integer, ByteBuffer> entry : tags.entrySet()) {
+        super.read(tags);
+        
+        for (Iterator<Entry<Integer, ByteBuffer>> it = tags.entrySet().iterator(); it.hasNext();) {
+            Entry<Integer, ByteBuffer> entry = it.next();
+            
             ByteBuffer _bb = entry.getValue();
 
             switch (entry.getKey()) {
@@ -27,9 +39,12 @@ public class TimecodeComponent extends MXFMetadataSet {
                 break;
             case 0x1503:
                 dropFrame = _bb.get();
-                ;
                 break;
+            default:
+                System.out.println(String.format("Unknown tag [ TimecodeComponent: " + ul + "]: %04x", entry.getKey()));
+                continue;
             }
+            it.remove();
         }
     }
 
