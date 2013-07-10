@@ -542,6 +542,7 @@ public class SliceDecoder {
         }
     }
 
+    // TODO: optimize this crap
     public void put(Picture tgt, Picture decoded, int mbX, int mbY) {
 
         int[] luma = tgt.getPlaneData(0);
