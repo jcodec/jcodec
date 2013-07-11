@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
-import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mkv.Reader;
 
 public class Block {
@@ -78,7 +77,6 @@ public class Block {
                         return;
                     }
                     System.arraycopy(data, currentFramePos, frameData, 0, frameData.length);
-                    NIOUtils.writeTo(ByteBuffer.wrap(frameData), new File(parent, "pos-" + pos + "-lace-" + i + ".frm"));
                     currentFramePos += s;
                 }
 
@@ -98,7 +96,6 @@ public class Block {
                         return;
                     }
                     System.arraycopy(data, currentFramePos, frameData, 0, frameData.length);
-                    NIOUtils.writeTo(ByteBuffer.wrap(frameData), new File(parent, "pos-" + pos + "-lace-" + i + ".frm"));
                     currentFramePos += s;
                 }
 
@@ -117,7 +114,6 @@ public class Block {
                        return;
                    }
                    System.arraycopy(data, index, frameData, 0, frameData.length);
-                   NIOUtils.writeTo(ByteBuffer.wrap(frameData), new File(parent, "pos-" + pos + "-lace-" + i + ".frm"));
                    index += laceSize;
                }
             } else {
@@ -131,7 +127,6 @@ public class Block {
         System.out.println("KeyFrame: " + keyFrame);
         byte[] frameData = new byte[data.limit() - index];
         System.arraycopy(data, index, frameData, 0, frameData.length);
-        NIOUtils.writeTo(ByteBuffer.wrap(frameData), new File(parent, "pos-" + pos + ".frm"));
 
     }
 

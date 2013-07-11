@@ -18,9 +18,13 @@ import org.junit.Test;
 
 public class DateElementTest {
 
+
+    @Test
     public void test() throws IOException {
         MKVTestSuite suite = MKVTestSuite.read();
-        
+        if (!suite.isSuitePresent())
+            Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
+
         FileInputStream inputStream = new FileInputStream(suite.test1);
         SimpleEBMLParser parser = new SimpleEBMLParser(inputStream.getChannel());
         try {

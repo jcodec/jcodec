@@ -1,5 +1,6 @@
 package org.jcodec.containers.mkv;
 
+import static org.jcodec.common.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.Type.Block;
 import static org.jcodec.containers.mkv.Type.BlockGroup;
 
@@ -10,7 +11,6 @@ import java.nio.channels.FileChannel;
 import java.util.List;
 
 import org.jcodec.common.IOUtils;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mkv.ebml.Element;
 import org.jcodec.containers.mkv.ebml.MasterElement;
 import org.jcodec.containers.mkv.ebml.UnsignedIntegerElement;
@@ -24,7 +24,7 @@ public class BlockOrderingTest {
     @Test
     public void testMuxingFixedLacingFrame() throws IOException {
         File file = new File("src/test/resources/mkv/fixed_lacing_simple_block.ebml");
-        byte[] rawFrame = NIOUtils.toArray(NIOUtils.fetchFrom(file));
+        byte[] rawFrame = IOUtils.readFileToByteArray(file);
         BlockElement be = new BlockElement(Type.SimpleBlock.id);
         be.offset = 0x00;
         be.size = 0xC05;
@@ -45,7 +45,7 @@ public class BlockOrderingTest {
     @Test
     public void testMuxingEbmlLacingFrame() throws IOException {
         File file = new File("src/test/resources/mkv/ebml_lacing_block.ebml");
-        byte[] rawFrame = NIOUtils.toArray(NIOUtils.fetchFrom(file));
+        byte[] rawFrame = readFileToByteArray(file);
         BlockElement be = new BlockElement(Type.Block.id);
         be.offset = 0x00;
         be.size = 0xF22;
@@ -66,7 +66,7 @@ public class BlockOrderingTest {
     @Test
     public void testMuxingXiphLacingFrame() throws IOException {
         File file = new File("src/test/resources/mkv/xiph_lacing_block.ebml");
-        byte[] rawFrame = NIOUtils.toArray(NIOUtils.fetchFrom(file));
+        byte[] rawFrame = readFileToByteArray(file);
         BlockElement be = new BlockElement(Type.Block.id);
         be.offset = 0x00;
         be.size = 0x353;
@@ -87,7 +87,7 @@ public class BlockOrderingTest {
     @Test
     public void testMuxingNoLacingFrame() throws IOException {
         File file = new File("src/test/resources/mkv/no_lacing_simple_block.ebml");
-        byte[] rawFrame = NIOUtils.toArray(NIOUtils.fetchFrom(file));
+        byte[] rawFrame = readFileToByteArray(file);
         BlockElement be = new BlockElement(Type.SimpleBlock.id);
         be.offset = 0x00;
         be.size = 0x304;
@@ -106,8 +106,11 @@ public class BlockOrderingTest {
         Assert.assertArrayEquals(rawFrame, be.mux().array());
     }
     
+    @Test
     public void test() throws IOException {
         MKVTestSuite suite = MKVTestSuite.read();
+        if (!suite.isSuitePresent())
+            Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
         System.out.println("Scanning file: " + suite.test1.getAbsolutePath());
 
         FileInputStream inputStream = new FileInputStream(suite.test1);

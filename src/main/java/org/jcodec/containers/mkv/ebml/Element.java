@@ -30,7 +30,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
-import org.jcodec.common.Assert;
+import junit.framework.Assert;
+
 import org.jcodec.containers.mkv.Type;
 
 /**

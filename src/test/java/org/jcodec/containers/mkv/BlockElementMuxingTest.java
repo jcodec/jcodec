@@ -115,8 +115,11 @@ public class BlockElementMuxingTest {
         Assert.assertArrayEquals(new long[]{187, 630, 255, 60, be.size - (187 + 630 + 255 + 60 + be.headerSize) }, sizes);
     }
     
+    @Test
     public void testGetSize() throws Exception {
         MKVTestSuite suite = MKVTestSuite.read();
+        if (!suite.isSuitePresent())
+            Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
         
         System.out.println("Scanning file: " + suite.test1.getAbsolutePath());
 

@@ -1,21 +1,20 @@
 package org.jcodec.containers.mkv;
 
 import static org.jcodec.common.IOUtils.closeQuietly;
+import static org.jcodec.common.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVMuxerTest.tildeExpand;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.jcodec.common.IOUtils;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.Packet;
-import org.jcodec.containers.mkv.MKVDemuxerTest.MKVDemuxer;
-import org.jcodec.containers.mkv.MKVDemuxerTest.MKVDemuxer.AudioTrack;
+import org.jcodec.containers.mkv.MKVDemuxer.AudioTrack;
 import org.jcodec.containers.mkv.elements.BlockElement;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 public class AudioTrackTest {
 
@@ -24,24 +23,26 @@ public class AudioTrackTest {
     private MKVDemuxer dem;
     private boolean showInterlacedBlocks = false;
 
+    @Test
     public void testSoundSamples() throws Exception {
         AudioTrack audio = dem.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
         audio.seekPointer(9);
         
         Packet p = audio.getFrames(1);
-        byte[] audioSample = NIOUtils.toArray(NIOUtils.fetchFrom((tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"))));
+        byte[] audioSample = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
         Assert.assertArrayEquals(audioSample, p.getData().array());
     }
     
+    @Test
     public void testTwoSoundSamples() throws Exception {
         AudioTrack audio = dem.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
         audio.seekPointer(8);
         
         Packet p = audio.getFrames(2);
-        byte[] sample08 = NIOUtils.toArray(NIOUtils.fetchFrom(tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3")));
-        byte[] sample09 = NIOUtils.toArray(NIOUtils.fetchFrom(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3")));
+        byte[] sample08 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3"));
+        byte[] sample09 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
         byte[] twoSamples = new byte[sample08.length+sample09.length];
         System.arraycopy(sample08, 0, twoSamples, 0, sample08.length);
         System.arraycopy(sample09, 0, twoSamples, sample08.length, sample09.length);
@@ -51,6 +52,8 @@ public class AudioTrackTest {
     @Before
     public void setUp() throws FileNotFoundException, IOException {
         MKVTestSuite suite = MKVTestSuite.read();
+        if (!suite.isSuitePresent())
+            Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
         FileInputStream inputStream = new FileInputStream(suite.test1);
         par = new SimpleEBMLParser(inputStream .getChannel());
         try {

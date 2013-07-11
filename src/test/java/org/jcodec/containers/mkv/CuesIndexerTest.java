@@ -1,5 +1,6 @@
 package org.jcodec.containers.mkv;
 
+import static org.jcodec.common.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.CuesIndexer.CuePointMock.make;
 
 import java.io.File;
@@ -9,7 +10,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
 import org.jcodec.common.IOUtils;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mkv.CuesIndexer.CuePointMock;
 import org.jcodec.containers.mkv.ebml.Element;
 import org.jcodec.containers.mkv.ebml.MasterElement;
@@ -23,7 +23,7 @@ public class CuesIndexerTest {
     @Test
     public void test() throws IOException {
         File file = new File("src/test/resources/mkv/cues.ebml");
-        byte[] rawCue = NIOUtils.toArray(NIOUtils.fetchFrom(file));
+        byte[] rawCue = readFileToByteArray(file);
         CuesIndexer indexer = new CuesIndexer(0, 1);
         indexer.add(make(new byte[] { 0x00, 0x01 }, 0, 1000));
         indexer.add(make(new byte[] { 0x00, 0x02 }, 1209, 2000));
@@ -34,8 +34,11 @@ public class CuesIndexerTest {
         Assert.assertArrayEquals(rawCue, bb.array());
     }
 
+    @Test
     public void testMock() throws IOException {
         MKVTestSuite suite = MKVTestSuite.read();
+        if (!suite.isSuitePresent())
+            Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
         FileInputStream inputStream = new FileInputStream(suite.test5);
         FileChannel iFS = inputStream.getChannel();
         SimpleEBMLParser p = new SimpleEBMLParser(iFS);

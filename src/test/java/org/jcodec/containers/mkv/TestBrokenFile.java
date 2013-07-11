@@ -6,12 +6,18 @@ import java.nio.channels.FileChannel;
 import org.jcodec.containers.mkv.ebml.Element;
 import org.jcodec.containers.mkv.ebml.MasterElement;
 import org.jcodec.containers.mkv.ebml.StringElement;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestBrokenFile {
 
+
+    @Test
     public void test() throws Exception {
         MKVTestSuite suite = MKVTestSuite.read();
+        if (!suite.isSuitePresent())
+            Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
+
         Element level0 = null;
         Element level1 = null;
         Element level2 = null;

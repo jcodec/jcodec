@@ -173,11 +173,11 @@ public class MKVRemuxer {
         info.addChildElement(dateElem);
 
         StringElement writingAppElem = (StringElement) Type.createElementByType(Type.WritingApp);
-        writingAppElem.set("Matroska Muxer v0.1a");
+        writingAppElem.set("JCodec v0.1.0");
         info.addChildElement(writingAppElem);
 
         StringElement muxingAppElem = (StringElement) Type.createElementByType(Type.MuxingApp);
-        muxingAppElem.set("JCodec v0.1.0");
+        muxingAppElem.set("JCodec MKVRemuxer v0.1a");
         info.addChildElement(muxingAppElem);
 
         return info;

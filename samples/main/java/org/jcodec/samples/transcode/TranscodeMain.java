@@ -10,6 +10,7 @@ import static org.jcodec.common.model.Unit.SEC;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -34,8 +35,11 @@ import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.codecs.prores.ProresToThumb2x2;
+import org.jcodec.codecs.vp8.VP8Decoder;
 import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
@@ -43,6 +47,11 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mkv.MKVDemuxer;
+import org.jcodec.containers.mkv.MKVDemuxer.VideoTrack;
+import org.jcodec.containers.mkv.MKVMuxer;
+import org.jcodec.containers.mkv.MKVMuxer.MKVMuxerTrack;
+import org.jcodec.containers.mkv.elements.BlockElement;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4DemuxerException;
 import org.jcodec.containers.mp4.MP4Packet;
@@ -51,9 +60,9 @@ import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.AWTUtil;
@@ -108,6 +117,154 @@ public class TranscodeMain {
             avc2prores(args[1], args[2], false);
         } else if ("avcraw2prores".equals(args[0])) {
             avc2prores(args[1], args[2], true);
+        } else if ("png2mkv".equals(args[0])) {
+            png2mkv(args[1], args[2]);
+        } else if ("mkv2png".equals(args[0])){
+            mkv2png(args[1], args[2]);
+        } else if ("webm2png".equals(args[0])) {
+            webm2png(args[1], args[2]);
+        }
+    }
+    
+    private static void webm2png(String in, String out) throws IOException {
+        File file = new File(in);
+        if (!file.exists()) {
+            System.out.println("Input file doesn't exist");
+            return;
+        }
+
+        FileInputStream inputStream = new FileInputStream(file);
+        try {
+            MKVDemuxer demux = MKVDemuxer.getDemuxer(inputStream.getChannel());
+
+            VP8Decoder decoder = new VP8Decoder();
+            Transform transform = new Yuv420pToRgb(0, 0);
+
+            VideoTrack inTrack = demux.getVideoTrack();
+
+            Picture rgb = Picture.create((int)inTrack.pixelWidth, (int)inTrack.pixelHeight, ColorSpace.RGB);
+            BufferedImage bi = new BufferedImage((int)inTrack.pixelWidth, (int)inTrack.pixelHeight, BufferedImage.TYPE_3BYTE_BGR);
+
+            Packet inFrame;
+            int totalFrames = (int) inTrack.getFrameCount();
+            for (int i = 1; (inFrame = inTrack.getFrames(1)) != null && i <= 200; i++) {
+                if (!inFrame.isKeyFrame())
+                    continue;
+                
+                decoder.decode(inFrame.getData());
+                Picture pic =  decoder.getPicture();
+                if (bi == null)
+                    bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+                if (rgb == null)
+                    rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
+                transform.transform(pic, rgb);
+                AWTUtil.toBufferedImage(rgb, bi);
+                ImageIO.write(bi, "png", new File(format(out, i++)));
+
+                if (i % 100 == 0)
+                    System.out.println((i * 100 / totalFrames) + "%");
+            }
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+    }
+
+    private static void png2mkv(String pattern, String out) throws IOException {
+        FileOutputStream fos = new FileOutputStream(tildeExpand(out));
+        FileChannelWrapper sink = null;
+        try {
+            sink = new FileChannelWrapper(fos.getChannel());
+            MKVMuxer muxer = new MKVMuxer(sink);
+
+            H264Encoder encoder = new H264Encoder();
+            RgbToYuv420 transform = new RgbToYuv420(0, 0);
+
+            MKVMuxerTrack videoTrack = null;
+            int i;
+            for (i = 1;; i++) {
+                File nextImg = tildeExpand(format(pattern, i));
+                if (!nextImg.exists())
+                    break;
+                BufferedImage rgb = ImageIO.read(nextImg);
+
+                if (videoTrack == null) {
+                    videoTrack = muxer.addVideoTrack(new Size(rgb.getWidth(), rgb.getHeight()), "V_MPEG4/ISO/AVC");
+                    videoTrack.setTgtChunkDuration(Rational.ONE, SEC);
+                }
+                Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);
+                transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
+                ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
+
+                ByteBuffer ff = encoder.encodeFrame(buf, yuv);
+
+                BlockElement se = BlockElement.keyFrame(videoTrack.trackId, i-1, ff.array());
+                videoTrack.addSampleEntry(se);
+            }
+            if (i == 1) {
+                System.out.println("Image sequence not found");
+                return;
+            }
+            muxer.mux();
+        } finally {
+            IOUtils.closeQuietly(fos);
+            if (sink != null)
+                sink.close();
+            
+        }
+    }
+    
+    public static File tildeExpand(String path) {
+        if (path.startsWith("~")) {
+            path = path.replaceFirst("~", System.getProperty("user.home"));
+        }
+        return new File(path);
+    }
+
+    private static void mkv2png(String in, String out) throws IOException {
+        File file = new File(in);
+        if (!file.exists()) {
+            System.out.println("Input file doesn't exist");
+            return;
+        }
+
+        FileInputStream inputStream = new FileInputStream(file);
+        try {
+            MKVDemuxer demux = MKVDemuxer.getDemuxer(inputStream.getChannel());
+
+            H264Decoder decoder = new H264Decoder();
+            Transform transform = new Yuv420pToRgb(0, 0);
+
+            VideoTrack inTrack = demux.getVideoTrack();
+
+            
+            Picture target1 = Picture.create(((int)inTrack.pixelWidth + 15) & ~0xf, ((int)inTrack.pixelHeight + 15) & ~0xf, ColorSpace.YUV420);
+            Picture rgb = Picture.create((int)inTrack.pixelWidth, (int)inTrack.pixelHeight, ColorSpace.RGB);
+            ByteBuffer _out = ByteBuffer.allocate((int)inTrack.pixelWidth * (int)inTrack.pixelHeight * 6);
+            BufferedImage bi = new BufferedImage((int)inTrack.pixelWidth, (int)inTrack.pixelHeight, BufferedImage.TYPE_3BYTE_BGR);
+            AvcCBox avcC = new AvcCBox();
+            avcC.parse(inTrack.codecState);
+
+            decoder.addSps(avcC.getSpsList());
+            decoder.addPps(avcC.getPpsList());
+
+            Packet inFrame;
+            int totalFrames = (int) inTrack.getFrameCount();
+            for (int i = 1; (inFrame = inTrack.getFrames(1)) != null && i <= 200; i++) {
+                Picture buf = Picture.create(1920, 1088, ColorSpace.YUV422_10);
+                Picture pic = decoder.decodeFrame(inFrame.getData(), buf.getData());
+                if (bi == null)
+                    bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+                if (rgb == null)
+                    rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
+                transform.transform(pic, rgb);
+                AWTUtil.toBufferedImage(rgb, bi);
+                ImageIO.write(bi, "png", new File(format(out, i++)));
+
+                if (i % 100 == 0)
+                    System.out.println((i * 100 / totalFrames) + "%");
+            }
+        } finally {
+            IOUtils.closeQuietly(inputStream);
         }
     }
 
