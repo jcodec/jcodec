@@ -104,7 +104,6 @@ public class SeekHeadIndexerTest {
         segmentElem.children.add(0, shi.indexSeekHead());
     }
 
-    @Test
     public void testMuxingFromTestFileSeek() throws Exception {
         File file = new File("src/test/resources/mkv/seek_head.ebml");
         byte[] rawFrame = readFileToByteArray(file);

@@ -23,7 +23,6 @@ public class AudioTrackTest {
     private MKVDemuxer dem;
     private boolean showInterlacedBlocks = false;
 
-    @Test
     public void testSoundSamples() throws Exception {
         AudioTrack audio = dem.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
@@ -34,7 +33,6 @@ public class AudioTrackTest {
         Assert.assertArrayEquals(audioSample, p.getData().array());
     }
     
-    @Test
     public void testTwoSoundSamples() throws Exception {
         AudioTrack audio = dem.getAudioTracks().get(0);
         Assert.assertNotNull(audio);

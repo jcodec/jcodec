@@ -12,7 +12,6 @@ import org.junit.Test;
 public class TestBrokenFile {
 
 
-    @Test
     public void test() throws Exception {
         MKVTestSuite suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())

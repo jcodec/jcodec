@@ -19,7 +19,6 @@ import org.junit.Test;
 public class DateElementTest {
 
 
-    @Test
     public void test() throws IOException {
         MKVTestSuite suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())

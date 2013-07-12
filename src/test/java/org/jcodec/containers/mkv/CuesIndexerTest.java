@@ -34,7 +34,6 @@ public class CuesIndexerTest {
         Assert.assertArrayEquals(rawCue, bb.array());
     }
 
-    @Test
     public void testMock() throws IOException {
         MKVTestSuite suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())

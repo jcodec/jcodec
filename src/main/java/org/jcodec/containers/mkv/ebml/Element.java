@@ -19,19 +19,12 @@
  */
 package org.jcodec.containers.mkv.ebml;
 
-/*
- * Element.java
- *
- * Created on November 19, 2002, 9:11 PM
- */
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
-import junit.framework.Assert;
-
+import org.jcodec.common.Assert;
 import org.jcodec.containers.mkv.Type;
 
 /**

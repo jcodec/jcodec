@@ -115,7 +115,6 @@ public class BlockElementMuxingTest {
         Assert.assertArrayEquals(new long[]{187, 630, 255, 60, be.size - (187 + 630 + 255 + 60 + be.headerSize) }, sizes);
     }
     
-    @Test
     public void testGetSize() throws Exception {
         MKVTestSuite suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())

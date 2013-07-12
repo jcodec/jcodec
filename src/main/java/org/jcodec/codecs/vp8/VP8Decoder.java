@@ -15,11 +15,10 @@ import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import junit.framework.Assert;
-
 import org.jcodec.codecs.vp8.Macroblock.Subblock;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
+import org.jcodec.common.Assert;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 

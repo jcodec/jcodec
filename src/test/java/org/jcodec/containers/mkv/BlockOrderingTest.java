@@ -106,7 +106,6 @@ public class BlockOrderingTest {
         Assert.assertArrayEquals(rawFrame, be.mux().array());
     }
     
-    @Test
     public void test() throws IOException {
         MKVTestSuite suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())

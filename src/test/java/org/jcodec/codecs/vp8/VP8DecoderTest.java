@@ -32,7 +32,6 @@ public class VP8DecoderTest {
         ImageIO.write(JCodecUtil.toBufferedImage(p), "png", MKVMuxerTest.tildeExpand("~/decoded.pic.png"));
     }
     
-    @Test
     public void pysch() throws Exception {
         int mbWidth = 4;
         int mbHeight = 2;

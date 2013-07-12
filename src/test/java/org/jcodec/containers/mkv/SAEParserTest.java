@@ -28,7 +28,6 @@ public class SAEParserTest {
             Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
     }
 
-    @Test
     public void test() throws IOException {
         System.out.println("Scanning file: " + suite.test1.getAbsolutePath());
 
@@ -38,7 +37,6 @@ public class SAEParserTest {
         IOUtils.closeQuietly(fileInputStream);
     }
 
-    @Test
     public void testAll() throws IOException {
         for (File aFile : suite.allTests()) {
             System.out.println("Scanning file: " + aFile.getAbsolutePath());
@@ -55,7 +53,6 @@ public class SAEParserTest {
         }
     }
 
-    @Test
     public void testFind() throws IOException {
         System.out.println("Scanning file: " + suite.test5.getAbsolutePath());
         FileInputStream stream = null;
