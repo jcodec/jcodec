@@ -28,59 +28,35 @@ public class VPXBitstream {
     }
 
     public void encodeCoeffsWHT(VPxBooleanEncoder bc, int[] coeffs, int mbX) {
-        fastZigzag(coeffs);
         int nCoeff = fastCountCoeffWHT(coeffs);
-        encodeCoeffs(bc, coeffs, 0, nCoeff, 1, (whtNzLeft > 0 ? 1 : 0) + (whtNzTop[mbX] > 0 ? 1 : 0));
+        encodeCoeffs(bc, coeffs, 0, nCoeff, 1, (mbX == 0 || whtNzLeft <= 0 ? 0 : 1) + (whtNzTop[mbX] > 0 ? 1 : 0));
         whtNzLeft = nCoeff;
         whtNzTop[mbX] = nCoeff;
     }
 
     public void encodeCoeffsDCT15(VPxBooleanEncoder bc, int[] coeffs, int mbX, int blkX, int blkY) {
-        fastZigzag(coeffs);
         int nCoeff = countCoeff(coeffs, 16);
         int blkAbsX = (mbX << 2) + blkX;
-        encodeCoeffs(bc, coeffs, 1, nCoeff, 0, (dctNzLeft[0][blkY] > 0 ? 1 : 0) + (dctNzTop[0][blkAbsX] > 0 ? 1 : 0));
-        dctNzLeft[0][blkY] = nCoeff - 1;
-        dctNzTop[0][blkAbsX] = nCoeff - 1;
+        encodeCoeffs(bc, coeffs, 1, nCoeff, 0, (blkAbsX == 0 || dctNzLeft[0][blkY] <= 0 ? 0 : 1) + (dctNzTop[0][blkAbsX] > 0 ? 1 : 0));
+        dctNzLeft[0][blkY] = Math.max(nCoeff - 1, 0);
+        dctNzTop[0][blkAbsX] = Math.max(nCoeff - 1, 0);
     }
 
     public void encodeCoeffsDCT16(VPxBooleanEncoder bc, int[] coeffs, int mbX, int blkX, int blkY) {
-        fastZigzag(coeffs);
         int nCoeff = countCoeff(coeffs, 16);
         int blkAbsX = (mbX << 2) + blkX;
-        encodeCoeffs(bc, coeffs, 0, nCoeff, 3, (dctNzLeft[0][blkY] > 0 ? 1 : 0) + (dctNzTop[0][blkAbsX] > 0 ? 1 : 0));
+        encodeCoeffs(bc, coeffs, 0, nCoeff, 3, (blkAbsX == 0 || dctNzLeft[0][blkY] <= 0 ? 0 : 1) + (dctNzTop[0][blkAbsX] > 0 ? 1 : 0));
         dctNzLeft[0][blkY] = nCoeff;
         dctNzTop[0][blkAbsX] = nCoeff;
     }
 
     public void encodeCoeffsDCTUV(VPxBooleanEncoder bc, int[] coeffs, int comp, int mbX, int blkX, int blkY) {
-        fastZigzag(coeffs);
         int nCoeff = countCoeff(coeffs, 16);
         int blkAbsX = (mbX << 1) + blkX;
-        encodeCoeffs(bc, coeffs, 0, nCoeff, 2, (dctNzLeft[comp][blkY] > 0 ? 1 : 0)
+        encodeCoeffs(bc, coeffs, 0, nCoeff, 2, (blkAbsX == 0 || dctNzLeft[comp][blkY] <= 0 ? 0 : 1)
                 + (dctNzTop[comp][blkAbsX] > 0 ? 1 : 0));
         dctNzLeft[comp][blkY] = nCoeff;
         dctNzTop[comp][blkAbsX] = nCoeff;
-    }
-
-    private void fastZigzag(int[] coeffs) {
-        int tmp = coeffs[5];
-        coeffs[5] = coeffs[2];
-        coeffs[2] = coeffs[4];
-        coeffs[4] = tmp;
-
-        tmp = coeffs[9];
-        coeffs[9] = coeffs[12];
-        coeffs[12] = coeffs[7];
-        coeffs[7] = coeffs[6];
-        coeffs[6] = coeffs[3];
-        coeffs[3] = coeffs[8];
-        coeffs[8] = tmp;
-
-        tmp = coeffs[11];
-        coeffs[11] = coeffs[10];
-        coeffs[10] = coeffs[13];
-        coeffs[13] = tmp;
     }
 
     /**
@@ -93,7 +69,8 @@ public class VPXBitstream {
     public void encodeCoeffs(VPxBooleanEncoder bc, int[] coeffs, int firstCoeff, int nCoeff, int blkType, int ctx) {
         boolean prevZero = false;
 
-        for (int i = firstCoeff; i < nCoeff; i++) {
+        int i;
+        for (i = firstCoeff; i < nCoeff; i++) {
             int[] probs = tokenBinProbs[blkType][coeffBandMapping[i]][ctx];
 
             int coeffAbs = MathUtil.abs(coeffs[i]);
@@ -161,7 +138,7 @@ public class VPXBitstream {
             prevZero = coeffAbs == 0;
         }
         if (nCoeff < 16) {
-            int[] probs = tokenBinProbs[blkType][coeffBandMapping[nCoeff]][ctx];
+            int[] probs = tokenBinProbs[blkType][coeffBandMapping[i]][ctx];
             bc.writeBit(probs[0], 0);
         }
     }

@@ -1,7 +1,5 @@
 package org.jcodec.codecs.vpx;
 
-import static org.jcodec.codecs.h264.H264Const.BLK_X;
-import static org.jcodec.codecs.h264.H264Const.BLK_Y;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import java.awt.image.BufferedImage;
@@ -11,11 +9,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
-import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
@@ -37,6 +35,7 @@ public class VP8Encoder {
     private int[][] leftRow;
     private int[][] topLine;
     private VPXQuantizer quantizer;
+    private int[] tmp = new int[16];
 
     public ByteBuffer encodeFrame(Picture pic, ByteBuffer _buf) {
         ByteBuffer out = _buf.duplicate();
@@ -46,6 +45,9 @@ public class VP8Encoder {
         bitstream = new VPXBitstream(VPXConst.tokenDefaultBinProbs, mbWidth);
         leftRow = new int[][] { new int[16], new int[8], new int[8] };
         topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
+        initValue(leftRow, 129);
+        initValue(topLine, 127);
+
         quantizer = new VPXQuantizer();
 
         Picture outMB = Picture.create(16, 16, ColorSpace.YUV420);
@@ -69,8 +71,7 @@ public class VP8Encoder {
                 boolEnc.writeBit(163, 0);
 
                 // Chroma mode DC
-                boolEnc.writeBit(142, 1);
-                boolEnc.writeBit(114, 0);
+                boolEnc.writeBit(142, 0);
             }
         }
         boolEnc.stop();
@@ -79,6 +80,8 @@ public class VP8Encoder {
 
         // MB residuals
         for (int mbY = 0; mbY < mbHeight; mbY++) {
+            initValue(leftRow, 129);
+
             for (int mbX = 0; mbX < mbWidth; mbX++) {
                 luma(pic, mbX, mbY, boolEnc, qp, outMB);
                 chroma(pic, mbX, mbY, boolEnc, qp, outMB);
@@ -91,6 +94,12 @@ public class VP8Encoder {
         writeHeader(out.duplicate(), firstPart);
 
         return out;
+    }
+
+    private void initValue(int[][] leftRow2, int val) {
+        Arrays.fill(leftRow2[0], val);
+        Arrays.fill(leftRow2[1], val);
+        Arrays.fill(leftRow2[2], val);
     }
 
     private void writeHeader(ByteBuffer duplicate, int firstPart) {
@@ -170,7 +179,7 @@ public class VP8Encoder {
     private void luma(Picture pic, int mbX, int mbY, VPxBooleanEncoder out, int qp, Picture outMB) {
         int x = mbX << 4;
         int y = mbY << 4;
-        int[][] ac = transform(pic, 0, qp, 0, 0, x, y);
+        int[][] ac = transform(pic, 0, qp, x, y);
         int[] dc = extractDC(ac);
         writeLumaDC(mbX, mbY, out, qp, dc);
         writeLumaAC(mbX, mbY, out, ac, qp);
@@ -182,78 +191,78 @@ public class VP8Encoder {
     private void writeLumaAC(int mbX, int mbY, VPxBooleanEncoder out, int[][] ac, int qp) {
         for (int i = 0; i < 16; i++) {
             quantizer.quantizeY(ac[i], qp);
-            bitstream.encodeCoeffsDCT15(out, ac[i], mbX, i & 3, i >> 2);
+            bitstream.encodeCoeffsDCT15(out, zigzag(ac[i], tmp), mbX, i & 3, i >> 2);
         }
     }
 
     private void writeLumaDC(int mbX, int mbY, VPxBooleanEncoder out, int qp, int[] dc) {
+        VPXDCT.walsh4x4(dc);
         quantizer.quantizeY2(dc, qp);
-        bitstream.encodeCoeffsWHT(out, dc, mbX);
+        bitstream.encodeCoeffsWHT(out, zigzag(dc, tmp), mbX);
     }
 
     private void writeChroma(int comp, int mbX, int mbY, VPxBooleanEncoder boolEnc, int[][] ac, int qp) {
         for (int i = 0; i < 4; i++) {
             quantizer.quantizeUV(ac[i], qp);
-            bitstream.encodeCoeffsDCT16(boolEnc, ac[i], mbX, i & 1, i >> 1);
+            bitstream.encodeCoeffsDCTUV(boolEnc, zigzag(ac[i], tmp), comp, mbX, i & 1, i >> 1);
         }
+    }
+
+    private int[] zigzag(int[] zz, int[] tmp2) {
+        for (int i = 0; i < 16; i++)
+            tmp2[i] = zz[VPXConst.zigzag[i]];
+        return tmp2;
     }
 
     private void chroma(Picture pic, int mbX, int mbY, VPxBooleanEncoder boolEnc, int qp, Picture outMB) {
         int x = mbX << 3;
         int y = mbY << 3;
-        int[][] ac1 = transformChroma(pic, 1, qp, x, y, outMB);
-        int[][] ac2 = transformChroma(pic, 2, qp, x, y, outMB);
+        int chromaPred1 = chromaPredBlk(1, x, y);
+        int chromaPred2 = chromaPredBlk(2, x, y);
+        
+        int[][] ac1 = transformChroma(pic, 1, qp, x, y, outMB, chromaPred1);
+        int[][] ac2 = transformChroma(pic, 2, qp, x, y, outMB, chromaPred2);
 
         writeChroma(1, mbX, mbY, boolEnc, ac1, qp);
         writeChroma(2, mbX, mbY, boolEnc, ac2, qp);
 
         restorePlaneChroma(ac1, qp);
-        putChroma(outMB.getData()[1], 1, x, y, ac1);
+        putChroma(outMB.getData()[1], 1, x, y, ac1, chromaPred1);
         restorePlaneChroma(ac2, qp);
-        putChroma(outMB.getData()[2], 2, x, y, ac2);
+        putChroma(outMB.getData()[2], 2, x, y, ac2, chromaPred2);
     }
 
-    private int[][] transformChroma(Picture pic, int comp, int qp, int x, int y, Picture outMB) {
+    private int[][] transformChroma(Picture pic, int comp, int qp, int x, int y, Picture outMB, int chromaPred) {
         int[][] ac = new int[4][16];
+        
+        for (int blk = 0; blk < ac.length; blk++) {
 
-        takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x, y, ac[0],
-                chromaPredBlk0(comp, x, y));
-        CoeffTransformer.fdct4x4(ac[0]);
-
-        takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + 4, y, ac[1],
-                chromaPredBlk1(comp, x, y));
-        CoeffTransformer.fdct4x4(ac[1]);
-
-        takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x, y + 4, ac[2],
-                chromaPredBlk2(comp, x, y));
-        CoeffTransformer.fdct4x4(ac[2]);
-
-        takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + 4, y + 4, ac[3],
-                chromaPredBlk3(comp, x, y));
-        CoeffTransformer.fdct4x4(ac[3]);
+            int blkOffX = (blk & 1) << 2;
+            int blkOffY = (blk >> 1) << 2;
+            takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + blkOffX, y
+                    + blkOffY, ac[blk], chromaPred);
+            VPXDCT.fdct4x4(ac[blk]);
+        }
 
         return ac;
     }
 
-    private void putChroma(int[] mb, int comp, int x, int y, int[][] ac) {
-        putBlk(mb, chromaPredBlk0(comp, x, y), ac[0], 3, 0, 0);
-
-        putBlk(mb, chromaPredBlk1(comp, x, y), ac[1], 3, 4, 0);
-
-        putBlk(mb, chromaPredBlk2(comp, x, y), ac[2], 3, 0, 4);
-
-        putBlk(mb, chromaPredBlk3(comp, x, y), ac[3], 3, 4, 4);
+    private void putChroma(int[] mb, int comp, int x, int y, int[][] ac, int chromaPred) {
+        for (int blk = 0; blk < 4; blk++)
+            putBlk(mb, chromaPred, ac[blk], 3, (blk & 1) << 2, (blk >> 1) << 2);
     }
 
     private final int chromaPredOne(int[] pix, int x) {
-        return (pix[x] + pix[x + 1] + pix[x + 2] + pix[x + 3] + 2) >> 2;
+        return (pix[x] + pix[x + 1] + pix[x + 2] + pix[x + 3] + pix[x + 4] + pix[x + 5] + pix[x + 6] + pix[x + 7] + 4) >> 3;
     }
 
     private final int chromaPredTwo(int[] pix1, int[] pix2, int x, int y) {
-        return (pix1[x] + pix1[x + 1] + pix1[x + 2] + pix1[x + 3] + pix2[y] + pix2[y + 1] + pix2[y + 2] + pix2[y + 3] + 4) >> 3;
+        return (pix1[x] + pix1[x + 1] + pix1[x + 2] + pix1[x + 3] + pix1[x + 4] + pix1[x + 5] + pix1[x + 6]
+                + pix1[x + 7] + pix2[y] + pix2[y + 1] + pix2[y + 2] + pix2[y + 3] + pix2[y + 4] + pix2[y + 5]
+                + pix2[y + 6] + pix2[y + 7] + 8) >> 4;
     }
 
-    private int chromaPredBlk0(int comp, int x, int y) {
+    private int chromaPredBlk(int comp, int x, int y) {
         int predY = y & 0x7;
         if (x != 0 && y != 0)
             return chromaPredTwo(leftRow[comp], topLine[comp], predY, x);
@@ -265,41 +274,11 @@ public class VP8Encoder {
             return 128;
     }
 
-    private int chromaPredBlk1(int comp, int x, int y) {
-        int predY = y & 0x7;
-        if (y != 0)
-            return chromaPredOne(topLine[comp], x + 4);
-        else if (x != 0)
-            return chromaPredOne(leftRow[comp], predY);
-        else
-            return 128;
-    }
-
-    private int chromaPredBlk2(int comp, int x, int y) {
-        int predY = y & 0x7;
-        if (x != 0)
-            return chromaPredOne(leftRow[comp], predY + 4);
-        else if (y != 0)
-            return chromaPredOne(topLine[comp], x);
-        else
-            return 128;
-    }
-
-    private int chromaPredBlk3(int comp, int x, int y) {
-        int predY = y & 0x7;
-        if (x != 0 && y != 0)
-            return chromaPredTwo(leftRow[comp], topLine[comp], predY + 4, x + 4);
-        else if (x != 0)
-            return chromaPredOne(leftRow[comp], predY + 4);
-        else if (y != 0)
-            return chromaPredOne(topLine[comp], x + 4);
-        else
-            return 128;
-    }
-
     private void putLuma(int[] planeData, int pred, int[][] ac, int log2stride) {
         for (int blk = 0; blk < ac.length; blk++) {
-            putBlk(planeData, pred, ac[blk], log2stride, BLK_X[blk], BLK_Y[blk]);
+            int blkOffX = (blk & 3) << 2;
+            int blkOffY = blk & ~3;
+            putBlk(planeData, pred, ac[blk], log2stride, blkOffX, blkOffY);
         }
     }
 
@@ -318,16 +297,17 @@ public class VP8Encoder {
     private void restorePlaneChroma(int[][] ac, int qp) {
         for (int i = 0; i < 4; i++) {
             quantizer.dequantizeUV(ac[i], qp);
-            CoeffTransformer.idct4x4(ac[i]);
+            VPXDCT.idct4x4(ac[i]);
         }
     }
 
     private void restorePlaneLuma(int[] dc, int[][] ac, int qp) {
         quantizer.dequantizeY2(dc, qp);
+        VPXDCT.iwalsh4x4(dc);
         for (int i = 0; i < 16; i++) {
             quantizer.dequantizeY(ac[i], qp);
             ac[i][0] = dc[i];
-            CoeffTransformer.idct4x4(ac[i]);
+            VPXDCT.idct4x4(ac[i]);
         }
     }
 
@@ -335,7 +315,6 @@ public class VP8Encoder {
         int[] dc = new int[ac.length];
         for (int i = 0; i < ac.length; i++) {
             dc[i] = ac[i][0];
-            ac[i][0] = 0;
         }
         return dc;
     }
@@ -352,15 +331,17 @@ public class VP8Encoder {
         return (ArrayUtil.sum(leftRow[0]) + ArrayUtil.sum(topLine[0], x, 16) + 16) >> 5;
     }
 
-    private int[][] transform(Picture pic, int comp, int qp, int cw, int ch, int x, int y) {
+    private int[][] transform(Picture pic, int comp, int qp, int x, int y) {
         int dcc = lumaDCPred(x, y);
 
-        int[][] ac = new int[16 >> (cw + ch)][16];
+        int[][] ac = new int[16][16];
         for (int i = 0; i < ac.length; i++) {
             int[] coeff = ac[i];
-            takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + BLK_X[i], y
-                    + BLK_Y[i], coeff, dcc);
-            CoeffTransformer.fdct4x4(coeff);
+            int blkOffX = (i & 3) << 2;
+            int blkOffY = i & ~3;
+            takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + blkOffX, y
+                    + blkOffY, coeff, dcc);
+            VPXDCT.fdct4x4(coeff);
         }
         return ac;
     }
@@ -406,45 +387,5 @@ public class VP8Encoder {
             for (; j < x + 4; j++)
                 coeff[outOff++] = planeData[off] - dc;
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        BufferedImage image = ImageIO.read(new File(System.getProperty("user.home"), "Desktop/vp8/img2.png"));
-        Picture pic1 = AWTUtil.fromBufferedImage(image);
-        Picture pic2 = Picture.create(pic1.getWidth(), pic1.getHeight(), ColorSpace.YUV420);
-        Transform tr = ColorUtil.getTransform(ColorSpace.RGB, ColorSpace.YUV420);
-        tr.transform(pic1, pic2);
-        ByteBuffer buf = ByteBuffer.allocate(1024);
-        ByteBuffer frame = new VP8Encoder().encodeFrame(pic2, buf);
-
-        ByteBuffer ivf = ByteBuffer.allocate(32);
-        ivf.order(ByteOrder.LITTLE_ENDIAN);
-
-        ivf.put((byte) 'D');
-        ivf.put((byte) 'K');
-        ivf.put((byte) 'I');
-        ivf.put((byte) 'F');
-        ivf.putShort((short) 0);/* version */
-        ivf.putShort((short) 32); /* headersize */
-        ivf.putInt(0x30385056); /* headersize */
-        ivf.putShort((short) 16); /* width */
-        ivf.putShort((short) 16); /* height */
-        ivf.putInt(1); /* rate */
-        ivf.putInt(1); /* scale */
-        ivf.putInt(1); /* length */
-        ivf.clear();
-
-        ByteBuffer fh = ByteBuffer.allocate(12);
-        fh.order(ByteOrder.LITTLE_ENDIAN);
-        fh.putInt(frame.remaining());
-        fh.putLong(0);
-        fh.clear();
-
-        FileChannel ch = new FileOutputStream(new File(System.getProperty("user.home"), "Desktop/vp8/result.ivf"))
-                .getChannel();
-        ch.write(ivf);
-        ch.write(fh);
-        ch.write(frame);
-        NIOUtils.closeQuietly(ch);
     }
 }

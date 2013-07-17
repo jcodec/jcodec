@@ -17,28 +17,52 @@ public class VPXQuantizer {
     private int y2_dc_delta_q;
     private int y2_ac_delta_q;
 
+//    public final void quantizeY(int[] coeffs, int qp) {
+//        int factDC = MathUtil.clip(VPXConst.dc_qlookup[qp + y1_dc_delta_q], 8, 132);
+//        int invFactAC = 8192 / MathUtil.clip(VPXConst.ac_qlookup[qp], 8, 132);
+//        quantize(coeffs, factDC, invFactAC);
+//    }
+//
+//    public final void quantizeUV(int[] coeffs, int qp) {
+//        int factDC = MathUtil.clip(VPXConst.dc_qlookup[qp + uv_dc_delta_q], 8, 132);
+//        int invFactAC = 8192 / MathUtil.clip(VPXConst.ac_qlookup[qp + uv_ac_delta_q], 8, 132);
+//        quantize(coeffs, factDC, invFactAC);
+//    }
+//
+//    public final void quantizeY2(int[] coeffs, int qp) {
+//        int factDC = MathUtil.clip(VPXConst.dc_qlookup[qp + y2_dc_delta_q] * 2, 8, 132);
+//        int invFactAC = 8192 / MathUtil.clip(VPXConst.ac_qlookup[qp + y2_ac_delta_q] * 155 / 100, 8, 132);
+//        quantize(coeffs, factDC, invFactAC);
+//    }
+//
+//    private final void quantize(int[] coeffs, int factDC, int invFactAC) {
+//        coeffs[0] /= factDC;
+//        for (int i = 1; i < 15; i++)
+//            coeffs[i] = (coeffs[i] * invFactAC) >> 13;
+//    }
+    
     public final void quantizeY(int[] coeffs, int qp) {
         int factDC = MathUtil.clip(VPXConst.dc_qlookup[qp + y1_dc_delta_q], 8, 132);
-        int invFactAC = 8192 / MathUtil.clip(VPXConst.ac_qlookup[qp], 8, 132);
+        int invFactAC = MathUtil.clip(VPXConst.ac_qlookup[qp], 8, 132);
         quantize(coeffs, factDC, invFactAC);
     }
 
     public final void quantizeUV(int[] coeffs, int qp) {
         int factDC = MathUtil.clip(VPXConst.dc_qlookup[qp + uv_dc_delta_q], 8, 132);
-        int invFactAC = 8192 / MathUtil.clip(VPXConst.ac_qlookup[qp + uv_ac_delta_q], 8, 132);
+        int invFactAC = MathUtil.clip(VPXConst.ac_qlookup[qp + uv_ac_delta_q], 8, 132);
         quantize(coeffs, factDC, invFactAC);
     }
 
     public final void quantizeY2(int[] coeffs, int qp) {
         int factDC = MathUtil.clip(VPXConst.dc_qlookup[qp + y2_dc_delta_q] * 2, 8, 132);
-        int invFactAC = 8192 / MathUtil.clip(VPXConst.ac_qlookup[qp + y2_ac_delta_q] * 155 / 100, 8, 132);
+        int invFactAC = MathUtil.clip(VPXConst.ac_qlookup[qp + y2_ac_delta_q] * 155 / 100, 8, 132);
         quantize(coeffs, factDC, invFactAC);
     }
 
-    private final void quantize(int[] coeffs, int factDC, int invFactAC) {
+    private final void quantize(int[] coeffs, int factDC, int factAC) {
         coeffs[0] /= factDC;
-        for (int i = 1; i < 15; i++)
-            coeffs[i] = (coeffs[i] * invFactAC) >> 13;
+        for (int i = 1; i < 16; i++)
+            coeffs[i] = coeffs[i] / factAC;
     }
 
     public final void dequantizeY(int[] coeffs, int qp) {
@@ -61,7 +85,7 @@ public class VPXQuantizer {
 
     private final void dequantize(int[] coeffs, int factDC, int factAC) {
         coeffs[0] *= factDC;
-        for (int i = 1; i < 15; i++)
+        for (int i = 1; i < 16; i++)
             coeffs[i] *= factAC;
     }
 }

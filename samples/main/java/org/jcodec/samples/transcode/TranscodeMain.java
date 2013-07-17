@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.codecs.prores.ProresToThumb2x2;
 import org.jcodec.codecs.vp8.VP8Decoder;
+import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.FileChannelWrapper;
@@ -66,6 +68,7 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.AWTUtil;
+import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.RgbToYuv420;
 import org.jcodec.scale.RgbToYuv422;
 import org.jcodec.scale.Transform;
@@ -119,13 +122,54 @@ public class TranscodeMain {
             avc2prores(args[1], args[2], true);
         } else if ("png2mkv".equals(args[0])) {
             png2mkv(args[1], args[2]);
-        } else if ("mkv2png".equals(args[0])){
+        } else if ("mkv2png".equals(args[0])) {
             mkv2png(args[1], args[2]);
         } else if ("webm2png".equals(args[0])) {
             webm2png(args[1], args[2]);
+        } else if ("png2vp8".equals(args[0])) {
+            png2vp8(args[1], args[2]);
         }
     }
-    
+
+    private static void png2vp8(String in, String out) throws IOException {
+        BufferedImage image = ImageIO.read(new File(in));
+        Picture pic1 = AWTUtil.fromBufferedImage(image);
+        Picture pic2 = Picture.create(pic1.getWidth(), pic1.getHeight(), ColorSpace.YUV420);
+        Transform tr = ColorUtil.getTransform(ColorSpace.RGB, ColorSpace.YUV420);
+        tr.transform(pic1, pic2);
+        ByteBuffer buf = ByteBuffer.allocate(1 << 20);
+        ByteBuffer frame = new VP8Encoder().encodeFrame(pic2, buf);
+
+        ByteBuffer ivf = ByteBuffer.allocate(32);
+        ivf.order(ByteOrder.LITTLE_ENDIAN);
+
+        ivf.put((byte) 'D');
+        ivf.put((byte) 'K');
+        ivf.put((byte) 'I');
+        ivf.put((byte) 'F');
+        ivf.putShort((short) 0);/* version */
+        ivf.putShort((short) 32); /* headersize */
+        ivf.putInt(0x30385056); /* headersize */
+        ivf.putShort((short) image.getWidth()); /* width */
+        ivf.putShort((short) image.getHeight()); /* height */
+        ivf.putInt(1); /* rate */
+        ivf.putInt(1); /* scale */
+        ivf.putInt(1); /* length */
+        ivf.clear();
+
+        ByteBuffer fh = ByteBuffer.allocate(12);
+        fh.order(ByteOrder.LITTLE_ENDIAN);
+        fh.putInt(frame.remaining());
+        fh.putLong(0);
+        fh.clear();
+
+        FileChannel ch = new FileOutputStream(new File(out)).getChannel();
+        ch.write(ivf);
+        ch.write(fh);
+        ch.write(frame);
+        NIOUtils.closeQuietly(ch);
+    }
+
     private static void webm2png(String in, String out) throws IOException {
         File file = new File(in);
         if (!file.exists()) {
@@ -142,17 +186,18 @@ public class TranscodeMain {
 
             VideoTrack inTrack = demux.getVideoTrack();
 
-            Picture rgb = Picture.create((int)inTrack.pixelWidth, (int)inTrack.pixelHeight, ColorSpace.RGB);
-            BufferedImage bi = new BufferedImage((int)inTrack.pixelWidth, (int)inTrack.pixelHeight, BufferedImage.TYPE_3BYTE_BGR);
+            Picture rgb = Picture.create((int) inTrack.pixelWidth, (int) inTrack.pixelHeight, ColorSpace.RGB);
+            BufferedImage bi = new BufferedImage((int) inTrack.pixelWidth, (int) inTrack.pixelHeight,
+                    BufferedImage.TYPE_3BYTE_BGR);
 
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
             for (int i = 1; (inFrame = inTrack.getFrames(1)) != null && i <= 200; i++) {
                 if (!inFrame.isKeyFrame())
                     continue;
-                
+
                 decoder.decode(inFrame.getData());
-                Picture pic =  decoder.getPicture();
+                Picture pic = decoder.getPicture();
                 if (bi == null)
                     bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
                 if (rgb == null)
@@ -197,7 +242,7 @@ public class TranscodeMain {
 
                 ByteBuffer ff = encoder.encodeFrame(buf, yuv);
 
-                BlockElement se = BlockElement.keyFrame(videoTrack.trackId, i-1, ff.array());
+                BlockElement se = BlockElement.keyFrame(videoTrack.trackId, i - 1, ff.array());
                 videoTrack.addSampleEntry(se);
             }
             if (i == 1) {
@@ -209,10 +254,10 @@ public class TranscodeMain {
             IOUtils.closeQuietly(fos);
             if (sink != null)
                 sink.close();
-            
+
         }
     }
-    
+
     public static File tildeExpand(String path) {
         if (path.startsWith("~")) {
             path = path.replaceFirst("~", System.getProperty("user.home"));
@@ -236,11 +281,12 @@ public class TranscodeMain {
 
             VideoTrack inTrack = demux.getVideoTrack();
 
-            
-            Picture target1 = Picture.create(((int)inTrack.pixelWidth + 15) & ~0xf, ((int)inTrack.pixelHeight + 15) & ~0xf, ColorSpace.YUV420);
-            Picture rgb = Picture.create((int)inTrack.pixelWidth, (int)inTrack.pixelHeight, ColorSpace.RGB);
-            ByteBuffer _out = ByteBuffer.allocate((int)inTrack.pixelWidth * (int)inTrack.pixelHeight * 6);
-            BufferedImage bi = new BufferedImage((int)inTrack.pixelWidth, (int)inTrack.pixelHeight, BufferedImage.TYPE_3BYTE_BGR);
+            Picture target1 = Picture.create(((int) inTrack.pixelWidth + 15) & ~0xf, ((int) inTrack.pixelHeight + 15)
+                    & ~0xf, ColorSpace.YUV420);
+            Picture rgb = Picture.create((int) inTrack.pixelWidth, (int) inTrack.pixelHeight, ColorSpace.RGB);
+            ByteBuffer _out = ByteBuffer.allocate((int) inTrack.pixelWidth * (int) inTrack.pixelHeight * 6);
+            BufferedImage bi = new BufferedImage((int) inTrack.pixelWidth, (int) inTrack.pixelHeight,
+                    BufferedImage.TYPE_3BYTE_BGR);
             AvcCBox avcC = new AvcCBox();
             avcC.parse(inTrack.codecState);
 
@@ -368,8 +414,8 @@ public class TranscodeMain {
     }
 
     private static void outGOP(ProresEncoder encoder, Transform transform, int timescale, int frameDuration,
-            FramesMP4MuxerTrack outTrack, int gopLen, Frame[] gop, int totalFrames, int i, int codedWidth, int codedHeight)
-            throws IOException {
+            FramesMP4MuxerTrack outTrack, int gopLen, Frame[] gop, int totalFrames, int i, int codedWidth,
+            int codedHeight) throws IOException {
 
         ByteBuffer _out = ByteBuffer.allocate(codedWidth * codedHeight * 6);
         Picture target2 = Picture.create(codedWidth, codedHeight, ColorSpace.YUV422_10);
@@ -548,7 +594,8 @@ public class TranscodeMain {
             ProresEncoder encoder = new ProresEncoder(Profile.HQ);
 
             Yuv420pToYuv422p color = new Yuv420pToYuv422p(2, 0);
-            FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("apch", frames.getSize(), APPLE_PRO_RES_422, fps.getNum());
+            FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("apch", frames.getSize(), APPLE_PRO_RES_422,
+                    fps.getNum());
             videoTrack.setTgtChunkDuration(HALF, SEC);
             Picture picture = Picture.create(frames.getSize().getWidth(), frames.getSize().getHeight(),
                     ColorSpace.YUV422_10);
