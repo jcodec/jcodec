@@ -7,12 +7,15 @@ import java.util.EnumSet;
 
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.encode.ConstantRateControl;
-import org.jcodec.codecs.prores.ProresDecoder;
+import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.codecs.prores.ProresToThumb2x2;
 import org.jcodec.codecs.prores.ProresToThumb4x4;
+import org.jcodec.codecs.vpx.VP8Encoder;
+import org.jcodec.codecs.vpx.VP8FixedRateControl;
+import org.jcodec.common.VideoDecoder;
+import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
@@ -24,18 +27,18 @@ import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
-import org.jcodec.scale.Yuv422pToYuv420p;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * Virtual movie track that transcodes ProRes to AVC on the fly.
+ * Generic transcode track
  * 
  * @author The JCodec project
  * 
  */
-public class Prores2AVCTrack implements VirtualTrack {
+public abstract class TranscodeTrack implements VirtualTrack {
+
     private static final int TARGET_RATE = 1024;
     private int frameSize;
     private VirtualTrack proresTrack;
@@ -47,10 +50,10 @@ public class Prores2AVCTrack implements VirtualTrack {
     private int thumbWidth;
     private int thumbHeight;
 
-    public Prores2AVCTrack(VirtualTrack proresTrack, Size frameDim) {
+    public TranscodeTrack(VirtualTrack proresTrack, Size frameDim) {
         checkFourCC(proresTrack);
         this.proresTrack = proresTrack;
-        ConstantRateControl rc = new ConstantRateControl(TARGET_RATE);
+        H264FixedRateControl rc = new H264FixedRateControl(TARGET_RATE);
         H264Encoder encoder = new H264Encoder(rc);
 
         scaleFactor = frameDim.getWidth() >= 960 ? 2 : 1;
@@ -116,18 +119,22 @@ public class Prores2AVCTrack implements VirtualTrack {
         }
     }
 
+    protected abstract VideoDecoder getDecoder(int scaleFactor);
+
+    protected abstract VideoEncoder getEncoder(int rate);
+
     class Transcoder {
-        private ProresDecoder decoder;
-        private H264Encoder encoder;
+        private VideoDecoder decoder;
+        private VideoEncoder[] encoder = new VideoEncoder[3];
         private Picture pic0;
         private Picture pic1;
         private Transform transform;
-        private ConstantRateControl rc;
 
         public Transcoder() {
-            rc = new ConstantRateControl(TARGET_RATE);
-            this.decoder = scaleFactor == 2 ? new ProresToThumb2x2() : new ProresToThumb4x4();
-            this.encoder = new H264Encoder(rc);
+            this.decoder = getDecoder(scaleFactor);
+            this.encoder[0] = getEncoder(TARGET_RATE);
+            this.encoder[1] = getEncoder((int) (TARGET_RATE * 0.9));
+            this.encoder[2] = getEncoder((int) (TARGET_RATE * 0.8));
             pic0 = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV444);
         }
 
@@ -139,18 +146,15 @@ public class Prores2AVCTrack implements VirtualTrack {
             }
             transform.transform(decoded, pic1);
             pic1.setCrop(new Rect(0, 0, thumbWidth, thumbHeight));
-            int rate = TARGET_RATE;
-            do {
+            // Rate control, reinforcement mechanism
+            for (int i = 0; i < encoder.length; i++) {
                 try {
-                    encoder.encodeFrame(dst, pic1);
+                    encoder[i].encodeFrame(dst, pic1);
                     break;
                 } catch (BufferOverflowException ex) {
                     System.out.println("Abandon frame!!!");
-                    rate -= 10;
-                    rc.setRate(rate);
                 }
-            } while (rate > 10);
-            rc.setRate(TARGET_RATE);
+            }
 
             H264Utils.encodeMOVPacket(dst, null, null);
             return dst;
@@ -170,5 +174,39 @@ public class Prores2AVCTrack implements VirtualTrack {
     @Override
     public int getPreferredTimescale() {
         return proresTrack.getPreferredTimescale();
+    }
+
+    public static class Prores2AVCTrack extends TranscodeTrack {
+
+        public Prores2AVCTrack(VirtualTrack proresTrack, Size frameDim) {
+            super(proresTrack, frameDim);
+        }
+
+        @Override
+        protected VideoDecoder getDecoder(int scaleFactor) {
+            return scaleFactor == 2 ? new ProresToThumb2x2() : new ProresToThumb4x4();
+        }
+
+        @Override
+        protected VideoEncoder getEncoder(int rate) {
+            return new H264Encoder(new H264FixedRateControl(rate));
+        }
+    }
+
+    public static class Prores2VP8Track extends TranscodeTrack {
+
+        public Prores2VP8Track(VirtualTrack proresTrack, Size frameDim) {
+            super(proresTrack, frameDim);
+        }
+
+        @Override
+        protected VideoDecoder getDecoder(int scaleFactor) {
+            return scaleFactor == 2 ? new ProresToThumb2x2() : new ProresToThumb4x4();
+        }
+
+        @Override
+        protected VideoEncoder getEncoder(int rate) {
+            return new VP8Encoder(new VP8FixedRateControl(rate));
+        }
     }
 }

@@ -25,6 +25,7 @@ import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
@@ -41,7 +42,7 @@ import org.jcodec.common.model.Size;
  * @author The JCodec project
  * 
  */
-public class H264Encoder {
+public class H264Encoder implements VideoEncoder {
 
     // private static final int QP = 20;
 

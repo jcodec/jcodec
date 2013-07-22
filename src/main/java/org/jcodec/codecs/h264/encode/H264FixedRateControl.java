@@ -11,13 +11,13 @@ import org.jcodec.common.tools.MathUtil;
  * @author The JCodec project
  * 
  */
-public class ConstantRateControl implements RateControl {
+public class H264FixedRateControl implements RateControl {
     private static final int INIT_QP = 26;
     private int balance;
     private int perMb;
     private int curQp;
 
-    public ConstantRateControl(int bitsPer256) {
+    public H264FixedRateControl(int bitsPer256) {
         perMb = bitsPer256;
         curQp = INIT_QP;
     }

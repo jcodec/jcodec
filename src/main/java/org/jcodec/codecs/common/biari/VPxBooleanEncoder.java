@@ -31,7 +31,7 @@ public class VPxBooleanEncoder {
 
         if (bb != 0) {
             lowvalue += split;
-            range = range - split;
+            range -= split;
         } else {
             range = split;
         }
@@ -69,5 +69,9 @@ public class VPxBooleanEncoder {
 
         for (i = 0; i < 32; i++)
             writeBit(128, 0);
+    }
+
+    public int position() {
+        return out.position() + ((count + 24) >> 3);
     }
 }

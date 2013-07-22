@@ -286,6 +286,12 @@ public class NIOUtils {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).order(order).putInt(value).flip());
     }
     
+    public static void writeIntLE(WritableByteChannel channel, int value) throws IOException {
+        ByteBuffer allocate = ByteBuffer.allocate(4);
+        allocate.order(ByteOrder.LITTLE_ENDIAN);
+        channel.write((ByteBuffer) allocate.putInt(value).flip());
+    }
+    
     public static void writeInt(WritableByteChannel channel, int value) throws IOException {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).putInt(value).flip());
     }

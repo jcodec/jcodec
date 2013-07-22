@@ -41,7 +41,7 @@ import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.movtool.streaming.VirtualMovie.PacketChunk;
+import org.jcodec.movtool.streaming.VirtualMP4Movie.PacketChunk;
 import org.jcodec.movtool.streaming.VirtualTrack.VirtualEdit;
 
 /**

@@ -14,7 +14,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +25,7 @@ import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.MappedH264ES;
-import org.jcodec.codecs.h264.encode.ConstantRateControl;
+import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -37,6 +36,7 @@ import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.codecs.prores.ProresToThumb2x2;
 import org.jcodec.codecs.vp8.VP8Decoder;
+import org.jcodec.codecs.vpx.IVFMuxer;
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.DemuxerTrack;
@@ -68,7 +68,6 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.AWTUtil;
-import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.RgbToYuv420;
 import org.jcodec.scale.RgbToYuv422;
 import org.jcodec.scale.Transform;
@@ -111,7 +110,7 @@ public class TranscodeMain {
         } else if ("prores2avc".equals(args[0])) {
             prores2avc(args[1], args[2], new ProresDecoder(), new DumbRateControl());
         } else if ("prores2avct".equals(args[0])) {
-            ConstantRateControl rc = new ConstantRateControl(512);
+            H264FixedRateControl rc = new H264FixedRateControl(512);
             System.out.println("Target frame size: " + rc.calcFrameSize(510));
             prores2avc(args[1], args[2], new ProresToThumb2x2(), rc);
         } else if ("avc2png".equals(args[0])) {
@@ -128,46 +127,102 @@ public class TranscodeMain {
             webm2png(args[1], args[2]);
         } else if ("png2vp8".equals(args[0])) {
             png2vp8(args[1], args[2]);
+        } else if ("prores2vp8".equals(args[0])) {
+            prores2vp8(args[1], args[2], new ProresToThumb2x2());
         }
     }
 
-    private static void png2vp8(String in, String out) throws IOException {
-        BufferedImage image = ImageIO.read(new File(in));
-        Picture pic1 = AWTUtil.fromBufferedImage(image);
-        Picture pic2 = Picture.create(pic1.getWidth(), pic1.getHeight(), ColorSpace.YUV420);
-        Transform tr = ColorUtil.getTransform(ColorSpace.RGB, ColorSpace.YUV420);
-        tr.transform(pic1, pic2);
-        ByteBuffer buf = ByteBuffer.allocate(1 << 20);
-        ByteBuffer frame = new VP8Encoder().encodeFrame(pic2, buf);
+    private static void png2vp8(String pattern, String out) throws IOException {
+        FileChannelWrapper sink = null;
+        try {
+            sink = NIOUtils.writableFileChannel(new File(out));
+            VP8Encoder encoder = new VP8Encoder(10); // qp
+            RgbToYuv420 transform = new RgbToYuv420(0, 0);
 
-        ByteBuffer ivf = ByteBuffer.allocate(32);
-        ivf.order(ByteOrder.LITTLE_ENDIAN);
+            IVFMuxer muxer = null;
 
-        ivf.put((byte) 'D');
-        ivf.put((byte) 'K');
-        ivf.put((byte) 'I');
-        ivf.put((byte) 'F');
-        ivf.putShort((short) 0);/* version */
-        ivf.putShort((short) 32); /* headersize */
-        ivf.putInt(0x30385056); /* headersize */
-        ivf.putShort((short) image.getWidth()); /* width */
-        ivf.putShort((short) image.getHeight()); /* height */
-        ivf.putInt(1); /* rate */
-        ivf.putInt(1); /* scale */
-        ivf.putInt(1); /* length */
-        ivf.clear();
+            int i;
+            for (i = 0; i < 10000; i++) {
+                File nextImg = new File(String.format(pattern, i));
+                if (!nextImg.exists())
+                    continue;
 
-        ByteBuffer fh = ByteBuffer.allocate(12);
-        fh.order(ByteOrder.LITTLE_ENDIAN);
-        fh.putInt(frame.remaining());
-        fh.putLong(0);
-        fh.clear();
+                BufferedImage rgb = ImageIO.read(nextImg);
+                Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);
+                transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
+                ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
-        FileChannel ch = new FileOutputStream(new File(out)).getChannel();
-        ch.write(ivf);
-        ch.write(fh);
-        ch.write(frame);
-        NIOUtils.closeQuietly(ch);
+                ByteBuffer ff = encoder.encodeFrame(buf, yuv);
+                Packet packet = new Packet(ff, i, 1, 1, i, true, null);
+
+                if (muxer == null)
+                    muxer = new IVFMuxer(sink, rgb.getWidth(), rgb.getHeight(), 25);
+
+                muxer.addFrame(packet);
+            }
+            if (i == 1) {
+                System.out.println("Image sequence not found");
+                return;
+            }
+        } finally {
+            NIOUtils.closeQuietly(sink);
+        }
+    }
+
+    private static void prores2vp8(String in, String out, ProresDecoder decoder) throws IOException {
+        SeekableByteChannel sink = null;
+        SeekableByteChannel source = null;
+        try {
+            sink = writableFileChannel(out);
+            source = readableFileChannel(in);
+
+            MP4Demuxer demux = new MP4Demuxer(source);
+
+            Transform transform = new Yuv422pToYuv420p(0, 2);
+
+            VP8Encoder encoder = new VP8Encoder(10); // qp
+
+            IVFMuxer muxer = null;
+
+            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
+
+            VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
+            Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
+            Picture target2 = null;
+            ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
+
+            int fps = (int) (inTrack.getFrameCount() / inTrack.getDuration().scalar());
+
+            MP4Packet inFrame;
+            int totalFrames = (int) inTrack.getFrameCount();
+            long start = System.currentTimeMillis();
+            for (int i = 0; (inFrame = (MP4Packet) inTrack.nextFrame()) != null; i++) {
+                Picture dec = decoder.decodeFrame(inFrame.getData(), target1.getData());
+                if (target2 == null) {
+                    target2 = Picture.create(dec.getWidth(), dec.getHeight(), ColorSpace.YUV420);
+                }
+                transform.transform(dec, target2);
+                _out.clear();
+                ByteBuffer result = encoder.encodeFrame(_out, target2);
+                if (muxer == null)
+                    muxer = new IVFMuxer(sink, dec.getWidth(), dec.getHeight(), fps);
+
+                Packet packet = new Packet(result, inFrame.getMediaPts(), inFrame.getTimescale(),
+                        inFrame.getDuration(), inFrame.getFrameNo(), true, null);
+
+                muxer.addFrame(packet);
+                if (i % 100 == 0) {
+                    long elapse = System.currentTimeMillis() - start;
+                    System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
+                }
+            }
+            muxer.close();
+        } finally {
+            if (sink != null)
+                sink.close();
+            if (source != null)
+                source.close();
+        }
     }
 
     private static void webm2png(String in, String out) throws IOException {
@@ -519,10 +574,10 @@ public class TranscodeMain {
                 transform.transform(dec, target2);
                 _out.clear();
                 ByteBuffer result = encoder.encodeFrame(_out, target2);
-                if (rc instanceof ConstantRateControl) {
+                if (rc instanceof H264FixedRateControl) {
                     int mbWidth = (dec.getWidth() + 15) >> 4;
                     int mbHeight = (dec.getHeight() + 15) >> 4;
-                    result.limit(((ConstantRateControl) rc).calcFrameSize(mbWidth * mbHeight));
+                    result.limit(((H264FixedRateControl) rc).calcFrameSize(mbWidth * mbHeight));
                 }
                 spsList.clear();
                 ppsList.clear();

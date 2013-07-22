@@ -1,9 +1,6 @@
 package org.jcodec.movtool.streaming;
 
-import static org.jcodec.movtool.streaming.MovieHelper.produceHeader;
-
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,11 +10,13 @@ import java.util.List;
  * 
  * Virtual movie. A movie constructed on-the-fly from virtual track data.
  * 
+ * Generic muxing
+ * 
  * @author The JCodec project
  * 
  */
-public class VirtualMovie {
-    private PacketChunk[] chunks;
+public abstract class VirtualMovie {
+    private MovieSegment[] chunks;
     private MovieSegment headerChunk;
     private long size;
     private VirtualTrack[] tracks;
@@ -29,7 +28,7 @@ public class VirtualMovie {
     }
 
     private void muxTracks() throws IOException {
-        List<PacketChunk> chch = new ArrayList<PacketChunk>();
+        List<MovieSegment> chch = new ArrayList<MovieSegment>();
         VirtualPacket[] heads = new VirtualPacket[tracks.length], tails = new VirtualPacket[tracks.length];
 
         for (int curChunk = 1;; curChunk++) {
@@ -46,83 +45,22 @@ public class VirtualMovie {
             }
             if (min == -1)
                 break;
-            chch.add(new PacketChunk(heads[min], min, curChunk, size));
+            chch.add(packetChunk(heads[min], curChunk, min, size));
             size += heads[min].getDataLen();
             tails[min] = heads[min];
             heads[min] = tracks[min].nextPacket();
         }
-        chunks = chch.toArray(new PacketChunk[0]);
-        long dataSize = size;
-        int headerSize = produceHeader(chunks, tracks, dataSize).remaining();
-        size += headerSize;
-        for (PacketChunk ch : chch) {
-            ch.offset(headerSize);
-        }
-        headerChunk = headerChunk(produceHeader(chunks, tracks, dataSize));
-        chunks = chch.toArray(new PacketChunk[0]);
+        
+        headerChunk = headerChunk(chch, tracks, size);
+        size += headerChunk.getDataLen();
+        
+        chunks = chch.toArray(new MovieSegment[0]);
     }
 
-    private MovieSegment headerChunk(final ByteBuffer header) {
-        return new MovieSegment() {
-            public ByteBuffer getData() {
-                return header.duplicate();
-            }
+    protected abstract MovieSegment packetChunk(VirtualPacket pkt, int chunkNo, int track, long pos);
 
-            public int getNo() {
-                return 0;
-            }
-
-            public long getPos() {
-                return 0;
-            }
-
-            public int getDataLen() {
-                return header.remaining();
-            }
-        };
-    }
-
-    public class PacketChunk implements MovieSegment {
-        private VirtualPacket packet;
-        private int track;
-        private int no;
-        private long pos;
-
-        public PacketChunk(VirtualPacket packet, int track, int no, long pos) {
-            this.packet = packet;
-            this.track = track;
-            this.no = no;
-            this.pos = pos;
-        }
-
-        public ByteBuffer getData() throws IOException {
-            return packet.getData().duplicate();
-        }
-
-        public int getNo() {
-            return no;
-        }
-
-        public long getPos() {
-            return pos;
-        }
-
-        public void offset(int off) {
-            pos += off;
-        }
-
-        public int getDataLen() throws IOException {
-            return packet.getDataLen();
-        }
-
-        public VirtualPacket getPacket() {
-            return packet;
-        }
-
-        public int getTrack() {
-            return track;
-        }
-    }
+    protected abstract MovieSegment headerChunk(List<MovieSegment> chunks, VirtualTrack[] tracks, long dataSize)
+            throws IOException;
 
     public void close() throws IOException {
         for (VirtualTrack virtualTrack : tracks) {

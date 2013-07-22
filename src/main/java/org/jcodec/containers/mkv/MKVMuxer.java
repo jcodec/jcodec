@@ -39,6 +39,13 @@ import org.jcodec.containers.mkv.ebml.UnsignedIntegerElement;
 import org.jcodec.containers.mkv.elements.BlockElement;
 import org.jcodec.containers.mkv.elements.Cluster;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class MKVMuxer {
 
         List<MKVMuxerTrack> tracks = new ArrayList<MKVMuxerTrack>();
