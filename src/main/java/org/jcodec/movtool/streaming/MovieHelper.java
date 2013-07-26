@@ -9,14 +9,18 @@ import java.util.List;
 
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
+import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
+import org.jcodec.containers.mp4.boxes.ClearApertureBox;
 import org.jcodec.containers.mp4.boxes.DataInfoBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
 import org.jcodec.containers.mp4.boxes.Edit;
+import org.jcodec.containers.mp4.boxes.EncodedPixelBox;
 import org.jcodec.containers.mp4.boxes.GenericMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.Header;
@@ -27,6 +31,8 @@ import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.PixelAspectExt;
+import org.jcodec.containers.mp4.boxes.ProductionApertureBox;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
@@ -59,7 +65,8 @@ public class MovieHelper {
 
     private static int timescales[] = { 10000, 12000, 15000, 24000, 25000, 30000, 50000, 41000, 48000, 96000 };
 
-    public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize) throws IOException {
+    public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize)
+            throws IOException {
         int defaultTimescale = 1000;
 
         ByteBuffer buf = ByteBuffer.allocate(6 * MEBABYTE);
@@ -94,16 +101,29 @@ public class MovieHelper {
 
             TrakBox trak = new TrakBox();
 
-            Size dd = new Size(0, 0);
+            Size dd = new Size(0, 0), sd = new Size(0, 0);
             if (se instanceof VideoSampleEntry) {
                 VideoSampleEntry vse = (VideoSampleEntry) se;
-                dd = new Size(vse.getWidth(), vse.getHeight());
+                PixelAspectExt pasp = Box.findFirst(vse, PixelAspectExt.class, "pasp");
+                if (pasp == null)
+                    sd = dd = new Size(vse.getWidth(), vse.getHeight());
+                else {
+                    Rational r = pasp.getRational();
+                    dd = new Size(r.multiplyS(vse.getWidth()), vse.getHeight());
+                    sd = new Size(vse.getWidth(), vse.getHeight());
+                }
             }
             TrackHeaderBox tkhd = new TrackHeaderBox(trackId + 1, movieDur, dd.getWidth(), dd.getHeight(),
                     new Date().getTime(), new Date().getTime(), 1.0f, (short) 0, 0, new int[] { 0x10000, 0, 0, 0,
                             0x10000, 0, 0, 0, 0x40000000 });
             tkhd.setFlags(0xf);
             trak.add(tkhd);
+            
+            NodeBox tapt = new NodeBox(new Header("tapt"));
+            tapt.add(new ClearApertureBox(dd.getWidth(), dd.getHeight()));
+            tapt.add(new ProductionApertureBox(dd.getWidth(), dd.getHeight()));
+            tapt.add(new EncodedPixelBox(sd.getWidth(), sd.getHeight()));
+            trak.add(tapt);
 
             MediaBox media = new MediaBox();
             trak.add(media);
@@ -216,7 +236,7 @@ public class MovieHelper {
                 double dur = chunk.getPacket().getDuration();
                 if (dur != prevDur) {
                     if (prevCount != -1)
-                        stts.add(new TimeToSampleEntry(prevCount, (int)Math.round(prevDur * timescale)));
+                        stts.add(new TimeToSampleEntry(prevCount, (int) Math.round(prevDur * timescale)));
                     prevDur = dur;
                     prevCount = 0;
                 }
@@ -241,7 +261,8 @@ public class MovieHelper {
         stbl.add(new TimeToSampleBox(stts.toArray(new TimeToSampleEntry[0])));
     }
 
-    private static void populateStblPCM(NodeBox stbl, PacketChunk[] chunks, int trackId, SampleEntry se) throws IOException {
+    private static void populateStblPCM(NodeBox stbl, PacketChunk[] chunks, int trackId, SampleEntry se)
+            throws IOException {
         AudioSampleEntry ase = (AudioSampleEntry) se;
         int frameSize = ase.calcFrameSize();
 
