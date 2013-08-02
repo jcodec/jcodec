@@ -19,7 +19,7 @@ public class VirtualWebmMovie extends VirtualMovie {
     }
 
     @Override
-    protected MovieSegment packetChunk(VirtualPacket pkt, int chunkNo, int track, long pos) {
+    protected MovieSegment packetChunk(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long pos) {
         // TODO Auto-generated method stub
         return null;
     }

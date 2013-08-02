@@ -7,12 +7,15 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
+import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.TrackType;
-import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
+import org.jcodec.containers.mp4.boxes.ChannelBox;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.DataInfoBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
@@ -27,6 +30,7 @@ import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
@@ -40,7 +44,8 @@ import org.jcodec.containers.mp4.boxes.TimecodeMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.boxes.channel.ChannelUtils;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.movtool.streaming.VirtualMP4Movie.PacketChunk;
 import org.jcodec.movtool.streaming.VirtualTrack.VirtualEdit;
 
@@ -59,7 +64,8 @@ public class MovieHelper {
 
     private static int timescales[] = { 10000, 12000, 15000, 24000, 25000, 30000, 50000, 41000, 48000, 96000 };
 
-    public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize) throws IOException {
+    public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize)
+            throws IOException {
         int defaultTimescale = 1000;
 
         ByteBuffer buf = ByteBuffer.allocate(6 * MEBABYTE);
@@ -73,13 +79,14 @@ public class MovieHelper {
 
             // TODO: optimal timescale selection
             VirtualTrack track = tracks[trackId];
-            SampleEntry se = track.getSampleEntry();
+            CodecMeta codecMeta = track.getCodecMeta();
 
-            boolean pcm = (se instanceof AudioSampleEntry) && ((AudioSampleEntry) se).isPCM();
+            boolean pcm = (codecMeta instanceof AudioCodecMeta) && ((AudioCodecMeta) codecMeta).isPCM();
+
             int trackTimescale = track.getPreferredTimescale();
             if (trackTimescale <= 0) {
                 if (pcm)
-                    trackTimescale = getPCMTs((AudioSampleEntry) se, chunks, trackId);
+                    trackTimescale = getPCMTs((AudioCodecMeta) codecMeta, chunks, trackId);
                 else
                     trackTimescale = chooseTimescale(chunks, trackId);
             } else if (trackTimescale < 100) {
@@ -95,9 +102,8 @@ public class MovieHelper {
             TrakBox trak = new TrakBox();
 
             Size dd = new Size(0, 0);
-            if (se instanceof VideoSampleEntry) {
-                VideoSampleEntry vse = (VideoSampleEntry) se;
-                dd = new Size(vse.getWidth(), vse.getHeight());
+            if (codecMeta instanceof VideoCodecMeta) {
+                dd = ((VideoCodecMeta) codecMeta).getSize();
             }
             TrackHeaderBox tkhd = new TrackHeaderBox(trackId + 1, movieDur, dd.getWidth(), dd.getHeight(),
                     new Date().getTime(), new Date().getTime(), 1.0f, (short) 0, 0, new int[] { 0x10000, 0, 0, 0,
@@ -109,7 +115,7 @@ public class MovieHelper {
             trak.add(media);
             media.add(new MediaHeaderBox(trackTimescale, totalDur, 0, new Date().getTime(), new Date().getTime(), 0));
 
-            TrackType tt = (se instanceof AudioSampleEntry) ? TrackType.SOUND : TrackType.VIDEO;
+            TrackType tt = (codecMeta instanceof AudioCodecMeta) ? TrackType.SOUND : TrackType.VIDEO;
 
             HandlerBox hdlr = new HandlerBox("mhlr", tt.getHandler(), "appl", 0, 0);
             media.add(hdlr);
@@ -122,11 +128,11 @@ public class MovieHelper {
             NodeBox stbl = new NodeBox(new Header("stbl"));
             minf.add(stbl);
 
-            stbl.add(new SampleDescriptionBox(new SampleEntry[] { se }));
+            stbl.add(new SampleDescriptionBox(new SampleEntry[] { toSampleEntry(codecMeta) }));
             if (pcm) {
-                populateStblPCM(stbl, chunks, trackId, se);
+                populateStblPCM(stbl, chunks, trackId, codecMeta);
             } else {
-                populateStblGeneric(stbl, chunks, trackId, se, trackTimescale);
+                populateStblGeneric(stbl, chunks, trackId, codecMeta, trackTimescale);
             }
 
             addEdits(trak, track, defaultTimescale, trackTimescale);
@@ -142,9 +148,35 @@ public class MovieHelper {
         return buf;
     }
 
+    private static SampleEntry toSampleEntry(CodecMeta se) {
+
+        Rational pasp = null;
+        SampleEntry vse;
+        if ("avc1".equals(se.getFourcc())) {
+            AvcCBox avcC = AvcCBox.fromNAL(se.getCodecPrivate().duplicate());
+            vse = H264Utils.createMOVSampleEntry(avcC);
+            pasp = ((VideoCodecMeta) se).getPasp();
+        } else if (se instanceof VideoCodecMeta) {
+            VideoCodecMeta ss = (VideoCodecMeta) se;
+            pasp = ss.getPasp();
+            vse = MP4Muxer.videoSampleEntry(se.getFourcc(), ss.getSize(), "JCodec");
+        } else {
+            AudioCodecMeta ss = (AudioCodecMeta) se;
+            vse = MP4Muxer.audioSampleEntry(se.getFourcc(), 0, ss.getSampleSize(), ss.getChannelCount(),
+                    ss.getSampleRate(), ss.getEndian());
+            ChannelBox chan = new ChannelBox();
+            ChannelUtils.setLabels(ss.getChannelLabels(), chan);
+            vse.add(chan);
+        }
+
+        if (pasp != null)
+            vse.add(new PixelAspectExt(pasp));
+        return vse;
+    }
+
     private static int chooseTimescale(PacketChunk[] chunks, int trackId) {
         for (int ch = 0; ch < chunks.length; ch++) {
-            if (chunks[ch].getTrack() == trackId) {
+            if (chunks[ch].getTrackNo() == trackId) {
                 double dur = chunks[ch].getPacket().getDuration(), min = Double.MAX_VALUE;
                 int minTs = -1;
                 for (int ts = 0; ts < timescales.length; ts++) {
@@ -186,7 +218,7 @@ public class MovieHelper {
         Arrays.fill(dur, -1);
         for (int chunkId = chunks.length - 1, n = 0; chunkId >= 0 && n < dur.length; chunkId--) {
             PacketChunk chunk = chunks[chunkId];
-            int track = chunk.getTrack();
+            int track = chunk.getTrackNo();
             if (dur[track] == -1) {
                 dur[track] = chunk.getPacket().getPts() + chunk.getPacket().getDuration();
                 ++n;
@@ -195,8 +227,8 @@ public class MovieHelper {
         return dur;
     }
 
-    private static void populateStblGeneric(NodeBox stbl, PacketChunk[] chunks, int trackId, SampleEntry se,
-            int timescale) throws IOException {
+    private static void populateStblGeneric(NodeBox stbl, PacketChunk[] chunks, int trackId, CodecMeta se, int timescale)
+            throws IOException {
         LongArrayList stco = new LongArrayList(250 << 10);
         IntArrayList stsz = new IntArrayList(250 << 10);
         List<TimeToSampleEntry> stts = new ArrayList<TimeToSampleEntry>();
@@ -208,7 +240,7 @@ public class MovieHelper {
         for (int chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
             PacketChunk chunk = chunks[chunkNo];
 
-            if (chunk.getTrack() == trackId) {
+            if (chunk.getTrackNo() == trackId) {
                 stco.add(chunk.getPos());
 
                 stsz.add(chunk.getDataLen());
@@ -216,7 +248,7 @@ public class MovieHelper {
                 double dur = chunk.getPacket().getDuration();
                 if (dur != prevDur) {
                     if (prevCount != -1)
-                        stts.add(new TimeToSampleEntry(prevCount, (int)Math.round(prevDur * timescale)));
+                        stts.add(new TimeToSampleEntry(prevCount, (int) Math.round(prevDur * timescale)));
                     prevDur = dur;
                     prevCount = 0;
                 }
@@ -241,9 +273,10 @@ public class MovieHelper {
         stbl.add(new TimeToSampleBox(stts.toArray(new TimeToSampleEntry[0])));
     }
 
-    private static void populateStblPCM(NodeBox stbl, PacketChunk[] chunks, int trackId, SampleEntry se) throws IOException {
-        AudioSampleEntry ase = (AudioSampleEntry) se;
-        int frameSize = ase.calcFrameSize();
+    private static void populateStblPCM(NodeBox stbl, PacketChunk[] chunks, int trackId, CodecMeta se)
+            throws IOException {
+        AudioCodecMeta ase = (AudioCodecMeta) se;
+        int frameSize = ase.getFrameSize();
 
         LongArrayList stco = new LongArrayList(250 << 10);
         List<SampleToChunkEntry> stsc = new ArrayList<SampleToChunkEntry>();
@@ -252,7 +285,7 @@ public class MovieHelper {
         for (int chunkNo = 0, stscCurChunk = 1; chunkNo < chunks.length; chunkNo++) {
             PacketChunk chunk = chunks[chunkNo];
 
-            if (chunk.getTrack() == trackId) {
+            if (chunk.getTrackNo() == trackId) {
                 stco.add(chunk.getPos());
 
                 int framesPerChunk = chunk.getDataLen() / frameSize;
@@ -272,15 +305,15 @@ public class MovieHelper {
 
         stbl.add(new ChunkOffsets64Box(stco.toArray()));
         stbl.add(new SampleToChunkBox(stsc.toArray(new SampleToChunkEntry[0])));
-        stbl.add(new SampleSizesBox(ase.calcFrameSize(), totalFrames));
+        stbl.add(new SampleSizesBox(ase.getFrameSize(), totalFrames));
         stbl.add(new TimeToSampleBox(new TimeToSampleEntry[] { new TimeToSampleEntry(totalFrames, 1) }));
     }
 
-    private static int getPCMTs(AudioSampleEntry se, PacketChunk[] chunks, int trackId) throws IOException {
+    private static int getPCMTs(AudioCodecMeta se, PacketChunk[] chunks, int trackId) throws IOException {
         for (int chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
-            if (chunks[chunkNo].getTrack() == trackId) {
+            if (chunks[chunkNo].getTrackNo() == trackId) {
                 return (int) Math.round(chunks[chunkNo].getDataLen()
-                        / (se.calcFrameSize() * chunks[chunkNo].getPacket().getDuration()));
+                        / (se.getFrameSize() * chunks[chunkNo].getPacket().getDuration()));
             }
         }
         throw new RuntimeException("Crap");

@@ -5,10 +5,10 @@ import java.nio.ByteBuffer;
 
 import javax.sound.sampled.AudioFormat;
 
-import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.containers.mp4.boxes.channel.Label;
+import org.jcodec.movtool.streaming.AudioCodecMeta;
+import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -28,7 +28,7 @@ import org.jcodec.movtool.streaming.VirtualTrack;
 public class StereoDownmixTrack implements VirtualTrack {
     private final static int FRAMES_IN_OUT_PACKET = 1024 * 20;
     private VirtualTrack[] sources;
-    private AudioSampleEntry[] sampleEntries;
+    private AudioCodecMeta[] sampleEntries;
     private int rate;
     private int frameNo;
     private boolean[][] solo;
@@ -37,13 +37,13 @@ public class StereoDownmixTrack implements VirtualTrack {
     public StereoDownmixTrack(VirtualTrack... tracks) {
         this.rate = -1;
         sources = new VirtualTrack[tracks.length];
-        sampleEntries = new AudioSampleEntry[sources.length];
+        sampleEntries = new AudioCodecMeta[sources.length];
         solo = new boolean[tracks.length][];
         for (int i = 0; i < tracks.length; i++) {
-            SampleEntry se = tracks[i].getSampleEntry();
-            if (!(se instanceof AudioSampleEntry))
+            CodecMeta se = tracks[i].getCodecMeta();
+            if (!(se instanceof AudioCodecMeta))
                 throw new IllegalArgumentException("Non audio track");
-            AudioSampleEntry ase = (AudioSampleEntry) se;
+            AudioCodecMeta ase = (AudioCodecMeta) se;
             if (!ase.isPCM())
                 throw new IllegalArgumentException("Non PCM audio track.");
             AudioFormat format = ase.getFormat();
@@ -102,8 +102,8 @@ public class StereoDownmixTrack implements VirtualTrack {
     }
 
     @Override
-    public SampleEntry getSampleEntry() {
-        return MP4Muxer.audioSampleEntry("sowt", 1, 2, 2, rate, Endian.LITTLE_ENDIAN);
+    public CodecMeta getCodecMeta() {
+        return new AudioCodecMeta("sowt", 2, 2, rate, Endian.LITTLE_ENDIAN, true, new Label[] {Label.Left, Label.Right}, null);
     }
 
     @Override

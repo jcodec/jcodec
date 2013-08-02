@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.jcodec.codecs.h264.H264Utils;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -48,8 +50,8 @@ public class VirtualMP4Movie extends VirtualMovie {
         };
     }
 
-    protected MovieSegment packetChunk(VirtualPacket pkt, int chunkNo, int track, long pos) {
-        return new PacketChunk(pkt, track, chunkNo, pos);
+    protected MovieSegment packetChunk(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long pos) {
+        return new PacketChunk(pkt, trackNo, chunkNo, pos, track.getCodecMeta().getFourcc());
     }
 
     public class PacketChunk implements MovieSegment {
@@ -57,16 +59,22 @@ public class VirtualMP4Movie extends VirtualMovie {
         private int track;
         private int no;
         private long pos;
+        private String fourcc;
 
-        public PacketChunk(VirtualPacket packet, int track, int no, long pos) {
+        public PacketChunk(VirtualPacket packet, int track, int no, long pos, String fourcc) {
             this.packet = packet;
             this.track = track;
             this.no = no;
             this.pos = pos;
+            this.fourcc = fourcc;
         }
 
         public ByteBuffer getData() throws IOException {
-            return packet.getData().duplicate();
+            ByteBuffer buf = packet.getData().duplicate();
+            if ("avc1".equals(fourcc)) {
+                H264Utils.encodeMOVPacket(buf, null, null);
+            }
+            return buf;
         }
 
         public int getNo() {
@@ -89,7 +97,7 @@ public class VirtualMP4Movie extends VirtualMovie {
             return packet;
         }
 
-        public int getTrack() {
+        public int getTrackNo() {
             return track;
         }
     }

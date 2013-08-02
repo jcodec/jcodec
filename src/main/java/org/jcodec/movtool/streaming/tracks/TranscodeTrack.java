@@ -5,24 +5,17 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.EnumSet;
 
-import org.jcodec.codecs.h264.H264Encoder;
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
-import org.jcodec.codecs.prores.ProresToThumb2x2;
-import org.jcodec.codecs.prores.ProresToThumb4x4;
-import org.jcodec.codecs.vpx.VP8Encoder;
-import org.jcodec.codecs.vpx.VP8FixedRateControl;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.PixelAspectExt;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.movtool.streaming.CodecMeta;
+import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.scale.ColorUtil;
@@ -41,8 +34,8 @@ public abstract class TranscodeTrack implements VirtualTrack {
 
     private static final int TARGET_RATE = 1024;
     private int frameSize;
-    private VirtualTrack proresTrack;
-    private SampleEntry se;
+    private VirtualTrack src;
+    private CodecMeta se;
     private ThreadLocal<Transcoder> transcoders = new ThreadLocal<Transcoder>();
     private int mbW;
     private int mbH;
@@ -50,11 +43,16 @@ public abstract class TranscodeTrack implements VirtualTrack {
     private int thumbWidth;
     private int thumbHeight;
 
+    protected abstract int getFrameSize(int mbCount, int rate);
+
+    protected abstract VideoDecoder getDecoder(int scaleFactor);
+
+    protected abstract VideoEncoder getEncoder(int rate);
+
+    protected abstract void getCodecPrivate(ByteBuffer buf, Size size);
+
     public TranscodeTrack(VirtualTrack proresTrack, Size frameDim) {
-        checkFourCC(proresTrack);
-        this.proresTrack = proresTrack;
-        H264FixedRateControl rc = new H264FixedRateControl(TARGET_RATE);
-        H264Encoder encoder = new H264Encoder(rc);
+        this.src = proresTrack;
 
         scaleFactor = frameDim.getWidth() >= 960 ? 2 : 1;
         thumbWidth = frameDim.getWidth() >> scaleFactor;
@@ -63,34 +61,26 @@ public abstract class TranscodeTrack implements VirtualTrack {
         mbW = (thumbWidth + 15) >> 4;
         mbH = (thumbHeight + 15) >> 4;
 
-        se = H264Utils.createMOVSampleEntry(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS());
-        PixelAspectExt pasp = Box.findFirst(proresTrack.getSampleEntry(), PixelAspectExt.class, "pasp");
-        if (pasp != null)
-            se.add(pasp);
+        Size size = new Size(thumbWidth, thumbHeight);
+        Rational pasp = ((VideoCodecMeta) proresTrack.getCodecMeta()).getPasp();
 
-        frameSize = rc.calcFrameSize(mbW * mbH);
+        ByteBuffer codecPrivate = ByteBuffer.allocate(1024);
+        getCodecPrivate(codecPrivate, size);
+
+        se = new VideoCodecMeta("avc1", size, pasp, codecPrivate);
+
+        frameSize = getFrameSize(mbW * mbH, TARGET_RATE);
         frameSize += frameSize >> 4;
     }
 
-    private void checkFourCC(VirtualTrack proresTrack) {
-        String fourcc = proresTrack.getSampleEntry().getFourcc();
-        if ("ap4h".equals(fourcc))
-            return;
-        for (Profile profile : EnumSet.allOf(ProresEncoder.Profile.class)) {
-            if (profile.fourcc.equals(fourcc))
-                return;
-        }
-        throw new IllegalArgumentException("Input track is not ProRes");
-    }
-
     @Override
-    public SampleEntry getSampleEntry() {
+    public CodecMeta getCodecMeta() {
         return se;
     }
 
     @Override
     public VirtualPacket nextPacket() throws IOException {
-        VirtualPacket nextPacket = proresTrack.nextPacket();
+        VirtualPacket nextPacket = src.nextPacket();
         if (nextPacket == null)
             return null;
         return new TranscodePacket(nextPacket);
@@ -119,10 +109,6 @@ public abstract class TranscodeTrack implements VirtualTrack {
         }
     }
 
-    protected abstract VideoDecoder getDecoder(int scaleFactor);
-
-    protected abstract VideoEncoder getEncoder(int rate);
-
     class Transcoder {
         private VideoDecoder decoder;
         private VideoEncoder[] encoder = new VideoEncoder[3];
@@ -138,7 +124,7 @@ public abstract class TranscodeTrack implements VirtualTrack {
             pic0 = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV444);
         }
 
-        public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst) throws IOException {
+        public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst) {
             Picture decoded = decoder.decodeFrame(src, pic0.getData());
             if (pic1 == null) {
                 pic1 = Picture.create(decoded.getWidth(), decoded.getHeight(), ColorSpace.YUV420);
@@ -149,64 +135,30 @@ public abstract class TranscodeTrack implements VirtualTrack {
             // Rate control, reinforcement mechanism
             for (int i = 0; i < encoder.length; i++) {
                 try {
-                    encoder[i].encodeFrame(dst, pic1);
+                    dst.clear();
+                    ByteBuffer out = encoder[i].encodeFrame(dst, pic1);
                     break;
                 } catch (BufferOverflowException ex) {
                     System.out.println("Abandon frame!!!");
                 }
             }
-
-            H264Utils.encodeMOVPacket(dst, null, null);
+            
             return dst;
         }
     }
 
     @Override
     public void close() throws IOException {
-        proresTrack.close();
+        src.close();
     }
 
     @Override
     public VirtualEdit[] getEdits() {
-        return proresTrack.getEdits();
+        return src.getEdits();
     }
 
     @Override
     public int getPreferredTimescale() {
-        return proresTrack.getPreferredTimescale();
-    }
-
-    public static class Prores2AVCTrack extends TranscodeTrack {
-
-        public Prores2AVCTrack(VirtualTrack proresTrack, Size frameDim) {
-            super(proresTrack, frameDim);
-        }
-
-        @Override
-        protected VideoDecoder getDecoder(int scaleFactor) {
-            return scaleFactor == 2 ? new ProresToThumb2x2() : new ProresToThumb4x4();
-        }
-
-        @Override
-        protected VideoEncoder getEncoder(int rate) {
-            return new H264Encoder(new H264FixedRateControl(rate));
-        }
-    }
-
-    public static class Prores2VP8Track extends TranscodeTrack {
-
-        public Prores2VP8Track(VirtualTrack proresTrack, Size frameDim) {
-            super(proresTrack, frameDim);
-        }
-
-        @Override
-        protected VideoDecoder getDecoder(int scaleFactor) {
-            return scaleFactor == 2 ? new ProresToThumb2x2() : new ProresToThumb4x4();
-        }
-
-        @Override
-        protected VideoEncoder getEncoder(int rate) {
-            return new VP8Encoder(new VP8FixedRateControl(rate));
-        }
+        return src.getPreferredTimescale();
     }
 }

@@ -45,7 +45,7 @@ public abstract class VirtualMovie {
             }
             if (min == -1)
                 break;
-            chch.add(packetChunk(heads[min], curChunk, min, size));
+            chch.add(packetChunk(tracks[min], heads[min], curChunk, min, size));
             size += heads[min].getDataLen();
             tails[min] = heads[min];
             heads[min] = tracks[min].nextPacket();
@@ -57,7 +57,7 @@ public abstract class VirtualMovie {
         chunks = chch.toArray(new MovieSegment[0]);
     }
 
-    protected abstract MovieSegment packetChunk(VirtualPacket pkt, int chunkNo, int track, long pos);
+    protected abstract MovieSegment packetChunk(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long pos);
 
     protected abstract MovieSegment headerChunk(List<MovieSegment> chunks, VirtualTrack[] tracks, long dataSize)
             throws IOException;

@@ -17,6 +17,7 @@ import org.jcodec.movtool.streaming.VirtualMovie;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.movtool.streaming.tracks.CachingTrack;
 import org.jcodec.movtool.streaming.tracks.FilePool;
+import org.jcodec.movtool.streaming.tracks.Prores2AVCTrack;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
 import org.jcodec.movtool.streaming.tracks.StereoDownmixTrack;
 import org.jcodec.movtool.streaming.tracks.TranscodeTrack;
@@ -39,7 +40,7 @@ public class TestStreaming {
         long start = System.currentTimeMillis();
         ScheduledExecutorService cachePolicyExec = Executors.newSingleThreadScheduledExecutor();
 
-        VirtualMovie vm = new VirtualMP4Movie(new CachingTrack(new TranscodeTrack.Prores2AVCTrack(rt, v1.getCodedSize()), 10,
+        VirtualMovie vm = new VirtualMP4Movie(new CachingTrack(new Prores2AVCTrack(rt, v1.getCodedSize()), 10,
                 cachePolicyExec), new CachingTrack(rt1, 10, cachePolicyExec));
         System.out.println(System.currentTimeMillis() - start);
 

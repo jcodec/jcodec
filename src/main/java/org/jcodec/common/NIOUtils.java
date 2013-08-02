@@ -211,7 +211,7 @@ public class NIOUtils {
     public static String readNullTermString(ByteBuffer buffer) {
         return readNullTermString(buffer, Charset.defaultCharset());
     }
-    
+
     public static String readNullTermString(ByteBuffer buffer, Charset charset) {
         ByteBuffer fork = buffer.duplicate();
         while (buffer.hasRemaining() && buffer.get() != 0)
@@ -257,7 +257,7 @@ public class NIOUtils {
         buf.flip();
         return buf.get();
     }
-    
+
     public static byte[] readNByte(ReadableByteChannel channel, int n) throws IOException {
         byte[] result = new byte[n];
         channel.read(ByteBuffer.wrap(result));
@@ -270,7 +270,7 @@ public class NIOUtils {
         buf.flip();
         return buf.getInt();
     }
-    
+
     public static int readInt(ReadableByteChannel channel, ByteOrder order) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(4).order(order);
         channel.read(buf);
@@ -285,13 +285,13 @@ public class NIOUtils {
     public static void writeInt(WritableByteChannel channel, int value, ByteOrder order) throws IOException {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).order(order).putInt(value).flip());
     }
-    
+
     public static void writeIntLE(WritableByteChannel channel, int value) throws IOException {
         ByteBuffer allocate = ByteBuffer.allocate(4);
         allocate.order(ByteOrder.LITTLE_ENDIAN);
         channel.write((ByteBuffer) allocate.putInt(value).flip());
     }
-    
+
     public static void writeInt(WritableByteChannel channel, int value) throws IOException {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).putInt(value).flip());
     }
@@ -326,5 +326,12 @@ public class NIOUtils {
 
     public static AutoFileChannelWrapper autoChannel(File file) throws IOException {
         return new AutoFileChannelWrapper(file);
+    }
+
+    public static ByteBuffer clone(ByteBuffer byteBuffer) {
+        ByteBuffer result = ByteBuffer.allocate(byteBuffer.remaining());
+        result.put(byteBuffer.duplicate());
+        result.flip();
+        return result;
     }
 }

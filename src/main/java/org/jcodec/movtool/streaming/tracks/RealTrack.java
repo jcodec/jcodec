@@ -4,17 +4,27 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Edit;
+import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.boxes.channel.ChannelUtils;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.PCMMP4DemuxerTrack;
+import org.jcodec.movtool.streaming.AudioCodecMeta;
+import org.jcodec.movtool.streaming.CodecMeta;
+import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -67,8 +77,42 @@ public class RealTrack implements VirtualTrack {
     }
 
     @Override
-    public SampleEntry getSampleEntry() {
-        return trak.getSampleEntries()[0];
+    public CodecMeta getCodecMeta() {
+        SampleEntry se = trak.getSampleEntries()[0];
+        if (se instanceof VideoSampleEntry) {
+            VideoSampleEntry vse = (VideoSampleEntry) se;
+            PixelAspectExt pasp = Box.findFirst(se, PixelAspectExt.class, "pasp");
+
+            return new VideoCodecMeta(se.getFourcc(), new Size(vse.getWidth(), vse.getHeight()),
+                    pasp != null ? pasp.getRational() : null, extractVideoCodecPrivate(se));
+        } else if (se instanceof AudioSampleEntry) {
+            AudioSampleEntry ase = (AudioSampleEntry) se;
+            ByteBuffer codecPrivate = null;
+            if ("mp4a".equals(ase.getFourcc())) {
+                LeafBox lb = Box.findFirst(se, LeafBox.class, "esds");
+                if (lb == null)
+                    lb = Box.findFirst(se, LeafBox.class, null, "esds");
+                codecPrivate = lb.getData();
+            }
+
+            return new AudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(),
+                    (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), ChannelUtils.getLabels(ase), codecPrivate);
+        } else
+            throw new RuntimeException("Sample entry '" + se.getFourcc() + "' is not supported.");
+    }
+
+    private ByteBuffer extractVideoCodecPrivate(SampleEntry se) {
+        if ("avc1".equals(se.getFourcc())) {
+            LeafBox leaf = Box.findFirst(se, LeafBox.class, "avcC");
+            ByteBuffer codecPrivate = ByteBuffer.allocate(leaf.getData().remaining());
+            AvcCBox avcCBox = new AvcCBox();
+            avcCBox.parse(leaf.getData());
+
+            avcCBox.toNAL(codecPrivate, avcCBox);
+
+            return codecPrivate;
+        }
+        return null;
     }
 
     @Override
@@ -108,7 +152,7 @@ public class RealTrack implements VirtualTrack {
 
         @Override
         public double getPts() {
-            return (double)packet.getMediaPts() / packet.getTimescale();
+            return (double) packet.getMediaPts() / packet.getTimescale();
         }
 
         @Override
@@ -130,7 +174,7 @@ public class RealTrack implements VirtualTrack {
     @Override
     public VirtualEdit[] getEdits() {
         List<Edit> edits = demuxer.getEdits();
-        if(edits == null)
+        if (edits == null)
             return null;
         VirtualEdit[] result = new VirtualEdit[edits.size()];
         for (int i = 0; i < edits.size(); i++) {
@@ -143,6 +187,6 @@ public class RealTrack implements VirtualTrack {
 
     @Override
     public int getPreferredTimescale() {
-        return (int)demuxer.getTimescale();
+        return (int) demuxer.getTimescale();
     }
 }

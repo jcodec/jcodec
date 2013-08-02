@@ -1,9 +1,15 @@
 package org.jcodec.codecs.h264.mp4;
 
+import static org.jcodec.codecs.h264.H264Utils.unescapeNAL;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.io.model.NALUnit;
+import org.jcodec.codecs.h264.io.model.NALUnitType;
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -112,5 +118,34 @@ public class AvcCBox extends Box {
 
     public int getNalLengthSize() {
         return nalLengthSize;
+    }
+
+    public void toNAL(ByteBuffer codecPrivate, AvcCBox avcCBox) {
+        H264Utils.toNAL(codecPrivate, avcCBox.getSpsList(), avcCBox.getPpsList());
+    }
+
+    public static AvcCBox fromNAL(ByteBuffer codecPrivate) {
+        List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
+        List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+
+        ByteBuffer dup = codecPrivate.duplicate();
+
+        ByteBuffer buf;
+        SeqParameterSet sps = null;
+        while ((buf = H264Utils.nextNALUnit(dup)) != null) {
+            NALUnit nu = NALUnit.read(buf);
+            
+            H264Utils.unescapeNAL(buf);
+            
+            if (nu.type == NALUnitType.PPS) {
+                ppsList.add(buf);
+            } else if (nu.type == NALUnitType.SPS) {
+                spsList.add(buf);
+                sps = SeqParameterSet.read(buf.duplicate());
+            }
+        }
+        if (spsList.size() == 0 || ppsList.size() == 0)
+            return null;
+        return new AvcCBox(sps.profile_idc, 0, sps.level_idc, spsList, ppsList);
     }
 }

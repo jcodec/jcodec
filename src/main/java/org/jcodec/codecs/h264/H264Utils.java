@@ -194,6 +194,11 @@ public class H264Utils {
         SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
         AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, spsList, ppsList);
 
+        return createMOVSampleEntry(avcC);
+    }
+
+    public static SampleEntry createMOVSampleEntry(AvcCBox avcC) {
+        SeqParameterSet sps = SeqParameterSet.read(avcC.getSpsList().get(0).duplicate());
         int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
         int codedHeight = getPicHeightInMbs(sps) << 4;
 
@@ -208,7 +213,6 @@ public class H264Utils {
 
         SampleEntry se = MP4Muxer.videoSampleEntry("avc1", size, "JCodec");
         se.add(avcC);
-
         return se;
     }
 
@@ -286,5 +290,36 @@ public class H264Utils {
             out.putInt(1);
             out.put(nal.duplicate());
         }
+    }
+
+    public static void toNAL(ByteBuffer codecPrivate, SeqParameterSet sps, PictureParameterSet pps) {
+        ByteBuffer bb1 = ByteBuffer.allocate(512), bb2 = ByteBuffer.allocate(512);
+        sps.write(bb1);
+        pps.write(bb2);
+        bb1.flip();
+        bb2.flip();
+
+        putNAL(codecPrivate, bb1, 0x67);
+        putNAL(codecPrivate, bb2, 0x68);
+
+        codecPrivate.flip();
+    }
+
+    public static void toNAL(ByteBuffer codecPrivate, List<ByteBuffer> spsList2, List<ByteBuffer> ppsList2) {
+        for (ByteBuffer byteBuffer : spsList2)
+            putNAL(codecPrivate, byteBuffer, 0x67);
+        for (ByteBuffer byteBuffer : ppsList2)
+            putNAL(codecPrivate, byteBuffer, 0x68);
+
+        codecPrivate.flip();
+    }
+
+    private static void putNAL(ByteBuffer codecPrivate, ByteBuffer byteBuffer, int nalType) {
+        ByteBuffer dst = ByteBuffer.allocate(byteBuffer.remaining() * 2);
+        escapeNAL(byteBuffer, dst);
+        dst.flip();
+        codecPrivate.putInt(1);
+        codecPrivate.put((byte) nalType);
+        codecPrivate.put(dst);
     }
 }
