@@ -59,7 +59,7 @@ public class BitReader {
         if (deficit == 32) {
             curInt = readInt();
         }
-//         System.out.println(ret);
+        // System.out.println(ret);
 
         return ret;
     }
@@ -85,9 +85,9 @@ public class BitReader {
             deficit += n;
         }
 
-//         for(--nn; nn >=0; nn--)
-//         System.out.print((ret >> nn) & 1);
-//         System.out.println();
+        // for(--nn; nn >=0; nn--)
+        // System.out.print((ret >> nn) & 1);
+        // System.out.println();
 
         return ret;
     }
@@ -138,10 +138,10 @@ public class BitReader {
             curInt |= nextIgnore() << deficit;
         }
         int res = curInt >>> (32 - n);
-//         for (int i = n - 1; i >= 0; i--) {
-//         System.out.print((res >> i) & 0x1);
-//         }
-//         System.out.println();
+        // for (int i = n - 1; i >= 0; i--) {
+        // System.out.print((res >> i) & 0x1);
+        // }
+        // System.out.println();
         return res;
     }
 
@@ -164,5 +164,17 @@ public class BitReader {
     public void terminate() {
         int putBack = (32 - deficit) >> 3;
         bb.position(bb.position() - putBack);
+    }
+
+    public int position() {
+        return ((bb.position() - 4) << 3) + deficit;
+    }
+
+    /**
+     * Stops this bit reader. Returns underlying ByteBuffer pointer to the next
+     * byte unread byte
+     */
+    public void stop() {
+        bb.position(bb.position() - ((32 - deficit) >> 3));
     }
 }

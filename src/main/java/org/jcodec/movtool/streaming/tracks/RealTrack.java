@@ -108,7 +108,7 @@ public class RealTrack implements VirtualTrack {
 
         @Override
         public double getPts() {
-            return (double)packet.getMediaPts() / packet.getTimescale();
+            return (double) packet.getMediaPts() / packet.getTimescale();
         }
 
         @Override
@@ -130,7 +130,7 @@ public class RealTrack implements VirtualTrack {
     @Override
     public VirtualEdit[] getEdits() {
         List<Edit> edits = demuxer.getEdits();
-        if(edits == null)
+        if (edits == null)
             return null;
         VirtualEdit[] result = new VirtualEdit[edits.size()];
         for (int i = 0; i < edits.size(); i++) {
@@ -143,6 +143,6 @@ public class RealTrack implements VirtualTrack {
 
     @Override
     public int getPreferredTimescale() {
-        return (int)demuxer.getTimescale();
+        return (int) demuxer.getTimescale();
     }
 }

@@ -25,15 +25,9 @@ import org.jcodec.common.io.BitWriter;
  * 
  */
 public class SliceHeaderWriter {
-    private SeqParameterSet sps;
-    private PictureParameterSet pps;
-
-    public SliceHeaderWriter(SeqParameterSet sps, PictureParameterSet pps) {
-        this.sps = sps;
-        this.pps = pps;
-    }
-
     public void write(SliceHeader sliceHeader, boolean idrSlice, int nalRefIdc, BitWriter writer) {
+        SeqParameterSet sps = sliceHeader.sps;
+        PictureParameterSet pps = sliceHeader.pps;
         writeUE(writer, sliceHeader.first_mb_in_slice, "SH: first_mb_in_slice");
         writeUE(writer, sliceHeader.slice_type.ordinal() + (sliceHeader.slice_type_restr ? 5 : 0), "SH: slice_type");
         writeUE(writer, sliceHeader.pic_parameter_set_id, "SH: pic_parameter_set_id");
@@ -164,6 +158,7 @@ public class SliceHeaderWriter {
     }
 
     private void writePredWeightTable(SliceHeader sliceHeader, BitWriter writer) {
+        SeqParameterSet sps = sliceHeader.sps;
         writeUE(writer, sliceHeader.pred_weight_table.luma_log2_weight_denom, "SH: luma_log2_weight_denom");
         if (sps.chroma_format_idc != MONO) {
             writeUE(writer, sliceHeader.pred_weight_table.chroma_log2_weight_denom, "SH: chroma_log2_weight_denom");
@@ -176,6 +171,7 @@ public class SliceHeaderWriter {
     }
 
     private void writeOffsetWeight(SliceHeader sliceHeader, BitWriter writer, int list) {
+        SeqParameterSet sps = sliceHeader.sps;
         for (int i = 0; i < sliceHeader.pred_weight_table.luma_weight[list].length; i++) {
             boolean flagLuma = sliceHeader.pred_weight_table.luma_weight[list][i] == 128
                     && sliceHeader.pred_weight_table.luma_offset[list][i] == 0;

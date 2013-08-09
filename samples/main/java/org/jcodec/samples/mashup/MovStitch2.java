@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 
 import junit.framework.Assert;
 
+import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
@@ -26,11 +27,14 @@ import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4DemuxerException;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.AVC1Box;
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
+import org.jcodec.containers.mp4.boxes.SampleDescriptionBox.MyFactory;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
@@ -68,7 +72,7 @@ public class MovStitch2 {
         FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) vt1.getTimescale());
         outTrack.addSampleEntry(vt1.getSampleEntries()[0]);
         for (int i = 0; i < vt1.getFrameCount(); i++) {
-            outTrack.addFrame((MP4Packet)vt1.nextFrame());
+            outTrack.addFrame((MP4Packet) vt1.nextFrame());
         }
 
         AvcCBox avcC = doSampleEntry(vt2, outTrack);
@@ -76,10 +80,10 @@ public class MovStitch2 {
         SliceHeaderReader shr = new SliceHeaderReader();
         SeqParameterSet sps = SeqParameterSet.read(avcC.getSpsList().get(0).duplicate());
         PictureParameterSet pps = PictureParameterSet.read(avcC.getPpsList().get(0).duplicate());
-        SliceHeaderWriter shw = new SliceHeaderWriter(sps, pps);
+        SliceHeaderWriter shw = new SliceHeaderWriter();
 
         for (int i = 0; i < vt2.getFrameCount(); i++) {
-            MP4Packet packet = (MP4Packet)vt2.nextFrame();
+            MP4Packet packet = (MP4Packet) vt2.nextFrame();
             ByteBuffer frm = doFrame(packet.getData(), shr, shw, sps, pps);
             outTrack.addFrame(new MP4Packet(packet, frm));
         }
@@ -148,9 +152,9 @@ public class MovStitch2 {
     private static AvcCBox doSampleEntry(AbstractMP4DemuxerTrack videoTrack, FramesMP4MuxerTrack outTrack) {
         SampleEntry se = videoTrack.getSampleEntries()[0];
 
-        AvcCBox avcC = Box.findFirst(se, AvcCBox.class, AvcCBox.fourcc());
-        AvcCBox old = (AvcCBox) MP4Util.cloneBox(avcC, 2048);
-
+        AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
+        AvcCBox old = H264Utils.parseAVCC((VideoSampleEntry) se);
+        
         for (int i = 0; i < avcC.getPpsList().size(); i++) {
             avcC.getPpsList().set(i, updatePps(avcC.getPpsList().get(i)));
         }
@@ -173,7 +177,7 @@ public class MovStitch2 {
         while ((b = r.readNBit(8)) != -1)
             w.writeNBit(b, 8);
     }
-    
+
     static ByteBuffer updateSps(ByteBuffer bb) {
         SeqParameterSet sps = SeqParameterSet.read(bb);
         sps.seq_parameter_set_id = 1;

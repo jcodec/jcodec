@@ -26,7 +26,7 @@ public class CAVLCReader {
         return val;
     }
 
-    private static int readUE(BitReader bits)  {
+    public static int readUE(BitReader bits)  {
         int cnt = 0;
         while (bits.read1Bit() == 0 && cnt < 31)
             cnt++;

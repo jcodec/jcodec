@@ -1,6 +1,8 @@
 package org.jcodec.movtool.streaming.tracks;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.movtool.streaming.VirtualPacket;
@@ -17,12 +19,15 @@ import org.jcodec.movtool.streaming.VirtualTrack;
  */
 public class ClipTrack implements VirtualTrack {
 
-    private ClipTrack src;
+    private VirtualTrack src;
     private int from;
     private int to;
+    private int startFrame;
     private double startPts;
+    private List<VirtualPacket> gop;
+    private boolean eof;
 
-    public ClipTrack(ClipTrack src, int frameFrom, int frameTo) {
+    public ClipTrack(VirtualTrack src, int frameFrom, int frameTo) {
         this.src = src;
         this.from = frameFrom;
         this.to = frameTo;
@@ -30,13 +35,31 @@ public class ClipTrack implements VirtualTrack {
 
     @Override
     public VirtualPacket nextPacket() throws IOException {
+        if (eof)
+            return null;
+
         VirtualPacket nextPacket;
 
-        while ((nextPacket = src.nextPacket()) != null && nextPacket.getFrameNo() < from)
-            startPts = nextPacket.getPts();
+        if (gop == null) {
+            gop = new ArrayList<VirtualPacket>();
+            do {
+                nextPacket = src.nextPacket();
+                if (nextPacket != null) {
+                    if (nextPacket.isKeyframe())
+                        gop.clear();
+                    gop.add(nextPacket);
+                }
+            } while (nextPacket != null && nextPacket.getFrameNo() < from);
+            startPts = gop.get(0).getPts();
+            startFrame = gop.get(0).getFrameNo();
+        }
 
-        if (nextPacket == null || nextPacket.getFrameNo() >= to)
+        nextPacket = gop.size() > 0 ? gop.remove(0) : src.nextPacket();
+
+        if (nextPacket == null || nextPacket.getFrameNo() >= to) {
+            eof = true;
             return null;
+        }
 
         return new ClipPacket(nextPacket);
     }
@@ -74,7 +97,7 @@ public class ClipTrack implements VirtualTrack {
 
         @Override
         public int getFrameNo() {
-            return super.getFrameNo() - from;
+            return super.getFrameNo() - startFrame;
         }
     }
 }

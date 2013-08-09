@@ -18,10 +18,9 @@ import org.jcodec.movtool.streaming.VirtualMovie;
 import org.jcodec.movtool.streaming.tracks.ConcatTrack;
 import org.jcodec.movtool.streaming.tracks.FilePool;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
-import org.junit.Test;
 
 public class ConcatTest {
-    @Test
+    
     public void testConcat() throws Exception {
         File folder = new File(System.getProperty("user.home"), "upload");
         File[] listFiles = folder.listFiles(new FilenameFilter() {

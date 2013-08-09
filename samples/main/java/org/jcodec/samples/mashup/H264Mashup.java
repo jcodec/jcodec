@@ -108,7 +108,7 @@ public class H264Mashup {
                 pps.seq_parameter_set_id = lastSPS;
                 pps.pic_parameter_set_id = ++lastPPS;
                 reader = new SliceHeaderReader();
-                writer = new SliceHeaderWriter(sps, pps);
+                writer = new SliceHeaderWriter();
                 System.out.println("PPS");
             } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
                 ByteBuffer res = ByteBuffer.allocate(nus.remaining() + 10);

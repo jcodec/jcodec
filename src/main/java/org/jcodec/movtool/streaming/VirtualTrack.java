@@ -16,7 +16,7 @@ import org.jcodec.containers.mp4.boxes.SampleEntry;
 public interface VirtualTrack {
 
     VirtualPacket nextPacket() throws IOException;
-
+    
     SampleEntry getSampleEntry();
     
     VirtualEdit[] getEdits();

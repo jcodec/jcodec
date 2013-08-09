@@ -143,10 +143,13 @@ public class MP4Util {
     }
 
     public static Box cloneBox(Box box, int approxSize) {
+        return cloneBox(box, approxSize, BoxFactory.getDefault());
+    }
+    public static Box cloneBox(Box box, int approxSize, BoxFactory bf) {
         ByteBuffer buf = ByteBuffer.allocate(approxSize);
         box.write(buf);
         buf.flip();
-        return NodeBox.parseChildBox(buf, BoxFactory.getDefault());
+        return NodeBox.parseChildBox(buf, bf);
     }
     
     public static String getFourcc(Codec codec) {

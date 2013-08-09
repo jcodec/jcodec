@@ -131,10 +131,12 @@ public class H264Encoder {
         SliceHeader sh = new SliceHeader();
         sh.slice_type = SliceType.I;
         sh.refPicMarkingIDR = new RefPicMarkingIDR(false, false);
+        sh.pps = pps;
+        sh.sps = sps;
 
         ByteBuffer buf = ByteBuffer.allocate(pic.getWidth() * pic.getHeight());
         BitWriter sliceData = new BitWriter(buf);
-        new SliceHeaderWriter(sps, pps).write(sh, true, 2, sliceData);
+        new SliceHeaderWriter().write(sh, true, 2, sliceData);
 
         Picture outMB = Picture.create(16, 16, ColorSpace.YUV420);
 

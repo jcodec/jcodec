@@ -16,7 +16,10 @@ import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
@@ -286,5 +289,12 @@ public class H264Utils {
             out.putInt(1);
             out.put(nal.duplicate());
         }
+    }
+    
+    public static AvcCBox parseAVCC(VideoSampleEntry vse) {
+        LeafBox lb = Box.findFirst(vse, LeafBox.class, "avcC");
+        AvcCBox avcC = new AvcCBox();
+        avcC.parse(lb.getData().duplicate());
+        return avcC;
     }
 }

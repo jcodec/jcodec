@@ -56,7 +56,7 @@ public class MovChangePPS {
         SliceHeaderReader shr = new SliceHeaderReader();
         SeqParameterSet sps = SeqParameterSet.read(avcC.getSpsList().get(0));
         PictureParameterSet pps = PictureParameterSet.read(avcC.getPpsList().get(0));
-        SliceHeaderWriter shw = new SliceHeaderWriter(sps, pps);
+        SliceHeaderWriter shw = new SliceHeaderWriter();
 
         for (int i = 0; i < videoTrack.getFrameCount(); i++) {
             MP4Packet packet = (MP4Packet)videoTrack.nextFrame();
