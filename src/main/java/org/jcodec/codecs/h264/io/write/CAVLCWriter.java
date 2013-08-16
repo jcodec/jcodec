@@ -2,6 +2,7 @@ package org.jcodec.codecs.h264.io.write;
 
 import static org.jcodec.common.tools.Debug.print;
 import static org.jcodec.common.tools.Debug.println;
+import static org.jcodec.common.tools.Debug.trace;
 
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.tools.MathUtil;
@@ -20,10 +21,9 @@ public class CAVLCWriter {
     private CAVLCWriter() {
     }
 
-    public static void writeU(BitWriter out, int value, int n, String string)  {
-        print(string + "\t");
+    public static void writeU(BitWriter out, int value, int n, String message)  {
         out.writeNBit(value, n);
-        println("\t" + value);
+        trace(message, value);
     }
 
     public static void writeUE(BitWriter out, int value)  {
@@ -45,34 +45,30 @@ public class CAVLCWriter {
         writeUE(out, MathUtil.golomb(value));
     }
 
-    public static void writeUE(BitWriter out, int value, String string)  {
-        print(string + "\t");
+    public static void writeUE(BitWriter out, int value, String message)  {
         writeUE(out, value);
-        println("\t" + value);
+        trace(message, value);
     }
 
-    public static void writeSE(BitWriter out, int value, String string)  {
-        print(string + "\t");
+    public static void writeSE(BitWriter out, int value, String message)  {
         writeUE(out, MathUtil.golomb(value));
-        println("\t" + value);
+        trace(message, value);
     }
 
-    public static void writeBool(BitWriter out, boolean value, String string)  {
-        print(string + "\t");
+    public static void writeBool(BitWriter out, boolean value, String message)  {
         out.write1Bit(value ? 1 : 0);
-        println("\t" + value);
+        trace(message, value ? 1 : 0);
     }
 
     public static void writeU(BitWriter out, int i, int n)  {
         out.writeNBit(i, n);
     }
 
-    public static void writeNBit(BitWriter out, long value, int n, String string)  {
-        print(string + "\t");
+    public static void writeNBit(BitWriter out, long value, int n, String message)  {
         for (int i = 0; i < n; i++) {
             out.write1Bit((int) (value >> (n - i - 1)) & 0x1);
         }
-        println("\t" + value);
+        trace(message, value);
     }
 
     public static void writeTrailingBits(BitWriter out)  {

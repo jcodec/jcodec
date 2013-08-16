@@ -13,6 +13,7 @@ import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Size;
@@ -102,6 +103,39 @@ public class H264Utils {
             p2 = b;
         }
         _buf.limit(out.position());
+    }
+
+    public static final void escapeNAL(ByteBuffer src) {
+        int[] loc = searchEscapeLocations(src);
+
+        int old = src.limit();
+        src.limit(src.limit() + loc.length);
+
+        for (int newPos = src.limit() - 1, oldPos = old - 1, locIdx = loc.length - 1; newPos >= src.position(); newPos--, oldPos--) {
+            src.put(newPos, src.get(oldPos));
+            if (locIdx >= 0 && loc[locIdx] == oldPos) {
+                newPos--;
+                src.put(newPos, (byte) 3);
+                locIdx--;
+            }
+        }
+    }
+
+    private static int[] searchEscapeLocations(ByteBuffer src) {
+        IntArrayList points = new IntArrayList();
+        ByteBuffer search = src.duplicate();
+        short p = search.getShort();
+        while (search.hasRemaining()) {
+            byte b = search.get();
+            if (p == 0 && (b & ~3) == 0) {
+                points.add(search.position() - 1);
+                p = 3;
+            }
+            p <<= 8;
+            p |= b & 0xff;
+        }
+        int[] array = points.toArray();
+        return array;
     }
 
     public static final void escapeNAL(ByteBuffer src, ByteBuffer dst) {
@@ -290,11 +324,41 @@ public class H264Utils {
             out.put(nal.duplicate());
         }
     }
-    
+
     public static AvcCBox parseAVCC(VideoSampleEntry vse) {
         LeafBox lb = Box.findFirst(vse, LeafBox.class, "avcC");
         AvcCBox avcC = new AvcCBox();
         avcC.parse(lb.getData().duplicate());
         return avcC;
+    }
+    
+    public static ByteBuffer writeSPS(SeqParameterSet sps, int approxSize) {
+        ByteBuffer output = ByteBuffer.allocate(approxSize + 8);
+        sps.write(output);
+        output.flip();
+        H264Utils.escapeNAL(output);
+        return output;
+    }
+
+    public static SeqParameterSet readSPS(ByteBuffer data) {
+        ByteBuffer input = NIOUtils.duplicate(data);
+        H264Utils.unescapeNAL(input);
+        SeqParameterSet sps = SeqParameterSet.read(input);
+        return sps;
+    }
+    
+    public static ByteBuffer writePPS(PictureParameterSet pps, int approxSize) {
+        ByteBuffer output = ByteBuffer.allocate(approxSize + 8);
+        pps.write(output);
+        output.flip();
+        H264Utils.escapeNAL(output);
+        return output;
+    }
+
+    public static PictureParameterSet readPPS(ByteBuffer data) {
+        ByteBuffer input = NIOUtils.duplicate(data);
+        H264Utils.unescapeNAL(input);
+        PictureParameterSet pps = PictureParameterSet.read(input);
+        return pps;
     }
 }

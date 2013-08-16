@@ -13,9 +13,11 @@ public class BitReader {
     protected int deficit;
     protected int curInt;
     private ByteBuffer bb;
+    private int initPos;
 
     public BitReader(ByteBuffer bb) {
         this.bb = bb;
+        initPos = bb.position();
         curInt = readInt();
         deficit = 0;
     }
@@ -167,7 +169,7 @@ public class BitReader {
     }
 
     public int position() {
-        return ((bb.position() - 4) << 3) + deficit;
+        return ((bb.position() - initPos - 4) << 3) + deficit;
     }
 
     /**

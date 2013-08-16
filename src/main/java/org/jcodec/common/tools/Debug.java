@@ -54,7 +54,7 @@ public class Debug {
 
     public static void trace(String format, Object... args) {
         if (debug)
-            System.out.printf("> " + format + "\n", args);
+            System.out.printf(format + ": %d\n", args);
     }
 
     public final static boolean debug = false;

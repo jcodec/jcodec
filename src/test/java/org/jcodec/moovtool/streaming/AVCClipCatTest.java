@@ -15,13 +15,15 @@ import org.jcodec.movtool.streaming.tracks.AVCConcatTrack;
 import org.jcodec.movtool.streaming.tracks.ClipTrack;
 import org.jcodec.movtool.streaming.tracks.FilePool;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
+import org.junit.Test;
 
 public class AVCClipCatTest {
 
+    @Test
     public void testClipCat() throws IOException {
-        File f1 = new File(System.getProperty("user.home"), "Desktop/seg1.mov");
-        File f2 = new File(System.getProperty("user.home"), "Desktop/seg2.mov");
-        File f3 = new File(System.getProperty("user.home"), "Desktop/seg3.mov");
+        File f1 = new File(System.getProperty("user.home"), "Desktop/h264_concat/test2/thumbshq_1.mov");
+        File f2 = new File(System.getProperty("user.home"), "Desktop/h264_concat/test2/thumbshq_2.mov");
+        File f3 = new File(System.getProperty("user.home"), "Desktop/h264_concat/test2/thumbshq_3.mov");
 
         MovieBox m1 = MP4Util.parseMovie(f1);
         MovieBox m2 = MP4Util.parseMovie(f2);
@@ -39,5 +41,7 @@ public class AVCClipCatTest {
         BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(
                 System.getProperty("user.home"), "Desktop/result.mov")));
         IOUtils.copy(range, out);
+        out.flush();
+        out.close();
     }
 }

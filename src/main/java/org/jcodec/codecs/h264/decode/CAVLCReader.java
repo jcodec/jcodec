@@ -21,7 +21,7 @@ public class CAVLCReader {
     public static int readNBit(BitReader bits, int n, String message)  {
         int val = bits.readNBit(n);
 
-        trace(message, String.valueOf(val));
+        trace(message, val);
 
         return val;
     }
@@ -44,7 +44,7 @@ public class CAVLCReader {
     public static int readUE(BitReader bits, String message)  {
         int res = readUE(bits);
 
-        trace(message, String.valueOf(res));
+        trace(message, res);
 
         return res;
     }
@@ -54,7 +54,7 @@ public class CAVLCReader {
 
         val = H264Utils.golomb2Signed(val);
 
-        trace(message, String.valueOf(val));
+        trace(message, val);
 
         return val;
     }
@@ -63,7 +63,7 @@ public class CAVLCReader {
 
         boolean res = bits.read1Bit() == 0 ? false : true;
 
-        trace(message, res ? "1" : "0");
+        trace(message, res ? 1 : 0);
 
         return res;
     }

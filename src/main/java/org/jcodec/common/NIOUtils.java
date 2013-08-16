@@ -228,7 +228,7 @@ public class NIOUtils {
     }
 
     public static void copy(ReadableByteChannel in, WritableByteChannel out, long amount) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(8192);
+        ByteBuffer buf = ByteBuffer.allocate(0x10000);
         int read;
         do {
             buf.position(0);
@@ -320,5 +320,12 @@ public class NIOUtils {
 
     public static AutoFileChannelWrapper autoChannel(File file) throws IOException {
         return new AutoFileChannelWrapper(file);
+    }
+
+    public static ByteBuffer duplicate(ByteBuffer bb) {
+        ByteBuffer out = ByteBuffer.allocate(bb.remaining());
+        out.put(bb.duplicate());
+        out.flip();
+        return out;
     }
 }

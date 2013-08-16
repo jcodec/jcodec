@@ -1,5 +1,10 @@
 package org.jcodec.movtool.streaming.tracks;
 
+import static org.jcodec.codecs.h264.H264Utils.readPPS;
+import static org.jcodec.codecs.h264.H264Utils.readSPS;
+import static org.jcodec.codecs.h264.H264Utils.writePPS;
+import static org.jcodec.codecs.h264.H264Utils.writeSPS;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -18,6 +23,8 @@ import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.movtool.streaming.VirtualPacket;
@@ -54,12 +61,19 @@ public class AVCConcatTrack implements VirtualTrack {
         spss = new SeqParameterSet[tracks.length];
         ppss = new PictureParameterSet[tracks.length];
         avcCs = new AvcCBox[tracks.length];
+        PixelAspectExt pasp = null;
         for (int i = 0; i < tracks.length; i++) {
             SampleEntry se = tracks[i].getSampleEntry();
             if (!(se instanceof VideoSampleEntry))
                 throw new RuntimeException("Not a video track.");
             if (!"avc1".equals(se.getFourcc()))
                 throw new RuntimeException("Not an AVC track.");
+
+            PixelAspectExt paspL = Box.findFirst(se, PixelAspectExt.class, "pasp");
+            if (pasp != null && paspL != null && !pasp.getRational().equals(paspL.getRational()))
+                throw new RuntimeException("Can not concat video tracks with different Pixel Aspect Ratio.");
+            pasp = paspL;
+
             AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
             if (avcC.getSpsList().size() > 1)
                 throw new RuntimeException("Multiple SPS per track not supported.");
@@ -70,29 +84,29 @@ public class AVCConcatTrack implements VirtualTrack {
             avcCs[i] = avcC;
         }
         se = H264Utils.createMOVSampleEntry(outSps, outPps);
+        if (pasp != null)
+            se.add(pasp);
     }
 
-    private ByteBuffer changeSPS(int newId, ByteBuffer bb) {
-        ByteBuffer obb = ByteBuffer.allocate(bb.remaining() + 8);
-        SeqParameterSet sps = SeqParameterSet.read(bb.duplicate());
+    private ByteBuffer changeSPS(int newId, ByteBuffer data) {
+        SeqParameterSet sps = readSPS(data);
+
         sps.seq_parameter_set_id = newId;
-        System.out.println(newId);
-        sps.write(obb);
-        obb.flip();
         spss[newId] = sps;
-        return obb;
+
+        int approxSize = data.remaining();
+        return writeSPS(sps, approxSize);
     }
 
-    private ByteBuffer changePPS(int newId, ByteBuffer bb) {
-        ByteBuffer obb = ByteBuffer.allocate(bb.remaining() + 8);
-        PictureParameterSet pps = PictureParameterSet.read(bb.duplicate());
+    private ByteBuffer changePPS(int newId, ByteBuffer data) {
+        PictureParameterSet pps = readPPS(data);
+
         pps.seq_parameter_set_id = newId;
         pps.pic_parameter_set_id = newId;
-        System.out.println(newId);
-        pps.write(obb);
-        obb.flip();
         ppss[newId] = pps;
-        return obb;
+
+        int approxSize = data.remaining();
+        return writePPS(pps, approxSize);
     }
 
     @Override
@@ -142,7 +156,7 @@ public class AVCConcatTrack implements VirtualTrack {
 
             if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
 
-                ByteBuffer savePoint = out.duplicate();
+                ByteBuffer nalSizePosition = out.duplicate();
                 out.putInt(0);
                 nu.write(out);
                 if (!ppss[idx2].entropy_coding_mode_flag)
@@ -150,7 +164,7 @@ public class AVCConcatTrack implements VirtualTrack {
                 else
                     copyCABAC(nal, out, idx2, nu, spss[idx2], ppss[idx2]);
 
-                savePoint.putInt(out.position() - savePoint.position() - 4);
+                nalSizePosition.putInt(out.position() - nalSizePosition.position() - 4);
             }
         }
         if (out.remaining() >= 5) {
@@ -224,6 +238,11 @@ public class AVCConcatTrack implements VirtualTrack {
 
     private static void copyCABAC(ByteBuffer is, ByteBuffer os, int id, NALUnit nu, SeqParameterSet sps,
             PictureParameterSet pps) {
+
+        ByteBuffer nal = os.duplicate();
+
+        H264Utils.unescapeNAL(is);
+
         BitReader reader = new BitReader(is);
         BitWriter writer = new BitWriter(os);
         SliceHeader sh = shr.readPart1(reader);
@@ -235,7 +254,7 @@ public class AVCConcatTrack implements VirtualTrack {
         long bp = reader.curBit();
         if (bp != 0) {
             long rem = reader.readNBit(8 - (int) bp);
-            if((1 << (8 - bp)) - 1 != rem)
+            if ((1 << (8 - bp)) - 1 != rem)
                 throw new RuntimeException("Invalid CABAC padding");
         }
 
@@ -243,7 +262,14 @@ public class AVCConcatTrack implements VirtualTrack {
             writer.writeNBit(0xff, 8 - writer.curBit());
         writer.flush();
         reader.stop();
+
         os.put(is);
+
+        nal.limit(os.position());
+
+        H264Utils.escapeNAL(nal);
+
+        os.position(nal.limit());
     }
 
     public class AVCConcatPacket implements VirtualPacket {

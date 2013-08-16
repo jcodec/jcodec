@@ -31,7 +31,7 @@ public class SliceHeaderWriter {
         writeUE(writer, sliceHeader.first_mb_in_slice, "SH: first_mb_in_slice");
         writeUE(writer, sliceHeader.slice_type.ordinal() + (sliceHeader.slice_type_restr ? 5 : 0), "SH: slice_type");
         writeUE(writer, sliceHeader.pic_parameter_set_id, "SH: pic_parameter_set_id");
-        writeU(writer, sliceHeader.frame_num, sps.log2_max_frame_num_minus4 + 4);
+        writeU(writer, sliceHeader.frame_num, sps.log2_max_frame_num_minus4 + 4, "SH: frame_num");
         if (!sps.frame_mbs_only_flag) {
             writeBool(writer, sliceHeader.field_pic_flag, "SH: field_pic_flag");
             if (sliceHeader.field_pic_flag) {
@@ -172,24 +172,27 @@ public class SliceHeaderWriter {
 
     private void writeOffsetWeight(SliceHeader sliceHeader, BitWriter writer, int list) {
         SeqParameterSet sps = sliceHeader.sps;
+        int defaultLW = 1 << sliceHeader.pred_weight_table.luma_log2_weight_denom;
+        int defaultCW = 1 << sliceHeader.pred_weight_table.chroma_log2_weight_denom;
+        
         for (int i = 0; i < sliceHeader.pred_weight_table.luma_weight[list].length; i++) {
-            boolean flagLuma = sliceHeader.pred_weight_table.luma_weight[list][i] == 128
-                    && sliceHeader.pred_weight_table.luma_offset[list][i] == 0;
+            boolean flagLuma = sliceHeader.pred_weight_table.luma_weight[list][i] != defaultLW
+                    || sliceHeader.pred_weight_table.luma_offset[list][i] != 0;
             writeBool(writer, flagLuma, "SH: luma_weight_l0_flag");
             if (flagLuma) {
-                writeSE(writer, sliceHeader.pred_weight_table.luma_weight[list][i], "SH: ");
-                writeSE(writer, sliceHeader.pred_weight_table.luma_offset[list][i], "SH: ");
+                writeSE(writer, sliceHeader.pred_weight_table.luma_weight[list][i], "SH: luma_weight_l" + list);
+                writeSE(writer, sliceHeader.pred_weight_table.luma_offset[list][i], "SH: luma_offset_l" + list);
             }
             if (sps.chroma_format_idc != MONO) {
-                boolean flagChroma = sliceHeader.pred_weight_table.chroma_weight[list][0][i] == 128
-                        && sliceHeader.pred_weight_table.chroma_offset[list][0][i] == 0
-                        && sliceHeader.pred_weight_table.chroma_weight[list][1][i] == 128
-                        && sliceHeader.pred_weight_table.chroma_offset[list][1][i] == 0;
+                boolean flagChroma = sliceHeader.pred_weight_table.chroma_weight[list][0][i] != defaultCW
+                        || sliceHeader.pred_weight_table.chroma_offset[list][0][i] != 0
+                        || sliceHeader.pred_weight_table.chroma_weight[list][1][i] != defaultCW
+                        || sliceHeader.pred_weight_table.chroma_offset[list][1][i] != 0;
                 writeBool(writer, flagChroma, "SH: chroma_weight_l0_flag");
                 if (flagChroma)
                     for (int j = 0; j < 2; j++) {
-                        writeSE(writer, sliceHeader.pred_weight_table.chroma_weight[list][i][j], "SH: ");
-                        writeSE(writer, sliceHeader.pred_weight_table.chroma_offset[list][i][j], "SH: ");
+                        writeSE(writer, sliceHeader.pred_weight_table.chroma_weight[list][j][i], "SH: chroma_weight_l" + list);
+                        writeSE(writer, sliceHeader.pred_weight_table.chroma_offset[list][j][i], "SH: chroma_offset_l" + list);
                     }
             }
         }
@@ -210,7 +213,7 @@ public class SliceHeaderWriter {
         if (reordering == null)
             return;
 
-        for (int i = 0; i < reordering.length; i++) {
+        for (int i = 0; i < reordering[0].length; i++) {
             writeUE(writer, reordering[0][i], "SH: reordering_of_pic_nums_idc");
             writeUE(writer, reordering[1][i], "SH: abs_diff_pic_num_minus1");
         }
