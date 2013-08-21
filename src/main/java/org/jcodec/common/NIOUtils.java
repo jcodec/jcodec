@@ -17,6 +17,8 @@ import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -211,7 +213,7 @@ public class NIOUtils {
     public static String readNullTermString(ByteBuffer buffer) {
         return readNullTermString(buffer, Charset.defaultCharset());
     }
-    
+
     public static String readNullTermString(ByteBuffer buffer, Charset charset) {
         ByteBuffer fork = buffer.duplicate();
         while (buffer.hasRemaining() && buffer.get() != 0)
@@ -257,7 +259,7 @@ public class NIOUtils {
         buf.flip();
         return buf.get();
     }
-    
+
     public static byte[] readNByte(ReadableByteChannel channel, int n) throws IOException {
         byte[] result = new byte[n];
         channel.read(ByteBuffer.wrap(result));
@@ -270,7 +272,7 @@ public class NIOUtils {
         buf.flip();
         return buf.getInt();
     }
-    
+
     public static int readInt(ReadableByteChannel channel, ByteOrder order) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(4).order(order);
         channel.read(buf);
@@ -285,7 +287,7 @@ public class NIOUtils {
     public static void writeInt(WritableByteChannel channel, int value, ByteOrder order) throws IOException {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).order(order).putInt(value).flip());
     }
-    
+
     public static void writeInt(WritableByteChannel channel, int value) throws IOException {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).putInt(value).flip());
     }
@@ -327,5 +329,14 @@ public class NIOUtils {
         out.put(bb.duplicate());
         out.flip();
         return out;
+    }
+
+    public static int find(List<ByteBuffer> catalog, ByteBuffer key) {
+        byte[] keyA = toArray(key);
+        for (int i = 0; i < catalog.size(); i++) {
+            if (Arrays.equals(toArray(catalog.get(i)), keyA))
+                return i;
+        }
+        return -1;
     }
 }

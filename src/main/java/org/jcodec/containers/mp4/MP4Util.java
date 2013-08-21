@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
@@ -154,5 +155,13 @@ public class MP4Util {
     
     public static String getFourcc(Codec codec) {
         return codecMapping.get(codec);
+    }
+
+    public static ByteBuffer writeBox(Box box, int approxSize) {
+        ByteBuffer buf = ByteBuffer.allocate(approxSize);
+        box.write(buf);
+        buf.flip();
+        
+        return buf;
     }
 }

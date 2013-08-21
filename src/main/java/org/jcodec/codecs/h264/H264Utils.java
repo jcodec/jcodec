@@ -8,14 +8,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
+import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
+import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.LeafBox;
@@ -31,6 +37,9 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * 
  */
 public class H264Utils {
+
+    private static SliceHeaderReader shr = new SliceHeaderReader();
+    private static SliceHeaderWriter shw = new SliceHeaderWriter();
 
     public static ByteBuffer nextNALUnit(ByteBuffer buf) {
         skipToNALUnit(buf);
@@ -165,8 +174,10 @@ public class H264Utils {
         List<ByteBuffer> result = new ArrayList<ByteBuffer>();
         int nls = avcC.getNalLengthSize();
         ByteBuffer dup = buf.duplicate();
-        while (dup.hasRemaining()) {
+        while (dup.remaining() >= nls) {
             int len = readLen(dup, nls);
+            if (len == 0)
+                break;
             result.add(NIOUtils.read(dup, len));
         }
         return result;
@@ -197,6 +208,29 @@ public class H264Utils {
      * 
      * @param avcFrame
      *            AVC frame encoded in Annex B NAL unit format
+     */
+    public static void encodeMOVPacket(ByteBuffer avcFrame) {
+
+        ByteBuffer dup = avcFrame.duplicate();
+        ByteBuffer d1 = avcFrame.duplicate();
+
+        for (int tot = d1.position();;) {
+            ByteBuffer buf = H264Utils.nextNALUnit(dup);
+            if (buf == null)
+                break;
+            d1.position(tot);
+            d1.putInt(buf.remaining());
+            tot += buf.remaining() + 4;
+        }
+    }
+
+    /**
+     * Wipes AVC parameter sets ( SPS/PPS ) from the packet
+     * 
+     * @param in
+     *            AVC frame encoded in Annex B NAL unit format
+     * @param out
+     *            Buffer where packet without PS will be put
      * @param spsList
      *            Storage for leading SPS structures ( can be null, then all
      *            leading SPSs are discarded ).
@@ -204,31 +238,65 @@ public class H264Utils {
      *            Storage for leading PPS structures ( can be null, then all
      *            leading PPSs are discarded ).
      */
-    public static void encodeMOVPacket(ByteBuffer avcFrame, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
+    public static void wipePS(ByteBuffer in, ByteBuffer out, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
 
-        ByteBuffer dup = avcFrame.duplicate();
-        ByteBuffer d1 = avcFrame.duplicate();
-
-        for (int tot = 0;;) {
+        ByteBuffer dup = in.duplicate();
+        while (dup.hasRemaining()) {
             ByteBuffer buf = H264Utils.nextNALUnit(dup);
             if (buf == null)
                 break;
-            d1.position(tot);
-            d1.putInt(buf.remaining());
-            tot += buf.remaining() + 4;
+
+            NALUnit nu = NALUnit.read(buf.duplicate());
+            if (nu.type == NALUnitType.PPS) {
+                if (ppsList != null)
+                    ppsList.add(buf);
+            } else if (nu.type == NALUnitType.SPS) {
+                if (spsList != null)
+                    spsList.add(buf);
+            } else {
+                out.putInt(1);
+                out.put(buf);
+            }
+        }
+        out.flip();
+    }
+
+    /**
+     * Wipes AVC parameter sets ( SPS/PPS ) from the packet ( inplace operation
+     * )
+     * 
+     * @param in
+     *            AVC frame encoded in Annex B NAL unit format
+     * @param spsList
+     *            Storage for leading SPS structures ( can be null, then all
+     *            leading SPSs are discarded ).
+     * @param ppsList
+     *            Storage for leading PPS structures ( can be null, then all
+     *            leading PPSs are discarded ).
+     */
+    public static void wipePS(ByteBuffer in, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
+        ByteBuffer dup = in.duplicate();
+        while (dup.hasRemaining()) {
+            ByteBuffer buf = H264Utils.nextNALUnit(dup);
+            if (buf == null)
+                break;
 
             NALUnit nu = NALUnit.read(buf);
-
-            if (nu.type == NALUnitType.PPS && ppsList != null) {
-                ppsList.add(buf);
-            } else if (nu.type == NALUnitType.SPS && spsList != null) {
-                spsList.add(buf);
-            }
+            if (nu.type == NALUnitType.PPS) {
+                if (ppsList != null)
+                    ppsList.add(buf);
+                in.position(dup.position());
+            } else if (nu.type == NALUnitType.SPS) {
+                if (spsList != null)
+                    spsList.add(buf);
+                in.position(dup.position());
+            } else
+                break;
         }
     }
 
     public static SampleEntry createMOVSampleEntry(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
-        SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
+        SeqParameterSet sps = readSPS(NIOUtils.duplicate(spsList.get(0)));
         AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, spsList, ppsList);
 
         int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
@@ -326,12 +394,16 @@ public class H264Utils {
     }
 
     public static AvcCBox parseAVCC(VideoSampleEntry vse) {
-        LeafBox lb = Box.findFirst(vse, LeafBox.class, "avcC");
-        AvcCBox avcC = new AvcCBox();
-        avcC.parse(lb.getData().duplicate());
-        return avcC;
+        Box lb = Box.findFirst(vse, Box.class, "avcC");
+        if (lb instanceof AvcCBox)
+            return (AvcCBox) lb;
+        else {
+            AvcCBox avcC = new AvcCBox();
+            avcC.parse(((LeafBox) lb).getData().duplicate());
+            return avcC;
+        }
     }
-    
+
     public static ByteBuffer writeSPS(SeqParameterSet sps, int approxSize) {
         ByteBuffer output = ByteBuffer.allocate(approxSize + 8);
         sps.write(output);
@@ -346,7 +418,7 @@ public class H264Utils {
         SeqParameterSet sps = SeqParameterSet.read(input);
         return sps;
     }
-    
+
     public static ByteBuffer writePPS(PictureParameterSet pps, int approxSize) {
         ByteBuffer output = ByteBuffer.allocate(approxSize + 8);
         pps.write(output);
@@ -360,5 +432,169 @@ public class H264Utils {
         H264Utils.unescapeNAL(input);
         PictureParameterSet pps = PictureParameterSet.read(input);
         return pps;
+    }
+
+    public static PictureParameterSet findPPS(List<PictureParameterSet> ppss, int id) {
+        for (PictureParameterSet pps : ppss) {
+            if (pps.pic_parameter_set_id == id)
+                return pps;
+        }
+        return null;
+    }
+
+    public static SeqParameterSet findSPS(List<SeqParameterSet> spss, int id) {
+        for (SeqParameterSet sps : spss) {
+            if (sps.seq_parameter_set_id == id)
+                return sps;
+        }
+        return null;
+    }
+
+    public abstract static class SliceHeaderTweaker {
+
+        private List<SeqParameterSet> sps;
+        private List<PictureParameterSet> pps;
+
+        public SliceHeaderTweaker() {
+        }
+
+        public SliceHeaderTweaker(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
+            this.sps = readSPS(spsList);
+            this.pps = readPPS(ppsList);
+        }
+
+        protected abstract void tweak(SliceHeader sh);
+
+        public SliceHeader run(ByteBuffer is, ByteBuffer os, NALUnit nu) {
+            ByteBuffer nal = os.duplicate();
+
+            H264Utils.unescapeNAL(is);
+
+            BitReader reader = new BitReader(is);
+            SliceHeader sh = shr.readPart1(reader);
+
+            PictureParameterSet pp = findPPS(pps, sh.pic_parameter_set_id);
+
+            return part2(is, os, nu, findSPS(sps, pp.pic_parameter_set_id), pp, nal, reader, sh);
+        }
+
+        public SliceHeader run(ByteBuffer is, ByteBuffer os, NALUnit nu, SeqParameterSet sps, PictureParameterSet pps) {
+            ByteBuffer nal = os.duplicate();
+
+            H264Utils.unescapeNAL(is);
+
+            BitReader reader = new BitReader(is);
+            SliceHeader sh = shr.readPart1(reader);
+
+            return part2(is, os, nu, sps, pps, nal, reader, sh);
+        }
+
+        private SliceHeader part2(ByteBuffer is, ByteBuffer os, NALUnit nu, SeqParameterSet sps,
+                PictureParameterSet pps, ByteBuffer nal, BitReader reader, SliceHeader sh) {
+            BitWriter writer = new BitWriter(os);
+            shr.readPart2(sh, nu, sps, pps, reader);
+
+            tweak(sh);
+
+            shw.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
+
+            if (pps.entropy_coding_mode_flag)
+                copyDataCABAC(is, os, reader, writer);
+            else
+                copyDataCAVLC(is, os, reader, writer);
+
+            nal.limit(os.position());
+
+            H264Utils.escapeNAL(nal);
+
+            os.position(nal.limit());
+
+            return sh;
+        }
+
+        private void copyDataCAVLC(ByteBuffer is, ByteBuffer os, BitReader reader, BitWriter writer) {
+            int wLeft = 8 - writer.curBit();
+            if (wLeft != 0)
+                writer.writeNBit(reader.readNBit(wLeft), wLeft);
+            writer.flush();
+
+            // Copy with shift
+            int shift = reader.curBit();
+            if (shift != 0) {
+                int mShift = 8 - shift;
+                int inp = reader.readNBit(mShift);
+                reader.stop();
+
+                while (is.hasRemaining()) {
+                    int out = inp << shift;
+                    inp = is.get() & 0xff;
+                    out |= inp >> mShift;
+
+                    os.put((byte) out);
+                }
+                os.put((byte) (inp << shift));
+            } else {
+                reader.stop();
+                os.put(is);
+            }
+        }
+
+        private void copyDataCABAC(ByteBuffer is, ByteBuffer os, BitReader reader, BitWriter writer) {
+            long bp = reader.curBit();
+            if (bp != 0) {
+                long rem = reader.readNBit(8 - (int) bp);
+                if ((1 << (8 - bp)) - 1 != rem)
+                    throw new RuntimeException("Invalid CABAC padding");
+            }
+
+            if (writer.curBit() != 0)
+                writer.writeNBit(0xff, 8 - writer.curBit());
+            writer.flush();
+            reader.stop();
+
+            os.put(is);
+        }
+    }
+
+    public static Size getPicSize(SeqParameterSet sps) {
+        int w = (sps.pic_width_in_mbs_minus1 + 1) << 4;
+        int h = getPicHeightInMbs(sps) << 4;
+        if (sps.frame_cropping_flag) {
+            w -= (sps.frame_crop_left_offset + sps.frame_crop_right_offset) << sps.chroma_format_idc.compWidth[1];
+            h -= (sps.frame_crop_top_offset + sps.frame_crop_bottom_offset) << sps.chroma_format_idc.compHeight[1];
+        }
+        return new Size(w, h);
+    }
+
+    public static List<SeqParameterSet> readSPS(List<ByteBuffer> spsList) {
+        List<SeqParameterSet> result = new ArrayList<SeqParameterSet>();
+        for (ByteBuffer byteBuffer : spsList) {
+            result.add(readSPS(NIOUtils.duplicate(byteBuffer)));
+        }
+        return result;
+    }
+
+    public static List<PictureParameterSet> readPPS(List<ByteBuffer> ppsList) {
+        List<PictureParameterSet> result = new ArrayList<PictureParameterSet>();
+        for (ByteBuffer byteBuffer : ppsList) {
+            result.add(readPPS(NIOUtils.duplicate(byteBuffer)));
+        }
+        return result;
+    }
+
+    public static List<ByteBuffer> writePPS(List<PictureParameterSet> allPps) {
+        List<ByteBuffer> result = new ArrayList<ByteBuffer>();
+        for (PictureParameterSet pps : allPps) {
+            result.add(writePPS(pps, 64));
+        }
+        return result;
+    }
+
+    public static List<ByteBuffer> writeSPS(List<SeqParameterSet> allSps) {
+        List<ByteBuffer> result = new ArrayList<ByteBuffer>();
+        for (SeqParameterSet sps : allSps) {
+            result.add(writeSPS(sps, 256));
+        }
+        return result;
     }
 }

@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class SampleDescriptionBox extends NodeBox {
 
-    private static final MyFactory FACTORY = new MyFactory();
+    public static final MyFactory FACTORY = new MyFactory();
 
     public static class MyFactory extends BoxFactory {
         private Map<String, Class<? extends Box>> handlers = new HashMap<String, Class<? extends Box>>();

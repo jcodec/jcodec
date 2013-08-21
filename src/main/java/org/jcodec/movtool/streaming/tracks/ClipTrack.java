@@ -41,15 +41,7 @@ public class ClipTrack implements VirtualTrack {
         VirtualPacket nextPacket;
 
         if (gop == null) {
-            gop = new ArrayList<VirtualPacket>();
-            do {
-                nextPacket = src.nextPacket();
-                if (nextPacket != null) {
-                    if (nextPacket.isKeyframe())
-                        gop.clear();
-                    gop.add(nextPacket);
-                }
-            } while (nextPacket != null && nextPacket.getFrameNo() < from);
+            gop = getGop(src, from);
             startPts = gop.get(0).getPts();
             startFrame = gop.get(0).getFrameNo();
         }
@@ -62,6 +54,20 @@ public class ClipTrack implements VirtualTrack {
         }
 
         return new ClipPacket(nextPacket);
+    }
+
+    protected List<VirtualPacket> getGop(VirtualTrack src, int from) throws IOException {
+        List<VirtualPacket> result = new ArrayList<VirtualPacket>();
+        VirtualPacket nextPacket;
+        do {
+            nextPacket = src.nextPacket();
+            if (nextPacket != null) {
+                if (nextPacket.isKeyframe())
+                    result.clear();
+                result.add(nextPacket);
+            }
+        } while (nextPacket != null && nextPacket.getFrameNo() < from);
+        return result;
     }
 
     @Override

@@ -152,7 +152,8 @@ public class Prores2AVCTrack implements VirtualTrack {
             } while (rate > 10);
             rc.setRate(TARGET_RATE);
 
-            H264Utils.encodeMOVPacket(dst, null, null);
+            H264Utils.encodeMOVPacket(dst);
+            
             return dst;
         }
     }

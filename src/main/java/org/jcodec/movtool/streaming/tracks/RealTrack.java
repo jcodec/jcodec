@@ -30,11 +30,11 @@ import org.jcodec.movtool.streaming.VirtualTrack;
 public class RealTrack implements VirtualTrack {
 
     private TrakBox trak;
-    private FilePool pool;
+    private ByteChannelPool pool;
     private AbstractMP4DemuxerTrack demuxer;
     private MovieBox movie;
 
-    public RealTrack(MovieBox movie, TrakBox trak, FilePool pool) {
+    public RealTrack(MovieBox movie, TrakBox trak, ByteChannelPool pool) {
         this.movie = movie;
         SampleSizesBox stsz = Box.findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
         if (stsz.getDefaultSize() == 0) {

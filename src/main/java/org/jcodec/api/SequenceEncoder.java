@@ -76,7 +76,8 @@ public class SequenceEncoder {
         // Based on the frame above form correct MP4 packet
         spsList.clear();
         ppsList.clear();
-        H264Utils.encodeMOVPacket(result, spsList, ppsList);
+        H264Utils.wipePS(result, spsList, ppsList);
+        H264Utils.encodeMOVPacket(result);
 
         // Add packet to video track
         outTrack.addFrame(new MP4Packet(result, frameNo, 25, 1, frameNo, true, null, frameNo, 0));

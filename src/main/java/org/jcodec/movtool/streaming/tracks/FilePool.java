@@ -21,7 +21,7 @@ import org.jcodec.common.SeekableByteChannel;
  * @author The JCodec project
  * 
  */
-public class FilePool {
+public class FilePool implements ByteChannelPool {
     private BlockingQueue<SeekableByteChannel> channels;
     private List<SeekableByteChannel> allChannels = Collections.synchronizedList(new ArrayList<SeekableByteChannel>());
     private File file;
@@ -33,6 +33,7 @@ public class FilePool {
         this.channels = new LinkedBlockingQueue<SeekableByteChannel>();
     }
 
+    @Override
     public SeekableByteChannel getChannel() throws IOException {
 
         SeekableByteChannel channel = channels.poll();
@@ -82,6 +83,7 @@ public class FilePool {
         }
     }
 
+    @Override
     public void close() {
         while (!allChannels.isEmpty()) {
             SeekableByteChannel channel = allChannels.remove(0);

@@ -30,7 +30,7 @@ public class WavTrack implements VirtualTrack {
 
     public static final int FRAMES_PER_PKT = 1024;
 
-    private FilePool pool;
+    private ByteChannelPool pool;
     private WavHeader header;
     private AudioSampleEntry se;
     private int pktDataLen;
@@ -44,7 +44,7 @@ public class WavTrack implements VirtualTrack {
 
     private long size;
 
-    public WavTrack(FilePool pool, Label... labels) throws IOException {
+    public WavTrack(ByteChannelPool pool, Label... labels) throws IOException {
         this.pool = pool;
 
         SeekableByteChannel ch = null;

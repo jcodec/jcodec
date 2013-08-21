@@ -25,7 +25,7 @@ import org.jcodec.containers.mxf.model.TimelineTrack;
 import org.jcodec.containers.mxf.model.UL;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
-import org.jcodec.movtool.streaming.tracks.FilePool;
+import org.jcodec.movtool.streaming.tracks.ByteChannelPool;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -38,10 +38,10 @@ import org.jcodec.movtool.streaming.tracks.FilePool;
  */
 public class MXFVirtualTrack implements VirtualTrack {
     private MXFDemuxerTrack track;
-    private FilePool fp;
+    private ByteChannelPool fp;
     private UL essenceUL;
 
-    public MXFVirtualTrack(MXFDemuxerTrack track, FilePool fp) throws IOException {
+    public MXFVirtualTrack(MXFDemuxerTrack track, ByteChannelPool fp) throws IOException {
         this.fp = fp;
         this.track = track;
         this.essenceUL = track.getEssenceUL();

@@ -1,28 +1,26 @@
-package org.jcodec.movtool.streaming.tracks;
+package org.jcodec.movtool.streaming.tracks.avc;
 
-import static org.jcodec.codecs.h264.H264Utils.readPPS;
-import static org.jcodec.codecs.h264.H264Utils.readSPS;
 import static org.jcodec.codecs.h264.H264Utils.writePPS;
 import static org.jcodec.codecs.h264.H264Utils.writeSPS;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.decode.CAVLCReader;
+import org.jcodec.codecs.h264.H264Utils.SliceHeaderTweaker;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.codecs.h264.io.write.CAVLCWriter;
-import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.io.BitReader;
-import org.jcodec.common.io.BitWriter;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -36,6 +34,8 @@ import org.jcodec.movtool.streaming.VirtualTrack;
  * 
  * Concats AVC tracks, special logic to merge codec private is applied
  * 
+ * TODO: Check SPS/PPS for similarity TODO: Support multiple SPS/PPS per piece
+ * 
  * @author The JCodec project
  * 
  */
@@ -48,20 +48,20 @@ public class AVCConcatTrack implements VirtualTrack {
     private int offsetFn = 0;
     private SampleEntry se;
     private AvcCBox[] avcCs;
-    private SeqParameterSet[] spss;
-    private PictureParameterSet[] ppss;
-    private static SliceHeaderReader shr = new SliceHeaderReader();
-    private static SliceHeaderWriter shw = new SliceHeaderWriter();
+    private Map<Integer, Integer> map;
+    private List<PictureParameterSet> allPps;
+    private List<SeqParameterSet> allSps;
+    private SliceHeaderTweaker[] tweakers;
 
     public AVCConcatTrack(VirtualTrack[] tracks) {
         this.tracks = tracks;
 
-        List<ByteBuffer> outSps = new ArrayList<ByteBuffer>();
-        List<ByteBuffer> outPps = new ArrayList<ByteBuffer>();
-        spss = new SeqParameterSet[tracks.length];
-        ppss = new PictureParameterSet[tracks.length];
         avcCs = new AvcCBox[tracks.length];
         PixelAspectExt pasp = null;
+
+        allPps = new ArrayList<PictureParameterSet>();
+        allSps = new ArrayList<SeqParameterSet>();
+        tweakers = new H264Utils.SliceHeaderTweaker[tracks.length];
         for (int i = 0; i < tracks.length; i++) {
             SampleEntry se = tracks[i].getSampleEntry();
             if (!(se instanceof VideoSampleEntry))
@@ -75,38 +75,76 @@ public class AVCConcatTrack implements VirtualTrack {
             pasp = paspL;
 
             AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
-            if (avcC.getSpsList().size() > 1)
-                throw new RuntimeException("Multiple SPS per track not supported.");
-            if (avcC.getPpsList().size() > 1)
-                throw new RuntimeException("Multiple PPS per track not supported.");
-            outSps.add(changeSPS(i, avcC.getSpsList().get(0)));
-            outPps.add(changePPS(i, avcC.getPpsList().get(0)));
+            for (ByteBuffer ppsBuffer : avcC.getPpsList()) {
+                PictureParameterSet pps = H264Utils.readPPS(NIOUtils.duplicate(ppsBuffer));
+                pps.pic_parameter_set_id |= i << 8;
+                pps.seq_parameter_set_id |= i << 8;
+                allPps.add(pps);
+            }
+            for (ByteBuffer spsBuffer : avcC.getSpsList()) {
+                SeqParameterSet sps = H264Utils.readSPS(NIOUtils.duplicate(spsBuffer));
+                sps.seq_parameter_set_id |= i << 8;
+                allSps.add(sps);
+            }
+            final int idx2 = i;
+            tweakers[i] = new H264Utils.SliceHeaderTweaker(avcC.getSpsList(), avcC.getPpsList()) {
+                protected void tweak(SliceHeader sh) {
+                    sh.pic_parameter_set_id = map.get((idx2 << 8) | sh.pic_parameter_set_id);
+                }
+            };
             avcCs[i] = avcC;
         }
-        se = H264Utils.createMOVSampleEntry(outSps, outPps);
+        map = mergePS(allSps, allPps);
+
+        se = H264Utils.createMOVSampleEntry(writeSPS(allSps), writePPS(allPps));
         if (pasp != null)
             se.add(pasp);
     }
 
-    private ByteBuffer changeSPS(int newId, ByteBuffer data) {
-        SeqParameterSet sps = readSPS(data);
+    private Map<Integer, Integer> mergePS(List<SeqParameterSet> allSps, List<PictureParameterSet> allPps) {
+        List<ByteBuffer> spsRef = new ArrayList<ByteBuffer>();
+        for (SeqParameterSet sps : allSps) {
+            int spsId = sps.seq_parameter_set_id;
+            sps.seq_parameter_set_id = 0;
+            ByteBuffer serial = H264Utils.writeSPS(sps, 32);
+            int idx = NIOUtils.find(spsRef, serial);
+            if (idx == -1) {
+                idx = spsRef.size();
+                spsRef.add(serial);
+            }
+            for (PictureParameterSet pps : allPps) {
+                if (pps.seq_parameter_set_id == spsId)
+                    pps.seq_parameter_set_id = idx;
+            }
+        }
+        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        List<ByteBuffer> ppsRef = new ArrayList<ByteBuffer>();
+        for (PictureParameterSet pps : allPps) {
+            int ppsId = pps.pic_parameter_set_id;
+            pps.pic_parameter_set_id = 0;
+            ByteBuffer serial = H264Utils.writePPS(pps, 128);
+            int idx = NIOUtils.find(ppsRef, serial);
+            if (idx == -1) {
+                idx = ppsRef.size();
+                ppsRef.add(serial);
+            }
+            map.put(ppsId, idx);
+        }
+        allSps.clear();
+        for (int i = 0; i < spsRef.size(); i++) {
+            SeqParameterSet sps = H264Utils.readSPS(spsRef.get(i));
+            sps.seq_parameter_set_id = i;
+            allSps.add(sps);
+        }
 
-        sps.seq_parameter_set_id = newId;
-        spss[newId] = sps;
+        allPps.clear();
+        for (int i = 0; i < ppsRef.size(); i++) {
+            PictureParameterSet pps = H264Utils.readPPS(ppsRef.get(i));
+            pps.pic_parameter_set_id = i;
+            allPps.add(pps);
+        }
 
-        int approxSize = data.remaining();
-        return writeSPS(sps, approxSize);
-    }
-
-    private ByteBuffer changePPS(int newId, ByteBuffer data) {
-        PictureParameterSet pps = readPPS(data);
-
-        pps.seq_parameter_set_id = newId;
-        pps.pic_parameter_set_id = newId;
-        ppss[newId] = pps;
-
-        int approxSize = data.remaining();
-        return writePPS(pps, approxSize);
+        return map;
     }
 
     @Override
@@ -148,7 +186,7 @@ public class AVCConcatTrack implements VirtualTrack {
         }
     }
 
-    private ByteBuffer patchPacket(int idx2, ByteBuffer data) {
+    private ByteBuffer patchPacket(final int idx2, ByteBuffer data) {
         ByteBuffer out = ByteBuffer.allocate(data.remaining() + 8);
 
         for (ByteBuffer nal : H264Utils.splitMOVPacket(data, avcCs[idx2])) {
@@ -159,11 +197,8 @@ public class AVCConcatTrack implements VirtualTrack {
                 ByteBuffer nalSizePosition = out.duplicate();
                 out.putInt(0);
                 nu.write(out);
-                if (!ppss[idx2].entropy_coding_mode_flag)
-                    copyCAVLC(nal, out, idx2);
-                else
-                    copyCABAC(nal, out, idx2, nu, spss[idx2], ppss[idx2]);
 
+                tweakers[idx2].run(nal, out, nu);
                 nalSizePosition.putInt(out.position() - nalSizePosition.position() - 4);
             }
         }
@@ -175,101 +210,6 @@ public class AVCConcatTrack implements VirtualTrack {
         out.clear();
 
         return out;
-    }
-
-    private static void copyCAVLC(ByteBuffer is, ByteBuffer os, int id) {
-        H264Utils.unescapeNAL(is);
-
-        BitReader reader = new BitReader(is);
-        BitWriter writer = new BitWriter(os);
-
-        // SH: first_mb_in_slice
-        CAVLCWriter.writeUE(writer, CAVLCReader.readUE(reader));
-        // SH: slice_type
-        CAVLCWriter.writeUE(writer, CAVLCReader.readUE(reader));
-        // SH: pic_parameter_set_id
-        CAVLCReader.readUE(reader);
-        // SH: pic_parameter_set_id
-        CAVLCWriter.writeUE(writer, id);
-
-        // Byte align the writer
-        int wLeft = 8 - writer.curBit();
-        if (wLeft != 0)
-            writer.writeNBit(reader.readNBit(wLeft), wLeft);
-        writer.flush();
-
-        // Copy with shift
-        int shift = reader.curBit();
-        if (shift != 0) {
-            short prev = (short) (os.position() >= 2 ? os.get(os.position() - 2) & 0xff : 0xff);
-            prev <<= 8;
-            prev |= (short) (os.position() >= 1 ? os.get(os.position() - 1) & 0xff : 0xff);
-
-            int mShift = 8 - shift;
-            int inp = reader.readNBit(mShift);
-            reader.stop();
-
-            while (is.hasRemaining()) {
-                int out = inp << shift;
-                inp = is.get() & 0xff;
-                out |= inp >> mShift;
-
-                prev = outByte(os, prev, out);
-            }
-            outByte(os, prev, inp << shift);
-        } else {
-            H264Utils.escapeNAL(is, os);
-        }
-    }
-
-    private static final short outByte(ByteBuffer os, short prev, int out) {
-        out &= 0xff;
-
-        if (prev == 0 && (out & ~3) == 0) {
-            os.put((byte) 3);
-            prev = 3;
-        }
-        os.put((byte) out);
-        prev <<= 8;
-        prev |= out;
-
-        return prev;
-    }
-
-    private static void copyCABAC(ByteBuffer is, ByteBuffer os, int id, NALUnit nu, SeqParameterSet sps,
-            PictureParameterSet pps) {
-
-        ByteBuffer nal = os.duplicate();
-
-        H264Utils.unescapeNAL(is);
-
-        BitReader reader = new BitReader(is);
-        BitWriter writer = new BitWriter(os);
-        SliceHeader sh = shr.readPart1(reader);
-        shr.readPart2(sh, nu, sps, pps, reader);
-
-        sh.pic_parameter_set_id = id;
-        shw.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
-
-        long bp = reader.curBit();
-        if (bp != 0) {
-            long rem = reader.readNBit(8 - (int) bp);
-            if ((1 << (8 - bp)) - 1 != rem)
-                throw new RuntimeException("Invalid CABAC padding");
-        }
-
-        if (writer.curBit() != 0)
-            writer.writeNBit(0xff, 8 - writer.curBit());
-        writer.flush();
-        reader.stop();
-
-        os.put(is);
-
-        nal.limit(os.position());
-
-        H264Utils.escapeNAL(nal);
-
-        os.position(nal.limit());
     }
 
     public class AVCConcatPacket implements VirtualPacket {
