@@ -38,11 +38,11 @@ public class FilePool implements ByteChannelPool {
 
         SeekableByteChannel channel = channels.poll();
         if (channel == null) {
-            System.out.println("NO CHANNEL");
+//            System.out.println("NO CHANNEL");
             if (allChannels.size() < max) {
                 channel = newChannel(file);
                 allChannels.add(channel);
-                System.out.println("CHANNELS: " + allChannels.size() + "(" + max + ")");
+//                System.out.println("CHANNELS: " + allChannels.size() + "(" + max + ")");
             } else {
                 while (true) {
                     try {
@@ -92,9 +92,9 @@ public class FilePool implements ByteChannelPool {
                     channel.close();
                 } catch (IOException e) {
                 }
-                System.out.println("CLOSED FILE");
+//                System.out.println("CLOSED FILE");
             }
         }
-        System.out.println("FILE POOL CLOSED!!!");
+//        System.out.println("FILE POOL CLOSED!!!");
     }
 }

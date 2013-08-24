@@ -42,6 +42,7 @@ import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IOUtils;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
@@ -367,11 +368,9 @@ public class TranscodeMain {
                 dt.gotoFrame(sf);
                 while ((inFrame = videoTrack.nextFrame()) != null && !inFrame.isKeyFrame())
                     ;
-                // System.out.println(inFrame.getFrameNo() + " - " +
-                // inFrame.isKeyFrame());
                 dt.gotoFrame(inFrame.getFrameNo());
             }
-            for (i = 0; (inFrame = videoTrack.nextFrame()) != null && i < 2000;) {
+            for (i = 0; (inFrame = videoTrack.nextFrame()) != null;) {
                 ByteBuffer data = inFrame.getData();
                 Picture target1;
                 Frame dec;
@@ -379,12 +378,12 @@ public class TranscodeMain {
                     target1 = Picture.create(width, height, ColorSpace.YUV420);
                     dec = decoder.decodeFrame(splitMOVPacket(data, avcC), target1.getData());
                 } else {
-                    // data = ByteBuffer.wrap(NIOUtils.toArray(data));
                     SeqParameterSet sps = ((MappedH264ES) videoTrack).getSps()[0];
                     width = (sps.pic_width_in_mbs_minus1 + 1) << 4;
                     height = H264Utils.getPicHeightInMbs(sps) << 4;
                     target1 = Picture.create(width, height, ColorSpace.YUV420);
                     dec = decoder.decodeFrame(data, target1.getData());
+
                 }
                 if (outTrack == null) {
                     outTrack = muxer.addVideoTrack("apch", new Size(dec.getCroppedWidth(), dec.getCroppedHeight()),
@@ -526,7 +525,8 @@ public class TranscodeMain {
                 }
                 spsList.clear();
                 ppsList.clear();
-                H264Utils.encodeMOVPacket(result, spsList, ppsList);
+                H264Utils.wipePS(result, spsList, ppsList);
+                H264Utils.encodeMOVPacket(result);
                 outTrack.addFrame(new MP4Packet((MP4Packet) inFrame, result));
                 if (i % 100 == 0) {
                     long elapse = System.currentTimeMillis() - start;

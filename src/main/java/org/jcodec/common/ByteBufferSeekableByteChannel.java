@@ -14,7 +14,7 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
 
     private ByteBuffer backing;
     private boolean open;
-    private int maxPos;
+    private int contentLength;
 
     public ByteBufferSeekableByteChannel(ByteBuffer backing) {
         this.backing = backing;
@@ -30,16 +30,19 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
     }
 
     public int read(ByteBuffer dst) throws IOException {
+        if (!backing.hasRemaining()) {
+            return -1;
+        }
         int toRead = Math.min(backing.remaining(), dst.remaining());
         dst.put(NIOUtils.read(backing, toRead));
-        maxPos = Math.max(maxPos, backing.position());
+        contentLength = Math.max(contentLength, backing.position());
         return toRead;
     }
 
     public int write(ByteBuffer src) throws IOException {
         int toWrite = Math.min(backing.remaining(), src.remaining());
         backing.put(NIOUtils.read(src, toWrite));
-        maxPos = Math.max(maxPos, backing.position());
+        contentLength = Math.max(contentLength, backing.position());
         return toWrite;
     }
 
@@ -49,23 +52,23 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
 
     public SeekableByteChannel position(long newPosition) throws IOException {
         backing.position((int) newPosition);
-        maxPos = Math.max(maxPos, backing.position());
+        contentLength = Math.max(contentLength, backing.position());
         return this;
     }
 
     public long size() throws IOException {
-        return maxPos;
+        return contentLength;
     }
 
     public SeekableByteChannel truncate(long size) throws IOException {
-        maxPos = (int)size;
+        contentLength = (int) size;
         return this;
     }
 
     public ByteBuffer getContents() {
         ByteBuffer contents = backing.duplicate();
         contents.position(0);
-        contents.limit(maxPos);
+        contents.limit(contentLength);
         return contents;
     }
 }

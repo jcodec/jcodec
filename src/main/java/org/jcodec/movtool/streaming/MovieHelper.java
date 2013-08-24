@@ -119,17 +119,18 @@ public class MovieHelper {
             tkhd.setFlags(0xf);
             trak.add(tkhd);
             
-            NodeBox tapt = new NodeBox(new Header("tapt"));
-            tapt.add(new ClearApertureBox(dd.getWidth(), dd.getHeight()));
-            tapt.add(new ProductionApertureBox(dd.getWidth(), dd.getHeight()));
-            tapt.add(new EncodedPixelBox(sd.getWidth(), sd.getHeight()));
-            trak.add(tapt);
-
             MediaBox media = new MediaBox();
             trak.add(media);
             media.add(new MediaHeaderBox(trackTimescale, totalDur, 0, new Date().getTime(), new Date().getTime(), 0));
 
             TrackType tt = (se instanceof AudioSampleEntry) ? TrackType.SOUND : TrackType.VIDEO;
+            if(tt == TrackType.VIDEO) {
+                NodeBox tapt = new NodeBox(new Header("tapt"));
+                tapt.add(new ClearApertureBox(dd.getWidth(), dd.getHeight()));
+                tapt.add(new ProductionApertureBox(dd.getWidth(), dd.getHeight()));
+                tapt.add(new EncodedPixelBox(sd.getWidth(), sd.getHeight()));
+                trak.add(tapt);
+            }
 
             HandlerBox hdlr = new HandlerBox("mhlr", tt.getHandler(), "appl", 0, 0);
             media.add(hdlr);

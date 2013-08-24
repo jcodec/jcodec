@@ -203,7 +203,7 @@ public class AVCClipTrack extends ClipTrack {
 
         @Override
         public ByteBuffer getData() throws IOException {
-            return tr.getResult().get(off).duplicate();
+            return NIOUtils.duplicate(tr.getResult().get(off));
         }
 
         @Override

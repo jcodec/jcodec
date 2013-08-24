@@ -73,7 +73,7 @@ public class RealTrack implements VirtualTrack {
 
     @Override
     public void close() {
-        System.out.println("CLOSING FILE");
+//        System.out.println("CLOSING FILE");
         pool.close();
     }
 

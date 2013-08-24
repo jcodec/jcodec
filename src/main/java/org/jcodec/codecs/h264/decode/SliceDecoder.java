@@ -198,7 +198,7 @@ public class SliceDecoder {
             numRef = new int[] { activePps.num_ref_idx_active_minus1[0] + 1, activePps.num_ref_idx_active_minus1[1] + 1 };
 
         debugPrint("============" + thisFrame.getPOC() + "============= " + sh.slice_type.name());
-        
+
         Frame[][] refList = null;
         if (sh.slice_type == SliceType.P) {
             refList = new Frame[][] { buildRefListP(), null };
@@ -206,10 +206,15 @@ public class SliceDecoder {
             refList = buildRefListB();
         }
 
-        // System.out.println("------");
-        // for (int i = 0; i < refList[0].length; i++)
-        // if (refList[0][i] != null)
-        // System.out.println("REF: " + ((Frame) refList[0][i]).getFrameNo());
+        debugPrint("------");
+        if (refList != null) {
+            for (int l = 0; l < 2; l++) {
+                if (refList[l] != null)
+                    for (int i = 0; i < refList[l].length; i++)
+                        if (refList[l][i] != null)
+                            debugPrint("REF[" + l + "][" + i + "]: " + ((Frame) refList[l][i]).getPOC());
+            }
+        }
 
         mapper = new MapManager(sh.sps, sh.pps).getMapper(sh);
 
@@ -225,7 +230,8 @@ public class SliceDecoder {
                 int mbSkipRun = readUE(in, "mb_skip_run");
                 for (int j = 0; j < mbSkipRun; j++, i++) {
                     int mbAddr = mapper.getAddress(i);
-                    debugPrint("---------------------- MB (" + (mbAddr % mbWidth) + "," + (mbAddr / mbWidth) + ") ---------------------");
+                    debugPrint("---------------------- MB (" + (mbAddr % mbWidth) + "," + (mbAddr / mbWidth)
+                            + ") ---------------------");
                     decodeSkip(refList, i, mb, sh.slice_type);
                     shs[mbAddr] = sh;
                     refsUsed[mbAddr] = refList;
@@ -1187,7 +1193,7 @@ public class SliceDecoder {
         Picture mb1 = Picture.create(16, 16, chromaFormat);
 
         boolean transform8x8Used = false;
-        if (cbpLuma > 0 && transform8x8) {
+        if (cbpLuma != 0 && transform8x8) {
             transform8x8Used = readTransform8x8Flag(reader, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                     tf8x8Left, tf8x8Top[mbX]);
         }
@@ -1721,7 +1727,7 @@ public class SliceDecoder {
         int cbpChroma = codedBlockPattern >> 4;
 
         boolean transform8x8Used = false;
-        if (transform8x8) {
+        if (transform8x8 && cbpLuma != 0 && activeSps.direct_8x8_inference_flag) {
             transform8x8Used = readTransform8x8Flag(reader, lAvb, tAvb, leftMBType, topMBType[mbX], tf8x8Left,
                     tf8x8Top[mbX]);
         }
@@ -2237,10 +2243,12 @@ public class SliceDecoder {
                 }
                 pp[blk8x8] = Bi;
 
-                BlockInterpolator.getBlockLuma(refs[0][0], mb0, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6), (mbY << 6), 8,
-                        8);
-                BlockInterpolator.getBlockLuma(refs[1][0], mb1, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6), (mbY << 6), 8,
-                        8);
+                int blkOffX = (blk8x8 & 1) << 5;
+                int blkOffY = (blk8x8 >> 1) << 5;
+                BlockInterpolator.getBlockLuma(refs[0][0], mb0, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX,
+                        (mbY << 6) + blkOffY, 8, 8);
+                BlockInterpolator.getBlockLuma(refs[1][0], mb1, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX,
+                        (mbY << 6) + blkOffY, 8, 8);
                 prediction.mergePrediction(0, 0, PartPred.Bi, 0, mb0.getPlaneData(0), mb1.getPlaneData(0),
                         BLK_8x8_MB_OFF_LUMA[blk8x8], 16, 8, 8, mb.getPlaneData(0), refs, thisFrame);
                 debugPrint("DIRECT_8x8 [" + (blk8x8 & 2) + ", " + ((blk8x8 << 1) & 2) + "]: (0,0,0), (0,0,0)");

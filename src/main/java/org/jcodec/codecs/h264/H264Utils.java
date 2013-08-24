@@ -16,7 +16,9 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IntArrayList;
+import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.io.BitReader;
@@ -596,5 +598,25 @@ public class H264Utils {
             result.add(writeSPS(sps, 256));
         }
         return result;
+    }
+
+    public static void dumpFrame(FileChannelWrapper ch, SeqParameterSet[] values, PictureParameterSet[] values2,
+            List<ByteBuffer> nalUnits) throws IOException {
+        for (SeqParameterSet sps : values) {
+            NIOUtils.writeInt(ch, 1);
+            NIOUtils.writeByte(ch, (byte)0x67);
+            ch.write(writeSPS(sps, 128));
+        }
+        
+        for (PictureParameterSet pps : values2) {
+            NIOUtils.writeInt(ch, 1);
+            NIOUtils.writeByte(ch, (byte)0x68);
+            ch.write(writePPS(pps, 256));
+        }
+        
+        for (ByteBuffer byteBuffer : nalUnits) {
+            NIOUtils.writeInt(ch, 1);
+            ch.write(byteBuffer.duplicate());
+        }
     }
 }

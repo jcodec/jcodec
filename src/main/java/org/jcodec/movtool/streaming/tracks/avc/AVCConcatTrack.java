@@ -12,7 +12,6 @@ import java.util.Map;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.H264Utils.SliceHeaderTweaker;
-import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
@@ -20,7 +19,6 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.NIOUtils;
-import org.jcodec.common.io.BitReader;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
