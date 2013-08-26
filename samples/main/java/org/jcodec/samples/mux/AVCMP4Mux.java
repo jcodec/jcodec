@@ -65,9 +65,10 @@ public class AVCMP4Mux {
         ArrayList<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
         Packet frame = null;
         while ((frame = es.nextFrame()) != null) {
-            ByteBuffer wrap = ByteBuffer.wrap(NIOUtils.toArray(frame.getData()));
-            H264Utils.encodeMOVPacket(wrap, spsList, ppsList);
-            MP4Packet pkt = new MP4Packet(new Packet(frame, wrap), frame.getPts(), 0);
+            ByteBuffer data = frame.getData();
+            H264Utils.wipePS(data, spsList, ppsList);
+            H264Utils.encodeMOVPacket(data);
+            MP4Packet pkt = new MP4Packet(new Packet(frame, data), frame.getPts(), 0);
             System.out.println(pkt.getFrameNo());
             track.addFrame(pkt);
         }

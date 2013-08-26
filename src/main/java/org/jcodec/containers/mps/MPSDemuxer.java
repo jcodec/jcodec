@@ -1,5 +1,9 @@
 package org.jcodec.containers.mps;
 
+import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
+import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
+import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -10,6 +14,8 @@ import java.util.Map;
 
 import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.SegmentReader;
+import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -18,6 +24,8 @@ import org.jcodec.common.model.TapeTimecode;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
+ * 
+ * Demuxer for MPEG Program Stream format
  * 
  * @author The JCodec project
  * 
@@ -121,8 +129,13 @@ public class MPSDemuxer extends SegmentReader {
             return null;
         }
 
-        public MPEGPacket getFrame(ByteBuffer buf) throws IOException {
+        public Packet nextFrame(ByteBuffer buf) throws IOException {
             return es.getFrame(buf);
+        }
+
+        public DemuxerTrackMeta getMeta() {
+            return new DemuxerTrackMeta(videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER), null,
+                    0, 0);
         }
     }
 

@@ -11,6 +11,8 @@ import org.jcodec.codecs.h264.io.model.RefPicMarking.InstrType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.Packet;
@@ -54,7 +56,7 @@ public class MappedH264ES implements DemuxerTrack {
             ByteBuffer buf = H264Utils.nextNALUnit(bb);
             if (buf == null)
                 break;
-//            NIOUtils.skip(buf, 4);
+            // NIOUtils.skip(buf, 4);
             NALUnit nu = NALUnit.read(buf);
 
             if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
@@ -242,20 +244,7 @@ public class MappedH264ES implements DemuxerTrack {
     }
 
     @Override
-    public boolean gotoFrame(long i) {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public long getCurFrame() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    @Override
-    public void seek(double second) {
-        // TODO Auto-generated method stub
-        
+    public DemuxerTrackMeta getMeta() {
+        throw new UnsupportedOperationException();
     }
 }

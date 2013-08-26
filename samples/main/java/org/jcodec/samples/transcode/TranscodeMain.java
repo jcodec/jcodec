@@ -40,6 +40,7 @@ import org.jcodec.codecs.vp8.VP8Decoder;
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IOUtils;
 import org.jcodec.common.JCodecUtil;

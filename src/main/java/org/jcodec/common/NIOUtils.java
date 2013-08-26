@@ -76,6 +76,24 @@ public class NIOUtils {
         return buf;
     }
 
+    /**
+     * Reads size amount of bytes from ch into a new ByteBuffer allocated from a
+     * buffer buf
+     * 
+     * @param buf
+     * @param ch
+     * @param size
+     * @return
+     * @throws IOException
+     */
+    public static ByteBuffer fetchFrom(ByteBuffer buf, ReadableByteChannel ch, int size) throws IOException {
+        ByteBuffer result = buf.duplicate();
+        result.limit(size);
+        NIOUtils.read(ch, result);
+        result.flip();
+        return result;
+    }
+
     public static ByteBuffer fetchFrom(File file, int length) throws IOException {
         FileChannel is = null;
         try {

@@ -1,9 +1,5 @@
 package org.jcodec.common;
 
-import java.io.IOException;
-
-import org.jcodec.common.model.Packet;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -11,8 +7,11 @@ import org.jcodec.common.model.Packet;
  * @author The JCodec project
  * 
  */
-public interface DemuxerTrack {
-    Packet nextFrame() throws IOException;
+public interface SeekableDemuxerTrack extends DemuxerTrack {
 
-    DemuxerTrackMeta getMeta();
+    boolean gotoFrame(long i);
+
+    long getCurFrame();
+
+    void seek(double second);
 }

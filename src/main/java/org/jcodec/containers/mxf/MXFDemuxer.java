@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -29,6 +30,8 @@ import org.jcodec.containers.mxf.model.TimecodeComponent;
 import org.jcodec.containers.mxf.model.TimelineTrack;
 import org.jcodec.containers.mxf.model.UL;
 import org.jcodec.containers.mxf.model.WaveAudioDescriptor;
+
+import static org.jcodec.common.DemuxerTrackMeta.Type.*;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -246,7 +249,7 @@ public class MXFDemuxer {
         return audio.toArray(new MXFDemuxerTrack[0]);
     }
 
-    public class MXFDemuxerTrack implements DemuxerTrack {
+    public class MXFDemuxerTrack implements SeekableDemuxerTrack {
 
         private UL essenceUL;
         private int dataLen;
@@ -445,6 +448,11 @@ public class MXFDemuxer {
 
         public int getTrackId() {
             return track.getTrackId();
+        }
+
+        @Override
+        public DemuxerTrackMeta getMeta() {
+            return new DemuxerTrackMeta(video ? VIDEO : (audio ? AUDIO : OTHER), null, totalFrames, duration);
         }
     }
 

@@ -3,15 +3,14 @@ package org.jcodec.containers.mp4.demuxer;
 import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableByteChannel;
-import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
@@ -19,6 +18,7 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import static org.jcodec.common.DemuxerTrackMeta.Type.*;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -160,5 +160,16 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     public long getFrameCount() {
         return sizes.length;
+    }
+
+    @Override
+    public DemuxerTrackMeta getMeta() {
+        int[] copyOf = Arrays.copyOf(syncSamples, syncSamples.length);
+        for (int i = 0; i < copyOf.length; i++)
+            copyOf[i]--;
+
+        TrackType type = getType();
+        return new DemuxerTrackMeta(type == TrackType.VIDEO ? VIDEO : (type == TrackType.SOUND ? AUDIO : OTHER),
+                copyOf, sizes.length, (double) duration / timescale);
     }
 }

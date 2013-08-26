@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.RationalLarge;
@@ -24,7 +24,6 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
-import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
 /**
@@ -36,7 +35,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * @author The JCodec project
  * 
  */
-public abstract class AbstractMP4DemuxerTrack implements DemuxerTrack {
+public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     protected TrakBox box;
     private TrackType type;
     private int no;
@@ -189,7 +188,7 @@ public abstract class AbstractMP4DemuxerTrack implements DemuxerTrack {
 
     @Override
     public void seek(double second) {
-        seek((long) second * timescale);
+        seek((long) (second * timescale));
     }
 
     private void seekPts(long frameNo) {
