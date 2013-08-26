@@ -55,7 +55,9 @@ public class ConcurrentMovieRangeService {
         }
 
         public ByteBuffer call() throws Exception {
-            return segment.getData().duplicate();
+            ByteBuffer bb = segment.getData().duplicate();
+            checkDataLen(bb, segment.getDataLen());
+            return bb;
         }
     }
 
@@ -162,6 +164,13 @@ public class ConcurrentMovieRangeService {
             --remaining;
 
             return ret;
+        }
+    }
+
+    private static void checkDataLen(ByteBuffer chunkData, int chunkDataLen) throws IOException {
+        if (chunkData.remaining() != chunkDataLen) {
+            System.err.println("WARN: packet expected data len != actual data len " + chunkDataLen + " != "
+                    + chunkData.remaining());
         }
     }
 }

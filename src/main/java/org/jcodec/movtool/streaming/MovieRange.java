@@ -22,15 +22,23 @@ public class MovieRange extends InputStream {
     private ByteBuffer chunkData;
 
     public MovieRange(VirtualMovie movie, long from, long to) throws IOException {
-        if(to < from)
-            throw new IllegalArgumentException ("from < to");
+        if (to < from)
+            throw new IllegalArgumentException("from < to");
         this.movie = movie;
         MovieSegment chunk = movie.getPacketAt(from);
         this.remaining = to - from + 1;
         if (chunk != null) {
             chunkData = chunk.getData();
+            checkDataLen(chunkData, chunk.getDataLen());
             chunkNo = chunk.getNo();
             NIOUtils.skip(chunkData, (int) (from - chunk.getPos()));
+        }
+    }
+
+    private void checkDataLen(ByteBuffer chunkData, int chunkDataLen) throws IOException {
+        if (chunkData.remaining() != chunkDataLen) {
+            System.err.println("WARN: packet expected data len != actual data len " + chunkDataLen + " != "
+                    + chunkData.remaining());
         }
     }
 
@@ -64,6 +72,7 @@ public class MovieRange extends InputStream {
             MovieSegment chunk = movie.getPacketByNo(chunkNo + 1);
             if (chunk != null) {
                 chunkData = chunk.getData();
+                checkDataLen(chunkData, chunk.getDataLen());
                 chunkNo = chunk.getNo();
             } else
                 chunkData = null;
