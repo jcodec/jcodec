@@ -127,8 +127,23 @@ public class BitReader {
         return bits;
     }
 
+    public int skipFast(int bits) {
+        deficit += bits;
+        curInt <<= bits;
+
+        return bits;
+    }
+
     public int align() {
         return (deficit & 0x7) > 0 ? skip(8 - (deficit & 0x7)) : 0;
+    }
+
+    public int check16Bits() {
+        if (deficit > 16) {
+            deficit -= 16;
+            curInt |= nextIgnore16() << deficit;
+        }
+        return curInt >>> 16;
     }
 
     public int checkNBit(int n) {
@@ -147,6 +162,10 @@ public class BitReader {
         return res;
     }
 
+    private int nextIgnore16() {
+        return bb.remaining() > 1 ? bb.getShort() & 0xffff : (bb.hasRemaining() ? ((bb.get() & 0xff) << 8) : 0);
+    }
+    
     private int nextIgnore() {
         return bb.hasRemaining() ? bb.get() & 0xff : 0;
     }

@@ -13,13 +13,13 @@ import org.jcodec.common.model.Picture;
  * @author The JCodec project
  * 
  */
-public class RgbToYuv420 implements Transform {
+public class RgbToYuv420p implements Transform {
 
     private int upShift;
     private int downShift;
     private int downShiftChr;
 
-    public RgbToYuv420(int upShift, int downShift) {
+    public RgbToYuv420p(int upShift, int downShift) {
         this.upShift = upShift;
         this.downShift = downShift;
         this.downShiftChr = downShift + 2;

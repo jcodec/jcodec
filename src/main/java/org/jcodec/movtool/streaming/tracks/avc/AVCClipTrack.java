@@ -135,7 +135,7 @@ public class AVCClipTrack extends ClipTrack {
                 dec = decoder.decodeFrame(H264Utils.splitMOVPacket(pkt.getData(), avcC), buf.getData());
 
                 tmp.clear();
-                ByteBuffer res = encoder.encodeFrame(tmp, dec);
+                ByteBuffer res = encoder.encodeFrame(dec, tmp);
                 ByteBuffer out = ByteBuffer.allocate(frameSize);
                 processFrame(res, out);
 

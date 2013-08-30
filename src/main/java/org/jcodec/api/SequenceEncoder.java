@@ -18,12 +18,14 @@ import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.AWTUtil;
-import org.jcodec.scale.RgbToYuv420;
+import org.jcodec.scale.ColorUtil;
+import org.jcodec.scale.RgbToYuv420p;
+import org.jcodec.scale.Transform;
 
 public class SequenceEncoder {
     private SeekableByteChannel ch;
     private Picture toEncode;
-    private RgbToYuv420 transform;
+    private Transform transform;
     private H264Encoder encoder;
     private ArrayList<ByteBuffer> spsList;
     private ArrayList<ByteBuffer> ppsList;
@@ -34,9 +36,6 @@ public class SequenceEncoder {
 
     public SequenceEncoder(File out) throws IOException {
         this.ch = NIOUtils.writableFileChannel(out);
-
-        // Transform to convert between RGB and YUV
-        transform = new RgbToYuv420(0, 0);
 
         // Muxer that will store the encoded frames
         muxer = new MP4Muxer(ch, Brand.MP4);
@@ -50,6 +49,9 @@ public class SequenceEncoder {
         // Create an instance of encoder
         encoder = new H264Encoder();
 
+        // Transform to convert between RGB and YUV
+        transform = ColorUtil.getTransform(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
+
         // Encoder extra data ( SPS, PPS ) to be stored in a special place of
         // MP4
         spsList = new ArrayList<ByteBuffer>();
@@ -58,20 +60,20 @@ public class SequenceEncoder {
     }
 
     public void encodeImage(BufferedImage bi) throws IOException {
-        encodeNativeFrame(AWTUtil.fromBufferedImage(bi));        
+        encodeNativeFrame(AWTUtil.fromBufferedImage(bi));
     }
-    
+
     public void encodeNativeFrame(Picture pic) throws IOException {
         if (toEncode == null) {
-            toEncode = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.YUV420);
+            toEncode = Picture.create(pic.getWidth(), pic.getHeight(), encoder.getSupportedColorSpaces()[0]);
         }
-        
+
         // Perform conversion
         transform.transform(pic, toEncode);
-        
+
         // Encode image into H.264 frame, the result is stored in '_out' buffer
         _out.clear();
-        ByteBuffer result = encoder.encodeFrame(_out, toEncode);
+        ByteBuffer result = encoder.encodeFrame(toEncode, _out);
 
         // Based on the frame above form correct MP4 packet
         spsList.clear();

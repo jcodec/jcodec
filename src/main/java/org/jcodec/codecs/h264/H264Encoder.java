@@ -25,6 +25,7 @@ import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
@@ -41,7 +42,7 @@ import org.jcodec.common.model.Size;
  * @author The JCodec project
  * 
  */
-public class H264Encoder {
+public class H264Encoder implements VideoEncoder {
 
     // private static final int QP = 20;
 
@@ -58,7 +59,7 @@ public class H264Encoder {
         this.rc = rc;
     }
 
-    public ByteBuffer encodeFrame(ByteBuffer _out, Picture pic) {
+    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out) {
         ByteBuffer dup = _out.duplicate();
 
         dup.putInt(0x1);
@@ -448,5 +449,10 @@ public class H264Encoder {
             for (; j < x + 4; j++)
                 coeff[outOff++] = planeData[off] - dc;
         }
+    }
+
+    @Override
+    public ColorSpace[] getSupportedColorSpaces() {
+        return new ColorSpace[] { ColorSpace.YUV420J };
     }
 }

@@ -2,25 +2,16 @@ package org.jcodec.codecs.vpx;
 
 import static org.jcodec.common.tools.MathUtil.clip;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 import java.util.Arrays;
-
-import javax.imageio.ImageIO;
 
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.scale.AWTUtil;
-import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,7 +20,7 @@ import org.jcodec.scale.Transform;
  * @author The JCodec project
  * 
  */
-public class VP8Encoder {
+public class VP8Encoder implements VideoEncoder {
 
     private VPXBitstream bitstream;
     private int[][] leftRow;
@@ -219,7 +210,7 @@ public class VP8Encoder {
         int y = mbY << 3;
         int chromaPred1 = chromaPredBlk(1, x, y);
         int chromaPred2 = chromaPredBlk(2, x, y);
-        
+
         int[][] ac1 = transformChroma(pic, 1, qp, x, y, outMB, chromaPred1);
         int[][] ac2 = transformChroma(pic, 2, qp, x, y, outMB, chromaPred2);
 
@@ -234,7 +225,7 @@ public class VP8Encoder {
 
     private int[][] transformChroma(Picture pic, int comp, int qp, int x, int y, Picture outMB, int chromaPred) {
         int[][] ac = new int[4][16];
-        
+
         for (int blk = 0; blk < ac.length; blk++) {
 
             int blkOffX = (blk & 1) << 2;
@@ -387,5 +378,10 @@ public class VP8Encoder {
             for (; j < x + 4; j++)
                 coeff[outOff++] = planeData[off] - dc;
         }
+    }
+
+    @Override
+    public ColorSpace[] getSupportedColorSpaces() {
+        return new ColorSpace[] { ColorSpace.YUV420J };
     }
 }

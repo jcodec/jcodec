@@ -9,13 +9,13 @@ import org.jcodec.common.model.Picture;
  * @author The JCodec project
  * 
  */
-public class RgbToYuv422 implements Transform {
+public class RgbToYuv422p implements Transform {
 
     private int upShift;
     private int downShift;
     private int downShiftChr;
 
-    public RgbToYuv422(int upShift, int downShift) {
+    public RgbToYuv422p(int upShift, int downShift) {
         this.upShift = upShift;
         this.downShift = downShift;
         this.downShiftChr = downShift + 1;
@@ -34,11 +34,11 @@ public class RgbToYuv422 implements Transform {
                 
                 int offY = off << 1;
 
-                RgbToYuv420.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY, dstData[1], off,
+                RgbToYuv420p.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY, dstData[1], off,
                         dstData[2], off);
                 dstData[0][offY] = (dstData[0][offY] << upShift) >> downShift;
 
-                RgbToYuv420.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY + 1, dstData[1], off,
+                RgbToYuv420p.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY + 1, dstData[1], off,
                         dstData[2], off);
                 dstData[0][offY + 1] = (dstData[0][offY + 1] << upShift) >> downShift;
 

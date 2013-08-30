@@ -78,7 +78,24 @@ public class VLC {
 
         return tableEnd;
     }
+    
+    public int readVLC16(BitReader in) {
+        
+        int string = in.check16Bits();
+        int b = string >>> 8;
+        int code = values[b];
+        int len = valueSizes[b];
 
+        if (len == 0) {
+            b = (string & 0xff) + code;
+            code = values[b];
+            in.skipFast(8 + valueSizes[b]);
+        } else
+            in.skipFast(len);
+        
+        return code;
+    }
+    
     public int readVLC(BitReader in) {
 
         int code = 0, len = 0, overall = 0, total = 0;
@@ -96,8 +113,8 @@ public class VLC {
             if (code == -1)
                 throw new RuntimeException("Invalid code prefix " + binary(overall, (i << 3) + bits));
         }
-        
-//        System.out.println("VLC: " + binary(overall, total));
+
+        // System.out.println("VLC: " + binary(overall, total));
 
         return code;
     }

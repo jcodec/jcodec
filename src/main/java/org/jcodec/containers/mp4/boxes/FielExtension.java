@@ -23,24 +23,28 @@ public class FielExtension extends Box {
     public boolean isInterlaced() {
         return type == 2;
     }
+    
+    public boolean topFieldFirst() {
+        return order == 1 || order == 6;
+    }
 
     public String getOrderInterpretation() {
         if (isInterlaced())
             // Copy from qtff 2007-09-04, page 98 The following defines
             // the permitted variants:
-            // 0 – There is only one field.
+            // 0 There is only one field.
             switch (order) {
             case 1:
-                // 1 – T is displayed earliest, T is stored first in the file.
+                // 1 T is displayed earliest, T is stored first in the file.
                 return "top";
             case 6:
-                // 6 – B is displayed earliest, B is stored first in the file.
+                // 6 B is displayed earliest, B is stored first in the file.
                 return "bottom";
             case 9:
-                // 9 – B is displayed earliest, T is stored first in the file.
+                // 9  B is displayed earliest, T is stored first in the file.
                 return "bottomtop";
             case 14:
-                // 14 – T is displayed earliest, B is stored first in the
+                // 14  T is displayed earliest, B is stored first in the
                 // file.
                 return "topbottom";
             }

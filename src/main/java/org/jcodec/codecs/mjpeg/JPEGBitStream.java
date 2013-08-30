@@ -1,6 +1,5 @@
 package org.jcodec.codecs.mjpeg;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.BitReader;
@@ -16,62 +15,41 @@ import org.jcodec.common.io.VLC;
  * 
  */
 public class JPEGBitStream {
-    private VLC huffYDC;
-    private VLC huffCDC;
-    private VLC huffYAC;
-    private VLC huffCAC;
+    private VLC[] huff;
     private BitReader in;
+    private int[] dcPredictor = new int[3];
+    private int lumaLen;
+    
+    
 
-    /**
-     * @deprecated
-     * @param coded
-     * @throws IOException
-     */
-    public JPEGBitStream(CodedImage coded) {
-        this(coded, ByteBuffer.wrap(coded.getData()));
-    }
-
-    public JPEGBitStream(CodedImage coded, ByteBuffer b) {
+    public JPEGBitStream(ByteBuffer b, VLC[] huff, int lumaLen) {
         this.in = new BitReader(b);
-        this.huffYDC = coded.getYdc();
-        this.huffCDC = coded.getCdc();
-        this.huffYAC = coded.getYac();
-        this.huffCAC = coded.getCac();
+        this.huff = huff;
+        this.lumaLen = lumaLen;
     }
 
-    private final int prevLumDC[] = new int[1];
-    private final int prevCbDC[] = new int[1];
-    private final int prevCrDC[] = new int[1];
+    public void readMCU(int[][] buf) {
+        int blk = 0;
+        for (int i = 0; i < lumaLen; i++, blk++) {
+            dcPredictor[0] = buf[blk][0] = readDCValue(dcPredictor[0], huff[0]);
+            readACValues(buf[blk], huff[2]);
+        }
 
-    public MCU readBlock(MCU block) throws IOException {
-        block.clear();
-        for (int i = 0; i < block.lum.data.length; i++) {
-            readDCValue(block.lum.data[i], prevLumDC, huffYDC);
-            readACValues(block.lum.data[i], huffYAC);
-        }
-        for (int i = 0; i < block.cb.data.length; i++) {
-            readDCValue(block.cb.data[i], prevCbDC, huffCDC);
-            readACValues(block.cb.data[i], huffCAC);
-        }
-        for (int i = 0; i < block.cr.data.length; i++) {
-            readDCValue(block.cr.data[i], prevCrDC, huffCDC);
-            readACValues(block.cr.data[i], huffCAC);
-        }
-        return block;
+        dcPredictor[1] = buf[blk][0] = readDCValue(dcPredictor[1], huff[1]);
+        readACValues(buf[blk], huff[3]);
+        ++blk;
+
+        dcPredictor[2] = buf[blk][0] = readDCValue(dcPredictor[2], huff[1]);
+        readACValues(buf[blk], huff[3]);
+        ++blk;
     }
 
-    public void readDCValue(int[] target, int[] prevDC, VLC table) {
+    public int readDCValue(int prevDC, VLC table) {
         int code = table.readVLC(in);
-        if (code != 0) {
-            target[0] = toValue(in.readNBit(code), code);
-            target[0] += prevDC[0];
-            prevDC[0] = target[0];
-        } else {
-            target[0] = prevDC[0];
-        }
+        return code != 0 ? toValue(in.readNBit(code), code) + prevDC : prevDC;
     }
 
-    public void readACValues(int[] target, VLC table) throws IOException {
+    public void readACValues(int[] target, VLC table) {
         int code;
         int curOff = 1;
         do {

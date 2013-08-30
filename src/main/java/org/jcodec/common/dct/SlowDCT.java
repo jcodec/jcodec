@@ -5,7 +5,7 @@ import static java.lang.Math.cos;
 import static java.lang.Math.round;
 import static java.lang.Math.sqrt;
 
-import org.jcodec.codecs.mjpeg.ImageConvert;
+import org.jcodec.scale.ImageConvert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

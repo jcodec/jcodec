@@ -44,7 +44,7 @@ public class TestRgbToYuv420 {
         int[] vv = downscale(v, 10, 10, 2);
         upshift(y, 2);
 
-        RgbToYuv420 transform = new RgbToYuv420(2, 0);
+        RgbToYuv420p transform = new RgbToYuv420p(2, 0);
         Picture in = new Picture(10, 10, new int[][] { rgb, null, null, null }, ColorSpace.RGB);
         Picture out = Picture.create(10, 10, ColorSpace.YUV420);
         transform.transform(in, out);

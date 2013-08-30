@@ -49,6 +49,10 @@ public class VLCBuilder {
             public int readVLC(BitReader in) {
                 return inverse.get(super.readVLC(in));
             }
+            
+            public int readVLC16(BitReader in) {
+                return inverse.get(super.readVLC16(in));
+            }
 
             public void writeVLC(BitWriter out, int code) {
                 super.writeVLC(out, forward.get(code));
