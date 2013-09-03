@@ -114,8 +114,8 @@ public class TranscodeMain {
         } else if ("prores2avc".equals(args[0])) {
             prores2avc(args[1], args[2], new ProresDecoder(), new DumbRateControl());
         } else if ("prores2avct".equals(args[0])) {
-            ConstantRateControl rc = new ConstantRateControl(512);
-            System.out.println("Target frame size: " + rc.calcFrameSize(510));
+            ConstantRateControl rc = new ConstantRateControl(1024);
+            System.out.println("Target frame size: " + rc.calcFrameSize(1024));
             prores2avc(args[1], args[2], new ProresToThumb2x2(), rc);
         } else if ("avc2png".equals(args[0])) {
             avc2png(args[1], args[2]);
@@ -574,7 +574,7 @@ public class TranscodeMain {
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
             long start = System.currentTimeMillis();
-            for (int i = 0; (inFrame = inTrack.nextFrame()) != null && i < 100; i++) {
+            for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                 Picture dec = decoder.decodeFrame(inFrame.getData(), target1.getData());
                 if (target2 == null) {
                     target2 = Picture.create(dec.getWidth(), dec.getHeight(), encoder.getSupportedColorSpaces()[0]);

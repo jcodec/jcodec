@@ -189,7 +189,7 @@ public class H264Encoder implements VideoEncoder {
         luma(pic, mbX, mbY, out, qp, outMB);
         chroma(pic, mbX, mbY, out, qp, outMB);
     }
-
+    
     private void chroma(Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB) {
         int cw = pic.getColor().compWidth[1];
         int ch = pic.getColor().compHeight[1];

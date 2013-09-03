@@ -138,12 +138,41 @@ public class BitReader {
         return (deficit & 0x7) > 0 ? skip(8 - (deficit & 0x7)) : 0;
     }
 
+    public int check24Bits() {
+        if (deficit > 16) {
+            deficit -= 16;
+            curInt |= nextIgnore16() << deficit;
+        }
+        
+        if (deficit > 8) {
+            deficit -= 8;
+            curInt |= nextIgnore() << deficit;
+        }
+        
+        return curInt >>> 8;
+    }
+    
     public int check16Bits() {
         if (deficit > 16) {
             deficit -= 16;
             curInt |= nextIgnore16() << deficit;
         }
         return curInt >>> 16;
+    }
+
+    public int readFast16(int n) {
+        if (n == 0)
+            return 0;
+        if (deficit > 16) {
+            deficit -= 16;
+            curInt |= nextIgnore16() << deficit;
+        }
+
+        int ret = curInt >>> (32 - n);
+        deficit += n;
+        curInt <<= n;
+
+        return ret;
     }
 
     public int checkNBit(int n) {
@@ -165,7 +194,7 @@ public class BitReader {
     private int nextIgnore16() {
         return bb.remaining() > 1 ? bb.getShort() & 0xffff : (bb.hasRemaining() ? ((bb.get() & 0xff) << 8) : 0);
     }
-    
+
     private int nextIgnore() {
         return bb.hasRemaining() ? bb.get() & 0xff : 0;
     }
@@ -197,5 +226,9 @@ public class BitReader {
      */
     public void stop() {
         bb.position(bb.position() - ((32 - deficit) >> 3));
+    }
+
+    public int checkAllBits() {
+        return curInt;
     }
 }

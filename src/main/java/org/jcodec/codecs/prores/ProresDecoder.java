@@ -49,40 +49,38 @@ public class ProresDecoder implements VideoDecoder {
     public ProresDecoder() {
     }
 
-    static final int[] table = new int[] { 7, 6, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-            2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-            1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    static final int[] mask = new int[] { 0, 0, 0, 0, 0, 0, 0, -1 };
+    static final int[] table = new int[] { 8, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+            3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+            2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-    public static final int nZeros(int check14Bit) {
-        int low = table[check14Bit & 0x7f];
-        check14Bit >>= 7;
-        int high = table[check14Bit & 0x7f];
-        return high + (mask[high & 0x7] & low);
+    static final int[] mask = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, -1 };
+
+    public static final int nZeros(int check16Bit) {
+        int low = table[check16Bit & 0xff];
+        check16Bit >>= 8;
+        int high = table[check16Bit];
+
+        return high + (mask[high] & low);
     }
 
     public static final int readCodeword(BitReader reader, Codebook codebook) {
-        int q = nZeros(reader.checkNBit(14));
+        int q = nZeros(reader.check16Bits());
+        reader.skipFast(q + 1);
 
-        int val;
         if (q > codebook.switchBits) {
-            int bits = codebook.expOrder - codebook.switchBits + (q << 1);
-            // if (bits + q + 1 > 32) {
-            // throw new RuntimeException("Codeword damaged");
-            // }
-            val = (int) reader.readNBit(bits); // Read value
-            val -= (1 << codebook.expOrder); // Offset to zero
-            // Offset to next number after max rice
-            val += ((codebook.switchBits + 1) << codebook.riceOrder);
-        } else if (codebook.riceOrder > 0) {
-            reader.skip(q + 1);
-            val = (q << codebook.riceOrder) + reader.readNBit(codebook.riceOrder);
-        } else {
-            reader.skip(q + 1);
-            val = q;
-        }
-        return val;
+            int bits = codebook.golombBits + q;
+            if (bits > 16)
+                System.out.println("CRAP!!!!!!");
+            return ((1 << bits) | reader.readFast16(bits)) - codebook.golombOffset;
+        } else if (codebook.riceOrder > 0)
+            return (q << codebook.riceOrder) | reader.readFast16(codebook.riceOrder);
+        else
+            return q;
     }
 
     public static final int golumbToSigned(int val) {
@@ -130,7 +128,7 @@ public class ProresDecoder implements VideoDecoder {
         int maxCoeffs = 64 << log2BlocksPerSlice;
 
         int pos = blockMask;
-        while (bits.moreData()) {
+        while (bits.remaining() > 32 || bits.checkAllBits() != 0) {
             run = readCodeword(bits, runCodebooks[min(run, 15)]);
             if (run < 0 || run >= maxCoeffs - pos - 1) {
                 return;
