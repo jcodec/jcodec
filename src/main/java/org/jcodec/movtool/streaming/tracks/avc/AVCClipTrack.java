@@ -3,6 +3,8 @@ package org.jcodec.movtool.streaming.tracks.avc;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.jcodec.codecs.h264.H264Decoder;
@@ -69,6 +71,14 @@ public class AVCClipTrack extends ClipTrack {
         encPPS = encoder.initPPS();
         encPPS.seq_parameter_set_id = 1;
         encPPS.pic_parameter_set_id = 1;
+        encSPS.profile_idc = sps.profile_idc;
+        encSPS.level_idc = sps.level_idc;
+        encSPS.frame_mbs_only_flag = sps.frame_mbs_only_flag;
+        encSPS.frame_crop_bottom_offset = sps.frame_crop_bottom_offset;
+        encSPS.frame_crop_left_offset = sps.frame_crop_left_offset;
+        encSPS.frame_crop_right_offset = sps.frame_crop_right_offset;
+        encSPS.frame_crop_top_offset = sps.frame_crop_top_offset;
+        encSPS.vuiParams = sps.vuiParams;
 
         avcC.getSpsList().add(H264Utils.writeSPS(encSPS, 128));
         avcC.getPpsList().add(H264Utils.writePPS(encPPS, 20));
@@ -96,9 +106,10 @@ public class AVCClipTrack extends ClipTrack {
             tail.add(packet);
             packet = src.nextPacket();
         }
-
+        
         List<VirtualPacket> gop = new ArrayList<VirtualPacket>();
         GopTranscoder tr = new GopTranscoder(head, tail);
+        
         for (int i = 0; i < tail.size(); i++)
             gop.add(new TranscodePacket(tail.get(i), tr, i));
 
@@ -122,7 +133,7 @@ public class AVCClipTrack extends ClipTrack {
             H264Decoder decoder = new H264Decoder();
             decoder.addSps(avcC.getSpsList());
             decoder.addPps(avcC.getPpsList());
-            Picture buf = Picture.create(1920, 1088, ColorSpace.YUV420);
+            Picture buf = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV420);
             Frame dec = null;
             for (VirtualPacket virtualPacket : head) {
                 dec = decoder.decodeFrame(H264Utils.splitMOVPacket(virtualPacket.getData(), avcC), buf.getData());

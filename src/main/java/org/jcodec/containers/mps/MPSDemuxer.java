@@ -135,7 +135,7 @@ public class MPSDemuxer extends SegmentReader {
 
         public DemuxerTrackMeta getMeta() {
             return new DemuxerTrackMeta(videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER), null,
-                    0, 0);
+                    0, 0, null);
         }
     }
 

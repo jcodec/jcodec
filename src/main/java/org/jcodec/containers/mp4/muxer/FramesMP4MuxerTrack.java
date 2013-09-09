@@ -238,7 +238,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         }
     }
 
-    private int minOffset(List<Entry> offs) {
+    public static int minOffset(List<Entry> offs) {
         int min = Integer.MAX_VALUE;
         for (Entry entry : offs) {
             if (entry.getOffset() < min)

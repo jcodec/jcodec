@@ -170,6 +170,6 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
         TrackType type = getType();
         return new DemuxerTrackMeta(type == TrackType.VIDEO ? VIDEO : (type == TrackType.SOUND ? AUDIO : OTHER),
-                copyOf, sizes.length, (double) duration / timescale);
+                copyOf, sizes.length, (double) duration / timescale, box.getCodedSize());
     }
 }

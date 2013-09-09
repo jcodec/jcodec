@@ -28,6 +28,8 @@ public class ClipTrack implements VirtualTrack {
     private boolean eof;
 
     public ClipTrack(VirtualTrack src, int frameFrom, int frameTo) {
+        if (frameTo <= frameFrom)
+            throw new IllegalArgumentException("Clipping negative or zero frames.");
         this.src = src;
         this.from = frameFrom;
         this.to = frameTo;

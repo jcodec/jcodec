@@ -16,7 +16,6 @@ import org.jcodec.movtool.streaming.tracks.FilePool;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
 import org.jcodec.movtool.streaming.tracks.avc.AVCClipTrack;
 import org.jcodec.movtool.streaming.tracks.avc.AVCConcatTrack;
-import org.junit.Test;
 
 public class AVCClipCatTest {
 

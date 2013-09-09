@@ -15,6 +15,7 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mxf.MXFConst.MXFCodecMapping;
 import org.jcodec.containers.mxf.model.FileDescriptor;
@@ -452,7 +453,13 @@ public class MXFDemuxer {
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            return new DemuxerTrackMeta(video ? VIDEO : (audio ? AUDIO : OTHER), null, totalFrames, duration);
+            Size size = null;
+            if(video) {
+                GenericPictureEssenceDescriptor pd = (GenericPictureEssenceDescriptor)descriptor;
+                size = new Size(pd.getStoredWidth(), pd.getStoredHeight());
+            }
+        
+            return new DemuxerTrackMeta(video ? VIDEO : (audio ? AUDIO : OTHER), null, totalFrames, duration, size);
         }
     }
 

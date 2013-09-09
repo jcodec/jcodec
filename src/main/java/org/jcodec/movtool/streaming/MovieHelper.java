@@ -17,6 +17,7 @@ import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ClearApertureBox;
+import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.DataInfoBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
 import org.jcodec.containers.mp4.boxes.Edit;
@@ -37,6 +38,7 @@ import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
+import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.SoundMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
@@ -47,6 +49,7 @@ import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.movtool.streaming.VirtualMovie.PacketChunk;
 import org.jcodec.movtool.streaming.VirtualTrack.VirtualEdit;
 
@@ -118,13 +121,13 @@ public class MovieHelper {
                             0x10000, 0, 0, 0, 0x40000000 });
             tkhd.setFlags(0xf);
             trak.add(tkhd);
-            
+
             MediaBox media = new MediaBox();
             trak.add(media);
             media.add(new MediaHeaderBox(trackTimescale, totalDur, 0, new Date().getTime(), new Date().getTime(), 0));
 
             TrackType tt = (se instanceof AudioSampleEntry) ? TrackType.SOUND : TrackType.VIDEO;
-            if(tt == TrackType.VIDEO) {
+            if (tt == TrackType.VIDEO) {
                 NodeBox tapt = new NodeBox(new Header("tapt"));
                 tapt.add(new ClearApertureBox(dd.getWidth(), dd.getHeight()));
                 tapt.add(new ProductionApertureBox(dd.getWidth(), dd.getHeight()));
@@ -226,6 +229,9 @@ public class MovieHelper {
         int prevCount = -1;
         boolean allKey = true;
 
+        List<Entry> compositionOffsets = new ArrayList<Entry>();
+        double ptsEstimate = 0, lastCompositionOffset = 0;
+        int lastCompositionSamples = 0;
         for (int chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
             PacketChunk chunk = chunks[chunkNo];
 
@@ -247,7 +253,24 @@ public class MovieHelper {
                 allKey &= key;
                 if (key)
                     stss.add(chunk.getPacket().getFrameNo() + 1);
+
+                double pts = chunk.getPacket().getPts();
+
+                double compositionOffset = pts - ptsEstimate;
+                if (compositionOffset != lastCompositionOffset) {
+                    if (lastCompositionSamples > 0)
+                        compositionOffsets.add(new Entry(lastCompositionSamples, (int) Math.round(lastCompositionOffset
+                                * timescale)));
+                    lastCompositionOffset = compositionOffset;
+                    lastCompositionSamples = 0;
+                }
+                lastCompositionSamples++;
+                ptsEstimate += chunk.getPacket().getDuration();
             }
+        }
+        if (compositionOffsets.size() > 0) {
+            compositionOffsets.add(new Entry(lastCompositionSamples, (int) Math
+                    .round(lastCompositionOffset * timescale)));
         }
 
         if (prevCount > 0)
@@ -260,6 +283,17 @@ public class MovieHelper {
         stbl.add(new SampleToChunkBox(new SampleToChunkEntry[] { new SampleToChunkEntry(1, 1, 1) }));
         stbl.add(new SampleSizesBox(stsz.toArray()));
         stbl.add(new TimeToSampleBox(stts.toArray(new TimeToSampleEntry[0])));
+        compositionOffsets(compositionOffsets, stbl);
+    }
+
+    private static void compositionOffsets(List<Entry> compositionOffsets, NodeBox stbl) {
+        if (compositionOffsets.size() > 0) {
+            int min = FramesMP4MuxerTrack.minOffset(compositionOffsets);
+            for (Entry entry : compositionOffsets) {
+                entry.offset -= min;
+            }
+            stbl.add(new CompositionOffsetsBox(compositionOffsets.toArray(new Entry[0])));
+        }
     }
 
     private static void populateStblPCM(NodeBox stbl, PacketChunk[] chunks, int trackId, SampleEntry se)

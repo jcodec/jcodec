@@ -126,6 +126,6 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     @Override
     public DemuxerTrackMeta getMeta() {
-        return new DemuxerTrackMeta(DemuxerTrackMeta.Type.AUDIO, null, totalFrames, (double) duration / timescale);
+        return new DemuxerTrackMeta(DemuxerTrackMeta.Type.AUDIO, null, totalFrames, (double) duration / timescale, null);
     }
 }

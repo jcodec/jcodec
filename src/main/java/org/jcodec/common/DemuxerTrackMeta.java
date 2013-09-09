@@ -1,5 +1,7 @@
 package org.jcodec.common;
 
+import org.jcodec.common.model.Size;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -19,12 +21,14 @@ public class DemuxerTrackMeta {
     private int[] seekFrames;
     private int totalFrames;
     private double totalDuration;
+    private Size dimensions;
 
-    public DemuxerTrackMeta(Type type, int[] seekFrames, int totalFrames, double totalDuration) {
+    public DemuxerTrackMeta(Type type, int[] seekFrames, int totalFrames, double totalDuration, Size dimensions) {
         this.type = type;
         this.seekFrames = seekFrames;
         this.totalFrames = totalFrames;
         this.totalDuration = totalDuration;
+        this.dimensions = dimensions;
     }
 
     public Type getType() {
@@ -52,5 +56,9 @@ public class DemuxerTrackMeta {
      */
     public double getTotalDuration() {
         return totalDuration;
+    }
+
+    public Size getDimensions() {
+        return dimensions;
     }
 }
