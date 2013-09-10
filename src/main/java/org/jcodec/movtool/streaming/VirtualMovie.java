@@ -47,7 +47,10 @@ public class VirtualMovie {
             if (min == -1)
                 break;
             chch.add(new PacketChunk(heads[min], min, curChunk, size));
-            size += heads[min].getDataLen();
+            if (heads[min].getDataLen() >= 0)
+                size += heads[min].getDataLen();
+            else
+                System.err.println("WARN: Negative frame data len!!!");
             tails[min] = heads[min];
             heads[min] = tracks[min].nextPacket();
         }

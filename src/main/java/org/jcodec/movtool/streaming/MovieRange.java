@@ -28,18 +28,28 @@ public class MovieRange extends InputStream {
         MovieSegment chunk = movie.getPacketAt(from);
         this.remaining = to - from + 1;
         if (chunk != null) {
-            chunkData = chunk.getData();
-            checkDataLen(chunkData, chunk.getDataLen());
+            chunkData = checkDataLen(chunk.getData(), chunk.getDataLen());
             chunkNo = chunk.getNo();
             NIOUtils.skip(chunkData, (int) (from - chunk.getPos()));
         }
     }
 
-    private void checkDataLen(ByteBuffer chunkData, int chunkDataLen) throws IOException {
+    static ByteBuffer checkDataLen(ByteBuffer chunkData, int chunkDataLen) throws IOException {
         if (chunkData.remaining() != chunkDataLen) {
             System.err.println("WARN: packet expected data len != actual data len " + chunkDataLen + " != "
                     + chunkData.remaining());
+            chunkDataLen = Math.max(0, chunkDataLen);
+
+            if (chunkDataLen < chunkData.remaining() || chunkData.capacity() - chunkData.position() >= chunkDataLen) {
+                chunkData.limit(chunkData.position() + chunkDataLen);
+            } else {
+                ByteBuffer correct = ByteBuffer.allocate(chunkDataLen);
+                correct.put(chunkData);
+                correct.clear();
+                return correct;
+            }
         }
+        return chunkData;
     }
 
     @Override
@@ -71,8 +81,7 @@ public class MovieRange extends InputStream {
         if (chunkData == null || !chunkData.hasRemaining()) {
             MovieSegment chunk = movie.getPacketByNo(chunkNo + 1);
             if (chunk != null) {
-                chunkData = chunk.getData();
-                checkDataLen(chunkData, chunk.getDataLen());
+                chunkData = checkDataLen(chunk.getData(), chunk.getDataLen());
                 chunkNo = chunk.getNo();
             } else
                 chunkData = null;

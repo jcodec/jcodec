@@ -24,7 +24,8 @@ import org.jcodec.scale.Transform;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * Virtual movie track that transcodes the source video format to AVC on the fly.
+ * Virtual movie track that transcodes the source video format to AVC on the
+ * fly.
  * 
  * @author The JCodec project
  * 
@@ -40,9 +41,11 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
     private int scaleFactor;
     private int thumbWidth;
     private int thumbHeight;
-    
+
     protected abstract int selectScaleFactor(Size frameDim);
+
     protected abstract VideoDecoder getDecoder(int scaleFactor);
+
     protected abstract void checkFourCC(VirtualTrack proresTrack);
 
     public Transcode2AVCTrack(VirtualTrack src, Size frameDim) {

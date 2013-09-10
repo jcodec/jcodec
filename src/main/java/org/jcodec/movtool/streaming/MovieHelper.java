@@ -238,7 +238,7 @@ public class MovieHelper {
             if (chunk.getTrack() == trackId) {
                 stco.add(chunk.getPos());
 
-                stsz.add(chunk.getDataLen());
+                stsz.add(Math.max(0, chunk.getDataLen()));
 
                 double dur = chunk.getPacket().getDuration();
                 if (dur != prevDur) {
