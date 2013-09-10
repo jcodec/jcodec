@@ -1,6 +1,7 @@
 package org.jcodec.api.specific;
 
 import org.jcodec.common.VideoDecoder;
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 
@@ -29,5 +30,10 @@ public class GenericAdaptor implements ContainerAdaptor {
     @Override
     public boolean canSeek(Packet data) {
         return true;
+    }
+
+    @Override
+    public int[][] allocatePicture() {
+        return Picture.create(1920, 1088, ColorSpace.YUV444).getData();
     }
 }

@@ -18,10 +18,8 @@ import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.VideoDecoder;
-import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
@@ -47,6 +45,7 @@ public class FrameGrab {
 
     private DemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
+    private ThreadLocal<int[][]> buffers = new ThreadLocal<int[][]>();
 
     public FrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
@@ -175,12 +174,20 @@ public class FrameGrab {
         Packet frame = sdt.nextFrame();
         decoder = detectDecoder(sdt, frame);
 
-        Picture buf = Picture.create(1920, 1088, ColorSpace.YUV444);
         while (frame.getFrameNo() < curFrame) {
-            decoder.decodeFrame(frame, buf.getData());
+            decoder.decodeFrame(frame, getBuffer());
             frame = sdt.nextFrame();
         }
         sdt.gotoFrame(curFrame);
+    }
+
+    private int[][] getBuffer() {
+        int[][] buf = buffers.get();
+        if (buf == null) {
+            buf = decoder.allocatePicture();
+            buffers.set(buf);
+        }
+        return buf;
     }
 
     private int detectKeyFrame(int start) throws IOException {
@@ -239,11 +246,8 @@ public class FrameGrab {
         Packet frame = videoTrack.nextFrame();
         if (frame == null)
             return null;
-        Size dim = videoTrack.getMeta().getDimensions();
-        if(dim == null)
-            dim = new Size(1920, 1088);
-        Picture buffer = Picture.create((dim.getWidth() + 15) & ~0xf, (dim.getHeight() + 15) & ~0xf, ColorSpace.YUV444);
-        return decoder.decodeFrame(frame, buffer.getData());
+        
+        return decoder.decodeFrame(frame, getBuffer());
     }
 
     /**

@@ -155,6 +155,7 @@ public class H264Decoder implements VideoDecoder {
 
         public void performIDRMarking(RefPicMarkingIDR refPicMarkingIDR, Frame picture) {
             clearAll();
+            pictureBuffer.clear();
 
             Frame saved = saveRef(picture);
             if (refPicMarkingIDR.isUseForlongTerm()) {

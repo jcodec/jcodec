@@ -51,7 +51,7 @@ public class AVCConcatTrack implements VirtualTrack {
     private List<SeqParameterSet> allSps;
     private SliceHeaderTweaker[] tweakers;
 
-    public AVCConcatTrack(VirtualTrack[] tracks) {
+    public AVCConcatTrack(VirtualTrack... tracks) {
         this.tracks = tracks;
 
         avcCs = new AvcCBox[tracks.length];
@@ -198,6 +198,8 @@ public class AVCConcatTrack implements VirtualTrack {
 
                 tweakers[idx2].run(nal, out, nu);
                 nalSizePosition.putInt(out.position() - nalSizePosition.position() - 4);
+            } else {
+                System.out.println(nu.type);
             }
         }
         if (out.remaining() >= 5) {

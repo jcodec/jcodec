@@ -68,7 +68,7 @@ public class MovieHelper {
 
     private static int timescales[] = { 10000, 12000, 15000, 24000, 25000, 30000, 50000, 41000, 48000, 96000 };
 
-    public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize)
+    public static ByteBuffer produceHeader(PacketChunk[] chunks, VirtualTrack[] tracks, long dataSize, Brand brand)
             throws IOException {
         int defaultTimescale = 1000;
 
@@ -158,7 +158,7 @@ public class MovieHelper {
             movie.add(trak);
         }
 
-        Brand.MP4.getFileTypeBox().write(buf);
+        brand.getFileTypeBox().write(buf);
         movie.write(buf);
         new Header("mdat", dataSize).write(buf);
         buf.flip();
@@ -225,13 +225,13 @@ public class MovieHelper {
         IntArrayList stsz = new IntArrayList(250 << 10);
         List<TimeToSampleEntry> stts = new ArrayList<TimeToSampleEntry>();
         IntArrayList stss = new IntArrayList(4 << 10);
-        double prevDur = 0;
+        int prevDur = 0;
         int prevCount = -1;
         boolean allKey = true;
 
         List<Entry> compositionOffsets = new ArrayList<Entry>();
-        double ptsEstimate = 0, lastCompositionOffset = 0;
-        int lastCompositionSamples = 0;
+        long ptsEstimate = 0;
+        int lastCompositionSamples = 0, lastCompositionOffset = 0;
         for (int chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
             PacketChunk chunk = chunks[chunkNo];
 
@@ -240,10 +240,10 @@ public class MovieHelper {
 
                 stsz.add(Math.max(0, chunk.getDataLen()));
 
-                double dur = chunk.getPacket().getDuration();
+                int dur = (int) Math.round(chunk.getPacket().getDuration() * timescale);
                 if (dur != prevDur) {
                     if (prevCount != -1)
-                        stts.add(new TimeToSampleEntry(prevCount, (int) Math.round(prevDur * timescale)));
+                        stts.add(new TimeToSampleEntry(prevCount, prevDur));
                     prevDur = dur;
                     prevCount = 0;
                 }
@@ -254,27 +254,25 @@ public class MovieHelper {
                 if (key)
                     stss.add(chunk.getPacket().getFrameNo() + 1);
 
-                double pts = chunk.getPacket().getPts();
+                long pts = Math.round(chunk.getPacket().getPts() * timescale);
 
-                double compositionOffset = pts - ptsEstimate;
+                int compositionOffset = (int)(pts - ptsEstimate);
                 if (compositionOffset != lastCompositionOffset) {
                     if (lastCompositionSamples > 0)
-                        compositionOffsets.add(new Entry(lastCompositionSamples, (int) Math.round(lastCompositionOffset
-                                * timescale)));
+                        compositionOffsets.add(new Entry(lastCompositionSamples, lastCompositionOffset));
                     lastCompositionOffset = compositionOffset;
                     lastCompositionSamples = 0;
                 }
                 lastCompositionSamples++;
-                ptsEstimate += chunk.getPacket().getDuration();
+                ptsEstimate += dur;
             }
         }
         if (compositionOffsets.size() > 0) {
-            compositionOffsets.add(new Entry(lastCompositionSamples, (int) Math
-                    .round(lastCompositionOffset * timescale)));
+            compositionOffsets.add(new Entry(lastCompositionSamples, lastCompositionOffset));
         }
 
         if (prevCount > 0)
-            stts.add(new TimeToSampleEntry(prevCount, (int) Math.round(prevDur * timescale)));
+            stts.add(new TimeToSampleEntry(prevCount, prevDur));
 
         if (!allKey)
             stbl.add(new SyncSamplesBox(stss.toArray()));

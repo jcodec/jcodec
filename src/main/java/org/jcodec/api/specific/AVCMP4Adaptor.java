@@ -4,14 +4,17 @@ import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
 
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 
 /**
@@ -29,10 +32,32 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     private SampleEntry[] ses;
     private AvcCBox avcCBox;
     private int curENo;
+    private Size size;
 
     public AVCMP4Adaptor(SampleEntry[] ses) {
         this.ses = ses;
         this.curENo = -1;
+
+        calcBufferSize();
+    }
+
+    private void calcBufferSize() {
+        int w = Integer.MIN_VALUE, h = Integer.MIN_VALUE;
+        for (SampleEntry se : ses) {
+            if ("avc1".equals(se.getFourcc())) {
+                AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
+                for (SeqParameterSet sps : H264Utils.readSPS(avcC.getSpsList())) {
+                    int ww = sps.pic_width_in_mbs_minus1 + 1;
+                    if (ww > w)
+                        w = ww;
+                    int hh = H264Utils.getPicHeightInMbs(sps);
+                    if (hh > h)
+                        h = hh;
+                }
+            }
+        }
+
+        size = new Size(w << 4, h << 4);
     }
 
     public AVCMP4Adaptor(AbstractMP4DemuxerTrack vt) {
@@ -56,8 +81,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         int eNo = ((MP4Packet) packet).getEntryNo();
         if (eNo != curENo) {
             curENo = eNo;
-            avcCBox = new AvcCBox();
-            avcCBox.parse(Box.findFirst(ses[curENo], LeafBox.class, "avcC").getData());
+            avcCBox = H264Utils.parseAVCC((VideoSampleEntry) ses[curENo]);
             decoder = new H264Decoder();
             ((H264Decoder) decoder).addSps(avcCBox.getSpsList());
             ((H264Decoder) decoder).addPps(avcCBox.getPpsList());
@@ -68,5 +92,10 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     public boolean canSeek(Packet pkt) {
         updateState(pkt);
         return H264Utils.idrSlice(splitMOVPacket(pkt.getData(), avcCBox));
+    }
+
+    @Override
+    public int[][] allocatePicture() {
+        return Picture.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
     }
 }

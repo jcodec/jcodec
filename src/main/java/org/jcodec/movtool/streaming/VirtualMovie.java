@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.containers.mp4.Brand;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -21,9 +23,15 @@ public class VirtualMovie {
     private MovieSegment headerChunk;
     private long size;
     private VirtualTrack[] tracks;
+    private Brand brand;
 
     public VirtualMovie(VirtualTrack... tracks) throws IOException {
+        this(Brand.MP4, tracks);
+    }
+
+    public VirtualMovie(Brand brand, VirtualTrack... tracks) throws IOException {
         this.tracks = tracks;
+        this.brand = brand;
 
         muxTracks();
     }
@@ -56,12 +64,12 @@ public class VirtualMovie {
         }
         chunks = chch.toArray(new PacketChunk[0]);
         long dataSize = size;
-        int headerSize = produceHeader(chunks, tracks, dataSize).remaining();
+        int headerSize = produceHeader(chunks, tracks, dataSize, brand).remaining();
         size += headerSize;
         for (PacketChunk ch : chch) {
             ch.offset(headerSize);
         }
-        headerChunk = headerChunk(produceHeader(chunks, tracks, dataSize));
+        headerChunk = headerChunk(produceHeader(chunks, tracks, dataSize, brand));
         chunks = chch.toArray(new PacketChunk[0]);
     }
 

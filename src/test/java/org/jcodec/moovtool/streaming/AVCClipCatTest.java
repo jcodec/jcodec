@@ -32,7 +32,7 @@ public class AVCClipCatTest {
         VirtualTrack t2 = new ClipTrack(new RealTrack(m2, m2.getVideoTrack(), new FilePool(f2, 10)), 30, 90);
         VirtualTrack t3 = new ClipTrack(new RealTrack(m3, m3.getVideoTrack(), new FilePool(f3, 10)), 30, 90);
 
-        AVCConcatTrack ct = new AVCConcatTrack(new VirtualTrack[] { t1, t2, t3 });
+        AVCConcatTrack ct = new AVCConcatTrack( t1, t2, t3 );
         VirtualMovie vm = new VirtualMovie(ct);
 
         MovieRange range = new MovieRange(vm, 0, vm.size());
@@ -75,7 +75,7 @@ public class AVCClipCatTest {
         VirtualTrack t2 = new AVCClipTrack(new RealTrack(m2, m2.getVideoTrack(), new FilePool(f2, 10)), 30, 90);
         VirtualTrack t3 = new AVCClipTrack(new RealTrack(m3, m3.getVideoTrack(), new FilePool(f3, 10)), 30, 90);
 
-        AVCConcatTrack ct = new AVCConcatTrack(new VirtualTrack[] { t1, t2, t3 });
+        AVCConcatTrack ct = new AVCConcatTrack( t1, t2, t3 );
         VirtualMovie vm = new VirtualMovie(ct);
 
         MovieRange range = new MovieRange(vm, 0, vm.size());
