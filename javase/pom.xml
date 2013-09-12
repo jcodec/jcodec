@@ -105,7 +105,6 @@
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec</artifactId>
 			<version>0.1.7</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>
