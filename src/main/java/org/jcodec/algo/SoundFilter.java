@@ -1,6 +1,6 @@
 package org.jcodec.algo;
 
-import javax.sound.sampled.AudioFormat;
+import org.jcodec.common.AudioFormat;
 
 public class SoundFilter {
 

@@ -7,8 +7,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.sound.sampled.AudioFormat;
-
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
@@ -239,7 +238,7 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public AudioFormat getFormat() {
-        return new AudioFormat(sampleRate, calcSampleSize() << 3, channelCount, true, getEndian() == Endian.BIG_ENDIAN);
+        return new AudioFormat((int)sampleRate, calcSampleSize() << 3, channelCount, true, getEndian() == Endian.BIG_ENDIAN);
     }
 
     @Override

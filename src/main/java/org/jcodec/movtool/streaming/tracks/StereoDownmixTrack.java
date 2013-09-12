@@ -3,8 +3,7 @@ package org.jcodec.movtool.streaming.tracks;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import javax.sound.sampled.AudioFormat;
-
+import org.jcodec.common.AudioFormat;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
 import org.jcodec.containers.mp4.boxes.SampleEntry;

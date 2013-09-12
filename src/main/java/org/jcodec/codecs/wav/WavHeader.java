@@ -16,8 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.sound.sampled.AudioFormat;
-
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.CountingInputStream;
 import org.jcodec.common.IOUtils;
 import org.jcodec.common.JCodecUtil;

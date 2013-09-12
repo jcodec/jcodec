@@ -274,42 +274,6 @@ public class MKVMuxer {
             return audio;
         }
 
-        // MKVMuxerTrack addVideoTrackWithTimecode(Size dimentions, String encder, int timescale) {
-        // return null;
-        // }
-        //
-        // static BlockElement videoSampleEntry(Size size, String encoder) {
-        // return null;
-        // }
-        //
-        // static BlockElement audioSampleEntry(int drefId, int sampleSize, int channels, int sampleRate, Endian endiannes) {
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addTimecodeTrack(int timescale) {
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addTrackForCompressed(int timescale) {
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addTrackForUncompressed(int timescale, int sampleDuration, int sampleSize, BlockElement be) {
-        // return null;
-        // }
-        //
-        // List<MKVMuxerTrack> getTracks() {
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addUncompressedAudioTrack(AudioFormat fmt){
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addCompressedAudioTrack(int timescale, int channels, int sampleRate, int samplesPerPacket, Element... extra){
-        // return null;
-        // }
-
         public static void createAndAddElement(MasterElement parent, Type type, byte[] value) {
             BinaryElement se = (BinaryElement) Type.createElementByType(type);
             se.setData(value);

@@ -4,9 +4,8 @@ import static org.jcodec.codecs.aac.ObjectType.AOT_ESCAPE;
 
 import java.nio.ByteBuffer;
 
-import javax.sound.sampled.AudioFormat;
-
 import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.containers.mp4.boxes.Box;

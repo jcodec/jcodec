@@ -1,6 +1,5 @@
 package org.jcodec.api;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -20,6 +19,7 @@ import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
@@ -46,6 +46,23 @@ public class FrameGrab {
     private DemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
     private ThreadLocal<int[][]> buffers = new ThreadLocal<int[][]>();
+    
+    public static class MediaInfo {
+    	private Size dim;
+
+		public MediaInfo(Size dim) {
+			super();
+			this.dim = dim;
+		}
+
+		public Size getDim() {
+			return dim;
+		}
+
+		public void setDim(Size dim) {
+			this.dim = dim;
+		}
+    }
 
     public FrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
@@ -226,15 +243,7 @@ public class FrameGrab {
         return null;
     }
 
-    /**
-     * Get frame at current position in AWT image
-     * 
-     * @return
-     * @throws IOException
-     */
-    public BufferedImage getFrame() throws IOException {
-        return JCodecUtil.toBufferedImage(getNativeFrame());
-    }
+    
 
     /**
      * Get frame at current position in JCodec native image
@@ -250,37 +259,7 @@ public class FrameGrab {
         return decoder.decodeFrame(frame, getBuffer());
     }
 
-    /**
-     * Get frame at a specified second as AWT image
-     * 
-     * @param file
-     * @param second
-     * @return
-     * @throws IOException
-     * @throws JCodecException
-     */
-    public static BufferedImage getFrame(File file, double second) throws IOException, JCodecException {
-        FileChannelWrapper ch = null;
-        try {
-            ch = NIOUtils.readableFileChannel(file);
-            return new FrameGrab(ch).seekToSecondPrecise(second).getFrame();
-        } finally {
-            NIOUtils.closeQuietly(ch);
-        }
-    }
-
-    /**
-     * Get frame at a specified second as AWT image
-     * 
-     * @param file
-     * @param second
-     * @return
-     * @throws UnsupportedFormatException
-     * @throws IOException
-     */
-    public static BufferedImage getFrame(SeekableByteChannel file, double second) throws JCodecException, IOException {
-        return new FrameGrab(file).seekToSecondPrecise(second).getFrame();
-    }
+    
 
     /**
      * Get frame at a specified second as JCodec image
@@ -314,37 +293,9 @@ public class FrameGrab {
         return new FrameGrab(file).seekToSecondPrecise(second).getNativeFrame();
     }
 
-    /**
-     * Get frame at a specified frame number as AWT image
-     * 
-     * @param file
-     * @param second
-     * @return
-     * @throws IOException
-     * @throws JCodecException
-     */
-    public static BufferedImage getFrame(File file, int frameNumber) throws IOException, JCodecException {
-        FileChannelWrapper ch = null;
-        try {
-            ch = NIOUtils.readableFileChannel(file);
-            return new FrameGrab(ch).seekToFramePrecise(frameNumber).getFrame();
-        } finally {
-            NIOUtils.closeQuietly(ch);
-        }
-    }
+    
 
-    /**
-     * Get frame at a specified frame number as AWT image
-     * 
-     * @param file
-     * @param second
-     * @return
-     * @throws IOException
-     * @throws JCodecException
-     */
-    public static BufferedImage getFrame(SeekableByteChannel file, int frameNumber) throws JCodecException, IOException {
-        return new FrameGrab(file).seekToFramePrecise(frameNumber).getFrame();
-    }
+    
 
     /**
      * Get frame at a specified frame number as JCodec image
@@ -378,67 +329,7 @@ public class FrameGrab {
         return new FrameGrab(file).seekToFramePrecise(frameNumber).getNativeFrame();
     }
 
-    /**
-     * Get a specified frame by number from an already open demuxer track
-     * 
-     * @param vt
-     * @param decoder
-     * @param frameNumber
-     * @return
-     * @throws IOException
-     * @throws JCodecException
-     */
-    public static BufferedImage getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
-            throws IOException, JCodecException {
-        return new FrameGrab(vt, decoder).seekToFramePrecise(frameNumber).getFrame();
-    }
-
-    /**
-     * Get a specified frame by second from an already open demuxer track
-     * 
-     * @param vt
-     * @param decoder
-     * @param frameNumber
-     * @return
-     * @throws IOException
-     * @throws JCodecException
-     */
-    public static BufferedImage getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
-            throws IOException, JCodecException {
-        return new FrameGrab(vt, decoder).seekToSecondPrecise(second).getFrame();
-    }
-
-    /**
-     * Get a specified frame by number from an already open demuxer track (
-     * sloppy mode, i.e. nearest keyframe )
-     * 
-     * @param vt
-     * @param decoder
-     * @param frameNumber
-     * @return
-     * @throws IOException
-     * @throws JCodecException
-     */
-    public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
-            throws IOException, JCodecException {
-        return new FrameGrab(vt, decoder).seekToFrameSloppy(frameNumber).getFrame();
-    }
-
-    /**
-     * Get a specified frame by second from an already open demuxer track (
-     * sloppy mode, i.e. nearest keyframe )
-     * 
-     * @param vt
-     * @param decoder
-     * @param frameNumber
-     * @return
-     * @throws IOException
-     * @throws JCodecException
-     */
-    public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
-            throws IOException, JCodecException {
-        return new FrameGrab(vt, decoder).seekToSecondSloppy(second).getFrame();
-    }
+    
 
     /**
      * Get a specified frame by number from an already open demuxer track
@@ -500,5 +391,13 @@ public class FrameGrab {
     public static Picture getNativeFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
         return new FrameGrab(vt, decoder).seekToSecondSloppy(second).getNativeFrame();
+    }
+    
+    /**
+     * Gets info about the media
+     * @return
+     */
+    public MediaInfo getMediaInfo() {
+    	return decoder.getMediaInfo();
     }
 }

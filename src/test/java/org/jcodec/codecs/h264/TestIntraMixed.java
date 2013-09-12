@@ -1,18 +1,13 @@
 package org.jcodec.codecs.h264;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import javax.imageio.ImageIO;
-
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.scale.AWTUtil;
-import org.jcodec.scale.Yuv420pToRgb;
 import org.junit.Assert;
 import org.junit.Test;
 

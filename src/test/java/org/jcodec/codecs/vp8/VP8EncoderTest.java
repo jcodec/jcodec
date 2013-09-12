@@ -2,16 +2,6 @@ package org.jcodec.codecs.vp8;
 
 import static org.jcodec.codecs.vp8.VP8EncoderTest.LinearAlgebraUtil.substractScalar;
 
-import java.awt.image.BufferedImage;
-
-import javax.imageio.ImageIO;
-
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
-import org.jcodec.containers.mkv.MKVMuxerTest;
-import org.jcodec.scale.AWTUtil;
-import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -54,18 +44,17 @@ public class VP8EncoderTest {
         return b;
     }
     
-    @Test
-    public void testName() throws Exception {
-        BufferedImage in = ImageIO.read(MKVMuxerTest.tildeExpand("src/test/resources/olezha422.jpg"));
-        Transform t = ColorUtil.getTransform(ColorSpace.RGB, ColorSpace.YUV420);
-        Picture yuv = Picture.create(in.getWidth(), in.getHeight(), ColorSpace.YUV420);
-        t.transform(AWTUtil.fromBufferedImage(in), yuv);
-        int mbCols = VP8Util.getMacroblockCount(in.getWidth());
-        int mbRows = VP8Util.getMacroblockCount(in.getHeight());
-        System.out.println("image: "+in.getHeight()+"x"+in.getWidth()+" macroblocks: "+mbRows+"x"+mbCols);
-        getMbData(yuv.getData()[0], in.getHeight(), in.getWidth(), mbRows, mbCols);
-        
-    }
+//    public void testName() throws Exception {
+//        BufferedImage in = ImageIO.read(MKVMuxerTest.tildeExpand("src/test/resources/olezha422.jpg"));
+//        Transform t = ColorUtil.getTransform(ColorSpace.RGB, ColorSpace.YUV420);
+//        Picture yuv = Picture.create(in.getWidth(), in.getHeight(), ColorSpace.YUV420);
+//        t.transform(AWTUtil.fromBufferedImage(in), yuv);
+//        int mbCols = VP8Util.getMacroblockCount(in.getWidth());
+//        int mbRows = VP8Util.getMacroblockCount(in.getHeight());
+//        System.out.println("image: "+in.getHeight()+"x"+in.getWidth()+" macroblocks: "+mbRows+"x"+mbCols);
+//        getMbData(yuv.getData()[0], in.getHeight(), in.getWidth(), mbRows, mbCols);
+//        
+//    }
     
     int[] yPlane = {
             

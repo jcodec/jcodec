@@ -1,6 +1,5 @@
 package org.jcodec.api;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -17,11 +16,16 @@ import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
-import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.RgbToYuv420p;
 import org.jcodec.scale.Transform;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class SequenceEncoder {
     private SeekableByteChannel ch;
     private Picture toEncode;
@@ -57,10 +61,6 @@ public class SequenceEncoder {
         spsList = new ArrayList<ByteBuffer>();
         ppsList = new ArrayList<ByteBuffer>();
 
-    }
-
-    public void encodeImage(BufferedImage bi) throws IOException {
-        encodeNativeFrame(AWTUtil.fromBufferedImage(bi));
     }
 
     public void encodeNativeFrame(Picture pic) throws IOException {

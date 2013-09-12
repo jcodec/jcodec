@@ -1,9 +1,11 @@
 package org.jcodec.api.specific;
 
+import org.jcodec.api.FrameGrab.MediaInfo;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Size;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -36,4 +38,9 @@ public class GenericAdaptor implements ContainerAdaptor {
     public int[][] allocatePicture() {
         return Picture.create(1920, 1088, ColorSpace.YUV444).getData();
     }
+
+	@Override
+	public MediaInfo getMediaInfo() {
+		return new MediaInfo(new Size(0, 0));
+	}
 }

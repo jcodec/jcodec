@@ -2,6 +2,7 @@ package org.jcodec.api.specific;
 
 import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
 
+import org.jcodec.api.FrameGrab.MediaInfo;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
@@ -98,4 +99,9 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     public int[][] allocatePicture() {
         return Picture.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
     }
+
+	@Override
+	public MediaInfo getMediaInfo() {
+		return new MediaInfo(size);
+	}
 }

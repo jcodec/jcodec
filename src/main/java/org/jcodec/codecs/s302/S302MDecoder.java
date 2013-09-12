@@ -3,9 +3,8 @@ package org.jcodec.codecs.s302;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import javax.sound.sampled.AudioFormat;
-
 import org.jcodec.common.AudioDecoder;
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.tools.MathUtil;
 

@@ -1,6 +1,5 @@
 package org.jcodec.common;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -9,8 +8,6 @@ import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import javax.imageio.ImageIO;
 
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
@@ -21,7 +18,6 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
-import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
 
@@ -78,18 +74,6 @@ public class JCodecUtil {
             return new MPEGDecoder();
         else
             return null;
-    }
-
-    public static void savePicture(Picture pic, String format, File file) throws IOException {
-        ImageIO.write(toBufferedImage(pic), format, file);
-    }
-
-    public static BufferedImage toBufferedImage(Picture pic) {
-        Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
-        Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
-        transform.transform(pic, rgb);
-        BufferedImage bi = AWTUtil.toBufferedImage(rgb);
-        return bi;
     }
 
     public static void savePictureAsPPM(Picture pic, File file) throws IOException {

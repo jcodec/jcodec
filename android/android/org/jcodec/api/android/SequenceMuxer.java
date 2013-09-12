@@ -1,20 +1,27 @@
-package org.jcodec.api;
+package org.jcodec.api.android;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-
-import javax.imageio.ImageIO;
 
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
-import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class SequenceMuxer {
     private SeekableByteChannel ch;
     private FramesMP4MuxerTrack outTrack;
@@ -34,7 +41,7 @@ public class SequenceMuxer {
 
     public void encodeImage(File png) throws IOException {
         if (size == null) {
-            BufferedImage read = ImageIO.read(png);
+            Bitmap read = BitmapFactory.decodeFile(png.getAbsolutePath());
             size = new Size(read.getWidth(), read.getHeight());
         }
         // Add packet to video track

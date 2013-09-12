@@ -2,7 +2,7 @@ package org.jcodec.common.model;
 
 import java.nio.ByteBuffer;
 
-import javax.sound.sampled.AudioFormat;
+import org.jcodec.common.AudioFormat;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

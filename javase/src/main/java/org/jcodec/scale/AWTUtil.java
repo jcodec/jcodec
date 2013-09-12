@@ -4,7 +4,12 @@ import static org.jcodec.common.model.ColorSpace.RGB;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.io.File;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
+
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 
 /**
@@ -17,6 +22,13 @@ import org.jcodec.common.model.Picture;
 public class AWTUtil {
 
     public static BufferedImage toBufferedImage(Picture src) {
+        if (src.getColor() != ColorSpace.RGB) {
+            Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
+            Picture rgb = Picture.create(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
+            transform.transform(src, rgb);
+            src = rgb;
+        }
+
         BufferedImage dst = new BufferedImage(src.getCroppedWidth(), src.getCroppedHeight(),
                 BufferedImage.TYPE_3BYTE_BGR);
 
@@ -70,5 +82,9 @@ public class AWTUtil {
                 dstData[off++] = rgb1 & 0xff;
             }
         }
+    }
+
+    public static void savePicture(Picture pic, String format, File file) throws IOException {
+        ImageIO.write(toBufferedImage(pic), format, file);
     }
 }

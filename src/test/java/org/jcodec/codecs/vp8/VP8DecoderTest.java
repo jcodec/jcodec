@@ -18,19 +18,17 @@ public class VP8DecoderTest {
     private byte[] bb;
     private VP8Decoder dec;
 
-    @Test
-    public void testKF() throws Exception {
-        dec.decode(ByteBuffer.wrap(bb));
-        
-        ImageIO.write(dec.getBufferedImage(), "png", MKVMuxerTest.tildeExpand("~/decoded.png"));
-    }
+//    public void testKF() throws Exception {
+//        dec.decode(ByteBuffer.wrap(bb));
+//        
+//        ImageIO.write(dec.getBufferedImage(), "png", MKVMuxerTest.tildeExpand("~/decoded.png"));
+//    }
     
-    @Test
-    public void testKFToPicture() throws Exception {
-        dec.decode(ByteBuffer.wrap(bb));
-        Picture p = dec.getPicture();
-        ImageIO.write(JCodecUtil.toBufferedImage(p), "png", MKVMuxerTest.tildeExpand("~/decoded.pic.png"));
-    }
+//    public void testKFToPicture() throws Exception {
+//        dec.decode(ByteBuffer.wrap(bb));
+//        Picture p = dec.getPicture();
+//        ImageIO.write(JCodecUtil.toBufferedImage(p), "png", MKVMuxerTest.tildeExpand("~/decoded.pic.png"));
+//    }
     
     public void pysch() throws Exception {
         int mbWidth = 4;
