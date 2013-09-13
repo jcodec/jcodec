@@ -80,7 +80,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.jcodec</groupId>
-			<artifactId>jcodec</artifactId>
+			<artifactId>jcodec-javase</artifactId>
 			<version>0.1.7</version>
 		</dependency>
 		<dependency>

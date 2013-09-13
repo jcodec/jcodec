@@ -50,8 +50,8 @@ public class RgbToYuv420j implements Transform {
                 dstData[0][offLuma + strideDst] = dstData[0][offLuma + strideDst];
                 ++offLuma;
 
-                dstData[1][offChr] = dstData[1][offChr];
-                dstData[2][offChr] = dstData[2][offChr];
+                dstData[1][offChr] = dstData[1][offChr] >> 2;
+                dstData[2][offChr] = dstData[2][offChr] >> 2;
 
                 ++offChr;
                 offSrc += 6;

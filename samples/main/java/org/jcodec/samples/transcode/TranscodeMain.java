@@ -555,7 +555,7 @@ public class TranscodeMain {
             source = readableFileChannel(in);
 
             MP4Demuxer demux = new MP4Demuxer(source);
-            MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
+            MP4Muxer muxer = new MP4Muxer(sink, Brand.MP4);
 
             Transform transform = new Yuv422pToYuv420p(0, 2);
 
