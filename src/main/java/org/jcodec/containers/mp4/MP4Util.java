@@ -32,9 +32,9 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class MP4Util {
-    
+
     private static Map<Codec, String> codecMapping = new HashMap<Codec, String>();
-    
+
     static {
         codecMapping.put(Codec.MPEG2, "m2v1");
         codecMapping.put(Codec.H264, "avc1");
@@ -74,6 +74,13 @@ public class MP4Util {
         }
 
         return result;
+    }
+
+    public static Atom atom(SeekableByteChannel input) throws IOException {
+        long off = input.position();
+        Header atom = Header.read(NIOUtils.fetchFrom(input, 16));
+
+        return atom == null ? null : new Atom(atom, off);
     }
 
     public static class Atom {
@@ -146,13 +153,14 @@ public class MP4Util {
     public static Box cloneBox(Box box, int approxSize) {
         return cloneBox(box, approxSize, BoxFactory.getDefault());
     }
+
     public static Box cloneBox(Box box, int approxSize, BoxFactory bf) {
         ByteBuffer buf = ByteBuffer.allocate(approxSize);
         box.write(buf);
         buf.flip();
         return NodeBox.parseChildBox(buf, bf);
     }
-    
+
     public static String getFourcc(Codec codec) {
         return codecMapping.get(codec);
     }
@@ -161,7 +169,7 @@ public class MP4Util {
         ByteBuffer buf = ByteBuffer.allocate(approxSize);
         box.write(buf);
         buf.flip();
-        
+
         return buf;
     }
 }

@@ -38,9 +38,8 @@ public abstract class InplaceEdit {
             MovieBox movBox = (MovieBox) NodeBox.parseBox(oldMov, header, BoxFactory.getDefault());
 
             apply(movBox);
-
-            oldMov.position(0);
-            oldMov.limit(oldMov.capacity());
+            
+            oldMov.clear();
 
             try {
                 movBox.write(oldMov);
@@ -53,6 +52,7 @@ public abstract class InplaceEdit {
                 oldMov.putInt(oldMov.remaining());
                 oldMov.put(new byte[] { 'f', 'r', 'e', 'e' });
             }
+            oldMov.flip();
             fi.position(moov.getOffset());
             fi.write(oldMov);
 

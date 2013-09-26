@@ -64,6 +64,14 @@ public class AWTUtil {
         }
     }
 
+    public static Picture fromBufferedImage(BufferedImage src, ColorSpace tgtColor) {
+        Picture rgb = fromBufferedImage(src);
+        Transform tr = ColorUtil.getTransform(rgb.getColor(), tgtColor);
+        Picture res = Picture.create(rgb.getWidth(), rgb.getWidth(), tgtColor);
+        tr.transform(rgb, res);
+        return res;
+    }
+
     public static Picture fromBufferedImage(BufferedImage src) {
         Picture dst = Picture.create(src.getWidth(), src.getHeight(), RGB);
         fromBufferedImage(src, dst);
