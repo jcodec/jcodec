@@ -61,7 +61,7 @@ public class EditListBox extends FullBox {
         return edits;
     }
 
-    protected void dump(StringBuilder sb) {
+    public void dump(StringBuilder sb) {
         super.dump(sb);
         sb.append(": ");
         ToJSON.toJSON(this, sb, "edits");

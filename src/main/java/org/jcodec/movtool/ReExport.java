@@ -39,7 +39,7 @@ public class ReExport extends Remux {
         tgt.renameTo(src);
 
         try {
-            new ReExport().remux(tgt, src);
+            new ReExport().remux(tgt, src, null, null);
         } catch (Throwable t) {
             t.printStackTrace();
             tgt.renameTo(new File(tgt.getParentFile(), tgt.getName() + ".error"));

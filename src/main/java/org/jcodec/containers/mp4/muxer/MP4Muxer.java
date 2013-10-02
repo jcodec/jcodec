@@ -41,10 +41,10 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
  */
 public class MP4Muxer {
     private List<AbstractMP4MuxerTrack> tracks = new ArrayList<AbstractMP4MuxerTrack>();
-    private long mdatOffset;
+    protected long mdatOffset;
 
     private int nextTrackId = 1;
-    SeekableByteChannel out;
+    protected SeekableByteChannel out;
 
     public MP4Muxer(SeekableByteChannel output) throws IOException {
         this(output, Brand.MP4);
@@ -70,7 +70,7 @@ public class MP4Muxer {
     public FramesMP4MuxerTrack addVideoTrackWithTimecode(String fourcc, Size size, String encoderName, int timescale) {
         TimecodeMP4MuxerTrack timecode = addTimecodeTrack(timescale);
 
-        FramesMP4MuxerTrack track = addTrackForCompressed(VIDEO, timescale);
+        FramesMP4MuxerTrack track = addTrack(VIDEO, timescale);
 
         track.addSampleEntry(videoSampleEntry(fourcc, size, encoderName));
         track.setTimecode(timecode);
@@ -79,7 +79,7 @@ public class MP4Muxer {
     }
 
     public FramesMP4MuxerTrack addVideoTrack(String fourcc, Size size, String encoderName, int timescale) {
-        FramesMP4MuxerTrack track = addTrackForCompressed(VIDEO, timescale);
+        FramesMP4MuxerTrack track = addTrack(VIDEO, timescale);
 
         track.addSampleEntry(videoSampleEntry(fourcc, size, encoderName));
         return track;
@@ -118,15 +118,15 @@ public class MP4Muxer {
         return track;
     }
 
-    public FramesMP4MuxerTrack addTrackForCompressed(TrackType type, int timescale) {
+    public FramesMP4MuxerTrack addTrack(TrackType type, int timescale) {
         FramesMP4MuxerTrack track = new FramesMP4MuxerTrack(out, nextTrackId++, type, timescale);
         tracks.add(track);
         return track;
     }
 
-    public PCMMP4MuxerTrack addTrackForUncompressed(TrackType type, int timescale, int sampleDuration, int sampleSize,
+    public PCMMP4MuxerTrack addPCMTrack(int timescale, int sampleDuration, int sampleSize,
             SampleEntry se) {
-        PCMMP4MuxerTrack track = new PCMMP4MuxerTrack(out, nextTrackId++, type, timescale, sampleDuration, sampleSize, se);
+        PCMMP4MuxerTrack track = new PCMMP4MuxerTrack(out, nextTrackId++, TrackType.SOUND, timescale, sampleDuration, sampleSize, se);
         tracks.add(track);
         return track;
     }
@@ -212,8 +212,8 @@ public class MP4Muxer {
             throw new IllegalArgumentException("Audio format " + format + " is not supported.");
     }
 
-    public PCMMP4MuxerTrack addUncompressedAudioTrack(AudioFormat format) {
-        return addTrackForUncompressed(SOUND, (int) format.getSampleRate(), 1, (format.getSampleSizeInBits() >> 3)
+    public PCMMP4MuxerTrack addPCMAudioTrack(AudioFormat format) {
+        return addPCMTrack((int) format.getSampleRate(), 1, (format.getSampleSizeInBits() >> 3)
                 * format.getChannels(), MP4Muxer.audioSampleEntry(lookupFourcc(format), 1,
                 format.getSampleSizeInBits() >> 3, format.getChannels(), (int) format.getSampleRate(),
                 format.isBigEndian() ? Endian.BIG_ENDIAN : Endian.LITTLE_ENDIAN));
@@ -221,7 +221,7 @@ public class MP4Muxer {
 
     public FramesMP4MuxerTrack addCompressedAudioTrack(String fourcc, int timescale, int channels, int sampleRate,
             int samplesPerPkt, Box... extra) {
-        FramesMP4MuxerTrack track = addTrackForCompressed(SOUND, timescale);
+        FramesMP4MuxerTrack track = addTrack(SOUND, timescale);
 
         AudioSampleEntry ase = new AudioSampleEntry(new Header(fourcc, 0), (short) 1, (short) channels, (short) 16,
                 sampleRate, (short) 0, 0, 65534, 0, samplesPerPkt, 0, 0, 2, (short) 1);

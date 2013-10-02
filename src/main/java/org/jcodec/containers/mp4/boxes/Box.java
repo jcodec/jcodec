@@ -100,7 +100,7 @@ public abstract class Box {
 
     }
 
-    protected void dump(StringBuilder sb) {
+    public void dump(StringBuilder sb) {
         sb.append("'" + header.getFourcc() + "'");
     }
 

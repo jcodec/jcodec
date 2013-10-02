@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.wav.StringReader;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -109,6 +110,13 @@ public class Header {
         if (size > MAX_UNSIGNED_INT) {
             out.putLong(size);
         }
+    }
+    
+    public void write(SeekableByteChannel output) throws IOException {
+        ByteBuffer bb = ByteBuffer.allocate(16);
+        write(bb);
+        bb.flip();
+        output.write(bb);
     }
 
     public long getSize() {

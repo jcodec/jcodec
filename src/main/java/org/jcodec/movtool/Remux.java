@@ -9,12 +9,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.containers.mp4.WebOptimizedMP4Muxer;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
+import org.jcodec.containers.mp4.boxes.Edit;
+import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.TimecodeMP4DemuxerTrack;
+import org.jcodec.containers.mp4.muxer.AbstractMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
@@ -27,7 +34,7 @@ import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
  * 
  */
 public class Remux {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 1) {
             System.out.println("remux <movie>");
             return;
@@ -38,26 +45,40 @@ public class Remux {
         tgt.renameTo(src);
 
         try {
-            new Remux().remux(tgt, src);
+            new Remux().remux(tgt, src, null, null);
         } catch (Throwable t) {
             tgt.renameTo(new File(tgt.getParentFile(), tgt.getName() + ".error"));
             src.renameTo(tgt);
         }
     }
 
-    public void remux(File tgt, File src) throws IOException {
+    public interface Handler {
+        public void handle(MovieBox mov) throws IOException;
+    }
+
+    public void remux(File tgt, File src, File timecode, Handler handler) throws IOException {
         SeekableByteChannel input = null;
         SeekableByteChannel output = null;
+        SeekableByteChannel tci = null;
         try {
             input = readableFileChannel(src);
             output = writableFileChannel(tgt);
             MP4Demuxer demuxer = new MP4Demuxer(input);
-            MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
+
+            
+            TimecodeMP4DemuxerTrack tt = null;
+            if (timecode != null) {
+                tci = readableFileChannel(src);
+                MP4Demuxer tcd = new MP4Demuxer(tci);
+                tt = tcd.getTimecodeTrack();
+            }
+
+            MP4Muxer muxer = WebOptimizedMP4Muxer.withOldHeader(output, Brand.MOV, demuxer.getMovie());
 
             List<AbstractMP4DemuxerTrack> at = demuxer.getAudioTracks();
             List<PCMMP4MuxerTrack> audioTracks = new ArrayList<PCMMP4MuxerTrack>();
             for (AbstractMP4DemuxerTrack demuxerTrack : at) {
-                PCMMP4MuxerTrack att = muxer.addUncompressedAudioTrack(((AudioSampleEntry) demuxerTrack
+                PCMMP4MuxerTrack att = muxer.addPCMAudioTrack(((AudioSampleEntry) demuxerTrack
                         .getSampleEntries()[0]).getFormat());
                 audioTracks.add(att);
                 att.setEdits(demuxerTrack.getEdits());
@@ -65,13 +86,15 @@ public class Remux {
             }
 
             AbstractMP4DemuxerTrack vt = demuxer.getVideoTrack();
-            FramesMP4MuxerTrack video = muxer.addTrackForCompressed(VIDEO, (int) vt.getTimescale());
+            FramesMP4MuxerTrack video = muxer.addTrack(VIDEO, (int) vt.getTimescale());
             // vt.open(input);
             video.setTimecode(muxer.addTimecodeTrack((int) vt.getTimescale()));
-            video.setEdits(vt.getEdits());
+            copyEdits(vt, video, new Rational((int)vt.getTimescale(), demuxer.getMovie().getTimescale()));
             video.addSampleEntries(vt.getSampleEntries());
             MP4Packet pkt = null;
             while ((pkt = (MP4Packet)vt.nextFrame()) != null) {
+                if (tt != null)
+                    pkt = tt.getTimecode(pkt);
                 pkt = processFrame(pkt);
                 video.addFrame(pkt);
 
@@ -83,13 +106,27 @@ public class Remux {
                 }
             }
 
-            muxer.writeHeader();
+            MovieBox movie = muxer.finalizeHeader();
+            if (handler != null)
+                handler.handle(movie);
+            muxer.storeHeader(movie);
+
         } finally {
-            if (input != null)
-                input.close();
-            if (output != null)
-                output.close();
+            NIOUtils.closeQuietly(input);
+            NIOUtils.closeQuietly(output);
+            NIOUtils.closeQuietly(tci);
         }
+    }
+    
+    private void copyEdits(AbstractMP4DemuxerTrack from, AbstractMP4MuxerTrack two, Rational tsRatio) {
+        List<Edit> edits = from.getEdits(), result = new ArrayList<Edit>();
+        if(edits == null)
+            return;
+        for (Edit edit : edits) {
+            result.add(new Edit(tsRatio.multiply(edit.getDuration()), edit.getMediaTime(), edit.getRate()));
+        }
+
+        two.setEdits(result);
     }
 
     protected MP4Packet processFrame(MP4Packet pkt) {

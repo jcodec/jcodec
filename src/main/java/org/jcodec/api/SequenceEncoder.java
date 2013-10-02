@@ -45,7 +45,7 @@ public class SequenceEncoder {
         muxer = new MP4Muxer(ch, Brand.MP4);
 
         // Add video track to muxer
-        outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, 25);
+        outTrack = muxer.addTrack(TrackType.VIDEO, 25);
 
         // Allocate a buffer big enough to hold output frames
         _out = ByteBuffer.allocate(1920 * 1080 * 6);

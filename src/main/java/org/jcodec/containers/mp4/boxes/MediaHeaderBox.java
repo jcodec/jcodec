@@ -86,7 +86,7 @@ public class MediaHeaderBox extends FullBox {
     }
 
     @Override
-    protected void dump(StringBuilder sb) {
+    public void dump(StringBuilder sb) {
         super.dump(sb);
         sb.append(": ");
         ToJSON.toJSON(this, sb, "created", "modified", "timescale", "duration", "language", "quality");

@@ -150,7 +150,7 @@ public class TestDemuxer {
         in.seek(header.dataOffset);
         FileChannel ch = in.getChannel();
         MP4Muxer muxer = new MP4Muxer(writableFileChannel(out));
-        PCMMP4MuxerTrack track = muxer.addTrackForUncompressed(SOUND, 48000, 1, 3,
+        PCMMP4MuxerTrack track = muxer.addPCMTrack(48000, 1, 3,
                 MP4Muxer.audioSampleEntry("in24", 1, 3, 1, 48000, Endian.LITTLE_ENDIAN));
 
         ByteBuffer buffer = ByteBuffer.allocate(3 * 24000);
@@ -166,7 +166,7 @@ public class TestDemuxer {
         MP4Demuxer demuxer1 = new MP4Demuxer(readableFileChannel(src));
         AbstractMP4DemuxerTrack vt1 = demuxer1.getVideoTrack();
 
-        FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) vt1.getTimescale());
+        FramesMP4MuxerTrack outTrack = muxer.addTrack(VIDEO, (int) vt1.getTimescale());
         outTrack.addSampleEntry(vt1.getSampleEntries()[0]);
         for (int i = 0; i < vt1.getFrameCount(); i++) {
             outTrack.addFrame((MP4Packet)vt1.nextFrame());

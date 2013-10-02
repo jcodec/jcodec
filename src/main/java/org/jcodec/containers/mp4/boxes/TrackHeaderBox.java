@@ -176,7 +176,7 @@ public class TrackHeaderBox extends FullBox {
     }
 
     @Override
-    protected void dump(StringBuilder sb) {
+    public void dump(StringBuilder sb) {
         super.dump(sb);
         sb.append(": ");
         ToJSON.toJSON(this, sb, "trackId", "duration", "width", "height", "created", "modified", "volume", "layer",

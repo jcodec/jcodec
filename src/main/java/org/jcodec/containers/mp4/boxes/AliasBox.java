@@ -192,7 +192,7 @@ public class AliasBox extends FullBox {
     }
 
     @Override
-    protected void dump(StringBuilder sb) {
+    public void dump(StringBuilder sb) {
         super.dump(sb);
         sb.append(": ");
         if (isSelfRef())

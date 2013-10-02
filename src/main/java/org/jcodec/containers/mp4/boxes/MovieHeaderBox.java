@@ -141,7 +141,7 @@ public class MovieHeaderBox extends FullBox {
     }
 
     @Override
-    protected void dump(StringBuilder sb) {
+    public void dump(StringBuilder sb) {
         super.dump(sb);
         sb.append(": ");
         ToJSON.toJSON(this, sb, "timescale", "duration", "rate", "volume", "created", "modified", "nextTrackId");

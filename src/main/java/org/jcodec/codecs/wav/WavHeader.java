@@ -352,4 +352,8 @@ public class WavHeader {
             }
         }
     }
+
+    public AudioFormat getFormat() {
+        return new AudioFormat(fmt.sampleRate, fmt.bitsPerSample, fmt.numChannels, true, false);
+    }
 }
