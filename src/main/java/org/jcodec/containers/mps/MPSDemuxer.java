@@ -14,7 +14,6 @@ import java.util.Map;
 
 import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.SegmentReader;
-import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
@@ -30,7 +29,8 @@ import org.jcodec.common.model.TapeTimecode;
  * @author The JCodec project
  * 
  */
-public class MPSDemuxer extends SegmentReader {
+public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
+    private static final int BUFFER_SIZE = 0x100000;
     public static final int VIDEO_MIN = 0x1E0;
     public static final int VIDEO_MAX = 0x1EF;
 
@@ -51,7 +51,7 @@ public class MPSDemuxer extends SegmentReader {
 
     protected void findStreams() throws IOException {
         for (int i = 0; i == 0 || i < 3 * streams.size(); i++) {
-            PESPacket nextPacket = nextPacket(ByteBuffer.allocate(0x10000));
+            PESPacket nextPacket = nextPacket(getBuffer());
             if (nextPacket == null)
                 break;
             addToStream(nextPacket);
@@ -73,14 +73,35 @@ public class MPSDemuxer extends SegmentReader {
             this.pos = pos;
         }
     }
+    private List<ByteBuffer> bufPool = new ArrayList<ByteBuffer>();
+    
+    public ByteBuffer getBuffer() {
+        synchronized (bufPool) {
+            if (bufPool.size() > 0) {
+                return bufPool.remove(0);
+            }
+        }
+        System.out.println("creating buffer");
+        return ByteBuffer.allocate(BUFFER_SIZE);
+    }
 
-    public class Track implements ReadableByteChannel {
+    public void putBack(ByteBuffer buffer) {
+        buffer.clear();
+        synchronized (bufPool) {
+            bufPool.add(buffer);
+        }
+    }
+    
+
+    public class Track implements ReadableByteChannel, MPEGDemuxer.Track {
         private List<PESPacket> pending = new ArrayList<PESPacket>();
         private int streamId;
         private MPEGES es;
+       
 
-        public Track(int streamId) throws IOException {
+        public Track(int streamId, PESPacket pkt) throws IOException {
             this.streamId = streamId;
+            this.pending.add(pkt);
             this.es = new MPEGES(this);
         }
 
@@ -99,10 +120,21 @@ public class MPSDemuxer extends SegmentReader {
         public void close() throws IOException {
         }
 
+        
+
         public int read(ByteBuffer arg0) throws IOException {
             PESPacket pes = pending.size() > 0 ? pending.remove(0) : getPacket();
-            NIOUtils.write(arg0, pes.data);
-            return pes.data.remaining();
+            if (pes == null || !pes.data.hasRemaining())
+                return -1;
+            int toRead = Math.min(arg0.remaining(), pes.data.remaining());
+            arg0.put(NIOUtils.read(pes.data, toRead));
+            
+            if (pes.data.hasRemaining())
+                pending.add(0, pes);
+            else
+                putBack(pes.data);
+
+            return toRead;
         }
 
         public void pending(PESPacket pkt) {
@@ -117,7 +149,7 @@ public class MPSDemuxer extends SegmentReader {
             if (pending.size() > 0)
                 return pending.remove(0);
             PESPacket pkt;
-            while ((pkt = nextPacket(ByteBuffer.allocate(0x10000))) != null) {
+            while ((pkt = nextPacket(getBuffer())) != null) {
                 if (pkt.streamId == streamId) {
                     if (pkt.pts != -1) {
                         es.curPts = pkt.pts;
@@ -129,6 +161,7 @@ public class MPSDemuxer extends SegmentReader {
             return null;
         }
 
+        @Override
         public Packet nextFrame(ByteBuffer buf) throws IOException {
             return es.getFrame(buf);
         }
@@ -141,6 +174,10 @@ public class MPSDemuxer extends SegmentReader {
 
     public void seekByte(long offset) throws IOException {
         channel.position(offset);
+        reset();
+    }
+
+    public void reset() {
         for (Track track : streams.values()) {
             track.pending.clear();
         }
@@ -149,10 +186,11 @@ public class MPSDemuxer extends SegmentReader {
     private void addToStream(PESPacket pkt) throws IOException {
         Track pes = streams.get(pkt.streamId);
         if (pes == null) {
-            pes = new Track(pkt.streamId);
+            pes = new Track(pkt.streamId, pkt);
             streams.put(pkt.streamId, pes);
+        } else {
+            pes.pending(pkt);
         }
-        pes.pending(pkt);
     }
 
     public PESPacket nextPacket(ByteBuffer out) throws IOException {
@@ -161,17 +199,17 @@ public class MPSDemuxer extends SegmentReader {
         while (curMarker < PRIVATE_1 || curMarker > VIDEO_MAX)
             skipToMarker();
 
+        ByteBuffer fork = dup.duplicate();
         readToNextMarker(dup);
-        ByteBuffer fork = NIOUtils.from(dup, 4);
         PESPacket pkt = readPES(fork, curPos());
         if (pkt.length == 0) {
             while ((curMarker < PRIVATE_1 || curMarker > VIDEO_MAX) && readToNextMarker(dup))
                 ;
         } else {
-            read(dup, pkt.length - (fork.position() - dup.position() - 4));
+            read(dup, pkt.length - dup.position() + 6);
         }
-        dup.flip();
-        pkt.data = dup;
+        fork.limit(dup.position());
+        pkt.data = fork;
         return pkt;
     }
 
@@ -227,7 +265,8 @@ public class MPSDemuxer extends SegmentReader {
             pts = readTs(is);
             dts = readTs(is);
             NIOUtils.skip(is, header_len - 10);
-        }
+        } else
+            NIOUtils.skip(is, header_len);
 
         return new PESPacket(null, pts, streamId, len, pos);
     }
@@ -262,7 +301,9 @@ public class MPSDemuxer extends SegmentReader {
     }
 
     private List<Track> getTracks(int min, int max) {
-        ArrayList<Track> result = new ArrayList<Track>();
+        min &= 0xff;
+        max &= 0xff;
+        List<Track> result = new ArrayList<Track>();
         for (Track p : streams.values()) {
             if (p.streamId >= min && p.streamId <= max)
                 result.add(p);
@@ -281,20 +322,20 @@ public class MPSDemuxer extends SegmentReader {
             if (marker < 0x100 || marker > 0x1ff)
                 continue;
 
-            if (code >= VIDEO_MIN && code <= VIDEO_MAX) {
+            if (marker >= VIDEO_MIN && marker <= VIDEO_MAX) {
                 if (inVideoPes)
                     break;
                 else
                     inVideoPes = true;
-            } else if (code >= 0xB0 && code <= 0xB8 && inVideoPes) {
-                if ((hasHeader && code != 0xB5 && code != 0xB2) || slicesStarted)
+            } else if (marker >= 0x1B0 && marker <= 0x1B8 && inVideoPes) {
+                if ((hasHeader && marker != 0x1B5 && marker != 0x1B2) || slicesStarted)
                     break;
                 score += 5;
-            } else if (code == 0 && inVideoPes) {
+            } else if (marker == 0x100 && inVideoPes) {
                 if (slicesStarted)
                     break;
                 hasHeader = true;
-            } else if (code > 0 && code < 0xB0) {
+            } else if (marker > 0x100 && marker < 0x1B0) {
                 if (!hasHeader)
                     break;
                 if (!slicesStarted) {

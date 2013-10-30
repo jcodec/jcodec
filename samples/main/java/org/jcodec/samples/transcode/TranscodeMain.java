@@ -33,6 +33,7 @@ import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
+import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
@@ -41,10 +42,10 @@ import org.jcodec.codecs.vp8.VP8Decoder;
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IOUtils;
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
@@ -70,6 +71,10 @@ import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.containers.mps.MPEGDemuxer;
+import org.jcodec.containers.mps.MPEGDemuxer.Track;
+import org.jcodec.containers.mps.MPSDemuxer;
+import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.RgbToYuv420p;
@@ -103,8 +108,8 @@ public class TranscodeMain {
         }
         if ("prores2png".equals(args[0]))
             prores2png(args[1], args[2]);
-        if ("mpeg2png".equals(args[0]))
-            mpeg2png(args[1], args[2]);
+        if ("mpeg2jpg".equals(args[0]))
+            mpeg2jpg(args[1], args[2]);
         else if ("png2prores".equals(args[0]))
             png2prores(args[1], args[2], args.length > 3 ? args[3] : "apch");
         else if ("y4m2prores".equals(args[0]))
@@ -151,7 +156,7 @@ public class TranscodeMain {
             H264Encoder encoder = new H264Encoder(new DumbRateControl());
 
             AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
-            FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inTrack.getTimescale());
+            FramesMP4MuxerTrack outTrack = muxer.addTrack(TrackType.VIDEO, (int) inTrack.getTimescale());
 
             VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
             Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
@@ -562,7 +567,7 @@ public class TranscodeMain {
             H264Encoder encoder = new H264Encoder(rc);
 
             AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
-            FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inTrack.getTimescale());
+            FramesMP4MuxerTrack outTrack = muxer.addTrack(TrackType.VIDEO, (int) inTrack.getTimescale());
 
             VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
             Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
@@ -716,36 +721,36 @@ public class TranscodeMain {
         }
     }
 
-    private static void mpeg2png(String in, String out) throws IOException {
+    private static void mpeg2jpg(String in, String out) throws IOException {
         File file = new File(in);
         if (!file.exists()) {
             System.out.println("Input file doesn't exist");
             return;
         }
 
-        MP4Demuxer rawDemuxer = new MP4Demuxer(readableFileChannel(file));
-        FramesMP4DemuxerTrack videoTrack = (FramesMP4DemuxerTrack) rawDemuxer.getVideoTrack();
+        Format format = JCodecUtil.detectFormat(file);
+        FileChannelWrapper cj = readableFileChannel(file);
+        MPEGDemuxer mpsDemuxer;
+        if (format == Format.MPEG_PS) {
+            mpsDemuxer = new MPSDemuxer(cj);
+        } else if (format == Format.MPEG_TS) {
+            mpsDemuxer = new MTSDemuxer(cj);
+        } else
+            throw new RuntimeException("Unsupported mpeg container");
+        Track videoTrack = mpsDemuxer.getVideoTracks().get(0);
         if (videoTrack == null) {
             System.out.println("Video track not found");
             return;
         }
-        Yuv422pToRgb transform = new Yuv422pToRgb(2, 0);
 
-        ProresDecoder decoder = new ProresDecoder();
-        BufferedImage bi = null;
-        Picture rgb = null;
-        int i = 0;
+        ByteBuffer buf = ByteBuffer.allocate(1920 * 1080 * 6);
+        MPEGDecoder mpegDecoder = new MPEGDecoder();
         Packet pkt;
-        while ((pkt = videoTrack.nextFrame()) != null) {
-            Picture buf = Picture.create(1920, 1080, ColorSpace.YUV422_10);
-            Picture pic = decoder.decodeFrame(pkt.getData(), buf.getData());
-            if (bi == null)
-                bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-            if (rgb == null)
-                rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
-            transform.transform(pic, rgb);
-            AWTUtil.toBufferedImage(rgb, bi);
-            ImageIO.write(bi, "png", new File(format(out, i++)));
+        Picture pix = Picture.create(1920, 1088, ColorSpace.YUV444);
+        for (int i = 0; (pkt = videoTrack.nextFrame(buf)) != null; i++) {
+//            System.out.println(i);
+            Picture pic = mpegDecoder.decodeFrame(pkt.getData(), pix.getData());
+            AWTUtil.savePicture(pic, "jpeg", new File(String.format(out, i)));
         }
     }
 

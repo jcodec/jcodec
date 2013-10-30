@@ -65,10 +65,10 @@ public class SegmentReader {
             return false;
         do {
             while (buf.hasRemaining()) {
+                curMarker = (curMarker << 8) | (buf.get() & 0xff);
                 if (curMarker >= 0x100 && curMarker <= 0x1ff) {
                     return true;
                 }
-                curMarker = (curMarker << 8) | (buf.get() & 0xff);
             }
             buf = NIOUtils.fetchFrom(channel, fetchSize);
             pos += buf.remaining();

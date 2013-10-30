@@ -68,7 +68,6 @@ public class MPEGDecoder implements VideoDecoder {
 
     protected SequenceHeader sh;
     protected GOPHeader gh;
-    private int maxCoeff;
     private Picture[] refFrames = new Picture[2];
     private Picture[] refFields = new Picture[2];
 
@@ -78,11 +77,6 @@ public class MPEGDecoder implements VideoDecoder {
     }
 
     public MPEGDecoder() {
-        this(64);
-    }
-
-    public MPEGDecoder(int maxCoeff) {
-        this.maxCoeff = maxCoeff;
     }
 
     public class Context {
@@ -138,38 +132,33 @@ public class MPEGDecoder implements VideoDecoder {
     private PictureHeader readHeader(ByteBuffer buffer) {
         PictureHeader ph = null;
         ByteBuffer segment;
-        while ((segment = nextSegment(buffer)) != null) {
-            int code = segment.get(3);
-            segment.position(4);
-            switch (code) {
-            case SEQUENCE_HEADER_CODE:
+        ByteBuffer fork = buffer.duplicate();
+
+        while ((segment = nextSegment(fork)) != null) {
+            int code = segment.getInt() & 0xff;
+            if (code == SEQUENCE_HEADER_CODE) {
                 SequenceHeader newSh = SequenceHeader.read(segment);
                 if (sh != null) {
                     newSh.copyExtensions(sh);
                 }
                 sh = newSh;
-                break;
-            case GROUP_START_CODE:
+            } else if (code == GROUP_START_CODE) {
                 gh = GOPHeader.read(segment);
-                break;
-            case PICTURE_START_CODE:
+            } else if (code == PICTURE_START_CODE) {
                 ph = PictureHeader.read(segment);
-                break;
-            case EXTENSION_START_CODE:
+            } else if (code == EXTENSION_START_CODE) {
                 int extType = segment.get(4) >> 4;
                 if (extType == Sequence_Extension || extType == Sequence_Scalable_Extension
                         || extType == Sequence_Display_Extension)
                     SequenceHeader.readExtension(segment, sh);
                 else
                     PictureHeader.readExtension(segment, ph, sh);
-                break;
-            case USER_DATA_START_CODE:
+            } else if (code == USER_DATA_START_CODE) {
                 // do nothing
-                break;
-            default:
-                buffer.reset();
+            } else {
                 break;
             }
+            buffer.position(fork.position());
         }
         return ph;
     }
@@ -455,10 +444,10 @@ public class MPEGDecoder implements VideoDecoder {
             int[] qmat = context.qMats[(i >= 4 ? 1 : 0) + (mbType.macroblock_intra << 1)];
 
             if (mbType.macroblock_intra == 1)
-                blockIntra(bits, vlcCoeff, pp[BLOCK_TO_CC[i]], context.intra_dc_predictor, i, context.scan,
+                blockIntra(bits, vlcCoeff, block, context.intra_dc_predictor, i, context.scan,
                         sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, intra_dc_mult, qScale, qmat);
             else
-                blockInter(bits, vlcCoeff, pp[BLOCK_TO_CC[i]], context.scan,
+                blockInter(bits, vlcCoeff, block, context.scan,
                         sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, qScale, qmat);
 
             mapBlock(block, pp[BLOCK_TO_CC[i]], i, dctType, chromaFormat);
@@ -470,7 +459,7 @@ public class MPEGDecoder implements VideoDecoder {
         return mbAddr;
     }
 
-    private void mapBlock(int[] block, int[] out, int blkIdx, int dctType, int chromaFormat) {
+    protected void mapBlock(int[] block, int[] out, int blkIdx, int dctType, int chromaFormat) {
         int stepVert = chromaFormat == Chroma420 && (blkIdx == 4 || blkIdx == 5) ? 0 : dctType;
         int log2stride = blkIdx < 4 ? 4 : 4 - SQUEEZE_X[chromaFormat];
 
@@ -592,19 +581,19 @@ public class MPEGDecoder implements VideoDecoder {
         }
     }
 
-    private static final int clip(int val) {
+    protected static final int clip(int val) {
         return val < 0 ? 0 : (val > 255 ? 255 : val);
     }
 
-    private static final int quantInter(int level, int quant) {
+    protected static final int quantInter(int level, int quant) {
         return (((level << 1) + 1) * quant) >> 5;
     }
 
-    private static final int quantInterSigned(int level, int quant) {
+    protected static final int quantInterSigned(int level, int quant) {
         return level >= 0 ? quantInter(level, quant) : -quantInter(-level, quant);
     }
 
-    private final void blockIntra(BitReader bits, VLC vlcCoeff, int[] block, int[] intra_dc_predictor, int blkIdx,
+    protected void blockIntra(BitReader bits, VLC vlcCoeff, int[] block, int[] intra_dc_predictor, int blkIdx,
             int[] scan, int escSize, int intra_dc_mult, int qScale, int[] qmat) {
         int cc = BLOCK_TO_CC[blkIdx];
         int size = (cc == 0 ? vlcDCSizeLuma : vlcDCSizeChroma).readVLC(bits);
@@ -613,24 +602,26 @@ public class MPEGDecoder implements VideoDecoder {
         int dc = intra_dc_predictor[cc] * intra_dc_mult;
         SparseIDCT.start(block, dc);
 
-        for (int idx = 0; idx < maxCoeff;) {
+        for (int idx = 0; idx < 64;) {
             int readVLC = vlcCoeff.readVLC(bits);
             int level;
-            if (readVLC >= 0) {
-                idx += (readVLC >> 12) + 1;
-                level = toSigned(((readVLC & 0xfff) * qScale * qmat[idx]) >> 4, bits.read1Bit());
-            } else if (readVLC == -2) {
+
+            if (readVLC == MPEGConst.CODE_END) {
+                break;
+            } else if (readVLC == MPEGConst.CODE_ESCAPE) {
                 idx += bits.readNBit(6) + 1;
                 level = twosSigned(bits, escSize) * qScale * qmat[idx];
                 level = level >= 0 ? (level >> 4) : -(-level >> 4);
-            } else
-                break;
+            } else {
+                idx += (readVLC >> 6) + 1;
+                level = toSigned(((readVLC & 0x3f) * qScale * qmat[idx]) >> 4, bits.read1Bit());
+            }
             SparseIDCT.coeff(block, scan[idx], level);
         }
         SparseIDCT.finish(block);
     }
 
-    private final void blockInter(BitReader bits, VLC vlcCoeff, int[] block, int[] scan, int escSize, int qScale,
+    protected void blockInter(BitReader bits, VLC vlcCoeff, int[] block, int[] scan, int escSize, int qScale,
             int[] qmat) {
 
         int idx = -1;
@@ -643,34 +634,35 @@ public class MPEGDecoder implements VideoDecoder {
             SparseIDCT.start(block, 0);
         }
 
-        for (; idx < maxCoeff;) {
+        for (; idx < 64;) {
             int readVLC = vlcCoeff.readVLC(bits);
             int ac;
-            if (readVLC >= 0) {
-                idx += (readVLC >> 12) + 1;
-                ac = toSigned(quantInter(readVLC & 0xfff, qScale * qmat[idx]), bits.read1Bit());
-            } else if (readVLC == -2) {
+            if (readVLC == MPEGConst.CODE_END) {
+                break;
+            } else if (readVLC == MPEGConst.CODE_ESCAPE) {
                 idx += bits.readNBit(6) + 1;
                 ac = quantInterSigned(twosSigned(bits, escSize), qScale * qmat[idx]);
-            } else
-                break;
+            } else {
+                idx += (readVLC >> 6) + 1;
+                ac = toSigned(quantInter(readVLC & 0x3f, qScale * qmat[idx]), bits.read1Bit());
+            }
             SparseIDCT.coeff(block, scan[idx], ac);
         }
         SparseIDCT.finish(block);
     }
 
-    private static final int twosSigned(BitReader bits, int size) {
+    public static final int twosSigned(BitReader bits, int size) {
         int shift = 32 - size;
         return (bits.readNBit(size) << shift) >> shift;
     }
 
-    private static final int mpegSigned(BitReader bits, int size) {
+    public static final int mpegSigned(BitReader bits, int size) {
         int val = bits.readNBit(size);
         int sign = (val >>> (size - 1)) ^ 0x1;
         return val + sign - (sign << size);
     }
 
-    private static final int toSigned(int val, int s) {
+    public static final int toSigned(int val, int s) {
         int sign = (s << 31) >> 31;
         return (val ^ sign) - sign;
     }

@@ -51,7 +51,7 @@ public class WavTrack implements VirtualTrack {
         try {
             ch = pool.getChannel();
             header = WavHeader.read(Channels.newInputStream(ch));
-            size = ch.size();
+            size = header.dataSize <= 0 ? ch.size() : header.dataSize;
         } finally {
             ch.close();
         }
@@ -59,7 +59,14 @@ public class WavTrack implements VirtualTrack {
         se = MP4Muxer.audioSampleEntry("sowt", 1, header.fmt.bitsPerSample >> 3, header.fmt.numChannels,
                 header.fmt.sampleRate, Endian.LITTLE_ENDIAN);
         ChannelBox chan = new ChannelBox();
-        ChannelUtils.setLabels(labels, chan);
+        if (labels != null && labels.length > 0) {
+            ChannelUtils.setLabels(labels, chan);
+        } else {
+            labels = new Label[header.getFormat().getChannels()];
+            for (int i = 0; i < labels.length; i++)
+                labels[i] = Label.Mono;
+            ChannelUtils.setLabels(labels, chan);
+        }
         se.add(chan);
 
         pktDataLen = FRAMES_PER_PKT * header.fmt.numChannels * (header.fmt.bitsPerSample >> 3);

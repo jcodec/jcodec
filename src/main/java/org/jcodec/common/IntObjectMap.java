@@ -20,7 +20,7 @@ public class IntObjectMap<T> {
 
     public void put(int key, T val) {
         if (storage.length <= key) {
-            Object[] ns = new Object[storage.length + GROW_BY];
+            Object[] ns = new Object[key + GROW_BY];
             System.arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }

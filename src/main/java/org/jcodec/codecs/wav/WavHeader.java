@@ -198,6 +198,8 @@ public class WavHeader {
             if ("fmt ".equals(fourcc) && size >= 14 && size <= 1024 * 1024) {
                 switch (size) {
                 case 16:
+                    fmt = FmtChunk.read(cin);
+                    break;
                 case 18:
                     fmt = FmtChunk.read(cin);
                     StringReader.sureSkip(cin, 2);

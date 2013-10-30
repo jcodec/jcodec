@@ -56,7 +56,7 @@ public class H264EmbedMain {
             AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
             VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
 
-            FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inTrack.getTimescale());
+            FramesMP4MuxerTrack outTrack = muxer.addTrack(TrackType.VIDEO, (int) inTrack.getTimescale());
             outTrack.addSampleEntry(ine);
 
             ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);

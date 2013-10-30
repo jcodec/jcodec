@@ -44,7 +44,7 @@ public class ToProxy {
         int width = (int) entry.getWidth();
         int height = (int) entry.getHeight();
         ProresToProxy toProxy = new ProresToProxy(width, height, 65536);
-        FramesMP4MuxerTrack outVideo = muxer.addTrackForCompressed(TrackType.VIDEO, (int) inVideo.getTimescale());
+        FramesMP4MuxerTrack outVideo = muxer.addTrack(TrackType.VIDEO, (int) inVideo.getTimescale());
 
         TrackHeaderBox th = inVideo.getBox().getTrackHeader();
         System.out.println(toProxy.getFrameSize());

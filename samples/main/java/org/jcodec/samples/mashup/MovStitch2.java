@@ -69,7 +69,7 @@ public class MovStitch2 {
         AbstractMP4DemuxerTrack vt2 = demuxer2.getVideoTrack();
         checkCompatible(vt1, vt2);
 
-        FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) vt1.getTimescale());
+        FramesMP4MuxerTrack outTrack = muxer.addTrack(VIDEO, (int) vt1.getTimescale());
         outTrack.addSampleEntry(vt1.getSampleEntries()[0]);
         for (int i = 0; i < vt1.getFrameCount(); i++) {
             outTrack.addFrame((MP4Packet) vt1.nextFrame());

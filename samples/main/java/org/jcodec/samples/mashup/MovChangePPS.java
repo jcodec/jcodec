@@ -49,7 +49,7 @@ public class MovChangePPS {
         MP4Muxer muxer = new MP4Muxer(writableFileChannel(out));
 
         AbstractMP4DemuxerTrack videoTrack = demuxer.getVideoTrack();
-        FramesMP4MuxerTrack outTrack = muxer.addTrackForCompressed(VIDEO, (int) videoTrack.getTimescale());
+        FramesMP4MuxerTrack outTrack = muxer.addTrack(VIDEO, (int) videoTrack.getTimescale());
 
         AvcCBox avcC = doSampleEntry(videoTrack, outTrack);
 

@@ -36,7 +36,7 @@ public class SequenceMuxer {
         muxer = new MP4Muxer(ch, Brand.MP4);
 
         // Add video track to muxer
-        outTrack = muxer.addTrackForCompressed(TrackType.VIDEO, 25);
+        outTrack = muxer.addTrack(TrackType.VIDEO, 25);
     }
 
     public void encodeImage(File png) throws IOException {

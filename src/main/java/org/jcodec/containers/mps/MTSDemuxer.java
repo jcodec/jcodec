@@ -10,7 +10,6 @@ import org.jcodec.common.Assert;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
-import org.jcodec.containers.mps.MPSDemuxer.Track;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,89 +20,108 @@ import org.jcodec.containers.mps.MPSDemuxer.Track;
  * @author The JCodec project
  * 
  */
-public class MTSDemuxer {
-    private int guid = -1;
+public class MTSDemuxer implements MPEGDemuxer {
     private MPSDemuxer psDemuxer;
+    private SeekableByteChannel tsChannel;
 
-    public MTSDemuxer(final SeekableByteChannel channel) throws IOException {
-        psDemuxer = new MPSDemuxer(new SeekableByteChannel() {
-            public boolean isOpen() {
-                return true;
-            }
-
-            public void close() throws IOException {
-            }
-
-            public int read(ByteBuffer dst) throws IOException {
-                MTSPacket packet = getPacket(channel);
-                int rem = packet.payload.remaining();
-                NIOUtils.write(dst, packet.payload);
-                return rem - packet.payload.remaining();
-            }
-
-            public int write(ByteBuffer src) throws IOException {
-                return 0;
-            }
-
-            public long position() throws IOException {
-                return 0;
-            }
-
-            public SeekableByteChannel position(long newPosition) throws IOException {
-                return null;
-            }
-
-            public long size() throws IOException {
-                return 0;
-            }
-
-            public SeekableByteChannel truncate(long size) throws IOException {
-                return null;
-            }
-        });
+    public MTSDemuxer(final SeekableByteChannel src) throws IOException {
+        this.tsChannel = (new TSChannel(src));
+        psDemuxer = new MPSDemuxer(this.tsChannel);
     }
 
-    public List<Track> getTracks() {
+    public List<? extends Track> getTracks() {
         return psDemuxer.getTracks();
     }
 
-    public List<Track> getVideoTracks() {
+    public List<? extends Track> getVideoTracks() {
         return psDemuxer.getVideoTracks();
     }
 
-    public List<Track> getAudioTracks() {
+    public List<? extends Track> getAudioTracks() {
         return psDemuxer.getAudioTracks();
     }
 
-    protected MTSPacket getPacket(ReadableByteChannel channel) throws IOException {
-        MTSPacket pkt;
-        do {
-            pkt = readPacket(channel);
-            if (pkt == null)
-                return null;
-        } while (pkt.pid <= 0xf || pkt.pid == 0x1fff);
+    private static class TSChannel implements SeekableByteChannel {
+        private SeekableByteChannel src;
+        private ByteBuffer data;
+        private int filterGuid = -1;
 
-        while (guid == -1) {
-            ByteBuffer payload = pkt.payload;
-            if (payload.get(0) == 0 && payload.get(1) == 0 && payload.get(2) == 1) {
-                guid = pkt.pid;
-                break;
+        public TSChannel(SeekableByteChannel source) {
+            this.src = source;
+        }
+
+        public boolean isOpen() {
+            return src.isOpen();
+        }
+
+        public void close() throws IOException {
+            src.close();
+        }
+
+        public int read(ByteBuffer dst) throws IOException {
+            while (data == null || !data.hasRemaining()) {
+                MTSPacket packet = getPacket(src);
+                if (packet == null)
+                    return -1;
+                data = packet.payload;
             }
-            pkt = readPacket(channel);
-            if (pkt == null)
-                return null;
+            int toRead = Math.min(dst.remaining(), data.remaining());
+            dst.put(NIOUtils.read(data, toRead));
+            return toRead;
         }
 
-        while (pkt.pid != guid) {
-            pkt = readPacket(channel);
-            if (pkt == null)
-                return null;
+        public int write(ByteBuffer src) throws IOException {
+            throw new UnsupportedOperationException();
         }
 
-        // pkt.payload.print(System.out);
-        // System.out.println(",");
+        public long position() throws IOException {
+            return src.position();
+        }
 
-        return pkt;
+        public SeekableByteChannel position(long newPosition) throws IOException {
+            src.position(newPosition);
+            data = null;
+            return this;
+        }
+
+        public long size() throws IOException {
+            return src.size();
+        }
+
+        public SeekableByteChannel truncate(long size) throws IOException {
+            return src.truncate(size);
+        }
+
+        protected MTSPacket getPacket(ReadableByteChannel channel) throws IOException {
+            MTSPacket pkt;
+            do {
+                pkt = readPacket(channel);
+                if (pkt == null)
+                    return null;
+            } while (pkt.pid <= 0xf || pkt.pid == 0x1fff || pkt.payload == null);
+
+            while (filterGuid == -1) {
+                ByteBuffer payload = pkt.payload;
+                if (payload != null && (payload.duplicate().getInt() & ~0xff) == 0x100) {
+                    filterGuid = pkt.pid;
+                    break;
+                }
+                pkt = readPacket(channel);
+                if (pkt == null)
+                    return null;
+            }
+
+            while (pkt.pid != filterGuid) {
+                pkt = readPacket(channel);
+                if (pkt == null)
+                    return null;
+            }
+
+            // pkt.payload.print(System.out);
+            // System.out.println(",");
+
+            return pkt;
+        }
     }
 
     public static class MTSPacket {
@@ -157,7 +175,10 @@ public class MTSDemuxer {
                     data = new ArrayList<ByteBuffer>();
                     streams.put(tsPkt.pid, data);
                 }
-                data.add(tsPkt.payload);
+                if (tsPkt != null && tsPkt.payload != null)
+                    data.add(tsPkt.payload);
+                else
+                    break;
             } catch (Throwable t) {
                 break;
             }
@@ -170,5 +191,11 @@ public class MTSDemuxer {
                 maxScore = score;
         }
         return maxScore;
+    }
+
+    @Override
+    public void seekByte(long offset) throws IOException {
+        tsChannel.position(offset - (offset % 188));
+        psDemuxer.reset();
     }
 }

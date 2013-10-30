@@ -49,7 +49,7 @@ public class AVCMP4Mux {
 
         SeekableByteChannel file = writableFileChannel(out);
         MP4Muxer muxer = new MP4Muxer(file);
-        FramesMP4MuxerTrack track = muxer.addTrackForCompressed(TrackType.VIDEO, 25);
+        FramesMP4MuxerTrack track = muxer.addTrack(TrackType.VIDEO, 25);
 
         mux(track, in);
 

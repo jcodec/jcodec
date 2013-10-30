@@ -25,8 +25,9 @@ public class IntIntMap {
     public void put(int key, int val) {
         if (val == MIN_VALUE)
             throw new IllegalArgumentException("This implementation can not store " + MIN_VALUE);
+        
         if (storage.length <= key) {
-            int[] ns = createArray(storage.length + GROW_BY);
+            int[] ns = createArray(key + GROW_BY);
             System.arraycopy(storage, 0, ns, 0, storage.length);
             Arrays.fill(ns, storage.length, ns.length, MIN_VALUE);
             storage = ns;
