@@ -7,6 +7,8 @@ import org.jcodec.codecs.mpeg4.es.DecoderSpecific;
 import org.jcodec.codecs.mpeg4.es.Descriptor;
 import org.jcodec.codecs.mpeg4.es.ES;
 import org.jcodec.codecs.mpeg4.es.SL;
+import org.jcodec.common.io.BitWriter;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.FullBox;
 import org.jcodec.containers.mp4.boxes.Header;
 
@@ -97,5 +99,17 @@ public class EsdsBox extends FullBox {
 
     public int getTrackId() {
         return trackId;
+    }
+
+    public static Box fromADTS(org.jcodec.codecs.aac.ADTSParser.Header hdr) {
+    	ByteBuffer si = ByteBuffer.allocate(2);
+    	BitWriter wr = new BitWriter(si);
+    	wr.writeNBit(hdr.getObjectType(), 5);
+    	wr.writeNBit(hdr.getSamplingIndex(), 4);
+    	wr.writeNBit(hdr.getChanConfig(), 4);
+    	wr.flush();
+    	si.clear();
+    	
+        return new EsdsBox(si, hdr.getObjectType() << 5, 0, 210750, 133350, 2);
     }
 }

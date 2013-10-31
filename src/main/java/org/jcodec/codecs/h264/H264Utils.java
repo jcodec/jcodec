@@ -292,7 +292,7 @@ public class H264Utils {
                 if (spsList != null)
                     spsList.add(buf);
                 in.position(dup.position());
-            } else
+            } else if(nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE)
                 break;
         }
     }

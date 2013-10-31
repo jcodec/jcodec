@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.model.Packet;
 
 public interface MPEGDemuxer {
@@ -15,5 +16,6 @@ public interface MPEGDemuxer {
 
     static interface Track {
         Packet nextFrame(ByteBuffer buf) throws IOException;
+        DemuxerTrackMeta getMeta();
     }
 }

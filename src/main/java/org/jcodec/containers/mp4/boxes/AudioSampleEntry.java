@@ -130,8 +130,6 @@ public class AudioSampleEntry extends SampleEntry {
                 out.putInt(bytesPerPkt);
                 out.putInt(bytesPerFrame);
                 out.putInt(bytesPerSample);
-
-                writeExtensions(out);
             }
         } else if (version == 2) {
             out.putShort((short)3);
@@ -148,8 +146,8 @@ public class AudioSampleEntry extends SampleEntry {
             out.putInt(bytesPerFrame);
             out.putInt(samplesPerPkt);
 
-            writeExtensions(out);
         }
+        writeExtensions(out);
     }
 
     public short getChannelCount() {

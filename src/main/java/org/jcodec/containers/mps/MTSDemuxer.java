@@ -1,12 +1,19 @@
 package org.jcodec.containers.mps;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import javax.xml.transform.Source;
 
 import org.jcodec.common.Assert;
+import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
@@ -24,8 +31,36 @@ public class MTSDemuxer implements MPEGDemuxer {
     private MPSDemuxer psDemuxer;
     private SeekableByteChannel tsChannel;
 
-    public MTSDemuxer(final SeekableByteChannel src) throws IOException {
-        this.tsChannel = (new TSChannel(src));
+    public static Set<Integer> getPrograms(SeekableByteChannel src) throws IOException {
+        long rem = src.position();
+        Set<Integer> guids = new HashSet<Integer>();
+        for (int i = 0; guids.size() == 0 || i < guids.size() * 500; i++) {
+            MTSPacket pkt = readPacket(src);
+            if (pkt == null)
+                break;
+            if (pkt.payload == null)
+                continue;
+            ByteBuffer payload = pkt.payload;
+            if (!guids.contains(pkt.pid) && (payload.duplicate().getInt() & ~0xff) == 0x100) {
+                guids.add(pkt.pid);
+            }
+        }
+        src.position(rem);
+        return guids;
+    }
+
+    public static Set<Integer> getPrograms(File file) throws IOException {
+        FileChannelWrapper fc = null;
+        try {
+            fc = NIOUtils.readableFileChannel(file);
+            return getPrograms(fc);
+        } finally {
+            NIOUtils.closeQuietly(fc);
+        }
+    }
+
+    public MTSDemuxer(final SeekableByteChannel src, int filterGuid) throws IOException {
+        this.tsChannel = (new TSChannel(src, filterGuid));
         psDemuxer = new MPSDemuxer(this.tsChannel);
     }
 
@@ -44,10 +79,11 @@ public class MTSDemuxer implements MPEGDemuxer {
     private static class TSChannel implements SeekableByteChannel {
         private SeekableByteChannel src;
         private ByteBuffer data;
-        private int filterGuid = -1;
+        private int filterGuid;
 
-        public TSChannel(SeekableByteChannel source) {
+        public TSChannel(SeekableByteChannel source, int filterGuid) {
             this.src = source;
+            this.filterGuid = filterGuid;
         }
 
         public boolean isOpen() {
@@ -100,25 +136,11 @@ public class MTSDemuxer implements MPEGDemuxer {
                     return null;
             } while (pkt.pid <= 0xf || pkt.pid == 0x1fff || pkt.payload == null);
 
-            while (filterGuid == -1) {
-                ByteBuffer payload = pkt.payload;
-                if (payload != null && (payload.duplicate().getInt() & ~0xff) == 0x100) {
-                    filterGuid = pkt.pid;
-                    break;
-                }
-                pkt = readPacket(channel);
-                if (pkt == null)
-                    return null;
-            }
-
             while (pkt.pid != filterGuid) {
                 pkt = readPacket(channel);
                 if (pkt == null)
                     return null;
             }
-
-            // pkt.payload.print(System.out);
-            // System.out.println(",");
 
             return pkt;
         }
@@ -170,15 +192,16 @@ public class MTSDemuxer implements MPEGDemuxer {
                     break;
 
                 MTSPacket tsPkt = parsePacket(sub);
+                if (tsPkt == null)
+                    break;
                 List<ByteBuffer> data = streams.get(tsPkt.pid);
                 if (data == null) {
                     data = new ArrayList<ByteBuffer>();
                     streams.put(tsPkt.pid, data);
                 }
-                if (tsPkt != null && tsPkt.payload != null)
+
+                if (tsPkt.payload != null)
                     data.add(tsPkt.payload);
-                else
-                    break;
             } catch (Throwable t) {
                 break;
             }

@@ -7,6 +7,8 @@ import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.common.model.Rational.HALF;
 import static org.jcodec.common.model.Unit.SEC;
+import static org.jcodec.containers.mp4.TrackType.SOUND;
+import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -19,9 +21,13 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 
+import org.jcodec.codecs.aac.AACConts;
+import org.jcodec.codecs.aac.ADTSParser;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
@@ -30,10 +36,12 @@ import org.jcodec.codecs.h264.encode.ConstantRateControl;
 import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
+import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
+import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
@@ -42,12 +50,15 @@ import org.jcodec.codecs.vp8.VP8Decoder;
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.DemuxerTrackMeta.Type;
 import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IOUtils;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
@@ -62,9 +73,14 @@ import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4DemuxerException;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.FormatBox;
+import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.LeafBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
+import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
@@ -138,6 +154,10 @@ public class TranscodeMain {
             png2vp8(args[1], args[2]);
         } else if ("jpeg2avc".equals(args[0])) {
             jpeg2avc(args[1], args[2]);
+        } else if ("hls2png".equals(args[0])) {
+            hls2png(args[1], args[2]);
+        } else if ("ts2mp4".equals(args[0])) {
+            ts2mp4(args[1], args[2]);
         }
     }
 
@@ -504,6 +524,132 @@ public class TranscodeMain {
         }
     }
 
+    private static void ts2mp4(String in, String out) throws IOException {
+        File fin = new File(in);
+        SeekableByteChannel sink = null;
+        List<SeekableByteChannel> sources = new ArrayList<SeekableByteChannel>();
+        try {
+            sink = writableFileChannel(out);
+            MP4Muxer muxer = new MP4Muxer(sink, Brand.MP4);
+
+            Set<Integer> programs = MTSDemuxer.getPrograms(fin);
+            MPEGDemuxer.Track[] srcTracks = new MPEGDemuxer.Track[100];
+            FramesMP4MuxerTrack[] dstTracks = new FramesMP4MuxerTrack[100];
+            boolean[] h264 = new boolean[100];
+            Packet[] top = new Packet[100];
+            int nTracks = 0;
+            long minPts = Long.MAX_VALUE;
+            ByteBuffer[] used = new ByteBuffer[100];
+            for (Integer guid : programs) {
+                SeekableByteChannel sx = readableFileChannel(in);
+                sources.add(sx);
+                MTSDemuxer demuxer = new MTSDemuxer(sx, guid);
+                for (Track track : demuxer.getTracks()) {
+                    srcTracks[nTracks] = track;
+                    DemuxerTrackMeta meta = track.getMeta();
+
+                    top[nTracks] = track.nextFrame(ByteBuffer.allocate(1920 * 1088));
+                    dstTracks[nTracks] = muxer.addTrack(meta.getType() == Type.VIDEO ? VIDEO : SOUND, 90000);
+                    if (meta.getType() == Type.VIDEO) {
+                        h264[nTracks] = true;
+                    }
+                    used[nTracks] = ByteBuffer.allocate(1920 * 1088);
+                    if (top[nTracks].getPts() < minPts)
+                        minPts = top[nTracks].getPts();
+                    nTracks++;
+                }
+            }
+
+            long[] prevDuration = new long[100];
+            while (true) {
+                long min = Integer.MAX_VALUE;
+                int mini = -1;
+                for (int i = 0; i < nTracks; i++) {
+                    if (top[i] != null && top[i].getPts() < min) {
+                        min = top[i].getPts();
+                        mini = i;
+                    }
+                }
+                if (mini == -1)
+                    break;
+
+                Packet next = srcTracks[mini].nextFrame(used[mini]);
+                if (next != null)
+                    prevDuration[mini] = next.getPts() - top[mini].getPts();
+                muxPacket(top[mini], dstTracks[mini], h264[mini], minPts, prevDuration[mini]);
+                used[mini] = top[mini].getData();
+                used[mini].clear();
+                top[mini] = next;
+            }
+
+            muxer.writeHeader();
+
+        } finally {
+            for (SeekableByteChannel sx : sources) {
+                NIOUtils.closeQuietly(sx);
+            }
+            NIOUtils.closeQuietly(sink);
+        }
+    }
+
+    private static void muxPacket(Packet packet, FramesMP4MuxerTrack dstTrack, boolean h264, long minPts, long duration)
+            throws IOException {
+        if (h264) {
+            if (dstTrack.getEntries().size() == 0) {
+                List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
+                List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+                H264Utils.wipePS(packet.getData(), spsList, ppsList);
+                dstTrack.addSampleEntry(H264Utils.createMOVSampleEntry(spsList, ppsList));
+            } else {
+                H264Utils.wipePS(packet.getData(), null, null);
+            }
+            H264Utils.encodeMOVPacket(packet.getData());
+        } else {
+            org.jcodec.codecs.aac.ADTSParser.Header header = ADTSParser.read(packet.getData());
+            if (dstTrack.getEntries().size() == 0) {
+
+                AudioSampleEntry ase = new AudioSampleEntry(new Header("mp4a", 0), (short) 1,
+                        (short) AACConts.AAC_CHANNEL_COUNT[header.getChanConfig()], (short) 16,
+                        AACConts.AAC_SAMPLE_RATES[header.getSamplingIndex()], (short) 0, 0, 0, 0, 0, 0, 0, 2, (short) 0);
+
+                dstTrack.addSampleEntry(ase);
+                ase.add(EsdsBox.fromADTS(header));
+            }
+        }
+        dstTrack.addFrame(new MP4Packet(packet.getData(), packet.getPts() - minPts, packet.getTimescale(), duration,
+                packet.getFrameNo(), packet.isKeyFrame(), packet.getTapeTimecode(), packet.getPts() - minPts, 0));
+    }
+
+    private static void hls2png(String in, String out) throws IOException {
+        SeekableByteChannel source = null;
+        try {
+            Format f = JCodecUtil.detectFormat(new File(in));
+            System.out.println(f);
+            source = readableFileChannel(in);
+
+            Set<Integer> programs = MTSDemuxer.getPrograms(source);
+            MTSDemuxer demuxer = new MTSDemuxer(source, programs.iterator().next());
+
+            H264Decoder decoder = new H264Decoder();
+
+            Track track = demuxer.getVideoTracks().get(0);
+            List<? extends Track> audioTracks = demuxer.getAudioTracks();
+
+            ByteBuffer buf = ByteBuffer.allocate(1920 * 1088);
+            Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV420J);
+
+            Packet inFrame;
+            for (int i = 0; (inFrame = track.nextFrame(buf)) != null; i++) {
+                ByteBuffer data = inFrame.getData();
+                Picture dec = decoder.decodeFrame(data, target1.getData());
+                AWTUtil.savePicture(dec, "png", new File(format(out, i)));
+            }
+        } finally {
+            if (source != null)
+                source.close();
+        }
+    }
+
     private static void avc2png(String in, String out) throws IOException {
         SeekableByteChannel sink = null;
         SeekableByteChannel source = null;
@@ -729,12 +875,13 @@ public class TranscodeMain {
         }
 
         Format format = JCodecUtil.detectFormat(file);
-        FileChannelWrapper cj = readableFileChannel(file);
+        FileChannelWrapper ch = readableFileChannel(file);
         MPEGDemuxer mpsDemuxer;
         if (format == Format.MPEG_PS) {
-            mpsDemuxer = new MPSDemuxer(cj);
+            mpsDemuxer = new MPSDemuxer(ch);
         } else if (format == Format.MPEG_TS) {
-            mpsDemuxer = new MTSDemuxer(cj);
+            Set<Integer> programs = MTSDemuxer.getPrograms(ch);
+            mpsDemuxer = new MTSDemuxer(ch, programs.iterator().next());
         } else
             throw new RuntimeException("Unsupported mpeg container");
         Track videoTrack = mpsDemuxer.getVideoTracks().get(0);
@@ -748,7 +895,7 @@ public class TranscodeMain {
         Packet pkt;
         Picture pix = Picture.create(1920, 1088, ColorSpace.YUV444);
         for (int i = 0; (pkt = videoTrack.nextFrame(buf)) != null; i++) {
-//            System.out.println(i);
+            // System.out.println(i);
             Picture pic = mpegDecoder.decodeFrame(pkt.getData(), pix.getData());
             AWTUtil.savePicture(pic, "jpeg", new File(String.format(out, i)));
         }
