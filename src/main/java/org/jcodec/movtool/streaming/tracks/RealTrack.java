@@ -91,6 +91,8 @@ public class RealTrack implements VirtualTrack {
             SeekableByteChannel ch = null;
             try {
                 ch = pool.getChannel();
+                if(packet.getFileOff() >= ch.size())
+                    return null;
                 ch.position(packet.getFileOff());
                 ch.read(bb);
                 bb.flip();

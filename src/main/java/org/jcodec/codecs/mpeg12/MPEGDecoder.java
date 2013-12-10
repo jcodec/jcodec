@@ -90,6 +90,8 @@ public class MPEGDecoder implements VideoDecoder {
         public MBType lastPredB;
         public int[][] qMats;
         public int[] scan;
+        public int picWidth;
+        public int picHeight;
     }
 
     public Picture decodeFrame(ByteBuffer ByteBuffer, int[][] buf) {
@@ -101,7 +103,7 @@ public class MPEGDecoder implements VideoDecoder {
         }
         Context context = initContext(sh, ph);
         Picture pic = new Picture(context.codedWidth, context.codedHeight, buf, context.color, new Rect(0, 0,
-                sh.horizontal_size, sh.vertical_size));
+                context.picWidth, context.picHeight));
         if (ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
             decodePicture(context, ph, ByteBuffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
             ph = readHeader(ByteBuffer);
@@ -163,12 +165,14 @@ public class MPEGDecoder implements VideoDecoder {
         return ph;
     }
 
-    private Context initContext(SequenceHeader sh, PictureHeader ph) {
+    protected Context initContext(SequenceHeader sh, PictureHeader ph) {
         Context context = new Context();
         context.codedWidth = (sh.horizontal_size + 15) & ~0xf;
         context.codedHeight = getCodedHeight(sh, ph);
         context.mbWidth = (sh.horizontal_size + 15) >> 4;
         context.mbHeight = (sh.vertical_size + 15) >> 4;
+        context.picWidth = sh.horizontal_size;
+        context.picHeight = sh.vertical_size;
 
         int chromaFormat = Chroma420;
         if (sh.sequenceExtension != null)
@@ -438,6 +442,7 @@ public class MPEGDecoder implements VideoDecoder {
 
         int blkCount = 6 + (chromaFormat == Chroma420 ? 0 : (chromaFormat == Chroma422 ? 2 : 6));
         int[] block = new int[64];
+//        System.out.print(mbAddr + ": ");
         for (int i = 0, cbpMask = 1 << (blkCount - 1); i < blkCount; i++, cbpMask >>= 1) {
             if ((cbp & cbpMask) == 0)
                 continue;
@@ -623,6 +628,8 @@ public class MPEGDecoder implements VideoDecoder {
 
     protected void blockInter(BitReader bits, VLC vlcCoeff, int[] block, int[] scan, int escSize, int qScale,
             int[] qmat) {
+        
+        System.out.println();
 
         int idx = -1;
         if (vlcCoeff == vlcCoeff0 && bits.checkNBit(1) == 1) {
@@ -647,6 +654,7 @@ public class MPEGDecoder implements VideoDecoder {
                 ac = toSigned(quantInter(readVLC & 0x3f, qScale * qmat[idx]), bits.read1Bit());
             }
             SparseIDCT.coeff(block, scan[idx], ac);
+//            System.out.print(ac + ",");
         }
         SparseIDCT.finish(block);
     }

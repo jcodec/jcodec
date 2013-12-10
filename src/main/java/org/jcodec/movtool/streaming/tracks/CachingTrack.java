@@ -75,7 +75,7 @@ public class CachingTrack implements VirtualTrack {
             }
             cachedPackets.add(this);
 
-            return cache.duplicate();
+            return cache == null ? null : cache.duplicate();
         }
     }
 

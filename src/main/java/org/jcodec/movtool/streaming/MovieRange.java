@@ -35,6 +35,11 @@ public class MovieRange extends InputStream {
     }
 
     static ByteBuffer checkDataLen(ByteBuffer chunkData, int chunkDataLen) throws IOException {
+        if(chunkData == null) {
+            System.err.println("WARN: packet expected data len != actual data len " + chunkDataLen + " != 0"
+                    );
+            return ByteBuffer.allocate(chunkDataLen);
+        }
         if (chunkData.remaining() != chunkDataLen) {
             System.err.println("WARN: packet expected data len != actual data len " + chunkDataLen + " != "
                     + chunkData.remaining());

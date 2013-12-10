@@ -107,7 +107,7 @@ public class VirtualMovie {
         }
 
         public ByteBuffer getData() throws IOException {
-            return packet.getData().duplicate();
+            return packet.getData() == null ? null : packet.getData().duplicate();
         }
 
         public int getNo() {

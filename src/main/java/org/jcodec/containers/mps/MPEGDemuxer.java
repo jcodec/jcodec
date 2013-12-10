@@ -17,5 +17,6 @@ public interface MPEGDemuxer {
     static interface Track {
         Packet nextFrame(ByteBuffer buf) throws IOException;
         DemuxerTrackMeta getMeta();
+        void ignore();
     }
 }

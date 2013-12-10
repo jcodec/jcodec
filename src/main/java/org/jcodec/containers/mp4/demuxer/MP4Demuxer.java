@@ -121,13 +121,14 @@ public class MP4Demuxer {
     private static int free = ('f' << 24) | ('r' << 16) | ('e' << 8) | 'e';
     private static int moov = ('m' << 24) | ('o' << 16) | ('o' << 8) | 'v';
     private static int mdat = ('m' << 24) | ('d' << 16) | ('a' << 8) | 't';
-
+    private static int wide = ('w' << 24) | ('i' << 16) | ('d' << 8) | 'e';
+    
     public static int probe(final ByteBuffer b) {
         ByteBuffer fork = b.duplicate();
         int success = 0;
         int total = 0;
         while (fork.remaining() >= 8) {
-            long len = fork.getInt();
+            long len = fork.getInt() & 0xffffffffL;
             int fcc = fork.getInt();
             int hdrLen = 8;
             if (len == 1) {
@@ -135,7 +136,7 @@ public class MP4Demuxer {
                 hdrLen = 16;
             } else if (len < 8)
                 break;
-            if (fcc == ftyp && len < 64 || fcc == moov && len < 100 * 1024 * 1024 || fcc == free || fcc == mdat)
+            if (fcc == ftyp && len < 64 || fcc == moov && len < 100 * 1024 * 1024 || fcc == free || fcc == mdat || fcc == wide)
                 success++;
             total++;
             if (len >= Integer.MAX_VALUE)

@@ -18,7 +18,7 @@ import org.jcodec.common.tools.MathUtil;
  * 
  */
 public class MPEGPred {
-    private int[][][] mvPred = new int[2][2][2];
+    protected int[][][] mvPred = new int[2][2][2];
     private int chromaFormat;
     private int[][] fCode;
     private boolean topFieldFirst;
@@ -28,8 +28,14 @@ public class MPEGPred {
         this.chromaFormat = chromaFormat;
         this.topFieldFirst = topFieldFirst;
     }
+    
+    public MPEGPred(MPEGPred other) {
+        this.fCode = other.fCode;
+        this.chromaFormat = other.chromaFormat;
+        this.topFieldFirst = other.topFieldFirst;
+    }
 
-    public final void predictEvenEvenSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictEvenEvenSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int offRef = ((refY << refVertStep) + refVertOff) * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
                 - tgtW, lfTgt = tgtVertStep * tgtW;
@@ -42,7 +48,7 @@ public class MPEGPred {
         }
     }
 
-    public final void predictEvenOddSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictEvenOddSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int offRef = ((refY << refVertStep) + refVertOff) * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
                 - tgtW, lfTgt = tgtVertStep * tgtW;
@@ -57,7 +63,7 @@ public class MPEGPred {
         }
     }
 
-    public final void predictOddEvenSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictOddEvenSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int offRef = ((refY << refVertStep) + refVertOff) * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
                 - tgtW, lfTgt = tgtVertStep * tgtW, stride = refW << refVertStep;
@@ -72,7 +78,7 @@ public class MPEGPred {
         }
     }
 
-    public final void predictOddOddSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictOddOddSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int offRef = ((refY << refVertStep) + refVertOff) * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
                 - tgtW, lfTgt = tgtVertStep * tgtW, stride = refW << refVertStep;
@@ -87,14 +93,14 @@ public class MPEGPred {
         }
     }
 
-    private final int getPix1(int[] ref, int refW, int refH, int x, int y, int refVertStep, int refVertOff) {
+    protected final int getPix1(int[] ref, int refW, int refH, int x, int y, int refVertStep, int refVertOff) {
         x = MathUtil.clip(x, 0, refW - 1);
         y = MathUtil.clip(y, 0, refH - (1 << refVertStep) + refVertOff);
 
         return ref[y * refW + x];
     }
 
-    private final int getPix2(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2, int refVertStep,
+    protected final int getPix2(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2, int refVertStep,
             int refVertOff) {
         x1 = MathUtil.clip(x1, 0, refW - 1);
         int lastLine = refH - (1 << refVertStep) + refVertOff;
@@ -105,7 +111,7 @@ public class MPEGPred {
         return (ref[y1 * refW + x1] + ref[y2 * refW + x2] + 1) >> 1;
     }
 
-    private final int getPix4(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2, int x3, int y3, int x4,
+    protected final int getPix4(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2, int x3, int y3, int x4,
             int y4, int refVertStep, int refVertOff) {
         int lastLine = refH - (1 << refVertStep) + refVertOff;
         x1 = MathUtil.clip(x1, 0, refW - 1);
@@ -120,7 +126,7 @@ public class MPEGPred {
         return (ref[y1 * refW + x1] + ref[y2 * refW + x2] + ref[y3 * refW + x3] + ref[y4 * refW + x4] + 3) >> 2;
     }
 
-    public final void predictEvenEvenUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictEvenEvenUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
         for (int j = 0; j < tgtH; j++) {
@@ -132,7 +138,7 @@ public class MPEGPred {
         }
     }
 
-    public final void predictEvenOddUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictEvenOddUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
         for (int j = 0; j < tgtH; j++) {
@@ -144,7 +150,7 @@ public class MPEGPred {
         }
     }
 
-    public final void predictOddEvenUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictOddEvenUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
         for (int j = 0; j < tgtH; j++) {
@@ -157,7 +163,7 @@ public class MPEGPred {
         }
     }
 
-    public final void predictOddOddUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictOddOddUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
         for (int j = 0; j < tgtH; j++) {
@@ -172,7 +178,7 @@ public class MPEGPred {
         }
     }
 
-    public final void predictPlane(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int refVertOff,
+    public void predictPlane(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int refVertOff,
             int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int rx = refX >> 1, ry = refY >> 1;
 
@@ -305,7 +311,7 @@ public class MPEGPred {
         predictGeneric(reference[field], x, y + vertPos, bits, backward, mbPix, vertPos, 16, 8, 1, field, 0, vectIdx, 0);
     }
 
-    private void predict16x16Field(Picture[] reference, int x, int y, BitReader bits, int backward, int[][] mbPix) {
+    protected void predict16x16Field(Picture[] reference, int x, int y, BitReader bits, int backward, int[][] mbPix) {
         int field = bits.read1Bit();
 
         predictGeneric(reference[field], x, y, bits, backward, mbPix, 0, 16, 16, 1, field, 0, 0, 0);
@@ -387,7 +393,7 @@ public class MPEGPred {
         mvPred[1][0][1] = mvPred[0][0][1] = vect1Y << 1;
     }
 
-    private void predict16x16Frame(Picture reference, int x, int y, BitReader bits, int backward, int[][] mbPix) {
+    protected void predict16x16Frame(Picture reference, int x, int y, BitReader bits, int backward, int[][] mbPix) {
         predictGeneric(reference, x, y, bits, backward, mbPix, 0, 16, 16, 0, 0, 0, 0, 0);
 
         mvPred[1][backward][0] = mvPred[0][backward][0];
@@ -424,7 +430,7 @@ public class MPEGPred {
         return (val << shift) >> shift;
     }
 
-    private void predictGeneric(Picture reference, int x, int y, BitReader bits, int backward, int[][] mbPix, int tgtY,
+    protected void predictGeneric(Picture reference, int x, int y, BitReader bits, int backward, int[][] mbPix, int tgtY,
             int blkW, int blkH, int isSrcField, int srcField, int isDstField, int vectIdx, int predScale) {
         int vectX = mvectDecode(bits, fCode[backward][0], mvPred[vectIdx][backward][0]);
         int vectY = mvectDecode(bits, fCode[backward][1], mvPred[vectIdx][backward][1] >> predScale);

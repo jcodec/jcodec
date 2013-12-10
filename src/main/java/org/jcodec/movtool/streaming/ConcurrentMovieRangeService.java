@@ -55,7 +55,7 @@ public class ConcurrentMovieRangeService {
         }
 
         public ByteBuffer call() throws Exception {
-            return MovieRange.checkDataLen(segment.getData().duplicate(), segment.getDataLen());
+            return MovieRange.checkDataLen(segment.getData() == null ? null : segment.getData().duplicate(), segment.getDataLen());
         }
     }
 

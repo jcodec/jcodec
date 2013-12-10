@@ -107,11 +107,24 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
 
         public void pending(PESPacket pkt) {
-            pending.add(pkt);
+            if (pending != null)
+                pending.add(pkt);
+            else
+                putBack(pkt.data);
         }
 
         public List<PESPacket> getPending() {
             return pending;
+        }
+
+        @Override
+        public void ignore() {
+            if(pending == null)
+                return;
+            for (PESPacket pesPacket : pending) {
+                putBack(pesPacket.data);
+            }
+            pending = null;
         }
     }
 
@@ -330,7 +343,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     }
 
     public static boolean audioStream(Integer streamId) {
-        return streamId >= $(AUDIO_MIN) && streamId <= $(AUDIO_MAX) || streamId == $(PRIVATE_1) || streamId == $(PRIVATE_2);
+        return streamId >= $(AUDIO_MIN) && streamId <= $(AUDIO_MAX) || streamId == $(PRIVATE_1)
+                || streamId == $(PRIVATE_2);
     }
 
     public List<Track> getTracks() {

@@ -122,6 +122,8 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
         }
 
         public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst) throws IOException {
+            if(src == null)
+                return null;
             Picture decoded = decoder.decodeFrame(src, pic0.getData());
             if (pic1 == null) {
                 pic1 = Picture.create(decoded.getWidth(), decoded.getHeight(), encoder.getSupportedColorSpaces()[0]);
