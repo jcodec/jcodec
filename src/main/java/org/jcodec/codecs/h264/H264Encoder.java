@@ -60,7 +60,7 @@ public class H264Encoder implements VideoEncoder {
     }
 
     public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out) {
-        return encodeFrame(pic, _out, false, 0);
+        return encodeFrame(pic, _out, true, 0);
     }
 
     public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out, boolean idr, int poc) {
