@@ -120,7 +120,7 @@ public class RealTrack implements VirtualTrack {
 
         @Override
         public boolean isKeyframe() {
-            return packet.isKeyFrame();
+            return packet.isKeyFrame() || packet.isPsync();
         }
 
         @Override

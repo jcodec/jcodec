@@ -37,7 +37,7 @@ public class ColorUtil {
         yuv422.put(ColorSpace.YUV422, new Idential());
         yuv422.put(ColorSpace.RGB, new Yuv422pToRgb(0, 0));
         yuv422.put(ColorSpace.YUV420, new Yuv422pToYuv420p(0, 0));
-        yuv422.put(ColorSpace.YUV420J, new Yuv422pToYuv420j(0, 2));
+        yuv422.put(ColorSpace.YUV420J, new Yuv422pToYuv420j(0, 0));
         map.put(ColorSpace.YUV422, yuv422);
 
         Map<ColorSpace, Transform> yuv422_10 = new HashMap<ColorSpace, Transform>();

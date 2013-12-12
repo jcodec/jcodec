@@ -38,6 +38,7 @@ public class BoxFactory {
         mappings.put(SampleDescriptionBox.fourcc(), SampleDescriptionBox.class);
         mappings.put(TimeToSampleBox.fourcc(), TimeToSampleBox.class);
         mappings.put(SyncSamplesBox.fourcc(), SyncSamplesBox.class);
+        mappings.put(PartialSyncSamplesBox.fourcc(), PartialSyncSamplesBox.class);
         mappings.put(SampleToChunkBox.fourcc(), SampleToChunkBox.class);
         mappings.put(SampleSizesBox.fourcc(), SampleSizesBox.class);
         mappings.put(ChunkOffsetsBox.fourcc(), ChunkOffsetsBox.class);

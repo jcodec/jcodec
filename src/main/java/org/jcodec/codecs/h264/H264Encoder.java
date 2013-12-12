@@ -60,24 +60,31 @@ public class H264Encoder implements VideoEncoder {
     }
 
     public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out) {
+        return encodeFrame(pic, _out, false, 0);
+    }
+
+    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out, boolean idr, int poc) {
         ByteBuffer dup = _out.duplicate();
 
-        dup.putInt(0x1);
-        new NALUnit(NALUnitType.SPS, 3).write(dup);
         SeqParameterSet sps = initSPS(new Size(pic.getCroppedWidth(), pic.getCroppedHeight()));
-        writeSPS(dup, sps);
-
-        dup.putInt(0x1);
-        new NALUnit(NALUnitType.PPS, 3).write(dup);
         PictureParameterSet pps = initPPS();
-        writePPS(dup, pps);
+
+        if (idr) {
+            dup.putInt(0x1);
+            new NALUnit(NALUnitType.SPS, 3).write(dup);
+            writeSPS(dup, sps);
+
+            dup.putInt(0x1);
+            new NALUnit(NALUnitType.PPS, 3).write(dup);
+            writePPS(dup, pps);
+        }
 
         int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
 
         leftRow = new int[][] { new int[16], new int[8], new int[8] };
         topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
 
-        encodeSlice(sps, pps, pic, dup);
+        encodeSlice(sps, pps, pic, dup, idr, poc);
 
         dup.flip();
         return dup;
@@ -121,23 +128,26 @@ public class H264Encoder implements VideoEncoder {
         return sps;
     }
 
-    private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture pic, ByteBuffer dup) {
+    private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture pic, ByteBuffer dup, boolean idr,
+            int poc) {
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
 
         rc.reset();
         int qp = rc.getInitQp();
 
         dup.putInt(0x1);
-        new NALUnit(NALUnitType.IDR_SLICE, 2).write(dup);
+        new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 2).write(dup);
         SliceHeader sh = new SliceHeader();
         sh.slice_type = SliceType.I;
-        sh.refPicMarkingIDR = new RefPicMarkingIDR(false, false);
+        if (idr)
+            sh.refPicMarkingIDR = new RefPicMarkingIDR(false, false);
         sh.pps = pps;
         sh.sps = sps;
+        sh.pic_order_cnt_lsb = poc << 1;
 
         ByteBuffer buf = ByteBuffer.allocate(pic.getWidth() * pic.getHeight());
         BitWriter sliceData = new BitWriter(buf);
-        new SliceHeaderWriter().write(sh, true, 2, sliceData);
+        new SliceHeaderWriter().write(sh, idr, 2, sliceData);
 
         Picture outMB = Picture.create(16, 16, ColorSpace.YUV420);
 
@@ -189,7 +199,7 @@ public class H264Encoder implements VideoEncoder {
         luma(pic, mbX, mbY, out, qp, outMB);
         chroma(pic, mbX, mbY, out, qp, outMB);
     }
-    
+
     private void chroma(Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB) {
         int cw = pic.getColor().compWidth[1];
         int ch = pic.getColor().compHeight[1];

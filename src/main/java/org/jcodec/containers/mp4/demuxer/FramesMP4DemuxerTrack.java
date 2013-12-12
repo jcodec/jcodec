@@ -38,7 +38,9 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     private int noInChunk;
 
     private int[] syncSamples;
+    private int[] partialSync;
     private int ssOff;
+    private int psOff;
 
     private Entry[] compOffsets;
     private int cttsInd;
@@ -48,6 +50,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     private MovieBox movie;
 
+
     public FramesMP4DemuxerTrack(MovieBox mov, TrakBox trak, SeekableByteChannel input) {
         super(trak);
         this.input = input;
@@ -55,11 +58,16 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
         SampleSizesBox stsz = findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
         SyncSamplesBox stss = Box.findFirst(trak, SyncSamplesBox.class, "mdia", "minf", "stbl", "stss");
+        SyncSamplesBox stps = Box.findFirst(trak, SyncSamplesBox.class, "mdia", "minf", "stbl", "stps");
         CompositionOffsetsBox ctts = Box.findFirst(trak, CompositionOffsetsBox.class, "mdia", "minf", "stbl", "ctts");
         compOffsets = ctts == null ? null : ctts.getEntries();
         if (stss != null) {
             syncSamples = stss.getSyncSamples();
         }
+        if(stps != null) {
+            partialSync = stps.getSyncSamples();
+        }
+    
         sizes = stsz.getSizes();
     }
 
@@ -96,6 +104,12 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             sync = true;
             ssOff++;
         }
+        
+        boolean psync = false;
+        if (partialSync != null && psOff < partialSync.length && (curFrame + 1) == partialSync[psOff]) {
+            psync = true;
+            psOff++;
+        }
 
         long realPts = pts;
         if (compOffsets != null) {
@@ -108,7 +122,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
 
         MP4Packet pkt = new MP4Packet(result, mediaToEdited(box, realPts, movie.getTimescale()), timescale, duration,
-                curFrame, sync, null, realPts, sampleToChunks[stscInd].getEntry() - 1, pktPos, size);
+                curFrame, sync, null, realPts, sampleToChunks[stscInd].getEntry() - 1, pktPos, size, psync);
 
         offInChunk += size;
 
@@ -154,6 +168,10 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
         if (syncSamples != null)
             for (ssOff = 0; ssOff < syncSamples.length && syncSamples[ssOff] < curFrame + 1; ssOff++)
+                ;
+        
+        if (partialSync != null)
+            for (psOff = 0; psOff < partialSync.length && partialSync[psOff] < curFrame + 1; psOff++)
                 ;
 
     }

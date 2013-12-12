@@ -16,6 +16,7 @@ public class MP4Packet extends Packet {
     private int entryNo;
     private long fileOff;
     private int size;
+    private boolean psync;
 
     public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
             TapeTimecode tapeTimecode, long mediaPts, int entryNo) {
@@ -25,12 +26,13 @@ public class MP4Packet extends Packet {
     }
     
     public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
-            TapeTimecode tapeTimecode, long mediaPts, int entryNo, long fileOff, int size) {
+            TapeTimecode tapeTimecode, long mediaPts, int entryNo, long fileOff, int size, boolean psync) {
         super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode);
         this.mediaPts = mediaPts;
         this.entryNo = entryNo;
         this.fileOff = fileOff;
         this.size = size;
+        this.psync = psync;
     }
 
     public MP4Packet(MP4Packet packet, ByteBuffer frm) {
@@ -76,5 +78,9 @@ public class MP4Packet extends Packet {
 
     public int getSize() {
         return size;
+    }
+
+    public boolean isPsync() {
+        return psync;
     }
 }

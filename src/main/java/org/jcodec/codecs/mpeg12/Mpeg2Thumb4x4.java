@@ -8,23 +8,24 @@ import static org.jcodec.codecs.mpeg12.MPEGConst.vlcDCSizeChroma;
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcDCSizeLuma;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceExtension.Chroma420;
 
+import java.util.Arrays;
+
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
-import org.jcodec.common.dct.IDCT2x2;
+import org.jcodec.common.dct.IDCT4x4;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
-import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * MPEG 1/2 Decoder, downscaled 2x2
+ * MPEG 1/2 Decoder, downscaled 4x4
  * 
  * @author The JCodec project
  * 
  */
-public class Mpeg2Thumb2x2 extends MPEGDecoder {
+public class Mpeg2Thumb4x4 extends MPEGDecoder {
     private MPEGPred localPred;
     private MPEGPred oldPred;
 
@@ -34,10 +35,11 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
         int size = (cc == 0 ? vlcDCSizeLuma : vlcDCSizeChroma).readVLC(bits);
         int delta = (size != 0) ? mpegSigned(bits, size) : 0;
         intra_dc_predictor[cc] = intra_dc_predictor[cc] + delta;
+        Arrays.fill(block, 1, 16, 0);
         block[0] = intra_dc_predictor[cc] * intra_dc_mult;
-        block[1] = block[2] = block[3] = 0;
+
         int idx, readVLC = 0;
-        for (idx = 0; idx < 6;) {
+        for (idx = 0; idx < 19 + (scan == scan4x4[1] ? 7 : 0);) {
             readVLC = vlcCoeff.readVLC(bits);
             int level;
 
@@ -55,7 +57,7 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
         }
         if (readVLC != MPEGConst.CODE_END)
             finishOff(bits, idx, vlcCoeff, escSize);
-        IDCT2x2.idct(block, 0);
+        IDCT4x4.idct(block, 0);
     }
 
     private void finishOff(BitReader bits, int idx, VLC vlcCoeff, int escSize) {
@@ -74,7 +76,7 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
     }
 
     protected void blockInter(BitReader bits, VLC vlcCoeff, int[] block, int[] scan, int escSize, int qScale, int[] qmat) {
-        block[1] = block[2] = block[3] = 0;
+        Arrays.fill(block, 1, 16, 0);
 
         int idx = -1;
         if (vlcCoeff == vlcCoeff0 && bits.checkNBit(1) == 1) {
@@ -86,7 +88,7 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
         }
 
         int readVLC = 0;
-        for (; idx < 6;) {
+        for (; idx < 19 + (scan == scan4x4[1] ? 7 : 0);) {
             readVLC = vlcCoeff.readVLC(bits);
             int ac;
             if (readVLC == MPEGConst.CODE_END) {
@@ -102,15 +104,14 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
         }
         if (readVLC != MPEGConst.CODE_END)
             finishOff(bits, idx, vlcCoeff, escSize);
-        IDCT2x2.idct(block, 0);
+        IDCT4x4.idct(block, 0);
     }
-
 
     @Override
     public int decodeMacroblock(PictureHeader ph, Context context, int prevAddr, int[] qScaleCode, int[][] buf,
             int stride, BitReader bits, int vertOff, int vertStep, MPEGPred pred) {
         if (localPred == null || oldPred != pred) {
-            localPred = new MPEGPredOct(pred);
+            localPred = new MPEGPredQuad(pred);
             oldPred = pred;
         }
 
@@ -118,35 +119,37 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
                 localPred);
     }
 
-    public static int[] BLOCK_POS_X = new int[] { 0, 2, 0, 2, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0,
-            0, 2, 2, 2, 2 };
-    public static int[] BLOCK_POS_Y = new int[] { 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
+    public static int[] BLOCK_POS_X = new int[] { 0, 4, 0, 4, 0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 4, 0, 4, 0, 0, 0,
+            0, 4, 4, 4, 4 };
+    public static int[] BLOCK_POS_Y = new int[] { 0, 0, 4, 4, 0, 0, 4, 4, 0, 0, 4, 4, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
             1, 0, 0, 1, 1 };
 
     protected void mapBlock(int[] block, int[] out, int blkIdx, int dctType, int chromaFormat) {
         int stepVert = chromaFormat == Chroma420 && (blkIdx == 4 || blkIdx == 5) ? 0 : dctType;
-        int log2stride = blkIdx < 4 ? 2 : 2 - SQUEEZE_X[chromaFormat];
+        int log2stride = blkIdx < 4 ? 3 : 3 - SQUEEZE_X[chromaFormat];
 
         int blkIdxExt = blkIdx + (dctType << 4);
         int x = BLOCK_POS_X[blkIdxExt];
         int y = BLOCK_POS_Y[blkIdxExt];
         int off = (y << log2stride) + x, stride = 1 << (log2stride + stepVert);
 
-        out[off] += block[0];
-        out[off + 1] += block[1];
-        out[off + stride] += block[2];
-        out[off + stride + 1] += block[3];
+        for (int i = 0; i < 16; i += 4, off += stride) {
+            out[off] += block[i];
+            out[off + 1] += block[i + 1];
+            out[off + 2] += block[i + 2];
+            out[off + 3] += block[i + 3];
+        }
     }
 
     protected void put(int[][] mbPix, int[][] buf, int stride, int chromaFormat, int mbX, int mbY, int width,
             int height, int vertOff, int vertStep) {
 
         int chromaStride = (stride + (1 << SQUEEZE_X[chromaFormat]) - 1) >> SQUEEZE_X[chromaFormat];
-        int chromaMBW = 2 - SQUEEZE_X[chromaFormat];
-        int chromaMBH = 2 - SQUEEZE_Y[chromaFormat];
+        int chromaMBW = 3 - SQUEEZE_X[chromaFormat];
+        int chromaMBH = 3 - SQUEEZE_Y[chromaFormat];
 
-        putSub(buf[0], (mbY << 2) * (stride << vertStep) + vertOff * stride + (mbX << 2), stride << vertStep, mbPix[0],
-                2, 2);
+        putSub(buf[0], (mbY << 3) * (stride << vertStep) + vertOff * stride + (mbX << 3), stride << vertStep, mbPix[0],
+                3, 3);
         putSub(buf[1], (mbY << chromaMBH) * (chromaStride << vertStep) + vertOff * chromaStride + (mbX << chromaMBW),
                 chromaStride << vertStep, mbPix[1], chromaMBW, chromaMBH);
         putSub(buf[2], (mbY << chromaMBH) * (chromaStride << vertStep) + vertOff * chromaStride + (mbX << chromaMBW),
@@ -156,47 +159,49 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
     private final void putSub(int[] big, int off, int stride, int[] block, int mbW, int mbH) {
         int blOff = 0;
 
-        if (mbW == 1) {
-            big[off] = clip(block[blOff]);
-            big[off + 1] = clip(block[blOff + 1]);
-            big[off + stride] = clip(block[blOff + 2]);
-            big[off + stride + 1] = clip(block[blOff + 3]);
-
-            if (mbH == 2) {
-                off += stride << 1;
-
-                big[off] = clip(block[blOff + 4]);
-                big[off + 1] = clip(block[blOff + 5]);
-                big[off + stride] = clip(block[blOff + 6]);
-                big[off + stride + 1] = clip(block[blOff + 7]);
-            }
-        } else {
-            for (int i = 0; i < 4; i++) {
+        if (mbW == 2) {
+            for (int i = 0; i < (1 << mbH); i++) {
                 big[off] = clip(block[blOff]);
                 big[off + 1] = clip(block[blOff + 1]);
                 big[off + 2] = clip(block[blOff + 2]);
                 big[off + 3] = clip(block[blOff + 3]);
 
-                off += stride;
                 blOff += 4;
+                off += stride;
+            }
+        } else {
+            for (int i = 0; i < (1 << mbH); i++) {
+                big[off] = clip(block[blOff]);
+                big[off + 1] = clip(block[blOff + 1]);
+                big[off + 2] = clip(block[blOff + 2]);
+                big[off + 3] = clip(block[blOff + 3]);
+                big[off + 4] = clip(block[blOff + 4]);
+                big[off + 5] = clip(block[blOff + 5]);
+                big[off + 6] = clip(block[blOff + 6]);
+                big[off + 7] = clip(block[blOff + 7]);
+
+                blOff += 8;
+                off += stride;
             }
         }
     }
 
-    public static int[][] scan2x2 = new int[][] {
-            new int[] { 0, 1, 2, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-                    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 },
-            new int[] { 0, 2, 4, 4, 1, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-                    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 } };
+    public static int[][] scan4x4 = new int[][] {
+            new int[] { 0, 1, 4, 8, 5, 2, 3, 6, 9, 12, 16, 13, 10, 7, 16, 16, 16, 11, 14, 16, 16, 16, 16, 16, 15, 16,
+                    16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+                    16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 },
+            new int[] { 0, 4, 8, 12, 1, 5, 2, 6, 9, 13, 16, 16, 16, 16, 16, 16, 16, 16, 14, 10, 3, 7, 16, 16, 11, 15,
+                    16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+                    16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 } };
 
     protected Context initContext(SequenceHeader sh, PictureHeader ph) {
         Context context = super.initContext(sh, ph);
-        context.codedWidth >>= 2;
-        context.codedHeight >>= 2;
-        context.picWidth >>= 2;
-        context.picHeight >>= 2;
+        context.codedWidth >>= 1;
+        context.codedHeight >>= 1;
+        context.picWidth >>= 1;
+        context.picHeight >>= 1;
 
-        context.scan = scan2x2[ph.pictureCodingExtension == null ? 0 : ph.pictureCodingExtension.alternate_scan];
+        context.scan = scan4x4[ph.pictureCodingExtension == null ? 0 : ph.pictureCodingExtension.alternate_scan];
 
         return context;
     }

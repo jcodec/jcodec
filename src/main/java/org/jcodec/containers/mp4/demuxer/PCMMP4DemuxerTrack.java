@@ -86,7 +86,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         shiftPts(doneFrames);
 
         MP4Packet pkt = new MP4Packet(result, QTTimeUtil.mediaToEdited(box, _pts, movie.getTimescale()), timescale,
-                (int) (pts - _pts), curFrame, true, null, _pts, se - 1, pktOff, pktSize);
+                (int) (pts - _pts), curFrame, true, null, _pts, se - 1, pktOff, pktSize, true);
 
         curFrame += doneFrames;
 
