@@ -15,6 +15,7 @@ import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
@@ -97,6 +98,16 @@ public class JCodecUtil {
         buffer.put((byte) ((value >> 14) | 0x80));
         buffer.put((byte) ((value >> 7) | 0x80));
         buffer.put((byte) (value & 0x7F));
+    }
+    
+    public static void writeBER32Var(ByteBuffer bb, int value) {
+        for (int i = 0, bits = MathUtil.log2(value); i < 4 && bits > 0; i++) {
+            bits -= 7;
+            int out = value >> bits;
+            if(bits > 0)
+                out |= 0x80;
+            bb.put((byte)out);
+        }
     }
 
     public static int readBER32(ByteBuffer input) {
