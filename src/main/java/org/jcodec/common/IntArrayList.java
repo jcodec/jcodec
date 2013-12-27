@@ -70,4 +70,8 @@ public class IntArrayList {
         System.arraycopy(other, 0, storage, size, other.length);
         size += other.length;
     }
+
+    public void clear() {
+        size = 0;
+    }
 }

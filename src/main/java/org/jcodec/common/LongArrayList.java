@@ -72,4 +72,7 @@ public class LongArrayList {
         size += other.length;
     }
 
+    public void clear() {
+        size = 0;
+    }
 }

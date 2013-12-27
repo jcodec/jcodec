@@ -1,6 +1,8 @@
 package org.jcodec.movtool.streaming.tracks;
 
-import static org.jcodec.common.NIOUtils.from;
+import static java.util.Arrays.binarySearch;
+import static org.jcodec.codecs.mpeg12.MPEGConst.PICTURE_START_CODE;
+import static org.jcodec.codecs.mpeg12.MPEGUtil.nextSegment;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -11,11 +13,7 @@ import java.util.List;
 
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.H264Utils.SliceHeaderTweaker;
 import org.jcodec.codecs.h264.encode.ConstantRateControl;
-import org.jcodec.codecs.h264.io.model.NALUnit;
-import org.jcodec.codecs.h264.io.model.NALUnitType;
-import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.Mpeg2Thumb2x2;
 import org.jcodec.codecs.mpeg12.Mpeg2Thumb4x4;
@@ -150,7 +148,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
             if (data != null)
                 return;
 
-            System.out.println("Transcoding GOP: " + frameNo);
+//            System.out.println("Transcoding GOP: " + frameNo);
 
             data = new ByteBuffer[packets.size()];
             Transcoder t = transcoders.get();
@@ -172,7 +170,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                     continue;
                 }
                 ByteBuffer buf = ByteBuffer.allocate(frameSize);
-                data[i] = t.transcodeFrame(pktData, buf, i == 0, indexOf(pts, pkt.getPts()));
+                data[i] = t.transcodeFrame(pktData, buf, i == 0, binarySearch(pts, pkt.getPts()));
             }
 
             if (nextGop != null) {
@@ -191,7 +189,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                         break;
 
                     ByteBuffer buf = ByteBuffer.allocate(frameSize);
-                    nextGop.leadingB.add(t.transcodeFrame(pktData, buf, i == 0, indexOf(pts, pkt.getPts())));
+                    nextGop.leadingB.add(t.transcodeFrame(pktData, buf, i == 0, binarySearch(pts, pkt.getPts())));
                 }
             }
         }
@@ -202,13 +200,6 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                 pts[i] = packets2.get(i).getPts();
             Arrays.sort(pts);
             return pts;
-        }
-
-        private int indexOf(double[] pts, double search) {
-            for (int i = 0; i < pts.length; i++)
-                if (pts[i] == search)
-                    return i;
-            return 0;
         }
 
         private synchronized void carryLeadingBOver() {
@@ -230,8 +221,16 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     }
 
     public static int getPicType(ByteBuffer buf) {
-        PictureHeader ph = PictureHeader.read(from(buf, 4));
-        return ph.picture_coding_type;
+        ByteBuffer segment;
+
+        while ((segment = nextSegment(buf)) != null) {
+            int code = segment.getInt() & 0xff;
+            if (code == PICTURE_START_CODE) {
+                PictureHeader ph = PictureHeader.read(segment);
+                return ph.picture_coding_type;
+            }
+        }
+        return -1;
     }
 
     private class TranscodePacket extends VirtualPacketWrapper {
@@ -294,7 +293,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
             rc.setRate(TARGET_RATE);
 
             H264Utils.encodeMOVPacket(dst);
-
+            
             return dst;
         }
     }

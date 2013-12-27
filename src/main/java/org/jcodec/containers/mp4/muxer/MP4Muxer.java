@@ -214,9 +214,13 @@ public class MP4Muxer {
 
     public PCMMP4MuxerTrack addPCMAudioTrack(AudioFormat format) {
         return addPCMTrack((int) format.getSampleRate(), 1, (format.getSampleSizeInBits() >> 3)
-                * format.getChannels(), MP4Muxer.audioSampleEntry(lookupFourcc(format), 1,
-                format.getSampleSizeInBits() >> 3, format.getChannels(), (int) format.getSampleRate(),
-                format.isBigEndian() ? Endian.BIG_ENDIAN : Endian.LITTLE_ENDIAN));
+                * format.getChannels(), audioSampleEntry(format));
+    }
+
+    public static AudioSampleEntry audioSampleEntry(AudioFormat format) {
+        return MP4Muxer.audioSampleEntry(lookupFourcc(format), 1,
+        format.getSampleSizeInBits() >> 3, format.getChannels(), (int) format.getSampleRate(),
+        format.isBigEndian() ? Endian.BIG_ENDIAN : Endian.LITTLE_ENDIAN);
     }
 
     public FramesMP4MuxerTrack addCompressedAudioTrack(String fourcc, int timescale, int channels, int sampleRate,

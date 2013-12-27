@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
@@ -36,6 +37,16 @@ public class MPSIndexer {
     private ByteBuffer index;
     private int prevPesToken;
     private int runLengthMinus1 = -1;
+    private Listener listener;
+    private int oldPd;
+
+    public static interface Listener {
+        void progress(int percentDone);
+    }
+
+    public MPSIndexer(Listener listener) {
+        this.listener = listener;
+    }
 
     public ByteBuffer index(File source, ByteBuffer indexBuf) throws IOException {
         index = indexBuf.duplicate();
@@ -46,10 +57,17 @@ public class MPSIndexer {
 
         try {
             ch = NIOUtils.readableFileChannel(source);
+            long size = ch.size();
             for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
                 buf.flip();
                 analyseBuffer(buf, pos);
                 buf.flip();
+                if (listener != null) {
+                    int newPd = (int) (100 * pos / size);
+                    if (newPd != oldPd)
+                        listener.progress(newPd);
+                    oldPd = newPd;
+                }
             }
         } catch (Throwable t) {
             t.printStackTrace();
@@ -75,11 +93,14 @@ public class MPSIndexer {
         public abstract void serialize(ByteBuffer bb);
 
         public void framePts(PESPacket pesHeader) {
-            pts.add((int)pesHeader.pts);
+            if (pesHeader.pts == -1)
+                pts.add(pts.get(pts.size() - 1));
+            else
+                pts.add((int) pesHeader.pts);
         }
 
         public void serializePts(ByteBuffer bb) {
-            for(int i = 0; i < pts.size(); i++)
+            for (int i = 0; i < pts.size(); i++)
                 bb.putInt(pts.get(i));
         }
     }
@@ -98,6 +119,7 @@ public class MPSIndexer {
             bb.putInt(array.length);
             for (int i = 0; i < array.length; i++)
                 bb.putInt(array[i]);
+            bb.putInt(0); // key frames table
 
             super.serializePts(bb);
         }
@@ -108,6 +130,7 @@ public class MPSIndexer {
         private long position;
         private long prevFrame = -1;
         private IntArrayList sizes = new IntArrayList(250000);
+        private IntArrayList keyFrames = new IntArrayList(20000);
         private int siSize;
         private int frameNo;
 
@@ -121,12 +144,19 @@ public class MPSIndexer {
                     long frameStart = position - 4;
                     if (prevFrame != -1) {
                         sizes.add((int) (frameStart - prevFrame));
-                        super.framePts(pesHeader);
                     } else
                         siSize = (int) frameStart;
 
+                    super.framePts(pesHeader);
                     prevFrame = frameStart;
-                    frameNo ++;
+//                    System.out.println(String.format("FRAME[%d]: %012x, %d", frameNo,
+//                            (pesHeader.pos + pkt.position() - 4), pesHeader.pts));
+                    frameNo++;
+                }
+                if (position - prevFrame == 6) {
+                    int picCodingType = (b >> 3) & 0x7;
+                    if (picCodingType == PictureHeader.IntraCoded)
+                        keyFrames.add(frameNo - 1);
                 }
             }
         }
@@ -134,10 +164,14 @@ public class MPSIndexer {
         public void serialize(ByteBuffer bb) {
             bb.putInt(siSize);
             int[] array = sizes.toArray();
-            bb.putInt(array.length);
+            bb.putInt(array.length + 1);
             for (int i = 0; i < array.length; i++)
                 bb.putInt(array[i]);
-            
+            bb.putInt((int) (position - prevFrame));
+            bb.putInt(keyFrames.size());
+            for (int i = 0; i < keyFrames.size(); i++)
+                bb.putInt(keyFrames.get(i));
+
             super.serializePts(bb);
         }
     }
@@ -212,7 +246,6 @@ public class MPSIndexer {
         if (predFileStart != start) {
             leading += (int) (start - predFileStart);
         }
-        System.out.println(leading);
         predFileStart = start + pesLen;
         writePesToken(stream, leading);
         getAnalyser(stream).pkt(pesBuffer, pesHeader);
@@ -239,5 +272,14 @@ public class MPSIndexer {
         }
 
         index.putInt(prevPesToken);
+    }
+
+    public static void main(String[] args) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(0x800000);
+        NIOUtils.writeTo(new MPSIndexer(new Listener() {
+            public void progress(int percentDone) {
+                System.out.println(percentDone);
+            }
+        }).index(new File(args[0]), buf), new File(args[1]));
     }
 }
