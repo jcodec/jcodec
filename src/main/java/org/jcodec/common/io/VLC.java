@@ -147,4 +147,12 @@ public class VLC {
         builder.append(str);
         return builder.toString();
     }
+
+    public int[] getCodes() {
+        return codes;
+    }
+
+    public int[] getCodeSizes() {
+        return codeSizes;
+    }
 }

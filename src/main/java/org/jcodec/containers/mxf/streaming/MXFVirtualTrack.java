@@ -166,9 +166,9 @@ public class MXFVirtualTrack implements VirtualTrack {
                 throws IOException {
             return new MXFDemuxerTrack(ul, track, descriptor) {
                 @Override
-                public MXFPacket readPacket(long off, int len, long pts, int timescale, int duration, int frameNo)
+                public MXFPacket readPacket(long off, int len, long pts, int timescale, int duration, int frameNo, boolean kf)
                         throws IOException {
-                    return new MXFPacket(null, pts, timescale, duration, frameNo, true, null, off, len);
+                    return new MXFPacket(null, pts, timescale, duration, frameNo, kf, null, off, len);
                 }
             };
         }

@@ -3,13 +3,8 @@ package org.jcodec.containers.mps;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
-import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 
 /**
@@ -21,265 +16,44 @@ import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
  * @author The JCodec project
  * 
  */
-public class MPSIndexer {
-
-    private int marker = -1;
-    private int lenFieldLeft;
-    private int pesLen;
-    private long pesFileStart = -1;
-    private int stream;
-    private boolean pes;
-    private int pesLeft;
-    private Map<Integer, BaseAnalyser> analyzers = new HashMap<Integer, BaseAnalyser>();
-    private ByteBuffer pesBuffer;
-    private int numPesEntries;
+public class MPSIndexer extends BaseIndexer {
     private long predFileStart;
-    private ByteBuffer index;
-    private int prevPesToken;
-    private int runLengthMinus1 = -1;
-    private Listener listener;
-    private int oldPd;
 
-    public static interface Listener {
-        void progress(int percentDone);
-    }
-
-    public MPSIndexer(Listener listener) {
-        this.listener = listener;
-    }
-
-    public ByteBuffer index(File source, ByteBuffer indexBuf) throws IOException {
-        index = indexBuf.duplicate();
-        SeekableByteChannel ch = null;
-        ByteBuffer buf = ByteBuffer.allocate(0x10000);
-        pesBuffer = ByteBuffer.allocate(0x10000);
-        NIOUtils.skip(index, 4);
-
-        try {
-            ch = NIOUtils.readableFileChannel(source);
-            long size = ch.size();
-            for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
-                buf.flip();
-                analyseBuffer(buf, pos);
-                buf.flip();
-                if (listener != null) {
-                    int newPd = (int) (100 * pos / size);
-                    if (newPd != oldPd)
-                        listener.progress(newPd);
-                    oldPd = newPd;
-                }
+    public void index(File source, NIOUtils.FileReaderListener listener) throws IOException {
+        new NIOUtils.FileReader() {
+            protected void data(ByteBuffer data, long filePos) {
+                analyseBuffer(data, filePos);
             }
-        } catch (Throwable t) {
-            t.printStackTrace();
-        } finally {
-            NIOUtils.closeQuietly(ch);
-        }
-        putRLToken();
-
-        for (Integer stream : analyzers.keySet()) {
-            index.put((byte) stream.intValue());
-            analyzers.get(stream).serialize(index);
-        }
-        index.flip();
-        index.duplicate().putInt(numPesEntries + 1);
-        return index;
+        }.readFile(source, 0x10000, listener);
     }
 
-    private abstract class BaseAnalyser {
-        private IntArrayList pts = new IntArrayList(250000);
-
-        public abstract void pkt(ByteBuffer pkt, PESPacket pesHeader);
-
-        public abstract void serialize(ByteBuffer bb);
-
-        public void framePts(PESPacket pesHeader) {
-            if (pesHeader.pts == -1)
-                pts.add(pts.get(pts.size() - 1));
-            else
-                pts.add((int) pesHeader.pts);
-        }
-
-        public void serializePts(ByteBuffer bb) {
-            for (int i = 0; i < pts.size(); i++)
-                bb.putInt(pts.get(i));
-        }
-    }
-
-    private class GenericAnalyser extends BaseAnalyser {
-        private IntArrayList sizes = new IntArrayList(250000);
-
-        public void pkt(ByteBuffer pkt, PESPacket pesHeader) {
-            sizes.add(pkt.remaining());
-            super.framePts(pesHeader);
-        }
-
-        public void serialize(ByteBuffer bb) {
-            bb.putInt(0);
-            int[] array = sizes.toArray();
-            bb.putInt(array.length);
-            for (int i = 0; i < array.length; i++)
-                bb.putInt(array[i]);
-            bb.putInt(0); // key frames table
-
-            super.serializePts(bb);
-        }
-    }
-
-    private class MPEGVideoAnalyser extends BaseAnalyser {
-        private int marker = -1;
-        private long position;
-        private long prevFrame = -1;
-        private IntArrayList sizes = new IntArrayList(250000);
-        private IntArrayList keyFrames = new IntArrayList(20000);
-        private int siSize;
-        private int frameNo;
-
-        public void pkt(ByteBuffer pkt, PESPacket pesHeader) {
-
-            while (pkt.hasRemaining()) {
-                int b = pkt.get() & 0xff;
-                ++position;
-                marker = (marker << 8) | b;
-                if (marker == 0x100) {
-                    long frameStart = position - 4;
-                    if (prevFrame != -1) {
-                        sizes.add((int) (frameStart - prevFrame));
-                    } else
-                        siSize = (int) frameStart;
-
-                    super.framePts(pesHeader);
-                    prevFrame = frameStart;
-//                    System.out.println(String.format("FRAME[%d]: %012x, %d", frameNo,
-//                            (pesHeader.pos + pkt.position() - 4), pesHeader.pts));
-                    frameNo++;
-                }
-                if (position - prevFrame == 6) {
-                    int picCodingType = (b >> 3) & 0x7;
-                    if (picCodingType == PictureHeader.IntraCoded)
-                        keyFrames.add(frameNo - 1);
-                }
-            }
-        }
-
-        public void serialize(ByteBuffer bb) {
-            bb.putInt(siSize);
-            int[] array = sizes.toArray();
-            bb.putInt(array.length + 1);
-            for (int i = 0; i < array.length; i++)
-                bb.putInt(array[i]);
-            bb.putInt((int) (position - prevFrame));
-            bb.putInt(keyFrames.size());
-            for (int i = 0; i < keyFrames.size(); i++)
-                bb.putInt(keyFrames.get(i));
-
-            super.serializePts(bb);
-        }
-    }
-
-    private void analyseBuffer(ByteBuffer buf, long pos) {
-        int init = buf.position();
-        while (buf.hasRemaining()) {
-            if (pesLeft > 0) {
-                int toRead = Math.min(buf.remaining(), pesLeft);
-                pesBuffer.put(NIOUtils.read(buf, toRead));
-                pesLeft -= toRead;
-
-                if (pesLeft == 0) {
-                    pes(pesFileStart, stream);
-                    pesFileStart = -1;
-                    pes = false;
-                    stream = -1;
-                }
-                continue;
-            }
-            int bt = buf.get() & 0xff;
-            if (pes)
-                pesBuffer.put((byte) (marker >>> 24));
-            marker = (marker << 8) | bt;
-            if (marker >= 0x1bd && marker <= 0x1ef) {
-                long filePos = pos + buf.position() - init - 4;
-                if (pes)
-                    pes(pesFileStart, stream);
-                pesFileStart = filePos;
-
-                pes = true;
-                stream = marker & 0xff;
-                lenFieldLeft = 2;
-                pesLen = 0;
-            } else if (marker >= 0x1b9 && marker <= 0x1ff) {
-                if (pes)
-                    pes(pesFileStart, stream);
-                pesFileStart = -1;
-                pes = false;
-                stream = -1;
-            } else if (lenFieldLeft > 0) {
-                pesLen = (pesLen << 8) | bt;
-                lenFieldLeft--;
-                if (lenFieldLeft == 0) {
-                    pesLeft = pesLen;
-                    if (pesLen != 0) {
-                        pesBuffer.put((byte) (marker >>> 24));
-                        pesBuffer.put((byte) ((marker >>> 16) & 0xff));
-                        pesBuffer.put((byte) ((marker >>> 8) & 0xff));
-                        pesBuffer.put((byte) (marker & 0xff));
-                        marker = -1;
-                    }
-                }
-            }
-        }
-    }
-
-    private BaseAnalyser getAnalyser(int stream) {
-        BaseAnalyser analizer = analyzers.get(stream);
-        if (analizer == null) {
-            analizer = stream >= 0xe0 && stream <= 0xef ? new MPEGVideoAnalyser() : new GenericAnalyser();
-            analyzers.put(stream, analizer);
-        }
-        return analyzers.get(stream);
-    }
-
-    private void pes(long start, int stream) {
+    protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
         pesBuffer.flip();
-        int pesLen = pesBuffer.remaining();
         PESPacket pesHeader = MPSDemuxer.readPES(pesBuffer, start);
-        int leading = pesBuffer.position();
+        int leading = 0;
         if (predFileStart != start) {
             leading += (int) (start - predFileStart);
         }
         predFileStart = start + pesLen;
-        writePesToken(stream, leading);
+        savePesMeta(stream, leading, pesLen, pesBuffer.remaining());
         getAnalyser(stream).pkt(pesBuffer, pesHeader);
         pesBuffer.clear();
     }
-
-    private void writePesToken(int stream, int leading) {
-        int pesToken = (stream << 24) | (leading << 16) | pesBuffer.remaining();
-        if (prevPesToken != 0 && pesToken != prevPesToken || runLengthMinus1 >= 0x7fff) {
-            putRLToken();
-            runLengthMinus1 = 0;
-            ++numPesEntries;
-        } else
-            runLengthMinus1++;
-        prevPesToken = pesToken;
-    }
-
-    private void putRLToken() {
-        if (runLengthMinus1 <= 0x7f)
-            index.put((byte) runLengthMinus1);
-        else {
-            index.put((byte) ((runLengthMinus1 >> 8) | 0x80));
-            index.put((byte) (runLengthMinus1 & 0xff));
-        }
-
-        index.putInt(prevPesToken);
+    
+    private ByteBuffer serialize() {
+        ByteBuffer buf = ByteBuffer.allocate(estimateSize());
+        serializeTo(buf);
+        buf.flip();
+        return buf;
     }
 
     public static void main(String[] args) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(0x800000);
-        NIOUtils.writeTo(new MPSIndexer(new Listener() {
+        MPSIndexer indexer = new MPSIndexer();
+        indexer.index(new File(args[0]), new NIOUtils.FileReaderListener() {
             public void progress(int percentDone) {
                 System.out.println(percentDone);
             }
-        }).index(new File(args[0]), buf), new File(args[1]));
+        });
+        NIOUtils.writeTo(indexer.serialize(), new File(args[1]));
     }
 }

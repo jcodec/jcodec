@@ -5,7 +5,6 @@ import static org.jcodec.codecs.mpeg12.MPEGConst.PICTURE_START_CODE;
 import static org.jcodec.codecs.mpeg12.MPEGUtil.nextSegment;
 
 import java.io.IOException;
-import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,21 +14,13 @@ import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.encode.ConstantRateControl;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
-import org.jcodec.codecs.mpeg12.Mpeg2Thumb2x2;
-import org.jcodec.codecs.mpeg12.Mpeg2Thumb4x4;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
-import org.jcodec.common.VideoDecoder;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
-import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,18 +33,19 @@ import org.jcodec.scale.Transform;
  */
 public class Mpeg2AVCTrack implements VirtualTrack {
 
-    private static final int TARGET_RATE = 1024;
+    public static final int TARGET_RATE = 1024;
     private int frameSize;
     protected VirtualTrack src;
     private SampleEntry se;
-    private ThreadLocal<Transcoder> transcoders = new ThreadLocal<Transcoder>();
-    private int mbW;
-    private int mbH;
-    private int scaleFactor;
-    private int thumbWidth;
-    private int thumbHeight;
+    private ThreadLocal<MPEGToAVCTranscoder> transcoders = new ThreadLocal<MPEGToAVCTranscoder>();
+    int mbW;
+    int mbH;
+    int scaleFactor;
+    int thumbWidth;
+    int thumbHeight;
     private GOP gop;
     private GOP prevGop;
+    private VirtualPacket nextPacket;
 
     protected void checkFourCC(VirtualTrack srcTrack) {
         String fourcc = srcTrack.getSampleEntry().getFourcc();
@@ -65,24 +57,14 @@ public class Mpeg2AVCTrack implements VirtualTrack {
         return frameDim.getWidth() >= 960 ? 2 : (frameDim.getWidth() > 480 ? 1 : 0);
     }
 
-    protected VideoDecoder getDecoder(int scaleFactor) {
-        switch (scaleFactor) {
-        case 2:
-            return new Mpeg2Thumb2x2();
-        case 1:
-            return new Mpeg2Thumb4x4();
-        case 0:
-            return new MPEGDecoder();
-        default:
-            throw new IllegalArgumentException("Unsupported scale factor: " + scaleFactor);
-        }
-    }
-
-    public Mpeg2AVCTrack(VirtualTrack src, Size frameDim) {
+    public Mpeg2AVCTrack(VirtualTrack src) throws IOException {
         checkFourCC(src);
         this.src = src;
         ConstantRateControl rc = new ConstantRateControl(TARGET_RATE);
         H264Encoder encoder = new H264Encoder(rc);
+
+        nextPacket = src.nextPacket();
+        Size frameDim = MPEGDecoder.getSize(nextPacket.getData());
 
         scaleFactor = selectScaleFactor(frameDim);
         thumbWidth = frameDim.getWidth() >> scaleFactor;
@@ -107,8 +89,6 @@ public class Mpeg2AVCTrack implements VirtualTrack {
 
     @Override
     public VirtualPacket nextPacket() throws IOException {
-        VirtualPacket nextPacket = src.nextPacket();
-
         if (nextPacket == null)
             return null;
 
@@ -119,7 +99,11 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                 prevGop.setNextGop(gop);
         }
 
-        return gop.addPacket(nextPacket);
+        VirtualPacket ret = gop.addPacket(nextPacket);
+
+        nextPacket = src.nextPacket();
+
+        return ret;
     }
 
     private class GOP {
@@ -148,48 +132,55 @@ public class Mpeg2AVCTrack implements VirtualTrack {
             if (data != null)
                 return;
 
-//            System.out.println("Transcoding GOP: " + frameNo);
-
+            // System.out.println("Transcoding GOP: " + frameNo);
             data = new ByteBuffer[packets.size()];
-            Transcoder t = transcoders.get();
-            if (t == null) {
-                t = new Transcoder();
-                transcoders.set(t);
-            }
-            carryLeadingBOver();
+            for (int tr = 0; tr < 2; tr++) {
+                try {
+                    MPEGToAVCTranscoder t = transcoders.get();
+                    if (t == null) {
+                        t = createTranscoder(scaleFactor);
+                        transcoders.set(t);
+                    }
+                    carryLeadingBOver();
 
-            double[] pts = collectPts(packets);
+                    double[] pts = collectPts(packets);
 
-            for (int numRefs = 0, i = 0; i < packets.size(); i++) {
-                VirtualPacket pkt = packets.get(i);
-                ByteBuffer pktData = pkt.getData();
-                int picType = getPicType(pktData.duplicate());
-                if (picType != PictureHeader.BiPredictiveCoded) {
-                    ++numRefs;
-                } else if (numRefs < 2) {
-                    continue;
-                }
-                ByteBuffer buf = ByteBuffer.allocate(frameSize);
-                data[i] = t.transcodeFrame(pktData, buf, i == 0, binarySearch(pts, pkt.getPts()));
-            }
+                    for (int numRefs = 0, i = 0; i < packets.size(); i++) {
+                        VirtualPacket pkt = packets.get(i);
+                        ByteBuffer pktData = pkt.getData();
+                        int picType = getPicType(pktData.duplicate());
+                        if (picType != PictureHeader.BiPredictiveCoded) {
+                            ++numRefs;
+                        } else if (numRefs < 2) {
+                            continue;
+                        }
+                        ByteBuffer buf = ByteBuffer.allocate(frameSize);
+                        data[i] = t.transcodeFrame(pktData, buf, i == 0, binarySearch(pts, pkt.getPts()));
+                    }
 
-            if (nextGop != null) {
-                nextGop.leadingB = new ArrayList<ByteBuffer>();
+                    if (nextGop != null) {
+                        nextGop.leadingB = new ArrayList<ByteBuffer>();
 
-                pts = collectPts(nextGop.packets);
+                        pts = collectPts(nextGop.packets);
 
-                for (int numRefs = 0, i = 0; i < nextGop.packets.size(); i++) {
-                    VirtualPacket pkt = nextGop.packets.get(i);
-                    ByteBuffer pktData = pkt.getData();
+                        for (int numRefs = 0, i = 0; i < nextGop.packets.size(); i++) {
+                            VirtualPacket pkt = nextGop.packets.get(i);
+                            ByteBuffer pktData = pkt.getData();
 
-                    int picType = getPicType(pktData.duplicate());
-                    if (picType != PictureHeader.BiPredictiveCoded)
-                        ++numRefs;
-                    if (numRefs >= 2)
-                        break;
+                            int picType = getPicType(pktData.duplicate());
+                            if (picType != PictureHeader.BiPredictiveCoded)
+                                ++numRefs;
+                            if (numRefs >= 2)
+                                break;
 
-                    ByteBuffer buf = ByteBuffer.allocate(frameSize);
-                    nextGop.leadingB.add(t.transcodeFrame(pktData, buf, i == 0, binarySearch(pts, pkt.getPts())));
+                            ByteBuffer buf = ByteBuffer.allocate(frameSize);
+                            nextGop.leadingB
+                                    .add(t.transcodeFrame(pktData, buf, i == 0, binarySearch(pts, pkt.getPts())));
+                        }
+                    }
+                    break;
+                } catch (Throwable t) {
+                    System.out.println("Error transcoding gop: " + t.getMessage() + ", retrying.");
                 }
             }
         }
@@ -218,6 +209,10 @@ public class Mpeg2AVCTrack implements VirtualTrack {
             }
             return data[i];
         }
+    }
+
+    protected MPEGToAVCTranscoder createTranscoder(int scaleFactor) {
+        return new MPEGToAVCTranscoder(scaleFactor);
     }
 
     public static int getPicType(ByteBuffer buf) {
@@ -251,50 +246,6 @@ public class Mpeg2AVCTrack implements VirtualTrack {
         @Override
         public ByteBuffer getData() throws IOException {
             return gop.getData(index);
-        }
-    }
-
-    class Transcoder {
-        private VideoDecoder decoder;
-        private H264Encoder encoder;
-        private Picture pic0;
-        private Picture pic1;
-        private Transform transform;
-        private ConstantRateControl rc;
-
-        public Transcoder() {
-            rc = new ConstantRateControl(TARGET_RATE);
-            this.decoder = getDecoder(scaleFactor);
-            this.encoder = new H264Encoder(rc);
-            pic0 = Picture.create(mbW << 4, (mbH + 1) << 4, ColorSpace.YUV444);
-        }
-
-        public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst, boolean iframe, int poc) throws IOException {
-            if (src == null)
-                return null;
-            Picture decoded = decoder.decodeFrame(src, pic0.getData());
-            if (pic1 == null) {
-                pic1 = Picture.create(decoded.getWidth(), decoded.getHeight(), encoder.getSupportedColorSpaces()[0]);
-                transform = ColorUtil.getTransform(decoded.getColor(), encoder.getSupportedColorSpaces()[0]);
-            }
-            transform.transform(decoded, pic1);
-            pic1.setCrop(new Rect(0, 0, thumbWidth, thumbHeight));
-            int rate = TARGET_RATE;
-            do {
-                try {
-                    encoder.encodeFrame(pic1, dst, iframe, poc);
-                    break;
-                } catch (BufferOverflowException ex) {
-                    System.out.println("Abandon frame!!!");
-                    rate -= 10;
-                    rc.setRate(rate);
-                }
-            } while (rate > 10);
-            rc.setRate(TARGET_RATE);
-
-            H264Utils.encodeMOVPacket(dst);
-            
-            return dst;
         }
     }
 

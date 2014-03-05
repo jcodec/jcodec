@@ -8,13 +8,13 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.model.Packet;
 
 public interface MPEGDemuxer {
-    List<? extends Track> getTracks();
-    List<? extends Track> getVideoTracks();
-    List<? extends Track> getAudioTracks();
+    List<? extends MPEGDemuxerTrack> getTracks();
+    List<? extends MPEGDemuxerTrack> getVideoTracks();
+    List<? extends MPEGDemuxerTrack> getAudioTracks();
     
     void seekByte(long offset) throws IOException;
 
-    static interface Track {
+    public static interface MPEGDemuxerTrack {
         Packet nextFrame(ByteBuffer buf) throws IOException;
         DemuxerTrackMeta getMeta();
         void ignore();

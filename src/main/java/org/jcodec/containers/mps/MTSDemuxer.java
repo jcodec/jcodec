@@ -64,15 +64,15 @@ public class MTSDemuxer implements MPEGDemuxer {
         psDemuxer = new MPSDemuxer(this.tsChannel);
     }
 
-    public List<? extends Track> getTracks() {
+    public List<? extends MPEGDemuxerTrack> getTracks() {
         return psDemuxer.getTracks();
     }
 
-    public List<? extends Track> getVideoTracks() {
+    public List<? extends MPEGDemuxerTrack> getVideoTracks() {
         return psDemuxer.getVideoTracks();
     }
 
-    public List<? extends Track> getAudioTracks() {
+    public List<? extends MPEGDemuxerTrack> getAudioTracks() {
         return psDemuxer.getAudioTracks();
     }
 

@@ -93,7 +93,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
     }
 
-    public abstract class BaseTrack implements MPEGDemuxer.Track {
+    public abstract class BaseTrack implements MPEGDemuxer.MPEGDemuxerTrack {
         protected int streamId;
         protected List<PESPacket> pending = new ArrayList<PESPacket>();
 
@@ -347,22 +347,22 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 || streamId == $(PRIVATE_2);
     }
 
-    public List<Track> getTracks() {
-        return new ArrayList<Track>(streams.values());
+    public List<MPEGDemuxerTrack> getTracks() {
+        return new ArrayList<MPEGDemuxerTrack>(streams.values());
     }
 
-    public List<Track> getVideoTracks() {
+    public List<MPEGDemuxerTrack> getVideoTracks() {
         return getTracks(VIDEO_MIN, VIDEO_MAX);
     }
 
-    public List<Track> getAudioTracks() {
+    public List<MPEGDemuxerTrack> getAudioTracks() {
         return getTracks(AUDIO_MIN, AUDIO_MAX);
     }
 
-    private List<Track> getTracks(int min, int max) {
+    private List<MPEGDemuxerTrack> getTracks(int min, int max) {
         min &= 0xff;
         max &= 0xff;
-        List<Track> result = new ArrayList<Track>();
+        List<MPEGDemuxerTrack> result = new ArrayList<MPEGDemuxerTrack>();
         for (BaseTrack p : streams.values()) {
             if (p.streamId >= min && p.streamId <= max)
                 result.add(p);

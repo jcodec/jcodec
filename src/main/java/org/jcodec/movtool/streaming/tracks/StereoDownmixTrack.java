@@ -77,6 +77,18 @@ public class StereoDownmixTrack implements VirtualTrack {
         return solo;
     }
     
+    public void soloAll() {
+        for(int i = 0; i < solo.length; i++)
+            for(int j = 0; j < solo[i].length; j++)
+                solo[i][j] = true;
+    }
+    
+    public void muteAll() {
+        for(int i = 0; i < solo.length; i++)
+            for(int j = 0; j < solo[i].length; j++)
+                solo[i][j] = false;
+    }
+    
     public void bulkSetSolo(boolean[][] solo) {
         this.solo = solo;
         downmix = new DownmixHelper(sampleEntries, FRAMES_IN_OUT_PACKET, solo);

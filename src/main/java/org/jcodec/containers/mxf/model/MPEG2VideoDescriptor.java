@@ -60,7 +60,7 @@ public class MPEG2VideoDescriptor extends CDCIEssenceDescriptor {
                 maxGOP = _bb.getShort();
                 break;
             case 0x8007:
-                bPictureCount = _bb.getShort();
+                bPictureCount = (short)(_bb.get() & 0xff);
                 break;
             case 0x8008:
                 bitRate = _bb.getInt();

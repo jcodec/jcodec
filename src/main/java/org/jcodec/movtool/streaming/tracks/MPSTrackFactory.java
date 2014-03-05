@@ -1,5 +1,6 @@
 package org.jcodec.movtool.streaming.tracks;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -7,12 +8,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.RunLength;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -27,38 +33,42 @@ import org.jcodec.movtool.streaming.VirtualTrack;
  */
 public class MPSTrackFactory {
 
-    private int[] pesTokens;
-    private short[] pesRLE;
-    private Map<Integer, Stream> streams;
+    private Map<Integer, Stream> tracks;
     private FilePool fp;
+    private long[] pesTokens;
+    private int[] streams;
 
     public MPSTrackFactory(ByteBuffer index, FilePool fp) throws IOException {
         this.fp = fp;
-        streams = new HashMap<Integer, Stream>();
+        tracks = new HashMap<Integer, Stream>();
 
-        int pesCnt = index.getInt();
-        pesTokens = new int[pesCnt];
-        pesRLE = new short[pesCnt];
+        readIndex(index);
+    }
 
-        for (int i = 0; i < pesCnt; i++) {
-            byte b0 = index.get();
-            pesRLE[i] = (short) ((b0 & 0x80) != 0 ? (((b0 & 0x7f) << 8) | (index.get() & 0xff)) + 1 : (b0 & 0xff) + 1);
-            pesTokens[i] = index.getInt();
-        }
+    protected void readIndex(ByteBuffer index) throws IOException {
+        int nTokens = index.getInt();
+        pesTokens = new long[nTokens];
+        for (int i = 0; i < pesTokens.length; i++)
+            pesTokens[i] = index.getLong();
+        streams = RunLength.Integer.parse(index).flattern();
 
         while (index.hasRemaining()) {
             int stream = index.get() & 0xff;
-            getStream(streams, stream).parseIndex(index);
+            getStream(tracks, stream).parseIndex(index);
         }
     }
 
     private Stream getStream(Map<Integer, Stream> streams, int streamId) {
         Stream stream = streams.get(streamId);
         if (stream == null) {
-            stream = new Stream(streamId);
+            stream = createStream(streamId);
             streams.put(streamId, stream);
         }
         return stream;
+    }
+
+    protected Stream createStream(int streamId) {
+        return new Stream(streamId);
     }
 
     public class Stream implements VirtualTrack {
@@ -70,10 +80,9 @@ public class MPSTrackFactory {
         private long duration;
         private int streamId;
         private long fileOff;
-        private int curPesIdx;
+        private int pesIdx;
         private int curFrame;
-        private int curPesSubIdx;
-        private int pesOff;
+        private int offInPayload;
         private ByteBuffer si;
 
         public Stream(int streamId) {
@@ -102,82 +111,85 @@ public class MPSTrackFactory {
 
             long[] seg0 = Arrays.copyOf(fpts, 10);
             Arrays.sort(seg0);
-            
+
             long[] seg1 = new long[10];
             System.arraycopy(fpts, fpts.length - 10, seg1, 0, 10);
             Arrays.sort(seg1);
 
             duration = (seg1[9] - seg0[0] + (fpts.length >> 1)) / fpts.length;
 
-            pesOff = siLen;
-            for (fileOff = 0; streamId(pesTokens[curPesIdx]) != streamId; fileOff += (payLoadSize(pesTokens[curPesIdx]) + leadingSize(pesTokens[curPesIdx]))
-                    * pesRLE[curPesIdx], curPesIdx++)
+            offInPayload = siLen;
+            for (fileOff = 0; streams[pesIdx] != streamId; fileOff += pesLen(pesTokens[pesIdx])
+                    + leadingSize(pesTokens[pesIdx]), pesIdx++)
                 ;
-            fileOff += leadingSize(pesTokens[curPesIdx]);
+            fileOff += leadingSize(pesTokens[pesIdx]);
+
             SeekableByteChannel ch = null;
             try {
                 ch = fp.getChannel();
-                ch.position(fileOff);
-                si = NIOUtils.fetchFrom(ch, siLen);
+                ByteBuffer firstPes = readPes(ch, fileOff, pesLen(pesTokens[pesIdx]), payloadLen(pesTokens[pesIdx]),
+                        pesIdx);
+                si = NIOUtils.read(firstPes, siLen);
             } finally {
                 NIOUtils.closeQuietly(ch);
             }
         }
 
-        private int payLoadSize(int token) {
-            return token & 0xffff;
+        protected ByteBuffer readPes(SeekableByteChannel ch, long pesPosition, int pesSize, int payloadSize, int pesIdx)
+                throws IOException {
+            ch.position(pesPosition);
+            ByteBuffer pes = NIOUtils.fetchFrom(ch, pesSize);
+            MPSDemuxer.readPES(pes, 0);
+            return pes;
         }
 
-        private int streamId(int token) {
-            return token >>> 24;
+        private int pesLen(long token) {
+            return (int) ((token >>> 24) & 0xffffff);
         }
 
-        private int leadingSize(int token) {
-            return (token >>> 16) & 0xff;
+        private int payloadLen(long token) {
+            return (int) (token & 0xffffff);
+        }
+
+        private int leadingSize(long token) {
+            return (int) ((token >>> 48) & 0xffff);
         }
 
         @Override
         public VirtualPacket nextPacket() throws IOException {
-            if(curFrame >= fsizes.length)
+            if (curFrame >= fsizes.length)
                 return null;
-            VirtualPacket pkt = new MPSPacket(curPesIdx, curPesSubIdx, pesOff, fileOff, curFrame);
+            VirtualPacket pkt = new MPSPacket(offInPayload, fileOff, curFrame, pesIdx);
 
-            pesOff += fsizes[curFrame];
-            
-            while (pesOff >= payLoadSize(pesTokens[curPesIdx])) {
-                int ps = payLoadSize(pesTokens[curPesIdx]);
-                pesOff -= ps;
-                fileOff += ps;
-                ++curPesSubIdx;
+            offInPayload += fsizes[curFrame];
+
+            while (offInPayload >= payloadLen(pesTokens[pesIdx])) {
+                int ps = payloadLen(pesTokens[pesIdx]);
+                offInPayload -= ps;
+                fileOff += pesLen(pesTokens[pesIdx]);
+                ++pesIdx;
                 long posShift = 0;
-                if (curPesSubIdx == pesRLE[curPesIdx] && curPesIdx < pesTokens.length - 1) {
-                    curPesIdx++;
-                    curPesSubIdx = 0;
-                    for (; streamId(pesTokens[curPesIdx]) != streamId && curPesIdx < pesTokens.length - 1; curPesIdx++)
-                        posShift += (payLoadSize(pesTokens[curPesIdx]) + leadingSize(pesTokens[curPesIdx]))
-                                * pesRLE[curPesIdx];
-                }
-                fileOff += posShift + leadingSize(pesTokens[curPesIdx]);
+                for (; streams[pesIdx] != streamId; pesIdx++)
+                    posShift += pesLen(pesTokens[pesIdx]) + leadingSize(pesTokens[pesIdx]);
+                fileOff += posShift + leadingSize(pesTokens[pesIdx]);
             }
             curFrame++;
 
             return pkt;
         }
 
-        private class MPSPacket implements VirtualPacket {
+        protected class MPSPacket implements VirtualPacket {
 
-            private int curPesIdx;
-            private int curPesSubIdx;
             private long fileOff;
             private int curFrame;
             private int pesOff;
+            private int pesIdx;
 
-            public MPSPacket(int curPesIdx, int curPesSubIdx, int pesOff, long fileOff, int curFrame) {
-                this.curPesIdx = curPesIdx;
-                this.curPesSubIdx = curPesSubIdx;
+            public MPSPacket(int pesOff, long fileOff, int curFrame, int pesIdx) {
                 this.pesOff = pesOff;
                 this.fileOff = fileOff;
                 this.curFrame = curFrame;
+                this.pesIdx = pesIdx;
             }
 
             @Override
@@ -187,23 +199,25 @@ public class MPSTrackFactory {
                 SeekableByteChannel ch = null;
                 try {
                     ch = fp.getChannel();
-                    ch.position(fileOff);
-                    ByteBuffer pesBuf = NIOUtils.fetchFrom(ch, payLoadSize(pesTokens[curPesIdx]));
+
+                    long curOff = fileOff;
+                    ByteBuffer pesBuf = readPes(ch, curOff, pesLen(pesTokens[pesIdx]), payloadLen(pesTokens[pesIdx]),
+                            pesIdx);
+                    curOff += pesLen(pesTokens[pesIdx]);
+
                     NIOUtils.skip(pesBuf, pesOff);
-//                    System.out.println(String.format("Frame %d: %012x", curFrame, fileOff + pesOff));
                     result.put(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
 
-                    for (int idx = curPesIdx, sidx = curPesSubIdx; result.hasRemaining();) {
-                        ++sidx;
+                    for (int idx = pesIdx; result.hasRemaining();) {
                         long posShift = 0;
-                        if (sidx == pesRLE[idx] && idx < pesTokens.length - 1) {
-                            idx++;
-                            sidx = 0;
-                            for (; streamId(pesTokens[idx]) != streamId && idx < pesTokens.length; idx++)
-                                posShift += (payLoadSize(pesTokens[idx]) + leadingSize(pesTokens[idx])) * pesRLE[idx];
-                        }
-                        ch.position(ch.position() + posShift + leadingSize(pesTokens[idx]));
-                        pesBuf = NIOUtils.fetchFrom(ch, payLoadSize(pesTokens[idx]));
+                        idx++;
+                        for (; streams[idx] != streamId && idx < pesTokens.length; idx++)
+                            posShift += pesLen(pesTokens[idx]) + leadingSize(pesTokens[idx]);
+
+                        pesBuf = readPes(ch, curOff + posShift + leadingSize(pesTokens[idx]), pesLen(pesTokens[idx]),
+                                payloadLen(pesTokens[idx]), idx);
+                        curOff += posShift + leadingSize(pesTokens[idx]) + pesLen(pesTokens[idx]);
+
                         result.put(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
                     }
                     result.flip();
@@ -262,7 +276,45 @@ public class MPSTrackFactory {
         }
     }
 
+    public List<Stream> getVideoStreams() {
+        List<Stream> ret = new ArrayList<Stream>();
+        Set<Entry<Integer, Stream>> entrySet = tracks.entrySet();
+        for (Entry<Integer, Stream> entry : entrySet) {
+            if (MPSDemuxer.videoStream(entry.getKey()))
+                ret.add(entry.getValue());
+        }
+        return ret;
+    }
+
+    public List<Stream> getAudioStreams() {
+        List<Stream> ret = new ArrayList<Stream>();
+        Set<Entry<Integer, Stream>> entrySet = tracks.entrySet();
+        for (Entry<Integer, Stream> entry : entrySet) {
+            if (MPSDemuxer.audioStream(entry.getKey()))
+                ret.add(entry.getValue());
+        }
+        return ret;
+    }
+
     public List<Stream> getStreams() {
-        return new ArrayList<Stream>(streams.values());
+        return new ArrayList<Stream>(tracks.values());
+    }
+
+    public static void main(String[] args) throws IOException {
+        FilePool fp = new FilePool(new File(args[0]), 10);
+        MPSTrackFactory factory = new MPSTrackFactory(NIOUtils.fetchFrom(new File(args[1])), fp);
+        Stream stream = factory.getVideoStreams().get(0);
+        FileChannelWrapper ch = NIOUtils.writableFileChannel(new File(args[2]));
+
+        List<VirtualPacket> pkt = new ArrayList<VirtualPacket>();
+        for (int i = 0; i < 2000; i++) {
+            pkt.add(stream.nextPacket());
+        }
+
+        for (VirtualPacket virtualPacket : pkt) {
+            ch.write(virtualPacket.getData());
+        }
+
+        ch.close();
     }
 }

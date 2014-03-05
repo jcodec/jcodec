@@ -357,4 +357,36 @@ public class NIOUtils {
         }
         return -1;
     }
+
+    public static interface FileReaderListener {
+        void progress(int percentDone);
+    }
+
+    public static abstract class FileReader {
+        private int oldPd;
+
+        protected abstract void data(ByteBuffer data, long filePos);
+
+        public void readFile(File source, int bufferSize, FileReaderListener listener) throws IOException {
+            ByteBuffer buf = ByteBuffer.allocate(bufferSize);
+            SeekableByteChannel ch = null;
+            try {
+                ch = NIOUtils.readableFileChannel(source);
+                long size = ch.size();
+                for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
+                    buf.flip();
+                    data(buf, pos);
+                    buf.flip();
+                    if (listener != null) {
+                        int newPd = (int) (100 * pos / size);
+                        if (newPd != oldPd)
+                            listener.progress(newPd);
+                        oldPd = newPd;
+                    }
+                }
+            } finally {
+                NIOUtils.closeQuietly(ch);
+            }
+        }
+    }
 }

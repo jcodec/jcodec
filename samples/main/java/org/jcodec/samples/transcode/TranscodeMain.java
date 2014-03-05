@@ -88,7 +88,7 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mps.MPEGDemuxer;
-import org.jcodec.containers.mps.MPEGDemuxer.Track;
+import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.scale.AWTUtil;
@@ -533,7 +533,7 @@ public class TranscodeMain {
             MP4Muxer muxer = new MP4Muxer(sink, Brand.MP4);
 
             Set<Integer> programs = MTSDemuxer.getPrograms(fin);
-            MPEGDemuxer.Track[] srcTracks = new MPEGDemuxer.Track[100];
+            MPEGDemuxer.MPEGDemuxerTrack[] srcTracks = new MPEGDemuxer.MPEGDemuxerTrack[100];
             FramesMP4MuxerTrack[] dstTracks = new FramesMP4MuxerTrack[100];
             boolean[] h264 = new boolean[100];
             Packet[] top = new Packet[100];
@@ -544,7 +544,7 @@ public class TranscodeMain {
                 SeekableByteChannel sx = readableFileChannel(in);
                 sources.add(sx);
                 MTSDemuxer demuxer = new MTSDemuxer(sx, guid);
-                for (Track track : demuxer.getTracks()) {
+                for (MPEGDemuxerTrack track : demuxer.getTracks()) {
                     srcTracks[nTracks] = track;
                     DemuxerTrackMeta meta = track.getMeta();
 
@@ -632,8 +632,8 @@ public class TranscodeMain {
 
             H264Decoder decoder = new H264Decoder();
 
-            Track track = demuxer.getVideoTracks().get(0);
-            List<? extends Track> audioTracks = demuxer.getAudioTracks();
+            MPEGDemuxerTrack track = demuxer.getVideoTracks().get(0);
+            List<? extends MPEGDemuxerTrack> audioTracks = demuxer.getAudioTracks();
 
             ByteBuffer buf = ByteBuffer.allocate(1920 * 1088);
             Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV420J);
@@ -884,7 +884,7 @@ public class TranscodeMain {
             mpsDemuxer = new MTSDemuxer(ch, programs.iterator().next());
         } else
             throw new RuntimeException("Unsupported mpeg container");
-        Track videoTrack = mpsDemuxer.getVideoTracks().get(0);
+        MPEGDemuxerTrack videoTrack = mpsDemuxer.getVideoTracks().get(0);
         if (videoTrack == null) {
             System.out.println("Video track not found");
             return;
