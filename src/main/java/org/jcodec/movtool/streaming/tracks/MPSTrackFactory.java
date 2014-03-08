@@ -1,5 +1,7 @@
 package org.jcodec.movtool.streaming.tracks;
 
+import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -19,6 +21,7 @@ import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mps.MPSDemuxer;
+import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -139,7 +142,7 @@ public class MPSTrackFactory {
                 throws IOException {
             ch.position(pesPosition);
             ByteBuffer pes = NIOUtils.fetchFrom(ch, pesSize);
-            MPSDemuxer.readPES(pes, 0);
+            readPESHeader(pes, 0);
             return pes;
         }
 
@@ -163,15 +166,17 @@ public class MPSTrackFactory {
 
             offInPayload += fsizes[curFrame];
 
-            while (offInPayload >= payloadLen(pesTokens[pesIdx])) {
+            while (pesIdx < streams.length && offInPayload >= payloadLen(pesTokens[pesIdx])) {
                 int ps = payloadLen(pesTokens[pesIdx]);
                 offInPayload -= ps;
                 fileOff += pesLen(pesTokens[pesIdx]);
                 ++pesIdx;
-                long posShift = 0;
-                for (; streams[pesIdx] != streamId; pesIdx++)
-                    posShift += pesLen(pesTokens[pesIdx]) + leadingSize(pesTokens[pesIdx]);
-                fileOff += posShift + leadingSize(pesTokens[pesIdx]);
+                if (pesIdx < streams.length) {
+                    long posShift = 0;
+                    for (; streams[pesIdx] != streamId; pesIdx++)
+                        posShift += pesLen(pesTokens[pesIdx]) + leadingSize(pesTokens[pesIdx]);
+                    fileOff += posShift + leadingSize(pesTokens[pesIdx]);
+                }
             }
             curFrame++;
 
@@ -280,7 +285,7 @@ public class MPSTrackFactory {
         List<Stream> ret = new ArrayList<Stream>();
         Set<Entry<Integer, Stream>> entrySet = tracks.entrySet();
         for (Entry<Integer, Stream> entry : entrySet) {
-            if (MPSDemuxer.videoStream(entry.getKey()))
+            if (MPSUtils.videoStream(entry.getKey()))
                 ret.add(entry.getValue());
         }
         return ret;
@@ -290,7 +295,7 @@ public class MPSTrackFactory {
         List<Stream> ret = new ArrayList<Stream>();
         Set<Entry<Integer, Stream>> entrySet = tracks.entrySet();
         for (Entry<Integer, Stream> entry : entrySet) {
-            if (MPSDemuxer.audioStream(entry.getKey()))
+            if (MPSUtils.audioStream(entry.getKey()))
                 ret.add(entry.getValue());
         }
         return ret;

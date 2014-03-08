@@ -1,5 +1,8 @@
 package org.jcodec.containers.mps;
 
+import static org.jcodec.containers.mps.MPSUtils.mediaStream;
+import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -20,6 +23,10 @@ import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 public class MTSIndexer {
     public static final int BUFFER_SIZE = 188 << 9;
     private MTSAnalyser[] indexers;
+
+    public void index(File source, NIOUtils.FileReaderListener listener) throws IOException {
+        index(source, listener, MTSUtils.getMediaPids(source));
+    }
 
     public void index(File source, NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
         indexers = new MTSAnalyser[targetGuids.length];
@@ -97,9 +104,10 @@ public class MTSIndexer {
         }
 
         protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
-            pesBuffer.flip();
+            if (!mediaStream(stream))
+                return;
             System.out.println(String.format("PES: %08x, %d", start, pesLen));
-            PESPacket pesHeader = MPSDemuxer.readPES(pesBuffer, start);
+            PESPacket pesHeader = readPESHeader(pesBuffer, start);
             int leadingTsPkt = 0;// pesBuffer.position();
             if (predFileStartInTsPkt != start) {
                 leadingTsPkt = (int) (start / 188 - predFileStartInTsPkt);
@@ -108,7 +116,6 @@ public class MTSIndexer {
             int tsPktInPes = (int) (predFileStartInTsPkt - start / 188);
             savePesMeta(stream, leadingTsPkt, tsPktInPes, pesBuffer.remaining());
             getAnalyser(stream).pkt(pesBuffer, pesHeader);
-            pesBuffer.clear();
         }
     }
 
@@ -120,7 +127,7 @@ public class MTSIndexer {
             public void progress(int percentDone) {
                 System.out.println(percentDone);
             }
-        }, MTSUtils.getMediaPids(src));
+        });
         NIOUtils.writeTo(indexer.serialize(), new File(args[1]));
     }
 }

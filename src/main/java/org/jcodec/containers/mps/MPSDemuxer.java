@@ -3,6 +3,10 @@ package org.jcodec.containers.mps;
 import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
 import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
 import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
+import static org.jcodec.containers.mps.MPSUtils.audioStream;
+import static org.jcodec.containers.mps.MPSUtils.psMarker;
+import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+import static org.jcodec.containers.mps.MPSUtils.videoStream;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -31,14 +35,6 @@ import org.jcodec.common.model.TapeTimecode;
  */
 public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     private static final int BUFFER_SIZE = 0x100000;
-    public static final int VIDEO_MIN = 0x1E0;
-    public static final int VIDEO_MAX = 0x1EF;
-
-    public static final int AUDIO_MIN = 0x1C0;
-    public static final int AUDIO_MAX = 0x1DF;
-
-    public static final int PRIVATE_1 = 0x1BD;
-    public static final int PRIVATE_2 = 0x1BF;
 
     private Map<Integer, BaseTrack> streams = new HashMap<Integer, BaseTrack>();
     private SeekableByteChannel channel;
@@ -119,7 +115,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         @Override
         public void ignore() {
-            if(pending == null)
+            if (pending == null)
                 return;
             for (PESPacket pesPacket : pending) {
                 putBack(pesPacket.data);
@@ -248,16 +244,16 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     public PESPacket nextPacket(ByteBuffer out) throws IOException {
         ByteBuffer dup = out.duplicate();
 
-        while (curMarker < PRIVATE_1 || curMarker > VIDEO_MAX) {
+        while (!psMarker(curMarker)) {
             if (!skipToMarker())
                 return null;
         }
 
         ByteBuffer fork = dup.duplicate();
         readToNextMarker(dup);
-        PESPacket pkt = readPES(fork, curPos());
+        PESPacket pkt = readPESHeader(fork, curPos());
         if (pkt.length == 0) {
-            while ((curMarker < PRIVATE_1 || curMarker > VIDEO_MAX) && readToNextMarker(dup))
+            while (!psMarker(curMarker) && readToNextMarker(dup))
                 ;
         } else {
             read(dup, pkt.length - dup.position() + 6);
@@ -267,104 +263,25 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         return pkt;
     }
 
-    public static PESPacket readPES(ByteBuffer iss, long pos) {
-        int streamId = iss.getInt() & 0xff;
-        int len = iss.getShort();
-        int b0 = iss.get() & 0xff;
-        if ((b0 & 0xc0) == 0x80)
-            return mpeg2Pes(b0, len, streamId, iss, pos);
-        else
-            return mpeg1Pes(b0, len, streamId, iss, pos);
-    }
-
-    public static PESPacket mpeg1Pes(int b0, int len, int streamId, ByteBuffer is, long pos) {
-        int c = b0;
-        while (c == 0xff) {
-            c = is.get() & 0xff;
-        }
-
-        if ((c & 0xc0) == 0x40) {
-            is.get();
-            c = is.get() & 0xff;
-        }
-        long pts = -1, dts = -1;
-        if ((c & 0xf0) == 0x20) {
-            pts = readTs(is, c);
-        } else if ((c & 0xf0) == 0x30) {
-            pts = readTs(is, c);
-            dts = readTs(is);
-        } else {
-            if (c != 0x0f)
-                throw new RuntimeException("Invalid data");
-        }
-
-        return new PESPacket(null, pts, streamId, len, pos);
-    }
-
-    public static long readTs(ByteBuffer is, int c) {
-        return (((long) c & 0x0e) << 29) | ((is.get() & 0xff) << 22) | (((is.get() & 0xff) >> 1) << 15)
-                | ((is.get() & 0xff) << 7) | ((is.get() & 0xff) >> 1);
-    }
-
-    public static PESPacket mpeg2Pes(int b0, int len, int streamId, ByteBuffer is, long pos) {
-        int flags1 = b0;
-        int flags2 = is.get() & 0xff;
-        int header_len = is.get() & 0xff;
-
-        long pts = -1, dts = -1;
-        if ((flags2 & 0xc0) == 0x80) {
-            pts = readTs(is);
-            NIOUtils.skip(is, header_len - 5);
-        } else if ((flags2 & 0xc0) == 0xc0) {
-            pts = readTs(is);
-            dts = readTs(is);
-            NIOUtils.skip(is, header_len - 10);
-        } else
-            NIOUtils.skip(is, header_len);
-
-        return new PESPacket(null, pts, streamId, len, pos);
-    }
-
-    public static long readTs(ByteBuffer is) {
-        return (((long) is.get() & 0x0e) << 29) | ((is.get() & 0xff) << 22) | (((is.get() & 0xff) >> 1) << 15)
-                | ((is.get() & 0xff) << 7) | ((is.get() & 0xff) >> 1);
-    }
-
-    static int $(int marker) {
-        return marker & 0xff;
-    }
-
-    public static final boolean mediaStream(int streamId) {
-        return (streamId >= $(AUDIO_MIN) && streamId <= $(VIDEO_MAX) || streamId == $(PRIVATE_1) || streamId == $(PRIVATE_2));
-    }
-
-    public static final boolean videoStream(int streamId) {
-        return streamId >= $(VIDEO_MIN) && streamId <= $(VIDEO_MAX);
-    }
-
-    public static boolean audioStream(Integer streamId) {
-        return streamId >= $(AUDIO_MIN) && streamId <= $(AUDIO_MAX) || streamId == $(PRIVATE_1)
-                || streamId == $(PRIVATE_2);
-    }
+    
 
     public List<MPEGDemuxerTrack> getTracks() {
         return new ArrayList<MPEGDemuxerTrack>(streams.values());
     }
 
     public List<MPEGDemuxerTrack> getVideoTracks() {
-        return getTracks(VIDEO_MIN, VIDEO_MAX);
+        List<MPEGDemuxerTrack> result = new ArrayList<MPEGDemuxerTrack>();
+        for (BaseTrack p : streams.values()) {
+            if (videoStream(p.streamId))
+                result.add(p);
+        }
+        return result;
     }
 
     public List<MPEGDemuxerTrack> getAudioTracks() {
-        return getTracks(AUDIO_MIN, AUDIO_MAX);
-    }
-
-    private List<MPEGDemuxerTrack> getTracks(int min, int max) {
-        min &= 0xff;
-        max &= 0xff;
         List<MPEGDemuxerTrack> result = new ArrayList<MPEGDemuxerTrack>();
         for (BaseTrack p : streams.values()) {
-            if (p.streamId >= min && p.streamId <= max)
+            if (audioStream(p.streamId))
                 result.add(p);
         }
         return result;
@@ -414,7 +331,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             if (marker < 0x100 || marker > 0x1ff)
                 continue;
 
-            if (marker >= VIDEO_MIN && marker <= VIDEO_MAX) {
+            if (MPSUtils.videoMarker(marker)) {
                 if (inVideoPes)
                     break;
                 else

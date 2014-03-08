@@ -1,5 +1,7 @@
 package org.jcodec.movtool.streaming.tracks;
 
+import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,6 +13,7 @@ import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mps.MPSDemuxer;
+import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.tracks.MPSTrackFactory.Stream;
 
@@ -81,7 +84,7 @@ public class MTSTrackFactory {
                     }
                 }
                 dst.flip();
-                MPSDemuxer.readPES(dst, 0);
+                readPESHeader(dst, 0);
                 dst.limit(dst.position() + payloadSize);
                 return dst;
             }

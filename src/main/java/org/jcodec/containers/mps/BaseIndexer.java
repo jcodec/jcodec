@@ -7,7 +7,6 @@ import java.util.Map;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.RunLength;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 
@@ -20,79 +19,11 @@ import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
  * @author The JCodec project
  * 
  */
-public abstract class BaseIndexer {
-
-    private int marker = -1;
-    private int lenFieldLeft;
-    private int pesLen;
-    private long pesFileStart = -1;
-    private int stream;
-    private boolean pes;
-    private int pesLeft;
-
-    private ByteBuffer pesBuffer = ByteBuffer.allocate(1 << 21);
+public abstract class BaseIndexer extends MPSUtils.PESReader {
 
     private Map<Integer, BaseAnalyser> analyzers = new HashMap<Integer, BaseAnalyser>();
     private LongArrayList tokens = new LongArrayList();
     private RunLength.Integer streams = new RunLength.Integer();
-
-    protected abstract void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream);
-
-    protected void analyseBuffer(ByteBuffer buf, long pos) {
-        int init = buf.position();
-        while (buf.hasRemaining()) {
-            if (pesLeft > 0) {
-                int toRead = Math.min(buf.remaining(), pesLeft);
-                pesBuffer.put(NIOUtils.read(buf, toRead));
-                pesLeft -= toRead;
-
-                if (pesLeft == 0) {
-                    long filePos = pos + buf.position() - init;
-                    pes(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
-                    pesFileStart = -1;
-                    pes = false;
-                    stream = -1;
-                }
-                continue;
-            }
-            int bt = buf.get() & 0xff;
-            if (pes)
-                pesBuffer.put((byte) (marker >>> 24));
-            marker = (marker << 8) | bt;
-            if (marker == 0x1bd || marker == 0x1bf || marker >= 0x1c0 && marker <= 0x1ef) {
-                long filePos = pos + buf.position() - init - 4;
-                if (pes)
-                    pes(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
-                pesFileStart = filePos;
-
-                pes = true;
-                stream = marker & 0xff;
-                lenFieldLeft = 2;
-                pesLen = 0;
-            } else if (marker >= 0x1b9 && marker <= 0x1ff) {
-                if (pes) {
-                    long filePos = pos + buf.position() - init - 4;
-                    pes(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
-                }
-                pesFileStart = -1;
-                pes = false;
-                stream = -1;
-            } else if (lenFieldLeft > 0) {
-                pesLen = (pesLen << 8) | bt;
-                lenFieldLeft--;
-                if (lenFieldLeft == 0) {
-                    pesLeft = pesLen;
-                    if (pesLen != 0) {
-                        pesBuffer.put((byte) (marker >>> 24));
-                        pesBuffer.put((byte) ((marker >>> 16) & 0xff));
-                        pesBuffer.put((byte) ((marker >>> 8) & 0xff));
-                        pesBuffer.put((byte) (marker & 0xff));
-                        marker = -1;
-                    }
-                }
-            }
-        }
-    }
 
     public int estimateSize() {
         int sizeEstimate = (tokens.size() << 3) + streams.estimateSize() + 128;

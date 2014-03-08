@@ -1,5 +1,8 @@
 package org.jcodec.containers.mps;
 
+import static org.jcodec.containers.mps.MPSUtils.mediaStream;
+import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,8 +31,9 @@ public class MPSIndexer extends BaseIndexer {
     }
 
     protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
-        pesBuffer.flip();
-        PESPacket pesHeader = MPSDemuxer.readPES(pesBuffer, start);
+        if (!mediaStream(stream))
+            return;
+        PESPacket pesHeader = readPESHeader(pesBuffer, start);
         int leading = 0;
         if (predFileStart != start) {
             leading += (int) (start - predFileStart);
@@ -37,10 +41,9 @@ public class MPSIndexer extends BaseIndexer {
         predFileStart = start + pesLen;
         savePesMeta(stream, leading, pesLen, pesBuffer.remaining());
         getAnalyser(stream).pkt(pesBuffer, pesHeader);
-        pesBuffer.clear();
     }
-    
-    private ByteBuffer serialize() {
+
+    public ByteBuffer serialize() {
         ByteBuffer buf = ByteBuffer.allocate(estimateSize());
         serializeTo(buf);
         buf.flip();

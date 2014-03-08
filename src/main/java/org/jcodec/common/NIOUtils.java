@@ -389,4 +389,11 @@ public class NIOUtils {
             }
         }
     }
+
+	public static ByteBuffer cloneBuffer(ByteBuffer pesBuffer) {
+		ByteBuffer res = ByteBuffer.allocate(pesBuffer.remaining());
+		res.put(pesBuffer.duplicate());
+		res.clear();
+		return res;
+	}
 }
