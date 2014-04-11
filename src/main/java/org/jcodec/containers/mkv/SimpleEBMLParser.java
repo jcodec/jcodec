@@ -20,6 +20,13 @@ import org.jcodec.containers.mkv.ebml.BinaryElement;
 import org.jcodec.containers.mkv.ebml.Element;
 import org.jcodec.containers.mkv.ebml.MasterElement;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ *
+ */
 public class SimpleEBMLParser {
 
         private FileChannel is;

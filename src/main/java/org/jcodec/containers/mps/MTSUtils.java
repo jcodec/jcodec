@@ -1,5 +1,7 @@
 package org.jcodec.containers.mps;
 
+import static org.jcodec.common.NIOUtils.getRel;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,6 +13,7 @@ import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -133,13 +136,26 @@ public class MTSUtils {
         }
     };
 
-    public static class PMT {
+    public static class Section {
+        private int sectionNumber;
+        private int lastSectionNumber;
+
+        public int getSectionNumber() {
+            return sectionNumber;
+        }
+
+        public int getLastSectionNumber() {
+            return lastSectionNumber;
+        }
+    }
+
+    public static class PMT extends Section {
 
         private int pcrPid;
         private List<Tag> tags;
-        private List<Stream> streams;
+        private List<PMTStream> streams;
 
-        public PMT(int pcrPid, List<Tag> tags, List<Stream> streams) {
+        public PMT(int pcrPid, List<Tag> tags, List<PMTStream> streams) {
             this.pcrPid = pcrPid;
             this.tags = tags;
             this.streams = streams;
@@ -153,7 +169,7 @@ public class MTSUtils {
             return tags;
         }
 
-        public List<Stream> getStreams() {
+        public List<PMTStream> getStreams() {
             return streams;
         }
     }
@@ -176,16 +192,16 @@ public class MTSUtils {
         }
     }
 
-    public static class Stream {
+    public static class PMTStream {
         private int streamTypeTag;
         private int pid;
-        private ByteBuffer info;
+        private List<MPEGMediaDescriptor> descriptors;
         private StreamType streamType;
 
-        public Stream(int streamTypeTag, int pid, ByteBuffer info) {
+        public PMTStream(int streamTypeTag, int pid, List<MPEGMediaDescriptor> descriptors) {
             this.streamTypeTag = streamTypeTag;
             this.pid = pid;
-            this.info = info.duplicate();
+            this.descriptors = descriptors;
             this.streamType = StreamType.fromTag(streamTypeTag);
         }
 
@@ -201,8 +217,8 @@ public class MTSUtils {
             return pid;
         }
 
-        public ByteBuffer getInfo() {
-            return info;
+        public List<MPEGMediaDescriptor> getDesctiptors() {
+            return descriptors;
         }
     }
 
@@ -230,7 +246,7 @@ public class MTSUtils {
         int programInfoLength = w2 & 0xfff;
 
         List<Tag> tags = parseTags(NIOUtils.read(data, programInfoLength));
-        List<Stream> streams = new ArrayList<Stream>();
+        List<PMTStream> streams = new ArrayList<PMTStream>();
         while (data.remaining() > 4) {
             int streamType = data.get() & 0xff;
             int wn = data.getShort() & 0xffff;
@@ -240,7 +256,8 @@ public class MTSUtils {
 
             int wn1 = data.getShort() & 0xffff;
             int esInfoLength = wn1 & 0xfff;
-            streams.add(new Stream(streamType, elementaryPid, NIOUtils.read(data, esInfoLength)));
+            ByteBuffer read = NIOUtils.read(data, esInfoLength);
+            streams.add(new PMTStream(streamType, elementaryPid, MPSUtils.parseDescriptors(read)));
         }
 
         return new PMT(pcrPid, tags, streams);
@@ -280,7 +297,7 @@ public class MTSUtils {
         return tags;
     }
 
-    public static List<Stream> getPrograms(File src) throws IOException {
+    public static List<PMTStream> getPrograms(File src) throws IOException {
         SeekableByteChannel ch = null;
         try {
             ch = NIOUtils.readableFileChannel(src);
@@ -290,7 +307,7 @@ public class MTSUtils {
         }
     }
 
-    public static List<Stream> getProgramGuids(SeekableByteChannel in) throws IOException {
+    public static List<PMTStream> getProgramGuids(SeekableByteChannel in) throws IOException {
         PMTExtractor ex = new PMTExtractor();
         ex.readTsFile(in);
         PMT pmt = ex.getPmt();
@@ -340,7 +357,8 @@ public class MTSUtils {
                     if ((b0 & 0x20) != 0) {
                         NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
                     }
-                    if (payloadStart == 1) {
+                    boolean sectionSyntax = payloadStart == 1 && (getRel(tsBuf, getRel(tsBuf, 0) + 2) & 0x80) == 0x80;
+                    if (sectionSyntax) {
                         NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
                     }
                     if (!onPkt(guid, payloadStart == 1, tsBuf, pos - tsBuf.remaining()))
@@ -354,8 +372,8 @@ public class MTSUtils {
     }
 
     public static int getVideoPid(File src) throws IOException {
-        List<Stream> streams = MTSUtils.getPrograms(src);
-        for (Stream stream : streams) {
+        List<PMTStream> streams = MTSUtils.getPrograms(src);
+        for (PMTStream stream : streams) {
             if (stream.getStreamType().isVideo())
                 return stream.getPid();
         }
@@ -364,8 +382,8 @@ public class MTSUtils {
     }
 
     public static int getAudioPid(File src) throws IOException {
-        List<Stream> streams = MTSUtils.getPrograms(src);
-        for (Stream stream : streams) {
+        List<PMTStream> streams = MTSUtils.getPrograms(src);
+        for (PMTStream stream : streams) {
             if (stream.getStreamType().isVideo())
                 return stream.getPid();
         }
@@ -375,8 +393,8 @@ public class MTSUtils {
 
     public static int[] getMediaPids(File src) throws IOException {
         IntArrayList result = new IntArrayList();
-        List<Stream> streams = MTSUtils.getPrograms(src);
-        for (Stream stream : streams) {
+        List<PMTStream> streams = MTSUtils.getPrograms(src);
+        for (PMTStream stream : streams) {
             if (stream.getStreamType().isVideo() || stream.getStreamType().isAudio())
                 result.add(stream.getPid());
         }

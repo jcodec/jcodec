@@ -22,6 +22,13 @@ import org.jcodec.containers.mkv.elements.Cluster;
 import org.jcodec.containers.mkv.elements.TrackEntryElement;
 import org.jcodec.containers.mkv.elements.Tracks;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ *
+ */
 public class MKVDemuxer {
     
     private List<MKVDemuxer.MKVDemuxerTrack> tracks = new ArrayList<MKVDemuxer.MKVDemuxerTrack>();

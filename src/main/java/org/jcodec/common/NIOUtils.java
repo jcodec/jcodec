@@ -389,6 +389,10 @@ public class NIOUtils {
             }
         }
     }
+    
+    public static byte getRel(ByteBuffer bb, int rel) {
+        return bb.get(bb.position() + rel);
+    }
 
 	public static ByteBuffer cloneBuffer(ByteBuffer pesBuffer) {
 		ByteBuffer res = ByteBuffer.allocate(pesBuffer.remaining());
