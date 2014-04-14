@@ -37,6 +37,10 @@ public class TimeToSampleBox extends FullBox {
         public void setSampleCount(int sampleCount) {
             this.sampleCount = sampleCount;
         }
+
+        public long getSegmentDuration() {
+            return sampleCount * sampleDuration;
+        }
     }
 
     public static String fourcc() {

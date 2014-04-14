@@ -13,7 +13,7 @@ public enum ChannelLayout {
 
     kCAFChannelLayoutTag_UseChannelBitmap((1 << 16) | 0),
 
-    kCAFChannelLayoutTag_Mono((100 << 16) | 1),
+    kCAFChannelLayoutTag_Mono((100 << 16) | 1, Label.Mono),
 
     kCAFChannelLayoutTag_Stereo((101 << 16) | 2, Label.Left, Label.Right),
 

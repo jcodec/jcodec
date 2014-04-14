@@ -135,7 +135,6 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             nextChunk();
         }
         shiftPts(1);
-        sttsSubInd++;
 
         return pkt;
     }
