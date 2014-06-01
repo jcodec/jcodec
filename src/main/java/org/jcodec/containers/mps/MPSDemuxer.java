@@ -60,13 +60,15 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         public int streamId;
         public int length;
         public long pos;
+        public long dts;
 
-        public PESPacket(ByteBuffer data, long pts, int streamId, int length, long pos) {
+        public PESPacket(ByteBuffer data, long pts, int streamId, int length, long pos, long dts) {
             this.data = data;
             this.pts = pts;
             this.streamId = streamId;
             this.length = length;
             this.pos = pos;
+            this.dts = dts;
         }
     }
 

@@ -8,6 +8,15 @@ import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * Demuxer for MPEG Program Stream format
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class MPSUtils {
 
     public static final int VIDEO_MIN = 0x1E0;
@@ -159,7 +168,7 @@ public class MPSUtils {
                 throw new RuntimeException("Invalid data");
         }
 
-        return new PESPacket(null, pts, streamId, len, pos);
+        return new PESPacket(null, pts, streamId, len, pos, dts);
     }
 
     public static long readTs(ByteBuffer is, int c) {
@@ -183,7 +192,7 @@ public class MPSUtils {
         } else
             NIOUtils.skip(is, header_len);
 
-        return new PESPacket(null, pts, streamId, len, pos);
+        return new PESPacket(null, pts, streamId, len, pos, dts);
     }
 
     public static long readTs(ByteBuffer is) {

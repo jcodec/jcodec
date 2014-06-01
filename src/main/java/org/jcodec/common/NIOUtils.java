@@ -103,7 +103,7 @@ public class NIOUtils {
             closeQuietly(is);
         }
     }
-
+    
     public static void writeTo(ByteBuffer buffer, File file) throws IOException {
         FileChannel out = null;
         try {
