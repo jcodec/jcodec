@@ -333,4 +333,15 @@ public class CAVLC {
     public void setZeroCoeff(int blkIndX, int blkIndY) {
         tokensLeft[blkIndY & mbMask] = tokensTop[blkIndX] = 0;
     }
+
+    public void writeZeroCoeffToken(BitWriter out, int blkIndX, int blkIndY, MBType leftMBType, MBType topMBType) {
+        VLC coeffTokenTab = getCoeffTokenVLCForLuma(blkIndX != 0, leftMBType, tokensLeft[blkIndY & mbMask],
+                blkIndY != 0, topMBType, tokensTop[blkIndX]);
+        int coeffToken = coeffToken(0, 0);
+
+        coeffTokenTab.writeVLC(out, coeffToken);
+        
+        tokensLeft[blkIndY & mbMask] = coeffToken;
+        tokensTop[blkIndX] = coeffToken;
+    }
 }

@@ -1,5 +1,7 @@
 package org.jcodec.codecs.h264.decode;
 
+import static org.jcodec.common.tools.MathUtil.clamp;
+
 import org.jcodec.common.model.Picture;
 
 /**
@@ -18,18 +20,18 @@ public class BlockInterpolator {
     /**
      * Get block of ( possibly interpolated ) luma pixels
      */
-    public static void getBlockLuma(Picture pic, Picture out, int off, int x, int y, int w, int h) {
+    public static void getBlockLuma(Picture pic, int[] out, int outStride, int off, int x, int y, int w, int h) {
         int xInd = x & 0x3;
         int yInd = y & 0x3;
 
         int xFp = x >> 2;
         int yFp = y >> 2;
         if (xFp < 2 || yFp < 2 || xFp > pic.getWidth() - w - 5 || yFp > pic.getHeight() - h - 5) {
-            unsafe[(yInd << 2) + xInd].getLuma(pic.getData()[0], pic.getWidth(), pic.getHeight(), out.getPlaneData(0),
-                    off, out.getPlaneWidth(0), xFp, yFp, w, h);
+            unsafe[(yInd << 2) + xInd].getLuma(pic.getData()[0], pic.getWidth(), pic.getHeight(), out,
+                    off, outStride, xFp, yFp, w, h);
         } else {
-            safe[(yInd << 2) + xInd].getLuma(pic.getData()[0], pic.getWidth(), pic.getHeight(), out.getPlaneData(0),
-                    off, out.getPlaneWidth(0), xFp, yFp, w, h);
+            safe[(yInd << 2) + xInd].getLuma(pic.getData()[0], pic.getWidth(), pic.getHeight(), out,
+                    off, outStride, xFp, yFp, w, h);
         }
     }
 
@@ -129,7 +131,7 @@ public class BlockInterpolator {
 
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                blk[blkOff + i] = iClip3(0, 255, (blk[blkOff + i] + 16) >> 5);
+                blk[blkOff + i] = clamp((blk[blkOff + i] + 16) >> 5);
             }
             blkOff += blkStride;
         }
@@ -173,7 +175,7 @@ public class BlockInterpolator {
         for (int i = 0; i < blkW; i++) {
             int boff = blkOff;
             for (int j = 0; j < blkH; j++) {
-                blk[boff + i] = iClip3(0, 255, (blk[boff + i] + 16) >> 5);
+                blk[boff + i] = clamp((blk[boff + i] + 16) >> 5);
                 boff += blkStride;
             }
         }
@@ -204,7 +206,7 @@ public class BlockInterpolator {
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
 
-                blk[blkOff + i] = iClip3(0, 255, (blk[blkOff + i] + 16) >> 5);
+                blk[blkOff + i] = clamp((blk[blkOff + i] + 16) >> 5);
             }
             blkOff += blkStride;
         }
@@ -244,7 +246,7 @@ public class BlockInterpolator {
 
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                blk[blkOff + i] = iClip3(0, 255, (blk[blkOff + i] + 16) >> 5);
+                blk[blkOff + i] = clamp((blk[blkOff + i] + 16) >> 5);
             }
             blkOff += blkStride;
         }
@@ -415,8 +417,8 @@ public class BlockInterpolator {
         int off = blkW << 1;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                int rounded = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
-                int rounded2 = iClip3(0, 255, (tmp1[off + i] + 16) >> 5);
+                int rounded = clamp((blk[blkOff + i] + 512) >> 10);
+                int rounded2 = clamp((tmp1[off + i] + 16) >> 5);
                 blk[blkOff + i] = (rounded + rounded2 + 1) >> 1;
             }
             blkOff += blkStride;
@@ -435,8 +437,8 @@ public class BlockInterpolator {
         int off = blkW << 1;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                int rounded = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
-                int rounded2 = iClip3(0, 255, (tmp1[off + i] + 16) >> 5);
+                int rounded = clamp((blk[blkOff + i] + 512) >> 10);
+                int rounded2 = clamp((tmp1[off + i] + 16) >> 5);
                 blk[blkOff + i] = (rounded + rounded2 + 1) >> 1;
             }
             blkOff += blkStride;
@@ -454,7 +456,7 @@ public class BlockInterpolator {
 
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                blk[blkOff + i] = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
+                blk[blkOff + i] = clamp((blk[blkOff + i] + 512) >> 10);
             }
             blkOff += blkStride;
         }
@@ -470,7 +472,7 @@ public class BlockInterpolator {
 
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                blk[blkOff + i] = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
+                blk[blkOff + i] = clamp((blk[blkOff + i] + 512) >> 10);
             }
             blkOff += blkStride;
         }
@@ -488,8 +490,8 @@ public class BlockInterpolator {
         int off = blkW << 1;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                int rounded = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
-                int rounded2 = iClip3(0, 255, (tmp1[off + i + blkW] + 16) >> 5);
+                int rounded = clamp((blk[blkOff + i] + 512) >> 10);
+                int rounded2 = clamp((tmp1[off + i + blkW] + 16) >> 5);
                 blk[blkOff + i] = (rounded + rounded2 + 1) >> 1;
             }
             blkOff += blkStride;
@@ -508,8 +510,8 @@ public class BlockInterpolator {
         int off = blkW << 1;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                int rounded = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
-                int rounded2 = iClip3(0, 255, (tmp1[off + i + blkW] + 16) >> 5);
+                int rounded = clamp((blk[blkOff + i] + 512) >> 10);
+                int rounded2 = clamp((tmp1[off + i + blkW] + 16) >> 5);
                 blk[blkOff + i] = (rounded + rounded2 + 1) >> 1;
             }
             blkOff += blkStride;
@@ -531,8 +533,8 @@ public class BlockInterpolator {
         int off = 2;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                int rounded = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
-                int rounded2 = iClip3(0, 255, (tmp1[off + i] + 16) >> 5);
+                int rounded = clamp((blk[blkOff + i] + 512) >> 10);
+                int rounded2 = clamp((tmp1[off + i] + 16) >> 5);
                 blk[blkOff + i] = (rounded + rounded2 + 1) >> 1;
             }
             blkOff += blkStride;
@@ -553,8 +555,8 @@ public class BlockInterpolator {
         int off = 2;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                int rounded = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
-                int rounded2 = iClip3(0, 255, (tmp1[off + i] + 16) >> 5);
+                int rounded = clamp((blk[blkOff + i] + 512) >> 10);
+                int rounded2 = clamp((tmp1[off + i] + 16) >> 5);
                 blk[blkOff + i] = (rounded + rounded2 + 1) >> 1;
             }
             blkOff += blkStride;
@@ -575,8 +577,8 @@ public class BlockInterpolator {
         int off = 2;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                int rounded = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
-                int rounded2 = iClip3(0, 255, (tmp1[off + i + 1] + 16) >> 5);
+                int rounded = clamp((blk[blkOff + i] + 512) >> 10);
+                int rounded2 = clamp((tmp1[off + i + 1] + 16) >> 5);
                 blk[blkOff + i] = (rounded + rounded2 + 1) >> 1;
             }
             blkOff += blkStride;
@@ -597,8 +599,8 @@ public class BlockInterpolator {
         int off = 2;
         for (int j = 0; j < blkH; j++) {
             for (int i = 0; i < blkW; i++) {
-                int rounded = iClip3(0, 255, (blk[blkOff + i] + 512) >> 10);
-                int rounded2 = iClip3(0, 255, (tmp1[off + i + 1] + 16) >> 5);
+                int rounded = clamp((blk[blkOff + i] + 512) >> 10);
+                int rounded2 = clamp((tmp1[off + i + 1] + 16) >> 5);
                 blk[blkOff + i] = (rounded + rounded2 + 1) >> 1;
             }
             blkOff += blkStride;

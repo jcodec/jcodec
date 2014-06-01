@@ -18,12 +18,10 @@ import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IntArrayList;
-import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
-import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.LeafBox;
@@ -58,7 +56,6 @@ public class H264Utils {
             val <<= 8;
             val |= (buf.get() & 0xff);
             if ((val & 0xffffff) == 1) {
-                buf.position(buf.position());
                 break;
             }
         }
@@ -178,7 +175,7 @@ public class H264Utils {
         ByteBuffer dup = buf.duplicate();
         while (dup.remaining() >= nls) {
             int len = readLen(dup, nls);
-            if (len == 0)
+            if (len == 0 || len > buf.remaining())
                 break;
             result.add(NIOUtils.read(dup, len));
         }
@@ -292,7 +289,7 @@ public class H264Utils {
                 if (spsList != null)
                     spsList.add(buf);
                 in.position(dup.position());
-            } else if(nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE)
+            } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE)
                 break;
         }
     }
@@ -412,6 +409,20 @@ public class H264Utils {
         output.flip();
         H264Utils.escapeNAL(output);
         return output;
+    }
+
+    public static void writePPS(ByteBuffer dup, PictureParameterSet pps) {
+        ByteBuffer tmp = ByteBuffer.allocate(1024);
+        pps.write(tmp);
+        tmp.flip();
+        escapeNAL(tmp, dup);
+    }
+
+    public static void writeSPS(ByteBuffer dup, SeqParameterSet sps) {
+        ByteBuffer tmp = ByteBuffer.allocate(1024);
+        sps.write(tmp);
+        tmp.flip();
+        escapeNAL(tmp, dup);
     }
 
     public static SeqParameterSet readSPS(ByteBuffer data) {
@@ -584,6 +595,22 @@ public class H264Utils {
         return result;
     }
 
+    public static SeqParameterSet[] readSPSAsArray(List<ByteBuffer> spsList) {
+        SeqParameterSet[] spsa = new SeqParameterSet[spsList.size()];
+        for (int i = 0; i < spsa.length; i++) {
+            spsa[i] = H264Utils.readSPS(spsList.get(i));
+        }
+        return spsa;
+    }
+
+    public static PictureParameterSet[] readPPSAsArray(List<ByteBuffer> ppsList) {
+        PictureParameterSet[] ppsa = new PictureParameterSet[ppsList.size()];
+        for (int i = 0; i < ppsa.length; i++) {
+            ppsa[i] = H264Utils.readPPS(ppsList.get(i));
+        }
+        return ppsa;
+    }
+
     public static List<ByteBuffer> writePPS(List<PictureParameterSet> allPps) {
         List<ByteBuffer> result = new ArrayList<ByteBuffer>();
         for (PictureParameterSet pps : allPps) {
@@ -604,16 +631,16 @@ public class H264Utils {
             List<ByteBuffer> nalUnits) throws IOException {
         for (SeqParameterSet sps : values) {
             NIOUtils.writeInt(ch, 1);
-            NIOUtils.writeByte(ch, (byte)0x67);
+            NIOUtils.writeByte(ch, (byte) 0x67);
             ch.write(writeSPS(sps, 128));
         }
-        
+
         for (PictureParameterSet pps : values2) {
             NIOUtils.writeInt(ch, 1);
-            NIOUtils.writeByte(ch, (byte)0x68);
+            NIOUtils.writeByte(ch, (byte) 0x68);
             ch.write(writePPS(pps, 256));
         }
-        
+
         for (ByteBuffer byteBuffer : nalUnits) {
             NIOUtils.writeInt(ch, 1);
             ch.write(byteBuffer.duplicate());

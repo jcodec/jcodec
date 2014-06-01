@@ -1,13 +1,12 @@
 package org.jcodec.codecs.vpx;
 
-import static org.jcodec.common.tools.MathUtil.clip;
+import static org.jcodec.common.tools.MathUtil.clamp;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
-import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
@@ -27,6 +26,7 @@ public class VP8Encoder implements VideoEncoder {
     private int[][] topLine;
     private VPXQuantizer quantizer;
     private int[] tmp = new int[16];
+    private int[][] topLeft;
 
     public ByteBuffer encodeFrame(Picture pic, ByteBuffer _buf) {
         ByteBuffer out = _buf.duplicate();
@@ -35,23 +35,25 @@ public class VP8Encoder implements VideoEncoder {
 
         bitstream = new VPXBitstream(VPXConst.tokenDefaultBinProbs, mbWidth);
         leftRow = new int[][] { new int[16], new int[8], new int[8] };
+        topLeft = new int[][] { new int[16], new int[8], new int[8] };
         topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
         initValue(leftRow, 129);
         initValue(topLine, 127);
 
         quantizer = new VPXQuantizer();
 
-        Picture outMB = Picture.create(16, 16, ColorSpace.YUV420);
+        Picture mbPix = Picture.create(16, 16, ColorSpace.YUV420);
 
         int qp = 20;
 
         out.order(ByteOrder.LITTLE_ENDIAN);
-        writeHeader1(out, pic.getWidth(), pic.getHeight());
+        NIOUtils.skip(out, 3);
+        writeHeaderWH(out, pic.getWidth(), pic.getHeight());
 
         int start = out.position();
         VPxBooleanEncoder boolEnc = new VPxBooleanEncoder(out);
 
-        writeHeader2(boolEnc, qp);
+        writeHeaderKey(boolEnc, qp);
 
         // MB modes
         for (int mbY = 0; mbY < mbHeight; mbY++) {
@@ -74,15 +76,17 @@ public class VP8Encoder implements VideoEncoder {
             initValue(leftRow, 129);
 
             for (int mbX = 0; mbX < mbWidth; mbX++) {
-                luma(pic, mbX, mbY, boolEnc, qp, outMB);
-                chroma(pic, mbX, mbY, boolEnc, qp, outMB);
+                take(pic, mbPix, mbX, mbY);
 
-                collectPredictors(outMB, mbX);
+                luma(mbX, mbY, boolEnc, qp, mbPix);
+                chroma(mbX, mbY, boolEnc, qp, mbPix);
+
+                collectPredictors(mbPix, mbX);
             }
         }
         boolEnc.stop();
         out.flip();
-        writeHeader(out.duplicate(), firstPart);
+        writeHeader(out.duplicate(), firstPart, true, 0);
 
         return out;
     }
@@ -93,8 +97,8 @@ public class VP8Encoder implements VideoEncoder {
         Arrays.fill(leftRow2[2], val);
     }
 
-    private void writeHeader(ByteBuffer duplicate, int firstPart) {
-        int version = 0, type = 0, showFrame = 1;
+    public static void writeHeader(ByteBuffer duplicate, int firstPart, boolean keyFrame, int version) {
+        int type = keyFrame ? 0 : 1, showFrame = 1;
         int header = (firstPart << 5) | (showFrame << 4) | (version << 1) | type;
 
         duplicate.put((byte) (header & 0xff));
@@ -102,7 +106,7 @@ public class VP8Encoder implements VideoEncoder {
         duplicate.put((byte) ((header >> 16) & 0xff));
     }
 
-    private void writeHeader2(VPxBooleanEncoder boolEnc, int qp) {
+    public static void writeHeaderKey(VPxBooleanEncoder boolEnc, int qp) {
         boolEnc.writeBit(128, 0); // clr_type
         boolEnc.writeBit(128, 0); // clamp_type
         boolEnc.writeBit(128, 0); // segmentation enabled
@@ -132,16 +136,14 @@ public class VP8Encoder implements VideoEncoder {
         boolEnc.writeBit(128, 0); // mb_no_coeff_skip
     }
 
-    void writeInt(VPxBooleanEncoder boolEnc, int data, int bits) {
+    public static void writeInt(VPxBooleanEncoder boolEnc, int data, int bits) {
         int bit;
 
         for (bit = bits - 1; bit >= 0; bit--)
             boolEnc.writeBit(128, (1 & (data >> bit)));
     }
 
-    private void writeHeader1(ByteBuffer out, int width, int height) {
-        NIOUtils.skip(out, 3);
-
+    public static void writeHeaderWH(ByteBuffer out, int width, int height) {
         out.put((byte) 0x9d);
         out.put((byte) 0x01);
         out.put((byte) 0x2a);
@@ -151,32 +153,43 @@ public class VP8Encoder implements VideoEncoder {
     }
 
     private void collectPredictors(Picture outMB, int mbX) {
+        topLeft[0][0] = topLine[0][15];
+        topLeft[1][0] = topLine[1][7];
+        topLeft[2][0] = topLine[2][7];
+
         System.arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
         System.arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
         System.arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
 
-        copyCol(outMB.getPlaneData(0), 15, 16, leftRow[0]);
-        copyCol(outMB.getPlaneData(1), 7, 8, leftRow[1]);
-        copyCol(outMB.getPlaneData(2), 7, 8, leftRow[2]);
+        copyCol(outMB.getPlaneData(0), 15, 16, leftRow[0], 0);
+        copyCol(outMB.getPlaneData(1), 7, 8, leftRow[1], 0);
+        copyCol(outMB.getPlaneData(2), 7, 8, leftRow[2], 0);
+
+        copyCol(outMB.getPlaneData(0), 31, 16, topLeft[0], 1);
+        copyCol(outMB.getPlaneData(1), 15, 8, topLeft[1], 1);
+        copyCol(outMB.getPlaneData(2), 15, 8, topLeft[2], 1);
     }
 
-    private void copyCol(int[] planeData, int off, int stride, int[] out) {
-        for (int i = 0; i < out.length; i++) {
+    public static void copyCol(int[] planeData, int off, int stride, int[] out, int fi) {
+        for (int i = fi; i < out.length; i++) {
             out[i] = planeData[off];
             off += stride;
         }
     }
 
-    private void luma(Picture pic, int mbX, int mbY, VPxBooleanEncoder out, int qp, Picture outMB) {
+    private void luma(int mbX, int mbY, VPxBooleanEncoder out, int qp, Picture mb) {
         int x = mbX << 4;
         int y = mbY << 4;
-        int[][] ac = transform(pic, 0, qp, x, y);
+        int[] pred = new int[256];
+        int lumaPred = VPXConst.DC_PRED;
+        VPXPred.pred816(lumaPred, x, y, leftRow[0], topLine[0], topLeft[0], pred, 4);
+        int[][] ac = transform(mb, qp, pred);
         int[] dc = extractDC(ac);
         writeLumaDC(mbX, mbY, out, qp, dc);
         writeLumaAC(mbX, mbY, out, ac, qp);
 
         restorePlaneLuma(dc, ac, qp);
-        putLuma(outMB.getPlaneData(0), lumaDCPred(x, y), ac, 4);
+        putLuma(mb.getPlaneData(0), pred, ac, 4);
     }
 
     private void writeLumaAC(int mbX, int mbY, VPxBooleanEncoder out, int[][] ac, int qp) {
@@ -199,89 +212,64 @@ public class VP8Encoder implements VideoEncoder {
         }
     }
 
-    private int[] zigzag(int[] zz, int[] tmp2) {
+    public static int[] zigzag(int[] zz, int[] tmp2) {
         for (int i = 0; i < 16; i++)
             tmp2[i] = zz[VPXConst.zigzag[i]];
         return tmp2;
     }
 
-    private void chroma(Picture pic, int mbX, int mbY, VPxBooleanEncoder boolEnc, int qp, Picture outMB) {
+    private void chroma(int mbX, int mbY, VPxBooleanEncoder boolEnc, int qp, Picture mbPix) {
         int x = mbX << 3;
         int y = mbY << 3;
-        int chromaPred1 = chromaPredBlk(1, x, y);
-        int chromaPred2 = chromaPredBlk(2, x, y);
+        int chromaMode = VPXConst.DC_PRED;
+        for (int c = 0; c < 2; c++) {
+            int[] pred = new int[64];
+            VPXPred.pred816(chromaMode, x, y, leftRow[c + 1], topLine[c + 1], topLeft[c + 1], pred, 3);
+            int[][] ac = transformChroma(c + 1, qp, mbPix, pred);
 
-        int[][] ac1 = transformChroma(pic, 1, qp, x, y, outMB, chromaPred1);
-        int[][] ac2 = transformChroma(pic, 2, qp, x, y, outMB, chromaPred2);
+            writeChroma(c + 1, mbX, mbY, boolEnc, ac, qp);
 
-        writeChroma(1, mbX, mbY, boolEnc, ac1, qp);
-        writeChroma(2, mbX, mbY, boolEnc, ac2, qp);
-
-        restorePlaneChroma(ac1, qp);
-        putChroma(outMB.getData()[1], 1, x, y, ac1, chromaPred1);
-        restorePlaneChroma(ac2, qp);
-        putChroma(outMB.getData()[2], 2, x, y, ac2, chromaPred2);
+            restorePlaneChroma(ac, qp);
+            putChroma(mbPix.getData()[c + 1], c + 1, x, y, ac, pred);
+        }
     }
 
-    private int[][] transformChroma(Picture pic, int comp, int qp, int x, int y, Picture outMB, int chromaPred) {
+    private int[][] transformChroma(int comp, int qp, Picture mbPix, int[] chromaPred) {
         int[][] ac = new int[4][16];
 
         for (int blk = 0; blk < ac.length; blk++) {
 
-            int blkOffX = (blk & 1) << 2;
-            int blkOffY = (blk >> 1) << 2;
-            takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + blkOffX, y
-                    + blkOffY, ac[blk], chromaPred);
+            takeResidual(mbPix.getPlaneData(comp), 3, (blk & 1) << 2, (blk >> 1) << 2, ac[blk], chromaPred);
             VPXDCT.fdct4x4(ac[blk]);
         }
 
         return ac;
     }
 
-    private void putChroma(int[] mb, int comp, int x, int y, int[][] ac, int chromaPred) {
+    private void putChroma(int[] mb, int comp, int x, int y, int[][] ac, int chromaPred[]) {
         for (int blk = 0; blk < 4; blk++)
-            putBlk(mb, chromaPred, ac[blk], 3, (blk & 1) << 2, (blk >> 1) << 2);
+            putBlk(mb, chromaPred, 8, ac[blk], 3, (blk & 1) << 2, (blk >> 1) << 2);
     }
 
-    private final int chromaPredOne(int[] pix, int x) {
-        return (pix[x] + pix[x + 1] + pix[x + 2] + pix[x + 3] + pix[x + 4] + pix[x + 5] + pix[x + 6] + pix[x + 7] + 4) >> 3;
-    }
-
-    private final int chromaPredTwo(int[] pix1, int[] pix2, int x, int y) {
-        return (pix1[x] + pix1[x + 1] + pix1[x + 2] + pix1[x + 3] + pix1[x + 4] + pix1[x + 5] + pix1[x + 6]
-                + pix1[x + 7] + pix2[y] + pix2[y + 1] + pix2[y + 2] + pix2[y + 3] + pix2[y + 4] + pix2[y + 5]
-                + pix2[y + 6] + pix2[y + 7] + 8) >> 4;
-    }
-
-    private int chromaPredBlk(int comp, int x, int y) {
-        int predY = y & 0x7;
-        if (x != 0 && y != 0)
-            return chromaPredTwo(leftRow[comp], topLine[comp], predY, x);
-        else if (x != 0)
-            return chromaPredOne(leftRow[comp], predY);
-        else if (y != 0)
-            return chromaPredOne(topLine[comp], x);
-        else
-            return 128;
-    }
-
-    private void putLuma(int[] planeData, int pred, int[][] ac, int log2stride) {
+    private void putLuma(int[] planeData, int[] pred, int[][] ac, int log2stride) {
         for (int blk = 0; blk < ac.length; blk++) {
             int blkOffX = (blk & 3) << 2;
             int blkOffY = blk & ~3;
-            putBlk(planeData, pred, ac[blk], log2stride, blkOffX, blkOffY);
+            putBlk(planeData, pred, 1 << log2stride, ac[blk], log2stride, blkOffX, blkOffY);
         }
     }
 
-    private void putBlk(int[] planeData, int pred, int[] block, int log2stride, int blkX, int blkY) {
+    public static void putBlk(int[] planeData, int[] pred, int predStride, int[] block, int log2stride, int blkX,
+            int blkY) {
         int stride = 1 << log2stride;
-        for (int line = 0, srcOff = 0, dstOff = (blkY << log2stride) + blkX; line < 4; line++) {
-            planeData[dstOff] = clip(block[srcOff] + pred, 0, 255);
-            planeData[dstOff + 1] = clip(block[srcOff + 1] + pred, 0, 255);
-            planeData[dstOff + 2] = clip(block[srcOff + 2] + pred, 0, 255);
-            planeData[dstOff + 3] = clip(block[srcOff + 3] + pred, 0, 255);
+        for (int line = 0, srcOff = 0, dstOff = (blkY << log2stride) + blkX, predOff = blkY * predStride + blkX; line < 4; line++) {
+            planeData[dstOff] = clamp(block[srcOff] + pred[predOff]);
+            planeData[dstOff + 1] = clamp(block[srcOff + 1] + pred[predOff + 1]);
+            planeData[dstOff + 2] = clamp(block[srcOff + 2] + pred[predOff + 2]);
+            planeData[dstOff + 3] = clamp(block[srcOff + 3] + pred[predOff + 3]);
             srcOff += 4;
             dstOff += stride;
+            predOff += predStride;
         }
     }
 
@@ -310,73 +298,69 @@ public class VP8Encoder implements VideoEncoder {
         return dc;
     }
 
-    private int lumaDCPred(int x, int y) {
-        if (x == 0 && y == 0)
-            return 128;
-
-        if (y == 0)
-            return (ArrayUtil.sum(leftRow[0]) + 8) >> 4;
-        if (x == 0)
-            return (ArrayUtil.sum(topLine[0], x, 16) + 8) >> 4;
-
-        return (ArrayUtil.sum(leftRow[0]) + ArrayUtil.sum(topLine[0], x, 16) + 16) >> 5;
-    }
-
-    private int[][] transform(Picture pic, int comp, int qp, int x, int y) {
-        int dcc = lumaDCPred(x, y);
-
+    private int[][] transform(Picture mb, int qp, int[] pred) {
         int[][] ac = new int[16][16];
         for (int i = 0; i < ac.length; i++) {
             int[] coeff = ac[i];
-            int blkOffX = (i & 3) << 2;
-            int blkOffY = i & ~3;
-            takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + blkOffX, y
-                    + blkOffY, coeff, dcc);
+            takeResidual(mb.getPlaneData(0), 4, (i & 3) << 2, i & ~3, coeff, pred);
             VPXDCT.fdct4x4(coeff);
         }
         return ac;
     }
 
-    private final void takeSubtract(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff, int dc) {
-        if (x + 4 < planeWidth && y + 4 < planeHeight)
-            takeSubtractSafe(planeData, planeWidth, planeHeight, x, y, coeff, dc);
-        else
-            takeSubtractUnsafe(planeData, planeWidth, planeHeight, x, y, coeff, dc);
-
-    }
-
-    private final void takeSubtractSafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
-            int dc) {
-        for (int i = 0, srcOff = y * planeWidth + x, dstOff = 0; i < 4; i++, srcOff += planeWidth, dstOff += 4) {
-            coeff[dstOff] = planeData[srcOff] - dc;
-            coeff[dstOff + 1] = planeData[srcOff + 1] - dc;
-            coeff[dstOff + 2] = planeData[srcOff + 2] - dc;
-            coeff[dstOff + 3] = planeData[srcOff + 3] - dc;
+    private void take(Picture pic, Picture mb, int mbX, int mbY) {
+        for (int i = 0, logBlkS = 4; i < 3; i++, logBlkS = 3) {
+            int planeWidth = pic.getPlaneWidth(i), planeHeight = pic.getPlaneHeight(i), x = mbX << logBlkS, y = mbY << logBlkS, blkS = 1 << logBlkS;
+            if (x + blkS < planeWidth && y + blkS < planeHeight)
+                takeSafe(pic.getPlaneData(i), planeWidth, planeHeight, x, y, mb.getPlaneData(i), blkS);
+            else
+                takeUnsafe(pic.getPlaneData(i), planeWidth, planeHeight, x, y, mb.getPlaneData(i), blkS);
         }
     }
 
-    private final void takeSubtractUnsafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
-            int dc) {
+    private final void takeSafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] out, int outSize) {
+        for (int srcOff = y * planeWidth + x, dstOff = 0; dstOff < out.length; srcOff += planeWidth - outSize) {
+            for (int j = 0; j < outSize; j += 4, dstOff += 4, srcOff += 4) {
+                out[dstOff] = planeData[srcOff];
+                out[dstOff + 1] = planeData[srcOff + 1];
+                out[dstOff + 2] = planeData[srcOff + 2];
+                out[dstOff + 3] = planeData[srcOff + 3];
+            }
+        }
+    }
+
+    private final void takeUnsafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
+            int outSize) {
         int outOff = 0;
 
         int i;
-        for (i = y; i < Math.min(y + 4, planeHeight); i++) {
+        for (i = y; i < Math.min(y + outSize, planeHeight); i++) {
             int off = i * planeWidth + Math.min(x, planeWidth);
             int j;
-            for (j = x; j < Math.min(x + 4, planeWidth); j++)
-                coeff[outOff++] = planeData[off++] - dc;
+            for (j = x; j < Math.min(x + outSize, planeWidth); j++, off++)
+                coeff[outOff++] = planeData[off];
             --off;
-            for (; j < x + 4; j++)
-                coeff[outOff++] = planeData[off] - dc;
+            for (; j < x + outSize; j++)
+                coeff[outOff++] = planeData[off];
         }
-        for (; i < y + 4; i++) {
+        for (; i < y + outSize; i++) {
             int off = planeHeight * planeWidth - planeWidth + Math.min(x, planeWidth);
             int j;
-            for (j = x; j < Math.min(x + 4, planeWidth); j++)
-                coeff[outOff++] = planeData[off++] - dc;
+            for (j = x; j < Math.min(x + outSize, planeWidth); j++, off++)
+                coeff[outOff++] = planeData[off];
             --off;
-            for (; j < x + 4; j++)
-                coeff[outOff++] = planeData[off] - dc;
+            for (; j < x + outSize; j++)
+                coeff[outOff++] = planeData[off];
+        }
+    }
+
+    private final void takeResidual(int[] planeData, int log2PlaneWidth, int x, int y, int[] coeff, int[] dc) {
+        int planeWidth = 1 << log2PlaneWidth;
+        for (int i = 0, srcOff = (y << log2PlaneWidth) + x, dstOff = 0; i < 4; i++, srcOff += planeWidth, dstOff += 4) {
+            coeff[dstOff] = planeData[srcOff] - dc[srcOff];
+            coeff[dstOff + 1] = planeData[srcOff + 1] - dc[srcOff + 1];
+            coeff[dstOff + 2] = planeData[srcOff + 2] - dc[srcOff + 2];
+            coeff[dstOff + 3] = planeData[srcOff + 3] - dc[srcOff + 3];
         }
     }
 

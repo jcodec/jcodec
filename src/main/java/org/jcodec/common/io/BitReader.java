@@ -211,9 +211,10 @@ public class BitReader {
         return new BitReader(this);
     }
 
-    public void terminate() {
+    public ByteBuffer terminate() {
         int putBack = (32 - deficit) >> 3;
         bb.position(bb.position() - putBack);
+        return bb;
     }
 
     public int position() {

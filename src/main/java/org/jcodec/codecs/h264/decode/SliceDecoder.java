@@ -73,7 +73,7 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class SliceDecoder {
 
-    private static final int[] NULL_VECTOR = new int[] { 0, 0, -1 };
+    public static final int[] NULL_VECTOR = new int[] { 0, 0, -1 };
     private SliceHeader sh;
     private CAVLC[] cavlc;
     private CABAC cabac;
@@ -123,7 +123,7 @@ public class SliceDecoder {
     private boolean[] tr8x8Used;
     private Frame[][][] refsUsed;
     private Prediction prediction;
-    private boolean debug;
+    private boolean debug = true;
 
     public SliceDecoder(SeqParameterSet activeSps, PictureParameterSet activePps, int[][] nCoeff, int[][][][] mvs,
             MBType[] mbTypes, int[][] mbQps, SliceHeader[] shs, boolean[] tr8x8Used, Frame[][][] refsUsed,
@@ -144,6 +144,7 @@ public class SliceDecoder {
     }
 
     public void decode(ByteBuffer segment, NALUnit nalUnit) {
+
         BitReader in = new BitReader(segment);
         SliceHeaderReader shr = new SliceHeaderReader();
         sh = shr.readPart1(in);
@@ -174,7 +175,7 @@ public class SliceDecoder {
         mvTopLeft = new int[2][3];
 
         leftRow = new int[3][16];
-        topLeft = new int[3][4];
+        topLeft = new int[3][16];
         topLine = new int[3][mbWidth << 4];
 
         this.predModeLeft = new PartPred[2];
@@ -412,9 +413,9 @@ public class SliceDecoder {
 
     private void collectPredictors(Picture outMB, int mbX) {
         topLeft[0][0] = topLine[0][(mbX << 4) + 15];
-        topLeft[0][1] = outMB.getPlaneData(0)[63];
-        topLeft[0][2] = outMB.getPlaneData(0)[127];
-        topLeft[0][3] = outMB.getPlaneData(0)[191];
+        topLeft[0][4] = outMB.getPlaneData(0)[63];
+        topLeft[0][8] = outMB.getPlaneData(0)[127];
+        topLeft[0][12] = outMB.getPlaneData(0)[191];
         System.arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
         copyCol(outMB.getPlaneData(0), 16, 15, 16, leftRow[0]);
 
@@ -473,7 +474,7 @@ public class SliceDecoder {
             decodeMBlockIntra16x16(reader, mbType, mbIdx, prevMbType, mb);
             mbt = MBType.I_16x16;
         } else {
-            System.out.println("IPCM!!!");
+            // System.out.println("IPCM!!!");
             decodeMBlockIPCM(reader, mbIdx, mb);
             mbt = MBType.I_PCM;
         }
@@ -577,6 +578,8 @@ public class SliceDecoder {
         int mbY = mapper.getMbY(mbIndex);
         int address = mapper.getAddress(mbIndex);
 
+        // System.out.println("MACROBLOCK[" + address + "]: I16x16");
+
         int cbpChroma = (mbType / 4) % 3;
         int cbpLuma = (mbType / 12) * 15;
 
@@ -586,14 +589,21 @@ public class SliceDecoder {
         int chromaPredictionMode = readChromaPredMode(reader, mbX, leftAvailable, topAvailable);
         int mbQPDelta = readMBQpDelta(reader, prevMbType);
         qp = (qp + mbQPDelta + 52) % 52;
+        // System.out.println("QP: " + qp);
         mbQps[0][address] = qp;
 
-        residualLumaI16x16(reader, leftAvailable, topAvailable, mbX, mbY, mb, cbpLuma);
-        Intra16x16PredictionBuilder.predictWithMode(mbType % 4, mb.getPlaneData(0), leftAvailable, topAvailable,
-                leftRow[0], topLine[0], topLeft[0], mbX << 4);
+        // System.out.println("PREDICTION 16x16: " + (mbType % 4) + ", " +
+        // chromaPredictionMode);
 
-        decodeChroma(reader, cbpChroma, chromaPredictionMode, mbX, mbY, leftAvailable, topAvailable, mb, qp,
-                MBType.I_16x16);
+        residualLumaI16x16(reader, leftAvailable, topAvailable, mbX, mbY, mb, cbpLuma);
+        boolean lAvbPred = leftAvailable
+                && (leftMBType != null && leftMBType.intra || !sh.pps.constrained_intra_pred_flag);
+        boolean tAvbPred = topAvailable
+                && (topMBType[mbX] != null && topMBType[mbX].intra || !sh.pps.constrained_intra_pred_flag);
+        Intra16x16PredictionBuilder.predictWithMode(mbType % 4, mb.getPlaneData(0), lAvbPred, tAvbPred, leftRow[0],
+                topLine[0], topLeft[0], mbX << 4);
+
+        decodeChroma(reader, cbpChroma, chromaPredictionMode, mbX, mbY, leftAvailable, topAvailable, mb, qp, MBType.I_16x16);
         mbTypes[address] = topMBType[mbX] = leftMBType = MBType.I_16x16;
         // System.out.println("idx: " + mbIndex + ", addr: " + address);
         topCBPLuma[mbX] = leftCBPLuma = cbpLuma;
@@ -639,6 +649,11 @@ public class SliceDecoder {
                         identityMapping16, identityMapping16);
         }
 
+        // System.out.println("LUMA DC BLOCK");
+        // for (int i = 0; i < dc.length; i++)
+        // System.out.print(dc[i] + ",");
+        // System.out.println();
+
         CoeffTransformer.invDC4x4(dc);
         CoeffTransformer.dequantizeDC4x4(dc, qp);
         reorderDC4x4(dc);
@@ -664,11 +679,17 @@ public class SliceDecoder {
                         nCoeff[blkY][blkX] = cabac.readCoeffs(mDecoder, BlockType.LUMA_15_AC, ac, 1, 15,
                                 CoeffTransformer.zigzag4x4, identityMapping16, identityMapping16);
                 }
+                // System.out.println("LUMA AC BLOCK " + i);
+                // for (int j = 1; j < ac.length; j++)
+                // System.out.print(ac[j] + ",");
+                // System.out.println();
+
                 CoeffTransformer.dequantizeAC(ac, qp);
             } else {
                 if (!activePps.entropy_coding_mode_flag)
                     cavlc[0].setZeroCoeff(blkX, blkOffTop);
             }
+
             ac[0] = dc[i];
             CoeffTransformer.idct4x4(ac);
             putBlk(mb.getPlaneData(0), ac, 4, blkOffLeft << 2, blkOffTop << 2);
@@ -719,9 +740,13 @@ public class SliceDecoder {
         int addr = mbY * (activeSps.pic_width_in_mbs_minus1 + 1) + mbX;
         mbQps[1][addr] = qp1;
         mbQps[2][addr] = qp2;
-        ChromaPredictionBuilder.predictWithMode(mb.getPlaneData(1), chromaMode, mbX, leftAvailable, topAvailable,
+        boolean lAvbPred = leftAvailable
+                && (leftMBType != null && leftMBType.intra || !sh.pps.constrained_intra_pred_flag);
+        boolean tAvbPred = topAvailable
+                && (topMBType[mbX] != null && topMBType[mbX].intra || !sh.pps.constrained_intra_pred_flag);
+        ChromaPredictionBuilder.predictWithMode(mb.getPlaneData(1), chromaMode, mbX, lAvbPred, tAvbPred,
                 leftRow[1], topLine[1], topLeft[1]);
-        ChromaPredictionBuilder.predictWithMode(mb.getPlaneData(2), chromaMode, mbX, leftAvailable, topAvailable,
+        ChromaPredictionBuilder.predictWithMode(mb.getPlaneData(2), chromaMode, mbX, lAvbPred, tAvbPred,
                 leftRow[2], topLine[2], topLeft[2]);
     }
 
@@ -749,6 +774,11 @@ public class SliceDecoder {
                         identityMapping16);
         }
 
+        // System.out.println("CHROMA DC BLOCK [" + (comp - 1) + "]");
+        // for (int i = 0; i < dc.length; i++)
+        // System.out.print(dc[i] + ",");
+        // System.out.println();
+
         CoeffTransformer.invDC2x2(dc);
         CoeffTransformer.dequantizeDC2x2(dc, crQp);
     }
@@ -764,6 +794,7 @@ public class SliceDecoder {
             int blkX = (mbX << 1) + blkOffLeft;
             int blkY = (mbY << 1) + blkOffTop;
 
+            // System.out.println("CHROMA [" + (comp - 1) + "] AC BLOCK " + i);
             if (codedAC) {
 
                 if (!activePps.entropy_coding_mode_flag)
@@ -776,18 +807,24 @@ public class SliceDecoder {
                         cabac.readCoeffs(mDecoder, BlockType.CHROMA_AC, ac, 1, 15, CoeffTransformer.zigzag4x4,
                                 identityMapping16, identityMapping16);
                 }
+
+                // for (int j = 1; j < ac.length; j++)
+                // System.out.print(ac[j] + ",");
+                // System.out.println();
+
                 CoeffTransformer.dequantizeAC(ac, crQp);
             } else {
                 if (!activePps.entropy_coding_mode_flag)
                     cavlc[comp].setZeroCoeff(blkX, blkOffTop);
             }
+
             ac[0] = dc[i];
             CoeffTransformer.idct4x4(ac);
             putBlk(mb.getPlaneData(comp), ac, 3, blkOffLeft << 2, blkOffTop << 2);
         }
     }
 
-    private int calcQpChroma(int qp, int crQpOffset) {
+    public static int calcQpChroma(int qp, int crQpOffset) {
         return QP_SCALE_CR[MathUtil.clip(qp + crQpOffset, 0, 51)];
     }
 
@@ -799,6 +836,8 @@ public class SliceDecoder {
         boolean topAvailable = mapper.topAvailable(mbIndex);
         boolean topLeftAvailable = mapper.topLeftAvailable(mbIndex);
         boolean topRightAvailable = mapper.topRightAvailable(mbIndex);
+
+        // System.out.println("MACROBLOCK[" + mbAddr + "]: INxN");
 
         boolean transform8x8Used = false;
         if (transform8x8) {
@@ -828,6 +867,9 @@ public class SliceDecoder {
         }
         int chromaMode = readChromaPredMode(reader, mbX, leftAvailable, topAvailable);
 
+        // System.out.println("PREDICTION NxN " + Arrays.toString(lumaModes) +
+        // ", " + chromaMode);
+
         int codedBlockPattern = readCodedBlockPatternIntra(reader, leftAvailable, topAvailable, leftCBPLuma
                 | (leftCBPChroma << 4), topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
@@ -837,10 +879,23 @@ public class SliceDecoder {
         if (cbpLuma > 0 || cbpChroma > 0) {
             qp = (qp + readMBQpDelta(reader, prevMbType) + 52) % 52;
         }
+        // System.out.println("QP: " + qp);
         mbQps[0][mbAddr] = qp;
 
         residualLuma(reader, leftAvailable, topAvailable, mbX, mbY, mb, codedBlockPattern, MBType.I_NxN,
                 transform8x8Used, tf8x8Left, tf8x8Top[mbX]);
+
+        int[] residual = mb.getPlaneData(0);
+        int[] pred = new int[16];
+        int mbOffX = mbX << 4;
+        boolean lAvbPred = leftAvailable
+                && (leftMBType != null && leftMBType.intra || !sh.pps.constrained_intra_pred_flag);
+        boolean tAvbPred = topAvailable
+                && (topMBType[mbX] != null && topMBType[mbX].intra || !sh.pps.constrained_intra_pred_flag);
+        boolean tlAvbPred = topLeftAvailable
+                && (topMBType[mbX - 1] != null && topMBType[mbX - 1].intra || !sh.pps.constrained_intra_pred_flag);
+        boolean trAvbPred = topRightAvailable
+                && (topMBType[mbX + 1] != null && topMBType[mbX + 1].intra || !sh.pps.constrained_intra_pred_flag);
 
         if (!transform8x8Used) {
             for (int i = 0; i < 16; i++) {
@@ -848,26 +903,51 @@ public class SliceDecoder {
                 int blkY = i & ~3;
 
                 int bi = H264Const.BLK_INV_MAP[i];
-                boolean trAvailable = ((bi == 0 || bi == 1 || bi == 4) && topAvailable)
-                        || (bi == 5 && topRightAvailable) || bi == 2 || bi == 6 || bi == 8 || bi == 9 || bi == 10
-                        || bi == 12 || bi == 14;
+                boolean trAvb4x4 = ((bi == 0 || bi == 1 || bi == 4) && tAvbPred) || (bi == 5 && trAvbPred) || bi == 2
+                        || bi == 6 || bi == 8 || bi == 9 || bi == 10 || bi == 12 || bi == 14;
+                boolean lAvb4x4 = blkX == 0 ? lAvbPred : true;
+                boolean tAvb4x4 = blkY == 0 ? tAvbPred : true;
 
-                Intra4x4PredictionBuilder.predictWithMode(lumaModes[bi], mb.getPlaneData(0), blkX == 0 ? leftAvailable
-                        : true, blkY == 0 ? topAvailable : true, trAvailable, leftRow[0], topLine[0], topLeft[0],
-                        (mbX << 4), blkX, blkY);
+                int blkAbsX = mbOffX + blkX;
+                Intra4x4PredictionBuilder.predictWithMode(lumaModes[bi], lAvb4x4, tAvb4x4, trAvb4x4, leftRow[0],
+                        topLine[0], topLeft[0], blkAbsX, blkY, pred);
+                // System.out.println(topLine[0][blkAbsX] + ", " +
+                // topLine[0][blkAbsX + 1] + ", " + topLine[0][blkAbsX + 2] +
+                // ", " + topLine[0][blkAbsX + 3]);
+                //
+                // System.out.println("***" + leftRow[0][blkY] + ", " +
+                // leftRow[0][blkY + 1] + ", " + leftRow[0][blkY + 2] + ", " +
+                // leftRow[0][blkY + 3]);
+                addPix(residual, pred, blkX, blkY);
+
+                int oo1 = mbOffX + blkX;
+                int off1 = (blkY << 4) + blkX + 3;
+
+                topLeft[0][blkY] = topLine[0][oo1 + 3];
+
+                leftRow[0][blkY] = residual[off1];
+                leftRow[0][blkY + 1] = residual[off1 + 16];
+                leftRow[0][blkY + 2] = residual[off1 + 32];
+                leftRow[0][blkY + 3] = residual[off1 + 48];
+
+                int off2 = (blkY << 4) + blkX + 48;
+                topLine[0][oo1] = residual[off2];
+                topLine[0][oo1 + 1] = residual[off2 + 1];
+                topLine[0][oo1 + 2] = residual[off2 + 2];
+                topLine[0][oo1 + 3] = residual[off2 + 3];
             }
         } else {
             for (int i = 0; i < 4; i++) {
                 int blkX = (i & 1) << 1;
                 int blkY = i & 2;
 
-                boolean trAvailable = (i == 0 && topAvailable) || (i == 1 && topRightAvailable) || i == 2;
-                boolean tlAvailable = i == 0 ? topLeftAvailable : (i == 1 ? topAvailable : (i == 2 ? leftAvailable
-                        : true));
+                boolean trAvb8x8 = (i == 0 && tAvbPred) || (i == 1 && trAvbPred) || i == 2;
+                boolean tlAvb8x8 = i == 0 ? tlAvbPred : (i == 1 ? tAvbPred : (i == 2 ? lAvbPred : true));
+                boolean lAvb8x8 = blkX == 0 ? lAvbPred : true;
+                boolean tAvb8x8 = blkY == 0 ? tAvbPred : true;
 
-                Intra8x8PredictionBuilder.predictWithMode(lumaModes[i], mb.getPlaneData(0), blkX == 0 ? leftAvailable
-                        : true, blkY == 0 ? topAvailable : true, tlAvailable, trAvailable, leftRow[0], topLine[0],
-                        topLeft[0], (mbX << 4), blkX << 2, blkY << 2);
+                Intra8x8PredictionBuilder.predictWithMode(lumaModes[i], residual, lAvb8x8, tAvb8x8, tlAvb8x8, trAvb8x8,
+                        leftRow[0], topLine[0], topLeft[0], mbOffX, blkX << 2, blkY << 2);
             }
         }
 
@@ -883,6 +963,15 @@ public class SliceDecoder {
         collectChromaPredictors(mb, mbX);
 
         saveMvsIntra(mbX, mbY);
+    }
+
+    private void addPix(int[] residual, int[] pred, int blkX, int blkY) {
+        for (int j = 0, off = (blkY << 4) + blkX; j < 16; j += 4, off += 16) {
+            residual[off] = clip(residual[off] + pred[j], 0, 255);
+            residual[off + 1] = clip(residual[off + 1] + pred[j + 1], 0, 255);
+            residual[off + 2] = clip(residual[off + 2] + pred[j + 2], 0, 255);
+            residual[off + 3] = clip(residual[off + 3] + pred[j + 3], 0, 255);
+        }
     }
 
     private void saveMvsIntra(int mbX, int mbY) {
@@ -962,6 +1051,11 @@ public class SliceDecoder {
                             CoeffTransformer.zigzag4x4, identityMapping16, identityMapping16);
             }
 
+            // System.out.println("LUMA BLOCK " + i);
+            // for (int j = 0; j < ac.length; j++)
+            // System.out.print(ac[j] + ",");
+            // System.out.println();
+
             CoeffTransformer.dequantizeAC(ac, qp);
             CoeffTransformer.idct4x4(ac);
             putBlk(mb.getPlaneData(0), ac, 4, blkOffLeft << 2, blkOffTop << 2);
@@ -973,8 +1067,6 @@ public class SliceDecoder {
 
     private void residualLuma8x8CABAC(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
             Picture mb, int codedBlockPattern, MBType curMbType, boolean is8x8Left, boolean is8x8Top) {
-
-        // System.out.println("8x8 CABAC!!!");
 
         int cbpLuma = codedBlockPattern & 0xf;
 
@@ -1049,6 +1141,11 @@ public class SliceDecoder {
     private int readPredictionI4x4Block(BitReader reader, boolean leftAvailable, boolean topAvailable,
             MBType leftMBType, MBType topMBType, int blkX, int blkY, int mbX) {
         int mode = 2;
+
+        leftAvailable = leftAvailable
+                && (leftMBType != null && leftMBType.intra || !sh.pps.constrained_intra_pred_flag);
+        topAvailable = topAvailable && (topMBType != null && topMBType.intra || !sh.pps.constrained_intra_pred_flag);
+
         if ((leftAvailable || blkX > 0) && (topAvailable || blkY > 0)) {
             int predModeB = topMBType == MBType.I_NxN || blkY > 0 ? i4x4PredTop[(mbX << 2) + blkX] : 2;
             int predModeA = leftMBType == MBType.I_NxN || blkX > 0 ? i4x4PredLeft[blkY] : 2;
@@ -1078,6 +1175,9 @@ public class SliceDecoder {
 
     private void decodeInter16x8(BitReader reader, Picture mb, Frame[][] refs, int mbIdx, MBType prevMbType,
             PartPred p0, PartPred p1, MBType curMBType) {
+
+        // System.out.println("MACROBLOCK[" + mbIdx + "]: PB16x8");
+
         int mbX = mapper.getMbX(mbIdx);
         int mbY = mapper.getMbY(mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mbIdx);
@@ -1142,11 +1242,14 @@ public class SliceDecoder {
             mvX1 = mvdX1 + mvpX1;
             mvY1 = mvdY1 + mvpY1;
 
+            // System.out.println("MV[" + list + "]: (" + mvdX1 + "," + mvdY1 +
+            // "," + refIdx1[list] + ")");
+
             debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + mvX1 + ","
                     + mvY1 + "," + refIdx1[list] + ")");
 
-            BlockInterpolator.getBlockLuma(references[list][refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
-                    (mbY << 6) + mvY1, 16, 8);
+            BlockInterpolator.getBlockLuma(references[list][refIdx1[list]], mb.getPlaneData(0), mb.getPlaneWidth(0), 0,
+                    (mbX << 6) + mvX1, (mbY << 6) + mvY1, 16, 8);
             r1 = refIdx1[list];
         }
         int[] v1 = { mvX1, mvY1, r1 };
@@ -1165,11 +1268,14 @@ public class SliceDecoder {
             mvX2 = mvdX2 + mvpX2;
             mvY2 = mvdY2 + mvpY2;
 
+            // System.out.println("MV[" + list + "]: (" + mvdX2 + "," + mvdY2 +
+            // "," + refIdx2[list] + ")");
+
             debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + mvX2 + ","
                     + mvY2 + "," + refIdx2[list] + ")");
 
-            BlockInterpolator.getBlockLuma(references[list][refIdx2[list]], mb, 128, (mbX << 6) + mvX2, (mbY << 6) + 32
-                    + mvY2, 16, 8);
+            BlockInterpolator.getBlockLuma(references[list][refIdx2[list]], mb.getPlaneData(0), mb.getPlaneWidth(0),
+                    128, (mbX << 6) + mvX2, (mbY << 6) + 32 + mvY2, 16, 8);
             r2 = refIdx2[list];
         }
         int[] v2 = { mvX2, mvY2, r2 };
@@ -1237,6 +1343,7 @@ public class SliceDecoder {
 
     private void decodeInter8x16(BitReader reader, Picture mb, Frame[][] refs, int mbIdx, MBType prevMbType,
             PartPred p0, PartPred p1, MBType curMBType) {
+        // System.out.println("MACROBLOCK[" + mbIdx + "]: PB8x16");
         int mbX = mapper.getMbX(mbIdx);
         int mbY = mapper.getMbY(mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mbIdx);
@@ -1302,11 +1409,14 @@ public class SliceDecoder {
             mvX1 = mvdX1 + mvpX1;
             mvY1 = mvdY1 + mvpY1;
 
+            // System.out.println("MV[" + list + "]: (" + mvdX1 + "," + mvdY1 +
+            // "," + refIdx1[list] + ")");
+
             debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + mvX1 + ","
                     + mvY1 + "," + refIdx1[list] + ")");
 
-            BlockInterpolator.getBlockLuma(references[list][refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
-                    (mbY << 6) + mvY1, 8, 16);
+            BlockInterpolator.getBlockLuma(references[list][refIdx1[list]], mb.getPlaneData(0), mb.getPlaneWidth(0), 0,
+                    (mbX << 6) + mvX1, (mbY << 6) + mvY1, 8, 16);
             r1 = refIdx1[list];
         }
         int[] v1 = { mvX1, mvY1, r1 };
@@ -1325,11 +1435,14 @@ public class SliceDecoder {
             mvX2 = mvdX2 + mvpX2;
             mvY2 = mvdY2 + mvpY2;
 
+            // System.out.println("MV[" + list + "]: (" + mvdX2 + "," + mvdY2 +
+            // "," + refIdx2[list] + ")");
+
             debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + mvX2 + ","
                     + mvY2 + "," + refIdx2[list] + ")");
 
-            BlockInterpolator.getBlockLuma(references[list][refIdx2[list]], mb, 8, (mbX << 6) + 32 + mvX2, (mbY << 6)
-                    + mvY2, 8, 16);
+            BlockInterpolator.getBlockLuma(references[list][refIdx2[list]], mb.getPlaneData(0), mb.getPlaneWidth(0), 8,
+                    (mbX << 6) + 32 + mvX2, (mbY << 6) + mvY2, 8, 16);
             r2 = refIdx2[list];
         }
         int[] v2 = { mvX2, mvY2, r2 };
@@ -1344,6 +1457,7 @@ public class SliceDecoder {
 
     private void decodeInter16x16(BitReader reader, Picture mb, Frame[][] refs, int mbIdx, MBType prevMbType,
             PartPred p0, MBType curMBType) {
+        // System.out.println("MACROBLOCK[" + mbIdx + "]: PB16x16");
         int mbX = mapper.getMbX(mbIdx);
         int mbY = mapper.getMbY(mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mbIdx);
@@ -1402,7 +1516,10 @@ public class SliceDecoder {
                     + "," + refIdx[list] + ")");
             r = refIdx[list];
 
-            BlockInterpolator.getBlockLuma(references[list][r], mb, 0, (mbX << 6) + mvX, (mbY << 6) + mvY, 16, 16);
+            BlockInterpolator.getBlockLuma(references[list][r], mb.getPlaneData(0), mb.getPlaneWidth(0), 0, (mbX << 6)
+                    + mvX, (mbY << 6) + mvY, 16, 16);
+            // System.out.println("MV[" + list + "]: (" + mvX + "," + mvY + ","
+            // + r + ")");
         }
 
         copyVect(mvTopLeft[list], mvTop[list][xx + 3]);
@@ -1423,7 +1540,7 @@ public class SliceDecoder {
                     curPred, mbX, partX, partY, partW, partH, list);
     }
 
-    private void saveVect(int[][] mv, int from, int to, int x, int y, int r) {
+    public static void saveVect(int[][] mv, int from, int to, int x, int y, int r) {
         for (int i = from; i < to; i++) {
             mv[i][0] = x;
             mv[i][1] = y;
@@ -1431,8 +1548,8 @@ public class SliceDecoder {
         }
     }
 
-    public int calcMVPredictionMedian(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb, boolean cAvb,
-            boolean dAvb, int ref, int comp) {
+    public static int calcMVPredictionMedian(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb,
+            boolean cAvb, boolean dAvb, int ref, int comp) {
 
         if (!cAvb) {
             c = d;
@@ -1458,24 +1575,24 @@ public class SliceDecoder {
         return a[comp] + b[comp] + c[comp] - min(a[comp], b[comp], c[comp]) - max(a[comp], b[comp], c[comp]);
     }
 
-    private int max(int x, int x2, int x3) {
+    private static int max(int x, int x2, int x3) {
         return x > x2 ? (x > x3 ? x : x3) : (x2 > x3 ? x2 : x3);
     }
 
-    private int min(int x, int x2, int x3) {
+    private static int min(int x, int x2, int x3) {
         return x < x2 ? (x < x3 ? x : x3) : (x2 < x3 ? x2 : x3);
     }
 
-    public int calcMVPrediction16x8Top(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb, boolean cAvb,
-            boolean dAvb, int refIdx, int comp) {
+    public static int calcMVPrediction16x8Top(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb,
+            boolean cAvb, boolean dAvb, int refIdx, int comp) {
         if (bAvb && b[2] == refIdx)
             return b[comp];
         else
             return calcMVPredictionMedian(a, b, c, d, aAvb, bAvb, cAvb, dAvb, refIdx, comp);
     }
 
-    public int calcMVPrediction16x8Bottom(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb, boolean cAvb,
-            boolean dAvb, int refIdx, int comp) {
+    public static int calcMVPrediction16x8Bottom(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb,
+            boolean cAvb, boolean dAvb, int refIdx, int comp) {
 
         if (aAvb && a[2] == refIdx)
             return a[comp];
@@ -1483,8 +1600,8 @@ public class SliceDecoder {
             return calcMVPredictionMedian(a, b, c, d, aAvb, bAvb, cAvb, dAvb, refIdx, comp);
     }
 
-    public int calcMVPrediction8x16Left(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb, boolean cAvb,
-            boolean dAvb, int refIdx, int comp) {
+    public static int calcMVPrediction8x16Left(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb,
+            boolean cAvb, boolean dAvb, int refIdx, int comp) {
 
         if (aAvb && a[2] == refIdx)
             return a[comp];
@@ -1492,8 +1609,8 @@ public class SliceDecoder {
             return calcMVPredictionMedian(a, b, c, d, aAvb, bAvb, cAvb, dAvb, refIdx, comp);
     }
 
-    public int calcMVPrediction8x16Right(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb, boolean cAvb,
-            boolean dAvb, int refIdx, int comp) {
+    public static int calcMVPrediction8x16Right(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb,
+            boolean cAvb, boolean dAvb, int refIdx, int comp) {
         int[] lc = cAvb ? c : (dAvb ? d : NULL_VECTOR);
 
         if (lc[2] == refIdx)
@@ -1605,7 +1722,7 @@ public class SliceDecoder {
                 x[0][7], null, x[0][9], x[0][13], true, true, false, true, x[0][10], x[0][11], x[0][14], x[0][15],
                 refIdx[3], mb, 136, 2, 2, mbX, P_8x8, P_8x8, P_8x8, L0, L0, L0, 0);
 
-        savePrediction8x8(mbX, x[0], 0);
+        savePrediction8x8(mbX, x[0], 0, mvTop, mvLeft, mvTopLeft);
 
         predModeLeft[0] = predModeLeft[1] = predModeTop[blk8x8X] = predModeTop[blk8x8X + 1] = L0;
 
@@ -1690,8 +1807,8 @@ public class SliceDecoder {
         predModeTop[blk8x8X] = p[2];
         predModeLeft[1] = predModeTop[blk8x8X + 1] = p[3];
 
-        savePrediction8x8(mbX, x[0], 0);
-        savePrediction8x8(mbX, x[1], 1);
+        savePrediction8x8(mbX, x[0], 0, mvTop, mvLeft, mvTopLeft);
+        savePrediction8x8(mbX, x[1], 1, mvTop, mvLeft, mvTopLeft);
 
         for (int i = 0; i < 4; i++)
             if (p[i] == Direct)
@@ -1740,8 +1857,8 @@ public class SliceDecoder {
         residualLuma(reader, lAvb, tAvb, mbX, mbY, mb, codedBlockPattern, MBType.P_8x8, transform8x8Used, tf8x8Left,
                 tf8x8Top[mbX]);
 
-        savePrediction8x8(mbX, x[0], 0);
-        savePrediction8x8(mbX, x[1], 1);
+        savePrediction8x8(mbX, x[0], 0, mvTop, mvLeft, mvTopLeft);
+        savePrediction8x8(mbX, x[1], 1, mvTop, mvLeft, mvTopLeft);
         saveMvs(x, mbX, mbY);
 
         decodeChromaInter(reader, codedBlockPattern >> 4, references, x, pp, lAvb, tAvb, mbX, mbY, mbAddr, qp, mb, mb1);
@@ -1772,7 +1889,9 @@ public class SliceDecoder {
             return cabac.readSubMbTypeB(mDecoder);
     }
 
-    private void savePrediction8x8(int mbX, int[][] x, int list) {
+    public static void savePrediction8x8(int mbX, int[][] x, int list, int[][][] mvTop, int[][][] mvLeft,
+            int[][] mvTopLeft) {
+
         copyVect(mvTopLeft[list], mvTop[list][(mbX << 2) + 3]);
         copyVect(mvLeft[list][0], x[3]);
         copyVect(mvLeft[list][1], x[7]);
@@ -1784,7 +1903,7 @@ public class SliceDecoder {
         copyVect(mvTop[list][(mbX << 2) + 3], x[15]);
     }
 
-    private void copyVect(int[] to, int[] from) {
+    public static void copyVect(int[] to, int[] from) {
         to[0] = from[0];
         to[1] = from[1];
         to[2] = from[2];
@@ -1839,7 +1958,8 @@ public class SliceDecoder {
 
         debugPrint("MVP: (" + mvpX + ", " + mvpY + "), MVD: (" + mvdX + ", " + mvdY + "), MV: (" + x00[0] + ","
                 + x00[1] + "," + refIdx + ")");
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 8);
+        BlockInterpolator.getBlockLuma(references[refIdx], mb.getPlaneData(0), mb.getPlaneWidth(0), off, offX + x00[0],
+                offY + x00[1], 8, 8);
     }
 
     private void decodeSub8x4(BitReader reader, Picture[] references, int offX, int offY, int[] tl, int[] t0, int[] tr,
@@ -1876,9 +1996,10 @@ public class SliceDecoder {
         debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + x10[0] + ","
                 + x10[1] + "," + refIdx + ")");
 
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 4);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4, offX + x10[0], offY + x10[1]
-                + 16, 8, 4);
+        BlockInterpolator.getBlockLuma(references[refIdx], mb.getPlaneData(0), mb.getPlaneWidth(0), off, offX + x00[0],
+                offY + x00[1], 8, 4);
+        BlockInterpolator.getBlockLuma(references[refIdx], mb.getPlaneData(0), mb.getPlaneWidth(0), off + mb.getWidth()
+                * 4, offX + x10[0], offY + x10[1] + 16, 8, 4);
     }
 
     private void decodeSub4x8(BitReader reader, Picture[] references, int offX, int offY, int[] tl, int[] t0, int[] t1,
@@ -1915,8 +2036,10 @@ public class SliceDecoder {
         debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + x01[0] + ","
                 + x01[1] + "," + refIdx + ")");
 
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 4, 8);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 8);
+        BlockInterpolator.getBlockLuma(references[refIdx], mb.getPlaneData(0), mb.getPlaneWidth(0), off, offX + x00[0],
+                offY + x00[1], 4, 8);
+        BlockInterpolator.getBlockLuma(references[refIdx], mb.getPlaneData(0), mb.getPlaneWidth(0), off + 4, offX
+                + x01[0] + 16, offY + x01[1], 4, 8);
     }
 
     private void decodeSub4x4(BitReader reader, Picture[] references, int offX, int offY, int[] tl, int[] t0, int[] t1,
@@ -1978,12 +2101,14 @@ public class SliceDecoder {
         debugPrint("MVP: (" + mvpX4 + ", " + mvpY4 + "), MVD: (" + mvdX4 + ", " + mvdY4 + "), MV: (" + x11[0] + ","
                 + x11[1] + "," + refIdx + ")");
 
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 4, 4);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 4);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4, offX + x10[0], offY + x10[1]
-                + 16, 4, 4);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4 + 4, offX + x11[0] + 16, offY
-                + x11[1] + 16, 4, 4);
+        BlockInterpolator.getBlockLuma(references[refIdx], mb.getPlaneData(0), mb.getPlaneWidth(0), off, offX + x00[0],
+                offY + x00[1], 4, 4);
+        BlockInterpolator.getBlockLuma(references[refIdx], mb.getPlaneData(0), mb.getPlaneWidth(0), off + 4, offX
+                + x01[0] + 16, offY + x01[1], 4, 4);
+        BlockInterpolator.getBlockLuma(references[refIdx], mb.getPlaneData(0), mb.getPlaneWidth(0), off + mb.getWidth()
+                * 4, offX + x10[0], offY + x10[1] + 16, 4, 4);
+        BlockInterpolator.getBlockLuma(references[refIdx], mb.getPlaneData(0), mb.getPlaneWidth(0), off + mb.getWidth()
+                * 4 + 4, offX + x11[0] + 16, offY + x11[1] + 16, 4, 4);
     }
 
     private int readMVD(BitReader reader, int comp, boolean leftAvailable, boolean topAvailable, MBType leftType,
@@ -2052,6 +2177,15 @@ public class SliceDecoder {
                     mbb[0].getPlaneData(comp), mbb[1].getPlaneData(comp), BLK_8x8_MB_OFF_CHROMA[blk8x8],
                     mb.getPlaneWidth(comp), 4, 4, mb.getPlaneData(comp), refs, thisFrame);
         }
+
+        // int[] pels = mbb[0].getPlaneData(comp);
+        // for (int i = 0, k = 0; i < 8; i++) {
+        // for (int j = 0; j < 8; j++, k++) {
+        // System.out.print(pels[k] + ",");
+        // }
+        // System.out.println();
+        // }
+        // System.out.println();
     }
 
     public void decodeMBlockIPCM(BitReader reader, int mbIndex, Picture mb) {
@@ -2091,8 +2225,8 @@ public class SliceDecoder {
         } else {
             predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
                     mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, pp, mb, identityMapping4);
-            savePrediction8x8(mbX, x[0], 0);
-            savePrediction8x8(mbX, x[1], 1);
+            savePrediction8x8(mbX, x[0], 0, mvTop, mvLeft, mvTopLeft);
+            savePrediction8x8(mbX, x[1], 1, mvTop, mvLeft, mvTopLeft);
         }
 
         decodeChromaSkip(refs, x, pp, mbX, mbY, mb);
@@ -2136,10 +2270,10 @@ public class SliceDecoder {
                     int blkPredX = (mbX << 6) + (blkIndX << 4);
                     int blkPredY = (mbY << 6) + (blkIndY << 4);
 
-                    BlockInterpolator.getBlockLuma(refs[0][x[0][blk4x4][2]], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
-                            + x[0][blk4x4][0], blkPredY + x[0][blk4x4][1], 4, 4);
-                    BlockInterpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
-                            + x[1][blk4x4][0], blkPredY + x[1][blk4x4][1], 4, 4);
+                    BlockInterpolator.getBlockLuma(refs[0][x[0][blk4x4][2]], mb0.getPlaneData(0), mb0.getPlaneWidth(0),
+                            BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX + x[0][blk4x4][0], blkPredY + x[0][blk4x4][1], 4, 4);
+                    BlockInterpolator.getBlockLuma(refs[1][0], mb1.getPlaneData(0), mb1.getPlaneWidth(0),
+                            BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX + x[1][blk4x4][0], blkPredY + x[1][blk4x4][1], 4, 4);
                 }
             else {
                 int blk4x4Pred = BLK_INV_MAP[blk8x8 * 5];
@@ -2156,10 +2290,14 @@ public class SliceDecoder {
                 int blkPredX = (mbX << 6) + (blkIndX << 4);
                 int blkPredY = (mbY << 6) + (blkIndY << 4);
 
-                BlockInterpolator.getBlockLuma(refs[0][x[0][blk4x4_0][2]], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
-                        + x[0][blk4x4_0][0], blkPredY + x[0][blk4x4_0][1], 8, 8);
-                BlockInterpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
-                        + x[1][blk4x4_0][0], blkPredY + x[1][blk4x4_0][1], 8, 8);
+                BlockInterpolator
+                        .getBlockLuma(refs[0][x[0][blk4x4_0][2]], mb0.getPlaneData(0), mb0.getPlaneWidth(0),
+                                BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX + x[0][blk4x4_0][0], blkPredY
+                                        + x[0][blk4x4_0][1], 8, 8);
+                BlockInterpolator
+                        .getBlockLuma(refs[1][0], mb1.getPlaneData(0), mb1.getPlaneWidth(0),
+                                BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX + x[1][blk4x4_0][0], blkPredY
+                                        + x[1][blk4x4_0][1], 8, 8);
             }
             prediction.mergePrediction(x[0][blk4x4_0][2], x[1][blk4x4_0][2], Bi, 0, mb0.getPlaneData(0),
                     mb1.getPlaneData(0), BLK_4x4_MB_OFF_LUMA[blk4x4_0], 16, 8, 8, mb.getPlaneData(0), refs, thisFrame);
@@ -2245,10 +2383,10 @@ public class SliceDecoder {
 
                 int blkOffX = (blk8x8 & 1) << 5;
                 int blkOffY = (blk8x8 >> 1) << 5;
-                BlockInterpolator.getBlockLuma(refs[0][0], mb0, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX,
-                        (mbY << 6) + blkOffY, 8, 8);
-                BlockInterpolator.getBlockLuma(refs[1][0], mb1, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX,
-                        (mbY << 6) + blkOffY, 8, 8);
+                BlockInterpolator.getBlockLuma(refs[0][0], mb0.getPlaneData(0), mb0.getPlaneWidth(0),
+                        BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX, (mbY << 6) + blkOffY, 8, 8);
+                BlockInterpolator.getBlockLuma(refs[1][0], mb1.getPlaneData(0), mb1.getPlaneWidth(0),
+                        BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX, (mbY << 6) + blkOffY, 8, 8);
                 prediction.mergePrediction(0, 0, PartPred.Bi, 0, mb0.getPlaneData(0), mb1.getPlaneData(0),
                         BLK_8x8_MB_OFF_LUMA[blk8x8], 16, 8, 8, mb.getPlaneData(0), refs, thisFrame);
                 debugPrint("DIRECT_8x8 [" + (blk8x8 & 2) + ", " + ((blk8x8 << 1) & 2) + "]: (0,0,0), (0,0,0)");
@@ -2280,11 +2418,13 @@ public class SliceDecoder {
                     int blkPredY = (mbY << 6) + (blkIndY << 4);
 
                     if (refIdxL0 >= 0)
-                        BlockInterpolator.getBlockLuma(refs[0][refIdxL0], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
-                                + x[0][blk4x4][0], blkPredY + x[0][blk4x4][1], 4, 4);
+                        BlockInterpolator.getBlockLuma(refs[0][refIdxL0], mb0.getPlaneData(0), mb0.getPlaneWidth(0),
+                                BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX + x[0][blk4x4][0], blkPredY + x[0][blk4x4][1], 4,
+                                4);
                     if (refIdxL1 >= 0)
-                        BlockInterpolator.getBlockLuma(refs[1][refIdxL1], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
-                                + x[1][blk4x4][0], blkPredY + x[1][blk4x4][1], 4, 4);
+                        BlockInterpolator.getBlockLuma(refs[1][refIdxL1], mb1.getPlaneData(0), mb1.getPlaneWidth(0),
+                                BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX + x[1][blk4x4][0], blkPredY + x[1][blk4x4][1], 4,
+                                4);
                 }
             else {
                 int blk4x4Pred = BLK_INV_MAP[blk8x8 * 5];
@@ -2302,11 +2442,13 @@ public class SliceDecoder {
                 int blkPredY = (mbY << 6) + (blkIndY << 4);
 
                 if (refIdxL0 >= 0)
-                    BlockInterpolator.getBlockLuma(refs[0][refIdxL0], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
-                            + x[0][blk4x4_0][0], blkPredY + x[0][blk4x4_0][1], 8, 8);
+                    BlockInterpolator.getBlockLuma(refs[0][refIdxL0], mb0.getPlaneData(0), mb0.getPlaneWidth(0),
+                            BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX + x[0][blk4x4_0][0], blkPredY + x[0][blk4x4_0][1],
+                            8, 8);
                 if (refIdxL1 >= 0)
-                    BlockInterpolator.getBlockLuma(refs[1][refIdxL1], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
-                            + x[1][blk4x4_0][0], blkPredY + x[1][blk4x4_0][1], 8, 8);
+                    BlockInterpolator.getBlockLuma(refs[1][refIdxL1], mb1.getPlaneData(0), mb1.getPlaneWidth(0),
+                            BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX + x[1][blk4x4_0][0], blkPredY + x[1][blk4x4_0][1],
+                            8, 8);
             }
             prediction.mergePrediction(x[0][blk4x4_0][2], x[1][blk4x4_0][2], refIdxL0 >= 0 ? (refIdxL1 >= 0 ? Bi : L0)
                     : L1, 0, mb0.getPlaneData(0), mb1.getPlaneData(0), BLK_4x4_MB_OFF_LUMA[blk4x4_0], 16, 8, 8, mb
@@ -2393,7 +2535,8 @@ public class SliceDecoder {
             x[0][i][1] = mvY;
             x[0][i][2] = 0;
         }
-        BlockInterpolator.getBlockLuma(refs[0][0], mb, 0, (mbX << 6) + mvX, (mbY << 6) + mvY, 16, 16);
+        BlockInterpolator.getBlockLuma(refs[0][0], mb.getPlaneData(0), mb.getPlaneWidth(0), 0, (mbX << 6) + mvX,
+                (mbY << 6) + mvY, 16, 16);
 
         prediction.mergePrediction(0, 0, L0, 0, mb.getPlaneData(0), null, 0, 16, 16, 16, mb.getPlaneData(0), refs,
                 thisFrame);
@@ -2410,6 +2553,6 @@ public class SliceDecoder {
     }
 
     public void setDebug(boolean debug) {
-        this.debug = debug;
+        this.debug = true;// debug;
     }
 }

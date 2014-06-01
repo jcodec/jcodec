@@ -1,6 +1,6 @@
 package org.jcodec.codecs.h264.decode;
 
-import static org.jcodec.common.tools.MathUtil.clip;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -13,353 +13,179 @@ import static org.jcodec.common.tools.MathUtil.clip;
  */
 public class Intra4x4PredictionBuilder {
 
-    public static void predictWithMode(int mode, int[] residual, boolean leftAvailable, boolean topAvailable,
-            boolean topRightAvailable, int[] leftRow, int[] topLine, int topLeft[], int mbOffX, int blkX, int blkY) {
+    public static void predictWithMode(int mode, boolean leftAvailable, boolean topAvailable,
+            boolean topRightAvailable, int[] leftRow, int[] topLine, int topLeft[], int blkAbsX, int blkOffY, int[] out) {
         switch (mode) {
         case 0:
-            predictVertical(residual, topAvailable, topLine, mbOffX, blkX, blkY);
+            predictVertical(topAvailable, topLine, blkAbsX, blkOffY, out);
             break;
         case 1:
-            predictHorizontal(residual, leftAvailable, leftRow, mbOffX, blkX, blkY);
+            predictHorizontal(leftAvailable, leftRow, blkAbsX, blkOffY, out);
             break;
         case 2:
-            predictDC(residual, leftAvailable, topAvailable, leftRow, topLine, mbOffX, blkX, blkY);
+            predictDC(leftAvailable, topAvailable, leftRow, topLine, blkAbsX, blkOffY, out);
             break;
         case 3:
-            predictDiagonalDownLeft(residual, topAvailable, topRightAvailable, topLine, mbOffX,
-                    blkX, blkY);
+            predictDiagonalDownLeft(topAvailable, topRightAvailable, topLine, blkAbsX, blkOffY, out);
             break;
         case 4:
-            predictDiagonalDownRight(residual, leftAvailable, topAvailable, leftRow, topLine, topLeft, mbOffX, blkX, blkY);
+            predictDiagonalDownRight(leftAvailable, topAvailable, leftRow, topLine, topLeft, blkAbsX, blkOffY, out);
             break;
         case 5:
-            predictVerticalRight(residual, leftAvailable, topAvailable, leftRow, topLine, topLeft, mbOffX, blkX, blkY);
+            predictVerticalRight(leftAvailable, topAvailable, leftRow, topLine, topLeft, blkAbsX, blkOffY, out);
             break;
         case 6:
-            predictHorizontalDown(residual, leftAvailable, topAvailable, leftRow, topLine, topLeft, mbOffX, blkX, blkY);
+            predictHorizontalDown(leftAvailable, topAvailable, leftRow, topLine, topLeft, blkAbsX, blkOffY, out);
             break;
         case 7:
-            predictVerticalLeft(residual, topAvailable, topRightAvailable, topLine, mbOffX,
-                    blkX, blkY);
+            predictVerticalLeft(topAvailable, topRightAvailable, topLine, blkAbsX, blkOffY, out);
             break;
         case 8:
-            predictHorizontalUp(residual, leftAvailable, leftRow, mbOffX, blkX, blkY);
+            predictHorizontalUp(leftAvailable, leftRow, blkAbsX, blkOffY, out);
             break;
         }
-
-        int oo1 = mbOffX + blkX;
-        int off1 = (blkY << 4) + blkX + 3;
-        
-        topLeft[blkY >> 2] = topLine[oo1 + 3];
-        
-        leftRow[blkY] = residual[off1];
-        leftRow[blkY + 1] = residual[off1 + 16];
-        leftRow[blkY + 2] = residual[off1 + 32];
-        leftRow[blkY + 3] = residual[off1 + 48];
-
-        int off2 = (blkY << 4) + blkX + 48;
-        topLine[oo1] = residual[off2];
-        topLine[oo1 + 1] = residual[off2 + 1];
-        topLine[oo1 + 2] = residual[off2 + 2];
-        topLine[oo1 + 3] = residual[off2 + 3];
     }
 
-    public static void predictVertical(int[] residual, boolean topAvailable,
-            int[] topLine, int mbOffX, int blkX, int blkY) {
+    public static void predictVertical(boolean topAvailable, int[] topLine, int blkAbsX, int blkY, int[] out) {
 
-        int off = (blkY << 4) + blkX;
-        int toff = mbOffX + blkX;
-        for (int j = 0; j < 4; j++) {
-            residual[off] = clip(residual[off] + topLine[toff], 0, 255);
-            residual[off + 1] = clip(residual[off + 1] + topLine[toff + 1], 0, 255);
-            residual[off + 2] = clip(residual[off + 2] + topLine[toff + 2], 0, 255);
-            residual[off + 3] = clip(residual[off + 3] + topLine[toff + 3], 0, 255);
-            off += 16;
+        for (int j = 0, off = 0; j < 4; j++, off += 4) {
+            out[off] = topLine[blkAbsX];
+            out[off + 1] = topLine[blkAbsX + 1];
+            out[off + 2] = topLine[blkAbsX + 2];
+            out[off + 3] = topLine[blkAbsX + 3];
         }
     }
 
-    public static void predictHorizontal(int[] residual, boolean leftAvailable, int[] leftRow,
-            int mbOffX, int blkX, int blkY) {
+    public static void predictHorizontal(boolean leftAvailable, int[] leftRow, int blkAbsX, int blkY, int[] out) {
 
-        int off = (blkY << 4) + blkX;
-        for (int j = 0; j < 4; j++) {
+        for (int j = 0, off = 0; j < 4; j++, off += 4) {
             int l = leftRow[blkY + j];
-            residual[off] = clip(residual[off] + l, 0, 255);
-            residual[off + 1] = clip(residual[off + 1] + l, 0, 255);
-            residual[off + 2] = clip(residual[off + 2] + l, 0, 255);
-            residual[off + 3] = clip(residual[off + 3] + l, 0, 255);
-            off += 16;
+            out[off] = out[off + 1] = out[off + 2] = out[off + 3] = l;
         }
     }
 
-    public static void predictDC(int[] residual, boolean leftAvailable, boolean topAvailable, int[] leftRow,
-            int[] topLine, int mbOffX, int blkX, int blkY) {
+    public static void predictDC(boolean leftAvailable, boolean topAvailable, int[] leftRow, int[] topLine,
+            int blkAbsX, int blkY, int[] out) {
 
         int val;
         if (leftAvailable && topAvailable) {
-            val = (leftRow[blkY] + leftRow[blkY + 1] + leftRow[blkY + 2] + leftRow[blkY + 3]
-                    + topLine[mbOffX + blkX] + topLine[mbOffX + blkX + 1] + topLine[mbOffX + blkX + 2]
-                    + topLine[mbOffX + blkX + 3] + 4) >> 3;
+            val = (leftRow[blkY] + leftRow[blkY + 1] + leftRow[blkY + 2] + leftRow[blkY + 3] + topLine[blkAbsX]
+                    + topLine[blkAbsX + 1] + topLine[blkAbsX + 2] + topLine[blkAbsX + 3] + 4) >> 3;
         } else if (leftAvailable) {
             val = (leftRow[blkY] + leftRow[blkY + 1] + leftRow[blkY + 2] + leftRow[blkY + 3] + 2) >> 2;
         } else if (topAvailable) {
-            val = (topLine[mbOffX + blkX] + topLine[mbOffX + blkX + 1] + topLine[mbOffX + blkX + 2]
-                    + topLine[mbOffX + blkX + 3] + 2) >> 2;
+            val = (topLine[blkAbsX] + topLine[blkAbsX + 1] + topLine[blkAbsX + 2] + topLine[blkAbsX + 3] + 2) >> 2;
         } else {
             val = 128;
         }
 
-        int off = (blkY << 4) + blkX;
-        for (int j = 0; j < 4; j++) {
-            residual[off] = clip(residual[off] + val, 0, 255);
-            residual[off + 1] = clip(residual[off + 1] + val, 0, 255);
-            residual[off + 2] = clip(residual[off + 2] + val, 0, 255);
-            residual[off + 3] = clip(residual[off + 3] + val, 0, 255);
-            off += 16;
+        Arrays.fill(out, val);
+    }
+
+    public static void predictDiagonalDownLeft(boolean topAvailable, boolean topRightAvailable, int[] topLine,
+            int blkAbsX, int blkY, int[] out) {
+
+        int tr0 = topLine[blkAbsX + 3], tr1 = topLine[blkAbsX + 3], tr2 = topLine[blkAbsX + 3], tr3 = topLine[blkAbsX + 3];
+        if (topRightAvailable) {
+            tr0 = topLine[blkAbsX + 4];
+            tr1 = topLine[blkAbsX + 5];
+            tr2 = topLine[blkAbsX + 6];
+            tr3 = topLine[blkAbsX + 7];
         }
+
+        out[0] = ((topLine[blkAbsX] + topLine[blkAbsX + 2] + 2 * (topLine[blkAbsX + 1]) + 2) >> 2);
+        out[1] = out[4] = ((topLine[blkAbsX + 1] + topLine[blkAbsX + 3] + 2 * (topLine[blkAbsX + 2]) + 2) >> 2);
+        out[2] = out[5] = out[8] = ((topLine[blkAbsX + 2] + tr0 + 2 * (topLine[blkAbsX + 3]) + 2) >> 2);
+        out[3] = out[6] = out[9] = out[12] = ((topLine[blkAbsX + 3] + tr1 + 2 * (tr0) + 2) >> 2);
+        out[7] = out[10] = out[13] = ((tr0 + tr2 + 2 * (tr1) + 2) >> 2);
+        out[11] = out[14] = ((tr1 + tr3 + 2 * (tr2) + 2) >> 2);
+        out[15] = ((tr2 + 3 * (tr3) + 2) >> 2);
     }
 
-    public static void predictDiagonalDownLeft(int[] residual, boolean topAvailable,
-            boolean topRightAvailable, int[] topLine, int mbOffX, int blkX, int blkY) {
-        
-        int to = mbOffX + blkX;
-        int tr0 = topLine[to+3],
-        tr1 = topLine[to+3],
-        tr2 = topLine[to+3],
-        tr3 = topLine[to+3];
-        if(topRightAvailable) {
-            tr0 = topLine[to+4];
-            tr1 = topLine[to+5];
-            tr2 = topLine[to+6];
-            tr3 = topLine[to+7];
+    public static void predictDiagonalDownRight(boolean leftAvailable, boolean topAvailable, int[] leftRow,
+            int[] topLine, int[] topLeft, int blkAbsX, int blkY, int[] out) {
+
+        int TL = topLeft[blkY];
+
+        out[0] = out[5] = out[10] = out[15] = (topLine[blkAbsX] + 2 * TL + leftRow[blkY] + 2) >> 2;
+        out[1] = ((TL + 2 * topLine[blkAbsX] + topLine[blkAbsX + 1] + 2) >> 2);
+        out[2] = ((topLine[blkAbsX] + 2 * topLine[blkAbsX + 1] + topLine[blkAbsX + 2] + 2) >> 2);
+        out[3] = ((topLine[blkAbsX + 1] + 2 * topLine[blkAbsX + 2] + topLine[blkAbsX + 3] + 2) >> 2);
+        out[4] = ((TL + 2 * leftRow[blkY] + leftRow[blkY + 1] + 2) >> 2);
+        out[6] = ((TL + 2 * topLine[blkAbsX] + topLine[blkAbsX + 1] + 2) >> 2);
+        out[7] = ((topLine[blkAbsX] + 2 * topLine[blkAbsX + 1] + topLine[blkAbsX + 2] + 2) >> 2);
+        out[8] = ((leftRow[blkY] + 2 * leftRow[blkY + 1] + leftRow[blkY + 2] + 2) >> 2);
+        out[9] = ((TL + 2 * leftRow[blkY] + leftRow[blkY + 1] + 2) >> 2);
+        out[11] = ((TL + 2 * topLine[blkAbsX] + topLine[blkAbsX + 1] + 2) >> 2);
+        out[12] = ((leftRow[blkY + 1] + 2 * leftRow[blkY + 2] + leftRow[blkY + 3] + 2) >> 2);
+        out[13] = ((leftRow[blkY] + 2 * leftRow[blkY + 1] + leftRow[blkY + 2] + 2) >> 2);
+        out[14] = ((TL + 2 * leftRow[blkY] + leftRow[blkY + 1] + 2) >> 2);
+    }
+
+    public static void predictVerticalRight(boolean leftAvailable, boolean topAvailable, int[] leftRow, int[] topLine,
+            int[] topLeft, int blkAbsX, int blkY, int[] out) {
+
+        int TL = topLeft[blkY];
+        out[0] = out[9] = (TL + topLine[blkAbsX + 0] + 1) >> 1;
+        out[1] = out[10] = (topLine[blkAbsX + 0] + topLine[blkAbsX + 1] + 1) >> 1;
+        out[2] = out[11] = (topLine[blkAbsX + 1] + topLine[blkAbsX + 2] + 1) >> 1;
+        out[3] = (topLine[blkAbsX + 2] + topLine[blkAbsX + 3] + 1) >> 1;
+        out[4] = out[13] = (leftRow[blkY] + 2 * TL + topLine[blkAbsX + 0] + 2) >> 2;
+        out[5] = out[14] = (TL + 2 * topLine[blkAbsX + 0] + topLine[blkAbsX + 1] + 2) >> 2;
+        out[6] = out[15] = (topLine[blkAbsX + 0] + 2 * topLine[blkAbsX + 1] + topLine[blkAbsX + 2] + 2) >> 2;
+        out[7] = (topLine[blkAbsX + 1] + 2 * topLine[blkAbsX + 2] + topLine[blkAbsX + 3] + 2) >> 2;
+        out[8] = (TL + 2 * leftRow[blkY] + leftRow[blkY + 1] + 2) >> 2;
+        out[12] = (leftRow[blkY] + 2 * leftRow[blkY + 1] + leftRow[blkY + 2] + 2) >> 2;
+    }
+
+    public static void predictHorizontalDown(boolean leftAvailable, boolean topAvailable, int[] leftRow, int[] topLine,
+            int[] topLeft, int blkAbsX, int blkY, int[] out) {
+
+        int TL = topLeft[blkY];
+
+        out[0] = out[6] = (TL + leftRow[blkY] + 1) >> 1;
+        out[1] = out[7] = (leftRow[blkY] + 2 * TL + topLine[blkAbsX + 0] + 2) >> 2;
+        out[2] = (TL + 2 * topLine[blkAbsX + 0] + topLine[blkAbsX + 1] + 2) >> 2;
+        out[3] = (topLine[blkAbsX + 0] + 2 * topLine[blkAbsX + 1] + topLine[blkAbsX + 2] + 2) >> 2;
+        out[4] = out[10] = (leftRow[blkY] + leftRow[blkY + 1] + 1) >> 1;
+        out[5] = out[11] = (TL + 2 * leftRow[blkY] + leftRow[blkY + 1] + 2) >> 2;
+        out[8] = out[14] = (leftRow[blkY + 1] + leftRow[blkY + 2] + 1) >> 1;
+        out[9] = out[15] = (leftRow[blkY] + 2 * leftRow[blkY + 1] + leftRow[blkY + 2] + 2) >> 2;
+        out[12] = (leftRow[blkY + 2] + leftRow[blkY + 3] + 1) >> 1;
+        out[13] = (leftRow[blkY + 1] + 2 * leftRow[blkY + 2] + leftRow[blkY + 3] + 2) >> 2;
+    }
+
+    public static void predictVerticalLeft(boolean topAvailable, boolean topRightAvailable, int[] topLine,
+            int blkAbsX, int blkY, int[] out) {
+
+        int tr0 = topLine[blkAbsX + 3], tr1 = topLine[blkAbsX + 3], tr2 = topLine[blkAbsX + 3];
+        if (topRightAvailable) {
+            tr0 = topLine[blkAbsX + 4];
+            tr1 = topLine[blkAbsX + 5];
+            tr2 = topLine[blkAbsX + 6];
         }
-        
-        int c0 = ((topLine[to] + topLine[to+2] + 2*(topLine[to+1]) + 2) >> 2);
-        int c1 = ((topLine[to+1] + topLine[to+3] + 2*(topLine[to+2]) + 2) >> 2);
-        int c2 = ((topLine[to+2] + tr0 + 2*(topLine[to+3]) + 2) >> 2);
-        int c3 = ((topLine[to+3] + tr1 + 2*(tr0) + 2) >> 2);
-        int c4 = ((tr0 + tr2 + 2*(tr1) + 2) >> 2);
-        int c5 = ((tr1 + tr3 + 2*(tr2) + 2) >> 2);
-        int c6 = ((tr2 + 3*(tr3) + 2) >> 2);
-        
-        int off = (blkY << 4) + blkX;
-        residual[off] = clip(residual[off] + c0, 0, 255);
-        residual[off+1] = clip(residual[off+1] + c1, 0, 255);
-        residual[off+2] = clip(residual[off+2] + c2, 0, 255);
-        residual[off+3] = clip(residual[off+3] + c3, 0, 255);
-        
-        residual[off+16] = clip(residual[off+16] + c1, 0, 255);
-        residual[off+17] = clip(residual[off+17] + c2, 0, 255);
-        residual[off+18] = clip(residual[off+18] + c3, 0, 255);
-        residual[off+19] = clip(residual[off+19] + c4, 0, 255);
-        
-        residual[off+32] = clip(residual[off+32] + c2, 0, 255);
-        residual[off+33] = clip(residual[off+33] + c3, 0, 255);
-        residual[off+34] = clip(residual[off+34] + c4, 0, 255);
-        residual[off+35] = clip(residual[off+35] + c5, 0, 255);
-        
-        residual[off+48] = clip(residual[off+48] + c3, 0, 255);
-        residual[off+49] = clip(residual[off+49] + c4, 0, 255);
-        residual[off+50] = clip(residual[off+50] + c5, 0, 255);
-        residual[off+51] = clip(residual[off+51] + c6, 0, 255);
+
+        out[0] = ((topLine[blkAbsX] + topLine[blkAbsX + 1] + 1) >> 1);
+        out[1] = out[8] = ((topLine[blkAbsX + 1] + topLine[blkAbsX + 2] + 1) >> 1);
+        out[2] = out[9] = ((topLine[blkAbsX + 2] + topLine[blkAbsX + 3] + 1) >> 1);
+        out[3] = out[10] = ((topLine[blkAbsX + 3] + tr0 + 1) >> 1);
+        out[11] = ((tr0 + tr1 + 1) >> 1);
+        out[4] = ((topLine[blkAbsX] + 2 * topLine[blkAbsX + 1] + topLine[blkAbsX + 2] + 2) >> 2);
+        out[5] = out[12] = ((topLine[blkAbsX + 1] + 2 * topLine[blkAbsX + 2] + topLine[blkAbsX + 3] + 2) >> 2);
+        out[6] = out[13] = ((topLine[blkAbsX + 2] + 2 * topLine[blkAbsX + 3] + tr0 + 2) >> 2);
+        out[7] = out[14] = ((topLine[blkAbsX + 3] + 2 * tr0 + tr1 + 2) >> 2);
+        out[15] = ((tr0 + 2 * tr1 + tr2 + 2) >> 2);
     }
 
-    public static void predictDiagonalDownRight(int[] residual, boolean leftAvailable, boolean topAvailable,
-            int[] leftRow, int[] topLine, int[] topLeft, int mbOffX, int blkX, int blkY) {
+    public static void predictHorizontalUp(boolean leftAvailable, int[] leftRow, int blkAbsX, int blkY,
+            int[] out) {
 
-        int off = (blkY << 4) + blkX;
-        for (int y = 0; y < 4; y++) {
-            for (int x = 0; x < 4; x++) {
-                if (x > y) {
-                    int t1;
-                    if (x - y - 2 == -1)
-                        t1 = topLeft[blkY >> 2];
-                    else
-                        t1 = topLine[mbOffX + blkX + x - y - 2];
-
-                    int t2;
-                    if (x - y - 1 == -1)
-                        t2 = topLeft[blkY >> 2];
-                    else
-                        t2 = topLine[mbOffX + blkX + x - y - 1];
-
-                    int t3;
-                    if (x - y == -1)
-                        t3 = topLeft[blkY >> 2];
-                    else
-                        t3 = topLine[mbOffX + blkX + x - y];
-
-                    residual[off + x] = clip(residual[off + x] + ((t1 + 2 * t2 + t3 + 2) >> 2), 0, 255);
-                } else if (x < y) {
-                    int l1;
-                    if (y - x - 2 == -1)
-                        l1 = topLeft[blkY >> 2];
-                    else
-                        l1 = leftRow[blkY + y - x - 2];
-
-                    int l2;
-                    if (y - x - 1 == -1)
-                        l2 = topLeft[blkY >> 2];
-                    else
-                        l2 = leftRow[blkY + y - x - 1];
-
-                    int l3;
-                    if (y - x == -1)
-                        l3 = topLeft[blkY >> 2];
-                    else
-                        l3 = leftRow[blkY + y - x];
-
-                    residual[off + x] = clip(residual[off + x] + ((l1 + 2 * l2 + l3 + 2) >> 2), 0, 255);
-                } else
-                    residual[off + x] = clip(residual[off + x]
-                            + ((topLine[mbOffX + blkX + 0] + 2 * topLeft[blkY>>2] + leftRow[blkY] + 2) >> 2), 0, 255);
-            }
-            off += 16;
-        }
-    }
-
-    public static void predictVerticalRight(int[] residual, boolean leftAvailable, boolean topAvailable, int[] leftRow,
-            int[] topLine, int[] topLeft, int mbOffX, int blkX, int blkY) {
-
-        int v1 = (topLeft[blkY >> 2] + topLine[mbOffX + blkX + 0] + 1) >> 1;
-        int v2 = (topLine[mbOffX + blkX + 0] + topLine[mbOffX + blkX + 1] + 1) >> 1;
-        int v3 = (topLine[mbOffX + blkX + 1] + topLine[mbOffX + blkX + 2] + 1) >> 1;
-        int v4 = (topLine[mbOffX + blkX + 2] + topLine[mbOffX + blkX + 3] + 1) >> 1;
-        int v5 = (leftRow[blkY] + 2 * topLeft[blkY >> 2] + topLine[mbOffX + blkX + 0] + 2) >> 2;
-        int v6 = (topLeft[blkY >> 2] + 2 * topLine[mbOffX + blkX + 0] + topLine[mbOffX + blkX + 1] + 2) >> 2;
-        int v7 = (topLine[mbOffX + blkX + 0] + 2 * topLine[mbOffX + blkX + 1] + topLine[mbOffX + blkX + 2] + 2) >> 2;
-        int v8 = (topLine[mbOffX + blkX + 1] + 2 * topLine[mbOffX + blkX + 2] + topLine[mbOffX + blkX + 3] + 2) >> 2;
-        int v9 = (topLeft[blkY >> 2] + 2 * leftRow[blkY] + leftRow[blkY + 1] + 2) >> 2;
-        int v10 = (leftRow[blkY] + 2 * leftRow[blkY + 1] + leftRow[blkY + 2] + 2) >> 2;
-
-        int off = (blkY << 4) + blkX;
-        residual[off] = clip(residual[off] + v1, 0, 255);
-        residual[off + 1] = clip(residual[off + 1] + v2, 0, 255);
-        residual[off + 2] = clip(residual[off + 2] + v3, 0, 255);
-        residual[off + 3] = clip(residual[off + 3] + v4, 0, 255);
-        residual[off + 16] = clip(residual[off + 16] + v5, 0, 255);
-        residual[off + 17] = clip(residual[off + 17] + v6, 0, 255);
-        residual[off + 18] = clip(residual[off + 18] + v7, 0, 255);
-        residual[off + 19] = clip(residual[off + 19] + v8, 0, 255);
-        residual[off + 32] = clip(residual[off + 32] + v9, 0, 255);
-        residual[off + 33] = clip(residual[off + 33] + v1, 0, 255);
-        residual[off + 34] = clip(residual[off + 34] + v2, 0, 255);
-        residual[off + 35] = clip(residual[off + 35] + v3, 0, 255);
-        residual[off + 48] = clip(residual[off + 48] + v10, 0, 255);
-        residual[off + 49] = clip(residual[off + 49] + v5, 0, 255);
-        residual[off + 50] = clip(residual[off + 50] + v6, 0, 255);
-        residual[off + 51] = clip(residual[off + 51] + v7, 0, 255);
-    }
-
-    public static void predictHorizontalDown(int[] residual, boolean leftAvailable, boolean topAvailable,
-            int[] leftRow, int[] topLine, int[] topLeft, int mbOffX, int blkX, int blkY) {
-
-        int c0 = (topLeft[blkY>>2] + leftRow[blkY] + 1) >> 1;
-        int c1 = (leftRow[blkY] + 2 * topLeft[blkY>>2] + topLine[mbOffX + blkX + 0] + 2) >> 2;
-        int c2 = (topLeft[blkY>>2] + 2 * topLine[mbOffX + blkX + 0] + topLine[mbOffX + blkX + 1] + 2) >> 2;
-        int c3 = (topLine[mbOffX + blkX + 0] + 2 * topLine[mbOffX + blkX + 1] + topLine[mbOffX + blkX + 2] + 2) >> 2;
-        int c4 = (leftRow[blkY] + leftRow[blkY + 1] + 1) >> 1;
-        int c5 = (topLeft[blkY>>2] + 2 * leftRow[blkY] + leftRow[blkY + 1] + 2) >> 2;
-        int c6 = (leftRow[blkY + 1] + leftRow[blkY + 2] + 1) >> 1;
-        int c7 = (leftRow[blkY] + 2 * leftRow[blkY + 1] + leftRow[blkY + 2] + 2) >> 2;
-        int c8 = (leftRow[blkY + 2] + leftRow[blkY + 3] + 1) >> 1;
-        int c9 = (leftRow[blkY + 1] + 2 * leftRow[blkY + 2] + leftRow[blkY + 3] + 2) >> 2;
-
-        int off = (blkY << 4) + blkX;
-        residual[off] = clip(residual[off] + c0, 0, 255);
-        residual[off + 1] = clip(residual[off + 1] + c1, 0, 255);
-        residual[off + 2] = clip(residual[off + 2] + c2, 0, 255);
-        residual[off + 3] = clip(residual[off + 3] + c3, 0, 255);
-        residual[off + 16] = clip(residual[off + 16] + c4, 0, 255);
-        residual[off + 17] = clip(residual[off + 17] + c5, 0, 255);
-        residual[off + 18] = clip(residual[off + 18] + c0, 0, 255);
-        residual[off + 19] = clip(residual[off + 19] + c1, 0, 255);
-        residual[off + 32] = clip(residual[off + 32] + c6, 0, 255);
-        residual[off + 33] = clip(residual[off + 33] + c7, 0, 255);
-        residual[off + 34] = clip(residual[off + 34] + c4, 0, 255);
-        residual[off + 35] = clip(residual[off + 35] + c5, 0, 255);
-        residual[off + 48] = clip(residual[off + 48] + c8, 0, 255);
-        residual[off + 49] = clip(residual[off + 49] + c9, 0, 255);
-        residual[off + 50] = clip(residual[off + 50] + c6, 0, 255);
-        residual[off + 51] = clip(residual[off + 51] + c7, 0, 255);
-    }
-
-    public static void predictVerticalLeft(int[] residual, boolean topAvailable,
-            boolean topRightAvailable, int[] topLine, int mbOffX, int blkX, int blkY) {
-        
-        int to = mbOffX + blkX;
-        int tr0 = topLine[to+3],
-        tr1 = topLine[to+3],
-        tr2 = topLine[to+3];
-        if(topRightAvailable) {
-            tr0 = topLine[to+4];
-            tr1 = topLine[to+5];
-            tr2 = topLine[to+6];
-        }
-        
-        int c0 = ((topLine[to] + topLine[to+1] + 1) >> 1);
-        int c1 = ((topLine[to+1] + topLine[to+2] + 1) >> 1);
-        int c2 = ((topLine[to+2] + topLine[to+3] + 1) >> 1);
-        int c3 = ((topLine[to+3] + tr0 + 1) >> 1);
-        int c4 = ((tr0 + tr1 + 1) >> 1);
-        int c5 = ((topLine[to] + 2*topLine[to+1] + topLine[to+2] + 2) >> 2);
-        int c6 = ((topLine[to+1] + 2*topLine[to+2] + topLine[to+3] + 2) >> 2);
-        int c7 = ((topLine[to+2] + 2*topLine[to+3] + tr0 + 2) >> 2);
-        int c8 = ((topLine[to+3] + 2*tr0 + tr1 + 2) >> 2);
-        int c9 = ((tr0 + 2*tr1 + tr2 + 2) >> 2);
-        
-        int off = (blkY << 4) + blkX;
-        residual[off] = clip(residual[off] + c0, 0, 255);
-        residual[off+1] = clip(residual[off+1] + c1, 0, 255);
-        residual[off+2] = clip(residual[off+2] + c2, 0, 255);
-        residual[off+3] = clip(residual[off+3] + c3, 0, 255);
-        
-        residual[off+16] = clip(residual[off+16] + c5, 0, 255);
-        residual[off+17] = clip(residual[off+17] + c6, 0, 255);
-        residual[off+18] = clip(residual[off+18] + c7, 0, 255);
-        residual[off+19] = clip(residual[off+19] + c8, 0, 255);
-        
-        residual[off+32] = clip(residual[off+32] + c1, 0, 255);
-        residual[off+33] = clip(residual[off+33] + c2, 0, 255);
-        residual[off+34] = clip(residual[off+34] + c3, 0, 255);
-        residual[off+35] = clip(residual[off+35] + c4, 0, 255);
-        
-        residual[off+48] = clip(residual[off+48] + c6, 0, 255);
-        residual[off+49] = clip(residual[off+49] + c7, 0, 255);
-        residual[off+50] = clip(residual[off+50] + c8, 0, 255);
-        residual[off+51] = clip(residual[off+51] + c9, 0, 255);
-    }
-
-    public static void predictHorizontalUp(int[] residual, boolean leftAvailable, int[] leftRow,
-            int mbOffX, int blkX, int blkY) {
-        
-        int c0 = ((leftRow[blkY] + leftRow[blkY+1] + 1) >> 1);
-        int c1 = ((leftRow[blkY] + (leftRow[blkY+1] << 1) + leftRow[blkY+2] + 2) >> 2);
-        int c2 = ((leftRow[blkY+1] + leftRow[blkY+2] + 1) >> 1);
-        int c3 = ((leftRow[blkY+1] + (leftRow[blkY+2] << 1) + leftRow[blkY+3] + 2) >> 2);
-        int c4 = ((leftRow[blkY+2] + leftRow[blkY+3] + 1) >> 1);
-        int c5 = ((leftRow[blkY+2] + (leftRow[blkY+3] << 1) + leftRow[blkY+3] + 2) >> 2);
-        int c6 = leftRow[blkY+3];
-        
-        int off = (blkY << 4) + blkX;
-        residual[off] = clip(residual[off] + c0, 0, 255);
-        residual[off+1] = clip(residual[off+1] + c1, 0, 255);
-        residual[off+2] = clip(residual[off+2] + c2, 0, 255);
-        residual[off+3] = clip(residual[off+3] + c3, 0, 255);
-        
-        residual[off+16] = clip(residual[off+16] + c2, 0, 255);
-        residual[off+17] = clip(residual[off+17] + c3, 0, 255);
-        residual[off+18] = clip(residual[off+18] + c4, 0, 255);
-        residual[off+19] = clip(residual[off+19] + c5, 0, 255);
-        
-        residual[off+32] = clip(residual[off+32] + c4, 0, 255);
-        residual[off+33] = clip(residual[off+33] + c5, 0, 255);
-        residual[off+34] = clip(residual[off+34] + c6, 0, 255);
-        residual[off+35] = clip(residual[off+35] + c6, 0, 255);
-        
-        residual[off+48] = clip(residual[off+48] + c6, 0, 255);
-        residual[off+49] = clip(residual[off+49] + c6, 0, 255);
-        residual[off+50] = clip(residual[off+50] + c6, 0, 255);
-        residual[off+51] = clip(residual[off+51] + c6, 0, 255);
+        out[0] = ((leftRow[blkY] + leftRow[blkY + 1] + 1) >> 1);
+        out[1] = ((leftRow[blkY] + (leftRow[blkY + 1] << 1) + leftRow[blkY + 2] + 2) >> 2);
+        out[2] = out[4] = ((leftRow[blkY + 1] + leftRow[blkY + 2] + 1) >> 1);
+        out[3] = out[5] = ((leftRow[blkY + 1] + (leftRow[blkY + 2] << 1) + leftRow[blkY + 3] + 2) >> 2);
+        out[6] = out[8] = ((leftRow[blkY + 2] + leftRow[blkY + 3] + 1) >> 1);
+        out[7] = out[9] = ((leftRow[blkY + 2] + (leftRow[blkY + 3] << 1) + leftRow[blkY + 3] + 2) >> 2);
+        out[10] = out[11] = out[12] = out[13] = out[14] = out[15] = leftRow[blkY + 3];
     }
 }

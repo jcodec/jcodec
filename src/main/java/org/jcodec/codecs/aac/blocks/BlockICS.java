@@ -193,7 +193,7 @@ public class BlockICS extends Block {
                         offset[2] += vlc.readVLC(in) - 60;
                         clipped_offset = clip(offset[2], -155, 100);
                         if (offset[2] != clipped_offset) {
-                            System.out.println(String.format("Intensity stereo "
+                            System.err.println(String.format("Intensity stereo "
                                     + "position clipped (%d -> %d).\nIf you heard an "
                                     + "audible artifact, there may be a bug in the " + "decoder. ", offset[2],
                                     clipped_offset));
@@ -208,7 +208,7 @@ public class BlockICS extends Block {
                             offset[1] += vlc.readVLC(in) - 60;
                         clipped_offset = clip(offset[1], -100, 155);
                         if (offset[1] != clipped_offset) {
-                            System.out.println(String.format("Noise gain clipped "
+                            System.err.println(String.format("Noise gain clipped "
                                     + "(%d -> %d).\nIf you heard an audible "
                                     + "artifact, there may be a bug in the decoder. ", offset[1], clipped_offset));
                         }

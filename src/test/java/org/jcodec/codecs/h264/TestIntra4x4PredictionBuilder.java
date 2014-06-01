@@ -10,14 +10,14 @@ public class TestIntra4x4PredictionBuilder {
     @Test
     public void testDC() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
         int[] top = new int[] { 1, 2, 3, 4, 5, 6, 7, 8 };
         int[] left = new int[] { 9, 10, 11, 12 };
 
-        Intra4x4PredictionBuilder.predictDC(pred, true, true, left, top, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictDC(true, true, left, top, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7 }), pred);
+        assertArrayEquals(new int[] { 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7 }, pred);
     }
 
     private int[] inMB(int[] is) {
@@ -45,118 +45,118 @@ public class TestIntra4x4PredictionBuilder {
     @Test
     public void testVertical() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
         int[] top = new int[] { 1, 2, 3, 4, 5, 6, 7, 8 };
 //        int[] left = new int[] { 13, 9, 10, 11, 12 };
 
-        Intra4x4PredictionBuilder.predictVertical(pred, true, top, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictVertical(true, top, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4 }), pred);
+        assertArrayEquals(new int[] { 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4 }, pred);
     }
 
     @Test
     public void testHorizontal() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
 //        int[] top = new int[] { 1, 2, 3, 4, 5, 6, 7, 8 };
         int[] left = new int[] { 9, 10, 11, 12 };
-        Intra4x4PredictionBuilder.predictHorizontal(pred, true, left, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictHorizontal(true, left, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12 }), pred);
+        assertArrayEquals(new int[] { 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12 }, pred);
     }
 
     @Test
     public void testDiagonalDownLeft() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
         int[] top = new int[] { 209, 212, 218, 222, 216, 219, 225, 229 };
-        Intra4x4PredictionBuilder.predictDiagonalDownLeft(pred, true, true, top, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictDiagonalDownLeft(true, true, top, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 213, 218, 220, 218, 218, 220, 218, 220, 220, 218, 220, 225, 218, 220, 225, 228 }),
+        assertArrayEquals(new int[] { 213, 218, 220, 218, 218, 220, 218, 220, 220, 218, 220, 225, 218, 220, 225, 228 },
                 pred);
     }
 
     @Test
     public void testDiagonalDownRight() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
         int[] top =  { 183, 196, 170, 131, 0, 0, 0, 0 };
         int[] left =  { 207, 207, 207, 207 };
         int[] tl = {196,0, 0, 0};
-        Intra4x4PredictionBuilder.predictDiagonalDownRight(pred, true, true, left, top, tl, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictDiagonalDownRight(true, true, left, top, tl, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 196, 190, 186, 167, 204, 196, 190, 186, 207, 204, 196, 190, 207, 207, 204, 196 }),
+        assertArrayEquals(new int[] { 196, 190, 186, 167, 204, 196, 190, 186, 207, 204, 196, 190, 207, 207, 204, 196 },
                 pred);
     }
     
     @Test
     public void testDiagonalDownRight1() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
         int[] top = new int[] { 236, 236, 236, 236, 0, 0, 0, 0 };
         int[] left = new int[] { 233, 233, 233, 233 };
         int[] tl = {226, 0, 0, 0};
-        Intra4x4PredictionBuilder.predictDiagonalDownRight(pred, true, true, left, top, tl, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictDiagonalDownRight(true, true, left, top, tl, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 230, 234, 236, 236, 231, 230, 234, 236, 233, 231, 230, 234, 233, 233, 231, 230 }),
+        assertArrayEquals(new int[] { 230, 234, 236, 236, 231, 230, 234, 236, 233, 231, 230, 234, 233, 233, 231, 230 },
                 pred);
     }
 
     @Test
     public void testVerticalRight() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
         int[] top = { 207, 201, 197, 175, 0, 0, 0, 0 };
         int[] left = { 208, 176, 129, 122 };
         int[] tl = {206, 0, 0, 0};
         
-        Intra4x4PredictionBuilder.predictVerticalRight(pred, true, true, left, top, tl, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictVerticalRight(true, true, left, top, tl, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 207, 204, 199, 186, 207, 205, 202, 193, 200, 207, 204, 199, 172, 207, 205, 202 }),
+        assertArrayEquals(new int[] { 207, 204, 199, 186, 207, 205, 202, 193, 200, 207, 204, 199, 172, 207, 205, 202 },
                 pred);
     }
 
     @Test
     public void testHorizontalDown() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
         int[] top = { 209, 157, 114, 118 };
         int[] left = { 197, 198, 202, 205 };
         int[] tl = {204, 0, 0, 0};
-        Intra4x4PredictionBuilder.predictHorizontalDown(pred, true, true, left, top, tl, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictHorizontalDown(true, true, left, top, tl, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 201, 204, 195, 159, 198, 199, 201, 204, 200, 199, 198, 199, 204, 202, 200, 199 }),
+        assertArrayEquals(new int[] { 201, 204, 195, 159, 198, 199, 201, 204, 200, 199, 198, 199, 204, 202, 200, 199 },
                 pred);
     }
 
     @Test
     public void testVerticalLeft() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
         int[] top = new int[] { 215, 201, 173, 159, 137, 141, 150, 155 };
-        Intra4x4PredictionBuilder.predictVerticalLeft(pred, true, true, top, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictVerticalLeft(true, true, top, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 208, 187, 166, 148, 198, 177, 157, 144, 187, 166, 148, 139, 177, 157, 144, 142 }),
+        assertArrayEquals(new int[] { 208, 187, 166, 148, 198, 177, 157, 144, 187, 166, 148, 139, 177, 157, 144, 142 },
                 pred);
     }
 
     @Test
     public void testHorizontalUp() throws Exception {
 
-        int[] pred = new int[256];
+        int[] pred = new int[16];
 
         int[] left = new int[] { 175, 180, 216, 221 };
-        Intra4x4PredictionBuilder.predictHorizontalUp(pred, true, left, 0, 0, 0);
+        Intra4x4PredictionBuilder.predictHorizontalUp(true, left, 0, 0, pred);
 
-        assertArrayEquals(inMB(new int[] { 178, 188, 198, 208, 198, 208, 219, 220, 219, 220, 221, 221, 221, 221, 221, 221 }),
+        assertArrayEquals(new int[] { 178, 188, 198, 208, 198, 208, 219, 220, 219, 220, 221, 221, 221, 221, 221, 221 },
                 pred);
     }
 

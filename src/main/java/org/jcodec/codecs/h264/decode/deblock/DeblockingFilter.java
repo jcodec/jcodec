@@ -3,6 +3,7 @@ package org.jcodec.codecs.h264.decode.deblock;
 import static java.lang.Math.abs;
 import static org.jcodec.common.tools.MathUtil.clip;
 
+import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.ColorSpace;
@@ -33,22 +34,6 @@ import org.jcodec.common.tools.MathUtil;
  * 
  */
 public class DeblockingFilter {
-
-    static int[] alphaTab = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 4, 5, 6, 7, 8, 9, 10, 12,
-            13, 15, 17, 20, 22, 25, 28, 32, 36, 40, 45, 50, 56, 63, 71, 80, 90, 101, 113, 127, 144, 162, 182, 203, 226,
-            255, 255 };
-    static int[] betaTab = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 6,
-            6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18 };
-
-    static int[][] tcs = new int[][] {
-            new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                    1, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 6, 6, 7, 8, 9, 10, 11, 13 },
-
-            new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
-                    2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 6, 7, 8, 8, 10, 11, 12, 13, 15, 17 },
-
-            new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3,
-                    3, 3, 4, 4, 4, 5, 6, 6, 7, 8, 9, 10, 11, 13, 14, 16, 18, 20, 23, 25 } };
 
     private int[][] nCoeff;
     private int[][][][] mvs;
@@ -108,7 +93,7 @@ public class DeblockingFilter {
 
     static int[] inverse = new int[] { 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15 };
 
-    private int calcBoundaryStrenth(boolean atMbBoundary, boolean leftIntra, boolean rightIntra, int leftCoeff,
+    public int calcBoundaryStrenth(boolean atMbBoundary, boolean leftIntra, boolean rightIntra, int leftCoeff,
             int rightCoeff, int[] mvA0, int[] mvB0, int[] mvA1, int[] mvB1, int mbAddrA, int mbAddrB) {
 
         if (atMbBoundary && (leftIntra || rightIntra))
@@ -116,41 +101,45 @@ public class DeblockingFilter {
         else if (leftIntra || rightIntra)
             return 3;
         else {
-
-            if (leftCoeff > 0 || rightCoeff > 0)
-                return 2;
-
-            int nA = (mvA0[2] == -1 ? 0 : 1) + (mvA1[2] == -1 ? 0 : 1);
-            int nB = (mvB0[2] == -1 ? 0 : 1) + (mvB1[2] == -1 ? 0 : 1);
-
-            if (nA != nB)
-                return 1;
-
-            Picture ra0 = mvA0[2] < 0 ? null : refsUsed[mbAddrA][0][mvA0[2]];
-            Picture ra1 = mvA1[2] < 0 ? null : refsUsed[mbAddrA][1][mvA1[2]];
-
-            Picture rb0 = mvB0[2] < 0 ? null : refsUsed[mbAddrB][0][mvB0[2]];
-            Picture rb1 = mvB1[2] < 0 ? null : refsUsed[mbAddrB][1][mvB1[2]];
-
-            if (ra0 != rb0 && ra0 != rb1 || ra1 != rb0 && ra1 != rb1 || rb0 != ra0 && rb0 != ra1 || rb1 != ra0
-                    && rb1 != ra1)
-                return 1;
-
-            if (ra0 == ra1 && ra1 == rb0 && rb0 == rb1) {
-                return ra0 != null
-                        && (mvThresh(mvA0, mvB0) || mvThresh(mvA1, mvB0) || mvThresh(mvA0, mvB1) || mvThresh(mvA1, mvB1)) ? 1
-                        : 0;
-            } else if (ra0 == rb0 && ra1 == rb1) {
-                return ra0 != null && mvThresh(mvA0, mvB0) || ra1 != null && mvThresh(mvA1, mvB1) ? 1 : 0;
-            } else if (ra0 == rb1 && ra1 == rb0) {
-                return ra0 != null && mvThresh(mvA0, mvB1) || ra1 != null && mvThresh(mvA1, mvB0) ? 1 : 0;
-            }
+            return calcBoundaryStrenthInter(leftCoeff, rightCoeff, mvA0, mvB0, mvA1, mvB1, mbAddrA, mbAddrB);
         }
+    }
 
+    private int calcBoundaryStrenthInter(int leftCoeff, int rightCoeff, int[] mvA0, int[] mvB0, int[] mvA1,
+            int[] mvB1, int mbAddrA, int mbAddrB) {
+        if (leftCoeff > 0 || rightCoeff > 0)
+            return 2;
+
+        int nA = (mvA0[2] == -1 ? 0 : 1) + (mvA1[2] == -1 ? 0 : 1);
+        int nB = (mvB0[2] == -1 ? 0 : 1) + (mvB1[2] == -1 ? 0 : 1);
+
+        if (nA != nB)
+            return 1;
+
+        Picture ra0 = mvA0[2] < 0 ? null : refsUsed[mbAddrA][0][mvA0[2]];
+        Picture ra1 = mvA1[2] < 0 ? null : refsUsed[mbAddrA][1][mvA1[2]];
+
+        Picture rb0 = mvB0[2] < 0 ? null : refsUsed[mbAddrB][0][mvB0[2]];
+        Picture rb1 = mvB1[2] < 0 ? null : refsUsed[mbAddrB][1][mvB1[2]];
+
+        if (ra0 != rb0 && ra0 != rb1 || ra1 != rb0 && ra1 != rb1 || rb0 != ra0 && rb0 != ra1 || rb1 != ra0
+                && rb1 != ra1)
+            return 1;
+
+        if (ra0 == ra1 && ra1 == rb0 && rb0 == rb1) {
+            return ra0 != null
+                    && (mvThresh(mvA0, mvB0) || mvThresh(mvA1, mvB0) || mvThresh(mvA0, mvB1) || mvThresh(mvA1, mvB1)) ? 1
+                    : 0;
+        } else if (ra0 == rb0 && ra1 == rb1) {
+            return ra0 != null && mvThresh(mvA0, mvB0) || ra1 != null && mvThresh(mvA1, mvB1) ? 1 : 0;
+        } else if (ra0 == rb1 && ra1 == rb0) {
+            return ra0 != null && mvThresh(mvA0, mvB1) || ra1 != null && mvThresh(mvA1, mvB0) ? 1 : 0;
+        }
+        
         return 0;
     }
 
-    private boolean mvThresh(int[] v0, int[] v1) {
+    public static boolean mvThresh(int[] v0, int[] v1) {
         return abs(v0[0] - v1[0]) >= 4 || abs(v0[1] - v1[1]) >= 4;
     }
 
@@ -331,11 +320,11 @@ public class DeblockingFilter {
                 int p3Idx = offset - 4 * stride + pixOff;
                 int q3Idx = offset + 3 * stride + pixOff;
 
-                filterBs4(indexAlpha, indexBeta, pic.getPlaneData(comp), p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx,
+                filterStrong(indexAlpha, indexBeta, pic.getPlaneData(comp), p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx,
                         q2Idx, q3Idx, comp != 0);
             } else if (bs > 0) {
 
-                filterBs(bs, indexAlpha, indexBeta, pic.getPlaneData(comp), p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx,
+                filterWeak(bs, indexAlpha, indexBeta, pic.getPlaneData(comp), p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx,
                         comp != 0);
             }
         }
@@ -357,16 +346,16 @@ public class DeblockingFilter {
             if (bs == 4) {
                 int p3Idx = offsetQ - 4;
                 int q3Idx = offsetQ + 3;
-                filterBs4(indexAlpha, indexBeta, pic.getPlaneData(comp), p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx,
+                filterStrong(indexAlpha, indexBeta, pic.getPlaneData(comp), p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx,
                         q2Idx, q3Idx, comp != 0);
             } else if (bs > 0) {
-                filterBs(bs, indexAlpha, indexBeta, pic.getPlaneData(comp), p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx,
+                filterWeak(bs, indexAlpha, indexBeta, pic.getPlaneData(comp), p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx,
                         comp != 0);
             }
         }
     }
 
-    private void filterBs(int bs, int indexAlpha, int indexBeta, int[] pels, int p2Idx, int p1Idx, int p0Idx,
+    public static void filterWeak(int bs, int indexAlpha, int indexBeta, int[] pels, int p2Idx, int p1Idx, int p0Idx,
             int q0Idx, int q1Idx, int q2Idx, boolean isChroma) {
 
         int p1 = pels[p1Idx];
@@ -374,8 +363,8 @@ public class DeblockingFilter {
         int q0 = pels[q0Idx];
         int q1 = pels[q1Idx];
 
-        int alphaThresh = alphaTab[indexAlpha];
-        int betaThresh = betaTab[indexBeta];
+        int alphaThresh = H264Const.alphaTab[indexAlpha];
+        int betaThresh = H264Const.betaTab[indexBeta];
 
         boolean filterEnabled = abs(p0 - q0) < alphaThresh && abs(p1 - p0) < betaThresh && abs(q1 - q0) < betaThresh;
 
@@ -385,7 +374,7 @@ public class DeblockingFilter {
         // System.out.printf("%h %h %h %h %h %h %h %h\n", q3, q2, q1, q0, p0,
         // p1, p2, p3);
 
-        int tC0 = tcs[bs - 1][indexAlpha];
+        int tC0 = H264Const.tcs[bs - 1][indexAlpha];
 
         boolean conditionP, conditionQ;
         int tC;
@@ -431,15 +420,15 @@ public class DeblockingFilter {
 
     }
 
-    private void filterBs4(int indexAlpha, int indexBeta, int[] pels, int p3Idx, int p2Idx, int p1Idx, int p0Idx,
+    public static void filterStrong(int indexAlpha, int indexBeta, int[] pels, int p3Idx, int p2Idx, int p1Idx, int p0Idx,
             int q0Idx, int q1Idx, int q2Idx, int q3Idx, boolean isChroma) {
         int p0 = pels[p0Idx];
         int q0 = pels[q0Idx];
         int p1 = pels[p1Idx];
         int q1 = pels[q1Idx];
 
-        int alphaThresh = alphaTab[indexAlpha];
-        int betaThresh = betaTab[indexBeta];
+        int alphaThresh = H264Const.alphaTab[indexAlpha];
+        int betaThresh = H264Const.betaTab[indexBeta];
 
         boolean filterEnabled = abs(p0 - q0) < alphaThresh && abs(p1 - p0) < betaThresh && abs(q1 - q0) < betaThresh;
 

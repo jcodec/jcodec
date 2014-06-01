@@ -12,6 +12,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.Channel;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.ReadableByteChannel;
@@ -262,7 +263,7 @@ public class NIOUtils {
         } while (read != -1 && amount > 0);
     }
 
-    public static void closeQuietly(ReadableByteChannel channel) {
+    public static void closeQuietly(Channel channel) {
         if (channel == null)
             return;
         try {

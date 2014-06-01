@@ -59,9 +59,13 @@ public class CAVLCWriter {
         out.write1Bit(value ? 1 : 0);
         trace(message, value ? 1 : 0);
     }
+    
+    public static void writeBool(BitWriter out, boolean value)  {
+        out.write1Bit(value ? 1 : 0);
+    }
 
-    public static void writeU(BitWriter out, int i, int n)  {
-        out.writeNBit(i, n);
+    public static void writeU(BitWriter out, int value, int n)  {
+        out.writeNBit(value, n);
     }
 
     public static void writeNBit(BitWriter out, long value, int n, String message)  {
