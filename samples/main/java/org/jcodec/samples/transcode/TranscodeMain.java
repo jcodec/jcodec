@@ -25,8 +25,8 @@ import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.MappedH264ES;
-import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.encode.DumbRateControl;
+import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
@@ -127,8 +127,12 @@ public class TranscodeMain {
             webm2png(args[1], args[2]);
         } else if ("png2vp8".equals(args[0])) {
             png2vp8(args[1], args[2]);
+        } else if ("png2webm".equals(args[0])) {
+            png2webm(args[1], args[2]);
         } else if ("prores2vp8".equals(args[0])) {
             prores2vp8(args[1], args[2], new ProresToThumb2x2());
+        } else if ("prores2webm".equals(args[0])) {
+            prores2webm(args[1], args[2], new ProresToThumb2x2());
         }
     }
 
@@ -166,6 +170,47 @@ public class TranscodeMain {
             }
         } finally {
             NIOUtils.closeQuietly(sink);
+        }
+    }
+    
+    private static void png2webm(String pattern, String out) throws IOException {
+        FileChannelWrapper sink = null;
+        try {
+            sink = NIOUtils.writableFileChannel(new File(out));
+            VP8Encoder encoder = new VP8Encoder(10); // qp
+            RgbToYuv420 transform = new RgbToYuv420(0, 0);
+
+            MKVMuxer muxer = new MKVMuxer(sink);
+            MKVMuxerTrack videoTrack = null;
+            
+            int i;
+            for (i = 0; i < 10000; i++) {
+                File nextImg = new File(String.format(pattern, i));
+                if (!nextImg.exists())
+                    continue;
+
+                BufferedImage rgb = ImageIO.read(nextImg);
+                if (videoTrack == null) {
+                    videoTrack = muxer.addVideoTrack(new Size(rgb.getWidth(), rgb.getHeight()), "V_VP8");
+                    videoTrack.setTgtChunkDuration(Rational.ONE, SEC);
+                }
+                
+                Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);
+                transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
+                ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
+
+                ByteBuffer ff = encoder.encodeFrame(buf, yuv);
+                BlockElement se = BlockElement.keyFrame(videoTrack.trackId, i - 1, ff.array());
+                videoTrack.addSampleEntry(se);
+
+            }
+            if (i == 1) {
+                System.out.println("Image sequence not found");
+                return;
+            }
+            muxer.mux();
+        } finally {
+            IOUtils.closeQuietly(sink);
         }
     }
 
@@ -217,6 +262,68 @@ public class TranscodeMain {
                 }
             }
             muxer.close();
+        } finally {
+            if (sink != null)
+                sink.close();
+            if (source != null)
+                source.close();
+        }
+    }
+    
+    private static void prores2webm(String in, String out, ProresDecoder decoder) throws IOException {
+        SeekableByteChannel sink = null;
+        SeekableByteChannel source = null;
+        try {
+            sink = writableFileChannel(out);
+            source = readableFileChannel(in);
+
+            MP4Demuxer demux = new MP4Demuxer(source);
+
+            Transform transform = new Yuv422pToYuv420p(0, 2);
+
+            VP8Encoder encoder = new VP8Encoder(10); // qp
+
+            MKVMuxer muxer = new MKVMuxer(sink);
+            MKVMuxerTrack videoTrack = null;
+
+            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
+
+            VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
+            Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
+            Picture target2 = null;
+            ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
+
+            int fps = (int) (inTrack.getFrameCount() / inTrack.getDuration().scalar());
+
+            MP4Packet inFrame;
+            int totalFrames = (int) inTrack.getFrameCount();
+            long start = System.currentTimeMillis();
+            for (int i = 0; (inFrame = (MP4Packet) inTrack.nextFrame()) != null; i++) {
+                Picture dec = decoder.decodeFrame(inFrame.getData(), target1.getData());
+                if (target2 == null) {
+                    target2 = Picture.create(dec.getWidth(), dec.getHeight(), ColorSpace.YUV420);
+                }
+                transform.transform(dec, target2);
+                _out.clear();
+                
+                ByteBuffer result = encoder.encodeFrame(_out, target2);
+                if (videoTrack == null) {
+                    videoTrack = muxer.addVideoTrack(new Size(dec.getWidth(), dec.getHeight()), "V_VP8");
+                    videoTrack.setTgtChunkDuration(Rational.ONE, SEC);
+                }
+//                Packet packet = new Packet(result, inFrame.getMediaPts(), inFrame.getTimescale(),
+//                        inFrame.getDuration(), inFrame.getFrameNo(), true, null);
+                byte[] array = new byte[result.limit()];
+                System.arraycopy(result.array(), result.position(), array, 0, array.length);
+                BlockElement se = BlockElement.keyFrame(videoTrack.trackId, i - 1, array);
+                videoTrack.addSampleEntry(se);
+                
+                if (i % 100 == 0) {
+                    long elapse = System.currentTimeMillis() - start;
+                    System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
+                }
+            }
+            muxer.mux();
         } finally {
             if (sink != null)
                 sink.close();

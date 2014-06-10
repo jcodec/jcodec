@@ -1,6 +1,7 @@
 package org.jcodec.containers.mkv;
 
 import static org.jcodec.containers.mkv.CuesIndexer.CuePointMock.make;
+import static org.jcodec.containers.mkv.MKVMuxer.createAndAddElement;
 import static org.jcodec.containers.mkv.Type.Audio;
 import static org.jcodec.containers.mkv.Type.BitDepth;
 import static org.jcodec.containers.mkv.Type.Channels;
@@ -19,16 +20,16 @@ import static org.jcodec.containers.mkv.Type.TrackUID;
 import static org.jcodec.containers.mkv.Type.Tracks;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
-import org.jcodec.containers.mkv.ebml.BinaryElement;
+import org.jcodec.containers.mkv.MKVMuxer.TType;
 import org.jcodec.containers.mkv.ebml.DateElement;
 import org.jcodec.containers.mkv.ebml.Element;
 import org.jcodec.containers.mkv.ebml.FloatElement;
@@ -45,20 +46,16 @@ import org.jcodec.containers.mkv.elements.Cluster;
  * @author The JCodec project
  * 
  */
-public class MKVMuxer {
+public class OnDemandMKVMuxer {
 
         List<MKVMuxerTrack> tracks = new ArrayList<MKVMuxerTrack>();
-        private SeekableByteChannel out;
         private MasterElement mkvInfo;
         private MasterElement mkvTracks;
         private MasterElement mkvCues;
         private MasterElement mkvSeekHead;
+        private MasterElement ebmlHeader;
         private MasterElement segmentElem;
         private LinkedList<Cluster> mkvClusters = new LinkedList<Cluster>();
-
-        public MKVMuxer(SeekableByteChannel out) {
-            this.out = out;
-        }
         
         public MKVMuxerTrack addVideoTrack(Size dimentions, String encoder) {
             MKVMuxerTrack video = new MKVMuxerTrack(tracks.size()+1);
@@ -88,13 +85,13 @@ public class MKVMuxer {
             return audio;
         }
 
-        void writeHeader() throws IOException {
-            muxEbmlHeader();
+        void createHeaders() throws IOException {
+            createEbmlHeader();
 
             muxSegmentHeader();
         }
-
-        public void mux() throws IOException {
+        
+        public ByteBuffer muxHeaders() throws IOException {
             /**
              * In order to write Cues, one has to know the sized of Clusters fist.
              * thus blocks are organized into clusters before writing header.
@@ -107,17 +104,56 @@ public class MKVMuxer {
             // Info
             // Tracks
             // Cues
-            writeHeader();
+            createHeaders();
             // Clusters
-            muxClusters();
+            addClusters();
 
-            segmentElem.mux(out);
+            long ebmlHeaderSize = ebmlHeader.getSize();
+            ebmlHeaderSize += ebmlHeader.id.length + Element.ebmlBytes(ebmlHeaderSize).length;
+            
+            int segmentHeaderSize = (int) conditionalDataSize(segmentElem);
+            segmentHeaderSize += segmentElem.id.length + Element.ebmlBytes(segmentElem.getSize()).length;
+            ByteBuffer bb = ByteBuffer.allocate((int)(ebmlHeaderSize+segmentHeaderSize));
+            conditionalMux(bb, ebmlHeader);
+            conditionalMux(bb, segmentElem);
             
             // TODO: Chapters
             // TODO: Attachments
             // TODO: Tags
+            
+            bb.flip();
+            return bb;
         }
-
+        
+        private long conditionalMux(ByteBuffer os, MasterElement el) throws IOException {
+            long size = conditionalDataSize(el);
+            byte[] ebmledSize = Element.ebmlBytes(size);
+            os.put(el.id);
+            os.put(ebmledSize);
+            
+            
+            for (int i = 0; i < el.children.size(); i++) {
+                Element element = el.children.get(i);
+                if (!(element instanceof Cluster))
+                    os.put(element.mux());
+            }
+            return os.position();
+        }
+        
+        private long conditionalDataSize(MasterElement el){
+            long returnValue = 0;
+            if (el.children != null && !el.children.isEmpty()){
+                // Either account for all the children
+                for(Element e : el.children)
+                    if (!(e instanceof Cluster))
+                        returnValue += e.getSize(); 
+            } else {
+                // Or just rely on size attribute if no children are present
+                //    this happens while reading the file
+                returnValue += el.size;
+            }
+            return returnValue;
+        }
 
 
         private void muxSegmentHeader() {
@@ -164,8 +200,8 @@ public class MKVMuxer {
             return mkvSeekHead.getSize() + mkvInfo.getSize() + mkvTracks.getSize();
         }
 
-        private void muxEbmlHeader() throws IOException {
-            MasterElement ebmlHeaderElem = (MasterElement) Type.createElementByType(Type.EBML);
+        private void createEbmlHeader() throws IOException {
+            ebmlHeader = (MasterElement) Type.createElementByType(Type.EBML);
 
             StringElement docTypeElem = (StringElement) Type.createElementByType(Type.DocType);
             docTypeElem.set("matroska");
@@ -176,13 +212,12 @@ public class MKVMuxer {
             UnsignedIntegerElement docTypeReadVersionElem = (UnsignedIntegerElement) Type.createElementByType(Type.DocTypeReadVersion);
             docTypeReadVersionElem.set(2);
 
-            ebmlHeaderElem.addChildElement(docTypeElem);
-            ebmlHeaderElem.addChildElement(docTypeVersionElem);
-            ebmlHeaderElem.addChildElement(docTypeReadVersionElem);
-            ebmlHeaderElem.mux(out);
+            ebmlHeader.addChildElement(docTypeElem);
+            ebmlHeader.addChildElement(docTypeVersionElem);
+            ebmlHeader.addChildElement(docTypeReadVersionElem);
         }
 
-        private void muxClusters() {
+        private void addClusters() {
             for (Cluster cluster : mkvClusters) 
                 segmentElem.addChildElement(cluster);
         }
@@ -278,70 +313,6 @@ public class MKVMuxer {
                     audio.add(t);
 
             return audio;
-        }
-
-        // MKVMuxerTrack addVideoTrackWithTimecode(Size dimentions, String encder, int timescale) {
-        // return null;
-        // }
-        //
-        // static BlockElement videoSampleEntry(Size size, String encoder) {
-        // return null;
-        // }
-        //
-        // static BlockElement audioSampleEntry(int drefId, int sampleSize, int channels, int sampleRate, Endian endiannes) {
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addTimecodeTrack(int timescale) {
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addTrackForCompressed(int timescale) {
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addTrackForUncompressed(int timescale, int sampleDuration, int sampleSize, BlockElement be) {
-        // return null;
-        // }
-        //
-        // List<MKVMuxerTrack> getTracks() {
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addUncompressedAudioTrack(AudioFormat fmt){
-        // return null;
-        // }
-        //
-        // MKVMuxerTrack addCompressedAudioTrack(int timescale, int channels, int sampleRate, int samplesPerPacket, Element... extra){
-        // return null;
-        // }
-
-        public static void createAndAddElement(MasterElement parent, Type type, byte[] value) {
-            BinaryElement se = (BinaryElement) Type.createElementByType(type);
-            se.setData(value);
-            parent.addChildElement(se);
-        }
-
-        public static void createAndAddElement(MasterElement parent, Type type, double value) {
-            FloatElement se = (FloatElement) Type.createElementByType(type);
-            se.set(value);
-            parent.addChildElement(se);
-        }
-
-        public static void createAndAddElement(MasterElement parent, Type type, long value) {
-            UnsignedIntegerElement se = (UnsignedIntegerElement) Type.createElementByType(type);
-            se.set(value);
-            parent.addChildElement(se);
-        }
-
-        public static void createAndAddElement(MasterElement parent, Type type, String value) {
-            StringElement se = (StringElement) Type.createElementByType(type);
-            se.set(value);
-            parent.addChildElement(se);
-        }
-        
-        public enum TType {
-            VIDEO, AUDIO, TIMECODE;
         }
 
         // MuxerTrack
@@ -450,47 +421,6 @@ public class MKVMuxer {
                     i++;
                 }
             }
-            
-//            private void tracksToClusters() {
-//                mkvClusters = new ArrayList<Cluster>();
-//
-//                long timecodeBase = 0;
-//                int frameRate = 25; // 1000000000/Segment.Info.TimecodeScale
-//                Cluster cluster = Type.createElementByType(Type.Cluster);
-//                List<Element> blocks = new ArrayList<Element>();
-//                
-//                for (MKVMuxerTrack aTrack : tracks) {
-//                    aTrack.getTimescale();
-//
-//                    createAndAddElement(cluster, Timecode, timecodeBase);
-//                    createAndAddElement(cluster, PrevSize, mkvClusters.get(mkvClusters.size()-1).getSize());
-//
-//                    for (Element child : aCluster.children) {
-//                        if (child.type.equals(Type.SimpleBlock)) {
-//                            BlockElement aBlock = (BlockElement) child;
-//                            BlockElement be = copy(aBlock);
-//                            be.readFrames(source);
-//                            blocks.add(be);
-//                        } else if (child.type.equals(Type.BlockGroup)) {
-//                            MasterElement aBlockGroup = (MasterElement) child;
-//                            MasterElement bg = new MasterElement(Type.BlockGroup.id);
-//                            bg.type = Type.BlockGroup;
-//                            BlockElement aBlock = (BlockElement) Type.findFirst(aBlockGroup, Type.BlockGroup, Type.Block);
-//                            BlockElement be = BlockElement.copy(aBlock);
-//                            be.readFrames(source);
-//                            bg.addChildElement(be);
-//                            bg.addChildElement(Type.findFirst(aBlockGroup, Type.BlockGroup, Type.BlockDuration));
-//                            bg.addChildElement(Type.findFirst(aBlockGroup, Type.BlockGroup, Type.ReferenceBlock));
-//                            blocks.add(bg);
-//                        }
-//                    }
-//                }
-//                for (Element e : blocks)
-//                    cluster.addChildElement(e);
-//
-//                mkvClusters.add(cluster);
-//
-//            }
 
         }
     }

@@ -22,6 +22,7 @@ package org.jcodec.containers.mkv.ebml;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 
 import org.jcodec.containers.mkv.Reader;
@@ -79,29 +80,44 @@ public class MasterElement extends Element {
         children.add(elem);
     }
 
-    public long mux(FileChannel os) throws IOException {
-        return os.write(mux());
+    public long mux(WritableByteChannel os) throws IOException {
+        long size = getDataSize();
+
+        byte[] ebmledSize = ebmlBytes(size);
+        ByteBuffer bb = ByteBuffer.allocate(id.length + ebmledSize.length);
+        bb.put(id);
+        bb.put(ebmledSize);
+        bb.flip();
+        
+        long bytesMuxed = os.write(bb);
+
+        for (int i = 0; i < children.size(); i++) {
+            bytesMuxed += os.write(children.get(i).mux());
+        }
+        return bytesMuxed;
     }
     
     
     public ByteBuffer mux() {
-        int size = (int) getDataSize();
-        ByteBuffer bb = ByteBuffer.allocate(id.length + Element.getEbmlSize(size)+size);
+        long size = getDataSize();
+        
+        if (size > Integer.MAX_VALUE)
+            System.out.println("MasterElement.mux: id.length "+id.length+"  Element.getEbmlSize("+size+"): "+Element.getEbmlSize(size)+" size: "+size);
+        ByteBuffer bb = ByteBuffer.allocate((int)(id.length + Element.getEbmlSize(size)+size));
 
         bb.put(id);
         bb.put(ebmlBytes(size));
 
-        for (int i = 0; i < children.size(); i++) {
-            Element elem = (Element) children.get(i);
-            bb.put(elem.mux());
-        }
+        for (int i = 0; i < children.size(); i++) 
+            bb.put(children.get(i).mux());
+        
         bb.flip();
         
         return bb;
     }
     
-    private int getDataSize(){
-        int returnValue = 0;
+    private long getDataSize(){
+        long returnValue = 0;
         if (children != null && !children.isEmpty()){
             // Either account for all the children
             for(Element e : children)
