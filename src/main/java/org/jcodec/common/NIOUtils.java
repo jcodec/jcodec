@@ -401,4 +401,13 @@ public class NIOUtils {
 		res.clear();
 		return res;
 	}
+
+    public static void closeQuietly(RandomAccessFile file) {
+        if(file == null)
+            return;
+        try {
+            file.close();
+        } catch(IOException e) {
+        }
+    }
 }

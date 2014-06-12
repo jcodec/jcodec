@@ -51,6 +51,7 @@ public class MPSDump {
 
             PESPacket pkt = null;
             while (ch.position() + 4 < ch.size()) {
+                long bufferOffset = ch.position();
                 ByteBuffer buffer = NIOUtils.fetchFrom(ch, 0x100000);
 
                 while (buffer.remaining() >= 8) {
@@ -67,7 +68,7 @@ public class MPSDump {
                     if (buffer.remaining() < 4)
                         break;
 
-                    pkt = readPESHeader(buffer, buffer.position());
+                    pkt = readPESHeader(buffer, buffer.position() + bufferOffset);
                     System.out.println(pkt.streamId + "(" + (pkt.streamId >= 0xe0 ? "video" : "audio") + ")" + " ["
                             + pkt.pos + "], pts: " + pkt.pts + ", dts: " + pkt.dts);
                     if (dumpAfterPts != null && pkt.pts >= dumpAfterPts)
@@ -100,7 +101,7 @@ public class MPSDump {
 
         System.out.println(" )");
     }
-
+    
     private static void dumpExtension() {
         System.out.print(MainUtils.color("extension", MainUtils.ANSIColor.GREEN, true));
     }
