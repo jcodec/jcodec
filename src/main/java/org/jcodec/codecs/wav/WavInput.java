@@ -1,13 +1,12 @@
 package org.jcodec.codecs.wav;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 
-import org.jcodec.algo.DataConvert;
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.AudioUtil;
+import org.jcodec.common.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -19,33 +18,99 @@ import org.jcodec.algo.DataConvert;
  */
 public class WavInput {
 
-    private InputStream is;
-    private WavHeader header;
-    private byte[] prevBuf;
+    protected WavHeader header;
+    protected byte[] prevBuf;
+    protected ReadableByteChannel in;
+    protected AudioFormat format;
 
-    public WavInput(File file) throws IOException {
-        is = new BufferedInputStream(new FileInputStream(file));
-        header = WavHeader.read(is);
+    public WavInput(ReadableByteChannel in) throws IOException {
+        this.header = WavHeader.read(in);
+        this.format = header.getFormat();
+        this.in = in;
     }
 
-    public int[] read(int samples) throws IOException {
-        int bufLen = samples * (header.fmt.bitsPerSample >> 3);
-        if (prevBuf == null || bufLen != prevBuf.length) {
-            prevBuf = new byte[bufLen];
-        }
-        int read = is.read(prevBuf);
-        if (read == -1)
-            return null;
-        int[] conv = DataConvert.fromByte(prevBuf, header.fmt.bitsPerSample, false);
-
-        return read == bufLen ? conv : Arrays.copyOf(conv, read / (header.fmt.bitsPerSample >> 3));
+    public int read(ByteBuffer buf) throws IOException {
+        return NIOUtils.read(in, NIOUtils.read(buf, format.samplesToBytes(format.bytesToSamples(buf.remaining()))));
     }
 
     public void close() throws IOException {
-        is.close();
+        in.close();
     }
 
     public WavHeader getHeader() {
         return header;
+    }
+
+    public AudioFormat getFormat() {
+        return format;
+    }
+
+    /**
+     * Manages file resource on top of WavInput
+     */
+    public static class File extends WavInput {
+
+        public File(java.io.File f) throws IOException {
+            super(NIOUtils.readableFileChannel(f));
+        }
+
+        @Override
+        public void close() throws IOException {
+            super.close();
+            in.close();
+        }
+    }
+
+    /**
+     * Supports more high-level float and integer input on top of WavInput
+     */
+    public static class Adaptor {
+
+        private WavInput src;
+        private AudioFormat format;
+
+        public Adaptor(WavInput src) {
+            this.src = src;
+            this.format = src.getFormat();
+        }
+
+        public Adaptor(ReadableByteChannel ch) throws IOException {
+            this(new WavInput(ch));
+        }
+
+        public Adaptor(java.io.File file) throws IOException {
+            this(new WavInput.File(file));
+        }
+
+        public AudioFormat getFormat() {
+            return src.getFormat();
+        }
+
+        public void close() throws IOException {
+            src.close();
+        }
+
+        public int read(int[] samples, int max) throws IOException {
+            // Safety net
+            max = Math.min(max, samples.length);
+
+            ByteBuffer bb = ByteBuffer.allocate(format.samplesToBytes(max));
+            int read = src.read(bb);
+            bb.flip();
+            AudioUtil.toInt(format, bb, samples);
+            return format.bytesToSamples(read);
+        }
+
+        public int read(float[] samples, int max) throws IOException {
+            // Safety net
+            max = Math.min(max, samples.length);
+
+            ByteBuffer bb = ByteBuffer.allocate(format.samplesToBytes(max));
+            int read = src.read(bb);
+            bb.flip();
+            AudioUtil.toFloat(format, bb, samples);
+            return format.bytesToSamples(read);
+        }
+
     }
 }

@@ -1,25 +1,19 @@
 package org.jcodec.codecs.wav;
 
-import static org.jcodec.codecs.wav.ReaderLE.readInt;
-import static org.jcodec.codecs.wav.ReaderLE.readShort;
-import static org.jcodec.codecs.wav.StringReader.readString;
-import static org.jcodec.codecs.wav.WriterLE.writeInt;
-import static org.jcodec.codecs.wav.WriterLE.writeShort;
-
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.jcodec.common.AudioFormat;
-import org.jcodec.common.CountingInputStream;
 import org.jcodec.common.IOUtils;
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.ChannelLabel;
 
 /**
@@ -45,18 +39,30 @@ public class WavHeader {
             this.guid = guid;
         }
 
-        public static FmtChunk read(InputStream input) throws IOException {
-            FmtChunk fmtChunk = FmtChunk.read(input);
-            return new FmtChunkExtended(fmtChunk, readShort(input), readShort(input), readInt(input), readInt(input));
+        public FmtChunkExtended(FmtChunkExtended fmt) {
+            this(fmt, fmt.cbSize, fmt.bitsPerCodedSample, fmt.channelLayout, fmt.guid);
         }
 
-        public void write(OutputStream out) throws IOException {
-            super.write(out);
+        public static FmtChunk read(ByteBuffer bb) throws IOException {
+            FmtChunk fmtChunk = FmtChunk.get(bb);
+            ByteOrder old = bb.order();
+            try {
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                return new FmtChunkExtended(fmtChunk, bb.getShort(), bb.getShort(), bb.getInt(), bb.getInt());
+            } finally {
+                bb.order(old);
+            }
+        }
 
-            writeShort(out, cbSize);
-            writeShort(out, bitsPerCodedSample);
-            writeInt(out, channelLayout);
-            writeInt(out, guid);
+        public void put(ByteBuffer bb) throws IOException {
+            super.put(bb);
+            ByteOrder old = bb.order();
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+            bb.putShort(cbSize);
+            bb.putShort(bitsPerCodedSample);
+            bb.putInt(channelLayout);
+            bb.putInt(guid);
+            bb.order(old);
         }
 
         public int size() {
@@ -107,18 +113,27 @@ public class WavHeader {
                     other.bitsPerSample);
         }
 
-        public static FmtChunk read(InputStream input) throws IOException {
-            return new FmtChunk(readShort(input), readShort(input), readInt(input), readInt(input), readShort(input),
-                    readShort(input));
+        public static FmtChunk get(ByteBuffer bb) throws IOException {
+            ByteOrder old = bb.order();
+            try {
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                return new FmtChunk(bb.getShort(), bb.getShort(), bb.getInt(), bb.getInt(), bb.getShort(),
+                        bb.getShort());
+            } finally {
+                bb.order(old);
+            }
         }
 
-        public void write(OutputStream out) throws IOException {
-            writeShort(out, audioFormat);
-            writeShort(out, numChannels);
-            writeInt(out, sampleRate);
-            writeInt(out, byteRate);
-            writeShort(out, blockAlign);
-            writeShort(out, bitsPerSample);
+        public void put(ByteBuffer bb) throws IOException {
+            ByteOrder old = bb.order();
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+            bb.putShort(audioFormat);
+            bb.putShort(numChannels);
+            bb.putInt(sampleRate);
+            bb.putInt(byteRate);
+            bb.putShort(blockAlign);
+            bb.putShort(bitsPerSample);
+            bb.order(old);
         }
 
         public int size() {
@@ -144,12 +159,35 @@ public class WavHeader {
     }
 
     public WavHeader(WavHeader header) {
-        throw new UnsupportedOperationException();
+        this(header.chunkId, header.chunkSize, header.format,
+                header.fmt instanceof FmtChunkExtended ? new FmtChunkExtended((FmtChunkExtended) header.fmt)
+                        : new FmtChunk(header.fmt), header.dataOffset, header.dataSize);
     }
 
-    public WavHeader(WavHeader header, int rate) {
-        this(header);
-        fmt.sampleRate = rate;
+    public static WavHeader copyWithRate(WavHeader header, int rate) {
+        WavHeader result = new WavHeader(header);
+        result.fmt.sampleRate = rate;
+        return result;
+    }
+
+    public static WavHeader copyWithChannels(WavHeader header, int channels) {
+        WavHeader result = new WavHeader(header);
+        result.fmt.numChannels = (short) channels;
+        return result;
+    }
+
+    /**
+     * Creates wav header for the specified audio format
+     * 
+     * @param format
+     * @param samples
+     */
+    public WavHeader(AudioFormat format, int samples) {
+        this("RIFF", 40, "WAVE", new FmtChunk((short) 1, (short) format.getChannels(), format.getSampleRate(),
+                format.getSampleRate() * format.getChannels() * (format.getSampleSizeInBits() >> 3),
+                (short) (format.getChannels() * (format.getSampleSizeInBits() >> 3)),
+                (short) format.getSampleSizeInBits()), 44, calcDataSize(format.getChannels(),
+                format.getSampleSizeInBits() >> 3, samples));
     }
 
     public static WavHeader stereo48k() {
@@ -158,7 +196,7 @@ public class WavHeader {
 
     public static WavHeader stereo48k(long samples) {
         return new WavHeader("RIFF", 40, "WAVE", new FmtChunk((short) 1, (short) 2, 48000, 48000 * 2 * 16 / 8,
-                (short) 4, (short) 16), 44, calcDataSize(1, 2, samples));
+                (short) 4, (short) 16), 44, calcDataSize(2, 2, samples));
     }
 
     public static WavHeader mono48k(long samples) {
@@ -171,20 +209,26 @@ public class WavHeader {
     }
 
     public static WavHeader read(File file) throws IOException {
-        InputStream is = null;
+        ReadableByteChannel is = null;
         try {
-            is = new BufferedInputStream(new FileInputStream(file));
+            is = NIOUtils.readableFileChannel(file);
             return read(is);
         } finally {
             IOUtils.closeQuietly(is);
         }
     }
 
-    public static WavHeader read(InputStream in) throws IOException {
-        CountingInputStream cin = new CountingInputStream(in);
-        String chunkId = readString(cin, 4);
-        int chunkSize = readInt(cin);
-        String format = readString(cin, 4);
+    public static WavHeader read(ReadableByteChannel in) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(44);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        in.read(buf);
+        if (buf.remaining() > 0)
+            throw new IOException("Incomplete wav header found");
+        buf.flip();
+
+        String chunkId = NIOUtils.readString(buf, 4);
+        int chunkSize = buf.getInt();
+        String format = NIOUtils.readString(buf, 4);
         FmtChunk fmt = null;
 
         if (!"RIFF".equals(chunkId) || !"WAVE".equals(format)) {
@@ -193,33 +237,33 @@ public class WavHeader {
         String fourcc;
         int size = 0;
         do {
-            fourcc = readString(cin, 4);
-            size = ReaderLE.readInt(cin);
+            fourcc = NIOUtils.readString(buf, 4);
+            size = buf.getInt();
             if ("fmt ".equals(fourcc) && size >= 14 && size <= 1024 * 1024) {
                 switch (size) {
                 case 16:
-                    fmt = FmtChunk.read(cin);
+                    fmt = FmtChunk.get(buf);
                     break;
                 case 18:
-                    fmt = FmtChunk.read(cin);
-                    StringReader.sureSkip(cin, 2);
+                    fmt = FmtChunk.get(buf);
+                    NIOUtils.skip(buf, 2);
                     break;
                 case 40:
-                    fmt = FmtChunkExtended.read(cin);
-                    StringReader.sureSkip(cin, 12);
+                    fmt = FmtChunkExtended.get(buf);
+                    NIOUtils.skip(buf, 12);
                     break;
                 case 28:
-                    fmt = FmtChunkExtended.read(cin);
+                    fmt = FmtChunkExtended.get(buf);
                     break;
                 default:
                     throw new IllegalStateException("Don't know how to handle fmt size: " + size);
                 }
             } else if (!"data".equals(fourcc)) {
-                StringReader.sureRead(cin, size);
+                NIOUtils.skip(buf, size);
             }
         } while (!"data".equals(fourcc));
 
-        return new WavHeader(chunkId, chunkSize, format, fmt, cin.getCount(), size);
+        return new WavHeader(chunkId, chunkSize, format, fmt, buf.position(), size);
     }
 
     public static WavHeader multiChannelWav(List<File> wavs) throws IOException {
@@ -254,7 +298,10 @@ public class WavHeader {
         return w;
     }
 
-    public void write(OutputStream out) throws IOException {
+    public void write(WritableByteChannel out) throws IOException {
+        ByteBuffer bb = ByteBuffer.allocate(44);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+
         long chunkSize;
         if (dataSize <= 0xffffffffL) {
             chunkSize = dataSize + 36;
@@ -262,43 +309,21 @@ public class WavHeader {
             chunkSize = 40;
         }
 
-        out.write(JCodecUtil.asciiString("RIFF"));
-        writeInt(out, (int) chunkSize);
-        out.write(JCodecUtil.asciiString("WAVE"));
+        bb.put(JCodecUtil.asciiString("RIFF"));
+        bb.putInt((int) chunkSize);
+        bb.put(JCodecUtil.asciiString("WAVE"));
 
-        out.write(JCodecUtil.asciiString("fmt "));
-        writeInt(out, fmt.size());
-        fmt.write(out);
-        out.write(JCodecUtil.asciiString("data"));
+        bb.put(JCodecUtil.asciiString("fmt "));
+        bb.putInt(fmt.size());
+        fmt.put(bb);
+        bb.put(JCodecUtil.asciiString("data"));
         if (dataSize <= 0xffffffffL) {
-            writeInt(out, (int) dataSize);
+            bb.putInt((int) dataSize);
         } else {
-            writeInt(out, 0);
+            bb.putInt(0);
         }
-    }
-
-    public void writeExtended(OutputStream out) throws IOException {
-        long chunkSize;
-        if (dataSize <= 0xffffffffL) {
-            chunkSize = dataSize + 36;
-        } else {
-            chunkSize = 40;
-        }
-
-        out.write(JCodecUtil.asciiString("RIFF"));
-        writeInt(out, (int) chunkSize);
-        out.write(JCodecUtil.asciiString("WAVE"));
-
-        out.write(JCodecUtil.asciiString("fmt "));
-        writeInt(out, fmt.size());
-        fmt.write(out);
-        out.write(JCodecUtil.asciiString("data"));
-
-        if (dataSize <= 0xffffffffL) {
-            writeInt(out, (int) dataSize);
-        } else {
-            writeInt(out, 0);
-        }
+        bb.flip();
+        out.write(bb);
     }
 
     public static long calcDataSize(int numChannels, int bytesPerSample, long samples) {

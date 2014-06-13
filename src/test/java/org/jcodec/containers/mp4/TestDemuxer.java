@@ -27,6 +27,7 @@ import javax.imageio.ImageIO;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.codecs.wav.WavHeader.FmtChunk;
+import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -100,8 +101,7 @@ public class TestDemuxer {
         MP4Demuxer demuxer = new MP4Demuxer(readableFileChannel(src));
         AbstractMP4DemuxerTrack demuxerTrack = demuxer.getAudioTracks().get(0);
 
-        FileOutputStream fos = new FileOutputStream(wavFile);
-        FileChannel ch = fos.getChannel();
+        FileChannelWrapper fos = NIOUtils.writableFileChannel(wavFile);
 
         AudioSampleEntry se = (AudioSampleEntry) demuxerTrack.getSampleEntries()[0];
 
@@ -113,7 +113,7 @@ public class TestDemuxer {
 
         while (true) {
             Packet packet = demuxerTrack.nextFrame();
-            ch.write(packet.getData());
+            fos.write(packet.getData());
         }
     }
 

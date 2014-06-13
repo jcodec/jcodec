@@ -18,20 +18,44 @@ public class MainUtils {
             this.args = args;
         }
 
+        public Long getLongFlag(String flagName, Long defaultValue) {
+            return flags.containsKey(flagName) ? new Long(flags.get(flagName)) : defaultValue;
+        }
+
+        public Integer getIntegerFlag(String flagName, Integer defaultValue) {
+            return flags.containsKey(flagName) ? new Integer(flags.get(flagName)) : defaultValue;
+        }
+
+        public Double getDoubleFlag(String flagName, Long defaultValue) {
+            return flags.containsKey(flagName) ? new Double(flags.get(flagName)) : defaultValue;
+        }
+
+        public String getStringFlag(String flagName, String defaultValue) {
+            return flags.containsKey(flagName) ? flags.get(flagName) : defaultValue;
+        }
+
         public Long getLongFlag(String flagName) {
-            return flags.containsKey(flagName) ? new Long(flags.get(flagName)) : null;
+            return this.getLongFlag(flagName, null);
         }
 
         public Integer getIntegerFlag(String flagName) {
-            return flags.containsKey(flagName) ? new Integer(flags.get(flagName)) : null;
+            return getIntegerFlag(flagName, null);
         }
 
         public Double getDoubleFlag(String flagName) {
-            return flags.containsKey(flagName) ? new Double(flags.get(flagName)) : null;
+            return getDoubleFlag(flagName, null);
         }
 
         public String getStringFlag(String flagName) {
-            return flags.get(flagName);
+            return getStringFlag(flagName, null);
+        }
+
+        public String getArg(int i) {
+            return i < args.length ? args[i] : null;
+        }
+
+        public int argsLength() {
+            return args.length;
         }
     }
 

@@ -5,10 +5,10 @@ import static java.lang.System.arraycopy;
 import java.io.File;
 import java.io.IOException;
 
-import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.codecs.wav.WavInput;
 import org.jcodec.codecs.wav.WavOutput;
 import org.jcodec.common.Assert;
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.Rational;
 
 /**
@@ -36,14 +36,17 @@ public class BiliearStreamInterpolator extends StreamInterpolator {
         lastSamples = new int[256];
     }
 
-    public int[] interpolate(int[] in) {
-        int[] result = new int[(int) ((((long) in.length + nLastSamples) * ratio.getNum()) / ratio.getDen())];
+    public int interpolate(int[] in, int[] result) {
+        int sizeRequired = (int) ((((long) in.length + nLastSamples) * ratio.getNum()) / ratio.getDen());
+        if (result.length < sizeRequired)
+            throw new IllegalArgumentException(sizeRequired + " samples is required in the output buffer.");
 
         int[] in1 = new int[nLastSamples + in.length];
         arraycopy(lastSamples, 0, in1, 0, nLastSamples);
         arraycopy(in, 0, in1, nLastSamples, in.length);
 
-        for (int i = 0; i < result.length - 1; i++) {
+        int i = 0;
+        for (; i < result.length - 1; i++) {
             int ind = (int) (pos >> SHIFT);
             int s0 = in1[ind];
             int s1 = in1[ind + 1];
@@ -54,7 +57,8 @@ public class BiliearStreamInterpolator extends StreamInterpolator {
         nLastSamples = in1.length - (int) (pos >> SHIFT);
         arraycopy(in1, pos >> SHIFT, lastSamples, 0, nLastSamples);
         pos &= MASK;
-        return result;
+
+        return i;
     }
 
     private int c = 0;
@@ -69,20 +73,22 @@ public class BiliearStreamInterpolator extends StreamInterpolator {
     }
 
     public static void main(String[] args) throws IOException {
-        WavInput inp = null;
-        WavOutput out = null;
+        WavInput.Adaptor inp = null;
+        WavOutput.Adaptor out = null;
         try {
-            inp = new WavInput(new File(args[0]));
-            out = new WavOutput(new File(args[1]), new WavHeader(inp.getHeader(), 44100));
-            
+            inp = new WavInput.Adaptor(new File(args[0]));
+            out = new WavOutput.Adaptor(new File(args[1]), new AudioFormat(inp.getFormat(), 44100));
+
             BiliearStreamInterpolator in = new BiliearStreamInterpolator(new Rational(44100, 48000));
-            
-            int[] samples;
-            while ((samples = inp.read(1024)) != null) {
-                int[] outSamples = in.interpolate(samples);
-                out.write(outSamples);
+
+            int[] samples = new int[1024];
+            int[] outSamples = new int[2048];
+
+            while (inp.read(samples, 1024) > 0) {
+                int outSize = in.interpolate(samples, outSamples);
+                out.write(outSamples, outSize);
             }
-            
+
         } finally {
             inp.close();
             out.close();

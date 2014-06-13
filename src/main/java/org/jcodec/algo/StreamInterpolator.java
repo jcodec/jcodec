@@ -21,28 +21,33 @@ import org.jcodec.common.model.Rational;
  * 
  * Example ( interpolates 48000 signal to 44100 ):
  * 
- * <blockquote><pre>
+ * <blockquote>
  * 
- * WavInput inp = null;
- * WavOutput out = null;
+ * <pre>
+ * 
+ * WavInput.Adaptor inp = null;
+ * WavOutput.Adaptor out = null;
  * try {
- *     inp = new WavInput(new File(args[0]));
- *     out = new WavOutput(new File(args[1]), new WavHeader(inp.getHeader(), 44100));
- *     
- *     StreamInterpolator in = new CubicSplineStreamInterpolator(new Rational(44100, 48000));
- *     
- *     int[] samples;
- *     while ((samples = inp.read(1024)) != null) {
- *         int[] outSamples = in.interpolate(samples);
- *         out.write(outSamples);
+ *     inp = new WavInput.Adaptor(new File(args[0]));
+ *     out = new WavOutput.Adaptor(new File(args[1]), new AudioFormat(inp.getFormat(), 44100));
+ * 
+ *     BiliearStreamInterpolator in = new BiliearStreamInterpolator(new Rational(44100, 48000));
+ * 
+ *     int[] samples = new int[1024];
+ *     int[] outSamples = new int[2048];
+ * 
+ *     while (inp.read(samples) &gt; 0) {
+ *         int outSize = in.interpolate(samples, outSamples);
+ *         out.write(outSamples, outSize);
  *     }
- *     
+ * 
  * } finally {
  *     inp.close();
  *     out.close();
  * }
+ * </pre>
  * 
- * </blockquote></pre> 
+ * </blockquote>
  * 
  * 
  * @author The JCodec project
@@ -56,5 +61,5 @@ public abstract class StreamInterpolator {
         this.ratio = ratio;
     }
 
-    public abstract int[] interpolate(int[] in);
+    public abstract int interpolate(int[] in, int[] out);
 }

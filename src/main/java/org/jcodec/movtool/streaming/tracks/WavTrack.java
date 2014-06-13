@@ -2,7 +2,6 @@ package org.jcodec.movtool.streaming.tracks;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.common.NIOUtils;
@@ -50,7 +49,7 @@ public class WavTrack implements VirtualTrack {
         SeekableByteChannel ch = null;
         try {
             ch = pool.getChannel();
-            header = WavHeader.read(Channels.newInputStream(ch));
+            header = WavHeader.read(ch);
             size = header.dataSize <= 0 ? ch.size() : header.dataSize;
         } finally {
             ch.close();

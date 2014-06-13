@@ -15,7 +15,7 @@ public class CubicSplineStreamInterpolator extends StreamInterpolator {
         super(ratio);
     }
 
-    public int[] interpolate(int[] in) {
+    public int interpolate(int[] in, int[] out) {
         throw new UnsupportedOperationException();
     }
 }
