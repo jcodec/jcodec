@@ -7,6 +7,8 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jcodec.common.StringUtils;
+
 public class MainUtils {
 
     public static class Cmd {
@@ -34,6 +36,16 @@ public class MainUtils {
             return flags.containsKey(flagName) ? flags.get(flagName) : defaultValue;
         }
 
+        public int[] getMultiIntegerFlag(String flagName, int[] defaultValue) {
+            if (!flags.containsKey(flagName))
+                return defaultValue;
+            String[] split = StringUtils.split(flags.get(flagName), ",");
+            int[] result = new int[split.length];
+            for (int i = 0; i < split.length; i++)
+                result[i] = Integer.parseInt(split[i]);
+            return result;
+        }
+
         public Long getLongFlag(String flagName) {
             return this.getLongFlag(flagName, null);
         }
@@ -48,6 +60,10 @@ public class MainUtils {
 
         public String getStringFlag(String flagName) {
             return getStringFlag(flagName, null);
+        }
+
+        public int[] getMultiIntegerFlag(String flagName) {
+            return getMultiIntegerFlag(flagName, new int[0]);
         }
 
         public String getArg(int i) {

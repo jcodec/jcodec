@@ -219,7 +219,7 @@ public class WavHeader {
     }
 
     public static WavHeader read(ReadableByteChannel in) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(44);
+        ByteBuffer buf = ByteBuffer.allocate(128);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         in.read(buf);
         if (buf.remaining() > 0)

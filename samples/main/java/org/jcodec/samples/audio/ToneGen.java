@@ -35,14 +35,24 @@ public class ToneGen {
         AudioFormat format = AudioFormat.MONO_48K_S16_LE;
         Adaptor wavOutput = new WavOutput.Adaptor(new File(cmd.getArg(0)), format);
 
-        int freq = cmd.getIntegerFlag("freq", 500);
+        int[] freq = cmd.getMultiIntegerFlag("freq", new int[] { 500 });
 
-        double coeff = 2 * Math.PI * freq / format.getSampleRate();
+        double[] coeff = new double[freq.length];
+        double[] mul = new double[freq.length];
+        for (int i = 0; i < coeff.length; i++) {
+            coeff[i] = 2 * Math.PI * freq[i] / format.getSampleRate();
+            mul[i] = .5 / (1 << i);
+        }
 
         int sample = 0;
         for (int i = 0; i < 1000; i++) {
-            for (int j = 0; j < buf.length; j++)
-                buf[j] = (float) Math.sin(sample++ * coeff);
+            for (int j = 0; j < buf.length; j++) {
+                double result = 0;
+                for (int fi = 0; fi < freq.length; fi++)
+                    result += (float) (Math.sin(sample * coeff[fi]) * mul[fi]);
+                ++sample;
+                buf[j] = (float) result;
+            }
             wavOutput.write(buf, buf.length);
         }
         wavOutput.close();

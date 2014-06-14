@@ -40,6 +40,38 @@ public class AudioFormat {
     public static AudioFormat MONO_44K_S24_BE = new AudioFormat(44100, 24, 1, true, true);
     public static AudioFormat MONO_44K_S24_LE = new AudioFormat(44100, 24, 1, true, false);
 
+    public static AudioFormat STEREO_S16_BE(int rate) {
+        return new AudioFormat(rate, 16, 2, true, true);
+    }
+
+    public static AudioFormat STEREO_S16_LE(int rate) {
+        return new AudioFormat(rate, 16, 2, true, false);
+    }
+
+    public static AudioFormat STEREO_S24_BE(int rate) {
+        return new AudioFormat(rate, 24, 2, true, true);
+    }
+
+    public static AudioFormat STEREO_S24_LE(int rate) {
+        return new AudioFormat(rate, 24, 2, true, false);
+    }
+
+    public static AudioFormat MONO_S16_BE(int rate) {
+        return new AudioFormat(rate, 16, 1, true, true);
+    }
+
+    public static AudioFormat MONO_S16_LE(int rate) {
+        return new AudioFormat(rate, 16, 1, true, false);
+    }
+
+    public static AudioFormat MONO_S24_BE(int rate) {
+        return new AudioFormat(rate, 24, 1, true, true);
+    }
+
+    public static AudioFormat MONO_S24_LE(int rate) {
+        return new AudioFormat(rate, 24, 1, true, false);
+    }
+
     public AudioFormat(int sampleRate, int sampleSizeInBits, int channelCount, boolean signed, boolean bigEndian) {
         this.sampleRate = sampleRate;
         this.sampleSizeInBits = sampleSizeInBits;
