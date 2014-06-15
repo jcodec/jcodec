@@ -84,7 +84,7 @@ public class Mpeg2Prores extends MPEGDecoder {
             Picture[] field = interlaced(dct);
             result = new Picture[] { colorCvt(field[0]), colorCvt(field[1]) };
         }
-        System.out.println(nInterlaced);
+//        System.out.println(nInterlaced);
 
         return result;
     }

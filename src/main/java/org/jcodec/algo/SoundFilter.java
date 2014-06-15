@@ -89,11 +89,4 @@ public class SoundFilter {
     public static void out(AudioFormat fmt, byte[] samples, int[] func) {
         out16BitSignedLE(samples, fmt.getChannels(), func);
     }
-
-    // public static void main(String[] args) {
-    // for (int i = 0; i < 512; i++)
-    // System.out.println(i + ",");
-    // // System.out.println((int) (Math.sin(2 * Math.PI * i / 2048) * 512) +
-    // // ",");
-    // }
 }

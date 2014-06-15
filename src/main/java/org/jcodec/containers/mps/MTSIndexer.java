@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 
 /**
@@ -106,7 +107,7 @@ public class MTSIndexer {
         protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
             if (!mediaStream(stream))
                 return;
-            System.out.println(String.format("PES: %08x, %d", start, pesLen));
+            Logger.debug(String.format("PES: %08x, %d", start, pesLen));
             PESPacket pesHeader = readPESHeader(pesBuffer, start);
             int leadingTsPkt = 0;// pesBuffer.position();
             if (predFileStartInTsPkt != start) {

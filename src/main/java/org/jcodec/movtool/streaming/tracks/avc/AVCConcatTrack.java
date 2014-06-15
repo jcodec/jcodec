@@ -19,6 +19,7 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -199,7 +200,7 @@ public class AVCConcatTrack implements VirtualTrack {
                 tweakers[idx2].run(nal, out, nu);
                 nalSizePosition.putInt(out.position() - nalSizePosition.position() - 4);
             } else {
-                System.out.println(nu.type);
+                Logger.warn("Skipping NAL unit: " + nu.type);
             }
         }
         if (out.remaining() >= 5) {

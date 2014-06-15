@@ -9,6 +9,7 @@ import org.jcodec.codecs.wav.StringReader;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.logging.Logger;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -50,7 +51,7 @@ public class Header {
         while (input.remaining() >= 4 && (size = (((long) input.getInt()) & 0xffffffffL)) == 0)
             ;
         if (input.remaining() < 4 || size < 8 && size != 1) {
-            System.out.println("Broken atom of size " + size);
+            Logger.error("Broken atom of size " + size);
             return null;
         }
 
@@ -61,16 +62,12 @@ public class Header {
                 lng = true;
                 size = input.getLong();
             } else {
-                System.out.println("Broken atom of size " + size);
+                Logger.error("Broken atom of size " + size);
                 return null;
             }
         }
 
         return new Header(fourcc, size, lng);
-    }
-
-    public void print() {
-        System.out.println(fourcc + "," + size);
     }
 
     public void skip(InputStream di) throws IOException {
@@ -121,5 +118,30 @@ public class Header {
 
     public long getSize() {
         return size;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((fourcc == null) ? 0 : fourcc.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Header other = (Header) obj;
+        if (fourcc == null) {
+            if (other.fourcc != null)
+                return false;
+        } else if (!fourcc.equals(other.fourcc))
+            return false;
+        return true;
     }
 }

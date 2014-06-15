@@ -196,4 +196,8 @@ public class MovieBox extends NodeBox {
 
         return new Size((int) vs.getWidth(), (int) vs.getHeight());
     }
+    
+    protected void getModelFields(List<String> model) {
+
+    }
 }

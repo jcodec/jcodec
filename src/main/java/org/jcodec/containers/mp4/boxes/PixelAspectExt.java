@@ -56,10 +56,4 @@ public class PixelAspectExt extends Box {
     public static String fourcc() {
         return "pasp";
     }
-
-    @Override
-    public void dump(StringBuilder sb) {
-        super.dump(sb);
-        sb.append(": " + hSpacing + ":" + vSpacing);
-    }
 }

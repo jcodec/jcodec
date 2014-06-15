@@ -6,7 +6,6 @@ import static org.jcodec.containers.mp4.TimeUtil.toMovTime;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.NIOUtils;
-import org.jcodec.common.tools.ToJSON;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -49,6 +48,65 @@ public class MovieHeaderBox extends FullBox {
         super(new Header(fourcc()));
     }
 
+    public int getTimescale() {
+        return timescale;
+    }
+
+    public long getDuration() {
+        return duration;
+    }
+
+    public int getNextTrackId() {
+        return nextTrackId;
+    }
+
+    public float getRate() {
+        return rate;
+    }
+
+    public float getVolume() {
+        return volume;
+    }
+
+    public long getCreated() {
+        return created;
+    }
+
+    public long getModified() {
+        return modified;
+    }
+
+    public int[] getMatrix() {
+        return matrix;
+    }
+
+    public void setTimescale(int newTs) {
+        this.timescale = newTs;
+    }
+
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
+
+    public void setNextTrackId(int nextTrackId) {
+        this.nextTrackId = nextTrackId;
+    }
+
+    private int[] readMatrix(ByteBuffer input) {
+        int[] matrix = new int[9];
+        for (int i = 0; i < 9; i++)
+            matrix[i] = input.getInt();
+        return matrix;
+    }
+
+    private float readVolume(ByteBuffer input) {
+        return (float) input.getShort() / 256f;
+    }
+
+    private float readRate(ByteBuffer input) {
+        return (float) input.getInt() / 65536f;
+    }
+
     public void parse(ByteBuffer input) {
         super.parse(input);
         if (version == 0) {
@@ -70,21 +128,6 @@ public class MovieHeaderBox extends FullBox {
         matrix = readMatrix(input);
         NIOUtils.skip(input, 24);
         nextTrackId = input.getInt();
-    }
-
-    private int[] readMatrix(ByteBuffer input) {
-        int[] matrix = new int[9];
-        for (int i = 0; i < 9; i++)
-            matrix[i] = input.getInt();
-        return matrix;
-    }
-
-    private float readVolume(ByteBuffer input) {
-        return (float) input.getShort() / 256f;
-    }
-
-    private float readRate(ByteBuffer input) {
-        return (float) input.getInt() / 65536f;
     }
 
     public void doWrite(ByteBuffer out) {
@@ -114,36 +157,5 @@ public class MovieHeaderBox extends FullBox {
 
     private void writeFixed1616(ByteBuffer out, float rate) {
         out.putInt((int) (rate * 65536.));
-    }
-
-    public int getTimescale() {
-        return timescale;
-    }
-
-    public long getDuration() {
-        return duration;
-    }
-
-    public void setTimescale(int newTs) {
-        this.timescale = newTs;
-    }
-
-    public void setDuration(long duration) {
-        this.duration = duration;
-    }
-
-    public int getNextTrackId() {
-        return nextTrackId;
-    }
-
-    public void setNextTrackId(int nextTrackId) {
-        this.nextTrackId = nextTrackId;
-    }
-
-    @Override
-    public void dump(StringBuilder sb) {
-        super.dump(sb);
-        sb.append(": ");
-        ToJSON.toJSON(this, sb, "timescale", "duration", "rate", "volume", "created", "modified", "nextTrackId");
     }
 }

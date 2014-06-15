@@ -17,6 +17,7 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
@@ -99,13 +100,13 @@ public class MXFDemuxer {
 
                 FileDescriptor descriptor = findDescriptor(descriptors, track.getTrackId());
                 if (descriptor == null) {
-                    System.out.println("No generic descriptor for track: " + track.getTrackId());
+                    Logger.warn("No generic descriptor for track: " + track.getTrackId());
                     if (descriptors.size() == 1 && descriptors.get(0).getLinkedTrackId() == 0) {
                         descriptor = descriptors.get(0);
                     }
                 }
                 if (descriptor == null) {
-                    System.out.println("Track without descriptor: " + track.getTrackId());
+                    Logger.warn("Track without descriptor: " + track.getTrackId());
                     continue;
                 }
                 MXFDemuxerTrack dt = createTrack(new UL(0x06, 0x0e, 0x2b, 0x34, 0x01, 0x02, 0x01, 0x01, 0x0d, 0x01,
@@ -200,21 +201,16 @@ public class MXFDemuxer {
     private static MXFMetadata parseMeta(UL ul, ByteBuffer _bb) {
         Class<? extends MXFMetadata> class1 = klMetadataMapping.get(ul);
         if (class1 == null) {
-            System.out.println("Unknown metadata piece: " + ul);
+            Logger.warn("Unknown metadata piece: " + ul);
             return null;
         }
         try {
             MXFMetadata meta = class1.getConstructor(UL.class).newInstance(ul);
             meta.read(_bb);
             return meta;
-        } catch (InstantiationException e) {
-        } catch (IllegalAccessException e) {
-        } catch (IllegalArgumentException e) {
-        } catch (SecurityException e) {
-        } catch (InvocationTargetException e) {
-        } catch (NoSuchMethodException e) {
+        } catch (Exception e) {
         }
-        System.out.println("Unknown metadata piece: " + ul);
+        Logger.warn("Unknown metadata piece: " + ul);
         return null;
     }
 
@@ -281,7 +277,7 @@ public class MXFDemuxer {
             codec = resolveCodec();
 
             if (codec != null || (descriptor instanceof WaveAudioDescriptor)) {
-                System.out.println("Track type: " + video + ", " + audio);
+                Logger.warn("Track type: " + video + ", " + audio);
 
                 if (audio && (descriptor instanceof WaveAudioDescriptor)) {
                     WaveAudioDescriptor wave = (WaveAudioDescriptor) descriptor;
@@ -446,7 +442,7 @@ public class MXFDemuxer {
                 if (codec.getUl().equals(codecUL, 0xff7f))
                     return codec;
             }
-            System.out.println("Unknown codec: " + codecUL);
+            Logger.warn("Unknown codec: " + codecUL);
 
             return null;
         }

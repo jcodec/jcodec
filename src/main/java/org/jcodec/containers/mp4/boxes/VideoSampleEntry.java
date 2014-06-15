@@ -4,9 +4,8 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.tools.ToJSON;
+import org.jcodec.common.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -148,6 +147,28 @@ public class VideoSampleEntry extends SampleEntry {
         return vendor;
     }
 
+    public short getVersion() {
+        return version;
+    }
+
+    public short getRevision() {
+        return revision;
+    }
+
+    public int getTemporalQual() {
+        return temporalQual;
+    }
+
+    public int getSpacialQual() {
+        return spacialQual;
+    }
+
+    public short getClrTbl() {
+        return clrTbl;
+    }
+
+
+
     public static class MyFactory extends BoxFactory {
         private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
 
@@ -163,17 +184,5 @@ public class VideoSampleEntry extends SampleEntry {
         public Class<? extends Box> toClass(String fourcc) {
             return mappings.get(fourcc);
         }
-    }
-
-    @Override
-    public void dump(StringBuilder sb) {
-        sb.append(header.getFourcc() + ": {\n");
-        sb.append("entry: ");
-        ToJSON.toJSON(this, sb, "version", "revision", "vendor", "temporalQual", "spacialQual", "width", "height",
-                "hRes", "vRes", "frameCount", "compressorName", "depth", "clrTbl");
-        sb.append(",\nexts: [\n");
-        dumpBoxes(sb);
-        sb.append("\n]\n");
-        sb.append("}\n");
     }
 }

@@ -103,7 +103,7 @@ public class NIOUtils {
             closeQuietly(is);
         }
     }
-    
+
     public static void writeTo(ByteBuffer buffer, File file) throws IOException {
         FileChannel out = null;
         try {
@@ -271,6 +271,15 @@ public class NIOUtils {
         }
     }
 
+    public static void closeQuietly(RandomAccessFile file) {
+        if (file == null)
+            return;
+        try {
+            file.close();
+        } catch (IOException e) {
+        }
+    }
+
     public static byte readByte(ReadableByteChannel channel) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(1);
         channel.read(buf);
@@ -389,15 +398,15 @@ public class NIOUtils {
             }
         }
     }
-    
+
     public static byte getRel(ByteBuffer bb, int rel) {
         return bb.get(bb.position() + rel);
     }
 
-	public static ByteBuffer cloneBuffer(ByteBuffer pesBuffer) {
-		ByteBuffer res = ByteBuffer.allocate(pesBuffer.remaining());
-		res.put(pesBuffer.duplicate());
-		res.clear();
-		return res;
-	}
+    public static ByteBuffer cloneBuffer(ByteBuffer pesBuffer) {
+        ByteBuffer res = ByteBuffer.allocate(pesBuffer.remaining());
+        res.put(pesBuffer.duplicate());
+        res.clear();
+        return res;
+    }
 }

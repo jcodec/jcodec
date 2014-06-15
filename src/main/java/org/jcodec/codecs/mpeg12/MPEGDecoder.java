@@ -629,7 +629,7 @@ public class MPEGDecoder implements VideoDecoder {
     protected void blockInter(BitReader bits, VLC vlcCoeff, int[] block, int[] scan, int escSize, int qScale,
             int[] qmat) {
         
-        System.out.println();
+//        System.out.println();
 
         int idx = -1;
         if (vlcCoeff == vlcCoeff0 && bits.checkNBit(1) == 1) {

@@ -70,10 +70,7 @@ public class MovDump {
     }
 
     public static String print(File file) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        MP4Util.parseMovie(file).dump(sb);
-
-        return sb.toString();
+        return MP4Util.parseMovie(file).toString();
     }
 
     private static Box findDeep(NodeBox root, String atom) {
@@ -82,7 +79,7 @@ public class MovDump {
                 return b;
             } else if (b instanceof NodeBox) {
                 Box res = findDeep((NodeBox) b, atom);
-                if(res != null)
+                if (res != null)
                     return res;
             }
         }
@@ -90,7 +87,6 @@ public class MovDump {
     }
 
     public static String print(File file, String atom) throws IOException {
-        StringBuilder sb = new StringBuilder();
         MovieBox mov = MP4Util.parseMovie(file);
 
         Box found = findDeep(mov, atom);
@@ -99,8 +95,6 @@ public class MovDump {
             return null;
         }
 
-        found.dump(sb);
-
-        return sb.toString();
+        return found.toString();
     }
 }

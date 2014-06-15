@@ -1,13 +1,18 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.logging.Logger;
+import org.jcodec.common.tools.ToJSON;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -19,6 +24,7 @@ import org.jcodec.common.NIOUtils;
  * 
  */
 public abstract class Box {
+    private static final String GET_MODEL_FIELDS = "getModelFields";
     protected Header header;
 
     public Box(Header header) {
@@ -100,8 +106,50 @@ public abstract class Box {
 
     }
 
-    public void dump(StringBuilder sb) {
-        sb.append("'" + header.getFourcc() + "'");
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        return toString().equals(obj.toString());
+    }
+
+    protected void dump(StringBuilder sb) {
+        sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
+        List<String> fields = new ArrayList<String>(0);
+        collectModel(this.getClass(), fields);
+        ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[0]));
+        sb.append("}");
+    }
+
+    protected void collectModel(Class claz, List<String> model) {
+        if (Box.class == claz || !Box.class.isAssignableFrom(claz))
+            return;
+
+        collectModel(claz.getSuperclass(), model);
+
+        try {
+            Method method = claz.getDeclaredMethod(GET_MODEL_FIELDS, List.class);
+            method.invoke(this, model);
+        } catch (NoSuchMethodException e) {
+            checkWrongSignature(claz);
+            model.addAll(ToJSON.allFields(claz));
+        } catch (Exception e) {
+        }
+    }
+
+    private void checkWrongSignature(Class claz) {
+        for (Method method : claz.getDeclaredMethods()) {
+            if (method.getName().equals(GET_MODEL_FIELDS)) {
+                Logger.warn("Class " + claz.getCanonicalName() + " contains 'getModelFields' of wrong signature.\n"
+                        + "Did you mean to define 'protected void " + GET_MODEL_FIELDS + "(List<String> model) ?");
+                break;
+            }
+        }
     }
 
     public static <T extends Box> T as(Class<T> class1, LeafBox box) {

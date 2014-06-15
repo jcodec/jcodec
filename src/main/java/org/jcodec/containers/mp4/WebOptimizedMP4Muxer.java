@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
@@ -74,7 +75,7 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
             if (rem >= 8)
                 new Header("free", rem).write(out);
         } catch (ArrayIndexOutOfBoundsException e) {
-            System.out.println("Could not web-optimize, header is bigger then allocated space.");
+            Logger.warn("Could not web-optimize, header is bigger then allocated space.");
             new Header("free", header.remaining()).write(out);
             out.position(mdatEnd);
             MP4Util.writeMovie(out, movie);

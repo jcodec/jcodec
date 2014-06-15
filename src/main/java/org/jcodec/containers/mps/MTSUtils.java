@@ -13,6 +13,7 @@ import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
 
 /**
@@ -252,7 +253,7 @@ public class MTSUtils {
             int wn = data.getShort() & 0xffff;
             int elementaryPid = wn & 0x1fff;
 
-            System.out.println(String.format("Elementary stream: [%d,%d]", streamType, elementaryPid));
+            Logger.info(String.format("Elementary stream: [%d,%d]", streamType, elementaryPid));
 
             int wn1 = data.getShort() & 0xffff;
             int esInfoLength = wn1 & 0xfff;
@@ -291,7 +292,7 @@ public class MTSUtils {
         while (bb.hasRemaining()) {
             int tag = bb.get();
             int tagLen = bb.get();
-            System.out.println(String.format("TAG: [0x%x, 0x%x]", tag, tagLen));
+            Logger.info(String.format("TAG: [0x%x, 0x%x]", tag, tagLen));
             tags.add(new Tag(tag, NIOUtils.read(bb, tagLen)));
         }
         return tags;

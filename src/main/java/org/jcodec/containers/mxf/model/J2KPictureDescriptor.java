@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.jcodec.common.logging.Logger;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -68,7 +70,7 @@ public class J2KPictureDescriptor extends MXFInterchangeObject {
                 break;
 
             default:
-                System.out.println(String.format("Unknown tag [ Identification: " + ul + "]: %04x", entry.getKey()));
+                Logger.warn(String.format("Unknown tag [ " + ul + "]: %04x", entry.getKey()));
                 continue;
             }
             it.remove();

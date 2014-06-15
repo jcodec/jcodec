@@ -5,8 +5,6 @@ import static org.jcodec.containers.mp4.TimeUtil.toMovTime;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.tools.ToJSON;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -42,6 +40,38 @@ public class MediaHeaderBox extends FullBox {
         super(new Header(fourcc()));
     }
 
+    public int getTimescale() {
+        return timescale;
+    }
+
+    public long getDuration() {
+        return duration;
+    }
+
+    public long getCreated() {
+        return created;
+    }
+
+    public long getModified() {
+        return modified;
+    }
+
+    public int getLanguage() {
+        return language;
+    }
+
+    public int getQuality() {
+        return quality;
+    }
+
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
+
+    public void setTimescale(int timescale) {
+        this.timescale = timescale;
+    }
+
     public void parse(ByteBuffer input) {
         super.parse(input);
         if (version == 0) {
@@ -59,14 +89,6 @@ public class MediaHeaderBox extends FullBox {
         }
     }
 
-    public int getTimescale() {
-        return timescale;
-    }
-
-    public long getDuration() {
-        return duration;
-    }
-
     public void doWrite(ByteBuffer out) {
         super.doWrite(out);
         out.putInt(toMovTime(created));
@@ -75,20 +97,5 @@ public class MediaHeaderBox extends FullBox {
         out.putInt((int) duration);
         out.putShort((short) language);
         out.putShort((short) quality);
-    }
-
-    public void setDuration(long duration) {
-        this.duration = duration;
-    }
-
-    public void setTimescale(int timescale) {
-        this.timescale = timescale;
-    }
-
-    @Override
-    public void dump(StringBuilder sb) {
-        super.dump(sb);
-        sb.append(": ");
-        ToJSON.toJSON(this, sb, "created", "modified", "timescale", "duration", "language", "quality");
     }
 }

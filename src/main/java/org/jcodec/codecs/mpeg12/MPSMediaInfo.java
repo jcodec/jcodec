@@ -16,6 +16,7 @@ import org.jcodec.common.Codec;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -53,8 +54,9 @@ public class MPSMediaInfo extends PESReader {
             // TODO Auto-generated method stub
             return null;
         }
-        
+
     }
+
     public class MPEGTrackMetadata {
         int streamId;
         Codec codec;
@@ -122,7 +124,7 @@ public class MPSMediaInfo extends PESReader {
                 }
             }.readFile(f, 0x10000, null);
         } catch (MediaInfoDone e) {
-            System.out.println("MEDIA INFO DONE");
+            Logger.info("Media info done");
         }
         return getInfos();
     }

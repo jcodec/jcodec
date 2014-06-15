@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.jcodec.common.logging.Logger;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -69,7 +71,7 @@ public class CDCIEssenceDescriptor extends GenericPictureEssenceDescriptor {
                 colorRange = _bb.getInt();
                 break;
             default:
-//                System.out.println(String.format("Unknown tag [ CDCIEssenceDescriptor: " + ul + "]: %04x", entry.getKey()));
+                Logger.warn(String.format("Unknown tag [ " + ul + "]: %04x", entry.getKey()));
                 continue;
             }
             it.remove();

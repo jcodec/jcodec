@@ -27,7 +27,7 @@ public class WaveAudioDescriptor extends GenericSoundEssenceDescriptor {
     private ByteBuffer peakOfPeaksPosition;
     private ByteBuffer peakEnvelopeTimestamp;
     private ByteBuffer peakEnvelopeData;
-    
+
     public WaveAudioDescriptor(UL ul) {
         super(ul);
     }
@@ -82,8 +82,7 @@ public class WaveAudioDescriptor extends GenericSoundEssenceDescriptor {
                 break;
 
             default:
-//                System.out.println(String.format("Unknown tag [ WaveAudioDescriptor: " + ul + "]: %04x",
-//                        entry.getKey()));
+                System.out.println(String.format("Unknown tag [ " + ul + "]: %04x", entry.getKey()));
                 continue;
             }
             it.remove();

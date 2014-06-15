@@ -80,7 +80,6 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 return bufPool.remove(0);
             }
         }
-        System.out.println("creating buffer");
         return ByteBuffer.allocate(BUFFER_SIZE);
     }
 

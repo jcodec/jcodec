@@ -10,10 +10,10 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
@@ -21,6 +21,7 @@ import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.BoxFactory;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
@@ -57,6 +58,22 @@ public class MP4Util {
             }
         }
         return null;
+    }
+
+    public static List<MovieFragmentBox> parseMovieFragments(SeekableByteChannel input) throws IOException {
+        MovieBox moov = null;
+        LinkedList<MovieFragmentBox> fragments = new LinkedList<MovieFragmentBox>();
+        for (Atom atom : getRootAtoms(input)) {
+            if ("moov".equals(atom.getHeader().getFourcc())) {
+                moov = (MovieBox) atom.parseBox(input);
+            } else if ("moof".equalsIgnoreCase(atom.getHeader().getFourcc())) {
+                fragments.add((MovieFragmentBox) atom.parseBox(input));
+            }
+        }
+        for (MovieFragmentBox fragment : fragments) {
+            fragment.setMovie(moov);
+        }
+        return fragments;
     }
 
     public static List<Atom> getRootAtoms(SeekableByteChannel input) throws IOException {
@@ -108,6 +125,34 @@ public class MP4Util {
         public void copy(SeekableByteChannel input, WritableByteChannel out) throws IOException {
             input.position(offset);
             NIOUtils.copy(input, out, header.getSize());
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + ((header == null) ? 0 : header.hashCode());
+            result = prime * result + (int) (offset ^ (offset >>> 32));
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            Atom other = (Atom) obj;
+            if (header == null) {
+                if (other.header != null)
+                    return false;
+            } else if (!header.equals(other.header))
+                return false;
+            if (offset != other.offset)
+                return false;
+            return true;
         }
     }
 

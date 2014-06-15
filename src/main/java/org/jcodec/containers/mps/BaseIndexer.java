@@ -8,6 +8,7 @@ import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.RunLength;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 
 /**
@@ -119,8 +120,8 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
 
                     super.framePts(pesHeader);
                     prevFrame = frameStart;
-                    System.out.println(String.format("FRAME[%d]: %012x, %d", frameNo,
-                            (pesHeader.pos + pkt.position() - 4), pesHeader.pts));
+                    Logger.info(String.format("FRAME[%d]: %012x, %d", frameNo, (pesHeader.pos + pkt.position() - 4),
+                            pesHeader.pts));
                     frameNo++;
                 }
                 if (position - prevFrame == 6) {

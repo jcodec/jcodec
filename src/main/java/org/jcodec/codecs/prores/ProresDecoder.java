@@ -24,6 +24,7 @@ import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
@@ -75,7 +76,7 @@ public class ProresDecoder implements VideoDecoder {
         if (q > codebook.switchBits) {
             int bits = codebook.golombBits + q;
             if (bits > 16)
-                System.out.println("CRAP!!!!!!");
+                Logger.error("Broken prores slice");
             return ((1 << bits) | reader.readFast16(bits)) - codebook.golombOffset;
         } else if (codebook.riceOrder > 0)
             return (q << codebook.riceOrder) | reader.readFast16(codebook.riceOrder);

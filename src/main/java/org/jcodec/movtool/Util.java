@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.jcodec.common.ArrayUtil;
-import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;

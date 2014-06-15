@@ -19,7 +19,7 @@ public class SetPAR {
         }
         final Rational newPAR = Rational.parse(args[1]);
 
-        new InplaceEdit() {
+        new SimpleMP4Edit() {
             protected void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
                 vt.setPAR(newPAR);
@@ -39,6 +39,6 @@ public class SetPAR {
                     }
                 }
             }
-        }.save(new File(args[0]));
+        }.inplace(new File(args[0]));
     }
 }

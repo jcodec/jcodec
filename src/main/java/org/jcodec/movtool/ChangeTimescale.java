@@ -18,7 +18,7 @@ public class ChangeTimescale {
             System.out.println("Could not set timescale < 600");
             System.exit(-1);
         }
-        new InplaceEdit() {
+        new SimpleMP4Edit() {
             protected void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
                 MediaHeaderBox mdhd = Box.findFirst(vt, MediaHeaderBox.class, "mdia", "mdhd");
@@ -33,6 +33,6 @@ public class ChangeTimescale {
                 
                 mov.fixTimescale(ts);
             }
-        }.save(new File(args[0]));
+        }.inplace(new File(args[0]));
     }
 }

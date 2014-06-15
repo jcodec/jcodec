@@ -94,11 +94,11 @@ public class QTEdit {
 			help();
 		}
 
-		boolean inplace = new InplaceEdit() {
+		boolean inplace = new SimpleMP4Edit() {
 			protected void apply(MovieBox mov) {
 				applyCommands(mov, commands);
 			}
-		}.save(input);
+		}.inplace(input);
 		if (!inplace) {
 			final MovieBox movie = MP4Util.createRefMovie(input);
 			applyCommands(movie, commands);

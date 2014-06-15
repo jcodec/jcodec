@@ -15,6 +15,7 @@ import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.encode.ConstantRateControl;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
@@ -180,7 +181,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                     }
                     break;
                 } catch (Throwable t) {
-                    System.out.println("Error transcoding gop: " + t.getMessage() + ", retrying.");
+                    Logger.error("Error transcoding gop: " + t.getMessage() + ", retrying.");
                 }
             }
         }

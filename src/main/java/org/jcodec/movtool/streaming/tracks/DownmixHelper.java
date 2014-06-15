@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
 import org.jcodec.containers.mp4.boxes.channel.ChannelUtils;
@@ -81,7 +82,7 @@ public class DownmixHelper {
                     if((channels[ch].getVal() >>> 16) == 1) {
                         matrixBuilder.add(new float[] { .7f, .7f });
                         countsBuilder.add(new int[] { 1, 1 });
-                        System.out.println("Discrete" + (channels[ch].getVal() & 0xffff));
+                        Logger.info("Discrete" + (channels[ch].getVal() & 0xffff));
                     }
                 }
             }

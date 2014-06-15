@@ -7,10 +7,10 @@ import java.nio.ByteBuffer;
  * under FreeBSD License
  * 
  * @author The JCodec project
- *
+ * 
  */
 public class FullBox extends Box {
-    
+
     public FullBox(Header atom) {
         super(atom);
     }
@@ -20,10 +20,10 @@ public class FullBox extends Box {
 
     public void parse(ByteBuffer input) {
         int vf = input.getInt();
-        version = (byte)((vf >> 24) & 0xff);
+        version = (byte) ((vf >> 24) & 0xff);
         flags = vf & 0xffffff;
     }
-    
+
     protected void doWrite(ByteBuffer out) {
         out.putInt((version << 24) | (flags & 0xffffff));
     }

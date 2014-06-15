@@ -91,20 +91,20 @@ public class DeblockingFilter {
         // shs[235], "!**!**!**!**!--!--!--!--!--!--!--!");
     }
 
-    private void printMB(int[] is, int stride, int mbAddr, SliceHeader sh, String delim) {
-        int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
-        int mbX = mbAddr % mbWidth;
-        int mbY = mbAddr / mbWidth;
-
-        System.out.println("MB: " + mbX + ", " + mbY);
-        System.out.println(delim);
-        for (int j = 0; j < 16; j++) {
-            for (int i = 0; i < 16; i++)
-                System.out.print(String.format("%3d,", is[((mbY << 4) + j) * stride + (mbX << 4) + i]));
-            System.out.println();
-        }
-        System.out.println(delim);
-    }
+//    private void printMB(int[] is, int stride, int mbAddr, SliceHeader sh, String delim) {
+//        int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
+//        int mbX = mbAddr % mbWidth;
+//        int mbY = mbAddr / mbWidth;
+//
+//        System.out.println("MB: " + mbX + ", " + mbY);
+//        System.out.println(delim);
+//        for (int j = 0; j < 16; j++) {
+//            for (int i = 0; i < 16; i++)
+//                System.out.print(String.format("%3d,", is[((mbY << 4) + j) * stride + (mbX << 4) + i]));
+//            System.out.println();
+//        }
+//        System.out.println(delim);
+//    }
 
     static int[] inverse = new int[] { 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15 };
 

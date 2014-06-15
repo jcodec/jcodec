@@ -11,6 +11,11 @@ import org.jcodec.common.StringUtils;
 
 public class MainUtils {
 
+    private static final String JCODEC_LOG_SINK_COLOR = "jcodec.colorPrint";
+
+    public static boolean isColorSupported = System.console() != null
+            || Boolean.parseBoolean(System.getProperty(JCODEC_LOG_SINK_COLOR));
+
     public static class Cmd {
         public Map<String, String> flags;
         public String[] args;
@@ -26,6 +31,10 @@ public class MainUtils {
 
         public Integer getIntegerFlag(String flagName, Integer defaultValue) {
             return flags.containsKey(flagName) ? new Integer(flags.get(flagName)) : defaultValue;
+        }
+
+        public Boolean getBooleanFlag(String flagName, Boolean defaultValue) {
+            return flags.containsKey(flagName) ? new Boolean(flags.get(flagName)) : defaultValue;
         }
 
         public Double getDoubleFlag(String flagName, Long defaultValue) {
@@ -52,6 +61,10 @@ public class MainUtils {
 
         public Integer getIntegerFlag(String flagName) {
             return getIntegerFlag(flagName, null);
+        }
+
+        public Boolean getBooleanFlag(String flagName) {
+            return getBooleanFlag(flagName, null);
         }
 
         public Double getDoubleFlag(String flagName) {
@@ -85,7 +98,11 @@ public class MainUtils {
                 Matcher matcher = flagPattern.matcher(args[firstArg]);
                 if (matcher.matches()) {
                     flags.put(matcher.group(1), matcher.group(2));
+                } else {
+                    flags.put(args[firstArg].substring(2), "true");
                 }
+            } else if (args[firstArg].startsWith("-")) {
+                flags.put(args[firstArg].substring(1), args[++firstArg]);
             } else
                 break;
         }
@@ -94,18 +111,19 @@ public class MainUtils {
     }
 
     public static void printHelp(Map<String, String> flags, String... params) {
-        System.out.print("Syntax:");
+        System.out.print(bold("Syntax:"));
         StringBuilder sample = new StringBuilder();
         StringBuilder detail = new StringBuilder();
         for (Entry<String, String> entry : flags.entrySet()) {
-            sample.append(" [--" + entry.getKey() + "=<value>]");
-            detail.append("\t--" + entry.getKey() + "\t\t" + entry.getValue() + "\n");
+            sample.append(" [" + bold(color("--" + entry.getKey() + "=<value>", ANSIColor.MAGENTA)) + "]");
+            detail.append("\t" + bold(color("--" + entry.getKey(), ANSIColor.MAGENTA)) + "\t\t" + entry.getValue()
+                    + "\n");
         }
         for (String string : params) {
-            sample.append(" <" + string + ">");
+            sample.append(bold(" <" + string + ">"));
         }
         System.out.println(sample);
-        System.out.println("Where:");
+        System.out.println(bold("Where:"));
         System.out.println(detail);
     }
 
@@ -113,20 +131,30 @@ public class MainUtils {
         BLACK, RED, GREEN, BROWN, BLUE, MAGENTA, CYAN, GREY
     }
 
+    public static String bold(String str) {
+        return isColorSupported ? "\033[1m" + str + "\033[0m" : str;
+    }
+
+    public static String colorString(String str, String placeholder) {
+        return isColorSupported ? "\033[" + placeholder + "m" + str + "\033[0m" : str;
+    }
+
     public static String color(String str, ANSIColor fg) {
-        return "\033[" + (30 + (fg.ordinal() & 0x7)) + "m" + str + "\033[0m";
+        return isColorSupported ? "\033[" + (30 + (fg.ordinal() & 0x7)) + "m" + str + "\033[0m" : str;
     }
 
     public static String color(String str, ANSIColor fg, boolean bright) {
-        return "\033[" + (30 + (fg.ordinal() & 0x7)) + ";" + (bright ? 1 : 2) + "m" + str + "\033[0m";
+        return isColorSupported ? "\033[" + (30 + (fg.ordinal() & 0x7)) + ";" + (bright ? 1 : 2) + "m" + str
+                + "\033[0m" : str;
     }
 
     public static String color(String str, ANSIColor fg, ANSIColor bg) {
-        return "\033[" + (30 + (fg.ordinal() & 0x7)) + ";" + (40 + (bg.ordinal() & 0x7)) + ";1m" + str + "\033[0m";
+        return isColorSupported ? "\033[" + (30 + (fg.ordinal() & 0x7)) + ";" + (40 + (bg.ordinal() & 0x7)) + ";1m"
+                + str + "\033[0m" : str;
     }
 
     public static String color(String str, ANSIColor fg, ANSIColor bg, boolean bright) {
-        return "\033[" + (30 + (fg.ordinal() & 0x7)) + ";" + (40 + (bg.ordinal() & 0x7)) + ";" + (bright ? 1 : 2) + "m"
-                + str + "\033[0m";
+        return isColorSupported ? "\033[" + (30 + (fg.ordinal() & 0x7)) + ";" + (40 + (bg.ordinal() & 0x7)) + ";"
+                + (bright ? 1 : 2) + "m" + str + "\033[0m" : str;
     }
 }

@@ -11,6 +11,7 @@ import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.Mpeg2Thumb2x2;
 import org.jcodec.codecs.mpeg12.Mpeg2Thumb4x4;
 import org.jcodec.common.VideoDecoder;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
@@ -88,7 +89,7 @@ public class MPEGToAVCTranscoder {
                 encoder.encodeFrame(toEnc, dst, iframe, poc);
                 break;
             } catch (BufferOverflowException ex) {
-                System.out.println("Abandon frame!!!");
+                Logger.warn("Abandon frame, buffer too small: " + dst.capacity());
                 rate -= 10;
                 rc.setRate(rate);
             }

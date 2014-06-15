@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Rational;
 
 /**
@@ -139,7 +140,7 @@ public class GenericPictureEssenceDescriptor extends FileDescriptor {
                 colorPrimaries = UL.read(_bb);
                 break;
             default:
-//                System.out.println(String.format("Unknown tag [ GenericPictureEssenceDescriptor: " + ul + "]: %04x", entry.getKey()));
+                Logger.warn(String.format("Unknown tag [ " + ul + "]: %04x", entry.getKey()));
                 continue;
             }
             it.remove();

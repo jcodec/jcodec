@@ -31,4 +31,16 @@ public class Assert {
         if (obj == null)
             throw new AssertionError();
     }
+
+    public static void assertArrayEquals(int[] a, int[] b) {
+        if (a == b)
+            return;
+        if (a == null || b == null)
+            throw new AssertionError();
+        if (a.length != b.length)
+            throw new AssertionError();
+        for (int i = 0; i < a.length; i++)
+            if (a[i] != b[i])
+                throw new AssertionError();
+    }
 }

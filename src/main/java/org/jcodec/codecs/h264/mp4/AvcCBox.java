@@ -23,10 +23,10 @@ public class AvcCBox extends Box {
     private int profile;
     private int profileCompat;
     private int level;
+    private int nalLengthSize;
 
     private List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
     private List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
-    private int nalLengthSize;
 
     public AvcCBox(Box other) {
         super(other);
@@ -100,6 +100,18 @@ public class AvcCBox extends Box {
             out.put((byte) 0x68);
             NIOUtils.write(out, pps);
         }
+    }
+
+    public int getProfile() {
+        return profile;
+    }
+
+    public int getProfileCompat() {
+        return profileCompat;
+    }
+
+    public int getLevel() {
+        return level;
     }
 
     public List<ByteBuffer> getSpsList() {
