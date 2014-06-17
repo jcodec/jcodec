@@ -11,6 +11,7 @@ import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.Tuple;
+import org.jcodec.common.Tuple._2;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -76,11 +77,17 @@ public abstract class SimpleMP4Edit {
             List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi);
             if (fragments == null)
                 return false;
+            
+            List<_2<Long, ByteBuffer>> fragOffsets = Tuple._2map0(fragments, new Tuple.Mapper<Atom, Long>() {
+                public Long map(Atom t) {
+                    return t.getOffset();
+                }
+            });
 
             // If everything is clean, only then actually start writing file
-            Map<Atom, ByteBuffer> rewrite = Tuple.asMap(fragments);
+            Map<Long, ByteBuffer> rewrite = Tuple.asMap(fragOffsets);
             for (Atom atom : MP4Util.getRootAtoms(fi)) {
-                ByteBuffer byteBuffer = rewrite.get(atom);
+                ByteBuffer byteBuffer = rewrite.get(atom.getOffset());
                 if (byteBuffer != null)
                     fo.write(byteBuffer);
                 else

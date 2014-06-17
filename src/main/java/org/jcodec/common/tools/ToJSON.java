@@ -26,6 +26,7 @@ public class ToJSON {
     static Set<String> omitMethods = new HashSet<String>();
 
     static {
+        primitive.add(Boolean.class);
         primitive.add(Byte.class);
         primitive.add(Short.class);
         primitive.add(Integer.class);
@@ -96,7 +97,7 @@ public class ToJSON {
         String isGetter = getterName("is", field);
         String getGetter = getterName("get", field);
         for (Method method : methods) {
-            if (isGetter.equals(method.getName()) || getGetter.equals(method.getName()))
+            if ((isGetter.equals(method.getName()) || getGetter.equals(method.getName())) && isGetter(method))
                 return method;
         }
         return null;

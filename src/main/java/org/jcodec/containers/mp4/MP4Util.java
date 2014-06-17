@@ -126,34 +126,6 @@ public class MP4Util {
             input.position(offset);
             NIOUtils.copy(input, out, header.getSize());
         }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((header == null) ? 0 : header.hashCode());
-            result = prime * result + (int) (offset ^ (offset >>> 32));
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            Atom other = (Atom) obj;
-            if (header == null) {
-                if (other.header != null)
-                    return false;
-            } else if (!header.equals(other.header))
-                return false;
-            if (offset != other.offset)
-                return false;
-            return true;
-        }
     }
 
     public static MovieBox parseMovie(File source) throws IOException {
