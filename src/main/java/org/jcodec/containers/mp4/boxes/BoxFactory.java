@@ -73,6 +73,7 @@ public class BoxFactory {
         mappings.put(TrackFragmentHeaderBox.fourcc(), TrackFragmentHeaderBox.class);
         mappings.put(MovieFragmentBox.fourcc(), MovieFragmentBox.class);
         mappings.put(TrackFragmentBox.fourcc(), TrackFragmentBox.class);
+        mappings.put(TrackFragmentBaseMediaDecodeTimeBox.fourcc(), TrackFragmentBaseMediaDecodeTimeBox.class);
         mappings.put(TrunBox.fourcc(), TrunBox.class);
     }
 

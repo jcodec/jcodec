@@ -106,6 +106,11 @@ public class NodeBox extends Box {
         removeChildren(fourcc);
         add(box);
     }
+    
+    public void replace(Box box) {
+        removeChildren(box.getFourcc());
+        add(box);
+    }
 
     protected void dump(StringBuilder sb) {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
