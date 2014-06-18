@@ -3,13 +3,13 @@ package org.jcodec.codecs.vp8;
 import static java.nio.ByteBuffer.wrap;
 import static org.jcodec.codecs.vp8.BooleanArithmeticDecoder.leadingZeroCountInByte;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.ArithmeticCoderTest;
 import org.jcodec.common.IOUtils;
-import org.jcodec.containers.mkv.MKVMuxerTest;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,7 +35,7 @@ public class BooleanCodingTest {
 
     @Test
     public void test() throws IOException {
-        byte[] b = IOUtils.toByteArray(new FileInputStream(MKVMuxerTest.tildeExpand("src/test/resources/part1.vp8.mb")));
+        byte[] b = IOUtils.toByteArray(new FileInputStream(new File("src/test/resources/part1.vp8.mb")));
         BooleanArithmeticDecoder bac = new BooleanArithmeticDecoder(ByteBuffer.wrap(b), 0);
          Assert.assertEquals("clear type is expected to be 0", 0, bac.decodeBit());
          Assert.assertEquals("clamp type is expected to be 0", 0, bac.decodeBit());

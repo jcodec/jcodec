@@ -36,7 +36,6 @@ import org.jcodec.codecs.h264.encode.ConstantRateControl;
 import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
-import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
@@ -58,29 +57,20 @@ import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
-import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mkv.MKVDemuxer;
-import org.jcodec.containers.mkv.MKVDemuxer.VideoTrack;
-import org.jcodec.containers.mkv.MKVMuxer;
-import org.jcodec.containers.mkv.MKVMuxer.MKVMuxerTrack;
-import org.jcodec.containers.mkv.elements.BlockElement;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4DemuxerException;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.FormatBox;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.LeafBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
@@ -144,13 +134,13 @@ public class TranscodeMain {
             avc2prores(args[1], args[2], false);
         } else if ("avcraw2prores".equals(args[0])) {
             avc2prores(args[1], args[2], true);
-        } else if ("png2mkv".equals(args[0])) {
+        } /*else if ("png2mkv".equals(args[0])) {
             png2mkv(args[1], args[2]);
         } else if ("mkv2png".equals(args[0])) {
             mkv2png(args[1], args[2]);
         } else if ("webm2png".equals(args[0])) {
             webm2png(args[1], args[2]);
-        } else if ("png2vp8".equals(args[0])) {
+        } */else if ("png2vp8".equals(args[0])) {
             png2vp8(args[1], args[2]);
         } else if ("jpeg2avc".equals(args[0])) {
             jpeg2avc(args[1], args[2]);
@@ -260,6 +250,7 @@ public class TranscodeMain {
         NIOUtils.closeQuietly(ch);
     }
 
+    /*
     private static void webm2png(String in, String out) throws IOException {
         File file = new File(in);
         if (!file.exists()) {
@@ -303,7 +294,9 @@ public class TranscodeMain {
             IOUtils.closeQuietly(inputStream);
         }
     }
+    */
 
+    /*
     private static void png2mkv(String pattern, String out) throws IOException {
         FileOutputStream fos = new FileOutputStream(tildeExpand(out));
         FileChannelWrapper sink = null;
@@ -347,6 +340,7 @@ public class TranscodeMain {
 
         }
     }
+    */
 
     public static File tildeExpand(String path) {
         if (path.startsWith("~")) {
@@ -355,6 +349,7 @@ public class TranscodeMain {
         return new File(path);
     }
 
+    /*
     private static void mkv2png(String in, String out) throws IOException {
         File file = new File(in);
         if (!file.exists()) {
@@ -403,6 +398,7 @@ public class TranscodeMain {
             IOUtils.closeQuietly(inputStream);
         }
     }
+    */
 
     private static void avc2prores(String in, String out, boolean raw) throws IOException {
         SeekableByteChannel sink = null;

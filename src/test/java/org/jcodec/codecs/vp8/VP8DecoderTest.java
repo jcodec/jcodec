@@ -1,17 +1,11 @@
 package org.jcodec.codecs.vp8;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import javax.imageio.ImageIO;
 
 import org.jcodec.common.IOUtils;
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.model.Picture;
-import org.jcodec.containers.mkv.MKVMuxerTest;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 
 public class VP8DecoderTest {
 
@@ -53,7 +47,7 @@ public class VP8DecoderTest {
     @Before
     public void setUp() throws IOException {
         String path = "src/test/resources/fr.vp8";
-        bb = IOUtils.readFileToByteArray(MKVMuxerTest.tildeExpand(path));
+        bb = IOUtils.readFileToByteArray(new File(path));
         System.out.println("byte array length: " + bb.length);
         dec = new VP8Decoder();
     }
