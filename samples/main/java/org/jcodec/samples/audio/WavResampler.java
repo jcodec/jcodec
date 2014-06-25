@@ -4,19 +4,27 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.jcodec.algo.AudioFilter;
-import org.jcodec.algo.LanczosInterpolator;
-import org.jcodec.algo.SincLowPassFilter;
+import org.jcodec.audio.Audio;
+import org.jcodec.audio.AudioFilter;
+import org.jcodec.audio.ChannelMerge;
+import org.jcodec.audio.ChannelSplit;
+import org.jcodec.audio.FilterGraph;
+import org.jcodec.audio.LanczosInterpolator;
+import org.jcodec.audio.SincLowPassFilter;
 import org.jcodec.codecs.wav.WavInput;
 import org.jcodec.codecs.wav.WavOutput;
 import org.jcodec.common.AudioFormat;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Basic wave file resampler using jcodec lanczos filter
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class WavResampler {
@@ -35,24 +43,35 @@ public class WavResampler {
 
         int outRate = cmd.getIntegerFlag("out_rate", 44100);
 
-        WavInput.Adaptor in = new WavInput.Adaptor(new File(cmd.getArg(0)));
-        AudioFormat inf = in.getFormat();
+        WavInput.Source wavIn = null;
+        WavOutput.Sink wavOut = null;
+        try {
+            wavIn = new WavInput.Source(new File(cmd.getArg(0)));
+            AudioFormat inf = wavIn.getFormat();
 
-        float[] values = new float[4096];
-        float[] values1 = new float[4096];
-        float[] out = new float[(int) Math.ceil(values.length * outRate / inf.getSampleRate()) + 3];
+            wavOut = new WavOutput.Sink(new File(cmd.getArg(1)), new AudioFormat(inf, outRate));
+            AudioFilter lowPass = new SincLowPassFilter(outRate / 3, inf.getSampleRate());
 
-        WavOutput.Adaptor a = new WavOutput.Adaptor(new File(cmd.getArg(1)), new AudioFormat(inf, outRate));
-        AudioFilter interp = new LanczosInterpolator(inf.getSampleRate(), outRate);
-        AudioFilter lowPass = new SincLowPassFilter(outRate / 3, inf.getSampleRate());
+            // Two interpolations for the sake of the demo, just to make our
+            // lives a little bit harder
+            AudioFilter r0 = new LanczosInterpolator(inf.getSampleRate(), 44100);
+            AudioFilter r1 = new LanczosInterpolator(44100, outRate);
+            ChannelSplit split = new ChannelSplit(inf);
+            ChannelMerge merge = new ChannelMerge(inf);
 
-        int read = 0;
-        while ((read = in.read(values, values.length)) > 0) {
-            int produced1 = lowPass.filter(values, read, values1);
-            int produced = interp.filter(values1, produced1, out);
-            a.write(out, produced);
+//@formatter:off
+            FilterGraph cf = FilterGraph
+                    .addLevel(split)
+                    .addLevelSpan(lowPass)
+                    .addLevelSpan(r0)
+                    .addLevelSpan(r1)
+                    .addLevel(merge)
+                    .create();
+//@formatter:on
+            Audio.transfer(wavIn, cf, wavOut);
+        } finally {
+            IOUtils.closeQuietly(wavIn);
+            IOUtils.closeQuietly(wavOut);
         }
-        a.close();
     }
-
 }

@@ -1,6 +1,10 @@
-package org.jcodec.algo;
+package org.jcodec.audio;
+
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Low pass filter based on windowed sinc function
  * 
  * Simplest possible low pass filter
@@ -11,7 +15,7 @@ package org.jcodec.algo;
  * 
  * So for kernelSize = 20, and sampling rate 48000, BW = 9600 Hz ( pretty huge )
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SincLowPassFilter extends ConvolutionFilter {

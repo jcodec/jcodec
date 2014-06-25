@@ -2,20 +2,26 @@ package org.jcodec.samples.audio;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.FloatBuffer;
 import java.util.HashMap;
 
-import org.jcodec.algo.AudioFilter;
-import org.jcodec.algo.LanczosInterpolator;
+import org.jcodec.audio.Audio;
+import org.jcodec.audio.AudioFilter;
+import org.jcodec.audio.AudioSource;
+import org.jcodec.audio.FilterGraph;
+import org.jcodec.audio.LanczosInterpolator;
 import org.jcodec.codecs.wav.WavOutput;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
  * 
  * Demonstrates audio interpolation usign tone
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class ToneInterpolation {
@@ -38,25 +44,42 @@ public class ToneInterpolation {
         int toneRate = cmd.getIntegerFlag("tone_rate", 48000);
         int outRate = cmd.getIntegerFlag("out_rate", 44100);
 
-        float[] values = new float[1024];
-        float[] out = new float[(int) Math.ceil(values.length * outRate / toneRate) + 3];
+        Tone source = new Tone(toneRate, toneFreq);
+        WavOutput.Sink sink = new WavOutput.Sink(new File(cmd.getArg(0)), AudioFormat.MONO_S16_LE(outRate));
+//@formatter:off
+        AudioFilter filter = FilterGraph
+                .addLevel(new LanczosInterpolator(toneRate, outRate))
+                .create();
+//@formatter:on
+        Audio.transfer(source, filter, sink);
 
-        WavOutput.Adaptor a = new WavOutput.Adaptor(new File(cmd.getArg(0)), AudioFormat.MONO_S16_LE(outRate));
-        AudioFilter interp = new LanczosInterpolator(toneRate, outRate);
-
-        double factor = 2 * Math.PI * toneFreq / toneRate;
-
-        for (int ch = 0, sample = 0; ch < 1000; ch++) {
-
-            for (int i = 0; i < values.length; i++) {
-                values[i] = (float) Math.sin(factor * (sample++));
-            }
-
-            int produced = interp.filter(values, values.length, out);
-
-            a.write(out, produced);
-        }
-        a.close();
+        sink.close();
     }
 
+    public static class Tone implements AudioSource {
+
+        private double factor;
+        private int sample;
+        private AudioFormat format;
+
+        public Tone(int toneRate, int toneFreq) {
+            factor = 2 * Math.PI * toneFreq / toneRate;
+            format = AudioFormat.MONO_S16_LE(toneRate);
+        }
+
+        @Override
+        public AudioFormat getFormat() {
+            return format;
+        }
+
+        @Override
+        public int read(FloatBuffer buffer) throws IOException {
+            if (sample > 480000)
+                return -1;
+            int i = 0;
+            for (; buffer.hasRemaining(); i++)
+                buffer.put((float) Math.sin(factor * (sample++)));
+            return i;
+        }
+    }
 }

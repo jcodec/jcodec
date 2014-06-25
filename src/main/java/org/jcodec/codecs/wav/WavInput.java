@@ -1,9 +1,12 @@
 package org.jcodec.codecs.wav;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.channels.ReadableByteChannel;
 
+import org.jcodec.audio.AudioSource;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.AudioUtil;
 import org.jcodec.common.NIOUtils;
@@ -16,7 +19,7 @@ import org.jcodec.common.NIOUtils;
  * 
  * @author The JCodec project
  */
-public class WavInput {
+public class WavInput implements Closeable {
 
     protected WavHeader header;
     protected byte[] prevBuf;
@@ -30,7 +33,8 @@ public class WavInput {
     }
 
     public int read(ByteBuffer buf) throws IOException {
-        return NIOUtils.read(in, NIOUtils.read(buf, format.samplesToBytes(format.bytesToSamples(buf.remaining()))));
+        int maxRead = format.framesToBytes(format.bytesToFrames(buf.remaining()));
+        return NIOUtils.read(in, buf, maxRead);
     }
 
     public void close() throws IOException {
@@ -64,21 +68,22 @@ public class WavInput {
     /**
      * Supports more high-level float and integer input on top of WavInput
      */
-    public static class Adaptor {
+    public static class Source implements AudioSource, Closeable {
 
         private WavInput src;
         private AudioFormat format;
+        private int pos;
 
-        public Adaptor(WavInput src) {
+        public Source(WavInput src) {
             this.src = src;
             this.format = src.getFormat();
         }
 
-        public Adaptor(ReadableByteChannel ch) throws IOException {
+        public Source(ReadableByteChannel ch) throws IOException {
             this(new WavInput(ch));
         }
 
-        public Adaptor(java.io.File file) throws IOException {
+        public Source(java.io.File file) throws IOException {
             this(new WavInput.File(file));
         }
 
@@ -98,19 +103,20 @@ public class WavInput {
             int read = src.read(bb);
             bb.flip();
             AudioUtil.toInt(format, bb, samples);
-            return format.bytesToSamples(read);
+            return format.bytesToFrames(read);
         }
 
-        public int read(float[] samples, int max) throws IOException {
-            // Safety net
-            max = Math.min(max, samples.length);
-
-            ByteBuffer bb = ByteBuffer.allocate(format.samplesToBytes(max));
-            int read = src.read(bb);
+        public int read(FloatBuffer samples) throws IOException {
+            ByteBuffer bb = ByteBuffer.allocate(format.samplesToBytes(samples.remaining()));
+            int i = src.read(bb);
+            if (i == -1)
+                return -1;
             bb.flip();
             AudioUtil.toFloat(format, bb, samples);
-            return format.bytesToSamples(read);
-        }
+            int read = format.bytesToFrames(i);
+            pos += read;
 
+            return read;
+        }
     }
 }

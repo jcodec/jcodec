@@ -1,8 +1,11 @@
 package org.jcodec.codecs.wav;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
+import org.jcodec.audio.AudioSink;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.AudioUtil;
 import org.jcodec.common.NIOUtils;
@@ -16,7 +19,7 @@ import org.jcodec.common.SeekableByteChannel;
  * 
  * @author The JCodec project
  */
-public class WavOutput {
+public class WavOutput implements Closeable {
 
     protected SeekableByteChannel out;
     protected WavHeader header;
@@ -36,7 +39,7 @@ public class WavOutput {
 
     public void close() throws IOException {
         out.position(0);
-        new WavHeader(format, format.bytesToSamples(written)).write(out);
+        new WavHeader(format, format.bytesToFrames(written)).write(out);
         NIOUtils.closeQuietly(out);
     }
 
@@ -59,27 +62,24 @@ public class WavOutput {
     /**
      * Supports more high-level float and int array output on top of WavOutput
      */
-    public static class Adaptor {
+    public static class Sink implements AudioSink, Closeable {
         private WavOutput out;
 
-        public Adaptor(WavOutput out) {
+        public Sink(WavOutput out) {
             this.out = out;
         }
 
-        public Adaptor(java.io.File f, AudioFormat format) throws IOException {
+        public Sink(java.io.File f, AudioFormat format) throws IOException {
             this(new File(f, format));
         }
 
-        public Adaptor(SeekableByteChannel ch, AudioFormat format) throws IOException {
+        public Sink(SeekableByteChannel ch, AudioFormat format) throws IOException {
             this(new WavOutput(ch, format));
         }
 
-        public void write(float[] data, int len) throws IOException {
-            // Safety net
-            len = Math.min(data.length, len);
-
-            ByteBuffer buf = ByteBuffer.allocate(out.format.samplesToBytes(len));
-            AudioUtil.fromFloat(data, len, out.format, buf);
+        public void write(FloatBuffer data) throws IOException {
+            ByteBuffer buf = ByteBuffer.allocate(out.format.samplesToBytes(data.remaining()));
+            AudioUtil.fromFloat(data, out.format, buf);
             buf.flip();
             out.write(buf);
         }

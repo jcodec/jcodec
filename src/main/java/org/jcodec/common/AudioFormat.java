@@ -72,6 +72,38 @@ public class AudioFormat {
         return new AudioFormat(rate, 24, 1, true, false);
     }
 
+    public static AudioFormat NCH_48K_S16_BE(int n) {
+        return new AudioFormat(48000, 16, n, true, true);
+    }
+
+    public static AudioFormat NCH_48K_S16_LE(int n) {
+        return new AudioFormat(48000, 16, n, true, false);
+    }
+
+    public static AudioFormat NCH_48K_S24_BE(int n) {
+        return new AudioFormat(48000, 24, n, true, true);
+    }
+
+    public static AudioFormat NCH_48K_S24_LE(int n) {
+        return new AudioFormat(48000, 24, n, true, false);
+    }
+
+    public static AudioFormat NCH_44K_S16_BE(int n) {
+        return new AudioFormat(44100, 16, n, true, true);
+    }
+
+    public static AudioFormat NCH_44K_S16_LE(int n) {
+        return new AudioFormat(44100, 16, n, true, false);
+    }
+
+    public static AudioFormat NCH_44K_S24_BE(int n) {
+        return new AudioFormat(44100, 24, n, true, true);
+    }
+
+    public static AudioFormat NCH_44K_S24_LE(int n) {
+        return new AudioFormat(44100, 24, n, true, false);
+    }
+
     public AudioFormat(int sampleRate, int sampleSizeInBits, int channelCount, boolean signed, boolean bigEndian) {
         this.sampleRate = sampleRate;
         this.sampleSizeInBits = sampleSizeInBits;
@@ -117,11 +149,19 @@ public class AudioFormat {
         return signed;
     }
 
-    public int bytesToSamples(int bytes) {
+    public int bytesToFrames(int bytes) {
         return bytes / (channelCount * sampleSizeInBits >> 3);
     }
 
-    public int samplesToBytes(int samples) {
+    public int framesToBytes(int samples) {
         return samples * (channelCount * sampleSizeInBits >> 3);
+    }
+
+    public int bytesToSamples(int bytes) {
+        return bytes / (sampleSizeInBits >> 3);
+    }
+
+    public int samplesToBytes(int samples) {
+        return samples * (sampleSizeInBits >> 3);
     }
 }

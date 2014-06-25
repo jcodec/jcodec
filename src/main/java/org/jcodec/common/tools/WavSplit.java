@@ -65,9 +65,9 @@ public class WavSplit {
     private static void copy(AudioFormat format, ReadableByteChannel is, SeekableByteChannel[] out) throws IOException {
         ByteBuffer[] outs = new ByteBuffer[out.length];
         for (int i = 0; i < out.length; i++) {
-            outs[i] = ByteBuffer.allocate(format.samplesToBytes(4096));
+            outs[i] = ByteBuffer.allocate(format.framesToBytes(4096));
         }
-        ByteBuffer inb = ByteBuffer.allocate(format.samplesToBytes(4096) * out.length);
+        ByteBuffer inb = ByteBuffer.allocate(format.framesToBytes(4096) * out.length);
 
         while (is.read(inb) != -1) {
             inb.flip();
