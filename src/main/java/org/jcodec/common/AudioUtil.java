@@ -1,7 +1,11 @@
 package org.jcodec.common;
 
+import static org.jcodec.common.tools.MathUtil.clip;
+
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+
+import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -109,7 +113,7 @@ public class AudioUtil {
 
     private static void fromFloat24LE(ByteBuffer buf, FloatBuffer in) {
         while (buf.remaining() >= 3 && in.hasRemaining()) {
-            int val = ((int) (in.get() * f24)) & 0xffffff;
+            int val = clip((int) (in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
             buf.put((byte) val);
             buf.put((byte) (val >> 8));
             buf.put((byte) (val >> 16));
@@ -118,7 +122,7 @@ public class AudioUtil {
 
     private static void fromFloat16LE(ByteBuffer buf, FloatBuffer in) {
         while (buf.remaining() >= 2 && in.hasRemaining()) {
-            int val = ((int) (in.get() * f16)) & 0xffff;
+            int val = clip((int) (in.get() * f16), -0x8000, 0x7fff) & 0xffff;
             buf.put((byte) val);
             buf.put((byte) (val >> 8));
         }
@@ -126,7 +130,7 @@ public class AudioUtil {
 
     private static void fromFloat24BE(ByteBuffer buf, FloatBuffer in) {
         while (buf.remaining() >= 3 && in.hasRemaining()) {
-            int val = ((int) (in.get() * f24)) & 0xffffff;
+            int val = clip((int) (in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
             buf.put((byte) (val >> 16));
             buf.put((byte) (val >> 8));
             buf.put((byte) val);
@@ -135,7 +139,7 @@ public class AudioUtil {
 
     private static void fromFloat16BE(ByteBuffer buf, FloatBuffer in) {
         while (buf.remaining() >= 2 && in.hasRemaining()) {
-            int val = ((int) (in.get() * f16)) & 0xffff;
+            int val = clip((int) (in.get() * f16), -0x8000, 0x7fff) & 0xffff;
             buf.put((byte) (val >> 8));
             buf.put((byte) val);
         }
