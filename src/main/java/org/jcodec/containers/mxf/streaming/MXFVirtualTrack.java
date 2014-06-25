@@ -135,7 +135,7 @@ public class MXFVirtualTrack implements VirtualTrack {
             MXFCodecMapping codec = track.getCodec();
 
             return MP4Muxer.audioSampleEntry(sampleSize == 3 ? "in24" : "sowt", 0, sampleSize, sed.getChannelCount(),
-                    (int) sed.getAudioSamplingRate().asFloat(), codec == MXFCodecMapping.PCM_S16BE ? Endian.BIG_ENDIAN
+                    (int) sed.getAudioSamplingRate().scalar(), codec == MXFCodecMapping.PCM_S16BE ? Endian.BIG_ENDIAN
                             : Endian.LITTLE_ENDIAN);
         }
         throw new RuntimeException("Can't get sample entry");

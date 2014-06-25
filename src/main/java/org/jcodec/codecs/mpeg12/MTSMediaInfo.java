@@ -8,14 +8,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jcodec.codecs.mpeg12.MPSMediaInfo.MediaInfoDone;
 import org.jcodec.codecs.mpeg12.MPSMediaInfo.MPEGTrackMetadata;
+import org.jcodec.codecs.mpeg12.MPSMediaInfo.MediaInfoDone;
 import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mps.MTSUtils;
-import org.jcodec.containers.mps.MTSUtils.PMT;
-import org.jcodec.containers.mps.MTSUtils.PMTStream;
+import org.jcodec.containers.mps.psi.PMTSection;
+import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -30,7 +30,7 @@ public class MTSMediaInfo {
 
     public List<MPEGTrackMetadata> getMediaInfo(File f) throws IOException {
         FileChannelWrapper ch = null;
-        final List<MTSUtils.PMT> pmtSections = new ArrayList<MTSUtils.PMT>();
+        final List<PMTSection> pmtSections = new ArrayList<PMTSection>();
         final Map<Integer, MPSMediaInfo> pids = new HashMap<Integer, MPSMediaInfo>();
         final List<MPEGTrackMetadata> result = new ArrayList<MPEGTrackMetadata>();
         try {
@@ -52,7 +52,7 @@ public class MTSMediaInfo {
 
                         if (!pmtBuffer.hasRemaining()) {
                             pmtBuffer.flip();
-                            PMT pmt = MTSUtils.parsePMT(pmtBuffer);
+                            PMTSection pmt = MTSUtils.parsePMT(pmtBuffer);
                             pmtSections.add(pmt);
                             for (PMTStream stream : pmt.getStreams()) {
                                 if (!pids.containsKey(stream.getPid()))

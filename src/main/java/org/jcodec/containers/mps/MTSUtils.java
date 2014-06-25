@@ -5,16 +5,16 @@ import static org.jcodec.common.NIOUtils.getRel;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
-import org.jcodec.common.logging.Logger;
-import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
+import org.jcodec.containers.mps.psi.PATSection;
+import org.jcodec.containers.mps.psi.PMTSection;
+import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
+import org.jcodec.containers.mps.psi.PSISection;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -137,168 +137,39 @@ public class MTSUtils {
         }
     };
 
-    public static class Section {
-        private int sectionNumber;
-        private int lastSectionNumber;
-
-        public int getSectionNumber() {
-            return sectionNumber;
-        }
-
-        public int getLastSectionNumber() {
-            return lastSectionNumber;
-        }
-    }
-
-    public static class PMT extends Section {
-
-        private int pcrPid;
-        private List<Tag> tags;
-        private List<PMTStream> streams;
-
-        public PMT(int pcrPid, List<Tag> tags, List<PMTStream> streams) {
-            this.pcrPid = pcrPid;
-            this.tags = tags;
-            this.streams = streams;
-        }
-
-        public int getPcrPid() {
-            return pcrPid;
-        }
-
-        public List<Tag> getTags() {
-            return tags;
-        }
-
-        public List<PMTStream> getStreams() {
-            return streams;
-        }
-    }
-
-    public static class Tag {
-        private int tag;
-        private ByteBuffer content;
-
-        public Tag(int tag, ByteBuffer content) {
-            this.tag = tag;
-            this.content = content;
-        }
-
-        public int getTag() {
-            return tag;
-        }
-
-        public ByteBuffer getContent() {
-            return content;
-        }
-    }
-
-    public static class PMTStream {
-        private int streamTypeTag;
-        private int pid;
-        private List<MPEGMediaDescriptor> descriptors;
-        private StreamType streamType;
-
-        public PMTStream(int streamTypeTag, int pid, List<MPEGMediaDescriptor> descriptors) {
-            this.streamTypeTag = streamTypeTag;
-            this.pid = pid;
-            this.descriptors = descriptors;
-            this.streamType = StreamType.fromTag(streamTypeTag);
-        }
-
-        public int getStreamTypeTag() {
-            return streamTypeTag;
-        }
-
-        public StreamType getStreamType() {
-            return streamType;
-        }
-
-        public int getPid() {
-            return pid;
-        }
-
-        public List<MPEGMediaDescriptor> getDesctiptors() {
-            return descriptors;
-        }
-    }
-
+    /**
+     * Parses PAT ( Program Association Table )
+     * 
+     * @param data
+     * @deprecated Use org.jcodec.containers.mps.psi.PAT.parse method instead,
+     *             this method will not work correctly for streams with multiple
+     *             programs
+     * @return Pid of the first PMT found in the PAT
+     */
+    @Deprecated
     public static int parsePAT(ByteBuffer data) {
-        parseSection(data);
-        int pmtPid = -1;
-        while (data.remaining() > 4) {
-            int programNum = data.getShort() & 0xffff;
-            int w = data.getShort();
-            if (programNum != 0)
-                pmtPid = w & 0x1fff;
-        }
-
-        return pmtPid;
+        PATSection pat = PATSection.parse(data);
+        if (pat.getPrograms().size() > 0)
+            return pat.getPrograms().values()[0];
+        else
+            return -1;
     }
 
-    public static PMT parsePMT(ByteBuffer data) {
-        parseSection(data);
-
-        // PMT itself
-        int w1 = data.getShort() & 0xffff;
-        int pcrPid = w1 & 0x1fff;
-
-        int w2 = data.getShort() & 0xffff;
-        int programInfoLength = w2 & 0xfff;
-
-        List<Tag> tags = parseTags(NIOUtils.read(data, programInfoLength));
-        List<PMTStream> streams = new ArrayList<PMTStream>();
-        while (data.remaining() > 4) {
-            int streamType = data.get() & 0xff;
-            int wn = data.getShort() & 0xffff;
-            int elementaryPid = wn & 0x1fff;
-
-            Logger.info(String.format("Elementary stream: [%d,%d]", streamType, elementaryPid));
-
-            int wn1 = data.getShort() & 0xffff;
-            int esInfoLength = wn1 & 0xfff;
-            ByteBuffer read = NIOUtils.read(data, esInfoLength);
-            streams.add(new PMTStream(streamType, elementaryPid, MPSUtils.parseDescriptors(read)));
-        }
-
-        return new PMT(pcrPid, tags, streams);
+    @Deprecated
+    public static PMTSection parsePMT(ByteBuffer data) {
+        return PMTSection.parse(data);
     }
 
-    public static void parseSection(ByteBuffer data) {
-        int tableId = data.get() & 0xff;
-        int w0 = data.getShort() & 0xffff;
-        int sectionSyntaxIndicator = w0 >> 15;
-        if (((w0 >> 14) & 1) != 0)
-            throw new RuntimeException("Invalid PMT");
-        int sectionLength = w0 & 0xfff;
-
-        data.limit(data.position() + sectionLength);
-
-        int programNumber = data.getShort() & 0xffff;
-        int b0 = data.get() & 0xff;
-        int versionNumber = (b0 >> 1) & 0x1f;
-        int currentNextIndicator = b0 & 1;
-
-        int sectionNumber = data.get() & 0xff;
-        int lastSectionNumber = data.get() & 0xff;
+    @Deprecated
+    public static PSISection parseSection(ByteBuffer data) {
+        return PSISection.parse(data);
     }
 
     private static void parseEsInfo(ByteBuffer read) {
 
     }
 
-    private static List<Tag> parseTags(ByteBuffer bb) {
-        List<Tag> tags = new ArrayList<Tag>();
-        while (bb.hasRemaining()) {
-            int tag = bb.get();
-            int tagLen = bb.get();
-            Logger.info(String.format("TAG: [0x%x, 0x%x]", tag, tagLen));
-            tags.add(new Tag(tag, NIOUtils.read(bb, tagLen)));
-        }
-        return tags;
-    }
-
-    public static List<PMTStream> getPrograms(File src) throws IOException {
+    public static PMTStream[] getPrograms(File src) throws IOException {
         SeekableByteChannel ch = null;
         try {
             ch = NIOUtils.readableFileChannel(src);
@@ -308,16 +179,16 @@ public class MTSUtils {
         }
     }
 
-    public static List<PMTStream> getProgramGuids(SeekableByteChannel in) throws IOException {
+    public static PMTStream[] getProgramGuids(SeekableByteChannel in) throws IOException {
         PMTExtractor ex = new PMTExtractor();
         ex.readTsFile(in);
-        PMT pmt = ex.getPmt();
+        PMTSection pmt = ex.getPmt();
         return pmt.getStreams();
     }
 
     private static class PMTExtractor extends TSReader {
         private int pmtGuid = -1;
-        private PMT pmt;
+        private PMTSection pmt;
 
         @Override
         protected boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos) {
@@ -330,7 +201,7 @@ public class MTSUtils {
             return true;
         }
 
-        public PMT getPmt() {
+        public PMTSection getPmt() {
             return pmt;
         }
     };
@@ -373,8 +244,7 @@ public class MTSUtils {
     }
 
     public static int getVideoPid(File src) throws IOException {
-        List<PMTStream> streams = MTSUtils.getPrograms(src);
-        for (PMTStream stream : streams) {
+        for (PMTStream stream : MTSUtils.getPrograms(src)) {
             if (stream.getStreamType().isVideo())
                 return stream.getPid();
         }
@@ -383,8 +253,7 @@ public class MTSUtils {
     }
 
     public static int getAudioPid(File src) throws IOException {
-        List<PMTStream> streams = MTSUtils.getPrograms(src);
-        for (PMTStream stream : streams) {
+        for (PMTStream stream : MTSUtils.getPrograms(src)) {
             if (stream.getStreamType().isVideo())
                 return stream.getPid();
         }
@@ -394,8 +263,7 @@ public class MTSUtils {
 
     public static int[] getMediaPids(File src) throws IOException {
         IntArrayList result = new IntArrayList();
-        List<PMTStream> streams = MTSUtils.getPrograms(src);
-        for (PMTStream stream : streams) {
+        for (PMTStream stream : MTSUtils.getPrograms(src)) {
             if (stream.getStreamType().isVideo() || stream.getStreamType().isAudio())
                 result.add(stream.getPid());
         }

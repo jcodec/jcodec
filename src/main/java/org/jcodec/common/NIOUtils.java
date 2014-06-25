@@ -129,9 +129,12 @@ public class NIOUtils {
     public static int read(ReadableByteChannel channel, ByteBuffer buffer, int length) throws IOException {
         ByteBuffer fork = buffer.duplicate();
         fork.limit(min(fork.position() + length, fork.limit()));
-        while (channel.read(fork) != -1 && fork.hasRemaining())
+        int read;
+        while ((read = channel.read(fork)) != -1 && fork.hasRemaining())
             ;
-        int read = fork.position() - buffer.position();
+        if (read == -1)
+            return -1;
+
         buffer.position(fork.position());
         return read;
     }

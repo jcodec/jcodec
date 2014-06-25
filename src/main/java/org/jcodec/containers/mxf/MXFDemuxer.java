@@ -283,7 +283,7 @@ public class MXFDemuxer {
                     WaveAudioDescriptor wave = (WaveAudioDescriptor) descriptor;
                     cacheAudioFrameSizes(ch);
                     audioFrameDuration = dataLen / ((wave.getQuantizationBits() >> 3) * wave.getChannelCount());
-                    audioTimescale = (int) wave.getAudioSamplingRate().asFloat();
+                    audioTimescale = (int) wave.getAudioSamplingRate().scalar();
                 }
             }
         }
