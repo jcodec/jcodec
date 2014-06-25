@@ -6,6 +6,7 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
@@ -19,8 +20,10 @@ public class SetPAR {
         }
         final Rational newPAR = Rational.parse(args[1]);
 
-        new SimpleMP4Edit() {
-            protected void apply(MovieBox mov) {
+        new InplaceMP4Editor().modify(new File(args[0]), new MP4Edit() {
+
+            @Override
+            public void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
                 vt.setPAR(newPAR);
                 Box box = NodeBox.findFirst(vt, SampleDescriptionBox.class, "mdia", "minf", "stbl", "stsd").getBoxes()
@@ -39,6 +42,11 @@ public class SetPAR {
                     }
                 }
             }
-        }.inplace(new File(args[0]));
+
+            @Override
+            public void apply(MovieBox mov, MovieFragmentBox[] fragmentBox) {
+                throw new RuntimeException("Unsupported");
+            }
+        });
     }
 }

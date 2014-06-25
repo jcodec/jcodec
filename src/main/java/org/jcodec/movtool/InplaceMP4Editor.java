@@ -2,6 +2,7 @@ package org.jcodec.movtool;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,33 +26,41 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
+ * Parses MP4 header and allows custom MP4Editor to modify it, then tries to put
+ * the resulting header into the same place relatively to a file.
+ * 
+ * This might not work out, for example if the resulting header is bigger then
+ * the original.
+ * 
+ * Use this class to make blazing fast changes to MP4 files when you know your
+ * are not adding anything new to the header, perhaps only patching some values
+ * or removing stuff from the header.
+ * 
  * @author The JCodec project
  * 
  */
-public abstract class SimpleMP4Edit {
+public class InplaceMP4Editor {
 
     /**
-     * Operation performed on a movie header and fragments
+     * Tries to modify movie header in place according to what's implemented in
+     * the edit, the file gets pysically modified if the operation is
+     * successful. No temporary file is created.
      * 
-     * @param mov
+     * @param file
+     *            A file to be modified
+     * @param edit
+     *            An edit to be carried out on a movie header
+     * @return Whether or not edit was successful, i.e. was there enough place
+     *         to put the new header
+     * @throws IOException
+     * @throws Exception
      */
-    protected void apply(MovieBox mov, MovieFragmentBox[] fragmentBox) {
-    }
-
-    /**
-     * Operation performed on a movie header
-     * 
-     * @param mov
-     */
-    protected void apply(MovieBox mov) {
-    }
-
-    public boolean inplace(File f) throws IOException, Exception {
+    public boolean modify(File file, MP4Edit edit) throws IOException {
         SeekableByteChannel fi = null;
         try {
-            fi = NIOUtils.rwFileChannel(f);
+            fi = NIOUtils.rwFileChannel(file);
 
-            List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi);
+            List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi, edit);
             if (fragments == null)
                 return false;
 
@@ -67,17 +76,39 @@ public abstract class SimpleMP4Edit {
         }
     }
 
-    public boolean copy(File f, File dst) throws IOException {
+    /**
+     * Tries to modify movie header in place according to what's implemented in
+     * the edit. Copies modified contents to a new file.
+     * 
+     * Note: The header is still edited in-place, so the new file will have
+     * all-the-same sample offsets.
+     * 
+     * Note: Still subject to the same limitations as 'modify', i.e. the new
+     * header must 'fit' into an old place.
+     * 
+     * This method is useful when you can't write to the original file, for ex.
+     * you don't have permission.
+     * 
+     * @param src
+     *            An original file
+     * @param dst
+     *            A file to store the modified copy
+     * @param edit
+     *            An edit logic to apply
+     * @return
+     * @throws IOException
+     */
+    public boolean copy(File src, File dst, MP4Edit edit) throws IOException {
         SeekableByteChannel fi = null;
         SeekableByteChannel fo = null;
         try {
-            fi = NIOUtils.readableFileChannel(f);
+            fi = NIOUtils.readableFileChannel(src);
             fo = NIOUtils.writableFileChannel(dst);
 
-            List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi);
+            List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi, edit);
             if (fragments == null)
                 return false;
-            
+
             List<_2<Long, ByteBuffer>> fragOffsets = Tuple._2map0(fragments, new Tuple.Mapper<Atom, Long>() {
                 public Long map(Atom t) {
                     return t.getOffset();
@@ -101,7 +132,32 @@ public abstract class SimpleMP4Edit {
         }
     }
 
-    private List<Tuple._2<Atom, ByteBuffer>> doTheFix(SeekableByteChannel fi) throws IOException {
+    /**
+     * Tries to modify movie header in place according to what's implemented in
+     * the edit. Copies modified contents to a new file with the same name
+     * erasing the original file if successful.
+     * 
+     * This is a shortcut for 'copy' when you want the new file to have the same
+     * name but for some reason can not modify the original file in place. Maybe
+     * modifications of files are expensive or not supported on your filesystem.
+     * 
+     * @param src
+     *            A source and destination file
+     * @param edit
+     *            An edit to be applied
+     * @return
+     * @throws IOException
+     */
+    public boolean replace(File src, MP4Edit edit) throws IOException {
+        File tmp = new File(src.getParentFile(), "." + src.getName());
+        if (copy(src, tmp, edit)) {
+            tmp.renameTo(src);
+            return true;
+        }
+        return false;
+    }
+
+    private List<Tuple._2<Atom, ByteBuffer>> doTheFix(SeekableByteChannel fi, MP4Edit edit) throws IOException {
         Atom moovAtom = getMoov(fi);
         Assert.assertNotNull(moovAtom);
 
@@ -119,14 +175,14 @@ public abstract class SimpleMP4Edit {
                 temp.add(Tuple._2(fragBuffer, fragBox));
             }
 
-            apply(moovBox, Tuple._2_project1(temp).toArray(new MovieFragmentBox[0]));
+            edit.apply(moovBox, Tuple._2_project1(temp).toArray(new MovieFragmentBox[0]));
 
             for (Tuple._2<ByteBuffer, ? extends Box> frag : temp) {
                 if (!rewriteBox(frag.v0, frag.v1))
                     return null;
             }
         } else
-            apply(moovBox);
+            edit.apply(moovBox);
 
         if (!rewriteBox(moovBuffer, moovBox))
             return null;
@@ -140,17 +196,20 @@ public abstract class SimpleMP4Edit {
     }
 
     private boolean rewriteBox(ByteBuffer buffer, Box box) {
-        buffer.clear();
-        box.write(buffer);
-        if (buffer.hasRemaining()) {
-            if (buffer.remaining() < 8)
-                return false;
-            buffer.putInt(buffer.remaining());
-            buffer.put(new byte[] { 'f', 'r', 'e', 'e' });
+        try {
+            buffer.clear();
+            box.write(buffer);
+            if (buffer.hasRemaining()) {
+                if (buffer.remaining() < 8)
+                    return false;
+                buffer.putInt(buffer.remaining());
+                buffer.put(new byte[] { 'f', 'r', 'e', 'e' });
+            }
+            buffer.flip();
+            return true;
+        } catch (BufferOverflowException e) {
+            return false;
         }
-        buffer.flip();
-
-        return true;
     }
 
     private ByteBuffer fetchBox(SeekableByteChannel fi, Atom moov) throws IOException {
