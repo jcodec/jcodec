@@ -11,7 +11,6 @@ import org.jcodec.codecs.h264.io.model.RefPicMarking.InstrType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;

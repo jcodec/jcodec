@@ -3,7 +3,7 @@ Muxing h264 (avc) into mp4
   This sample shows how to mux coded frames from H264 ( MPEG 4 AVC ) elementary stream into mp4 (
   ISO base media format ) file.
 
-  {{{http://git.jcodec.org/?p=jcodec-samples.git;a=blob;f=src/main/java/org/jcodec/samples/mux/AVCMP4Mux.java}Source code}}
+  {{{https://github.com/jcodec/jcodec/blob/master/samples/main/java/org/jcodec/samples/mux/AVCMP4Mux.java}Source code}}
 
 * Compiling and running
 
@@ -21,69 +21,76 @@ java -cp target/jcodec-samples-<version>-uberjar.jar org.jcodec.samples.mux.AVCM
 
 * Implementation details
   
-  When muxing h264 into MP4 container frame NAL units ( IDR and non IDR ) go into packets of a video track. Stream
+  When muxing h264 into MP4 container video frames ( IDR and non IDR slices ) go into packets of a video track. Stream
   parameters ( SPSs, PPSs ) are stored in the video sample entry of the video track.
     
 * Code explanation
 
-  Create 'bare' track for video without sample entry. Sample entry will be added after the input file is scanned
-  and all SPSs/PPSs are collected. Mux NAL units into track collecting all SPSs and PPSs that we come across.
-  Create video sample entry, add 'avcC' sub-box, add video sample entry to video track. Save header of the movie.
+  First we create an MP4 muxer with one video track in it. We set FPS of the video track to 25. Function 'mux' will
+  contain the logic of reading frames from NAL unit stream and putting them into the muxer track.
+  
+  When muxing is done we tell MP4 muxer to collect all the frame data into an MP4 header and store it in the file.
 
 +--------------------
 
-CompressedTrack track = muxer.addTrackForCompressed(TrackType.VIDEO, 25);
+MP4Muxer muxer = new MP4Muxer(file);
+FramesMP4MuxerTrack track = muxer.addTrack(TrackType.VIDEO, 25);
 
-mux(track, in, spsList, ppsList);
-
-Size size = new Size((spsList.get(0).pic_width_in_mbs_minus1 + 1) << 4,
-        (spsList.get(0).pic_height_in_map_units_minus1 + 1) << 4);
-
-SampleEntry se = MP4Muxer.videoSampleEntry("avc1", size, "JCodec");
-
-se.add(new AvcCBox(spsList, ppsList));
-track.addSampleEntry(se);
+mux(track, in);
 
 muxer.writeHeader();
 
 +--------------------
 
-  This code forms correct MP4 packet from a codec h264 frame. MP4 packet should contain a total length of coded frame
-  as the first 4 bytes of the payload ( big endian 32 bit integer ).  
-
+  Inside of the 'mux' function we obtain each frame ( access unit ) from NAL unit parser like so:
+  
 +--------------------
 
-ByteArrayOutputStream baos = new ByteArrayOutputStream();
-DataOutputStream out = new DataOutputStream(baos);
-byte[] data = IOUtils.toByteArray(nextNALUnit);
-out.writeInt(data.length + 1);
-nu.write(out);
-out.write(data);
-return baos.toByteArray();
-
-+--------------------
-
-  This code runs through all the NAL units of h264 elementary stream, selects frames and addes them to
-  container. All the SPSs and PPSs specifically are collected and later will be added to 'avcC' box of video
-  sample entry. 
-
-+--------------------
-
-do {
-    nextNALUnit = in.nextNALUnit();
-    if (nextNALUnit == null)
-        continue;
-    NALUnit nu = NALUnit.read(nextNALUnit);
-    if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
-
-        track.addFrame(formPacket(nu, nextNALUnit), 1, 1, nu.type == NALUnitType.IDR_SLICE);
-    } else if (nu.type == NALUnitType.SPS) {
-        spsList.add(SeqParameterSet.read(nextNALUnit));
-    } else if (nu.type == NALUnitType.PPS) {
-        ppsList.add(PictureParameterSet.read(nextNALUnit));
-    } else {
-        nextNALUnit.skip(Integer.MAX_VALUE);
-    }
-} while (nextNALUnit != null);
+while ((frame = es.nextFrame()) != null) {
+	...
+}
 
 +-------------------
+
+  The frame is in NAL unit format, i.e. SPS/PPS and slices are separated by 0x00000001 4-byte unique
+  string ( aliasing prevention is carried out within the payload of the NAL units to ensure the string
+  is indeed unique). However inside MP4 frame packet NAL units must have the 0x00000001 string stripped out
+  and they must be prefixed with 32-bit unsigned integer specifying the length of the NAL unit in bytes.
+  The code below achieves this.  
+
++--------------------
+
+// Get frame ( access unit ) in NAL fromat
+ByteBuffer data = NIOUtils.cloneBuffer(frame.getData());
+
+// Collect all SPS and PPS that are found in the access unit to the appropriate lists and 
+// remove these data from the buffer itself
+H264Utils.wipePS(data, spsList, ppsList);
+
+// Encode frame in MP4 format, i.e. replace each 0x00000001 by the unsigned integer specifying
+// the lenth of this NAL unit in bytes
+H264Utils.encodeMOVPacket(data);
+
+// Create a packet to add to the muxer
+MP4Packet pkt = new MP4Packet(new Packet(frame, data), frame.getPts(), 0);
+
+// Add packet to the muxer track
+track.addFrame(pkt);
+
++-------------------- 
+
+  At the end all the SPS/PPS collected should go into 'avcC' box of a video sample entry, the code below achieves
+  this:
+  
++--------------------
+
+SeqParameterSet sps = spss[0];
+Size size = new Size((sps.pic_width_in_mbs_minus1 + 1) << 4, getPicHeightInMbs(sps) << 4);
+
+SampleEntry se = MP4Muxer.videoSampleEntry("avc1", size, "JCodec");
+
+avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, write(spss), write(ppss));
+se.add(avcC);
+track.addSampleEntry(se);
+
++--------------------
