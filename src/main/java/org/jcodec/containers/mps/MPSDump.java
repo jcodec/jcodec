@@ -45,82 +45,156 @@ public class MPSDump {
             }
 
             ch = NIOUtils.readableFileChannel(new File(cmd.args[0]));
-            boolean dumpMarkers = false;
             Long dumpAfterPts = cmd.getLongFlag(DUMP_FROM);
             Long stopPts = cmd.getLongFlag(STOP_AT);
 
+            MPEGVideoAnalyzer analyzer = null;
+
             PESPacket pkt = null;
+            int hdrSize = 0;
             while (ch.position() + 4 < ch.size()) {
                 ByteBuffer buffer = NIOUtils.fetchFrom(ch, 0x100000);
 
-                while (buffer.remaining() >= 8) {
-                    while (buffer.remaining() >= 8) {
-                        int marker = buffer.duplicate().getInt();
-                        if (marker >= 0x1bd && marker <= 0x1ff && marker != 0x1be)
-                            break;
-                        int mark = buffer.getInt();
-                        ByteBuffer b = MPEGUtil.gotoNextMarker(buffer);
-                        if (dumpMarkers && pkt != null && pkt.streamId >= 0xe0 && mark <= 0x1b8 & mark >= 0x100)
-                            dumpMarker(mark, b);
-
+                while (true) {
+                    ByteBuffer payload = null;
+                    if (pkt != null && pkt.length > 0) {
+                        int pesLen = pkt.length - hdrSize + 6;
+                        if(pesLen <= buffer.remaining())
+                            payload = NIOUtils.read(buffer, pesLen);
+                    } else {
+                        payload = getPesPayload(buffer);
                     }
-                    if (buffer.remaining() < 4)
+                    if(payload == null)
+                        break;
+                    if (pkt != null)
+                        System.out.println(pkt.streamId + "(" + (pkt.streamId >= 0xe0 ? "video" : "audio") + ")" + " ["
+                                + pkt.pos + ", " + (payload.remaining() + hdrSize) + "], pts: " + pkt.pts + ", dts: "
+                                + pkt.dts);
+                    if (analyzer != null && pkt != null && pkt.streamId >= 0xe0 && pkt.streamId <= 0xef) {
+                        analyzer.analyzeMpegVideoPacket(payload);
+                    }
+                    if (buffer.remaining() < 32)
                         break;
 
-                    pkt = readPESHeader(buffer, buffer.position());
-                    System.out.println(pkt.streamId + "(" + (pkt.streamId >= 0xe0 ? "video" : "audio") + ")" + " ["
-                            + pkt.pos + "], pts: " + pkt.pts + ", dts: " + pkt.dts);
+                    skipToNextPES(buffer);
+                    
+                    if (buffer.remaining() < 32)
+                        break;
+
+                    hdrSize = buffer.position();
+                    pkt = readPESHeader(buffer, ch.position() - buffer.remaining());
+                    hdrSize = buffer.position() - hdrSize;
                     if (dumpAfterPts != null && pkt.pts >= dumpAfterPts)
-                        dumpMarkers = true;
+                        analyzer = new MPEGVideoAnalyzer();
                     if (stopPts != null && pkt.pts >= stopPts)
                         return;
                 }
-                ch.position(ch.position() + buffer.position());
+                ch.position(ch.position() - buffer.remaining());
             }
         } finally {
             NIOUtils.closeQuietly(ch);
         }
     }
 
-    private static void dumpMarker(int mark, ByteBuffer b) {
-        System.out.print(String.format("marker: 0x%02x ( ", mark));
-        if (mark == 0x100)
-            dumpPictureHeader(b);
-        else if (mark <= 0x1af)
-            System.out.print(MainUtils.color(String.format("slice @0x%02x", mark - 0x101), MainUtils.ANSIColor.BLACK,
-                    true));
-        else if (mark == 0x1b3)
-            dumpSequenceHeader();
-        else if (mark == 0x1b5)
-            dumpExtension();
-        else if (mark == 0x1b8)
-            dumpGroupHeader(b);
-        else
-            System.out.print("--");
-
-        System.out.println(" )");
+    private static void skipToNextPES(ByteBuffer buffer) {
+        while (buffer.hasRemaining()) {
+            int marker = buffer.duplicate().getInt();
+            if (marker >= 0x1bd && marker <= 0x1ff && marker != 0x1be)
+                break;
+            buffer.getInt();
+            MPEGUtil.gotoNextMarker(buffer);
+        }
     }
 
-    private static void dumpExtension() {
-        System.out.print(MainUtils.color("extension", MainUtils.ANSIColor.GREEN, true));
+    private static ByteBuffer getPesPayload(ByteBuffer buffer) {
+        ByteBuffer copy = buffer.duplicate();
+        ByteBuffer result = buffer.duplicate();
+        while (copy.hasRemaining()) {
+            int marker = copy.duplicate().getInt();
+            if (marker > 0x1af) {
+                result.limit(copy.position());
+                buffer.position(copy.position());
+                return result;
+            }
+            copy.getInt();
+            MPEGUtil.gotoNextMarker(copy);
+        }
+        return null;
     }
 
-    private static void dumpGroupHeader(ByteBuffer b) {
-        GOPHeader gopHeader = GOPHeader.read(b);
-        System.out.print(MainUtils.color("group header" + " <closed:" + gopHeader.isClosedGop() + ",broken link:"
-                + gopHeader.isBrokenLink()
-                + (gopHeader.getTimeCode() != null ? (",timecode:" + gopHeader.getTimeCode().toString()) : "") + ">",
-                MainUtils.ANSIColor.MAGENTA, true));
-    }
+    private static class MPEGVideoAnalyzer {
+        private int nextStartCode = 0xffffffff;
+        private ByteBuffer bselPayload = ByteBuffer.allocate(0x100000);
+        private int bselStartCode;
+        private int bselOffset;
+        private int bselBufInd;
+        private int prevBufSize;
+        private int curBufInd;
 
-    private static void dumpSequenceHeader() {
-        System.out.print(MainUtils.color("sequence header", MainUtils.ANSIColor.BLUE, true));
-    }
+        private void analyzeMpegVideoPacket(ByteBuffer buffer) {
+            int pos = buffer.position();
+            int bufSize = buffer.remaining();
+            while (buffer.hasRemaining()) {
+                bselPayload.put((byte) (nextStartCode >> 24));
+                nextStartCode = (nextStartCode << 8) | (buffer.get() & 0xff);
+                if (nextStartCode >= 0x100 && nextStartCode <= 0x1b8) {
+                    bselPayload.flip();
+                    bselPayload.getInt();
+                    if(bselStartCode != 0) {
+                        if(bselBufInd != curBufInd)
+                            bselOffset -= prevBufSize; 
+                        dumpBSEl(bselStartCode, bselOffset, bselPayload);
+                    }
+                    bselPayload.clear();
+                    bselStartCode = nextStartCode;
+                    bselOffset = buffer.position() - 4 - pos;
+                    bselBufInd = curBufInd;
+                }
+            }
+            ++curBufInd;
+            prevBufSize = bufSize;
+        }
 
-    private static void dumpPictureHeader(ByteBuffer b) {
-        PictureHeader picHeader = PictureHeader.read(b);
-        System.out.print(MainUtils.color("picture header" + " <type:"
-                + (picHeader.picture_coding_type == 0 ? "I" : (picHeader.picture_coding_type == 1 ? "P" : "B")) + ">",
-                MainUtils.ANSIColor.BROWN, true));
+        private static void dumpBSEl(int mark, int offset, ByteBuffer b) {
+            System.out.print(String.format("marker: 0x%02x [@%d] ( ", mark, offset));
+            if (mark == 0x100)
+                dumpPictureHeader(b);
+            else if (mark <= 0x1af)
+                System.out.print(MainUtils.color(String.format("slice @0x%02x", mark - 0x101),
+                        MainUtils.ANSIColor.BLACK, true));
+            else if (mark == 0x1b3)
+                dumpSequenceHeader();
+            else if (mark == 0x1b5)
+                dumpExtension();
+            else if (mark == 0x1b8)
+                dumpGroupHeader(b);
+            else
+                System.out.print("--");
+
+            System.out.println(" )");
+        }
+
+        private static void dumpExtension() {
+            System.out.print(MainUtils.color("extension", MainUtils.ANSIColor.GREEN, true));
+        }
+
+        private static void dumpGroupHeader(ByteBuffer b) {
+            GOPHeader gopHeader = GOPHeader.read(b);
+            System.out.print(MainUtils.color("group header" + " <closed:" + gopHeader.isClosedGop() + ",broken link:"
+                    + gopHeader.isBrokenLink()
+                    + (gopHeader.getTimeCode() != null ? (",timecode:" + gopHeader.getTimeCode().toString()) : "")
+                    + ">", MainUtils.ANSIColor.MAGENTA, true));
+        }
+
+        private static void dumpSequenceHeader() {
+            System.out.print(MainUtils.color("sequence header", MainUtils.ANSIColor.BLUE, true));
+        }
+
+        private static void dumpPictureHeader(ByteBuffer b) {
+            PictureHeader picHeader = PictureHeader.read(b);
+            System.out.print(MainUtils.color("picture header" + " <type:"
+                    + (picHeader.picture_coding_type == 1 ? "I" : (picHeader.picture_coding_type == 2 ? "P" : "B"))
+                    + ">", MainUtils.ANSIColor.BROWN, true));
+        }
     }
 }
