@@ -194,7 +194,7 @@ public class MPSDump {
             PictureHeader picHeader = PictureHeader.read(b);
             System.out.print(MainUtils.color("picture header" + " <type:"
                     + (picHeader.picture_coding_type == 1 ? "I" : (picHeader.picture_coding_type == 2 ? "P" : "B"))
-                    + ">", MainUtils.ANSIColor.BROWN, true));
+                    + "temp_ref:" + picHeader.temporal_reference + ">", MainUtils.ANSIColor.BROWN, true));
         }
     }
 }
