@@ -49,6 +49,11 @@ public class TrunBox extends FullBox {
     public static String fourcc() {
         return "trun";
     }
+    
+    
+    public void setDataOffset(int dataOffset) {
+        this.dataOffset = dataOffset;
+    }
 
     public static Factory create(int sampleCount) {
         return new Factory(sampleCount);
@@ -142,7 +147,7 @@ public class TrunBox extends FullBox {
             return this;
         }
 
-        public Box create() {
+        public TrunBox create() {
             try {
                 return box;
             } finally {

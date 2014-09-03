@@ -185,4 +185,12 @@ public class TrackFragmentHeaderBox extends FullBox {
     public boolean isDefaultSampleFlagsAvailable() {
         return (flags & FLAG_DEFAILT_SAMPLE_FLAGS) != 0;
     }
+    
+    public void setTrackId(int trackId) {
+        this.trackId = trackId;
+    }
+    
+    public void setDefaultSampleFlags(int defaultSampleFlags) {
+        this.defaultSampleFlags = defaultSampleFlags;
+    }
 }
