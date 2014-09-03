@@ -21,6 +21,11 @@ public class BoxFactory {
     }
 
     public BoxFactory() {
+        mappings.put(MovieExtendsBox.fourcc(), MovieExtendsBox.class);
+        mappings.put(MovieExtendsHeaderBox.fourcc(), MovieExtendsHeaderBox.class);
+        mappings.put(SegmentIndexBox.fourcc(), SegmentIndexBox.class);
+        mappings.put(SegmentTypeBox.fourcc(), SegmentTypeBox.class);
+        mappings.put(TrackExtendsBox.fourcc(), TrackExtendsBox.class);
         mappings.put(VideoMediaHeaderBox.fourcc(), VideoMediaHeaderBox.class);
         mappings.put(FileTypeBox.fourcc(), FileTypeBox.class);
         mappings.put(MovieBox.fourcc(), MovieBox.class);
