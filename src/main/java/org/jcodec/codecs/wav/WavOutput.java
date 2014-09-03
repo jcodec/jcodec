@@ -37,6 +37,7 @@ public class WavOutput implements Closeable {
         written += out.write(samples);
     }
 
+    @Override
     public void close() throws IOException {
         out.position(0);
         new WavHeader(format, format.bytesToFrames(written)).write(out);
@@ -77,6 +78,7 @@ public class WavOutput implements Closeable {
             this(new WavOutput(ch, format));
         }
 
+        @Override
         public void write(FloatBuffer data) throws IOException {
             ByteBuffer buf = ByteBuffer.allocate(out.format.samplesToBytes(data.remaining()));
             AudioUtil.fromFloat(data, out.format, buf);
@@ -94,6 +96,7 @@ public class WavOutput implements Closeable {
             out.write(buf);
         }
 
+        @Override
         public void close() throws IOException {
             out.close();
         }

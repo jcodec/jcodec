@@ -37,6 +37,7 @@ public class WavInput implements Closeable {
         return NIOUtils.read(in, buf, maxRead);
     }
 
+    @Override
     public void close() throws IOException {
         in.close();
     }
@@ -91,6 +92,7 @@ public class WavInput implements Closeable {
             return src.getFormat();
         }
 
+        @Override
         public void close() throws IOException {
             src.close();
         }
@@ -106,6 +108,7 @@ public class WavInput implements Closeable {
             return format.bytesToFrames(read);
         }
 
+        @Override
         public int read(FloatBuffer samples) throws IOException {
             ByteBuffer bb = ByteBuffer.allocate(format.samplesToBytes(samples.remaining()));
             int i = src.read(bb);

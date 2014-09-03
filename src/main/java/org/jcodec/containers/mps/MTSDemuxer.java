@@ -90,6 +90,7 @@ public class MTSDemuxer implements MPEGDemuxer {
             return src.isOpen();
         }
 
+        @Override
         public void close() throws IOException {
             src.close();
         }
