@@ -58,8 +58,8 @@ public class ConcatTrack implements VirtualTrack {
 
     @Override
     public void close() throws IOException {
-        for (int i = 0; i < tracks.length; i++) {
-            tracks[i].close();
+        for (VirtualTrack track : tracks) {
+            track.close();
         }
     }
 }

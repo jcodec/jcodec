@@ -40,7 +40,7 @@ public class Yuv422pToRgb implements Transform {
 
     }
 
-    public static final void YUV444toRGB888(final int y, final int u, final int v, int[] data, int off) {
+    public static void YUV444toRGB888(final int y, final int u, final int v, int[] data, int off) {
         final int c = y - 16;
         final int d = u - 128;
         final int e = v - 128;

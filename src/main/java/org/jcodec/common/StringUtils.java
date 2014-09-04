@@ -92,7 +92,7 @@ public class StringUtils {
         if (match || (preserveAllTokens && lastMatch)) {
             list.add(str.substring(start, i));
         }
-        return (String[]) list.toArray(new String[list.size()]);
+        return list.toArray(new String[list.size()]);
     }
 
     private static String[] splitWorker(String str, char separatorChar, boolean preserveAllTokens) {
@@ -126,7 +126,7 @@ public class StringUtils {
         if (match || (preserveAllTokens && lastMatch)) {
             list.add(str.substring(start, i));
         }
-        return (String[]) list.toArray(new String[list.size()]);
+        return list.toArray(new String[list.size()]);
     }
 
     public static String[] split(String str) {
@@ -153,8 +153,8 @@ public class StringUtils {
         if (delimiters == null) {
             return Character.isWhitespace(ch);
         }
-        for (int i = 0, isize = delimiters.length; i < isize; i++) {
-            if (ch == delimiters[i]) {
+        for (char delimiter : delimiters) {
+            if (ch == delimiter) {
                 return true;
             }
         }
@@ -175,7 +175,7 @@ public class StringUtils {
             return str;
         }
         int strLen = str.length();
-        StringBuffer buffer = new StringBuffer(strLen);
+        StringBuilder buffer = new StringBuilder(strLen);
         boolean capitalizeNext = true;
         for (int i = 0; i < strLen; i++) {
             char ch = str.charAt(i);
@@ -219,7 +219,7 @@ public class StringUtils {
         }
 
         bufSize *= ((array[startIndex] == null ? 16 : array[startIndex].toString().length()) + 1);
-        StringBuffer buf = new StringBuffer(bufSize);
+        StringBuilder buf = new StringBuilder(bufSize);
 
         for (int i = startIndex; i < endIndex; i++) {
             if (i > startIndex) {
@@ -260,7 +260,7 @@ public class StringUtils {
         bufSize *= ((array[startIndex] == null ? 16 : array[startIndex].toString().length())
                         + separator.length());
 
-        StringBuffer buf = new StringBuffer(bufSize);
+        StringBuilder buf = new StringBuilder(bufSize);
 
         for (int i = startIndex; i < endIndex; i++) {
             if (i > startIndex) {

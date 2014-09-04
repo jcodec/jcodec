@@ -72,12 +72,12 @@ public class BlockICS extends Block {
 
     protected int parseICSInfo(BitReader in) {
         in.read1Bit();
-        windowSequence = (int) in.readNBit(2);
+        windowSequence = in.readNBit(2);
         int useKbWindow = in.read1Bit();
         num_window_groups = 1;
         group_len[0] = 1;
         if (windowSequence == WindowSequence.EIGHT_SHORT_SEQUENCE.ordinal()) {
-            int max_sfb = (int) in.readNBit(4);
+            int max_sfb = in.readNBit(4);
 
             for (int i = 0; i < 7; i++) {
                 if (in.read1Bit() != 0) {
@@ -91,7 +91,7 @@ public class BlockICS extends Block {
             swbOffset = AACTab.ff_swb_offset_128[samplingIndex];
             numWindows = 8;
         } else {
-            maxSfb = (int) in.readNBit(6);
+            maxSfb = in.readNBit(6);
             numSwb = AACTab.ff_aac_num_swb_1024[samplingIndex];
             swbOffset = AACTab.ff_swb_offset_1024[samplingIndex];
             numWindows = 1;
@@ -115,7 +115,7 @@ public class BlockICS extends Block {
 
     private void decodePrediction(BitReader in, int maxSfb) {
         if (in.read1Bit() != 0) {
-            int predictorResetGroup = (int) in.readNBit(5);
+            int predictorResetGroup = in.readNBit(5);
         }
         for (int sfb = 0; sfb < min(maxSfb, AACTab.maxSfbTab[samplingIndex]); sfb++) {
             in.read1Bit();
@@ -124,8 +124,8 @@ public class BlockICS extends Block {
 
     private void decodeLtp(BitReader in, int maxSfb) {
 
-        int lag = (int) in.readNBit(11);
-        float coef = AACTab.ltpCoefTab[(int) in.readNBit(3)];
+        int lag = in.readNBit(11);
+        float coef = AACTab.ltpCoefTab[in.readNBit(3)];
         for (int sfb = 0; sfb < min(maxSfb, MAX_LTP_LONG_SFB); sfb++)
             in.read1Bit();
     }
@@ -138,11 +138,11 @@ public class BlockICS extends Block {
             while (k < maxSfb) {
                 int sect_end = k;
                 int sect_len_incr;
-                int sect_band_type = (int) in.readNBit(4);
+                int sect_band_type = in.readNBit(4);
                 if (sect_band_type == 12) {
                     throw new RuntimeException("invalid band type");
                 }
-                while ((sect_len_incr = (int) in.readNBit(bits)) == (1 << bits) - 1)
+                while ((sect_len_incr = in.readNBit(bits)) == (1 << bits) - 1)
                     sect_end += sect_len_incr;
                 sect_end += sect_len_incr;
                 if (!in.moreData() || sect_len_incr == (1 << bits) - 1) {
@@ -161,7 +161,7 @@ public class BlockICS extends Block {
 
     enum BandType {
         ZERO_BT, BT_1, BT_2, BT_3, BT_4, FIRST_PAIR_BT, BT_6, BT_7, BT_8, BT_9, BT_10, ESC_BT, BT_12, NOISE_BT, INTENSITY_BT2, INTENSITY_BT
-    };
+    }
 
     static float[] ff_aac_pow2sf_tab = new float[428];
     private final static int POW_SF2_ZERO = 200;
@@ -256,20 +256,20 @@ public class BlockICS extends Block {
         int[] pos = new int[4];
         int[] amp = new int[4];
 
-        int numPulse = (int) in.readNBit(2) + 1;
-        int pulseSwb = (int) in.readNBit(6);
+        int numPulse = in.readNBit(2) + 1;
+        int pulseSwb = in.readNBit(6);
         if (pulseSwb >= numSwb)
             throw new RuntimeException("pulseSwb >= numSwb");
         pos[0] = swbOffset[pulseSwb];
-        pos[0] += (int) in.readNBit(5);
+        pos[0] += in.readNBit(5);
         if (pos[0] > 1023)
             throw new RuntimeException("pos[0] > 1023");
-        amp[0] = (int) in.readNBit(4);
+        amp[0] = in.readNBit(4);
         for (int i = 1; i < numPulse; i++) {
-            pos[i] = (int) in.readNBit(5) + pos[i - 1];
+            pos[i] = in.readNBit(5) + pos[i - 1];
             if (pos[i] > 1023)
                 throw new RuntimeException("pos[" + i + "] > 1023");
-            amp[i] = (int) in.readNBit(5);
+            amp[i] = in.readNBit(5);
         }
         return new Pulse(numPulse, pos, amp);
     }
@@ -300,14 +300,14 @@ public class BlockICS extends Block {
         int[][] direction = new int[numWindows][2];
         float[][][] coeff = new float[numWindows][2][1 << (5 - 2 * is8)];
         for (int w = 0; w < numWindows; w++) {
-            if ((nFilt[w] = (int) in.readNBit(2 - is8)) != 0) {
+            if ((nFilt[w] = in.readNBit(2 - is8)) != 0) {
                 int coefRes = in.read1Bit();
 
                 for (int filt = 0; filt < nFilt[w]; filt++) {
                     int tmp2_idx;
-                    length[w][filt] = (int) in.readNBit(6 - 2 * is8);
+                    length[w][filt] = in.readNBit(6 - 2 * is8);
 
-                    if ((order[w][filt] = (int) in.readNBit(5 - 2 * is8)) > tns_max_order) {
+                    if ((order[w][filt] = in.readNBit(5 - 2 * is8)) > tns_max_order) {
                         throw new RuntimeException(String.format("TNS filter order %d is greater than maximum %d.\n",
                                 order[w][filt], tns_max_order));
                     }
@@ -318,7 +318,7 @@ public class BlockICS extends Block {
                         tmp2_idx = 2 * coefCompress + coefRes;
 
                         for (int i = 0; i < order[w][filt]; i++)
-                            coeff[w][filt][i] = AACTab.tns_tmp2_map[tmp2_idx][(int) in.readNBit(coefLen)];
+                            coeff[w][filt][i] = AACTab.tns_tmp2_map[tmp2_idx][in.readNBit(coefLen)];
                     }
                 }
             }
@@ -528,7 +528,7 @@ public class BlockICS extends Block {
     }
 
     public void parse(BitReader in) {
-        globalGain = (int) in.readNBit(8);
+        globalGain = in.readNBit(8);
 
         if (!commonWindow && !scaleFlag) {
             parseICSInfo(in);

@@ -24,7 +24,7 @@ public class IDCT4x4 {
 
     public static final int CN_SHIFT = 12;
 
-    public static final int C_FIX(double x) {
+    public static int C_FIX(double x) {
         return ((int) ((x) * 1.414213562 * (1 << CN_SHIFT) + 0.5));
     }
 
@@ -53,7 +53,7 @@ public class IDCT4x4 {
 
     public static final int RN_SHIFT = 15;
 
-    public static final int R_FIX(double x) {
+    public static int R_FIX(double x) {
         return ((int) ((x) * 1.414213562 * (1 << RN_SHIFT) + 0.5));
     }
 

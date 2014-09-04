@@ -83,11 +83,11 @@ public class CoeffTransformer {
      * @param block
      * @return
      */
-    public final static void idct4x4(int[] block) {
+    public static void idct4x4(int[] block) {
         idct4x4(block, block);
     }
 
-    public static final void idct4x4(int[] block, int[] out) {
+    public static void idct4x4(int[] block, int[] out) {
         // Horisontal
         for (int i = 0; i < 16; i += 4) {
             int e0 = block[i] + block[i + 2];

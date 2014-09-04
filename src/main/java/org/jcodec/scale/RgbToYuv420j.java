@@ -61,7 +61,7 @@ public class RgbToYuv420j implements Transform {
         }
     }
 
-    public static final void rgb2yuv(int r, int g, int b, int[] Y, int offY, int[] U, int offU, int[] V, int offV) {
+    public static void rgb2yuv(int r, int g, int b, int[] Y, int offY, int[] U, int offU, int[] V, int offV) {
         int y = 66 * r + 129 * g + 25 * b;
         int u = -38 * r - 74 * g + 112 * b;
         int v = 112 * r - 94 * g - 18 * b;
@@ -74,7 +74,7 @@ public class RgbToYuv420j implements Transform {
         V[offV] += clip(v + 128);
     }
 
-    private static final int clip(int val) {
+    private static int clip(int val) {
         return val < 0 ? 0 : (val > 255 ? 255 : val);
     }
 }

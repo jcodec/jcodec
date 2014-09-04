@@ -70,6 +70,7 @@ public class FilePool implements ByteChannelPool {
             return src != null;
         }
 
+        @Override
         public void close() throws IOException {
             SeekableByteChannel ret = src;
             src = null;

@@ -16,7 +16,7 @@ import org.jcodec.common.SeekableByteChannel;
 public class BER {
     public static final byte ASN_LONG_LEN = (byte) 0x80;
 
-    public static final long decodeLength(SeekableByteChannel is) throws IOException {
+    public static long decodeLength(SeekableByteChannel is) throws IOException {
         long length = 0;
         int lengthbyte = NIOUtils.readByte(is) & 0xff;
 

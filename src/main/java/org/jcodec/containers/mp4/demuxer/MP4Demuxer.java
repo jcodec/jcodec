@@ -51,7 +51,7 @@ public class MP4Demuxer {
     }
 
     public AbstractMP4DemuxerTrack[] getTracks() {
-        return tracks.toArray(new AbstractMP4DemuxerTrack[] {});
+        return tracks.toArray(new AbstractMP4DemuxerTrack[tracks.size()]);
     }
 
     private void findMovieBox(SeekableByteChannel input) throws IOException {

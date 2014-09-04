@@ -116,7 +116,7 @@ public class NodeBox extends Box {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
         List<String> fields = new ArrayList<String>(0);
         collectModel(this.getClass(), fields);
-        ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[0]));
+        ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[fields.size()]));
         sb.append("\"boxes\": [");
         dumpBoxes(sb);
         sb.append("]");

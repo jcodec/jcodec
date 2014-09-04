@@ -1,5 +1,6 @@
 package org.jcodec.movtool.streaming;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -13,7 +14,7 @@ import org.jcodec.containers.mp4.boxes.SampleEntry;
  * @author The JCodec project
  * 
  */
-public interface VirtualTrack {
+public interface VirtualTrack extends Closeable {
 
     VirtualPacket nextPacket() throws IOException;
     
@@ -22,9 +23,7 @@ public interface VirtualTrack {
     VirtualEdit[] getEdits();
     
     int getPreferredTimescale();
-    
-    void close() throws IOException;
-    
+
     public static class VirtualEdit {
         private double in;
         private double duration;

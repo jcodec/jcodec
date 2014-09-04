@@ -135,7 +135,7 @@ public class MTSUtils {
         public boolean isAudio() {
             return audio;
         }
-    };
+    }
 
     /**
      * Parses PAT ( Program Association Table )
@@ -204,7 +204,7 @@ public class MTSUtils {
         public PMTSection getPmt() {
             return pmt;
         }
-    };
+    }
 
     public abstract static class TSReader {
         // Buffer must have an integral number of MPEG TS packets
@@ -221,7 +221,7 @@ public class MTSUtils {
                     pos += 188;
                     Assert.assertEquals(0x47, tsBuf.get() & 0xff);
                     int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
-                    int guid = (int) guidFlags & 0x1fff;
+                    int guid = guidFlags & 0x1fff;
 
                     int payloadStart = (guidFlags >> 14) & 0x1;
                     int b0 = tsBuf.get() & 0xff;

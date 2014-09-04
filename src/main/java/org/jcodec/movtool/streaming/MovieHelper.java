@@ -146,7 +146,7 @@ public class MovieHelper {
             NodeBox stbl = new NodeBox(new Header("stbl"));
             minf.add(stbl);
 
-            stbl.add(new SampleDescriptionBox(new SampleEntry[] { se }));
+            stbl.add(new SampleDescriptionBox(se));
             if (pcm) {
                 populateStblPCM(stbl, chunks, trackId, se);
             } else {
@@ -167,9 +167,9 @@ public class MovieHelper {
     }
 
     private static int chooseTimescale(PacketChunk[] chunks, int trackId) {
-        for (int ch = 0; ch < chunks.length; ch++) {
-            if (chunks[ch].getTrack() == trackId) {
-                double dur = chunks[ch].getPacket().getDuration(), min = Double.MAX_VALUE;
+        for (PacketChunk chunk : chunks) {
+            if (chunk.getTrack() == trackId) {
+                double dur = chunk.getPacket().getDuration(), min = Double.MAX_VALUE;
                 int minTs = -1;
                 for (int ts = 0; ts < timescales.length; ts++) {
                     double dd = timescales[ts] * dur;
@@ -232,9 +232,7 @@ public class MovieHelper {
         List<Entry> compositionOffsets = new ArrayList<Entry>();
         long ptsEstimate = 0;
         int lastCompositionSamples = 0, lastCompositionOffset = 0;
-        for (int chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
-            PacketChunk chunk = chunks[chunkNo];
-
+        for (PacketChunk chunk : chunks) {
             if (chunk.getTrack() == trackId) {
                 stco.add(chunk.getPos());
 
@@ -280,7 +278,7 @@ public class MovieHelper {
         stbl.add(new ChunkOffsets64Box(stco.toArray()));
         stbl.add(new SampleToChunkBox(new SampleToChunkEntry[] { new SampleToChunkEntry(1, 1, 1) }));
         stbl.add(new SampleSizesBox(stsz.toArray()));
-        stbl.add(new TimeToSampleBox(stts.toArray(new TimeToSampleEntry[0])));
+        stbl.add(new TimeToSampleBox(stts.toArray(new TimeToSampleEntry[stts.size()])));
         compositionOffsets(compositionOffsets, stbl);
     }
 
@@ -290,7 +288,7 @@ public class MovieHelper {
             for (Entry entry : compositionOffsets) {
                 entry.offset -= min;
             }
-            stbl.add(new CompositionOffsetsBox(compositionOffsets.toArray(new Entry[0])));
+            stbl.add(new CompositionOffsetsBox(compositionOffsets.toArray(new Entry[compositionOffsets.size()])));
         }
     }
 
@@ -325,16 +323,16 @@ public class MovieHelper {
             stsc.add(new SampleToChunkEntry(stscFirstChunk, stscCount, 1));
 
         stbl.add(new ChunkOffsets64Box(stco.toArray()));
-        stbl.add(new SampleToChunkBox(stsc.toArray(new SampleToChunkEntry[0])));
+        stbl.add(new SampleToChunkBox(stsc.toArray(new SampleToChunkEntry[stsc.size()])));
         stbl.add(new SampleSizesBox(ase.calcFrameSize(), totalFrames));
         stbl.add(new TimeToSampleBox(new TimeToSampleEntry[] { new TimeToSampleEntry(totalFrames, 1) }));
     }
 
     private static int getPCMTs(AudioSampleEntry se, PacketChunk[] chunks, int trackId) throws IOException {
-        for (int chunkNo = 0; chunkNo < chunks.length; chunkNo++) {
-            if (chunks[chunkNo].getTrack() == trackId) {
-                return (int) Math.round(chunks[chunkNo].getDataLen()
-                        / (se.calcFrameSize() * chunks[chunkNo].getPacket().getDuration()));
+        for (PacketChunk chunk : chunks) {
+            if (chunk.getTrack() == trackId) {
+                return (int) Math.round(chunk.getDataLen()
+                        / (se.calcFrameSize() * chunk.getPacket().getDuration()));
             }
         }
         throw new RuntimeException("Crap");

@@ -35,12 +35,12 @@ public class ChannelMerge implements AudioFilter {
         FloatBuffer out0 = out[0];
 
         int min = Integer.MAX_VALUE;
-        for (int i = 0; i < in.length; i++) {
-            if (in[i].remaining() < min)
-                min = in[i].remaining();
+        for (FloatBuffer buf : in) {
+            if (buf.remaining() < min)
+                min = buf.remaining();
         }
-        for (int i = 0; i < in.length; i++) {
-            Assert.assertEquals(in[i].remaining(), min);
+        for (FloatBuffer buf : in) {
+            Assert.assertEquals(buf.remaining(), min);
         }
 
         if (out0.remaining() < min * in.length)
@@ -48,8 +48,8 @@ public class ChannelMerge implements AudioFilter {
                     + in.length + " = " + (min * in.length) + " output samples.");
 
         for (int i = 0; i < min; i++) {
-            for (int j = 0; j < in.length; j++)
-                out0.put(in[j].get());
+            for (FloatBuffer buf : in)
+                out0.put(buf.get());
         }
     }
 

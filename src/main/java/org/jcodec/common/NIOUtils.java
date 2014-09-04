@@ -57,7 +57,7 @@ public class NIOUtils {
         return result;
     }
 
-    public static final ByteBuffer read(ByteBuffer buffer, int count) {
+    public static ByteBuffer read(ByteBuffer buffer, int count) {
         ByteBuffer slice = buffer.duplicate();
         int limit = buffer.position() + count;
         slice.limit(limit);
@@ -167,11 +167,11 @@ public class NIOUtils {
             buffer.put(val);
     }
 
-    public static final MappedByteBuffer map(String fileName) throws IOException {
+    public static MappedByteBuffer map(String fileName) throws IOException {
         return map(new File(fileName));
     }
 
-    public static final MappedByteBuffer map(File file) throws IOException {
+    public static MappedByteBuffer map(File file) throws IOException {
         FileInputStream is = new FileInputStream(file);
         MappedByteBuffer map = is.getChannel().map(MapMode.READ_ONLY, 0, file.length());
         is.close();

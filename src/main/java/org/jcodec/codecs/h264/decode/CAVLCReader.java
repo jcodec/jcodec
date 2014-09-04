@@ -69,7 +69,7 @@ public class CAVLCReader {
     }
 
     public static int readU(BitReader bits, int i, String string)  {
-        return (int) readNBit(bits, i, string);
+        return readNBit(bits, i, string);
     }
 
     public static int readTE(BitReader bits, int max)  {

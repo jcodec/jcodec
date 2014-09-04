@@ -213,13 +213,13 @@ public class MP4Muxer {
     }
 
     public PCMMP4MuxerTrack addPCMAudioTrack(AudioFormat format) {
-        return addPCMTrack((int) format.getSampleRate(), 1, (format.getSampleSizeInBits() >> 3)
+        return addPCMTrack(format.getSampleRate(), 1, (format.getSampleSizeInBits() >> 3)
                 * format.getChannels(), audioSampleEntry(format));
     }
 
     public static AudioSampleEntry audioSampleEntry(AudioFormat format) {
         return MP4Muxer.audioSampleEntry(lookupFourcc(format), 1,
-        format.getSampleSizeInBits() >> 3, format.getChannels(), (int) format.getSampleRate(),
+        format.getSampleSizeInBits() >> 3, format.getChannels(), format.getSampleRate(),
         format.isBigEndian() ? Endian.BIG_ENDIAN : Endian.LITTLE_ENDIAN);
     }
 

@@ -26,7 +26,7 @@ public abstract class FixTimestamp {
 
                 Assert.assertEquals(0x47, tsPkt[0] & 0xff);
                 int guidFlags = ((tsPkt[1] & 0xff) << 8) | (tsPkt[2] & 0xff);
-                int guid = (int) guidFlags & 0x1fff;
+                int guid = guidFlags & 0x1fff;
                 int payloadStart = (guidFlags >> 14) & 0x1;
                 if (payloadStart == 0 || guid == 0)
                     continue;

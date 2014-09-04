@@ -93,7 +93,7 @@ public class FilterGraph implements AudioFilter {
         }
 
         public FilterGraph create() {
-            return new FilterGraph(sockets.toArray(new FilterSocket[0]));
+            return new FilterGraph(sockets.toArray(new FilterSocket[sockets.size()]));
         }
     }
 

@@ -25,6 +25,7 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
         return open;
     }
 
+    @Override
     public void close() throws IOException {
         open = false;
     }

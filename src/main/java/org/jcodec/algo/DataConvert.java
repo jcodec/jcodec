@@ -54,9 +54,9 @@ public class DataConvert {
     public static byte[] to16BE(int[] ia) {
         byte[] result = new byte[ia.length << 1];
         int off = 0;
-        for (int i = 0; i < ia.length; i++) {
-            result[off++] = (byte) ((ia[i] >> 8) & 0xff);
-            result[off++] = (byte) (ia[i] & 0xff);
+        for (int i : ia) {
+            result[off++] = (byte) ((i >> 8) & 0xff);
+            result[off++] = (byte) (i & 0xff);
         }
 
         return result;
@@ -65,10 +65,10 @@ public class DataConvert {
     public static byte[] to24BE(int[] ia) {
         byte[] result = new byte[ia.length * 3];
         int off = 0;
-        for (int i = 0; i < ia.length; i++) {
-            result[off++] = (byte) ((ia[i] >> 16) & 0xff);
-            result[off++] = (byte) ((ia[i] >> 8) & 0xff);
-            result[off++] = (byte) (ia[i] & 0xff);
+        for (int i : ia) {
+            result[off++] = (byte) ((i >> 16) & 0xff);
+            result[off++] = (byte) ((i >> 8) & 0xff);
+            result[off++] = (byte) (i & 0xff);
         }
 
         return result;
@@ -77,9 +77,9 @@ public class DataConvert {
     public static byte[] to16LE(int[] ia) {
         byte[] result = new byte[ia.length << 1];
         int off = 0;
-        for (int i = 0; i < ia.length; i++) {
-            result[off++] = (byte) (ia[i] & 0xff);
-            result[off++] = (byte) ((ia[i] >> 8) & 0xff);
+        for (int i : ia) {
+            result[off++] = (byte) (i & 0xff);
+            result[off++] = (byte) ((i >> 8) & 0xff);
         }
 
         return result;
@@ -88,10 +88,10 @@ public class DataConvert {
     public static byte[] to24LE(int[] ia) {
         byte[] result = new byte[ia.length * 3];
         int off = 0;
-        for (int i = 0; i < ia.length; i++) {
-            result[off++] = (byte) (ia[i] & 0xff);
-            result[off++] = (byte) ((ia[i] >> 8) & 0xff);
-            result[off++] = (byte) ((ia[i] >> 16) & 0xff);
+        for (int i : ia) {
+            result[off++] = (byte) (i & 0xff);
+            result[off++] = (byte) ((i >> 8) & 0xff);
+            result[off++] = (byte) ((i >> 16) & 0xff);
         }
 
         return result;

@@ -43,5 +43,5 @@ public enum ObjectType {
     AOT_USAC_NOSBR, // /< N Unified Speech and Audio Coding (no SBR)
     AOT_SAOC, // /< N Spatial Audio Object Coding
     AOT_LD_SURROUND, // /< N Low Delay MPEG Surround
-    AOT_USAC;
+    AOT_USAC
 }

@@ -243,11 +243,11 @@ public class VP8Encoder implements VideoEncoder {
             putBlk(mb, chromaPred, ac[blk], 3, (blk & 1) << 2, (blk >> 1) << 2);
     }
 
-    private final int chromaPredOne(int[] pix, int x) {
+    private int chromaPredOne(int[] pix, int x) {
         return (pix[x] + pix[x + 1] + pix[x + 2] + pix[x + 3] + pix[x + 4] + pix[x + 5] + pix[x + 6] + pix[x + 7] + 4) >> 3;
     }
 
-    private final int chromaPredTwo(int[] pix1, int[] pix2, int x, int y) {
+    private int chromaPredTwo(int[] pix1, int[] pix2, int x, int y) {
         return (pix1[x] + pix1[x + 1] + pix1[x + 2] + pix1[x + 3] + pix1[x + 4] + pix1[x + 5] + pix1[x + 6]
                 + pix1[x + 7] + pix2[y] + pix2[y + 1] + pix2[y + 2] + pix2[y + 3] + pix2[y + 4] + pix2[y + 5]
                 + pix2[y + 6] + pix2[y + 7] + 8) >> 4;
@@ -337,7 +337,7 @@ public class VP8Encoder implements VideoEncoder {
         return ac;
     }
 
-    private final void takeSubtract(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff, int dc) {
+    private void takeSubtract(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff, int dc) {
         if (x + 4 < planeWidth && y + 4 < planeHeight)
             takeSubtractSafe(planeData, planeWidth, planeHeight, x, y, coeff, dc);
         else
@@ -345,7 +345,7 @@ public class VP8Encoder implements VideoEncoder {
 
     }
 
-    private final void takeSubtractSafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
+    private void takeSubtractSafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
             int dc) {
         for (int i = 0, srcOff = y * planeWidth + x, dstOff = 0; i < 4; i++, srcOff += planeWidth, dstOff += 4) {
             coeff[dstOff] = planeData[srcOff] - dc;
@@ -355,7 +355,7 @@ public class VP8Encoder implements VideoEncoder {
         }
     }
 
-    private final void takeSubtractUnsafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
+    private void takeSubtractUnsafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
             int dc) {
         int outOff = 0;
 

@@ -115,13 +115,13 @@ public class Util {
         TimeToSampleBox stts = findFirst(track, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
         int count = 0;
         TimeToSampleEntry[] tts = stts.getEntries();
-        for (int i = 0; i < tts.length; i++)
-            count += tts[i].getSampleCount();
+        for (TimeToSampleEntry tt : tts)
+            count += tt.getSampleCount();
         long[] tv = new long[count + 1];
         int k = 0;
-        for (int i = 0; i < tts.length; i++) {
-            for (int j = 0; j < tts[i].getSampleCount(); j++, k++) {
-                tv[k + 1] = tv[k] + tts[i].getSampleDuration();
+        for (TimeToSampleEntry tt : tts) {
+            for (int j = 0; j < tt.getSampleCount(); j++, k++) {
+                tv[k + 1] = tv[k] + tt.getSampleDuration();
             }
         }
         return tv;

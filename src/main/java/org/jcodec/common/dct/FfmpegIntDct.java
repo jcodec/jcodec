@@ -71,7 +71,7 @@ public class FfmpegIntDct {
     /* Pass 1: process rows. */
     /* Note results are scaled up by sqrt(8) compared to a true IDCT; */
     /* furthermore, we scale the results by 2PASS1_BITS. */
-    private final static void pass1(ShortBuffer data) {
+    private static void pass1(ShortBuffer data) {
         int z1;
         int tmp2;
         int tmp3;
@@ -117,7 +117,7 @@ public class FfmpegIntDct {
                 /* AC terms all zero */
                 if (d0 != 0) {
                     /* Compute a 32 bit value to assign. */
-                    int dcval = (int) (d0 << PASS1_BITS);
+                    int dcval = d0 << PASS1_BITS;
                     for (int i = 0; i < 8; i++) {
                         dataptr.put(i, (short) dcval);
                     }
@@ -461,7 +461,7 @@ public class FfmpegIntDct {
     /**
      * Perform the inverse DCT on one block of coefficients.
      */
-    private final static void pass2(ShortBuffer data) {
+    private static void pass2(ShortBuffer data) {
         int tmp0, tmp1, tmp2, tmp3;
         int tmp10, tmp11, tmp12, tmp13;
         int z1, z2, z3, z4, z5;
@@ -818,15 +818,15 @@ public class FfmpegIntDct {
         }
     }
 
-    private final static int DESCALE(int x, int n) {
+    private static int DESCALE(int x, int n) {
         return ((x) + (1 << ((n) - 1))) >> n;
     }
 
-    private final static short DESCALE11(int x) {
+    private static short DESCALE11(int x) {
         return (short) ((x + ONEHALF_11) >> 11);
     }
 
-    private final static short DESCALE18(int x) {
+    private static short DESCALE18(int x) {
         return (short) ((x + ONEHALF_18) >> 18);
     }
 }

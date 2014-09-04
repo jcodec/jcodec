@@ -19,14 +19,14 @@ public class SimpleIDCT10Bit {
     public static int ROW_SHIFT = 15;
     public static int COL_SHIFT = 20;
 
-    public static final void idct10(int[] buf, int off) {
+    public static void idct10(int[] buf, int off) {
         for (int i = 0; i < 8; i++)
             idctRow(buf, off + (i << 3));
         for (int i = 0; i < 8; i++)
             idctCol(buf, off + i);
     }
 
-    private static final void idctCol(int[] buf, int off) {
+    private static void idctCol(int[] buf, int off) {
         int a0, a1, a2, a3, b0, b1, b2, b3;
 
         a0 = W4 * (buf[off + 8 * 0] + ((1 << (COL_SHIFT - 1)) / W4));
@@ -87,7 +87,7 @@ public class SimpleIDCT10Bit {
         buf[off + 56] = ((a0 - b0) >> COL_SHIFT);
     }
 
-    private static final void idctRow(int[] buf, int off) {
+    private static void idctRow(int[] buf, int off) {
         int a0, a1, a2, a3, b0, b1, b2, b3;
 
         a0 = (W4 * buf[off]) + (1 << (ROW_SHIFT - 1));

@@ -194,19 +194,19 @@ public class DownmixHelper {
 
     private static float rev = 1f / 2147483647;
 
-    private static final float nextSample24BE(byte[] ba, int bi) {
+    private static float nextSample24BE(byte[] ba, int bi) {
         return rev * (((ba[bi] & 0xff) << 24) | ((ba[bi + 1] & 0xff) << 16) | ((ba[bi + 2] & 0xff) << 8));
     }
 
-    private static final float nextSample24LE(byte[] ba, int bi) {
+    private static float nextSample24LE(byte[] ba, int bi) {
         return rev * (((ba[bi] & 0xff) << 8) | ((ba[bi + 1] & 0xff) << 16) | ((ba[bi + 2] & 0xff) << 24));
     }
 
-    private static final float nextSample16BE(byte[] ba, int bi) {
+    private static float nextSample16BE(byte[] ba, int bi) {
         return rev * (((ba[bi] & 0xff) << 24) | ((ba[bi + 1] & 0xff) << 16));
     }
 
-    private static final float nextSample16LE(byte[] ba, int bi) {
+    private static float nextSample16LE(byte[] ba, int bi) {
         return rev * (((ba[bi] & 0xff) << 16) | ((ba[bi + 1] & 0xff) << 24));
     }
 }

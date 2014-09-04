@@ -200,10 +200,10 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         putEdits(trak);
         putName(trak);
 
-        stbl.add(new SampleDescriptionBox(sampleEntries.toArray(new SampleEntry[0])));
-        stbl.add(new SampleToChunkBox(samplesInChunks.toArray(new SampleToChunkEntry[0])));
+        stbl.add(new SampleDescriptionBox(sampleEntries.toArray(new SampleEntry[sampleEntries.size()])));
+        stbl.add(new SampleToChunkBox(samplesInChunks.toArray(new SampleToChunkEntry[samplesInChunks.size()])));
         stbl.add(new SampleSizesBox(sampleSizes.toArray()));
-        stbl.add(new TimeToSampleBox(sampleDurations.toArray(new TimeToSampleEntry[] {})));
+        stbl.add(new TimeToSampleBox(sampleDurations.toArray(new TimeToSampleEntry[sampleDurations.size()])));
         stbl.add(new ChunkOffsets64Box(chunkOffsets.toArray()));
         if (!allIframes && iframes.size() > 0)
             stbl.add(new SyncSamplesBox(iframes.toArray()));
@@ -234,7 +234,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
                 }
             }
 
-            stbl.add(new CompositionOffsetsBox(compositionOffsets.toArray(new Entry[0])));
+            stbl.add(new CompositionOffsetsBox(compositionOffsets.toArray(new Entry[compositionOffsets.size()])));
         }
     }
 

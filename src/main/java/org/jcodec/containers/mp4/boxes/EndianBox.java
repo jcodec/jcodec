@@ -13,7 +13,7 @@ public class EndianBox extends Box {
 
     public static enum Endian {
         LITTLE_ENDIAN, BIG_ENDIAN
-    };
+    }
 
     private Endian endian;
 

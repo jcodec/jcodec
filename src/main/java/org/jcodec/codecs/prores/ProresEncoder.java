@@ -64,7 +64,7 @@ public class ProresEncoder {
             this.firstQp = firstQp;
             this.lastQp = lastQp;
         }
-    };
+    }
 
     protected Profile profile;
     private int[][] scaledLuma;
@@ -86,7 +86,7 @@ public class ProresEncoder {
         return result;
     }
 
-    public static final void writeCodeword(BitWriter writer, Codebook codebook, int val) {
+    public static void writeCodeword(BitWriter writer, Codebook codebook, int val) {
         int firstExp = ((codebook.switchBits + 1) << codebook.riceOrder);
         if (val >= firstExp) {
             val -= firstExp;
@@ -111,30 +111,30 @@ public class ProresEncoder {
         }
     }
 
-    private static final int qScale(int[] qMat, int ind, int val) {
+    private static int qScale(int[] qMat, int ind, int val) {
         return val / qMat[ind];
     }
 
-    private static final int toGolumb(int val) {
+    private static int toGolumb(int val) {
         return (val << 1) ^ (val >> 31);
     }
 
-    private static final int toGolumb(int val, int sign) {
+    private static int toGolumb(int val, int sign) {
         if (val == 0)
             return 0;
         return (val << 1) + sign;
     }
 
-    private static final int diffSign(int val, int sign) {
+    private static int diffSign(int val, int sign) {
         return (val >> 31) ^ sign;
     }
 
-    public static final int getLevel(int val) {
+    public static int getLevel(int val) {
         int sign = (val >> 31);
         return (val ^ sign) - sign;
     }
 
-    static final void writeDCCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice) {
+    static void writeDCCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice) {
         int prevDc = qScale(qMat, 0, in[0] - 16384);
         writeCodeword(bits, firstDCCodebook, toGolumb(prevDc));
 
@@ -150,7 +150,7 @@ public class ProresEncoder {
         }
     }
 
-    static final void writeACCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice, int[] scan, int maxCoeff) {
+    static void writeACCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice, int[] scan, int maxCoeff) {
         int prevRun = 4;
         int prevLevel = 2;
 
@@ -174,7 +174,7 @@ public class ProresEncoder {
         }
     }
 
-    static final void encodeOnePlane(BitWriter bits, int blocksPerSlice, int[] qMat, int[] scan, int[] in) {
+    static void encodeOnePlane(BitWriter bits, int blocksPerSlice, int[] qMat, int[] scan, int[] in) {
 
         writeDCCoeffs(bits, qMat, in, blocksPerSlice);
         writeACCoeffs(bits, qMat, in, blocksPerSlice, scan, 64);
@@ -227,11 +227,11 @@ public class ProresEncoder {
         return qp;
     }
 
-    static final int bits(int[] sizes) {
+    static int bits(int[] sizes) {
         return sizes[0] + sizes[1] + sizes[2] << 3;
     }
 
-    protected static final void encodeSliceData(ByteBuffer out, int[] qmatLuma, int[] qmatChroma, int[] scan,
+    protected static void encodeSliceData(ByteBuffer out, int[] qmatLuma, int[] qmatChroma, int[] scan,
             int sliceMbCount, Picture striped, int qp, int[] sizes) {
 
         sizes[0] = onePlane(out, sliceMbCount << 2, qmatLuma, scan, striped.getPlaneData(0));
@@ -239,7 +239,7 @@ public class ProresEncoder {
         sizes[2] = onePlane(out, sliceMbCount << 1, qmatChroma, scan, striped.getPlaneData(2));
     }
 
-    static final int onePlane(ByteBuffer out, int blocksPerSlice, int[] qmatLuma, int[] scan, int[] data) {
+    static int onePlane(ByteBuffer out, int blocksPerSlice, int[] qmatLuma, int[] scan, int[] data) {
         int rem = out.position();
         BitWriter bits = new BitWriter(out);
         encodeOnePlane(bits, blocksPerSlice, qmatLuma, scan, data);
@@ -383,7 +383,7 @@ public class ProresEncoder {
         writeQMat(outp, header.qMatChroma);
     }
 
-    static final void writeQMat(ByteBuffer out, int[] qmat) {
+    static void writeQMat(ByteBuffer out, int[] qmat) {
         for (int i = 0; i < 64; i++)
             out.put((byte) qmat[i]);
     }

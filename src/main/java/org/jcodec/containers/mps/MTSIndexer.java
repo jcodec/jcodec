@@ -46,7 +46,7 @@ public class MTSIndexer {
                     pos += 188;
                     Assert.assertEquals(0x47, tsBuf.get() & 0xff);
                     int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
-                    int guid = (int) guidFlags & 0x1fff;
+                    int guid = guidFlags & 0x1fff;
 
                     for (int i = 0; i < indexers.length; i++) {
 

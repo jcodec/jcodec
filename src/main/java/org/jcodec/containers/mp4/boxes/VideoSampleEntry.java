@@ -96,8 +96,8 @@ public class VideoSampleEntry extends SampleEntry {
         out.putInt(temporalQual);
         out.putInt(spacialQual);
 
-        out.putShort((short) width);
-        out.putShort((short) height);
+        out.putShort(width);
+        out.putShort(height);
 
         out.putInt((int) (hRes * 65536));
         out.putInt((int) (vRes * 65536));

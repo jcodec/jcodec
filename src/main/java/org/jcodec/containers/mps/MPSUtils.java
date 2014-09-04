@@ -31,15 +31,15 @@ public class MPSUtils {
     public static final int PRIVATE_1 = 0x1bd;
     public static final int PRIVATE_2 = 0x1bf;
 
-    public static final boolean mediaStream(int streamId) {
+    public static boolean mediaStream(int streamId) {
         return (streamId >= $(AUDIO_MIN) && streamId <= $(VIDEO_MAX) || streamId == $(PRIVATE_1) || streamId == $(PRIVATE_2));
     }
 
-    public static final boolean mediaMarker(int marker) {
+    public static boolean mediaMarker(int marker) {
         return (marker >= AUDIO_MIN && marker <= VIDEO_MAX || marker == PRIVATE_1 || marker == PRIVATE_2);
     }
 
-    public static final boolean psMarker(int marker) {
+    public static boolean psMarker(int marker) {
         return marker >= PRIVATE_1 && marker <= VIDEO_MAX;
     }
 
@@ -47,7 +47,7 @@ public class MPSUtils {
         return marker >= VIDEO_MIN && marker <= VIDEO_MAX;
     }
 
-    public static final boolean videoStream(int streamId) {
+    public static boolean videoStream(int streamId) {
         return streamId >= $(VIDEO_MIN) && streamId <= $(VIDEO_MAX);
     }
 

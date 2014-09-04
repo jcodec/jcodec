@@ -75,13 +75,13 @@ public class DummyBitstreamReader {
         return val;
     }
 
-    private final void advance1() throws IOException {
+    private void advance1() throws IOException {
         curByte = nextByte;
         nextByte = secondByte;
         secondByte = is.read();
     }
 
-    private final void advance() throws IOException {
+    private void advance() throws IOException {
         advance1();
         nBit = 0;
         // println("\n-> " + curByte);

@@ -169,7 +169,7 @@ public class VP8Decoder {
 					}
 
 		// Read the mb_no_coeff_skip flag
-		int macroBlockNoCoeffSkip = (int) headerDecoder.decodeBit();
+		int macroBlockNoCoeffSkip = headerDecoder.decodeBit();
 		// System.out.println("macroBlockNoCoeffSkip: " +
 		// macroBlockNoCoeffSkip);
 		Assert.assertEquals(1, macroBlockNoCoeffSkip);

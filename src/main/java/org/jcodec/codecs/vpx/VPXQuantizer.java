@@ -59,7 +59,7 @@ public class VPXQuantizer {
         quantize(coeffs, factDC, invFactAC);
     }
 
-    private final void quantize(int[] coeffs, int factDC, int factAC) {
+    private void quantize(int[] coeffs, int factDC, int factAC) {
         coeffs[0] /= factDC;
         for (int i = 1; i < 16; i++)
             coeffs[i] = coeffs[i] / factAC;
@@ -83,7 +83,7 @@ public class VPXQuantizer {
         dequantize(coeffs, factDC, factAC);
     }
 
-    private final void dequantize(int[] coeffs, int factDC, int factAC) {
+    private void dequantize(int[] coeffs, int factDC, int factAC) {
         coeffs[0] *= factDC;
         for (int i = 1; i < 16; i++)
             coeffs[i] *= factAC;

@@ -161,7 +161,7 @@ public class Strip {
         }
         if (cnt > 0)
             tts.add(new TimeToSampleEntry(cnt, curTts));
-        return new TimeToSampleBox(tts.toArray(new TimeToSampleEntry[0]));
+        return new TimeToSampleBox(tts.toArray(new TimeToSampleEntry[tts.size()]));
     }
 
     public SampleSizesBox getSampleSizes(List<Chunk> chunks) {
@@ -206,7 +206,7 @@ public class Strip {
         }
         if (cnt > 0)
             result.add(new SampleToChunkEntry(first, curSz, curEntry));
-        return new SampleToChunkBox(result.toArray(new SampleToChunkEntry[0]));
+        return new SampleToChunkBox(result.toArray(new SampleToChunkEntry[result.size()]));
     }
 
     private boolean intersects(long a, long b, long c, long d) {

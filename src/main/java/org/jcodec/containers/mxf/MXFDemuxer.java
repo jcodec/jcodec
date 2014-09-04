@@ -117,7 +117,7 @@ public class MXFDemuxer {
             }
         }
 
-        return rt.toArray(new MXFDemuxerTrack[0]);
+        return rt.toArray(new MXFDemuxerTrack[rt.size()]);
     }
 
     public static FileDescriptor findDescriptor(List<FileDescriptor> descriptors, int trackId) {
@@ -244,7 +244,7 @@ public class MXFDemuxer {
             if (track.isAudio())
                 audio.add(track);
         }
-        return audio.toArray(new MXFDemuxerTrack[0]);
+        return audio.toArray(new MXFDemuxerTrack[audio.size()]);
     }
 
     public class MXFDemuxerTrack implements SeekableDemuxerTrack {

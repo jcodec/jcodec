@@ -42,8 +42,8 @@ public class ChannelSplit implements AudioFilter {
         }
 
         while (in0.remaining() >= format.getChannels()) {
-            for (int i = 0; i < out.length; i++) {
-                out[i].put(in0.get());
+            for (FloatBuffer buf : out) {
+                buf.put(in0.get());
             }
         }
     }

@@ -50,16 +50,16 @@ public class CleanApertureExtension extends Box {
 
     @Override
     public void doWrite(ByteBuffer out) {
-        out.putInt((int) this.apertureWidthNumerator);
-        out.putInt((int) this.apertureWidthDenominator);
+        out.putInt(this.apertureWidthNumerator);
+        out.putInt(this.apertureWidthDenominator);
 
-        out.putInt((int) this.apertureHeightNumerator);
-        out.putInt((int) this.apertureHeightDenominator);
+        out.putInt(this.apertureHeightNumerator);
+        out.putInt(this.apertureHeightDenominator);
 
-        out.putInt((int) this.horizOffsetNumerator);
-        out.putInt((int) this.horizOffsetDenominator);
+        out.putInt(this.horizOffsetNumerator);
+        out.putInt(this.horizOffsetDenominator);
 
-        out.putInt((int) this.vertOffsetNumerator);
-        out.putInt((int) this.vertOffsetDenominator);
+        out.putInt(this.vertOffsetNumerator);
+        out.putInt(this.vertOffsetDenominator);
     }
 }

@@ -183,8 +183,8 @@ public class H264Decoder implements VideoDecoder {
                 sRefs[i] = null;
             }
             int[] keys = lRefs.keys();
-            for (int i = 0; i < keys.length; i++) {
-                releaseRef(lRefs.get(keys[i]));
+            for (int key : keys) {
+                releaseRef(lRefs.get(key));
             }
             lRefs.clear();
         }
@@ -223,12 +223,12 @@ public class H264Decoder implements VideoDecoder {
             if (refPicMarking == null) {
                 int maxShort = Math.max(1, activeSps.num_ref_frames - lRefs.size());
                 int min = Integer.MAX_VALUE, num = 0, minFn = 0;
-                for (int i = 0; i < sRefs.length; i++) {
-                    if (sRefs[i] != null) {
-                        int fnWrap = unwrap(firstSliceHeader.frame_num, sRefs[i].getFrameNo(), maxFrames);
+                for (Frame frame : sRefs) {
+                    if (frame != null) {
+                        int fnWrap = unwrap(firstSliceHeader.frame_num, frame.getFrameNo(), maxFrames);
                         if (fnWrap < min) {
                             min = fnWrap;
-                            minFn = sRefs[i].getFrameNo();
+                            minFn = frame.getFrameNo();
                         }
                         num++;
                     }
@@ -261,10 +261,10 @@ public class H264Decoder implements VideoDecoder {
 
         private void truncateLongTerm(int maxLongNo) {
             int[] keys = lRefs.keys();
-            for (int i = 0; i < keys.length; i++) {
-                if (keys[i] > maxLongNo) {
-                    releaseRef(lRefs.get(keys[i]));
-                    lRefs.remove(keys[i]);
+            for (int key : keys) {
+                if (key > maxLongNo) {
+                    releaseRef(lRefs.get(key));
+                    lRefs.remove(key);
                 }
             }
         }

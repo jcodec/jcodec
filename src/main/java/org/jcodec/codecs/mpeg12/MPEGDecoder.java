@@ -486,7 +486,7 @@ public class MPEGDecoder implements VideoDecoder {
         }
     }
 
-    private static final int[][] buildPred(int[][] predFwd, int[][] predBack) {
+    private static int[][] buildPred(int[][] predFwd, int[][] predBack) {
         if (predFwd != null && predBack != null) {
             avgPred(predFwd, predBack);
             return predFwd;
@@ -498,7 +498,7 @@ public class MPEGDecoder implements VideoDecoder {
             throw new RuntimeException("Omited pred in B-frames --> invalid");
     }
 
-    private static final void avgPred(int[][] predFwd, int[][] predBack) {
+    private static void avgPred(int[][] predFwd, int[][] predBack) {
         for (int i = 0; i < predFwd.length; i++) {
             for (int j = 0; j < predFwd[i].length; j += 4) {
                 predFwd[i][j] = (predFwd[i][j] + predBack[i][j] + 1) >> 1;
@@ -544,7 +544,7 @@ public class MPEGDecoder implements VideoDecoder {
                 chromaStride << vertStep, mbPix[2], chromaMBW, chromaMBH);
     }
 
-    private final void putSub(int[] big, int off, int stride, int[] block, int mbW, int mbH) {
+    private void putSub(int[] big, int off, int stride, int[] block, int mbW, int mbH) {
         int blOff = 0;
 
         if (mbW == 3) {
@@ -586,15 +586,15 @@ public class MPEGDecoder implements VideoDecoder {
         }
     }
 
-    protected static final int clip(int val) {
+    protected static int clip(int val) {
         return val < 0 ? 0 : (val > 255 ? 255 : val);
     }
 
-    protected static final int quantInter(int level, int quant) {
+    protected static int quantInter(int level, int quant) {
         return (((level << 1) + 1) * quant) >> 5;
     }
 
-    protected static final int quantInterSigned(int level, int quant) {
+    protected static int quantInterSigned(int level, int quant) {
         return level >= 0 ? quantInter(level, quant) : -quantInter(-level, quant);
     }
 
@@ -659,23 +659,23 @@ public class MPEGDecoder implements VideoDecoder {
         SparseIDCT.finish(block);
     }
 
-    public static final int twosSigned(BitReader bits, int size) {
+    public static int twosSigned(BitReader bits, int size) {
         int shift = 32 - size;
         return (bits.readNBit(size) << shift) >> shift;
     }
 
-    public static final int mpegSigned(BitReader bits, int size) {
+    public static int mpegSigned(BitReader bits, int size) {
         int val = bits.readNBit(size);
         int sign = (val >>> (size - 1)) ^ 0x1;
         return val + sign - (sign << size);
     }
 
-    public static final int toSigned(int val, int s) {
+    public static int toSigned(int val, int s) {
         int sign = (s << 31) >> 31;
         return (val ^ sign) - sign;
     }
 
-    private final int readCbPattern(BitReader bits) {
+    private int readCbPattern(BitReader bits) {
         int cbp420 = vlcCBP.readVLC(bits);
         if (sh.sequenceExtension == null || sh.sequenceExtension.chroma_format == SequenceExtension.Chroma420)
             return cbp420;

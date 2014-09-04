@@ -13,7 +13,7 @@ public class RefPicMarking {
 
     public static enum InstrType {
         REMOVE_SHORT, REMOVE_LONG, CONVERT_INTO_LONG, TRUNK_LONG, CLEAR, MARK_LONG
-    };
+    }
 
     public static class Instruction {
         private InstrType type;
