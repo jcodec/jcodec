@@ -21,7 +21,7 @@ public class BlockReader {
         if (type == TYPE_END)
             return null;
 
-        int id = (int) bits.readNBit(4);
+        int id = bits.readNBit(4);
 
         return null;
     }

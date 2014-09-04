@@ -15,7 +15,7 @@ public class DemuxerTrackMeta {
 
     public static enum Type {
         VIDEO, AUDIO, OTHER
-    };
+    }
 
     private Type type;
     private int[] seekFrames;

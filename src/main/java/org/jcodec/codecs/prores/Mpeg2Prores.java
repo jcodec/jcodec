@@ -112,7 +112,7 @@ public class Mpeg2Prores extends MPEGDecoder {
         return new Picture[] { field1, field2 };
     }
 
-    private final void splitY(int mbWidth, int mbHeight, int[] y, int[] y1, int[] y2, int[] dctTypes) {
+    private void splitY(int mbWidth, int mbHeight, int[] y, int[] y1, int[] y2, int[] dctTypes) {
         int dstOff = 0, srcOff = 0, i = 0;
         for (int mbY = 0; mbY < mbHeight; mbY++) {
             for (int mbX = 0; mbX < mbWidth; mbX++, i++, dstOff += 256, srcOff += 256) {
@@ -139,12 +139,12 @@ public class Mpeg2Prores extends MPEGDecoder {
         }
     }
 
-    private final void copyShift(int[] src, int srcOff, int[] dst, int dstOff, int len) {
+    private void copyShift(int[] src, int srcOff, int[] dst, int dstOff, int len) {
         for (int i = 0; i < len; i++)
             src[srcOff++] = dst[dstOff++] << 2;
     }
 
-    private final void splitCbCr(int mbWidth, int mbHeight, int[] y, int[] y1, int[] y2, int[] dctTypes) {
+    private void splitCbCr(int mbWidth, int mbHeight, int[] y, int[] y1, int[] y2, int[] dctTypes) {
         int dstOff = 0, srcOff = 0, i = 0;
         for (int mbY = 0; mbY < mbHeight; mbY++) {
             for (int mbX = 0; mbX < mbWidth; mbX++, i++, dstOff += 128, srcOff += 128) {
@@ -253,7 +253,7 @@ public class Mpeg2Prores extends MPEGDecoder {
         copyLine(tmp, y, 48, off2 + 40);
     }
 
-    private final void copyLine(int[] from, int[] to, int offFrom, int offTo) {
+    private void copyLine(int[] from, int[] to, int offFrom, int offTo) {
         for (int i = 0; i < 8; i++)
             to[offTo++] = from[offFrom++];
     }

@@ -47,16 +47,16 @@ public class ArrayUtil {
         shiftRight(array, 0, to);
     }
 
-    public static final void swap(int[] arr, int ind1, int ind2) {
+    public static void swap(int[] arr, int ind1, int ind2) {
         int tmp = arr[ind1];
         arr[ind1] = arr[ind2];
         arr[ind2] = tmp;
     }
 
-    public static final int sum(int[] array) {
+    public static int sum(int[] array) {
         int result = 0;
-        for (int i = 0; i < array.length; i++) {
-            result += array[i];
+        for (int i : array) {
+            result += i;
         }
         return result;
     }
@@ -115,21 +115,21 @@ public class ArrayUtil {
         if (array == null) {
             return null;
         }
-        return (int[]) array.clone();
+        return array.clone();
     }
 
     public static long[] clone(long[] array) {
         if (array == null) {
             return null;
         }
-        return (long[]) array.clone();
+        return array.clone();
     }
 
     public static Object[] clone(Object[] array) {
         if (array == null) {
             return null;
         }
-        return (Object[]) array.clone();
+        return array.clone();
     }
 
     public static byte[] toByteArray(int[] val) {

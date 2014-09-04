@@ -65,7 +65,7 @@ public class SampleSizesBox extends FullBox {
     @Override
     public void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.putInt((int) defaultSize);
+        out.putInt(defaultSize);
 
         if (defaultSize == 0) {
             out.putInt(sizes.length);
@@ -73,7 +73,7 @@ public class SampleSizesBox extends FullBox {
                 out.putInt((int) size);
             }
         } else {
-            out.putInt((int)count);
+            out.putInt(count);
         }
     }
 }

@@ -68,7 +68,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     public Picture decodeFrame(Packet packet, int[][] data) {
         updateState(packet);
 
-        Picture pic = ((H264Decoder) decoder).decodeFrame(H264Utils.splitMOVPacket(packet.getData(), avcCBox), data);
+        Picture pic = decoder.decodeFrame(H264Utils.splitMOVPacket(packet.getData(), avcCBox), data);
         PixelAspectExt pasp = Box.findFirst(ses[curENo], PixelAspectExt.class, "pasp");
 
         if (pasp != null) {
@@ -84,8 +84,8 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
             curENo = eNo;
             avcCBox = H264Utils.parseAVCC((VideoSampleEntry) ses[curENo]);
             decoder = new H264Decoder();
-            ((H264Decoder) decoder).addSps(avcCBox.getSpsList());
-            ((H264Decoder) decoder).addPps(avcCBox.getPpsList());
+            decoder.addSps(avcCBox.getSpsList());
+            decoder.addPps(avcCBox.getPpsList());
         }
     }
 

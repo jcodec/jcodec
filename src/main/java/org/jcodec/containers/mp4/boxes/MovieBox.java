@@ -168,7 +168,7 @@ public class MovieBox extends NodeBox {
         Rational par = videoTrack.getPAR();
 
         return applyMatrix(videoTrack,
-                new Size((int) ((vs.getWidth() * par.getNum()) / par.getDen()), (int) vs.getHeight()));
+                new Size((vs.getWidth() * par.getNum()) / par.getDen(), vs.getHeight()));
     }
 
     private Size applyMatrix(TrakBox videoTrack, Size size) {
@@ -194,7 +194,7 @@ public class MovieBox extends NodeBox {
 
         VideoSampleEntry vs = (VideoSampleEntry) box;
 
-        return new Size((int) vs.getWidth(), (int) vs.getHeight());
+        return new Size(vs.getWidth(), vs.getHeight());
     }
     
     protected void getModelFields(List<String> model) {

@@ -48,7 +48,7 @@ public class StereoDownmixTrack implements VirtualTrack {
             AudioFormat format = ase.getFormat();
             if (rate != -1 && rate != format.getFrameRate())
                 throw new IllegalArgumentException("Can not downmix tracks of different rate.");
-            rate = (int) format.getFrameRate();
+            rate = format.getFrameRate();
             sampleEntries[i] = ase;
             sources[i] = new PCMFlatternTrack(tracks[i], FRAMES_IN_OUT_PACKET);
             solo[i] = new boolean[format.getChannels()];

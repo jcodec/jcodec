@@ -39,7 +39,7 @@ public class SparseIDCT {
      * @param block
      * @param dc
      */
-    public static final void start(int[] block, int dc) {
+    public static void start(int[] block, int dc) {
         dc <<= DC_SHIFT;
         for (int i = 0; i < 64; i += 4) {
             block[i + 0] = dc;
@@ -70,7 +70,7 @@ public class SparseIDCT {
      * 
      * @param block
      */
-    public static final void finish(int block[]) {
+    public static void finish(int block[]) {
         for (int i = 0; i < 64; i += 4) {
             block[i] = div(block[i]);
             block[i + 1] = div(block[i + 1]);
@@ -79,7 +79,7 @@ public class SparseIDCT {
         }
     }
 
-    private final static int div(int x) {
+    private static int div(int x) {
         int m = x >> 31;
         int n = x >>> 31;
         return ((((x ^ m) + n) >> PRECISION) ^ m) + n;

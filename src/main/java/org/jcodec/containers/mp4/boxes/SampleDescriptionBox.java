@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -130,9 +131,7 @@ public class SampleDescriptionBox extends NodeBox {
     
     public SampleDescriptionBox(SampleEntry...entries) {
         this();
-        for (SampleEntry e : entries) {
-            boxes.add(e);
-        }
+        Collections.addAll(boxes, entries);
     }
 
     public void parse(ByteBuffer input) {

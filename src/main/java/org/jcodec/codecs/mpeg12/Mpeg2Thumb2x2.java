@@ -153,7 +153,7 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
                 chromaStride << vertStep, mbPix[2], chromaMBW, chromaMBH);
     }
 
-    private final void putSub(int[] big, int off, int stride, int[] block, int mbW, int mbH) {
+    private void putSub(int[] big, int off, int stride, int[] block, int mbW, int mbH) {
         int blOff = 0;
 
         if (mbW == 1) {

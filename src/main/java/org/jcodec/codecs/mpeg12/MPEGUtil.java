@@ -21,7 +21,7 @@ public class MPEGUtil {
      * @param buf
      * @return
      */
-    public static final ByteBuffer gotoNextMarker(ByteBuffer buf) {
+    public static ByteBuffer gotoNextMarker(ByteBuffer buf) {
         return gotoMarker(buf, 0, 0x100, 0x1ff);
     }
 
@@ -34,7 +34,7 @@ public class MPEGUtil {
      * @param buf
      * @return
      */
-    public static final ByteBuffer gotoMarker(ByteBuffer buf, int n, int mmin, int mmax) {
+    public static ByteBuffer gotoMarker(ByteBuffer buf, int n, int mmin, int mmax) {
         if (!buf.hasRemaining())
             return null;
 
@@ -66,7 +66,7 @@ public class MPEGUtil {
      * @param buf
      * @return
      */
-    public static final ByteBuffer nextSegment(ByteBuffer buf) {
+    public static ByteBuffer nextSegment(ByteBuffer buf) {
         gotoMarker(buf, 0, 0x100, 0x1ff);
         return gotoMarker(buf, 1, 0x100, 0x1ff);
     }

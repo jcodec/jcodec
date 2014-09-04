@@ -59,7 +59,7 @@ public class Yuv420jToRgb implements Transform {
     private static final int SCALEBITS = 10;
     private static final int ONE_HALF = (1 << (SCALEBITS - 1));
 
-    private final static int FIX(double x) {
+    private static int FIX(double x) {
         return ((int) ((x) * (1 << SCALEBITS) + 0.5));
     }
 
@@ -68,7 +68,7 @@ public class Yuv420jToRgb implements Transform {
     private static final int _FIX_0_34414 = -FIX(0.34414);
     private static final int FIX_1_402 = FIX(1.40200);
 
-    public final static void YUVJtoRGB(int y, int cb, int cr, int[] data, int off) {
+    public static void YUVJtoRGB(int y, int cb, int cr, int[] data, int off) {
         y = y << SCALEBITS;
         cb = cb - 128;
         cr = cr - 128;

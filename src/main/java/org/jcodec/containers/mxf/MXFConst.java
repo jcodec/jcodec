@@ -126,7 +126,7 @@ public class MXFConst {
         public Codec getCodec() {
             return codec;
         }
-    };
+    }
 
     public static Map<UL, Class<? extends MXFMetadata>> klMetadataMapping = new HashMap<UL, Class<? extends MXFMetadata>>();
 

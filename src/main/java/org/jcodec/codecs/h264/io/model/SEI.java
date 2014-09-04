@@ -50,7 +50,7 @@ public class SEI {
                 messages.add(msg);
         } while (msg != null);
 
-        return new SEI((SEIMessage[]) messages.toArray(new SEIMessage[] {}));
+        return new SEI(messages.toArray(new SEIMessage[messages.size()]));
     }
 
     private static SEIMessage sei_message(ByteBuffer is) {

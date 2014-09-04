@@ -26,15 +26,15 @@ public class MainUtils {
         }
 
         public Long getLongFlag(String flagName, Long defaultValue) {
-            return flags.containsKey(flagName) ? new Long(flags.get(flagName)) : defaultValue;
+            return flags.containsKey(flagName) ? Long.valueOf(flags.get(flagName)) : defaultValue;
         }
 
         public Integer getIntegerFlag(String flagName, Integer defaultValue) {
-            return flags.containsKey(flagName) ? new Integer(flags.get(flagName)) : defaultValue;
+            return flags.containsKey(flagName) ? Integer.valueOf(flags.get(flagName)) : defaultValue;
         }
 
         public Boolean getBooleanFlag(String flagName, Boolean defaultValue) {
-            return flags.containsKey(flagName) ? new Boolean(flags.get(flagName)) : defaultValue;
+            return flags.containsKey(flagName) ? Boolean.valueOf(flags.get(flagName)) : defaultValue;
         }
 
         public Double getDoubleFlag(String flagName, Long defaultValue) {

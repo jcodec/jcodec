@@ -89,5 +89,5 @@ public class BlockCCE extends Block {
 
     enum CouplingPoint {
         BEFORE_TNS, BETWEEN_TNS_AND_IMDCT, UNDEF, AFTER_IMDCT,
-    };
+    }
 }

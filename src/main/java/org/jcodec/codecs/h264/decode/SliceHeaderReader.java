@@ -182,7 +182,7 @@ public class SliceHeaderReader {
                     if (instr != null)
                         mmops.add(instr);
                 } while (memory_management_control_operation != 0);
-                sh.refPicMarkingNonIDR = new RefPicMarking(mmops.toArray(new Instruction[] {}));
+                sh.refPicMarkingNonIDR = new RefPicMarking(mmops.toArray(new Instruction[mmops.size()]));
             }
         }
     }

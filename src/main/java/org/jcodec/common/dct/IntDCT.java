@@ -51,8 +51,8 @@ public class IntDCT extends DCT {
             int tmp2 = z1 + MULTIPLY(z3, -FIX_1_847759065);
             int tmp3 = z1 + MULTIPLY(z2, FIX_0_765366865);
 
-            int tmp0 = ((int) wsptr.get(0) + (int) wsptr.get(4)) << CONST_BITS;
-            int tmp1 = ((int) wsptr.get(0) - (int) wsptr.get(4)) << CONST_BITS;
+            int tmp0 = (wsptr.get(0) + wsptr.get(4)) << CONST_BITS;
+            int tmp1 = (wsptr.get(0) - wsptr.get(4)) << CONST_BITS;
 
             int tmp10 = tmp0 + tmp3;
             int tmp13 = tmp0 - tmp3;
@@ -64,10 +64,10 @@ public class IntDCT extends DCT {
              * transpose is its inverse. i0..i3 are y7,y5,y3,y1 respectively.
              */
 
-            tmp0 = (int) wsptr.get(7);
-            tmp1 = (int) wsptr.get(5);
-            tmp2 = (int) wsptr.get(3);
-            tmp3 = (int) wsptr.get(1);
+            tmp0 = wsptr.get(7);
+            tmp1 = wsptr.get(5);
+            tmp2 = wsptr.get(3);
+            tmp3 = wsptr.get(1);
 
             z1 = tmp0 + tmp3;
             z2 = tmp1 + tmp2;
@@ -273,7 +273,7 @@ public class IntDCT extends DCT {
         return x >> shft;
     }
 
-    private static final int MULTIPLY(int i, int j) {
+    private static int MULTIPLY(int i, int j) {
         return i * j;
     }
 
@@ -293,7 +293,7 @@ public class IntDCT extends DCT {
     private static final int CONST_BITS = 13;
     private static final int ONE_HALF = (1 << (CONST_BITS - 1));
 
-    private final static int FIX(double x) {
+    private static int FIX(double x) {
         return ((int) ((x) * (1 << CONST_BITS) + 0.5));
     }
 

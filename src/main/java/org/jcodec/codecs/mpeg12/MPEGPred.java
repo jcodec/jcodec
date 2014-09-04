@@ -296,11 +296,11 @@ public class MPEGPred {
         mvPred[1][0][1] = mvPred[0][0][1] = vect1Y;
     }
 
-    private final int dpYField(int vect1y, int dmY, int topField) {
+    private int dpYField(int vect1y, int dmY, int topField) {
         return ((vect1y + (vect1y > 0 ? 1 : 0)) >> 1) + (1 - (topField << 1)) + dmY;
     }
 
-    private final int dpXField(int vect1x, int dmX, int topField) {
+    private int dpXField(int vect1x, int dmX, int topField) {
         return ((vect1x + (vect1x > 0 ? 1 : 0)) >> 1) + dmX;
     }
 
@@ -400,7 +400,7 @@ public class MPEGPred {
         mvPred[1][backward][1] = mvPred[0][backward][1];
     }
 
-    private final int mvectDecode(BitReader bits, int fcode, int pred) {
+    private int mvectDecode(BitReader bits, int fcode, int pred) {
         int code = vlcMotionCode.readVLC(bits);
         if (code == 0) {
             return pred;
@@ -425,7 +425,7 @@ public class MPEGPred {
         return sign_extend(val, 5 + shift);
     }
 
-    private final int sign_extend(int val, int bits) {
+    private int sign_extend(int val, int bits) {
         int shift = 32 - bits;
         return (val << shift) >> shift;
     }

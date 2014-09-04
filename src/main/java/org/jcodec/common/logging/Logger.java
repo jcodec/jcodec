@@ -16,7 +16,7 @@ public class Logger {
 
     public static enum Level {
         DEBUG, INFO, WARN, ERROR
-    };
+    }
 
     public static class Message {
         private Level level;

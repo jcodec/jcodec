@@ -12,7 +12,7 @@ public class FilterUtil {
      *  Clamp, then convert signed number back to pixel value. 
      */
     private static int clipPlus128(int v) {
-        return (int) (clipSigned(v) + 128);
+        return (clipSigned(v) + 128);
     }
         
     public static class Segment {
@@ -235,12 +235,12 @@ public class FilterUtil {
     
     
     private static int clipSigned(int v) {
-         return (int) (v < -128 ? -128 : (v > 127 ? 127 : v));
+         return v < -128 ? -128 : (v > 127 ? 127 : v);
     }
 
     /* Convert pixel value (0 <= v <= 255) to an 8-bit signed number. */
     private static int minus128(int v) {
-        return (int) (v - 128);
+        return v - 128;
     }
 
     public static void loopFilterUV(Macroblock[][] mbs, int sharpnessLevel, boolean keyFrame) {

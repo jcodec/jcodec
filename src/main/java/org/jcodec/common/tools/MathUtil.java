@@ -108,11 +108,11 @@ public class MathUtil {
         return new RationalLarge(num / gcd, den / gcd);
     }
 
-    public static final int clip(int val, int from, int to) {
+    public static int clip(int val, int from, int to) {
         return val < from ? from : (val > to ? to : val);
     }
 
-    public static final int clip(int val, int max) {
+    public static int clip(int val, int max) {
         return val < max ? val : max;
     }
 
@@ -121,7 +121,7 @@ public class MathUtil {
         return 0;
     }
 
-    public static final int reverse(int b) {
+    public static int reverse(int b) {
         return reverseTab[b & 0xff];
     }
 
@@ -136,22 +136,22 @@ public class MathUtil {
         return n;
     }
 
-    public static final int abs(int val) {
+    public static int abs(int val) {
         int sign = (val >> 31);
         return (val ^ sign) - sign;
     }
 
-    public static final int golomb(int signedLevel) {
+    public static int golomb(int signedLevel) {
         if (signedLevel == 0)
             return 0;
         return (abs(signedLevel) << 1) - (~signedLevel >>> 31);
     }
 
-    public static final int toSigned(int val, int sign) {
+    public static int toSigned(int val, int sign) {
         return (val ^ sign) - sign;
     }
 
-    public static final int sign(int val) {
+    public static int sign(int val) {
         return -(val >> 31);
     }
 

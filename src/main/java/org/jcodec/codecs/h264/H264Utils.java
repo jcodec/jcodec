@@ -46,7 +46,7 @@ public class H264Utils {
         return gotoNALUnit(buf);
     }
 
-    public static final void skipToNALUnit(ByteBuffer buf) {
+    public static void skipToNALUnit(ByteBuffer buf) {
 
         if (!buf.hasRemaining())
             return;
@@ -73,7 +73,7 @@ public class H264Utils {
      * @param buf
      * @return
      */
-    public static final ByteBuffer gotoNALUnit(ByteBuffer buf) {
+    public static ByteBuffer gotoNALUnit(ByteBuffer buf) {
 
         if (!buf.hasRemaining())
             return null;
@@ -95,7 +95,7 @@ public class H264Utils {
         return result;
     }
 
-    public static final void unescapeNAL(ByteBuffer _buf) {
+    public static void unescapeNAL(ByteBuffer _buf) {
         if (_buf.remaining() < 2)
             return;
         ByteBuffer in = _buf.duplicate();
@@ -114,7 +114,7 @@ public class H264Utils {
         _buf.limit(out.position());
     }
 
-    public static final void escapeNAL(ByteBuffer src) {
+    public static void escapeNAL(ByteBuffer src) {
         int[] loc = searchEscapeLocations(src);
 
         int old = src.limit();
@@ -147,7 +147,7 @@ public class H264Utils {
         return array;
     }
 
-    public static final void escapeNAL(ByteBuffer src, ByteBuffer dst) {
+    public static void escapeNAL(ByteBuffer src, ByteBuffer dst) {
         byte p1 = src.get(), p2 = src.get();
         dst.put(p1);
         dst.put(p2);
@@ -323,7 +323,7 @@ public class H264Utils {
         initPPS.write(bb2);
         bb1.flip();
         bb2.flip();
-        return createMOVSampleEntry(Arrays.asList(new ByteBuffer[] { bb1 }), Arrays.asList(new ByteBuffer[] { bb2 }));
+        return createMOVSampleEntry(Arrays.asList(bb1), Arrays.asList(bb2));
     }
 
     public static boolean idrSlice(ByteBuffer _data) {

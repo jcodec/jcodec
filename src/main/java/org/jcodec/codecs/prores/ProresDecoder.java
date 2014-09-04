@@ -61,7 +61,7 @@ public class ProresDecoder implements VideoDecoder {
 
     static final int[] mask = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, -1 };
 
-    public static final int nZeros(int check16Bit) {
+    public static int nZeros(int check16Bit) {
         int low = table[check16Bit & 0xff];
         check16Bit >>= 8;
         int high = table[check16Bit];
@@ -69,7 +69,7 @@ public class ProresDecoder implements VideoDecoder {
         return high + (mask[high] & low);
     }
 
-    public static final int readCodeword(BitReader reader, Codebook codebook) {
+    public static int readCodeword(BitReader reader, Codebook codebook) {
         int q = nZeros(reader.check16Bits());
         reader.skipFast(q + 1);
 
@@ -84,15 +84,15 @@ public class ProresDecoder implements VideoDecoder {
             return q;
     }
 
-    public static final int golumbToSigned(int val) {
+    public static int golumbToSigned(int val) {
         return (val >> 1) ^ golumbSign(val);
     }
 
-    public static final int golumbSign(int val) {
+    public static int golumbSign(int val) {
         return -(val & 1);
     }
 
-    public static final void readDCCoeffs(BitReader bits, int[] qMat, int[] out, int blocksPerSlice, int blkSize) {
+    public static void readDCCoeffs(BitReader bits, int[] qMat, int[] out, int blocksPerSlice, int blkSize) {
         int c = readCodeword(bits, firstDCCodebook);
         if (c < 0) {
             return;
@@ -119,7 +119,7 @@ public class ProresDecoder implements VideoDecoder {
         }
     }
 
-    protected static final void readACCoeffs(BitReader bits, int[] qMat, int[] out, int blocksPerSlice, int[] scan,
+    protected static void readACCoeffs(BitReader bits, int[] qMat, int[] out, int blocksPerSlice, int[] scan,
             int max, int log2blkSize) {
         int run = 4;
         int level = 2;
@@ -150,7 +150,7 @@ public class ProresDecoder implements VideoDecoder {
         }
     }
 
-    private static final int qScale(int[] qMat, int ind, int val) {
+    private static int qScale(int[] qMat, int ind, int val) {
         return ((val * qMat[ind]) >> 2);
     }
 
@@ -299,7 +299,7 @@ public class ProresDecoder implements VideoDecoder {
                 qMatChroma, chromaType);
     }
 
-    static final String readSig(ByteBuffer inp) {
+    static String readSig(ByteBuffer inp) {
         byte[] sig = new byte[4];
         inp.get(sig);
         return new String(sig);
@@ -367,7 +367,7 @@ public class ProresDecoder implements VideoDecoder {
         putSlice(result, lumaStride, mbX, mbY, y, u, v, pictureType == 0 ? 0 : 1, pictureType == 2 ? 1 : 0, chromaType);
     }
 
-    public static final int[] scaleMat(int[] qMatLuma, int qScale) {
+    public static int[] scaleMat(int[] qMatLuma, int qScale) {
         int[] res = new int[qMatLuma.length];
         for (int i = 0; i < qMatLuma.length; i++)
             res[i] = qMatLuma[i] * qScale;
@@ -375,11 +375,11 @@ public class ProresDecoder implements VideoDecoder {
         return res;
     }
 
-    static final BitReader bitstream(ByteBuffer data, int dataSize) {
+    static BitReader bitstream(ByteBuffer data, int dataSize) {
         return new BitReader(NIOUtils.read(data, dataSize));
     }
 
-    static final int clip(int val, int min, int max) {
+    static int clip(int val, int min, int max) {
         return val < min ? min : (val > max ? max : val);
     }
 
@@ -429,11 +429,11 @@ public class ProresDecoder implements VideoDecoder {
         }
     }
 
-    static final boolean hasQMatChroma(int flags2) {
+    static boolean hasQMatChroma(int flags2) {
         return (flags2 & 1) != 0;
     }
 
-    static final void readQMat(ByteBuffer inp, int[] qMatLuma, int[] scan) {
+    static void readQMat(ByteBuffer inp, int[] qMatLuma, int[] scan) {
         byte[] b = new byte[64];
         inp.get(b);
         for (int i = 0; i < 64; i++) {
@@ -441,7 +441,7 @@ public class ProresDecoder implements VideoDecoder {
         }
     }
 
-    static final boolean hasQMatLuma(int flags2) {
+    static boolean hasQMatLuma(int flags2) {
         return (flags2 & 2) != 0;
     }
 

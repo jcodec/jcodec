@@ -341,11 +341,11 @@ public class H264Encoder implements VideoEncoder {
         return ac;
     }
 
-    private final int chromaPredOne(int[] pix, int x) {
+    private int chromaPredOne(int[] pix, int x) {
         return (pix[x] + pix[x + 1] + pix[x + 2] + pix[x + 3] + 2) >> 2;
     }
 
-    private final int chromaPredTwo(int[] pix1, int[] pix2, int x, int y) {
+    private int chromaPredTwo(int[] pix1, int[] pix2, int x, int y) {
         return (pix1[x] + pix1[x + 1] + pix1[x + 2] + pix1[x + 3] + pix2[y] + pix2[y + 1] + pix2[y + 2] + pix2[y + 3] + 4) >> 3;
     }
 
@@ -418,7 +418,7 @@ public class H264Encoder implements VideoEncoder {
         return ac;
     }
 
-    private final void takeSubtract(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff, int dc) {
+    private void takeSubtract(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff, int dc) {
         if (x + 4 < planeWidth && y + 4 < planeHeight)
             takeSubtractSafe(planeData, planeWidth, planeHeight, x, y, coeff, dc);
         else
@@ -426,7 +426,7 @@ public class H264Encoder implements VideoEncoder {
 
     }
 
-    private final void takeSubtractSafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
+    private void takeSubtractSafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
             int dc) {
         for (int i = 0, srcOff = y * planeWidth + x, dstOff = 0; i < 4; i++, srcOff += planeWidth, dstOff += 4) {
             coeff[dstOff] = planeData[srcOff] - dc;
@@ -436,7 +436,7 @@ public class H264Encoder implements VideoEncoder {
         }
     }
 
-    private final void takeSubtractUnsafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
+    private void takeSubtractUnsafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
             int dc) {
         int outOff = 0;
 

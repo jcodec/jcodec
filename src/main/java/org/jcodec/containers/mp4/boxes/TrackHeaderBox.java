@@ -122,7 +122,7 @@ public class TrackHeaderBox extends FullBox {
         out.putInt(0);
         out.putInt(0);
 
-        out.putShort((short) layer);
+        out.putShort(layer);
         out.putShort((short) altGroup);
 
         writeVolume(out);

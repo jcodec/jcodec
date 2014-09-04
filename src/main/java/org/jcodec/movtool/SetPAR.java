@@ -30,8 +30,8 @@ public class SetPAR {
                         .get(0);
                 if (box != null && (box instanceof VideoSampleEntry)) {
                     VideoSampleEntry vs = (VideoSampleEntry) box;
-                    int codedWidth = (int) vs.getWidth();
-                    int codedHeight = (int) vs.getHeight();
+                    int codedWidth = vs.getWidth();
+                    int codedHeight = vs.getHeight();
                     int displayWidth = codedWidth * newPAR.getNum() / newPAR.getDen();
 
                     vt.getTrackHeader().setWidth(displayWidth);

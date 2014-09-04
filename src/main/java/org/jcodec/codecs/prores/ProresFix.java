@@ -34,7 +34,7 @@ import org.jcodec.common.io.BitWriter;
  */
 public class ProresFix {
 
-    static final void readDCCoeffs(BitReader bits, int[] out, int blocksPerSlice) {
+    static void readDCCoeffs(BitReader bits, int[] out, int blocksPerSlice) {
         out[0] = readCodeword(bits, firstDCCodebook);
         if (out[0] < 0) {
             throw new RuntimeException("First DC coeff damaged");
@@ -51,7 +51,7 @@ public class ProresFix {
         }
     }
 
-    static final void readACCoeffs(BitReader bits, int[] out, int blocksPerSlice, int[] scan) {
+    static void readACCoeffs(BitReader bits, int[] out, int blocksPerSlice, int[] scan) {
         int run = 4;
         int level = 2;
 
@@ -77,7 +77,7 @@ public class ProresFix {
         }
     }
 
-    static final void writeDCCoeffs(BitWriter bits, int[] in, int blocksPerSlice) {
+    static void writeDCCoeffs(BitWriter bits, int[] in, int blocksPerSlice) {
         writeCodeword(bits, firstDCCodebook, in[0]);
 
         int code = 5, idx = 64;
@@ -87,7 +87,7 @@ public class ProresFix {
         }
     }
 
-    static final void writeACCoeffs(BitWriter bits, int[] in, int blocksPerSlice, int[] scan) {
+    static void writeACCoeffs(BitWriter bits, int[] in, int blocksPerSlice, int[] scan) {
         int prevRun = 4;
         int prevLevel = 2;
 

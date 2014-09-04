@@ -28,14 +28,14 @@ public class BlockPCE extends Block {
 
         in.readNBit(2); // object_type
 
-        int samplingIndex = (int) in.readNBit(4);
+        int samplingIndex = in.readNBit(4);
 
-        int num_front = (int) in.readNBit(4);
-        int num_side = (int) in.readNBit(4);
-        int num_back = (int) in.readNBit(4);
-        int num_lfe = (int) in.readNBit(2);
-        int num_assoc_data = (int) in.readNBit(3);
-        int num_cc = (int) in.readNBit(4);
+        int num_front = in.readNBit(4);
+        int num_side = in.readNBit(4);
+        int num_back = in.readNBit(4);
+        int num_lfe = in.readNBit(2);
+        int num_assoc_data = in.readNBit(3);
+        int num_cc = in.readNBit(4);
 
         if (in.read1Bit() != 0)
             in.readNBit(4); // mono_mixdown_tag
@@ -69,7 +69,7 @@ public class BlockPCE extends Block {
         in.align();
 
         /* comment field, first byte is length */
-        int comment_len = (int) in.readNBit(8) * 8;
+        int comment_len = in.readNBit(8) * 8;
         // if (!in.moreData(comment_len)) {
         // throw new RuntimeException("Overread");
         // }
@@ -100,7 +100,7 @@ public class BlockPCE extends Block {
                 break;
             }
             layout_map[offset].syn_ele = syn_ele;
-            layout_map[offset].someInt = (int) in.readNBit(4);
+            layout_map[offset].someInt = in.readNBit(4);
             layout_map[offset].position = type;
             offset++;
         }

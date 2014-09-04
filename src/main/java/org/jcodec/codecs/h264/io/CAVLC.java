@@ -143,7 +143,7 @@ public class CAVLC {
         }
     }
 
-    private final int unsigned(int signed) {
+    private int unsigned(int signed) {
         int sign = signed >>> 31;
         int s = signed >> 31;
 
@@ -289,15 +289,15 @@ public class CAVLC {
         return i < 0 ? -i : i;
     }
 
-    public static final int coeffToken(int totalCoeff, int trailingOnes) {
+    public static int coeffToken(int totalCoeff, int trailingOnes) {
         return (totalCoeff << 4) | trailingOnes;
     }
 
-    public static final int totalCoeff(int coeffToken) {
+    public static int totalCoeff(int coeffToken) {
         return coeffToken >> 4;
     }
 
-    public static final int trailingOnes(int coeffToken) {
+    public static int trailingOnes(int coeffToken) {
         return coeffToken & 0xf;
     }
 

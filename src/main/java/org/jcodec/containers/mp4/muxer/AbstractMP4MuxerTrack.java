@@ -102,8 +102,8 @@ public abstract class AbstractMP4MuxerTrack {
             VideoSampleEntry vse = (VideoSampleEntry) sampleEntries.get(0);
             PixelAspectExt paspBox = Box.findFirst(vse, PixelAspectExt.class, PixelAspectExt.fourcc());
             Rational pasp = paspBox != null ? paspBox.getRational() : new Rational(1, 1);
-            width = (int) (pasp.getNum() * vse.getWidth()) / pasp.getDen();
-            height = (int) vse.getHeight();
+            width = (pasp.getNum() * vse.getWidth()) / pasp.getDen();
+            height = vse.getHeight();
         }
         return new Size(width, height);
     }

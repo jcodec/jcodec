@@ -22,9 +22,9 @@ public class FilterSocket {
         totalInputs = 0;
         totalOutputs = 0;
 
-        for (int i = 0; i < filters.length; i++) {
-            totalInputs += filters[i].getNInputs();
-            totalOutputs += filters[i].getNOutputs();
+        for (AudioFilter audioFilter : filters) {
+            totalInputs += audioFilter.getNInputs();
+            totalOutputs += audioFilter.getNOutputs();
         }
 
         buffers = new FloatBuffer[totalInputs];

@@ -33,7 +33,7 @@ public class Yuv420pToYuv422p implements Transform {
                 src.getHeight() >> 1, dst.getHeight(), shiftUp, shiftDown);
     }
 
-    private static final void copy(int[] src, int[] dest, int offX, int offY, int stepX, int stepY, int strideSrc,
+    private static void copy(int[] src, int[] dest, int offX, int offY, int stepX, int stepY, int strideSrc,
             int strideDest, int heightSrc, int heightDst, int upShift, int downShift) {
         int offD = offX + offY * strideDest, srcOff = 0;
         for (int i = 0; i < heightSrc; i++) {

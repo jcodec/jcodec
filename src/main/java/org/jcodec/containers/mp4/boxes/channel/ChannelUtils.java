@@ -146,6 +146,6 @@ public class ChannelUtils {
             if ((label.bitmapVal & channelBitmap) != 0)
                 result.add(label);
         }
-        return result.toArray(new Label[0]);
+        return result.toArray(new Label[result.size()]);
     }
 }

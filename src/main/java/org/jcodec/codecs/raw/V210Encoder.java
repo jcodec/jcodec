@@ -73,7 +73,7 @@ public class V210Encoder {
         return out;
     }
 
-    static final int clip(int val) {
+    static int clip(int val) {
         return MathUtil.clip(val, 8, 1019);
     }
 }

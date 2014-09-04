@@ -125,8 +125,8 @@ public class MXFVirtualTrack implements VirtualTrack {
                     ped.getDisplayWidth(), ped.getDisplayHeight()), "JCodec");
             Rational ar = ped.getAspectRatio();
             se.add(new PixelAspectExt(
-                    new Rational((int) ((1000 * ar.getNum() * ped.getDisplayHeight()) / (ar.getDen() * ped
-                            .getDisplayWidth())), 1000)));
+                    new Rational((1000 * ar.getNum() * ped.getDisplayHeight()) / (ar.getDen() * ped
+                            .getDisplayWidth()), 1000)));
 
             return se;
         } else if (track.isAudio()) {

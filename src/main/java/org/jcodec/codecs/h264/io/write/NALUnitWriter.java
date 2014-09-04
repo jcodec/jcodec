@@ -49,7 +49,7 @@ public class NALUnitWriter {
 
             prev2 = prev1;
             prev1 = b;
-            emprev.put((byte) b);
+            emprev.put(b);
         }
     }
 }

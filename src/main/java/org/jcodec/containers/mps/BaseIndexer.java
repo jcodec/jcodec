@@ -83,8 +83,8 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
             bb.putInt(0);
             int[] array = sizes.toArray();
             bb.putInt(array.length);
-            for (int i = 0; i < array.length; i++)
-                bb.putInt(array[i]);
+            for (int val : array)
+                bb.putInt(val);
             bb.putInt(0); // key frames table
 
             super.serializePts(bb);
@@ -136,8 +136,8 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
             bb.putInt(siSize);
             int[] array = sizes.toArray();
             bb.putInt(array.length + 1);
-            for (int i = 0; i < array.length; i++)
-                bb.putInt(array[i]);
+            for (int val : array)
+                bb.putInt(val);
             bb.putInt((int) (position - prevFrame));
             bb.putInt(keyFrames.size());
             for (int i = 0; i < keyFrames.size(); i++)

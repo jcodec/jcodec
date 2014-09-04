@@ -102,9 +102,9 @@ public class AudioSampleEntry extends SampleEntry {
             channelCount = (short) input.getInt();
             input.getInt(); /* always 0x7F000000 */
             sampleSize = (short) input.getInt();
-            lpcmFlags = (int) input.getInt();
-            bytesPerFrame = (int) input.getInt();
-            samplesPerPkt = (int) input.getInt();
+            lpcmFlags = input.getInt();
+            bytesPerFrame = input.getInt();
+            samplesPerPkt = input.getInt();
         }
         parseExtensions(input);
     }

@@ -75,7 +75,7 @@ public class WavHeader {
                 if ((channelLayout & (1 << i)) != 0)
                     labels.add(mapping[i]);
             }
-            return labels.toArray(new ChannelLabel[0]);
+            return labels.toArray(new ChannelLabel[labels.size()]);
         }
     }
 
@@ -267,7 +267,7 @@ public class WavHeader {
     }
 
     public static WavHeader multiChannelWav(List<File> wavs) throws IOException {
-        return multiChannelWav(wavs.toArray(new File[0]));
+        return multiChannelWav(wavs.toArray(new File[wavs.size()]));
     }
 
     public static WavHeader multiChannelWav(File... wavs) throws IOException {
@@ -289,7 +289,7 @@ public class WavHeader {
         FmtChunk fmt = wavs[0].fmt;
         int bitsPerSample = fmt.bitsPerSample;
         int bytesPerSample = bitsPerSample / 8;
-        int sampleRate = (int) fmt.sampleRate;
+        int sampleRate = fmt.sampleRate;
         w.fmt.bitsPerSample = (short) bitsPerSample;
         w.fmt.blockAlign = (short) (wavs.length * bytesPerSample);
         w.fmt.byteRate = wavs.length * bytesPerSample * sampleRate;
@@ -336,12 +336,12 @@ public class WavHeader {
         FmtChunk fmt = new FmtChunk();
         int bitsPerSample = af.getSampleSizeInBits();
         int bytesPerSample = bitsPerSample / 8;
-        int sampleRate = (int) af.getSampleRate();
+        int sampleRate = af.getSampleRate();
         w.fmt.bitsPerSample = (short) bitsPerSample;
-        w.fmt.blockAlign = (short) (af.getFrameSize());
-        w.fmt.byteRate = (int) af.getFrameRate() * af.getFrameSize();
+        w.fmt.blockAlign = af.getFrameSize();
+        w.fmt.byteRate = af.getFrameRate() * af.getFrameSize();
         w.fmt.numChannels = (short) af.getChannels();
-        w.fmt.sampleRate = (int) af.getSampleRate();
+        w.fmt.sampleRate = af.getSampleRate();
         return w;
     }
 

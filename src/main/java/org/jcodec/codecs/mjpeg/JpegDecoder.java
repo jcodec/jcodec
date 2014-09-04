@@ -126,7 +126,7 @@ public class JpegDecoder implements VideoDecoder {
         } while (code != 0 && curOff < 64);
     }
 
-    public static final int toValue(int raw, int length) {
+    public static int toValue(int raw, int length) {
         return (length >= 1 && raw < (1 << length - 1)) ? -(1 << length) + 1 + raw : raw;
     }
 

@@ -13,7 +13,7 @@ public class ImageConvert {
     private static final int SCALEBITS = 10;
     private static final int ONE_HALF = (1 << (SCALEBITS - 1));
 
-    private final static int FIX(double x) {
+    private static int FIX(double x) {
         return ((int) ((x) * (1 << SCALEBITS) + 0.5));
     }
 
@@ -22,7 +22,7 @@ public class ImageConvert {
     private static final int _FIX_0_34414 = -FIX(0.34414);
     private static final int FIX_1_402 = FIX(1.40200);
 
-    public final static int ycbcr_to_rgb24(int y, int cb, int cr) {
+    public static int ycbcr_to_rgb24(int y, int cb, int cr) {
         y = y << SCALEBITS;
         cb = cb - 128;
         cr = cr - 128;
@@ -41,11 +41,11 @@ public class ImageConvert {
 
     private static final int CROP = 1024;
 
-    final static int Y_JPEG_TO_CCIR(final int y) {
+    static int Y_JPEG_TO_CCIR(final int y) {
         return (((y) * FIX(219.0 / 255.0) + (ONE_HALF + (16 << SCALEBITS))) >> SCALEBITS);
     }
 
-    final static int Y_CCIR_TO_JPEG(final int y) {
+    static int Y_CCIR_TO_JPEG(final int y) {
         return ((y) * FIX(255.0 / 219.0) + (ONE_HALF - 16 * FIX(255.0 / 219.0))) >> SCALEBITS;
     }
 
@@ -73,19 +73,19 @@ public class ImageConvert {
         }
     }
 
-    public final static int icrop(final int i) {
+    public static int icrop(final int i) {
         return intCropTable[i + CROP];
     }
 
-    public final static byte crop(final int i) {
+    public static byte crop(final int i) {
         return cropTable[i + CROP];
     }
 
-    public final static byte y_ccir_to_jpeg(final byte y) {
+    public static byte y_ccir_to_jpeg(final byte y) {
         return y_ccir_to_jpeg[(y & 0xff)];
     }
 
-    public final static byte y_jpeg_to_ccir(final byte y) {
+    public static byte y_jpeg_to_ccir(final byte y) {
         return y_jpeg_to_ccir[(y & 0xff)];
     }
 

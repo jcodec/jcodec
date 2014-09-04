@@ -62,7 +62,7 @@ public class VirtualMovie {
             tails[min] = heads[min];
             heads[min] = tracks[min].nextPacket();
         }
-        chunks = chch.toArray(new PacketChunk[0]);
+        chunks = chch.toArray(new PacketChunk[chch.size()]);
         long dataSize = size;
         int headerSize = produceHeader(chunks, tracks, dataSize, brand).remaining();
         size += headerSize;
@@ -70,7 +70,7 @@ public class VirtualMovie {
             ch.offset(headerSize);
         }
         headerChunk = headerChunk(produceHeader(chunks, tracks, dataSize, brand));
-        chunks = chch.toArray(new PacketChunk[0]);
+        chunks = chch.toArray(new PacketChunk[chch.size()]);
     }
 
     private MovieSegment headerChunk(final ByteBuffer header) {

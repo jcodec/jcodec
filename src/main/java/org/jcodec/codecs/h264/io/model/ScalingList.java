@@ -31,12 +31,12 @@ public class ScalingList {
 
         int lastScale = 8;
         int nextScale = 8;
-        for (int j = 0; j < scalingList.length; j++) {
+        for (int scale : scalingList) {
             if (nextScale != 0) {
-                int deltaScale = scalingList[j] - lastScale - 256;
+                int deltaScale = scale - lastScale - 256;
                 writeSE(out, deltaScale, "SPS: ");
             }
-            lastScale = scalingList[j];
+            lastScale = scale;
         }
     }
 

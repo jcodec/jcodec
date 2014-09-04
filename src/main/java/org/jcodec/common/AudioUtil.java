@@ -276,9 +276,9 @@ public class AudioUtil {
         int bytesPerFrame = bytesPerSample * ins.length;
 
         int max = 0;
-        for (int i = 0; i < ins.length; i++)
-            if (ins[i].remaining() > max)
-                max = ins[i].remaining();
+        for (ByteBuffer in : ins)
+            if (in.remaining() > max)
+                max = in.remaining();
 
         for (int frames = 0; frames < max && outb.remaining() >= bytesPerFrame; frames++) {
             for (int j = 0; j < ins.length; j++) {

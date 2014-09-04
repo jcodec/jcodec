@@ -107,7 +107,7 @@ public class SeqParameterSet {
         sps.constraint_set_2_flag = readBool(in, "SPS: constraint_set_2_flag");
         sps.constraint_set_3_flag = readBool(in, "SPS: constraint_set_3_flag");
         readNBit(in, 4, "SPS: reserved_zero_4bits");
-        sps.level_idc = (int) readNBit(in, 8, "SPS: level_idc");
+        sps.level_idc = readNBit(in, 8, "SPS: level_idc");
         sps.seq_parameter_set_id = readUE(in, "SPS: seq_parameter_set_id");
 
         if (sps.profile_idc == 100 || sps.profile_idc == 110 || sps.profile_idc == 122 || sps.profile_idc == 144) {
@@ -182,10 +182,10 @@ public class SeqParameterSet {
         VUIParameters vuip = new VUIParameters();
         vuip.aspect_ratio_info_present_flag = readBool(in, "VUI: aspect_ratio_info_present_flag");
         if (vuip.aspect_ratio_info_present_flag) {
-            vuip.aspect_ratio = AspectRatio.fromValue((int) readNBit(in, 8, "VUI: aspect_ratio"));
+            vuip.aspect_ratio = AspectRatio.fromValue(readNBit(in, 8, "VUI: aspect_ratio"));
             if (vuip.aspect_ratio == AspectRatio.Extended_SAR) {
-                vuip.sar_width = (int) readNBit(in, 16, "VUI: sar_width");
-                vuip.sar_height = (int) readNBit(in, 16, "VUI: sar_height");
+                vuip.sar_width = readNBit(in, 16, "VUI: sar_width");
+                vuip.sar_height = readNBit(in, 16, "VUI: sar_height");
             }
         }
         vuip.overscan_info_present_flag = readBool(in, "VUI: overscan_info_present_flag");
@@ -194,13 +194,13 @@ public class SeqParameterSet {
         }
         vuip.video_signal_type_present_flag = readBool(in, "VUI: video_signal_type_present_flag");
         if (vuip.video_signal_type_present_flag) {
-            vuip.video_format = (int) readNBit(in, 3, "VUI: video_format");
+            vuip.video_format = readNBit(in, 3, "VUI: video_format");
             vuip.video_full_range_flag = readBool(in, "VUI: video_full_range_flag");
             vuip.colour_description_present_flag = readBool(in, "VUI: colour_description_present_flag");
             if (vuip.colour_description_present_flag) {
-                vuip.colour_primaries = (int) readNBit(in, 8, "VUI: colour_primaries");
-                vuip.transfer_characteristics = (int) readNBit(in, 8, "VUI: transfer_characteristics");
-                vuip.matrix_coefficients = (int) readNBit(in, 8, "VUI: matrix_coefficients");
+                vuip.colour_primaries = readNBit(in, 8, "VUI: colour_primaries");
+                vuip.transfer_characteristics = readNBit(in, 8, "VUI: transfer_characteristics");
+                vuip.matrix_coefficients = readNBit(in, 8, "VUI: matrix_coefficients");
             }
         }
         vuip.chroma_loc_info_present_flag = readBool(in, "VUI: chroma_loc_info_present_flag");
@@ -210,8 +210,8 @@ public class SeqParameterSet {
         }
         vuip.timing_info_present_flag = readBool(in, "VUI: timing_info_present_flag");
         if (vuip.timing_info_present_flag) {
-            vuip.num_units_in_tick = (int) readNBit(in, 32, "VUI: num_units_in_tick");
-            vuip.time_scale = (int) readNBit(in, 32, "VUI: time_scale");
+            vuip.num_units_in_tick = readNBit(in, 32, "VUI: num_units_in_tick");
+            vuip.time_scale = readNBit(in, 32, "VUI: time_scale");
             vuip.fixed_frame_rate_flag = readBool(in, "VUI: fixed_frame_rate_flag");
         }
         boolean nal_hrd_parameters_present_flag = readBool(in, "VUI: nal_hrd_parameters_present_flag");
@@ -243,8 +243,8 @@ public class SeqParameterSet {
     private static HRDParameters readHRDParameters(BitReader in) {
         HRDParameters hrd = new HRDParameters();
         hrd.cpb_cnt_minus1 = readUE(in, "SPS: cpb_cnt_minus1");
-        hrd.bit_rate_scale = (int) readNBit(in, 4, "HRD: bit_rate_scale");
-        hrd.cpb_size_scale = (int) readNBit(in, 4, "HRD: cpb_size_scale");
+        hrd.bit_rate_scale = readNBit(in, 4, "HRD: bit_rate_scale");
+        hrd.cpb_size_scale = readNBit(in, 4, "HRD: cpb_size_scale");
         hrd.bit_rate_value_minus1 = new int[hrd.cpb_cnt_minus1 + 1];
         hrd.cpb_size_value_minus1 = new int[hrd.cpb_cnt_minus1 + 1];
         hrd.cbr_flag = new boolean[hrd.cpb_cnt_minus1 + 1];
@@ -254,11 +254,11 @@ public class SeqParameterSet {
             hrd.cpb_size_value_minus1[SchedSelIdx] = readUE(in, "HRD: cpb_size_value_minus1");
             hrd.cbr_flag[SchedSelIdx] = readBool(in, "HRD: cbr_flag");
         }
-        hrd.initial_cpb_removal_delay_length_minus1 = (int) readNBit(in, 5,
+        hrd.initial_cpb_removal_delay_length_minus1 = readNBit(in, 5,
                 "HRD: initial_cpb_removal_delay_length_minus1");
-        hrd.cpb_removal_delay_length_minus1 = (int) readNBit(in, 5, "HRD: cpb_removal_delay_length_minus1");
-        hrd.dpb_output_delay_length_minus1 = (int) readNBit(in, 5, "HRD: dpb_output_delay_length_minus1");
-        hrd.time_offset_length = (int) readNBit(in, 5, "HRD: time_offset_length");
+        hrd.cpb_removal_delay_length_minus1 = readNBit(in, 5, "HRD: cpb_removal_delay_length_minus1");
+        hrd.dpb_output_delay_length_minus1 = readNBit(in, 5, "HRD: dpb_output_delay_length_minus1");
+        hrd.time_offset_length = readNBit(in, 5, "HRD: time_offset_length");
         return hrd;
     }
 
@@ -308,8 +308,8 @@ public class SeqParameterSet {
             writeSE(writer, offset_for_non_ref_pic, "SPS: offset_for_non_ref_pic");
             writeSE(writer, offset_for_top_to_bottom_field, "SPS: offset_for_top_to_bottom_field");
             writeUE(writer, offsetForRefFrame.length, "SPS: ");
-            for (int i = 0; i < offsetForRefFrame.length; i++)
-                writeSE(writer, offsetForRefFrame[i], "SPS: ");
+            for (int i : offsetForRefFrame)
+                writeSE(writer, i, "SPS: ");
         }
         writeUE(writer, num_ref_frames, "SPS: num_ref_frames");
         writeBool(writer, gaps_in_frame_num_value_allowed_flag, "SPS: gaps_in_frame_num_value_allowed_flag");

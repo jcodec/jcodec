@@ -43,8 +43,8 @@ public class SyncSamplesBox extends FullBox {
     protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
         out.putInt(syncSamples.length);
-        for (int i = 0; i < syncSamples.length; i++)
-            out.putInt((int) syncSamples[i]);
+        for (int syncSample : syncSamples)
+            out.putInt(syncSample);
     }
 
     public int[] getSyncSamples() {

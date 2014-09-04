@@ -47,7 +47,7 @@ public abstract class Descriptor {
         Class<? extends Descriptor> cls = factory.byTag(tag);
         Descriptor descriptor;
         try {
-            descriptor = cls.getConstructor(Integer.TYPE, Integer.TYPE).newInstance(tag, (int) size);
+            descriptor = cls.getConstructor(Integer.TYPE, Integer.TYPE).newInstance(tag, size);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

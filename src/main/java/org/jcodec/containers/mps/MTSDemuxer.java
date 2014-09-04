@@ -172,7 +172,7 @@ public class MTSDemuxer implements MPEGDemuxer {
         int marker = buffer.get() & 0xff;
         Assert.assertEquals(0x47, marker);
         int guidFlags = buffer.getShort();
-        int guid = (int) guidFlags & 0x1fff;
+        int guid = guidFlags & 0x1fff;
         int payloadStart = (guidFlags >> 14) & 0x1;
         int b0 = buffer.get() & 0xff;
         int counter = b0 & 0xf;

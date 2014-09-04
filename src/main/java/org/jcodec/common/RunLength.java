@@ -108,8 +108,8 @@ public abstract class RunLength {
         public int[] flattern() {
             int[] counts = getCounts();
             int total = 0;
-            for (int i = 0; i < counts.length; i++) {
-                total += counts[i];
+            for (int i : counts) {
+                total += i;
             }
             int[] values = getValues();
             int[] result = new int[total];
@@ -200,8 +200,8 @@ public abstract class RunLength {
         public long[] flattern() {
             int[] counts = getCounts();
             int total = 0;
-            for (int i = 0; i < counts.length; i++) {
-                total += counts[i];
+            for (int i : counts) {
+                total += i;
             }
             long[] values = getValues();
             long[] result = new long[total];
