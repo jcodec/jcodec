@@ -9,35 +9,35 @@ import java.nio.ByteBuffer;
  * @author Jay Codec
  * 
  */
-public class MovieFragmentHeaderBox extends FullBox {
+public class MovieExtendsHeaderBox extends FullBox {
 
-    private int sequenceNumber;
+    private int fragmentDuration;
 
-    public MovieFragmentHeaderBox() {
+    public MovieExtendsHeaderBox() {
         super(new Header(fourcc()));
     }
 
     public static String fourcc() {
-        return "mfhd";
+        return "mehd";
     }
 
     @Override
     public void parse(ByteBuffer input) {
         super.parse(input);
-        sequenceNumber = input.getInt();
+        fragmentDuration = input.getInt();
     }
 
     @Override
     protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.putInt(sequenceNumber);
+        out.putInt(fragmentDuration);
     }
 
-    public int getSequenceNumber() {
-        return sequenceNumber;
+    public int getFragmentDuration() {
+        return fragmentDuration;
     }
-    
-    public void setSequenceNumber(int sequenceNumber) {
-        this.sequenceNumber = sequenceNumber;
+
+    public void setFragmentDuration(int fragmentDuration) {
+        this.fragmentDuration = fragmentDuration;
     }
 }

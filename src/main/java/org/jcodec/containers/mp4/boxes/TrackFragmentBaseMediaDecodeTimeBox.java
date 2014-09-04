@@ -27,6 +27,9 @@ public class TrackFragmentBaseMediaDecodeTimeBox extends FullBox {
     public TrackFragmentBaseMediaDecodeTimeBox(long baseMediaDecodeTime) {
         this();
         this.baseMediaDecodeTime = baseMediaDecodeTime;
+        if (this.baseMediaDecodeTime > Integer.MAX_VALUE) {
+            this.version = 1;
+        }
     }
 
     public static String fourcc() {
