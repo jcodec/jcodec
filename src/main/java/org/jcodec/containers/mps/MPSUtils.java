@@ -119,10 +119,7 @@ public class MPSUtils {
                     if (lenFieldLeft == 0) {
                         pesLeft = pesLen;
                         if (pesLen != 0) {
-                            pesBuffer.put((byte) (marker >>> 24));
-                            pesBuffer.put((byte) ((marker >>> 16) & 0xff));
-                            pesBuffer.put((byte) ((marker >>> 8) & 0xff));
-                            pesBuffer.put((byte) (marker & 0xff));
+                            flushMarker();
                             marker = -1;
                         }
                     }
@@ -130,10 +127,24 @@ public class MPSUtils {
             }
         }
 
+        private void flushMarker() {
+            pesBuffer.put((byte) (marker >>> 24));
+            pesBuffer.put((byte) ((marker >>> 16) & 0xff));
+            pesBuffer.put((byte) ((marker >>> 8) & 0xff));
+            pesBuffer.put((byte) (marker & 0xff));
+        }
+
         private void pes1(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
             pesBuffer.flip();
             pes(pesBuffer, start, pesLen, stream);
             pesBuffer.clear();
+        }
+
+        public void finishRead() {
+            if (pesLeft <= 4) {
+                flushMarker();
+                pes1(pesBuffer, pesFileStart, pesBuffer.position(), stream);
+            }
         }
     }
 
@@ -201,6 +212,14 @@ public class MPSUtils {
     public static long readTs(ByteBuffer is) {
         return (((long) is.get() & 0x0e) << 29) | ((is.get() & 0xff) << 22) | (((is.get() & 0xff) >> 1) << 15)
                 | ((is.get() & 0xff) << 7) | ((is.get() & 0xff) >> 1);
+    }
+
+    public static void writeTs(ByteBuffer is, long ts) {
+        is.put((byte) ((ts >> 29) << 1));
+        is.put((byte) (ts >> 22));
+        is.put((byte) ((ts >> 15) << 1));
+        is.put((byte) (ts >> 7));
+        is.put((byte) (ts >> 1));
     }
 
     public static class MPEGMediaDescriptor {

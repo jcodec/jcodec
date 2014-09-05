@@ -1,7 +1,6 @@
 package org.jcodec.containers.mps;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -9,8 +8,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import javax.xml.transform.Source;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.FileChannelWrapper;

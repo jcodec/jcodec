@@ -1,4 +1,4 @@
-package org.jcodec.containers.mps;
+package org.jcodec.containers.mps.index;
 
 import static org.jcodec.containers.mps.MPSUtils.mediaStream;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.NIOUtils.FileReader;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 
 /**
@@ -23,11 +25,24 @@ public class MPSIndexer extends BaseIndexer {
     private long predFileStart;
 
     public void index(File source, NIOUtils.FileReaderListener listener) throws IOException {
-        new NIOUtils.FileReader() {
+        newReader().readFile(source, 0x10000, listener);
+    }
+
+    public void index(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
+        newReader().readFile(source, 0x10000, listener);
+    }
+
+    private FileReader newReader() {
+        return new NIOUtils.FileReader() {
+            @Override
             protected void data(ByteBuffer data, long filePos) {
                 analyseBuffer(data, filePos);
             }
-        }.readFile(source, 0x10000, listener);
+            @Override
+            protected void done() {
+                finishAnalyse();
+            }
+        };
     }
 
     protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
@@ -39,15 +54,8 @@ public class MPSIndexer extends BaseIndexer {
             leading += (int) (start - predFileStart);
         }
         predFileStart = start + pesLen;
-        savePesMeta(stream, leading, pesLen, pesBuffer.remaining());
+        savePESMeta(stream, MPSIndex.makePESToken(leading, pesLen, pesBuffer.remaining()));
         getAnalyser(stream).pkt(pesBuffer, pesHeader);
-    }
-
-    public ByteBuffer serialize() {
-        ByteBuffer buf = ByteBuffer.allocate(estimateSize());
-        serializeTo(buf);
-        buf.flip();
-        return buf;
     }
 
     public static void main(String[] args) throws IOException {
@@ -57,6 +65,8 @@ public class MPSIndexer extends BaseIndexer {
                 System.out.println(percentDone);
             }
         });
-        NIOUtils.writeTo(indexer.serialize(), new File(args[1]));
+        ByteBuffer index = ByteBuffer.allocate(0x10000);
+        indexer.serialize().serializeTo(index);
+        NIOUtils.writeTo(index, new File(args[1]));
     }
 }

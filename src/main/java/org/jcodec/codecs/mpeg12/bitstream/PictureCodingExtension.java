@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
@@ -12,13 +12,13 @@ import org.jcodec.common.io.BitWriter;
  * @author The JCodec project
  * 
  */
-public class PictureCodingExtension {
+public class PictureCodingExtension implements MPEGHeader {
 
     public static final int Top_Field = 1;
     public static final int Bottom_Field = 2;
     public static final int Frame = 3;
 
-    public int[][] f_code;
+    public int[][] f_code = new int[2][2];
     public int intra_dc_precision;
     public int picture_structure;
     public int top_field_first;
@@ -49,7 +49,7 @@ public class PictureCodingExtension {
             return cd;
         }
 
-        public void write(BitWriter out) throws IOException {
+        public void write(BitWriter out) {
             out.write1Bit(v_axis);
             out.writeNBit(field_sequence, 3);
             out.write1Bit(sub_carrier);
@@ -60,7 +60,6 @@ public class PictureCodingExtension {
 
     public static PictureCodingExtension read(BitReader in) {
         PictureCodingExtension pce = new PictureCodingExtension();
-        pce.f_code = new int[2][2];
         pce.f_code[0][0] = in.readNBit(4);
         pce.f_code[0][1] = in.readNBit(4);
         pce.f_code[1][0] = in.readNBit(4);
@@ -83,24 +82,28 @@ public class PictureCodingExtension {
         return pce;
     }
 
-    public void write(BitWriter out) throws IOException {
-        out.writeNBit(f_code[0][0], 4);
-        out.writeNBit(f_code[0][1], 4);
-        out.writeNBit(f_code[1][0], 4);
-        out.writeNBit(f_code[1][1], 4);
-        out.writeNBit(intra_dc_precision, 2);
-        out.writeNBit(picture_structure, 2);
-        out.write1Bit(top_field_first);
-        out.write1Bit(frame_pred_frame_dct);
-        out.write1Bit(concealment_motion_vectors);
-        out.write1Bit(q_scale_type);
-        out.write1Bit(intra_vlc_format);
-        out.write1Bit(alternate_scan);
-        out.write1Bit(repeat_first_field);
-        out.write1Bit(chroma_420_type);
-        out.write1Bit(progressive_frame);
-        out.write1Bit(compositeDisplay != null ? 1 : 0);
+    @Override
+    public void write(ByteBuffer bb) {
+        BitWriter bw = new BitWriter(bb);
+        bw.writeNBit(PictureHeader.Picture_Coding_Extension, 4);
+        bw.writeNBit(f_code[0][0], 4);
+        bw.writeNBit(f_code[0][1], 4);
+        bw.writeNBit(f_code[1][0], 4);
+        bw.writeNBit(f_code[1][1], 4);
+        bw.writeNBit(intra_dc_precision, 2);
+        bw.writeNBit(picture_structure, 2);
+        bw.write1Bit(top_field_first);
+        bw.write1Bit(frame_pred_frame_dct);
+        bw.write1Bit(concealment_motion_vectors);
+        bw.write1Bit(q_scale_type);
+        bw.write1Bit(intra_vlc_format);
+        bw.write1Bit(alternate_scan);
+        bw.write1Bit(repeat_first_field);
+        bw.write1Bit(chroma_420_type);
+        bw.write1Bit(progressive_frame);
+        bw.write1Bit(compositeDisplay != null ? 1 : 0);
         if (compositeDisplay != null)
-            compositeDisplay.write(out);
+            compositeDisplay.write(bw);
+        bw.flush();
     }
 }

@@ -85,6 +85,10 @@ public class BoxFactory {
     public void override(String fourcc, Class<? extends Box> cls) {
         mappings.put(fourcc, cls);
     }
+    
+    public void clear() {
+        mappings.clear();
+    }
 
     public Class<? extends Box> toClass(String fourcc) {
         return mappings.get(fourcc);

@@ -11,6 +11,8 @@ package org.jcodec.common;
 public interface SeekableDemuxerTrack extends DemuxerTrack {
 
     boolean gotoFrame(long i);
+    
+    boolean gotoSyncFrame(long i);
 
     long getCurFrame();
 

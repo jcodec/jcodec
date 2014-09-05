@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
@@ -12,7 +12,7 @@ import org.jcodec.common.io.BitWriter;
  * @author The JCodec project
  * 
  */
-public class CopyrightExtension {
+public class CopyrightExtension implements MPEGHeader {
     public int copyright_flag;
     public int copyright_identifier;
     public int original_or_copy;
@@ -35,16 +35,22 @@ public class CopyrightExtension {
         return ce;
     }
 
-    public void write(BitWriter out) throws IOException {
-        out.write1Bit(copyright_flag);
-        out.writeNBit(copyright_identifier, 8);
-        out.write1Bit(original_or_copy);
-        out.writeNBit(0, 7);
-        out.write1Bit(1); // todo: verify this
-        out.writeNBit(copyright_number_1, 20);
-        out.write1Bit(1); // todo: verify this
-        out.writeNBit(copyright_number_2, 22);
-        out.write1Bit(1); // todo: verify this
-        out.writeNBit(copyright_number_3, 22);
+    @Override
+    public void write(ByteBuffer bb) {
+        BitWriter bw = new BitWriter(bb);
+        bw.writeNBit(PictureHeader.Copyright_Extension, 4);
+
+        bw.write1Bit(copyright_flag);
+        bw.writeNBit(copyright_identifier, 8);
+        bw.write1Bit(original_or_copy);
+        bw.writeNBit(0, 7);
+        bw.write1Bit(1); // todo: verify this
+        bw.writeNBit(copyright_number_1, 20);
+        bw.write1Bit(1); // todo: verify this
+        bw.writeNBit(copyright_number_2, 22);
+        bw.write1Bit(1); // todo: verify this
+        bw.writeNBit(copyright_number_3, 22);
+        
+        bw.flush();
     }
 }

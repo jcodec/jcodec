@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
@@ -12,7 +12,7 @@ import org.jcodec.common.io.BitWriter;
  * @author The JCodec project
  * 
  */
-public class QuantMatrixExtension {
+public class QuantMatrixExtension implements MPEGHeader {
 
     public int[] intra_quantiser_matrix;
     public int[] non_intra_quantiser_matrix;
@@ -40,22 +40,28 @@ public class QuantMatrixExtension {
         return qmat;
     }
 
-    public void write(BitWriter ob) throws IOException {
-        ob.write1Bit(intra_quantiser_matrix != null ? 1 : 0);
+    @Override
+    public void write(ByteBuffer bb) {
+        BitWriter bw = new BitWriter(bb);
+        bw.writeNBit(PictureHeader.Quant_Matrix_Extension, 4);
+        
+        bw.write1Bit(intra_quantiser_matrix != null ? 1 : 0);
         if (intra_quantiser_matrix != null)
-            writeQMat(intra_quantiser_matrix, ob);
-        ob.write1Bit(non_intra_quantiser_matrix != null ? 1 : 0);
+            writeQMat(intra_quantiser_matrix, bw);
+        bw.write1Bit(non_intra_quantiser_matrix != null ? 1 : 0);
         if (non_intra_quantiser_matrix != null)
-            writeQMat(non_intra_quantiser_matrix, ob);
-        ob.write1Bit(chroma_intra_quantiser_matrix != null ? 1 : 0);
+            writeQMat(non_intra_quantiser_matrix, bw);
+        bw.write1Bit(chroma_intra_quantiser_matrix != null ? 1 : 0);
         if (chroma_intra_quantiser_matrix != null)
-            writeQMat(chroma_intra_quantiser_matrix, ob);
-        ob.write1Bit(chroma_non_intra_quantiser_matrix != null ? 1 : 0);
+            writeQMat(chroma_intra_quantiser_matrix, bw);
+        bw.write1Bit(chroma_non_intra_quantiser_matrix != null ? 1 : 0);
         if (chroma_non_intra_quantiser_matrix != null)
-            writeQMat(chroma_non_intra_quantiser_matrix, ob);
+            writeQMat(chroma_non_intra_quantiser_matrix, bw);
+        
+        bw.flush();
     }
 
-    private void writeQMat(int[] matrix, BitWriter ob) throws IOException {
+    private void writeQMat(int[] matrix, BitWriter ob) {
         for (int i = 0; i < 64; i++)
             ob.writeNBit(matrix[i], 8);
     }

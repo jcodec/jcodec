@@ -169,7 +169,7 @@ public class MTSUtils {
 
     }
 
-    public static PMTStream[] getPrograms(File src) throws IOException {
+    public static PMTStream[] getProgramGuids(File src) throws IOException {
         SeekableByteChannel ch = null;
         try {
             ch = NIOUtils.readableFileChannel(src);
@@ -244,7 +244,7 @@ public class MTSUtils {
     }
 
     public static int getVideoPid(File src) throws IOException {
-        for (PMTStream stream : MTSUtils.getPrograms(src)) {
+        for (PMTStream stream : MTSUtils.getProgramGuids(src)) {
             if (stream.getStreamType().isVideo())
                 return stream.getPid();
         }
@@ -253,7 +253,7 @@ public class MTSUtils {
     }
 
     public static int getAudioPid(File src) throws IOException {
-        for (PMTStream stream : MTSUtils.getPrograms(src)) {
+        for (PMTStream stream : MTSUtils.getProgramGuids(src)) {
             if (stream.getStreamType().isVideo())
                 return stream.getPid();
         }
@@ -261,9 +261,17 @@ public class MTSUtils {
         throw new RuntimeException("No video stream");
     }
 
+    public static int[] getMediaPids(SeekableByteChannel src) throws IOException {
+        return filterMediaPids(MTSUtils.getProgramGuids(src));
+    }
+    
     public static int[] getMediaPids(File src) throws IOException {
+        return filterMediaPids(MTSUtils.getProgramGuids(src));
+    }
+
+    private static int[] filterMediaPids(PMTStream[] programs) {
         IntArrayList result = new IntArrayList();
-        for (PMTStream stream : MTSUtils.getPrograms(src)) {
+        for (PMTStream stream : programs) {
             if (stream.getStreamType().isVideo() || stream.getStreamType().isAudio())
                 result.add(stream.getPid());
         }

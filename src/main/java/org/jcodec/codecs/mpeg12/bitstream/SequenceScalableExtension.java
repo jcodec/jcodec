@@ -1,5 +1,7 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
+import java.nio.ByteBuffer;
+
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 
@@ -10,7 +12,7 @@ import org.jcodec.common.io.BitWriter;
  * @author The JCodec project
  * 
  */
-public class SequenceScalableExtension {
+public class SequenceScalableExtension implements MPEGHeader {
 
     public static final int DATA_PARTITIONING = 0;
     public static final int SPATIAL_SCALABILITY = 1;
@@ -56,26 +58,31 @@ public class SequenceScalableExtension {
         return sse;
     }
 
-    public void write(BitWriter out) {
-        out.writeNBit(scalable_mode, 2);
-        out.writeNBit(layer_id, 4);
+    @Override
+    public void write(ByteBuffer bb) {
+        BitWriter bw = new BitWriter(bb);
+        bw.writeNBit(SequenceHeader.Sequence_Scalable_Extension, 4);
+
+        bw.writeNBit(scalable_mode, 2);
+        bw.writeNBit(layer_id, 4);
 
         if (scalable_mode == SPATIAL_SCALABILITY) {
-            out.writeNBit(lower_layer_prediction_horizontal_size, 14);
-            out.write1Bit(1); // todo: check this
-            out.writeNBit(lower_layer_prediction_vertical_size, 14);
-            out.writeNBit(horizontal_subsampling_factor_m, 5);
-            out.writeNBit(horizontal_subsampling_factor_n, 5);
-            out.writeNBit(vertical_subsampling_factor_m, 5);
-            out.writeNBit(vertical_subsampling_factor_n, 5);
+            bw.writeNBit(lower_layer_prediction_horizontal_size, 14);
+            bw.write1Bit(1); // todo: check this
+            bw.writeNBit(lower_layer_prediction_vertical_size, 14);
+            bw.writeNBit(horizontal_subsampling_factor_m, 5);
+            bw.writeNBit(horizontal_subsampling_factor_n, 5);
+            bw.writeNBit(vertical_subsampling_factor_m, 5);
+            bw.writeNBit(vertical_subsampling_factor_n, 5);
         }
 
         if (scalable_mode == TEMPORAL_SCALABILITY) {
-            out.write1Bit(picture_mux_enable);
+            bw.write1Bit(picture_mux_enable);
             if (picture_mux_enable != 0)
-                out.write1Bit(mux_to_progressive_sequence);
-            out.writeNBit(picture_mux_order, 3);
-            out.writeNBit(picture_mux_factor, 3);
+                bw.write1Bit(mux_to_progressive_sequence);
+            bw.writeNBit(picture_mux_order, 3);
+            bw.writeNBit(picture_mux_factor, 3);
         }
+        bw.flush();
     }
 }

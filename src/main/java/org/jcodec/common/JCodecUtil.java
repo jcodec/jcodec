@@ -3,6 +3,7 @@ package org.jcodec.common;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.util.concurrent.Callable;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.RunnableFuture;
@@ -39,6 +40,10 @@ public class JCodecUtil {
     }
 
     public static Format detectFormat(File f) throws IOException {
+        return detectFormat(NIOUtils.fetchFrom(f, 200 * 1024));
+    }
+    
+    public static Format detectFormat(ReadableByteChannel f) throws IOException {
         return detectFormat(NIOUtils.fetchFrom(f, 200 * 1024));
     }
 

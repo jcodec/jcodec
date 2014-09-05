@@ -2,7 +2,6 @@ package org.jcodec.codecs.mpeg12.bitstream;
 
 import static org.jcodec.codecs.mpeg12.MPEGConst.EXTENSION_START_CODE;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.BitReader;
@@ -15,7 +14,7 @@ import org.jcodec.common.io.BitWriter;
  * @author The JCodec project
  * 
  */
-public class PictureHeader {
+public class PictureHeader implements MPEGHeader {
 
     public static final int Quant_Matrix_Extension = 0x3;
     public static final int Copyright_Extension = 0x4;
@@ -43,6 +42,21 @@ public class PictureHeader {
     public PictureSpatialScalableExtension pictureSpatialScalableExtension;
     public PictureTemporalScalableExtension pictureTemporalScalableExtension;
     private boolean hasExtensions;
+    
+
+    public PictureHeader(int temporal_reference, int picture_coding_type, int vbv_delay, int full_pel_forward_vector,
+            int forward_f_code, int full_pel_backward_vector, int backward_f_code) {
+        this.temporal_reference = temporal_reference;
+        this.picture_coding_type = picture_coding_type;
+        this.vbv_delay = vbv_delay;
+        this.full_pel_forward_vector = full_pel_forward_vector;
+        this.forward_f_code = forward_f_code;
+        this.full_pel_backward_vector = full_pel_backward_vector;
+        this.backward_f_code = backward_f_code;
+    }
+    
+    private PictureHeader() {
+    }
 
     public static PictureHeader read(ByteBuffer bb) {
         BitReader in = new BitReader(bb);
@@ -94,7 +108,8 @@ public class PictureHeader {
         }
     }
 
-    public void write(ByteBuffer os) throws IOException {
+    @Override
+    public void write(ByteBuffer os) {
         BitWriter out = new BitWriter(os);
         out.writeNBit(temporal_reference, 10);
         out.writeNBit(picture_coding_type, 3);
@@ -108,51 +123,40 @@ public class PictureHeader {
             out.writeNBit(backward_f_code, 3);
         }
         out.write1Bit(0);
+        out.flush();
 
         writeExtensions(os);
     }
 
-    private void writeExtensions(ByteBuffer out) throws IOException {
+    private void writeExtensions(ByteBuffer out) {
         if (quantMatrixExtension != null) {
             out.putInt(EXTENSION_START_CODE);
-            BitWriter os = new BitWriter(out);
-            os.writeNBit(Quant_Matrix_Extension, 4);
-            quantMatrixExtension.write(os);
+            quantMatrixExtension.write(out);
         }
 
         if (copyrightExtension != null) {
             out.putInt(EXTENSION_START_CODE);
-            BitWriter os = new BitWriter(out);
-            os.writeNBit(Copyright_Extension, 4);
-            copyrightExtension.write(os);
+            copyrightExtension.write(out);
         }
 
         if (pictureCodingExtension != null) {
             out.putInt(EXTENSION_START_CODE);
-            BitWriter os = new BitWriter(out);
-            os.writeNBit(Picture_Coding_Extension, 4);
-            pictureCodingExtension.write(os);
+            pictureCodingExtension.write(out);
         }
 
         if (pictureDisplayExtension != null) {
             out.putInt(EXTENSION_START_CODE);
-            BitWriter os = new BitWriter(out);
-            os.writeNBit(Picture_Display_Extension, 4);
-            pictureDisplayExtension.write(os);
+            pictureDisplayExtension.write(out);
         }
 
         if (pictureSpatialScalableExtension != null) {
             out.putInt(EXTENSION_START_CODE);
-            BitWriter os = new BitWriter(out);
-            os.writeNBit(Picture_Spatial_Scalable_Extension, 4);
-            pictureSpatialScalableExtension.write(os);
+            pictureSpatialScalableExtension.write(out);
         }
 
         if (pictureTemporalScalableExtension != null) {
             out.putInt(EXTENSION_START_CODE);
-            BitWriter os = new BitWriter(out);
-            os.writeNBit(Picture_Temporal_Scalable_Extension, 4);
-            pictureTemporalScalableExtension.write(os);
+            pictureTemporalScalableExtension.write(out);
         }
     }
 

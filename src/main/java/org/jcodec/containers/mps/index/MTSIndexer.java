@@ -1,4 +1,4 @@
-package org.jcodec.containers.mps;
+package org.jcodec.containers.mps.index;
 
 import static org.jcodec.containers.mps.MPSUtils.mediaStream;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
@@ -9,8 +9,12 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.NIOUtils.FileReader;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
+import org.jcodec.containers.mps.MTSUtils;
+import org.jcodec.containers.mps.index.MTSIndex.MTSProgram;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -26,16 +30,20 @@ public class MTSIndexer {
     private MTSAnalyser[] indexers;
 
     public void index(File source, NIOUtils.FileReaderListener listener) throws IOException {
-        index(source, listener, MTSUtils.getMediaPids(source));
+        index(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
     }
 
-    public void index(File source, NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
+    public void index(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
+        index(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
+    }
+
+    public FileReader index(NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
         indexers = new MTSAnalyser[targetGuids.length];
         for (int i = 0; i < targetGuids.length; i++) {
             indexers[i] = new MTSAnalyser(targetGuids[i]);
         }
 
-        new NIOUtils.FileReader() {
+        return new NIOUtils.FileReader() {
             protected void data(ByteBuffer data, long filePos) {
                 analyseBuffer(data, filePos);
             }
@@ -62,16 +70,21 @@ public class MTSIndexer {
                     }
                 }
             }
-        }.readFile(source, BUFFER_SIZE, listener);
+
+            @Override
+            protected void done() {
+                for (MTSAnalyser mtsAnalyser : indexers) {
+                    mtsAnalyser.finishAnalyse();
+                }
+            }
+        };
     }
 
-    public void serializeTo(ByteBuffer buf) {
-        for (MTSAnalyser mtsAnalyser : indexers) {
-            ByteBuffer dup = buf.duplicate();
-            NIOUtils.skip(buf, 4);
-            mtsAnalyser.serializeTo(buf);
-            dup.putInt(buf.position() - dup.position());
-        }
+    public MTSIndex serializeTo(ByteBuffer buf) {
+        MTSProgram[] programs = new MTSProgram[indexers.length];
+        for (int i = 0; i < indexers.length; i++)
+            programs[i] = indexers[i].serializeTo();
+        return new MTSIndex(programs);
     }
 
     public ByteBuffer serialize() {
@@ -98,10 +111,8 @@ public class MTSIndexer {
             this.targetGuid = targetGuid;
         }
 
-        @Override
-        public void serializeTo(ByteBuffer index) {
-            index.putShort((short) targetGuid);
-            super.serializeTo(index);
+        public MTSProgram serializeTo() {
+            return new MTSProgram(super.serialize(), targetGuid);
         }
 
         protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
@@ -115,7 +126,7 @@ public class MTSIndexer {
             }
             predFileStartInTsPkt = (start + pesLen) / 188;
             int tsPktInPes = (int) (predFileStartInTsPkt - start / 188);
-            savePesMeta(stream, leadingTsPkt, tsPktInPes, pesBuffer.remaining());
+            savePESMeta(stream, MPSIndex.makePESToken(leadingTsPkt, tsPktInPes, pesBuffer.remaining()));
             getAnalyser(stream).pkt(pesBuffer, pesHeader);
         }
     }

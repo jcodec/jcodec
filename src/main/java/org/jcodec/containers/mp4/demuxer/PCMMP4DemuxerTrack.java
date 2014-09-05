@@ -99,6 +99,11 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         return pkt;
     }
 
+    @Override
+    public boolean gotoSyncFrame(long frameNo) {
+        return gotoFrame(frameNo);
+    }
+
     public int getFrameSize() {
         SampleEntry entry = sampleEntries[sampleToChunks[stscInd].getEntry() - 1];
         if (entry instanceof AudioSampleEntry) {

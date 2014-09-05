@@ -378,24 +378,30 @@ public class NIOUtils {
         private int oldPd;
 
         protected abstract void data(ByteBuffer data, long filePos);
+        protected abstract void done();
+
+        public void readFile(SeekableByteChannel ch, int bufferSize, FileReaderListener listener) throws IOException {
+            ByteBuffer buf = ByteBuffer.allocate(bufferSize);
+            long size = ch.size();
+            for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
+                buf.flip();
+                data(buf, pos);
+                buf.flip();
+                if (listener != null) {
+                    int newPd = (int) (100 * pos / size);
+                    if (newPd != oldPd)
+                        listener.progress(newPd);
+                    oldPd = newPd;
+                }
+            }
+            done();
+        }
 
         public void readFile(File source, int bufferSize, FileReaderListener listener) throws IOException {
-            ByteBuffer buf = ByteBuffer.allocate(bufferSize);
             SeekableByteChannel ch = null;
             try {
                 ch = NIOUtils.readableFileChannel(source);
-                long size = ch.size();
-                for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
-                    buf.flip();
-                    data(buf, pos);
-                    buf.flip();
-                    if (listener != null) {
-                        int newPd = (int) (100 * pos / size);
-                        if (newPd != oldPd)
-                            listener.progress(newPd);
-                        oldPd = newPd;
-                    }
-                }
+                readFile(ch, bufferSize, listener);
             } finally {
                 NIOUtils.closeQuietly(ch);
             }

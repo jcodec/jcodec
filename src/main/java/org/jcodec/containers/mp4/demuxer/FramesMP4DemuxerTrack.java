@@ -18,6 +18,7 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+
 import static org.jcodec.common.DemuxerTrackMeta.Type.*;
 
 /**
@@ -50,7 +51,6 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     private MovieBox movie;
 
-
     public FramesMP4DemuxerTrack(MovieBox mov, TrakBox trak, SeekableByteChannel input) {
         super(trak);
         this.input = input;
@@ -64,10 +64,10 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         if (stss != null) {
             syncSamples = stss.getSyncSamples();
         }
-        if(stps != null) {
+        if (stps != null) {
             partialSync = stps.getSyncSamples();
         }
-    
+
         sizes = stsz.getSizes();
     }
 
@@ -104,7 +104,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             sync = true;
             ssOff++;
         }
-        
+
         boolean psync = false;
         if (partialSync != null && psOff < partialSync.length && (curFrame + 1) == partialSync[psOff]) {
             psync = true;
@@ -139,6 +139,25 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         return pkt;
     }
 
+    @Override
+    public boolean gotoSyncFrame(long frameNo) {
+        if (syncSamples == null)
+            return gotoFrame(frameNo);
+        else {
+            if (frameNo < 0)
+                throw new IllegalArgumentException("negative frame number");
+            if (frameNo >= getFrameCount())
+                return false;
+            if (frameNo == curFrame)
+                return true;
+            for (int i = 0; i < syncSamples.length; i++) {
+                if (syncSamples[i] - 1 > frameNo)
+                    return gotoFrame(syncSamples[i - 1] - 1);
+            }
+            return gotoFrame(syncSamples[syncSamples.length - 1] - 1);
+        }
+    }
+
     protected void seekPointer(long frameNo) {
         if (compOffsets != null) {
             cttsSubInd = (int) frameNo;
@@ -168,7 +187,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         if (syncSamples != null)
             for (ssOff = 0; ssOff < syncSamples.length && syncSamples[ssOff] < curFrame + 1; ssOff++)
                 ;
-        
+
         if (partialSync != null)
             for (psOff = 0; psOff < partialSync.length && partialSync[psOff] < curFrame + 1; psOff++)
                 ;

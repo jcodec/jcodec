@@ -1,5 +1,7 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
+import java.nio.ByteBuffer;
+
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 
@@ -10,7 +12,7 @@ import org.jcodec.common.io.BitWriter;
  * @author The JCodec project
  * 
  */
-public class SequenceDisplayExtension {
+public class SequenceDisplayExtension implements MPEGHeader {
     public int video_format;
     public int display_horizontal_size;
     public int display_vertical_size;
@@ -49,13 +51,18 @@ public class SequenceDisplayExtension {
         return sde;
     }
 
-    public void write(BitWriter out) {
-        out.writeNBit(video_format, 3);
-        out.write1Bit(colorDescription != null ? 1 : 0);
+    @Override
+    public void write(ByteBuffer bb) {
+        BitWriter bw = new BitWriter(bb);
+        bw.writeNBit(SequenceHeader.Sequence_Display_Extension, 4);
+        
+        bw.writeNBit(video_format, 3);
+        bw.write1Bit(colorDescription != null ? 1 : 0);
         if (colorDescription != null)
-            colorDescription.write(out);
-        out.writeNBit(display_horizontal_size, 14);
-        out.write1Bit(1); // verify this
-        out.writeNBit(display_vertical_size, 14);
+            colorDescription.write(bw);
+        bw.writeNBit(display_horizontal_size, 14);
+        bw.write1Bit(1); // verify this
+        bw.writeNBit(display_vertical_size, 14);
+        bw.flush();
     }
 }

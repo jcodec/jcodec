@@ -7,7 +7,6 @@ import static org.jcodec.containers.mxf.MXFConst.klMetadataMapping;
 import static org.jcodec.containers.mxf.model.MXFUtil.findAllMeta;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -405,6 +404,15 @@ public class MXFDemuxer {
                     .getIndexDuration());
 
             return true;
+        }
+        
+        @Override
+        public boolean gotoSyncFrame(long frameNo) {
+            if(!gotoFrame(frameNo))
+                return false;
+            IndexSegment seg = indexSegments.get(indexSegmentIdx);
+            byte kfOff = seg.getIe().getKeyFrameOff()[indexSegmentSubIdx];
+            return gotoFrame(frameNo + kfOff);
         }
 
         @Override
