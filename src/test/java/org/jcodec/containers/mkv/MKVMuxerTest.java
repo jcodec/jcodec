@@ -1,9 +1,17 @@
 package org.jcodec.containers.mkv;
 
 import static org.jcodec.common.IOUtils.readFileToByteArray;
-import static org.jcodec.containers.mkv.Type.Cluster;
-import static org.jcodec.containers.mkv.Type.Segment;
-import static org.jcodec.containers.mkv.Type.SimpleBlock;
+import static org.jcodec.containers.mkv.MKVType.Block;
+import static org.jcodec.containers.mkv.MKVType.BlockGroup;
+import static org.jcodec.containers.mkv.MKVType.Cluster;
+import static org.jcodec.containers.mkv.MKVType.DocType;
+import static org.jcodec.containers.mkv.MKVType.DocTypeReadVersion;
+import static org.jcodec.containers.mkv.MKVType.DocTypeVersion;
+import static org.jcodec.containers.mkv.MKVType.EBML;
+import static org.jcodec.containers.mkv.MKVType.Segment;
+import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
+import static org.jcodec.containers.mkv.MKVType.Timecode;
+import static org.jcodec.containers.mkv.MKVType.findFirst;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,16 +19,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IOUtils;
-import org.jcodec.containers.mkv.ebml.Element;
-import org.jcodec.containers.mkv.ebml.MasterElement;
-import org.jcodec.containers.mkv.ebml.StringElement;
-import org.jcodec.containers.mkv.ebml.UnsignedIntegerElement;
-import org.jcodec.containers.mkv.elements.BlockElement;
-import org.jcodec.containers.mkv.elements.Cluster;
+import org.jcodec.containers.mkv.boxes.EbmlBase;
+import org.jcodec.containers.mkv.boxes.EbmlMaster;
+import org.jcodec.containers.mkv.boxes.EbmlString;
+import org.jcodec.containers.mkv.boxes.EbmlUint;
+import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,116 +42,8 @@ public class MKVMuxerTest {
 
     private MKVTestSuite suite;
 
-    public void testCopyAndReadSingleFrame() throws Exception {
-        byte[] rawFrame = readFileToByteArray(new File("src/test/resources/mkv/single-frame01.vp8"));
-        File file = new File("src/test/resources/mkv/single-frame.webm");
-        FileInputStream inputStream = new FileInputStream(file);
-        SimpleEBMLParser parser = new SimpleEBMLParser(inputStream.getChannel());
-        try {
-            parser.parse();
-        } finally {
-            if (inputStream != null)
-                inputStream.close();
-            inputStream = null;
-        }
-        List<MasterElement> tree = parser.getTree();
-        FileInputStream remuxerInputStream = new FileInputStream(file);
-        File outputFile = new File(file.getParent(), "copy-"+file.getName());
-        FileOutputStream os = new FileOutputStream(outputFile);
-        MKVRemuxer remuxer = new MKVRemuxer(tree, remuxerInputStream.getChannel());
-        try {
-            remuxer.mux(os.getChannel());
-        } finally {
-            IOUtils.closeQuietly(remuxerInputStream);
-            IOUtils.closeQuietly(os);
-        }
-        
-        FileInputStream zz = new FileInputStream(outputFile);
-        FileInputStream blocksStream = new FileInputStream(outputFile);
-        SimpleEBMLParser  pp = new SimpleEBMLParser(zz.getChannel());
-        try {
-            pp.parse();
-            Cluster c = (Cluster) Type.findFirst(pp.getTree(), Type.Segment, Type.Cluster);
-            List<BlockElement> bs = c.getBlocksByTrackNumber(1);
-            Assert.assertNotNull(bs);
-            Assert.assertEquals(1, bs.size());
-            byte[][] frames = bs.get(0).getFrames(blocksStream.getChannel());
-            Assert.assertNotNull(frames);
-            Assert.assertEquals(1, frames.length);
-            Assert.assertArrayEquals(rawFrame, frames[0]);
-        } finally {
-            IOUtils.closeQuietly(zz);
-            IOUtils.closeQuietly(blocksStream);
-        }
-        
-    }
     
-    public void testCopyAndRead10Frames() throws Exception {
-        byte[][] rawFrames = new byte[10][];
-        rawFrames[0] = readFileToByteArray(new File("src/test/resources/mkv/10frames01.vp8"));
-        rawFrames[1] = readFileToByteArray(new File("src/test/resources/mkv/10frames02.vp8"));
-        rawFrames[2] = readFileToByteArray(new File("src/test/resources/mkv/10frames03.vp8"));
-        rawFrames[3] = readFileToByteArray(new File("src/test/resources/mkv/10frames04.vp8"));
-        rawFrames[4] = readFileToByteArray(new File("src/test/resources/mkv/10frames05.vp8"));
-        rawFrames[5] = readFileToByteArray(new File("src/test/resources/mkv/10frames06.vp8"));
-        rawFrames[6] = readFileToByteArray(new File("src/test/resources/mkv/10frames07.vp8"));
-        rawFrames[7] = readFileToByteArray(new File("src/test/resources/mkv/10frames08.vp8"));
-        rawFrames[8] = readFileToByteArray(new File("src/test/resources/mkv/10frames09.vp8"));
-        rawFrames[9] = readFileToByteArray(new File("src/test/resources/mkv/10frames10.vp8"));
-        File file = new File("src/test/resources/mkv/10frames.webm");
-        FileInputStream inputStream = new FileInputStream(file);
-        SimpleEBMLParser parser = new SimpleEBMLParser(inputStream.getChannel());
-        try {
-            parser.parse();
-        } finally {
-            if (inputStream != null)
-                inputStream.close();
-            inputStream = null;
-        }
-        List<MasterElement> tree = parser.getTree();
-        FileInputStream remuxerInputStream = new FileInputStream(file);
-        File outputFile = new File(file.getParent(), "copy-"+file.getName());
-        FileOutputStream os = new FileOutputStream(outputFile);
-        MKVRemuxer remuxer = new MKVRemuxer(tree, remuxerInputStream.getChannel());
-        try {
-            remuxer.mux(os.getChannel());
-        } finally {
-            IOUtils.closeQuietly(remuxerInputStream);
-            IOUtils.closeQuietly(os);
-        }
-        
-        inputStream = new FileInputStream(outputFile);
-        SimpleEBMLParser  pp = new SimpleEBMLParser(inputStream.getChannel());
-        try {
-            pp.parse();
-            Cluster[] cc =  Type.findAll(pp.getTree(), Cluster.class, Type.Segment, Type.Cluster);
-            
-            Assert.assertNotNull(cc);
-            Assert.assertEquals(2, cc.length);
-            FileChannel frameReadingChannel = inputStream.getChannel();
-            List<BlockElement> bs = cc[0].getBlocksByTrackNumber(1);
-            Assert.assertNotNull(bs);
-            Assert.assertEquals(5, bs.size());
-            for (int i = 0; i < 5; i++) {
-                byte[][] frames = bs.get(i).getFrames(frameReadingChannel);
-                Assert.assertNotNull(frames);
-                Assert.assertEquals(1, frames.length);
-                Assert.assertArrayEquals(rawFrames[i], frames[0]);
-            }
-            bs = cc[1].getBlocksByTrackNumber(1);
-            Assert.assertNotNull(bs);
-            Assert.assertEquals(5, bs.size());
-            for (int i = 5; i < 10; i++) {
-                byte[][] frames = bs.get(i-5).getFrames(frameReadingChannel);
-                Assert.assertNotNull(frames);
-                Assert.assertEquals(1, frames.length);
-                Assert.assertArrayEquals(rawFrames[i], frames[0]);
-            }
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-        }
-    }
-    
+    @Test
     public void testRead10Frames() throws Exception {
         byte[][] rawFrames = new byte[10][];
         rawFrames[0] = readFileToByteArray(new File("src/test/resources/mkv/10frames01.vp8"));
@@ -157,148 +58,72 @@ public class MKVMuxerTest {
         rawFrames[9] = readFileToByteArray(new File("src/test/resources/mkv/10frames10.vp8"));
         File file = new File("src/test/resources/mkv/10frames.webm");
         FileInputStream inputStream = new FileInputStream(file);
-        SimpleEBMLParser parser = new SimpleEBMLParser(inputStream.getChannel());
+        MKVParser parser = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
+        List<EbmlMaster> tree = null;
         try {
-            parser.parse();
+            tree = parser.parse();
         } finally {
             if (inputStream != null)
                 inputStream.close();
             inputStream = null;
         }
-        List<MasterElement> tree = parser.getTree();
-        Cluster[] cc =  Type.findAll(tree, Cluster.class, Type.Segment, Type.Cluster);
+        EbmlMaster[] cc =  MKVType.findAll(tree, EbmlMaster.class, MKVType.Segment, MKVType.Cluster);
         inputStream = new FileInputStream(file);
         Assert.assertNotNull(cc);
         Assert.assertEquals(2, cc.length);
         
         try {    
             FileChannel frameReadingChannel = inputStream.getChannel();
-            List<BlockElement> bs = cc[0].getBlocksByTrackNumber(1);
+            List<MkvBlock> bs = getBlocksByTrackNumber(cc[0], 1);
             Assert.assertNotNull(bs);
             Assert.assertEquals(5, bs.size());
             for (int i = 0; i < 5; i++) {
-                byte[][] frames = bs.get(i).getFrames(frameReadingChannel);
+                FileChannel channel = frameReadingChannel;
+                ByteBuffer bb = ByteBuffer.allocate(bs.get(i).dataLen);
+                frameReadingChannel.position(bs.get(i).dataOffset);
+                frameReadingChannel.read(bb);
+                ByteBuffer[] frames = bs.get(i).getFrames(bb);
+                
                 Assert.assertNotNull(frames);
                 Assert.assertEquals(1, frames.length);
-                Assert.assertArrayEquals(rawFrames[i], frames[0]);
+                Assert.assertArrayEquals(rawFrames[i], MKVMuxerTest.bufferToArray(frames[0]));
             }
-            bs = cc[1].getBlocksByTrackNumber(1);
+            bs = getBlocksByTrackNumber(cc[1], 1);
             Assert.assertNotNull(bs);
             Assert.assertEquals(5, bs.size());
             for (int i = 5; i < 10; i++) {
-                byte[][] frames = bs.get(i - 5).getFrames(frameReadingChannel);
+                ByteBuffer bb = ByteBuffer.allocate(bs.get(i-5).dataLen);
+                frameReadingChannel.position(bs.get(i-5).dataOffset);
+                frameReadingChannel.read(bb);
+                ByteBuffer[] frames = bs.get(i - 5).getFrames(bb);
                 Assert.assertNotNull(frames);
                 Assert.assertEquals(1, frames.length);
-                Assert.assertArrayEquals(rawFrames[i], frames[0]);
+                Assert.assertArrayEquals(rawFrames[i], MKVMuxerTest.bufferToArray(frames[0]));
             }
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
     }
 
-    public void testCopyAndRead20Frames() throws Exception {
-        byte[][] rawFrames = new byte[20][];
-        rawFrames[0] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame001.mpeg4"));
-        rawFrames[1] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame002.mpeg4"));
-        rawFrames[2] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame003.mpeg4"));
-        rawFrames[3] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame004.mpeg4"));
-        rawFrames[4] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame005.mpeg4"));
-        rawFrames[5] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame006.mpeg4"));
-        rawFrames[6] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame007.mpeg4"));
-        rawFrames[7] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame008.mpeg4"));
-        rawFrames[8] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame009.mpeg4"));
-        rawFrames[9] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame010.mpeg4"));
-        rawFrames[10] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame011.mpeg4"));
-        rawFrames[11] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame012.mpeg4"));
-        rawFrames[12] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame013.mpeg4"));
-        rawFrames[13] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame014.mpeg4"));
-        rawFrames[14] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame015.mpeg4"));
-        rawFrames[15] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame016.mpeg4"));
-        rawFrames[16] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame017.mpeg4"));
-        rawFrames[17] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame018.mpeg4"));
-        rawFrames[18] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame019.mpeg4"));
-        rawFrames[19] = readFileToByteArray(new File("./src/test/resources/mkv/test1.frame020.mpeg4"));
-        FileInputStream inputStream = new FileInputStream(suite.test1);
-        SimpleEBMLParser parser = new SimpleEBMLParser(inputStream.getChannel());
-        try {
-            parser.parse();
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-        }
-
-        List<MasterElement> tree = parser.getTree();
-        FileInputStream remuxerInputStream = new FileInputStream(suite.test1);
-        File outputFile = new File(suite.test1.getParent(), "copy-" + suite.test1.getName());
-        FileOutputStream os = new FileOutputStream(outputFile);
-        MKVRemuxer remuxer = new MKVRemuxer(tree, remuxerInputStream.getChannel());
-        try {
-            remuxer.mux(os.getChannel());
-        } finally {
-            IOUtils.closeQuietly(remuxerInputStream);
-            IOUtils.closeQuietly(os);
-        }
-
-        inputStream = new FileInputStream(outputFile);
-        SimpleEBMLParser pp = new SimpleEBMLParser(inputStream.getChannel());
-        try {
-            pp.parse();
-            Cluster[] cc = Type.findAll(pp.getTree(), Cluster.class, Type.Segment, Type.Cluster);
-
-            Assert.assertNotNull(cc);
-            Assert.assertEquals(11, cc.length);
-            FileChannel frameReadingChannel = inputStream.getChannel();
-            List<BlockElement> bs = cc[0].getBlocksByTrackNumber(1);
-            Assert.assertNotNull(bs);
-            Assert.assertEquals(25, bs.size());
-            for (int i = 0; i < 20; i++) {
-                byte[][] frames = bs.get(i).getFrames(frameReadingChannel);
-                Assert.assertNotNull(frames);
-                Assert.assertEquals(1, frames.length);
-                Assert.assertArrayEquals(rawFrames[i], frames[0]);
-            }
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-        }
-    }
-
-    public void justCopy() throws Exception {
-        FileInputStream inputStream = new FileInputStream(suite.test5);
-        SimpleEBMLParser parser = new SimpleEBMLParser(inputStream.getChannel());
-        try {
-            parser.parse();
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-        }
-        List<MasterElement> tree = parser.getTree();
-        FileInputStream remuxerInputStream = new FileInputStream(suite.test5);
-        File outputFile = new File(suite.test5.getParent(), "copy-"+suite.test5.getName());
-        FileOutputStream os = new FileOutputStream(outputFile);
-        MKVRemuxer remuxer = new MKVRemuxer(tree, remuxerInputStream.getChannel());
-        try {
-            remuxer.mux(os.getChannel());
-        } finally {
-            IOUtils.closeQuietly(remuxerInputStream);
-            IOUtils.closeQuietly(os);
-        }
-    }
-
+    @Test
     public void showKeyFrames() throws IOException {
         FileInputStream inputStream = new FileInputStream(suite.test5);
-        SimpleEBMLParser p = new SimpleEBMLParser(inputStream.getChannel());
+        MKVParser p = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
+        List<EbmlMaster> t = null;
         try {
-            p.parse();
+            t = p.parse();
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
-        for (Cluster c : Type.findAll(p.getTree(), Cluster.class, Type.Segment, Type.Cluster)) {
-            for (Element e : c.children) {
-                if (e.type.equals(Type.SimpleBlock)) {
-                    BlockElement be = (BlockElement) e;
-                    System.out.println("offset: " + be.getSize() + " timecode: " + be.timecode);
+        for (EbmlMaster c : MKVType.findAll(t, EbmlMaster.class, Segment, Cluster)) {
+            for (EbmlBase e : c.children) {
+                if (e.type.equals(SimpleBlock)) {
+                    MkvBlock be = (MkvBlock) e;
+                    System.out.println("offset: " + be.size() + " timecode: " + be.timecode);
 
-                } else if (e.type.equals(Type.BlockGroup)) {
-                    BlockElement be = (BlockElement) Type.findFirst(e, Type.BlockGroup, Type.Block);
-                    System.out.println("offset: " + be.getSize() + " timecode: " + be.timecode);
+                } else if (e.type.equals(BlockGroup)) {
+                    MkvBlock be = (MkvBlock) MKVType.findFirst(e, BlockGroup, MKVType.Block);
+                    System.out.println("offset: " + be.size() + " timecode: " + be.timecode);
                 }
             }
         }
@@ -306,60 +131,64 @@ public class MKVMuxerTest {
 
     public void printTrackInfo() throws Exception {
         FileInputStream inputStream = new FileInputStream(suite.test1);
-        SimpleEBMLParser parser = new SimpleEBMLParser(inputStream.getChannel());
+        MKVParser parser = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
+        List<EbmlMaster> tree = null;
         try {
-            parser.parse();
+            tree = parser.parse();
         } finally {
             if (inputStream != null)
                 inputStream.close();
             inputStream = null;
         }
-        List<MasterElement> tree = parser.getTree();
-        UnsignedIntegerElement[] tcs = Type.findAll(tree, UnsignedIntegerElement.class, Type.Segment, Type.Cues, Type.CuePoint, Type.CueTime);
-        for (UnsignedIntegerElement tc : tcs)
+        EbmlUint[] tcs = MKVType.findAll(tree, EbmlUint.class, MKVType.Segment, MKVType.Cues, MKVType.CuePoint, MKVType.CueTime);
+        for (EbmlUint tc : tcs)
             System.out.println("CueTime " + tc.get() + " " + tc.offset);
     }
 
+    @Test
     public void testMatroskaBytes() throws Exception {
         Assert.assertArrayEquals(new byte[] { 0x6d, 0x61, 0x74, 0x72, 0x6f, 0x73, 0x6b, 0x61 }, "matroska".getBytes());
     }
 
+    @Test
     public void testEBMLHeaderMuxin() throws Exception {
-        MasterElement ebmlHeaderElem = (MasterElement) Type.createElementByType(Type.EBML);
+        EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
-        StringElement docTypeElem = (StringElement) Type.createElementByType(Type.DocType);
+        EbmlString docTypeElem = (EbmlString) MKVType.createByType(DocType);
         docTypeElem.set("matroska");
 
-        UnsignedIntegerElement docTypeVersionElem = (UnsignedIntegerElement) Type.createElementByType(Type.DocTypeVersion);
+        EbmlUint docTypeVersionElem = (EbmlUint) MKVType.createByType(DocTypeVersion);
         docTypeVersionElem.set(1);
 
-        UnsignedIntegerElement docTypeReadVersionElem = (UnsignedIntegerElement) Type.createElementByType(Type.DocTypeReadVersion);
+        EbmlUint docTypeReadVersionElem = (EbmlUint) MKVType.createByType(DocTypeReadVersion);
         docTypeReadVersionElem.set(1);
 
-        ebmlHeaderElem.addChildElement(docTypeElem);
-        ebmlHeaderElem.addChildElement(docTypeVersionElem);
-        ebmlHeaderElem.addChildElement(docTypeReadVersionElem);
-        ByteBuffer bb = ebmlHeaderElem.mux();
+        ebmlHeaderElem.add(docTypeElem);
+        ebmlHeaderElem.add(docTypeVersionElem);
+        ebmlHeaderElem.add(docTypeReadVersionElem);
+        ByteBuffer bb = ebmlHeaderElem.getData();
 
         System.out.println("c: " + bb.capacity() + " p: " + bb.position() + " l: " + bb.limit());
     }
 
-    public void testMasterElementMuxig() throws Exception {
-        MasterElement ebmlHeaderElem = (MasterElement) Type.createElementByType(Type.EBML);
+    @Test
+    public void testEbmlMasterMuxig() throws Exception {
+        EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
-        StringElement docTypeElem = (StringElement) Type.createElementByType(Type.DocType);
+        EbmlString docTypeElem = (EbmlString) MKVType.createByType(DocType);
         docTypeElem.set("matroska");
 
-        ebmlHeaderElem.addChildElement(docTypeElem);
-        ByteBuffer bb = ebmlHeaderElem.mux();
+        ebmlHeaderElem.add(docTypeElem);
+        ByteBuffer bb = ebmlHeaderElem.getData();
 
         Assert.assertArrayEquals(new byte[] { 0x1A, 0x45, (byte) 0xDF, (byte) 0xA3, (byte) 0x8B, 0x42, (byte) 0x82, (byte) 0x88, 0x6d, 0x61, 0x74, 0x72, 0x6f, 0x73, 0x6b, 0x61 }, bb.array());
     }
 
-    public void testEmptyMasterElementMuxig() throws Exception {
-        MasterElement ebmlHeaderElem = (MasterElement) Type.createElementByType(Type.EBML);
+    @Test
+    public void testEmptyEbmlMasterMuxig() throws Exception {
+        EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
-        ByteBuffer bb = ebmlHeaderElem.mux();
+        ByteBuffer bb = ebmlHeaderElem.getData();
 
         Assert.assertArrayEquals(new byte[] { 0x1A, 0x45, (byte) 0xDF, (byte) 0xA3, (byte) 0x80 }, bb.array());
     }
@@ -371,26 +200,47 @@ public class MKVMuxerTest {
             Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
     }
 
+    @Test
     public void copyMuxing() throws Exception {
         FileInputStream inputStream = new FileInputStream(suite.test3);
-        SimpleEBMLParser parser = new SimpleEBMLParser(inputStream.getChannel());
+        MKVParser parser = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
+        List<EbmlMaster> tree = null;
         try {
-            parser.parse();
+            tree = parser.parse();
         } finally {
             if (inputStream != null)
                 inputStream.close();
             inputStream = null;
         }
-        List<MasterElement> tree = parser.getTree();
+        
+        
+        
         FileInputStream remuxerInputStream = new FileInputStream(suite.test3);
         FileOutputStream os = new FileOutputStream(new File(suite.test3.getParent(), "copy-" + suite.test3.getName()));
+        
 
         try {
-            for (BlockElement be : Type.findAll(tree, BlockElement.class, Segment, Cluster, SimpleBlock))
-                be.readData(remuxerInputStream.getChannel());
+            FileChannel channel = remuxerInputStream.getChannel();
+            for (MkvBlock be : MKVType.findAll(tree, MkvBlock.class, Segment, Cluster, SimpleBlock)) {
+                ByteBuffer bb = ByteBuffer.allocate(be.dataLen);
+                
+                channel.position(be.dataOffset);
+                int read = channel.read(bb);
+                bb.flip();
+                be.readFrames(bb);
+            }
+            
+            for (MkvBlock be : MKVType.findAll(tree, MkvBlock.class, Segment, Cluster, BlockGroup, Block)) {
+                ByteBuffer bb = ByteBuffer.allocate(be.dataLen);
+                
+                channel.position(be.dataOffset);
+                int read = channel.read(bb);
+                bb.flip();
+                be.readFrames(bb);
+            }
 
-            for (MasterElement e : tree)
-                e.mux(os.getChannel());
+            for (EbmlMaster e : tree)
+                e.mux(new FileChannelWrapper(os.getChannel()));
         } finally {
             if (remuxerInputStream != null)
                 remuxerInputStream.close();
@@ -402,26 +252,27 @@ public class MKVMuxerTest {
 
     public void testName() throws Exception {
         FileInputStream inputStream = new FileInputStream(suite.test3);
-        SimpleEBMLParser parser = new SimpleEBMLParser(inputStream.getChannel());
+        MKVParser parser = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
+        List<EbmlMaster> tree = null;
         try {
-            parser.parse();
+            tree = parser.parse();
         } finally {
             if (inputStream != null)
                 inputStream.close();
             inputStream = null;
         }
-        Cluster[] cc = Type.findAll(parser.getTree(), Cluster.class, Type.Segment, Type.Cluster);
+        EbmlMaster[] cc = MKVType.findAll(tree, EbmlMaster.class, MKVType.Segment, MKVType.Cluster);
         printCueTable(cc);
     }
 
-    private void printCueTable(Cluster[] cc) {
+    private void printCueTable(EbmlMaster[] cc) {
         long time = 0;
         long predictedOffset = 0;
-        for (Cluster c : cc) {
-            long csize = c.getSize();
-            System.out.println("cluster " + ((UnsignedIntegerElement) Type.findFirst(c, Type.Cluster, Type.Timecode)).get() + " size: " + csize + " predOffset: " + predictedOffset);
-            long min = c.getMinTimecode(1);
-            long max = c.getMaxTimecode(1);
+        for (EbmlMaster c : cc) {
+            long csize = c.size();
+            System.out.println("cluster " + ((EbmlUint) MKVType.findFirst(c, MKVType.Cluster, MKVType.Timecode)).get() + " size: " + csize + " predOffset: " + predictedOffset);
+            long min = getMinTimecode(c, 1);
+            long max = getMaxTimecode(c, 1);
             while (min <= time && time <= max) {
                 System.out.println("timecode: " + time + " offset: " + c.offset);
                 time += 1000;
@@ -429,7 +280,47 @@ public class MKVMuxerTest {
             predictedOffset += csize;
         }
     }
+    
+    public static long getMinTimecode(EbmlMaster c, int trackNr) {
+        EbmlUint timecode = (EbmlUint) MKVType.findFirst(c, Cluster, Timecode);
+        long clusterTimecode = timecode.get();
+        long minTimecode = clusterTimecode;
+        for (MkvBlock be : getBlocksByTrackNumber(c, trackNr))
+            if (clusterTimecode + be.timecode < minTimecode)
+                minTimecode = clusterTimecode + be.timecode;
 
+        return minTimecode;
+    }
+
+    public static long getMaxTimecode(EbmlMaster c, int trackNr) {
+        EbmlUint timecode = (EbmlUint) findFirst(c, Cluster, Timecode);
+        long clusterTimecode = timecode.get();
+        long maxTimecode = clusterTimecode;
+        for (MkvBlock be : getBlocksByTrackNumber(c, trackNr))
+            if (clusterTimecode + be.timecode > maxTimecode)
+                maxTimecode = clusterTimecode + be.timecode;
+
+        return maxTimecode;
+    }
+    
+    public static List<MkvBlock> getBlocksByTrackNumber(EbmlMaster c, long nr) {
+        List<MkvBlock> blocks = new ArrayList<MkvBlock>();
+        for (EbmlBase child : c.children) {
+            MkvBlock block = null;
+            if (child.type.equals(SimpleBlock))
+                block = (MkvBlock) child;
+            else if (child.type.equals(BlockGroup))
+                block = (MkvBlock) findFirst(child, BlockGroup, Block);
+            else
+                continue;
+
+            if (block.trackNumber == nr)
+                blocks.add(block);
+        }
+        return blocks;
+    }
+
+    @Test
     public void testBasicMathDivision() throws Exception {
         int framesPerCluster = 25;
         int i = 0;
@@ -440,6 +331,7 @@ public class MKVMuxerTest {
         Assert.assertEquals(0, i%framesPerCluster);
     }
     
+    @Test
     public void testBasicLinkedList() throws Exception {
         LinkedList<Integer> ll = new LinkedList<Integer>();
         ll.add(1);
@@ -448,6 +340,12 @@ public class MKVMuxerTest {
         Assert.assertEquals(Integer.valueOf(2), ll.getLast());
         ll.add(3);
         Assert.assertEquals(Integer.valueOf(3), ll.getLast());
+    }
+
+    public static byte[] bufferToArray(ByteBuffer bb) {
+        byte[] ar = new byte[bb.remaining()];
+        bb.get(ar);
+        return ar;
     }
 
 }

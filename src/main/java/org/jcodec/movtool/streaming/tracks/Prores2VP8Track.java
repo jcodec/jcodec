@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresToThumb2x2;
 import org.jcodec.codecs.prores.ProresToThumb4x4;
+import org.jcodec.codecs.vpx.NopRateControl;
 import org.jcodec.codecs.vpx.VP8Encoder;
-import org.jcodec.codecs.vpx.VP8FixedRateControl;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.Size;
@@ -31,12 +31,12 @@ public class Prores2VP8Track extends TranscodeTrack {
 
     @Override
     protected VideoEncoder getEncoder(int rate) {
-        return new VP8Encoder(new VP8FixedRateControl(rate));
+        return new VP8Encoder(new NopRateControl(12));
     }
 
     @Override
     protected int getFrameSize(int mbCount, int rate) {
-        return 0;
+        return 278528;
     }
 
     @Override

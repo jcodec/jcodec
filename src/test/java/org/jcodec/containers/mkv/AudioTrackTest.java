@@ -2,15 +2,26 @@ package org.jcodec.containers.mkv;
 
 import static org.jcodec.common.IOUtils.closeQuietly;
 import static org.jcodec.common.IOUtils.readFileToByteArray;
+import static org.jcodec.containers.mkv.MKVMuxerTest.bufferToArray;
 import static org.jcodec.containers.mkv.MKVMuxerTest.tildeExpand;
+import static org.jcodec.containers.mkv.MKVType.Cluster;
+import static org.jcodec.containers.mkv.MKVType.Segment;
+import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
+import static org.jcodec.containers.mkv.MKVType.findAll;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
 
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.Packet;
-import org.jcodec.containers.mkv.MKVDemuxer.AudioTrack;
-import org.jcodec.containers.mkv.elements.BlockElement;
+import org.jcodec.containers.mkv.boxes.EbmlMaster;
+import org.jcodec.containers.mkv.boxes.MkvBlock;
+import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
+import org.jcodec.containers.mkv.demuxer.MKVDemuxer.AudioTrack;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,25 +29,28 @@ import org.junit.Test;
 
 public class AudioTrackTest {
 
-    private SimpleEBMLParser par;
+    private MKVParser par;
     private FileInputStream demInputStream;
     private MKVDemuxer dem;
     private boolean showInterlacedBlocks = false;
 
+    @Test
     public void testSoundSamples() throws Exception {
-        AudioTrack audio = dem.getAudioTracks().get(0);
+        AudioTrack audio = (AudioTrack) dem.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
-        audio.seekPointer(9);
+        audio.gotoFrame(9);
         
-        Packet p = audio.getFrames(1);
-        byte[] audioSample = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
-        Assert.assertArrayEquals(audioSample, p.getData().array());
+        Packet p = audio.nextFrame();
+        ByteBuffer audioSample = NIOUtils.fetchFrom(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
+        
+        Assert.assertArrayEquals(audioSample.array(), bufferToArray(p.getData()));
     }
-    
+
+    @Test
     public void testTwoSoundSamples() throws Exception {
-        AudioTrack audio = dem.getAudioTracks().get(0);
+        AudioTrack audio = (AudioTrack) dem.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
-        audio.seekPointer(8);
+        audio.gotoFrame(8);
         
         Packet p = audio.getFrames(2);
         byte[] sample08 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3"));
@@ -53,15 +67,16 @@ public class AudioTrackTest {
         if (!suite.isSuitePresent())
             Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
         FileInputStream inputStream = new FileInputStream(suite.test1);
-        par = new SimpleEBMLParser(inputStream .getChannel());
+        par = new MKVParser(new FileChannelWrapper(inputStream .getChannel()));
+        List<EbmlMaster> mkv = null;
         try {
-            par.parse();
+            mkv = par.parse();
         } finally {
             closeQuietly(inputStream);
         }
         if (showInterlacedBlocks) {
-            BlockElement[] blocks = Type.findAll(par.getTree(), BlockElement.class, Type.Segment, Type.Cluster, Type.SimpleBlock);
-            for (BlockElement be : blocks) {
+            MkvBlock[] blocks = findAll(mkv, MkvBlock.class, Segment, Cluster, SimpleBlock);
+            for (MkvBlock be : blocks) {
                 System.out.println("\nTRACK " + be.trackNumber);
                 String pref = "";
                 if (be.lacingPresent) {
@@ -73,7 +88,7 @@ public class AudioTrackTest {
         }
         
         demInputStream = new FileInputStream(suite.test1);
-        dem = new MKVDemuxer(par.getTree(), demInputStream.getChannel());
+        dem = new MKVDemuxer(mkv, new FileChannelWrapper(demInputStream.getChannel()));
     }
     
     @After

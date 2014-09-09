@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
-import org.jcodec.common.IOUtils;
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mkv.MKVMuxerTest;
 import org.junit.Assert;
@@ -15,19 +15,19 @@ import org.junit.Test;
 
 public class VP8DecoderTest {
 
-    private byte[] bb;
+    private ByteBuffer bb;
     private VP8Decoder dec;
 
     @Test
     public void testKF() throws Exception {
-        dec.decode(ByteBuffer.wrap(bb));
+        dec.decode(bb.duplicate());
         
         ImageIO.write(dec.getBufferedImage(), "png", MKVMuxerTest.tildeExpand("~/decoded.png"));
     }
     
     @Test
     public void testKFToPicture() throws Exception {
-        dec.decode(ByteBuffer.wrap(bb));
+        dec.decode(bb.duplicate());
         Picture p = dec.getPicture();
         ImageIO.write(JCodecUtil.toBufferedImage(p), "png", MKVMuxerTest.tildeExpand("~/decoded.pic.png"));
     }
@@ -55,8 +55,8 @@ public class VP8DecoderTest {
     @Before
     public void setUp() throws IOException {
         String path = "src/test/resources/fr.vp8";
-        bb = IOUtils.readFileToByteArray(MKVMuxerTest.tildeExpand(path));
-        System.out.println("byte array length: " + bb.length);
+        bb = NIOUtils.fetchFrom(MKVMuxerTest.tildeExpand(path));
+        System.out.println("byte array length: " + bb.limit());
         dec = new VP8Decoder();
     }
 

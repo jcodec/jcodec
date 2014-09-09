@@ -18,6 +18,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.LinkedList;
 
 import javax.imageio.ImageIO;
 
@@ -49,11 +50,10 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mkv.MKVDemuxer;
-import org.jcodec.containers.mkv.MKVDemuxer.VideoTrack;
-import org.jcodec.containers.mkv.MKVMuxer;
-import org.jcodec.containers.mkv.MKVMuxer.MKVMuxerTrack;
-import org.jcodec.containers.mkv.elements.BlockElement;
+import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
+import org.jcodec.containers.mkv.demuxer.MKVDemuxer.VideoTrack;
+import org.jcodec.containers.mkv.muxer.MKVMuxer;
+import org.jcodec.containers.mkv.muxer.MKVMuxerTrack;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4DemuxerException;
 import org.jcodec.containers.mp4.MP4Packet;
@@ -75,7 +75,6 @@ import org.jcodec.scale.Yuv420pToRgb;
 import org.jcodec.scale.Yuv420pToYuv422p;
 import org.jcodec.scale.Yuv422pToRgb;
 import org.jcodec.scale.Yuv422pToYuv420p;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -180,7 +179,7 @@ public class TranscodeMain {
             VP8Encoder encoder = new VP8Encoder(10); // qp
             RgbToYuv420 transform = new RgbToYuv420(0, 0);
 
-            MKVMuxer muxer = new MKVMuxer(sink);
+            MKVMuxer muxer = new MKVMuxer();
             MKVMuxerTrack videoTrack = null;
             
             int i;
@@ -190,25 +189,23 @@ public class TranscodeMain {
                     continue;
 
                 BufferedImage rgb = ImageIO.read(nextImg);
-                if (videoTrack == null) {
-                    videoTrack = muxer.addVideoTrack(new Size(rgb.getWidth(), rgb.getHeight()), "V_VP8");
-                    videoTrack.setTgtChunkDuration(Rational.ONE, SEC);
-                }
+
+                if (videoTrack == null) 
+                    videoTrack = muxer.createVideoTrack(new Size(rgb.getWidth(), rgb.getHeight()), "V_VP8");
                 
                 Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);
                 transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
                 ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
                 ByteBuffer ff = encoder.encodeFrame(buf, yuv);
-                BlockElement se = BlockElement.keyFrame(videoTrack.trackId, i - 1, ff.array());
-                videoTrack.addSampleEntry(se);
 
+                videoTrack.addSampleEntry(ff, i-1);
             }
             if (i == 1) {
                 System.out.println("Image sequence not found");
                 return;
             }
-            muxer.mux();
+            muxer.mux(sink);
         } finally {
             IOUtils.closeQuietly(sink);
         }
@@ -283,7 +280,7 @@ public class TranscodeMain {
 
             VP8Encoder encoder = new VP8Encoder(10); // qp
 
-            MKVMuxer muxer = new MKVMuxer(sink);
+            MKVMuxer muxer = new MKVMuxer();
             MKVMuxerTrack videoTrack = null;
 
             AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
@@ -307,23 +304,21 @@ public class TranscodeMain {
                 _out.clear();
                 
                 ByteBuffer result = encoder.encodeFrame(_out, target2);
-                if (videoTrack == null) {
-                    videoTrack = muxer.addVideoTrack(new Size(dec.getWidth(), dec.getHeight()), "V_VP8");
-                    videoTrack.setTgtChunkDuration(Rational.ONE, SEC);
-                }
+                if (videoTrack == null) 
+                    videoTrack = muxer.createVideoTrack(new Size(dec.getWidth(), dec.getHeight()), "V_VP8");
+                
 //                Packet packet = new Packet(result, inFrame.getMediaPts(), inFrame.getTimescale(),
 //                        inFrame.getDuration(), inFrame.getFrameNo(), true, null);
                 byte[] array = new byte[result.limit()];
                 System.arraycopy(result.array(), result.position(), array, 0, array.length);
-                BlockElement se = BlockElement.keyFrame(videoTrack.trackId, i - 1, array);
-                videoTrack.addSampleEntry(se);
+                videoTrack.addSampleEntry(ByteBuffer.wrap(array), i - 1);
                 
                 if (i % 100 == 0) {
                     long elapse = System.currentTimeMillis() - start;
                     System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
                 }
             }
-            muxer.mux();
+            muxer.mux(sink);
         } finally {
             if (sink != null)
                 sink.close();
@@ -341,24 +336,28 @@ public class TranscodeMain {
 
         FileInputStream inputStream = new FileInputStream(file);
         try {
-            MKVDemuxer demux = MKVDemuxer.getDemuxer(inputStream.getChannel());
+            MKVDemuxer demux = MKVDemuxer.getDemuxer(new FileChannelWrapper(inputStream.getChannel()));
 
             VP8Decoder decoder = new VP8Decoder();
             Transform transform = new Yuv420pToRgb(0, 0);
 
-            VideoTrack inTrack = demux.getVideoTrack();
+            DemuxerTrack inTrack = demux.getVideoTrack();
 
-            Picture rgb = Picture.create((int) inTrack.pixelWidth, (int) inTrack.pixelHeight, ColorSpace.RGB);
-            BufferedImage bi = new BufferedImage((int) inTrack.pixelWidth, (int) inTrack.pixelHeight,
+            Picture rgb = Picture.create(demux.getPictureWidth(), demux.getPictureHeight(), ColorSpace.RGB);
+            BufferedImage bi = new BufferedImage(demux.getPictureWidth(), demux.getPictureHeight(),
                     BufferedImage.TYPE_3BYTE_BGR);
 
             Packet inFrame;
-            int totalFrames = (int) inTrack.getFrameCount();
-            for (int i = 1; (inFrame = inTrack.getFrames(1)) != null && i <= 200; i++) {
+            for (int i = 1; (inFrame = inTrack.nextFrame()) != null && i <= 10;) {
                 if (!inFrame.isKeyFrame())
                     continue;
 
-                decoder.decode(inFrame.getData());
+                try {
+                    decoder.decode(inFrame.getData());
+                } catch (AssertionError ae) {
+                    ae.printStackTrace(System.err);
+                    continue;
+                }
                 Picture pic = decoder.getPicture();
                 if (bi == null)
                     bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
@@ -368,8 +367,6 @@ public class TranscodeMain {
                 AWTUtil.toBufferedImage(rgb, bi);
                 ImageIO.write(bi, "png", new File(format(out, i++)));
 
-                if (i % 100 == 0)
-                    System.out.println((i * 100 / totalFrames) + "%");
             }
         } finally {
             IOUtils.closeQuietly(inputStream);
@@ -381,7 +378,7 @@ public class TranscodeMain {
         FileChannelWrapper sink = null;
         try {
             sink = new FileChannelWrapper(fos.getChannel());
-            MKVMuxer muxer = new MKVMuxer(sink);
+            MKVMuxer muxer = new MKVMuxer();
 
             H264Encoder encoder = new H264Encoder();
             RgbToYuv420 transform = new RgbToYuv420(0, 0);
@@ -394,24 +391,21 @@ public class TranscodeMain {
                     break;
                 BufferedImage rgb = ImageIO.read(nextImg);
 
-                if (videoTrack == null) {
-                    videoTrack = muxer.addVideoTrack(new Size(rgb.getWidth(), rgb.getHeight()), "V_MPEG4/ISO/AVC");
-                    videoTrack.setTgtChunkDuration(Rational.ONE, SEC);
-                }
+                if (videoTrack == null)
+                    videoTrack = muxer.createVideoTrack(new Size(rgb.getWidth(), rgb.getHeight()), "V_MPEG4/ISO/AVC");
+                
                 Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);
                 transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
                 ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
                 ByteBuffer ff = encoder.encodeFrame(buf, yuv);
-
-                BlockElement se = BlockElement.keyFrame(videoTrack.trackId, i - 1, ff.array());
-                videoTrack.addSampleEntry(se);
+                videoTrack.addSampleEntry(ff, i);
             }
             if (i == 1) {
                 System.out.println("Image sequence not found");
                 return;
             }
-            muxer.mux();
+            muxer.mux(sink);
         } finally {
             IOUtils.closeQuietly(fos);
             if (sink != null)
@@ -435,41 +429,45 @@ public class TranscodeMain {
         }
 
         FileInputStream inputStream = new FileInputStream(file);
+        LinkedList<Packet> presentationStack = new LinkedList<Packet>();
         try {
-            MKVDemuxer demux = MKVDemuxer.getDemuxer(inputStream.getChannel());
+            MKVDemuxer demux = MKVDemuxer.getDemuxer(new FileChannelWrapper(inputStream.getChannel()));
 
             H264Decoder decoder = new H264Decoder();
             Transform transform = new Yuv420pToRgb(0, 0);
 
-            VideoTrack inTrack = demux.getVideoTrack();
+            DemuxerTrack inTrack = demux.getVideoTrack();
 
-            Picture target1 = Picture.create(((int) inTrack.pixelWidth + 15) & ~0xf, ((int) inTrack.pixelHeight + 15)
-                    & ~0xf, ColorSpace.YUV420);
-            Picture rgb = Picture.create((int) inTrack.pixelWidth, (int) inTrack.pixelHeight, ColorSpace.RGB);
-            ByteBuffer _out = ByteBuffer.allocate((int) inTrack.pixelWidth * (int) inTrack.pixelHeight * 6);
-            BufferedImage bi = new BufferedImage((int) inTrack.pixelWidth, (int) inTrack.pixelHeight,
+            Picture rgb = Picture.create(demux.getPictureWidth(), demux.getPictureHeight(), ColorSpace.RGB);
+            BufferedImage bi = new BufferedImage(demux.getPictureWidth(), demux.getPictureHeight(),
                     BufferedImage.TYPE_3BYTE_BGR);
             AvcCBox avcC = new AvcCBox();
-            avcC.parse(inTrack.codecState);
+            avcC.parse(((VideoTrack) inTrack).getCodecState());
 
             decoder.addSps(avcC.getSpsList());
             decoder.addPps(avcC.getPpsList());
 
             Packet inFrame;
-            int totalFrames = (int) inTrack.getFrameCount();
-            for (int i = 1; (inFrame = inTrack.getFrames(1)) != null && i <= 200; i++) {
-                Picture buf = Picture.create(1920, 1088, ColorSpace.YUV422_10);
-                Picture pic = decoder.decodeFrame(inFrame.getData(), buf.getData());
+            int gopSize = 0;
+            int prevGopsSize = 0;
+            for (int i = 1; (inFrame = inTrack.nextFrame()) != null && i <= 200; i++) {
+                Picture buf = Picture.create(demux.getPictureWidth(), demux.getPictureHeight(), ColorSpace.YUV422_10);
+                Frame pic = (Frame) decoder.decodeFrame(H264Utils.splitMOVPacket(inFrame.getData(), avcC), buf.getData());
+                if (pic.getPOC() == 0){
+                    prevGopsSize += gopSize;
+                    gopSize = 1;
+                } else 
+                    gopSize++;
+                
                 if (bi == null)
                     bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
                 if (rgb == null)
                     rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
                 transform.transform(pic, rgb);
                 AWTUtil.toBufferedImage(rgb, bi);
-                ImageIO.write(bi, "png", new File(format(out, i++)));
-
-                if (i % 100 == 0)
-                    System.out.println((i * 100 / totalFrames) + "%");
+                int framePresentationIndex = (pic.getPOC()>>1)+prevGopsSize;
+                System.out.println("farme"+framePresentationIndex+".png  ("+pic.getPOC()+">>2 == "+(pic.getPOC()>>1)+" ) +"+prevGopsSize );
+                ImageIO.write(bi, "png", new File(format(out, framePresentationIndex)));
             }
         } finally {
             IOUtils.closeQuietly(inputStream);
@@ -708,8 +706,10 @@ public class TranscodeMain {
 
     private static void png2avc(String pattern, String out) throws IOException {
         FileChannel sink = null;
+        FileOutputStream fos = null;
         try {
-            sink = new FileOutputStream(new File(out)).getChannel();
+            fos = new FileOutputStream(new File(out));
+            sink = fos.getChannel();
             H264Encoder encoder = new H264Encoder();
             RgbToYuv420 transform = new RgbToYuv420(0, 0);
 
@@ -731,8 +731,8 @@ public class TranscodeMain {
                 return;
             }
         } finally {
-            if (sink != null)
-                sink.close();
+            IOUtils.closeQuietly(sink);
+            IOUtils.closeQuietly(fos);
         }
     }
 

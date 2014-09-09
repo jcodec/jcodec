@@ -1,22 +1,13 @@
 package org.jcodec.movtool.streaming;
 
-import static org.jcodec.containers.mkv.MKVMuxer.createAndAddElement;
-
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.containers.mkv.OnDemandMKVMuxer.MKVMuxerTrack;
-import org.jcodec.containers.mkv.Type;
-import org.jcodec.containers.mkv.ebml.MasterElement;
-import org.jcodec.containers.mkv.elements.BlockElement;
-import org.jcodec.containers.mkv.elements.Cluster;
+import org.jcodec.containers.mkv.MKVStreamingMuxer;
 
 /**
- * This class is part of JCodec ( www.jcodec.org ) This software is distributed
- * under FreeBSD License
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
  * 
  * WebM specific muxing
  * 
@@ -25,97 +16,53 @@ import org.jcodec.containers.mkv.elements.Cluster;
  */
 public class VirtualWebmMovie extends VirtualMovie {
     
-    List<MKVMuxerTrack> tracks = new ArrayList<MKVMuxerTrack>();
-    private MasterElement mkvInfo;
-    private MasterElement mkvTracks;
-    private MasterElement mkvCues;
-    private MasterElement mkvSeekHead;
-    private MasterElement ebmlHeader;
-    private MasterElement segmentElem;
-    private LinkedList<Cluster> mkvClusters = new LinkedList<Cluster>();
+    private MKVStreamingMuxer muxer = null;
 
-    public VirtualWebmMovie(VirtualTrack[] tracks) throws IOException {
+    public VirtualWebmMovie(VirtualTrack... tracks) throws IOException {
         super(tracks);
     }
-
+    
     @Override
-    protected MovieSegment packetChunk(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long pos) {
-        return new WebmCluster(track, pkt, chunkNo, trackNo, pos);
-    }
 
-    @Override
-    protected MovieSegment headerChunk(List<MovieSegment> chunks, VirtualTrack[] tracks, long dataSize)
-            throws IOException {
-        
-        return null;
-    }
+    protected void muxTracks() throws IOException {
+        muxer = new MKVStreamingMuxer();
+        List<MovieSegment> chch = new ArrayList<MovieSegment>();
+        VirtualPacket[] heads = new VirtualPacket[tracks.length], tails = new VirtualPacket[tracks.length];
+        long currentlyAddedContentSize = 0;
+        for (int curChunk = 1;; curChunk++) {
+            int min = -1;
 
-    public static class WebmCluster implements MovieSegment {
-        
-        BlockElement be = new BlockElement(Type.SimpleBlock.id);
-        Cluster c = Type.createElementByType(Type.Cluster);
-        private VirtualPacket pkt;
-        private int chunkNo;
-        private int trackNo;
-        private long pos;
-        private VirtualTrack track;
-
-        public WebmCluster(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long pos) {
-            this.track = track;
-            this.pkt = pkt;
-            this.chunkNo = chunkNo;
-            this.trackNo = trackNo;
-            this.pos = pos;
-            createAndAddElement(c, Type.Timecode, pkt.getFrameNo());
-            c.timecode = pkt.getFrameNo();
-        }
-
-        @Override
-        public ByteBuffer getData() throws IOException {
-            return pkt.getData().duplicate();
-        }
-
-        @Override
-        public int getNo() {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
-        @Override
-        public long getPos() {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
-        @Override
-        public int getDataLen() throws IOException {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-        
-        /**
-         *      int framesPerCluster = NANOSECONDS_IN_A_SECOND/timescale;
-                long i=0;
-                for (BlockElement be : blocks){
-                    if (i%framesPerCluster == 0) {
-                        Cluster c = Type.createElementByType(Type.Cluster);
-                        createAndAddElement(c, Type.Timecode, i);
-                        c.timecode = i;
-                        
-                        if (!mkvClusters.isEmpty()){
-                            long prevSize = mkvClusters.getLast().getSize();
-                            createAndAddElement(c, Type.PrevSize, prevSize);
-                            c.prevsize = prevSize;
-                        }
-                        
-                        mkvClusters.add(c);
-                    }
-                    Cluster c = mkvClusters.getLast();
-                    be.timecode = (int)(i - c.timecode);
-                    c.addChildElement(be);
-                    i++;
+            for (int i = 0; i < heads.length; i++) {
+                if (heads[i] == null) {
+                    heads[i] = tracks[i].nextPacket();
+                    if (heads[i] == null)
+                        continue;
                 }
-         */
+
+                min = min == -1 || heads[i].getPts() < heads[min].getPts() ? i : min;
+            }
+            if (min == -1)
+                break;
+            MovieSegment packetChunk = packetChunk(tracks[min], heads[min], curChunk, min, currentlyAddedContentSize);
+            chch.add(packetChunk);
+            currentlyAddedContentSize += packetChunk.getDataLen();
+            tails[min] = heads[min];
+            heads[min] = tracks[min].nextPacket();
+        }
         
+        headerChunk = headerChunk(chch, tracks, size);
+        size += headerChunk.getDataLen()+currentlyAddedContentSize;
+        
+        chunks = chch.toArray(new MovieSegment[0]);
+    }
+
+    @Override
+    protected MovieSegment packetChunk(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long previousClustersSize) {
+        return muxer.preparePacket(track, pkt, chunkNo, trackNo, previousClustersSize);
+    }
+
+    @Override
+    protected MovieSegment headerChunk(List<MovieSegment> chunks, VirtualTrack[] tracks, long dataSize) throws IOException {
+        return muxer.prepareHeader(chunks, tracks, dataSize);
     }
 }

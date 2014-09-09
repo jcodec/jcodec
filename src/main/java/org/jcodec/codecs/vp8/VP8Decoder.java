@@ -33,28 +33,19 @@ public class VP8Decoder {
             frame.get(firstThree);
 
             boolean keyFrame = getBitInBytes(firstThree, 0) == 0;
-//            System.out.println("frame type: " + (keyFrame ? "key" : ""));
             int version = getBitsInBytes(firstThree, 1, 3);
-//            System.out.println("version: " + version);
             boolean showFrame = getBitInBytes(firstThree, 4) > 0;
-//            System.out.println("show frame: " + showFrame);
             int partitionSize = getBitsInBytes(firstThree, 5, 19);
-//            System.out.println("partition size: " + partitionSize);
             String threeByteToken = printHexByte(frame.get()) + " " + printHexByte(frame.get()) + " " + printHexByte(frame.get());
-//            System.out.println("three byte token: " +threeByteToken );
 
             int twoBytesWidth = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
             int twoBytesHeight = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
             width = (twoBytesWidth & 0x3fff);
             height = (twoBytesHeight & 0x3fff);
-//            System.out.println("size: " + width + "x" + height);
-//            System.out.println("horizontal scale: " + (twoBytesWidth >> 14));
-//            System.out.println("vertical scale: " + (twoBytesHeight >> 14));
 
             int numberOfMBRows = getMacroblockCount(height);
             int numberOfMBCols = getMacroblockCount(width);
 
-//            System.out.println("macroblocks: " + numberOfMBRows + "x" + numberOfMBCols);
             /** Init macroblocks and subblocks */
             mbs = new Macroblock[numberOfMBRows + 2][numberOfMBCols + 2];
             for (int row = 0; row < numberOfMBRows + 2; row++)
@@ -62,28 +53,19 @@ public class VP8Decoder {
                     mbs[row][col] = new Macroblock(row, col);
 
             int headerOffset = frame.position();
-//            System.out.println("header offset: " + headerOffset);
             BooleanArithmeticDecoder headerDecoder = new BooleanArithmeticDecoder(frame, 0);
             boolean isYUVColorSpace = (headerDecoder.decodeBit() == 0);
-//            System.out.println("color space: " + (isYUVColorSpace ? "YUV" : "UNKNOWN"));
 
             boolean clampingRequired = headerDecoder.decodeBit() == 0;
-//            System.out.println("clamp type: " + (clampingRequired ? "clampt to match [0,255]" : "no clamping needed"));
             int segmentation = headerDecoder.decodeBit();
-//            System.out.println("segmentation: " + (segmentation == 1 ? "yes" : "no"));
-            Assert.assertEquals(0, segmentation);
+            Assert.assertEquals("Frame has segmentation, segment decoding is not ", 0, segmentation);
             int simpleFilter = headerDecoder.decodeBit();
-//            System.out.println("simpleFilter: " + simpleFilter);
             int filterLevel = headerDecoder.decodeInt(6);
             int filterType = (filterLevel == 0) ? 0 : (simpleFilter > 0) ? 1 : 2;
-//            System.out.println("filterLevel: " + filterLevel);
             int sharpnessLevel = headerDecoder.decodeInt(3);
-//            System.out.println("sharpnessLevel: " + sharpnessLevel);
             int loopFilterDeltaFlag = headerDecoder.decodeBit();
-//            System.out.println("loopFilterDeltaFlag: " + (loopFilterDeltaFlag == 1 ? "yes" : "no"));
             Assert.assertEquals(1, loopFilterDeltaFlag);
             int loopFilterDeltaUpdate = headerDecoder.decodeBit();
-//            System.out.println("loopFilterDeltaUpdate: " + (loopFilterDeltaUpdate == 1 ? "yes" : "no"));
             Assert.assertEquals(1, loopFilterDeltaUpdate);
             int[] refLoopFilterDeltas = new int[MAX_REF_LF_DELTAS];
             int[] modeLoopFilterDeltas = new int[MAX_MODE_LF_DELTAS];
@@ -93,7 +75,6 @@ public class VP8Decoder {
                     refLoopFilterDeltas[i] = headerDecoder.decodeInt(6);;
                     if (headerDecoder.decodeBit() > 0) // Apply sign
                         refLoopFilterDeltas[i] = refLoopFilterDeltas[i] * -1;
-//                    System.out.println("ref_lf_deltas[" + i + "]: " + refLoopFilterDeltas[i]);
                 }
             }
             for (int i = 0; i < MAX_MODE_LF_DELTAS; i++) {
@@ -102,11 +83,10 @@ public class VP8Decoder {
                     modeLoopFilterDeltas[i] = headerDecoder.decodeInt(6);
                     if (headerDecoder.decodeBit() > 0) // Apply sign
                         modeLoopFilterDeltas[i] = modeLoopFilterDeltas[i] * -1;
-//                    System.out.println("mode_lf_deltas[" + i + "]: " + modeLoopFilterDeltas[i]);
                 }
             }
             int log2OfPartCnt = headerDecoder.decodeInt(2);
-//            System.out.println("log2OfPartitionsCount: " + log2OfPartCnt);
+            
             Assert.assertEquals(0, log2OfPartCnt);
             int partitionsCount = 1;
             long runningSize = 0;
@@ -116,19 +96,12 @@ public class VP8Decoder {
             BooleanArithmeticDecoder decoder = new BooleanArithmeticDecoder(tokenBuffer, 0);
 
             int yacIndex = headerDecoder.decodeInt(7);
-//            System.out.println("yacQi: " + yacIndex);
             int ydcDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-//            System.out.println("ydcDelta: " + ydcDelta);
             int y2dcDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-//            System.out.println("y2dcDelta: " + y2dcDelta);
             int y2acDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-//            System.out.println("y2acDelta: " + y2acDelta);
             int chromaDCDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-//            System.out.println("uvdcDelta: " + chromaDCDelta);
             int chromaACDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-//            System.out.println("uvacDelta: " + chromaACDelta);
             boolean refreshProbs = headerDecoder.decodeBit() == 0;
-//            System.out.println("refreshEntropyProbs: " + refreshProbs);
             QuantizationParams quants = new QuantizationParams(yacIndex, ydcDelta, y2dcDelta, y2acDelta, chromaDCDelta, chromaACDelta);
 
             int[][][][] coefProbs = getDefaultCoefProbs();
@@ -140,38 +113,31 @@ public class VP8Decoder {
                             if (headerDecoder.decodeBool(vp8CoefUpdateProbs[i][j][k][l]) > 0) {
                                 int newp = headerDecoder.decodeInt(8);
                                 coefProbs[i][j][k][l] = newp;
-                                // System.out.println("coefProbs["+i+"]["+j+"]["+k+"]["+l+"] = "+newp);
                             }
                         }
 
-            // Read the mb_no_coeff_skip flag
             int macroBlockNoCoeffSkip = (int) headerDecoder.decodeBit();
-//            System.out.println("macroBlockNoCoeffSkip: " + macroBlockNoCoeffSkip);
             Assert.assertEquals(1, macroBlockNoCoeffSkip);
             int probSkipFalse = headerDecoder.decodeInt(8);
-//            System.out.println("probSkipFalse: " + probSkipFalse);
             for (int mbRow = 0; mbRow < numberOfMBRows; mbRow++) {
                 for (int mbCol = 0; mbCol < numberOfMBCols; mbCol++) {
                     Macroblock mb = mbs[mbRow + 1][mbCol + 1];
-                    // System.out.println("mbSkipCoeff: " +headerDecoder.decodeBool(probSkipFalse));
-                    if ((segmentation > 0)) {
+                    if ((segmentation > 0)) 
                         throw new UnsupportedOperationException("TODO: frames with multiple segments are not supported yet");
-                    }
+                    
 
                     if (loopFilterDeltaFlag > 0) {
                         int level = filterLevel;
                         level = level + refLoopFilterDeltas[0];
                         level = (level < 0) ? 0 : (level > 63) ? 63 : level;
                         mb.filterLevel = level;
-                    } else {
+                    } else 
                         throw new UnsupportedOperationException("TODO: frames with loopFilterDeltaFlag <= 0 are not supported yet");
-                        // mb.filterLevel = segmentQuants.getSegQuants()[mb.segmentId].getFilterStrength();
-                        // logger.error("TODO:");
-                    }
+                    
 
-                    if (macroBlockNoCoeffSkip > 0) {
+                    if (macroBlockNoCoeffSkip > 0) 
                         mb.skipCoeff = headerDecoder.decodeBool(probSkipFalse);
-                    }
+                    
                     mb.lumaMode = headerDecoder.readTree(keyFrameYModeTree, keyFrameYModeProb);
                     // 1 is added to account for non-displayed framing macroblocks, which are used for prediction only.
                     if (mb.lumaMode == SubblockConstants.B_PRED) {

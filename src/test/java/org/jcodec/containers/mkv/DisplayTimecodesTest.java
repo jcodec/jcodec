@@ -1,61 +1,75 @@
 package org.jcodec.containers.mkv;
 
-import static org.jcodec.containers.mkv.Type.AttachmentLink;
-import static org.jcodec.containers.mkv.Type.Audio;
-import static org.jcodec.containers.mkv.Type.BitDepth;
-import static org.jcodec.containers.mkv.Type.Block;
-import static org.jcodec.containers.mkv.Type.BlockDuration;
-import static org.jcodec.containers.mkv.Type.BlockGroup;
-import static org.jcodec.containers.mkv.Type.Channels;
-import static org.jcodec.containers.mkv.Type.Cluster;
-import static org.jcodec.containers.mkv.Type.CodecDecodeAll;
-import static org.jcodec.containers.mkv.Type.CodecID;
-import static org.jcodec.containers.mkv.Type.CodecName;
-import static org.jcodec.containers.mkv.Type.CuePoint;
-import static org.jcodec.containers.mkv.Type.CueTime;
-import static org.jcodec.containers.mkv.Type.CueTrackPositions;
-import static org.jcodec.containers.mkv.Type.Cues;
-import static org.jcodec.containers.mkv.Type.DefaultDuration;
-import static org.jcodec.containers.mkv.Type.Duration;
-import static org.jcodec.containers.mkv.Type.FlagDefault;
-import static org.jcodec.containers.mkv.Type.FlagEnabled;
-import static org.jcodec.containers.mkv.Type.FlagForced;
-import static org.jcodec.containers.mkv.Type.FlagInterlaced;
-import static org.jcodec.containers.mkv.Type.FlagLacing;
-import static org.jcodec.containers.mkv.Type.Info;
-import static org.jcodec.containers.mkv.Type.Language;
-import static org.jcodec.containers.mkv.Type.MaxCache;
-import static org.jcodec.containers.mkv.Type.MinCache;
-import static org.jcodec.containers.mkv.Type.Name;
-import static org.jcodec.containers.mkv.Type.OutputSamplingFrequency;
-import static org.jcodec.containers.mkv.Type.Position;
-import static org.jcodec.containers.mkv.Type.ReferenceBlock;
-import static org.jcodec.containers.mkv.Type.SamplingFrequency;
-import static org.jcodec.containers.mkv.Type.Segment;
-import static org.jcodec.containers.mkv.Type.Timecode;
-import static org.jcodec.containers.mkv.Type.TimecodeScale;
-import static org.jcodec.containers.mkv.Type.TrackEntry;
-import static org.jcodec.containers.mkv.Type.TrackNumber;
-import static org.jcodec.containers.mkv.Type.TrackOverlay;
-import static org.jcodec.containers.mkv.Type.TrackType;
-import static org.jcodec.containers.mkv.Type.Tracks;
-import static org.jcodec.containers.mkv.Type.Video;
-import static org.jcodec.containers.mkv.Type.findAll;
-import static org.jcodec.containers.mkv.Type.findFirst;
+import static org.jcodec.containers.mkv.MKVType.AlphaMode;
+import static org.jcodec.containers.mkv.MKVType.AspectRatioType;
+import static org.jcodec.containers.mkv.MKVType.AttachmentLink;
+import static org.jcodec.containers.mkv.MKVType.Audio;
+import static org.jcodec.containers.mkv.MKVType.BitDepth;
+import static org.jcodec.containers.mkv.MKVType.Block;
+import static org.jcodec.containers.mkv.MKVType.BlockDuration;
+import static org.jcodec.containers.mkv.MKVType.BlockGroup;
+import static org.jcodec.containers.mkv.MKVType.Channels;
+import static org.jcodec.containers.mkv.MKVType.Cluster;
+import static org.jcodec.containers.mkv.MKVType.CodecDecodeAll;
+import static org.jcodec.containers.mkv.MKVType.CodecID;
+import static org.jcodec.containers.mkv.MKVType.CodecName;
+import static org.jcodec.containers.mkv.MKVType.CueBlockNumber;
+import static org.jcodec.containers.mkv.MKVType.CueClusterPosition;
+import static org.jcodec.containers.mkv.MKVType.CuePoint;
+import static org.jcodec.containers.mkv.MKVType.CueTime;
+import static org.jcodec.containers.mkv.MKVType.CueTrack;
+import static org.jcodec.containers.mkv.MKVType.CueTrackPositions;
+import static org.jcodec.containers.mkv.MKVType.Cues;
+import static org.jcodec.containers.mkv.MKVType.DefaultDuration;
+import static org.jcodec.containers.mkv.MKVType.DisplayHeight;
+import static org.jcodec.containers.mkv.MKVType.DisplayUnit;
+import static org.jcodec.containers.mkv.MKVType.DisplayWidth;
+import static org.jcodec.containers.mkv.MKVType.Duration;
+import static org.jcodec.containers.mkv.MKVType.FlagDefault;
+import static org.jcodec.containers.mkv.MKVType.FlagEnabled;
+import static org.jcodec.containers.mkv.MKVType.FlagForced;
+import static org.jcodec.containers.mkv.MKVType.FlagInterlaced;
+import static org.jcodec.containers.mkv.MKVType.FlagLacing;
+import static org.jcodec.containers.mkv.MKVType.Info;
+import static org.jcodec.containers.mkv.MKVType.Language;
+import static org.jcodec.containers.mkv.MKVType.MaxCache;
+import static org.jcodec.containers.mkv.MKVType.MinCache;
+import static org.jcodec.containers.mkv.MKVType.Name;
+import static org.jcodec.containers.mkv.MKVType.OutputSamplingFrequency;
+import static org.jcodec.containers.mkv.MKVType.PixelCropBottom;
+import static org.jcodec.containers.mkv.MKVType.PixelCropLeft;
+import static org.jcodec.containers.mkv.MKVType.PixelCropRight;
+import static org.jcodec.containers.mkv.MKVType.PixelCropTop;
+import static org.jcodec.containers.mkv.MKVType.PixelHeight;
+import static org.jcodec.containers.mkv.MKVType.PixelWidth;
+import static org.jcodec.containers.mkv.MKVType.Position;
+import static org.jcodec.containers.mkv.MKVType.ReferenceBlock;
+import static org.jcodec.containers.mkv.MKVType.SamplingFrequency;
+import static org.jcodec.containers.mkv.MKVType.Segment;
+import static org.jcodec.containers.mkv.MKVType.StereoMode;
+import static org.jcodec.containers.mkv.MKVType.Timecode;
+import static org.jcodec.containers.mkv.MKVType.TimecodeScale;
+import static org.jcodec.containers.mkv.MKVType.TrackEntry;
+import static org.jcodec.containers.mkv.MKVType.TrackNumber;
+import static org.jcodec.containers.mkv.MKVType.TrackOverlay;
+import static org.jcodec.containers.mkv.MKVType.TrackType;
+import static org.jcodec.containers.mkv.MKVType.Tracks;
+import static org.jcodec.containers.mkv.MKVType.Video;
+import static org.jcodec.containers.mkv.MKVType.findAll;
+import static org.jcodec.containers.mkv.MKVType.findFirst;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import org.jcodec.containers.mkv.ebml.Element;
-import org.jcodec.containers.mkv.ebml.FloatElement;
-import org.jcodec.containers.mkv.ebml.MasterElement;
-import org.jcodec.containers.mkv.ebml.StringElement;
-import org.jcodec.containers.mkv.ebml.UnsignedIntegerElement;
-import org.jcodec.containers.mkv.elements.BlockElement;
-import org.jcodec.containers.mkv.elements.Cluster;
-import org.jcodec.containers.mkv.elements.CuePoint;
-import org.jcodec.containers.mkv.elements.TrackEntryElement;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.containers.mkv.boxes.EbmlBase;
+import org.jcodec.containers.mkv.boxes.EbmlFloat;
+import org.jcodec.containers.mkv.boxes.EbmlMaster;
+import org.jcodec.containers.mkv.boxes.EbmlString;
+import org.jcodec.containers.mkv.boxes.EbmlUint;
+import org.jcodec.containers.mkv.boxes.EbmlUlong;
+import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Test;
 
 public class DisplayTimecodesTest {
@@ -66,78 +80,82 @@ public class DisplayTimecodesTest {
         filename += "10frames.webm";
         System.out.println("Scanning file: " + filename);
         FileInputStream iFS = new FileInputStream(new File(filename));
-        SimpleEBMLParser reader = new SimpleEBMLParser(iFS.getChannel());
-        reader.parse();
-        MasterElement s = (MasterElement) findFirst(reader.getTree(), Segment);
+        MKVParser reader = new MKVParser(new FileChannelWrapper(iFS.getChannel()));
+        EbmlMaster s = (EbmlMaster) findFirst(reader.parse(), Segment);
         printCues(s);
         printBlocks(s);
         printTracks(s);
         printInfo(s);
     }
 
-    private void printInfo(MasterElement s) {
+    private void printInfo(EbmlMaster s) {
         StringBuilder sb = new StringBuilder("info ");
-        UnsignedIntegerElement scale = (UnsignedIntegerElement) findFirst(s, Segment, Info, TimecodeScale);
-        FloatElement duration = (FloatElement) findFirst(s, Segment, Info, Duration);
+        EbmlUint scale = (EbmlUint) findFirst(s, Segment, Info, TimecodeScale);
+        EbmlFloat duration = (EbmlFloat) findFirst(s, Segment, Info, Duration);
         appendIfExists(sb, "scale", scale);
         appendIfExists(sb, "duration", duration);
         sb.append("\n");
         System.out.println(sb.toString());
     }
 
-    private void printCues(MasterElement s) {
+    private void printCues(EbmlMaster s) {
         StringBuilder sb = new StringBuilder();
-        for(CuePoint aCuePoint : findAll(s, CuePoint.class, Segment, Cues, CuePoint)){
-            UnsignedIntegerElement time = (UnsignedIntegerElement) findFirst(aCuePoint, CuePoint, CueTime);
+        for(EbmlMaster aCuePoint : findAll(s, EbmlMaster.class, Segment, Cues, CuePoint)){
+            EbmlUint time = (EbmlUint) findFirst(aCuePoint, CuePoint, CueTime);
             sb.append("cue time: ").append(time.get());
-            for(MasterElement aCueTrackPosition : findAll(aCuePoint, MasterElement.class, CuePoint, CueTrackPositions)){
-                appendIfExists(sb, "track", (UnsignedIntegerElement) findFirst(aCueTrackPosition, CueTrackPositions, Type.CueTrack));
-                UnsignedIntegerElement cluster = (UnsignedIntegerElement) findFirst(aCueTrackPosition, CueTrackPositions, Type.CueClusterPosition);
-                if (cluster != null)
-                    sb.append(" cluster offset ").append(cluster.get()+s.dataOffset);
-                appendIfExists(sb, "block", (UnsignedIntegerElement) findFirst(aCueTrackPosition, CueTrackPositions, Type.CueBlockNumber));
+            for(EbmlMaster aCueTrackPosition : findAll(aCuePoint, EbmlMaster.class, CuePoint, CueTrackPositions)){
+                appendIfExists(sb, "track", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueTrack));
+                EbmlUint EbmlMaster = (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueClusterPosition);
+                if (EbmlMaster != null)
+                    sb.append(" EbmlMaster offset ").append(EbmlMaster.get()+s.dataOffset);
+                appendIfExists(sb, "block", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueBlockNumber));
             }
             sb.append("\n");
         }
         System.out.println(sb.toString());
     }
     
-    public static void appendIfExists(StringBuilder b, String caption, UnsignedIntegerElement e){
+    public static void appendIfExists(StringBuilder b, String caption, EbmlUint e){
         if (e != null)
             b.append(" ").append(caption).append(": ").append(e.get());
     }
     
-    public static void appendIfExists(StringBuilder b, String caption, StringElement e){
+    public static void appendIfExists(StringBuilder b, String caption, EbmlUlong e){
         if (e != null)
             b.append(" ").append(caption).append(": ").append(e.get());
     }
     
-    public static void appendIfExists(StringBuilder b, String caption, FloatElement e){
+    public static void appendIfExists(StringBuilder b, String caption, EbmlString e){
         if (e != null)
             b.append(" ").append(caption).append(": ").append(e.get());
     }
     
-    private void printBlocks(MasterElement s) {
+    public static void appendIfExists(StringBuilder b, String caption, EbmlFloat e){
+        if (e != null)
+            b.append(" ").append(caption).append(": ").append(e.get());
+    }
+    
+    private void printBlocks(EbmlMaster s) {
         StringBuilder sb = new StringBuilder();
-        for(Cluster aCluster : findAll(s, Cluster.class, Segment, Cluster)){
-            UnsignedIntegerElement time = (UnsignedIntegerElement) findFirst(aCluster, Cluster, Timecode);
-            UnsignedIntegerElement position = (UnsignedIntegerElement) findFirst(aCluster, Cluster, Position);
-            sb.append("cluster time: ").append(time.get());
+        for(EbmlMaster aEbmlMaster : findAll(s, EbmlMaster.class, Segment, Cluster)){
+            EbmlUint time = (EbmlUint) findFirst(aEbmlMaster, Cluster, Timecode);
+            EbmlUint position = (EbmlUint) findFirst(aEbmlMaster, Cluster, Position);
+            sb.append("EbmlMaster time: ").append(time.get());
             appendIfExists(sb, "position", position);
-            sb.append(" offset: ").append(aCluster.offset).append("\n");
-            for(Element aChild : aCluster.children){
-                if (aChild instanceof BlockElement){
-                    BlockElement block = (BlockElement) aChild;
+            sb.append(" offset: ").append(aEbmlMaster.offset).append("\n");
+            for(EbmlBase aChild : aEbmlMaster.children){
+                if (aChild instanceof MkvBlock){
+                    MkvBlock block = (MkvBlock) aChild;
                     sb.append("    block tarck: ").append(block.trackNumber).append(" timecode: ").append(block.timecode).append(" offset: ").append(block.offset).append("\n");
                     sb.append("    block real timecode: "+(time.get()+block.timecode));
                     sb.append("\n");
-                } else if (aChild instanceof MasterElement){
-                    BlockElement block = (BlockElement) findFirst((MasterElement) aChild, BlockGroup, Block);
+                } else if (aChild instanceof EbmlMaster){
+                    MkvBlock block = (MkvBlock) findFirst((EbmlMaster) aChild, BlockGroup, Block);
                     sb.append("    block tarck: ").append(block.trackNumber).append(" timecode: ").append(block.timecode).append(" offset: ").append(block.offset).append("\n");
                     sb.append("    block real timecode: "+(time.get()+block.timecode));
                     
-                    appendIfExists(sb, "reference", (UnsignedIntegerElement) findFirst(aCluster, BlockGroup, ReferenceBlock));
-                    appendIfExists(sb, "duration", (UnsignedIntegerElement) findFirst(aCluster, Cluster, BlockDuration));
+                    appendIfExists(sb, "reference", (EbmlUint) findFirst(aEbmlMaster, BlockGroup, ReferenceBlock));
+                    appendIfExists(sb, "duration", (EbmlUint) findFirst(aEbmlMaster, Cluster, BlockDuration));
                     sb.append("\n");    
                 }
                 
@@ -147,49 +165,49 @@ public class DisplayTimecodesTest {
         System.out.println(sb.toString());
     }
     
-    private void printTracks(MasterElement s){
+    private void printTracks(EbmlMaster s){
         StringBuilder sb = new StringBuilder();
-        for(TrackEntryElement anEntry : findAll(s, TrackEntryElement.class, Segment, Tracks, TrackEntry)){
+        for(EbmlMaster anEntry : findAll(s, EbmlMaster.class, Segment, Tracks, TrackEntry)){
             sb.append("track ");
-            appendIfExists(sb, "name", (StringElement) findFirst(anEntry, TrackEntry, Name));
-            appendIfExists(sb, "language", (StringElement) findFirst(anEntry, TrackEntry, Language));
-            appendIfExists(sb, "number", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, TrackNumber));
-            appendIfExists(sb, "type", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, TrackType));
-            appendIfExists(sb, "enabled", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, FlagEnabled));
-            appendIfExists(sb, "default", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, FlagDefault));
-            appendIfExists(sb, "forced", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, FlagForced));
-            appendIfExists(sb, "lacing", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, FlagLacing));
-            appendIfExists(sb, "mincache", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, MinCache));
-            appendIfExists(sb, "maccache", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, MaxCache));
-            appendIfExists(sb, "defaultduration", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, DefaultDuration));
-            appendIfExists(sb, "codecid", (StringElement) findFirst(anEntry, TrackEntry, CodecID));
-            appendIfExists(sb, "codecname", (StringElement) findFirst(anEntry, TrackEntry, CodecName));
-            appendIfExists(sb, "attachmentlink", (StringElement) findFirst(anEntry, TrackEntry, AttachmentLink));
-            appendIfExists(sb, "codecdecodeall", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, CodecDecodeAll));
-            appendIfExists(sb, "overlay", (UnsignedIntegerElement) findFirst(anEntry, TrackEntry, TrackOverlay));
-            MasterElement video = (MasterElement) findFirst(anEntry, TrackEntry, Video);
-            MasterElement audio = (MasterElement) findFirst(anEntry, TrackEntry, Audio);
+            appendIfExists(sb, "name", (EbmlString) findFirst(anEntry, TrackEntry, Name));
+            appendIfExists(sb, "language", (EbmlString) findFirst(anEntry, TrackEntry, Language));
+            appendIfExists(sb, "number", (EbmlUint) findFirst(anEntry, TrackEntry, TrackNumber));
+            appendIfExists(sb, "type", (EbmlUint) findFirst(anEntry, TrackEntry, TrackType));
+            appendIfExists(sb, "enabled", (EbmlUint) findFirst(anEntry, TrackEntry, FlagEnabled));
+            appendIfExists(sb, "default", (EbmlUint) findFirst(anEntry, TrackEntry, FlagDefault));
+            appendIfExists(sb, "forced", (EbmlUint) findFirst(anEntry, TrackEntry, FlagForced));
+            appendIfExists(sb, "lacing", (EbmlUint) findFirst(anEntry, TrackEntry, FlagLacing));
+            appendIfExists(sb, "mincache", (EbmlUint) findFirst(anEntry, TrackEntry, MinCache));
+            appendIfExists(sb, "maccache", (EbmlUint) findFirst(anEntry, TrackEntry, MaxCache));
+            appendIfExists(sb, "defaultduration", (EbmlUint) findFirst(anEntry, TrackEntry, DefaultDuration));
+            appendIfExists(sb, "codecid", (EbmlString) findFirst(anEntry, TrackEntry, CodecID));
+            appendIfExists(sb, "codecname", (EbmlString) findFirst(anEntry, TrackEntry, CodecName));
+            appendIfExists(sb, "attachmentlink", (EbmlString) findFirst(anEntry, TrackEntry, AttachmentLink));
+            appendIfExists(sb, "codecdecodeall", (EbmlUint) findFirst(anEntry, TrackEntry, CodecDecodeAll));
+            appendIfExists(sb, "overlay", (EbmlUint) findFirst(anEntry, TrackEntry, TrackOverlay));
+            EbmlMaster video = (EbmlMaster) findFirst(anEntry, TrackEntry, Video);
+            EbmlMaster audio = (EbmlMaster) findFirst(anEntry, TrackEntry, Audio);
             if (video != null){
                 sb.append("\n    video ");
-                appendIfExists(sb, "interlaced", (UnsignedIntegerElement) findFirst(video, Video, FlagInterlaced));
-                appendIfExists(sb, "stereo", (UnsignedIntegerElement) findFirst(video, Video, Type.StereoMode));
-                appendIfExists(sb, "alpha", (UnsignedIntegerElement) findFirst(video, Video, Type.AlphaMode));
-                appendIfExists(sb, "pixelwidth", (UnsignedIntegerElement) findFirst(video, Video, Type.PixelWidth));
-                appendIfExists(sb, "pixelheight", (UnsignedIntegerElement) findFirst(video, Video, Type.PixelHeight));
-                appendIfExists(sb, "cropbottom", (UnsignedIntegerElement) findFirst(video, Video, Type.PixelCropBottom));
-                appendIfExists(sb, "croptop", (UnsignedIntegerElement) findFirst(video, Video, Type.PixelCropTop));
-                appendIfExists(sb, "cropleft", (UnsignedIntegerElement) findFirst(video, Video, Type.PixelCropLeft));
-                appendIfExists(sb, "cropright", (UnsignedIntegerElement) findFirst(video, Video, Type.PixelCropRight));
-                appendIfExists(sb, "displaywidth", (UnsignedIntegerElement) findFirst(video, Video, Type.DisplayWidth));
-                appendIfExists(sb, "displayheight", (UnsignedIntegerElement) findFirst(video, Video, Type.DisplayHeight));
-                appendIfExists(sb, "displayunit", (UnsignedIntegerElement) findFirst(video, Video, Type.DisplayUnit));
-                appendIfExists(sb, "aspectratiotype", (UnsignedIntegerElement) findFirst(video, Video, Type.AspectRatioType));
+                appendIfExists(sb, "interlaced", (EbmlUint) findFirst(video, Video, FlagInterlaced));
+                appendIfExists(sb, "stereo", (EbmlUint) findFirst(video, Video, StereoMode));
+                appendIfExists(sb, "alpha", (EbmlUint) findFirst(video, Video, AlphaMode));
+                appendIfExists(sb, "pixelwidth", (EbmlUint) findFirst(video, Video, PixelWidth));
+                appendIfExists(sb, "pixelheight", (EbmlUint) findFirst(video, Video, PixelHeight));
+                appendIfExists(sb, "cropbottom", (EbmlUint) findFirst(video, Video, PixelCropBottom));
+                appendIfExists(sb, "croptop", (EbmlUint) findFirst(video, Video, PixelCropTop));
+                appendIfExists(sb, "cropleft", (EbmlUint) findFirst(video, Video, PixelCropLeft));
+                appendIfExists(sb, "cropright", (EbmlUint) findFirst(video, Video, PixelCropRight));
+                appendIfExists(sb, "displaywidth", (EbmlUint) findFirst(video, Video, DisplayWidth));
+                appendIfExists(sb, "displayheight", (EbmlUint) findFirst(video, Video, DisplayHeight));
+                appendIfExists(sb, "displayunit", (EbmlUint) findFirst(video, Video, DisplayUnit));
+                appendIfExists(sb, "aspectratiotype", (EbmlUint) findFirst(video, Video, AspectRatioType));
             } else if (audio != null){
                 sb.append("\n    audio ");
-                appendIfExists(sb, "sampling", (FloatElement) findFirst(audio, Audio, SamplingFrequency));
-                appendIfExists(sb, "outputsampling", (FloatElement) findFirst(audio, Audio, OutputSamplingFrequency));
-                appendIfExists(sb, "channels", (UnsignedIntegerElement) findFirst(audio, Audio, Channels));
-                appendIfExists(sb, "bitdepth", (UnsignedIntegerElement) findFirst(audio, Audio, BitDepth));
+                appendIfExists(sb, "sampling", (EbmlFloat) findFirst(audio, Audio, SamplingFrequency));
+                appendIfExists(sb, "outputsampling", (EbmlFloat) findFirst(audio, Audio, OutputSamplingFrequency));
+                appendIfExists(sb, "channels", (EbmlUint) findFirst(audio, Audio, Channels));
+                appendIfExists(sb, "bitdepth", (EbmlUint) findFirst(audio, Audio, BitDepth));
             }
             sb.append("\n");
         }

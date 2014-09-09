@@ -16,10 +16,10 @@ import java.util.List;
  * 
  */
 public abstract class VirtualMovie {
-    private MovieSegment[] chunks;
-    private MovieSegment headerChunk;
-    private long size;
-    private VirtualTrack[] tracks;
+    public MovieSegment[] chunks;
+    public MovieSegment headerChunk;
+    protected long size;
+    protected VirtualTrack[] tracks;
 
     public VirtualMovie(VirtualTrack... tracks) throws IOException {
         this.tracks = tracks;
@@ -27,7 +27,7 @@ public abstract class VirtualMovie {
         muxTracks();
     }
 
-    private void muxTracks() throws IOException {
+    protected void muxTracks() throws IOException {
         List<MovieSegment> chch = new ArrayList<MovieSegment>();
         VirtualPacket[] heads = new VirtualPacket[tracks.length], tails = new VirtualPacket[tracks.length];
 
