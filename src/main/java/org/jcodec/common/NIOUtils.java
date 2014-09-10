@@ -318,6 +318,12 @@ public class NIOUtils {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).order(order).putInt(value).flip());
     }
 
+    public static void writeIntLE(WritableByteChannel channel, int value) throws IOException {
+        ByteBuffer allocate = ByteBuffer.allocate(4);
+        allocate.order(ByteOrder.LITTLE_ENDIAN);
+        channel.write((ByteBuffer) allocate.putInt(value).flip());
+    }
+
     public static void writeInt(WritableByteChannel channel, int value) throws IOException {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).putInt(value).flip());
     }
@@ -378,6 +384,7 @@ public class NIOUtils {
         private int oldPd;
 
         protected abstract void data(ByteBuffer data, long filePos);
+
         protected abstract void done();
 
         public void readFile(SeekableByteChannel ch, int bufferSize, FileReaderListener listener) throws IOException {
@@ -417,5 +424,12 @@ public class NIOUtils {
         res.put(pesBuffer.duplicate());
         res.clear();
         return res;
+    }
+
+    public static ByteBuffer clone(ByteBuffer byteBuffer) {
+        ByteBuffer result = ByteBuffer.allocate(byteBuffer.remaining());
+        result.put(byteBuffer.duplicate());
+        result.flip();
+        return result;
     }
 }

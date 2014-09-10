@@ -3,6 +3,7 @@ package org.jcodec.movtool.streaming.tracks;
 import static java.util.Arrays.binarySearch;
 import static org.jcodec.codecs.mpeg12.MPEGConst.PICTURE_START_CODE;
 import static org.jcodec.codecs.mpeg12.MPEGUtil.nextSegment;
+import static org.jcodec.movtool.streaming.tracks.Transcode2AVCTrack.createCodecMeta;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,15 +12,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jcodec.codecs.h264.H264Encoder;
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.encode.ConstantRateControl;
+import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.PixelAspectExt;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -37,7 +35,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     public static final int TARGET_RATE = 1024;
     private int frameSize;
     protected VirtualTrack src;
-    private SampleEntry se;
+    private CodecMeta se;
     private ThreadLocal<MPEGToAVCTranscoder> transcoders = new ThreadLocal<MPEGToAVCTranscoder>();
     int mbW;
     int mbH;
@@ -49,7 +47,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     private VirtualPacket nextPacket;
 
     protected void checkFourCC(VirtualTrack srcTrack) {
-        String fourcc = srcTrack.getSampleEntry().getFourcc();
+        String fourcc = srcTrack.getCodecMeta().getFourcc();
         if (!"m2v1".equals(fourcc))
             throw new IllegalArgumentException("Input track is not ProRes");
     }
@@ -61,7 +59,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     public Mpeg2AVCTrack(VirtualTrack src) throws IOException {
         checkFourCC(src);
         this.src = src;
-        ConstantRateControl rc = new ConstantRateControl(TARGET_RATE);
+        H264FixedRateControl rc = new H264FixedRateControl(TARGET_RATE);
         H264Encoder encoder = new H264Encoder(rc);
 
         nextPacket = src.nextPacket();
@@ -74,17 +72,14 @@ public class Mpeg2AVCTrack implements VirtualTrack {
         mbW = (thumbWidth + 15) >> 4;
         mbH = (thumbHeight + 15) >> 4;
 
-        se = H264Utils.createMOVSampleEntry(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS());
-        PixelAspectExt pasp = Box.findFirst(src.getSampleEntry(), PixelAspectExt.class, "pasp");
-        if (pasp != null)
-            se.add(pasp);
+        se = createCodecMeta(src, encoder, thumbWidth, thumbHeight);
 
         frameSize = rc.calcFrameSize(mbW * mbH);
         frameSize += frameSize >> 4;
     }
 
     @Override
-    public SampleEntry getSampleEntry() {
+    public CodecMeta getCodecMeta() {
         return se;
     }
 

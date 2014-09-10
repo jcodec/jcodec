@@ -17,11 +17,11 @@ import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.RunLength;
 import org.jcodec.common.SeekableByteChannel;
-import org.jcodec.containers.mp4.boxes.Header;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mps.MPSDemuxer;
+import org.jcodec.common.model.Rational;
+import org.jcodec.common.model.Size;
 import org.jcodec.containers.mps.MPSUtils;
+import org.jcodec.movtool.streaming.CodecMeta;
+import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -260,9 +260,8 @@ public class MPSTrackFactory {
         }
 
         @Override
-        public SampleEntry getSampleEntry() {
-            return new VideoSampleEntry(new Header("m2v1"), (short) 0, (short) 0, "jcod", 0, 768, (short) 1920,
-                    (short) 1080, 72, 72, (short) 1, "jcodec", (short) 25, (short) 1, (short) -1);
+        public CodecMeta getCodecMeta() {
+            return new VideoCodecMeta("m2v1", ByteBuffer.allocate(0), new Size(1920, 1080), new Rational(1, 1));
         }
 
         @Override

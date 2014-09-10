@@ -55,7 +55,7 @@ public class Packet {
     }
 
     public ByteBuffer getData() {
-        return data;
+        return data.duplicate();
     }
 
     public long getPts() {

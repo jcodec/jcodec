@@ -8,10 +8,9 @@ import java.util.List;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
-import org.jcodec.containers.mp4.boxes.channel.ChannelUtils;
 import org.jcodec.containers.mp4.boxes.channel.Label;
+import org.jcodec.movtool.streaming.AudioCodecMeta;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,9 +28,9 @@ public class DownmixHelper {
     private float[][] matrix;
     private int[][] counts;
     private int[][] channels;
-    private AudioSampleEntry[] se;
+    private AudioCodecMeta[] se;
 
-    public DownmixHelper(AudioSampleEntry[] se, int nSamples, boolean[][] solo) {
+    public DownmixHelper(AudioCodecMeta[] se, int nSamples, boolean[][] solo) {
         this.nSamples = nSamples;
         this.se = se;
 
@@ -39,7 +38,7 @@ public class DownmixHelper {
         List<int[]> countsBuilder = new ArrayList<int[]>();
         List<int[]> channelsBuilder = new ArrayList<int[]>();
         for (int tr = 0; tr < se.length; tr++) {
-            Label[] channels = ChannelUtils.getLabels(se[tr]);
+            Label[] channels = se[tr].getChannelLabels();
             IntArrayList tmp = new IntArrayList();
             for (int ch = 0; ch < channels.length; ch++) {
                 if (solo != null && !solo[tr][ch])
@@ -139,7 +138,7 @@ public class DownmixHelper {
         out.flip();
     }
 
-    private void toFloat(float[] fSamples, AudioSampleEntry se, ByteBuffer bb, int ch, int nCh) {
+    private void toFloat(float[] fSamples, AudioCodecMeta se, ByteBuffer bb, int ch, int nCh) {
 
         byte[] ba;
         int off, len;
@@ -155,7 +154,7 @@ public class DownmixHelper {
         }
 
         int maxSamples;
-        if (se.calcSampleSize() == 3) {
+        if (se.getSampleSize() == 3) {
             int step = nCh * 3;
             maxSamples = Math.min(nSamples, len / step);
             if (se.getEndian() == Endian.BIG_ENDIAN) {

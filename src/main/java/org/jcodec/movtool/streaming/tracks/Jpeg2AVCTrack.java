@@ -5,9 +5,8 @@ import org.jcodec.codecs.mjpeg.JpegToThumb2x2;
 import org.jcodec.codecs.mjpeg.JpegToThumb4x4;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.FielExtension;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.movtool.streaming.CodecMeta;
+import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
 /**
@@ -26,8 +25,8 @@ public class Jpeg2AVCTrack extends Transcode2AVCTrack {
     }
 
     @Override
-    protected void checkFourCC(VirtualTrack proresTrack) {
-        String fourcc = proresTrack.getSampleEntry().getFourcc();
+    protected void checkFourCC(VirtualTrack jpegTrack) {
+        String fourcc = jpegTrack.getCodecMeta().getFourcc();
         if ("jpeg".equals(fourcc) || "mjpa".equals(fourcc))
             return;
 
@@ -41,22 +40,15 @@ public class Jpeg2AVCTrack extends Transcode2AVCTrack {
 
     @Override
     protected VideoDecoder getDecoder(int scaleFactor) {
-        SampleEntry srcSE = src.getSampleEntry();
-        FielExtension fiel = Box.findFirst(srcSE, FielExtension.class, "fiel");
-        boolean interlace = false, topField = false;
-        if(fiel != null) {
-            interlace = fiel.isInterlaced();
-            topField = fiel.topFieldFirst();
-        }
-        
+        VideoCodecMeta meta = (VideoCodecMeta)src.getCodecMeta();
         
         switch (scaleFactor) {
         case 2:
-            return new JpegToThumb2x2(interlace, topField);
+            return new JpegToThumb2x2(meta.isInterlaced(), meta.isTopFieldFirst());
         case 1:
-            return new JpegToThumb4x4(interlace, topField);
+            return new JpegToThumb4x4(meta.isInterlaced(), meta.isTopFieldFirst());
         case 0:
-            return new JpegDecoder(interlace, topField);
+            return new JpegDecoder(meta.isInterlaced(), meta.isTopFieldFirst());
         default:
             throw new IllegalArgumentException("Unsupported scale factor: " + scaleFactor);
         }

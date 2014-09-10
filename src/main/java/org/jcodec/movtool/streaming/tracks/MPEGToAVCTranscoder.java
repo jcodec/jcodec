@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.encode.ConstantRateControl;
+import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.Mpeg2Thumb2x2;
 import org.jcodec.codecs.mpeg12.Mpeg2Thumb4x4;
@@ -32,14 +32,14 @@ public class MPEGToAVCTranscoder {
     private Picture pic0;
     private Picture pic1;
     private Transform transform;
-    private ConstantRateControl rc;
+    private H264FixedRateControl rc;
     private int scaleFactor;
     private int thumbWidth;
     private int thumbHeight;
 
     public MPEGToAVCTranscoder(int scaleFactor) {
         this.scaleFactor = scaleFactor;
-        rc = new ConstantRateControl(Mpeg2AVCTrack.TARGET_RATE);
+        rc = new H264FixedRateControl(Mpeg2AVCTrack.TARGET_RATE);
         this.decoder = getDecoder(scaleFactor);
         this.encoder = new H264Encoder(rc);
     }

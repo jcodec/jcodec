@@ -40,11 +40,12 @@ public class AvcCBox extends Box {
         super(header);
     }
 
-    public AvcCBox(int profile, int profileCompat, int level, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
+    public AvcCBox(int profile, int profileCompat, int level, int nalLengthSize, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
         this();
         this.profile = profile;
         this.profileCompat = profileCompat;
         this.level = level;
+        this.nalLengthSize = nalLengthSize;
         this.spsList = spsList;
         this.ppsList = ppsList;
     }
@@ -79,7 +80,7 @@ public class AvcCBox extends Box {
     }
 
     @Override
-    protected void doWrite(ByteBuffer out) {
+    public void doWrite(ByteBuffer out) {
 
         out.put((byte) 0x1); // version
         out.put((byte) profile);
@@ -125,4 +126,41 @@ public class AvcCBox extends Box {
     public int getNalLengthSize() {
         return nalLengthSize;
     }
+    
+
+//    public void toNAL(ByteBuffer codecPrivate) {
+//        H264Utils.toNAL(codecPrivate, getSpsList(), getPpsList());
+//    }
+//    
+//    public ByteBuffer toNAL() {
+//        ByteBuffer bb = ByteBuffer.allocate(2048);
+//        H264Utils.toNAL(bb, getSpsList(), getPpsList());
+//        bb.flip();
+//        return bb;
+//    }
+//
+//    public static AvcCBox fromNAL(ByteBuffer codecPrivate) {
+//        List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
+//        List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+//
+//        ByteBuffer dup = codecPrivate.duplicate();
+//
+//        ByteBuffer buf;
+//        SeqParameterSet sps = null;
+//        while ((buf = H264Utils.nextNALUnit(dup)) != null) {
+//            NALUnit nu = NALUnit.read(buf);
+//            
+//            H264Utils.unescapeNAL(buf);
+//            
+//            if (nu.type == NALUnitType.PPS) {
+//                ppsList.add(buf);
+//            } else if (nu.type == NALUnitType.SPS) {
+//                spsList.add(buf);
+//                sps = SeqParameterSet.read(buf.duplicate());
+//            }
+//        }
+//        if (spsList.size() == 0 || ppsList.size() == 0)
+//            return null;
+//        return new AvcCBox(sps.profile_idc, 0, sps.level_idc, spsList, ppsList);
+//    }
 }

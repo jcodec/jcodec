@@ -8,10 +8,10 @@ import java.util.Arrays;
 
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.jcodec.common.ArrayUtil;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -27,11 +27,25 @@ public class VP8Encoder implements VideoEncoder {
     private int[][] topLine;
     private VPXQuantizer quantizer;
     private int[] tmp = new int[16];
+    private RateControl rc;
+
+    private ByteBuffer headerBuffer;
+    private ByteBuffer dataBuffer;
+
+    public VP8Encoder(int qp) {
+        this(new NopRateControl(qp));
+    }
+
+    public VP8Encoder(RateControl rc) {
+        this.rc = rc;
+    }
 
     public ByteBuffer encodeFrame(Picture pic, ByteBuffer _buf) {
         ByteBuffer out = _buf.duplicate();
         int mbWidth = ((pic.getWidth() + 15) >> 4);
         int mbHeight = ((pic.getHeight() + 15) >> 4);
+
+        prepareBuffers(mbWidth, mbHeight);
 
         bitstream = new VPXBitstream(VPXConst.tokenDefaultBinProbs, mbWidth);
         leftRow = new int[][] { new int[16], new int[8], new int[8] };
@@ -43,19 +57,43 @@ public class VP8Encoder implements VideoEncoder {
 
         Picture outMB = Picture.create(16, 16, ColorSpace.YUV420);
 
-        int qp = 20;
+        int[] segmentQps = rc.getSegmentQps();
 
-        out.order(ByteOrder.LITTLE_ENDIAN);
-        writeHeader1(out, pic.getWidth(), pic.getHeight());
+        VPxBooleanEncoder boolEnc = new VPxBooleanEncoder(dataBuffer);
 
-        int start = out.position();
-        VPxBooleanEncoder boolEnc = new VPxBooleanEncoder(out);
+        int[] segmentMap = new int[mbWidth * mbHeight];
 
-        writeHeader2(boolEnc, qp);
+        // MB residuals
+        for (int mbY = 0, mbAddr = 0; mbY < mbHeight; mbY++) {
+            initValue(leftRow, 129);
+
+            for (int mbX = 0; mbX < mbWidth; mbX++, mbAddr++) {
+
+                int before = boolEnc.position();
+                int segment = rc.getSegment();
+                segmentMap[mbAddr] = segment;
+
+                luma(pic, mbX, mbY, boolEnc, segmentQps[segment], outMB);
+                chroma(pic, mbX, mbY, boolEnc, segmentQps[segment], outMB);
+
+                rc.report(boolEnc.position() - before);
+
+                collectPredictors(outMB, mbX);
+            }
+        }
+        boolEnc.stop();
+        dataBuffer.flip();
+
+        boolEnc = new VPxBooleanEncoder(headerBuffer);
+        int[] probs = calcSegmentProbs(segmentMap);
+
+        writeHeader2(boolEnc, segmentQps, probs);
 
         // MB modes
-        for (int mbY = 0; mbY < mbHeight; mbY++) {
-            for (int mbX = 0; mbX < mbWidth; mbX++) {
+        for (int mbY = 0, mbAddr = 0; mbY < mbHeight; mbY++) {
+            for (int mbX = 0; mbX < mbWidth; mbX++, mbAddr++) {
+                writeSegmetId(boolEnc, segmentMap[mbAddr], probs);
+
                 // Luma mode DC
                 boolEnc.writeBit(145, 1);
                 boolEnc.writeBit(156, 0);
@@ -66,25 +104,58 @@ public class VP8Encoder implements VideoEncoder {
             }
         }
         boolEnc.stop();
-        int firstPart = out.position() - start;
-        boolEnc = new VPxBooleanEncoder(out);
+        headerBuffer.flip();
 
-        // MB residuals
-        for (int mbY = 0; mbY < mbHeight; mbY++) {
-            initValue(leftRow, 129);
+        out.order(ByteOrder.LITTLE_ENDIAN);
+        writeHeader(out, pic.getWidth(), pic.getHeight(), headerBuffer.remaining());
+        out.put(headerBuffer);
+        out.put(dataBuffer);
 
-            for (int mbX = 0; mbX < mbWidth; mbX++) {
-                luma(pic, mbX, mbY, boolEnc, qp, outMB);
-                chroma(pic, mbX, mbY, boolEnc, qp, outMB);
-
-                collectPredictors(outMB, mbX);
-            }
-        }
-        boolEnc.stop();
         out.flip();
-        writeHeader(out.duplicate(), firstPart);
 
         return out;
+    }
+
+    private void prepareBuffers(int mbWidth, int mbHeight) {
+        int dataBufSize = (mbHeight * mbHeight) << 10;
+        int headerBufSize = 256 + mbWidth * mbHeight;
+
+        if (headerBuffer == null || headerBuffer.capacity() < headerBufSize)
+            headerBuffer = ByteBuffer.allocate(headerBufSize);
+        else
+            headerBuffer.clear();
+
+        if (dataBuffer == null || dataBuffer.capacity() < dataBufSize)
+            dataBuffer = ByteBuffer.allocate(dataBufSize);
+        else
+            dataBuffer.clear();
+    }
+
+    private void writeSegmetId(VPxBooleanEncoder boolEnc, int id, int[] probs) {
+        int bit1 = (id >> 1) & 1;
+        boolEnc.writeBit(probs[0], bit1);
+        boolEnc.writeBit(probs[1 + bit1], id & 1);
+    }
+
+    private int[] calcSegmentProbs(int[] segmentMap) {
+        int[] result = new int[3];
+        for (int i = 0; i < segmentMap.length; i++) {
+            switch (segmentMap[i]) {
+            case 0:
+                result[0]++;
+                result[1]++;
+                break;
+            case 1:
+                result[0]++;
+                break;
+            case 2:
+                result[2]++;
+            }
+        }
+        for (int i = 0; i < 3; i++)
+            result[i] = MathUtil.clip((result[i] << 8) / segmentMap.length, 1, 255);
+
+        return result;
     }
 
     private void initValue(int[][] leftRow2, int val) {
@@ -93,25 +164,40 @@ public class VP8Encoder implements VideoEncoder {
         Arrays.fill(leftRow2[2], val);
     }
 
-    private void writeHeader(ByteBuffer duplicate, int firstPart) {
-        int version = 0, type = 0, showFrame = 1;
-        int header = (firstPart << 5) | (showFrame << 4) | (version << 1) | type;
-
-        duplicate.put((byte) (header & 0xff));
-        duplicate.put((byte) ((header >> 8) & 0xff));
-        duplicate.put((byte) ((header >> 16) & 0xff));
-    }
-
-    private void writeHeader2(VPxBooleanEncoder boolEnc, int qp) {
+    private void writeHeader2(VPxBooleanEncoder boolEnc, int[] segmentQps, int[] probs) {
         boolEnc.writeBit(128, 0); // clr_type
         boolEnc.writeBit(128, 0); // clamp_type
-        boolEnc.writeBit(128, 0); // segmentation enabled
+        boolEnc.writeBit(128, 1); // segmentation enabled
+
+        boolEnc.writeBit(128, 1); // update_mb_segmentation_map
+        boolEnc.writeBit(128, 1); // update_segment_feature_data
+
+        boolEnc.writeBit(128, 1); // segment_feature_mode - absolute
+
+        for (int i = 0; i < segmentQps.length; i++) {
+            boolEnc.writeBit(128, 1); // quantizer_update
+            writeInt(boolEnc, segmentQps[i], 7); // quantizer_update_value
+            boolEnc.writeBit(128, 0);
+        }
+        for (int i = segmentQps.length; i < 4; i++)
+            boolEnc.writeBit(128, 0); // quantizer_update
+
+        boolEnc.writeBit(128, 0); // loop_filter_update
+        boolEnc.writeBit(128, 0); // loop_filter_update
+        boolEnc.writeBit(128, 0); // loop_filter_update
+        boolEnc.writeBit(128, 0); // loop_filter_update
+
+        for (int i = 0; i < 3; i++) {
+            boolEnc.writeBit(128, 1); // segment_prob_update
+            writeInt(boolEnc, probs[i], 8);
+        }
+
         boolEnc.writeBit(128, 0); // filter type
         writeInt(boolEnc, 1, 6); // filter level
         writeInt(boolEnc, 0, 3); // sharpness level
         boolEnc.writeBit(128, 0); // deltas enabled
         writeInt(boolEnc, 0, 2); // partition type
-        writeInt(boolEnc, qp, 7);
+        writeInt(boolEnc, segmentQps[0], 7);
         boolEnc.writeBit(128, 0); // y1dc_delta_q
         boolEnc.writeBit(128, 0); // y2dc_delta_q
         boolEnc.writeBit(128, 0); // y2ac_delta_q
@@ -139,8 +225,13 @@ public class VP8Encoder implements VideoEncoder {
             boolEnc.writeBit(128, (1 & (data >> bit)));
     }
 
-    private void writeHeader1(ByteBuffer out, int width, int height) {
-        NIOUtils.skip(out, 3);
+    private void writeHeader(ByteBuffer out, int width, int height, int firstPart) {
+        int version = 0, type = 0, showFrame = 1;
+        int header = (firstPart << 5) | (showFrame << 4) | (version << 1) | type;
+
+        out.put((byte) (header & 0xff));
+        out.put((byte) ((header >> 8) & 0xff));
+        out.put((byte) ((header >> 16) & 0xff));
 
         out.put((byte) 0x9d);
         out.put((byte) 0x01);

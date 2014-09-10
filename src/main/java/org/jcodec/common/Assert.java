@@ -14,7 +14,7 @@ public class Assert {
 
     public static void assertEquals(String msg, int i, int j) {
         if (i != j)
-            throw new AssertionError(msg);
+            throw new AssertionError(msg+" expected "+i+" actual "+j);
     }
 
     public static void assertEquals(int i, int j) {

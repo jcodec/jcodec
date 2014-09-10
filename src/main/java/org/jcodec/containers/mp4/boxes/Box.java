@@ -92,7 +92,7 @@ public abstract class Box {
         Assert.assertEquals(header.headerSize(), 8);
         header.write(dup);
     }
-
+    
     protected abstract void doWrite(ByteBuffer out);
 
     public String getFourcc() {

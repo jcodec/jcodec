@@ -18,6 +18,7 @@ import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.movtool.streaming.ConcurrentMovieRangeService;
 import org.jcodec.movtool.streaming.MovieRange;
+import org.jcodec.movtool.streaming.VirtualMP4Movie;
 import org.jcodec.movtool.streaming.VirtualMovie;
 import org.jcodec.movtool.streaming.tracks.FilePool;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
@@ -34,7 +35,7 @@ public class TestConcurrentMovieRangeService {
         MovieBox movie = MP4Util.parseMovie(file);
 
         RealTrack vt = new RealTrack(movie, movie.getVideoTrack(), fp);
-        VirtualMovie vm = new VirtualMovie(vt);
+        VirtualMovie vm = new VirtualMP4Movie(vt);
         InputStream is = new MovieRange(vm, 0, vm.size());
         File ref = File.createTempFile("cool", "super");
         ref.deleteOnExit();

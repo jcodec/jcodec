@@ -37,6 +37,16 @@ public class IOUtils {
         }
         return count;
     }
+    
+    public static int copyDumb(InputStream input, OutputStream output) throws IOException {
+        int count = 0;
+        int n = 0;
+        while (-1 != (n = input.read())) {
+            output.write(n);
+            count++;
+        }
+        return count;
+    }
 
     public static byte[] readFileToByteArray(File file) throws IOException {
         return NIOUtils.toArray(NIOUtils.fetchFrom(file));

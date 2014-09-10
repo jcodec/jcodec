@@ -15,8 +15,6 @@ import org.jcodec.movtool.streaming.VirtualTrack;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * Virtual movie track that transcodes ProRes to AVC on the fly.
- * 
  * @author The JCodec project
  * 
  */
@@ -28,7 +26,7 @@ public class Prores2AVCTrack extends Transcode2AVCTrack {
 
     @Override
     protected void checkFourCC(VirtualTrack proresTrack) {
-        String fourcc = proresTrack.getSampleEntry().getFourcc();
+        String fourcc = proresTrack.getCodecMeta().getFourcc();
         if ("ap4h".equals(fourcc))
             return;
         for (Profile profile : EnumSet.allOf(ProresEncoder.Profile.class)) {
