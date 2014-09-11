@@ -92,6 +92,10 @@ public class MPSIndex {
             for (int i = 0; i < fpts.length; i++)
                 index.putInt(fpts[i]);
         }
+
+        public int estimateSize() {
+            return (fpts.length << 2) + (sync.length << 2) + (fsizes.length << 2) + 64;
+        }
     }
 
     public MPSIndex(long[] pesTokens, RunLength.Integer pesStreamIds, MPSStreamIndex[] streams) {
@@ -141,10 +145,17 @@ public class MPSIndex {
         }
         pesStreamIds.serialize(index);
 
-        MPSStreamIndex[] streams2 = streams;
-        for (MPSStreamIndex mpsStreamIndex : streams2) {
+        for (MPSStreamIndex mpsStreamIndex : streams) {
             mpsStreamIndex.serialize(index);
         }
+    }
+
+    public int estimateSize() {
+        int size = (pesTokens.length << 3) + pesStreamIds.estimateSize();
+        for (MPSStreamIndex mpsStreamIndex : streams) {
+            size += mpsStreamIndex.estimateSize();
+        }
+        return size + 64;
     }
 
     public static long makePESToken(long leading, long pesLen, long payloadLen) {

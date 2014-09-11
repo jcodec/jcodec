@@ -190,11 +190,6 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
         public MPSStreamIndex serialize(int streamId) {
             return new MPSStreamIndex(streamId, siSize, sizes.toArray(), pts.toArray(), keyFrames.toArray());
         }
-
-        @Override
-        public int estimateSize() {
-            return super.estimateSize() + ((sizes.size() + keyFrames.size()) << 2) + 64;
-        }
     }
 
     protected BaseAnalyser getAnalyser(int stream) {

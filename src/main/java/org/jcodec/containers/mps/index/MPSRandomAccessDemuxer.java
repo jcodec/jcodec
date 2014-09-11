@@ -9,6 +9,7 @@ import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.model.Packet;
+import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 
 /**
@@ -28,14 +29,18 @@ public class MPSRandomAccessDemuxer {
     private long[] pesTokens;
     private int[] pesStreamIds;
 
-    public MPSRandomAccessDemuxer(SeekableByteChannel ch, ByteBuffer index) throws IOException {
-        MPSIndex mpsIndex = MPSIndex.parseIndex(index);
+    public MPSRandomAccessDemuxer(SeekableByteChannel ch, MPSIndex mpsIndex) throws IOException {
         pesTokens = mpsIndex.getPesTokens();
         pesStreamIds = mpsIndex.getPesStreamIds().flattern();
         MPSStreamIndex[] streamIndices = mpsIndex.getStreams();
+        streams = new Stream[streamIndices.length];
         for (int i = 0; i < streamIndices.length; i++) {
-            streams[i] = new Stream(streamIndices[i], ch);
+            streams[i] = newStream(ch, streamIndices[i]);
         }
+    }
+
+    protected Stream newStream(SeekableByteChannel ch, MPSStreamIndex streamIndex) throws IOException {
+        return new Stream(streamIndex, ch);
     }
 
     public Stream[] getStreams() {
@@ -49,16 +54,13 @@ public class MPSRandomAccessDemuxer {
         private int curFrame;
         private ByteBuffer si;
         private ByteBuffer pesBuf;
-        private MPSStreamIndex streamIndex;
         private int seekToFrame = -1;
-        private SeekableByteChannel source;
+        protected SeekableByteChannel source;
         private long duration;
-        private long avgFrameduration;
         private long[] foffs;
 
         public Stream(MPSStreamIndex streamIndex, SeekableByteChannel source) throws IOException {
             super(streamIndex);
-            this.streamIndex = streamIndex;
             this.source = source;
 
             foffs = new long[fsizes.length];
@@ -71,17 +73,20 @@ public class MPSRandomAccessDemuxer {
             int[] seg = Arrays.copyOf(streamIndex.getFpts(), 100);
             Arrays.sort(seg);
 
-            avgFrameduration = (seg[99] - seg[0]) / 100;
-
             seekToFrame = 0;
             seekToFrame();
-            ByteBuffer si = pesBuf.duplicate();
+            si = pesBuf.duplicate();
             si.limit(si.position());
             si.position(si.limit() - siLen);
         }
 
         @Override
         public Packet nextFrame() throws IOException {
+            seekToFrame();
+            
+            if(curFrame >= fsizes.length)
+                return null;
+            
             int fs = fsizes[curFrame];
             ByteBuffer result = ByteBuffer.allocate(fs + si.remaining());
             return nextFrame(result);
@@ -107,11 +112,13 @@ public class MPSRandomAccessDemuxer {
                     ++curPesIdx;
                     long posShift = 0;
                     while (pesStreamIds[curPesIdx] != streamId) {
-                        posShift += MPSIndex.pesLen(pesTokens[curPesIdx]);
+                        posShift += MPSIndex.pesLen(pesTokens[curPesIdx]) + MPSIndex.leadingSize(pesTokens[curPesIdx]);
                         ++curPesIdx;
                     }
-                    source.position(source.position() + posShift + MPSIndex.leadingSize(pesTokens[curPesIdx]));
-                    pesBuf = NIOUtils.fetchFrom(source, MPSIndex.payLoadSize(pesTokens[curPesIdx]));
+                    skip(posShift + MPSIndex.leadingSize(pesTokens[curPesIdx]));
+                    int pesLen = MPSIndex.pesLen(pesTokens[curPesIdx]);
+                    pesBuf = fetch(pesLen);
+                    MPSUtils.readPESHeader(pesBuf, 0);
                 }
             }
             result.flip();
@@ -122,6 +129,18 @@ public class MPSRandomAccessDemuxer {
             curFrame++;
 
             return pkt;
+        }
+
+        protected ByteBuffer fetch(int pesLen) throws IOException {
+            return NIOUtils.fetchFrom(source, pesLen);
+        }
+        
+        protected void skip(long leadingSize) throws IOException {
+            source.position(source.position() + leadingSize);
+        }
+        
+        protected void reset() throws IOException {
+            source.position(0);
         }
 
         @Override
@@ -154,7 +173,9 @@ public class MPSRandomAccessDemuxer {
             curFrame = seekToFrame;
 
             long payloadOff = foffs[curFrame];
-            long fileOff = 0;
+            long posShift = 0;
+            
+            reset();
 
             for (curPesIdx = 0;; curPesIdx++) {
                 if (pesStreamIds[curPesIdx] == streamId) {
@@ -163,12 +184,12 @@ public class MPSRandomAccessDemuxer {
                         break;
                     payloadOff -= payloadSize;
                 }
-                fileOff += MPSIndex.pesLen(pesTokens[curPesIdx]);
+                posShift += MPSIndex.pesLen(pesTokens[curPesIdx]) + MPSIndex.leadingSize(pesTokens[curPesIdx]);
             }
 
-            fileOff += MPSIndex.leadingSize(pesTokens[curPesIdx]);
-            source.position(fileOff);
-            pesBuf = NIOUtils.fetchFrom(source, MPSIndex.payLoadSize(pesTokens[curPesIdx]));
+            skip(posShift + MPSIndex.leadingSize(pesTokens[curPesIdx]));
+            pesBuf = fetch(MPSIndex.pesLen(pesTokens[curPesIdx]));
+            MPSUtils.readPESHeader(pesBuf, 0);
             NIOUtils.skip(pesBuf, (int) payloadOff);
 
             seekToFrame = -1;

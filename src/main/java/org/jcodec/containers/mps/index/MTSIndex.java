@@ -53,7 +53,7 @@ public class MTSIndex {
         this.programs = programs;
     }
 
-    public MPSIndex[] getPrograms() {
+    public MTSProgram[] getPrograms() {
         return programs;
     }
 
@@ -67,7 +67,15 @@ public class MTSIndex {
         return new MTSIndex(programs);
     }
 
-    public void serialize(ByteBuffer buf) {
+    public int estimateSize() {
+        int totalSize = 64;
+        for (MTSProgram mtsProgram : programs) {
+            totalSize += 4 + mtsProgram.estimateSize();
+        }
+        return totalSize;
+    }
+
+    public void serializeTo(ByteBuffer buf) {
         buf.putInt(programs.length);
         for (MTSProgram mtsAnalyser : programs) {
             ByteBuffer dup = buf.duplicate();
@@ -75,5 +83,12 @@ public class MTSIndex {
             mtsAnalyser.serializeTo(buf);
             dup.putInt(buf.position() - dup.position());
         }
+    }
+
+    public ByteBuffer serialize() {
+        ByteBuffer bb = ByteBuffer.allocate(estimateSize());
+        serializeTo(bb);
+        bb.flip();
+        return bb;
     }
 }

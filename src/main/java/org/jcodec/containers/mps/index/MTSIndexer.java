@@ -80,26 +80,11 @@ public class MTSIndexer {
         };
     }
 
-    public MTSIndex serializeTo(ByteBuffer buf) {
+    public MTSIndex serialize() {
         MTSProgram[] programs = new MTSProgram[indexers.length];
         for (int i = 0; i < indexers.length; i++)
             programs[i] = indexers[i].serializeTo();
         return new MTSIndex(programs);
-    }
-
-    public ByteBuffer serialize() {
-        ByteBuffer buf = ByteBuffer.allocate(estimateSize());
-        serializeTo(buf);
-        buf.flip();
-        return buf;
-    }
-
-    public int estimateSize() {
-        int totalSize = 0;
-        for (MTSAnalyser mtsAnalyser : indexers) {
-            totalSize += mtsAnalyser.estimateSize();
-        }
-        return totalSize;
     }
 
     private class MTSAnalyser extends BaseIndexer {
@@ -140,6 +125,7 @@ public class MTSIndexer {
                 System.out.println(percentDone);
             }
         });
-        NIOUtils.writeTo(indexer.serialize(), new File(args[1]));
+        MTSIndex index = indexer.serialize();
+        NIOUtils.writeTo(index.serialize(), new File(args[1]));
     }
 }
