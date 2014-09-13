@@ -1,7 +1,6 @@
 package org.jcodec.containers.mps.index;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 import org.jcodec.common.RunLength;
 
@@ -21,29 +20,25 @@ public class MPSIndex {
 
     public static class MPSStreamIndex {
         protected int streamId;
-        protected int siLen;
         protected int[] fsizes;
         protected int[] fpts;
+        protected int[] fdur;
         protected int[] sync;
 
-        public MPSStreamIndex(int streamId, int siLen, int[] fsizes, int[] fpts, int[] sync) {
+        public MPSStreamIndex(int streamId, int[] fsizes, int[] fpts, int[] fdur, int[] sync) {
             this.streamId = streamId;
-            this.siLen = siLen;
             this.fsizes = fsizes;
             this.fpts = fpts;
+            this.fdur = fdur;
             this.sync = sync;
         }
 
         public MPSStreamIndex(MPSStreamIndex other) {
-            this(other.streamId, other.siLen, other.fsizes, other.fpts, other.sync);
+            this(other.streamId, other.fsizes, other.fpts, other.fdur, other.sync);
         }
 
         public int getStreamId() {
             return streamId;
-        }
-
-        public int getSiLen() {
-            return siLen;
         }
 
         public int[] getFsizes() {
@@ -54,19 +49,33 @@ public class MPSIndex {
             return fpts;
         }
 
+        public int[] getFdur() {
+            return fdur;
+        }
+
         public int[] getSync() {
             return sync;
         }
 
-        public static MPSStreamIndex parseIndex(int streamId, ByteBuffer index) {
-            int siLen = index.getInt();
+        public static MPSStreamIndex parseIndex(ByteBuffer index) {
+            int streamId = index.get() & 0xff;
 
             int fCnt = index.getInt();
             int[] fsizes = new int[fCnt];
-            int[] fpts = new int[fCnt];
             for (int i = 0; i < fCnt; i++) {
-                int size = index.getInt();
-                fsizes[i] = size;
+                fsizes[i] = index.getInt();
+            }
+
+            int fptsCnt = index.getInt();
+            int[] fpts = new int[fptsCnt];
+            for (int i = 0; i < fptsCnt; i++) {
+                fpts[i] = index.getInt();
+            }
+
+            int fdurCnt = index.getInt();
+            int[] fdur = new int[fdurCnt];
+            for (int i = 0; i < fdurCnt; i++) {
+                fdur[i] = index.getInt();
             }
 
             int syncCount = index.getInt();
@@ -74,27 +83,31 @@ public class MPSIndex {
             for (int i = 0; i < syncCount; i++)
                 sync[i] = index.getInt();
 
-            for (int i = 0; i < fCnt; i++) {
-                fpts[i] = index.getInt();
-            }
-
-            return new MPSStreamIndex(streamId, siLen, fsizes, fpts, sync);
+            return new MPSStreamIndex(streamId, fsizes, fpts, fdur, sync);
         }
 
         public void serialize(ByteBuffer index) {
             index.put((byte) streamId);
+
             index.putInt(fsizes.length);
             for (int i = 0; i < fsizes.length; i++)
                 index.putInt(fsizes[i]);
+
+            index.putInt(fpts.length);
+            for (int i = 0; i < fpts.length; i++)
+                index.putInt(fpts[i]);
+
+            index.putInt(fdur.length);
+            for (int i = 0; i < fdur.length; i++)
+                index.putInt(fdur[i]);
+
             index.putInt(sync.length);
             for (int i = 0; i < sync.length; i++)
                 index.putInt(sync[i]);
-            for (int i = 0; i < fpts.length; i++)
-                index.putInt(fpts[i]);
         }
 
         public int estimateSize() {
-            return (fpts.length << 2) + (sync.length << 2) + (fsizes.length << 2) + 64;
+            return (fpts.length << 2) + (fdur.length << 2) + (sync.length << 2) + (fsizes.length << 2) + 64;
         }
     }
 
@@ -130,12 +143,12 @@ public class MPSIndex {
 
         RunLength.Integer pesStreamId = RunLength.Integer.parse(index);
 
-        ArrayList<MPSStreamIndex> list = new ArrayList<MPSStreamIndex>();
-        while (index.hasRemaining()) {
-            int stream = index.get() & 0xff;
-            list.add(MPSStreamIndex.parseIndex(stream, index));
+        int nStreams = index.getInt();
+        MPSStreamIndex[] streams = new MPSStreamIndex[nStreams];
+        for (int i = 0; i < nStreams; i++) {
+            streams[i] = MPSStreamIndex.parseIndex(index);
         }
-        return new MPSIndex(pesTokens, pesStreamId, list.toArray(new MPSStreamIndex[0]));
+        return new MPSIndex(pesTokens, pesStreamId, streams);
     }
 
     public void serializeTo(ByteBuffer index) {
@@ -145,6 +158,7 @@ public class MPSIndex {
         }
         pesStreamIds.serialize(index);
 
+        index.putInt(streams.length);
         for (MPSStreamIndex mpsStreamIndex : streams) {
             mpsStreamIndex.serialize(index);
         }

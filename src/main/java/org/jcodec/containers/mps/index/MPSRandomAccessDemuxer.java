@@ -52,11 +52,9 @@ public class MPSRandomAccessDemuxer {
         private static final int MPEG_TIMESCALE = 90000;
         private int curPesIdx;
         private int curFrame;
-        private ByteBuffer si;
         private ByteBuffer pesBuf;
         private int seekToFrame = -1;
         protected SeekableByteChannel source;
-        private long duration;
         private long[] foffs;
 
         public Stream(MPSStreamIndex streamIndex, SeekableByteChannel source) throws IOException {
@@ -64,7 +62,7 @@ public class MPSRandomAccessDemuxer {
             this.source = source;
 
             foffs = new long[fsizes.length];
-            long curOff = siLen;
+            long curOff = 0;
             for (int i = 0; i < fsizes.length; i++) {
                 foffs[i] = curOff;
                 curOff += fsizes[i];
@@ -75,9 +73,6 @@ public class MPSRandomAccessDemuxer {
 
             seekToFrame = 0;
             seekToFrame();
-            si = pesBuf.duplicate();
-            si.limit(si.position());
-            si.position(si.limit() - siLen);
         }
 
         @Override
@@ -88,7 +83,7 @@ public class MPSRandomAccessDemuxer {
                 return null;
             
             int fs = fsizes[curFrame];
-            ByteBuffer result = ByteBuffer.allocate(fs + si.remaining());
+            ByteBuffer result = ByteBuffer.allocate(fs);
             return nextFrame(result);
         }
 
@@ -101,9 +96,7 @@ public class MPSRandomAccessDemuxer {
             int fs = fsizes[curFrame];
 
             ByteBuffer result = buf.duplicate();
-            result.limit(result.position() + fs + si.remaining());
-
-            result.put(si.duplicate());
+            result.limit(result.position() + fs);
 
             while (result.hasRemaining()) {
                 if (pesBuf.hasRemaining()) {
@@ -123,7 +116,7 @@ public class MPSRandomAccessDemuxer {
             }
             result.flip();
 
-            Packet pkt = new Packet(result, fpts[curFrame], MPEG_TIMESCALE, duration, curFrame, sync.length == 0
+            Packet pkt = new Packet(result, fpts[curFrame], MPEG_TIMESCALE, fdur[curFrame], curFrame, sync.length == 0
                     || Arrays.binarySearch(sync, curFrame) >= 0, null);
 
             curFrame++;

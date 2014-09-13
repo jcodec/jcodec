@@ -48,6 +48,8 @@ public class MPSIndexerTest {
         });
     }
 
+    byte[] iFrame = flatten(new byte[][] { mpegStreamParams, mpegFrame(0, 1) });
+
     private byte[] flatten(byte[][] data) {
         int total = 0;
         for (int i = 0; i < data.length; i++) {
@@ -101,7 +103,7 @@ public class MPSIndexerTest {
         });
         //@formatter:on
     }
-    
+
     private void printHex(byte[] mpegPS) {
         for (int i = 0; i < mpegPS.length; i += 32) {
             for (int j = i; j < Math.min(mpegPS.length, i + 32); j++) {
@@ -120,10 +122,8 @@ public class MPSIndexerTest {
 
     @Test
     public void testSingleVideoLengthPresentPtsPresent() throws IOException {
-        byte[] iFrame = mpegFrame(0, 1);
         byte[][] mpegFrames = {
 //@formatter:off
-            mpegStreamParams, 
             iFrame, 
             mpegFrame(5, 2),
             mpegFrame(2, 3), 
@@ -133,7 +133,7 @@ public class MPSIndexerTest {
         };
         byte[] mpegES = flatten(mpegFrames);
 
-        int pesLen = iFrame.length / 3;
+        int pesLen = mpegFrames[1].length / 3;
         byte[][] peses = {
 //@formatter:off
             pes(0xe0, pesLen, 0, mpegES, false),
@@ -175,19 +175,16 @@ public class MPSIndexerTest {
         Assert.assertEquals(1, streams.length);
         MPSStreamIndex stream = streams[0];
         Assert.assertArrayEquals(new int[] { 10000, 13003, 16006, 19009, 21012 }, stream.getFpts());
-        Assert.assertArrayEquals(new int[] { mpegFrames[1].length, mpegFrames[2].length, mpegFrames[3].length,
-                mpegFrames[4].length, mpegFrames[5].length }, stream.fsizes);
+        Assert.assertArrayEquals(new int[] { mpegFrames[0].length, mpegFrames[1].length, mpegFrames[2].length,
+                mpegFrames[3].length, mpegFrames[4].length }, stream.fsizes);
         Assert.assertArrayEquals(new int[] { 0 }, stream.sync);
-        Assert.assertEquals(mpegStreamParams.length, stream.siLen);
     }
 
     @Test
     public void testInterleavedLengthPresentPtsPresent() throws IOException {
         byte[] EMPTY = { 0, 0 };
-        byte[] iFrame = mpegFrame(0, 1);
         byte[][] mpegFrames = {
 //@formatter:off
-            mpegStreamParams, 
             iFrame, 
             mpegFrame(5, 2),
             mpegFrame(2, 3), 
@@ -197,7 +194,7 @@ public class MPSIndexerTest {
         };
         byte[] mpegES = flatten(mpegFrames);
 
-        int pesLen = iFrame.length / 3;
+        int pesLen = mpegFrames[1].length / 3;
         byte[][] peses = {
 //@formatter:off
             pes(0xe0, pesLen, 0, mpegES, false),
@@ -248,19 +245,16 @@ public class MPSIndexerTest {
         Assert.assertEquals(2, streams.length);
         MPSStreamIndex stream = getVideoStream(streams);
         Assert.assertArrayEquals(new int[] { 10000, 13003, 16006, 19009, 21012 }, stream.getFpts());
-        Assert.assertArrayEquals(new int[] { mpegFrames[1].length, mpegFrames[2].length, mpegFrames[3].length,
-                mpegFrames[4].length, mpegFrames[5].length }, stream.fsizes);
+        Assert.assertArrayEquals(new int[] { mpegFrames[0].length, mpegFrames[1].length, mpegFrames[2].length,
+                mpegFrames[3].length, mpegFrames[4].length }, stream.fsizes);
         Assert.assertArrayEquals(new int[] { 0 }, stream.sync);
-        Assert.assertEquals(mpegStreamParams.length, stream.siLen);
     }
-    
+
     @Test
     public void testInterleavedNoLengthPtsPresent() throws IOException {
         byte[] EMPTY = { 0, 0 };
-        byte[] iFrame = mpegFrame(0, 1);
         byte[][] mpegFrames = {
 //@formatter:off
-            mpegStreamParams, 
             iFrame, 
             mpegFrame(5, 2),
             mpegFrame(2, 3), 
@@ -270,7 +264,7 @@ public class MPSIndexerTest {
         };
         byte[] mpegES = flatten(mpegFrames);
 
-        int pesLen = iFrame.length / 3;
+        int pesLen = mpegFrames[1].length / 3;
         byte[][] peses = {
 //@formatter:off
             pes(0xe0, pesLen, 0, mpegES, true),
@@ -321,19 +315,16 @@ public class MPSIndexerTest {
         Assert.assertEquals(2, streams.length);
         MPSStreamIndex stream = getVideoStream(streams);
         Assert.assertArrayEquals(new int[] { 10000, 13003, 16006, 19009, 21012 }, stream.getFpts());
-        Assert.assertArrayEquals(new int[] { mpegFrames[1].length, mpegFrames[2].length, mpegFrames[3].length,
-                mpegFrames[4].length, mpegFrames[5].length }, stream.fsizes);
+        Assert.assertArrayEquals(new int[] { mpegFrames[0].length, mpegFrames[1].length, mpegFrames[2].length,
+                mpegFrames[3].length, mpegFrames[4].length }, stream.fsizes);
         Assert.assertArrayEquals(new int[] { 0 }, stream.sync);
-        Assert.assertEquals(mpegStreamParams.length, stream.siLen);
     }
-    
+
     @Test
     public void testInterleavedNoLengthPtsInterpolation() throws IOException {
         byte[] EMPTY = { 0, 0 };
-        byte[] iFrame = mpegFrame(0, 1);
         byte[][] mpegFrames = {
 //@formatter:off
-            mpegStreamParams, 
             iFrame, 
             mpegFrame(4, 2),
             mpegFrame(1, 3), 
@@ -343,7 +334,7 @@ public class MPSIndexerTest {
         };
         byte[] mpegES = flatten(mpegFrames);
 
-        int pesLen = iFrame.length / 3;
+        int pesLen = mpegFrames[1].length / 3;
         byte[][] peses = {
 //@formatter:off
             pes(0xe0, pesLen, 0, mpegES, true),
@@ -412,10 +403,9 @@ public class MPSIndexerTest {
         Assert.assertEquals(2, streams.length);
         MPSStreamIndex stream = getVideoStream(streams);
         Assert.assertArrayEquals(new int[] { 10000, 22012, 13003, 16006, 19009 }, stream.getFpts());
-        Assert.assertArrayEquals(new int[] { mpegFrames[1].length, mpegFrames[2].length, mpegFrames[3].length,
-                mpegFrames[4].length, mpegFrames[5].length }, stream.fsizes);
+        Assert.assertArrayEquals(new int[] { mpegFrames[0].length, mpegFrames[1].length, mpegFrames[2].length,
+                mpegFrames[3].length, mpegFrames[4].length }, stream.fsizes);
         Assert.assertArrayEquals(new int[] { 0 }, stream.sync);
-        Assert.assertEquals(mpegStreamParams.length, stream.siLen);
     }
 
     private MPSStreamIndex getVideoStream(MPSStreamIndex[] streams) {

@@ -57,7 +57,7 @@ public class MTSIndex {
         return programs;
     }
 
-    public MTSIndex parse(ByteBuffer buf) {
+    public static MTSIndex parse(ByteBuffer buf) {
         int numPrograms = buf.getInt();
         MTSProgram[] programs = new MTSProgram[numPrograms];
         for (int i = 0; i < numPrograms; i++) {
@@ -81,7 +81,7 @@ public class MTSIndex {
             ByteBuffer dup = buf.duplicate();
             NIOUtils.skip(buf, 4);
             mtsAnalyser.serializeTo(buf);
-            dup.putInt(buf.position() - dup.position());
+            dup.putInt(buf.position() - dup.position() - 4);
         }
     }
 

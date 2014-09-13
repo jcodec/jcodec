@@ -3,7 +3,6 @@ package org.jcodec.containers.mps.index;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +46,7 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
 
     protected abstract class BaseAnalyser {
         protected IntArrayList pts = new IntArrayList(250000);
+        protected IntArrayList dur = new IntArrayList(250000);
 
         public abstract void pkt(ByteBuffer pkt, PESPacket pesHeader);
 
@@ -57,25 +57,28 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
         }
 
         public abstract MPSStreamIndex serialize(int streamId);
-
-        public int framePts(PESPacket pesHeader) {
-            if (pesHeader.pts == -1 && pts.size() > 0)
-                return pts.get(pts.size() - 1);
-            else
-                return (int) pesHeader.pts;
-        }
     }
 
     private class GenericAnalyser extends BaseAnalyser {
         private IntArrayList sizes = new IntArrayList(250000);
+        private int knownDuration;
+        private long lastPts;
 
         public void pkt(ByteBuffer pkt, PESPacket pesHeader) {
             sizes.add(pkt.remaining());
-            super.framePts(pesHeader);
+
+            if (pesHeader.pts == -1) {
+                pesHeader.pts = lastPts + knownDuration;
+            } else {
+                knownDuration = (int) (pesHeader.pts - lastPts);
+                lastPts = pesHeader.pts;
+            }
+            pts.add((int) pesHeader.pts);
+            dur.add(knownDuration);
         }
 
         public MPSStreamIndex serialize(int streamId) {
-            return new MPSStreamIndex(streamId, 0, sizes.toArray(), pts.toArray(), new int[0]);
+            return new MPSStreamIndex(streamId, sizes.toArray(), pts.toArray(), dur.toArray(), new int[0]);
         }
 
         @Override
@@ -93,19 +96,19 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
         private long position;
         private IntArrayList sizes = new IntArrayList(250000);
         private IntArrayList keyFrames = new IntArrayList(20000);
-        private int siSize;
         private int frameNo;
+        private boolean inFrameData;
 
         private Frame lastFrame;
         private List<Frame> curGop = new ArrayList<Frame>();
+        private long phPos = -1;
+        private Frame lastFrameOfLastGop;
 
         private class Frame {
-            public long offset;
-            public int size;
-            public int pts;
-            public int tempRef;
-            public int duration;
-
+            long offset;
+            int size;
+            int pts;
+            int tempRef;
         }
 
         public void pkt(ByteBuffer pkt, PESPacket pesHeader) {
@@ -114,29 +117,12 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
                 int b = pkt.get() & 0xff;
                 ++position;
                 marker = (marker << 8) | b;
-                if (marker == 0x100) {
-                    Frame frame = new Frame();
-                    long frameStart = position - 4;
 
-                    if (lastFrame != null) {
-                        lastFrame.size = (int) (frameStart - lastFrame.offset);
-                    } else
-                        siSize = (int) frameStart;
-
-                    frame.pts = super.framePts(pesHeader);
-                    frame.offset = frameStart;
-                    Logger.info(String.format("FRAME[%d]: %012x, %d", frameNo, (pesHeader.pos + pkt.position() - 4),
-                            pesHeader.pts));
-                    frameNo++;
-                    if (lastFrame != null)
-                        curGop.add(lastFrame);
-                    lastFrame = frame;
-                }
-                if (lastFrame != null) {
-                    long intoTheFrame = position - lastFrame.offset;
-                    if (intoTheFrame == 5)
+                if (phPos != -1) {
+                    long phOffset = position - phPos;
+                    if (phOffset == 5)
                         lastFrame.tempRef = b << 2;
-                    else if (intoTheFrame == 6) {
+                    else if (phOffset == 6) {
                         int picCodingType = (b >> 3) & 0x7;
                         lastFrame.tempRef |= b >> 6;
                         if (picCodingType == PictureHeader.IntraCoded) {
@@ -146,6 +132,34 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
                         }
                     }
                 }
+
+                if ((marker & 0xffffff00) != 0x100)
+                    continue;
+
+                if (inFrameData && (marker == 0x100 || marker > 0x1af)) {
+                    // End of frame
+                    lastFrame.size = (int) (position - 4 - lastFrame.offset);
+                    curGop.add(lastFrame);
+                    lastFrame = null;
+                    inFrameData = false;
+                } else if (!inFrameData && (marker > 0x100 && marker <= 0x1af)) {
+                    inFrameData = true;
+                }
+
+                if (lastFrame == null && (marker == 0x1b3 || marker == 0x1b8 || marker == 0x100)) {
+                    Frame frame = new Frame();
+                    frame.pts = (int) pesHeader.pts;
+                    frame.offset = position - 4;
+                    Logger.info(String.format("FRAME[%d]: %012x, %d", frameNo, (pesHeader.pos + pkt.position() - 4),
+                            pesHeader.pts));
+                    frameNo++;
+                    lastFrame = frame;
+                }
+                if (lastFrame != null && lastFrame.pts == -1 && marker == 0x100) {
+                    lastFrame.pts = (int) pesHeader.pts;
+                }
+
+                phPos = marker == 0x100 ? position - 4 : -1;
             }
         }
 
@@ -178,17 +192,26 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
                 }
                 ArrayUtil.reverse(frames);
             }
+            if (lastFrameOfLastGop != null) {
+                dur.add(frames[0].pts - lastFrameOfLastGop.pts);
+            }
+            for (int i = 1; i < frames.length; i++) {
+                dur.add(frames[i].pts - frames[i - 1].pts);
+            }
+            lastFrameOfLastGop = frames[frames.length - 1];
         }
 
         @Override
         public void finishAnalyse() {
+            if (lastFrame == null)
+                return;
             lastFrame.size = (int) (position - lastFrame.offset);
             curGop.add(lastFrame);
             outGop();
         }
 
         public MPSStreamIndex serialize(int streamId) {
-            return new MPSStreamIndex(streamId, siSize, sizes.toArray(), pts.toArray(), keyFrames.toArray());
+            return new MPSStreamIndex(streamId, sizes.toArray(), pts.toArray(), dur.toArray(), keyFrames.toArray());
         }
     }
 
