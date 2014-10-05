@@ -3,15 +3,13 @@ package org.jcodec.movtool.streaming.tracks.avc;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.H264Utils.SliceHeaderTweaker;
-import org.jcodec.codecs.h264.encode.ConstantRateControl;
+import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
@@ -22,10 +20,8 @@ import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.movtool.streaming.CodecMeta;
+import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.movtool.streaming.tracks.ClipTrack;
@@ -43,10 +39,10 @@ import org.jcodec.movtool.streaming.tracks.VirtualPacketWrapper;
 public class AVCClipTrack extends ClipTrack {
 
     private AvcCBox avcC;
-    private ConstantRateControl rc;
+    private H264FixedRateControl rc;
     private int mbW;
     private int mbH;
-    private VideoSampleEntry se;
+    private VideoCodecMeta se;
     private int frameSize;
     private SeqParameterSet encSPS;
     private PictureParameterSet encPPS;
@@ -54,13 +50,13 @@ public class AVCClipTrack extends ClipTrack {
     public AVCClipTrack(VirtualTrack src, int frameFrom, int frameTo) {
         super(src, frameFrom, frameTo);
 
-        SampleEntry origSE = src.getSampleEntry();
-        if (!"avc1".equals(origSE.getFourcc()))
+        VideoCodecMeta codecMeta = (VideoCodecMeta)src.getCodecMeta();
+        if (!"avc1".equals(codecMeta.getFourcc()))
             throw new RuntimeException("Not an AVC source track");
 
-        rc = new ConstantRateControl(1024);
+        rc = new H264FixedRateControl(1024);
         H264Encoder encoder = new H264Encoder(rc);
-        avcC = H264Utils.parseAVCC((VideoSampleEntry) origSE);
+        avcC = H264Utils.parseAVCC(codecMeta.getCodecPrivate());
         SeqParameterSet sps = H264Utils.readSPS(NIOUtils.duplicate(avcC.getSpsList().get(0)));
 
         mbW = sps.pic_width_in_mbs_minus1 + 1;
@@ -82,10 +78,8 @@ public class AVCClipTrack extends ClipTrack {
 
         avcC.getSpsList().add(H264Utils.writeSPS(encSPS, 128));
         avcC.getPpsList().add(H264Utils.writePPS(encPPS, 20));
-
-        se = (VideoSampleEntry) MP4Util.cloneBox(origSE, 2048, SampleDescriptionBox.FACTORY);
-        se.removeChildren("avcC");
-        se.add(avcC);
+        
+        se = new VideoCodecMeta("avc1", H264Utils.getAvcCData(avcC), codecMeta.getSize(), codecMeta.getPasp());
 
         frameSize = rc.calcFrameSize(mbW * mbH);
         frameSize += frameSize >> 4;
@@ -196,7 +190,7 @@ public class AVCClipTrack extends ClipTrack {
     }
 
     @Override
-    public SampleEntry getSampleEntry() {
+    public CodecMeta getCodecMeta() {
         return se;
     }
 

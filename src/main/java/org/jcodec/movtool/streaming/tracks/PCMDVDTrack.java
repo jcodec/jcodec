@@ -6,8 +6,10 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.pcmdvd.PCMDVDDecoder;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.AudioBuffer;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.boxes.channel.Label;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.movtool.streaming.AudioCodecMeta;
+import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -71,8 +73,9 @@ public class PCMDVDTrack implements VirtualTrack {
     }
 
     @Override
-    public SampleEntry getSampleEntry() {
-        return MP4Muxer.audioSampleEntry(format);
+    public CodecMeta getCodecMeta() {
+        return new AudioCodecMeta(MP4Muxer.lookupFourcc(format), ByteBuffer.allocate(0), format, true, new Label[] {
+                Label.Left, Label.Right });
     }
 
     @Override

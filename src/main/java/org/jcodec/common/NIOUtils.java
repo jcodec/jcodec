@@ -318,6 +318,12 @@ public class NIOUtils {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).order(order).putInt(value).flip());
     }
 
+    public static void writeIntLE(WritableByteChannel channel, int value) throws IOException {
+        ByteBuffer allocate = ByteBuffer.allocate(4);
+        allocate.order(ByteOrder.LITTLE_ENDIAN);
+        channel.write((ByteBuffer) allocate.putInt(value).flip());
+    }
+
     public static void writeInt(WritableByteChannel channel, int value) throws IOException {
         channel.write((ByteBuffer) ByteBuffer.allocate(4).putInt(value).flip());
     }
@@ -379,23 +385,30 @@ public class NIOUtils {
 
         protected abstract void data(ByteBuffer data, long filePos);
 
-        public void readFile(File source, int bufferSize, FileReaderListener listener) throws IOException {
+        protected abstract void done();
+
+        public void readFile(SeekableByteChannel ch, int bufferSize, FileReaderListener listener) throws IOException {
             ByteBuffer buf = ByteBuffer.allocate(bufferSize);
+            long size = ch.size();
+            for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
+                buf.flip();
+                data(buf, pos);
+                buf.flip();
+                if (listener != null) {
+                    int newPd = (int) (100 * pos / size);
+                    if (newPd != oldPd)
+                        listener.progress(newPd);
+                    oldPd = newPd;
+                }
+            }
+            done();
+        }
+
+        public void readFile(File source, int bufferSize, FileReaderListener listener) throws IOException {
             SeekableByteChannel ch = null;
             try {
                 ch = NIOUtils.readableFileChannel(source);
-                long size = ch.size();
-                for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
-                    buf.flip();
-                    data(buf, pos);
-                    buf.flip();
-                    if (listener != null) {
-                        int newPd = (int) (100 * pos / size);
-                        if (newPd != oldPd)
-                            listener.progress(newPd);
-                        oldPd = newPd;
-                    }
-                }
+                readFile(ch, bufferSize, listener);
             } finally {
                 NIOUtils.closeQuietly(ch);
             }
@@ -411,5 +424,12 @@ public class NIOUtils {
         res.put(pesBuffer.duplicate());
         res.clear();
         return res;
+    }
+
+    public static ByteBuffer clone(ByteBuffer byteBuffer) {
+        ByteBuffer result = ByteBuffer.allocate(byteBuffer.remaining());
+        result.put(byteBuffer.duplicate());
+        result.flip();
+        return result;
     }
 }

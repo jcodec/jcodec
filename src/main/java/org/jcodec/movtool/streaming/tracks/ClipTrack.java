@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -73,8 +73,8 @@ public class ClipTrack implements VirtualTrack {
     }
 
     @Override
-    public SampleEntry getSampleEntry() {
-        return src.getSampleEntry();
+    public CodecMeta getCodecMeta() {
+        return src.getCodecMeta();
     }
 
     @Override

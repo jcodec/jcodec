@@ -164,7 +164,7 @@ public class Flattern {
             SeekableByteChannel[] e = new SeekableByteChannel[entries.size()];
             SeekableByteChannel[] inputs = new SeekableByteChannel[entries.size()];
             for (int j = 0; j < e.length; j++) {
-                inputs[j] = Flattern.resolveDataRef(entries.get(j));
+                inputs[j] = resolveDataRef(entries.get(j));
             }
             result[i] = inputs;
         }
@@ -181,7 +181,7 @@ public class Flattern {
         return sum;
     }
 
-    public static SeekableByteChannel resolveDataRef(Box box) throws IOException {
+    public SeekableByteChannel resolveDataRef(Box box) throws IOException {
         if (box instanceof UrlBox) {
             String url = ((UrlBox) box).getUrl();
             if (!url.startsWith("file://"))

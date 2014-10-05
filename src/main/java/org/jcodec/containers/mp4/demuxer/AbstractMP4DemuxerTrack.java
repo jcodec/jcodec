@@ -178,7 +178,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
 
         return true;
     }
-
+    
     @Override
     public void seek(double second) {
         seek((long) (second * timescale));

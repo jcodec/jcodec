@@ -10,6 +10,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -41,8 +42,8 @@ public class CachingTrack implements VirtualTrack {
     }
 
     @Override
-    public SampleEntry getSampleEntry() {
-        return src.getSampleEntry();
+    public CodecMeta getCodecMeta() {
+        return src.getCodecMeta();
     }
 
     @Override

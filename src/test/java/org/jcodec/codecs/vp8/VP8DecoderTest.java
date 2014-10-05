@@ -2,27 +2,34 @@ package org.jcodec.codecs.vp8;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import org.jcodec.common.IOUtils;
+import javax.imageio.ImageIO;
+
+import org.jcodec.common.NIOUtils;
+import org.jcodec.containers.mkv.MKVMuxerTest;
+import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 public class VP8DecoderTest {
 
-    private byte[] bb;
+    private ByteBuffer bb;
     private VP8Decoder dec;
 
-//    public void testKF() throws Exception {
-//        dec.decode(ByteBuffer.wrap(bb));
-//        
-//        ImageIO.write(dec.getBufferedImage(), "png", MKVMuxerTest.tildeExpand("~/decoded.png"));
-//    }
+    @Test
+    public void testKF() throws Exception {
+        dec.decode(bb.duplicate());
+        
+        ImageIO.write(AWTUtil.toBufferedImage(dec.getPicture()), "png", MKVMuxerTest.tildeExpand("~/decoded.png"));
+    }
     
-//    public void testKFToPicture() throws Exception {
-//        dec.decode(ByteBuffer.wrap(bb));
-//        Picture p = dec.getPicture();
-//        ImageIO.write(JCodecUtil.toBufferedImage(p), "png", MKVMuxerTest.tildeExpand("~/decoded.pic.png"));
-//    }
+    @Test
+    public void testKFToPicture() throws Exception {
+        dec.decode(bb.duplicate());
+        ImageIO.write(AWTUtil.toBufferedImage(dec.getPicture()), "png", MKVMuxerTest.tildeExpand("~/decoded.pic.png"));
+    }
     
     public void pysch() throws Exception {
         int mbWidth = 4;
@@ -47,8 +54,8 @@ public class VP8DecoderTest {
     @Before
     public void setUp() throws IOException {
         String path = "src/test/resources/fr.vp8";
-        bb = IOUtils.readFileToByteArray(new File(path));
-        System.out.println("byte array length: " + bb.length);
+        bb = NIOUtils.fetchFrom(new File(path));
+        System.out.println("byte array length: " + bb.remaining());
         dec = new VP8Decoder();
     }
 

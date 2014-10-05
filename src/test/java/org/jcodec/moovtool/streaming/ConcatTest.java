@@ -14,6 +14,7 @@ import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.movtool.streaming.MovieRange;
+import org.jcodec.movtool.streaming.VirtualMP4Movie;
 import org.jcodec.movtool.streaming.VirtualMovie;
 import org.jcodec.movtool.streaming.tracks.ConcatTrack;
 import org.jcodec.movtool.streaming.tracks.FilePool;
@@ -45,7 +46,7 @@ public class ConcatTest {
             tracks[i] = rt;
         }
         ConcatTrack concat = new ConcatTrack(tracks);
-        VirtualMovie vm = new VirtualMovie(concat);
+        VirtualMovie vm = new VirtualMP4Movie(concat);
 
         BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(new File(
                 System.getProperty("user.home"), "concat.mov")));

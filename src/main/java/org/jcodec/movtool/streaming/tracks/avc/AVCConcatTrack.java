@@ -1,8 +1,5 @@
 package org.jcodec.movtool.streaming.tracks.avc;
 
-import static org.jcodec.codecs.h264.H264Utils.writePPS;
-import static org.jcodec.codecs.h264.H264Utils.writeSPS;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -20,10 +17,9 @@ import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.PixelAspectExt;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.common.model.Rational;
+import org.jcodec.movtool.streaming.CodecMeta;
+import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -45,7 +41,7 @@ public class AVCConcatTrack implements VirtualTrack {
     private VirtualPacket lastPacket;
     private double offsetPts = 0;
     private int offsetFn = 0;
-    private SampleEntry se;
+    private CodecMeta se;
     private AvcCBox[] avcCs;
     private Map<Integer, Integer> map;
     private List<PictureParameterSet> allPps;
@@ -56,24 +52,32 @@ public class AVCConcatTrack implements VirtualTrack {
         this.tracks = tracks;
 
         avcCs = new AvcCBox[tracks.length];
-        PixelAspectExt pasp = null;
+        Rational pasp = null;
 
         allPps = new ArrayList<PictureParameterSet>();
         allSps = new ArrayList<SeqParameterSet>();
         tweakers = new H264Utils.SliceHeaderTweaker[tracks.length];
+        int nalLengthSize = 0;
         for (int i = 0; i < tracks.length; i++) {
-            SampleEntry se = tracks[i].getSampleEntry();
-            if (!(se instanceof VideoSampleEntry))
+            CodecMeta se = tracks[i].getCodecMeta();
+            if (!(se instanceof VideoCodecMeta))
                 throw new RuntimeException("Not a video track.");
             if (!"avc1".equals(se.getFourcc()))
                 throw new RuntimeException("Not an AVC track.");
 
-            PixelAspectExt paspL = Box.findFirst(se, PixelAspectExt.class, "pasp");
-            if (pasp != null && paspL != null && !pasp.getRational().equals(paspL.getRational()))
+            VideoCodecMeta vcm = (VideoCodecMeta) se;
+
+            Rational paspL = vcm.getPasp();
+            if (pasp != null && paspL != null && !pasp.equals(paspL))
                 throw new RuntimeException("Can not concat video tracks with different Pixel Aspect Ratio.");
             pasp = paspL;
 
-            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
+            AvcCBox avcC = H264Utils.parseAVCC(vcm.getCodecPrivate());
+            if (nalLengthSize == 0)
+                nalLengthSize = avcC.getNalLengthSize();
+            else if (nalLengthSize != avcC.getNalLengthSize())
+                throw new RuntimeException("Unable to concat AVC tracks with different NAL length size in AvcC box");
+
             for (ByteBuffer ppsBuffer : avcC.getPpsList()) {
                 PictureParameterSet pps = H264Utils.readPPS(NIOUtils.duplicate(ppsBuffer));
                 pps.pic_parameter_set_id |= i << 8;
@@ -95,9 +99,10 @@ public class AVCConcatTrack implements VirtualTrack {
         }
         map = mergePS(allSps, allPps);
 
-        se = H264Utils.createMOVSampleEntry(writeSPS(allSps), writePPS(allPps));
-        if (pasp != null)
-            se.add(pasp);
+        VideoCodecMeta codecMeta = (VideoCodecMeta) tracks[0].getCodecMeta();
+        AvcCBox createAvcC = H264Utils.createAvcC(allSps, allPps, nalLengthSize);
+
+        se = new VideoCodecMeta("avc1", H264Utils.getAvcCData(createAvcC), codecMeta.getSize(), codecMeta.getPasp());
     }
 
     private Map<Integer, Integer> mergePS(List<SeqParameterSet> allSps, List<PictureParameterSet> allPps) {
@@ -164,7 +169,7 @@ public class AVCConcatTrack implements VirtualTrack {
     }
 
     @Override
-    public SampleEntry getSampleEntry() {
+    public CodecMeta getCodecMeta() {
         return se;
     }
 
@@ -204,7 +209,16 @@ public class AVCConcatTrack implements VirtualTrack {
             }
         }
         if (out.remaining() >= 5) {
-            out.putInt(out.remaining() - 4);
+            int nalLengthSize = avcCs[idx2].getNalLengthSize();
+            int size = out.remaining() - nalLengthSize;
+            if (nalLengthSize == 4)
+                out.putInt(size);
+            else if (nalLengthSize == 2)
+                out.putShort((short) size);
+            else if (nalLengthSize == 3) {
+                out.put((byte) (size >> 16));
+                out.putShort((short) (size & 0xffff));
+            }
             new NALUnit(NALUnitType.FILLER_DATA, 0).write(out);
         }
 

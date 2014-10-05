@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
@@ -12,7 +12,7 @@ import org.jcodec.common.io.BitWriter;
  * @author The JCodec project
  * 
  */
-public class PictureSpatialScalableExtension {
+public class PictureSpatialScalableExtension implements MPEGHeader {
     public int lower_layer_temporal_reference;
     public int lower_layer_horizontal_offset;
     public int lower_layer_vertical_offset;
@@ -35,14 +35,20 @@ public class PictureSpatialScalableExtension {
         return psse;
     }
 
-    public void write(BitWriter out) throws IOException {
-        out.writeNBit(lower_layer_temporal_reference, 10);
-        out.write1Bit(1); // todo: verify this
-        out.writeNBit(lower_layer_horizontal_offset, 15);
-        out.write1Bit(1); // todo: verify this
-        out.writeNBit(lower_layer_vertical_offset, 15);
-        out.writeNBit(spatial_temporal_weight_code_table_index, 2);
-        out.write1Bit(lower_layer_progressive_frame);
-        out.write1Bit(lower_layer_deinterlaced_field_select);
+    @Override
+    public void write(ByteBuffer bb) {
+        BitWriter bw = new BitWriter(bb);
+        bw.writeNBit(PictureHeader.Picture_Spatial_Scalable_Extension, 4);
+
+        bw.writeNBit(lower_layer_temporal_reference, 10);
+        bw.write1Bit(1); // todo: verify this
+        bw.writeNBit(lower_layer_horizontal_offset, 15);
+        bw.write1Bit(1); // todo: verify this
+        bw.writeNBit(lower_layer_vertical_offset, 15);
+        bw.writeNBit(spatial_temporal_weight_code_table_index, 2);
+        bw.write1Bit(lower_layer_progressive_frame);
+        bw.write1Bit(lower_layer_deinterlaced_field_select);
+
+        bw.flush();
     }
 }

@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.common.NIOUtils;
-import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.movtool.streaming.AudioCodecMeta;
+import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -25,7 +25,7 @@ public class PCMFlatternTrack implements VirtualTrack {
     private static final VirtualPacket[] EMPTY = new VirtualPacket[0];
     private int framesPerPkt;
     private VirtualTrack src;
-    private AudioSampleEntry se;
+    private AudioCodecMeta se;
     private int dataLen;
     private double packetDur;
     private VirtualPacket leftover;
@@ -36,8 +36,8 @@ public class PCMFlatternTrack implements VirtualTrack {
     public PCMFlatternTrack(VirtualTrack src, int samplesPerPkt) {
         this.framesPerPkt = samplesPerPkt;
         this.src = src;
-        this.se = (AudioSampleEntry) src.getSampleEntry();
-        this.dataLen = se.calcFrameSize() * framesPerPkt;
+        this.se = (AudioCodecMeta) src.getCodecMeta();
+        this.dataLen = se.getFrameSize() * framesPerPkt;
         this.packetDur = (double) framesPerPkt / se.getSampleRate();
     }
 
@@ -72,7 +72,7 @@ public class PCMFlatternTrack implements VirtualTrack {
     }
 
     @Override
-    public SampleEntry getSampleEntry() {
+    public CodecMeta getCodecMeta() {
         return se;
     }
 

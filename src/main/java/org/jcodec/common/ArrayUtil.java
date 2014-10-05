@@ -138,11 +138,19 @@ public class ArrayUtil {
             result[i] = (byte) val[i];
         return result;
     }
-    
+
     public static int[] toUnsignedIntArray(byte[] val) {
         int[] result = new int[val.length];
         for (int i = 0; i < val.length; i++)
             result[i] = val[i] & 0xff;
         return result;
+    }
+
+    public static <T> void reverse(T[] frames) {
+        for (int i = 0, j = frames.length - 1; i < frames.length >> 1; ++i, --j) {
+            T tmp = frames[i];
+            frames[i] = frames[j];
+            frames[j] = tmp;
+        }
     }
 }

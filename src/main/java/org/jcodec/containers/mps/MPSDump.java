@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.util.HashMap;
 
 import org.jcodec.codecs.mpeg12.MPEGUtil;
@@ -42,6 +43,12 @@ import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 public class MPSDump {
     private static final String DUMP_FROM = "dump-from";
     private static final String STOP_AT = "stop-at";
+    
+    protected ReadableByteChannel ch;
+
+    public MPSDump(ReadableByteChannel ch) {
+        this.ch = ch;
+    }
 
     public static void main(String[] args) throws IOException {
         FileChannelWrapper ch = null;
@@ -61,52 +68,82 @@ public class MPSDump {
             Long dumpAfterPts = cmd.getLongFlag(DUMP_FROM);
             Long stopPts = cmd.getLongFlag(STOP_AT);
 
-            MPEGVideoAnalyzer analyzer = null;
-
-            PESPacket pkt = null;
-            int hdrSize = 0;
-            while (ch.position() + 4 < ch.size()) {
-                ByteBuffer buffer = NIOUtils.fetchFrom(ch, 0x100000);
-
-                while (true) {
-                    ByteBuffer payload = null;
-                    if (pkt != null && pkt.length > 0) {
-                        int pesLen = pkt.length - hdrSize + 6;
-                        if (pesLen <= buffer.remaining())
-                            payload = NIOUtils.read(buffer, pesLen);
-                    } else {
-                        payload = getPesPayload(buffer);
-                    }
-                    if (payload == null)
-                        break;
-                    if (pkt != null)
-                        System.out.println(pkt.streamId + "(" + (pkt.streamId >= 0xe0 ? "video" : "audio") + ")" + " ["
-                                + pkt.pos + ", " + (payload.remaining() + hdrSize) + "], pts: " + pkt.pts + ", dts: "
-                                + pkt.dts);
-                    if (analyzer != null && pkt != null && pkt.streamId >= 0xe0 && pkt.streamId <= 0xef) {
-                        analyzer.analyzeMpegVideoPacket(payload);
-                    }
-                    if (buffer.remaining() < 32)
-                        break;
-
-                    skipToNextPES(buffer);
-
-                    if (buffer.remaining() < 32)
-                        break;
-
-                    hdrSize = buffer.position();
-                    pkt = readPESHeader(buffer, ch.position() - buffer.remaining());
-                    hdrSize = buffer.position() - hdrSize;
-                    if (dumpAfterPts != null && pkt.pts >= dumpAfterPts)
-                        analyzer = new MPEGVideoAnalyzer();
-                    if (stopPts != null && pkt.pts >= stopPts)
-                        return;
-                }
-                ch.position(ch.position() - buffer.remaining());
-            }
+            new MPSDump(ch).dump(dumpAfterPts, stopPts);
         } finally {
             NIOUtils.closeQuietly(ch);
         }
+    }
+
+    public void dump(Long dumpAfterPts, Long stopPts) throws IOException {
+        MPEGVideoAnalyzer analyzer = null;
+        ByteBuffer buffer = ByteBuffer.allocate(0x100000);
+
+        PESPacket pkt = null;
+        int hdrSize = 0;
+        for (long position = 0;;) {
+            position -= buffer.position();
+            fillBuffer(buffer);
+            buffer.flip();
+            if (buffer.remaining() < 4)
+                break;
+            position += buffer.remaining();
+
+            while (true) {
+                ByteBuffer payload = null;
+                if (pkt != null && pkt.length > 0) {
+                    int pesLen = pkt.length - hdrSize + 6;
+                    if (pesLen <= buffer.remaining())
+                        payload = NIOUtils.read(buffer, pesLen);
+                } else {
+                    payload = getPesPayload(buffer);
+                }
+                if (payload == null)
+                    break;
+                if (pkt != null)
+                    logPes(pkt, hdrSize, payload);
+                if (analyzer != null && pkt != null && pkt.streamId >= 0xe0 && pkt.streamId <= 0xef) {
+                    analyzer.analyzeMpegVideoPacket(payload);
+                }
+                if (buffer.remaining() < 32) {
+                    pkt = null;
+                    break;
+                }
+
+                skipToNextPES(buffer);
+
+                if (buffer.remaining() < 32) {
+                    pkt = null;
+                    break;
+                }
+
+                hdrSize = buffer.position();
+                pkt = readPESHeader(buffer, position - buffer.remaining());
+                hdrSize = buffer.position() - hdrSize;
+                if (dumpAfterPts != null && pkt.pts >= dumpAfterPts)
+                    analyzer = new MPEGVideoAnalyzer();
+                if (stopPts != null && pkt.pts >= stopPts)
+                    return;
+            }
+            buffer = transferRemainder(buffer);
+        }
+    }
+
+    protected int fillBuffer(ByteBuffer buffer) throws IOException {
+        return ch.read(buffer);
+    }
+
+    protected void logPes(PESPacket pkt, int hdrSize, ByteBuffer payload) {
+        System.out.println(pkt.streamId + "(" + (pkt.streamId >= 0xe0 ? "video" : "audio") + ")" + " ["
+                + pkt.pos + ", " + (payload.remaining() + hdrSize) + "], pts: " + pkt.pts + ", dts: "
+                + pkt.dts);
+    }
+
+    private ByteBuffer transferRemainder(ByteBuffer buffer) {
+        ByteBuffer dup = buffer.duplicate();
+        dup.clear();
+        while (buffer.hasRemaining())
+            dup.put(buffer.get());
+        return dup;
     }
 
     private static void skipToNextPES(ByteBuffer buffer) {
@@ -124,7 +161,7 @@ public class MPSDump {
         ByteBuffer result = buffer.duplicate();
         while (copy.hasRemaining()) {
             int marker = copy.duplicate().getInt();
-            if (marker > 0x1af) {
+            if (marker >= 0x1b9) {
                 result.limit(copy.position());
                 buffer.position(copy.position());
                 return result;

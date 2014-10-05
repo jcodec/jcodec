@@ -122,6 +122,11 @@ public class MPSMediaInfo extends PESReader {
                 protected void data(ByteBuffer data, long filePos) {
                     analyseBuffer(data, filePos);
                 }
+
+                @Override
+                protected void done() {
+                    
+                }
             }.readFile(f, 0x10000, null);
         } catch (MediaInfoDone e) {
             Logger.info("Media info done");

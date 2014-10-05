@@ -6,16 +6,16 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.encode.ConstantRateControl;
+import org.jcodec.codecs.h264.encode.H264FixedRateControl;
+import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.PixelAspectExt;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.movtool.streaming.CodecMeta;
+import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.scale.ColorUtil;
@@ -35,7 +35,7 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
     private static final int TARGET_RATE = 1024;
     private int frameSize;
     protected VirtualTrack src;
-    private SampleEntry se;
+    private CodecMeta se;
     private ThreadLocal<Transcoder> transcoders = new ThreadLocal<Transcoder>();
     private int mbW;
     private int mbH;
@@ -52,7 +52,7 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
     public Transcode2AVCTrack(VirtualTrack src, Size frameDim) {
         checkFourCC(src);
         this.src = src;
-        ConstantRateControl rc = new ConstantRateControl(TARGET_RATE);
+        H264FixedRateControl rc = new H264FixedRateControl(TARGET_RATE);
         H264Encoder encoder = new H264Encoder(rc);
 
         scaleFactor = selectScaleFactor(frameDim);
@@ -62,17 +62,22 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
         mbW = (thumbWidth + 15) >> 4;
         mbH = (thumbHeight + 15) >> 4;
 
-        se = H264Utils.createMOVSampleEntry(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS());
-        PixelAspectExt pasp = Box.findFirst(src.getSampleEntry(), PixelAspectExt.class, "pasp");
-        if (pasp != null)
-            se.add(pasp);
+        se = createCodecMeta(src, encoder, thumbWidth, thumbHeight);
 
         frameSize = rc.calcFrameSize(mbW * mbH);
         frameSize += frameSize >> 4;
     }
 
+    public static VideoCodecMeta createCodecMeta(VirtualTrack src, H264Encoder encoder, int thumbWidth, int thumbHeight) {
+        VideoCodecMeta codecMeta = (VideoCodecMeta) src.getCodecMeta();
+        AvcCBox createAvcC = H264Utils
+                .createAvcC(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS(), 4);
+        
+        return new VideoCodecMeta("avc1", H264Utils.getAvcCData(createAvcC), new Size(thumbWidth, thumbHeight), codecMeta.getPasp());
+    }
+
     @Override
-    public SampleEntry getSampleEntry() {
+    public CodecMeta getCodecMeta() {
         return se;
     }
 
@@ -113,10 +118,10 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
         private Picture pic0;
         private Picture pic1;
         private Transform transform;
-        private ConstantRateControl rc;
+        private H264FixedRateControl rc;
 
         public Transcoder() {
-            rc = new ConstantRateControl(TARGET_RATE);
+            rc = new H264FixedRateControl(TARGET_RATE);
             this.decoder = getDecoder(scaleFactor);
             this.encoder = new H264Encoder(rc);
             pic0 = Picture.create(mbW << 4, (mbH + 1) << 4, ColorSpace.YUV444);

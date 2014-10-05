@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
@@ -13,7 +13,7 @@ import org.jcodec.common.model.Point;
  * @author The JCodec project
  * 
  */
-public class PictureDisplayExtension {
+public class PictureDisplayExtension implements MPEGHeader {
     public Point[] frame_centre_offsets;
 
     public static PictureDisplayExtension read(BitReader bits, SequenceExtension se, PictureCodingExtension pce) {
@@ -54,10 +54,15 @@ public class PictureDisplayExtension {
         }
     }
 
-    public void write(BitWriter out) throws IOException {
+    @Override
+    public void write(ByteBuffer bb) {
+        BitWriter bw = new BitWriter(bb);
+        bw.writeNBit(PictureHeader.Picture_Display_Extension, 4);
+        
         for (Point point : frame_centre_offsets) {
-            out.writeNBit(point.getX(), 16);
-            out.writeNBit(point.getY(), 16);
+            bw.writeNBit(point.getX(), 16);
+            bw.writeNBit(point.getY(), 16);
         }
+        bw.flush();
     }
 }

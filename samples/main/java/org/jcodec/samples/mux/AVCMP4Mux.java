@@ -88,7 +88,7 @@ public class AVCMP4Mux {
 
         SampleEntry se = MP4Muxer.videoSampleEntry("avc1", size, "JCodec");
 
-        avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, write(spss), write(ppss));
+        avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, 4, write(spss), write(ppss));
         se.add(avcC);
         track.addSampleEntry(se);
     }

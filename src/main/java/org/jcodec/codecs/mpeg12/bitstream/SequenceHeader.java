@@ -14,7 +14,7 @@ import org.jcodec.common.io.BitWriter;
  * @author The JCodec project
  * 
  */
-public class SequenceHeader {
+public class SequenceHeader implements MPEGHeader {
 
     public static final int Sequence_Extension = 0x1;
     public static final int Sequence_Display_Extension = 0x2;
@@ -26,7 +26,6 @@ public class SequenceHeader {
     public int aspect_ratio_information;
     public int frame_rate_code;
     public int bit_rate;
-    public int marker_bit;
     public int vbv_buffer_size_value;
     public int constrained_parameters_flag;
     public int[] intra_quantiser_matrix;
@@ -35,6 +34,23 @@ public class SequenceHeader {
     public SequenceExtension sequenceExtension;
     public SequenceScalableExtension sequenceScalableExtension;
     public SequenceDisplayExtension sequenceDisplayExtension;
+    
+    public SequenceHeader(int horizontal_size, int vertical_size, int aspect_ratio_information, int frame_rate_code,
+            int bit_rate, int vbv_buffer_size_value, int constrained_parameters_flag, int[] intra_quantiser_matrix,
+            int[] non_intra_quantiser_matrix) {
+        this.horizontal_size = horizontal_size;
+        this.vertical_size = vertical_size;
+        this.aspect_ratio_information = aspect_ratio_information;
+        this.frame_rate_code = frame_rate_code;
+        this.bit_rate = bit_rate;
+        this.vbv_buffer_size_value = vbv_buffer_size_value;
+        this.constrained_parameters_flag = constrained_parameters_flag;
+        this.intra_quantiser_matrix = intra_quantiser_matrix;
+        this.non_intra_quantiser_matrix = non_intra_quantiser_matrix;
+    }
+    
+    private SequenceHeader() {
+    }
 
     public static SequenceHeader read(ByteBuffer bb) {
         BitReader in = new BitReader(bb);
@@ -44,7 +60,7 @@ public class SequenceHeader {
         sh.aspect_ratio_information = in.readNBit(4);
         sh.frame_rate_code = in.readNBit(4);
         sh.bit_rate = in.readNBit(18);
-        sh.marker_bit = in.read1Bit();
+        in.read1Bit();
         sh.vbv_buffer_size_value = in.readNBit(10);
         sh.constrained_parameters_flag = in.read1Bit();
         if (in.read1Bit() != 0) {
@@ -83,52 +99,49 @@ public class SequenceHeader {
         }
     }
 
-    public void write(ByteBuffer os) {
-        BitWriter out = new BitWriter(os);
-        out.writeNBit(horizontal_size, 12);
-        out.writeNBit(vertical_size, 12);
-        out.writeNBit(aspect_ratio_information, 4);
-        out.writeNBit(frame_rate_code, 4);
-        out.writeNBit(bit_rate, 18);
-        out.write1Bit(marker_bit);
-        out.writeNBit(vbv_buffer_size_value, 10);
-        out.write1Bit(constrained_parameters_flag);
-        out.write1Bit(intra_quantiser_matrix != null ? 1 : 0);
+    @Override
+    public void write(ByteBuffer bb) {
+        BitWriter bw = new BitWriter(bb);
+        bw.writeNBit(horizontal_size, 12);
+        bw.writeNBit(vertical_size, 12);
+        bw.writeNBit(aspect_ratio_information, 4);
+        bw.writeNBit(frame_rate_code, 4);
+        bw.writeNBit(bit_rate, 18);
+        bw.write1Bit(1);
+        bw.writeNBit(vbv_buffer_size_value, 10);
+        bw.write1Bit(constrained_parameters_flag);
+        bw.write1Bit(intra_quantiser_matrix != null ? 1 : 0);
         if (intra_quantiser_matrix != null) {
             for (int i = 0; i < 64; i++) {
-                out.writeNBit(intra_quantiser_matrix[i], 8);
+                bw.writeNBit(intra_quantiser_matrix[i], 8);
             }
         }
-        out.write1Bit(non_intra_quantiser_matrix != null ? 1 : 0);
+        bw.write1Bit(non_intra_quantiser_matrix != null ? 1 : 0);
         if (non_intra_quantiser_matrix != null) {
             for (int i = 0; i < 64; i++) {
-                out.writeNBit(non_intra_quantiser_matrix[i], 8);
+                bw.writeNBit(non_intra_quantiser_matrix[i], 8);
             }
         }
+        
+        bw.flush();
 
-        writeExtensions(os);
+        writeExtensions(bb);
     }
 
     private void writeExtensions(ByteBuffer out) {
         if (sequenceExtension != null) {
             out.putInt(EXTENSION_START_CODE);
-            BitWriter os = new BitWriter(out);
-            os.writeNBit(Sequence_Extension, 4);
-            sequenceExtension.write(os);
+            sequenceExtension.write(out);
         }
 
         if (sequenceScalableExtension != null) {
             out.putInt(EXTENSION_START_CODE);
-            BitWriter os = new BitWriter(out);
-            os.writeNBit(Sequence_Scalable_Extension, 4);
-            sequenceScalableExtension.write(os);
+            sequenceScalableExtension.write(out);
         }
 
         if (sequenceDisplayExtension != null) {
             out.putInt(EXTENSION_START_CODE);
-            BitWriter os = new BitWriter(out);
-            os.writeNBit(Sequence_Display_Extension, 4);
-            sequenceDisplayExtension.write(os);
+            sequenceDisplayExtension.write(out);
         }
     }
 

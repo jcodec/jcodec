@@ -13,14 +13,13 @@ import org.jcodec.common.model.TapeTimecode;
  * @author The JCodec project
  * 
  */
-public class GOPHeader {
+public class GOPHeader implements MPEGHeader {
 
     private TapeTimecode timeCode;
     private boolean closedGop;
     private boolean brokenLink;
 
     public GOPHeader(TapeTimecode timeCode, boolean closedGop, boolean brokenLink) {
-        super();
         this.timeCode = timeCode;
         this.closedGop = closedGop;
         this.brokenLink = brokenLink;
@@ -42,20 +41,22 @@ public class GOPHeader {
         return new GOPHeader(new TapeTimecode(hours, minutes, seconds, frames, dropFrame), closedGop, brokenLink);
     }
 
-    public void write(ByteBuffer os) {
-        BitWriter out = new BitWriter(os);
+    @Override
+    public void write(ByteBuffer bb) {
+        BitWriter bw = new BitWriter(bb);
         if (timeCode == null)
-            out.writeNBit(0, 25);
+            bw.writeNBit(0, 25);
         else {
-            out.write1Bit(timeCode.isDropFrame() ? 1 : 0);
-            out.writeNBit(timeCode.getHour(), 5);
-            out.writeNBit(timeCode.getMinute(), 6);
-            out.write1Bit(1);
-            out.writeNBit(timeCode.getSecond(), 6);
-            out.writeNBit(timeCode.getFrame(), 6);
+            bw.write1Bit(timeCode.isDropFrame() ? 1 : 0);
+            bw.writeNBit(timeCode.getHour(), 5);
+            bw.writeNBit(timeCode.getMinute(), 6);
+            bw.write1Bit(1);
+            bw.writeNBit(timeCode.getSecond(), 6);
+            bw.writeNBit(timeCode.getFrame(), 6);
         }
-        out.write1Bit(closedGop ? 1 : 0);
-        out.write1Bit(brokenLink ? 1 : 0);
+        bw.write1Bit(closedGop ? 1 : 0);
+        bw.write1Bit(brokenLink ? 1 : 0);
+        bw.flush();
     }
 
     public TapeTimecode getTimeCode() {

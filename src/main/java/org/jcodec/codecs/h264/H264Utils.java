@@ -290,15 +290,59 @@ public class H264Utils {
                 if (spsList != null)
                     spsList.add(buf);
                 in.position(dup.position());
-            } else if(nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE)
+            } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE)
                 break;
         }
     }
 
-    public static SampleEntry createMOVSampleEntry(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
-        SeqParameterSet sps = readSPS(NIOUtils.duplicate(spsList.get(0)));
-        AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, spsList, ppsList);
+    public static AvcCBox createAvcC(SeqParameterSet sps, PictureParameterSet pps, int nalLengthSize) {
+        ByteBuffer serialSps = ByteBuffer.allocate(512);
+        sps.write(serialSps);
+        serialSps.flip();
+        H264Utils.escapeNAL(serialSps);
 
+        ByteBuffer serialPps = ByteBuffer.allocate(512);
+        pps.write(serialPps);
+        serialPps.flip();
+        H264Utils.escapeNAL(serialPps);
+
+        AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize,
+                Arrays.asList(new ByteBuffer[] { serialSps }), Arrays.asList(new ByteBuffer[] { serialPps }));
+
+        return avcC;
+    }
+
+    public static AvcCBox createAvcC(List<SeqParameterSet> initSPS, List<PictureParameterSet> initPPS, int nalLengthSize) {
+        List<ByteBuffer> serialSps = new ArrayList<ByteBuffer>();
+        List<ByteBuffer> serialPps = new ArrayList<ByteBuffer>();
+        for (SeqParameterSet sps : initSPS) {
+            ByteBuffer bb1 = ByteBuffer.allocate(512);
+            sps.write(bb1);
+            bb1.flip();
+            H264Utils.escapeNAL(bb1);
+            serialSps.add(bb1);
+        }
+        for (PictureParameterSet pps : initPPS) {
+            ByteBuffer bb1 = ByteBuffer.allocate(512);
+            pps.write(bb1);
+            bb1.flip();
+            H264Utils.escapeNAL(bb1);
+            serialPps.add(bb1);
+        }
+
+        SeqParameterSet sps = initSPS.get(0);
+        return new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, serialSps, serialPps);
+    }
+
+    public static SampleEntry createMOVSampleEntry(List<ByteBuffer> spsList, List<ByteBuffer> ppsList, int nalLengthSize) {
+        SeqParameterSet sps = readSPS(NIOUtils.duplicate(spsList.get(0)));
+        AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, spsList, ppsList);
+
+        return createMOVSampleEntry(avcC);
+    }
+
+    public static SampleEntry createMOVSampleEntry(AvcCBox avcC) {
+        SeqParameterSet sps = SeqParameterSet.read(avcC.getSpsList().get(0).duplicate());
         int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
         int codedHeight = getPicHeightInMbs(sps) << 4;
 
@@ -313,17 +357,18 @@ public class H264Utils {
 
         SampleEntry se = MP4Muxer.videoSampleEntry("avc1", size, "JCodec");
         se.add(avcC);
-
         return se;
     }
 
-    public static SampleEntry createMOVSampleEntry(SeqParameterSet initSPS, PictureParameterSet initPPS) {
+    public static SampleEntry createMOVSampleEntry(SeqParameterSet initSPS, PictureParameterSet initPPS,
+            int nalLengthSize) {
         ByteBuffer bb1 = ByteBuffer.allocate(512), bb2 = ByteBuffer.allocate(512);
         initSPS.write(bb1);
         initPPS.write(bb2);
         bb1.flip();
         bb2.flip();
-        return createMOVSampleEntry(Arrays.asList(new ByteBuffer[] { bb1 }), Arrays.asList(new ByteBuffer[] { bb2 }));
+        return createMOVSampleEntry(Arrays.asList(new ByteBuffer[] { bb1 }), Arrays.asList(new ByteBuffer[] { bb2 }),
+                nalLengthSize);
     }
 
     public static boolean idrSlice(ByteBuffer _data) {
@@ -393,15 +438,26 @@ public class H264Utils {
         }
     }
 
+    public static ByteBuffer getAvcCData(AvcCBox avcC) {
+        ByteBuffer bb = ByteBuffer.allocate(2048);
+        avcC.doWrite(bb);
+        bb.flip();
+        return bb;
+    }
+
     public static AvcCBox parseAVCC(VideoSampleEntry vse) {
         Box lb = Box.findFirst(vse, Box.class, "avcC");
         if (lb instanceof AvcCBox)
             return (AvcCBox) lb;
         else {
-            AvcCBox avcC = new AvcCBox();
-            avcC.parse(((LeafBox) lb).getData().duplicate());
-            return avcC;
+            return parseAVCC(((LeafBox) lb).getData().duplicate());
         }
+    }
+
+    public static AvcCBox parseAVCC(ByteBuffer bb) {
+        AvcCBox avcC = new AvcCBox();
+        avcC.parse(bb);
+        return avcC;
     }
 
     public static ByteBuffer writeSPS(SeqParameterSet sps, int approxSize) {
@@ -602,19 +658,46 @@ public class H264Utils {
             List<ByteBuffer> nalUnits) throws IOException {
         for (SeqParameterSet sps : values) {
             NIOUtils.writeInt(ch, 1);
-            NIOUtils.writeByte(ch, (byte)0x67);
+            NIOUtils.writeByte(ch, (byte) 0x67);
             ch.write(writeSPS(sps, 128));
         }
-        
+
         for (PictureParameterSet pps : values2) {
             NIOUtils.writeInt(ch, 1);
-            NIOUtils.writeByte(ch, (byte)0x68);
+            NIOUtils.writeByte(ch, (byte) 0x68);
             ch.write(writePPS(pps, 256));
         }
-        
+
         for (ByteBuffer byteBuffer : nalUnits) {
             NIOUtils.writeInt(ch, 1);
             ch.write(byteBuffer.duplicate());
         }
+    }
+
+    public static void toNAL(ByteBuffer codecPrivate, SeqParameterSet sps, PictureParameterSet pps) {
+        ByteBuffer bb1 = ByteBuffer.allocate(512), bb2 = ByteBuffer.allocate(512);
+        sps.write(bb1);
+        pps.write(bb2);
+        bb1.flip();
+        bb2.flip();
+
+        putNAL(codecPrivate, bb1, 0x67);
+        putNAL(codecPrivate, bb2, 0x68);
+    }
+
+    public static void toNAL(ByteBuffer codecPrivate, List<ByteBuffer> spsList2, List<ByteBuffer> ppsList2) {
+        for (ByteBuffer byteBuffer : spsList2)
+            putNAL(codecPrivate, byteBuffer, 0x67);
+        for (ByteBuffer byteBuffer : ppsList2)
+            putNAL(codecPrivate, byteBuffer, 0x68);
+    }
+
+    private static void putNAL(ByteBuffer codecPrivate, ByteBuffer byteBuffer, int nalType) {
+        ByteBuffer dst = ByteBuffer.allocate(byteBuffer.remaining() * 2);
+        escapeNAL(byteBuffer, dst);
+        dst.flip();
+        codecPrivate.putInt(1);
+        codecPrivate.put((byte) nalType);
+        codecPrivate.put(dst);
     }
 }
