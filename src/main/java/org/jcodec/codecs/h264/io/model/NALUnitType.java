@@ -18,6 +18,14 @@ public enum NALUnitType {
             11, "end of stream"), FILLER_DATA(12, "filter data"), SEQ_PAR_SET_EXT(13,
             "sequence parameter set extension"), AUX_SLICE(19, "auxilary slice");
 
+    private final static NALUnitType[] lut;
+    static {
+        lut = new NALUnitType[256];
+        for (NALUnitType nalUnitType : EnumSet.allOf(NALUnitType.class)) {
+            lut[nalUnitType.value] = nalUnitType;
+        }
+    }
+
     private final int value;
     private final String name;
 
@@ -35,10 +43,6 @@ public enum NALUnitType {
     }
 
     public static NALUnitType fromValue(int value) {
-        for (NALUnitType nalUnitType : EnumSet.allOf(NALUnitType.class)) {
-            if (nalUnitType.value == value)
-                return nalUnitType;
-        }
-        return null;
+        return value < lut.length ? lut[value] : null;
     }
 }
