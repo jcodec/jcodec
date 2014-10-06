@@ -59,6 +59,8 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
         public abstract MPSStreamIndex serialize(int streamId);
     }
 
+    // TODO: check how ES are packetized in the following audio formats:
+    // mp1, mp2, s302m, aac, pcm_s16le, pcm_s16be, pcm_dvd, mp3, ac3, dts, 
     private class GenericAnalyser extends BaseAnalyser {
         private IntArrayList sizes = new IntArrayList(250000);
         private int knownDuration;

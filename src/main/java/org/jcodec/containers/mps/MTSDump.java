@@ -9,13 +9,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.jcodec.common.Assert;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IntArrayList;
+import org.jcodec.common.IntIntMap;
 import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
+import org.jcodec.containers.mps.psi.PATSection;
+import org.jcodec.containers.mps.psi.PMTSection;
+import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 
 public class MTSDump extends MPSDump {
     private static final String DUMP_FROM = "dump-from";
@@ -72,6 +74,7 @@ public class MTSDump extends MPSDump {
         readableFileChannel.read(buf);
         buf.flip();
         buf.limit(buf.limit() - (buf.limit() % 188));
+        int pmtPid = -1;
         while (buf.hasRemaining()) {
             ByteBuffer tsBuf = NIOUtils.read(buf, 188);
             Assert.assertEquals(0x47, tsBuf.get() & 0xff);
@@ -79,9 +82,38 @@ public class MTSDump extends MPSDump {
             int guid = (int) guidFlags & 0x1fff;
             if (guid != 0)
                 pids.add(guid);
+            if (guid == 0 || guid == pmtPid) {
+                // PSI
+                int payloadStart = (guidFlags >> 14) & 0x1;
+                int b0 = tsBuf.get() & 0xff;
+                int counter = b0 & 0xf;
+                int payloadOff = 0;
+                if ((b0 & 0x20) != 0) {
+                    NIOUtils.skip(tsBuf, (tsBuf.get() & 0xff));
+                }
+                if (payloadStart == 1) {
+                    NIOUtils.skip(tsBuf, (tsBuf.get() & 0xff));
+                }
+
+                if (guid == 0) {
+                    PATSection pat = PATSection.parse(tsBuf);
+                    IntIntMap programs = pat.getPrograms();
+                    pmtPid = programs.values()[0];
+                } else if (guid == pmtPid) {
+                    PMTSection pmt = PMTSection.parse(tsBuf);
+                    printPmt(pmt);
+                    return;
+                }
+            }
         }
         for (Integer pid : pids) {
             System.out.println(pid);
+        }
+    }
+
+    private static void printPmt(PMTSection pmt) {
+        for (PMTStream pmtStream : pmt.getStreams()) {
+            System.out.println(pmtStream.getPid() + ": " + pmtStream.getStreamTypeTag());
         }
     }
 
@@ -114,45 +146,48 @@ public class MTSDump extends MPSDump {
     public int fillBuffer(ByteBuffer dst) throws IOException {
         IntArrayList payloads = new IntArrayList();
         IntArrayList nums = new IntArrayList();
-
         int remaining = dst.remaining();
-        dst.put(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
-        while (dst.hasRemaining()) {
-            if (!buf.hasRemaining()) {
-                ByteBuffer dub = buf.duplicate();
-                dub.clear();
-                int read = ch.read(dub);
-                if (read == -1)
-                    return dst.remaining() != remaining ? remaining - dst.remaining() : -1;
-                dub.flip();
-                dub.limit(dub.limit() - (dub.limit() % 188));
-                buf = dub;
-            }
 
-            tsBuf = NIOUtils.read(buf, 188);
-            Assert.assertEquals(0x47, tsBuf.get() & 0xff);
-            ++tsNo;
-            int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
-            int guid = (int) guidFlags & 0x1fff;
-            if (guid != this.guid)
-                continue;
-            int payloadStart = (guidFlags >> 14) & 0x1;
-            int b0 = tsBuf.get() & 0xff;
-            int counter = b0 & 0xf;
-            if ((b0 & 0x20) != 0) {
-                NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
-            }
-
-            globalPayload += tsBuf.remaining();
-            payloads.add(tsBuf.remaining());
-            nums.add(tsNo - 1);
-
+        try {
             dst.put(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
+            while (dst.hasRemaining()) {
+                if (!buf.hasRemaining()) {
+                    ByteBuffer dub = buf.duplicate();
+                    dub.clear();
+                    int read = ch.read(dub);
+                    if (read == -1)
+                        return dst.remaining() != remaining ? remaining - dst.remaining() : -1;
+                    dub.flip();
+                    dub.limit(dub.limit() - (dub.limit() % 188));
+                    buf = dub;
+                }
+
+                tsBuf = NIOUtils.read(buf, 188);
+                Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+                ++tsNo;
+                int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
+                int guid = (int) guidFlags & 0x1fff;
+                if (guid != this.guid)
+                    continue;
+                int payloadStart = (guidFlags >> 14) & 0x1;
+                int b0 = tsBuf.get() & 0xff;
+                int counter = b0 & 0xf;
+                if ((b0 & 0x20) != 0) {
+                    NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
+                }
+
+                globalPayload += tsBuf.remaining();
+                payloads.add(tsBuf.remaining());
+                nums.add(tsNo - 1);
+
+                dst.put(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
+            }
+        } finally {
+            this.prevPayloads = this.payloads;
+            this.payloads = payloads.toArray();
+            this.prevNums = this.nums;
+            this.nums = nums.toArray();
         }
-        this.prevPayloads = this.payloads;
-        this.payloads = payloads.toArray();
-        this.prevNums = this.nums;
-        this.nums = nums.toArray();
         return remaining - dst.remaining();
     }
 }
