@@ -11,6 +11,7 @@ import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.model.Picture;
 import org.jcodec.scale.AWTUtil;
 
 /**
@@ -79,7 +80,8 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      */
     public BufferedImage getFrame() throws IOException {
-        return AWTUtil.toBufferedImage(getNativeFrame());
+        Picture nativeFrame = getNativeFrame();
+        return nativeFrame == null ? null : AWTUtil.toBufferedImage(nativeFrame);
     }
 
     /**
