@@ -99,6 +99,7 @@ public class MTSDump extends MPSDump {
                     PATSection pat = PATSection.parse(tsBuf);
                     IntIntMap programs = pat.getPrograms();
                     pmtPid = programs.values()[0];
+                    printPat(pat);
                 } else if (guid == pmtPid) {
                     PMTSection pmt = PMTSection.parse(tsBuf);
                     printPmt(pmt);
@@ -111,10 +112,22 @@ public class MTSDump extends MPSDump {
         }
     }
 
-    private static void printPmt(PMTSection pmt) {
-        for (PMTStream pmtStream : pmt.getStreams()) {
-            System.out.println(pmtStream.getPid() + ": " + pmtStream.getStreamTypeTag());
+    private static void printPat(PATSection pat) {
+        IntIntMap programs = pat.getPrograms();
+        System.out.print("PAT: ");
+        int[] keys = programs.keys();
+        for (int i : keys) {
+            System.out.print(i + ":" + programs.get(i) + ", ");
         }
+        System.out.println();
+    }
+
+    private static void printPmt(PMTSection pmt) {
+        System.out.print("PMT: ");
+        for (PMTStream pmtStream : pmt.getStreams()) {
+            System.out.print(pmtStream.getPid() + ":" + pmtStream.getStreamTypeTag() + ", ");
+        }
+        System.out.println();
     }
 
     protected void logPes(PESPacket pkt, int hdrSize, ByteBuffer payload) {

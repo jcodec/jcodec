@@ -64,7 +64,7 @@ public class PMTSection extends PSISection {
             int wn = data.getShort() & 0xffff;
             int elementaryPid = wn & 0x1fff;
 
-            Logger.info(String.format("Elementary stream: [%d,%d]", streamType, elementaryPid));
+//            Logger.info(String.format("Elementary stream: [%d,%d]", streamType, elementaryPid));
 
             int wn1 = data.getShort() & 0xffff;
             int esInfoLength = wn1 & 0xfff;
@@ -80,7 +80,7 @@ public class PMTSection extends PSISection {
         while (bb.hasRemaining()) {
             int tag = bb.get();
             int tagLen = bb.get();
-            Logger.info(String.format("TAG: [0x%x, 0x%x]", tag, tagLen));
+//            Logger.info(String.format("TAG: [0x%x, 0x%x]", tag, tagLen));
             tags.add(new Tag(tag, NIOUtils.read(bb, tagLen)));
         }
         return tags;
