@@ -1,0 +1,35 @@
+[0] On a clean machine follow the guide below to setup GPG and the key:
+    http://blog.sonatype.com/2010/01/how-to-generate-pgp-signatures-with-maven/#.VEq0WIvF-8E
+
+[1] Download a version of jcodec you want to build
+    git clone https://github.com/jcodec/jcodec.git
+
+[2] Go inside jcodec folder and execute:
+    mvn clean install
+    mvn javadoc:jar gpg:sign
+    mvn source:jar gpg:sign
+
+[3] Go to https://oss.sonatype.org/
+    [3.1]  Log in
+    [3.2]  Go to 'Staging Upload'
+    [3.3]  Under Upload Mode select 'Artifact(s) with a POM'
+    [3.4]  Select 'pom' from jcodec/target
+    [3.5]  In Select Artifacts to upload upload the following artifacts ( press Add Artifact for each file)
+           jcodec-0.1.9.pom.asc
+           jcodec-0.1.9.jar
+           jcodec-0.1.9.jar.asc
+           jcodec-0.1.9-javadoc.jar
+           jcodec-0.1.9-javadoc.jar.asc
+           jcodec-0.1.9-sources.jar
+           jcodec-0.1.9-sources.jar.asc
+
+    [3.5]  Fill in 'Description' field.
+    [3.6]  Then press 'Upload artifacts'.
+    [3.7]  Click on 'Staging Repositories' and find jcodec, it's normally the last one in the list.
+    [3.8]  Verify that everything is fine and that the repository is closed ( no errors found ), 
+	       check the 'Activity' tab. If something is wrong, fix it ( jcodecproject@gmail.com ).
+    [3.9]  Click on 'Release' on the top of the page.
+    [3.10] Fill in the drescription, press the button, it should say 'Repository is released'.
+
+[4] The changes will be synced to main maven the next day or so.
+

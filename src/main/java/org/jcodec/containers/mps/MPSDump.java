@@ -82,7 +82,8 @@ public class MPSDump {
         int hdrSize = 0;
         for (long position = 0;;) {
             position -= buffer.position();
-            fillBuffer(buffer);
+            if(fillBuffer(buffer) == -1)
+                break;
             buffer.flip();
             if (buffer.remaining() < 4)
                 break;

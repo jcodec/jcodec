@@ -3,6 +3,7 @@ package org.jcodec.common;
 import static java.lang.Math.min;
 import static org.jcodec.common.JCodecUtil.asciiString;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -12,6 +13,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.Channel;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.ReadableByteChannel;
@@ -265,7 +267,7 @@ public class NIOUtils {
         } while (read != -1 && amount > 0);
     }
 
-    public static void closeQuietly(ReadableByteChannel channel) {
+    public static void closeQuietly(Closeable channel) {
         if (channel == null)
             return;
         try {

@@ -34,18 +34,18 @@ public abstract class FixTimestamp {
                 if ((tsPkt[3] & 0x20) != 0) {
                     NIOUtils.skip(bb, bb.get() & 0xff);
                 }
-                
-                if(bb.remaining() < 10)
+
+                if (bb.remaining() < 10)
                     continue; // non PES payload
 
                 int streamId = bb.getInt();
-                if((streamId >> 8) != 1)
+                if ((streamId >> 8) != 1)
                     continue; // non PES payload, probably PSI
                 while (bb.hasRemaining() && !(streamId >= 0x1bf && streamId < 0x1ef)) {
                     streamId <<= 8;
                     streamId |= bb.get() & 0xff;
                 }
-                if (streamId >= 0x1bf && streamId < 0x1ef) {
+                if (streamId >= 0x1c0 && streamId < 0x1ef) {
                     int len = bb.getShort();
                     int b0 = bb.get() & 0xff;
 
