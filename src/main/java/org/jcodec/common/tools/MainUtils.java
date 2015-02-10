@@ -37,7 +37,7 @@ public class MainUtils {
             return flags.containsKey(flagName) ? new Boolean(flags.get(flagName)) : defaultValue;
         }
 
-        public Double getDoubleFlag(String flagName, Long defaultValue) {
+        public Double getDoubleFlag(String flagName, Double defaultValue) {
             return flags.containsKey(flagName) ? new Double(flags.get(flagName)) : defaultValue;
         }
 
