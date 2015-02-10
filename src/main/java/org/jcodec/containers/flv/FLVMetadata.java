@@ -47,7 +47,8 @@ public class FLVMetadata {
                 } else {
                     field.set(this, object);
                 }
-            } catch (IllegalArgumentException | IllegalAccessException e) {
+            } catch (IllegalArgumentException e) {
+            } catch (IllegalAccessException e) {
             }
         }
     }

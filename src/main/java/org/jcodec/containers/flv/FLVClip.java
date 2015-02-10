@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 import org.jcodec.common.Codec;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.tools.MainUtils;
@@ -41,8 +42,11 @@ public class FLVClip {
 
         Double from = cmd.getDoubleFlag("from");
         Double to = cmd.getDoubleFlag("to");
-        try (SeekableByteChannel in = NIOUtils.readableFileChannel(new File(cmd.args[0]));
-                SeekableByteChannel out = NIOUtils.writableFileChannel(new File(cmd.args[1]))) {
+        SeekableByteChannel in = null;
+        SeekableByteChannel out = null;
+        try  {
+            in = NIOUtils.readableFileChannel(new File(cmd.args[0]));
+            out = NIOUtils.writableFileChannel(new File(cmd.args[1]));
             FLVDemuxer demuxer = new FLVDemuxer(in);
             FLVMuxer muxer = new FLVMuxer(out);
             FLVPacket pkt = null;
@@ -72,6 +76,9 @@ public class FLVClip {
                 }
             }
             muxer.finish();
+        } finally {
+            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(out);
         }
     }
 }
