@@ -38,7 +38,11 @@ public class IntIntMap {
     }
 
     public int get(int key) {
-        return key >= storage.length ? null : storage[key];
+        return key >= storage.length ? Integer.MIN_VALUE : storage[key];
+    }
+    
+    public boolean contains(int key) {
+        return key >= 0 && key < storage.length;
     }
 
     public int[] keys() {

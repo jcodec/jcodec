@@ -191,7 +191,8 @@ public class MTSUtils {
         private PMTSection pmt;
 
         @Override
-        protected boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos) {
+        public boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
+                ByteBuffer fullPkt) {
             if (guid == 0) {
                 pmtGuid = parsePAT(tsBuf);
             } else if (pmtGuid != -1 && guid == pmtGuid) {
@@ -206,9 +207,23 @@ public class MTSUtils {
         }
     };
 
-    public abstract static class TSReader {
+    public static interface TSFilter {
+        boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
+                ByteBuffer fullPkt);
+    }
+
+    public static class TSReader implements TSFilter {
         // Buffer must have an integral number of MPEG TS packets
         public static final int BUFFER_SIZE = 188 << 9;
+        private TSFilter out;
+        
+        public TSReader() {
+            this(null);
+        }
+        
+        public TSReader(TSFilter out) {
+            this.out = out == null ? this : out;
+        }
 
         public void readTsFile(SeekableByteChannel ch) throws IOException {
             ch.position(0);
@@ -218,6 +233,7 @@ public class MTSUtils {
                 buf.flip();
                 while (buf.hasRemaining()) {
                     ByteBuffer tsBuf = NIOUtils.read(buf, 188);
+                    ByteBuffer fullPkt = tsBuf.duplicate();
                     pos += 188;
                     Assert.assertEquals(0x47, tsBuf.get() & 0xff);
                     int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
@@ -231,16 +247,21 @@ public class MTSUtils {
                     }
                     boolean sectionSyntax = payloadStart == 1 && (getRel(tsBuf, getRel(tsBuf, 0) + 2) & 0x80) == 0x80;
                     if (sectionSyntax) {
+                        // Adaptation field
                         NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
                     }
-                    if (!onPkt(guid, payloadStart == 1, tsBuf, pos - tsBuf.remaining()))
+                    if (!out.onPkt(guid, payloadStart == 1, tsBuf, pos - tsBuf.remaining(), sectionSyntax, fullPkt))
                         return;
                 }
                 buf.flip();
             }
         }
-
-        protected abstract boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos);
+        
+        public boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
+                ByteBuffer fullPkt) {
+            // DO NOTHING
+            return true;
+        }
     }
 
     public static int getVideoPid(File src) throws IOException {
@@ -264,7 +285,7 @@ public class MTSUtils {
     public static int[] getMediaPids(SeekableByteChannel src) throws IOException {
         return filterMediaPids(MTSUtils.getProgramGuids(src));
     }
-    
+
     public static int[] getMediaPids(File src) throws IOException {
         return filterMediaPids(MTSUtils.getProgramGuids(src));
     }
