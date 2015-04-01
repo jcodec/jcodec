@@ -119,8 +119,11 @@ public class MainUtils {
             detail.append("\t" + bold(color("--" + entry.getKey(), ANSIColor.MAGENTA)) + "\t\t" + entry.getValue()
                     + "\n");
         }
-        for (String string : params) {
-            sample.append(bold(" <" + string + ">"));
+        for (String param : params) {
+            if (param.charAt(0) != '?')
+                sample.append(bold(" <" + param + ">"));
+            else
+                sample.append(bold(" [" + param.substring(1) + "]"));
         }
         System.out.println(sample);
         System.out.println(bold("Where:"));

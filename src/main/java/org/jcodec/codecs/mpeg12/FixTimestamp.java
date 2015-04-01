@@ -5,8 +5,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.Assert;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.containers.mps.MTSUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -16,53 +17,43 @@ import org.jcodec.common.NIOUtils;
  * 
  */
 public abstract class FixTimestamp {
+
     public void fix(File file) throws IOException {
         RandomAccessFile ra = null;
         try {
             ra = new RandomAccessFile(file, "rw");
-            byte[] tsPkt = new byte[188];
-
-            while (ra.read(tsPkt) == 188) {
-
-                Assert.assertEquals(0x47, tsPkt[0] & 0xff);
-                int guidFlags = ((tsPkt[1] & 0xff) << 8) | (tsPkt[2] & 0xff);
-                int guid = (int) guidFlags & 0x1fff;
-                int payloadStart = (guidFlags >> 14) & 0x1;
-                if (payloadStart == 0 || guid == 0)
-                    continue;
-                ByteBuffer bb = ByteBuffer.wrap(tsPkt, 4, 184);
-                if ((tsPkt[3] & 0x20) != 0) {
-                    NIOUtils.skip(bb, bb.get() & 0xff);
+            SeekableByteChannel ch = new FileChannelWrapper(ra.getChannel());
+            new MTSUtils.TSReader(true) {
+                @Override
+                public boolean onPkt(int guid, boolean payloadStart, ByteBuffer bb, long filePos,
+                        boolean sectionSyntax, ByteBuffer fullPkt) {
+                    return processPacket(payloadStart, bb, sectionSyntax, fullPkt);
                 }
-
-                if (bb.remaining() < 10)
-                    continue; // non PES payload
-
-                int streamId = bb.getInt();
-                if ((streamId >> 8) != 1)
-                    continue; // non PES payload, probably PSI
-                while (bb.hasRemaining() && !(streamId >= 0x1bf && streamId < 0x1ef)) {
-                    streamId <<= 8;
-                    streamId |= bb.get() & 0xff;
-                }
-                if (streamId >= 0x1c0 && streamId < 0x1ef) {
-                    int len = bb.getShort();
-                    int b0 = bb.get() & 0xff;
-
-                    bb.position(bb.position() - 1);
-                    if ((b0 & 0xc0) == 0x80)
-                        fixMpeg2(streamId & 0xff, bb);
-                    else
-                        fixMpeg1(streamId & 0xff, bb);
-
-                    ra.seek(ra.getFilePointer() - 188);
-                    ra.write(tsPkt);
-                }
-            }
+            }.readTsFile(ch);
         } finally {
             if (ra != null)
                 ra.close();
         }
+    }
+
+    private boolean processPacket(boolean payloadStart, ByteBuffer bb, boolean sectionSyntax, ByteBuffer fullPkt) {
+        if (!payloadStart || sectionSyntax)
+            return true;
+
+        int streamId = bb.getInt();
+        if (streamId == 0x1bd || streamId >= 0x1c0 && streamId < 0x1ef) {
+            System.out.println("PES: " + streamId);
+            int len = bb.getShort();
+            int b0 = bb.get() & 0xff;
+
+            bb.position(bb.position() - 1);
+            if ((b0 & 0xc0) == 0x80)
+                fixMpeg2(streamId & 0xff, bb);
+            else
+                fixMpeg1(streamId & 0xff, bb);
+        }
+
+        return true;
     }
 
     public void fixMpeg1(int streamId, ByteBuffer is) {

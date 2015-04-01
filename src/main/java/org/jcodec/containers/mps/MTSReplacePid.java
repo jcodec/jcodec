@@ -22,12 +22,13 @@ import org.jcodec.containers.mps.psi.PSISection;
  * @author Stan Vitvitskyy
  * 
  */
-public class MTSReplacePid implements MTSUtils.TSFilter {
+public class MTSReplacePid extends MTSUtils.TSReader {
 
     private Set<Integer> pmtPids = new HashSet<Integer>();
     private IntIntMap replaceSpec;
 
     public MTSReplacePid(IntIntMap replaceSpec) {
+        super(true);
         this.replaceSpec = replaceSpec;
     }
 
@@ -95,53 +96,23 @@ public class MTSReplacePid implements MTSUtils.TSFilter {
 
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
-        if (cmd.args.length < 3) {
+        if (cmd.args.length < 2) {
             MainUtils.printHelp(new HashMap<String, String>() {
                 {
                 }
-            }, "pid_from:pid_to,[pid_from:pid_to...]", "in file", "out file");
+            }, "pid_from:pid_to,[pid_from:pid_to...]", "file");
             return;
         }
 
         IntIntMap replaceSpec = parseReplaceSpec(cmd.getArg(0));
 
-        SeekableByteChannel in = null;
-        SeekableByteChannel out = null;
+        SeekableByteChannel ch = null;
         try {
-            in = NIOUtils.readableFileChannel(new File(cmd.getArg(1)));
-            out = NIOUtils.writableFileChannel(new File(cmd.getArg(2)));
+            ch = NIOUtils.rwFileChannel(new File(cmd.getArg(1)));
 
-            MTSReplacePid replacer = new MTSReplacePid(replaceSpec);
-
-            new MTSUtils.TSReader(new Sink(replacer, out)).readTsFile(in);
+            new MTSReplacePid(replaceSpec).readTsFile(ch);
         } finally {
-            NIOUtils.closeQuietly(in);
-            NIOUtils.closeQuietly(out);
-        }
-    }
-
-    private static class Sink implements MTSUtils.TSFilter {
-
-        private MTSUtils.TSFilter chain;
-        private SeekableByteChannel out;
-
-        public Sink(MTSUtils.TSFilter chain, SeekableByteChannel out) {
-            this.chain = chain;
-            this.out = out;
-        }
-
-        @Override
-        public boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
-                ByteBuffer fullPkt) {
-            if (!chain.onPkt(guid, payloadStart, tsBuf, filePos, sectionSyntax, fullPkt))
-                return false;
-
-            try {
-                out.write(fullPkt);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return true;
+            NIOUtils.closeQuietly(ch);
         }
     }
 }

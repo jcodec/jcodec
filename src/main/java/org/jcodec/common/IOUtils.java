@@ -37,7 +37,7 @@ public class IOUtils {
         }
         return count;
     }
-    
+
     public static int copyDumb(InputStream input, OutputStream output) throws IOException {
         int count = 0;
         int n = 0;
@@ -76,6 +76,19 @@ public class IOUtils {
                     throw new IOException(message);
                 }
             }
+        }
+    }
+
+    public static void copyFile(File src, File dst) throws IOException {
+        FileChannelWrapper in = null;
+        FileChannelWrapper out = null;
+        try {
+            in = NIOUtils.readableFileChannel(src);
+            out = NIOUtils.writableFileChannel(dst);
+            NIOUtils.copy(in, out, Long.MAX_VALUE);
+        } finally {
+            NIOUtils.closeQuietly(in);
+            NIOUtils.closeQuietly(out);
         }
     }
 }

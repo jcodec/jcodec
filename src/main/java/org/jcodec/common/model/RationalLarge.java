@@ -32,9 +32,9 @@ public class RationalLarge {
         return den;
     }
 
-    public static Rational parse(String string) {
+    public static RationalLarge parse(String string) {
         String[] split = split(string, ":");
-        return new Rational(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+        return new RationalLarge(Long.parseLong(split[0]), Long.parseLong(split[1]));
     }
 
     @Override
