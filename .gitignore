@@ -3,4 +3,5 @@
 .settings
 target
 tmp/*
+android/src/*
 *.patch
