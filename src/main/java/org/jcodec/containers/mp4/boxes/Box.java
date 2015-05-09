@@ -106,17 +106,17 @@ public abstract class Box {
 
     }
 
-    @Override
-    public int hashCode() {
-        return toString().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-        return toString().equals(obj.toString());
-    }
+//    @Override
+//    public int hashCode() {
+//        return toString().hashCode();
+//    }
+//
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (obj == null)
+//            return false;
+//        return toString().equals(obj.toString());
+//    }
 
     protected void dump(StringBuilder sb) {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
