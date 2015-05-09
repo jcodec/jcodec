@@ -27,6 +27,7 @@ public class SampleSizesBox extends FullBox {
     public SampleSizesBox(int[] sizes) {
         this();
         this.sizes = sizes;
+        this.count = sizes.length;
     }
 
     public SampleSizesBox() {
@@ -68,12 +69,17 @@ public class SampleSizesBox extends FullBox {
         out.putInt((int) defaultSize);
 
         if (defaultSize == 0) {
-            out.putInt(sizes.length);
+            out.putInt(count);
             for (long size : sizes) {
                 out.putInt((int) size);
             }
         } else {
             out.putInt((int)count);
         }
+    }
+
+    public void setSizes(int[] sizes) {
+        this.sizes = sizes;
+        this.count = sizes.length;
     }
 }
