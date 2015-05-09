@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.NIOUtils;
 
@@ -167,14 +168,12 @@ public class VideoSampleEntry extends SampleEntry {
         return clrTbl;
     }
 
-
-
     public static class MyFactory extends BoxFactory {
         private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
 
         public MyFactory() {
             mappings.put(PixelAspectExt.fourcc(), PixelAspectExt.class);
-            // mappings.put(AvcCBox.fourcc(), AvcCBox.class);
+            mappings.put(AvcCBox.fourcc(), AvcCBox.class);
             mappings.put(ColorExtension.fourcc(), ColorExtension.class);
             mappings.put(GamaExtension.fourcc(), GamaExtension.class);
             mappings.put(CleanApertureExtension.fourcc(), CleanApertureExtension.class);
