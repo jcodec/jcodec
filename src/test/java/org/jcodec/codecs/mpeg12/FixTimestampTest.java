@@ -19,8 +19,13 @@ public class FixTimestampTest {
         }
 
         protected long doWithTimestamp(int streamId, long pts, boolean isPts) {
+<<<<<<< HEAD
             if (!isPts)
                 return pts;
+=======
+//            if (!isPts)
+//                return pts;
+>>>>>>> master
             if (delta == Long.MIN_VALUE) {
                 delta = setpts - pts;
             }
@@ -41,8 +46,13 @@ public class FixTimestampTest {
     // ffmpeg version 2.3.3
     @Test
     public void testSetPts() throws Exception {
+<<<<<<< HEAD
         File largeTs = new File("02.ts");
         File noSoundTs = new File("02nosound.ts");
+=======
+        File largeTs = new File("/Users/vitvitskyy/Desktop/02.ts");
+        File noSoundTs = new File("/Users/vitvitskyy/Desktop/02nosound.ts");
+>>>>>>> master
         doCopyFile(largeTs, noSoundTs, true);
         setFirstPts(noSoundTs, 609483);
     }

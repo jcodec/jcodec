@@ -191,7 +191,8 @@ public class MTSUtils {
         private PMTSection pmt;
 
         @Override
-        protected boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos) {
+        public boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
+                ByteBuffer fullPkt) {
             if (guid == 0) {
                 pmtGuid = parsePAT(tsBuf);
             } else if (pmtGuid != -1 && guid == pmtGuid) {
@@ -206,20 +207,33 @@ public class MTSUtils {
         }
     };
 
-    public abstract static class TSReader {
+    public static abstract class TSReader {
+        private static final int TS_SYNC_MARKER = 0x47;
+        private static final int TS_PKT_SIZE = 188;
         // Buffer must have an integral number of MPEG TS packets
-        public static final int BUFFER_SIZE = 188 << 9;
+        public static final int BUFFER_SIZE = TS_PKT_SIZE << 9;
+        private boolean flush;
+
+        public TSReader() {
+            this(false);
+        }
+
+        public TSReader(boolean flush) {
+            this.flush = flush;
+        }
 
         public void readTsFile(SeekableByteChannel ch) throws IOException {
             ch.position(0);
             ByteBuffer buf = ByteBuffer.allocate(BUFFER_SIZE);
 
-            for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
+            for (long pos = ch.position(); ch.read(buf) >= TS_PKT_SIZE; pos = ch.position()) {
+                long posRem = pos;
                 buf.flip();
-                while (buf.hasRemaining()) {
-                    ByteBuffer tsBuf = NIOUtils.read(buf, 188);
-                    pos += 188;
-                    Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+                while (buf.remaining() >= TS_PKT_SIZE) {
+                    ByteBuffer tsBuf = NIOUtils.read(buf, TS_PKT_SIZE);
+                    ByteBuffer fullPkt = tsBuf.duplicate();
+                    pos += TS_PKT_SIZE;
+                    Assert.assertEquals(TS_SYNC_MARKER, tsBuf.get() & 0xff);
                     int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                     int guid = (int) guidFlags & 0x1fff;
 
@@ -231,16 +245,26 @@ public class MTSUtils {
                     }
                     boolean sectionSyntax = payloadStart == 1 && (getRel(tsBuf, getRel(tsBuf, 0) + 2) & 0x80) == 0x80;
                     if (sectionSyntax) {
+                        // Adaptation field
                         NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
                     }
-                    if (!onPkt(guid, payloadStart == 1, tsBuf, pos - tsBuf.remaining()))
+                    if (!onPkt(guid, payloadStart == 1, tsBuf, pos - tsBuf.remaining(), sectionSyntax, fullPkt))
                         return;
                 }
-                buf.flip();
+                if (flush) {
+                    buf.flip();
+                    ch.position(posRem);
+                    ch.write(buf);
+                }
+                buf.clear();
             }
         }
 
-        protected abstract boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos);
+        public boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
+                ByteBuffer fullPkt) {
+            // DO NOTHING
+            return true;
+        }
     }
 
     public static int getVideoPid(File src) throws IOException {
@@ -264,7 +288,7 @@ public class MTSUtils {
     public static int[] getMediaPids(SeekableByteChannel src) throws IOException {
         return filterMediaPids(MTSUtils.getProgramGuids(src));
     }
-    
+
     public static int[] getMediaPids(File src) throws IOException {
         return filterMediaPids(MTSUtils.getProgramGuids(src));
     }

@@ -117,9 +117,20 @@ public class ToJSON {
     }
 
     private static void toJSONSub(Object obj, IntArrayList stack, StringBuilder builder) {
+        if(obj == null) {
+            builder.append("null");
+            return;
+        }
+        
+        String className = obj.getClass().getName();
+        if(className.startsWith("java.lang") && !className.equals("java.lang.String")) {
+            builder.append("null");
+            return;
+        }
+        
         int id = System.identityHashCode(obj);
         if (stack.contains(id)) {
-            builder.append("\"!-!-!-!-LOOP-!-!-!-!\"");
+            builder.append("null");
             return;
         }
         stack.push(id);
@@ -227,6 +238,8 @@ public class ToJSON {
                     builder.append(",");
             }
             builder.append("]");
+        } else if(obj.getClass().isEnum()) {
+            builder.append(String.valueOf(obj));
         } else {
             builder.append("{");
             for (Method method : obj.getClass().getMethods()) {

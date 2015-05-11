@@ -125,4 +125,8 @@ public class Packet {
             return o1.frameNo < o2.frameNo ? -1 : (o1.frameNo == o2.frameNo ? 0 : 1);
         }
     };
+
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
 }

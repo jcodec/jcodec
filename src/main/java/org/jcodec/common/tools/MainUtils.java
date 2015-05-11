@@ -37,7 +37,7 @@ public class MainUtils {
             return flags.containsKey(flagName) ? new Boolean(flags.get(flagName)) : defaultValue;
         }
 
-        public Double getDoubleFlag(String flagName, Long defaultValue) {
+        public Double getDoubleFlag(String flagName, Double defaultValue) {
             return flags.containsKey(flagName) ? new Double(flags.get(flagName)) : defaultValue;
         }
 
@@ -119,8 +119,11 @@ public class MainUtils {
             detail.append("\t" + bold(color("--" + entry.getKey(), ANSIColor.MAGENTA)) + "\t\t" + entry.getValue()
                     + "\n");
         }
-        for (String string : params) {
-            sample.append(bold(" <" + string + ">"));
+        for (String param : params) {
+            if (param.charAt(0) != '?')
+                sample.append(bold(" <" + param + ">"));
+            else
+                sample.append(bold(" [" + param.substring(1) + "]"));
         }
         System.out.println(sample);
         System.out.println(bold("Where:"));
