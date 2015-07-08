@@ -42,7 +42,6 @@ public abstract class FixTimestamp {
 
         int streamId = bb.getInt();
         if (streamId == 0x1bd || streamId >= 0x1c0 && streamId < 0x1ef) {
-            System.out.println("PES: " + streamId);
             int len = bb.getShort();
             int b0 = bb.get() & 0xff;
 

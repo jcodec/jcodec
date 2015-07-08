@@ -120,6 +120,12 @@ public class HexDump {
         return sb.toString();
     }
 
+    public static String hexdump0(ByteBuffer data) {
+        StringBuilder sb = new StringBuilder();
+        dump(data, -data.position(), sb);
+        return sb.toString();
+    }
+
     public static StringBuilder dump(ByteBuffer data, long offset, StringBuilder buffer) {
         int index = data.position();
         int len = data.limit();
