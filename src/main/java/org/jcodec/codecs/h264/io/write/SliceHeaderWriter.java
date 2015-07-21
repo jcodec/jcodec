@@ -31,6 +31,9 @@ public class SliceHeaderWriter {
         writeUE(writer, sliceHeader.first_mb_in_slice, "SH: first_mb_in_slice");
         writeUE(writer, sliceHeader.slice_type.ordinal() + (sliceHeader.slice_type_restr ? 5 : 0), "SH: slice_type");
         writeUE(writer, sliceHeader.pic_parameter_set_id, "SH: pic_parameter_set_id");
+        if (sliceHeader.frame_num > (1 << (sps.log2_max_frame_num_minus4 + 4))) {
+            throw new IllegalArgumentException("frame_num > " + (1 << (sps.log2_max_frame_num_minus4 + 4)));
+        }
         writeU(writer, sliceHeader.frame_num, sps.log2_max_frame_num_minus4 + 4, "SH: frame_num");
         if (!sps.frame_mbs_only_flag) {
             writeBool(writer, sliceHeader.field_pic_flag, "SH: field_pic_flag");
@@ -42,6 +45,9 @@ public class SliceHeaderWriter {
             writeUE(writer, sliceHeader.idr_pic_id, "SH: idr_pic_id");
         }
         if (sps.pic_order_cnt_type == 0) {
+            if(sliceHeader.pic_order_cnt_lsb > (1 << (sps.log2_max_pic_order_cnt_lsb_minus4 + 4))) {
+                throw new IllegalArgumentException("pic_order_cnt_lsb > " + (1 << (sps.log2_max_pic_order_cnt_lsb_minus4 + 4)));
+            }
             writeU(writer, sliceHeader.pic_order_cnt_lsb, sps.log2_max_pic_order_cnt_lsb_minus4 + 4);
             if (pps.pic_order_present_flag && !sps.field_pic_flag) {
                 writeSE(writer, sliceHeader.delta_pic_order_cnt_bottom, "SH: delta_pic_order_cnt_bottom");
@@ -200,12 +206,18 @@ public class SliceHeaderWriter {
 
     private void writeRefPicListReordering(SliceHeader sliceHeader, BitWriter writer) {
         if (sliceHeader.slice_type.isInter()) {
-            writeBool(writer, sliceHeader.refPicReordering[0] != null, "SH: ref_pic_list_reordering_flag_l0");
-            writeReorderingList(sliceHeader.refPicReordering[0], writer);
+            boolean l0ReorderingPresent = sliceHeader.refPicReordering != null
+                    && sliceHeader.refPicReordering[0] != null;
+            writeBool(writer, l0ReorderingPresent, "SH: ref_pic_list_reordering_flag_l0");
+            if (l0ReorderingPresent)
+                writeReorderingList(sliceHeader.refPicReordering[0], writer);
         }
         if (sliceHeader.slice_type == SliceType.B) {
-            writeBool(writer, sliceHeader.refPicReordering[1] != null, "SH: ref_pic_list_reordering_flag_l1");
-            writeReorderingList(sliceHeader.refPicReordering[1], writer);
+            boolean l1ReorderingPresent = sliceHeader.refPicReordering != null
+                    && sliceHeader.refPicReordering[1] != null;
+            writeBool(writer, l1ReorderingPresent, "SH: ref_pic_list_reordering_flag_l1");
+            if (l1ReorderingPresent)
+                writeReorderingList(sliceHeader.refPicReordering[1], writer);
         }
     }
 

@@ -97,6 +97,10 @@ public class Packet {
     public boolean isKeyFrame() {
         return keyFrame;
     }
+    
+    public void setKeyFrame(boolean keyFrame) {
+        this.keyFrame = keyFrame;
+    }
 
     public RationalLarge getPtsR() {
         return RationalLarge.R(pts, timescale);

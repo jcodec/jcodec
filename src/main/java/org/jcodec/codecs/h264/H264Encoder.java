@@ -27,6 +27,7 @@ import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
@@ -45,11 +46,22 @@ import org.jcodec.common.model.Size;
 public class H264Encoder implements VideoEncoder {
 
     // private static final int QP = 20;
+    private static final int KEY_INTERVAL_DEFAULT = 1;
 
     private CAVLC[] cavlc;
     private int[][] leftRow;
     private int[][] topLine;
     private RateControl rc;
+    private int frameNumber;
+    private int keyInterval = KEY_INTERVAL_DEFAULT;
+
+    private int maxPOC;
+
+    private int maxFrameNumber;
+
+    private SeqParameterSet sps;
+
+    private PictureParameterSet pps;
 
     public H264Encoder() {
         this(new DumbRateControl());
@@ -58,16 +70,67 @@ public class H264Encoder implements VideoEncoder {
     public H264Encoder(RateControl rc) {
         this.rc = rc;
     }
-
-    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out) {
-        return encodeFrame(pic, _out, true, 0);
+    
+    public int getKeyInterval() {
+        return keyInterval;
     }
 
-    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out, boolean idr, int poc) {
+    public void setKeyInterval(int keyInterval) {
+        this.keyInterval = keyInterval;
+    }
+
+    /**
+     * Encode this picture into h.264 frame. Frame type will be selected by
+     * encoder.
+     */
+    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out) {
+        if (frameNumber >= keyInterval) {
+            frameNumber = 0;
+        }
+        
+        SliceType sliceType = frameNumber == 0 ? SliceType.I : SliceType.P;
+        boolean idr = frameNumber == 0;
+        
+        return encodeFrame(pic, _out, idr, frameNumber++, sliceType);
+    }
+
+    /**
+     * Encode this picture as an IDR frame. IDR frame starts a new independently
+     * decodeable video sequence
+     * 
+     * @param pic
+     * @param _out
+     * @return
+     */
+    public ByteBuffer encodeIDRFrame(Picture pic, ByteBuffer _out) {
+        frameNumber = 0;
+        return encodeFrame(pic, _out, true, frameNumber, SliceType.I);
+    }
+
+    /**
+     * Encode this picture as a P-frame. P-frame is an frame predicted from one
+     * or more of the previosly decoded frame and is usually 10x less in size
+     * then the IDR frame.
+     * 
+     * @param pic
+     * @param _out
+     * @return
+     */
+    public ByteBuffer encodePFrame(Picture pic, ByteBuffer _out) {
+        frameNumber ++;
+        return encodeFrame(pic, _out, true, frameNumber, SliceType.P);
+    }
+
+    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out, boolean idr, int poc, SliceType frameType) {
         ByteBuffer dup = _out.duplicate();
 
-        SeqParameterSet sps = initSPS(new Size(pic.getCroppedWidth(), pic.getCroppedHeight()));
-        PictureParameterSet pps = initPPS();
+        if (idr) {
+            sps = initSPS(new Size(pic.getCroppedWidth(), pic.getCroppedHeight()));
+            pps = initPPS();
+
+            maxPOC = 1 << (sps.log2_max_pic_order_cnt_lsb_minus4 + 4);
+            maxFrameNumber = 1 << (sps.log2_max_frame_num_minus4 + 4);
+        }
 
         if (idr) {
             dup.putInt(0x1);
@@ -84,7 +147,7 @@ public class H264Encoder implements VideoEncoder {
         leftRow = new int[][] { new int[16], new int[8], new int[8] };
         topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
 
-        encodeSlice(sps, pps, pic, dup, idr, poc);
+        encodeSlice(sps, pps, pic, dup, idr, poc, frameType);
 
         dup.flip();
         return dup;
@@ -124,12 +187,16 @@ public class H264Encoder implements VideoEncoder {
         sps.frame_cropping_flag = codedWidth != sz.getWidth() || codedHeight != sz.getHeight();
         sps.frame_crop_right_offset = (codedWidth - sz.getWidth() + 1) >> 1;
         sps.frame_crop_bottom_offset = (codedHeight - sz.getHeight() + 1) >> 1;
-
+        
         return sps;
     }
 
     private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture pic, ByteBuffer dup, boolean idr,
-            int poc) {
+            int frameNum, SliceType sliceType) {
+        if(idr && sliceType != SliceType.I) {
+            idr = false;
+            Logger.warn("Illegal value of idr = true when sliceType != I");
+        }
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
 
         rc.reset();
@@ -138,22 +205,28 @@ public class H264Encoder implements VideoEncoder {
         dup.putInt(0x1);
         new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 2).write(dup);
         SliceHeader sh = new SliceHeader();
-        sh.slice_type = SliceType.I;
+        sh.slice_type = sliceType;
         if (idr)
             sh.refPicMarkingIDR = new RefPicMarkingIDR(false, false);
         sh.pps = pps;
         sh.sps = sps;
-        sh.pic_order_cnt_lsb = poc << 1;
+        sh.pic_order_cnt_lsb = (frameNum << 1) % maxPOC;
+        sh.frame_num = frameNum % maxFrameNumber;
 
         ByteBuffer buf = ByteBuffer.allocate(pic.getWidth() * pic.getHeight());
         BitWriter sliceData = new BitWriter(buf);
         new SliceHeaderWriter().write(sh, idr, 2, sliceData);
 
         Picture outMB = Picture.create(16, 16, ColorSpace.YUV420);
+        
+        int mbTypeOffset = sliceType == SliceType.P ? 5 : 0;
 
         for (int mbY = 0; mbY < sps.pic_height_in_map_units_minus1 + 1; mbY++) {
             for (int mbX = 0; mbX < sps.pic_width_in_mbs_minus1 + 1; mbX++) {
-                CAVLCWriter.writeUE(sliceData, 23); // I_16x16_2_2_1
+                if(sliceType == SliceType.P) {
+                    CAVLCWriter.writeUE(sliceData, 0); // number of skipped mbs
+                }
+                CAVLCWriter.writeUE(sliceData, mbTypeOffset + 23); // I_16x16_2_2_1
                 BitWriter candidate;
                 int qpDelta;
                 do {

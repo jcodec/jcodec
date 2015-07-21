@@ -37,6 +37,18 @@ public class PictureParameterSet {
         public ScalingMatrix scalindMatrix;
         public int second_chroma_qp_index_offset;
         public boolean[] pic_scaling_list_present_flag;
+        public boolean isTransform_8x8_mode_flag() {
+            return transform_8x8_mode_flag;
+        }
+        public ScalingMatrix getScalindMatrix() {
+            return scalindMatrix;
+        }
+        public int getSecond_chroma_qp_index_offset() {
+            return second_chroma_qp_index_offset;
+        }
+        public boolean[] getPic_scaling_list_present_flag() {
+            return pic_scaling_list_present_flag;
+        }
     }
 
     public boolean entropy_coding_mode_flag;
@@ -307,5 +319,93 @@ public class PictureParameterSet {
         write(buf);
         buf.flip();
         return read(buf);
+    }
+
+    public boolean isEntropy_coding_mode_flag() {
+        return entropy_coding_mode_flag;
+    }
+
+    public int[] getNum_ref_idx_active_minus1() {
+        return num_ref_idx_active_minus1;
+    }
+
+    public int getSlice_group_change_rate_minus1() {
+        return slice_group_change_rate_minus1;
+    }
+
+    public int getPic_parameter_set_id() {
+        return pic_parameter_set_id;
+    }
+
+    public int getSeq_parameter_set_id() {
+        return seq_parameter_set_id;
+    }
+
+    public boolean isPic_order_present_flag() {
+        return pic_order_present_flag;
+    }
+
+    public int getNum_slice_groups_minus1() {
+        return num_slice_groups_minus1;
+    }
+
+    public int getSlice_group_map_type() {
+        return slice_group_map_type;
+    }
+
+    public boolean isWeighted_pred_flag() {
+        return weighted_pred_flag;
+    }
+
+    public int getWeighted_bipred_idc() {
+        return weighted_bipred_idc;
+    }
+
+    public int getPic_init_qp_minus26() {
+        return pic_init_qp_minus26;
+    }
+
+    public int getPic_init_qs_minus26() {
+        return pic_init_qs_minus26;
+    }
+
+    public int getChroma_qp_index_offset() {
+        return chroma_qp_index_offset;
+    }
+
+    public boolean isDeblocking_filter_control_present_flag() {
+        return deblocking_filter_control_present_flag;
+    }
+
+    public boolean isConstrained_intra_pred_flag() {
+        return constrained_intra_pred_flag;
+    }
+
+    public boolean isRedundant_pic_cnt_present_flag() {
+        return redundant_pic_cnt_present_flag;
+    }
+
+    public int[] getTop_left() {
+        return top_left;
+    }
+
+    public int[] getBottom_right() {
+        return bottom_right;
+    }
+
+    public int[] getRun_length_minus1() {
+        return run_length_minus1;
+    }
+
+    public boolean isSlice_group_change_direction_flag() {
+        return slice_group_change_direction_flag;
+    }
+
+    public int[] getSlice_group_id() {
+        return slice_group_id;
+    }
+
+    public PPSExt getExtended() {
+        return extended;
     }
 }
