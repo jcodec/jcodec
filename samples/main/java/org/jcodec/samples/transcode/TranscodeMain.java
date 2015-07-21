@@ -890,7 +890,7 @@ public class TranscodeMain {
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
             long start = System.currentTimeMillis();
-            for (int i = 0; i < 50 && (inFrame = inTrack.nextFrame()) != null; i++) {
+            for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                 Picture dec = decoder.decodeFrame(inFrame.getData(), target1.getData());
                 if (target2 == null) {
                     target2 = Picture.create(dec.getWidth(), dec.getHeight(), encoder.getSupportedColorSpaces()[0]);
