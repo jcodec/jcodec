@@ -479,6 +479,8 @@ public class H264Const {
         {10, 11, 14, 15}
     };
     public static final int[][] ARRAY = {{0}, {1}, {2}, {3}};
+    public static final int[][] PIX_MAP_SPLIT_4x4 = buildPixSplitMap4x4();
+    public static final int[][] PIX_MAP_SPLIT_2x2 = buildPixSplitMap2x2();
 
     public static int[] CODED_BLOCK_PATTERN_INTRA_COLOR = new int[] { 47, 31, 15, 0, 23, 27, 29, 30, 7, 11, 13, 14, 39,
             43, 45, 46, 16, 3, 5, 10, 12, 19, 21, 26, 28, 35, 37, 42, 44, 1, 2, 4, 8, 17, 18, 20, 24, 6, 9, 22, 25, 32,
@@ -490,6 +492,8 @@ public class H264Const {
     public static int[] CODED_BLOCK_PATTERN_INTER_COLOR = new int[] { 0, 16, 1, 2, 4, 8, 32, 3, 5, 10, 12, 15, 47, 7,
             11, 13, 14, 6, 9, 31, 35, 37, 42, 44, 33, 34, 36, 40, 39, 43, 45, 46, 17, 18, 20, 24, 19, 21, 26, 28, 23,
             27, 29, 30, 22, 25, 38, 41 };
+    
+    public static int[] CODED_BLOCK_PATTERN_INTER_COLOR_INV = inverse(CODED_BLOCK_PATTERN_INTER_COLOR);
 
     public static int[] coded_block_pattern_inter_monochrome = new int[] { 0, 1, 2, 4, 8, 3, 5, 10, 12, 15, 7, 11, 13,
             14, 6, 9 };
@@ -510,4 +514,39 @@ public class H264Const {
     public static int[] identityMapping4 = { 0, 1, 2, 3 };
     public static PartPred[] bPartPredModes = { Direct, L0, L1, Bi, L0, L0, L1, L1, Bi, Bi, L0, L1, Bi };
     public static int[] bSubMbTypes = { 0, 0, 0, 0, 1, 2, 1, 2, 1, 2, 3, 3, 3 };
+    
+    private static int[] inverse(int[] arr) {
+        int[] inv = new int[arr.length];
+        for(int i = 0; i < inv.length; i++) {
+            inv[arr[i]] = i;
+        }
+        return inv;
+    }
+
+    private static int[][] buildPixSplitMap4x4() {
+        int[][] result = new int[][] { { 0, 1, 2, 3, 16, 17, 18, 19, 32, 33, 34, 35, 48, 49, 50, 51 }, new int[16],
+                new int[16], new int[16], new int[16], new int[16], new int[16], new int[16], new int[16], new int[16],
+                new int[16], new int[16], new int[16], new int[16], new int[16], new int[16] };
+        for (int blkY = 0, blk = 0, off = 0; blkY < 4; ++blkY) {
+            for (int blkX = 0; blkX < 4; ++blkX, ++blk, off += 4) {
+                for (int i = 0; i < 16; i++)
+                    result[blk][i] = result[0][i] + off;
+            }
+            off += 48;
+        }
+        return result;
+    }
+    
+    private static int[][] buildPixSplitMap2x2() {
+        int[][] result = new int[][] { {0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27}, new int[16],
+                new int[16], new int[16] };
+        for (int blkY = 0, blk = 0, off = 0; blkY < 2; ++blkY) {
+            for (int blkX = 0; blkX < 2; ++blkX, ++blk, off += 4) {
+                for (int i = 0; i < 16; i++)
+                    result[blk][i] = result[0][i] + off;
+            }
+            off += 24;
+        }
+        return result;
+    }
 }

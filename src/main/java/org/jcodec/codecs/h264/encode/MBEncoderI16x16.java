@@ -10,11 +10,20 @@ import static org.jcodec.codecs.h264.io.model.MBType.I_16x16;
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.io.CAVLC;
+import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Picture;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * Encodes macroblock as I16x16
+ * 
+ * @author Stanislav Vitvitskyy
+ */
 public class MBEncoderI16x16 {
 
     private CAVLC[] cavlc;
@@ -31,7 +40,7 @@ public class MBEncoderI16x16 {
         CAVLCWriter.writeUE(out, 0); // Chroma prediction mode -- DC
         CAVLCWriter.writeSE(out, qpDelta); // MB QP delta
 
-        luma(pic, mbX, mbY, out, qp, outMB);
+        luma(pic, mbX, mbY, out, qp, outMB, cavlc[0]);
         chroma(pic, mbX, mbY, out, qp, outMB);
     }
 
@@ -45,29 +54,35 @@ public class MBEncoderI16x16 {
         int[][] pred1 = new int[16 >> (cw + ch)][16];
         int[][] pred2 = new int[16 >> (cw + ch)][16];
 
-        predictChroma(pred1, 1, cw, ch, x, y);
-        predictChroma(pred2, 2, cw, ch, x, y);
+        predictChroma(pic, ac1, pred1, 1, cw, ch, x, y);
+        predictChroma(pic, ac2, pred2, 2, cw, ch, x, y);
 
-        transformChroma(pic, ac1, pred1, 1, qp, cw, ch, x, y, outMB);
-        transformChroma(pic, ac2, pred2, 2, qp, cw, ch, x, y, outMB);
-
-        int[] dc1 = extractDC(ac1);
-        int[] dc2 = extractDC(ac2);
-
-        writeDC(1, mbX, mbY, out, qp, mbX << 1, mbY << 1, dc1);
-        writeDC(2, mbX, mbY, out, qp, mbX << 1, mbY << 1, dc2);
-
-        writeAC(1, mbX, mbY, out, mbX << 1, mbY << 1, ac1, qp);
-        writeAC(2, mbX, mbY, out, mbX << 1, mbY << 1, ac2, qp);
-
-        restorePlane(dc1, ac1, qp);
-        restorePlane(dc2, ac2, qp);
+        chromaResidual(pic, mbX, mbY, out, qp, ac1, ac2, cavlc[1], cavlc[2], I_16x16, I_16x16);
 
         putChroma(outMB.getData()[1], 1, x, y, ac1, pred1);
         putChroma(outMB.getData()[2], 2, x, y, ac2, pred2);
     }
 
-    private void luma(Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB) {
+    public static void chromaResidual(Picture pic, int mbX, int mbY, BitWriter out, int qp, int[][] ac1,
+            int[][] ac2, CAVLC cavlc1, CAVLC cavlc2, MBType leftMBType, MBType topMBType) {
+
+        transformChroma(ac1);
+        transformChroma(ac2);
+
+        int[] dc1 = extractDC(ac1);
+        int[] dc2 = extractDC(ac2);
+
+        writeDC(cavlc1, mbX, mbY, out, qp, mbX << 1, mbY << 1, dc1, leftMBType, topMBType);
+        writeDC(cavlc2, mbX, mbY, out, qp, mbX << 1, mbY << 1, dc2, leftMBType, topMBType);
+
+        writeAC(cavlc1, mbX, mbY, out, mbX << 1, mbY << 1, ac1, qp, leftMBType, topMBType);
+        writeAC(cavlc2, mbX, mbY, out, mbX << 1, mbY << 1, ac2, qp, leftMBType, topMBType);
+
+        restorePlane(dc1, ac1, qp);
+        restorePlane(dc2, ac2, qp);
+    }
+
+    private void luma(Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB, CAVLC cavlc) {
         int x = mbX << 4;
         int y = mbY << 4;
         int[][] ac = new int[16][16];
@@ -76,8 +91,8 @@ public class MBEncoderI16x16 {
         lumaDCPred(x, y, pred);
         transform(pic, 0, ac, pred, x, y);
         int[] dc = extractDC(ac);
-        writeDC(0, mbX, mbY, out, qp, mbX << 2, mbY << 2, dc);
-        writeAC(0, mbX, mbY, out, mbX << 2, mbY << 2, ac, qp);
+        writeDC(cavlc, mbX, mbY, out, qp, mbX << 2, mbY << 2, dc, I_16x16, I_16x16);
+        writeAC(cavlc, mbX, mbY, out, mbX << 2, mbY << 2, ac, qp, I_16x16, I_16x16);
 
         restorePlane(dc, ac, qp);
 
@@ -96,7 +111,7 @@ public class MBEncoderI16x16 {
         MBEncoderHelper.putBlk(mb, ac[3], pred[3], 3, 4, 4, 4, 4);
     }
 
-    private void restorePlane(int[] dc, int[][] ac, int qp) {
+    private static void restorePlane(int[] dc, int[][] ac, int qp) {
         if (dc.length == 4) {
             CoeffTransformer.invDC2x2(dc);
             CoeffTransformer.dequantizeDC2x2(dc, qp);
@@ -115,7 +130,7 @@ public class MBEncoderI16x16 {
         }
     }
 
-    private int[] extractDC(int[][] ac) {
+    private static int[] extractDC(int[][] ac) {
         int[] dc = new int[ac.length];
         for (int i = 0; i < ac.length; i++) {
             dc[i] = ac[i][0];
@@ -124,61 +139,59 @@ public class MBEncoderI16x16 {
         return dc;
     }
 
-    private void writeAC(int comp, int mbX, int mbY, BitWriter out, int mbLeftBlk, int mbTopBlk, int[][] ac, int qp) {
+    private static void writeAC(CAVLC cavlc, int mbX, int mbY, BitWriter out, int mbLeftBlk, int mbTopBlk, int[][] ac,
+            int qp, MBType leftMBType, MBType topMBType) {
         for (int i = 0; i < ac.length; i++) {
             CoeffTransformer.quantizeAC(ac[i], qp);
             // TODO: calc here
-            cavlc[comp].writeACBlock(out, mbLeftBlk + MB_BLK_OFF_LEFT[i], mbTopBlk + MB_BLK_OFF_TOP[i], I_16x16,
-                    I_16x16, ac[i], H264Const.totalZeros16, 1, 15, CoeffTransformer.zigzag4x4);
+            cavlc.writeACBlock(out, mbLeftBlk + MB_BLK_OFF_LEFT[i], mbTopBlk + MB_BLK_OFF_TOP[i], leftMBType, topMBType,
+                    ac[i], H264Const.totalZeros16, 1, 15, CoeffTransformer.zigzag4x4);
         }
     }
 
-    private void writeDC(int comp, int mbX, int mbY, BitWriter out, int qp, int mbLeftBlk, int mbTopBlk, int[] dc) {
+    private static void writeDC(CAVLC cavlc, int mbX, int mbY, BitWriter out, int qp, int mbLeftBlk, int mbTopBlk,
+            int[] dc, MBType leftMBType, MBType topMBType) {
         if (dc.length == 4) {
             CoeffTransformer.quantizeDC2x2(dc, qp);
             CoeffTransformer.fvdDC2x2(dc);
-            cavlc[comp].writeChrDCBlock(out, dc, H264Const.totalZeros4, 0, dc.length, new int[] { 0, 1, 2, 3 });
+            cavlc.writeChrDCBlock(out, dc, H264Const.totalZeros4, 0, dc.length, new int[] { 0, 1, 2, 3 });
         } else if (dc.length == 8) {
             CoeffTransformer.quantizeDC4x2(dc, qp);
             CoeffTransformer.fvdDC4x2(dc);
-            cavlc[comp].writeChrDCBlock(out, dc, H264Const.totalZeros8, 0, dc.length, new int[] { 0, 1, 2, 3, 4, 5, 6,
-                    7 });
+            cavlc.writeChrDCBlock(out, dc, H264Const.totalZeros8, 0, dc.length, new int[] { 0, 1, 2, 3, 4, 5, 6, 7 });
         } else {
             reorderDC4x4(dc);
             CoeffTransformer.quantizeDC4x4(dc, qp);
             CoeffTransformer.fvdDC4x4(dc);
             // TODO: calc here
-            cavlc[comp].writeLumaDCBlock(out, mbLeftBlk, mbTopBlk, I_16x16, I_16x16, dc, H264Const.totalZeros16, 0, 16,
+            cavlc.writeLumaDCBlock(out, mbLeftBlk, mbTopBlk, leftMBType, topMBType, dc, H264Const.totalZeros16, 0, 16,
                     CoeffTransformer.zigzag4x4);
         }
     }
 
-    private int[][] transformChroma(Picture pic, int[][] ac, int[][] pred, int comp, int qp, int cw, int ch, int x,
-            int y, Picture outMB) {
+    private static void transformChroma(int[][] ac) {
+        for (int i = 0; i < 4; i++) {
+            CoeffTransformer.fdct4x4(ac[i]);
+        }
+    }
+
+    private void predictChroma(Picture pic, int[][] ac, int[][] pred, int comp, int cw, int ch, int x, int y) {
+        chromaPredBlk0(comp, x, y, pred[0]);
+        chromaPredBlk1(comp, x, y, pred[1]);
+        chromaPredBlk2(comp, x, y, pred[2]);
+        chromaPredBlk3(comp, x, y, pred[3]);
+
         MBEncoderHelper.takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x, y,
                 ac[0], pred[0], 4, 4);
-        CoeffTransformer.fdct4x4(ac[0]);
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + 4,
                 y, ac[1], pred[1], 4, 4);
-        CoeffTransformer.fdct4x4(ac[1]);
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x,
                 y + 4, ac[2], pred[2], 4, 4);
-        CoeffTransformer.fdct4x4(ac[2]);
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x + 4,
                 y + 4, ac[3], pred[3], 4, 4);
-        CoeffTransformer.fdct4x4(ac[3]);
-
-        return ac;
-    }
-
-    private void predictChroma(int[][] ac, int comp, int cw, int ch, int x, int y) {
-        chromaPredBlk0(comp, x, y, ac[0]);
-        chromaPredBlk1(comp, x, y, ac[1]);
-        chromaPredBlk2(comp, x, y, ac[2]);
-        chromaPredBlk3(comp, x, y, ac[3]);
     }
 
     private final int chromaPredOne(int[] pix, int x) {

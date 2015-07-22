@@ -2,6 +2,8 @@ package org.jcodec.codecs.h264.encode;
 
 import static org.jcodec.common.tools.MathUtil.clip;
 
+import org.jcodec.common.model.Picture;
+
 public class MBEncoderHelper {
 
     public static final void takeSubtract(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
@@ -71,4 +73,22 @@ public class MBEncoderHelper {
         }
     }
 
+    public static final void putBlk(Picture dest, Picture src, int x, int y) {
+        if (dest.getColor() != src.getColor())
+            throw new RuntimeException("Incompatible color");
+        for (int c = 0; c < dest.getColor().nComp; c++) {
+            pubBlkOnePlane(dest.getPlaneData(c), dest.getPlaneWidth(c), src.getPlaneData(c), src.getPlaneWidth(c),
+                    src.getPlaneHeight(c), x >> dest.getColor().compWidth[c], y >> dest.getColor().compHeight[c]);
+        }
+    }
+
+    private static void pubBlkOnePlane(int[] dest, int destWidth, int[] src, int srcWidth, int srcHeight, int x, int y) {
+        int destOff = y * destWidth + x;
+        int srcOff = 0;
+        for (int i = 0; i < srcHeight; i++) {
+            for (int j = 0; j < srcWidth; j++, ++destOff, ++srcOff)
+                dest[destOff] = src[srcOff];
+            destOff += destWidth - srcWidth;
+        }
+    }
 }

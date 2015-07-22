@@ -1,7 +1,5 @@
 package org.jcodec.codecs.h264.io.write;
 
-import static org.jcodec.common.tools.Debug.print;
-import static org.jcodec.common.tools.Debug.println;
 import static org.jcodec.common.tools.Debug.trace;
 
 import org.jcodec.common.io.BitWriter;
@@ -53,6 +51,13 @@ public class CAVLCWriter {
     public static void writeSE(BitWriter out, int value, String message)  {
         writeUE(out, MathUtil.golomb(value));
         trace(message, value);
+    }
+    
+    public static void writeTE(BitWriter out, int value, int max) {
+        if (max > 1)
+            writeUE(out, value);
+        else
+            out.write1Bit(~value & 0x1);
     }
 
     public static void writeBool(BitWriter out, boolean value, String message)  {

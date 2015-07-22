@@ -2,10 +2,16 @@ package org.jcodec.codecs.h264;
 
 import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import javax.imageio.ImageIO;
+
 import org.jcodec.codecs.h264.encode.DumbRateControl;
+import org.jcodec.codecs.h264.encode.MBEncoderHelper;
 import org.jcodec.codecs.h264.encode.MBEncoderI16x16;
+import org.jcodec.codecs.h264.encode.MBEncoderP16x16;
 import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.CAVLC;
 import org.jcodec.codecs.h264.io.model.MBType;
@@ -24,6 +30,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
+import org.jcodec.scale.AWTUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -57,6 +64,11 @@ public class H264Encoder implements VideoEncoder {
     private PictureParameterSet pps;
 
     private MBEncoderI16x16 mbEncoderI16x16;
+
+    private MBEncoderP16x16 mbEncoderP16x16;
+    
+    private Picture ref;
+    private Picture picOut;
 
     public H264Encoder() {
         this(new DumbRateControl());
@@ -138,12 +150,16 @@ public class H264Encoder implements VideoEncoder {
         }
 
         int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
+        int mbHeight = sps.pic_height_in_map_units_minus1 + 1;
 
         leftRow = new int[][] { new int[16], new int[8], new int[8] };
         topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
+        picOut = Picture.create(mbWidth << 4, mbHeight << 4, pic.getColor());
 
         encodeSlice(sps, pps, pic, dup, idr, poc, frameType);
-
+        
+        ref = picOut;
+        
         dup.flip();
         return dup;
     }
@@ -194,6 +210,7 @@ public class H264Encoder implements VideoEncoder {
         }
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
         mbEncoderI16x16 = new MBEncoderI16x16(cavlc, leftRow, topLine);
+        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc);
 
         rc.reset();
         int qp = rc.getInitQp();
@@ -213,33 +230,34 @@ public class H264Encoder implements VideoEncoder {
         BitWriter sliceData = new BitWriter(buf);
         new SliceHeaderWriter().write(sh, idr, 2, sliceData);
 
-        Picture outMB = Picture.create(16, 16, ColorSpace.YUV420);
-
-        int mbTypeOffset = sliceType == SliceType.P ? 5 : 0;
+        Picture outMB = Picture.create(16, 16, ColorSpace.YUV420J);
 
         for (int mbY = 0; mbY < sps.pic_height_in_map_units_minus1 + 1; mbY++) {
             for (int mbX = 0; mbX < sps.pic_width_in_mbs_minus1 + 1; mbX++) {
                 if (sliceType == SliceType.P) {
                     CAVLCWriter.writeUE(sliceData, 0); // number of skipped mbs
                 }
-                
-                MBType mbType = selectMBType();
-                
+
+                MBType mbType = selectMBType(sliceType);
+
                 if (mbType == MBType.I_16x16) {
-                    // I16x16 carries part of layout information in the macroblock type
-                    // itself for this reason we'll have to decide it now to embed into
+                    // I16x16 carries part of layout information in the
+                    // macroblock type
+                    // itself for this reason we'll have to decide it now to
+                    // embed into
                     // macroblock type
                     int predMode = mbEncoderI16x16.getPredMode(pic, mbX, mbY);
                     int cbpChroma = mbEncoderI16x16.getCbpChroma(pic, mbX, mbY);
                     int cbpLuma = mbEncoderI16x16.getCbpLuma(pic, mbX, mbY);
 
                     int i16x16TypeOffset = (cbpLuma / 15) * 12 + cbpChroma * 4 + predMode;
+                    int mbTypeOffset = sliceType == SliceType.P ? 5 : 0;
 
                     CAVLCWriter.writeUE(sliceData, mbTypeOffset + mbType.code() + i16x16TypeOffset);
                 } else {
-                    CAVLCWriter.writeUE(sliceData, mbTypeOffset + mbType.code());
+                    CAVLCWriter.writeUE(sliceData, mbType.code());
                 }
-                
+
                 BitWriter candidate;
                 int qpDelta;
                 do {
@@ -251,6 +269,7 @@ public class H264Encoder implements VideoEncoder {
                 qp += qpDelta;
 
                 collectPredictors(outMB, mbX);
+                addToReference(outMB, mbX, mbY);
             }
         }
         sliceData.write1Bit(1);
@@ -265,14 +284,25 @@ public class H264Encoder implements VideoEncoder {
             int qp, int qpDelta) {
         if (mbType == MBType.I_16x16)
             mbEncoderI16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, qp + qpDelta, qpDelta);
+        else if (mbType == MBType.P_16x16)
+            mbEncoderP16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, qp + qpDelta, qpDelta);
         else
             throw new RuntimeException("Macroblock of type " + mbType + " is not supported.");
     }
 
-    private MBType selectMBType() {
-        return MBType.I_16x16; // _2_2_1;
+    private MBType selectMBType(SliceType sliceType) {
+        if (sliceType == SliceType.I)
+            return MBType.I_16x16;
+        else if (sliceType == SliceType.P)
+            return MBType.P_16x16;
+        else
+            throw new RuntimeException("Unsupported slice type");
     }
 
+    private void addToReference(Picture outMB, int mbX, int mbY) {
+        MBEncoderHelper.putBlk(picOut, outMB, mbX << 4, mbY << 4);
+    }
+    
     private void collectPredictors(Picture outMB, int mbX) {
         System.arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
         System.arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);

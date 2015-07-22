@@ -235,13 +235,13 @@ public class CoeffTransformer {
         int qbits = 15 + level;
 
         if (qp < 10) {
-            for (int i = 1; i < 16; i++) {
+            for (int i = 0; i < 16; i++) {
                 int sign = (coeffs[i] >> 31);
                 coeffs[i] = (Math.min((((coeffs[i] ^ sign) - sign) * quantCoeff[offset][i] + addition) >> qbits, 2063) ^ sign)
                         - sign;
             }
         } else {
-            for (int i = 1; i < 16; i++) {
+            for (int i = 0; i < 16; i++) {
                 int sign = (coeffs[i] >> 31);
                 coeffs[i] = (((((coeffs[i] ^ sign) - sign) * quantCoeff[offset][i] + addition) >> qbits) ^ sign) - sign;
             }
