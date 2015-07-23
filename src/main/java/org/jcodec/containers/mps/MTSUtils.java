@@ -278,11 +278,11 @@ public class MTSUtils {
 
     public static int getAudioPid(File src) throws IOException {
         for (PMTStream stream : MTSUtils.getProgramGuids(src)) {
-            if (stream.getStreamType().isVideo())
+            if (stream.getStreamType().isAudio())
                 return stream.getPid();
         }
 
-        throw new RuntimeException("No video stream");
+        throw new RuntimeException("No audio stream");
     }
 
     public static int[] getMediaPids(SeekableByteChannel src) throws IOException {
