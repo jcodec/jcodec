@@ -26,6 +26,15 @@ public class MBEncoderHelper {
             }
         }
     }
+    
+    public static final void takeSafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
+            int blkW, int blkH) {
+        for (int i = 0, srcOff = y * planeWidth + x, dstOff = 0; i < blkH; i++, srcOff += planeWidth) {
+            for (int j = 0, srcOff1 = srcOff; j < blkW; ++j, ++dstOff, ++srcOff1) {
+                coeff[dstOff] = planeData[srcOff1];
+            }
+        }
+    }
 
     public static final void takeSubtractUnsafe(int[] planeData, int planeWidth, int planeHeight, int x, int y,
             int[] coeff, int[] pred, int blkW, int blkH) {

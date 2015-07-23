@@ -2,16 +2,13 @@ package org.jcodec.codecs.h264;
 
 import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import javax.imageio.ImageIO;
 
 import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.h264.encode.MBEncoderHelper;
 import org.jcodec.codecs.h264.encode.MBEncoderI16x16;
 import org.jcodec.codecs.h264.encode.MBEncoderP16x16;
+import org.jcodec.codecs.h264.encode.MotionEstimator;
 import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.CAVLC;
 import org.jcodec.codecs.h264.io.model.MBType;
@@ -30,7 +27,6 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
-import org.jcodec.scale.AWTUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -180,7 +176,7 @@ public class H264Encoder implements VideoEncoder {
 
     public PictureParameterSet initPPS() {
         PictureParameterSet pps = new PictureParameterSet();
-        pps.pic_init_qp_minus26 = rc.getInitQp() - 26;
+        pps.pic_init_qp_minus26 = rc.getInitQp(SliceType.I) - 26;
         return pps;
     }
 
@@ -210,10 +206,10 @@ public class H264Encoder implements VideoEncoder {
         }
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
         mbEncoderI16x16 = new MBEncoderI16x16(cavlc, leftRow, topLine);
-        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc);
+        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc, new MotionEstimator(16));
 
         rc.reset();
-        int qp = rc.getInitQp();
+        int qp = rc.getInitQp(sliceType);
 
         dup.putInt(0x1);
         new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 2).write(dup);
@@ -225,6 +221,7 @@ public class H264Encoder implements VideoEncoder {
         sh.sps = sps;
         sh.pic_order_cnt_lsb = (frameNum << 1) % maxPOC;
         sh.frame_num = frameNum % maxFrameNumber;
+        sh.slice_qp_delta = qp - (pps.pic_init_qp_minus26 + 26);
 
         ByteBuffer buf = ByteBuffer.allocate(pic.getWidth() * pic.getHeight());
         BitWriter sliceData = new BitWriter(buf);

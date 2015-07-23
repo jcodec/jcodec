@@ -1,15 +1,15 @@
 package org.jcodec.codecs.h264.encode;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_LEFT;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_TOP;
-import static org.jcodec.codecs.h264.io.model.MBType.I_16x16;
 import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.BlockInterpolator;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.io.CAVLC;
-import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.common.io.BitWriter;
@@ -28,11 +28,21 @@ public class MBEncoderP16x16 {
     private CAVLC[] cavlc;
     private SeqParameterSet sps;
     private Picture ref;
+    private MotionEstimator me;
+    private int[] mvTopX;
+    private int[] mvTopY;
+    private int mvLeftX;
+    private int mvLeftY;
+    private int mvTopLeftX;
+    private int mvTopLeftY;
 
-    public MBEncoderP16x16(SeqParameterSet sps, Picture ref, CAVLC[] cavlc) {
+    public MBEncoderP16x16(SeqParameterSet sps, Picture ref, CAVLC[] cavlc, MotionEstimator me) {
         this.sps = sps;
         this.cavlc = cavlc;
         this.ref = ref;
+        this.me = me;
+        mvTopX = new int[sps.pic_width_in_mbs_minus1 + 1];
+        mvTopY = new int[sps.pic_width_in_mbs_minus1 + 1];
     }
 
     public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, Picture outMB, int qp, int qpDelta) {
@@ -44,13 +54,24 @@ public class MBEncoderP16x16 {
             CAVLCWriter.writeTE(out, refIdx, sps.num_ref_frames - 1);
         }
 
-        // Prediction based on the previous MVs
-        int mvpx = 0, mvpy = 0;
+        boolean trAvb = mbY > 0 && mbX < sps.pic_width_in_mbs_minus1;
+        boolean tlAvb = mbX > 0 && mbY > 0;
+        int mvpx = median(mvLeftX, mvTopX[mbX], trAvb ? mvTopX[mbX + 1] : 0, tlAvb ? mvTopLeftX : 0, mbX > 0,
+                mbY > 0, trAvb, tlAvb);
+        int mvpy = median(mvLeftY, mvTopY[mbX], trAvb ? mvTopY[mbX + 1] : 0, tlAvb ? mvTopLeftY : 0, mbX > 0,
+                mbY > 0, trAvb, tlAvb);
 
         // Motion estimation for the current macroblock
         int[] mv = mvEstimate(pic, mbX, mbY, mvpx, mvpy);
-        CAVLCWriter.writeSE(out, mv[0] - mvpx); // mvx
-        CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvy
+        mvTopLeftX = mvTopX[mbX];
+        mvTopLeftY = mvTopY[mbX];
+        mvTopX[mbX] = mv[0];
+        mvTopY[mbX] = mv[1];
+        mvLeftX = mv[0];
+        mvLeftY = mv[1];
+        CAVLCWriter.writeSE(out, mv[0] - mvpx); // mvdx
+        CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvdy
+//        System.out.println((mv[0] >> 2) + ", " + (mv[1] >> 2) );
 
         Picture mbRef = Picture.create(16, 16, sps.chroma_format_idc), mb = Picture.create(16, 16,
                 sps.chroma_format_idc);
@@ -84,12 +105,34 @@ public class MBEncoderP16x16 {
                 16 >> cw, 16 >> ch);
     }
 
+    public int median(int a, int b, int c, int d, boolean aAvb, boolean bAvb, boolean cAvb, boolean dAvb) {
+
+        if (!cAvb) {
+            c = d;
+            cAvb = dAvb;
+        }
+
+        if (aAvb && !bAvb && !cAvb) {
+            b = c = a;
+            bAvb = cAvb = aAvb;
+        }
+
+        a = aAvb ? a : 0;
+        b = bAvb ? b : 0;
+        c = cAvb ? c : 0;
+
+        return a + b + c - min(min(a, b), c) - max(max(a, b), c);
+    }
+
     private int getCodedBlockPattern() {
         return 47;
     }
 
     private int[] mvEstimate(Picture pic, int mbX, int mbY, int mvpx, int mvpy) {
-        return new int[] { 0, 0 };
+        int[] patch = new int[256];
+        MBEncoderHelper.takeSafe(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4, mbY << 4,
+                patch, 16, 16);
+        return me.estimate(ref, patch, mbX, mbY, mvpx, mvpy);
     }
 
     /**

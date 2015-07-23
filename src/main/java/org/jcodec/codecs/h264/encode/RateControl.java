@@ -1,5 +1,7 @@
 package org.jcodec.codecs.h264.encode;
 
+import org.jcodec.codecs.h264.io.model.SliceType;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -11,7 +13,7 @@ package org.jcodec.codecs.h264.encode;
  */
 public interface RateControl {
 
-    int getInitQp();
+    int getInitQp(SliceType sliceType);
 
     int getQpDelta();
 
