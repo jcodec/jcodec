@@ -366,7 +366,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void filterBs(int bs, int indexAlpha, int indexBeta, int[] pels, int p2Idx, int p1Idx, int p0Idx,
+    public static void filterBs(int bs, int indexAlpha, int indexBeta, int[] pels, int p2Idx, int p1Idx, int p0Idx,
             int q0Idx, int q1Idx, int q2Idx, boolean isChroma) {
 
         int p1 = pels[p1Idx];
@@ -431,7 +431,7 @@ public class DeblockingFilter {
 
     }
 
-    private void filterBs4(int indexAlpha, int indexBeta, int[] pels, int p3Idx, int p2Idx, int p1Idx, int p0Idx,
+    public static void filterBs4(int indexAlpha, int indexBeta, int[] pels, int p3Idx, int p2Idx, int p1Idx, int p0Idx,
             int q0Idx, int q1Idx, int q2Idx, int q3Idx, boolean isChroma) {
         int p0 = pels[p0Idx];
         int q0 = pels[q0Idx];

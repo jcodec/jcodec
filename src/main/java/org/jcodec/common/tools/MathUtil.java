@@ -1,5 +1,7 @@
 package org.jcodec.common.tools;
 
+import static java.lang.Math.max;
+
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.RationalLarge;
 
@@ -157,5 +159,9 @@ public class MathUtil {
 
     public static int wrap(int picNo, int maxFrames) {
         return picNo < 0 ? picNo + maxFrames : (picNo >= maxFrames ? picNo - maxFrames : picNo);
+    }
+
+    public static int max3(int a, int b, int c) {
+        return max(max(a, b), c);
     }
 }

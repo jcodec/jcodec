@@ -6,10 +6,13 @@ import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_LEFT;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_TOP;
 import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
 
+import java.util.Arrays;
+
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.BlockInterpolator;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.io.CAVLC;
+import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.common.io.BitWriter;
@@ -45,7 +48,8 @@ public class MBEncoderP16x16 {
         mvTopY = new int[sps.pic_width_in_mbs_minus1 + 1];
     }
 
-    public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, Picture outMB, int qp, int qpDelta) {
+    public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB, EncodedMB leftOutMB,
+            EncodedMB topOutMB, int qp, int qpDelta) {
         int cw = pic.getColor().compWidth[1];
         int ch = pic.getColor().compHeight[1];
 
@@ -56,10 +60,10 @@ public class MBEncoderP16x16 {
 
         boolean trAvb = mbY > 0 && mbX < sps.pic_width_in_mbs_minus1;
         boolean tlAvb = mbX > 0 && mbY > 0;
-        int mvpx = median(mvLeftX, mvTopX[mbX], trAvb ? mvTopX[mbX + 1] : 0, tlAvb ? mvTopLeftX : 0, mbX > 0,
-                mbY > 0, trAvb, tlAvb);
-        int mvpy = median(mvLeftY, mvTopY[mbX], trAvb ? mvTopY[mbX + 1] : 0, tlAvb ? mvTopLeftY : 0, mbX > 0,
-                mbY > 0, trAvb, tlAvb);
+        int mvpx = median(mvLeftX, mvTopX[mbX], trAvb ? mvTopX[mbX + 1] : 0, tlAvb ? mvTopLeftX : 0, mbX > 0, mbY > 0,
+                trAvb, tlAvb);
+        int mvpy = median(mvLeftY, mvTopY[mbX], trAvb ? mvTopY[mbX + 1] : 0, tlAvb ? mvTopLeftY : 0, mbX > 0, mbY > 0,
+                trAvb, tlAvb);
 
         // Motion estimation for the current macroblock
         int[] mv = mvEstimate(pic, mbX, mbY, mvpx, mvpy);
@@ -71,7 +75,7 @@ public class MBEncoderP16x16 {
         mvLeftY = mv[1];
         CAVLCWriter.writeSE(out, mv[0] - mvpx); // mvdx
         CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvdy
-//        System.out.println((mv[0] >> 2) + ", " + (mv[1] >> 2) );
+        // System.out.println((mv[0] >> 2) + ", " + (mv[1] >> 2) );
 
         Picture mbRef = Picture.create(16, 16, sps.chroma_format_idc), mb = Picture.create(16, 16,
                 sps.chroma_format_idc);
@@ -95,14 +99,22 @@ public class MBEncoderP16x16 {
 
         CAVLCWriter.writeSE(out, qpDelta);
 
-        luma(pic, mb.getPlaneData(0), mbX, mbY, out, qp);
+        luma(pic, mb.getPlaneData(0), mbX, mbY, out, qp, outMB.getNc());
         chroma(pic, mb.getPlaneData(1), mb.getPlaneData(2), mbX, mbY, out, qp);
 
-        MBEncoderHelper.putBlk(outMB.getPlaneData(0), mb.getPlaneData(0), mbRef.getPlaneData(0), 4, 0, 0, 16, 16);
-        MBEncoderHelper.putBlk(outMB.getPlaneData(1), mb.getPlaneData(1), mbRef.getPlaneData(1), 4 - cw, 0, 0,
-                16 >> cw, 16 >> ch);
-        MBEncoderHelper.putBlk(outMB.getPlaneData(2), mb.getPlaneData(2), mbRef.getPlaneData(2), 4 - cw, 0, 0,
-                16 >> cw, 16 >> ch);
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(0), mb.getPlaneData(0), mbRef.getPlaneData(0), 4, 0, 0,
+                16, 16);
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb.getPlaneData(1), mbRef.getPlaneData(1), 4 - cw, 0,
+                0, 16 >> cw, 16 >> ch);
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb.getPlaneData(2), mbRef.getPlaneData(2), 4 - cw, 0,
+                0, 16 >> cw, 16 >> ch);
+
+        Arrays.fill(outMB.getMx(), mv[0]);
+        Arrays.fill(outMB.getMy(), mv[1]);
+        outMB.setType(MBType.P_16x16);
+        outMB.setQp(qp);
+
+        MBDeblocker.deblockMBP(outMB, leftOutMB, topOutMB);
     }
 
     public int median(int a, int b, int c, int d, boolean aAvb, boolean bAvb, boolean cAvb, boolean dAvb) {
@@ -144,7 +156,7 @@ public class MBEncoderP16x16 {
         return 0;
     }
 
-    private void luma(Picture pic, int[] pix, int mbX, int mbY, BitWriter out, int qp) {
+    private void luma(Picture pic, int[] pix, int mbX, int mbY, BitWriter out, int qp, int[] nc) {
         int[][] ac = new int[16][16];
         for (int i = 0; i < ac.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_4x4[i].length; j++) {
@@ -192,11 +204,6 @@ public class MBEncoderP16x16 {
         for (int i = 0; i < ac.length; i++) {
             int blkI = H264Const.BLK_INV_MAP[i];
             CoeffTransformer.quantizeAC(ac[blkI], qp);
-            // System.out.print("Luma coeff: ");
-            // for(int j = 0; j < 16; j++)
-            // System.out.print(ac[i][j] + ",");
-            // System.out.println();
-            // TODO: calc here
             cavlc[comp].writeACBlock(out, mbLeftBlk + MB_BLK_OFF_LEFT[i], mbTopBlk + MB_BLK_OFF_TOP[i], P_16x16,
                     P_16x16, ac[blkI], H264Const.totalZeros16, 0, 16, CoeffTransformer.zigzag4x4);
         }

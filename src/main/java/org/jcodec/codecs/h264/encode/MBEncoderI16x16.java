@@ -1,5 +1,6 @@
 package org.jcodec.codecs.h264.encode;
 
+import static org.jcodec.codecs.h264.H264Const.BLK_INV_MAP;
 import static org.jcodec.codecs.h264.H264Const.BLK_X;
 import static org.jcodec.codecs.h264.H264Const.BLK_Y;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_LEFT;
@@ -36,13 +37,21 @@ public class MBEncoderI16x16 {
         this.topLine = topLine;
     }
 
-    public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, Picture outMB, int qp, int qpDelta) {
+    public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB, EncodedMB leftOutMB,
+            EncodedMB topOutMB, int qp, int qpDelta) {
         CAVLCWriter.writeUE(out, 0); // Chroma prediction mode -- DC
         CAVLCWriter.writeSE(out, qpDelta); // MB QP delta
 
-        luma(pic, mbX, mbY, out, qp, outMB, cavlc[0]);
-        chroma(pic, mbX, mbY, out, qp, outMB);
+        outMB.setType(MBType.I_16x16);
+        outMB.setQp(qp);
+
+        luma(pic, mbX, mbY, out, qp, outMB.getPixels(), cavlc[0]);
+        chroma(pic, mbX, mbY, out, qp, outMB.getPixels());
+
+        MBDeblocker.deblockMBI(outMB, leftOutMB, topOutMB);
     }
+
+    private static int DUMMY[] = new int[16];
 
     private void chroma(Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB) {
         int cw = pic.getColor().compWidth[1];
@@ -63,8 +72,8 @@ public class MBEncoderI16x16 {
         putChroma(outMB.getData()[2], 2, x, y, ac2, pred2);
     }
 
-    public static void chromaResidual(Picture pic, int mbX, int mbY, BitWriter out, int qp, int[][] ac1,
-            int[][] ac2, CAVLC cavlc1, CAVLC cavlc2, MBType leftMBType, MBType topMBType) {
+    public static void chromaResidual(Picture pic, int mbX, int mbY, BitWriter out, int qp, int[][] ac1, int[][] ac2,
+            CAVLC cavlc1, CAVLC cavlc2, MBType leftMBType, MBType topMBType) {
 
         transformChroma(ac1);
         transformChroma(ac2);
@@ -75,8 +84,8 @@ public class MBEncoderI16x16 {
         writeDC(cavlc1, mbX, mbY, out, qp, mbX << 1, mbY << 1, dc1, leftMBType, topMBType);
         writeDC(cavlc2, mbX, mbY, out, qp, mbX << 1, mbY << 1, dc2, leftMBType, topMBType);
 
-        writeAC(cavlc1, mbX, mbY, out, mbX << 1, mbY << 1, ac1, qp, leftMBType, topMBType);
-        writeAC(cavlc2, mbX, mbY, out, mbX << 1, mbY << 1, ac2, qp, leftMBType, topMBType);
+        writeAC(cavlc1, mbX, mbY, out, mbX << 1, mbY << 1, ac1, qp, leftMBType, topMBType, DUMMY);
+        writeAC(cavlc2, mbX, mbY, out, mbX << 1, mbY << 1, ac2, qp, leftMBType, topMBType, DUMMY);
 
         restorePlane(dc1, ac1, qp);
         restorePlane(dc2, ac2, qp);
@@ -92,7 +101,7 @@ public class MBEncoderI16x16 {
         transform(pic, 0, ac, pred, x, y);
         int[] dc = extractDC(ac);
         writeDC(cavlc, mbX, mbY, out, qp, mbX << 2, mbY << 2, dc, I_16x16, I_16x16);
-        writeAC(cavlc, mbX, mbY, out, mbX << 2, mbY << 2, ac, qp, I_16x16, I_16x16);
+        writeAC(cavlc, mbX, mbY, out, mbX << 2, mbY << 2, ac, qp, I_16x16, I_16x16, DUMMY);
 
         restorePlane(dc, ac, qp);
 
@@ -140,12 +149,12 @@ public class MBEncoderI16x16 {
     }
 
     private static void writeAC(CAVLC cavlc, int mbX, int mbY, BitWriter out, int mbLeftBlk, int mbTopBlk, int[][] ac,
-            int qp, MBType leftMBType, MBType topMBType) {
+            int qp, MBType leftMBType, MBType topMBType, int[] nc) {
         for (int i = 0; i < ac.length; i++) {
             CoeffTransformer.quantizeAC(ac[i], qp);
-            // TODO: calc here
-            cavlc.writeACBlock(out, mbLeftBlk + MB_BLK_OFF_LEFT[i], mbTopBlk + MB_BLK_OFF_TOP[i], leftMBType, topMBType,
-                    ac[i], H264Const.totalZeros16, 1, 15, CoeffTransformer.zigzag4x4);
+            nc[BLK_INV_MAP[i]] = CAVLC.totalCoeff(cavlc.writeACBlock(out, mbLeftBlk + MB_BLK_OFF_LEFT[i], mbTopBlk
+                    + MB_BLK_OFF_TOP[i], leftMBType, topMBType, ac[i], H264Const.totalZeros16, 1, 15,
+                    CoeffTransformer.zigzag4x4));
         }
     }
 

@@ -5,6 +5,7 @@ import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.encode.DumbRateControl;
+import org.jcodec.codecs.h264.encode.EncodedMB;
 import org.jcodec.codecs.h264.encode.MBEncoderHelper;
 import org.jcodec.codecs.h264.encode.MBEncoderI16x16;
 import org.jcodec.codecs.h264.encode.MBEncoderP16x16;
@@ -62,9 +63,12 @@ public class H264Encoder implements VideoEncoder {
     private MBEncoderI16x16 mbEncoderI16x16;
 
     private MBEncoderP16x16 mbEncoderP16x16;
-    
+
     private Picture ref;
     private Picture picOut;
+    private EncodedMB[] topEncoded;
+
+    private EncodedMB outMB;
 
     public H264Encoder() {
         this(new DumbRateControl());
@@ -152,10 +156,17 @@ public class H264Encoder implements VideoEncoder {
         topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
         picOut = Picture.create(mbWidth << 4, mbHeight << 4, pic.getColor());
 
+        outMB = new EncodedMB();
+        topEncoded = new EncodedMB[mbWidth];
+        for (int i = 0; i < mbWidth; i++)
+            topEncoded[i] = new EncodedMB();
+
         encodeSlice(sps, pps, pic, dup, idr, poc, frameType);
-        
+
+        putLastMBLine();
+
         ref = picOut;
-        
+
         dup.flip();
         return dup;
     }
@@ -227,8 +238,6 @@ public class H264Encoder implements VideoEncoder {
         BitWriter sliceData = new BitWriter(buf);
         new SliceHeaderWriter().write(sh, idr, 2, sliceData);
 
-        Picture outMB = Picture.create(16, 16, ColorSpace.YUV420J);
-
         for (int mbY = 0; mbY < sps.pic_height_in_map_units_minus1 + 1; mbY++) {
             for (int mbX = 0; mbX < sps.pic_width_in_mbs_minus1 + 1; mbX++) {
                 if (sliceType == SliceType.P) {
@@ -260,13 +269,13 @@ public class H264Encoder implements VideoEncoder {
                 do {
                     candidate = sliceData.fork();
                     qpDelta = rc.getQpDelta();
-                    encodeMacroblock(mbType, pic, mbX, mbY, candidate, outMB, qp, qpDelta);
+                    encodeMacroblock(mbType, pic, mbX, mbY, candidate, qp, qpDelta);
                 } while (!rc.accept(candidate.position() - sliceData.position()));
                 sliceData = candidate;
                 qp += qpDelta;
 
-                collectPredictors(outMB, mbX);
-                addToReference(outMB, mbX, mbY);
+                collectPredictors(outMB.getPixels(), mbX);
+                addToReference(mbX, mbY);
             }
         }
         sliceData.write1Bit(1);
@@ -277,12 +286,13 @@ public class H264Encoder implements VideoEncoder {
         escapeNAL(buf, dup);
     }
 
-    private void encodeMacroblock(MBType mbType, Picture pic, int mbX, int mbY, BitWriter candidate, Picture outMB,
-            int qp, int qpDelta) {
+    private void encodeMacroblock(MBType mbType, Picture pic, int mbX, int mbY, BitWriter candidate, int qp, int qpDelta) {
         if (mbType == MBType.I_16x16)
-            mbEncoderI16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, qp + qpDelta, qpDelta);
+            mbEncoderI16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, mbX > 0 ? topEncoded[mbX - 1] : null,
+                    mbY > 0 ? topEncoded[mbX] : null, qp + qpDelta, qpDelta);
         else if (mbType == MBType.P_16x16)
-            mbEncoderP16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, qp + qpDelta, qpDelta);
+            mbEncoderP16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, mbX > 0 ? topEncoded[mbX - 1] : null,
+                    mbY > 0 ? topEncoded[mbX] : null, qp + qpDelta, qpDelta);
         else
             throw new RuntimeException("Macroblock of type " + mbType + " is not supported.");
     }
@@ -296,10 +306,21 @@ public class H264Encoder implements VideoEncoder {
             throw new RuntimeException("Unsupported slice type");
     }
 
-    private void addToReference(Picture outMB, int mbX, int mbY) {
-        MBEncoderHelper.putBlk(picOut, outMB, mbX << 4, mbY << 4);
+    private void addToReference(int mbX, int mbY) {
+        if (mbY > 0)
+            MBEncoderHelper.putBlk(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbY - 1) << 4);
+        EncodedMB tmp = topEncoded[mbX];
+        topEncoded[mbX] = outMB;
+        outMB = tmp;
     }
-    
+
+    private void putLastMBLine() {
+        int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
+        int mbHeight = sps.pic_height_in_map_units_minus1 + 1;
+        for (int mbX = 0; mbX < mbWidth; mbX++)
+            MBEncoderHelper.putBlk(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbHeight - 1) << 4);
+    }
+
     private void collectPredictors(Picture outMB, int mbX) {
         System.arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
         System.arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
