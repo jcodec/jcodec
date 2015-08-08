@@ -17,12 +17,14 @@ import org.jcodec.common.model.Rect;
  */
 public class Frame extends Picture {
     private int frameNo;
+    private SliceType frameType;
     private int[][][][] mvs;
-    private Frame[][][] refsUsed; 
+    private Frame[][][] refsUsed;
     private boolean shortTerm;
     private int poc;
 
-    public Frame(int width, int height, int[][] data, ColorSpace color, Rect crop, int frameNo, int[][][][] mvs, Frame[][][] refsUsed, int poc) {
+    public Frame(int width, int height, int[][] data, ColorSpace color, Rect crop, int frameNo, SliceType frameType,
+            int[][][][] mvs, Frame[][][] refsUsed, int poc) {
         super(width, height, data, color, crop);
         this.frameNo = frameNo;
         this.mvs = mvs;
@@ -34,12 +36,13 @@ public class Frame extends Picture {
     public static Frame createFrame(Frame pic) {
         Picture comp = pic.createCompatible();
         return new Frame(comp.getWidth(), comp.getHeight(), comp.getData(), comp.getColor(), pic.getCrop(),
-                pic.frameNo, pic.mvs, pic.refsUsed, pic.poc);
+                pic.frameNo, pic.frameType, pic.mvs, pic.refsUsed, pic.poc);
     }
 
     public Frame cropped() {
         Picture cropped = super.cropped();
-        return new Frame(cropped.getWidth(), cropped.getHeight(), cropped.getData(), cropped.getColor(), null, frameNo, mvs, refsUsed, poc);
+        return new Frame(cropped.getWidth(), cropped.getHeight(), cropped.getData(), cropped.getColor(), null, frameNo,
+                frameType, mvs, refsUsed, poc);
     }
 
     public void copyFrom(Frame src) {
@@ -99,5 +102,9 @@ public class Frame extends Picture {
 
     public Frame[][][] getRefsUsed() {
         return refsUsed;
+    }
+
+    public SliceType getFrameType() {
+        return frameType;
     }
 }

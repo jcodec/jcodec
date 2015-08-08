@@ -35,7 +35,7 @@ public class MainUtils {
         }
 
         public Boolean getBooleanFlag(String flagName, Boolean defaultValue) {
-            return flags.containsKey(flagName) ? new Boolean(flags.get(flagName)) : defaultValue;
+            return flags.containsKey(flagName) ? !"false".equalsIgnoreCase(flags.get(flagName)) : defaultValue;
         }
 
         public Double getDoubleFlag(String flagName, Double defaultValue) {

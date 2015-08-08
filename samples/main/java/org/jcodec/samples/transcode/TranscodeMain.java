@@ -43,6 +43,7 @@ import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
+import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
@@ -666,6 +667,8 @@ public class TranscodeMain {
 
     protected static class Avc2prores implements Profile {
         private static final String FLAG_RAW = "raw";
+        private static final String FLAG_DUMPMV = "dumpMv";
+        private static final String FLAG_DUMPMVJS = "dumpMvJs";
 
         public void transcode(Cmd cmd) throws IOException {
             SeekableByteChannel sink = null;
@@ -705,6 +708,8 @@ public class TranscodeMain {
                 ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ);
 
                 Transform transform = new Yuv420pToYuv422p(2, 0);
+                boolean dumpMv = cmd.getBooleanFlag(FLAG_DUMPMV, false);
+                boolean dumpMvJs = cmd.getBooleanFlag(FLAG_DUMPMVJS, false);
 
                 int timescale = 24000;
                 int frameDuration = 1000;
@@ -722,20 +727,27 @@ public class TranscodeMain {
                         ;
                     dt.gotoFrame(inFrame.getFrameNo());
                 }
-                for (i = 0; (inFrame = videoTrack.nextFrame()) != null;) {
+                for (i = 0; (inFrame = videoTrack.nextFrame()) != null; i++) {
                     ByteBuffer data = inFrame.getData();
                     Picture target1;
                     Frame dec;
                     if (!raw) {
                         target1 = Picture.create(width, height, ColorSpace.YUV420);
                         dec = decoder.decodeFrame(splitMOVPacket(data, avcC), target1.getData());
+                        if (dumpMv)
+                            dumpMv(i, dec);
+                        if (dumpMvJs)
+                            dumpMvJs(i, dec);
                     } else {
                         SeqParameterSet sps = ((MappedH264ES) videoTrack).getSps()[0];
                         width = (sps.pic_width_in_mbs_minus1 + 1) << 4;
                         height = H264Utils.getPicHeightInMbs(sps) << 4;
                         target1 = Picture.create(width, height, ColorSpace.YUV420);
                         dec = decoder.decodeFrame(data, target1.getData());
-
+                        if (dumpMv)
+                            dumpMv(i, dec);
+                        if (dumpMvJs)
+                            dumpMvJs(i, dec);
                     }
                     if (outTrack == null) {
                         outTrack = muxer.addVideoTrack("apch", new Size(dec.getCroppedWidth(), dec.getCroppedHeight()),
@@ -762,6 +774,62 @@ public class TranscodeMain {
                 if (source != null)
                     source.close();
             }
+        }
+
+        private void dumpMv(int frameNo, Frame dec) {
+            System.err.println("FRAME " + String.format("%08d", frameNo)
+                    + " ================================================================");
+            if (dec.getFrameType() == SliceType.I)
+                return;
+            int[][][][] mvs = dec.getMvs();
+            for (int i = 0; i < 2; i++) {
+
+                System.err.println((i == 0 ? "BCK" : "FWD")
+                        + " ===========================================================================");
+                for (int blkY = 0; blkY < mvs[i].length; ++blkY) {
+                    StringBuilder line0 = new StringBuilder();
+                    StringBuilder line1 = new StringBuilder();
+                    StringBuilder line2 = new StringBuilder();
+                    StringBuilder line3 = new StringBuilder();
+                    line0.append("+");
+                    line1.append("|");
+                    line2.append("|");
+                    line3.append("|");
+                    for (int blkX = 0; blkX < mvs[i][0].length; ++blkX) {
+                        line0.append("------+");
+                        line1.append(String.format("%6d|", mvs[i][blkY][blkX][0]));
+                        line2.append(String.format("%6d|", mvs[i][blkY][blkX][1]));
+                        line3.append(String.format("    %2d|", mvs[i][blkY][blkX][2]));
+                    }
+                    System.err.println(line0.toString());
+                    System.err.println(line1.toString());
+                    System.err.println(line2.toString());
+                    System.err.println(line3.toString());
+                }
+                if (dec.getFrameType() != SliceType.B)
+                    break;
+            }
+        }
+
+        private void dumpMvJs(int frameNo, Frame dec) {
+            System.err.println("{frameNo: " + frameNo + ",");
+            if (dec.getFrameType() == SliceType.I)
+                return;
+            int[][][][] mvs = dec.getMvs();
+            for (int i = 0; i < 2; i++) {
+
+                System.err.println((i == 0 ? "backRef" : "forwardRef") + ": [");
+                for (int blkY = 0; blkY < mvs[i].length; ++blkY) {
+                    for (int blkX = 0; blkX < mvs[i][0].length; ++blkX) {
+                        System.err.println("{x: " + blkX + ", y: " + blkY + ", mx: " + mvs[i][blkY][blkX][0] + ", my: "
+                                + mvs[i][blkY][blkX][1] + ", ridx:" + mvs[i][blkY][blkX][2] + "},");
+                    }
+                }
+                System.err.println("],");
+                if (dec.getFrameType() != SliceType.B)
+                    break;
+            }
+            System.err.println("}");
         }
 
         private static void outGOP(ProresEncoder encoder, Transform transform, int timescale, int frameDuration,
@@ -792,6 +860,8 @@ public class TranscodeMain {
             MainUtils.printHelp(new HashMap<String, String>() {
                 {
                     put(FLAG_RAW, "Input AnnexB stream (raw h.264 elementary stream)");
+                    put(FLAG_DUMPMV, "Dump motion vectors from frames");
+                    put(FLAG_DUMPMVJS, "Dump motion vectors from frames in JSon format");
                 }
             }, "in file", "pattern");
         }
