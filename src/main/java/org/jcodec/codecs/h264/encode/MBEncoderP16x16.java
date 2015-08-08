@@ -114,7 +114,7 @@ public class MBEncoderP16x16 {
         outMB.setType(MBType.P_16x16);
         outMB.setQp(qp);
 
-        MBDeblocker.deblockMBP(outMB, leftOutMB, topOutMB);
+        new MBDeblocker().deblockMBP(outMB, leftOutMB, topOutMB);
     }
 
     public int median(int a, int b, int c, int d, boolean aAvb, boolean bAvb, boolean cAvb, boolean dAvb) {

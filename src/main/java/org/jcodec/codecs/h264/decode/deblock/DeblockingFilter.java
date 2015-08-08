@@ -74,7 +74,8 @@ public class DeblockingFilter {
         // for (int i = 0; i < shs.length; i++)
         // printMB(result.getPlaneData(2), result.getPlaneWidth(2), i, shs[i],
         // "!--!--!--!--!--!--!--!--!--!--!--!");
-//        printMB(result.getPlaneData(0), result.getPlaneWidth(0), 0, shs[0], "!--!--!--!--!--!--!--!--!--!--!--!");
+        // printMB(result.getPlaneData(0), result.getPlaneWidth(0), 0, shs[0],
+        // "!--!--!--!--!--!--!--!--!--!--!--!");
         int[][] bsV = new int[4][4], bsH = new int[4][4];
         for (int i = 0; i < shs.length; i++) {
             calcBsH(result, i, bsH);
@@ -91,20 +92,22 @@ public class DeblockingFilter {
         // shs[235], "!**!**!**!**!--!--!--!--!--!--!--!");
     }
 
-//    private void printMB(int[] is, int stride, int mbAddr, SliceHeader sh, String delim) {
-//        int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
-//        int mbX = mbAddr % mbWidth;
-//        int mbY = mbAddr / mbWidth;
-//
-//        System.out.println("MB: " + mbX + ", " + mbY);
-//        System.out.println(delim);
-//        for (int j = 0; j < 16; j++) {
-//            for (int i = 0; i < 16; i++)
-//                System.out.print(String.format("%3d,", is[((mbY << 4) + j) * stride + (mbX << 4) + i]));
-//            System.out.println();
-//        }
-//        System.out.println(delim);
-//    }
+    // private void printMB(int[] is, int stride, int mbAddr, SliceHeader sh,
+    // String delim) {
+    // int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
+    // int mbX = mbAddr % mbWidth;
+    // int mbY = mbAddr / mbWidth;
+    //
+    // System.out.println("MB: " + mbX + ", " + mbY);
+    // System.out.println(delim);
+    // for (int j = 0; j < 16; j++) {
+    // for (int i = 0; i < 16; i++)
+    // System.out.print(String.format("%3d,", is[((mbY << 4) + j) * stride +
+    // (mbX << 4) + i]));
+    // System.out.println();
+    // }
+    // System.out.println(delim);
+    // }
 
     static int[] inverse = new int[] { 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15 };
 
@@ -331,12 +334,12 @@ public class DeblockingFilter {
                 int p3Idx = offset - 4 * stride + pixOff;
                 int q3Idx = offset + 3 * stride + pixOff;
 
-                filterBs4(indexAlpha, indexBeta, pic.getPlaneData(comp), p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx,
-                        q2Idx, q3Idx, comp != 0);
+                filterBs4(indexAlpha, indexBeta, pic.getPlaneData(comp), pic.getPlaneData(comp), p3Idx, p2Idx, p1Idx,
+                        p0Idx, q0Idx, q1Idx, q2Idx, q3Idx, comp != 0);
             } else if (bs > 0) {
 
-                filterBs(bs, indexAlpha, indexBeta, pic.getPlaneData(comp), p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx,
-                        comp != 0);
+                filterBs(bs, indexAlpha, indexBeta, pic.getPlaneData(comp), pic.getPlaneData(comp), p2Idx, p1Idx,
+                        p0Idx, q0Idx, q1Idx, q2Idx, comp != 0);
             }
         }
     }
@@ -357,22 +360,22 @@ public class DeblockingFilter {
             if (bs == 4) {
                 int p3Idx = offsetQ - 4;
                 int q3Idx = offsetQ + 3;
-                filterBs4(indexAlpha, indexBeta, pic.getPlaneData(comp), p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx,
-                        q2Idx, q3Idx, comp != 0);
+                filterBs4(indexAlpha, indexBeta, pic.getPlaneData(comp), pic.getPlaneData(comp), p3Idx, p2Idx, p1Idx,
+                        p0Idx, q0Idx, q1Idx, q2Idx, q3Idx, comp != 0);
             } else if (bs > 0) {
-                filterBs(bs, indexAlpha, indexBeta, pic.getPlaneData(comp), p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx,
-                        comp != 0);
+                filterBs(bs, indexAlpha, indexBeta, pic.getPlaneData(comp), pic.getPlaneData(comp), p2Idx, p1Idx,
+                        p0Idx, q0Idx, q1Idx, q2Idx, comp != 0);
             }
         }
     }
 
-    public static void filterBs(int bs, int indexAlpha, int indexBeta, int[] pels, int p2Idx, int p1Idx, int p0Idx,
-            int q0Idx, int q1Idx, int q2Idx, boolean isChroma) {
+    public static void filterBs(int bs, int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p2Idx, int p1Idx,
+            int p0Idx, int q0Idx, int q1Idx, int q2Idx, boolean isChroma) {
 
-        int p1 = pels[p1Idx];
-        int p0 = pels[p0Idx];
-        int q0 = pels[q0Idx];
-        int q1 = pels[q1Idx];
+        int p1 = pelsP[p1Idx];
+        int p0 = pelsP[p0Idx];
+        int q0 = pelsQ[q0Idx];
+        int q1 = pelsQ[q1Idx];
 
         int alphaThresh = alphaTab[indexAlpha];
         int betaThresh = betaTab[indexBeta];
@@ -390,8 +393,8 @@ public class DeblockingFilter {
         boolean conditionP, conditionQ;
         int tC;
         if (!isChroma) {
-            int ap = abs(pels[p2Idx] - p0);
-            int aq = abs(pels[q2Idx] - q0);
+            int ap = abs(pelsP[p2Idx] - p0);
+            int aq = abs(pelsQ[q2Idx] - q0);
             tC = tC0 + ((ap < betaThresh) ? 1 : 0) + ((aq < betaThresh) ? 1 : 0);
             conditionP = ap < betaThresh;
             conditionQ = aq < betaThresh;
@@ -410,33 +413,33 @@ public class DeblockingFilter {
         q0n = q0n < 0 ? 0 : q0n;
 
         if (conditionP) {
-            int p2 = pels[p2Idx];
+            int p2 = pelsP[p2Idx];
 
             int diff = (p2 + ((p0 + q0 + 1) >> 1) - (p1 << 1)) >> 1;
             diff = diff < -tC0 ? -tC0 : (diff > tC0 ? tC0 : diff);
             int p1n = p1 + diff;
-            pels[p1Idx] = clip(p1n, 0, 255);
+            pelsP[p1Idx] = clip(p1n, 0, 255);
         }
 
         if (conditionQ) {
-            int q2 = pels[q2Idx];
+            int q2 = pelsQ[q2Idx];
             int diff = (q2 + ((p0 + q0 + 1) >> 1) - (q1 << 1)) >> 1;
             diff = diff < -tC0 ? -tC0 : (diff > tC0 ? tC0 : diff);
             int q1n = q1 + diff;
-            pels[q1Idx] = clip(q1n, 0, 255);
+            pelsQ[q1Idx] = clip(q1n, 0, 255);
         }
 
-        pels[q0Idx] = clip(q0n, 0, 255);
-        pels[p0Idx] = clip(p0n, 0, 255);
+        pelsQ[q0Idx] = clip(q0n, 0, 255);
+        pelsP[p0Idx] = clip(p0n, 0, 255);
 
     }
 
-    public static void filterBs4(int indexAlpha, int indexBeta, int[] pels, int p3Idx, int p2Idx, int p1Idx, int p0Idx,
-            int q0Idx, int q1Idx, int q2Idx, int q3Idx, boolean isChroma) {
-        int p0 = pels[p0Idx];
-        int q0 = pels[q0Idx];
-        int p1 = pels[p1Idx];
-        int q1 = pels[q1Idx];
+    public static void filterBs4(int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p3Idx, int p2Idx,
+            int p1Idx, int p0Idx, int q0Idx, int q1Idx, int q2Idx, int q3Idx, boolean isChroma) {
+        int p0 = pelsP[p0Idx];
+        int q0 = pelsQ[q0Idx];
+        int p1 = pelsP[p1Idx];
+        int q1 = pelsQ[q1Idx];
 
         int alphaThresh = alphaTab[indexAlpha];
         int betaThresh = betaTab[indexBeta];
@@ -452,8 +455,8 @@ public class DeblockingFilter {
             conditionP = false;
             conditionQ = false;
         } else {
-            int ap = abs(pels[p2Idx] - p0);
-            int aq = abs(pels[q2Idx] - q0);
+            int ap = abs(pelsP[p2Idx] - p0);
+            int aq = abs(pelsQ[q2Idx] - q0);
 
             conditionP = ap < betaThresh && abs(p0 - q0) < ((alphaThresh >> 2) + 2);
             conditionQ = aq < betaThresh && abs(p0 - q0) < ((alphaThresh >> 2) + 2);
@@ -461,32 +464,32 @@ public class DeblockingFilter {
         }
 
         if (conditionP) {
-            int p3 = pels[p3Idx];
-            int p2 = pels[p2Idx];
+            int p3 = pelsP[p3Idx];
+            int p2 = pelsP[p2Idx];
 
             int p0n = (p2 + 2 * p1 + 2 * p0 + 2 * q0 + q1 + 4) >> 3;
             int p1n = (p2 + p1 + p0 + q0 + 2) >> 2;
             int p2n = (2 * p3 + 3 * p2 + p1 + p0 + q0 + 4) >> 3;
-            pels[p0Idx] = clip(p0n, 0, 255);
-            pels[p1Idx] = clip(p1n, 0, 255);
-            pels[p2Idx] = clip(p2n, 0, 255);
+            pelsP[p0Idx] = clip(p0n, 0, 255);
+            pelsP[p1Idx] = clip(p1n, 0, 255);
+            pelsP[p2Idx] = clip(p2n, 0, 255);
         } else {
             int p0n = (2 * p1 + p0 + q1 + 2) >> 2;
-            pels[p0Idx] = clip(p0n, 0, 255);
+            pelsP[p0Idx] = clip(p0n, 0, 255);
         }
 
         if (conditionQ && !isChroma) {
-            int q2 = pels[q2Idx];
-            int q3 = pels[q3Idx];
+            int q2 = pelsQ[q2Idx];
+            int q3 = pelsQ[q3Idx];
             int q0n = (p1 + 2 * p0 + 2 * q0 + 2 * q1 + q2 + 4) >> 3;
             int q1n = (p0 + q0 + q1 + q2 + 2) >> 2;
             int q2n = (2 * q3 + 3 * q2 + q1 + q0 + p0 + 4) >> 3;
-            pels[q0Idx] = clip(q0n, 0, 255);
-            pels[q1Idx] = clip(q1n, 0, 255);
-            pels[q2Idx] = clip(q2n, 0, 255);
+            pelsQ[q0Idx] = clip(q0n, 0, 255);
+            pelsQ[q1Idx] = clip(q1n, 0, 255);
+            pelsQ[q2Idx] = clip(q2n, 0, 255);
         } else {
             int q0n = (2 * q1 + q0 + p1 + 2) >> 2;
-            pels[q0Idx] = clip(q0n, 0, 255);
+            pelsQ[q0Idx] = clip(q0n, 0, 255);
         }
     }
 }

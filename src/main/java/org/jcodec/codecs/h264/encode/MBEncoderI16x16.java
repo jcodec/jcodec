@@ -48,7 +48,7 @@ public class MBEncoderI16x16 {
         luma(pic, mbX, mbY, out, qp, outMB.getPixels(), cavlc[0]);
         chroma(pic, mbX, mbY, out, qp, outMB.getPixels());
 
-        MBDeblocker.deblockMBI(outMB, leftOutMB, topOutMB);
+        new MBDeblocker().deblockMBI(outMB, leftOutMB, topOutMB);
     }
 
     private static int DUMMY[] = new int[16];

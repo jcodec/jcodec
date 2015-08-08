@@ -153,4 +153,25 @@ public class ArrayUtil {
             frames[j] = tmp;
         }
     }
+
+    public static int max(int[] array) {
+        int max = Integer.MIN_VALUE;
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] > max) {
+                max = array[i];
+            }
+        }
+        
+        return max;
+    }
+    
+    public static int[][] rotate(int[][] src) {
+        int[][] dst = new int[src[0].length][src.length];
+        for(int i = 0; i < src.length; i++) {
+            for(int j = 0; j < src[0].length; j++) {
+                dst[j][i] = src[i][j];
+            }
+        }
+        return dst;
+    }
 }
