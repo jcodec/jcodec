@@ -23,8 +23,8 @@ public class MotionEstimator {
     public int[] estimate(Picture ref, int[] patch, int mbX, int mbY, int mvpx, int mvpy) {
         int[] searchPatch = new int[(maxSearchRange * 2 + 16) * (maxSearchRange * 2 + 16)];
 
-        int startX = (mbX << 4) + (mvpx >> 2);
-        int startY = (mbY << 4) + (mvpy >> 2);
+        int startX = (mbX << 4) /* + (mvpx >> 2)*/;
+        int startY = (mbY << 4) /* + (mvpy >> 2)*/;
 
         int patchTlX = Math.max(startX - maxSearchRange, 0);
         int patchTlY = Math.max(startY - maxSearchRange, 0);
@@ -40,18 +40,13 @@ public class MotionEstimator {
                 searchPatch, patchW, patchH);
 
         int bestMvX = centerX, bestMvY = centerY;
-//        int realMvX = ((bestMvX - centerX) << 2) + mvpx, realMvY = ((bestMvY - centerY) << 2) + mvpy;
-        int bestScore = sad(searchPatch, patchW, patch, bestMvX, bestMvY)/* + mvCost(realMvX) + mvCost(realMvY)*/;
+        int bestScore = sad(searchPatch, patchW, patch, bestMvX, bestMvY);
         // Diagonal search
         for (int i = 0; i < maxSearchRange; i++) {
-            int score1 = bestMvX > 0 ? sad(searchPatch, patchW, patch, bestMvX - 1, bestMvY)/* + mvCost(realMvX - 4)
-                    + mvCost(realMvY)*/ : Integer.MAX_VALUE;
-            int score2 = bestMvX < patchW - 1 ? sad(searchPatch, patchW, patch, bestMvX + 1, bestMvY)/*
-                    + mvCost(realMvX + 4) + mvCost(realMvY)*/ : Integer.MAX_VALUE;
-            int score3 = bestMvY > 0 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY - 1)/* + mvCost(realMvX)
-                    + mvCost(realMvY - 4)*/ : Integer.MAX_VALUE;
-            int score4 = bestMvY < patchH - 1 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY + 1)/* + mvCost(realMvX)
-                    + mvCost(realMvY + 4)*/ : Integer.MAX_VALUE;
+            int score1 = bestMvX > 0 ? sad(searchPatch, patchW, patch, bestMvX - 1, bestMvY) : Integer.MAX_VALUE;
+            int score2 = bestMvX < patchW - 1 ? sad(searchPatch, patchW, patch, bestMvX + 1, bestMvY) : Integer.MAX_VALUE;
+            int score3 = bestMvY > 0 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY - 1) : Integer.MAX_VALUE;
+            int score4 = bestMvY < patchH - 1 ? sad(searchPatch, patchW, patch, bestMvX, bestMvY + 1) : Integer.MAX_VALUE;
             int min = min(min(min(score1, score2), score3), score4);
             if (min > bestScore)
                 break;
@@ -67,12 +62,8 @@ public class MotionEstimator {
             }
         }
 
-        return new int[] { ((bestMvX - centerX) << 2) + mvpx, ((bestMvY - centerY) << 2) + mvpy };
+        return new int[] { ((bestMvX - centerX) << 2)/* + mvpx*/, ((bestMvY - centerY) << 2)/* + mvpy*/ };
     }
-
-//    private final int mvCost(int mv) {
-//        return (MathUtil.log2(mv) << 1) + 1;
-//    }
 
     private int sad(int[] big, int bigStride, int[] small, int offX, int offY) {
         int score = 0, bigOff = offY * bigStride + offX, smallOff = 0;
