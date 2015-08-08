@@ -109,24 +109,24 @@ public class MBDeblocker {
     /**
      * Deblocks P-macroblock
      * 
-     * @param curMB
+     * @param cur
      *            Pixels and parameters of encoded and reconstructed current
      *            macroblock
-     * @param leftOutMB
+     * @param left
      *            Pixels and parameters of encoded and reconstructed left
      *            macroblock
-     * @param topOutMB
+     * @param top
      *            Pixels and parameters of encoded and reconstructed top
      *            macroblock
      */
-    public void deblockMBP(EncodedMB curMB, EncodedMB leftOutMB, EncodedMB topOutMB) {
+    public void deblockMBP(EncodedMB cur, EncodedMB left, EncodedMB top) {
         int[][] vertStrength = new int[4][4];
         int[][] horizStrength = new int[4][4];
 
-        calcStrengthForBlocks(curMB, topOutMB, horizStrength, LOOKUP_IDX_P_V, LOOKUP_IDX_Q_V);
-        calcStrengthForBlocks(curMB, topOutMB, horizStrength, LOOKUP_IDX_P_H, LOOKUP_IDX_Q_H);
+        calcStrengthForBlocks(cur, left, vertStrength, LOOKUP_IDX_P_V, LOOKUP_IDX_Q_V);
+        calcStrengthForBlocks(cur, top, horizStrength, LOOKUP_IDX_P_H, LOOKUP_IDX_Q_H);
 
-        deblockMBGeneric(curMB, leftOutMB, topOutMB, vertStrength, horizStrength);
+        deblockMBGeneric(cur, left, top, vertStrength, horizStrength);
     }
 
     private void deblockBorder(int[] boundary, int qp, int[] p, int pi, int[] q, int qi, int[][] pTab, int[][] qTab,

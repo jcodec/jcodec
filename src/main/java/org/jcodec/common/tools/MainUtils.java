@@ -1,5 +1,6 @@
 package org.jcodec.common.tools;
 
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -86,6 +87,11 @@ public class MainUtils {
         public int argsLength() {
             return args.length;
         }
+
+        public void popArg() {
+            args = Arrays.copyOfRange(args, 1, args.length);
+
+        }
     }
 
     private static Pattern flagPattern = Pattern.compile("^--([^=]+)=(.*)$");
@@ -111,7 +117,11 @@ public class MainUtils {
     }
 
     public static void printHelp(Map<String, String> flags, String... params) {
-        System.out.print(bold("Syntax:"));
+        printHelp(flags, params);
+    }
+
+    public static void printHelp(PrintStream out, Map<String, String> flags, String... params) {
+        out.print(bold("Syntax:"));
         StringBuilder sample = new StringBuilder();
         StringBuilder detail = new StringBuilder();
         for (Entry<String, String> entry : flags.entrySet()) {
@@ -125,9 +135,9 @@ public class MainUtils {
             else
                 sample.append(bold(" [" + param.substring(1) + "]"));
         }
-        System.out.println(sample);
-        System.out.println(bold("Where:"));
-        System.out.println(detail);
+        out.println(sample);
+        out.println(bold("Where:"));
+        out.println(detail);
     }
 
     public enum ANSIColor {
