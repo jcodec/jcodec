@@ -1,5 +1,6 @@
 package org.jcodec.codecs.h264.encode;
 
+import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -23,8 +24,8 @@ public class H264FixedRateControl implements RateControl {
     }
 
     @Override
-    public int getInitQp() {
-        return INIT_QP;
+    public int getInitQp(SliceType sliceType) {
+        return INIT_QP + (sliceType == SliceType.P ? 4 : 0);
     }
 
     @Override

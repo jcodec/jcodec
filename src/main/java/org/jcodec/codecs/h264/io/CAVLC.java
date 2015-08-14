@@ -46,7 +46,7 @@ public class CAVLC {
         tokensTop = new int[mbWidth << mbW];
     }
 
-    public void writeACBlock(BitWriter out, int blkIndX, int blkIndY, MBType leftMBType, MBType topMBType, int[] coeff,
+    public int writeACBlock(BitWriter out, int blkIndX, int blkIndY, MBType leftMBType, MBType topMBType, int[] coeff,
             VLC[] totalZerosTab, int firstCoeff, int maxCoeff, int[] scan) {
         VLC coeffTokenTab = getCoeffTokenVLCForLuma(blkIndX != 0, leftMBType, tokensLeft[blkIndY & mbMask],
                 blkIndY != 0, topMBType, tokensTop[blkIndX]);
@@ -55,6 +55,8 @@ public class CAVLC {
 
         tokensLeft[blkIndY & mbMask] = coeffToken;
         tokensTop[blkIndX] = coeffToken;
+        
+        return coeffToken;
     }
 
     public void writeChrDCBlock(BitWriter out, int[] coeff, VLC[] totalZerosTab, int firstCoeff, int maxCoeff,

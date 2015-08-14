@@ -19,6 +19,10 @@ public class UrlBox extends FullBox {
     public static String fourcc() {
         return "url ";
     }
+    
+    public UrlBox() {
+        super(new Header(fourcc()));
+    }
 
     public UrlBox(String url) {
         super(new Header(fourcc()));

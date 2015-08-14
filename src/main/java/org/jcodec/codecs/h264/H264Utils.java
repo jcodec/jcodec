@@ -249,10 +249,10 @@ public class H264Utils {
             NALUnit nu = NALUnit.read(buf.duplicate());
             if (nu.type == NALUnitType.PPS) {
                 if (ppsList != null)
-                    ppsList.add(buf);
+                    ppsList.add(NIOUtils.duplicate(buf));
             } else if (nu.type == NALUnitType.SPS) {
                 if (spsList != null)
-                    spsList.add(buf);
+                    spsList.add(NIOUtils.duplicate(buf));
             } else {
                 out.putInt(1);
                 out.put(buf);
@@ -284,11 +284,11 @@ public class H264Utils {
             NALUnit nu = NALUnit.read(buf);
             if (nu.type == NALUnitType.PPS) {
                 if (ppsList != null)
-                    ppsList.add(buf);
+                    ppsList.add(NIOUtils.duplicate(buf));
                 in.position(dup.position());
             } else if (nu.type == NALUnitType.SPS) {
                 if (spsList != null)
-                    spsList.add(buf);
+                    spsList.add(NIOUtils.duplicate(buf));
                 in.position(dup.position());
             } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE)
                 break;

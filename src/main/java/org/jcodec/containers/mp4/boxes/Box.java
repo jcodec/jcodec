@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -55,21 +55,21 @@ public abstract class Box {
         return findAll(box, Box.class, path);
     }
 
-    private static void findSub(Box box, List<String> path, Collection<Box> result) {
+    public static void findBox(Box root, List<String> path, Collection<Box> result) {
 
         if (path.size() > 0) {
             String head = path.remove(0);
-            if (box instanceof NodeBox) {
-                NodeBox nb = (NodeBox) box;
+            if (root instanceof NodeBox) {
+                NodeBox nb = (NodeBox) root;
                 for (Box candidate : nb.getBoxes()) {
                     if (head == null || head.equals(candidate.header.getFourcc())) {
-                        findSub(candidate, path, result);
+                        findBox(candidate, path, result);
                     }
                 }
             }
             path.add(0, head);
         } else {
-            result.add(box);
+            result.add(root);
         }
     }
 
@@ -79,7 +79,18 @@ public abstract class Box {
         for (String type : path) {
             tlist.add(type);
         }
-        findSub(box, tlist, result);
+
+        findBox(box, tlist, result);
+
+        for (Iterator<Box> it = result.iterator(); it.hasNext();) {
+            Box next = it.next();
+            if (next == null || !class1.isAssignableFrom(next.getClass())) {
+                if (next != null)
+                    Logger.warn("Ignoring box: " + next.getClass().getName() + " for it's not of the target class: "
+                            + class1.getName());
+                it.remove();
+            }
+        }
         return result.toArray((T[]) Array.newInstance(class1, 0));
     }
 
@@ -92,7 +103,7 @@ public abstract class Box {
         Assert.assertEquals(header.headerSize(), 8);
         header.write(dup);
     }
-    
+
     protected abstract void doWrite(ByteBuffer out);
 
     public String getFourcc() {

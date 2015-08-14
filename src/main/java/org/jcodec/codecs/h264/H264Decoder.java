@@ -20,6 +20,7 @@ import org.jcodec.codecs.h264.io.model.RefPicMarking;
 import org.jcodec.codecs.h264.io.model.RefPicMarkingIDR;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
@@ -140,8 +141,8 @@ public class H264Decoder implements VideoDecoder {
                 lRefs = new IntObjectMap<Frame>();
             }
 
-            Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, mvs, refsUsed,
-                    poc.calcPOC(firstSliceHeader, firstNu));
+            Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type, mvs,
+                    refsUsed, poc.calcPOC(firstSliceHeader, firstNu));
 
             decoder = new SliceDecoder(activeSps, activePps, nCoeff, mvs, mbTypes, mbQps, shs, tr8x8Used, refsUsed,
                     result, sRefs, lRefs);
@@ -291,8 +292,8 @@ public class H264Decoder implements VideoDecoder {
         }
     }
 
-    public static Frame createFrame(SeqParameterSet sps, int[][] buffer, int frame_num, int[][][][] mvs,
-            Frame[][][] refsUsed, int POC) {
+    public static Frame createFrame(SeqParameterSet sps, int[][] buffer, int frameNum, SliceType frameType,
+            int[][][][] mvs, Frame[][][] refsUsed, int POC) {
         int width = sps.pic_width_in_mbs_minus1 + 1 << 4;
         int height = getPicHeightInMbs(sps) << 4;
 
@@ -304,7 +305,7 @@ public class H264Decoder implements VideoDecoder {
             int h = height - (sps.frame_crop_bottom_offset << 1) - sY;
             crop = new Rect(sX, sY, w, h);
         }
-        return new Frame(width, height, buffer, ColorSpace.YUV420, crop, frame_num, mvs, refsUsed, POC);
+        return new Frame(width, height, buffer, ColorSpace.YUV420, crop, frameNum, frameType, mvs, refsUsed, POC);
     }
 
     public void addSps(List<ByteBuffer> spsList) {

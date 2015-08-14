@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
+import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.Mpeg2Thumb2x2;
 import org.jcodec.codecs.mpeg12.Mpeg2Thumb4x4;
@@ -86,7 +87,7 @@ public class MPEGToAVCTranscoder {
         int rate = Mpeg2AVCTrack.TARGET_RATE;
         do {
             try {
-                encoder.encodeFrame(toEnc, dst, iframe, poc);
+                encoder.encodeFrame(toEnc, dst, iframe, poc, SliceType.I);
                 break;
             } catch (BufferOverflowException ex) {
                 Logger.warn("Abandon frame, buffer too small: " + dst.capacity());
