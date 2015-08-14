@@ -61,6 +61,10 @@ public class TrackFragmentBaseMediaDecodeTimeBox extends FullBox {
     public long getBaseMediaDecodeTime() {
         return baseMediaDecodeTime;
     }
+    
+    public void setBaseMediaDecodeTime(long baseMediaDecodeTime) {
+        this.baseMediaDecodeTime = baseMediaDecodeTime;
+    }
 
     public static Factory copy(TrackFragmentBaseMediaDecodeTimeBox other) {
         return new Factory(other);

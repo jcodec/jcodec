@@ -18,6 +18,7 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
 
     public ByteBufferSeekableByteChannel(ByteBuffer backing) {
         this.backing = backing;
+        this.contentLength = backing.remaining();
         this.open = true;
     }
 

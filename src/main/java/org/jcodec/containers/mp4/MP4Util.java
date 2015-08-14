@@ -14,7 +14,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.Codec;
+import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -91,6 +93,24 @@ public class MP4Util {
         }
 
         return result;
+    }
+
+    public static Atom findFirstAtom(String fourcc, File input) throws IOException {
+        SeekableByteChannel c = new AutoFileChannelWrapper(input);
+        try {
+            return findFirstAtom(fourcc, c);
+        } finally {
+            IOUtils.closeQuietly(c);
+        }
+    }
+
+    public static Atom findFirstAtom(String fourcc, SeekableByteChannel input) throws IOException {
+        List<Atom> rootAtoms = getRootAtoms(input);
+        for (Atom atom : rootAtoms) {
+            if (fourcc.equals(atom.getHeader().getFourcc()))
+                return atom;
+        }
+        return null;
     }
 
     public static Atom atom(SeekableByteChannel input) throws IOException {
