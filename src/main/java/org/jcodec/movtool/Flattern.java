@@ -174,7 +174,7 @@ public class Flattern {
     private int calcSpaceReq(MovieBox movie) {
         int sum = 0;
         for (TrakBox trakBox : movie.getTracks()) {
-            ChunkOffsetsBox stco = Box.findFirst(trakBox, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
+            ChunkOffsetsBox stco = trakBox.getStco();
             if (stco != null)
                 sum += stco.getChunkOffsets().length * 4;
         }

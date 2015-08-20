@@ -6,7 +6,6 @@ import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
@@ -36,19 +35,19 @@ public class ChunkReader {
     private SampleDescriptionBox stsd;
 
     public ChunkReader(TrakBox trakBox) {
-        TimeToSampleBox stts = NodeBox.findFirst(trakBox, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
+        TimeToSampleBox stts = trakBox.getStts();
         tts = stts.getEntries();
-        ChunkOffsetsBox stco = NodeBox.findFirst(trakBox, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
-        ChunkOffsets64Box co64 = NodeBox.findFirst(trakBox, ChunkOffsets64Box.class, "mdia", "minf", "stbl", "co64");
-        stsz = NodeBox.findFirst(trakBox, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
-        SampleToChunkBox stsc = NodeBox.findFirst(trakBox, SampleToChunkBox.class, "mdia", "minf", "stbl", "stsc");
+        ChunkOffsetsBox stco = trakBox.getStco();
+        ChunkOffsets64Box co64 = trakBox.getCo64();
+        stsz = trakBox.getStsz();
+        SampleToChunkBox stsc = trakBox.getStsc();
 
         if (stco != null)
             chunkOffsets = stco.getChunkOffsets();
         else
             chunkOffsets = co64.getChunkOffsets();
         sampleToChunk = stsc.getSampleToChunk();
-        stsd = NodeBox.findFirst(trakBox, SampleDescriptionBox.class, "mdia", "minf", "stbl", "stsd");
+        stsd = trakBox.getStsd();
     }
 
     public boolean hasNext() {
