@@ -9,7 +9,6 @@ import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
 import java.util.Arrays;
 
 import org.jcodec.codecs.h264.H264Const;
-import org.jcodec.codecs.h264.decode.BlockInterpolator;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.io.CAVLC;
 import org.jcodec.codecs.h264.io.model.MBType;
@@ -17,6 +16,7 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -30,7 +30,7 @@ public class MBEncoderP16x16 {
 
     private CAVLC[] cavlc;
     private SeqParameterSet sps;
-    private Picture ref;
+    private Picture8Bit ref;
     private MotionEstimator me;
     private int[] mvTopX;
     private int[] mvTopY;
@@ -39,7 +39,7 @@ public class MBEncoderP16x16 {
     private int mvTopLeftX;
     private int mvTopLeftY;
 
-    public MBEncoderP16x16(SeqParameterSet sps, Picture ref, CAVLC[] cavlc, MotionEstimator me) {
+    public MBEncoderP16x16(SeqParameterSet sps, Picture8Bit ref, CAVLC[] cavlc, MotionEstimator me) {
         this.sps = sps;
         this.cavlc = cavlc;
         this.ref = ref;
@@ -48,8 +48,8 @@ public class MBEncoderP16x16 {
         mvTopY = new int[sps.pic_width_in_mbs_minus1 + 1];
     }
 
-    public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB, EncodedMB leftOutMB,
-            EncodedMB topOutMB, int qp, int qpDelta) {
+    public void encodeMacroblock(Picture8Bit pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
+            EncodedMB leftOutMB, EncodedMB topOutMB, int qp, int qpDelta) {
         int cw = pic.getColor().compWidth[1];
         int ch = pic.getColor().compHeight[1];
 
@@ -75,16 +75,15 @@ public class MBEncoderP16x16 {
         mvLeftY = mv[1];
         CAVLCWriter.writeSE(out, mv[0] - mvpx); // mvdx
         CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvdy
-        // System.out.println((mv[0] >> 2) + ", " + (mv[1] >> 2) );
 
-        Picture mbRef = Picture.create(16, 16, sps.chroma_format_idc), mb = Picture.create(16, 16,
-                sps.chroma_format_idc);
+        Picture8Bit mbRef = Picture8Bit.create(16, 16, sps.chroma_format_idc);
+        Picture mb = Picture.create(16, 16, sps.chroma_format_idc);
 
-        BlockInterpolator.getBlockLuma(ref, mbRef, 0, (mbX << 6) + mv[0], (mbY << 6) + mv[1], 16, 16);
+        BlockInterpolator8Bit.getBlockLuma(ref, mbRef, 0, (mbX << 6) + mv[0], (mbY << 6) + mv[1], 16, 16);
 
-        BlockInterpolator.getBlockChroma(ref.getPlaneData(1), ref.getPlaneWidth(1), ref.getPlaneHeight(1),
+        BlockInterpolator8Bit.getBlockChroma(ref.getPlaneData(1), ref.getPlaneWidth(1), ref.getPlaneHeight(1),
                 mbRef.getPlaneData(1), 0, mbRef.getPlaneWidth(1), (mbX << 6) + mv[0], (mbY << 6) + mv[1], 8, 8);
-        BlockInterpolator.getBlockChroma(ref.getPlaneData(2), ref.getPlaneWidth(2), ref.getPlaneHeight(2),
+        BlockInterpolator8Bit.getBlockChroma(ref.getPlaneData(2), ref.getPlaneWidth(2), ref.getPlaneHeight(2),
                 mbRef.getPlaneData(2), 0, mbRef.getPlaneWidth(2), (mbX << 6) + mv[0], (mbY << 6) + mv[1], 8, 8);
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4,
@@ -140,7 +139,7 @@ public class MBEncoderP16x16 {
         return 47;
     }
 
-    private int[] mvEstimate(Picture pic, int mbX, int mbY, int mvpx, int mvpy) {
+    private int[] mvEstimate(Picture8Bit pic, int mbX, int mbY, int mvpx, int mvpy) {
         int[] patch = new int[256];
         MBEncoderHelper.takeSafe(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4, mbY << 4,
                 patch, 16, 16);
@@ -156,12 +155,15 @@ public class MBEncoderP16x16 {
         return 0;
     }
 
-    private void luma(Picture pic, int[] pix, int mbX, int mbY, BitWriter out, int qp, int[] nc) {
+    private void luma(Picture8Bit pic, int[] pix, int mbX, int mbY, BitWriter out, int qp, int[] nc) {
         int[][] ac = new int[16][16];
         for (int i = 0; i < ac.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_4x4[i].length; j++) {
                 ac[i][j] = pix[H264Const.PIX_MAP_SPLIT_4x4[i][j]];
             }
+            // shift back up
+//            for (int j = 0; j < ac[i].length; j++)
+//                ac[i][j] += 128;
             CoeffTransformer.fdct4x4(ac[i]);
         }
 
@@ -175,7 +177,7 @@ public class MBEncoderP16x16 {
         }
     }
 
-    private void chroma(Picture pic, int[] pix1, int[] pix2, int mbX, int mbY, BitWriter out, int qp) {
+    private void chroma(Picture8Bit pic, int[] pix1, int[] pix2, int mbX, int mbY, BitWriter out, int qp) {
         int cw = pic.getColor().compWidth[1];
         int ch = pic.getColor().compHeight[1];
         int[][] ac1 = new int[16 >> (cw + ch)][16];
@@ -192,11 +194,11 @@ public class MBEncoderP16x16 {
 
         for (int i = 0; i < ac1.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
-                pix1[H264Const.PIX_MAP_SPLIT_2x2[i][j]] = ac1[i][j];
+                pix1[H264Const.PIX_MAP_SPLIT_2x2[i][j]] = (byte) ac1[i][j];
         }
         for (int i = 0; i < ac2.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
-                pix2[H264Const.PIX_MAP_SPLIT_2x2[i][j]] = ac2[i][j];
+                pix2[H264Const.PIX_MAP_SPLIT_2x2[i][j]] = (byte) ac2[i][j];
         }
     }
 

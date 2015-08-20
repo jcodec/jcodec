@@ -672,6 +672,11 @@ public class SliceDecoder {
             }
             ac[0] = dc[i];
             CoeffTransformer.idct4x4(ac);
+//            System.out.print("Luma");
+//            for(int j = 0; j < ac.length; j++) {
+//                System.out.print(ac[j] + ",");
+//            }
+//            System.out.println();
             putBlk(mb.getPlaneData(0), ac, 4, blkOffLeft << 2, blkOffTop << 2);
         }
     }
@@ -784,6 +789,10 @@ public class SliceDecoder {
             }
             ac[0] = dc[i];
             CoeffTransformer.idct4x4(ac);
+//            System.out.print("Chroma");
+//            for (int j = 0; j < ac.length; j++)
+//                System.out.print(ac[j] + ",");
+//            System.out.println();
             putBlk(mb.getPlaneData(comp), ac, 3, blkOffLeft << 2, blkOffTop << 2);
         }
     }

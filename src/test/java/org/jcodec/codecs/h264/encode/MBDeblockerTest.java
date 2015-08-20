@@ -6,7 +6,7 @@ import java.util.List;
 import org.jcodec.TestUtil;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.ArrayUtil;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -62,7 +62,7 @@ public class MBDeblockerTest {
         final List<String> actions = new ArrayList<String>();
         MBDeblocker deblocker = new MBDeblocker() {
             @Override
-            protected void filterBs4(int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p3Idx, int p2Idx,
+            protected void filterBs4(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p3Idx, int p2Idx,
                     int p1Idx, int p0Idx, int q0Idx, int q1Idx, int q2Idx, int q3Idx) {
                 actions.add("{" + "bs:" + 4 + "," + "indexAlpha:" + indexAlpha + "," + "indexBeta:" + indexBeta + ","
                         + "pelsP:" + label(pelsP, cur, left, top) + "," + "pelsQ:" + label(pelsQ, cur, left, top)
@@ -72,7 +72,7 @@ public class MBDeblockerTest {
             }
 
             @Override
-            protected void filterBs(int bs, int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p2Idx,
+            protected void filterBs(int bs, int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p2Idx,
                     int p1Idx, int p0Idx, int q0Idx, int q1Idx, int q2Idx) {
                 actions.add("{" + "bs:" + bs + "," + "indexAlpha:" + indexAlpha + "," + "indexBeta:" + indexBeta + ","
                         + "pelsP:" + label(pelsP, cur, left, top) + "," + "pelsQ:" + label(pelsQ, cur, left, top)
@@ -81,7 +81,7 @@ public class MBDeblockerTest {
             }
 
             @Override
-            protected void filterBs4Chr(int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p1Idx, int p0Idx,
+            protected void filterBs4Chr(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p1Idx, int p0Idx,
                     int q0Idx, int q1Idx) {
                 actions.add("{" + "bs:" + 4 + "," + "indexAlpha:" + indexAlpha + "," + "indexBeta:" + indexBeta + ","
                         + "pelsP:" + label(pelsP, cur, left, top) + "," + "pelsQ:" + label(pelsQ, cur, left, top)
@@ -90,7 +90,7 @@ public class MBDeblockerTest {
             }
 
             @Override
-            protected void filterBsChr(int bs, int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p1Idx,
+            protected void filterBsChr(int bs, int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p1Idx,
                     int p0Idx, int q0Idx, int q1Idx) {
                 actions.add("{" + "bs:" + bs + "," + "indexAlpha:" + indexAlpha + "," + "indexBeta:" + indexBeta + ","
                         + "pelsP:" + label(pelsP, cur, left, top) + "," + "pelsQ:" + label(pelsQ, cur, left, top)
@@ -98,8 +98,8 @@ public class MBDeblockerTest {
                         + q1Idx + "," + "isChroma:" + "true" + "}");
             }
 
-            private String label(int[] pels, EncodedMB curMB, EncodedMB leftMB, EncodedMB topMB) {
-                Picture cur = curMB.getPixels(), top = topMB.getPixels(), left = leftMB.getPixels();
+            private String label(byte[] pels, EncodedMB curMB, EncodedMB leftMB, EncodedMB topMB) {
+                Picture8Bit cur = curMB.getPixels(), top = topMB.getPixels(), left = leftMB.getPixels();
                 if (cur.getPlaneData(0) == pels || cur.getPlaneData(1) == pels || cur.getPlaneData(2) == pels)
                     return "cur";
                 else if (left.getPlaneData(0) == pels || left.getPlaneData(1) == pels || left.getPlaneData(2) == pels)

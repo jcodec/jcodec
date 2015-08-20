@@ -27,6 +27,7 @@ import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 
 /**
@@ -46,8 +47,8 @@ public class H264Encoder implements VideoEncoder {
     private static final int KEY_INTERVAL_DEFAULT = 1;
 
     private CAVLC[] cavlc;
-    private int[][] leftRow;
-    private int[][] topLine;
+    private byte[][] leftRow;
+    private byte[][] topLine;
     private RateControl rc;
     private int frameNumber;
     private int keyInterval = KEY_INTERVAL_DEFAULT;
@@ -64,8 +65,8 @@ public class H264Encoder implements VideoEncoder {
 
     private MBEncoderP16x16 mbEncoderP16x16;
 
-    private Picture ref;
-    private Picture picOut;
+    private Picture8Bit ref;
+    private Picture8Bit picOut;
     private EncodedMB[] topEncoded;
 
     private EncodedMB outMB;
@@ -86,11 +87,15 @@ public class H264Encoder implements VideoEncoder {
         this.keyInterval = keyInterval;
     }
 
+    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out) {
+        return encodeFrame(Picture8Bit.fromPicture(pic), _out);
+    }
+    
     /**
      * Encode this picture into h.264 frame. Frame type will be selected by
      * encoder.
      */
-    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out) {
+    public ByteBuffer encodeFrame(Picture8Bit pic, ByteBuffer _out) {
         if (frameNumber >= keyInterval) {
             frameNumber = 0;
         }
@@ -109,7 +114,7 @@ public class H264Encoder implements VideoEncoder {
      * @param _out
      * @return
      */
-    public ByteBuffer encodeIDRFrame(Picture pic, ByteBuffer _out) {
+    public ByteBuffer encodeIDRFrame(Picture8Bit pic, ByteBuffer _out) {
         frameNumber = 0;
         return encodeFrame(pic, _out, true, frameNumber, SliceType.I);
     }
@@ -123,12 +128,12 @@ public class H264Encoder implements VideoEncoder {
      * @param _out
      * @return
      */
-    public ByteBuffer encodePFrame(Picture pic, ByteBuffer _out) {
+    public ByteBuffer encodePFrame(Picture8Bit pic, ByteBuffer _out) {
         frameNumber++;
         return encodeFrame(pic, _out, true, frameNumber, SliceType.P);
     }
 
-    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out, boolean idr, int poc, SliceType frameType) {
+    public ByteBuffer encodeFrame(Picture8Bit pic, ByteBuffer _out, boolean idr, int poc, SliceType frameType) {
         ByteBuffer dup = _out.duplicate();
 
         if (idr) {
@@ -152,9 +157,9 @@ public class H264Encoder implements VideoEncoder {
         int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
         int mbHeight = sps.pic_height_in_map_units_minus1 + 1;
 
-        leftRow = new int[][] { new int[16], new int[8], new int[8] };
-        topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
-        picOut = Picture.create(mbWidth << 4, mbHeight << 4, pic.getColor());
+        leftRow = new byte[][] { new byte[16], new byte[8], new byte[8] };
+        topLine = new byte[][] { new byte[mbWidth << 4], new byte[mbWidth << 3], new byte[mbWidth << 3] };
+        picOut = Picture8Bit.create(mbWidth << 4, mbHeight << 4, pic.getColor());
 
         outMB = new EncodedMB();
         topEncoded = new EncodedMB[mbWidth];
@@ -209,7 +214,7 @@ public class H264Encoder implements VideoEncoder {
         return sps;
     }
 
-    private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture pic, ByteBuffer dup, boolean idr,
+    private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture8Bit pic, ByteBuffer dup, boolean idr,
             int frameNum, SliceType sliceType) {
         if (idr && sliceType != SliceType.I) {
             idr = false;
@@ -286,7 +291,7 @@ public class H264Encoder implements VideoEncoder {
         escapeNAL(buf, dup);
     }
 
-    private void encodeMacroblock(MBType mbType, Picture pic, int mbX, int mbY, BitWriter candidate, int qp, int qpDelta) {
+    private void encodeMacroblock(MBType mbType, Picture8Bit pic, int mbX, int mbY, BitWriter candidate, int qp, int qpDelta) {
         if (mbType == MBType.I_16x16)
             mbEncoderI16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, mbX > 0 ? topEncoded[mbX - 1] : null,
                     mbY > 0 ? topEncoded[mbX] : null, qp + qpDelta, qpDelta);
@@ -321,7 +326,7 @@ public class H264Encoder implements VideoEncoder {
             MBEncoderHelper.putBlk(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbHeight - 1) << 4);
     }
 
-    private void collectPredictors(Picture outMB, int mbX) {
+    private void collectPredictors(Picture8Bit outMB, int mbX) {
         System.arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
         System.arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
         System.arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
@@ -331,7 +336,7 @@ public class H264Encoder implements VideoEncoder {
         copyCol(outMB.getPlaneData(2), 7, 8, leftRow[2]);
     }
 
-    private void copyCol(int[] planeData, int off, int stride, int[] out) {
+    private void copyCol(byte[] planeData, int off, int stride, byte[] out) {
         for (int i = 0; i < out.length; i++) {
             out[i] = planeData[off];
             off += stride;

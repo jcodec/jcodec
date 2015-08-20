@@ -15,6 +15,7 @@ import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.scale.ColorUtil;
@@ -87,7 +88,7 @@ public class MPEGToAVCTranscoder {
         int rate = Mpeg2AVCTrack.TARGET_RATE;
         do {
             try {
-                encoder.encodeFrame(toEnc, dst, iframe, poc, SliceType.I);
+                encoder.encodeFrame(Picture8Bit.fromPicture(toEnc), dst, iframe, poc, SliceType.I);
                 break;
             } catch (BufferOverflowException ex) {
                 Logger.warn("Abandon frame, buffer too small: " + dst.capacity());

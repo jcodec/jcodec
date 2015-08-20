@@ -60,8 +60,24 @@ public class ArrayUtil {
         }
         return result;
     }
+    
+    public static final int sum(byte[] array) {
+        int result = 0;
+        for (int i = 0; i < array.length; i++) {
+            result += array[i];
+        }
+        return result;
+    }
 
     public static int sum(int[] array, int from, int count) {
+        int result = 0;
+        for (int i = from; i < from + count; i++) {
+            result += array[i];
+        }
+        return result;
+    }
+    
+    public static int sum(byte[] array, int from, int count) {
         int result = 0;
         for (int i = from; i < from + count; i++) {
             result += array[i];
