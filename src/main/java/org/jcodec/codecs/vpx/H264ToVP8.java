@@ -2,7 +2,6 @@ package org.jcodec.codecs.vpx;
 
 import static org.jcodec.codecs.h264.H264Utils.readPPSAsArray;
 import static org.jcodec.codecs.h264.H264Utils.readSPSAsArray;
-import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -30,7 +29,6 @@ import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.junit.Test;
 
 public class H264ToVP8 {
     public static void main(String[] args) throws IOException {
