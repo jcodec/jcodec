@@ -367,7 +367,11 @@ public class H264Utils {
         initPPS.write(bb2);
         bb1.flip();
         bb2.flip();
-        return createMOVSampleEntry(Arrays.asList(new ByteBuffer[] { bb1 }), Arrays.asList(new ByteBuffer[] { bb2 }),
+        return createMOVSampleEntry(bb1, bb2, nalLengthSize);
+    }
+
+    public static SampleEntry createMOVSampleEntry(ByteBuffer sps, ByteBuffer pps, int nalLengthSize) {
+        return createMOVSampleEntry(Arrays.asList(new ByteBuffer[] { sps }), Arrays.asList(new ByteBuffer[] { pps }),
                 nalLengthSize);
     }
 
