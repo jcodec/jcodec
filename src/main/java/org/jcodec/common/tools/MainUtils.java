@@ -117,7 +117,7 @@ public class MainUtils {
     }
 
     public static void printHelp(Map<String, String> flags, String... params) {
-        printHelp(flags, params);
+        printHelp(System.out, flags, params);
     }
 
     public static void printHelp(PrintStream out, Map<String, String> flags, String... params) {
