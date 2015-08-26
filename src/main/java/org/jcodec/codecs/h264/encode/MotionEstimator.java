@@ -20,8 +20,8 @@ public class MotionEstimator {
         this.maxSearchRange = maxSearchRange;
     }
 
-    public int[] estimate(Picture8Bit ref, int[] patch, int mbX, int mbY, int mvpx, int mvpy) {
-        int[] searchPatch = new int[(maxSearchRange * 2 + 16) * (maxSearchRange * 2 + 16)];
+    public int[] estimate(Picture8Bit ref, byte[] patch, int mbX, int mbY, int mvpx, int mvpy) {
+        byte[] searchPatch = new byte[(maxSearchRange * 2 + 16) * (maxSearchRange * 2 + 16)];
 
         int startX = (mbX << 4) /* + (mvpx >> 2)*/;
         int startY = (mbY << 4) /* + (mvpy >> 2)*/;
@@ -65,7 +65,7 @@ public class MotionEstimator {
         return new int[] { ((bestMvX - centerX) << 2)/* + mvpx*/, ((bestMvY - centerY) << 2)/* + mvpy*/ };
     }
 
-    private int sad(int[] big, int bigStride, int[] small, int offX, int offY) {
+    private int sad(byte[] big, int bigStride, byte[] small, int offX, int offY) {
         int score = 0, bigOff = offY * bigStride + offX, smallOff = 0;
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 16; j++, ++bigOff, ++smallOff) {
