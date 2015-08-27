@@ -29,6 +29,7 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,7 +45,7 @@ import org.jcodec.common.model.Size;
 public class H264Encoder implements VideoEncoder {
 
     // private static final int QP = 20;
-    private static final int KEY_INTERVAL_DEFAULT = 1;
+    private static final int KEY_INTERVAL_DEFAULT = 25;
 
     private CAVLC[] cavlc;
     private byte[][] leftRow;
@@ -133,7 +134,7 @@ public class H264Encoder implements VideoEncoder {
         return encodeFrame(pic, _out, true, frameNumber, SliceType.P);
     }
 
-    public ByteBuffer encodeFrame(Picture8Bit pic, ByteBuffer _out, boolean idr, int poc, SliceType frameType) {
+    public ByteBuffer encodeFrame(Picture8Bit pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
         ByteBuffer dup = _out.duplicate();
 
         if (idr) {
@@ -166,7 +167,7 @@ public class H264Encoder implements VideoEncoder {
         for (int i = 0; i < mbWidth; i++)
             topEncoded[i] = new EncodedMB();
 
-        encodeSlice(sps, pps, pic, dup, idr, poc, frameType);
+        encodeSlice(sps, pps, pic, dup, idr, frameNumber, frameType);
 
         putLastMBLine();
 
@@ -204,6 +205,7 @@ public class H264Encoder implements VideoEncoder {
         sps.profile_idc = 66;
         sps.level_idc = 40;
         sps.frame_mbs_only_flag = true;
+        sps.log2_max_frame_num_minus4 = MathUtil.log2(keyInterval) - 3;
 
         int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
         int codedHeight = (sps.pic_height_in_map_units_minus1 + 1) << 4;
@@ -228,7 +230,7 @@ public class H264Encoder implements VideoEncoder {
         int qp = rc.getInitQp(sliceType);
 
         dup.putInt(0x1);
-        new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 2).write(dup);
+        new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 3).write(dup);
         SliceHeader sh = new SliceHeader();
         sh.slice_type = sliceType;
         if (idr)

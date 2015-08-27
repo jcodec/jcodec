@@ -154,11 +154,33 @@ public class Picture8Bit {
     }
 
     public static Picture8Bit fromPicture(Picture pic) {
-        Picture8Bit create = Picture8Bit.create(pic.getWidth(), pic.getHeight(), pic.getColor());
+        Picture8Bit create = Picture8Bit.create(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
 
         for (int i = 0; i < pic.getData().length; i++) {
             for (int j = 0; j < pic.getData()[i].length; j++) {
                 create.getData()[i][j] = (byte) (((pic.getData()[i][j] << 8) >> pic.getBitDepth() ) - 128);
+            }
+        }
+
+        return create;
+    }
+    
+    public Picture toPicture(int bitDepth) {
+        Picture create = Picture.create(width, height, color, bitDepth, crop);
+
+        return toPictureInternal(bitDepth, create);
+    }
+
+    public Picture toPicture(int bitDepth, int[][] buffer) {
+        Picture create = new Picture(width, height, buffer, color, bitDepth, crop);
+
+        return toPictureInternal(bitDepth, create);
+    }
+    
+    private Picture toPictureInternal(int bitDepth, Picture create) {
+        for (int i = 0; i < data.length; i++) {
+            for (int j = 0; j < data[i].length; j++) {
+                create.getData()[i][j] = ((data[i][j] + 128) << bitDepth) >> 8;
             }
         }
 
