@@ -8,6 +8,9 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Contains various deblocking filter routines for deblocking on MB bases
  * 
  * @author Stan Vitvitskyy

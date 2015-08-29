@@ -8,6 +8,13 @@ import net.sourceforge.jaad.aac.tools.ICPrediction;
 import net.sourceforge.jaad.aac.tools.LTPrediction;
 import java.util.Arrays;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license. 
+ *
+ * @author in-somnia
+ */
 public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 
 	public static final int WINDOW_SHAPE_SINE = 0;

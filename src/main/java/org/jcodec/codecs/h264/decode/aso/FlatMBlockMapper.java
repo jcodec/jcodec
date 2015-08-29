@@ -6,7 +6,7 @@ package org.jcodec.codecs.h264.decode.aso;
  * 
  * A block map that that maps macroblocks sequentially in scan order
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class FlatMBlockMapper implements Mapper {

@@ -8,7 +8,7 @@ import org.jcodec.common.tools.ToJSON;
  * 
  * A script of instructions applied to reference picture list
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class RefPicMarking {

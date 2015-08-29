@@ -11,6 +11,15 @@ import org.jcodec.api.awt.SequenceEncoder;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * A demo of SequenceEncoder that generates a video with a bouncing ball
+ * 
+ * @author Stan Vitvitskyy
+ *
+ */
 public class SequenceEncoderDemo {
 
     public static void main(String[] args) throws IOException {

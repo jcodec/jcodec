@@ -2,6 +2,13 @@ package net.sourceforge.jaad.aac.sbr;
 
 import java.util.Arrays;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license. 
+ *
+ * @author in-somnia
+ */
 class SynthesisFilterbank implements FilterbankTable {
 
 	private static final float[][] qmf32_pre_twiddle = {

@@ -8,7 +8,7 @@ import org.jcodec.common.tools.ToJSON;
  * 
  * Reference picture marking used for IDR frames
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class RefPicMarkingIDR {

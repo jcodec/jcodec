@@ -14,7 +14,7 @@ import org.jcodec.common.JCodecUtil;
  * File type box
  * 
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class FileTypeBox extends Box {

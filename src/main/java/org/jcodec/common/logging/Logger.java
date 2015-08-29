@@ -4,13 +4,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * JCodec has to be dependancy free, so it can run both on Java SE and Android
  * hence defining here our small logger that can be plugged into the logging
  * framework of choice on the target platform
  * 
- * 
- * @author Jay Codec
- * 
+ * @author The JCodec project
  */
 public class Logger {
 

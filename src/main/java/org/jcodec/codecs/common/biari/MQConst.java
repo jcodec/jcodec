@@ -6,7 +6,7 @@ package org.jcodec.codecs.common.biari;
  * 
  * Constants shared by both MQ encoder and decoder
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MQConst {

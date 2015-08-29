@@ -9,7 +9,7 @@ import org.jcodec.common.io.BitReader;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class CAVLCReader {

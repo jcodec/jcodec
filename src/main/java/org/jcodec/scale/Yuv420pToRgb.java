@@ -4,6 +4,13 @@ import static org.jcodec.scale.Yuv422pToRgb.YUV444toRGB888;
 
 import org.jcodec.common.model.Picture;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class Yuv420pToRgb implements Transform {
 
     private final int downShift;

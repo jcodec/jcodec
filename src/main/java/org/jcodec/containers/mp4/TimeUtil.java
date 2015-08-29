@@ -4,6 +4,13 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class TimeUtil {
 
     public final static long MOV_TIME_OFFSET;

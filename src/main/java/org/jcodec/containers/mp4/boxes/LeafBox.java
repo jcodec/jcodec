@@ -12,7 +12,7 @@ import org.jcodec.common.NIOUtils;
  * 
  * A box containing data, no children
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class LeafBox extends Box {

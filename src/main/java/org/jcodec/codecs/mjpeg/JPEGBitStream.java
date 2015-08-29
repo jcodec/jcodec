@@ -11,7 +11,7 @@ import org.jcodec.common.io.VLC;
  * 
  * Class for convenient reading JPEG entropy coded bit stream
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class JPEGBitStream {

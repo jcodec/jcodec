@@ -19,9 +19,12 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Splits H264 bitstream into slices having n IDR sequences each
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class H264SplitterMain extends H264SplitterBase {

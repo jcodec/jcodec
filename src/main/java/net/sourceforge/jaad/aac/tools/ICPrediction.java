@@ -10,6 +10,10 @@ import net.sourceforge.jaad.aac.syntax.ICStream;
 import java.util.logging.Level;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * Intra-channel prediction used in profile Main
  * @author in-somnia
  */

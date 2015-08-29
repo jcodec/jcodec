@@ -5,7 +5,7 @@ package org.jcodec.containers.mkv.util;
  * 
  * EBML IO implementation
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class EbmlUtil {

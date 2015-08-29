@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * 
  * Network abstraction layer (NAL) unit
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class NALUnit {

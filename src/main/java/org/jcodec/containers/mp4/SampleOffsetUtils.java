@@ -14,6 +14,13 @@ import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class SampleOffsetUtils {
 
     public static ByteBuffer getSampleData(int sample, File file) throws IOException {

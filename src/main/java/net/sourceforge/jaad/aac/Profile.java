@@ -1,6 +1,10 @@
 package net.sourceforge.jaad.aac;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * Different AAC profiles.
  * The function <code>Decoder.canDecode</code> specifies if the decoder can
  * handle a given format.

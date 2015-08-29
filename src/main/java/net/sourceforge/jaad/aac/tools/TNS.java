@@ -8,6 +8,10 @@ import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * Temporal Noise Shaping
  * @author in-somnia
  */

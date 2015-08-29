@@ -4,6 +4,13 @@ import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 import net.sourceforge.jaad.aac.syntax.ICSInfo.WindowSequence;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
+ * @author in-somnia
+ */
 public class FilterBank implements SyntaxConstants, SineWindows, KBDWindows {
 
 	private final float[][] LONG_WINDOWS;// = {SINE_LONG, KBD_LONG};

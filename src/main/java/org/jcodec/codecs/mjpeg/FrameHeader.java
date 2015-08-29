@@ -10,6 +10,8 @@ import java.nio.ByteBuffer;
  * components in the frame, and the sampling factors for each component, and
  * specifies the destinations from which the quantized tables to be used with
  * each component are retrieved.
+ * 
+ * @author The JCodec project
  */
 public class FrameHeader {
     /**

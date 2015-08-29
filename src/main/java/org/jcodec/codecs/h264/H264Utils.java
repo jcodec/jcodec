@@ -33,7 +33,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class H264Utils {

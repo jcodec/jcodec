@@ -7,7 +7,7 @@ package org.jcodec.codecs.h264.decode.aso;
  * A helper class that builds macroblock to slice group maps needed by ASO
  * (Arbitrary Slice Order)
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SliceGroupMapBuilder {

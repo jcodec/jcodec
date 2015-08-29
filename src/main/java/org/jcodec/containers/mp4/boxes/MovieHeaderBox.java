@@ -13,7 +13,7 @@ import org.jcodec.common.NIOUtils;
  * 
  * A movie header box
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MovieHeaderBox extends FullBox {

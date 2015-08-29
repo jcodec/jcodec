@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * 
  * Sample to chunk mapping box
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SampleToChunkBox extends FullBox {

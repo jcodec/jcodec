@@ -8,7 +8,7 @@ package org.jcodec.codecs.h264.io.model;
  * 
  * dynamic enum
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class AspectRatio {

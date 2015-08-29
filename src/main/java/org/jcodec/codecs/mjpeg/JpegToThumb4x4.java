@@ -16,7 +16,7 @@ import org.jcodec.common.tools.MathUtil;
  * Decodes JPEG in low res taking only first 4 coefficients from each DCT block
  * ( DCT 4x4 )
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class JpegToThumb4x4 extends JpegDecoder {

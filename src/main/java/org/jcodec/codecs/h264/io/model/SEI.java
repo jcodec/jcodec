@@ -16,7 +16,7 @@ import org.jcodec.common.io.BitWriter;
  * 
  * capable to serialize and deserialize with CAVLC bitstream
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SEI {

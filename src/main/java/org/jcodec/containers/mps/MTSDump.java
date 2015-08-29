@@ -19,6 +19,12 @@ import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ */
 public class MTSDump extends MPSDump {
     private static final String DUMP_FROM = "dump-from";
     private static final String STOP_AT = "stop-at";

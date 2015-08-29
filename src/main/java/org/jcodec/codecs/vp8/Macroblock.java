@@ -9,6 +9,13 @@ import org.jcodec.codecs.vp8.VP8Util.PLANE;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class Macroblock {
 
     public int filterLevel;

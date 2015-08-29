@@ -34,7 +34,7 @@ import org.jcodec.containers.mkv.boxes.MkvSegment;
  * 
  * EBML IO implementation
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public enum MKVType {

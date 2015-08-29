@@ -12,6 +12,13 @@ import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class SetPAR {
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {

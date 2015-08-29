@@ -3,6 +3,13 @@ package net.sourceforge.jaad.aac.sbr;
 import java.util.Arrays;
 import net.sourceforge.jaad.aac.SampleFrequency;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ *
+ * @author in-somnia
+ */
 class FBT implements SBRConstants {
 
 	/* calculate the start QMF channel for the master frequency band table */

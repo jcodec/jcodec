@@ -17,7 +17,7 @@ import org.jcodec.common.tools.ToJSON;
  * 
  * A box containing children, no data
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class NodeBox extends Box {

@@ -2,6 +2,13 @@ package net.sourceforge.jaad.aac.filterbank;
 
 import net.sourceforge.jaad.aac.AACException;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
+ * @author in-somnia
+ */
 class FFT implements FFTTables {
 
 	private final int length;

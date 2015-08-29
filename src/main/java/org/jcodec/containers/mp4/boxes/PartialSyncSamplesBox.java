@@ -6,7 +6,7 @@ package org.jcodec.containers.mp4.boxes;
  * 
  * A box storing a list of synch samples
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class PartialSyncSamplesBox extends SyncSamplesBox {

@@ -21,7 +21,7 @@ import org.jcodec.common.io.BitWriter;
  * 
  * A writer for slice header data structure
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SliceHeaderWriter {

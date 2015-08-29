@@ -1,6 +1,10 @@
 package net.sourceforge.jaad.aac.syntax;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * Scalefactor lookup table
  * @author in-somnia
  */

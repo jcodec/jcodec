@@ -7,7 +7,7 @@ package org.jcodec.codecs.h264.decode.aso;
  * A macrboblock to slice group mapper that operates on prebuilt map, passed to
  * it in the constructor
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class PrebuiltMBlockMapper implements Mapper {

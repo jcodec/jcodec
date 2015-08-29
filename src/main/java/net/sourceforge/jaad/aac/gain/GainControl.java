@@ -6,6 +6,13 @@ import net.sourceforge.jaad.aac.syntax.ICSInfo.WindowSequence;
 
 import java.util.Arrays;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
+ * @author in-somnia
+ */
 public class GainControl implements GCConstants {
 
 	private final int frameLen, lbLong, lbShort;

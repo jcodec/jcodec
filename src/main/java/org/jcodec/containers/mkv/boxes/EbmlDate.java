@@ -8,7 +8,7 @@ import java.util.Date;
  * 
  * EBML IO implementation
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class EbmlDate extends EbmlSint {

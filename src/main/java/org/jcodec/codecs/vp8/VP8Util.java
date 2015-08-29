@@ -2,6 +2,13 @@ package org.jcodec.codecs.vp8;
 
 import java.io.IOException;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class VP8Util {
     
     public static int BLOCK_TYPES = 4;

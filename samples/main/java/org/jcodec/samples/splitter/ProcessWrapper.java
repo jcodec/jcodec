@@ -11,7 +11,7 @@ import java.io.OutputStream;
  * 
  * Copies of error and output streams are saved for later use
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class ProcessWrapper {

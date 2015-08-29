@@ -3,8 +3,13 @@ package net.sourceforge.jaad.aac;
 import java.io.IOException;
 
 /**
- * Standard exception, thrown when decoding of an AAC frame fails.
- * The message gives more detailed information about the error.
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
+ * Standard exception, thrown when decoding of an AAC frame fails. The message
+ * gives more detailed information about the error.
+ * 
  * @author in-somnia
  */
 public class AACException extends IOException {

@@ -22,10 +22,13 @@ import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * An MPEG thumbnail to AVC transcoder implemented fully in java ( using jcodec
  * codecs ).
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MPEGToAVCTranscoder {

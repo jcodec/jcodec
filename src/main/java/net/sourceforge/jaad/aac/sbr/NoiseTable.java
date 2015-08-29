@@ -1,5 +1,12 @@
 package net.sourceforge.jaad.aac.sbr;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license. 
+ *
+ * @author in-somnia
+ */
 interface NoiseTable {
 
 	/* Table 1.A.13 Noise table V */

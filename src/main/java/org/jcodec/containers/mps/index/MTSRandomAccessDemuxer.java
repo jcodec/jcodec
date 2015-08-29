@@ -9,6 +9,13 @@ import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 import org.jcodec.containers.mps.index.MTSIndex.MTSProgram;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class MTSRandomAccessDemuxer {
 
     private MTSProgram[] programs;

@@ -7,7 +7,7 @@ package org.jcodec.codecs.h264.decode.aso;
  * Contains a mapping of macroblocks to slice groups. Groups is an array of
  * group slice group indices having a dimension picWidthInMbs x picHeightInMbs
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MBToSliceGroupMap {

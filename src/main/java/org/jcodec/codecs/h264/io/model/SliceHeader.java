@@ -10,7 +10,7 @@ import org.jcodec.common.tools.ToJSON;
  * 
  * capable to serialize / deserialize with CAVLC bitstream
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SliceHeader {

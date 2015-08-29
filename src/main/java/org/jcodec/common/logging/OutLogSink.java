@@ -12,10 +12,12 @@ import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.ANSIColor;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Outputs messages to standard output
  * 
- * @author Jay Codec
- * 
+ * @author The JCodec project
  */
 public class OutLogSink implements Logger.LogSink {
 

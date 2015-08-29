@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * 
  * A box containing sample presentation time information
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class TimeToSampleBox extends FullBox {

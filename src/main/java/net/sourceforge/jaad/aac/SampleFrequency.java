@@ -1,6 +1,10 @@
 package net.sourceforge.jaad.aac;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * An enumeration that represents all possible sample frequencies AAC data can 
  * have.
  * 

@@ -6,6 +6,10 @@ import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.PCE;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * DecoderConfig that must be passed to the
  * <code>Decoder</code> constructor. Typically it is created via one of the
  * static parsing methods.

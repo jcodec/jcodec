@@ -1,5 +1,12 @@
 package org.jcodec.codecs.aac;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class AACConts {
 
     public static final short[] AAC_CHANNEL_COUNT = { 0, 1, 2, 3, 4, 5, 6, 8 };

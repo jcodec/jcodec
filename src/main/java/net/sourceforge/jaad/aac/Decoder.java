@@ -13,6 +13,10 @@ import net.sourceforge.jaad.aac.syntax.SyntacticElements;
 import net.sourceforge.jaad.aac.transport.ADIFHeader;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * Main AAC decoder class
  * 
  * @author in-somnia

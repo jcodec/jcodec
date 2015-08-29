@@ -19,7 +19,7 @@ import org.jcodec.common.model.Picture;
  * x|x|9876543210(cb2)|9876543210(y3) |9876543210(cr1)
  * x|x|9876543210(y5) |9876543210(cr2)|9876543210(y4) 
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class V210Decoder {

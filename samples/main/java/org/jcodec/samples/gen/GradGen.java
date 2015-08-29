@@ -10,9 +10,9 @@ import org.jcodec.codecs.raw.V210Encoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Packet;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,7 +21,7 @@ import org.jcodec.containers.mp4.MP4Packet;
  * This code generates two dark gradients 8bit and 10 bit quantization and saves
  * it into v210 mov
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class GradGen {

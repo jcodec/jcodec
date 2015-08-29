@@ -6,6 +6,13 @@ import static org.jcodec.codecs.vp8.FilterUtil.Segment.vertical;
 
 import org.jcodec.codecs.vp8.Macroblock.Subblock;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class FilterUtil {
 
     /**

@@ -8,6 +8,13 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class ChangeTimescale {
     public static void main(String[] args) throws Exception {
         if (args.length < 2) {

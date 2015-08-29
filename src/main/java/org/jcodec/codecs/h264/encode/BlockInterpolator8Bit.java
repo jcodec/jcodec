@@ -8,7 +8,7 @@ import org.jcodec.common.model.Picture8Bit;
  * 
  * Interpolator that operates on block level
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class BlockInterpolator8Bit {

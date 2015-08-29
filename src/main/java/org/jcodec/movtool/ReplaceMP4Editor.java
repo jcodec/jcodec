@@ -14,7 +14,7 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
  * Unlike InplaceMP4Edit any changes are allowed. This class will take care of
  * adjusting all the sample offsets so the result file will be correct.
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class ReplaceMP4Editor {

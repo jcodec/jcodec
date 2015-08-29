@@ -15,7 +15,7 @@ import org.jcodec.containers.mp4.boxes.Header;
  * 
  * Creates MP4 file out of a set of samples
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class AvcCBox extends Box {

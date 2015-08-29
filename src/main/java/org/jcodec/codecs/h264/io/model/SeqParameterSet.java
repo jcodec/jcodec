@@ -28,7 +28,7 @@ import org.jcodec.common.model.ColorSpace;
  * 
  * capable to serialize and deserialize with CAVLC bitstream
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SeqParameterSet {

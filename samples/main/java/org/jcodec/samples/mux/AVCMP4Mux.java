@@ -34,7 +34,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * Sample code. Muxes H.264 ( MPEG4 AVC ) elementary stream into MP4 ( ISO
  * 14496-1/14496-12/14496-14, Quicktime ) container
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class AVCMP4Mux {

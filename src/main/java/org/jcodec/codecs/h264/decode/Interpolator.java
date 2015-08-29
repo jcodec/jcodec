@@ -6,7 +6,7 @@ package org.jcodec.codecs.h264.decode;
  * 
  * Quarter pixel image interpolator for inter prediction
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class Interpolator {

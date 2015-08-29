@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * This code is borrowed from Apache Commons String Utils
  * 
- * 
+ * @author The JCodec project
  */
 public class StringUtils {
 

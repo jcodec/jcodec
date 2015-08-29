@@ -4,6 +4,13 @@ import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ *
+ * @author in-somnia
+ */
 public class PS implements PSConstants, PSTables, PSHuffmanTables {
 
 	/* bitstream parameters */

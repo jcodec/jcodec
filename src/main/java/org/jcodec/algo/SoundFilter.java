@@ -2,6 +2,13 @@ package org.jcodec.algo;
 
 import org.jcodec.common.AudioFormat;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class SoundFilter {
 
     public static final int[] sine = new int[] { 0, 1, 3, 4, 6, 7, 9, 10, 12, 14, 15, 17, 18, 20, 21, 23, 25, 26, 28,

@@ -19,8 +19,8 @@ import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
@@ -28,7 +28,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MovChangePPS {

@@ -17,7 +17,7 @@ import org.jcodec.common.logging.Logger;
  * 
  * An MP4 file structure (atom)
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class Header {

@@ -3,6 +3,13 @@ package net.sourceforge.jaad.aac.syntax;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license. 
+ *
+ * @author in-somnia
+ */
 class FIL extends Element implements SyntaxConstants {
 
 	public static class DynamicRangeInfo {

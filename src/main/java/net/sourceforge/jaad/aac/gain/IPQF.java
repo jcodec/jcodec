@@ -1,5 +1,12 @@
 package net.sourceforge.jaad.aac.gain;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ *
+ * @author in-somnia
+ */
 //inverse polyphase quadrature filter
 class IPQF implements GCConstants, PQFTables {
 

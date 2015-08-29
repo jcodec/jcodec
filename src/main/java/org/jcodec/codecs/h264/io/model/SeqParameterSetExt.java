@@ -18,7 +18,7 @@ import org.jcodec.common.io.BitWriter;
  * 
  * Capable to serialize / deserialize itself with CAVLC bit stream
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SeqParameterSetExt {

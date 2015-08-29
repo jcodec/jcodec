@@ -3,6 +3,9 @@ package org.jcodec.containers.mp4.boxes;
 import java.nio.ByteBuffer;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * The Track Fragment Base Media Decode Time Box provides the absolute decode
  * time, measured on the media timeline, of the first sample in decode order in
  * the track fragment. This can be useful, for example, when performing random
@@ -13,7 +16,7 @@ import java.nio.ByteBuffer;
  * Decode Time Box, if present, shall be positioned after the Track Fragment
  * Header Box and before the first Track Fragment Run box.
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class TrackFragmentBaseMediaDecodeTimeBox extends FullBox {

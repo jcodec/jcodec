@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
  * 
  * A media header atom
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MediaHeaderBox extends FullBox {

@@ -7,6 +7,13 @@ import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.tools.MSMask;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license. 
+ *
+ * @author in-somnia
+ */
 public class CPE extends Element implements SyntaxConstants {
 
 	private MSMask msMask;

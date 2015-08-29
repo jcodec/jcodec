@@ -3,10 +3,13 @@ package org.jcodec.containers.mp4.boxes;
 import java.nio.ByteBuffer;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Movie fragment header box
  * 
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MovieFragmentHeaderBox extends FullBox {

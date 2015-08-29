@@ -5,6 +5,13 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.SeekableByteChannel;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class EbmlVoid extends EbmlBase {
 
     public EbmlVoid(byte[] id) {

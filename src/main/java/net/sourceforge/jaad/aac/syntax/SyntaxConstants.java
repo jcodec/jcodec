@@ -2,6 +2,13 @@ package net.sourceforge.jaad.aac.syntax;
 
 import java.util.logging.Logger;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ *
+ * @author in-somnia
+ */
 public interface SyntaxConstants {
 
 	Logger LOGGER = Logger.getLogger("jaad"); //for debugging

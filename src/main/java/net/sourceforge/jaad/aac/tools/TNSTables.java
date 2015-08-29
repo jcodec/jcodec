@@ -1,6 +1,10 @@
 package net.sourceforge.jaad.aac.tools;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * Tables of coefficients used for TNS.
  * The suffix indicates the values of coefCompress and coefRes.
  * @author in-somnia

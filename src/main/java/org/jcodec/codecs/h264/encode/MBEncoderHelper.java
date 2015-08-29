@@ -4,6 +4,12 @@ import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.common.model.Picture8Bit;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ */
 public class MBEncoderHelper {
 
     public static final void takeSubtract(byte[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
