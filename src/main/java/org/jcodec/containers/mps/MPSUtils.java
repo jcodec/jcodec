@@ -150,7 +150,7 @@ public class MPSUtils {
 
     public static PESPacket readPESHeader(ByteBuffer iss, long pos) {
         int streamId = iss.getInt() & 0xff;
-        int len = iss.getShort();
+        int len = iss.getShort() & 0xffff;
         if (streamId != 0xbf) {
             int b0 = iss.get() & 0xff;
             if ((b0 & 0xc0) == 0x80)
