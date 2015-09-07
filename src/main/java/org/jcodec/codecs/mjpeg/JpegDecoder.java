@@ -2,13 +2,10 @@ package org.jcodec.codecs.mjpeg;
 
 import static org.jcodec.codecs.mjpeg.JpegConst.naturalOrder;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.jcodec.codecs.mjpeg.tools.Asserts;
-import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
@@ -17,6 +14,7 @@ import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.MathUtil;
 
@@ -24,7 +22,7 @@ import org.jcodec.common.tools.MathUtil;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class JpegDecoder implements VideoDecoder {
@@ -258,5 +256,10 @@ public class JpegDecoder implements VideoDecoder {
     @Override
     public int probe(ByteBuffer data) {
         return 0;
+    }
+
+    @Override
+    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
+        throw new RuntimeException("TODO(stan): Move JPEG decoder to 8Bit");
     }
 }

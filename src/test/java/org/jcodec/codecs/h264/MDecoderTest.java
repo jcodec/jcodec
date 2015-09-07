@@ -9,7 +9,7 @@ import org.jcodec.codecs.h264.io.CABAC;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.junit.Test;
 
-public class TestMDecoder {
+public class MDecoderTest {
 
     @Test
     public void testMDecoder() {

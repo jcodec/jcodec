@@ -5,18 +5,14 @@ import static org.jcodec.common.JCodecUtil.getAsIntArray;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
-import org.jcodec.codecs.h264.io.model.Frame;
-import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestInter {
+public class MacroblockInterDecodingTest {
 
     @Test
     public void testMBlockCABAC1() throws IOException {

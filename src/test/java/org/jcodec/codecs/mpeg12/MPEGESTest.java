@@ -11,7 +11,7 @@ import org.jcodec.common.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.junit.Test;
 
-public class TestMPEGES {
+public class MPEGESTest {
 
     @Test
     public void testES() throws IOException {

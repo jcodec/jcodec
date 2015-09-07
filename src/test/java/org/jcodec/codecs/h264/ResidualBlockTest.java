@@ -17,7 +17,7 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.junit.Test;
 
-public class TestResidualBlock {
+public class ResidualBlockTest {
 
     @Test
     public void testLuma1CAVLC() throws Exception {

@@ -13,7 +13,7 @@ import org.jcodec.common.NIOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestSPS extends TestCase {
+public class SPSReadTest extends TestCase {
 
     private SeqParameterSet sps1;
 

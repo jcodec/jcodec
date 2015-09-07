@@ -179,7 +179,8 @@ public class Picture8Bit {
     
     private Picture toPictureInternal(int bitDepth, Picture create) {
         for (int i = 0; i < data.length; i++) {
-            for (int j = 0; j < data[i].length; j++) {
+            int planeSize = getPlaneWidth(i)*getPlaneHeight(i);
+            for (int j = 0; j < planeSize; j++) {
                 create.getData()[i][j] = ((data[i][j] + 128) << bitDepth) >> 8;
             }
         }

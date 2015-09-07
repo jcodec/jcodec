@@ -12,25 +12,18 @@ import static org.jcodec.common.dct.SimpleIDCT10Bit.idct10;
 import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.toSigned;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
-import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.jcodec.scale.Yuv422pToRgb;
+import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Rect;
 
 /**
  * 
@@ -197,7 +190,7 @@ public class ProresDecoder implements VideoDecoder {
         }
 
         return new Picture(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422_10
-                : ColorSpace.YUV444_10);
+                : ColorSpace.YUV444_10, new Rect(0, 0, fh.width, fh.height));
     }
 
     public Picture[] decodeFields(ByteBuffer data, int[][][] target) {
@@ -453,5 +446,10 @@ public class ProresDecoder implements VideoDecoder {
         if (data.get(4) == 'i' && data.get(5) == 'c' && data.get(6) == 'p' && data.get(7) == 'f')
             return 100;
         return 0;
+    }
+
+    @Override
+    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
+        throw new RuntimeException("TODO(stan): Move ProRes decoder to 8Bit");
     }
 }

@@ -8,7 +8,7 @@ import org.jcodec.common.dct.SparseIDCT;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestSparseIDCT {
+public class SparseIDCTTest {
 
     @Test
     public void testSparseIDCT() {

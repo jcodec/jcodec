@@ -3,13 +3,12 @@ package org.jcodec.codecs.h264;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import junit.framework.Assert;
 
-import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.io.CABAC;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.junit.Test;
 
-public class TestCABAC {
+public class CABACTest {
 
     @Test
     public void testMBTypeI() {

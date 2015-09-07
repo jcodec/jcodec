@@ -48,6 +48,7 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 
@@ -721,5 +722,10 @@ public class MPEGDecoder implements VideoDecoder {
             segment = nextSegment(data);
         }
         return null;
+    }
+
+    @Override
+    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
+        throw new RuntimeException("TODO(stan): Move MPEG decoder to 8Bit");
     }
 }

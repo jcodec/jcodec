@@ -35,7 +35,7 @@ public class MPEGPred {
         this.topFieldFirst = other.topFieldFirst;
     }
 
-    public void predictEvenEvenSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictFullXFullYSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int offRef = ((refY << refVertStep) + refVertOff) * refW + refX, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
                 - tgtW, lfTgt = tgtVertStep * tgtW;
@@ -126,7 +126,7 @@ public class MPEGPred {
         return (ref[y1 * refW + x1] + ref[y2 * refW + x2] + ref[y3 * refW + x3] + ref[y4 * refW + x4] + 3) >> 2;
     }
 
-    public void predictEvenEvenUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
+    public void predictFullXFullYUnSafe(int[] ref, int refX, int refY, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
         for (int j = 0; j < tgtH; j++) {
@@ -186,10 +186,10 @@ public class MPEGPred {
         if ((refX & 0x1) == 0) {
             if ((refY & 0x1) == 0) {
                 if (safe)
-                    predictEvenEvenSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                    predictFullXFullYSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
                             tgtVertStep);
                 else
-                    predictEvenEvenUnSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                    predictFullXFullYUnSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
                             tgtVertStep);
             } else {
                 if (safe)

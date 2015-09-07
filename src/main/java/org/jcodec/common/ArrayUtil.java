@@ -60,7 +60,7 @@ public class ArrayUtil {
         }
         return result;
     }
-    
+
     public static final int sum(byte[] array) {
         int result = 0;
         for (int i = 0; i < array.length; i++) {
@@ -76,7 +76,7 @@ public class ArrayUtil {
         }
         return result;
     }
-    
+
     public static int sum(byte[] array, int from, int count) {
         int result = 0;
         for (int i = from; i < from + count; i++) {
@@ -148,10 +148,33 @@ public class ArrayUtil {
         return (Object[]) array.clone();
     }
 
-    public static byte[] toByteArray(int[] val) {
+    public static byte[] toByteArrayShifted(int... val) {
+        byte[] result = new byte[val.length];
+        for (int i = 0; i < val.length; i++)
+            result[i] = (byte) (val[i] - 128);
+        return result;
+    }
+
+    public static int[] toIntArrayUnshifted(byte... array) {
+        int[] result = new int[array.length];
+        for (int i = 0; i < result.length; i++)
+            result[i] = (byte) (array[i] + 128);
+
+        return result;
+    }
+
+    public static byte[] toByteArray(int... val) {
         byte[] result = new byte[val.length];
         for (int i = 0; i < val.length; i++)
             result[i] = (byte) val[i];
+        return result;
+    }
+
+    public static int[] toIntArray(byte... array) {
+        int[] result = new int[array.length];
+        for (int i = 0; i < result.length; i++)
+            result[i] = array[i] & 0xff;
+
         return result;
     }
 
@@ -177,17 +200,49 @@ public class ArrayUtil {
                 max = array[i];
             }
         }
-        
+
         return max;
     }
-    
+
     public static int[][] rotate(int[][] src) {
         int[][] dst = new int[src[0].length][src.length];
-        for(int i = 0; i < src.length; i++) {
-            for(int j = 0; j < src[0].length; j++) {
+        for (int i = 0; i < src.length; i++) {
+            for (int j = 0; j < src[0].length; j++) {
                 dst[j][i] = src[i][j];
             }
         }
         return dst;
+    }
+
+    public static byte[][] create2D(int width, int height) {
+        byte[][] result = new byte[height][];
+        for (int i = 0; i < height; i++)
+            result[i] = new byte[width];
+        return result;
+    }
+
+    public static void printMatrix(int[] array, String format, int width) {
+        String[] strings = new String[array.length];
+        int maxLen = 0;
+        for (int i = 0; i < array.length; i++) {
+            strings[i] = String.format(format, array[i]);
+            maxLen = Math.max(maxLen, strings[i].length());
+        }
+        for (int ind = 0; ind < strings.length;) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < width && ind < strings.length; i++, ind++) {
+                for (int j = 0; j < maxLen - strings[ind].length() + 1; j++)
+                    builder.append(' ');
+                builder.append(strings[ind]);
+            }
+            System.out.println(builder);
+        }
+    }
+
+    public static byte[] padLeft(byte[] array, int padLength) {
+        byte[] result = new byte[array.length + padLength];
+        for(int i = padLength; i < result.length; i++)
+            result[i] = array[i - padLength];
+        return result;
     }
 }

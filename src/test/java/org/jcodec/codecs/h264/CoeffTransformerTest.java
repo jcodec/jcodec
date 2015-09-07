@@ -5,7 +5,7 @@ import static org.junit.Assert.assertArrayEquals;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.junit.Test;
 
-public class TestCoeffTransformer {
+public class CoeffTransformerTest {
 
     @Test
     public void testDCT() {

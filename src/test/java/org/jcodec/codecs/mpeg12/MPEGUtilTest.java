@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.common.NIOUtils;
 import org.junit.Test;
 
-public class TestMPEGUtil {
+public class MPEGUtilTest {
 
     @Test
     public void testGotoNextMarker() {

@@ -6,7 +6,7 @@ import static org.jcodec.common.tools.MathUtil.clip;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -29,7 +29,7 @@ import org.jcodec.common.tools.MathUtil;
  * of DCT coded residual; motion vector difference; spatial location.
  * 
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class DeblockingFilter {
@@ -56,10 +56,10 @@ public class DeblockingFilter {
     private int[][] mbQps;
     private SliceHeader[] shs;
     private boolean[] tr8x8Used;
-    private Picture[][][] refsUsed;
+    private Picture8Bit[][][] refsUsed;
 
     public DeblockingFilter(int bitDepthLuma, int bitDepthChroma, int[][] nCoeff, int[][][][] mvs, MBType[] mbTypes,
-            int[][] mbQps, SliceHeader[] shs, boolean[] tr8x8Used, Picture[][][] refsUsed) {
+            int[][] mbQps, SliceHeader[] shs, boolean[] tr8x8Used, Picture8Bit[][][] refsUsed) {
         this.nCoeff = nCoeff;
         this.mvs = mvs;
         this.mbTypes = mbTypes;
@@ -69,7 +69,7 @@ public class DeblockingFilter {
         this.refsUsed = refsUsed;
     }
 
-    public void deblockFrame(Picture result) {
+    public void deblockFrame(Picture8Bit result) {
         ColorSpace color = result.getColor();
         // for (int i = 0; i < shs.length; i++)
         // printMB(result.getPlaneData(2), result.getPlaneWidth(2), i, shs[i],
@@ -129,11 +129,11 @@ public class DeblockingFilter {
             if (nA != nB)
                 return 1;
 
-            Picture ra0 = mvA0[2] < 0 ? null : refsUsed[mbAddrA][0][mvA0[2]];
-            Picture ra1 = mvA1[2] < 0 ? null : refsUsed[mbAddrA][1][mvA1[2]];
+            Picture8Bit ra0 = mvA0[2] < 0 ? null : refsUsed[mbAddrA][0][mvA0[2]];
+            Picture8Bit ra1 = mvA1[2] < 0 ? null : refsUsed[mbAddrA][1][mvA1[2]];
 
-            Picture rb0 = mvB0[2] < 0 ? null : refsUsed[mbAddrB][0][mvB0[2]];
-            Picture rb1 = mvB1[2] < 0 ? null : refsUsed[mbAddrB][1][mvB1[2]];
+            Picture8Bit rb0 = mvB0[2] < 0 ? null : refsUsed[mbAddrB][0][mvB0[2]];
+            Picture8Bit rb1 = mvB1[2] < 0 ? null : refsUsed[mbAddrB][1][mvB1[2]];
 
             if (ra0 != rb0 && ra0 != rb1 || ra1 != rb0 && ra1 != rb1 || rb0 != ra0 && rb0 != ra1 || rb1 != ra0
                     && rb1 != ra1)
@@ -165,7 +165,7 @@ public class DeblockingFilter {
         return MathUtil.clip(avgQp + sliceAlphaC0Offset, 0, 51);
     }
 
-    private void calcBsH(Picture pic, int mbAddr, int[][] bs) {
+    private void calcBsH(Picture8Bit pic, int mbAddr, int[][] bs) {
         SliceHeader sh = shs[mbAddr];
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
 
@@ -200,7 +200,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void fillHorizontalEdge(Picture pic, int comp, int mbAddr, int[][] bs) {
+    private void fillHorizontalEdge(Picture8Bit pic, int comp, int mbAddr, int[][] bs) {
         SliceHeader sh = shs[mbAddr];
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
 
@@ -243,7 +243,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void calcBsV(Picture pic, int mbAddr, int[][] bs) {
+    private void calcBsV(Picture8Bit pic, int mbAddr, int[][] bs) {
 
         SliceHeader sh = shs[mbAddr];
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
@@ -276,7 +276,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void fillVerticalEdge(Picture pic, int comp, int mbAddr, int[][] bs) {
+    private void fillVerticalEdge(Picture8Bit pic, int comp, int mbAddr, int[][] bs) {
 
         SliceHeader sh = shs[mbAddr];
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
@@ -316,7 +316,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void filterBlockEdgeHoris(Picture pic, int comp, int x, int y, int indexAlpha, int indexBeta, int bs,
+    private void filterBlockEdgeHoris(Picture8Bit pic, int comp, int x, int y, int indexAlpha, int indexBeta, int bs,
             int blkW) {
 
         int stride = pic.getPlaneWidth(comp);
@@ -344,7 +344,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void filterBlockEdgeVert(Picture pic, int comp, int x, int y, int indexAlpha, int indexBeta, int bs,
+    private void filterBlockEdgeVert(Picture8Bit pic, int comp, int x, int y, int indexAlpha, int indexBeta, int bs,
             int blkH) {
 
         int stride = pic.getPlaneWidth(comp);
@@ -369,7 +369,7 @@ public class DeblockingFilter {
         }
     }
 
-    public static void filterBs(int bs, int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p2Idx, int p1Idx,
+    public static void filterBs(int bs, int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p2Idx, int p1Idx,
             int p0Idx, int q0Idx, int q1Idx, int q2Idx, boolean isChroma) {
 
         int p1 = pelsP[p1Idx];
@@ -408,9 +408,9 @@ public class DeblockingFilter {
         sigma = sigma < -tC ? -tC : (sigma > tC ? tC : sigma);
 
         int p0n = p0 + sigma;
-        p0n = p0n < 0 ? 0 : p0n;
+        p0n = p0n < -128 ? -128 : p0n;
         int q0n = q0 - sigma;
-        q0n = q0n < 0 ? 0 : q0n;
+        q0n = q0n < -128 ? -128 : q0n;
 
         if (conditionP) {
             int p2 = pelsP[p2Idx];
@@ -418,7 +418,7 @@ public class DeblockingFilter {
             int diff = (p2 + ((p0 + q0 + 1) >> 1) - (p1 << 1)) >> 1;
             diff = diff < -tC0 ? -tC0 : (diff > tC0 ? tC0 : diff);
             int p1n = p1 + diff;
-            pelsP[p1Idx] = clip(p1n, 0, 255);
+            pelsP[p1Idx] = (byte)clip(p1n, -128, 127);
         }
 
         if (conditionQ) {
@@ -426,15 +426,15 @@ public class DeblockingFilter {
             int diff = (q2 + ((p0 + q0 + 1) >> 1) - (q1 << 1)) >> 1;
             diff = diff < -tC0 ? -tC0 : (diff > tC0 ? tC0 : diff);
             int q1n = q1 + diff;
-            pelsQ[q1Idx] = clip(q1n, 0, 255);
+            pelsQ[q1Idx] = (byte)clip(q1n, -128, 127);
         }
 
-        pelsQ[q0Idx] = clip(q0n, 0, 255);
-        pelsP[p0Idx] = clip(p0n, 0, 255);
+        pelsQ[q0Idx] = (byte)clip(q0n, -128, 127);
+        pelsP[p0Idx] = (byte)clip(p0n, -128, 127);
 
     }
 
-    public static void filterBs4(int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p3Idx, int p2Idx,
+    public static void filterBs4(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p3Idx, int p2Idx,
             int p1Idx, int p0Idx, int q0Idx, int q1Idx, int q2Idx, int q3Idx, boolean isChroma) {
         int p0 = pelsP[p0Idx];
         int q0 = pelsQ[q0Idx];
@@ -470,12 +470,12 @@ public class DeblockingFilter {
             int p0n = (p2 + 2 * p1 + 2 * p0 + 2 * q0 + q1 + 4) >> 3;
             int p1n = (p2 + p1 + p0 + q0 + 2) >> 2;
             int p2n = (2 * p3 + 3 * p2 + p1 + p0 + q0 + 4) >> 3;
-            pelsP[p0Idx] = clip(p0n, 0, 255);
-            pelsP[p1Idx] = clip(p1n, 0, 255);
-            pelsP[p2Idx] = clip(p2n, 0, 255);
+            pelsP[p0Idx] = (byte)clip(p0n, -128, 127);
+            pelsP[p1Idx] = (byte)clip(p1n, -128, 127);
+            pelsP[p2Idx] = (byte)clip(p2n, -128, 127);
         } else {
             int p0n = (2 * p1 + p0 + q1 + 2) >> 2;
-            pelsP[p0Idx] = clip(p0n, 0, 255);
+            pelsP[p0Idx] = (byte)clip(p0n, -128, 127);
         }
 
         if (conditionQ && !isChroma) {
@@ -484,12 +484,12 @@ public class DeblockingFilter {
             int q0n = (p1 + 2 * p0 + 2 * q0 + 2 * q1 + q2 + 4) >> 3;
             int q1n = (p0 + q0 + q1 + q2 + 2) >> 2;
             int q2n = (2 * q3 + 3 * q2 + q1 + q0 + p0 + 4) >> 3;
-            pelsQ[q0Idx] = clip(q0n, 0, 255);
-            pelsQ[q1Idx] = clip(q1n, 0, 255);
-            pelsQ[q2Idx] = clip(q2n, 0, 255);
+            pelsQ[q0Idx] = (byte)clip(q0n, -128, 127);
+            pelsQ[q1Idx] = (byte)clip(q1n, -128, 127);
+            pelsQ[q2Idx] = (byte)clip(q2n, -128, 127);
         } else {
             int q0n = (2 * q1 + q0 + p1 + 2) >> 2;
-            pelsQ[q0Idx] = clip(q0n, 0, 255);
+            pelsQ[q0Idx] = (byte)clip(q0n, -128, 127);
         }
     }
 }

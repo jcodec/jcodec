@@ -21,10 +21,13 @@ import org.jcodec.codecs.h264.io.model.RefPicMarkingIDR;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
+import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 
 /**
@@ -47,6 +50,8 @@ public class H264Decoder implements VideoDecoder {
     private List<Frame> pictureBuffer;
     private POCManager poc;
     private boolean debug;
+    private byte[][] byteBuffer;
+    int fn;
 
     public H264Decoder() {
         pictureBuffer = new ArrayList<Frame>();
@@ -54,11 +59,32 @@ public class H264Decoder implements VideoDecoder {
     }
 
     @Override
-    public Frame decodeFrame(ByteBuffer data, int[][] buffer) {
+    public Picture decodeFrame(ByteBuffer data, int[][] buffer) {
+        Frame frame = new FrameDecoder().decodeFrame(H264Utils.splitFrame(data), getSameSizeBuffer(buffer));
+        return frame == null ? null : frame.toPicture(8, buffer);
+    }
+
+    public Picture decodeFrame(List<ByteBuffer> data, int[][] buffer) {
+        Frame frame = new FrameDecoder().decodeFrame(data, getSameSizeBuffer(buffer));
+        return frame == null ? null : frame.toPicture(8, buffer);
+    }
+
+    private byte[][] getSameSizeBuffer(int[][] buffer) {
+        if (byteBuffer == null || byteBuffer.length != buffer.length || byteBuffer[0].length != buffer[0].length)
+            byteBuffer = ArrayUtil.create2D(buffer[0].length, buffer.length);
+        return byteBuffer;
+    }
+
+    @Override
+    public Frame decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
+        System.out.println(fn);
+        ++fn;
         return new FrameDecoder().decodeFrame(H264Utils.splitFrame(data), buffer);
     }
 
-    public Frame decodeFrame(List<ByteBuffer> nalUnits, int[][] buffer) {
+    public Frame decodeFrame8Bit(List<ByteBuffer> nalUnits, byte[][] buffer) {
+        System.out.println(fn);
+        ++fn;
         return new FrameDecoder().decodeFrame(nalUnits, buffer);
     }
 
@@ -72,7 +98,7 @@ public class H264Decoder implements VideoDecoder {
         private SliceDecoder decoder;
         private int[][][][] mvs;
 
-        public Frame decodeFrame(List<ByteBuffer> nalUnits, int[][] buffer) {
+        public Frame decodeFrame(List<ByteBuffer> nalUnits, byte[][] buffer) {
             Frame result = null;
 
             for (ByteBuffer nalUnit : nalUnits) {
@@ -83,8 +109,13 @@ public class H264Decoder implements VideoDecoder {
                 switch (marker.type) {
                 case NON_IDR_SLICE:
                 case IDR_SLICE:
-                    if (result == null)
+                    if (result == null) {
+                        if (sps.size() == 0 || pps.size() == 0) {
+                            Logger.warn("Skipping frame as no SPS/PPS have been seen so far...");
+                            return null;
+                        }
                         result = init(buffer, nalUnit, marker);
+                    }
                     decoder.decode(nalUnit, marker);
                     break;
                 case SPS:
@@ -116,7 +147,7 @@ public class H264Decoder implements VideoDecoder {
             }
         }
 
-        private Frame init(int[][] buffer, ByteBuffer segment, NALUnit marker) {
+        private Frame init(byte[][] buffer, ByteBuffer segment, NALUnit marker) {
             firstNu = marker;
 
             shr = new SliceHeaderReader();
@@ -292,7 +323,7 @@ public class H264Decoder implements VideoDecoder {
         }
     }
 
-    public static Frame createFrame(SeqParameterSet sps, int[][] buffer, int frameNum, SliceType frameType,
+    public static Frame createFrame(SeqParameterSet sps, byte[][] buffer, int frameNum, SliceType frameType,
             int[][][][] mvs, Frame[][][] refsUsed, int POC) {
         int width = sps.pic_width_in_mbs_minus1 + 1 << 4;
         int height = getPicHeightInMbs(sps) << 4;

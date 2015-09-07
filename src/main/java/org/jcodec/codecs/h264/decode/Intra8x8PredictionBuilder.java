@@ -10,55 +10,56 @@ import org.jcodec.common.Assert;
  * 
  * Builds intra prediction for intra 8x8 coded macroblocks
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class Intra8x8PredictionBuilder {
 
-    static int[] topBuf = new int[16];
-    static int[] leftBuf = new int[8];
-    static int[] genBuf = new int[24];
+    static byte[] topBuf = new byte[16];
+    static byte[] leftBuf = new byte[8];
+    static byte[] genBuf = new byte[24];
 
     public static void predictWithMode(int mode, int[] residual, boolean leftAvailable, boolean topAvailable,
-            boolean topLeftAvailable, boolean topRightAvailable, int[] leftRow, int[] topLine, int topLeft[],
-            int mbOffX, int blkX, int blkY) {
+            boolean topLeftAvailable, boolean topRightAvailable, byte[] leftRow, byte[] topLine, byte[] topLeft,
+            int mbOffX, int blkX, int blkY, byte[] pixOut) {
         switch (mode) {
         case 0:
             Assert.assertTrue(topAvailable);
-            predictVertical(residual, topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX, blkX, blkY);
+            predictVertical(residual, topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 1:
             Assert.assertTrue(leftAvailable);
-            predictHorizontal(residual, topLeftAvailable, topLeft, leftRow, mbOffX, blkX, blkY);
+            predictHorizontal(residual, topLeftAvailable, topLeft, leftRow, mbOffX, blkX, blkY, pixOut);
             break;
         case 2:
             predictDC(residual, topLeftAvailable, topRightAvailable, leftAvailable, topAvailable, topLeft, leftRow,
-                    topLine, mbOffX, blkX, blkY);
+                    topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 3:
             Assert.assertTrue(topAvailable);
             predictDiagonalDownLeft(residual, topLeftAvailable, topAvailable, topRightAvailable, topLeft, topLine,
-                    mbOffX, blkX, blkY);
+                    mbOffX, blkX, blkY, pixOut);
             break;
         case 4:
             Assert.assertTrue(topAvailable && leftAvailable && topLeftAvailable);
-            predictDiagonalDownRight(residual, topRightAvailable, topLeft, leftRow, topLine, mbOffX, blkX, blkY);
+            predictDiagonalDownRight(residual, topRightAvailable, topLeft, leftRow, topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 5:
             Assert.assertTrue(topAvailable && leftAvailable && topLeftAvailable);
-            predictVerticalRight(residual, topRightAvailable, topLeft, leftRow, topLine, mbOffX, blkX, blkY);
+            predictVerticalRight(residual, topRightAvailable, topLeft, leftRow, topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 6:
             Assert.assertTrue(topAvailable && leftAvailable && topLeftAvailable);
-            predictHorizontalDown(residual, topRightAvailable, topLeft, leftRow, topLine, mbOffX, blkX, blkY);
+            predictHorizontalDown(residual, topRightAvailable, topLeft, leftRow, topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 7:
             Assert.assertTrue(topAvailable);
-            predictVerticalLeft(residual, topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX, blkX, blkY);
+            predictVerticalLeft(residual, topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX, blkX, blkY,
+                    pixOut);
             break;
         case 8:
             Assert.assertTrue(leftAvailable);
-            predictHorizontalUp(residual, topLeftAvailable, topLeft, leftRow, mbOffX, blkX, blkY);
+            predictHorizontalUp(residual, topLeftAvailable, topLeft, leftRow, mbOffX, blkX, blkY, pixOut);
             break;
         }
 
@@ -68,47 +69,47 @@ public class Intra8x8PredictionBuilder {
         topLeft[blkY >> 2] = topLine[oo1 + 7];
 
         for (int i = 0; i < 8; i++)
-            leftRow[blkY + i] = residual[off1 + (i << 4)];
+            leftRow[blkY + i] = pixOut[off1 + (i << 4)];
 
         int off2 = (blkY << 4) + blkX + 112;
         for (int i = 0; i < 8; i++)
-            topLine[oo1 + i] = residual[off2 + i];
-        
+            topLine[oo1 + i] = pixOut[off2 + i];
+
         topLeft[(blkY >> 2) + 1] = leftRow[blkY + 3];
     }
 
-    private static void interpolateTop(boolean topLeftAvailable, boolean topRightAvailable, int[] topLeft,
-            int[] topLine, int blkX, int blkY, int[] out) {
+    private static void interpolateTop(boolean topLeftAvailable, boolean topRightAvailable, byte[] topLeft,
+            byte[] topLine, int blkX, int blkY, byte[] out) {
         int a = topLeftAvailable ? topLeft[blkY >> 2] : topLine[blkX];
 
-        out[0] = (a + (topLine[blkX] << 1) + topLine[blkX + 1] + 2) >> 2;
+        out[0] = (byte) ((a + (topLine[blkX] << 1) + topLine[blkX + 1] + 2) >> 2);
         int i;
         for (i = 1; i < 7; i++)
-            out[i] = (topLine[blkX + i - 1] + (topLine[blkX + i] << 1) + topLine[blkX + i + 1] + 2) >> 2;
+            out[i] = (byte) ((topLine[blkX + i - 1] + (topLine[blkX + i] << 1) + topLine[blkX + i + 1] + 2) >> 2);
 
         if (topRightAvailable) {
             for (; i < 15; i++)
-                out[i] = (topLine[blkX + i - 1] + (topLine[blkX + i] << 1) + topLine[blkX + i + 1] + 2) >> 2;
-            out[15] = (topLine[blkX + 14] + (topLine[blkX + 15] << 1) + topLine[blkX + 15] + 2) >> 2;
+                out[i] = (byte) ((topLine[blkX + i - 1] + (topLine[blkX + i] << 1) + topLine[blkX + i + 1] + 2) >> 2);
+            out[15] = (byte) ((topLine[blkX + 14] + (topLine[blkX + 15] << 1) + topLine[blkX + 15] + 2) >> 2);
         } else {
-            out[7] = (topLine[blkX + 6] + (topLine[blkX + 7] << 1) + topLine[blkX + 7] + 2) >> 2;
+            out[7] = (byte) ((topLine[blkX + 6] + (topLine[blkX + 7] << 1) + topLine[blkX + 7] + 2) >> 2);
             for (i = 8; i < 16; i++)
                 out[i] = topLine[blkX + 7];
         }
     }
 
-    private static void interpolateLeft(boolean topLeftAvailable, int[] topLeft, int[] leftRow, int blkY, int[] out) {
+    private static void interpolateLeft(boolean topLeftAvailable, byte[] topLeft, byte[] leftRow, int blkY, byte[] out) {
         int a = topLeftAvailable ? topLeft[blkY >> 2] : leftRow[0];
 
-        out[0] = (a + (leftRow[blkY] << 1) + leftRow[blkY + 1] + 2) >> 2;
+        out[0] = (byte) ((a + (leftRow[blkY] << 1) + leftRow[blkY + 1] + 2) >> 2);
         for (int i = 1; i < 7; i++)
-            out[i] = (leftRow[blkY + i - 1] + (leftRow[blkY + i] << 1) + leftRow[blkY + i + 1] + 2) >> 2;
+            out[i] = (byte) ((leftRow[blkY + i - 1] + (leftRow[blkY + i] << 1) + leftRow[blkY + i + 1] + 2) >> 2);
 
-        out[7] = (leftRow[blkY + 6] + (leftRow[blkY + 7] << 1) + leftRow[blkY + 7] + 2) >> 2;
+        out[7] = (byte) ((leftRow[blkY + 6] + (leftRow[blkY + 7] << 1) + leftRow[blkY + 7] + 2) >> 2);
     }
 
-    private static int interpolateTopLeft(boolean topAvailable, boolean leftAvailable, int[] topLeft, int[] topLine,
-            int[] leftRow, int mbOffX, int blkX, int blkY) {
+    private static int interpolateTopLeft(boolean topAvailable, boolean leftAvailable, byte[] topLeft, byte[] topLine,
+            byte[] leftRow, int mbOffX, int blkX, int blkY) {
         int a = topLeft[blkY >> 2];
         int b = topAvailable ? topLine[mbOffX + blkX] : a;
         int c = leftAvailable ? leftRow[blkY] : a;
@@ -117,63 +118,74 @@ public class Intra8x8PredictionBuilder {
         return (aa + b + c + 2) >> 2;
     }
 
-    public static void copyAdd(int[] src, int srcOff, int[] dst, int dstOff) {
-        dst[dstOff] = clip(dst[dstOff] + src[srcOff], 0, 255);
-        dst[dstOff + 1] = clip(dst[dstOff + 1] + src[srcOff + 1], 0, 255);
-        dst[dstOff + 2] = clip(dst[dstOff + 2] + src[srcOff + 2], 0, 255);
-        dst[dstOff + 3] = clip(dst[dstOff + 3] + src[srcOff + 3], 0, 255);
-        dst[dstOff + 4] = clip(dst[dstOff + 4] + src[srcOff + 4], 0, 255);
-        dst[dstOff + 5] = clip(dst[dstOff + 5] + src[srcOff + 5], 0, 255);
-        dst[dstOff + 6] = clip(dst[dstOff + 6] + src[srcOff + 6], 0, 255);
-        dst[dstOff + 7] = clip(dst[dstOff + 7] + src[srcOff + 7], 0, 255);
+    public static void copyAdd(byte[] pred, int srcOff, int[] residual, int pixOff, int rOff, byte[] out) {
+        out[pixOff] = (byte) clip(residual[rOff] + pred[srcOff], -128, 127);
+        out[pixOff + 1] = (byte) clip(residual[rOff + 1] + pred[srcOff + 1], -128, 127);
+        out[pixOff + 2] = (byte) clip(residual[rOff + 2] + pred[srcOff + 2], -128, 127);
+        out[pixOff + 3] = (byte) clip(residual[rOff + 3] + pred[srcOff + 3], -128, 127);
+        out[pixOff + 4] = (byte) clip(residual[rOff + 4] + pred[srcOff + 4], -128, 127);
+        out[pixOff + 5] = (byte) clip(residual[rOff + 5] + pred[srcOff + 5], -128, 127);
+        out[pixOff + 6] = (byte) clip(residual[rOff + 6] + pred[srcOff + 6], -128, 127);
+        out[pixOff + 7] = (byte) clip(residual[rOff + 7] + pred[srcOff + 7], -128, 127);
     }
 
-    public static void fillAdd(int[] dst, int off, int val) {
-        for (int i = 0; i < 8; i++, off += 16) {
-            dst[off] = clip(dst[off] + val, 0, 255);
-            dst[off + 1] = clip(dst[off + 1] + val, 0, 255);
-            dst[off + 2] = clip(dst[off + 2] + val, 0, 255);
-            dst[off + 3] = clip(dst[off + 3] + val, 0, 255);
-            dst[off + 4] = clip(dst[off + 4] + val, 0, 255);
-            dst[off + 5] = clip(dst[off + 5] + val, 0, 255);
-            dst[off + 6] = clip(dst[off + 6] + val, 0, 255);
-            dst[off + 7] = clip(dst[off + 7] + val, 0, 255);
+    public static void fillAdd(int[] residual, int pixOff, int val, byte[] pixOut) {
+        int rOff = 0;
+        for (int i = 0; i < 8; i++) {
+            pixOut[pixOff] = (byte) clip(residual[rOff] + val, -128, 127);
+            pixOut[pixOff + 1] = (byte) clip(residual[rOff + 1] + val, -128, 127);
+            pixOut[pixOff + 2] = (byte) clip(residual[rOff + 2] + val, -128, 127);
+            pixOut[pixOff + 3] = (byte) clip(residual[rOff + 3] + val, -128, 127);
+            pixOut[pixOff + 4] = (byte) clip(residual[rOff + 4] + val, -128, 127);
+            pixOut[pixOff + 5] = (byte) clip(residual[rOff + 5] + val, -128, 127);
+            pixOut[pixOff + 6] = (byte) clip(residual[rOff + 6] + val, -128, 127);
+            pixOut[pixOff + 7] = (byte) clip(residual[rOff + 7] + val, -128, 127);
+            pixOff += 16;
+            rOff += 8;
         }
     }
 
     private static void predictVertical(int[] residual, boolean topLeftAvailable, boolean topRightAvailable,
-            int[] topLeft, int[] topLine, int mbOffX, int blkX, int blkY) {
+            byte[] topLeft, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
-        for (int i = 0, off = (blkY << 4) + blkX; i < 8; i++, off += 16) {
-            residual[off] = clip(residual[off] + topBuf[0], 0, 255);
-            residual[off + 1] = clip(residual[off + 1] + topBuf[1], 0, 255);
-            residual[off + 2] = clip(residual[off + 2] + topBuf[2], 0, 255);
-            residual[off + 3] = clip(residual[off + 3] + topBuf[3], 0, 255);
-            residual[off + 4] = clip(residual[off + 4] + topBuf[4], 0, 255);
-            residual[off + 5] = clip(residual[off + 5] + topBuf[5], 0, 255);
-            residual[off + 6] = clip(residual[off + 6] + topBuf[6], 0, 255);
-            residual[off + 7] = clip(residual[off + 7] + topBuf[7], 0, 255);
+        int pixOff = (blkY << 4) + blkX;
+        int rOff = 0;
+        for (int i = 0; i < 8; i++) {
+            pixOut[pixOff] = (byte) clip(residual[rOff] + topBuf[0], -128, 127);
+            pixOut[pixOff + 1] = (byte) clip(residual[rOff + 1] + topBuf[1], -128, 127);
+            pixOut[pixOff + 2] = (byte) clip(residual[rOff + 2] + topBuf[2], -128, 127);
+            pixOut[pixOff + 3] = (byte) clip(residual[rOff + 3] + topBuf[3], -128, 127);
+            pixOut[pixOff + 4] = (byte) clip(residual[rOff + 4] + topBuf[4], -128, 127);
+            pixOut[pixOff + 5] = (byte) clip(residual[rOff + 5] + topBuf[5], -128, 127);
+            pixOut[pixOff + 6] = (byte) clip(residual[rOff + 6] + topBuf[6], -128, 127);
+            pixOut[pixOff + 7] = (byte) clip(residual[rOff + 7] + topBuf[7], -128, 127);
+            pixOff += 16;
+            rOff += 8;
         }
     }
 
-    private static void predictHorizontal(int[] residual, boolean topLeftAvailable, int[] topLeft, int[] leftRow,
-            int mbOffX, int blkX, int blkY) {
+    private static void predictHorizontal(int[] residual, boolean topLeftAvailable, byte[] topLeft, byte[] leftRow,
+            int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateLeft(topLeftAvailable, topLeft, leftRow, blkY, leftBuf);
-        for (int i = 0, off = (blkY << 4) + blkX; i < 8; i++, off += 16) {
-            residual[off] = clip(residual[off] + leftBuf[i], 0, 255);
-            residual[off + 1] = clip(residual[off + 1] + leftBuf[i], 0, 255);
-            residual[off + 2] = clip(residual[off + 2] + leftBuf[i], 0, 255);
-            residual[off + 3] = clip(residual[off + 3] + leftBuf[i], 0, 255);
-            residual[off + 4] = clip(residual[off + 4] + leftBuf[i], 0, 255);
-            residual[off + 5] = clip(residual[off + 5] + leftBuf[i], 0, 255);
-            residual[off + 6] = clip(residual[off + 6] + leftBuf[i], 0, 255);
-            residual[off + 7] = clip(residual[off + 7] + leftBuf[i], 0, 255);
+        int pixOff = (blkY << 4) + blkX;
+        int rOff = 0;
+        for (int i = 0; i < 8; i++) {
+            pixOut[pixOff] = (byte) clip(residual[rOff] + leftBuf[i], -128, 127);
+            pixOut[pixOff + 1] = (byte) clip(residual[rOff + 1] + leftBuf[i], -128, 127);
+            pixOut[pixOff + 2] = (byte) clip(residual[rOff + 2] + leftBuf[i], -128, 127);
+            pixOut[pixOff + 3] = (byte) clip(residual[rOff + 3] + leftBuf[i], -128, 127);
+            pixOut[pixOff + 4] = (byte) clip(residual[rOff + 4] + leftBuf[i], -128, 127);
+            pixOut[pixOff + 5] = (byte) clip(residual[rOff + 5] + leftBuf[i], -128, 127);
+            pixOut[pixOff + 6] = (byte) clip(residual[rOff + 6] + leftBuf[i], -128, 127);
+            pixOut[pixOff + 7] = (byte) clip(residual[rOff + 7] + leftBuf[i], -128, 127);
+            pixOff += 16;
+            rOff += 4;
         }
     }
 
     private static void predictDC(int[] residual, boolean topLeftAvailable, boolean topRightAvailable,
-            boolean leftAvailable, boolean topAvailable, int topLeft[], int[] leftRow, int[] topLine, int mbOffX,
-            int blkX, int blkY) {
+            boolean leftAvailable, boolean topAvailable, byte[] topLeft, byte[] leftRow, byte[] topLine, int mbOffX,
+            int blkX, int blkY, byte[] pixOut) {
         if (topAvailable && leftAvailable) {
             interpolateTop(topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
             interpolateLeft(topLeftAvailable, topLeft, leftRow, blkY, leftBuf);
@@ -181,232 +193,232 @@ public class Intra8x8PredictionBuilder {
             int sum2 = topBuf[4] + topBuf[5] + topBuf[6] + topBuf[7];
             int sum3 = leftBuf[0] + leftBuf[1] + leftBuf[2] + leftBuf[3];
             int sum4 = leftBuf[4] + leftBuf[5] + leftBuf[6] + leftBuf[7];
-            fillAdd(residual, (blkY << 4) + blkX, (sum1 + sum2 + sum3 + sum4 + 8) >> 4);
+            fillAdd(residual, (blkY << 4) + blkX, (sum1 + sum2 + sum3 + sum4 + 8) >> 4, pixOut);
         } else if (leftAvailable) {
             interpolateLeft(topLeftAvailable, topLeft, leftRow, blkY, leftBuf);
             int sum3 = leftBuf[0] + leftBuf[1] + leftBuf[2] + leftBuf[3];
             int sum4 = leftBuf[4] + leftBuf[5] + leftBuf[6] + leftBuf[7];
-            fillAdd(residual, (blkY << 4) + blkX, (sum3 + sum4 + 4) >> 3);
+            fillAdd(residual, (blkY << 4) + blkX, (sum3 + sum4 + 4) >> 3, pixOut);
         } else if (topAvailable) {
             interpolateTop(topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
             int sum1 = topBuf[0] + topBuf[1] + topBuf[2] + topBuf[3];
             int sum2 = topBuf[4] + topBuf[5] + topBuf[6] + topBuf[7];
-            fillAdd(residual, (blkY << 4) + blkX, (sum1 + sum2 + 4) >> 3);
+            fillAdd(residual, (blkY << 4) + blkX, (sum1 + sum2 + 4) >> 3, pixOut);
         } else {
-            fillAdd(residual, (blkY << 4) + blkX, 128);
+            fillAdd(residual, (blkY << 4) + blkX, 0, pixOut);
         }
     }
 
     private static void predictDiagonalDownLeft(int[] residual, boolean topLeftAvailable, boolean topAvailable,
-            boolean topRightAvailable, int[] topLeft, int[] topLine, int mbOffX, int blkX, int blkY) {
+            boolean topRightAvailable, byte[] topLeft, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
 
-        genBuf[0] = ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
-        genBuf[1] = ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
-        genBuf[2] = ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
-        genBuf[3] = ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
-        genBuf[4] = ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
-        genBuf[5] = ((topBuf[5] + topBuf[7] + ((topBuf[6]) << 1) + 2) >> 2);
-        genBuf[6] = ((topBuf[6] + topBuf[8] + ((topBuf[7]) << 1) + 2) >> 2);
-        genBuf[7] = ((topBuf[7] + topBuf[9] + ((topBuf[8]) << 1) + 2) >> 2);
-        genBuf[8] = ((topBuf[8] + topBuf[10] + ((topBuf[9]) << 1) + 2) >> 2);
-        genBuf[9] = ((topBuf[9] + topBuf[11] + ((topBuf[10]) << 1) + 2) >> 2);
-        genBuf[10] = ((topBuf[10] + topBuf[12] + ((topBuf[11]) << 1) + 2) >> 2);
-        genBuf[11] = ((topBuf[11] + topBuf[13] + ((topBuf[12]) << 1) + 2) >> 2);
-        genBuf[12] = ((topBuf[12] + topBuf[14] + ((topBuf[13]) << 1) + 2) >> 2);
-        genBuf[13] = ((topBuf[13] + topBuf[15] + ((topBuf[14]) << 1) + 2) >> 2);
-        genBuf[14] = ((topBuf[14] + topBuf[15] + ((topBuf[15]) << 1) + 2) >> 2);
+        genBuf[0] = (byte) ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
+        genBuf[1] = (byte) ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
+        genBuf[2] = (byte) ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
+        genBuf[3] = (byte) ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
+        genBuf[4] = (byte) ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
+        genBuf[5] = (byte) ((topBuf[5] + topBuf[7] + ((topBuf[6]) << 1) + 2) >> 2);
+        genBuf[6] = (byte) ((topBuf[6] + topBuf[8] + ((topBuf[7]) << 1) + 2) >> 2);
+        genBuf[7] = (byte) ((topBuf[7] + topBuf[9] + ((topBuf[8]) << 1) + 2) >> 2);
+        genBuf[8] = (byte) ((topBuf[8] + topBuf[10] + ((topBuf[9]) << 1) + 2) >> 2);
+        genBuf[9] = (byte) ((topBuf[9] + topBuf[11] + ((topBuf[10]) << 1) + 2) >> 2);
+        genBuf[10] = (byte) ((topBuf[10] + topBuf[12] + ((topBuf[11]) << 1) + 2) >> 2);
+        genBuf[11] = (byte) ((topBuf[11] + topBuf[13] + ((topBuf[12]) << 1) + 2) >> 2);
+        genBuf[12] = (byte) ((topBuf[12] + topBuf[14] + ((topBuf[13]) << 1) + 2) >> 2);
+        genBuf[13] = (byte) ((topBuf[13] + topBuf[15] + ((topBuf[14]) << 1) + 2) >> 2);
+        genBuf[14] = (byte) ((topBuf[14] + topBuf[15] + ((topBuf[15]) << 1) + 2) >> 2);
 
         int off = (blkY << 4) + blkX;
-        copyAdd(genBuf, 0, residual, off);
-        copyAdd(genBuf, 1, residual, off + 16);
-        copyAdd(genBuf, 2, residual, off + 32);
-        copyAdd(genBuf, 3, residual, off + 48);
-        copyAdd(genBuf, 4, residual, off + 64);
-        copyAdd(genBuf, 5, residual, off + 80);
-        copyAdd(genBuf, 6, residual, off + 96);
-        copyAdd(genBuf, 7, residual, off + 112);
+        copyAdd(genBuf, 0, residual, off, 0, pixOut);
+        copyAdd(genBuf, 1, residual, off + 16, 8, pixOut);
+        copyAdd(genBuf, 2, residual, off + 32, 16, pixOut);
+        copyAdd(genBuf, 3, residual, off + 48, 24, pixOut);
+        copyAdd(genBuf, 4, residual, off + 64, 32, pixOut);
+        copyAdd(genBuf, 5, residual, off + 80, 40, pixOut);
+        copyAdd(genBuf, 6, residual, off + 96, 48, pixOut);
+        copyAdd(genBuf, 7, residual, off + 112, 56, pixOut);
     }
 
-    private static void predictDiagonalDownRight(int[] residual, boolean topRightAvailable, int[] topLeft,
-            int[] leftRow, int[] topLine, int mbOffX, int blkX, int blkY) {
+    private static void predictDiagonalDownRight(int[] residual, boolean topRightAvailable, byte[] topLeft,
+            byte[] leftRow, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(true, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
         interpolateLeft(true, topLeft, leftRow, blkY, leftBuf);
         int tl = interpolateTopLeft(true, true, topLeft, topLine, leftRow, mbOffX, blkX, blkY);
 
-        genBuf[0] = ((leftBuf[7] + leftBuf[5] + ((leftBuf[6]) << 1) + 2) >> 2);
-        genBuf[1] = ((leftBuf[6] + leftBuf[4] + ((leftBuf[5]) << 1) + 2) >> 2);
-        genBuf[2] = ((leftBuf[5] + leftBuf[3] + ((leftBuf[4]) << 1) + 2) >> 2);
-        genBuf[3] = ((leftBuf[4] + leftBuf[2] + ((leftBuf[3]) << 1) + 2) >> 2);
-        genBuf[4] = ((leftBuf[3] + leftBuf[1] + ((leftBuf[2]) << 1) + 2) >> 2);
-        genBuf[5] = ((leftBuf[2] + leftBuf[0] + ((leftBuf[1]) << 1) + 2) >> 2);
-        genBuf[6] = ((leftBuf[1] + tl + ((leftBuf[0]) << 1) + 2) >> 2);
-        genBuf[7] = ((leftBuf[0] + topBuf[0] + ((tl) << 1) + 2) >> 2);
-        genBuf[8] = ((tl + topBuf[1] + ((topBuf[0]) << 1) + 2) >> 2);
-        genBuf[9] = ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
-        genBuf[10] = ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
-        genBuf[11] = ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
-        genBuf[12] = ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
-        genBuf[13] = ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
-        genBuf[14] = ((topBuf[5] + topBuf[7] + ((topBuf[6]) << 1) + 2) >> 2);
+        genBuf[0] = (byte) ((leftBuf[7] + leftBuf[5] + ((leftBuf[6]) << 1) + 2) >> 2);
+        genBuf[1] = (byte) ((leftBuf[6] + leftBuf[4] + ((leftBuf[5]) << 1) + 2) >> 2);
+        genBuf[2] = (byte) ((leftBuf[5] + leftBuf[3] + ((leftBuf[4]) << 1) + 2) >> 2);
+        genBuf[3] = (byte) ((leftBuf[4] + leftBuf[2] + ((leftBuf[3]) << 1) + 2) >> 2);
+        genBuf[4] = (byte) ((leftBuf[3] + leftBuf[1] + ((leftBuf[2]) << 1) + 2) >> 2);
+        genBuf[5] = (byte) ((leftBuf[2] + leftBuf[0] + ((leftBuf[1]) << 1) + 2) >> 2);
+        genBuf[6] = (byte) ((leftBuf[1] + tl + ((leftBuf[0]) << 1) + 2) >> 2);
+        genBuf[7] = (byte) ((leftBuf[0] + topBuf[0] + ((tl) << 1) + 2) >> 2);
+        genBuf[8] = (byte) ((tl + topBuf[1] + ((topBuf[0]) << 1) + 2) >> 2);
+        genBuf[9] = (byte) ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
+        genBuf[10] = (byte) ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
+        genBuf[11] = (byte) ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
+        genBuf[12] = (byte) ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
+        genBuf[13] = (byte) ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
+        genBuf[14] = (byte) ((topBuf[5] + topBuf[7] + ((topBuf[6]) << 1) + 2) >> 2);
 
         int off = (blkY << 4) + blkX;
-        copyAdd(genBuf, 7, residual, off);
-        copyAdd(genBuf, 6, residual, off + 16);
-        copyAdd(genBuf, 5, residual, off + 32);
-        copyAdd(genBuf, 4, residual, off + 48);
-        copyAdd(genBuf, 3, residual, off + 64);
-        copyAdd(genBuf, 2, residual, off + 80);
-        copyAdd(genBuf, 1, residual, off + 96);
-        copyAdd(genBuf, 0, residual, off + 112);
+        copyAdd(genBuf, 7, residual, off, 0, pixOut);
+        copyAdd(genBuf, 6, residual, off + 16, 8, pixOut);
+        copyAdd(genBuf, 5, residual, off + 32, 16, pixOut);
+        copyAdd(genBuf, 4, residual, off + 48, 24, pixOut);
+        copyAdd(genBuf, 3, residual, off + 64, 32, pixOut);
+        copyAdd(genBuf, 2, residual, off + 80, 40, pixOut);
+        copyAdd(genBuf, 1, residual, off + 96, 48, pixOut);
+        copyAdd(genBuf, 0, residual, off + 112, 56, pixOut);
     }
 
-    private static void predictVerticalRight(int[] residual, boolean topRightAvailable, int[] topLeft, int[] leftRow,
-            int[] topLine, int mbOffX, int blkX, int blkY) {
+    private static void predictVerticalRight(int[] residual, boolean topRightAvailable, byte[] topLeft, byte[] leftRow,
+            byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(true, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
         interpolateLeft(true, topLeft, leftRow, blkY, leftBuf);
         int tl = interpolateTopLeft(true, true, topLeft, topLine, leftRow, mbOffX, blkX, blkY);
 
-        genBuf[0] = ((leftBuf[5] + leftBuf[3] + ((leftBuf[4]) << 1) + 2) >> 2);
-        genBuf[1] = ((leftBuf[3] + leftBuf[1] + ((leftBuf[2]) << 1) + 2) >> 2);
-        genBuf[2] = ((leftBuf[1] + tl + ((leftBuf[0]) << 1) + 2) >> 2);
-        genBuf[3] = ((tl + topBuf[0] + 1) >> 1);
-        genBuf[4] = ((topBuf[0] + topBuf[1] + 1) >> 1);
-        genBuf[5] = ((topBuf[1] + topBuf[2] + 1) >> 1);
-        genBuf[6] = ((topBuf[2] + topBuf[3] + 1) >> 1);
-        genBuf[7] = ((topBuf[3] + topBuf[4] + 1) >> 1);
-        genBuf[8] = ((topBuf[4] + topBuf[5] + 1) >> 1);
-        genBuf[9] = ((topBuf[5] + topBuf[6] + 1) >> 1);
-        genBuf[10] = ((topBuf[6] + topBuf[7] + 1) >> 1);
-        genBuf[11] = ((leftBuf[6] + leftBuf[4] + ((leftBuf[5]) << 1) + 2) >> 2);
-        genBuf[12] = ((leftBuf[4] + leftBuf[2] + ((leftBuf[3]) << 1) + 2) >> 2);
-        genBuf[13] = ((leftBuf[2] + leftBuf[0] + ((leftBuf[1]) << 1) + 2) >> 2);
-        genBuf[14] = ((leftBuf[0] + topBuf[0] + ((tl) << 1) + 2) >> 2);
-        genBuf[15] = ((tl + topBuf[1] + ((topBuf[0]) << 1) + 2) >> 2);
-        genBuf[16] = ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
-        genBuf[17] = ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
-        genBuf[18] = ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
-        genBuf[19] = ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
-        genBuf[20] = ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
-        genBuf[21] = ((topBuf[5] + topBuf[7] + ((topBuf[6]) << 1) + 2) >> 2);
+        genBuf[0] = (byte) ((leftBuf[5] + leftBuf[3] + ((leftBuf[4]) << 1) + 2) >> 2);
+        genBuf[1] = (byte) ((leftBuf[3] + leftBuf[1] + ((leftBuf[2]) << 1) + 2) >> 2);
+        genBuf[2] = (byte) ((leftBuf[1] + tl + ((leftBuf[0]) << 1) + 2) >> 2);
+        genBuf[3] = (byte) ((tl + topBuf[0] + 1) >> 1);
+        genBuf[4] = (byte) ((topBuf[0] + topBuf[1] + 1) >> 1);
+        genBuf[5] = (byte) ((topBuf[1] + topBuf[2] + 1) >> 1);
+        genBuf[6] = (byte) ((topBuf[2] + topBuf[3] + 1) >> 1);
+        genBuf[7] = (byte) ((topBuf[3] + topBuf[4] + 1) >> 1);
+        genBuf[8] = (byte) ((topBuf[4] + topBuf[5] + 1) >> 1);
+        genBuf[9] = (byte) ((topBuf[5] + topBuf[6] + 1) >> 1);
+        genBuf[10] = (byte) ((topBuf[6] + topBuf[7] + 1) >> 1);
+        genBuf[11] = (byte) ((leftBuf[6] + leftBuf[4] + ((leftBuf[5]) << 1) + 2) >> 2);
+        genBuf[12] = (byte) ((leftBuf[4] + leftBuf[2] + ((leftBuf[3]) << 1) + 2) >> 2);
+        genBuf[13] = (byte) ((leftBuf[2] + leftBuf[0] + ((leftBuf[1]) << 1) + 2) >> 2);
+        genBuf[14] = (byte) ((leftBuf[0] + topBuf[0] + ((tl) << 1) + 2) >> 2);
+        genBuf[15] = (byte) ((tl + topBuf[1] + ((topBuf[0]) << 1) + 2) >> 2);
+        genBuf[16] = (byte) ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
+        genBuf[17] = (byte) ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
+        genBuf[18] = (byte) ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
+        genBuf[19] = (byte) ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
+        genBuf[20] = (byte) ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
+        genBuf[21] = (byte) ((topBuf[5] + topBuf[7] + ((topBuf[6]) << 1) + 2) >> 2);
 
         int off = (blkY << 4) + blkX;
-        copyAdd(genBuf, 3, residual, off);
-        copyAdd(genBuf, 14, residual, off + 16);
-        copyAdd(genBuf, 2, residual, off + 32);
-        copyAdd(genBuf, 13, residual, off + 48);
-        copyAdd(genBuf, 1, residual, off + 64);
-        copyAdd(genBuf, 12, residual, off + 80);
-        copyAdd(genBuf, 0, residual, off + 96);
-        copyAdd(genBuf, 11, residual, off + 112);
+        copyAdd(genBuf, 3, residual, off, 0, pixOut);
+        copyAdd(genBuf, 14, residual, off + 16, 8, pixOut);
+        copyAdd(genBuf, 2, residual, off + 32, 16, pixOut);
+        copyAdd(genBuf, 13, residual, off + 48, 24, pixOut);
+        copyAdd(genBuf, 1, residual, off + 64, 32, pixOut);
+        copyAdd(genBuf, 12, residual, off + 80, 40, pixOut);
+        copyAdd(genBuf, 0, residual, off + 96, 48, pixOut);
+        copyAdd(genBuf, 11, residual, off + 112, 56, pixOut);
     }
 
-    private static void predictHorizontalDown(int[] residual, boolean topRightAvailable, int[] topLeft, int[] leftRow,
-            int[] topLine, int mbOffX, int blkX, int blkY) {
+    private static void predictHorizontalDown(int[] residual, boolean topRightAvailable, byte[] topLeft,
+            byte[] leftRow, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(true, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
         interpolateLeft(true, topLeft, leftRow, blkY, leftBuf);
         int tl = interpolateTopLeft(true, true, topLeft, topLine, leftRow, mbOffX, blkX, blkY);
 
-        genBuf[0] = ((leftBuf[7] + leftBuf[6] + 1) >> 1);
-        genBuf[1] = ((leftBuf[5] + leftBuf[7] + (leftBuf[6] << 1) + 2) >> 2);
-        genBuf[2] = ((leftBuf[6] + leftBuf[5] + 1) >> 1);
-        genBuf[3] = ((leftBuf[4] + leftBuf[6] + ((leftBuf[5]) << 1) + 2) >> 2);
-        genBuf[4] = ((leftBuf[5] + leftBuf[4] + 1) >> 1);
-        genBuf[5] = ((leftBuf[3] + leftBuf[5] + ((leftBuf[4]) << 1) + 2) >> 2);
-        genBuf[6] = ((leftBuf[4] + leftBuf[3] + 1) >> 1);
-        genBuf[7] = ((leftBuf[2] + leftBuf[4] + ((leftBuf[3]) << 1) + 2) >> 2);
-        genBuf[8] = ((leftBuf[3] + leftBuf[2] + 1) >> 1);
-        genBuf[9] = ((leftBuf[1] + leftBuf[3] + ((leftBuf[2]) << 1) + 2) >> 2);
-        genBuf[10] = ((leftBuf[2] + leftBuf[1] + 1) >> 1);
-        genBuf[11] = ((leftBuf[0] + leftBuf[2] + ((leftBuf[1]) << 1) + 2) >> 2);
-        genBuf[12] = ((leftBuf[1] + leftBuf[0] + 1) >> 1);
-        genBuf[13] = ((tl + leftBuf[1] + ((leftBuf[0]) << 1) + 2) >> 2);
-        genBuf[14] = ((leftBuf[0] + tl + 1) >> 1);
-        genBuf[15] = ((leftBuf[0] + topBuf[0] + ((tl) << 1) + 2) >> 2);
-        genBuf[16] = ((tl + topBuf[1] + ((topBuf[0]) << 1) + 2) >> 2);
-        genBuf[17] = ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
-        genBuf[18] = ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
-        genBuf[19] = ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
-        genBuf[20] = ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
-        genBuf[21] = ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
+        genBuf[0] = (byte) ((leftBuf[7] + leftBuf[6] + 1) >> 1);
+        genBuf[1] = (byte) ((leftBuf[5] + leftBuf[7] + (leftBuf[6] << 1) + 2) >> 2);
+        genBuf[2] = (byte) ((leftBuf[6] + leftBuf[5] + 1) >> 1);
+        genBuf[3] = (byte) ((leftBuf[4] + leftBuf[6] + ((leftBuf[5]) << 1) + 2) >> 2);
+        genBuf[4] = (byte) ((leftBuf[5] + leftBuf[4] + 1) >> 1);
+        genBuf[5] = (byte) ((leftBuf[3] + leftBuf[5] + ((leftBuf[4]) << 1) + 2) >> 2);
+        genBuf[6] = (byte) ((leftBuf[4] + leftBuf[3] + 1) >> 1);
+        genBuf[7] = (byte) ((leftBuf[2] + leftBuf[4] + ((leftBuf[3]) << 1) + 2) >> 2);
+        genBuf[8] = (byte) ((leftBuf[3] + leftBuf[2] + 1) >> 1);
+        genBuf[9] = (byte) ((leftBuf[1] + leftBuf[3] + ((leftBuf[2]) << 1) + 2) >> 2);
+        genBuf[10] = (byte) ((leftBuf[2] + leftBuf[1] + 1) >> 1);
+        genBuf[11] = (byte) ((leftBuf[0] + leftBuf[2] + ((leftBuf[1]) << 1) + 2) >> 2);
+        genBuf[12] = (byte) ((leftBuf[1] + leftBuf[0] + 1) >> 1);
+        genBuf[13] = (byte) ((tl + leftBuf[1] + ((leftBuf[0]) << 1) + 2) >> 2);
+        genBuf[14] = (byte) ((leftBuf[0] + tl + 1) >> 1);
+        genBuf[15] = (byte) ((leftBuf[0] + topBuf[0] + ((tl) << 1) + 2) >> 2);
+        genBuf[16] = (byte) ((tl + topBuf[1] + ((topBuf[0]) << 1) + 2) >> 2);
+        genBuf[17] = (byte) ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
+        genBuf[18] = (byte) ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
+        genBuf[19] = (byte) ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
+        genBuf[20] = (byte) ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
+        genBuf[21] = (byte) ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
 
         int off = (blkY << 4) + blkX;
-        copyAdd(genBuf, 14, residual, off);
-        copyAdd(genBuf, 12, residual, off + 16);
-        copyAdd(genBuf, 10, residual, off + 32);
-        copyAdd(genBuf, 8, residual, off + 48);
-        copyAdd(genBuf, 6, residual, off + 64);
-        copyAdd(genBuf, 4, residual, off + 80);
-        copyAdd(genBuf, 2, residual, off + 96);
-        copyAdd(genBuf, 0, residual, off + 112);
+        copyAdd(genBuf, 14, residual, off, 0, pixOut);
+        copyAdd(genBuf, 12, residual, off + 16, 8, pixOut);
+        copyAdd(genBuf, 10, residual, off + 32, 16, pixOut);
+        copyAdd(genBuf, 8, residual, off + 48, 24, pixOut);
+        copyAdd(genBuf, 6, residual, off + 64, 32, pixOut);
+        copyAdd(genBuf, 4, residual, off + 80, 40, pixOut);
+        copyAdd(genBuf, 2, residual, off + 96, 48, pixOut);
+        copyAdd(genBuf, 0, residual, off + 112, 56, pixOut);
     }
 
     private static void predictVerticalLeft(int[] residual, boolean topLeftAvailable, boolean topRightAvailable,
-            int[] topLeft, int[] topLine, int mbOffX, int blkX, int blkY) {
+            byte[] topLeft, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
 
-        genBuf[0] = ((topBuf[0] + topBuf[1] + 1) >> 1);
-        genBuf[1] = ((topBuf[1] + topBuf[2] + 1) >> 1);
-        genBuf[2] = ((topBuf[2] + topBuf[3] + 1) >> 1);
-        genBuf[3] = ((topBuf[3] + topBuf[4] + 1) >> 1);
-        genBuf[4] = ((topBuf[4] + topBuf[5] + 1) >> 1);
-        genBuf[5] = ((topBuf[5] + topBuf[6] + 1) >> 1);
-        genBuf[6] = ((topBuf[6] + topBuf[7] + 1) >> 1);
-        genBuf[7] = ((topBuf[7] + topBuf[8] + 1) >> 1);
-        genBuf[8] = ((topBuf[8] + topBuf[9] + 1) >> 1);
-        genBuf[9] = ((topBuf[9] + topBuf[10] + 1) >> 1);
-        genBuf[10] = ((topBuf[10] + topBuf[11] + 1) >> 1);
-        genBuf[11] = ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
-        genBuf[12] = ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
-        genBuf[13] = ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
-        genBuf[14] = ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
-        genBuf[15] = ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
-        genBuf[16] = ((topBuf[5] + topBuf[7] + ((topBuf[6]) << 1) + 2) >> 2);
-        genBuf[17] = ((topBuf[6] + topBuf[8] + ((topBuf[7]) << 1) + 2) >> 2);
-        genBuf[18] = ((topBuf[7] + topBuf[9] + ((topBuf[8]) << 1) + 2) >> 2);
-        genBuf[19] = ((topBuf[8] + topBuf[10] + ((topBuf[9]) << 1) + 2) >> 2);
-        genBuf[20] = ((topBuf[9] + topBuf[11] + ((topBuf[10]) << 1) + 2) >> 2);
-        genBuf[21] = ((topBuf[10] + topBuf[12] + ((topBuf[11]) << 1) + 2) >> 2);
+        genBuf[0] = (byte) ((topBuf[0] + topBuf[1] + 1) >> 1);
+        genBuf[1] = (byte) ((topBuf[1] + topBuf[2] + 1) >> 1);
+        genBuf[2] = (byte) ((topBuf[2] + topBuf[3] + 1) >> 1);
+        genBuf[3] = (byte) ((topBuf[3] + topBuf[4] + 1) >> 1);
+        genBuf[4] = (byte) ((topBuf[4] + topBuf[5] + 1) >> 1);
+        genBuf[5] = (byte) ((topBuf[5] + topBuf[6] + 1) >> 1);
+        genBuf[6] = (byte) ((topBuf[6] + topBuf[7] + 1) >> 1);
+        genBuf[7] = (byte) ((topBuf[7] + topBuf[8] + 1) >> 1);
+        genBuf[8] = (byte) ((topBuf[8] + topBuf[9] + 1) >> 1);
+        genBuf[9] = (byte) ((topBuf[9] + topBuf[10] + 1) >> 1);
+        genBuf[10] = (byte) ((topBuf[10] + topBuf[11] + 1) >> 1);
+        genBuf[11] = (byte) ((topBuf[0] + topBuf[2] + ((topBuf[1]) << 1) + 2) >> 2);
+        genBuf[12] = (byte) ((topBuf[1] + topBuf[3] + ((topBuf[2]) << 1) + 2) >> 2);
+        genBuf[13] = (byte) ((topBuf[2] + topBuf[4] + ((topBuf[3]) << 1) + 2) >> 2);
+        genBuf[14] = (byte) ((topBuf[3] + topBuf[5] + ((topBuf[4]) << 1) + 2) >> 2);
+        genBuf[15] = (byte) ((topBuf[4] + topBuf[6] + ((topBuf[5]) << 1) + 2) >> 2);
+        genBuf[16] = (byte) ((topBuf[5] + topBuf[7] + ((topBuf[6]) << 1) + 2) >> 2);
+        genBuf[17] = (byte) ((topBuf[6] + topBuf[8] + ((topBuf[7]) << 1) + 2) >> 2);
+        genBuf[18] = (byte) ((topBuf[7] + topBuf[9] + ((topBuf[8]) << 1) + 2) >> 2);
+        genBuf[19] = (byte) ((topBuf[8] + topBuf[10] + ((topBuf[9]) << 1) + 2) >> 2);
+        genBuf[20] = (byte) ((topBuf[9] + topBuf[11] + ((topBuf[10]) << 1) + 2) >> 2);
+        genBuf[21] = (byte) ((topBuf[10] + topBuf[12] + ((topBuf[11]) << 1) + 2) >> 2);
 
         int off = (blkY << 4) + blkX;
-        copyAdd(genBuf, 0, residual, off);
-        copyAdd(genBuf, 11, residual, off + 16);
-        copyAdd(genBuf, 1, residual, off + 32);
-        copyAdd(genBuf, 12, residual, off + 48);
-        copyAdd(genBuf, 2, residual, off + 64);
-        copyAdd(genBuf, 13, residual, off + 80);
-        copyAdd(genBuf, 3, residual, off + 96);
-        copyAdd(genBuf, 14, residual, off + 112);
+        copyAdd(genBuf, 0, residual, off, 0, pixOut);
+        copyAdd(genBuf, 11, residual, off + 16, 8, pixOut);
+        copyAdd(genBuf, 1, residual, off + 32, 16, pixOut);
+        copyAdd(genBuf, 12, residual, off + 48, 24, pixOut);
+        copyAdd(genBuf, 2, residual, off + 64, 32, pixOut);
+        copyAdd(genBuf, 13, residual, off + 80, 40, pixOut);
+        copyAdd(genBuf, 3, residual, off + 96, 48, pixOut);
+        copyAdd(genBuf, 14, residual, off + 112, 56, pixOut);
     }
 
-    private static void predictHorizontalUp(int[] residual, boolean topLeftAvailable, int[] topLeft, int[] leftRow,
-            int mbOffX, int blkX, int blkY) {
+    private static void predictHorizontalUp(int[] residual, boolean topLeftAvailable, byte[] topLeft, byte[] leftRow,
+            int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateLeft(topLeftAvailable, topLeft, leftRow, blkY, leftBuf);
 
-        genBuf[0] = ((leftBuf[0] + leftBuf[1] + 1) >> 1);
-        genBuf[1] = ((leftBuf[2] + leftBuf[0] + ((leftBuf[1]) << 1) + 2) >> 2);
-        genBuf[2] = ((leftBuf[1] + leftBuf[2] + 1) >> 1);
-        genBuf[3] = ((leftBuf[3] + leftBuf[1] + ((leftBuf[2]) << 1) + 2) >> 2);
-        genBuf[4] = ((leftBuf[2] + leftBuf[3] + 1) >> 1);
-        genBuf[5] = ((leftBuf[4] + leftBuf[2] + ((leftBuf[3]) << 1) + 2) >> 2);
-        genBuf[6] = ((leftBuf[3] + leftBuf[4] + 1) >> 1);
-        genBuf[7] = ((leftBuf[5] + leftBuf[3] + ((leftBuf[4]) << 1) + 2) >> 2);
-        genBuf[8] = ((leftBuf[4] + leftBuf[5] + 1) >> 1);
-        genBuf[9] = ((leftBuf[6] + leftBuf[4] + ((leftBuf[5]) << 1) + 2) >> 2);
-        genBuf[10] = ((leftBuf[5] + leftBuf[6] + 1) >> 1);
-        genBuf[11] = ((leftBuf[7] + leftBuf[5] + ((leftBuf[6]) << 1) + 2) >> 2);
-        genBuf[12] = ((leftBuf[6] + leftBuf[7] + 1) >> 1);
-        genBuf[13] = ((leftBuf[6] + leftBuf[7] + ((leftBuf[7]) << 1) + 2) >> 2);
+        genBuf[0] = (byte) ((leftBuf[0] + leftBuf[1] + 1) >> 1);
+        genBuf[1] = (byte) ((leftBuf[2] + leftBuf[0] + ((leftBuf[1]) << 1) + 2) >> 2);
+        genBuf[2] = (byte) ((leftBuf[1] + leftBuf[2] + 1) >> 1);
+        genBuf[3] = (byte) ((leftBuf[3] + leftBuf[1] + ((leftBuf[2]) << 1) + 2) >> 2);
+        genBuf[4] = (byte) ((leftBuf[2] + leftBuf[3] + 1) >> 1);
+        genBuf[5] = (byte) ((leftBuf[4] + leftBuf[2] + ((leftBuf[3]) << 1) + 2) >> 2);
+        genBuf[6] = (byte) ((leftBuf[3] + leftBuf[4] + 1) >> 1);
+        genBuf[7] = (byte) ((leftBuf[5] + leftBuf[3] + ((leftBuf[4]) << 1) + 2) >> 2);
+        genBuf[8] = (byte) ((leftBuf[4] + leftBuf[5] + 1) >> 1);
+        genBuf[9] = (byte) ((leftBuf[6] + leftBuf[4] + ((leftBuf[5]) << 1) + 2) >> 2);
+        genBuf[10] = (byte) ((leftBuf[5] + leftBuf[6] + 1) >> 1);
+        genBuf[11] = (byte) ((leftBuf[7] + leftBuf[5] + ((leftBuf[6]) << 1) + 2) >> 2);
+        genBuf[12] = (byte) ((leftBuf[6] + leftBuf[7] + 1) >> 1);
+        genBuf[13] = (byte) ((leftBuf[6] + leftBuf[7] + ((leftBuf[7]) << 1) + 2) >> 2);
         genBuf[14] = genBuf[15] = genBuf[16] = genBuf[17] = genBuf[18] = genBuf[19] = genBuf[20] = genBuf[21] = leftBuf[7];
 
         int off = (blkY << 4) + blkX;
-        copyAdd(genBuf, 0, residual, off);
-        copyAdd(genBuf, 2, residual, off + 16);
-        copyAdd(genBuf, 4, residual, off + 32);
-        copyAdd(genBuf, 6, residual, off + 48);
-        copyAdd(genBuf, 8, residual, off + 64);
-        copyAdd(genBuf, 10, residual, off + 80);
-        copyAdd(genBuf, 12, residual, off + 96);
-        copyAdd(genBuf, 14, residual, off + 112);
+        copyAdd(genBuf, 0, residual, off, 0, pixOut);
+        copyAdd(genBuf, 2, residual, off + 16, 8, pixOut);
+        copyAdd(genBuf, 4, residual, off + 32, 16, pixOut);
+        copyAdd(genBuf, 6, residual, off + 48, 24, pixOut);
+        copyAdd(genBuf, 8, residual, off + 64, 32, pixOut);
+        copyAdd(genBuf, 10, residual, off + 80, 40, pixOut);
+        copyAdd(genBuf, 12, residual, off + 96, 28, pixOut);
+        copyAdd(genBuf, 14, residual, off + 112, 56, pixOut);
     }
 }

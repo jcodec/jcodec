@@ -1,16 +1,27 @@
 package org.jcodec.codecs.h264;
 
+import static org.jcodec.codecs.h264.H264Const.BLK_X;
 import static org.jcodec.codecs.h264.H264Const.PartPred.Bi;
 import static org.jcodec.codecs.h264.H264Const.PartPred.Direct;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L1;
 import static org.jcodec.codecs.h264.io.CAVLC.coeffToken;
 
+import java.util.Arrays;
+
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class H264Const {
 
     public static VLC[] coeffToken = new VLC[10];
@@ -457,6 +468,9 @@ public class H264Const {
 
     public static int[] BLK_X = new int[] { 0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12 };
     public static int[] BLK_Y = new int[] { 0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12 };
+    
+    public static int[] BLK_8x8_X = new int[] { 0, 8, 0, 8 };
+    public static int[] BLK_8x8_Y = new int[] { 0, 0, 8, 8 };
 
     public static int[] BLK_INV_MAP = { 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15 };
 
@@ -467,7 +481,7 @@ public class H264Const {
             21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 34, 35, 35, 36, 36, 37, 37, 37, 38, 38, 38,
             39, 39, 39, 39 };
 
-    public static final Picture NO_PIC = new Picture(0, 0, null, null);
+    public static final Picture8Bit NO_PIC = new Picture8Bit(0, 0, null, null);
     public static final int[] BLK_8x8_MB_OFF_LUMA = {0, 8, 128, 136};
     public static final int[] BLK_8x8_MB_OFF_CHROMA = {0, 4, 32, 36};
     public static final int[] BLK_4x4_MB_OFF_LUMA = {0, 4, 8, 12, 64, 68, 72, 76, 128, 132, 136, 140, 192, 196, 200, 204};
@@ -514,6 +528,57 @@ public class H264Const {
     public static int[] identityMapping4 = { 0, 1, 2, 3 };
     public static PartPred[] bPartPredModes = { Direct, L0, L1, Bi, L0, L0, L1, L1, Bi, Bi, L0, L1, Bi };
     public static int[] bSubMbTypes = { 0, 0, 0, 0, 1, 2, 1, 2, 1, 2, 3, 3, 3 };
+    
+    public static int[] LUMA_4x4_BLOCK_LUT = new int[256];
+    public static int[] LUMA_4x4_POS_LUT = new int[256];
+    public static int[] LUMA_8x8_BLOCK_LUT = new int[256];
+    public static int[] LUMA_8x8_POS_LUT = new int[256];
+    public static int[] CHROMA_BLOCK_LUT = new int[64];
+    public static int[] CHROMA_POS_LUT = new int[64];
+    
+    public static int[][] COMP_BLOCK_4x4_LUT = {LUMA_4x4_BLOCK_LUT, CHROMA_BLOCK_LUT, CHROMA_BLOCK_LUT};
+    public static int[][] COMP_POS_4x4_LUT = {LUMA_4x4_POS_LUT, CHROMA_POS_LUT, CHROMA_POS_LUT};
+    
+    public static int[][] COMP_BLOCK_8x8_LUT = {LUMA_4x4_BLOCK_LUT, CHROMA_BLOCK_LUT, CHROMA_BLOCK_LUT};
+    public static int[][] COMP_POS_8x8_LUT = {LUMA_4x4_POS_LUT, CHROMA_POS_LUT, CHROMA_POS_LUT};
+    static {
+        int[] tmp = new int[16];
+
+        for (int blk = 0; blk < 16; blk++) {
+            for (int i = 0; i < 16; i++) {
+                tmp[i] = i;
+            }
+            putBlk(tmp, BLK_X[blk], BLK_Y[blk], 4, 4, 16, LUMA_4x4_POS_LUT);
+            Arrays.fill(tmp, blk);
+            putBlk(tmp, BLK_X[blk], BLK_Y[blk], 4, 4, 16, LUMA_4x4_BLOCK_LUT);
+        }
+        for (int blk = 0; blk < 4; blk++) {
+            for (int i = 0; i < 16; i++) {
+                tmp[i] = i;
+            }
+            putBlk(tmp, BLK_X[blk], BLK_Y[blk], 4, 4, 8, CHROMA_POS_LUT);
+            Arrays.fill(tmp, blk);
+            putBlk(tmp, BLK_X[blk], BLK_Y[blk], 4, 4, 8, CHROMA_BLOCK_LUT);
+        }
+        tmp = new int[64];
+        for (int blk = 0; blk < 4; blk++) {
+            for (int i = 0; i < 64; i++) {
+                tmp[i] = i;
+            }
+            putBlk(tmp, BLK_8x8_X[blk], BLK_8x8_Y[blk], 8, 8, 16, LUMA_8x8_POS_LUT);
+            Arrays.fill(tmp, blk);
+            putBlk(tmp, BLK_8x8_X[blk], BLK_8x8_Y[blk], 8, 8, 16, LUMA_8x8_BLOCK_LUT);
+        }
+    }
+
+    private static void putBlk(int[] in, int blkX, int blkY, int blkW, int blkH, int stride, int[] out) {
+        for (int line = 0, srcOff = 0, dstOff = blkY * stride + blkX; line < blkH; line++) {
+            for(int i = 0; i < blkW; i++)
+                out[dstOff + i] = in[srcOff + i];
+            srcOff += blkW;
+            dstOff += stride;
+        }
+    }
     
     private static int[] inverse(int[] arr) {
         int[] inv = new int[arr.length];

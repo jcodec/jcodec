@@ -6,7 +6,7 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
-public class TestMPEGDecoder {
+public class MPEGDecoderTest {
 
     @Test
     public void testProbe() {

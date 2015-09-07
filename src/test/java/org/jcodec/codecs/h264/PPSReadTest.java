@@ -9,7 +9,7 @@ import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.common.NIOUtils;
 import org.junit.Test;
 
-public class TestPPS extends TestCase {
+public class PPSReadTest extends TestCase {
     private PictureParameterSet expected;
 
     @Override

@@ -30,8 +30,8 @@ public class Prediction {
         this.sh = sh;
     }
 
-    public void mergePrediction(int refIdxL0, int refIdxL1, PartPred predType, int comp, int[] pred0, int[] pred1,
-            int off, int stride, int blkW, int blkH, int[] out, Frame[][] refs, Frame thisFrame) {
+    public void mergePrediction(int refIdxL0, int refIdxL1, PartPred predType, int comp, byte[] pred0, byte[] pred1,
+            int off, int stride, int blkW, int blkH, byte[] out, Frame[][] refs, Frame thisFrame) {
 
         PictureParameterSet pps = sh.pps;
         if (sh.slice_type == SliceType.P) {
@@ -80,18 +80,18 @@ public class Prediction {
         }
     }
 
-    private void mergeAvg(int[] blk0, int[] blk1, int stride, PartPred p0, int off, int blkW, int blkH, int[] o) {
+    private void mergeAvg(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH, byte[] out) {
         if (p0 == Bi)
-            mergePrediction(blk0, blk1, stride, p0, off, blkW, blkH, o);
+            mergePrediction(blk0, blk1, stride, p0, off, blkW, blkH, out);
         else if (p0 == L0)
-            copyPrediction(blk0, stride, off, blkW, blkH, o);
+            copyPrediction(blk0, stride, off, blkW, blkH, out);
         else if (p0 == L1)
-            copyPrediction(blk1, stride, off, blkW, blkH, o);
+            copyPrediction(blk1, stride, off, blkW, blkH, out);
 
     }
 
-    private void mergeWeight(int[] blk0, int[] blk1, int stride, PartPred partPred, int off, int blkW, int blkH,
-            int logWD, int w0, int w1, int o0, int o1, int[] out) {
+    private void mergeWeight(byte[] blk0, byte[] blk1, int stride, PartPred partPred, int off, int blkW, int blkH,
+            int logWD, int w0, int w1, int o0, int o1, byte[] out) {
         if (partPred == L0) {
             weight(blk0, stride, off, blkW, blkH, logWD, w0, o0, out);
         } else if (partPred == L1) {
@@ -101,41 +101,42 @@ public class Prediction {
         }
     }
 
-    private void copyPrediction(int[] in, int stride, int off, int blkW, int blkH, int[] o) {
+    private void copyPrediction(byte[] in, int stride, int off, int blkW, int blkH, byte[] out) {
 
         for (int i = 0; i < blkH; i++, off += stride - blkW)
             for (int j = 0; j < blkW; j++, off++)
-                o[off] = in[off];
+                out[off] = in[off];
     }
 
-    private void mergePrediction(int[] blk0, int[] blk1, int stride, PartPred p0, int off, int blkW, int blkH, int[] o) {
+    private void mergePrediction(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
+            byte[] out) {
 
         for (int i = 0; i < blkH; i++, off += stride - blkW)
             for (int j = 0; j < blkW; j++, off++)
-                o[off] = (blk0[off] + blk1[off] + 1) >> 1;
+                out[off] = (byte) ((blk0[off] + blk1[off] + 1) >> 1);
     }
 
-    private void weightPrediction(int[] blk0, int[] blk1, int stride, int off, int blkW, int blkH, int logWD, int w0,
-            int w1, int o0, int o1, int[] out) {
+    private void weightPrediction(byte[] blk0, byte[] blk1, int stride, int off, int blkW, int blkH, int logWD, int w0,
+            int w1, int o0, int o1, byte[] out) {
         int dvadva = 1 << logWD;
         int sum = (o0 + o1 + 1) >> 1;
         int logWDCP1 = logWD + 1;
         for (int i = 0; i < blkH; i++, off += stride - blkW)
             for (int j = 0; j < blkW; j++, off++) {
-                out[off] = MathUtil.clip(((blk0[off] * w0 + blk1[off] * w1 + dvadva) >> logWDCP1) + sum, 0, 255);
+                out[off] = (byte) clip(((blk0[off] * w0 + blk1[off] * w1 + dvadva) >> logWDCP1) + sum, -128, 127);
             }
     }
 
-    private void weight(int[] blk0, int stride, int off, int blkW, int blkH, int logWD, int w, int o, int[] out) {
+    private void weight(byte[] blk0, int stride, int off, int blkW, int blkH, int logWD, int w, int o, byte[] out) {
         int dva = 1 << (logWD - 1);
         if (logWD >= 1) {
             for (int i = 0; i < blkH; i++, off += stride - blkW)
                 for (int j = 0; j < blkW; j++, off++)
-                    out[off] = MathUtil.clip(((blk0[off] * w + dva) >> logWD) + o, 0, 255);
+                    out[off] = (byte) clip(((blk0[off] * w + dva) >> logWD) + o, -128, 127);
         } else {
             for (int i = 0; i < blkH; i++, off += stride - blkW)
                 for (int j = 0; j < blkW; j++, off++)
-                    out[off] = MathUtil.clip(blk0[off] * w + o, 0, 255);
+                    out[off] = (byte) clip(blk0[off] * w + o, -128, 127);
         }
     }
 }
