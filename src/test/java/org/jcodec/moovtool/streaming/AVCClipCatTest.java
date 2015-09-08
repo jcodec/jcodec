@@ -40,10 +40,6 @@ public class AVCClipCatTest {
 
         MovieRange range = new MovieRange(vm, 0, vm.size());
         
-//        File f = new File("src/test/resources/AVCClipCatTest/cat_key_clip.mp4");
-
-//        Assert.assertArrayEquals(NIOUtils.toArray(NIOUtils.fetchFrom(f)), IOUtils.toByteArray(range));
-
         BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(
                 System.getProperty("user.home"), "Desktop/cat_key_clip.mp4")));
         IOUtils.copy(range, out);

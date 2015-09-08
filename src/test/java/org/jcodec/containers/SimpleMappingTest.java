@@ -11,9 +11,12 @@ import java.nio.channels.ReadableByteChannel;
 import org.jcodec.containers.mkv.MKVTestSuite;
 import org.jcodec.containers.mkv.MKVType;
 import org.jcodec.containers.mkv.util.EbmlUtil;
+import org.junit.Ignore;
+import org.junit.Test;
 
 public class SimpleMappingTest {
 
+    @Ignore @Test
     public void test() throws IOException {
         MKVTestSuite suite = MKVTestSuite.read();
         System.out.println("Scanning file: " + suite.test2.getAbsolutePath());

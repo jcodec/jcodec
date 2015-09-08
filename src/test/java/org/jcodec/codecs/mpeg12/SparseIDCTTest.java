@@ -13,7 +13,7 @@ public class SparseIDCTTest {
     @Test
     public void testSparseIDCT() {
         long count = 0, n = 1000000;
-        for (int i = 0; i < 1000000; i++)
+        for (int i = 0; i < 10000; i++)
             count += oneTest();
 
         System.out.println((100 * count) / (64 * n));

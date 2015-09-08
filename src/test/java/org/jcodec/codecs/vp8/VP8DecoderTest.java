@@ -11,6 +11,7 @@ import org.jcodec.containers.mkv.MKVMuxerTest;
 import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class VP8DecoderTest {
@@ -18,14 +19,14 @@ public class VP8DecoderTest {
     private ByteBuffer bb;
     private VP8Decoder dec;
 
-    @Test
+    @Ignore @Test
     public void testKF() throws Exception {
         dec.decode(bb.duplicate());
         
         ImageIO.write(AWTUtil.toBufferedImage(dec.getPicture()), "png", MKVMuxerTest.tildeExpand("~/decoded.png"));
     }
     
-    @Test
+    @Ignore @Test
     public void testKFToPicture() throws Exception {
         dec.decode(bb.duplicate());
         ImageIO.write(AWTUtil.toBufferedImage(dec.getPicture()), "png", MKVMuxerTest.tildeExpand("~/decoded.pic.png"));

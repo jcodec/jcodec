@@ -25,6 +25,7 @@ import org.jcodec.containers.mkv.demuxer.MKVDemuxer.AudioTrack;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class AudioTrackTest {
@@ -34,7 +35,7 @@ public class AudioTrackTest {
     private MKVDemuxer dem;
     private boolean showInterlacedBlocks = false;
 
-    @Test
+    @Ignore @Test
     public void testSoundSamples() throws Exception {
         AudioTrack audio = (AudioTrack) dem.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
@@ -46,7 +47,7 @@ public class AudioTrackTest {
         Assert.assertArrayEquals(audioSample.array(), bufferToArray(p.getData()));
     }
 
-    @Test
+    @Ignore @Test
     public void testTwoSoundSamples() throws Exception {
         AudioTrack audio = (AudioTrack) dem.getAudioTracks().get(0);
         Assert.assertNotNull(audio);

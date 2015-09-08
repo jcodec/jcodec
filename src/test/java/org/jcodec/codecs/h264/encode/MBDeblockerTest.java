@@ -3,7 +3,7 @@ package org.jcodec.codecs.h264.encode;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.TestUtil;
+import org.jcodec.Utils;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.model.Picture8Bit;
@@ -49,10 +49,10 @@ public class MBDeblockerTest {
         top.setType(MBType.P_16x16);
         MBDeblocker.calcStrengthForBlocks(cur, top, h, MBDeblocker.LOOKUP_IDX_P_H, MBDeblocker.LOOKUP_IDX_Q_H);
 
-        TestUtil.assertArrayEquals(new int[][] { { 4, 0, 0, 0 }, { 4, 2, 0, 0 }, { 4, 0, 0, 1 }, { 4, 0, 0, 0 } },
+        Utils.assertArrayEquals(new int[][] { { 4, 0, 0, 0 }, { 4, 2, 0, 0 }, { 4, 0, 0, 1 }, { 4, 0, 0, 0 } },
                 ArrayUtil.rotate(v));
 
-        TestUtil.assertArrayEquals(new int[][] { { 1, 0, 1, 2 }, { 2, 0, 1, 0 }, { 2, 0, 1, 0 }, { 0, 0, 1, 0 } }, h);
+        Utils.assertArrayEquals(new int[][] { { 1, 0, 1, 2 }, { 2, 0, 1, 0 }, { 2, 0, 1, 0 }, { 0, 0, 1, 0 } }, h);
     }
 
     @Test

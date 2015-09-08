@@ -13,11 +13,12 @@ import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class CuesFactoryTest {
 
-    @Test
+    @Ignore @Test
     public void testWithValidCues() throws IOException {
         FileInputStream inputStream = new FileInputStream(MKVMuxerTest.tildeExpand("~/References/mkv.test/test2.webm"));
         FileChannel iFS = inputStream.getChannel();
