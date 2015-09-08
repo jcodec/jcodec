@@ -201,7 +201,7 @@ public class H264Encoder implements VideoEncoder {
         SeqParameterSet sps = new SeqParameterSet();
         sps.pic_width_in_mbs_minus1 = ((sz.getWidth() + 15) >> 4) - 1;
         sps.pic_height_in_map_units_minus1 = ((sz.getHeight() + 15) >> 4) - 1;
-        sps.chroma_format_idc = ColorSpace.YUV420;
+        sps.chroma_format_idc = ColorSpace.YUV420J;
         sps.profile_idc = 66;
         sps.level_idc = 40;
         sps.frame_mbs_only_flag = true;

@@ -126,7 +126,7 @@ public class AVCClipTrack extends ClipTrack {
             H264Decoder decoder = new H264Decoder();
             decoder.addSps(avcC.getSpsList());
             decoder.addPps(avcC.getPpsList());
-            Picture buf = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV420);
+            Picture buf = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV420J);
             Picture dec = null;
             for (VirtualPacket virtualPacket : head) {
                 dec = decoder.decodeFrame(H264Utils.splitMOVPacket(virtualPacket.getData(), avcC), buf.getData());

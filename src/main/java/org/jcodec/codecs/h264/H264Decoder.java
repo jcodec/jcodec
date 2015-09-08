@@ -51,7 +51,6 @@ public class H264Decoder implements VideoDecoder {
     private POCManager poc;
     private boolean debug;
     private byte[][] byteBuffer;
-    int fn;
 
     public H264Decoder() {
         pictureBuffer = new ArrayList<Frame>();
@@ -77,14 +76,10 @@ public class H264Decoder implements VideoDecoder {
 
     @Override
     public Frame decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
-        System.out.println(fn);
-        ++fn;
         return new FrameDecoder().decodeFrame(H264Utils.splitFrame(data), buffer);
     }
 
     public Frame decodeFrame8Bit(List<ByteBuffer> nalUnits, byte[][] buffer) {
-        System.out.println(fn);
-        ++fn;
         return new FrameDecoder().decodeFrame(nalUnits, buffer);
     }
 
@@ -336,7 +331,7 @@ public class H264Decoder implements VideoDecoder {
             int h = height - (sps.frame_crop_bottom_offset << 1) - sY;
             crop = new Rect(sX, sY, w, h);
         }
-        return new Frame(width, height, buffer, ColorSpace.YUV420, crop, frameNum, frameType, mvs, refsUsed, POC);
+        return new Frame(width, height, buffer, ColorSpace.YUV420J, crop, frameNum, frameType, mvs, refsUsed, POC);
     }
 
     public void addSps(List<ByteBuffer> spsList) {
