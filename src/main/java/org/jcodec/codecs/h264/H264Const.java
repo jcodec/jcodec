@@ -539,8 +539,8 @@ public class H264Const {
     public static int[][] COMP_BLOCK_4x4_LUT = {LUMA_4x4_BLOCK_LUT, CHROMA_BLOCK_LUT, CHROMA_BLOCK_LUT};
     public static int[][] COMP_POS_4x4_LUT = {LUMA_4x4_POS_LUT, CHROMA_POS_LUT, CHROMA_POS_LUT};
     
-    public static int[][] COMP_BLOCK_8x8_LUT = {LUMA_4x4_BLOCK_LUT, CHROMA_BLOCK_LUT, CHROMA_BLOCK_LUT};
-    public static int[][] COMP_POS_8x8_LUT = {LUMA_4x4_POS_LUT, CHROMA_POS_LUT, CHROMA_POS_LUT};
+    public static int[][] COMP_BLOCK_8x8_LUT = {LUMA_8x8_BLOCK_LUT, CHROMA_BLOCK_LUT, CHROMA_BLOCK_LUT};
+    public static int[][] COMP_POS_8x8_LUT = {LUMA_8x8_POS_LUT, CHROMA_POS_LUT, CHROMA_POS_LUT};
     static {
         int[] tmp = new int[16];
 
