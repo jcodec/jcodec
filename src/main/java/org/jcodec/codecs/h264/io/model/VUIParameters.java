@@ -47,5 +47,79 @@ public class VUIParameters {
 
     public BitstreamRestriction bitstreamRestriction;
     public AspectRatio aspect_ratio;
-
+    public boolean isAspect_ratio_info_present_flag() {
+        return aspect_ratio_info_present_flag;
+    }
+    public int getSar_width() {
+        return sar_width;
+    }
+    public int getSar_height() {
+        return sar_height;
+    }
+    public boolean isOverscan_info_present_flag() {
+        return overscan_info_present_flag;
+    }
+    public boolean isOverscan_appropriate_flag() {
+        return overscan_appropriate_flag;
+    }
+    public boolean isVideo_signal_type_present_flag() {
+        return video_signal_type_present_flag;
+    }
+    public int getVideo_format() {
+        return video_format;
+    }
+    public boolean isVideo_full_range_flag() {
+        return video_full_range_flag;
+    }
+    public boolean isColour_description_present_flag() {
+        return colour_description_present_flag;
+    }
+    public int getColour_primaries() {
+        return colour_primaries;
+    }
+    public int getTransfer_characteristics() {
+        return transfer_characteristics;
+    }
+    public int getMatrix_coefficients() {
+        return matrix_coefficients;
+    }
+    public boolean isChroma_loc_info_present_flag() {
+        return chroma_loc_info_present_flag;
+    }
+    public int getChroma_sample_loc_type_top_field() {
+        return chroma_sample_loc_type_top_field;
+    }
+    public int getChroma_sample_loc_type_bottom_field() {
+        return chroma_sample_loc_type_bottom_field;
+    }
+    public boolean isTiming_info_present_flag() {
+        return timing_info_present_flag;
+    }
+    public int getNum_units_in_tick() {
+        return num_units_in_tick;
+    }
+    public int getTime_scale() {
+        return time_scale;
+    }
+    public boolean isFixed_frame_rate_flag() {
+        return fixed_frame_rate_flag;
+    }
+    public boolean isLow_delay_hrd_flag() {
+        return low_delay_hrd_flag;
+    }
+    public boolean isPic_struct_present_flag() {
+        return pic_struct_present_flag;
+    }
+    public HRDParameters getNalHRDParams() {
+        return nalHRDParams;
+    }
+    public HRDParameters getVclHRDParams() {
+        return vclHRDParams;
+    }
+    public BitstreamRestriction getBitstreamRestriction() {
+        return bitstreamRestriction;
+    }
+    public AspectRatio getAspect_ratio() {
+        return aspect_ratio;
+    }
 }

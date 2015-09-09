@@ -1,12 +1,14 @@
 package org.jcodec.api.specific;
 
-import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
+import java.io.IOException;
 
 import org.jcodec.api.FrameGrab.MediaInfo;
+import org.jcodec.api.JCodecException;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
@@ -21,13 +23,14 @@ import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
- * 
- * High level frame grabber helper.
+ *
+ * Frame grabber adapter for AVC in MP4 combination
  * 
  * @author The JCodec project
  * 
  */
-public class AVCMP4Adaptor implements ContainerAdaptor {
+public class AVCMP4Adaptor extends CodecContainerAdaptor {
+    private ThreadLocal<int[][]> buffers = new ThreadLocal<int[][]>();
 
     private H264Decoder decoder;
     private SampleEntry[] ses;
@@ -35,11 +38,13 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     private int curENo;
     private Size size;
 
-    public AVCMP4Adaptor(SampleEntry[] ses) {
-        this.ses = ses;
+    public AVCMP4Adaptor(SeekableDemuxerTrack track) throws IOException, JCodecException {
+        super(track);
+        this.ses = ((AbstractMP4DemuxerTrack) track()).getSampleEntries();
         this.curENo = -1;
 
         calcBufferSize();
+        decodeLeadingFrames();
     }
 
     private void calcBufferSize() {
@@ -61,14 +66,22 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         size = new Size(w << 4, h << 4);
     }
 
-    public AVCMP4Adaptor(AbstractMP4DemuxerTrack vt) {
-        this(((AbstractMP4DemuxerTrack) vt).getSampleEntries());
-    }
+    public Picture nextFrame() throws IOException {
+        for (;;) {
+            Packet packet = track().nextFrame();
+            if (packet == null)
+                return null;
 
-    public Picture decodeFrame(Packet packet, int[][] data) {
+            Picture frame = decodeFrame(packet);
+            if (frame != null)
+                return frame;
+        }
+    }
+    
+    public Picture decodeFrame(Packet packet) {
         updateState(packet);
 
-        Picture pic = ((H264Decoder) decoder).decodeFrame(H264Utils.splitMOVPacket(packet.getData(), avcCBox), data);
+        Picture pic = decoder.decodeFrame(H264Utils.splitMOVPacket(packet.getData(), avcCBox), getBuffer());
         PixelAspectExt pasp = Box.findFirst(ses[curENo], PixelAspectExt.class, "pasp");
 
         if (pasp != null) {
@@ -90,18 +103,90 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     }
 
     @Override
-    public boolean canSeek(Packet pkt) {
-        updateState(pkt);
-        return H264Utils.idrSlice(splitMOVPacket(pkt.getData(), avcCBox));
+    public MediaInfo getMediaInfo() {
+        return new MediaInfo(size);
+    }
+
+    private int[][] getBuffer() {
+        int[][] buf = buffers.get();
+        if (buf == null) {
+            buf = Picture.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
+            buffers.set(buf);
+        }
+        return buf;
     }
 
     @Override
-    public int[][] allocatePicture() {
-        return Picture.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
+    public void seek(double second) throws IOException {
+        track().seek(second);
+        decodeLeadingFrames();
     }
 
-	@Override
-	public MediaInfo getMediaInfo() {
-		return new MediaInfo(size);
-	}
+    @Override
+    public void gotoFrame(int frameNumber) throws IOException {
+        track().gotoFrame(frameNumber);
+        decodeLeadingFrames();
+    }
+
+    @Override
+    public void seekToKeyFrame(double second) throws IOException {
+        track().seek(second);
+        goToPrevKeyframe();
+    }
+
+    @Override
+    public void gotoToKeyFrame(int frameNumber) throws IOException {
+        track().gotoFrame(frameNumber);
+        goToPrevKeyframe();
+    }
+
+    private void goToPrevKeyframe() throws IOException {
+        track().gotoFrame(detectKeyFrame((int) track().getCurFrame()));
+    }
+
+    private int detectKeyFrame(int start) throws IOException {
+        int[] seekFrames = track().getMeta().getSeekFrames();
+        if (seekFrames == null)
+            return start;
+        int prev = seekFrames[0];
+        for (int i = 1; i < seekFrames.length; i++) {
+            if (seekFrames[i] > start)
+                break;
+            prev = seekFrames[i];
+        }
+        return prev;
+    }
+
+    private void decodeLeadingFrames() throws IOException {
+        SeekableDemuxerTrack sdt = track();
+
+        int curFrame = (int) sdt.getCurFrame();
+        int keyFrame = detectKeyFrame(curFrame);
+        if (keyFrame != curFrame)
+            sdt.gotoFrame(keyFrame);
+
+        Packet frame = sdt.nextFrame();
+
+        while (frame.getFrameNo() < curFrame) {
+            decodeFrame(frame);
+            frame = sdt.nextFrame();
+        }
+        sdt.gotoFrame(curFrame);
+    }
+
+//    private CodecContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack, Packet frame) throws JCodecException {
+//        if (videoTrack instanceof AbstractMP4DemuxerTrack) {
+//            SampleEntry se = ((AbstractMP4DemuxerTrack) videoTrack).getSampleEntries()[((MP4Packet) frame).getEntryNo()];
+//            VideoDecoder byFourcc = byFourcc(se.getHeader().getFourcc());
+//            if (byFourcc instanceof H264Decoder)
+//                return new AVCMP4Adaptor(((AbstractMP4DemuxerTrack) videoTrack).getSampleEntries());
+//        } else if (videoTrack instanceof FLVDemuxerTrack) {
+//            FLVDemuxerTrack demuxerTrack = (FLVDemuxerTrack) videoTrack;
+//            Codec codec = demuxerTrack.getCodec();
+//            if (codec == Codec.H264)
+//                return new AVCFLVAdaptor();
+//        }
+//
+//        throw new UnsupportedFormatException("Codec is not supported");
+//    }
 }

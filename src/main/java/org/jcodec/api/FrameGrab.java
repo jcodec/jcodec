@@ -3,26 +3,29 @@ package org.jcodec.api;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.jcodec.api.specific.AVCFLVAdaptor;
 import org.jcodec.api.specific.AVCMP4Adaptor;
-import org.jcodec.api.specific.ContainerAdaptor;
-import org.jcodec.codecs.h264.H264Decoder;
-import org.jcodec.codecs.mpeg12.MPEGDecoder;
-import org.jcodec.codecs.prores.ProresDecoder;
+import org.jcodec.api.specific.AVCMTSAdapter;
+import org.jcodec.api.specific.CodecContainerAdaptor;
+import org.jcodec.api.specific.IFrameOnlyAdapter;
+import org.jcodec.api.specific.MPEGMP4Adapter;
+import org.jcodec.api.specific.MPEGMPSAdapter;
+import org.jcodec.api.specific.MPEGMTSAdapter;
+import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.Format;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.flv.FLVTrackDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
 /**
@@ -35,34 +38,70 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
  * Supports going to random points inside of a movie ( seeking ) by frame number
  * of by second.
  * 
- * NOTE: Supports only AVC ( H.264 ) in MP4 ( ISO BMF, QuickTime ) at this
- * point.
+ * NOTE: Supports only AVC ( H.264 ) in MP4 ( ISO BMF, QuickTime ) or FLV at
+ * this point.
  * 
  * @author The JCodec project
  * 
  */
 public class FrameGrab {
 
-    private DemuxerTrack videoTrack;
-    private ContainerAdaptor decoder;
-    private ThreadLocal<int[][]> buffers = new ThreadLocal<int[][]>();
-    
+    private CodecContainerAdaptor adapter;
+
     public static class MediaInfo {
-    	private Size dim;
+        private Size dim;
 
-		public MediaInfo(Size dim) {
-			super();
-			this.dim = dim;
-		}
+        public MediaInfo(Size dim) {
+            super();
+            this.dim = dim;
+        }
 
-		public Size getDim() {
-			return dim;
-		}
+        public Size getDim() {
+            return dim;
+        }
 
-		public void setDim(Size dim) {
-			this.dim = dim;
-		}
+        public void setDim(Size dim) {
+            this.dim = dim;
+        }
     }
+
+    private static Map<Format, Map<Codec, Class<? extends CodecContainerAdaptor>>> supported = new HashMap<Format, Map<Codec, Class<? extends CodecContainerAdaptor>>>() {
+        {
+            put(Format.MOV, new HashMap<Codec, Class<? extends CodecContainerAdaptor>>() {
+                {
+                    put(Codec.H264, AVCMP4Adaptor.class);
+                    put(Codec.MPEG2, MPEGMP4Adapter.class);
+                    put(Codec.PRORES, IFrameOnlyAdapter.class);
+                    put(Codec.J2K, IFrameOnlyAdapter.class);
+                    put(Codec.JPEG, IFrameOnlyAdapter.class);
+                }
+            });
+            put(Format.MPEG_TS, new HashMap<Codec, Class<? extends CodecContainerAdaptor>>() {
+                {
+                    put(Codec.H264, AVCMTSAdapter.class);
+                    put(Codec.MPEG2, MPEGMTSAdapter.class);
+                }
+            });
+            put(Format.MPEG_PS, new HashMap<Codec, Class<? extends CodecContainerAdaptor>>() {
+                {
+                    put(Codec.MPEG2, MPEGMPSAdapter.class);
+                }
+            });
+            put(Format.FLV, new HashMap<Codec, Class<? extends CodecContainerAdaptor>>() {
+                {
+                    put(Codec.H264, AVCFLVAdaptor.class);
+                }
+            });
+            put(Format.AVI, new HashMap<Codec, Class<? extends CodecContainerAdaptor>>() {
+                {
+                }
+            });
+            put(Format.MKV, new HashMap<Codec, Class<? extends CodecContainerAdaptor>>() {
+                {
+                }
+            });
+        }
+    };
 
     public FrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
@@ -70,31 +109,40 @@ public class FrameGrab {
         header.flip();
         Format detectFormat = JCodecUtil.detectFormat(header);
 
+        DemuxerTrack videoTrack;
         switch (detectFormat) {
         case MOV:
-            MP4Demuxer d1 = new MP4Demuxer(in);
-            videoTrack = d1.getVideoTrack();
+            videoTrack = new MP4Demuxer(in).getVideoTrack();
+            break;
+        case FLV:
+            videoTrack = new FLVTrackDemuxer(in).getVideoTrack();
             break;
         case MPEG_PS:
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");
         case MPEG_TS:
             throw new UnsupportedFormatException("MPEG TS is temporarily unsupported.");
+        case AVI:
+            throw new UnsupportedFormatException("AVI is temporarily unsupported.");
+        case MKV:
+            throw new UnsupportedFormatException("MKV is temporarily unsupported.");
         default:
             throw new UnsupportedFormatException("Container format is not supported by JCodec");
         }
-        decodeLeadingFrames();
+        Packet frame = videoTrack.nextFrame();
+        Codec codec = JCodecUtil.detectDecoder(frame.getData());
+        Map<Codec, Class<? extends CodecContainerAdaptor>> map = supported.get(detectFormat);
+        if (map != null) {
+            Class<? extends CodecContainerAdaptor> adapterClass = map.get(codec);
+            try {
+                adapter = adapterClass.getConstructor(DemuxerTrack.class).newInstance(videoTrack);
+            } catch(Exception e) { 
+                throw new JCodecException("Could not instantiate adapter", e);
+            }
+        }
     }
 
-    public FrameGrab(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
-        this.videoTrack = videoTrack;
-        this.decoder = decoder;
-    }
-
-    private SeekableDemuxerTrack sdt() throws JCodecException {
-        if (!(videoTrack instanceof SeekableDemuxerTrack))
-            throw new JCodecException("Not a seekable track");
-
-        return (SeekableDemuxerTrack) videoTrack;
+    public FrameGrab(CodecContainerAdaptor decoder) {
+        this.adapter = decoder;
     }
 
     /**
@@ -112,8 +160,7 @@ public class FrameGrab {
      * @throws JCodecException
      */
     public FrameGrab seekToSecondPrecise(double second) throws IOException, JCodecException {
-        sdt().seek(second);
-        decodeLeadingFrames();
+        adapter.seek(second);
         return this;
     }
 
@@ -132,8 +179,7 @@ public class FrameGrab {
      * @throws JCodecException
      */
     public FrameGrab seekToFramePrecise(int frameNumber) throws IOException, JCodecException {
-        sdt().gotoFrame(frameNumber);
-        decodeLeadingFrames();
+        adapter.gotoFrame(frameNumber);
         return this;
     }
 
@@ -152,8 +198,7 @@ public class FrameGrab {
      * @throws JCodecException
      */
     public FrameGrab seekToSecondSloppy(double second) throws IOException, JCodecException {
-        sdt().seek(second);
-        goToPrevKeyframe();
+        adapter.seekToKeyFrame(second);
         return this;
     }
 
@@ -172,78 +217,9 @@ public class FrameGrab {
      * @throws JCodecException
      */
     public FrameGrab seekToFrameSloppy(int frameNumber) throws IOException, JCodecException {
-        sdt().gotoFrame(frameNumber);
-        goToPrevKeyframe();
+        adapter.gotoToKeyFrame(frameNumber);
         return this;
     }
-
-    private void goToPrevKeyframe() throws IOException, JCodecException {
-        sdt().gotoFrame(detectKeyFrame((int) sdt().getCurFrame()));
-    }
-
-    private void decodeLeadingFrames() throws IOException, JCodecException {
-        SeekableDemuxerTrack sdt = sdt();
-
-        int curFrame = (int) sdt.getCurFrame();
-        int keyFrame = detectKeyFrame(curFrame);
-        sdt.gotoFrame(keyFrame);
-
-        Packet frame = sdt.nextFrame();
-        decoder = detectDecoder(sdt, frame);
-
-        while (frame.getFrameNo() < curFrame) {
-            decoder.decodeFrame(frame, getBuffer());
-            frame = sdt.nextFrame();
-        }
-        sdt.gotoFrame(curFrame);
-    }
-
-    private int[][] getBuffer() {
-        int[][] buf = buffers.get();
-        if (buf == null) {
-            buf = decoder.allocatePicture();
-            buffers.set(buf);
-        }
-        return buf;
-    }
-
-    private int detectKeyFrame(int start) throws IOException {
-        int[] seekFrames = videoTrack.getMeta().getSeekFrames();
-        if (seekFrames == null)
-            return start;
-        int prev = seekFrames[0];
-        for (int i = 1; i < seekFrames.length; i++) {
-            if (seekFrames[i] > start)
-                break;
-            prev = seekFrames[i];
-        }
-        return prev;
-    }
-
-    private ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack, Packet frame) throws JCodecException {
-        if (videoTrack instanceof AbstractMP4DemuxerTrack) {
-            SampleEntry se = ((AbstractMP4DemuxerTrack) videoTrack).getSampleEntries()[((MP4Packet) frame).getEntryNo()];
-            VideoDecoder byFourcc = byFourcc(se.getHeader().getFourcc());
-            if (byFourcc instanceof H264Decoder)
-                return new AVCMP4Adaptor(((AbstractMP4DemuxerTrack) videoTrack).getSampleEntries());
-        }
-
-        throw new UnsupportedFormatException("Codec is not supported");
-    }
-
-    private VideoDecoder byFourcc(String fourcc) {
-        if (fourcc.equals("avc1")) {
-            return new H264Decoder();
-        } else if (fourcc.equals("m1v1") || fourcc.equals("m2v1")) {
-            return new MPEGDecoder();
-        } else if (fourcc.equals("apco") || fourcc.equals("apcs") || fourcc.equals("apcn") || fourcc.equals("apch")
-                || fourcc.equals("ap4h")) {
-            return new ProresDecoder();
-        }
-        return null;
-    }
-
-    
 
     /**
      * Get frame at current position in JCodec native image
@@ -252,14 +228,8 @@ public class FrameGrab {
      * @throws IOException
      */
     public Picture getNativeFrame() throws IOException {
-        Packet frame = videoTrack.nextFrame();
-        if (frame == null)
-            return null;
-        
-        return decoder.decodeFrame(frame, getBuffer());
+        return adapter.nextFrame();
     }
-
-    
 
     /**
      * Get frame at a specified second as JCodec image
@@ -293,10 +263,6 @@ public class FrameGrab {
         return new FrameGrab(file).seekToSecondPrecise(second).getNativeFrame();
     }
 
-    
-
-    
-
     /**
      * Get frame at a specified frame number as JCodec image
      * 
@@ -329,8 +295,6 @@ public class FrameGrab {
         return new FrameGrab(file).seekToFramePrecise(frameNumber).getNativeFrame();
     }
 
-    
-
     /**
      * Get a specified frame by number from an already open demuxer track
      * 
@@ -341,9 +305,9 @@ public class FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture getNativeFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+    public static Picture getNativeFrame(SeekableDemuxerTrack vt, CodecContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
-        return new FrameGrab(vt, decoder).seekToFramePrecise(frameNumber).getNativeFrame();
+        return new FrameGrab(decoder).seekToFramePrecise(frameNumber).getNativeFrame();
     }
 
     /**
@@ -356,9 +320,9 @@ public class FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture getNativeFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+    public static Picture getNativeFrame(SeekableDemuxerTrack vt, CodecContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
-        return new FrameGrab(vt, decoder).seekToSecondPrecise(second).getNativeFrame();
+        return new FrameGrab(decoder).seekToSecondPrecise(second).getNativeFrame();
     }
 
     /**
@@ -372,9 +336,9 @@ public class FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture getNativeFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+    public static Picture getNativeFrameSloppy(SeekableDemuxerTrack vt, CodecContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
-        return new FrameGrab(vt, decoder).seekToFrameSloppy(frameNumber).getNativeFrame();
+        return new FrameGrab(decoder).seekToFrameSloppy(frameNumber).getNativeFrame();
     }
 
     /**
@@ -388,16 +352,17 @@ public class FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture getNativeFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+    public static Picture getNativeFrameSloppy(SeekableDemuxerTrack vt, CodecContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
-        return new FrameGrab(vt, decoder).seekToSecondSloppy(second).getNativeFrame();
+        return new FrameGrab(decoder).seekToSecondSloppy(second).getNativeFrame();
     }
-    
+
     /**
      * Gets info about the media
+     * 
      * @return
      */
     public MediaInfo getMediaInfo() {
-    	return decoder.getMediaInfo();
+        return adapter.getMediaInfo();
     }
 }

@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import org.jcodec.api.JCodecException;
 import org.jcodec.api.UnsupportedFormatException;
-import org.jcodec.api.specific.ContainerAdaptor;
+import org.jcodec.api.specific.CodecContainerAdaptor;
 import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
@@ -37,7 +37,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
         super(in);
     }
 
-    public FrameGrab(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
+    public FrameGrab(SeekableDemuxerTrack videoTrack, CodecContainerAdaptor decoder) {
         super(videoTrack, decoder);
     }
 
@@ -126,7 +126,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static BufferedImage getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+    public static BufferedImage getFrame(SeekableDemuxerTrack vt, CodecContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
         return ((FrameGrab) new FrameGrab(vt, decoder).seekToFramePrecise(frameNumber)).getFrame();
     }
@@ -141,7 +141,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static BufferedImage getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+    public static BufferedImage getFrame(SeekableDemuxerTrack vt, CodecContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
         return ((FrameGrab) new FrameGrab(vt, decoder).seekToSecondPrecise(second)).getFrame();
     }
@@ -157,7 +157,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+    public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, CodecContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
         return ((FrameGrab) new FrameGrab(vt, decoder).seekToFrameSloppy(frameNumber)).getFrame();
     }
@@ -173,7 +173,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+    public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, CodecContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
         return ((FrameGrab) new FrameGrab(vt, decoder).seekToSecondSloppy(second)).getFrame();
     }

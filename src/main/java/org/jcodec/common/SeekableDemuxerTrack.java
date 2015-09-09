@@ -1,5 +1,7 @@
 package org.jcodec.common;
 
+import java.io.IOException;
+
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -10,11 +12,11 @@ package org.jcodec.common;
  */
 public interface SeekableDemuxerTrack extends DemuxerTrack {
 
-    boolean gotoFrame(long i);
+    boolean gotoFrame(long i) throws IOException;
     
     boolean gotoSyncFrame(long i);
 
     long getCurFrame();
 
-    void seek(double second);
+    void seek(double second) throws IOException;
 }

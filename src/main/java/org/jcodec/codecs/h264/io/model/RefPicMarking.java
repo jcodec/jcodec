@@ -1,5 +1,7 @@
 package org.jcodec.codecs.h264.io.model;
 
+import org.jcodec.common.tools.ToJSON;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -47,5 +49,10 @@ public class RefPicMarking {
 
     public Instruction[] getInstructions() {
         return instructions;
+    }
+    
+    @Override
+    public String toString() {
+        return ToJSON.toJSON(this);
     }
 }

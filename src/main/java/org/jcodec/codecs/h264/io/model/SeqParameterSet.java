@@ -16,7 +16,6 @@ import static org.jcodec.common.model.ColorSpace.YUV444;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.codecs.h264.decode.CAVLCReader;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
@@ -419,5 +418,145 @@ public class SeqParameterSet {
         write(buf);
         buf.flip();
         return read(buf);
+    }
+
+    public int getPic_order_cnt_type() {
+        return pic_order_cnt_type;
+    }
+
+    public boolean isField_pic_flag() {
+        return field_pic_flag;
+    }
+
+    public boolean isDelta_pic_order_always_zero_flag() {
+        return delta_pic_order_always_zero_flag;
+    }
+
+    public boolean isMb_adaptive_frame_field_flag() {
+        return mb_adaptive_frame_field_flag;
+    }
+
+    public boolean isDirect_8x8_inference_flag() {
+        return direct_8x8_inference_flag;
+    }
+
+    public ColorSpace getChroma_format_idc() {
+        return chroma_format_idc;
+    }
+
+    public int getLog2_max_frame_num_minus4() {
+        return log2_max_frame_num_minus4;
+    }
+
+    public int getLog2_max_pic_order_cnt_lsb_minus4() {
+        return log2_max_pic_order_cnt_lsb_minus4;
+    }
+
+    public int getPic_height_in_map_units_minus1() {
+        return pic_height_in_map_units_minus1;
+    }
+
+    public int getPic_width_in_mbs_minus1() {
+        return pic_width_in_mbs_minus1;
+    }
+
+    public int getBit_depth_luma_minus8() {
+        return bit_depth_luma_minus8;
+    }
+
+    public int getBit_depth_chroma_minus8() {
+        return bit_depth_chroma_minus8;
+    }
+
+    public boolean isQpprime_y_zero_transform_bypass_flag() {
+        return qpprime_y_zero_transform_bypass_flag;
+    }
+
+    public int getProfile_idc() {
+        return profile_idc;
+    }
+
+    public boolean isConstraint_set_0_flag() {
+        return constraint_set_0_flag;
+    }
+
+    public boolean isConstraint_set_1_flag() {
+        return constraint_set_1_flag;
+    }
+
+    public boolean isConstraint_set_2_flag() {
+        return constraint_set_2_flag;
+    }
+
+    public boolean isConstraint_set_3_flag() {
+        return constraint_set_3_flag;
+    }
+
+    public int getLevel_idc() {
+        return level_idc;
+    }
+
+    public int getSeq_parameter_set_id() {
+        return seq_parameter_set_id;
+    }
+
+    public boolean isResidual_color_transform_flag() {
+        return residual_color_transform_flag;
+    }
+
+    public int getOffset_for_non_ref_pic() {
+        return offset_for_non_ref_pic;
+    }
+
+    public int getOffset_for_top_to_bottom_field() {
+        return offset_for_top_to_bottom_field;
+    }
+
+    public int getNum_ref_frames() {
+        return num_ref_frames;
+    }
+
+    public boolean isGaps_in_frame_num_value_allowed_flag() {
+        return gaps_in_frame_num_value_allowed_flag;
+    }
+
+    public boolean isFrame_mbs_only_flag() {
+        return frame_mbs_only_flag;
+    }
+
+    public boolean isFrame_cropping_flag() {
+        return frame_cropping_flag;
+    }
+
+    public int getFrame_crop_left_offset() {
+        return frame_crop_left_offset;
+    }
+
+    public int getFrame_crop_right_offset() {
+        return frame_crop_right_offset;
+    }
+
+    public int getFrame_crop_top_offset() {
+        return frame_crop_top_offset;
+    }
+
+    public int getFrame_crop_bottom_offset() {
+        return frame_crop_bottom_offset;
+    }
+
+    public int[] getOffsetForRefFrame() {
+        return offsetForRefFrame;
+    }
+
+    public VUIParameters getVuiParams() {
+        return vuiParams;
+    }
+
+    public ScalingMatrix getScalingMatrix() {
+        return scalingMatrix;
+    }
+
+    public int getNum_ref_frames_in_pic_order_cnt_cycle() {
+        return num_ref_frames_in_pic_order_cnt_cycle;
     }
 }

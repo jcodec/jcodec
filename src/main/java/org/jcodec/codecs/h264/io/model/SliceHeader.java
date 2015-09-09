@@ -1,5 +1,7 @@
 package org.jcodec.codecs.h264.io.model;
 
+import org.jcodec.common.tools.ToJSON;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -66,4 +68,9 @@ public class SliceHeader {
     public int slice_beta_offset_div2;
 
     public int slice_group_change_cycle;
+    
+    @Override
+    public String toString() {
+        return ToJSON.toJSON(this);
+    }
 }

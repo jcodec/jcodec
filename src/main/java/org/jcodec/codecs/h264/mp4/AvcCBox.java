@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -125,6 +126,19 @@ public class AvcCBox extends Box {
 
     public int getNalLengthSize() {
         return nalLengthSize;
+    }
+    
+    public void setNalLengthSize(int nalLengthSize) {
+        this.nalLengthSize = nalLengthSize;
+    }
+
+    public AvcCBox copy() {
+        ByteBuffer buf = ByteBuffer.allocate(2048);
+        doWrite(buf);
+        buf.flip();
+        AvcCBox result = new AvcCBox();
+        result.parse(buf);
+        return result;
     }
     
 

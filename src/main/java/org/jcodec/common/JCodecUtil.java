@@ -2,8 +2,12 @@ package org.jcodec.common;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.RunnableFuture;
@@ -17,6 +21,7 @@ import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
+import org.jcodec.containers.flv.FLVDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
@@ -32,44 +37,74 @@ import org.jcodec.scale.Transform;
  */
 public class JCodecUtil {
 
-    private static final VideoDecoder[] knownDecoders = new VideoDecoder[] { new ProresDecoder(), new MPEGDecoder(),
-            new H264Decoder() };
+    public static Map<Format, Class<?>> formatMapping = new HashMap<Format, Class<?>>() {
+        {
+            put(Format.MOV, MP4Demuxer.class);
+            put(Format.MPEG_PS, MPSDemuxer.class);
+            put(Format.MPEG_TS, MTSDemuxer.class);
+            put(Format.FLV, FLVDemuxer.class);
+        }
+    };
 
-    public enum Format {
-        MOV, MPEG_PS, MPEG_TS
-    }
+    public static Map<Codec, Class<? extends VideoDecoder>> codecMapping = new HashMap<Codec, Class<? extends VideoDecoder>>() {
+        {
+            put(Codec.PRORES, ProresDecoder.class);
+            put(Codec.MPEG2, MPEGDecoder.class);
+            put(Codec.H264, H264Decoder.class);
+        }
+    };
 
     public static Format detectFormat(File f) throws IOException {
         return detectFormat(NIOUtils.fetchFrom(f, 200 * 1024));
     }
-    
+
     public static Format detectFormat(ReadableByteChannel f) throws IOException {
         return detectFormat(NIOUtils.fetchFrom(f, 200 * 1024));
     }
 
     public static Format detectFormat(ByteBuffer b) {
-        int movScore = MP4Demuxer.probe(b.duplicate());
-        int psScore = MPSDemuxer.probe(b.duplicate());
-        int tsScore = MTSDemuxer.probe(b.duplicate());
-
-        if (movScore == 0 && psScore == 0 && tsScore == 0)
-            return null;
-
-        return movScore > psScore ? (movScore > tsScore ? Format.MOV : Format.MPEG_TS)
-                : (psScore > tsScore ? Format.MPEG_PS : Format.MPEG_TS);
+        int max = 0;
+        Format format = null;
+        for (Entry<Format, Class<?>> entry : formatMapping.entrySet()) {
+            try {
+                int score = (Integer) entry.getValue().getMethod("probe", ByteBuffer.class)
+                        .invoke(entry.getValue(), b.duplicate());
+                if (score > max && score > 0) {
+                    max = score;
+                    format = entry.getKey();
+                }
+            } catch (NoSuchMethodException e) {
+            } catch (SecurityException e) {
+            } catch (IllegalAccessException e) {
+            } catch (IllegalArgumentException e) {
+            } catch (InvocationTargetException e) {
+            }
+        }
+        return format;
     }
 
-    public static VideoDecoder detectDecoder(ByteBuffer b) {
+    public static Codec detectDecoder(ByteBuffer b) {
         int maxProbe = 0;
-        VideoDecoder selected = null;
-        for (VideoDecoder vd : knownDecoders) {
-            int probe = vd.probe(b);
+        Codec selected = null;
+        for (Entry<Codec, Class<? extends VideoDecoder>> entry : codecMapping.entrySet()) {
+            VideoDecoder decoder = instantiateCodec(entry);
+            int probe = decoder.probe(b);
             if (probe > maxProbe) {
-                selected = vd;
+                selected = entry.getKey();
                 maxProbe = probe;
             }
         }
         return selected;
+    }
+
+    private static VideoDecoder instantiateCodec(Entry<Codec, Class<? extends VideoDecoder>> entry) {
+        try {
+            return entry.getValue().newInstance();
+        } catch (InstantiationException e) {
+            return null;
+        } catch (IllegalAccessException e) {
+            return null;
+        }
     }
 
     public static VideoDecoder getVideoDecoder(String fourcc) {
@@ -104,14 +139,14 @@ public class JCodecUtil {
         buffer.put((byte) ((value >> 7) | 0x80));
         buffer.put((byte) (value & 0x7F));
     }
-    
+
     public static void writeBER32Var(ByteBuffer bb, int value) {
         for (int i = 0, bits = MathUtil.log2(value); i < 4 && bits > 0; i++) {
             bits -= 7;
             int out = value >> bits;
-            if(bits > 0)
+            if (bits > 0)
                 out |= 0x80;
-            bb.put((byte)out);
+            bb.put((byte) out);
         }
     }
 
@@ -148,7 +183,7 @@ public class JCodecUtil {
     }
 
     public static String removeExtension(String name) {
-        if(name == null)
+        if (name == null)
             return null;
         return name.replaceAll("\\.[^\\.]+$", "");
     }

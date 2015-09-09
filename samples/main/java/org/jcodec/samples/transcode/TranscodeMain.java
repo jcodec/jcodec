@@ -36,6 +36,8 @@ import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
+import org.jcodec.codecs.h264.io.model.NALUnit;
+import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
@@ -55,7 +57,7 @@ import org.jcodec.common.DemuxerTrackMeta.Type;
 import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IOUtils;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.JCodecUtil.Format;
+import org.jcodec.common.Format;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
@@ -887,7 +889,7 @@ public class TranscodeMain {
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
             long start = System.currentTimeMillis();
-            for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
+            for (int i = 0; i < 50 && (inFrame = inTrack.nextFrame()) != null; i++) {
                 Picture dec = decoder.decodeFrame(inFrame.getData(), target1.getData());
                 if (target2 == null) {
                     target2 = Picture.create(dec.getWidth(), dec.getHeight(), encoder.getSupportedColorSpaces()[0]);
@@ -900,17 +902,18 @@ public class TranscodeMain {
                     int mbHeight = (dec.getHeight() + 15) >> 4;
                     result.limit(((H264FixedRateControl) rc).calcFrameSize(mbWidth * mbHeight));
                 }
-                spsList.clear();
-                ppsList.clear();
                 H264Utils.wipePS(result, spsList, ppsList);
+                NALUnit nu = NALUnit.read(NIOUtils.from(result.duplicate(), 4));
                 H264Utils.encodeMOVPacket(result);
-                outTrack.addFrame(new MP4Packet((MP4Packet) inFrame, result));
+                MP4Packet pkt = new MP4Packet((MP4Packet) inFrame, result);
+                pkt.setKeyFrame(nu.type == NALUnitType.IDR_SLICE);
+                outTrack.addFrame(pkt);
                 if (i % 100 == 0) {
                     long elapse = System.currentTimeMillis() - start;
                     System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
                 }
             }
-            outTrack.addSampleEntry(H264Utils.createMOVSampleEntry(spsList, ppsList, 4));
+            outTrack.addSampleEntry(H264Utils.createMOVSampleEntry(spsList.subList(0, 1), ppsList.subList(0, 1), 4));
 
             muxer.writeHeader();
         } finally {

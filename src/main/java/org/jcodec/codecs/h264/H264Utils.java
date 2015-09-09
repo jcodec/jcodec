@@ -170,6 +170,18 @@ public class H264Utils {
         return val;
     }
 
+    /**
+     * Splits MP4-delimited AVC frame, each ByteBuffer from a returned list
+     * contains a NAL unit. The resulting list of NAL units map to original
+     * ByteBuffer (buf), no additional memory is allocated.
+     * 
+     * @param buf
+     *            A buffer containing MP4 AVC packet
+     * @param avcC
+     *            An AvcC box containing the number of bytes per size integer
+     * @return a list of NAL units recovered from this packets, each element
+     *         maps to the original ByteBuffer
+     */
     public static List<ByteBuffer> splitMOVPacket(ByteBuffer buf, AvcCBox avcC) {
         List<ByteBuffer> result = new ArrayList<ByteBuffer>();
         int nls = avcC.getNalLengthSize();
@@ -183,6 +195,54 @@ public class H264Utils {
         return result;
     }
 
+    /**
+     * Joins a list of NALUnits into MP4 packet using NAL size field as specified in AvcC box 
+     * 
+     * @param nalUnits List of original NAL units
+     * @param avcC AvcC box that holds 
+     * @param out
+     * @return
+     */
+    public static ByteBuffer joinMOVPacket(List<ByteBuffer> nalUnits, AvcCBox avcC, ByteBuffer out) {
+        ByteBuffer result = out.duplicate();
+        int nls = avcC.getNalLengthSize();
+        for (ByteBuffer byteBuffer : nalUnits) {
+            writeLen(result, nls, byteBuffer.remaining());
+            result.put(byteBuffer.duplicate());
+        }
+        result.flip();
+        return result;
+    }
+
+    public static int calcMOVPacketSize(List<ByteBuffer> combined, AvcCBox avcC) {
+        int nls = avcC.getNalLengthSize();
+        int totalSize = 0;
+        for (ByteBuffer byteBuffer : combined) {
+            totalSize += byteBuffer.remaining() + nls;
+        }
+        return totalSize;
+    }
+
+    private static void writeLen(ByteBuffer dup, int nls, int len) {
+        switch (nls) {
+        case 1:
+            dup.put((byte)len);
+            break;
+        case 2:
+            dup.putShort((short)len);
+            break;
+        case 3:
+            dup.putShort((short)(len >> 8));
+            dup.put((byte)len);
+            break;
+        case 4:
+            dup.putInt(len);
+            break;
+        default:
+            throw new IllegalArgumentException("NAL Unit length size can not be " + nls);
+        }
+    }
+    
     private static int readLen(ByteBuffer dup, int nls) {
         switch (nls) {
         case 1:
@@ -284,11 +344,11 @@ public class H264Utils {
             NALUnit nu = NALUnit.read(buf);
             if (nu.type == NALUnitType.PPS) {
                 if (ppsList != null)
-                    ppsList.add(buf);
+                    ppsList.add(NIOUtils.duplicate(buf));
                 in.position(dup.position());
             } else if (nu.type == NALUnitType.SPS) {
                 if (spsList != null)
-                    spsList.add(buf);
+                    spsList.add(NIOUtils.duplicate(buf));
                 in.position(dup.position());
             } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE)
                 break;
@@ -335,6 +395,8 @@ public class H264Utils {
     }
 
     public static SampleEntry createMOVSampleEntry(List<ByteBuffer> spsList, List<ByteBuffer> ppsList, int nalLengthSize) {
+        if(spsList.isEmpty() || ppsList.isEmpty() || nalLengthSize < 1 || nalLengthSize > 4) 
+            throw new IllegalArgumentException("spsList is empty of ppsList is empty or invalid nalLengthSize");
         SeqParameterSet sps = readSPS(NIOUtils.duplicate(spsList.get(0)));
         AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, spsList, ppsList);
 
@@ -519,9 +581,9 @@ public class H264Utils {
             this.pps = readPPS(ppsList);
         }
 
-        protected abstract void tweak(SliceHeader sh);
+        protected abstract void tweak(SliceHeader sh, NALUnit nu);
 
-        public SliceHeader run(ByteBuffer is, ByteBuffer os, NALUnit nu) {
+        public SliceHeader run(ByteBuffer is, ByteBuffer os, NALUnit nuOld, NALUnit nuNew) {
             ByteBuffer nal = os.duplicate();
 
             H264Utils.unescapeNAL(is);
@@ -531,10 +593,10 @@ public class H264Utils {
 
             PictureParameterSet pp = findPPS(pps, sh.pic_parameter_set_id);
 
-            return part2(is, os, nu, findSPS(sps, pp.pic_parameter_set_id), pp, nal, reader, sh);
+            return part2(is, os, nuOld, nuNew, findSPS(sps, pp.pic_parameter_set_id), pp, nal, reader, sh);
         }
 
-        public SliceHeader run(ByteBuffer is, ByteBuffer os, NALUnit nu, SeqParameterSet sps, PictureParameterSet pps) {
+        public SliceHeader run(ByteBuffer is, ByteBuffer os, NALUnit nuOld, NALUnit nuNew, SeqParameterSet sps, PictureParameterSet pps) {
             ByteBuffer nal = os.duplicate();
 
             H264Utils.unescapeNAL(is);
@@ -542,17 +604,17 @@ public class H264Utils {
             BitReader reader = new BitReader(is);
             SliceHeader sh = shr.readPart1(reader);
 
-            return part2(is, os, nu, sps, pps, nal, reader, sh);
+            return part2(is, os, nuOld, nuNew, sps, pps, nal, reader, sh);
         }
 
-        private SliceHeader part2(ByteBuffer is, ByteBuffer os, NALUnit nu, SeqParameterSet sps,
+        private SliceHeader part2(ByteBuffer is, ByteBuffer os, NALUnit nuOld, NALUnit nuNew, SeqParameterSet sps,
                 PictureParameterSet pps, ByteBuffer nal, BitReader reader, SliceHeader sh) {
             BitWriter writer = new BitWriter(os);
-            shr.readPart2(sh, nu, sps, pps, reader);
+            shr.readPart2(sh, nuOld, sps, pps, reader);
 
-            tweak(sh);
+            tweak(sh, nuNew);
 
-            shw.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
+            shw.write(sh, nuNew.type == NALUnitType.IDR_SLICE, nuNew.nal_ref_idc, writer);
 
             if (pps.entropy_coding_mode_flag)
                 copyDataCABAC(is, os, reader, writer);
