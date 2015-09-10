@@ -14,13 +14,14 @@ import java.util.Map;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.tools.ToJSON;
-import org.jcodec.containers.flv.FLVPacket.AacAudioTagHeader;
-import org.jcodec.containers.flv.FLVPacket.AudioTagHeader;
-import org.jcodec.containers.flv.FLVPacket.AvcVideoTagHeader;
-import org.jcodec.containers.flv.FLVPacket.TagHeader;
-import org.jcodec.containers.flv.FLVPacket.Type;
-import org.jcodec.containers.flv.FLVPacket.VideoTagHeader;
+import org.jcodec.containers.flv.FLVTag.AacAudioTagHeader;
+import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
+import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
+import org.jcodec.containers.flv.FLVTag.TagHeader;
+import org.jcodec.containers.flv.FLVTag.Type;
+import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -31,16 +32,15 @@ import org.jcodec.containers.flv.FLVPacket.VideoTagHeader;
  * @author Stan Vitvitskyy
  * 
  */
-public class FLVDemuxer {
+public class FLVReader {
 
     // Read buffer, 1M
     private static final int READ_BUFFER_SIZE = 0x100000;
-    private LinkedList<FLVPacket> prevPkt = new LinkedList<FLVPacket>();
+    private LinkedList<FLVTag> prevPkt = new LinkedList<FLVTag>();
     private int frameNo;
     private byte[] metadata;
     private ByteBuffer readBuf;
-    private ReadableByteChannel ch;
-    private long globalPos;
+    private SeekableByteChannel ch;
 
     private static boolean platformBigEndian = ByteBuffer.allocate(0).order() == ByteOrder.BIG_ENDIAN;
 
@@ -52,25 +52,29 @@ public class FLVDemuxer {
 
     public static int[] sampleRates = new int[] { 5500, 11000, 22000, 44100 };
 
-    public FLVDemuxer(ReadableByteChannel ch) throws IOException {
+    public FLVReader(SeekableByteChannel ch) throws IOException {
         this.ch = ch;
         readBuf = ByteBuffer.allocate(READ_BUFFER_SIZE);
         readBuf.order(ByteOrder.BIG_ENDIAN);
-        int read = ch.read(readBuf);
-        globalPos += read == -1 ? 0 : read;
-        readBuf.flip();
+        
+        initialRead(ch);
 
         readHeader(readBuf);
     }
+    
+    private void initialRead(ReadableByteChannel ch) throws IOException {
+        readBuf.clear();
+        int read = ch.read(readBuf);
+        readBuf.flip();
+    }
 
-    public FLVPacket getPacket() throws IOException {
-        FLVPacket pkt = readPacket(readBuf);
+    public FLVTag readNextPacket() throws IOException {
+        FLVTag pkt = parsePacket(readBuf);
         if (pkt == null) {
             relocateBytes(readBuf);
             int read = ch.read(readBuf);
-            globalPos += read == -1 ? 0 : read;
             readBuf.flip();
-            pkt = readPacket(readBuf);
+            pkt = parsePacket(readBuf);
         }
 
         // Empty the queue
@@ -79,6 +83,34 @@ public class FLVDemuxer {
         }
 
         return pkt;
+    }
+    
+    public FLVTag readPrevPacket() throws IOException {
+        int startOfLastPacket = readBuf.getInt();
+        readBuf.position(readBuf.position() - 4);
+        if (readBuf.position() > startOfLastPacket) {
+            // The previous frame is still in the buffer, so no need to fetch
+            readBuf.position(readBuf.position() - startOfLastPacket);
+            return parsePacket(readBuf);
+        } else {
+            // Now we need to fetch the new buffer, because we are unsure of the
+            // access pattern we are going to fetch only half of the buffer from
+            // the left side and the other half from the right side of the
+            // current position
+            long oldPos = ch.position() - readBuf.remaining();
+            if (oldPos <= 9) {
+                // We are at the first frame, there's nowhere to seek
+                return null;
+            }
+            long newPos = Math.max(0, oldPos - readBuf.capacity() / 2);
+
+            ch.position(newPos);
+            readBuf.clear();
+            ch.read(readBuf);
+            readBuf.flip();
+            readBuf.position((int) (oldPos - newPos));
+            return readPrevPacket();
+        }
     }
 
     public byte[] getMetadata() {
@@ -94,14 +126,14 @@ public class FLVDemuxer {
         readBuf.position(rem);
     }
 
-    private FLVPacket readPacket(ByteBuffer readBuf) {
+    public FLVTag parsePacket(ByteBuffer readBuf) throws IOException {
         for (;;) {
             if (readBuf.remaining() < 15) {
                 return null;
             }
 
             int pos = readBuf.position();
-            long packetPos = globalPos - pos;
+            long packetPos = ch.position() - readBuf.remaining();
             int startOfLastPacket = readBuf.getInt();
             int packetType = readBuf.get() & 0xff;
             int payloadSize = ((readBuf.getShort() & 0xffff) << 8) | (readBuf.get() & 0xff);
@@ -130,20 +162,20 @@ public class FLVDemuxer {
             TagHeader tagHeader;
             if (packetType == 0x8) {
                 type = Type.AUDIO;
-                tagHeader = parseAudioTagHeader(payload);
+                tagHeader = parseAudioTagHeader(payload.duplicate());
             } else if (packetType == 0x9) {
                 type = Type.VIDEO;
-                tagHeader = parseVideoTagHeader(payload);
+                tagHeader = parseVideoTagHeader(payload.duplicate());
             } else {
                 System.out.println("NON AV packet");
                 continue;
             }
             boolean keyFrame = packetType == 0x8 || ((VideoTagHeader) tagHeader).getFrameType() == 1;
 
-            FLVPacket pkt = new FLVPacket(type, payload, timestamp, 0, frameNo++, true, metadata, packetPos, tagHeader);
+            FLVTag pkt = new FLVTag(type, metadata, packetPos, tagHeader, timestamp, 0, payload, keyFrame, frameNo++);
 
-            for (ListIterator<FLVPacket> it = prevPkt.listIterator(prevPkt.size()); it.hasPrevious();) {
-                FLVPacket flvPacket = it.previous();
+            for (ListIterator<FLVTag> it = prevPkt.listIterator(prevPkt.size()); it.hasPrevious();) {
+                FLVTag flvPacket = it.previous();
                 if (flvPacket.getType() == pkt.getType())
                     flvPacket.setDuration(timestamp - flvPacket.getPts());
             }
@@ -154,14 +186,14 @@ public class FLVDemuxer {
         }
     }
 
-    private static void readHeader(ByteBuffer readBuf) throws IOException {
+    public static void readHeader(ByteBuffer readBuf) {
         if (readBuf.get() != 'F' || readBuf.get() != 'L' || readBuf.get() != 'V' || readBuf.get() != 1
                 || (readBuf.get() & 0x5) == 0 || readBuf.getInt() != 9) {
-            throw new IOException("Invalid FLV file");
+            throw new RuntimeException("Invalid FLV file");
         }
     }
 
-    private static FLVMetadata parseMetadata(ByteBuffer bb) {
+    public static FLVMetadata parseMetadata(ByteBuffer bb) {
         if ("onMetaData".equals(readAMFData(bb, -1)))
             return new FLVMetadata((Map<String, Object>) readAMFData(bb, -1));
         return null;
@@ -277,5 +309,41 @@ public class FLVDemuxer {
         }
 
         return new AudioTagHeader(codec, audioFormat);
+    }
+
+    public static int probe(ByteBuffer buf) {
+        try {
+            readHeader(buf);
+            return 100;
+        } catch (RuntimeException e) {
+            return 0;
+        }
+    }
+
+    public void reset() throws IOException {
+        prevPkt.clear();
+        initialRead(ch);
+    }
+
+    public void reposition() throws IOException {
+        reset();
+
+        positionAtPacket(readBuf);
+    }
+
+    public static void positionAtPacket(ByteBuffer readBuf) {
+        // We will be using the fact that <payload size> = <start of last
+        // packet> - 15
+        ByteBuffer dup = readBuf.duplicate();
+        int payloadSize = 0;
+        NIOUtils.skip(dup, 5);
+        while (dup.hasRemaining()) {
+            payloadSize = ((payloadSize & 0xffff) << 8) | (dup.get() & 0xff);
+            int pointerPos = dup.position() + 7 + payloadSize;
+            if (pointerPos < dup.limit() - 4 && dup.getInt(pointerPos) - payloadSize == 11) {
+                readBuf.position(dup.position() - 8);
+                return;
+            }
+        }
     }
 }

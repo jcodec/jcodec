@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
-import org.jcodec.containers.flv.FLVPacket.Type;
+import org.jcodec.containers.flv.FLVTag.Type;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -16,7 +16,7 @@ import org.jcodec.containers.flv.FLVPacket.Type;
  * @author Stan Vitvitskyy
  * 
  */
-public class FLVMuxer {
+public class FLVWriter {
     // Write buffer, 1M
     private static final int WRITE_BUFFER_SIZE = 0x100000;
 
@@ -25,7 +25,7 @@ public class FLVMuxer {
     private ByteBuffer writeBuf;
     private byte[] prevMetadata;
 
-    public FLVMuxer(SeekableByteChannel out) {
+    public FLVWriter(SeekableByteChannel out) {
         this.out = out;
         writeBuf = ByteBuffer.allocate(WRITE_BUFFER_SIZE);
         writeHeader(writeBuf);
@@ -37,7 +37,7 @@ public class FLVMuxer {
      * @param pkt
      * @throws IOException
      */
-    public void addPacket(FLVPacket pkt) throws IOException {
+    public void addPacket(FLVTag pkt) throws IOException {
         if (!writePacket(writeBuf, pkt)) {
             writeBuf.flip();
             startOfLastPacket -= out.write(writeBuf);
@@ -57,7 +57,7 @@ public class FLVMuxer {
         out.write(writeBuf);
     }
 
-    private boolean writePacket(ByteBuffer writeBuf, FLVPacket pkt) {
+    private boolean writePacket(ByteBuffer writeBuf, FLVTag pkt) {
         for (;;) {
             int pktType = pkt.getType() == Type.VIDEO ? 0x9 : 0x8;
             int dataLen = pkt.getData().remaining();

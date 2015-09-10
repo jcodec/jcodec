@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
-import org.jcodec.common.model.Packet;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,24 +14,34 @@ import org.jcodec.common.model.Packet;
  * @author Stan Vitvitskyy
  * 
  */
-public class FLVPacket extends Packet {
+public class FLVTag {
     private Type type;
     private byte[] metadata;
     private long position;
     private TagHeader tagHeader;
-
-    public static enum Type {
-        VIDEO, AUDIO
-    };
-
-    public FLVPacket(Type type, ByteBuffer data, long pts, long duration, long frameNo, boolean keyFrame,
-            byte[] metadata, long position, TagHeader tagHeader) {
-        super(data, pts, 1000, duration, frameNo, keyFrame, null);
+    private int pts;
+    private int duration;
+    private ByteBuffer data;
+    private boolean keyFrame;
+    private long frameNo;
+    
+    
+    public FLVTag(Type type, byte[] metadata, long position, TagHeader tagHeader, int pts, int duration,
+            ByteBuffer data, boolean keyFrame, long frameNo) {
         this.type = type;
         this.metadata = metadata;
         this.position = position;
         this.tagHeader = tagHeader;
+        this.pts = pts;
+        this.duration = duration;
+        this.data = data;
+        this.keyFrame = keyFrame;
+        this.frameNo = frameNo;
     }
+
+    public static enum Type {
+        VIDEO, AUDIO, SCRIPT
+    };
 
     public Type getType() {
         return type;
@@ -48,6 +57,38 @@ public class FLVPacket extends Packet {
 
     public TagHeader getTagHeader() {
         return tagHeader;
+    }
+    
+    public int getPts() {
+        return pts;
+    }
+    
+    public void setPts(int pts) {
+        this.pts = pts;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
+    public int getDuration() {
+        return duration;
+    }
+
+    public ByteBuffer getData() {
+        return data;
+    }
+
+    public double getPtsD() {
+        return ((double) pts) / 1000;
+    }
+
+    public boolean isKeyFrame() {
+        return keyFrame;
+    }
+
+    public long getFrameNo() {
+        return frameNo;
     }
 
     public static class TagHeader {
