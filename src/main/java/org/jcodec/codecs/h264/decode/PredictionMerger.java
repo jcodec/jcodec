@@ -22,16 +22,10 @@ import org.jcodec.common.tools.MathUtil;
  * @author The JCodec project
  * 
  */
-public class Prediction {
+public class PredictionMerger {
 
-    private SliceHeader sh;
-
-    public Prediction(SliceHeader sh) {
-        this.sh = sh;
-    }
-
-    public void mergePrediction(int refIdxL0, int refIdxL1, PartPred predType, int comp, byte[] pred0, byte[] pred1,
-            int off, int stride, int blkW, int blkH, byte[] out, Frame[][] refs, Frame thisFrame) {
+    public static void mergePrediction(SliceHeader sh, int refIdxL0, int refIdxL1, PartPred predType, int comp, byte[] pred0, byte[] pred1,
+            int off, int stride, int blkW, int blkH, byte[] out, Frame[][] refs, int thisPoc) {
 
         PictureParameterSet pps = sh.pps;
         if (sh.slice_type == SliceType.P) {
@@ -62,7 +56,7 @@ public class Prediction {
                 mergeWeight(pred0, pred1, stride, predType, off, blkW, blkH, comp == 0 ? w.luma_log2_weight_denom
                         : w.chroma_log2_weight_denom, w0, w1, o0, o1, out);
             } else {
-                int tb = MathUtil.clip(thisFrame.getPOC() - refs[0][refIdxL0].getPOC(), -128, 127);
+                int tb = MathUtil.clip(thisPoc - refs[0][refIdxL0].getPOC(), -128, 127);
                 int td = MathUtil.clip(refs[1][refIdxL1].getPOC() - refs[0][refIdxL0].getPOC(), -128, 127);
                 int w0 = 32, w1 = 32;
                 if (td != 0 && refs[0][refIdxL0].isShortTerm() && refs[1][refIdxL1].isShortTerm()) {
@@ -80,7 +74,7 @@ public class Prediction {
         }
     }
 
-    private void mergeAvg(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH, byte[] out) {
+    private static void mergeAvg(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH, byte[] out) {
         if (p0 == Bi)
             mergePrediction(blk0, blk1, stride, p0, off, blkW, blkH, out);
         else if (p0 == L0)
@@ -90,7 +84,7 @@ public class Prediction {
 
     }
 
-    private void mergeWeight(byte[] blk0, byte[] blk1, int stride, PartPred partPred, int off, int blkW, int blkH,
+    private static void mergeWeight(byte[] blk0, byte[] blk1, int stride, PartPred partPred, int off, int blkW, int blkH,
             int logWD, int w0, int w1, int o0, int o1, byte[] out) {
         if (partPred == L0) {
             weight(blk0, stride, off, blkW, blkH, logWD, w0, o0, out);
@@ -101,14 +95,14 @@ public class Prediction {
         }
     }
 
-    private void copyPrediction(byte[] in, int stride, int off, int blkW, int blkH, byte[] out) {
+    private static void copyPrediction(byte[] in, int stride, int off, int blkW, int blkH, byte[] out) {
 
         for (int i = 0; i < blkH; i++, off += stride - blkW)
             for (int j = 0; j < blkW; j++, off++)
                 out[off] = in[off];
     }
 
-    private void mergePrediction(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
+    private static void mergePrediction(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
             byte[] out) {
 
         for (int i = 0; i < blkH; i++, off += stride - blkW)
@@ -116,7 +110,7 @@ public class Prediction {
                 out[off] = (byte) ((blk0[off] + blk1[off] + 1) >> 1);
     }
 
-    private void weightPrediction(byte[] blk0, byte[] blk1, int stride, int off, int blkW, int blkH, int logWD, int w0,
+    private static void weightPrediction(byte[] blk0, byte[] blk1, int stride, int off, int blkW, int blkH, int logWD, int w0,
             int w1, int o0, int o1, byte[] out) {
         int dvadva = 1 << logWD;
         int sum = (o0 + o1 + 1) >> 1;
@@ -127,7 +121,7 @@ public class Prediction {
             }
     }
 
-    private void weight(byte[] blk0, int stride, int off, int blkW, int blkH, int logWD, int w, int o, byte[] out) {
+    private static void weight(byte[] blk0, int stride, int off, int blkW, int blkH, int logWD, int w, int o, byte[] out) {
         int dva = 1 << (logWD - 1);
         if (logWD >= 1) {
             for (int i = 0; i < blkH; i++, off += stride - blkW)

@@ -221,7 +221,7 @@ public class MP4Util {
             ChunkOffsets64Box co64 = trak.getCo64();
             sizeHint += co64 != null ? (co64.getChunkOffsets().length << 3) : 0;
             SampleSizesBox stsz = trak.getStsz();
-            sizeHint += stsz != null ? (stsz.getDefaultSize() == 0 ? 0 : (stsz.getCount() << 2)) : 0;
+            sizeHint += stsz != null ? (stsz.getDefaultSize() != 0 ? 0 : (stsz.getCount() << 2)) : 0;
             TimeToSampleBox stts = trak.getStts();
             sizeHint += stts != null ? (stts.getEntries().length << 3) : 0;
             SyncSamplesBox stss = trak.getStss();

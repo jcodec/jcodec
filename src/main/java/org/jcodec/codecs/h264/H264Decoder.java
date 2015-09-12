@@ -8,6 +8,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.codecs.h264.decode.DeblockerInput;
+import org.jcodec.codecs.h264.decode.DecoderState;
+import org.jcodec.codecs.h264.decode.MBlockDecoderUtils;
 import org.jcodec.codecs.h264.decode.SliceDecoder;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.decode.deblock.DeblockingFilter;
@@ -91,7 +94,8 @@ public class H264Decoder implements VideoDecoder {
         private SliceHeader firstSliceHeader;
         private NALUnit firstNu;
         private SliceDecoder decoder;
-        private int[][][][] mvs;
+
+        // private int[][][][] mvs;
 
         public Frame decodeFrame(List<ByteBuffer> nalUnits, byte[][] buffer) {
             Frame result = null;
@@ -154,28 +158,20 @@ public class H264Decoder implements VideoDecoder {
             int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
             int picHeightInMbs = getPicHeightInMbs(activeSps);
 
-            int[][] nCoeff = new int[picHeightInMbs << 2][picWidthInMbs << 2];
-            mvs = new int[2][picHeightInMbs << 2][picWidthInMbs << 2][3];
-            MBType[] mbTypes = new MBType[picHeightInMbs * picWidthInMbs];
-            boolean[] tr8x8Used = new boolean[picHeightInMbs * picWidthInMbs];
-            int[][] mbQps = new int[3][picHeightInMbs * picWidthInMbs];
-            SliceHeader[] shs = new SliceHeader[picHeightInMbs * picWidthInMbs];
-            Frame[][][] refsUsed = new Frame[picHeightInMbs * picWidthInMbs][][];
-
             if (sRefs == null) {
                 sRefs = new Frame[1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4)];
                 lRefs = new IntObjectMap<Frame>();
             }
 
-            Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type, mvs,
-                    refsUsed, poc.calcPOC(firstSliceHeader, firstNu));
+            DeblockerInput deblockerInput = new DeblockerInput(activeSps);
 
-            decoder = new SliceDecoder(activeSps, activePps, nCoeff, mvs, mbTypes, mbQps, shs, tr8x8Used, refsUsed,
-                    result, sRefs, lRefs);
-            decoder.setDebug(debug);
+            Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type,
+                    deblockerInput.mvs, deblockerInput.refsUsed, poc.calcPOC(firstSliceHeader, firstNu));
 
-            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, nCoeff, mvs, mbTypes,
-                    mbQps, shs, tr8x8Used, refsUsed);
+            decoder = new SliceDecoder(activeSps, activePps, sRefs, lRefs, deblockerInput, result);
+            MBlockDecoderUtils.setDebug(debug);
+
+            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, deblockerInput);
 
             return result;
         }

@@ -2,6 +2,8 @@ package org.jcodec.common.model;
 
 import static org.jcodec.common.model.ColorSpace.MAX_PLANES;
 
+import java.util.Arrays;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -158,13 +160,13 @@ public class Picture8Bit {
 
         for (int i = 0; i < pic.getData().length; i++) {
             for (int j = 0; j < pic.getData()[i].length; j++) {
-                create.getData()[i][j] = (byte) (((pic.getData()[i][j] << 8) >> pic.getBitDepth() ) - 128);
+                create.getData()[i][j] = (byte) (((pic.getData()[i][j] << 8) >> pic.getBitDepth()) - 128);
             }
         }
 
         return create;
     }
-    
+
     public Picture toPicture(int bitDepth) {
         Picture create = Picture.create(width, height, color, bitDepth, crop);
 
@@ -176,15 +178,21 @@ public class Picture8Bit {
 
         return toPictureInternal(bitDepth, create);
     }
-    
+
     private Picture toPictureInternal(int bitDepth, Picture create) {
         for (int i = 0; i < data.length; i++) {
-            int planeSize = getPlaneWidth(i)*getPlaneHeight(i);
+            int planeSize = getPlaneWidth(i) * getPlaneHeight(i);
             for (int j = 0; j < planeSize; j++) {
                 create.getData()[i][j] = ((data[i][j] + 128) << bitDepth) >> 8;
             }
         }
 
         return create;
+    }
+
+    public void fill(int val) {
+        for (int i = 0; i < data.length; i++) {
+            Arrays.fill(data[i], (byte) val);
+        }
     }
 }

@@ -3,7 +3,7 @@ package org.jcodec.codecs.h264.decode.deblock;
 import static java.lang.Math.abs;
 import static org.jcodec.common.tools.MathUtil.clip;
 
-import org.jcodec.codecs.h264.io.model.MBType;
+import org.jcodec.codecs.h264.decode.DeblockerInput;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
@@ -50,23 +50,10 @@ public class DeblockingFilter {
             new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3,
                     3, 3, 4, 4, 4, 5, 6, 6, 7, 8, 9, 10, 11, 13, 14, 16, 18, 20, 23, 25 } };
 
-    private int[][] nCoeff;
-    private int[][][][] mvs;
-    private MBType[] mbTypes;
-    private int[][] mbQps;
-    private SliceHeader[] shs;
-    private boolean[] tr8x8Used;
-    private Picture8Bit[][][] refsUsed;
+    private DeblockerInput di;
 
-    public DeblockingFilter(int bitDepthLuma, int bitDepthChroma, int[][] nCoeff, int[][][][] mvs, MBType[] mbTypes,
-            int[][] mbQps, SliceHeader[] shs, boolean[] tr8x8Used, Picture8Bit[][][] refsUsed) {
-        this.nCoeff = nCoeff;
-        this.mvs = mvs;
-        this.mbTypes = mbTypes;
-        this.mbQps = mbQps;
-        this.shs = shs;
-        this.tr8x8Used = tr8x8Used;
-        this.refsUsed = refsUsed;
+    public DeblockingFilter(int bitDepthLuma, int bitDepthChroma, DeblockerInput di) {
+        this.di = di;
     }
 
     public void deblockFrame(Picture8Bit result) {
@@ -77,7 +64,7 @@ public class DeblockingFilter {
         // printMB(result.getPlaneData(0), result.getPlaneWidth(0), 0, shs[0],
         // "!--!--!--!--!--!--!--!--!--!--!--!");
         int[][] bsV = new int[4][4], bsH = new int[4][4];
-        for (int i = 0; i < shs.length; i++) {
+        for (int i = 0; i < di.shs.length; i++) {
             calcBsH(result, i, bsH);
             calcBsV(result, i, bsV);
             for (int c = 0; c < color.nComp; c++) {
@@ -129,11 +116,11 @@ public class DeblockingFilter {
             if (nA != nB)
                 return 1;
 
-            Picture8Bit ra0 = mvA0[2] < 0 ? null : refsUsed[mbAddrA][0][mvA0[2]];
-            Picture8Bit ra1 = mvA1[2] < 0 ? null : refsUsed[mbAddrA][1][mvA1[2]];
+            Picture8Bit ra0 = mvA0[2] < 0 ? null : di.refsUsed[mbAddrA][0][mvA0[2]];
+            Picture8Bit ra1 = mvA1[2] < 0 ? null : di.refsUsed[mbAddrA][1][mvA1[2]];
 
-            Picture8Bit rb0 = mvB0[2] < 0 ? null : refsUsed[mbAddrB][0][mvB0[2]];
-            Picture8Bit rb1 = mvB1[2] < 0 ? null : refsUsed[mbAddrB][1][mvB1[2]];
+            Picture8Bit rb0 = mvB0[2] < 0 ? null : di.refsUsed[mbAddrB][0][mvB0[2]];
+            Picture8Bit rb1 = mvB1[2] < 0 ? null : di.refsUsed[mbAddrB][1][mvB1[2]];
 
             if (ra0 != rb0 && ra0 != rb1 || ra1 != rb0 && ra1 != rb1 || rb0 != ra0 && rb0 != ra1 || rb1 != ra0
                     && rb1 != ra1)
@@ -166,24 +153,24 @@ public class DeblockingFilter {
     }
 
     private void calcBsH(Picture8Bit pic, int mbAddr, int[][] bs) {
-        SliceHeader sh = shs[mbAddr];
+        SliceHeader sh = di.shs[mbAddr];
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
 
         int mbX = mbAddr % mbWidth;
         int mbY = mbAddr / mbWidth;
 
-        boolean topAvailable = mbY > 0 && (sh.disable_deblocking_filter_idc != 2 || shs[mbAddr - mbWidth] == sh);
-        boolean thisIntra = mbTypes[mbAddr] != null && mbTypes[mbAddr].isIntra();
+        boolean topAvailable = mbY > 0 && (sh.disable_deblocking_filter_idc != 2 || di.shs[mbAddr - mbWidth] == sh);
+        boolean thisIntra = di.mbTypes[mbAddr] != null && di.mbTypes[mbAddr].isIntra();
 
         if (topAvailable) {
-            boolean topIntra = mbTypes[mbAddr - mbWidth] != null && mbTypes[mbAddr - mbWidth].isIntra();
+            boolean topIntra = di.mbTypes[mbAddr - mbWidth] != null && di.mbTypes[mbAddr - mbWidth].isIntra();
             for (int blkX = 0; blkX < 4; blkX++) {
                 int thisBlkX = (mbX << 2) + blkX;
                 int thisBlkY = (mbY << 2);
 
-                bs[0][blkX] = calcBoundaryStrenth(true, topIntra, thisIntra, nCoeff[thisBlkY][thisBlkX],
-                        nCoeff[thisBlkY - 1][thisBlkX], mvs[0][thisBlkY][thisBlkX], mvs[0][thisBlkY - 1][thisBlkX],
-                        mvs[1][thisBlkY][thisBlkX], mvs[1][thisBlkY - 1][thisBlkX], mbAddr, mbAddr - mbWidth);
+                bs[0][blkX] = calcBoundaryStrenth(true, topIntra, thisIntra, di.nCoeff[thisBlkY][thisBlkX],
+                        di.nCoeff[thisBlkY - 1][thisBlkX], di.mvs[0][thisBlkY][thisBlkX], di.mvs[0][thisBlkY - 1][thisBlkX],
+                        di.mvs[1][thisBlkY][thisBlkX], di.mvs[1][thisBlkY - 1][thisBlkX], mbAddr, mbAddr - mbWidth);
 
             }
         }
@@ -193,15 +180,15 @@ public class DeblockingFilter {
                 int thisBlkX = (mbX << 2) + blkX;
                 int thisBlkY = (mbY << 2) + blkY;
 
-                bs[blkY][blkX] = calcBoundaryStrenth(false, thisIntra, thisIntra, nCoeff[thisBlkY][thisBlkX],
-                        nCoeff[thisBlkY - 1][thisBlkX], mvs[0][thisBlkY][thisBlkX], mvs[0][thisBlkY - 1][thisBlkX],
-                        mvs[1][thisBlkY][thisBlkX], mvs[1][thisBlkY - 1][thisBlkX], mbAddr, mbAddr);
+                bs[blkY][blkX] = calcBoundaryStrenth(false, thisIntra, thisIntra, di.nCoeff[thisBlkY][thisBlkX],
+                        di.nCoeff[thisBlkY - 1][thisBlkX], di.mvs[0][thisBlkY][thisBlkX], di.mvs[0][thisBlkY - 1][thisBlkX],
+                        di.mvs[1][thisBlkY][thisBlkX], di.mvs[1][thisBlkY - 1][thisBlkX], mbAddr, mbAddr);
             }
         }
     }
 
     private void fillHorizontalEdge(Picture8Bit pic, int comp, int mbAddr, int[][] bs) {
-        SliceHeader sh = shs[mbAddr];
+        SliceHeader sh = di.shs[mbAddr];
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
 
         int alpha = sh.slice_alpha_c0_offset_div2 << 1;
@@ -210,13 +197,13 @@ public class DeblockingFilter {
         int mbX = mbAddr % mbWidth;
         int mbY = mbAddr / mbWidth;
 
-        boolean topAvailable = mbY > 0 && (sh.disable_deblocking_filter_idc != 2 || shs[mbAddr - mbWidth] == sh);
-        int curQp = mbQps[comp][mbAddr];
+        boolean topAvailable = mbY > 0 && (sh.disable_deblocking_filter_idc != 2 || di.shs[mbAddr - mbWidth] == sh);
+        int curQp = di.mbQps[comp][mbAddr];
 
         int cW = 2 - pic.getColor().compWidth[comp];
         int cH = 2 - pic.getColor().compHeight[comp];
         if (topAvailable) {
-            int topQp = mbQps[comp][mbAddr - mbWidth];
+            int topQp = di.mbQps[comp][mbAddr - mbWidth];
             int avgQp = (topQp + curQp + 1) >> 1;
             for (int blkX = 0; blkX < 4; blkX++) {
                 int thisBlkX = (mbX << 2) + blkX;
@@ -227,7 +214,7 @@ public class DeblockingFilter {
             }
         }
 
-        boolean skip4x4 = comp == 0 && tr8x8Used[mbAddr] || cH == 1;
+        boolean skip4x4 = comp == 0 && di.tr8x8Used[mbAddr] || cH == 1;
 
         for (int blkY = 1; blkY < 4; blkY++) {
             if (skip4x4 && (blkY & 1) == 1)
@@ -245,23 +232,23 @@ public class DeblockingFilter {
 
     private void calcBsV(Picture8Bit pic, int mbAddr, int[][] bs) {
 
-        SliceHeader sh = shs[mbAddr];
+        SliceHeader sh = di.shs[mbAddr];
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
 
         int mbX = mbAddr % mbWidth;
         int mbY = mbAddr / mbWidth;
 
-        boolean leftAvailable = mbX > 0 && (sh.disable_deblocking_filter_idc != 2 || shs[mbAddr - 1] == sh);
-        boolean thisIntra = mbTypes[mbAddr] != null && mbTypes[mbAddr].isIntra();
+        boolean leftAvailable = mbX > 0 && (sh.disable_deblocking_filter_idc != 2 || di.shs[mbAddr - 1] == sh);
+        boolean thisIntra = di.mbTypes[mbAddr] != null && di.mbTypes[mbAddr].isIntra();
 
         if (leftAvailable) {
-            boolean leftIntra = mbTypes[mbAddr - 1] != null && mbTypes[mbAddr - 1].isIntra();
+            boolean leftIntra = di.mbTypes[mbAddr - 1] != null && di.mbTypes[mbAddr - 1].isIntra();
             for (int blkY = 0; blkY < 4; blkY++) {
                 int thisBlkX = (mbX << 2);
                 int thisBlkY = (mbY << 2) + blkY;
-                bs[blkY][0] = calcBoundaryStrenth(true, leftIntra, thisIntra, nCoeff[thisBlkY][thisBlkX],
-                        nCoeff[thisBlkY][thisBlkX - 1], mvs[0][thisBlkY][thisBlkX], mvs[0][thisBlkY][thisBlkX - 1],
-                        mvs[1][thisBlkY][thisBlkX], mvs[1][thisBlkY][thisBlkX - 1], mbAddr, mbAddr - 1);
+                bs[blkY][0] = calcBoundaryStrenth(true, leftIntra, thisIntra, di.nCoeff[thisBlkY][thisBlkX],
+                        di.nCoeff[thisBlkY][thisBlkX - 1], di.mvs[0][thisBlkY][thisBlkX], di.mvs[0][thisBlkY][thisBlkX - 1],
+                        di.mvs[1][thisBlkY][thisBlkX], di.mvs[1][thisBlkY][thisBlkX - 1], mbAddr, mbAddr - 1);
             }
         }
 
@@ -269,16 +256,16 @@ public class DeblockingFilter {
             for (int blkY = 0; blkY < (1 << 2); blkY++) {
                 int thisBlkX = (mbX << 2) + blkX;
                 int thisBlkY = (mbY << 2) + blkY;
-                bs[blkY][blkX] = calcBoundaryStrenth(false, thisIntra, thisIntra, nCoeff[thisBlkY][thisBlkX],
-                        nCoeff[thisBlkY][thisBlkX - 1], mvs[0][thisBlkY][thisBlkX], mvs[0][thisBlkY][thisBlkX - 1],
-                        mvs[1][thisBlkY][thisBlkX], mvs[1][thisBlkY][thisBlkX - 1], mbAddr, mbAddr);
+                bs[blkY][blkX] = calcBoundaryStrenth(false, thisIntra, thisIntra, di.nCoeff[thisBlkY][thisBlkX],
+                        di.nCoeff[thisBlkY][thisBlkX - 1], di.mvs[0][thisBlkY][thisBlkX], di.mvs[0][thisBlkY][thisBlkX - 1],
+                        di.mvs[1][thisBlkY][thisBlkX], di.mvs[1][thisBlkY][thisBlkX - 1], mbAddr, mbAddr);
             }
         }
     }
 
     private void fillVerticalEdge(Picture8Bit pic, int comp, int mbAddr, int[][] bs) {
 
-        SliceHeader sh = shs[mbAddr];
+        SliceHeader sh = di.shs[mbAddr];
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
 
         int alpha = sh.slice_alpha_c0_offset_div2 << 1;
@@ -287,13 +274,13 @@ public class DeblockingFilter {
         int mbX = mbAddr % mbWidth;
         int mbY = mbAddr / mbWidth;
 
-        boolean leftAvailable = mbX > 0 && (sh.disable_deblocking_filter_idc != 2 || shs[mbAddr - 1] == sh);
-        int curQp = mbQps[comp][mbAddr];
+        boolean leftAvailable = mbX > 0 && (sh.disable_deblocking_filter_idc != 2 || di.shs[mbAddr - 1] == sh);
+        int curQp = di.mbQps[comp][mbAddr];
 
         int cW = 2 - pic.getColor().compWidth[comp];
         int cH = 2 - pic.getColor().compHeight[comp];
         if (leftAvailable) {
-            int leftQp = mbQps[comp][mbAddr - 1];
+            int leftQp = di.mbQps[comp][mbAddr - 1];
             int avgQpV = (leftQp + curQp + 1) >> 1;
             for (int blkY = 0; blkY < 4; blkY++) {
                 int thisBlkX = (mbX << 2);
@@ -302,7 +289,7 @@ public class DeblockingFilter {
                         getIdxBeta(beta, avgQpV), bs[blkY][0], 1 << cH);
             }
         }
-        boolean skip4x4 = comp == 0 && tr8x8Used[mbAddr] || cW == 1;
+        boolean skip4x4 = comp == 0 && di.tr8x8Used[mbAddr] || cW == 1;
 
         for (int blkX = 1; blkX < 4; blkX++) {
             if (skip4x4 && (blkX & 1) == 1)
