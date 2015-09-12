@@ -322,27 +322,11 @@ public class SliceDecoder {
 
         Frame[][] result = { Arrays.copyOf(l0, numRef[0]), Arrays.copyOf(l1, numRef[1]) };
 
-        // System.out.println("----------" + thisFrame.getPOC() +
-        // "------------");
-        // printList("List 0: ", result[0]);
-        // printList("List 1: ", result[1]);
-
         reorder(result[0], 0);
         reorder(result[1], 1);
 
-        // printList("Reorder List 0: ", result[0]);
-        // printList("Reorder List 1: ", result[1]);
-
         return result;
     }
-
-    // private void printList(String label, Frame[] frames) {
-    // System.out.print(label);
-    // for (Frame frame : frames) {
-    // System.out.print(frame.getPOC() + ", ");
-    // }
-    // System.out.println();
-    // }
 
     private Frame[] buildList(Comparator<Frame> cmpFwd, Comparator<Frame> cmpInv) {
         Frame[] refs = new Frame[sRefs.length + lRefs.size()];
@@ -406,40 +390,6 @@ public class SliceDecoder {
                 if (result[i] != sRefs[predict])
                     result[j++] = result[i];
             }
-        }
-    }
-
-    private void wipe(Picture8Bit mb) {
-        Arrays.fill(mb.getPlaneData(0), (byte)0);
-        Arrays.fill(mb.getPlaneData(1), (byte)0);
-        Arrays.fill(mb.getPlaneData(2), (byte)0);
-    }
-
-    private void collectPredictors(Picture8Bit outMB, int mbX) {
-        topLeft[0][0] = topLine[0][(mbX << 4) + 15];
-        topLeft[0][1] = outMB.getPlaneData(0)[63];
-        topLeft[0][2] = outMB.getPlaneData(0)[127];
-        topLeft[0][3] = outMB.getPlaneData(0)[191];
-        System.arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
-        copyCol(outMB.getPlaneData(0), 16, 15, 16, leftRow[0]);
-
-        collectChromaPredictors(outMB, mbX);
-    }
-
-    private void collectChromaPredictors(Picture8Bit outMB, int mbX) {
-        topLeft[1][0] = topLine[1][(mbX << 3) + 7];
-        topLeft[2][0] = topLine[2][(mbX << 3) + 7];
-
-        System.arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
-        System.arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
-
-        copyCol(outMB.getPlaneData(1), 8, 7, 8, leftRow[1]);
-        copyCol(outMB.getPlaneData(2), 8, 7, 8, leftRow[2]);
-    }
-
-    private void copyCol(byte[] planeData, int n, int off, int stride, byte[] out) {
-        for (int i = 0; i < n; i++, off += stride) {
-            out[i] = planeData[off];
         }
     }
 
@@ -550,7 +500,7 @@ public class SliceDecoder {
             return curMBType;
         }
     }
-
+    
     public void put(Picture8Bit tgt, Picture8Bit decoded, int mbX, int mbY) {
 
         byte[] luma = tgt.getPlaneData(0);
@@ -608,194 +558,7 @@ public class SliceDecoder {
         collectPredictors(mb, mbX);
         saveMvsIntra(mbX, mbY);
     }
-
-    private int readMBQpDelta(BitReader reader, MBType prevMbType) {
-        int mbQPDelta;
-        if (!activePps.entropy_coding_mode_flag) {
-            mbQPDelta = readSE(reader, "mb_qp_delta");
-        } else {
-            mbQPDelta = cabac.readMBQpDelta(mDecoder, prevMbType);
-        }
-        return mbQPDelta;
-    }
-
-    private int readChromaPredMode(BitReader reader, int mbX, boolean leftAvailable, boolean topAvailable) {
-        int chromaPredictionMode;
-        if (!activePps.entropy_coding_mode_flag) {
-            chromaPredictionMode = readUE(reader, "MBP: intra_chroma_pred_mode");
-        } else {
-            chromaPredictionMode = cabac.readIntraChromaPredMode(mDecoder, mbX, leftMBType, topMBType[mbX],
-                    leftAvailable, topAvailable);
-        }
-        return chromaPredictionMode;
-    }
-
-    private void residualLumaI16x16(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
-            int cbpLuma, int[][] residualOut) {
-        int[] dc = new int[16];
-        // System.out.println("=================== 16x16 DC ===========================");
-        if (!activePps.entropy_coding_mode_flag)
-            cavlc[0].readLumaDCBlock(reader, dc, mbX, leftAvailable, leftMBType, topAvailable, topMBType[mbX],
-                    CoeffTransformer.zigzag4x4);
-        else {
-            if (cabac.readCodedBlockFlagLumaDC(mDecoder, mbX, leftMBType, topMBType[mbX], leftAvailable, topAvailable,
-                    MBType.I_16x16) == 1)
-                cabac.readCoeffs(mDecoder, BlockType.LUMA_16_DC, dc, 0, 16, CoeffTransformer.zigzag4x4,
-                        identityMapping16, identityMapping16);
-        }
-
-        CoeffTransformer.invDC4x4(dc);
-        CoeffTransformer.dequantizeDC4x4(dc, qp);
-        reorderDC4x4(dc);
-
-        for (int i = 0; i < 16; i++) {
-            int[] ac = residualOut[i];
-            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
-            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
-            int blkX = (mbX << 2) + blkOffLeft;
-            int blkY = (mbY << 2) + blkOffTop;
-
-            if ((cbpLuma & (1 << (i >> 2))) != 0) {
-                // System.out.println("=================== 16x16 AC ===========================");
-
-                if (!activePps.entropy_coding_mode_flag) {
-                    nCoeff[blkY][blkX] = cavlc[0].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0
-                            || leftAvailable, blkOffLeft == 0 ? leftMBType : I_16x16, blkOffTop != 0 || topAvailable,
-                            blkOffTop == 0 ? topMBType[mbX] : I_16x16, 1, 15, CoeffTransformer.zigzag4x4);
-                } else {
-                    if (cabac.readCodedBlockFlagLumaAC(mDecoder, BlockType.LUMA_15_AC, blkX, blkOffTop, 0, leftMBType,
-                            topMBType[mbX], leftAvailable, topAvailable, leftCBPLuma, topCBPLuma[mbX], cbpLuma,
-                            MBType.I_16x16) == 1)
-                        nCoeff[blkY][blkX] = cabac.readCoeffs(mDecoder, BlockType.LUMA_15_AC, ac, 1, 15,
-                                CoeffTransformer.zigzag4x4, identityMapping16, identityMapping16);
-                }
-                CoeffTransformer.dequantizeAC(ac, qp);
-            } else {
-                if (!activePps.entropy_coding_mode_flag)
-                    cavlc[0].setZeroCoeff(blkX, blkOffTop);
-            }
-            ac[0] = dc[i];
-            CoeffTransformer.idct4x4(ac);
-        }
-    }
-
-    private void putBlk(byte[] planeData, int[] block, int log2stride, int blkX, int blkY) {
-        int stride = 1 << log2stride;
-        for (int line = 0, srcOff = 0, dstOff = (blkY << log2stride) + blkX; line < 4; line++) {
-            planeData[dstOff] = (byte)block[srcOff];
-            planeData[dstOff + 1] = (byte)block[srcOff + 1];
-            planeData[dstOff + 2] = (byte)block[srcOff + 2];
-            planeData[dstOff + 3] = (byte)block[srcOff + 3];
-            srcOff += 4;
-            dstOff += stride;
-        }
-    }
-
-    private void putBlk8x8(byte[] planeData, int[] block, int log2stride, int blkX, int blkY) {
-        int stride = 1 << log2stride;
-        for (int line = 0, srcOff = 0, dstOff = (blkY << log2stride) + blkX; line < 8; line++) {
-            for (int row = 0; row < 8; row++)
-                planeData[dstOff + row] = (byte)block[srcOff + row];
-            srcOff += 8;
-            dstOff += stride;
-        }
-    }
-
-    public void decodeChroma(BitReader reader, int pattern, int chromaMode, int mbX, int mbY, boolean leftAvailable,
-            boolean topAvailable, Picture8Bit mb, int qp, MBType curMbType) {
-
-        if (chromaFormat == MONO) {
-            Arrays.fill(mb.getPlaneData(1), (byte) 0);
-            Arrays.fill(mb.getPlaneData(2), (byte) 0);
-            return;
-        }
-
-        int[][] residualCb = new int[4][16];
-        int[][] residualCr = new int[4][16];
-        int qp1 = calcQpChroma(qp, chromaQpOffset[0]);
-        int qp2 = calcQpChroma(qp, chromaQpOffset[1]);
-        if (pattern != 0) {
-            decodeChromaResidual(reader, leftAvailable, topAvailable, mbX, mbY, pattern, qp1, qp2, curMbType, residualCb, residualCr);
-        } else if (!activePps.entropy_coding_mode_flag) {
-            cavlc[1].setZeroCoeff(mbX << 1, 0);
-            cavlc[1].setZeroCoeff((mbX << 1) + 1, 1);
-            cavlc[2].setZeroCoeff(mbX << 1, 0);
-            cavlc[2].setZeroCoeff((mbX << 1) + 1, 1);
-        }
-        int addr = mbY * (activeSps.pic_width_in_mbs_minus1 + 1) + mbX;
-        mbQps[1][addr] = qp1;
-        mbQps[2][addr] = qp2;
-        ChromaPredictionBuilder.predictWithMode(residualCb, chromaMode, mbX, leftAvailable, topAvailable,
-                leftRow[1], topLine[1], topLeft[1], mb.getPlaneData(1));
-        ChromaPredictionBuilder.predictWithMode(residualCr, chromaMode, mbX, leftAvailable, topAvailable,
-                leftRow[2], topLine[2], topLeft[2], mb.getPlaneData(2));
-    }
-
-    private void decodeChromaResidual(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
-            int pattern, int crQp1, int crQp2, MBType curMbType, int[][] residualCbOut, int[][] residualCrOut) {
-        int[] dc1 = new int[(16 >> chromaFormat.compWidth[1]) >> chromaFormat.compHeight[1]];
-        int[] dc2 = new int[(16 >> chromaFormat.compWidth[2]) >> chromaFormat.compHeight[2]];
-        if ((pattern & 3) > 0) {
-            chromaDC(reader, mbX, leftAvailable, topAvailable, dc1, 1, crQp1, curMbType);
-            chromaDC(reader, mbX, leftAvailable, topAvailable, dc2, 2, crQp2, curMbType);
-        }
-        chromaAC(reader, leftAvailable, topAvailable, mbX, mbY, dc1, 1, crQp1, curMbType, (pattern & 2) > 0, residualCbOut);
-        chromaAC(reader, leftAvailable, topAvailable, mbX, mbY, dc2, 2, crQp2, curMbType, (pattern & 2) > 0, residualCrOut);
-    }
-
-    private void chromaDC(BitReader reader, int mbX, boolean leftAvailable, boolean topAvailable, int[] dc, int comp,
-            int crQp, MBType curMbType) {
-        // System.out.println("============= CHROMA RESIDUAL DC ================");
-        if (!activePps.entropy_coding_mode_flag)
-            cavlc[comp].readChromaDCBlock(reader, dc, leftAvailable, topAvailable);
-        else {
-            if (cabac.readCodedBlockFlagChromaDC(mDecoder, mbX, comp, leftMBType, topMBType[mbX], leftAvailable,
-                    topAvailable, leftCBPChroma, topCBPChroma[mbX], curMbType) == 1)
-                cabac.readCoeffs(mDecoder, BlockType.CHROMA_DC, dc, 0, 4, identityMapping16, identityMapping16,
-                        identityMapping16);
-        }
-
-        CoeffTransformer.invDC2x2(dc);
-        CoeffTransformer.dequantizeDC2x2(dc, crQp);
-    }
-
-    private void chromaAC(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
-            int[] dc, int comp, int crQp, MBType curMbType, boolean codedAC, int[][] residualOut) {
-        // System.out.println("============= CHROMA RESIDUAL AC ================");
-        for (int i = 0; i < dc.length; i++) {
-            int[] ac = residualOut[i];
-            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
-            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
-
-            int blkX = (mbX << 1) + blkOffLeft;
-            int blkY = (mbY << 1) + blkOffTop;
-
-            if (codedAC) {
-
-                if (!activePps.entropy_coding_mode_flag)
-                    cavlc[comp].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
-                            blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0 || topAvailable,
-                            blkOffTop == 0 ? topMBType[mbX] : curMbType, 1, 15, CoeffTransformer.zigzag4x4);
-                else {
-                    if (cabac.readCodedBlockFlagChromaAC(mDecoder, blkX, blkOffTop, comp, leftMBType, topMBType[mbX],
-                            leftAvailable, topAvailable, leftCBPChroma, topCBPChroma[mbX], curMbType) == 1)
-                        cabac.readCoeffs(mDecoder, BlockType.CHROMA_AC, ac, 1, 15, CoeffTransformer.zigzag4x4,
-                                identityMapping16, identityMapping16);
-                }
-                CoeffTransformer.dequantizeAC(ac, crQp);
-            } else {
-                if (!activePps.entropy_coding_mode_flag)
-                    cavlc[comp].setZeroCoeff(blkX, blkOffTop);
-            }
-            ac[0] = dc[i];
-            CoeffTransformer.idct4x4(ac);
-        }
-    }
-
-    private int calcQpChroma(int qp, int crQpOffset) {
-        return QP_SCALE_CR[MathUtil.clip(qp + crQpOffset, 0, 51)];
-    }
-
+    
     public void decodeMBlockIntraNxN(BitReader reader, int mbIndex, MBType prevMbType, Picture8Bit mb) {
         int mbX = mapper.getMbX(mbIndex);
         int mbY = mapper.getMbY(mbIndex);
@@ -890,306 +653,50 @@ public class SliceDecoder {
 
         saveMvsIntra(mbX, mbY);
     }
+    
+    private void decodeInter16x16(BitReader reader, Picture8Bit mb, Frame[][] refs, int mbIdx, MBType prevMbType,
+            PartPred p0, MBType curMBType) {
+        int mbX = mapper.getMbX(mbIdx);
+        int mbY = mapper.getMbY(mbIdx);
+        boolean leftAvailable = mapper.leftAvailable(mbIdx);
+        boolean topAvailable = mapper.topAvailable(mbIdx);
+        boolean topLeftAvailable = mapper.topLeftAvailable(mbIdx);
+        boolean topRightAvailable = mapper.topRightAvailable(mbIdx);
+        int address = mapper.getAddress(mbIdx);
+        int[][][] x = new int[2][][];
 
-    private void saveMvsIntra(int mbX, int mbY) {
-        for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
-            for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
-                mvs[0][blkOffY][blkOffX] = NULL_VECTOR;
-                mvs[1][blkOffY][blkOffX] = NULL_VECTOR;
-            }
+        int xx = mbX << 2;
+        int[] refIdx = { 0, 0 };
+        for (int list = 0; list < 2; list++) {
+            if (p0.usesList(list) && numRef[list] > 1)
+                refIdx[list] = readRefIdx(reader, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                        predModeLeft[0], predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 4, list);
         }
-    }
-
-    private void residualLuma(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
-            int codedBlockPattern, MBType mbType, boolean transform8x8Used, boolean is8x8Left,
-            boolean is8x8Top, int[][] residualOut) {
-        if (!transform8x8Used)
-            residualLuma(reader, leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, mbType, residualOut);
-        else if (activePps.entropy_coding_mode_flag)
-            residualLuma8x8CABAC(reader, leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, mbType,
-                    is8x8Left, is8x8Top, residualOut);
-        else
-            residualLuma8x8CAVLC(reader, leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, mbType, residualOut);
-    }
-
-    private boolean readTransform8x8Flag(BitReader reader, boolean leftAvailable, boolean topAvailable,
-            MBType leftType, MBType topType, boolean is8x8Left, boolean is8x8Top) {
-        if (!activePps.entropy_coding_mode_flag)
-            return readBool(reader, "transform_size_8x8_flag");
-        else
-            return cabac.readTransform8x8Flag(mDecoder, leftAvailable, topAvailable, leftType, topType, is8x8Left,
-                    is8x8Top);
-    }
-
-    protected int readCodedBlockPatternIntra(BitReader reader, boolean leftAvailable, boolean topAvailable,
-            int leftCBP, int topCBP, MBType leftMB, MBType topMB) {
-
-        if (!activePps.entropy_coding_mode_flag)
-            return H264Const.CODED_BLOCK_PATTERN_INTRA_COLOR[readUE(reader, "coded_block_pattern")];
-        else
-            return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
-    }
-
-    protected int readCodedBlockPatternInter(BitReader reader, boolean leftAvailable, boolean topAvailable,
-            int leftCBP, int topCBP, MBType leftMB, MBType topMB) {
-        if (!activePps.entropy_coding_mode_flag)
-            return H264Const.CODED_BLOCK_PATTERN_INTER_COLOR[readUE(reader, "coded_block_pattern")];
-        else
-            return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
-    }
-
-    private void residualLuma(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
-            int codedBlockPattern, MBType curMbType, int[][] residualOut) {
-
-        int cbpLuma = codedBlockPattern & 0xf;
-
-        for (int i = 0; i < 16; i++) {
-            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
-            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
-            int blkX = (mbX << 2) + blkOffLeft;
-            int blkY = (mbY << 2) + blkOffTop;
-
-            if ((cbpLuma & (1 << (i >> 2))) == 0) {
-                if (!activePps.entropy_coding_mode_flag)
-                    cavlc[0].setZeroCoeff(blkX, blkOffTop);
-                continue;
-            }
-            int[] ac = residualOut[i];
-
-            if (!activePps.entropy_coding_mode_flag) {
-                nCoeff[blkY][blkX] = cavlc[0].readACBlock(reader, ac, blkX, blkOffTop,
-                        blkOffLeft != 0 || leftAvailable, blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0
-                                || topAvailable, blkOffTop == 0 ? topMBType[mbX] : curMbType, 0, 16,
-                        CoeffTransformer.zigzag4x4);
-            } else {
-                if (cabac.readCodedBlockFlagLumaAC(mDecoder, BlockType.LUMA_16, blkX, blkOffTop, 0, leftMBType,
-                        topMBType[mbX], leftAvailable, topAvailable, leftCBPLuma, topCBPLuma[mbX], cbpLuma, curMbType) == 1)
-                    nCoeff[blkY][blkX] = cabac.readCoeffs(mDecoder, BlockType.LUMA_16, ac, 0, 16,
-                            CoeffTransformer.zigzag4x4, identityMapping16, identityMapping16);
-            }
-
-            CoeffTransformer.dequantizeAC(ac, qp);
-            CoeffTransformer.idct4x4(ac);
+        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, chromaFormat), Picture8Bit.create(16, 16, chromaFormat) };
+        for (int list = 0; list < 2; list++) {
+            predictInter16x16(reader, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
+                    topRightAvailable, x, xx, refIdx, list, p0);
         }
 
-        if (activePps.entropy_coding_mode_flag)
-            cabac.setPrevCBP(codedBlockPattern);
-    }
+        prediction.mergePrediction(x[0][0][2], x[1][0][2], p0, 0, mbb[0].getPlaneData(0), mbb[1].getPlaneData(0), 0,
+                16, 16, 16, mb.getPlaneData(0), refs, thisFrame);
 
-    private void residualLuma8x8CABAC(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
-            int codedBlockPattern, MBType curMbType, boolean is8x8Left, boolean is8x8Top, int[][] residualOut) {
+        predModeLeft[0] = predModeLeft[1] = predModeTop[mbX << 1] = predModeTop[(mbX << 1) + 1] = p0;
 
-        int cbpLuma = codedBlockPattern & 0xf;
-
-        for (int i = 0; i < 4; i++) {
-            int blkOffLeft = (i & 1) << 1;
-            int blkOffTop = i & 2;
-            int blkX = (mbX << 2) + blkOffLeft;
-            int blkY = (mbY << 2) + blkOffTop;
-
-            if ((cbpLuma & (1 << i)) == 0) {
-                continue;
-            }
-            int[] ac = residualOut[i];
-
-            nCoeff[blkY][blkX] = nCoeff[blkY][blkX + 1] = nCoeff[blkY + 1][blkX] = nCoeff[blkY + 1][blkX + 1] = cabac
-                    .readCoeffs(mDecoder, BlockType.LUMA_64, ac, 0, 64, CoeffTransformer.zigzag8x8, sig_coeff_map_8x8,
-                            last_sig_coeff_map_8x8);
-            cabac.setCodedBlock(blkX, blkY);
-            cabac.setCodedBlock(blkX + 1, blkY);
-            cabac.setCodedBlock(blkX, blkY + 1);
-            cabac.setCodedBlock(blkX + 1, blkY + 1);
-
-            CoeffTransformer.dequantizeAC8x8(ac, qp);
-            CoeffTransformer.idct8x8(ac);
-        }
-
-        cabac.setPrevCBP(codedBlockPattern);
-    }
-
-    private void residualLuma8x8CAVLC(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
-            int codedBlockPattern, MBType curMbType, int[][] residualOut) {
-
-        int cbpLuma = codedBlockPattern & 0xf;
-
-        for (int i = 0; i < 4; i++) {
-            int blk8x8OffLeft = (i & 1) << 1;
-            int blk8x8OffTop = i & 2;
-            int blkX = (mbX << 2) + blk8x8OffLeft;
-            int blkY = (mbY << 2) + blk8x8OffTop;
-
-            if ((cbpLuma & (1 << i)) == 0) {
-                cavlc[0].setZeroCoeff(blkX, blk8x8OffTop);
-                cavlc[0].setZeroCoeff(blkX + 1, blk8x8OffTop);
-                cavlc[0].setZeroCoeff(blkX, blk8x8OffTop + 1);
-                cavlc[0].setZeroCoeff(blkX + 1, blk8x8OffTop + 1);
-                continue;
-            }
-            int[] ac64 = residualOut[i];
-            int coeffs = 0;
-            for (int j = 0; j < 4; j++) {
-                int[] ac16 = new int[16];
-                int blkOffLeft = blk8x8OffLeft + (j & 1);
-                int blkOffTop = blk8x8OffTop + (j >> 1);
-                coeffs += cavlc[0].readACBlock(reader, ac16, blkX + (j & 1), blkOffTop, blkOffLeft != 0
-                        || leftAvailable, blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0 || topAvailable,
-                        blkOffTop == 0 ? topMBType[mbX] : curMbType, 0, 16, H264Const.identityMapping16);
-                for (int k = 0; k < 16; k++)
-                    ac64[CoeffTransformer.zigzag8x8[(k << 2) + j]] = ac16[k];
-            }
-            nCoeff[blkY][blkX] = nCoeff[blkY][blkX + 1] = nCoeff[blkY + 1][blkX] = nCoeff[blkY + 1][blkX + 1] = coeffs;
-
-            CoeffTransformer.dequantizeAC8x8(ac64, qp);
-            CoeffTransformer.idct8x8(ac64);
-        }
-    }
-
-    private int readPredictionI4x4Block(BitReader reader, boolean leftAvailable, boolean topAvailable,
-            MBType leftMBType, MBType topMBType, int blkX, int blkY, int mbX) {
-        int mode = 2;
-        if ((leftAvailable || blkX > 0) && (topAvailable || blkY > 0)) {
-            int predModeB = topMBType == MBType.I_NxN || blkY > 0 ? i4x4PredTop[(mbX << 2) + blkX] : 2;
-            int predModeA = leftMBType == MBType.I_NxN || blkX > 0 ? i4x4PredLeft[blkY] : 2;
-            mode = Math.min(predModeB, predModeA);
-        }
-        if (!prev4x4PredMode(reader)) {
-            int rem_intra4x4_pred_mode = rem4x4PredMode(reader);
-            mode = rem_intra4x4_pred_mode + (rem_intra4x4_pred_mode < mode ? 0 : 1);
-        }
-        i4x4PredTop[(mbX << 2) + blkX] = i4x4PredLeft[blkY] = mode;
-        return mode;
-    }
-
-    private int rem4x4PredMode(BitReader reader) {
-        if (!activePps.entropy_coding_mode_flag)
-            return readNBit(reader, 3, "MB: rem_intra4x4_pred_mode");
-        else
-            return cabac.rem4x4PredMode(mDecoder);
-    }
-
-    private boolean prev4x4PredMode(BitReader reader) {
-        if (!activePps.entropy_coding_mode_flag)
-            return readBool(reader, "MBP: prev_intra4x4_pred_mode_flag");
-        else
-            return cabac.prev4x4PredModeFlag(mDecoder);
-    }
-
-    private void predictInter16x8(BitReader reader, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
-            boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, int xx,
-            int[] refIdx1, int[] refIdx2, int[][][] x, PartPred p0, PartPred p1, int list) {
-
-        int blk8x8X = mbX << 1;
-        int mvX1 = 0, mvY1 = 0, mvX2 = 0, mvY2 = 0, r1 = -1, r2 = -1;
-        if (p0.usesList(list)) {
-
-            int mvdX1 = readMVD(reader, 0, leftAvailable, topAvailable, leftMBType, topMBType[mbX], predModeLeft[0],
-                    predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
-            int mvdY1 = readMVD(reader, 1, leftAvailable, topAvailable, leftMBType, topMBType[mbX], predModeLeft[0],
-                    predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
-
-            int mvpX1 = calcMVPrediction16x8Top(mvLeft[list][0], mvTop[list][mbX << 2], mvTop[list][(mbX << 2) + 4],
-                    mvTopLeft[list], leftAvailable, topAvailable, trAvailable, tlAvailable, refIdx1[list], 0);
-            int mvpY1 = calcMVPrediction16x8Top(mvLeft[list][0], mvTop[list][mbX << 2], mvTop[list][(mbX << 2) + 4],
-                    mvTopLeft[list], leftAvailable, topAvailable, trAvailable, tlAvailable, refIdx1[list], 1);
-
-            mvX1 = mvdX1 + mvpX1;
-            mvY1 = mvdY1 + mvpY1;
-
-            debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + mvX1 + ","
-                    + mvY1 + "," + refIdx1[list] + ")");
-
-            BlockInterpolator.getBlockLuma(references[list][refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
-                    (mbY << 6) + mvY1, 16, 8);
-            r1 = refIdx1[list];
-        }
-        int[] v1 = { mvX1, mvY1, r1 };
-
-        if (p1.usesList(list)) {
-            int mvdX2 = readMVD(reader, 0, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1], p0, p1,
-                    mbX, 0, 2, 4, 2, list);
-            int mvdY2 = readMVD(reader, 1, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1], p0, p1,
-                    mbX, 0, 2, 4, 2, list);
-
-            int mvpX2 = calcMVPrediction16x8Bottom(mvLeft[list][2], v1, null, mvLeft[list][1], leftAvailable, true,
-                    false, leftAvailable, refIdx2[list], 0);
-            int mvpY2 = calcMVPrediction16x8Bottom(mvLeft[list][2], v1, null, mvLeft[list][1], leftAvailable, true,
-                    false, leftAvailable, refIdx2[list], 1);
-
-            mvX2 = mvdX2 + mvpX2;
-            mvY2 = mvdY2 + mvpY2;
-
-            debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + mvX2 + ","
-                    + mvY2 + "," + refIdx2[list] + ")");
-
-            BlockInterpolator.getBlockLuma(references[list][refIdx2[list]], mb, 128, (mbX << 6) + mvX2, (mbY << 6) + 32
-                    + mvY2, 16, 8);
-            r2 = refIdx2[list];
-        }
-        int[] v2 = { mvX2, mvY2, r2 };
-
-        copyVect(mvTopLeft[list], mvTop[list][xx + 3]);
-        saveVect(mvLeft[list], 0, 2, mvX1, mvY1, r1);
-        saveVect(mvLeft[list], 2, 4, mvX2, mvY2, r2);
-        saveVect(mvTop[list], xx, xx + 4, mvX2, mvY2, r2);
-
-        x[list] = new int[][] { v1, v1, v1, v1, v1, v1, v1, v1, v2, v2, v2, v2, v2, v2, v2, v2 };
-    }
-
-    private int[][][] residualInter(BitReader reader, Frame[][] refs, boolean leftAvailable,
-            boolean topAvailable, int mbX, int mbY, int[][][] x, PartPred[] pp, int mbAddr, MBType prevMbType,
-            MBType curMbType) {
-        int codedBlockPattern = readCodedBlockPatternInter(reader, leftAvailable, topAvailable, leftCBPLuma
-                | (leftCBPChroma << 4), topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
-        int cbpLuma = codedBlockPattern & 0xf;
-        int cbpChroma = codedBlockPattern >> 4;
-
-        boolean transform8x8Used = false;
-        if (cbpLuma != 0 && transform8x8) {
-            transform8x8Used = readTransform8x8Flag(reader, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
-                    tf8x8Left, tf8x8Top[mbX]);
-        }
-        int[][][] residualOut = {
-                transform8x8Used ? new int[4][64] : new int[16][16],
-                new int[4][16],
-                new int[4][16]
-        };
-
-        if (cbpLuma > 0 || cbpChroma > 0) {
-            int mbQpDelta = readMBQpDelta(reader, prevMbType);
-            qp = (qp + mbQpDelta + 52) % 52;
-        }
-        mbQps[0][mbAddr] = qp;
-
-        residualLuma(reader, leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, curMbType,
-                transform8x8Used, tf8x8Left, tf8x8Top[mbX], residualOut[0]);
-
-        saveMvs(x, mbX, mbY);
-
-        if (chromaFormat != MONO) {
-            int qp1 = calcQpChroma(qp, chromaQpOffset[0]);
-            int qp2 = calcQpChroma(qp, chromaQpOffset[1]);
-
-            decodeChromaResidual(reader, leftAvailable, topAvailable, mbX, mbY, cbpChroma, qp1, qp2, MBType.P_16x16, residualOut[1], residualOut[2]);
-
-            mbQps[1][mbAddr] = qp1;
-            mbQps[2][mbAddr] = qp2;
-        }
-
-        topCBPLuma[mbX] = leftCBPLuma = cbpLuma;
-        topCBPChroma[mbX] = leftCBPChroma = cbpChroma;
-        tf8x8Left = tf8x8Top[mbX] = transform8x8Used;
-        tr8x8Used[mbAddr] = transform8x8Used;
+        PartPred[] partPreds = new PartPred[] { p0, p0, p0, p0 };
+        predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb, partPreds);
+        predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb, partPreds);
         
-        return residualOut;
-    }
+        int[][][] residual = residualInter(reader, refs, leftAvailable, topAvailable, mbX, mbY, x, partPreds,
+                mapper.getAddress(mbIdx), prevMbType, curMBType);
+        
+        boolean transform8x8Used = residual[0][0].length == 64;
+        mergeResidual(mb, residual, transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
+                transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-    private void mergeResidual(Picture8Bit mb, int[][][] residual, int[][] blockLUT, int[][] posLUT) {
-        for (int comp = 0; comp < 3; comp++) {
-            byte[] to = mb.getPlaneData(comp);
-            for (int i = 0; i < to.length; i++) {
-                to[i] = (byte)clip(to[i] + residual[comp][blockLUT[comp][i]][posLUT[comp][i]], -128, 127);
-            }
-        }
+        collectPredictors(mb, mbX);
+
+        mbTypes[address] = topMBType[mbX] = leftMBType = curMBType;
     }
     
     private void decodeInter16x8(BitReader reader, Picture8Bit mb, Frame[][] refs, int mbIdx, MBType prevMbType,
@@ -1288,51 +795,6 @@ public class SliceDecoder {
         predModeTop[(mbX << 1) + 1] = predModeLeft[0] = predModeLeft[1] = p1;
 
         int[][][] residual = residualInter(reader, refs, leftAvailable, topAvailable, mbX, mbY, x, predType,
-                mapper.getAddress(mbIdx), prevMbType, curMBType);
-        
-        boolean transform8x8Used = residual[0][0].length == 64;
-        mergeResidual(mb, residual, transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
-                transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
-
-        collectPredictors(mb, mbX);
-
-        mbTypes[address] = topMBType[mbX] = leftMBType = curMBType;
-    }
-    
-    private void decodeInter16x16(BitReader reader, Picture8Bit mb, Frame[][] refs, int mbIdx, MBType prevMbType,
-            PartPred p0, MBType curMBType) {
-        int mbX = mapper.getMbX(mbIdx);
-        int mbY = mapper.getMbY(mbIdx);
-        boolean leftAvailable = mapper.leftAvailable(mbIdx);
-        boolean topAvailable = mapper.topAvailable(mbIdx);
-        boolean topLeftAvailable = mapper.topLeftAvailable(mbIdx);
-        boolean topRightAvailable = mapper.topRightAvailable(mbIdx);
-        int address = mapper.getAddress(mbIdx);
-        int[][][] x = new int[2][][];
-
-        int xx = mbX << 2;
-        int[] refIdx = { 0, 0 };
-        for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && numRef[list] > 1)
-                refIdx[list] = readRefIdx(reader, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
-                        predModeLeft[0], predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 4, list);
-        }
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, chromaFormat), Picture8Bit.create(16, 16, chromaFormat) };
-        for (int list = 0; list < 2; list++) {
-            predictInter16x16(reader, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
-                    topRightAvailable, x, xx, refIdx, list, p0);
-        }
-
-        prediction.mergePrediction(x[0][0][2], x[1][0][2], p0, 0, mbb[0].getPlaneData(0), mbb[1].getPlaneData(0), 0,
-                16, 16, 16, mb.getPlaneData(0), refs, thisFrame);
-
-        predModeLeft[0] = predModeLeft[1] = predModeTop[mbX << 1] = predModeTop[(mbX << 1) + 1] = p0;
-
-        PartPred[] partPreds = new PartPred[] { p0, p0, p0, p0 };
-        predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb, partPreds);
-        predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb, partPreds);
-        
-        int[][][] residual = residualInter(reader, refs, leftAvailable, topAvailable, mbX, mbY, x, partPreds,
                 mapper.getAddress(mbIdx), prevMbType, curMBType);
         
         boolean transform8x8Used = residual[0][0].length == 64;
@@ -1493,6 +955,535 @@ public class SliceDecoder {
         tf8x8Left = tf8x8Top[mbX] = transform8x8Used;
         tr8x8Used[mbAddr] = transform8x8Used;
         predModeTop[mbX << 1] = predModeTop[(mbX << 1) + 1] = predModeLeft[0] = predModeLeft[1] = Direct;
+    }
+    
+    public void decodeSkip(Frame[][] refs, int mbIdx, Picture8Bit mb, SliceType sliceType) {
+        int mbX = mapper.getMbX(mbIdx);
+        int mbY = mapper.getMbY(mbIdx);
+        int mbAddr = mapper.getAddress(mbIdx);
+
+        int[][][] x = new int[2][16][3];
+        PartPred[] pp = new PartPred[4];
+
+        for (int i = 0; i < 16; i++)
+            x[0][i][2] = x[1][i][2] = -1;
+
+        if (sliceType == P) {
+            predictPSkip(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
+                    mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, mb);
+            Arrays.fill(pp, PartPred.L0);
+        } else {
+            predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
+                    mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, pp, mb, identityMapping4);
+            savePrediction8x8(mbX, x[0], 0);
+            savePrediction8x8(mbX, x[1], 1);
+        }
+
+        decodeChromaSkip(refs, x, pp, mbX, mbY, mb);
+
+        collectPredictors(mb, mbX);
+
+        saveMvs(x, mbX, mbY);
+        mbTypes[mbAddr] = topMBType[mbX] = leftMBType = null;
+        mbQps[0][mbAddr] = qp;
+        mbQps[1][mbAddr] = calcQpChroma(qp, chromaQpOffset[0]);
+        mbQps[2][mbAddr] = calcQpChroma(qp, chromaQpOffset[1]);
+    }
+
+    public void decodeChroma(BitReader reader, int pattern, int chromaMode, int mbX, int mbY, boolean leftAvailable,
+            boolean topAvailable, Picture8Bit mb, int qp, MBType curMbType) {
+
+        if (chromaFormat == MONO) {
+            Arrays.fill(mb.getPlaneData(1), (byte) 0);
+            Arrays.fill(mb.getPlaneData(2), (byte) 0);
+            return;
+        }
+
+        int[][] residualCb = new int[4][16];
+        int[][] residualCr = new int[4][16];
+        int qp1 = calcQpChroma(qp, chromaQpOffset[0]);
+        int qp2 = calcQpChroma(qp, chromaQpOffset[1]);
+        if (pattern != 0) {
+            decodeChromaResidual(reader, leftAvailable, topAvailable, mbX, mbY, pattern, qp1, qp2, curMbType, residualCb, residualCr);
+        } else if (!activePps.entropy_coding_mode_flag) {
+            cavlc[1].setZeroCoeff(mbX << 1, 0);
+            cavlc[1].setZeroCoeff((mbX << 1) + 1, 1);
+            cavlc[2].setZeroCoeff(mbX << 1, 0);
+            cavlc[2].setZeroCoeff((mbX << 1) + 1, 1);
+        }
+        int addr = mbY * (activeSps.pic_width_in_mbs_minus1 + 1) + mbX;
+        mbQps[1][addr] = qp1;
+        mbQps[2][addr] = qp2;
+        ChromaPredictionBuilder.predictWithMode(residualCb, chromaMode, mbX, leftAvailable, topAvailable,
+                leftRow[1], topLine[1], topLeft[1], mb.getPlaneData(1));
+        ChromaPredictionBuilder.predictWithMode(residualCr, chromaMode, mbX, leftAvailable, topAvailable,
+                leftRow[2], topLine[2], topLeft[2], mb.getPlaneData(2));
+    }
+
+    private void decodeChromaResidual(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
+            int pattern, int crQp1, int crQp2, MBType curMbType, int[][] residualCbOut, int[][] residualCrOut) {
+        int[] dc1 = new int[(16 >> chromaFormat.compWidth[1]) >> chromaFormat.compHeight[1]];
+        int[] dc2 = new int[(16 >> chromaFormat.compWidth[2]) >> chromaFormat.compHeight[2]];
+        if ((pattern & 3) > 0) {
+            chromaDC(reader, mbX, leftAvailable, topAvailable, dc1, 1, crQp1, curMbType);
+            chromaDC(reader, mbX, leftAvailable, topAvailable, dc2, 2, crQp2, curMbType);
+        }
+        chromaAC(reader, leftAvailable, topAvailable, mbX, mbY, dc1, 1, crQp1, curMbType, (pattern & 2) > 0, residualCbOut);
+        chromaAC(reader, leftAvailable, topAvailable, mbX, mbY, dc2, 2, crQp2, curMbType, (pattern & 2) > 0, residualCrOut);
+    }
+
+    private void chromaDC(BitReader reader, int mbX, boolean leftAvailable, boolean topAvailable, int[] dc, int comp,
+            int crQp, MBType curMbType) {
+        if (!activePps.entropy_coding_mode_flag)
+            cavlc[comp].readChromaDCBlock(reader, dc, leftAvailable, topAvailable);
+        else {
+            if (cabac.readCodedBlockFlagChromaDC(mDecoder, mbX, comp, leftMBType, topMBType[mbX], leftAvailable,
+                    topAvailable, leftCBPChroma, topCBPChroma[mbX], curMbType) == 1)
+                cabac.readCoeffs(mDecoder, BlockType.CHROMA_DC, dc, 0, 4, identityMapping16, identityMapping16,
+                        identityMapping16);
+        }
+
+        CoeffTransformer.invDC2x2(dc);
+        CoeffTransformer.dequantizeDC2x2(dc, crQp);
+    }
+
+    private void chromaAC(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
+            int[] dc, int comp, int crQp, MBType curMbType, boolean codedAC, int[][] residualOut) {
+        for (int i = 0; i < dc.length; i++) {
+            int[] ac = residualOut[i];
+            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
+            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
+
+            int blkX = (mbX << 1) + blkOffLeft;
+            int blkY = (mbY << 1) + blkOffTop;
+
+            if (codedAC) {
+
+                if (!activePps.entropy_coding_mode_flag)
+                    cavlc[comp].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
+                            blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0 || topAvailable,
+                            blkOffTop == 0 ? topMBType[mbX] : curMbType, 1, 15, CoeffTransformer.zigzag4x4);
+                else {
+                    if (cabac.readCodedBlockFlagChromaAC(mDecoder, blkX, blkOffTop, comp, leftMBType, topMBType[mbX],
+                            leftAvailable, topAvailable, leftCBPChroma, topCBPChroma[mbX], curMbType) == 1)
+                        cabac.readCoeffs(mDecoder, BlockType.CHROMA_AC, ac, 1, 15, CoeffTransformer.zigzag4x4,
+                                identityMapping16, identityMapping16);
+                }
+                CoeffTransformer.dequantizeAC(ac, crQp);
+            } else {
+                if (!activePps.entropy_coding_mode_flag)
+                    cavlc[comp].setZeroCoeff(blkX, blkOffTop);
+            }
+            ac[0] = dc[i];
+            CoeffTransformer.idct4x4(ac);
+        }
+    }
+
+    private int calcQpChroma(int qp, int crQpOffset) {
+        return QP_SCALE_CR[MathUtil.clip(qp + crQpOffset, 0, 51)];
+    }
+    
+    private int readMBQpDelta(BitReader reader, MBType prevMbType) {
+        int mbQPDelta;
+        if (!activePps.entropy_coding_mode_flag) {
+            mbQPDelta = readSE(reader, "mb_qp_delta");
+        } else {
+            mbQPDelta = cabac.readMBQpDelta(mDecoder, prevMbType);
+        }
+        return mbQPDelta;
+    }
+
+    private int readChromaPredMode(BitReader reader, int mbX, boolean leftAvailable, boolean topAvailable) {
+        int chromaPredictionMode;
+        if (!activePps.entropy_coding_mode_flag) {
+            chromaPredictionMode = readUE(reader, "MBP: intra_chroma_pred_mode");
+        } else {
+            chromaPredictionMode = cabac.readIntraChromaPredMode(mDecoder, mbX, leftMBType, topMBType[mbX],
+                    leftAvailable, topAvailable);
+        }
+        return chromaPredictionMode;
+    }
+    
+    private void wipe(Picture8Bit mb) {
+        Arrays.fill(mb.getPlaneData(0), (byte)0);
+        Arrays.fill(mb.getPlaneData(1), (byte)0);
+        Arrays.fill(mb.getPlaneData(2), (byte)0);
+    }
+
+    private void collectPredictors(Picture8Bit outMB, int mbX) {
+        topLeft[0][0] = topLine[0][(mbX << 4) + 15];
+        topLeft[0][1] = outMB.getPlaneData(0)[63];
+        topLeft[0][2] = outMB.getPlaneData(0)[127];
+        topLeft[0][3] = outMB.getPlaneData(0)[191];
+        System.arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
+        copyCol(outMB.getPlaneData(0), 16, 15, 16, leftRow[0]);
+
+        collectChromaPredictors(outMB, mbX);
+    }
+
+    private void collectChromaPredictors(Picture8Bit outMB, int mbX) {
+        topLeft[1][0] = topLine[1][(mbX << 3) + 7];
+        topLeft[2][0] = topLine[2][(mbX << 3) + 7];
+
+        System.arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
+        System.arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
+
+        copyCol(outMB.getPlaneData(1), 8, 7, 8, leftRow[1]);
+        copyCol(outMB.getPlaneData(2), 8, 7, 8, leftRow[2]);
+    }
+
+    private void copyCol(byte[] planeData, int n, int off, int stride, byte[] out) {
+        for (int i = 0; i < n; i++, off += stride) {
+            out[i] = planeData[off];
+        }
+    }
+
+    private void residualLumaI16x16(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
+            int cbpLuma, int[][] residualOut) {
+        int[] dc = new int[16];
+        if (!activePps.entropy_coding_mode_flag)
+            cavlc[0].readLumaDCBlock(reader, dc, mbX, leftAvailable, leftMBType, topAvailable, topMBType[mbX],
+                    CoeffTransformer.zigzag4x4);
+        else {
+            if (cabac.readCodedBlockFlagLumaDC(mDecoder, mbX, leftMBType, topMBType[mbX], leftAvailable, topAvailable,
+                    MBType.I_16x16) == 1)
+                cabac.readCoeffs(mDecoder, BlockType.LUMA_16_DC, dc, 0, 16, CoeffTransformer.zigzag4x4,
+                        identityMapping16, identityMapping16);
+        }
+
+        CoeffTransformer.invDC4x4(dc);
+        CoeffTransformer.dequantizeDC4x4(dc, qp);
+        reorderDC4x4(dc);
+
+        for (int i = 0; i < 16; i++) {
+            int[] ac = residualOut[i];
+            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
+            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
+            int blkX = (mbX << 2) + blkOffLeft;
+            int blkY = (mbY << 2) + blkOffTop;
+
+            if ((cbpLuma & (1 << (i >> 2))) != 0) {
+
+                if (!activePps.entropy_coding_mode_flag) {
+                    nCoeff[blkY][blkX] = cavlc[0].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0
+                            || leftAvailable, blkOffLeft == 0 ? leftMBType : I_16x16, blkOffTop != 0 || topAvailable,
+                            blkOffTop == 0 ? topMBType[mbX] : I_16x16, 1, 15, CoeffTransformer.zigzag4x4);
+                } else {
+                    if (cabac.readCodedBlockFlagLumaAC(mDecoder, BlockType.LUMA_15_AC, blkX, blkOffTop, 0, leftMBType,
+                            topMBType[mbX], leftAvailable, topAvailable, leftCBPLuma, topCBPLuma[mbX], cbpLuma,
+                            MBType.I_16x16) == 1)
+                        nCoeff[blkY][blkX] = cabac.readCoeffs(mDecoder, BlockType.LUMA_15_AC, ac, 1, 15,
+                                CoeffTransformer.zigzag4x4, identityMapping16, identityMapping16);
+                }
+                CoeffTransformer.dequantizeAC(ac, qp);
+            } else {
+                if (!activePps.entropy_coding_mode_flag)
+                    cavlc[0].setZeroCoeff(blkX, blkOffTop);
+            }
+            ac[0] = dc[i];
+            CoeffTransformer.idct4x4(ac);
+        }
+    }
+
+    private void residualLuma(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
+            int codedBlockPattern, MBType mbType, boolean transform8x8Used, boolean is8x8Left,
+            boolean is8x8Top, int[][] residualOut) {
+        if (!transform8x8Used)
+            residualLuma(reader, leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, mbType, residualOut);
+        else if (activePps.entropy_coding_mode_flag)
+            residualLuma8x8CABAC(reader, leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, mbType,
+                    is8x8Left, is8x8Top, residualOut);
+        else
+            residualLuma8x8CAVLC(reader, leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, mbType, residualOut);
+    }
+    
+    private void residualLuma(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
+            int codedBlockPattern, MBType curMbType, int[][] residualOut) {
+
+        int cbpLuma = codedBlockPattern & 0xf;
+
+        for (int i = 0; i < 16; i++) {
+            int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
+            int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
+            int blkX = (mbX << 2) + blkOffLeft;
+            int blkY = (mbY << 2) + blkOffTop;
+
+            if ((cbpLuma & (1 << (i >> 2))) == 0) {
+                if (!activePps.entropy_coding_mode_flag)
+                    cavlc[0].setZeroCoeff(blkX, blkOffTop);
+                continue;
+            }
+            int[] ac = residualOut[i];
+
+            if (!activePps.entropy_coding_mode_flag) {
+                nCoeff[blkY][blkX] = cavlc[0].readACBlock(reader, ac, blkX, blkOffTop,
+                        blkOffLeft != 0 || leftAvailable, blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0
+                                || topAvailable, blkOffTop == 0 ? topMBType[mbX] : curMbType, 0, 16,
+                        CoeffTransformer.zigzag4x4);
+            } else {
+                if (cabac.readCodedBlockFlagLumaAC(mDecoder, BlockType.LUMA_16, blkX, blkOffTop, 0, leftMBType,
+                        topMBType[mbX], leftAvailable, topAvailable, leftCBPLuma, topCBPLuma[mbX], cbpLuma, curMbType) == 1)
+                    nCoeff[blkY][blkX] = cabac.readCoeffs(mDecoder, BlockType.LUMA_16, ac, 0, 16,
+                            CoeffTransformer.zigzag4x4, identityMapping16, identityMapping16);
+            }
+
+            CoeffTransformer.dequantizeAC(ac, qp);
+            CoeffTransformer.idct4x4(ac);
+        }
+
+        if (activePps.entropy_coding_mode_flag)
+            cabac.setPrevCBP(codedBlockPattern);
+    }
+
+    private void residualLuma8x8CABAC(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
+            int codedBlockPattern, MBType curMbType, boolean is8x8Left, boolean is8x8Top, int[][] residualOut) {
+
+        int cbpLuma = codedBlockPattern & 0xf;
+
+        for (int i = 0; i < 4; i++) {
+            int blkOffLeft = (i & 1) << 1;
+            int blkOffTop = i & 2;
+            int blkX = (mbX << 2) + blkOffLeft;
+            int blkY = (mbY << 2) + blkOffTop;
+
+            if ((cbpLuma & (1 << i)) == 0) {
+                continue;
+            }
+            int[] ac = residualOut[i];
+
+            nCoeff[blkY][blkX] = nCoeff[blkY][blkX + 1] = nCoeff[blkY + 1][blkX] = nCoeff[blkY + 1][blkX + 1] = cabac
+                    .readCoeffs(mDecoder, BlockType.LUMA_64, ac, 0, 64, CoeffTransformer.zigzag8x8, sig_coeff_map_8x8,
+                            last_sig_coeff_map_8x8);
+            cabac.setCodedBlock(blkX, blkY);
+            cabac.setCodedBlock(blkX + 1, blkY);
+            cabac.setCodedBlock(blkX, blkY + 1);
+            cabac.setCodedBlock(blkX + 1, blkY + 1);
+
+            CoeffTransformer.dequantizeAC8x8(ac, qp);
+            CoeffTransformer.idct8x8(ac);
+        }
+
+        cabac.setPrevCBP(codedBlockPattern);
+    }
+
+    private void residualLuma8x8CAVLC(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
+            int codedBlockPattern, MBType curMbType, int[][] residualOut) {
+
+        int cbpLuma = codedBlockPattern & 0xf;
+
+        for (int i = 0; i < 4; i++) {
+            int blk8x8OffLeft = (i & 1) << 1;
+            int blk8x8OffTop = i & 2;
+            int blkX = (mbX << 2) + blk8x8OffLeft;
+            int blkY = (mbY << 2) + blk8x8OffTop;
+
+            if ((cbpLuma & (1 << i)) == 0) {
+                cavlc[0].setZeroCoeff(blkX, blk8x8OffTop);
+                cavlc[0].setZeroCoeff(blkX + 1, blk8x8OffTop);
+                cavlc[0].setZeroCoeff(blkX, blk8x8OffTop + 1);
+                cavlc[0].setZeroCoeff(blkX + 1, blk8x8OffTop + 1);
+                continue;
+            }
+            int[] ac64 = residualOut[i];
+            int coeffs = 0;
+            for (int j = 0; j < 4; j++) {
+                int[] ac16 = new int[16];
+                int blkOffLeft = blk8x8OffLeft + (j & 1);
+                int blkOffTop = blk8x8OffTop + (j >> 1);
+                coeffs += cavlc[0].readACBlock(reader, ac16, blkX + (j & 1), blkOffTop, blkOffLeft != 0
+                        || leftAvailable, blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0 || topAvailable,
+                        blkOffTop == 0 ? topMBType[mbX] : curMbType, 0, 16, H264Const.identityMapping16);
+                for (int k = 0; k < 16; k++)
+                    ac64[CoeffTransformer.zigzag8x8[(k << 2) + j]] = ac16[k];
+            }
+            nCoeff[blkY][blkX] = nCoeff[blkY][blkX + 1] = nCoeff[blkY + 1][blkX] = nCoeff[blkY + 1][blkX + 1] = coeffs;
+
+            CoeffTransformer.dequantizeAC8x8(ac64, qp);
+            CoeffTransformer.idct8x8(ac64);
+        }
+    }
+    
+    private int[][][] residualInter(BitReader reader, Frame[][] refs, boolean leftAvailable,
+            boolean topAvailable, int mbX, int mbY, int[][][] x, PartPred[] pp, int mbAddr, MBType prevMbType,
+            MBType curMbType) {
+        int codedBlockPattern = readCodedBlockPatternInter(reader, leftAvailable, topAvailable, leftCBPLuma
+                | (leftCBPChroma << 4), topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
+        int cbpLuma = codedBlockPattern & 0xf;
+        int cbpChroma = codedBlockPattern >> 4;
+
+        boolean transform8x8Used = false;
+        if (cbpLuma != 0 && transform8x8) {
+            transform8x8Used = readTransform8x8Flag(reader, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    tf8x8Left, tf8x8Top[mbX]);
+        }
+        int[][][] residualOut = {
+                transform8x8Used ? new int[4][64] : new int[16][16],
+                new int[4][16],
+                new int[4][16]
+        };
+
+        if (cbpLuma > 0 || cbpChroma > 0) {
+            int mbQpDelta = readMBQpDelta(reader, prevMbType);
+            qp = (qp + mbQpDelta + 52) % 52;
+        }
+        mbQps[0][mbAddr] = qp;
+
+        residualLuma(reader, leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, curMbType,
+                transform8x8Used, tf8x8Left, tf8x8Top[mbX], residualOut[0]);
+
+        saveMvs(x, mbX, mbY);
+
+        if (chromaFormat != MONO) {
+            int qp1 = calcQpChroma(qp, chromaQpOffset[0]);
+            int qp2 = calcQpChroma(qp, chromaQpOffset[1]);
+
+            decodeChromaResidual(reader, leftAvailable, topAvailable, mbX, mbY, cbpChroma, qp1, qp2, MBType.P_16x16, residualOut[1], residualOut[2]);
+
+            mbQps[1][mbAddr] = qp1;
+            mbQps[2][mbAddr] = qp2;
+        }
+
+        topCBPLuma[mbX] = leftCBPLuma = cbpLuma;
+        topCBPChroma[mbX] = leftCBPChroma = cbpChroma;
+        tf8x8Left = tf8x8Top[mbX] = transform8x8Used;
+        tr8x8Used[mbAddr] = transform8x8Used;
+        
+        return residualOut;
+    }
+    
+    private void saveMvsIntra(int mbX, int mbY) {
+        for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
+            for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
+                mvs[0][blkOffY][blkOffX] = NULL_VECTOR;
+                mvs[1][blkOffY][blkOffX] = NULL_VECTOR;
+            }
+        }
+    }
+    
+    private boolean readTransform8x8Flag(BitReader reader, boolean leftAvailable, boolean topAvailable,
+            MBType leftType, MBType topType, boolean is8x8Left, boolean is8x8Top) {
+        if (!activePps.entropy_coding_mode_flag)
+            return readBool(reader, "transform_size_8x8_flag");
+        else
+            return cabac.readTransform8x8Flag(mDecoder, leftAvailable, topAvailable, leftType, topType, is8x8Left,
+                    is8x8Top);
+    }
+
+    protected int readCodedBlockPatternIntra(BitReader reader, boolean leftAvailable, boolean topAvailable,
+            int leftCBP, int topCBP, MBType leftMB, MBType topMB) {
+
+        if (!activePps.entropy_coding_mode_flag)
+            return H264Const.CODED_BLOCK_PATTERN_INTRA_COLOR[readUE(reader, "coded_block_pattern")];
+        else
+            return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
+    }
+
+    protected int readCodedBlockPatternInter(BitReader reader, boolean leftAvailable, boolean topAvailable,
+            int leftCBP, int topCBP, MBType leftMB, MBType topMB) {
+        if (!activePps.entropy_coding_mode_flag)
+            return H264Const.CODED_BLOCK_PATTERN_INTER_COLOR[readUE(reader, "coded_block_pattern")];
+        else
+            return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
+    }
+
+    private int readPredictionI4x4Block(BitReader reader, boolean leftAvailable, boolean topAvailable,
+            MBType leftMBType, MBType topMBType, int blkX, int blkY, int mbX) {
+        int mode = 2;
+        if ((leftAvailable || blkX > 0) && (topAvailable || blkY > 0)) {
+            int predModeB = topMBType == MBType.I_NxN || blkY > 0 ? i4x4PredTop[(mbX << 2) + blkX] : 2;
+            int predModeA = leftMBType == MBType.I_NxN || blkX > 0 ? i4x4PredLeft[blkY] : 2;
+            mode = Math.min(predModeB, predModeA);
+        }
+        if (!prev4x4PredMode(reader)) {
+            int rem_intra4x4_pred_mode = rem4x4PredMode(reader);
+            mode = rem_intra4x4_pred_mode + (rem_intra4x4_pred_mode < mode ? 0 : 1);
+        }
+        i4x4PredTop[(mbX << 2) + blkX] = i4x4PredLeft[blkY] = mode;
+        return mode;
+    }
+
+    private int rem4x4PredMode(BitReader reader) {
+        if (!activePps.entropy_coding_mode_flag)
+            return readNBit(reader, 3, "MB: rem_intra4x4_pred_mode");
+        else
+            return cabac.rem4x4PredMode(mDecoder);
+    }
+
+    private boolean prev4x4PredMode(BitReader reader) {
+        if (!activePps.entropy_coding_mode_flag)
+            return readBool(reader, "MBP: prev_intra4x4_pred_mode_flag");
+        else
+            return cabac.prev4x4PredModeFlag(mDecoder);
+    }
+
+    private void predictInter16x8(BitReader reader, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+            boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, int xx,
+            int[] refIdx1, int[] refIdx2, int[][][] x, PartPred p0, PartPred p1, int list) {
+
+        int blk8x8X = mbX << 1;
+        int mvX1 = 0, mvY1 = 0, mvX2 = 0, mvY2 = 0, r1 = -1, r2 = -1;
+        if (p0.usesList(list)) {
+
+            int mvdX1 = readMVD(reader, 0, leftAvailable, topAvailable, leftMBType, topMBType[mbX], predModeLeft[0],
+                    predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
+            int mvdY1 = readMVD(reader, 1, leftAvailable, topAvailable, leftMBType, topMBType[mbX], predModeLeft[0],
+                    predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
+
+            int mvpX1 = calcMVPrediction16x8Top(mvLeft[list][0], mvTop[list][mbX << 2], mvTop[list][(mbX << 2) + 4],
+                    mvTopLeft[list], leftAvailable, topAvailable, trAvailable, tlAvailable, refIdx1[list], 0);
+            int mvpY1 = calcMVPrediction16x8Top(mvLeft[list][0], mvTop[list][mbX << 2], mvTop[list][(mbX << 2) + 4],
+                    mvTopLeft[list], leftAvailable, topAvailable, trAvailable, tlAvailable, refIdx1[list], 1);
+
+            mvX1 = mvdX1 + mvpX1;
+            mvY1 = mvdY1 + mvpY1;
+
+            debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mvdX1 + ", " + mvdY1 + "), MV: (" + mvX1 + ","
+                    + mvY1 + "," + refIdx1[list] + ")");
+
+            BlockInterpolator.getBlockLuma(references[list][refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
+                    (mbY << 6) + mvY1, 16, 8);
+            r1 = refIdx1[list];
+        }
+        int[] v1 = { mvX1, mvY1, r1 };
+
+        if (p1.usesList(list)) {
+            int mvdX2 = readMVD(reader, 0, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1], p0, p1,
+                    mbX, 0, 2, 4, 2, list);
+            int mvdY2 = readMVD(reader, 1, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1], p0, p1,
+                    mbX, 0, 2, 4, 2, list);
+
+            int mvpX2 = calcMVPrediction16x8Bottom(mvLeft[list][2], v1, null, mvLeft[list][1], leftAvailable, true,
+                    false, leftAvailable, refIdx2[list], 0);
+            int mvpY2 = calcMVPrediction16x8Bottom(mvLeft[list][2], v1, null, mvLeft[list][1], leftAvailable, true,
+                    false, leftAvailable, refIdx2[list], 1);
+
+            mvX2 = mvdX2 + mvpX2;
+            mvY2 = mvdY2 + mvpY2;
+
+            debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mvdX2 + ", " + mvdY2 + "), MV: (" + mvX2 + ","
+                    + mvY2 + "," + refIdx2[list] + ")");
+
+            BlockInterpolator.getBlockLuma(references[list][refIdx2[list]], mb, 128, (mbX << 6) + mvX2, (mbY << 6) + 32
+                    + mvY2, 16, 8);
+            r2 = refIdx2[list];
+        }
+        int[] v2 = { mvX2, mvY2, r2 };
+
+        copyVect(mvTopLeft[list], mvTop[list][xx + 3]);
+        saveVect(mvLeft[list], 0, 2, mvX1, mvY1, r1);
+        saveVect(mvLeft[list], 2, 4, mvX2, mvY2, r2);
+        saveVect(mvTop[list], xx, xx + 4, mvX2, mvY2, r2);
+
+        x[list] = new int[][] { v1, v1, v1, v1, v1, v1, v1, v1, v2, v2, v2, v2, v2, v2, v2, v2 };
+    }
+
+    private void mergeResidual(Picture8Bit mb, int[][][] residual, int[][] blockLUT, int[][] posLUT) {
+        for (int comp = 0; comp < 3; comp++) {
+            byte[] to = mb.getPlaneData(comp);
+            for (int i = 0; i < to.length; i++) {
+                to[i] = (byte)clip(to[i] + residual[comp][blockLUT[comp][i]][posLUT[comp][i]], -128, 127);
+            }
+        }
     }
     
     private void predictInter8x16(BitReader reader, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
@@ -2127,39 +2118,6 @@ public class SliceDecoder {
             samplesChroma[i] = reader.readNBit(8);
         }
         collectPredictors(mb, mbX);
-    }
-
-    public void decodeSkip(Frame[][] refs, int mbIdx, Picture8Bit mb, SliceType sliceType) {
-        int mbX = mapper.getMbX(mbIdx);
-        int mbY = mapper.getMbY(mbIdx);
-        int mbAddr = mapper.getAddress(mbIdx);
-
-        int[][][] x = new int[2][16][3];
-        PartPred[] pp = new PartPred[4];
-
-        for (int i = 0; i < 16; i++)
-            x[0][i][2] = x[1][i][2] = -1;
-
-        if (sliceType == P) {
-            predictPSkip(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
-                    mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, mb);
-            Arrays.fill(pp, PartPred.L0);
-        } else {
-            predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
-                    mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, pp, mb, identityMapping4);
-            savePrediction8x8(mbX, x[0], 0);
-            savePrediction8x8(mbX, x[1], 1);
-        }
-
-        decodeChromaSkip(refs, x, pp, mbX, mbY, mb);
-
-        collectPredictors(mb, mbX);
-
-        saveMvs(x, mbX, mbY);
-        mbTypes[mbAddr] = topMBType[mbX] = leftMBType = null;
-        mbQps[0][mbAddr] = qp;
-        mbQps[1][mbAddr] = calcQpChroma(qp, chromaQpOffset[0]);
-        mbQps[2][mbAddr] = calcQpChroma(qp, chromaQpOffset[1]);
     }
 
     public void predictBDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
