@@ -15,7 +15,6 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
-import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.flv.FLVTag.AacAudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
@@ -38,7 +37,6 @@ public class FLVReader {
     private static final int READ_BUFFER_SIZE = 0x100000;
     private LinkedList<FLVTag> prevPkt = new LinkedList<FLVTag>();
     private int frameNo;
-    private byte[] metadata;
     private ByteBuffer readBuf;
     private SeekableByteChannel ch;
 
@@ -113,10 +111,6 @@ public class FLVReader {
         }
     }
 
-    public byte[] getMetadata() {
-        return metadata;
-    }
-
     private static void relocateBytes(ByteBuffer readBuf) {
         int rem = readBuf.remaining();
         for (int i = 0; i < rem; i++) {
@@ -145,13 +139,8 @@ public class FLVReader {
                 readBuf.position(pos);
                 return null;
             }
-            if (packetType == 0x12) {
-                System.out.println("META");
-                metadata = NIOUtils.toArray(NIOUtils.read(readBuf, payloadSize));
-                FLVMetadata meta = parseMetadata(ByteBuffer.wrap(metadata));
-                System.out.println(ToJSON.toJSON(meta));
-                continue;
-            } else if (packetType != 0x8 && packetType != 0x9) {
+            
+            if (packetType != 0x8 && packetType != 0x9 && packetType != 0x12) {
                 NIOUtils.skip(readBuf, payloadSize);
                 continue;
             }
@@ -166,13 +155,16 @@ public class FLVReader {
             } else if (packetType == 0x9) {
                 type = Type.VIDEO;
                 tagHeader = parseVideoTagHeader(payload.duplicate());
+            } else if (packetType == 0x12) {
+                type = Type.SCRIPT;
+                tagHeader = null;
             } else {
                 System.out.println("NON AV packet");
                 continue;
             }
-            boolean keyFrame = packetType == 0x8 || ((VideoTagHeader) tagHeader).getFrameType() == 1;
+            boolean keyFrame = packetType == 0x8 || packetType == 9 && ((VideoTagHeader) tagHeader).getFrameType() == 1;
 
-            FLVTag pkt = new FLVTag(type, metadata, packetPos, tagHeader, timestamp, 0, payload, keyFrame, frameNo++);
+            FLVTag pkt = new FLVTag(type, packetPos, tagHeader, timestamp, 0, payload, keyFrame, frameNo++);
 
             for (ListIterator<FLVTag> it = prevPkt.listIterator(prevPkt.size()); it.hasPrevious();) {
                 FLVTag flvPacket = it.previous();
@@ -265,8 +257,7 @@ public class FLVReader {
         return array;
     }
 
-    public static VideoTagHeader parseVideoTagHeader(ByteBuffer bb) {
-        ByteBuffer dup = bb.duplicate();
+    public static VideoTagHeader parseVideoTagHeader(ByteBuffer dup) {
         byte b0 = dup.get();
         int frameType = (b0 & 0xff) >> 4;
         int codecId = (b0 & 0xf);
@@ -274,8 +265,6 @@ public class FLVReader {
 
         if (codecId == 7) {
             byte avcPacketType = dup.get();
-            if (avcPacketType == 0)
-                System.out.println("SPS/PPS");
             int compOffset = (dup.getShort() << 8) | (dup.get() & 0xff);
             return new AvcVideoTagHeader(codec, frameType, avcPacketType, compOffset);
         }
@@ -283,8 +272,7 @@ public class FLVReader {
         return new VideoTagHeader(codec, frameType);
     }
 
-    public static TagHeader parseAudioTagHeader(ByteBuffer bb) {
-        ByteBuffer dup = bb.duplicate();
+    public static TagHeader parseAudioTagHeader(ByteBuffer dup) {
         byte b = dup.get();
 
         int codecId = (b & 0xff) >> 4;

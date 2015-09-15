@@ -16,7 +16,6 @@ import org.jcodec.common.Codec;
  */
 public class FLVTag {
     private Type type;
-    private byte[] metadata;
     private long position;
     private TagHeader tagHeader;
     private int pts;
@@ -26,10 +25,9 @@ public class FLVTag {
     private long frameNo;
     
     
-    public FLVTag(Type type, byte[] metadata, long position, TagHeader tagHeader, int pts, int duration,
+    public FLVTag(Type type, long position, TagHeader tagHeader, int pts, int duration,
             ByteBuffer data, boolean keyFrame, long frameNo) {
         this.type = type;
-        this.metadata = metadata;
         this.position = position;
         this.tagHeader = tagHeader;
         this.pts = pts;
@@ -45,10 +43,6 @@ public class FLVTag {
 
     public Type getType() {
         return type;
-    }
-
-    public byte[] getMetadata() {
-        return metadata;
     }
 
     public long getPosition() {

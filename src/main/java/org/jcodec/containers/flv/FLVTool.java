@@ -6,11 +6,17 @@ import static java.lang.Math.min;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.io.model.PictureParameterSet;
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
+import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
@@ -22,6 +28,7 @@ import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
+import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,14 +44,15 @@ public class FLVTool {
         {
             put("clip", new ClipPacketProcessor.Factory());
             put("fix_pts", new FixPtsProcessor.Factory());
+            put("info", new InfoPacketProcessor.Factory());
         }
     };
 
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
-        if (cmd.args.length < 3) {
+        if (cmd.args.length < 2) {
             if (cmd.args.length > 0) {
-                MainUtils.printHelp(processors.get(cmd.getArg(0)).getFlags(), cmd.getArg(0), "file in", "file out");
+                MainUtils.printHelp(processors.get(cmd.getArg(0)).getFlags(), cmd.getArg(0), "file in", "?file out");
             } else {
                 printGenericHelp();
             }
@@ -63,7 +71,8 @@ public class FLVTool {
         SeekableByteChannel out = null;
         try {
             in = NIOUtils.readableFileChannel(new File(cmd.getArg(1)));
-            out = NIOUtils.writableFileChannel(new File(cmd.getArg(2)));
+            if (processor.hasOutput())
+                out = NIOUtils.writableFileChannel(new File(cmd.getArg(2)));
             FLVReader demuxer = new FLVReader(in);
             FLVWriter muxer = new FLVWriter(out);
             FLVTag pkt = null;
@@ -93,6 +102,8 @@ public class FLVTool {
 
     public static interface PacketProcessor {
         boolean processPacket(FLVTag pkt, FLVWriter writer) throws IOException;
+
+        boolean hasOutput();
 
         void finish(FLVWriter muxer) throws IOException;
     }
@@ -163,6 +174,11 @@ public class FLVTool {
 
         @Override
         public void finish(FLVWriter muxer) {
+        }
+
+        @Override
+        public boolean hasOutput() {
+            return true;
         }
     }
 
@@ -247,6 +263,86 @@ public class FLVTool {
             while (tags.size() > 0) {
                 processOneTag(muxer);
             }
+        }
+
+        @Override
+        public boolean hasOutput() {
+            return true;
+        }
+    }
+
+    /**
+     * A packet processor that just dumps info
+     * 
+     */
+    public static class InfoPacketProcessor implements PacketProcessor {
+
+        public static class Factory implements PacketProcessorFactory {
+            @Override
+            public PacketProcessor newPacketProcessor(Cmd flags) {
+                return new InfoPacketProcessor();
+            }
+
+            @Override
+            public Map<String, String> getFlags() {
+                return new HashMap<String, String>() {
+                    {
+                    }
+                };
+            }
+        }
+
+        @Override
+        public boolean processPacket(FLVTag pkt, FLVWriter writer) throws IOException {
+            System.out.print("T=" + typeString(pkt.getType()) + "|PTS=" + pkt.getPts() + "|"
+                    + (pkt.isKeyFrame() ? "K" : " ") + "|POS=" + pkt.getPosition());
+            if (pkt.getTagHeader() instanceof VideoTagHeader) {
+                VideoTagHeader vt = (VideoTagHeader) pkt.getTagHeader();
+                System.out.print("|C=" + vt.getCodec() + "|FT=" + vt.getFrameType());
+                if (vt instanceof AvcVideoTagHeader) {
+                    AvcVideoTagHeader avct = (AvcVideoTagHeader) vt;
+                    System.out.print("|PKT_TYPE=" + avct.getAvcPacketType() + "|COMP_OFF=" + avct.getCompOffset());
+                    if (avct.getAvcPacketType() == 0) {
+                        ByteBuffer frameData = pkt.getData().duplicate();
+                        FLVReader.parseVideoTagHeader(frameData);
+                        AvcCBox avcc = H264Utils.parseAVCC(frameData);
+                        for (SeqParameterSet sps : H264Utils.readSPS(avcc.getSpsList())) {
+                            System.out.println();
+                            System.out.print("  SPS[" + sps.getSeq_parameter_set_id() + "]:" + ToJSON.toJSON(sps));
+                        }
+                        for (PictureParameterSet pps : H264Utils.readPPS(avcc.getPpsList())) {
+                            System.out.println();
+                            System.out.print("  PPS[" + pps.getPic_parameter_set_id() + "]:" + ToJSON.toJSON(pps));
+                        }
+                    }
+                }
+            } else if (pkt.getTagHeader() instanceof AudioTagHeader) {
+                AudioTagHeader at = (AudioTagHeader) pkt.getTagHeader();
+                AudioFormat format = at.getAudioFormat();
+                System.out.print("|C=" + at.getCodec() + "|SR=" + format.getSampleRate() + "|SS="
+                        + (format.getSampleSizeInBits() >> 3) + "|CH=" + format.getChannels());
+            } else if (pkt.getType() == Type.SCRIPT) {
+                FLVMetadata metadata = FLVReader.parseMetadata(pkt.getData().duplicate());
+                if (metadata != null) {
+                    System.out.println();
+                    System.out.print("  Metadata:" + ToJSON.toJSON(metadata));
+                }
+            }
+            System.out.println();
+            return true;
+        }
+
+        private String typeString(Type type) {
+            return type.toString().substring(0, 1);
+        }
+
+        @Override
+        public void finish(FLVWriter muxer) throws IOException {
+        }
+
+        @Override
+        public boolean hasOutput() {
+            return false;
         }
     }
 }

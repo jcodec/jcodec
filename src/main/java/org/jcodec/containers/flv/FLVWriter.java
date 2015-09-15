@@ -23,7 +23,6 @@ public class FLVWriter {
     private int startOfLastPacket = 9;
     private SeekableByteChannel out;
     private ByteBuffer writeBuf;
-    private byte[] prevMetadata;
 
     public FLVWriter(SeekableByteChannel out) {
         this.out = out;
@@ -58,40 +57,29 @@ public class FLVWriter {
     }
 
     private boolean writePacket(ByteBuffer writeBuf, FLVTag pkt) {
-        for (;;) {
-            int pktType = pkt.getType() == Type.VIDEO ? 0x9 : 0x8;
-            int dataLen = pkt.getData().remaining();
-            
-            if (pkt.getMetadata() != prevMetadata) {
-                pktType = 0x12;
-                dataLen = pkt.getMetadata().length;
-            }
+        int pktType = pkt.getType() == Type.VIDEO ? 0x9 : (pkt.getType() == Type.SCRIPT ? 0x12 : 0x8);
+        int dataLen = pkt.getData().remaining();
 
-            if (writeBuf.remaining() < 15 + dataLen)
-                return false;
+        if (writeBuf.remaining() < 15 + dataLen)
+            return false;
 
-            writeBuf.putInt(writeBuf.position() - startOfLastPacket);
-            startOfLastPacket = writeBuf.position();
-            
-            writeBuf.put((byte) pktType);
-            writeBuf.putShort((short) (dataLen >> 8));
-            writeBuf.put((byte) (dataLen & 0xff));
+        writeBuf.putInt(writeBuf.position() - startOfLastPacket);
+        startOfLastPacket = writeBuf.position();
 
-            writeBuf.putShort((short) ((pkt.getPts() >> 8) & 0xffff));
-            writeBuf.put((byte) (pkt.getPts() & 0xff));
-            writeBuf.put((byte) ((pkt.getPts() >> 24) & 0xff));
+        writeBuf.put((byte) pktType);
+        writeBuf.putShort((short) (dataLen >> 8));
+        writeBuf.put((byte) (dataLen & 0xff));
 
-            writeBuf.putShort((short) 0);
-            writeBuf.put((byte) 0);
+        writeBuf.putShort((short) ((pkt.getPts() >> 8) & 0xffff));
+        writeBuf.put((byte) (pkt.getPts() & 0xff));
+        writeBuf.put((byte) ((pkt.getPts() >> 24) & 0xff));
 
-            if (pkt.getMetadata() != prevMetadata) {
-                writeBuf.put(pkt.getMetadata());
-                prevMetadata = pkt.getMetadata();
-            } else {
-                NIOUtils.write(writeBuf, pkt.getData().duplicate());
-                return true;
-            }
-        }
+        writeBuf.putShort((short) 0);
+        writeBuf.put((byte) 0);
+
+        NIOUtils.write(writeBuf, pkt.getData().duplicate());
+
+        return true;
     }
 
     private static void writeHeader(ByteBuffer writeBuf) {
