@@ -47,7 +47,7 @@ public class BitstreamParser {
         this.di = di;
     }
 
-    int readMBQpDelta(BitReader reader, MBType prevMbType) {
+    int readMBQpDelta(MBType prevMbType) {
         int mbQPDelta;
         if (!activePps.entropy_coding_mode_flag) {
             mbQPDelta = readSE(reader, "mb_qp_delta");
@@ -57,7 +57,7 @@ public class BitstreamParser {
         return mbQPDelta;
     }
 
-    int readChromaPredMode(BitReader reader, int mbX, boolean leftAvailable, boolean topAvailable) {
+    int readChromaPredMode(int mbX, boolean leftAvailable, boolean topAvailable) {
         int chromaPredictionMode;
         if (!activePps.entropy_coding_mode_flag) {
             chromaPredictionMode = readUE(reader, "MBP: intra_chroma_pred_mode");
@@ -68,7 +68,7 @@ public class BitstreamParser {
         return chromaPredictionMode;
     }
 
-    boolean readTransform8x8Flag(BitReader reader, boolean leftAvailable, boolean topAvailable, MBType leftType,
+    boolean readTransform8x8Flag(boolean leftAvailable, boolean topAvailable, MBType leftType,
             MBType topType, boolean is8x8Left, boolean is8x8Top) {
         if (!activePps.entropy_coding_mode_flag)
             return readBool(reader, "transform_size_8x8_flag");
@@ -77,7 +77,7 @@ public class BitstreamParser {
                     is8x8Top);
     }
 
-    protected int readCodedBlockPatternIntra(BitReader reader, boolean leftAvailable, boolean topAvailable,
+    protected int readCodedBlockPatternIntra(boolean leftAvailable, boolean topAvailable,
             int leftCBP, int topCBP, MBType leftMB, MBType topMB) {
 
         if (!activePps.entropy_coding_mode_flag)
@@ -86,7 +86,7 @@ public class BitstreamParser {
             return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
     }
 
-    protected int readCodedBlockPatternInter(BitReader reader, boolean leftAvailable, boolean topAvailable,
+    protected int readCodedBlockPatternInter(boolean leftAvailable, boolean topAvailable,
             int leftCBP, int topCBP, MBType leftMB, MBType topMB) {
         if (!activePps.entropy_coding_mode_flag)
             return H264Const.CODED_BLOCK_PATTERN_INTER_COLOR[readUE(reader, "coded_block_pattern")];
@@ -94,7 +94,7 @@ public class BitstreamParser {
             return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
     }
 
-    int readRefIdx(BitReader reader, boolean leftAvailable, boolean topAvailable, MBType leftType, MBType topType,
+    int readRefIdx(boolean leftAvailable, boolean topAvailable, MBType leftType, MBType topType,
             PartPred leftPred, PartPred topPred, PartPred curPred, int mbX, int partX, int partY, int partW, int partH,
             int list) {
         if (!activePps.entropy_coding_mode_flag)
@@ -104,7 +104,7 @@ public class BitstreamParser {
                     curPred, mbX, partX, partY, partW, partH, list);
     }
 
-    int readMVD(BitReader reader, int comp, boolean leftAvailable, boolean topAvailable, MBType leftType,
+    int readMVD(int comp, boolean leftAvailable, boolean topAvailable, MBType leftType,
             MBType topType, PartPred leftPred, PartPred topPred, PartPred curPred, int mbX, int partX, int partY,
             int partW, int partH, int list) {
         if (!activePps.entropy_coding_mode_flag)
@@ -114,7 +114,7 @@ public class BitstreamParser {
                     curPred, mbX, partX, partY, partW, partH, list);
     }
 
-    int readPredictionI4x4Block(BitReader reader, boolean leftAvailable, boolean topAvailable, MBType leftMBType,
+    int readPredictionI4x4Block(boolean leftAvailable, boolean topAvailable, MBType leftMBType,
             MBType topMBType, int blkX, int blkY, int mbX) {
         int mode = 2;
         if ((leftAvailable || blkX > 0) && (topAvailable || blkY > 0)) {
@@ -122,22 +122,22 @@ public class BitstreamParser {
             int predModeA = leftMBType == MBType.I_NxN || blkX > 0 ? sharedState.i4x4PredLeft[blkY] : 2;
             mode = Math.min(predModeB, predModeA);
         }
-        if (!prev4x4PredMode(reader)) {
-            int rem_intra4x4_pred_mode = rem4x4PredMode(reader);
+        if (!prev4x4PredMode()) {
+            int rem_intra4x4_pred_mode = rem4x4PredMode();
             mode = rem_intra4x4_pred_mode + (rem_intra4x4_pred_mode < mode ? 0 : 1);
         }
         sharedState.i4x4PredTop[(mbX << 2) + blkX] = sharedState.i4x4PredLeft[blkY] = mode;
         return mode;
     }
 
-    int rem4x4PredMode(BitReader reader) {
+    int rem4x4PredMode() {
         if (!activePps.entropy_coding_mode_flag)
             return readNBit(reader, 3, "MB: rem_intra4x4_pred_mode");
         else
             return cabac.rem4x4PredMode(mDecoder);
     }
 
-    boolean prev4x4PredMode(BitReader reader) {
+    boolean prev4x4PredMode() {
         if (!activePps.entropy_coding_mode_flag)
             return readBool(reader, "MBP: prev_intra4x4_pred_mode_flag");
         else
@@ -195,7 +195,7 @@ public class BitstreamParser {
             cabac.setPrevCBP(codedBlockPattern);
     }
 
-    public int readLumaAC(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, MBType curMbType,
+    public int readLumaAC(boolean leftAvailable, boolean topAvailable, int mbX, MBType curMbType,
             int blkX, int j, int[] ac16, int blkOffLeft, int blkOffTop) {
         return cavlc[0].readACBlock(reader, ac16, blkX + (j & 1), blkOffTop, blkOffLeft != 0 || leftAvailable,
                 blkOffLeft == 0 ? sharedState.leftMBType : curMbType, blkOffTop != 0 || topAvailable,
@@ -212,21 +212,21 @@ public class BitstreamParser {
         cabac.setCodedBlock(blkX + 1, blkY + 1);
     }
 
-    public int readSubMBTypeP(BitReader reader) {
+    public int readSubMBTypeP() {
         if (!activePps.entropy_coding_mode_flag)
             return readUE(reader, "SUB: sub_mb_type");
         else
             return cabac.readSubMbTypeP(mDecoder);
     }
 
-    public int readSubMBTypeB(BitReader reader) {
+    public int readSubMBTypeB() {
         if (!activePps.entropy_coding_mode_flag)
             return readUE(reader, "SUB: sub_mb_type");
         else
             return cabac.readSubMbTypeB(mDecoder);
     }
 
-    public void readChromaDC(BitReader reader, int mbX, boolean leftAvailable, boolean topAvailable, int[] dc,
+    public void readChromaDC(int mbX, boolean leftAvailable, boolean topAvailable, int[] dc,
             int comp, MBType curMbType) {
         if (!activePps.entropy_coding_mode_flag)
             cavlc[comp].readChromaDCBlock(reader, dc, leftAvailable, topAvailable);
@@ -239,7 +239,7 @@ public class BitstreamParser {
         }
     }
 
-    public void readChromaAC(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int comp,
+    public void readChromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int comp,
             MBType curMbType, int[] ac, int blkOffLeft, int blkOffTop, int blkX) {
         if (!activePps.entropy_coding_mode_flag)
             cavlc[comp].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
@@ -254,7 +254,7 @@ public class BitstreamParser {
         }
     }
 
-    public int decodeMBTypeI(int mbIdx, BitReader reader, boolean leftAvailable, boolean topAvailable,
+    public int decodeMBTypeI(int mbIdx, boolean leftAvailable, boolean topAvailable,
             MBType leftMBType, MBType topMBType) {
         int mbType;
         if (!activePps.entropy_coding_mode_flag)
@@ -264,7 +264,7 @@ public class BitstreamParser {
         return mbType;
     }
 
-    public int readMBTypeP(BitReader reader) {
+    public int readMBTypeP() {
         int mbType;
         if (!activePps.entropy_coding_mode_flag)
             mbType = readUE(reader, "MB: mb_type");

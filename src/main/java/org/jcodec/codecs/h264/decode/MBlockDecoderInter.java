@@ -20,7 +20,6 @@ import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.Picture8Bit;
 
 /**
@@ -31,12 +30,12 @@ import org.jcodec.common.model.Picture8Bit;
 public class MBlockDecoderInter extends MBlockDecoderBase {
     private Mapper mapper;
 
-    public MBlockDecoderInter(Mapper mapper, BitstreamParser parser, SliceHeader sh, DeblockerInput di, int poc, DecoderState sharedState) {
-        super(parser, sh, di, poc, sharedState);
+    public MBlockDecoderInter(Mapper mapper, BitstreamParser parser, SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
+        super(parser, sh, di, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode16x16(BitReader reader, Picture8Bit mb, Frame[][] refs, int mbIdx,
+    public void decode16x16(Picture8Bit mb, Frame[][] refs, int mbIdx,
             MBType prevMbType, PartPred p0, MBType curMBType) {
         int mbX = mapper.getMbX(mbIdx);
         int mbY = mapper.getMbY(mbIdx);
@@ -50,40 +49,40 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int xx = mbX << 2;
         int[] refIdx = { 0, 0 };
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && sharedState.numRef[list] > 1)
-                refIdx[list] = parser.readRefIdx(reader, leftAvailable, topAvailable, sharedState.leftMBType,
-                        sharedState.topMBType[mbX], sharedState.predModeLeft[0], sharedState.predModeTop[(mbX << 1)],
+            if (p0.usesList(list) && s.numRef[list] > 1)
+                refIdx[list] = parser.readRefIdx(leftAvailable, topAvailable, s.leftMBType,
+                        s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[(mbX << 1)],
                         p0, mbX, 0, 0, 4, 4, list);
         }
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, sharedState.chromaFormat),
-                Picture8Bit.create(16, 16, sharedState.chromaFormat) };
+        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat),
+                Picture8Bit.create(16, 16, s.chromaFormat) };
         for (int list = 0; list < 2; list++) {
-            predictInter16x16(reader, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
+            predictInter16x16(mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, x, xx, refIdx, list, p0);
         }
 
         PredictionMerger.mergePrediction(sh, x[0][0][2], x[1][0][2], p0, 0, mbb[0].getPlaneData(0),
                 mbb[1].getPlaneData(0), 0, 16, 16, 16, mb.getPlaneData(0), refs, poc);
 
-        sharedState.predModeLeft[0] = sharedState.predModeLeft[1] = sharedState.predModeTop[mbX << 1] = sharedState.predModeTop[(mbX << 1) + 1] = p0;
+        s.predModeLeft[0] = s.predModeLeft[1] = s.predModeTop[mbX << 1] = s.predModeTop[(mbX << 1) + 1] = p0;
 
         PartPred[] partPreds = new PartPred[] { p0, p0, p0, p0 };
         predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb, partPreds);
         predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb, partPreds);
 
-        int[][][] residual = residualInter(reader, refs, leftAvailable, topAvailable, mbX, mbY, x, partPreds,
+        int[][][] residual = residualInter(refs, leftAvailable, topAvailable, mbX, mbY, x, partPreds,
                 mapper.getAddress(mbIdx), prevMbType, curMBType);
 
         boolean transform8x8Used = residual[0][0].length == 64;
         mergeResidual(mb, residual, transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-        collectPredictors(sharedState, mb, mbX);
+        collectPredictors(s, mb, mbX);
 
-        di.mbTypes[address] = sharedState.topMBType[mbX] = sharedState.leftMBType = curMBType;
+        di.mbTypes[address] = s.topMBType[mbX] = s.leftMBType = curMBType;
     }
 
-    private void predictInter8x16(BitReader reader, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+    private void predictInter8x16(Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, int[][][] x,
             int[] refIdx1, int[] refIdx2, int list, PartPred p0, PartPred p1) {
         int xx = mbX << 2;
@@ -92,18 +91,18 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
 
         int mvX1 = 0, mvY1 = 0, r1 = -1, mvX2 = 0, mvY2 = 0, r2 = -1;
         if (p0.usesList(list)) {
-            int mvdX1 = parser.readMVD(reader, 0, leftAvailable, topAvailable, sharedState.leftMBType,
-                    sharedState.topMBType[mbX], sharedState.predModeLeft[0], sharedState.predModeTop[blk8x8X], p0, mbX,
+            int mvdX1 = parser.readMVD(0, leftAvailable, topAvailable, s.leftMBType,
+                    s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[blk8x8X], p0, mbX,
                     0, 0, 2, 4, list);
-            int mvdY1 = parser.readMVD(reader, 1, leftAvailable, topAvailable, sharedState.leftMBType,
-                    sharedState.topMBType[mbX], sharedState.predModeLeft[0], sharedState.predModeTop[blk8x8X], p0, mbX,
+            int mvdY1 = parser.readMVD(1, leftAvailable, topAvailable, s.leftMBType,
+                    s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[blk8x8X], p0, mbX,
                     0, 0, 2, 4, list);
 
-            int mvpX1 = calcMVPrediction8x16Left(sharedState.mvLeft[list][0], sharedState.mvTop[list][mbX << 2],
-                    sharedState.mvTop[list][(mbX << 2) + 2], sharedState.mvTopLeft[list], leftAvailable, topAvailable,
+            int mvpX1 = calcMVPrediction8x16Left(s.mvLeft[list][0], s.mvTop[list][mbX << 2],
+                    s.mvTop[list][(mbX << 2) + 2], s.mvTopLeft[list], leftAvailable, topAvailable,
                     topAvailable, tlAvailable, refIdx1[list], 0);
-            int mvpY1 = calcMVPrediction8x16Left(sharedState.mvLeft[list][0], sharedState.mvTop[list][mbX << 2],
-                    sharedState.mvTop[list][(mbX << 2) + 2], sharedState.mvTopLeft[list], leftAvailable, topAvailable,
+            int mvpY1 = calcMVPrediction8x16Left(s.mvLeft[list][0], s.mvTop[list][mbX << 2],
+                    s.mvTop[list][(mbX << 2) + 2], s.mvTopLeft[list], leftAvailable, topAvailable,
                     topAvailable, tlAvailable, refIdx1[list], 1);
 
             mvX1 = mvdX1 + mvpX1;
@@ -119,16 +118,16 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int[] v1 = { mvX1, mvY1, r1 };
 
         if (p1.usesList(list)) {
-            int mvdX2 = parser.readMVD(reader, 0, true, topAvailable, MBType.P_8x16, sharedState.topMBType[mbX], p0,
-                    sharedState.predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
-            int mvdY2 = parser.readMVD(reader, 1, true, topAvailable, MBType.P_8x16, sharedState.topMBType[mbX], p0,
-                    sharedState.predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
+            int mvdX2 = parser.readMVD(0, true, topAvailable, MBType.P_8x16, s.topMBType[mbX], p0,
+                    s.predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
+            int mvdY2 = parser.readMVD(1, true, topAvailable, MBType.P_8x16, s.topMBType[mbX], p0,
+                    s.predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
 
-            int mvpX2 = calcMVPrediction8x16Right(v1, sharedState.mvTop[list][(mbX << 2) + 2],
-                    sharedState.mvTop[list][(mbX << 2) + 4], sharedState.mvTop[list][(mbX << 2) + 1], true,
+            int mvpX2 = calcMVPrediction8x16Right(v1, s.mvTop[list][(mbX << 2) + 2],
+                    s.mvTop[list][(mbX << 2) + 4], s.mvTop[list][(mbX << 2) + 1], true,
                     topAvailable, trAvailable, topAvailable, refIdx2[list], 0);
-            int mvpY2 = calcMVPrediction8x16Right(v1, sharedState.mvTop[list][(mbX << 2) + 2],
-                    sharedState.mvTop[list][(mbX << 2) + 4], sharedState.mvTop[list][(mbX << 2) + 1], true,
+            int mvpY2 = calcMVPrediction8x16Right(v1, s.mvTop[list][(mbX << 2) + 2],
+                    s.mvTop[list][(mbX << 2) + 4], s.mvTop[list][(mbX << 2) + 1], true,
                     topAvailable, trAvailable, topAvailable, refIdx2[list], 1);
 
             mvX2 = mvdX2 + mvpX2;
@@ -143,15 +142,15 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         }
         int[] v2 = { mvX2, mvY2, r2 };
 
-        copyVect(sharedState.mvTopLeft[list], sharedState.mvTop[list][xx + 3]);
-        saveVect(sharedState.mvTop[list], xx, xx + 2, mvX1, mvY1, r1);
-        saveVect(sharedState.mvTop[list], xx + 2, xx + 4, mvX2, mvY2, r2);
-        saveVect(sharedState.mvLeft[list], 0, 4, mvX2, mvY2, r2);
+        copyVect(s.mvTopLeft[list], s.mvTop[list][xx + 3]);
+        saveVect(s.mvTop[list], xx, xx + 2, mvX1, mvY1, r1);
+        saveVect(s.mvTop[list], xx + 2, xx + 4, mvX2, mvY2, r2);
+        saveVect(s.mvLeft[list], 0, 4, mvX2, mvY2, r2);
 
         x[list] = new int[][] { v1, v1, v2, v2, v1, v1, v2, v2, v1, v1, v2, v2, v1, v1, v2, v2 };
     }
 
-    private void predictInter16x8(BitReader reader, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+    private void predictInter16x8(Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, int xx,
             int[] refIdx1, int[] refIdx2, int[][][] x, PartPred p0, PartPred p1, int list) {
 
@@ -159,18 +158,18 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int mvX1 = 0, mvY1 = 0, mvX2 = 0, mvY2 = 0, r1 = -1, r2 = -1;
         if (p0.usesList(list)) {
 
-            int mvdX1 = parser.readMVD(reader, 0, leftAvailable, topAvailable, sharedState.leftMBType,
-                    sharedState.topMBType[mbX], sharedState.predModeLeft[0], sharedState.predModeTop[blk8x8X], p0, mbX,
+            int mvdX1 = parser.readMVD(0, leftAvailable, topAvailable, s.leftMBType,
+                    s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[blk8x8X], p0, mbX,
                     0, 0, 4, 2, list);
-            int mvdY1 = parser.readMVD(reader, 1, leftAvailable, topAvailable, sharedState.leftMBType,
-                    sharedState.topMBType[mbX], sharedState.predModeLeft[0], sharedState.predModeTop[blk8x8X], p0, mbX,
+            int mvdY1 = parser.readMVD(1, leftAvailable, topAvailable, s.leftMBType,
+                    s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[blk8x8X], p0, mbX,
                     0, 0, 4, 2, list);
 
-            int mvpX1 = calcMVPrediction16x8Top(sharedState.mvLeft[list][0], sharedState.mvTop[list][mbX << 2],
-                    sharedState.mvTop[list][(mbX << 2) + 4], sharedState.mvTopLeft[list], leftAvailable, topAvailable,
+            int mvpX1 = calcMVPrediction16x8Top(s.mvLeft[list][0], s.mvTop[list][mbX << 2],
+                    s.mvTop[list][(mbX << 2) + 4], s.mvTopLeft[list], leftAvailable, topAvailable,
                     trAvailable, tlAvailable, refIdx1[list], 0);
-            int mvpY1 = calcMVPrediction16x8Top(sharedState.mvLeft[list][0], sharedState.mvTop[list][mbX << 2],
-                    sharedState.mvTop[list][(mbX << 2) + 4], sharedState.mvTopLeft[list], leftAvailable, topAvailable,
+            int mvpY1 = calcMVPrediction16x8Top(s.mvLeft[list][0], s.mvTop[list][mbX << 2],
+                    s.mvTop[list][(mbX << 2) + 4], s.mvTopLeft[list], leftAvailable, topAvailable,
                     trAvailable, tlAvailable, refIdx1[list], 1);
 
             mvX1 = mvdX1 + mvpX1;
@@ -186,14 +185,14 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int[] v1 = { mvX1, mvY1, r1 };
 
         if (p1.usesList(list)) {
-            int mvdX2 = parser.readMVD(reader, 0, leftAvailable, true, sharedState.leftMBType, MBType.P_16x8,
-                    sharedState.predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
-            int mvdY2 = parser.readMVD(reader, 1, leftAvailable, true, sharedState.leftMBType, MBType.P_16x8,
-                    sharedState.predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
+            int mvdX2 = parser.readMVD(0, leftAvailable, true, s.leftMBType, MBType.P_16x8,
+                    s.predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
+            int mvdY2 = parser.readMVD(1, leftAvailable, true, s.leftMBType, MBType.P_16x8,
+                    s.predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
 
-            int mvpX2 = calcMVPrediction16x8Bottom(sharedState.mvLeft[list][2], v1, null, sharedState.mvLeft[list][1],
+            int mvpX2 = calcMVPrediction16x8Bottom(s.mvLeft[list][2], v1, null, s.mvLeft[list][1],
                     leftAvailable, true, false, leftAvailable, refIdx2[list], 0);
-            int mvpY2 = calcMVPrediction16x8Bottom(sharedState.mvLeft[list][2], v1, null, sharedState.mvLeft[list][1],
+            int mvpY2 = calcMVPrediction16x8Bottom(s.mvLeft[list][2], v1, null, s.mvLeft[list][1],
                     leftAvailable, true, false, leftAvailable, refIdx2[list], 1);
 
             mvX2 = mvdX2 + mvpX2;
@@ -208,15 +207,15 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         }
         int[] v2 = { mvX2, mvY2, r2 };
 
-        copyVect(sharedState.mvTopLeft[list], sharedState.mvTop[list][xx + 3]);
-        saveVect(sharedState.mvLeft[list], 0, 2, mvX1, mvY1, r1);
-        saveVect(sharedState.mvLeft[list], 2, 4, mvX2, mvY2, r2);
-        saveVect(sharedState.mvTop[list], xx, xx + 4, mvX2, mvY2, r2);
+        copyVect(s.mvTopLeft[list], s.mvTop[list][xx + 3]);
+        saveVect(s.mvLeft[list], 0, 2, mvX1, mvY1, r1);
+        saveVect(s.mvLeft[list], 2, 4, mvX2, mvY2, r2);
+        saveVect(s.mvTop[list], xx, xx + 4, mvX2, mvY2, r2);
 
         x[list] = new int[][] { v1, v1, v1, v1, v1, v1, v1, v1, v2, v2, v2, v2, v2, v2, v2, v2 };
     }
 
-    public void decode16x8(BitReader reader, Picture8Bit mb, Frame[][] refs, int mbIdx,
+    public void decode16x8(Picture8Bit mb, Frame[][] refs, int mbIdx,
             MBType prevMbType, PartPred p0, PartPred p1, MBType curMBType) {
         int mbX = mapper.getMbX(mbIdx);
         int mbY = mapper.getMbY(mbIdx);
@@ -231,19 +230,19 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int[][][] x = new int[2][][];
 
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && sharedState.numRef[list] > 1)
-                refIdx1[list] = parser.readRefIdx(reader, leftAvailable, topAvailable, sharedState.leftMBType,
-                        sharedState.topMBType[mbX], sharedState.predModeLeft[0], sharedState.predModeTop[(mbX << 1)],
+            if (p0.usesList(list) && s.numRef[list] > 1)
+                refIdx1[list] = parser.readRefIdx(leftAvailable, topAvailable, s.leftMBType,
+                        s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[(mbX << 1)],
                         p0, mbX, 0, 0, 4, 2, list);
-            if (p1.usesList(list) && sharedState.numRef[list] > 1)
-                refIdx2[list] = parser.readRefIdx(reader, leftAvailable, true, sharedState.leftMBType, curMBType,
-                        sharedState.predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
+            if (p1.usesList(list) && s.numRef[list] > 1)
+                refIdx2[list] = parser.readRefIdx(leftAvailable, true, s.leftMBType, curMBType,
+                        s.predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
         }
 
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, sharedState.chromaFormat),
-                Picture8Bit.create(16, 16, sharedState.chromaFormat) };
+        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat),
+                Picture8Bit.create(16, 16, s.chromaFormat) };
         for (int list = 0; list < 2; list++) {
-            predictInter16x8(reader, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
+            predictInter16x8(mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, xx, refIdx1, refIdx2, x, p0, p1, list);
         }
 
@@ -252,26 +251,26 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         mergePrediction(sh, x[0][8][2], x[1][8][2], p1, 0, mbb[0].getPlaneData(0), mbb[1].getPlaneData(0), 128, 16, 16,
                 8, mb.getPlaneData(0), refs, poc);
 
-        sharedState.predModeLeft[0] = p0;
-        sharedState.predModeLeft[1] = sharedState.predModeTop[mbX << 1] = sharedState.predModeTop[(mbX << 1) + 1] = p1;
+        s.predModeLeft[0] = p0;
+        s.predModeLeft[1] = s.predModeTop[mbX << 1] = s.predModeTop[(mbX << 1) + 1] = p1;
 
         PartPred[] partPreds = new PartPred[] { p0, p0, p1, p1 };
         predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb, partPreds);
         predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb, partPreds);
 
-        int[][][] residual = residualInter(reader, refs, leftAvailable, topAvailable, mbX, mbY, x, partPreds,
+        int[][][] residual = residualInter(refs, leftAvailable, topAvailable, mbX, mbY, x, partPreds,
                 mapper.getAddress(mbIdx), prevMbType, curMBType);
 
         boolean transform8x8Used = residual[0][0].length == 64;
         mergeResidual(mb, residual, transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-        collectPredictors(sharedState, mb, mbX);
+        collectPredictors(s, mb, mbX);
 
-        di.mbTypes[address] = sharedState.topMBType[mbX] = sharedState.leftMBType = curMBType;
+        di.mbTypes[address] = s.topMBType[mbX] = s.leftMBType = curMBType;
     }
 
-    public void decode8x16(BitReader reader, Picture8Bit mb, Frame[][] refs, int mbIdx,
+    public void decode8x16(Picture8Bit mb, Frame[][] refs, int mbIdx,
             MBType prevMbType, PartPred p0, PartPred p1, MBType curMBType) {
         int mbX = mapper.getMbX(mbIdx);
         int mbY = mapper.getMbY(mbIdx);
@@ -285,20 +284,20 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
 
         int[] refIdx1 = { 0, 0 }, refIdx2 = { 0, 0 };
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && sharedState.numRef[list] > 1)
-                refIdx1[list] = parser.readRefIdx(reader, leftAvailable, topAvailable, sharedState.leftMBType,
-                        sharedState.topMBType[mbX], sharedState.predModeLeft[0], sharedState.predModeTop[mbX << 1], p0,
+            if (p0.usesList(list) && s.numRef[list] > 1)
+                refIdx1[list] = parser.readRefIdx(leftAvailable, topAvailable, s.leftMBType,
+                        s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[mbX << 1], p0,
                         mbX, 0, 0, 2, 4, list);
-            if (p1.usesList(list) && sharedState.numRef[list] > 1)
-                refIdx2[list] = parser.readRefIdx(reader, true, topAvailable, curMBType, sharedState.topMBType[mbX],
-                        p0, sharedState.predModeTop[(mbX << 1) + 1], p1, mbX, 2, 0, 2, 4, list);
+            if (p1.usesList(list) && s.numRef[list] > 1)
+                refIdx2[list] = parser.readRefIdx(true, topAvailable, curMBType, s.topMBType[mbX],
+                        p0, s.predModeTop[(mbX << 1) + 1], p1, mbX, 2, 0, 2, 4, list);
         }
 
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, sharedState.chromaFormat),
-                Picture8Bit.create(16, 16, sharedState.chromaFormat) };
+        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat),
+                Picture8Bit.create(16, 16, s.chromaFormat) };
 
         for (int list = 0; list < 2; list++) {
-            predictInter8x16(reader, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
+            predictInter8x16(mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, x, refIdx1, refIdx2, list, p0, p1);
         }
 
@@ -312,39 +311,39 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb, predType);
         predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb, predType);
 
-        sharedState.predModeTop[mbX << 1] = p0;
-        sharedState.predModeTop[(mbX << 1) + 1] = sharedState.predModeLeft[0] = sharedState.predModeLeft[1] = p1;
+        s.predModeTop[mbX << 1] = p0;
+        s.predModeTop[(mbX << 1) + 1] = s.predModeLeft[0] = s.predModeLeft[1] = p1;
 
-        int[][][] residual = residualInter(reader, refs, leftAvailable, topAvailable, mbX, mbY, x, predType,
+        int[][][] residual = residualInter(refs, leftAvailable, topAvailable, mbX, mbY, x, predType,
                 mapper.getAddress(mbIdx), prevMbType, curMBType);
 
         boolean transform8x8Used = residual[0][0].length == 64;
         mergeResidual(mb, residual, transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-        collectPredictors(sharedState, mb, mbX);
+        collectPredictors(s, mb, mbX);
 
-        di.mbTypes[address] = sharedState.topMBType[mbX] = sharedState.leftMBType = curMBType;
+        di.mbTypes[address] = s.topMBType[mbX] = s.leftMBType = curMBType;
     }
 
-    void predictInter16x16(BitReader reader, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+    void predictInter16x16(Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, int[][][] x, int xx,
             int[] refIdx, int list, PartPred curPred) {
         int blk8x8X = (mbX << 1);
 
         int mvX = 0, mvY = 0, r = -1;
         if (curPred.usesList(list)) {
-            int mvpX = calcMVPredictionMedian(sharedState.mvLeft[list][0], sharedState.mvTop[list][mbX << 2],
-                    sharedState.mvTop[list][(mbX << 2) + 4], sharedState.mvTopLeft[list], leftAvailable, topAvailable,
+            int mvpX = calcMVPredictionMedian(s.mvLeft[list][0], s.mvTop[list][mbX << 2],
+                    s.mvTop[list][(mbX << 2) + 4], s.mvTopLeft[list], leftAvailable, topAvailable,
                     trAvailable, tlAvailable, refIdx[list], 0);
-            int mvpY = calcMVPredictionMedian(sharedState.mvLeft[list][0], sharedState.mvTop[list][mbX << 2],
-                    sharedState.mvTop[list][(mbX << 2) + 4], sharedState.mvTopLeft[list], leftAvailable, topAvailable,
+            int mvpY = calcMVPredictionMedian(s.mvLeft[list][0], s.mvTop[list][mbX << 2],
+                    s.mvTop[list][(mbX << 2) + 4], s.mvTopLeft[list], leftAvailable, topAvailable,
                     trAvailable, tlAvailable, refIdx[list], 1);
-            int mvdX = parser.readMVD(reader, 0, leftAvailable, topAvailable, sharedState.leftMBType,
-                    sharedState.topMBType[mbX], sharedState.predModeLeft[0], sharedState.predModeTop[blk8x8X], curPred,
+            int mvdX = parser.readMVD(0, leftAvailable, topAvailable, s.leftMBType,
+                    s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[blk8x8X], curPred,
                     mbX, 0, 0, 4, 4, list);
-            int mvdY = parser.readMVD(reader, 1, leftAvailable, topAvailable, sharedState.leftMBType,
-                    sharedState.topMBType[mbX], sharedState.predModeLeft[0], sharedState.predModeTop[blk8x8X], curPred,
+            int mvdY = parser.readMVD(1, leftAvailable, topAvailable, s.leftMBType,
+                    s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[blk8x8X], curPred,
                     mbX, 0, 0, 4, 4, list);
 
             mvX = mvdX + mvpX;
@@ -357,54 +356,54 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             BlockInterpolator.getBlockLuma(references[list][r], mb, 0, (mbX << 6) + mvX, (mbY << 6) + mvY, 16, 16);
         }
 
-        copyVect(sharedState.mvTopLeft[list], sharedState.mvTop[list][xx + 3]);
-        saveVect(sharedState.mvTop[list], xx, xx + 4, mvX, mvY, r);
-        saveVect(sharedState.mvLeft[list], 0, 4, mvX, mvY, r);
+        copyVect(s.mvTopLeft[list], s.mvTop[list][xx + 3]);
+        saveVect(s.mvTop[list], xx, xx + 4, mvX, mvY, r);
+        saveVect(s.mvLeft[list], 0, 4, mvX, mvY, r);
 
         int[] v = { mvX, mvY, r };
         x[list] = new int[][] { v, v, v, v, v, v, v, v, v, v, v, v, v, v, v, v };
     }
 
-    private int[][][] residualInter(BitReader reader, Frame[][] refs, boolean leftAvailable, boolean topAvailable,
+    private int[][][] residualInter(Frame[][] refs, boolean leftAvailable, boolean topAvailable,
             int mbX, int mbY, int[][][] x, PartPred[] pp, int mbAddr, MBType prevMbType, MBType curMbType) {
-        int codedBlockPattern = parser.readCodedBlockPatternInter(reader, leftAvailable, topAvailable,
-                sharedState.leftCBPLuma | (sharedState.leftCBPChroma << 4), sharedState.topCBPLuma[mbX]
-                        | (sharedState.topCBPChroma[mbX] << 4), sharedState.leftMBType, sharedState.topMBType[mbX]);
+        int codedBlockPattern = parser.readCodedBlockPatternInter(leftAvailable, topAvailable,
+                s.leftCBPLuma | (s.leftCBPChroma << 4), s.topCBPLuma[mbX]
+                        | (s.topCBPChroma[mbX] << 4), s.leftMBType, s.topMBType[mbX]);
         int cbpLuma = codedBlockPattern & 0xf;
         int cbpChroma = codedBlockPattern >> 4;
 
         boolean transform8x8Used = false;
-        if (cbpLuma != 0 && sharedState.transform8x8) {
-            transform8x8Used = parser.readTransform8x8Flag(reader, leftAvailable, topAvailable, sharedState.leftMBType,
-                    sharedState.topMBType[mbX], sharedState.tf8x8Left, sharedState.tf8x8Top[mbX]);
+        if (cbpLuma != 0 && s.transform8x8) {
+            transform8x8Used = parser.readTransform8x8Flag(leftAvailable, topAvailable, s.leftMBType,
+                    s.topMBType[mbX], s.tf8x8Left, s.tf8x8Top[mbX]);
         }
         int[][][] residualOut = { transform8x8Used ? new int[4][64] : new int[16][16], new int[4][16], new int[4][16] };
 
         if (cbpLuma > 0 || cbpChroma > 0) {
-            int mbQpDelta = parser.readMBQpDelta(reader, prevMbType);
-            sharedState.qp = (sharedState.qp + mbQpDelta + 52) % 52;
+            int mbQpDelta = parser.readMBQpDelta(prevMbType);
+            s.qp = (s.qp + mbQpDelta + 52) % 52;
         }
-        di.mbQps[0][mbAddr] = sharedState.qp;
+        di.mbQps[0][mbAddr] = s.qp;
 
-        residualLuma(reader, leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, curMbType, transform8x8Used,
-                sharedState.tf8x8Left, sharedState.tf8x8Top[mbX], residualOut[0]);
+        residualLuma(leftAvailable, topAvailable, mbX, mbY, codedBlockPattern, curMbType, transform8x8Used,
+                s.tf8x8Left, s.tf8x8Top[mbX], residualOut[0]);
 
         saveMvs(di, x, mbX, mbY);
 
-        if (sharedState.chromaFormat != MONO) {
-            int qp1 = calcQpChroma(sharedState.qp, sharedState.chromaQpOffset[0]);
-            int qp2 = calcQpChroma(sharedState.qp, sharedState.chromaQpOffset[1]);
+        if (s.chromaFormat != MONO) {
+            int qp1 = calcQpChroma(s.qp, s.chromaQpOffset[0]);
+            int qp2 = calcQpChroma(s.qp, s.chromaQpOffset[1]);
 
-            decodeChromaResidual(reader, leftAvailable, topAvailable, mbX, mbY, cbpChroma, qp1, qp2, MBType.P_16x16,
+            decodeChromaResidual(leftAvailable, topAvailable, mbX, mbY, cbpChroma, qp1, qp2, MBType.P_16x16,
                     residualOut[1], residualOut[2]);
 
             di.mbQps[1][mbAddr] = qp1;
             di.mbQps[2][mbAddr] = qp2;
         }
 
-        sharedState.topCBPLuma[mbX] = sharedState.leftCBPLuma = cbpLuma;
-        sharedState.topCBPChroma[mbX] = sharedState.leftCBPChroma = cbpChroma;
-        sharedState.tf8x8Left = sharedState.tf8x8Top[mbX] = transform8x8Used;
+        s.topCBPLuma[mbX] = s.leftCBPLuma = cbpLuma;
+        s.topCBPChroma[mbX] = s.leftCBPChroma = cbpChroma;
+        s.tf8x8Left = s.tf8x8Top[mbX] = transform8x8Used;
         di.tr8x8Used[mbAddr] = transform8x8Used;
 
         return residualOut;

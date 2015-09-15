@@ -54,43 +54,43 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
         } else {
             bDirectDecoder.predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
                     mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, pp, mb, identityMapping4);
-            savePrediction8x8(sharedState, mbX, x[0], 0);
-            savePrediction8x8(sharedState, mbX, x[1], 1);
+            savePrediction8x8(s, mbX, x[0], 0);
+            savePrediction8x8(s, mbX, x[1], 1);
         }
 
         decodeChromaSkip(refs, x, pp, mbX, mbY, mb);
 
-        collectPredictors(sharedState, mb, mbX);
+        collectPredictors(s, mb, mbX);
 
         saveMvs(di, x, mbX, mbY);
-        di.mbTypes[mbAddr] = sharedState.topMBType[mbX] = sharedState.leftMBType = null;
-        di.mbQps[0][mbAddr] = sharedState.qp;
-        di.mbQps[1][mbAddr] = calcQpChroma(sharedState.qp, sharedState.chromaQpOffset[0]);
-        di.mbQps[2][mbAddr] = calcQpChroma(sharedState.qp, sharedState.chromaQpOffset[1]);
+        di.mbTypes[mbAddr] = s.topMBType[mbX] = s.leftMBType = null;
+        di.mbQps[0][mbAddr] = s.qp;
+        di.mbQps[1][mbAddr] = calcQpChroma(s.qp, s.chromaQpOffset[0]);
+        di.mbQps[2][mbAddr] = calcQpChroma(s.qp, s.chromaQpOffset[1]);
     }
 
     public void predictPSkip(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
             boolean trAvb, int[][][] x, Picture8Bit mb) {
         int mvX = 0, mvY = 0;
         if (lAvb && tAvb) {
-            int[] b = sharedState.mvTop[0][mbX << 2];
-            int[] a = sharedState.mvLeft[0][0];
+            int[] b = s.mvTop[0][mbX << 2];
+            int[] a = s.mvLeft[0][0];
 
             if ((a[0] != 0 || a[1] != 0 || a[2] != 0) && (b[0] != 0 || b[1] != 0 || b[2] != 0)) {
-                mvX = calcMVPredictionMedian(a, b, sharedState.mvTop[0][(mbX << 2) + 4], sharedState.mvTopLeft[0],
+                mvX = calcMVPredictionMedian(a, b, s.mvTop[0][(mbX << 2) + 4], s.mvTopLeft[0],
                         lAvb, tAvb, trAvb, tlAvb, 0, 0);
-                mvY = calcMVPredictionMedian(a, b, sharedState.mvTop[0][(mbX << 2) + 4], sharedState.mvTopLeft[0],
+                mvY = calcMVPredictionMedian(a, b, s.mvTop[0][(mbX << 2) + 4], s.mvTopLeft[0],
                         lAvb, tAvb, trAvb, tlAvb, 0, 1);
             }
         }
         debugPrint("MV_SKIP: (" + mvX + "," + mvY + ")");
         int blk8x8X = mbX << 1;
-        sharedState.predModeLeft[0] = sharedState.predModeLeft[1] = sharedState.predModeTop[blk8x8X] = sharedState.predModeTop[blk8x8X + 1] = L0;
+        s.predModeLeft[0] = s.predModeLeft[1] = s.predModeTop[blk8x8X] = s.predModeTop[blk8x8X + 1] = L0;
 
         int xx = mbX << 2;
-        copyVect(sharedState.mvTopLeft[0], sharedState.mvTop[0][xx + 3]);
-        saveVect(sharedState.mvTop[0], xx, xx + 4, mvX, mvY, 0);
-        saveVect(sharedState.mvLeft[0], 0, 4, mvX, mvY, 0);
+        copyVect(s.mvTopLeft[0], s.mvTop[0][xx + 3]);
+        saveVect(s.mvTop[0], xx, xx + 4, mvX, mvY, 0);
+        saveVect(s.mvLeft[0], 0, 4, mvX, mvY, 0);
 
         for (int i = 0; i < 16; i++) {
             x[0][i][0] = mvX;

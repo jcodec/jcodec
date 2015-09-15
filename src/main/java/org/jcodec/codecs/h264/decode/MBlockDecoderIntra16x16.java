@@ -9,7 +9,6 @@ import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.Picture8Bit;
 
 /**
@@ -21,12 +20,12 @@ public class MBlockDecoderIntra16x16 extends MBlockDecoderBase {
 
     private Mapper mapper;
 
-    public MBlockDecoderIntra16x16(Mapper mapper, BitstreamParser parser, SliceHeader sh, DeblockerInput di, int poc, DecoderState sharedState) {
-        super(parser, sh, di, poc, sharedState);
+    public MBlockDecoderIntra16x16(Mapper mapper, BitstreamParser parser, SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
+        super(parser, sh, di, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode(BitReader reader, int mbType, int mbIndex, MBType prevMbType, Picture8Bit mb) {
+    public void decode(int mbType, int mbIndex, MBType prevMbType, Picture8Bit mb) {
 
         int mbX = mapper.getMbX(mbIndex);
         int mbY = mapper.getMbY(mbIndex);
@@ -38,38 +37,38 @@ public class MBlockDecoderIntra16x16 extends MBlockDecoderBase {
         boolean leftAvailable = mapper.leftAvailable(mbIndex);
         boolean topAvailable = mapper.topAvailable(mbIndex);
 
-        int chromaPredictionMode = parser.readChromaPredMode(reader, mbX, leftAvailable, topAvailable);
-        int mbQPDelta = parser.readMBQpDelta(reader, prevMbType);
-        sharedState.qp = (sharedState.qp + mbQPDelta + 52) % 52;
-        di.mbQps[0][address] = sharedState.qp;
+        int chromaPredictionMode = parser.readChromaPredMode(mbX, leftAvailable, topAvailable);
+        int mbQPDelta = parser.readMBQpDelta(prevMbType);
+        s.qp = (s.qp + mbQPDelta + 52) % 52;
+        di.mbQps[0][address] = s.qp;
 
         int[][] residual = new int[16][16];
 
-        residualLumaI16x16(reader, leftAvailable, topAvailable, mbX, mbY, cbpLuma, residual);
+        residualLumaI16x16(leftAvailable, topAvailable, mbX, mbY, cbpLuma, residual);
 
         Intra16x16PredictionBuilder.predictWithMode(mbType % 4, residual, leftAvailable, topAvailable,
-                sharedState.leftRow[0], sharedState.topLine[0], sharedState.topLeft[0], mbX << 4, mb.getPlaneData(0));
+                s.leftRow[0], s.topLine[0], s.topLeft[0], mbX << 4, mb.getPlaneData(0));
 
-        decodeChroma(reader, cbpChroma, chromaPredictionMode, mbX, mbY, leftAvailable, topAvailable, mb,
-                sharedState.qp, MBType.I_16x16);
-        di.mbTypes[address] = sharedState.topMBType[mbX] = sharedState.leftMBType = MBType.I_16x16;
+        decodeChroma(cbpChroma, chromaPredictionMode, mbX, mbY, leftAvailable, topAvailable, mb,
+                s.qp, MBType.I_16x16);
+        di.mbTypes[address] = s.topMBType[mbX] = s.leftMBType = MBType.I_16x16;
         // System.out.println("idx: " + mbIndex + ", addr: " + address);
-        sharedState.topCBPLuma[mbX] = sharedState.leftCBPLuma = cbpLuma;
-        sharedState.topCBPChroma[mbX] = sharedState.leftCBPChroma = cbpChroma;
-        sharedState.tf8x8Left = sharedState.tf8x8Top[mbX] = false;
+        s.topCBPLuma[mbX] = s.leftCBPLuma = cbpLuma;
+        s.topCBPChroma[mbX] = s.leftCBPChroma = cbpChroma;
+        s.tf8x8Left = s.tf8x8Top[mbX] = false;
 
-        collectPredictors(sharedState, mb, mbX);
+        collectPredictors(s, mb, mbX);
         saveMvsIntra(di, mbX, mbY);
-        saveVectIntra(sharedState, mapper.getMbX(mbIndex));
+        saveVectIntra(s, mapper.getMbX(mbIndex));
     }
 
-    private void residualLumaI16x16(BitReader reader, boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
+    private void residualLumaI16x16(boolean leftAvailable, boolean topAvailable, int mbX, int mbY,
             int cbpLuma, int[][] residualOut) {
         int[] dc = new int[16];
         parser.read16x16DC(leftAvailable, topAvailable, mbX, dc);
 
         CoeffTransformer.invDC4x4(dc);
-        CoeffTransformer.dequantizeDC4x4(dc, sharedState.qp);
+        CoeffTransformer.dequantizeDC4x4(dc, s.qp);
         reorderDC4x4(dc);
 
         for (int i = 0; i < 16; i++) {
@@ -81,7 +80,7 @@ public class MBlockDecoderIntra16x16 extends MBlockDecoderBase {
 
             if ((cbpLuma & (1 << (i >> 2))) != 0) {
                 parser.read16x16AC(leftAvailable, topAvailable, mbX, cbpLuma, ac, blkOffLeft, blkOffTop, blkX, blkY);
-                CoeffTransformer.dequantizeAC(ac, sharedState.qp);
+                CoeffTransformer.dequantizeAC(ac, s.qp);
             } else {
                 if (!sh.pps.entropy_coding_mode_flag)
                     parser.setZeroCoeff(0, blkX, blkOffTop);
