@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ import org.jcodec.common.IOUtils;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.StringUtils;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.ToJSON;
@@ -45,6 +47,7 @@ public class FLVTool {
             put("clip", new ClipPacketProcessor.Factory());
             put("fix_pts", new FixPtsProcessor.Factory());
             put("info", new InfoPacketProcessor.Factory());
+            put("shift_pts", new ShiftPtsProcessor.Factory());
         }
     };
 
@@ -343,6 +346,117 @@ public class FLVTool {
         @Override
         public boolean hasOutput() {
             return false;
+        }
+    }
+
+    /**
+     * A packet processor shifts pts
+     * 
+     */
+    public static class ShiftPtsProcessor implements PacketProcessor {
+
+        private static final long WRAP_AROUND_VALUE = 0x80000000L;
+        private static final int HALF_WRAP_AROUND_VALUE = 0x40000000;
+
+        public static class Factory implements PacketProcessorFactory {
+            @Override
+            public PacketProcessor newPacketProcessor(Cmd flags) {
+                return new ShiftPtsProcessor(flags.getIntegerFlag("to", 0), flags.getIntegerFlag("by"),
+                        flags.getBooleanFlag("wrap-around", false));
+            }
+
+            @Override
+            public Map<String, String> getFlags() {
+                return new HashMap<String, String>() {
+                    {
+                        put("to", "Shift first pts to this value, and all subsequent pts accordingly.");
+                        put("by", "Shift all pts by this value.");
+                        put("wrap-around", "Expect wrap around of timestamps.");
+                    }
+                };
+            }
+        }
+
+        private int shiftTo;
+        private Integer shiftBy;
+        private long ptsDelta;
+        private boolean firstPtsSeen;
+        private List<FLVTag> savedTags = new LinkedList<FLVTag>();
+        private boolean expectWrapAround;
+        private int prevPts;
+
+        public ShiftPtsProcessor(int shiftTo, Integer shiftBy, boolean expectWrapAround) {
+            this.shiftTo = shiftTo;
+            this.shiftBy = shiftBy;
+            this.expectWrapAround = true;
+        }
+
+        public boolean processPacket(FLVTag pkt, FLVWriter writer) throws IOException {
+            boolean validPkt = pkt.getType() == Type.AUDIO
+                    || pkt.getType() == Type.VIDEO
+                    && (((VideoTagHeader) pkt.getTagHeader()).getCodec() != Codec.H264 || ((AvcVideoTagHeader) pkt
+                            .getTagHeader()).getAvcPacketType() != 0);
+            if (expectWrapAround && validPkt && pkt.getPts() < prevPts && ((long)prevPts - pkt.getPts() > HALF_WRAP_AROUND_VALUE)) {
+                Logger.warn("Wrap around detected: " + prevPts + " -> " + pkt.getPts());
+
+                if (pkt.getPts() < -HALF_WRAP_AROUND_VALUE) {
+                    ptsDelta += (WRAP_AROUND_VALUE << 1);
+                } else if (pkt.getPts() >= 0) {
+                    ptsDelta += WRAP_AROUND_VALUE;
+                }
+            }
+            if (validPkt)
+                prevPts = pkt.getPts();
+
+            if (firstPtsSeen) {
+                writePacket(pkt, writer);
+            } else {
+                if (!validPkt) {
+                    savedTags.add(pkt);
+                } else {
+                    if (shiftBy != null) {
+                        ptsDelta = shiftBy;
+                        if (ptsDelta + pkt.getPts() < 0)
+                            ptsDelta = -pkt.getPts();
+                    } else {
+                        ptsDelta = shiftTo - pkt.getPts();
+                    }
+                    firstPtsSeen = true;
+                    emptySavedTags(writer);
+                }
+            }
+
+            return true;
+        }
+
+        private void writePacket(FLVTag pkt, FLVWriter writer) throws IOException {
+            long newPts = pkt.getPts() + ptsDelta;
+            if (newPts < 0) {
+                Logger.warn("Preventing negative pts for tag @" + pkt.getPosition());
+                newPts = 0;
+            } else if (newPts >= WRAP_AROUND_VALUE) {
+                Logger.warn("PTS wrap around @" + pkt.getPosition());
+                newPts -= WRAP_AROUND_VALUE;
+                ptsDelta = newPts - pkt.getPts();
+            }
+            pkt.setPts((int) newPts);
+            writer.addPacket(pkt);
+        }
+
+        private void emptySavedTags(FLVWriter muxer) throws IOException {
+            while (savedTags.size() > 0) {
+                writePacket(savedTags.remove(0), muxer);
+            }
+        }
+
+        @Override
+        public void finish(FLVWriter muxer) throws IOException {
+            emptySavedTags(muxer);
+        }
+
+        @Override
+        public boolean hasOutput() {
+            return true;
         }
     }
 }
