@@ -42,21 +42,25 @@ import org.jcodec.common.tools.MathUtil;
 public class MBlockDecoderBDirect extends MBlockDecoderBase {
     private Mapper mapper;
 
-    public MBlockDecoderBDirect(Mapper mapper, BitstreamParser parser, SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
+    public MBlockDecoderBDirect(Mapper mapper, BitstreamParser parser, SliceHeader sh, DeblockerInput di, int poc,
+            DecoderState decoderState) {
         super(parser, sh, di, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode(int mbIdx, boolean field, MBType prevMbType, Picture8Bit mb,
-            Frame[][] references) {
+    public void decode(int mbIdx, boolean field, MBType prevMbType, Picture8Bit mb, Frame[][] references) {
+
+        MBlock mBlock = new MBlock();
+        
+        readMBlockBDirect(mbIdx, prevMbType, mBlock);
+
         int mbX = mapper.getMbX(mbIdx);
         int mbY = mapper.getMbY(mbIdx);
-        int mbAddr = mapper.getAddress(mbIdx);
         boolean lAvb = mapper.leftAvailable(mbIdx);
         boolean tAvb = mapper.topAvailable(mbIdx);
+        int mbAddr = mapper.getAddress(mbIdx);
         boolean tlAvb = mapper.topLeftAvailable(mbIdx);
         boolean trAvb = mapper.topRightAvailable(mbIdx);
-
         int[][][] x = new int[2][16][3];
         for (int i = 0; i < 16; i++)
             x[0][i][2] = x[1][i][2] = -1;
@@ -68,28 +72,13 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         predictChromaInter(references, x, mbX << 3, mbY << 3, 1, mb, pp);
         predictChromaInter(references, x, mbX << 3, mbY << 3, 2, mb, pp);
 
-        int codedBlockPattern = parser.readCodedBlockPatternInter(lAvb, tAvb, s.leftCBPLuma
-                | (s.leftCBPChroma << 4), s.topCBPLuma[mbX] | (s.topCBPChroma[mbX] << 4),
-                s.leftMBType, s.topMBType[mbX]);
-
-        int cbpLuma = codedBlockPattern & 0xf;
-        int cbpChroma = codedBlockPattern >> 4;
-
-        boolean transform8x8Used = false;
-        if (s.transform8x8 && cbpLuma != 0 && sh.sps.direct_8x8_inference_flag) {
-            transform8x8Used = parser.readTransform8x8Flag(lAvb, tAvb, s.leftMBType,
-                    s.topMBType[mbX], s.tf8x8Left, s.tf8x8Top[mbX]);
-        }
-
-        if (cbpLuma > 0 || cbpChroma > 0) {
-            s.qp = (s.qp + parser.readMBQpDelta(prevMbType) + 52) % 52;
+        if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
+            s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;
         }
         di.mbQps[0][mbAddr] = s.qp;
 
-        int[][][] residual = { transform8x8Used ? new int[4][64] : new int[16][16], new int[4][16], new int[4][16] };
-
-        residualLuma(lAvb, tAvb, mbX, mbY, codedBlockPattern, MBType.P_8x8, transform8x8Used,
-                s.tf8x8Left, s.tf8x8Top[mbX], residual[0]);
+        residualLuma(mBlock, lAvb, tAvb, mbX, mbY, MBType.B_Direct_16x16, mBlock.transform8x8Used, s.tf8x8Left,
+                s.tf8x8Top[mbX]);
 
         savePrediction8x8(s, mbX, x[0], 0);
         savePrediction8x8(s, mbX, x[1], 1);
@@ -98,38 +87,57 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         int qp1 = calcQpChroma(s.qp, s.chromaQpOffset[0]);
         int qp2 = calcQpChroma(s.qp, s.chromaQpOffset[1]);
 
-        decodeChromaResidual(lAvb, tAvb, mbX, mbY, codedBlockPattern >> 4, qp1, qp2, MBType.P_16x16,
-                residual[1], residual[2]);
+        decodeChromaResidual(mBlock, lAvb, tAvb, mbX, mbY, mBlock.cbpChroma(), qp1, qp2, MBType.B_Direct_16x16);
 
         di.mbQps[1][mbAddr] = qp1;
         di.mbQps[2][mbAddr] = qp2;
 
-        mergeResidual(mb, residual, transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
-                transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
+        mergeResidual(mb, mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
+                mBlock.transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
         collectPredictors(s, mb, mbX);
 
         di.mbTypes[mbAddr] = s.topMBType[mbX] = s.leftMBType = MBType.B_Direct_16x16;
-        s.topCBPLuma[mbX] = s.leftCBPLuma = cbpLuma;
-        s.topCBPChroma[mbX] = s.leftCBPChroma = cbpChroma;
-        s.tf8x8Left = s.tf8x8Top[mbX] = transform8x8Used;
-        di.tr8x8Used[mbAddr] = transform8x8Used;
+        s.topCBPLuma[mbX] = s.leftCBPLuma = mBlock.cbpLuma();
+        s.topCBPChroma[mbX] = s.leftCBPChroma = mBlock.cbpChroma();
+        s.tf8x8Left = s.tf8x8Top[mbX] = mBlock.transform8x8Used;
+        di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
         s.predModeTop[mbX << 1] = s.predModeTop[(mbX << 1) + 1] = s.predModeLeft[0] = s.predModeLeft[1] = Direct;
     }
 
-    public void predictBDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb,
-            boolean tlAvb, boolean trAvb, int[][][] x, PartPred[] pp, Picture8Bit mb, int[] blocks) {
+    private void readMBlockBDirect(int mbIdx, MBType prevMbType, MBlock mBlock) {
+        int mbX = mapper.getMbX(mbIdx);
+        int mbY = mapper.getMbY(mbIdx);
+        boolean lAvb = mapper.leftAvailable(mbIdx);
+        boolean tAvb = mapper.topAvailable(mbIdx);
+        mBlock.cbp = parser.readCodedBlockPatternInter(lAvb, tAvb, s.leftCBPLuma | (s.leftCBPChroma << 4),
+                s.topCBPLuma[mbX] | (s.topCBPChroma[mbX] << 4), s.leftMBType, s.topMBType[mbX]);
+
+        mBlock.transform8x8Used = false;
+        if (s.transform8x8 && mBlock.cbpLuma() != 0 && sh.sps.direct_8x8_inference_flag) {
+            mBlock.transform8x8Used = parser.readTransform8x8Flag(lAvb, tAvb, s.leftMBType, s.topMBType[mbX],
+                    s.tf8x8Left, s.tf8x8Top[mbX]);
+        }
+
+        if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
+            mBlock.mbQPDelta = parser.readMBQpDelta(prevMbType);
+        }
+        readResidualLuma(mBlock, lAvb, tAvb, mbX, mbY, MBType.B_Direct_16x16, mBlock.transform8x8Used);
+        readChromaResidual(mBlock, lAvb, tAvb, mbX, mBlock.cbpChroma(), MBType.B_Direct_16x16);
+    }
+
+    public void predictBDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
+            boolean trAvb, int[][][] x, PartPred[] pp, Picture8Bit mb, int[] blocks) {
         if (sh.direct_spatial_mv_pred_flag)
             predictBSpatialDirect(refs, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, x, pp, mb, blocks);
         else
             predictBTemporalDirect(refs, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, x, pp, mb, blocks);
     }
 
-    private void predictBTemporalDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb,
-            boolean tlAvb, boolean trAvb, int[][][] x, PartPred[] pp, Picture8Bit mb, int[] blocks8x8) {
+    private void predictBTemporalDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
+            boolean trAvb, int[][][] x, PartPred[] pp, Picture8Bit mb, int[] blocks8x8) {
 
-        Picture8Bit mb0 = Picture8Bit.create(16, 16, s.chromaFormat), mb1 = Picture8Bit.create(16, 16,
-                s.chromaFormat);
+        Picture8Bit mb0 = Picture8Bit.create(16, 16, s.chromaFormat), mb1 = Picture8Bit.create(16, 16, s.chromaFormat);
         for (int blk8x8 : blocks8x8) {
             int blk4x4_0 = H264Const.BLK8x8_BLOCKS[blk8x8][0];
             pp[blk8x8] = Bi;
@@ -234,8 +242,8 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         return 0;
     }
 
-    private void predictBSpatialDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb,
-            boolean tlAvb, boolean trAvb, int[][][] x, PartPred[] pp, Picture8Bit mb, int[] blocks8x8) {
+    private void predictBSpatialDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
+            boolean trAvb, int[][][] x, PartPred[] pp, Picture8Bit mb, int[] blocks8x8) {
 
         int[] a0 = s.mvLeft[0][0], a1 = s.mvLeft[1][0];
         int[] b0 = s.mvTop[0][mbX << 2], b1 = s.mvTop[1][mbX << 2];
@@ -246,8 +254,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         int refIdxL0 = calcRef(a0, b0, c0, d0, lAvb, tAvb, tlAvb, trAvb, mbX);
         int refIdxL1 = calcRef(a1, b1, c1, d1, lAvb, tAvb, tlAvb, trAvb, mbX);
 
-        Picture8Bit mb0 = Picture8Bit.create(16, 16, s.chromaFormat), mb1 = Picture8Bit.create(16, 16,
-                s.chromaFormat);
+        Picture8Bit mb0 = Picture8Bit.create(16, 16, s.chromaFormat), mb1 = Picture8Bit.create(16, 16, s.chromaFormat);
 
         if (refIdxL0 < 0 && refIdxL1 < 0) {
             for (int blk8x8 : blocks8x8) {
