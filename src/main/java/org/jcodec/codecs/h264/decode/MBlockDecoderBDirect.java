@@ -42,25 +42,20 @@ import org.jcodec.common.tools.MathUtil;
 public class MBlockDecoderBDirect extends MBlockDecoderBase {
     private Mapper mapper;
 
-    public MBlockDecoderBDirect(Mapper mapper, BitstreamParser parser, SliceHeader sh, DeblockerInput di, int poc,
+    public MBlockDecoderBDirect(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc,
             DecoderState decoderState) {
-        super(parser, sh, di, poc, decoderState);
+        super(sh, di, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode(int mbIdx, boolean field, MBType prevMbType, Picture8Bit mb, Frame[][] references) {
-
-        MBlock mBlock = new MBlock();
-        
-        readMBlockBDirect(mbIdx, prevMbType, mBlock);
-
-        int mbX = mapper.getMbX(mbIdx);
-        int mbY = mapper.getMbY(mbIdx);
-        boolean lAvb = mapper.leftAvailable(mbIdx);
-        boolean tAvb = mapper.topAvailable(mbIdx);
-        int mbAddr = mapper.getAddress(mbIdx);
-        boolean tlAvb = mapper.topLeftAvailable(mbIdx);
-        boolean trAvb = mapper.topRightAvailable(mbIdx);
+    public void decode(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+        int mbX = mapper.getMbX(mBlock.mbIdx);
+        int mbY = mapper.getMbY(mBlock.mbIdx);
+        boolean lAvb = mapper.leftAvailable(mBlock.mbIdx);
+        boolean tAvb = mapper.topAvailable(mBlock.mbIdx);
+        int mbAddr = mapper.getAddress(mBlock.mbIdx);
+        boolean tlAvb = mapper.topLeftAvailable(mBlock.mbIdx);
+        boolean trAvb = mapper.topRightAvailable(mBlock.mbIdx);
         int[][][] x = new int[2][16][3];
         for (int i = 0; i < 16; i++)
             x[0][i][2] = x[1][i][2] = -1;
@@ -77,8 +72,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         }
         di.mbQps[0][mbAddr] = s.qp;
 
-        residualLuma(mBlock, lAvb, tAvb, mbX, mbY, MBType.B_Direct_16x16, mBlock.transform8x8Used, s.tf8x8Left,
-                s.tf8x8Top[mbX]);
+        residualLuma(mBlock, lAvb, tAvb, mbX, mbY, s.tf8x8Left, s.tf8x8Top[mbX]);
 
         savePrediction8x8(s, mbX, x[0], 0);
         savePrediction8x8(s, mbX, x[1], 1);
@@ -87,7 +81,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         int qp1 = calcQpChroma(s.qp, s.chromaQpOffset[0]);
         int qp2 = calcQpChroma(s.qp, s.chromaQpOffset[1]);
 
-        decodeChromaResidual(mBlock, lAvb, tAvb, mbX, mbY, mBlock.cbpChroma(), qp1, qp2, MBType.B_Direct_16x16);
+        decodeChromaResidual(mBlock, lAvb, tAvb, mbX, mbY, qp1, qp2);
 
         di.mbQps[1][mbAddr] = qp1;
         di.mbQps[2][mbAddr] = qp2;
@@ -103,27 +97,6 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         s.tf8x8Left = s.tf8x8Top[mbX] = mBlock.transform8x8Used;
         di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
         s.predModeTop[mbX << 1] = s.predModeTop[(mbX << 1) + 1] = s.predModeLeft[0] = s.predModeLeft[1] = Direct;
-    }
-
-    private void readMBlockBDirect(int mbIdx, MBType prevMbType, MBlock mBlock) {
-        int mbX = mapper.getMbX(mbIdx);
-        int mbY = mapper.getMbY(mbIdx);
-        boolean lAvb = mapper.leftAvailable(mbIdx);
-        boolean tAvb = mapper.topAvailable(mbIdx);
-        mBlock.cbp = parser.readCodedBlockPatternInter(lAvb, tAvb, s.leftCBPLuma | (s.leftCBPChroma << 4),
-                s.topCBPLuma[mbX] | (s.topCBPChroma[mbX] << 4), s.leftMBType, s.topMBType[mbX]);
-
-        mBlock.transform8x8Used = false;
-        if (s.transform8x8 && mBlock.cbpLuma() != 0 && sh.sps.direct_8x8_inference_flag) {
-            mBlock.transform8x8Used = parser.readTransform8x8Flag(lAvb, tAvb, s.leftMBType, s.topMBType[mbX],
-                    s.tf8x8Left, s.tf8x8Top[mbX]);
-        }
-
-        if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
-            mBlock.mbQPDelta = parser.readMBQpDelta(prevMbType);
-        }
-        readResidualLuma(mBlock, lAvb, tAvb, mbX, mbY, MBType.B_Direct_16x16, mBlock.transform8x8Used);
-        readChromaResidual(mBlock, lAvb, tAvb, mbX, mBlock.cbpChroma(), MBType.B_Direct_16x16);
     }
 
     public void predictBDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,

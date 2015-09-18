@@ -1,13 +1,8 @@
 package org.jcodec.codecs.h264.decode;
 
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.moreRBSPData;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
-import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
-import static org.jcodec.codecs.h264.io.model.MBType.P_16x8;
-import static org.jcodec.codecs.h264.io.model.MBType.P_8x16;
+import static org.jcodec.codecs.h264.io.model.MBType.B_Direct_16x16;
 import static org.jcodec.codecs.h264.io.model.SliceType.P;
 
 import java.nio.ByteBuffer;
@@ -108,16 +103,15 @@ public class SliceDecoder {
 
         mapper = new MapManager(sh.sps, sh.pps).getMapper(sh);
 
-        parser = new BitstreamParser(activePps, cabac, cavlc, mDecoder, in, di, decoderState);
+        parser = new BitstreamParser(activePps, cabac, cavlc, mDecoder, in, di, mapper, sh, decoderState);
 
-        decoderIntra16x16 = new MBlockDecoderIntra16x16(mapper, parser, sh, di, frameOut.getPOC(), decoderState);
-        decoderIntraNxN = new MBlockDecoderIntraNxN(mapper, parser, sh, di, frameOut.getPOC(), decoderState);
-        decoderInter = new MBlockDecoderInter(mapper, parser, sh, di, frameOut.getPOC(), decoderState);
-        decoderBDirect = new MBlockDecoderBDirect(mapper, parser, sh, di, frameOut.getPOC(), decoderState);
-        decoderInter8x8 = new MBlockDecoderInter8x8(mapper, parser, decoderBDirect, sh, di, frameOut.getPOC(),
-                decoderState);
-        skipDecoder = new MBlockSkipDecoder(mapper, parser, decoderBDirect, sh, di, frameOut.getPOC(), decoderState);
-        decoderIPCM = new MBlockDecoderIPCM(mapper, in, decoderState);
+        decoderIntra16x16 = new MBlockDecoderIntra16x16(mapper, sh, di, frameOut.getPOC(), decoderState);
+        decoderIntraNxN = new MBlockDecoderIntraNxN(mapper, sh, di, frameOut.getPOC(), decoderState);
+        decoderInter = new MBlockDecoderInter(mapper, sh, di, frameOut.getPOC(), decoderState);
+        decoderBDirect = new MBlockDecoderBDirect(mapper, sh, di, frameOut.getPOC(), decoderState);
+        decoderInter8x8 = new MBlockDecoderInter8x8(mapper, decoderBDirect, sh, di, frameOut.getPOC(), decoderState);
+        skipDecoder = new MBlockSkipDecoder(mapper, decoderBDirect, sh, di, frameOut.getPOC(), decoderState);
+        decoderIPCM = new MBlockDecoderIPCM(mapper, decoderState);
 
         refListManager = new RefListManager(sh, sRefs, lRefs, frameOut);
 
@@ -125,148 +119,88 @@ public class SliceDecoder {
 
     private void decodeMacroblocks(SliceHeader sh, BitReader in, Frame[][] refList) {
         Picture8Bit mb = Picture8Bit.create(16, 16, sh.sps.chroma_format_idc);
-        int mbWidth1 = sh.sps.pic_width_in_mbs_minus1 + 1;
-        boolean mbaffFrameFlag = (sh.sps.mb_adaptive_frame_field_flag && !sh.field_pic_flag);
+        int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
 
-        boolean prevMbSkipped = false;
-        int i;
-        MBType prevMBType = null;
-        for (i = 0;; i++) {
-            if (sh.slice_type.isInter() && !activePps.entropy_coding_mode_flag) {
-                int mbSkipRun = readUE(in, "mb_skip_run");
-                for (int j = 0; j < mbSkipRun; j++, i++) {
-                    int mbAddr = mapper.getAddress(i);
-                    debugPrint("---------------------- MB (" + (mbAddr % mbWidth1) + "," + (mbAddr / mbWidth1)
-                            + ") ---------------------");
-                    skipDecoder.decodeSkip(refList, i, mb, sh.slice_type);
-                    di.shs[mbAddr] = sh;
-                    di.refsUsed[mbAddr] = refList;
-                    putMacroblock(frameOut, mb, mapper.getMbX(i), mapper.getMbY(i));
-                    mb.fill(0);
-                }
-
-                prevMbSkipped = mbSkipRun > 0;
-                prevMBType = null;
-
-                if (!moreRBSPData(in))
-                    break;
-            }
-
-            int mbAddr = mapper.getAddress(i);
+        MBlock mBlock;
+        while ((mBlock = parser.readMacroblock()) != null) {
+            decode(mBlock, sh.slice_type, mb, refList);
+            int mbAddr = mapper.getAddress(mBlock.mbIdx);
+            int mbX = mbAddr % mbWidth;
+            int mbY = mbAddr / mbWidth;
+            putMacroblock(frameOut, mb, mbX, mbY);
             di.shs[mbAddr] = sh;
             di.refsUsed[mbAddr] = refList;
-            int mbX = mbAddr % mbWidth1;
-            int mbY = mbAddr / mbWidth1;
-            debugPrint("---------------------- MB (" + mbX + "," + mbY + ") ---------------------");
-
-            if (sh.slice_type.isIntra()
-                    || (!activePps.entropy_coding_mode_flag || !parser.readMBSkipFlag(sh.slice_type,
-                            mapper.leftAvailable(i), mapper.topAvailable(i), mbX))) {
-
-                boolean mb_field_decoding_flag = false;
-                if (mbaffFrameFlag && (i % 2 == 0 || (i % 2 == 1 && prevMbSkipped))) {
-                    mb_field_decoding_flag = readBool(in, "mb_field_decoding_flag");
-                }
-
-                prevMBType = decode(sh.slice_type, i, mb_field_decoding_flag, prevMBType, mb, refList);
-
-            } else {
-                skipDecoder.decodeSkip(refList, i, mb, sh.slice_type);
-                prevMBType = null;
-            }
-
-            putMacroblock(frameOut, mb, mbX, mbY);
-
-            if (activePps.entropy_coding_mode_flag && parser.decodeFinalBin() == 1)
-                break;
-            else if (!activePps.entropy_coding_mode_flag && !moreRBSPData(in))
-                break;
-
             mb.fill(0);
         }
     }
 
-    public MBType decode(SliceType sliceType, int mbAddr, boolean field, MBType prevMbType, Picture8Bit mb,
-            Frame[][] references) {
-        if (sliceType == SliceType.I) {
-            return decodeMBlockI(mbAddr, field, prevMbType, mb);
+    public void decode(MBlock mBlock, SliceType sliceType, Picture8Bit mb, Frame[][] references) {
+        if (mBlock.skipped) {
+            skipDecoder.decodeSkip(mBlock, references, mb, sliceType);
+        } else if (sliceType == SliceType.I) {
+            decodeMBlockI(mBlock, mb);
         } else if (sliceType == SliceType.P) {
-            return decodeMBlockP(mbAddr, field, prevMbType, mb, references);
+            decodeMBlockP(mBlock, mb, references);
         } else {
-            return decodeMBlockB(mbAddr, field, prevMbType, mb, references);
+            decodeMBlockB(mBlock, mb, references);
         }
     }
 
-    private MBType decodeMBlockI(int mbIdx, boolean field, MBType prevMbType, Picture8Bit mb) {
-
-        int mbType = parser.decodeMBTypeI(mbIdx, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
-                decoderState.leftMBType, decoderState.topMBType[mapper.getMbX(mbIdx)]);
-        return decodeMBlockIInt(mbType, mbIdx, field, prevMbType, mb);
+    private void decodeMBlockI(MBlock mBlock, Picture8Bit mb) {
+        decodeMBlockIInt(mBlock, mb);
     }
 
-    private MBType decodeMBlockIInt(int mbType, int mbIdx, boolean field, MBType prevMbType, Picture8Bit mb) {
-        MBType mbt;
-        if (mbType == 0) {
-            decoderIntraNxN.decode(mbIdx, prevMbType, mb);
-            mbt = MBType.I_NxN;
-        } else if (mbType >= 1 && mbType <= 24) {
-            mbType--;
-            decoderIntra16x16.decode(mbType, mbIdx, prevMbType, mb);
-            mbt = MBType.I_16x16;
+    private void decodeMBlockIInt(MBlock mBlock, Picture8Bit mb) {
+        if (mBlock.curMbType == MBType.I_NxN) {
+            decoderIntraNxN.decode(mBlock, mb);
+        } else if (mBlock.curMbType == MBType.I_16x16) {
+            decoderIntra16x16.decode(mBlock, mb);
         } else {
             Logger.warn("IPCM macroblock found. Not tested, may cause unpredictable behavior.");
-            decoderIPCM.decode(mbIdx, mb);
-            mbt = MBType.I_PCM;
+            decoderIPCM.decode(mBlock, mb);
         }
-        return mbt;
     }
 
-    private MBType decodeMBlockP(int mbIdx, boolean field, MBType prevMbType, Picture8Bit mb, Frame[][] references) {
-        int mbType = parser.readMBTypeP();
-
-        switch (mbType) {
-        case 0:
-            decoderInter.decode16x16(mb, references, mbIdx, prevMbType, L0, P_16x16);
-            return MBType.P_16x16;
-        case 1:
-            decoderInter.decode16x8(mb, references, mbIdx, prevMbType, L0, L0, P_16x8);
-            return MBType.P_16x8;
-        case 2:
-            decoderInter.decode8x16(mb, references, mbIdx, prevMbType, L0, L0, P_8x16);
-            return MBType.P_8x16;
-        case 3:
-            decoderInter8x8.decode(mbType, references, mb, P, mbIdx, field, prevMbType, false);
-            return MBType.P_8x8;
-        case 4:
-            decoderInter8x8.decode(mbType, references, mb, P, mbIdx, field, prevMbType, true);
-            return MBType.P_8x8ref0;
+    private void decodeMBlockP(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+        switch (mBlock.curMbType) {
+        case P_16x16:
+            decoderInter.decode16x16(mBlock, mb, references, L0);
+            break;
+        case P_16x8:
+            decoderInter.decode16x8(mBlock, mb, references, L0, L0);
+            break;
+        case P_8x16:
+            decoderInter.decode8x16(mBlock, mb, references, L0, L0);
+            break;
+        case P_8x8:
+            decoderInter8x8.decode(mBlock, references, mb, P, false);
+            break;
+        case P_8x8ref0:
+            decoderInter8x8.decode(mBlock, references, mb, P, true);
+            break;
         default:
-            return decodeMBlockIInt(mbType - 5, mbIdx, field, prevMbType, mb);
+            decodeMBlockIInt(mBlock, mb);
+            break;
         }
     }
 
-    private MBType decodeMBlockB(int mbIdx, boolean field, MBType prevMbType, Picture8Bit mb, Frame[][] references) {
-        int mbType = parser.readMBTypeB(mbIdx, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
-                decoderState.leftMBType, decoderState.topMBType[mapper.getMbX(mbIdx)]);
-        if (mbType >= 23) {
-            return decodeMBlockIInt(mbType - 23, mbIdx, field, prevMbType, mb);
+    private void decodeMBlockB(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+        if (mBlock.curMbType.isIntra()) {
+            decodeMBlockIInt(mBlock, mb);
         } else {
-            MBType curMBType = H264Const.bMbTypes[mbType];
-
-            if (mbType == 0)
-                decoderBDirect.decode(mbIdx, field, prevMbType, mb, references);
-            else if (mbType <= 3)
-                decoderInter.decode16x16(mb, references, mbIdx, prevMbType, H264Const.bPredModes[mbType][0], curMBType);
-            else if (mbType == 22)
-                decoderInter8x8.decode(mbType, references, mb, SliceType.B, mbIdx, field, prevMbType, false);
-            else if ((mbType & 1) == 0)
-                decoderInter.decode16x8(mb, references, mbIdx, prevMbType, H264Const.bPredModes[mbType][0],
-                        H264Const.bPredModes[mbType][1], curMBType);
-            else
-                decoderInter.decode8x16(mb, references, mbIdx, prevMbType, H264Const.bPredModes[mbType][0],
-                        H264Const.bPredModes[mbType][1], curMBType);
-
-            return curMBType;
+            if (mBlock.curMbType == B_Direct_16x16) {
+                decoderBDirect.decode(mBlock, mb, references);
+            } else if (mBlock.mbType <= 3) {
+                decoderInter.decode16x16(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType][0]);
+            } else if (mBlock.mbType == 22) {
+                decoderInter8x8.decode(mBlock, references, mb, SliceType.B, false);
+            } else if ((mBlock.mbType & 1) == 0) {
+                decoderInter.decode16x8(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType][0],
+                        H264Const.bPredModes[mBlock.mbType][1]);
+            } else {
+                decoderInter.decode8x16(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType][0],
+                        H264Const.bPredModes[mBlock.mbType][1]);
+            }
         }
     }
 

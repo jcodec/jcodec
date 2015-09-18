@@ -29,17 +29,17 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
     private Mapper mapper;
     private MBlockDecoderBDirect bDirectDecoder;
 
-    public MBlockSkipDecoder(Mapper mapper, BitstreamParser parser, MBlockDecoderBDirect bDirectDecoder,
+    public MBlockSkipDecoder(Mapper mapper, MBlockDecoderBDirect bDirectDecoder,
             SliceHeader sh, DeblockerInput di, int poc, DecoderState sharedState) {
-        super(parser, sh, di, poc, sharedState);
+        super(sh, di, poc, sharedState);
         this.mapper = mapper;
         this.bDirectDecoder = bDirectDecoder;
     }
 
-    public void decodeSkip(Frame[][] refs, int mbIdx, Picture8Bit mb, SliceType sliceType) {
-        int mbX = mapper.getMbX(mbIdx);
-        int mbY = mapper.getMbY(mbIdx);
-        int mbAddr = mapper.getAddress(mbIdx);
+    public void decodeSkip(MBlock mBlock, Frame[][] refs, Picture8Bit mb, SliceType sliceType) {
+        int mbX = mapper.getMbX(mBlock.mbIdx);
+        int mbY = mapper.getMbY(mBlock.mbIdx);
+        int mbAddr = mapper.getAddress(mBlock.mbIdx);
 
         int[][][] x = new int[2][16][3];
         PartPred[] pp = new PartPred[4];
@@ -48,12 +48,13 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
             x[0][i][2] = x[1][i][2] = -1;
 
         if (sliceType == P) {
-            predictPSkip(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
-                    mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, mb);
+            predictPSkip(refs, mbX, mbY, mapper.leftAvailable(mBlock.mbIdx), mapper.topAvailable(mBlock.mbIdx),
+                    mapper.topLeftAvailable(mBlock.mbIdx), mapper.topRightAvailable(mBlock.mbIdx), x, mb);
             Arrays.fill(pp, PartPred.L0);
         } else {
-            bDirectDecoder.predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mbIdx), mapper.topAvailable(mbIdx),
-                    mapper.topLeftAvailable(mbIdx), mapper.topRightAvailable(mbIdx), x, pp, mb, identityMapping4);
+            bDirectDecoder.predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mBlock.mbIdx),
+                    mapper.topAvailable(mBlock.mbIdx), mapper.topLeftAvailable(mBlock.mbIdx),
+                    mapper.topRightAvailable(mBlock.mbIdx), x, pp, mb, identityMapping4);
             savePrediction8x8(s, mbX, x[0], 0);
             savePrediction8x8(s, mbX, x[1], 1);
         }
@@ -77,10 +78,10 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
             int[] a = s.mvLeft[0][0];
 
             if ((a[0] != 0 || a[1] != 0 || a[2] != 0) && (b[0] != 0 || b[1] != 0 || b[2] != 0)) {
-                mvX = calcMVPredictionMedian(a, b, s.mvTop[0][(mbX << 2) + 4], s.mvTopLeft[0],
-                        lAvb, tAvb, trAvb, tlAvb, 0, 0);
-                mvY = calcMVPredictionMedian(a, b, s.mvTop[0][(mbX << 2) + 4], s.mvTopLeft[0],
-                        lAvb, tAvb, trAvb, tlAvb, 0, 1);
+                mvX = calcMVPredictionMedian(a, b, s.mvTop[0][(mbX << 2) + 4], s.mvTopLeft[0], lAvb, tAvb, trAvb,
+                        tlAvb, 0, 0);
+                mvY = calcMVPredictionMedian(a, b, s.mvTop[0][(mbX << 2) + 4], s.mvTopLeft[0], lAvb, tAvb, trAvb,
+                        tlAvb, 0, 1);
             }
         }
         debugPrint("MV_SKIP: (" + mvX + "," + mvY + ")");

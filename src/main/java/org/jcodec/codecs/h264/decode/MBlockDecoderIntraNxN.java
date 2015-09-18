@@ -4,7 +4,6 @@ import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 
 /**
@@ -15,32 +14,28 @@ import org.jcodec.common.model.Picture8Bit;
 public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
     private Mapper mapper;
 
-    public MBlockDecoderIntraNxN(Mapper mapper, BitstreamParser parser, SliceHeader sh, DeblockerInput di, int poc,
+    public MBlockDecoderIntraNxN(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc,
             DecoderState decoderState) {
-        super(parser, sh, di, poc, decoderState);
+        super(sh, di, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode(int mbIndex, MBType prevMbType, Picture8Bit mb) {
+    public void decode(MBlock mBlock, Picture8Bit mb) {
 
-        MBlock mBlock = new MBlock();
-        readIntraNxN(mbIndex, prevMbType, mBlock);
-
-        int mbX = mapper.getMbX(mbIndex);
-        int mbY = mapper.getMbY(mbIndex);
-        int mbAddr = mapper.getAddress(mbIndex);
-        boolean leftAvailable = mapper.leftAvailable(mbIndex);
-        boolean topAvailable = mapper.topAvailable(mbIndex);
-        boolean topLeftAvailable = mapper.topLeftAvailable(mbIndex);
-        boolean topRightAvailable = mapper.topRightAvailable(mbIndex);
+        int mbX = mapper.getMbX(mBlock.mbIdx);
+        int mbY = mapper.getMbY(mBlock.mbIdx);
+        int mbAddr = mapper.getAddress(mBlock.mbIdx);
+        boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
+        boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
+        boolean topLeftAvailable = mapper.topLeftAvailable(mBlock.mbIdx);
+        boolean topRightAvailable = mapper.topRightAvailable(mBlock.mbIdx);
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
             s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;
         }
         di.mbQps[0][mbAddr] = s.qp;
 
-        residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY, MBType.I_NxN, mBlock.transform8x8Used, s.tf8x8Left,
-                s.tf8x8Top[mbX]);
+        residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY, s.tf8x8Left, s.tf8x8Top[mbX]);
 
         if (!mBlock.transform8x8Used) {
             for (int i = 0; i < 16; i++) {
@@ -71,7 +66,7 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
             }
         }
 
-        decodeChroma(mBlock, mbX, mbY, leftAvailable, topAvailable, mb, s.qp, MBType.I_NxN);
+        decodeChroma(mBlock, mbX, mbY, leftAvailable, topAvailable, mb, s.qp);
 
         di.mbTypes[mbAddr] = s.topMBType[mbX] = s.leftMBType = MBType.I_NxN;
         // System.out.println("idx: " + mbIndex + ", addr: " + address);
@@ -84,49 +79,5 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
 
         MBlockDecoderUtils.saveMvsIntra(di, mbX, mbY);
         MBlockDecoderUtils.saveVectIntra(s, mapper.getMbX(mbAddr));
-    }
-
-    private void readIntraNxN(int mbIndex, MBType prevMbType, MBlock mBlock) {
-        int mbX = mapper.getMbX(mbIndex);
-        int mbY = mapper.getMbY(mbIndex);
-        boolean leftAvailable = mapper.leftAvailable(mbIndex);
-        boolean topAvailable = mapper.topAvailable(mbIndex);
-
-        mBlock.transform8x8Used = false;
-        if (s.transform8x8) {
-            mBlock.transform8x8Used = parser.readTransform8x8Flag(leftAvailable, topAvailable, s.leftMBType,
-                    s.topMBType[mbX], s.tf8x8Left, s.tf8x8Top[mbX]);
-        }
-
-        if (!mBlock.transform8x8Used) {
-            for (int i = 0; i < 16; i++) {
-                int blkX = H264Const.MB_BLK_OFF_LEFT[i];
-                int blkY = H264Const.MB_BLK_OFF_TOP[i];
-                mBlock.lumaModes[i] = parser.readPredictionI4x4Block(leftAvailable, topAvailable, s.leftMBType,
-                        s.topMBType[mbX], blkX, blkY, mbX);
-            }
-        } else {
-            for (int i = 0; i < 4; i++) {
-                int blkX = (i & 1) << 1;
-                int blkY = i & 2;
-                mBlock.lumaModes[i] = parser.readPredictionI4x4Block(leftAvailable, topAvailable, s.leftMBType,
-                        s.topMBType[mbX], blkX, blkY, mbX);
-                s.i4x4PredLeft[blkY + 1] = s.i4x4PredLeft[blkY];
-                s.i4x4PredTop[(mbX << 2) + blkX + 1] = s.i4x4PredTop[(mbX << 2) + blkX];
-            }
-        }
-        mBlock.chromaPredictionMode = parser.readChromaPredMode(mbX, leftAvailable, topAvailable);
-
-        mBlock.cbp = parser.readCodedBlockPatternIntra(leftAvailable, topAvailable, s.leftCBPLuma
-                | (s.leftCBPChroma << 4), s.topCBPLuma[mbX] | (s.topCBPChroma[mbX] << 4), s.leftMBType,
-                s.topMBType[mbX]);
-
-        if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
-            mBlock.mbQPDelta = parser.readMBQpDelta(prevMbType);
-        }
-        readResidualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY, MBType.I_NxN, mBlock.transform8x8Used);
-        if (s.chromaFormat != ColorSpace.MONO) {
-            readChromaResidual(mBlock, leftAvailable, topAvailable, mbX, mBlock.cbpChroma(), MBType.I_NxN);
-        }
     }
 }
