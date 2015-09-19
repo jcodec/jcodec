@@ -941,8 +941,8 @@ public class BitstreamParser {
                 int mbAddr = mapper.getAddress(mbIdx);
                 prevMbSkipped = true;
                 prevMBType = null;
-                debugPrint("---------------------- MB (" + (mbAddr % mbWidth1) + "," + (mbAddr / mbWidth1)
-                        + ") ---------------------");
+                debugPrint("---------------------- MB (%d,%d) ---------------------", (mbAddr % mbWidth1),
+                        (mbAddr / mbWidth1));
                 mBlock.skipped = true;
                 ++mbIdx;
                 return true;
@@ -954,7 +954,7 @@ public class BitstreamParser {
         int mbAddr = mapper.getAddress(mbIdx);
         int mbX = mbAddr % mbWidth1;
         int mbY = mbAddr / mbWidth1;
-        debugPrint("---------------------- MB (" + mbX + "," + mbY + ") ---------------------");
+        debugPrint("---------------------- MB (%d,%d) ---------------------", mbX, mbY);
 
         if (sh.slice_type.isIntra()
                 || (!activePps.entropy_coding_mode_flag || !readMBSkipFlag(sh.slice_type, mapper.leftAvailable(mbIdx),

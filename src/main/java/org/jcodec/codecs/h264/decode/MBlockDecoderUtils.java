@@ -14,6 +14,46 @@ public class MBlockDecoderUtils {
             Logger.debug(str);
     }
 
+    public static void debugPrint(String str, int p0) {
+        if (debug)
+            Logger.debug(str);
+    }
+
+    public static void debugPrint(String str, int p0, int p1) {
+        if (debug)
+            Logger.debug(str);
+    }
+
+    public static void debugPrint(String str, int p0, int p1, int p2) {
+        if (debug)
+            Logger.debug(str);
+    }
+
+    public static void debugPrint(String str, int p0, int p1, int p2, int p3) {
+        if (debug)
+            Logger.debug(str);
+    }
+
+    public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4) {
+        if (debug)
+            Logger.debug(str);
+    }
+
+    public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4, int p5) {
+        if (debug)
+            Logger.debug(str);
+    }
+
+    public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4, int p5, int p6) {
+        if (debug)
+            Logger.debug(str);
+    }
+
+    public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4, int p5, int p6, int p7) {
+        if (debug)
+            Logger.debug(str);
+    }
+
     public static void setDebug(boolean newValue) {
         debug = newValue;
     }

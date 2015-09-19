@@ -42,8 +42,7 @@ import org.jcodec.common.tools.MathUtil;
 public class MBlockDecoderBDirect extends MBlockDecoderBase {
     private Mapper mapper;
 
-    public MBlockDecoderBDirect(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc,
-            DecoderState decoderState) {
+    public MBlockDecoderBDirect(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
         super(sh, di, poc, decoderState);
         this.mapper = mapper;
     }
@@ -122,9 +121,8 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                     int blkIndX = blk4x4 & 3;
                     int blkIndY = blk4x4 >> 2;
 
-                    debugPrint("DIRECT_4x4 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4][0] + ","
-                            + x[0][blk4x4][1] + "," + x[0][blk4x4][2] + "), (" + x[1][blk4x4][0] + ","
-                            + x[1][blk4x4][1] + "," + x[1][blk4x4][2] + ")");
+                    debugPrint("DIRECT_4x4 [%d, %d]: (%d,%d,%d), (%d,%d,%d)", blkIndY, blkIndX, x[0][blk4x4][0],
+                            x[0][blk4x4][1], x[0][blk4x4][2], x[1][blk4x4][0], x[1][blk4x4][1], x[1][blk4x4][2]);
 
                     int blkPredX = (mbX << 6) + (blkIndX << 4);
                     int blkPredY = (mbY << 6) + (blkIndY << 4);
@@ -142,9 +140,8 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                 int blkIndX = blk4x4_0 & 3;
                 int blkIndY = blk4x4_0 >> 2;
 
-                debugPrint("DIRECT_8x8 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4_0][0] + ","
-                        + x[0][blk4x4_0][1] + "," + x[0][blk4x4_0][2] + "), (" + x[1][blk4x4_0][0] + ","
-                        + x[1][blk4x4_0][1] + "," + x[0][blk4x4_0][2] + ")");
+                debugPrint("DIRECT_8x8 [%d, %d]: (%d,%d,%d), (%d,%d)", blkIndY, blkIndX, x[0][blk4x4_0][0],
+                        x[0][blk4x4_0][1], x[0][blk4x4_0][2], x[1][blk4x4_0][0], x[1][blk4x4_0][1], x[0][blk4x4_0][2]);
 
                 int blkPredX = (mbX << 6) + (blkIndX << 4);
                 int blkPredY = (mbY << 6) + (blkIndY << 4);
@@ -244,7 +241,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                         (mbY << 6) + blkOffY, 8, 8);
                 PredictionMerger.mergePrediction(sh, 0, 0, PartPred.Bi, 0, mb0.getPlaneData(0), mb1.getPlaneData(0),
                         BLK_8x8_MB_OFF_LUMA[blk8x8], 16, 8, 8, mb.getPlaneData(0), refs, poc);
-                debugPrint("DIRECT_8x8 [" + (blk8x8 & 2) + ", " + ((blk8x8 << 1) & 2) + "]: (0,0,0), (0,0,0)");
+                debugPrint("DIRECT_8x8 [%d, %d]: (0,0,0), (0,0,0)", (blk8x8 & 2), ((blk8x8 << 1) & 2));
             }
             return;
         }
@@ -265,9 +262,8 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                     int blkIndX = blk4x4 & 3;
                     int blkIndY = blk4x4 >> 2;
 
-                    debugPrint("DIRECT_4x4 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4][0] + ","
-                            + x[0][blk4x4][1] + "," + refIdxL0 + "), (" + x[1][blk4x4][0] + "," + x[1][blk4x4][1] + ","
-                            + refIdxL1 + ")");
+                    debugPrint("DIRECT_4x4 [%d, %d]: (%d,%d,%d), (%d,%d," + refIdxL1 + ")", blkIndY, blkIndX,
+                            x[0][blk4x4][0], x[0][blk4x4][1], refIdxL0, x[1][blk4x4][0], x[1][blk4x4][1]);
 
                     int blkPredX = (mbX << 6) + (blkIndX << 4);
                     int blkPredY = (mbY << 6) + (blkIndY << 4);
@@ -287,9 +283,8 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                 int blkIndX = blk4x4_0 & 3;
                 int blkIndY = blk4x4_0 >> 2;
 
-                debugPrint("DIRECT_8x8 [" + blkIndY + ", " + blkIndX + "]: (" + x[0][blk4x4_0][0] + ","
-                        + x[0][blk4x4_0][1] + "," + refIdxL0 + "), (" + x[1][blk4x4_0][0] + "," + x[1][blk4x4_0][1]
-                        + "," + refIdxL1 + ")");
+                debugPrint("DIRECT_8x8 [%d, %d]: (%d,%d,%d), (%d,%d,%d)", blkIndY, blkIndX, x[0][blk4x4_0][0],
+                        x[0][blk4x4_0][1], refIdxL0, x[1][blk4x4_0][0], x[1][blk4x4_0][1], refIdxL1);
 
                 int blkPredX = (mbX << 6) + (blkIndX << 4);
                 int blkPredY = (mbY << 6) + (blkIndY << 4);

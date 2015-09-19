@@ -77,7 +77,7 @@ public class SliceDecoder {
 
         initContext(sh, segment, in);
 
-        debugPrint("============" + frameOut.getPOC() + "============= " + sh.slice_type.name());
+        debugPrint("============%d============= ", frameOut.getPOC());
 
         Frame[][] refList = refListManager.getRefList();
 

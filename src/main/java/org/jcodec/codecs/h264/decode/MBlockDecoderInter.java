@@ -29,8 +29,7 @@ import org.jcodec.common.model.Picture8Bit;
 public class MBlockDecoderInter extends MBlockDecoderBase {
     private Mapper mapper;
 
-    public MBlockDecoderInter(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc,
-            DecoderState decoderState) {
+    public MBlockDecoderInter(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
         super(sh, di, poc, decoderState);
         this.mapper = mapper;
     }
@@ -90,9 +89,8 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             mvX1 = mBlock.pb168x168.mvdX1[list] + mvpX1;
             mvY1 = mBlock.pb168x168.mvdY1[list] + mvpY1;
 
-            debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mBlock.pb168x168.mvdX1[list] + ", "
-                    + mBlock.pb168x168.mvdY1[list] + "), MV: (" + mvX1 + "," + mvY1 + ","
-                    + mBlock.pb168x168.refIdx1[list] + ")");
+            debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX1, mvpY1, mBlock.pb168x168.mvdX1[list],
+                    mBlock.pb168x168.mvdY1[list], mvX1, mvY1, mBlock.pb168x168.refIdx1[list]);
 
             BlockInterpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
                     (mbY << 6) + mvY1, 8, 16);
@@ -147,9 +145,8 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             mvX1 = mBlock.pb168x168.mvdX1[list] + mvpX1;
             mvY1 = mBlock.pb168x168.mvdY1[list] + mvpY1;
 
-            debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mBlock.pb168x168.mvdX1[list] + ", "
-                    + mBlock.pb168x168.mvdY1[list] + "), MV: (" + mvX1 + "," + mvY1 + ","
-                    + mBlock.pb168x168.refIdx1[list] + ")");
+            debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX1, mvpY1, mBlock.pb168x168.mvdX1[list],
+                    mBlock.pb168x168.mvdY1[list], mvX1, mvY1, mBlock.pb168x168.refIdx1[list]);
 
             BlockInterpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
                     (mbY << 6) + mvY1, 16, 8);
@@ -166,9 +163,8 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             mvX2 = mBlock.pb168x168.mvdX2[list] + mvpX2;
             mvY2 = mBlock.pb168x168.mvdY2[list] + mvpY2;
 
-            debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mBlock.pb168x168.mvdX2[list] + ", "
-                    + mBlock.pb168x168.mvdY2[list] + "), MV: (" + mvX2 + "," + mvY2 + ","
-                    + mBlock.pb168x168.refIdx2[list] + ")");
+            debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb168x168.mvdX2[list],
+                    mBlock.pb168x168.mvdY2[list], mvX2, mvY2, mBlock.pb168x168.refIdx2[list]);
 
             BlockInterpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]], mb, 128,
                     (mbX << 6) + mvX2, (mbY << 6) + 32 + mvY2, 16, 8);
@@ -281,9 +277,8 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             mvX = mBlock.pb16x16.mvdX[list] + mvpX;
             mvY = mBlock.pb16x16.mvdY[list] + mvpY;
 
-            debugPrint("MVP: (" + mvpX + ", " + mvpY + "), MVD: (" + mBlock.pb16x16.mvdX[list] + ", "
-                    + mBlock.pb16x16.mvdY[list] + "), MV: (" + mvX + "," + mvY + "," + mBlock.pb16x16.refIdx[list]
-                    + ")");
+            debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX, mvpY, mBlock.pb16x16.mvdX[list],
+                    mBlock.pb16x16.mvdY[list], mvX, mvY, mBlock.pb16x16.refIdx[list]);
             r = mBlock.pb16x16.refIdx[list];
 
             BlockInterpolator.getBlockLuma(references[list][r], mb, 0, (mbX << 6) + mvX, (mbY << 6) + mvY, 16, 16);

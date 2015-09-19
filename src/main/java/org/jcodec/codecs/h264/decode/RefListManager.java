@@ -50,7 +50,7 @@ public class RefListManager {
                 if (refList[l] != null)
                     for (int i = 0; i < refList[l].length; i++)
                         if (refList[l][i] != null)
-                            debugPrint("REF[" + l + "][" + i + "]: " + ((Frame) refList[l][i]).getPOC());
+                            debugPrint("REF[%d][%d]: ", l, i, ((Frame) refList[l][i]).getPOC());
             }
         }
         return refList;

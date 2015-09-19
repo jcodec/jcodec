@@ -84,7 +84,7 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
                         tlAvb, 0, 1);
             }
         }
-        debugPrint("MV_SKIP: (" + mvX + "," + mvY + ")");
+        debugPrint("MV_SKIP: (%d,%d)", mvX, mvY);
         int blk8x8X = mbX << 1;
         s.predModeLeft[0] = s.predModeLeft[1] = s.predModeTop[blk8x8X] = s.predModeTop[blk8x8X + 1] = L0;
 
