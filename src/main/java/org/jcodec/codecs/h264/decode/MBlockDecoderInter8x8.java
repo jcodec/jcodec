@@ -41,8 +41,8 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
     private Mapper mapper;
     private MBlockDecoderBDirect bDirectDecoder;
 
-    public MBlockDecoderInter8x8(Mapper mapper, MBlockDecoderBDirect bDirectDecoder,
-            SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
+    public MBlockDecoderInter8x8(Mapper mapper, MBlockDecoderBDirect bDirectDecoder, SliceHeader sh, DeblockerInput di,
+            int poc, DecoderState decoderState) {
         super(sh, di, poc, decoderState);
         this.mapper = mapper;
         this.bDirectDecoder = bDirectDecoder;
@@ -78,8 +78,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         }
         di.mbQps[0][mbAddr] = s.qp;
 
-        residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY, s.tf8x8Left,
-                s.tf8x8Top[mbX]);
+        residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY, s.tf8x8Left, s.tf8x8Top[mbX]);
 
         saveMvs(di, x, mbX, mbY);
 
@@ -247,11 +246,11 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         int mvpX = calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 0);
         int mvpY = calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 1);
 
-        x00[0] = x01[0] = x10[0] = x11[0] = mBlock.pb8x8.mvdX1[partNo] + mvpX;
-        x00[1] = x01[1] = x10[1] = x11[1] = mBlock.pb8x8.mvdY1[partNo] + mvpY;
+        x00[0] = x01[0] = x10[0] = x11[0] = mBlock.pb8x8.mvdX1[list][partNo] + mvpX;
+        x00[1] = x01[1] = x10[1] = x11[1] = mBlock.pb8x8.mvdY1[list][partNo] + mvpY;
 
-        debugPrint("MVP: (" + mvpX + ", " + mvpY + "), MVD: (" + mBlock.pb8x8.mvdX1[partNo] + ", "
-                + mBlock.pb8x8.mvdY1[partNo] + "), MV: (" + x00[0] + "," + x00[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX + ", " + mvpY + "), MVD: (" + mBlock.pb8x8.mvdX1[list][partNo] + ", "
+                + mBlock.pb8x8.mvdY1[list][partNo] + "), MV: (" + x00[0] + "," + x00[1] + "," + refIdx + ")");
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 8);
     }
 
@@ -264,20 +263,20 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         int mvpX1 = calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 0);
         int mvpY1 = calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 1);
 
-        x00[0] = x01[0] = mBlock.pb8x8.mvdX1[partNo] + mvpX1;
-        x00[1] = x01[1] = mBlock.pb8x8.mvdY1[partNo] + mvpY1;
+        x00[0] = x01[0] = mBlock.pb8x8.mvdX1[list][partNo] + mvpX1;
+        x00[1] = x01[1] = mBlock.pb8x8.mvdY1[list][partNo] + mvpY1;
 
-        debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mBlock.pb8x8.mvdX1[partNo] + ", "
-                + mBlock.pb8x8.mvdY1[partNo] + "), MV: (" + x00[0] + "," + x00[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mBlock.pb8x8.mvdX1[list][partNo] + ", "
+                + mBlock.pb8x8.mvdY1[list][partNo] + "), MV: (" + x00[0] + "," + x00[1] + "," + refIdx + ")");
 
         int mvpX2 = calcMVPredictionMedian(l1, x00, NULL_VECTOR, l0, lAvb, true, false, lAvb, refIdx, 0);
         int mvpY2 = calcMVPredictionMedian(l1, x00, NULL_VECTOR, l0, lAvb, true, false, lAvb, refIdx, 1);
 
-        x10[0] = x11[0] = mBlock.pb8x8.mvdX2[partNo] + mvpX2;
-        x10[1] = x11[1] = mBlock.pb8x8.mvdY2[partNo] + mvpY2;
+        x10[0] = x11[0] = mBlock.pb8x8.mvdX2[list][partNo] + mvpX2;
+        x10[1] = x11[1] = mBlock.pb8x8.mvdY2[list][partNo] + mvpY2;
 
-        debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mBlock.pb8x8.mvdX2[partNo] + ", "
-                + mBlock.pb8x8.mvdY2[partNo] + "), MV: (" + x10[0] + "," + x10[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mBlock.pb8x8.mvdX2[list][partNo] + ", "
+                + mBlock.pb8x8.mvdY2[list][partNo] + "), MV: (" + x10[0] + "," + x10[1] + "," + refIdx + ")");
 
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 4);
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4, offX + x10[0], offY + x10[1]
@@ -293,20 +292,20 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         int mvpX1 = calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 0);
         int mvpY1 = calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 1);
 
-        x00[0] = x10[0] = mBlock.pb8x8.mvdX1[partNo] + mvpX1;
-        x00[1] = x10[1] = mBlock.pb8x8.mvdY1[partNo] + mvpY1;
+        x00[0] = x10[0] = mBlock.pb8x8.mvdX1[list][partNo] + mvpX1;
+        x00[1] = x10[1] = mBlock.pb8x8.mvdY1[list][partNo] + mvpY1;
 
-        debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mBlock.pb8x8.mvdX1[partNo] + ", "
-                + mBlock.pb8x8.mvdY1[partNo] + "), MV: (" + x00[0] + "," + x00[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mBlock.pb8x8.mvdX1[list][partNo] + ", "
+                + mBlock.pb8x8.mvdY1[list][partNo] + "), MV: (" + x00[0] + "," + x00[1] + "," + refIdx + ")");
 
         int mvpX2 = calcMVPredictionMedian(x00, t1, tr, t0, true, tAvb, trAvb, tAvb, refIdx, 0);
         int mvpY2 = calcMVPredictionMedian(x00, t1, tr, t0, true, tAvb, trAvb, tAvb, refIdx, 1);
 
-        x01[0] = x11[0] = mBlock.pb8x8.mvdX2[partNo] + mvpX2;
-        x01[1] = x11[1] = mBlock.pb8x8.mvdY2[partNo] + mvpY2;
+        x01[0] = x11[0] = mBlock.pb8x8.mvdX2[list][partNo] + mvpX2;
+        x01[1] = x11[1] = mBlock.pb8x8.mvdY2[list][partNo] + mvpY2;
 
-        debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mBlock.pb8x8.mvdX2[partNo] + ", "
-                + mBlock.pb8x8.mvdY2[partNo] + "), MV: (" + x01[0] + "," + x01[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mBlock.pb8x8.mvdX2[list][partNo] + ", "
+                + mBlock.pb8x8.mvdY2[list][partNo] + "), MV: (" + x01[0] + "," + x01[1] + "," + refIdx + ")");
 
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 4, 8);
         BlockInterpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 8);
@@ -321,33 +320,33 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         int mvpX1 = calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 0);
         int mvpY1 = calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 1);
 
-        x00[0] = mBlock.pb8x8.mvdX1[partNo] + mvpX1;
-        x00[1] = mBlock.pb8x8.mvdY1[partNo] + mvpY1;
-        debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mBlock.pb8x8.mvdX1[partNo] + ", "
-                + mBlock.pb8x8.mvdY1[partNo] + "), MV: (" + x00[0] + "," + x00[1] + "," + refIdx + ")");
+        x00[0] = mBlock.pb8x8.mvdX1[list][partNo] + mvpX1;
+        x00[1] = mBlock.pb8x8.mvdY1[list][partNo] + mvpY1;
+        debugPrint("MVP: (" + mvpX1 + ", " + mvpY1 + "), MVD: (" + mBlock.pb8x8.mvdX1[list][partNo] + ", "
+                + mBlock.pb8x8.mvdY1[list][partNo] + "), MV: (" + x00[0] + "," + x00[1] + "," + refIdx + ")");
 
         int mvpX2 = calcMVPredictionMedian(x00, t1, tr, t0, true, tAvb, trAvb, tAvb, refIdx, 0);
         int mvpY2 = calcMVPredictionMedian(x00, t1, tr, t0, true, tAvb, trAvb, tAvb, refIdx, 1);
 
-        x01[0] = mBlock.pb8x8.mvdX2[partNo] + mvpX2;
-        x01[1] = mBlock.pb8x8.mvdY2[partNo] + mvpY2;
-        debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mBlock.pb8x8.mvdX2 + ", " + mBlock.pb8x8.mvdY2
-                + "), MV: (" + x01[0] + "," + x01[1] + "," + refIdx + ")");
+        x01[0] = mBlock.pb8x8.mvdX2[list][partNo] + mvpX2;
+        x01[1] = mBlock.pb8x8.mvdY2[list][partNo] + mvpY2;
+        debugPrint("MVP: (" + mvpX2 + ", " + mvpY2 + "), MVD: (" + mBlock.pb8x8.mvdX2[list][partNo] + ", "
+                + mBlock.pb8x8.mvdY2[list][partNo] + "), MV: (" + x01[0] + "," + x01[1] + "," + refIdx + ")");
 
         int mvpX3 = calcMVPredictionMedian(l1, x00, x01, l0, lAvb, true, true, lAvb, refIdx, 0);
         int mvpY3 = calcMVPredictionMedian(l1, x00, x01, l0, lAvb, true, true, lAvb, refIdx, 1);
 
-        x10[0] = mBlock.pb8x8.mvdX3[partNo] + mvpX3;
-        x10[1] = mBlock.pb8x8.mvdY3[partNo] + mvpY3;
+        x10[0] = mBlock.pb8x8.mvdX3[list][partNo] + mvpX3;
+        x10[1] = mBlock.pb8x8.mvdY3[list][partNo] + mvpY3;
 
-        debugPrint("MVP: (" + mvpX3 + ", " + mvpY3 + "), MVD: (" + mBlock.pb8x8.mvdX3[partNo] + ", "
-                + mBlock.pb8x8.mvdY3[partNo] + "), MV: (" + x10[0] + "," + x10[1] + "," + refIdx + ")");
+        debugPrint("MVP: (" + mvpX3 + ", " + mvpY3 + "), MVD: (" + mBlock.pb8x8.mvdX3[list][partNo] + ", "
+                + mBlock.pb8x8.mvdY3[list][partNo] + "), MV: (" + x10[0] + "," + x10[1] + "," + refIdx + ")");
 
         int mvpX4 = calcMVPredictionMedian(x10, x01, NULL_VECTOR, x00, true, true, false, true, refIdx, 0);
         int mvpY4 = calcMVPredictionMedian(x10, x01, NULL_VECTOR, x00, true, true, false, true, refIdx, 1);
 
-        x11[0] = mBlock.pb8x8.mvdX4[partNo] + mvpX4;
-        x11[1] = mBlock.pb8x8.mvdY4[partNo] + mvpY4;
+        x11[0] = mBlock.pb8x8.mvdX4[list][partNo] + mvpX4;
+        x11[1] = mBlock.pb8x8.mvdY4[list][partNo] + mvpY4;
 
         debugPrint("MVP: (" + mvpX4 + ", " + mvpY4 + "), MVD: (" + mBlock.pb8x8.mvdX4[partNo] + ", "
                 + mBlock.pb8x8.mvdY4[partNo] + "), MV: (" + x11[0] + "," + x11[1] + "," + refIdx + ")");

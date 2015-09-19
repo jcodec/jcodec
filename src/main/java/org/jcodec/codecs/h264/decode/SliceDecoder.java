@@ -121,8 +121,8 @@ public class SliceDecoder {
         Picture8Bit mb = Picture8Bit.create(16, 16, sh.sps.chroma_format_idc);
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
 
-        MBlock mBlock;
-        while ((mBlock = parser.readMacroblock()) != null) {
+        MBlock mBlock = new MBlock(activeSps.chroma_format_idc);
+        while (parser.readMacroblock(mBlock)) {
             decode(mBlock, sh.slice_type, mb, refList);
             int mbAddr = mapper.getAddress(mBlock.mbIdx);
             int mbX = mbAddr % mbWidth;
@@ -131,6 +131,7 @@ public class SliceDecoder {
             di.shs[mbAddr] = sh;
             di.refsUsed[mbAddr] = refList;
             mb.fill(0);
+            mBlock.clear();
         }
     }
 
