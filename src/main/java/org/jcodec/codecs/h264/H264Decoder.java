@@ -61,11 +61,13 @@ public class H264Decoder implements VideoDecoder {
     }
 
     @Override
+    @Deprecated
     public Picture decodeFrame(ByteBuffer data, int[][] buffer) {
         Frame frame = new FrameDecoder().decodeFrame(H264Utils.splitFrame(data), getSameSizeBuffer(buffer));
         return frame == null ? null : frame.toPicture(8, buffer);
     }
-
+    
+    @Deprecated
     public Picture decodeFrame(List<ByteBuffer> data, int[][] buffer) {
         Frame frame = new FrameDecoder().decodeFrame(data, getSameSizeBuffer(buffer));
         return frame == null ? null : frame.toPicture(8, buffer);

@@ -9,6 +9,7 @@ import static org.jcodec.common.model.ColorSpace.MAX_PLANES;
  * A YUV picture
  * 
  * @author The JCodec project
+ * @deprecated Use org.jcodec.common.model.Picture8Bit and related APIs
  * 
  */
 public class Picture {

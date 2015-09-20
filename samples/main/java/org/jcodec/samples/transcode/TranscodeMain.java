@@ -101,8 +101,10 @@ import org.jcodec.scale.RgbToYuv420p;
 import org.jcodec.scale.RgbToYuv422p;
 import org.jcodec.scale.Transform;
 import org.jcodec.scale.Transform.Levels;
+import org.jcodec.scale.Transform8Bit;
 import org.jcodec.scale.Yuv420pToRgb;
 import org.jcodec.scale.Yuv420pToYuv422p;
+import org.jcodec.scale.Yuv420pToYuv422p8Bit;
 import org.jcodec.scale.Yuv422pToRgb;
 import org.jcodec.scale.Yuv422pToYuv420p;
 
@@ -713,7 +715,7 @@ public class TranscodeMain {
 
                 ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ);
 
-                Transform transform = new Yuv420pToYuv422p(2, 0);
+                Transform8Bit transform = new Yuv420pToYuv422p8Bit();
                 boolean dumpMv = cmd.getBooleanFlag(FLAG_DUMPMV, false);
                 boolean dumpMvJs = cmd.getBooleanFlag(FLAG_DUMPMVJS, false);
 
@@ -846,17 +848,17 @@ public class TranscodeMain {
             System.err.println("}");
         }
 
-        private static long outGOP(ProresEncoder encoder, Transform transform, int timescale, int frameDuration,
+        private static long outGOP(ProresEncoder encoder, Transform8Bit transform, int timescale, int frameDuration,
                 FramesMP4MuxerTrack outTrack, int gopLen, Frame[] gop, int totalFrames, int i, int codedWidth,
                 int codedHeight) throws IOException {
 
             long totalTime = 0;
             ByteBuffer _out = ByteBuffer.allocate(codedWidth * codedHeight * 6);
-            Picture target2 = Picture.create(codedWidth, codedHeight, ColorSpace.YUV422_10);
+            Picture8Bit target2 = Picture8Bit.create(codedWidth, codedHeight, ColorSpace.YUV422_10);
             Arrays.sort(gop, 0, gopLen, Frame.POCAsc);
             for (int g = 0; g < gopLen; g++) {
                 Frame frame = gop[g];
-                transform.transform(frame.toPicture(8), target2);
+                transform.transform(frame, target2);
                 target2.setCrop(frame.getCrop());
                 _out.clear();
                 long start = System.nanoTime();
