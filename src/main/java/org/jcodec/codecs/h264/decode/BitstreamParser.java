@@ -49,6 +49,12 @@ public class BitstreamParser {
     private DeblockerInput di;
     private Mapper mapper;
     private SliceHeader sh;
+    
+    private boolean prevMbSkipped = false;
+    private int mbIdx;
+    private MBType prevMBType = null;
+    private int mbSkipRun;
+    private boolean endOfData;
 
     public BitstreamParser(PictureParameterSet activePps, CABAC cabac, CAVLC[] cavlc, MDecoder mDecoder,
             BitReader reader, DeblockerInput di, Mapper mapper, SliceHeader sh, DecoderState sharedContext) {
@@ -61,6 +67,72 @@ public class BitstreamParser {
         this.mapper = mapper;
         this.sh = sh;
         this.di = di;
+    }
+    
+    public boolean readMacroblock(MBlock mBlock) {
+        if (endOfData && mbSkipRun == 0)
+            return false;
+
+        mBlock.mbIdx = mbIdx;
+        mBlock.prevMbType = prevMBType;
+
+        int mbWidth1 = sh.sps.pic_width_in_mbs_minus1 + 1;
+        boolean mbaffFrameFlag = (sh.sps.mb_adaptive_frame_field_flag && !sh.field_pic_flag);
+
+        if (sh.slice_type.isInter() && !activePps.entropy_coding_mode_flag) {
+            if (!prevMbSkipped && mbSkipRun == 0) {
+                mbSkipRun = readUE(reader, "mb_skip_run");
+                if (!moreRBSPData(reader)) {
+                    endOfData = true;
+                }
+            }
+
+            if (mbSkipRun > 0) {
+                --mbSkipRun;
+                int mbAddr = mapper.getAddress(mbIdx);
+                prevMbSkipped = true;
+                prevMBType = null;
+                debugPrint("---------------------- MB (%d,%d) ---------------------", (mbAddr % mbWidth1),
+                        (mbAddr / mbWidth1));
+                mBlock.skipped = true;
+                ++mbIdx;
+                return true;
+            } else {
+                prevMbSkipped = false;
+            }
+        }
+
+        int mbAddr = mapper.getAddress(mbIdx);
+        int mbX = mbAddr % mbWidth1;
+        int mbY = mbAddr / mbWidth1;
+        debugPrint("---------------------- MB (%d,%d) ---------------------", mbX, mbY);
+
+        if (sh.slice_type.isIntra()
+                || (!activePps.entropy_coding_mode_flag || !readMBSkipFlag(sh.slice_type, mapper.leftAvailable(mbIdx),
+                        mapper.topAvailable(mbIdx), mbX))) {
+
+            boolean mb_field_decoding_flag = false;
+            if (mbaffFrameFlag && (mbIdx % 2 == 0 || (mbIdx % 2 == 1 && prevMbSkipped))) {
+                mb_field_decoding_flag = readBool(reader, "mb_field_decoding_flag");
+            }
+
+            mBlock.fieldDecoding = mb_field_decoding_flag;
+            readMBlock(mBlock, sh.slice_type);
+
+            prevMBType = mBlock.curMbType;
+
+        } else {
+            prevMBType = null;
+            prevMbSkipped = true;
+            mBlock.skipped = true;
+        }
+
+        endOfData = (activePps.entropy_coding_mode_flag && mDecoder.decodeFinalBin() == 1)
+                || (!activePps.entropy_coding_mode_flag && !moreRBSPData(reader));
+
+        ++mbIdx;
+
+        return true;
     }
 
     int readMBQpDelta(MBType prevMbType) {
@@ -910,77 +982,5 @@ public class BitstreamParser {
                 readIntra8x16(H264Const.bPredModes[mBlock.mbType][0], H264Const.bPredModes[mBlock.mbType][1], mBlock);
             }
         }
-    }
-
-    private boolean prevMbSkipped = false;
-    private int mbIdx;
-    private MBType prevMBType = null;
-    private int mbSkipRun;
-    private boolean endOfData;
-
-    public boolean readMacroblock(MBlock mBlock) {
-        if (endOfData && mbSkipRun == 0)
-            return false;
-
-        mBlock.mbIdx = mbIdx;
-        mBlock.prevMbType = prevMBType;
-
-        int mbWidth1 = sh.sps.pic_width_in_mbs_minus1 + 1;
-        boolean mbaffFrameFlag = (sh.sps.mb_adaptive_frame_field_flag && !sh.field_pic_flag);
-
-        if (sh.slice_type.isInter() && !activePps.entropy_coding_mode_flag) {
-            if (!prevMbSkipped && mbSkipRun == 0) {
-                mbSkipRun = readUE(reader, "mb_skip_run");
-                if (!moreRBSPData(reader)) {
-                    endOfData = true;
-                }
-            }
-
-            if (mbSkipRun > 0) {
-                --mbSkipRun;
-                int mbAddr = mapper.getAddress(mbIdx);
-                prevMbSkipped = true;
-                prevMBType = null;
-                debugPrint("---------------------- MB (%d,%d) ---------------------", (mbAddr % mbWidth1),
-                        (mbAddr / mbWidth1));
-                mBlock.skipped = true;
-                ++mbIdx;
-                return true;
-            } else {
-                prevMbSkipped = false;
-            }
-        }
-
-        int mbAddr = mapper.getAddress(mbIdx);
-        int mbX = mbAddr % mbWidth1;
-        int mbY = mbAddr / mbWidth1;
-        debugPrint("---------------------- MB (%d,%d) ---------------------", mbX, mbY);
-
-        if (sh.slice_type.isIntra()
-                || (!activePps.entropy_coding_mode_flag || !readMBSkipFlag(sh.slice_type, mapper.leftAvailable(mbIdx),
-                        mapper.topAvailable(mbIdx), mbX))) {
-
-            boolean mb_field_decoding_flag = false;
-            if (mbaffFrameFlag && (mbIdx % 2 == 0 || (mbIdx % 2 == 1 && prevMbSkipped))) {
-                mb_field_decoding_flag = readBool(reader, "mb_field_decoding_flag");
-            }
-
-            mBlock.fieldDecoding = mb_field_decoding_flag;
-            readMBlock(mBlock, sh.slice_type);
-
-            prevMBType = mBlock.curMbType;
-
-        } else {
-            prevMBType = null;
-            prevMbSkipped = true;
-            mBlock.skipped = true;
-        }
-
-        endOfData = (activePps.entropy_coding_mode_flag && mDecoder.decodeFinalBin() == 1)
-                || (!activePps.entropy_coding_mode_flag && !moreRBSPData(reader));
-
-        ++mbIdx;
-
-        return true;
     }
 }

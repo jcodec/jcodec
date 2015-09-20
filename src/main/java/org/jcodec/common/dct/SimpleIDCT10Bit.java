@@ -1,5 +1,9 @@
 package org.jcodec.common.dct;
 
+import static java.lang.Math.PI;
+import static java.lang.Math.cos;
+import static java.lang.Math.sqrt;
+
 /**
  * This class is part of JCodec ( www.jcodec.org )
  * This software is distributed under FreeBSD License
@@ -137,8 +141,40 @@ public class SimpleIDCT10Bit {
         buf[off + 3] = (a3 + b3) >> ROW_SHIFT;
         buf[off + 4] = (a3 - b3) >> ROW_SHIFT;
     }
+    static double[] coefficients = new double[64];
 
-    private static void fdctRow(int[] buf, int off) {
-        
+    static {
+        for (int j = 0; j < 8; ++j) {
+            coefficients[j] = sqrt(0.125);
+            for (int i = 8; i < 64; i += 8) {
+                coefficients[i + j] = 0.5 * cos(i * (j + 0.5) * PI / 64.0);
+            }
+        }
+    }
+
+    // TODO: integer implementation of this
+    public static void fdct10(byte[] block, int off, int[] dctOut) {
+        int i, j, k;
+        double[] out = new double[8 * 8];
+
+        for (i = 0; i < 64; i += 8) {
+            for (j = 0; j < 8; ++j) {
+                double tmp = 0;
+                for (k = 0; k < 8; ++k) {
+                    tmp += coefficients[i + k] * ((block[k * 8 + j + off] + 128) << 2);
+                }
+                out[i + j] = tmp * 4;
+            }
+        }
+
+        for (j = 0; j < 8; ++j) {
+            for (i = 0; i < 64; i += 8) {
+                double tmp = 0;
+                for (k = 0; k < 8; ++k) {
+                    tmp += out[i + k] * coefficients[j * 8 + k];
+                }
+                dctOut[i + j + off] = (int) (tmp + 0.499999999999);
+            }
+        }
     }
 }

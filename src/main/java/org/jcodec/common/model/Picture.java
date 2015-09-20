@@ -20,17 +20,17 @@ public class Picture {
     private int[][] data;
 
     private Rect crop;
-    
+
     private int bitDepth;
 
     public Picture(int width, int height, int[][] data, ColorSpace color) {
         this(width, height, data, color, 8, new Rect(0, 0, width, height));
     }
-    
+
     public Picture(int width, int height, int[][] data, ColorSpace color, int bitDepth) {
         this(width, height, data, color, bitDepth, new Rect(0, 0, width, height));
     }
-    
+
     public Picture(int width, int height, int[][] data, ColorSpace color, Rect crop) {
         this(width, height, data, color, 8, crop);
     }
@@ -51,11 +51,11 @@ public class Picture {
     public static Picture create(int width, int height, ColorSpace colorSpace) {
         return create(width, height, colorSpace, 8, null);
     }
-    
+
     public static Picture create(int width, int height, ColorSpace colorSpace, int bitDepth) {
         return create(width, height, colorSpace, bitDepth, null);
     }
-    
+
     public static Picture create(int width, int height, ColorSpace colorSpace, Rect crop) {
         return create(width, height, colorSpace, 8, crop);
     }
@@ -166,12 +166,16 @@ public class Picture {
     public void setCrop(Rect crop) {
         this.crop = crop;
     }
-    
+
     public int getCroppedWidth() {
         return crop == null ? width : crop.getWidth();
     }
-    
+
     public int getCroppedHeight() {
         return crop == null ? height : crop.getHeight();
+    }
+
+    public void setBitDepth(int bitDepth) {
+        this.bitDepth = bitDepth;
     }
 }
