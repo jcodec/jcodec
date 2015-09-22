@@ -85,6 +85,31 @@
 					<template>site.vm</template>
 				</configuration>
 			</plugin>
+			<plugin>
+	            <groupId>org.codehaus.mojo</groupId>
+	            <artifactId>findbugs-maven-plugin</artifactId>
+	            <version>2.5.2</version>
+	            <configuration>
+	                <effort>Max</effort>
+	                <!-- Reports all bugs (other values are medium and max) -->
+	                <threshold>Max</threshold>
+	                <!-- Build doesn't fail if problems are found -->
+                	<failOnError>false</failOnError>
+	                <!-- Produces XML report -->
+	                <xmlOutput>false</xmlOutput>
+	                <!-- Configures the directory in which the XML report is created -->
+	                <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+	            </configuration>
+	            <executions>
+		            <execution>
+	                    <id>analyze-compile</id>
+	                    <phase>compile</phase>
+	                    <goals>
+	                        <goal>check</goal>
+	                    </goals>
+	                </execution>
+                </executions>
+	        </plugin>
 		</plugins>
 	</build>
 	<dependencies>
