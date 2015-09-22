@@ -7,8 +7,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.Map;
 
 import org.jcodec.common.AudioFormat;
@@ -35,7 +33,6 @@ public class FLVReader {
 
     // Read buffer, 1M
     private static final int READ_BUFFER_SIZE = 0x100000;
-    private LinkedList<FLVTag> prevPkt = new LinkedList<FLVTag>();
     private int frameNo;
     private ByteBuffer readBuf;
     private SeekableByteChannel ch;
@@ -54,12 +51,12 @@ public class FLVReader {
         this.ch = ch;
         readBuf = ByteBuffer.allocate(READ_BUFFER_SIZE);
         readBuf.order(ByteOrder.BIG_ENDIAN);
-        
+
         initialRead(ch);
 
         readHeader(readBuf);
     }
-    
+
     private void initialRead(ReadableByteChannel ch) throws IOException {
         readBuf.clear();
         int read = ch.read(readBuf);
@@ -75,14 +72,9 @@ public class FLVReader {
             pkt = parsePacket(readBuf);
         }
 
-        // Empty the queue
-        if (pkt == null && prevPkt.size() > 0) {
-            pkt = prevPkt.remove(0);
-        }
-
         return pkt;
     }
-    
+
     public FLVTag readPrevPacket() throws IOException {
         int startOfLastPacket = readBuf.getInt();
         readBuf.position(readBuf.position() - 4);
@@ -128,7 +120,7 @@ public class FLVReader {
 
             int pos = readBuf.position();
             long packetPos = ch.position() - readBuf.remaining();
-            int startOfLastPacket = readBuf.getInt();
+            int prevPacketSize = readBuf.getInt();
             int packetType = readBuf.get() & 0xff;
             int payloadSize = ((readBuf.getShort() & 0xffff) << 8) | (readBuf.get() & 0xff);
             int timestamp = ((readBuf.getShort() & 0xffff) << 8) | (readBuf.get() & 0xff)
@@ -139,7 +131,7 @@ public class FLVReader {
                 readBuf.position(pos);
                 return null;
             }
-            
+
             if (packetType != 0x8 && packetType != 0x9 && packetType != 0x12) {
                 NIOUtils.skip(readBuf, payloadSize);
                 continue;
@@ -164,17 +156,8 @@ public class FLVReader {
             }
             boolean keyFrame = packetType == 0x8 || packetType == 9 && ((VideoTagHeader) tagHeader).getFrameType() == 1;
 
-            FLVTag pkt = new FLVTag(type, packetPos, tagHeader, timestamp, 0, payload, keyFrame, frameNo++);
-
-            for (ListIterator<FLVTag> it = prevPkt.listIterator(prevPkt.size()); it.hasPrevious();) {
-                FLVTag flvPacket = it.previous();
-                if (flvPacket.getType() == pkt.getType())
-                    flvPacket.setDuration(timestamp - flvPacket.getPts());
-            }
-            prevPkt.add(pkt);
-
-            if (!prevPkt.isEmpty() && prevPkt.peek().getDuration() != 0)
-                return prevPkt.poll();
+            return new FLVTag(type, packetPos, tagHeader, timestamp, payload, keyFrame, frameNo++, streamId,
+                    prevPacketSize);
         }
     }
 
@@ -309,7 +292,6 @@ public class FLVReader {
     }
 
     public void reset() throws IOException {
-        prevPkt.clear();
         initialRead(ch);
     }
 

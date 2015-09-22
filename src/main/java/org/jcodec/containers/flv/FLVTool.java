@@ -27,6 +27,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.ToJSON;
+import org.jcodec.containers.flv.FLVTag.AacAudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
@@ -62,6 +63,7 @@ public class FLVTool {
             return;
         }
         String command = cmd.getArg(0);
+        int maxPackets = cmd.getIntegerFlag("max-packets", Integer.MAX_VALUE);
 
         PacketProcessor processor = getProcessor(command, cmd);
         if (processor == null) {
@@ -79,7 +81,7 @@ public class FLVTool {
             FLVReader demuxer = new FLVReader(in);
             FLVWriter muxer = new FLVWriter(out);
             FLVTag pkt = null;
-            while ((pkt = demuxer.readNextPacket()) != null) {
+            for (int i = 0; i < maxPackets && (pkt = demuxer.readNextPacket()) != null; i++) {
                 if (!processor.processPacket(pkt, muxer))
                     break;
             }
@@ -392,11 +394,16 @@ public class FLVTool {
         }
 
         public boolean processPacket(FLVTag pkt, FLVWriter writer) throws IOException {
-            boolean validPkt = pkt.getType() == Type.AUDIO
-                    || pkt.getType() == Type.VIDEO
-                    && (((VideoTagHeader) pkt.getTagHeader()).getCodec() != Codec.H264 || ((AvcVideoTagHeader) pkt
-                            .getTagHeader()).getAvcPacketType() != 0);
-            if (expectWrapAround && validPkt && pkt.getPts() < prevPts && ((long)prevPts - pkt.getPts() > HALF_WRAP_AROUND_VALUE)) {
+            boolean avcPrivatePacket = pkt.getType() == Type.VIDEO
+                    && ((VideoTagHeader) pkt.getTagHeader()).getCodec() == Codec.H264
+                    && ((AvcVideoTagHeader) pkt.getTagHeader()).getAvcPacketType() == 0;
+            boolean aacPrivatePacket = pkt.getType() == Type.AUDIO
+                    && ((AudioTagHeader) pkt.getTagHeader()).getCodec() == Codec.AAC
+                    && ((AacAudioTagHeader) pkt.getTagHeader()).getPacketType() == 0;
+
+            boolean validPkt = pkt.getType() != Type.SCRIPT && !avcPrivatePacket && !aacPrivatePacket;
+            if (expectWrapAround && validPkt && pkt.getPts() < prevPts
+                    && ((long) prevPts - pkt.getPts() > HALF_WRAP_AROUND_VALUE)) {
                 Logger.warn("Wrap around detected: " + prevPts + " -> " + pkt.getPts());
 
                 if (pkt.getPts() < -HALF_WRAP_AROUND_VALUE) {
@@ -423,6 +430,7 @@ public class FLVTool {
                     }
                     firstPtsSeen = true;
                     emptySavedTags(writer);
+                    writePacket(pkt, writer);
                 }
             }
 
@@ -433,7 +441,10 @@ public class FLVTool {
             long newPts = pkt.getPts() + ptsDelta;
             if (newPts < 0) {
                 Logger.warn("Preventing negative pts for tag @" + pkt.getPosition());
-                newPts = 0;
+                if (shiftBy != null)
+                    newPts = 0;
+                else
+                    newPts = shiftTo;
             } else if (newPts >= WRAP_AROUND_VALUE) {
                 Logger.warn("PTS wrap around @" + pkt.getPosition());
                 newPts -= WRAP_AROUND_VALUE;

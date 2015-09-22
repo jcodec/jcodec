@@ -19,22 +19,23 @@ public class FLVTag {
     private long position;
     private TagHeader tagHeader;
     private int pts;
-    private int duration;
     private ByteBuffer data;
     private boolean keyFrame;
     private long frameNo;
-    
-    
-    public FLVTag(Type type, long position, TagHeader tagHeader, int pts, int duration,
-            ByteBuffer data, boolean keyFrame, long frameNo) {
+    private int streamId;
+    private int prevPacketSize;
+
+    public FLVTag(Type type, long position, TagHeader tagHeader, int pts, ByteBuffer data, boolean keyFrame,
+            long frameNo, int streamId, int prevPacketSize) {
         this.type = type;
         this.position = position;
         this.tagHeader = tagHeader;
         this.pts = pts;
-        this.duration = duration;
         this.data = data;
         this.keyFrame = keyFrame;
         this.frameNo = frameNo;
+        this.streamId = streamId;
+        this.prevPacketSize = prevPacketSize;
     }
 
     public static enum Type {
@@ -52,21 +53,29 @@ public class FLVTag {
     public TagHeader getTagHeader() {
         return tagHeader;
     }
-    
+
     public int getPts() {
         return pts;
     }
-    
+
     public void setPts(int pts) {
         this.pts = pts;
     }
 
-    public void setDuration(int duration) {
-        this.duration = duration;
+    public int getStreamId() {
+        return streamId;
     }
 
-    public int getDuration() {
-        return duration;
+    public void setStreamId(int streamId) {
+        this.streamId = streamId;
+    }
+
+    public int getPrevPacketSize() {
+        return prevPacketSize;
+    }
+
+    public void setPrevPacketSize(int prevPacketSize) {
+        this.prevPacketSize = prevPacketSize;
     }
 
     public ByteBuffer getData() {
