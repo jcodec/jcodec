@@ -199,7 +199,7 @@ public class ToJSON {
             float[] a = (float[]) obj;
             builder.append("[");
             for (int i = 0; i < a.length; i++) {
-                builder.append(String.format(".3f", a[i]));
+                builder.append(String.format("%.3f", a[i]));
                 if (i < a.length - 1)
                     builder.append(",");
             }
@@ -208,7 +208,7 @@ public class ToJSON {
             double[] a = (double[]) obj;
             builder.append("[");
             for (int i = 0; i < a.length; i++) {
-                builder.append(String.format(".6f", a[i]));
+                builder.append(String.format("%.6f", a[i]));
                 if (i < a.length - 1)
                     builder.append(",");
             }

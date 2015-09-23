@@ -104,11 +104,11 @@ public class HCR implements SyntaxConstants {
 		final int swbOffsetMax = info.getSWBOffsetMax();
 		//TODO:
 		//final SectionData sectData = ics.getSectionData();
-		final int[][] sectStart = null; //sectData.getSectStart();
-		final int[][] sectEnd = null; //sectData.getSectEnd();
-		final int[] numSec = null; //sectData.getNumSec();
-		final int[][] sectCB = null; //sectData.getSectCB();
-		final int[][] sectSFBOffsets = null; //info.getSectSFBOffsets();
+		final int[][] sectStart = new int[0][0]; //sectData.getSectStart();
+		final int[][] sectEnd = new int[0][0]; //sectData.getSectEnd();
+		final int[] numSec = new int[0]; //sectData.getNumSec();
+		final int[][] sectCB = new int[0][0]; //sectData.getSectCB();
+		final int[][] sectSFBOffsets = new int[0][0]; //info.getSectSFBOffsets();
 
 		//check parameter
 		final int spDataLen = ics.getReorderedSpectralDataLength();

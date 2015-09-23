@@ -29,7 +29,7 @@ public class RVLC implements RVLCTables {
 		final ICSInfo info = ics.getInfo();
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
-		final int[][] sfbCB = null; //ics.getSectionData().getSfbCB();
+		final int[][] sfbCB = {{}}; //ics.getSectionData().getSfbCB();
 
 		int sf = ics.getGlobalGain();
 		int intensityPosition = 0;
@@ -77,7 +77,7 @@ public class RVLC implements RVLCTables {
 		final ICSInfo info = ics.getInfo();
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
-		final int[][] sfbCB = null; //ics.getSectionData().getSfbCB();
+		final int[][] sfbCB = {{}}; //ics.getSectionData().getSfbCB();
 
 		final int escapesLen = in.readBits(8);
 

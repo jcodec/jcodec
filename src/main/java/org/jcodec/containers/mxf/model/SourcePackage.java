@@ -17,7 +17,6 @@ import org.jcodec.common.logging.Logger;
 public class SourcePackage extends GenericPackage {
     private UL[] trackRefs;
     private UL descriptorRef;
-    private UL packageUid;
     
     public SourcePackage(UL ul) {
         super(ul);
@@ -50,9 +49,5 @@ public class SourcePackage extends GenericPackage {
 
     public UL getDescriptorRef() {
         return descriptorRef;
-    }
-
-    public UL getPackageUid() {
-        return packageUid;
     }
 }

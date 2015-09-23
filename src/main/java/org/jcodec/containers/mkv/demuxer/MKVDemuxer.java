@@ -118,7 +118,7 @@ public final class MKVDemuxer {
                 } else if (MKVType.BlockGroup.equals(child.type)) {
                     EbmlMaster group = (EbmlMaster) child;
                     for (EbmlBase grandChild : group.children) {
-                        if (MKVType.Block.equals(grandChild)) {
+                        if (grandChild.type == MKVType.Block) {
                             MkvBlock b = (MkvBlock) child;
                             b.absoluteTimecode = b.timecode + baseTimecode;
                             putIntoRightBasket(b);

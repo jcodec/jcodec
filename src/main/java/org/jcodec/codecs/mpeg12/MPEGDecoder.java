@@ -227,16 +227,12 @@ public class MPEGDecoder implements VideoDecoder {
         try {
             ByteBuffer segment;
             while ((segment = nextSegment(buffer)) != null) {
-                if (segment.get(3) >= SLICE_START_CODE_FIRST && segment.get(3) <= SLICE_START_CODE_LAST) {
-                    segment.position(4);
-                    try {
-                        decodeSlice(ph, segment.get(3) & 0xff, context, buf, new BitReader(segment), vertOff, vertStep);
-                    } catch (RuntimeException e) {
-                        e.printStackTrace();
-                    }
-                } else if (segment.get(3) >= 0xB3 && segment.get(3) != 0xB6 && segment.get(3) != 0xB7) {
-                    throw new RuntimeException("Unexpected start code " + segment.get(3));
-                } else if (segment.get(3) == 0x0) {
+                int startCode = segment.get(3) & 0xff;
+                if (startCode >= SLICE_START_CODE_FIRST && startCode <= SLICE_START_CODE_LAST) {
+                    decodeSlice(context, ph, buf, vertOff, vertStep, segment);
+                } else if (startCode >= 0xB3 && startCode != 0xB6 && startCode != 0xB7) {
+                    throw new RuntimeException("Unexpected start code " + startCode);
+                } else if (startCode == 0x0) {
                     buffer.reset();
                     break;
                 }
@@ -252,6 +248,18 @@ public class MPEGDecoder implements VideoDecoder {
             return pic;
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void decodeSlice(Context context, PictureHeader ph, int[][] buf, int vertOff, int vertStep,
+            ByteBuffer segment) throws IOException {
+        int startCode = segment.get(3) & 0xff;
+        ByteBuffer dup = segment.duplicate();
+        dup.position(4);
+        try {
+            decodeSlice(ph, startCode, context, buf, new BitReader(dup), vertOff, vertStep);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
         }
     }
 

@@ -319,7 +319,7 @@ public class MXFDemuxer {
                         ch.position(ch.position() + kl.len);
                     } while (!essenceUL.equals(kl.key));
 
-                    if (essenceUL.equals(kl.key)) {
+                    if (kl != null && essenceUL.equals(kl.key)) {
                         dataLen = (int) kl.len;
                         break;
                     }

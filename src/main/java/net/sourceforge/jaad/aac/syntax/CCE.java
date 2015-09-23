@@ -89,7 +89,7 @@ class CCE extends Element implements SyntaxConstants {
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
 		//TODO:
-		final int[][] sfbCB = null;//ics.getSectionData().getSfbCB();
+		final int[][] sfbCB = {{}};//ics.getSectionData().getSfbCB();
 
 		for(i = 0; i<gainCount; i++) {
 			int idx = 0;
@@ -144,7 +144,7 @@ class CCE extends Element implements SyntaxConstants {
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
 		//TODO:
-		final int[][] sfbCB = null; //ics.getSectionData().getSfbCB();
+		final int[][] sfbCB = {{}}; //ics.getSectionData().getSfbCB();
 
 		int srcOff = 0;
 		int dstOff = 0;

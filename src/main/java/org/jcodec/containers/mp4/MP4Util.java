@@ -180,10 +180,10 @@ public class MP4Util {
     }
 
     public static void writeMovie(File f, MovieBox movie) throws IOException {
-        FileChannel out = null;
+        SeekableByteChannel out = null;
         try {
-            out = new FileInputStream(f).getChannel();
-            writeMovie(f, movie);
+            out = NIOUtils.writableFileChannel(f);
+            writeMovie(out, movie);
         } finally {
             out.close();
         }

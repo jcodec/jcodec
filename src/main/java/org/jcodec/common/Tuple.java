@@ -101,17 +101,6 @@ public class Tuple {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T0, T1> _2<T0, T1>[] asArray(Map<T0, T1> m) {
-        _2<T0, T1>[] result = (_2<T0, T1>[]) (new Object[m.size()]);
-        Set<Entry<T0, T1>> entrySet = m.entrySet();
-        int i = 0;
-        for (Entry<T0, T1> entry : entrySet) {
-            result[i++] = _2(entry.getKey(), entry.getValue());
-        }
-        return result;
-    }
-
     public static <T0> List<T0> _1_project0(List<_1<T0>> temp) {
         List<T0> result = new LinkedList<T0>();
         for (_1<T0> _1 : temp) {
