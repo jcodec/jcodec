@@ -8,6 +8,7 @@ import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.common.model.Rational.HALF;
 import static org.jcodec.common.model.Unit.SEC;
+import static org.jcodec.common.tools.MainUtils.tildeExpand;
 import static org.jcodec.containers.mp4.TrackType.SOUND;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
@@ -597,13 +598,6 @@ public class TranscodeMain {
                 }
             }, "pattern", "out file");
         }
-    }
-
-    public static File tildeExpand(String path) {
-        if (path.startsWith("~")) {
-            path = path.replaceFirst("~", System.getProperty("user.home"));
-        }
-        return new File(path);
     }
 
     protected static class Mkv2png implements Profile {

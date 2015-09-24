@@ -12,14 +12,14 @@ import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform;
+import org.jcodec.scale.Transform8Bit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -27,11 +27,10 @@ import org.jcodec.scale.Transform;
  * 
  * @author The JCodec project
  */
-@Deprecated
-public class SequenceEncoder {
+public class SequenceEncoder8Bit {
     private SeekableByteChannel ch;
-    private Picture toEncode;
-    private Transform transform;
+    private Picture8Bit toEncode;
+    private Transform8Bit transform;
     private H264Encoder encoder;
     private ArrayList<ByteBuffer> spsList;
     private ArrayList<ByteBuffer> ppsList;
@@ -42,7 +41,7 @@ public class SequenceEncoder {
     private ByteBuffer sps;
     private ByteBuffer pps;
 
-    public SequenceEncoder(File out) throws IOException {
+    public SequenceEncoder8Bit(File out) throws IOException {
         this.ch = NIOUtils.writableFileChannel(out);
 
         // Muxer that will store the encoded frames
@@ -58,7 +57,7 @@ public class SequenceEncoder {
         encoder = new H264Encoder();
 
         // Transform to convert between RGB and YUV
-        transform = ColorUtil.getTransform(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
+        transform = ColorUtil.getTransform8Bit(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
 
         // Encoder extra data ( SPS, PPS ) to be stored in a special place of
         // MP4
@@ -67,9 +66,9 @@ public class SequenceEncoder {
 
     }
 
-    public void encodeNativeFrame(Picture pic) throws IOException {
+    public void encodeNativeFrame(Picture8Bit pic) throws IOException {
         if (toEncode == null) {
-            toEncode = Picture.create(pic.getWidth(), pic.getHeight(), encoder.getSupportedColorSpaces()[0]);
+            toEncode = Picture8Bit.create(pic.getWidth(), pic.getHeight(), encoder.getSupportedColorSpaces()[0]);
         }
 
         // Perform conversion

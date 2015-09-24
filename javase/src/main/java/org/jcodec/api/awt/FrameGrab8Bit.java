@@ -11,7 +11,7 @@ import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.scale.AWTUtil;
 
 /**
@@ -32,13 +32,12 @@ import org.jcodec.scale.AWTUtil;
  * @author The JCodec project
  * 
  */
-@Deprecated
-public class FrameGrab extends org.jcodec.api.FrameGrab {
-    public FrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
+public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
+    public FrameGrab8Bit(SeekableByteChannel in) throws IOException, JCodecException {
         super(in);
     }
 
-    public FrameGrab(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
+    public FrameGrab8Bit(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
         super(videoTrack, decoder);
     }
 
@@ -55,7 +54,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
         FileChannelWrapper ch = null;
         try {
             ch = NIOUtils.readableFileChannel(file);
-            return ((FrameGrab) new FrameGrab(ch).seekToSecondPrecise(second)).getFrame();
+            return ((FrameGrab8Bit) new FrameGrab8Bit(ch).seekToSecondPrecise(second)).getFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -71,7 +70,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      */
     public static BufferedImage getFrame(SeekableByteChannel file, double second) throws JCodecException, IOException {
-        return ((FrameGrab) new FrameGrab(file).seekToSecondPrecise(second)).getFrame();
+        return ((FrameGrab8Bit) new FrameGrab8Bit(file).seekToSecondPrecise(second)).getFrame();
     }
 
     /**
@@ -81,8 +80,8 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      */
     public BufferedImage getFrame() throws IOException {
-        Picture nativeFrame = getNativeFrame();
-        return nativeFrame == null ? null : AWTUtil.toBufferedImage(nativeFrame);
+        Picture8Bit nativeFrame = getNativeFrame();
+        return nativeFrame == null ? null : AWTUtil.toBufferedImage8Bit(nativeFrame);
     }
 
     /**
@@ -98,7 +97,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
         FileChannelWrapper ch = null;
         try {
             ch = NIOUtils.readableFileChannel(file);
-            return ((FrameGrab) new FrameGrab(ch).seekToFramePrecise(frameNumber)).getFrame();
+            return ((FrameGrab8Bit) new FrameGrab8Bit(ch).seekToFramePrecise(frameNumber)).getFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -114,7 +113,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws JCodecException
      */
     public static BufferedImage getFrame(SeekableByteChannel file, int frameNumber) throws JCodecException, IOException {
-        return ((FrameGrab) new FrameGrab(file).seekToFramePrecise(frameNumber)).getFrame();
+        return ((FrameGrab8Bit) new FrameGrab8Bit(file).seekToFramePrecise(frameNumber)).getFrame();
     }
 
     /**
@@ -129,7 +128,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      */
     public static BufferedImage getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
-        return ((FrameGrab) new FrameGrab(vt, decoder).seekToFramePrecise(frameNumber)).getFrame();
+        return ((FrameGrab8Bit) new FrameGrab8Bit(vt, decoder).seekToFramePrecise(frameNumber)).getFrame();
     }
 
     /**
@@ -144,7 +143,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      */
     public static BufferedImage getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
-        return ((FrameGrab) new FrameGrab(vt, decoder).seekToSecondPrecise(second)).getFrame();
+        return ((FrameGrab8Bit) new FrameGrab8Bit(vt, decoder).seekToSecondPrecise(second)).getFrame();
     }
 
     /**
@@ -160,7 +159,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      */
     public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
-        return ((FrameGrab) new FrameGrab(vt, decoder).seekToFrameSloppy(frameNumber)).getFrame();
+        return ((FrameGrab8Bit) new FrameGrab8Bit(vt, decoder).seekToFrameSloppy(frameNumber)).getFrame();
     }
 
     /**
@@ -176,7 +175,7 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      */
     public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
-        return ((FrameGrab) new FrameGrab(vt, decoder).seekToSecondSloppy(second)).getFrame();
+        return ((FrameGrab8Bit) new FrameGrab8Bit(vt, decoder).seekToSecondSloppy(second)).getFrame();
     }
 
 }

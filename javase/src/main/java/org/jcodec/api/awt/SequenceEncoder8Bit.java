@@ -13,14 +13,13 @@ import org.jcodec.scale.AWTUtil;
  * @author The JCodec project
  * 
  */
-@Deprecated
-public class SequenceEncoder extends org.jcodec.api.SequenceEncoder {
+public class SequenceEncoder8Bit extends org.jcodec.api.SequenceEncoder8Bit {
 
-    public SequenceEncoder(File out) throws IOException {
+    public SequenceEncoder8Bit(File out) throws IOException {
         super(out);
     }
 
     public void encodeImage(BufferedImage bi) throws IOException {
-        encodeNativeFrame(AWTUtil.fromBufferedImage(bi));
+        encodeNativeFrame(AWTUtil.fromBufferedImage8Bit(bi));
     }
 }

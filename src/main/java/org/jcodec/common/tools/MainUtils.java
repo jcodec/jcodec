@@ -1,5 +1,6 @@
 package org.jcodec.common.tools;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -176,5 +177,12 @@ public class MainUtils {
     public static String color(String str, ANSIColor fg, ANSIColor bg, boolean bright) {
         return isColorSupported ? "\033[" + (30 + (fg.ordinal() & 0x7)) + ";" + (40 + (bg.ordinal() & 0x7)) + ";"
                 + (bright ? 1 : 2) + "m" + str + "\033[0m" : str;
+    }
+    
+    public static File tildeExpand(String path) {
+        if (path.startsWith("~")) {
+            path = path.replaceFirst("~", System.getProperty("user.home"));
+        }
+        return new File(path);
     }
 }

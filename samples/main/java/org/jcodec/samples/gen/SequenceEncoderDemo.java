@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.jcodec.api.awt.SequenceEncoder;
+import org.jcodec.api.awt.SequenceEncoder8Bit;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 
@@ -18,7 +18,7 @@ import org.jcodec.common.tools.MainUtils.Cmd;
  * A demo of SequenceEncoder that generates a video with a bouncing ball
  * 
  * @author Stan Vitvitskyy
- *
+ * 
  */
 public class SequenceEncoderDemo {
 
@@ -32,12 +32,12 @@ public class SequenceEncoderDemo {
             }, "output file");
             return;
         }
-        final int speed = 10;
+        final int speed = 4;
         final int ballSize = 40;
 
-        SequenceEncoder enc = new SequenceEncoder(new File(cmd.getArg(0)));
+        SequenceEncoder8Bit enc = new SequenceEncoder8Bit(new File(cmd.getArg(0)));
         enc.getEncoder().setKeyInterval(25);
-        int framesToEncode = cmd.getIntegerFlag("n-frames", 200);
+        int framesToEncode = cmd.getIntegerFlag("n-frames", 100);
 
         long totalNano = 0;
         BufferedImage image = new BufferedImage(640, 480, BufferedImage.TYPE_3BYTE_BGR);
@@ -45,7 +45,7 @@ public class SequenceEncoderDemo {
             Graphics g = image.getGraphics();
             g.setColor(Color.BLACK);
             g.fillRect(0, 0, image.getWidth(), image.getHeight());
-            g.setColor(Color.GREEN);
+            g.setColor(Color.YELLOW);
             if (x >= image.getWidth() - ballSize)
                 incX = -speed;
             if (y >= image.getHeight() - ballSize)
