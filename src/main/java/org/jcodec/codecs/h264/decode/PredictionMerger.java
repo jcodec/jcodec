@@ -24,8 +24,8 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class PredictionMerger {
 
-    public static void mergePrediction(SliceHeader sh, int refIdxL0, int refIdxL1, PartPred predType, int comp, byte[] pred0, byte[] pred1,
-            int off, int stride, int blkW, int blkH, byte[] out, Frame[][] refs, int thisPoc) {
+    public static void mergePrediction(SliceHeader sh, int refIdxL0, int refIdxL1, PartPred predType, int comp,
+            byte[] pred0, byte[] pred1, int off, int stride, int blkW, int blkH, byte[] out, Frame[][] refs, int thisPoc) {
 
         PictureParameterSet pps = sh.pps;
         if (sh.slice_type == SliceType.P) {
@@ -74,7 +74,8 @@ public class PredictionMerger {
         }
     }
 
-    private static void mergeAvg(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH, byte[] out) {
+    private static void mergeAvg(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
+            byte[] out) {
         if (p0 == Bi)
             mergePrediction(blk0, blk1, stride, p0, off, blkW, blkH, out);
         else if (p0 == L0)
@@ -84,8 +85,8 @@ public class PredictionMerger {
 
     }
 
-    private static void mergeWeight(byte[] blk0, byte[] blk1, int stride, PartPred partPred, int off, int blkW, int blkH,
-            int logWD, int w0, int w1, int o0, int o1, byte[] out) {
+    private static void mergeWeight(byte[] blk0, byte[] blk1, int stride, PartPred partPred, int off, int blkW,
+            int blkH, int logWD, int w0, int w1, int o0, int o1, byte[] out) {
         if (partPred == L0) {
             weight(blk0, stride, off, blkW, blkH, logWD, w0, o0, out);
         } else if (partPred == L1) {
@@ -110,24 +111,33 @@ public class PredictionMerger {
                 out[off] = (byte) ((blk0[off] + blk1[off] + 1) >> 1);
     }
 
-    private static void weightPrediction(byte[] blk0, byte[] blk1, int stride, int off, int blkW, int blkH, int logWD, int w0,
-            int w1, int o0, int o1, byte[] out) {
-        int dvadva = 1 << logWD;
-        int sum = (o0 + o1 + 1) >> 1;
+    private static void weightPrediction(byte[] blk0, byte[] blk1, int stride, int off, int blkW, int blkH, int logWD,
+            int w0, int w1, int o0, int o1, byte[] out) {
+        // Necessary to correctly scale in [-128, 127] range
+        int round = (1 << logWD) + ((w0 + w1) << 7);
+        int sum = ((o0 + o1 + 1) >> 1) - 128;
         int logWDCP1 = logWD + 1;
         for (int i = 0; i < blkH; i++, off += stride - blkW)
             for (int j = 0; j < blkW; j++, off++) {
-                out[off] = (byte) clip(((blk0[off] * w0 + blk1[off] * w1 + dvadva) >> logWDCP1) + sum, -128, 127);
+                out[off] = (byte) clip(((blk0[off] * w0 + blk1[off] * w1 + round) >> logWDCP1) + sum, -128, 127);
             }
     }
 
     private static void weight(byte[] blk0, int stride, int off, int blkW, int blkH, int logWD, int w, int o, byte[] out) {
-        int dva = 1 << (logWD - 1);
+        int round = 1 << (logWD - 1);
+
         if (logWD >= 1) {
+            // Necessary to correctly scale in [-128, 127] range,
+            // i.e. x = ay / b; x,y in [0, 255] is
+            // x = a * (y + 128) / b - 128; x,y in [-128, 127]
+            o -= 128;
+            round += w << 7;
             for (int i = 0; i < blkH; i++, off += stride - blkW)
                 for (int j = 0; j < blkW; j++, off++)
-                    out[off] = (byte) clip(((blk0[off] * w + dva) >> logWD) + o, -128, 127);
+                    out[off] = (byte) clip(((blk0[off] * w + round) >> logWD) + o, -128, 127);
         } else {
+            // Necessary to correctly scale in [-128, 127] range
+            o += (w << 7) - 128;
             for (int i = 0; i < blkH; i++, off += stride - blkW)
                 for (int j = 0; j < blkW; j++, off++)
                     out[off] = (byte) clip(blk0[off] * w + o, -128, 127);
