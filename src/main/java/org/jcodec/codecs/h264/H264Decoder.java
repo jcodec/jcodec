@@ -6,6 +6,11 @@ import static org.jcodec.common.tools.MathUtil.wrap;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 
 import org.jcodec.codecs.h264.decode.DeblockerInput;
 import org.jcodec.codecs.h264.decode.FrameReader;
@@ -51,10 +56,26 @@ public class H264Decoder implements VideoDecoder {
     private boolean debug;
     private byte[][] byteBuffer;
     private FrameReader reader = new FrameReader();
+    private ExecutorService tp;
+    private boolean threaded;
 
     public H264Decoder() {
+        this(false);
+    }
+
+    public H264Decoder(boolean threaded) {
         pictureBuffer = new ArrayList<Frame>();
         poc = new POCManager();
+        this.threaded = threaded;
+        if (threaded) {
+            tp = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
+                public Thread newThread(Runnable r) {
+                    Thread t = Executors.defaultThreadFactory().newThread(r);
+                    t.setDaemon(true);
+                    return t;
+                }
+            });
+        }
     }
 
     @Override
@@ -90,16 +111,31 @@ public class H264Decoder implements VideoDecoder {
         private DeblockingFilter filter;
         private SliceHeader firstSliceHeader;
         private NALUnit firstNu;
-        private SliceDecoder decoder;
         private DeblockerInput di;
 
         public Frame decodeFrame(List<ByteBuffer> nalUnits, byte[][] buffer) {
             List<SliceReader> readFrame = reader.readFrame(nalUnits);
             if (readFrame == null)
                 return null;
-            Frame result = init(readFrame.get(0), buffer);
-            for (SliceReader sliceReader : readFrame) {
-                decoder.decode(sliceReader);
+            final Frame result = init(readFrame.get(0), buffer);
+            if (threaded) {
+                List<Future<?>> futures = new ArrayList<Future<?>>();
+                for (final SliceReader sliceReader : readFrame) {
+                    futures.add(tp.submit(new Runnable() {
+                        public void run() {
+                            new SliceDecoder(activeSps, sRefs, lRefs, di, result).decode(sliceReader);
+                        }
+                    }));
+                }
+
+                for (Future<?> future : futures) {
+                    waitForSure(future);
+                }
+
+            } else {
+                for (SliceReader sliceReader : readFrame) {
+                    new SliceDecoder(activeSps, sRefs, lRefs, di, result).decode(sliceReader);
+                }
             }
 
             filter.deblockFrame(result);
@@ -107,6 +143,18 @@ public class H264Decoder implements VideoDecoder {
             updateReferences(result);
 
             return result;
+        }
+
+        private void waitForSure(Future<?> future) {
+            while (true) {
+                try {
+                    future.get();
+                    break;
+                } catch (InterruptedException e) {
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
         private void updateReferences(Frame picture) {
@@ -136,7 +184,6 @@ public class H264Decoder implements VideoDecoder {
             Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type,
                     di.mvs, di.refsUsed, poc.calcPOC(firstSliceHeader, firstNu));
 
-            decoder = new SliceDecoder(activeSps, sRefs, lRefs, di, result);
             MBlockDecoderUtils.setDebug(debug);
 
             filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, di);
