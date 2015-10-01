@@ -38,8 +38,7 @@ public class MBlockDecoderBase {
         this.poc = poc;
     }
 
-    void residualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY, boolean is8x8Left,
-            boolean is8x8Top) {
+    void residualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         if (!mBlock.transform8x8Used) {
             residualLuma(mBlock);
         } else if (sh.pps.entropy_coding_mode_flag) {

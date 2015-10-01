@@ -19,15 +19,12 @@ import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.mergeResidual;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveMvs;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.savePrediction8x8;
 import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
-import static org.jcodec.codecs.h264.io.model.MBType.B_8x8;
-import static org.jcodec.codecs.h264.io.model.MBType.P_8x8;
 
 import java.util.Arrays;
 
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
-import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.model.Picture8Bit;
@@ -78,7 +75,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         }
         di.mbQps[0][mbAddr] = s.qp;
 
-        residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY, s.tf8x8Left, s.tf8x8Top[mbX]);
+        residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
 
         saveMvs(di, x, mbX, mbY);
 
@@ -95,10 +92,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
 
         collectPredictors(s, mb, mbX);
 
-        di.mbTypes[mbAddr] = s.topMBType[mbX] = s.leftMBType = mBlock.curMbType;
-        s.topCBPLuma[mbX] = s.leftCBPLuma = mBlock.cbpLuma();
-        s.topCBPChroma[mbX] = s.leftCBPChroma = mBlock.cbpChroma();
-        s.tf8x8Left = s.tf8x8Top[mbX] = mBlock.transform8x8Used;
+        di.mbTypes[mbAddr] = mBlock.curMbType;
         di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
     }
 
@@ -109,29 +103,23 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         decodeSubMb8x8(mBlock, 0, mBlock.pb8x8.subMbTypes[0], references, mbX << 6, mbY << 6, x[0], s.mvTopLeft[0],
                 s.mvTop[0][mbX << 2], s.mvTop[0][(mbX << 2) + 1], s.mvTop[0][(mbX << 2) + 2], s.mvLeft[0][0],
                 s.mvLeft[0][1], tlAvailable, topAvailable, topAvailable, leftAvailable, x[0][0], x[0][1], x[0][4],
-                x[0][5], mBlock.pb8x8.refIdx[0][0], mb, 0, 0, 0, mbX, s.leftMBType, s.topMBType[mbX], P_8x8, L0, L0,
-                L0, 0);
+                x[0][5], mBlock.pb8x8.refIdx[0][0], mb, 0, 0);
 
         decodeSubMb8x8(mBlock, 1, mBlock.pb8x8.subMbTypes[1], references, (mbX << 6) + 32, mbY << 6, x[0],
                 s.mvTop[0][(mbX << 2) + 1], s.mvTop[0][(mbX << 2) + 2], s.mvTop[0][(mbX << 2) + 3],
                 s.mvTop[0][(mbX << 2) + 4], x[0][1], x[0][5], topAvailable, topAvailable, topRightAvailable, true,
-                x[0][2], x[0][3], x[0][6], x[0][7], mBlock.pb8x8.refIdx[0][1], mb, 8, 2, 0, mbX, P_8x8,
-                s.topMBType[mbX], P_8x8, L0, L0, L0, 0);
+                x[0][2], x[0][3], x[0][6], x[0][7], mBlock.pb8x8.refIdx[0][1], mb, 8, 0);
 
         decodeSubMb8x8(mBlock, 2, mBlock.pb8x8.subMbTypes[2], references, mbX << 6, (mbY << 6) + 32, x[0],
                 s.mvLeft[0][1], x[0][4], x[0][5], x[0][6], s.mvLeft[0][2], s.mvLeft[0][3], leftAvailable, true, true,
-                leftAvailable, x[0][8], x[0][9], x[0][12], x[0][13], mBlock.pb8x8.refIdx[0][2], mb, 128, 0, 2, mbX,
-                s.leftMBType, P_8x8, P_8x8, L0, L0, L0, 0);
+                leftAvailable, x[0][8], x[0][9], x[0][12], x[0][13], mBlock.pb8x8.refIdx[0][2], mb, 128, 0);
 
         decodeSubMb8x8(mBlock, 3, mBlock.pb8x8.subMbTypes[3], references, (mbX << 6) + 32, (mbY << 6) + 32, x[0],
                 x[0][5], x[0][6], x[0][7], null, x[0][9], x[0][13], true, true, false, true, x[0][10], x[0][11],
-                x[0][14], x[0][15], mBlock.pb8x8.refIdx[0][3], mb, 136, 2, 2, mbX, P_8x8, P_8x8, P_8x8, L0, L0, L0, 0);
+                x[0][14], x[0][15], mBlock.pb8x8.refIdx[0][3], mb, 136, 0);
 
         savePrediction8x8(s, mbX, x[0], 0);
         Arrays.fill(pp, L0);
-        int blk8x8X = mbX << 1;
-
-        s.predModeLeft[0] = s.predModeLeft[1] = s.predModeTop[blk8x8X] = s.predModeTop[blk8x8X + 1] = L0;
     }
 
     private void predict8x8B(MBlock mBlock, Frame[][] refs, Picture8Bit mb, boolean ref0, int mbX, int mbY,
@@ -159,32 +147,28 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
                         x[list], s.mvTopLeft[list], s.mvTop[list][mbX << 2], s.mvTop[list][(mbX << 2) + 1],
                         s.mvTop[list][(mbX << 2) + 2], s.mvLeft[list][0], s.mvLeft[list][1], tlAvailable, topAvailable,
                         topAvailable, leftAvailable, x[list][0], x[list][1], x[list][4], x[list][5],
-                        mBlock.pb8x8.refIdx[list][0], mbb[list], 0, 0, 0, mbX, s.leftMBType, s.topMBType[mbX], B_8x8,
-                        s.predModeLeft[0], s.predModeTop[blk8x8X], p[0], list);
+                        mBlock.pb8x8.refIdx[list][0], mbb[list], 0, list);
             }
             if (p[1].usesList(list)) {
                 decodeSubMb8x8(mBlock, 1, bSubMbTypes[mBlock.pb8x8.subMbTypes[1]], refs[list], (mbX << 6) + 32,
                         mbY << 6, x[list], s.mvTop[list][(mbX << 2) + 1], s.mvTop[list][(mbX << 2) + 2],
                         s.mvTop[list][(mbX << 2) + 3], s.mvTop[list][(mbX << 2) + 4], x[list][1], x[list][5],
                         topAvailable, topAvailable, topRightAvailable, true, x[list][2], x[list][3], x[list][6],
-                        x[list][7], mBlock.pb8x8.refIdx[list][1], mbb[list], 8, 2, 0, mbX, B_8x8, s.topMBType[mbX],
-                        B_8x8, p[0], s.predModeTop[blk8x8X + 1], p[1], list);
+                        x[list][7], mBlock.pb8x8.refIdx[list][1], mbb[list], 8, list);
             }
 
             if (p[2].usesList(list)) {
                 decodeSubMb8x8(mBlock, 2, bSubMbTypes[mBlock.pb8x8.subMbTypes[2]], refs[list], mbX << 6,
                         (mbY << 6) + 32, x[list], s.mvLeft[list][1], x[list][4], x[list][5], x[list][6],
                         s.mvLeft[list][2], s.mvLeft[list][3], leftAvailable, true, true, leftAvailable, x[list][8],
-                        x[list][9], x[list][12], x[list][13], mBlock.pb8x8.refIdx[list][2], mbb[list], 128, 0, 2, mbX,
-                        s.leftMBType, B_8x8, B_8x8, s.predModeLeft[1], p[0], p[2], list);
+                        x[list][9], x[list][12], x[list][13], mBlock.pb8x8.refIdx[list][2], mbb[list], 128, list);
             }
 
             if (p[3].usesList(list)) {
                 decodeSubMb8x8(mBlock, 3, bSubMbTypes[mBlock.pb8x8.subMbTypes[3]], refs[list], (mbX << 6) + 32,
                         (mbY << 6) + 32, x[list], x[list][5], x[list][6], x[list][7], null, x[list][9], x[list][13],
                         true, true, false, true, x[list][10], x[list][11], x[list][14], x[list][15],
-                        mBlock.pb8x8.refIdx[list][3], mbb[list], 136, 2, 2, mbX, B_8x8, B_8x8, B_8x8, p[2], p[1], p[3],
-                        list);
+                        mBlock.pb8x8.refIdx[list][3], mbb[list], 136, list);
             }
         }
 
@@ -193,10 +177,6 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
             mergePrediction(sh, x[0][blk4x4][2], x[1][blk4x4][2], p[i], 0, mbb[0].getPlaneData(0),
                     mbb[1].getPlaneData(0), BLK_8x8_MB_OFF_LUMA[i], 16, 8, 8, mb.getPlaneData(0), refs, poc);
         }
-
-        s.predModeLeft[0] = p[1];
-        s.predModeTop[blk8x8X] = p[2];
-        s.predModeLeft[1] = s.predModeTop[blk8x8X + 1] = p[3];
 
         savePrediction8x8(s, mbX, x[0], 0);
         savePrediction8x8(s, mbX, x[1], 1);
@@ -209,39 +189,32 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
     private void decodeSubMb8x8(MBlock mBlock, int partNo, int subMbType, Picture8Bit[] references, int offX, int offY,
             int[][] x, int[] tl, int[] t0, int[] t1, int[] tr, int[] l0, int[] l1, boolean tlAvb, boolean tAvb,
             boolean trAvb, boolean lAvb, int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb,
-            int off, int blk8x8X, int blk8x8Y, int mbX, MBType leftMBType, MBType topMBType, MBType curMBType,
-            PartPred leftPred, PartPred topPred, PartPred partPred, int list) {
+            int off, int list) {
 
         x00[2] = x01[2] = x10[2] = x11[2] = refIdx;
 
         switch (subMbType) {
         case 3:
             decodeSub4x4(mBlock, partNo, references, offX, offY, tl, t0, t1, tr, l0, l1, tlAvb, tAvb, trAvb, lAvb, x00,
-                    x01, x10, x11, refIdx, mb, off, blk8x8X, blk8x8Y, mbX, leftMBType, topMBType, curMBType, leftPred,
-                    topPred, partPred, list);
+                    x01, x10, x11, refIdx, mb, off, list);
             break;
         case 2:
             decodeSub4x8(mBlock, partNo, references, offX, offY, tl, t0, t1, tr, l0, tlAvb, tAvb, trAvb, lAvb, x00,
-                    x01, x10, x11, refIdx, mb, off, blk8x8X, blk8x8Y, mbX, leftMBType, topMBType, curMBType, leftPred,
-                    topPred, partPred, list);
+                    x01, x10, x11, refIdx, mb, off, list);
             break;
         case 1:
             decodeSub8x4(mBlock, partNo, references, offX, offY, tl, t0, tr, l0, l1, tlAvb, tAvb, trAvb, lAvb, x00,
-                    x01, x10, x11, refIdx, mb, off, blk8x8X, blk8x8Y, mbX, leftMBType, topMBType, curMBType, leftPred,
-                    topPred, partPred, list);
+                    x01, x10, x11, refIdx, mb, off, list);
             break;
         case 0:
             decodeSub8x8(mBlock, partNo, references, offX, offY, tl, t0, tr, l0, tlAvb, tAvb, trAvb, lAvb, x00, x01,
-                    x10, x11, refIdx, mb, off, blk8x8X, blk8x8Y, mbX, leftMBType, topMBType, curMBType, leftPred,
-                    topPred, partPred, list);
+                    x10, x11, refIdx, mb, off, list);
         }
     }
 
     private void decodeSub8x8(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
             int[] t0, int[] tr, int[] l0, boolean tlAvb, boolean tAvb, boolean trAvb, boolean lAvb, int[] x00,
-            int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int blk8x8X, int blk8x8Y, int mbX,
-            MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
-            PartPred partPred, int list) {
+            int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int list) {
 
         int mvpX = calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 0);
         int mvpY = calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 1);
@@ -256,9 +229,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
 
     private void decodeSub8x4(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
             int[] t0, int[] tr, int[] l0, int[] l1, boolean tlAvb, boolean tAvb, boolean trAvb, boolean lAvb,
-            int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int blk8x8X, int blk8x8Y,
-            int mbX, MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
-            PartPred partPred, int list) {
+            int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int list) {
 
         int mvpX1 = calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 0);
         int mvpY1 = calcMVPredictionMedian(l0, t0, tr, tl, lAvb, tAvb, trAvb, tlAvb, refIdx, 1);
@@ -285,9 +256,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
 
     private void decodeSub4x8(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
             int[] t0, int[] t1, int[] tr, int[] l0, boolean tlAvb, boolean tAvb, boolean trAvb, boolean lAvb,
-            int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int blk8x8X, int blk8x8Y,
-            int mbX, MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
-            PartPred partPred, int list) {
+            int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int list) {
 
         int mvpX1 = calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 0);
         int mvpY1 = calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 1);
@@ -313,9 +282,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
 
     private void decodeSub4x4(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
             int[] t0, int[] t1, int[] tr, int[] l0, int[] l1, boolean tlAvb, boolean tAvb, boolean trAvb, boolean lAvb,
-            int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int blk8x8X, int blk8x8Y,
-            int mbX, MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
-            PartPred partPred, int list) {
+            int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int list) {
 
         int mvpX1 = calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 0);
         int mvpY1 = calcMVPredictionMedian(l0, t0, t1, tl, lAvb, tAvb, tAvb, tlAvb, refIdx, 1);

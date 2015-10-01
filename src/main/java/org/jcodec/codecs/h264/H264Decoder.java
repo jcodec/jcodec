@@ -1,7 +1,6 @@
 package org.jcodec.codecs.h264;
 
 import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
-import static org.jcodec.codecs.h264.H264Utils.unescapeNAL;
 import static org.jcodec.common.tools.MathUtil.wrap;
 
 import java.nio.ByteBuffer;
@@ -9,13 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.codecs.h264.decode.DeblockerInput;
-import org.jcodec.codecs.h264.decode.DecoderState;
+import org.jcodec.codecs.h264.decode.FrameReader;
 import org.jcodec.codecs.h264.decode.MBlockDecoderUtils;
 import org.jcodec.codecs.h264.decode.SliceDecoder;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
+import org.jcodec.codecs.h264.decode.SliceReader;
 import org.jcodec.codecs.h264.decode.deblock.DeblockingFilter;
 import org.jcodec.codecs.h264.io.model.Frame;
-import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
@@ -28,7 +27,6 @@ import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
-import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
@@ -46,14 +44,13 @@ import org.jcodec.common.model.Rect;
  */
 public class H264Decoder implements VideoDecoder {
 
-    private IntObjectMap<SeqParameterSet> sps = new IntObjectMap<SeqParameterSet>();
-    private IntObjectMap<PictureParameterSet> pps = new IntObjectMap<PictureParameterSet>();
     private Frame[] sRefs;
     private IntObjectMap<Frame> lRefs;
     private List<Frame> pictureBuffer;
     private POCManager poc;
     private boolean debug;
     private byte[][] byteBuffer;
+    private FrameReader reader = new FrameReader();
 
     public H264Decoder() {
         pictureBuffer = new ArrayList<Frame>();
@@ -66,7 +63,7 @@ public class H264Decoder implements VideoDecoder {
         Frame frame = new FrameDecoder().decodeFrame(H264Utils.splitFrame(data), getSameSizeBuffer(buffer));
         return frame == null ? null : frame.toPicture(8, buffer);
     }
-    
+
     @Deprecated
     public Picture decodeFrame(List<ByteBuffer> data, int[][] buffer) {
         Frame frame = new FrameDecoder().decodeFrame(data, getSameSizeBuffer(buffer));
@@ -89,46 +86,20 @@ public class H264Decoder implements VideoDecoder {
     }
 
     class FrameDecoder {
-        private SliceHeaderReader shr;
-        private PictureParameterSet activePps;
         private SeqParameterSet activeSps;
         private DeblockingFilter filter;
         private SliceHeader firstSliceHeader;
         private NALUnit firstNu;
         private SliceDecoder decoder;
-
-        // private int[][][][] mvs;
+        private DeblockerInput di;
 
         public Frame decodeFrame(List<ByteBuffer> nalUnits, byte[][] buffer) {
-            Frame result = null;
-
-            for (ByteBuffer nalUnit : nalUnits) {
-                NALUnit marker = NALUnit.read(nalUnit);
-
-                unescapeNAL(nalUnit);
-
-                switch (marker.type) {
-                case NON_IDR_SLICE:
-                case IDR_SLICE:
-                    if (result == null) {
-                        if (sps.size() == 0 || pps.size() == 0) {
-                            Logger.warn("Skipping frame as no SPS/PPS have been seen so far...");
-                            return null;
-                        }
-                        result = init(buffer, nalUnit, marker);
-                    }
-                    decoder.decode(nalUnit, marker);
-                    break;
-                case SPS:
-                    SeqParameterSet _sps = SeqParameterSet.read(nalUnit);
-                    sps.put(_sps.seq_parameter_set_id, _sps);
-                    break;
-                case PPS:
-                    PictureParameterSet _pps = PictureParameterSet.read(nalUnit);
-                    pps.put(_pps.pic_parameter_set_id, _pps);
-                    break;
-                default:
-                }
+            List<SliceReader> readFrame = reader.readFrame(nalUnits);
+            if (readFrame == null)
+                return null;
+            Frame result = init(readFrame.get(0), buffer);
+            for (SliceReader sliceReader : readFrame) {
+                decoder.decode(sliceReader);
             }
 
             filter.deblockFrame(result);
@@ -148,32 +119,27 @@ public class H264Decoder implements VideoDecoder {
             }
         }
 
-        private Frame init(byte[][] buffer, ByteBuffer segment, NALUnit marker) {
-            firstNu = marker;
+        private Frame init(SliceReader sliceReader, byte[][] buffer) {
+            firstNu = sliceReader.getNALUnit();
 
-            shr = new SliceHeaderReader();
-            BitReader br = new BitReader(segment.duplicate());
-            firstSliceHeader = shr.readPart1(br);
-            activePps = pps.get(firstSliceHeader.pic_parameter_set_id);
-            activeSps = sps.get(activePps.seq_parameter_set_id);
-            shr.readPart2(firstSliceHeader, marker, activeSps, activePps, br);
+            firstSliceHeader = sliceReader.getSliceHeader();
+            activeSps = firstSliceHeader.sps;
             int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
-            int picHeightInMbs = getPicHeightInMbs(activeSps);
 
             if (sRefs == null) {
                 sRefs = new Frame[1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4)];
                 lRefs = new IntObjectMap<Frame>();
             }
 
-            DeblockerInput deblockerInput = new DeblockerInput(activeSps);
+            di = new DeblockerInput(activeSps);
 
             Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type,
-                    deblockerInput.mvs, deblockerInput.refsUsed, poc.calcPOC(firstSliceHeader, firstNu));
+                    di.mvs, di.refsUsed, poc.calcPOC(firstSliceHeader, firstNu));
 
-            decoder = new SliceDecoder(activeSps, activePps, sRefs, lRefs, deblockerInput, result);
+            decoder = new SliceDecoder(activeSps, sRefs, lRefs, di, result);
             MBlockDecoderUtils.setDebug(debug);
 
-            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, deblockerInput);
+            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, di);
 
             return result;
         }
@@ -259,8 +225,6 @@ public class H264Decoder implements VideoDecoder {
                     }
                 }
                 if (num > maxShort) {
-                    // System.out.println("Removing: " + minFn + ", POC: " +
-                    // sRefs[minFn].getPOC());
                     releaseRef(sRefs[minFn]);
                     sRefs[minFn] = null;
                 }
@@ -333,21 +297,11 @@ public class H264Decoder implements VideoDecoder {
     }
 
     public void addSps(List<ByteBuffer> spsList) {
-        for (ByteBuffer byteBuffer : spsList) {
-            ByteBuffer dup = byteBuffer.duplicate();
-            unescapeNAL(dup);
-            SeqParameterSet s = SeqParameterSet.read(dup);
-            sps.put(s.seq_parameter_set_id, s);
-        }
+        reader.addSps(spsList);
     }
 
     public void addPps(List<ByteBuffer> ppsList) {
-        for (ByteBuffer byteBuffer : ppsList) {
-            ByteBuffer dup = byteBuffer.duplicate();
-            unescapeNAL(dup);
-            PictureParameterSet p = PictureParameterSet.read(dup);
-            pps.put(p.pic_parameter_set_id, p);
-        }
+        reader.addPps(ppsList);
     }
 
     @Override

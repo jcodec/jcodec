@@ -5,6 +5,7 @@ import static org.jcodec.codecs.h264.H264Const.bSubMbTypes;
 import static org.jcodec.codecs.h264.H264Const.identityMapping16;
 import static org.jcodec.codecs.h264.H264Const.last_sig_coeff_map_8x8;
 import static org.jcodec.codecs.h264.H264Const.sig_coeff_map_8x8;
+import static org.jcodec.codecs.h264.H264Const.PartPred.Direct;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.moreRBSPData;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
@@ -26,6 +27,7 @@ import org.jcodec.codecs.h264.io.CABAC;
 import org.jcodec.codecs.h264.io.CABAC.BlockType;
 import org.jcodec.codecs.h264.io.CAVLC;
 import org.jcodec.codecs.h264.io.model.MBType;
+import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
@@ -38,37 +40,70 @@ import org.jcodec.common.model.ColorSpace;
  * 
  * @author The JCodec Project
  */
-public class BitstreamParser {
+public class SliceReader {
 
     private PictureParameterSet activePps;
     private CABAC cabac;
     private MDecoder mDecoder;
-    private DecoderState s;
     private CAVLC[] cavlc;
     private BitReader reader;
-    private DeblockerInput di;
     private Mapper mapper;
     private SliceHeader sh;
-    
+    private NALUnit nalUnit;
+
     private boolean prevMbSkipped = false;
     private int mbIdx;
     private MBType prevMBType = null;
     private int mbSkipRun;
     private boolean endOfData;
 
-    public BitstreamParser(PictureParameterSet activePps, CABAC cabac, CAVLC[] cavlc, MDecoder mDecoder,
-            BitReader reader, DeblockerInput di, Mapper mapper, SliceHeader sh, DecoderState sharedContext) {
+    // State
+    MBType[] topMBType;
+    MBType leftMBType;
+    int leftCBPLuma;
+    int[] topCBPLuma;
+    int leftCBPChroma;
+    int[] topCBPChroma;
+    ColorSpace chromaFormat;
+    boolean transform8x8;
+    int[] numRef;
+    boolean tf8x8Left;
+    boolean[] tf8x8Top;
+    int[] i4x4PredTop;
+    int[] i4x4PredLeft;
+    PartPred[] predModeLeft;
+    PartPred[] predModeTop;
+
+    public SliceReader(PictureParameterSet activePps, CABAC cabac, CAVLC[] cavlc, MDecoder mDecoder, BitReader reader,
+            Mapper mapper, SliceHeader sh, NALUnit nalUnit) {
         this.activePps = activePps;
         this.cabac = cabac;
         this.mDecoder = mDecoder;
-        this.s = sharedContext;
         this.cavlc = cavlc;
         this.reader = reader;
         this.mapper = mapper;
         this.sh = sh;
-        this.di = di;
+        this.nalUnit = nalUnit;
+
+        int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
+        topMBType = new MBType[mbWidth];
+        topCBPLuma = new int[mbWidth];
+        topCBPChroma = new int[mbWidth];
+        chromaFormat = sh.sps.chroma_format_idc;
+        transform8x8 = sh.pps.extended == null ? false : sh.pps.extended.transform_8x8_mode_flag;
+        if (sh.num_ref_idx_active_override_flag)
+            numRef = new int[] { sh.num_ref_idx_active_minus1[0] + 1, sh.num_ref_idx_active_minus1[1] + 1 };
+        else
+            numRef = new int[] { sh.pps.num_ref_idx_active_minus1[0] + 1, sh.pps.num_ref_idx_active_minus1[1] + 1 };
+
+        tf8x8Top = new boolean[mbWidth];
+        predModeLeft = new PartPred[2];
+        predModeTop = new PartPred[mbWidth << 1];
+
+        i4x4PredLeft = new int[4];
+        i4x4PredTop = new int[mbWidth << 2];
     }
-    
+
     public boolean readMacroblock(MBlock mBlock) {
         if (endOfData && mbSkipRun == 0)
             return false;
@@ -95,6 +130,10 @@ public class BitstreamParser {
                 debugPrint("---------------------- MB (%d,%d) ---------------------", (mbAddr % mbWidth1),
                         (mbAddr / mbWidth1));
                 mBlock.skipped = true;
+                int mbX = mapper.getMbX(mBlock.mbIdx);
+                topMBType[mbX] = leftMBType = null;
+                int blk8x8X = mbX << 1;
+                predModeLeft[0] = predModeLeft[1] = predModeTop[blk8x8X] = predModeTop[blk8x8X + 1] = L0;
                 ++mbIdx;
                 return true;
             } else {
@@ -125,12 +164,16 @@ public class BitstreamParser {
             prevMBType = null;
             prevMbSkipped = true;
             mBlock.skipped = true;
+            int blk8x8X = mbX << 1;
+            predModeLeft[0] = predModeLeft[1] = predModeTop[blk8x8X] = predModeTop[blk8x8X + 1] = L0;
         }
 
         endOfData = (activePps.entropy_coding_mode_flag && mDecoder.decodeFinalBin() == 1)
                 || (!activePps.entropy_coding_mode_flag && !moreRBSPData(reader));
 
         ++mbIdx;
+
+        topMBType[mapper.getMbX(mBlock.mbIdx)] = leftMBType = mBlock.curMbType;
 
         return true;
     }
@@ -150,7 +193,7 @@ public class BitstreamParser {
         if (!activePps.entropy_coding_mode_flag) {
             chromaPredictionMode = readUE(reader, "MBP: intra_chroma_pred_mode");
         } else {
-            chromaPredictionMode = cabac.readIntraChromaPredMode(mDecoder, mbX, s.leftMBType, s.topMBType[mbX],
+            chromaPredictionMode = cabac.readIntraChromaPredMode(mDecoder, mbX, leftMBType, topMBType[mbX],
                     leftAvailable, topAvailable);
         }
         return chromaPredictionMode;
@@ -185,7 +228,7 @@ public class BitstreamParser {
     int readRefIdx(boolean leftAvailable, boolean topAvailable, MBType leftType, MBType topType, PartPred leftPred,
             PartPred topPred, PartPred curPred, int mbX, int partX, int partY, int partW, int partH, int list) {
         if (!activePps.entropy_coding_mode_flag)
-            return readTE(reader, s.numRef[list] - 1);
+            return readTE(reader, numRef[list] - 1);
         else
             return cabac.readRefIdx(mDecoder, leftAvailable, topAvailable, leftType, topType, leftPred, topPred,
                     curPred, mbX, partX, partY, partW, partH, list);
@@ -205,15 +248,15 @@ public class BitstreamParser {
             int blkX, int blkY, int mbX) {
         int mode = 2;
         if ((leftAvailable || blkX > 0) && (topAvailable || blkY > 0)) {
-            int predModeB = topMBType == MBType.I_NxN || blkY > 0 ? s.i4x4PredTop[(mbX << 2) + blkX] : 2;
-            int predModeA = leftMBType == MBType.I_NxN || blkX > 0 ? s.i4x4PredLeft[blkY] : 2;
+            int predModeB = topMBType == MBType.I_NxN || blkY > 0 ? i4x4PredTop[(mbX << 2) + blkX] : 2;
+            int predModeA = leftMBType == MBType.I_NxN || blkX > 0 ? i4x4PredLeft[blkY] : 2;
             mode = Math.min(predModeB, predModeA);
         }
         if (!prev4x4PredMode()) {
             int rem_intra4x4_pred_mode = rem4x4PredMode();
             mode = rem_intra4x4_pred_mode + (rem_intra4x4_pred_mode < mode ? 0 : 1);
         }
-        s.i4x4PredTop[(mbX << 2) + blkX] = s.i4x4PredLeft[blkY] = mode;
+        i4x4PredTop[(mbX << 2) + blkX] = i4x4PredLeft[blkY] = mode;
         return mode;
     }
 
@@ -233,45 +276,55 @@ public class BitstreamParser {
 
     void read16x16DC(boolean leftAvailable, boolean topAvailable, int mbX, int[] dc) {
         if (!activePps.entropy_coding_mode_flag)
-            cavlc[0].readLumaDCBlock(reader, dc, mbX, leftAvailable, s.leftMBType, topAvailable, s.topMBType[mbX],
+            cavlc[0].readLumaDCBlock(reader, dc, mbX, leftAvailable, leftMBType, topAvailable, topMBType[mbX],
                     CoeffTransformer.zigzag4x4);
         else {
-            if (cabac.readCodedBlockFlagLumaDC(mDecoder, mbX, s.leftMBType, s.topMBType[mbX], leftAvailable,
-                    topAvailable, MBType.I_16x16) == 1)
+            if (cabac.readCodedBlockFlagLumaDC(mDecoder, mbX, leftMBType, topMBType[mbX], leftAvailable, topAvailable,
+                    MBType.I_16x16) == 1)
                 cabac.readCoeffs(mDecoder, BlockType.LUMA_16_DC, dc, 0, 16, CoeffTransformer.zigzag4x4,
                         identityMapping16, identityMapping16);
         }
     }
 
-    void read16x16AC(boolean leftAvailable, boolean topAvailable, int mbX, int cbpLuma, int[] ac, int blkOffLeft,
+    /**
+     * Reads AC block of macroblock encoded as I_16x16, returns number of
+     * non-zero coefficients
+     * 
+     * @return
+     */
+    int read16x16AC(boolean leftAvailable, boolean topAvailable, int mbX, int cbpLuma, int[] ac, int blkOffLeft,
             int blkOffTop, int blkX, int blkY) {
         if (!activePps.entropy_coding_mode_flag) {
-            di.nCoeff[blkY][blkX] = cavlc[0].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
-                    blkOffLeft == 0 ? s.leftMBType : I_16x16, blkOffTop != 0 || topAvailable,
-                    blkOffTop == 0 ? s.topMBType[mbX] : I_16x16, 1, 15, CoeffTransformer.zigzag4x4);
+            return cavlc[0].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
+                    blkOffLeft == 0 ? leftMBType : I_16x16, blkOffTop != 0 || topAvailable,
+                    blkOffTop == 0 ? topMBType[mbX] : I_16x16, 1, 15, CoeffTransformer.zigzag4x4);
         } else {
-            if (cabac.readCodedBlockFlagLumaAC(mDecoder, BlockType.LUMA_15_AC, blkX, blkOffTop, 0, s.leftMBType,
-                    s.topMBType[mbX], leftAvailable, topAvailable, s.leftCBPLuma, s.topCBPLuma[mbX], cbpLuma,
-                    MBType.I_16x16) == 1)
-                di.nCoeff[blkY][blkX] = cabac.readCoeffs(mDecoder, BlockType.LUMA_15_AC, ac, 1, 15,
-                        CoeffTransformer.zigzag4x4, identityMapping16, identityMapping16);
+            if (cabac.readCodedBlockFlagLumaAC(mDecoder, BlockType.LUMA_15_AC, blkX, blkOffTop, 0, leftMBType,
+                    topMBType[mbX], leftAvailable, topAvailable, leftCBPLuma, topCBPLuma[mbX], cbpLuma, MBType.I_16x16) == 1)
+                return cabac.readCoeffs(mDecoder, BlockType.LUMA_15_AC, ac, 1, 15, CoeffTransformer.zigzag4x4,
+                        identityMapping16, identityMapping16);
         }
+        return 0;
     }
 
-    void readResidualAC(boolean leftAvailable, boolean topAvailable, int mbX, MBType curMbType, int cbpLuma,
+    /**
+     * Reads AC block of a macroblock, return number of non-zero coefficients
+     * 
+     * @return
+     */
+    int readResidualAC(boolean leftAvailable, boolean topAvailable, int mbX, MBType curMbType, int cbpLuma,
             int blkOffLeft, int blkOffTop, int blkX, int blkY, int[] ac) {
         if (!activePps.entropy_coding_mode_flag) {
-            di.nCoeff[blkY][blkX] = cavlc[0].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
-                    blkOffLeft == 0 ? s.leftMBType : curMbType, blkOffTop != 0 || topAvailable,
-                    blkOffTop == 0 ? s.topMBType[mbX] : curMbType, 0, 16, CoeffTransformer.zigzag4x4);
+            return cavlc[0].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
+                    blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0 || topAvailable,
+                    blkOffTop == 0 ? topMBType[mbX] : curMbType, 0, 16, CoeffTransformer.zigzag4x4);
         } else {
-            if (cabac
-                    .readCodedBlockFlagLumaAC(mDecoder, BlockType.LUMA_16, blkX, blkOffTop, 0, s.leftMBType,
-                            s.topMBType[mbX], leftAvailable, topAvailable, s.leftCBPLuma, s.topCBPLuma[mbX], cbpLuma,
-                            curMbType) == 1)
-                di.nCoeff[blkY][blkX] = cabac.readCoeffs(mDecoder, BlockType.LUMA_16, ac, 0, 16,
-                        CoeffTransformer.zigzag4x4, identityMapping16, identityMapping16);
+            if (cabac.readCodedBlockFlagLumaAC(mDecoder, BlockType.LUMA_16, blkX, blkOffTop, 0, leftMBType,
+                    topMBType[mbX], leftAvailable, topAvailable, leftCBPLuma, topCBPLuma[mbX], cbpLuma, curMbType) == 1)
+                return cabac.readCoeffs(mDecoder, BlockType.LUMA_16, ac, 0, 16, CoeffTransformer.zigzag4x4,
+                        identityMapping16, identityMapping16);
         }
+        return 0;
     }
 
     public void setZeroCoeff(int comp, int blkX, int blkOffTop) {
@@ -286,18 +339,25 @@ public class BitstreamParser {
     public int readLumaAC(boolean leftAvailable, boolean topAvailable, int mbX, MBType curMbType, int blkX, int j,
             int[] ac16, int blkOffLeft, int blkOffTop) {
         return cavlc[0].readACBlock(reader, ac16, blkX + (j & 1), blkOffTop, blkOffLeft != 0 || leftAvailable,
-                blkOffLeft == 0 ? s.leftMBType : curMbType, blkOffTop != 0 || topAvailable,
-                blkOffTop == 0 ? s.topMBType[mbX] : curMbType, 0, 16, H264Const.identityMapping16);
+                blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0 || topAvailable,
+                blkOffTop == 0 ? topMBType[mbX] : curMbType, 0, 16, H264Const.identityMapping16);
     }
 
-    public void readLumaAC8x8(int blkX, int blkY, int[] ac) {
+    /**
+     * Reads luma AC coeffiecients for 8x8 blocks, returns number of non-zero
+     * coefficients
+     * 
+     * @return
+     */
+    public int readLumaAC8x8(int blkX, int blkY, int[] ac) {
         int readCoeffs = cabac.readCoeffs(mDecoder, BlockType.LUMA_64, ac, 0, 64, CoeffTransformer.zigzag8x8,
                 sig_coeff_map_8x8, last_sig_coeff_map_8x8);
-        di.nCoeff[blkY][blkX] = di.nCoeff[blkY][blkX + 1] = di.nCoeff[blkY + 1][blkX] = di.nCoeff[blkY + 1][blkX + 1] = readCoeffs;
         cabac.setCodedBlock(blkX, blkY);
         cabac.setCodedBlock(blkX + 1, blkY);
         cabac.setCodedBlock(blkX, blkY + 1);
         cabac.setCodedBlock(blkX + 1, blkY + 1);
+
+        return readCoeffs;
     }
 
     public int readSubMBTypeP() {
@@ -318,8 +378,8 @@ public class BitstreamParser {
         if (!activePps.entropy_coding_mode_flag)
             cavlc[comp].readChromaDCBlock(reader, dc, leftAvailable, topAvailable);
         else {
-            if (cabac.readCodedBlockFlagChromaDC(mDecoder, mbX, comp, s.leftMBType, s.topMBType[mbX], leftAvailable,
-                    topAvailable, s.leftCBPChroma, s.topCBPChroma[mbX], curMbType) == 1)
+            if (cabac.readCodedBlockFlagChromaDC(mDecoder, mbX, comp, leftMBType, topMBType[mbX], leftAvailable,
+                    topAvailable, leftCBPChroma, topCBPChroma[mbX], curMbType) == 1)
                 cabac.readCoeffs(mDecoder, BlockType.CHROMA_DC, dc, 0, 4, identityMapping16, identityMapping16,
                         identityMapping16);
         }
@@ -329,11 +389,11 @@ public class BitstreamParser {
             int[] ac, int blkOffLeft, int blkOffTop, int blkX) {
         if (!activePps.entropy_coding_mode_flag)
             cavlc[comp].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
-                    blkOffLeft == 0 ? s.leftMBType : curMbType, blkOffTop != 0 || topAvailable,
-                    blkOffTop == 0 ? s.topMBType[mbX] : curMbType, 1, 15, CoeffTransformer.zigzag4x4);
+                    blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0 || topAvailable,
+                    blkOffTop == 0 ? topMBType[mbX] : curMbType, 1, 15, CoeffTransformer.zigzag4x4);
         else {
-            if (cabac.readCodedBlockFlagChromaAC(mDecoder, blkX, blkOffTop, comp, s.leftMBType, s.topMBType[mbX],
-                    leftAvailable, topAvailable, s.leftCBPChroma, s.topCBPChroma[mbX], curMbType) == 1)
+            if (cabac.readCodedBlockFlagChromaAC(mDecoder, blkX, blkOffTop, comp, leftMBType, topMBType[mbX],
+                    leftAvailable, topAvailable, leftCBPChroma, topCBPChroma[mbX], curMbType) == 1)
                 cabac.readCoeffs(mDecoder, BlockType.CHROMA_AC, ac, 1, 15, CoeffTransformer.zigzag4x4,
                         identityMapping16, identityMapping16);
         }
@@ -387,15 +447,15 @@ public class BitstreamParser {
             int blkY = (mbY << 2) + blkOffTop;
 
             if ((mBlock.cbpLuma() & (1 << (i >> 2))) != 0) {
-                read16x16AC(leftAvailable, topAvailable, mbX, mBlock.cbpLuma(), mBlock.ac[0][i], blkOffLeft, blkOffTop,
-                        blkX, blkY);
+                mBlock.nCoeff[i] = read16x16AC(leftAvailable, topAvailable, mbX, mBlock.cbpLuma(), mBlock.ac[0][i],
+                        blkOffLeft, blkOffTop, blkX, blkY);
             } else {
                 if (!sh.pps.entropy_coding_mode_flag)
                     setZeroCoeff(0, blkX, blkOffTop);
             }
         }
 
-        if (s.chromaFormat != ColorSpace.MONO) {
+        if (chromaFormat != ColorSpace.MONO) {
             readChromaResidual(mBlock, leftAvailable, topAvailable, mbX);
         }
     }
@@ -405,13 +465,13 @@ public class BitstreamParser {
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean lAvb = mapper.leftAvailable(mBlock.mbIdx);
         boolean tAvb = mapper.topAvailable(mBlock.mbIdx);
-        mBlock.cbp = readCodedBlockPatternInter(lAvb, tAvb, s.leftCBPLuma | (s.leftCBPChroma << 4), s.topCBPLuma[mbX]
-                | (s.topCBPChroma[mbX] << 4), s.leftMBType, s.topMBType[mbX]);
+        mBlock.cbp = readCodedBlockPatternInter(lAvb, tAvb, leftCBPLuma | (leftCBPChroma << 4), topCBPLuma[mbX]
+                | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
-        if (s.transform8x8 && mBlock.cbpLuma() != 0 && sh.sps.direct_8x8_inference_flag) {
-            mBlock.transform8x8Used = readTransform8x8Flag(lAvb, tAvb, s.leftMBType, s.topMBType[mbX], s.tf8x8Left,
-                    s.tf8x8Top[mbX]);
+        if (transform8x8 && mBlock.cbpLuma() != 0 && sh.sps.direct_8x8_inference_flag) {
+            mBlock.transform8x8Used = readTransform8x8Flag(lAvb, tAvb, leftMBType, topMBType[mbX], tf8x8Left,
+                    tf8x8Top[mbX]);
         }
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
@@ -419,6 +479,8 @@ public class BitstreamParser {
         }
         readResidualLuma(mBlock, lAvb, tAvb, mbX, mbY);
         readChromaResidual(mBlock, lAvb, tAvb, mbX);
+
+        predModeTop[mbX << 1] = predModeTop[(mbX << 1) + 1] = predModeLeft[0] = predModeLeft[1] = Direct;
     }
 
     public void readInter16x16(PartPred p0, MBlock mBlock) {
@@ -428,14 +490,16 @@ public class BitstreamParser {
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
 
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && s.numRef[list] > 1)
-                mBlock.pb16x16.refIdx[list] = readRefIdx(leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                        s.predModeLeft[0], s.predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 4, list);
+            if (p0.usesList(list) && numRef[list] > 1)
+                mBlock.pb16x16.refIdx[list] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                        predModeLeft[0], predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 4, list);
         }
         for (int list = 0; list < 2; list++) {
             readPredictionInter16x16(mBlock, mbX, leftAvailable, topAvailable, list, p0);
         }
         readResidualInter(mBlock, leftAvailable, topAvailable, mbX, mbY);
+
+        predModeLeft[0] = predModeLeft[1] = predModeTop[mbX << 1] = predModeTop[(mbX << 1) + 1] = p0;
     }
 
     private void readPredInter8x16(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable, int list,
@@ -443,18 +507,18 @@ public class BitstreamParser {
         int blk8x8X = (mbX << 1);
 
         if (p0.usesList(list)) {
-            mBlock.pb168x168.mvdX1[list] = readMVD(0, leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                    s.predModeLeft[0], s.predModeTop[blk8x8X], p0, mbX, 0, 0, 2, 4, list);
-            mBlock.pb168x168.mvdY1[list] = readMVD(1, leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                    s.predModeLeft[0], s.predModeTop[blk8x8X], p0, mbX, 0, 0, 2, 4, list);
+            mBlock.pb168x168.mvdX1[list] = readMVD(0, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 2, 4, list);
+            mBlock.pb168x168.mvdY1[list] = readMVD(1, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 2, 4, list);
 
         }
 
         if (p1.usesList(list)) {
-            mBlock.pb168x168.mvdX2[list] = readMVD(0, true, topAvailable, MBType.P_8x16, s.topMBType[mbX], p0,
-                    s.predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
-            mBlock.pb168x168.mvdY2[list] = readMVD(1, true, topAvailable, MBType.P_8x16, s.topMBType[mbX], p0,
-                    s.predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
+            mBlock.pb168x168.mvdX2[list] = readMVD(0, true, topAvailable, MBType.P_8x16, topMBType[mbX], p0,
+                    predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
+            mBlock.pb168x168.mvdY2[list] = readMVD(1, true, topAvailable, MBType.P_8x16, topMBType[mbX], p0,
+                    predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
 
         }
     }
@@ -464,17 +528,17 @@ public class BitstreamParser {
         int blk8x8X = mbX << 1;
         if (p0.usesList(list)) {
 
-            mBlock.pb168x168.mvdX1[list] = readMVD(0, leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                    s.predModeLeft[0], s.predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
-            mBlock.pb168x168.mvdY1[list] = readMVD(1, leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                    s.predModeLeft[0], s.predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
+            mBlock.pb168x168.mvdX1[list] = readMVD(0, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
+            mBlock.pb168x168.mvdY1[list] = readMVD(1, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
         }
 
         if (p1.usesList(list)) {
-            mBlock.pb168x168.mvdX2[list] = readMVD(0, leftAvailable, true, s.leftMBType, MBType.P_16x8,
-                    s.predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
-            mBlock.pb168x168.mvdY2[list] = readMVD(1, leftAvailable, true, s.leftMBType, MBType.P_16x8,
-                    s.predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
+            mBlock.pb168x168.mvdX2[list] = readMVD(0, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1],
+                    p0, p1, mbX, 0, 2, 4, 2, list);
+            mBlock.pb168x168.mvdY2[list] = readMVD(1, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1],
+                    p0, p1, mbX, 0, 2, 4, 2, list);
         }
     }
 
@@ -485,18 +549,21 @@ public class BitstreamParser {
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
 
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && s.numRef[list] > 1)
-                mBlock.pb168x168.refIdx1[list] = readRefIdx(leftAvailable, topAvailable, s.leftMBType,
-                        s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 2, list);
-            if (p1.usesList(list) && s.numRef[list] > 1)
-                mBlock.pb168x168.refIdx2[list] = readRefIdx(leftAvailable, true, s.leftMBType, mBlock.curMbType,
-                        s.predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
+            if (p0.usesList(list) && numRef[list] > 1)
+                mBlock.pb168x168.refIdx1[list] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                        predModeLeft[0], predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 2, list);
+            if (p1.usesList(list) && numRef[list] > 1)
+                mBlock.pb168x168.refIdx2[list] = readRefIdx(leftAvailable, true, leftMBType, mBlock.curMbType,
+                        predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
         }
 
         for (int list = 0; list < 2; list++) {
             readPredictionInter16x8(mBlock, mbX, leftAvailable, topAvailable, p0, p1, list);
         }
         readResidualInter(mBlock, leftAvailable, topAvailable, mbX, mbY);
+
+        predModeLeft[0] = p0;
+        predModeLeft[1] = predModeTop[mbX << 1] = predModeTop[(mbX << 1) + 1] = p1;
     }
 
     public void readIntra8x16(PartPred p0, PartPred p1, MBlock mBlock) {
@@ -505,18 +572,20 @@ public class BitstreamParser {
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && s.numRef[list] > 1)
-                mBlock.pb168x168.refIdx1[list] = readRefIdx(leftAvailable, topAvailable, s.leftMBType,
-                        s.topMBType[mbX], s.predModeLeft[0], s.predModeTop[mbX << 1], p0, mbX, 0, 0, 2, 4, list);
-            if (p1.usesList(list) && s.numRef[list] > 1)
-                mBlock.pb168x168.refIdx2[list] = readRefIdx(true, topAvailable, mBlock.curMbType, s.topMBType[mbX], p0,
-                        s.predModeTop[(mbX << 1) + 1], p1, mbX, 2, 0, 2, 4, list);
+            if (p0.usesList(list) && numRef[list] > 1)
+                mBlock.pb168x168.refIdx1[list] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                        predModeLeft[0], predModeTop[mbX << 1], p0, mbX, 0, 0, 2, 4, list);
+            if (p1.usesList(list) && numRef[list] > 1)
+                mBlock.pb168x168.refIdx2[list] = readRefIdx(true, topAvailable, mBlock.curMbType, topMBType[mbX], p0,
+                        predModeTop[(mbX << 1) + 1], p1, mbX, 2, 0, 2, 4, list);
         }
 
         for (int list = 0; list < 2; list++) {
             readPredInter8x16(mBlock, mbX, leftAvailable, topAvailable, list, p0, p1);
         }
         readResidualInter(mBlock, leftAvailable, topAvailable, mbX, mbY);
+        predModeTop[mbX << 1] = p0;
+        predModeTop[(mbX << 1) + 1] = predModeLeft[0] = predModeLeft[1] = p1;
     }
 
     private void readPredictionInter16x16(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable,
@@ -524,21 +593,21 @@ public class BitstreamParser {
         int blk8x8X = (mbX << 1);
 
         if (curPred.usesList(list)) {
-            mBlock.pb16x16.mvdX[list] = readMVD(0, leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                    s.predModeLeft[0], s.predModeTop[blk8x8X], curPred, mbX, 0, 0, 4, 4, list);
-            mBlock.pb16x16.mvdY[list] = readMVD(1, leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                    s.predModeLeft[0], s.predModeTop[blk8x8X], curPred, mbX, 0, 0, 4, 4, list);
+            mBlock.pb16x16.mvdX[list] = readMVD(0, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    predModeLeft[0], predModeTop[blk8x8X], curPred, mbX, 0, 0, 4, 4, list);
+            mBlock.pb16x16.mvdY[list] = readMVD(1, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    predModeLeft[0], predModeTop[blk8x8X], curPred, mbX, 0, 0, 4, 4, list);
         }
     }
 
     private void readResidualInter(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
-        mBlock.cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, s.leftCBPLuma | (s.leftCBPChroma << 4),
-                s.topCBPLuma[mbX] | (s.topCBPChroma[mbX] << 4), s.leftMBType, s.topMBType[mbX]);
+        mBlock.cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
+                topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
-        if (mBlock.cbpLuma() != 0 && s.transform8x8) {
-            mBlock.transform8x8Used = readTransform8x8Flag(leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                    s.tf8x8Left, s.tf8x8Top[mbX]);
+        if (mBlock.cbpLuma() != 0 && transform8x8) {
+            mBlock.transform8x8Used = readTransform8x8Flag(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    tf8x8Left, tf8x8Top[mbX]);
         }
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
@@ -547,7 +616,7 @@ public class BitstreamParser {
 
         readResidualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
 
-        if (s.chromaFormat != MONO) {
+        if (chromaFormat != MONO) {
             readChromaResidual(mBlock, leftAvailable, topAvailable, mbX);
         }
     }
@@ -571,13 +640,13 @@ public class BitstreamParser {
                     && bSubMbTypes[mBlock.pb8x8.subMbTypes[3]] == 0;
         }
 
-        mBlock.cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, s.leftCBPLuma | (s.leftCBPChroma << 4),
-                s.topCBPLuma[mbX] | (s.topCBPChroma[mbX] << 4), s.leftMBType, s.topMBType[mbX]);
+        mBlock.cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
+                topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
-        if (s.transform8x8 && mBlock.cbpLuma() != 0 && noSubMBLessThen8x8) {
-            mBlock.transform8x8Used = readTransform8x8Flag(leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                    s.tf8x8Left, s.tf8x8Top[mbX]);
+        if (transform8x8 && mBlock.cbpLuma() != 0 && noSubMBLessThen8x8) {
+            mBlock.transform8x8Used = readTransform8x8Flag(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    tf8x8Left, tf8x8Top[mbX]);
         }
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
@@ -592,21 +661,25 @@ public class BitstreamParser {
             mBlock.pb8x8.subMbTypes[i] = readSubMBTypeP();
         }
 
-        if (s.numRef[0] > 1 && mBlock.curMbType != MBType.P_8x8ref0) {
-            mBlock.pb8x8.refIdx[0][0] = readRefIdx(leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX], L0, L0,
-                    L0, mbX, 0, 0, 2, 2, 0);
-            mBlock.pb8x8.refIdx[0][1] = readRefIdx(true, topAvailable, P_8x8, s.topMBType[mbX], L0, L0, L0, mbX, 2, 0,
-                    2, 2, 0);
-            mBlock.pb8x8.refIdx[0][2] = readRefIdx(leftAvailable, true, s.leftMBType, P_8x8, L0, L0, L0, mbX, 0, 2, 2,
+        if (numRef[0] > 1 && mBlock.curMbType != MBType.P_8x8ref0) {
+            mBlock.pb8x8.refIdx[0][0] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX], L0, L0, L0,
+                    mbX, 0, 0, 2, 2, 0);
+            mBlock.pb8x8.refIdx[0][1] = readRefIdx(true, topAvailable, P_8x8, topMBType[mbX], L0, L0, L0, mbX, 2, 0, 2,
                     2, 0);
+            mBlock.pb8x8.refIdx[0][2] = readRefIdx(leftAvailable, true, leftMBType, P_8x8, L0, L0, L0, mbX, 0, 2, 2, 2,
+                    0);
             mBlock.pb8x8.refIdx[0][3] = readRefIdx(true, true, P_8x8, P_8x8, L0, L0, L0, mbX, 2, 2, 2, 2, 0);
         }
 
-        readSubMb8x8(mBlock, 0, topAvailable, leftAvailable, 0, 0, mbX, s.leftMBType, s.topMBType[mbX], P_8x8, L0, L0,
-                L0, 0);
-        readSubMb8x8(mBlock, 1, topAvailable, true, 2, 0, mbX, P_8x8, s.topMBType[mbX], P_8x8, L0, L0, L0, 0);
-        readSubMb8x8(mBlock, 2, true, leftAvailable, 0, 2, mbX, s.leftMBType, P_8x8, P_8x8, L0, L0, L0, 0);
+        readSubMb8x8(mBlock, 0, topAvailable, leftAvailable, 0, 0, mbX, leftMBType, topMBType[mbX], P_8x8, L0, L0, L0,
+                0);
+        readSubMb8x8(mBlock, 1, topAvailable, true, 2, 0, mbX, P_8x8, topMBType[mbX], P_8x8, L0, L0, L0, 0);
+        readSubMb8x8(mBlock, 2, true, leftAvailable, 0, 2, mbX, leftMBType, P_8x8, P_8x8, L0, L0, L0, 0);
         readSubMb8x8(mBlock, 3, true, true, 2, 2, mbX, P_8x8, P_8x8, P_8x8, L0, L0, L0, 0);
+
+        int blk8x8X = mbX << 1;
+
+        predModeLeft[0] = predModeLeft[1] = predModeTop[blk8x8X] = predModeTop[blk8x8X + 1] = L0;
     }
 
     private void readPrediction8x8B(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable) {
@@ -617,16 +690,16 @@ public class BitstreamParser {
         }
 
         for (int list = 0; list < 2; list++) {
-            if (s.numRef[list] <= 1)
+            if (numRef[list] <= 1)
                 continue;
             if (p[0].usesList(list))
-                mBlock.pb8x8.refIdx[list][0] = readRefIdx(leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                        s.predModeLeft[0], s.predModeTop[mbX << 1], p[0], mbX, 0, 0, 2, 2, list);
+                mBlock.pb8x8.refIdx[list][0] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                        predModeLeft[0], predModeTop[mbX << 1], p[0], mbX, 0, 0, 2, 2, list);
             if (p[1].usesList(list))
-                mBlock.pb8x8.refIdx[list][1] = readRefIdx(true, topAvailable, B_8x8, s.topMBType[mbX], p[0],
-                        s.predModeTop[(mbX << 1) + 1], p[1], mbX, 2, 0, 2, 2, list);
+                mBlock.pb8x8.refIdx[list][1] = readRefIdx(true, topAvailable, B_8x8, topMBType[mbX], p[0],
+                        predModeTop[(mbX << 1) + 1], p[1], mbX, 2, 0, 2, 2, list);
             if (p[2].usesList(list))
-                mBlock.pb8x8.refIdx[list][2] = readRefIdx(leftAvailable, true, s.leftMBType, B_8x8, s.predModeLeft[1],
+                mBlock.pb8x8.refIdx[list][2] = readRefIdx(leftAvailable, true, leftMBType, B_8x8, predModeLeft[1],
                         p[0], p[2], mbX, 0, 2, 2, 2, list);
             if (p[3].usesList(list))
                 mBlock.pb8x8.refIdx[list][3] = readRefIdx(true, true, B_8x8, B_8x8, p[2], p[1], p[3], mbX, 2, 2, 2, 2,
@@ -636,16 +709,16 @@ public class BitstreamParser {
         int blk8x8X = mbX << 1;
         for (int list = 0; list < 2; list++) {
             if (p[0].usesList(list)) {
-                readSubMb8x8(mBlock, 0, topAvailable, leftAvailable, 0, 0, mbX, s.leftMBType, s.topMBType[mbX], B_8x8,
-                        s.predModeLeft[0], s.predModeTop[blk8x8X], p[0], list);
+                readSubMb8x8(mBlock, 0, topAvailable, leftAvailable, 0, 0, mbX, leftMBType, topMBType[mbX], B_8x8,
+                        predModeLeft[0], predModeTop[blk8x8X], p[0], list);
             }
             if (p[1].usesList(list)) {
-                readSubMb8x8(mBlock, 1, topAvailable, true, 2, 0, mbX, B_8x8, s.topMBType[mbX], B_8x8, p[0],
-                        s.predModeTop[blk8x8X + 1], p[1], list);
+                readSubMb8x8(mBlock, 1, topAvailable, true, 2, 0, mbX, B_8x8, topMBType[mbX], B_8x8, p[0],
+                        predModeTop[blk8x8X + 1], p[1], list);
             }
 
             if (p[2].usesList(list)) {
-                readSubMb8x8(mBlock, 2, true, leftAvailable, 0, 2, mbX, s.leftMBType, B_8x8, B_8x8, s.predModeLeft[1],
+                readSubMb8x8(mBlock, 2, true, leftAvailable, 0, 2, mbX, leftMBType, B_8x8, B_8x8, predModeLeft[1],
                         p[0], p[2], list);
             }
 
@@ -653,6 +726,10 @@ public class BitstreamParser {
                 readSubMb8x8(mBlock, 3, true, true, 2, 2, mbX, B_8x8, B_8x8, B_8x8, p[2], p[1], p[3], list);
             }
         }
+
+        predModeLeft[0] = p[1];
+        predModeTop[blk8x8X] = p[2];
+        predModeLeft[1] = predModeTop[blk8x8X + 1] = p[3];
     }
 
     private void readSubMb8x8(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
@@ -679,58 +756,58 @@ public class BitstreamParser {
 
     private void readSub8x8(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
             MBType leftMBType, MBType topMBType, PartPred leftPred, PartPred topPred, PartPred partPred, int list) {
-        mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred, mbX,
-                blk8x8X, blk8x8Y, 2, 2, list);
-        mBlock.pb8x8.mvdY1[list][partNo] = readMVD(1, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred, mbX,
-                blk8x8X, blk8x8Y, 2, 2, list);
+        mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
+                mbX, blk8x8X, blk8x8Y, 2, 2, list);
+        mBlock.pb8x8.mvdY1[list][partNo] = readMVD(1, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
+                mbX, blk8x8X, blk8x8Y, 2, 2, list);
     }
 
     private void readSub8x4(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
             MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
             PartPred partPred, int list) {
-        mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred, mbX,
-                blk8x8X, blk8x8Y, 2, 1, list);
-        mBlock.pb8x8.mvdY1[list][partNo] = readMVD(1, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred, mbX,
-                blk8x8X, blk8x8Y, 2, 1, list);
+        mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
+                mbX, blk8x8X, blk8x8Y, 2, 1, list);
+        mBlock.pb8x8.mvdY1[list][partNo] = readMVD(1, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
+                mbX, blk8x8X, blk8x8Y, 2, 1, list);
 
-        mBlock.pb8x8.mvdX2[list][partNo] = readMVD(0, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred, mbX,
-                blk8x8X, blk8x8Y + 1, 2, 1, list);
-        mBlock.pb8x8.mvdY2[list][partNo] = readMVD(1, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred, mbX,
-                blk8x8X, blk8x8Y + 1, 2, 1, list);
+        mBlock.pb8x8.mvdX2[list][partNo] = readMVD(0, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred,
+                mbX, blk8x8X, blk8x8Y + 1, 2, 1, list);
+        mBlock.pb8x8.mvdY2[list][partNo] = readMVD(1, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred,
+                mbX, blk8x8X, blk8x8Y + 1, 2, 1, list);
     }
 
     private void readSub4x8(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
             MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
             PartPred partPred, int list) {
-        mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred, mbX,
-                blk8x8X, blk8x8Y, 1, 2, list);
-        mBlock.pb8x8.mvdY1[list][partNo] = readMVD(1, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred, mbX,
-                blk8x8X, blk8x8Y, 1, 2, list);
-        mBlock.pb8x8.mvdX2[list][partNo] = readMVD(0, true, tAvb, curMBType, topMBType, partPred, topPred, partPred, mbX,
-                blk8x8X + 1, blk8x8Y, 1, 2, list);
-        mBlock.pb8x8.mvdY2[list][partNo] = readMVD(1, true, tAvb, curMBType, topMBType, partPred, topPred, partPred, mbX,
-                blk8x8X + 1, blk8x8Y, 1, 2, list);
+        mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
+                mbX, blk8x8X, blk8x8Y, 1, 2, list);
+        mBlock.pb8x8.mvdY1[list][partNo] = readMVD(1, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
+                mbX, blk8x8X, blk8x8Y, 1, 2, list);
+        mBlock.pb8x8.mvdX2[list][partNo] = readMVD(0, true, tAvb, curMBType, topMBType, partPred, topPred, partPred,
+                mbX, blk8x8X + 1, blk8x8Y, 1, 2, list);
+        mBlock.pb8x8.mvdY2[list][partNo] = readMVD(1, true, tAvb, curMBType, topMBType, partPred, topPred, partPred,
+                mbX, blk8x8X + 1, blk8x8Y, 1, 2, list);
     }
 
     private void readSub4x4(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
             MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
             PartPred partPred, int list) {
-        mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred, mbX,
-                blk8x8X, blk8x8Y, 1, 1, list);
-        mBlock.pb8x8.mvdY1[list][partNo] = readMVD(1, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred, mbX,
-                blk8x8X, blk8x8Y, 1, 1, list);
-        mBlock.pb8x8.mvdX2[list][partNo] = readMVD(0, true, tAvb, curMBType, topMBType, partPred, topPred, partPred, mbX,
-                blk8x8X + 1, blk8x8Y, 1, 1, list);
-        mBlock.pb8x8.mvdY2[list][partNo] = readMVD(1, true, tAvb, curMBType, topMBType, partPred, topPred, partPred, mbX,
-                blk8x8X + 1, blk8x8Y, 1, 1, list);
-        mBlock.pb8x8.mvdX3[list][partNo] = readMVD(0, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred, mbX,
-                blk8x8X, blk8x8Y + 1, 1, 1, list);
-        mBlock.pb8x8.mvdY3[list][partNo] = readMVD(1, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred, mbX,
-                blk8x8X, blk8x8Y + 1, 1, 1, list);
-        mBlock.pb8x8.mvdX4[list][partNo] = readMVD(0, true, true, curMBType, curMBType, partPred, partPred, partPred, mbX,
-                blk8x8X + 1, blk8x8Y + 1, 1, 1, list);
-        mBlock.pb8x8.mvdY4[list][partNo] = readMVD(1, true, true, curMBType, curMBType, partPred, partPred, partPred, mbX,
-                blk8x8X + 1, blk8x8Y + 1, 1, 1, list);
+        mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
+                mbX, blk8x8X, blk8x8Y, 1, 1, list);
+        mBlock.pb8x8.mvdY1[list][partNo] = readMVD(1, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
+                mbX, blk8x8X, blk8x8Y, 1, 1, list);
+        mBlock.pb8x8.mvdX2[list][partNo] = readMVD(0, true, tAvb, curMBType, topMBType, partPred, topPred, partPred,
+                mbX, blk8x8X + 1, blk8x8Y, 1, 1, list);
+        mBlock.pb8x8.mvdY2[list][partNo] = readMVD(1, true, tAvb, curMBType, topMBType, partPred, topPred, partPred,
+                mbX, blk8x8X + 1, blk8x8Y, 1, 1, list);
+        mBlock.pb8x8.mvdX3[list][partNo] = readMVD(0, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred,
+                mbX, blk8x8X, blk8x8Y + 1, 1, 1, list);
+        mBlock.pb8x8.mvdY3[list][partNo] = readMVD(1, lAvb, true, leftMBType, curMBType, leftPred, partPred, partPred,
+                mbX, blk8x8X, blk8x8Y + 1, 1, 1, list);
+        mBlock.pb8x8.mvdX4[list][partNo] = readMVD(0, true, true, curMBType, curMBType, partPred, partPred, partPred,
+                mbX, blk8x8X + 1, blk8x8Y + 1, 1, 1, list);
+        mBlock.pb8x8.mvdY4[list][partNo] = readMVD(1, true, true, curMBType, curMBType, partPred, partPred, partPred,
+                mbX, blk8x8X + 1, blk8x8Y + 1, 1, 1, list);
     }
 
     public void readIntraNxN(MBlock mBlock) {
@@ -740,38 +817,38 @@ public class BitstreamParser {
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
 
         mBlock.transform8x8Used = false;
-        if (s.transform8x8) {
-            mBlock.transform8x8Used = readTransform8x8Flag(leftAvailable, topAvailable, s.leftMBType, s.topMBType[mbX],
-                    s.tf8x8Left, s.tf8x8Top[mbX]);
+        if (transform8x8) {
+            mBlock.transform8x8Used = readTransform8x8Flag(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                    tf8x8Left, tf8x8Top[mbX]);
         }
 
         if (!mBlock.transform8x8Used) {
             for (int i = 0; i < 16; i++) {
                 int blkX = H264Const.MB_BLK_OFF_LEFT[i];
                 int blkY = H264Const.MB_BLK_OFF_TOP[i];
-                mBlock.lumaModes[i] = readPredictionI4x4Block(leftAvailable, topAvailable, s.leftMBType,
-                        s.topMBType[mbX], blkX, blkY, mbX);
+                mBlock.lumaModes[i] = readPredictionI4x4Block(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                        blkX, blkY, mbX);
             }
         } else {
             for (int i = 0; i < 4; i++) {
                 int blkX = (i & 1) << 1;
                 int blkY = i & 2;
-                mBlock.lumaModes[i] = readPredictionI4x4Block(leftAvailable, topAvailable, s.leftMBType,
-                        s.topMBType[mbX], blkX, blkY, mbX);
-                s.i4x4PredLeft[blkY + 1] = s.i4x4PredLeft[blkY];
-                s.i4x4PredTop[(mbX << 2) + blkX + 1] = s.i4x4PredTop[(mbX << 2) + blkX];
+                mBlock.lumaModes[i] = readPredictionI4x4Block(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
+                        blkX, blkY, mbX);
+                i4x4PredLeft[blkY + 1] = i4x4PredLeft[blkY];
+                i4x4PredTop[(mbX << 2) + blkX + 1] = i4x4PredTop[(mbX << 2) + blkX];
             }
         }
         mBlock.chromaPredictionMode = readChromaPredMode(mbX, leftAvailable, topAvailable);
 
-        mBlock.cbp = readCodedBlockPatternIntra(leftAvailable, topAvailable, s.leftCBPLuma | (s.leftCBPChroma << 4),
-                s.topCBPLuma[mbX] | (s.topCBPChroma[mbX] << 4), s.leftMBType, s.topMBType[mbX]);
+        mBlock.cbp = readCodedBlockPatternIntra(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
+                topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
             mBlock.mbQPDelta = readMBQpDelta(mBlock.prevMbType);
         }
         readResidualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
-        if (s.chromaFormat != ColorSpace.MONO) {
+        if (chromaFormat != ColorSpace.MONO) {
             readChromaResidual(mBlock, leftAvailable, topAvailable, mbX);
         }
     }
@@ -799,8 +876,8 @@ public class BitstreamParser {
                 continue;
             }
 
-            readResidualAC(leftAvailable, topAvailable, mbX, mBlock.curMbType, mBlock.cbpLuma(), blkOffLeft, blkOffTop,
-                    blkX, blkY, mBlock.ac[0][i]);
+            mBlock.nCoeff[i] = readResidualAC(leftAvailable, topAvailable, mbX, mBlock.curMbType, mBlock.cbpLuma(),
+                    blkOffLeft, blkOffTop, blkX, blkY, mBlock.ac[0][i]);
         }
 
         savePrevCBP(mBlock.cbp);
@@ -817,7 +894,10 @@ public class BitstreamParser {
                 continue;
             }
 
-            readLumaAC8x8(blkX, blkY, mBlock.ac[0][i]);
+            int nCoeff = readLumaAC8x8(blkX, blkY, mBlock.ac[0][i]);
+
+            int blk4x4Offset = i << 2;
+            mBlock.nCoeff[blk4x4Offset] = mBlock.nCoeff[blk4x4Offset + 1] = mBlock.nCoeff[blk4x4Offset + 2] = mBlock.nCoeff[blk4x4Offset + 3] = nCoeff;
         }
         savePrevCBP(mBlock.cbp);
     }
@@ -846,7 +926,8 @@ public class BitstreamParser {
                 for (int k = 0; k < 16; k++)
                     mBlock.ac[0][i][CoeffTransformer.zigzag8x8[(k << 2) + j]] = ac16[k];
             }
-            di.nCoeff[blkY][blkX] = di.nCoeff[blkY][blkX + 1] = di.nCoeff[blkY + 1][blkX] = di.nCoeff[blkY + 1][blkX + 1] = coeffs;
+            int blk4x4Offset = i << 2;
+            mBlock.nCoeff[blk4x4Offset] = mBlock.nCoeff[blk4x4Offset + 1] = mBlock.nCoeff[blk4x4Offset + 2] = mBlock.nCoeff[blk4x4Offset + 3] = coeffs;
         }
     }
 
@@ -892,8 +973,8 @@ public class BitstreamParser {
         for (int i = 0; i < 256; i++) {
             mBlock.ipcm.samplesLuma[i] = reader.readNBit(8);
         }
-        int MbWidthC = 16 >> s.chromaFormat.compWidth[1];
-        int MbHeightC = 16 >> s.chromaFormat.compHeight[1];
+        int MbWidthC = 16 >> chromaFormat.compWidth[1];
+        int MbHeightC = 16 >> chromaFormat.compHeight[1];
 
         for (int i = 0; i < 2 * MbWidthC * MbHeightC; i++) {
             mBlock.ipcm.samplesChroma[i] = reader.readNBit(8);
@@ -909,12 +990,16 @@ public class BitstreamParser {
         } else {
             readMBlockB(mBlock);
         }
+        int mbX = mapper.getMbX(mBlock.mbIdx);
+        topCBPLuma[mbX] = leftCBPLuma = mBlock.cbpLuma();
+        topCBPChroma[mbX] = leftCBPChroma = mBlock.cbpChroma();
+        tf8x8Left = tf8x8Top[mbX] = mBlock.transform8x8Used;
     }
 
     private void readMBlockI(MBlock mBlock) {
 
         mBlock.mbType = decodeMBTypeI(mBlock.mbIdx, mapper.leftAvailable(mBlock.mbIdx),
-                mapper.topAvailable(mBlock.mbIdx), s.leftMBType, s.topMBType[mapper.getMbX(mBlock.mbIdx)]);
+                mapper.topAvailable(mBlock.mbIdx), leftMBType, topMBType[mapper.getMbX(mBlock.mbIdx)]);
 
         readMBlockIInt(mBlock, mBlock.mbType);
     }
@@ -963,8 +1048,9 @@ public class BitstreamParser {
     }
 
     private void readMBlockB(MBlock mBlock) {
+        int mbX = mapper.getMbX(mBlock.mbIdx);
         mBlock.mbType = readMBTypeB(mBlock.mbIdx, mapper.leftAvailable(mBlock.mbIdx),
-                mapper.topAvailable(mBlock.mbIdx), s.leftMBType, s.topMBType[mapper.getMbX(mBlock.mbIdx)]);
+                mapper.topAvailable(mBlock.mbIdx), leftMBType, topMBType[mapper.getMbX(mBlock.mbIdx)]);
         if (mBlock.mbType >= 23) {
             readMBlockIInt(mBlock, mBlock.mbType - 23);
         } else {
@@ -982,5 +1068,13 @@ public class BitstreamParser {
                 readIntra8x16(H264Const.bPredModes[mBlock.mbType][0], H264Const.bPredModes[mBlock.mbType][1], mBlock);
             }
         }
+    }
+
+    public SliceHeader getSliceHeader() {
+        return sh;
+    }
+
+    public NALUnit getNALUnit() {
+        return nalUnit;
     }
 }

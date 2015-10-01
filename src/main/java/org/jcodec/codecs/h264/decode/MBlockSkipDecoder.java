@@ -5,7 +5,6 @@ import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.calcMVPredictionMedian;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.collectPredictors;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.copyVect;
-import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveMvs;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.savePrediction8x8;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveVect;
@@ -64,7 +63,7 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
         collectPredictors(s, mb, mbX);
 
         saveMvs(di, x, mbX, mbY);
-        di.mbTypes[mbAddr] = s.topMBType[mbX] = s.leftMBType = null;
+        di.mbTypes[mbAddr] = mBlock.curMbType;
         di.mbQps[0][mbAddr] = s.qp;
         di.mbQps[1][mbAddr] = calcQpChroma(s.qp, s.chromaQpOffset[0]);
         di.mbQps[2][mbAddr] = calcQpChroma(s.qp, s.chromaQpOffset[1]);
@@ -84,9 +83,6 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
                         tlAvb, 0, 1);
             }
         }
-        debugPrint("MV_SKIP: (%d,%d)", mvX, mvY);
-        int blk8x8X = mbX << 1;
-        s.predModeLeft[0] = s.predModeLeft[1] = s.predModeTop[blk8x8X] = s.predModeTop[blk8x8X + 1] = L0;
 
         int xx = mbX << 2;
         copyVect(s.mvTopLeft[0], s.mvTop[0][xx + 3]);

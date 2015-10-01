@@ -2,7 +2,6 @@ package org.jcodec.codecs.h264.decode;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
-import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.Picture8Bit;
 
@@ -35,7 +34,7 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
         }
         di.mbQps[0][mbAddr] = s.qp;
 
-        residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY, s.tf8x8Left, s.tf8x8Top[mbX]);
+        residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
 
         if (!mBlock.transform8x8Used) {
             for (int i = 0; i < 16; i++) {
@@ -68,11 +67,7 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
 
         decodeChroma(mBlock, mbX, mbY, leftAvailable, topAvailable, mb, s.qp);
 
-        di.mbTypes[mbAddr] = s.topMBType[mbX] = s.leftMBType = MBType.I_NxN;
-        // System.out.println("idx: " + mbIndex + ", addr: " + address);
-        s.topCBPLuma[mbX] = s.leftCBPLuma = mBlock.cbpLuma();
-        s.topCBPChroma[mbX] = s.leftCBPChroma = mBlock.cbpChroma();
-        s.tf8x8Left = s.tf8x8Top[mbX] = mBlock.transform8x8Used;
+        di.mbTypes[mbAddr] = mBlock.curMbType;
         di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
 
         MBlockDecoderUtils.collectChromaPredictors(s, mb, mbX);

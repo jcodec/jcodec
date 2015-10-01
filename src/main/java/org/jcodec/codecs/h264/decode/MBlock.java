@@ -37,11 +37,14 @@ public class MBlock {
     public int luma16x16Mode;
 
     public boolean skipped;
+    // Number of coefficients in AC blocks, stored in 8x8 encoding order: 0 1 4 5 2 3 6 7 8 9 12 13 10 11 14 15
+    public int[] nCoeff;
 
     public MBlock(ColorSpace chromaFormat) {
         dc = new int[16];
         ac = new int[][][] { new int[16][64], new int[4][16], new int[4][16] };
         lumaModes = new int[16];
+        nCoeff = new int[16];
         dc1 = new int[(16 >> chromaFormat.compWidth[1]) >> chromaFormat.compHeight[1]];
         dc2 = new int[(16 >> chromaFormat.compWidth[2]) >> chromaFormat.compHeight[2]];
         ipcm = new IPCM(chromaFormat);
@@ -159,6 +162,7 @@ public class MBlock {
         Arrays.fill(lumaModes, 0);
         Arrays.fill(dc1, 0);
         Arrays.fill(dc2, 0);
+        Arrays.fill(nCoeff, 0);
         cbp = 0;
         mbType = 0;
         pb16x16.clean();

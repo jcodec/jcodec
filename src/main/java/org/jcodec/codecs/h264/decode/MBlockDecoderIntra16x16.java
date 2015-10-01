@@ -6,7 +6,6 @@ import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveMvsIntra;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveVectIntra;
 
 import org.jcodec.codecs.h264.decode.aso.Mapper;
-import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.Picture8Bit;
 
@@ -40,11 +39,7 @@ public class MBlockDecoderIntra16x16 extends MBlockDecoderBase {
                 s.leftRow[0], s.topLine[0], s.topLeft[0], mbX << 4, mb.getPlaneData(0));
 
         decodeChroma(mBlock, mbX, mbY, leftAvailable, topAvailable, mb, s.qp);
-        di.mbTypes[address] = s.topMBType[mbX] = s.leftMBType = MBType.I_16x16;
-        // System.out.println("idx: " + mbIndex + ", addr: " + address);
-        s.topCBPLuma[mbX] = s.leftCBPLuma = mBlock.cbpLuma();
-        s.topCBPChroma[mbX] = s.leftCBPChroma = mBlock.cbpChroma();
-        s.tf8x8Left = s.tf8x8Top[mbX] = false;
+        di.mbTypes[address] = mBlock.curMbType;
 
         collectPredictors(s, mb, mbX);
         saveMvsIntra(di, mbX, mbY);

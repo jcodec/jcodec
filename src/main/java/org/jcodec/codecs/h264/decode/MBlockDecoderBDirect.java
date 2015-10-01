@@ -11,7 +11,6 @@ import static org.jcodec.codecs.h264.H264Const.COMP_POS_4x4_LUT;
 import static org.jcodec.codecs.h264.H264Const.COMP_POS_8x8_LUT;
 import static org.jcodec.codecs.h264.H264Const.identityMapping4;
 import static org.jcodec.codecs.h264.H264Const.PartPred.Bi;
-import static org.jcodec.codecs.h264.H264Const.PartPred.Direct;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L1;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.calcMVPredictionMedian;
@@ -28,7 +27,6 @@ import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
-import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Picture8Bit;
@@ -71,7 +69,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         }
         di.mbQps[0][mbAddr] = s.qp;
 
-        residualLuma(mBlock, lAvb, tAvb, mbX, mbY, s.tf8x8Left, s.tf8x8Top[mbX]);
+        residualLuma(mBlock, lAvb, tAvb, mbX, mbY);
 
         savePrediction8x8(s, mbX, x[0], 0);
         savePrediction8x8(s, mbX, x[1], 1);
@@ -90,12 +88,8 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
 
         collectPredictors(s, mb, mbX);
 
-        di.mbTypes[mbAddr] = s.topMBType[mbX] = s.leftMBType = MBType.B_Direct_16x16;
-        s.topCBPLuma[mbX] = s.leftCBPLuma = mBlock.cbpLuma();
-        s.topCBPChroma[mbX] = s.leftCBPChroma = mBlock.cbpChroma();
-        s.tf8x8Left = s.tf8x8Top[mbX] = mBlock.transform8x8Used;
+        di.mbTypes[mbAddr] = mBlock.curMbType;
         di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
-        s.predModeTop[mbX << 1] = s.predModeTop[(mbX << 1) + 1] = s.predModeLeft[0] = s.predModeLeft[1] = Direct;
     }
 
     public void predictBDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
