@@ -219,9 +219,10 @@ public class SliceReader {
 
     protected int readCodedBlockPatternInter(boolean leftAvailable, boolean topAvailable, int leftCBP, int topCBP,
             MBType leftMB, MBType topMB) {
-        if (!activePps.entropy_coding_mode_flag)
-            return H264Const.CODED_BLOCK_PATTERN_INTER_COLOR[readUE(reader, "coded_block_pattern")];
-        else
+        if (!activePps.entropy_coding_mode_flag) {
+            int code = readUE(reader, "coded_block_pattern");
+            return H264Const.CODED_BLOCK_PATTERN_INTER_COLOR[code];
+        } else
             return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
     }
 
@@ -671,11 +672,13 @@ public class SliceReader {
             mBlock.pb8x8.refIdx[0][3] = readRefIdx(true, true, P_8x8, P_8x8, L0, L0, L0, mbX, 2, 2, 2, 2, 0);
         }
 
-        readSubMb8x8(mBlock, 0, topAvailable, leftAvailable, 0, 0, mbX, leftMBType, topMBType[mbX], P_8x8, L0, L0, L0,
-                0);
-        readSubMb8x8(mBlock, 1, topAvailable, true, 2, 0, mbX, P_8x8, topMBType[mbX], P_8x8, L0, L0, L0, 0);
-        readSubMb8x8(mBlock, 2, true, leftAvailable, 0, 2, mbX, leftMBType, P_8x8, P_8x8, L0, L0, L0, 0);
-        readSubMb8x8(mBlock, 3, true, true, 2, 2, mbX, P_8x8, P_8x8, P_8x8, L0, L0, L0, 0);
+        readSubMb8x8(mBlock, 0, mBlock.pb8x8.subMbTypes[0], topAvailable, leftAvailable, 0, 0, mbX, leftMBType,
+                topMBType[mbX], P_8x8, L0, L0, L0, 0);
+        readSubMb8x8(mBlock, 1, mBlock.pb8x8.subMbTypes[1], topAvailable, true, 2, 0, mbX, P_8x8, topMBType[mbX],
+                P_8x8, L0, L0, L0, 0);
+        readSubMb8x8(mBlock, 2, mBlock.pb8x8.subMbTypes[2], true, leftAvailable, 0, 2, mbX, leftMBType, P_8x8, P_8x8,
+                L0, L0, L0, 0);
+        readSubMb8x8(mBlock, 3, mBlock.pb8x8.subMbTypes[3], true, true, 2, 2, mbX, P_8x8, P_8x8, P_8x8, L0, L0, L0, 0);
 
         int blk8x8X = mbX << 1;
 
@@ -706,24 +709,27 @@ public class SliceReader {
                         list);
         }
 
+        debugPrint("Pred: " + p[0] + ", " + p[1] + ", " + p[2] + ", " + p[3]);
+
         int blk8x8X = mbX << 1;
         for (int list = 0; list < 2; list++) {
             if (p[0].usesList(list)) {
-                readSubMb8x8(mBlock, 0, topAvailable, leftAvailable, 0, 0, mbX, leftMBType, topMBType[mbX], B_8x8,
-                        predModeLeft[0], predModeTop[blk8x8X], p[0], list);
+                readSubMb8x8(mBlock, 0, bSubMbTypes[mBlock.pb8x8.subMbTypes[0]], topAvailable, leftAvailable, 0, 0,
+                        mbX, leftMBType, topMBType[mbX], B_8x8, predModeLeft[0], predModeTop[blk8x8X], p[0], list);
             }
             if (p[1].usesList(list)) {
-                readSubMb8x8(mBlock, 1, topAvailable, true, 2, 0, mbX, B_8x8, topMBType[mbX], B_8x8, p[0],
-                        predModeTop[blk8x8X + 1], p[1], list);
+                readSubMb8x8(mBlock, 1, bSubMbTypes[mBlock.pb8x8.subMbTypes[1]], topAvailable, true, 2, 0, mbX, B_8x8,
+                        topMBType[mbX], B_8x8, p[0], predModeTop[blk8x8X + 1], p[1], list);
             }
 
             if (p[2].usesList(list)) {
-                readSubMb8x8(mBlock, 2, true, leftAvailable, 0, 2, mbX, leftMBType, B_8x8, B_8x8, predModeLeft[1],
-                        p[0], p[2], list);
+                readSubMb8x8(mBlock, 2, bSubMbTypes[mBlock.pb8x8.subMbTypes[2]], true, leftAvailable, 0, 2, mbX,
+                        leftMBType, B_8x8, B_8x8, predModeLeft[1], p[0], p[2], list);
             }
 
             if (p[3].usesList(list)) {
-                readSubMb8x8(mBlock, 3, true, true, 2, 2, mbX, B_8x8, B_8x8, B_8x8, p[2], p[1], p[3], list);
+                readSubMb8x8(mBlock, 3, bSubMbTypes[mBlock.pb8x8.subMbTypes[3]], true, true, 2, 2, mbX, B_8x8, B_8x8,
+                        B_8x8, p[2], p[1], p[3], list);
             }
         }
 
@@ -732,10 +738,10 @@ public class SliceReader {
         predModeLeft[1] = predModeTop[blk8x8X + 1] = p[3];
     }
 
-    private void readSubMb8x8(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
-            MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
-            PartPred partPred, int list) {
-        switch (mBlock.pb8x8.subMbTypes[partNo]) {
+    private void readSubMb8x8(MBlock mBlock, int partNo, int subMbType, boolean tAvb, boolean lAvb, int blk8x8X,
+            int blk8x8Y, int mbX, MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred,
+            PartPred topPred, PartPred partPred, int list) {
+        switch (subMbType) {
         case 3:
             readSub4x4(mBlock, partNo, tAvb, lAvb, blk8x8X, blk8x8Y, mbX, leftMBType, topMBType, curMBType, leftPred,
                     topPred, partPred, list);
@@ -760,6 +766,7 @@ public class SliceReader {
                 mbX, blk8x8X, blk8x8Y, 2, 2, list);
         mBlock.pb8x8.mvdY1[list][partNo] = readMVD(1, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
                 mbX, blk8x8X, blk8x8Y, 2, 2, list);
+        debugPrint("mvd: (%d, %d)", mBlock.pb8x8.mvdX1[list][partNo], mBlock.pb8x8.mvdY1[list][partNo]);
     }
 
     private void readSub8x4(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
