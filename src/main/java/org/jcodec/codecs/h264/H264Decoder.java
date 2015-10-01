@@ -53,7 +53,6 @@ public class H264Decoder implements VideoDecoder {
     private IntObjectMap<Frame> lRefs;
     private List<Frame> pictureBuffer;
     private POCManager poc;
-    private boolean debug;
     private byte[][] byteBuffer;
     private FrameReader reader = new FrameReader();
     private ExecutorService tp;
@@ -183,8 +182,6 @@ public class H264Decoder implements VideoDecoder {
 
             Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type,
                     di.mvs, di.refsUsed, poc.calcPOC(firstSliceHeader, firstNu));
-
-            MBlockDecoderUtils.setDebug(debug);
 
             filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, di);
 
@@ -381,9 +378,5 @@ public class H264Decoder implements VideoDecoder {
 
     private boolean validPps(PictureParameterSet pps) {
         return pps.pic_init_qp_minus26 <= 26 && pps.seq_parameter_set_id <= 2 && pps.pic_parameter_set_id <= 2;
-    }
-
-    public void setDebug(boolean b) {
-        this.debug = b;
     }
 }

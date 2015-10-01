@@ -16,46 +16,42 @@ public class MBlockDecoderUtils {
 
     public static void debugPrint(String str, int p0) {
         if (debug)
-            Logger.debug(str);
+            Logger.debug(String.format(str, p0));
     }
 
     public static void debugPrint(String str, int p0, int p1) {
         if (debug)
-            Logger.debug(str);
+            Logger.debug(String.format(str, p0, p1));
     }
 
     public static void debugPrint(String str, int p0, int p1, int p2) {
         if (debug)
-            Logger.debug(str);
+            Logger.debug(String.format(str, p0, p1, p2));
     }
 
     public static void debugPrint(String str, int p0, int p1, int p2, int p3) {
         if (debug)
-            Logger.debug(str);
+            Logger.debug(String.format(str, p0, p1, p2, p3));
     }
 
     public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4) {
         if (debug)
-            Logger.debug(str);
+            Logger.debug(String.format(str, p0, p1, p2, p3, p4));
     }
 
     public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4, int p5) {
         if (debug)
-            Logger.debug(str);
+            Logger.debug(String.format(str, p0, p1, p2, p3, p4, p5));
     }
 
     public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4, int p5, int p6) {
         if (debug)
-            Logger.debug(str);
+            Logger.debug(String.format(str, p0, p1, p2, p3, p4, p5, p6));
     }
 
     public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4, int p5, int p6, int p7) {
         if (debug)
-            Logger.debug(str);
-    }
-
-    public static void setDebug(boolean newValue) {
-        debug = newValue;
+            Logger.debug(String.format(str, p0, p1, p2, p3, p4, p5, p6, p7));
     }
 
     static void collectPredictors(DecoderState sharedState, Picture8Bit outMB, int mbX) {
