@@ -94,7 +94,7 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
             x[0][i][1] = mvY;
             x[0][i][2] = 0;
         }
-        BlockInterpolator.getBlockLuma(refs[0][0], mb, 0, (mbX << 6) + mvX, (mbY << 6) + mvY, 16, 16);
+        interpolator.getBlockLuma(refs[0][0], mb, 0, (mbX << 6) + mvX, (mbY << 6) + mvY, 16, 16);
 
         PredictionMerger.mergePrediction(sh, 0, 0, L0, 0, mb.getPlaneData(0), null, 0, 16, 16, 16, mb.getPlaneData(0),
                 refs, poc);

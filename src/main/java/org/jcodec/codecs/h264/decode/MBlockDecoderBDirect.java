@@ -121,9 +121,9 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                     int blkPredX = (mbX << 6) + (blkIndX << 4);
                     int blkPredY = (mbY << 6) + (blkIndY << 4);
 
-                    BlockInterpolator.getBlockLuma(refs[0][x[0][blk4x4][2]], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
+                    interpolator.getBlockLuma(refs[0][x[0][blk4x4][2]], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                             + x[0][blk4x4][0], blkPredY + x[0][blk4x4][1], 4, 4);
-                    BlockInterpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
+                    interpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                             + x[1][blk4x4][0], blkPredY + x[1][blk4x4][1], 4, 4);
                 }
             else {
@@ -140,9 +140,9 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                 int blkPredX = (mbX << 6) + (blkIndX << 4);
                 int blkPredY = (mbY << 6) + (blkIndY << 4);
 
-                BlockInterpolator.getBlockLuma(refs[0][x[0][blk4x4_0][2]], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
+                interpolator.getBlockLuma(refs[0][x[0][blk4x4_0][2]], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
                         + x[0][blk4x4_0][0], blkPredY + x[0][blk4x4_0][1], 8, 8);
-                BlockInterpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
+                interpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
                         + x[1][blk4x4_0][0], blkPredY + x[1][blk4x4_0][1], 8, 8);
             }
             mergePrediction(sh, x[0][blk4x4_0][2], x[1][blk4x4_0][2], Bi, 0, mb0.getPlaneData(0), mb1.getPlaneData(0),
@@ -229,9 +229,9 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
 
                 int blkOffX = (blk8x8 & 1) << 5;
                 int blkOffY = (blk8x8 >> 1) << 5;
-                BlockInterpolator.getBlockLuma(refs[0][0], mb0, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX,
+                interpolator.getBlockLuma(refs[0][0], mb0, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX,
                         (mbY << 6) + blkOffY, 8, 8);
-                BlockInterpolator.getBlockLuma(refs[1][0], mb1, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX,
+                interpolator.getBlockLuma(refs[1][0], mb1, BLK_8x8_MB_OFF_LUMA[blk8x8], (mbX << 6) + blkOffX,
                         (mbY << 6) + blkOffY, 8, 8);
                 PredictionMerger.mergePrediction(sh, 0, 0, PartPred.Bi, 0, mb0.getPlaneData(0), mb1.getPlaneData(0),
                         BLK_8x8_MB_OFF_LUMA[blk8x8], 16, 8, 8, mb.getPlaneData(0), refs, poc);
@@ -263,10 +263,10 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                     int blkPredY = (mbY << 6) + (blkIndY << 4);
 
                     if (refIdxL0 >= 0)
-                        BlockInterpolator.getBlockLuma(refs[0][refIdxL0], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
+                        interpolator.getBlockLuma(refs[0][refIdxL0], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                                 + x[0][blk4x4][0], blkPredY + x[0][blk4x4][1], 4, 4);
                     if (refIdxL1 >= 0)
-                        BlockInterpolator.getBlockLuma(refs[1][refIdxL1], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
+                        interpolator.getBlockLuma(refs[1][refIdxL1], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                                 + x[1][blk4x4][0], blkPredY + x[1][blk4x4][1], 4, 4);
                 }
             else {
@@ -284,10 +284,10 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                 int blkPredY = (mbY << 6) + (blkIndY << 4);
 
                 if (refIdxL0 >= 0)
-                    BlockInterpolator.getBlockLuma(refs[0][refIdxL0], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
+                    interpolator.getBlockLuma(refs[0][refIdxL0], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
                             + x[0][blk4x4_0][0], blkPredY + x[0][blk4x4_0][1], 8, 8);
                 if (refIdxL1 >= 0)
-                    BlockInterpolator.getBlockLuma(refs[1][refIdxL1], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
+                    interpolator.getBlockLuma(refs[1][refIdxL1], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
                             + x[1][blk4x4_0][0], blkPredY + x[1][blk4x4_0][1], 8, 8);
             }
             PredictionMerger.mergePrediction(sh, x[0][blk4x4_0][2], x[1][blk4x4_0][2],

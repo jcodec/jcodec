@@ -90,7 +90,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX1, mvpY1, mBlock.pb168x168.mvdX1[list],
                     mBlock.pb168x168.mvdY1[list], mvX1, mvY1, mBlock.pb168x168.refIdx1[list]);
 
-            BlockInterpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
+            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
                     (mbY << 6) + mvY1, 8, 16);
             r1 = mBlock.pb168x168.refIdx1[list];
         }
@@ -112,7 +112,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
                     + mBlock.pb168x168.mvdY2[list] + "), MV: (" + mvX2 + "," + mvY2 + ","
                     + mBlock.pb168x168.refIdx2[list] + ")");
 
-            BlockInterpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]], mb, 8, (mbX << 6) + 32
+            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]], mb, 8, (mbX << 6) + 32
                     + mvX2, (mbY << 6) + mvY2, 8, 16);
             r2 = mBlock.pb168x168.refIdx2[list];
         }
@@ -146,7 +146,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX1, mvpY1, mBlock.pb168x168.mvdX1[list],
                     mBlock.pb168x168.mvdY1[list], mvX1, mvY1, mBlock.pb168x168.refIdx1[list]);
 
-            BlockInterpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
+            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx1[list]], mb, 0, (mbX << 6) + mvX1,
                     (mbY << 6) + mvY1, 16, 8);
             r1 = mBlock.pb168x168.refIdx1[list];
         }
@@ -164,7 +164,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb168x168.mvdX2[list],
                     mBlock.pb168x168.mvdY2[list], mvX2, mvY2, mBlock.pb168x168.refIdx2[list]);
 
-            BlockInterpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]], mb, 128,
+            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]], mb, 128,
                     (mbX << 6) + mvX2, (mbY << 6) + 32 + mvY2, 16, 8);
             r2 = mBlock.pb168x168.refIdx2[list];
         }
@@ -273,7 +273,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
                     mBlock.pb16x16.mvdY[list], mvX, mvY, mBlock.pb16x16.refIdx[list]);
             r = mBlock.pb16x16.refIdx[list];
 
-            BlockInterpolator.getBlockLuma(references[list][r], mb, 0, (mbX << 6) + mvX, (mbY << 6) + mvY, 16, 16);
+            interpolator.getBlockLuma(references[list][r], mb, 0, (mbX << 6) + mvX, (mbY << 6) + mvY, 16, 16);
         }
 
         copyVect(s.mvTopLeft[list], s.mvTop[list][xx + 3]);

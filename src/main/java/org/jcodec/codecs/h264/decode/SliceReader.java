@@ -1055,7 +1055,6 @@ public class SliceReader {
     }
 
     private void readMBlockB(MBlock mBlock) {
-        int mbX = mapper.getMbX(mBlock.mbIdx);
         mBlock.mbType = readMBTypeB(mBlock.mbIdx, mapper.leftAvailable(mBlock.mbIdx),
                 mapper.topAvailable(mBlock.mbIdx), leftMBType, topMBType[mapper.getMbX(mBlock.mbIdx)]);
         if (mBlock.mbType >= 23) {

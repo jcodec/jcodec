@@ -54,18 +54,18 @@ public class H264Decoder implements VideoDecoder {
     private List<Frame> pictureBuffer;
     private POCManager poc;
     private byte[][] byteBuffer;
-    private FrameReader reader = new FrameReader();
+    private FrameReader reader;
     private ExecutorService tp;
     private boolean threaded;
 
     public H264Decoder() {
-        this(false);
+        this(true);
     }
 
     public H264Decoder(boolean threaded) {
         pictureBuffer = new ArrayList<Frame>();
         poc = new POCManager();
-        this.threaded = threaded;
+        this.threaded = threaded && Runtime.getRuntime().availableProcessors() > 1;
         if (threaded) {
             tp = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), new ThreadFactory() {
                 public Thread newThread(Runnable r) {
@@ -75,6 +75,7 @@ public class H264Decoder implements VideoDecoder {
                 }
             });
         }
+        reader = new FrameReader();
     }
 
     @Override
@@ -113,13 +114,13 @@ public class H264Decoder implements VideoDecoder {
         private DeblockerInput di;
 
         public Frame decodeFrame(List<ByteBuffer> nalUnits, byte[][] buffer) {
-            List<SliceReader> readFrame = reader.readFrame(nalUnits);
-            if (readFrame == null)
+            List<SliceReader> sliceReaders = reader.readFrame(nalUnits);
+            if (sliceReaders == null || sliceReaders.size() == 0)
                 return null;
-            final Frame result = init(readFrame.get(0), buffer);
-            if (threaded) {
+            final Frame result = init(sliceReaders.get(0), buffer);
+            if (threaded && sliceReaders.size() > 1) {
                 List<Future<?>> futures = new ArrayList<Future<?>>();
-                for (final SliceReader sliceReader : readFrame) {
+                for (final SliceReader sliceReader : sliceReaders) {
                     futures.add(tp.submit(new Runnable() {
                         public void run() {
                             new SliceDecoder(activeSps, sRefs, lRefs, di, result).decode(sliceReader);
@@ -132,7 +133,7 @@ public class H264Decoder implements VideoDecoder {
                 }
 
             } else {
-                for (SliceReader sliceReader : readFrame) {
+                for (SliceReader sliceReader : sliceReaders) {
                     new SliceDecoder(activeSps, sRefs, lRefs, di, result).decode(sliceReader);
                 }
             }

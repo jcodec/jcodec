@@ -12,11 +12,13 @@ import org.jcodec.common.model.Picture8Bit;
  */
 public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
     private Mapper mapper;
+    private Intra8x8PredictionBuilder prediction8x8Builder;
 
     public MBlockDecoderIntraNxN(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc,
             DecoderState decoderState) {
         super(sh, di, poc, decoderState);
         this.mapper = mapper;
+        this.prediction8x8Builder = new Intra8x8PredictionBuilder();
     }
 
     public void decode(MBlock mBlock, Picture8Bit mb) {
@@ -59,7 +61,7 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
                 boolean tlAvailable = i == 0 ? topLeftAvailable : (i == 1 ? topAvailable : (i == 2 ? leftAvailable
                         : true));
 
-                Intra8x8PredictionBuilder.predictWithMode(mBlock.lumaModes[i], mBlock.ac[0][i],
+                prediction8x8Builder.predictWithMode(mBlock.lumaModes[i], mBlock.ac[0][i],
                         blkX == 0 ? leftAvailable : true, blkY == 0 ? topAvailable : true, tlAvailable, trAvailable,
                         s.leftRow[0], s.topLine[0], s.topLeft[0], (mbX << 4), blkX << 2, blkY << 2, mb.getPlaneData(0));
             }

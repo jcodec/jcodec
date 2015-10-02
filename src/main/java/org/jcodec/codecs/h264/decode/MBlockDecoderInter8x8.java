@@ -224,7 +224,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
 
         debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX, mvpY, mBlock.pb8x8.mvdX1[list][partNo],
                 mBlock.pb8x8.mvdY1[list][partNo], x00[0], x00[1], refIdx);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 8);
+        interpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 8);
     }
 
     private void decodeSub8x4(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
@@ -249,8 +249,8 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb8x8.mvdX2[list][partNo],
                 mBlock.pb8x8.mvdY2[list][partNo], x10[0], x10[1], refIdx);
 
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 4);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4, offX + x10[0], offY + x10[1]
+        interpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 4);
+        interpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4, offX + x10[0], offY + x10[1]
                 + 16, 8, 4);
     }
 
@@ -276,8 +276,8 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb8x8.mvdX2[list][partNo],
                 mBlock.pb8x8.mvdY2[list][partNo], x01[0], x01[1], refIdx);
 
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 4, 8);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 8);
+        interpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 4, 8);
+        interpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 8);
     }
 
     private void decodeSub4x4(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
@@ -318,11 +318,11 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX4, mvpY4, mBlock.pb8x8.mvdX4[list][partNo],
                 mBlock.pb8x8.mvdY4[list][partNo], x11[0], x11[1], refIdx);
 
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 4, 4);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 4);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4, offX + x10[0], offY + x10[1]
+        interpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 4, 4);
+        interpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 4);
+        interpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4, offX + x10[0], offY + x10[1]
                 + 16, 4, 4);
-        BlockInterpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4 + 4, offX + x11[0] + 16, offY
+        interpolator.getBlockLuma(references[refIdx], mb, off + mb.getWidth() * 4 + 4, offX + x11[0] + 16, offY
                 + x11[1] + 16, 4, 4);
     }
 }

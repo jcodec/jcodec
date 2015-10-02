@@ -52,14 +52,15 @@ public class Intra8x8PredictionBuilderTest {
         byte[] expected = new byte[64];
         Arrays.fill(expected, (byte) (13 - 128));
 
-        Intra8x8PredictionBuilder.predictDC(emptyResidual, true, true, true, true, topLeft, left, top, 0, 0, 0, pred);
+        new Intra8x8PredictionBuilder().predictDC(emptyResidual, true, true, true, true, topLeft, left, top, 0, 0, 0,
+                pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 8) {
             for (int blkX = 0; blkX < 16; blkX += 8) {
                 Arrays.fill(pred, (byte) 0);
-                Intra8x8PredictionBuilder.predictDC(testResidual, true, true, true, true, padLeft(topLeft, blkY >> 2),
-                        padLeft(left, blkY), padLeft(top, blkX), 0, blkX, blkY, pred);
+                new Intra8x8PredictionBuilder().predictDC(testResidual, true, true, true, true,
+                        padLeft(topLeft, blkY >> 2), padLeft(left, blkY), padLeft(top, blkX), 0, blkX, blkY, pred);
                 assertArrayEquals(inMB(addResidual(expected, testResidual), blkX, blkY), pred);
             }
         }
@@ -78,13 +79,13 @@ public class Intra8x8PredictionBuilderTest {
                 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3,
                 4, 5, 6, 7, 8);
 
-        Intra8x8PredictionBuilder.predictVertical(emptyResidual, true, true, topLeft, top, 0, 0, 0, pred);
+        new Intra8x8PredictionBuilder().predictVertical(emptyResidual, true, true, topLeft, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 8) {
             for (int blkX = 0; blkX < 16; blkX += 8) {
                 Arrays.fill(pred, (byte) 0);
-                Intra8x8PredictionBuilder.predictVertical(testResidual, true, true, padLeft(topLeft, blkY >> 2),
+                new Intra8x8PredictionBuilder().predictVertical(testResidual, true, true, padLeft(topLeft, blkY >> 2),
                         padLeft(top, blkX), 0, blkX, blkY, pred);
                 assertArrayEquals(inMB(addResidual(expected, testResidual), blkX, blkY), pred);
             }
@@ -103,13 +104,13 @@ public class Intra8x8PredictionBuilderTest {
                 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 19, 20, 20, 20, 20, 20, 20, 20, 20, 21, 21, 21, 21,
                 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 23, 23, 23, 23, 23, 23);
 
-        Intra8x8PredictionBuilder.predictHorizontal(emptyResidual, true, topLeft, left, 0, 0, 0, pred);
+        new Intra8x8PredictionBuilder().predictHorizontal(emptyResidual, true, topLeft, left, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 8) {
             for (int blkX = 0; blkX < 16; blkX += 8) {
                 Arrays.fill(pred, (byte) 0);
-                Intra8x8PredictionBuilder.predictHorizontal(testResidual, true, padLeft(topLeft, blkY >> 2),
+                new Intra8x8PredictionBuilder().predictHorizontal(testResidual, true, padLeft(topLeft, blkY >> 2),
                         padLeft(left, blkY), 0, blkX, blkY, pred);
                 assertArrayEquals(inMB(addResidual(expected, testResidual), blkX, blkY), pred);
             }
@@ -129,13 +130,14 @@ public class Intra8x8PredictionBuilderTest {
                 80, 90, 100, 110, 120, 130, 140, 80, 90, 100, 110, 120, 130, 140, 150, 90, 100, 110, 120, 130, 140,
                 150, 156);
 
-        Intra8x8PredictionBuilder.predictDiagonalDownLeft(emptyResidual, true, true, true, topLeft, top, 0, 0, 0, pred);
+        new Intra8x8PredictionBuilder().predictDiagonalDownLeft(emptyResidual, true, true, true, topLeft, top, 0, 0, 0,
+                pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 8) {
             for (int blkX = 0; blkX < 16; blkX += 8) {
                 Arrays.fill(pred, (byte) 0);
-                Intra8x8PredictionBuilder.predictDiagonalDownLeft(testResidual, true, true, true,
+                new Intra8x8PredictionBuilder().predictDiagonalDownLeft(testResidual, true, true, true,
                         padLeft(topLeft, blkY >> 2), padLeft(top, blkX), 0, blkX, blkY, pred);
                 assertArrayEquals(inMB(addResidual(expected, testResidual), blkX, blkY), pred);
             }
@@ -156,13 +158,13 @@ public class Intra8x8PredictionBuilderTest {
                 230, 225, 220, 213, 189, 134, 67, 31, 235, 230, 225, 220, 213, 189, 134, 67, 240, 235, 230, 225, 220,
                 213, 189, 134);
 
-        Intra8x8PredictionBuilder.predictDiagonalDownRight(emptyResidual, true, tl, left, top, 0, 0, 0, pred);
+        new Intra8x8PredictionBuilder().predictDiagonalDownRight(emptyResidual, true, tl, left, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 8) {
             for (int blkX = 0; blkX < 16; blkX += 8) {
                 Arrays.fill(pred, (byte) 0);
-                Intra8x8PredictionBuilder.predictDiagonalDownRight(testResidual, true, padLeft(tl, blkY >> 2),
+                new Intra8x8PredictionBuilder().predictDiagonalDownRight(testResidual, true, padLeft(tl, blkY >> 2),
                         padLeft(left, blkY), padLeft(top, blkX), 0, blkX, blkY, pred);
                 assertArrayEquals(inMB(addResidual(expected, testResidual), blkX, blkY), pred);
             }
@@ -182,13 +184,13 @@ public class Intra8x8PredictionBuilderTest {
                 37, 25, 35, 45, 55, 65, 213, 134, 67, 31, 30, 40, 50, 60, 220, 189, 97, 37, 25, 35, 45, 55, 225, 213,
                 134, 67, 31, 30, 40, 50, 230, 220, 189, 97, 37, 25, 35, 45, 235, 225, 213, 134, 67, 31, 30, 40);
 
-        Intra8x8PredictionBuilder.predictVerticalRight(emptyResidual, true, tl, left, top, 0, 0, 0, pred);
+        new Intra8x8PredictionBuilder().predictVerticalRight(emptyResidual, true, tl, left, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 8) {
             for (int blkX = 0; blkX < 16; blkX += 8) {
                 Arrays.fill(pred, (byte) 0);
-                Intra8x8PredictionBuilder.predictVerticalRight(testResidual, true, padLeft(tl, blkY >> 2),
+                new Intra8x8PredictionBuilder().predictVerticalRight(testResidual, true, padLeft(tl, blkY >> 2),
                         padLeft(left, blkY), padLeft(top, blkX), 0, blkX, blkY, pred);
                 assertArrayEquals(inMB(addResidual(expected, testResidual), blkX, blkY), pred);
             }
@@ -209,13 +211,13 @@ public class Intra8x8PredictionBuilderTest {
                 208, 189, 233, 230, 228, 225, 223, 220, 218, 213, 238, 235, 233, 230, 228, 225, 223, 220, 242, 240,
                 238, 235, 233, 230, 228, 225);
 
-        Intra8x8PredictionBuilder.predictHorizontalDown(emptyResidual, true, tl, left, top, 0, 0, 0, pred);
+        new Intra8x8PredictionBuilder().predictHorizontalDown(emptyResidual, true, tl, left, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 8) {
             for (int blkX = 0; blkX < 16; blkX += 8) {
                 Arrays.fill(pred, (byte) 0);
-                Intra8x8PredictionBuilder.predictHorizontalDown(testResidual, true, padLeft(tl, blkY >> 2),
+                new Intra8x8PredictionBuilder().predictHorizontalDown(testResidual, true, padLeft(tl, blkY >> 2),
                         padLeft(left, blkY), padLeft(top, blkX), 0, blkX, blkY, pred);
                 assertArrayEquals(inMB(addResidual(expected, testResidual), blkX, blkY), pred);
             }
@@ -234,13 +236,13 @@ public class Intra8x8PredictionBuilderTest {
                 45, 55, 65, 75, 85, 95, 30, 40, 50, 60, 70, 80, 90, 100, 35, 45, 55, 65, 75, 85, 95, 105, 40, 50, 60,
                 70, 80, 90, 100, 110, 45, 55, 65, 75, 85, 95, 105, 115, 50, 60, 70, 80, 90, 100, 110, 120);
 
-        Intra8x8PredictionBuilder.predictVerticalLeft(emptyResidual, true, true, tl, top, 0, 0, 0, pred);
+        new Intra8x8PredictionBuilder().predictVerticalLeft(emptyResidual, true, true, tl, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 8) {
             for (int blkX = 0; blkX < 16; blkX += 8) {
                 Arrays.fill(pred, (byte) 0);
-                Intra8x8PredictionBuilder.predictVerticalLeft(testResidual, true, true, padLeft(tl, blkY >> 2),
+                new Intra8x8PredictionBuilder().predictVerticalLeft(testResidual, true, true, padLeft(tl, blkY >> 2),
                         padLeft(top, blkX), 0, blkX, blkY, pred);
                 assertArrayEquals(inMB(addResidual(expected, testResidual), blkX, blkY), pred);
             }
@@ -260,13 +262,13 @@ public class Intra8x8PredictionBuilderTest {
                 240, 242, 243, 244, 244, 238, 240, 242, 243, 244, 244, 244, 244, 242, 243, 244, 244, 244, 244, 244,
                 244, 244, 244, 244, 244, 244, 244, 244, 244);
 
-        Intra8x8PredictionBuilder.predictHorizontalUp(emptyResidual, true, tl, left, 0, 0, 0, pred);
+        new Intra8x8PredictionBuilder().predictHorizontalUp(emptyResidual, true, tl, left, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 8) {
             for (int blkX = 0; blkX < 16; blkX += 8) {
                 Arrays.fill(pred, (byte) 0);
-                Intra8x8PredictionBuilder.predictHorizontalUp(testResidual, true, padLeft(tl, blkY >> 2),
+                new Intra8x8PredictionBuilder().predictHorizontalUp(testResidual, true, padLeft(tl, blkY >> 2),
                         padLeft(left, blkY), 0, blkX, blkY, pred);
                 assertArrayEquals(inMB(addResidual(expected, testResidual), blkX, blkY), pred);
             }

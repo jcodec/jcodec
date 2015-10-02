@@ -30,6 +30,7 @@ public class MBlockDecoderBase {
     protected SliceHeader sh;
     protected DeblockerInput di;
     protected int poc;
+    protected BlockInterpolator interpolator = new BlockInterpolator();
 
     public MBlockDecoderBase(SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
         this.s = decoderState;
@@ -188,7 +189,7 @@ public class MBlockDecoderBase {
                     int xx = ((x + blkPox) << 3) + mv[0];
                     int yy = ((y + blkPoy) << 3) + mv[1];
 
-                    BlockInterpolator.getBlockChroma(ref.getPlaneData(comp), ref.getPlaneWidth(comp),
+                    interpolator.getBlockChroma(ref.getPlaneData(comp), ref.getPlaneWidth(comp),
                             ref.getPlaneHeight(comp), mbb[list].getPlaneData(comp), blkPoy * mb.getPlaneWidth(comp)
                                     + blkPox, mb.getPlaneWidth(comp), xx, yy, 2, 2);
                 }

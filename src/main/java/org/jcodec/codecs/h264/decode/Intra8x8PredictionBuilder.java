@@ -15,11 +15,11 @@ import org.jcodec.common.Assert;
  */
 public class Intra8x8PredictionBuilder {
 
-    static byte[] topBuf = new byte[16];
-    static byte[] leftBuf = new byte[8];
-    static byte[] genBuf = new byte[24];
+    byte[] topBuf = new byte[16];
+    byte[] leftBuf = new byte[8];
+    byte[] genBuf = new byte[24];
 
-    public static void predictWithMode(int mode, int[] residual, boolean leftAvailable, boolean topAvailable,
+    public void predictWithMode(int mode, int[] residual, boolean leftAvailable, boolean topAvailable,
             boolean topLeftAvailable, boolean topRightAvailable, byte[] leftRow, byte[] topLine, byte[] topLeft,
             int mbOffX, int blkX, int blkY, byte[] pixOut) {
         switch (mode) {
@@ -78,8 +78,8 @@ public class Intra8x8PredictionBuilder {
         topLeft[(blkY >> 2) + 1] = leftRow[blkY + 3];
     }
 
-    private static void interpolateTop(boolean topLeftAvailable, boolean topRightAvailable, byte[] topLeft,
-            byte[] topLine, int blkX, int blkY, byte[] out) {
+    private void interpolateTop(boolean topLeftAvailable, boolean topRightAvailable, byte[] topLeft, byte[] topLine,
+            int blkX, int blkY, byte[] out) {
         int a = topLeftAvailable ? topLeft[blkY >> 2] : topLine[blkX];
 
         out[0] = (byte) ((a + (topLine[blkX] << 1) + topLine[blkX + 1] + 2) >> 2);
@@ -98,7 +98,7 @@ public class Intra8x8PredictionBuilder {
         }
     }
 
-    private static void interpolateLeft(boolean topLeftAvailable, byte[] topLeft, byte[] leftRow, int blkY, byte[] out) {
+    private void interpolateLeft(boolean topLeftAvailable, byte[] topLeft, byte[] leftRow, int blkY, byte[] out) {
         int a = topLeftAvailable ? topLeft[blkY >> 2] : leftRow[0];
 
         out[0] = (byte) ((a + (leftRow[blkY] << 1) + leftRow[blkY + 1] + 2) >> 2);
@@ -108,7 +108,7 @@ public class Intra8x8PredictionBuilder {
         out[7] = (byte) ((leftRow[blkY + 6] + (leftRow[blkY + 7] << 1) + leftRow[blkY + 7] + 2) >> 2);
     }
 
-    private static int interpolateTopLeft(boolean topAvailable, boolean leftAvailable, byte[] topLeft, byte[] topLine,
+    private int interpolateTopLeft(boolean topAvailable, boolean leftAvailable, byte[] topLeft, byte[] topLine,
             byte[] leftRow, int mbOffX, int blkX, int blkY) {
         int a = topLeft[blkY >> 2];
         int b = topAvailable ? topLine[mbOffX + blkX] : a;
@@ -118,7 +118,7 @@ public class Intra8x8PredictionBuilder {
         return (aa + b + c + 2) >> 2;
     }
 
-    public static void copyAdd(byte[] pred, int srcOff, int[] residual, int pixOff, int rOff, byte[] out) {
+    public void copyAdd(byte[] pred, int srcOff, int[] residual, int pixOff, int rOff, byte[] out) {
         out[pixOff] = (byte) clip(residual[rOff] + pred[srcOff], -128, 127);
         out[pixOff + 1] = (byte) clip(residual[rOff + 1] + pred[srcOff + 1], -128, 127);
         out[pixOff + 2] = (byte) clip(residual[rOff + 2] + pred[srcOff + 2], -128, 127);
@@ -129,7 +129,7 @@ public class Intra8x8PredictionBuilder {
         out[pixOff + 7] = (byte) clip(residual[rOff + 7] + pred[srcOff + 7], -128, 127);
     }
 
-    public static void fillAdd(int[] residual, int pixOff, int val, byte[] pixOut) {
+    public void fillAdd(int[] residual, int pixOff, int val, byte[] pixOut) {
         int rOff = 0;
         for (int i = 0; i < 8; i++) {
             pixOut[pixOff] = (byte) clip(residual[rOff] + val, -128, 127);
@@ -145,8 +145,8 @@ public class Intra8x8PredictionBuilder {
         }
     }
 
-    public static void predictVertical(int[] residual, boolean topLeftAvailable, boolean topRightAvailable,
-            byte[] topLeft, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
+    public void predictVertical(int[] residual, boolean topLeftAvailable, boolean topRightAvailable, byte[] topLeft,
+            byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
         int pixOff = (blkY << 4) + blkX;
         int rOff = 0;
@@ -164,8 +164,8 @@ public class Intra8x8PredictionBuilder {
         }
     }
 
-    public static void predictHorizontal(int[] residual, boolean topLeftAvailable, byte[] topLeft, byte[] leftRow,
-            int mbOffX, int blkX, int blkY, byte[] pixOut) {
+    public void predictHorizontal(int[] residual, boolean topLeftAvailable, byte[] topLeft, byte[] leftRow, int mbOffX,
+            int blkX, int blkY, byte[] pixOut) {
         interpolateLeft(topLeftAvailable, topLeft, leftRow, blkY, leftBuf);
         int pixOff = (blkY << 4) + blkX;
         int rOff = 0;
@@ -183,9 +183,9 @@ public class Intra8x8PredictionBuilder {
         }
     }
 
-    public static void predictDC(int[] residual, boolean topLeftAvailable, boolean topRightAvailable,
-            boolean leftAvailable, boolean topAvailable, byte[] topLeft, byte[] leftRow, byte[] topLine, int mbOffX,
-            int blkX, int blkY, byte[] pixOut) {
+    public void predictDC(int[] residual, boolean topLeftAvailable, boolean topRightAvailable, boolean leftAvailable,
+            boolean topAvailable, byte[] topLeft, byte[] leftRow, byte[] topLine, int mbOffX, int blkX, int blkY,
+            byte[] pixOut) {
         if (topAvailable && leftAvailable) {
             interpolateTop(topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
             interpolateLeft(topLeftAvailable, topLeft, leftRow, blkY, leftBuf);
@@ -209,7 +209,7 @@ public class Intra8x8PredictionBuilder {
         }
     }
 
-    public static void predictDiagonalDownLeft(int[] residual, boolean topLeftAvailable, boolean topAvailable,
+    public void predictDiagonalDownLeft(int[] residual, boolean topLeftAvailable, boolean topAvailable,
             boolean topRightAvailable, byte[] topLeft, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
 
@@ -240,8 +240,8 @@ public class Intra8x8PredictionBuilder {
         copyAdd(genBuf, 7, residual, off + 112, 56, pixOut);
     }
 
-    public static void predictDiagonalDownRight(int[] residual, boolean topRightAvailable, byte[] topLeft,
-            byte[] leftRow, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
+    public void predictDiagonalDownRight(int[] residual, boolean topRightAvailable, byte[] topLeft, byte[] leftRow,
+            byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(true, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
         interpolateLeft(true, topLeft, leftRow, blkY, leftBuf);
         int tl = interpolateTopLeft(true, true, topLeft, topLine, leftRow, mbOffX, blkX, blkY);
@@ -273,7 +273,7 @@ public class Intra8x8PredictionBuilder {
         copyAdd(genBuf, 0, residual, off + 112, 56, pixOut);
     }
 
-    public static void predictVerticalRight(int[] residual, boolean topRightAvailable, byte[] topLeft, byte[] leftRow,
+    public void predictVerticalRight(int[] residual, boolean topRightAvailable, byte[] topLeft, byte[] leftRow,
             byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(true, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
         interpolateLeft(true, topLeft, leftRow, blkY, leftBuf);
@@ -313,8 +313,8 @@ public class Intra8x8PredictionBuilder {
         copyAdd(genBuf, 11, residual, off + 112, 56, pixOut);
     }
 
-    public static void predictHorizontalDown(int[] residual, boolean topRightAvailable, byte[] topLeft,
-            byte[] leftRow, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
+    public void predictHorizontalDown(int[] residual, boolean topRightAvailable, byte[] topLeft, byte[] leftRow,
+            byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(true, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
         interpolateLeft(true, topLeft, leftRow, blkY, leftBuf);
         int tl = interpolateTopLeft(true, true, topLeft, topLine, leftRow, mbOffX, blkX, blkY);
@@ -353,7 +353,7 @@ public class Intra8x8PredictionBuilder {
         copyAdd(genBuf, 0, residual, off + 112, 56, pixOut);
     }
 
-    public static void predictVerticalLeft(int[] residual, boolean topLeftAvailable, boolean topRightAvailable,
+    public void predictVerticalLeft(int[] residual, boolean topLeftAvailable, boolean topRightAvailable,
             byte[] topLeft, byte[] topLine, int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateTop(topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX + blkX, blkY, topBuf);
 
@@ -391,7 +391,7 @@ public class Intra8x8PredictionBuilder {
         copyAdd(genBuf, 14, residual, off + 112, 56, pixOut);
     }
 
-    public static void predictHorizontalUp(int[] residual, boolean topLeftAvailable, byte[] topLeft, byte[] leftRow,
+    public void predictHorizontalUp(int[] residual, boolean topLeftAvailable, byte[] topLeft, byte[] leftRow,
             int mbOffX, int blkX, int blkY, byte[] pixOut) {
         interpolateLeft(topLeftAvailable, topLeft, leftRow, blkY, leftBuf);
 
