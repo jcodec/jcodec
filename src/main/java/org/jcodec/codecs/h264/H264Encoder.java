@@ -205,7 +205,7 @@ public class H264Encoder implements VideoEncoder {
         sps.profile_idc = 66;
         sps.level_idc = 40;
         sps.frame_mbs_only_flag = true;
-        sps.log2_max_frame_num_minus4 = MathUtil.log2(keyInterval) - 3;
+        sps.log2_max_frame_num_minus4 = Math.max(0, MathUtil.log2(keyInterval) - 3);
 
         int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
         int codedHeight = (sps.pic_height_in_map_units_minus1 + 1) << 4;
