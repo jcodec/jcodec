@@ -34,6 +34,25 @@ public class Picture8Bit {
         this.data = data;
         this.color = color;
         this.crop = crop;
+
+        if (color != null) {
+            for (int i = 0; i < color.nComp; i++) {
+                int mask = 0xff >> (8 - color.compWidth[i]);
+                if ((width & mask) != 0)
+                    throw new IllegalArgumentException("Component " + i + " width should be a multiple of "
+                            + (1 << color.compWidth[i]) + " for colorspace: " + color);
+                if (crop != null && (crop.getWidth() & mask) != 0)
+                    throw new IllegalArgumentException("Component " + i + " cropped width should be a multiple of "
+                            + (1 << color.compWidth[i]) + " for colorspace: " + color);
+                mask = 0xff >> (8 - color.compHeight[i]);
+                if ((height & mask) != 0)
+                    throw new IllegalArgumentException("Component " + i + " height should be a multiple of "
+                            + (1 << color.compHeight[i]) + " for colorspace: " + color);
+                if (crop != null && (crop.getHeight() & mask) != 0)
+                    throw new IllegalArgumentException("Component " + i + " cropped height should be a multiple of "
+                            + (1 << color.compHeight[i]) + " for colorspace: " + color);
+            }
+        }
     }
 
     public Picture8Bit(Picture8Bit other) {

@@ -144,7 +144,7 @@ public class MBEncoderP16x16 {
 
     private int[] mvEstimate(Picture8Bit pic, int mbX, int mbY, int mvpx, int mvpy) {
         byte[] patch = new byte[256];
-        MBEncoderHelper.takeSafe(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4, mbY << 4,
+        MBEncoderHelper.take(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4, mbY << 4,
                 patch, 16, 16);
         return me.estimate(ref, patch, mbX, mbY, mvpx, mvpy);
     }

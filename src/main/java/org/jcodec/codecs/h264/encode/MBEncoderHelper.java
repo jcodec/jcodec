@@ -32,12 +32,50 @@ public class MBEncoderHelper {
             }
         }
     }
+    
+    public static final void take(byte[] planeData, int planeWidth, int planeHeight, int x, int y, byte[] patch,
+            int blkW, int blkH) {
+        if (x + blkW < planeWidth && y + blkH < planeHeight)
+            takeSafe(planeData, planeWidth, planeHeight, x, y, patch, blkW, blkH);
+        else
+            takeExtendBorder(planeData, planeWidth, planeHeight, x, y, patch, blkW, blkH);
+
+    }
 
     public static final void takeSafe(byte[] planeData, int planeWidth, int planeHeight, int x, int y, byte[] patch,
             int blkW, int blkH) {
         for (int i = 0, srcOff = y * planeWidth + x, dstOff = 0; i < blkH; i++, srcOff += planeWidth) {
             for (int j = 0, srcOff1 = srcOff; j < blkW; ++j, ++dstOff, ++srcOff1) {
                 patch[dstOff] = planeData[srcOff1];
+            }
+        }
+    }
+    
+    public static final void takeExtendBorder(byte[] planeData, int planeWidth, int planeHeight, int x, int y, byte[] patch,
+            int blkW, int blkH) {
+        int outOff = 0;
+
+        int i;
+        for (i = y; i < Math.min(y + blkH, planeHeight); i++) {
+            int off = i * planeWidth + Math.min(x, planeWidth);
+            int j;
+            for (j = x; j < Math.min(x + blkW, planeWidth); j++, outOff++, off++) {
+                patch[outOff] = planeData[off];
+            }
+            --off;
+            for (; j < x + blkW; j++, outOff++) {
+                patch[outOff] = planeData[off];
+            }
+        }
+        for (; i < y + blkH; i++) {
+            int off = planeHeight * planeWidth - planeWidth + Math.min(x, planeWidth);
+            int j;
+            for (j = x; j < Math.min(x + blkW, planeWidth); j++, outOff++, off++) {
+                patch[outOff] = planeData[off];
+            }
+            --off;
+            for (; j < x + blkW; j++, outOff++) {
+                patch[outOff] = planeData[off];
             }
         }
     }
