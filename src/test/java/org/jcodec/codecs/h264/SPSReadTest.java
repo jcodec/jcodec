@@ -26,6 +26,8 @@ public class SPSReadTest extends TestCase {
         sps1.constraint_set_1_flag = false;
         sps1.constraint_set_2_flag = false;
         sps1.constraint_set_3_flag = false;
+        sps1.constraint_set_4_flag = false;
+        sps1.constraint_set_5_flag = false;
         sps1.level_idc = 30;
         sps1.seq_parameter_set_id = 0;
         sps1.log2_max_frame_num_minus4 = 5;
@@ -79,6 +81,8 @@ public class SPSReadTest extends TestCase {
             assertEquals(sps.constraint_set_1_flag, false);
             assertEquals(sps.constraint_set_2_flag, false);
             assertEquals(sps.constraint_set_3_flag, false);
+            assertEquals(sps.constraint_set_4_flag, false);
+            assertEquals(sps.constraint_set_5_flag, false);
             assertEquals(sps.level_idc, 30);
             assertEquals(sps.seq_parameter_set_id, 0);
             assertEquals(sps.log2_max_frame_num_minus4, 5);

@@ -50,6 +50,8 @@ public class SeqParameterSet {
     public boolean constraint_set_1_flag;
     public boolean constraint_set_2_flag;
     public boolean constraint_set_3_flag;
+    public boolean constraint_set_4_flag;
+    public boolean constraint_set_5_flag;
     public int level_idc;
     public int seq_parameter_set_id;
     public boolean residual_color_transform_flag;
@@ -105,7 +107,9 @@ public class SeqParameterSet {
         sps.constraint_set_1_flag = readBool(in, "SPS: constraint_set_1_flag");
         sps.constraint_set_2_flag = readBool(in, "SPS: constraint_set_2_flag");
         sps.constraint_set_3_flag = readBool(in, "SPS: constraint_set_3_flag");
-        readNBit(in, 4, "SPS: reserved_zero_4bits");
+        sps.constraint_set_4_flag = readBool(in, "SPS: constraint_set_4_flag");
+        sps.constraint_set_5_flag = readBool(in, "SPS: constraint_set_5_flag");
+        readNBit(in, 2, "SPS: reserved_zero_2bits");
         sps.level_idc = (int) readNBit(in, 8, "SPS: level_idc");
         sps.seq_parameter_set_id = readUE(in, "SPS: seq_parameter_set_id");
 
@@ -269,7 +273,9 @@ public class SeqParameterSet {
         writeBool(writer, constraint_set_1_flag, "SPS: constraint_set_1_flag");
         writeBool(writer, constraint_set_2_flag, "SPS: constraint_set_2_flag");
         writeBool(writer, constraint_set_3_flag, "SPS: constraint_set_3_flag");
-        writeNBit(writer, 0, 4, "SPS: reserved");
+        writeBool(writer, constraint_set_4_flag, "SPS: constraint_set_4_flag");
+        writeBool(writer, constraint_set_5_flag, "SPS: constraint_set_5_flag");
+        writeNBit(writer, 0, 2, "SPS: reserved");
         writeNBit(writer, level_idc, 8, "SPS: level_idc");
         writeUE(writer, seq_parameter_set_id, "SPS: seq_parameter_set_id");
 
@@ -490,6 +496,14 @@ public class SeqParameterSet {
 
     public boolean isConstraint_set_3_flag() {
         return constraint_set_3_flag;
+    }
+    
+    public boolean isConstraint_set_4_flag() {
+        return constraint_set_4_flag;
+    }
+    
+    public boolean isConstraint_set_5_flag() {
+        return constraint_set_5_flag;
     }
 
     public int getLevel_idc() {
