@@ -86,7 +86,8 @@ public class FLVTool {
                     break;
             }
             processor.finish(muxer);
-            muxer.finish();
+            if (processor.hasOutput())
+                muxer.finish();
         } finally {
             IOUtils.closeQuietly(in);
             IOUtils.closeQuietly(out);

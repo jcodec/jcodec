@@ -13,6 +13,7 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.flv.FLVTag.AacAudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
@@ -54,7 +55,16 @@ public class FLVReader {
 
         initialRead(ch);
 
-        readHeader(readBuf);
+        if (!readHeader(readBuf)) {
+            // This file doesn't have an FLV header, maybe it's a portion of an
+            // FLV file and we can position at the tag start?
+            readBuf.position(0);
+            if (!positionAtPacket(readBuf))
+                throw new RuntimeException("Invalid FLV file");
+            else {
+                Logger.warn("Parsing a corrupt FLV file, first tag found at: " + readBuf.position());
+            }
+        }
     }
 
     private void initialRead(ReadableByteChannel ch) throws IOException {
@@ -161,11 +171,12 @@ public class FLVReader {
         }
     }
 
-    public static void readHeader(ByteBuffer readBuf) {
+    public static boolean readHeader(ByteBuffer readBuf) {
         if (readBuf.get() != 'F' || readBuf.get() != 'L' || readBuf.get() != 'V' || readBuf.get() != 1
                 || (readBuf.get() & 0x5) == 0 || readBuf.getInt() != 9) {
-            throw new RuntimeException("Invalid FLV file");
+            return false;
         }
+        return true;
     }
 
     public static FLVMetadata parseMetadata(ByteBuffer bb) {
@@ -298,10 +309,12 @@ public class FLVReader {
     public void reposition() throws IOException {
         reset();
 
-        positionAtPacket(readBuf);
+        if (!positionAtPacket(readBuf)) {
+            throw new RuntimeException("Could not find at FLV tag start");
+        }
     }
 
-    public static void positionAtPacket(ByteBuffer readBuf) {
+    public static boolean positionAtPacket(ByteBuffer readBuf) {
         // We will be using the fact that <payload size> = <start of last
         // packet> - 15
         ByteBuffer dup = readBuf.duplicate();
@@ -310,10 +323,11 @@ public class FLVReader {
         while (dup.hasRemaining()) {
             payloadSize = ((payloadSize & 0xffff) << 8) | (dup.get() & 0xff);
             int pointerPos = dup.position() + 7 + payloadSize;
-            if (pointerPos < dup.limit() - 4 && dup.getInt(pointerPos) - payloadSize == 11) {
+            if (dup.position() >= 8 && pointerPos < dup.limit() - 4 && dup.getInt(pointerPos) - payloadSize == 11) {
                 readBuf.position(dup.position() - 8);
-                return;
+                return true;
             }
         }
+        return false;
     }
 }
