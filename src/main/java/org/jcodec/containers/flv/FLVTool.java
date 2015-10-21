@@ -282,6 +282,8 @@ public class FLVTool {
      * 
      */
     public static class InfoPacketProcessor implements PacketProcessor {
+        private FLVTag prevVideoTag;
+        private FLVTag prevAudioTag;
 
         public static class Factory implements PacketProcessorFactory {
             private static final String FLAG_CHECK = "check";
@@ -304,15 +306,30 @@ public class FLVTool {
         private boolean checkOnly;
 
         public InfoPacketProcessor(boolean checkOnly) {
-            this.checkOnly = true;
+            this.checkOnly = checkOnly;
         }
 
         @Override
         public boolean processPacket(FLVTag pkt, FLVWriter writer) throws IOException {
-            if(checkOnly)
+            if (checkOnly)
                 return true;
-            
-            System.out.print("T=" + typeString(pkt.getType()) + "|PTS=" + pkt.getPts() + "|"
+            if (pkt.getType() == Type.VIDEO) {
+                if (prevVideoTag != null)
+                    dumpOnePacket(prevVideoTag, pkt.getPts() - prevVideoTag.getPts());
+                prevVideoTag = pkt;
+            } else if (pkt.getType() == Type.AUDIO) {
+                if (prevAudioTag != null)
+                    dumpOnePacket(prevAudioTag, pkt.getPts() - prevAudioTag.getPts());
+                prevAudioTag = pkt;
+            } else {
+                dumpOnePacket(pkt, 0);
+            }
+
+            return true;
+        }
+
+        private void dumpOnePacket(FLVTag pkt, int duration) {
+            System.out.print("T=" + typeString(pkt.getType()) + "|PTS=" + pkt.getPts() + "|DUR=" + duration + "|"
                     + (pkt.isKeyFrame() ? "K" : " ") + "|POS=" + pkt.getPosition());
             if (pkt.getTagHeader() instanceof VideoTagHeader) {
                 VideoTagHeader vt = (VideoTagHeader) pkt.getTagHeader();
@@ -347,7 +364,6 @@ public class FLVTool {
                 }
             }
             System.out.println();
-            return true;
         }
 
         private String typeString(Type type) {
@@ -356,6 +372,10 @@ public class FLVTool {
 
         @Override
         public void finish(FLVWriter muxer) throws IOException {
+            if (prevVideoTag != null)
+                dumpOnePacket(prevVideoTag, 0);
+            if (prevAudioTag != null)
+                dumpOnePacket(prevAudioTag, 0);
         }
 
         @Override
