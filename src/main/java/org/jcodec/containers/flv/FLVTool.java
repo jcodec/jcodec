@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,16 +54,17 @@ public class FLVTool {
     };
 
     public static void main(String[] args) throws IOException {
-        Cmd cmd = MainUtils.parseArguments(args);
-        if (cmd.args.length < 2) {
-            if (cmd.args.length > 0) {
-                MainUtils.printHelp(processors.get(cmd.getArg(0)).getFlags(), cmd.getArg(0), "file in", "?file out");
-            } else {
-                printGenericHelp();
-            }
+        if (args.length < 1) {
+            printGenericHelp();
             return;
         }
-        String command = cmd.getArg(0);
+        String command = args[0];
+
+        Cmd cmd = MainUtils.parseArguments(Arrays.copyOfRange(args, 1, args.length));
+        if (cmd.args.length < 1) {
+            MainUtils.printHelp(command, processors.get(command).getFlags(), "file in", "?file out");
+            return;
+        }
         int maxPackets = cmd.getIntegerFlag("max-packets", Integer.MAX_VALUE);
 
         PacketProcessor processor = getProcessor(command, cmd);
@@ -75,9 +77,9 @@ public class FLVTool {
         SeekableByteChannel in = null;
         SeekableByteChannel out = null;
         try {
-            in = NIOUtils.readableFileChannel(new File(cmd.getArg(1)));
+            in = NIOUtils.readableFileChannel(new File(cmd.getArg(0)));
             if (processor.hasOutput())
-                out = NIOUtils.writableFileChannel(new File(cmd.getArg(2)));
+                out = NIOUtils.writableFileChannel(new File(cmd.getArg(1)));
             FLVReader demuxer = new FLVReader(in);
             FLVWriter muxer = new FLVWriter(out);
             FLVTag pkt = null;
@@ -95,8 +97,8 @@ public class FLVTool {
     }
 
     private static void printGenericHelp() {
-        System.err.println("Syntax: <command> [flags] <file in> <file out>\nWhere command is: ["
-                + StringUtils.join(processors.keySet().toArray(new String[0]), ",") + "].");
+        System.err.println("Syntax: <command> [flags] <file in> [file out]\nWhere command is: ["
+                + StringUtils.join(processors.keySet().toArray(new String[0]), ", ") + "].");
     }
 
     private static PacketProcessor getProcessor(String command, Cmd cmd) {
@@ -287,26 +289,31 @@ public class FLVTool {
 
         public static class Factory implements PacketProcessorFactory {
             private static final String FLAG_CHECK = "check";
+            private static final String FLAG_STREAM = "stream";
 
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new InfoPacketProcessor(flags.getBooleanFlag(FLAG_CHECK, false));
+                return new InfoPacketProcessor(flags.getBooleanFlag(FLAG_CHECK, false), flags.getEnumFlag(FLAG_STREAM,
+                        null, Type.class));
             }
 
             @Override
             public Map<String, String> getFlags() {
                 return new HashMap<String, String>() {
                     {
-                        put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated");
+                        put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated.");
+                        put(FLAG_STREAM, "Stream selector, can be one of: ['video', 'audio', 'script'].");
                     }
                 };
             }
         }
 
         private boolean checkOnly;
+        private Type streamType;
 
-        public InfoPacketProcessor(boolean checkOnly) {
+        public InfoPacketProcessor(boolean checkOnly, Type streamType) {
             this.checkOnly = checkOnly;
+            this.streamType = streamType;
         }
 
         @Override
@@ -314,13 +321,17 @@ public class FLVTool {
             if (checkOnly)
                 return true;
             if (pkt.getType() == Type.VIDEO) {
-                if (prevVideoTag != null)
-                    dumpOnePacket(prevVideoTag, pkt.getPts() - prevVideoTag.getPts());
-                prevVideoTag = pkt;
+                if (streamType == Type.VIDEO || streamType == null) {
+                    if (prevVideoTag != null)
+                        dumpOnePacket(prevVideoTag, pkt.getPts() - prevVideoTag.getPts());
+                    prevVideoTag = pkt;
+                }
             } else if (pkt.getType() == Type.AUDIO) {
-                if (prevAudioTag != null)
-                    dumpOnePacket(prevAudioTag, pkt.getPts() - prevAudioTag.getPts());
-                prevAudioTag = pkt;
+                if (streamType == Type.AUDIO || streamType == null) {
+                    if (prevAudioTag != null)
+                        dumpOnePacket(prevAudioTag, pkt.getPts() - prevAudioTag.getPts());
+                    prevAudioTag = pkt;
+                }
             } else {
                 dumpOnePacket(pkt, 0);
             }

@@ -2,8 +2,12 @@ package org.jcodec.common.tools;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -28,33 +32,35 @@ public class MainUtils {
     public static class Cmd {
         public Map<String, String> flags;
         public String[] args;
+        private Map<String, String>[] argFlags;
 
-        public Cmd(Map<String, String> flags, String[] args) {
+        public Cmd(Map<String, String> flags, String[] args, Map<String, String>[] argFlags) {
             this.flags = flags;
             this.args = args;
+            this.argFlags = argFlags;
         }
 
-        public Long getLongFlag(String flagName, Long defaultValue) {
+        private Long getLongFlagInternal(Map<String, String> flags, String flagName, Long defaultValue) {
             return flags.containsKey(flagName) ? new Long(flags.get(flagName)) : defaultValue;
         }
 
-        public Integer getIntegerFlag(String flagName, Integer defaultValue) {
+        private Integer getIntegerFlagInternal(Map<String, String> flags, String flagName, Integer defaultValue) {
             return flags.containsKey(flagName) ? new Integer(flags.get(flagName)) : defaultValue;
         }
 
-        public Boolean getBooleanFlag(String flagName, Boolean defaultValue) {
+        private Boolean getBooleanFlagInternal(Map<String, String> flags, String flagName, Boolean defaultValue) {
             return flags.containsKey(flagName) ? !"false".equalsIgnoreCase(flags.get(flagName)) : defaultValue;
         }
 
-        public Double getDoubleFlag(String flagName, Double defaultValue) {
+        private Double getDoubleFlagInternal(Map<String, String> flags, String flagName, Double defaultValue) {
             return flags.containsKey(flagName) ? new Double(flags.get(flagName)) : defaultValue;
         }
 
-        public String getStringFlag(String flagName, String defaultValue) {
+        private String getStringFlagInternal(Map<String, String> flags, String flagName, String defaultValue) {
             return flags.containsKey(flagName) ? flags.get(flagName) : defaultValue;
         }
 
-        public int[] getMultiIntegerFlag(String flagName, int[] defaultValue) {
+        private int[] getMultiIntegerFlagInternal(Map<String, String> flags, String flagName, int[] defaultValue) {
             if (!flags.containsKey(flagName))
                 return defaultValue;
             String[] split = StringUtils.split(flags.get(flagName), ",");
@@ -64,28 +70,130 @@ public class MainUtils {
             return result;
         }
 
+        private <T extends Enum<T>> T getEnumFlagInternal(Map<String, String> flags, String flagName, T defaultValue,
+                Class<T> class1) {
+            if (!flags.containsKey(flagName))
+                return defaultValue;
+
+            String strVal = flags.get(flagName).toLowerCase();
+            EnumSet<T> allOf = EnumSet.allOf(class1);
+            for (T val : allOf) {
+                if (val.name().toLowerCase().equals(strVal))
+                    return val;
+            }
+            return null;
+        }
+
+        public Long getLongFlag(String flagName, Long defaultValue) {
+            return this.getLongFlagInternal(flags, flagName, defaultValue);
+        }
+
         public Long getLongFlag(String flagName) {
-            return this.getLongFlag(flagName, null);
+            return this.getLongFlagInternal(flags, flagName, null);
+        }
+
+        public Long getLongFlag(int arg, String flagName, Long defaultValue) {
+            return this.getLongFlagInternal(argFlags[arg], flagName, defaultValue);
+        }
+
+        public Long getLongFlag(int arg, String flagName) {
+            return this.getLongFlagInternal(argFlags[arg], flagName, null);
+        }
+
+        public Integer getIntegerFlag(String flagName, Integer defaultValue) {
+            return getIntegerFlagInternal(flags, flagName, defaultValue);
         }
 
         public Integer getIntegerFlag(String flagName) {
-            return getIntegerFlag(flagName, null);
+            return getIntegerFlagInternal(flags, flagName, null);
+        }
+
+        public Integer getIntegerFlag(int arg, String flagName, Integer defaultValue) {
+            return getIntegerFlagInternal(argFlags[arg], flagName, defaultValue);
+        }
+
+        public Integer getIntegerFlag(int arg, String flagName) {
+            return getIntegerFlagInternal(argFlags[arg], flagName, null);
+        }
+
+        public Boolean getBooleanFlag(String flagName, Boolean defaultValue) {
+            return getBooleanFlagInternal(flags, flagName, defaultValue);
         }
 
         public Boolean getBooleanFlag(String flagName) {
-            return getBooleanFlag(flagName, null);
+            return getBooleanFlagInternal(flags, flagName, null);
+        }
+
+        public Boolean getBooleanFlag(int arg, String flagName, Boolean defaultValue) {
+            return getBooleanFlagInternal(argFlags[arg], flagName, defaultValue);
+        }
+
+        public Boolean getBooleanFlag(int arg, String flagName) {
+            return getBooleanFlagInternal(argFlags[arg], flagName, null);
+        }
+
+        public Double getDoubleFlag(String flagName, Double defaultValue) {
+            return getDoubleFlagInternal(flags, flagName, defaultValue);
         }
 
         public Double getDoubleFlag(String flagName) {
-            return getDoubleFlag(flagName, null);
+            return getDoubleFlagInternal(flags, flagName, null);
+        }
+
+        public Double getDoubleFlag(int arg, String flagName, Double defaultValue) {
+            return getDoubleFlagInternal(argFlags[arg], flagName, defaultValue);
+        }
+
+        public Double getDoubleFlag(int arg, String flagName) {
+            return getDoubleFlagInternal(argFlags[arg], flagName, null);
+        }
+
+        public String getStringFlag(String flagName, String defaultValue) {
+            return getStringFlagInternal(flags, flagName, defaultValue);
         }
 
         public String getStringFlag(String flagName) {
-            return getStringFlag(flagName, null);
+            return getStringFlagInternal(flags, flagName, null);
+        }
+
+        public String getStringFlag(int arg, String flagName, String defaultValue) {
+            return getStringFlagInternal(argFlags[arg], flagName, defaultValue);
+        }
+
+        public String getStringFlag(int arg, String flagName) {
+            return getStringFlagInternal(argFlags[arg], flagName, null);
+        }
+
+        public int[] getMultiIntegerFlag(String flagName, int[] defaultValue) {
+            return getMultiIntegerFlagInternal(flags, flagName, defaultValue);
         }
 
         public int[] getMultiIntegerFlag(String flagName) {
-            return getMultiIntegerFlag(flagName, new int[0]);
+            return getMultiIntegerFlagInternal(flags, flagName, new int[0]);
+        }
+
+        public int[] getMultiIntegerFlag(int arg, String flagName, int[] defaultValue) {
+            return getMultiIntegerFlagInternal(argFlags[arg], flagName, defaultValue);
+        }
+
+        public int[] getMultiIntegerFlag(int arg, String flagName) {
+            return getMultiIntegerFlagInternal(argFlags[arg], flagName, new int[0]);
+        }
+
+        public <T extends Enum<T>> T getEnumFlag(String flagName, T defaultValue, Class<T> class1) {
+            return getEnumFlagInternal(flags, flagName, defaultValue, class1);
+        }
+
+        public <T extends Enum<T>> T getEnumFlag(String flagName, Class<T> class1) {
+            return getEnumFlagInternal(flags, flagName, null, class1);
+        }
+
+        public <T extends Enum<T>> T getEnumFlag(int arg, String flagName, T defaultValue, Class<T> class1) {
+            return getEnumFlagInternal(argFlags[arg], flagName, defaultValue, class1);
+        }
+
+        public <T extends Enum<T>> T getEnumFlag(int arg, String flagName, Class<T> class1) {
+            return getEnumFlagInternal(argFlags[arg], flagName, null, class1);
         }
 
         public String getArg(int i) {
@@ -106,30 +214,41 @@ public class MainUtils {
 
     public static Cmd parseArguments(String[] args) {
         Map<String, String> flags = new HashMap<String, String>();
-        int firstArg = 0;
-        for (; firstArg < args.length; firstArg++) {
-            if (args[firstArg].startsWith("--")) {
-                Matcher matcher = flagPattern.matcher(args[firstArg]);
+        Map<String, String> allFlags = new HashMap<String, String>();
+        List<String> outArgs = new ArrayList<String>();
+        List<Map<String, String>> argFlags = new ArrayList<Map<String, String>>();
+        int arg = 0;
+        for (; arg < args.length; arg++) {
+            if (args[arg].startsWith("--")) {
+                Matcher matcher = flagPattern.matcher(args[arg]);
                 if (matcher.matches()) {
                     flags.put(matcher.group(1), matcher.group(2));
                 } else {
-                    flags.put(args[firstArg].substring(2), "true");
+                    flags.put(args[arg].substring(2), "true");
                 }
-            } else if (args[firstArg].startsWith("-")) {
-                flags.put(args[firstArg].substring(1), args[++firstArg]);
-            } else
-                break;
+            } else if (args[arg].startsWith("-")) {
+                flags.put(args[arg].substring(1), args[++arg]);
+            } else {
+                allFlags.putAll(flags);
+                outArgs.add(args[arg]);
+                argFlags.add(flags);
+            }
         }
 
-        return new Cmd(flags, Arrays.copyOfRange(args, firstArg, args.length));
+        return new Cmd(allFlags, outArgs.toArray(new String[0]), argFlags.toArray((Map<String, String>[]) Array
+                .newInstance(flags.getClass(), 0)));
     }
 
     public static void printHelp(Map<String, String> flags, String... params) {
-        printHelp(System.out, flags, params);
+        printHelp(System.out, "", flags, params);
+    }
+    
+    public static void printHelp(String command, Map<String, String> flags, String... params) {
+        printHelp(System.out, command, flags, params);
     }
 
-    public static void printHelp(PrintStream out, Map<String, String> flags, String... params) {
-        out.print(bold("Syntax:"));
+    public static void printHelp(PrintStream out, String command, Map<String, String> flags, String... params) {
+        out.print(bold("Syntax: " + command));
         StringBuilder sample = new StringBuilder();
         StringBuilder detail = new StringBuilder();
         for (Entry<String, String> entry : flags.entrySet()) {
@@ -178,7 +297,7 @@ public class MainUtils {
         return isColorSupported ? "\033[" + (30 + (fg.ordinal() & 0x7)) + ";" + (40 + (bg.ordinal() & 0x7)) + ";"
                 + (bright ? 1 : 2) + "m" + str + "\033[0m" : str;
     }
-    
+
     public static File tildeExpand(String path) {
         if (path.startsWith("~")) {
             path = path.replaceFirst("~", System.getProperty("user.home"));
