@@ -284,22 +284,34 @@ public class FLVTool {
     public static class InfoPacketProcessor implements PacketProcessor {
 
         public static class Factory implements PacketProcessorFactory {
+            private static final String FLAG_CHECK = "check";
+
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new InfoPacketProcessor();
+                return new InfoPacketProcessor(flags.getBooleanFlag(FLAG_CHECK, false));
             }
 
             @Override
             public Map<String, String> getFlags() {
                 return new HashMap<String, String>() {
                     {
+                        put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated");
                     }
                 };
             }
         }
 
+        private boolean checkOnly;
+
+        public InfoPacketProcessor(boolean checkOnly) {
+            this.checkOnly = true;
+        }
+
         @Override
         public boolean processPacket(FLVTag pkt, FLVWriter writer) throws IOException {
+            if(checkOnly)
+                return true;
+            
             System.out.print("T=" + typeString(pkt.getType()) + "|PTS=" + pkt.getPts() + "|"
                     + (pkt.isKeyFrame() ? "K" : " ") + "|POS=" + pkt.getPosition());
             if (pkt.getTagHeader() instanceof VideoTagHeader) {
