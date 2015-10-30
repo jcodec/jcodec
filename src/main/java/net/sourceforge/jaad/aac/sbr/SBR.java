@@ -7,6 +7,13 @@ import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.ps.PS;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ *
+ * @author in-somnia
+ */
 public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.SyntaxConstants, HuffmanTables {
 
 	private final boolean downSampledSBR;

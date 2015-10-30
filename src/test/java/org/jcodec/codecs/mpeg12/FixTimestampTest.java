@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class FixTimestampTest {
@@ -44,7 +45,7 @@ public class FixTimestampTest {
     // originally 02.ts converted from https://www.dropbox.com/s/xb6m7yptp90z5m9/2.mp4
     // #ffmpeg -i 2.mp4 -acodec copy -vcodec copy -bsf h264_mp4toannexb 02.ts
     // ffmpeg version 2.3.3
-    @Test
+    @Ignore @Test
     public void testSetPts() throws Exception {
         File largeTs = new File("02.ts");
         File noSoundTs = new File("02nosound.ts");

@@ -11,7 +11,7 @@ import java.io.OutputStream;
  * 
  * All the IO routines related to bits
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class BitIO {

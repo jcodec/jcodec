@@ -15,6 +15,10 @@ public class Yuv422pToYuv420p implements Transform {
     private int shiftDown;
 
     public Yuv422pToYuv420p(int shiftUp, int shiftDown) {
+        this(shiftUp, shiftDown, Levels.STUDIO);
+    }
+    
+    public Yuv422pToYuv420p(int shiftUp, int shiftDown, Levels levels) {
         this.shiftUp = shiftUp;
         this.shiftDown = shiftDown;
     }

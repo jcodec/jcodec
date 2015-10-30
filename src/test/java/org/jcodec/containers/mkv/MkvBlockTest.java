@@ -14,6 +14,7 @@ import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IOUtils;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class MkvBlockTest {
@@ -116,7 +117,7 @@ public class MkvBlockTest {
         Assert.assertArrayEquals(new int[]{187, 630, 255, 60, (int)(be.dataLen) - (187 + 630 + 255 + 60 + be.headerSize) }, sizes);
     }
     
-    @Test
+    @Ignore @Test
     public void testGetSize() throws Exception {
         MKVTestSuite suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())

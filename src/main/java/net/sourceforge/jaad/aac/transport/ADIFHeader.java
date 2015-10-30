@@ -4,6 +4,13 @@ import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.PCE;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
+ * @author in-somnia
+ */
 public final class ADIFHeader {
 
 	private static final long ADIF_ID = 0x41444946; //'ADIF'

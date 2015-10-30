@@ -17,8 +17,8 @@ import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
@@ -30,7 +30,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * 
  * This sample embeds text onto H.264 picture without full re-transcode cycle
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class H264EmbedMain {

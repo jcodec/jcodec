@@ -8,7 +8,7 @@ package org.jcodec.codecs.common.biari;
  * 
  * Stores probability state table index and current MPS symbol value
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class Context {

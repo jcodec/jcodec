@@ -41,6 +41,13 @@ import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public final class MKVDemuxer {
     private VideoTrack vTrack = null;
     private List<DemuxerTrack> aTracks = new ArrayList<DemuxerTrack>();
@@ -111,7 +118,7 @@ public final class MKVDemuxer {
                 } else if (MKVType.BlockGroup.equals(child.type)) {
                     EbmlMaster group = (EbmlMaster) child;
                     for (EbmlBase grandChild : group.children) {
-                        if (MKVType.Block.equals(grandChild)) {
+                        if (grandChild.type == MKVType.Block) {
                             MkvBlock b = (MkvBlock) child;
                             b.absoluteTimecode = b.timecode + baseTimecode;
                             putIntoRightBasket(b);

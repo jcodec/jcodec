@@ -1,6 +1,10 @@
 package net.sourceforge.jaad.aac.tools;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * Intensity stereo lookup table for all possible values for
  * 0.5<sup>0.25*scaleFactor</sup>.
  * @author in-somnia

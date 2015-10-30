@@ -19,7 +19,6 @@ import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
@@ -41,28 +40,12 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
  * @author The JCodec project
  * 
  */
+@Deprecated
 public class FrameGrab {
 
     private DemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
     private ThreadLocal<int[][]> buffers = new ThreadLocal<int[][]>();
-    
-    public static class MediaInfo {
-    	private Size dim;
-
-		public MediaInfo(Size dim) {
-			super();
-			this.dim = dim;
-		}
-
-		public Size getDim() {
-			return dim;
-		}
-
-		public void setDim(Size dim) {
-			this.dim = dim;
-		}
-    }
 
     public FrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
@@ -243,8 +226,6 @@ public class FrameGrab {
         return null;
     }
 
-    
-
     /**
      * Get frame at current position in JCodec native image
      * 
@@ -255,11 +236,9 @@ public class FrameGrab {
         Packet frame = videoTrack.nextFrame();
         if (frame == null)
             return null;
-        
+
         return decoder.decodeFrame(frame, getBuffer());
     }
-
-    
 
     /**
      * Get frame at a specified second as JCodec image
@@ -293,10 +272,6 @@ public class FrameGrab {
         return new FrameGrab(file).seekToSecondPrecise(second).getNativeFrame();
     }
 
-    
-
-    
-
     /**
      * Get frame at a specified frame number as JCodec image
      * 
@@ -328,8 +303,6 @@ public class FrameGrab {
     public static Picture getNativeFrame(SeekableByteChannel file, int frameNumber) throws JCodecException, IOException {
         return new FrameGrab(file).seekToFramePrecise(frameNumber).getNativeFrame();
     }
-
-    
 
     /**
      * Get a specified frame by number from an already open demuxer track
@@ -392,12 +365,13 @@ public class FrameGrab {
             throws IOException, JCodecException {
         return new FrameGrab(vt, decoder).seekToSecondSloppy(second).getNativeFrame();
     }
-    
+
     /**
      * Gets info about the media
+     * 
      * @return
      */
     public MediaInfo getMediaInfo() {
-    	return decoder.getMediaInfo();
+        return decoder.getMediaInfo();
     }
 }

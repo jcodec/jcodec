@@ -5,6 +5,13 @@ import net.sourceforge.jaad.aac.DecoderConfig;
 import net.sourceforge.jaad.aac.huffman.HCB;
 import net.sourceforge.jaad.aac.huffman.Huffman;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license. 
+ *
+ * @author in-somnia
+ */
 class CCE extends Element implements SyntaxConstants {
 
 	public static final int BEFORE_TNS = 0;
@@ -82,7 +89,7 @@ class CCE extends Element implements SyntaxConstants {
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
 		//TODO:
-		final int[][] sfbCB = null;//ics.getSectionData().getSfbCB();
+		final int[][] sfbCB = {{}};//ics.getSectionData().getSfbCB();
 
 		for(i = 0; i<gainCount; i++) {
 			int idx = 0;
@@ -137,7 +144,7 @@ class CCE extends Element implements SyntaxConstants {
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
 		//TODO:
-		final int[][] sfbCB = null; //ics.getSectionData().getSfbCB();
+		final int[][] sfbCB = {{}}; //ics.getSectionData().getSfbCB();
 
 		int srcOff = 0;
 		int dstOff = 0;

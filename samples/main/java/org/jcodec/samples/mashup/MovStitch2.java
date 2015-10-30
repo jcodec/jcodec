@@ -26,11 +26,7 @@ import org.jcodec.common.io.BitWriter;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4DemuxerException;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.boxes.AVC1Box;
 import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
-import org.jcodec.containers.mp4.boxes.SampleDescriptionBox.MyFactory;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
@@ -42,7 +38,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MovStitch2 {

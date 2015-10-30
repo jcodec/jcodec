@@ -16,6 +16,7 @@ import static org.jcodec.codecs.prores.ProresConsts.levCodebooks;
 import static org.jcodec.codecs.prores.ProresConsts.progressive_scan;
 import static org.jcodec.codecs.prores.ProresConsts.runCodebooks;
 import static org.jcodec.common.dct.DCTRef.fdct;
+import static org.jcodec.common.dct.SimpleIDCT10Bit.fdct10;
 import static org.jcodec.common.model.ColorSpace.YUV422_10;
 import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.sign;
@@ -23,8 +24,10 @@ import static org.jcodec.common.tools.MathUtil.sign;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.NIOUtils;
+import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.ImageOP;
 
@@ -180,19 +183,20 @@ public class ProresEncoder {
         writeACCoeffs(bits, qMat, in, blocksPerSlice, scan, 64);
     }
 
-    private void dctOnePlane(int blocksPerSlice, int[] in) {
+    private void dctOnePlane(int blocksPerSlice, byte[] in, int[] out) {
         for (int i = 0; i < blocksPerSlice; i++) {
-            fdct(in, i << 6);
+            fdct10(in, i << 6, out);
         }
     }
 
     protected int encodeSlice(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan, int sliceMbCount,
-            int mbX, int mbY, Picture result, int prevQp, int mbWidth, int mbHeight, boolean unsafe) {
+            int mbX, int mbY, Picture8Bit result, int prevQp, int mbWidth, int mbHeight, boolean unsafe) {
 
-        Picture striped = splitSlice(result, mbX, mbY, sliceMbCount, unsafe);
-        dctOnePlane(sliceMbCount << 2, striped.getPlaneData(0));
-        dctOnePlane(sliceMbCount << 1, striped.getPlaneData(1));
-        dctOnePlane(sliceMbCount << 1, striped.getPlaneData(2));
+        Picture8Bit striped = splitSlice(result, mbX, mbY, sliceMbCount, unsafe);
+        int[][] ac = new int[][] { new int[sliceMbCount << 8], new int[sliceMbCount << 7], new int[sliceMbCount << 7] };
+        dctOnePlane(sliceMbCount << 2, striped.getPlaneData(0), ac[0]);
+        dctOnePlane(sliceMbCount << 1, striped.getPlaneData(1), ac[1]);
+        dctOnePlane(sliceMbCount << 1, striped.getPlaneData(2), ac[2]);
 
         int est = (sliceMbCount >> 2) * profile.bitrate;
         int low = est - (est >> 3); // 12% bitrate fluctuation
@@ -205,18 +209,18 @@ public class ProresEncoder {
         NIOUtils.skip(out, 5);
         int rem = out.position();
         int[] sizes = new int[3];
-        encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp, sizes);
+        encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, ac, qp, sizes);
         if (bits(sizes) > high && qp < profile.lastQp) {
             do {
                 ++qp;
                 out.position(rem);
-                encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp, sizes);
+                encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, ac, qp, sizes);
             } while (bits(sizes) > high && qp < profile.lastQp);
         } else if (bits(sizes) < low && qp > profile.firstQp) {
             do {
                 --qp;
                 out.position(rem);
-                encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, striped, qp, sizes);
+                encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, ac, qp, sizes);
             } while (bits(sizes) < low && qp > profile.firstQp);
         }
 
@@ -232,11 +236,11 @@ public class ProresEncoder {
     }
 
     protected static final void encodeSliceData(ByteBuffer out, int[] qmatLuma, int[] qmatChroma, int[] scan,
-            int sliceMbCount, Picture striped, int qp, int[] sizes) {
+            int sliceMbCount, int[][] ac, int qp, int[] sizes) {
 
-        sizes[0] = onePlane(out, sliceMbCount << 2, qmatLuma, scan, striped.getPlaneData(0));
-        sizes[1] = onePlane(out, sliceMbCount << 1, qmatChroma, scan, striped.getPlaneData(1));
-        sizes[2] = onePlane(out, sliceMbCount << 1, qmatChroma, scan, striped.getPlaneData(2));
+        sizes[0] = onePlane(out, sliceMbCount << 2, qmatLuma, scan, ac[0]);
+        sizes[1] = onePlane(out, sliceMbCount << 1, qmatChroma, scan, ac[1]);
+        sizes[2] = onePlane(out, sliceMbCount << 1, qmatChroma, scan, ac[2]);
     }
 
     static final int onePlane(ByteBuffer out, int blocksPerSlice, int[] qmatLuma, int[] scan, int[] data) {
@@ -247,7 +251,8 @@ public class ProresEncoder {
         return out.position() - rem;
     }
 
-    protected void encodePicture(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan, Picture picture) {
+    protected void encodePicture(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan,
+            Picture8Bit picture) {
 
         int mbWidth = (picture.getWidth() + 15) >> 4;
         int mbHeight = (picture.getHeight() + 15) >> 4;
@@ -296,10 +301,10 @@ public class ProresEncoder {
         return nSlices * mbHeight;
     }
 
-    private Picture splitSlice(Picture result, int mbX, int mbY, int sliceMbCount, boolean unsafe) {
-        Picture out = Picture.create(sliceMbCount << 4, 16, YUV422_10);
+    private Picture8Bit splitSlice(Picture8Bit result, int mbX, int mbY, int sliceMbCount, boolean unsafe) {
+        Picture8Bit out = Picture8Bit.create(sliceMbCount << 4, 16, YUV422_10);
         if (unsafe) {
-            Picture filled = Picture.create(sliceMbCount << 4, 16, YUV422_10);
+            Picture8Bit filled = Picture8Bit.create(sliceMbCount << 4, 16, YUV422_10);
             ImageOP.subImageWithFill(result, filled, new Rect(mbX << 4, mbY << 4, sliceMbCount << 4, 16));
 
             split(filled, out, 0, 0, sliceMbCount);
@@ -310,7 +315,7 @@ public class ProresEncoder {
         return out;
     }
 
-    private void split(Picture in, Picture out, int mbX, int mbY, int sliceMbCount) {
+    private void split(Picture8Bit in, Picture8Bit out, int mbX, int mbY, int sliceMbCount) {
 
         split(in.getPlaneData(0), out.getPlaneData(0), in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0);
         split(in.getPlaneData(1), out.getPlaneData(1), in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1);
@@ -318,7 +323,7 @@ public class ProresEncoder {
 
     }
 
-    private int[] split(int[] in, int[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma) {
+    private void split(byte[] in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma) {
         int outOff = 0;
         int off = (mbY << 4) * stride + (mbX << (4 - chroma));
 
@@ -334,11 +339,9 @@ public class ProresEncoder {
             outOff += (256 >> chroma);
             off += (16 >> chroma);
         }
-
-        return out;
     }
 
-    private void splitBlock(int[] y, int stride, int off, int[] out, int outOff) {
+    private void splitBlock(byte[] y, int stride, int off, byte[] out, int outOff) {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++)
                 out[outOff++] = y[off++];
@@ -347,6 +350,15 @@ public class ProresEncoder {
     }
 
     public void encodeFrame(ByteBuffer out, Picture... pics) {
+        Picture8Bit[] pics8Bit = new Picture8Bit[pics.length];
+        for (int i = 0; i < pics8Bit.length; i++) {
+            pics[i].setBitDepth(10);
+            pics8Bit[i] = Picture8Bit.fromPicture(pics[i]);
+        }
+        encodeFrame(out, pics8Bit);
+    }
+
+    public void encodeFrame(ByteBuffer out, Picture8Bit... pics) {
         ByteBuffer fork = out.duplicate();
 
         int[] scan = pics.length > 1 ? interlaced_scan : progressive_scan;

@@ -12,6 +12,8 @@ import java.nio.ByteBuffer;
  * are retrieved, and (for the progressive DCT) which part of the DCT quantized
  * coefficient data is contained in the scan. For lossless processes the scan
  * parameters specify the predictor and the point transform.
+ * 
+ * @author The JCodec project
  */
 public class ScanHeader {
     /**

@@ -14,6 +14,13 @@ import net.sourceforge.jaad.aac.tools.IS;
 import net.sourceforge.jaad.aac.tools.LTPrediction;
 import net.sourceforge.jaad.aac.tools.MS;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license. 
+ * 
+ * @author in-somnia
+ */
 public class SyntacticElements implements SyntaxConstants {
 
 	//global properties

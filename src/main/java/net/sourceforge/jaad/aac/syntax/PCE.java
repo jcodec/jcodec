@@ -4,6 +4,13 @@ import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
+ * @author in-somnia
+ */
 public class PCE extends Element {
 
 	private static final int MAX_FRONT_CHANNEL_ELEMENTS = 16;

@@ -1,5 +1,12 @@
 package net.sourceforge.jaad.aac.sbr;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license. 
+ *
+ * @author in-somnia
+ */
 class HFGeneration {
 
 	private static final int[] goalSbTab = {21, 23, 32, 43, 46, 64, 85, 93, 128, 0, 0, 0};

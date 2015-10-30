@@ -13,6 +13,7 @@ import org.jcodec.scale.AWTUtil;
  * @author The JCodec project
  * 
  */
+@Deprecated
 public class SequenceEncoder extends org.jcodec.api.SequenceEncoder {
 
     public SequenceEncoder(File out) throws IOException {

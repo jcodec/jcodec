@@ -8,12 +8,33 @@ import org.jcodec.common.tools.MathUtil;
  * 
  * MPEG 1/2 decoder interframe motion compensation routines, octal interpolation
  * 
- * TODO: implement 6-tap interpolation for half-pixel positions
- * 
  * @author The JCodec project
  * 
  */
 public class MPEGPredOct extends MPEGPred {
+    // Max block size is 16x16
+    private int[] tmp = new int[16 * 21];
+
+    private static final int[][] COEFF = {
+
+    { 0, 0, 128, 0, 0, 0 },
+
+    { 0, -6, 123, 12, -1, 0 },
+
+    { 2, -11, 108, 36, -8, 1 },
+
+    { 0, -9, 93, 50, -6, 0 },
+
+    { 3, -16, 77, 77, -16, 3 },
+
+    { 0, -6, 50, 93, -9, 0 },
+
+    { 1, -8, 36, 108, -11, 2 },
+
+    { 0, -1, 12, 123, -6, 0 }
+
+    };
+
     public MPEGPredOct(MPEGPred other) {
         super(other);
     }
@@ -22,155 +43,199 @@ public class MPEGPredOct extends MPEGPred {
     public void predictPlane(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int refVertOff,
             int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int rx = refX >> 3, ry = refY >> 3;
+        tgtW >>= 3;
+        tgtH >>= 3;
 
-        boolean safe = rx >= 0 && ry >= 0 && rx + tgtW < refW && (ry + tgtH << refVertStep) < refH;
+        boolean safe = rx >= 2 && ry >= 2 && rx + tgtW + 2 <= refW && ((ry + tgtH + 2) << refVertStep) < refH;
         if ((refX & 0x7) == 0) {
             if ((refY & 0x7) == 0) {
                 if (safe)
-                    predictEvenEvenSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW >> 2,
-                            tgtH >> 2, tgtVertStep);
+                    predictFullXFullYSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                            tgtVertStep);
                 else
-                    predictEvenEvenUnSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW >> 2,
-                            tgtH >> 2, tgtVertStep);
+                    predictFullXFullYUnSafe(ref, rx, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+                            tgtVertStep);
             } else {
                 if (safe)
-                    predictOddEvenSafe(ref, rx, ry, refY - (ry << 3), refW, refH, refVertStep, refVertOff, tgt,
-                            tgtY, tgtW >> 2, tgtH >> 2, tgtVertStep);
+                    predictFullXSubYSafe(ref, rx, ry, refY & 0x7, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW,
+                            tgtH, tgtVertStep);
                 else
-                    predictOddEvenUnSafe(ref, rx, ry, refY - (ry << 3), refW, refH, refVertStep, refVertOff, tgt,
-                            tgtY, tgtW >> 2, tgtH >> 2, tgtVertStep);
+                    predictFullXSubYUnSafe(ref, rx, ry, refY & 0x7, refW, refH, refVertStep, refVertOff, tgt, tgtY,
+                            tgtW, tgtH, tgtVertStep);
             }
         } else if ((refY & 0x7) == 0) {
             if (safe)
-                predictEvenOddSafe(ref, rx, refX - (rx << 3), ry, refW, refH, refVertStep, refVertOff, tgt, tgtY,
-                        tgtW >> 2, tgtH >> 2, tgtVertStep);
+                predictSubXFullYSafe(ref, rx, refX & 0x7, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW,
+                        tgtH, tgtVertStep);
             else
-                predictEvenOddUnSafe(ref, rx, refX - (rx << 3), ry, refW, refH, refVertStep, refVertOff, tgt, tgtY,
-                        tgtW >> 2, tgtH >> 2, tgtVertStep);
+                predictSubXFullYUnSafe(ref, rx, refX & 0x7, ry, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW,
+                        tgtH, tgtVertStep);
         } else {
             if (safe)
-                predictOddOddSafe(ref, rx, refX - (rx << 3), ry, refY - (ry << 3), refW, refH, refVertStep,
-                        refVertOff, tgt, tgtY, tgtW >> 2, tgtH >> 2, tgtVertStep);
+                predictSubXSubYSafe(ref, rx, refX & 0x7, ry, refY & 0x7, refW, refH, refVertStep, refVertOff, tgt,
+                        tgtY, tgtW, tgtH, tgtVertStep);
             else
-                predictOddOddUnSafe(ref, rx, refX - (rx << 3), ry, refY - (ry << 3), refW, refH, refVertStep,
-                        refVertOff, tgt, tgtY, tgtW >> 2, tgtH >> 2, tgtVertStep);
+                predictSubXSubYUnSafe(ref, rx, refX & 0x7, ry, refY & 0x7, refW, refH, refVertStep, refVertOff, tgt,
+                        tgtY, tgtW, tgtH, tgtVertStep);
         }
     }
 
-    private void predictOddOddUnSafe(int[] ref, int rx, int ix, int ry, int iy, int refW, int refH,
-            int refVertStep, int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
-        for (int j = 0; j < tgtH; j++) {
-            int y1 = ((j + ry) << refVertStep) + refVertOff;
-            int y2 = ((j + ry + 1) << refVertStep) + refVertOff;
-            for (int i = 0; i < tgtW; i++) {
-                int ptX = i + rx;
-                tgt[tgtOff++] = getPix4(ref, refW, refH, ptX, y1, ptX + 1, y1, ptX, y2, ptX + 1, y2, refVertStep,
-                        refVertOff, ix, iy);
-            }
-            tgtOff += jump;
-        }
-    }
-
-    protected int getPix4(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2, int x3, int y3, int x4,
-            int y4, int refVertStep, int refVertOff, int ix, int iy) {
+    protected int getPix6(int[] ref, int refW, int refH, int x, int y, int refVertStep, int refVertOff, int[] coeff) {
         int lastLine = refH - (1 << refVertStep) + refVertOff;
-        x1 = MathUtil.clip(x1, 0, refW - 1);
-        y1 = MathUtil.clip(y1, 0, lastLine);
-        x2 = MathUtil.clip(x2, 0, refW - 1);
-        y2 = MathUtil.clip(y2, 0, lastLine);
-        x3 = MathUtil.clip(x3, 0, refW - 1);
-        y3 = MathUtil.clip(y3, 0, lastLine);
-        x4 = MathUtil.clip(x4, 0, refW - 1);
-        y4 = MathUtil.clip(y4, 0, lastLine);
+        int x0 = MathUtil.clip(x - 2, 0, refW - 1);
+        int x1 = MathUtil.clip(x - 1, 0, refW - 1);
+        int x2 = MathUtil.clip(x, 0, refW - 1);
+        int x3 = MathUtil.clip(x + 1, 0, refW - 1);
+        int x4 = MathUtil.clip(x + 2, 0, refW - 1);
+        int x5 = MathUtil.clip(x + 3, 0, refW - 1);
+        int off = MathUtil.clip(y, refVertOff, lastLine) * refW;
 
-        int nix = 8 - ix, niy = 8 - iy;
-
-        return (ref[y1 * refW + x1] * nix * niy + ref[y2 * refW + x2] * ix * niy + ref[y3 * refW + x3] * nix * iy
-                + ref[y4 * refW + x4] * ix * iy + 32) >> 6;
+        return ref[off + x0] * coeff[0] + ref[off + x1] * coeff[1] + ref[off + x2] * coeff[2] + ref[off + x3]
+                * coeff[3] + ref[off + x4] * coeff[4] + ref[off + x5] * coeff[5];
     }
 
-    private void predictOddOddSafe(int[] ref, int rx, int ix, int ry, int iy, int refW, int refH, int refVertStep,
-            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int offRef = ((ry << refVertStep) + refVertOff) * refW + rx, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
-                - tgtW, lfTgt = tgtVertStep * tgtW, stride = refW << refVertStep;
+    protected int getPix6Vert(int[] ref, int refW, int refH, int x, int y, int refVertStep, int refVertOff, int[] coeff) {
+        int lastLine = refH - (1 << refVertStep) + refVertOff;
+        int y0 = MathUtil.clip(y - (2 << refVertStep), refVertOff, lastLine);
+        int y1 = MathUtil.clip(y - (1 << refVertStep), refVertOff, lastLine);
+        int y2 = MathUtil.clip(y, 0, lastLine);
+        int y3 = MathUtil.clip(y + (1 << refVertStep), refVertOff, lastLine);
+        int y4 = MathUtil.clip(y + (2 << refVertStep), refVertOff, lastLine);
+        int y5 = MathUtil.clip(y + (3 << refVertStep), refVertOff, lastLine);
+        x = MathUtil.clip(x, 0, refW - 1);
 
-        int nix = 8 - ix, niy = 8 - iy;
+        return ref[y0 * refW + x] * coeff[0] + ref[y1 * refW + x] * coeff[1] + ref[y2 * refW + x] * coeff[2]
+                + ref[y3 * refW + x] * coeff[3] + ref[y4 * refW + x] * coeff[4] + ref[y5 * refW + x] * coeff[5];
+    }
+
+    private void predictSubXSubYUnSafe(int[] ref, int rx, int ix, int ry, int iy, int refW, int refH, int refVertStep,
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+
+        int offTgt = tgtW * tgtY;
+        int dblTgtW = tgtW << 1;
+        int tripleTgtW = dblTgtW + tgtW;
+        int lfTgt = tgtVertStep * tgtW;
+
+        int[] coeff = COEFF[ix];
+        for (int i = -2, offTmp = 0; i < tgtH + 3; i++) {
+            int y = ((i + ry) << refVertStep) + refVertOff;
+            for (int j = 0; j < tgtW; j++, ++offTmp) {
+                tmp[offTmp] = getPix6(ref, refW, refH, j + rx, y, refVertStep, refVertOff, coeff);
+            }
+        }
+
+        coeff = COEFF[iy];
+        for (int i = 0, offTmp = dblTgtW; i < tgtH; i++) {
+            for (int j = 0; j < tgtW; j++, ++offTmp, ++offTgt) {
+                tgt[offTgt] = (tmp[offTmp - dblTgtW] * coeff[0] + tmp[offTmp - tgtW] * coeff[1] + tmp[offTmp]
+                        * coeff[2] + tmp[offTmp + tgtW] * coeff[3] + tmp[offTmp + dblTgtW] * coeff[4]
+                        + tmp[offTmp + tripleTgtW] * coeff[5] + 8192) >> 14;
+            }
+            offTgt += lfTgt;
+        }
+    }
+
+    private void predictSubXSubYSafe(int[] ref, int rx, int ix, int ry, int iy, int refW, int refH, int refVertStep,
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+
+        int[] coeff = COEFF[ix];
+
+        int offRef = (((ry - 2) << refVertStep) + refVertOff) * refW + rx;
+        int offTgt = tgtW * tgtY;
+        int lfRef = (refW << refVertStep) - tgtW;
+        int lfTgt = tgtVertStep * tgtW;
+        int dblTgtW = tgtW << 1;
+        int tripleTgtW = dblTgtW + tgtW;
+
+        for (int i = 0, offTmp = 0; i < tgtH + 5; i++) {
+            for (int j = 0; j < tgtW; j++, ++offTmp, ++offRef) {
+                tmp[offTmp] = ref[offRef - 2] * coeff[0] + ref[offRef - 1] * coeff[1] + ref[offRef] * coeff[2]
+                        + ref[offRef + 1] * coeff[3] + ref[offRef + 2] * coeff[4] + ref[offRef + 3] * coeff[5];
+            }
+            offRef += lfRef;
+        }
+
+        coeff = COEFF[iy];
+        for (int i = 0, offTmp = dblTgtW; i < tgtH; i++) {
+            for (int j = 0; j < tgtW; j++, ++offTmp, ++offTgt) {
+                tgt[offTgt] = (tmp[offTmp - dblTgtW] * coeff[0] + tmp[offTmp - tgtW] * coeff[1] + tmp[offTmp]
+                        * coeff[2] + tmp[offTmp + tgtW] * coeff[3] + tmp[offTmp + dblTgtW] * coeff[4]
+                        + tmp[offTmp + tripleTgtW] * coeff[5] + 8192) >> 14;
+            }
+            offTgt += lfTgt;
+        }
+    }
+
+    private void predictSubXFullYUnSafe(int[] ref, int rx, int ix, int ry, int refW, int refH, int refVertStep,
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+        int[] coeff = COEFF[ix];
+
+        int tgtOff = tgtW * tgtY;
+        int lfTgt = tgtVertStep * tgtW;
+
         for (int i = 0; i < tgtH; i++) {
+            int y = ((i + ry) << refVertStep) + refVertOff;
             for (int j = 0; j < tgtW; j++) {
-                tgt[offTgt++] = (ref[offRef] * nix * niy + ref[offRef + 1] * ix * niy + ref[offRef + stride] * nix
-                        * iy + ref[offRef + stride + 1] * ix * iy + 32) >> 6;
-                ++offRef;
+                tgt[tgtOff++] = (getPix6(ref, refW, refH, j + rx, y, refVertStep, refVertOff, coeff) + 64) >> 7;
+            }
+            tgtOff += lfTgt;
+        }
+    }
+
+    private void predictSubXFullYSafe(int[] ref, int rx, int ix, int ry, int refW, int refH, int refVertStep,
+            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
+        int[] coeff = COEFF[ix];
+
+        int offRef = ((ry << refVertStep) + refVertOff) * refW + rx;
+        int offTgt = tgtW * tgtY;
+        int lfRef = (refW << refVertStep) - tgtW;
+        int lfTgt = tgtVertStep * tgtW;
+
+        for (int i = 0; i < tgtH; i++) {
+            for (int j = 0; j < tgtW; j++, ++offRef) {
+                tgt[offTgt++] = (ref[offRef - 2] * coeff[0] + ref[offRef - 1] * coeff[1] + ref[offRef] * coeff[2]
+                        + ref[offRef + 1] * coeff[3] + ref[offRef + 2] * coeff[4] + ref[offRef + 3] * coeff[5] + 64) >> 7;
             }
             offRef += lfRef;
             offTgt += lfTgt;
         }
     }
 
-    protected int getPix2(int[] ref, int refW, int refH, int x1, int y1, int x2, int y2, int refVertStep,
-            int refVertOff, int i) {
-        int ni = 8 - i;
-
-        x1 = MathUtil.clip(x1, 0, refW - 1);
-        int lastLine = refH - (1 << refVertStep) + refVertOff;
-        y1 = MathUtil.clip(y1, 0, lastLine);
-        x2 = MathUtil.clip(x2, 0, refW - 1);
-        y2 = MathUtil.clip(y2, 0, lastLine);
-
-        return (ref[y1 * refW + x1] * ni + ref[y2 * refW + x2] * i + 4) >> 3;
-    }
-
-    private void predictEvenOddUnSafe(int[] ref, int rx, int ix, int ry, int refW, int refH, int refVertStep,
+    private void predictFullXSubYUnSafe(int[] ref, int rx, int ry, int iy, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
-        for (int j = 0; j < tgtH; j++) {
-            int y = ((j + ry) << refVertStep) + refVertOff;
-            for (int i = 0; i < tgtW; i++) {
-                tgt[tgtOff++] = getPix2(ref, refW, refH, i + rx, y, i + rx + 1, y, refVertStep, refVertOff, ix);
-            }
-            tgtOff += jump;
-        }
-    }
+        int[] coeff = COEFF[iy];
 
-    private void predictEvenOddSafe(int[] ref, int rx, int ix, int ry, int refW, int refH, int refVertStep,
-            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int offRef = ((ry << refVertStep) + refVertOff) * refW + rx, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
-                - tgtW, lfTgt = tgtVertStep * tgtW;
+        int tgtOff = tgtW * tgtY;
+        int lfTgt = tgtVertStep * tgtW;
 
-        int nix = 8 - ix;
         for (int i = 0; i < tgtH; i++) {
+            int y = ((i + ry) << refVertStep) + refVertOff;
             for (int j = 0; j < tgtW; j++) {
-                tgt[offTgt++] = (ref[offRef] * nix + ref[offRef + 1] * ix + 4) >> 3;
-                ++offRef;
+                tgt[tgtOff++] = (getPix6Vert(ref, refW, refH, j + rx, y, refVertStep, refVertOff, coeff) + 64) >> 7;
             }
-            offRef += lfRef;
-            offTgt += lfTgt;
+            tgtOff += lfTgt;
         }
     }
 
-    private void predictOddEvenUnSafe(int[] ref, int rx, int ry, int iy, int refW, int refH, int refVertStep,
+    private void predictFullXSubYSafe(int[] ref, int rx, int ry, int iy, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int tgtOff = tgtW * tgtY, jump = tgtVertStep * tgtW;
-        for (int j = 0; j < tgtH; j++) {
-            int y1 = ((j + ry) << refVertStep) + refVertOff;
-            int y2 = ((j + ry + 1) << refVertStep) + refVertOff;
-            for (int i = 0; i < tgtW; i++) {
-                tgt[tgtOff++] = getPix2(ref, refW, refH, i + rx, y1, i + rx, y2, refVertStep, refVertOff, iy);
-            }
-            tgtOff += jump;
-        }
-    }
+        int[] coeff = COEFF[iy];
 
-    private void predictOddEvenSafe(int[] ref, int rx, int ry, int iy, int refW, int refH, int refVertStep,
-            int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        int offRef = ((ry << refVertStep) + refVertOff) * refW + rx, offTgt = tgtW * tgtY, lfRef = (refW << refVertStep)
-                - tgtW, lfTgt = tgtVertStep * tgtW, stride = refW << refVertStep;
+        int offTgt = tgtW * tgtY;
+        int offRef = ((ry << refVertStep) + refVertOff) * refW + rx;
 
-        int niy = 8 - iy;
+        int singleRefW = refW << refVertStep;
+        int dblRefW = refW << (1 + refVertStep);
+        int tripleRefW = dblRefW + singleRefW;
+
+        int lfTgt = tgtVertStep * tgtW;
+        int lfRef = (refW << refVertStep) - tgtW;
+
         for (int i = 0; i < tgtH; i++) {
-            for (int j = 0; j < tgtW; j++) {
-                tgt[offTgt++] = (ref[offRef] * niy + ref[offRef + stride] * iy + 4) >> 3;
-                ++offRef;
+            for (int j = 0; j < tgtW; ++j, ++offTgt, ++offRef) {
+                tgt[offTgt] = (ref[offRef - dblRefW] * coeff[0] + ref[offRef - singleRefW] * coeff[1] + ref[offRef]
+                        * coeff[2] + ref[offRef + singleRefW] * coeff[3] + ref[offRef + dblRefW] * coeff[4]
+                        + ref[offRef + tripleRefW] * coeff[5] + 64) >> 7;
             }
             offRef += lfRef;
             offTgt += lfTgt;

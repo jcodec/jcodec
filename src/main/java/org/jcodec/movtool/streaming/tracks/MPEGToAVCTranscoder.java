@@ -15,16 +15,20 @@ import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * An MPEG thumbnail to AVC transcoder implemented fully in java ( using jcodec
  * codecs ).
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MPEGToAVCTranscoder {
@@ -87,7 +91,7 @@ public class MPEGToAVCTranscoder {
         int rate = Mpeg2AVCTrack.TARGET_RATE;
         do {
             try {
-                encoder.encodeFrame(toEnc, dst, iframe, poc, SliceType.I);
+                encoder.encodeFrame(Picture8Bit.fromPicture(toEnc), dst, iframe, poc, SliceType.I);
                 break;
             } catch (BufferOverflowException ex) {
                 Logger.warn("Abandon frame, buffer too small: " + dst.capacity());

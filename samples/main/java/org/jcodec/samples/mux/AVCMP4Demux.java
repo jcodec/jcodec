@@ -2,6 +2,13 @@ package org.jcodec.samples.mux;
 
 import java.io.File;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ *
+ */
 public class AVCMP4Demux {
     public static void main(String[] args) {
         if (args.length < 2) {

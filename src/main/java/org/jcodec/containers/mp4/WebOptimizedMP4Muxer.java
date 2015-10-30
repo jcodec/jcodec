@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.Header;
@@ -15,6 +14,13 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class WebOptimizedMP4Muxer extends MP4Muxer {
     private ByteBuffer header;
     private long headerPos;
@@ -24,16 +30,16 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
         int size = (int) oldHeader.getHeader().getSize();
         TrakBox vt = oldHeader.getVideoTrack();
 
-        SampleToChunkBox stsc = Box.findFirst(vt, SampleToChunkBox.class, "mdia", "minf", "stbl", "stsc");
+        SampleToChunkBox stsc = vt.getStsc();
         size -= stsc.getSampleToChunk().length * 12;
         size += 12;
 
-        ChunkOffsetsBox stco = Box.findFirst(vt, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
+        ChunkOffsetsBox stco = vt.getStco();
         if (stco != null) {
             size -= stco.getChunkOffsets().length << 2;
             size += vt.getFrameCount() << 3;
         } else {
-            ChunkOffsets64Box co64 = Box.findFirst(vt, ChunkOffsets64Box.class, "mdia", "minf", "stbl", "co64");
+            ChunkOffsets64Box co64 = vt.getCo64();
             size -= co64.getChunkOffsets().length << 3;
             size += vt.getFrameCount() << 3;
         }

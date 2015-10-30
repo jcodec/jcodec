@@ -2,7 +2,6 @@ package org.jcodec.codecs.h264.io;
 
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readU;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readZeroBitCount;
-import static org.jcodec.common.model.ColorSpace.YUV420;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.model.ColorSpace.YUV444;
 
@@ -55,7 +54,7 @@ public class CAVLC {
 
         tokensLeft[blkIndY & mbMask] = coeffToken;
         tokensTop[blkIndX] = coeffToken;
-        
+
         return coeffToken;
     }
 
@@ -188,7 +187,7 @@ public class CAVLC {
     }
 
     protected VLC codeTableChromaDC() {
-        if (color == YUV420) {
+        if (color == ColorSpace.YUV420J) {
             return H264Const.coeffTokenChromaDCY420;
         } else if (color == YUV422) {
             return H264Const.coeffTokenChromaDCY422;
@@ -203,7 +202,8 @@ public class CAVLC {
         int coeffToken = coeffTokenTab.readVLC(in);
         int totalCoeff = totalCoeff(coeffToken);
         int trailingOnes = trailingOnes(coeffToken);
-//        System.out.println("Coeff token. Total: " + totalCoeff + ", trailOne: " + trailingOnes);
+        // System.out.println("Coeff token. Total: " + totalCoeff +
+        // ", trailOne: " + trailingOnes);
 
         // blockType.getMaxCoeffs();
         // if (blockType == BlockType.BLOCK_CHROMA_DC)

@@ -26,7 +26,12 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Timecode track, provides timecode information for video track
+ * 
+ * @author The JCodec project
  * 
  */
 public class TimecodeMP4DemuxerTrack {

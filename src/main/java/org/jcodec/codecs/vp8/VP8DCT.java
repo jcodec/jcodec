@@ -1,12 +1,17 @@
 package org.jcodec.codecs.vp8;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * @see http://static.googleusercontent.com/external_content/untrusted_dlcp/research.google.com/de//pubs/archive/37073.pdf
  * @see http://jpegclub.org/jidctred/
  * @see http://www3.matapp.unimib.it/corsi-2007-2008/matematica/istituzioni-di-analisi-numerica/jpeg/papers/11-multiplications.pdf
  * @see http://static.googleusercontent.com/external_content/untrusted_dlcp/research.google.com/de//pubs/archive/37073.pdf
  * <pre>
  * </pre>
+ * 
+ * @author The JCodec project
  */
 public class VP8DCT {
     

@@ -11,7 +11,7 @@ import org.jcodec.common.tools.MathUtil;
  * 
  * A class responsible for outputting exp-Golomb values into binary stream
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class CAVLCWriter {

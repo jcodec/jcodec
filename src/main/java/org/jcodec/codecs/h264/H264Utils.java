@@ -33,7 +33,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class H264Utils {
@@ -367,7 +367,11 @@ public class H264Utils {
         initPPS.write(bb2);
         bb1.flip();
         bb2.flip();
-        return createMOVSampleEntry(Arrays.asList(new ByteBuffer[] { bb1 }), Arrays.asList(new ByteBuffer[] { bb2 }),
+        return createMOVSampleEntry(bb1, bb2, nalLengthSize);
+    }
+
+    public static SampleEntry createMOVSampleEntry(ByteBuffer sps, ByteBuffer pps, int nalLengthSize) {
+        return createMOVSampleEntry(Arrays.asList(new ByteBuffer[] { sps }), Arrays.asList(new ByteBuffer[] { pps }),
                 nalLengthSize);
     }
 

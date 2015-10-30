@@ -10,7 +10,6 @@ import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.H264Utils.SliceHeaderTweaker;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
-import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
@@ -127,8 +126,8 @@ public class AVCClipTrack extends ClipTrack {
             H264Decoder decoder = new H264Decoder();
             decoder.addSps(avcC.getSpsList());
             decoder.addPps(avcC.getPpsList());
-            Picture buf = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV420);
-            Frame dec = null;
+            Picture buf = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV420J);
+            Picture dec = null;
             for (VirtualPacket virtualPacket : head) {
                 dec = decoder.decodeFrame(H264Utils.splitMOVPacket(virtualPacket.getData(), avcC), buf.getData());
             }

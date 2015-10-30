@@ -2,10 +2,16 @@ package org.jcodec.codecs.h264.encode;
 
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ */
 public class EncodedMB {
-    private Picture pixels;
+    private Picture8Bit pixels;
     private MBType type;
     private int qp;
     private int[] nc;
@@ -13,13 +19,13 @@ public class EncodedMB {
     private int[] my;
 
     public EncodedMB() {
-        pixels = Picture.create(16, 16, ColorSpace.YUV420J);
+        pixels = Picture8Bit.create(16, 16, ColorSpace.YUV420J);
         nc = new int[16];
         mx = new int[16];
         my = new int[16];
     }
 
-    public Picture getPixels() {
+    public Picture8Bit getPixels() {
         return pixels;
     }
 

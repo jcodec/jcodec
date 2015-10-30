@@ -13,7 +13,7 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
  * 
  * EBML IO implementation
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public abstract class EbmlBase {

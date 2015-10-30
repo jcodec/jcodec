@@ -14,6 +14,13 @@ import org.jcodec.common.ByteArrayList;
 import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.containers.mkv.util.EbmlUtil;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class MkvBlock extends EbmlBin {
     private static final String XIPH = "Xiph";
     private static final String EBML = "EBML";

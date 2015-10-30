@@ -9,6 +9,13 @@ import java.util.List;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class MKVMuxerTrack {
 
     public static enum MKVMuxerTrackType {VIDEO };

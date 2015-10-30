@@ -12,6 +12,13 @@ import net.sourceforge.jaad.aac.tools.TNS;
 import java.util.logging.Level;
 import net.sourceforge.jaad.aac.Decoder;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
+ * @author in-somnia
+ */
 //TODO: apply pulse data
 public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable {
 

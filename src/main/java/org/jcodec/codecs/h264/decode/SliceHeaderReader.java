@@ -29,7 +29,7 @@ import org.jcodec.common.io.BitReader;
  * 
  * Reads header of the coded slice
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SliceHeaderReader {

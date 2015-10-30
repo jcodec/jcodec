@@ -10,7 +10,7 @@ import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeTrailingBits;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUE;
 import static org.jcodec.common.model.ColorSpace.MONO;
-import static org.jcodec.common.model.ColorSpace.YUV420;
+import static org.jcodec.common.model.ColorSpace.YUV420J;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.model.ColorSpace.YUV444;
 
@@ -28,7 +28,7 @@ import org.jcodec.common.model.ColorSpace;
  * 
  * capable to serialize and deserialize with CAVLC bitstream
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SeqParameterSet {
@@ -73,7 +73,7 @@ public class SeqParameterSet {
         case 0:
             return MONO;
         case 1:
-            return YUV420;
+            return YUV420J;
         case 2:
             return YUV422;
         case 3:
@@ -86,7 +86,7 @@ public class SeqParameterSet {
         switch (color) {
         case MONO:
             return 0;
-        case YUV420:
+        case YUV420J:
             return 1;
         case YUV422:
             return 2;
@@ -122,7 +122,7 @@ public class SeqParameterSet {
                 readScalingListMatrix(in, sps);
             }
         } else {
-            sps.chroma_format_idc = YUV420;
+            sps.chroma_format_idc = YUV420J;
         }
         sps.log2_max_frame_num_minus4 = readUE(in, "SPS: log2_max_frame_num_minus4");
         sps.pic_order_cnt_type = readUE(in, "SPS: pic_order_cnt_type");

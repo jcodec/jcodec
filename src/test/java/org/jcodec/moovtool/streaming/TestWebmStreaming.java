@@ -21,6 +21,7 @@ import org.jcodec.movtool.streaming.tracks.FilePool;
 import org.jcodec.movtool.streaming.tracks.Prores2VP8Track;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestWebmStreaming {
@@ -90,7 +91,7 @@ public class TestWebmStreaming {
             // CueTrackPosition
             (byte) 0xF1, (byte) 0x83, (byte) 0x04, (byte) 0x8B, (byte) 0x37 };
 
-    @Test
+    @Ignore @Test
     public void testMovieRange() throws Exception {
         File m1 = new File("src/test/resources/test.prores.mov");
 
@@ -148,7 +149,7 @@ public class TestWebmStreaming {
 
     }
 
-    @Test
+    @Ignore @Test
     public void testMultiRangeCopying() throws Exception {
 
         File m1 = new File("src/test/resources/test.prores.mov");

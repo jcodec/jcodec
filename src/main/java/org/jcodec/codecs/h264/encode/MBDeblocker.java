@@ -1,12 +1,16 @@
 package org.jcodec.codecs.h264.encode;
 
 import static java.lang.Math.abs;
+import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.codecs.h264.decode.deblock.DeblockingFilter;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Contains various deblocking filter routines for deblocking on MB bases
  * 
  * @author Stan Vitvitskyy
@@ -62,9 +66,9 @@ public class MBDeblocker {
      */
     public void deblockMBGeneric(EncodedMB curMB, EncodedMB leftMB, EncodedMB topMB, int[][] vertStrength,
             int horizStrength[][]) {
-        Picture curPix = curMB.getPixels();
+        Picture8Bit curPix = curMB.getPixels();
         if (leftMB != null) {
-            Picture leftPix = leftMB.getPixels();
+            Picture8Bit leftPix = leftMB.getPixels();
             int avgQp = MathUtil.clip((leftMB.getQp() + curMB.getQp() + 1) >> 1, 0, 51);
             deblockBorder(vertStrength[0], avgQp, leftPix.getPlaneData(0), 3, curPix.getPlaneData(0), 0, P_POS_V,
                     Q_POS_V, false);
@@ -83,7 +87,7 @@ public class MBDeblocker {
         }
 
         if (topMB != null) {
-            Picture topPix = topMB.getPixels();
+            Picture8Bit topPix = topMB.getPixels();
             int avgQp = MathUtil.clip((topMB.getQp() + curMB.getQp() + 1) >> 1, 0, 51);
             deblockBorder(horizStrength[0], avgQp, topPix.getPlaneData(0), 3, curPix.getPlaneData(0), 0, P_POS_H,
                     Q_POS_H, true);
@@ -129,7 +133,7 @@ public class MBDeblocker {
         deblockMBGeneric(cur, left, top, vertStrength, horizStrength);
     }
 
-    private void deblockBorder(int[] boundary, int qp, int[] p, int pi, int[] q, int qi, int[][] pTab, int[][] qTab,
+    private void deblockBorder(int[] boundary, int qp, byte[] p, int pi, byte[] q, int qi, int[][] pTab, int[][] qTab,
             boolean horiz) {
         int inc1 = horiz ? 16 : 1, inc2 = inc1 * 2, inc3 = inc1 * 3;
         for (int b = 0; b < 4; b++) {
@@ -145,31 +149,150 @@ public class MBDeblocker {
             }
         }
     }
-
-    protected void filterBs4Chr(int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p1Idx, int p0Idx,
+    
+    protected void filterBs4Chr(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p1Idx, int p0Idx,
             int q0Idx, int q1Idx) {
-        DeblockingFilter.filterBs4(indexAlpha, indexBeta, pelsP, pelsQ, -1, -1, p1Idx, p0Idx, q0Idx, q1Idx, -1, -1,
+        filterBs4(indexAlpha, indexBeta, pelsP, pelsQ, -1, -1, p1Idx, p0Idx, q0Idx, q1Idx, -1, -1,
                 true);
     }
 
-    protected void filterBsChr(int bs, int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p1Idx, int p0Idx,
+    protected void filterBsChr(int bs, int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p1Idx, int p0Idx,
             int q0Idx, int q1Idx) {
-        DeblockingFilter.filterBs(bs, indexAlpha, indexBeta, pelsP, pelsQ, -1, p1Idx, p0Idx, q0Idx, q1Idx, -1, true);
+        filterBs(bs, indexAlpha, indexBeta, pelsP, pelsQ, -1, p1Idx, p0Idx, q0Idx, q1Idx, -1, true);
     }
 
-    protected void filterBs4(int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p3Idx, int p2Idx, int p1Idx,
+    protected void filterBs4(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p3Idx, int p2Idx, int p1Idx,
             int p0Idx, int q0Idx, int q1Idx, int q2Idx, int q3Idx) {
-        DeblockingFilter.filterBs4(indexAlpha, indexBeta, pelsP, pelsQ, p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx,
+        filterBs4(indexAlpha, indexBeta, pelsP, pelsQ, p3Idx, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx,
                 q2Idx, q3Idx, false);
     }
 
-    protected void filterBs(int bs, int indexAlpha, int indexBeta, int[] pelsP, int[] pelsQ, int p2Idx, int p1Idx,
+    protected void filterBs(int bs, int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p2Idx, int p1Idx,
             int p0Idx, int q0Idx, int q1Idx, int q2Idx) {
-        DeblockingFilter.filterBs(bs, indexAlpha, indexBeta, pelsP, pelsQ, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx,
+        filterBs(bs, indexAlpha, indexBeta, pelsP, pelsQ, p2Idx, p1Idx, p0Idx, q0Idx, q1Idx, q2Idx,
                 false);
     }
 
-    private void deblockBorderChroma(int[] boundary, int qp, int[] p, int pi, int[] q, int qi, int[][] pTab,
+    protected void filterBs4(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p3Idx, int p2Idx,
+            int p1Idx, int p0Idx, int q0Idx, int q1Idx, int q2Idx, int q3Idx, boolean isChroma) {
+        int p0 = pelsP[p0Idx];
+        int q0 = pelsQ[q0Idx];
+        int p1 = pelsP[p1Idx];
+        int q1 = pelsQ[q1Idx];
+
+        int alphaThresh = DeblockingFilter.alphaTab[indexAlpha];
+        int betaThresh = DeblockingFilter.betaTab[indexBeta];
+
+        boolean filterEnabled = abs(p0 - q0) < alphaThresh && abs(p1 - p0) < betaThresh && abs(q1 - q0) < betaThresh;
+
+        if (!filterEnabled)
+            return;
+
+        boolean conditionP, conditionQ;
+
+        if (isChroma) {
+            conditionP = false;
+            conditionQ = false;
+        } else {
+            int ap = abs(pelsP[p2Idx] - p0);
+            int aq = abs(pelsQ[q2Idx] - q0);
+
+            conditionP = ap < betaThresh && abs(p0 - q0) < ((alphaThresh >> 2) + 2);
+            conditionQ = aq < betaThresh && abs(p0 - q0) < ((alphaThresh >> 2) + 2);
+
+        }
+
+        if (conditionP) {
+            int p3 = pelsP[p3Idx];
+            int p2 = pelsP[p2Idx];
+
+            int p0n = (p2 + 2 * p1 + 2 * p0 + 2 * q0 + q1 + 4) >> 3;
+            int p1n = (p2 + p1 + p0 + q0 + 2) >> 2;
+            int p2n = (2 * p3 + 3 * p2 + p1 + p0 + q0 + 4) >> 3;
+            pelsP[p0Idx] = (byte) clip(p0n, -128, 127);
+            pelsP[p1Idx] = (byte) clip(p1n, -128, 127);
+            pelsP[p2Idx] = (byte) clip(p2n, -128, 127);
+        } else {
+            int p0n = (2 * p1 + p0 + q1 + 2) >> 2;
+            pelsP[p0Idx] = (byte) clip(p0n, -128, 127);
+        }
+
+        if (conditionQ && !isChroma) {
+            int q2 = pelsQ[q2Idx];
+            int q3 = pelsQ[q3Idx];
+            int q0n = (p1 + 2 * p0 + 2 * q0 + 2 * q1 + q2 + 4) >> 3;
+            int q1n = (p0 + q0 + q1 + q2 + 2) >> 2;
+            int q2n = (2 * q3 + 3 * q2 + q1 + q0 + p0 + 4) >> 3;
+            pelsQ[q0Idx] = (byte) clip(q0n, -128, 127);
+            pelsQ[q1Idx] = (byte) clip(q1n, -128, 127);
+            pelsQ[q2Idx] = (byte) clip(q2n, -128, 127);
+        } else {
+            int q0n = (2 * q1 + q0 + p1 + 2) >> 2;
+            pelsQ[q0Idx] = (byte) clip(q0n, -128, 127);
+        }
+    }
+
+    protected void filterBs(int bs, int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p2Idx, int p1Idx,
+            int p0Idx, int q0Idx, int q1Idx, int q2Idx, boolean isChroma) {
+        int p1 = pelsP[p1Idx];
+        int p0 = pelsP[p0Idx];
+        int q0 = pelsQ[q0Idx];
+        int q1 = pelsQ[q1Idx];
+
+        int alphaThresh = DeblockingFilter.alphaTab[indexAlpha];
+        int betaThresh = DeblockingFilter.betaTab[indexBeta];
+
+        boolean filterEnabled = abs(p0 - q0) < alphaThresh && abs(p1 - p0) < betaThresh && abs(q1 - q0) < betaThresh;
+
+        if (!filterEnabled)
+            return;
+
+        int tC0 = DeblockingFilter.tcs[bs - 1][indexAlpha];
+
+        boolean conditionP, conditionQ;
+        int tC;
+        if (!isChroma) {
+            int ap = abs(pelsP[p2Idx] - p0);
+            int aq = abs(pelsQ[q2Idx] - q0);
+            tC = tC0 + ((ap < betaThresh) ? 1 : 0) + ((aq < betaThresh) ? 1 : 0);
+            conditionP = ap < betaThresh;
+            conditionQ = aq < betaThresh;
+        } else {
+            tC = tC0 + 1;
+            conditionP = false;
+            conditionQ = false;
+        }
+
+        int sigma = ((((q0 - p0) << 2) + (p1 - q1) + 4) >> 3);
+        sigma = sigma < -tC ? -tC : (sigma > tC ? tC : sigma);
+
+        int p0n = p0 + sigma;
+        p0n = p0n < -128 ? -128 : p0n;
+        int q0n = q0 - sigma;
+        q0n = q0n < -128 ? -128 : q0n;
+
+        if (conditionP) {
+            int p2 = pelsP[p2Idx];
+
+            int diff = (p2 + ((p0 + q0 + 1) >> 1) - (p1 << 1)) >> 1;
+            diff = diff < -tC0 ? -tC0 : (diff > tC0 ? tC0 : diff);
+            int p1n = p1 + diff;
+            pelsP[p1Idx] = (byte) clip(p1n, -128, 127);
+        }
+
+        if (conditionQ) {
+            int q2 = pelsQ[q2Idx];
+            int diff = (q2 + ((p0 + q0 + 1) >> 1) - (q1 << 1)) >> 1;
+            diff = diff < -tC0 ? -tC0 : (diff > tC0 ? tC0 : diff);
+            int q1n = q1 + diff;
+            pelsQ[q1Idx] = (byte) clip(q1n, -128, 127);
+        }
+
+        pelsQ[q0Idx] = (byte) clip(q0n, -128, 127);
+        pelsP[p0Idx] = (byte) clip(p0n, -128, 127);
+    }
+
+    private void deblockBorderChroma(int[] boundary, int qp, byte[] p, int pi, byte[] q, int qi, int[][] pTab,
             int[][] qTab, boolean horiz) {
         int inc1 = horiz ? 8 : 1;
         for (int b = 0; b < 4; b++) {

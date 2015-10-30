@@ -11,7 +11,7 @@ import java.io.OutputStream;
  * 
  * Half-way to MQ Coder
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MQEncoder {

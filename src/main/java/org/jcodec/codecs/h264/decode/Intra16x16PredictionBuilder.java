@@ -1,5 +1,7 @@
 package org.jcodec.codecs.h264.decode;
 
+import static org.jcodec.codecs.h264.H264Const.LUMA_4x4_BLOCK_LUT;
+import static org.jcodec.codecs.h264.H264Const.LUMA_4x4_POS_LUT;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 /**
@@ -9,50 +11,47 @@ import static org.jcodec.common.tools.MathUtil.clip;
  * Prediction builder class for intra 16x16 coded macroblocks
  * 
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class Intra16x16PredictionBuilder {
-
-    public static void predictWithMode(int predMode, int[] residual, boolean leftAvailable, boolean topAvailable,
-            int[] leftRow, int[] topLine, int[] topLeft, int x) {
+    public static void predictWithMode(int predMode, int[][] residual, boolean leftAvailable, boolean topAvailable,
+            byte[] leftRow, byte[] topLine, byte[] topLeft, int x, byte[] pixOut) {
         switch (predMode) {
         case 0:
-            predictVertical(residual, topAvailable, topLine, x);
+            predictVertical(residual, topAvailable, topLine, x, pixOut);
             break;
         case 1:
-            predictHorizontal(residual, leftAvailable, leftRow, x);
+            predictHorizontal(residual, leftAvailable, leftRow, x, pixOut);
             break;
         case 2:
-            predictDC(residual, leftAvailable, topAvailable, leftRow, topLine, x);
+            predictDC(residual, leftAvailable, topAvailable, leftRow, topLine, x, pixOut);
             break;
         case 3:
-            predictPlane(residual, leftAvailable, topAvailable, leftRow, topLine, topLeft, x);
+            predictPlane(residual, leftAvailable, topAvailable, leftRow, topLine, topLeft, x, pixOut);
             break;
         }
 
     }
 
-    public static void predictVertical(int[] residual, boolean topAvailable,
-            int[] topLine, int x) {
+    public static void predictVertical(int[][] residual, boolean topAvailable, byte[] topLine, int x, byte[] pixOut) {
         int off = 0;
         for (int j = 0; j < 16; j++) {
             for (int i = 0; i < 16; i++, off++)
-                residual[off] = clip(residual[off] + topLine[x + i], 0, 255);
+                pixOut[off] = (byte) clip(residual[LUMA_4x4_BLOCK_LUT[off]][LUMA_4x4_POS_LUT[off]] + topLine[x + i], -128, 127);
         }
     }
 
-    public static void predictHorizontal(int[] residual, boolean leftAvailable, int[] leftRow,
-             int x) {
+    public static void predictHorizontal(int[][] residual, boolean leftAvailable, byte[] leftRow, int x, byte[] pixOut) {
         int off = 0;
         for (int j = 0; j < 16; j++) {
             for (int i = 0; i < 16; i++, off++)
-                residual[off] = clip(residual[off] + leftRow[j], 0, 255);
+                pixOut[off] = (byte) clip(residual[LUMA_4x4_BLOCK_LUT[off]][LUMA_4x4_POS_LUT[off]] + leftRow[j], -128, 127);
         }
     }
 
-    public static void predictDC(int[] residual, boolean leftAvailable, boolean topAvailable, int[] leftRow,
-            int[] topLine, int x) {
+    public static void predictDC(int[][] residual, boolean leftAvailable, boolean topAvailable, byte[] leftRow,
+            byte[] topLine, int x, byte[] pixOut) {
         int s0;
         if (leftAvailable && topAvailable) {
             s0 = 0;
@@ -73,15 +72,15 @@ public class Intra16x16PredictionBuilder {
                 s0 += topLine[x + i];
             s0 = (s0 + 8) >> 4;
         } else {
-            s0 = 128;
+            s0 = 0;
         }
 
         for (int i = 0; i < 256; i++)
-            residual[i] = clip(residual[i] + s0, 0, 255);
+            pixOut[i] = (byte) clip(residual[LUMA_4x4_BLOCK_LUT[i]][LUMA_4x4_POS_LUT[i]] + s0, -128, 127);
     }
 
-    public static void predictPlane(int[] residual, boolean leftAvailable, boolean topAvailable, int[] leftRow,
-            int[] topLine, int[] topLeft, int x) {
+    public static void predictPlane(int[][] residual, boolean leftAvailable, boolean topAvailable, byte[] leftRow,
+            byte[] topLine, byte[] topLeft, int x, byte[] pixOut) {
         int H = 0;
 
         for (int i = 0; i < 7; i++) {
@@ -102,8 +101,8 @@ public class Intra16x16PredictionBuilder {
         int off = 0;
         for (int j = 0; j < 16; j++) {
             for (int i = 0; i < 16; i++, off++) {
-                int val = clip((a + b * (i - 7) + c * (j - 7) + 16) >> 5, 0, 255);
-                residual[off] = clip(residual[off] + val, 0, 255);
+                int val = clip((a + b * (i - 7) + c * (j - 7) + 16) >> 5, -128, 127);
+                pixOut[off] = (byte) clip(residual[LUMA_4x4_BLOCK_LUT[off]][LUMA_4x4_POS_LUT[off]] + val, -128, 127);
             }
         }
     }

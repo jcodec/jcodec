@@ -3,6 +3,13 @@ package net.sourceforge.jaad.aac.gain;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.syntax.ICSInfo.WindowSequence;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
+ * @author in-somnia
+ */
 //inverse modified discrete cosine transform
 class IMDCT implements GCConstants, IMDCTTables, Windows {
 

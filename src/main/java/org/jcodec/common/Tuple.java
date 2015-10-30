@@ -8,8 +8,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class Tuple {
@@ -95,17 +97,6 @@ public class Tuple {
         Set<Entry<T0, T1>> entrySet = m.entrySet();
         for (Entry<T0, T1> entry : entrySet) {
             result.add(_2(entry.getKey(), entry.getValue()));
-        }
-        return result;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T0, T1> _2<T0, T1>[] asArray(Map<T0, T1> m) {
-        _2<T0, T1>[] result = (_2<T0, T1>[]) (new Object[m.size()]);
-        Set<Entry<T0, T1>> entrySet = m.entrySet();
-        int i = 0;
-        for (Entry<T0, T1> entry : entrySet) {
-            result[i++] = _2(entry.getKey(), entry.getValue());
         }
         return result;
     }

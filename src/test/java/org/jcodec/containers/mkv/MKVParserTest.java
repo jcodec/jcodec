@@ -15,6 +15,7 @@ import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class MKVParserTest {
@@ -37,7 +38,7 @@ public class MKVParserTest {
         IOUtils.closeQuietly(fileInputStream);
     }
     
-    @Test
+    @Ignore @Test
     public void testFindAll() throws IOException {
         for (File aFile : suite.allTests()) {
             System.out.println("Scanning file: " + aFile.getAbsolutePath());
@@ -59,7 +60,7 @@ public class MKVParserTest {
         }
     }
 
-    @Test
+    @Ignore @Test
     public void testFind() throws IOException {
         System.out.println("Scanning file: " + suite.test5.getAbsolutePath());
         FileInputStream stream = null;
@@ -81,7 +82,7 @@ public class MKVParserTest {
         }
     }
 
-    @Test
+    @Ignore @Test
     public void testFirstElementAndSizeAsBytes() throws Exception {
         FileInputStream fis = new FileInputStream("./src/test/resources/mkv/10frames.webm");
         try {
@@ -94,7 +95,7 @@ public class MKVParserTest {
         }
     }
     
-    @Test
+    @Ignore @Test
     public void testFirstElement() throws Exception {
         FileInputStream fis = new FileInputStream("./src/test/resources/mkv/10frames.webm");
         try {

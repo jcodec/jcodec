@@ -32,6 +32,7 @@ import org.jcodec.scale.AWTUtil;
  * @author The JCodec project
  * 
  */
+@Deprecated
 public class FrameGrab extends org.jcodec.api.FrameGrab {
     public FrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
         super(in);

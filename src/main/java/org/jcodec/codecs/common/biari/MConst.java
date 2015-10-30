@@ -6,7 +6,7 @@ package org.jcodec.codecs.common.biari;
  * 
  * Shared constants for H264 CABAC M encoder/decoder
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MConst {

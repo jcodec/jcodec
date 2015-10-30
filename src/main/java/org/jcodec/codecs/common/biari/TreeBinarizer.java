@@ -8,7 +8,7 @@ import java.io.IOException;
  * 
  * Binarization and context modeling using binary search tree
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class TreeBinarizer {

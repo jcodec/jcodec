@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
+import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.dct.DCTRef;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.BitReader;
@@ -86,10 +87,6 @@ public class TestProresEncoder {
         diffArray(U, result.getPlaneData(1));
         System.out.println("V");
         diffArray(V, result.getPlaneData(2));
-
-        // Assert.assertArrayEquals(Y, result.getY());
-        // Assert.assertArrayEquals(U, result.getCb());
-        // Assert.assertArrayEquals(V, result.getCr());
     }
 
     private int[] randomArray(int size, int off, int max) {
@@ -100,15 +97,20 @@ public class TestProresEncoder {
         return result;
     }
 
+    @Test
     public void testIdct() {
-        int[] rand = randomArray(64, 4, 1019);
-        int[] newRand = new int[rand.length];
-        System.arraycopy(rand, 0, newRand, 0, rand.length);
-        DCTRef.fdct(rand, 0);
-        for (int i = 0; i < 64; i++)
-            rand[i] >>= 2;
-        SimpleIDCT10Bit.idct10(rand, 0);
-        diffArray(rand, newRand);
+        int[] rand = randomArray(64, 4, 255);
+        byte[] rand8Bit = ArrayUtil.toByteArrayShifted(rand);
+        
+        int[] out = new int[64];
+        SimpleIDCT10Bit.fdct10(rand8Bit, 0, out);
+        for (int i = 0; i < 64; i++) {
+            out[i] >>= 2;
+            rand[i] <<= 2;
+        }
+        
+        SimpleIDCT10Bit.idct10(out, 0);
+        diffArray(rand, out);
 
     }
 
@@ -119,7 +121,7 @@ public class TestProresEncoder {
             if (diff > maxDiff)
                 maxDiff = diff;
         }
-        Assert.assertTrue(maxDiff < 50);
+        Assert.assertTrue("Maxdiff: " + maxDiff, maxDiff < 50);
     }
 
 }

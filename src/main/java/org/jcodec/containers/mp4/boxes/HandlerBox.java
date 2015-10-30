@@ -11,7 +11,7 @@ import org.jcodec.common.JCodecUtil;
  * 
  * A handler description box
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class HandlerBox extends FullBox {

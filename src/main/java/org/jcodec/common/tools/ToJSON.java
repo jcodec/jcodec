@@ -15,11 +15,13 @@ import org.jcodec.common.IntArrayList;
 import org.jcodec.common.NIOUtils;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Simple JSON serializer, introduced because jcodec can not use dependencies as
  * they bring frastration on some platforms
  * 
- * @author Jay Codec
- * 
+ * @author The JCodec project
  */
 public class ToJSON {
     static Set<Class> primitive = new HashSet<Class>();
@@ -197,7 +199,7 @@ public class ToJSON {
             float[] a = (float[]) obj;
             builder.append("[");
             for (int i = 0; i < a.length; i++) {
-                builder.append(String.format(".3f", a[i]));
+                builder.append(String.format("%.3f", a[i]));
                 if (i < a.length - 1)
                     builder.append(",");
             }
@@ -206,7 +208,7 @@ public class ToJSON {
             double[] a = (double[]) obj;
             builder.append("[");
             for (int i = 0; i < a.length; i++) {
-                builder.append(String.format(".6f", a[i]));
+                builder.append(String.format("%.6f", a[i]));
                 if (i < a.length - 1)
                     builder.append(",");
             }

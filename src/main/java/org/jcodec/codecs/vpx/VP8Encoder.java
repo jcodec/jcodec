@@ -11,6 +11,7 @@ import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -474,5 +475,10 @@ public class VP8Encoder implements VideoEncoder {
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
         return new ColorSpace[] { ColorSpace.YUV420J };
+    }
+
+    @Override
+    public ByteBuffer encodeFrame(Picture8Bit pic, ByteBuffer _out) {
+        throw new RuntimeException("Unsupported");
     }
 }

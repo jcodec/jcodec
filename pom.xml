@@ -6,7 +6,7 @@
 	<name>JCodec</name>
 	<url>http://jcodec.org</url>
 	<packaging>jar</packaging>
-	<version>0.1.10z5</version>
+	<version>0.2</version>
 	<description>Pure Java implementation of video/audio codecs and formats</description>
 	<licenses>
 		<license>
@@ -85,6 +85,31 @@
 					<template>site.vm</template>
 				</configuration>
 			</plugin>
+			<plugin>
+	            <groupId>org.codehaus.mojo</groupId>
+	            <artifactId>findbugs-maven-plugin</artifactId>
+	            <version>2.5.2</version>
+	            <configuration>
+	                <effort>Max</effort>
+	                <!-- Reports all bugs (other values are medium and max) -->
+	                <threshold>Max</threshold>
+	                <!-- Build doesn't fail if problems are found -->
+                	<failOnError>false</failOnError>
+	                <!-- Produces XML report -->
+	                <xmlOutput>false</xmlOutput>
+	                <!-- Configures the directory in which the XML report is created -->
+	                <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
+	            </configuration>
+	            <executions>
+		            <execution>
+	                    <id>analyze-compile</id>
+	                    <phase>compile</phase>
+	                    <goals>
+	                        <goal>check</goal>
+	                    </goals>
+	                </execution>
+                </executions>
+	        </plugin>
 		</plugins>
 	</build>
 	<dependencies>

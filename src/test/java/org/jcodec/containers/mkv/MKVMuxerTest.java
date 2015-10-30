@@ -32,6 +32,7 @@ import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class MKVMuxerTest {
@@ -43,7 +44,7 @@ public class MKVMuxerTest {
     private MKVTestSuite suite;
 
     
-    @Test
+    @Ignore @Test
     public void testRead10Frames() throws Exception {
         byte[][] rawFrames = new byte[10][];
         rawFrames[0] = readFileToByteArray(new File("src/test/resources/mkv/10frames01.vp8"));
@@ -105,7 +106,7 @@ public class MKVMuxerTest {
         }
     }
 
-    @Test
+    @Ignore @Test
     public void showKeyFrames() throws IOException {
         FileInputStream inputStream = new FileInputStream(suite.test5);
         MKVParser p = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
@@ -145,12 +146,12 @@ public class MKVMuxerTest {
             System.out.println("CueTime " + tc.get() + " " + tc.offset);
     }
 
-    @Test
+    @Ignore @Test
     public void testMatroskaBytes() throws Exception {
         Assert.assertArrayEquals(new byte[] { 0x6d, 0x61, 0x74, 0x72, 0x6f, 0x73, 0x6b, 0x61 }, "matroska".getBytes());
     }
 
-    @Test
+    @Ignore @Test
     public void testEBMLHeaderMuxin() throws Exception {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
@@ -171,7 +172,7 @@ public class MKVMuxerTest {
         System.out.println("c: " + bb.capacity() + " p: " + bb.position() + " l: " + bb.limit());
     }
 
-    @Test
+    @Ignore @Test
     public void testEbmlMasterMuxig() throws Exception {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
@@ -184,7 +185,7 @@ public class MKVMuxerTest {
         Assert.assertArrayEquals(new byte[] { 0x1A, 0x45, (byte) 0xDF, (byte) 0xA3, (byte) 0x8B, 0x42, (byte) 0x82, (byte) 0x88, 0x6d, 0x61, 0x74, 0x72, 0x6f, 0x73, 0x6b, 0x61 }, bb.array());
     }
 
-    @Test
+    @Ignore @Test
     public void testEmptyEbmlMasterMuxig() throws Exception {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
@@ -200,7 +201,7 @@ public class MKVMuxerTest {
             Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
     }
 
-    @Test
+    @Ignore @Test
     public void copyMuxing() throws Exception {
         FileInputStream inputStream = new FileInputStream(suite.test3);
         MKVParser parser = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
@@ -320,7 +321,7 @@ public class MKVMuxerTest {
         return blocks;
     }
 
-    @Test
+    @Ignore @Test
     public void testBasicMathDivision() throws Exception {
         int framesPerCluster = 25;
         int i = 0;
@@ -331,7 +332,7 @@ public class MKVMuxerTest {
         Assert.assertEquals(0, i%framesPerCluster);
     }
     
-    @Test
+    @Ignore @Test
     public void testBasicLinkedList() throws Exception {
         LinkedList<Integer> ll = new LinkedList<Integer>();
         ll.add(1);

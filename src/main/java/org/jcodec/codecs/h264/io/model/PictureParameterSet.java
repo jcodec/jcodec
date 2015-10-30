@@ -27,7 +27,7 @@ import org.jcodec.common.io.BitWriter;
  * 
  * capable to serialize / deserialize with CAVLC bitstream
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class PictureParameterSet {

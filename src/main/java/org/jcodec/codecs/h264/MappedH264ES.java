@@ -22,7 +22,7 @@ import org.jcodec.common.model.Packet;
  * 
  * Extracts H.264 frames out H.264 Elementary stream ( according to Annex B )
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MappedH264ES implements DemuxerTrack {

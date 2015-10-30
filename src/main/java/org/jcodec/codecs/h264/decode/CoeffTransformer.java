@@ -10,7 +10,7 @@ import org.jcodec.common.ArrayUtil;
  * 
  * Integer DCT 4x4 base implementation
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class CoeffTransformer {

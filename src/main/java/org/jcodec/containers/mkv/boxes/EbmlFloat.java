@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * 
  * EBML IO implementation
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class EbmlFloat extends EbmlBin {

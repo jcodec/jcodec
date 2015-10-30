@@ -4,6 +4,7 @@ import java.util.Comparator;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 
 /**
@@ -15,7 +16,7 @@ import org.jcodec.common.model.Rect;
  * @author The JCodec project
  * 
  */
-public class Frame extends Picture {
+public class Frame extends Picture8Bit {
     private int frameNo;
     private SliceType frameType;
     private int[][][][] mvs;
@@ -23,7 +24,7 @@ public class Frame extends Picture {
     private boolean shortTerm;
     private int poc;
 
-    public Frame(int width, int height, int[][] data, ColorSpace color, Rect crop, int frameNo, SliceType frameType,
+    public Frame(int width, int height, byte[][] data, ColorSpace color, Rect crop, int frameNo, SliceType frameType,
             int[][][][] mvs, Frame[][][] refsUsed, int poc) {
         super(width, height, data, color, crop);
         this.frameNo = frameNo;
@@ -34,13 +35,13 @@ public class Frame extends Picture {
     }
 
     public static Frame createFrame(Frame pic) {
-        Picture comp = pic.createCompatible();
+        Picture8Bit comp = pic.createCompatible();
         return new Frame(comp.getWidth(), comp.getHeight(), comp.getData(), comp.getColor(), pic.getCrop(),
                 pic.frameNo, pic.frameType, pic.mvs, pic.refsUsed, pic.poc);
     }
 
     public Frame cropped() {
-        Picture cropped = super.cropped();
+        Picture8Bit cropped = super.cropped();
         return new Frame(cropped.getWidth(), cropped.getHeight(), cropped.getData(), cropped.getColor(), null, frameNo,
                 frameType, mvs, refsUsed, poc);
     }

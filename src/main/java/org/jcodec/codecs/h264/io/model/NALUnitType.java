@@ -8,7 +8,7 @@ import java.util.EnumSet;
  * 
  * NAL unit type
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public enum NALUnitType {

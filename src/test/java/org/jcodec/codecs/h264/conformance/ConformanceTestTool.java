@@ -20,7 +20,7 @@ import org.jcodec.common.model.Picture;
 /**
  * A tool to test jcodec for conformance
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class ConformanceTestTool {

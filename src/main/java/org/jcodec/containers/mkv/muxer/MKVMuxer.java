@@ -49,6 +49,13 @@ import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.muxer.MKVMuxerTrack.MKVMuxerTrackType;
 
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public class MKVMuxer {
 
     private List<MKVMuxerTrack> tracks = new ArrayList<MKVMuxerTrack>();

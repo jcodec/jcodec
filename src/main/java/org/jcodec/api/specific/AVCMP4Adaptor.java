@@ -2,7 +2,7 @@ package org.jcodec.api.specific;
 
 import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
 
-import org.jcodec.api.FrameGrab.MediaInfo;
+import org.jcodec.api.MediaInfo;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
@@ -10,6 +10,7 @@ import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -65,10 +66,25 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         this(((AbstractMP4DemuxerTrack) vt).getSampleEntries());
     }
 
+    @Deprecated
     public Picture decodeFrame(Packet packet, int[][] data) {
         updateState(packet);
 
         Picture pic = ((H264Decoder) decoder).decodeFrame(H264Utils.splitMOVPacket(packet.getData(), avcCBox), data);
+        PixelAspectExt pasp = Box.findFirst(ses[curENo], PixelAspectExt.class, "pasp");
+
+        if (pasp != null) {
+            // TODO: transform
+        }
+
+        return pic;
+    }
+
+    public Picture8Bit decodeFrame8Bit(Packet packet, byte[][] data) {
+        updateState(packet);
+
+        Picture8Bit pic = ((H264Decoder) decoder).decodeFrame8Bit(H264Utils.splitMOVPacket(packet.getData(), avcCBox),
+                data);
         PixelAspectExt pasp = Box.findFirst(ses[curENo], PixelAspectExt.class, "pasp");
 
         if (pasp != null) {
@@ -96,12 +112,18 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     }
 
     @Override
+    @Deprecated
     public int[][] allocatePicture() {
         return Picture.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
     }
 
-	@Override
-	public MediaInfo getMediaInfo() {
-		return new MediaInfo(size);
-	}
+    @Override
+    public byte[][] allocatePicture8Bit() {
+        return Picture8Bit.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
+    }
+
+    @Override
+    public MediaInfo getMediaInfo() {
+        return new MediaInfo(size);
+    }
 }

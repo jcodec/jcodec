@@ -1,5 +1,7 @@
 package org.jcodec.codecs.h264.decode;
 
+import static org.jcodec.codecs.h264.H264Const.CHROMA_BLOCK_LUT;
+import static org.jcodec.codecs.h264.H264Const.CHROMA_POS_LUT;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 /**
@@ -8,55 +10,56 @@ import static org.jcodec.common.tools.MathUtil.clip;
  * 
  * Prediction builder for chroma samples
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class ChromaPredictionBuilder {
 
-    public static void predictWithMode(int[] planeData, int chromaMode, int mbX, boolean leftAvailable,
-            boolean topAvailable, int[] leftRow, int[] topLine, int[] topLeft) {
+    public static void predictWithMode(int[][] residual, int chromaMode, int mbX, boolean leftAvailable,
+            boolean topAvailable, byte[] leftRow, byte[] topLine, byte[] topLeft, byte[] pixOut) {
 
         switch (chromaMode) {
         case 0:
-            predictDC(planeData, mbX, leftAvailable, topAvailable, leftRow, topLine);
+            predictDC(residual, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut);
             break;
         case 1:
-            predictHorizontal(planeData, mbX, leftAvailable, leftRow);
+            predictHorizontal(residual, mbX, leftAvailable, leftRow, pixOut);
             break;
         case 2:
-            predictVertical(planeData, mbX, topAvailable, topLine);
+            predictVertical(residual, mbX, topAvailable, topLine, pixOut);
             break;
         case 3:
-            predictPlane(planeData, mbX, leftAvailable, topAvailable, leftRow, topLine, topLeft);
+            predictPlane(residual, mbX, leftAvailable, topAvailable, leftRow, topLine, topLeft, pixOut);
             break;
         }
 
     }
 
-    public static void predictDC(int[] planeData, int mbX, boolean leftAvailable, boolean topAvailable, int[] leftRow,
-            int[] topLine) {
-        predictDCInside(planeData, 0, 0, mbX, leftAvailable, topAvailable, leftRow, topLine);
-        predictDCTopBorder(planeData, 1, 0, mbX, leftAvailable, topAvailable, leftRow, topLine);
-        predictDCLeftBorder(planeData, 0, 1, mbX, leftAvailable, topAvailable, leftRow, topLine);
-        predictDCInside(planeData, 1, 1, mbX, leftAvailable, topAvailable, leftRow, topLine);
+    public static void predictDC(int[][] planeData, int mbX, boolean leftAvailable, boolean topAvailable,
+            byte[] leftRow, byte[] topLine, byte[] pixOut) {
+        predictDCInside(planeData, 0, 0, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut);
+        predictDCTopBorder(planeData, 1, 0, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut);
+        predictDCLeftBorder(planeData, 0, 1, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut);
+        predictDCInside(planeData, 1, 1, mbX, leftAvailable, topAvailable, leftRow, topLine, pixOut);
     }
 
-    public static void predictVertical(int[] planeData, int mbX, boolean topAvailable, int[] topLine) {
+    public static void predictVertical(int[][] residual, int mbX, boolean topAvailable, byte[] topLine, byte[] pixOut) {
         for (int off = 0, j = 0; j < 8; j++) {
             for (int i = 0; i < 8; i++, off++)
-                planeData[off] = clip(planeData[off] + topLine[(mbX << 3) + i], 0, 255);
+                pixOut[off] = (byte) clip(residual[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]]
+                        + topLine[(mbX << 3) + i], -128, 127);
         }
     }
 
-    public static void predictHorizontal(int[] planeData, int mbX, boolean leftAvailable, int[] leftRow) {
+    public static void predictHorizontal(int[][] residual, int mbX, boolean leftAvailable, byte[] leftRow, byte[] pixOut) {
         for (int off = 0, j = 0; j < 8; j++) {
             for (int i = 0; i < 8; i++, off++)
-                planeData[off] = clip(planeData[off] + leftRow[j], 0, 255);
+                pixOut[off] = (byte) clip(residual[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] + leftRow[j], -128, 127);
         }
     }
 
-    public static void predictDCInside(int[] planeData, int blkX, int blkY, int mbX, boolean leftAvailable,
-            boolean topAvailable, int[] leftRow, int[] topLine) {
+    public static void predictDCInside(int[][] residual, int blkX, int blkY, int mbX, boolean leftAvailable,
+            boolean topAvailable, byte[] leftRow, byte[] topLine, byte[] pixOut) {
 
         int s0, blkOffX = (blkX << 2) + (mbX << 3), blkOffY = blkY << 2;
 
@@ -79,19 +82,19 @@ public class ChromaPredictionBuilder {
                 s0 += topLine[blkOffX + i];
             s0 = (s0 + 2) >> 2;
         } else {
-            s0 = 128;
+            s0 = 0;
         }
 
         for (int off = (blkY << 5) + (blkX << 2), j = 0; j < 4; j++, off += 8) {
-            planeData[off] = clip(planeData[off] + s0, 0, 255);
-            planeData[off + 1] = clip(planeData[off + 1] + s0, 0, 255);
-            planeData[off + 2] = clip(planeData[off + 2] + s0, 0, 255);
-            planeData[off + 3] = clip(planeData[off + 3] + s0, 0, 255);
+            pixOut[off] = (byte) clip(residual[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] + s0, -128, 127);
+            pixOut[off + 1] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 1]][CHROMA_POS_LUT[off + 1]] + s0, -128, 127);
+            pixOut[off + 2] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 2]][CHROMA_POS_LUT[off + 2]] + s0, -128, 127);
+            pixOut[off + 3] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 3]][CHROMA_POS_LUT[off + 3]] + s0, -128, 127);
         }
     }
 
-    public static void predictDCTopBorder(int[] planeData, int blkX, int blkY, int mbX, boolean leftAvailable,
-            boolean topAvailable, int[] leftRow, int[] topLine) {
+    public static void predictDCTopBorder(int[][] residual, int blkX, int blkY, int mbX, boolean leftAvailable,
+            boolean topAvailable, byte[] leftRow, byte[] topLine, byte[] pixOut) {
 
         int s1, blkOffX = (blkX << 2) + (mbX << 3), blkOffY = blkY << 2;
         if (topAvailable) {
@@ -106,19 +109,19 @@ public class ChromaPredictionBuilder {
                 s1 += leftRow[blkOffY + i];
             s1 = (s1 + 2) >> 2;
         } else {
-            s1 = 128;
+            s1 = 0;
         }
 
         for (int off = (blkY << 5) + (blkX << 2), j = 0; j < 4; j++, off += 8) {
-            planeData[off] = clip(planeData[off] + s1, 0, 255);
-            planeData[off + 1] = clip(planeData[off + 1] + s1, 0, 255);
-            planeData[off + 2] = clip(planeData[off + 2] + s1, 0, 255);
-            planeData[off + 3] = clip(planeData[off + 3] + s1, 0, 255);
+            pixOut[off] = (byte) clip(residual[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] + s1, -128, 127);
+            pixOut[off + 1] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 1]][CHROMA_POS_LUT[off + 1]] + s1, -128, 127);
+            pixOut[off + 2] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 2]][CHROMA_POS_LUT[off + 2]] + s1, -128, 127);
+            pixOut[off + 3] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 3]][CHROMA_POS_LUT[off + 3]] + s1, -128, 127);
         }
     }
 
-    public static void predictDCLeftBorder(int[] planeData, int blkX, int blkY, int mbX, boolean leftAvailable,
-            boolean topAvailable, int[] leftRow, int[] topLine) {
+    public static void predictDCLeftBorder(int[][] residual, int blkX, int blkY, int mbX, boolean leftAvailable,
+            boolean topAvailable, byte[] leftRow, byte[] topLine, byte[] pixOut) {
 
         int s2, blkOffX = (blkX << 2) + (mbX << 3), blkOffY = blkY << 2;
         if (leftAvailable) {
@@ -132,19 +135,19 @@ public class ChromaPredictionBuilder {
                 s2 += topLine[blkOffX + i];
             s2 = (s2 + 2) >> 2;
         } else {
-            s2 = 128;
+            s2 = 0;
         }
 
         for (int off = (blkY << 5) + (blkX << 2), j = 0; j < 4; j++, off += 8) {
-            planeData[off] = clip(planeData[off] + s2, 0, 255);
-            planeData[off + 1] = clip(planeData[off + 1] + s2, 0, 255);
-            planeData[off + 2] = clip(planeData[off + 2] + s2, 0, 255);
-            planeData[off + 3] = clip(planeData[off + 3] + s2, 0, 255);
+            pixOut[off] = (byte) clip(residual[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] + s2, -128, 127);
+            pixOut[off + 1] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 1]][CHROMA_POS_LUT[off + 1]] + s2, -128, 127);
+            pixOut[off + 2] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 2]][CHROMA_POS_LUT[off + 2]] + s2, -128, 127);
+            pixOut[off + 3] = (byte) clip(residual[CHROMA_BLOCK_LUT[off + 3]][CHROMA_POS_LUT[off + 3]] + s2, -128, 127);
         }
     }
 
-    public static void predictPlane(int[] planeData, int mbX, boolean leftAvailable, boolean topAvailable,
-            int[] leftRow, int[] topLine, int[] topLeft) {
+    public static void predictPlane(int[][] residual, int mbX, boolean leftAvailable, boolean topAvailable,
+            byte[] leftRow, byte[] topLine, byte[] topLeft, byte[] pixOut) {
         int H = 0, blkOffX = (mbX << 3);
 
         for (int i = 0; i < 3; i++) {
@@ -165,7 +168,7 @@ public class ChromaPredictionBuilder {
         for (int off = 0, j = 0; j < 8; j++) {
             for (int i = 0; i < 8; i++, off++) {
                 int val = (a + b * (i - 3) + c * (j - 3) + 16) >> 5;
-                planeData[off] = clip(planeData[off] + clip(val, 0, 255), 0, 255);
+                pixOut[off] = (byte) clip(residual[CHROMA_BLOCK_LUT[off]][CHROMA_POS_LUT[off]] + clip(val, -128, 127), -128, 127);
             }
         }
     }

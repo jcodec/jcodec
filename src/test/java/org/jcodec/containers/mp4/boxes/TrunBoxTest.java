@@ -28,7 +28,7 @@ public class TrunBoxTest {
         bb.getLong(); // box header
         parsed.parse(bb);
 
-        Assert.assertEquals(box, parsed);
+        Assert.assertEquals(box.toString(), parsed.toString());
 
     }
 }

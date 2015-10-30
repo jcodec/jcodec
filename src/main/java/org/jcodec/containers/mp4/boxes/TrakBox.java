@@ -253,8 +253,40 @@ public class TrakBox extends NodeBox {
 
         return new Size(vse.getWidth(), vse.getHeight());
     }
-    
+
     protected void getModelFields(List<String> model) {
 
+    }
+
+    public TimeToSampleBox getStts() {
+        return NodeBox.findFirst(this, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
+    }
+
+    public ChunkOffsetsBox getStco() {
+        return NodeBox.findFirst(this, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
+    }
+
+    public ChunkOffsets64Box getCo64() {
+        return NodeBox.findFirst(this, ChunkOffsets64Box.class, "mdia", "minf", "stbl", "co64");
+    }
+
+    public SampleSizesBox getStsz() {
+        return NodeBox.findFirst(this, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+    }
+
+    public SampleToChunkBox getStsc() {
+        return NodeBox.findFirst(this, SampleToChunkBox.class, "mdia", "minf", "stbl", "stsc");
+    }
+
+    public SampleDescriptionBox getStsd() {
+        return NodeBox.findFirst(this, SampleDescriptionBox.class, "mdia", "minf", "stbl", "stsd");
+    }
+
+    public SyncSamplesBox getStss() {
+        return Box.findFirst(this, SyncSamplesBox.class, "mdia", "minf", "stbl", "stss");
+    }
+
+    public CompositionOffsetsBox getCtts() {
+        return Box.findFirst(this, CompositionOffsetsBox.class, "mdia", "minf", "stbl", "ctts");
     }
 }

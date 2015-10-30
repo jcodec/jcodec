@@ -6,7 +6,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
 public abstract class H264SplitterBase {
 	private static final int NU_IDR = 5;
 	private static final int NU_NON_IDR = 1;

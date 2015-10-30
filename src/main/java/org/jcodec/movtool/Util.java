@@ -112,7 +112,7 @@ public class Util {
     }
 
     public static long[] getTimevalues(TrakBox track) {
-        TimeToSampleBox stts = findFirst(track, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
+        TimeToSampleBox stts = track.getStts();
         int count = 0;
         TimeToSampleEntry[] tts = stts.getEntries();
         for (int i = 0; i < tts.length; i++)
@@ -168,8 +168,8 @@ public class Util {
     }
 
     private static void appendSampleSizes(TrakBox trakBox1, TrakBox trakBox2) {
-        SampleSizesBox stsz1 = NodeBox.findFirst(trakBox1, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
-        SampleSizesBox stsz2 = NodeBox.findFirst(trakBox2, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        SampleSizesBox stsz1 = trakBox1.getStsz();
+        SampleSizesBox stsz2 = trakBox2.getStsz();
         if (stsz1.getDefaultSize() != stsz2.getDefaultSize())
             throw new IllegalArgumentException("Can't append to track that has different default sample size");
         SampleSizesBox stszr;
@@ -182,8 +182,8 @@ public class Util {
     }
 
     private static void appendSampleToChunk(TrakBox trakBox1, TrakBox trakBox2, int off) {
-        SampleToChunkBox stsc1 = NodeBox.findFirst(trakBox1, SampleToChunkBox.class, "mdia", "minf", "stbl", "stsc");
-        SampleToChunkBox stsc2 = NodeBox.findFirst(trakBox2, SampleToChunkBox.class, "mdia", "minf", "stbl", "stsc");
+        SampleToChunkBox stsc1 = trakBox1.getStsc();
+        SampleToChunkBox stsc2 = trakBox2.getStsc();
 
         SampleToChunkEntry[] orig = stsc2.getSampleToChunk();
         SampleToChunkEntry[] shifted = new SampleToChunkEntry[orig.length];
@@ -198,8 +198,8 @@ public class Util {
     private static int appendEntries(TrakBox trakBox1, TrakBox trakBox2) {
         appendDrefs(trakBox1, trakBox2);
 
-        SampleEntry[] ent1 = NodeBox.findAll(trakBox1, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
-        SampleEntry[] ent2 = NodeBox.findAll(trakBox2, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
+        SampleEntry[] ent1 = trakBox1.getSampleEntries();
+        SampleEntry[] ent2 = trakBox2.getSampleEntries();
 
         SampleDescriptionBox stsd = new SampleDescriptionBox(ent1);
         for (SampleEntry se : ent2) {
@@ -218,18 +218,18 @@ public class Util {
     }
 
     private static void appendTimeToSamples(TrakBox trakBox1, TrakBox trakBox2) {
-        TimeToSampleBox stts1 = NodeBox.findFirst(trakBox1, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
-        TimeToSampleBox stts2 = NodeBox.findFirst(trakBox2, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
+        TimeToSampleBox stts1 = trakBox1.getStts();
+        TimeToSampleBox stts2 = trakBox2.getStts();
         TimeToSampleBox sttsNew = new TimeToSampleBox((TimeToSampleEntry[]) addAll(stts1.getEntries(),
                 stts2.getEntries()));
         NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stts", sttsNew);
     }
 
     private static void appendChunkOffsets(TrakBox trakBox1, TrakBox trakBox2) {
-        ChunkOffsetsBox stco1 = NodeBox.findFirst(trakBox1, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
-        ChunkOffsets64Box co641 = NodeBox.findFirst(trakBox1, ChunkOffsets64Box.class, "mdia", "minf", "stbl", "co64");
-        ChunkOffsetsBox stco2 = NodeBox.findFirst(trakBox2, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
-        ChunkOffsets64Box co642 = NodeBox.findFirst(trakBox2, ChunkOffsets64Box.class, "mdia", "minf", "stbl", "co64");
+        ChunkOffsetsBox stco1 = trakBox1.getStco();
+        ChunkOffsets64Box co641 = trakBox1.getCo64();
+        ChunkOffsetsBox stco2 = trakBox2.getStco();
+        ChunkOffsets64Box co642 = trakBox2.getCo64();
 
         long[] off1 = stco1 == null ? co641.getChunkOffsets() : stco1.getChunkOffsets();
         long[] off2 = stco2 == null ? co642.getChunkOffsets() : stco2.getChunkOffsets();

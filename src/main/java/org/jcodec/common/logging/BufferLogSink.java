@@ -6,10 +6,12 @@ import java.util.List;
 import org.jcodec.common.logging.Logger.Message;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Just stores log messages to be extracted at later point
  * 
- * @author Jay Codec
- * 
+ * @author The JCodec project
  */
 public class BufferLogSink implements Logger.LogSink {
 

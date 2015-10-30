@@ -5,9 +5,9 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.NIOUtils;
@@ -45,7 +45,7 @@ public abstract class Box {
         return findFirst(box, Box.class, path);
     }
 
-    public static <T> T findFirst(NodeBox box, Class<T> clazz, String... path) {
+    public static <T extends Box> T findFirst(NodeBox box, Class<T> clazz, String... path) {
         T[] result = (T[]) findAll(box, clazz, path);
 
         return result.length > 0 ? result[0] : null;
@@ -73,7 +73,7 @@ public abstract class Box {
         }
     }
 
-    public static <T> T[] findAll(Box box, Class<T> class1, String... path) {
+    public static <T extends Box> T[] findAll(Box box, Class<T> class1, String... path) {
         List<Box> result = new LinkedList<Box>();
         List<String> tlist = new LinkedList<String>();
         for (String type : path) {
@@ -82,13 +82,19 @@ public abstract class Box {
 
         findBox(box, tlist, result);
 
-        for (Iterator<Box> it = result.iterator(); it.hasNext();) {
+        for (ListIterator<Box> it = result.listIterator(); it.hasNext();) {
             Box next = it.next();
-            if (next == null || !class1.isAssignableFrom(next.getClass())) {
-                if (next != null)
-                    Logger.warn("Ignoring box: " + next.getClass().getName() + " for it's not of the target class: "
-                            + class1.getName());
+            if (next == null) {
                 it.remove();
+            } else if (!class1.isAssignableFrom(next.getClass())) {
+                // Trying to reinterpret one box as the other
+                try {
+                    it.set(Box.as(class1, next));
+                } catch (Exception e) {
+                    Logger.warn("Failed to reinterpret box: " + next.getFourcc() + " as: " + class1.getName() + "."
+                            + e.getMessage());
+                    it.remove();
+                }
             }
         }
         return result.toArray((T[]) Array.newInstance(class1, 0));
@@ -116,18 +122,6 @@ public abstract class Box {
         return sb.toString();
 
     }
-
-//    @Override
-//    public int hashCode() {
-//        return toString().hashCode();
-//    }
-//
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (obj == null)
-//            return false;
-//        return toString().equals(obj.toString());
-//    }
 
     protected void dump(StringBuilder sb) {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
@@ -163,10 +157,23 @@ public abstract class Box {
         }
     }
 
+    public static <T extends Box> T as(Class<T> class1, Box box) {
+        try {
+            T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
+            ByteBuffer buffer = ByteBuffer.allocate((int)box.getHeader().getBodySize());
+            box.doWrite(buffer);
+            buffer.flip();
+            res.parse(buffer);
+            return res;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     public static <T extends Box> T as(Class<T> class1, LeafBox box) {
         try {
             T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
-            res.parse(box.getData());
+            res.parse(box.getData().duplicate());
             return res;
         } catch (Exception e) {
             throw new RuntimeException(e);

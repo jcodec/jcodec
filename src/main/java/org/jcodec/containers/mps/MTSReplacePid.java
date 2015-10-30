@@ -17,6 +17,9 @@ import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PSISection;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Replaces pid of a stream with a different value
  * 
  * @author Stan Vitvitskyy

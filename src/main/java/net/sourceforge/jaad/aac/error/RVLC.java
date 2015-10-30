@@ -7,8 +7,14 @@ import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * Reversable variable length coding
  * Decodes scalefactors if error resilience is used.
+ * 
+ * @author in-somnia
  */
 public class RVLC implements RVLCTables {
 
@@ -23,7 +29,7 @@ public class RVLC implements RVLCTables {
 		final ICSInfo info = ics.getInfo();
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
-		final int[][] sfbCB = null; //ics.getSectionData().getSfbCB();
+		final int[][] sfbCB = {{}}; //ics.getSectionData().getSfbCB();
 
 		int sf = ics.getGlobalGain();
 		int intensityPosition = 0;
@@ -71,7 +77,7 @@ public class RVLC implements RVLCTables {
 		final ICSInfo info = ics.getInfo();
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
-		final int[][] sfbCB = null; //ics.getSectionData().getSfbCB();
+		final int[][] sfbCB = {{}}; //ics.getSectionData().getSfbCB();
 
 		final int escapesLen = in.readBits(8);
 

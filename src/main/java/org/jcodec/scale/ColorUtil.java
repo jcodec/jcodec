@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -16,6 +17,7 @@ import org.jcodec.common.model.Picture;
 public class ColorUtil {
 
     private static Map<ColorSpace, Map<ColorSpace, Transform>> map = new HashMap<ColorSpace, Map<ColorSpace, Transform>>();
+    private static Map<ColorSpace, Map<ColorSpace, Transform8Bit>> map8Bit = new HashMap<ColorSpace, Map<ColorSpace, Transform8Bit>>();
 
     static {
         Map<ColorSpace, Transform> rgb = new HashMap<ColorSpace, Transform>();
@@ -78,17 +80,63 @@ public class ColorUtil {
         yuv444j.put(ColorSpace.YUV420, new Yuv444jToYuv420p());
         yuv444j.put(ColorSpace.YUV420J, new Yuv444pToYuv420p(0, 0));
         map.put(ColorSpace.YUV444J, yuv444j);
+
+        Map<ColorSpace, Transform8Bit> rgb8Bit = new HashMap<ColorSpace, Transform8Bit>();
+        rgb8Bit.put(ColorSpace.RGB, new Idential8Bit());
+        rgb8Bit.put(ColorSpace.YUV420J, new RgbToYuv420j8Bit());
+        map8Bit.put(ColorSpace.RGB, rgb8Bit);
+
+        Map<ColorSpace, Transform8Bit> yuv4208Bit = new HashMap<ColorSpace, Transform8Bit>();
+        yuv4208Bit.put(ColorSpace.YUV420, new Idential8Bit());
+        yuv4208Bit.put(ColorSpace.YUV422, new Yuv420pToYuv422p8Bit());
+        map8Bit.put(ColorSpace.YUV420, yuv4208Bit);
+
+        Map<ColorSpace, Transform8Bit> yuv4228Bit = new HashMap<ColorSpace, Transform8Bit>();
+        yuv4228Bit.put(ColorSpace.YUV422, new Idential8Bit());
+        map8Bit.put(ColorSpace.YUV422, yuv4228Bit);
+
+        Map<ColorSpace, Transform8Bit> yuv4448Bit = new HashMap<ColorSpace, Transform8Bit>();
+        yuv4448Bit.put(ColorSpace.YUV444, new Idential8Bit());
+        map8Bit.put(ColorSpace.YUV444, yuv4448Bit);
+
+        Map<ColorSpace, Transform8Bit> yuv420j8Bit = new HashMap<ColorSpace, Transform8Bit>();
+        yuv420j8Bit.put(ColorSpace.YUV420J, new Idential8Bit());
+        yuv420j8Bit.put(ColorSpace.RGB, new Yuv420jToRgb8Bit());
+        map8Bit.put(ColorSpace.YUV420J, yuv420j8Bit);
     }
 
+    @Deprecated
     public static Transform getTransform(ColorSpace from, ColorSpace to) {
         Map<ColorSpace, Transform> map2 = map.get(from);
 
         return map2 == null ? null : map2.get(to);
     }
 
+    public static Transform8Bit getTransform8Bit(ColorSpace from, ColorSpace to) {
+        Map<ColorSpace, Transform8Bit> map2 = map8Bit.get(from);
+
+        return map2 == null ? null : map2.get(to);
+    }
+
+    @Deprecated
     public static class Idential implements Transform {
         @Override
         public void transform(Picture src, Picture dst) {
+            for (int i = 0; i < 3; i++)
+                System.arraycopy(
+                        src.getPlaneData(i),
+                        0,
+                        dst.getPlaneData(i),
+                        0,
+                        Math.min(src.getPlaneWidth(i) * src.getPlaneHeight(i),
+                                dst.getPlaneWidth(i) * dst.getPlaneHeight(i)));
+
+        }
+    }
+
+    public static class Idential8Bit implements Transform8Bit {
+        @Override
+        public void transform(Picture8Bit src, Picture8Bit dst) {
             for (int i = 0; i < 3; i++)
                 System.arraycopy(
                         src.getPlaneData(i),

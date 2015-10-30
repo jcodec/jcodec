@@ -1,6 +1,10 @@
 package net.sourceforge.jaad.aac.syntax;
 
 /**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license.
+ * 
  * Inverse quantization lookup table for all possible values
  * from 0<sup>4/3</sup> to 8191<sup>4/3</sup>.
  * @author in-somnia

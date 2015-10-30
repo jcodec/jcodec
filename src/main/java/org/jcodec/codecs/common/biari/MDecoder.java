@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
  * 
  * H264 CABAC M-Coder ( decoder module )
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class MDecoder {

@@ -31,9 +31,9 @@ public class ChunkWriter {
     private TrakBox trak;
 
     public ChunkWriter(TrakBox trak, SeekableByteChannel[] inputs, SeekableByteChannel out) {
-        entries = NodeBox.findAll(trak, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
-        ChunkOffsetsBox stco = NodeBox.findFirst(trak, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
-        ChunkOffsets64Box co64 = NodeBox.findFirst(trak, ChunkOffsets64Box.class, "mdia", "minf", "stbl", "co64");
+        entries = trak.getSampleEntries();
+        ChunkOffsetsBox stco = trak.getStco();
+        ChunkOffsets64Box co64 = trak.getCo64();
         int size;
         if (stco != null)
             size = stco.getChunkOffsets().length;
@@ -71,7 +71,7 @@ public class ChunkWriter {
         dref.getBoxes().clear();
         dref.add(AliasBox.createSelfRef());
 
-        for (SampleEntry entry : NodeBox.findAll(trak, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null)) {
+        for (SampleEntry entry : trak.getSampleEntries()) {
             entry.setDrefInd((short) 1);
         }
     }

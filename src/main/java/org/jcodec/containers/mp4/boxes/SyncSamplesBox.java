@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * 
  * A box storing a list of synch samples
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class SyncSamplesBox extends FullBox {

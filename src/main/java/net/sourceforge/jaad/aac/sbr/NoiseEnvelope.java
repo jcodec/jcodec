@@ -1,5 +1,12 @@
 package net.sourceforge.jaad.aac.sbr;
 
+/**
+ * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
+ * under the Public Domain license. Code changes provided by the JCodec project
+ * are distributed under FreeBSD license. 
+ *
+ * @author in-somnia
+ */
 class NoiseEnvelope implements SBRConstants {
 
 	private static final float[] E_deq_tab = {

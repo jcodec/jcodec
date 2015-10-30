@@ -25,7 +25,7 @@ import java.util.List;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class NIOUtils {
@@ -205,7 +205,7 @@ public class NIOUtils {
     }
 
     public static ByteBuffer combine(ByteBuffer... buffer) {
-        return combine(buffer);
+        return combine(Arrays.asList(buffer));
     }
 
     public static String readString(ByteBuffer buffer, int len) {

@@ -1,5 +1,6 @@
 package org.jcodec.samples.transcode;
 
+import static java.lang.Math.min;
 import static java.lang.String.format;
 import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
 import static org.jcodec.common.NIOUtils.readableFileChannel;
@@ -7,6 +8,7 @@ import static org.jcodec.common.NIOUtils.writableFileChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.common.model.Rational.HALF;
 import static org.jcodec.common.model.Unit.SEC;
+import static org.jcodec.common.tools.MainUtils.tildeExpand;
 import static org.jcodec.containers.mp4.TrackType.SOUND;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
@@ -64,9 +66,11 @@ import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.NIOUtils;
 import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils;
@@ -97,8 +101,11 @@ import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.RgbToYuv420p;
 import org.jcodec.scale.RgbToYuv422p;
 import org.jcodec.scale.Transform;
+import org.jcodec.scale.Transform.Levels;
+import org.jcodec.scale.Transform8Bit;
 import org.jcodec.scale.Yuv420pToRgb;
 import org.jcodec.scale.Yuv420pToYuv422p;
+import org.jcodec.scale.Yuv420pToYuv422p8Bit;
 import org.jcodec.scale.Yuv422pToRgb;
 import org.jcodec.scale.Yuv422pToYuv420p;
 
@@ -106,7 +113,7 @@ import org.jcodec.scale.Yuv422pToYuv420p;
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * @author Jay Codec
+ * @author The JCodec project
  * 
  */
 public class TranscodeMain {
@@ -132,6 +139,7 @@ public class TranscodeMain {
         profiles.put("prores2vp8", new Prores2vp8());
         profiles.put("prores2webm", new Prores2webm());
         profiles.put("ts2mp4", new Ts2mp4());
+        profiles.put("tsavc2png", new TsAvc2Png());
         profiles.put("y4m2prores", new Y4m2prores());
         profiles.put("webm2png", new Webm2png());
     }
@@ -425,7 +433,7 @@ public class TranscodeMain {
                 MP4Demuxer demux = new MP4Demuxer(source);
                 MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
 
-                Transform transform = new Yuv422pToYuv420p(0, 2);
+                Transform transform = new Yuv422pToYuv420p(0, 2, Levels.PC);
 
                 H264Encoder encoder = new H264Encoder(new DumbRateControl());
 
@@ -592,13 +600,6 @@ public class TranscodeMain {
         }
     }
 
-    public static File tildeExpand(String path) {
-        if (path.startsWith("~")) {
-            path = path.replaceFirst("~", System.getProperty("user.home"));
-        }
-        return new File(path);
-    }
-
     protected static class Mkv2png implements Profile {
         public void transcode(Cmd cmd) throws IOException {
             File file = tildeExpand(cmd.getArg(0));
@@ -630,9 +631,9 @@ public class TranscodeMain {
                 int gopSize = 0;
                 int prevGopsSize = 0;
                 for (int i = 1; (inFrame = inTrack.nextFrame()) != null && i <= 200; i++) {
-                    Picture buf = Picture.create(demux.getPictureWidth(), demux.getPictureHeight(),
-                            ColorSpace.YUV422_10);
-                    Frame pic = (Frame) decoder.decodeFrame(H264Utils.splitMOVPacket(inFrame.getData(), avcC),
+                    Picture8Bit buf = Picture8Bit.create(demux.getPictureWidth(), demux.getPictureHeight(),
+                            ColorSpace.YUV420);
+                    Frame pic = (Frame) decoder.decodeFrame8Bit(H264Utils.splitMOVPacket(inFrame.getData(), avcC),
                             buf.getData());
                     if (pic.getPOC() == 0) {
                         prevGopsSize += gopSize;
@@ -644,7 +645,7 @@ public class TranscodeMain {
                         bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
                     if (rgb == null)
                         rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
-                    transform.transform(pic, rgb);
+                    transform.transform(pic.toPicture(8), rgb);
                     AWTUtil.toBufferedImage(rgb, bi);
                     int framePresentationIndex = (pic.getPOC() >> 1) + prevGopsSize;
                     System.out.println("farme" + framePresentationIndex + ".png  (" + pic.getPOC() + ">>2 == "
@@ -667,6 +668,7 @@ public class TranscodeMain {
 
     protected static class Avc2prores implements Profile {
         private static final String FLAG_RAW = "raw";
+        private static final String FLAG_MAX_FRAMES = "max-frames";
         private static final String FLAG_DUMPMV = "dumpMv";
         private static final String FLAG_DUMPMVJS = "dumpMvJs";
 
@@ -707,7 +709,7 @@ public class TranscodeMain {
 
                 ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ);
 
-                Transform transform = new Yuv420pToYuv422p(2, 0);
+                Transform8Bit transform = new Yuv420pToYuv422p8Bit();
                 boolean dumpMv = cmd.getBooleanFlag(FLAG_DUMPMV, false);
                 boolean dumpMvJs = cmd.getBooleanFlag(FLAG_DUMPMVJS, false);
 
@@ -727,13 +729,17 @@ public class TranscodeMain {
                         ;
                     dt.gotoFrame(inFrame.getFrameNo());
                 }
-                for (i = 0; (inFrame = videoTrack.nextFrame()) != null; i++) {
+                long totalH264 = 0, totalProRes = 0;
+                int maxFrames = cmd.getIntegerFlag(FLAG_MAX_FRAMES, Integer.MAX_VALUE);
+                for (i = 0; (gopLen + i) < maxFrames && (inFrame = videoTrack.nextFrame()) != null;) {
                     ByteBuffer data = inFrame.getData();
-                    Picture target1;
+                    Picture8Bit target1;
                     Frame dec;
                     if (!raw) {
-                        target1 = Picture.create(width, height, ColorSpace.YUV420);
-                        dec = decoder.decodeFrame(splitMOVPacket(data, avcC), target1.getData());
+                        target1 = Picture8Bit.create(width, height, ColorSpace.YUV420);
+                        long start = System.nanoTime();
+                        dec = decoder.decodeFrame8Bit(splitMOVPacket(data, avcC), target1.getData());
+                        totalH264 += (System.nanoTime() - start);
                         if (dumpMv)
                             dumpMv(i, dec);
                         if (dumpMvJs)
@@ -742,8 +748,10 @@ public class TranscodeMain {
                         SeqParameterSet sps = ((MappedH264ES) videoTrack).getSps()[0];
                         width = (sps.pic_width_in_mbs_minus1 + 1) << 4;
                         height = H264Utils.getPicHeightInMbs(sps) << 4;
-                        target1 = Picture.create(width, height, ColorSpace.YUV420);
-                        dec = decoder.decodeFrame(data, target1.getData());
+                        target1 = Picture8Bit.create(width, height, ColorSpace.YUV420);
+                        long start = System.nanoTime();
+                        dec = decoder.decodeFrame8Bit(data, target1.getData());
+                        totalH264 += (System.nanoTime() - start);
                         if (dumpMv)
                             dumpMv(i, dec);
                         if (dumpMvJs)
@@ -756,18 +764,20 @@ public class TranscodeMain {
                             outTrack.getEntries().get(0).add(pasp);
                     }
                     if (dec.getPOC() == 0 && gopLen > 0) {
-                        outGOP(encoder, transform, timescale, frameDuration, outTrack, gopLen, gop, totalFrames, i,
-                                width, height);
+                        totalProRes += outGOP(encoder, transform, timescale, frameDuration, outTrack, gopLen, gop,
+                                min(totalFrames, maxFrames), i, width, height);
                         i += gopLen;
                         gopLen = 0;
                     }
                     gop[gopLen++] = dec;
                 }
                 if (gopLen > 0) {
-                    outGOP(encoder, transform, timescale, frameDuration, outTrack, gopLen, gop, totalFrames, i, width,
-                            height);
+                    totalProRes += outGOP(encoder, transform, timescale, frameDuration, outTrack, gopLen, gop,
+                            min(totalFrames, maxFrames), i, width, height);
                 }
                 muxer.writeHeader();
+                System.out.println(((1000000000L * (i + gopLen)) / totalH264) + "fps (h.264 decoding).");
+                System.out.println(((1000000000L * (i + gopLen)) / totalProRes) + "fps (ProRes encoding).");
             } finally {
                 if (sink != null)
                     sink.close();
@@ -832,19 +842,22 @@ public class TranscodeMain {
             System.err.println("}");
         }
 
-        private static void outGOP(ProresEncoder encoder, Transform transform, int timescale, int frameDuration,
+        private static long outGOP(ProresEncoder encoder, Transform8Bit transform, int timescale, int frameDuration,
                 FramesMP4MuxerTrack outTrack, int gopLen, Frame[] gop, int totalFrames, int i, int codedWidth,
                 int codedHeight) throws IOException {
 
+            long totalTime = 0;
             ByteBuffer _out = ByteBuffer.allocate(codedWidth * codedHeight * 6);
-            Picture target2 = Picture.create(codedWidth, codedHeight, ColorSpace.YUV422_10);
+            Picture8Bit target2 = Picture8Bit.create(codedWidth, codedHeight, ColorSpace.YUV422_10);
             Arrays.sort(gop, 0, gopLen, Frame.POCAsc);
             for (int g = 0; g < gopLen; g++) {
                 Frame frame = gop[g];
                 transform.transform(frame, target2);
                 target2.setCrop(frame.getCrop());
                 _out.clear();
+                long start = System.nanoTime();
                 encoder.encodeFrame(_out, target2);
+                totalTime += System.nanoTime() - start;
                 // TODO: Error if chunk has more then one frame
                 outTrack.addFrame(new MP4Packet(_out, i * frameDuration, timescale, frameDuration, i, true, null, i
                         * frameDuration, 0));
@@ -853,6 +866,7 @@ public class TranscodeMain {
                     System.out.println((i * 100 / totalFrames) + "%");
                 i++;
             }
+            return totalTime;
         }
 
         @Override
@@ -862,8 +876,60 @@ public class TranscodeMain {
                     put(FLAG_RAW, "Input AnnexB stream (raw h.264 elementary stream)");
                     put(FLAG_DUMPMV, "Dump motion vectors from frames");
                     put(FLAG_DUMPMVJS, "Dump motion vectors from frames in JSon format");
+                    put(FLAG_MAX_FRAMES, "Maximum number of frames to ouput");
                 }
             }, "in file", "pattern");
+        }
+    }
+
+    protected static class TsAvc2Png implements Profile {
+
+        @Override
+        public void transcode(Cmd cmd) throws IOException {
+            SeekableByteChannel bc = null;
+            try {
+                bc = NIOUtils.readableFileChannel(cmd.getArg(0));
+                Set<Integer> programs = MTSDemuxer.getPrograms(bc);
+                for (int program : programs) {
+                    System.out.println("Transcoding program " + String.format("%x", program));
+                    bc.position(0);
+                    MTSDemuxer mts = new MTSDemuxer(bc, program);
+                    // We ignore all audio tracks
+                    for (MPEGDemuxerTrack track : mts.getAudioTracks()) {
+                        track.ignore();
+                    }
+                    List<? extends MPEGDemuxerTrack> videoTracks = mts.getVideoTracks();
+                    if (videoTracks.size() == 0)
+                        continue;
+                    MPEGDemuxerTrack videoTrack = videoTracks.remove(0);
+                    // We ignore all video tracks but the first
+                    for (MPEGDemuxerTrack track : videoTracks) {
+                        track.ignore();
+                    }
+                    // 500k buffer for the raw frame
+                    ByteBuffer bb = ByteBuffer.allocate(500 << 10);
+                    Picture tmp = Picture.create(1920, 1088, ColorSpace.YUV420);
+                    VideoDecoder vd = null;
+
+                    Packet packet;
+                    int i = 0;
+                    while ((packet = videoTrack.nextFrame(bb)) != null) {
+                        ByteBuffer data = packet.getData();
+                        if (vd == null)
+                            vd = JCodecUtil.detectDecoder(data.duplicate());
+                        Picture pic = vd.decodeFrame(data, tmp.getData());
+                        if (pic != null) {
+                            AWTUtil.savePicture(pic, "png", tildeExpand(format(cmd.getArg(1), i++)));
+                        }
+                    }
+                }
+            } finally {
+                NIOUtils.closeQuietly(bc);
+            }
+        }
+
+        @Override
+        public void printHelp(PrintStream err) {
         }
     }
 
@@ -1025,13 +1091,13 @@ public class TranscodeMain {
 
                 H264Decoder decoder = new H264Decoder();
 
-                Transform transform = new Yuv420pToRgb(0, 0);
+                Transform transform = new Yuv420pToRgb(0, 0, Levels.PC);
 
                 AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
 
                 VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
                 Picture target1 = Picture.create((ine.getWidth() + 15) & ~0xf, (ine.getHeight() + 15) & ~0xf,
-                        ColorSpace.YUV420);
+                        ColorSpace.YUV420J);
                 Picture rgb = Picture.create(ine.getWidth(), ine.getHeight(), ColorSpace.RGB);
                 ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
                 BufferedImage bi = new BufferedImage(ine.getWidth(), ine.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
@@ -1085,7 +1151,7 @@ public class TranscodeMain {
                 MP4Demuxer demux = new MP4Demuxer(source);
                 MP4Muxer muxer = new MP4Muxer(sink, Brand.MP4);
 
-                Transform transform = new Yuv422pToYuv420p(0, 2);
+                Transform transform = new Yuv422pToYuv420p(0, 2, Levels.PC);
 
                 String rcName = cmd.getStringFlag(FLAG_RC, "dumb");
                 RateControl rc;
@@ -1123,7 +1189,8 @@ public class TranscodeMain {
                 for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                     Picture dec = decoder.decodeFrame(inFrame.getData(), target1.getData());
                     if (target2 == null) {
-                        target2 = Picture.create(dec.getWidth(), dec.getHeight(), encoder.getSupportedColorSpaces()[0]);
+                        target2 = Picture.create(dec.getWidth(), dec.getHeight(), encoder.getSupportedColorSpaces()[0],
+                                dec.getCrop());
                     }
                     transform.transform(dec, target2);
                     _out.clear();
@@ -1174,7 +1241,7 @@ public class TranscodeMain {
                 fos = new FileOutputStream(new File(cmd.getArg(1)));
                 sink = fos.getChannel();
                 H264Encoder encoder = new H264Encoder();
-                RgbToYuv420p transform = new RgbToYuv420p(0, 0);
+                RgbToYuv420p transform = new RgbToYuv420p(0, 0, Levels.PC);
 
                 int i;
                 for (i = 0; i < 10000; i++) {
