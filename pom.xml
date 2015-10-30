@@ -6,7 +6,7 @@
 	<name>JCodec</name>
 	<url>http://jcodec.org</url>
 	<packaging>jar</packaging>
-	<version>0.2</version>
+	<version>0.2vg1</version>
 	<description>Pure Java implementation of video/audio codecs and formats</description>
 	<licenses>
 		<license>
@@ -26,6 +26,10 @@
 			<email>jcodecproject@gmail.com</email>
 		</developer>
 	</developers>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<testSourceDirectory>src/test/java</testSourceDirectory>
@@ -57,8 +61,16 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.3</version>
+				<configuration>
+					<additionalparam>-Xdoclint:none</additionalparam>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
+				<version>3.3</version>
 				<configuration>
 					<encoding>UTF-8</encoding>
 					<source>1.6</source>
@@ -85,31 +97,11 @@
 					<template>site.vm</template>
 				</configuration>
 			</plugin>
-			<plugin>
-	            <groupId>org.codehaus.mojo</groupId>
-	            <artifactId>findbugs-maven-plugin</artifactId>
-	            <version>2.5.2</version>
-	            <configuration>
-	                <effort>Max</effort>
-	                <!-- Reports all bugs (other values are medium and max) -->
-	                <threshold>Max</threshold>
-	                <!-- Build doesn't fail if problems are found -->
-                	<failOnError>false</failOnError>
-	                <!-- Produces XML report -->
-	                <xmlOutput>false</xmlOutput>
-	                <!-- Configures the directory in which the XML report is created -->
-	                <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory>
-	            </configuration>
-	            <executions>
-		            <execution>
-	                    <id>analyze-compile</id>
-	                    <phase>compile</phase>
-	                    <goals>
-	                        <goal>check</goal>
-	                    </goals>
-	                </execution>
-                </executions>
-	        </plugin>
+			<!-- plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>findbugs-maven-plugin</artifactId> 
+				<version>2.5.2</version> <configuration> <effort>Max</effort> <threshold>Max</threshold> 
+				<failOnError>false</failOnError> <xmlOutput>false</xmlOutput> <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory> 
+				</configuration> <executions> <execution> <id>analyze-compile</id> <phase>compile</phase> 
+				<goals> <goal>check</goal> </goals> </execution> </executions> </plugin -->
 		</plugins>
 	</build>
 	<dependencies>
