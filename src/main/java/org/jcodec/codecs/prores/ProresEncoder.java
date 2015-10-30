@@ -349,6 +349,7 @@ public class ProresEncoder {
         }
     }
 
+    @Deprecated
     public void encodeFrame(ByteBuffer out, Picture... pics) {
         Picture8Bit[] pics8Bit = new Picture8Bit[pics.length];
         for (int i = 0; i < pics8Bit.length; i++) {

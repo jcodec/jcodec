@@ -22,6 +22,8 @@ import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
 
 import java.util.Arrays;
 
+import org.jcodec.codecs.h264.DecodedMBlock;
+import org.jcodec.codecs.h264.EncodedMBlock;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -38,20 +40,20 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
     private Mapper mapper;
     private MBlockDecoderBDirect bDirectDecoder;
 
-    public MBlockDecoderInter8x8(Mapper mapper, MBlockDecoderBDirect bDirectDecoder, SliceHeader sh, DeblockerInput di,
+    public MBlockDecoderInter8x8(Mapper mapper, MBlockDecoderBDirect bDirectDecoder, SliceHeader sh,
             int poc, DecoderState decoderState) {
-        super(sh, di, poc, decoderState);
+        super(sh, poc, decoderState);
         this.mapper = mapper;
         this.bDirectDecoder = bDirectDecoder;
     }
 
-    public void decode(MBlock mBlock, Frame[][] references, Picture8Bit mb, SliceType sliceType, boolean ref0) {
+    public void decode(EncodedMBlock mBlock, DecodedMBlock mb, Frame[][] references,  SliceType sliceType, boolean ref0) {
 
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
-        int mbAddr = mapper.getAddress(mBlock.mbIdx);
+//        int mbAddr = mapper.getAddress(mBlock.mbIdx);
         boolean topLeftAvailable = mapper.topLeftAvailable(mBlock.mbIdx);
         boolean topRightAvailable = mapper.topRightAvailable(mBlock.mbIdx);
         int[][][] x = new int[2][16][3];
@@ -60,43 +62,42 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
             x[0][i][2] = x[1][i][2] = -1;
 
         if (sliceType == SliceType.P) {
-            predict8x8P(mBlock, references[0], mb, ref0, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
+            predict8x8P(mBlock, references[0], mb.getPixels(), ref0, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, x, pp);
         } else {
-            predict8x8B(mBlock, references, mb, ref0, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
+            predict8x8B(mBlock, references, mb.getPixels(), ref0, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, x, pp);
         }
 
-        predictChromaInter(references, x, mbX << 3, mbY << 3, 1, mb, pp);
-        predictChromaInter(references, x, mbX << 3, mbY << 3, 2, mb, pp);
+        predictChromaInter(references, x, mbX << 3, mbY << 3, 1, mb.getPixels(), pp);
+        predictChromaInter(references, x, mbX << 3, mbY << 3, 2, mb.getPixels(), pp);
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
             s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;
         }
-        di.mbQps[0][mbAddr] = s.qp;
+        mb.setQp(0, s.qp);
+        mb.setType(mBlock.curMbType);
+        mb.setTransform8x8Used(mBlock.transform8x8Used);
 
         residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
 
-        saveMvs(di, x, mbX, mbY);
+        saveMvs(mb, x, references);
 
         int qp1 = calcQpChroma(s.qp, s.chromaQpOffset[0]);
         int qp2 = calcQpChroma(s.qp, s.chromaQpOffset[1]);
 
         decodeChromaResidual(mBlock, leftAvailable, topAvailable, mbX, mbY, qp1, qp2);
 
-        di.mbQps[1][mbAddr] = qp1;
-        di.mbQps[2][mbAddr] = qp2;
+        mb.setQp(1, qp1);
+        mb.setQp(2, qp2);
 
-        mergeResidual(mb, mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
+        mergeResidual(mb.getPixels(), mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 mBlock.transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-        collectPredictors(s, mb, mbX);
-
-        di.mbTypes[mbAddr] = mBlock.curMbType;
-        di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
+        collectPredictors(s, mb.getPixels(), mbX);
     }
 
-    private void predict8x8P(MBlock mBlock, Picture8Bit[] references, Picture8Bit mb, boolean ref0, int mbX, int mbY,
+    private void predict8x8P(EncodedMBlock mBlock, Picture8Bit[] references, Picture8Bit mb, boolean ref0, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean topRightAvailable, int[][][] x,
             PartPred[] pp) {
 
@@ -122,7 +123,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         Arrays.fill(pp, L0);
     }
 
-    private void predict8x8B(MBlock mBlock, Frame[][] refs, Picture8Bit mb, boolean ref0, int mbX, int mbY,
+    private void predict8x8B(EncodedMBlock mBlock, Frame[][] refs, Picture8Bit mb, boolean ref0, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean topRightAvailable, int[][][] x,
             PartPred[] p) {
 
@@ -186,7 +187,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
                 p[i] = _pp[i];
     }
 
-    private void decodeSubMb8x8(MBlock mBlock, int partNo, int subMbType, Picture8Bit[] references, int offX, int offY,
+    private void decodeSubMb8x8(EncodedMBlock mBlock, int partNo, int subMbType, Picture8Bit[] references, int offX, int offY,
             int[][] x, int[] tl, int[] t0, int[] t1, int[] tr, int[] l0, int[] l1, boolean tlAvb, boolean tAvb,
             boolean trAvb, boolean lAvb, int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb,
             int off, int list) {
@@ -212,7 +213,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         }
     }
 
-    private void decodeSub8x8(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
+    private void decodeSub8x8(EncodedMBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
             int[] t0, int[] tr, int[] l0, boolean tlAvb, boolean tAvb, boolean trAvb, boolean lAvb, int[] x00,
             int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int list) {
 
@@ -227,7 +228,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         interpolator.getBlockLuma(references[refIdx], mb, off, offX + x00[0], offY + x00[1], 8, 8);
     }
 
-    private void decodeSub8x4(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
+    private void decodeSub8x4(EncodedMBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
             int[] t0, int[] tr, int[] l0, int[] l1, boolean tlAvb, boolean tAvb, boolean trAvb, boolean lAvb,
             int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int list) {
 
@@ -254,7 +255,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
                 + 16, 8, 4);
     }
 
-    private void decodeSub4x8(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
+    private void decodeSub4x8(EncodedMBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
             int[] t0, int[] t1, int[] tr, int[] l0, boolean tlAvb, boolean tAvb, boolean trAvb, boolean lAvb,
             int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int list) {
 
@@ -280,7 +281,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         interpolator.getBlockLuma(references[refIdx], mb, off + 4, offX + x01[0] + 16, offY + x01[1], 4, 8);
     }
 
-    private void decodeSub4x4(MBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
+    private void decodeSub4x4(EncodedMBlock mBlock, int partNo, Picture8Bit[] references, int offX, int offY, int[] tl,
             int[] t0, int[] t1, int[] tr, int[] l0, int[] l1, boolean tlAvb, boolean tAvb, boolean trAvb, boolean lAvb,
             int[] x00, int[] x01, int[] x10, int[] x11, int refIdx, Picture8Bit mb, int off, int list) {
 

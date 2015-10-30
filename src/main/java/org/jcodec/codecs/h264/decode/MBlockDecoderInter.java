@@ -15,6 +15,8 @@ import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveVect;
 import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
 import static org.jcodec.common.model.ColorSpace.MONO;
 
+import org.jcodec.codecs.h264.DecodedMBlock;
+import org.jcodec.codecs.h264.EncodedMBlock;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -29,12 +31,12 @@ import org.jcodec.common.model.Picture8Bit;
 public class MBlockDecoderInter extends MBlockDecoderBase {
     private Mapper mapper;
 
-    public MBlockDecoderInter(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
-        super(sh, di, poc, decoderState);
+    public MBlockDecoderInter(Mapper mapper, SliceHeader sh, int poc, DecoderState decoderState) {
+        super(sh, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode16x16(MBlock mBlock, Picture8Bit mb, Frame[][] refs, PartPred p0) {
+    public void decode16x16(EncodedMBlock mBlock, DecodedMBlock mb, Frame[][] refs, PartPred p0) {
 
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
@@ -43,7 +45,9 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
 
         boolean topLeftAvailable = mapper.topLeftAvailable(mBlock.mbIdx);
         boolean topRightAvailable = mapper.topRightAvailable(mBlock.mbIdx);
-        int address = mapper.getAddress(mBlock.mbIdx);
+        // int address = mapper.getAddress(mBlock.mbIdx);
+        mb.setType(mBlock.curMbType);
+
         int[][][] x = new int[2][][];
         int xx = mbX << 2;
         Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
@@ -53,24 +57,21 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         }
 
         PredictionMerger.mergePrediction(sh, x[0][0][2], x[1][0][2], p0, 0, mbb[0].getPlaneData(0),
-                mbb[1].getPlaneData(0), 0, 16, 16, 16, mb.getPlaneData(0), refs, poc);
+                mbb[1].getPlaneData(0), 0, 16, 16, 16, mb.getPixels().getPlaneData(0), refs, poc);
 
         PartPred[] partPreds = new PartPred[] { p0, p0, p0, p0 };
-        predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb, partPreds);
-        predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb, partPreds);
+        predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb.getPixels(), partPreds);
+        predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb.getPixels(), partPreds);
 
-        residualInter(mBlock, refs, leftAvailable, topAvailable, mbX, mbY, x, partPreds,
-                mapper.getAddress(mBlock.mbIdx));
+        residualInter(mBlock, mb, leftAvailable, topAvailable, mbX, mbY, x, refs);
 
-        mergeResidual(mb, mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
+        mergeResidual(mb.getPixels(), mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 mBlock.transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-        collectPredictors(s, mb, mbX);
-
-        di.mbTypes[address] = mBlock.curMbType;
+        collectPredictors(s, mb.getPixels(), mbX);
     }
 
-    private void predictInter8x16(MBlock mBlock, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+    private void predictInter8x16(EncodedMBlock mBlock, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, int[][][] x,
             int list, PartPred p0, PartPred p1) {
         int xx = mbX << 2;
@@ -112,8 +113,8 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
                     + mBlock.pb168x168.mvdY2[list] + "), MV: (" + mvX2 + "," + mvY2 + ","
                     + mBlock.pb168x168.refIdx2[list] + ")");
 
-            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]], mb, 8, (mbX << 6) + 32
-                    + mvX2, (mbY << 6) + mvY2, 8, 16);
+            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]], mb, 8, (mbX << 6) + 32 + mvX2,
+                    (mbY << 6) + mvY2, 8, 16);
             r2 = mBlock.pb168x168.refIdx2[list];
         }
         int[] v2 = { mvX2, mvY2, r2 };
@@ -126,7 +127,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         x[list] = new int[][] { v1, v1, v2, v2, v1, v1, v2, v2, v1, v1, v2, v2, v1, v1, v2, v2 };
     }
 
-    private void predictInter16x8(MBlock mBlock, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+    private void predictInter16x8(EncodedMBlock mBlock, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, int xx, int[][][] x,
             PartPred p0, PartPred p1, int list) {
 
@@ -164,8 +165,8 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             debugPrint("MVP: (%d, %d), MVD: (%d, %d), MV: (%d,%d,%d)", mvpX2, mvpY2, mBlock.pb168x168.mvdX2[list],
                     mBlock.pb168x168.mvdY2[list], mvX2, mvY2, mBlock.pb168x168.refIdx2[list]);
 
-            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]], mb, 128,
-                    (mbX << 6) + mvX2, (mbY << 6) + 32 + mvY2, 16, 8);
+            interpolator.getBlockLuma(references[list][mBlock.pb168x168.refIdx2[list]], mb, 128, (mbX << 6) + mvX2,
+                    (mbY << 6) + 32 + mvY2, 16, 8);
             r2 = mBlock.pb168x168.refIdx2[list];
         }
         int[] v2 = { mvX2, mvY2, r2 };
@@ -178,7 +179,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         x[list] = new int[][] { v1, v1, v1, v1, v1, v1, v1, v1, v2, v2, v2, v2, v2, v2, v2, v2 };
     }
 
-    public void decode16x8(MBlock mBlock, Picture8Bit mb, Frame[][] refs, PartPred p0, PartPred p1) {
+    public void decode16x8(EncodedMBlock mBlock, DecodedMBlock mb, Frame[][] refs, PartPred p0, PartPred p1) {
 
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
@@ -190,6 +191,8 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int[][][] x = new int[2][][];
         int xx = mbX << 2;
 
+        mb.setType(mBlock.curMbType);
+
         Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
         for (int list = 0; list < 2; list++) {
             predictInter16x8(mBlock, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
@@ -197,33 +200,31 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         }
 
         mergePrediction(sh, x[0][0][2], x[1][0][2], p0, 0, mbb[0].getPlaneData(0), mbb[1].getPlaneData(0), 0, 16, 16,
-                8, mb.getPlaneData(0), refs, poc);
+                8, mb.getPixels().getPlaneData(0), refs, poc);
         mergePrediction(sh, x[0][8][2], x[1][8][2], p1, 0, mbb[0].getPlaneData(0), mbb[1].getPlaneData(0), 128, 16, 16,
-                8, mb.getPlaneData(0), refs, poc);
+                8, mb.getPixels().getPlaneData(0), refs, poc);
 
         PartPred[] partPreds = new PartPred[] { p0, p0, p1, p1 };
-        predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb, partPreds);
-        predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb, partPreds);
+        predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb.getPixels(), partPreds);
+        predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb.getPixels(), partPreds);
 
-        residualInter(mBlock, refs, leftAvailable, topAvailable, mbX, mbY, x, partPreds,
-                mapper.getAddress(mBlock.mbIdx));
+        residualInter(mBlock, mb, leftAvailable, topAvailable, mbX, mbY, x, refs);
 
-        mergeResidual(mb, mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
+        mergeResidual(mb.getPixels(), mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 mBlock.transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-        collectPredictors(s, mb, mbX);
-
-        di.mbTypes[address] = mBlock.curMbType;
+        collectPredictors(s, mb.getPixels(), mbX);
     }
 
-    public void decode8x16(MBlock mBlock, Picture8Bit mb, Frame[][] refs, PartPred p0, PartPred p1) {
+    public void decode8x16(EncodedMBlock mBlock, DecodedMBlock mb, Frame[][] refs, PartPred p0, PartPred p1) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
         boolean topLeftAvailable = mapper.topLeftAvailable(mBlock.mbIdx);
         boolean topRightAvailable = mapper.topRightAvailable(mBlock.mbIdx);
-        int address = mapper.getAddress(mBlock.mbIdx);
+        // int address = mapper.getAddress(mBlock.mbIdx);
+        mb.setType(mBlock.curMbType);
 
         int[][][] x = new int[2][][];
         Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
@@ -234,26 +235,24 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         }
 
         mergePrediction(sh, x[0][0][2], x[1][0][2], p0, 0, mbb[0].getPlaneData(0), mbb[1].getPlaneData(0), 0, 16, 8,
-                16, mb.getPlaneData(0), refs, poc);
+                16, mb.getPixels().getPlaneData(0), refs, poc);
         mergePrediction(sh, x[0][2][2], x[1][2][2], p1, 0, mbb[0].getPlaneData(0), mbb[1].getPlaneData(0), 8, 16, 8,
-                16, mb.getPlaneData(0), refs, poc);
+                16, mb.getPixels().getPlaneData(0), refs, poc);
 
         PartPred[] predType = new PartPred[] { p0, p1, p0, p1 };
 
-        predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb, predType);
-        predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb, predType);
+        predictChromaInter(refs, x, mbX << 3, mbY << 3, 1, mb.getPixels(), predType);
+        predictChromaInter(refs, x, mbX << 3, mbY << 3, 2, mb.getPixels(), predType);
 
-        residualInter(mBlock, refs, leftAvailable, topAvailable, mbX, mbY, x, predType, mapper.getAddress(mBlock.mbIdx));
+        residualInter(mBlock, mb, leftAvailable, topAvailable, mbX, mbY, x, refs);
 
-        mergeResidual(mb, mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
+        mergeResidual(mb.getPixels(), mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 mBlock.transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-        collectPredictors(s, mb, mbX);
-
-        di.mbTypes[address] = mBlock.curMbType;
+        collectPredictors(s, mb.getPixels(), mbX);
     }
 
-    void predictInter16x16(MBlock mBlock, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+    void predictInter16x16(EncodedMBlock mBlock, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, int[][][] x, int xx,
             int list, PartPred curPred) {
 
@@ -284,17 +283,17 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         x[list] = new int[][] { v, v, v, v, v, v, v, v, v, v, v, v, v, v, v, v };
     }
 
-    private void residualInter(MBlock mBlock, Frame[][] refs, boolean leftAvailable, boolean topAvailable, int mbX,
-            int mbY, int[][][] x, PartPred[] pp, int mbAddr) {
+    private void residualInter(EncodedMBlock mBlock, DecodedMBlock mb, boolean leftAvailable, boolean topAvailable,
+            int mbX, int mbY, int[][][] x, Frame[][] refs) {
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
             s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;
         }
-        di.mbQps[0][mbAddr] = s.qp;
+        mb.setQp(0, s.qp);
 
         residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
 
-        saveMvs(di, x, mbX, mbY);
+        saveMvs(mb, x, refs);
 
         if (s.chromaFormat != MONO) {
             int qp1 = calcQpChroma(s.qp, s.chromaQpOffset[0]);
@@ -302,11 +301,11 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
 
             decodeChromaResidual(mBlock, leftAvailable, topAvailable, mbX, mbY, qp1, qp2);
 
-            di.mbQps[1][mbAddr] = qp1;
-            di.mbQps[2][mbAddr] = qp2;
+            mb.setQp(1, qp1);
+            mb.setQp(2, qp2);
         }
 
-        di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
+        mb.setTransform8x8Used(mBlock.transform8x8Used);
     }
 
     public int calcMVPrediction16x8Top(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb, boolean cAvb,

@@ -1,4 +1,4 @@
-package org.jcodec.codecs.h264.decode;
+package org.jcodec.codecs.h264;
 
 import java.util.Arrays;
 
@@ -14,7 +14,7 @@ import org.jcodec.common.model.ColorSpace;
  * @author The JCodec project
  * 
  */
-public class MBlock {
+public class EncodedMBlock {
 
     public int chromaPredictionMode;
     public int mbQPDelta;
@@ -40,7 +40,7 @@ public class MBlock {
     // Number of coefficients in AC blocks, stored in 8x8 encoding order: 0 1 4 5 2 3 6 7 8 9 12 13 10 11 14 15
     public int[] nCoeff;
 
-    public MBlock(ColorSpace chromaFormat) {
+    public EncodedMBlock(ColorSpace chromaFormat) {
         dc = new int[16];
         ac = new int[][][] { new int[16][64], new int[4][16], new int[4][16] };
         lumaModes = new int[16];
@@ -62,7 +62,7 @@ public class MBlock {
         cbp = (cbpLuma & 0xf) | (cbpChroma << 4);
     }
 
-    static class PB16x16 {
+    public static class PB16x16 {
         public int[] refIdx = new int[2];
         public int[] mvdX = new int[2];
         public int[] mvdY = new int[2];
@@ -74,7 +74,7 @@ public class MBlock {
         }
     }
 
-    static class PB168x168 {
+    public static class PB168x168 {
         public int[] refIdx1 = new int[2];
         public int[] refIdx2 = new int[2];
         public int[] mvdX1 = new int[2];
@@ -93,7 +93,7 @@ public class MBlock {
         }
     }
 
-    static class PB8x8 {
+    public static class PB8x8 {
         public int[][] refIdx = new int[2][4];
         public int[] subMbTypes = new int[4];
         public int[][] mvdX1 = new int[2][4];
@@ -132,7 +132,7 @@ public class MBlock {
         }
     }
 
-    static class IPCM {
+    public static class IPCM {
 
         public int[] samplesLuma = new int[256];;
         public int[] samplesChroma;

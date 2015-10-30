@@ -164,4 +164,12 @@ public class MathUtil {
     public static int max3(int a, int b, int c) {
         return max(max(a, b), c);
     }
+
+    public static int max4(int a, int b, int c, int d) {
+        return max(max3(a, b, c), d);
+    }
+
+    public static int max8(int a, int b, int c, int d, int e, int f, int g, int h) {
+        return max(max4(a, b, c, d), max4(e, f, g, h));
+    }
 }

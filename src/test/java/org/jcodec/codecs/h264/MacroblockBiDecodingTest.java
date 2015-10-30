@@ -80,8 +80,8 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
     
-    @Ignore @Test
-    public void testBSkipABAC() throws IOException {
+    @Test
+    public void testBSkipCABAC() throws IOException {
         // BAD
         String encoded = "src/test/resources/h264/cabac/test_b_skip.264";
         String decoded = "src/test/resources/h264/cabac/test_b_skip.yuv";
@@ -90,9 +90,8 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
     
-    @Ignore @Test
+    @Test
     public void testBi16x16CABAC() throws IOException {
-        // BAD: skip
         String encoded = "src/test/resources/h264/cabac/test_bi_16x16.264";
         String decoded = "src/test/resources/h264/cabac/test_bi_16x16.yuv";
         int nFrames = 3;
@@ -100,9 +99,8 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBi16x8CABAC() throws IOException {
-        // BAD: skip
         String encoded = "src/test/resources/h264/cabac/test_bi_16x8.264";
         String decoded = "src/test/resources/h264/cabac/test_bi_16x8.yuv";
         int nFrames = 3;
@@ -110,9 +108,8 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBi8x16CABAC() throws IOException {
-        // BAD: skip
         String encoded = "src/test/resources/h264/cabac/test_bi_8x16.264";
         String decoded = "src/test/resources/h264/cabac/test_bi_8x16.yuv";
         int nFrames = 3;
@@ -120,9 +117,8 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBi8x8CABAC() throws IOException {
-        // BAD: skip
         String encoded = "src/test/resources/h264/cabac/test_bi_8x8.264";
         String decoded = "src/test/resources/h264/cabac/test_bi_8x8.yuv";
         int nFrames = 3;
@@ -136,7 +132,7 @@ public class MacroblockBiDecodingTest {
         String decoded = "src/test/resources/h264/cabac/test_bi_mix_ref.yuv";
         int nFrames = 5;
 
-        testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 3, 4, 1});
+        testOneFile(encoded, decoded, nFrames, new int[] {0, 4, 1, 2, 3});
     }
 
     @Test
@@ -166,9 +162,8 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBiDirectTemporalNoInference() throws IOException {
-        // BAD: intra
         String encoded = "src/test/resources/h264/cabac/test_temp_direct_noinf.264";
         String decoded = "src/test/resources/h264/cabac/test_temp_direct_noinf.yuv";
         int nFrames = 3;
@@ -176,14 +171,31 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBiDirectTemporal() throws IOException {
-        // BAD: intra
         String encoded = "src/test/resources/h264/cabac/test_temp_direct.264";
         String decoded = "src/test/resources/h264/cabac/test_temp_direct.yuv";
         int nFrames = 3;
 
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
+    }
+    
+    @Test
+    public void testBiDirectTemporalHierarchical() throws IOException {
+        String encoded = "src/test/resources/h264/cabac/test_temp_direct_hierarchical.264";
+        String decoded = "src/test/resources/h264/cabac/test_temp_direct_hierarchical.yuv";
+        int nFrames = 7;
+
+        testOneFile(encoded, decoded, nFrames, new int[] {0, 4, 2, 1, 3, 6, 5});
+    }
+    
+    @Test
+    public void testBiMixHierarchical() throws IOException {
+        String encoded = "src/test/resources/h264/cabac/test_bi_mix_hierarchical.264";
+        String decoded = "src/test/resources/h264/cabac/test_bi_mix_hierarchical.yuv";
+        int nFrames = 7;
+
+        testOneFile(encoded, decoded, nFrames, new int[] {0, 4, 2, 1, 3, 6, 5});
     }
 
     @Test
@@ -249,7 +261,7 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBi16x16CAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_16x16_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_16x16_cavlc.yuv";
@@ -258,7 +270,7 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBi16x8CAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_16x8_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_16x8_cavlc.yuv";
@@ -267,7 +279,7 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBi8x16CAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_8x16_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_8x16_cavlc.yuv";
@@ -276,7 +288,7 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBi8x8CAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_8x8_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_8x8_cavlc.yuv";
@@ -291,7 +303,7 @@ public class MacroblockBiDecodingTest {
         String decoded = "src/test/resources/h264/cavlc/test_bi_mix_ref_cavlc.yuv";
         int nFrames = 5;
 
-        testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 3, 4, 1});
+        testOneFile(encoded, decoded, nFrames, new int[] {0, 4, 1, 2, 3});
     }
 
     @Test
@@ -312,7 +324,7 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBiDirectTemporalCAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_temp_direct_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_temp_direct_cavlc.yuv";
@@ -321,7 +333,7 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 2, 1});
     }
 
-    @Ignore @Test
+    @Test
     public void testBiDirectTemporalNoInferenceCAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_temp_direct_noinf_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_temp_direct_noinf_cavlc.yuv";
@@ -338,7 +350,7 @@ public class MacroblockBiDecodingTest {
 
         testOneFile(encoded, decoded, nFrames, new int[] {0, 1, 2});
     }
-
+    
     private void testOneFile(String encoded, String decoded, int nFrames, int[] reorderMap) throws IOException {
         MappedH264ES es = new MappedH264ES(NIOUtils.fetchFrom(new File(encoded)));
         H264Decoder dec = new H264Decoder();
@@ -350,13 +362,20 @@ public class MacroblockBiDecodingTest {
         }
 
         ByteBuffer yuv = NIOUtils.fetchFrom(new File(decoded));
+        byte[][][] expected = new byte[nFrames][3][];
         for (int i = 0; i < nFrames; i++) {
-            Assert.assertArrayEquals(format("Frame %d luma", i), toByteArrayShifted(getAsIntArray(yuv, 1024)),
-                    out[reorderMap[i]].getPlaneData(0));
-            Assert.assertArrayEquals(format("Frame %d cb", i), toByteArrayShifted(getAsIntArray(yuv, 256)),
-                    out[reorderMap[i]].getPlaneData(1));
-            Assert.assertArrayEquals(format("Frame %d cr", i), toByteArrayShifted(getAsIntArray(yuv, 256)),
-                    out[reorderMap[i]].getPlaneData(2));
+            expected[i][0] = toByteArrayShifted(getAsIntArray(yuv, 1024));
+            expected[i][1] = toByteArrayShifted(getAsIntArray(yuv, 256));
+            expected[i][2] = toByteArrayShifted(getAsIntArray(yuv, 256));
+        }
+        
+        for (int i = 0; i < nFrames; i++) {
+            Assert.assertArrayEquals(format("Frame %d luma", i), expected[reorderMap[i]][0],
+                    out[i].getPlaneData(0));
+            Assert.assertArrayEquals(format("Frame %d cb", i), expected[reorderMap[i]][1],
+                    out[i].getPlaneData(1));
+            Assert.assertArrayEquals(format("Frame %d cr", i), expected[reorderMap[i]][2],
+                    out[i].getPlaneData(2));
         }
     }
 }

@@ -135,6 +135,14 @@ public class JCodecUtil {
         }
         return result;
     }
+    
+    public static byte[] getAsArray(ByteBuffer yuv, int size) {
+        byte[] b = new byte[size];
+        yuv.get(b);
+        for(int i = 0; i < b.length; i++)
+            b[i] -= 128;
+        return b;
+    }
 
     public static ThreadPoolExecutor getPriorityExecutor(int nThreads) {
         return new ThreadPoolExecutor(nThreads, nThreads, 0L, TimeUnit.MILLISECONDS,

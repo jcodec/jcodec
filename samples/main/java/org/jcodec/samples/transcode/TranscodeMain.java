@@ -671,6 +671,7 @@ public class TranscodeMain {
         private static final String FLAG_MAX_FRAMES = "max-frames";
         private static final String FLAG_DUMPMV = "dumpMv";
         private static final String FLAG_DUMPMVJS = "dumpMvJs";
+        private static final String FLAG_BENCHMARK_DECODE = "benchmark-decode";
 
         public void transcode(Cmd cmd) throws IOException {
             SeekableByteChannel sink = null;
@@ -679,7 +680,7 @@ public class TranscodeMain {
             try {
                 sink = writableFileChannel(cmd.getArg(1));
 
-                H264Decoder decoder = new H264Decoder();
+                H264Decoder decoder = new H264Decoder(false);
 
                 int totalFrames = Integer.MAX_VALUE;
                 PixelAspectExt pasp = null;
@@ -712,6 +713,7 @@ public class TranscodeMain {
                 Transform8Bit transform = new Yuv420pToYuv422p8Bit();
                 boolean dumpMv = cmd.getBooleanFlag(FLAG_DUMPMV, false);
                 boolean dumpMvJs = cmd.getBooleanFlag(FLAG_DUMPMVJS, false);
+                boolean benchmarkDecode = cmd.getBooleanFlag(FLAG_BENCHMARK_DECODE, false);
 
                 int timescale = 24000;
                 int frameDuration = 1000;
@@ -764,20 +766,23 @@ public class TranscodeMain {
                             outTrack.getEntries().get(0).add(pasp);
                     }
                     if (dec.getPOC() == 0 && gopLen > 0) {
-                        totalProRes += outGOP(encoder, transform, timescale, frameDuration, outTrack, gopLen, gop,
-                                min(totalFrames, maxFrames), i, width, height);
+                        if (!benchmarkDecode) {
+                            totalProRes += outGOP(encoder, transform, timescale, frameDuration, outTrack, gopLen, gop,
+                                    min(totalFrames, maxFrames), i, width, height);
+                        }
                         i += gopLen;
                         gopLen = 0;
                     }
                     gop[gopLen++] = dec;
                 }
-                if (gopLen > 0) {
+                if (gopLen > 0 && !benchmarkDecode) {
                     totalProRes += outGOP(encoder, transform, timescale, frameDuration, outTrack, gopLen, gop,
                             min(totalFrames, maxFrames), i, width, height);
                 }
                 muxer.writeHeader();
                 System.out.println(((1000000000L * (i + gopLen)) / totalH264) + "fps (h.264 decoding).");
-                System.out.println(((1000000000L * (i + gopLen)) / totalProRes) + "fps (ProRes encoding).");
+                if (!benchmarkDecode)
+                    System.out.println(((1000000000L * (i + gopLen)) / totalProRes) + "fps (ProRes encoding).");
             } finally {
                 if (sink != null)
                     sink.close();
@@ -877,6 +882,7 @@ public class TranscodeMain {
                     put(FLAG_DUMPMV, "Dump motion vectors from frames");
                     put(FLAG_DUMPMVJS, "Dump motion vectors from frames in JSon format");
                     put(FLAG_MAX_FRAMES, "Maximum number of frames to ouput");
+                    put(FLAG_BENCHMARK_DECODE, "Don't produce output, just measure FPS of decode");
                 }
             }, "in file", "pattern");
         }

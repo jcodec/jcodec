@@ -8,6 +8,8 @@ import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
 
 import java.util.Arrays;
 
+import org.jcodec.codecs.h264.DeblockingFilter;
+import org.jcodec.codecs.h264.DecodedMBlock;
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.BlockInterpolator;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
@@ -51,8 +53,8 @@ public class MBEncoderP16x16 {
         interpolator = new BlockInterpolator();
     }
 
-    public void encodeMacroblock(Picture8Bit pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
-            EncodedMB leftOutMB, EncodedMB topOutMB, int qp, int qpDelta) {
+    public void encodeMacroblock(Picture8Bit pic, int mbX, int mbY, BitWriter out, DecodedMBlock outMB,
+            DecodedMBlock leftOutMB, DecodedMBlock topOutMB, int qp, int qpDelta) {
         int cw = pic.getColor().compWidth[1];
         int ch = pic.getColor().compHeight[1];
 
@@ -111,12 +113,14 @@ public class MBEncoderP16x16 {
         MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb.getPlaneData(2), mbRef.getPlaneData(2), 4 - cw, 0,
                 0, 16 >> cw, 16 >> ch);
 
-        Arrays.fill(outMB.getMx(), mv[0]);
-        Arrays.fill(outMB.getMy(), mv[1]);
+        Arrays.fill(outMB.getMxL0(), mv[0]);
+        Arrays.fill(outMB.getMyL0(), mv[1]);
         outMB.setType(MBType.P_16x16);
-        outMB.setQp(qp);
+        outMB.setQp(0, qp);
+        outMB.setQp(1, qp);
+        outMB.setQp(2, qp);
 
-        new MBDeblocker().deblockMBP(outMB, leftOutMB, topOutMB);
+        new DeblockingFilter().deblockMbP(outMB, leftOutMB, topOutMB);
     }
 
     public int median(int a, int b, int c, int d, boolean aAvb, boolean bAvb, boolean cAvb, boolean dAvb) {

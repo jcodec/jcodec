@@ -23,6 +23,8 @@ import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
 import static org.jcodec.common.tools.MathUtil.abs;
 import static org.jcodec.common.tools.MathUtil.clip;
 
+import org.jcodec.codecs.h264.DecodedMBlock;
+import org.jcodec.codecs.h264.EncodedMBlock;
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
@@ -40,17 +42,16 @@ import org.jcodec.common.tools.MathUtil;
 public class MBlockDecoderBDirect extends MBlockDecoderBase {
     private Mapper mapper;
 
-    public MBlockDecoderBDirect(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
-        super(sh, di, poc, decoderState);
+    public MBlockDecoderBDirect(Mapper mapper, SliceHeader sh, int poc, DecoderState decoderState) {
+        super(sh, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+    public void decode(EncodedMBlock mBlock, DecodedMBlock mb, Frame[][] references) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean lAvb = mapper.leftAvailable(mBlock.mbIdx);
         boolean tAvb = mapper.topAvailable(mBlock.mbIdx);
-        int mbAddr = mapper.getAddress(mBlock.mbIdx);
         boolean tlAvb = mapper.topLeftAvailable(mBlock.mbIdx);
         boolean trAvb = mapper.topRightAvailable(mBlock.mbIdx);
         int[][][] x = new int[2][16][3];
@@ -59,37 +60,36 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
 
         PartPred[] pp = new PartPred[4];
 
-        predictBDirect(references, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, x, pp, mb, identityMapping4);
+        predictBDirect(references, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, x, pp, mb.getPixels(), identityMapping4);
 
-        predictChromaInter(references, x, mbX << 3, mbY << 3, 1, mb, pp);
-        predictChromaInter(references, x, mbX << 3, mbY << 3, 2, mb, pp);
+        predictChromaInter(references, x, mbX << 3, mbY << 3, 1, mb.getPixels(), pp);
+        predictChromaInter(references, x, mbX << 3, mbY << 3, 2, mb.getPixels(), pp);
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
             s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;
         }
-        di.mbQps[0][mbAddr] = s.qp;
+        mb.setQp(0, s.qp);
+        mb.setType(mBlock.curMbType);
+        mb.setTransform8x8Used(mBlock.transform8x8Used);
 
         residualLuma(mBlock, lAvb, tAvb, mbX, mbY);
 
         savePrediction8x8(s, mbX, x[0], 0);
         savePrediction8x8(s, mbX, x[1], 1);
-        saveMvs(di, x, mbX, mbY);
+        saveMvs(mb, x, references);
 
         int qp1 = calcQpChroma(s.qp, s.chromaQpOffset[0]);
         int qp2 = calcQpChroma(s.qp, s.chromaQpOffset[1]);
 
         decodeChromaResidual(mBlock, lAvb, tAvb, mbX, mbY, qp1, qp2);
 
-        di.mbQps[1][mbAddr] = qp1;
-        di.mbQps[2][mbAddr] = qp2;
+        mb.setQp(1, qp1);
+        mb.setQp(2, qp2);
 
-        mergeResidual(mb, mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
+        mergeResidual(mb.getPixels(), mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 mBlock.transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-        collectPredictors(s, mb, mbX);
-
-        di.mbTypes[mbAddr] = mBlock.curMbType;
-        di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
+        collectPredictors(s, mb.getPixels(), mbX);
     }
 
     public void predictBDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
@@ -123,8 +123,8 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
 
                     interpolator.getBlockLuma(refs[0][x[0][blk4x4][2]], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                             + x[0][blk4x4][0], blkPredY + x[0][blk4x4][1], 4, 4);
-                    interpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
-                            + x[1][blk4x4][0], blkPredY + x[1][blk4x4][1], 4, 4);
+                    interpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX + x[1][blk4x4][0],
+                            blkPredY + x[1][blk4x4][1], 4, 4);
                 }
             else {
                 int blk4x4Pred = BLK_INV_MAP[blk8x8 * 5];
@@ -142,8 +142,8 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
 
                 interpolator.getBlockLuma(refs[0][x[0][blk4x4_0][2]], mb0, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
                         + x[0][blk4x4_0][0], blkPredY + x[0][blk4x4_0][1], 8, 8);
-                interpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX
-                        + x[1][blk4x4_0][0], blkPredY + x[1][blk4x4_0][1], 8, 8);
+                interpolator.getBlockLuma(refs[1][0], mb1, BLK_4x4_MB_OFF_LUMA[blk4x4_0], blkPredX + x[1][blk4x4_0][0],
+                        blkPredY + x[1][blk4x4_0][1], 8, 8);
             }
             mergePrediction(sh, x[0][blk4x4_0][2], x[1][blk4x4_0][2], Bi, 0, mb0.getPlaneData(0), mb1.getPlaneData(0),
                     BLK_4x4_MB_OFF_LUMA[blk4x4_0], 16, 8, 8, mb.getPlaneData(0), refs, poc);
@@ -151,8 +151,6 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
     }
 
     private void predTemp4x4(Frame[][] refs, int mbX, int mbY, int[][][] x, int blk4x4) {
-        int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
-
         Frame picCol = refs[1][0];
         int blkIndX = blk4x4 & 3;
         int blkIndY = blk4x4 >> 2;
@@ -160,47 +158,58 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         int blkPosX = (mbX << 2) + blkIndX;
         int blkPosY = (mbY << 2) + blkIndY;
 
-        int[] mvCol = picCol.getMvs()[0][blkPosY][blkPosX];
-        Frame refL0;
         int refIdxL0;
-        if (mvCol[2] == -1) {
-            mvCol = picCol.getMvs()[1][blkPosY][blkPosX];
-            if (mvCol[2] == -1) {
+        int refPOC;
+        boolean refShortTerm;
+        int refPOCL0 = picCol.getMvs().getRefPOCL0(blkPosY, blkPosX);
+        int mx = picCol.getMvs().getMxL0(blkPosY, blkPosX);
+        int my = picCol.getMvs().getMyL0(blkPosY, blkPosX);
+        if (refPOCL0 == -1) {
+            // mvCol = picCol.getMvs()[1][blkPosY][blkPosX];
+            int refPOCL1 = picCol.getMvs().getRefPOCL1(blkPosY, blkPosX);
+            mx = picCol.getMvs().getMxL1(blkPosY, blkPosX);
+            my = picCol.getMvs().getMyL1(blkPosY, blkPosX);
+            if (refPOCL1 == -1) {
                 refIdxL0 = 0;
-                refL0 = refs[0][0];
+                mx = 0;
+                my = 0;
+                refPOC = refs[0][0].getPOC();
+                refShortTerm = refs[0][0].isShortTerm();
             } else {
-                refL0 = picCol.getRefsUsed()[mbY * mbWidth + mbX][1][mvCol[2]];
-                refIdxL0 = findPic(refs[0], refL0);
+                refPOC = refPOCL1;
+                refShortTerm = picCol.getMvs().getRefShortTermL1(blkPosY, blkPosX);
+                refIdxL0 = findPic(refs[0], refPOC);
             }
         } else {
-            refL0 = picCol.getRefsUsed()[mbY * mbWidth + mbX][0][mvCol[2]];
-            refIdxL0 = findPic(refs[0], refL0);
+            refPOC = refPOCL0;
+            refShortTerm = picCol.getMvs().getRefShortTermL0(blkPosY, blkPosX);
+            refIdxL0 = findPic(refs[0], refPOC);
         }
 
         x[0][blk4x4][2] = refIdxL0;
         x[1][blk4x4][2] = 0;
 
-        int td = MathUtil.clip(picCol.getPOC() - refL0.getPOC(), -128, 127);
-        if (!refL0.isShortTerm() || td == 0) {
-            x[0][blk4x4][0] = mvCol[0];
-            x[0][blk4x4][1] = mvCol[1];
+        int td = MathUtil.clip(picCol.getPOC() - refPOC, -128, 127);
+        if (!refShortTerm || td == 0) {
+            x[0][blk4x4][0] = mx;
+            x[0][blk4x4][1] = my;
             x[1][blk4x4][0] = 0;
             x[1][blk4x4][1] = 0;
         } else {
-            int tb = MathUtil.clip(poc - refL0.getPOC(), -128, 127);
+            int tb = MathUtil.clip(poc - refPOC, -128, 127);
             int tx = (16384 + Math.abs(td / 2)) / td;
             int dsf = clip((tb * tx + 32) >> 6, -1024, 1023);
 
-            x[0][blk4x4][0] = (dsf * mvCol[0] + 128) >> 8;
-            x[0][blk4x4][1] = (dsf * mvCol[1] + 128) >> 8;
-            x[1][blk4x4][0] = (x[0][blk4x4][0] - mvCol[0]);
-            x[1][blk4x4][1] = (x[0][blk4x4][1] - mvCol[1]);
+            x[0][blk4x4][0] = (dsf * mx + 128) >> 8;
+            x[0][blk4x4][1] = (dsf * my + 128) >> 8;
+            x[1][blk4x4][0] = (x[0][blk4x4][0] - mx);
+            x[1][blk4x4][1] = (x[0][blk4x4][1] - my);
         }
     }
 
-    private int findPic(Frame[] frames, Frame refL0) {
+    private int findPic(Frame[] frames, int poc) {
         for (int i = 0; i < frames.length; i++)
-            if (frames[i] == refL0)
+            if (frames[i].getPOC() == poc)
                 return i;
         Logger.error("RefPicList0 shall contain refPicCol");
         return 0;
@@ -325,11 +334,17 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         x[0][blk4x4][2] = refL0;
         x[1][blk4x4][2] = refL1;
 
-        int[] mvCol = col.getMvs()[0][blkPosY][blkPosX];
-        if (mvCol[2] == -1)
-            mvCol = col.getMvs()[1][blkPosY][blkPosX];
+        int refIdx = col.getMvs().getRefIdxL0(blkPosY, blkPosX);
+        int mx = col.getMvs().getMxL0(blkPosY, blkPosX);
+        int my = col.getMvs().getMyL0(blkPosY, blkPosX);
+        // int[] mvCol = col.getMvs()[0][blkPosY][blkPosX];
+        if (refIdx == -1) {
+            refIdx = col.getMvs().getRefIdxL1(blkPosY, blkPosX);
+            mx = col.getMvs().getMxL1(blkPosY, blkPosX);
+            my = col.getMvs().getMyL1(blkPosY, blkPosX);
+        }
 
-        boolean colZero = col.isShortTerm() && mvCol[2] == 0 && (abs(mvCol[0]) >> 1) == 0 && (abs(mvCol[1]) >> 1) == 0;
+        boolean colZero = col.isShortTerm() && refIdx == 0 && (abs(mx) >> 1) == 0 && (abs(my) >> 1) == 0;
 
         if (refL0 > 0 || !colZero) {
             x[0][blk4x4][0] = mvX0;

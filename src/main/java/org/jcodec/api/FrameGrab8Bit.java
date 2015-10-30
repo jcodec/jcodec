@@ -19,7 +19,6 @@ import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;

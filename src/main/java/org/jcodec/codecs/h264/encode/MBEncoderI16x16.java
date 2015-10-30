@@ -8,6 +8,8 @@ import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_TOP;
 import static org.jcodec.codecs.h264.decode.CoeffTransformer.reorderDC4x4;
 import static org.jcodec.codecs.h264.io.model.MBType.I_16x16;
 
+import org.jcodec.codecs.h264.DeblockingFilter;
+import org.jcodec.codecs.h264.DecodedMBlock;
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
 import org.jcodec.codecs.h264.io.CAVLC;
@@ -37,18 +39,20 @@ public class MBEncoderI16x16 {
         this.topLine = topLine;
     }
 
-    public void encodeMacroblock(Picture8Bit pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
-            EncodedMB leftOutMB, EncodedMB topOutMB, int qp, int qpDelta) {
+    public void encodeMacroblock(Picture8Bit pic, int mbX, int mbY, BitWriter out, DecodedMBlock outMB,
+            DecodedMBlock leftOutMB, DecodedMBlock topOutMB, int qp, int qpDelta) {
         CAVLCWriter.writeUE(out, 0); // Chroma prediction mode -- DC
         CAVLCWriter.writeSE(out, qpDelta); // MB QP delta
 
         outMB.setType(MBType.I_16x16);
-        outMB.setQp(qp);
+        outMB.setQp(0, qp);
+        outMB.setQp(1, qp);
+        outMB.setQp(2, qp);
 
         luma(pic, mbX, mbY, out, qp, outMB.getPixels(), cavlc[0]);
         chroma(pic, mbX, mbY, out, qp, outMB.getPixels());
 
-        new MBDeblocker().deblockMBI(outMB, leftOutMB, topOutMB);
+        new DeblockingFilter().deblockMbP(outMB, leftOutMB, topOutMB);
     }
 
     private static int DUMMY[] = new int[16];

@@ -2,6 +2,8 @@ package org.jcodec.codecs.h264.decode;
 
 import static org.jcodec.common.tools.MathUtil.clip;
 
+import org.jcodec.codecs.h264.DecodedMBlock;
+import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Picture8Bit;
 
@@ -82,14 +84,14 @@ public class MBlockDecoderUtils {
         }
     }
 
-    static void saveMvsIntra(DeblockerInput di, int mbX, int mbY) {
-        for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
-            for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
-                di.mvs[0][blkOffY][blkOffX] = NULL_VECTOR;
-                di.mvs[1][blkOffY][blkOffX] = NULL_VECTOR;
-            }
-        }
-    }
+    // static void saveMvsIntra(DecodedMBlock mb, int mbX, int mbY) {
+    // for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
+    // for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
+    // di.mvs[0][blkOffY][blkOffX] = NULL_VECTOR;
+    // di.mvs[1][blkOffY][blkOffX] = NULL_VECTOR;
+    // }
+    // }
+    // }
 
     static void mergeResidual(Picture8Bit mb, int[][][] residual, int[][] blockLUT, int[][] posLUT) {
         for (int comp = 0; comp < 3; comp++) {
@@ -149,11 +151,25 @@ public class MBlockDecoderUtils {
         to[2] = from[2];
     }
 
-    static void saveMvs(DeblockerInput di, int[][][] x, int mbX, int mbY) {
-        for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
-            for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
-                di.mvs[0][blkOffY][blkOffX] = x[0][blkInd];
-                di.mvs[1][blkOffY][blkOffX] = x[1][blkInd];
+    static void saveMvs(DecodedMBlock mb, int[][][] x, Frame[][] references) {
+        for (int i = 0; i < 16; i++) {
+            int refIdx = x[0][i][2];
+            if (refIdx != Frame.MVS.POC_NO_REFERENCE) {
+                Frame ref = references[0][refIdx];
+                mb.setMvL0(i, x[0][i][0], x[0][i][1], refIdx, ref.getPOC(), ref.isShortTerm());
+            } else {
+                mb.setMvL0(i, 0, 0, Frame.MVS.POC_NO_REFERENCE, Frame.MVS.POC_NO_REFERENCE, true);
+            }
+        }
+        if (references[1] != null) {
+            for (int i = 0; i < 16; i++) {
+                int refIdx = x[1][i][2];
+                if (refIdx != Frame.MVS.POC_NO_REFERENCE) {
+                    Frame ref = references[1][refIdx];
+                    mb.setMvL1(i, x[1][i][0], x[1][i][1], refIdx, ref.getPOC(), ref.isShortTerm());
+                } else {
+                    mb.setMvL1(i, 0, 0, Frame.MVS.POC_NO_REFERENCE, Frame.MVS.POC_NO_REFERENCE, true);
+                }
             }
         }
     }

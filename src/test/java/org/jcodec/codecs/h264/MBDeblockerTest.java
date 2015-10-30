@@ -1,9 +1,11 @@
-package org.jcodec.codecs.h264.encode;
+package org.jcodec.codecs.h264;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.Utils;
+import org.jcodec.codecs.h264.DeblockingFilter;
+import org.jcodec.codecs.h264.DecodedMBlock;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.model.Picture8Bit;
@@ -14,23 +16,23 @@ public class MBDeblockerTest {
 
     @Test
     public void testCalcStrength() {
-        EncodedMB left = new EncodedMB();
-        EncodedMB top = new EncodedMB();
-        EncodedMB cur = new EncodedMB();
+        DecodedMBlock left = new DecodedMBlock();
+        DecodedMBlock top = new DecodedMBlock();
+        DecodedMBlock cur = new DecodedMBlock();
 
         int[][] v = new int[4][4];
         int[][] h = new int[4][4];
 
         // h[0][0] -> 1
-        top.getMx()[12] = 4;
+        top.getMxL0()[12] = 4;
 
         // h[2][0] -> 1
-        cur.getMx()[2] = -2;
-        top.getMx()[14] = 2;
+        cur.getMxL0()[2] = -2;
+        top.getMxL0()[14] = 2;
 
         // h[1][0] -> 0
-        cur.getMy()[1] = -1;
-        top.getMy()[13] = 2;
+        cur.getMyL0()[1] = -1;
+        top.getMyL0()[13] = 2;
 
         // h[3][0] -> 2
         top.getNc()[15] = 1;
@@ -39,15 +41,15 @@ public class MBDeblockerTest {
         cur.getNc()[4] = 1;
 
         // h[2]
-        cur.getMx()[6] = 2;
-        cur.getMx()[10] = -2;
-        cur.getMx()[11] = 2;
-        cur.getMx()[14] = 2;
+        cur.getMxL0()[6] = 2;
+        cur.getMxL0()[10] = -2;
+        cur.getMxL0()[11] = 2;
+        cur.getMxL0()[14] = 2;
 
         left.setType(MBType.I_16x16);
-        MBDeblocker.calcStrengthForBlocks(cur, left, v, MBDeblocker.LOOKUP_IDX_P_V, MBDeblocker.LOOKUP_IDX_Q_V);
+        DeblockingFilter.calcStrengthForBlocks(cur, left, v, DeblockingFilter.LOOKUP_IDX_P_V, DeblockingFilter.LOOKUP_IDX_Q_V);
         top.setType(MBType.P_16x16);
-        MBDeblocker.calcStrengthForBlocks(cur, top, h, MBDeblocker.LOOKUP_IDX_P_H, MBDeblocker.LOOKUP_IDX_Q_H);
+        DeblockingFilter.calcStrengthForBlocks(cur, top, h, DeblockingFilter.LOOKUP_IDX_P_H, DeblockingFilter.LOOKUP_IDX_Q_H);
 
         Utils.assertArrayEquals(new int[][] { { 4, 0, 0, 0 }, { 4, 2, 0, 0 }, { 4, 0, 0, 1 }, { 4, 0, 0, 0 } },
                 ArrayUtil.rotate(v));
@@ -57,10 +59,10 @@ public class MBDeblockerTest {
 
     @Test
     public void testMBlockGeneric() {
-        final EncodedMB cur = new EncodedMB(), left = new EncodedMB(), top = new EncodedMB();
+        final DecodedMBlock cur = new DecodedMBlock(), left = new DecodedMBlock(), top = new DecodedMBlock();
 
         final List<String> actions = new ArrayList<String>();
-        MBDeblocker deblocker = new MBDeblocker() {
+        DeblockingFilter deblocker = new DeblockingFilter() {
             @Override
             protected void filterBs4(int indexAlpha, int indexBeta, byte[] pelsP, byte[] pelsQ, int p3Idx, int p2Idx,
                     int p1Idx, int p0Idx, int q0Idx, int q1Idx, int q2Idx, int q3Idx) {
@@ -98,7 +100,7 @@ public class MBDeblockerTest {
                         + q1Idx + "," + "isChroma:" + "true" + "}");
             }
 
-            private String label(byte[] pels, EncodedMB curMB, EncodedMB leftMB, EncodedMB topMB) {
+            private String label(byte[] pels, DecodedMBlock curMB, DecodedMBlock leftMB, DecodedMBlock topMB) {
                 Picture8Bit cur = curMB.getPixels(), top = topMB.getPixels(), left = leftMB.getPixels();
                 if (cur.getPlaneData(0) == pels || cur.getPlaneData(1) == pels || cur.getPlaneData(2) == pels)
                     return "cur";

@@ -5,7 +5,6 @@ import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.encode.DumbRateControl;
-import org.jcodec.codecs.h264.encode.EncodedMB;
 import org.jcodec.codecs.h264.encode.MBEncoderHelper;
 import org.jcodec.codecs.h264.encode.MBEncoderI16x16;
 import org.jcodec.codecs.h264.encode.MBEncoderP16x16;
@@ -68,9 +67,9 @@ public class H264Encoder implements VideoEncoder {
 
     private Picture8Bit ref;
     private Picture8Bit picOut;
-    private EncodedMB[] topEncoded;
+    private DecodedMBlock[] topEncoded;
 
-    private EncodedMB outMB;
+    private DecodedMBlock outMB;
 
     public H264Encoder() {
         this(new DumbRateControl());
@@ -162,10 +161,10 @@ public class H264Encoder implements VideoEncoder {
         topLine = new byte[][] { new byte[mbWidth << 4], new byte[mbWidth << 3], new byte[mbWidth << 3] };
         picOut = Picture8Bit.create(mbWidth << 4, mbHeight << 4, pic.getColor());
 
-        outMB = new EncodedMB();
-        topEncoded = new EncodedMB[mbWidth];
+        outMB = new DecodedMBlock();
+        topEncoded = new DecodedMBlock[mbWidth];
         for (int i = 0; i < mbWidth; i++)
-            topEncoded[i] = new EncodedMB();
+            topEncoded[i] = new DecodedMBlock();
 
         encodeSlice(sps, pps, pic, dup, idr, frameNumber, frameType);
 
@@ -316,7 +315,7 @@ public class H264Encoder implements VideoEncoder {
     private void addToReference(int mbX, int mbY) {
         if (mbY > 0)
             MBEncoderHelper.putBlk(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbY - 1) << 4);
-        EncodedMB tmp = topEncoded[mbX];
+        DecodedMBlock tmp = topEncoded[mbX];
         topEncoded[mbX] = outMB;
         outMB = tmp;
     }

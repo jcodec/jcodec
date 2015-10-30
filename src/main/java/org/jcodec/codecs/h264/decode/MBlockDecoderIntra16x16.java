@@ -2,12 +2,12 @@ package org.jcodec.codecs.h264.decode;
 
 import static org.jcodec.codecs.h264.decode.CoeffTransformer.reorderDC4x4;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.collectPredictors;
-import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveMvsIntra;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveVectIntra;
 
+import org.jcodec.codecs.h264.DecodedMBlock;
+import org.jcodec.codecs.h264.EncodedMBlock;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.common.model.Picture8Bit;
 
 /**
  * A decoder for I16x16 macroblocks
@@ -18,35 +18,40 @@ public class MBlockDecoderIntra16x16 extends MBlockDecoderBase {
 
     private Mapper mapper;
 
-    public MBlockDecoderIntra16x16(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc,
-            DecoderState decoderState) {
-        super(sh, di, poc, decoderState);
+    public MBlockDecoderIntra16x16(Mapper mapper, SliceHeader sh, int poc, DecoderState decoderState) {
+        super(sh, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode(MBlock mBlock, Picture8Bit mb) {
+    public void decode(EncodedMBlock mBlock, DecodedMBlock mb) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
-        int address = mapper.getAddress(mBlock.mbIdx);
+//        int address = mapper.getAddress(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
         s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;
-        di.mbQps[0][address] = s.qp;
+        mb.setQp(0, s.qp);
+        mb.setType(mBlock.curMbType);
 
         residualLumaI16x16(mBlock, leftAvailable, topAvailable, mbX, mbY);
 
         Intra16x16PredictionBuilder.predictWithMode(mBlock.luma16x16Mode, mBlock.ac[0], leftAvailable, topAvailable,
-                s.leftRow[0], s.topLine[0], s.topLeft[0], mbX << 4, mb.getPlaneData(0));
+                s.leftRow[0], s.topLine[0], s.topLeft[0], mbX << 4, mb.getPixels().getPlaneData(0));
 
-        decodeChroma(mBlock, mbX, mbY, leftAvailable, topAvailable, mb, s.qp);
-        di.mbTypes[address] = mBlock.curMbType;
+        int qp1 = calcQpChroma(s.qp, s.chromaQpOffset[0]);
+        int qp2 = calcQpChroma(s.qp, s.chromaQpOffset[1]);
 
-        collectPredictors(s, mb, mbX);
-        saveMvsIntra(di, mbX, mbY);
+        decodeChroma(mBlock, mbX, mbY, leftAvailable, topAvailable, mb.getPixels(), qp1, qp2);
+
+        mb.setQp(1, qp1);
+        mb.setQp(2, qp2);
+
+        collectPredictors(s, mb.getPixels(), mbX);
+        // saveMvsIntra(di, mbX, mbY);
         saveVectIntra(s, mapper.getMbX(mBlock.mbIdx));
     }
 
-    private void residualLumaI16x16(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
+    private void residualLumaI16x16(EncodedMBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         CoeffTransformer.invDC4x4(mBlock.dc);
         CoeffTransformer.dequantizeDC4x4(mBlock.dc, s.qp);
         reorderDC4x4(mBlock.dc);

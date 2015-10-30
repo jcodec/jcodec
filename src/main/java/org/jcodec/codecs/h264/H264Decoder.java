@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264;
 
 import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
+import static org.jcodec.codecs.h264.decode.DecoderUtils.putMacroblock;
 import static org.jcodec.common.tools.MathUtil.wrap;
 
 import java.nio.ByteBuffer;
@@ -12,13 +13,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
-import org.jcodec.codecs.h264.decode.DeblockerInput;
 import org.jcodec.codecs.h264.decode.FrameReader;
-import org.jcodec.codecs.h264.decode.MBlockDecoderUtils;
 import org.jcodec.codecs.h264.decode.SliceDecoder;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.decode.SliceReader;
-import org.jcodec.codecs.h264.decode.deblock.DeblockingFilter;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
@@ -55,8 +53,31 @@ public class H264Decoder implements VideoDecoder {
     private POCManager poc;
     private byte[][] byteBuffer;
     private FrameReader reader;
+    private DeblockingFilterContext deblockingContext;
     private ExecutorService tp;
     private boolean threaded;
+
+    public static class DeblockingFilterContext {
+        private DecodedMBlock[] top;
+
+        public DeblockingFilterContext(int mbWidth) {
+            this.top = new DecodedMBlock[mbWidth];
+            for (int i = 0; i < top.length; i++)
+                top[i] = new DecodedMBlock();
+        }
+
+        public void save(DecodedMBlock mBlock, int mbX) {
+            top[mbX].copyFrom(mBlock);
+        }
+
+        public DecodedMBlock getTop(int mbX) {
+            return top[mbX];
+        }
+
+        public DecodedMBlock getLeft(int mbX) {
+            return top[mbX - 1];
+        }
+    }
 
     public H264Decoder() {
         this(true);
@@ -108,12 +129,11 @@ public class H264Decoder implements VideoDecoder {
 
     class FrameDecoder {
         private SeqParameterSet activeSps;
-        private DeblockingFilter filter;
         private SliceHeader firstSliceHeader;
         private NALUnit firstNu;
-        private DeblockerInput di;
 
         public Frame decodeFrame(List<ByteBuffer> nalUnits, byte[][] buffer) {
+            // System.out.println("FRAME ================================================ ");
             List<SliceReader> sliceReaders = reader.readFrame(nalUnits);
             if (sliceReaders == null || sliceReaders.size() == 0)
                 return null;
@@ -123,7 +143,7 @@ public class H264Decoder implements VideoDecoder {
                 for (final SliceReader sliceReader : sliceReaders) {
                     futures.add(tp.submit(new Runnable() {
                         public void run() {
-                            new SliceDecoder(activeSps, sRefs, lRefs, di, result).decode(sliceReader);
+                            new SliceDecoder(activeSps, sRefs, lRefs, deblockingContext, result).decode(sliceReader);
                         }
                     }));
                 }
@@ -134,11 +154,14 @@ public class H264Decoder implements VideoDecoder {
 
             } else {
                 for (SliceReader sliceReader : sliceReaders) {
-                    new SliceDecoder(activeSps, sRefs, lRefs, di, result).decode(sliceReader);
+                    new SliceDecoder(activeSps, sRefs, lRefs, deblockingContext, result).decode(sliceReader);
                 }
             }
 
-            filter.deblockFrame(result);
+            for (int i = 0; i < activeSps.pic_width_in_mbs_minus1 + 1; i++) {
+                putMacroblock(result, deblockingContext.getTop(i).getPixels(), i,
+                        activeSps.pic_height_in_map_units_minus1);
+            }
 
             updateReferences(result);
 
@@ -172,19 +195,18 @@ public class H264Decoder implements VideoDecoder {
 
             firstSliceHeader = sliceReader.getSliceHeader();
             activeSps = firstSliceHeader.sps;
-            int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
+            // int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
 
             if (sRefs == null) {
                 sRefs = new Frame[1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4)];
                 lRefs = new IntObjectMap<Frame>();
             }
 
-            di = new DeblockerInput(activeSps);
-
             Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type,
-                    di.mvs, di.refsUsed, poc.calcPOC(firstSliceHeader, firstNu));
+                    new Frame.MVS(activeSps.pic_width_in_mbs_minus1 + 1, activeSps.pic_height_in_map_units_minus1 + 1),
+                    poc.calcPOC(firstSliceHeader, firstNu));
 
-            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, di);
+            deblockingContext = new DeblockingFilterContext(activeSps.pic_width_in_mbs_minus1 + 1);
 
             return result;
         }
@@ -326,7 +348,7 @@ public class H264Decoder implements VideoDecoder {
     }
 
     public static Frame createFrame(SeqParameterSet sps, byte[][] buffer, int frameNum, SliceType frameType,
-            int[][][][] mvs, Frame[][][] refsUsed, int POC) {
+            Frame.MVS mvs, int POC) {
         int width = sps.pic_width_in_mbs_minus1 + 1 << 4;
         int height = getPicHeightInMbs(sps) << 4;
 
@@ -338,7 +360,7 @@ public class H264Decoder implements VideoDecoder {
             int h = height - (sps.frame_crop_bottom_offset << 1) - sY;
             crop = new Rect(sX, sY, w, h);
         }
-        return new Frame(width, height, buffer, ColorSpace.YUV420J, crop, frameNum, frameType, mvs, refsUsed, POC);
+        return new Frame(width, height, buffer, ColorSpace.YUV420J, crop, frameNum, frameType, mvs, POC);
     }
 
     public void addSps(List<ByteBuffer> spsList) {

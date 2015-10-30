@@ -245,4 +245,19 @@ public class ArrayUtil {
             result[i] = array[i - padLength];
         return result;
     }
+
+    /**
+     * Copies array and permutes the elements
+     * @param nCoeff
+     * @param i
+     * @param nc
+     * @param bLK_INV_MAP
+     */
+    public static void copyPermute(int[] from, int[] to, int[] permute) {
+        if(from.length != to.length || from.length != permute.length)
+            throw new IllegalArgumentException("Lengths of argument arrays should be equal");
+        for(int i = 0; i < permute.length; i++) {
+            to[permute[i]] = from[i];
+        }
+    }
 }

@@ -12,6 +12,8 @@ import static org.jcodec.codecs.h264.io.model.SliceType.P;
 
 import java.util.Arrays;
 
+import org.jcodec.codecs.h264.DecodedMBlock;
+import org.jcodec.codecs.h264.EncodedMBlock;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -28,17 +30,17 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
     private Mapper mapper;
     private MBlockDecoderBDirect bDirectDecoder;
 
-    public MBlockSkipDecoder(Mapper mapper, MBlockDecoderBDirect bDirectDecoder,
-            SliceHeader sh, DeblockerInput di, int poc, DecoderState sharedState) {
-        super(sh, di, poc, sharedState);
+    public MBlockSkipDecoder(Mapper mapper, MBlockDecoderBDirect bDirectDecoder, SliceHeader sh, int poc,
+            DecoderState sharedState) {
+        super(sh, poc, sharedState);
         this.mapper = mapper;
         this.bDirectDecoder = bDirectDecoder;
     }
 
-    public void decodeSkip(MBlock mBlock, Frame[][] refs, Picture8Bit mb, SliceType sliceType) {
+    public void decodeSkip(EncodedMBlock mBlock, DecodedMBlock mb, Frame[][] refs, SliceType sliceType) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
-        int mbAddr = mapper.getAddress(mBlock.mbIdx);
+        // int mbAddr = mapper.getAddress(mBlock.mbIdx);
 
         int[][][] x = new int[2][16][3];
         PartPred[] pp = new PartPred[4];
@@ -48,25 +50,25 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
 
         if (sliceType == P) {
             predictPSkip(refs, mbX, mbY, mapper.leftAvailable(mBlock.mbIdx), mapper.topAvailable(mBlock.mbIdx),
-                    mapper.topLeftAvailable(mBlock.mbIdx), mapper.topRightAvailable(mBlock.mbIdx), x, mb);
+                    mapper.topLeftAvailable(mBlock.mbIdx), mapper.topRightAvailable(mBlock.mbIdx), x, mb.getPixels());
             Arrays.fill(pp, PartPred.L0);
         } else {
             bDirectDecoder.predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mBlock.mbIdx),
                     mapper.topAvailable(mBlock.mbIdx), mapper.topLeftAvailable(mBlock.mbIdx),
-                    mapper.topRightAvailable(mBlock.mbIdx), x, pp, mb, identityMapping4);
+                    mapper.topRightAvailable(mBlock.mbIdx), x, pp, mb.getPixels(), identityMapping4);
             savePrediction8x8(s, mbX, x[0], 0);
             savePrediction8x8(s, mbX, x[1], 1);
         }
 
-        decodeChromaSkip(refs, x, pp, mbX, mbY, mb);
+        decodeChromaSkip(refs, x, pp, mbX, mbY, mb.getPixels());
 
-        collectPredictors(s, mb, mbX);
+        collectPredictors(s, mb.getPixels(), mbX);
 
-        saveMvs(di, x, mbX, mbY);
-        di.mbTypes[mbAddr] = mBlock.curMbType;
-        di.mbQps[0][mbAddr] = s.qp;
-        di.mbQps[1][mbAddr] = calcQpChroma(s.qp, s.chromaQpOffset[0]);
-        di.mbQps[2][mbAddr] = calcQpChroma(s.qp, s.chromaQpOffset[1]);
+        saveMvs(mb, x, refs);
+        mb.setType(mBlock.curMbType);
+        mb.setQp(0, s.qp);
+        mb.setQp(1, calcQpChroma(s.qp, s.chromaQpOffset[0]));
+        mb.setQp(2, calcQpChroma(s.qp, s.chromaQpOffset[1]));
     }
 
     public void predictPSkip(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
