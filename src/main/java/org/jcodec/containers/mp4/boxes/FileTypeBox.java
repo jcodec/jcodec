@@ -42,7 +42,7 @@ public class FileTypeBox extends Box {
         minorVersion = input.getInt();
 
         String brand;
-        while ((brand = NIOUtils.readString(input, 4)) != null) {
+        while (input.hasRemaining() && (brand = NIOUtils.readString(input, 4)) != null) {
             compBrands.add(brand);
         }
     }

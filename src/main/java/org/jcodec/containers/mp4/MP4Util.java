@@ -148,7 +148,7 @@ public class MP4Util {
 
         public Box parseBox(SeekableByteChannel input) throws IOException {
             input.position(offset + header.headerSize());
-            return NodeBox.parseBox(NIOUtils.fetchFrom(input, (int) header.getSize()), header, BoxFactory.getDefault());
+            return NodeBox.parseBox(NIOUtils.fetchFrom(input, (int) header.getBodySize()), header, BoxFactory.getDefault());
         }
 
         public void copy(SeekableByteChannel input, WritableByteChannel out) throws IOException {
