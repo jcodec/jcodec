@@ -200,12 +200,21 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     @Override
     public DemuxerTrackMeta getMeta() {
-        int[] copyOf = Arrays.copyOf(syncSamples, syncSamples.length);
-        for (int i = 0; i < copyOf.length; i++)
-            copyOf[i]--;
+        int[] seekFrames;
+        if (syncSamples == null) {
+            //all frames are I-frames
+            seekFrames  = new int[(int)getFrameCount()];
+            for (int i = 0; i < seekFrames.length; i++) {
+                seekFrames[i] = i;
+            }
+        } else {
+            seekFrames = Arrays.copyOf(syncSamples, syncSamples.length);
+            for (int i = 0; i < seekFrames.length; i++)
+                seekFrames[i]--;
+        }
 
         TrackType type = getType();
         return new DemuxerTrackMeta(type == TrackType.VIDEO ? VIDEO : (type == TrackType.SOUND ? AUDIO : OTHER),
-                copyOf, sizes.length, (double) duration / timescale, box.getCodedSize());
+                seekFrames, sizes.length, (double) duration / timescale, box.getCodedSize());
     }
 }
