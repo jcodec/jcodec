@@ -1,0 +1,45 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.jcodec</groupId>
+    <artifactId>jcodec-android</artifactId>
+	<version>0.1.9</version>
+    <packaging>jar</packaging>
+    <name>JCodec for Android</name>
+	<url>http://jcodec.org</url>
+	<description>Pure Java implementation of video/audio codecs and formats</description>
+	<licenses>
+		<license>
+			<name>FreeBSD</name>
+			<url>http://jcodec.org/lic.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:git://github.com/jcodec/jcodec.git</connection>
+		<developerConnection>scm:https://github.com/jcodec/jcodec.git</developerConnection>
+		<url>http://git.jcodec.org</url>
+	</scm>
+	<developers>
+		<developer>
+			<name>Jay Codec</name>
+			<email>jcodecproject@gmail.com</email>
+		</developer>
+	</developers>
+    <build>
+		<sourceDirectory>src/main</sourceDirectory>
+    </build>
+	<dependencies>
+        <dependency>
+          <groupId>com.google.android</groupId>
+          <artifactId>android</artifactId>
+          <version>4.1.1.4</version>
+          <scope>provided</scope>
+        </dependency>
+		<dependency>
+			<groupId>org.jcodec</groupId>
+			<artifactId>jcodec</artifactId>
+			<version>0.1.9</version>
+		</dependency>
+    </dependencies>
+</project>

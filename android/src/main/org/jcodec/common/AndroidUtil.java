@@ -18,6 +18,9 @@ import android.graphics.Bitmap;
 public class AndroidUtil {
 
 	public static Bitmap toBitmap(Picture pic) {
+		if(pic == null)
+			return null;
+		
 		Transform transform = ColorUtil.getTransform(pic.getColor(),
 				ColorSpace.RGB);
 		Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(),
@@ -27,6 +30,11 @@ public class AndroidUtil {
 	}
 	
 	public static void toBitmap(Picture pic, Bitmap out) {
+		if(pic == null)
+			throw new IllegalArgumentException("Input pic is null");
+		if(out == null)
+			throw new IllegalArgumentException("Out bitmap is null");
+		
 		Transform transform = ColorUtil.getTransform(pic.getColor(),
 				ColorSpace.RGB);
 		Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(),
