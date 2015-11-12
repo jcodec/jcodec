@@ -18,6 +18,8 @@ public class BitmapUtil {
 	private static ThreadLocal<int[]> buffer = new ThreadLocal<int[]>();
 
 	public static Picture fromBitmap(Bitmap src) {
+		if(src == null)
+			return null;
 		Picture dst = Picture.create((int) src.getWidth(),
 				(int) src.getHeight(), ColorSpace.RGB);
 		fromBitmap(src, dst);
@@ -42,7 +44,9 @@ public class BitmapUtil {
 	}
 
 	public static Bitmap toBitmap(Picture pic) {
-		Bitmap dst = Bitmap.createBitmap(pic.getWidth(), pic.getHeight(),
+		if(pic == null)
+			return null;
+		Bitmap dst = Bitmap.createBitmap(pic.getCroppedWidth(), pic.getCroppedHeight(),
 				Bitmap.Config.ARGB_8888);
 		toBitmap(pic, dst);
 		return dst;
@@ -52,11 +56,12 @@ public class BitmapUtil {
 		int[] srcData = src.getPlaneData(0);
 		int[] packed = getBuffer(src);
 
-		for (int i = 0, dstOff = 0, srcOff = 0; i < src.getHeight(); i++) {
-			for (int j = 0; j < src.getWidth(); j++, dstOff++, srcOff += 3) {
-				packed[dstOff] = (srcData[srcOff] << 16)
+		for (int i = 0, dstOff = 0, srcOff = 0; i < src.getCroppedHeight(); i++) {
+			for (int j = 0; j < src.getCroppedWidth(); j++, dstOff++, srcOff += 3) {
+				packed[dstOff] = (255 << 24) | (srcData[srcOff] << 16)
 						| (srcData[srcOff + 1] << 8) | srcData[srcOff + 2];
 			}
+			srcOff += src.getWidth() - src.getCroppedWidth();
 		}
 		dst.copyPixelsFromBuffer(IntBuffer.wrap(packed));
 	}
