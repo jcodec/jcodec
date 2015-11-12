@@ -22,5 +22,5 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:22.2.1'
-    compile 'org.jcodec:jcodec-android:0.1.9'
+    compile 'org.jcodec:jcodec-android:0.2.0'
 }
