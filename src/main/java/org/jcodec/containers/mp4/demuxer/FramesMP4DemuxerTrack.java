@@ -89,7 +89,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             throw new IllegalArgumentException("Buffer size is not enough to fit a packet");
         }
 
-        long pktPos = chunkOffsets[stcoInd] + offInChunk;
+        long pktPos = chunkOffsets[Math.min(chunkOffsets.length - 1, stcoInd)] + offInChunk;
 
         ByteBuffer result = readPacketData(input, storage, pktPos, size);
 
