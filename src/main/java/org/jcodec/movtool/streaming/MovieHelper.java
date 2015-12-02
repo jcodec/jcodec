@@ -186,10 +186,10 @@ public class MovieHelper {
             AudioCodecMeta ss = (AudioCodecMeta) se;
 
             if (ss.isPCM()) {
-                vse = MP4Muxer.audioSampleEntry(se.getFourcc(), 0, ss.getSampleSize(), ss.getChannelCount(),
+                vse = MP4Muxer.audioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
                         ss.getSampleRate(), ss.getEndian());
             } else {
-                vse = MP4Muxer.compressedAudioSampleEntry(se.getFourcc(), 0, ss.getSampleSize(), ss.getChannelCount(),
+                vse = MP4Muxer.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
                         ss.getSampleRate(), ss.getSamplesPerPacket(), ss.getBytesPerPacket(), ss.getBytesPerFrame());
             }
 
