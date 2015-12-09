@@ -5,9 +5,9 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;

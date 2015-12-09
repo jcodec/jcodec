@@ -10,9 +10,9 @@ import java.util.Map;
 
 import org.jcodec.codecs.mpeg12.MPSMediaInfo.MPEGTrackMetadata;
 import org.jcodec.codecs.mpeg12.MPSMediaInfo.MediaInfoDone;
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.MTSUtils;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;

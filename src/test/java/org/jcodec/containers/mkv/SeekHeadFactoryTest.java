@@ -1,6 +1,6 @@
 package org.jcodec.containers.mkv;
 
-import static org.jcodec.common.IOUtils.readFileToByteArray;
+import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVType.Audio;
 import static org.jcodec.containers.mkv.MKVType.Channels;
 import static org.jcodec.containers.mkv.MKVType.CodecID;
@@ -38,10 +38,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.IOUtils;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.SeekHeadFactory.SeekMock;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlBin;

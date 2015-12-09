@@ -1,7 +1,7 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.NIOUtils.readableFileChannel;
-import static org.jcodec.common.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.ChunkWriter;

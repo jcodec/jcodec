@@ -2,6 +2,8 @@ package org.jcodec.common;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.common.io.NIOUtils;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License

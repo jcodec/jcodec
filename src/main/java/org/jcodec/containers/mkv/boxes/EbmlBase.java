@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.MKVType;
 import org.jcodec.containers.mkv.util.EbmlUtil;
 

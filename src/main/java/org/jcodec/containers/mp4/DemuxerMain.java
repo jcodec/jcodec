@@ -1,9 +1,9 @@
 package org.jcodec.containers.mp4;
 
-import static org.jcodec.common.IOUtils.readFileToByteArray;
-import static org.jcodec.common.NIOUtils.readableFileChannel;
-import static org.jcodec.common.NIOUtils.rwFileChannel;
-import static org.jcodec.common.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.IOUtils.readFileToByteArray;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.rwFileChannel;
+import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
@@ -25,9 +25,9 @@ import java.util.List;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.codecs.wav.WavHeader.FmtChunk;
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.MP4Util.Atom;

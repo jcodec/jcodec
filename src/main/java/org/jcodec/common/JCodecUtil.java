@@ -14,6 +14,7 @@ import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;

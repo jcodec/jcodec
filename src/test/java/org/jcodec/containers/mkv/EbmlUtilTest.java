@@ -8,7 +8,7 @@ import static org.jcodec.containers.mkv.util.EbmlUtil.toHexString;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.io.FileChannelWrapper;
 import org.junit.Assert;
 import org.junit.Test;
 

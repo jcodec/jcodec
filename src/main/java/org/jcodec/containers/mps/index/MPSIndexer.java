@@ -7,9 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.NIOUtils.FileReader;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils.FileReader;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 
 /**

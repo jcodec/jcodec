@@ -16,7 +16,6 @@ import net.sourceforge.jaad.aac.syntax.BitStream;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.NIOBitStream;
 
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;

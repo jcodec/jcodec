@@ -8,8 +8,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jcodec.common.IntArrayList;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.QTTimeUtil;

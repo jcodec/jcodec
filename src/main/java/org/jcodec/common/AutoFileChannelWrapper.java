@@ -8,6 +8,7 @@ import java.nio.channels.FileChannel;
 
 import org.jcodec.common.io.AutoPool;
 import org.jcodec.common.io.AutoResource;
+import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

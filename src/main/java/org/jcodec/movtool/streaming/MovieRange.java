@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

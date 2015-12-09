@@ -2,7 +2,6 @@ package org.jcodec.common.io;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.NIOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 

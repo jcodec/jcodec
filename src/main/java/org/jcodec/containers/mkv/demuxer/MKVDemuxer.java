@@ -28,8 +28,8 @@ import java.util.List;
 
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mkv.MKVParser;

@@ -1,14 +1,14 @@
 package org.jcodec.containers.mkv;
 
-import static org.jcodec.common.IOUtils.closeQuietly;
-import static org.jcodec.common.IOUtils.readFileToByteArray;
+import static org.jcodec.common.io.IOUtils.closeQuietly;
+import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
-import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;

@@ -1,6 +1,6 @@
 package org.jcodec.containers.mkv;
 
-import static org.jcodec.common.IOUtils.readFileToByteArray;
+import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVType.Block;
 import static org.jcodec.containers.mkv.MKVType.BlockGroup;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
@@ -21,9 +21,9 @@ import java.nio.channels.FileChannel;
 import java.util.List;
 
 import org.jcodec.codecs.vp8.VP8Decoder;
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.IOUtils;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlUint;

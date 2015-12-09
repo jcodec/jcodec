@@ -15,10 +15,10 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.write.NALUnitWriter;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
-import org.jcodec.common.IOUtils;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.junit.Assert;
 
 /**

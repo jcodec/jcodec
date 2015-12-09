@@ -1,7 +1,7 @@
 package org.jcodec.samples.mux;
 
 import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
-import static org.jcodec.common.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,8 +15,8 @@ import org.jcodec.codecs.h264.MappedH264ES;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils;

@@ -11,8 +11,8 @@ import java.util.Map;
 
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.flv.FLVTag.AacAudioTagHeader;

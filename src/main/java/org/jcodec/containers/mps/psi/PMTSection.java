@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;

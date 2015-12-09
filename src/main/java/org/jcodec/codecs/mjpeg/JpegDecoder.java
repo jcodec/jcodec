@@ -6,10 +6,10 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.jcodec.codecs.mjpeg.tools.Asserts;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
 import org.jcodec.common.model.ColorSpace;

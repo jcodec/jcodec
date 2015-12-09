@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.jcodec.common.Assert;
-import org.jcodec.common.FileChannelWrapper;
 import org.jcodec.common.IntObjectMap;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

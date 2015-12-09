@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
-import org.jcodec.common.IOUtils;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.movtool.streaming.tracks.FilePool;

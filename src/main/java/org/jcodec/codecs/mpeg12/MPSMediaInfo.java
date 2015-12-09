@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg12;
 
-import static org.jcodec.common.NIOUtils.cloneBuffer;
+import static org.jcodec.common.io.NIOUtils.cloneBuffer;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +14,8 @@ import java.util.Map;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.IntArrayList;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Rational;

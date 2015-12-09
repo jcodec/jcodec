@@ -1,4 +1,4 @@
-package org.jcodec.common;
+package org.jcodec.common.io;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;

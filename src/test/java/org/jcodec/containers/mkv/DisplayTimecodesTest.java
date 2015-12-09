@@ -62,7 +62,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlFloat;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;

@@ -15,7 +15,7 @@ import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Rational;
 import org.jcodec.movtool.streaming.CodecMeta;

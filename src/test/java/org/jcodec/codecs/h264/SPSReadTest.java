@@ -8,8 +8,8 @@ import junit.framework.TestCase;
 
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.VUIParameters;
-import org.jcodec.common.IOUtils;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 

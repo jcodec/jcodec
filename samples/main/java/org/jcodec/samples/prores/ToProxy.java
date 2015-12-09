@@ -1,13 +1,13 @@
 package org.jcodec.samples.prores;
 
-import static org.jcodec.common.NIOUtils.readableFileChannel;
-import static org.jcodec.common.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 
 import java.io.File;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresToProxy;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;

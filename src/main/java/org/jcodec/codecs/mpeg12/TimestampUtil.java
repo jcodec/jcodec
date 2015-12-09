@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.jcodec.common.IOUtils;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;

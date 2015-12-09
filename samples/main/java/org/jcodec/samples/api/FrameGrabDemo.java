@@ -9,8 +9,8 @@ import javax.imageio.ImageIO;
 
 import org.jcodec.api.JCodecException;
 import org.jcodec.api.awt.FrameGrab8Bit;
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 

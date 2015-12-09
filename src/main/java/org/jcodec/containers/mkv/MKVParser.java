@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlBin;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;

@@ -1,8 +1,8 @@
 package org.jcodec.movtool;
 
 import static java.util.Arrays.fill;
-import static org.jcodec.common.NIOUtils.readableFileChannel;
-import static org.jcodec.common.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
 import static org.jcodec.movtool.Util.forceEditList;
 import static org.jcodec.movtool.Util.insertTo;
@@ -12,9 +12,9 @@ import static org.jcodec.movtool.Util.spread;
 import java.io.File;
 import java.util.Arrays;
 
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.ClipRegionBox;
 import org.jcodec.containers.mp4.boxes.LoadSettingsBox;

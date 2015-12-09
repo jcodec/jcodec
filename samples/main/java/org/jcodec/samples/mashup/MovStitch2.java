@@ -1,7 +1,7 @@
 package org.jcodec.samples.mashup;
 
-import static org.jcodec.common.NIOUtils.readableFileChannel;
-import static org.jcodec.common.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
 import java.io.File;
@@ -20,9 +20,9 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4DemuxerException;
 import org.jcodec.containers.mp4.MP4Packet;

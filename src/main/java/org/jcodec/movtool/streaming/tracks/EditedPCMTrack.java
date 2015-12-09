@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.movtool.streaming.AudioCodecMeta;

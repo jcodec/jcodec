@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.jcodec.common.Assert;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
 import org.jcodec.common.Tuple;
 import org.jcodec.common.Tuple._2;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.Box;

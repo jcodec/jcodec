@@ -16,9 +16,9 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;

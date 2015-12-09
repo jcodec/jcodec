@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.common.Assert;
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.movtool.streaming.VirtualPacket;

@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.ArithmeticCoderTest;
-import org.jcodec.common.IOUtils;
+import org.jcodec.common.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 

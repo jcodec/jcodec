@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;

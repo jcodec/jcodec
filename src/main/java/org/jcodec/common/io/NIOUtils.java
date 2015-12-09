@@ -1,4 +1,4 @@
-package org.jcodec.common;
+package org.jcodec.common.io;
 
 import static java.lang.Math.min;
 import static org.jcodec.common.JCodecUtil.asciiString;
@@ -20,6 +20,9 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+
+import org.jcodec.common.AutoFileChannelWrapper;
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

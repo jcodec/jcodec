@@ -6,7 +6,7 @@ import static org.junit.Assert.assertFalse;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.junit.Test;
 
 public class MPEGUtilTest {

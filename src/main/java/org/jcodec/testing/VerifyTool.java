@@ -10,7 +10,7 @@ import java.util.Arrays;
 
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.MappedH264ES;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
