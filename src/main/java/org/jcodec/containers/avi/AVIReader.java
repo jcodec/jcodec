@@ -1,14 +1,14 @@
 package org.jcodec.containers.avi;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.common.io.DataReader;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 
 /**
@@ -100,8 +100,7 @@ public class AVIReader {
                                                        // sizes from unsigned
                                                        // int to long
 
-    private File aviFile = null;
-    private RandomAccessFile raf = null;
+    private DataReader raf = null;
     private long fileLeft = 0;
 
     private AVITag_AVIH aviHeader;
@@ -116,8 +115,8 @@ public class AVIReader {
                                        // video/audio byte data, just skip over
                                        // it
 
-    public AVIReader(final File aviFile) {
-        this.aviFile = aviFile;
+    public AVIReader(SeekableByteChannel src) {
+        this.raf = new DataReader(src, ByteOrder.LITTLE_ENDIAN);
     }
 
     public static int fromFourCC(final String str) {
@@ -148,29 +147,6 @@ public class AVIReader {
         return sb.toString();
     }
 
-    // Read LONG (8 byte long) with little-endian byte order
-    private static long readLong(final RandomAccessFile raf) throws IOException {
-        long low = readInt(raf) & 0x00000000FFFFFFFFL;
-        long high = readInt(raf) & 0x00000000FFFFFFFFL;
-        long result = high << 32 | low;
-        return (long) result;
-    }
-
-    // Read DWORD (4 byte int) in little-endian byte order
-    private static int readInt(final RandomAccessFile raf) throws IOException {
-        int result = 0;
-        for (int shiftBy = 0; shiftBy < 32; shiftBy += 8)
-            result |= (raf.readByte() & 0xff) << shiftBy;
-        return result;
-    }
-
-    // Read SHORT (2 byte short) with little-endian byte order
-    private static short readShort(final RandomAccessFile raf) throws IOException {
-        int low = raf.readByte() & 0xff;
-        int high = raf.readByte() & 0xff;
-        return (short) (high << 8 | low);
-    }
-
     public long getFileLeft() throws IOException {
         return (this.fileLeft);
     }
@@ -180,17 +156,10 @@ public class AVIReader {
     }
 
     public void parse() throws IOException {
-        if (!aviFile.exists())
-            throw new FileNotFoundException(aviFile.getName());
-
-        Logger.debug("--------------- Reading : " + aviFile.getName() + " ---------------");
-
         try {
-            raf = new RandomAccessFile(aviFile, "r");
-
             long t1 = System.currentTimeMillis();
 
-            long fileSize = raf.length();
+            long fileSize = raf.size();
             fileLeft = fileSize;
 
             int numStreams = 0;
@@ -199,7 +168,7 @@ public class AVIReader {
 
             // Read the FOURCC tag code
 
-            int dwFourCC = readInt(raf);
+            int dwFourCC = raf.readInt();
             if (dwFourCC != FOURCC_RIFF)
                 throw new IllegalArgumentException("No RIFF header found");
 
@@ -209,7 +178,7 @@ public class AVIReader {
 
             int previousStreamType = 0;
             do {
-                dwFourCC = readInt(raf);
+                dwFourCC = raf.readInt();
                 String dwFourCCStr = toFourCC(dwFourCC);
 
                 switch (dwFourCC) {
@@ -393,7 +362,7 @@ public class AVIReader {
 
                 Logger.debug(aviItem.toString());
 
-                fileLeft = fileSize - raf.getFilePointer();
+                fileLeft = fileSize - raf.position();
 
             } while (fileLeft > 0);
 
@@ -403,10 +372,6 @@ public class AVIReader {
             Logger.debug("\tParse time : " + (t2 - t1) + "ms");
 
         } finally {
-            if (raf != null) {
-                raf.close();
-            }
-
             if (ps != null) {
                 ps.close();
             }
@@ -422,14 +387,14 @@ public class AVIReader {
         protected int dwChunkSize;
         protected long startOfChunk;
 
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
-            startOfChunk = raf.getFilePointer() - 4; // Add four as we've
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
+            startOfChunk = raf.position() - 4; // Add four as we've
                                                      // already read the
                                                      // dwFourCC DWORD flag
 
             this.dwFourCC = dwFourCC;
             this.fwFourCCStr = AVIReader.toFourCC(dwFourCC);
-            dwChunkSize = readInt(raf);
+            dwChunkSize = raf.readInt();
         }
 
         public long getStartOfChunk() {
@@ -445,7 +410,7 @@ public class AVIReader {
             return (dwFourCC);
         }
 
-        public void skip(final RandomAccessFile raf) throws IOException {
+        public void skip(final DataReader raf) throws IOException {
             int chunkSize = getChunkSize();
             if (chunkSize < 0)
                 throw new IOException("Negative chunk size for chunk [" + toFourCC(this.dwFourCC) + "]");
@@ -484,12 +449,12 @@ public class AVIReader {
         protected String dwListTypeFourCCStr;
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
             dwChunkSize -= 4; // Correct for next field being in between the
                               // size and the data
-            dwListTypeFourCC = readInt(raf);
+            dwListTypeFourCC = raf.readInt();
             dwListTypeFourCCStr = AVIReader.toFourCC(dwListTypeFourCC);
         }
 
@@ -498,7 +463,7 @@ public class AVIReader {
         }
 
         /*
-         * @Override public void skip(final RandomAccessFile raf) throws
+         * @Override public void skip(final DataReader raf) throws
          * IOException { // Don't skip, each list contains N number of AviChunks
          * // raf.skipBytes(0); }
          */
@@ -514,7 +479,7 @@ public class AVIReader {
 
     class AVI_SEGM extends AVIChunk {
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
         }
 
@@ -559,7 +524,7 @@ public class AVIReader {
         private int[] dwReserved = new int[4];
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
             if (dwFourCC != FOURCC_AVIH)
                 throw new IOException("Unexpected AVI header : " + toFourCC(dwFourCC));
@@ -567,20 +532,20 @@ public class AVIReader {
             if (getChunkSize() != 56)
                 throw new IOException("Expected dwSize=56");
 
-            dwMicroSecPerFrame = readInt(raf);
-            dwMaxBytesPerSec = readInt(raf);
-            dwPaddingGranularity = readInt(raf);
-            dwFlags = readInt(raf);
-            dwTotalFrames = readInt(raf);
-            dwInitialFrames = readInt(raf);
-            dwStreams = readInt(raf);
-            dwSuggestedBufferSize = readInt(raf);
-            dwWidth = readInt(raf);
-            dwHeight = readInt(raf);
-            dwReserved[0] = readInt(raf);
-            dwReserved[1] = readInt(raf);
-            dwReserved[2] = readInt(raf);
-            dwReserved[3] = readInt(raf);
+            dwMicroSecPerFrame = raf.readInt();
+            dwMaxBytesPerSec = raf.readInt();
+            dwPaddingGranularity = raf.readInt();
+            dwFlags = raf.readInt();
+            dwTotalFrames = raf.readInt();
+            dwInitialFrames = raf.readInt();
+            dwStreams = raf.readInt();
+            dwSuggestedBufferSize = raf.readInt();
+            dwWidth = raf.readInt();
+            dwHeight = raf.readInt();
+            dwReserved[0] = raf.readInt();
+            dwReserved[1] = raf.readInt();
+            dwReserved[2] = raf.readInt();
+            dwReserved[3] = raf.readInt();
         }
 
         public int getWidth() {
@@ -644,32 +609,32 @@ public class AVIReader {
         private short bottom = 0;
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
             if (dwFourCC != FOURCC_STRH)
                 throw new IOException("Expected 'strh' fourcc got [" + toFourCC(this.dwFourCC) + "]");
 
-            fccType = readInt(raf);
+            fccType = raf.readInt();
 
-            fccCodecHandler = readInt(raf);
-            dwFlags = readInt(raf);
+            fccCodecHandler = raf.readInt();
+            dwFlags = raf.readInt();
 
-            wPriority = readShort(raf);
-            wLanguage = readShort(raf);
+            wPriority = raf.readShort();
+            wLanguage = raf.readShort();
 
-            dwInitialFrames = readInt(raf);
-            dwScale = readInt(raf);
-            dwRate = readInt(raf);
-            dwStart = readInt(raf);
-            dwLength = readInt(raf);
-            dwSuggestedBufferSize = readInt(raf);
-            dwQuality = readInt(raf);
-            dwSampleSize = readInt(raf);
+            dwInitialFrames = raf.readInt();
+            dwScale = raf.readInt();
+            dwRate = raf.readInt();
+            dwStart = raf.readInt();
+            dwLength = raf.readInt();
+            dwSuggestedBufferSize = raf.readInt();
+            dwQuality = raf.readInt();
+            dwSampleSize = raf.readInt();
 
-            left = readShort(raf);
-            top = readShort(raf);
-            right = readShort(raf);
-            bottom = readShort(raf);
+            left = raf.readShort();
+            top = raf.readShort();
+            right = raf.readShort();
+            bottom = raf.readShort();
         }
 
         public int getType() {
@@ -725,20 +690,20 @@ public class AVIReader {
         private byte x;
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
-            biSize = readInt(raf);
-            biWidth = readInt(raf);
-            biHeight = readInt(raf);
-            biPlanes = readShort(raf);
-            biBitCount = readShort(raf);
-            biCompression = readInt(raf);
-            biSizeImage = readInt(raf);
-            biXPelsPerMeter = readInt(raf);
-            biYPelsPerMeter = readInt(raf);
-            biClrUsed = readInt(raf);
-            biClrImportant = readInt(raf);
+            biSize = raf.readInt();
+            biWidth = raf.readInt();
+            biHeight = raf.readInt();
+            biPlanes = raf.readShort();
+            biBitCount = raf.readShort();
+            biCompression = raf.readInt();
+            biSizeImage = raf.readInt();
+            biXPelsPerMeter = raf.readInt();
+            biYPelsPerMeter = raf.readInt();
+            biClrUsed = raf.readInt();
+            biClrImportant = raf.readInt();
 
             if (this.getChunkSize() == 56) // Normal size is 40, plus optional
                                            // extra 4 dwords for palette info =
@@ -846,33 +811,33 @@ public class AVIReader {
         private String audioFormat = "?";
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
             // WAVEFORMAT Fields
-            wFormatTag = readShort(raf);
-            channels = readShort(raf);
-            nSamplesPerSec = readInt(raf);
-            nAvgBytesPerSec = readInt(raf);
-            nBlockAlign = readShort(raf);
+            wFormatTag = raf.readShort();
+            channels = raf.readShort();
+            nSamplesPerSec = raf.readInt();
+            nAvgBytesPerSec = raf.readInt();
+            nBlockAlign = raf.readShort();
 
             switch ((int) wFormatTag) {
             // See mmreg.h for a list of all audio format tags
 
             case AUDIO_FORMAT_PCM: {
-                wBitsPerSample = readShort(raf);
+                wBitsPerSample = raf.readShort();
 
                 if (dwChunkSize == 40) {
                     // Simulate a C union struct
-                    wValidBitsPerSample = samplesValidBitsPerSample = wReserved = readShort(raf);
-                    cbSize = readShort(raf);
+                    wValidBitsPerSample = samplesValidBitsPerSample = wReserved = raf.readShort();
+                    cbSize = raf.readShort();
 
-                    channelMask = readInt(raf);
+                    channelMask = raf.readInt();
 
                     // GUID SubFormat
-                    guid_data1 = readInt(raf);
-                    guid_data2 = readShort(raf);
-                    guid_data3 = readShort(raf);
+                    guid_data1 = raf.readInt();
+                    guid_data2 = raf.readShort();
+                    guid_data3 = raf.readShort();
                     raf.readFully(guid_data4);
                 }
                 audioFormat = "PCM";
@@ -881,14 +846,14 @@ public class AVIReader {
 
             case AUDIO_FORMAT_MP3: {
                 // WaveFormatEX
-                wBitsPerSample = readShort(raf);
-                cbSize = readShort(raf);
+                wBitsPerSample = raf.readShort();
+                cbSize = raf.readShort();
 
-                wID = readShort(raf);
-                fdwFlags = readInt(raf);
-                nBlockSize = readShort(raf);
-                nFramesPerBlock = readShort(raf);
-                nCodecDelay = readShort(raf);
+                wID = raf.readShort();
+                fdwFlags = raf.readInt();
+                nBlockSize = raf.readShort();
+                nFramesPerBlock = raf.readShort();
+                nCodecDelay = raf.readShort();
 
                 mp3Flag = true;
                 audioFormat = "MP3";
@@ -912,20 +877,20 @@ public class AVIReader {
 
             case AUDIO_FORMAT_EXTENSIBLE: {
                 // WaveFormatEX
-                wBitsPerSample = readShort(raf);
-                cbSize = readShort(raf);
+                wBitsPerSample = raf.readShort();
+                cbSize = raf.readShort();
 
                 // WaveFormat Extensible
 
                 // Simulate a C union struct
-                wValidBitsPerSample = samplesValidBitsPerSample = wReserved = readShort(raf);
+                wValidBitsPerSample = samplesValidBitsPerSample = wReserved = raf.readShort();
 
-                channelMask = readInt(raf);
+                channelMask = raf.readInt();
 
                 // GUID SubFormat
-                guid_data1 = readInt(raf);
-                guid_data2 = readShort(raf);
-                guid_data3 = readShort(raf);
+                guid_data1 = raf.readInt();
+                guid_data2 = raf.readShort();
+                guid_data3 = raf.readShort();
                 raf.readFully(guid_data4);
 
                 audioFormat = "EXTENSIBLE";
@@ -999,7 +964,7 @@ public class AVIReader {
         }
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
             String fourccStr = toFourCC(dwFourCC);
@@ -1009,7 +974,7 @@ public class AVIReader {
         public byte[] getVideoPacket() throws IOException {
             byte[] videoFrameData = new byte[dwChunkSize];
 
-            int bytesRead = raf.read(videoFrameData);
+            int bytesRead = raf.readFully(videoFrameData);
             if (bytesRead != dwChunkSize)
                 throw new IOException("Read mismatch expected chunksize [" + dwChunkSize + "], Actual read ["
                         + bytesRead + "]");
@@ -1033,7 +998,7 @@ public class AVIReader {
         protected int streamNo;
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
             String fourccStr = toFourCC(dwFourCC);
@@ -1055,7 +1020,7 @@ public class AVIReader {
         public byte[] getAudioPacket() throws IOException {
             byte[] audioFrameData = new byte[dwChunkSize];
 
-            int bytesRead = raf.read(audioFrameData);
+            int bytesRead = raf.readFully(audioFrameData);
             if (bytesRead != dwChunkSize)
                 throw new IOException("Read mismatch expected chunksize [" + dwChunkSize + "], Actual read ["
                         + bytesRead + "]");
@@ -1091,7 +1056,7 @@ public class AVIReader {
         protected int[] dwChunkLength;
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
             numIndexes = this.getChunkSize() >> 4;
@@ -1102,13 +1067,13 @@ public class AVIReader {
             dwChunkLength = new int[numIndexes];
 
             for (int i = 0; i < numIndexes; i++) {
-                ckid[i] = readInt(raf); // raf.readInt();
-                dwFlags[i] = readInt(raf); // raf.readInt();
-                dwChunkOffset[i] = readInt(raf); // raf.readInt();
-                dwChunkLength[i] = readInt(raf); // raf.readInt();
+                ckid[i] = raf.readInt(); // raf.readInt();
+                dwFlags[i] = raf.readInt(); // raf.readInt();
+                dwChunkOffset[i] = raf.readInt(); // raf.readInt();
+                dwChunkLength[i] = raf.readInt(); // raf.readInt();
             }
 
-            raf.seek(this.getEndOfChunk());
+            raf.position(this.getEndOfChunk());
 
             int alignment = getChunkSize() - dwChunkSize;
             if (alignment > 0)
@@ -1184,18 +1149,18 @@ public class AVIReader {
         private int streamNo = 0;
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
-            wLongsPerEntry = readShort(raf);
+            wLongsPerEntry = raf.readShort();
             bIndexSubType = raf.readByte();
             bIndexType = raf.readByte();
-            nEntriesInUse = readInt(raf);
-            dwChunkId = readInt(raf); // id the index points to eg. 00dx
+            nEntriesInUse = raf.readInt();
+            dwChunkId = raf.readInt(); // id the index points to eg. 00dx
 
-            dwReserved[0] = readInt(raf);
-            dwReserved[1] = readInt(raf);
-            dwReserved[2] = readInt(raf);
+            dwReserved[0] = raf.readInt();
+            dwReserved[1] = raf.readInt();
+            dwReserved[2] = raf.readInt();
 
             qwOffset = new long[nEntriesInUse];
             dwSize = new int[nEntriesInUse];
@@ -1208,15 +1173,15 @@ public class AVIReader {
                             chunkIdStr.substring(2)));
 
             for (int i = 0; i < nEntriesInUse; i++) {
-                qwOffset[i] = readLong(raf);
-                dwSize[i] = readInt(raf);
-                dwDuration[i] = readInt(raf);
+                qwOffset[i] = raf.readLong();
+                dwSize[i] = raf.readInt();
+                dwDuration[i] = raf.readInt();
 
                 sb.append(String.format("\n\t\tStandard Index - Offset [%d], Size [%d], Duration [%d]", qwOffset[i],
                         dwSize[i], dwDuration[i]));
             }
 
-            raf.seek(this.getEndOfChunk());
+            raf.position(this.getEndOfChunk());
         }
 
         @Override
@@ -1266,24 +1231,24 @@ public class AVIReader {
         }
 
         @Override
-        public void read(final int dwFourCC, final RandomAccessFile raf) throws IOException {
+        public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
-            wLongsPerEntry = readShort(raf);
+            wLongsPerEntry = raf.readShort();
             bIndexSubType = raf.readByte();
             bIndexType = raf.readByte();
-            nEntriesInUse = readInt(raf);
-            dwChunkId = readInt(raf); // id the index points to eg. 00dx
-            qwBaseOffset = readLong(raf);
-            dwReserved2 = readInt(raf);
+            nEntriesInUse = raf.readInt();
+            dwChunkId = raf.readInt(); // id the index points to eg. 00dx
+            qwBaseOffset = raf.readLong();
+            dwReserved2 = raf.readInt();
 
             dwOffset = new int[nEntriesInUse];
             dwDuration = new int[nEntriesInUse];
 
             try {
                 for (int i = 0; i < nEntriesInUse; i++) {
-                    dwOffset[i] = readInt(raf);
-                    dwDuration[i] = readInt(raf);
+                    dwOffset[i] = raf.readInt();
+                    dwDuration[i] = raf.readInt();
 
                     lastOffset = dwOffset[i];
                     lastDuration = dwDuration[i];
@@ -1292,7 +1257,7 @@ public class AVIReader {
                 Logger.debug("Failed to read : " + toString());
             }
 
-            raf.seek(this.getEndOfChunk());
+            raf.position(this.getEndOfChunk());
         }
 
         @Override
