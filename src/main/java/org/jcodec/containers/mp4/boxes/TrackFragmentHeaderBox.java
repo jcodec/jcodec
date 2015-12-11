@@ -104,7 +104,7 @@ public class TrackFragmentHeaderBox extends FullBox {
             return this;
         }
 
-        public Box create() {
+        public TrackFragmentHeaderBox create() {
             try {
                 return box;
             } finally {
