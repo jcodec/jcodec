@@ -108,6 +108,14 @@ public class MP4Muxer {
         return ase;
     }
 
+    public static AudioSampleEntry compressedAudioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
+            int sampleRate, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame) {
+        AudioSampleEntry ase = new AudioSampleEntry(new Header(fourcc, 0), (short) drefId, (short) channels,
+                (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPacket, bytesPerPacket, bytesPerFrame, 16 / 8,
+                (short) 1);
+        return ase;
+    }
+
     public static LeafBox terminatorAtom() {
         return new LeafBox(new Header(new String(new byte[4])), ByteBuffer.allocate(0));
     }

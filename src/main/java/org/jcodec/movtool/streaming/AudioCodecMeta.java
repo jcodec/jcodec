@@ -19,6 +19,9 @@ public class AudioCodecMeta extends CodecMeta {
     private int channelCount;
     private int sampleRate;
     private Endian endian;
+    private int samplesPerPacket;
+    private int bytesPerPacket;
+    private int bytesPerFrame;
     private boolean pcm;
     private Label[] labels;
 
@@ -29,6 +32,20 @@ public class AudioCodecMeta extends CodecMeta {
         this.channelCount = channelCount;
         this.sampleRate = sampleRate;
         this.endian = endian;
+        this.pcm = pcm;
+        this.labels = labels;
+    }
+
+    public AudioCodecMeta(String fourcc, int sampleSize, int channelCount, int sampleRate, Endian endian, boolean pcm,
+                          Label[] labels, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame, ByteBuffer codecPrivate) {
+        super(fourcc, codecPrivate);
+        this.sampleSize = sampleSize;
+        this.channelCount = channelCount;
+        this.sampleRate = sampleRate;
+        this.endian = endian;
+        this.samplesPerPacket = samplesPerPacket;
+        this.bytesPerPacket = bytesPerPacket;
+        this.bytesPerFrame = bytesPerFrame;
         this.pcm = pcm;
         this.labels = labels;
     }
@@ -57,6 +74,18 @@ public class AudioCodecMeta extends CodecMeta {
 
     public int getChannelCount() {
         return channelCount;
+    }
+
+    public int getSamplesPerPacket() {
+        return samplesPerPacket;
+    }
+
+    public int getBytesPerPacket() {
+        return bytesPerPacket;
+    }
+
+    public int getBytesPerFrame() {
+        return bytesPerFrame;
     }
 
     public Endian getEndian() {

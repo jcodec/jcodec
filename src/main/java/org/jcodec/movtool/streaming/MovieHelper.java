@@ -15,6 +15,8 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChannelBox;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ClearApertureBox;
@@ -182,8 +184,15 @@ public class MovieHelper {
             vse = MP4Muxer.videoSampleEntry(se.getFourcc(), ss.getSize(), "JCodec");
         } else {
             AudioCodecMeta ss = (AudioCodecMeta) se;
-            vse = MP4Muxer.audioSampleEntry(se.getFourcc(), 0, ss.getSampleSize(), ss.getChannelCount(),
-                    ss.getSampleRate(), ss.getEndian());
+
+            if (ss.isPCM()) {
+                vse = MP4Muxer.audioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
+                        ss.getSampleRate(), ss.getEndian());
+            } else {
+                vse = MP4Muxer.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
+                        ss.getSampleRate(), ss.getSamplesPerPacket(), ss.getBytesPerPacket(), ss.getBytesPerFrame());
+            }
+
             ChannelBox chan = new ChannelBox();
             ChannelUtils.setLabels(ss.getChannelLabels(), chan);
             vse.add(chan);
