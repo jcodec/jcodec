@@ -34,7 +34,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mkv.CuesFactory;
 import org.jcodec.containers.mkv.MKVType;

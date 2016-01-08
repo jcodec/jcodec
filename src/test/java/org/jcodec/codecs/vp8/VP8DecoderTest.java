@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mkv.MKVMuxerTest;
 import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;

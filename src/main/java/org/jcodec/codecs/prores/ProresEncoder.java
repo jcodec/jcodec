@@ -23,9 +23,9 @@ import static org.jcodec.common.tools.MathUtil.sign;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.NIOUtils;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.BitWriter;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;

@@ -14,7 +14,7 @@ import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import org.jcodec.HexDump;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.AutoFileChannelWrapper;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;

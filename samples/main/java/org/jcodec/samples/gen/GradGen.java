@@ -1,6 +1,6 @@
 package org.jcodec.samples.gen;
 
-import static org.jcodec.common.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 
 import java.io.File;
 import java.nio.ByteBuffer;

@@ -9,7 +9,7 @@ import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import org.jcodec.common.IOUtils;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.File;
 import java.nio.ByteBuffer;
 
+import org.jcodec.common.io.NIOUtils;
 import org.junit.Test;
 
 /**

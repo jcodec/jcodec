@@ -7,8 +7,8 @@ import static org.junit.Assert.assertTrue;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.jcodec.common.ByteBufferSeekableByteChannel;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.ByteBufferSeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.junit.Test;

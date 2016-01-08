@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.QTTimeUtil;

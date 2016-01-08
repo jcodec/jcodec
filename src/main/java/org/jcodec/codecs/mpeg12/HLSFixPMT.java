@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 
 import org.jcodec.common.Assert;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mps.MTSUtils;
 
 /**

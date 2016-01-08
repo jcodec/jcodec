@@ -10,8 +10,8 @@ import static org.junit.Assert.assertArrayEquals;
 import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.IOUtils;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Assert;
 import org.junit.Ignore;

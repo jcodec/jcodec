@@ -1,7 +1,7 @@
 package org.jcodec.samples.mashup;
 
-import static org.jcodec.common.NIOUtils.readableFileChannel;
-import static org.jcodec.common.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 import static org.jcodec.samples.mashup.MovStitch2.doFrame;
 

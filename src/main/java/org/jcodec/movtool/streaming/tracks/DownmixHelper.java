@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.common.IntArrayList;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
 import org.jcodec.containers.mp4.boxes.channel.Label;

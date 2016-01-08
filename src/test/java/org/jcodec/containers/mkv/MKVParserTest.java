@@ -7,9 +7,9 @@ import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.util.List;
 
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.IOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.MkvBlock;

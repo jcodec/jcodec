@@ -14,7 +14,7 @@ import org.jcodec.audio.SincLowPassFilter;
 import org.jcodec.codecs.wav.WavInput;
 import org.jcodec.codecs.wav.WavOutput;
 import org.jcodec.common.AudioFormat;
-import org.jcodec.common.IOUtils;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 

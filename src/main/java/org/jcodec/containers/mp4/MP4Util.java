@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4;
 
-import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,9 +16,9 @@ import java.util.Map;
 
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.Codec;
-import org.jcodec.common.IOUtils;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.BoxFactory;

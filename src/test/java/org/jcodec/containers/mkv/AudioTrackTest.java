@@ -1,7 +1,7 @@
 package org.jcodec.containers.mkv;
 
-import static org.jcodec.common.IOUtils.closeQuietly;
-import static org.jcodec.common.IOUtils.readFileToByteArray;
+import static org.jcodec.common.io.IOUtils.closeQuietly;
+import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVMuxerTest.bufferToArray;
 import static org.jcodec.containers.mkv.MKVMuxerTest.tildeExpand;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
@@ -15,8 +15,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.MkvBlock;

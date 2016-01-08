@@ -9,7 +9,7 @@ import java.util.List;
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;

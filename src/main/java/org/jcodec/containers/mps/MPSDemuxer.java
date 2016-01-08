@@ -19,8 +19,8 @@ import java.util.Map;
 import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.SegmentReader;
 import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 

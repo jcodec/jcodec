@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -11,7 +11,7 @@ import java.util.Set;
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.IntIntMap;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;

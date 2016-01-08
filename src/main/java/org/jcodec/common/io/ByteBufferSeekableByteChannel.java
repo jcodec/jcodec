@@ -1,4 +1,4 @@
-package org.jcodec.common;
+package org.jcodec.common.io;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
+ * 
+ * Implements a seekable byte channel that wraps a byte buffer
  * 
  * @author The JCodec project
  * 

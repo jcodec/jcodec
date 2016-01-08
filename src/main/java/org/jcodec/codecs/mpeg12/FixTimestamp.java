@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.MTSUtils;
 
 /**

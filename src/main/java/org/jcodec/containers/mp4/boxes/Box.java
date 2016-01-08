@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.jcodec.common.Assert;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
 

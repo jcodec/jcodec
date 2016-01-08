@@ -1,6 +1,6 @@
 package org.jcodec.containers.mps;
 
-import static org.jcodec.common.NIOUtils.getRel;
+import static org.jcodec.common.io.NIOUtils.getRel;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,8 +9,8 @@ import java.util.EnumSet;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;

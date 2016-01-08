@@ -11,7 +11,7 @@ import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
 import org.jcodec.common.ByteArrayList;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.util.EbmlUtil;
 
 /**

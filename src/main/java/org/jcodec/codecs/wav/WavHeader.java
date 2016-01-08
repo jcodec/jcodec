@@ -11,9 +11,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.jcodec.common.AudioFormat;
-import org.jcodec.common.IOUtils;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ChannelLabel;
 
 /**

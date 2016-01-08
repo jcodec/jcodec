@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import junit.framework.TestCase;
 
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.junit.Test;
 
 public class PPSReadTest extends TestCase {
