@@ -5,7 +5,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.AutoFileChannelWrapper;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.junit.Test;
 
