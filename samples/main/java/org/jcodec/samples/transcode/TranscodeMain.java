@@ -1244,10 +1244,10 @@ public class TranscodeMain {
                 RgbToYuv420p transform = new RgbToYuv420p(0, 0, Levels.PC);
 
                 int i;
-                for (i = 0; i < 10000; i++) {
+                for (i = 0; i < cmd.getIntegerFlag("maxFrames", Integer.MAX_VALUE); i++) {
                     File nextImg = new File(String.format(cmd.getArg(0), i));
                     if (!nextImg.exists())
-                        continue;
+                        break;
                     BufferedImage rgb = ImageIO.read(nextImg);
                     Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), encoder.getSupportedColorSpaces()[0]);
                     transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
@@ -1270,6 +1270,7 @@ public class TranscodeMain {
         public void printHelp(PrintStream err) {
             MainUtils.printHelp(new HashMap<String, String>() {
                 {
+                    put("maxFrames", "Number of frames to transcode");
                 }
             }, "pattern", "out file");
         }
