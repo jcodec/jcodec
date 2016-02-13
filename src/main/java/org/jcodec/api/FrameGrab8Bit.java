@@ -9,7 +9,9 @@ import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.prores.ProresDecoder;
+import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.SeekableDemuxerTrack;
@@ -205,26 +207,13 @@ public class FrameGrab8Bit {
     }
 
     private ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack, Packet frame) throws JCodecException {
-        if (videoTrack instanceof AbstractMP4DemuxerTrack) {
-            SampleEntry se = ((AbstractMP4DemuxerTrack) videoTrack).getSampleEntries()[((MP4Packet) frame).getEntryNo()];
-            VideoDecoder byFourcc = byFourcc(se.getHeader().getFourcc());
-            if (byFourcc instanceof H264Decoder)
-                return new AVCMP4Adaptor(((AbstractMP4DemuxerTrack) videoTrack).getSampleEntries());
+        DemuxerTrackMeta meta = videoTrack.getMeta();
+        switch (meta.getCodec()) {
+        case H264:
+            return new AVCMP4Adaptor(meta);
+        default:
+            throw new UnsupportedFormatException("Codec is not supported");
         }
-
-        throw new UnsupportedFormatException("Codec is not supported");
-    }
-
-    private VideoDecoder byFourcc(String fourcc) {
-        if (fourcc.equals("avc1")) {
-            return new H264Decoder();
-        } else if (fourcc.equals("m1v1") || fourcc.equals("m2v1")) {
-            return new MPEGDecoder();
-        } else if (fourcc.equals("apco") || fourcc.equals("apcs") || fourcc.equals("apcn") || fourcc.equals("apch")
-                || fourcc.equals("ap4h")) {
-            return new ProresDecoder();
-        }
-        return null;
     }
 
     /**
@@ -269,8 +258,8 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrame(SeekableByteChannel file, double second) throws JCodecException,
-            IOException {
+    public static Picture8Bit getNativeFrame(SeekableByteChannel file, double second)
+            throws JCodecException, IOException {
         return new FrameGrab8Bit(file).seekToSecondPrecise(second).getNativeFrame();
     }
 
@@ -302,8 +291,8 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrame(SeekableByteChannel file, int frameNumber) throws JCodecException,
-            IOException {
+    public static Picture8Bit getNativeFrame(SeekableByteChannel file, int frameNumber)
+            throws JCodecException, IOException {
         return new FrameGrab8Bit(file).seekToFramePrecise(frameNumber).getNativeFrame();
     }
 

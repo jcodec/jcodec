@@ -18,6 +18,7 @@ import java.util.Map;
 
 import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.SegmentReader;
+import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -183,8 +184,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            return new DemuxerTrackMeta(videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER), null,
-                    0, 0, null);
+            DemuxerTrackMeta.Type t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
+            return new DemuxerTrackMeta(t, Codec.MP2, null, 0, 0, null, null);
         }
     }
 
@@ -215,8 +216,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
 
         public DemuxerTrackMeta getMeta() {
-            return new DemuxerTrackMeta(videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER), null,
-                    0, 0, null);
+            DemuxerTrackMeta.Type t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
+            return new DemuxerTrackMeta(t, Codec.MP2, null, 0, 0, null, null);
         }
     }
 

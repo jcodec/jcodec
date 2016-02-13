@@ -42,7 +42,6 @@ public class AVCConcatTrack implements VirtualTrack {
     private double offsetPts = 0;
     private int offsetFn = 0;
     private CodecMeta se;
-    private AvcCBox[] avcCs;
     private Map<Integer, Integer> map;
     private List<PictureParameterSet> allPps;
     private List<SeqParameterSet> allSps;
@@ -51,13 +50,11 @@ public class AVCConcatTrack implements VirtualTrack {
     public AVCConcatTrack(VirtualTrack... tracks) {
         this.tracks = tracks;
 
-        avcCs = new AvcCBox[tracks.length];
         Rational pasp = null;
 
         allPps = new ArrayList<PictureParameterSet>();
         allSps = new ArrayList<SeqParameterSet>();
         tweakers = new H264Utils.SliceHeaderTweaker[tracks.length];
-        int nalLengthSize = 0;
         for (int i = 0; i < tracks.length; i++) {
             CodecMeta se = tracks[i].getCodecMeta();
             if (!(se instanceof VideoCodecMeta))
@@ -72,37 +69,34 @@ public class AVCConcatTrack implements VirtualTrack {
                 throw new RuntimeException("Can not concat video tracks with different Pixel Aspect Ratio.");
             pasp = paspL;
 
-            AvcCBox avcC = H264Utils.parseAVCC(vcm.getCodecPrivate());
-            if (nalLengthSize == 0)
-                nalLengthSize = avcC.getNalLengthSize();
-            else if (nalLengthSize != avcC.getNalLengthSize())
-                throw new RuntimeException("Unable to concat AVC tracks with different NAL length size in AvcC box");
-
-            for (ByteBuffer ppsBuffer : avcC.getPpsList()) {
+            List<ByteBuffer> rawPPSs = H264Utils.getRawPPS(se.getCodecPrivate());
+            for (ByteBuffer ppsBuffer : rawPPSs) {
                 PictureParameterSet pps = H264Utils.readPPS(NIOUtils.duplicate(ppsBuffer));
                 pps.pic_parameter_set_id |= i << 8;
                 pps.seq_parameter_set_id |= i << 8;
                 allPps.add(pps);
             }
-            for (ByteBuffer spsBuffer : avcC.getSpsList()) {
+            List<ByteBuffer> rawSPSs = H264Utils.getRawSPS(se.getCodecPrivate());
+            for (ByteBuffer spsBuffer : rawSPSs) {
                 SeqParameterSet sps = H264Utils.readSPS(NIOUtils.duplicate(spsBuffer));
                 sps.seq_parameter_set_id |= i << 8;
                 allSps.add(sps);
             }
             final int idx2 = i;
-            tweakers[i] = new H264Utils.SliceHeaderTweaker(avcC.getSpsList(), avcC.getPpsList()) {
+            tweakers[i] = new H264Utils.SliceHeaderTweaker(rawSPSs, rawPPSs) {
+                @Override
                 protected void tweak(SliceHeader sh) {
                     sh.pic_parameter_set_id = map.get((idx2 << 8) | sh.pic_parameter_set_id);
                 }
             };
-            avcCs[i] = avcC;
         }
         map = mergePS(allSps, allPps);
 
         VideoCodecMeta codecMeta = (VideoCodecMeta) tracks[0].getCodecMeta();
-        AvcCBox createAvcC = H264Utils.createAvcC(allSps, allPps, nalLengthSize);
 
-        se = new VideoCodecMeta("avc1", H264Utils.getAvcCData(createAvcC), codecMeta.getSize(), codecMeta.getPasp());
+        se = new VideoCodecMeta("avc1",
+                ByteBuffer.wrap(H264Utils.saveCodecPrivate(H264Utils.saveSPS(allSps), H264Utils.savePPS(allPps))),
+                codecMeta.getSize(), codecMeta.getPasp());
     }
 
     private Map<Integer, Integer> mergePS(List<SeqParameterSet> allSps, List<PictureParameterSet> allPps) {
@@ -193,32 +187,21 @@ public class AVCConcatTrack implements VirtualTrack {
     private ByteBuffer patchPacket(final int idx2, ByteBuffer data) {
         ByteBuffer out = ByteBuffer.allocate(data.remaining() + 8);
 
-        for (ByteBuffer nal : H264Utils.splitMOVPacket(data, avcCs[idx2])) {
+        for (ByteBuffer nal : H264Utils.splitFrame(data)) {
             NALUnit nu = NALUnit.read(nal);
 
             if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
 
-                ByteBuffer nalSizePosition = out.duplicate();
-                out.putInt(0);
+                out.putInt(1);
                 nu.write(out);
 
                 tweakers[idx2].run(nal, out, nu);
-                nalSizePosition.putInt(out.position() - nalSizePosition.position() - 4);
             } else {
                 Logger.warn("Skipping NAL unit: " + nu.type);
             }
         }
         if (out.remaining() >= 5) {
-            int nalLengthSize = avcCs[idx2].getNalLengthSize();
-            int size = out.remaining() - nalLengthSize;
-            if (nalLengthSize == 4)
-                out.putInt(size);
-            else if (nalLengthSize == 2)
-                out.putShort((short) size);
-            else if (nalLengthSize == 3) {
-                out.put((byte) (size >> 16));
-                out.putShort((short) (size & 0xffff));
-            }
+            out.putInt(1);
             new NALUnit(NALUnitType.FILLER_DATA, 0).write(out);
         }
 

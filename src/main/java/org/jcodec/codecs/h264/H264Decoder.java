@@ -78,6 +78,25 @@ public class H264Decoder implements VideoDecoder {
         reader = new FrameReader();
     }
 
+    /**
+     * Constructs this decoder from a portion of a stream that contains AnnexB
+     * delimited (00 00 00 01) SPS/PPS NAL units. SPS/PPS NAL units are 0x67 and
+     * 0x68 respectfully.
+     * 
+     * @param codecPrivate
+     */
+    public H264Decoder(byte[] codecPrivate) {
+        this();
+        for (ByteBuffer bb : H264Utils.splitFrame(ByteBuffer.wrap(codecPrivate))) {
+            NALUnit nu = NALUnit.read(bb);
+            if (nu.type == NALUnitType.SPS) {
+                reader.addSps(bb);
+            } else if (nu.type == NALUnitType.PPS) {
+                reader.addPps(bb);
+            }
+        }
+    }
+
     @Override
     @Deprecated
     public Picture decodeFrame(ByteBuffer data, int[][] buffer) {

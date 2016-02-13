@@ -3,10 +3,14 @@ package org.jcodec.containers.mp4.demuxer;
 import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.mp4.AvcCBox;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Packet;
@@ -15,9 +19,11 @@ import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
 import static org.jcodec.common.DemuxerTrackMeta.Type.*;
 
@@ -51,6 +57,8 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     private MovieBox movie;
 
+    private AvcCBox avcC;
+
     public FramesMP4DemuxerTrack(MovieBox mov, TrakBox trak, SeekableByteChannel input) {
         super(trak);
         this.input = input;
@@ -69,6 +77,10 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
 
         sizes = stsz.getSizes();
+        
+        if (getCodec() == Codec.H264) {
+            avcC = H264Utils.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
+        }
     }
 
     @Override
@@ -123,7 +135,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             }
         }
 
-        MP4Packet pkt = new MP4Packet(result, mediaToEdited(box, realPts, movie.getTimescale()), timescale, duration,
+        MP4Packet pkt = new MP4Packet(result == null ? null : convertPacket(result), mediaToEdited(box, realPts, movie.getTimescale()), timescale, duration,
                 curFrame, sync, null, realPts, sampleToChunks[stscInd].getEntry() - 1, pktPos, size, psync);
 
         offInChunk += size;
@@ -139,6 +151,13 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         shiftPts(1);
 
         return pkt;
+    }
+
+    @Override
+    public ByteBuffer convertPacket(ByteBuffer result) {
+        if(avcC != null)
+            return H264Utils.decodeMOVPacket(result, avcC);
+        return result;
     }
 
     @Override
@@ -218,7 +237,15 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
 
         TrackType type = getType();
-        return new DemuxerTrackMeta(type == TrackType.VIDEO ? VIDEO : (type == TrackType.SOUND ? AUDIO : OTHER),
-                seekFrames, sizes.length, (double) duration / timescale, box.getCodedSize());
+        DemuxerTrackMeta.Type t = type == TrackType.VIDEO ? VIDEO : (type == TrackType.SOUND ? AUDIO : OTHER);
+        DemuxerTrackMeta meta = new DemuxerTrackMeta(t, getCodec(), seekFrames, sizes.length, (double) duration / timescale,
+                box.getCodedSize(), getCodecPrivate());
+        if(type == TrackType.VIDEO) {
+            PixelAspectExt pasp = Box.findFirst(getSampleEntries()[0], PixelAspectExt.class, "pasp");
+            if(pasp != null)
+                meta.setPixelAspectRatio(pasp.getRational());
+        }
+        
+        return meta;
     }
 }

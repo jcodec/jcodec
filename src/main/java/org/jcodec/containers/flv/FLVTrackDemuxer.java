@@ -42,6 +42,7 @@ public class FLVTrackDemuxer {
         private int curFrame;
         private Codec codec;
         private LongArrayList framePositions = new LongArrayList();
+        private byte[] codecPrivate;
 
         public FLVDemuxerTrack(Type type) throws IOException {
             this.type = type;
@@ -74,12 +75,9 @@ public class FLVTrackDemuxer {
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            return new DemuxerTrackMeta(type == Type.VIDEO ? DemuxerTrackMeta.Type.VIDEO : DemuxerTrackMeta.Type.AUDIO,
-                    null, 0, 0, new Size(0, 0));
-        }
-
-        public Codec getCodec() {
-            return codec;
+            DemuxerTrackMeta.Type t = type == Type.VIDEO ? DemuxerTrackMeta.Type.VIDEO : DemuxerTrackMeta.Type.AUDIO;
+            return new DemuxerTrackMeta(t, codec,
+                    null, 0, 0, new Size(0, 0), codecPrivate);
         }
 
         @Override

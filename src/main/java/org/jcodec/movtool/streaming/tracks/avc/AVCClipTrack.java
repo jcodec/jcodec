@@ -37,7 +37,7 @@ import org.jcodec.movtool.streaming.tracks.VirtualPacketWrapper;
  */
 public class AVCClipTrack extends ClipTrack {
 
-    private AvcCBox avcC;
+//    private AvcCBox avcC;
     private H264FixedRateControl rc;
     private int mbW;
     private int mbH;
@@ -45,6 +45,7 @@ public class AVCClipTrack extends ClipTrack {
     private int frameSize;
     private SeqParameterSet encSPS;
     private PictureParameterSet encPPS;
+    private byte[] codecPrivate;
 
     public AVCClipTrack(VirtualTrack src, int frameFrom, int frameTo) {
         super(src, frameFrom, frameTo);
@@ -55,8 +56,11 @@ public class AVCClipTrack extends ClipTrack {
 
         rc = new H264FixedRateControl(1024);
         H264Encoder encoder = new H264Encoder(rc);
-        avcC = H264Utils.parseAVCC(codecMeta.getCodecPrivate());
-        SeqParameterSet sps = H264Utils.readSPS(NIOUtils.duplicate(avcC.getSpsList().get(0)));
+        ByteBuffer codecPrivate = codecMeta.getCodecPrivate();
+        this.codecPrivate = NIOUtils.toArray(codecPrivate);
+        List<ByteBuffer> rawSPS = H264Utils.getRawSPS(codecPrivate);
+        List<ByteBuffer> rawPPS = H264Utils.getRawPPS(codecPrivate);
+        SeqParameterSet sps = H264Utils.readSPS(rawSPS.get(0));
 
         mbW = sps.pic_width_in_mbs_minus1 + 1;
         mbH = H264Utils.getPicHeightInMbs(sps);
@@ -75,10 +79,11 @@ public class AVCClipTrack extends ClipTrack {
         encSPS.frame_crop_top_offset = sps.frame_crop_top_offset;
         encSPS.vuiParams = sps.vuiParams;
 
-        avcC.getSpsList().add(H264Utils.writeSPS(encSPS, 128));
-        avcC.getPpsList().add(H264Utils.writePPS(encPPS, 20));
+        rawSPS.add(H264Utils.writeSPS(encSPS, 128));
+        rawPPS.add(H264Utils.writePPS(encPPS, 20));
         
-        se = new VideoCodecMeta("avc1", H264Utils.getAvcCData(avcC), codecMeta.getSize(), codecMeta.getPasp());
+        se = new VideoCodecMeta("avc1", ByteBuffer.wrap(H264Utils.saveCodecPrivate(rawSPS, rawPPS)),
+                codecMeta.getSize(), codecMeta.getPasp());
 
         frameSize = rc.calcFrameSize(mbW * mbH);
         frameSize += frameSize >> 4;
@@ -123,20 +128,18 @@ public class AVCClipTrack extends ClipTrack {
         }
 
         public List<ByteBuffer> transcode() throws IOException {
-            H264Decoder decoder = new H264Decoder();
-            decoder.addSps(avcC.getSpsList());
-            decoder.addPps(avcC.getPpsList());
+            H264Decoder decoder = new H264Decoder(codecPrivate);
             Picture buf = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV420J);
             Picture dec = null;
             for (VirtualPacket virtualPacket : head) {
-                dec = decoder.decodeFrame(H264Utils.splitMOVPacket(virtualPacket.getData(), avcC), buf.getData());
+                dec = decoder.decodeFrame(H264Utils.splitFrame(virtualPacket.getData()), buf.getData());
             }
             H264Encoder encoder = new H264Encoder(rc);
             ByteBuffer tmp = ByteBuffer.allocate(frameSize);
 
             List<ByteBuffer> result = new ArrayList<ByteBuffer>();
             for (VirtualPacket pkt : tail) {
-                dec = decoder.decodeFrame(H264Utils.splitMOVPacket(pkt.getData(), avcC), buf.getData());
+                dec = decoder.decodeFrame(H264Utils.splitFrame(pkt.getData()), buf.getData());
 
                 tmp.clear();
                 ByteBuffer res = encoder.encodeFrame(dec, tmp);

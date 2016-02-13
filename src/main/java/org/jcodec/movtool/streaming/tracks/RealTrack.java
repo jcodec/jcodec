@@ -90,7 +90,8 @@ public class RealTrack implements VirtualTrack {
                 topField = fiel.topFieldFirst();
             }
 
-            return new VideoCodecMeta(se.getFourcc(), extractVideoCodecPrivate(se), new Size(vse.getWidth(), vse.getHeight()),
+            byte[] codecPrivate = demuxer.getMeta().getCodecPrivate();
+            return new VideoCodecMeta(se.getFourcc(), ByteBuffer.wrap(codecPrivate), new Size(vse.getWidth(), vse.getHeight()),
                     pasp != null ? pasp.getRational() : null, interlace, topField);
         } else if (se instanceof AudioSampleEntry) {
             AudioSampleEntry ase = (AudioSampleEntry) se;
@@ -106,14 +107,6 @@ public class RealTrack implements VirtualTrack {
                     (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), ChannelUtils.getLabels(ase), codecPrivate);
         } else
             throw new RuntimeException("Sample entry '" + se.getFourcc() + "' is not supported.");
-    }
-
-    private ByteBuffer extractVideoCodecPrivate(SampleEntry se) {
-        if ("avc1".equals(se.getFourcc())) {
-            LeafBox leaf = Box.findFirst(se, LeafBox.class, "avcC");
-            return leaf.getData();
-        }
-        return null;
     }
 
     @Override
@@ -141,7 +134,7 @@ public class RealTrack implements VirtualTrack {
                 ch.position(packet.getFileOff());
                 ch.read(bb);
                 bb.flip();
-                return bb;
+                return demuxer.convertPacket(bb);
             } finally {
                 if (ch != null)
                     ch.close();

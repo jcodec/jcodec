@@ -680,13 +680,12 @@ public class TranscodeMain {
             try {
                 sink = writableFileChannel(cmd.getArg(1));
 
-                H264Decoder decoder = new H264Decoder();
 
                 int totalFrames = Integer.MAX_VALUE;
                 PixelAspectExt pasp = null;
                 DemuxerTrack videoTrack;
                 int width = 0, height = 0;
-                AvcCBox avcC = null;
+                H264Decoder decoder = null;
                 if (!raw) {
                     source = readableFileChannel(cmd.getArg(0));
                     MP4Demuxer demux = new MP4Demuxer(source);
@@ -696,9 +695,8 @@ public class TranscodeMain {
                     totalFrames = (int) inTrack.getFrameCount();
                     pasp = Box.findFirst(inTrack.getSampleEntries()[0], PixelAspectExt.class, "pasp");
 
-                    avcC = Box.as(AvcCBox.class, Box.findFirst(ine, LeafBox.class, "avcC"));
-                    decoder.addSps(avcC.getSpsList());
-                    decoder.addPps(avcC.getPpsList());
+                    decoder = new H264Decoder(inTrack.getMeta().getCodecPrivate());
+                    
                     videoTrack = inTrack;
 
                     width = (ine.getWidth() + 15) & ~0xf;
@@ -739,7 +737,7 @@ public class TranscodeMain {
                     if (!raw) {
                         target1 = Picture8Bit.create(width, height, ColorSpace.YUV420);
                         long start = System.nanoTime();
-                        dec = decoder.decodeFrame8Bit(splitMOVPacket(data, avcC), target1.getData());
+                        dec = decoder.decodeFrame8Bit(H264Utils.splitFrame(data), target1.getData());
                         totalH264 += (System.nanoTime() - start);
                         if (dumpMv)
                             dumpMv(i, dec);
@@ -1090,8 +1088,6 @@ public class TranscodeMain {
 
                 MP4Demuxer demux = new MP4Demuxer(source);
 
-                H264Decoder decoder = new H264Decoder();
-
                 Transform transform = new Yuv420pToRgb(0, 0, Levels.PC);
 
                 AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
@@ -1102,10 +1098,9 @@ public class TranscodeMain {
                 Picture rgb = Picture.create(ine.getWidth(), ine.getHeight(), ColorSpace.RGB);
                 ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
                 BufferedImage bi = new BufferedImage(ine.getWidth(), ine.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-                AvcCBox avcC = Box.as(AvcCBox.class, Box.findFirst(ine, LeafBox.class, "avcC"));
 
-                decoder.addSps(avcC.getSpsList());
-                decoder.addPps(avcC.getPpsList());
+                H264Decoder decoder = new H264Decoder(inTrack.getMeta().getCodecPrivate());
+                RgbToBgr rgbToBgr = new RgbToBgr();
 
                 Packet inFrame;
                 int totalFrames = (int) inTrack.getFrameCount();
@@ -1113,7 +1108,7 @@ public class TranscodeMain {
                 for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                     ByteBuffer data = inFrame.getData();
 
-                    Picture dec = decoder.decodeFrame(splitMOVPacket(data, avcC), target1.getData());
+                    Picture dec = decoder.decodeFrame(H264Utils.splitFrame(data), target1.getData());
                     transform.transform(dec, rgb);
                     rgbToBgr.transform(rgb, rgb);
                     _out.clear();
