@@ -2,16 +2,16 @@ package org.jcodec.scale;
 
 import static org.jcodec.common.model.ColorSpace.RGB;
 
+import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Picture8Bit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,6 +28,7 @@ public class AWTUtil {
             Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
             Picture rgb = Picture.create(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
             transform.transform(src, rgb);
+            new RgbToBgr().transform(rgb, rgb);
             src = rgb;
         }
 
@@ -47,6 +48,7 @@ public class AWTUtil {
             Transform8Bit transform = ColorUtil.getTransform8Bit(src.getColor(), ColorSpace.RGB);
             Picture8Bit rgb = Picture8Bit.create(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
             transform.transform(src, rgb);
+            new RgbToBgr8Bit().transform(rgb, rgb);
             src = rgb;
         }
 
@@ -83,7 +85,7 @@ public class AWTUtil {
         byte[] data = ((DataBufferByte) dst.getRaster().getDataBuffer()).getData();
         int[] srcData = src.getPlaneData(0);
         for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) (srcData[i] + 128);
+            data[i] = (byte) srcData[i];
         }
     }
 
@@ -109,13 +111,13 @@ public class AWTUtil {
         byte[] srcData = src.getPlaneData(0);
         for (int i = 0; i < data.length; i++) {
             // Unshifting, since JCodec stores [0..255] -> [-128, 127]
-            data[i] = (byte) srcData[i];
+            data[i] = (byte) (srcData[i] + 128);
         }
     }
 
     @Deprecated
     public static Picture fromBufferedImage(BufferedImage src, ColorSpace tgtColor) {
-        Picture rgb = fromBufferedImage(src);
+        Picture rgb = fromBufferedImageRGB(src);
         Transform tr = ColorUtil.getTransform(rgb.getColor(), tgtColor);
         Picture res = Picture.create(rgb.getWidth(), rgb.getHeight(), tgtColor);
         tr.transform(rgb, res);
@@ -123,21 +125,21 @@ public class AWTUtil {
     }
 
     @Deprecated
-    public static Picture fromBufferedImage(BufferedImage src) {
+    public static Picture fromBufferedImageRGB(BufferedImage src) {
         Picture dst = Picture.create(src.getWidth(), src.getHeight(), RGB);
         fromBufferedImage(src, dst);
         return dst;
     }
 
     public static Picture8Bit fromBufferedImage8Bit(BufferedImage src, ColorSpace tgtColor) {
-        Picture8Bit rgb = fromBufferedImage8Bit(src);
+        Picture8Bit rgb = fromBufferedImageRGB8Bit(src);
         Transform8Bit tr = ColorUtil.getTransform8Bit(rgb.getColor(), tgtColor);
         Picture8Bit res = Picture8Bit.create(rgb.getWidth(), rgb.getHeight(), tgtColor);
         tr.transform(rgb, res);
         return res;
     }
 
-    public static Picture8Bit fromBufferedImage8Bit(BufferedImage src) {
+    public static Picture8Bit fromBufferedImageRGB8Bit(BufferedImage src) {
         Picture8Bit dst = Picture8Bit.create(src.getWidth(), src.getHeight(), RGB);
         fromBufferedImage8Bit(src, dst);
         return dst;

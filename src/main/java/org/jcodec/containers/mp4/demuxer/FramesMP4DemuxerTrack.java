@@ -71,6 +71,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         sizes = stsz.getSizes();
     }
 
+    @Override
     public synchronized MP4Packet nextFrame() throws IOException {
         if (curFrame >= sizes.length)
             return null;
@@ -79,6 +80,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         return nextFrame(ByteBuffer.allocate(size));
     }
 
+    @Override
     public synchronized MP4Packet nextFrame(ByteBuffer storage) throws IOException {
 
         if (curFrame >= sizes.length)
@@ -158,6 +160,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
     }
 
+    @Override
     protected void seekPointer(long frameNo) {
         if (compOffsets != null) {
             cttsSubInd = (int) frameNo;
@@ -194,6 +197,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     }
 
+    @Override
     public long getFrameCount() {
         return sizes.length;
     }

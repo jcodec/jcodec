@@ -17,9 +17,9 @@ import org.jcodec.common.model.Picture8Bit;
  * @author The JCodec project
  * 
  */
-public class RgbToYuv420j8Bit implements Transform8Bit {
+public class RgbToYuv420p8Bit implements Transform8Bit {
 
-    public RgbToYuv420j8Bit() {
+    public RgbToYuv420p8Bit() {
     }
 
     public void transform(Picture8Bit img, Picture8Bit dst) {
@@ -64,14 +64,14 @@ public class RgbToYuv420j8Bit implements Transform8Bit {
         int rS = r + 128;
         int gS = g + 128;
         int bS = b + 128;
-        int y = 77 * rS + 150 * gS + 15 * bS;
-        int u = -43 * rS - 85 * gS + 128 * bS;
-        int v = 128 * rS - 107 * gS - 21 * bS;
+        int y = 66 * rS + 129 * gS + 25 * bS;
+        int u = -38 * rS - 74 * gS + 112 * bS;
+        int v = 112 * rS - 94 * gS - 18 * bS;
         y = (y + 128) >> 8;
         u = (u + 128) >> 8;
         v = (v + 128) >> 8;
 
-        out[0] = clip(y - 128, -128, 127);
+        out[0] = clip(y - 112, -128, 127);
         out[1] = clip(u, -128, 127);
         out[2] = clip(v, -128, 127);
     }

@@ -7,9 +7,9 @@ import org.jcodec.api.JCodecException;
 import org.jcodec.api.UnsupportedFormatException;
 import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.common.AndroidUtil;
-import org.jcodec.common.FileChannelWrapper;
-import org.jcodec.common.NIOUtils;
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.model.Picture;
 
@@ -31,8 +31,10 @@ import android.graphics.Bitmap;
  * NOTE: Android specific routines
  * 
  * @author The JCodec project
+ * @deprecated use {@link org.jcodec.api.android.FrameGrab8Bit} instead.
  * 
  */
+@Deprecated
 public class FrameGrab extends org.jcodec.api.FrameGrab {
 
 	public FrameGrab(SeekableByteChannel in) throws IOException,

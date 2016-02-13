@@ -181,6 +181,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             return es.getFrame(buf);
         }
 
+        @Override
         public DemuxerTrackMeta getMeta() {
             return new DemuxerTrackMeta(videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER), null,
                     0, 0, null);
@@ -201,6 +202,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         public void close() throws IOException {
         }
 
+        @Override
         public Packet nextFrame(ByteBuffer buf) throws IOException {
             PESPacket pkt;
             if (pending.size() > 0) {

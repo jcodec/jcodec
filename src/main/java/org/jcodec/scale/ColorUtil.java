@@ -84,6 +84,7 @@ public class ColorUtil {
         Map<ColorSpace, Transform8Bit> rgb8Bit = new HashMap<ColorSpace, Transform8Bit>();
         rgb8Bit.put(ColorSpace.RGB, new Idential8Bit());
         rgb8Bit.put(ColorSpace.YUV420J, new RgbToYuv420j8Bit());
+        rgb8Bit.put(ColorSpace.YUV420, new RgbToYuv420p8Bit());
         map8Bit.put(ColorSpace.RGB, rgb8Bit);
 
         Map<ColorSpace, Transform8Bit> yuv4208Bit = new HashMap<ColorSpace, Transform8Bit>();

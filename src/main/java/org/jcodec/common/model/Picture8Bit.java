@@ -129,8 +129,8 @@ public class Picture8Bit {
         for (int plane = 0; plane < color.nComp; plane++) {
             if (data[plane] == null)
                 continue;
-            System.arraycopy(src.data[plane], 0, data[plane], 0, (width >> color.compWidth[plane])
-                    * (height >> color.compHeight[plane]));
+            System.arraycopy(src.data[plane], 0, data[plane], 0,
+                    (width >> color.compWidth[plane]) * (height >> color.compHeight[plane]));
         }
     }
 
@@ -213,5 +213,38 @@ public class Picture8Bit {
         for (int i = 0; i < data.length; i++) {
             Arrays.fill(data[i], (byte) val);
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof Picture8Bit))
+            return false;
+        Picture8Bit other = (Picture8Bit) obj;
+
+        if (other.getCroppedWidth() != getCroppedWidth() || other.getCroppedHeight() != getCroppedHeight()
+                || other.getColor() != color)
+            return false;
+
+        for (int i = 0; i < getData().length; i++)
+            if (!planeEquals(other, i))
+                return false;
+        return true;
+    }
+
+    private boolean planeEquals(Picture8Bit other, int plane) {
+        int cw = color.compWidth[plane];
+        int ch = color.compHeight[plane];
+        int offA = other.getCrop() == null ? 0
+                : ((other.getCrop().getX() >> cw) + (other.getCrop().getY() >> ch) * (other.getWidth() >> cw));
+        int offB = crop == null ? 0 : ((crop.getX() >> cw) + (crop.getY() >> ch) * (width >> cw));
+
+        byte[] planeData = other.getPlaneData(plane);
+        for (int i = 0; i < getCroppedHeight() >> ch; i++, offA += (other.getWidth() >> cw), offB += (width >> cw)) {
+            for (int j = 0; j < getCroppedWidth() >> cw; j++) {
+                if (planeData[offA + j] != data[plane][offB + j])
+                    return false;
+            }
+        }
+        return true;
     }
 }

@@ -172,7 +172,8 @@ public class FrameGrab8Bit {
         sdt.gotoFrame(keyFrame);
 
         Packet frame = sdt.nextFrame();
-        decoder = detectDecoder(sdt, frame);
+        if (decoder == null)
+            decoder = detectDecoder(sdt, frame);
 
         while (frame.getFrameNo() < curFrame) {
             decoder.decodeFrame8Bit(frame, getBuffer());

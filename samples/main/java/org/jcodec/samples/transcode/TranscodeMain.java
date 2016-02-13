@@ -98,6 +98,7 @@ import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.scale.AWTUtil;
+import org.jcodec.scale.RgbToBgr;
 import org.jcodec.scale.RgbToYuv420p;
 import org.jcodec.scale.RgbToYuv422p;
 import org.jcodec.scale.Transform;
@@ -190,7 +191,7 @@ public class TranscodeMain {
                         videoTrack = muxer.createVideoTrack(new Size(rgb.getWidth(), rgb.getHeight()), "V_VP8");
 
                     Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);
-                    transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
+                    transform.transform(AWTUtil.fromBufferedImageRGB(rgb), yuv);
                     ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
                     ByteBuffer ff = encoder.encodeFrame(yuv, buf);
@@ -392,7 +393,7 @@ public class TranscodeMain {
 
                     BufferedImage rgb = ImageIO.read(nextImg);
                     Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);
-                    transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
+                    transform.transform(AWTUtil.fromBufferedImageRGB(rgb), yuv);
                     ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
                     ByteBuffer ff = encoder.encodeFrame(yuv, buf);
@@ -572,7 +573,7 @@ public class TranscodeMain {
                     }
 
                     Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);
-                    transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
+                    transform.transform(AWTUtil.fromBufferedImageRGB(rgb), yuv);
                     ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
                     ByteBuffer ff = encoder.encodeFrame(yuv, buf);
@@ -1108,11 +1109,13 @@ public class TranscodeMain {
 
                 Packet inFrame;
                 int totalFrames = (int) inTrack.getFrameCount();
+                RgbToBgr rgbToBgr = new RgbToBgr();
                 for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                     ByteBuffer data = inFrame.getData();
 
                     Picture dec = decoder.decodeFrame(splitMOVPacket(data, avcC), target1.getData());
                     transform.transform(dec, rgb);
+                    rgbToBgr.transform(rgb, rgb);
                     _out.clear();
 
                     AWTUtil.toBufferedImage(rgb, bi);
@@ -1250,7 +1253,7 @@ public class TranscodeMain {
                         break;
                     BufferedImage rgb = ImageIO.read(nextImg);
                     Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), encoder.getSupportedColorSpaces()[0]);
-                    transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
+                    transform.transform(AWTUtil.fromBufferedImageRGB(rgb), yuv);
                     ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
                     ByteBuffer ff = encoder.encodeFrame(yuv, buf);
@@ -1451,7 +1454,7 @@ public class TranscodeMain {
                         videoTrack.setTgtChunkDuration(HALF, SEC);
                     }
                     Picture yuv = Picture.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV422);
-                    transform.transform(AWTUtil.fromBufferedImage(rgb), yuv);
+                    transform.transform(AWTUtil.fromBufferedImageRGB(rgb), yuv);
                     ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
                     encoder.encodeFrame(buf, yuv);

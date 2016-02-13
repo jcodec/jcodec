@@ -80,6 +80,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         return pic;
     }
 
+    @Override
     public Picture8Bit decodeFrame8Bit(Packet packet, byte[][] data) {
         updateState(packet);
 

@@ -223,6 +223,40 @@ public class H264Utils {
             tot += buf.remaining() + 4;
         }
     }
+    
+    /**
+     * Decodes AVC packet in ISO BMF format into Annex B format.
+     * 
+     * Replaces NAL unit size integers with 00 00 00 01 start codes. If the
+     * space allows the transformation is done inplace.
+     * 
+     * @param result
+     */
+    public static ByteBuffer decodeMOVPacket(ByteBuffer result, AvcCBox avcC) {
+        if(avcC.getNalLengthSize() == 4) {
+            decodeMOVPacketInplace(result, avcC);
+            return result;
+        }
+        return joinNALUnits(splitMOVPacket(result, avcC));
+    }
+
+    /**
+     * Decodes AVC packet in ISO BMF format into Annex B format.
+     * 
+     * Inplace replaces NAL unit size integers with 00 00 00 01 start codes. 
+     * @param result
+     */
+    public static void decodeMOVPacketInplace(ByteBuffer result, AvcCBox avcC) {
+        if (avcC.getNalLengthSize() != 4)
+            throw new IllegalArgumentException("Can only inplace decode AVC MOV packet with nal_length_size = 4.");
+        ByteBuffer dup = result.duplicate();
+        while (dup.remaining() >= 4) {
+            int size = dup.getInt();
+            dup.position(dup.position() - 4);
+            dup.putInt(1);
+            dup.position(dup.position() + size);
+        }
+    }
 
     /**
      * Wipes AVC parameter sets ( SPS/PPS ) from the packet
@@ -313,15 +347,19 @@ public class H264Utils {
     }
 
     public static AvcCBox createAvcC(List<SeqParameterSet> initSPS, List<PictureParameterSet> initPPS, int nalLengthSize) {
-        List<ByteBuffer> serialSps = new ArrayList<ByteBuffer>();
+        List<ByteBuffer> serialSps = saveSPS(initSPS);
+        List<ByteBuffer> serialPps = savePPS(initPPS);
+
+        SeqParameterSet sps = initSPS.get(0);
+        return new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, serialSps, serialPps);
+    }
+
+    /**
+     * @param initPPS
+     * @return
+     */
+    public static List<ByteBuffer> savePPS(List<PictureParameterSet> initPPS) {
         List<ByteBuffer> serialPps = new ArrayList<ByteBuffer>();
-        for (SeqParameterSet sps : initSPS) {
-            ByteBuffer bb1 = ByteBuffer.allocate(512);
-            sps.write(bb1);
-            bb1.flip();
-            H264Utils.escapeNAL(bb1);
-            serialSps.add(bb1);
-        }
         for (PictureParameterSet pps : initPPS) {
             ByteBuffer bb1 = ByteBuffer.allocate(512);
             pps.write(bb1);
@@ -329,11 +367,36 @@ public class H264Utils {
             H264Utils.escapeNAL(bb1);
             serialPps.add(bb1);
         }
-
-        SeqParameterSet sps = initSPS.get(0);
-        return new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, serialSps, serialPps);
+        return serialPps;
     }
 
+    /**
+     * @param initSPS
+     * @return
+     */
+    public static List<ByteBuffer> saveSPS(List<SeqParameterSet> initSPS) {
+        List<ByteBuffer> serialSps = new ArrayList<ByteBuffer>();
+        for (SeqParameterSet sps : initSPS) {
+            ByteBuffer bb1 = ByteBuffer.allocate(512);
+            sps.write(bb1);
+            bb1.flip();
+            H264Utils.escapeNAL(bb1);
+            serialSps.add(bb1);
+        }
+        return serialSps;
+    }
+
+    /**
+     * Creates a MP4 sample entry given AVC/H.264 codec private.
+     * @param codecPrivate Array containing AnnexB delimited (00 00 00 01) SPS/PPS NAL units.
+     * @return MP4 sample entry
+     */
+    public static SampleEntry createMOVSampleEntry(byte[] codecPrivate) {
+        List<ByteBuffer> rawSPS = getRawSPS(ByteBuffer.wrap(codecPrivate));
+        List<ByteBuffer> rawPPS = getRawPPS(ByteBuffer.wrap(codecPrivate));
+        return createMOVSampleEntry(rawSPS, rawPPS, 4);
+    }
+    
     public static SampleEntry createMOVSampleEntry(List<ByteBuffer> spsList, List<ByteBuffer> ppsList, int nalLengthSize) {
         SeqParameterSet sps = readSPS(NIOUtils.duplicate(spsList.get(0)));
         AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, spsList, ppsList);
@@ -435,6 +498,29 @@ public class H264Utils {
         return result;
     }
 
+    /**
+     * Joins buffers containing individual NAL units into a single AnnexB delimited buffer.
+     * Each NAL unit will be separated with 00 00 00 01 markers. Allocates a new byte buffer
+     * and writes data into it. 
+     * @param nalUnits
+     * @param out
+     */
+    public static ByteBuffer joinNALUnits(List<ByteBuffer> nalUnits) {
+        int size = 0;
+        for (ByteBuffer nal : nalUnits) {
+            size += 4 + nal.remaining();
+        }
+        ByteBuffer allocate = ByteBuffer.allocate(size);
+        joinNALUnits(nalUnits, allocate);
+        return allocate;
+    }
+    
+    /**
+     * Joins buffers containing individual NAL units into a single AnnexB delimited buffer.
+     * Each NAL unit will be separated with 00 00 00 01 markers. 
+     * @param nalUnits
+     * @param out
+     */
     public static void joinNALUnits(List<ByteBuffer> nalUnits, ByteBuffer out) {
         for (ByteBuffer nal : nalUnits) {
             out.putInt(1);
@@ -456,6 +542,34 @@ public class H264Utils {
         else {
             return parseAVCC(((LeafBox) lb).getData().duplicate());
         }
+    }
+    
+    public static byte[] saveCodecPrivate(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
+        int totalCodecPrivateSize = 0;
+        for (ByteBuffer byteBuffer : spsList) {
+            totalCodecPrivateSize += byteBuffer.remaining() + 5;
+        }
+        for (ByteBuffer byteBuffer : ppsList) {
+            totalCodecPrivateSize += byteBuffer.remaining() + 5;
+        }
+        
+        ByteBuffer bb = ByteBuffer.allocate(totalCodecPrivateSize);
+        for (ByteBuffer byteBuffer : spsList) {
+            bb.putInt(1);
+            bb.put((byte)0x67);
+            bb.put(byteBuffer.duplicate());
+        }
+        for (ByteBuffer byteBuffer : ppsList) {
+            bb.putInt(1);
+            bb.put((byte)0x68);
+            bb.put(byteBuffer.duplicate());
+        }
+        bb.flip();
+        return NIOUtils.toArray(bb);
+    }
+    
+    public static byte[] avcCToAnnexB(AvcCBox avcC) {
+        return saveCodecPrivate(avcC.getSpsList(), avcC.getPpsList());
     }
 
     public static AvcCBox parseAVCC(ByteBuffer bb) {
@@ -703,5 +817,34 @@ public class H264Utils {
         codecPrivate.putInt(1);
         codecPrivate.put((byte) nalType);
         codecPrivate.put(dst);
+    }
+
+    /**
+     * Parses a list of SPS NAL units out of the codec private array.
+     * @param codecPrivate An AnnexB formatted set of SPS/PPS NAL units.
+     * @return A list of ByteBuffers containing PPS NAL units.
+     */
+    public static List<ByteBuffer> getRawPPS(ByteBuffer codecPrivate) {
+        return getRawNALUnitsOfType(codecPrivate, NALUnitType.PPS);
+    }
+
+    /**
+     * Parses a list of SPS NAL units out of the codec private array.
+     * @param codecPrivate An AnnexB formatted set of SPS/PPS NAL units.
+     * @return A list of ByteBuffers containing SPS NAL units.
+     */
+    public static List<ByteBuffer> getRawSPS(ByteBuffer codecPrivate) {
+        return getRawNALUnitsOfType(codecPrivate, NALUnitType.SPS);
+    }
+    
+    public static List<ByteBuffer> getRawNALUnitsOfType(ByteBuffer codecPrivate, NALUnitType type) {
+        List<ByteBuffer> result = new ArrayList<ByteBuffer>();
+        for (ByteBuffer bb : splitFrame(codecPrivate.duplicate())) {
+            NALUnit nu = NALUnit.read(bb);
+            if(nu.type == type) {
+                result.add(bb);
+            }
+        }
+        return result;
     }
 }

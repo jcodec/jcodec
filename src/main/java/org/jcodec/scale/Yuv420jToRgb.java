@@ -87,8 +87,8 @@ public class Yuv420jToRgb implements Transform {
         int r = (y + add_r) >> SCALEBITS;
         int g = (y + add_g) >> SCALEBITS;
         int b = (y + add_b) >> SCALEBITS;
-        data[off] = MathUtil.clip(b, 0, 255);
+        data[off] = MathUtil.clip(r, 0, 255);
         data[off + 1] = MathUtil.clip(g, 0, 255);
-        data[off + 2] = MathUtil.clip(r, 0, 255);
+        data[off + 2] = MathUtil.clip(b, 0, 255);
     }
 }

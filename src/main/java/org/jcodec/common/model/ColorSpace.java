@@ -9,6 +9,8 @@ package org.jcodec.common.model;
  * 
  */
 public enum ColorSpace {
+    BGR(3, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }),
+    
     RGB(3, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }),
 
     YUV420(3, new int[] { 0, 1, 2 }, new int[] { 0, 1, 1 }, new int[] { 0, 1, 1 }),
