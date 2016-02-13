@@ -2,8 +2,7 @@ package org.jcodec.api.android;
 
 import android.graphics.Bitmap;
 
-import org.jcodec.common.AndroidUtil;
-import org.jcodec.common.model.ColorSpace;
+import org.jcodec.scale.BitmapUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +22,6 @@ public class SequenceEncoder extends org.jcodec.api.SequenceEncoder {
 	}
 
 	public void encodeImage(Bitmap bi) throws IOException {
-        encodeNativeFrame(AndroidUtil.fromBitmap(bi, ColorSpace.YUV420J));
+        encodeNativeFrame(BitmapUtil.fromBitmap(bi));
     }
 }
