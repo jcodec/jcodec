@@ -1104,7 +1104,6 @@ public class TranscodeMain {
 
                 Packet inFrame;
                 int totalFrames = (int) inTrack.getFrameCount();
-                RgbToBgr rgbToBgr = new RgbToBgr();
                 for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                     ByteBuffer data = inFrame.getData();
 
