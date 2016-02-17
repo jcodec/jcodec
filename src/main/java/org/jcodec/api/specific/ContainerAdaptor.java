@@ -26,5 +26,4 @@ public interface ContainerAdaptor {
     byte[][] allocatePicture8Bit();
 
     MediaInfo getMediaInfo();
-
 }
