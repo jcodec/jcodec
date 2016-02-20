@@ -2,7 +2,6 @@ package org.jcodec.samples.transcode;
 
 import static java.lang.Math.min;
 import static java.lang.String.format;
-import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
 import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;
@@ -87,7 +86,6 @@ import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;
-import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
@@ -707,7 +705,7 @@ public class TranscodeMain {
                 }
                 MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
 
-                ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ);
+                ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
 
                 Transform8Bit transform = new Yuv420pToYuv422p8Bit();
                 boolean dumpMv = cmd.getBooleanFlag(FLAG_DUMPMV, false);
@@ -848,7 +846,7 @@ public class TranscodeMain {
 
             long totalTime = 0;
             ByteBuffer _out = ByteBuffer.allocate(codedWidth * codedHeight * 6);
-            Picture8Bit target2 = Picture8Bit.create(codedWidth, codedHeight, ColorSpace.YUV422_10);
+            Picture8Bit target2 = Picture8Bit.create(codedWidth, codedHeight, ColorSpace.YUV422);
             Arrays.sort(gop, 0, gopLen, Frame.POCAsc);
             for (int g = 0; g < gopLen; g++) {
                 Frame frame = gop[g];
@@ -856,7 +854,7 @@ public class TranscodeMain {
                 target2.setCrop(frame.getCrop());
                 _out.clear();
                 long start = System.nanoTime();
-                encoder.encodeFrame(_out, target2);
+                encoder.encodeFrame8Bit(target2, _out);
                 totalTime += System.nanoTime() - start;
                 // TODO: Error if chunk has more then one frame
                 outTrack.addFrame(new MP4Packet(_out, i * frameDuration, timescale, frameDuration, i, true, null, i
@@ -1292,20 +1290,20 @@ public class TranscodeMain {
                     fps = new Rational(24, 1);
                 }
                 muxer = new MP4Muxer(sink);
-                ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ);
+                ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
 
-                Yuv420pToYuv422p color = new Yuv420pToYuv422p(2, 0);
+                Yuv420pToYuv422p color = new Yuv420pToYuv422p(0, 0);
                 FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("apch", frames.getSize(), APPLE_PRO_RES_422,
                         fps.getNum());
                 videoTrack.setTgtChunkDuration(HALF, SEC);
                 Picture picture = Picture.create(frames.getSize().getWidth(), frames.getSize().getHeight(),
-                        ColorSpace.YUV422_10);
+                        ColorSpace.YUV422);
                 Picture frame;
                 int i = 0;
                 ByteBuffer buf = ByteBuffer.allocate(frames.getSize().getWidth() * frames.getSize().getHeight() * 6);
                 while ((frame = frames.nextFrame(outPic.getData())) != null) {
                     color.transform(frame, picture);
-                    encoder.encodeFrame(buf, picture);
+                    encoder.encodeFrame(picture, buf);
                     // TODO: Error if chunk has more then one frame
                     videoTrack.addFrame(new MP4Packet(buf, i * fps.getDen(), fps.getNum(), fps.getDen(), i, true, null,
                             i * fps.getDen(), 0));
@@ -1435,6 +1433,7 @@ public class TranscodeMain {
     protected static class Png2prores implements Profile {
         private static final String DEFAULT_PROFILE = "apch";
         private static final String FLAG_FOURCC = "fourcc";
+        private static final String FLAG_INTERLACED = "interlaced";
 
         public void transcode(Cmd cmd) throws IOException {
 
@@ -1449,8 +1448,8 @@ public class TranscodeMain {
             try {
                 sink = writableFileChannel(new File(cmd.getArg(1)));
                 MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
-                ProresEncoder encoder = new ProresEncoder(profile);
-                RgbToYuv422p transform = new RgbToYuv422p(2, 0);
+                ProresEncoder encoder = new ProresEncoder(profile, cmd.getBooleanFlag(FLAG_INTERLACED, false));
+                RgbToYuv422p transform = new RgbToYuv422p(0, 0);
 
                 FramesMP4MuxerTrack videoTrack = null;
                 int i;
@@ -1469,7 +1468,7 @@ public class TranscodeMain {
                     transform.transform(AWTUtil.fromBufferedImageRGB(rgb), yuv);
                     ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
-                    encoder.encodeFrame(buf, yuv);
+                    encoder.encodeFrame(yuv, buf);
                     // TODO: Error if chunk has more then one frame
                     videoTrack.addFrame(new MP4Packet(buf, i * 1001, 24000, 1001, i, true, null, i * 1001, 0));
                 }
@@ -1488,7 +1487,8 @@ public class TranscodeMain {
         public void printHelp(PrintStream err) {
             MainUtils.printHelp(new HashMap<String, String>() {
                 {
-                    put(FLAG_FOURCC, "Prores profile fourcc");
+                    put(FLAG_FOURCC, "Prores profile fourcc.");
+                    put(FLAG_INTERLACED, "Should use interlaced encoding?");
                 }
             }, "pattern", "out file");
         }

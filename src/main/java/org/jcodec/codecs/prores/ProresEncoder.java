@@ -15,18 +15,17 @@ import static org.jcodec.codecs.prores.ProresConsts.interlaced_scan;
 import static org.jcodec.codecs.prores.ProresConsts.levCodebooks;
 import static org.jcodec.codecs.prores.ProresConsts.progressive_scan;
 import static org.jcodec.codecs.prores.ProresConsts.runCodebooks;
-import static org.jcodec.common.dct.DCTRef.fdct;
 import static org.jcodec.common.dct.SimpleIDCT10Bit.fdct10;
-import static org.jcodec.common.model.ColorSpace.YUV422_10;
+import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.sign;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.dct.SimpleIDCT10Bit;
+import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.ImageOP;
@@ -41,7 +40,7 @@ import org.jcodec.common.tools.ImageOP;
  * @author The JCodec project
  * 
  */
-public class ProresEncoder {
+public class ProresEncoder extends VideoEncoder {
 
     private static final int LOG_DEFAULT_SLICE_MB_WIDTH = 3;
     private static final int DEFAULT_SLICE_MB_WIDTH = 1 << LOG_DEFAULT_SLICE_MB_WIDTH;
@@ -72,11 +71,13 @@ public class ProresEncoder {
     protected Profile profile;
     private int[][] scaledLuma;
     private int[][] scaledChroma;
+    private boolean interlaced;
 
-    public ProresEncoder(Profile profile) {
+    public ProresEncoder(Profile profile, boolean interlaced) {
         this.profile = profile;
         scaledLuma = scaleQMat(profile.qmatLuma, 1, 16);
         scaledChroma = scaleQMat(profile.qmatChroma, 1, 16);
+        this.interlaced = interlaced;
     }
 
     private int[][] scaleQMat(int[] qmatLuma, int start, int count) {
@@ -190,9 +191,10 @@ public class ProresEncoder {
     }
 
     protected int encodeSlice(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan, int sliceMbCount,
-            int mbX, int mbY, Picture8Bit result, int prevQp, int mbWidth, int mbHeight, boolean unsafe) {
+            int mbX, int mbY, Picture8Bit result, int prevQp, int mbWidth, int mbHeight, boolean unsafe, int vStep,
+            int vOffset) {
 
-        Picture8Bit striped = splitSlice(result, mbX, mbY, sliceMbCount, unsafe);
+        Picture8Bit striped = splitSlice(result, mbX, mbY, sliceMbCount, unsafe, vStep, vOffset);
         int[][] ac = new int[][] { new int[sliceMbCount << 8], new int[sliceMbCount << 7], new int[sliceMbCount << 7] };
         dctOnePlane(sliceMbCount << 2, striped.getPlaneData(0), ac[0]);
         dctOnePlane(sliceMbCount << 1, striped.getPlaneData(1), ac[1]);
@@ -252,10 +254,12 @@ public class ProresEncoder {
     }
 
     protected void encodePicture(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan,
-            Picture8Bit picture) {
+            Picture8Bit picture, int vStep, int vOffset) {
 
         int mbWidth = (picture.getWidth() + 15) >> 4;
-        int mbHeight = (picture.getHeight() + 15) >> 4;
+        int shift = 4 + vStep;
+        int round = (1 << shift) - 1;
+        int mbHeight = (picture.getHeight() + round) >> shift;
         int qp = profile.firstQp;
 
         int nSlices = calcNSlices(mbWidth, mbHeight);
@@ -276,7 +280,7 @@ public class ProresEncoder {
                 boolean unsafeBottom = (picture.getHeight() % 16) != 0 && mbY == mbHeight - 1;
                 boolean unsafeRight = (picture.getWidth() % 16) != 0 && mbX + sliceMbCount == mbWidth;
                 qp = encodeSlice(out, scaledLuma, scaledChroma, scan, sliceMbCount, mbX, mbY, picture, qp, mbWidth,
-                        mbHeight, unsafeBottom || unsafeRight);
+                        mbHeight, unsafeBottom || unsafeRight, vStep, vOffset);
                 fork.putShort((short) (out.position() - sliceStart));
                 total[i++] = (short) (out.position() - sliceStart);
 
@@ -301,31 +305,35 @@ public class ProresEncoder {
         return nSlices * mbHeight;
     }
 
-    private Picture8Bit splitSlice(Picture8Bit result, int mbX, int mbY, int sliceMbCount, boolean unsafe) {
-        Picture8Bit out = Picture8Bit.create(sliceMbCount << 4, 16, YUV422_10);
+    private Picture8Bit splitSlice(Picture8Bit result, int mbX, int mbY, int sliceMbCount, boolean unsafe, int vStep,
+            int vOffset) {
+        Picture8Bit out = Picture8Bit.create(sliceMbCount << 4, 16, YUV422);
         if (unsafe) {
-            Picture8Bit filled = Picture8Bit.create(sliceMbCount << 4, 16, YUV422_10);
-            ImageOP.subImageWithFill(result, filled, new Rect(mbX << 4, mbY << 4, sliceMbCount << 4, 16));
+            int mbHeightPix = 16 << vStep;
+            Picture8Bit filled = Picture8Bit.create(sliceMbCount << 4, mbHeightPix, YUV422);
+            ImageOP.subImageWithFill(result, filled, new Rect(mbX << 4, mbY << (4 + vStep), sliceMbCount << 4, mbHeightPix));
 
-            split(filled, out, 0, 0, sliceMbCount);
+            split(filled, out, 0, 0, sliceMbCount, vStep, vOffset);
         } else {
-            split(result, out, mbX, mbY, sliceMbCount);
+            split(result, out, mbX, mbY, sliceMbCount, vStep, vOffset);
         }
 
         return out;
     }
 
-    private void split(Picture8Bit in, Picture8Bit out, int mbX, int mbY, int sliceMbCount) {
+    private void split(Picture8Bit in, Picture8Bit out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
 
-        split(in.getPlaneData(0), out.getPlaneData(0), in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0);
-        split(in.getPlaneData(1), out.getPlaneData(1), in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1);
-        split(in.getPlaneData(2), out.getPlaneData(2), in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1);
+        split(in.getPlaneData(0), out.getPlaneData(0), in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
+        split(in.getPlaneData(1), out.getPlaneData(1), in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        split(in.getPlaneData(2), out.getPlaneData(2), in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
 
     }
 
-    private void split(byte[] in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma) {
+    private void split(byte[] in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma, int vStep,
+            int vOffset) {
         int outOff = 0;
-        int off = (mbY << 4) * stride + (mbX << (4 - chroma));
+        int off = (mbY << 4) * (stride << vStep) + (mbX << (4 - chroma)) + stride * vOffset;
+        stride <<= vStep;
 
         for (int i = 0; i < sliceMbCount; i++) {
             splitBlock(in, stride, off, out, outOff);
@@ -349,27 +357,22 @@ public class ProresEncoder {
         }
     }
 
-    public void encodeFrame(ByteBuffer out, Picture... pics) {
-        Picture8Bit[] pics8Bit = new Picture8Bit[pics.length];
-        for (int i = 0; i < pics8Bit.length; i++) {
-            pics[i].setBitDepth(10);
-            pics8Bit[i] = Picture8Bit.fromPicture(pics[i]);
-        }
-        encodeFrame(out, pics8Bit);
-    }
-
-    public void encodeFrame(ByteBuffer out, Picture8Bit... pics) {
+    @Override
+    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer buffer) {
+        ByteBuffer out = buffer.duplicate();
         ByteBuffer fork = out.duplicate();
 
-        int[] scan = pics.length > 1 ? interlaced_scan : progressive_scan;
-        writeFrameHeader(out, new ProresConsts.FrameHeader(0, pics[0].getCroppedWidth(), pics[0].getCroppedHeight()
-                * pics.length, pics.length == 1 ? 0 : 1, true, scan, profile.qmatLuma, profile.qmatChroma, 2));
+        int[] scan = interlaced ? interlaced_scan : progressive_scan;
+        writeFrameHeader(out, new ProresConsts.FrameHeader(0, pic.getCroppedWidth(), pic.getCroppedHeight(),
+                interlaced ? 1 : 0, true, scan, profile.qmatLuma, profile.qmatChroma, 2));
 
-        encodePicture(out, scaledLuma, scaledChroma, scan, pics[0]);
-        if (pics.length > 1)
-            encodePicture(out, scaledLuma, scaledChroma, scan, pics[1]);
+        encodePicture(out, scaledLuma, scaledChroma, scan, pic, interlaced ? 1 : 0, 0);
+        if (interlaced)
+            encodePicture(out, scaledLuma, scaledChroma, scan, pic, interlaced ? 1 : 0, 1);
         out.flip();
         fork.putInt(out.remaining());
+
+        return out;
     }
 
     public static void writeFrameHeader(ByteBuffer outp, ProresConsts.FrameHeader header) {
@@ -398,5 +401,10 @@ public class ProresEncoder {
     static final void writeQMat(ByteBuffer out, int[] qmat) {
         for (int i = 0; i < 64; i++)
             out.put((byte) qmat[i]);
+    }
+
+    @Override
+    public ColorSpace[] getSupportedColorSpaces() {
+        return new ColorSpace[] { ColorSpace.YUV422 };
     }
 }
