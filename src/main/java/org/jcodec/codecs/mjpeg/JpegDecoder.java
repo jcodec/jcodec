@@ -25,7 +25,7 @@ import org.jcodec.common.tools.MathUtil;
  * @author The JCodec project
  * 
  */
-public class JpegDecoder implements VideoDecoder {
+public class JpegDecoder extends VideoDecoder {
     private boolean interlace;
     private boolean topFieldFirst;
 

@@ -38,7 +38,7 @@ import org.jcodec.common.model.Rect;
  * @author The JCodec project
  * 
  */
-public class ProresDecoder implements VideoDecoder {
+public class ProresDecoder extends VideoDecoder {
 
     public ProresDecoder() {
     }

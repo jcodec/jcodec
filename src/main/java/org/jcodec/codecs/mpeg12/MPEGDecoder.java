@@ -65,7 +65,7 @@ import org.jcodec.common.model.Size;
  * @author The JCodec project
  * 
  */
-public class MPEGDecoder implements VideoDecoder {
+public class MPEGDecoder extends VideoDecoder {
 
     protected SequenceHeader sh;
     protected GOPHeader gh;
