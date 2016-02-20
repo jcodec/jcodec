@@ -177,8 +177,8 @@ public class Picture8Bit {
     public static Picture8Bit fromPicture(Picture pic) {
         Picture8Bit create = Picture8Bit.create(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
 
-        for (int i = 0; i < pic.getData().length; i++) {
-            for (int j = 0; j < pic.getData()[i].length; j++) {
+        for (int i = 0; i < Math.min(pic.getData().length, create.getData().length); i++) {
+            for (int j = 0; j < Math.min(pic.getData()[i].length, create.getData()[i].length); j++) {
                 create.getData()[i][j] = (byte) (((pic.getData()[i][j] << 8) >> pic.getBitDepth()) - 128);
             }
         }
