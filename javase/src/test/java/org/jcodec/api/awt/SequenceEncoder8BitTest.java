@@ -1,5 +1,11 @@
 package org.jcodec.api.awt;
 
-public class SequenceEncoder8BitTest {
+import org.junit.Test;
 
+public class SequenceEncoder8BitTest {
+    
+    @Test
+    public void testEncoder() {
+        
+    }
 }
