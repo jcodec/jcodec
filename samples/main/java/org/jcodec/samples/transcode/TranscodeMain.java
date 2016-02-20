@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,8 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
+import org.jcodec.codecs.mjpeg.JpegToThumb2x2;
+import org.jcodec.codecs.mjpeg.JpegToThumb4x4;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.codecs.prores.ProresDecoder;
@@ -98,6 +101,7 @@ import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.scale.AWTUtil;
+import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.RgbToBgr;
 import org.jcodec.scale.RgbToYuv420p;
 import org.jcodec.scale.RgbToYuv422p;
@@ -424,6 +428,7 @@ public class TranscodeMain {
     }
 
     protected static class Jpeg2avc implements Profile {
+        public static final String FLAG_DOWNSCALE = "downscale";
         public void transcode(Cmd cmd) throws IOException {
             SeekableByteChannel sink = null;
             SeekableByteChannel source = null;
@@ -434,7 +439,7 @@ public class TranscodeMain {
                 MP4Demuxer demux = new MP4Demuxer(source);
                 MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
 
-                Transform transform = new Yuv422pToYuv420p(0, 0, Levels.PC);
+                Transform8Bit transform = null;
 
                 H264Encoder encoder = new H264Encoder(new DumbRateControl());
 
@@ -442,27 +447,39 @@ public class TranscodeMain {
                 FramesMP4MuxerTrack outTrack = muxer.addTrack(TrackType.VIDEO, (int) inTrack.getTimescale());
 
                 VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
-                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422);
-                Picture target2 = null;
+                Picture8Bit target1 = Picture8Bit.create(1920, 1088, ColorSpace.YUV444);
+                Picture8Bit target2 = null;
                 ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
 
-                JpegDecoder decoder = new JpegDecoder();
+                Integer downscale = cmd.getIntegerFlag(FLAG_DOWNSCALE);
+                JpegDecoder decoder;
+                if (downscale == null || downscale == 1) {
+                    decoder = new JpegDecoder();
+                } else if (downscale == 2) {
+                    decoder = new JpegToThumb4x4();
+                } else if (downscale == 4) {
+                    decoder = new JpegToThumb2x2();
+                } else {
+                    throw new IllegalArgumentException("Downscale factor of " + downscale
+                            + " is not supported ([2,4]).");
+                }
 
-                ArrayList<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
-                ArrayList<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+                Set<ByteBuffer> spsList = new HashSet<ByteBuffer>();
+                Set<ByteBuffer> ppsList = new HashSet<ByteBuffer>();
                 Packet inFrame;
                 int totalFrames = (int) inTrack.getFrameCount();
                 long start = System.currentTimeMillis();
                 for (int i = 0; (inFrame = inTrack.nextFrame()) != null && i < 100; i++) {
-                    Picture dec = decoder.decodeFrame(inFrame.getData(), target1.getData());
+                    Picture8Bit dec = decoder.decodeFrame8Bit(inFrame.getData(), target1.getData());
+                    if(transform == null) {
+                        transform = ColorUtil.getTransform8Bit(dec.getColor(), encoder.getSupportedColorSpaces()[0]);
+                    }
                     if (target2 == null) {
-                        target2 = Picture.create(dec.getWidth(), dec.getHeight(), encoder.getSupportedColorSpaces()[0]);
+                        target2 = Picture8Bit.create(dec.getWidth(), dec.getHeight(), encoder.getSupportedColorSpaces()[0]);
                     }
                     transform.transform(dec, target2);
                     _out.clear();
-                    ByteBuffer result = encoder.encodeFrame(target2, _out);
-                    spsList.clear();
-                    ppsList.clear();
+                    ByteBuffer result = encoder.encodeFrame8Bit(target2, _out);
                     H264Utils.wipePS(result, spsList, ppsList);
                     H264Utils.encodeMOVPacket(result);
                     outTrack.addFrame(new MP4Packet((MP4Packet) inFrame, result));
@@ -472,7 +489,8 @@ public class TranscodeMain {
                         System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
                     }
                 }
-                outTrack.addSampleEntry(H264Utils.createMOVSampleEntry(spsList, ppsList, 4));
+                outTrack.addSampleEntry(H264Utils.createMOVSampleEntry(new ArrayList<ByteBuffer>(spsList),
+                        new ArrayList<ByteBuffer>(ppsList), 4));
 
                 muxer.writeHeader();
             } finally {
@@ -487,6 +505,7 @@ public class TranscodeMain {
         public void printHelp(PrintStream err) {
             MainUtils.printHelp(new HashMap<String, String>() {
                 {
+                    put(FLAG_DOWNSCALE, "Downscale factor: [2, 4].");
                 }
             }, "in file", "out file");
         }

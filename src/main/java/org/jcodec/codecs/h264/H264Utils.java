@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
@@ -308,7 +309,7 @@ public class H264Utils {
      *            Storage for leading PPS structures ( can be null, then all
      *            leading PPSs are discarded ).
      */
-    public static void wipePS(ByteBuffer in, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
+    public static void wipePS(ByteBuffer in, Collection<ByteBuffer> spsList, Collection<ByteBuffer> ppsList) {
         ByteBuffer dup = in.duplicate();
         while (dup.hasRemaining()) {
             ByteBuffer buf = H264Utils.nextNALUnit(dup);
