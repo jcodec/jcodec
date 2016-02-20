@@ -52,7 +52,9 @@ import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
+import org.jcodec.codecs.prores.ProresToThumb;
 import org.jcodec.codecs.prores.ProresToThumb2x2;
+import org.jcodec.codecs.prores.ProresToThumb4x4;
 import org.jcodec.codecs.vp8.VP8Decoder;
 import org.jcodec.codecs.vpx.IVFMuxer;
 import org.jcodec.codecs.vpx.VP8Encoder;
@@ -231,7 +233,7 @@ public class TranscodeMain {
 
                 MP4Demuxer demux = new MP4Demuxer(source);
 
-                Transform transform = new Yuv422pToYuv420p(0, 2);
+                Transform transform = new Yuv422pToYuv420p(0, 0);
 
                 VP8Encoder encoder = new VP8Encoder(10); // qp
 
@@ -240,7 +242,7 @@ public class TranscodeMain {
                 AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
 
                 VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
-                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
+                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422);
                 Picture target2 = null;
                 ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
 
@@ -306,7 +308,7 @@ public class TranscodeMain {
 
                 MP4Demuxer demux = new MP4Demuxer(source);
 
-                Transform transform = new Yuv422pToYuv420p(0, 2);
+                Transform transform = new Yuv422pToYuv420p(0, 0);
 
                 VP8Encoder encoder = new VP8Encoder(10); // qp
 
@@ -316,7 +318,7 @@ public class TranscodeMain {
                 AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
 
                 VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
-                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
+                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422);
                 Picture target2 = null;
                 ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
 
@@ -434,7 +436,7 @@ public class TranscodeMain {
                 MP4Demuxer demux = new MP4Demuxer(source);
                 MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
 
-                Transform transform = new Yuv422pToYuv420p(0, 2, Levels.PC);
+                Transform transform = new Yuv422pToYuv420p(0, 0, Levels.PC);
 
                 H264Encoder encoder = new H264Encoder(new DumbRateControl());
 
@@ -442,7 +444,7 @@ public class TranscodeMain {
                 FramesMP4MuxerTrack outTrack = muxer.addTrack(TrackType.VIDEO, (int) inTrack.getTimescale());
 
                 VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
-                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
+                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422);
                 Picture target2 = null;
                 ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
 
@@ -680,7 +682,6 @@ public class TranscodeMain {
             try {
                 sink = writableFileChannel(cmd.getArg(1));
 
-
                 int totalFrames = Integer.MAX_VALUE;
                 PixelAspectExt pasp = null;
                 DemuxerTrack videoTrack;
@@ -696,7 +697,7 @@ public class TranscodeMain {
                     pasp = Box.findFirst(inTrack.getSampleEntries()[0], PixelAspectExt.class, "pasp");
 
                     decoder = new H264Decoder(inTrack.getMeta().getCodecPrivate());
-                    
+
                     videoTrack = inTrack;
 
                     width = (ine.getWidth() + 15) & ~0xf;
@@ -1148,7 +1149,7 @@ public class TranscodeMain {
                 MP4Demuxer demux = new MP4Demuxer(source);
                 MP4Muxer muxer = new MP4Muxer(sink, Brand.MP4);
 
-                Transform transform = new Yuv422pToYuv420p(0, 2, Levels.PC);
+                Transform transform = new Yuv422pToYuv420p(0, 0, Levels.PC);
 
                 String rcName = cmd.getStringFlag(FLAG_RC, "dumb");
                 RateControl rc;
@@ -1168,7 +1169,7 @@ public class TranscodeMain {
                 FramesMP4MuxerTrack outTrack = muxer.addTrack(TrackType.VIDEO, (int) inTrack.getTimescale());
 
                 VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
-                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422_10);
+                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV422);
                 Picture target2 = null;
                 ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
 
@@ -1328,6 +1329,8 @@ public class TranscodeMain {
     }
 
     protected static class Prores2png implements Profile {
+        private static final String FLAG_DOWNSCALE = "downscale";
+
         public void transcode(Cmd cmd) throws IOException {
             File file = tildeExpand(cmd.getArg(0));
             if (!file.exists()) {
@@ -1341,21 +1344,35 @@ public class TranscodeMain {
                 System.out.println("Video track not found");
                 return;
             }
-            Yuv422pToRgb transform = new Yuv422pToRgb(2, 0);
+            Yuv422pToRgb transform = new Yuv422pToRgb(0, 0);
 
-            ProresDecoder decoder = new ProresDecoder();
+            ProresDecoder decoder;
+            Integer downscale = cmd.getIntegerFlag(FLAG_DOWNSCALE);
+            if (downscale == null) {
+                decoder = new ProresDecoder();
+            } else if (2 == downscale) {
+                decoder = new ProresToThumb4x4();
+            } else if (4 == downscale) {
+                decoder = new ProresToThumb2x2();
+            } else if (8 == downscale) {
+                decoder = new ProresToThumb();
+            } else {
+                throw new IllegalArgumentException("Unsupported downscale factor: " + downscale + ".");
+            }
+
             BufferedImage bi = null;
             Picture rgb = null;
             int i = 0;
             Packet pkt;
             while ((pkt = videoTrack.nextFrame()) != null) {
-                Picture buf = Picture.create(1920, 1088, ColorSpace.YUV422_10);
+                Picture buf = Picture.create(1920, 1088, ColorSpace.YUV420);
                 Picture pic = decoder.decodeFrame(pkt.getData(), buf.getData());
                 if (bi == null)
                     bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
                 if (rgb == null)
                     rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
                 transform.transform(pic, rgb);
+                new RgbToBgr().transform(rgb, rgb);
                 AWTUtil.toBufferedImage(rgb, bi);
                 ImageIO.write(bi, "png", tildeExpand(format(cmd.getArg(1), i++)));
             }
@@ -1365,6 +1382,7 @@ public class TranscodeMain {
         public void printHelp(PrintStream err) {
             MainUtils.printHelp(new HashMap<String, String>() {
                 {
+                    put(FLAG_DOWNSCALE, "Downscale factor, i.e. [2, 4, 8].");
                 }
             }, "in file", "pattern");
         }
