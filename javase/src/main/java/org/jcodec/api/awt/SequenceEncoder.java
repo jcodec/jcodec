@@ -21,6 +21,6 @@ public class SequenceEncoder extends org.jcodec.api.SequenceEncoder {
     }
 
     public void encodeImage(BufferedImage bi) throws IOException {
-        encodeNativeFrame(AWTUtil.fromBufferedImage(bi));
+        encodeNativeFrame(AWTUtil.fromBufferedImageRGB(bi));
     }
 }

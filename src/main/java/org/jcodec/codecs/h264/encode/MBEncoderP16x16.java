@@ -197,11 +197,11 @@ public class MBEncoderP16x16 {
 
         for (int i = 0; i < ac1.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
-                pix1[H264Const.PIX_MAP_SPLIT_2x2[i][j]] = (byte) ac1[i][j];
+                pix1[H264Const.PIX_MAP_SPLIT_2x2[i][j]] = ac1[i][j];
         }
         for (int i = 0; i < ac2.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
-                pix2[H264Const.PIX_MAP_SPLIT_2x2[i][j]] = (byte) ac2[i][j];
+                pix2[H264Const.PIX_MAP_SPLIT_2x2[i][j]] = ac2[i][j];
         }
     }
 

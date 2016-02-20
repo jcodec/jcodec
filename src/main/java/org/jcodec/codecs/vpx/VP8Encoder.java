@@ -21,7 +21,7 @@ import org.jcodec.common.tools.MathUtil;
  * @author The JCodec project
  * 
  */
-public class VP8Encoder implements VideoEncoder {
+public class VP8Encoder extends VideoEncoder {
 
     private VPXBitstream bitstream;
     private int[][] leftRow;
@@ -478,7 +478,7 @@ public class VP8Encoder implements VideoEncoder {
     }
 
     @Override
-    public ByteBuffer encodeFrame(Picture8Bit pic, ByteBuffer _out) {
+    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out) {
         throw new RuntimeException("Unsupported");
     }
 }

@@ -31,7 +31,8 @@ public class Yuv420jToRgb8Bit implements Transform8Bit {
                 YUVJtoRGB(y[offLuma + j + 1], u[offChroma], v[offChroma], data, (offLuma + j + 1) * 3);
 
                 YUVJtoRGB(y[offLuma + j + stride], u[offChroma], v[offChroma], data, (offLuma + j + stride) * 3);
-                YUVJtoRGB(y[offLuma + j + stride + 1], u[offChroma], v[offChroma], data, (offLuma + j + stride + 1) * 3);
+                YUVJtoRGB(y[offLuma + j + stride + 1], u[offChroma], v[offChroma], data,
+                        (offLuma + j + stride + 1) * 3);
 
                 ++offChroma;
             }
@@ -85,8 +86,8 @@ public class Yuv420jToRgb8Bit implements Transform8Bit {
         int r = (y_ + add_r) >> SCALEBITS;
         int g = (y_ + add_g) >> SCALEBITS;
         int b = (y_ + add_b) >> SCALEBITS;
-        data[off] = (byte) clip(b - 128, -128, 127);
+        data[off] = (byte) clip(r - 128, -128, 127);
         data[off + 1] = (byte) clip(g - 128, -128, 127);
-        data[off + 2] = (byte) clip(r - 128, -128, 127);
+        data[off + 2] = (byte) clip(b - 128, -128, 127);
     }
 }

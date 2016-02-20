@@ -60,14 +60,13 @@ public class H264EmbedMain {
             outTrack.addSampleEntry(ine);
 
             ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
-            AvcCBox avcC = Box.as(AvcCBox.class, Box.findFirst(ine, LeafBox.class, "avcC"));
 
             Packet inFrame;
             int totalFrames = (int) inTrack.getFrameCount();
             for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                 ByteBuffer data = inFrame.getData();
                 _out.clear();
-                ByteBuffer result = transcoder.transcode(H264Utils.splitMOVPacket(data, avcC), _out);
+                ByteBuffer result = transcoder.transcode(H264Utils.splitFrame(data), _out);
                 outTrack.addFrame(new MP4Packet((MP4Packet)inFrame, result));
 
                 if (i % 100 == 0)

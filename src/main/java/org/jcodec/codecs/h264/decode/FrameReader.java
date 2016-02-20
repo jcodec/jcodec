@@ -96,19 +96,27 @@ public class FrameReader {
     
     public void addSps(List<ByteBuffer> spsList) {
         for (ByteBuffer byteBuffer : spsList) {
-            ByteBuffer dup = byteBuffer.duplicate();
-            unescapeNAL(dup);
-            SeqParameterSet s = SeqParameterSet.read(dup);
-            sps.put(s.seq_parameter_set_id, s);
+            addSps(byteBuffer);
         }
+    }
+
+    public void addSps(ByteBuffer byteBuffer) {
+        ByteBuffer dup = byteBuffer.duplicate();
+        unescapeNAL(dup);
+        SeqParameterSet s = SeqParameterSet.read(dup);
+        sps.put(s.seq_parameter_set_id, s);
     }
 
     public void addPps(List<ByteBuffer> ppsList) {
         for (ByteBuffer byteBuffer : ppsList) {
-            ByteBuffer dup = byteBuffer.duplicate();
-            unescapeNAL(dup);
-            PictureParameterSet p = PictureParameterSet.read(dup);
-            pps.put(p.pic_parameter_set_id, p);
+            addPps(byteBuffer);
         }
+    }
+
+    public void addPps(ByteBuffer byteBuffer) {
+        ByteBuffer dup = byteBuffer.duplicate();
+        unescapeNAL(dup);
+        PictureParameterSet p = PictureParameterSet.read(dup);
+        pps.put(p.pic_parameter_set_id, p);
     }
 }

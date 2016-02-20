@@ -62,14 +62,14 @@ public class RgbToYuv420j implements Transform {
     }
 
     public static final void rgb2yuv(int r, int g, int b, int[] Y, int offY, int[] U, int offU, int[] V, int offV) {
-        int y = 66 * r + 129 * g + 25 * b;
-        int u = -38 * r - 74 * g + 112 * b;
-        int v = 112 * r - 94 * g - 18 * b;
+        int y = 77 * r + 150 * g + 15 * b;
+        int u = -43 * r - 85 * g + 128 * b;
+        int v = 128 * r - 107 * g - 21 * b;
         y = (y + 128) >> 8;
         u = (u + 128) >> 8;
         v = (v + 128) >> 8;
 
-        Y[offY] = clip(y + 16);
+        Y[offY] = clip(y);
         U[offU] += clip(u + 128);
         V[offV] += clip(v + 128);
     }

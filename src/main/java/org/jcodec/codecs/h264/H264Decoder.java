@@ -14,7 +14,6 @@ import java.util.concurrent.ThreadFactory;
 
 import org.jcodec.codecs.h264.decode.DeblockerInput;
 import org.jcodec.codecs.h264.decode.FrameReader;
-import org.jcodec.codecs.h264.decode.MBlockDecoderUtils;
 import org.jcodec.codecs.h264.decode.SliceDecoder;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.decode.SliceReader;
@@ -28,7 +27,6 @@ import org.jcodec.codecs.h264.io.model.RefPicMarkingIDR;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
-import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
@@ -47,13 +45,12 @@ import org.jcodec.common.model.Rect;
  * @author The JCodec project
  * 
  */
-public class H264Decoder implements VideoDecoder {
+public class H264Decoder extends VideoDecoder {
 
     private Frame[] sRefs;
     private IntObjectMap<Frame> lRefs;
     private List<Frame> pictureBuffer;
     private POCManager poc;
-    private byte[][] byteBuffer;
     private FrameReader reader;
     private ExecutorService tp;
     private boolean threaded;
@@ -78,23 +75,23 @@ public class H264Decoder implements VideoDecoder {
         reader = new FrameReader();
     }
 
-    @Override
-    @Deprecated
-    public Picture decodeFrame(ByteBuffer data, int[][] buffer) {
-        Frame frame = new FrameDecoder().decodeFrame(H264Utils.splitFrame(data), getSameSizeBuffer(buffer));
-        return frame == null ? null : frame.toPicture(8, buffer);
-    }
-
-    @Deprecated
-    public Picture decodeFrame(List<ByteBuffer> data, int[][] buffer) {
-        Frame frame = new FrameDecoder().decodeFrame(data, getSameSizeBuffer(buffer));
-        return frame == null ? null : frame.toPicture(8, buffer);
-    }
-
-    private byte[][] getSameSizeBuffer(int[][] buffer) {
-        if (byteBuffer == null || byteBuffer.length != buffer.length || byteBuffer[0].length != buffer[0].length)
-            byteBuffer = ArrayUtil.create2D(buffer[0].length, buffer.length);
-        return byteBuffer;
+    /**
+     * Constructs this decoder from a portion of a stream that contains AnnexB
+     * delimited (00 00 00 01) SPS/PPS NAL units. SPS/PPS NAL units are 0x67 and
+     * 0x68 respectfully.
+     * 
+     * @param codecPrivate
+     */
+    public H264Decoder(byte[] codecPrivate) {
+        this();
+        for (ByteBuffer bb : H264Utils.splitFrame(ByteBuffer.wrap(codecPrivate))) {
+            NALUnit nu = NALUnit.read(bb);
+            if (nu.type == NALUnitType.SPS) {
+                reader.addSps(bb);
+            } else if (nu.type == NALUnitType.PPS) {
+                reader.addPps(bb);
+            }
+        }
     }
 
     @Override
@@ -104,6 +101,12 @@ public class H264Decoder implements VideoDecoder {
 
     public Frame decodeFrame8Bit(List<ByteBuffer> nalUnits, byte[][] buffer) {
         return new FrameDecoder().decodeFrame(nalUnits, buffer);
+    }
+    
+    @Deprecated
+    public Picture decodeFrame(List<ByteBuffer> data, int[][] buffer) {
+        Frame frame = new FrameDecoder().decodeFrame(data, getSameSizeBuffer(buffer));
+        return frame == null ? null : frame.toPicture(8, buffer);
     }
 
     class FrameDecoder {

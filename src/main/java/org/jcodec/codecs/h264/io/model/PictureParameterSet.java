@@ -131,6 +131,7 @@ public class PictureParameterSet {
                 for (int i = 0; i < 6 + 2 * (pps.extended.transform_8x8_mode_flag ? 1 : 0); i++) {
                     boolean pic_scaling_list_present_flag = readBool(in, "PPS: pic_scaling_list_present_flag");
                     if (pic_scaling_list_present_flag) {
+                        pps.extended.scalindMatrix = new ScalingMatrix();
                         pps.extended.scalindMatrix.ScalingList4x4 = new ScalingList[8];
                         pps.extended.scalindMatrix.ScalingList8x8 = new ScalingList[8];
                         if (i < 6) {

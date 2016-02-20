@@ -31,6 +31,7 @@ public class VirtualMP4Movie extends VirtualMovie {
         muxTracks();
     }
 
+    @Override
     protected MovieSegment headerChunk(List<MovieSegment> ch, VirtualTrack[] tracks, long dataSize) throws IOException {
         PacketChunk[] chunks = ch.toArray(new PacketChunk[0]);
         int headerSize = produceHeader(chunks, tracks, dataSize, brand).remaining();
@@ -40,24 +41,26 @@ public class VirtualMP4Movie extends VirtualMovie {
 
         final ByteBuffer header = produceHeader(chunks, tracks, dataSize, brand);
         return new MovieSegment() {
+            @Override
             public ByteBuffer getData() {
                 return header.duplicate();
             }
-
+            @Override
             public int getNo() {
                 return 0;
             }
-
+            @Override
             public long getPos() {
                 return 0;
             }
-
+            @Override
             public int getDataLen() {
                 return header.remaining();
             }
         };
     }
 
+    @Override
     protected MovieSegment packetChunk(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long pos) {
         return new PacketChunk(pkt, trackNo, chunkNo, pos, track.getCodecMeta().getFourcc());
     }
@@ -77,8 +80,10 @@ public class VirtualMP4Movie extends VirtualMovie {
             this.fourcc = fourcc;
         }
 
+        @Override
         public ByteBuffer getData() throws IOException {
             ByteBuffer buf = packet.getData().duplicate();
+            H264Utils.encodeMOVPacket(buf);
 //            if ("avc1".equals(fourcc)) {
 //                H264Utils.wipePS(buf, null, null);
 //                H264Utils.encodeMOVPacket(buf);
@@ -86,18 +91,18 @@ public class VirtualMP4Movie extends VirtualMovie {
             return buf;
         }
 
+        @Override
         public int getNo() {
             return no;
         }
-
+        @Override
         public long getPos() {
             return pos;
         }
-
         public void offset(int off) {
             pos += off;
         }
-
+        @Override
         public int getDataLen() throws IOException {
             return packet.getDataLen();
         }

@@ -15,5 +15,8 @@
 		<menu name="H264">
 			<item name="Index" href="h264/index.html" />
 		</menu>
+    <menu name="Tools">
+      <item name="movsetfps" href="tools/movsetfps.html" />
+    </menu>
 	</body>
 </project>

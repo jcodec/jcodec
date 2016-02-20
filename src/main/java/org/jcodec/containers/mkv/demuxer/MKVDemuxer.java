@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
@@ -229,7 +230,6 @@ public final class MKVDemuxer {
         public boolean gotoSyncFrame(long i) {
             throw new RuntimeException("Unsupported");
         }
-
     }
 
     public static class IndexedBlock {
@@ -381,7 +381,6 @@ public final class MKVDemuxer {
         public boolean gotoSyncFrame(long frame) {
             return gotoFrame(frame);
         }
-
     }
 
     public int getPictureWidth() {

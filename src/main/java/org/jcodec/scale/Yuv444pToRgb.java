@@ -41,9 +41,9 @@ public class Yuv444pToRgb implements Transform {
         final int r = (298 * c + 409 * e + 128) >> 8;
         final int g = (298 * c - 100 * d - 208 * e + 128) >> 8;
         final int b = (298 * c + 516 * d + 128) >> 8;
-        data[off] = crop(b);
+        data[off] = crop(r);
         data[off + 1] = crop(g);
-        data[off + 2] = crop(r);
+        data[off + 2] = crop(b);
     }
 
     private static int crop(int val) {

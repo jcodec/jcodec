@@ -173,4 +173,9 @@ public class RationalLarge {
     public long scalarClip() {
         return num / den;
     }
+
+    @Override
+    public String toString() {
+        return num + ":" + den;
+    }
 }

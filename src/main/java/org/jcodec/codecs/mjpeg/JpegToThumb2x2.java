@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.common.dct.IDCT2x2;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.MathUtil;
 
@@ -33,8 +33,8 @@ public class JpegToThumb2x2 extends JpegDecoder {
             4, 4, 4, 4, 4, 4, 4 };
 
     @Override
-    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture result, int[] buf, int blkX,
-            int blkY, int plane, int chroma, int field, int step) {
+    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture8Bit result, int[] buf,
+            int blkX, int blkY, int plane, int chroma, int field, int step) {
         buf[1] = buf[2] = buf[3] = 0;
         dcPredictor[plane] = buf[0] = readDCValue(bits, huff[chroma]) * quant[chroma][0] + dcPredictor[plane];
         readACValues(bits, buf, huff[chroma + 2], quant[chroma]);
@@ -43,14 +43,14 @@ public class JpegToThumb2x2 extends JpegDecoder {
         putBlock2x2(result.getPlaneData(plane), result.getPlaneWidth(plane), buf, blkX, blkY, field, step);
     }
 
-    private void putBlock2x2(int[] plane, int stride, int[] patch, int x, int y, int field, int step) {
+    private void putBlock2x2(byte[] plane, int stride, int[] patch, int x, int y, int field, int step) {
         stride >>= 2;
         int dstride = stride * step;
         int off = field * stride + (y >> 2) * dstride + (x >> 2);
-        plane[off] = MathUtil.clip(patch[0], 0, 255);
-        plane[off + 1] = MathUtil.clip(patch[1], 0, 255);
-        plane[off + dstride] = MathUtil.clip(patch[2], 0, 255);
-        plane[off + dstride + 1] = MathUtil.clip(patch[3], 0, 255);
+        plane[off] = (byte)(MathUtil.clip(patch[0], 0, 255) - 128);
+        plane[off + 1] = (byte)(MathUtil.clip(patch[1], 0, 255) - 128);
+        plane[off + dstride] = (byte)(MathUtil.clip(patch[2], 0, 255) - 128);
+        plane[off + dstride + 1] = (byte)(MathUtil.clip(patch[3], 0, 255) - 128);
     }
 
     @Override
@@ -87,10 +87,10 @@ public class JpegToThumb2x2 extends JpegDecoder {
     }
 
     @Override
-    public Picture decodeField(ByteBuffer data, int[][] data2, int field, int step) {
-        Picture res = super.decodeField(data, data2, field, step);
+    public Picture8Bit decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
+        Picture8Bit res = super.decodeField(data, data2, field, step);
 
-        return new Picture(res.getWidth() >> 2, res.getHeight() >> 2, res.getData(), res.getColor(), new Rect(0, 0,
+        return new Picture8Bit(res.getWidth() >> 2, res.getHeight() >> 2, res.getData(), res.getColor(), new Rect(0, 0,
                 res.getCroppedWidth() >> 2, res.getCroppedHeight() >> 2));
     }
 }

@@ -245,4 +245,20 @@ public class ArrayUtil {
             result[i] = array[i - padLength];
         return result;
     }
+    
+    public static int[] randomIntArray(int size, int from, int to) {
+        int width = to - from;
+        int[] result = new int[size];
+        for (int i = 0; i < size; i++)
+            result[i] = (int) ((Math.random() * width) % width) + from;
+        return result;
+    }
+    
+    public static byte[] randomByteArray(int size, byte from, byte to) {
+        byte width = (byte)(to - from);
+        byte[] result = new byte[size];
+        for (int i = 0; i < size; i++)
+            result[i] = (byte) (((Math.random() * width) % width) + from);
+        return result;
+    }
 }

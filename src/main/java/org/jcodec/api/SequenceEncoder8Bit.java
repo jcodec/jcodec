@@ -42,7 +42,11 @@ public class SequenceEncoder8Bit {
     private ByteBuffer pps;
 
     public SequenceEncoder8Bit(File out) throws IOException {
-        this.ch = NIOUtils.writableFileChannel(out);
+        this(NIOUtils.writableFileChannel(out));
+    }
+    
+    public SequenceEncoder8Bit(SeekableByteChannel ch) throws IOException {
+        this.ch = ch;
 
         // Muxer that will store the encoded frames
         muxer = new MP4Muxer(ch, Brand.MP4);
@@ -76,7 +80,7 @@ public class SequenceEncoder8Bit {
 
         // Encode image into H.264 frame, the result is stored in '_out' buffer
         _out.clear();
-        ByteBuffer result = encoder.encodeFrame(toEncode, _out);
+        ByteBuffer result = encoder.encodeFrame8Bit(toEncode, _out);
 
         // Based on the frame above form correct MP4 packet
         spsList.clear();

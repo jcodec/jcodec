@@ -1,16 +1,19 @@
 package org.jcodec.codecs.prores;
 
+import static org.jcodec.common.ArrayUtil.randomByteArray;
+import static org.jcodec.common.ArrayUtil.randomIntArray;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.common.ArrayUtil;
-import org.jcodec.common.dct.DCTRef;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +51,7 @@ public class TestProresEncoder {
     private void onePlaneTest(ByteBuffer out, int[] slice, int blocksPerSlice, int[] qMat) {
 
         BitWriter writer = new BitWriter(out);
-        ProresEncoder encoder = new ProresEncoder(Profile.HQ);
+        ProresEncoder encoder = new ProresEncoder(Profile.HQ, false);
 
         encoder.writeDCCoeffs(writer, qMat, slice, blocksPerSlice);
         encoder.writeACCoeffs(writer, qMat, slice, blocksPerSlice, ProresConsts.progressive_scan, 64);
@@ -69,37 +72,29 @@ public class TestProresEncoder {
 
     @Test
     public void testWholeThing() throws Exception {
-        int[] Y = randomArray(4096, 4, 1019);
-        int[] U = randomArray(2048, 4, 1019);
-        int[] V = randomArray(2048, 4, 1019);
-        Picture picture = new Picture(64, 64, new int[][] { Y, U, V }, ColorSpace.YUV422_10);
+        byte[] Y = randomByteArray(4096, (byte)1, (byte)254);
+        byte[] U = randomByteArray(2048, (byte)1, (byte)254);
+        byte[] V = randomByteArray(2048, (byte)1, (byte)254);
+        Picture8Bit picture = new Picture8Bit(64, 64, new byte[][] { Y, U, V }, ColorSpace.YUV422);
 
         ByteBuffer buf = ByteBuffer.allocate(64 * 64 * 6);
-        new ProresEncoder(Profile.HQ).encodeFrame(buf, picture);
+        new ProresEncoder(Profile.HQ, false).encodeFrame8Bit(picture, buf);
 
         ProresDecoder decoder = new ProresDecoder();
 
-        Picture result = decoder.decodeFrame(buf, new int[][] { new int[4096], new int[2048], new int[2048] });
+        Picture8Bit result = decoder.decodeFrame8Bit(buf, new byte[][] { new byte[4096], new byte[2048], new byte[2048] });
 
         System.out.println("Y");
-        diffArray(Y, result.getPlaneData(0));
+        assertArrayApproximatelyEquals(Y, result.getPlaneData(0), 20);
         System.out.println("U");
-        diffArray(U, result.getPlaneData(1));
+        assertArrayApproximatelyEquals(U, result.getPlaneData(1), 20);
         System.out.println("V");
-        diffArray(V, result.getPlaneData(2));
-    }
-
-    private int[] randomArray(int size, int off, int max) {
-        int width = max - off;
-        int[] result = new int[size];
-        for (int i = 0; i < size; i++)
-            result[i] = (int) ((Math.random() * width) % width) + off;
-        return result;
+        assertArrayApproximatelyEquals(V, result.getPlaneData(2), 20);
     }
 
     @Test
     public void testIdct() {
-        int[] rand = randomArray(64, 4, 255);
+        int[] rand = randomIntArray(64, 4, 255);
         byte[] rand8Bit = ArrayUtil.toByteArrayShifted(rand);
         
         int[] out = new int[64];
@@ -110,18 +105,28 @@ public class TestProresEncoder {
         }
         
         SimpleIDCT10Bit.idct10(out, 0);
-        diffArray(rand, out);
+        assertArrayApproximatelyEquals(rand, out, 50);
 
     }
-
-    private void diffArray(int[] rand, int[] newRand) {
+    
+    private void assertArrayApproximatelyEquals(byte[] rand, byte[] newRand, int threash) {
         int maxDiff = 0;
         for (int i = 0; i < rand.length; i++) {
             int diff = Math.abs(rand[i] - newRand[i]);
             if (diff > maxDiff)
                 maxDiff = diff;
         }
-        Assert.assertTrue("Maxdiff: " + maxDiff, maxDiff < 50);
+        Assert.assertTrue("Maxdiff: " + maxDiff, maxDiff < threash);
+    }
+
+    private void assertArrayApproximatelyEquals(int[] rand, int[] newRand, int threash) {
+        int maxDiff = 0;
+        for (int i = 0; i < rand.length; i++) {
+            int diff = Math.abs(rand[i] - newRand[i]);
+            if (diff > maxDiff)
+                maxDiff = diff;
+        }
+        Assert.assertTrue("Maxdiff: " + maxDiff, maxDiff < threash);
     }
 
 }

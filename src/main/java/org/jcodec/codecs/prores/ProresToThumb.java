@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 
 /**
  * 
@@ -22,9 +22,9 @@ public class ProresToThumb extends ProresDecoder {
     public ProresToThumb() {
     }
 
-    protected int[] decodeOnePlane(BitReader bits, int blocksPerSlice, int[] qMat, int[] scan, int mbX, int mbY,
+    @Override
+    protected void decodeOnePlane(BitReader bits, int blocksPerSlice,  int[] out, int[] qMat, int[] scan, int mbX, int mbY,
             int plane) {
-        int[] out = new int[blocksPerSlice];
         try {
             readDCCoeffs(bits, qMat, out, blocksPerSlice, 1);
         } catch (RuntimeException e) {
@@ -34,11 +34,9 @@ public class ProresToThumb extends ProresDecoder {
         for (int i = 0; i < blocksPerSlice; i++) {
             out[i] >>= 3;
         }
-
-        return out;
     }
 
-    public Picture decodeFrame(ByteBuffer data, int[][] target) {
+    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] target) {
         FrameHeader fh = readFrameHeader(data);
 
         int codedWidth = ((fh.width + 15) & ~0xf) >> 3;
@@ -63,53 +61,51 @@ public class ProresToThumb extends ProresDecoder {
                     new int[] { 0 }, fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
 
-        return new Picture(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422_10
-                : ColorSpace.YUV444_10);
+        return new Picture8Bit(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
+                : ColorSpace.YUV444);
     }
 
     @Override
-    protected void putSlice(int[][] result, int lumaStride, int mbX, int mbY, int[] y, int[] u, int[] v, int dist,
-            int shift, int chromaType) {
-        int mbPerSlice = y.length >> 2;
-
+    protected void putSlice(byte[][] result, int lumaStride, int mbX, int mbY, int[] y, int[] u, int[] v, int dist,
+            int shift, int chromaType, int sliceMbCount) {
         int chromaStride = lumaStride >> 1;
 
-        putLuma(result[0], shift * lumaStride, lumaStride << dist, mbX, mbY, y, mbPerSlice, dist, shift);
+        putLuma(result[0], shift * lumaStride, lumaStride << dist, mbX, mbY, y, sliceMbCount, dist, shift);
         if (chromaType == 2) {
-            putChroma(result[1], shift * chromaStride, chromaStride << dist, mbX, mbY, u, mbPerSlice, dist, shift);
-            putChroma(result[2], shift * chromaStride, chromaStride << dist, mbX, mbY, v, mbPerSlice, dist, shift);
+            putChroma(result[1], shift * chromaStride, chromaStride << dist, mbX, mbY, u, sliceMbCount, dist, shift);
+            putChroma(result[2], shift * chromaStride, chromaStride << dist, mbX, mbY, v, sliceMbCount, dist, shift);
         } else {
-            putLuma(result[1], shift * lumaStride, lumaStride << dist, mbX, mbY, u, mbPerSlice, dist, shift);
-            putLuma(result[2], shift * lumaStride, lumaStride << dist, mbX, mbY, v, mbPerSlice, dist, shift);
+            putLuma(result[1], shift * lumaStride, lumaStride << dist, mbX, mbY, u, sliceMbCount, dist, shift);
+            putLuma(result[2], shift * lumaStride, lumaStride << dist, mbX, mbY, v, sliceMbCount, dist, shift);
         }
     }
 
-    private void putLuma(int[] y, int off, int stride, int mbX, int mbY, int[] luma, int mbPerSlice, int dist, int shift) {
+    private void putLuma(byte[] y, int off, int stride, int mbX, int mbY, int[] luma, int mbPerSlice, int dist, int shift) {
         off += (mbX << 1) + (mbY << 1) * stride;
         for (int k = 0, sOff = 0; k < mbPerSlice; k++) {
-            y[off] = clip(luma[sOff], 4, 1019);
-            y[off + 1] = clip(luma[sOff + 1], 4, 1019);
+            y[off] = clipTo8Bit(luma[sOff], 4, 1019);
+            y[off + 1] = clipTo8Bit(luma[sOff + 1], 4, 1019);
 
             off += stride;
 
-            y[off] = clip(luma[sOff + 2], 4, 1019);
-            y[off + 1] = clip(luma[sOff + 3], 4, 1019);
+            y[off] = clipTo8Bit(luma[sOff + 2], 4, 1019);
+            y[off + 1] = clipTo8Bit(luma[sOff + 3], 4, 1019);
 
             off += 2 - stride;
             sOff += 4;
         }
     }
 
-    private void putChroma(int[] y, int off, int stride, int mbX, int mbY, int[] chroma, int mbPerSlice, int dist,
+    private void putChroma(byte[] y, int off, int stride, int mbX, int mbY, int[] chroma, int mbPerSlice, int dist,
             int shift) {
         off += mbX + (mbY << 1) * stride;
         for (int k = 0, sOff = 0; k < mbPerSlice; k++) {
 
-            y[off] = clip(chroma[sOff], 4, 1019);
+            y[off] = clipTo8Bit(chroma[sOff], 4, 1019);
 
             off += stride;
 
-            y[off] = clip(chroma[sOff + 1], 4, 1019);
+            y[off] = clipTo8Bit(chroma[sOff + 1], 4, 1019);
 
             off += 1 - stride;
             sOff += 2;

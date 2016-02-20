@@ -467,7 +467,8 @@ public class MXFDemuxer {
                 size = new Size(pd.getStoredWidth(), pd.getStoredHeight());
             }
 
-            return new DemuxerTrackMeta(video ? VIDEO : (audio ? AUDIO : OTHER), null, totalFrames, duration, size);
+            DemuxerTrackMeta.Type t = video ? VIDEO : (audio ? AUDIO : OTHER);
+            return new DemuxerTrackMeta(t, getCodec().getCodec(), null, totalFrames, duration, size, null);
         }
     }
 

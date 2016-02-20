@@ -102,8 +102,25 @@ public class TrakBox extends NodeBox {
         return "soun".equals(getHandlerType());
     }
 
+    /**
+     * Gets 'media timescale' of this track.
+     * This is the timescale used to represent the durations of samples inside
+     * mdia/minf/stbl/stts box.
+     * 
+     * @return 'media timescale' of the track.
+     */
     public int getTimescale() {
         return findFirst(this, MediaHeaderBox.class, "mdia", "mdhd").getTimescale();
+    }
+    
+    /**
+     * Sets the 'media timescale' of this track. This is the time timescale used to
+     * represent sample durations.
+     * 
+     * @param timescale A new 'media timescale' of this track.
+     */
+    public void setTimescale(int timescale) {
+        findFirst(this, MediaHeaderBox.class, "mdia", "mdhd").setTimescale(timescale);
     }
 
     public long rescale(long tv, long ts) {
