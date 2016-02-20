@@ -80,7 +80,7 @@ public class SequenceEncoder8Bit {
 
         // Encode image into H.264 frame, the result is stored in '_out' buffer
         _out.clear();
-        ByteBuffer result = encoder.encodeFrame(toEncode, _out);
+        ByteBuffer result = encoder.encodeFrame8Bit(toEncode, _out);
 
         // Based on the frame above form correct MP4 packet
         spsList.clear();

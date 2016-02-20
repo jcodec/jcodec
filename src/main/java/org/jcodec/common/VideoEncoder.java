@@ -13,10 +13,12 @@ import org.jcodec.common.model.Picture8Bit;
  * @author The JCodec project
  * 
  */
-public interface VideoEncoder {
-    ByteBuffer encodeFrame(Picture pic, ByteBuffer _out);
-    
-    ByteBuffer encodeFrame(Picture8Bit pic, ByteBuffer _out);
-    
-    ColorSpace[] getSupportedColorSpaces();
+public abstract class VideoEncoder {
+    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out) {
+        return encodeFrame8Bit(Picture8Bit.fromPicture(pic), _out);
+    }
+
+    public abstract ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out);
+
+    public abstract ColorSpace[] getSupportedColorSpaces();
 }

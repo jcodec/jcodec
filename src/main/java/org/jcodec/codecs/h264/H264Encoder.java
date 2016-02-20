@@ -26,7 +26,6 @@ import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MathUtil;
@@ -42,7 +41,7 @@ import org.jcodec.common.tools.MathUtil;
  * @author The JCodec project
  * 
  */
-public class H264Encoder implements VideoEncoder {
+public class H264Encoder extends VideoEncoder {
 
     // private static final int QP = 20;
     private static final int KEY_INTERVAL_DEFAULT = 25;
@@ -87,16 +86,12 @@ public class H264Encoder implements VideoEncoder {
     public void setKeyInterval(int keyInterval) {
         this.keyInterval = keyInterval;
     }
-
-    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _out) {
-        return encodeFrame(Picture8Bit.fromPicture(pic), _out);
-    }
     
     /**
      * Encode this picture into h.264 frame. Frame type will be selected by
      * encoder.
      */
-    public ByteBuffer encodeFrame(Picture8Bit pic, ByteBuffer _out) {
+    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out) {
         if (frameNumber >= keyInterval) {
             frameNumber = 0;
         }
@@ -104,7 +99,7 @@ public class H264Encoder implements VideoEncoder {
         SliceType sliceType = frameNumber == 0 ? SliceType.I : SliceType.P;
         boolean idr = frameNumber == 0;
 
-        return encodeFrame(pic, _out, idr, frameNumber++, sliceType);
+        return encodeFrame8Bit(pic, _out, idr, frameNumber++, sliceType);
     }
 
     /**
@@ -117,7 +112,7 @@ public class H264Encoder implements VideoEncoder {
      */
     public ByteBuffer encodeIDRFrame(Picture8Bit pic, ByteBuffer _out) {
         frameNumber = 0;
-        return encodeFrame(pic, _out, true, frameNumber, SliceType.I);
+        return encodeFrame8Bit(pic, _out, true, frameNumber, SliceType.I);
     }
 
     /**
@@ -131,10 +126,10 @@ public class H264Encoder implements VideoEncoder {
      */
     public ByteBuffer encodePFrame(Picture8Bit pic, ByteBuffer _out) {
         frameNumber++;
-        return encodeFrame(pic, _out, true, frameNumber, SliceType.P);
+        return encodeFrame8Bit(pic, _out, true, frameNumber, SliceType.P);
     }
 
-    public ByteBuffer encodeFrame(Picture8Bit pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
+    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
         ByteBuffer dup = _out.duplicate();
 
         if (idr) {
