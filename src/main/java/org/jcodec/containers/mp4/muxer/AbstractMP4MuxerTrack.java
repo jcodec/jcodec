@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
@@ -175,7 +176,7 @@ public abstract class AbstractMP4MuxerTrack {
             minf.add(gmhd);
             break;
         default:
-            throw new IllegalStateException("Handler " + type.getHandler() + " not supported");
+            throw new UnhandledStateException("Handler " + type.getHandler() + " not supported");
         }
     }
 

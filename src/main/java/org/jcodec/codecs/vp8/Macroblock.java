@@ -5,7 +5,8 @@ import static org.jcodec.codecs.vp8.VP8Util.pickDefaultPrediction;
 
 import java.util.Arrays;
 
-import org.jcodec.api.UnsupportedException;
+import org.jcodec.api.NotImplementedException;
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vp8.VP8Util.PLANE;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
@@ -600,7 +601,7 @@ public class Macroblock {
                 break;
 
             default:
-                throw new UnsupportedException("TODO: unknowwn mode: "+this.mode);
+                throw new NotSupportedException("TODO: unknowwn mode: "+this.mode);
             }
 
         }
@@ -664,7 +665,7 @@ public class Macroblock {
         private int[] getAboveRightLowestRow(Macroblock[][] mbs) {
             // this might break at right edge
             if( ! VP8Util.PLANE.Y1.equals(this.plane)) 
-                throw new IllegalArgumentException("Decoder.getAboveRight: not implemented for Y2 and chroma planes");
+                throw new NotImplementedException("Decoder.getAboveRight: not implemented for Y2 and chroma planes");
              
             int[] aboveRightDistValues;
             

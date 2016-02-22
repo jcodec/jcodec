@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-import org.jcodec.api.UnsupportedException;
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
@@ -423,7 +423,7 @@ public class MXFDemuxer {
 
         @Override
         public void seek(double second) {
-            throw new UnsupportedException();
+            throw new NotSupportedException();
         }
 
         public UL getEssenceUL() {

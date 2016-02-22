@@ -5,6 +5,7 @@ import static org.jcodec.common.tools.MathUtil.clip;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -34,10 +35,10 @@ public class AudioUtil {
      */
     public static void toFloat(AudioFormat format, ByteBuffer buf, FloatBuffer floatBuf) {
         if (!format.isSigned())
-            throw new IllegalArgumentException("Unsigned PCM is not supported ( yet? ).");
+            throw new NotSupportedException("Unsigned PCM is not supported ( yet? ).");
 
         if (format.getSampleSizeInBits() != 16 && format.getSampleSizeInBits() != 24)
-            throw new IllegalArgumentException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
+            throw new NotSupportedException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
 
         if (format.isBigEndian()) {
             if (format.getSampleSizeInBits() == 16) {
@@ -67,10 +68,10 @@ public class AudioUtil {
      */
     public static void fromFloat(FloatBuffer floatBuf, AudioFormat format, ByteBuffer buf) {
         if (!format.isSigned())
-            throw new IllegalArgumentException("Unsigned PCM is not supported ( yet? ).");
+            throw new NotSupportedException("Unsigned PCM is not supported ( yet? ).");
 
         if (format.getSampleSizeInBits() != 16 && format.getSampleSizeInBits() != 24)
-            throw new IllegalArgumentException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
+            throw new NotSupportedException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
 
         if (format.isBigEndian()) {
             if (format.getSampleSizeInBits() == 16) {
@@ -147,10 +148,10 @@ public class AudioUtil {
 
     public static int fromInt(int[] data, int len, AudioFormat format, ByteBuffer buf) {
         if (!format.isSigned())
-            throw new IllegalArgumentException("Unsigned PCM is not supported ( yet? ).");
+            throw new NotSupportedException("Unsigned PCM is not supported ( yet? ).");
 
         if (format.getSampleSizeInBits() != 16 && format.getSampleSizeInBits() != 24)
-            throw new IllegalArgumentException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
+            throw new NotSupportedException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
 
         if (format.isBigEndian()) {
             if (format.getSampleSizeInBits() == 16) {
@@ -211,10 +212,10 @@ public class AudioUtil {
 
     public static int toInt(AudioFormat format, ByteBuffer buf, int[] samples) {
         if (!format.isSigned())
-            throw new IllegalArgumentException("Unsigned PCM is not supported ( yet? ).");
+            throw new NotSupportedException("Unsigned PCM is not supported ( yet? ).");
 
         if (format.getSampleSizeInBits() != 16 && format.getSampleSizeInBits() != 24)
-            throw new IllegalArgumentException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
+            throw new NotSupportedException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
 
         if (format.isBigEndian()) {
             if (format.getSampleSizeInBits() == 16) {

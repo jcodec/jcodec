@@ -3,7 +3,7 @@ package org.jcodec.common.io;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.jcodec.api.UnsupportedException;
+import org.jcodec.api.NotSupportedException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -204,7 +204,7 @@ public class DummyBitstreamReader {
     }
 
     public boolean moreData(int bits) throws IOException {
-        throw new UnsupportedException();
+        throw new NotSupportedException();
     }
 
     public final int skip(int bits) throws IOException {

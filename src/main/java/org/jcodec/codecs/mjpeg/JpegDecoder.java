@@ -5,6 +5,7 @@ import static org.jcodec.codecs.mjpeg.JpegConst.naturalOrder;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.mjpeg.tools.Asserts;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
@@ -178,7 +179,7 @@ public class JpegDecoder extends VideoDecoder {
             } else if (b == JpegConst.SOS) {
 
                 if (scan != null) {
-                    throw new IllegalStateException("unhandled - more than one scan header");
+                    throw new UnhandledStateException("unhandled - more than one scan header");
                 }
                 scan = ScanHeader.read(data);
                 // Debug.trace("    %s", image.scan);
@@ -199,7 +200,7 @@ public class JpegDecoder extends VideoDecoder {
 
                 Asserts.assertEquals(0, ri);
             } else {
-                throw new IllegalStateException("unhandled marker " + JpegConst.toString(b));
+                throw new UnhandledStateException("unhandled marker " + JpegConst.toString(b));
             }
         }
 

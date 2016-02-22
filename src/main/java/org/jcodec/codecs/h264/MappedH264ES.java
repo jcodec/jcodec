@@ -2,7 +2,7 @@ package org.jcodec.codecs.h264;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.api.UnsupportedException;
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
@@ -245,6 +245,6 @@ public class MappedH264ES implements DemuxerTrack {
 
     @Override
     public DemuxerTrackMeta getMeta() {
-        throw new UnsupportedException();
+        throw new NotSupportedException();
     }
 }

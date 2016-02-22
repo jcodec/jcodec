@@ -7,6 +7,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.api.FormatException;
 import org.jcodec.common.io.DataReader;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
@@ -172,7 +173,7 @@ public class AVIReader {
 
             int dwFourCC = raf.readInt();
             if (dwFourCC != FOURCC_RIFF)
-                throw new IllegalArgumentException("No RIFF header found");
+                throw new FormatException("No RIFF header found");
 
             AVIChunk aviItem = new AVIList();
             aviItem.read(dwFourCC, raf);
@@ -226,7 +227,7 @@ public class AVIReader {
 
                 case FOURCC_STRH: {
                     if (streamIndex >= numStreams) {
-                        throw new IllegalArgumentException("Read more stream headers than expected, expected ["
+                        throw new IllegalStateException("Read more stream headers than expected, expected ["
                                 + numStreams + "]");
                     }
 
