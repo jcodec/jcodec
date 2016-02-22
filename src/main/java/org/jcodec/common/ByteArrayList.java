@@ -2,6 +2,8 @@ package org.jcodec.common;
 
 import java.util.Arrays;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -26,14 +28,14 @@ public class ByteArrayList {
 
     public byte[] toArray() {
         byte[] result = new byte[size];
-        System.arraycopy(storage, 0, result, 0, size);
+        arraycopy(storage, 0, result, 0, size);
         return result;
     }
 
     public void add(byte val) {
         if (size >= storage.length) {
             byte[] ns = new byte[storage.length + growAmount];
-            System.arraycopy(storage, 0, ns, 0, storage.length);
+            arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
         storage[size++] = val;
@@ -60,7 +62,7 @@ public class ByteArrayList {
     public void fill(int start, int end, byte val) {
         if (end > storage.length) {
             byte[] ns = new byte[end + growAmount];
-            System.arraycopy(storage, 0, ns, 0, storage.length);
+            arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
         Arrays.fill(storage, start, end, val);
@@ -74,10 +76,10 @@ public class ByteArrayList {
     public void addAll(byte[] other) {
         if (size + other.length >= storage.length) {
             byte[] ns = new byte[size + growAmount + other.length];
-            System.arraycopy(storage, 0, ns, 0, size);
+            arraycopy(storage, 0, ns, 0, size);
             storage = ns;
         }
-        System.arraycopy(other, 0, storage, size, other.length);
+        arraycopy(other, 0, storage, size, other.length);
         size += other.length;
     }
     

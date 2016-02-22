@@ -1,5 +1,6 @@
 package org.jcodec.movtool.streaming.tracks;
 
+import static java.lang.System.arraycopy;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 
 import java.io.File;
@@ -116,7 +117,7 @@ public class MPSTrackFactory {
             Arrays.sort(seg0);
 
             long[] seg1 = new long[10];
-            System.arraycopy(fpts, fpts.length - 10, seg1, 0, 10);
+            arraycopy(fpts, fpts.length - 10, seg1, 0, 10);
             Arrays.sort(seg1);
 
             duration = (seg1[9] - seg0[0] + (fpts.length >> 1)) / fpts.length;

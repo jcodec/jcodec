@@ -1,5 +1,6 @@
 package org.jcodec.codecs.h264.decode;
 
+import static java.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.common.model.Picture8Bit;
@@ -79,7 +80,7 @@ public class BlockInterpolator {
 
         int off = y * picW + x;
         for (int j = 0; j < blkH; j++) {
-            System.arraycopy(pic, off, blk, blkOff, blkW);
+            arraycopy(pic, off, blk, blkOff, blkW);
             off += picW;
             blkOff += blkStride;
         }
@@ -754,7 +755,7 @@ public class BlockInterpolator {
             int blkW, int blkH) {
         int off = y * picW + x;
         for (int j = 0; j < blkH; j++) {
-            System.arraycopy(pic, off, blk, blkOff, blkW);
+            arraycopy(pic, off, blk, blkOff, blkW);
             off += picW;
             blkOff += blkStride;
         }

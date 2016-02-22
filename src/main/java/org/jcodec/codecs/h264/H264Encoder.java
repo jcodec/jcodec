@@ -1,5 +1,6 @@
 package org.jcodec.codecs.h264;
 
+import static java.lang.System.arraycopy;
 import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
 
 import java.nio.ByteBuffer;
@@ -324,9 +325,9 @@ public class H264Encoder extends VideoEncoder {
     }
 
     private void collectPredictors(Picture8Bit outMB, int mbX) {
-        System.arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
-        System.arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
-        System.arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
+        arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
+        arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
+        arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
 
         copyCol(outMB.getPlaneData(0), 15, 16, leftRow[0]);
         copyCol(outMB.getPlaneData(1), 7, 8, leftRow[1]);

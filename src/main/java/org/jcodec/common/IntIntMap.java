@@ -1,6 +1,7 @@
 package org.jcodec.common;
 
 import static java.lang.Integer.MIN_VALUE;
+import static java.lang.System.arraycopy;
 
 import java.util.Arrays;
 
@@ -28,7 +29,7 @@ public class IntIntMap {
         
         if (storage.length <= key) {
             int[] ns = createArray(key + GROW_BY);
-            System.arraycopy(storage, 0, ns, 0, storage.length);
+            arraycopy(storage, 0, ns, 0, storage.length);
             Arrays.fill(ns, storage.length, ns.length, MIN_VALUE);
             storage = ns;
         }

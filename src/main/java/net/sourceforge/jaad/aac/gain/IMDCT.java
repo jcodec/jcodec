@@ -3,6 +3,8 @@ package net.sourceforge.jaad.aac.gain;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.syntax.ICSInfo.WindowSequence;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
  * under the Public Domain license. Code changes provided by the JCodec project
@@ -115,8 +117,8 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 				for(k = 0; k<lbShort; k++) {
 					bufIn[k] = in[band*lbLong+j*lbShort+k];
 				}
-				if(j==0) System.arraycopy(window1, 0, window, 0, lbShort*2);
-				else System.arraycopy(window2, 0, window, 0, lbShort*2);
+				if(j==0) arraycopy(window1, 0, window, 0, lbShort * 2);
+				else arraycopy(window2, 0, window, 0, lbShort * 2);
 				imdct(bufIn, bufOut, window, lbShort);
 				for(k = 0; k<lbShort*2; k++) {
 					out[band*lbLong*2+j*lbShort*2+k] = bufOut[k]/32.0f;
@@ -175,7 +177,7 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 		}
 
 		//copy to output and apply window
-		System.arraycopy(tmp, n2, out, 0, n2);
+		arraycopy(tmp, n2, out, 0, n2);
 		for(i = n2; i<n*3/2; ++i) {
 			out[i] = -tmp[n*3/2-1-i];
 		}

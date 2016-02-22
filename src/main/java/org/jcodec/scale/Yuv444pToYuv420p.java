@@ -2,6 +2,8 @@ package org.jcodec.scale;
 
 import org.jcodec.common.model.Picture;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -20,7 +22,7 @@ public class Yuv444pToYuv420p implements Transform {
 
     public void transform(Picture src, Picture dst) {
         int lumaSize = src.getWidth() * src.getHeight();
-        System.arraycopy(src.getPlaneData(0), 0, dst.getPlaneData(0), 0, lumaSize);
+        arraycopy(src.getPlaneData(0), 0, dst.getPlaneData(0), 0, lumaSize);
         copyAvg(src.getPlaneData(1), dst.getPlaneData(1), src.getPlaneWidth(1), src.getPlaneHeight(1));
         copyAvg(src.getPlaneData(2), dst.getPlaneData(2), src.getPlaneWidth(2), src.getPlaneHeight(2));
 

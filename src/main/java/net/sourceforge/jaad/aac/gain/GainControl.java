@@ -6,6 +6,8 @@ import net.sourceforge.jaad.aac.syntax.ICSInfo.WindowSequence;
 
 import java.util.Arrays;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
  * under the Public Domain license. Code changes provided by the JCodec project
@@ -128,8 +130,8 @@ public class GainControl implements GCConstants {
 				locationPrev[band][0] = Arrays.copyOf(location[band][k], location[band][k].length);
 				levelPrev[band][0] = Arrays.copyOf(level[band][k], level[band][k].length);
 			}
-			System.arraycopy(overlap[band], 0, out[band], 0, lbLong);
-			System.arraycopy(overlap[band], lbLong, overlap[band], 0, lbLong);
+			arraycopy(overlap[band], 0, out[band], 0, lbLong);
+			arraycopy(overlap[band], lbLong, overlap[band], 0, lbLong);
 		}
 		else {
 			//calculation

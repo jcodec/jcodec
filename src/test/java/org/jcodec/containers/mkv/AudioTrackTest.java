@@ -1,5 +1,6 @@
 package org.jcodec.containers.mkv;
 
+import static java.lang.System.arraycopy;
 import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVMuxerTest.bufferToArray;
@@ -57,8 +58,8 @@ public class AudioTrackTest {
         byte[] sample08 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3"));
         byte[] sample09 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
         byte[] twoSamples = new byte[sample08.length+sample09.length];
-        System.arraycopy(sample08, 0, twoSamples, 0, sample08.length);
-        System.arraycopy(sample09, 0, twoSamples, sample08.length, sample09.length);
+        arraycopy(sample08, 0, twoSamples, 0, sample08.length);
+        arraycopy(sample09, 0, twoSamples, sample08.length, sample09.length);
         Assert.assertArrayEquals(twoSamples, p.getData().array());
     }
 

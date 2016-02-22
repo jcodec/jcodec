@@ -11,6 +11,8 @@ import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
  * under the Public Domain license. Code changes provided by the JCodec project
@@ -136,7 +138,7 @@ public class LTPrediction implements SyntaxConstants {
 	}
 
 	public void copy(LTPrediction ltp) {
-		System.arraycopy(ltp.states, 0, states, 0, states.length);
+		arraycopy(ltp.states, 0, states, 0, states.length);
 		coef = ltp.coef;
 		lag = ltp.lag;
 		lastBand = ltp.lastBand;
