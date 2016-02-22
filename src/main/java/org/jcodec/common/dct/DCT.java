@@ -1,5 +1,7 @@
 package org.jcodec.common.dct;
 
+import org.jcodec.api.UnsupportedException;
+
 /**
  * This class is part of JCodec ( www.jcodec.org )
  * This software is distributed under FreeBSD License
@@ -9,7 +11,7 @@ package org.jcodec.common.dct;
  */
 public abstract class DCT {
     public short[] encode(byte[] orig) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedException();
     }
 
     public abstract int[] decode(int[] orig);

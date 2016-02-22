@@ -5,6 +5,7 @@ import static org.jcodec.codecs.vp8.VP8Util.pickDefaultPrediction;
 
 import java.util.Arrays;
 
+import org.jcodec.api.UnsupportedException;
 import org.jcodec.codecs.vp8.VP8Util.PLANE;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
@@ -599,7 +600,7 @@ public class Macroblock {
                 break;
 
             default:
-                throw new UnsupportedOperationException("TODO: unknowwn mode: "+this.mode);
+                throw new UnsupportedException("TODO: unknowwn mode: "+this.mode);
             }
 
         }

@@ -4,6 +4,7 @@ import static java.lang.Math.abs;
 import static org.jcodec.codecs.vp8.FilterUtil.Segment.horizontal;
 import static org.jcodec.codecs.vp8.FilterUtil.Segment.vertical;
 
+import org.jcodec.api.UnsupportedException;
 import org.jcodec.codecs.vp8.Macroblock.Subblock;
 
 /**
@@ -273,7 +274,7 @@ public class FilterUtil {
                                 else if (loop_filter_level >= 15)
                                     hev_threshold = 1;
                             } else /* current frame is an interframe */ {
-                                throw new UnsupportedOperationException("TODO: non-key frames are not supported yet.");
+                                throw new UnsupportedException("TODO: non-key frames are not supported yet.");
 //                                if (loop_filter_level >= 40)
 //                                    hev_threshold = 3;
 //                                else if (loop_filter_level >= 20)
@@ -394,7 +395,7 @@ public class FilterUtil {
                                 else if (loopFilterLevel >= 15)
                                     varianceThreshold = 1;
                             } else /* current frame is an interframe */ {
-                                throw new UnsupportedOperationException("TODO: non-key frames are not supported yet");
+                                throw new UnsupportedException("TODO: non-key frames are not supported yet");
 //                                if (loopFilterLevel >= 40)
 //                                    varianceThreshold = 3;
 //                                else if (loop_filter_level >= 20)

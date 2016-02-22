@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.jcodec.api.UnsupportedException;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
@@ -196,7 +197,7 @@ public class MPSRandomAccessDemuxer {
 
         @Override
         public void seek(double second) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedException();
         }
     }
 }
