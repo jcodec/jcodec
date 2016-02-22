@@ -1,5 +1,6 @@
 package org.jcodec.common;
 
+import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.io.File;
@@ -41,17 +42,17 @@ public class TestByteBufferUtil {
         ByteBuffer rawFrame = NIOUtils.fetchFrom(new File("src/test/resources/mkv/single-frame01.vp8"));
         ByteBuffer newFrame = ByteBuffer.allocate(rawFrame.limit());
         
-        long start = System.currentTimeMillis();
+        long start = currentTimeMillis();
         for (int i=0;i < 10E7; i++){
             newFrame.put(rawFrame);
             newFrame.flip();
         }
-        System.out.println((System.currentTimeMillis()-start)+"ms for put");
+        System.out.println((currentTimeMillis()-start)+"ms for put");
         
-        start = System.currentTimeMillis();
+        start = currentTimeMillis();
         for (int i=0;i < 10E7; i++){
             newFrame = rawFrame.slice();
         }
-        System.out.println((System.currentTimeMillis()-start)+"ms for slice");
+        System.out.println((currentTimeMillis()-start)+"ms for slice");
     }
 }

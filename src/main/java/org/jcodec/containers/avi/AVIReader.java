@@ -11,6 +11,8 @@ import org.jcodec.common.io.DataReader;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 
+import static java.lang.System.currentTimeMillis;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -157,7 +159,7 @@ public class AVIReader {
 
     public void parse() throws IOException {
         try {
-            long t1 = System.currentTimeMillis();
+            long t1 = currentTimeMillis();
 
             long fileSize = raf.size();
             fileLeft = fileSize;
@@ -366,7 +368,7 @@ public class AVIReader {
 
             } while (fileLeft > 0);
 
-            long t2 = System.currentTimeMillis();
+            long t2 = currentTimeMillis();
 
             Logger.debug("\tFile Left [" + fileLeft + "]");
             Logger.debug("\tParse time : " + (t2 - t1) + "ms");

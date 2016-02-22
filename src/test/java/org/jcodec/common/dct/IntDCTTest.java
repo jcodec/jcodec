@@ -1,5 +1,6 @@
 package org.jcodec.common.dct;
 
+import static java.lang.System.currentTimeMillis;
 import static org.jcodec.common.dct.IntDCT.DESCALE;
 import static org.jcodec.common.dct.IntDCT.range_limit;
 
@@ -23,14 +24,14 @@ public class IntDCTTest {
         IntBuffer ws = IntBuffer.allocate(64);
         IntBuffer out = IntBuffer.allocate(64);
         IntBuffer inptr = IntBuffer.wrap(input);
-        long start = System.currentTimeMillis();
+        long start = currentTimeMillis();
         for (int i = 0; i < count; i++) {
             ws.clear();
             out.clear();
             inptr.clear();
             dct.decode(inptr, ws, out);
         }
-        long time = System.currentTimeMillis() - start;
+        long time = currentTimeMillis() - start;
         long kdctPerSec = count / time;
         System.out.println(kdctPerSec + "kdct/sec");
     }
