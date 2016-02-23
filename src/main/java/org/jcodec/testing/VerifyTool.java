@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.MappedH264ES;
@@ -14,6 +13,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,8 +45,8 @@ public class VerifyTool {
                 try {
                     if (test(coded, ref)) {
                         System.out.println(coded.getAbsolutePath() + " -- FIXED");
-                        coded.delete();
-                        ref.delete();
+                        Platform.deleteFile(coded);
+                        Platform.deleteFile(ref);
                     } else {
                         System.out.println(coded.getAbsolutePath() + " -- NOT FIXED!!!!");
                     }
@@ -73,11 +73,11 @@ public class VerifyTool {
 
             ByteBuffer yuv = NIOUtils.read(_yuv, lumaSize + crSize + cbSize);
 
-            if (!Arrays.equals(getAsIntArray(yuv, lumaSize), pic.getPlaneData(0)))
+            if (!Platform.arrayEquals(getAsIntArray(yuv, lumaSize), pic.getPlaneData(0)))
                 return false;
-            if (!Arrays.equals(getAsIntArray(yuv, crSize), pic.getPlaneData(1)))
+            if (!Platform.arrayEquals(getAsIntArray(yuv, crSize), pic.getPlaneData(1)))
                 return false;
-            if (!Arrays.equals(getAsIntArray(yuv, cbSize), pic.getPlaneData(2)))
+            if (!Platform.arrayEquals(getAsIntArray(yuv, cbSize), pic.getPlaneData(2)))
                 return false;
         }
         return true;

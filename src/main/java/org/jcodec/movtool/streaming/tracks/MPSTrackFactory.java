@@ -25,6 +25,7 @@ import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -115,7 +116,7 @@ public class MPSTrackFactory {
                 fpts[i] = index.getInt() & 0xffffffffL;
             }
 
-            long[] seg0 = Arrays.copyOf(fpts, 10);
+            long[] seg0 = Platform.copyOfLong(fpts, 10);
             Arrays.sort(seg0);
 
             long[] seg1 = new long[10];

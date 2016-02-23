@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.tools.MathUtil;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -71,7 +72,7 @@ public class DictionaryCompressor {
         }
 
         private RunLength.Long getValueStats(long[] values) {
-            long[] copy = Arrays.copyOf(values, values.length);
+            long[] copy = Platform.copyOfLong(values, values.length);
             Arrays.sort(copy);
             RunLength.Long rl = new RunLength.Long();
             for (long l : copy) {
@@ -110,7 +111,7 @@ public class DictionaryCompressor {
         }
 
         private RunLength.Integer getValueStats(int[] values) {
-            int[] copy = Arrays.copyOf(values, values.length);
+            int[] copy = Platform.copyOfInt(values, values.length);
             Arrays.sort(copy);
             RunLength.Integer rl = new RunLength.Integer();
             for (int l : copy) {

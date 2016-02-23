@@ -27,6 +27,7 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
+import org.jcodec.platform.Platform;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
 /**
@@ -49,7 +50,7 @@ public class Strip {
         try {
             input = readableFileChannel(new File(args[0]));
             File file = new File(args[1]);
-            file.delete();
+            Platform.deleteFile(file);
             out = writableFileChannel(file);
             MovieBox movie = MP4Util.createRefMovie(input, "file://" + new File(args[0]).getAbsolutePath());
             new Strip().strip(movie);

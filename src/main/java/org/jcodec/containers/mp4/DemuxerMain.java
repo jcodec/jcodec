@@ -19,7 +19,6 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 import java.util.List;
 
 import org.jcodec.codecs.prores.ProresDecoder;
@@ -40,6 +39,7 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
+import org.jcodec.platform.Platform;
 import org.jcodec.scale.Yuv422pToRgb;
 
 /**
@@ -141,7 +141,7 @@ public class DemuxerMain {
             byte[] expected = readFileToByteArray(new File(base, String.format("frame%08d.raw", i + startFn
                     + 1)));
             Packet pkt = vt.nextFrame();
-            if(!Arrays.equals(expected, NIOUtils.toArray(pkt.getData())))
+            if(!Platform.arrayEquals(expected, NIOUtils.toArray(pkt.getData())))
                 throw new RuntimeException("not equal");
             System.out.print(".");
             if ((i % 100) == 0)

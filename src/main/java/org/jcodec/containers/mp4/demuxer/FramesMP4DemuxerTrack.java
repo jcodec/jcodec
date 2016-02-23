@@ -8,7 +8,6 @@ import org.jcodec.codecs.h264.mp4.AvcCBox;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
@@ -24,6 +23,7 @@ import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.platform.Platform;
 
 import static org.jcodec.common.DemuxerTrackMeta.Type.*;
 
@@ -231,7 +231,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
                 seekFrames[i] = i;
             }
         } else {
-            seekFrames = Arrays.copyOf(syncSamples, syncSamples.length);
+            seekFrames = Platform.copyOfInt(syncSamples, syncSamples.length);
             for (int i = 0; i < seekFrames.length; i++)
                 seekFrames[i]--;
         }

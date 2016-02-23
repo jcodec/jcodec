@@ -2,13 +2,12 @@ package org.jcodec.codecs.mjpeg;
 
 import static junit.framework.Assert.assertTrue;
 
-import java.util.Arrays;
-
 import org.jcodec.codecs.mjpeg.tools.Asserts;
 import org.jcodec.common.dct.DCT;
 import org.jcodec.common.dct.IntDCT;
 import org.jcodec.common.dct.SlowDCT;
 import org.jcodec.common.tools.Debug;
+import org.jcodec.platform.Platform;
 import org.junit.Test;
 
 public class DctTest {
@@ -64,7 +63,7 @@ public class DctTest {
 
     private void doTestStrict(DCT dct, int[] input, int[] expected) {
         int[] output = dct.decode(input);
-        boolean equals = Arrays.equals(expected, output);
+        boolean equals = Platform.arrayEquals(expected, output);
         if (!equals) {
             Debug.print8x8(expected);
             System.out.println();

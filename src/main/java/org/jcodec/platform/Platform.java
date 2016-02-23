@@ -1,5 +1,5 @@
 package org.jcodec.platform;
-
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -68,4 +68,55 @@ public class Platform {
     public static URL getResource(Class<?> class1, String string) {
         return class1.getResource(string);
  }
+    
+    public static boolean arrayEquals(Object... arguments) {
+        throw new RuntimeException("TODO");
+    }
+    
+    public static <T> T[] copyOfRangeO(T[] original, int from, int to) {
+        throw new RuntimeException("TODO");
+    }
+
+    public static long[] copyOfRangeL(long[] positions, int from, int to) {
+        throw new RuntimeException("TODO");
+    }
+
+    public static int[] copyOfRangeI(int[] sizes, int sampleNo, int to) {
+        throw new RuntimeException("TODO");
+    }
+
+    public static byte[] copyOfRangeB(byte[] arr, int off, int min) {
+        // TODO Auto-generated method stub
+        throw new RuntimeException("TODO");
+    }
+
+    public static <T> T[] copyOfObj(T[] original, int newLength) {
+        throw new RuntimeException("TODO");
+    }
+
+    public static long[] copyOfLong(long[] values, int length) {
+        throw new RuntimeException("TODO");
+    }
+
+    public static int[] copyOfInt(int[] values, int length) {
+        throw new RuntimeException("TODO");
+    }
+
+    public static boolean[] copyOfBool(boolean[] shortUsed, int length) {
+        throw new RuntimeException("TODO");
+    }
+
+    public static byte[] copyOfByte(byte[] asByteArray, int newLength) {
+        // TODO Auto-generated method stub
+        throw new RuntimeException("TODO");
+    }
+    
+    public static String arrayToString(Object[] references) {
+        throw new RuntimeException("TODO");
+    }
+
+    public static void deleteFile(File video) {
+        throw new RuntimeException("TODO Platform.deleteFile");
+    }
+
 }

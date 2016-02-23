@@ -18,6 +18,7 @@ import java.util.Arrays;
 
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -263,7 +264,7 @@ public class PictureParameterSet {
         if (getClass() != obj.getClass())
             return false;
         PictureParameterSet other = (PictureParameterSet) obj;
-        if (!Arrays.equals(bottom_right, other.bottom_right))
+        if (!Platform.arrayEquals(bottom_right, other.bottom_right))
             return false;
         if (chroma_qp_index_offset != other.chroma_qp_index_offset)
             return false;
@@ -294,7 +295,7 @@ public class PictureParameterSet {
             return false;
         if (redundant_pic_cnt_present_flag != other.redundant_pic_cnt_present_flag)
             return false;
-        if (!Arrays.equals(run_length_minus1, other.run_length_minus1))
+        if (!Platform.arrayEquals(run_length_minus1, other.run_length_minus1))
             return false;
         if (seq_parameter_set_id != other.seq_parameter_set_id)
             return false;
@@ -302,11 +303,11 @@ public class PictureParameterSet {
             return false;
         if (slice_group_change_rate_minus1 != other.slice_group_change_rate_minus1)
             return false;
-        if (!Arrays.equals(slice_group_id, other.slice_group_id))
+        if (!Platform.arrayEquals(slice_group_id, other.slice_group_id))
             return false;
         if (slice_group_map_type != other.slice_group_map_type)
             return false;
-        if (!Arrays.equals(top_left, other.top_left))
+        if (!Platform.arrayEquals(top_left, other.top_left))
             return false;
         if (weighted_bipred_idc != other.weighted_bipred_idc)
             return false;

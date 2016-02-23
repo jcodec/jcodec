@@ -26,6 +26,7 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.UrlBox;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,7 +45,7 @@ public class Flattern {
             System.exit(-1);
         }
         File outFile = new File(args[1]);
-        outFile.delete();
+        Platform.deleteFile(outFile);
         SeekableByteChannel input = null;
         try {
             input = readableFileChannel(new File(args[0]));
@@ -198,7 +199,7 @@ public class Flattern {
     }
 
     public void flattern(MovieBox movie, File video) throws IOException {
-        video.delete();
+        Platform.deleteFile(video);
         SeekableByteChannel out = null;
         try {
             out = writableFileChannel(video);

@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,6 +32,7 @@ import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -60,7 +60,7 @@ public class FLVTool {
         }
         String command = args[0];
 
-        Cmd cmd = MainUtils.parseArguments(Arrays.copyOfRange(args, 1, args.length));
+        Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length));
         if (cmd.args.length < 1) {
             MainUtils.printHelp(command, processors.get(command).getFlags(), "file _in", "?file out");
             return;
