@@ -84,7 +84,7 @@ public class MPEGDecoder extends VideoDecoder {
     }
 
     public static class Context {
-        int[] intra_dc_predictor = new int[3];
+        int[] intra_dc_predictor;
         public int mbWidth;
         int mbNo;
         public int codedWidth;
@@ -96,6 +96,10 @@ public class MPEGDecoder extends VideoDecoder {
         public int[] scan;
         public int picWidth;
         public int picHeight;
+        
+        public Context() {
+            this.intra_dc_predictor = new int[3];
+        }
     }
 
     @Override

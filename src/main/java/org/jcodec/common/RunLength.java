@@ -44,13 +44,14 @@ public abstract class RunLength {
     public static class Integer extends RunLength {
         private static final int MIN_VALUE = java.lang.Integer.MIN_VALUE;
 
-        private int lastValue = Integer.MIN_VALUE;
+        private int lastValue;
         private int count = 0;
 
         private IntArrayList values;
 
         public Integer() {
             super();
+            this.lastValue = Integer.MIN_VALUE;
             this.values = new IntArrayList();
         }
 

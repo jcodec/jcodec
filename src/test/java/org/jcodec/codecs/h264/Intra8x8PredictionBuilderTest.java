@@ -12,10 +12,10 @@ import org.junit.Test;
 
 public class Intra8x8PredictionBuilderTest {
 
-    private int[] testResidual = new int[64];
-    private int[] emptyResidual = new int[64];
+    private static int[] testResidual = new int[64];
+    private static int[] emptyResidual = new int[64];
 
-    {
+    static {
         for (int i = 0; i < 64; i++) {
             testResidual[i] = (i << 2) - 128;
         }

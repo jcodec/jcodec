@@ -17,10 +17,19 @@ import org.jcodec.common.model.Picture8Bit;
  */
 public class BlockInterpolator {
 
-    private int[] tmp1 = new int[1024];
-    private int[] tmp2 = new int[1024];
-    private byte[] tmp3 = new byte[1024];
-
+    private int[] tmp1;
+    private int[] tmp2;
+    private byte[] tmp3;
+    private LumaInterpolator[] safe;
+    private LumaInterpolator[] unsafe;
+    
+    public BlockInterpolator() {
+        this.tmp1 = new int[1024];
+        this.tmp2 = new int[1024];
+        this.tmp3 = new byte[1024];
+        this.safe = initSafe();
+        this.unsafe = initUnsafe(); 
+    }
     /**
      * Get block of ( possibly interpolated ) luma pixels
      */
@@ -907,7 +916,6 @@ public class BlockInterpolator {
                 int blkH);
     }
 
-    private LumaInterpolator[] safe = initSafe();
     private LumaInterpolator[] initSafe() {
     final BlockInterpolator self = this;
     return new LumaInterpolator[] {
@@ -1011,7 +1019,6 @@ public class BlockInterpolator {
     } };
     }
 
-    private LumaInterpolator[] unsafe = initUnsafe(); 
     private LumaInterpolator[] initUnsafe() {
     final BlockInterpolator self = this;
     return new LumaInterpolator[] {

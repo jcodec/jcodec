@@ -11,10 +11,10 @@ import org.jcodec.common.tools.MathUtil;
 
 public class Intra16x16PredictionBuilderTest extends TestCase {
     
-    private int[][] emptyResidual = new int[16][16];
-    private int[][] testResidual = new int[16][16];
+    private static int[][] emptyResidual = new int[16][16];
+    private static int[][] testResidual = new int[16][16];
     
-    {
+    static {
         for(int i = 0; i < 256; i++) {
             testResidual[LUMA_4x4_BLOCK_LUT[i]][LUMA_4x4_POS_LUT[i]] = i - 128;
         }

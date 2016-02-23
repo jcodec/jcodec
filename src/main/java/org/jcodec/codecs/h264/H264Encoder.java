@@ -52,7 +52,7 @@ public class H264Encoder extends VideoEncoder {
     private byte[][] topLine;
     private RateControl rc;
     private int frameNumber;
-    private int keyInterval = KEY_INTERVAL_DEFAULT;
+    private int keyInterval;
 
     private int maxPOC;
 
@@ -78,6 +78,7 @@ public class H264Encoder extends VideoEncoder {
 
     public H264Encoder(RateControl rc) {
         this.rc = rc;
+        this.keyInterval = KEY_INTERVAL_DEFAULT;
     }
 
     public int getKeyInterval() {

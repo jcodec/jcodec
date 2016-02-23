@@ -29,7 +29,7 @@ public class MBlock {
     public MBType curMbType;
     public PB16x16 pb16x16;
     public PB168x168 pb168x168;
-    public PB8x8 pb8x8 = new PB8x8();
+    public PB8x8 pb8x8;
     public IPCM ipcm;
     public int mbIdx;
     public boolean fieldDecoding;
@@ -41,6 +41,7 @@ public class MBlock {
     public int[] nCoeff;
 
     public MBlock(ColorSpace chromaFormat) {
+        this.pb8x8 = new PB8x8();
         this.pb16x16 = new PB16x16();
         this.pb168x168 = new PB168x168();
 
