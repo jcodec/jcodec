@@ -23,11 +23,12 @@ public abstract class FixTimestamp {
         try {
             ra = new RandomAccessFile(file, "rw");
             SeekableByteChannel ch = new FileChannelWrapper(ra.getChannel());
+            final FixTimestamp self = this;
             new MTSUtils.TSReader(true) {
                 @Override
                 public boolean onPkt(int guid, boolean payloadStart, ByteBuffer bb, long filePos,
                         boolean sectionSyntax, ByteBuffer fullPkt) {
-                    return processPacket(payloadStart, bb, sectionSyntax, fullPkt);
+                    return self.processPacket(payloadStart, bb, sectionSyntax, fullPkt);
                 }
             }.readTsFile(ch);
         } finally {
