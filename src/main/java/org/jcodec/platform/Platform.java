@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.nio.charset.Charset;
 
 public class Platform {
@@ -63,5 +64,8 @@ public class Platform {
     public static String stringFromCharset(byte[] data, int offset, int len, Charset charset) {
         return new String(data, offset, len, charset);
     }
-
+    
+    public static URL getResource(Class<?> class1, String string) {
+        return class1.getResource(string);
+ }
 }
