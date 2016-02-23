@@ -2,6 +2,7 @@ package org.jcodec.containers.mp4;
 
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 import static org.jcodec.common.io.NIOUtils.rwChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;

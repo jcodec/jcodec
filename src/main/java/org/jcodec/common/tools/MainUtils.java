@@ -63,7 +63,7 @@ public class MainUtils {
         private int[] getMultiIntegerFlagInternal(Map<String, String> flags, String flagName, int[] defaultValue) {
             if (!flags.containsKey(flagName))
                 return defaultValue;
-            String[] split = StringUtils.split(flags.get(flagName), ",");
+            String[] split = StringUtils.splitS(flags.get(flagName), ",");
             int[] result = new int[split.length];
             for (int i = 0; i < split.length; i++)
                 result[i] = Integer.parseInt(split[i]);

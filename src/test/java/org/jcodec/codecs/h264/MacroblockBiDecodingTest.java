@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264;
 
 import static java.lang.String.format;
+import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
 import static org.jcodec.common.JCodecUtil.getAsIntArray;
 

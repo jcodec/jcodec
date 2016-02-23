@@ -243,7 +243,7 @@ public class TestBitReader {
                 "src/test/resources/h264/bitstream/data.dat")));
         String readFileToString = new String(NIOUtils.toArray(NIOUtils.fetchFromFile(new File("src/test/resources/h264/bitstream/reads.csv"))));
 
-        String[] split = StringUtils.split(readFileToString, ",");
+        String[] split = StringUtils.splitS(readFileToString, ",");
         for (String string : split) {
             String trim = string.trim();
             if (StringUtils.isEmpty(trim))

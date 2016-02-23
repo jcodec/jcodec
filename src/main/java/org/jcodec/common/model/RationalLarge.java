@@ -1,6 +1,7 @@
 package org.jcodec.common.model;
 
-import static org.jcodec.common.StringUtils.split;
+import static org.jcodec.common.StringUtils.splitS;
+import static org.jcodec.common.StringUtils.splitC;
 import static org.jcodec.common.tools.MathUtil.reduce;
 
 /**
@@ -33,7 +34,7 @@ public class RationalLarge {
     }
 
     public static RationalLarge parse(String string) {
-        String[] split = split(string, ":");
+        String[] split = splitS(string, ":");
         return new RationalLarge(Long.parseLong(split[0]), Long.parseLong(split[1]));
     }
 

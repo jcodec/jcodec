@@ -47,7 +47,7 @@ public class Cut {
         int shift = 0;
         while (true) {
             if ("-cut".equals(args[shift])) {
-                String[] pt = StringUtils.split(args[shift + 1], ":");
+                String[] pt = StringUtils.splitS(args[shift + 1], ":");
                 slices.add(new Slice(parseInt(pt[0]), parseInt(pt[1])));
                 if (pt.length > 2)
                     sliceNames.add(pt[2]);
