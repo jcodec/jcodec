@@ -1,14 +1,12 @@
 package org.jcodec.api.specific;
 
-import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
-
 import org.jcodec.api.MediaInfo;
+import org.jcodec.api.PictureWithMetadata8Bit;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
@@ -17,15 +15,8 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.PixelAspectExt;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -100,7 +91,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
 
         return pic;
     }
-
+    
     private void updateState(Packet packet) {
         int eNo = ((MP4Packet) packet).getEntryNo();
         if (eNo != curENo) {

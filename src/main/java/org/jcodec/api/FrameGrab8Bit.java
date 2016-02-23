@@ -220,6 +220,21 @@ public class FrameGrab8Bit {
     /**
      * Get frame at current position in JCodec native image
      * 
+     * @return A decoded picture with metadata.
+     * @throws IOException
+     */
+    public PictureWithMetadata8Bit getNativeFrameWithMetadata() throws IOException {
+        Packet frame = videoTrack.nextFrame();
+        if (frame == null)
+            return null;
+
+        Picture8Bit picture = decoder.decodeFrame8Bit(frame, getBuffer());
+        return new PictureWithMetadata8Bit(picture, frame.getPtsD(), frame.getDurationD());
+    }
+
+    /**
+     * Get frame at current position in JCodec native image
+     * 
      * @return
      * @throws IOException
      */
