@@ -234,7 +234,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 							energy += data[off+k]*data[off+k];
 						}
 
-						final float scale = (float) (scaleFactors[idx]/Math.sqrt(energy));
+						float scale = (float) (scaleFactors[idx]/Math.sqrt(energy));
 						for(k = 0; k<width; k++) {
 							data[off+k] *= scale;
 						}

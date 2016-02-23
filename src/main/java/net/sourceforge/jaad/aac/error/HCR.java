@@ -187,7 +187,7 @@ public class HCR implements SyntaxConstants {
 											else {
 												//remaining after last segment
 												if(bitsread<spDataLen) {
-													final int additional_bits = spDataLen-bitsread;
+													int additional_bits = spDataLen-bitsread;
 
 													segment[segmentsCount].readSegment(additional_bits, _in);
 													segment[segmentsCount].len += segment[segmentsCount-1].len;
