@@ -20,7 +20,7 @@ public class GainControl implements GCConstants {
 	private final int frameLen, lbLong, lbShort;
 	private final IMDCT imdct;
 	private final IPQF ipqf;
-	private final float[] buffer1, function;
+	private final float[] buffer1, _function;
 	private final float[][] buffer2, overlap;
 	private int maxBand;
 	private int[][][] level, levelPrev;
@@ -36,7 +36,7 @@ public class GainControl implements GCConstants {
 		locationPrev = new int[0][][];
 		buffer1 = new float[frameLen/2];
 		buffer2 = new float[BANDS][lbLong];
-		function = new float[lbLong*2];
+		_function = new float[lbLong*2];
 		overlap = new float[BANDS][lbLong*2];
 	}
 
@@ -112,7 +112,7 @@ public class GainControl implements GCConstants {
 				//applying
 				for(j = 0; j<lbShort*2; j++) {
 					a = band*lbLong*2+k*lbShort*2+j;
-					_in[a] *= function[j];
+					_in[a] *= _function[j];
 				}
 				//overlapping
 				for(j = 0; j<lbShort; j++) {
@@ -138,7 +138,7 @@ public class GainControl implements GCConstants {
 			calculateFunctionData(lbLong*2, band, winSeq, 0);
 			//applying
 			for(j = 0; j<lbLong*2; j++) {
-				_in[band*lbLong*2+j] *= function[j];
+				_in[band*lbLong*2+j] *= _function[j];
 			}
 			//overlapping
 			for(j = 0; j<lbLong; j++) {
@@ -230,7 +230,7 @@ public class GainControl implements GCConstants {
 
 		//calculate a gain control function
 		for(i = 0; i<samples; i++) {
-			function[i] = 1.0f/modFunc[i];
+			_function[i] = 1.0f/modFunc[i];
 		}
 	}
 
