@@ -2,7 +2,7 @@ package org.jcodec.codecs.h264;
 
 import static org.jcodec.codecs.h264.H264Const.LUMA_4x4_BLOCK_LUT;
 import static org.jcodec.codecs.h264.H264Const.LUMA_4x4_POS_LUT;
-import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
+import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
 import static org.junit.Assert.assertArrayEquals;
 import junit.framework.TestCase;
 

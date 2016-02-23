@@ -409,11 +409,11 @@ public class VP8Encoder extends VideoEncoder {
             return 128;
 
         if (y == 0)
-            return (ArrayUtil.sum(leftRow[0]) + 8) >> 4;
+            return (ArrayUtil.sumInt(leftRow[0]) + 8) >> 4;
         if (x == 0)
-            return (ArrayUtil.sum(topLine[0], x, 16) + 8) >> 4;
+            return (ArrayUtil.sumInt3(topLine[0], x, 16) + 8) >> 4;
 
-        return (ArrayUtil.sum(leftRow[0]) + ArrayUtil.sum(topLine[0], x, 16) + 16) >> 5;
+        return (ArrayUtil.sumInt(leftRow[0]) + ArrayUtil.sumInt3(topLine[0], x, 16) + 16) >> 5;
     }
 
     private int[][] transform(Picture pic, int comp, int qp, int x, int y) {
