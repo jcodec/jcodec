@@ -72,7 +72,7 @@ public class HexDump {
      *             if the output stream is null
      */
 
-    public static void dump(byte[] data, long offset, OutputStream stream, int index, int len) throws IOException,
+    public static void dumpOut(byte[] data, long offset, OutputStream stream, int index, int len) throws IOException,
             ArrayIndexOutOfBoundsException, IllegalArgumentException {
 
         if (index < 0 || index >= data.length) {
@@ -90,10 +90,10 @@ public class HexDump {
             if (chars_read > 16) {
                 chars_read = 16;
             }
-            dump(buffer, display_offset).append(' ');
+            dumpLong(buffer, display_offset).append(' ');
             for (int k = 0; k < 16; k++) {
                 if (k < chars_read) {
-                    dump(buffer, data[k + j]);
+                    dumpByte(buffer, data[k + j]);
                 } else {
                     buffer.append("  ");
                 }
@@ -136,10 +136,10 @@ public class HexDump {
             if (chars_read > 16) {
                 chars_read = 16;
             }
-            dump(buffer, display_offset).append(' ');
+            dumpLong(buffer, display_offset).append(' ');
             for (int k = 0; k < 16; k++) {
                 if (k < chars_read) {
-                    dump(buffer, data.get(k + j));
+                    dumpByte(buffer, data.get(k + j));
                 } else {
                     buffer.append("  ");
                 }
@@ -176,7 +176,7 @@ public class HexDump {
      *            the long value to be dumped
      * @return StringBuilder containing the dumped value.
      */
-    private static StringBuilder dump(StringBuilder _lbuffer, long value) {
+    private static StringBuilder dumpLong(StringBuilder _lbuffer, long value) {
         for (int j = 0; j < 8; j++) {
             _lbuffer.append(_hexcodes[(int) (value >> _shifts[j]) & 15]);
         }
@@ -192,7 +192,7 @@ public class HexDump {
      *            the byte value to be dumped
      * @return StringBuilder containing the dumped value.
      */
-    private static StringBuilder dump(StringBuilder _cbuffer, byte value) {
+    private static StringBuilder dumpByte(StringBuilder _cbuffer, byte value) {
         for (int j = 0; j < 2; j++) {
             _cbuffer.append(_hexcodes[value >> _shifts[j + 6] & 15]);
         }
