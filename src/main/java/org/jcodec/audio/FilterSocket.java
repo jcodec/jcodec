@@ -1,7 +1,10 @@
 package org.jcodec.audio;
 
+import org.jcodec.platform.Platform;
+
+import java.lang.IllegalAccessException; import java.lang.StackTraceElement;
+
 import java.nio.FloatBuffer;
-import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -60,9 +63,9 @@ public class FilterSocket {
                     + outputs.length + "!=" + totalOutputs + ")");
         for (int i = 0, ii = 0, oi = 0; i < filters.length; ii += filters[i].getNInputs(), oi += filters[i]
                 .getNOutputs(), i++) {
-            filters[i].filter(Arrays.copyOfRange(buffers, ii, filters[i].getNInputs() + ii),
-                    Arrays.copyOfRange(positions, ii, filters[i].getNInputs() + ii),
-                    Arrays.copyOfRange(outputs, oi, filters[i].getNOutputs() + oi));
+            filters[i].filter(Platform.copyOfRangeO(buffers, ii, filters[i].getNInputs() + ii),
+                    Platform.copyOfRangeL(positions, ii, filters[i].getNInputs() + ii),
+                    Platform.copyOfRangeO(outputs, oi, filters[i].getNOutputs() + oi));
         }
     }
 

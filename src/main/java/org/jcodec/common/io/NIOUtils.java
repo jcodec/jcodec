@@ -376,7 +376,7 @@ public class NIOUtils {
     public static int find(List<ByteBuffer> catalog, ByteBuffer key) {
         byte[] keyA = toArray(key);
         for (int i = 0; i < catalog.size(); i++) {
-            if (Arrays.equals(toArray(catalog.get(i)), keyA))
+            if (Platform.arrayEquals(toArray(catalog.get(i)), keyA))
                 return i;
         }
         return -1;

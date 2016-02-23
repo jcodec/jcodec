@@ -1,12 +1,11 @@
 package org.jcodec.codecs.mjpeg;
 
-import java.util.Arrays;
-
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.dct.DCT;
 import org.jcodec.common.dct.IntDCT;
 import org.jcodec.common.dct.SlowDCT;
 import org.jcodec.common.tools.Debug;
+import org.jcodec.platform.Platform;
 
 public class VerifyDCT extends DCT {
 
@@ -18,7 +17,7 @@ public class VerifyDCT extends DCT {
     public int[] decode(int[] orig) {
         int[] expected = slow.decode(orig);
         int[] actual = fast.decode(orig);
-        if (!Arrays.equals(expected, actual)) {
+        if (!Platform.arrayEquals(expected, actual)) {
             System.out.println("\nwhile decoding: ");
             Debug.print8x8(orig);
             System.out.println("expected: ");

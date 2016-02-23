@@ -1,7 +1,4 @@
 package net.sourceforge.jaad.aac.tools;
-
-import java.util.Arrays;
-
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
@@ -12,6 +9,8 @@ import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
 
 import static java.lang.System.arraycopy;
+
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -143,9 +142,9 @@ public class LTPrediction implements SyntaxConstants {
 		lag = ltp.lag;
 		lastBand = ltp.lastBand;
 		lagUpdate = ltp.lagUpdate;
-		shortUsed = Arrays.copyOf(ltp.shortUsed, ltp.shortUsed.length);
-		shortLagPresent = Arrays.copyOf(ltp.shortLagPresent, ltp.shortLagPresent.length);
-		shortLag = Arrays.copyOf(ltp.shortLag, ltp.shortLag.length);
-		longUsed = Arrays.copyOf(ltp.longUsed, ltp.longUsed.length);
+		shortUsed = Platform.copyOfBool(ltp.shortUsed, ltp.shortUsed.length);
+		shortLagPresent = Platform.copyOfBool(ltp.shortLagPresent, ltp.shortLagPresent.length);
+		shortLag = Platform.copyOfInt(ltp.shortLag, ltp.shortLag.length);
+		longUsed = Platform.copyOfBool(ltp.longUsed, ltp.longUsed.length);
 	}
 }

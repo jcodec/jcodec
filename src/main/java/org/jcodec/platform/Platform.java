@@ -1,11 +1,11 @@
 package org.jcodec.platform;
-
+import java.io.File;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 public class Platform {
 
@@ -68,4 +68,62 @@ public class Platform {
     public static URL getResource(Class<?> class1, String string) {
         return class1.getResource(string);
  }
+    
+    public static boolean arrayEquals(int[] a, int[] a2) {
+        return Arrays.equals(a, a2);
+    }
+
+    public static boolean arrayEquals(byte[] a, byte[] a2) {
+        return Arrays.equals(a, a2);
+    }
+    
+    public static boolean arrayEquals(Object[] a, Object[] a2) {
+        return Arrays.equals(a, a2);
+    }
+
+    
+    public static <T> T[] copyOfRangeO(T[] original, int from, int to) {
+        return Arrays.copyOfRange(original, from, to);
+    }
+
+    public static long[] copyOfRangeL(long[] original, int from, int to) {
+        return Arrays.copyOfRange(original, from, to);
+    }
+
+    public static int[] copyOfRangeI(int[] original, int from, int to) {
+        return Arrays.copyOfRange(original, from, to);
+    }
+
+    public static byte[] copyOfRangeB(byte[] original, int from, int to) {
+        return Arrays.copyOfRange(original, from, to);
+    }
+
+    public static <T> T[] copyOfObj(T[] original, int newLength) {
+        return Arrays.copyOf(original, newLength);
+    }
+
+    public static long[] copyOfLong(long[] original, int newLength) {
+        return Arrays.copyOf(original, newLength);
+    }
+
+    public static int[] copyOfInt(int[] original, int newLength) {
+        return Arrays.copyOf(original, newLength);
+    }
+
+    public static boolean[] copyOfBool(boolean[] original, int newLength) {
+        return Arrays.copyOf(original, newLength);
+    }
+
+    public static byte[] copyOfByte(byte[] original, int newLength) {
+        return Arrays.copyOf(original, newLength);
+    }
+    
+    public static String arrayToString(Object[] a) {
+        return Arrays.toString(a);
+    }
+
+    public static void deleteFile(File file) {
+        file.delete();
+    }
+
 }

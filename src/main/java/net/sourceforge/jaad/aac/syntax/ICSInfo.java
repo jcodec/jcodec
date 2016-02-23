@@ -1,12 +1,13 @@
 package net.sourceforge.jaad.aac.syntax;
 
+import org.jcodec.platform.Platform;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.DecoderConfig;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.tools.ICPrediction;
 import net.sourceforge.jaad.aac.tools.LTPrediction;
-import java.util.Arrays;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -228,8 +229,8 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 		}
 		windowCount = info.windowCount;
 		windowGroupCount = info.windowGroupCount;
-		windowGroupLength = Arrays.copyOf(info.windowGroupLength, info.windowGroupLength.length);
+		windowGroupLength = Platform.copyOfInt(info.windowGroupLength, info.windowGroupLength.length);
 		swbCount = info.swbCount;
-		swbOffsets = Arrays.copyOf(info.swbOffsets, info.swbOffsets.length);
+		swbOffsets = Platform.copyOfInt(info.swbOffsets, info.swbOffsets.length);
 	}
 }

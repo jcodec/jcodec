@@ -13,6 +13,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -72,7 +73,7 @@ public class MPSRandomAccessDemuxer {
                 curOff += fsizes[i];
             }
 
-            int[] seg = Arrays.copyOf(streamIndex.getFpts(), 100);
+            int[] seg = Platform.copyOfInt(streamIndex.getFpts(), 100);
             Arrays.sort(seg);
 
             seekToFrame = 0;

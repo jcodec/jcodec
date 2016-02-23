@@ -2,7 +2,6 @@ package org.jcodec.containers.mps.index;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.MPEGHeader;
@@ -15,6 +14,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
+import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -77,7 +77,7 @@ public class MPSIndexerTest {
     }
 
     public byte[] sub(byte[] arr, int off, int length) {
-        return Arrays.copyOfRange(arr, off, Math.min(arr.length, off + length));
+        return Platform.copyOfRangeB(arr, off, Math.min(arr.length, off + length));
     }
 
     byte[] pes(int streamId, int pts, int dts, int payloadLen, int off, byte[] es, boolean zeroLen) {

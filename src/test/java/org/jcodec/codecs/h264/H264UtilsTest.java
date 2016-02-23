@@ -1,12 +1,12 @@
 package org.jcodec.codecs.h264;
 
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class H264UtilsTest {
 
@@ -17,7 +17,7 @@ public class H264UtilsTest {
         short[] tgt = new short[] { 0x64, 0x00, 0x15, 0xac, 0xb2, 0x01, 0x00, 0x4b, 0x7f, 0xe0, 0x00, 0x60, 0x00, 0x82,
                 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x03, 0x00, 0x64, 0x1e, 0x2c, 0x5c, 0x90 };
         
-        byte[] b = Arrays.copyOf(asByteArray(src), src.length + 2);
+        byte[] b = Platform.copyOfByte(asByteArray(src), src.length + 2);
         ByteBuffer bb = ByteBuffer.wrap(b);
         bb.limit(bb.limit() - 2);
 

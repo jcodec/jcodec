@@ -3,11 +3,11 @@ package org.jcodec.codecs.h264;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -134,9 +134,9 @@ public class MacroblockIntraMixedDecodingTest {
         Picture out = new H264Decoder().decodeFrame(data, buf.getData());
         
         ByteBuffer yuv = NIOUtils.fetchFrom(new File("src/test/resources/h264/cabac/random_1/random_1.yuv"));
-        Assert.assertArrayEquals(getAsIntArray(yuv, 129600), Arrays.copyOfRange(out.getPlaneData(0), 0, 129600));
-        Assert.assertArrayEquals(getAsIntArray(yuv, 32400), Arrays.copyOfRange(out.getPlaneData(1), 0, 32400));
-        Assert.assertArrayEquals(getAsIntArray(yuv, 32400), Arrays.copyOfRange(out.getPlaneData(2), 0, 32400));
+        Assert.assertArrayEquals(getAsIntArray(yuv, 129600), Platform.copyOfRangeI(out.getPlaneData(0), 0, 129600));
+        Assert.assertArrayEquals(getAsIntArray(yuv, 32400), Platform.copyOfRangeI(out.getPlaneData(1), 0, 32400));
+        Assert.assertArrayEquals(getAsIntArray(yuv, 32400), Platform.copyOfRangeI(out.getPlaneData(2), 0, 32400));
     }
 
     private int[] getAsIntArray(ByteBuffer yuv, int size) {

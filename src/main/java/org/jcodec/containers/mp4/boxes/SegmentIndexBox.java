@@ -1,7 +1,10 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.platform.Platform;
+
+import java.lang.IllegalAccessException; import java.lang.StackTraceElement;
+
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -111,7 +114,7 @@ public class SegmentIndexBox extends FullBox {
         return "SegmentIndexBox [reference_ID=" + reference_ID + ", timescale=" + timescale
                 + ", earliest_presentation_time=" + earliest_presentation_time + ", first_offset=" + first_offset
                 + ", reserved=" + reserved + ", reference_count=" + reference_count + ", references="
-                + Arrays.toString(references) + ", version=" + version + ", flags=" + flags + ", header=" + header
+                + Platform.arrayToString(references) + ", version=" + version + ", flags=" + flags + ", header=" + header
                 + "]";
     }
 
