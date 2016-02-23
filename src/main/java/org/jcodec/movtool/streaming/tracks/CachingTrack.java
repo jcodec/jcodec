@@ -32,10 +32,11 @@ public class CachingTrack implements VirtualTrack {
         if (policy < 1)
             throw new IllegalArgumentException("Caching track with less then 1 entry.");
         this.src = src;
+        final CachingTrack self = this;
         policyFuture = policyExecutor.scheduleAtFixedRate(new Runnable() {
             public void run() {
-                while (cachedPackets.size() > policy) {
-                    cachedPackets.get(0).wipe();
+                while (self.cachedPackets.size() > policy) {
+                    self.cachedPackets.get(0).wipe();
                 }
             }
         }, 200, 200, TimeUnit.MILLISECONDS);
@@ -56,23 +57,23 @@ public class CachingTrack implements VirtualTrack {
 
     public static class CachingPacket extends VirtualPacketWrapper {
         private ByteBuffer cache;
-		private CachingTrack track;
+        private CachingTrack track;
 
         public CachingPacket(CachingTrack track, VirtualPacket src) {
             super(src);
-			this.track = track;
+            this.track = track;
         }
 
         public synchronized void wipe() {
             if (track.cachedPackets.indexOf(this) == 0) {
-            	track.cachedPackets.remove(0);
+                track.cachedPackets.remove(0);
                 cache = null;
             }
         }
 
         public synchronized ByteBuffer getData() throws IOException {
             // This packet will receive new place _in the queue
-        	track.cachedPackets.remove(this);
+            track.cachedPackets.remove(this);
             if (cache == null) {
                 cache = src.getData();
             }

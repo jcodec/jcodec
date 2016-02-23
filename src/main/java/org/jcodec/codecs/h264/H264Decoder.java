@@ -108,7 +108,23 @@ public class H264Decoder extends VideoDecoder {
         Frame frame = new FrameDecoder(this).decodeFrame(data, getSameSizeBuffer(buffer));
         return frame == null ? null : frame.toPicture(8, buffer);
     }
+    
+    private static final class SliceDecoderRunnable implements Runnable {
+        private final SliceReader sliceReader;
+        private final Frame result;
+        private FrameDecoder fdec;
 
+        private SliceDecoderRunnable(FrameDecoder fdec, SliceReader sliceReader, Frame result) {
+            this.fdec = fdec;
+            this.sliceReader = sliceReader;
+            this.result = result;
+        }
+
+        public void run() {
+            new SliceDecoder(fdec.activeSps, fdec.dec.sRefs, fdec.dec.lRefs, fdec.di, result).decode(sliceReader);
+        }
+    }
+    
     static class FrameDecoder {
         private SeqParameterSet activeSps;
         private DeblockingFilter filter;
@@ -128,11 +144,7 @@ public class H264Decoder extends VideoDecoder {
             if (dec.threaded && sliceReaders.size() > 1) {
                 List<Future<?>> futures = new ArrayList<Future<?>>();
                 for (final SliceReader sliceReader : sliceReaders) {
-                    futures.add(dec.tp.submit(new Runnable() {
-                        public void run() {
-                            new SliceDecoder(activeSps, dec.sRefs, dec.lRefs, di, result).decode(sliceReader);
-                        }
-                    }));
+                    futures.add(dec.tp.submit(new SliceDecoderRunnable(this, sliceReader, result)));
                 }
 
                 for (Future<?> future : futures) {

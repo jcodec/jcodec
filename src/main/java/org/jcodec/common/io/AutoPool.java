@@ -24,10 +24,10 @@ public class AutoPool {
 
     private AutoPool() {
         scheduler = Executors.newScheduledThreadPool(1, daemonThreadFactory());
+        final List<AutoResource> res = resources;
         scheduler.scheduleAtFixedRate(new Runnable() {
             public void run() {
                 long curTime = currentTimeMillis();
-                List<AutoResource> res = resources;
                 for (AutoResource autoResource : res) {
                     autoResource.setCurTime(curTime);
                 }

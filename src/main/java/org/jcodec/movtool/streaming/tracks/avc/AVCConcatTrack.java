@@ -83,12 +83,7 @@ public class AVCConcatTrack implements VirtualTrack {
                 allSps.add(sps);
             }
             final int idx2 = i;
-            tweakers[i] = new H264Utils.SliceHeaderTweaker(rawSPSs, rawPPSs) {
-                @Override
-                protected void tweak(SliceHeader sh) {
-                    sh.pic_parameter_set_id = map.get((idx2 << 8) | sh.pic_parameter_set_id);
-                }
-            };
+            tweakers[i] = new AvccTweaker(rawSPSs, rawPPSs, idx2, map);
         }
         map = mergePS(allSps, allPps);
 
@@ -208,6 +203,22 @@ public class AVCConcatTrack implements VirtualTrack {
         out.clear();
 
         return out;
+    }
+
+    private static final class AvccTweaker extends H264Utils.SliceHeaderTweaker {
+        private final int idx2;
+        private Map<Integer, Integer> map;
+
+        private AvccTweaker(List<ByteBuffer> spsList, List<ByteBuffer> ppsList, int idx2, Map<Integer, Integer> map) {
+            super(spsList, ppsList);
+            this.idx2 = idx2;
+            this.map = map;
+        }
+
+        @Override
+        protected void tweak(SliceHeader sh) {
+            sh.pic_parameter_set_id = map.get((idx2 << 8) | sh.pic_parameter_set_id);
+        }
     }
 
     public static class AVCConcatPacket implements VirtualPacket {
