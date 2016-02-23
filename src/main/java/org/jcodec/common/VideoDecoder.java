@@ -54,4 +54,15 @@ abstract public class VideoDecoder {
             byteBuffer = ArrayUtil.create2D(buffer[0].length, buffer.length);
         return byteBuffer;
     }
+    
+    /**
+     * Returns a downscaled version of this decoder
+     * @param ratio
+     * @return
+     */
+    public VideoDecoder downscaled(int ratio) {
+        if(ratio == 1)
+            return this;
+        return null;
+    }
 }

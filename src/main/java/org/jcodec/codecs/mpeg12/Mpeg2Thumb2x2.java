@@ -13,7 +13,6 @@ import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
 import org.jcodec.common.dct.IDCT2x2;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
-import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -107,10 +106,10 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
 
 
     @Override
-    public int decodeMacroblock(PictureHeader ph, Context context, int prevAddr, int[] qScaleCode, int[][] buf,
+    public int decodeMacroblock(PictureHeader ph, Context context, int prevAddr, int[] qScaleCode, byte[][] buf,
             int stride, BitReader bits, int vertOff, int vertStep, MPEGPred pred) {
         if (localPred == null || oldPred != pred) {
-            localPred = new MPEGPredOct(pred);
+            localPred = new MPEGPredQuad(pred);
             oldPred = pred;
         }
 
@@ -138,7 +137,8 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
         out[off + stride + 1] += block[3];
     }
 
-    protected void put(int[][] mbPix, int[][] buf, int stride, int chromaFormat, int mbX, int mbY, int width,
+    @Override
+    protected void put(int[][] mbPix, byte[][] buf, int stride, int chromaFormat, int mbX, int mbY, int width,
             int height, int vertOff, int vertStep) {
 
         int chromaStride = (stride + (1 << SQUEEZE_X[chromaFormat]) - 1) >> SQUEEZE_X[chromaFormat];
@@ -153,29 +153,30 @@ public class Mpeg2Thumb2x2 extends MPEGDecoder {
                 chromaStride << vertStep, mbPix[2], chromaMBW, chromaMBH);
     }
 
-    private final void putSub(int[] big, int off, int stride, int[] block, int mbW, int mbH) {
+    @Override
+    protected void putSub(byte[] big, int off, int stride, int[] block, int mbW, int mbH) {
         int blOff = 0;
 
         if (mbW == 1) {
-            big[off] = clip(block[blOff]);
-            big[off + 1] = clip(block[blOff + 1]);
-            big[off + stride] = clip(block[blOff + 2]);
-            big[off + stride + 1] = clip(block[blOff + 3]);
+            big[off] = clipTo8Bit(block[blOff]);
+            big[off + 1] = clipTo8Bit(block[blOff + 1]);
+            big[off + stride] = clipTo8Bit(block[blOff + 2]);
+            big[off + stride + 1] = clipTo8Bit(block[blOff + 3]);
 
             if (mbH == 2) {
                 off += stride << 1;
 
-                big[off] = clip(block[blOff + 4]);
-                big[off + 1] = clip(block[blOff + 5]);
-                big[off + stride] = clip(block[blOff + 6]);
-                big[off + stride + 1] = clip(block[blOff + 7]);
+                big[off] = clipTo8Bit(block[blOff + 4]);
+                big[off + 1] = clipTo8Bit(block[blOff + 5]);
+                big[off + stride] = clipTo8Bit(block[blOff + 6]);
+                big[off + stride + 1] = clipTo8Bit(block[blOff + 7]);
             }
         } else {
             for (int i = 0; i < 4; i++) {
-                big[off] = clip(block[blOff]);
-                big[off + 1] = clip(block[blOff + 1]);
-                big[off + 2] = clip(block[blOff + 2]);
-                big[off + 3] = clip(block[blOff + 3]);
+                big[off] = clipTo8Bit(block[blOff]);
+                big[off + 1] = clipTo8Bit(block[blOff + 1]);
+                big[off + 2] = clipTo8Bit(block[blOff + 2]);
+                big[off + 3] = clipTo8Bit(block[blOff + 3]);
 
                 off += stride;
                 blOff += 4;
