@@ -33,7 +33,8 @@ public class V210Decoder {
     }
 
     public Picture decode(byte[] data) {
-        IntBuffer dat = ByteBuffer.wrap(data).order(LITTLE_ENDIAN).asIntBuffer();
+        ByteBuffer littleEndian = (ByteBuffer) ByteBuffer.wrap(data).order(LITTLE_ENDIAN);
+        IntBuffer dat = littleEndian.asIntBuffer();
         IntBuffer y = IntBuffer.wrap(new int[width * height]);
         IntBuffer cb = IntBuffer.wrap(new int[width * height / 2]);
         IntBuffer cr = IntBuffer.wrap(new int[width * height / 2]);

@@ -46,7 +46,7 @@ public class WavHeader {
 
         public static FmtChunk read(ByteBuffer bb) throws IOException {
             FmtChunk fmtChunk = FmtChunk.get(bb);
-            ByteOrder old = bb.order();
+            ByteOrder old = (ByteOrder) bb.order();
             try {
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 return new FmtChunkExtended(fmtChunk, bb.getShort(), bb.getShort(), bb.getInt(), bb.getInt());
@@ -57,7 +57,7 @@ public class WavHeader {
 
         public void put(ByteBuffer bb) throws IOException {
             super.put(bb);
-            ByteOrder old = bb.order();
+            ByteOrder old = (ByteOrder) bb.order();
             bb.order(ByteOrder.LITTLE_ENDIAN);
             bb.putShort(cbSize);
             bb.putShort(bitsPerCodedSample);
@@ -115,7 +115,7 @@ public class WavHeader {
         }
 
         public static FmtChunk get(ByteBuffer bb) throws IOException {
-            ByteOrder old = bb.order();
+            ByteOrder old = (ByteOrder) bb.order();
             try {
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 return new FmtChunk(bb.getShort(), bb.getShort(), bb.getInt(), bb.getInt(), bb.getShort(),
@@ -126,7 +126,7 @@ public class WavHeader {
         }
 
         public void put(ByteBuffer bb) throws IOException {
-            ByteOrder old = bb.order();
+            ByteOrder old = (ByteOrder) bb.order();
             bb.order(ByteOrder.LITTLE_ENDIAN);
             bb.putShort(audioFormat);
             bb.putShort(numChannels);
