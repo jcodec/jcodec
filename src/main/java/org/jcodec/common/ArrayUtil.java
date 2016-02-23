@@ -154,6 +154,14 @@ public class ArrayUtil {
             result[i] = (byte) (val[i] - 128);
         return result;
     }
+    
+    public static byte[][] toByteArrayShifted(int[][] intArray) {
+        byte[][] result = new byte[intArray.length][];
+        for (int i = 0; i < intArray.length; i++) {
+            result[i] = toByteArrayShifted(intArray[i]);
+        }
+        return result;
+    }
 
     public static int[] toIntArrayUnshifted(byte... array) {
         int[] result = new int[array.length];
@@ -173,7 +181,7 @@ public class ArrayUtil {
     public static int[] toIntArray(byte... array) {
         int[] result = new int[array.length];
         for (int i = 0; i < result.length; i++)
-            result[i] = array[i] & 0xff;
+            result[i] = array[i];
 
         return result;
     }

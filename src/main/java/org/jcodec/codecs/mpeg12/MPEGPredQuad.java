@@ -17,10 +17,12 @@ public class MPEGPredQuad extends MPEGPredOct {
         super(other);
     }
 
+    // TODO: This interpolation uses sinc at the very lowest (half-pel -- 1/8) level as opposed to linear as specified by the standard.
+    // this may be a result of color greening out in long GOPs.
     @Override
-    public void predictPlane(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int refVertOff,
+    public void predictPlane(byte[] ref, int refX, int refY, int refW, int refH, int refVertStep, int refVertOff,
             int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
-        super.predictPlane(ref, refX << 1, refY << 1, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW, tgtH,
+        super.predictPlane(ref, refX, refY, refW, refH, refVertStep, refVertOff, tgt, tgtY, tgtW << 1, tgtH << 1,
                 tgtVertStep);
     }
 }

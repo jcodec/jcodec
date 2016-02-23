@@ -108,10 +108,10 @@ public class Mpeg2Thumb4x4 extends MPEGDecoder {
     }
 
     @Override
-    public int decodeMacroblock(PictureHeader ph, Context context, int prevAddr, int[] qScaleCode, int[][] buf,
+    public int decodeMacroblock(PictureHeader ph, Context context, int prevAddr, int[] qScaleCode, byte[][] buf,
             int stride, BitReader bits, int vertOff, int vertStep, MPEGPred pred) {
         if (localPred == null || oldPred != pred) {
-            localPred = new MPEGPredQuad(pred);
+            localPred = new MPEGPredDbl(pred);
             oldPred = pred;
         }
 
@@ -141,7 +141,7 @@ public class Mpeg2Thumb4x4 extends MPEGDecoder {
         }
     }
 
-    protected void put(int[][] mbPix, int[][] buf, int stride, int chromaFormat, int mbX, int mbY, int width,
+    protected void put(int[][] mbPix, byte[][] buf, int stride, int chromaFormat, int mbX, int mbY, int width,
             int height, int vertOff, int vertStep) {
 
         int chromaStride = (stride + (1 << SQUEEZE_X[chromaFormat]) - 1) >> SQUEEZE_X[chromaFormat];
@@ -156,29 +156,30 @@ public class Mpeg2Thumb4x4 extends MPEGDecoder {
                 chromaStride << vertStep, mbPix[2], chromaMBW, chromaMBH);
     }
 
-    private final void putSub(int[] big, int off, int stride, int[] block, int mbW, int mbH) {
+    @Override
+    protected void putSub(byte[] big, int off, int stride, int[] block, int mbW, int mbH) {
         int blOff = 0;
 
         if (mbW == 2) {
             for (int i = 0; i < (1 << mbH); i++) {
-                big[off] = clip(block[blOff]);
-                big[off + 1] = clip(block[blOff + 1]);
-                big[off + 2] = clip(block[blOff + 2]);
-                big[off + 3] = clip(block[blOff + 3]);
+                big[off] = clipTo8Bit(block[blOff]);
+                big[off + 1] = clipTo8Bit(block[blOff + 1]);
+                big[off + 2] = clipTo8Bit(block[blOff + 2]);
+                big[off + 3] = clipTo8Bit(block[blOff + 3]);
 
                 blOff += 4;
                 off += stride;
             }
         } else {
             for (int i = 0; i < (1 << mbH); i++) {
-                big[off] = clip(block[blOff]);
-                big[off + 1] = clip(block[blOff + 1]);
-                big[off + 2] = clip(block[blOff + 2]);
-                big[off + 3] = clip(block[blOff + 3]);
-                big[off + 4] = clip(block[blOff + 4]);
-                big[off + 5] = clip(block[blOff + 5]);
-                big[off + 6] = clip(block[blOff + 6]);
-                big[off + 7] = clip(block[blOff + 7]);
+                big[off] = clipTo8Bit(block[blOff]);
+                big[off + 1] = clipTo8Bit(block[blOff + 1]);
+                big[off + 2] = clipTo8Bit(block[blOff + 2]);
+                big[off + 3] = clipTo8Bit(block[blOff + 3]);
+                big[off + 4] = clipTo8Bit(block[blOff + 4]);
+                big[off + 5] = clipTo8Bit(block[blOff + 5]);
+                big[off + 6] = clipTo8Bit(block[blOff + 6]);
+                big[off + 7] = clipTo8Bit(block[blOff + 7]);
 
                 blOff += 8;
                 off += stride;
