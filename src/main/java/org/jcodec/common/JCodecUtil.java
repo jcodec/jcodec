@@ -41,14 +41,14 @@ public class JCodecUtil {
     }
 
     public static Format detectFormat(File f) throws IOException {
-        return detectFormat(NIOUtils.fetchFromFileL(f, 200 * 1024));
+        return detectFormatBuffer(NIOUtils.fetchFromFileL(f, 200 * 1024));
     }
     
-    public static Format detectFormat(ReadableByteChannel f) throws IOException {
-        return detectFormat(NIOUtils.fetchFromChannel(f, 200 * 1024));
+    public static Format detectFormatChannel(ReadableByteChannel f) throws IOException {
+        return detectFormatBuffer(NIOUtils.fetchFromChannel(f, 200 * 1024));
     }
 
-    public static Format detectFormat(ByteBuffer b) {
+    public static Format detectFormatBuffer(ByteBuffer b) {
         int movScore = MP4Demuxer.probe(b.duplicate());
         int psScore = MPSDemuxer.probe(b.duplicate());
         int tsScore = MTSDemuxer.probe(b.duplicate());
