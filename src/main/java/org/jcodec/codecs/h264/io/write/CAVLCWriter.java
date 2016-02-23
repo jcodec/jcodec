@@ -20,7 +20,7 @@ public class CAVLCWriter {
     private CAVLCWriter() {
     }
 
-    public static void writeU(BitWriter out, int value, int n, String message)  {
+    public static void writeUtrace(BitWriter out, int value, int n, String message)  {
         out.writeNBit(value, n);
         trace(message, value);
     }
@@ -44,12 +44,12 @@ public class CAVLCWriter {
         writeUE(out, MathUtil.golomb(value));
     }
 
-    public static void writeUE(BitWriter out, int value, String message)  {
+    public static void writeUEtrace(BitWriter out, int value, String message)  {
         writeUE(out, value);
         trace(message, value);
     }
 
-    public static void writeSE(BitWriter out, int value, String message)  {
+    public static void writeSEtrace(BitWriter out, int value, String message)  {
         writeUE(out, MathUtil.golomb(value));
         trace(message, value);
     }
