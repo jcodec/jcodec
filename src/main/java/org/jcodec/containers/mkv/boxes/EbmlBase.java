@@ -20,7 +20,7 @@ public abstract class EbmlBase {
 
     protected EbmlMaster parent;
     public MKVType type;
-    public byte[] id = { 0x00 };
+    public byte[] id;
     public int dataLen = 0;
     public long offset;
     public long dataOffset;

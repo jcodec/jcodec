@@ -11,10 +11,10 @@ import org.jcodec.common.tools.MathUtil;
 import org.junit.Test;
 
 public class Intra4x4PredictionBuilderTest {
-    private int[] emptyResidual = new int[16];
-    private int[] testResidual = new int[16];
+    private static int[] emptyResidual = new int[16];
+    private static int[] testResidual = new int[16];
 
-    {
+    static {
         for (int i = 0; i < 16; i++) {
             testResidual[i] = 16 * i - 128;
         }

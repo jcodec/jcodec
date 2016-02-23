@@ -525,7 +525,7 @@ public class Macroblock {
         private VP8Util.PLANE plane;
         public int mode;
         public boolean someValuePresent;
-        private int[] tokens = new int[16];
+        private int[] tokens;
 		private Macroblock self;
 
         public Subblock(Macroblock self, int row, int col, VP8Util.PLANE plane) {
@@ -533,6 +533,7 @@ public class Macroblock {
 			this.row = row;
             this.col = col;
             this.plane = plane;
+            this.tokens = new int[16];
         }
 
         public void predict(Macroblock[][] mbs) {

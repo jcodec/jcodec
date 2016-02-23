@@ -60,7 +60,7 @@ public class VLCBuilder {
             }
 
             public void writeVLC(BitWriter out, int code) {
-                super.writeVLC(out, forward.get(code));
+                super.writeVLC(out, self.forward.get(code));
             }
         };
     }
