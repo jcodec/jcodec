@@ -466,7 +466,7 @@ public class SliceReader {
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean lAvb = mapper.leftAvailable(mBlock.mbIdx);
         boolean tAvb = mapper.topAvailable(mBlock.mbIdx);
-        mBlock.cbp = readCodedBlockPatternInter(lAvb, tAvb, leftCBPLuma | (leftCBPChroma << 4), topCBPLuma[mbX]
+        mBlock._cbp = readCodedBlockPatternInter(lAvb, tAvb, leftCBPLuma | (leftCBPChroma << 4), topCBPLuma[mbX]
                 | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
@@ -602,7 +602,7 @@ public class SliceReader {
     }
 
     private void readResidualInter(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
-        mBlock.cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
+        mBlock._cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
                 topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
@@ -641,7 +641,7 @@ public class SliceReader {
                     && bSubMbTypes[mBlock.pb8x8.subMbTypes[3]] == 0;
         }
 
-        mBlock.cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
+        mBlock._cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
                 topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
@@ -848,7 +848,7 @@ public class SliceReader {
         }
         mBlock.chromaPredictionMode = readChromaPredMode(mbX, leftAvailable, topAvailable);
 
-        mBlock.cbp = readCodedBlockPatternIntra(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
+        mBlock._cbp = readCodedBlockPatternIntra(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
                 topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
@@ -887,7 +887,7 @@ public class SliceReader {
                     blkOffLeft, blkOffTop, blkX, blkY, mBlock.ac[0][i]);
         }
 
-        savePrevCBP(mBlock.cbp);
+        savePrevCBP(mBlock._cbp);
     }
 
     private void readLuma8x8CABAC(MBlock mBlock, int mbX, int mbY) {
@@ -906,7 +906,7 @@ public class SliceReader {
             int blk4x4Offset = i << 2;
             mBlock.nCoeff[blk4x4Offset] = mBlock.nCoeff[blk4x4Offset + 1] = mBlock.nCoeff[blk4x4Offset + 2] = mBlock.nCoeff[blk4x4Offset + 3] = nCoeff;
         }
-        savePrevCBP(mBlock.cbp);
+        savePrevCBP(mBlock._cbp);
     }
 
     private void readLuma8x8CAVLC(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {

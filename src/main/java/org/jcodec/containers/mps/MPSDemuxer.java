@@ -99,14 +99,14 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
     public static abstract class BaseTrack implements MPEGDemuxer.MPEGDemuxerTrack {
         protected int streamId;
-        protected List<PESPacket> pending;
+        protected List<PESPacket> _pending;
         protected MPSDemuxer demuxer;
 
         public BaseTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
-            this.pending = new ArrayList<PESPacket>();
+            this._pending = new ArrayList<PESPacket>();
             this.demuxer = demuxer;
 			this.streamId = streamId;
-            this.pending.add(pkt);
+            this._pending.add(pkt);
         }
 
         public int getSid() {
@@ -114,24 +114,24 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
 
         public void pending(PESPacket pkt) {
-            if (pending != null)
-                pending.add(pkt);
+            if (_pending != null)
+                _pending.add(pkt);
             else
             	demuxer.putBack(pkt.data);
         }
 
         public List<PESPacket> getPending() {
-            return pending;
+            return _pending;
         }
 
         @Override
         public void ignore() {
-            if (pending == null)
+            if (_pending == null)
                 return;
-            for (PESPacket pesPacket : pending) {
+            for (PESPacket pesPacket : _pending) {
             	demuxer.putBack(pesPacket.data);
             }
-            pending = null;
+            _pending = null;
         }
     }
 
@@ -156,14 +156,14 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
 
         public int read(ByteBuffer arg0) throws IOException {
-            PESPacket pes = pending.size() > 0 ? pending.remove(0) : getPacket();
+            PESPacket pes = _pending.size() > 0 ? _pending.remove(0) : getPacket();
             if (pes == null || !pes.data.hasRemaining())
                 return -1;
             int toRead = Math.min(arg0.remaining(), pes.data.remaining());
             arg0.put(NIOUtils.read(pes.data, toRead));
 
             if (pes.data.hasRemaining())
-                pending.add(0, pes);
+                _pending.add(0, pes);
             else
                 demuxer.putBack(pes.data);
 
@@ -171,8 +171,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
 
         private PESPacket getPacket() throws IOException {
-            if (pending.size() > 0)
-                return pending.remove(0);
+            if (_pending.size() > 0)
+                return _pending.remove(0);
             PESPacket pkt;
             while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null) {
                 if (pkt.streamId == streamId) {
@@ -215,8 +215,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         @Override
         public Packet nextFrame(ByteBuffer buf) throws IOException {
             PESPacket pkt;
-            if (pending.size() > 0) {
-                pkt = pending.remove(0);
+            if (_pending.size() > 0) {
+                pkt = _pending.remove(0);
             } else {
                 while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null && pkt.streamId != streamId)
                 	demuxer.addToStream(pkt);
@@ -237,7 +237,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
     public void reset() {
         for (BaseTrack track : streams.values()) {
-            track.pending.clear();
+            track._pending.clear();
         }
     }
 

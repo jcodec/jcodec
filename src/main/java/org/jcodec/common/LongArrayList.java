@@ -15,7 +15,7 @@ public class LongArrayList {
 
     private static final int DEFAULT_GROW_AMOUNT = 128;
     private long[] storage;
-    private int size;
+    private int _size;
     private int growAmount;
 
     public LongArrayList() {
@@ -28,18 +28,18 @@ public class LongArrayList {
     }
 
     public long[] toArray() {
-        long[] result = new long[size];
-        arraycopy(storage, 0, result, 0, size);
+        long[] result = new long[_size];
+        arraycopy(storage, 0, result, 0, _size);
         return result;
     }
 
     public void add(long val) {
-        if (size >= storage.length) {
+        if (_size >= storage.length) {
             long[] ns = new long[storage.length + growAmount];
             arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
-        storage[size++] = val;
+        storage[_size++] = val;
     }
     
     public void push(long id) {
@@ -47,9 +47,9 @@ public class LongArrayList {
     }
     
     public void pop() {
-        if (size == 0)
+        if (_size == 0)
             return;
-        size--;
+        _size--;
     }
 
     public void set(int index, int value) {
@@ -67,29 +67,29 @@ public class LongArrayList {
             storage = ns;
         }
         Arrays.fill(storage, start, end, val);
-        size = Math.max(size, end);
+        _size = Math.max(_size, end);
     }
 
     public int size() {
-        return size;
+        return _size;
     }
 
     public void addAll(long[] other) {
-        if (size + other.length >= storage.length) {
-            long[] ns = new long[size + growAmount + other.length];
-            arraycopy(storage, 0, ns, 0, size);
+        if (_size + other.length >= storage.length) {
+            long[] ns = new long[_size + growAmount + other.length];
+            arraycopy(storage, 0, ns, 0, _size);
             storage = ns;
         }
-        arraycopy(other, 0, storage, size, other.length);
-        size += other.length;
+        arraycopy(other, 0, storage, _size, other.length);
+        _size += other.length;
     }
 
     public void clear() {
-        size = 0;
+        _size = 0;
     }
     
     public boolean contains(long needle) {
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < _size; i++)
             if (storage[i] == needle)
                 return true;
         return false;

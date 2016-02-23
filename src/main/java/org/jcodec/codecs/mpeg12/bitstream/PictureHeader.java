@@ -41,7 +41,7 @@ public class PictureHeader implements MPEGHeader {
     public PictureCodingExtension pictureCodingExtension;
     public PictureSpatialScalableExtension pictureSpatialScalableExtension;
     public PictureTemporalScalableExtension pictureTemporalScalableExtension;
-    private boolean hasExtensions;
+    private boolean _hasExtensions;
     
 
     public PictureHeader(int temporal_reference, int picture_coding_type, int vbv_delay, int full_pel_forward_vector,
@@ -80,7 +80,7 @@ public class PictureHeader implements MPEGHeader {
     }
 
     public static void readExtension(ByteBuffer bb, PictureHeader ph, SequenceHeader sh) {
-        ph.hasExtensions = true;
+        ph._hasExtensions = true;
         BitReader _in = new BitReader(bb);
         int extType = _in.readNBit(4);
         switch (extType) {
@@ -161,6 +161,6 @@ public class PictureHeader implements MPEGHeader {
     }
 
     public boolean hasExtensions() {
-        return hasExtensions;
+        return _hasExtensions;
     }
 }

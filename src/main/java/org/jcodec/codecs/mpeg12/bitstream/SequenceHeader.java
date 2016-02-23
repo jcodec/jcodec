@@ -19,7 +19,7 @@ public class SequenceHeader implements MPEGHeader {
     public static final int Sequence_Extension = 0x1;
     public static final int Sequence_Display_Extension = 0x2;
     public static final int Sequence_Scalable_Extension = 0x5;
-    private static boolean hasExtensions;
+    private static boolean _hasExtensions;
 
     public int horizontal_size;
     public int vertical_size;
@@ -80,7 +80,7 @@ public class SequenceHeader implements MPEGHeader {
     }
 
     public static void readExtension(ByteBuffer bb, SequenceHeader sh) {
-        hasExtensions = true;
+        _hasExtensions = true;
 
         BitReader _in = new BitReader(bb);
         int extType = _in.readNBit(4);
@@ -146,7 +146,7 @@ public class SequenceHeader implements MPEGHeader {
     }
 
     public boolean hasExtensions() {
-        return hasExtensions;
+        return _hasExtensions;
     }
 
     public void copyExtensions(SequenceHeader sh) {

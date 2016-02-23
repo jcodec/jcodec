@@ -44,7 +44,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     int thumbHeight;
     private GOP gop;
     private GOP prevGop;
-    private VirtualPacket nextPacket;
+    private VirtualPacket _nextPacket;
 
     protected void checkFourCC(VirtualTrack srcTrack) {
         String fourcc = srcTrack.getCodecMeta().getFourcc();
@@ -64,8 +64,8 @@ public class Mpeg2AVCTrack implements VirtualTrack {
         H264FixedRateControl rc = new H264FixedRateControl(TARGET_RATE);
         H264Encoder encoder = new H264Encoder(rc);
 
-        nextPacket = src.nextPacket();
-        Size frameDim = MPEGDecoder.getSize(nextPacket.getData());
+        _nextPacket = src.nextPacket();
+        Size frameDim = MPEGDecoder.getSize(_nextPacket.getData());
 
         scaleFactor = selectScaleFactor(frameDim);
         thumbWidth = frameDim.getWidth() >> scaleFactor;
@@ -88,19 +88,19 @@ public class Mpeg2AVCTrack implements VirtualTrack {
 
     @Override
     public VirtualPacket nextPacket() throws IOException {
-        if (nextPacket == null)
+        if (_nextPacket == null)
             return null;
 
-        if (nextPacket.isKeyframe()) {
+        if (_nextPacket.isKeyframe()) {
             prevGop = gop;
-            gop = new GOP(this, nextPacket.getFrameNo(), prevGop);
+            gop = new GOP(this, _nextPacket.getFrameNo(), prevGop);
             if (prevGop != null)
                 prevGop.setNextGop(gop);
         }
 
-        VirtualPacket ret = gop.addPacket(nextPacket);
+        VirtualPacket ret = gop.addPacket(_nextPacket);
 
-        nextPacket = src.nextPacket();
+        _nextPacket = src.nextPacket();
 
         return ret;
     }
