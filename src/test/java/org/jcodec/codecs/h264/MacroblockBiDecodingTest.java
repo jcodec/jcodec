@@ -340,7 +340,7 @@ public class MacroblockBiDecodingTest {
     }
 
     private void testOneFile(String encoded, String decoded, int nFrames, int[] reorderMap) throws IOException {
-        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFrom(new File(encoded)));
+        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFromFile(new File(encoded)));
         H264Decoder dec = new H264Decoder();
 
         Frame[] out = new Frame[nFrames];
@@ -349,7 +349,7 @@ public class MacroblockBiDecodingTest {
                     .getData());
         }
 
-        ByteBuffer yuv = NIOUtils.fetchFrom(new File(decoded));
+        ByteBuffer yuv = NIOUtils.fetchFromFile(new File(decoded));
         for (int i = 0; i < nFrames; i++) {
             Assert.assertArrayEquals(format("Frame %d luma", i), toByteArrayShifted(getAsIntArray(yuv, 1024)),
                     out[reorderMap[i]].getPlaneData(0));

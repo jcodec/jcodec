@@ -1,7 +1,7 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -61,8 +61,8 @@ public class MovDump {
         SeekableByteChannel raf = null;
         SeekableByteChannel daos = null;
         try {
-            raf = readableFileChannel(source);
-            daos = writableFileChannel(headerFile);
+            raf = readableChannel(source);
+            daos = writableChannel(headerFile);
 
             for (Atom atom : MP4Util.getRootAtoms(raf)) {
                 String fourcc = atom.getHeader().getFourcc();

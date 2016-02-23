@@ -43,7 +43,7 @@ public class SequenceEncoder {
     private ByteBuffer pps;
 
     public SequenceEncoder(File out) throws IOException {
-        this.ch = NIOUtils.writableFileChannel(out);
+        this.ch = NIOUtils.writableChannel(out);
 
         // Muxer that will store the encoded frames
         muxer = new MP4Muxer(ch, Brand.MP4);

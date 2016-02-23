@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -94,7 +94,7 @@ public class MP4Util {
         Header atom;
         while (off < input.size()) {
             input.position(off);
-            atom = Header.read(NIOUtils.fetchFrom(input, 16));
+            atom = Header.read(NIOUtils.fetchFromChannel(input, 16));
             if (atom == null)
                 break;
             result.add(new Atom(atom, off));
@@ -124,7 +124,7 @@ public class MP4Util {
 
     public static Atom atom(SeekableByteChannel input) throws IOException {
         long off = input.position();
-        Header atom = Header.read(NIOUtils.fetchFrom(input, 16));
+        Header atom = Header.read(NIOUtils.fetchFromChannel(input, 16));
 
         return atom == null ? null : new Atom(atom, off);
     }
@@ -148,7 +148,7 @@ public class MP4Util {
 
         public Box parseBox(SeekableByteChannel input) throws IOException {
             input.position(offset + header.headerSize());
-            return NodeBox.parseBox(NIOUtils.fetchFrom(input, (int) header.getBodySize()), header, BoxFactory.getDefault());
+            return NodeBox.parseBox(NIOUtils.fetchFromChannel(input, (int) header.getBodySize()), header, BoxFactory.getDefault());
         }
 
         public void copy(SeekableByteChannel input, WritableByteChannel out) throws IOException {
@@ -160,7 +160,7 @@ public class MP4Util {
     public static MovieBox parseMovie(File source) throws IOException {
         SeekableByteChannel input = null;
         try {
-            input = readableFileChannel(source);
+            input = readableChannel(source);
             return parseMovie(input);
         } finally {
             if (input != null)
@@ -171,7 +171,7 @@ public class MP4Util {
     public static MovieBox createRefMovie(File source) throws IOException {
         SeekableByteChannel input = null;
         try {
-            input = readableFileChannel(source);
+            input = readableChannel(source);
             return createRefMovie(input, "file://" + source.getCanonicalPath());
         } finally {
             if (input != null)
@@ -182,7 +182,7 @@ public class MP4Util {
     public static void writeMovie(File f, MovieBox movie) throws IOException {
         SeekableByteChannel out = null;
         try {
-            out = NIOUtils.writableFileChannel(f);
+            out = NIOUtils.writableChannel(f);
             writeMovie(out, movie);
         } finally {
             out.close();

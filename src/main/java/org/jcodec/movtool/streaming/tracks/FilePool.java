@@ -58,7 +58,7 @@ public class FilePool implements ByteChannelPool {
     }
 
     protected SeekableByteChannel newChannel(File file) throws FileNotFoundException {
-        return NIOUtils.readableFileChannel(file);
+        return NIOUtils.readableChannel(file);
     }
 
     public static class PoolChannel extends SeekableByteChannelWrapper {

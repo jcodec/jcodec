@@ -112,7 +112,7 @@ public class MTSReplacePid extends MTSUtils.TSReader {
 
         SeekableByteChannel ch = null;
         try {
-            ch = NIOUtils.rwFileChannel(new File(cmd.getArg(1)));
+            ch = NIOUtils.rwChannel(new File(cmd.getArg(1)));
 
             new MTSReplacePid(replaceSpec).readTsFile(ch);
         } finally {

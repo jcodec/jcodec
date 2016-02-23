@@ -36,7 +36,7 @@ public class MTSPktDump {
 
         ReadableByteChannel ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(new File(cmd.args[0]));
+            ch = NIOUtils.readableChannel(new File(cmd.args[0]));
             dumpTSPackets(ch);
         } finally {
             NIOUtils.closeQuietly(ch);

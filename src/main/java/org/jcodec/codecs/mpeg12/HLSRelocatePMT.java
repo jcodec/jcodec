@@ -46,8 +46,8 @@ public class HLSRelocatePMT {
         ReadableByteChannel _in = null;
         WritableByteChannel out = null;
         try {
-            _in = NIOUtils.readableFileChannel(new File(cmd.args[0]));
-            out = NIOUtils.writableFileChannel(new File(cmd.args[1]));
+            _in = NIOUtils.readableChannel(new File(cmd.args[0]));
+            out = NIOUtils.writableChannel(new File(cmd.args[1]));
             System.err.println("Processed: " + replocatePMT(_in, out) + " packets.");
         } finally {
             NIOUtils.closeQuietly(_in);

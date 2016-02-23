@@ -83,7 +83,7 @@ public class MXFVirtualTrack implements VirtualTrack {
                     kl = KLV.readKL(ch);
                 }
 
-                return kl != null && track.essenceUL.equals(kl.key) ? NIOUtils.fetchFrom(ch, (int) kl.len) : null;
+                return kl != null && track.essenceUL.equals(kl.key) ? NIOUtils.fetchFromChannel(ch, (int) kl.len) : null;
             } finally {
                 NIOUtils.closeQuietly(ch);
             }

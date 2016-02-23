@@ -50,7 +50,7 @@ public class WavOutput implements Closeable {
     public static class WavOutFile extends WavOutput {
 
         public WavOutFile(File f, AudioFormat format) throws IOException {
-            super(NIOUtils.writableFileChannel(f), format);
+            super(NIOUtils.writableChannel(f), format);
         }
 
         @Override

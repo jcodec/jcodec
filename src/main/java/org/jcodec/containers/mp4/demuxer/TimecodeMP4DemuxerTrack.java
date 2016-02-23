@@ -101,7 +101,7 @@ public class TimecodeMP4DemuxerTrack {
                         + (Math.min(stscSubInd, sampleToChunks[stscInd].getCount() - 1) << 2);
                 if (input.position() != offset)
                     input.position(offset);
-                ByteBuffer buf = NIOUtils.fetchFrom(input, 4);
+                ByteBuffer buf = NIOUtils.fetchFromChannel(input, 4);
                 return buf.getInt();
             }
         }
@@ -133,7 +133,7 @@ public class TimecodeMP4DemuxerTrack {
                     stscInd++;
                 long offset = chunkOffsets[chunkNo];
                 input.position(offset);
-                ByteBuffer buf = NIOUtils.fetchFrom(input, nSamples * 4);
+                ByteBuffer buf = NIOUtils.fetchFromChannel(input, nSamples * 4);
                 for (int i = 0; i < nSamples; i++) {
                     ss.add(buf.getInt());
                 }

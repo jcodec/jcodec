@@ -34,7 +34,7 @@ public class MTSMediaInfo {
         final Map<Integer, MPSMediaInfo> pids = new HashMap<Integer, MPSMediaInfo>();
         final List<MPEGTrackMetadata> result = new ArrayList<MPEGTrackMetadata>();
         try {
-            ch = NIOUtils.readableFileChannel(f);
+            ch = NIOUtils.readableChannel(f);
             new MTSUtils.TSReader() {
                 private ByteBuffer pmtBuffer;
                 private int pmtPid = -1;
@@ -47,7 +47,7 @@ public class MTSMediaInfo {
                         if (pmtBuffer == null) {
                             pmtBuffer = ByteBuffer.allocate(((tsBuf.duplicate().getInt() >> 8) & 0x3ff) + 3);
                         } else if (pmtBuffer.hasRemaining()) {
-                            NIOUtils.write(pmtBuffer, tsBuf, Math.min(pmtBuffer.remaining(), tsBuf.remaining()));
+                            NIOUtils.writeL(pmtBuffer, tsBuf, Math.min(pmtBuffer.remaining(), tsBuf.remaining()));
                         }
 
                         if (!pmtBuffer.hasRemaining()) {

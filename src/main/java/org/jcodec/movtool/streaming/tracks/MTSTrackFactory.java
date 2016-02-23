@@ -69,7 +69,7 @@ public class MTSTrackFactory {
             protected ByteBuffer readPes(SeekableByteChannel ch, long pesPosition, int pesSize, int payloadSize,
                     int pesAbsIdx) throws IOException {
                 ch.position(pesPosition * 188);
-                ByteBuffer buf = NIOUtils.fetchFrom(ch, pesSize * 188);
+                ByteBuffer buf = NIOUtils.fetchFromChannel(ch, pesSize * 188);
 
                 // NOW REMOVE THE TS CRAP
                 ByteBuffer dst = buf.duplicate();
@@ -121,9 +121,9 @@ public class MTSTrackFactory {
 
     public static void main(String[] args) throws IOException {
         FilePool fp = new FilePool(new File(args[0]), 10);
-        MTSTrackFactory factory = new MTSTrackFactory(NIOUtils.fetchFrom(new File(args[1])), fp);
+        MTSTrackFactory factory = new MTSTrackFactory(NIOUtils.fetchFromFile(new File(args[1])), fp);
         Stream stream = factory.getVideoStreams().get(0);
-        FileChannelWrapper ch = NIOUtils.writableFileChannel(new File(args[2]));
+        FileChannelWrapper ch = NIOUtils.writableChannel(new File(args[2]));
 
         List<VirtualPacket> pkt = new ArrayList<VirtualPacket>();
         for (int i = 0; i < 2000; i++) {

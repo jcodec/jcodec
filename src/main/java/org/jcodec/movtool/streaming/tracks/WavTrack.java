@@ -119,7 +119,7 @@ public class WavTrack implements VirtualTrack {
                 ch = track.pool.getChannel();
                 ch.position(offset);
                 ByteBuffer buffer = ByteBuffer.allocate(dataLen);
-                NIOUtils.read(ch, buffer);
+                NIOUtils.readFromChannel(ch, buffer);
                 buffer.flip();
                 return buffer;
             } finally {

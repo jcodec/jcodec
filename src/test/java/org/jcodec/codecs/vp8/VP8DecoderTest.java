@@ -55,7 +55,7 @@ public class VP8DecoderTest {
     @Before
     public void setUp() throws IOException {
         String path = "src/test/resources/fr.vp8";
-        bb = NIOUtils.fetchFrom(new File(path));
+        bb = NIOUtils.fetchFromFile(new File(path));
         System.out.println("byte array length: " + bb.remaining());
         dec = new VP8Decoder();
     }

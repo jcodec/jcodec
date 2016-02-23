@@ -43,7 +43,7 @@ public class AudioTrackTest {
         audio.gotoFrame(9);
         
         Packet p = audio.nextFrame();
-        ByteBuffer audioSample = NIOUtils.fetchFrom(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
+        ByteBuffer audioSample = NIOUtils.fetchFromFile(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
         
         Assert.assertArrayEquals(audioSample.array(), bufferToArray(p.getData()));
     }

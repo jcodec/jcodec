@@ -63,7 +63,7 @@ public class BlockOrderingTest {
     @Test
     public void testEbmlLacing() throws IOException {
         File file = new File("src/test/resources/mkv/ebml_lacing_block.ebml");
-        ByteBuffer rawFrame = NIOUtils.fetchFrom(file);
+        ByteBuffer rawFrame = NIOUtils.fetchFromFile(file);
         MkvBlock be = new MkvBlock(Block.id);
         be.offset = 0x00;
         be.dataLen = 0xF22;

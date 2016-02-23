@@ -28,15 +28,15 @@ public class MTSRandomAccessDemuxerMain {
             NIOUtils.writeTo(index.serialize(), indexFile);
         } else {
             System.out.println("Reading index from: " + indexFile.getName());
-            index = MTSIndex.parse(NIOUtils.fetchFrom(indexFile));
+            index = MTSIndex.parse(NIOUtils.fetchFromFile(indexFile));
         }
 
-        MTSRandomAccessDemuxer demuxer = new MTSRandomAccessDemuxer(NIOUtils.readableFileChannel(source), index);
+        MTSRandomAccessDemuxer demuxer = new MTSRandomAccessDemuxer(NIOUtils.readableChannel(source), index);
         int[] guids = demuxer.getGuids();
 
         Stream video = getVideoStream(demuxer.getProgramDemuxer(guids[0]));
 
-        FileChannelWrapper ch = NIOUtils.writableFileChannel(new File(args[1]));
+        FileChannelWrapper ch = NIOUtils.writableChannel(new File(args[1]));
         MP4Muxer mp4Muxer = new MP4Muxer(ch, Brand.MOV);
         FramesMP4MuxerTrack videoTrack = mp4Muxer.addVideoTrack("m2v1", new Size(1920, 1080), "jcod", 90000);
 

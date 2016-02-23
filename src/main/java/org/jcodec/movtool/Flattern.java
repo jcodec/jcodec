@@ -1,7 +1,7 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class Flattern {
         Platform.deleteFile(outFile);
         SeekableByteChannel input = null;
         try {
-            input = readableFileChannel(new File(args[0]));
+            input = readableChannel(new File(args[0]));
             MovieBox movie = MP4Util.parseMovie(input);
             new Flattern().flattern(movie, outFile);
         } finally {
@@ -191,12 +191,12 @@ public class Flattern {
             String url = ((UrlBox) box).getUrl();
             if (!url.startsWith("file://"))
                 throw new RuntimeException("Only file:// urls are supported in data reference");
-            return readableFileChannel(new File(url.substring(7)));
+            return readableChannel(new File(url.substring(7)));
         } else if (box instanceof AliasBox) {
             String uxPath = ((AliasBox) box).getUnixPath();
             if (uxPath == null)
                 throw new RuntimeException("Could not resolve alias");
-            return readableFileChannel(new File(uxPath));
+            return readableChannel(new File(uxPath));
         } else {
             throw new RuntimeException(box.getHeader().getFourcc() + " dataref type is not supported");
         }
@@ -206,7 +206,7 @@ public class Flattern {
         Platform.deleteFile(video);
         SeekableByteChannel out = null;
         try {
-            out = writableFileChannel(video);
+            out = writableChannel(video);
             flattern(movie, out);
         } finally {
             if (out != null)

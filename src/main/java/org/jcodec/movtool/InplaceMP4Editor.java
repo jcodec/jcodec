@@ -58,7 +58,7 @@ public class InplaceMP4Editor {
     public boolean modify(File file, MP4Edit edit) throws IOException {
         SeekableByteChannel fi = null;
         try {
-            fi = NIOUtils.rwFileChannel(file);
+            fi = NIOUtils.rwChannel(file);
 
             List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi, edit);
             if (fragments == null)
@@ -102,8 +102,8 @@ public class InplaceMP4Editor {
         SeekableByteChannel fi = null;
         SeekableByteChannel fo = null;
         try {
-            fi = NIOUtils.readableFileChannel(src);
-            fo = NIOUtils.writableFileChannel(dst);
+            fi = NIOUtils.readableChannel(src);
+            fo = NIOUtils.writableChannel(dst);
 
             List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi, edit);
             if (fragments == null)
@@ -214,7 +214,7 @@ public class InplaceMP4Editor {
 
     private ByteBuffer fetchBox(SeekableByteChannel fi, Atom moov) throws IOException {
         fi.position(moov.getOffset());
-        ByteBuffer oldMov = NIOUtils.fetchFrom(fi, (int) moov.getHeader().getSize());
+        ByteBuffer oldMov = NIOUtils.fetchFromChannel(fi, (int) moov.getHeader().getSize());
         return oldMov;
     }
 

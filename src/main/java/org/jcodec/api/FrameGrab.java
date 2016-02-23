@@ -242,7 +242,7 @@ public class FrameGrab {
     public static Picture getNativeFrame(File file, double second) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
+            ch = NIOUtils.readableChannel(file);
             return new FrameGrab(ch).seekToSecondPrecise(second).getNativeFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
@@ -274,7 +274,7 @@ public class FrameGrab {
     public static Picture getNativeFrame(File file, int frameNumber) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
+            ch = NIOUtils.readableChannel(file);
             return new FrameGrab(ch).seekToFramePrecise(frameNumber).getNativeFrame();
         } finally {
             NIOUtils.closeQuietly(ch);

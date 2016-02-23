@@ -212,7 +212,7 @@ public class WavHeader {
     public static WavHeader read(File file) throws IOException {
         ReadableByteChannel is = null;
         try {
-            is = NIOUtils.readableFileChannel(file);
+            is = NIOUtils.readableChannel(file);
             return read(is);
         } finally {
             IOUtils.closeQuietly(is);

@@ -39,7 +39,7 @@ public class TestByteBufferUtil {
     
     @Test
     public void testSliceVsPut() throws Exception {
-        ByteBuffer rawFrame = NIOUtils.fetchFrom(new File("src/test/resources/mkv/single-frame01.vp8"));
+        ByteBuffer rawFrame = NIOUtils.fetchFromFile(new File("src/test/resources/mkv/single-frame01.vp8"));
         ByteBuffer newFrame = ByteBuffer.allocate(rawFrame.limit());
         
         long start = currentTimeMillis();

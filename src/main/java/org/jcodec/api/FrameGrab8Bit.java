@@ -258,7 +258,7 @@ public class FrameGrab8Bit {
     public static Picture8Bit getNativeFrame(File file, double second) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
+            ch = NIOUtils.readableChannel(file);
             return new FrameGrab8Bit(ch).seekToSecondPrecise(second).getNativeFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
@@ -291,7 +291,7 @@ public class FrameGrab8Bit {
     public static Picture8Bit getNativeFrame(File file, int frameNumber) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
+            ch = NIOUtils.readableChannel(file);
             return new FrameGrab8Bit(ch).seekToFramePrecise(frameNumber).getNativeFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
