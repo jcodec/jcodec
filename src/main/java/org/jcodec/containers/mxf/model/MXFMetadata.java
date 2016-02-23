@@ -2,10 +2,12 @@ package org.jcodec.containers.mxf.model;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.Date;
 
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -71,11 +73,7 @@ public abstract class MXFMetadata {
     }
     
     protected String readUtf16String(ByteBuffer _bb) {
-        try {
-            return new String(NIOUtils.toArray(_bb), "utf-16");
-        } catch (UnsupportedEncodingException e) {
-            return null;
-        }
+        return Platform.stringFromCharset(NIOUtils.toArray(_bb), Charset.forName("utf-16"));
     }
     
     public UL getUl() {

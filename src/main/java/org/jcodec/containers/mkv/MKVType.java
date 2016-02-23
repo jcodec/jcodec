@@ -28,6 +28,7 @@ import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.EbmlVoid;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.boxes.MkvSegment;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -369,8 +370,7 @@ public enum MKVType {
 
       private static <T extends EbmlBase> T create(Class<T> clazz, byte[] id) throws SecurityException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException, InstantiationException,
               IllegalAccessException {
-          Constructor<T> c = clazz.getConstructor(byte[].class);
-          return c.newInstance(id);
+          return Platform.newInstance(clazz, id);
       }
       
       @SuppressWarnings("unchecked")

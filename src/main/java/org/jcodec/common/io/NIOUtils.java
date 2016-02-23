@@ -24,6 +24,7 @@ import java.util.List;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -246,7 +247,7 @@ public class NIOUtils {
             ;
         if (buffer.hasRemaining())
             fork.limit(buffer.position() - 1);
-        return new String(toArray(fork), charset);
+        return Platform.stringFromCharset(toArray(fork), charset);
     }
 
     public static ByteBuffer read(ByteBuffer buffer) {

@@ -1,7 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -76,11 +77,7 @@ public class AliasBox extends FullBox {
         }
 
         public String toString() {
-            try {
-                return new String(data, 0, len, utf16.contains(type) ? "UTF-16" : "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-            }
-            return null;
+            return Platform.stringFromCharset(data, 0, len, utf16.contains(type) ? Charset.forName("UTF-16") : Charset.forName("UTF-8"));
         }
     }
 

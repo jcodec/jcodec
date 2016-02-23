@@ -1,4 +1,6 @@
 package org.jcodec.containers.flv;
+import org.jcodec.platform.Platform;
+
 
 import java.lang.reflect.Field;
 import java.util.Date;
@@ -36,7 +38,7 @@ public class FLVMetadata {
     private double audiodatarate;
 
     public FLVMetadata(Map<String, Object> md) {
-        Field[] declaredFields = this.getClass().getDeclaredFields();
+        Field[] declaredFields = Platform.getDeclaredFields(this.getClass());
         for (Field field : declaredFields) {
             Object object = md.get(field.getName());
             try {

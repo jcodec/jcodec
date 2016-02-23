@@ -29,6 +29,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -326,7 +327,7 @@ public class MPSDump {
         private String dumpBin(Object read) {
             StringBuilder bldr = new StringBuilder();
             bldr.append("<");
-            Field[] fields = read.getClass().getFields();
+            Field[] fields = Platform.getFields(read.getClass());
             for (int i = 0; i < fields.length; i++) {
                 if (!Modifier.isPublic(fields[i].getModifiers()) || Modifier.isStatic(fields[i].getModifiers()))
                     continue;
