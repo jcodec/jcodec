@@ -98,10 +98,10 @@ public final class MKVDemuxer {
                     }
                 }
 
-                vTrack = new VideoTrack((int) id, state);
+                vTrack = new VideoTrack(this, (int) id, state);
 
             } else if (type == 2) {
-                AudioTrack audioTrack = new AudioTrack((int) id);
+                AudioTrack audioTrack = new AudioTrack((int) id, this);
                 EbmlFloat sf = (EbmlFloat) findFirst(aTrack, TrackEntry, Audio, SamplingFrequency);
                 if (sf != null)
                     audioTrack.samplingFrequency = sf.get();
@@ -155,14 +155,16 @@ public final class MKVDemuxer {
 
     private static final TapeTimecode ZERO_TAPE_TIMECODE = new TapeTimecode((short) 0, (byte) 0, (byte) 0, (byte) 0, false);
 
-    public class VideoTrack implements SeekableDemuxerTrack {
+    public static class VideoTrack implements SeekableDemuxerTrack {
         private ByteBuffer state;
         public final int trackNo;
         private int frameIdx = 0;
         List<MkvBlock> blocks = new ArrayList<MkvBlock>();
+		private MKVDemuxer demuxer;
 
-        public VideoTrack(int trackNo, ByteBuffer state) {
-            this.trackNo = trackNo;
+        public VideoTrack(MKVDemuxer demuxer, int trackNo, ByteBuffer state) {
+            this.demuxer = demuxer;
+			this.trackNo = trackNo;
             this.state = state;
 
         }
@@ -179,16 +181,16 @@ public final class MKVDemuxer {
             /**
              * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually read only when Packet.getData() is executed.
              */
-            channel.position(b.dataOffset);
+            demuxer.channel.position(b.dataOffset);
             ByteBuffer data = ByteBuffer.allocate(b.dataLen);
-            channel.read(data);
+            demuxer.channel.read(data);
             data.flip();
             b.readFrames(data.duplicate());
             long duration = 1;
             if (frameIdx < blocks.size())
                 duration = blocks.get(frameIdx).absoluteTimecode - b.absoluteTimecode;
 
-            return new Packet(b.frames[0].duplicate(), b.absoluteTimecode, timescale, duration, frameIdx - 1, b.keyFrame, ZERO_TAPE_TIMECODE);
+            return new Packet(b.frames[0].duplicate(), b.absoluteTimecode, demuxer.timescale, duration, frameIdx - 1, b.keyFrame, ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -244,7 +246,7 @@ public final class MKVDemuxer {
         }
     }
 
-    public class AudioTrack implements SeekableDemuxerTrack {
+    public static class AudioTrack implements SeekableDemuxerTrack {
         public double samplingFrequency;
         public final int trackNo;
         List<IndexedBlock> blocks = new ArrayList<IndexedBlock>();
@@ -252,9 +254,11 @@ public final class MKVDemuxer {
         private int frameIdx = 0;
         private int blockIdx = 0;
         private int frameInBlockIdx = 0;
+		private MKVDemuxer demuxer;
 
-        public AudioTrack(int trackNo) {
+        public AudioTrack(int trackNo, MKVDemuxer demuxer) {
             this.trackNo = trackNo;
+			this.demuxer = demuxer;
         }
 
         @Override
@@ -270,9 +274,9 @@ public final class MKVDemuxer {
                 /**
                  * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually rean only when Packet.getData() is executed.
                  */
-                channel.position(b.dataOffset);
+            	demuxer.channel.position(b.dataOffset);
                 ByteBuffer data = ByteBuffer.allocate(b.dataLen);
-                channel.read(data);
+                demuxer.channel.read(data);
                 b.readFrames(data);
             }
             ByteBuffer data = b.frames[frameInBlockIdx].duplicate();
@@ -343,9 +347,9 @@ public final class MKVDemuxer {
                      * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually rean only when Packet.getData() is executed.
                      */
                     try {
-                        channel.position(b.dataOffset);
+                    	demuxer.channel.position(b.dataOffset);
                         ByteBuffer data = ByteBuffer.allocate(b.dataLen);
-                        channel.read(data);
+                        demuxer.channel.read(data);
                         b.readFrames(data);
                     } catch (IOException ioe) {
                         throw new RuntimeException("while reading frames of a Block at offset 0x" + Long.toHexString(b.dataOffset).toUpperCase() + ")", ioe);

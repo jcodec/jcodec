@@ -36,35 +36,37 @@ public class FLVTrackDemuxer {
 
     private SeekableByteChannel _in;
 
-    public class FLVDemuxerTrack implements SeekableDemuxerTrack {
+    public static class FLVDemuxerTrack implements SeekableDemuxerTrack {
 
         private Type type;
         private int curFrame;
         private Codec codec;
         private LongArrayList framePositions = new LongArrayList();
         private byte[] codecPrivate;
+		private FLVTrackDemuxer demuxer;
 
-        public FLVDemuxerTrack(Type type) throws IOException {
-            this.type = type;
-            FLVTag frame = nextFrameI(type, false);
+        public FLVDemuxerTrack(FLVTrackDemuxer demuxer, Type type) throws IOException {
+            this.demuxer = demuxer;
+			this.type = type;
+            FLVTag frame = demuxer.nextFrameI(type, false);
             codec = frame.getTagHeader().getCodec();
         }
 
         @Override
         public Packet nextFrame() throws IOException {
-            FLVTag frame = nextFrameI(type, true);
+            FLVTag frame = demuxer.nextFrameI(type, true);
             framePositions.add(frame.getPosition());
             return toPacket(frame);
         }
 
         public Packet prevFrame() throws IOException {
-            FLVTag frame = prevFrameI(type, true);
+            FLVTag frame = demuxer.prevFrameI(type, true);
             // framePositions.add(nextFrameI.getPosition());
             return toPacket(frame);
         }
 
         public Packet pickFrame() throws IOException {
-            FLVTag frame = nextFrameI(type, false);
+            FLVTag frame = demuxer.nextFrameI(type, false);
             // framePositions.add(nextFrameI.getPosition());
             return toPacket(frame);
         }
@@ -84,7 +86,7 @@ public class FLVTrackDemuxer {
         public boolean gotoFrame(long i) throws IOException {
             if (i >= framePositions.size())
                 return false;
-            resetToPosition(framePositions.get((int) i));
+            demuxer.resetToPosition(framePositions.get((int) i));
             return true;
         }
 
@@ -100,7 +102,7 @@ public class FLVTrackDemuxer {
 
         @Override
         public void seek(double second) throws IOException {
-            seekI(second);
+        	demuxer.seekI(second);
         }
     }
 
@@ -108,8 +110,8 @@ public class FLVTrackDemuxer {
         this._in = _in;
         _in.position(0);
         demuxer = new FLVReader(_in);
-        video = new FLVDemuxerTrack(Type.VIDEO);
-        audio = new FLVDemuxerTrack(Type.AUDIO);
+        video = new FLVDemuxerTrack(this, Type.VIDEO);
+        audio = new FLVDemuxerTrack(this, Type.AUDIO);
     }
 
     private void resetToPosition(long position) throws IOException {

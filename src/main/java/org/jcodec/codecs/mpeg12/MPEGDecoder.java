@@ -80,7 +80,7 @@ public class MPEGDecoder extends VideoDecoder {
     public MPEGDecoder() {
     }
 
-    public class Context {
+    public static class Context {
         int[] intra_dc_predictor = new int[3];
         public int mbWidth;
         int mbNo;

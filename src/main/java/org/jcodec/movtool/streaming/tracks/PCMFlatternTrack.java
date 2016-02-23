@@ -56,7 +56,7 @@ public class PCMFlatternTrack implements VirtualTrack {
                 pkt = src.nextPacket();
         } while (rem > 0 && pkt != null);
 
-        FlatternPacket result = new FlatternPacket(frameNo, pktBuffer.toArray(EMPTY), leftoverOffset, dataLen
+        FlatternPacket result = new FlatternPacket(this, frameNo, pktBuffer.toArray(EMPTY), leftoverOffset, dataLen
                 - Math.max(rem, 0));
         frameNo += framesPerPkt;
 
@@ -81,14 +81,16 @@ public class PCMFlatternTrack implements VirtualTrack {
         src.close();
     }
 
-    private class FlatternPacket implements VirtualPacket {
+    private static class FlatternPacket implements VirtualPacket {
         private int frameNo;
         private int leading;
         private VirtualPacket[] pN;
         private int dataLen;
+		private PCMFlatternTrack track;
 
-        public FlatternPacket(int frameNo, VirtualPacket[] pN, int lead, int dataLen) {
-            this.frameNo = frameNo;
+        public FlatternPacket(PCMFlatternTrack track, int frameNo, VirtualPacket[] pN, int lead, int dataLen) {
+            this.track = track;
+			this.frameNo = frameNo;
             this.leading = lead;
             this.pN = pN;
             this.dataLen = dataLen;
@@ -117,12 +119,12 @@ public class PCMFlatternTrack implements VirtualTrack {
 
         @Override
         public double getPts() {
-            return ((double) frameNo * framesPerPkt) / se.getSampleRate();
+            return ((double) frameNo * track.framesPerPkt) / track.se.getSampleRate();
         }
 
         @Override
         public double getDuration() {
-            return packetDur;
+            return track.packetDur;
         }
 
         @Override

@@ -86,45 +86,50 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
         VirtualPacket nextPacket = src.nextPacket();
         if (nextPacket == null)
             return null;
-        return new TranscodePacket(nextPacket);
+        return new TranscodePacket(this, nextPacket);
     }
 
-    private class TranscodePacket extends VirtualPacketWrapper {
-        public TranscodePacket(VirtualPacket nextPacket) {
+    private static class TranscodePacket extends VirtualPacketWrapper {
+        private Transcode2AVCTrack track;
+
+		public TranscodePacket(Transcode2AVCTrack track, VirtualPacket nextPacket) {
             super(nextPacket);
+			this.track = track;
         }
 
         @Override
         public int getDataLen() {
-            return frameSize;
+            return track.frameSize;
         }
 
         @Override
         public ByteBuffer getData() throws IOException {
-            Transcoder t = transcoders.get();
+            Transcoder t = track.transcoders.get();
             if (t == null) {
-                t = new Transcoder();
-                transcoders.set(t);
+                t = new Transcoder(track);
+                track.transcoders.set(t);
             }
-            ByteBuffer buf = ByteBuffer.allocate(frameSize);
+            ByteBuffer buf = ByteBuffer.allocate(track.frameSize);
             ByteBuffer data = src.getData();
             return t.transcodeFrame(data, buf);
         }
     }
 
-    class Transcoder {
+   static class Transcoder {
         private VideoDecoder decoder;
         private H264Encoder encoder;
         private Picture pic0;
         private Picture pic1;
         private Transform transform;
         private H264FixedRateControl rc;
+		private Transcode2AVCTrack track;
 
-        public Transcoder() {
-            rc = new H264FixedRateControl(TARGET_RATE);
-            this.decoder = getDecoder(scaleFactor);
+        public Transcoder(Transcode2AVCTrack track) {
+            this.track = track;
+			rc = new H264FixedRateControl(TARGET_RATE);
+            this.decoder = track.getDecoder(track.scaleFactor);
             this.encoder = new H264Encoder(rc);
-            pic0 = Picture.create(mbW << 4, (mbH + 1) << 4, ColorSpace.YUV444);
+            pic0 = Picture.create(track.mbW << 4, (track.mbH + 1) << 4, ColorSpace.YUV444);
         }
 
         public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst) throws IOException {
@@ -136,7 +141,7 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
                 transform = ColorUtil.getTransform(decoded.getColor(), encoder.getSupportedColorSpaces()[0]);
             }
             transform.transform(decoded, pic1);
-            pic1.setCrop(new Rect(0, 0, thumbWidth, thumbHeight));
+            pic1.setCrop(new Rect(0, 0, track.thumbWidth, track.thumbHeight));
             int rate = TARGET_RATE;
             do {
                 try {

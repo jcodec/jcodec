@@ -156,7 +156,7 @@ public class AVCConcatTrack implements VirtualTrack {
                 offsetFn += lastPacket.getFrameNo() + 1;
             } else {
                 lastPacket = nextPacket;
-                return new AVCConcatPacket(nextPacket, offsetPts, offsetFn, idx);
+                return new AVCConcatPacket(this, nextPacket, offsetPts, offsetFn, idx);
             }
         }
         return null;
@@ -210,14 +210,16 @@ public class AVCConcatTrack implements VirtualTrack {
         return out;
     }
 
-    public class AVCConcatPacket implements VirtualPacket {
+    public static class AVCConcatPacket implements VirtualPacket {
         private VirtualPacket packet;
         private double ptsOffset;
         private int fnOffset;
         private int idx;
+		private AVCConcatTrack track;
 
-        public AVCConcatPacket(VirtualPacket packet, double ptsOffset, int fnOffset, int idx) {
-            this.packet = packet;
+        public AVCConcatPacket(AVCConcatTrack track, VirtualPacket packet, double ptsOffset, int fnOffset, int idx) {
+            this.track = track;
+			this.packet = packet;
             this.ptsOffset = ptsOffset;
             this.fnOffset = fnOffset;
             this.idx = idx;
@@ -225,7 +227,7 @@ public class AVCConcatTrack implements VirtualTrack {
 
         @Override
         public ByteBuffer getData() throws IOException {
-            return patchPacket(idx, packet.getData());
+            return track.patchPacket(idx, packet.getData());
         }
 
         @Override

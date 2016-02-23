@@ -87,7 +87,7 @@ public class MTSIndexer {
         return new MTSIndex(programs);
     }
 
-    private class MTSAnalyser extends BaseIndexer {
+    private static class MTSAnalyser extends BaseIndexer {
 
         private int targetGuid;
         private long predFileStartInTsPkt;
