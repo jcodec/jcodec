@@ -310,7 +310,7 @@ public class NIOUtils {
     }
 
     public static int readInt(ReadableByteChannel channel, ByteOrder order) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(4).order(order);
+        ByteBuffer buf = (ByteBuffer) ByteBuffer.allocate(4).order(order);
         channel.read(buf);
         buf.flip();
         return buf.getInt();
@@ -321,7 +321,8 @@ public class NIOUtils {
     }
 
     public static void writeInt(WritableByteChannel channel, int value, ByteOrder order) throws IOException {
-        channel.write((ByteBuffer) ByteBuffer.allocate(4).order(order).putInt(value).flip());
+        ByteBuffer order2 = (ByteBuffer) ByteBuffer.allocate(4).order(order);
+        channel.write((ByteBuffer) order2.putInt(value).flip());
     }
 
     public static void writeIntLE(WritableByteChannel channel, int value) throws IOException {

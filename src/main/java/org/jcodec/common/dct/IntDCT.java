@@ -262,7 +262,8 @@ public class IntDCT extends DCT {
     }
 
     private static IntBuffer advance(IntBuffer ptr, int size) {
-        return ((IntBuffer) ptr.position(ptr.position() + size)).slice();
+        ptr.position(ptr.position() + size);
+        return ptr.slice();
     }
 
     static int DESCALE(int x, int n) {

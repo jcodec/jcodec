@@ -70,7 +70,9 @@ public class Audio {
                 if (out[i].remaining() >= _in[i].remaining())
                     out[i].put(_in[i]);
                 else {
-                    out[i].put((FloatBuffer) _in[i].duplicate().limit(_in[i].position() + out[i].remaining()));
+                    FloatBuffer duplicate = _in[i].duplicate();
+                    duplicate.limit(_in[i].position() + out[i].remaining());
+                    out[i].put(duplicate);
                 }
 
             }
