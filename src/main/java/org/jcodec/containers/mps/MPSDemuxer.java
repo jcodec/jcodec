@@ -40,11 +40,12 @@ import org.jcodec.common.model.TapeTimecode;
 public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     private static final int BUFFER_SIZE = 0x100000;
 
-    private Map<Integer, BaseTrack> streams = new HashMap<Integer, BaseTrack>();
+    private Map<Integer, BaseTrack> streams;
     private SeekableByteChannel channel;
 
     public MPSDemuxer(SeekableByteChannel channel) throws IOException {
         super(channel);
+        this.streams = new HashMap<Integer, BaseTrack>();
         this.channel = channel;
         findStreams();
     }
@@ -96,10 +97,11 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
     public static abstract class BaseTrack implements MPEGDemuxer.MPEGDemuxerTrack {
         protected int streamId;
-        protected List<PESPacket> pending = new ArrayList<PESPacket>();
+        protected List<PESPacket> pending;
         protected MPSDemuxer demuxer;
 
         public BaseTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
+            this.pending = new ArrayList<PESPacket>();
             this.demuxer = demuxer;
 			this.streamId = streamId;
             this.pending.add(pkt);

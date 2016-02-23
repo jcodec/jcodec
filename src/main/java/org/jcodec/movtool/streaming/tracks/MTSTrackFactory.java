@@ -27,9 +27,10 @@ import org.jcodec.movtool.streaming.tracks.MPSTrackFactory.Stream;
  * 
  */
 public class MTSTrackFactory {
-    private List<MTSProgram> programs = new ArrayList<MTSProgram>();
+    private List<MTSProgram> programs;
 
     public MTSTrackFactory(ByteBuffer index, FilePool fp) throws IOException {
+        this.programs = new ArrayList<MTSProgram>();
         while (index.remaining() >= 6) {
             int len = index.getInt() - 4;
             ByteBuffer sub = NIOUtils.read(index, len);

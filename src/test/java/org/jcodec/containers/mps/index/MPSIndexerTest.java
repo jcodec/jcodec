@@ -20,9 +20,9 @@ import org.junit.Test;
 
 public class MPSIndexerTest {
 
-    byte[] syncMarker = { 0, 0, 1 };
+    static byte[] syncMarker = { 0, 0, 1 };
 
-    byte[] mpegStreamParams = flatten(new byte[][] {
+    static byte[] mpegStreamParams = flatten(new byte[][] {
 //@formatter:off
       syncMarker, {(byte)0xb3}, toHex(new SequenceHeader(1920, 1080, 1, 1, 512*1024, 0, 0, null, null)), 
       syncMarker, {(byte)0xb5}, toHex(new SequenceExtension(100, 1, 1, 0, 0, 0, 0, 0, 0, 0)),
@@ -30,7 +30,7 @@ public class MPSIndexerTest {
   //@formatter:on
     });
 
-    byte[] mpegSlices = flatten(new byte[][] {
+    static byte[] mpegSlices = flatten(new byte[][] {
 //@formatter:off
       syncMarker, {0x1, 0, 0, 0},
       syncMarker, {0x2, 0, 0, 0},
@@ -38,7 +38,7 @@ public class MPSIndexerTest {
   //@formatter:on
     });
 
-    byte[] mpegFrame(int tempRef, int frameType) {
+    static  byte[] mpegFrame(int tempRef, int frameType) {
         return flatten(new byte[][] {
 //@formatter:off
       syncMarker, {0}, toHex(new PictureHeader(tempRef, frameType, 0, 0, 0, 0, 0)),
@@ -48,9 +48,9 @@ public class MPSIndexerTest {
         });
     }
 
-    byte[] iFrame = flatten(new byte[][] { mpegStreamParams, mpegFrame(0, 1) });
+    static byte[] iFrame = flatten(new byte[][] { mpegStreamParams, mpegFrame(0, 1) });
 
-    private byte[] flatten(byte[][] data) {
+    private static byte[] flatten(byte[][] data) {
         int total = 0;
         for (int i = 0; i < data.length; i++) {
             total += data[i].length;
@@ -113,7 +113,7 @@ public class MPSIndexerTest {
         }
     }
 
-    private <T extends MPEGHeader> byte[] toHex(T struct) {
+    private static <T extends MPEGHeader> byte[] toHex(T struct) {
         ByteBuffer bb = ByteBuffer.allocate(1024);
         struct.write(bb);
         bb.flip();

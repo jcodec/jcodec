@@ -29,8 +29,8 @@ import org.jcodec.common.model.Packet;
 public class MappedH264ES implements DemuxerTrack {
     private ByteBuffer bb;
     private SliceHeaderReader shr;
-    private IntObjectMap<PictureParameterSet> pps = new IntObjectMap<PictureParameterSet>();
-    private IntObjectMap<SeqParameterSet> sps = new IntObjectMap<SeqParameterSet>();
+    private IntObjectMap<PictureParameterSet> pps;
+    private IntObjectMap<SeqParameterSet> sps;
 
     // POC and framenum detection
     private int prevFrameNumOffset;
@@ -40,6 +40,9 @@ public class MappedH264ES implements DemuxerTrack {
     private int frameNo;
 
     public MappedH264ES(ByteBuffer bb) {
+        this.pps = new IntObjectMap<PictureParameterSet>();
+        this.sps = new IntObjectMap<SeqParameterSet>();
+
         this.bb = bb;
         this.shr = new SliceHeaderReader();
         this.frameNo = 0;

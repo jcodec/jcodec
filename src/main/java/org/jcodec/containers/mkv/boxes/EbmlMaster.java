@@ -20,9 +20,11 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
 public class EbmlMaster extends EbmlBase {
     
     protected long usedSize;
-    public final ArrayList<EbmlBase> children = new ArrayList<EbmlBase>();
+    public final ArrayList<EbmlBase> children;
     
     public EbmlMaster(byte[] id) {
+        super();
+        this.children = new ArrayList<EbmlBase>();
         this.id = id;
     }
 

@@ -27,11 +27,12 @@ import org.jcodec.containers.mps.psi.PSISection;
  */
 public class MTSReplacePid extends MTSUtils.TSReader {
 
-    private Set<Integer> pmtPids = new HashSet<Integer>();
+    private Set<Integer> pmtPids;
     private IntIntMap replaceSpec;
 
     public MTSReplacePid(IntIntMap replaceSpec) {
         super(true);
+        this.pmtPids = new HashSet<Integer>();
         this.replaceSpec = replaceSpec;
     }
 

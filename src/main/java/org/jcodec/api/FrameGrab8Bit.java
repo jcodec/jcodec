@@ -47,9 +47,10 @@ public class FrameGrab8Bit {
 
     private DemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
-    private ThreadLocal<byte[][]> buffers = new ThreadLocal<byte[][]>();
+    private ThreadLocal<byte[][]> buffers;
 
     public FrameGrab8Bit(SeekableByteChannel _in) throws IOException, JCodecException {
+        this.buffers = new ThreadLocal<byte[][]>();
         ByteBuffer header = ByteBuffer.allocate(65536);
         _in.read(header);
         header.flip();

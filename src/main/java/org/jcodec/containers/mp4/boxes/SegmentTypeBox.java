@@ -20,7 +20,7 @@ import org.jcodec.common.io.NIOUtils;
 public class SegmentTypeBox extends Box {
     private String majorBrand;
     private int minorVersion;
-    private Collection<String> compBrands = new LinkedList<String>();
+    private Collection<String> compBrands;
 
     public static String fourcc() {
         return "styp";
@@ -35,6 +35,7 @@ public class SegmentTypeBox extends Box {
 
     public SegmentTypeBox() {
         super(new Header(fourcc()));
+        this.compBrands = new LinkedList<String>();
     }
 
     public void parse(ByteBuffer input) {

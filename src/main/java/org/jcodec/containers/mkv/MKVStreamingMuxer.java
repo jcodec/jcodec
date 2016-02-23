@@ -218,8 +218,8 @@ public class MKVStreamingMuxer {
     
     public static class WebmCluster implements MovieSegment {
 
-        MkvBlock be = MKVType.createByType(SimpleBlock);
-        EbmlMaster c = MKVType.createByType(Cluster);
+        MkvBlock be;
+        EbmlMaster c;
         public VirtualPacket pkt;
         private int chunkNo;
         private int trackNo;
@@ -227,6 +227,9 @@ public class MKVStreamingMuxer {
 		private MKVStreamingMuxer muxer;
 
         public WebmCluster(MKVStreamingMuxer muxer, VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long previousClustersSize) {
+            this.be = MKVType.createByType(SimpleBlock);
+            this.c = MKVType.createByType(Cluster);
+
             this.muxer = muxer;
 			this.pkt = pkt;
             this.chunkNo = chunkNo;

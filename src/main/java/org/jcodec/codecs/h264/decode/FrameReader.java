@@ -31,8 +31,13 @@ import org.jcodec.common.logging.Logger;
  * 
  */
 public class FrameReader {
-    private IntObjectMap<SeqParameterSet> sps = new IntObjectMap<SeqParameterSet>();
-    private IntObjectMap<PictureParameterSet> pps = new IntObjectMap<PictureParameterSet>();
+    private IntObjectMap<SeqParameterSet> sps;
+    private IntObjectMap<PictureParameterSet> pps;
+
+    public FrameReader() {
+        this.sps = new IntObjectMap<SeqParameterSet>();
+        this.pps = new IntObjectMap<PictureParameterSet>();
+    }
 
     public List<SliceReader> readFrame(List<ByteBuffer> nalUnits) {
         List<SliceReader> result = new ArrayList<SliceReader>();

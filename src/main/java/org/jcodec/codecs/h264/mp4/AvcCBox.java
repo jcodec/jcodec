@@ -25,19 +25,26 @@ public class AvcCBox extends Box {
     private int level;
     private int nalLengthSize;
 
-    private List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
-    private List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+    private List<ByteBuffer> spsList;
+    private List<ByteBuffer> ppsList;
 
     public AvcCBox(Box other) {
         super(other);
+        this.spsList = new ArrayList<ByteBuffer>();
+        this.ppsList = new ArrayList<ByteBuffer>();
+
     }
 
     public AvcCBox() {
         super(new Header(fourcc()));
+        this.spsList = new ArrayList<ByteBuffer>();
+        this.ppsList = new ArrayList<ByteBuffer>();
     }
 
     public AvcCBox(Header header) {
         super(header);
+        this.spsList = new ArrayList<ByteBuffer>();
+        this.ppsList = new ArrayList<ByteBuffer>();
     }
 
     public AvcCBox(int profile, int profileCompat, int level, int nalLengthSize, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {

@@ -19,10 +19,11 @@ import static java.lang.System.currentTimeMillis;
  */
 public class AutoPool {
     private static AutoPool instance = new AutoPool();
-    private List<AutoResource> resources = Collections.synchronizedList(new ArrayList<AutoResource>());
+    private final List<AutoResource> resources;
     private ScheduledExecutorService scheduler;
 
     private AutoPool() {
+        this.resources = Collections.synchronizedList(new ArrayList<AutoResource>());
         scheduler = Executors.newScheduledThreadPool(1, daemonThreadFactory());
         final List<AutoResource> res = resources;
         scheduler.scheduleAtFixedRate(new Runnable() {

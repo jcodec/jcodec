@@ -20,7 +20,7 @@ import org.jcodec.movtool.Flattern.ProgressListener;
 public class QTEdit {
 
     protected final EditFactory[] factories;
-    private final List<ProgressListener> listeners = new ArrayList<ProgressListener>();
+    private final List<ProgressListener> listeners;
 
     public static interface EditFactory {
         String getName();
@@ -39,6 +39,7 @@ public class QTEdit {
     }
 
     public QTEdit(EditFactory... factories) {
+        this.listeners = new ArrayList<ProgressListener>();
         this.factories = factories;
     }
 

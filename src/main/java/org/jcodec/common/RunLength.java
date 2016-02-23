@@ -12,7 +12,11 @@ import org.jcodec.common.io.NIOUtils;
  * 
  */
 public abstract class RunLength {
-    protected IntArrayList counts = new IntArrayList();
+    protected IntArrayList counts;
+
+    public RunLength() {
+        this.counts = new IntArrayList();
+    }
 
     public int estimateSize() {
         int[] counts = getCounts();
@@ -43,7 +47,12 @@ public abstract class RunLength {
         private int lastValue = Integer.MIN_VALUE;
         private int count = 0;
 
-        private IntArrayList values = new IntArrayList();
+        private IntArrayList values;
+
+        public Integer() {
+            super();
+            this.values = new IntArrayList();
+        }
 
         public void add(int value) {
             if (lastValue == Integer.MIN_VALUE || lastValue != value) {
@@ -126,10 +135,16 @@ public abstract class RunLength {
     public static class Long extends RunLength {
         private static final long MIN_VALUE = java.lang.Long.MIN_VALUE;
 
-        private long lastValue = Long.MIN_VALUE;
+        private long lastValue;
         private int count = 0;
 
-        private LongArrayList values = new LongArrayList();
+        private LongArrayList values;
+
+        public Long() {
+            super();
+            this.lastValue = Long.MIN_VALUE;
+            this.values = new LongArrayList();
+        }
 
         public void add(long value) {
             if (lastValue == Long.MIN_VALUE || lastValue != value) {

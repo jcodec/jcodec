@@ -54,9 +54,9 @@ public abstract class AbstractMP4MuxerTrack {
     protected Unit tgtChunkDurationUnit;
 
     protected long chunkDuration;
-    protected List<ByteBuffer> curChunk = new ArrayList<ByteBuffer>();
+    protected List<ByteBuffer> curChunk;
 
-    protected List<SampleToChunkEntry> samplesInChunks = new ArrayList<SampleToChunkEntry>();
+    protected List<SampleToChunkEntry> samplesInChunks;
     protected int samplesInLastChunk = -1;
     protected int chunkNo = 0;
 
@@ -67,6 +67,9 @@ public abstract class AbstractMP4MuxerTrack {
     private String name;
 
     public AbstractMP4MuxerTrack(int trackId, TrackType type, int timescale) {
+        this.curChunk = new ArrayList<ByteBuffer>();
+        this.samplesInChunks = new ArrayList<SampleToChunkEntry>();
+
         this.trackId = trackId;
         this.type = type;
         this.timescale = timescale;

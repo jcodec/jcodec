@@ -194,7 +194,7 @@ public class FLVTool {
     public static class FixPtsProcessor implements PacketProcessor {
         private double lastPtsAudio = 0;
         private double lastPtsVideo = 0;
-        private List<FLVTag> tags = new ArrayList<FLVTag>();
+        private List<FLVTag> tags;
         private int audioTagsInQueue;
         private int videoTagsInQueue;
         private static final double CORRECTION_PACE = 0.33;
@@ -212,6 +212,7 @@ public class FLVTool {
         }
 
         public FixPtsProcessor() {
+            this.tags = new ArrayList<FLVTag>();
         }
 
         public boolean processPacket(FLVTag pkt, FLVWriter writer) throws IOException {
@@ -420,11 +421,12 @@ public class FLVTool {
         private Integer shiftBy;
         private long ptsDelta;
         private boolean firstPtsSeen;
-        private List<FLVTag> savedTags = new LinkedList<FLVTag>();
+        private List<FLVTag> savedTags;
         private boolean expectWrapAround;
         private int prevPts;
 
         public ShiftPtsProcessor(int shiftTo, Integer shiftBy, boolean expectWrapAround) {
+            this.savedTags = new LinkedList<FLVTag>();
             this.shiftTo = shiftTo;
             this.shiftBy = shiftBy;
             this.expectWrapAround = true;

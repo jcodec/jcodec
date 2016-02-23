@@ -78,9 +78,10 @@ public class CABAC {
     private int[][][] mvdTop;
     private int[][][] mvdLeft;
 
-    public int[] tmp = new int[16];
+    public int[] tmp;
 
     public CABAC(int mbWidth) {
+        this.tmp = new int[16];
         this.chromaPredModeLeft = 0;
         this.chromaPredModeTop = new int[mbWidth];
         this.codedBlkLeft = new int[][] { new int[4], new int[2], new int[2] };

@@ -20,7 +20,7 @@ import org.jcodec.common.io.NIOUtils;
 public class FileTypeBox extends Box {
     private String majorBrand;
     private int minorVersion;
-    private Collection<String> compBrands = new LinkedList<String>();
+    private Collection<String> compBrands;
 
     public static String fourcc() {
         return "ftyp";
@@ -28,6 +28,7 @@ public class FileTypeBox extends Box {
 
     public FileTypeBox(String majorBrand, int minorVersion, Collection<String> compBrands) {
         super(new Header(fourcc()));
+
         this.majorBrand = majorBrand;
         this.minorVersion = minorVersion;
         this.compBrands = compBrands;
@@ -35,6 +36,7 @@ public class FileTypeBox extends Box {
 
     public FileTypeBox() {
         super(new Header(fourcc()));
+        this.compBrands = new LinkedList<String>();
     }
 
     public void parse(ByteBuffer input) {

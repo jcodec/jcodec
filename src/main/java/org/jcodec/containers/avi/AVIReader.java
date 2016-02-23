@@ -111,7 +111,7 @@ public class AVIReader {
     private AVITag_STRH[] streamHeaders;
     private AVIChunk[] streamFormats;
 
-    private List<AVITag_AviIndex> aviIndexes = new ArrayList<AVITag_AviIndex>();
+    private List<AVITag_AviIndex> aviIndexes;
     private AVITag_AviDmlSuperIndex[] openDmlSuperIndex;
 
     private PrintStream ps = null;
@@ -121,6 +121,8 @@ public class AVIReader {
 
     public AVIReader(SeekableByteChannel src) {
         this.raf = new DataReader(src, ByteOrder.LITTLE_ENDIAN);
+        this.aviIndexes = new ArrayList<AVITag_AviIndex>();
+
     }
 
     public static int fromFourCC(final String str) {
@@ -525,8 +527,13 @@ static class AVITag_AVIH extends AVIChunk {
         private int dwSuggestedBufferSize;
         private int dwWidth; // replace with correct value
         private int dwHeight; // replace with correct value
-        private int[] dwReserved = new int[4];
-
+        private int[] dwReserved;
+        
+        public AVITag_AVIH() {
+            super();
+            this.dwReserved = new int[4];
+        }
+        
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -802,7 +809,7 @@ static class AVITag_WaveFormatEx extends AVIChunk {
         protected int guid_data1;
         protected short guid_data2;
         protected short guid_data3;
-        protected byte[] guid_data4 = new byte[8];
+        protected byte[] guid_data4;
 
         // Optional MP3 parameters if wFormatTag = 0x0055
         protected boolean mp3Flag = false;
@@ -813,7 +820,11 @@ static class AVITag_WaveFormatEx extends AVIChunk {
         protected short nCodecDelay;
 
         private String audioFormat = "?";
-
+        
+        public AVITag_WaveFormatEx() {
+            this.guid_data4 = new byte[8];
+        }
+        
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -1145,7 +1156,7 @@ static class AVITag_AviDmlSuperIndex extends AVIChunk {
         protected byte bIndexType;
         protected int nEntriesInUse;
         protected int dwChunkId;
-        protected int[] dwReserved = new int[3];
+        protected int[] dwReserved;
         protected long[] qwOffset;
         protected int[] dwSize;
         protected int[] dwDuration;
@@ -1155,7 +1166,12 @@ static class AVITag_AviDmlSuperIndex extends AVIChunk {
         // Generated
         StringBuffer sb = new StringBuffer();
         private int streamNo = 0;
-
+        
+        public AVITag_AviDmlSuperIndex() {
+            super();
+            this.dwReserved = new int[3];
+        }
+        
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);

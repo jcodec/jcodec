@@ -189,9 +189,10 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public static class MyFactory extends BoxFactory {
-        private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
+        private final Map<String, Class<? extends Box>> mappings;
 
         public MyFactory() {
+            this.mappings = new HashMap<String, Class<? extends Box>>();
             mappings.put(WaveExtension.fourcc(), WaveExtension.class);
             mappings.put(ChannelBox.fourcc(), ChannelBox.class);
             mappings.put("esds", LeafBox.class);

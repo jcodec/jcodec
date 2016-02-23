@@ -174,7 +174,7 @@ public class MPSDump {
 
     private static class MPEGVideoAnalyzer {
         private int nextStartCode = 0xffffffff;
-        private ByteBuffer bselPayload = ByteBuffer.allocate(0x100000);
+        private ByteBuffer bselPayload;
         private int bselStartCode;
         private int bselOffset;
         private int bselBufInd;
@@ -184,7 +184,11 @@ public class MPSDump {
         private SequenceHeader sequenceHeader;
         private PictureCodingExtension pictureCodingExtension;
         private SequenceExtension sequenceExtension;
-
+        
+        public MPEGVideoAnalyzer() {
+            this.bselPayload = ByteBuffer.allocate(0x100000);
+        }
+        
         private void analyzeMpegVideoPacket(ByteBuffer buffer) {
             int pos = buffer.position();
             int bufSize = buffer.remaining();

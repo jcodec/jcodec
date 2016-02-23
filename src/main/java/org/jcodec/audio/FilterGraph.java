@@ -25,9 +25,11 @@ public class FilterGraph implements AudioFilter {
     }
 
     public static class Factory {
-        private List<FilterSocket> sockets = new ArrayList<FilterSocket>();
+        private List<FilterSocket> sockets;
 
         protected Factory(AudioFilter firstFilter) {
+            this.sockets = new ArrayList<FilterSocket>();
+
             if (firstFilter.getDelay() != 0) {
                 // Removing first filter delay using filter socket zero stuffing
                 // features

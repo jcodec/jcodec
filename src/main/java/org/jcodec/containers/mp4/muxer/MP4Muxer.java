@@ -41,7 +41,7 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
  * 
  */
 public class MP4Muxer {
-    private List<AbstractMP4MuxerTrack> tracks = new ArrayList<AbstractMP4MuxerTrack>();
+    private List<AbstractMP4MuxerTrack> tracks;
     protected long mdatOffset;
 
     private int nextTrackId = 1;
@@ -56,6 +56,7 @@ public class MP4Muxer {
     }
 
     public MP4Muxer(SeekableByteChannel output, FileTypeBox ftyp) throws IOException {
+        this.tracks = new ArrayList<AbstractMP4MuxerTrack>();
         this.out = output;
 
         ByteBuffer buf = ByteBuffer.allocate(1024);

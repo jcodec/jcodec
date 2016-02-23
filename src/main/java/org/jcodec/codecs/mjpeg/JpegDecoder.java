@@ -28,12 +28,14 @@ import org.jcodec.common.tools.MathUtil;
 public class JpegDecoder extends VideoDecoder {
     private boolean interlace;
     private boolean topFieldFirst;
+    int[] buf;
 
     public JpegDecoder() {
         this(false, false);
     }
 
     public JpegDecoder(boolean interlace, boolean topFieldFirst) {
+        this.buf = new int[64];
         this.interlace = interlace;
         this.topFieldFirst = topFieldFirst;
     }
@@ -75,7 +77,6 @@ public class JpegDecoder extends VideoDecoder {
         }
     }
 
-    int[] buf = new int[64];
 
     void decodeMCU(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture8Bit result, int bx, int by,
             int blockH, int blockV, int field, int step) {

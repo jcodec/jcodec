@@ -169,9 +169,11 @@ public class VideoSampleEntry extends SampleEntry {
     }
 
     public static class MyFactory extends BoxFactory {
-        private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
-
+        private Map<String, Class<? extends Box>> mappings;
+        
         public MyFactory() {
+            this.mappings = new HashMap<String, Class<? extends Box>>();
+
             mappings.put(PixelAspectExt.fourcc(), PixelAspectExt.class);
             mappings.put(AvcCBox.fourcc(), AvcCBox.class);
             mappings.put(ColorExtension.fourcc(), ColorExtension.class);

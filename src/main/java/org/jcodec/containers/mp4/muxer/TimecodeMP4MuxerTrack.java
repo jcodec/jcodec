@@ -37,12 +37,13 @@ public class TimecodeMP4MuxerTrack extends FramesMP4MuxerTrack {
     private long sampleDuration;
     private long samplePts;
     private int tcFrames;
-    private List<Edit> lower = new ArrayList<Edit>();
-
-    private List<Packet> gop = new ArrayList<Packet>();
+    private List<Edit> lower;
+    private List<Packet> gop;
 
     public TimecodeMP4MuxerTrack(SeekableByteChannel out, int trackId, int timescale) {
         super(out, trackId, TrackType.TIMECODE, timescale);
+        this.lower = new ArrayList<Edit>();
+        this.gop = new ArrayList<Packet>();
     }
 
     public void addTimecode(Packet packet) throws IOException {

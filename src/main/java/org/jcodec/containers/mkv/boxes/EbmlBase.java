@@ -25,7 +25,10 @@ public abstract class EbmlBase {
     public long offset;
     public long dataOffset;
     public int typeSizeLength;
-
+    public EbmlBase() {
+        this.id = new byte[]{ 0x00 };
+    }
+    
     public boolean equalId(byte[] typeId) {
         return Platform.arrayEquals(this.id, typeId);
     }

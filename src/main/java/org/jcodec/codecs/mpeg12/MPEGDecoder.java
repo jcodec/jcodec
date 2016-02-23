@@ -68,15 +68,19 @@ public class MPEGDecoder extends VideoDecoder {
 
     protected SequenceHeader sh;
     protected GOPHeader gh;
-    private Picture8Bit[] refFrames = new Picture8Bit[2];
-    private Picture8Bit[] refFields = new Picture8Bit[2];
+    private Picture8Bit[] refFrames;
+    private Picture8Bit[] refFields;
 
     public MPEGDecoder(SequenceHeader sh, GOPHeader gh) {
+        this.refFrames = new Picture8Bit[2];
+        this.refFields = new Picture8Bit[2];
         this.sh = sh;
         this.gh = gh;
     }
 
     public MPEGDecoder() {
+        this.refFrames = new Picture8Bit[2];
+        this.refFields = new Picture8Bit[2];
     }
 
     public static class Context {

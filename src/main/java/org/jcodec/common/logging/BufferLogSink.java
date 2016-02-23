@@ -15,7 +15,11 @@ import org.jcodec.common.logging.Logger.Message;
  */
 public class BufferLogSink implements Logger.LogSink {
 
-    private List<Message> messages = new LinkedList<Message>();
+    private List<Message> messages;
+    
+    public BufferLogSink() {
+        this.messages = new LinkedList<Message>();
+    }
 
     @Override
     public void postMessage(Message msg) {

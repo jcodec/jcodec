@@ -36,10 +36,12 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
 public class MKVParser {
 
     private SeekableByteChannel channel;
-    private LinkedList<EbmlMaster> trace = new LinkedList<EbmlMaster>();
+    private LinkedList<EbmlMaster> trace;
 
     public MKVParser(SeekableByteChannel channel) {
         this.channel = channel;
+        this.trace = new LinkedList<EbmlMaster>();
+
     }
     
     public List<EbmlMaster> parse() throws IOException {

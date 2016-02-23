@@ -14,7 +14,7 @@ import org.junit.Test;
 
 
 public class SampleOffsetUtilsTest {
-    File f = new File("src/test/resources/petro_dae/95BCC757-7E23-445B-B7AB-6737208069FA/example1.mp4");
+    static File f = new File("src/test/resources/petro_dae/95BCC757-7E23-445B-B7AB-6737208069FA/example1.mp4");
     @Test
     public void testGetFirstSampleAtChunk() throws Exception {
         MovieBox moov = MP4Util.parseMovie(f);

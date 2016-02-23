@@ -51,7 +51,7 @@ import org.jcodec.containers.mkv.boxes.MkvBlock;
  */
 public final class MKVDemuxer {
     private VideoTrack vTrack = null;
-    private List<DemuxerTrack> aTracks = new ArrayList<DemuxerTrack>();
+    private List<DemuxerTrack> aTracks;
     private List<EbmlMaster> t;
     private SeekableByteChannel channel;
     long timescale = 1L;
@@ -59,6 +59,7 @@ public final class MKVDemuxer {
     int pictureHeight;
 
     public MKVDemuxer(List<EbmlMaster> t, SeekableByteChannel fileChannelWrapper) {
+        this.aTracks = new ArrayList<DemuxerTrack>();
         this.t = t;
         this.channel = fileChannelWrapper;
         demux();
@@ -159,10 +160,11 @@ public final class MKVDemuxer {
         private ByteBuffer state;
         public final int trackNo;
         private int frameIdx = 0;
-        List<MkvBlock> blocks = new ArrayList<MkvBlock>();
+        List<MkvBlock> blocks;
 		private MKVDemuxer demuxer;
 
         public VideoTrack(MKVDemuxer demuxer, int trackNo, ByteBuffer state) {
+            this.blocks = new ArrayList<MkvBlock>();
             this.demuxer = demuxer;
 			this.trackNo = trackNo;
             this.state = state;
@@ -249,7 +251,7 @@ public final class MKVDemuxer {
     public static class AudioTrack implements SeekableDemuxerTrack {
         public double samplingFrequency;
         public final int trackNo;
-        List<IndexedBlock> blocks = new ArrayList<IndexedBlock>();
+        List<IndexedBlock> blocks;
         private int framesCount = 0;
         private int frameIdx = 0;
         private int blockIdx = 0;
@@ -257,6 +259,8 @@ public final class MKVDemuxer {
 		private MKVDemuxer demuxer;
 
         public AudioTrack(int trackNo, MKVDemuxer demuxer) {
+            this.blocks = new ArrayList<IndexedBlock>();
+
             this.trackNo = trackNo;
 			this.demuxer = demuxer;
         }

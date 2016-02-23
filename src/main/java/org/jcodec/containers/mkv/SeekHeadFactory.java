@@ -26,9 +26,12 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
  * 
  */
 public class SeekHeadFactory {
-    List<SeekHeadFactory.SeekMock> a = new ArrayList<SeekHeadFactory.SeekMock>();
+    List<SeekHeadFactory.SeekMock> a;
     long currentDataOffset = 0;
     
+    public SeekHeadFactory() {
+        this.a = new ArrayList<SeekHeadFactory.SeekMock>();
+    }
 
     public void add(EbmlBase e) {
         SeekHeadFactory.SeekMock z = SeekMock.make(e);

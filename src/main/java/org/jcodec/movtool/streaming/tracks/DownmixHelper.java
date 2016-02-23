@@ -24,13 +24,14 @@ import org.jcodec.movtool.streaming.AudioCodecMeta;
 public class DownmixHelper {
 
     private int nSamples;
-    private ThreadLocal<float[][]> fltBuf = new ThreadLocal<float[][]>();
+    private ThreadLocal<float[][]> fltBuf;
     private float[][] matrix;
     private int[][] counts;
     private int[][] channels;
     private AudioCodecMeta[] se;
 
     public DownmixHelper(AudioCodecMeta[] se, int nSamples, boolean[][] solo) {
+        this.fltBuf = new ThreadLocal<float[][]>();
         this.nSamples = nSamples;
         this.se = se;
 

@@ -30,9 +30,10 @@ public class MBlockDecoderBase {
     protected SliceHeader sh;
     protected DeblockerInput di;
     protected int poc;
-    protected BlockInterpolator interpolator = new BlockInterpolator();
+    protected BlockInterpolator interpolator;
 
     public MBlockDecoderBase(SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
+        this.interpolator = new BlockInterpolator();
         this.s = decoderState;
         this.sh = sh;
         this.di = di;

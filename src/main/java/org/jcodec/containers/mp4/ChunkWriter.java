@@ -27,10 +27,11 @@ public class ChunkWriter {
     private SeekableByteChannel[] inputs;
     private int curChunk;
     private SeekableByteChannel out;
-    byte[] buf = new byte[8092];
+    byte[] buf;
     private TrakBox trak;
 
     public ChunkWriter(TrakBox trak, SeekableByteChannel[] inputs, SeekableByteChannel out) {
+        this.buf = new byte[8092];
         entries = trak.getSampleEntries();
         ChunkOffsetsBox stco = trak.getStco();
         ChunkOffsets64Box co64 = trak.getCo64();

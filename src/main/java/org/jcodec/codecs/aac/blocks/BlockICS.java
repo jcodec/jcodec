@@ -52,20 +52,28 @@ public class BlockICS extends Block {
                 new VLCBuilder(AACTab.codes11, AACTab.bits11, AACTab.codebook_vector10_idx).getVLC() };
     }
 
-    float ff_aac_codebook_vector_vals[][] = { AACTab.codebook_vector0_vals, AACTab.codebook_vector0_vals,
-            AACTab.codebook_vector10_vals, AACTab.codebook_vector10_vals, AACTab.codebook_vector4_vals,
-            AACTab.codebook_vector4_vals, AACTab.codebook_vector10_vals, AACTab.codebook_vector10_vals,
-            AACTab.codebook_vector10_vals, AACTab.codebook_vector10_vals, AACTab.codebook_vector10_vals, };
+    float[][] ff_aac_codebook_vector_vals;
 
     private static final int MAX_LTP_LONG_SFB = 40;
     private int windowSequence;
     int num_window_groups;
-    private int[] group_len = new int[8];
+    private int[] group_len;
     int maxSfb;
-    private int[] band_type = new int[120];
-    private int[] band_type_run_end = new int[120];
+    private int[] band_type;
+    private int[] band_type_run_end;
     private int globalGain;
 
+    public BlockICS() {
+        this.ff_aac_codebook_vector_vals = new float[][]{ AACTab.codebook_vector0_vals, AACTab.codebook_vector0_vals,
+                AACTab.codebook_vector10_vals, AACTab.codebook_vector10_vals, AACTab.codebook_vector4_vals,
+                AACTab.codebook_vector4_vals, AACTab.codebook_vector10_vals, AACTab.codebook_vector10_vals,
+                AACTab.codebook_vector10_vals, AACTab.codebook_vector10_vals, AACTab.codebook_vector10_vals, };
+
+        this.group_len = new int[8];
+        this.band_type = new int[120];
+        this.band_type_run_end = new int[120];
+    }
+    
     private static enum WindowSequence {
         ONLY_LONG_SEQUENCE, LONG_START_SEQUENCE, EIGHT_SHORT_SEQUENCE, LONG_STOP_SEQUENCE;
     }

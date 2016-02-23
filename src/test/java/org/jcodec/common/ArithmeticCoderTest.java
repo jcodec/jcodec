@@ -310,8 +310,11 @@ public class ArithmeticCoderTest {
     public static class Emitter{
         private int i=0;
         private byte buffer=0;
-        private ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        private ByteArrayOutputStream baos;
         
+        public Emitter() {
+            this.baos = new ByteArrayOutputStream();
+        }
         public void emit(int b) throws IOException {
             if (b != 1 && b != 0)
                 throw new IllegalArgumentException("Only 0's and 1's are accepted");

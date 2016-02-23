@@ -47,15 +47,15 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
  */
 public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
-    private List<TimeToSampleEntry> sampleDurations = new ArrayList<TimeToSampleEntry>();
+    private List<TimeToSampleEntry> sampleDurations;
     private long sameDurCount = 0;
     private long curDuration = -1;
 
-    private LongArrayList chunkOffsets = new LongArrayList();
-    private IntArrayList sampleSizes = new IntArrayList();
-    private IntArrayList iframes = new IntArrayList();
+    private LongArrayList chunkOffsets;
+    private IntArrayList sampleSizes;
+    private IntArrayList iframes;
 
-    private List<Entry> compositionOffsets = new ArrayList<Entry>();
+    private List<Entry> compositionOffsets;
     private int lastCompositionOffset = 0;
     private int lastCompositionSamples = 0;
     private long ptsEstimate = 0;
@@ -70,6 +70,11 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     public FramesMP4MuxerTrack(SeekableByteChannel out, int trackId, TrackType type, int timescale) {
         super(trackId, type, timescale);
+        this.sampleDurations = new ArrayList<TimeToSampleEntry>();
+        this.chunkOffsets = new LongArrayList();
+        this.sampleSizes = new IntArrayList();
+        this.iframes = new IntArrayList();
+        this.compositionOffsets = new ArrayList<Entry>();
         
         this.out = out;
 

@@ -30,8 +30,8 @@ public class MTSDump extends MPSDump {
     private static final String STOP_AT = "stop-at";
 
     private int guid;
-    private ByteBuffer buf = ByteBuffer.allocate(188 * 1024);
-    private ByteBuffer tsBuf = ByteBuffer.allocate(188);
+    private ByteBuffer buf;
+    private ByteBuffer tsBuf;
     private int tsNo;
     private int globalPayload;
     private int[] payloads;
@@ -41,6 +41,9 @@ public class MTSDump extends MPSDump {
 
     public MTSDump(ReadableByteChannel ch, int targetGuid) {
         super(ch);
+        this.buf = ByteBuffer.allocate(188 * 1024);
+        this.tsBuf = ByteBuffer.allocate(188);
+
         this.guid = targetGuid;
         this.buf.position(buf.limit());
         this.tsBuf.position(tsBuf.limit());

@@ -28,12 +28,13 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
  * 
  */
 public class CuesFactory {
-    List<CuePointMock> a = new ArrayList<CuePointMock>();
+    List<CuePointMock> a;
     private final long offsetBase;
     private long currentDataOffset = 0;
     private long videoTrackNr;
     
     public CuesFactory(long offset, long videoTrack){
+        this.a = new ArrayList<CuePointMock>();
         this.offsetBase = offset;
         this.videoTrackNr = videoTrack;
         this.currentDataOffset += offsetBase;

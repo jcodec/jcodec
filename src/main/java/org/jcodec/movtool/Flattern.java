@@ -57,7 +57,11 @@ public class Flattern {
         }
     }
 
-    public List<ProgressListener> listeners = new ArrayList<Flattern.ProgressListener>();
+    public List<ProgressListener> listeners;
+    
+    public Flattern() {
+        this.listeners = new ArrayList<Flattern.ProgressListener>();
+    }
 
     public interface ProgressListener {
         public void trigger(int progress);

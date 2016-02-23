@@ -15,10 +15,16 @@ import org.jcodec.common.Assert;
  */
 public class Intra8x8PredictionBuilder {
 
-    byte[] topBuf = new byte[16];
-    byte[] leftBuf = new byte[8];
-    byte[] genBuf = new byte[24];
-
+    byte[] topBuf;
+    byte[] leftBuf;
+    byte[] genBuf;
+    
+    public Intra8x8PredictionBuilder() {
+        this.topBuf = new byte[16];
+        this.leftBuf = new byte[8];
+        this.genBuf = new byte[24];
+    }
+    
     public void predictWithMode(int mode, int[] residual, boolean leftAvailable, boolean topAvailable,
             boolean topLeftAvailable, boolean topRightAvailable, byte[] leftRow, byte[] topLine, byte[] topLeft,
             int mbOffX, int blkX, int blkY, byte[] pixOut) {

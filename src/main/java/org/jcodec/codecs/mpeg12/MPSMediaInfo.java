@@ -34,9 +34,13 @@ import org.jcodec.containers.mps.MPSUtils.PESReader;
  */
 public class MPSMediaInfo extends PESReader {
 
-    private Map<Integer, MPEGTrackMetadata> infos = new HashMap<Integer, MPSMediaInfo.MPEGTrackMetadata>();
+    private Map<Integer, MPEGTrackMetadata> infos;
     private int pesTried;
     private PSM psm;
+    
+    public MPSMediaInfo() {
+        this.infos = new HashMap<Integer, MPSMediaInfo.MPEGTrackMetadata>();
+    }
 
     public static class MPEGTimecodeMetadata {
 

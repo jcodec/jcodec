@@ -15,12 +15,16 @@ import org.jcodec.common.IntIntMap;
  */
 public class VLCBuilder {
 
-    private IntIntMap forward = new IntIntMap();
-    private IntIntMap inverse = new IntIntMap();
-    private IntArrayList codes = new IntArrayList();
-    private IntArrayList codesSizes = new IntArrayList();
+    private IntIntMap forward;
+    private IntIntMap inverse;
+    private IntArrayList codes;
+    private IntArrayList codesSizes;
 
     public VLCBuilder() {
+        this.forward = new IntIntMap();
+        this.inverse = new IntIntMap();
+        this.codes = new IntArrayList();
+        this.codesSizes = new IntArrayList();
     }
 
     public VLCBuilder(int[] codes, int[] lens, int[] vals) {

@@ -58,13 +58,18 @@ import org.jcodec.containers.mkv.muxer.MKVMuxerTrack.MKVMuxerTrackType;
  */
 public class MKVMuxer {
 
-    private List<MKVMuxerTrack> tracks = new ArrayList<MKVMuxerTrack>();
+    private List<MKVMuxerTrack> tracks;
     private MKVMuxerTrack videoTrack = null;
     private EbmlMaster mkvInfo;
     private EbmlMaster mkvTracks;
     private EbmlMaster mkvCues;
     private EbmlMaster mkvSeekHead;
-    private List<EbmlMaster> clusterList = new LinkedList<EbmlMaster>();
+    private List<EbmlMaster> clusterList;
+
+    public MKVMuxer() {
+        this.tracks = new ArrayList<MKVMuxerTrack>();
+        this.clusterList = new LinkedList<EbmlMaster>();
+    }
 
     public MKVMuxerTrack createVideoTrack(Size dimentions, String codecId) {
         if (videoTrack == null) {
@@ -88,7 +93,7 @@ public class MKVMuxer {
         mkvCues = (EbmlMaster) createByType(Cues);
         mkvSeekHead = muxSeekHead();
         muxCues();
-        
+
         segmentElem.add(mkvSeekHead);
         segmentElem.add(mkvInfo);
         segmentElem.add(mkvTracks);
@@ -96,11 +101,11 @@ public class MKVMuxer {
         for (EbmlMaster aCluster : clusterList)
             segmentElem.add(aCluster);
         mkvFile.add(segmentElem);
-        
-        for(EbmlMaster el: mkvFile)
+
+        for (EbmlMaster el : mkvFile)
             el.mux(s);
     }
-    
+
     private EbmlMaster defaultEbmlHeader() {
         EbmlMaster master = (EbmlMaster) createByType(EBML);
 
@@ -118,17 +123,17 @@ public class MKVMuxer {
 
     private EbmlMaster muxInfo() {
         EbmlMaster master = (EbmlMaster) createByType(Info);
-        int frameDurationInNanoseconds = MKVMuxerTrack.NANOSECONDS_IN_A_MILISECOND*40;
+        int frameDurationInNanoseconds = MKVMuxerTrack.NANOSECONDS_IN_A_MILISECOND * 40;
         createChild(master, TimecodeScale, frameDurationInNanoseconds);
         createChild(master, WritingApp, "JCodec v0.1.7");
         createChild(master, MuxingApp, "JCodec MKVStreamingMuxer v0.1.7");
 
-        MkvBlock lastBlock = videoTrack.trackBlocks.get(videoTrack.trackBlocks.size()-1);
-        createChild(master, MKVType.Duration, (lastBlock.absoluteTimecode+1) * frameDurationInNanoseconds*1.0);
+        MkvBlock lastBlock = videoTrack.trackBlocks.get(videoTrack.trackBlocks.size() - 1);
+        createChild(master, MKVType.Duration, (lastBlock.absoluteTimecode + 1) * frameDurationInNanoseconds * 1.0);
         createChild(master, DateUTC, new Date());
         return master;
     }
-    
+
     private EbmlMaster muxTracks() {
         EbmlMaster master = (EbmlMaster) createByType(Tracks);
         for (int i = 0; i < tracks.size(); i++) {
@@ -142,29 +147,30 @@ public class MKVMuxer {
                 createChild(trackEntryElem, TrackType, (byte) 0x01);
                 createChild(trackEntryElem, Name, "Track " + (i + 1) + " Video");
                 createChild(trackEntryElem, CodecID, track.codecId);
-//                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
-//                VideoCodecMeta vcm = (VideoCodecMeta) codecMeta;
-                
+                //                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
+                //                VideoCodecMeta vcm = (VideoCodecMeta) codecMeta;
+
                 EbmlMaster trackVideoElem = (EbmlMaster) createByType(Video);
                 createChild(trackVideoElem, PixelWidth, track.frameDimentions.getWidth());
                 createChild(trackVideoElem, PixelHeight, track.frameDimentions.getHeight());
 
                 trackEntryElem.add(trackVideoElem);
-                
+
             } else {
                 createChild(trackEntryElem, TrackType, (byte) 0x02);
                 createChild(trackEntryElem, Name, "Track " + (i + 1) + " Audio");
                 createChild(trackEntryElem, CodecID, track.codecId);
-//                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
+                //                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
             }
 
             master.add(trackEntryElem);
         }
         return master;
     }
-    
+
     private void muxCues() {
-        CuesFactory cf = new CuesFactory(mkvSeekHead.size() + mkvInfo.size() + mkvTracks.size(), videoTrack.trackNo-1);
+        CuesFactory cf = new CuesFactory(mkvSeekHead.size() + mkvInfo.size() + mkvTracks.size(),
+                videoTrack.trackNo - 1);
         for (MkvBlock aBlock : videoTrack.trackBlocks) {
             EbmlMaster mkvCluster = singleBlockedCluster(aBlock);
             clusterList.add(mkvCluster);
@@ -172,18 +178,18 @@ public class MKVMuxer {
         }
 
         EbmlMaster indexedCues = cf.createCues();
-        
+
         for (EbmlBase aCuePoint : indexedCues.children)
             mkvCues.add(aCuePoint);
     }
 
     private EbmlMaster singleBlockedCluster(MkvBlock aBlock) {
         EbmlMaster mkvCluster = createByType(MKVType.Cluster);
-        createChild(mkvCluster, MKVType.Timecode, aBlock.absoluteTimecode-aBlock.timecode);
+        createChild(mkvCluster, MKVType.Timecode, aBlock.absoluteTimecode - aBlock.timecode);
         mkvCluster.add(aBlock);
         return mkvCluster;
     }
-    
+
     private EbmlMaster muxSeekHead() {
         SeekHeadFactory shi = new SeekHeadFactory();
         shi.add(mkvInfo);

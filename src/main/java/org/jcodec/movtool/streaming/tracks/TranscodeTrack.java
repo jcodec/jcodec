@@ -33,7 +33,7 @@ public abstract class TranscodeTrack implements VirtualTrack {
     private int frameSize;
     private VirtualTrack src;
     private CodecMeta se;
-    private ThreadLocal<Transcoder> transcoders = new ThreadLocal<Transcoder>();
+    private ThreadLocal<Transcoder> transcoders;
     private int mbW;
     private int mbH;
     private int scaleFactor;
@@ -49,6 +49,7 @@ public abstract class TranscodeTrack implements VirtualTrack {
     protected abstract void getCodecPrivate(ByteBuffer buf, Size size);
 
     public TranscodeTrack(VirtualTrack proresTrack, Size frameDim) {
+        this.transcoders = new ThreadLocal<Transcoder>();
         this.src = proresTrack;
 
         scaleFactor = frameDim.getWidth() >= 960 ? 2 : 1;
@@ -111,13 +112,14 @@ public abstract class TranscodeTrack implements VirtualTrack {
 
    static class Transcoder {
         private VideoDecoder decoder;
-        private VideoEncoder[] encoder = new VideoEncoder[3];
+        private VideoEncoder[] encoder;
         private Picture pic0;
         private Picture pic1;
         private Transform transform;
 		private TranscodeTrack track;
 
         public Transcoder(TranscodeTrack track) {
+            this.encoder = new VideoEncoder[3];
             this.track = track;
 			this.decoder = track.getDecoder(track.scaleFactor);
             this.encoder[0] = track.getEncoder(TARGET_RATE);

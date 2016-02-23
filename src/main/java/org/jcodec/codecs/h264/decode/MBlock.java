@@ -27,8 +27,8 @@ public class MBlock {
     public int cbp;
     public int mbType;
     public MBType curMbType;
-    public PB16x16 pb16x16 = new PB16x16();
-    public PB168x168 pb168x168 = new PB168x168();
+    public PB16x16 pb16x16;
+    public PB168x168 pb168x168;
     public PB8x8 pb8x8 = new PB8x8();
     public IPCM ipcm;
     public int mbIdx;
@@ -41,6 +41,9 @@ public class MBlock {
     public int[] nCoeff;
 
     public MBlock(ColorSpace chromaFormat) {
+        this.pb16x16 = new PB16x16();
+        this.pb168x168 = new PB168x168();
+
         dc = new int[16];
         ac = new int[][][] { new int[16][64], new int[4][16], new int[4][16] };
         lumaModes = new int[16];
@@ -63,9 +66,15 @@ public class MBlock {
     }
 
     static class PB16x16 {
-        public int[] refIdx = new int[2];
-        public int[] mvdX = new int[2];
-        public int[] mvdY = new int[2];
+        public int[] refIdx;
+        public int[] mvdX;
+        public int[] mvdY;
+
+        public PB16x16() {
+            this.refIdx = new int[2];
+            this.mvdX = new int[2];
+            this.mvdY = new int[2];
+        }
 
         public void clean() {
             refIdx[0] = refIdx[1] = 0;
@@ -75,13 +84,22 @@ public class MBlock {
     }
 
     static class PB168x168 {
-        public int[] refIdx1 = new int[2];
-        public int[] refIdx2 = new int[2];
-        public int[] mvdX1 = new int[2];
-        public int[] mvdY1 = new int[2];
-        public int[] mvdX2 = new int[2];
-        public int[] mvdY2 = new int[2];
-
+        public int[] refIdx1;
+        public int[] refIdx2;
+        public int[] mvdX1;
+        public int[] mvdY1;
+        public int[] mvdX2;
+        public int[] mvdY2;
+        
+        public PB168x168() {
+            this.refIdx1 = new int[2];
+            this.refIdx2 = new int[2];
+            this.mvdX1 = new int[2];
+            this.mvdY1 = new int[2];
+            this.mvdX2 = new int[2];
+            this.mvdY2 = new int[2];
+        }
+        
         public void clean() {
             refIdx1[0] = refIdx1[1] = 0;
             refIdx2[0] = refIdx2[1] = 0;
@@ -94,16 +112,29 @@ public class MBlock {
     }
 
     static class PB8x8 {
-        public int[][] refIdx = new int[2][4];
-        public int[] subMbTypes = new int[4];
-        public int[][] mvdX1 = new int[2][4];
-        public int[][] mvdY1 = new int[2][4];
-        public int[][] mvdX2 = new int[2][4];
-        public int[][] mvdY2 = new int[2][4];
-        public int[][] mvdX3 = new int[2][4];
-        public int[][] mvdY3 = new int[2][4];
-        public int[][] mvdX4 = new int[2][4];
-        public int[][] mvdY4 = new int[2][4];
+        public int[][] refIdx;
+        public int[] subMbTypes;
+        public int[][] mvdX1;
+        public int[][] mvdY1;
+        public int[][] mvdX2;
+        public int[][] mvdY2;
+        public int[][] mvdX3;
+        public int[][] mvdY3;
+        public int[][] mvdX4;
+        public int[][] mvdY4;
+        
+        public PB8x8() {
+            this.refIdx = new int[2][4];
+            this.subMbTypes = new int[4];
+            this.mvdX1 = new int[2][4];
+            this.mvdY1 = new int[2][4];
+            this.mvdX2 = new int[2][4];
+            this.mvdY2 = new int[2][4];
+            this.mvdX3 = new int[2][4];
+            this.mvdY3 = new int[2][4];
+            this.mvdX4 = new int[2][4];
+            this.mvdY4 = new int[2][4];
+        }
 
         public void clean() {
             mvdX1[0][0] = mvdX1[0][1] = mvdX1[0][2] = mvdX1[0][3] = 0;
@@ -134,10 +165,11 @@ public class MBlock {
 
     static class IPCM {
 
-        public int[] samplesLuma = new int[256];;
+        public int[] samplesLuma;
         public int[] samplesChroma;
 
         public IPCM(ColorSpace chromaFormat) {
+            this.samplesLuma = new int[256];
             int MbWidthC = 16 >> chromaFormat.compWidth[1];
             int MbHeightC = 16 >> chromaFormat.compHeight[1];
 

@@ -53,7 +53,7 @@ public class PictureParameterSet {
     }
 
     public boolean entropy_coding_mode_flag;
-    public int num_ref_idx_active_minus1[] = new int[2];
+    public int[] num_ref_idx_active_minus1;
     public int slice_group_change_rate_minus1;
     public int pic_parameter_set_id;
     public int seq_parameter_set_id;
@@ -74,7 +74,11 @@ public class PictureParameterSet {
     public boolean slice_group_change_direction_flag;
     public int[] slice_group_id;
     public PPSExt extended;
-
+    
+    public PictureParameterSet() {
+        this.num_ref_idx_active_minus1 = new int[2];
+    }
+    
     public static PictureParameterSet read(ByteBuffer is) {
         BitReader _in = new BitReader(is);
         PictureParameterSet pps = new PictureParameterSet();

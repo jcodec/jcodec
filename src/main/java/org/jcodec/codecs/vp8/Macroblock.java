@@ -23,10 +23,10 @@ public class Macroblock {
     public int filterLevel;
     public int chromaMode;
     public int skipCoeff;
-    public final Subblock[][] ySubblocks = new Subblock[4][4];
-    public final Subblock y2 = new Subblock(this, 0, 0, VP8Util.PLANE.Y2);
-    public final Subblock[][] uSubblocks = new Subblock[2][2];
-    public final Subblock[][] vSubblocks = new Subblock[2][2];
+    public final Subblock[][] ySubblocks;
+    public final Subblock y2;
+    public final Subblock[][] uSubblocks;
+    public final Subblock[][] vSubblocks;
     public final int Rrow;
     public final int column;
     public int lumaMode;
@@ -35,6 +35,11 @@ public class Macroblock {
     public boolean debug = true;
 
     public Macroblock(int y, int x) {
+        this.ySubblocks = new Subblock[4][4];
+        this.y2 = new Subblock(this, 0, 0, VP8Util.PLANE.Y2);
+        this.uSubblocks = new Subblock[2][2];
+        this.vSubblocks = new Subblock[2][2];
+
         this.Rrow = y;
         this.column = x;
         for (int row = 0; row < 4; row++)

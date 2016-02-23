@@ -16,8 +16,8 @@ public class TimecodeMediaInfoBox extends FullBox {
     private short font;
     private short face;
     private short size;
-    private short[] color = new short[3];
-    private short[] bgcolor = new short[3];
+    private short[] color;
+    private short[] bgcolor;    
     private String name;
 
     public static String fourcc() {
@@ -36,6 +36,8 @@ public class TimecodeMediaInfoBox extends FullBox {
 
     public TimecodeMediaInfoBox(Header atom) {
         super(atom);
+        this.color = new short[3];
+        this.bgcolor = new short[3];
     }
 
     @Override

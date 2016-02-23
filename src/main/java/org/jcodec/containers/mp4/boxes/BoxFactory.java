@@ -13,7 +13,8 @@ import java.util.Map;
  * 
  */
 public class BoxFactory {
-    private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
+    private final Map<String, Class<? extends Box>> mappings;
+    
     private static BoxFactory instance = new BoxFactory();
 
     public static BoxFactory getDefault() {
@@ -21,6 +22,8 @@ public class BoxFactory {
     }
 
     public BoxFactory() {
+        this.mappings = new HashMap<String, Class<? extends Box>>();
+
         mappings.put(MovieExtendsBox.fourcc(), MovieExtendsBox.class);
         mappings.put(MovieExtendsHeaderBox.fourcc(), MovieExtendsHeaderBox.class);
         mappings.put(SegmentIndexBox.fourcc(), SegmentIndexBox.class);

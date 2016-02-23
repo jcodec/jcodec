@@ -70,8 +70,12 @@ public class MPSUtils {
         private boolean pes;
         private int pesLeft;
 
-        private ByteBuffer pesBuffer = ByteBuffer.allocate(1 << 21);
-
+        private ByteBuffer pesBuffer;
+            
+        public PESReader() {
+            this.pesBuffer = ByteBuffer.allocate(1 << 21);
+        }
+        
         protected abstract void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream);
 
         public void analyseBuffer(ByteBuffer buf, long pos) {
@@ -243,7 +247,14 @@ public class MPSUtils {
         private int profileAndLevel;
         private int chromaFormat;
         private int frameRateExtension;
+        Rational[] frameRates;
 
+        public VideoStreamDescriptor() {
+            this.frameRates = new Rational[] { null, new Rational(24000, 1001), new Rational(24, 1),
+                    new Rational(25, 1), new Rational(30000, 1001), new Rational(30, 1), new Rational(50, 1),
+                    new Rational(60000, 1001), new Rational(60, 1), null, null, null, null, null, null, null};
+        }
+            
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
@@ -260,12 +271,6 @@ public class MPSUtils {
                 frameRateExtension = (b1 >> 5) & 1;
             }
         }
-
-        Rational[] frameRates = new Rational[] { null, new Rational(24000, 1001), new Rational(24, 1),
-                new Rational(25, 1), new Rational(30000, 1001), new Rational(30, 1), new Rational(50, 1),
-                new Rational(60000, 1001), new Rational(60, 1), null, null, null, null, null, null, null
-
-        };
 
         public Rational getFrameRate() {
             return frameRates[frameRateCode];

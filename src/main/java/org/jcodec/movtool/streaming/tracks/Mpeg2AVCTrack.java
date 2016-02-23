@@ -36,7 +36,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     private final int frameSize;
     protected VirtualTrack src;
     private CodecMeta se;
-    private ThreadLocal<MPEGToAVCTranscoder> transcoders = new ThreadLocal<MPEGToAVCTranscoder>();
+    private ThreadLocal<MPEGToAVCTranscoder> transcoders;
     int mbW;
     int mbH;
     int scaleFactor;
@@ -57,6 +57,8 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     }
 
     public Mpeg2AVCTrack(VirtualTrack src) throws IOException {
+        this.transcoders = new ThreadLocal<MPEGToAVCTranscoder>();
+
         checkFourCC(src);
         this.src = src;
         H264FixedRateControl rc = new H264FixedRateControl(TARGET_RATE);
@@ -104,7 +106,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     }
 
     private static class GOP {
-        private List<VirtualPacket> packets = new ArrayList<VirtualPacket>();
+        private List<VirtualPacket> packets;
         private ByteBuffer[] data;
         private int frameNo;
         private GOP nextGop;
@@ -113,6 +115,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
 		private Mpeg2AVCTrack track;
 
         public GOP(Mpeg2AVCTrack track, int frameNo, GOP prevGop) {
+            this.packets = new ArrayList<VirtualPacket>();
             this.track = track;
 			this.frameNo = frameNo;
             this.prevGop = prevGop;

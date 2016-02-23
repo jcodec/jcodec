@@ -28,7 +28,7 @@ public class VP8Encoder extends VideoEncoder {
     private int[][] leftRow;
     private int[][] topLine;
     private VPXQuantizer quantizer;
-    private int[] tmp = new int[16];
+    private int[] tmp;
     private RateControl rc;
 
     private ByteBuffer headerBuffer;
@@ -40,6 +40,7 @@ public class VP8Encoder extends VideoEncoder {
 
     public VP8Encoder(RateControl rc) {
         this.rc = rc;
+        this.tmp = new int[16];
     }
 
     public ByteBuffer encodeFrame(Picture pic, ByteBuffer _buf) {

@@ -22,11 +22,13 @@ import org.jcodec.common.tools.ToJSON;
  */
 public class NodeBox extends Box {
     private static final int MAX_BOX_SIZE = 128 * 1024 * 1024;
-    protected List<Box> boxes = new LinkedList<Box>();
-    protected BoxFactory factory = BoxFactory.getDefault();
+    protected List<Box> boxes;
+    protected BoxFactory factory;
 
     public NodeBox(Header atom) {
         super(atom);
+        this.boxes = new LinkedList<Box>();
+        this.factory = BoxFactory.getDefault();
     }
 
     public NodeBox(NodeBox other) {

@@ -7,7 +7,7 @@ import junit.framework.TestCase;
 import org.jcodec.codecs.h264.decode.ChromaPredictionBuilder;
 
 public class ChromaPredictionBuilderTest extends TestCase {
-    private int[][] emptyResidual = new int[4][16];
+    private static int[][] emptyResidual = new int[4][16];
 
     public void testVertical() throws Exception {
         byte[] expectedCb = toByteArrayShifted(129, 127, 122, 119, 116, 116, 116, 116, 129, 127, 122, 119, 116, 116,

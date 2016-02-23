@@ -32,7 +32,7 @@ public class FLVTrackDemuxer {
 
     private FLVDemuxerTrack video;
     private FLVDemuxerTrack audio;
-    private LinkedList<FLVTag> packets = new LinkedList<FLVTag>();
+    private LinkedList<FLVTag> packets;
 
     private SeekableByteChannel _in;
 
@@ -41,11 +41,12 @@ public class FLVTrackDemuxer {
         private Type type;
         private int curFrame;
         private Codec codec;
-        private LongArrayList framePositions = new LongArrayList();
+        private LongArrayList framePositions;
         private byte[] codecPrivate;
 		private FLVTrackDemuxer demuxer;
 
         public FLVDemuxerTrack(FLVTrackDemuxer demuxer, Type type) throws IOException {
+            this.framePositions = new LongArrayList();
             this.demuxer = demuxer;
 			this.type = type;
             FLVTag frame = demuxer.nextFrameI(type, false);
@@ -107,6 +108,7 @@ public class FLVTrackDemuxer {
     }
 
     public FLVTrackDemuxer(SeekableByteChannel _in) throws IOException {
+        this.packets = new LinkedList<FLVTag>();
         this._in = _in;
         _in.position(0);
         demuxer = new FLVReader(_in);
