@@ -1,6 +1,7 @@
 package org.jcodec.codecs.wav;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -52,9 +53,9 @@ public class WavInput implements Closeable {
     /**
      * Manages file resource on top of WavInput
      */
-    public static class File extends WavInput {
+    public static class WavFile extends WavInput {
 
-        public File(java.io.File f) throws IOException {
+        public WavFile(File f) throws IOException {
             super(NIOUtils.readableFileChannel(f));
         }
 
@@ -84,7 +85,7 @@ public class WavInput implements Closeable {
         }
 
         public Source(java.io.File file) throws IOException {
-            this(new WavInput.File(file));
+            this(new WavInput.WavFile(file));
         }
 
         public AudioFormat getFormat() {
