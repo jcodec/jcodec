@@ -84,7 +84,7 @@ public class WavInput implements Closeable {
             this(new WavInput(ch));
         }
 
-        public Source(java.io.File file) throws IOException {
+        public Source(File file) throws IOException {
             this(new WavInput.WavFile(file));
         }
 
