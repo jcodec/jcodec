@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.BaseInputStream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,7 +16,7 @@ import org.jcodec.common.io.NIOUtils;
  * @author The JCodec project
  * 
  */
-public class MovieRange extends InputStream {
+public class MovieRange extends BaseInputStream {
     private VirtualMovie movie;
     private long remaining;
     private int chunkNo;
@@ -58,7 +59,7 @@ public class MovieRange extends InputStream {
     }
 
     @Override
-    public int read(byte[] b, int from, int len) throws IOException {
+    public int readBuffer(byte[] b, int from, int len) throws IOException {
         tryFetch();
         if (chunkData == null || remaining == 0)
             return -1;
@@ -94,7 +95,7 @@ public class MovieRange extends InputStream {
     }
 
     @Override
-    public int read() throws IOException {
+    public int readByte() throws IOException {
         tryFetch();
         if (chunkData == null || remaining == 0)
             return -1;

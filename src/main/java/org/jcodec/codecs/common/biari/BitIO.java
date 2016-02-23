@@ -1,5 +1,7 @@
 package org.jcodec.codecs.common.biari;
 
+import org.jcodec.platform.BaseOutputStream;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,10 +42,10 @@ public class BitIO {
     }
 
     public static OutputBits outputFromArray(final byte[] bytes) {
-        return new StreamOutputBits(new OutputStream() {
+        return new StreamOutputBits(new BaseOutputStream() {
             int ptr;
 
-            public void write(int b) throws IOException {
+            protected void writeByte(int b) throws IOException {
                 if (ptr >= bytes.length)
                     throw new IOException("Buffer is full");
                 bytes[ptr++] = (byte) b;

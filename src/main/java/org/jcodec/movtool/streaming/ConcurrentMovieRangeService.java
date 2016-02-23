@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.BaseInputStream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -59,7 +60,7 @@ public class ConcurrentMovieRangeService {
         }
     }
 
-    public static class ConcurrentMovieRange extends InputStream {
+    public static class ConcurrentMovieRange extends BaseInputStream {
         private static final int READ_AHEAD_SEGMENTS = 10;
         private List<Future<ByteBuffer>> segments = new ArrayList<Future<ByteBuffer>>();
         private int nextReadAheadNo;
@@ -90,7 +91,7 @@ public class ConcurrentMovieRangeService {
         }
 
         @Override
-        public int read(byte[] b, int from, int len) throws IOException {
+        protected int readBuffer(byte[] b, int from, int len) throws IOException {
             if (segments.size() == 0 || remaining == 0)
                 return -1;
 
@@ -152,7 +153,7 @@ public class ConcurrentMovieRangeService {
         }
 
         @Override
-        public int read() throws IOException {
+        protected int readByte() throws IOException {
             if (segments.size() == 0 || remaining == 0)
                 return -1;
 
