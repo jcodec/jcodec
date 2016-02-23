@@ -44,14 +44,13 @@ import org.jcodec.platform.Platform;
  * 
  */
 public class FLVTool {
-    private static Map<String, PacketProcessorFactory> processors = new HashMap<String, PacketProcessorFactory>() {
-        {
-            put("clip", new ClipPacketProcessor.Factory());
-            put("fix_pts", new FixPtsProcessor.Factory());
-            put("info", new InfoPacketProcessor.Factory());
-            put("shift_pts", new ShiftPtsProcessor.Factory());
-        }
-    };
+    private static Map<String, PacketProcessorFactory> processors = new HashMap<String, PacketProcessorFactory>();
+    static {
+        processors.put("clip", new ClipPacketProcessor.Factory());
+        processors.put("fix_pts", new FixPtsProcessor.Factory());
+        processors.put("info", new InfoPacketProcessor.Factory());
+        processors.put("shift_pts", new ShiftPtsProcessor.Factory());
+    }
 
     public static void main(String[] args) throws IOException {
         if (args.length < 1) {
@@ -140,14 +139,11 @@ public class FLVTool {
 
             @Override
             public Map<String, String> getFlags() {
-                return new HashMap<String, String>() {
-                    {
-                        put("from", "From timestamp (in seconds, i.e 67.49)");
-                        put("from", "From timestamp (_in seconds, i.e 67.49)");
-                        put("to", "To timestamp");
-
-                    }
-                };
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("from", "From timestamp (in seconds, i.e 67.49)");
+                map.put("from", "From timestamp (_in seconds, i.e 67.49)");
+                map.put("to", "To timestamp");
+                return map;
             }
         }
 
@@ -300,12 +296,10 @@ public class FLVTool {
 
             @Override
             public Map<String, String> getFlags() {
-                return new HashMap<String, String>() {
-                    {
-                        put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated.");
-                        put(FLAG_STREAM, "Stream selector, can be one of: ['video', 'audio', 'script'].");
-                    }
-                };
+                HashMap<String, String> map = new HashMap<String, String>() ;
+                map.put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated.");
+                map.put(FLAG_STREAM, "Stream selector, can be one of: ['video', 'audio', 'script'].");
+                return map;
             }
         }
 
@@ -414,13 +408,11 @@ public class FLVTool {
 
             @Override
             public Map<String, String> getFlags() {
-                return new HashMap<String, String>() {
-                    {
-                        put("to", "Shift first pts to this value, and all subsequent pts accordingly.");
-                        put("by", "Shift all pts by this value.");
-                        put("wrap-around", "Expect wrap around of timestamps.");
-                    }
-                };
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("to", "Shift first pts to this value, and all subsequent pts accordingly.");
+                map.put("by", "Shift all pts by this value.");
+                map.put("wrap-around", "Expect wrap around of timestamps.");
+                return map;
             }
         }
 

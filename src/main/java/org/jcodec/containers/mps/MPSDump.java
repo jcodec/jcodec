@@ -56,12 +56,10 @@ public class MPSDump {
         try {
             Cmd cmd = MainUtils.parseArguments(args);
             if (cmd.args.length < 1) {
-                MainUtils.printHelp(new HashMap<String, String>() {
-                    {
-                        put(STOP_AT, "Stop reading at timestamp");
-                        put(DUMP_FROM, "Start dumping from timestamp");
-                    }
-                }, "file name");
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put(STOP_AT, "Stop reading at timestamp");
+                map.put(DUMP_FROM, "Start dumping from timestamp");
+                MainUtils.printHelp(map, "file name");
                 return;
             }
 

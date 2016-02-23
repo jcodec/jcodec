@@ -56,17 +56,18 @@ public class ToJSONTest {
     @Test
     public void testMap() {
 //@formatter:off
-        Map<String, Map<String, String[]>> map = new LinkedHashMap<String, Map<String, String[]>>() {{
-            put("europe", new LinkedHashMap<String, String[]>() {{
-                put("ukraine", new String[] {"Kyiv", "Lviv", "Odessa", "Kharkiv"});
-                put("russia", new String[] {"Moscow", "St. Petersburg", "Tver", "Novosibirsk"});
-            }});
-            put("asia", new LinkedHashMap<String, String[]>() {{
-                put("china", new String[] {"Beijing", "Shanghai", "Chongqing", "Tianjin"});
-                put("japan", new String[] {"Tokyo", "Kyoto", "Osaka", "Hakone"});
-                put("korea", new String[] {"Seoul", "Busan", "Daegu", "Daejon"});
-            }});
-        }};
+        Map<String, String[]> europe = new LinkedHashMap<String, String[]>();
+        europe.put("ukraine", new String[] {"Kyiv", "Lviv", "Odessa", "Kharkiv"});
+        europe.put("russia", new String[] {"Moscow", "St. Petersburg", "Tver", "Novosibirsk"});
+        
+        Map<String, String[]> asia = new LinkedHashMap<String, String[]>();
+        asia.put("china", new String[] {"Beijing", "Shanghai", "Chongqing", "Tianjin"});
+        asia.put("japan", new String[] {"Tokyo", "Kyoto", "Osaka", "Hakone"});
+        asia.put("korea", new String[] {"Seoul", "Busan", "Daegu", "Daejon"});
+
+        Map<String, Map<String, String[]>> map = new LinkedHashMap<String, Map<String, String[]>>();
+        map.put("europe",  europe);
+        map.put("asia", asia);
 //@formatter:on
         Assert.assertEquals("{" + "\"europe\":" + "{" + "\"ukraine\":[\"Kyiv\",\"Lviv\",\"Odessa\",\"Kharkiv\"],"
                 + "\"russia\":[\"Moscow\",\"St. Petersburg\",\"Tver\",\"Novosibirsk\"]" + "}," + "\"asia\":" + "{"

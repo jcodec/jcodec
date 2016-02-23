@@ -28,11 +28,9 @@ public class WavSplit {
     public static void main(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelp(new HashMap<String, String>() {
-                {
-                    put("pattern", "Output file name pattern, i.e. out%02d.wav");
-                }
-            }, "filename.wav");
+            HashMap<String, String> map = new HashMap<String, String>();
+            map.put("pattern", "Output file name pattern, i.e. out%02d.wav");
+            MainUtils.printHelp(map, "filename.wav");
             System.exit(-1);
         }
 

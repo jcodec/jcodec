@@ -33,12 +33,10 @@ public class TimestampUtil {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 3) {
             System.out.println("A utility to tweak MPEG TS timestamps.");
-            MainUtils.printHelp(new HashMap<String, String>() {
-                {
-                    put(FLAG_STREAM, "A stream to shift, i.e. '" + STRAM_VIDEO + "' or '" + STREAM_AUDIO + "' or '"
-                            + STREAM_ALL + "' [default]");
-                }
-            }, "command", "arg", "in name", "?out file");
+            HashMap<String, String> map = new HashMap<String, String>();
+            map.put(FLAG_STREAM, "A stream to shift, i.e. '" + STRAM_VIDEO + "' or '" + STREAM_AUDIO + "' or '"
+                    + STREAM_ALL + "' [default]");
+            MainUtils.printHelp(map, "command", "arg", "in name", "?out file");
             System.out.println("Where command is:\n" +
 
             "\t" + COMMAND_SHIFT + "\tShift timestamps of selected stream by arg." + "\n" +

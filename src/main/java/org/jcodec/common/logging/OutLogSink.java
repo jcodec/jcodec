@@ -51,13 +51,12 @@ public class OutLogSink implements Logger.LogSink {
 
     public static class SimpleFormat implements MessageFormat {
         private String fmt;
-        private static Map<Level, ANSIColor> colorMap = new HashMap<Logger.Level, MainUtils.ANSIColor>() {
-            {
-                put(Level.DEBUG, ANSIColor.BROWN);
-                put(Level.INFO, ANSIColor.GREEN);
-                put(Level.WARN, ANSIColor.MAGENTA);
-                put(Level.ERROR, ANSIColor.RED);
-            }
+        private static Map<Level, ANSIColor> colorMap = new HashMap<Logger.Level, MainUtils.ANSIColor>();
+        static {
+            colorMap.put(Level.DEBUG, ANSIColor.BROWN);
+            colorMap.put(Level.INFO, ANSIColor.GREEN);
+            colorMap.put(Level.WARN, ANSIColor.MAGENTA);
+            colorMap.put(Level.ERROR, ANSIColor.RED);
         };
 
         public SimpleFormat(String fmt) {

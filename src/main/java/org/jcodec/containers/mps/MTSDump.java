@@ -51,12 +51,10 @@ public class MTSDump extends MPSDump {
         try {
             Cmd cmd = MainUtils.parseArguments(args);
             if (cmd.args.length < 1) {
-                MainUtils.printHelp(new HashMap<String, String>() {
-                    {
-                        put(STOP_AT, "Stop reading at timestamp");
-                        put(DUMP_FROM, "Start dumping from timestamp");
-                    }
-                }, "file name", "guid");
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put(STOP_AT, "Stop reading at timestamp");
+                map.put(DUMP_FROM, "Start dumping from timestamp");
+                MainUtils.printHelp(map, "file name", "guid");
                 return;
             } else if (cmd.args.length == 1) {
                 System.out.println("MTS programs:");
