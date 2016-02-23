@@ -1164,13 +1164,13 @@ static class AVITag_AviDmlSuperIndex extends AVIChunk {
         private int numIndexFill;
 
         // Generated
-        StringBuffer sb;
+        StringBuilder sb;
         private int streamNo = 0;
         
         public AVITag_AviDmlSuperIndex() {
             super();
             this.dwReserved = new int[3];
-            this.sb = new StringBuffer();
+            this.sb = new StringBuilder();
 
         }
         
