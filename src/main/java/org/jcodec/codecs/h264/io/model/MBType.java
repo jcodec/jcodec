@@ -72,11 +72,11 @@ public enum MBType {
     B_8x8(false, 22);
 
     public boolean intra;
-    public int code;
+    public int _code;
 
     private MBType(boolean intra, int code) {
         this.intra = intra;
-        this.code = code;
+        this._code = code;
     }
 
     public boolean isIntra() {
@@ -84,6 +84,6 @@ public enum MBType {
     }
 
     public int code() {
-        return code;
+        return _code;
     }
 }

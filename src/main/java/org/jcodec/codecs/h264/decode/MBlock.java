@@ -24,7 +24,7 @@ public class MBlock {
     public int[] lumaModes;
     public int[] dc1;
     public int[] dc2;
-    public int cbp;
+    public int _cbp;
     public int mbType;
     public MBType curMbType;
     public PB16x16 pb16x16;
@@ -55,15 +55,15 @@ public class MBlock {
     }
 
     public int cbpLuma() {
-        return cbp & 0xf;
+        return _cbp & 0xf;
     }
 
     public int cbpChroma() {
-        return cbp >> 4;
+        return _cbp >> 4;
     }
 
     public void cbp(int cbpLuma, int cbpChroma) {
-        cbp = (cbpLuma & 0xf) | (cbpChroma << 4);
+        _cbp = (cbpLuma & 0xf) | (cbpChroma << 4);
     }
 
     static class PB16x16 {
@@ -196,7 +196,7 @@ public class MBlock {
         Arrays.fill(dc1, 0);
         Arrays.fill(dc2, 0);
         Arrays.fill(nCoeff, 0);
-        cbp = 0;
+        _cbp = 0;
         mbType = 0;
         pb16x16.clean();
         pb168x168.clean();

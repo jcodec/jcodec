@@ -50,8 +50,8 @@ public class VirtualWebmMovie extends VirtualMovie {
             heads[min] = tracks[min].nextPacket();
         }
         
-        headerChunk = headerChunk(chch, tracks, size);
-        size += headerChunk.getDataLen()+currentlyAddedContentSize;
+        _headerChunk = headerChunk(chch, tracks, _size);
+        _size += _headerChunk.getDataLen()+currentlyAddedContentSize;
         
         chunks = chch.toArray(new MovieSegment[0]);
     }

@@ -508,7 +508,7 @@ static class AVI_SEGM extends AVIChunk {
 static class AVITag_AVIH extends AVIChunk {
         // public byte[] fcc = new byte[]{'a','v','i','h'};
 
-        public String getHeight;
+        public String _getHeight;
         final static int AVIF_HASINDEX = 0x00000010; // Index at end of file?
         final static int AVIF_MUSTUSEINDEX = 0x00000020;
         final static int AVIF_ISINTERLEAVED = 0x00000100;

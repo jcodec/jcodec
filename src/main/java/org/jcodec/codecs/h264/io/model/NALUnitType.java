@@ -27,15 +27,15 @@ public enum NALUnitType {
     }
 
     private final int value;
-    private final String name;
+    private final String displayName;
 
     private NALUnitType(int value, String name) {
         this.value = value;
-        this.name = name;
+        this.displayName = name;
     }
 
     public String getName() {
-        return name;
+        return displayName;
     }
 
     public int getValue() {

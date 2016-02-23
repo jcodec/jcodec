@@ -192,7 +192,7 @@ public final class MKVDemuxer {
             if (frameIdx < blocks.size())
                 duration = blocks.get(frameIdx).absoluteTimecode - b.absoluteTimecode;
 
-            return new Packet(b.frames[0].duplicate(), b.absoluteTimecode, demuxer.timescale, duration, frameIdx - 1, b.keyFrame, ZERO_TAPE_TIMECODE);
+            return new Packet(b.frames[0].duplicate(), b.absoluteTimecode, demuxer.timescale, duration, frameIdx - 1, b._keyFrame, ZERO_TAPE_TIMECODE);
         }
 
         @Override

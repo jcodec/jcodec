@@ -191,8 +191,8 @@ public class Macroblock {
                 for (int aCol = 0; aCol < 2; aCol++) {
                     Subblock usb = uSubblocks[aRow][aCol];
                     Subblock vsb = vSubblocks[aRow][aCol];
-                    usb.predict = ufill;
-                    vsb.predict = vfill;
+                    usb._predict = ufill;
+                    vsb._predict = vfill;
                 }
             }
 
@@ -219,8 +219,8 @@ public class Macroblock {
                             ublock[pRow * 4 + pCol] = aboveUSb[aCol].val != null ? aboveUSb[aCol].val[3 * 4 + pCol] : 127;
                             vblock[pRow * 4 + pCol] = aboveVSb[aCol].val != null ? aboveVSb[aCol].val[3 * 4 + pCol] : 127;
                         }
-                    usb.predict = ublock;
-                    vsb.predict = vblock;
+                    usb._predict = ublock;
+                    vsb._predict = vblock;
                 }
 
             break;
@@ -246,8 +246,8 @@ public class Macroblock {
                             ublock[pRow * 4 + pCol] = leftUSb[aRow].val != null ? leftUSb[aRow].val[pRow * 4 + 3] : 129;
                             vblock[pRow * 4 + pCol] = leftVSb[aRow].val != null ? leftVSb[aRow].val[pRow * 4 + 3] : 129;
                         }
-                    usb.predict = ublock;
-                    vsb.predict = vblock;
+                    usb._predict = ublock;
+                    vsb._predict = vblock;
                 }
 
             break;
@@ -372,7 +372,7 @@ public class Macroblock {
 
         for (int y = 0; y < 4; y++)
             for (int x = 0; x < 4; x++)
-                ySubblocks[y][x].predict = fill;
+                ySubblocks[y][x]._predict = fill;
     }
 
     private void predictLumaH(Macroblock leftMb) {
@@ -388,7 +388,7 @@ public class Macroblock {
                     for (int bCol = 0; bCol < 4; bCol++) {
                         block[bRow * 4 + bCol] = leftYSb[row].val != null ? leftYSb[row].val[bRow * 4 + 3] : 129;
                     }
-                sb.predict = block;
+                sb._predict = block;
             }
     }
 
@@ -431,7 +431,7 @@ public class Macroblock {
                         block[j * 4 + i] = aboveYSb[col].val != null ? aboveYSb[col].val[3 * 4 + i] : 127;
                         // block[j*4+i] = aboveYSb[x].getPredict(SubBlock.B_VE_PRED, false)[3*4+i];
                     }
-                sb.predict = block;
+                sb._predict = block;
 
             }
         }
@@ -518,7 +518,7 @@ public class Macroblock {
     public static class Subblock {
 
         public int[] val;
-        public int[] predict;
+        public int[] _predict;
         public int[] residue;
         private int col;
         private int row;
@@ -569,43 +569,43 @@ public class Macroblock {
 
             switch (this.mode) {
             case SubblockConstants.B_DC_PRED:
-                this.predict = VP8Util.predictDC(above, left);
+                this._predict = VP8Util.predictDC(above, left);
                 break;
                 
             case SubblockConstants.B_TM_PRED:
-                this.predict = VP8Util.predictTM(above, left, aboveLeft);
+                this._predict = VP8Util.predictTM(above, left, aboveLeft);
                 break;
                 
             case SubblockConstants.B_VE_PRED:
-                this.predict = VP8Util.predictVE(above, aboveLeft, ar);
+                this._predict = VP8Util.predictVE(above, aboveLeft, ar);
                 break;
                 
             case SubblockConstants.B_HE_PRED:
-                this.predict = VP8Util.predictHE(left, aboveLeft);
+                this._predict = VP8Util.predictHE(left, aboveLeft);
                 break;
                 
             case SubblockConstants.B_LD_PRED:
-                this.predict = VP8Util.predictLD(above, ar);
+                this._predict = VP8Util.predictLD(above, ar);
                 break;
                 
             case SubblockConstants.B_RD_PRED:
-                this.predict = VP8Util.predictRD(above, left, aboveLeft);
+                this._predict = VP8Util.predictRD(above, left, aboveLeft);
                 break;
 
             case SubblockConstants.B_VR_PRED:
-                this.predict = VP8Util.predictVR(above, left, aboveLeft);
+                this._predict = VP8Util.predictVR(above, left, aboveLeft);
                 break;
                 
             case SubblockConstants.B_VL_PRED:
-                this.predict = VP8Util.predictVL(above, ar);
+                this._predict = VP8Util.predictVL(above, ar);
                 break;
                 
             case SubblockConstants.B_HD_PRED:
-                this.predict = VP8Util.predictHD(above, left, aboveLeft);
+                this._predict = VP8Util.predictHD(above, left, aboveLeft);
                 break;
                 
             case SubblockConstants.B_HU_PRED:
-                this.predict = VP8Util.predictHU(left);
+                this._predict = VP8Util.predictHU(left);
                 break;
 
             default:
@@ -617,7 +617,7 @@ public class Macroblock {
         public void reconstruct() {
 
             int aRow, aCol;
-            int p[] = this.val != null ? this.val : this.predict;
+            int p[] = this.val != null ? this.val : this._predict;
             int[] dest = new int[16];
 
             for (aRow = 0; aRow < 4; aRow++) {

@@ -67,7 +67,7 @@ public class MPSUtils {
         private int pesLen;
         private long pesFileStart = -1;
         private int stream;
-        private boolean pes;
+        private boolean _pes;
         private int pesLeft;
 
         private ByteBuffer pesBuffer;
@@ -90,32 +90,32 @@ public class MPSUtils {
                         long filePos = pos + buf.position() - init;
                         pes1(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
                         pesFileStart = -1;
-                        pes = false;
+                        _pes = false;
                         stream = -1;
                     }
                     continue;
                 }
                 int bt = buf.get() & 0xff;
-                if (pes)
+                if (_pes)
                     pesBuffer.put((byte) (marker >>> 24));
                 marker = (marker << 8) | bt;
                 if (marker >= SYSTEM && marker <= VIDEO_MAX) {
                     long filePos = pos + buf.position() - init - 4;
-                    if (pes)
+                    if (_pes)
                         pes1(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
                     pesFileStart = filePos;
 
-                    pes = true;
+                    _pes = true;
                     stream = marker & 0xff;
                     lenFieldLeft = 2;
                     pesLen = 0;
                 } else if (marker >= 0x1b9 && marker <= 0x1ff) {
-                    if (pes) {
+                    if (_pes) {
                         long filePos = pos + buf.position() - init - 4;
                         pes1(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
                     }
                     pesFileStart = -1;
-                    pes = false;
+                    _pes = false;
                     stream = -1;
                 } else if (lenFieldLeft > 0) {
                     pesLen = (pesLen << 8) | bt;
