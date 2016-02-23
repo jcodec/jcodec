@@ -218,7 +218,7 @@ public class MPSDump {
             if (mark == 0x100)
                 dumpPictureHeader(b);
             else if (mark <= 0x1af)
-                System.out.print(MainUtils.color(String.format("slice @0x%02x", mark - 0x101),
+                System.out.print(MainUtils.colorBright(String.format("slice @0x%02x", mark - 0x101),
                         MainUtils.ANSIColor.BLACK, true));
             else if (mark == 0x1b3)
                 dumpSequenceHeader(b);
@@ -249,10 +249,10 @@ public class MPSDump {
                         dumpSequenceDisplayExtension(SequenceDisplayExtension.read(_in));
                         break;
                     default:
-                        System.out.print(MainUtils.color("extension " + extType, MainUtils.ANSIColor.GREEN, true));
+                        System.out.print(MainUtils.colorBright("extension " + extType, MainUtils.ANSIColor.GREEN, true));
                     }
                 } else {
-                    System.out.print(MainUtils.color("dangling extension " + extType, MainUtils.ANSIColor.GREEN, true));
+                    System.out.print(MainUtils.colorBright("dangling extension " + extType, MainUtils.ANSIColor.GREEN, true));
                 }
             } else {
                 switch (extType) {
@@ -278,52 +278,52 @@ public class MPSDump {
                     dumpPictureTemporalScalableExtension(PictureTemporalScalableExtension.read(_in));
                     break;
                 default:
-                    System.out.print(MainUtils.color("extension " + extType, MainUtils.ANSIColor.GREEN, true));
+                    System.out.print(MainUtils.colorBright("extension " + extType, MainUtils.ANSIColor.GREEN, true));
                 }
             }
         }
 
         private void dumpSequenceDisplayExtension(SequenceDisplayExtension read) {
-            System.out.print(MainUtils.color("sequence display extension " + dumpBin(read), MainUtils.ANSIColor.GREEN,
+            System.out.print(MainUtils.colorBright("sequence display extension " + dumpBin(read), MainUtils.ANSIColor.GREEN,
                     true));
         }
 
         private void dumpSequenceScalableExtension(SequenceScalableExtension read) {
-            System.out.print(MainUtils.color("sequence scalable extension " + dumpBin(read), MainUtils.ANSIColor.GREEN,
+            System.out.print(MainUtils.colorBright("sequence scalable extension " + dumpBin(read), MainUtils.ANSIColor.GREEN,
                     true));
         }
 
         private void dumpSequenceExtension(SequenceExtension read) {
-            System.out.print(MainUtils.color("sequence extension " + dumpBin(read), MainUtils.ANSIColor.GREEN, true));
+            System.out.print(MainUtils.colorBright("sequence extension " + dumpBin(read), MainUtils.ANSIColor.GREEN, true));
         }
 
         private void dumpPictureTemporalScalableExtension(PictureTemporalScalableExtension read) {
-            System.out.print(MainUtils.color("picture temporal scalable extension " + dumpBin(read),
+            System.out.print(MainUtils.colorBright("picture temporal scalable extension " + dumpBin(read),
                     MainUtils.ANSIColor.GREEN, true));
         }
 
         private void dumpPictureSpatialScalableExtension(PictureSpatialScalableExtension read) {
-            System.out.print(MainUtils.color("picture spatial scalable extension " + dumpBin(read),
+            System.out.print(MainUtils.colorBright("picture spatial scalable extension " + dumpBin(read),
                     MainUtils.ANSIColor.GREEN, true));
         }
 
         private void dumpPictureCodingExtension(PictureCodingExtension read) {
-            System.out.print(MainUtils.color("picture coding extension " + dumpBin(read), MainUtils.ANSIColor.GREEN,
+            System.out.print(MainUtils.colorBright("picture coding extension " + dumpBin(read), MainUtils.ANSIColor.GREEN,
                     true));
         }
 
         private void dumpPictureDisplayExtension(PictureDisplayExtension read) {
-            System.out.print(MainUtils.color("picture display extension " + dumpBin(read), MainUtils.ANSIColor.GREEN,
+            System.out.print(MainUtils.colorBright("picture display extension " + dumpBin(read), MainUtils.ANSIColor.GREEN,
                     true));
         }
 
         private void dumpCopyrightExtension(CopyrightExtension read) {
-            System.out.print(MainUtils.color("copyright extension " + dumpBin(read), MainUtils.ANSIColor.GREEN, true));
+            System.out.print(MainUtils.colorBright("copyright extension " + dumpBin(read), MainUtils.ANSIColor.GREEN, true));
         }
 
         private void dumpQuantMatrixExtension(QuantMatrixExtension read) {
             System.out.print(MainUtils
-                    .color("quant matrix extension " + dumpBin(read), MainUtils.ANSIColor.GREEN, true));
+                    .colorBright("quant matrix extension " + dumpBin(read), MainUtils.ANSIColor.GREEN, true));
         }
 
         private String dumpBin(Object read) {
@@ -364,7 +364,7 @@ public class MPSDump {
 
         private void dumpGroupHeader(ByteBuffer b) {
             GOPHeader gopHeader = GOPHeader.read(b);
-            System.out.print(MainUtils.color("group header" + " <closed:" + gopHeader.isClosedGop() + ",broken link:"
+            System.out.print(MainUtils.colorBright("group header" + " <closed:" + gopHeader.isClosedGop() + ",broken link:"
                     + gopHeader.isBrokenLink()
                     + (gopHeader.getTimeCode() != null ? (",timecode:" + gopHeader.getTimeCode().toString()) : "")
                     + ">", MainUtils.ANSIColor.MAGENTA, true));
@@ -375,13 +375,13 @@ public class MPSDump {
             pictureCodingExtension = null;
             sequenceExtension = null;
             sequenceHeader = SequenceHeader.read(b);
-            System.out.print(MainUtils.color("sequence header", MainUtils.ANSIColor.BLUE, true));
+            System.out.print(MainUtils.colorBright("sequence header", MainUtils.ANSIColor.BLUE, true));
         }
 
         private void dumpPictureHeader(ByteBuffer b) {
             picHeader = PictureHeader.read(b);
             pictureCodingExtension = null;
-            System.out.print(MainUtils.color("picture header" + " <type:"
+            System.out.print(MainUtils.colorBright("picture header" + " <type:"
                     + (picHeader.picture_coding_type == 1 ? "I" : (picHeader.picture_coding_type == 2 ? "P" : "B"))
                     + ", temp_ref:" + picHeader.temporal_reference + ">", MainUtils.ANSIColor.BROWN, true));
         }

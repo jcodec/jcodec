@@ -56,7 +56,7 @@ public class TimestampUtil {
 
         String command = cmd.getArg(0);
 
-        String stream = cmd.getStringFlag(FLAG_STREAM, STREAM_ALL);
+        String stream = cmd.getStringFlagD(FLAG_STREAM, STREAM_ALL);
         if (COMMAND_SHIFT.equalsIgnoreCase(command)) {
             final long shift = Long.parseLong(cmd.getArg(1));
             new BaseCommand(stream) {
