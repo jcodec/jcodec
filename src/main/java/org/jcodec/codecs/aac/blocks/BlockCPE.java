@@ -15,13 +15,13 @@ public class BlockCPE extends BlockICS {
 
     private int[] ms_mask;
 
-    public void parse(BitReader in) {
+    public void parse(BitReader _in) {
 
         // int i, ret, common_window, ms_present = 0;
         //
-        int common_window = in.read1Bit();
+        int common_window = _in.read1Bit();
         if (common_window != 0) {
-            parseICSInfo(in);
+            parseICSInfo(_in);
             // i = cpe->ch[1].ics.use_kb_window[0];
             // cpe->ch[1].ics = cpe->ch[0].ics;
             // cpe->ch[1].ics.use_kb_window[1] = i;
@@ -29,23 +29,23 @@ public class BlockCPE extends BlockICS {
             // AOT_AAC_MAIN))
             // if ((cpe->ch[1].ics.ltp.present = get_bits(gb, 1)))
             // decode_ltp(ac, &cpe->ch[1].ics.ltp, gb, cpe->ch[1].ics.max_sfb);
-            int ms_present = in.readNBit(2);
+            int ms_present = _in.readNBit(2);
             if (ms_present == 3) {
                 throw new RuntimeException("ms_present = 3 is reserved.");
             } else if (ms_present != 0)
-                decodeMidSideStereo(in, ms_present, 0, 0);
+                decodeMidSideStereo(_in, ms_present, 0, 0);
         }
         BlockICS ics1 = new BlockICS();
-        ics1.parse(in);
+        ics1.parse(_in);
         BlockICS ics2 = new BlockICS();
-        ics2.parse(in);
+        ics2.parse(_in);
 
     }
 
-    private void decodeMidSideStereo(BitReader in, int ms_present, int numWindowGroups, int maxSfb) {
+    private void decodeMidSideStereo(BitReader _in, int ms_present, int numWindowGroups, int maxSfb) {
         if (ms_present == 1) {
             for (int idx = 0; idx < numWindowGroups * maxSfb; idx++)
-                ms_mask[idx] = in.read1Bit();
+                ms_mask[idx] = _in.read1Bit();
         }
     }
 }

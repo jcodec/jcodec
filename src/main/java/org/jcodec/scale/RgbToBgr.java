@@ -1,5 +1,6 @@
 package org.jcodec.scale;
 
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 
@@ -21,7 +22,7 @@ public class RgbToBgr implements Transform {
                     "Expected RGB or BGR inputs, was: " + src.getColor() + ", " + dst.getColor());
         }
         if (src.getCrop() != null || dst.getCrop() != null)
-            throw new IllegalArgumentException("Cropped images not supported");
+            throw new NotSupportedException("Cropped images not supported");
 
         int[] dataSrc = src.getPlaneData(0);
         int[] dataDst = dst.getPlaneData(0);

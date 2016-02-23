@@ -43,10 +43,10 @@ public class MTSPktDump {
         }
     }
 
-    private static void dumpTSPackets(ReadableByteChannel in) throws IOException {
+    private static void dumpTSPackets(ReadableByteChannel _in) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(188 * 1024);
 
-        while (in.read(buf) != -1) {
+        while (_in.read(buf) != -1) {
             buf.flip();
             buf.limit((buf.limit() / 188) * 188);
             int pmtPid = -1;

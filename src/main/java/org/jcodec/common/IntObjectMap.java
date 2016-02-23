@@ -2,6 +2,8 @@ package org.jcodec.common;
 
 import java.lang.reflect.Array;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -21,7 +23,7 @@ public class IntObjectMap<T> {
     public void put(int key, T val) {
         if (storage.length <= key) {
             Object[] ns = new Object[key + GROW_BY];
-            System.arraycopy(storage, 0, ns, 0, storage.length);
+            arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
         if (storage[key] == null)

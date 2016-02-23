@@ -254,13 +254,13 @@ public class NIOUtils {
         return result;
     }
 
-    public static void copy(ReadableByteChannel in, WritableByteChannel out, long amount) throws IOException {
+    public static void copy(ReadableByteChannel _in, WritableByteChannel out, long amount) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(0x10000);
         int read;
         do {
             buf.position(0);
             buf.limit((int) Math.min(amount, buf.capacity()));
-            read = in.read(buf);
+            read = _in.read(buf);
             if (read != -1) {
                 buf.flip();
                 out.write(buf);

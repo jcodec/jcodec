@@ -4,6 +4,9 @@ import org.jcodec.common.tools.Debug;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static java.lang.System.arraycopy;
+import static java.lang.System.currentTimeMillis;
+
 public class FfmpegIntDctTest {
     
     @Test
@@ -15,13 +18,13 @@ public class FfmpegIntDctTest {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         FfmpegIntDct dct = new FfmpegIntDct();
         int count = 40000000;
-        long start = System.currentTimeMillis();
+        long start = currentTimeMillis();
         short copy[] = new short[64];
         for (int i = 0; i < count; i++) {
-            System.arraycopy(input, 0, copy, 0, 64);
+            arraycopy(input, 0, copy, 0, 64);
             dct.decode(copy);
         }
-        long time = System.currentTimeMillis() - start;
+        long time = currentTimeMillis() - start;
         long kdctPerSec = count / time;
         System.out.println(kdctPerSec + "kdct/sec");
     }

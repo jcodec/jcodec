@@ -51,30 +51,32 @@ public class CachingTrack implements VirtualTrack {
         VirtualPacket pkt = src.nextPacket();
         if (pkt == null)
             return null;
-        return new CachingPacket(pkt);
+        return new CachingPacket(this, pkt);
     }
 
-    public class CachingPacket extends VirtualPacketWrapper {
+    public static class CachingPacket extends VirtualPacketWrapper {
         private ByteBuffer cache;
+		private CachingTrack track;
 
-        public CachingPacket(VirtualPacket src) {
+        public CachingPacket(CachingTrack track, VirtualPacket src) {
             super(src);
+			this.track = track;
         }
 
         public synchronized void wipe() {
-            if (cachedPackets.indexOf(this) == 0) {
-                cachedPackets.remove(0);
+            if (track.cachedPackets.indexOf(this) == 0) {
+            	track.cachedPackets.remove(0);
                 cache = null;
             }
         }
 
         public synchronized ByteBuffer getData() throws IOException {
-            // This packet will receive new place in the queue
-            cachedPackets.remove(this);
+            // This packet will receive new place _in the queue
+        	track.cachedPackets.remove(this);
             if (cache == null) {
                 cache = src.getData();
             }
-            cachedPackets.add(this);
+            track.cachedPackets.add(this);
 
             return cache == null ? null : cache.duplicate();
         }

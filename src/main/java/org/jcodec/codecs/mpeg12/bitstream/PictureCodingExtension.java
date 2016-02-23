@@ -39,13 +39,13 @@ public class PictureCodingExtension implements MPEGHeader {
         public int burst_amplitude;
         public int sub_carrier_phase;
 
-        public static CompositeDisplay read(BitReader in) {
+        public static CompositeDisplay read(BitReader _in) {
             CompositeDisplay cd = new CompositeDisplay();
-            cd.v_axis = in.read1Bit();
-            cd.field_sequence = in.readNBit(3);
-            cd.sub_carrier = in.read1Bit();
-            cd.burst_amplitude = in.readNBit(7);
-            cd.sub_carrier_phase = in.readNBit(8);
+            cd.v_axis = _in.read1Bit();
+            cd.field_sequence = _in.readNBit(3);
+            cd.sub_carrier = _in.read1Bit();
+            cd.burst_amplitude = _in.readNBit(7);
+            cd.sub_carrier_phase = _in.readNBit(8);
             return cd;
         }
 
@@ -58,25 +58,25 @@ public class PictureCodingExtension implements MPEGHeader {
         }
     }
 
-    public static PictureCodingExtension read(BitReader in) {
+    public static PictureCodingExtension read(BitReader _in) {
         PictureCodingExtension pce = new PictureCodingExtension();
-        pce.f_code[0][0] = in.readNBit(4);
-        pce.f_code[0][1] = in.readNBit(4);
-        pce.f_code[1][0] = in.readNBit(4);
-        pce.f_code[1][1] = in.readNBit(4);
-        pce.intra_dc_precision = in.readNBit(2);
-        pce.picture_structure = in.readNBit(2);
-        pce.top_field_first = in.read1Bit();
-        pce.frame_pred_frame_dct = in.read1Bit();
-        pce.concealment_motion_vectors = in.read1Bit();
-        pce.q_scale_type = in.read1Bit();
-        pce.intra_vlc_format = in.read1Bit();
-        pce.alternate_scan = in.read1Bit();
-        pce.repeat_first_field = in.read1Bit();
-        pce.chroma_420_type = in.read1Bit();
-        pce.progressive_frame = in.read1Bit();
-        if (in.read1Bit() != 0) {
-            pce.compositeDisplay = CompositeDisplay.read(in);
+        pce.f_code[0][0] = _in.readNBit(4);
+        pce.f_code[0][1] = _in.readNBit(4);
+        pce.f_code[1][0] = _in.readNBit(4);
+        pce.f_code[1][1] = _in.readNBit(4);
+        pce.intra_dc_precision = _in.readNBit(2);
+        pce.picture_structure = _in.readNBit(2);
+        pce.top_field_first = _in.read1Bit();
+        pce.frame_pred_frame_dct = _in.read1Bit();
+        pce.concealment_motion_vectors = _in.read1Bit();
+        pce.q_scale_type = _in.read1Bit();
+        pce.intra_vlc_format = _in.read1Bit();
+        pce.alternate_scan = _in.read1Bit();
+        pce.repeat_first_field = _in.read1Bit();
+        pce.chroma_420_type = _in.read1Bit();
+        pce.progressive_frame = _in.read1Bit();
+        if (_in.read1Bit() != 0) {
+            pce.compositeDisplay = CompositeDisplay.read(_in);
         }
 
         return pce;

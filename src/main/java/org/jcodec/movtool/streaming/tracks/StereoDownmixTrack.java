@@ -105,7 +105,7 @@ public class StereoDownmixTrack implements VirtualTrack {
         if (allNull)
             return null;
 
-        VirtualPacket ret = new DownmixVirtualPacket(packets, frameNo);
+        VirtualPacket ret = new DownmixVirtualPacket(this, packets, frameNo);
 
         frameNo += FRAMES_IN_OUT_PACKET;
 
@@ -124,11 +124,13 @@ public class StereoDownmixTrack implements VirtualTrack {
         }
     }
 
-    protected class DownmixVirtualPacket implements VirtualPacket {
+    protected static class DownmixVirtualPacket implements VirtualPacket {
         private VirtualPacket[] packets;
         private int frameNo;
+        private StereoDownmixTrack track;
 
-        public DownmixVirtualPacket(VirtualPacket[] packets, int pktNo) {
+        public DownmixVirtualPacket(StereoDownmixTrack track, VirtualPacket[] packets, int pktNo) {
+            this.track = track;
             this.packets = packets;
             this.frameNo = pktNo;
         }
@@ -140,7 +142,7 @@ public class StereoDownmixTrack implements VirtualTrack {
                 data[i] = packets[i] == null ? null : packets[i].getData();
             ByteBuffer out = ByteBuffer.allocate(FRAMES_IN_OUT_PACKET << 2);
 
-            downmix.downmix(data, out);
+            track.downmix.downmix(data, out);
 
             return out;
         }
@@ -152,12 +154,12 @@ public class StereoDownmixTrack implements VirtualTrack {
 
         @Override
         public double getPts() {
-            return (double) frameNo / rate;
+            return (double) frameNo / track.rate;
         }
 
         @Override
         public double getDuration() {
-            return (double) FRAMES_IN_OUT_PACKET / rate;
+            return (double) FRAMES_IN_OUT_PACKET / track.rate;
         }
 
         @Override

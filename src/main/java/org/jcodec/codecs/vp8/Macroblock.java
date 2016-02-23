@@ -5,6 +5,8 @@ import static org.jcodec.codecs.vp8.VP8Util.pickDefaultPrediction;
 
 import java.util.Arrays;
 
+import org.jcodec.api.NotImplementedException;
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vp8.VP8Util.PLANE;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
@@ -22,7 +24,7 @@ public class Macroblock {
     public int chromaMode;
     public int skipCoeff;
     public final Subblock[][] ySubblocks = new Subblock[4][4];
-    public final Subblock y2 = new Subblock(0, 0, VP8Util.PLANE.Y2);
+    public final Subblock y2 = new Subblock(this, 0, 0, VP8Util.PLANE.Y2);
     public final Subblock[][] uSubblocks = new Subblock[2][2];
     public final Subblock[][] vSubblocks = new Subblock[2][2];
     public final int Rrow;
@@ -37,11 +39,11 @@ public class Macroblock {
         this.column = x;
         for (int row = 0; row < 4; row++)
             for (int col = 0; col < 4; col++)
-                this.ySubblocks[row][col] = new Subblock(row, col, VP8Util.PLANE.Y1);
+                this.ySubblocks[row][col] = new Subblock(this, row, col, VP8Util.PLANE.Y1);
         for (int row = 0; row < 2; row++)
             for (int col = 0; col < 2; col++) {
-                uSubblocks[row][col] = new Subblock(row, col, VP8Util.PLANE.U);
-                vSubblocks[row][col] = new Subblock(row, col, VP8Util.PLANE.V);
+                uSubblocks[row][col] = new Subblock(this, row, col, VP8Util.PLANE.U);
+                vSubblocks[row][col] = new Subblock(this, row, col, VP8Util.PLANE.V);
             }
     }
 
@@ -508,7 +510,7 @@ public class Macroblock {
         return r;
     }
 
-    public class Subblock {
+    public static class Subblock {
 
         public int[] val;
         public int[] predict;
@@ -519,9 +521,11 @@ public class Macroblock {
         public int mode;
         public boolean someValuePresent;
         private int[] tokens = new int[16];
+		private Macroblock self;
 
-        public Subblock(int row, int col, VP8Util.PLANE plane) {
-            this.row = row;
+        public Subblock(Macroblock self, int row, int col, VP8Util.PLANE plane) {
+            this.self = self;
+			this.row = row;
             this.col = col;
             this.plane = plane;
         }
@@ -599,7 +603,7 @@ public class Macroblock {
                 break;
 
             default:
-                throw new UnsupportedOperationException("TODO: unknowwn mode: "+this.mode);
+                throw new NotSupportedException("TODO: unknowwn mode: "+this.mode);
             }
 
         }
@@ -623,15 +627,15 @@ public class Macroblock {
         public Subblock getAbove(VP8Util.PLANE plane, Macroblock[][] mbs) {
             if (this.row > 0)
                 if (VP8Util.PLANE.Y1.equals(this.plane))
-                    return Macroblock.this.ySubblocks[this.row - 1][this.col];
+                    return self.ySubblocks[this.row - 1][this.col];
                 else if (VP8Util.PLANE.U.equals(this.plane))
-                    return Macroblock.this.uSubblocks[this.row - 1][this.col];
+                    return self.uSubblocks[this.row - 1][this.col];
                 else if (VP8Util.PLANE.V.equals(this.plane))
-                    return Macroblock.this.vSubblocks[this.row - 1][this.col];
+                    return self.vSubblocks[this.row - 1][this.col];
 
             int x = this.col;
 
-            Macroblock mb2 = mbs[Macroblock.this.Rrow - 1][Macroblock.this.column];
+            Macroblock mb2 = mbs[self.Rrow - 1][self.column];
             if (plane == VP8Util.PLANE.Y2) {
                 while (mb2.lumaMode == SubblockConstants.B_PRED)
                     mb2 = mbs[mb2.Rrow - 1][mb2.column];
@@ -643,14 +647,14 @@ public class Macroblock {
         public Subblock getLeft(VP8Util.PLANE p, Macroblock[][] mbs) {
             if (this.col > 0)
                 if (VP8Util.PLANE.Y1.equals(this.plane))
-                    return Macroblock.this.ySubblocks[this.row][this.col - 1];
+                    return self.ySubblocks[this.row][this.col - 1];
                 else if (VP8Util.PLANE.U.equals(this.plane))
-                    return Macroblock.this.uSubblocks[this.row][this.col - 1];
+                    return self.uSubblocks[this.row][this.col - 1];
                 else if (VP8Util.PLANE.V.equals(this.plane))
-                    return Macroblock.this.vSubblocks[this.row][this.col - 1];
+                    return self.vSubblocks[this.row][this.col - 1];
 
             int y = this.row;
-            Macroblock mb2 = mbs[Macroblock.this.Rrow][Macroblock.this.column - 1];
+            Macroblock mb2 = mbs[self.Rrow][self.column - 1];
 
             if (p == VP8Util.PLANE.Y2)
                 while (mb2.lumaMode == SubblockConstants.B_PRED)
@@ -663,37 +667,37 @@ public class Macroblock {
         private int[] getAboveRightLowestRow(Macroblock[][] mbs) {
             // this might break at right edge
             if( ! VP8Util.PLANE.Y1.equals(this.plane)) 
-                throw new IllegalArgumentException("Decoder.getAboveRight: not implemented for Y2 and chroma planes");
+                throw new NotImplementedException("Decoder.getAboveRight: not implemented for Y2 and chroma planes");
              
             int[] aboveRightDistValues;
             
             if(row==0 && col<3) {
                 // top row
-                Macroblock mb2=mbs[Macroblock.this.Rrow-1][Macroblock.this.column];
+                Macroblock mb2=mbs[self.Rrow-1][self.column];
                 Subblock aboveRight = mb2.ySubblocks[3][col+1];
                 aboveRightDistValues = aboveRight.val;
                 
             } else if(row>0 && col<3) {
                 //not right edge or top row
-                Subblock aboveRight = Macroblock.this.ySubblocks[row-1][col+1];
+                Subblock aboveRight = self.ySubblocks[row-1][col+1];
                 aboveRightDistValues = aboveRight.val;
                 
             } else if(row==0 && col==3) {
                 //top right
-                Macroblock aboveRightMb = mbs[Macroblock.this.Rrow-1][Macroblock.this.column+1];
+                Macroblock aboveRightMb = mbs[self.Rrow-1][self.column+1];
                 if(aboveRightMb.column < (mbs[0].length-1)){
                     Subblock aboveRightSb = aboveRightMb.ySubblocks[3][0];
                     aboveRightDistValues = aboveRightSb.val;
                 } else {
                     aboveRightDistValues = new int [16];
-                    int fillVal = aboveRightMb.Rrow==0 ? 127 : mbs[Macroblock.this.Rrow-1][Macroblock.this.column].ySubblocks[3][3].val[3*4+3]; 
+                    int fillVal = aboveRightMb.Rrow==0 ? 127 : mbs[self.Rrow-1][self.column].ySubblocks[3][3].val[3*4+3]; 
 
                     Arrays.fill(aboveRightDistValues, fillVal);
                 }
 
             } else {
                 //else use top right
-                Subblock sb2 = Macroblock.this.ySubblocks[0][3];
+                Subblock sb2 = self.ySubblocks[0][3];
                 return sb2.getAboveRightLowestRow(mbs);
             }
             

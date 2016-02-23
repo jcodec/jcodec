@@ -67,12 +67,12 @@ public class FrameReader {
     }
 
     private SliceReader createSliceReader(ByteBuffer segment, NALUnit nalUnit) {
-        BitReader in = new BitReader(segment);
+        BitReader _in = new BitReader(segment);
         SliceHeaderReader shr = new SliceHeaderReader();
-        SliceHeader sh = shr.readPart1(in);
+        SliceHeader sh = shr.readPart1(_in);
         sh.pps = pps.get(sh.pic_parameter_set_id);
         sh.sps = sps.get(sh.pps.seq_parameter_set_id);
-        shr.readPart2(sh, nalUnit, sh.sps, sh.pps, in);
+        shr.readPart2(sh, nalUnit, sh.sps, sh.pps, _in);
 
         Mapper mapper = new MapManager(sh.sps, sh.pps).getMapper(sh);
 
@@ -84,14 +84,14 @@ public class FrameReader {
 
         MDecoder mDecoder = null;
         if (sh.pps.entropy_coding_mode_flag) {
-            in.terminate();
+            _in.terminate();
             int[][] cm = new int[2][1024];
             int qp = sh.pps.pic_init_qp_minus26 + 26 + sh.slice_qp_delta;
             cabac.initModels(cm, sh.slice_type, sh.cabac_init_idc, qp);
             mDecoder = new MDecoder(segment, cm);
         }
 
-        return new SliceReader(sh.pps, cabac, cavlc, mDecoder, in, mapper, sh, nalUnit);
+        return new SliceReader(sh.pps, cabac, cavlc, mDecoder, _in, mapper, sh, nalUnit);
     }
     
     public void addSps(List<ByteBuffer> spsList) {

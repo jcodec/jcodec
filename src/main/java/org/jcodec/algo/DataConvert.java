@@ -1,5 +1,7 @@
 package org.jcodec.algo;
 
+import org.jcodec.api.NotSupportedException;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -121,7 +123,7 @@ public class DataConvert {
                 return from16BE(b);
             else
                 return from16LE(b);
-        throw new IllegalArgumentException("Conversion from " + depth + "bit "
+        throw new NotSupportedException("Conversion from " + depth + "bit "
                 + (isBe ? "big endian" : "little endian") + " is not supported.");
     }
 
@@ -149,7 +151,7 @@ public class DataConvert {
                 return to16BE(ia);
             else
                 return to16LE(ia);
-        throw new IllegalArgumentException("Conversion to " + depth + "bit " + (isBe ? "big endian" : "little endian")
+        throw new NotSupportedException("Conversion to " + depth + "bit " + (isBe ? "big endian" : "little endian")
                 + " is not supported.");
     }
 }

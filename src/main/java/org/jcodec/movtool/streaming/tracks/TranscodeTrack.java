@@ -80,45 +80,50 @@ public abstract class TranscodeTrack implements VirtualTrack {
         VirtualPacket nextPacket = src.nextPacket();
         if (nextPacket == null)
             return null;
-        return new TranscodePacket(nextPacket);
+        return new TranscodePacket(this, nextPacket);
     }
 
-    private class TranscodePacket extends VirtualPacketWrapper {
-        public TranscodePacket(VirtualPacket nextPacket) {
+    private static class TranscodePacket extends VirtualPacketWrapper {
+        private TranscodeTrack track;
+
+		public TranscodePacket(TranscodeTrack track, VirtualPacket nextPacket) {
             super(nextPacket);
+			this.track = track;
         }
 
         @Override
         public int getDataLen() {
-            return frameSize;
+            return track.frameSize;
         }
 
         @Override
         public ByteBuffer getData() throws IOException {
-            Transcoder t = transcoders.get();
+            Transcoder t = track.transcoders.get();
             if (t == null) {
-                t = new Transcoder();
-                transcoders.set(t);
+                t = new Transcoder(track);
+                track.transcoders.set(t);
             }
-            ByteBuffer buf = ByteBuffer.allocate(frameSize);
+            ByteBuffer buf = ByteBuffer.allocate(track.frameSize);
             ByteBuffer data = src.getData();
             return t.transcodeFrame(data, buf);
         }
     }
 
-    class Transcoder {
+   static class Transcoder {
         private VideoDecoder decoder;
         private VideoEncoder[] encoder = new VideoEncoder[3];
         private Picture pic0;
         private Picture pic1;
         private Transform transform;
+		private TranscodeTrack track;
 
-        public Transcoder() {
-            this.decoder = getDecoder(scaleFactor);
-            this.encoder[0] = getEncoder(TARGET_RATE);
-            this.encoder[1] = getEncoder((int) (TARGET_RATE * 0.9));
-            this.encoder[2] = getEncoder((int) (TARGET_RATE * 0.8));
-            pic0 = Picture.create(mbW << 4, mbH << 4, ColorSpace.YUV444);
+        public Transcoder(TranscodeTrack track) {
+            this.track = track;
+			this.decoder = track.getDecoder(track.scaleFactor);
+            this.encoder[0] = track.getEncoder(TARGET_RATE);
+            this.encoder[1] = track.getEncoder((int) (TARGET_RATE * 0.9));
+            this.encoder[2] = track.getEncoder((int) (TARGET_RATE * 0.8));
+            pic0 = Picture.create(track.mbW << 4, track.mbH << 4, ColorSpace.YUV444);
         }
 
         public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst) {
@@ -128,7 +133,7 @@ public abstract class TranscodeTrack implements VirtualTrack {
                 transform = ColorUtil.getTransform(decoded.getColor(), ColorSpace.YUV420);
             }
             transform.transform(decoded, pic1);
-            pic1.setCrop(new Rect(0, 0, thumbWidth, thumbHeight));
+            pic1.setCrop(new Rect(0, 0, track.thumbWidth, track.thumbHeight));
             // Rate control, reinforcement mechanism
             for (int i = 0; i < encoder.length; i++) {
                 try {

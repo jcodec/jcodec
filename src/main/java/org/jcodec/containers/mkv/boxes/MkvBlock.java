@@ -1,5 +1,6 @@
 package org.jcodec.containers.mkv.boxes;
 
+import static java.lang.System.arraycopy;
 import static org.jcodec.containers.mkv.MKVType.Block;
 import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.convertToBytes;
@@ -53,8 +54,8 @@ public class MkvBlock extends EbmlBin {
         be.dataOffset = old.dataOffset;
         be.offset = old.offset;
         be.type = old.type;
-        System.arraycopy(old.frameOffsets, 0, be.frameOffsets, 0, be.frameOffsets.length);
-        System.arraycopy(old.frameSizes, 0, be.frameSizes, 0, be.frameSizes.length);
+        arraycopy(old.frameOffsets, 0, be.frameOffsets, 0, be.frameOffsets.length);
+        arraycopy(old.frameSizes, 0, be.frameSizes, 0, be.frameSizes.length);
         return be;
     }
 

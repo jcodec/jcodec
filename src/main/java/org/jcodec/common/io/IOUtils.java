@@ -87,14 +87,14 @@ public class IOUtils {
     }
 
     public static void copyFile(File src, File dst) throws IOException {
-        FileChannelWrapper in = null;
+        FileChannelWrapper _in = null;
         FileChannelWrapper out = null;
         try {
-            in = NIOUtils.readableFileChannel(src);
+            _in = NIOUtils.readableFileChannel(src);
             out = NIOUtils.writableFileChannel(dst);
-            NIOUtils.copy(in, out, Long.MAX_VALUE);
+            NIOUtils.copy(_in, out, Long.MAX_VALUE);
         } finally {
-            NIOUtils.closeQuietly(in);
+            NIOUtils.closeQuietly(_in);
             NIOUtils.closeQuietly(out);
         }
     }

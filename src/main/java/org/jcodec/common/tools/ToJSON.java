@@ -107,7 +107,7 @@ public class ToJSON {
 
     private static String getterName(String pref, String field) {
         if (field == null)
-            throw new IllegalArgumentException("Passed null string as field name");
+            throw new NullPointerException("Passed null string as field name");
         char[] ch = field.toCharArray();
         if (ch.length == 0)
             return pref;

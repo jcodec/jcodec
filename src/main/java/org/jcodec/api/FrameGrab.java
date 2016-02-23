@@ -48,15 +48,15 @@ public class FrameGrab {
     private ContainerAdaptor decoder;
     private ThreadLocal<int[][]> buffers = new ThreadLocal<int[][]>();
 
-    public FrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
+    public FrameGrab(SeekableByteChannel _in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
-        in.read(header);
+        _in.read(header);
         header.flip();
         Format detectFormat = JCodecUtil.detectFormat(header);
 
         switch (detectFormat) {
         case MOV:
-            MP4Demuxer d1 = new MP4Demuxer(in);
+            MP4Demuxer d1 = new MP4Demuxer(_in);
             videoTrack = d1.getVideoTrack();
             break;
         case MPEG_PS:

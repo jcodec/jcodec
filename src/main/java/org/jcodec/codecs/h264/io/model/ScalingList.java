@@ -40,7 +40,7 @@ public class ScalingList {
         }
     }
 
-    public static ScalingList read(BitReader in, int sizeOfScalingList)  {
+    public static ScalingList read(BitReader _in, int sizeOfScalingList)  {
 
         ScalingList sl = new ScalingList();
         sl.scalingList = new int[sizeOfScalingList];
@@ -48,7 +48,7 @@ public class ScalingList {
         int nextScale = 8;
         for (int j = 0; j < sizeOfScalingList; j++) {
             if (nextScale != 0) {
-                int deltaScale = readSE(in, "deltaScale");
+                int deltaScale = readSE(_in, "deltaScale");
                 nextScale = (lastScale + deltaScale + 256) % 256;
                 sl.useDefaultScalingMatrixFlag = (j == 0 && nextScale == 0);
             }

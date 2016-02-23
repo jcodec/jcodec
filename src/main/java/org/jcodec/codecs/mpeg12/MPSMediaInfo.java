@@ -38,7 +38,7 @@ public class MPSMediaInfo extends PESReader {
     private int pesTried;
     private PSM psm;
 
-    public class MPEGTimecodeMetadata {
+    public static class MPEGTimecodeMetadata {
 
         public String getNumFrames() {
             // TODO Auto-generated method stub
@@ -57,7 +57,7 @@ public class MPSMediaInfo extends PESReader {
 
     }
 
-    public class MPEGTrackMetadata {
+    public static class MPEGTrackMetadata {
         int streamId;
         Codec codec;
         ByteBuffer probeData;
@@ -134,7 +134,7 @@ public class MPSMediaInfo extends PESReader {
         return getInfos();
     }
 
-    public class MediaInfoDone extends RuntimeException {
+    public static class MediaInfoDone extends RuntimeException {
     };
 
     @Override

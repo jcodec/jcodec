@@ -17,16 +17,16 @@ class DSE extends Element {
 		super();
 	}
 
-	void decode(IBitStream in) throws AACException {
-		final boolean byteAlign = in.readBool();
-		int count = in.readBits(8);
-		if(count==255) count += in.readBits(8);
+	void decode(IBitStream _in) throws AACException {
+		final boolean byteAlign = _in.readBool();
+		int count = _in.readBits(8);
+		if(count==255) count += _in.readBits(8);
 
-		if(byteAlign) in.byteAlign();
+		if(byteAlign) _in.byteAlign();
 
 		dataStreamBytes = new byte[count];
 		for(int i = 0; i<count; i++) {
-			dataStreamBytes[i] = (byte) in.readBits(8);
+			dataStreamBytes[i] = (byte) _in.readBits(8);
 		}
 	}
 }

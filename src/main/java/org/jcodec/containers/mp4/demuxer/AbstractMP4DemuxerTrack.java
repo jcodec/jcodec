@@ -264,7 +264,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return null;
     }
     
-    public ByteBuffer convertPacket(ByteBuffer in) {
-        return in;
+    public ByteBuffer convertPacket(ByteBuffer _in) {
+        return _in;
     }
 }

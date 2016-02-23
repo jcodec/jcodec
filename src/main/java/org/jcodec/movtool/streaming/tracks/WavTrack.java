@@ -68,7 +68,7 @@ public class WavTrack implements VirtualTrack {
         if (offset >= size)
             return null;
 
-        WavPacket pkt = new WavPacket(frameNo, pts, offset, (int) Math.min(size - offset, pktDataLen));
+        WavPacket pkt = new WavPacket(this, frameNo, pts, offset, (int) Math.min(size - offset, pktDataLen));
 
         offset += pktDataLen;
         frameNo += FRAMES_PER_PKT;
@@ -97,14 +97,16 @@ public class WavTrack implements VirtualTrack {
         pool.close();
     }
 
-    public class WavPacket implements VirtualPacket {
+    public static class WavPacket implements VirtualPacket {
         private int frameNo;
         private double pts;
         private long offset;
         private int dataLen;
+		private WavTrack track;
 
-        public WavPacket(int frameNo, double pts, long offset, int dataLen) {
-            this.frameNo = frameNo;
+        public WavPacket(WavTrack track, int frameNo, double pts, long offset, int dataLen) {
+            this.track = track;
+			this.frameNo = frameNo;
             this.pts = pts;
             this.offset = offset;
             this.dataLen = dataLen;
@@ -114,7 +116,7 @@ public class WavTrack implements VirtualTrack {
         public ByteBuffer getData() throws IOException {
             SeekableByteChannel ch = null;
             try {
-                ch = pool.getChannel();
+                ch = track.pool.getChannel();
                 ch.position(offset);
                 ByteBuffer buffer = ByteBuffer.allocate(dataLen);
                 NIOUtils.read(ch, buffer);
@@ -137,7 +139,7 @@ public class WavTrack implements VirtualTrack {
 
         @Override
         public double getDuration() {
-            return pktDuration;
+            return track.pktDuration;
         }
 
         @Override

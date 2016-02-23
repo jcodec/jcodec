@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.IntArrayList;
@@ -399,7 +400,7 @@ public class MovieHelper {
             minf.add(gmhd);
             break;
         default:
-            throw new IllegalStateException("Handler " + type.getHandler() + " not supported");
+            throw new UnhandledStateException("Handler " + type.getHandler() + " not supported");
         }
     }
 

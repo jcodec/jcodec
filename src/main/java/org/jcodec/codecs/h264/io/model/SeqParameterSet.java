@@ -99,169 +99,169 @@ public class SeqParameterSet {
     }
 
     public static SeqParameterSet read(ByteBuffer is) {
-        BitReader in = new BitReader(is);
+        BitReader _in = new BitReader(is);
         SeqParameterSet sps = new SeqParameterSet();
 
-        sps.profile_idc = readNBit(in, 8, "SPS: profile_idc");
-        sps.constraint_set_0_flag = readBool(in, "SPS: constraint_set_0_flag");
-        sps.constraint_set_1_flag = readBool(in, "SPS: constraint_set_1_flag");
-        sps.constraint_set_2_flag = readBool(in, "SPS: constraint_set_2_flag");
-        sps.constraint_set_3_flag = readBool(in, "SPS: constraint_set_3_flag");
-        sps.constraint_set_4_flag = readBool(in, "SPS: constraint_set_4_flag");
-        sps.constraint_set_5_flag = readBool(in, "SPS: constraint_set_5_flag");
-        readNBit(in, 2, "SPS: reserved_zero_2bits");
-        sps.level_idc = (int) readNBit(in, 8, "SPS: level_idc");
-        sps.seq_parameter_set_id = readUE(in, "SPS: seq_parameter_set_id");
+        sps.profile_idc = readNBit(_in, 8, "SPS: profile_idc");
+        sps.constraint_set_0_flag = readBool(_in, "SPS: constraint_set_0_flag");
+        sps.constraint_set_1_flag = readBool(_in, "SPS: constraint_set_1_flag");
+        sps.constraint_set_2_flag = readBool(_in, "SPS: constraint_set_2_flag");
+        sps.constraint_set_3_flag = readBool(_in, "SPS: constraint_set_3_flag");
+        sps.constraint_set_4_flag = readBool(_in, "SPS: constraint_set_4_flag");
+        sps.constraint_set_5_flag = readBool(_in, "SPS: constraint_set_5_flag");
+        readNBit(_in, 2, "SPS: reserved_zero_2bits");
+        sps.level_idc = (int) readNBit(_in, 8, "SPS: level_idc");
+        sps.seq_parameter_set_id = readUE(_in, "SPS: seq_parameter_set_id");
 
         if (sps.profile_idc == 100 || sps.profile_idc == 110 || sps.profile_idc == 122 || sps.profile_idc == 144) {
-            sps.chroma_format_idc = getColor(readUE(in, "SPS: chroma_format_idc"));
+            sps.chroma_format_idc = getColor(readUE(_in, "SPS: chroma_format_idc"));
             if (sps.chroma_format_idc == YUV444) {
-                sps.residual_color_transform_flag = readBool(in, "SPS: residual_color_transform_flag");
+                sps.residual_color_transform_flag = readBool(_in, "SPS: residual_color_transform_flag");
             }
-            sps.bit_depth_luma_minus8 = readUE(in, "SPS: bit_depth_luma_minus8");
-            sps.bit_depth_chroma_minus8 = readUE(in, "SPS: bit_depth_chroma_minus8");
-            sps.qpprime_y_zero_transform_bypass_flag = readBool(in, "SPS: qpprime_y_zero_transform_bypass_flag");
-            boolean seqScalingMatrixPresent = readBool(in, "SPS: seq_scaling_matrix_present_lag");
+            sps.bit_depth_luma_minus8 = readUE(_in, "SPS: bit_depth_luma_minus8");
+            sps.bit_depth_chroma_minus8 = readUE(_in, "SPS: bit_depth_chroma_minus8");
+            sps.qpprime_y_zero_transform_bypass_flag = readBool(_in, "SPS: qpprime_y_zero_transform_bypass_flag");
+            boolean seqScalingMatrixPresent = readBool(_in, "SPS: seq_scaling_matrix_present_lag");
             if (seqScalingMatrixPresent) {
-                readScalingListMatrix(in, sps);
+                readScalingListMatrix(_in, sps);
             }
         } else {
             sps.chroma_format_idc = YUV420J;
         }
-        sps.log2_max_frame_num_minus4 = readUE(in, "SPS: log2_max_frame_num_minus4");
-        sps.pic_order_cnt_type = readUE(in, "SPS: pic_order_cnt_type");
+        sps.log2_max_frame_num_minus4 = readUE(_in, "SPS: log2_max_frame_num_minus4");
+        sps.pic_order_cnt_type = readUE(_in, "SPS: pic_order_cnt_type");
         if (sps.pic_order_cnt_type == 0) {
-            sps.log2_max_pic_order_cnt_lsb_minus4 = readUE(in, "SPS: log2_max_pic_order_cnt_lsb_minus4");
+            sps.log2_max_pic_order_cnt_lsb_minus4 = readUE(_in, "SPS: log2_max_pic_order_cnt_lsb_minus4");
         } else if (sps.pic_order_cnt_type == 1) {
-            sps.delta_pic_order_always_zero_flag = readBool(in, "SPS: delta_pic_order_always_zero_flag");
-            sps.offset_for_non_ref_pic = readSE(in, "SPS: offset_for_non_ref_pic");
-            sps.offset_for_top_to_bottom_field = readSE(in, "SPS: offset_for_top_to_bottom_field");
-            sps.num_ref_frames_in_pic_order_cnt_cycle = readUE(in, "SPS: num_ref_frames_in_pic_order_cnt_cycle");
+            sps.delta_pic_order_always_zero_flag = readBool(_in, "SPS: delta_pic_order_always_zero_flag");
+            sps.offset_for_non_ref_pic = readSE(_in, "SPS: offset_for_non_ref_pic");
+            sps.offset_for_top_to_bottom_field = readSE(_in, "SPS: offset_for_top_to_bottom_field");
+            sps.num_ref_frames_in_pic_order_cnt_cycle = readUE(_in, "SPS: num_ref_frames_in_pic_order_cnt_cycle");
             sps.offsetForRefFrame = new int[sps.num_ref_frames_in_pic_order_cnt_cycle];
             for (int i = 0; i < sps.num_ref_frames_in_pic_order_cnt_cycle; i++) {
-                sps.offsetForRefFrame[i] = readSE(in, "SPS: offsetForRefFrame [" + i + "]");
+                sps.offsetForRefFrame[i] = readSE(_in, "SPS: offsetForRefFrame [" + i + "]");
             }
         }
-        sps.num_ref_frames = readUE(in, "SPS: num_ref_frames");
-        sps.gaps_in_frame_num_value_allowed_flag = readBool(in, "SPS: gaps_in_frame_num_value_allowed_flag");
-        sps.pic_width_in_mbs_minus1 = readUE(in, "SPS: pic_width_in_mbs_minus1");
-        sps.pic_height_in_map_units_minus1 = readUE(in, "SPS: pic_height_in_map_units_minus1");
-        sps.frame_mbs_only_flag = readBool(in, "SPS: frame_mbs_only_flag");
+        sps.num_ref_frames = readUE(_in, "SPS: num_ref_frames");
+        sps.gaps_in_frame_num_value_allowed_flag = readBool(_in, "SPS: gaps_in_frame_num_value_allowed_flag");
+        sps.pic_width_in_mbs_minus1 = readUE(_in, "SPS: pic_width_in_mbs_minus1");
+        sps.pic_height_in_map_units_minus1 = readUE(_in, "SPS: pic_height_in_map_units_minus1");
+        sps.frame_mbs_only_flag = readBool(_in, "SPS: frame_mbs_only_flag");
         if (!sps.frame_mbs_only_flag) {
-            sps.mb_adaptive_frame_field_flag = readBool(in, "SPS: mb_adaptive_frame_field_flag");
+            sps.mb_adaptive_frame_field_flag = readBool(_in, "SPS: mb_adaptive_frame_field_flag");
         }
-        sps.direct_8x8_inference_flag = readBool(in, "SPS: direct_8x8_inference_flag");
-        sps.frame_cropping_flag = readBool(in, "SPS: frame_cropping_flag");
+        sps.direct_8x8_inference_flag = readBool(_in, "SPS: direct_8x8_inference_flag");
+        sps.frame_cropping_flag = readBool(_in, "SPS: frame_cropping_flag");
         if (sps.frame_cropping_flag) {
-            sps.frame_crop_left_offset = readUE(in, "SPS: frame_crop_left_offset");
-            sps.frame_crop_right_offset = readUE(in, "SPS: frame_crop_right_offset");
-            sps.frame_crop_top_offset = readUE(in, "SPS: frame_crop_top_offset");
-            sps.frame_crop_bottom_offset = readUE(in, "SPS: frame_crop_bottom_offset");
+            sps.frame_crop_left_offset = readUE(_in, "SPS: frame_crop_left_offset");
+            sps.frame_crop_right_offset = readUE(_in, "SPS: frame_crop_right_offset");
+            sps.frame_crop_top_offset = readUE(_in, "SPS: frame_crop_top_offset");
+            sps.frame_crop_bottom_offset = readUE(_in, "SPS: frame_crop_bottom_offset");
         }
-        boolean vui_parameters_present_flag = readBool(in, "SPS: vui_parameters_present_flag");
+        boolean vui_parameters_present_flag = readBool(_in, "SPS: vui_parameters_present_flag");
         if (vui_parameters_present_flag)
-            sps.vuiParams = readVUIParameters(in);
+            sps.vuiParams = readVUIParameters(_in);
 
         return sps;
     }
 
-    private static void readScalingListMatrix(BitReader in, SeqParameterSet sps) {
+    private static void readScalingListMatrix(BitReader _in, SeqParameterSet sps) {
         sps.scalingMatrix = new ScalingMatrix();
         for (int i = 0; i < 8; i++) {
-            boolean seqScalingListPresentFlag = readBool(in, "SPS: seqScalingListPresentFlag");
+            boolean seqScalingListPresentFlag = readBool(_in, "SPS: seqScalingListPresentFlag");
             if (seqScalingListPresentFlag) {
                 sps.scalingMatrix.ScalingList4x4 = new ScalingList[8];
                 sps.scalingMatrix.ScalingList8x8 = new ScalingList[8];
                 if (i < 6) {
-                    sps.scalingMatrix.ScalingList4x4[i] = ScalingList.read(in, 16);
+                    sps.scalingMatrix.ScalingList4x4[i] = ScalingList.read(_in, 16);
                 } else {
-                    sps.scalingMatrix.ScalingList8x8[i - 6] = ScalingList.read(in, 64);
+                    sps.scalingMatrix.ScalingList8x8[i - 6] = ScalingList.read(_in, 64);
                 }
             }
         }
     }
 
-    private static VUIParameters readVUIParameters(BitReader in) {
+    private static VUIParameters readVUIParameters(BitReader _in) {
         VUIParameters vuip = new VUIParameters();
-        vuip.aspect_ratio_info_present_flag = readBool(in, "VUI: aspect_ratio_info_present_flag");
+        vuip.aspect_ratio_info_present_flag = readBool(_in, "VUI: aspect_ratio_info_present_flag");
         if (vuip.aspect_ratio_info_present_flag) {
-            vuip.aspect_ratio = AspectRatio.fromValue((int) readNBit(in, 8, "VUI: aspect_ratio"));
+            vuip.aspect_ratio = AspectRatio.fromValue((int) readNBit(_in, 8, "VUI: aspect_ratio"));
             if (vuip.aspect_ratio == AspectRatio.Extended_SAR) {
-                vuip.sar_width = (int) readNBit(in, 16, "VUI: sar_width");
-                vuip.sar_height = (int) readNBit(in, 16, "VUI: sar_height");
+                vuip.sar_width = (int) readNBit(_in, 16, "VUI: sar_width");
+                vuip.sar_height = (int) readNBit(_in, 16, "VUI: sar_height");
             }
         }
-        vuip.overscan_info_present_flag = readBool(in, "VUI: overscan_info_present_flag");
+        vuip.overscan_info_present_flag = readBool(_in, "VUI: overscan_info_present_flag");
         if (vuip.overscan_info_present_flag) {
-            vuip.overscan_appropriate_flag = readBool(in, "VUI: overscan_appropriate_flag");
+            vuip.overscan_appropriate_flag = readBool(_in, "VUI: overscan_appropriate_flag");
         }
-        vuip.video_signal_type_present_flag = readBool(in, "VUI: video_signal_type_present_flag");
+        vuip.video_signal_type_present_flag = readBool(_in, "VUI: video_signal_type_present_flag");
         if (vuip.video_signal_type_present_flag) {
-            vuip.video_format = (int) readNBit(in, 3, "VUI: video_format");
-            vuip.video_full_range_flag = readBool(in, "VUI: video_full_range_flag");
-            vuip.colour_description_present_flag = readBool(in, "VUI: colour_description_present_flag");
+            vuip.video_format = (int) readNBit(_in, 3, "VUI: video_format");
+            vuip.video_full_range_flag = readBool(_in, "VUI: video_full_range_flag");
+            vuip.colour_description_present_flag = readBool(_in, "VUI: colour_description_present_flag");
             if (vuip.colour_description_present_flag) {
-                vuip.colour_primaries = (int) readNBit(in, 8, "VUI: colour_primaries");
-                vuip.transfer_characteristics = (int) readNBit(in, 8, "VUI: transfer_characteristics");
-                vuip.matrix_coefficients = (int) readNBit(in, 8, "VUI: matrix_coefficients");
+                vuip.colour_primaries = (int) readNBit(_in, 8, "VUI: colour_primaries");
+                vuip.transfer_characteristics = (int) readNBit(_in, 8, "VUI: transfer_characteristics");
+                vuip.matrix_coefficients = (int) readNBit(_in, 8, "VUI: matrix_coefficients");
             }
         }
-        vuip.chroma_loc_info_present_flag = readBool(in, "VUI: chroma_loc_info_present_flag");
+        vuip.chroma_loc_info_present_flag = readBool(_in, "VUI: chroma_loc_info_present_flag");
         if (vuip.chroma_loc_info_present_flag) {
-            vuip.chroma_sample_loc_type_top_field = readUE(in, "VUI chroma_sample_loc_type_top_field");
-            vuip.chroma_sample_loc_type_bottom_field = readUE(in, "VUI chroma_sample_loc_type_bottom_field");
+            vuip.chroma_sample_loc_type_top_field = readUE(_in, "VUI chroma_sample_loc_type_top_field");
+            vuip.chroma_sample_loc_type_bottom_field = readUE(_in, "VUI chroma_sample_loc_type_bottom_field");
         }
-        vuip.timing_info_present_flag = readBool(in, "VUI: timing_info_present_flag");
+        vuip.timing_info_present_flag = readBool(_in, "VUI: timing_info_present_flag");
         if (vuip.timing_info_present_flag) {
-            vuip.num_units_in_tick = (int) readNBit(in, 32, "VUI: num_units_in_tick");
-            vuip.time_scale = (int) readNBit(in, 32, "VUI: time_scale");
-            vuip.fixed_frame_rate_flag = readBool(in, "VUI: fixed_frame_rate_flag");
+            vuip.num_units_in_tick = (int) readNBit(_in, 32, "VUI: num_units_in_tick");
+            vuip.time_scale = (int) readNBit(_in, 32, "VUI: time_scale");
+            vuip.fixed_frame_rate_flag = readBool(_in, "VUI: fixed_frame_rate_flag");
         }
-        boolean nal_hrd_parameters_present_flag = readBool(in, "VUI: nal_hrd_parameters_present_flag");
+        boolean nal_hrd_parameters_present_flag = readBool(_in, "VUI: nal_hrd_parameters_present_flag");
         if (nal_hrd_parameters_present_flag)
-            vuip.nalHRDParams = readHRDParameters(in);
-        boolean vcl_hrd_parameters_present_flag = readBool(in, "VUI: vcl_hrd_parameters_present_flag");
+            vuip.nalHRDParams = readHRDParameters(_in);
+        boolean vcl_hrd_parameters_present_flag = readBool(_in, "VUI: vcl_hrd_parameters_present_flag");
         if (vcl_hrd_parameters_present_flag)
-            vuip.vclHRDParams = readHRDParameters(in);
+            vuip.vclHRDParams = readHRDParameters(_in);
         if (nal_hrd_parameters_present_flag || vcl_hrd_parameters_present_flag) {
-            vuip.low_delay_hrd_flag = readBool(in, "VUI: low_delay_hrd_flag");
+            vuip.low_delay_hrd_flag = readBool(_in, "VUI: low_delay_hrd_flag");
         }
-        vuip.pic_struct_present_flag = readBool(in, "VUI: pic_struct_present_flag");
-        boolean bitstream_restriction_flag = readBool(in, "VUI: bitstream_restriction_flag");
+        vuip.pic_struct_present_flag = readBool(_in, "VUI: pic_struct_present_flag");
+        boolean bitstream_restriction_flag = readBool(_in, "VUI: bitstream_restriction_flag");
         if (bitstream_restriction_flag) {
             vuip.bitstreamRestriction = new VUIParameters.BitstreamRestriction();
-            vuip.bitstreamRestriction.motion_vectors_over_pic_boundaries_flag = readBool(in,
+            vuip.bitstreamRestriction.motion_vectors_over_pic_boundaries_flag = readBool(_in,
                     "VUI: motion_vectors_over_pic_boundaries_flag");
-            vuip.bitstreamRestriction.max_bytes_per_pic_denom = readUE(in, "VUI max_bytes_per_pic_denom");
-            vuip.bitstreamRestriction.max_bits_per_mb_denom = readUE(in, "VUI max_bits_per_mb_denom");
-            vuip.bitstreamRestriction.log2_max_mv_length_horizontal = readUE(in, "VUI log2_max_mv_length_horizontal");
-            vuip.bitstreamRestriction.log2_max_mv_length_vertical = readUE(in, "VUI log2_max_mv_length_vertical");
-            vuip.bitstreamRestriction.num_reorder_frames = readUE(in, "VUI num_reorder_frames");
-            vuip.bitstreamRestriction.max_dec_frame_buffering = readUE(in, "VUI max_dec_frame_buffering");
+            vuip.bitstreamRestriction.max_bytes_per_pic_denom = readUE(_in, "VUI max_bytes_per_pic_denom");
+            vuip.bitstreamRestriction.max_bits_per_mb_denom = readUE(_in, "VUI max_bits_per_mb_denom");
+            vuip.bitstreamRestriction.log2_max_mv_length_horizontal = readUE(_in, "VUI log2_max_mv_length_horizontal");
+            vuip.bitstreamRestriction.log2_max_mv_length_vertical = readUE(_in, "VUI log2_max_mv_length_vertical");
+            vuip.bitstreamRestriction.num_reorder_frames = readUE(_in, "VUI num_reorder_frames");
+            vuip.bitstreamRestriction.max_dec_frame_buffering = readUE(_in, "VUI max_dec_frame_buffering");
         }
 
         return vuip;
     }
 
-    private static HRDParameters readHRDParameters(BitReader in) {
+    private static HRDParameters readHRDParameters(BitReader _in) {
         HRDParameters hrd = new HRDParameters();
-        hrd.cpb_cnt_minus1 = readUE(in, "SPS: cpb_cnt_minus1");
-        hrd.bit_rate_scale = (int) readNBit(in, 4, "HRD: bit_rate_scale");
-        hrd.cpb_size_scale = (int) readNBit(in, 4, "HRD: cpb_size_scale");
+        hrd.cpb_cnt_minus1 = readUE(_in, "SPS: cpb_cnt_minus1");
+        hrd.bit_rate_scale = (int) readNBit(_in, 4, "HRD: bit_rate_scale");
+        hrd.cpb_size_scale = (int) readNBit(_in, 4, "HRD: cpb_size_scale");
         hrd.bit_rate_value_minus1 = new int[hrd.cpb_cnt_minus1 + 1];
         hrd.cpb_size_value_minus1 = new int[hrd.cpb_cnt_minus1 + 1];
         hrd.cbr_flag = new boolean[hrd.cpb_cnt_minus1 + 1];
 
         for (int SchedSelIdx = 0; SchedSelIdx <= hrd.cpb_cnt_minus1; SchedSelIdx++) {
-            hrd.bit_rate_value_minus1[SchedSelIdx] = readUE(in, "HRD: bit_rate_value_minus1");
-            hrd.cpb_size_value_minus1[SchedSelIdx] = readUE(in, "HRD: cpb_size_value_minus1");
-            hrd.cbr_flag[SchedSelIdx] = readBool(in, "HRD: cbr_flag");
+            hrd.bit_rate_value_minus1[SchedSelIdx] = readUE(_in, "HRD: bit_rate_value_minus1");
+            hrd.cpb_size_value_minus1[SchedSelIdx] = readUE(_in, "HRD: cpb_size_value_minus1");
+            hrd.cbr_flag[SchedSelIdx] = readBool(_in, "HRD: cbr_flag");
         }
-        hrd.initial_cpb_removal_delay_length_minus1 = (int) readNBit(in, 5,
+        hrd.initial_cpb_removal_delay_length_minus1 = (int) readNBit(_in, 5,
                 "HRD: initial_cpb_removal_delay_length_minus1");
-        hrd.cpb_removal_delay_length_minus1 = (int) readNBit(in, 5, "HRD: cpb_removal_delay_length_minus1");
-        hrd.dpb_output_delay_length_minus1 = (int) readNBit(in, 5, "HRD: dpb_output_delay_length_minus1");
-        hrd.time_offset_length = (int) readNBit(in, 5, "HRD: time_offset_length");
+        hrd.cpb_removal_delay_length_minus1 = (int) readNBit(_in, 5, "HRD: cpb_removal_delay_length_minus1");
+        hrd.dpb_output_delay_length_minus1 = (int) readNBit(_in, 5, "HRD: dpb_output_delay_length_minus1");
+        hrd.time_offset_length = (int) readNBit(_in, 5, "HRD: time_offset_length");
         return hrd;
     }
 

@@ -10,6 +10,8 @@ import org.jcodec.common.io.AutoPool;
 import org.jcodec.common.io.AutoResource;
 import org.jcodec.common.io.SeekableByteChannel;
 
+import static java.lang.System.currentTimeMillis;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -29,7 +31,7 @@ public class AutoFileChannelWrapper implements SeekableByteChannel, AutoResource
 
     public AutoFileChannelWrapper(File file) throws IOException {
         this.file = file;
-        this.curTime = System.currentTimeMillis();
+        this.curTime = currentTimeMillis();
         AutoPool.getInstance().add(this);
         ensureOpen();
     }

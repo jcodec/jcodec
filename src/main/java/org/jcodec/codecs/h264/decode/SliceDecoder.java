@@ -1,5 +1,6 @@
 package org.jcodec.codecs.h264.decode;
 
+import static java.lang.System.arraycopy;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
 import static org.jcodec.codecs.h264.io.model.MBType.B_Direct_16x16;
@@ -197,14 +198,14 @@ public class SliceDecoder {
 
         int dOff = 0;
         for (int i = 0; i < 16; i++) {
-            System.arraycopy(decoded.getPlaneData(0), dOff, luma, (mbY * 16 + i) * stride + mbX * 16, 16);
+            arraycopy(decoded.getPlaneData(0), dOff, luma, (mbY * 16 + i) * stride + mbX * 16, 16);
             dOff += 16;
         }
         for (int i = 0; i < 8; i++) {
-            System.arraycopy(decoded.getPlaneData(1), i * 8, cb, (mbY * 8 + i) * strideChroma + mbX * 8, 8);
+            arraycopy(decoded.getPlaneData(1), i * 8, cb, (mbY * 8 + i) * strideChroma + mbX * 8, 8);
         }
         for (int i = 0; i < 8; i++) {
-            System.arraycopy(decoded.getPlaneData(2), i * 8, cr, (mbY * 8 + i) * strideChroma + mbX * 8, 8);
+            arraycopy(decoded.getPlaneData(2), i * 8, cr, (mbY * 8 + i) * strideChroma + mbX * 8, 8);
         }
     }
 }

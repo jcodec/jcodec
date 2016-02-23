@@ -78,18 +78,18 @@ public class BitIO {
     }
 
     public static class StreamInputBits implements InputBits {
-        private InputStream in;
+        private InputStream _in;
         private int cur;
         private int bit;
 
-        public StreamInputBits(InputStream in) {
-            this.in = in;
+        public StreamInputBits(InputStream _in) {
+            this._in = _in;
             this.bit = 8;
         }
 
         public int getBit() throws IOException {
             if (bit > 7) {
-                cur = in.read();
+                cur = _in.read();
                 if (cur == -1)
                     return -1;
                 bit = 0;

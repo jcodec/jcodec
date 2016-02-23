@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.IOUtils;
@@ -218,10 +219,10 @@ public class WavHeader {
         }
     }
 
-    public static WavHeader read(ReadableByteChannel in) throws IOException {
+    public static WavHeader read(ReadableByteChannel _in) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(128);
         buf.order(ByteOrder.LITTLE_ENDIAN);
-        in.read(buf);
+        _in.read(buf);
         if (buf.remaining() > 0)
             throw new IOException("Incomplete wav header found");
         buf.flip();
@@ -256,7 +257,7 @@ public class WavHeader {
                     fmt = FmtChunkExtended.get(buf);
                     break;
                 default:
-                    throw new IllegalStateException("Don't know how to handle fmt size: " + size);
+                    throw new UnhandledStateException("Don't know how to handle fmt size: " + size);
                 }
             } else if (!"data".equals(fourcc)) {
                 NIOUtils.skip(buf, size);

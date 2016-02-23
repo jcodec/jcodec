@@ -65,7 +65,7 @@ public class VirtualMP4Movie extends VirtualMovie {
         return new PacketChunk(pkt, trackNo, chunkNo, pos, track.getCodecMeta().getFourcc());
     }
 
-    public class PacketChunk implements MovieSegment {
+    public static class PacketChunk implements MovieSegment {
         private VirtualPacket packet;
         private int track;
         private int no;

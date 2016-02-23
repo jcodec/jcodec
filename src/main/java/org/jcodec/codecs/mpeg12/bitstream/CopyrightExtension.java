@@ -20,18 +20,18 @@ public class CopyrightExtension implements MPEGHeader {
     public int copyright_number_2;
     public int copyright_number_3;
 
-    public static CopyrightExtension read(BitReader in) {
+    public static CopyrightExtension read(BitReader _in) {
         CopyrightExtension ce = new CopyrightExtension();
-        ce.copyright_flag = in.read1Bit();
-        ce.copyright_identifier = in.readNBit(8);
-        ce.original_or_copy = in.read1Bit();
-        in.skip(7);
-        in.read1Bit();
-        ce.copyright_number_1 = in.readNBit(20);
-        in.read1Bit();
-        ce.copyright_number_2 = in.readNBit(22);
-        in.read1Bit();
-        ce.copyright_number_3 = in.readNBit(22);
+        ce.copyright_flag = _in.read1Bit();
+        ce.copyright_identifier = _in.readNBit(8);
+        ce.original_or_copy = _in.read1Bit();
+        _in.skip(7);
+        _in.read1Bit();
+        ce.copyright_number_1 = _in.readNBit(20);
+        _in.read1Bit();
+        ce.copyright_number_2 = _in.readNBit(22);
+        _in.read1Bit();
+        ce.copyright_number_3 = _in.readNBit(22);
         return ce;
     }
 

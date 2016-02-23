@@ -10,7 +10,7 @@ import org.junit.Test;
 
 public class ToJSONTest {
 
-    class Cl1 {
+    static class Cl1 {
         private List<Cl2> arr;
 
         public Cl1() {
@@ -26,7 +26,7 @@ public class ToJSONTest {
         }
     }
 
-    class Cl2 {
+    static class Cl2 {
         private Cl1 owner;
 
         public Cl2(Cl1 owner) {

@@ -361,22 +361,7 @@ public enum MKVType {
                 T elem = (T) create(g.clazz, g.id);
                 elem.type = g;
                 return elem;
-            } catch (SecurityException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (IllegalAccessException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 return (T) new EbmlBin(g.id);
             }

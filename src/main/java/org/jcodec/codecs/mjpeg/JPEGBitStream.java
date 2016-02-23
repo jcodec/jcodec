@@ -16,14 +16,14 @@ import org.jcodec.common.io.VLC;
  */
 public class JPEGBitStream {
     private VLC[] huff;
-    private BitReader in;
+    private BitReader _in;
     private int[] dcPredictor = new int[3];
     private int lumaLen;
     
     
 
     public JPEGBitStream(ByteBuffer b, VLC[] huff, int lumaLen) {
-        this.in = new BitReader(b);
+        this._in = new BitReader(b);
         this.huff = huff;
         this.lumaLen = lumaLen;
     }
@@ -45,22 +45,22 @@ public class JPEGBitStream {
     }
 
     public int readDCValue(int prevDC, VLC table) {
-        int code = table.readVLC(in);
-        return code != 0 ? toValue(in.readNBit(code), code) + prevDC : prevDC;
+        int code = table.readVLC(_in);
+        return code != 0 ? toValue(_in.readNBit(code), code) + prevDC : prevDC;
     }
 
     public void readACValues(int[] target, VLC table) {
         int code;
         int curOff = 1;
         do {
-            code = table.readVLC(in);
+            code = table.readVLC(_in);
             if (code == 0xF0) {
                 curOff += 16;
             } else if (code > 0) {
                 int rle = code >> 4;
                 curOff += rle;
                 int len = code & 0xf;
-                target[curOff] = toValue(in.readNBit(len), len);
+                target[curOff] = toValue(_in.readNBit(len), len);
                 curOff++;
             }
         } while (code != 0 && curOff < 64);

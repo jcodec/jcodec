@@ -37,7 +37,7 @@ public class MTSTrackFactory {
         }
     }
 
-    public class MTSProgram extends MPSTrackFactory {
+    public static class MTSProgram extends MPSTrackFactory {
         private int targetGuid;
 
         public MTSProgram(ByteBuffer index, FilePool fp) throws IOException {
@@ -52,13 +52,16 @@ public class MTSTrackFactory {
 
         @Override
         protected Stream createStream(int streamId) {
-            return new MTSStream(streamId);
+            return new MTSStream(streamId, this);
         }
 
-        public class MTSStream extends Stream {
+        public static class MTSStream extends Stream {
 
-            public MTSStream(int streamId) {
-                super(streamId);
+            private MTSProgram program;
+
+			public MTSStream(int streamId, MTSProgram program) {
+                super(streamId, program);
+				this.program = program;
             }
 
             @Override
@@ -74,7 +77,7 @@ public class MTSTrackFactory {
                     Assert.assertEquals(0x47, tsBuf.get() & 0xff);
                     int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                     int guid = (int) guidFlags & 0x1fff;
-                    if (guid == targetGuid) {
+                    if (guid == program.targetGuid) {
                         int b0 = tsBuf.get() & 0xff;
                         int counter = b0 & 0xf;
                         if ((b0 & 0x20) != 0) {

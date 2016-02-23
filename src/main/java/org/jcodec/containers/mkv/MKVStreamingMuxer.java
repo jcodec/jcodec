@@ -80,7 +80,7 @@ public class MKVStreamingMuxer {
     
     
     public MovieSegment preparePacket(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long previousClustersSize) {
-        WebmCluster wmc = new WebmCluster(track, pkt, chunkNo, trackNo, previousClustersSize);
+        WebmCluster wmc = new WebmCluster(this, track, pkt, chunkNo, trackNo, previousClustersSize);
         if (webmClusters == null)
             webmClusters = new LinkedList<WebmCluster>();
         webmClusters.add(wmc);
@@ -216,7 +216,7 @@ public class MKVStreamingMuxer {
         return -1;
     }
     
-    public class WebmCluster implements MovieSegment {
+    public static class WebmCluster implements MovieSegment {
 
         MkvBlock be = MKVType.createByType(SimpleBlock);
         EbmlMaster c = MKVType.createByType(Cluster);
@@ -224,9 +224,11 @@ public class MKVStreamingMuxer {
         private int chunkNo;
         private int trackNo;
         private long previousClustersSize;
+		private MKVStreamingMuxer muxer;
 
-        public WebmCluster(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long previousClustersSize) {
-            this.pkt = pkt;
+        public WebmCluster(MKVStreamingMuxer muxer, VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long previousClustersSize) {
+            this.muxer = muxer;
+			this.pkt = pkt;
             this.chunkNo = chunkNo;
             this.trackNo = trackNo+1;
             this.previousClustersSize = previousClustersSize;
@@ -264,7 +266,7 @@ public class MKVStreamingMuxer {
         @Override
         public long getPos() {
             try {
-                return this.previousClustersSize+headerChunk.getDataLen();
+                return this.previousClustersSize+muxer.headerChunk.getDataLen();
             } catch (IOException e) {
                 throw new RuntimeException("Couldn't compute header length", e);
             }

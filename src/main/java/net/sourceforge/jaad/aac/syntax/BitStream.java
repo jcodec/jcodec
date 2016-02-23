@@ -2,6 +2,8 @@ package net.sourceforge.jaad.aac.syntax;
 
 import net.sourceforge.jaad.aac.AACException;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
  * under the Public Domain license. Code changes provided by the JCodec project
@@ -45,7 +47,7 @@ public class BitStream implements IBitStream {
 		final int size = WORD_BYTES*((data.length+WORD_BYTES-1)/WORD_BYTES);
 		//only reallocate if needed
 		if(buffer==null||buffer.length!=size) buffer = new byte[size];
-		System.arraycopy(data, 0, buffer, 0, data.length);
+		arraycopy(data, 0, buffer, 0, data.length);
 		reset();
 	}
 

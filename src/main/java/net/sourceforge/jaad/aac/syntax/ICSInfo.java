@@ -76,22 +76,22 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 	}
 
 	/* ========== decoding ========== */
-	public void decode(IBitStream in, DecoderConfig conf, boolean commonWindow) throws AACException {
+	public void decode(IBitStream _in, DecoderConfig conf, boolean commonWindow) throws AACException {
 		final SampleFrequency sf = conf.getSampleFrequency();
 		if(sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE)) throw new AACException("invalid sample frequency");
 
-		in.skipBit(); //reserved
-		windowSequence = WindowSequence.forInt(in.readBits(2));
+		_in.skipBit(); //reserved
+		windowSequence = WindowSequence.forInt(_in.readBits(2));
 		windowShape[PREVIOUS] = windowShape[CURRENT];
-		windowShape[CURRENT] = in.readBit();
+		windowShape[CURRENT] = _in.readBit();
 
 		windowGroupCount = 1;
 		windowGroupLength[0] = 1;
 		if(windowSequence.equals(WindowSequence.EIGHT_SHORT_SEQUENCE)) {
-			maxSFB = in.readBits(4);
+			maxSFB = _in.readBits(4);
 			int i;
 			for(i = 0; i<7; i++) {
-				if(in.readBool()) windowGroupLength[windowGroupCount-1]++;
+				if(_in.readBool()) windowGroupLength[windowGroupCount-1]++;
 				else {
 					windowGroupCount++;
 					windowGroupLength[windowGroupCount-1] = 1;
@@ -103,38 +103,38 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 			predictionDataPresent = false;
 		}
 		else {
-			maxSFB = in.readBits(6);
+			maxSFB = _in.readBits(6);
 			windowCount = 1;
 			swbOffsets = SWB_OFFSET_LONG_WINDOW[sf.getIndex()];
 			swbCount = SWB_LONG_WINDOW_COUNT[sf.getIndex()];
-			predictionDataPresent = in.readBool();
-			if(predictionDataPresent) readPredictionData(in, conf.getProfile(), sf, commonWindow);
+			predictionDataPresent = _in.readBool();
+			if(predictionDataPresent) readPredictionData(_in, conf.getProfile(), sf, commonWindow);
 		}
 	}
 
-	private void readPredictionData(IBitStream in, Profile profile, SampleFrequency sf, boolean commonWindow) throws AACException {
+	private void readPredictionData(IBitStream _in, Profile profile, SampleFrequency sf, boolean commonWindow) throws AACException {
 		switch(profile) {
 			case AAC_MAIN:
 				if(icPredict==null) icPredict = new ICPrediction();
-				icPredict.decode(in, maxSFB, sf);
+				icPredict.decode(_in, maxSFB, sf);
 				break;
 			case AAC_LTP:
-				if(ltpData1Present = in.readBool()) {
+				if(ltpData1Present = _in.readBool()) {
 					if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
-					ltPredict1.decode(in, this, profile);
+					ltPredict1.decode(_in, this, profile);
 				}
 				if(commonWindow) {
-					if(ltpData2Present = in.readBool()) {
+					if(ltpData2Present = _in.readBool()) {
 						if(ltPredict2==null) ltPredict2 = new LTPrediction(frameLength);
-						ltPredict2.decode(in, this, profile);
+						ltPredict2.decode(_in, this, profile);
 					}
 				}
 				break;
 			case ER_AAC_LTP:
 				if(!commonWindow) {
-					if(ltpData1Present = in.readBool()) {
+					if(ltpData1Present = _in.readBool()) {
 						if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
-						ltPredict1.decode(in, this, profile);
+						ltPredict1.decode(_in, this, profile);
 					}
 				}
 				break;

@@ -20,17 +20,17 @@ public class PictureSpatialScalableExtension implements MPEGHeader {
     public int lower_layer_progressive_frame;
     public int lower_layer_deinterlaced_field_select;
 
-    public static PictureSpatialScalableExtension read(BitReader in) {
+    public static PictureSpatialScalableExtension read(BitReader _in) {
         PictureSpatialScalableExtension psse = new PictureSpatialScalableExtension();
 
-        psse.lower_layer_temporal_reference = in.readNBit(10);
-        in.read1Bit();
-        psse.lower_layer_horizontal_offset = in.readNBit(15);
-        in.read1Bit();
-        psse.lower_layer_vertical_offset = in.readNBit(15);
-        psse.spatial_temporal_weight_code_table_index = in.readNBit(2);
-        psse.lower_layer_progressive_frame = in.read1Bit();
-        psse.lower_layer_deinterlaced_field_select = in.read1Bit();
+        psse.lower_layer_temporal_reference = _in.readNBit(10);
+        _in.read1Bit();
+        psse.lower_layer_horizontal_offset = _in.readNBit(15);
+        _in.read1Bit();
+        psse.lower_layer_vertical_offset = _in.readNBit(15);
+        psse.spatial_temporal_weight_code_table_index = _in.readNBit(2);
+        psse.lower_layer_progressive_frame = _in.read1Bit();
+        psse.lower_layer_deinterlaced_field_select = _in.read1Bit();
 
         return psse;
     }

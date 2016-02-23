@@ -2,6 +2,8 @@ package org.jcodec.common;
 
 import java.util.Arrays;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -27,14 +29,14 @@ public class LongArrayList {
 
     public long[] toArray() {
         long[] result = new long[size];
-        System.arraycopy(storage, 0, result, 0, size);
+        arraycopy(storage, 0, result, 0, size);
         return result;
     }
 
     public void add(long val) {
         if (size >= storage.length) {
             long[] ns = new long[storage.length + growAmount];
-            System.arraycopy(storage, 0, ns, 0, storage.length);
+            arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
         storage[size++] = val;
@@ -61,7 +63,7 @@ public class LongArrayList {
     public void fill(int start, int end, int val) {
         if (end > storage.length) {
             long[] ns = new long[end + growAmount];
-            System.arraycopy(storage, 0, ns, 0, storage.length);
+            arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
         Arrays.fill(storage, start, end, val);
@@ -75,10 +77,10 @@ public class LongArrayList {
     public void addAll(long[] other) {
         if (size + other.length >= storage.length) {
             long[] ns = new long[size + growAmount + other.length];
-            System.arraycopy(storage, 0, ns, 0, size);
+            arraycopy(storage, 0, ns, 0, size);
             storage = ns;
         }
-        System.arraycopy(other, 0, storage, size, other.length);
+        arraycopy(other, 0, storage, size, other.length);
         size += other.length;
     }
 

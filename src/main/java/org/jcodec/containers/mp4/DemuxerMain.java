@@ -151,9 +151,9 @@ public class DemuxerMain {
 
     private static void testAudioMuxer(File wav, File out) throws IOException {
         WavHeader header = WavHeader.read(wav);
-        RandomAccessFile in = new RandomAccessFile(wav, "r");
-        in.seek(header.dataOffset);
-        FileChannel ch = in.getChannel();
+        RandomAccessFile _in = new RandomAccessFile(wav, "r");
+        _in.seek(header.dataOffset);
+        FileChannel ch = _in.getChannel();
         MP4Muxer muxer = new MP4Muxer(writableFileChannel(out));
         PCMMP4MuxerTrack track = muxer.addPCMTrack(48000, 1, 3,
                 MP4Muxer.audioSampleEntry("in24", 1, 3, 1, 48000, Endian.LITTLE_ENDIAN));
@@ -195,12 +195,12 @@ public class DemuxerMain {
             return;
         }
 
-        InputStream in = new BufferedInputStream(new FileInputStream(src));
-        in.skip(mdatOff);
+        InputStream _in = new BufferedInputStream(new FileInputStream(src));
+        _in.skip(mdatOff);
         OutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
 
         for (int i = 0; i < mdatSize; i++) {
-            out.write(in.read());
+            out.write(_in.read());
         }
     }
 

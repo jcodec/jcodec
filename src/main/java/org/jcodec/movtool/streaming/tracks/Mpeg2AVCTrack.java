@@ -33,7 +33,7 @@ import org.jcodec.movtool.streaming.VirtualTrack;
 public class Mpeg2AVCTrack implements VirtualTrack {
 
     public static final int TARGET_RATE = 1024;
-    private int frameSize;
+    private final int frameSize;
     protected VirtualTrack src;
     private CodecMeta se;
     private ThreadLocal<MPEGToAVCTranscoder> transcoders = new ThreadLocal<MPEGToAVCTranscoder>();
@@ -74,8 +74,9 @@ public class Mpeg2AVCTrack implements VirtualTrack {
 
         se = createCodecMeta(src, encoder, thumbWidth, thumbHeight);
 
-        frameSize = rc.calcFrameSize(mbW * mbH);
-        frameSize += frameSize >> 4;
+        int _frameSize = rc.calcFrameSize(mbW * mbH);
+        _frameSize += _frameSize >> 4;
+        this.frameSize = _frameSize;
     }
 
     @Override
@@ -90,7 +91,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
 
         if (nextPacket.isKeyframe()) {
             prevGop = gop;
-            gop = new GOP(nextPacket.getFrameNo(), prevGop);
+            gop = new GOP(this, nextPacket.getFrameNo(), prevGop);
             if (prevGop != null)
                 prevGop.setNextGop(gop);
         }
@@ -102,16 +103,18 @@ public class Mpeg2AVCTrack implements VirtualTrack {
         return ret;
     }
 
-    private class GOP {
+    private static class GOP {
         private List<VirtualPacket> packets = new ArrayList<VirtualPacket>();
         private ByteBuffer[] data;
         private int frameNo;
         private GOP nextGop;
         private GOP prevGop;
         private List<ByteBuffer> leadingB;
+		private Mpeg2AVCTrack track;
 
-        public GOP(int frameNo, GOP prevGop) {
-            this.frameNo = frameNo;
+        public GOP(Mpeg2AVCTrack track, int frameNo, GOP prevGop) {
+            this.track = track;
+			this.frameNo = frameNo;
             this.prevGop = prevGop;
         }
 
@@ -121,7 +124,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
 
         public VirtualPacket addPacket(VirtualPacket pkt) {
             packets.add(pkt);
-            return new TranscodePacket(pkt, this, packets.size() - 1);
+            return new TranscodePacket(pkt, this, packets.size() - 1, track.frameSize);
         }
 
         private synchronized void transcode() throws IOException {
@@ -132,10 +135,10 @@ public class Mpeg2AVCTrack implements VirtualTrack {
             data = new ByteBuffer[packets.size()];
             for (int tr = 0; tr < 2; tr++) {
                 try {
-                    MPEGToAVCTranscoder t = transcoders.get();
+                    MPEGToAVCTranscoder t = track.transcoders.get();
                     if (t == null) {
-                        t = createTranscoder(scaleFactor);
-                        transcoders.set(t);
+                        t = track.createTranscoder(track.scaleFactor);
+                        track.transcoders.set(t);
                     }
                     carryLeadingBOver();
 
@@ -150,7 +153,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                         } else if (numRefs < 2) {
                             continue;
                         }
-                        ByteBuffer buf = ByteBuffer.allocate(frameSize);
+                        ByteBuffer buf = ByteBuffer.allocate(track.frameSize);
                         data[i] = t.transcodeFrame(pktData, buf, i == 0, binarySearch(pts, pkt.getPts()));
                     }
 
@@ -169,7 +172,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                             if (numRefs >= 2)
                                 break;
 
-                            ByteBuffer buf = ByteBuffer.allocate(frameSize);
+                            ByteBuffer buf = ByteBuffer.allocate(track.frameSize);
                             nextGop.leadingB
                                     .add(t.transcodeFrame(pktData, buf, i == 0, binarySearch(pts, pkt.getPts())));
                         }
@@ -224,14 +227,16 @@ public class Mpeg2AVCTrack implements VirtualTrack {
         return -1;
     }
 
-    private class TranscodePacket extends VirtualPacketWrapper {
+    private static class TranscodePacket extends VirtualPacketWrapper {
         private GOP gop;
         private int index;
+		private int frameSize;
 
-        public TranscodePacket(VirtualPacket nextPacket, GOP gop, int index) {
+        public TranscodePacket(VirtualPacket nextPacket, GOP gop, int index, int frameSize) {
             super(nextPacket);
             this.gop = gop;
             this.index = index;
+			this.frameSize = frameSize;
         }
 
         @Override

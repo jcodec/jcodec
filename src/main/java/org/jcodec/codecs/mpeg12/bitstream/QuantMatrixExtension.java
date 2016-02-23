@@ -19,24 +19,24 @@ public class QuantMatrixExtension implements MPEGHeader {
     public int[] chroma_intra_quantiser_matrix;
     public int[] chroma_non_intra_quantiser_matrix;
 
-    public static QuantMatrixExtension read(BitReader in) {
+    public static QuantMatrixExtension read(BitReader _in) {
         QuantMatrixExtension qme = new QuantMatrixExtension();
-        if (in.read1Bit() != 0)
-            qme.intra_quantiser_matrix = readQMat(in);
-        if (in.read1Bit() != 0)
-            qme.non_intra_quantiser_matrix = readQMat(in);
-        if (in.read1Bit() != 0)
-            qme.chroma_intra_quantiser_matrix = readQMat(in);
-        if (in.read1Bit() != 0)
-            qme.chroma_non_intra_quantiser_matrix = readQMat(in);
+        if (_in.read1Bit() != 0)
+            qme.intra_quantiser_matrix = readQMat(_in);
+        if (_in.read1Bit() != 0)
+            qme.non_intra_quantiser_matrix = readQMat(_in);
+        if (_in.read1Bit() != 0)
+            qme.chroma_intra_quantiser_matrix = readQMat(_in);
+        if (_in.read1Bit() != 0)
+            qme.chroma_non_intra_quantiser_matrix = readQMat(_in);
 
         return qme;
     }
 
-    private static int[] readQMat(BitReader in) {
+    private static int[] readQMat(BitReader _in) {
         int[] qmat = new int[64];
         for (int i = 0; i < 64; i++)
-            qmat[i] = in.readNBit(8);
+            qmat[i] = _in.readNBit(8);
         return qmat;
     }
 

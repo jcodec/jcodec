@@ -38,6 +38,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
@@ -101,7 +102,7 @@ public class SeekHeadFactoryTest {
         for (int i = 0; i < segmentElem.children.size() && i < 4; i++) {
             EbmlBase e = segmentElem.children.get(i);
             if (!e.type.equals(Tracks) && !e.type.equals(Info) && !e.type.equals(Tags) && !e.type.equals(Cues)) {
-                throw new IllegalStateException("Unknown entry found among segment children, index " + i);
+                throw new UnhandledStateException("Unknown entry found among segment children, index " + i);
             }
             shi.add(e);
         }

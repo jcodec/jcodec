@@ -59,21 +59,21 @@ public class PictureHeader implements MPEGHeader {
     }
 
     public static PictureHeader read(ByteBuffer bb) {
-        BitReader in = new BitReader(bb);
+        BitReader _in = new BitReader(bb);
         PictureHeader ph = new PictureHeader();
-        ph.temporal_reference = in.readNBit(10);
-        ph.picture_coding_type = in.readNBit(3);
-        ph.vbv_delay = in.readNBit(16);
+        ph.temporal_reference = _in.readNBit(10);
+        ph.picture_coding_type = _in.readNBit(3);
+        ph.vbv_delay = _in.readNBit(16);
         if (ph.picture_coding_type == 2 || ph.picture_coding_type == 3) {
-            ph.full_pel_forward_vector = in.read1Bit();
-            ph.forward_f_code = in.readNBit(3);
+            ph.full_pel_forward_vector = _in.read1Bit();
+            ph.forward_f_code = _in.readNBit(3);
         }
         if (ph.picture_coding_type == 3) {
-            ph.full_pel_backward_vector = in.read1Bit();
-            ph.backward_f_code = in.readNBit(3);
+            ph.full_pel_backward_vector = _in.read1Bit();
+            ph.backward_f_code = _in.readNBit(3);
         }
-        while (in.read1Bit() == 1) {
-            in.readNBit(8);
+        while (_in.read1Bit() == 1) {
+            _in.readNBit(8);
         }
 
         return ph;
@@ -81,27 +81,27 @@ public class PictureHeader implements MPEGHeader {
 
     public static void readExtension(ByteBuffer bb, PictureHeader ph, SequenceHeader sh) {
         ph.hasExtensions = true;
-        BitReader in = new BitReader(bb);
-        int extType = in.readNBit(4);
+        BitReader _in = new BitReader(bb);
+        int extType = _in.readNBit(4);
         switch (extType) {
         case Quant_Matrix_Extension:
-            ph.quantMatrixExtension = QuantMatrixExtension.read(in);
+            ph.quantMatrixExtension = QuantMatrixExtension.read(_in);
             break;
         case Copyright_Extension:
-            ph.copyrightExtension = CopyrightExtension.read(in);
+            ph.copyrightExtension = CopyrightExtension.read(_in);
             break;
         case Picture_Display_Extension:
-            ph.pictureDisplayExtension = PictureDisplayExtension.read(in, sh.sequenceExtension,
+            ph.pictureDisplayExtension = PictureDisplayExtension.read(_in, sh.sequenceExtension,
                     ph.pictureCodingExtension);
             break;
         case Picture_Coding_Extension:
-            ph.pictureCodingExtension = PictureCodingExtension.read(in);
+            ph.pictureCodingExtension = PictureCodingExtension.read(_in);
             break;
         case Picture_Spatial_Scalable_Extension:
-            ph.pictureSpatialScalableExtension = PictureSpatialScalableExtension.read(in);
+            ph.pictureSpatialScalableExtension = PictureSpatialScalableExtension.read(_in);
             break;
         case Picture_Temporal_Scalable_Extension:
-            ph.pictureTemporalScalableExtension = PictureTemporalScalableExtension.read(in);
+            ph.pictureTemporalScalableExtension = PictureTemporalScalableExtension.read(_in);
             break;
         default:
             throw new RuntimeException("Unsupported extension: " + extType);

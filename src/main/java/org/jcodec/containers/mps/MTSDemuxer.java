@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -104,7 +105,7 @@ public class MTSDemuxer implements MPEGDemuxer {
         }
 
         public int write(ByteBuffer src) throws IOException {
-            throw new UnsupportedOperationException();
+            throw new NotSupportedException();
         }
 
         public long position() throws IOException {

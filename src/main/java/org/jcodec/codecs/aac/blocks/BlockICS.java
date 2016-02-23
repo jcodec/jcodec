@@ -70,17 +70,17 @@ public class BlockICS extends Block {
         ONLY_LONG_SEQUENCE, LONG_START_SEQUENCE, EIGHT_SHORT_SEQUENCE, LONG_STOP_SEQUENCE;
     }
 
-    protected int parseICSInfo(BitReader in) {
-        in.read1Bit();
-        windowSequence = (int) in.readNBit(2);
-        int useKbWindow = in.read1Bit();
+    protected int parseICSInfo(BitReader _in) {
+        _in.read1Bit();
+        windowSequence = (int) _in.readNBit(2);
+        int useKbWindow = _in.read1Bit();
         num_window_groups = 1;
         group_len[0] = 1;
         if (windowSequence == WindowSequence.EIGHT_SHORT_SEQUENCE.ordinal()) {
-            int max_sfb = (int) in.readNBit(4);
+            int max_sfb = (int) _in.readNBit(4);
 
             for (int i = 0; i < 7; i++) {
-                if (in.read1Bit() != 0) {
+                if (_in.read1Bit() != 0) {
                     group_len[num_window_groups - 1]++;
                 } else {
                     num_window_groups++;
@@ -91,21 +91,21 @@ public class BlockICS extends Block {
             swbOffset = AACTab.ff_swb_offset_128[samplingIndex];
             numWindows = 8;
         } else {
-            maxSfb = (int) in.readNBit(6);
+            maxSfb = (int) _in.readNBit(6);
             numSwb = AACTab.ff_aac_num_swb_1024[samplingIndex];
             swbOffset = AACTab.ff_swb_offset_1024[samplingIndex];
             numWindows = 1;
 
-            int predictor_present = in.read1Bit();
+            int predictor_present = _in.read1Bit();
             if (predictor_present != 0) {
                 if (profile == MAIN) {
-                    decodePrediction(in, maxSfb);
+                    decodePrediction(_in, maxSfb);
                 } else if (profile == LC) {
-                    throw new RuntimeException("Prediction is not allowed in AAC-LC.\n");
+                    throw new RuntimeException("Prediction is not allowed _in AAC-LC.\n");
                 } else {
-                    int ltpPresent = in.read1Bit();
+                    int ltpPresent = _in.read1Bit();
                     if (ltpPresent != 0)
-                        decodeLtp(in, maxSfb);
+                        decodeLtp(_in, maxSfb);
                 }
             }
         }
@@ -113,24 +113,24 @@ public class BlockICS extends Block {
         return 0;
     }
 
-    private void decodePrediction(BitReader in, int maxSfb) {
-        if (in.read1Bit() != 0) {
-            int predictorResetGroup = (int) in.readNBit(5);
+    private void decodePrediction(BitReader _in, int maxSfb) {
+        if (_in.read1Bit() != 0) {
+            int predictorResetGroup = (int) _in.readNBit(5);
         }
         for (int sfb = 0; sfb < min(maxSfb, AACTab.maxSfbTab[samplingIndex]); sfb++) {
-            in.read1Bit();
+            _in.read1Bit();
         }
     }
 
-    private void decodeLtp(BitReader in, int maxSfb) {
+    private void decodeLtp(BitReader _in, int maxSfb) {
 
-        int lag = (int) in.readNBit(11);
-        float coef = AACTab.ltpCoefTab[(int) in.readNBit(3)];
+        int lag = (int) _in.readNBit(11);
+        float coef = AACTab.ltpCoefTab[(int) _in.readNBit(3)];
         for (int sfb = 0; sfb < min(maxSfb, MAX_LTP_LONG_SFB); sfb++)
-            in.read1Bit();
+            _in.read1Bit();
     }
 
-    private void decodeBandTypes(BitReader in) {
+    private void decodeBandTypes(BitReader _in) {
         int g, idx = 0;
         int bits = (windowSequence == WindowSequence.EIGHT_SHORT_SEQUENCE.ordinal()) ? 3 : 5;
         for (g = 0; g < num_window_groups; g++) {
@@ -138,14 +138,14 @@ public class BlockICS extends Block {
             while (k < maxSfb) {
                 int sect_end = k;
                 int sect_len_incr;
-                int sect_band_type = (int) in.readNBit(4);
+                int sect_band_type = (int) _in.readNBit(4);
                 if (sect_band_type == 12) {
                     throw new RuntimeException("invalid band type");
                 }
-                while ((sect_len_incr = (int) in.readNBit(bits)) == (1 << bits) - 1)
+                while ((sect_len_incr = (int) _in.readNBit(bits)) == (1 << bits) - 1)
                     sect_end += sect_len_incr;
                 sect_end += sect_len_incr;
-                if (!in.moreData() || sect_len_incr == (1 << bits) - 1) {
+                if (!_in.moreData() || sect_len_incr == (1 << bits) - 1) {
                     throw new RuntimeException("Overread");
                 }
                 if (sect_end > maxSfb) {
@@ -176,7 +176,7 @@ public class BlockICS extends Block {
             ff_aac_pow2sf_tab[i] = (float) pow(2, (i - POW_SF2_ZERO) / 4.);
     }
 
-    private void decodeScalefactors(BitReader in) {
+    private void decodeScalefactors(BitReader _in) {
         int[] offset = new int[] { globalGain, globalGain - 90, 0 };
         int clipped_offset;
         int noise_flag = 1;
@@ -190,12 +190,12 @@ public class BlockICS extends Block {
                         sfs[idx] = 0.;
                 } else if ((band_type[idx] == INTENSITY_BT.ordinal()) || (band_type[idx] == INTENSITY_BT2.ordinal())) {
                     for (; i < run_end; i++, idx++) {
-                        offset[2] += vlc.readVLC(in) - 60;
+                        offset[2] += vlc.readVLC(_in) - 60;
                         clipped_offset = clip(offset[2], -155, 100);
                         if (offset[2] != clipped_offset) {
                             System.out.println(String.format("Intensity stereo "
                                     + "position clipped (%d -> %d).\nIf you heard an "
-                                    + "audible artifact, there may be a bug in the " + "decoder. ", offset[2],
+                                    + "audible artifact, there may be a bug _in the " + "decoder. ", offset[2],
                                     clipped_offset));
                         }
                         sfs[idx] = ff_aac_pow2sf_tab[-clipped_offset + POW_SF2_ZERO];
@@ -203,20 +203,20 @@ public class BlockICS extends Block {
                 } else if (band_type[idx] == NOISE_BT.ordinal()) {
                     for (; i < run_end; i++, idx++) {
                         if (noise_flag-- > 0)
-                            offset[1] += in.readNBit(9) - 256;
+                            offset[1] += _in.readNBit(9) - 256;
                         else
-                            offset[1] += vlc.readVLC(in) - 60;
+                            offset[1] += vlc.readVLC(_in) - 60;
                         clipped_offset = clip(offset[1], -100, 155);
                         if (offset[1] != clipped_offset) {
                             System.out.println(String.format("Noise gain clipped "
                                     + "(%d -> %d).\nIf you heard an audible "
-                                    + "artifact, there may be a bug in the decoder. ", offset[1], clipped_offset));
+                                    + "artifact, there may be a bug _in the decoder. ", offset[1], clipped_offset));
                         }
                         sfs[idx] = -ff_aac_pow2sf_tab[clipped_offset + POW_SF2_ZERO];
                     }
                 } else {
                     for (; i < run_end; i++, idx++) {
-                        offset[0] += vlc.readVLC(in) - 60;
+                        offset[0] += vlc.readVLC(_in) - 60;
                         if (offset[0] > 255) {
                             throw new RuntimeException(String.format("%s (%d) out of range.\n", sf_str[0], offset[0]));
                         }
@@ -252,24 +252,24 @@ public class BlockICS extends Block {
         }
     }
 
-    private Pulse decodePulses(BitReader in) {
+    private Pulse decodePulses(BitReader _in) {
         int[] pos = new int[4];
         int[] amp = new int[4];
 
-        int numPulse = (int) in.readNBit(2) + 1;
-        int pulseSwb = (int) in.readNBit(6);
+        int numPulse = (int) _in.readNBit(2) + 1;
+        int pulseSwb = (int) _in.readNBit(6);
         if (pulseSwb >= numSwb)
             throw new RuntimeException("pulseSwb >= numSwb");
         pos[0] = swbOffset[pulseSwb];
-        pos[0] += (int) in.readNBit(5);
+        pos[0] += (int) _in.readNBit(5);
         if (pos[0] > 1023)
             throw new RuntimeException("pos[0] > 1023");
-        amp[0] = (int) in.readNBit(4);
+        amp[0] = (int) _in.readNBit(4);
         for (int i = 1; i < numPulse; i++) {
-            pos[i] = (int) in.readNBit(5) + pos[i - 1];
+            pos[i] = (int) _in.readNBit(5) + pos[i - 1];
             if (pos[i] > 1023)
                 throw new RuntimeException("pos[" + i + "] > 1023");
-            amp[i] = (int) in.readNBit(5);
+            amp[i] = (int) _in.readNBit(5);
         }
         return new Pulse(numPulse, pos, amp);
     }
@@ -291,7 +291,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private Tns decodeTns(BitReader in) {
+    private Tns decodeTns(BitReader _in) {
         int is8 = windowSequence == WindowSequence.EIGHT_SHORT_SEQUENCE.ordinal() ? 1 : 0;
         int tns_max_order = is8 != 0 ? 7 : profile == Profile.MAIN ? 20 : 12;
         int[] nFilt = new int[numWindows];
@@ -300,25 +300,25 @@ public class BlockICS extends Block {
         int[][] direction = new int[numWindows][2];
         float[][][] coeff = new float[numWindows][2][1 << (5 - 2 * is8)];
         for (int w = 0; w < numWindows; w++) {
-            if ((nFilt[w] = (int) in.readNBit(2 - is8)) != 0) {
-                int coefRes = in.read1Bit();
+            if ((nFilt[w] = (int) _in.readNBit(2 - is8)) != 0) {
+                int coefRes = _in.read1Bit();
 
                 for (int filt = 0; filt < nFilt[w]; filt++) {
                     int tmp2_idx;
-                    length[w][filt] = (int) in.readNBit(6 - 2 * is8);
+                    length[w][filt] = (int) _in.readNBit(6 - 2 * is8);
 
-                    if ((order[w][filt] = (int) in.readNBit(5 - 2 * is8)) > tns_max_order) {
+                    if ((order[w][filt] = (int) _in.readNBit(5 - 2 * is8)) > tns_max_order) {
                         throw new RuntimeException(String.format("TNS filter order %d is greater than maximum %d.\n",
                                 order[w][filt], tns_max_order));
                     }
                     if (order[w][filt] != 0) {
-                        direction[w][filt] = in.read1Bit();
-                        int coefCompress = in.read1Bit();
+                        direction[w][filt] = _in.read1Bit();
+                        int coefCompress = _in.read1Bit();
                         int coefLen = coefRes + 3 - coefCompress;
                         tmp2_idx = 2 * coefCompress + coefRes;
 
                         for (int i = 0; i < order[w][filt]; i++)
-                            coeff[w][filt][i] = AACTab.tns_tmp2_map[tmp2_idx][(int) in.readNBit(coefLen)];
+                            coeff[w][filt][i] = AACTab.tns_tmp2_map[tmp2_idx][(int) _in.readNBit(coefLen)];
                     }
                 }
             }
@@ -365,7 +365,7 @@ public class BlockICS extends Block {
         result[idx + 1] = v[code >> 4 & 15] * scale;
     }
 
-    private void decodeSpectrum(BitReader in) {
+    private void decodeSpectrum(BitReader _in) {
         float[] coef = new float[1024];
         int idx = 0;
 
@@ -377,30 +377,30 @@ public class BlockICS extends Block {
                     VLC vlc = spectral[cbt_m1];
                     switch (cbt_m1 >> 1) {
                     case 0:
-                        readBandType1And2(in, coef, idx, g, i, vq, vlc);
+                        readBandType1And2(_in, coef, idx, g, i, vq, vlc);
                         break;
 
                     case 1:
-                        readBandType3And4(in, coef, idx, g, i, vq, vlc);
+                        readBandType3And4(_in, coef, idx, g, i, vq, vlc);
                         break;
 
                     case 2:
-                        readBandType5And6(in, coef, idx, g, i, vq, vlc);
+                        readBandType5And6(_in, coef, idx, g, i, vq, vlc);
                         break;
 
                     case 3:
                     case 4:
-                        readBandType7Through10(in, coef, idx, g, i, vq, vlc);
+                        readBandType7Through10(_in, coef, idx, g, i, vq, vlc);
                         break;
                     default:
-                        readOther(in, coef, idx, g, i, vq, vlc);
+                        readOther(_in, coef, idx, g, i, vq, vlc);
                     }
                 }
             }
         }
     }
 
-    private void readBandType3And4(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
+    private void readBandType3And4(BitReader _in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -410,9 +410,9 @@ public class BlockICS extends Block {
             int len = off_len;
 
             do {
-                int cb_idx = vlc.readVLC(in);
+                int cb_idx = vlc.readVLC(_in);
                 int nnz = cb_idx >> 8 & 15;
-                int bits = nnz == 0 ? 0 : in.readNBit(nnz);
+                int bits = nnz == 0 ? 0 : _in.readNBit(nnz);
                 VMUL4S(coef, cf, vq, cb_idx, bits, (float) sfs[idx]);
                 cf += 4;
                 len -= 4;
@@ -420,7 +420,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void readBandType7Through10(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
+    private void readBandType7Through10(BitReader _in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -430,9 +430,9 @@ public class BlockICS extends Block {
             int len = off_len;
 
             do {
-                int cb_idx = vlc.readVLC(in);
+                int cb_idx = vlc.readVLC(_in);
                 int nnz = cb_idx >> 8 & 15;
-                int bits = nnz == 0 ? 0 : (in.readNBit(nnz) << (cb_idx >> 12));
+                int bits = nnz == 0 ? 0 : (_in.readNBit(nnz) << (cb_idx >> 12));
                 VMUL2S(coef, cf, vq, cb_idx, bits, (float) sfs[idx]);
                 cf += 2;
                 len -= 2;
@@ -440,7 +440,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void readOther(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
+    private void readOther(BitReader _in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -450,12 +450,12 @@ public class BlockICS extends Block {
             int len = off_len;
 
             do {
-                int cb_idx = vlc.readVLC(in);
+                int cb_idx = vlc.readVLC(_in);
 
                 if (cb_idx != 0) {
                     int nnz = cb_idx >> 12;
                     int nzt = cb_idx >> 8;
-                    int bits = in.readNBit(nnz) << (32 - nnz);
+                    int bits = _in.readNBit(nnz) << (32 - nnz);
 
                     for (int j = 0; j < 2; j++) {
                         if ((nzt & 1 << j) != 0) {
@@ -467,15 +467,15 @@ public class BlockICS extends Block {
                              * 111111110xxxxxxxxxxxx).
                              */
 
-                            b = ProresDecoder.nZeros(~in.checkNBit(14));
+                            b = ProresDecoder.nZeros(~_in.checkNBit(14));
 
                             if (b > 8) {
-                                throw new RuntimeException("error in spectral data, ESC overflow\n");
+                                throw new RuntimeException("error _in spectral data, ESC overflow\n");
                             }
 
-                            in.skip(b + 1);
+                            _in.skip(b + 1);
                             b += 4;
-                            n = (1 << b) + in.readNBit(b);
+                            n = (1 << b) + _in.readNBit(b);
                             coef[cf++] = MathUtil.cubeRoot(n) | (bits & 1 << 31);
                             bits <<= 1;
                         } else {
@@ -492,7 +492,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void readBandType1And2(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
+    private void readBandType1And2(BitReader _in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -502,7 +502,7 @@ public class BlockICS extends Block {
             int len = off_len;
 
             do {
-                int cb_idx = vlc.readVLC(in);
+                int cb_idx = vlc.readVLC(_in);
                 VMUL4(coef, cf, vq, cb_idx, (float) sfs[idx]);
                 cf += 4;
                 len -= 4;
@@ -510,7 +510,7 @@ public class BlockICS extends Block {
         }
     }
 
-    private void readBandType5And6(BitReader in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
+    private void readBandType5And6(BitReader _in, float[] coef, int idx, int g, int sfb, float[] vq, VLC vlc) {
         int g_len = group_len[g];
         int cfo = swbOffset[sfb];
         int off_len = swbOffset[sfb + 1] - swbOffset[sfb];
@@ -519,7 +519,7 @@ public class BlockICS extends Block {
             int len = off_len;
 
             do {
-                int cb_idx = vlc.readVLC(in);
+                int cb_idx = vlc.readVLC(_in);
                 VMUL2(coef, cf, vq, cb_idx, (float) sfs[idx]);
                 cf += 2;
                 len -= 2;
@@ -527,33 +527,33 @@ public class BlockICS extends Block {
         }
     }
 
-    public void parse(BitReader in) {
-        globalGain = (int) in.readNBit(8);
+    public void parse(BitReader _in) {
+        globalGain = (int) _in.readNBit(8);
 
         if (!commonWindow && !scaleFlag) {
-            parseICSInfo(in);
+            parseICSInfo(_in);
         }
 
-        decodeBandTypes(in);
-        decodeScalefactors(in);
+        decodeBandTypes(_in);
+        decodeScalefactors(_in);
 
         int pulse_present = 0;
         int tns_present;
         if (!scaleFlag) {
-            if ((pulse_present = in.read1Bit()) != 0) {
+            if ((pulse_present = _in.read1Bit()) != 0) {
                 if (windowSequence == WindowSequence.EIGHT_SHORT_SEQUENCE.ordinal()) {
-                    throw new RuntimeException("Pulse tool not allowed in eight short sequence.");
+                    throw new RuntimeException("Pulse tool not allowed _in eight short sequence.");
                 }
-                decodePulses(in);
+                decodePulses(_in);
             }
-            if ((tns_present = in.read1Bit()) != 0) {
-                decodeTns(in);
+            if ((tns_present = _in.read1Bit()) != 0) {
+                decodeTns(_in);
             }
-            if (in.read1Bit() != 0) {
+            if (_in.read1Bit() != 0) {
                 throw new RuntimeException("SSR is not supported");
             }
         }
 
-        decodeSpectrum(in);
+        decodeSpectrum(_in);
     }
 }

@@ -47,18 +47,18 @@ public class SequenceExtension implements MPEGHeader {
     private SequenceExtension() {
     }
 
-    public static SequenceExtension read(BitReader in) {
+    public static SequenceExtension read(BitReader _in) {
         SequenceExtension se = new SequenceExtension();
-        se.profile_and_level = in.readNBit(8);
-        se.progressive_sequence = in.read1Bit();
-        se.chroma_format = in.readNBit(2);
-        se.horizontal_size_extension = in.readNBit(2);
-        se.vertical_size_extension = in.readNBit(2);
-        se.bit_rate_extension = in.readNBit(12);
-        se.vbv_buffer_size_extension = in.readNBit(8);
-        se.low_delay = in.read1Bit();
-        se.frame_rate_extension_n = in.readNBit(2);
-        se.frame_rate_extension_d = in.readNBit(5);
+        se.profile_and_level = _in.readNBit(8);
+        se.progressive_sequence = _in.read1Bit();
+        se.chroma_format = _in.readNBit(2);
+        se.horizontal_size_extension = _in.readNBit(2);
+        se.vertical_size_extension = _in.readNBit(2);
+        se.bit_rate_extension = _in.readNBit(12);
+        se.vbv_buffer_size_extension = _in.readNBit(8);
+        se.low_delay = _in.read1Bit();
+        se.frame_rate_extension_n = _in.readNBit(2);
+        se.frame_rate_extension_d = _in.readNBit(5);
 
         return se;
     }

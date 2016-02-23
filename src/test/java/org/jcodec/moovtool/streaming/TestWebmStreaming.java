@@ -24,6 +24,8 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static java.lang.System.currentTimeMillis;
+
 public class TestWebmStreaming {
 
     private static final int CUES_START = 0x4D9;
@@ -39,11 +41,11 @@ public class TestWebmStreaming {
 
         RealTrack rt = new RealTrack(mov1, v1, ch1);
 
-        long start = System.currentTimeMillis();
+        long start = currentTimeMillis();
         ScheduledExecutorService cachePolicyExec = Executors.newSingleThreadScheduledExecutor();
 
         VirtualMovie vm = new VirtualWebmMovie(new CachingTrack(new Prores2VP8Track(rt, v1.getCodedSize()), 10, cachePolicyExec));
-        System.out.println(System.currentTimeMillis() - start);
+        System.out.println(currentTimeMillis() - start);
 
         File f = File.createTempFile("test", ".webm");
         System.out.println("Saving output to " + f.getAbsolutePath());
@@ -101,11 +103,11 @@ public class TestWebmStreaming {
 
         RealTrack rt = new RealTrack(mov1, v1, ch1);
 
-        long start = System.currentTimeMillis();
+        long start = currentTimeMillis();
         ScheduledExecutorService cachePolicyExec = Executors.newSingleThreadScheduledExecutor();
 
         VirtualMovie vm = new VirtualWebmMovie(new CachingTrack(new Prores2VP8Track(rt, v1.getCodedSize()), 10, cachePolicyExec));
-        System.out.println(System.currentTimeMillis() - start);
+        System.out.println(currentTimeMillis() - start);
 
         MovieRange mr = null;
         try {
