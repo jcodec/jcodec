@@ -97,7 +97,7 @@ public class FLVTool {
 
     private static void printGenericHelp() {
         System.err.println("Syntax: <command> [flags] <file in> [file out]\nWhere command is: ["
-                + StringUtils.join(processors.keySet().toArray(new String[0]), ", ") + "].");
+                + StringUtils.joinS(processors.keySet().toArray(new String[0]), ", ") + "].");
     }
 
     private static PacketProcessor getProcessor(String command, Cmd cmd) {

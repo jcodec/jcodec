@@ -98,7 +98,7 @@ public class MKVFrameReadingTest {
             if (rgb == null)
                 rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
             transform.transform(pic, rgb);
-            AWTUtil.toBufferedImage(rgb, bi);
+            AWTUtil.toBufferedImage2(rgb, bi);
             ImageIO.write(bi, "png", new File(format(outPattern, i++)));
 
         }
@@ -141,7 +141,7 @@ public class MKVFrameReadingTest {
         Picture rgb = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
         BufferedImage bi = new BufferedImage(dem.getPictureWidth(), dem.getPictureHeight(), BufferedImage.TYPE_3BYTE_BGR);
         transform.transform(pic, rgb);
-        AWTUtil.toBufferedImage(rgb, bi);
+        AWTUtil.toBufferedImage2(rgb, bi);
         File f = new File(format(outPattern, 0));
         System.out.println("Writing to file: "+f.getAbsolutePath());
         ImageIO.write(bi, "png", f);

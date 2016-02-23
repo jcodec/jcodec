@@ -6,9 +6,9 @@ import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeBool;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeNBit;
-import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE;
+import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSEtrace;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeTrailingBits;
-import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUE;
+import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUEtrace;
 import static org.jcodec.common.model.ColorSpace.MONO;
 import static org.jcodec.common.model.ColorSpace.YUV420J;
 import static org.jcodec.common.model.ColorSpace.YUV422;
@@ -277,15 +277,15 @@ public class SeqParameterSet {
         writeBool(writer, constraint_set_5_flag, "SPS: constraint_set_5_flag");
         writeNBit(writer, 0, 2, "SPS: reserved");
         writeNBit(writer, level_idc, 8, "SPS: level_idc");
-        writeUE(writer, seq_parameter_set_id, "SPS: seq_parameter_set_id");
+        writeUEtrace(writer, seq_parameter_set_id, "SPS: seq_parameter_set_id");
 
         if (profile_idc == 100 || profile_idc == 110 || profile_idc == 122 || profile_idc == 144) {
-            writeUE(writer, fromColor(chroma_format_idc), "SPS: chroma_format_idc");
+            writeUEtrace(writer, fromColor(chroma_format_idc), "SPS: chroma_format_idc");
             if (chroma_format_idc == YUV444) {
                 writeBool(writer, residual_color_transform_flag, "SPS: residual_color_transform_flag");
             }
-            writeUE(writer, bit_depth_luma_minus8, "SPS: ");
-            writeUE(writer, bit_depth_chroma_minus8, "SPS: ");
+            writeUEtrace(writer, bit_depth_luma_minus8, "SPS: ");
+            writeUEtrace(writer, bit_depth_chroma_minus8, "SPS: ");
             writeBool(writer, qpprime_y_zero_transform_bypass_flag, "SPS: qpprime_y_zero_transform_bypass_flag");
             writeBool(writer, scalingMatrix != null, "SPS: ");
             if (scalingMatrix != null) {
@@ -304,22 +304,22 @@ public class SeqParameterSet {
                 }
             }
         }
-        writeUE(writer, log2_max_frame_num_minus4, "SPS: log2_max_frame_num_minus4");
-        writeUE(writer, pic_order_cnt_type, "SPS: pic_order_cnt_type");
+        writeUEtrace(writer, log2_max_frame_num_minus4, "SPS: log2_max_frame_num_minus4");
+        writeUEtrace(writer, pic_order_cnt_type, "SPS: pic_order_cnt_type");
         if (pic_order_cnt_type == 0) {
-            writeUE(writer, log2_max_pic_order_cnt_lsb_minus4, "SPS: log2_max_pic_order_cnt_lsb_minus4");
+            writeUEtrace(writer, log2_max_pic_order_cnt_lsb_minus4, "SPS: log2_max_pic_order_cnt_lsb_minus4");
         } else if (pic_order_cnt_type == 1) {
             writeBool(writer, delta_pic_order_always_zero_flag, "SPS: delta_pic_order_always_zero_flag");
-            writeSE(writer, offset_for_non_ref_pic, "SPS: offset_for_non_ref_pic");
-            writeSE(writer, offset_for_top_to_bottom_field, "SPS: offset_for_top_to_bottom_field");
-            writeUE(writer, offsetForRefFrame.length, "SPS: ");
+            writeSEtrace(writer, offset_for_non_ref_pic, "SPS: offset_for_non_ref_pic");
+            writeSEtrace(writer, offset_for_top_to_bottom_field, "SPS: offset_for_top_to_bottom_field");
+            writeUEtrace(writer, offsetForRefFrame.length, "SPS: ");
             for (int i = 0; i < offsetForRefFrame.length; i++)
-                writeSE(writer, offsetForRefFrame[i], "SPS: ");
+                writeSEtrace(writer, offsetForRefFrame[i], "SPS: ");
         }
-        writeUE(writer, num_ref_frames, "SPS: num_ref_frames");
+        writeUEtrace(writer, num_ref_frames, "SPS: num_ref_frames");
         writeBool(writer, gaps_in_frame_num_value_allowed_flag, "SPS: gaps_in_frame_num_value_allowed_flag");
-        writeUE(writer, pic_width_in_mbs_minus1, "SPS: pic_width_in_mbs_minus1");
-        writeUE(writer, pic_height_in_map_units_minus1, "SPS: pic_height_in_map_units_minus1");
+        writeUEtrace(writer, pic_width_in_mbs_minus1, "SPS: pic_width_in_mbs_minus1");
+        writeUEtrace(writer, pic_height_in_map_units_minus1, "SPS: pic_height_in_map_units_minus1");
         writeBool(writer, frame_mbs_only_flag, "SPS: frame_mbs_only_flag");
         if (!frame_mbs_only_flag) {
             writeBool(writer, mb_adaptive_frame_field_flag, "SPS: mb_adaptive_frame_field_flag");
@@ -327,10 +327,10 @@ public class SeqParameterSet {
         writeBool(writer, direct_8x8_inference_flag, "SPS: direct_8x8_inference_flag");
         writeBool(writer, frame_cropping_flag, "SPS: frame_cropping_flag");
         if (frame_cropping_flag) {
-            writeUE(writer, frame_crop_left_offset, "SPS: frame_crop_left_offset");
-            writeUE(writer, frame_crop_right_offset, "SPS: frame_crop_right_offset");
-            writeUE(writer, frame_crop_top_offset, "SPS: frame_crop_top_offset");
-            writeUE(writer, frame_crop_bottom_offset, "SPS: frame_crop_bottom_offset");
+            writeUEtrace(writer, frame_crop_left_offset, "SPS: frame_crop_left_offset");
+            writeUEtrace(writer, frame_crop_right_offset, "SPS: frame_crop_right_offset");
+            writeUEtrace(writer, frame_crop_top_offset, "SPS: frame_crop_top_offset");
+            writeUEtrace(writer, frame_crop_bottom_offset, "SPS: frame_crop_bottom_offset");
         }
         writeBool(writer, vuiParams != null, "SPS: ");
         if (vuiParams != null)
@@ -365,8 +365,8 @@ public class SeqParameterSet {
         }
         writeBool(writer, vuip.chroma_loc_info_present_flag, "VUI: chroma_loc_info_present_flag");
         if (vuip.chroma_loc_info_present_flag) {
-            writeUE(writer, vuip.chroma_sample_loc_type_top_field, "VUI: chroma_sample_loc_type_top_field");
-            writeUE(writer, vuip.chroma_sample_loc_type_bottom_field, "VUI: chroma_sample_loc_type_bottom_field");
+            writeUEtrace(writer, vuip.chroma_sample_loc_type_top_field, "VUI: chroma_sample_loc_type_top_field");
+            writeUEtrace(writer, vuip.chroma_sample_loc_type_bottom_field, "VUI: chroma_sample_loc_type_bottom_field");
         }
         writeBool(writer, vuip.timing_info_present_flag, "VUI: timing_info_present_flag");
         if (vuip.timing_info_present_flag) {
@@ -391,25 +391,25 @@ public class SeqParameterSet {
         if (vuip.bitstreamRestriction != null) {
             writeBool(writer, vuip.bitstreamRestriction.motion_vectors_over_pic_boundaries_flag,
                     "VUI: motion_vectors_over_pic_boundaries_flag");
-            writeUE(writer, vuip.bitstreamRestriction.max_bytes_per_pic_denom, "VUI: max_bytes_per_pic_denom");
-            writeUE(writer, vuip.bitstreamRestriction.max_bits_per_mb_denom, "VUI: max_bits_per_mb_denom");
-            writeUE(writer, vuip.bitstreamRestriction.log2_max_mv_length_horizontal,
+            writeUEtrace(writer, vuip.bitstreamRestriction.max_bytes_per_pic_denom, "VUI: max_bytes_per_pic_denom");
+            writeUEtrace(writer, vuip.bitstreamRestriction.max_bits_per_mb_denom, "VUI: max_bits_per_mb_denom");
+            writeUEtrace(writer, vuip.bitstreamRestriction.log2_max_mv_length_horizontal,
                     "VUI: log2_max_mv_length_horizontal");
-            writeUE(writer, vuip.bitstreamRestriction.log2_max_mv_length_vertical, "VUI: log2_max_mv_length_vertical");
-            writeUE(writer, vuip.bitstreamRestriction.num_reorder_frames, "VUI: num_reorder_frames");
-            writeUE(writer, vuip.bitstreamRestriction.max_dec_frame_buffering, "VUI: max_dec_frame_buffering");
+            writeUEtrace(writer, vuip.bitstreamRestriction.log2_max_mv_length_vertical, "VUI: log2_max_mv_length_vertical");
+            writeUEtrace(writer, vuip.bitstreamRestriction.num_reorder_frames, "VUI: num_reorder_frames");
+            writeUEtrace(writer, vuip.bitstreamRestriction.max_dec_frame_buffering, "VUI: max_dec_frame_buffering");
         }
 
     }
 
     private void writeHRDParameters(HRDParameters hrd, BitWriter writer) {
-        writeUE(writer, hrd.cpb_cnt_minus1, "HRD: cpb_cnt_minus1");
+        writeUEtrace(writer, hrd.cpb_cnt_minus1, "HRD: cpb_cnt_minus1");
         writeNBit(writer, hrd.bit_rate_scale, 4, "HRD: bit_rate_scale");
         writeNBit(writer, hrd.cpb_size_scale, 4, "HRD: cpb_size_scale");
 
         for (int SchedSelIdx = 0; SchedSelIdx <= hrd.cpb_cnt_minus1; SchedSelIdx++) {
-            writeUE(writer, hrd.bit_rate_value_minus1[SchedSelIdx], "HRD: ");
-            writeUE(writer, hrd.cpb_size_value_minus1[SchedSelIdx], "HRD: ");
+            writeUEtrace(writer, hrd.bit_rate_value_minus1[SchedSelIdx], "HRD: ");
+            writeUEtrace(writer, hrd.cpb_size_value_minus1[SchedSelIdx], "HRD: ");
             writeBool(writer, hrd.cbr_flag[SchedSelIdx], "HRD: ");
         }
         writeNBit(writer, hrd.initial_cpb_removal_delay_length_minus1, 5,

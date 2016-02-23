@@ -53,7 +53,7 @@ public class FrameGrab {
         ByteBuffer header = ByteBuffer.allocate(65536);
         _in.read(header);
         header.flip();
-        Format detectFormat = JCodecUtil.detectFormat(header);
+        Format detectFormat = JCodecUtil.detectFormatBuffer(header);
 
         switch (detectFormat) {
         case MOV:
