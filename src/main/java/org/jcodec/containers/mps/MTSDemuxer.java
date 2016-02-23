@@ -207,9 +207,11 @@ public class MTSDemuxer implements MPEGDemuxer {
         int maxScore = 0;
         int[] keys = streams.keys();
         for (int i : keys) {
-            int score = MPSDemuxer.probe(NIOUtils.combine(streams.get(i)));
-            if (score > maxScore)
-                maxScore = score;
+            List<ByteBuffer> packets = streams.get(i);
+            int score = MPSDemuxer.probe(NIOUtils.combine(packets));
+            if (score > maxScore) {
+                maxScore = score + (packets.size() > 20 ? 50 : 0);
+            }
         }
         return maxScore;
     }

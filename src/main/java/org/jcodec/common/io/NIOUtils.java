@@ -21,6 +21,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.JCodecUtil;
 
@@ -435,5 +436,13 @@ public class NIOUtils {
         result.put(byteBuffer.duplicate());
         result.flip();
         return result;
+    }
+    
+    public static ByteBuffer asByteBuffer(byte ... val) {
+        return ByteBuffer.wrap(val);
+    }
+    
+    public static ByteBuffer asByteBuffer(int ... val) {
+        return asByteBuffer(ArrayUtil.toByteArray(val));
     }
 }

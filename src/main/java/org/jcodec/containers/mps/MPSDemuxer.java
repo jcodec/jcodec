@@ -3,6 +3,7 @@ package org.jcodec.containers.mps;
 import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
 import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
 import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
+import static org.jcodec.common.io.NIOUtils.asByteBuffer;
 import static org.jcodec.containers.mps.MPSUtils.audioStream;
 import static org.jcodec.containers.mps.MPSUtils.psMarker;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
@@ -16,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.codecs.h264.io.model.NALUnit;
+import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.SegmentReader;
 import org.jcodec.common.Codec;
@@ -269,8 +272,6 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         return pkt;
     }
 
-    
-
     public List<MPEGDemuxerTrack> getTracks() {
         return new ArrayList<MPEGDemuxerTrack>(streams.values());
     }
@@ -330,11 +331,23 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         int marker = 0xffffffff;
 
         int score = 0;
-        boolean inVideoPes = false, hasHeader = false, slicesStarted = false;
+        boolean inVideoPes = false, hasHeader = false, slicesStarted = false, inNALUnit = false;
+        List<NALUnit> nuSeq = new ArrayList<NALUnit>();
         while (b.hasRemaining()) {
             int code = b.get() & 0xff;
             marker = (marker << 8) | code;
-            if (marker < 0x100 || marker > 0x1ff)
+
+            if (inNALUnit) {
+                NALUnit nu = NALUnit.read(asByteBuffer(code));
+                if (nu.type != null)
+                    nuSeq.add(nu);
+                inNALUnit = false;
+            }
+
+            if (inVideoPes && marker == 0x1) {
+                inNALUnit = true; // h.264 case
+                continue;
+            } else if (marker < 0x100 || marker > 0x1ff)
                 continue;
 
             if (MPSUtils.videoMarker(marker)) {
@@ -352,7 +365,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 hasHeader = true;
             } else if (marker > 0x100 && marker < 0x1B0) {
                 if (!hasHeader)
-                    break;
+                    continue;
                 if (!slicesStarted) {
                     score += 50;
                     slicesStarted = true;
@@ -361,6 +374,38 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             }
         }
 
+        return !nuSeq.isEmpty() ? rateSeq(nuSeq) : score ;
+    }
+
+    private static int rateSeq(List<NALUnit> nuSeq) {
+        int score = 0;
+        boolean hasSps = false, hasPps = false, hasSlice = false;
+        for (NALUnit nalUnit : nuSeq) {
+            switch (nalUnit.type) {
+            case SPS:
+                if (hasSps && !hasSlice)
+                    score -= 30;
+                else
+                    score += 30;
+                hasSps = true;
+                break;
+            case PPS:
+                if (hasPps && !hasSlice)
+                    score -= 30;
+                if (hasSps)
+                    score += 20;
+                hasPps = true;
+                break;
+            case IDR_SLICE:
+            case NON_IDR_SLICE:
+                if (!hasSlice)
+                    score += 50;
+                hasSlice = true;
+                break;
+            default:
+                score += 3;
+            }
+        }
         return score;
     }
 

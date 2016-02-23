@@ -133,7 +133,7 @@ public class TranscodeMain {
         profiles.put("jpeg2avc", new Jpeg2avc());
         profiles.put("hls2png", new Hls2png());
         profiles.put("mkv2png", new Mkv2png());
-        profiles.put("mpeg2jpg", new Mpeg2jpg());
+        profiles.put("mpeg2img", new Mpeg2img());
         profiles.put("png2avc", new Png2avc());
         profiles.put("png2mkv", new Png2mkv());
         profiles.put("png2prores", new Png2prores());
@@ -429,6 +429,7 @@ public class TranscodeMain {
 
     protected static class Jpeg2avc implements Profile {
         public static final String FLAG_DOWNSCALE = "downscale";
+
         public void transcode(Cmd cmd) throws IOException {
             SeekableByteChannel sink = null;
             SeekableByteChannel source = null;
@@ -471,11 +472,12 @@ public class TranscodeMain {
                 long start = System.currentTimeMillis();
                 for (int i = 0; (inFrame = inTrack.nextFrame()) != null && i < 100; i++) {
                     Picture8Bit dec = decoder.decodeFrame8Bit(inFrame.getData(), target1.getData());
-                    if(transform == null) {
+                    if (transform == null) {
                         transform = ColorUtil.getTransform8Bit(dec.getColor(), encoder.getSupportedColorSpaces()[0]);
                     }
                     if (target2 == null) {
-                        target2 = Picture8Bit.create(dec.getWidth(), dec.getHeight(), encoder.getSupportedColorSpaces()[0]);
+                        target2 = Picture8Bit.create(dec.getWidth(), dec.getHeight(),
+                                encoder.getSupportedColorSpaces()[0]);
                     }
                     transform.transform(dec, target2);
                     _out.clear();
@@ -925,7 +927,7 @@ public class TranscodeMain {
                     }
                     // 500k buffer for the raw frame
                     ByteBuffer bb = ByteBuffer.allocate(500 << 10);
-                    Picture tmp = Picture.create(1920, 1088, ColorSpace.YUV420);
+                    Picture8Bit tmp = Picture8Bit.create(1920, 1088, ColorSpace.YUV420);
                     VideoDecoder vd = null;
 
                     Packet packet;
@@ -934,7 +936,7 @@ public class TranscodeMain {
                         ByteBuffer data = packet.getData();
                         if (vd == null)
                             vd = JCodecUtil.detectDecoder(data.duplicate());
-                        Picture pic = vd.decodeFrame(data, tmp.getData());
+                        Picture8Bit pic = vd.decodeFrame8Bit(data, tmp.getData());
                         if (pic != null) {
                             AWTUtil.savePicture(pic, "png", tildeExpand(format(cmd.getArg(1), i++)));
                         }
@@ -1075,12 +1077,12 @@ public class TranscodeMain {
                 List<? extends MPEGDemuxerTrack> audioTracks = demuxer.getAudioTracks();
 
                 ByteBuffer buf = ByteBuffer.allocate(1920 * 1088);
-                Picture target1 = Picture.create(1920, 1088, ColorSpace.YUV420J);
+                Picture8Bit target1 = Picture8Bit.create(1920, 1088, ColorSpace.YUV420J);
 
                 Packet inFrame;
                 for (int i = 0; (inFrame = track.nextFrame(buf)) != null; i++) {
                     ByteBuffer data = inFrame.getData();
-                    Picture dec = decoder.decodeFrame(data, target1.getData());
+                    Picture8Bit dec = decoder.decodeFrame8Bit(data, target1.getData());
                     AWTUtil.savePicture(dec, "png", tildeExpand(format(cmd.getArg(1), i)));
                 }
             } finally {
@@ -1405,7 +1407,10 @@ public class TranscodeMain {
         }
     }
 
-    protected static class Mpeg2jpg implements Profile {
+    protected static class Mpeg2img implements Profile {
+        private static final String FLAG_DOWNSCALE = "downscale";
+        private static final String FLAG_IMG_FORMAT = "img_format";
+
         public void transcode(Cmd cmd) throws IOException {
             File file = new File(cmd.getArg(0));
             if (!file.exists()) {
@@ -1429,14 +1434,26 @@ public class TranscodeMain {
                 return;
             }
 
+            String imgFormat = cmd.getStringFlag(FLAG_IMG_FORMAT, "jpeg");
             ByteBuffer buf = ByteBuffer.allocate(1920 * 1080 * 6);
-            MPEGDecoder mpegDecoder = new MPEGDecoder();
             Packet pkt;
-            Picture pix = Picture.create(1920, 1088, ColorSpace.YUV444);
-            for (int i = 0; (pkt = videoTrack.nextFrame(buf)) != null; i++) {
+            Picture8Bit pix = Picture8Bit.create(1920, 1088, ColorSpace.YUV444);
+            pkt = videoTrack.nextFrame(buf);
+            if (pkt == null)
+                return;
+            VideoDecoder decoder = JCodecUtil.detectDecoder(pkt.getData());
+            Integer downscale = cmd.getIntegerFlag(FLAG_DOWNSCALE);
+            if (downscale != null) {
+                decoder = decoder.downscaled(downscale);
+                if (decoder == null) {
+                    System.out.println("Could not create decoder for downscale ratio: " + downscale);
+                }
+            }
+            for (int i = 0; pkt != null; i++) {
                 // System.out.println(i);
-                Picture pic = mpegDecoder.decodeFrame(pkt.getData(), pix.getData());
-                AWTUtil.savePicture(pic, "jpeg", new File(String.format(cmd.getArg(1), i)));
+                Picture8Bit pic = decoder.decodeFrame8Bit(pkt.getData(), pix.getData());
+                AWTUtil.savePicture(pic, imgFormat, new File(String.format(cmd.getArg(1), i)));
+                pkt = videoTrack.nextFrame(buf);
             }
         }
 
@@ -1444,6 +1461,7 @@ public class TranscodeMain {
         public void printHelp(PrintStream err) {
             MainUtils.printHelp(new HashMap<String, String>() {
                 {
+                    put(FLAG_DOWNSCALE, "Decode downscaled.");
                 }
             }, "in file", "pattern");
         }

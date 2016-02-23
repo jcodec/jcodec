@@ -15,6 +15,8 @@ public class MPEGPredOct extends MPEGPred {
     // Max block size is 16x16
     private int[] tmp = new int[16 * 21];
 
+    // TODO: this really implements interpolation for QUAD downsampling, add another linear step for OCT.
+    // This is also to be complient with MPEG spec which uses linear interpolation.
     private static final int[][] COEFF = {
 
     { 0, 0, 128, 0, 0, 0 },
@@ -40,13 +42,13 @@ public class MPEGPredOct extends MPEGPred {
     }
 
     @Override
-    public void predictPlane(int[] ref, int refX, int refY, int refW, int refH, int refVertStep, int refVertOff,
+    public void predictPlane(byte[] ref, int refX, int refY, int refW, int refH, int refVertStep, int refVertOff,
             int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int rx = refX >> 3, ry = refY >> 3;
         tgtW >>= 3;
         tgtH >>= 3;
 
-        boolean safe = rx >= 2 && ry >= 2 && rx + tgtW + 2 <= refW && ((ry + tgtH + 2) << refVertStep) < refH;
+        boolean safe = rx >= 2 && ry >= 2 && rx + tgtW + 3 < refW && ((ry + tgtH + 3) << refVertStep) < refH;
         if ((refX & 0x7) == 0) {
             if ((refY & 0x7) == 0) {
                 if (safe)
@@ -80,7 +82,7 @@ public class MPEGPredOct extends MPEGPred {
         }
     }
 
-    protected int getPix6(int[] ref, int refW, int refH, int x, int y, int refVertStep, int refVertOff, int[] coeff) {
+    protected int getPix6(byte[] ref, int refW, int refH, int x, int y, int refVertStep, int refVertOff, int[] coeff) {
         int lastLine = refH - (1 << refVertStep) + refVertOff;
         int x0 = MathUtil.clip(x - 2, 0, refW - 1);
         int x1 = MathUtil.clip(x - 1, 0, refW - 1);
@@ -91,10 +93,10 @@ public class MPEGPredOct extends MPEGPred {
         int off = MathUtil.clip(y, refVertOff, lastLine) * refW;
 
         return ref[off + x0] * coeff[0] + ref[off + x1] * coeff[1] + ref[off + x2] * coeff[2] + ref[off + x3]
-                * coeff[3] + ref[off + x4] * coeff[4] + ref[off + x5] * coeff[5];
+                * coeff[3] + ref[off + x4] * coeff[4] + ref[off + x5] * coeff[5] + 16384;
     }
 
-    protected int getPix6Vert(int[] ref, int refW, int refH, int x, int y, int refVertStep, int refVertOff, int[] coeff) {
+    protected int getPix6Vert(byte[] ref, int refW, int refH, int x, int y, int refVertStep, int refVertOff, int[] coeff) {
         int lastLine = refH - (1 << refVertStep) + refVertOff;
         int y0 = MathUtil.clip(y - (2 << refVertStep), refVertOff, lastLine);
         int y1 = MathUtil.clip(y - (1 << refVertStep), refVertOff, lastLine);
@@ -105,10 +107,10 @@ public class MPEGPredOct extends MPEGPred {
         x = MathUtil.clip(x, 0, refW - 1);
 
         return ref[y0 * refW + x] * coeff[0] + ref[y1 * refW + x] * coeff[1] + ref[y2 * refW + x] * coeff[2]
-                + ref[y3 * refW + x] * coeff[3] + ref[y4 * refW + x] * coeff[4] + ref[y5 * refW + x] * coeff[5];
+                + ref[y3 * refW + x] * coeff[3] + ref[y4 * refW + x] * coeff[4] + ref[y5 * refW + x] * coeff[5] + 16384;
     }
 
-    private void predictSubXSubYUnSafe(int[] ref, int rx, int ix, int ry, int iy, int refW, int refH, int refVertStep,
+    private void predictSubXSubYUnSafe(byte[] ref, int rx, int ix, int ry, int iy, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
 
         int offTgt = tgtW * tgtY;
@@ -135,7 +137,7 @@ public class MPEGPredOct extends MPEGPred {
         }
     }
 
-    private void predictSubXSubYSafe(int[] ref, int rx, int ix, int ry, int iy, int refW, int refH, int refVertStep,
+    private void predictSubXSubYSafe(byte[] ref, int rx, int ix, int ry, int iy, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
 
         int[] coeff = COEFF[ix];
@@ -158,15 +160,15 @@ public class MPEGPredOct extends MPEGPred {
         coeff = COEFF[iy];
         for (int i = 0, offTmp = dblTgtW; i < tgtH; i++) {
             for (int j = 0; j < tgtW; j++, ++offTmp, ++offTgt) {
-                tgt[offTgt] = (tmp[offTmp - dblTgtW] * coeff[0] + tmp[offTmp - tgtW] * coeff[1] + tmp[offTmp]
+                tgt[offTgt] = ((tmp[offTmp - dblTgtW] * coeff[0] + tmp[offTmp - tgtW] * coeff[1] + tmp[offTmp]
                         * coeff[2] + tmp[offTmp + tgtW] * coeff[3] + tmp[offTmp + dblTgtW] * coeff[4]
-                        + tmp[offTmp + tripleTgtW] * coeff[5] + 8192) >> 14;
+                        + tmp[offTmp + tripleTgtW] * coeff[5] + 8192) >> 14) + 128;
             }
             offTgt += lfTgt;
         }
     }
 
-    private void predictSubXFullYUnSafe(int[] ref, int rx, int ix, int ry, int refW, int refH, int refVertStep,
+    private void predictSubXFullYUnSafe(byte[] ref, int rx, int ix, int ry, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int[] coeff = COEFF[ix];
 
@@ -182,7 +184,7 @@ public class MPEGPredOct extends MPEGPred {
         }
     }
 
-    private void predictSubXFullYSafe(int[] ref, int rx, int ix, int ry, int refW, int refH, int refVertStep,
+    private void predictSubXFullYSafe(byte[] ref, int rx, int ix, int ry, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int[] coeff = COEFF[ix];
 
@@ -193,15 +195,15 @@ public class MPEGPredOct extends MPEGPred {
 
         for (int i = 0; i < tgtH; i++) {
             for (int j = 0; j < tgtW; j++, ++offRef) {
-                tgt[offTgt++] = (ref[offRef - 2] * coeff[0] + ref[offRef - 1] * coeff[1] + ref[offRef] * coeff[2]
-                        + ref[offRef + 1] * coeff[3] + ref[offRef + 2] * coeff[4] + ref[offRef + 3] * coeff[5] + 64) >> 7;
+                tgt[offTgt++] = ((ref[offRef - 2] * coeff[0] + ref[offRef - 1] * coeff[1] + ref[offRef] * coeff[2]
+                        + ref[offRef + 1] * coeff[3] + ref[offRef + 2] * coeff[4] + ref[offRef + 3] * coeff[5] + 64) >> 7) + 128;
             }
             offRef += lfRef;
             offTgt += lfTgt;
         }
     }
 
-    private void predictFullXSubYUnSafe(int[] ref, int rx, int ry, int iy, int refW, int refH, int refVertStep,
+    private void predictFullXSubYUnSafe(byte[] ref, int rx, int ry, int iy, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int[] coeff = COEFF[iy];
 
@@ -217,7 +219,7 @@ public class MPEGPredOct extends MPEGPred {
         }
     }
 
-    private void predictFullXSubYSafe(int[] ref, int rx, int ry, int iy, int refW, int refH, int refVertStep,
+    private void predictFullXSubYSafe(byte[] ref, int rx, int ry, int iy, int refW, int refH, int refVertStep,
             int refVertOff, int[] tgt, int tgtY, int tgtW, int tgtH, int tgtVertStep) {
         int[] coeff = COEFF[iy];
 
@@ -233,9 +235,9 @@ public class MPEGPredOct extends MPEGPred {
 
         for (int i = 0; i < tgtH; i++) {
             for (int j = 0; j < tgtW; ++j, ++offTgt, ++offRef) {
-                tgt[offTgt] = (ref[offRef - dblRefW] * coeff[0] + ref[offRef - singleRefW] * coeff[1] + ref[offRef]
+                tgt[offTgt] = ((ref[offRef - dblRefW] * coeff[0] + ref[offRef - singleRefW] * coeff[1] + ref[offRef]
                         * coeff[2] + ref[offRef + singleRefW] * coeff[3] + ref[offRef + dblRefW] * coeff[4]
-                        + ref[offRef + tripleRefW] * coeff[5] + 64) >> 7;
+                        + ref[offRef + tripleRefW] * coeff[5] + 64) >> 7) + 128;
             }
             offRef += lfRef;
             offTgt += lfTgt;
