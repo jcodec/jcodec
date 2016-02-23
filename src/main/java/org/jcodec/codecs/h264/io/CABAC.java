@@ -568,10 +568,10 @@ public class CABAC {
 
     public int codedBlockPatternIntra(MDecoder mDecoder, boolean leftAvailable, boolean topAvailable, int cbpLeft,
             int cbpTop, MBType mbLeft, MBType mbTop) {
-        int cbp0 = mDecoder.decodeBin(73 + condTerm(leftAvailable, mbLeft, (cbpLeft >> 1) & 1) + 2
-                * condTerm(topAvailable, mbTop, (cbpTop >> 2) & 1));
-        int cbp1 = mDecoder.decodeBin(73 + (1 - cbp0) + 2 * condTerm(topAvailable, mbTop, (cbpTop >> 3) & 1));
-        int cbp2 = mDecoder.decodeBin(73 + condTerm(leftAvailable, mbLeft, (cbpLeft >> 3) & 1) + 2 * (1 - cbp0));
+        int cbp0 = mDecoder.decodeBin(73 + _condTerm(leftAvailable, mbLeft, (cbpLeft >> 1) & 1) + 2
+                * _condTerm(topAvailable, mbTop, (cbpTop >> 2) & 1));
+        int cbp1 = mDecoder.decodeBin(73 + (1 - cbp0) + 2 * _condTerm(topAvailable, mbTop, (cbpTop >> 3) & 1));
+        int cbp2 = mDecoder.decodeBin(73 + _condTerm(leftAvailable, mbLeft, (cbpLeft >> 3) & 1) + 2 * (1 - cbp0));
         int cbp3 = mDecoder.decodeBin(73 + (1 - cbp2) + 2 * (1 - cbp1));
 
         int cr0 = mDecoder.decodeBin(77 + condTermCr0(leftAvailable, mbLeft, cbpLeft >> 4) + 2
@@ -590,7 +590,7 @@ public class CABAC {
         return avb && (mbt == I_PCM || mbt != null && (cbpChroma & 2) != 0) ? 1 : 0;
     }
 
-    private int condTerm(boolean avb, MBType mbt, int cbp) {
+    private int _condTerm(boolean avb, MBType mbt, int cbp) {
         return !avb || mbt == I_PCM || (mbt != null && cbp == 1) ? 0 : 1;
     }
 
