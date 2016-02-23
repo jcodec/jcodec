@@ -14,6 +14,7 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.platform.Platform;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -157,7 +158,7 @@ public class TestTool {
     private void prepareJMConf() throws IOException {
         InputStream cool = null;
         try {
-            cool = getClass().getClassLoader().getResourceAsStream("org/jcodec/testing/jm.conf");
+            cool = Platform.getResourceAsStream(getClass(), "org/jcodec/testing/jm.conf");
             String str = IOUtils.toString(cool);
             str = str.replace("%input_file%", coded.getAbsolutePath());
             str = str.replace("%output_file%", decoded.getAbsolutePath());

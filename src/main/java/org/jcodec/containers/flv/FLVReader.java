@@ -21,6 +21,7 @@ import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.TagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -267,7 +268,7 @@ public class FLVReader {
 
     private static String readAMFString(ByteBuffer input) {
         int size = input.getShort() & 0xffff;
-        return new String(NIOUtils.toArray(NIOUtils.read(input, size)), Charset.forName("UTF-8"));
+        return Platform.stringFromCharset(NIOUtils.toArray(NIOUtils.read(input, size)), Charset.forName("UTF-8"));
     }
 
     private static Object readAMFObject(ByteBuffer input) {
