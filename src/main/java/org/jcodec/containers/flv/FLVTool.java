@@ -61,10 +61,10 @@ public class FLVTool {
 
         Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length));
         if (cmd.args.length < 1) {
-            MainUtils.printHelp(command, processors.get(command).getFlags(), "file _in", "?file out");
+            MainUtils.printHelpCmd(command, processors.get(command).getFlags(), "file _in", "?file out");
             return;
         }
-        int maxPackets = cmd.getIntegerFlag("max-packets", Integer.MAX_VALUE);
+        int maxPackets = cmd.getIntegerFlagD("max-packets", Integer.MAX_VALUE);
 
         PacketProcessor processor = getProcessor(command, cmd);
         if (processor == null) {
@@ -291,7 +291,7 @@ public class FLVTool {
 
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new InfoPacketProcessor(flags.getBooleanFlag(FLAG_CHECK, false), flags.getEnumFlag(FLAG_STREAM,
+                return new InfoPacketProcessor(flags.getBooleanFlagD(FLAG_CHECK, false), flags.getEnumFlagD(FLAG_STREAM,
                         null, Type.class));
             }
 
@@ -403,8 +403,8 @@ public class FLVTool {
         public static class Factory implements PacketProcessorFactory {
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new ShiftPtsProcessor(flags.getIntegerFlag("to", 0), flags.getIntegerFlag("by"),
-                        flags.getBooleanFlag("wrap-around", false));
+                return new ShiftPtsProcessor(flags.getIntegerFlagD("to", 0), flags.getIntegerFlag("by"),
+                        flags.getBooleanFlagD("wrap-around", false));
             }
 
             @Override

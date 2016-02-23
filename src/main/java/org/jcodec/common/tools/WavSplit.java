@@ -35,7 +35,7 @@ public class WavSplit {
         }
 
         File s = new File(args[0]);
-        String pattern = cmd.getStringFlag("pattern", "c%02d.wav");
+        String pattern = cmd.getStringFlagD("pattern", "c%02d.wav");
 
         WavHeader wavHeader = WavHeader.read(s);
 
