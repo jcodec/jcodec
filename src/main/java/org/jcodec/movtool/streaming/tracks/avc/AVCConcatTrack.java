@@ -83,7 +83,7 @@ public class AVCConcatTrack implements VirtualTrack {
                 sps.seq_parameter_set_id |= i << 8;
                 allSps.add(sps);
             }
-            final int idx2 = i;
+            int idx2 = i;
             tweakers[i] = new AvccTweaker(rawSPSs, rawPPSs, idx2, this);
         }
         mergePS(allSps, allPps, map);

@@ -143,7 +143,7 @@ public class H264Decoder extends VideoDecoder {
             final Frame result = init(sliceReaders.get(0), buffer);
             if (dec.threaded && sliceReaders.size() > 1) {
                 List<Future<?>> futures = new ArrayList<Future<?>>();
-                for (final SliceReader sliceReader : sliceReaders) {
+                for (SliceReader sliceReader : sliceReaders) {
                     futures.add(dec.tp.submit(new SliceDecoderRunnable(this, sliceReader, result)));
                 }
 
