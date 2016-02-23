@@ -55,6 +55,7 @@ public class AVCConcatTrack implements VirtualTrack {
         allPps = new ArrayList<PictureParameterSet>();
         allSps = new ArrayList<SeqParameterSet>();
         tweakers = new H264Utils.SliceHeaderTweaker[tracks.length];
+        map = new HashMap<Integer, Integer>();
         for (int i = 0; i < tracks.length; i++) {
             CodecMeta se = tracks[i].getCodecMeta();
             if (!(se instanceof VideoCodecMeta))
@@ -82,10 +83,9 @@ public class AVCConcatTrack implements VirtualTrack {
                 sps.seq_parameter_set_id |= i << 8;
                 allSps.add(sps);
             }
-            final int idx2 = i;
-            tweakers[i] = new AvccTweaker(rawSPSs, rawPPSs, idx2, map);
+            tweakers[i] = new AvccTweaker(rawSPSs, rawPPSs, i, map);
         }
-        map = mergePS(allSps, allPps);
+        mergePS(allSps, allPps, map);
 
         VideoCodecMeta codecMeta = (VideoCodecMeta) tracks[0].getCodecMeta();
 
@@ -94,7 +94,7 @@ public class AVCConcatTrack implements VirtualTrack {
                 codecMeta.getSize(), codecMeta.getPasp());
     }
 
-    private Map<Integer, Integer> mergePS(List<SeqParameterSet> allSps, List<PictureParameterSet> allPps) {
+    private void mergePS(List<SeqParameterSet> allSps, List<PictureParameterSet> allPps, Map<Integer, Integer> map) {
         List<ByteBuffer> spsRef = new ArrayList<ByteBuffer>();
         for (SeqParameterSet sps : allSps) {
             int spsId = sps.seq_parameter_set_id;
@@ -110,7 +110,6 @@ public class AVCConcatTrack implements VirtualTrack {
                     pps.seq_parameter_set_id = idx;
             }
         }
-        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
         List<ByteBuffer> ppsRef = new ArrayList<ByteBuffer>();
         for (PictureParameterSet pps : allPps) {
             int ppsId = pps.pic_parameter_set_id;
@@ -136,8 +135,6 @@ public class AVCConcatTrack implements VirtualTrack {
             pps.pic_parameter_set_id = i;
             allPps.add(pps);
         }
-
-        return map;
     }
 
     @Override
