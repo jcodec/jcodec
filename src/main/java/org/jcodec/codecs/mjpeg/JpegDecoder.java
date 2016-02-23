@@ -102,23 +102,23 @@ public class JpegDecoder extends VideoDecoder {
         putBlock(result.getPlaneData(plane), result.getPlaneWidth(plane), buf, blkX, blkY, field, step);
     }
 
-    int readDCValue(BitReader in, VLC table) {
-        int code = table.readVLC16(in);
-        return code != 0 ? toValue(in.readNBit(code), code) : 0;
+    int readDCValue(BitReader _in, VLC table) {
+        int code = table.readVLC16(_in);
+        return code != 0 ? toValue(_in.readNBit(code), code) : 0;
     }
 
-    void readACValues(BitReader in, int[] target, VLC table, int[] quantTable) {
+    void readACValues(BitReader _in, int[] target, VLC table, int[] quantTable) {
         int code;
         int curOff = 1;
         do {
-            code = table.readVLC16(in);
+            code = table.readVLC16(_in);
             if (code == 0xF0) {
                 curOff += 16;
             } else if (code > 0) {
                 int rle = code >> 4;
                 curOff += rle;
                 int len = code & 0xf;
-                target[naturalOrder[curOff]] = toValue(in.readNBit(len), len) * quantTable[curOff];
+                target[naturalOrder[curOff]] = toValue(_in.readNBit(len), len) * quantTable[curOff];
                 curOff++;
             }
         } while (code != 0 && curOff < 64);

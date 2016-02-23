@@ -53,51 +53,51 @@ public class TestBitReader {
 
     @Test
     public void testReader1() throws IOException {
-        BitReader in = reader(new byte[] { b("10011000"), b("00011100"), b("11001101"), b("01010101"), b("11101001"),
+        BitReader _in = reader(new byte[] { b("10011000"), b("00011100"), b("11001101"), b("01010101"), b("11101001"),
                 b("00101110"), b("00000111"), b("00011101"), b("10100100"), b("01101110"), b("10000101"),
                 b("00001100"), b("01010111"), b("01000000") });
-        assertFalse(in.lastByte());
-        assertEquals(i("1"), in.read1Bit());
-        assertFalse(in.lastByte());
-        assertEquals(i("00110000001110011001101"), in.checkNBit(23));
-        assertEquals(i("001"), in.readNBit(3));
-        assertTrue(in.moreData());
-        assertFalse(in.lastByte());
-        assertEquals(i("1000"), in.readNBit(4));
-        assertTrue(in.isByteAligned());
-        assertEquals(0, in.curBit());
-        assertEquals(7, in.skip(7));
-        assertEquals(7, in.curBit());
-        assertFalse(in.lastByte());
-        assertEquals(i("011"), in.readNBit(3));
-        assertEquals(i("0011010101010"), in.checkNBit(13));
-        assertEquals(i("0011"), in.readNBit(4));
-        assertEquals(35, in.skip(35));
-        assertTrue(in.moreData());
-        assertFalse(in.lastByte());
-        assertEquals(i("0011"), in.checkNBit(4));
-        assertEquals(i("001110110"), in.readNBit(9));
-        assertFalse(in.lastByte());
-        assertEquals(i("1"), in.readNBit(1));
-        assertFalse(in.lastByte());
-        assertEquals(i("00100"), in.readNBit(5));
-        assertTrue(in.moreData());
-        assertFalse(in.lastByte());
-        assertEquals(i("011"), in.readNBit(3));
-        assertFalse(in.lastByte());
-        assertEquals(i("01110"), in.checkNBit(5));
-        assertEquals(i("01110100"), in.readNBit(8));
-        assertFalse(in.lastByte());
-        assertEquals(i("001010000110001"), in.readNBit(15));
-        assertTrue(in.moreData());
-        assertFalse(in.lastByte());
-        assertEquals(i("010111010"), in.readNBit(9));
-        assertTrue(in.lastByte());
-        assertFalse(in.moreData());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.readNBit(1));
-        assertEquals(i("00"), in.readNBit(2));
+        assertFalse(_in.lastByte());
+        assertEquals(i("1"), _in.read1Bit());
+        assertFalse(_in.lastByte());
+        assertEquals(i("00110000001110011001101"), _in.checkNBit(23));
+        assertEquals(i("001"), _in.readNBit(3));
+        assertTrue(_in.moreData());
+        assertFalse(_in.lastByte());
+        assertEquals(i("1000"), _in.readNBit(4));
+        assertTrue(_in.isByteAligned());
+        assertEquals(0, _in.curBit());
+        assertEquals(7, _in.skip(7));
+        assertEquals(7, _in.curBit());
+        assertFalse(_in.lastByte());
+        assertEquals(i("011"), _in.readNBit(3));
+        assertEquals(i("0011010101010"), _in.checkNBit(13));
+        assertEquals(i("0011"), _in.readNBit(4));
+        assertEquals(35, _in.skip(35));
+        assertTrue(_in.moreData());
+        assertFalse(_in.lastByte());
+        assertEquals(i("0011"), _in.checkNBit(4));
+        assertEquals(i("001110110"), _in.readNBit(9));
+        assertFalse(_in.lastByte());
+        assertEquals(i("1"), _in.readNBit(1));
+        assertFalse(_in.lastByte());
+        assertEquals(i("00100"), _in.readNBit(5));
+        assertTrue(_in.moreData());
+        assertFalse(_in.lastByte());
+        assertEquals(i("011"), _in.readNBit(3));
+        assertFalse(_in.lastByte());
+        assertEquals(i("01110"), _in.checkNBit(5));
+        assertEquals(i("01110100"), _in.readNBit(8));
+        assertFalse(_in.lastByte());
+        assertEquals(i("001010000110001"), _in.readNBit(15));
+        assertTrue(_in.moreData());
+        assertFalse(_in.lastByte());
+        assertEquals(i("010111010"), _in.readNBit(9));
+        assertTrue(_in.lastByte());
+        assertFalse(_in.moreData());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.readNBit(1));
+        assertEquals(i("00"), _in.readNBit(2));
     }
 
     private BitReader reader(byte[] src) throws IOException {
@@ -107,137 +107,137 @@ public class TestBitReader {
     @Test
     public void testReader2() throws IOException {
 
-        BitReader in = reader(new byte[] { b("10100111"), b("10101110"), b("10010111"), b("01000010"), b("10100101"),
+        BitReader _in = reader(new byte[] { b("10100111"), b("10101110"), b("10010111"), b("01000010"), b("10100101"),
                 b("11000001"), b("11100001"), b("01010101"), b("00111100"), b("10100011"), b("01010000"),
                 b("01010100"), b("00101010"), b("01010100"), b("10101001"), b("00001010"), b("10000011"),
                 b("11000000"), b("00010101"), b("11010100"), b("10111110"), b("10100100"), b("10001010"),
                 b("01010001"), b("00100000"), b("00111110"), b("00000101"), b("00100100") });
-        assertTrue(in.moreData());
-        assertFalse(in.lastByte());
-        assertEquals(i("101001111010"), in.readNBit(12));
-        assertTrue(in.moreData());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("110100101110100001"), in.readNBit(18));
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(6, in.skip(6));
-        assertEquals(i("110"), in.readNBit(3));
-        assertEquals(i("0000111"), in.readNBit(7));
-        assertTrue(in.moreData());
-        assertEquals(i("10000"), in.checkNBit(5));
-        assertEquals(i("10000101010"), in.readNBit(11));
-        assertEquals(i("10100"), in.readNBit(5));
-        assertEquals(15, in.skip(15));
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1000001010"), in.readNBit(10));
-        assertEquals(47, in.skip(47));
-        assertEquals(i("00000001010111010100101111101010"), in.readNBit(32));
-        assertTrue(in.moreData());
-        assertEquals(i("01001000101"), in.readNBit(11));
-        assertTrue(in.moreData());
-        assertEquals(20, in.skip(20));
-        assertTrue(in.moreData());
-        assertEquals(i("11110000001010010010"), in.readNBit(20));
-        assertFalse(in.moreData());
-        assertTrue(in.lastByte());
+        assertTrue(_in.moreData());
+        assertFalse(_in.lastByte());
+        assertEquals(i("101001111010"), _in.readNBit(12));
+        assertTrue(_in.moreData());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("110100101110100001"), _in.readNBit(18));
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(6, _in.skip(6));
+        assertEquals(i("110"), _in.readNBit(3));
+        assertEquals(i("0000111"), _in.readNBit(7));
+        assertTrue(_in.moreData());
+        assertEquals(i("10000"), _in.checkNBit(5));
+        assertEquals(i("10000101010"), _in.readNBit(11));
+        assertEquals(i("10100"), _in.readNBit(5));
+        assertEquals(15, _in.skip(15));
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1000001010"), _in.readNBit(10));
+        assertEquals(47, _in.skip(47));
+        assertEquals(i("00000001010111010100101111101010"), _in.readNBit(32));
+        assertTrue(_in.moreData());
+        assertEquals(i("01001000101"), _in.readNBit(11));
+        assertTrue(_in.moreData());
+        assertEquals(20, _in.skip(20));
+        assertTrue(_in.moreData());
+        assertEquals(i("11110000001010010010"), _in.readNBit(20));
+        assertFalse(_in.moreData());
+        assertTrue(_in.lastByte());
 
     }
 
     @Test
     public void testReader3() throws IOException {
-        BitReader in = reader(new byte[] { b("10100111"), b("10101110"), b("10010111"), b("01000010"), b("10100101"),
+        BitReader _in = reader(new byte[] { b("10100111"), b("10101110"), b("10010111"), b("01000010"), b("10100101"),
                 b("11000001"), b("11100001"), b("01010101"), b("00111100"), b("10100011"), b("01010000") });
 
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
-        assertEquals(i("0"), in.read1Bit());
-        assertEquals(i("1"), in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
+        assertEquals(i("0"), _in.read1Bit());
+        assertEquals(i("1"), _in.read1Bit());
 
     }
 
     public void testReader4() throws Exception {
-        BitReader in = reader(new byte[] { b("00000000"), b("00000000"), b("00000000"), b("00000000"), b("00000000"),
+        BitReader _in = reader(new byte[] { b("00000000"), b("00000000"), b("00000000"), b("00000000"), b("00000000"),
                 b("00000000"), b("00000000"), b("00000000"), b("10001100"), b("00011100"), b("00110100"),
                 b("00010000"), b("11111111") });
-        in.skip(63);
-        assertEquals(i("010"), in.readNBit(3));
-        assertEquals(i("001"), in.readNBit(3));
-        assertEquals(i("100"), in.readNBit(3));
-        assertEquals(i("000"), in.readNBit(3));
-        assertEquals(i("111"), in.readNBit(3));
-        assertEquals(i("000"), in.readNBit(3));
-        assertEquals(i("011"), in.readNBit(3));
-        assertEquals(i("010"), in.readNBit(3));
-        assertEquals(i("000"), in.readNBit(3));
-        assertEquals(i("010"), in.readNBit(3));
-        assertEquals(i("000"), in.readNBit(3));
+        _in.skip(63);
+        assertEquals(i("010"), _in.readNBit(3));
+        assertEquals(i("001"), _in.readNBit(3));
+        assertEquals(i("100"), _in.readNBit(3));
+        assertEquals(i("000"), _in.readNBit(3));
+        assertEquals(i("111"), _in.readNBit(3));
+        assertEquals(i("000"), _in.readNBit(3));
+        assertEquals(i("011"), _in.readNBit(3));
+        assertEquals(i("010"), _in.readNBit(3));
+        assertEquals(i("000"), _in.readNBit(3));
+        assertEquals(i("010"), _in.readNBit(3));
+        assertEquals(i("000"), _in.readNBit(3));
 
     }
 
     public void testReader5() throws Exception {
-        BitReader in = new BitReader(NIOUtils.fetchFrom(new File(
+        BitReader _in = new BitReader(NIOUtils.fetchFrom(new File(
                 "src/test/resources/h264/bitstream/data.dat")));
         DummyBitstreamReader in1 = new DummyBitstreamReader(new BufferedInputStream(new FileInputStream(
                 "src/test/resources/h264/bitstream/data.dat")));
@@ -249,99 +249,99 @@ public class TestBitReader {
             if (StringUtils.isEmpty(trim))
                 continue;
             if ("r1".equals(trim))
-                assertEquals(in1.read1Bit(), in.read1Bit());
+                assertEquals(in1.read1Bit(), _in.read1Bit());
             else if ("a".equals(trim))
-                assertEquals(in1.align(), in.align());
+                assertEquals(in1.align(), _in.align());
             else if ("md".equals(trim))
-                assertEquals(in1.moreData(), in.moreData());
+                assertEquals(in1.moreData(), _in.moreData());
             else if ("lb".equals(trim))
-                assertEquals(in1.lastByte(), in.lastByte());
+                assertEquals(in1.lastByte(), _in.lastByte());
             else if ("cub".equals(trim))
-                assertEquals(in1.curBit(), in.curBit());
+                assertEquals(in1.curBit(), _in.curBit());
             else if (trim.startsWith("s")) {
                 int i = Integer.parseInt(trim.substring(1));
                 in1.skip(i);
-                in.skip(i);
+                _in.skip(i);
             } else if (trim.startsWith("c")) {
                 int i = Integer.parseInt(trim.substring(1));
-                assertEquals(in1.checkNBit(i), in.checkNBit(i));
+                assertEquals(in1.checkNBit(i), _in.checkNBit(i));
             } else {
                 int i = Integer.parseInt(trim);
-                assertEquals(in1.readNBit(i), in.readNBit(i));
+                assertEquals(in1.readNBit(i), _in.readNBit(i));
             }
         }
     }
 
     public void testReader6() throws IOException {
 
-        BitReader in = reader(new byte[] { b("01010100"), b("00011001"), b("10000100"), b("10001111"), b("11101011"),
+        BitReader _in = reader(new byte[] { b("01010100"), b("00011001"), b("10000100"), b("10001111"), b("11101011"),
                 b("10010100"), b("01101010"), b("01011111"), b("01110101") });
 
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(20, in.readNBit(6));
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(4, in.readNBit(3));
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
-        assertEquals(0, in.read1Bit());
-        assertEquals(1, in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(20, _in.readNBit(6));
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(4, _in.readNBit(3));
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
+        assertEquals(0, _in.read1Bit());
+        assertEquals(1, _in.read1Bit());
     }
 
     @Test

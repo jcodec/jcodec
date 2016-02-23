@@ -26,17 +26,17 @@ public class GOPHeader implements MPEGHeader {
     }
 
     public static GOPHeader read(ByteBuffer bb) {
-        BitReader in = new BitReader(bb);
-        boolean dropFrame = in.read1Bit() == 1;
-        short hours = (short) in.readNBit(5);
-        byte minutes = (byte) in.readNBit(6);
-        in.skip(1);
+        BitReader _in = new BitReader(bb);
+        boolean dropFrame = _in.read1Bit() == 1;
+        short hours = (short) _in.readNBit(5);
+        byte minutes = (byte) _in.readNBit(6);
+        _in.skip(1);
 
-        byte seconds = (byte) in.readNBit(6);
-        byte frames = (byte) in.readNBit(6);
+        byte seconds = (byte) _in.readNBit(6);
+        byte frames = (byte) _in.readNBit(6);
 
-        boolean closedGop = in.read1Bit() == 1;
-        boolean brokenLink = in.read1Bit() == 1;
+        boolean closedGop = _in.read1Bit() == 1;
+        boolean brokenLink = _in.read1Bit() == 1;
 
         return new GOPHeader(new TapeTimecode(hours, minutes, seconds, frames, dropFrame), closedGop, brokenLink);
     }

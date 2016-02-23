@@ -27,7 +27,7 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 		lbMid = (lbLong-lbShort)/2;
 	}
 
-	void process(float[] in, float[] out, int winShape, int winShapePrev, WindowSequence winSeq) throws AACException {
+	void process(float[] _in, float[] out, int winShape, int winShapePrev, WindowSequence winSeq) throws AACException {
 		final float[] buf = new float[frameLen];
 
 		int b, j, i;
@@ -35,8 +35,8 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 			for(b = 0; b<BANDS; b++) {
 				for(j = 0; j<8; j++) {
 					for(i = 0; i<lbShort; i++) {
-						if(b%2==0) buf[lbLong*b+lbShort*j+i] = in[shortFrameLen*j+lbShort*b+i];
-						else buf[lbLong*b+lbShort*j+i] = in[shortFrameLen*j+lbShort*b+lbShort-1-i];
+						if(b%2==0) buf[lbLong*b+lbShort*j+i] = _in[shortFrameLen*j+lbShort*b+i];
+						else buf[lbLong*b+lbShort*j+i] = _in[shortFrameLen*j+lbShort*b+lbShort-1-i];
 					}
 				}
 			}
@@ -44,8 +44,8 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 		else {
 			for(b = 0; b<BANDS; b++) {
 				for(i = 0; i<lbLong; i++) {
-					if(b%2==0) buf[lbLong*b+i] = in[lbLong*b+i];
-					else buf[lbLong*b+i] = in[lbLong*b+lbLong-1-i];
+					if(b%2==0) buf[lbLong*b+i] = _in[lbLong*b+i];
+					else buf[lbLong*b+i] = _in[lbLong*b+lbLong-1-i];
 				}
 			}
 		}
@@ -55,7 +55,7 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 		}
 	}
 
-	private void process2(float[] in, float[] out, WindowSequence winSeq, int winShape, int winShapePrev, int band) throws AACException {
+	private void process2(float[] _in, float[] out, WindowSequence winSeq, int winShape, int winShapePrev, int band) throws AACException {
 		final float[] bufIn = new float[lbLong];
 		final float[] bufOut = new float[lbLong*2];
 		final float[] window = new float[lbLong*2];
@@ -115,7 +115,7 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 			int k;
 			for(j = 0; j<8; j++) {
 				for(k = 0; k<lbShort; k++) {
-					bufIn[k] = in[band*lbLong+j*lbShort+k];
+					bufIn[k] = _in[band*lbLong+j*lbShort+k];
 				}
 				if(j==0) arraycopy(window1, 0, window, 0, lbShort * 2);
 				else arraycopy(window2, 0, window, 0, lbShort * 2);
@@ -127,7 +127,7 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 		}
 		else {
 			for(j = 0; j<lbLong; j++) {
-				bufIn[j] = in[band*lbLong+j];
+				bufIn[j] = _in[band*lbLong+j];
 			}
 			imdct(bufIn, bufOut, window, lbLong);
 			for(j = 0; j<lbLong*2; j++) {
@@ -136,7 +136,7 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 		}
 	}
 
-	private void imdct(float[] in, float[] out, float[] window, int n) throws AACException {
+	private void imdct(float[] _in, float[] out, float[] window, int n) throws AACException {
 		final int n2 = n/2;
 		float[][] table, table2;
 		if(n==256) {
@@ -152,10 +152,10 @@ class IMDCT implements GCConstants, IMDCTTables, Windows {
 		final float[] tmp = new float[n];
 		int i;
 		for(i = 0; i<n2; ++i) {
-			tmp[i] = in[2*i];
+			tmp[i] = _in[2*i];
 		}
 		for(i = n2; i<n; ++i) {
-			tmp[i] = -in[2*n-1-2*i];
+			tmp[i] = -_in[2*n-1-2*i];
 		}
 
 		//pre-twiddle

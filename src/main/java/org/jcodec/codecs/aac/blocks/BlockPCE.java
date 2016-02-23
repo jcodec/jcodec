@@ -24,56 +24,56 @@ public class BlockPCE extends Block {
         ChannelPosition position;
     }
 
-    public void parse(BitReader in) {
+    public void parse(BitReader _in) {
 
-        in.readNBit(2); // object_type
+        _in.readNBit(2); // object_type
 
-        int samplingIndex = (int) in.readNBit(4);
+        int samplingIndex = (int) _in.readNBit(4);
 
-        int num_front = (int) in.readNBit(4);
-        int num_side = (int) in.readNBit(4);
-        int num_back = (int) in.readNBit(4);
-        int num_lfe = (int) in.readNBit(2);
-        int num_assoc_data = (int) in.readNBit(3);
-        int num_cc = (int) in.readNBit(4);
+        int num_front = (int) _in.readNBit(4);
+        int num_side = (int) _in.readNBit(4);
+        int num_back = (int) _in.readNBit(4);
+        int num_lfe = (int) _in.readNBit(2);
+        int num_assoc_data = (int) _in.readNBit(3);
+        int num_cc = (int) _in.readNBit(4);
 
-        if (in.read1Bit() != 0)
-            in.readNBit(4); // mono_mixdown_tag
-        if (in.read1Bit() != 0)
-            in.readNBit(4); // stereo_mixdown_tag
+        if (_in.read1Bit() != 0)
+            _in.readNBit(4); // mono_mixdown_tag
+        if (_in.read1Bit() != 0)
+            _in.readNBit(4); // stereo_mixdown_tag
 
-        if (in.read1Bit() != 0)
-            in.readNBit(3); // mixdown_coeff_index and pseudo_surround
+        if (_in.read1Bit() != 0)
+            _in.readNBit(3); // mixdown_coeff_index and pseudo_surround
 
-        // if (!in.moreData(4 * (num_front + num_side + num_back + num_lfe +
+        // if (!_in.moreData(4 * (num_front + num_side + num_back + num_lfe +
         // num_assoc_data + num_cc))) {
         // throw new RuntimeException("Overread");
         // }
         ChannelMapping[] layout_map = new ChannelMapping[MAX_ELEM_ID * 4];
 
         int tags = 0;
-        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_FRONT, in, num_front);
+        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_FRONT, _in, num_front);
         tags = num_front;
-        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_SIDE, in, num_side);
+        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_SIDE, _in, num_side);
         tags += num_side;
-        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_BACK, in, num_back);
+        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_BACK, _in, num_back);
         tags += num_back;
-        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_LFE, in, num_lfe);
+        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_LFE, _in, num_lfe);
         tags += num_lfe;
 
-        in.skip(4 * num_assoc_data);
+        _in.skip(4 * num_assoc_data);
 
-        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_CC, in, num_cc);
+        decodeChannelMap(layout_map, tags, ChannelPosition.AAC_CHANNEL_CC, _in, num_cc);
         tags += num_cc;
 
-        in.align();
+        _in.align();
 
         /* comment field, first byte is length */
-        int comment_len = (int) in.readNBit(8) * 8;
-        // if (!in.moreData(comment_len)) {
+        int comment_len = (int) _in.readNBit(8) * 8;
+        // if (!_in.moreData(comment_len)) {
         // throw new RuntimeException("Overread");
         // }
-        in.skip(comment_len);
+        _in.skip(comment_len);
     }
 
     /**
@@ -82,17 +82,17 @@ public class BlockPCE extends Block {
      * 
      * @throws IOException
      */
-    private void decodeChannelMap(ChannelMapping layout_map[], int offset, ChannelPosition type, BitReader in, int n) {
+    private void decodeChannelMap(ChannelMapping layout_map[], int offset, ChannelPosition type, BitReader _in, int n) {
         while (n-- > 0) {
             RawDataBlockType syn_ele = null;
             switch (type) {
             case AAC_CHANNEL_FRONT:
             case AAC_CHANNEL_BACK:
             case AAC_CHANNEL_SIDE:
-                syn_ele = RawDataBlockType.fromOrdinal(in.read1Bit());
+                syn_ele = RawDataBlockType.fromOrdinal(_in.read1Bit());
                 break;
             case AAC_CHANNEL_CC:
-                in.read1Bit();
+                _in.read1Bit();
                 syn_ele = RawDataBlockType.TYPE_CCE;
                 break;
             case AAC_CHANNEL_LFE:
@@ -100,7 +100,7 @@ public class BlockPCE extends Block {
                 break;
             }
             layout_map[offset].syn_ele = syn_ele;
-            layout_map[offset].someInt = (int) in.readNBit(4);
+            layout_map[offset].someInt = (int) _in.readNBit(4);
             layout_map[offset].position = type;
             offset++;
         }

@@ -17,12 +17,12 @@ public class PictureTemporalScalableExtension implements MPEGHeader {
     public int forward_temporal_reference;
     public int backward_temporal_reference;
 
-    public static PictureTemporalScalableExtension read(BitReader in) {
+    public static PictureTemporalScalableExtension read(BitReader _in) {
         PictureTemporalScalableExtension ptse = new PictureTemporalScalableExtension();
-        ptse.reference_select_code = in.readNBit(2);
-        ptse.forward_temporal_reference = in.readNBit(10);
-        in.read1Bit();
-        ptse.backward_temporal_reference = in.readNBit(10);
+        ptse.reference_select_code = _in.readNBit(2);
+        ptse.forward_temporal_reference = _in.readNBit(10);
+        _in.read1Bit();
+        ptse.backward_temporal_reference = _in.readNBit(10);
 
         return ptse;
     }

@@ -276,7 +276,7 @@ public class MPEGDecoder extends VideoDecoder {
         return null;
     }
 
-    public void decodeSlice(PictureHeader ph, int verticalPos, Context context, int[][] buf, BitReader in, int vertOff,
+    public void decodeSlice(PictureHeader ph, int verticalPos, Context context, int[][] buf, BitReader _in, int vertOff,
             int vertStep) throws IOException {
 
         int stride = context.codedWidth;
@@ -285,18 +285,18 @@ public class MPEGDecoder extends VideoDecoder {
 
         int mbRow = verticalPos - 1;
         if (sh.vertical_size > 2800) {
-            mbRow += (in.readNBit(3) << 7);
+            mbRow += (_in.readNBit(3) << 7);
         }
         if (sh.sequenceScalableExtension != null
                 && sh.sequenceScalableExtension.scalable_mode == SequenceScalableExtension.DATA_PARTITIONING) {
-            int priorityBreakpoint = in.readNBit(7);
+            int priorityBreakpoint = _in.readNBit(7);
         }
-        int qScaleCode = in.readNBit(5);
-        if (in.read1Bit() == 1) {
-            int intraSlice = in.read1Bit();
-            in.skip(7);
-            while (in.read1Bit() == 1)
-                in.readNBit(8);
+        int qScaleCode = _in.readNBit(5);
+        if (_in.read1Bit() == 1) {
+            int intraSlice = _in.read1Bit();
+            _in.skip(7);
+            while (_in.read1Bit() == 1)
+                _in.readNBit(8);
         }
 
         MPEGPred pred = new MPEGPred(ph.pictureCodingExtension != null ? ph.pictureCodingExtension.f_code
@@ -307,9 +307,9 @@ public class MPEGDecoder extends VideoDecoder {
 
         int[] ctx = new int[] { qScaleCode };
 
-        for (int prevAddr = mbRow * context.mbWidth - 1; in.checkNBit(23) != 0;) {
+        for (int prevAddr = mbRow * context.mbWidth - 1; _in.checkNBit(23) != 0;) {
             // TODO: decode skipped!!!
-            prevAddr = decodeMacroblock(ph, context, prevAddr, ctx, buf, stride, in, vertOff, vertStep, pred);
+            prevAddr = decodeMacroblock(ph, context, prevAddr, ctx, buf, stride, _in, vertOff, vertStep, pred);
             context.mbNo++;
         }
     }
@@ -504,7 +504,7 @@ public class MPEGDecoder extends VideoDecoder {
         else if (predBack != null)
             return predBack;
         else
-            throw new RuntimeException("Omited pred in B-frames --> invalid");
+            throw new RuntimeException("Omited pred _in B-frames --> invalid");
     }
 
     private static final void avgPred(int[][] predFwd, int[][] predBack) {

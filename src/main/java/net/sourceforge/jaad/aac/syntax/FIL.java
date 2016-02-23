@@ -48,114 +48,114 @@ class FIL extends Element implements SyntaxConstants {
 		this.downSampledSBR = downSampledSBR;
 	}
 
-	void decode(IBitStream in, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames) throws AACException {
-		int count = in.readBits(4);
-		if(count==15) count += in.readBits(8)-1;
+	void decode(IBitStream _in, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames) throws AACException {
+		int count = _in.readBits(4);
+		if(count==15) count += _in.readBits(8)-1;
 		count *= 8; //convert to bits
 
 		final int cpy = count;
-		final int pos = in.getPosition();
+		final int pos = _in.getPosition();
 
 		while(count>0) {
-			count = decodeExtensionPayload(in, count, prev, sf, sbrEnabled, smallFrames);
+			count = decodeExtensionPayload(_in, count, prev, sf, sbrEnabled, smallFrames);
 		}
 
-		final int pos2 = in.getPosition()-pos;
+		final int pos2 = _in.getPosition()-pos;
 		final int bitsLeft = cpy-pos2;
-		if(bitsLeft>0) in.skipBits(pos2);
+		if(bitsLeft>0) _in.skipBits(pos2);
 		else if(bitsLeft<0) throw new AACException("FIL element overread: "+bitsLeft);
 	}
 
-	private int decodeExtensionPayload(IBitStream in, int count, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames) throws AACException {
-		final int type = in.readBits(4);
+	private int decodeExtensionPayload(IBitStream _in, int count, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames) throws AACException {
+		final int type = _in.readBits(4);
 		int ret = count-4;
 		switch(type) {
 			case TYPE_DYNAMIC_RANGE:
-				ret = decodeDynamicRangeInfo(in, ret);
+				ret = decodeDynamicRangeInfo(_in, ret);
 				break;
 			case TYPE_SBR_DATA:
 			case TYPE_SBR_DATA_CRC:
 				if(sbrEnabled) {
 					if(prev instanceof SCE_LFE||prev instanceof CPE||prev instanceof CCE) {
-						prev.decodeSBR(in, sf, ret, (prev instanceof CPE), (type==TYPE_SBR_DATA_CRC), downSampledSBR, smallFrames);
+						prev.decodeSBR(_in, sf, ret, (prev instanceof CPE), (type==TYPE_SBR_DATA_CRC), downSampledSBR, smallFrames);
 						ret = 0;
 						break;
 					}
 					else throw new AACException("SBR applied on unexpected element: "+prev);
 				}
 				else {
-					in.skipBits(ret);
+					_in.skipBits(ret);
 					ret = 0;
 				}
 			case TYPE_FILL:
 			case TYPE_FILL_DATA:
 			case TYPE_EXT_DATA_ELEMENT:
 			default:
-				in.skipBits(ret);
+				_in.skipBits(ret);
 				ret = 0;
 				break;
 		}
 		return ret;
 	}
 
-	private int decodeDynamicRangeInfo(IBitStream in, int count) throws AACException {
+	private int decodeDynamicRangeInfo(IBitStream _in, int count) throws AACException {
 		if(dri==null) dri = new DynamicRangeInfo();
 		int ret = count;
 
 		int bandCount = 1;
 
 		//pce tag
-		if(dri.pceTagPresent = in.readBool()) {
-			dri.pceInstanceTag = in.readBits(4);
-			dri.tagReservedBits = in.readBits(4);
+		if(dri.pceTagPresent = _in.readBool()) {
+			dri.pceInstanceTag = _in.readBits(4);
+			dri.tagReservedBits = _in.readBits(4);
 		}
 
 		//excluded channels
-		if(dri.excludedChannelsPresent = in.readBool()) {
-			ret -= decodeExcludedChannels(in);
+		if(dri.excludedChannelsPresent = _in.readBool()) {
+			ret -= decodeExcludedChannels(_in);
 		}
 
 		//bands
-		if(dri.bandsPresent = in.readBool()) {
-			dri.bandsIncrement = in.readBits(4);
-			dri.interpolationScheme = in.readBits(4);
+		if(dri.bandsPresent = _in.readBool()) {
+			dri.bandsIncrement = _in.readBits(4);
+			dri.interpolationScheme = _in.readBits(4);
 			ret -= 8;
 			bandCount += dri.bandsIncrement;
 			dri.bandTop = new int[bandCount];
 			for(int i = 0; i<bandCount; i++) {
-				dri.bandTop[i] = in.readBits(8);
+				dri.bandTop[i] = _in.readBits(8);
 				ret -= 8;
 			}
 		}
 
 		//prog ref level
-		if(dri.progRefLevelPresent = in.readBool()) {
-			dri.progRefLevel = in.readBits(7);
-			dri.progRefLevelReservedBits = in.readBits(1);
+		if(dri.progRefLevelPresent = _in.readBool()) {
+			dri.progRefLevel = _in.readBits(7);
+			dri.progRefLevelReservedBits = _in.readBits(1);
 			ret -= 8;
 		}
 
 		dri.dynRngSgn = new boolean[bandCount];
 		dri.dynRngCtl = new int[bandCount];
 		for(int i = 0; i<bandCount; i++) {
-			dri.dynRngSgn[i] = in.readBool();
-			dri.dynRngCtl[i] = in.readBits(7);
+			dri.dynRngSgn[i] = _in.readBool();
+			dri.dynRngCtl[i] = _in.readBits(7);
 			ret -= 8;
 		}
 		return ret;
 	}
 
-	private int decodeExcludedChannels(IBitStream in) throws AACException {
+	private int decodeExcludedChannels(IBitStream _in) throws AACException {
 		int i;
 		int exclChs = 0;
 
 		do {
 			for(i = 0; i<7; i++) {
-				dri.excludeMask[exclChs] = in.readBool();
+				dri.excludeMask[exclChs] = _in.readBool();
 				exclChs++;
 			}
 		}
-		while(exclChs<57&&in.readBool());
+		while(exclChs<57&&_in.readBool());
 
 		return (exclChs/7)*8;
 	}

@@ -219,10 +219,10 @@ public class WavHeader {
         }
     }
 
-    public static WavHeader read(ReadableByteChannel in) throws IOException {
+    public static WavHeader read(ReadableByteChannel _in) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(128);
         buf.order(ByteOrder.LITTLE_ENDIAN);
-        in.read(buf);
+        _in.read(buf);
         if (buf.remaining() > 0)
             throw new IOException("Incomplete wav header found");
         buf.flip();

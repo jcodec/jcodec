@@ -111,9 +111,9 @@ public class Cut {
         private double inSec;
         private double outSec;
 
-        public Slice(double in, double out) {
+        public Slice(double _in, double out) {
             super();
-            this.inSec = in;
+            this.inSec = _in;
             this.outSec = out;
         }
     }

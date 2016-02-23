@@ -96,7 +96,7 @@ public class HCR implements SyntaxConstants {
 	}
 
 	//sectionDataResilience = hDecoder->aacSectionDataResilienceFlag
-	public static void decodeReorderedSpectralData(ICStream ics, IBitStream in, short[] spectralData, boolean sectionDataResilience) throws AACException {
+	public static void decodeReorderedSpectralData(ICStream ics, IBitStream _in, short[] spectralData, boolean sectionDataResilience) throws AACException {
 		final ICSInfo info = ics.getInfo();
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
@@ -174,7 +174,7 @@ public class HCR implements SyntaxConstants {
 										if(PCWs_done==0) {
 											//read in normal segments
 											if(bitsread+segwidth<=spDataLen) {
-												segment[segmentsCount].readSegment(segwidth, in);
+												segment[segmentsCount].readSegment(segwidth, _in);
 												bitsread += segwidth;
 
 												//Huffman.decodeSpectralDataER(segment[segmentsCount], thisSectCB, spectralData, sp);
@@ -189,7 +189,7 @@ public class HCR implements SyntaxConstants {
 												if(bitsread<spDataLen) {
 													final int additional_bits = spDataLen-bitsread;
 
-													segment[segmentsCount].readSegment(additional_bits, in);
+													segment[segmentsCount].readSegment(additional_bits, _in);
 													segment[segmentsCount].len += segment[segmentsCount-1].len;
 													segment[segmentsCount].rewindReverse();
 
@@ -225,7 +225,7 @@ public class HCR implements SyntaxConstants {
 			}
 		}
 
-		if(segmentsCount==0) throw new AACException("no segments in HCR");
+		if(segmentsCount==0) throw new AACException("no segments _in HCR");
 
 		final int numberOfSets = numberOfCodewords/segmentsCount;
 

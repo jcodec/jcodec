@@ -24,22 +24,22 @@ public class WavInput implements Closeable {
 
     protected WavHeader header;
     protected byte[] prevBuf;
-    protected ReadableByteChannel in;
+    protected ReadableByteChannel _in;
     protected AudioFormat format;
 
-    public WavInput(ReadableByteChannel in) throws IOException {
-        this.header = WavHeader.read(in);
+    public WavInput(ReadableByteChannel _in) throws IOException {
+        this.header = WavHeader.read(_in);
         this.format = header.getFormat();
-        this.in = in;
+        this._in = _in;
     }
 
     public int read(ByteBuffer buf) throws IOException {
         int maxRead = format.framesToBytes(format.bytesToFrames(buf.remaining()));
-        return NIOUtils.read(in, buf, maxRead);
+        return NIOUtils.read(_in, buf, maxRead);
     }
 
     public void close() throws IOException {
-        in.close();
+        _in.close();
     }
 
     public WavHeader getHeader() {
@@ -62,7 +62,7 @@ public class WavInput implements Closeable {
         @Override
         public void close() throws IOException {
             super.close();
-            in.close();
+            _in.close();
         }
     }
 

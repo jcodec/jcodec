@@ -30,7 +30,7 @@ class AnalysisFilterbank implements FilterbankTable {
 		float[] u = new float[64];
 		float[] in_real = new float[32], in_imag = new float[32];
 		float[] out_real = new float[32], out_imag = new float[32];
-		int in = 0;
+		int _in = 0;
 		int l;
 
 		/* qmf subsample l */
@@ -43,7 +43,7 @@ class AnalysisFilterbank implements FilterbankTable {
 
 			/* add new samples to input buffer x */
 			for(n = 32-1; n>=0; n--) {
-				this.x[this.x_index+n] = this.x[this.x_index+n+320] = input[in++];
+				this.x[this.x_index+n] = this.x[this.x_index+n+320] = input[_in++];
 			}
 
 			/* window and summation to create array u */

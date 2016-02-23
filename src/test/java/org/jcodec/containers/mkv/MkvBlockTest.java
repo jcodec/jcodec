@@ -21,9 +21,9 @@ public class MkvBlockTest {
     
     @Test
     public void testXiph() {
-        int[] in = new int[]{187, 630, 255, 60, 0xFFFFFF};
+        int[] _in = new int[]{187, 630, 255, 60, 0xFFFFFF};
         byte[] expecteds = new byte[]{(byte)187, (byte)255, (byte)255, 120, (byte)255, 0, 60};
-        assertArrayEquals(expecteds, MkvBlock.muxXiphLacing(in));
+        assertArrayEquals(expecteds, MkvBlock.muxXiphLacing(_in));
     }
     
     @Test
@@ -37,13 +37,13 @@ public class MkvBlockTest {
     
     @Test
     public void testEbml() {
-        int[] in = new int[]{187, 630, 255, 60, 0xFFFFFF};
+        int[] _in = new int[]{187, 630, 255, 60, 0xFFFFFF};
         long[] expecteds = new long[]{187, 443, -375, -195};
-        assertArrayEquals(expecteds, MkvBlock.calcEbmlLacingDiffs(in));
+        assertArrayEquals(expecteds, MkvBlock.calcEbmlLacingDiffs(_in));
         
-        in = new int[]{480, 576, 672, 672, 672, 672, 576, 672};
+        _in = new int[]{480, 576, 672, 672, 672, 672, 576, 672};
         expecteds = new long[]{480, 96, 96, 0, 0, 0, -96};
-        assertArrayEquals(expecteds, MkvBlock.calcEbmlLacingDiffs(in));
+        assertArrayEquals(expecteds, MkvBlock.calcEbmlLacingDiffs(_in));
     }
     
     @Test

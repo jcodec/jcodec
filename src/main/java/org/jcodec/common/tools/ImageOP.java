@@ -75,11 +75,11 @@ public class ImageOP {
         }
     }
 
-    public static void subImageWithFill(Picture in, Picture out, Rect rect) {
-        int width = in.getWidth();
-        int height = in.getHeight();
-        ColorSpace color = in.getColor();
-        int[][] data = in.getData();
+    public static void subImageWithFill(Picture _in, Picture out, Rect rect) {
+        int width = _in.getWidth();
+        int height = _in.getHeight();
+        ColorSpace color = _in.getColor();
+        int[][] data = _in.getData();
 
         for (int i = 0; i < data.length; i++) {
             subImageWithFill(data[i], width >> color.compWidth[i], height >> color.compHeight[i],
@@ -89,11 +89,11 @@ public class ImageOP {
         }
     }
     
-    public static void subImageWithFill(Picture8Bit in, Picture8Bit out, Rect rect) {
-        int width = in.getWidth();
-        int height = in.getHeight();
-        ColorSpace color = in.getColor();
-        byte[][] data = in.getData();
+    public static void subImageWithFill(Picture8Bit _in, Picture8Bit out, Rect rect) {
+        int width = _in.getWidth();
+        int height = _in.getHeight();
+        ColorSpace color = _in.getColor();
+        byte[][] data = _in.getData();
 
         for (int i = 0; i < data.length; i++) {
             subImageWithFill(data[i], width >> color.compWidth[i], height >> color.compHeight[i],

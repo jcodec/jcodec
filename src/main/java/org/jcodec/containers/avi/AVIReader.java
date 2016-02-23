@@ -455,7 +455,7 @@ public class AVIReader {
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
-            dwChunkSize -= 4; // Correct for next field being in between the
+            dwChunkSize -= 4; // Correct for next field being _in between the
                               // size and the data
             dwListTypeFourCC = raf.readInt();
             dwListTypeFourCCStr = AVIReader.toFourCC(dwListTypeFourCC);

@@ -112,35 +112,35 @@ public class AudioUtil {
         }
     }
 
-    private static void fromFloat24LE(ByteBuffer buf, FloatBuffer in) {
-        while (buf.remaining() >= 3 && in.hasRemaining()) {
-            int val = clip((int) (in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
+    private static void fromFloat24LE(ByteBuffer buf, FloatBuffer _in) {
+        while (buf.remaining() >= 3 && _in.hasRemaining()) {
+            int val = clip((int) (_in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
             buf.put((byte) val);
             buf.put((byte) (val >> 8));
             buf.put((byte) (val >> 16));
         }
     }
 
-    private static void fromFloat16LE(ByteBuffer buf, FloatBuffer in) {
-        while (buf.remaining() >= 2 && in.hasRemaining()) {
-            int val = clip((int) (in.get() * f16), -0x8000, 0x7fff) & 0xffff;
+    private static void fromFloat16LE(ByteBuffer buf, FloatBuffer _in) {
+        while (buf.remaining() >= 2 && _in.hasRemaining()) {
+            int val = clip((int) (_in.get() * f16), -0x8000, 0x7fff) & 0xffff;
             buf.put((byte) val);
             buf.put((byte) (val >> 8));
         }
     }
 
-    private static void fromFloat24BE(ByteBuffer buf, FloatBuffer in) {
-        while (buf.remaining() >= 3 && in.hasRemaining()) {
-            int val = clip((int) (in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
+    private static void fromFloat24BE(ByteBuffer buf, FloatBuffer _in) {
+        while (buf.remaining() >= 3 && _in.hasRemaining()) {
+            int val = clip((int) (_in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
             buf.put((byte) (val >> 16));
             buf.put((byte) (val >> 8));
             buf.put((byte) val);
         }
     }
 
-    private static void fromFloat16BE(ByteBuffer buf, FloatBuffer in) {
-        while (buf.remaining() >= 2 && in.hasRemaining()) {
-            int val = clip((int) (in.get() * f16), -0x8000, 0x7fff) & 0xffff;
+    private static void fromFloat16BE(ByteBuffer buf, FloatBuffer _in) {
+        while (buf.remaining() >= 2 && _in.hasRemaining()) {
+            int val = clip((int) (_in.get() * f16), -0x8000, 0x7fff) & 0xffff;
             buf.put((byte) (val >> 8));
             buf.put((byte) val);
         }

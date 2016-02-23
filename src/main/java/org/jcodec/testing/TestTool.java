@@ -61,11 +61,11 @@ public class TestTool {
         new TestTool(args[0], args[2]).doIt(args[1]);
     }
 
-    private void doIt(String in) throws Exception {
+    private void doIt(String _in) throws Exception {
         SeekableByteChannel raw = null;
         SeekableByteChannel source = null;
         try {
-            source = new FileChannelWrapper(new FileInputStream(in).getChannel());
+            source = new FileChannelWrapper(new FileInputStream(_in).getChannel());
 
             MP4Demuxer demux = new MP4Demuxer(source);
 

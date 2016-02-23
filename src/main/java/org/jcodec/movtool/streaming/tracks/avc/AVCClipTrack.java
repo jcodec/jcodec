@@ -152,7 +152,7 @@ public class AVCClipTrack extends ClipTrack {
             return result;
         }
 
-        private void processFrame(ByteBuffer in, ByteBuffer out) {
+        private void processFrame(ByteBuffer _in, ByteBuffer out) {
             SliceHeaderTweaker st = new H264Utils.SliceHeaderTweaker() {
                 @Override
                 protected void tweak(SliceHeader sh) {
@@ -160,7 +160,7 @@ public class AVCClipTrack extends ClipTrack {
                 }
             };
 
-            ByteBuffer dup = in.duplicate();
+            ByteBuffer dup = _in.duplicate();
             while (dup.hasRemaining()) {
                 ByteBuffer buf = H264Utils.nextNALUnit(dup);
                 if (buf == null)

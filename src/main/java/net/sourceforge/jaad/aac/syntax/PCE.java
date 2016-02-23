@@ -82,65 +82,65 @@ public class PCE extends Element {
 		sampleFrequency = SampleFrequency.SAMPLE_FREQUENCY_NONE;
 	}
 
-	public void decode(IBitStream in) throws AACException {
-		readElementInstanceTag(in);
+	public void decode(IBitStream _in) throws AACException {
+		readElementInstanceTag(_in);
 
-		profile = Profile.forInt(in.readBits(2));
+		profile = Profile.forInt(_in.readBits(2));
 
-		sampleFrequency = SampleFrequency.forInt(in.readBits(4));
+		sampleFrequency = SampleFrequency.forInt(_in.readBits(4));
 
-		frontChannelElementsCount = in.readBits(4);
-		sideChannelElementsCount = in.readBits(4);
-		backChannelElementsCount = in.readBits(4);
-		lfeChannelElementsCount = in.readBits(2);
-		assocDataElementsCount = in.readBits(3);
-		validCCElementsCount = in.readBits(4);
+		frontChannelElementsCount = _in.readBits(4);
+		sideChannelElementsCount = _in.readBits(4);
+		backChannelElementsCount = _in.readBits(4);
+		lfeChannelElementsCount = _in.readBits(2);
+		assocDataElementsCount = _in.readBits(3);
+		validCCElementsCount = _in.readBits(4);
 
-		if(monoMixdown = in.readBool()) {
+		if(monoMixdown = _in.readBool()) {
 			SyntaxConstants.LOGGER.warning("mono mixdown present, but not yet supported");
-			monoMixdownElementNumber = in.readBits(4);
+			monoMixdownElementNumber = _in.readBits(4);
 		}
-		if(stereoMixdown = in.readBool()) {
+		if(stereoMixdown = _in.readBool()) {
 			SyntaxConstants.LOGGER.warning("stereo mixdown present, but not yet supported");
-			stereoMixdownElementNumber = in.readBits(4);
+			stereoMixdownElementNumber = _in.readBits(4);
 		}
-		if(matrixMixdownIDXPresent = in.readBool()) {
+		if(matrixMixdownIDXPresent = _in.readBool()) {
 			SyntaxConstants.LOGGER.warning("matrix mixdown present, but not yet supported");
-			matrixMixdownIDX = in.readBits(2);
-			pseudoSurround = in.readBool();
+			matrixMixdownIDX = _in.readBits(2);
+			pseudoSurround = _in.readBool();
 		}
 
-		readTaggedElementArray(frontElements, in, frontChannelElementsCount);
+		readTaggedElementArray(frontElements, _in, frontChannelElementsCount);
 
-		readTaggedElementArray(sideElements, in, sideChannelElementsCount);
+		readTaggedElementArray(sideElements, _in, sideChannelElementsCount);
 
-		readTaggedElementArray(backElements, in, backChannelElementsCount);
+		readTaggedElementArray(backElements, _in, backChannelElementsCount);
 
 		int i;
 		for(i = 0; i<lfeChannelElementsCount; ++i) {
-			lfeElementTags[i] = in.readBits(4);
+			lfeElementTags[i] = _in.readBits(4);
 		}
 
 		for(i = 0; i<assocDataElementsCount; ++i) {
-			assocDataElementTags[i] = in.readBits(4);
+			assocDataElementTags[i] = _in.readBits(4);
 		}
 
 		for(i = 0; i<validCCElementsCount; ++i) {
-			ccElements[i] = new CCE(in.readBool(), in.readBits(4));
+			ccElements[i] = new CCE(_in.readBool(), _in.readBits(4));
 		}
 
-		in.byteAlign();
+		_in.byteAlign();
 
-		final int commentFieldBytes = in.readBits(8);
+		final int commentFieldBytes = _in.readBits(8);
 		commentFieldData = new byte[commentFieldBytes];
 		for(i = 0; i<commentFieldBytes; i++) {
-			commentFieldData[i] = (byte) in.readBits(8);
+			commentFieldData[i] = (byte) _in.readBits(8);
 		}
 	}
 
-	private void readTaggedElementArray(TaggedElement[] te, IBitStream in, int len) throws AACException {
+	private void readTaggedElementArray(TaggedElement[] te, IBitStream _in, int len) throws AACException {
 		for(int i = 0; i<len; ++i) {
-			te[i] = new TaggedElement(in.readBool(), in.readBits(4));
+			te[i] = new TaggedElement(_in.readBool(), _in.readBits(4));
 		}
 	}
 

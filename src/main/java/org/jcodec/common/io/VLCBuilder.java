@@ -46,12 +46,12 @@ public class VLCBuilder {
 
     public VLC getVLC() {
         return new VLC(codes.toArray(), codesSizes.toArray()) {
-            public int readVLC(BitReader in) {
-                return inverse.get(super.readVLC(in));
+            public int readVLC(BitReader _in) {
+                return inverse.get(super.readVLC(_in));
             }
             
-            public int readVLC16(BitReader in) {
-                return inverse.get(super.readVLC16(in));
+            public int readVLC16(BitReader _in) {
+                return inverse.get(super.readVLC16(_in));
             }
 
             public void writeVLC(BitWriter out, int code) {

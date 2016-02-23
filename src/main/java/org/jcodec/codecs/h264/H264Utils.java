@@ -99,14 +99,14 @@ public class H264Utils {
     public static final void unescapeNAL(ByteBuffer _buf) {
         if (_buf.remaining() < 2)
             return;
-        ByteBuffer in = _buf.duplicate();
+        ByteBuffer _in = _buf.duplicate();
         ByteBuffer out = _buf.duplicate();
-        byte p1 = in.get();
+        byte p1 = _in.get();
         out.put(p1);
-        byte p2 = in.get();
+        byte p2 = _in.get();
         out.put(p2);
-        while (in.hasRemaining()) {
-            byte b = in.get();
+        while (_in.hasRemaining()) {
+            byte b = _in.get();
             if (p1 != 0 || p2 != 0 || b != 3)
                 out.put(b);
             p1 = p2;
@@ -273,9 +273,9 @@ public class H264Utils {
      *            Storage for leading PPS structures ( can be null, then all
      *            leading PPSs are discarded ).
      */
-    public static void wipePS(ByteBuffer in, ByteBuffer out, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
+    public static void wipePS(ByteBuffer _in, ByteBuffer out, List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
 
-        ByteBuffer dup = in.duplicate();
+        ByteBuffer dup = _in.duplicate();
         while (dup.hasRemaining()) {
             ByteBuffer buf = H264Utils.nextNALUnit(dup);
             if (buf == null)
@@ -309,8 +309,8 @@ public class H264Utils {
      *            Storage for leading PPS structures ( can be null, then all
      *            leading PPSs are discarded ).
      */
-    public static void wipePS(ByteBuffer in, Collection<ByteBuffer> spsList, Collection<ByteBuffer> ppsList) {
-        ByteBuffer dup = in.duplicate();
+    public static void wipePS(ByteBuffer _in, Collection<ByteBuffer> spsList, Collection<ByteBuffer> ppsList) {
+        ByteBuffer dup = _in.duplicate();
         while (dup.hasRemaining()) {
             ByteBuffer buf = H264Utils.nextNALUnit(dup);
             if (buf == null)
@@ -320,11 +320,11 @@ public class H264Utils {
             if (nu.type == NALUnitType.PPS) {
                 if (ppsList != null)
                     ppsList.add(NIOUtils.duplicate(buf));
-                in.position(dup.position());
+                _in.position(dup.position());
             } else if (nu.type == NALUnitType.SPS) {
                 if (spsList != null)
                     spsList.add(NIOUtils.duplicate(buf));
-                in.position(dup.position());
+                _in.position(dup.position());
             } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE)
                 break;
         }

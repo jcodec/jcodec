@@ -62,7 +62,7 @@ public class FLVTool {
 
         Cmd cmd = MainUtils.parseArguments(Arrays.copyOfRange(args, 1, args.length));
         if (cmd.args.length < 1) {
-            MainUtils.printHelp(command, processors.get(command).getFlags(), "file in", "?file out");
+            MainUtils.printHelp(command, processors.get(command).getFlags(), "file _in", "?file out");
             return;
         }
         int maxPackets = cmd.getIntegerFlag("max-packets", Integer.MAX_VALUE);
@@ -74,13 +74,13 @@ public class FLVTool {
             return;
         }
 
-        SeekableByteChannel in = null;
+        SeekableByteChannel _in = null;
         SeekableByteChannel out = null;
         try {
-            in = NIOUtils.readableFileChannel(new File(cmd.getArg(0)));
+            _in = NIOUtils.readableFileChannel(new File(cmd.getArg(0)));
             if (processor.hasOutput())
                 out = NIOUtils.writableFileChannel(new File(cmd.getArg(1)));
-            FLVReader demuxer = new FLVReader(in);
+            FLVReader demuxer = new FLVReader(_in);
             FLVWriter muxer = new FLVWriter(out);
             FLVTag pkt = null;
             for (int i = 0; i < maxPackets && (pkt = demuxer.readNextPacket()) != null; i++) {
@@ -91,7 +91,7 @@ public class FLVTool {
             if (processor.hasOutput())
                 muxer.finish();
         } finally {
-            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(_in);
             IOUtils.closeQuietly(out);
         }
     }
@@ -143,6 +143,7 @@ public class FLVTool {
                 return new HashMap<String, String>() {
                     {
                         put("from", "From timestamp (in seconds, i.e 67.49)");
+                        put("from", "From timestamp (_in seconds, i.e 67.49)");
                         put("to", "To timestamp");
 
                     }

@@ -197,9 +197,9 @@ public class CAVLC {
         return null;
     }
 
-    public int readCoeffs(BitReader in, VLC coeffTokenTab, VLC[] totalZerosTab, int[] coeffLevel, int firstCoeff,
+    public int readCoeffs(BitReader _in, VLC coeffTokenTab, VLC[] totalZerosTab, int[] coeffLevel, int firstCoeff,
             int nCoeff, int[] zigzag) {
-        int coeffToken = coeffTokenTab.readVLC(in);
+        int coeffToken = coeffTokenTab.readVLC(_in);
         int totalCoeff = totalCoeff(coeffToken);
         int trailingOnes = trailingOnes(coeffToken);
         // System.out.println("Coeff token. Total: " + totalCoeff +
@@ -215,10 +215,10 @@ public class CAVLC {
             int[] level = new int[totalCoeff];
             int i;
             for (i = 0; i < trailingOnes; i++)
-                level[i] = 1 - 2 * in.read1Bit();
+                level[i] = 1 - 2 * _in.read1Bit();
 
             for (; i < totalCoeff; i++) {
-                int level_prefix = readZeroBitCount(in, "");
+                int level_prefix = readZeroBitCount(_in, "");
                 int levelSuffixSize = suffixLength;
                 if (level_prefix == 14 && suffixLength == 0)
                     levelSuffixSize = 4;
@@ -227,7 +227,7 @@ public class CAVLC {
 
                 int levelCode = (Min(15, level_prefix) << suffixLength);
                 if (levelSuffixSize > 0) {
-                    int level_suffix = readU(in, levelSuffixSize, "RB: level_suffix");
+                    int level_suffix = readU(_in, levelSuffixSize, "RB: level_suffix");
                     levelCode += level_suffix;
                 }
                 if (level_prefix >= 15 && suffixLength == 0)
@@ -251,11 +251,11 @@ public class CAVLC {
             int zerosLeft;
             if (totalCoeff < nCoeff) {
                 if (coeffLevel.length == 4) {
-                    zerosLeft = H264Const.totalZeros4[totalCoeff - 1].readVLC(in);
+                    zerosLeft = H264Const.totalZeros4[totalCoeff - 1].readVLC(_in);
                 } else if (coeffLevel.length == 8) {
-                    zerosLeft = H264Const.totalZeros8[totalCoeff - 1].readVLC(in);
+                    zerosLeft = H264Const.totalZeros8[totalCoeff - 1].readVLC(_in);
                 } else {
-                    zerosLeft = H264Const.totalZeros16[totalCoeff - 1].readVLC(in);
+                    zerosLeft = H264Const.totalZeros16[totalCoeff - 1].readVLC(_in);
                 }
             } else
                 zerosLeft = 0;
@@ -263,7 +263,7 @@ public class CAVLC {
             int[] runs = new int[totalCoeff];
             int r;
             for (r = 0; r < totalCoeff - 1 && zerosLeft > 0; r++) {
-                int run = H264Const.run[Math.min(6, zerosLeft - 1)].readVLC(in);
+                int run = H264Const.run[Math.min(6, zerosLeft - 1)].readVLC(_in);
                 zerosLeft -= run;
                 runs[r] = run;
             }

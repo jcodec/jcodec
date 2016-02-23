@@ -34,7 +34,7 @@ public class FLVTrackDemuxer {
     private FLVDemuxerTrack audio;
     private LinkedList<FLVTag> packets = new LinkedList<FLVTag>();
 
-    private SeekableByteChannel in;
+    private SeekableByteChannel _in;
 
     public class FLVDemuxerTrack implements SeekableDemuxerTrack {
 
@@ -104,16 +104,16 @@ public class FLVTrackDemuxer {
         }
     }
 
-    public FLVTrackDemuxer(SeekableByteChannel in) throws IOException {
-        this.in = in;
-        in.position(0);
-        demuxer = new FLVReader(in);
+    public FLVTrackDemuxer(SeekableByteChannel _in) throws IOException {
+        this._in = _in;
+        _in.position(0);
+        demuxer = new FLVReader(_in);
         video = new FLVDemuxerTrack(Type.VIDEO);
         audio = new FLVDemuxerTrack(Type.AUDIO);
     }
 
     private void resetToPosition(long position) throws IOException {
-        in.position(position);
+        _in.position(position);
         demuxer.reset();
         packets.clear();
     }
@@ -124,14 +124,14 @@ public class FLVTrackDemuxer {
         while ((base = demuxer.readNextPacket()) != null && base.getPtsD() == 0)
             ;
 
-        in.position(base.getPosition() + 0x100000);
+        _in.position(base.getPosition() + 0x100000);
         demuxer.reposition();
         FLVTag off = demuxer.readNextPacket();
 
         int byteRate = (int) ((off.getPosition() - base.getPosition()) / (off.getPtsD() - base.getPtsD()));
         long offset = base.getPosition() + (long) ((second - base.getPtsD()) * byteRate);
 
-        in.position(offset);
+        _in.position(offset);
         demuxer.reposition();
         // TODO: the implementation is incorrect
         // 5 reposition attempts
@@ -150,7 +150,7 @@ public class FLVTrackDemuxer {
             } else if (distance < 0 && distance > -MAX_CRAWL_DISTANCE_SEC) {
                 // Read back to the frame
                 System.out.println("Overshoot by: " + (-distance));
-                in.position(pkt.getPosition() + (long) ((distance - 1) * byteRate));
+                _in.position(pkt.getPosition() + (long) ((distance - 1) * byteRate));
                 demuxer.reposition();
             }
         }
