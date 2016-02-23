@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
@@ -129,7 +130,7 @@ public class MXFDemuxer {
     }
 
     protected MXFDemuxerTrack createTrack(UL ul, TimelineTrack track, GenericDescriptor descriptor) throws IOException {
-        return new MXFDemuxerTrack(ul, track, descriptor);
+        return new MXFDemuxerTrack(this, ul, track, descriptor);
     }
 
     public List<IndexSegment> getIndexes() {
@@ -246,7 +247,7 @@ public class MXFDemuxer {
         return audio.toArray(new MXFDemuxerTrack[0]);
     }
 
-    public class MXFDemuxerTrack implements SeekableDemuxerTrack {
+    public static class MXFDemuxerTrack implements SeekableDemuxerTrack {
 
         private UL essenceUL;
         private int dataLen;
@@ -263,9 +264,11 @@ public class MXFDemuxer {
         private MXFCodecMapping codec;
         private int audioFrameDuration;
         private int audioTimescale;
+		private MXFDemuxer demuxer;
 
-        public MXFDemuxerTrack(UL essenceUL, TimelineTrack track, GenericDescriptor descriptor) throws IOException {
-            this.essenceUL = essenceUL;
+        public MXFDemuxerTrack(MXFDemuxer demuxer, UL essenceUL, TimelineTrack track, GenericDescriptor descriptor) throws IOException {
+            this.demuxer = demuxer;
+			this.essenceUL = essenceUL;
             this.track = track;
             this.descriptor = descriptor;
 
@@ -280,7 +283,7 @@ public class MXFDemuxer {
 
                 if (audio && (descriptor instanceof WaveAudioDescriptor)) {
                     WaveAudioDescriptor wave = (WaveAudioDescriptor) descriptor;
-                    cacheAudioFrameSizes(ch);
+                    cacheAudioFrameSizes(demuxer.ch);
                     audioFrameDuration = dataLen / ((wave.getQuantizationBits() >> 3) * wave.getChannelCount());
                     audioTimescale = (int) wave.getAudioSamplingRate().scalar();
                 }
@@ -296,11 +299,11 @@ public class MXFDemuxer {
         }
 
         public double getDuration() {
-            return duration;
+            return demuxer.duration;
         }
 
         public int getNumFrames() {
-            return totalFrames;
+            return demuxer.totalFrames;
         }
 
         public String getName() {
@@ -308,7 +311,7 @@ public class MXFDemuxer {
         }
 
         private void cacheAudioFrameSizes(SeekableByteChannel ch) throws IOException {
-            for (MXFPartition mxfPartition : partitions) {
+            for (MXFPartition mxfPartition : demuxer.partitions) {
                 if (mxfPartition.getEssenceLength() > 0) {
                     ch.position(mxfPartition.getEssenceFilePos());
                     KLV kl;
@@ -329,10 +332,10 @@ public class MXFDemuxer {
 
         @Override
         public Packet nextFrame() throws IOException {
-            if (indexSegmentIdx >= indexSegments.size())
+            if (indexSegmentIdx >= demuxer.indexSegments.size())
                 return null;
 
-            IndexSegment seg = indexSegments.get(indexSegmentIdx);
+            IndexSegment seg = demuxer.indexSegments.get(indexSegmentIdx);
 
             long[] off = seg.getIe().getFileOff();
             int erDen = seg.getIndexEditRateNum();
@@ -343,13 +346,13 @@ public class MXFDemuxer {
             byte toff = seg.getIe().getDisplayOff()[indexSegmentSubIdx];
             boolean kf = seg.getIe().getKeyFrameOff()[indexSegmentSubIdx] == 0;
 
-            while (frameEssenceOffset >= partEssenceOffset + partitions.get(partIdx).getEssenceLength()
-                    && partIdx < partitions.size() - 1) {
-                partEssenceOffset += partitions.get(partIdx).getEssenceLength();
+            while (frameEssenceOffset >= partEssenceOffset + demuxer.partitions.get(partIdx).getEssenceLength()
+                    && partIdx < demuxer.partitions.size() - 1) {
+                partEssenceOffset += demuxer.partitions.get(partIdx).getEssenceLength();
                 partIdx++;
             }
 
-            long frameFileOffset = frameEssenceOffset - partEssenceOffset + partitions.get(partIdx).getEssenceFilePos();
+            long frameFileOffset = frameEssenceOffset - partEssenceOffset + demuxer.partitions.get(partIdx).getEssenceFilePos();
 
             Packet result;
             if (!audio) {
@@ -366,8 +369,8 @@ public class MXFDemuxer {
                 indexSegmentIdx++;
                 indexSegmentSubIdx = 0;
 
-                if (dataLen == 0 && indexSegmentIdx < indexSegments.size()) {
-                    IndexSegment nseg = indexSegments.get(indexSegmentIdx);
+                if (dataLen == 0 && indexSegmentIdx < demuxer.indexSegments.size()) {
+                    IndexSegment nseg = demuxer.indexSegments.get(indexSegmentIdx);
                     pts = pts * nseg.getIndexEditRateNum() / erDen;
                 }
             }
@@ -377,6 +380,7 @@ public class MXFDemuxer {
 
         public MXFPacket readPacket(long off, int len, long pts, int timescale, int duration, int frameNo, boolean kf)
                 throws IOException {
+        	SeekableByteChannel ch = demuxer.ch;
             synchronized (ch) {
                 ch.position(off);
 
@@ -396,11 +400,11 @@ public class MXFDemuxer {
             if (frameNo == this.frameNo)
                 return true;
             indexSegmentSubIdx = (int) frameNo;
-            for (indexSegmentIdx = 0; indexSegmentIdx < indexSegments.size()
-                    && indexSegmentSubIdx >= indexSegments.get(indexSegmentIdx).getIndexDuration(); indexSegmentIdx++) {
-                indexSegmentSubIdx -= indexSegments.get(indexSegmentIdx).getIndexDuration();
+            for (indexSegmentIdx = 0; indexSegmentIdx < demuxer.indexSegments.size()
+                    && indexSegmentSubIdx >= demuxer.indexSegments.get(indexSegmentIdx).getIndexDuration(); indexSegmentIdx++) {
+                indexSegmentSubIdx -= demuxer.indexSegments.get(indexSegmentIdx).getIndexDuration();
             }
-            indexSegmentSubIdx = Math.min(indexSegmentSubIdx, (int) indexSegments.get(indexSegmentIdx)
+            indexSegmentSubIdx = Math.min(indexSegmentSubIdx, (int) demuxer.indexSegments.get(indexSegmentIdx)
                     .getIndexDuration());
 
             return true;
@@ -410,7 +414,7 @@ public class MXFDemuxer {
         public boolean gotoSyncFrame(long frameNo) {
             if(!gotoFrame(frameNo))
                 return false;
-            IndexSegment seg = indexSegments.get(indexSegmentIdx);
+            IndexSegment seg = demuxer.indexSegments.get(indexSegmentIdx);
             byte kfOff = seg.getIe().getKeyFrameOff()[indexSegmentSubIdx];
             return gotoFrame(frameNo + kfOff);
         }
@@ -422,7 +426,7 @@ public class MXFDemuxer {
 
         @Override
         public void seek(double second) {
-            throw new UnsupportedOperationException();
+            throw new NotSupportedException();
         }
 
         public UL getEssenceUL() {
@@ -468,7 +472,7 @@ public class MXFDemuxer {
             }
 
             DemuxerTrackMeta.Type t = video ? VIDEO : (audio ? AUDIO : OTHER);
-            return new DemuxerTrackMeta(t, getCodec().getCodec(), null, totalFrames, duration, size, null);
+            return new DemuxerTrackMeta(t, getCodec().getCodec(), null, demuxer.totalFrames, demuxer.duration, size, null);
         }
     }
 

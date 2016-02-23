@@ -24,6 +24,7 @@ import java.util.List;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -246,7 +247,7 @@ public class NIOUtils {
             ;
         if (buffer.hasRemaining())
             fork.limit(buffer.position() - 1);
-        return new String(toArray(fork), charset);
+        return Platform.stringFromCharset(toArray(fork), charset);
     }
 
     public static ByteBuffer read(ByteBuffer buffer) {
@@ -255,13 +256,13 @@ public class NIOUtils {
         return result;
     }
 
-    public static void copy(ReadableByteChannel in, WritableByteChannel out, long amount) throws IOException {
+    public static void copy(ReadableByteChannel _in, WritableByteChannel out, long amount) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(0x10000);
         int read;
         do {
             buf.position(0);
             buf.limit((int) Math.min(amount, buf.capacity()));
-            read = in.read(buf);
+            read = _in.read(buf);
             if (read != -1) {
                 buf.flip();
                 out.write(buf);
@@ -309,7 +310,7 @@ public class NIOUtils {
     }
 
     public static int readInt(ReadableByteChannel channel, ByteOrder order) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate(4).order(order);
+        ByteBuffer buf = (ByteBuffer) ByteBuffer.allocate(4).order(order);
         channel.read(buf);
         buf.flip();
         return buf.getInt();
@@ -320,7 +321,8 @@ public class NIOUtils {
     }
 
     public static void writeInt(WritableByteChannel channel, int value, ByteOrder order) throws IOException {
-        channel.write((ByteBuffer) ByteBuffer.allocate(4).order(order).putInt(value).flip());
+        ByteBuffer order2 = (ByteBuffer) ByteBuffer.allocate(4).order(order);
+        channel.write((ByteBuffer) order2.putInt(value).flip());
     }
 
     public static void writeIntLE(WritableByteChannel channel, int value) throws IOException {
@@ -375,7 +377,7 @@ public class NIOUtils {
     public static int find(List<ByteBuffer> catalog, ByteBuffer key) {
         byte[] keyA = toArray(key);
         for (int i = 0; i < catalog.size(); i++) {
-            if (Arrays.equals(toArray(catalog.get(i)), keyA))
+            if (Platform.arrayEquals(toArray(catalog.get(i)), keyA))
                 return i;
         }
         return -1;

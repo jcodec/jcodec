@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jcodec.common.StringUtils;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -205,7 +205,7 @@ public class MainUtils {
         }
 
         public void popArg() {
-            args = Arrays.copyOfRange(args, 1, args.length);
+            args = Platform.copyOfRangeO(args, 1, args.length);
 
         }
     }

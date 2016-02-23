@@ -73,7 +73,7 @@ public class RealTrack implements VirtualTrack {
         MP4Packet pkt = demuxer.nextFrame(null);
         if (pkt == null)
             return null;
-        return new RealPacket(pkt);
+        return new RealPacket(this, pkt);
     }
 
     @Override
@@ -115,12 +115,14 @@ public class RealTrack implements VirtualTrack {
         pool.close();
     }
 
-    public class RealPacket implements VirtualPacket {
+    public static class RealPacket implements VirtualPacket {
 
         private MP4Packet packet;
+		private RealTrack track;
 
-        public RealPacket(MP4Packet nextFrame) {
-            this.packet = nextFrame;
+        public RealPacket(RealTrack track, MP4Packet nextFrame) {
+            this.track = track;
+			this.packet = nextFrame;
         }
 
         @Override
@@ -128,13 +130,13 @@ public class RealTrack implements VirtualTrack {
             ByteBuffer bb = ByteBuffer.allocate(packet.getSize());
             SeekableByteChannel ch = null;
             try {
-                ch = pool.getChannel();
+                ch = track.pool.getChannel();
                 if(packet.getFileOff() >= ch.size())
                     return null;
                 ch.position(packet.getFileOff());
                 ch.read(bb);
                 bb.flip();
-                return demuxer.convertPacket(bb);
+                return track.demuxer.convertPacket(bb);
             } finally {
                 if (ch != null)
                     ch.close();

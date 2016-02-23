@@ -9,8 +9,6 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
-import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
-
 import org.jcodec.HexDump;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.AutoFileChannelWrapper;

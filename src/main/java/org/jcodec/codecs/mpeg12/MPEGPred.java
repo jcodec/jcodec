@@ -229,18 +229,18 @@ public class MPEGPred {
         }
     }
 
-    public void predictInFrame(Picture8Bit reference, int x, int y, int[][] mbPix, BitReader in, int motionType,
+    public void predictInFrame(Picture8Bit reference, int x, int y, int[][] mbPix, BitReader _in, int motionType,
             int backward, int spatial_temporal_weight_code) {
         Picture8Bit[] refs = new Picture8Bit[] { reference, reference };
         switch (motionType) {
         case 1:
-            predictFieldInFrame(reference, x, y, mbPix, in, backward, spatial_temporal_weight_code);
+            predictFieldInFrame(reference, x, y, mbPix, _in, backward, spatial_temporal_weight_code);
             break;
         case 2:
-            predict16x16Frame(reference, x, y, in, backward, mbPix);
+            predict16x16Frame(reference, x, y, _in, backward, mbPix);
             break;
         case 3:
-            predict16x16DualPrimeFrame(refs, x, y, in, backward, mbPix);
+            predict16x16DualPrimeFrame(refs, x, y, _in, backward, mbPix);
             break;
         }
     }

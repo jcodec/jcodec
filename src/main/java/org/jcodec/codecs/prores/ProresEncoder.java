@@ -138,13 +138,13 @@ public class ProresEncoder extends VideoEncoder {
         return (val ^ sign) - sign;
     }
 
-    static final void writeDCCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice) {
-        int prevDc = qScale(qMat, 0, in[0] - 16384);
+    static final void writeDCCoeffs(BitWriter bits, int[] qMat, int[] _in, int blocksPerSlice) {
+        int prevDc = qScale(qMat, 0, _in[0] - 16384);
         writeCodeword(bits, firstDCCodebook, toGolumb(prevDc));
 
         int code = 5, sign = 0, idx = 64;
         for (int i = 1; i < blocksPerSlice; i++, idx += 64) {
-            int newDc = qScale(qMat, 0, in[idx] - 16384);
+            int newDc = qScale(qMat, 0, _in[idx] - 16384);
             int delta = newDc - prevDc;
             int newCode = toGolumb(getLevel(delta), diffSign(delta, sign));
             writeCodeword(bits, dcCodebooks[min(code, 6)], newCode);
@@ -154,7 +154,7 @@ public class ProresEncoder extends VideoEncoder {
         }
     }
 
-    static final void writeACCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice, int[] scan, int maxCoeff) {
+    static final void writeACCoeffs(BitWriter bits, int[] qMat, int[] _in, int blocksPerSlice, int[] scan, int maxCoeff) {
         int prevRun = 4;
         int prevLevel = 2;
 
@@ -162,7 +162,7 @@ public class ProresEncoder extends VideoEncoder {
         for (int i = 1; i < maxCoeff; i++) {
             int indp = scan[i];
             for (int j = 0; j < blocksPerSlice; j++) {
-                int val = qScale(qMat, indp, in[(j << 6) + indp]);
+                int val = qScale(qMat, indp, _in[(j << 6) + indp]);
                 if (val == 0)
                     run++;
                 else {
@@ -178,15 +178,15 @@ public class ProresEncoder extends VideoEncoder {
         }
     }
 
-    static final void encodeOnePlane(BitWriter bits, int blocksPerSlice, int[] qMat, int[] scan, int[] in) {
+    static final void encodeOnePlane(BitWriter bits, int blocksPerSlice, int[] qMat, int[] scan, int[] _in) {
 
-        writeDCCoeffs(bits, qMat, in, blocksPerSlice);
-        writeACCoeffs(bits, qMat, in, blocksPerSlice, scan, 64);
+        writeDCCoeffs(bits, qMat, _in, blocksPerSlice);
+        writeACCoeffs(bits, qMat, _in, blocksPerSlice, scan, 64);
     }
 
-    private void dctOnePlane(int blocksPerSlice, byte[] in, int[] out) {
+    private void dctOnePlane(int blocksPerSlice, byte[] _in, int[] out) {
         for (int i = 0; i < blocksPerSlice; i++) {
-            fdct10(in, i << 6, out);
+            fdct10(_in, i << 6, out);
         }
     }
 
@@ -321,27 +321,27 @@ public class ProresEncoder extends VideoEncoder {
         return out;
     }
 
-    private void split(Picture8Bit in, Picture8Bit out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
+    private void split(Picture8Bit _in, Picture8Bit out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
 
-        split(in.getPlaneData(0), out.getPlaneData(0), in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
-        split(in.getPlaneData(1), out.getPlaneData(1), in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
-        split(in.getPlaneData(2), out.getPlaneData(2), in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        split(_in.getPlaneData(0), out.getPlaneData(0), _in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
+        split(_in.getPlaneData(1), out.getPlaneData(1), _in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        split(_in.getPlaneData(2), out.getPlaneData(2), _in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
 
     }
 
-    private void split(byte[] in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma, int vStep,
+    private void split(byte[] _in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma, int vStep,
             int vOffset) {
         int outOff = 0;
         int off = (mbY << 4) * (stride << vStep) + (mbX << (4 - chroma)) + stride * vOffset;
         stride <<= vStep;
 
         for (int i = 0; i < sliceMbCount; i++) {
-            splitBlock(in, stride, off, out, outOff);
-            splitBlock(in, stride, off + (stride << 3), out, outOff + (128 >> chroma));
+            splitBlock(_in, stride, off, out, outOff);
+            splitBlock(_in, stride, off + (stride << 3), out, outOff + (128 >> chroma));
 
             if (chroma == 0) {
-                splitBlock(in, stride, off + 8, out, outOff + 64);
-                splitBlock(in, stride, off + (stride << 3) + 8, out, outOff + 192);
+                splitBlock(_in, stride, off + 8, out, outOff + 64);
+                splitBlock(_in, stride, off + (stride << 3) + 8, out, outOff + 192);
             }
 
             outOff += (256 >> chroma);

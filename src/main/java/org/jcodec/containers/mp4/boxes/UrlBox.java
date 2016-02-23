@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -50,7 +51,7 @@ public class UrlBox extends FullBox {
         Charset utf8 = Charset.forName("utf-8");
 
         if (url != null) {
-            NIOUtils.write(out, ByteBuffer.wrap(url.getBytes(utf8)));
+            NIOUtils.write(out, ByteBuffer.wrap(Platform.getBytesForCharset(url, utf8)));
             out.put((byte) 0);
         }
     }

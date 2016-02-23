@@ -13,6 +13,7 @@ import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -138,8 +139,7 @@ public abstract class Box {
         collectModel(claz.getSuperclass(), model);
 
         try {
-            Method method = claz.getDeclaredMethod(GET_MODEL_FIELDS, List.class);
-            method.invoke(this, model);
+            Platform.invokeMethod(this, GET_MODEL_FIELDS, model);
         } catch (NoSuchMethodException e) {
             checkWrongSignature(claz);
             model.addAll(ToJSON.allFields(claz));
@@ -148,7 +148,7 @@ public abstract class Box {
     }
 
     private void checkWrongSignature(Class claz) {
-        for (Method method : claz.getDeclaredMethods()) {
+        for (Method method : Platform.getDeclaredMethods(claz)) {
             if (method.getName().equals(GET_MODEL_FIELDS)) {
                 Logger.warn("Class " + claz.getCanonicalName() + " contains 'getModelFields' of wrong signature.\n"
                         + "Did you mean to define 'protected void " + GET_MODEL_FIELDS + "(List<String> model) ?");

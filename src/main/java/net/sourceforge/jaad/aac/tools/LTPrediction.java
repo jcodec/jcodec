@@ -1,7 +1,4 @@
 package net.sourceforge.jaad.aac.tools;
-
-import java.util.Arrays;
-
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
@@ -10,6 +7,10 @@ import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
+
+import static java.lang.System.arraycopy;
+
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -43,15 +44,15 @@ public class LTPrediction implements SyntaxConstants {
 		states = new int[4*frameLength];
 	}
 
-	public void decode(IBitStream in, ICSInfo info, Profile profile) throws AACException {
+	public void decode(IBitStream _in, ICSInfo info, Profile profile) throws AACException {
 		lag = 0;
 		if(profile.equals(Profile.AAC_LD)) {
-			lagUpdate = in.readBool();
-			if(lagUpdate) lag = in.readBits(10);
+			lagUpdate = _in.readBool();
+			if(lagUpdate) lag = _in.readBits(10);
 		}
-		else lag = in.readBits(11);
+		else lag = _in.readBits(11);
 		if(lag>(frameLength<<1)) throw new AACException("LTP lag too large: "+lag);
-		coef = in.readBits(3);
+		coef = _in.readBits(3);
 
 		final int windowCount = info.getWindowCount();
 
@@ -60,9 +61,9 @@ public class LTPrediction implements SyntaxConstants {
 			shortLagPresent = new boolean[windowCount];
 			shortLag = new int[windowCount];
 			for(int w = 0; w<windowCount; w++) {
-				if((shortUsed[w] = in.readBool())) {
-					shortLagPresent[w] = in.readBool();
-					if(shortLagPresent[w]) shortLag[w] = in.readBits(4);
+				if((shortUsed[w] = _in.readBool())) {
+					shortLagPresent[w] = _in.readBool();
+					if(shortLagPresent[w]) shortLag[w] = _in.readBits(4);
 				}
 			}
 		}
@@ -70,7 +71,7 @@ public class LTPrediction implements SyntaxConstants {
 			lastBand = Math.min(info.getMaxSFB(), MAX_LTP_SFB);
 			longUsed = new boolean[lastBand];
 			for(int i = 0; i<lastBand; i++) {
-				longUsed[i] = in.readBool();
+				longUsed[i] = _in.readBool();
 			}
 		}
 	}
@@ -84,15 +85,15 @@ public class LTPrediction implements SyntaxConstants {
 
 		if(!info.isEightShortFrame()) {
 			final int samples = frameLength<<1;
-			final float[] in = new float[2048];
+			final float[] _in = new float[2048];
 			final float[] out = new float[2048];
 
 			for(int i = 0; i<samples; i++) {
-				in[i] = states[samples+i-lag]*CODEBOOK[coef];
+				_in[i] = states[samples+i-lag]*CODEBOOK[coef];
 			}
 
 			filterBank.processLTP(info.getWindowSequence(), info.getWindowShape(ICSInfo.CURRENT),
-					info.getWindowShape(ICSInfo.PREVIOUS), in, out);
+					info.getWindowShape(ICSInfo.PREVIOUS), _in, out);
 
 			if(ics.isTNSDataPresent()) ics.getTNS().process(ics, out, sf, true);
 
@@ -136,14 +137,14 @@ public class LTPrediction implements SyntaxConstants {
 	}
 
 	public void copy(LTPrediction ltp) {
-		System.arraycopy(ltp.states, 0, states, 0, states.length);
+		arraycopy(ltp.states, 0, states, 0, states.length);
 		coef = ltp.coef;
 		lag = ltp.lag;
 		lastBand = ltp.lastBand;
 		lagUpdate = ltp.lagUpdate;
-		shortUsed = Arrays.copyOf(ltp.shortUsed, ltp.shortUsed.length);
-		shortLagPresent = Arrays.copyOf(ltp.shortLagPresent, ltp.shortLagPresent.length);
-		shortLag = Arrays.copyOf(ltp.shortLag, ltp.shortLag.length);
-		longUsed = Arrays.copyOf(ltp.longUsed, ltp.longUsed.length);
+		shortUsed = Platform.copyOfBool(ltp.shortUsed, ltp.shortUsed.length);
+		shortLagPresent = Platform.copyOfBool(ltp.shortLagPresent, ltp.shortLagPresent.length);
+		shortLag = Platform.copyOfInt(ltp.shortLag, ltp.shortLag.length);
+		longUsed = Platform.copyOfBool(ltp.longUsed, ltp.longUsed.length);
 	}
 }

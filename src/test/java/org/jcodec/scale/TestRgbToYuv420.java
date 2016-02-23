@@ -45,9 +45,9 @@ public class TestRgbToYuv420 {
         upshift(y, 2);
 
         RgbToYuv420p transform = new RgbToYuv420p(2, 0);
-        Picture in = new Picture(10, 10, new int[][] { rgb, null, null, null }, ColorSpace.RGB);
+        Picture _in = new Picture(10, 10, new int[][] { rgb, null, null, null }, ColorSpace.RGB);
         Picture out = Picture.create(10, 10, ColorSpace.YUV420);
-        transform.transform(in, out);
+        transform.transform(_in, out);
 
         Assert.assertArrayEquals(y, out.getPlaneData(0));
         Assert.assertArrayEquals(uu, out.getPlaneData(1));

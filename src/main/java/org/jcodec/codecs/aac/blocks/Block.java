@@ -19,5 +19,5 @@ public abstract class Block {
         return type;
     }
     
-    public abstract void parse(BitReader in);
+    public abstract void parse(BitReader _in);
 }

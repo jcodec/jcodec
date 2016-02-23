@@ -1,5 +1,6 @@
 package org.jcodec.common.model;
 
+import static java.lang.System.arraycopy;
 import static org.jcodec.common.model.ColorSpace.MAX_PLANES;
 
 /**
@@ -131,7 +132,7 @@ public class Picture {
         for (int plane = 0; plane < color.nComp; plane++) {
             if (data[plane] == null)
                 continue;
-            System.arraycopy(src.data[plane], 0, data[plane], 0,
+            arraycopy(src.data[plane], 0, data[plane], 0,
                     (width >> color.compWidth[plane]) * (height >> color.compHeight[plane]));
         }
     }

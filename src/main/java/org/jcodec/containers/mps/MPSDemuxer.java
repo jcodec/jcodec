@@ -94,12 +94,14 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
     }
 
-    public abstract class BaseTrack implements MPEGDemuxer.MPEGDemuxerTrack {
+    public static abstract class BaseTrack implements MPEGDemuxer.MPEGDemuxerTrack {
         protected int streamId;
         protected List<PESPacket> pending = new ArrayList<PESPacket>();
+        protected MPSDemuxer demuxer;
 
-        public BaseTrack(int streamId, PESPacket pkt) throws IOException {
-            this.streamId = streamId;
+        public BaseTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
+            this.demuxer = demuxer;
+			this.streamId = streamId;
             this.pending.add(pkt);
         }
 
@@ -111,7 +113,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             if (pending != null)
                 pending.add(pkt);
             else
-                putBack(pkt.data);
+            	demuxer.putBack(pkt.data);
         }
 
         public List<PESPacket> getPending() {
@@ -123,18 +125,18 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             if (pending == null)
                 return;
             for (PESPacket pesPacket : pending) {
-                putBack(pesPacket.data);
+            	demuxer.putBack(pesPacket.data);
             }
             pending = null;
         }
     }
 
-    public class MPEGTrack extends BaseTrack implements ReadableByteChannel {
+    public static class MPEGTrack extends BaseTrack implements ReadableByteChannel {
 
         private MPEGES es;
 
-        public MPEGTrack(int streamId, PESPacket pkt) throws IOException {
-            super(streamId, pkt);
+        public MPEGTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
+            super(demuxer, streamId, pkt);
             this.es = new MPEGES(this);
         }
 
@@ -159,7 +161,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             if (pes.data.hasRemaining())
                 pending.add(0, pes);
             else
-                putBack(pes.data);
+                demuxer.putBack(pes.data);
 
             return toRead;
         }
@@ -168,14 +170,14 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             if (pending.size() > 0)
                 return pending.remove(0);
             PESPacket pkt;
-            while ((pkt = nextPacket(getBuffer())) != null) {
+            while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null) {
                 if (pkt.streamId == streamId) {
                     if (pkt.pts != -1) {
                         es.curPts = pkt.pts;
                     }
                     return pkt;
                 } else
-                    addToStream(pkt);
+                	demuxer.addToStream(pkt);
             }
             return null;
         }
@@ -192,11 +194,11 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
     }
 
-    public class PlainTrack extends BaseTrack {
+    public static class PlainTrack extends BaseTrack {
         private int frameNo;
 
-        public PlainTrack(int streamId, PESPacket pkt) throws IOException {
-            super(streamId, pkt);
+        public PlainTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
+            super(demuxer, streamId, pkt);
         }
 
         public boolean isOpen() {
@@ -212,8 +214,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             if (pending.size() > 0) {
                 pkt = pending.remove(0);
             } else {
-                while ((pkt = nextPacket(getBuffer())) != null && pkt.streamId != streamId)
-                    addToStream(pkt);
+                while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null && pkt.streamId != streamId)
+                	demuxer.addToStream(pkt);
             }
             return pkt == null ? null : new Packet(pkt.data, pkt.pts, 90000, 0, frameNo++, true, null);
         }
@@ -239,9 +241,9 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         BaseTrack pes = streams.get(pkt.streamId);
         if (pes == null) {
             if (isMPEG(pkt.data))
-                pes = new MPEGTrack(pkt.streamId, pkt);
+                pes = new MPEGTrack(this, pkt.streamId, pkt);
             else
-                pes = new PlainTrack(pkt.streamId, pkt);
+                pes = new PlainTrack(this, pkt.streamId, pkt);
             streams.put(pkt.streamId, pes);
         } else {
             pes.pending(pkt);

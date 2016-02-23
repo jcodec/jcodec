@@ -5,6 +5,7 @@ import static org.jcodec.common.tools.MathUtil.clip;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -34,10 +35,10 @@ public class AudioUtil {
      */
     public static void toFloat(AudioFormat format, ByteBuffer buf, FloatBuffer floatBuf) {
         if (!format.isSigned())
-            throw new IllegalArgumentException("Unsigned PCM is not supported ( yet? ).");
+            throw new NotSupportedException("Unsigned PCM is not supported ( yet? ).");
 
         if (format.getSampleSizeInBits() != 16 && format.getSampleSizeInBits() != 24)
-            throw new IllegalArgumentException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
+            throw new NotSupportedException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
 
         if (format.isBigEndian()) {
             if (format.getSampleSizeInBits() == 16) {
@@ -67,10 +68,10 @@ public class AudioUtil {
      */
     public static void fromFloat(FloatBuffer floatBuf, AudioFormat format, ByteBuffer buf) {
         if (!format.isSigned())
-            throw new IllegalArgumentException("Unsigned PCM is not supported ( yet? ).");
+            throw new NotSupportedException("Unsigned PCM is not supported ( yet? ).");
 
         if (format.getSampleSizeInBits() != 16 && format.getSampleSizeInBits() != 24)
-            throw new IllegalArgumentException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
+            throw new NotSupportedException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
 
         if (format.isBigEndian()) {
             if (format.getSampleSizeInBits() == 16) {
@@ -111,35 +112,35 @@ public class AudioUtil {
         }
     }
 
-    private static void fromFloat24LE(ByteBuffer buf, FloatBuffer in) {
-        while (buf.remaining() >= 3 && in.hasRemaining()) {
-            int val = clip((int) (in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
+    private static void fromFloat24LE(ByteBuffer buf, FloatBuffer _in) {
+        while (buf.remaining() >= 3 && _in.hasRemaining()) {
+            int val = clip((int) (_in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
             buf.put((byte) val);
             buf.put((byte) (val >> 8));
             buf.put((byte) (val >> 16));
         }
     }
 
-    private static void fromFloat16LE(ByteBuffer buf, FloatBuffer in) {
-        while (buf.remaining() >= 2 && in.hasRemaining()) {
-            int val = clip((int) (in.get() * f16), -0x8000, 0x7fff) & 0xffff;
+    private static void fromFloat16LE(ByteBuffer buf, FloatBuffer _in) {
+        while (buf.remaining() >= 2 && _in.hasRemaining()) {
+            int val = clip((int) (_in.get() * f16), -0x8000, 0x7fff) & 0xffff;
             buf.put((byte) val);
             buf.put((byte) (val >> 8));
         }
     }
 
-    private static void fromFloat24BE(ByteBuffer buf, FloatBuffer in) {
-        while (buf.remaining() >= 3 && in.hasRemaining()) {
-            int val = clip((int) (in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
+    private static void fromFloat24BE(ByteBuffer buf, FloatBuffer _in) {
+        while (buf.remaining() >= 3 && _in.hasRemaining()) {
+            int val = clip((int) (_in.get() * f24), -0x800000, 0x7fffff) & 0xffffff;
             buf.put((byte) (val >> 16));
             buf.put((byte) (val >> 8));
             buf.put((byte) val);
         }
     }
 
-    private static void fromFloat16BE(ByteBuffer buf, FloatBuffer in) {
-        while (buf.remaining() >= 2 && in.hasRemaining()) {
-            int val = clip((int) (in.get() * f16), -0x8000, 0x7fff) & 0xffff;
+    private static void fromFloat16BE(ByteBuffer buf, FloatBuffer _in) {
+        while (buf.remaining() >= 2 && _in.hasRemaining()) {
+            int val = clip((int) (_in.get() * f16), -0x8000, 0x7fff) & 0xffff;
             buf.put((byte) (val >> 8));
             buf.put((byte) val);
         }
@@ -147,10 +148,10 @@ public class AudioUtil {
 
     public static int fromInt(int[] data, int len, AudioFormat format, ByteBuffer buf) {
         if (!format.isSigned())
-            throw new IllegalArgumentException("Unsigned PCM is not supported ( yet? ).");
+            throw new NotSupportedException("Unsigned PCM is not supported ( yet? ).");
 
         if (format.getSampleSizeInBits() != 16 && format.getSampleSizeInBits() != 24)
-            throw new IllegalArgumentException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
+            throw new NotSupportedException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
 
         if (format.isBigEndian()) {
             if (format.getSampleSizeInBits() == 16) {
@@ -211,10 +212,10 @@ public class AudioUtil {
 
     public static int toInt(AudioFormat format, ByteBuffer buf, int[] samples) {
         if (!format.isSigned())
-            throw new IllegalArgumentException("Unsigned PCM is not supported ( yet? ).");
+            throw new NotSupportedException("Unsigned PCM is not supported ( yet? ).");
 
         if (format.getSampleSizeInBits() != 16 && format.getSampleSizeInBits() != 24)
-            throw new IllegalArgumentException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
+            throw new NotSupportedException(format.getSampleSizeInBits() + " bit PCM is not supported ( yet? ).");
 
         if (format.isBigEndian()) {
             if (format.getSampleSizeInBits() == 16) {

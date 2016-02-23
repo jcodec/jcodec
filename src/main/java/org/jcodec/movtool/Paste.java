@@ -10,7 +10,6 @@ import static org.jcodec.movtool.Util.shift;
 import static org.jcodec.movtool.Util.spread;
 
 import java.io.File;
-import java.util.Arrays;
 
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
@@ -25,6 +24,7 @@ import org.jcodec.containers.mp4.boxes.SoundMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -48,7 +48,7 @@ public class Paste {
         SeekableByteChannel out = null;
         try {
             File outFile = new File(toFile.getParentFile(), toFile.getName().replaceAll("\\.mov$", "") + ".paste.mov");
-            outFile.delete();
+            Platform.deleteFile(outFile);
             out = writableFileChannel(outFile);
             to = writableFileChannel(toFile);
             File fromFile = new File(args[1]);
@@ -179,7 +179,7 @@ public class Paste {
         TrackHeaderBox th1 = trakBox1.getTrackHeader();
         TrackHeaderBox th2 = trakBox2.getTrackHeader();
 
-        return ("vide".equals(trakBox1.getHandlerType()) && Arrays.equals(th1.getMatrix(), th2.getMatrix())
+        return ("vide".equals(trakBox1.getHandlerType()) && Platform.arrayEquals(th1.getMatrix(), th2.getMatrix())
                 && th1.getLayer() == th2.getLayer() && th1.getWidth() == th2.getWidth() && th1.getHeight() == th2
                 .getHeight())
                 || ("soun".equals(trakBox1.getHandlerType()) && th1.getVolume() == th2.getVolume())

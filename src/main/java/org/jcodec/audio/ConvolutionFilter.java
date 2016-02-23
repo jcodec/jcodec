@@ -18,15 +18,15 @@ public abstract class ConvolutionFilter implements AudioFilter {
     protected abstract double[] buildKernel();
 
     @Override
-    public void filter(FloatBuffer[] in, long[] pos, FloatBuffer[] out) {
-        if (in.length != 1)
+    public void filter(FloatBuffer[] _in, long[] pos, FloatBuffer[] out) {
+        if (_in.length != 1)
             throw new IllegalArgumentException(this.getClass().getName()
                     + " filter is designed to work only on one input");
         if (out.length != 1)
             throw new IllegalArgumentException(this.getClass().getName()
                     + " filter is designed to work only on one output");
 
-        FloatBuffer in0 = in[0];
+        FloatBuffer in0 = _in[0];
         FloatBuffer out0 = out[0];
 
         if (kernel == null) {

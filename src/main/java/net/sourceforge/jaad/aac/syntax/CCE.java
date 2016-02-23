@@ -63,28 +63,28 @@ class CCE extends Element implements SyntaxConstants {
 		return chSelect[index];
 	}
 
-	void decode(IBitStream in, DecoderConfig conf) throws AACException {
-		couplingPoint = 2*in.readBit();
-		coupledCount = in.readBits(3);
+	void decode(IBitStream _in, DecoderConfig conf) throws AACException {
+		couplingPoint = 2*_in.readBit();
+		coupledCount = _in.readBits(3);
 		int gainCount = 0;
 		int i;
 		for(i = 0; i<=coupledCount; i++) {
 			gainCount++;
-			channelPair[i] = in.readBool();
-			idSelect[i] = in.readBits(4);
+			channelPair[i] = _in.readBool();
+			idSelect[i] = _in.readBits(4);
 			if(channelPair[i]) {
-				chSelect[i] = in.readBits(2);
+				chSelect[i] = _in.readBits(2);
 				if(chSelect[i]==3) gainCount++;
 			}
 			else chSelect[i] = 2;
 		}
-		couplingPoint += in.readBit();
+		couplingPoint += _in.readBit();
 		couplingPoint |= (couplingPoint>>1);
 
-		final boolean sign = in.readBool();
-		final double scale = CCE_SCALE[in.readBits(2)];
+		final boolean sign = _in.readBool();
+		final double scale = CCE_SCALE[_in.readBits(2)];
 
-		ics.decode(in, false, conf);
+		ics.decode(_in, false, conf);
 		final ICSInfo info = ics.getInfo();
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
@@ -97,8 +97,8 @@ class CCE extends Element implements SyntaxConstants {
 			int xg = 0;
 			float gainCache = 1.0f;
 			if(i>0) {
-				cge = couplingPoint==2 ? 1 : in.readBit();
-				xg = cge==0 ? 0 : Huffman.decodeScaleFactor(in)-60;
+				cge = couplingPoint==2 ? 1 : _in.readBit();
+				xg = cge==0 ? 0 : Huffman.decodeScaleFactor(_in)-60;
 				gainCache = (float) Math.pow(scale, -xg);
 			}
 			if(couplingPoint==2) gain[i][0] = gainCache;
@@ -108,7 +108,7 @@ class CCE extends Element implements SyntaxConstants {
 					for(sfb = 0; sfb<maxSFB; sfb++, idx++) {
 						if(sfbCB[g][sfb]!=HCB.ZERO_HCB) {
 							if(cge==0) {
-								int t = Huffman.decodeScaleFactor(in)-60;
+								int t = Huffman.decodeScaleFactor(_in)-60;
 								if(t!=0) {
 									int s = 1;
 									t = xg += t;

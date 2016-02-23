@@ -55,52 +55,52 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 	}
 
 	/* ========= decoding ========== */
-	public void decode(IBitStream in, boolean commonWindow, DecoderConfig conf) throws AACException {
+	public void decode(IBitStream _in, boolean commonWindow, DecoderConfig conf) throws AACException {
 		if(conf.isScalefactorResilienceUsed()&&rvlc==null) rvlc = new RVLC();
 		final boolean er = conf.getProfile().isErrorResilientProfile();
 
-		globalGain = in.readBits(8);
+		globalGain = _in.readBits(8);
 
-		if(!commonWindow) info.decode(in, conf, commonWindow);
+		if(!commonWindow) info.decode(_in, conf, commonWindow);
 
-		decodeSectionData(in, conf.isSectionDataResilienceUsed());
+		decodeSectionData(_in, conf.isSectionDataResilienceUsed());
 
-		//if(conf.isScalefactorResilienceUsed()) rvlc.decode(in, this, scaleFactors);
-		/*else*/ decodeScaleFactors(in);
+		//if(conf.isScalefactorResilienceUsed()) rvlc.decode(_in, this, scaleFactors);
+		/*else*/ decodeScaleFactors(_in);
 
-		pulseDataPresent = in.readBool();
+		pulseDataPresent = _in.readBool();
 		if(pulseDataPresent) {
 			if(info.isEightShortFrame()) throw new AACException("pulse data not allowed for short frames");
 			LOGGER.log(Level.FINE, "PULSE");
-			decodePulseData(in);
+			decodePulseData(_in);
 		}
 
-		tnsDataPresent = in.readBool();
+		tnsDataPresent = _in.readBool();
 		if(tnsDataPresent&&!er) {
 			if(tns==null) tns = new TNS();
-			tns.decode(in, info);
+			tns.decode(_in, info);
 		}
 
-		gainControlPresent = in.readBool();
+		gainControlPresent = _in.readBool();
 		if(gainControlPresent) {
 			if(gainControl==null) gainControl = new GainControl(frameLength);
 			LOGGER.log(Level.FINE, "GAIN");
-			gainControl.decode(in, info.getWindowSequence());
+			gainControl.decode(_in, info.getWindowSequence());
 		}
 
 		//RVLC spectral data
-		//if(conf.isScalefactorResilienceUsed()) rvlc.decodeScalefactors(this, in, scaleFactors);
+		//if(conf.isScalefactorResilienceUsed()) rvlc.decodeScalefactors(this, _in, scaleFactors);
 
 		if(conf.isSpectralDataResilienceUsed()) {
 			int max = (conf.getChannelConfiguration()==ChannelConfiguration.CHANNEL_CONFIG_STEREO) ? 6144 : 12288;
-			reorderedSpectralDataLen = Math.max(in.readBits(14), max);
-			longestCodewordLen = Math.max(in.readBits(6), 49);
-			//HCR.decodeReorderedSpectralData(this, in, data, conf.isSectionDataResilienceUsed());
+			reorderedSpectralDataLen = Math.max(_in.readBits(14), max);
+			longestCodewordLen = Math.max(_in.readBits(6), 49);
+			//HCR.decodeReorderedSpectralData(this, _in, data, conf.isSectionDataResilienceUsed());
 		}
-		else decodeSpectralData(in);
+		else decodeSpectralData(_in);
 	}
 
-	public void decodeSectionData(IBitStream in, boolean sectionDataResilienceUsed) throws AACException {
+	public void decodeSectionData(IBitStream _in, boolean sectionDataResilienceUsed) throws AACException {
 		Arrays.fill(sfbCB, 0);
 		Arrays.fill(sectEnd, 0);
 		final int bits = info.isEightShortFrame() ? 3 : 5;
@@ -116,9 +116,9 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 			int k = 0;
 			while(k<maxSFB) {
 				end = k;
-				cb = in.readBits(4);
+				cb = _in.readBits(4);
 				if(cb==12) throw new AACException("invalid huffman codebook: 12");
-				while((incr = in.readBits(bits))==escVal) {
+				while((incr = _in.readBits(bits))==escVal) {
 					end += incr;
 				}
 				end += incr;
@@ -131,9 +131,9 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 		}
 	}
 
-	private void decodePulseData(IBitStream in) throws AACException {
-		pulseCount = in.readBits(2)+1;
-		pulseStartSWB = in.readBits(6);
+	private void decodePulseData(IBitStream _in) throws AACException {
+		pulseCount = _in.readBits(2)+1;
+		pulseStartSWB = _in.readBits(6);
 		if(pulseStartSWB>=info.getSWBCount()) throw new AACException("pulse SWB out of range: "+pulseStartSWB+" > "+info.getSWBCount());
 
 		if(pulseOffset==null||pulseCount!=pulseOffset.length) {
@@ -143,16 +143,16 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 		}
 
 		pulseOffset[0] = info.getSWBOffsets()[pulseStartSWB];
-		pulseOffset[0] += in.readBits(5);
-		pulseAmp[0] = in.readBits(4);
+		pulseOffset[0] += _in.readBits(5);
+		pulseAmp[0] = _in.readBits(4);
 		for(int i = 1; i<pulseCount; i++) {
-			pulseOffset[i] = in.readBits(5)+pulseOffset[i-1];
+			pulseOffset[i] = _in.readBits(5)+pulseOffset[i-1];
 			if(pulseOffset[i]>1023) throw new AACException("pulse offset out of range: "+pulseOffset[0]);
-			pulseAmp[i] = in.readBits(4);
+			pulseAmp[i] = _in.readBits(4);
 		}
 	}
 
-	public void decodeScaleFactors(IBitStream in) throws AACException {
+	public void decodeScaleFactors(IBitStream _in) throws AACException {
 		final int windowGroups = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
 		//0: spectrum, 1: noise, 2: intensity
@@ -174,7 +174,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 					case INTENSITY_HCB:
 					case INTENSITY_HCB2:
 						for(; sfb<end; sfb++, idx++) {
-							offset[2] += Huffman.decodeScaleFactor(in)-SF_DELTA;
+							offset[2] += Huffman.decodeScaleFactor(_in)-SF_DELTA;
 							tmp = Math.min(Math.max(offset[2], -155), 100);
 							scaleFactors[idx] = SCALEFACTOR_TABLE[-tmp+SF_OFFSET];
 						}
@@ -182,17 +182,17 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 					case NOISE_HCB:
 						for(; sfb<end; sfb++, idx++) {
 							if(noiseFlag) {
-								offset[1] += in.readBits(9)-256;
+								offset[1] += _in.readBits(9)-256;
 								noiseFlag = false;
 							}
-							else offset[1] += Huffman.decodeScaleFactor(in)-SF_DELTA;
+							else offset[1] += Huffman.decodeScaleFactor(_in)-SF_DELTA;
 							tmp = Math.min(Math.max(offset[1], -100), 155);
 							scaleFactors[idx] = -SCALEFACTOR_TABLE[tmp+SF_OFFSET];
 						}
 						break;
 					default:
 						for(; sfb<end; sfb++, idx++) {
-							offset[0] += Huffman.decodeScaleFactor(in)-SF_DELTA;
+							offset[0] += Huffman.decodeScaleFactor(_in)-SF_DELTA;
 							if(offset[0]>255) throw new AACException("scalefactor out of range: "+offset[0]);
 							scaleFactors[idx] = SCALEFACTOR_TABLE[offset[0]-100+SF_OFFSET];
 						}
@@ -202,7 +202,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 		}
 	}
 
-	private void decodeSpectralData(IBitStream in) throws AACException {
+	private void decodeSpectralData(IBitStream _in) throws AACException {
 		Arrays.fill(data, 0);
 		final int maxSFB = info.getMaxSFB();
 		final int windowGroups = info.getWindowGroupCount();
@@ -244,7 +244,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 					for(w = 0; w<groupLen; w++, off += 128) {
 						num = (hcb>=FIRST_PAIR_HCB) ? 2 : 4;
 						for(k = 0; k<width; k += num) {
-							Huffman.decodeSpectralData(in, hcb, buf, 0);
+							Huffman.decodeSpectralData(_in, hcb, buf, 0);
 
 							//inverse quantization & scaling
 							for(j = 0; j<num; j++) {

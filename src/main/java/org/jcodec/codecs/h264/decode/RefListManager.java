@@ -12,6 +12,7 @@ import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.platform.Platform;
 
 /**
  * Contains reference picture list management logic
@@ -86,13 +87,13 @@ public class RefListManager {
         Frame[] l0 = buildList(Frame.POCDesc, Frame.POCAsc);
         Frame[] l1 = buildList(Frame.POCAsc, Frame.POCDesc);
 
-        if (Arrays.equals(l0, l1) && count(l1) > 1) {
+        if (Platform.arrayEquals(l0, l1) && count(l1) > 1) {
             Frame frame = l1[1];
             l1[1] = l1[0];
             l1[0] = frame;
         }
 
-        Frame[][] result = { Arrays.copyOf(l0, numRef[0]), Arrays.copyOf(l1, numRef[1]) };
+        Frame[][] result = { Platform.copyOfObj(l0, numRef[0]), Platform.copyOfObj(l1, numRef[1]) };
 
         reorder(result[0], 0);
         reorder(result[1], 1);
@@ -129,7 +130,7 @@ public class RefListManager {
     }
 
     private Frame[] copySort(Comparator<Frame> fwd, Frame dummy) {
-        Frame[] copyOf = Arrays.copyOf(sRefs, sRefs.length);
+        Frame[] copyOf = Platform.copyOfObj(sRefs, sRefs.length);
         for (int i = 0; i < copyOf.length; i++)
             if (fwd.compare(dummy, copyOf[i]) > 0)
                 copyOf[i] = null;

@@ -2,6 +2,8 @@ package org.jcodec.common;
 
 import java.lang.reflect.Array;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -97,8 +99,8 @@ public class ArrayUtil {
             return clone(array1);
         }
         int[] joinedArray = new int[array1.length + array2.length];
-        System.arraycopy(array1, 0, joinedArray, 0, array1.length);
-        System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+        arraycopy(array1, 0, joinedArray, 0, array1.length);
+        arraycopy(array2, 0, joinedArray, array1.length, array2.length);
         return joinedArray;
     }
 
@@ -109,8 +111,8 @@ public class ArrayUtil {
             return clone(array1);
         }
         long[] joinedArray = new long[array1.length + array2.length];
-        System.arraycopy(array1, 0, joinedArray, 0, array1.length);
-        System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+        arraycopy(array1, 0, joinedArray, 0, array1.length);
+        arraycopy(array2, 0, joinedArray, array1.length, array2.length);
         return joinedArray;
     }
 
@@ -122,8 +124,8 @@ public class ArrayUtil {
         }
         Object[] joinedArray = (Object[]) Array.newInstance(array1.getClass().getComponentType(), array1.length
                 + array2.length);
-        System.arraycopy(array1, 0, joinedArray, 0, array1.length);
-        System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
+        arraycopy(array1, 0, joinedArray, 0, array1.length);
+        arraycopy(array2, 0, joinedArray, array1.length, array2.length);
         return joinedArray;
     }
 

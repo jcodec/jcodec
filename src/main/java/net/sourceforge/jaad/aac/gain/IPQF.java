@@ -19,7 +19,7 @@ class IPQF implements GCConstants, PQFTables {
 		tmp2 = new float[BANDS/2][NPQFTAPS/BANDS];
 	}
 
-	void process(float[][] in, int frameLen, int maxBand, float[] out) {
+	void process(float[][] _in, int frameLen, int maxBand, float[] out) {
 		int i, j;
 		for(i = 0; i<frameLen; i++) {
 			out[i] = 0.0f;
@@ -27,13 +27,13 @@ class IPQF implements GCConstants, PQFTables {
 
 		for(i = 0; i<frameLen/BANDS; i++) {
 			for(j = 0; j<BANDS; j++) {
-				buf[j] = in[j][i];
+				buf[j] = _in[j][i];
 			}
 			performSynthesis(buf, out, i*BANDS);
 		}
 	}
 
-	private void performSynthesis(float[] in, float[] out, int outOff) {
+	private void performSynthesis(float[] _in, float[] out, int outOff) {
 		final int kk = NPQFTAPS/(2*BANDS);
 		int i, n, k;
 		float acc;
@@ -48,13 +48,13 @@ class IPQF implements GCConstants, PQFTables {
 		for(n = 0; n<BANDS/2; ++n) {
 			acc = 0.0f;
 			for(i = 0; i<BANDS; ++i) {
-				acc += COEFS_Q0[n][i]*in[i];
+				acc += COEFS_Q0[n][i]*_in[i];
 			}
 			tmp1[n][2*kk-1] = acc;
 
 			acc = 0.0f;
 			for(i = 0; i<BANDS; ++i) {
-				acc += COEFS_Q1[n][i]*in[i];
+				acc += COEFS_Q1[n][i]*_in[i];
 			}
 			tmp2[n][2*kk-1] = acc;
 		}

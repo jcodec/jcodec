@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,6 +32,7 @@ import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,14 +44,13 @@ import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
  * 
  */
 public class FLVTool {
-    private static Map<String, PacketProcessorFactory> processors = new HashMap<String, PacketProcessorFactory>() {
-        {
-            put("clip", new ClipPacketProcessor.Factory());
-            put("fix_pts", new FixPtsProcessor.Factory());
-            put("info", new InfoPacketProcessor.Factory());
-            put("shift_pts", new ShiftPtsProcessor.Factory());
-        }
-    };
+    private static Map<String, PacketProcessorFactory> processors = new HashMap<String, PacketProcessorFactory>();
+    static {
+        processors.put("clip", new ClipPacketProcessor.Factory());
+        processors.put("fix_pts", new FixPtsProcessor.Factory());
+        processors.put("info", new InfoPacketProcessor.Factory());
+        processors.put("shift_pts", new ShiftPtsProcessor.Factory());
+    }
 
     public static void main(String[] args) throws IOException {
         if (args.length < 1) {
@@ -60,9 +59,9 @@ public class FLVTool {
         }
         String command = args[0];
 
-        Cmd cmd = MainUtils.parseArguments(Arrays.copyOfRange(args, 1, args.length));
+        Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length));
         if (cmd.args.length < 1) {
-            MainUtils.printHelp(command, processors.get(command).getFlags(), "file in", "?file out");
+            MainUtils.printHelp(command, processors.get(command).getFlags(), "file _in", "?file out");
             return;
         }
         int maxPackets = cmd.getIntegerFlag("max-packets", Integer.MAX_VALUE);
@@ -74,13 +73,13 @@ public class FLVTool {
             return;
         }
 
-        SeekableByteChannel in = null;
+        SeekableByteChannel _in = null;
         SeekableByteChannel out = null;
         try {
-            in = NIOUtils.readableFileChannel(new File(cmd.getArg(0)));
+            _in = NIOUtils.readableFileChannel(new File(cmd.getArg(0)));
             if (processor.hasOutput())
                 out = NIOUtils.writableFileChannel(new File(cmd.getArg(1)));
-            FLVReader demuxer = new FLVReader(in);
+            FLVReader demuxer = new FLVReader(_in);
             FLVWriter muxer = new FLVWriter(out);
             FLVTag pkt = null;
             for (int i = 0; i < maxPackets && (pkt = demuxer.readNextPacket()) != null; i++) {
@@ -91,7 +90,7 @@ public class FLVTool {
             if (processor.hasOutput())
                 muxer.finish();
         } finally {
-            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(_in);
             IOUtils.closeQuietly(out);
         }
     }
@@ -140,13 +139,11 @@ public class FLVTool {
 
             @Override
             public Map<String, String> getFlags() {
-                return new HashMap<String, String>() {
-                    {
-                        put("from", "From timestamp (in seconds, i.e 67.49)");
-                        put("to", "To timestamp");
-
-                    }
-                };
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("from", "From timestamp (in seconds, i.e 67.49)");
+                map.put("from", "From timestamp (_in seconds, i.e 67.49)");
+                map.put("to", "To timestamp");
+                return map;
             }
         }
 
@@ -299,12 +296,10 @@ public class FLVTool {
 
             @Override
             public Map<String, String> getFlags() {
-                return new HashMap<String, String>() {
-                    {
-                        put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated.");
-                        put(FLAG_STREAM, "Stream selector, can be one of: ['video', 'audio', 'script'].");
-                    }
-                };
+                HashMap<String, String> map = new HashMap<String, String>() ;
+                map.put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated.");
+                map.put(FLAG_STREAM, "Stream selector, can be one of: ['video', 'audio', 'script'].");
+                return map;
             }
         }
 
@@ -413,13 +408,11 @@ public class FLVTool {
 
             @Override
             public Map<String, String> getFlags() {
-                return new HashMap<String, String>() {
-                    {
-                        put("to", "Shift first pts to this value, and all subsequent pts accordingly.");
-                        put("by", "Shift all pts by this value.");
-                        put("wrap-around", "Expect wrap around of timestamps.");
-                    }
-                };
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("to", "Shift first pts to this value, and all subsequent pts accordingly.");
+                map.put("by", "Shift all pts by this value.");
+                map.put("wrap-around", "Expect wrap around of timestamps.");
+                return map;
             }
         }
 

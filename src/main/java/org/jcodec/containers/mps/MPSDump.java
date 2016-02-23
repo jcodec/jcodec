@@ -29,6 +29,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -55,12 +56,10 @@ public class MPSDump {
         try {
             Cmd cmd = MainUtils.parseArguments(args);
             if (cmd.args.length < 1) {
-                MainUtils.printHelp(new HashMap<String, String>() {
-                    {
-                        put(STOP_AT, "Stop reading at timestamp");
-                        put(DUMP_FROM, "Start dumping from timestamp");
-                    }
-                }, "file name");
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put(STOP_AT, "Stop reading at timestamp");
+                map.put(DUMP_FROM, "Start dumping from timestamp");
+                MainUtils.printHelp(map, "file name");
                 return;
             }
 
@@ -230,20 +229,20 @@ public class MPSDump {
         }
 
         private void dumpExtension(ByteBuffer b) {
-            BitReader in = new BitReader(b);
-            int extType = in.readNBit(4);
+            BitReader _in = new BitReader(b);
+            int extType = _in.readNBit(4);
             if (picHeader == null) {
                 if (sequenceHeader != null) {
                     switch (extType) {
                     case SequenceHeader.Sequence_Extension:
-                        sequenceExtension = SequenceExtension.read(in);
+                        sequenceExtension = SequenceExtension.read(_in);
                         dumpSequenceExtension(sequenceExtension);
                         break;
                     case SequenceHeader.Sequence_Scalable_Extension:
-                        dumpSequenceScalableExtension(SequenceScalableExtension.read(in));
+                        dumpSequenceScalableExtension(SequenceScalableExtension.read(_in));
                         break;
                     case SequenceHeader.Sequence_Display_Extension:
-                        dumpSequenceDisplayExtension(SequenceDisplayExtension.read(in));
+                        dumpSequenceDisplayExtension(SequenceDisplayExtension.read(_in));
                         break;
                     default:
                         System.out.print(MainUtils.color("extension " + extType, MainUtils.ANSIColor.GREEN, true));
@@ -254,25 +253,25 @@ public class MPSDump {
             } else {
                 switch (extType) {
                 case PictureHeader.Quant_Matrix_Extension:
-                    dumpQuantMatrixExtension(QuantMatrixExtension.read(in));
+                    dumpQuantMatrixExtension(QuantMatrixExtension.read(_in));
                     break;
                 case PictureHeader.Copyright_Extension:
-                    dumpCopyrightExtension(CopyrightExtension.read(in));
+                    dumpCopyrightExtension(CopyrightExtension.read(_in));
                     break;
                 case PictureHeader.Picture_Display_Extension:
                     if (sequenceHeader != null && pictureCodingExtension != null)
-                        dumpPictureDisplayExtension(PictureDisplayExtension.read(in, sequenceExtension,
+                        dumpPictureDisplayExtension(PictureDisplayExtension.read(_in, sequenceExtension,
                                 pictureCodingExtension));
                     break;
                 case PictureHeader.Picture_Coding_Extension:
-                    pictureCodingExtension = PictureCodingExtension.read(in);
+                    pictureCodingExtension = PictureCodingExtension.read(_in);
                     dumpPictureCodingExtension(pictureCodingExtension);
                     break;
                 case PictureHeader.Picture_Spatial_Scalable_Extension:
-                    dumpPictureSpatialScalableExtension(PictureSpatialScalableExtension.read(in));
+                    dumpPictureSpatialScalableExtension(PictureSpatialScalableExtension.read(_in));
                     break;
                 case PictureHeader.Picture_Temporal_Scalable_Extension:
-                    dumpPictureTemporalScalableExtension(PictureTemporalScalableExtension.read(in));
+                    dumpPictureTemporalScalableExtension(PictureTemporalScalableExtension.read(_in));
                     break;
                 default:
                     System.out.print(MainUtils.color("extension " + extType, MainUtils.ANSIColor.GREEN, true));
@@ -326,7 +325,7 @@ public class MPSDump {
         private String dumpBin(Object read) {
             StringBuilder bldr = new StringBuilder();
             bldr.append("<");
-            Field[] fields = read.getClass().getFields();
+            Field[] fields = Platform.getFields(read.getClass());
             for (int i = 0; i < fields.length; i++) {
                 if (!Modifier.isPublic(fields[i].getModifiers()) || Modifier.isStatic(fields[i].getModifiers()))
                     continue;

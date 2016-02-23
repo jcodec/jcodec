@@ -50,25 +50,28 @@ public class PCMDVDTrack implements VirtualTrack {
 
         prevPkt = src.nextPacket();
 
-        return new PCMDVDPkt(ret);
+        return new PCMDVDPkt(this, ret);
     }
 
-    private class PCMDVDPkt extends VirtualPacketWrapper {
+    private static class PCMDVDPkt extends VirtualPacketWrapper {
 
-        public PCMDVDPkt(VirtualPacket src) {
+        private PCMDVDTrack track;
+
+		public PCMDVDPkt(PCMDVDTrack track, VirtualPacket src) {
             super(src);
+			this.track = track;
         }
 
         @Override
         public ByteBuffer getData() throws IOException {
             ByteBuffer data = super.getData();
-            AudioBuffer decodeFrame = decoder.decodeFrame(data, data);
+            AudioBuffer decodeFrame = track.decoder.decodeFrame(data, data);
             return decodeFrame.getData();
         }
 
         @Override
         public int getDataLen() throws IOException {
-            return (nFrames * format.getChannels()) << 1;
+            return (track.nFrames * track.format.getChannels()) << 1;
         }
     }
 

@@ -58,30 +58,32 @@ public class MXFVirtualTrack implements VirtualTrack {
         if (nextFrame == null)
             return null;
 
-        return new MXFVirtualPacket(nextFrame);
+        return new MXFVirtualPacket(this, nextFrame);
     }
 
-    public class MXFVirtualPacket implements VirtualPacket {
+    public static class MXFVirtualPacket implements VirtualPacket {
         private MXFPacket pkt;
+		private MXFVirtualTrack track;
 
-        public MXFVirtualPacket(MXFPacket pkt) {
-            this.pkt = pkt;
+        public MXFVirtualPacket(MXFVirtualTrack track, MXFPacket pkt) {
+            this.track = track;
+			this.pkt = pkt;
         }
 
         @Override
         public ByteBuffer getData() throws IOException {
             SeekableByteChannel ch = null;
             try {
-                ch = fp.getChannel();
+                ch = track.fp.getChannel();
                 ch.position(pkt.getOffset());
 
                 KLV kl = KLV.readKL(ch);
-                while (kl != null && !essenceUL.equals(kl.key)) {
+                while (kl != null && !track.essenceUL.equals(kl.key)) {
                     ch.position(ch.position() + kl.len);
                     kl = KLV.readKL(ch);
                 }
 
-                return kl != null && essenceUL.equals(kl.key) ? NIOUtils.fetchFrom(ch, (int) kl.len) : null;
+                return kl != null && track.essenceUL.equals(kl.key) ? NIOUtils.fetchFrom(ch, (int) kl.len) : null;
             } finally {
                 NIOUtils.closeQuietly(ch);
             }
@@ -165,7 +167,7 @@ public class MXFVirtualTrack implements VirtualTrack {
         @Override
         protected MXFDemuxerTrack createTrack(UL ul, TimelineTrack track, GenericDescriptor descriptor)
                 throws IOException {
-            return new MXFDemuxerTrack(ul, track, descriptor) {
+            return new MXFDemuxerTrack(this, ul, track, descriptor) {
                 @Override
                 public MXFPacket readPacket(long off, int len, long pts, int timescale, int duration, int frameNo,
                         boolean kf) throws IOException {

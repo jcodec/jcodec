@@ -1,7 +1,9 @@
 package org.jcodec.codecs.h264.decode;
 
+import static java.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 
+import org.jcodec.codecs.aac.blocks.Block;
 import org.jcodec.common.model.Picture8Bit;
 
 /**
@@ -79,7 +81,7 @@ public class BlockInterpolator {
 
         int off = y * picW + x;
         for (int j = 0; j < blkH; j++) {
-            System.arraycopy(pic, off, blk, blkOff, blkW);
+            arraycopy(pic, off, blk, blkOff, blkW);
             off += picW;
             blkOff += blkStride;
         }
@@ -754,7 +756,7 @@ public class BlockInterpolator {
             int blkW, int blkH) {
         int off = y * picW + x;
         for (int j = 0; j < blkH; j++) {
-            System.arraycopy(pic, off, blk, blkOff, blkW);
+            arraycopy(pic, off, blk, blkOff, blkW);
             off += picW;
             blkOff += blkStride;
         }
@@ -905,203 +907,211 @@ public class BlockInterpolator {
                 int blkH);
     }
 
-    private LumaInterpolator[] safe = new LumaInterpolator[] {
+    private LumaInterpolator[] safe = initSafe();
+    private LumaInterpolator[] initSafe() {
+    final BlockInterpolator self = this;
+    return new LumaInterpolator[] {
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma00(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma00(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma10(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma10(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma20(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma20(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma30(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma30(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma01(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma01(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma11(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma11(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma21(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma21(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma31(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma31(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma02(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma02(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma12(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma12(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma22(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma22(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma32(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma32(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma03(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma03(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma13(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma13(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma23(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma23(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma33(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma33(pels, picW, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     } };
+    }
 
-    private LumaInterpolator[] unsafe = new LumaInterpolator[] {
+    private LumaInterpolator[] unsafe = initUnsafe(); 
+    private LumaInterpolator[] initUnsafe() {
+    final BlockInterpolator self = this;
+    return new LumaInterpolator[] {
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma00Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma00Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma10Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma10Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma20Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma20Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma30Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma30Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma01Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma01Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma11Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma11Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma21Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma21Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma31Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma31Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma02Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma02Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma12Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma12Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma22Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma22Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma32Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma32Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma03Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma03Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma13Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma13Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     },
 
     new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma23Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma23Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     }, new LumaInterpolator() {
         public void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y,
                 int blkW, int blkH) {
-            getLuma33Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
+            self.getLuma33Unsafe(pels, picW, imgH, blk, blkOff, blkStride, x, y, blkW, blkH);
         }
     } };
+    }
 }

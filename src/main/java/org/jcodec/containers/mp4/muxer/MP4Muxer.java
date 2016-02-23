@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -217,7 +218,7 @@ public class MP4Muxer {
         else if (format.getSampleSizeInBits() == 24)
             return "in24";
         else
-            throw new IllegalArgumentException("Audio format " + format + " is not supported.");
+            throw new NotSupportedException("Audio format " + format + " is not supported.");
     }
 
     public PCMMP4MuxerTrack addPCMAudioTrack(AudioFormat format) {

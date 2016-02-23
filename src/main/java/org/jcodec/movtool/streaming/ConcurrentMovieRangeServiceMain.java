@@ -93,9 +93,9 @@ public class ConcurrentMovieRangeServiceMain {
 
                 InputStream is1 = cmrs.getRange(from, to);
 
-                FileChannel in = new FileInputStream(ref).getChannel();
-                in.position(from);
-                InputStream is2 = Channels.newInputStream(in);
+                FileChannel _in = new FileInputStream(ref).getChannel();
+                _in.position(from);
+                InputStream is2 = Channels.newInputStream(_in);
                 byte[] buf1 = new byte[4096], buf2 = new byte[4096];
                 int b, ii = 0;
                 do {

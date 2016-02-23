@@ -96,15 +96,15 @@ public class BitsBuffer {
 		len += a.len;
 	}
 
-	public void readSegment(int segwidth, IBitStream in) throws AACException {
+	public void readSegment(int segwidth, IBitStream _in) throws AACException {
 		len = segwidth;
 
 		if(segwidth>32) {
-			bufb = in.readBits(segwidth-32);
-			bufa = in.readBits(32);
+			bufb = _in.readBits(segwidth-32);
+			bufa = _in.readBits(32);
 		}
 		else {
-			bufa = in.readBits(segwidth);
+			bufa = _in.readBits(segwidth);
 			bufb = 0;
 		}
 	}

@@ -4,7 +4,9 @@ import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo.WindowSequence;
 
-import java.util.Arrays;
+import static java.lang.System.arraycopy;
+
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -38,8 +40,8 @@ public class GainControl implements GCConstants {
 		overlap = new float[BANDS][lbLong*2];
 	}
 
-	public void decode(IBitStream in, WindowSequence winSeq) throws AACException {
-		maxBand = in.readBits(2)+1;
+	public void decode(IBitStream _in, WindowSequence winSeq) throws AACException {
+		maxBand = _in.readBits(2)+1;
 
 		int wdLen, locBits, locBits2 = 0;
 		switch(winSeq) {
@@ -72,13 +74,13 @@ public class GainControl implements GCConstants {
 		int wd, k, len, bits;
 		for(int bd = 1; bd<maxBand; bd++) {
 			for(wd = 0; wd<wdLen; wd++) {
-				len = in.readBits(3);
+				len = _in.readBits(3);
 				level[bd][wd] = new int[len];
 				location[bd][wd] = new int[len];
 				for(k = 0; k<len; k++) {
-					level[bd][wd][k] = in.readBits(4);
+					level[bd][wd][k] = _in.readBits(4);
 					bits = (wd==0) ? locBits : locBits2;
-					location[bd][wd][k] = in.readBits(bits);
+					location[bd][wd][k] = _in.readBits(bits);
 				}
 			}
 		}
@@ -100,7 +102,7 @@ public class GainControl implements GCConstants {
 	 * - the gain control function applies to IMDCT output samples as a another IMDCT window
 	 * - the reconstructed time domain signal produces by overlap-add
 	 */
-	private void compensate(float[] in, float[][] out, WindowSequence winSeq, int band) {
+	private void compensate(float[] _in, float[][] out, WindowSequence winSeq, int band) {
 		int j;
 		if(winSeq.equals(WindowSequence.EIGHT_SHORT_SEQUENCE)) {
 			int a, b;
@@ -110,45 +112,45 @@ public class GainControl implements GCConstants {
 				//applying
 				for(j = 0; j<lbShort*2; j++) {
 					a = band*lbLong*2+k*lbShort*2+j;
-					in[a] *= function[j];
+					_in[a] *= function[j];
 				}
 				//overlapping
 				for(j = 0; j<lbShort; j++) {
 					a = j+lbLong*7/16+lbShort*k;
 					b = band*lbLong*2+k*lbShort*2+j;
-					overlap[band][a] += in[b];
+					overlap[band][a] += _in[b];
 				}
 				//store for next frame
 				for(j = 0; j<lbShort; j++) {
 					a = j+lbLong*7/16+lbShort*(k+1);
 					b = band*lbLong*2+k*lbShort*2+lbShort+j;
 
-					overlap[band][a] = in[b];
+					overlap[band][a] = _in[b];
 				}
-				locationPrev[band][0] = Arrays.copyOf(location[band][k], location[band][k].length);
-				levelPrev[band][0] = Arrays.copyOf(level[band][k], level[band][k].length);
+				locationPrev[band][0] = Platform.copyOfInt(location[band][k], location[band][k].length);
+				levelPrev[band][0] = Platform.copyOfInt(level[band][k], level[band][k].length);
 			}
-			System.arraycopy(overlap[band], 0, out[band], 0, lbLong);
-			System.arraycopy(overlap[band], lbLong, overlap[band], 0, lbLong);
+			arraycopy(overlap[band], 0, out[band], 0, lbLong);
+			arraycopy(overlap[band], lbLong, overlap[band], 0, lbLong);
 		}
 		else {
 			//calculation
 			calculateFunctionData(lbLong*2, band, winSeq, 0);
 			//applying
 			for(j = 0; j<lbLong*2; j++) {
-				in[band*lbLong*2+j] *= function[j];
+				_in[band*lbLong*2+j] *= function[j];
 			}
 			//overlapping
 			for(j = 0; j<lbLong; j++) {
-				out[band][j] = overlap[band][j]+in[band*lbLong*2+j];
+				out[band][j] = overlap[band][j]+_in[band*lbLong*2+j];
 			}
 			//store for next frame
 			for(j = 0; j<lbLong; j++) {
-				overlap[band][j] = in[band*lbLong*2+lbLong+j];
+				overlap[band][j] = _in[band*lbLong*2+lbLong+j];
 			}
 			final int lastBlock = winSeq.equals(WindowSequence.ONLY_LONG_SEQUENCE) ? 1 : 0;
-			locationPrev[band][0] = Arrays.copyOf(location[band][lastBlock], location[band][lastBlock].length);
-			levelPrev[band][0] = Arrays.copyOf(level[band][lastBlock], level[band][lastBlock].length);
+			locationPrev[band][0] = Platform.copyOfInt(location[band][lastBlock], location[band][lastBlock].length);
+			levelPrev[band][0] = Platform.copyOfInt(level[band][lastBlock], level[band][lastBlock].length);
 		}
 	}
 

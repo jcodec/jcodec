@@ -24,16 +24,16 @@ public interface VirtualTrack {
     void close() throws IOException;
     
     public static class VirtualEdit {
-        private double in;
+        private double _in;
         private double duration;
 
-        public VirtualEdit(double in, double duration) {
-            this.in = in;
+        public VirtualEdit(double _in, double duration) {
+            this._in = _in;
             this.duration = duration;
         }
 
         public double getIn() {
-            return in;
+            return _in;
         }
 
         public double getDuration() {

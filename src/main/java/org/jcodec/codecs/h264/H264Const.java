@@ -571,10 +571,10 @@ public class H264Const {
         }
     }
 
-    private static void putBlk(int[] in, int blkX, int blkY, int blkW, int blkH, int stride, int[] out) {
+    private static void putBlk(int[] _in, int blkX, int blkY, int blkW, int blkH, int stride, int[] out) {
         for (int line = 0, srcOff = 0, dstOff = blkY * stride + blkX; line < blkH; line++) {
             for(int i = 0; i < blkW; i++)
-                out[dstOff + i] = in[srcOff + i];
+                out[dstOff + i] = _in[srcOff + i];
             srcOff += blkW;
             dstOff += stride;
         }

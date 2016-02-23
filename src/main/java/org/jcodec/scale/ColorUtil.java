@@ -7,6 +7,8 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -125,7 +127,7 @@ public class ColorUtil {
         @Override
         public void transform(Picture src, Picture dst) {
             for (int i = 0; i < 3; i++)
-                System.arraycopy(
+                arraycopy(
                         src.getPlaneData(i),
                         0,
                         dst.getPlaneData(i),
@@ -140,7 +142,7 @@ public class ColorUtil {
         @Override
         public void transform(Picture8Bit src, Picture8Bit dst) {
             for (int i = 0; i < 3; i++)
-                System.arraycopy(
+                arraycopy(
                         src.getPlaneData(i),
                         0,
                         dst.getPlaneData(i),

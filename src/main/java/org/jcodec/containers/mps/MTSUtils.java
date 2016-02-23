@@ -179,9 +179,9 @@ public class MTSUtils {
         }
     }
 
-    public static PMTStream[] getProgramGuids(SeekableByteChannel in) throws IOException {
+    public static PMTStream[] getProgramGuids(SeekableByteChannel _in) throws IOException {
         PMTExtractor ex = new PMTExtractor();
-        ex.readTsFile(in);
+        ex.readTsFile(_in);
         PMTSection pmt = ex.getPmt();
         return pmt.getStreams();
     }

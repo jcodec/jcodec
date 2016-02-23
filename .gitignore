@@ -4,3 +4,6 @@
 target
 tmp/*
 *.patch
+.idea/
+*.iml
+.DS_Store

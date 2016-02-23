@@ -39,23 +39,23 @@ public class HLSRelocatePMT {
             MainUtils.printHelp(new HashMap<String, String>() {
                 {
                 }
-            }, "file in", "file out");
+            }, "file _in", "file out");
             return;
         }
 
-        ReadableByteChannel in = null;
+        ReadableByteChannel _in = null;
         WritableByteChannel out = null;
         try {
-            in = NIOUtils.readableFileChannel(new File(cmd.args[0]));
+            _in = NIOUtils.readableFileChannel(new File(cmd.args[0]));
             out = NIOUtils.writableFileChannel(new File(cmd.args[1]));
-            System.err.println("Processed: " + replocatePMT(in, out) + " packets.");
+            System.err.println("Processed: " + replocatePMT(_in, out) + " packets.");
         } finally {
-            NIOUtils.closeQuietly(in);
+            NIOUtils.closeQuietly(_in);
             NIOUtils.closeQuietly(out);
         }
     }
 
-    private static int replocatePMT(ReadableByteChannel in, WritableByteChannel out) throws IOException {
+    private static int replocatePMT(ReadableByteChannel _in, WritableByteChannel out) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(TS_PKT_SIZE * CHUNK_SIZE_PKT);
         Set<Integer> pmtPids = new HashSet<Integer>();
         List<ByteBuffer> held = new ArrayList<ByteBuffer>();
@@ -63,7 +63,7 @@ public class HLSRelocatePMT {
         ByteBuffer pmtPkt = null;
 
         int totalPkt = 0;
-        while (in.read(buf) != -1) {
+        while (_in.read(buf) != -1) {
             buf.flip();
             buf.limit((buf.limit() / TS_PKT_SIZE) * TS_PKT_SIZE);
 

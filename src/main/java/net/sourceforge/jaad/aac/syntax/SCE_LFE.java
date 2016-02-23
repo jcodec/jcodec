@@ -19,9 +19,9 @@ class SCE_LFE extends Element {
 		ics = new ICStream(frameLength);
 	}
 
-	void decode(IBitStream in, DecoderConfig conf) throws AACException {
-		readElementInstanceTag(in);
-		ics.decode(in, false, conf);
+	void decode(IBitStream _in, DecoderConfig conf) throws AACException {
+		readElementInstanceTag(_in);
+		ics.decode(_in, false, conf);
 	}
 
 	public ICStream getICStream() {

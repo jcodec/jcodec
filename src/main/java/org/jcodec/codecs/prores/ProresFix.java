@@ -77,17 +77,17 @@ public class ProresFix {
         }
     }
 
-    static final void writeDCCoeffs(BitWriter bits, int[] in, int blocksPerSlice) {
-        writeCodeword(bits, firstDCCodebook, in[0]);
+    static final void writeDCCoeffs(BitWriter bits, int[] _in, int blocksPerSlice) {
+        writeCodeword(bits, firstDCCodebook, _in[0]);
 
         int code = 5, idx = 64;
         for (int i = 1; i < blocksPerSlice; i++, idx += 64) {
-            writeCodeword(bits, dcCodebooks[min(code, 6)], in[idx]);
-            code = in[idx];
+            writeCodeword(bits, dcCodebooks[min(code, 6)], _in[idx]);
+            code = _in[idx];
         }
     }
 
-    static final void writeACCoeffs(BitWriter bits, int[] in, int blocksPerSlice, int[] scan) {
+    static final void writeACCoeffs(BitWriter bits, int[] _in, int blocksPerSlice, int[] scan) {
         int prevRun = 4;
         int prevLevel = 2;
 
@@ -95,7 +95,7 @@ public class ProresFix {
         for (int i = 1; i < 64; i++) {
             int indp = scan[i];
             for (int j = 0; j < blocksPerSlice; j++) {
-                int val = in[(j << 6) + indp];
+                int val = _in[(j << 6) + indp];
                 if (val == 0)
                     run++;
                 else {

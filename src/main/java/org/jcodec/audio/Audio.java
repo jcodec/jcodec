@@ -65,12 +65,14 @@ public class Audio {
         }
 
         @Override
-        public void filter(FloatBuffer[] in, long[] inPos, FloatBuffer[] out) {
-            for (int i = 0; i < in.length; i++) {
-                if (out[i].remaining() >= in[i].remaining())
-                    out[i].put(in[i]);
+        public void filter(FloatBuffer[] _in, long[] inPos, FloatBuffer[] out) {
+            for (int i = 0; i < _in.length; i++) {
+                if (out[i].remaining() >= _in[i].remaining())
+                    out[i].put(_in[i]);
                 else {
-                    out[i].put((FloatBuffer) in[i].duplicate().limit(in[i].position() + out[i].remaining()));
+                    FloatBuffer duplicate = _in[i].duplicate();
+                    duplicate.limit(_in[i].position() + out[i].remaining());
+                    out[i].put(duplicate);
                 }
 
             }

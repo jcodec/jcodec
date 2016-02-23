@@ -19,7 +19,6 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.Arrays;
 import java.util.List;
 
 import org.jcodec.codecs.prores.ProresDecoder;
@@ -40,6 +39,7 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
+import org.jcodec.platform.Platform;
 import org.jcodec.scale.Yuv422pToRgb;
 
 /**
@@ -141,7 +141,7 @@ public class DemuxerMain {
             byte[] expected = readFileToByteArray(new File(base, String.format("frame%08d.raw", i + startFn
                     + 1)));
             Packet pkt = vt.nextFrame();
-            if(!Arrays.equals(expected, NIOUtils.toArray(pkt.getData())))
+            if(!Platform.arrayEquals(expected, NIOUtils.toArray(pkt.getData())))
                 throw new RuntimeException("not equal");
             System.out.print(".");
             if ((i % 100) == 0)
@@ -151,9 +151,9 @@ public class DemuxerMain {
 
     private static void testAudioMuxer(File wav, File out) throws IOException {
         WavHeader header = WavHeader.read(wav);
-        RandomAccessFile in = new RandomAccessFile(wav, "r");
-        in.seek(header.dataOffset);
-        FileChannel ch = in.getChannel();
+        RandomAccessFile _in = new RandomAccessFile(wav, "r");
+        _in.seek(header.dataOffset);
+        FileChannel ch = _in.getChannel();
         MP4Muxer muxer = new MP4Muxer(writableFileChannel(out));
         PCMMP4MuxerTrack track = muxer.addPCMTrack(48000, 1, 3,
                 MP4Muxer.audioSampleEntry("in24", 1, 3, 1, 48000, Endian.LITTLE_ENDIAN));
@@ -195,12 +195,12 @@ public class DemuxerMain {
             return;
         }
 
-        InputStream in = new BufferedInputStream(new FileInputStream(src));
-        in.skip(mdatOff);
+        InputStream _in = new BufferedInputStream(new FileInputStream(src));
+        _in.skip(mdatOff);
         OutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
 
         for (int i = 0; i < mdatSize; i++) {
-            out.write(in.read());
+            out.write(_in.read());
         }
     }
 

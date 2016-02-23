@@ -13,6 +13,7 @@ import java.util.Set;
 
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -49,7 +50,7 @@ public class ToJSON {
 
     public static List<String> allFieldsExcept(Class claz, String... except) {
         List<String> result = new ArrayList<String>();
-        for (Method method : claz.getDeclaredMethods()) {
+        for (Method method : Platform.getDeclaredMethods(claz)) {
             if (!isGetter(method))
                 continue;
             try {
@@ -86,7 +87,7 @@ public class ToJSON {
      * @param fields
      */
     public static void fieldsToJSON(Object obj, StringBuilder builder, String... fields) {
-        Method[] methods = obj.getClass().getMethods();
+        Method[] methods = Platform.getMethods(obj.getClass());
         for (String field : fields) {
             Method m = findGetter(methods, field);
             if (m == null)
@@ -107,7 +108,7 @@ public class ToJSON {
 
     private static String getterName(String pref, String field) {
         if (field == null)
-            throw new IllegalArgumentException("Passed null string as field name");
+            throw new NullPointerException("Passed null string as field name");
         char[] ch = field.toCharArray();
         if (ch.length == 0)
             return pref;
@@ -244,7 +245,7 @@ public class ToJSON {
             builder.append(String.valueOf(obj));
         } else {
             builder.append("{");
-            for (Method method : obj.getClass().getMethods()) {
+            for (Method method : Platform.getMethods(obj.getClass())) {
                 if (omitMethods.contains(method.getName()) || !isGetter(method))
                     continue;
 

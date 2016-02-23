@@ -1,5 +1,7 @@
 package net.sourceforge.jaad.aac.sbr;
 
+import static java.lang.System.arraycopy;
+
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
  * under the Public Domain license. Code changes provided by the JCodec project
@@ -181,8 +183,8 @@ class HFAdjustment implements SBRConstants, NoiseTable {
 
 			if(assembly_reset) {
 				for(n = 0; n<4; n++) {
-					System.arraycopy(adj.G_lim_boost[l], 0, sbr.G_temp_prev[ch][n], 0, sbr.M);
-					System.arraycopy(adj.Q_M_lim_boost[l], 0, sbr.Q_temp_prev[ch][n], 0, sbr.M);
+					arraycopy(adj.G_lim_boost[l], 0, sbr.G_temp_prev[ch][n], 0, sbr.M);
+					arraycopy(adj.Q_M_lim_boost[l], 0, sbr.Q_temp_prev[ch][n], 0, sbr.M);
 				}
 				/* reset ringbuffer index */
 				sbr.GQ_ringbuf_index[ch] = 4;
@@ -191,8 +193,8 @@ class HFAdjustment implements SBRConstants, NoiseTable {
 
 			for(i = sbr.t_E[ch][l]; i<sbr.t_E[ch][l+1]; i++) {
 				/* load new values into ringbuffer */
-				System.arraycopy(adj.G_lim_boost[l], 0, sbr.G_temp_prev[ch][sbr.GQ_ringbuf_index[ch]], 0, sbr.M);
-				System.arraycopy(adj.Q_M_lim_boost[l], 0, sbr.Q_temp_prev[ch][sbr.GQ_ringbuf_index[ch]], 0, sbr.M);
+				arraycopy(adj.G_lim_boost[l], 0, sbr.G_temp_prev[ch][sbr.GQ_ringbuf_index[ch]], 0, sbr.M);
+				arraycopy(adj.Q_M_lim_boost[l], 0, sbr.Q_temp_prev[ch][sbr.GQ_ringbuf_index[ch]], 0, sbr.M);
 
 				for(m = 0; m<sbr.M; m++) {
 					float[] psi = new float[2];

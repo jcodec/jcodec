@@ -28,6 +28,7 @@ import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.EbmlVoid;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.boxes.MkvSegment;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -361,22 +362,7 @@ public enum MKVType {
                 T elem = (T) create(g.clazz, g.id);
                 elem.type = g;
                 return elem;
-            } catch (SecurityException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-                return (T) new EbmlBin(g.id);
-            } catch (IllegalAccessException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 return (T) new EbmlBin(g.id);
             }
@@ -384,14 +370,13 @@ public enum MKVType {
 
       private static <T extends EbmlBase> T create(Class<T> clazz, byte[] id) throws SecurityException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException, InstantiationException,
               IllegalAccessException {
-          Constructor<T> c = clazz.getConstructor(byte[].class);
-          return c.newInstance(id);
+          return Platform.newInstance(clazz, id);
       }
       
       @SuppressWarnings("unchecked")
       public static <T extends EbmlBase> T createById(byte[] id, long offset) {
           for (MKVType t : values()){
-              if (Arrays.equals(t.id, id))
+              if (Platform.arrayEquals(t.id, id))
                   return createByType(t);
                 
           }
@@ -411,14 +396,14 @@ public enum MKVType {
       
       public static boolean isSpecifiedHeader(byte[] b){
           for (MKVType firstLevelHeader : values())
-              if (Arrays.equals(firstLevelHeader.id, b))
+              if (Platform.arrayEquals(firstLevelHeader.id, b))
                   return true;
           return false;
       }
       
       public static boolean isFirstLevelHeader(byte[] b){
           for (MKVType firstLevelHeader : firstLevelHeaders)
-              if (Arrays.equals(firstLevelHeader.id, b))
+              if (Platform.arrayEquals(firstLevelHeader.id, b))
                   return true;
           return false;
       }
@@ -498,7 +483,7 @@ public enum MKVType {
         // 1. since Void/CRC32 can occur anywhere in the tree, 
         //     look if they violate size-offset  contract of the parent.
         //     Violated size-offset contract implies the global EbmlBase actually belongs to parent        
-        if (Arrays.equals(child.id, Void.id) || Arrays.equals(child.id, CRC32.id))
+        if (Platform.arrayEquals(child.id, Void.id) || Platform.arrayEquals(child.id, CRC32.id))
             return !(child.offset == (parent.dataOffset+parent.dataLen));
         
         // 2. In case Void/CRC32 type is assigned, child EbmlBase is assumed as global,
@@ -512,7 +497,7 @@ public enum MKVType {
     
     public static boolean possibleChild(EbmlMaster parent, byte[] typeId) {
         // Only EBML or Segment are allowed at top level
-        if (parent == null && (Arrays.equals(EBML.id, typeId) || Arrays.equals(Segment.id, typeId)))
+        if (parent == null && (Platform.arrayEquals(EBML.id, typeId) || Platform.arrayEquals(Segment.id, typeId)))
             return true;
         
         // Other EbmlBases at top level are not allowed
@@ -520,12 +505,12 @@ public enum MKVType {
             return false;
         
         // Void and CRC32 EbmlBases are global and are allowed everywhere in the hierarchy
-        if (Arrays.equals(Void.id, typeId) || Arrays.equals(CRC32.id, typeId))
+        if (Platform.arrayEquals(Void.id, typeId) || Platform.arrayEquals(CRC32.id, typeId))
             return true;
         
         // for any other EbmlBase we have to check the spec
         for(MKVType aCandidate : children.get(parent.type))
-            if (Arrays.equals(aCandidate.id, typeId))
+            if (Platform.arrayEquals(aCandidate.id, typeId))
                 return true;
         
         return false;

@@ -1,6 +1,7 @@
 package org.jcodec.codecs.wav;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -23,22 +24,22 @@ public class WavInput implements Closeable {
 
     protected WavHeader header;
     protected byte[] prevBuf;
-    protected ReadableByteChannel in;
+    protected ReadableByteChannel _in;
     protected AudioFormat format;
 
-    public WavInput(ReadableByteChannel in) throws IOException {
-        this.header = WavHeader.read(in);
+    public WavInput(ReadableByteChannel _in) throws IOException {
+        this.header = WavHeader.read(_in);
         this.format = header.getFormat();
-        this.in = in;
+        this._in = _in;
     }
 
     public int read(ByteBuffer buf) throws IOException {
         int maxRead = format.framesToBytes(format.bytesToFrames(buf.remaining()));
-        return NIOUtils.read(in, buf, maxRead);
+        return NIOUtils.read(_in, buf, maxRead);
     }
 
     public void close() throws IOException {
-        in.close();
+        _in.close();
     }
 
     public WavHeader getHeader() {
@@ -52,16 +53,16 @@ public class WavInput implements Closeable {
     /**
      * Manages file resource on top of WavInput
      */
-    public static class File extends WavInput {
+    public static class WavFile extends WavInput {
 
-        public File(java.io.File f) throws IOException {
+        public WavFile(File f) throws IOException {
             super(NIOUtils.readableFileChannel(f));
         }
 
         @Override
         public void close() throws IOException {
             super.close();
-            in.close();
+            _in.close();
         }
     }
 
@@ -83,8 +84,8 @@ public class WavInput implements Closeable {
             this(new WavInput(ch));
         }
 
-        public Source(java.io.File file) throws IOException {
-            this(new WavInput.File(file));
+        public Source(File file) throws IOException {
+            this(new WavInput.WavFile(file));
         }
 
         public AudioFormat getFormat() {

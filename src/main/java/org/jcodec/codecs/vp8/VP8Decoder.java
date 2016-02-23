@@ -13,6 +13,7 @@ import static org.jcodec.codecs.vp8.VP8Util.vp8CoefUpdateProbs;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vp8.Macroblock.Subblock;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
@@ -131,7 +132,7 @@ public class VP8Decoder {
             for (int mbCol = 0; mbCol < numberOfMBCols; mbCol++) {
                 Macroblock mb = mbs[mbRow + 1][mbCol + 1];
                 if ((segmentation > 0))
-                    throw new UnsupportedOperationException("TODO: frames with multiple segments are not supported yet");
+                    throw new NotSupportedException("TODO: frames with multiple segments are not supported yet");
 
                 if (loopFilterDeltaFlag > 0) {
                     int level = filterLevel;
@@ -139,7 +140,7 @@ public class VP8Decoder {
                     level = (level < 0) ? 0 : (level > 63) ? 63 : level;
                     mb.filterLevel = level;
                 } else
-                    throw new UnsupportedOperationException(
+                    throw new NotSupportedException(
                             "TODO: frames with loopFilterDeltaFlag <= 0 are not supported yet");
 
                 if (macroBlockNoCoeffSkip > 0)

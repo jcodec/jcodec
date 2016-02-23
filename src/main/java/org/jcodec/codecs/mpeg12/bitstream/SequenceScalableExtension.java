@@ -32,27 +32,27 @@ public class SequenceScalableExtension implements MPEGHeader {
     public int picture_mux_order;
     public int picture_mux_factor;
 
-    public static SequenceScalableExtension read(BitReader in) {
+    public static SequenceScalableExtension read(BitReader _in) {
         SequenceScalableExtension sse = new SequenceScalableExtension();
-        sse.scalable_mode = in.readNBit(2);
-        sse.layer_id = in.readNBit(4);
+        sse.scalable_mode = _in.readNBit(2);
+        sse.layer_id = _in.readNBit(4);
 
         if (sse.scalable_mode == SPATIAL_SCALABILITY) {
-            sse.lower_layer_prediction_horizontal_size = in.readNBit(14);
-            in.read1Bit();
-            sse.lower_layer_prediction_vertical_size = in.readNBit(14);
-            sse.horizontal_subsampling_factor_m = in.readNBit(5);
-            sse.horizontal_subsampling_factor_n = in.readNBit(5);
-            sse.vertical_subsampling_factor_m = in.readNBit(5);
-            sse.vertical_subsampling_factor_n = in.readNBit(5);
+            sse.lower_layer_prediction_horizontal_size = _in.readNBit(14);
+            _in.read1Bit();
+            sse.lower_layer_prediction_vertical_size = _in.readNBit(14);
+            sse.horizontal_subsampling_factor_m = _in.readNBit(5);
+            sse.horizontal_subsampling_factor_n = _in.readNBit(5);
+            sse.vertical_subsampling_factor_m = _in.readNBit(5);
+            sse.vertical_subsampling_factor_n = _in.readNBit(5);
         }
 
         if (sse.scalable_mode == TEMPORAL_SCALABILITY) {
-            sse.picture_mux_enable = in.read1Bit();
+            sse.picture_mux_enable = _in.read1Bit();
             if (sse.picture_mux_enable != 0)
-                sse.mux_to_progressive_sequence = in.read1Bit();
-            sse.picture_mux_order = in.readNBit(3);
-            sse.picture_mux_factor = in.readNBit(3);
+                sse.mux_to_progressive_sequence = _in.read1Bit();
+            sse.picture_mux_order = _in.readNBit(3);
+            sse.picture_mux_factor = _in.readNBit(3);
         }
 
         return sse;

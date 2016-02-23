@@ -5,6 +5,7 @@ import static org.jcodec.codecs.mjpeg.JpegConst.naturalOrder;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.mjpeg.tools.Asserts;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
@@ -101,23 +102,23 @@ public class JpegDecoder extends VideoDecoder {
         putBlock(result.getPlaneData(plane), result.getPlaneWidth(plane), buf, blkX, blkY, field, step);
     }
 
-    int readDCValue(BitReader in, VLC table) {
-        int code = table.readVLC16(in);
-        return code != 0 ? toValue(in.readNBit(code), code) : 0;
+    int readDCValue(BitReader _in, VLC table) {
+        int code = table.readVLC16(_in);
+        return code != 0 ? toValue(_in.readNBit(code), code) : 0;
     }
 
-    void readACValues(BitReader in, int[] target, VLC table, int[] quantTable) {
+    void readACValues(BitReader _in, int[] target, VLC table, int[] quantTable) {
         int code;
         int curOff = 1;
         do {
-            code = table.readVLC16(in);
+            code = table.readVLC16(_in);
             if (code == 0xF0) {
                 curOff += 16;
             } else if (code > 0) {
                 int rle = code >> 4;
                 curOff += rle;
                 int len = code & 0xf;
-                target[naturalOrder[curOff]] = toValue(in.readNBit(len), len) * quantTable[curOff];
+                target[naturalOrder[curOff]] = toValue(_in.readNBit(len), len) * quantTable[curOff];
                 curOff++;
             }
         } while (code != 0 && curOff < 64);
@@ -178,7 +179,7 @@ public class JpegDecoder extends VideoDecoder {
             } else if (b == JpegConst.SOS) {
 
                 if (scan != null) {
-                    throw new IllegalStateException("unhandled - more than one scan header");
+                    throw new UnhandledStateException("unhandled - more than one scan header");
                 }
                 scan = ScanHeader.read(data);
                 // Debug.trace("    %s", image.scan);
@@ -199,7 +200,7 @@ public class JpegDecoder extends VideoDecoder {
 
                 Asserts.assertEquals(0, ri);
             } else {
-                throw new IllegalStateException("unhandled marker " + JpegConst.toString(b));
+                throw new UnhandledStateException("unhandled marker " + JpegConst.toString(b));
             }
         }
 

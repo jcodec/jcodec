@@ -53,16 +53,19 @@ public class FilePool implements ByteChannelPool {
                 }
             }
         }
-        return new PoolChannel(channel);
+        return new PoolChannel(this, channel);
     }
 
     protected SeekableByteChannel newChannel(File file) throws FileNotFoundException {
         return NIOUtils.readableFileChannel(file);
     }
 
-    public class PoolChannel extends SeekableByteChannelWrapper {
-        public PoolChannel(SeekableByteChannel src) throws IOException {
+    public static class PoolChannel extends SeekableByteChannelWrapper {
+        private FilePool pool;
+
+		public PoolChannel(FilePool pool, SeekableByteChannel src) throws IOException {
             super(src);
+			this.pool = pool;
             src.position(0);
         }
 
@@ -75,7 +78,7 @@ public class FilePool implements ByteChannelPool {
             src = null;
             while (true) {
                 try {
-                    channels.put(ret);
+                	pool.channels.put(ret);
                     break;
                 } catch (InterruptedException e) {
                 }

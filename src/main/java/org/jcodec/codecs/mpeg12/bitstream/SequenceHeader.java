@@ -53,26 +53,26 @@ public class SequenceHeader implements MPEGHeader {
     }
 
     public static SequenceHeader read(ByteBuffer bb) {
-        BitReader in = new BitReader(bb);
+        BitReader _in = new BitReader(bb);
         SequenceHeader sh = new SequenceHeader();
-        sh.horizontal_size = in.readNBit(12);
-        sh.vertical_size = in.readNBit(12);
-        sh.aspect_ratio_information = in.readNBit(4);
-        sh.frame_rate_code = in.readNBit(4);
-        sh.bit_rate = in.readNBit(18);
-        in.read1Bit();
-        sh.vbv_buffer_size_value = in.readNBit(10);
-        sh.constrained_parameters_flag = in.read1Bit();
-        if (in.read1Bit() != 0) {
+        sh.horizontal_size = _in.readNBit(12);
+        sh.vertical_size = _in.readNBit(12);
+        sh.aspect_ratio_information = _in.readNBit(4);
+        sh.frame_rate_code = _in.readNBit(4);
+        sh.bit_rate = _in.readNBit(18);
+        _in.read1Bit();
+        sh.vbv_buffer_size_value = _in.readNBit(10);
+        sh.constrained_parameters_flag = _in.read1Bit();
+        if (_in.read1Bit() != 0) {
             sh.intra_quantiser_matrix = new int[64];
             for (int i = 0; i < 64; i++) {
-                sh.intra_quantiser_matrix[i] = in.readNBit(8);
+                sh.intra_quantiser_matrix[i] = _in.readNBit(8);
             }
         }
-        if (in.read1Bit() != 0) {
+        if (_in.read1Bit() != 0) {
             sh.non_intra_quantiser_matrix = new int[64];
             for (int i = 0; i < 64; i++) {
-                sh.non_intra_quantiser_matrix[i] = in.readNBit(8);
+                sh.non_intra_quantiser_matrix[i] = _in.readNBit(8);
             }
         }
 
@@ -82,17 +82,17 @@ public class SequenceHeader implements MPEGHeader {
     public static void readExtension(ByteBuffer bb, SequenceHeader sh) {
         hasExtensions = true;
 
-        BitReader in = new BitReader(bb);
-        int extType = in.readNBit(4);
+        BitReader _in = new BitReader(bb);
+        int extType = _in.readNBit(4);
         switch (extType) {
         case Sequence_Extension:
-            sh.sequenceExtension = SequenceExtension.read(in);
+            sh.sequenceExtension = SequenceExtension.read(_in);
             break;
         case Sequence_Scalable_Extension:
-            sh.sequenceScalableExtension = SequenceScalableExtension.read(in);
+            sh.sequenceScalableExtension = SequenceScalableExtension.read(_in);
             break;
         case Sequence_Display_Extension:
-            sh.sequenceDisplayExtension = SequenceDisplayExtension.read(in);
+            sh.sequenceDisplayExtension = SequenceDisplayExtension.read(_in);
             break;
         default:
             throw new RuntimeException("Unsupported extension: " + extType);

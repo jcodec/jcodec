@@ -23,11 +23,11 @@ public class SequenceDisplayExtension implements MPEGHeader {
         int transfer_characteristics;
         int matrix_coefficients;
 
-        public static ColorDescription read(BitReader in) {
+        public static ColorDescription read(BitReader _in) {
             ColorDescription cd = new ColorDescription();
-            cd.colour_primaries = in.readNBit(8);
-            cd.transfer_characteristics = in.readNBit(8);
-            cd.matrix_coefficients = in.readNBit(8);
+            cd.colour_primaries = _in.readNBit(8);
+            cd.transfer_characteristics = _in.readNBit(8);
+            cd.matrix_coefficients = _in.readNBit(8);
             return cd;
         }
 
@@ -38,15 +38,15 @@ public class SequenceDisplayExtension implements MPEGHeader {
         }
     }
 
-    public static SequenceDisplayExtension read(BitReader in) {
+    public static SequenceDisplayExtension read(BitReader _in) {
         SequenceDisplayExtension sde = new SequenceDisplayExtension();
-        sde.video_format = in.readNBit(3);
-        if (in.read1Bit() == 1) {
-            sde.colorDescription = ColorDescription.read(in);
+        sde.video_format = _in.readNBit(3);
+        if (_in.read1Bit() == 1) {
+            sde.colorDescription = ColorDescription.read(_in);
         }
-        sde.display_horizontal_size = in.readNBit(14);
-        in.read1Bit();
-        sde.display_vertical_size = in.readNBit(14);
+        sde.display_horizontal_size = _in.readNBit(14);
+        _in.read1Bit();
+        sde.display_vertical_size = _in.readNBit(14);
 
         return sde;
     }

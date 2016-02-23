@@ -8,6 +8,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.System.currentTimeMillis;
+
 /**
  * This class is part of JCodec ( www.jcodec.org )
  * This software is distributed under FreeBSD License
@@ -22,10 +24,10 @@ public class AutoPool {
 
     private AutoPool() {
         scheduler = Executors.newScheduledThreadPool(1, daemonThreadFactory());
+        final List<AutoResource> res = resources;
         scheduler.scheduleAtFixedRate(new Runnable() {
             public void run() {
-                long curTime = System.currentTimeMillis();
-                List<AutoResource> res = resources;
+                long curTime = currentTimeMillis();
                 for (AutoResource autoResource : res) {
                     autoResource.setCurTime(curTime);
                 }

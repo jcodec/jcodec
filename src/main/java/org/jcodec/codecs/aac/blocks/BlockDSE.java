@@ -13,16 +13,16 @@ import org.jcodec.common.io.BitReader;
  */
 public class BlockDSE extends Block {
 
-    public void parse(BitReader in) {
-        int elemType = (int) in.readNBit(4);
-        int byte_align = in.read1Bit();
-        int count = (int) in.readNBit(8);
+    public void parse(BitReader _in) {
+        int elemType = (int) _in.readNBit(4);
+        int byte_align = _in.read1Bit();
+        int count = (int) _in.readNBit(8);
         if (count == 255)
-            count += in.readNBit(8);
+            count += _in.readNBit(8);
         if (byte_align != 0)
-            in.align();
+            _in.align();
 
-        if (in.skip(8 * count) != 8 * count) {
+        if (_in.skip(8 * count) != 8 * count) {
             throw new RuntimeException("Overread");
         }
     }
