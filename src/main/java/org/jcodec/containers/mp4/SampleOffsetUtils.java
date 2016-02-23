@@ -30,7 +30,7 @@ public class SampleOffsetUtils {
         SampleToChunkBox stsc = NodeBox.findFirst(minf, SampleToChunkBox.class, "stbl", "stsc");
         SampleSizesBox stsz = NodeBox.findFirst(minf, SampleSizesBox.class, "stbl", "stsz");
         long sampleOffset = getSampleOffset(sample, stsc, stco, stsz);
-        MappedByteBuffer map = NIOUtils.map(file);
+        MappedByteBuffer map = NIOUtils.mapFile(file);
         map.position((int) sampleOffset);
         map.limit(map.position() + stsz.getSizes()[sample]);
         return map;

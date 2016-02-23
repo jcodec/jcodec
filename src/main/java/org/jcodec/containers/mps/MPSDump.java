@@ -63,7 +63,7 @@ public class MPSDump {
                 return;
             }
 
-            ch = NIOUtils.readableFileChannel(new File(cmd.args[0]));
+            ch = NIOUtils.readableChannel(new File(cmd.args[0]));
             Long dumpAfterPts = cmd.getLongFlag(DUMP_FROM);
             Long stopPts = cmd.getLongFlag(STOP_AT);
 

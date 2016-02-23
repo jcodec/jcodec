@@ -43,7 +43,7 @@ public class WavMerge {
         try {
             int sampleSize = -1;
             for (int i = 0; i < src.length; i++) {
-                inputs[i] = NIOUtils.readableFileChannel(src[i]);
+                inputs[i] = NIOUtils.readableChannel(src[i]);
                 WavHeader hdr = WavHeader.read(inputs[i]);
                 if (sampleSize != -1 && sampleSize != hdr.fmt.bitsPerSample)
                     throw new RuntimeException("Input files have different sample sizes");
@@ -54,7 +54,7 @@ public class WavMerge {
             ByteBuffer outb = ByteBuffer.allocate(headers[0].getFormat().framesToBytes(4096) * src.length);
 
             WavHeader newHeader = WavHeader.multiChannelWav(headers);
-            out = NIOUtils.writableFileChannel(result);
+            out = NIOUtils.writableChannel(result);
             newHeader.write(out);
 
             for (boolean readOnce = true;;) {

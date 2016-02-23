@@ -131,7 +131,7 @@ public class TestTool {
             Process process = Runtime.getRuntime().exec(jm + " -d " + jmconf.getAbsolutePath());
             process.waitFor();
 
-            ByteBuffer yuv = NIOUtils.fetchFrom(decoded);
+            ByteBuffer yuv = NIOUtils.fetchFromFile(decoded);
             for (Picture pic : decodedPics) {
                 pic = pic.cropped();
                 boolean equals = Platform.arrayEquals(getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0)),

@@ -42,7 +42,7 @@ public class SequenceEncoder8Bit {
     private ByteBuffer pps;
 
     public SequenceEncoder8Bit(File out) throws IOException {
-        this(NIOUtils.writableFileChannel(out));
+        this(NIOUtils.writableChannel(out));
     }
     
     public SequenceEncoder8Bit(SeekableByteChannel ch) throws IOException {

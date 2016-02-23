@@ -77,7 +77,7 @@ public class VideoSampleEntry extends SampleEntry {
 
         frameCount = input.getShort();
 
-        compressorName = NIOUtils.readPascalString(input, 31);
+        compressorName = NIOUtils.readPascalStringL(input, 31);
 
         depth = input.getShort();
 
@@ -107,7 +107,7 @@ public class VideoSampleEntry extends SampleEntry {
 
         out.putShort(frameCount);
 
-        NIOUtils.writePascalString(out, compressorName, 31);
+        NIOUtils.writePascalStringL(out, compressorName, 31);
 
         out.putShort(depth);
 

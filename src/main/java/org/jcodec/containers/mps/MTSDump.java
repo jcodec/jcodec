@@ -61,11 +61,11 @@ public class MTSDump extends MPSDump {
                 return;
             } else if (cmd.args.length == 1) {
                 System.out.println("MTS programs:");
-                dumpProgramPids(NIOUtils.readableFileChannel(new File(cmd.args[0])));
+                dumpProgramPids(NIOUtils.readableChannel(new File(cmd.args[0])));
                 return;
             }
 
-            ch = NIOUtils.readableFileChannel(new File(cmd.args[0]));
+            ch = NIOUtils.readableChannel(new File(cmd.args[0]));
             Long dumpAfterPts = cmd.getLongFlag(DUMP_FROM);
             Long stopPts = cmd.getLongFlag(STOP_AT);
 

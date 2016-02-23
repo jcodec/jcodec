@@ -145,7 +145,7 @@ public class MPSTrackFactory {
         protected ByteBuffer readPes(SeekableByteChannel ch, long pesPosition, int pesSize, int payloadSize, int pesIdx)
                 throws IOException {
             ch.position(pesPosition);
-            ByteBuffer pes = NIOUtils.fetchFrom(ch, pesSize);
+            ByteBuffer pes = NIOUtils.fetchFromChannel(ch, pesSize);
             readPESHeader(pes, 0);
             return pes;
         }
@@ -312,9 +312,9 @@ public class MPSTrackFactory {
 
     public static void main(String[] args) throws IOException {
         FilePool fp = new FilePool(new File(args[0]), 10);
-        MPSTrackFactory factory = new MPSTrackFactory(NIOUtils.fetchFrom(new File(args[1])), fp);
+        MPSTrackFactory factory = new MPSTrackFactory(NIOUtils.fetchFromFile(new File(args[1])), fp);
         Stream stream = factory.getVideoStreams().get(0);
-        FileChannelWrapper ch = NIOUtils.writableFileChannel(new File(args[2]));
+        FileChannelWrapper ch = NIOUtils.writableChannel(new File(args[2]));
 
         List<VirtualPacket> pkt = new ArrayList<VirtualPacket>();
         for (int i = 0; i < 2000; i++) {

@@ -130,7 +130,7 @@ public class MPSRandomAccessDemuxer {
         }
 
         protected ByteBuffer fetch(int pesLen) throws IOException {
-            return NIOUtils.fetchFrom(source, pesLen);
+            return NIOUtils.fetchFromChannel(source, pesLen);
         }
         
         protected void skip(long leadingSize) throws IOException {

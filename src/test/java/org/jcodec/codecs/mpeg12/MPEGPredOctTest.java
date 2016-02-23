@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg12;
 
-import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
+import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
 import static org.jcodec.common.ArrayUtil.toIntArray;
 
 import java.util.Arrays;

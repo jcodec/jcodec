@@ -1,8 +1,8 @@
 package org.jcodec.movtool;
 
 import static java.lang.System.arraycopy;
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
 
 import java.io.File;
@@ -48,10 +48,10 @@ public class Strip {
         SeekableByteChannel input = null;
         SeekableByteChannel out = null;
         try {
-            input = readableFileChannel(new File(args[0]));
+            input = readableChannel(new File(args[0]));
             File file = new File(args[1]);
             Platform.deleteFile(file);
-            out = writableFileChannel(file);
+            out = writableChannel(file);
             MovieBox movie = MP4Util.createRefMovie(input, "file://" + new File(args[0]).getAbsolutePath());
             new Strip().strip(movie);
             MP4Util.writeMovie(out, movie);

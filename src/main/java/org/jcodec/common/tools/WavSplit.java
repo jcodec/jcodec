@@ -43,13 +43,13 @@ public class WavSplit {
 
         Assert.assertEquals(2, wavHeader.fmt.numChannels);
         int dataOffset = wavHeader.dataOffset;
-        FileChannelWrapper is = NIOUtils.readableFileChannel(s);
+        FileChannelWrapper is = NIOUtils.readableChannel(s);
         is.position(dataOffset);
 
         int channels = wavHeader.getFormat().getChannels();
         SeekableByteChannel[] out = new SeekableByteChannel[channels];
         for (int i = 0; i < channels; i++) {
-            out[i] = NIOUtils.writableFileChannel((new File(s.getParentFile(), String.format(pattern, i))));
+            out[i] = NIOUtils.writableChannel((new File(s.getParentFile(), String.format(pattern, i))));
             WavHeader.copyWithChannels(wavHeader, 1).write(out[i]);
         }
 

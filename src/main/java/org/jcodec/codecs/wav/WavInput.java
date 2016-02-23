@@ -35,7 +35,7 @@ public class WavInput implements Closeable {
 
     public int read(ByteBuffer buf) throws IOException {
         int maxRead = format.framesToBytes(format.bytesToFrames(buf.remaining()));
-        return NIOUtils.read(_in, buf, maxRead);
+        return NIOUtils.readL(_in, buf, maxRead);
     }
 
     public void close() throws IOException {
@@ -56,7 +56,7 @@ public class WavInput implements Closeable {
     public static class WavFile extends WavInput {
 
         public WavFile(File f) throws IOException {
-            super(NIOUtils.readableFileChannel(f));
+            super(NIOUtils.readableChannel(f));
         }
 
         @Override

@@ -41,7 +41,7 @@ public class UrlBox extends FullBox {
             return;
         Charset utf8 = Charset.forName("utf-8");
         
-        url = NIOUtils.readNullTermString(input, utf8);
+        url = NIOUtils.readNullTermStringCharset(input, utf8);
     }
 
     @Override

@@ -47,7 +47,7 @@ public class MP4UtilTest {
         read.flip();
 
         Atom atom = MP4Util.findFirstAtom("moov", new AutoFileChannelWrapper(f));
-        MappedByteBuffer written = NIOUtils.map(f);
+        MappedByteBuffer written = NIOUtils.mapFile(f);
         written.position((int) atom.getOffset());
         written.limit((int) (written.position() + atom.getHeader().getSize()));
 

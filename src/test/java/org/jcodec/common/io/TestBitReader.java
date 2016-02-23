@@ -237,11 +237,11 @@ public class TestBitReader {
     }
 
     public void testReader5() throws Exception {
-        BitReader _in = new BitReader(NIOUtils.fetchFrom(new File(
+        BitReader _in = new BitReader(NIOUtils.fetchFromFile(new File(
                 "src/test/resources/h264/bitstream/data.dat")));
         DummyBitstreamReader in1 = new DummyBitstreamReader(new BufferedInputStream(new FileInputStream(
                 "src/test/resources/h264/bitstream/data.dat")));
-        String readFileToString = new String(NIOUtils.toArray(NIOUtils.fetchFrom(new File("src/test/resources/h264/bitstream/reads.csv"))));
+        String readFileToString = new String(NIOUtils.toArray(NIOUtils.fetchFromFile(new File("src/test/resources/h264/bitstream/reads.csv"))));
 
         String[] split = StringUtils.split(readFileToString, ",");
         for (String string : split) {

@@ -50,7 +50,7 @@ public class MTSDemuxer implements MPEGDemuxer {
     public static Set<Integer> getPrograms(File file) throws IOException {
         FileChannelWrapper fc = null;
         try {
-            fc = NIOUtils.readableFileChannel(file);
+            fc = NIOUtils.readableChannel(file);
             return getPrograms(fc);
         } finally {
             NIOUtils.closeQuietly(fc);
@@ -158,7 +158,7 @@ public class MTSDemuxer implements MPEGDemuxer {
 
     public static MTSPacket readPacket(ReadableByteChannel channel) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(188);
-        if (NIOUtils.read(channel, buffer) != 188)
+        if (NIOUtils.readFromChannel(channel, buffer) != 188)
             return null;
         buffer.flip();
         return parsePacket(buffer);
@@ -208,7 +208,7 @@ public class MTSDemuxer implements MPEGDemuxer {
         int[] keys = streams.keys();
         for (int i : keys) {
             List<ByteBuffer> packets = streams.get(i);
-            int score = MPSDemuxer.probe(NIOUtils.combine(packets));
+            int score = MPSDemuxer.probe(NIOUtils.combineBuffers(packets));
             if (score > maxScore) {
                 maxScore = score + (packets.size() > 20 ? 50 : 0);
             }

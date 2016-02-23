@@ -157,7 +157,7 @@ public class MXFDemuxer {
         do {
             long thisPartition = ff.position();
             kl = KLV.readKL(ff);
-            ByteBuffer fetchFrom = NIOUtils.fetchFrom(ff, (int) kl.len);
+            ByteBuffer fetchFrom = NIOUtils.fetchFromChannel(ff, (int) kl.len);
             header = MXFPartition.read(kl.key, fetchFrom, ff.position() - kl.offset, nextPartition);
 
             if (header.getPack().getNbEssenceContainers() > 0)
@@ -174,7 +174,7 @@ public class MXFDemuxer {
         KLV kl;
         long basePos = ff.position();
         List<MXFMetadata> local = new ArrayList<MXFMetadata>();
-        ByteBuffer metaBuffer = NIOUtils.fetchFrom(ff, (int) Math.max(0, header.getEssenceFilePos() - basePos));
+        ByteBuffer metaBuffer = NIOUtils.fetchFromChannel(ff, (int) Math.max(0, header.getEssenceFilePos() - basePos));
         while (metaBuffer.hasRemaining() && (kl = KLV.readKL(metaBuffer, basePos)) != null) {
             MXFMetadata meta = parseMeta(kl.key, NIOUtils.read(metaBuffer, (int) kl.len));
             if (meta != null)
@@ -188,7 +188,7 @@ public class MXFDemuxer {
         MXFPartition header = null;
         while ((kl = KLV.readKL(ff)) != null) {
             if (MXFConst.HEADER_PARTITION_KLV.equals(kl.key)) {
-                ByteBuffer data = NIOUtils.fetchFrom(ff, (int) kl.len);
+                ByteBuffer data = NIOUtils.fetchFromChannel(ff, (int) kl.len);
                 header = MXFPartition.read(kl.key, data, ff.position() - kl.offset, 0);
                 break;
             } else {
@@ -390,7 +390,7 @@ public class MXFDemuxer {
                     kl = KLV.readKL(ch);
                 }
 
-                return kl != null && essenceUL.equals(kl.key) ? new MXFPacket(NIOUtils.fetchFrom(ch, (int) kl.len),
+                return kl != null && essenceUL.equals(kl.key) ? new MXFPacket(NIOUtils.fetchFromChannel(ch, (int) kl.len),
                         pts, timescale, duration, frameNo, kf, null, off, len) : null;
             }
         }
@@ -516,7 +516,7 @@ public class MXFDemuxer {
 
             ff.position(header.getPack().getFooterPartition());
             KLV kl = KLV.readKL(ff);
-            ByteBuffer fetchFrom = NIOUtils.fetchFrom(ff, (int) kl.len);
+            ByteBuffer fetchFrom = NIOUtils.fetchFromChannel(ff, (int) kl.len);
             MXFPartition footer = MXFPartition.read(kl.key, fetchFrom, ff.position() - kl.offset, ff.size());
 
             metadata.addAll(readPartitionMeta(ff, footer));

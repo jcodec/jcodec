@@ -58,11 +58,11 @@ public class VerifyTool {
     }
 
     private boolean test(File coded, File ref) throws IOException {
-        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFrom(coded));
+        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFromFile(coded));
         Picture buf = Picture.create(1920, 1088, ColorSpace.YUV420);
         H264Decoder dec = new H264Decoder();
         Packet nextFrame;
-        ByteBuffer _yuv = NIOUtils.fetchFrom(ref);
+        ByteBuffer _yuv = NIOUtils.fetchFromFile(ref);
         while ((nextFrame = es.nextFrame()) != null) {
             Picture out = dec.decodeFrame(nextFrame.getData(), buf.getData()).cropped();
             Picture pic = out.createCompatible();

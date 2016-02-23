@@ -76,9 +76,9 @@ public class FLVTool {
         SeekableByteChannel _in = null;
         SeekableByteChannel out = null;
         try {
-            _in = NIOUtils.readableFileChannel(new File(cmd.getArg(0)));
+            _in = NIOUtils.readableChannel(new File(cmd.getArg(0)));
             if (processor.hasOutput())
-                out = NIOUtils.writableFileChannel(new File(cmd.getArg(1)));
+                out = NIOUtils.writableChannel(new File(cmd.getArg(1)));
             FLVReader demuxer = new FLVReader(_in);
             FLVWriter muxer = new FLVWriter(out);
             FLVTag pkt = null;

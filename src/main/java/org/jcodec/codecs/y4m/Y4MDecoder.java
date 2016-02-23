@@ -32,7 +32,7 @@ public class Y4MDecoder {
     private int bufSize;
 
     public Y4MDecoder(SeekableByteChannel is) throws IOException {
-        ByteBuffer buf = NIOUtils.fetchFrom(is, 2048);
+        ByteBuffer buf = NIOUtils.fetchFromChannel(is, 2048);
         String[] header = split(readLine(buf), ' ');
 
         if (!"YUV4MPEG2".equals(header[0])) {
@@ -62,7 +62,7 @@ public class Y4MDecoder {
         if (invalidFormat != null)
             throw new RuntimeException("Invalid input: " + invalidFormat);
         long pos = is.position();
-        ByteBuffer buf = NIOUtils.fetchFrom(is, 2048);
+        ByteBuffer buf = NIOUtils.fetchFromChannel(is, 2048);
         String frame = readLine(buf);
         if (frame == null || !frame.startsWith("FRAME"))
             return null;

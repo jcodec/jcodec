@@ -34,7 +34,7 @@ public class PPSReadTest extends TestCase {
     @Test
     public void testRead() throws Exception {
 
-        ByteBuffer bb = NIOUtils.fetchFrom(new File("src/test/resources/h264/pps/pps.dat"));
+        ByteBuffer bb = NIOUtils.fetchFromFile(new File("src/test/resources/h264/pps/pps.dat"));
         PictureParameterSet pps = PictureParameterSet.read(bb);
         assertEquals(expected, pps);
     }

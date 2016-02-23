@@ -172,7 +172,7 @@ public class MTSUtils {
     public static PMTStream[] getProgramGuids(File src) throws IOException {
         SeekableByteChannel ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(src);
+            ch = NIOUtils.readableChannel(src);
             return getProgramGuids(ch);
         } finally {
             NIOUtils.closeQuietly(ch);

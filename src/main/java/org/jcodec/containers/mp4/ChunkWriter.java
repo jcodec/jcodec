@@ -87,7 +87,7 @@ public class ChunkWriter {
         input.position(chunk.getOffset());
         long pos = out.position();
 
-        out.write(NIOUtils.fetchFrom(input, (int) chunk.getSize()));
+        out.write(NIOUtils.fetchFromChannel(input, (int) chunk.getSize()));
         offsets[curChunk++] = pos;
     }
 }

@@ -73,7 +73,7 @@ public class SPSReadTest extends TestCase {
         String path = "src/test/resources/h264/sps/sps1.dat";
         BufferedInputStream is = null;
         try {
-            SeqParameterSet sps = SeqParameterSet.read(NIOUtils.fetchFrom(new File(path)));
+            SeqParameterSet sps = SeqParameterSet.read(NIOUtils.fetchFromFile(new File(path)));
 
             assertEquals(sps.profile_idc, 66);
 
@@ -130,7 +130,7 @@ public class SPSReadTest extends TestCase {
         sps1.write(bb);
         bb.flip();
 
-        ByteBuffer expect = NIOUtils.fetchFrom(new File(path));
+        ByteBuffer expect = NIOUtils.fetchFromFile(new File(path));
 
         Assert.assertArrayEquals(NIOUtils.toArray(bb), NIOUtils.toArray(expect));
 

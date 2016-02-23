@@ -3,7 +3,7 @@ package org.jcodec.containers.mps;
 import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
 import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
 import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
-import static org.jcodec.common.io.NIOUtils.asByteBuffer;
+import static org.jcodec.common.io.NIOUtils.asByteBufferInt;
 import static org.jcodec.containers.mps.MPSUtils.audioStream;
 import static org.jcodec.containers.mps.MPSUtils.psMarker;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
@@ -342,7 +342,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             marker = (marker << 8) | code;
 
             if (inNALUnit) {
-                NALUnit nu = NALUnit.read(asByteBuffer(code));
+                NALUnit nu = NALUnit.read(asByteBufferInt(code));
                 if (nu.type != null)
                     nuSeq.add(nu);
                 inNALUnit = false;

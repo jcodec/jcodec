@@ -107,7 +107,7 @@ public class PCMFlatternTrack implements VirtualTrack {
             for (int i = 1; i < pN.length && result.hasRemaining(); i++) {
                 ByteBuffer dN = pN[i].getData();
                 int toWrite = Math.min(dN.remaining(), result.remaining());
-                NIOUtils.write(result, dN, toWrite);
+                NIOUtils.writeL(result, dN, toWrite);
             }
             result.flip();
             return result;

@@ -231,7 +231,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         ByteBuffer result = buffer.duplicate();
         synchronized (input) {
             input.position(offset);
-            NIOUtils.read(input, result, size);
+            NIOUtils.readL(input, result, size);
         }
         result.flip();
         return result;

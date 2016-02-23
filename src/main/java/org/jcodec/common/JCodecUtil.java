@@ -41,11 +41,11 @@ public class JCodecUtil {
     }
 
     public static Format detectFormat(File f) throws IOException {
-        return detectFormat(NIOUtils.fetchFrom(f, 200 * 1024));
+        return detectFormat(NIOUtils.fetchFromFileL(f, 200 * 1024));
     }
     
     public static Format detectFormat(ReadableByteChannel f) throws IOException {
-        return detectFormat(NIOUtils.fetchFrom(f, 200 * 1024));
+        return detectFormat(NIOUtils.fetchFromChannel(f, 200 * 1024));
     }
 
     public static Format detectFormat(ByteBuffer b) {

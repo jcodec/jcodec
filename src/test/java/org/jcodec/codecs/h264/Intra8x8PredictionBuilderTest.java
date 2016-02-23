@@ -1,7 +1,7 @@
 package org.jcodec.codecs.h264;
 
 import static org.jcodec.common.ArrayUtil.padLeft;
-import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
+import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.util.Arrays;
