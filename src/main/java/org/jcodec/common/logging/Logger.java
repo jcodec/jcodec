@@ -92,7 +92,7 @@ public class Logger {
                     sinks = stageSinks;
                     stageSinks = null;
                     if (sinks.isEmpty())
-                        sinks.add(new OutLogSink());
+                        sinks.add(OutLogSink.createOutLogSink());
                 }
             }
         }

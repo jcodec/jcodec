@@ -9,6 +9,7 @@ import static org.jcodec.codecs.aac.blocks.BlockICS.BandType.INTENSITY_BT;
 import static org.jcodec.codecs.aac.blocks.BlockICS.BandType.INTENSITY_BT2;
 import static org.jcodec.codecs.aac.blocks.BlockICS.BandType.NOISE_BT;
 import static org.jcodec.codecs.aac.blocks.BlockICS.BandType.ZERO_BT;
+import static org.jcodec.common.io.VLCBuilder.createVLCBuilder;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.codecs.aac.Profile;
@@ -39,17 +40,17 @@ public class BlockICS extends Block {
 
     static {
         vlc = new VLC(AACTab.ff_aac_scalefactor_code, AACTab.ff_aac_scalefactor_bits);
-        spectral = new VLC[] { new VLCBuilder(AACTab.codes1, AACTab.bits1, AACTab.codebook_vector02_idx).getVLC(),
-                new VLCBuilder(AACTab.codes2, AACTab.bits2, AACTab.codebook_vector02_idx).getVLC(),
-                new VLCBuilder(AACTab.codes3, AACTab.bits3, AACTab.codebook_vector02_idx).getVLC(),
-                new VLCBuilder(AACTab.codes4, AACTab.bits4, AACTab.codebook_vector02_idx).getVLC(),
-                new VLCBuilder(AACTab.codes5, AACTab.bits5, AACTab.codebook_vector4_idx).getVLC(),
-                new VLCBuilder(AACTab.codes6, AACTab.bits6, AACTab.codebook_vector4_idx).getVLC(),
-                new VLCBuilder(AACTab.codes7, AACTab.bits7, AACTab.codebook_vector6_idx).getVLC(),
-                new VLCBuilder(AACTab.codes8, AACTab.bits8, AACTab.codebook_vector6_idx).getVLC(),
-                new VLCBuilder(AACTab.codes9, AACTab.bits9, AACTab.codebook_vector8_idx).getVLC(),
-                new VLCBuilder(AACTab.codes10, AACTab.bits10, AACTab.codebook_vector8_idx).getVLC(),
-                new VLCBuilder(AACTab.codes11, AACTab.bits11, AACTab.codebook_vector10_idx).getVLC() };
+        spectral = new VLC[] { createVLCBuilder(AACTab.codes1, AACTab.bits1, AACTab.codebook_vector02_idx).getVLC(),
+                createVLCBuilder(AACTab.codes2, AACTab.bits2, AACTab.codebook_vector02_idx).getVLC(),
+                createVLCBuilder(AACTab.codes3, AACTab.bits3, AACTab.codebook_vector02_idx).getVLC(),
+                createVLCBuilder(AACTab.codes4, AACTab.bits4, AACTab.codebook_vector02_idx).getVLC(),
+                createVLCBuilder(AACTab.codes5, AACTab.bits5, AACTab.codebook_vector4_idx).getVLC(),
+                createVLCBuilder(AACTab.codes6, AACTab.bits6, AACTab.codebook_vector4_idx).getVLC(),
+                createVLCBuilder(AACTab.codes7, AACTab.bits7, AACTab.codebook_vector6_idx).getVLC(),
+                createVLCBuilder(AACTab.codes8, AACTab.bits8, AACTab.codebook_vector6_idx).getVLC(),
+                createVLCBuilder(AACTab.codes9, AACTab.bits9, AACTab.codebook_vector8_idx).getVLC(),
+                createVLCBuilder(AACTab.codes10, AACTab.bits10, AACTab.codebook_vector8_idx).getVLC(),
+                createVLCBuilder(AACTab.codes11, AACTab.bits11, AACTab.codebook_vector10_idx).getVLC() };
     }
 
     float[][] ff_aac_codebook_vector_vals;

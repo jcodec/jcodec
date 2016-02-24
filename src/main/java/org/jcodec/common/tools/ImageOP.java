@@ -23,7 +23,7 @@ public class ImageOP {
      * @param area
      * @return
      */
-    public static void subImageWithFill(int[] src, int width, int height, int[] dst, int dstW, int dstH, int offX,
+    public static void subImageWithFillInt(int[] src, int width, int height, int[] dst, int dstW, int dstH, int offX,
             int offY) {
         int srcHeight = min(height - offY, dstH);
         int srcWidth = min(width - offX, dstW);
@@ -75,21 +75,21 @@ public class ImageOP {
         }
     }
 
-    public static void subImageWithFill(Picture _in, Picture out, Rect rect) {
+    public static void subImageWithFillPic(Picture _in, Picture out, Rect rect) {
         int width = _in.getWidth();
         int height = _in.getHeight();
         ColorSpace color = _in.getColor();
         int[][] data = _in.getData();
 
         for (int i = 0; i < data.length; i++) {
-            subImageWithFill(data[i], width >> color.compWidth[i], height >> color.compHeight[i],
+            subImageWithFillInt(data[i], width >> color.compWidth[i], height >> color.compHeight[i],
                     out.getPlaneData(i), rect.getWidth() >> color.compWidth[i],
                     rect.getHeight() >> color.compHeight[i], rect.getX() >> color.compWidth[i],
                     rect.getY() >> color.compHeight[i]);
         }
     }
     
-    public static void subImageWithFill(Picture8Bit _in, Picture8Bit out, Rect rect) {
+    public static void subImageWithFillPic8(Picture8Bit _in, Picture8Bit out, Rect rect) {
         int width = _in.getWidth();
         int height = _in.getHeight();
         ColorSpace color = _in.getColor();

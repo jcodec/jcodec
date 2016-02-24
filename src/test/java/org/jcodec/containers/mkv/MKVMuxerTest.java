@@ -143,7 +143,7 @@ public class MKVMuxerTest {
         }
         EbmlUint[] tcs = MKVType.findAll(tree, EbmlUint.class, MKVType.Segment, MKVType.Cues, MKVType.CuePoint, MKVType.CueTime);
         for (EbmlUint tc : tcs)
-            System.out.println("CueTime " + tc.get() + " " + tc.offset);
+            System.out.println("CueTime " + tc.getUint() + " " + tc.offset);
     }
 
     @Ignore @Test
@@ -156,13 +156,13 @@ public class MKVMuxerTest {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
         EbmlString docTypeElem = (EbmlString) MKVType.createByType(DocType);
-        docTypeElem.set("matroska");
+        docTypeElem.setString("matroska");
 
         EbmlUint docTypeVersionElem = (EbmlUint) MKVType.createByType(DocTypeVersion);
-        docTypeVersionElem.set(1);
+        docTypeVersionElem.setUint(1);
 
         EbmlUint docTypeReadVersionElem = (EbmlUint) MKVType.createByType(DocTypeReadVersion);
-        docTypeReadVersionElem.set(1);
+        docTypeReadVersionElem.setUint(1);
 
         ebmlHeaderElem.add(docTypeElem);
         ebmlHeaderElem.add(docTypeVersionElem);
@@ -177,7 +177,7 @@ public class MKVMuxerTest {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
         EbmlString docTypeElem = (EbmlString) MKVType.createByType(DocType);
-        docTypeElem.set("matroska");
+        docTypeElem.setString("matroska");
 
         ebmlHeaderElem.add(docTypeElem);
         ByteBuffer bb = ebmlHeaderElem.getData();
@@ -271,7 +271,7 @@ public class MKVMuxerTest {
         long predictedOffset = 0;
         for (EbmlMaster c : cc) {
             long csize = c.size();
-            System.out.println("cluster " + ((EbmlUint) MKVType.findFirst(c, MKVType.Cluster, MKVType.Timecode)).get() + " size: " + csize + " predOffset: " + predictedOffset);
+            System.out.println("cluster " + ((EbmlUint) MKVType.findFirst(c, MKVType.Cluster, MKVType.Timecode)).getUint() + " size: " + csize + " predOffset: " + predictedOffset);
             long min = getMinTimecode(c, 1);
             long max = getMaxTimecode(c, 1);
             while (min <= time && time <= max) {
@@ -284,7 +284,7 @@ public class MKVMuxerTest {
     
     public static long getMinTimecode(EbmlMaster c, int trackNr) {
         EbmlUint timecode = (EbmlUint) MKVType.findFirst(c, Cluster, Timecode);
-        long clusterTimecode = timecode.get();
+        long clusterTimecode = timecode.getUint();
         long minTimecode = clusterTimecode;
         for (MkvBlock be : getBlocksByTrackNumber(c, trackNr))
             if (clusterTimecode + be.timecode < minTimecode)
@@ -295,7 +295,7 @@ public class MKVMuxerTest {
 
     public static long getMaxTimecode(EbmlMaster c, int trackNr) {
         EbmlUint timecode = (EbmlUint) findFirst(c, Cluster, Timecode);
-        long clusterTimecode = timecode.get();
+        long clusterTimecode = timecode.getUint();
         long maxTimecode = clusterTimecode;
         for (MkvBlock be : getBlocksByTrackNumber(c, trackNr))
             if (clusterTimecode + be.timecode > maxTimecode)

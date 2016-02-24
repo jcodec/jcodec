@@ -19,15 +19,15 @@ public class EbmlUlong extends EbmlBin {
     
     public EbmlUlong(byte[] id, long value) {
         super(id);
-        set(value);
+        setUlong(value);
     }
     
-    public void set(long value){
+    public void setUlong(long value){
         data.putLong(value);
         data.flip();
     }
 
-    public long get() {
+    public long getUlong() {
         return data.duplicate().getLong();
     }
 

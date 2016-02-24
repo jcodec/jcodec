@@ -15,10 +15,15 @@ import org.jcodec.common.IntArrayList;
  */
 public class VLC {
 
-    public static VLC createVLC(String... codes) {
+    /**
+     * @param arguments
+     *            vlc codes
+     * @return
+     */
+    public static VLC createVLC(String... arguments) {
         IntArrayList _codes = new IntArrayList();
         IntArrayList _codeSizes = new IntArrayList();
-        for (String string : codes) {
+        for (String string : arguments) {
             _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
             _codeSizes.add(string.length());
         }
@@ -76,9 +81,9 @@ public class VLC {
 
         return tableEnd;
     }
-    
+
     public int readVLC16(BitReader _in) {
-        
+
         int string = _in.check16Bits();
         int b = string >>> 8;
         int code = values[b];
@@ -90,10 +95,10 @@ public class VLC {
             _in.skipFast(8 + valueSizes[b]);
         } else
             _in.skipFast(len);
-        
+
         return code;
     }
-    
+
     public int readVLC(BitReader _in) {
 
         int code = 0, len = 0, overall = 0, total = 0;

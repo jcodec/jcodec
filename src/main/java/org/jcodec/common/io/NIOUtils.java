@@ -209,8 +209,8 @@ public class NIOUtils {
         return result;
     }
 
-    public static ByteBuffer combine(ByteBuffer... buffer) {
-        return combineBuffers(Arrays.asList(buffer));
+    public static ByteBuffer combine(ByteBuffer... arguments) {
+        return combineBuffers(Arrays.asList(arguments));
     }
 
     public static String readString(ByteBuffer buffer, int len) {

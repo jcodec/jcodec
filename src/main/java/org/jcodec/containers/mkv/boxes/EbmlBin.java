@@ -53,7 +53,7 @@ public class EbmlBin extends EbmlBase {
         return totalSize; 
     }
 
-    public void set(ByteBuffer data) {
+    public void setBuf(ByteBuffer data) {
         this.data = data.slice();
         this.dataLen = this.data.limit();
     }

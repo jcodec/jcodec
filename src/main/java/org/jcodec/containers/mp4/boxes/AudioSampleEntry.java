@@ -317,6 +317,6 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     protected void getModelFields(List<String> list) {
-        ToJSON.allFieldsExcept(this.getClass(), "endian", "float", "format", "labels");
+        ToJSON.allFieldsExcept(this.getClass(), new String[]{"endian", "float", "format", "labels"});
     }
 }

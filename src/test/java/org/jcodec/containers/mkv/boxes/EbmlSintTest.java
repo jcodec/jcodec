@@ -55,7 +55,7 @@ public class EbmlSintTest {
     @Test
     public void test() throws IOException {
         EbmlSint sie = new EbmlSint(BlockDuration.id);
-        sie.set(100500);
+        sie.setLong(100500);
         ByteBuffer bb = sie.getData();
         
         Assert.assertArrayEquals(new byte[]{(byte)0x9B, (byte)0x83, 0x31, (byte)0x88, (byte)0x93}, bb.array());
@@ -64,7 +64,7 @@ public class EbmlSintTest {
     @Test
     public void testEdgeCase() throws Exception {
         EbmlSint sie = new EbmlSint(BlockDuration.id);
-        sie.set(-0x0FFFFF);
+        sie.setLong(-0x0FFFFF);
         ByteBuffer bb = sie.getData();
         Assert.assertArrayEquals(new byte[]{(byte)0x9B, (byte)0x83, 0x20, 0x00, 0x00}, bb.array());
     }

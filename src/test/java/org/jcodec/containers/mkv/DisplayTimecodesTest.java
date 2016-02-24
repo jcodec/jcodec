@@ -102,12 +102,12 @@ public class DisplayTimecodesTest {
         StringBuilder sb = new StringBuilder();
         for(EbmlMaster aCuePoint : findAll(s, EbmlMaster.class, Segment, Cues, CuePoint)){
             EbmlUint time = (EbmlUint) findFirst(aCuePoint, CuePoint, CueTime);
-            sb.append("cue time: ").append(time.get());
+            sb.append("cue time: ").append(time.getUint());
             for(EbmlMaster aCueTrackPosition : findAll(aCuePoint, EbmlMaster.class, CuePoint, CueTrackPositions)){
                 appendUint(sb, "track", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueTrack));
                 EbmlUint EbmlMaster = (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueClusterPosition);
                 if (EbmlMaster != null)
-                    sb.append(" EbmlMaster offset ").append(EbmlMaster.get()+s.dataOffset);
+                    sb.append(" EbmlMaster offset ").append(EbmlMaster.getUint()+s.dataOffset);
                 appendUint(sb, "block", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueBlockNumber));
             }
             sb.append("\n");
@@ -117,22 +117,22 @@ public class DisplayTimecodesTest {
     
     public static void appendUint(StringBuilder b, String caption, EbmlUint e){
         if (e != null)
-            b.append(" ").append(caption).append(": ").append(e.get());
+            b.append(" ").append(caption).append(": ").append(e.getUint());
     }
     
     public static void appendUlong(StringBuilder b, String caption, EbmlUlong e){
         if (e != null)
-            b.append(" ").append(caption).append(": ").append(e.get());
+            b.append(" ").append(caption).append(": ").append(e.getUlong());
     }
     
     public static void appendString(StringBuilder b, String caption, EbmlString e){
         if (e != null)
-            b.append(" ").append(caption).append(": ").append(e.get());
+            b.append(" ").append(caption).append(": ").append(e.getString());
     }
     
     public static void appendFloat(StringBuilder b, String caption, EbmlFloat e){
         if (e != null)
-            b.append(" ").append(caption).append(": ").append(e.get());
+            b.append(" ").append(caption).append(": ").append(e.getDouble());
     }
     
     private void printBlocks(EbmlMaster s) {
@@ -140,19 +140,19 @@ public class DisplayTimecodesTest {
         for(EbmlMaster aEbmlMaster : findAll(s, EbmlMaster.class, Segment, Cluster)){
             EbmlUint time = (EbmlUint) findFirst(aEbmlMaster, Cluster, Timecode);
             EbmlUint position = (EbmlUint) findFirst(aEbmlMaster, Cluster, Position);
-            sb.append("EbmlMaster time: ").append(time.get());
+            sb.append("EbmlMaster time: ").append(time.getUint());
             appendUint(sb, "position", position);
             sb.append(" offset: ").append(aEbmlMaster.offset).append("\n");
             for(EbmlBase aChild : aEbmlMaster.children){
                 if (aChild instanceof MkvBlock){
                     MkvBlock block = (MkvBlock) aChild;
                     sb.append("    block tarck: ").append(block.trackNumber).append(" timecode: ").append(block.timecode).append(" offset: ").append(block.offset).append("\n");
-                    sb.append("    block real timecode: "+(time.get()+block.timecode));
+                    sb.append("    block real timecode: "+(time.getUint()+block.timecode));
                     sb.append("\n");
                 } else if (aChild instanceof EbmlMaster){
                     MkvBlock block = (MkvBlock) findFirst((EbmlMaster) aChild, BlockGroup, Block);
                     sb.append("    block tarck: ").append(block.trackNumber).append(" timecode: ").append(block.timecode).append(" offset: ").append(block.offset).append("\n");
-                    sb.append("    block real timecode: "+(time.get()+block.timecode));
+                    sb.append("    block real timecode: "+(time.getUint()+block.timecode));
                     
                     appendUint(sb, "reference", (EbmlUint) findFirst(aEbmlMaster, BlockGroup, ReferenceBlock));
                     appendUint(sb, "duration", (EbmlUint) findFirst(aEbmlMaster, Cluster, BlockDuration));

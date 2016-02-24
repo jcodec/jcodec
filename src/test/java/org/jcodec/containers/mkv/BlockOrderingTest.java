@@ -158,14 +158,14 @@ public class BlockOrderingTest {
 
     private void printTracks(List<EbmlMaster> tree) {
         for (EbmlUint nr : findAll(tree, EbmlUint.class, Segment, Tracks, TrackEntry, TrackNumber))
-            System.out.println("Track nr:" + nr.get());
+            System.out.println("Track nr:" + nr.getUint());
         
     }
 
     private void printTimecodes(List<EbmlMaster> tree) {
         EbmlMaster[] clusters = findAll(tree, EbmlMaster.class, Segment, Cluster);
         for (EbmlMaster c : clusters) {
-            long ctc = ((EbmlUint) findFirst(c, Cluster, Timecode)).get();
+            long ctc = ((EbmlUint) findFirst(c, Cluster, Timecode)).getUint();
             long bks = 0;
             for (EbmlBase e : c.children) {
                 if (e instanceof MkvBlock) {

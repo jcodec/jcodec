@@ -89,9 +89,9 @@ public class MathUtil {
             return a;
     }
 
-    public static long gcd(long a, long b) {
+    public static long gcdLong(long a, long b) {
         if (b != 0)
-            return gcd(b, a % b);
+            return gcdLong(b, a % b);
         else
             return a;
     }
@@ -106,7 +106,7 @@ public class MathUtil {
     }
 
     public static RationalLarge reduceLong(long num, long den) {
-        long gcd = gcd(num, den);
+        long gcd = gcdLong(num, den);
         return new RationalLarge(num / gcd, den / gcd);
     }
 

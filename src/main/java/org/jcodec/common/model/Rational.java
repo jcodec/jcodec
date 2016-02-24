@@ -24,7 +24,7 @@ public class Rational {
         return new Rational(num, den);
     }
 
-    public static Rational R(int num) {
+    public static Rational R1(int num) {
         return R(num, 1);
     }
 
