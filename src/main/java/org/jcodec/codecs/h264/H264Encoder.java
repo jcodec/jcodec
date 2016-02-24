@@ -101,7 +101,7 @@ public class H264Encoder extends VideoEncoder {
         SliceType sliceType = frameNumber == 0 ? SliceType.I : SliceType.P;
         boolean idr = frameNumber == 0;
 
-        return encodeFrame8Bit(pic, _out, idr, frameNumber++, sliceType);
+        return doEncodeFrame8Bit(pic, _out, idr, frameNumber++, sliceType);
     }
 
     /**
@@ -114,7 +114,7 @@ public class H264Encoder extends VideoEncoder {
      */
     public ByteBuffer encodeIDRFrame(Picture8Bit pic, ByteBuffer _out) {
         frameNumber = 0;
-        return encodeFrame8Bit(pic, _out, true, frameNumber, SliceType.I);
+        return doEncodeFrame8Bit(pic, _out, true, frameNumber, SliceType.I);
     }
 
     /**
@@ -128,10 +128,10 @@ public class H264Encoder extends VideoEncoder {
      */
     public ByteBuffer encodePFrame(Picture8Bit pic, ByteBuffer _out) {
         frameNumber++;
-        return encodeFrame8Bit(pic, _out, true, frameNumber, SliceType.P);
+        return doEncodeFrame8Bit(pic, _out, true, frameNumber, SliceType.P);
     }
 
-    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
+    public ByteBuffer doEncodeFrame8Bit(Picture8Bit pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
         ByteBuffer dup = _out.duplicate();
 
         if (idr) {

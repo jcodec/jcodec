@@ -140,17 +140,17 @@ public class AVCClipTrack extends ClipTrack {
         }
 
         public List<ByteBuffer> transcode() throws IOException {
-            H264Decoder decoder = new H264Decoder(track.codecPrivate);
+            H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(track.codecPrivate);
             Picture8Bit buf = Picture8Bit.create(track.mbW << 4, track.mbH << 4, ColorSpace.YUV420J);
             Picture8Bit dec = null;
             for (VirtualPacket virtualPacket : head) {
-                dec = decoder.decodeFrame8Bit(H264Utils.splitFrame(virtualPacket.getData()), buf.getData());
+                dec = decoder.decodeFrame8Bit(virtualPacket.getData(), buf.getData());
             }
             ByteBuffer tmp = ByteBuffer.allocate(track.frameSize);
 
             List<ByteBuffer> result = new ArrayList<ByteBuffer>();
             for (VirtualPacket pkt : tail) {
-                dec = decoder.decodeFrame8Bit(H264Utils.splitFrame(pkt.getData()), buf.getData());
+                dec = decoder.decodeFrame8Bit(pkt.getData(), buf.getData());
 
                 tmp.clear();
                 ByteBuffer res = encoder.encodeFrame8Bit(dec, tmp);

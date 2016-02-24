@@ -91,7 +91,7 @@ public class MKVFrameReadingTest {
         Packet inFrame;
         for (int i = 1; (inFrame = inTrack.nextFrame()) != null && i <= 200; i++) {
             Picture buf = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.YUV422);
-            Picture pic = decoder.decodeFrame(splitMOVPacket(inFrame.getData(), avcC), buf.getData());
+            Picture pic = decoder.decodeFrameFromNals(splitMOVPacket(inFrame.getData(), avcC), buf.getData());
             if (bi == null)
                 bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
             if (rgb == null)
@@ -135,7 +135,7 @@ public class MKVFrameReadingTest {
         Assert.assertArrayEquals(rawFrame, MKVMuxerTest.bufferToArray(bb));
         
         Picture buf = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.YUV422);
-        Picture pic = decoder.decodeFrame(H264Utils.splitMOVPacket(inFrame.getData(), avcC), buf.getData());
+        Picture pic = decoder.decodeFrameFromNals(H264Utils.splitMOVPacket(inFrame.getData(), avcC), buf.getData());
         Picture rgb = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
         BufferedImage bi = new BufferedImage(dem.getPictureWidth(), dem.getPictureHeight(), BufferedImage.TYPE_3BYTE_BGR);
         transform.transform(pic, rgb);
