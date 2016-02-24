@@ -21,7 +21,7 @@ public class H264UtilsTest {
         ByteBuffer bb = ByteBuffer.wrap(b);
         bb.limit(bb.limit() - 2);
 
-        H264Utils.escapeNAL(bb);
+        H264Utils.escapeNALinplace(bb);
         
         for (byte c : b) {
             System.out.println(String.format("%02x", c & 0xff));

@@ -177,7 +177,7 @@ public class MovieHelper {
         Rational pasp = null;
         SampleEntry vse;
         if ("avc1".equals(se.getFourcc())) {
-            vse = H264Utils.createMOVSampleEntry(NIOUtils.toArray(se.getCodecPrivate()));
+            vse = H264Utils.createMOVSampleEntryFromBytes(NIOUtils.toArray(se.getCodecPrivate()));
             pasp = ((VideoCodecMeta) se).getPasp();
         } else if (se instanceof VideoCodecMeta) {
             VideoCodecMeta ss = (VideoCodecMeta) se;
