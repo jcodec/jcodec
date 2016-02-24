@@ -51,7 +51,7 @@ public class MovDump {
         if (atom == null)
             System.out.println(print(source));
         else {
-            String dump = print(source, atom);
+            String dump = printAtom(source, atom);
             if (dump != null)
                 System.out.println(dump);
         }
@@ -93,7 +93,7 @@ public class MovDump {
         return null;
     }
 
-    public static String print(File file, String atom) throws IOException {
+    public static String printAtom(File file, String atom) throws IOException {
         MovieBox mov = MP4Util.parseMovie(file);
 
         Box found = findDeep(mov, atom);

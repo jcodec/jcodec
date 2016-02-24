@@ -20,8 +20,8 @@ public class QTRefEdit {
 
     protected final EditFactory[] factories;
 
-    public QTRefEdit(EditFactory... factories) {
-        this.factories = factories;
+    public QTRefEdit(EditFactory... arguments) {
+        this.factories = arguments;
     }
 
     public void execute(String[] args) throws Exception {

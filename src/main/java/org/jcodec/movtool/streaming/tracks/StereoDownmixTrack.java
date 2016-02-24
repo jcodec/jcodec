@@ -33,13 +33,13 @@ public class StereoDownmixTrack implements VirtualTrack {
     private boolean[][] solo;
     private DownmixHelper downmix;
 
-    public StereoDownmixTrack(VirtualTrack... tracks) {
+    public StereoDownmixTrack(VirtualTrack... arguments) {
         this.rate = -1;
-        sources = new VirtualTrack[tracks.length];
+        sources = new VirtualTrack[arguments.length];
         sampleEntries = new AudioCodecMeta[sources.length];
-        solo = new boolean[tracks.length][];
-        for (int i = 0; i < tracks.length; i++) {
-            CodecMeta se = tracks[i].getCodecMeta();
+        solo = new boolean[arguments.length][];
+        for (int i = 0; i < arguments.length; i++) {
+            CodecMeta se = arguments[i].getCodecMeta();
             if (!(se instanceof AudioCodecMeta))
                 throw new IllegalArgumentException("Non audio track");
             AudioCodecMeta ase = (AudioCodecMeta) se;
@@ -50,7 +50,7 @@ public class StereoDownmixTrack implements VirtualTrack {
                 throw new IllegalArgumentException("Can not downmix tracks of different rate.");
             rate = (int) format.getFrameRate();
             sampleEntries[i] = ase;
-            sources[i] = new PCMFlatternTrack(tracks[i], FRAMES_IN_OUT_PACKET);
+            sources[i] = new PCMFlatternTrack(arguments[i], FRAMES_IN_OUT_PACKET);
             solo[i] = new boolean[format.getChannels()];
         }
         
@@ -114,7 +114,7 @@ public class StereoDownmixTrack implements VirtualTrack {
 
     @Override
     public CodecMeta getCodecMeta() {
-        return new AudioCodecMeta("sowt", 2, 2, rate, Endian.LITTLE_ENDIAN, true, new Label[] {Label.Left, Label.Right}, null);
+        return AudioCodecMeta.createAudioCodecMeta("sowt", 2, 2, rate, Endian.LITTLE_ENDIAN, true, new Label[] {Label.Left, Label.Right}, null);
     }
 
     @Override

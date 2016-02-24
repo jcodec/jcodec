@@ -91,8 +91,7 @@ public class RealTrack implements VirtualTrack {
             }
 
             byte[] codecPrivate = demuxer.getMeta().getCodecPrivate();
-            return new VideoCodecMeta(se.getFourcc(), ByteBuffer.wrap(codecPrivate), new Size(vse.getWidth(), vse.getHeight()),
-                    pasp != null ? pasp.getRational() : null, interlace, topField);
+            return VideoCodecMeta.createVideoCodecMeta2(se.getFourcc(), ByteBuffer.wrap(codecPrivate), new Size(vse.getWidth(), vse.getHeight()), pasp != null ? pasp.getRational() : null, interlace, topField);
         } else if (se instanceof AudioSampleEntry) {
             AudioSampleEntry ase = (AudioSampleEntry) se;
             ByteBuffer codecPrivate = null;
@@ -104,8 +103,8 @@ public class RealTrack implements VirtualTrack {
                 codecPrivate = lb.getData();
             }
 
-            return new AudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(),
-                    (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), ChannelUtils.getLabels(ase), codecPrivate);
+            return AudioCodecMeta
+                    .createAudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(), (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), ChannelUtils.getLabels(ase), codecPrivate);
         } else
             throw new RuntimeException("Sample entry '" + se.getFourcc() + "' is not supported.");
     }

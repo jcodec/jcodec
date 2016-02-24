@@ -65,7 +65,7 @@ public abstract class TranscodeTrack implements VirtualTrack {
         ByteBuffer codecPrivate = ByteBuffer.allocate(1024);
         getCodecPrivate(codecPrivate, size);
 
-        se = new VideoCodecMeta("avc1", codecPrivate, size, pasp);
+        se = VideoCodecMeta.createVideoCodecMeta("avc1", codecPrivate, size, pasp);
 
         frameSize = getFrameSize(mbW * mbH, TARGET_RATE);
         frameSize += frameSize >> 4;

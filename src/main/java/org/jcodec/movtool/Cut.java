@@ -79,7 +79,7 @@ public class Cut {
                         + ".self.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
                 new Strip().strip(movie);
-                new Flattern().flattern(movie, out);
+                new Flattern().flatternChannel(movie, out);
             }
             saveSlices(slicesMovs, sliceNames, source.getParentFile());
         } finally {

@@ -81,8 +81,7 @@ public class AVCClipTrack extends ClipTrack {
         rawSPS.add(H264Utils.writeSPS(encSPS, 128));
         rawPPS.add(H264Utils.writePPS(encPPS, 20));
 
-        se = new VideoCodecMeta("avc1", ByteBuffer.wrap(H264Utils.saveCodecPrivate(rawSPS, rawPPS)),
-                codecMeta.getSize(), codecMeta.getPasp());
+        se = VideoCodecMeta.createVideoCodecMeta("avc1", ByteBuffer.wrap(H264Utils.saveCodecPrivate(rawSPS, rawPPS)), codecMeta.getSize(), codecMeta.getPasp());
 
         int _frameSize = rc.calcFrameSize(mbW * mbH);
         _frameSize += _frameSize >> 4;
