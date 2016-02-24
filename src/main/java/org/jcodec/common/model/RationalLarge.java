@@ -1,8 +1,7 @@
 package org.jcodec.common.model;
 
 import static org.jcodec.common.StringUtils.splitS;
-import static org.jcodec.common.StringUtils.splitC;
-import static org.jcodec.common.tools.MathUtil.reduce;
+import static org.jcodec.common.tools.MathUtil.reduceLong;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -108,19 +107,19 @@ public class RationalLarge {
     }
 
     public RationalLarge plus(RationalLarge other) {
-        return reduce(num * other.den + other.num * den, den * other.den);
+        return reduceLong(num * other.den + other.num * den, den * other.den);
     }
 
     public RationalLarge plus(Rational other) {
-        return reduce(num * other.den + other.num * den, den * other.den);
+        return reduceLong(num * other.den + other.num * den, den * other.den);
     }
 
     public RationalLarge minus(RationalLarge other) {
-        return reduce(num * other.den - other.num * den, den * other.den);
+        return reduceLong(num * other.den - other.num * den, den * other.den);
     }
 
     public RationalLarge minus(Rational other) {
-        return reduce(num * other.den - other.num * den, den * other.den);
+        return reduceLong(num * other.den - other.num * den, den * other.den);
     }
 
     public RationalLarge plus(long scalar) {
@@ -144,27 +143,27 @@ public class RationalLarge {
     }
 
     public RationalLarge multiply(RationalLarge other) {
-        return reduce(num * other.num, den * other.den);
+        return reduceLong(num * other.num, den * other.den);
     }
 
     public RationalLarge multiply(Rational other) {
-        return reduce(num * other.num, den * other.den);
+        return reduceLong(num * other.num, den * other.den);
     }
 
     public RationalLarge divide(RationalLarge other) {
-        return reduce(other.num * den, other.den * num);
+        return reduceLong(other.num * den, other.den * num);
     }
 
     public RationalLarge divide(Rational other) {
-        return reduce(other.num * den, other.den * num);
+        return reduceLong(other.num * den, other.den * num);
     }
 
     public RationalLarge divideBy(RationalLarge other) {
-        return reduce(num * other.den, den * other.num);
+        return reduceLong(num * other.den, den * other.num);
     }
 
     public RationalLarge divideBy(Rational other) {
-        return reduce(num * other.den, den * other.num);
+        return reduceLong(num * other.den, den * other.num);
     }
 
     public double scalar() {

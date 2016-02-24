@@ -1,8 +1,9 @@
 package org.jcodec.common.model;
 
 import static org.jcodec.common.StringUtils.splitS;
-import static org.jcodec.common.StringUtils.splitC;
 import static org.jcodec.common.tools.MathUtil.reduce;
+import static org.jcodec.common.tools.MathUtil.reduceLong;
+
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -119,7 +120,7 @@ public class Rational {
     }
 
     public RationalLarge plus(RationalLarge other) {
-        return reduce(num * other.den + other.num * den, den * other.den);
+        return reduceLong(num * other.den + other.num * den, den * other.den);
     }
 
     public Rational minus(Rational other) {
@@ -127,7 +128,7 @@ public class Rational {
     }
 
     public RationalLarge minus(RationalLarge other) {
-        return reduce(num * other.den - other.num * den, den * other.den);
+        return reduceLong(num * other.den - other.num * den, den * other.den);
     }
 
     public Rational plus(int scalar) {
@@ -155,7 +156,7 @@ public class Rational {
     }
 
     public RationalLarge multiply(RationalLarge other) {
-        return reduce(num * other.num, den * other.den);
+        return reduceLong(num * other.num, den * other.den);
     }
 
     public Rational divide(Rational other) {
@@ -163,7 +164,7 @@ public class Rational {
     }
 
     public RationalLarge divide(RationalLarge other) {
-        return reduce(other.num * den, other.den * num);
+        return reduceLong(other.num * den, other.den * num);
     }
 
     public Rational divideBy(Rational other) {
@@ -171,7 +172,7 @@ public class Rational {
     }
 
     public RationalLarge divideBy(RationalLarge other) {
-        return reduce(num * other.den, den * other.num);
+        return reduceLong(num * other.den, den * other.num);
     }
 
     public float scalar() {
