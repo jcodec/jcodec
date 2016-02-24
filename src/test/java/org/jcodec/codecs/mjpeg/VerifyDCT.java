@@ -17,7 +17,7 @@ public class VerifyDCT extends DCT {
     public int[] decode(int[] orig) {
         int[] expected = slow.decode(orig);
         int[] actual = fast.decode(orig);
-        if (!Platform.arrayEquals(expected, actual)) {
+        if (!Platform.arrayEqualsInt(expected, actual)) {
             System.out.println("\nwhile decoding: ");
             Debug.print8x8(orig);
             System.out.println("expected: ");

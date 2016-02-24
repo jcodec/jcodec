@@ -142,7 +142,7 @@ public class DemuxerMain {
             byte[] expected = readFileToByteArray(new File(base, String.format("frame%08d.raw", i + startFn
                     + 1)));
             Packet pkt = vt.nextFrame();
-            if(!Platform.arrayEquals(expected, NIOUtils.toArray(pkt.getData())))
+            if(!Platform.arrayEqualsByte(expected, NIOUtils.toArray(pkt.getData())))
                 throw new RuntimeException("not equal");
             System.out.print(".");
             if ((i % 100) == 0)

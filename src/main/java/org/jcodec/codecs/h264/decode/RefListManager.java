@@ -87,7 +87,7 @@ public class RefListManager {
         Frame[] l0 = buildList(Frame.POCDesc, Frame.POCAsc);
         Frame[] l1 = buildList(Frame.POCAsc, Frame.POCDesc);
 
-        if (Platform.arrayEquals(l0, l1) && count(l1) > 1) {
+        if (Platform.arrayEqualsObj(l0, l1) && count(l1) > 1) {
             Frame frame = l1[1];
             l1[1] = l1[0];
             l1[0] = frame;

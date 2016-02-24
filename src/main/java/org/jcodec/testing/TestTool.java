@@ -134,11 +134,11 @@ public class TestTool {
             ByteBuffer yuv = NIOUtils.fetchFromFile(decoded);
             for (Picture pic : decodedPics) {
                 pic = pic.cropped();
-                boolean equals = Platform.arrayEquals(getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0)),
+                boolean equals = Platform.arrayEqualsInt(getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0)),
                         pic.getPlaneData(0));
-                equals &= Platform.arrayEquals(getAsIntArray(yuv, pic.getPlaneWidth(1) * pic.getPlaneHeight(1)),
+                equals &= Platform.arrayEqualsInt(getAsIntArray(yuv, pic.getPlaneWidth(1) * pic.getPlaneHeight(1)),
                         pic.getPlaneData(1));
-                equals &= Platform.arrayEquals(getAsIntArray(yuv, pic.getPlaneWidth(2) * pic.getPlaneHeight(2)),
+                equals &= Platform.arrayEqualsInt(getAsIntArray(yuv, pic.getPlaneWidth(2) * pic.getPlaneHeight(2)),
                         pic.getPlaneData(2));
                 if (!equals)
                     diff(seqNo);

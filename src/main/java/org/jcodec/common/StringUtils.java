@@ -263,7 +263,7 @@ public class StringUtils {
         bufSize *= ((array[startIndex] == null ? 16 : array[startIndex].toString().length())
                         + separator.length());
 
-        StringBuffer buf = new StringBuffer(bufSize);
+        StringBuilder buf = new StringBuilder(bufSize);
 
         for (int i = startIndex; i < endIndex; i++) {
             if (i > startIndex) {

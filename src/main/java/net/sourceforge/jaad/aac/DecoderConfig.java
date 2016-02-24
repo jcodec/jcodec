@@ -143,7 +143,7 @@ public class DecoderConfig implements SyntaxConstants {
 	 * @return a DecoderConfig
 	 */
 	public static DecoderConfig parseMP4DecoderSpecificInfo(byte[] data) throws AACException {
-		final IBitStream _in = new BitStream(data);
+		final IBitStream _in = BitStream.createBitStream(data);
 		final DecoderConfig config = new DecoderConfig();
 
 		try {

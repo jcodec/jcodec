@@ -30,7 +30,7 @@ public abstract class EbmlBase {
     }
     
     public boolean equalId(byte[] typeId) {
-        return Platform.arrayEquals(this.id, typeId);
+        return Platform.arrayEqualsByte(this.id, typeId);
     }
     
     public abstract ByteBuffer getData();

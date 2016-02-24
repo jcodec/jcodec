@@ -63,7 +63,7 @@ public class DctTest {
 
     private void doTestStrict(DCT dct, int[] input, int[] expected) {
         int[] output = dct.decode(input);
-        boolean equals = Platform.arrayEquals(expected, output);
+        boolean equals = Platform.arrayEqualsInt(expected, output);
         if (!equals) {
             Debug.print8x8(expected);
             System.out.println();
