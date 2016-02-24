@@ -222,7 +222,7 @@ public class H264Decoder extends VideoDecoder {
 
         private Frame saveRef(Frame decoded) {
             Frame frame = dec.pictureBuffer.size() > 0 ? dec.pictureBuffer.remove(0) : Frame.createFrame(decoded);
-            frame.copyFrom(decoded);
+            frame.copyFromFrame(decoded);
             return frame;
         }
 

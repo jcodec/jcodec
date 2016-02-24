@@ -46,7 +46,7 @@ public class Frame extends Picture8Bit {
                 frameType, mvs, refsUsed, poc);
     }
 
-    public void copyFrom(Frame src) {
+    public void copyFromFrame(Frame src) {
         super.copyFrom(src);
         this.frameNo = src.frameNo;
         this.mvs = src.mvs;
