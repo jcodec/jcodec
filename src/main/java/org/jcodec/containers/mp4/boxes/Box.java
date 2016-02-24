@@ -88,7 +88,7 @@ public abstract class Box {
             } else if (!class1.isAssignableFrom(next.getClass())) {
                 // Trying to reinterpret one box as the other
                 try {
-                    it.set(Box.as(class1, next));
+                    it.set(Box.asBox(class1, next));
                 } catch (Exception e) {
                     Logger.warn("Failed to reinterpret box: " + next.getFourcc() + " as: " + class1.getName() + "."
                             + e.getMessage());
@@ -155,7 +155,7 @@ public abstract class Box {
         }
     }
 
-    public static <T extends Box> T as(Class<T> class1, Box box) {
+    public static <T extends Box> T asBox(Class<T> class1, Box box) {
         try {
             T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
             ByteBuffer buffer = ByteBuffer.allocate((int)box.getHeader().getBodySize());
