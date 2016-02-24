@@ -1,10 +1,13 @@
 package org.jcodec.containers.mp4;
 
+import static org.jcodec.containers.mp4.boxes.Box.path;
+
 import java.io.IOException;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.boxes.AliasBox;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.DataInfoBox;
@@ -48,7 +51,7 @@ public class ChunkWriter {
     }
 
     public void apply() {
-        NodeBox stbl = NodeBox.findFirst(trak, NodeBox.class, "mdia", "minf", "stbl");
+        NodeBox stbl = NodeBox.findFirstPath(trak, NodeBox.class, path("mdia.minf.stbl"));
         stbl.removeChildren("stco", "co64");
 
         stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(offsets));

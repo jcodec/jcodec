@@ -65,10 +65,10 @@ public class ChannelUtils {
     }
 
     private static void setLabels(TrakBox trakBox, Label[] labels) {
-        ChannelBox channel = Box.findFirst(trakBox, ChannelBox.class, "mdia", "minf", "stbl", "stsd", null, "chan");
+        ChannelBox channel = Box.findFirstPath(trakBox, ChannelBox.class, new String[] { "mdia", "minf", "stbl", "stsd", null, "chan" });
         if (channel == null) {
             channel = ChannelBox.createChannelBox();
-            Box.findFirst(trakBox, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null).add(channel);
+            Box.findFirstPath(trakBox, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null }).add(channel);
         }
         setLabels(labels, channel);
     }

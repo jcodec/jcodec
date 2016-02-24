@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4.demuxer;
 
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
+import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -37,7 +37,7 @@ public class MP4Demuxer {
     private SeekableByteChannel input;
 
     public AbstractMP4DemuxerTrack create(TrakBox trak) {
-        SampleSizesBox stsz = findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        SampleSizesBox stsz = findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         if (stsz.getDefaultSize() == 0)
             return new FramesMP4DemuxerTrack(movie, trak, input);
         else
@@ -65,7 +65,7 @@ public class MP4Demuxer {
     private void processHeader(NodeBox moov) throws IOException {
         TrakBox tt = null;
         for (TrakBox trak : Box.findAll(moov, TrakBox.class, "trak")) {
-            SampleEntry se = Box.findFirst(trak, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
+            SampleEntry se = Box.findFirstPath(trak, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null });
             if ("tmcd".equals(se.getFourcc())) {
                 tt = trak;
             } else {
@@ -80,7 +80,7 @@ public class MP4Demuxer {
     }
 
     public static TrackType getTrackType(TrakBox trak) {
-        HandlerBox handler = findFirst(trak, HandlerBox.class, "mdia", "hdlr");
+        HandlerBox handler = findFirstPath(trak, HandlerBox.class, Box.path("mdia.hdlr"));
         return TrackType.fromHandler(handler.getComponentSubType());
     }
 

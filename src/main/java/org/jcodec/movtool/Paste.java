@@ -15,6 +15,7 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ClipRegionBox;
 import org.jcodec.containers.mp4.boxes.LoadSettingsBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -150,22 +151,22 @@ public class Paste {
     }
 
     private boolean matchSampleSizes(TrakBox trakBox1, TrakBox trakBox2) {
-        SampleSizesBox stsz1 = NodeBox.findFirst(trakBox1, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
-        SampleSizesBox stsz2 = NodeBox.findFirst(trakBox1, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        SampleSizesBox stsz1 = NodeBox.findFirstPath(trakBox1, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        SampleSizesBox stsz2 = NodeBox.findFirstPath(trakBox1, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         return stsz1.getDefaultSize() == stsz2.getDefaultSize();
     }
 
     private boolean matchMediaHeader(TrakBox trakBox1, TrakBox trakBox2) {
-        VideoMediaHeaderBox vmhd1 = NodeBox.findFirst(trakBox1, VideoMediaHeaderBox.class, "mdia", "minf", "vmhd");
-        VideoMediaHeaderBox vmhd2 = NodeBox.findFirst(trakBox2, VideoMediaHeaderBox.class, "mdia", "minf", "vmhd");
+        VideoMediaHeaderBox vmhd1 = NodeBox.findFirstPath(trakBox1, VideoMediaHeaderBox.class, Box.path("mdia.minf.vmhd"));
+        VideoMediaHeaderBox vmhd2 = NodeBox.findFirstPath(trakBox2, VideoMediaHeaderBox.class, Box.path("mdia.minf.vmhd"));
         if ((vmhd1 != null && vmhd2 == null) || (vmhd1 == null && vmhd2 != null))
             return false;
         else if (vmhd1 != null && vmhd2 != null) {
             return vmhd1.getGraphicsMode() == vmhd2.getGraphicsMode() && vmhd1.getbOpColor() == vmhd2.getbOpColor()
                     && vmhd1.getgOpColor() == vmhd2.getgOpColor() && vmhd1.getrOpColor() == vmhd2.getrOpColor();
         } else {
-            SoundMediaHeaderBox smhd1 = NodeBox.findFirst(trakBox1, SoundMediaHeaderBox.class, "mdia", "minf", "smhd");
-            SoundMediaHeaderBox smhd2 = NodeBox.findFirst(trakBox2, SoundMediaHeaderBox.class, "mdia", "minf", "smhd");
+            SoundMediaHeaderBox smhd1 = NodeBox.findFirstPath(trakBox1, SoundMediaHeaderBox.class, Box.path("mdia.minf.smhd"));
+            SoundMediaHeaderBox smhd2 = NodeBox.findFirstPath(trakBox2, SoundMediaHeaderBox.class, Box.path("mdia.minf.smhd"));
             if ((smhd1 == null && smhd2 != null) || (smhd1 != null && smhd2 == null))
                 return false;
             else if (smhd1 != null && smhd2 != null)
@@ -201,8 +202,8 @@ public class Paste {
     }
 
     private boolean matchClip(TrakBox trakBox1, TrakBox trakBox2) {
-        ClipRegionBox crgn1 = NodeBox.findFirst(trakBox1, ClipRegionBox.class, "clip", "crgn");
-        ClipRegionBox crgn2 = NodeBox.findFirst(trakBox2, ClipRegionBox.class, "clip", "crgn");
+        ClipRegionBox crgn1 = NodeBox.findFirstPath(trakBox1, ClipRegionBox.class, Box.path("clip.crgn"));
+        ClipRegionBox crgn2 = NodeBox.findFirstPath(trakBox2, ClipRegionBox.class, Box.path("clip.crgn"));
         if ((crgn1 == null && crgn2 != null) || (crgn1 != null && crgn2 == null))
             return false;
         if (crgn1 == null && crgn2 == null)

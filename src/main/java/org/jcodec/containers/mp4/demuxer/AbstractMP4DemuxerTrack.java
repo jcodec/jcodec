@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4.demuxer;
 
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
+import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
 
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.codecs.h264.H264Decoder;
@@ -72,7 +73,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     public AbstractMP4DemuxerTrack(TrakBox trak) {
         no = trak.getTrackHeader().getNo();
         type = MP4Demuxer.getTrackType(trak);
-        sampleEntries = Box.findAll(trak, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
+        sampleEntries = Box.findAllPath(trak, SampleEntry.class, new String[]{"mdia", "minf", "stbl", "stsd", null});
 
         NodeBox stbl = trak.getMdia().getMinf().getStbl();
 
@@ -211,14 +212,14 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     }
 
     public List<Edit> getEdits() {
-        EditListBox editListBox = Box.findFirst(box, EditListBox.class, "edts", "elst");
+        EditListBox editListBox = Box.findFirstPath(box, EditListBox.class, Box.path("edts.elst"));
         if (editListBox != null)
             return editListBox.getEdits();
         return null;
     }
 
     public String getName() {
-        NameBox nameBox = Box.findFirst(box, NameBox.class, "udta", "name");
+        NameBox nameBox = Box.findFirstPath(box, NameBox.class, Box.path("udta.name"));
         return nameBox != null ? nameBox.getName() : null;
     }
 
