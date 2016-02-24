@@ -13,11 +13,11 @@ import java.util.List;
  */
 public class MovieFragmentBox extends NodeBox {
 
-    private MovieBox moov;
-
-    public MovieFragmentBox() {
-        super(new Header(fourcc()));
+    public MovieFragmentBox(Header atom) {
+        super(atom);
     }
+
+    private MovieBox moov;
 
     public static String fourcc() {
         return "moof";

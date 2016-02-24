@@ -49,12 +49,12 @@ public class ChannelBox extends FullBox {
         super(atom);
     }
 
-    public ChannelBox() {
-        super(new Header(fourcc()));
-    }
-
     public static String fourcc() {
         return "chan";
+    }
+
+    public static ChannelBox createChannelBox() {
+        return new ChannelBox(new Header(fourcc()));
     }
 
     public void parse(ByteBuffer input) {

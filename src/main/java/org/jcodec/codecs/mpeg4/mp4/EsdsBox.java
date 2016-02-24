@@ -38,27 +38,14 @@ public class EsdsBox extends FullBox {
         super(atom);
     }
 
-    public EsdsBox() {
-        super(new Header(fourcc()));
-    }
-
-    public EsdsBox(ByteBuffer streamInfo, int objectType, int bufSize, int maxBitrate, int avgBitrate, int trackId) {
-        super(new Header(fourcc()));
-        this.objectType = objectType;
-        this.bufSize = bufSize;
-        this.maxBitrate = maxBitrate;
-        this.avgBitrate = avgBitrate;
-        this.trackId = trackId;
-        this.streamInfo = streamInfo;
-    }
-
     @Override
     protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
         if (streamInfo != null && streamInfo.remaining() > 0)
-            new ES(trackId, new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, new DecoderSpecific(
-                    streamInfo)), new SL()).write(out);
+            new ES(trackId,
+                    new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, new DecoderSpecific(streamInfo)),
+                    new SL()).write(out);
         else
             new ES(trackId, new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate), new SL()).write(out);
     }
@@ -102,14 +89,30 @@ public class EsdsBox extends FullBox {
     }
 
     public static Box fromADTS(org.jcodec.codecs.aac.ADTSParser.Header hdr) {
-    	ByteBuffer si = ByteBuffer.allocate(2);
-    	BitWriter wr = new BitWriter(si);
-    	wr.writeNBit(hdr.getObjectType(), 5);
-    	wr.writeNBit(hdr.getSamplingIndex(), 4);
-    	wr.writeNBit(hdr.getChanConfig(), 4);
-    	wr.flush();
-    	si.clear();
-    	
-        return new EsdsBox(si, hdr.getObjectType() << 5, 0, 210750, 133350, 2);
+        ByteBuffer si = ByteBuffer.allocate(2);
+        BitWriter wr = new BitWriter(si);
+        wr.writeNBit(hdr.getObjectType(), 5);
+        wr.writeNBit(hdr.getSamplingIndex(), 4);
+        wr.writeNBit(hdr.getChanConfig(), 4);
+        wr.flush();
+        si.clear();
+
+        return createEsdsBox(si, hdr.getObjectType() << 5, 0, 210750, 133350, 2);
+    }
+
+    public static EsdsBox createEsdsBox(ByteBuffer streamInfo, int objectType, int bufSize, int maxBitrate,
+            int avgBitrate, int trackId) {
+        EsdsBox esds = new EsdsBox(new Header(fourcc()));
+        esds.objectType = objectType;
+        esds.bufSize = bufSize;
+        esds.maxBitrate = maxBitrate;
+        esds.avgBitrate = avgBitrate;
+        esds.trackId = trackId;
+        esds.streamInfo = streamInfo;
+        return esds;
+    }
+
+    public static EsdsBox newEsdsBox() {
+        return new EsdsBox(new Header(fourcc()));
     }
 }

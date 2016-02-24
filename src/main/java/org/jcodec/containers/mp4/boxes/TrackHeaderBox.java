@@ -28,23 +28,24 @@ public class TrackHeaderBox extends FullBox {
         return "tkhd";
     }
 
-    public TrackHeaderBox(int trackId, long duration, float width, float height, long created, long modified,
-            float volume, short layer, long altGroup, int[] matrix) {
-        super(new Header(fourcc()));
-        this.trackId = trackId;
-        this.duration = duration;
-        this.width = width;
-        this.height = height;
-        this.created = created;
-        this.modified = modified;
-        this.volume = volume;
-        this.layer = layer;
-        this.altGroup = altGroup;
-        this.matrix = matrix;
+    public static TrackHeaderBox createTrackHeaderBox(int trackId, long duration, float width, float height,
+            long created, long modified, float volume, short layer, long altGroup, int[] matrix) {
+        TrackHeaderBox box = new TrackHeaderBox(new Header(fourcc()));
+        box.trackId = trackId;
+        box.duration = duration;
+        box.width = width;
+        box.height = height;
+        box.created = created;
+        box.modified = modified;
+        box.volume = volume;
+        box.layer = layer;
+        box.altGroup = altGroup;
+        box.matrix = matrix;
+        return box;
     }
 
-    public TrackHeaderBox() {
-        super(new Header(fourcc()));
+    public TrackHeaderBox(Header header) {
+        super(header);
     }
 
     public void parse(ByteBuffer input) {

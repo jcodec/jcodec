@@ -24,25 +24,25 @@ public class TrakBox extends NodeBox {
         return "trak";
     }
 
-    public TrakBox(Header atom) {
-        super(atom);
+    public static TrakBox createTrakBox() {
+        return new TrakBox(new Header(fourcc()));
     }
 
-    public TrakBox() {
-        super(new Header(fourcc()));
+    public TrakBox(Header atom) {
+        super(atom);
     }
 
     public void setDataRef(String url) {
         MediaInfoBox minf = getMdia().getMinf();
         DataInfoBox dinf = minf.getDinf();
         if (dinf == null) {
-            dinf = new DataInfoBox();
+            dinf = DataInfoBox.createDataInfoBox();
             minf.add(dinf);
         }
         DataRefBox dref = dinf.getDref();
-        UrlBox urlBox = new UrlBox(url);
+        UrlBox urlBox = UrlBox.createUrlBox(url);
         if (dref == null) {
-            dref = new DataRefBox();
+            dref = DataRefBox.createDataRefBox();
             dinf.add(dref);
             dref.add(urlBox);
         } else {
@@ -78,7 +78,7 @@ public class TrakBox extends NodeBox {
         }
         edts.removeChildren("elst");
 
-        edts.add(new EditListBox(edits));
+        edts.add(EditListBox.createEditListBox(edits));
         getTrackHeader().setDuration(getEditedDuration(this));
     }
 
@@ -103,21 +103,21 @@ public class TrakBox extends NodeBox {
     }
 
     /**
-     * Gets 'media timescale' of this track.
-     * This is the timescale used to represent the durations of samples inside
-     * mdia/minf/stbl/stts box.
+     * Gets 'media timescale' of this track. This is the timescale used to
+     * represent the durations of samples inside mdia/minf/stbl/stts box.
      * 
      * @return 'media timescale' of the track.
      */
     public int getTimescale() {
         return findFirst(this, MediaHeaderBox.class, "mdia", "mdhd").getTimescale();
     }
-    
+
     /**
-     * Sets the 'media timescale' of this track. This is the time timescale used to
-     * represent sample durations.
+     * Sets the 'media timescale' of this track. This is the time timescale used
+     * to represent sample durations.
      * 
-     * @param timescale A new 'media timescale' of this track.
+     * @param timescale
+     *            A new 'media timescale' of this track.
      */
     public void setTimescale(int timescale) {
         findFirst(this, MediaHeaderBox.class, "mdia", "mdhd").setTimescale(timescale);
@@ -173,15 +173,15 @@ public class TrakBox extends NodeBox {
     }
 
     public Rational getPAR() {
-        PixelAspectExt pasp = NodeBox.findFirst(this, PixelAspectExt.class, "mdia", "minf", "stbl", "stsd", null,
-                "pasp");
+        PixelAspectExt pasp = NodeBox
+                .findFirst(this, PixelAspectExt.class, "mdia", "minf", "stbl", "stsd", null, "pasp");
         return pasp == null ? new Rational(1, 1) : pasp.getRational();
     }
 
     public void setPAR(Rational par) {
         for (SampleEntry sampleEntry : getSampleEntries()) {
             sampleEntry.removeChildren("pasp");
-            sampleEntry.add(new PixelAspectExt(par));
+            sampleEntry.add(PixelAspectExt.createPixelAspectExt(par));
         }
     }
 
@@ -195,7 +195,7 @@ public class TrakBox extends NodeBox {
             clip = new NodeBox(new Header("clip"));
             add(clip);
         }
-        clip.replace("crgn", new ClipRegionBox(x, y, width, height));
+        clip.replace("crgn", ClipRegionBox.createClipRegionBox(x, y, width, height));
     }
 
     public long getSampleCount() {
@@ -205,9 +205,9 @@ public class TrakBox extends NodeBox {
     public void setAperture(Size sar, Size dar) {
         removeChildren("tapt");
         NodeBox tapt = new NodeBox(new Header("tapt"));
-        tapt.add(new ClearApertureBox(dar.getWidth(), dar.getHeight()));
-        tapt.add(new ProductionApertureBox(dar.getWidth(), dar.getHeight()));
-        tapt.add(new EncodedPixelBox(sar.getWidth(), sar.getHeight()));
+        tapt.add(ClearApertureBox.createClearApertureBox(dar.getWidth(), dar.getHeight()));
+        tapt.add(ProductionApertureBox.createProductionApertureBox(dar.getWidth(), dar.getHeight()));
+        tapt.add(EncodedPixelBox.createEncodedPixelBox(sar.getWidth(), sar.getHeight()));
         add(tapt);
     }
 
@@ -252,7 +252,7 @@ public class TrakBox extends NodeBox {
             this.add(udta);
         }
         udta.removeChildren("name");
-        udta.add(new NameBox(string));
+        udta.add(NameBox.createNameBox(string));
     }
 
     /**

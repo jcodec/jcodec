@@ -81,10 +81,6 @@ public class AliasBox extends FullBox {
         }
     }
 
-    public AliasBox() {
-        super(new Header(fourcc(), 0));
-    }
-
     public AliasBox(Header atom) {
         super(atom);
     }
@@ -183,7 +179,7 @@ public class AliasBox extends FullBox {
     }
 
     public static AliasBox createSelfRef() {
-        AliasBox alis = new AliasBox();
+        AliasBox alis = new AliasBox(new Header(fourcc()));
         alis.setFlags(1);
         return alis;
     }

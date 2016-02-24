@@ -24,7 +24,7 @@ public class SegmentIndexBoxTest {
 
     @Test
     public void testParse() throws Exception {
-        SegmentIndexBox sidx = new SegmentIndexBox();
+        SegmentIndexBox sidx = SegmentIndexBox.createSegmentIndexBox();
         ByteBuffer input = ByteBuffer.wrap(expected);
         input.position(8);
         sidx.parse(input);

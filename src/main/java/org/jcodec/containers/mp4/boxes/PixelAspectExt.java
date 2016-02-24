@@ -21,16 +21,13 @@ public class PixelAspectExt extends Box {
         super(header);
     }
 
-    public PixelAspectExt() {
-        super(new Header(fourcc()));
+    public static PixelAspectExt createPixelAspectExt(Rational par) {
+        PixelAspectExt pasp = new PixelAspectExt(new Header(fourcc()));
+        pasp.hSpacing = par.getNum();
+        pasp.vSpacing = par.getDen();
+        return pasp;
     }
-
-    public PixelAspectExt(Rational par) {
-        this();
-        this.hSpacing = par.getNum();
-        this.vSpacing = par.getDen();
-    }
-
+    
     public void parse(ByteBuffer input) {
         hSpacing = input.getInt();
         vSpacing = input.getInt();
@@ -56,4 +53,5 @@ public class PixelAspectExt extends Box {
     public static String fourcc() {
         return "pasp";
     }
+
 }

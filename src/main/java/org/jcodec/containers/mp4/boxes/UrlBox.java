@@ -20,14 +20,11 @@ public class UrlBox extends FullBox {
     public static String fourcc() {
         return "url ";
     }
-    
-    public UrlBox() {
-        super(new Header(fourcc()));
-    }
 
-    public UrlBox(String url) {
-        super(new Header(fourcc()));
-        this.url = url;
+    public static UrlBox createUrlBox(String url) {
+        UrlBox urlBox = new UrlBox(new Header(fourcc()));
+        urlBox.url = url;
+        return urlBox;
     }
 
     public UrlBox(Header atom) {
@@ -40,7 +37,7 @@ public class UrlBox extends FullBox {
         if ((flags & 0x1) != 0)
             return;
         Charset utf8 = Charset.forName("utf-8");
-        
+
         url = NIOUtils.readNullTermStringCharset(input, utf8);
     }
 

@@ -79,7 +79,7 @@ public class MovieHelper {
         int defaultTimescale = 1000;
 
         ByteBuffer buf = ByteBuffer.allocate(6 * MEBABYTE);
-        MovieBox movie = new MovieBox();
+        MovieBox movie = MovieBox.createMovieBox();
 
         double[] trackDurations = calcTrackDurations(chunks, tracks);
         long movieDur = calcMovieDuration(tracks, defaultTimescale, trackDurations);
@@ -109,7 +109,7 @@ public class MovieHelper {
 
             long totalDur = (long) (trackTimescale * trackDurations[trackId]);
 
-            TrakBox trak = new TrakBox();
+            TrakBox trak = TrakBox.createTrakBox();
 
             Size dd = new Size(0, 0), sd = new Size(0, 0);
             if (codecMeta instanceof VideoCodecMeta) {
@@ -122,37 +122,36 @@ public class MovieHelper {
                     dd = new Size(pasp.multiplyS(sd.getWidth()), sd.getHeight());
                 }
             }
-            TrackHeaderBox tkhd = new TrackHeaderBox(trackId + 1, movieDur, dd.getWidth(), dd.getHeight(),
-                    new Date().getTime(), new Date().getTime(), 1.0f, (short) 0, 0, new int[] { 0x10000, 0, 0, 0,
+            TrackHeaderBox tkhd = TrackHeaderBox.createTrackHeaderBox(trackId + 1, movieDur, dd.getWidth(), dd.getHeight(), new Date().getTime(), new Date().getTime(), 1.0f, (short) 0, 0, new int[] { 0x10000, 0, 0, 0,
                             0x10000, 0, 0, 0, 0x40000000 });
             tkhd.setFlags(0xf);
             trak.add(tkhd);
 
-            MediaBox media = new MediaBox();
+            MediaBox media = MediaBox.createMediaBox();
             trak.add(media);
-            media.add(new MediaHeaderBox(trackTimescale, totalDur, 0, new Date().getTime(), new Date().getTime(), 0));
+            media.add(MediaHeaderBox.createMediaHeaderBox(trackTimescale, totalDur, 0, new Date().getTime(), new Date().getTime(), 0));
 
             TrackType tt = (codecMeta instanceof AudioCodecMeta) ? TrackType.SOUND : TrackType.VIDEO;
             if (tt == TrackType.VIDEO) {
                 NodeBox tapt = new NodeBox(new Header("tapt"));
-                tapt.add(new ClearApertureBox(dd.getWidth(), dd.getHeight()));
-                tapt.add(new ProductionApertureBox(dd.getWidth(), dd.getHeight()));
-                tapt.add(new EncodedPixelBox(sd.getWidth(), sd.getHeight()));
+                tapt.add(ClearApertureBox.createClearApertureBox(dd.getWidth(), dd.getHeight()));
+                tapt.add(ProductionApertureBox.createProductionApertureBox(dd.getWidth(), dd.getHeight()));
+                tapt.add(EncodedPixelBox.createEncodedPixelBox(sd.getWidth(), sd.getHeight()));
                 trak.add(tapt);
             }
 
-            HandlerBox hdlr = new HandlerBox("mhlr", tt.getHandler(), "appl", 0, 0);
+            HandlerBox hdlr = HandlerBox.createHandlerBox("mhlr", tt.getHandler(), "appl", 0, 0);
             media.add(hdlr);
 
-            MediaInfoBox minf = new MediaInfoBox();
+            MediaInfoBox minf = MediaInfoBox.createMediaInfoBox();
             media.add(minf);
             mediaHeader(minf, tt);
-            minf.add(new HandlerBox("dhlr", "url ", "appl", 0, 0));
+            minf.add(HandlerBox.createHandlerBox("dhlr", "url ", "appl", 0, 0));
             addDref(minf);
             NodeBox stbl = new NodeBox(new Header("stbl"));
             minf.add(stbl);
 
-            stbl.add(new SampleDescriptionBox(new SampleEntry[] { toSampleEntry(codecMeta) }));
+            stbl.add(SampleDescriptionBox.createSampleDescriptionBox(new SampleEntry[] { toSampleEntry(codecMeta) }));
             if (pcm) {
                 populateStblPCM(stbl, chunks, trackId, codecMeta);
             } else {
@@ -177,7 +176,7 @@ public class MovieHelper {
         Rational pasp = null;
         SampleEntry vse;
         if ("avc1".equals(se.getFourcc())) {
-            vse = H264Utils.createMOVSampleEntry(NIOUtils.toArray(se.getCodecPrivate()));
+            vse = H264Utils.createMOVSampleEntryFromBytes(NIOUtils.toArray(se.getCodecPrivate()));
             pasp = ((VideoCodecMeta) se).getPasp();
         } else if (se instanceof VideoCodecMeta) {
             VideoCodecMeta ss = (VideoCodecMeta) se;
@@ -194,13 +193,13 @@ public class MovieHelper {
                         ss.getSampleRate(), ss.getSamplesPerPacket(), ss.getBytesPerPacket(), ss.getBytesPerFrame());
             }
 
-            ChannelBox chan = new ChannelBox();
+            ChannelBox chan = ChannelBox.createChannelBox();
             ChannelUtils.setLabels(ss.getChannelLabels(), chan);
             vse.add(chan);
         }
 
         if (pasp != null)
-            vse.add(new PixelAspectExt(pasp));
+            vse.add(PixelAspectExt.createPixelAspectExt(pasp));
         return vse;
     }
 
@@ -313,12 +312,12 @@ public class MovieHelper {
             stts.add(new TimeToSampleEntry(prevCount, prevDur));
 
         if (!allKey)
-            stbl.add(new SyncSamplesBox(stss.toArray()));
+            stbl.add(SyncSamplesBox.createSyncSamplesBox(stss.toArray()));
 
-        stbl.add(new ChunkOffsets64Box(stco.toArray()));
-        stbl.add(new SampleToChunkBox(new SampleToChunkEntry[] { new SampleToChunkEntry(1, 1, 1) }));
-        stbl.add(new SampleSizesBox(stsz.toArray()));
-        stbl.add(new TimeToSampleBox(stts.toArray(new TimeToSampleEntry[0])));
+        stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(stco.toArray()));
+        stbl.add(SampleToChunkBox.createSampleToChunkBox(new SampleToChunkEntry[] { new SampleToChunkEntry(1, 1, 1) }));
+        stbl.add(SampleSizesBox.createSampleSizesBox2(stsz.toArray()));
+        stbl.add(TimeToSampleBox.createTimeToSampleBox(stts.toArray(new TimeToSampleEntry[0])));
         compositionOffsets(compositionOffsets, stbl);
     }
 
@@ -328,7 +327,7 @@ public class MovieHelper {
             for (Entry entry : compositionOffsets) {
                 entry.offset -= min;
             }
-            stbl.add(new CompositionOffsetsBox(compositionOffsets.toArray(new Entry[0])));
+            stbl.add(CompositionOffsetsBox.createCompositionOffsetsBox(compositionOffsets.toArray(new Entry[0])));
         }
     }
 
@@ -362,10 +361,10 @@ public class MovieHelper {
         if (stscCount != -1)
             stsc.add(new SampleToChunkEntry(stscFirstChunk, stscCount, 1));
 
-        stbl.add(new ChunkOffsets64Box(stco.toArray()));
-        stbl.add(new SampleToChunkBox(stsc.toArray(new SampleToChunkEntry[0])));
-        stbl.add(new SampleSizesBox(ase.getFrameSize(), totalFrames));
-        stbl.add(new TimeToSampleBox(new TimeToSampleEntry[] { new TimeToSampleEntry(totalFrames, 1) }));
+        stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(stco.toArray()));
+        stbl.add(SampleToChunkBox.createSampleToChunkBox(stsc.toArray(new SampleToChunkEntry[0])));
+        stbl.add(SampleSizesBox.createSampleSizesBox(ase.getFrameSize(), totalFrames));
+        stbl.add(TimeToSampleBox.createTimeToSampleBox(new TimeToSampleEntry[] { new TimeToSampleEntry(totalFrames, 1) }));
     }
 
     private static int getPCMTs(AudioCodecMeta se, PacketChunk[] chunks, int trackId) throws IOException {
@@ -381,22 +380,23 @@ public class MovieHelper {
     private static void mediaHeader(MediaInfoBox minf, TrackType type) {
         switch (type) {
         case VIDEO:
-            VideoMediaHeaderBox vmhd = new VideoMediaHeaderBox(0, 0, 0, 0);
+            VideoMediaHeaderBox vmhd = VideoMediaHeaderBox.createVideoMediaHeaderBox(0, 0, 0, 0);
             vmhd.setFlags(1);
             minf.add(vmhd);
             break;
         case SOUND:
-            SoundMediaHeaderBox smhd = new SoundMediaHeaderBox();
+            SoundMediaHeaderBox smhd = SoundMediaHeaderBox.createSoundMediaHeaderBox();
             smhd.setFlags(1);
             minf.add(smhd);
             break;
         case TIMECODE:
             NodeBox gmhd = new NodeBox(new Header("gmhd"));
-            gmhd.add(new GenericMediaInfoBox());
+            gmhd.add(GenericMediaInfoBox.createGenericMediaInfoBox());
             NodeBox tmcd = new NodeBox(new Header("tmcd"));
             gmhd.add(tmcd);
-            tmcd.add(new TimecodeMediaInfoBox((short) 0, (short) 0, (short) 12, new short[] { 0, 0, 0 }, new short[] {
-                    0xff, 0xff, 0xff }, "Lucida Grande"));
+            tmcd.add(TimecodeMediaInfoBox
+                    .createTimecodeMediaInfoBox((short) 0, (short) 0, (short) 12, new short[] { 0, 0, 0 }, new short[] {
+                            0xff, 0xff, 0xff }, "Lucida Grande"));
             minf.add(gmhd);
             break;
         default:
@@ -405,16 +405,15 @@ public class MovieHelper {
     }
 
     private static void addDref(NodeBox minf) {
-        DataInfoBox dinf = new DataInfoBox();
+        DataInfoBox dinf = DataInfoBox.createDataInfoBox();
         minf.add(dinf);
-        DataRefBox dref = new DataRefBox();
+        DataRefBox dref = DataRefBox.createDataRefBox();
         dinf.add(dref);
-        dref.add(new LeafBox(new Header("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
+        dref.add(LeafBox.createLeafBox(new Header("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
     }
 
     private static MovieHeaderBox movieHeader(NodeBox movie, int nTracks, long duration, int timescale) {
 
-        return new MovieHeaderBox(timescale, duration, 1.0f, 1.0f, new Date().getTime(), new Date().getTime(),
-                new int[] { 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 }, nTracks + 1);
+        return MovieHeaderBox.createMovieHeaderBox(timescale, duration, 1.0f, 1.0f, new Date().getTime(), new Date().getTime(), new int[] { 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 }, nTracks + 1);
     }
 }

@@ -15,8 +15,8 @@ import java.util.List;
  */
 public class TrackFragmentBox extends NodeBox {
 
-    public TrackFragmentBox() {
-        super(new Header(fourcc()));
+    public TrackFragmentBox(Header atom) {
+        super(atom);
     }
 
     public static String fourcc() {

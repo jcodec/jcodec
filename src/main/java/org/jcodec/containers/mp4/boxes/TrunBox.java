@@ -15,12 +15,13 @@ import java.util.List;
  * <pre>
  * 
  * Box box = TrunBox
- *               .create(2)
- *               .dataOffset(20)
- *               .sampleCompositionOffset(new int[] { 11, 12 })
- *               .sampleDuration(new int[] { 15, 16 })
- *               .sampleFlags(new int[] { 100, 200 })
- *               .sampleSize(new int[] { 30, 40 }).create();
+ *         .create(2)
+ *         .dataOffset(20)
+ *         .sampleCompositionOffset(new int[] { 11, 12 })
+ *         .sampleDuration(new int[] { 15, 16 })
+ *         .sampleFlags(new int[] { 100, 200 })
+ *         .sampleSize(new int[] { 30, 40 })
+ *         .create();
  * 
  * </pre>
  * 
@@ -29,14 +30,14 @@ import java.util.List;
  */
 //@formatter:on
 public class TrunBox extends FullBox {
-// @formatter:off
-    private static final int DATA_OFFSET_AVAILABLE                      = 0x000001;
-    private static final int FIRST_SAMPLE_FLAGS_AVAILABLE               = 0x000004;
-    private static final int SAMPLE_DURATION_AVAILABLE                  = 0x000100;
-    private static final int SAMPLE_SIZE_AVAILABLE                      = 0x000200;
-    private static final int SAMPLE_FLAGS_AVAILABLE                     = 0x000400;
-    private static final int SAMPLE_COMPOSITION_OFFSET_AVAILABLE        = 0x000800;
-// @formatter:on
+    // @formatter:off
+    private static final int DATA_OFFSET_AVAILABLE = 0x000001;
+    private static final int FIRST_SAMPLE_FLAGS_AVAILABLE = 0x000004;
+    private static final int SAMPLE_DURATION_AVAILABLE = 0x000100;
+    private static final int SAMPLE_SIZE_AVAILABLE = 0x000200;
+    private static final int SAMPLE_FLAGS_AVAILABLE = 0x000400;
+    private static final int SAMPLE_COMPOSITION_OFFSET_AVAILABLE = 0x000800;
+    // @formatter:on
 
     private int sampleCount;
     private int dataOffset;
@@ -49,8 +50,7 @@ public class TrunBox extends FullBox {
     public static String fourcc() {
         return "trun";
     }
-    
-    
+
     public void setDataOffset(int dataOffset) {
         this.dataOffset = dataOffset;
     }
@@ -63,25 +63,27 @@ public class TrunBox extends FullBox {
         return new Factory(other);
     }
 
-    public TrunBox() {
-        super(new Header(fourcc()));
+    public TrunBox(Header header) {
+        super(header);
     }
 
-    protected TrunBox(int sampleCount, int dataOffset, int firstSampleFlags, int[] sampleDuration, int[] sampleSize,
-            int[] sampleFlags, int[] sampleCompositionOffset) {
-        this();
-        this.sampleCount = sampleCount;
-        this.dataOffset = dataOffset;
-        this.firstSampleFlags = firstSampleFlags;
-        this.sampleDuration = sampleDuration;
-        this.sampleSize = sampleSize;
-        this.sampleFlags = sampleFlags;
-        this.sampleCompositionOffset = sampleCompositionOffset;
+    public static TrunBox createTrunBox1(int sampleCount) {
+        TrunBox trun = new TrunBox(new Header(fourcc()));
+        trun.sampleCount = sampleCount;
+        return trun;
     }
 
-    protected TrunBox(int sampleCount) {
-        this();
-        this.sampleCount = sampleCount;
+    public static TrunBox createTrunBox2(int sampleCount, int dataOffset, int firstSampleFlags, int[] sampleDuration,
+            int[] sampleSize, int[] sampleFlags, int[] sampleCompositionOffset) {
+        TrunBox trun = new TrunBox(new Header(fourcc()));
+        trun.sampleCount = sampleCount;
+        trun.dataOffset = dataOffset;
+        trun.firstSampleFlags = firstSampleFlags;
+        trun.sampleDuration = sampleDuration;
+        trun.sampleSize = sampleSize;
+        trun.sampleFlags = sampleFlags;
+        trun.sampleCompositionOffset = sampleCompositionOffset;
+        return trun;
     }
 
     public static class Factory {
@@ -89,12 +91,12 @@ public class TrunBox extends FullBox {
         private TrunBox box;
 
         protected Factory(int sampleCount) {
-            box = new TrunBox(sampleCount);
+            box = TrunBox.createTrunBox1(sampleCount);
         }
 
         public Factory(TrunBox other) {
-            box = new TrunBox(other.sampleCount, other.dataOffset, other.firstSampleFlags, other.sampleDuration,
-                    other.sampleSize, other.sampleFlags, other.sampleCompositionOffset);
+            box = TrunBox
+                    .createTrunBox2(other.sampleCount, other.dataOffset, other.firstSampleFlags, other.sampleDuration, other.sampleSize, other.sampleFlags, other.sampleCompositionOffset);
             box.setFlags(other.getFlags());
             box.setVersion(other.getVersion());
         }
@@ -246,6 +248,10 @@ public class TrunBox extends FullBox {
 
     public static int flagsGetSampleDegradationPriority(int flags) {
         return (flags >> 16) & 0xffff;
+    }
+
+    public static TrunBox createTrunBox() {
+        return new TrunBox(new Header(fourcc()));
     }
 
     @Override

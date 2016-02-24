@@ -14,11 +14,11 @@ import java.nio.ByteBuffer;
  */
 public class MovieFragmentHeaderBox extends FullBox {
 
-    private int sequenceNumber;
-
-    public MovieFragmentHeaderBox() {
-        super(new Header(fourcc()));
+    public MovieFragmentHeaderBox(Header atom) {
+        super(atom);
     }
+
+    private int sequenceNumber;
 
     public static String fourcc() {
         return "mfhd";
@@ -39,7 +39,7 @@ public class MovieFragmentHeaderBox extends FullBox {
     public int getSequenceNumber() {
         return sequenceNumber;
     }
-    
+
     public void setSequenceNumber(int sequenceNumber) {
         this.sequenceNumber = sequenceNumber;
     }

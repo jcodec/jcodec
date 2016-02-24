@@ -347,12 +347,12 @@ public class FLVTool {
                     if (avct.getAvcPacketType() == 0) {
                         ByteBuffer frameData = pkt.getData().duplicate();
                         FLVReader.parseVideoTagHeader(frameData);
-                        AvcCBox avcc = H264Utils.parseAVCC(frameData);
-                        for (SeqParameterSet sps : H264Utils.readSPS(avcc.getSpsList())) {
+                        AvcCBox avcc = H264Utils.parseAVCCFromBuffer(frameData);
+                        for (SeqParameterSet sps : H264Utils.readSPSFromBufferList(avcc.getSpsList())) {
                             System.out.println();
                             System.out.print("  SPS[" + sps.getSeq_parameter_set_id() + "]:" + ToJSON.toJSON(sps));
                         }
-                        for (PictureParameterSet pps : H264Utils.readPPS(avcc.getPpsList())) {
+                        for (PictureParameterSet pps : H264Utils.readPPSFromBufferList(avcc.getPpsList())) {
                             System.out.println();
                             System.out.print("  PPS[" + pps.getPic_parameter_set_id() + "]:" + ToJSON.toJSON(pps));
                         }

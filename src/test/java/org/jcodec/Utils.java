@@ -73,8 +73,8 @@ public class Utils {
     public static void compareMP4H264Files(File file, File refFile) throws IOException, JCodecException {
         FileChannelWrapper ch1 = null, ch2 = null;
         try {
-            ch1 = NIOUtils.readableFileChannel(file);
-            ch2 = NIOUtils.readableFileChannel(refFile);
+            ch1 = NIOUtils.readableChannel(file);
+            ch2 = NIOUtils.readableChannel(refFile);
             FrameGrab8Bit frameGrab1 = new FrameGrab8Bit(ch1);
             FrameGrab8Bit frameGrab2 = new FrameGrab8Bit(ch2);
 

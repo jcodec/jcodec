@@ -27,12 +27,8 @@ public class MovieBox extends NodeBox {
         return "moov";
     }
 
-    public MovieBox() {
-        super(new Header(fourcc()));
-    }
-
-    public MovieBox(MovieBox movie) {
-        super(movie);
+    public static MovieBox createMovieBox() {
+        return new MovieBox(new Header(fourcc()));
     }
 
     public TrakBox[] getTracks() {

@@ -14,17 +14,14 @@ public class GamaExtension extends Box {
 
     private float gamma;
 
-    public GamaExtension(float gamma) {
-        super(new Header(fourcc(), 0));
-        this.gamma = gamma;
+    public static GamaExtension createGamaExtension(float gamma) {
+        GamaExtension gamaExtension = new GamaExtension(new Header(fourcc()));
+        gamaExtension.gamma = gamma;
+        return gamaExtension;
     }
 
     public GamaExtension(Header header) {
         super(header);
-    }
-
-    public GamaExtension(Box other) {
-        super(other);
     }
 
     public void parse(ByteBuffer input) {
@@ -35,12 +32,13 @@ public class GamaExtension extends Box {
     protected void doWrite(ByteBuffer out) {
         out.putInt((int) (gamma * 65536));
     }
-    
-    public float getGamma(){
+
+    public float getGamma() {
         return gamma;
     }
 
     public static String fourcc() {
         return "gama";
     }
+
 }

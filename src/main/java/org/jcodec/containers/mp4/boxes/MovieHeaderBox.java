@@ -30,22 +30,22 @@ public class MovieHeaderBox extends FullBox {
         return "mvhd";
     }
 
-    public MovieHeaderBox(int timescale, long duration, float rate, float volume, long created, long modified,
-            int[] matrix, int nextTrackId) {
-        super(new Header(fourcc()));
-
-        this.timescale = timescale;
-        this.duration = duration;
-        this.rate = rate;
-        this.volume = volume;
-        this.created = created;
-        this.modified = modified;
-        this.matrix = matrix;
-        this.nextTrackId = nextTrackId;
+    public static MovieHeaderBox createMovieHeaderBox(int timescale, long duration, float rate, float volume,
+            long created, long modified, int[] matrix, int nextTrackId) {
+        MovieHeaderBox mvhd = new MovieHeaderBox(new Header(fourcc()));
+        mvhd.timescale = timescale;
+        mvhd.duration = duration;
+        mvhd.rate = rate;
+        mvhd.volume = volume;
+        mvhd.created = created;
+        mvhd.modified = modified;
+        mvhd.matrix = matrix;
+        mvhd.nextTrackId = nextTrackId;
+        return mvhd;
     }
 
-    public MovieHeaderBox() {
-        super(new Header(fourcc()));
+    public MovieHeaderBox(Header header) {
+        super(header);
     }
 
     public int getTimescale() {

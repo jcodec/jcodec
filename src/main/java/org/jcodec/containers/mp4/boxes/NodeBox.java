@@ -31,12 +31,6 @@ public class NodeBox extends Box {
         this.factory = BoxFactory.getDefault();
     }
 
-    public NodeBox(NodeBox other) {
-        super(other);
-        this.boxes = other.boxes;
-        this.factory = other.factory;
-    }
-
     public void parse(ByteBuffer input) {
 
         while (input.remaining() >= 8) {

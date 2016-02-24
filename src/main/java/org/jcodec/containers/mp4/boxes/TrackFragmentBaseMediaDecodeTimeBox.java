@@ -21,18 +21,20 @@ import java.nio.ByteBuffer;
  */
 public class TrackFragmentBaseMediaDecodeTimeBox extends FullBox {
 
-    private long baseMediaDecodeTime;
-
-    public TrackFragmentBaseMediaDecodeTimeBox() {
-        super(new Header(fourcc()));
+    public TrackFragmentBaseMediaDecodeTimeBox(Header atom) {
+        super(atom);
     }
 
-    public TrackFragmentBaseMediaDecodeTimeBox(long baseMediaDecodeTime) {
-        this();
-        this.baseMediaDecodeTime = baseMediaDecodeTime;
-        if (this.baseMediaDecodeTime > Integer.MAX_VALUE) {
-            this.version = 1;
+    private long baseMediaDecodeTime;
+
+    public static TrackFragmentBaseMediaDecodeTimeBox createTrackFragmentBaseMediaDecodeTimeBox(
+            long baseMediaDecodeTime) {
+        TrackFragmentBaseMediaDecodeTimeBox box = new TrackFragmentBaseMediaDecodeTimeBox(new Header(fourcc()));
+        box.baseMediaDecodeTime = baseMediaDecodeTime;
+        if (box.baseMediaDecodeTime > Integer.MAX_VALUE) {
+            box.version = 1;
         }
+        return box;
     }
 
     public static String fourcc() {
@@ -64,7 +66,7 @@ public class TrackFragmentBaseMediaDecodeTimeBox extends FullBox {
     public long getBaseMediaDecodeTime() {
         return baseMediaDecodeTime;
     }
-    
+
     public void setBaseMediaDecodeTime(long baseMediaDecodeTime) {
         this.baseMediaDecodeTime = baseMediaDecodeTime;
     }
@@ -77,7 +79,8 @@ public class TrackFragmentBaseMediaDecodeTimeBox extends FullBox {
         private TrackFragmentBaseMediaDecodeTimeBox box;
 
         protected Factory(TrackFragmentBaseMediaDecodeTimeBox other) {
-            box = new TrackFragmentBaseMediaDecodeTimeBox(other.baseMediaDecodeTime);
+            box = TrackFragmentBaseMediaDecodeTimeBox
+                    .createTrackFragmentBaseMediaDecodeTimeBox(other.baseMediaDecodeTime);
             box.version = other.version;
             box.flags = other.flags;
         }

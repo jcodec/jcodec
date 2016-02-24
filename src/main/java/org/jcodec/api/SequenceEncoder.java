@@ -82,7 +82,7 @@ public class SequenceEncoder {
         // Based on the frame above form correct MP4 packet
         spsList.clear();
         ppsList.clear();
-        H264Utils.wipePS(result, spsList, ppsList);
+        H264Utils.wipePSinplace(result, spsList, ppsList);
         NALUnit nu = NALUnit.read(NIOUtils.from(result.duplicate(), 4));
         H264Utils.encodeMOVPacket(result);
 
@@ -108,7 +108,7 @@ public class SequenceEncoder {
             throw new RuntimeException(
                     "Somehow the encoder didn't generate SPS/PPS pair, did you encode at least one frame?");
         // Push saved SPS/PPS to a special storage in MP4
-        outTrack.addSampleEntry(H264Utils.createMOVSampleEntry(sps, pps, 4));
+        outTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromBuffer(sps, pps, 4));
 
         // Write MP4 header and finalize recording
         muxer.writeHeader();

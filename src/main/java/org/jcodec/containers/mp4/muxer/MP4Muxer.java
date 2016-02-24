@@ -88,22 +88,20 @@ public class MP4Muxer {
     }
 
     public static VideoSampleEntry videoSampleEntry(String fourcc, Size size, String encoderName) {
-        return new VideoSampleEntry(new Header(fourcc), (short) 0, (short) 0, "jcod", 0, 768, (short) size.getWidth(),
-                (short) size.getHeight(), 72, 72, (short) 1, encoderName != null ? encoderName : "jcodec", (short) 24,
-                (short) 1, (short) -1);
+        return VideoSampleEntry
+                .createVideoSampleEntry(new Header(fourcc), (short) 0, (short) 0, "jcod", 0, 768, (short) size.getWidth(), (short) size.getHeight(), 72, 72, (short) 1, encoderName != null ? encoderName : "jcodec", (short) 24, (short) 1, (short) -1);
     }
 
     public static AudioSampleEntry audioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
             int sampleRate, Endian endian) {
-        AudioSampleEntry ase = new AudioSampleEntry(new Header(fourcc, 0), (short) drefId, (short) channels,
-                (short) 16, sampleRate, (short) 0, 0, 65535, 0, 1, sampleSize, channels * sampleSize, sampleSize,
-                (short) 1);
+        AudioSampleEntry ase = AudioSampleEntry
+                .createAudioSampleEntry(new Header(fourcc, 0), (short) drefId, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65535, 0, 1, sampleSize, channels * sampleSize, sampleSize, (short) 1);
 
         NodeBox wave = new NodeBox(new Header("wave"));
         ase.add(wave);
 
-        wave.add(new FormatBox(fourcc));
-        wave.add(new EndianBox(endian));
+        wave.add(FormatBox.createFormatBox(fourcc));
+        wave.add(EndianBox.createEndianBox(endian));
         wave.add(terminatorAtom());
         // ase.add(new ChannelBox(atom));
 
@@ -112,14 +110,13 @@ public class MP4Muxer {
 
     public static AudioSampleEntry compressedAudioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
             int sampleRate, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame) {
-        AudioSampleEntry ase = new AudioSampleEntry(new Header(fourcc, 0), (short) drefId, (short) channels,
-                (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPacket, bytesPerPacket, bytesPerFrame, 16 / 8,
-                (short) 1);
+        AudioSampleEntry ase = AudioSampleEntry
+                .createAudioSampleEntry(new Header(fourcc, 0), (short) drefId, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPacket, bytesPerPacket, bytesPerFrame, 16 / 8, (short) 1);
         return ase;
     }
 
     public static LeafBox terminatorAtom() {
-        return new LeafBox(new Header(new String(new byte[4])), ByteBuffer.allocate(0));
+        return LeafBox.createLeafBox(new Header(new String(new byte[4])), ByteBuffer.allocate(0));
     }
 
     public TimecodeMP4MuxerTrack addTimecodeTrack(int timescale) {
@@ -160,7 +157,7 @@ public class MP4Muxer {
     }
 
     public MovieBox finalizeHeader() throws IOException {
-        MovieBox movie = new MovieBox();
+        MovieBox movie = MovieBox.createMovieBox();
         MovieHeaderBox mvhd = movieHeader(movie);
         movie.addFirst(mvhd);
 
@@ -209,8 +206,7 @@ public class MP4Muxer {
             duration = videoTrack.getTrackTotalDuration();
         }
 
-        return new MovieHeaderBox(timescale, duration, 1.0f, 1.0f, new Date().getTime(), new Date().getTime(),
-                new int[] { 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 }, nextTrackId);
+        return MovieHeaderBox.createMovieHeaderBox(timescale, duration, 1.0f, 1.0f, new Date().getTime(), new Date().getTime(), new int[] { 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 }, nextTrackId);
     }
 
     public static String lookupFourcc(AudioFormat format) {
@@ -237,13 +233,13 @@ public class MP4Muxer {
             int samplesPerPkt, Box... extra) {
         FramesMP4MuxerTrack track = addTrack(SOUND, timescale);
 
-        AudioSampleEntry ase = new AudioSampleEntry(new Header(fourcc, 0), (short) 1, (short) channels, (short) 16,
-                sampleRate, (short) 0, 0, 65534, 0, samplesPerPkt, 0, 0, 2, (short) 1);
+        AudioSampleEntry ase = AudioSampleEntry
+                .createAudioSampleEntry(new Header(fourcc, 0), (short) 1, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPkt, 0, 0, 2, (short) 1);
 
         NodeBox wave = new NodeBox(new Header("wave"));
         ase.add(wave);
 
-        wave.add(new FormatBox(fourcc));
+        wave.add(FormatBox.createFormatBox(fourcc));
         for (Box box : extra)
             wave.add(box);
 

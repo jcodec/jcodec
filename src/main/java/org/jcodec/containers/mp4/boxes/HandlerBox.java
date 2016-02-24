@@ -15,6 +15,10 @@ import org.jcodec.common.io.NIOUtils;
  * 
  */
 public class HandlerBox extends FullBox {
+    public HandlerBox(Header atom) {
+        super(atom);
+    }
+
     private String componentType;
     private String componentSubType;
     private String componentManufacturer;
@@ -26,19 +30,16 @@ public class HandlerBox extends FullBox {
         return "hdlr";
     }
 
-    public HandlerBox(String componentType, String componentSubType, String componentManufacturer, int componentFlags,
-            int componentFlagsMask) {
-        super(new Header("hdlr"));
-        this.componentType = componentType;
-        this.componentSubType = componentSubType;
-        this.componentManufacturer = componentManufacturer;
-        this.componentFlags = componentFlags;
-        this.componentFlagsMask = componentFlagsMask;
-        this.componentName = "";
-    }
-
-    public HandlerBox() {
-        super(new Header(fourcc()));
+    public static HandlerBox createHandlerBox(String componentType, String componentSubType,
+            String componentManufacturer, int componentFlags, int componentFlagsMask) {
+        HandlerBox hdlr = new HandlerBox(new Header(fourcc()));
+        hdlr.componentType = componentType;
+        hdlr.componentSubType = componentSubType;
+        hdlr.componentManufacturer = componentManufacturer;
+        hdlr.componentFlags = componentFlags;
+        hdlr.componentFlagsMask = componentFlagsMask;
+        hdlr.componentName = "";
+        return hdlr;
     }
 
     public void parse(ByteBuffer input) {

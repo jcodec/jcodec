@@ -66,7 +66,7 @@ public class AVCConcatTrack implements VirtualTrack {
             VideoCodecMeta vcm = (VideoCodecMeta) se;
 
             Rational paspL = vcm.getPasp();
-            if (pasp != null && paspL != null && !pasp.equals(paspL))
+            if (pasp != null && paspL != null && !pasp.equalsRational(paspL))
                 throw new RuntimeException("Can not concat video tracks with different Pixel Aspect Ratio.");
             pasp = paspL;
 

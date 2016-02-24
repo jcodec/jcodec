@@ -67,7 +67,7 @@ public class ChannelUtils {
     private static void setLabels(TrakBox trakBox, Label[] labels) {
         ChannelBox channel = Box.findFirst(trakBox, ChannelBox.class, "mdia", "minf", "stbl", "stsd", null, "chan");
         if (channel == null) {
-            channel = new ChannelBox();
+            channel = ChannelBox.createChannelBox();
             Box.findFirst(trakBox, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null).add(channel);
         }
         setLabels(labels, channel);

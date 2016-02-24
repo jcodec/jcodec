@@ -19,13 +19,10 @@ public class NameBox extends Box {
         return "name";
     }
 
-    public NameBox(String name) {
-        this();
-        this.name = name;
-    }
-
-    public NameBox() {
-        super(new Header(fourcc()));
+    public static NameBox createNameBox(String name) {
+        NameBox box = new NameBox(new Header(fourcc()));
+        box.name = name;
+        return box;
     }
 
     private NameBox(Header header) {

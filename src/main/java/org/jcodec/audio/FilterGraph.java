@@ -71,7 +71,7 @@ public class FilterGraph implements AudioFilter {
          * @param n
          * @return
          */
-        public Factory addLevel(AudioFilter filter, int n) {
+        public Factory addLevels(AudioFilter filter, int n) {
             AudioFilter[] filters = new AudioFilter[n];
             Arrays.fill(filters, filter);
             return addLevel(filters);
@@ -91,7 +91,7 @@ public class FilterGraph implements AudioFilter {
                 throw new IllegalArgumentException("Can't fill " + prevLevelOuts + " with multiple of "
                         + filter.getNInputs());
 
-            return addLevel(filter, prevLevelOuts / filter.getNInputs());
+            return addLevels(filter, prevLevelOuts / filter.getNInputs());
         }
 
         public FilterGraph create() {

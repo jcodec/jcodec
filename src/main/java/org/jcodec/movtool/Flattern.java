@@ -75,7 +75,7 @@ public class Flattern {
         if (!movie.isPureRefMovie(movie))
             throw new IllegalArgumentException("movie should be reference");
         ByteBuffer buf = ByteBuffer.allocate(16 * 1024 * 1024);
-        FileTypeBox ftyp = new FileTypeBox("qt  ", 0x20050300, Arrays.asList(new String[] { "qt  " }));
+        FileTypeBox ftyp = FileTypeBox.createFileTypeBox("qt  ", 0x20050300, Arrays.asList(new String[] { "qt  " }));
         ftyp.write(buf);
         long movieOff = buf.position();
         movie.write(buf);
