@@ -75,7 +75,7 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
         AvcCBox createAvcC = H264Utils
                 .createAvcC(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS(), 4);
         
-        return new VideoCodecMeta("avc1", H264Utils.getAvcCData(createAvcC), new Size(thumbWidth, thumbHeight), codecMeta.getPasp());
+        return VideoCodecMeta.createVideoCodecMeta("avc1", H264Utils.getAvcCData(createAvcC), new Size(thumbWidth, thumbHeight), codecMeta.getPasp());
     }
 
     @Override

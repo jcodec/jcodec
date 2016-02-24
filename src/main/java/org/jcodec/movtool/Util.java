@@ -58,7 +58,7 @@ public class Util {
         }
     }
 
-    public static Pair<List<Edit>> split(List<Edit> edits, Rational trackByMv, long tvMv) {
+    public static Pair<List<Edit>> splitEdits(List<Edit> edits, Rational trackByMv, long tvMv) {
         long total = 0;
         List<Edit> l = new ArrayList<Edit>();
         List<Edit> r = new ArrayList<Edit>();
@@ -102,7 +102,7 @@ public class Util {
      * @return
      */
     public static Pair<List<Edit>> split(MovieBox movie, TrakBox track, long tvMv) {
-        return split(track.getEdits(), new Rational(track.getTimescale(), movie.getTimescale()), tvMv);
+        return splitEdits(track.getEdits(), new Rational(track.getTimescale(), movie.getTimescale()), tvMv);
     }
 
     public static void spread(MovieBox movie, TrakBox track, long tvMv, long durationMv) {
@@ -262,8 +262,8 @@ public class Util {
         List<Edit> next = new ArrayList<Edit>(lower);
         for (Edit edit : higher) {
             long startMv = mvByTrack.multiplyLong(edit.getMediaTime());
-            Pair<List<Edit>> split = split(next, mvByTrack.flip(), startMv);
-            Pair<List<Edit>> split2 = split(split.getB(), mvByTrack.flip(), startMv + edit.getDuration());
+            Pair<List<Edit>> split = splitEdits(next, mvByTrack.flip(), startMv);
+            Pair<List<Edit>> split2 = splitEdits(split.getB(), mvByTrack.flip(), startMv + edit.getDuration());
             result.addAll(split2.getA());
             next = split2.getB();
         }

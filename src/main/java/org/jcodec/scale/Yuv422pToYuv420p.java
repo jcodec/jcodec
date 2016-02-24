@@ -17,14 +17,10 @@ public class Yuv422pToYuv420p implements Transform {
     private int shiftDown;
 
     public Yuv422pToYuv420p(int shiftUp, int shiftDown) {
-        this(shiftUp, shiftDown, Levels.STUDIO);
-    }
-    
-    public Yuv422pToYuv420p(int shiftUp, int shiftDown, Levels levels) {
         this.shiftUp = shiftUp;
         this.shiftDown = shiftDown;
     }
-
+    
     public void transform(Picture src, Picture dst) {
         int lumaSize = src.getWidth() * src.getHeight();
         arraycopy(src.getPlaneData(0), 0, dst.getPlaneData(0), 0, lumaSize);

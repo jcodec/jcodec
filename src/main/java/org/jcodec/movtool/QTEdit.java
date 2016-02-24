@@ -38,9 +38,9 @@ public class QTEdit {
         public abstract void apply(MovieBox movie);
     }
 
-    public QTEdit(EditFactory... factories) {
+    public QTEdit(EditFactory... arguments) {
         this.listeners = new ArrayList<ProgressListener>();
-        this.factories = factories;
+        this.factories = arguments;
     }
 
     public void addProgressListener(ProgressListener listener) {

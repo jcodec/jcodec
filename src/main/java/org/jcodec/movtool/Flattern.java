@@ -71,7 +71,7 @@ public class Flattern {
         this.listeners.add(listener);
     }
 
-    public void flattern(MovieBox movie, SeekableByteChannel out) throws IOException {
+    public void flatternChannel(MovieBox movie, SeekableByteChannel out) throws IOException {
         if (!movie.isPureRefMovie(movie))
             throw new IllegalArgumentException("movie should be reference");
         ByteBuffer buf = ByteBuffer.allocate(16 * 1024 * 1024);
@@ -207,7 +207,7 @@ public class Flattern {
         SeekableByteChannel out = null;
         try {
             out = writableChannel(video);
-            flattern(movie, out);
+            flatternChannel(movie, out);
         } finally {
             if (out != null)
                 out.close();

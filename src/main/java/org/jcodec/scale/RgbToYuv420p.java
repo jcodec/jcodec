@@ -20,7 +20,9 @@ public class RgbToYuv420p implements Transform {
     private int downShiftChr;
 
     public RgbToYuv420p(int upShift, int downShift) {
-        this(upShift, downShift, Levels.STUDIO);
+        this.upShift = upShift;
+        this.downShift = downShift;
+        this.downShiftChr = downShift + 2;
     }
 
     public RgbToYuv420p(int upShift, int downShift, Levels pc) {

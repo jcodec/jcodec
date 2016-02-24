@@ -50,17 +50,17 @@ public class AVCConcatTrack implements VirtualTrack {
     private List<SeqParameterSet> allSps;
     private SliceHeaderTweaker[] tweakers;
 
-    public AVCConcatTrack(VirtualTrack... tracks) {
-        this.tracks = tracks;
+    public AVCConcatTrack(VirtualTrack... arguments) {
+        this.tracks = arguments;
 
         Rational pasp = null;
 
         allPps = new ArrayList<PictureParameterSet>();
         allSps = new ArrayList<SeqParameterSet>();
-        tweakers = new H264Utils.SliceHeaderTweaker[tracks.length];
+        tweakers = new H264Utils.SliceHeaderTweaker[arguments.length];
         map = new HashMap<Integer, Integer>();
-        for (int i = 0; i < tracks.length; i++) {
-            CodecMeta se = tracks[i].getCodecMeta();
+        for (int i = 0; i < arguments.length; i++) {
+            CodecMeta se = arguments[i].getCodecMeta();
             if (!(se instanceof VideoCodecMeta))
                 throw new RuntimeException("Not a video track.");
             if (!"avc1".equals(se.getFourcc()))
@@ -92,11 +92,9 @@ public class AVCConcatTrack implements VirtualTrack {
         }
         mergePS(allSps, allPps, map);
 
-        VideoCodecMeta codecMeta = (VideoCodecMeta) tracks[0].getCodecMeta();
+        VideoCodecMeta codecMeta = (VideoCodecMeta) arguments[0].getCodecMeta();
 
-        se = new VideoCodecMeta("avc1",
-                ByteBuffer.wrap(H264Utils.saveCodecPrivate(H264Utils.saveSPS(allSps), H264Utils.savePPS(allPps))),
-                codecMeta.getSize(), codecMeta.getPasp());
+        se = VideoCodecMeta.createVideoCodecMeta("avc1", ByteBuffer.wrap(H264Utils.saveCodecPrivate(H264Utils.saveSPS(allSps), H264Utils.savePPS(allPps))), codecMeta.getSize(), codecMeta.getPasp());
     }
 
     private void mergePS(List<SeqParameterSet> allSps, List<PictureParameterSet> allPps, Map<Integer, Integer> map) {

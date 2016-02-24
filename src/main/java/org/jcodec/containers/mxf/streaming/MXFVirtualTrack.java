@@ -125,10 +125,9 @@ public class MXFVirtualTrack implements VirtualTrack {
             GenericPictureEssenceDescriptor ped = (GenericPictureEssenceDescriptor) d;
 
             Rational ar = ped.getAspectRatio();
-            VideoCodecMeta se = new VideoCodecMeta(MP4Util.getFourcc(track.getCodec().getCodec()), null, new Size(
-                    ped.getDisplayWidth(), ped.getDisplayHeight()),
-                    new Rational((int) ((1000 * ar.getNum() * ped.getDisplayHeight()) / (ar.getDen() * ped
-                            .getDisplayWidth())), 1000));
+            VideoCodecMeta se = VideoCodecMeta.createVideoCodecMeta(MP4Util.getFourcc(track.getCodec().getCodec()), null, new Size(
+                    ped.getDisplayWidth(), ped.getDisplayHeight()), new Rational((int) ((1000 * ar.getNum() * ped.getDisplayHeight()) / (ar.getDen() * ped
+                    .getDisplayWidth())), 1000));
             return se;
         } else if (track.isAudio()) {
             GenericSoundEssenceDescriptor sed = (GenericSoundEssenceDescriptor) d;
@@ -137,9 +136,9 @@ public class MXFVirtualTrack implements VirtualTrack {
             Label[] labels = new Label[sed.getChannelCount()];
             Arrays.fill(labels, Label.Mono);
 
-            return new AudioCodecMeta(sampleSize == 3 ? "in24" : "sowt", sampleSize, sed.getChannelCount(), (int) sed
+            return AudioCodecMeta.createAudioCodecMeta(sampleSize == 3 ? "in24" : "sowt", sampleSize, sed.getChannelCount(), (int) sed
                     .getAudioSamplingRate().scalar(), codec == MXFCodecMapping.PCM_S16BE ? Endian.BIG_ENDIAN
-                    : Endian.LITTLE_ENDIAN, true, labels, null);
+            : Endian.LITTLE_ENDIAN, true, labels, null);
         }
         throw new RuntimeException("Can't get sample entry");
     }

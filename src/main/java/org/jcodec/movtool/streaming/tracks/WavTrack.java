@@ -40,7 +40,7 @@ public class WavTrack implements VirtualTrack {
 
     private long size;
 
-    public WavTrack(ByteChannelPool pool, Label... labels) throws IOException {
+    public WavTrack(ByteChannelPool pool, Label[] labels) throws IOException {
         this.pool = pool;
 
         SeekableByteChannel ch = null;
@@ -52,7 +52,7 @@ public class WavTrack implements VirtualTrack {
             ch.close();
         }
 
-        se = new AudioCodecMeta("sowt", ByteBuffer.allocate(0), new AudioFormat(header.fmt.sampleRate,
+        se = AudioCodecMeta.createAudioCodecMeta3("sowt", ByteBuffer.allocate(0), new AudioFormat(header.fmt.sampleRate,
                 header.fmt.bitsPerSample >> 3, header.fmt.numChannels, true, false), true, labels);
 
         pktDataLen = FRAMES_PER_PKT * header.fmt.numChannels * (header.fmt.bitsPerSample >> 3);

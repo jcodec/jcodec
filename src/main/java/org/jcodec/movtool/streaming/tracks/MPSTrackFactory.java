@@ -267,7 +267,7 @@ public class MPSTrackFactory {
 
         @Override
         public CodecMeta getCodecMeta() {
-            return new VideoCodecMeta("m2v1", ByteBuffer.allocate(0), new Size(1920, 1080), new Rational(1, 1));
+            return VideoCodecMeta.createVideoCodecMeta("m2v1", ByteBuffer.allocate(0), new Size(1920, 1080), new Rational(1, 1));
         }
 
         @Override
