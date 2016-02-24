@@ -77,7 +77,7 @@ public class AliasBox extends FullBox {
         }
 
         public String toString() {
-            return Platform.stringFromCharset(data, 0, len, utf16.contains(type) ? Charset.forName("UTF-16") : Charset.forName("UTF-8"));
+            return Platform.stringFromCharset4(data, 0, len, utf16.contains(type) ? Charset.forName("UTF-16") : Charset.forName("UTF-8"));
         }
     }
 

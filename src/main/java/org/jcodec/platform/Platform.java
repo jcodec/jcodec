@@ -61,7 +61,7 @@ public class Platform {
         return class1.getClassLoader().getResourceAsStream(string);
     }
 
-    public static String stringFromCharset(byte[] data, int offset, int len, Charset charset) {
+    public static String stringFromCharset4(byte[] data, int offset, int len, Charset charset) {
         return new String(data, offset, len, charset);
     }
     
@@ -69,18 +69,17 @@ public class Platform {
         return class1.getResource(string);
  }
     
-    public static boolean arrayEquals(int[] a, int[] a2) {
+    public static boolean arrayEqualsInt(int[] a, int[] a2) {
         return Arrays.equals(a, a2);
     }
 
-    public static boolean arrayEquals(byte[] a, byte[] a2) {
+    public static boolean arrayEqualsByte(byte[] a, byte[] a2) {
         return Arrays.equals(a, a2);
     }
     
-    public static boolean arrayEquals(Object[] a, Object[] a2) {
+    public static boolean arrayEqualsObj(Object[] a, Object[] a2) {
         return Arrays.equals(a, a2);
     }
-
     
     public static <T> T[] copyOfRangeO(T[] original, int from, int to) {
         return Arrays.copyOfRange(original, from, to);

@@ -73,11 +73,11 @@ public class VerifyTool {
 
             ByteBuffer yuv = NIOUtils.read(_yuv, lumaSize + crSize + cbSize);
 
-            if (!Platform.arrayEquals(getAsIntArray(yuv, lumaSize), pic.getPlaneData(0)))
+            if (!Platform.arrayEqualsInt(getAsIntArray(yuv, lumaSize), pic.getPlaneData(0)))
                 return false;
-            if (!Platform.arrayEquals(getAsIntArray(yuv, crSize), pic.getPlaneData(1)))
+            if (!Platform.arrayEqualsInt(getAsIntArray(yuv, crSize), pic.getPlaneData(1)))
                 return false;
-            if (!Platform.arrayEquals(getAsIntArray(yuv, cbSize), pic.getPlaneData(2)))
+            if (!Platform.arrayEqualsInt(getAsIntArray(yuv, cbSize), pic.getPlaneData(2)))
                 return false;
         }
         return true;

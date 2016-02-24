@@ -72,7 +72,7 @@ public class MkvBlock extends EbmlBin {
 
     public MkvBlock(byte[] type) {
         super(type);
-        if (!Platform.arrayEquals(SimpleBlock.id, type) && !Platform.arrayEquals(Block.id, type))
+        if (!Platform.arrayEqualsByte(SimpleBlock.id, type) && !Platform.arrayEqualsByte(Block.id, type))
             throw new IllegalArgumentException("Block initiated with invalid id: " + EbmlUtil.toHexString(type));
     }
     

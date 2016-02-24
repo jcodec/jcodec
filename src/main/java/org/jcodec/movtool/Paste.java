@@ -180,7 +180,7 @@ public class Paste {
         TrackHeaderBox th1 = trakBox1.getTrackHeader();
         TrackHeaderBox th2 = trakBox2.getTrackHeader();
 
-        return ("vide".equals(trakBox1.getHandlerType()) && Platform.arrayEquals(th1.getMatrix(), th2.getMatrix())
+        return ("vide".equals(trakBox1.getHandlerType()) && Platform.arrayEqualsInt(th1.getMatrix(), th2.getMatrix())
                 && th1.getLayer() == th2.getLayer() && th1.getWidth() == th2.getWidth() && th1.getHeight() == th2
                 .getHeight())
                 || ("soun".equals(trakBox1.getHandlerType()) && th1.getVolume() == th2.getVolume())

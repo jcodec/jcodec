@@ -268,7 +268,7 @@ public class PictureParameterSet {
         if (getClass() != obj.getClass())
             return false;
         PictureParameterSet other = (PictureParameterSet) obj;
-        if (!Platform.arrayEquals(bottom_right, other.bottom_right))
+        if (!Platform.arrayEqualsInt(bottom_right, other.bottom_right))
             return false;
         if (chroma_qp_index_offset != other.chroma_qp_index_offset)
             return false;
@@ -299,7 +299,7 @@ public class PictureParameterSet {
             return false;
         if (redundant_pic_cnt_present_flag != other.redundant_pic_cnt_present_flag)
             return false;
-        if (!Platform.arrayEquals(run_length_minus1, other.run_length_minus1))
+        if (!Platform.arrayEqualsInt(run_length_minus1, other.run_length_minus1))
             return false;
         if (seq_parameter_set_id != other.seq_parameter_set_id)
             return false;
@@ -307,11 +307,11 @@ public class PictureParameterSet {
             return false;
         if (slice_group_change_rate_minus1 != other.slice_group_change_rate_minus1)
             return false;
-        if (!Platform.arrayEquals(slice_group_id, other.slice_group_id))
+        if (!Platform.arrayEqualsInt(slice_group_id, other.slice_group_id))
             return false;
         if (slice_group_map_type != other.slice_group_map_type)
             return false;
-        if (!Platform.arrayEquals(top_left, other.top_left))
+        if (!Platform.arrayEqualsInt(top_left, other.top_left))
             return false;
         if (weighted_bipred_idc != other.weighted_bipred_idc)
             return false;
