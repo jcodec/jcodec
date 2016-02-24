@@ -30,7 +30,7 @@ public class MXFPartitionPack extends MXFMetadata {
     }
 
     @Override
-    public void read(ByteBuffer bb) {
+    public void readBuf(ByteBuffer bb) {
         bb.order(ByteOrder.BIG_ENDIAN);
         NIOUtils.skip(bb, 4);
 

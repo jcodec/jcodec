@@ -220,7 +220,7 @@ public class MXFConst {
             super(ul);
         }
 
-        public void read(ByteBuffer bb) {
+        public void readBuf(ByteBuffer bb) {
         }
     }
 }

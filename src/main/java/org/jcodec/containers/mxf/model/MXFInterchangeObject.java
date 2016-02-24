@@ -23,7 +23,7 @@ public abstract class MXFInterchangeObject extends MXFMetadata {
         super(ul);
     }
 
-    public void read(ByteBuffer bb) {
+    public void readBuf(ByteBuffer bb) {
         bb.order(ByteOrder.BIG_ENDIAN);
         Map<Integer, ByteBuffer> tags = new HashMap<Integer, ByteBuffer>();
         while (bb.hasRemaining()) {

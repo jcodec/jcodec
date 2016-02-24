@@ -24,7 +24,7 @@ public abstract class MXFMetadata {
         this.ul = ul;
     }
 
-    public abstract void read(ByteBuffer bb);
+    public abstract void readBuf(ByteBuffer bb);
 
     /**
      * Utility method to read a batch of ULS
