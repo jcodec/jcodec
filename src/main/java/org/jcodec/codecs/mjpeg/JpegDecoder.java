@@ -238,7 +238,7 @@ public class JpegDecoder extends VideoDecoder {
             for (int c = 0; c < length; c++) {
                 int val = data.get() & 0xff;
                 int code = levelStart++;
-                builder.set(code, i + 1, val);
+                builder.setInt(code, i + 1, val);
             }
             levelStart <<= 1;
         }

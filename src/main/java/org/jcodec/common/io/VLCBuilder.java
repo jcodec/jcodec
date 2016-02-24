@@ -29,17 +29,17 @@ public class VLCBuilder {
 
     public VLCBuilder(int[] codes, int[] lens, int[] vals) {
         for (int i = 0; i < codes.length; i++) {
-            set(codes[i], lens[i], vals[i]);
+            setInt(codes[i], lens[i], vals[i]);
         }
     }
 
     public VLCBuilder set(int val, String code) {
-        set(Integer.parseInt(code, 2), code.length(), val);
+        setInt(Integer.parseInt(code, 2), code.length(), val);
         
         return this;
     }
 
-    public VLCBuilder set(int code, int len, int val) {
+    public VLCBuilder setInt(int code, int len, int val) {
         codes.add(code << (32 - len));
         codesSizes.add(len);
         forward.put(val, codes.size() - 1);
