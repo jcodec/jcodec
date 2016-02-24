@@ -70,7 +70,7 @@ public class DemuxerMain {
             File base) throws IOException {
 
         long pts = (long) (Math.random() * duration);
-        vt.seek(pts);
+        vt.seekPts(pts);
         for (int i = 0; i < 10; i++) {
             Packet frames = vt.nextFrame();
             Picture pic = decoder.decodeFrame(frames.getData(), allocBuffer(vt));

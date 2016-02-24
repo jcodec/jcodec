@@ -133,7 +133,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return pts >= 0 && pts < duration;
     }
 
-    public synchronized boolean seek(long pts) {
+    public synchronized boolean seekPts(long pts) {
         if (pts < 0)
             throw new IllegalArgumentException("Seeking to negative pts");
         if (pts >= duration)
@@ -186,17 +186,17 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
             return true;
 
         seekPointer(frameNo);
-        seekPts(frameNo);
+        seekFrame(frameNo);
 
         return true;
     }
     
     @Override
     public void seek(double second) {
-        seek((long) (second * timescale));
+        seekPts((long) (second * timescale));
     }
 
-    private void seekPts(long frameNo) {
+    private void seekFrame(long frameNo) {
         pts = sttsInd = sttsSubInd = 0;
         shiftPts(frameNo);
     }
