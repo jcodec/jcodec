@@ -36,10 +36,10 @@ public class VLC {
         this.codes = codes;
         this.codeSizes = codeSizes;
 
-        invert();
+        _invert();
     }
 
-    private void invert() {
+    private void _invert() {
         IntArrayList values = new IntArrayList();
         IntArrayList valueSizes = new IntArrayList();
         invert(0, 0, 0, values, valueSizes);
