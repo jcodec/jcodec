@@ -23,11 +23,12 @@ public class BitWriter {
         initPos = buf.position();
     }
 
-    private BitWriter(ByteBuffer os, int curBit, int curInt, int initPos) {
-        this.buf = os;
-        this._curBit = curBit;
-        this.curInt = curInt;
-        this.initPos = initPos;
+    public BitWriter fork() {
+        BitWriter fork = new BitWriter(buf.duplicate());
+        fork._curBit = this._curBit;
+        fork.curInt = this.curInt;
+        fork.initPos = this.initPos;
+        return fork;
     }
 
     public void flush() {
@@ -80,10 +81,6 @@ public class BitWriter {
 
     public int curBit() {
         return _curBit & 0x7;
-    }
-
-    public BitWriter fork() {
-        return new BitWriter(buf.duplicate(), _curBit, curInt, initPos);
     }
 
     public int position() {
