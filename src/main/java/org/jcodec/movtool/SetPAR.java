@@ -43,8 +43,7 @@ public class SetPAR {
 
                     vt.getTrackHeader().setWidth(displayWidth);
 
-                    Box tapt = Box.findFirst(vt, "tapt");
-                    if (tapt != null) {
+                    if (Box.containsBox(vt, "tapt")) {
                         vt.setAperture(new Size(codedWidth, codedHeight), new Size(displayWidth, codedHeight));
                     }
                 }

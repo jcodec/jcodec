@@ -43,7 +43,6 @@ public abstract class Box {
     public static Box findFirst(NodeBox box, String... path) {
         return findFirst(box, Box.class, path);
     }
-
     public static <T extends Box> T findFirst(NodeBox box, Class<T> clazz, String... path) {
         T[] result = (T[]) findAll(box, clazz, path);
 
@@ -176,5 +175,9 @@ public abstract class Box {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static boolean containsBox(NodeBox box, String path) {
+        return findFirst(box, new String[]{path}) != null;
     }
 }

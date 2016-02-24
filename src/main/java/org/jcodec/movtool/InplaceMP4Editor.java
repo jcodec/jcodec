@@ -165,7 +165,7 @@ public class InplaceMP4Editor {
         MovieBox moovBox = (MovieBox) parseBox(moovBuffer);
 
         List<Tuple._2<Atom, ByteBuffer>> fragments = new LinkedList<Tuple._2<Atom, ByteBuffer>>();
-        if (Box.findFirst(moovBox, "mvex") != null) {
+        if (Box.containsBox(moovBox, "mvex")) {
             List<Tuple._2<ByteBuffer, MovieFragmentBox>> temp = new LinkedList<Tuple._2<ByteBuffer, MovieFragmentBox>>();
             for (Atom fragAtom : getFragments(fi)) {
                 ByteBuffer fragBuffer = fetchBox(fi, fragAtom);
