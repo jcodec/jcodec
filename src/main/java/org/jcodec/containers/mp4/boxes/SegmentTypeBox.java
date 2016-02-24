@@ -20,6 +20,7 @@ import org.jcodec.common.io.NIOUtils;
 public class SegmentTypeBox extends Box {
     public SegmentTypeBox(Header header) {
         super(header);
+        this.compBrands = new LinkedList<String>();
     }
 
     private String majorBrand;
