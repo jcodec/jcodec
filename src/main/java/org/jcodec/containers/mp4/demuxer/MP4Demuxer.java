@@ -55,7 +55,7 @@ public class MP4Demuxer {
     }
 
     private void findMovieBox(SeekableByteChannel input) throws IOException {
-        movie = MP4Util.parseMovie(input);
+        movie = MP4Util.parseMovieChannel(input);
         if (movie == null)
             throw new IOException("Could not find movie meta information box");
 

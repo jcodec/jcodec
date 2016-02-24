@@ -49,7 +49,7 @@ public class Flattern {
         SeekableByteChannel input = null;
         try {
             input = readableChannel(new File(args[0]));
-            MovieBox movie = MP4Util.parseMovie(input);
+            MovieBox movie = MP4Util.parseMovieChannel(input);
             new Flattern().flattern(movie, outFile);
         } finally {
             if (input != null)
