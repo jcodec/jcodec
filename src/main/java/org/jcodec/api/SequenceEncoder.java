@@ -55,7 +55,7 @@ public class SequenceEncoder {
         _out = ByteBuffer.allocate(1920 * 1080 * 6);
 
         // Create an instance of encoder
-        encoder = new H264Encoder();
+        encoder = H264Encoder.createH264Encoder();
 
         // Transform to convert between RGB and YUV
         transform = ColorUtil.getTransform(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
