@@ -32,7 +32,7 @@ public class DataReader implements Closeable {
         this.buffer.order(order);
     }
 
-    public int readFully(byte[] b, int off, int len) throws IOException {
+    public int readFully3(byte[] b, int off, int len) throws IOException {
         int initOff = off;
         while (len > 0) {
             fetchIfNeeded(len);
@@ -134,6 +134,6 @@ public class DataReader implements Closeable {
     }
 
     public int readFully(byte[] b) throws IOException {
-        return readFully(b, 0, b.length);
+        return readFully3(b, 0, b.length);
     }
 }

@@ -34,7 +34,7 @@ public class MTSIndexer {
     }
 
     public void index(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
-        index(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
+        index(listener, MTSUtils.getMediaPids(source)).readChannel(source, BUFFER_SIZE, listener);
     }
 
     public FileReader index(NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
