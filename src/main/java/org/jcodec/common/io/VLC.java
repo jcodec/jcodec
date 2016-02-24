@@ -15,6 +15,17 @@ import org.jcodec.common.IntArrayList;
  */
 public class VLC {
 
+    public static VLC createVLC(String... codes) {
+        IntArrayList _codes = new IntArrayList();
+        IntArrayList _codeSizes = new IntArrayList();
+        for (String string : codes) {
+            _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
+            _codeSizes.add(string.length());
+        }
+        VLC vlc = new VLC(_codes.toArray(), _codeSizes.toArray());
+        return vlc;
+    }
+
     private int[] codes;
     private int[] codeSizes;
 
@@ -24,19 +35,6 @@ public class VLC {
     public VLC(int[] codes, int[] codeSizes) {
         this.codes = codes;
         this.codeSizes = codeSizes;
-
-        invert();
-    }
-
-    public VLC(String... codes) {
-        IntArrayList _codes = new IntArrayList();
-        IntArrayList _codeSizes = new IntArrayList();
-        for (String string : codes) {
-            _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
-            _codeSizes.add(string.length());
-        }
-        this.codes = _codes.toArray();
-        this.codeSizes = _codeSizes.toArray();
 
         invert();
     }
