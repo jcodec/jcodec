@@ -18,7 +18,7 @@ public enum Brand {
     private FileTypeBox ftyp;
 
     private Brand(String majorBrand, int version, String[] compatible) {
-        ftyp = new FileTypeBox(majorBrand, version, Arrays.asList(compatible));
+        ftyp = FileTypeBox.createFileTypeBox(majorBrand, version, Arrays.asList(compatible));
     }
 
     public FileTypeBox getFileTypeBox() {

@@ -19,11 +19,11 @@ public class DataRefBox extends NodeBox {
         return "dref";
     }
 
-    public DataRefBox() {
-        this(new Header(fourcc()));
+    public static DataRefBox createDataRefBox() {
+        return new DataRefBox(new Header(fourcc()));
     }
 
-    private DataRefBox(Header atom) {
+    public DataRefBox(Header atom) {
         super(atom);
         factory = FACTORY;
     }

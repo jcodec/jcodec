@@ -117,9 +117,9 @@ public abstract class AbstractMP4MuxerTrack {
         Size dd = getDisplayDimensions();
         if (type == VIDEO) {
             NodeBox tapt = new NodeBox(new Header("tapt"));
-            tapt.add(new ClearApertureBox(dd.getWidth(), dd.getHeight()));
-            tapt.add(new ProductionApertureBox(dd.getWidth(), dd.getHeight()));
-            tapt.add(new EncodedPixelBox(dd.getWidth(), dd.getHeight()));
+            tapt.add(ClearApertureBox.createClearApertureBox(dd.getWidth(), dd.getHeight()));
+            tapt.add(ProductionApertureBox.createProductionApertureBox(dd.getWidth(), dd.getHeight()));
+            tapt.add(EncodedPixelBox.createEncodedPixelBox(dd.getWidth(), dd.getHeight()));
             trak.add(tapt);
         }
     }
@@ -141,7 +141,7 @@ public abstract class AbstractMP4MuxerTrack {
     protected void putEdits(TrakBox trak) {
         if (edits != null) {
             NodeBox edts = new NodeBox(new Header("edts"));
-            edts.add(new EditListBox(edits));
+            edts.add(EditListBox.createEditListBox(edits));
             trak.add(edts);
         }
     }
@@ -153,7 +153,7 @@ public abstract class AbstractMP4MuxerTrack {
     protected void putName(TrakBox trak) {
         if (name != null) {
             NodeBox udta = new NodeBox(new Header("udta"));
-            udta.add(new NameBox(name));
+            udta.add(NameBox.createNameBox(name));
             trak.add(udta);
         }
     }
@@ -161,22 +161,23 @@ public abstract class AbstractMP4MuxerTrack {
     protected void mediaHeader(MediaInfoBox minf, TrackType type) {
         switch (type) {
         case VIDEO:
-            VideoMediaHeaderBox vmhd = new VideoMediaHeaderBox(0, 0, 0, 0);
+            VideoMediaHeaderBox vmhd = VideoMediaHeaderBox.createVideoMediaHeaderBox(0, 0, 0, 0);
             vmhd.setFlags(1);
             minf.add(vmhd);
             break;
         case SOUND:
-            SoundMediaHeaderBox smhd = new SoundMediaHeaderBox();
+            SoundMediaHeaderBox smhd = SoundMediaHeaderBox.createSoundMediaHeaderBox();
             smhd.setFlags(1);
             minf.add(smhd);
             break;
         case TIMECODE:
             NodeBox gmhd = new NodeBox(new Header("gmhd"));
-            gmhd.add(new GenericMediaInfoBox());
+            gmhd.add(GenericMediaInfoBox.createGenericMediaInfoBox());
             NodeBox tmcd = new NodeBox(new Header("tmcd"));
             gmhd.add(tmcd);
-            tmcd.add(new TimecodeMediaInfoBox((short) 0, (short) 0, (short) 12, new short[] { 0, 0, 0 }, new short[] {
-                    0xff, 0xff, 0xff }, "Lucida Grande"));
+            tmcd.add(TimecodeMediaInfoBox
+                    .createTimecodeMediaInfoBox((short) 0, (short) 0, (short) 12, new short[] { 0, 0, 0 }, new short[] {
+                            0xff, 0xff, 0xff }, "Lucida Grande"));
             minf.add(gmhd);
             break;
         default:
@@ -185,10 +186,10 @@ public abstract class AbstractMP4MuxerTrack {
     }
 
     protected void addDref(NodeBox minf) {
-        DataInfoBox dinf = new DataInfoBox();
+        DataInfoBox dinf = DataInfoBox.createDataInfoBox();
         minf.add(dinf);
-        DataRefBox dref = new DataRefBox();
+        DataRefBox dref = DataRefBox.createDataRefBox();
         dinf.add(dref);
-        dref.add(new LeafBox(new Header("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
+        dref.add(LeafBox.createLeafBox(new Header("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
     }
 }

@@ -11,11 +11,11 @@ import java.nio.ByteBuffer;
  */
 public class MP4ABox extends Box {
 
-    private int val;
-
-    public MP4ABox(int val) {
-        super(new Header("mp4a"));
+    public MP4ABox(Header header) {
+        super(header);
     }
+
+    private int val;
 
     protected void doWrite(ByteBuffer out) {
         out.putInt(val);

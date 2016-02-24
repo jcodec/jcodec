@@ -17,21 +17,23 @@ public class TimecodeMediaInfoBox extends FullBox {
     private short face;
     private short size;
     private short[] color;
-    private short[] bgcolor;    
+    private short[] bgcolor;
     private String name;
 
     public static String fourcc() {
         return "tcmi";
     }
 
-    public TimecodeMediaInfoBox(short font, short face, short size, short[] color, short[] bgcolor, String name) {
-        this(new Header(fourcc()));
-        this.font = font;
-        this.face = face;
-        this.size = size;
-        this.color = color;
-        this.bgcolor = bgcolor;
-        this.name = name;
+    public static TimecodeMediaInfoBox createTimecodeMediaInfoBox(short font, short face, short size, short[] color,
+            short[] bgcolor, String name) {
+        TimecodeMediaInfoBox box = new TimecodeMediaInfoBox(new Header(fourcc()));
+        box.font = font;
+        box.face = face;
+        box.size = size;
+        box.color = color;
+        box.bgcolor = bgcolor;
+        box.name = name;
+        return box;
     }
 
     public TimecodeMediaInfoBox(Header atom) {

@@ -14,16 +14,16 @@ import java.nio.ByteBuffer;
  */
 public class TrackExtendsBox extends FullBox {
 
+    public TrackExtendsBox(Header atom) {
+        super(atom);
+    }
+
     private int trackId;
     private int defaultSampleDescriptionIndex;
     private int defaultSampleDuration;
     private int defaultSampleBytes;
     private int defaultSampleFlags;
-
-    public TrackExtendsBox() {
-        super(new Header(fourcc()));
-    }
-
+ 
     public static String fourcc() {
         return "trex";
     }

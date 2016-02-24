@@ -1,6 +1,5 @@
 package org.jcodec.containers.mp4.boxes;
 
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -14,15 +13,14 @@ public class EncodedPixelBox extends ClearApertureBox {
         return "enof";
     }
 
+    public static EncodedPixelBox createEncodedPixelBox(int width, int height) {
+        EncodedPixelBox enof = new EncodedPixelBox(new Header(fourcc()));
+        enof.width = width;
+        enof.height = height;
+        return enof;
+    }
+
     public EncodedPixelBox(Header atom) {
         super(atom);
-    }
-
-    public EncodedPixelBox() {
-        super(new Header(fourcc()));
-    }
-
-    public EncodedPixelBox(int width, int height) {
-        super(new Header(fourcc()), width, height);
     }
 }

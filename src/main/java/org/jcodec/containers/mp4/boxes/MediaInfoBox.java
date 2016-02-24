@@ -15,12 +15,12 @@ public class MediaInfoBox extends NodeBox {
         return "minf";
     }
 
-    public MediaInfoBox(Header atom) {
-        super(atom);
+    public static MediaInfoBox createMediaInfoBox() {
+        return new MediaInfoBox(new Header(fourcc()));
     }
 
-    public MediaInfoBox() {
-        super(new Header(fourcc()));
+    public MediaInfoBox(Header atom) {
+        super(atom);
     }
 
     public DataInfoBox getDinf() {

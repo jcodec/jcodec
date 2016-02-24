@@ -16,15 +16,16 @@ import org.jcodec.common.io.NIOUtils;
  * 
  */
 public class LeafBox extends Box {
+    public static LeafBox createLeafBox(Header atom, ByteBuffer data) {
+        LeafBox leaf = new LeafBox(atom);
+        leaf.data = data;
+        return leaf;
+    }
+
     private ByteBuffer data;
 
     public LeafBox(Header atom) {
         super(atom);
-    }
-
-    public LeafBox(Header atom, ByteBuffer data) {
-        super(atom);
-        this.data = data;
     }
 
     public void parse(ByteBuffer input) {

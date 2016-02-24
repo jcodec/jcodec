@@ -1,5 +1,7 @@
 package org.jcodec.codecs.h264;
 
+import static java.util.Arrays.asList;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -341,8 +343,7 @@ public class H264Utils {
         serialPps.flip();
         H264Utils.escapeNALinplace(serialPps);
 
-        AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize,
-                Arrays.asList(new ByteBuffer[] { serialSps }), Arrays.asList(new ByteBuffer[] { serialPps }));
+        AvcCBox avcC = AvcCBox.createAvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, asList(serialSps), asList(serialPps));
 
         return avcC;
     }
@@ -352,7 +353,7 @@ public class H264Utils {
         List<ByteBuffer> serialPps = savePPS(initPPS);
 
         SeqParameterSet sps = initSPS.get(0);
-        return new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, serialSps, serialPps);
+        return AvcCBox.createAvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, serialSps, serialPps);
     }
 
     /**
@@ -400,7 +401,7 @@ public class H264Utils {
     
     public static SampleEntry createMOVSampleEntryFromSpsPpsList(List<ByteBuffer> spsList, List<ByteBuffer> ppsList, int nalLengthSize) {
         SeqParameterSet sps = readSPS(NIOUtils.duplicate(spsList.get(0)));
-        AvcCBox avcC = new AvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, spsList, ppsList);
+        AvcCBox avcC = AvcCBox.createAvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, spsList, ppsList);
 
         return createMOVSampleEntryFromAvcC(avcC);
     }
@@ -574,9 +575,7 @@ public class H264Utils {
     }
 
     public static AvcCBox parseAVCCFromBuffer(ByteBuffer bb) {
-        AvcCBox avcC = new AvcCBox();
-        avcC.parse(bb);
-        return avcC;
+        return AvcCBox.parseAvcCBox(bb);
     }
 
     public static ByteBuffer writeSPS(SeqParameterSet sps, int approxSize) {

@@ -12,12 +12,11 @@ import java.nio.ByteBuffer;
  * 
  */
 public class MovieExtendsHeaderBox extends FullBox {
+    public MovieExtendsHeaderBox(Header atom) {
+        super(atom);
+    }
 
     private int fragmentDuration;
-
-    public MovieExtendsHeaderBox() {
-        super(new Header(fourcc()));
-    }
 
     public static String fourcc() {
         return "mehd";

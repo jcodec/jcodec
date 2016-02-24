@@ -12,13 +12,17 @@ import java.nio.ByteBuffer;
  * 
  */
 public class TrackFragmentHeaderBox extends FullBox {
-//@formatter:off
-    public static final int FLAG_BASE_DATA_OFFSET               = 0x01;
-    public static final int FLAG_SAMPLE_DESCRIPTION_INDEX       = 0x02;
-    public static final int FLAG_DEFAILT_SAMPLE_DURATION        = 0x08;
-    public static final int FLAG_DEFAULT_SAMPLE_SIZE            = 0x10;
-    public static final int FLAG_DEFAILT_SAMPLE_FLAGS           = 0x20;
-//@formatter:on
+    public TrackFragmentHeaderBox(Header atom) {
+        super(atom);
+    }
+
+    //@formatter:off
+    public static final int FLAG_BASE_DATA_OFFSET = 0x01;
+    public static final int FLAG_SAMPLE_DESCRIPTION_INDEX = 0x02;
+    public static final int FLAG_DEFAILT_SAMPLE_DURATION = 0x08;
+    public static final int FLAG_DEFAULT_SAMPLE_SIZE = 0x10;
+    public static final int FLAG_DEFAILT_SAMPLE_FLAGS = 0x20;
+    //@formatter:on
 
     private int trackId;
     private long baseDataOffset;
@@ -30,25 +34,17 @@ public class TrackFragmentHeaderBox extends FullBox {
     public static String fourcc() {
         return "tfhd";
     }
-    
-    public TrackFragmentHeaderBox() {
-        super(new Header(fourcc()));
-    }
 
-    public TrackFragmentHeaderBox(int trackId) {
-        this();
-        this.trackId = trackId;
-    }
-
-    protected TrackFragmentHeaderBox(int trackId, long baseDataOffset, int sampleDescriptionIndex,
-            int defaultSampleDuration, int defaultSampleSize, int defaultSampleFlags) {
-        super(new Header(fourcc()));
-        this.trackId = trackId;
-        this.baseDataOffset = baseDataOffset;
-        this.sampleDescriptionIndex = sampleDescriptionIndex;
-        this.defaultSampleDuration = defaultSampleDuration;
-        this.defaultSampleSize = defaultSampleSize;
-        this.defaultSampleFlags = defaultSampleFlags;
+    public static TrackFragmentHeaderBox createTrackFragmentHeaderBox(int trackId, long baseDataOffset,
+            int sampleDescriptionIndex, int defaultSampleDuration, int defaultSampleSize, int defaultSampleFlags) {
+        TrackFragmentHeaderBox box = new TrackFragmentHeaderBox(new Header(fourcc()));
+        box.trackId = trackId;
+        box.baseDataOffset = baseDataOffset;
+        box.sampleDescriptionIndex = sampleDescriptionIndex;
+        box.defaultSampleDuration = defaultSampleDuration;
+        box.defaultSampleSize = defaultSampleSize;
+        box.defaultSampleFlags = defaultSampleFlags;
+        return box;
     }
 
     public static Factory create(int trackId) {
@@ -59,17 +55,23 @@ public class TrackFragmentHeaderBox extends FullBox {
         return new Factory(other);
     }
 
+    public static TrackFragmentHeaderBox createTrackFragmentHeaderBoxWithId(int trackId) {
+        TrackFragmentHeaderBox box = new TrackFragmentHeaderBox(new Header(fourcc()));
+        box.trackId = trackId;
+        return box;
+    }
+
     public static class Factory {
 
         private TrackFragmentHeaderBox box;
 
         protected Factory(int trackId) {
-            box = new TrackFragmentHeaderBox(trackId);
+            box = TrackFragmentHeaderBox.createTrackFragmentHeaderBoxWithId(trackId);
         }
 
         public Factory(TrackFragmentHeaderBox other) {
-            box = new TrackFragmentHeaderBox(other.trackId, other.baseDataOffset, other.sampleDescriptionIndex,
-                    other.defaultSampleDuration, other.defaultSampleSize, other.defaultSampleFlags);
+            box = TrackFragmentHeaderBox
+                    .createTrackFragmentHeaderBox(other.trackId, other.baseDataOffset, other.sampleDescriptionIndex, other.defaultSampleDuration, other.defaultSampleSize, other.defaultSampleFlags);
             box.setFlags(other.getFlags());
             box.setVersion(other.getVersion());
         }
@@ -188,11 +190,11 @@ public class TrackFragmentHeaderBox extends FullBox {
     public boolean isDefaultSampleFlagsAvailable() {
         return (flags & FLAG_DEFAILT_SAMPLE_FLAGS) != 0;
     }
-    
+
     public void setTrackId(int trackId) {
         this.trackId = trackId;
     }
-    
+
     public void setDefaultSampleFlags(int defaultSampleFlags) {
         this.defaultSampleFlags = defaultSampleFlags;
     }

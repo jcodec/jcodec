@@ -175,9 +175,9 @@ public class Util {
             throw new IllegalArgumentException("Can't append to track that has different default sample size");
         SampleSizesBox stszr;
         if (stsz1.getDefaultSize() > 0) {
-            stszr = new SampleSizesBox(stsz1.getDefaultSize(), stsz1.getCount() + stsz2.getCount());
+            stszr = SampleSizesBox.createSampleSizesBox(stsz1.getDefaultSize(), stsz1.getCount() + stsz2.getCount());
         } else {
-            stszr = new SampleSizesBox(addAllInt(stsz1.getSizes(), stsz2.getSizes()));
+            stszr = SampleSizesBox.createSampleSizesBox2(addAllInt(stsz1.getSizes(), stsz2.getSizes()));
         }
         NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stsz", stszr);
     }
@@ -193,7 +193,7 @@ public class Util {
                     orig[i].getCount(), orig[i].getEntry() + off);
         }
         NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stsc",
-                new SampleToChunkBox((SampleToChunkEntry[]) ArrayUtil.addAllObj(stsc1.getSampleToChunk(), shifted)));
+                SampleToChunkBox.createSampleToChunkBox((SampleToChunkEntry[]) ArrayUtil.addAllObj(stsc1.getSampleToChunk(), shifted)));
     }
 
     private static int appendEntries(TrakBox trakBox1, TrakBox trakBox2) {
@@ -202,7 +202,7 @@ public class Util {
         SampleEntry[] ent1 = trakBox1.getSampleEntries();
         SampleEntry[] ent2 = trakBox2.getSampleEntries();
 
-        SampleDescriptionBox stsd = new SampleDescriptionBox(ent1);
+        SampleDescriptionBox stsd = SampleDescriptionBox.createSampleDescriptionBox(ent1);
         for (SampleEntry se : ent2) {
             se.setDrefInd((short) (se.getDrefInd() + ent1.length));
             stsd.add(se);
@@ -221,7 +221,7 @@ public class Util {
     private static void appendTimeToSamples(TrakBox trakBox1, TrakBox trakBox2) {
         TimeToSampleBox stts1 = trakBox1.getStts();
         TimeToSampleBox stts2 = trakBox2.getStts();
-        TimeToSampleBox sttsNew = new TimeToSampleBox((TimeToSampleEntry[]) addAllObj(stts1.getEntries(),
+        TimeToSampleBox sttsNew = TimeToSampleBox.createTimeToSampleBox((TimeToSampleEntry[]) addAllObj(stts1.getEntries(),
                 stts2.getEntries()));
         NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stts", sttsNew);
     }
@@ -236,8 +236,7 @@ public class Util {
         long[] off2 = stco2 == null ? co642.getChunkOffsets() : stco2.getChunkOffsets();
         NodeBox stbl1 = NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl");
         stbl1.removeChildren("stco", "co64");
-        stbl1.add(co641 == null && co642 == null ? new ChunkOffsetsBox(ArrayUtil.addAllLong(off1, off2)) : new ChunkOffsets64Box(
-                ArrayUtil.addAllLong(off1, off2)));
+        stbl1.add(co641 == null && co642 == null ? ChunkOffsetsBox.createChunkOffsetsBox(ArrayUtil.addAllLong(off1, off2)) : ChunkOffsets64Box.createChunkOffsets64Box(ArrayUtil.addAllLong(off1, off2)));
     }
 
     public static void forceEditList(MovieBox movie, TrakBox trakBox) {

@@ -2,6 +2,8 @@ package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -17,21 +19,18 @@ public class EndianBox extends Box {
 
     private Endian endian;
 
-    public EndianBox(Box other) {
-        super(other);
-    }
-
     public static String fourcc() {
         return "enda";
     }
 
-    public EndianBox(Header header) {
-        super(header);
+    public static EndianBox createEndianBox(Endian endian) {
+        EndianBox endianBox = new EndianBox(new Header(fourcc()));
+        endianBox.endian = endian;
+        return endianBox;
     }
 
-    public EndianBox(Endian endian) {
-        super(new Header(fourcc()));
-        this.endian = endian;
+    public EndianBox(Header header) {
+        super(header);
     }
 
     public void parse(ByteBuffer input) {
@@ -44,7 +43,7 @@ public class EndianBox extends Box {
     }
 
     protected void doWrite(ByteBuffer out) {
-        out.putShort((short)(endian == Endian.LITTLE_ENDIAN ? 1 : 0));
+        out.putShort((short) (endian == Endian.LITTLE_ENDIAN ? 1 : 0));
     }
 
     public Endian getEndian() {

@@ -25,10 +25,6 @@ public class LoadSettingsBox extends Box {
         super(header);
     }
 
-    public LoadSettingsBox() {
-        super(new Header(fourcc()));
-    }
-
     public void parse(ByteBuffer input) {
         preloadStartTime = input.getInt();
         preloadDuration = input.getInt();

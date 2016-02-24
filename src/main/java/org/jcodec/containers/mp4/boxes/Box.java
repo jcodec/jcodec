@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.jcodec.common.Assert;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
@@ -27,13 +28,10 @@ import org.jcodec.platform.Platform;
 public abstract class Box {
     private static final String GET_MODEL_FIELDS = "getModelFields";
     protected Header header;
-
+    
+    @UsedViaReflection
     public Box(Header header) {
         this.header = header;
-    }
-
-    public Box(Box other) {
-        this.header = other.header;
     }
 
     public Header getHeader() {

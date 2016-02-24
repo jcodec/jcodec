@@ -2,6 +2,8 @@ package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -12,6 +14,10 @@ import java.nio.ByteBuffer;
  * 
  */
 public class SampleToChunkBox extends FullBox {
+
+    public SampleToChunkBox(Header atom) {
+        super(atom);
+    }
 
     public static class SampleToChunkEntry {
         private long first;
@@ -53,16 +59,12 @@ public class SampleToChunkBox extends FullBox {
         return "stsc";
     }
 
+    public static SampleToChunkBox createSampleToChunkBox(SampleToChunkEntry[] sampleToChunk) {
+        SampleToChunkBox box = new SampleToChunkBox(new Header(fourcc()));
+        box.sampleToChunk = sampleToChunk;
+        return box;
+    }
     private SampleToChunkEntry[] sampleToChunk;
-
-    public SampleToChunkBox(SampleToChunkEntry[] sampleToChunk) {
-        super(new Header(fourcc()));
-        this.sampleToChunk = sampleToChunk;
-    }
-
-    public SampleToChunkBox() {
-        super(new Header(fourcc()));
-    }
 
     public void parse(ByteBuffer input) {
         super.parse(input);

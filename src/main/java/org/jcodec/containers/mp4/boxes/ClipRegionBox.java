@@ -21,21 +21,18 @@ public class ClipRegionBox extends Box {
         return "crgn";
     }
 
+    public static ClipRegionBox createClipRegionBox(short x, short y, short width, short height) {
+        ClipRegionBox b = new ClipRegionBox(new Header(fourcc()));
+        b.rgnSize = 10;
+        b.x = x;
+        b.y = y;
+        b.width = width;
+        b.height = height;
+        return b;
+    }
+
     public ClipRegionBox(Header atom) {
         super(atom);
-    }
-
-    public ClipRegionBox() {
-        super(new Header(fourcc()));
-    }
-
-    public ClipRegionBox(short x, short y, short width, short height) {
-        this();
-        rgnSize = 10;
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
     }
 
     public void parse(ByteBuffer input) {

@@ -133,7 +133,7 @@ public class Strip {
                 longBox = true;
             result[i++] = chunk.getOffset();
         }
-        return longBox ? new ChunkOffsets64Box(result) : new ChunkOffsetsBox(result);
+        return longBox ? ChunkOffsets64Box.createChunkOffsets64Box(result) : ChunkOffsetsBox.createChunkOffsetsBox(result);
     }
 
     public TimeToSampleBox getTimeToSamples(List<Chunk> chunks) {
@@ -162,7 +162,7 @@ public class Strip {
         }
         if (cnt > 0)
             tts.add(new TimeToSampleEntry(cnt, curTts));
-        return new TimeToSampleBox(tts.toArray(new TimeToSampleEntry[0]));
+        return TimeToSampleBox.createTimeToSampleBox(tts.toArray(new TimeToSampleEntry[0]));
     }
 
     public SampleSizesBox getSampleSizes(List<Chunk> chunks) {
@@ -174,7 +174,7 @@ public class Strip {
         }
 
         if (prevSize > 0)
-            return new SampleSizesBox(prevSize, nSamples);
+            return SampleSizesBox.createSampleSizesBox(prevSize, nSamples);
 
         int[] sizes = new int[nSamples];
         int startSample = 0;
@@ -182,7 +182,7 @@ public class Strip {
             arraycopy(chunk.getSampleSizes(), 0, sizes, startSample, chunk.getSampleCount());
             startSample += chunk.getSampleCount();
         }
-        return new SampleSizesBox(sizes);
+        return SampleSizesBox.createSampleSizesBox2(sizes);
     }
 
     public SampleToChunkBox getSamplesToChunk(List<Chunk> chunks) {
@@ -207,7 +207,7 @@ public class Strip {
         }
         if (cnt > 0)
             result.add(new SampleToChunkEntry(first, curSz, curEntry));
-        return new SampleToChunkBox(result.toArray(new SampleToChunkEntry[0]));
+        return SampleToChunkBox.createSampleToChunkBox(result.toArray(new SampleToChunkEntry[0]));
     }
 
     private boolean intersects(long a, long b, long c, long d) {

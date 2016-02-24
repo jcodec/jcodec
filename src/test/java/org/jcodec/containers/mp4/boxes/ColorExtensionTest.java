@@ -8,7 +8,7 @@ import org.junit.Test;
 public class ColorExtensionTest {
     @Test
     public void testColorIsom() throws Exception {
-        ColorExtension color = new ColorExtension();
+        ColorExtension color = ColorExtension.createColr();
         color.setColorRange((byte) 2);
         ByteBuffer buf = ByteBuffer.allocate(64);
         color.write(buf);
@@ -18,7 +18,7 @@ public class ColorExtensionTest {
     
     @Test
     public void testColorMov() throws Exception {
-        ColorExtension color = new ColorExtension();
+        ColorExtension color = ColorExtension.createColr();
         ByteBuffer buf = ByteBuffer.allocate(64);
         color.write(buf);
         buf.flip();

@@ -15,21 +15,18 @@ import org.jcodec.common.io.NIOUtils;
 public class FormatBox extends Box {
     private String fmt;
 
-    public FormatBox(Box other) {
-        super(other);
-    }
-
     public FormatBox(Header header) {
         super(header);
     }
 
-    public FormatBox(String fmt) {
-        super(new Header(fourcc()));
-        this.fmt = fmt;
-    }
-
     public static String fourcc() {
         return "frma";
+    }
+
+    public static FormatBox createFormatBox(String fmt) {
+        FormatBox frma = new FormatBox(new Header(fourcc()));
+        frma.fmt = fmt;
+        return frma;
     }
 
     public void parse(ByteBuffer input) {

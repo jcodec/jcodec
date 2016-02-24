@@ -83,8 +83,7 @@ public class MKVFrameReadingTest {
 
         Picture rgb = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
         BufferedImage bi = new BufferedImage(dem.getPictureWidth(), dem.getPictureHeight(), BufferedImage.TYPE_3BYTE_BGR);
-        AvcCBox avcC = new AvcCBox();
-        avcC.parse(((VideoTrack) inTrack).getCodecState());
+        AvcCBox avcC = AvcCBox.parseAvcCBox(((VideoTrack) inTrack).getCodecState());
 
         decoder.addSps(avcC.getSpsList());
         decoder.addPps(avcC.getPpsList());
@@ -113,8 +112,7 @@ public class MKVFrameReadingTest {
         H264Decoder decoder = new H264Decoder();
         DemuxerTrack inTrack = dem.getVideoTrack();
 
-        AvcCBox avcC = new AvcCBox();
-        avcC.parse(((VideoTrack) inTrack).getCodecState());
+        AvcCBox avcC = AvcCBox.parseAvcCBox(((VideoTrack) inTrack).getCodecState());
 
         Assert.assertNotNull(avcC.getSpsList());
         Assert.assertFalse(avcC.getSpsList().isEmpty());

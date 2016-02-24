@@ -83,7 +83,7 @@ public class AACUtils {
             b = Box.findFirst(mp4a, LeafBox.class, null, "esds");
         if (b == null)
             return null;
-        EsdsBox esds = new EsdsBox();
+        EsdsBox esds = EsdsBox.newEsdsBox();
         esds.parse(b.getData());
         return parseAudioInfo(esds.getStreamInfo());
     }

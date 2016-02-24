@@ -13,15 +13,10 @@ import java.nio.ByteBuffer;
  */
 public class SampleEntry extends NodeBox {
 
-    private short drefInd;
+    protected short drefInd;
 
     public SampleEntry(Header header) {
         super(header);
-    }
-
-    public SampleEntry(Header header, short drefInd) {
-        super(header);
-        this.drefInd = drefInd;
     }
 
     public void parse(ByteBuffer input) {

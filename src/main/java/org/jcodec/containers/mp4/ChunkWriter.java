@@ -51,7 +51,7 @@ public class ChunkWriter {
         NodeBox stbl = NodeBox.findFirst(trak, NodeBox.class, "mdia", "minf", "stbl");
         stbl.removeChildren("stco", "co64");
 
-        stbl.add(new ChunkOffsets64Box(offsets));
+        stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(offsets));
         cleanDrefs(trak);
     }
 
@@ -59,13 +59,13 @@ public class ChunkWriter {
         MediaInfoBox minf = trak.getMdia().getMinf();
         DataInfoBox dinf = trak.getMdia().getMinf().getDinf();
         if (dinf == null) {
-            dinf = new DataInfoBox();
+            dinf = DataInfoBox.createDataInfoBox();
             minf.add(dinf);
         }
 
         DataRefBox dref = dinf.getDref();
         if (dref == null) {
-            dref = new DataRefBox();
+            dref = DataRefBox.createDataRefBox();
             dinf.add(dref);
         }
 

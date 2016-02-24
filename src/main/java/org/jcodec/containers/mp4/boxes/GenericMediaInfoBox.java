@@ -20,21 +20,12 @@ public class GenericMediaInfoBox extends FullBox {
         return "gmin";
     }
 
-    public GenericMediaInfoBox(short graphicsMode, short rOpColor, short gOpColor, short bOpColor, short balance) {
-        this();
-        this.graphicsMode = graphicsMode;
-        this.rOpColor = rOpColor;
-        this.gOpColor = gOpColor;
-        this.bOpColor = bOpColor;
-        this.balance = balance;
+    public static GenericMediaInfoBox createGenericMediaInfoBox() {
+        return new GenericMediaInfoBox(new Header(fourcc()));
     }
 
     public GenericMediaInfoBox(Header atom) {
         super(atom);
-    }
-
-    public GenericMediaInfoBox() {
-        this(new Header(fourcc()));
     }
 
     public void parse(ByteBuffer input) {
@@ -54,6 +45,6 @@ public class GenericMediaInfoBox extends FullBox {
         out.putShort(gOpColor);
         out.putShort(bOpColor);
         out.putShort(balance);
-        out.putShort((short)0);
+        out.putShort((short) 0);
     }
 }
