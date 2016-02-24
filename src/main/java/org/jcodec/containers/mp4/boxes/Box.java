@@ -137,7 +137,7 @@ public abstract class Box {
         collectModel(claz.getSuperclass(), model);
 
         try {
-            Platform.invokeMethod(this, GET_MODEL_FIELDS, model);
+            Platform.invokeMethod(this, GET_MODEL_FIELDS, new Object[]{model});
         } catch (NoSuchMethodException e) {
             checkWrongSignature(claz);
             model.addAll(ToJSON.allFields(claz));

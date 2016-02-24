@@ -370,7 +370,7 @@ public enum MKVType {
 
       private static <T extends EbmlBase> T create(Class<T> clazz, byte[] id) throws SecurityException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException, InstantiationException,
               IllegalAccessException {
-          return Platform.newInstance(clazz, id);
+          return Platform.newInstance(clazz, new Object[]{id});
       }
       
       @SuppressWarnings("unchecked")
