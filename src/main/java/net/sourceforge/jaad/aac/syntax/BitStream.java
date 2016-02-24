@@ -16,17 +16,20 @@ public class BitStream implements IBitStream {
 	private static final int WORD_BITS = 32;
 	private static final int WORD_BYTES = 4;
 	private static final int BYTE_MASK = 0xff;
-	private byte[] buffer;
+	
+	public static BitStream createBitStream(byte[] data) {
+        BitStream bs = new BitStream();
+        bs.setData(data);
+        return bs;
+    }
+
+    private byte[] buffer;
 	private int pos; //offset in the buffer array
 	private int cache; //current 4 bytes, that are read from the buffer
 	protected int bitsCached; //remaining bits in current cache
 	protected int position; //number of total bits read
 
 	public BitStream() {
-	}
-
-	public BitStream(byte[] data) {
-		setData(data);
 	}
 
 	/* (non-Javadoc)

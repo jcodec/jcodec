@@ -26,7 +26,7 @@ public class TestBitReader {
         byte[] src = new byte[] { b("10011000") };
         boolean eof = false;
         try {
-            BitStream bs = new BitStream(src);
+            BitStream bs = BitStream.createBitStream(src);
             for (int i = 0; i < 10; i++) {
                 System.out.println(Integer.toBinaryString(bs.readBits(4)) + " " + bs.getBitsLeft());
             }
