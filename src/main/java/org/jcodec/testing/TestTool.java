@@ -78,7 +78,7 @@ public class TestTool {
             AbstractMP4DemuxerTrack dt = (AbstractMP4DemuxerTrack) inTrack;
 
             byte[] codecPrivate = dt.getMeta().getCodecPrivate();
-            H264Decoder decoder = new H264Decoder(codecPrivate);
+            H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(codecPrivate);
 
             Packet inFrame;
 
@@ -109,7 +109,7 @@ public class TestTool {
                 }
                 raw.write(_rawData);
 
-                decodedPics.add(decoder.decodeFrame(nalUnits,
+                decodedPics.add(decoder.decodeFrameFromNals(nalUnits,
                         Picture.create((ine.getWidth() + 15) & ~0xf, (ine.getHeight() + 15) & ~0xf, ColorSpace.YUV420)
                                 .getData()));
                 if (i % 500 == 0)

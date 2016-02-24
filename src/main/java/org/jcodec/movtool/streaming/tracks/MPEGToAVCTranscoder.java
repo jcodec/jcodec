@@ -91,7 +91,7 @@ public class MPEGToAVCTranscoder {
         int rate = Mpeg2AVCTrack.TARGET_RATE;
         do {
             try {
-                encoder.encodeFrame8Bit(Picture8Bit.fromPicture(toEnc), dst, iframe, poc, SliceType.I);
+                encoder.doEncodeFrame8Bit(Picture8Bit.fromPicture(toEnc), dst, iframe, poc, SliceType.I);
                 break;
             } catch (BufferOverflowException ex) {
                 Logger.warn("Abandon frame, buffer too small: " + dst.capacity());
