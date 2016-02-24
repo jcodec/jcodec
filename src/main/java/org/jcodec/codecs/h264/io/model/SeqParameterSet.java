@@ -3,7 +3,7 @@ package org.jcodec.codecs.h264.io.model;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readNBit;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUEtrace;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeBool;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeNBit;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSEtrace;
@@ -111,15 +111,15 @@ public class SeqParameterSet {
         sps.constraint_set_5_flag = readBool(_in, "SPS: constraint_set_5_flag");
         readNBit(_in, 2, "SPS: reserved_zero_2bits");
         sps.level_idc = (int) readNBit(_in, 8, "SPS: level_idc");
-        sps.seq_parameter_set_id = readUE(_in, "SPS: seq_parameter_set_id");
+        sps.seq_parameter_set_id = readUEtrace(_in, "SPS: seq_parameter_set_id");
 
         if (sps.profile_idc == 100 || sps.profile_idc == 110 || sps.profile_idc == 122 || sps.profile_idc == 144) {
-            sps.chroma_format_idc = getColor(readUE(_in, "SPS: chroma_format_idc"));
+            sps.chroma_format_idc = getColor(readUEtrace(_in, "SPS: chroma_format_idc"));
             if (sps.chroma_format_idc == YUV444) {
                 sps.residual_color_transform_flag = readBool(_in, "SPS: residual_color_transform_flag");
             }
-            sps.bit_depth_luma_minus8 = readUE(_in, "SPS: bit_depth_luma_minus8");
-            sps.bit_depth_chroma_minus8 = readUE(_in, "SPS: bit_depth_chroma_minus8");
+            sps.bit_depth_luma_minus8 = readUEtrace(_in, "SPS: bit_depth_luma_minus8");
+            sps.bit_depth_chroma_minus8 = readUEtrace(_in, "SPS: bit_depth_chroma_minus8");
             sps.qpprime_y_zero_transform_bypass_flag = readBool(_in, "SPS: qpprime_y_zero_transform_bypass_flag");
             boolean seqScalingMatrixPresent = readBool(_in, "SPS: seq_scaling_matrix_present_lag");
             if (seqScalingMatrixPresent) {
@@ -128,24 +128,24 @@ public class SeqParameterSet {
         } else {
             sps.chroma_format_idc = YUV420J;
         }
-        sps.log2_max_frame_num_minus4 = readUE(_in, "SPS: log2_max_frame_num_minus4");
-        sps.pic_order_cnt_type = readUE(_in, "SPS: pic_order_cnt_type");
+        sps.log2_max_frame_num_minus4 = readUEtrace(_in, "SPS: log2_max_frame_num_minus4");
+        sps.pic_order_cnt_type = readUEtrace(_in, "SPS: pic_order_cnt_type");
         if (sps.pic_order_cnt_type == 0) {
-            sps.log2_max_pic_order_cnt_lsb_minus4 = readUE(_in, "SPS: log2_max_pic_order_cnt_lsb_minus4");
+            sps.log2_max_pic_order_cnt_lsb_minus4 = readUEtrace(_in, "SPS: log2_max_pic_order_cnt_lsb_minus4");
         } else if (sps.pic_order_cnt_type == 1) {
             sps.delta_pic_order_always_zero_flag = readBool(_in, "SPS: delta_pic_order_always_zero_flag");
             sps.offset_for_non_ref_pic = readSE(_in, "SPS: offset_for_non_ref_pic");
             sps.offset_for_top_to_bottom_field = readSE(_in, "SPS: offset_for_top_to_bottom_field");
-            sps.num_ref_frames_in_pic_order_cnt_cycle = readUE(_in, "SPS: num_ref_frames_in_pic_order_cnt_cycle");
+            sps.num_ref_frames_in_pic_order_cnt_cycle = readUEtrace(_in, "SPS: num_ref_frames_in_pic_order_cnt_cycle");
             sps.offsetForRefFrame = new int[sps.num_ref_frames_in_pic_order_cnt_cycle];
             for (int i = 0; i < sps.num_ref_frames_in_pic_order_cnt_cycle; i++) {
                 sps.offsetForRefFrame[i] = readSE(_in, "SPS: offsetForRefFrame [" + i + "]");
             }
         }
-        sps.num_ref_frames = readUE(_in, "SPS: num_ref_frames");
+        sps.num_ref_frames = readUEtrace(_in, "SPS: num_ref_frames");
         sps.gaps_in_frame_num_value_allowed_flag = readBool(_in, "SPS: gaps_in_frame_num_value_allowed_flag");
-        sps.pic_width_in_mbs_minus1 = readUE(_in, "SPS: pic_width_in_mbs_minus1");
-        sps.pic_height_in_map_units_minus1 = readUE(_in, "SPS: pic_height_in_map_units_minus1");
+        sps.pic_width_in_mbs_minus1 = readUEtrace(_in, "SPS: pic_width_in_mbs_minus1");
+        sps.pic_height_in_map_units_minus1 = readUEtrace(_in, "SPS: pic_height_in_map_units_minus1");
         sps.frame_mbs_only_flag = readBool(_in, "SPS: frame_mbs_only_flag");
         if (!sps.frame_mbs_only_flag) {
             sps.mb_adaptive_frame_field_flag = readBool(_in, "SPS: mb_adaptive_frame_field_flag");
@@ -153,10 +153,10 @@ public class SeqParameterSet {
         sps.direct_8x8_inference_flag = readBool(_in, "SPS: direct_8x8_inference_flag");
         sps.frame_cropping_flag = readBool(_in, "SPS: frame_cropping_flag");
         if (sps.frame_cropping_flag) {
-            sps.frame_crop_left_offset = readUE(_in, "SPS: frame_crop_left_offset");
-            sps.frame_crop_right_offset = readUE(_in, "SPS: frame_crop_right_offset");
-            sps.frame_crop_top_offset = readUE(_in, "SPS: frame_crop_top_offset");
-            sps.frame_crop_bottom_offset = readUE(_in, "SPS: frame_crop_bottom_offset");
+            sps.frame_crop_left_offset = readUEtrace(_in, "SPS: frame_crop_left_offset");
+            sps.frame_crop_right_offset = readUEtrace(_in, "SPS: frame_crop_right_offset");
+            sps.frame_crop_top_offset = readUEtrace(_in, "SPS: frame_crop_top_offset");
+            sps.frame_crop_bottom_offset = readUEtrace(_in, "SPS: frame_crop_bottom_offset");
         }
         boolean vui_parameters_present_flag = readBool(_in, "SPS: vui_parameters_present_flag");
         if (vui_parameters_present_flag)
@@ -208,8 +208,8 @@ public class SeqParameterSet {
         }
         vuip.chroma_loc_info_present_flag = readBool(_in, "VUI: chroma_loc_info_present_flag");
         if (vuip.chroma_loc_info_present_flag) {
-            vuip.chroma_sample_loc_type_top_field = readUE(_in, "VUI chroma_sample_loc_type_top_field");
-            vuip.chroma_sample_loc_type_bottom_field = readUE(_in, "VUI chroma_sample_loc_type_bottom_field");
+            vuip.chroma_sample_loc_type_top_field = readUEtrace(_in, "VUI chroma_sample_loc_type_top_field");
+            vuip.chroma_sample_loc_type_bottom_field = readUEtrace(_in, "VUI chroma_sample_loc_type_bottom_field");
         }
         vuip.timing_info_present_flag = readBool(_in, "VUI: timing_info_present_flag");
         if (vuip.timing_info_present_flag) {
@@ -232,12 +232,12 @@ public class SeqParameterSet {
             vuip.bitstreamRestriction = new VUIParameters.BitstreamRestriction();
             vuip.bitstreamRestriction.motion_vectors_over_pic_boundaries_flag = readBool(_in,
                     "VUI: motion_vectors_over_pic_boundaries_flag");
-            vuip.bitstreamRestriction.max_bytes_per_pic_denom = readUE(_in, "VUI max_bytes_per_pic_denom");
-            vuip.bitstreamRestriction.max_bits_per_mb_denom = readUE(_in, "VUI max_bits_per_mb_denom");
-            vuip.bitstreamRestriction.log2_max_mv_length_horizontal = readUE(_in, "VUI log2_max_mv_length_horizontal");
-            vuip.bitstreamRestriction.log2_max_mv_length_vertical = readUE(_in, "VUI log2_max_mv_length_vertical");
-            vuip.bitstreamRestriction.num_reorder_frames = readUE(_in, "VUI num_reorder_frames");
-            vuip.bitstreamRestriction.max_dec_frame_buffering = readUE(_in, "VUI max_dec_frame_buffering");
+            vuip.bitstreamRestriction.max_bytes_per_pic_denom = readUEtrace(_in, "VUI max_bytes_per_pic_denom");
+            vuip.bitstreamRestriction.max_bits_per_mb_denom = readUEtrace(_in, "VUI max_bits_per_mb_denom");
+            vuip.bitstreamRestriction.log2_max_mv_length_horizontal = readUEtrace(_in, "VUI log2_max_mv_length_horizontal");
+            vuip.bitstreamRestriction.log2_max_mv_length_vertical = readUEtrace(_in, "VUI log2_max_mv_length_vertical");
+            vuip.bitstreamRestriction.num_reorder_frames = readUEtrace(_in, "VUI num_reorder_frames");
+            vuip.bitstreamRestriction.max_dec_frame_buffering = readUEtrace(_in, "VUI max_dec_frame_buffering");
         }
 
         return vuip;
@@ -245,7 +245,7 @@ public class SeqParameterSet {
 
     private static HRDParameters readHRDParameters(BitReader _in) {
         HRDParameters hrd = new HRDParameters();
-        hrd.cpb_cnt_minus1 = readUE(_in, "SPS: cpb_cnt_minus1");
+        hrd.cpb_cnt_minus1 = readUEtrace(_in, "SPS: cpb_cnt_minus1");
         hrd.bit_rate_scale = (int) readNBit(_in, 4, "HRD: bit_rate_scale");
         hrd.cpb_size_scale = (int) readNBit(_in, 4, "HRD: cpb_size_scale");
         hrd.bit_rate_value_minus1 = new int[hrd.cpb_cnt_minus1 + 1];
@@ -253,8 +253,8 @@ public class SeqParameterSet {
         hrd.cbr_flag = new boolean[hrd.cpb_cnt_minus1 + 1];
 
         for (int SchedSelIdx = 0; SchedSelIdx <= hrd.cpb_cnt_minus1; SchedSelIdx++) {
-            hrd.bit_rate_value_minus1[SchedSelIdx] = readUE(_in, "HRD: bit_rate_value_minus1");
-            hrd.cpb_size_value_minus1[SchedSelIdx] = readUE(_in, "HRD: cpb_size_value_minus1");
+            hrd.bit_rate_value_minus1[SchedSelIdx] = readUEtrace(_in, "HRD: bit_rate_value_minus1");
+            hrd.cpb_size_value_minus1[SchedSelIdx] = readUEtrace(_in, "HRD: cpb_size_value_minus1");
             hrd.cbr_flag[SchedSelIdx] = readBool(_in, "HRD: cbr_flag");
         }
         hrd.initial_cpb_removal_delay_length_minus1 = (int) readNBit(_in, 5,

@@ -312,7 +312,7 @@ public class H264Encoder extends VideoEncoder {
 
     private void addToReference(int mbX, int mbY) {
         if (mbY > 0)
-            MBEncoderHelper.putBlk(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbY - 1) << 4);
+            MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbY - 1) << 4);
         EncodedMB tmp = topEncoded[mbX];
         topEncoded[mbX] = outMB;
         outMB = tmp;
@@ -322,7 +322,7 @@ public class H264Encoder extends VideoEncoder {
         int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
         int mbHeight = sps.pic_height_in_map_units_minus1 + 1;
         for (int mbX = 0; mbX < mbWidth; mbX++)
-            MBEncoderHelper.putBlk(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbHeight - 1) << 4);
+            MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbHeight - 1) << 4);
     }
 
     private void collectPredictors(Picture8Bit outMB, int mbX) {

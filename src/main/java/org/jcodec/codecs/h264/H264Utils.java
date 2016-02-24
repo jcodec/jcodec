@@ -626,16 +626,8 @@ public class H264Utils {
 
     public abstract static class SliceHeaderTweaker {
 
-        private List<SeqParameterSet> sps;
-        private List<PictureParameterSet> pps;
-
-        public SliceHeaderTweaker() {
-        }
-
-        public SliceHeaderTweaker(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
-            this.sps = readSPSFromBufferList(spsList);
-            this.pps = readPPSFromBufferList(ppsList);
-        }
+        protected List<SeqParameterSet> sps;
+        protected List<PictureParameterSet> pps;
 
         protected abstract void tweak(SliceHeader sh);
 
@@ -652,7 +644,7 @@ public class H264Utils {
             return part2(is, os, nu, findSPS(sps, pp.pic_parameter_set_id), pp, nal, reader, sh);
         }
 
-        public SliceHeader run(ByteBuffer is, ByteBuffer os, NALUnit nu, SeqParameterSet sps, PictureParameterSet pps) {
+        public SliceHeader runSpsPps(ByteBuffer is, ByteBuffer os, NALUnit nu, SeqParameterSet sps, PictureParameterSet pps) {
             ByteBuffer nal = os.duplicate();
 
             H264Utils.unescapeNAL(is);

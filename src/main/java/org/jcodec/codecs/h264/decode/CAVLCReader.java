@@ -41,7 +41,7 @@ public class CAVLCReader {
         return res;
     }
 
-    public static int readUE(BitReader bits, String message)  {
+    public static int readUEtrace(BitReader bits, String message)  {
         int res = readUE(bits);
 
         trace(message, res);
@@ -79,7 +79,7 @@ public class CAVLCReader {
     }
 
     public static int readME(BitReader bits, String string)  {
-        return readUE(bits, string);
+        return readUEtrace(bits, string);
     }
 
     public static int readZeroBitCount(BitReader bits, String message)  {

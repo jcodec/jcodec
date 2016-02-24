@@ -42,7 +42,7 @@ public class MBlockDecoderBase {
 
     void residualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         if (!mBlock.transform8x8Used) {
-            residualLuma(mBlock);
+            _residualLuma(mBlock);
         } else if (sh.pps.entropy_coding_mode_flag) {
             residualLuma8x8CABAC(mBlock);
         } else {
@@ -50,7 +50,7 @@ public class MBlockDecoderBase {
         }
     }
 
-    private void residualLuma(MBlock mBlock) {
+    private void _residualLuma(MBlock mBlock) {
 
         for (int i = 0; i < 16; i++) {
             if ((mBlock.cbpLuma() & (1 << (i >> 2))) == 0) {

@@ -121,7 +121,7 @@ public class H264Decoder extends VideoDecoder {
         }
 
         public void run() {
-            new SliceDecoder(fdec.activeSps, fdec.dec.sRefs, fdec.dec.lRefs, fdec.di, result).decode(sliceReader);
+            new SliceDecoder(fdec.activeSps, fdec.dec.sRefs, fdec.dec.lRefs, fdec.di, result).decodeFromReader(sliceReader);
         }
     }
     
@@ -153,7 +153,7 @@ public class H264Decoder extends VideoDecoder {
 
             } else {
                 for (SliceReader sliceReader : sliceReaders) {
-                    new SliceDecoder(activeSps, dec.sRefs, dec.lRefs, di, result).decode(sliceReader);
+                    new SliceDecoder(activeSps, dec.sRefs, dec.lRefs, di, result).decodeFromReader(sliceReader);
                 }
             }
 
