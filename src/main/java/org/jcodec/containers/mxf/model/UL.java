@@ -15,14 +15,14 @@ import java.nio.ByteBuffer;
 public class UL {
     private byte[] bytes;
 
-    public UL(byte... bytes) {
-        this.bytes = bytes;
+    public UL(byte... arguments) {
+        this.bytes = arguments;
     }
 
-    public UL(int... bytes) {
-        this.bytes = new byte[bytes.length];
-        for (int i = 0; i < bytes.length; i++) {
-            this.bytes[i] = (byte) bytes[i];
+    public UL(int... arguments) {
+        this.bytes = new byte[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            this.bytes[i] = (byte) arguments[i];
         }
     }
 

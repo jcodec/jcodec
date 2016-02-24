@@ -22,7 +22,7 @@ public class Utils {
         return new File(path);
     }
 
-    public static void printArray(int[] array, String... title) {
+    public static void printArray(int[] array, String[] title) {
         if (title.length > 0)
             System.out.println(title[0]);
 
@@ -38,7 +38,7 @@ public class Utils {
         System.out.println();
     }
 
-    public static void printArrayHex(int[] array, String... title) {
+    public static void printArrayHex(int[] array, String[] title) {
         if (title.length > 0)
             System.out.println(title[0]);
 
@@ -54,11 +54,11 @@ public class Utils {
         System.out.println();
     }
 
-    public static void printArray(int[][] array, String... title) {
+    public static void printArray(int[][] array, String[] title) {
         if (title.length > 0)
             System.out.println(title[0]);
         for (int i = 0; i < array.length; i++) {
-            printArray(array[i]);
+            printArray(array[i], new String[0]);
         }
         System.out.println();
     }

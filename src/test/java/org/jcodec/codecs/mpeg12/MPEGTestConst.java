@@ -28,16 +28,16 @@ public class MPEGTestConst {
             0x04, 0x04, 0x04, 0x05, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x05, 0x05, 0x04, 0x04, 0x04, 0x04, 0x04, 0x05,
             0x05, 0x06, 0x04, 0x04, 0x04, 0x04 };
 
-    public static byte[] toBB(int[]... mpeg) {
+    public static byte[] toBB(int[]... arguments) {
         int len = 0;
-        for (int i = 0; i < mpeg.length; i++)
-            len += mpeg[i].length;
+        for (int i = 0; i < arguments.length; i++)
+            len += arguments[i].length;
 
         int off = 0;
         byte[] bytes = new byte[len];
-        for (int i = 0; i < mpeg.length; i++) {
-            for (int j = 0; j < mpeg[i].length; j++)
-                bytes[off++] = (byte) mpeg[i][j];
+        for (int i = 0; i < arguments.length; i++) {
+            for (int j = 0; j < arguments[i].length; j++)
+                bytes[off++] = (byte) arguments[i][j];
         }
         return bytes;
     }

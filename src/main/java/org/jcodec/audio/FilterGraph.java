@@ -57,8 +57,8 @@ public class FilterGraph implements AudioFilter {
          * @return
          */
 //@formatter:on
-        public Factory addLevel(AudioFilter... filters) {
-            FilterSocket socket = new FilterSocket(filters);
+        public Factory addLevel(AudioFilter... arguments) {
+            FilterSocket socket = new FilterSocket(arguments);
             socket.allocateBuffers(4096);
             sockets.add(socket);
             return this;

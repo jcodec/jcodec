@@ -8,7 +8,7 @@ import static org.jcodec.containers.mkv.MKVMuxerTest.tildeExpand;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
 import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
-import static org.jcodec.containers.mkv.MKVType.findAll;
+import static org.jcodec.containers.mkv.MKVType.findAllTree;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -77,7 +77,8 @@ public class AudioTrackTest {
             closeQuietly(inputStream);
         }
         if (showInterlacedBlocks) {
-            MkvBlock[] blocks = findAll(mkv, MkvBlock.class, Segment, Cluster, SimpleBlock);
+            MKVType[] path = { Segment, Cluster, SimpleBlock };
+            MkvBlock[] blocks = findAllTree(mkv, MkvBlock.class, path);
             for (MkvBlock be : blocks) {
                 System.out.println("\nTRACK " + be.trackNumber);
                 String pref = "";

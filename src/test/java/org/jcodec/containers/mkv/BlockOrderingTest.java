@@ -10,7 +10,8 @@ import static org.jcodec.containers.mkv.MKVType.Timecode;
 import static org.jcodec.containers.mkv.MKVType.TrackEntry;
 import static org.jcodec.containers.mkv.MKVType.TrackNumber;
 import static org.jcodec.containers.mkv.MKVType.Tracks;
-import static org.jcodec.containers.mkv.MKVType.findAll;
+import static org.jcodec.containers.mkv.MKVType.findAllTree;
+import static org.jcodec.containers.mkv.MKVType.findFirstTree;
 import static org.jcodec.containers.mkv.MKVType.findFirst;
 
 import java.io.File;
@@ -157,15 +158,18 @@ public class BlockOrderingTest {
     }
 
     private void printTracks(List<EbmlMaster> tree) {
-        for (EbmlUint nr : findAll(tree, EbmlUint.class, Segment, Tracks, TrackEntry, TrackNumber))
+        MKVType[] path = { Segment, Tracks, TrackEntry, TrackNumber };
+        for (EbmlUint nr : findAllTree(tree, EbmlUint.class, path))
             System.out.println("Track nr:" + nr.getUint());
         
     }
 
     private void printTimecodes(List<EbmlMaster> tree) {
-        EbmlMaster[] clusters = findAll(tree, EbmlMaster.class, Segment, Cluster);
+        MKVType[] path2 = { Segment, Cluster };
+        EbmlMaster[] clusters = findAllTree(tree, EbmlMaster.class, path2);
         for (EbmlMaster c : clusters) {
-            long ctc = ((EbmlUint) findFirst(c, Cluster, Timecode)).getUint();
+            MKVType[] path = { Cluster, Timecode };
+            long ctc = ((EbmlUint) findFirst(c, path)).getUint();
             long bks = 0;
             for (EbmlBase e : c.children) {
                 if (e instanceof MkvBlock) {
@@ -175,7 +179,8 @@ public class BlockOrderingTest {
                     System.out.println("        Block timecode: " + btc + " absoluete timecode: " + (btc + ctc) + " track: " + block.trackNumber + " offset: " + e.offset +" lacing "+block.lacing);
                     bks++;
                 } else if (BlockGroup.equals(e.type)) {
-                    MkvBlock be = (MkvBlock) findFirst(e, BlockGroup, Block);
+                    MKVType[] path1 = { BlockGroup, Block };
+                    MkvBlock be = (MkvBlock) findFirst(e, path1);
                     be.absoluteTimecode = be.timecode + ctc;
                     System.out.println("        Block Group timecode: " + be.timecode + " absoluete timecode: " + (be.timecode + ctc) + " track: " + be.trackNumber + " offset: " +be.offset+" lacing "+be.lacing);
                     bks++;

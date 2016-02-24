@@ -56,7 +56,7 @@ import static org.jcodec.containers.mkv.MKVType.TrackType;
 import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.Video;
 import static org.jcodec.containers.mkv.MKVType.findAll;
-import static org.jcodec.containers.mkv.MKVType.findFirst;
+import static org.jcodec.containers.mkv.MKVType.findFirstTree;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -71,6 +71,7 @@ import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.EbmlUlong;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Test;
+import static org.jcodec.containers.mkv.MKVType.findFirst;
 
 public class DisplayTimecodesTest {
 
@@ -81,7 +82,8 @@ public class DisplayTimecodesTest {
         System.out.println("Scanning file: " + filename);
         FileInputStream iFS = new FileInputStream(new File(filename));
         MKVParser reader = new MKVParser(new FileChannelWrapper(iFS.getChannel()));
-        EbmlMaster s = (EbmlMaster) findFirst(reader.parse(), Segment);
+        MKVType[] path = { Segment };
+        EbmlMaster s = (EbmlMaster) findFirstTree(reader.parse(), path);
         printCues(s);
         printBlocks(s);
         printTracks(s);
@@ -90,8 +92,10 @@ public class DisplayTimecodesTest {
 
     private void printInfo(EbmlMaster s) {
         StringBuilder sb = new StringBuilder("info ");
-        EbmlUint scale = (EbmlUint) findFirst(s, Segment, Info, TimecodeScale);
-        EbmlFloat duration = (EbmlFloat) findFirst(s, Segment, Info, Duration);
+        MKVType[] path = { Segment, Info, TimecodeScale };
+        EbmlUint scale = (EbmlUint) findFirst(s, path);
+        MKVType[] path1 = { Segment, Info, Duration };
+        EbmlFloat duration = (EbmlFloat) findFirst(s, path1);
         appendUint(sb, "scale", scale);
         appendFloat(sb, "duration", duration);
         sb.append("\n");
@@ -100,15 +104,21 @@ public class DisplayTimecodesTest {
 
     private void printCues(EbmlMaster s) {
         StringBuilder sb = new StringBuilder();
-        for(EbmlMaster aCuePoint : findAll(s, EbmlMaster.class, Segment, Cues, CuePoint)){
-            EbmlUint time = (EbmlUint) findFirst(aCuePoint, CuePoint, CueTime);
+        MKVType[] path4 = { Segment, Cues, CuePoint };
+        for(EbmlMaster aCuePoint : findAll(s, EbmlMaster.class, false, path4)){
+            MKVType[] path = { CuePoint, CueTime };
+            EbmlUint time = (EbmlUint) findFirst(aCuePoint, path);
             sb.append("cue time: ").append(time.getUint());
-            for(EbmlMaster aCueTrackPosition : findAll(aCuePoint, EbmlMaster.class, CuePoint, CueTrackPositions)){
-                appendUint(sb, "track", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueTrack));
-                EbmlUint EbmlMaster = (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueClusterPosition);
+            MKVType[] path5 = { CuePoint, CueTrackPositions };
+            for(EbmlMaster aCueTrackPosition : findAll(aCuePoint, EbmlMaster.class, false, path5)){
+                MKVType[] path1 = { CueTrackPositions, CueTrack };
+                appendUint(sb, "track", (EbmlUint) findFirst(aCueTrackPosition, path1));
+                MKVType[] path2 = { CueTrackPositions, CueClusterPosition };
+                EbmlUint EbmlMaster = (EbmlUint) findFirst(aCueTrackPosition, path2);
                 if (EbmlMaster != null)
                     sb.append(" EbmlMaster offset ").append(EbmlMaster.getUint()+s.dataOffset);
-                appendUint(sb, "block", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueBlockNumber));
+                MKVType[] path3 = { CueTrackPositions, CueBlockNumber };
+                appendUint(sb, "block", (EbmlUint) findFirst(aCueTrackPosition, path3));
             }
             sb.append("\n");
         }
@@ -137,9 +147,12 @@ public class DisplayTimecodesTest {
     
     private void printBlocks(EbmlMaster s) {
         StringBuilder sb = new StringBuilder();
-        for(EbmlMaster aEbmlMaster : findAll(s, EbmlMaster.class, Segment, Cluster)){
-            EbmlUint time = (EbmlUint) findFirst(aEbmlMaster, Cluster, Timecode);
-            EbmlUint position = (EbmlUint) findFirst(aEbmlMaster, Cluster, Position);
+        MKVType[] path5 = { Segment, Cluster };
+        for(EbmlMaster aEbmlMaster : findAll(s, EbmlMaster.class, false, path5)){
+            MKVType[] path = { Cluster, Timecode };
+            EbmlUint time = (EbmlUint) findFirst(aEbmlMaster, path);
+            MKVType[] path1 = { Cluster, Position };
+            EbmlUint position = (EbmlUint) findFirst(aEbmlMaster, path1);
             sb.append("EbmlMaster time: ").append(time.getUint());
             appendUint(sb, "position", position);
             sb.append(" offset: ").append(aEbmlMaster.offset).append("\n");
@@ -150,12 +163,15 @@ public class DisplayTimecodesTest {
                     sb.append("    block real timecode: "+(time.getUint()+block.timecode));
                     sb.append("\n");
                 } else if (aChild instanceof EbmlMaster){
-                    MkvBlock block = (MkvBlock) findFirst((EbmlMaster) aChild, BlockGroup, Block);
+                    MKVType[] path2 = { BlockGroup, Block };
+                    MkvBlock block = (MkvBlock) findFirst((EbmlMaster) aChild, path2);
                     sb.append("    block tarck: ").append(block.trackNumber).append(" timecode: ").append(block.timecode).append(" offset: ").append(block.offset).append("\n");
                     sb.append("    block real timecode: "+(time.getUint()+block.timecode));
+                    MKVType[] path3 = { BlockGroup, ReferenceBlock };
                     
-                    appendUint(sb, "reference", (EbmlUint) findFirst(aEbmlMaster, BlockGroup, ReferenceBlock));
-                    appendUint(sb, "duration", (EbmlUint) findFirst(aEbmlMaster, Cluster, BlockDuration));
+                    appendUint(sb, "reference", (EbmlUint) findFirst(aEbmlMaster, path3));
+                    MKVType[] path4 = { Cluster, BlockDuration };
+                    appendUint(sb, "duration", (EbmlUint) findFirst(aEbmlMaster, path4));
                     sb.append("\n");    
                 }
                 
@@ -167,47 +183,83 @@ public class DisplayTimecodesTest {
     
     private void printTracks(EbmlMaster s){
         StringBuilder sb = new StringBuilder();
-        for(EbmlMaster anEntry : findAll(s, EbmlMaster.class, Segment, Tracks, TrackEntry)){
+        MKVType[] path31 = { Segment, Tracks, TrackEntry };
+        for(EbmlMaster anEntry : findAll(s, EbmlMaster.class, false, path31)){
             sb.append("track ");
-            appendString(sb, "name", (EbmlString) findFirst(anEntry, TrackEntry, Name));
-            appendString(sb, "language", (EbmlString) findFirst(anEntry, TrackEntry, Language));
-            appendUint(sb, "number", (EbmlUint) findFirst(anEntry, TrackEntry, TrackNumber));
-            appendUint(sb, "type", (EbmlUint) findFirst(anEntry, TrackEntry, TrackType));
-            appendUint(sb, "enabled", (EbmlUint) findFirst(anEntry, TrackEntry, FlagEnabled));
-            appendUint(sb, "default", (EbmlUint) findFirst(anEntry, TrackEntry, FlagDefault));
-            appendUint(sb, "forced", (EbmlUint) findFirst(anEntry, TrackEntry, FlagForced));
-            appendUint(sb, "lacing", (EbmlUint) findFirst(anEntry, TrackEntry, FlagLacing));
-            appendUint(sb, "mincache", (EbmlUint) findFirst(anEntry, TrackEntry, MinCache));
-            appendUint(sb, "maccache", (EbmlUint) findFirst(anEntry, TrackEntry, MaxCache));
-            appendUint(sb, "defaultduration", (EbmlUint) findFirst(anEntry, TrackEntry, DefaultDuration));
-            appendString(sb, "codecid", (EbmlString) findFirst(anEntry, TrackEntry, CodecID));
-            appendString(sb, "codecname", (EbmlString) findFirst(anEntry, TrackEntry, CodecName));
-            appendString(sb, "attachmentlink", (EbmlString) findFirst(anEntry, TrackEntry, AttachmentLink));
-            appendUint(sb, "codecdecodeall", (EbmlUint) findFirst(anEntry, TrackEntry, CodecDecodeAll));
-            appendUint(sb, "overlay", (EbmlUint) findFirst(anEntry, TrackEntry, TrackOverlay));
-            EbmlMaster video = (EbmlMaster) findFirst(anEntry, TrackEntry, Video);
-            EbmlMaster audio = (EbmlMaster) findFirst(anEntry, TrackEntry, Audio);
+            MKVType[] path = { TrackEntry, Name };
+            appendString(sb, "name", (EbmlString) findFirst(anEntry, path));
+            MKVType[] path1 = { TrackEntry, Language };
+            appendString(sb, "language", (EbmlString) findFirst(anEntry, path1));
+            MKVType[] path2 = { TrackEntry, TrackNumber };
+            appendUint(sb, "number", (EbmlUint) findFirst(anEntry, path2));
+            MKVType[] path3 = { TrackEntry, TrackType };
+            appendUint(sb, "type", (EbmlUint) findFirst(anEntry, path3));
+            MKVType[] path4 = { TrackEntry, FlagEnabled };
+            appendUint(sb, "enabled", (EbmlUint) findFirst(anEntry, path4));
+            MKVType[] path5 = { TrackEntry, FlagDefault };
+            appendUint(sb, "default", (EbmlUint) findFirst(anEntry, path5));
+            MKVType[] path6 = { TrackEntry, FlagForced };
+            appendUint(sb, "forced", (EbmlUint) findFirst(anEntry, path6));
+            MKVType[] path7 = { TrackEntry, FlagLacing };
+            appendUint(sb, "lacing", (EbmlUint) findFirst(anEntry, path7));
+            MKVType[] path8 = { TrackEntry, MinCache };
+            appendUint(sb, "mincache", (EbmlUint) findFirst(anEntry, path8));
+            MKVType[] path9 = { TrackEntry, MaxCache };
+            appendUint(sb, "maccache", (EbmlUint) findFirst(anEntry, path9));
+            MKVType[] path10 = { TrackEntry, DefaultDuration };
+            appendUint(sb, "defaultduration", (EbmlUint) findFirst(anEntry, path10));
+            MKVType[] path11 = { TrackEntry, CodecID };
+            appendString(sb, "codecid", (EbmlString) findFirst(anEntry, path11));
+            MKVType[] path12 = { TrackEntry, CodecName };
+            appendString(sb, "codecname", (EbmlString) findFirst(anEntry, path12));
+            MKVType[] path13 = { TrackEntry, AttachmentLink };
+            appendString(sb, "attachmentlink", (EbmlString) findFirst(anEntry, path13));
+            MKVType[] path14 = { TrackEntry, CodecDecodeAll };
+            appendUint(sb, "codecdecodeall", (EbmlUint) findFirst(anEntry, path14));
+            MKVType[] path15 = { TrackEntry, TrackOverlay };
+            appendUint(sb, "overlay", (EbmlUint) findFirst(anEntry, path15));
+            MKVType[] path16 = { TrackEntry, Video };
+            EbmlMaster video = (EbmlMaster) findFirst(anEntry, path16);
+            MKVType[] path17 = { TrackEntry, Audio };
+            EbmlMaster audio = (EbmlMaster) findFirst(anEntry, path17);
             if (video != null){
                 sb.append("\n    video ");
-                appendUint(sb, "interlaced", (EbmlUint) findFirst(video, Video, FlagInterlaced));
-                appendUint(sb, "stereo", (EbmlUint) findFirst(video, Video, StereoMode));
-                appendUint(sb, "alpha", (EbmlUint) findFirst(video, Video, AlphaMode));
-                appendUint(sb, "pixelwidth", (EbmlUint) findFirst(video, Video, PixelWidth));
-                appendUint(sb, "pixelheight", (EbmlUint) findFirst(video, Video, PixelHeight));
-                appendUint(sb, "cropbottom", (EbmlUint) findFirst(video, Video, PixelCropBottom));
-                appendUint(sb, "croptop", (EbmlUint) findFirst(video, Video, PixelCropTop));
-                appendUint(sb, "cropleft", (EbmlUint) findFirst(video, Video, PixelCropLeft));
-                appendUint(sb, "cropright", (EbmlUint) findFirst(video, Video, PixelCropRight));
-                appendUint(sb, "displaywidth", (EbmlUint) findFirst(video, Video, DisplayWidth));
-                appendUint(sb, "displayheight", (EbmlUint) findFirst(video, Video, DisplayHeight));
-                appendUint(sb, "displayunit", (EbmlUint) findFirst(video, Video, DisplayUnit));
-                appendUint(sb, "aspectratiotype", (EbmlUint) findFirst(video, Video, AspectRatioType));
+                MKVType[] path18 = { Video, FlagInterlaced };
+                appendUint(sb, "interlaced", (EbmlUint) findFirst(video, path18));
+                MKVType[] path19 = { Video, StereoMode };
+                appendUint(sb, "stereo", (EbmlUint) findFirst(video, path19));
+                MKVType[] path20 = { Video, AlphaMode };
+                appendUint(sb, "alpha", (EbmlUint) findFirst(video, path20));
+                MKVType[] path21 = { Video, PixelWidth };
+                appendUint(sb, "pixelwidth", (EbmlUint) findFirst(video, path21));
+                MKVType[] path22 = { Video, PixelHeight };
+                appendUint(sb, "pixelheight", (EbmlUint) findFirst(video, path22));
+                MKVType[] path23 = { Video, PixelCropBottom };
+                appendUint(sb, "cropbottom", (EbmlUint) findFirst(video, path23));
+                MKVType[] path24 = { Video, PixelCropTop };
+                appendUint(sb, "croptop", (EbmlUint) findFirst(video, path24));
+                MKVType[] path25 = { Video, PixelCropLeft };
+                appendUint(sb, "cropleft", (EbmlUint) findFirst(video, path25));
+                MKVType[] path26 = { Video, PixelCropRight };
+                appendUint(sb, "cropright", (EbmlUint) findFirst(video, path26));
+                MKVType[] path27 = { Video, DisplayWidth };
+                appendUint(sb, "displaywidth", (EbmlUint) findFirst(video, path27));
+                MKVType[] path28 = { Video, DisplayHeight };
+                appendUint(sb, "displayheight", (EbmlUint) findFirst(video, path28));
+                MKVType[] path29 = { Video, DisplayUnit };
+                appendUint(sb, "displayunit", (EbmlUint) findFirst(video, path29));
+                MKVType[] path30 = { Video, AspectRatioType };
+                appendUint(sb, "aspectratiotype", (EbmlUint) findFirst(video, path30));
             } else if (audio != null){
                 sb.append("\n    audio ");
-                appendFloat(sb, "sampling", (EbmlFloat) findFirst(audio, Audio, SamplingFrequency));
-                appendFloat(sb, "outputsampling", (EbmlFloat) findFirst(audio, Audio, OutputSamplingFrequency));
-                appendUint(sb, "channels", (EbmlUint) findFirst(audio, Audio, Channels));
-                appendUint(sb, "bitdepth", (EbmlUint) findFirst(audio, Audio, BitDepth));
+                MKVType[] path18 = { Audio, SamplingFrequency };
+                appendFloat(sb, "sampling", (EbmlFloat) findFirst(audio, path18));
+                MKVType[] path19 = { Audio, OutputSamplingFrequency };
+                appendFloat(sb, "outputsampling", (EbmlFloat) findFirst(audio, path19));
+                MKVType[] path20 = { Audio, Channels };
+                appendUint(sb, "channels", (EbmlUint) findFirst(audio, path20));
+                MKVType[] path21 = { Audio, BitDepth };
+                appendUint(sb, "bitdepth", (EbmlUint) findFirst(audio, path21));
             }
             sb.append("\n");
         }

@@ -4,7 +4,7 @@ import static org.jcodec.containers.mkv.MKVType.Block;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
 import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
-import static org.jcodec.containers.mkv.MKVType.findAll;
+import static org.jcodec.containers.mkv.MKVType.findAllTree;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.io.FileInputStream;
@@ -128,8 +128,9 @@ public class MkvBlockTest {
         FileInputStream inputStream = new FileInputStream(suite.test1);
         try {
             MKVParser reader = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
+            MKVType[] path = { Segment, Cluster, SimpleBlock };
             
-            MkvBlock[] blocks = findAll(reader.parse(), MkvBlock.class, Segment, Cluster, SimpleBlock);
+            MkvBlock[] blocks = findAllTree(reader.parse(), MkvBlock.class, path);
             for (MkvBlock be : blocks)
                 if (be.lacingPresent){
                     Assert.assertEquals("    "+be.lacing+" Lacing block offset "+be.offset, be.dataLen+(be.dataOffset-be.offset), be.size());

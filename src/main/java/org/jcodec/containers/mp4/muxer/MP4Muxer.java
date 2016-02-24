@@ -230,7 +230,7 @@ public class MP4Muxer {
     }
 
     public FramesMP4MuxerTrack addCompressedAudioTrack(String fourcc, int timescale, int channels, int sampleRate,
-            int samplesPerPkt, Box... extra) {
+            int samplesPerPkt, Box[] extra) {
         FramesMP4MuxerTrack track = addTrack(SOUND, timescale);
 
         AudioSampleEntry ase = AudioSampleEntry

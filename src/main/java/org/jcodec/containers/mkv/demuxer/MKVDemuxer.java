@@ -18,7 +18,7 @@ import static org.jcodec.containers.mkv.MKVType.TrackNumber;
 import static org.jcodec.containers.mkv.MKVType.TrackType;
 import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.Video;
-import static org.jcodec.containers.mkv.MKVType.findFirst;
+import static org.jcodec.containers.mkv.MKVType.findFirstTree;
 import static org.jcodec.containers.mkv.MKVType.findList;
 
 import java.io.IOException;
@@ -41,6 +41,7 @@ import org.jcodec.containers.mkv.boxes.EbmlFloat;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
+import static org.jcodec.containers.mkv.MKVType.findFirst;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -66,27 +67,37 @@ public final class MKVDemuxer {
     }
 
     private void demux() {
-        EbmlUint ts = findFirst(t, Segment, Info, TimecodeScale);
+        MKVType[] path = { Segment, Info, TimecodeScale };
+        EbmlUint ts = MKVType.findFirstTree(t, path);
         if (ts != null)
             timescale = ts.getUint();
+        MKVType[] path9 = { Segment, Tracks, TrackEntry };
 
-        for (EbmlMaster aTrack : findList(t, EbmlMaster.class, Segment, Tracks, TrackEntry)) {
-            long type = ((EbmlUint) findFirst(aTrack, TrackEntry, TrackType)).getUint();
-            long id = ((EbmlUint) findFirst(aTrack, TrackEntry, TrackNumber)).getUint();
+        for (EbmlMaster aTrack : findList(t, EbmlMaster.class, path9)) {
+            MKVType[] path1 = { TrackEntry, TrackType };
+            long type = ((EbmlUint) findFirst(aTrack, path1)).getUint();
+            MKVType[] path2 = { TrackEntry, TrackNumber };
+            long id = ((EbmlUint) findFirst(aTrack, path2)).getUint();
             if (type == 1) {
                 // video
                 if (vTrack != null)
                     throw new RuntimeException("More then 1 video track, can not compute...");
-                EbmlBin videoCodecState = (EbmlBin) findFirst(aTrack, TrackEntry, CodecPrivate);
+                MKVType[] path3 = { TrackEntry, CodecPrivate };
+                EbmlBin videoCodecState = (EbmlBin) findFirst(aTrack, path3);
                 ByteBuffer state = null;
                 if (videoCodecState != null)
                     state = videoCodecState.data;
+                MKVType[] path4 = { TrackEntry, Video, PixelWidth };
                 
-                EbmlUint width = (EbmlUint) findFirst(aTrack, TrackEntry, Video, PixelWidth);
-                EbmlUint height = (EbmlUint) findFirst(aTrack, TrackEntry, Video, PixelHeight);
-                EbmlUint dwidth = (EbmlUint) findFirst(aTrack, TrackEntry, Video, DisplayWidth);
-                EbmlUint dheight = (EbmlUint) findFirst(aTrack, TrackEntry, Video, DisplayHeight);  
-                EbmlUint unit = (EbmlUint) findFirst(aTrack, TrackEntry, Video, DisplayUnit);
+                EbmlUint width = (EbmlUint) findFirst(aTrack, path4);
+                MKVType[] path5 = { TrackEntry, Video, PixelHeight };
+                EbmlUint height = (EbmlUint) findFirst(aTrack, path5);
+                MKVType[] path6 = { TrackEntry, Video, DisplayWidth };
+                EbmlUint dwidth = (EbmlUint) findFirst(aTrack, path6);
+                MKVType[] path7 = { TrackEntry, Video, DisplayHeight };
+                EbmlUint dheight = (EbmlUint) findFirst(aTrack, path7);
+                MKVType[] path8 = { TrackEntry, Video, DisplayUnit };  
+                EbmlUint unit = (EbmlUint) findFirst(aTrack, path8);
                 if (width != null && height != null){
                     pictureWidth = (int) width.getUint();
                     pictureHeight = (int) height.getUint();
@@ -103,15 +114,18 @@ public final class MKVDemuxer {
 
             } else if (type == 2) {
                 AudioTrack audioTrack = new AudioTrack((int) id, this);
-                EbmlFloat sf = (EbmlFloat) findFirst(aTrack, TrackEntry, Audio, SamplingFrequency);
+                MKVType[] path3 = { TrackEntry, Audio, SamplingFrequency };
+                EbmlFloat sf = (EbmlFloat) findFirst(aTrack, path3);
                 if (sf != null)
                     audioTrack.samplingFrequency = sf.getDouble();
                 
                 aTracks.add(audioTrack);
             }
         }
-        for (EbmlMaster aCluster : findList(t, EbmlMaster.class, Segment, Cluster)) {
-            long baseTimecode = ((EbmlUint) findFirst(aCluster, Cluster, Timecode)).getUint();
+        MKVType[] path2 = { Segment, Cluster };
+        for (EbmlMaster aCluster : findList(t, EbmlMaster.class, path2)) {
+            MKVType[] path1 = { Cluster, Timecode };
+            long baseTimecode = ((EbmlUint) findFirst(aCluster, path1)).getUint();
             for (EbmlBase child : aCluster.children)
                 if (MKVType.SimpleBlock.equals(child.type)) {
                     MkvBlock b = (MkvBlock) child;

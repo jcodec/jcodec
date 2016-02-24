@@ -35,7 +35,7 @@ import org.jcodec.platform.Platform;
  */
 public class NIOUtils {
 
-    public static ByteBuffer search(ByteBuffer buffer, int n, byte... param) {
+    public static ByteBuffer search(ByteBuffer buffer, int n, byte[] param) {
         ByteBuffer result = buffer.duplicate();
         int step = 0, rem = buffer.position();
         while (buffer.hasRemaining()) {

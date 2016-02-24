@@ -44,10 +44,10 @@ public class EsdsBox extends FullBox {
 
         if (streamInfo != null && streamInfo.remaining() > 0)
             new ES(trackId,
-                    new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, new DecoderSpecific(streamInfo)),
-                    new SL()).write(out);
+                    new Descriptor[]{new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, new Descriptor[]{ new DecoderSpecific(streamInfo)}),
+                    new SL()}).write(out);
         else
-            new ES(trackId, new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate), new SL()).write(out);
+            new ES(trackId, new Descriptor[]{new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, new Descriptor[0]), new SL()}).write(out);
     }
 
     public void parse(ByteBuffer input) {

@@ -19,7 +19,7 @@ public class DecoderConfig extends NodeDescriptor {
         super(tag, size);
     }
 
-    public DecoderConfig(int objectType, int bufSize, int maxBitrate, int avgBitrate, Descriptor... children) {
+    public DecoderConfig(int objectType, int bufSize, int maxBitrate, int avgBitrate, Descriptor[] children) {
         super(tag(), children);
         this.objectType = objectType;
         this.bufSize = bufSize;
