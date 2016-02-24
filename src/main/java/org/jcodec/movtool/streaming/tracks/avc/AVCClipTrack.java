@@ -181,7 +181,7 @@ public class AVCClipTrack extends ClipTrack {
                 if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
                     out.putInt(1);
                     nu.write(out);
-                    st.run(buf, out, nu, track.encSPS, track.encPPS);
+                    st.runSpsPps(buf, out, nu, track.encSPS, track.encPPS);
                 }
             }
 

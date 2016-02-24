@@ -56,7 +56,7 @@ public class SliceDecoder {
         this.lRefs = lRefs;
     }
 
-    public void decode(SliceReader sliceReader) {
+    public void decodeFromReader(SliceReader sliceReader) {
 
         parser = sliceReader;
         

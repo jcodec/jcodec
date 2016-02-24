@@ -1,5 +1,8 @@
 package org.jcodec.movtool.streaming.tracks.avc;
 
+import static org.jcodec.codecs.h264.H264Utils.readPPSFromBufferList;
+import static org.jcodec.codecs.h264.H264Utils.readSPSFromBufferList;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -209,7 +212,9 @@ public class AVCConcatTrack implements VirtualTrack {
         private AVCConcatTrack track;
 
         private AvccTweaker(List<ByteBuffer> spsList, List<ByteBuffer> ppsList, int idx2, AVCConcatTrack track) {
-            super(spsList, ppsList);
+            super();
+            this.sps = readSPSFromBufferList(spsList);
+            this.pps = readPPSFromBufferList(ppsList);
             this.idx2 = idx2;
             this.track = track;
         }

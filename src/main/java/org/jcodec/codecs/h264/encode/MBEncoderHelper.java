@@ -80,7 +80,7 @@ public class MBEncoderHelper {
         }
     }
     
-    public static final void takeSafe(byte[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
+    public static final void takeSafe2(byte[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
             int blkW, int blkH) {
         for (int i = 0, srcOff = y * planeWidth + x, dstOff = 0; i < blkH; i++, srcOff += planeWidth) {
             for (int j = 0, srcOff1 = srcOff; j < blkW; ++j, ++dstOff, ++srcOff1) {
@@ -135,7 +135,7 @@ public class MBEncoderHelper {
         }
     }
 
-    public static final void putBlk(Picture8Bit dest, Picture8Bit src, int x, int y) {
+    public static final void putBlkPic(Picture8Bit dest, Picture8Bit src, int x, int y) {
         if (dest.getColor() != src.getColor())
             throw new RuntimeException("Incompatible color");
         for (int c = 0; c < dest.getColor().nComp; c++) {

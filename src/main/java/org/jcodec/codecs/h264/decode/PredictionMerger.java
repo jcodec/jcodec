@@ -77,7 +77,7 @@ public class PredictionMerger {
     private static void mergeAvg(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
             byte[] out) {
         if (p0 == Bi)
-            mergePrediction(blk0, blk1, stride, p0, off, blkW, blkH, out);
+            _mergePrediction(blk0, blk1, stride, p0, off, blkW, blkH, out);
         else if (p0 == L0)
             copyPrediction(blk0, stride, off, blkW, blkH, out);
         else if (p0 == L1)
@@ -103,7 +103,7 @@ public class PredictionMerger {
                 out[off] = _in[off];
     }
 
-    private static void mergePrediction(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
+    private static void _mergePrediction(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
             byte[] out) {
 
         for (int i = 0; i < blkH; i++, off += stride - blkW)

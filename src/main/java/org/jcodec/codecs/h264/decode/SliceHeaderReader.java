@@ -4,7 +4,7 @@ import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readU;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUEtrace;
 import static org.jcodec.common.model.ColorSpace.MONO;
 
 import java.util.ArrayList;
@@ -37,12 +37,12 @@ public class SliceHeaderReader {
     public SliceHeader readPart1(BitReader _in) {
 
         SliceHeader sh = new SliceHeader();
-        sh.first_mb_in_slice = readUE(_in, "SH: first_mb_in_slice");
-        int sh_type = readUE(_in, "SH: slice_type");
+        sh.first_mb_in_slice = readUEtrace(_in, "SH: first_mb_in_slice");
+        int sh_type = readUEtrace(_in, "SH: slice_type");
         sh.slice_type = SliceType.fromValue(sh_type % 5);
         sh.slice_type_restr = (sh_type / 5) > 0;
 
-        sh.pic_parameter_set_id = readUE(_in, "SH: pic_parameter_set_id");
+        sh.pic_parameter_set_id = readUEtrace(_in, "SH: pic_parameter_set_id");
 
         return sh;
     }
@@ -60,7 +60,7 @@ public class SliceHeaderReader {
             }
         }
         if (nalUnit.type == NALUnitType.IDR_SLICE) {
-            sh.idr_pic_id = readUE(_in, "SH: idr_pic_id");
+            sh.idr_pic_id = readUEtrace(_in, "SH: idr_pic_id");
         }
         if (sps.pic_order_cnt_type == 0) {
             sh.pic_order_cnt_lsb = readU(_in, sps.log2_max_pic_order_cnt_lsb_minus4 + 4, "SH: pic_order_cnt_lsb");
@@ -75,7 +75,7 @@ public class SliceHeaderReader {
                 sh.delta_pic_order_cnt[1] = readSE(_in, "SH: delta_pic_order_cnt[1]");
         }
         if (pps.redundant_pic_cnt_present_flag) {
-            sh.redundant_pic_cnt = readUE(_in, "SH: redundant_pic_cnt");
+            sh.redundant_pic_cnt = readUEtrace(_in, "SH: redundant_pic_cnt");
         }
         if (sh.slice_type == SliceType.B) {
             sh.direct_spatial_mv_pred_flag = readBool(_in, "SH: direct_spatial_mv_pred_flag");
@@ -83,9 +83,9 @@ public class SliceHeaderReader {
         if (sh.slice_type == SliceType.P || sh.slice_type == SliceType.SP || sh.slice_type == SliceType.B) {
             sh.num_ref_idx_active_override_flag = readBool(_in, "SH: num_ref_idx_active_override_flag");
             if (sh.num_ref_idx_active_override_flag) {
-                sh.num_ref_idx_active_minus1[0] = readUE(_in, "SH: num_ref_idx_l0_active_minus1");
+                sh.num_ref_idx_active_minus1[0] = readUEtrace(_in, "SH: num_ref_idx_l0_active_minus1");
                 if (sh.slice_type == SliceType.B) {
-                    sh.num_ref_idx_active_minus1[1] = readUE(_in, "SH: num_ref_idx_l1_active_minus1");
+                    sh.num_ref_idx_active_minus1[1] = readUEtrace(_in, "SH: num_ref_idx_l1_active_minus1");
                 }
             }
         }
@@ -96,7 +96,7 @@ public class SliceHeaderReader {
         if (nalUnit.nal_ref_idc != 0)
             readDecoderPicMarking(nalUnit, sh, _in);
         if (pps.entropy_coding_mode_flag && sh.slice_type.isInter()) {
-            sh.cabac_init_idc = readUE(_in, "SH: cabac_init_idc");
+            sh.cabac_init_idc = readUEtrace(_in, "SH: cabac_init_idc");
         }
         sh.slice_qp_delta = readSE(_in, "SH: slice_qp_delta");
         if (sh.slice_type == SliceType.SP || sh.slice_type == SliceType.SI) {
@@ -106,7 +106,7 @@ public class SliceHeaderReader {
             sh.slice_qs_delta = readSE(_in, "SH: slice_qs_delta");
         }
         if (pps.deblocking_filter_control_present_flag) {
-            sh.disable_deblocking_filter_idc = readUE(_in, "SH: disable_deblocking_filter_idc");
+            sh.disable_deblocking_filter_idc = readUEtrace(_in, "SH: disable_deblocking_filter_idc");
             if (sh.disable_deblocking_filter_idc != 1) {
                 sh.slice_alpha_c0_offset_div2 = readSE(_in, "SH: slice_alpha_c0_offset_div2");
                 sh.slice_beta_offset_div2 = readSE(_in, "SH: slice_beta_offset_div2");
@@ -150,25 +150,25 @@ public class SliceHeaderReader {
                 ArrayList<Instruction> mmops = new ArrayList<Instruction>();
                 int memory_management_control_operation;
                 do {
-                    memory_management_control_operation = readUE(_in, "SH: memory_management_control_operation");
+                    memory_management_control_operation = readUEtrace(_in, "SH: memory_management_control_operation");
 
                     Instruction instr = null;
 
                     switch (memory_management_control_operation) {
                     case 1:
-                        instr = new RefPicMarking.Instruction(InstrType.REMOVE_SHORT, readUE(_in,
+                        instr = new RefPicMarking.Instruction(InstrType.REMOVE_SHORT, readUEtrace(_in,
                                 "SH: difference_of_pic_nums_minus1") + 1, 0);
                         break;
                     case 2:
                         instr = new RefPicMarking.Instruction(InstrType.REMOVE_LONG,
-                                readUE(_in, "SH: long_term_pic_num"), 0);
+                                readUEtrace(_in, "SH: long_term_pic_num"), 0);
                         break;
                     case 3:
-                        instr = new RefPicMarking.Instruction(InstrType.CONVERT_INTO_LONG, readUE(_in,
-                                "SH: difference_of_pic_nums_minus1") + 1, readUE(_in, "SH: long_term_frame_idx"));
+                        instr = new RefPicMarking.Instruction(InstrType.CONVERT_INTO_LONG, readUEtrace(_in,
+                                "SH: difference_of_pic_nums_minus1") + 1, readUEtrace(_in, "SH: long_term_frame_idx"));
                         break;
                     case 4:
-                        instr = new RefPicMarking.Instruction(InstrType.TRUNK_LONG, readUE(_in,
+                        instr = new RefPicMarking.Instruction(InstrType.TRUNK_LONG, readUEtrace(_in,
                                 "SH: max_long_term_frame_idx_plus1") - 1, 0);
                         break;
                     case 5:
@@ -176,7 +176,7 @@ public class SliceHeaderReader {
                         break;
                     case 6:
                         instr = new RefPicMarking.Instruction(InstrType.MARK_LONG,
-                                readUE(_in, "SH: long_term_frame_idx"), 0);
+                                readUEtrace(_in, "SH: long_term_frame_idx"), 0);
                         break;
                     }
                     if (instr != null)
@@ -193,9 +193,9 @@ public class SliceHeaderReader {
                 : pps.num_ref_idx_active_minus1;
         int[] nr = new int[] {numRefsMinus1[0] + 1, numRefsMinus1[1] + 1};
 
-        sh.pred_weight_table.luma_log2_weight_denom = readUE(_in, "SH: luma_log2_weight_denom");
+        sh.pred_weight_table.luma_log2_weight_denom = readUEtrace(_in, "SH: luma_log2_weight_denom");
         if (sps.chroma_format_idc != MONO) {
-            sh.pred_weight_table.chroma_log2_weight_denom = readUE(_in, "SH: chroma_log2_weight_denom");
+            sh.pred_weight_table.chroma_log2_weight_denom = readUEtrace(_in, "SH: chroma_log2_weight_denom");
         }
         int defaultLW = 1 << sh.pred_weight_table.luma_log2_weight_denom;
         int defaultCW = 1 << sh.pred_weight_table.chroma_log2_weight_denom;
@@ -263,11 +263,11 @@ public class SliceHeaderReader {
         IntArrayList ops = new IntArrayList();
         IntArrayList args = new IntArrayList();
         do {
-            int idc = readUE(_in, "SH: reordering_of_pic_nums_idc");
+            int idc = readUEtrace(_in, "SH: reordering_of_pic_nums_idc");
             if (idc == 3)
                 break;
             ops.add(idc);
-            args.add(readUE(_in, "SH: abs_diff_pic_num_minus1"));
+            args.add(readUEtrace(_in, "SH: abs_diff_pic_num_minus1"));
         } while (true);
         return new int[][] { ops.toArray(), args.toArray() };
     }

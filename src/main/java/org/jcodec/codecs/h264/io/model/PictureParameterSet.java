@@ -5,7 +5,7 @@ import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readNBit;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readU;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUEtrace;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeBool;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeNBit;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSEtrace;
@@ -83,27 +83,27 @@ public class PictureParameterSet {
         BitReader _in = new BitReader(is);
         PictureParameterSet pps = new PictureParameterSet();
 
-        pps.pic_parameter_set_id = readUE(_in, "PPS: pic_parameter_set_id");
-        pps.seq_parameter_set_id = readUE(_in, "PPS: seq_parameter_set_id");
+        pps.pic_parameter_set_id = readUEtrace(_in, "PPS: pic_parameter_set_id");
+        pps.seq_parameter_set_id = readUEtrace(_in, "PPS: seq_parameter_set_id");
         pps.entropy_coding_mode_flag = readBool(_in, "PPS: entropy_coding_mode_flag");
         pps.pic_order_present_flag = readBool(_in, "PPS: pic_order_present_flag");
-        pps.num_slice_groups_minus1 = readUE(_in, "PPS: num_slice_groups_minus1");
+        pps.num_slice_groups_minus1 = readUEtrace(_in, "PPS: num_slice_groups_minus1");
         if (pps.num_slice_groups_minus1 > 0) {
-            pps.slice_group_map_type = readUE(_in, "PPS: slice_group_map_type");
+            pps.slice_group_map_type = readUEtrace(_in, "PPS: slice_group_map_type");
             pps.top_left = new int[pps.num_slice_groups_minus1 + 1];
             pps.bottom_right = new int[pps.num_slice_groups_minus1 + 1];
             pps.run_length_minus1 = new int[pps.num_slice_groups_minus1 + 1];
             if (pps.slice_group_map_type == 0)
                 for (int iGroup = 0; iGroup <= pps.num_slice_groups_minus1; iGroup++)
-                    pps.run_length_minus1[iGroup] = readUE(_in, "PPS: run_length_minus1");
+                    pps.run_length_minus1[iGroup] = readUEtrace(_in, "PPS: run_length_minus1");
             else if (pps.slice_group_map_type == 2)
                 for (int iGroup = 0; iGroup < pps.num_slice_groups_minus1; iGroup++) {
-                    pps.top_left[iGroup] = readUE(_in, "PPS: top_left");
-                    pps.bottom_right[iGroup] = readUE(_in, "PPS: bottom_right");
+                    pps.top_left[iGroup] = readUEtrace(_in, "PPS: top_left");
+                    pps.bottom_right[iGroup] = readUEtrace(_in, "PPS: bottom_right");
                 }
             else if (pps.slice_group_map_type == 3 || pps.slice_group_map_type == 4 || pps.slice_group_map_type == 5) {
                 pps.slice_group_change_direction_flag = readBool(_in, "PPS: slice_group_change_direction_flag");
-                pps.slice_group_change_rate_minus1 = readUE(_in, "PPS: slice_group_change_rate_minus1");
+                pps.slice_group_change_rate_minus1 = readUEtrace(_in, "PPS: slice_group_change_rate_minus1");
             } else if (pps.slice_group_map_type == 6) {
                 int NumberBitsPerSliceGroupId;
                 if (pps.num_slice_groups_minus1 + 1 > 4)
@@ -112,14 +112,14 @@ public class PictureParameterSet {
                     NumberBitsPerSliceGroupId = 2;
                 else
                     NumberBitsPerSliceGroupId = 1;
-                int pic_size_in_map_units_minus1 = readUE(_in, "PPS: pic_size_in_map_units_minus1");
+                int pic_size_in_map_units_minus1 = readUEtrace(_in, "PPS: pic_size_in_map_units_minus1");
                 pps.slice_group_id = new int[pic_size_in_map_units_minus1 + 1];
                 for (int i = 0; i <= pic_size_in_map_units_minus1; i++) {
                     pps.slice_group_id[i] = readU(_in, NumberBitsPerSliceGroupId, "PPS: slice_group_id [" + i + "]f");
                 }
             }
         }
-        pps.num_ref_idx_active_minus1 = new int[] {readUE(_in, "PPS: num_ref_idx_l0_active_minus1"), readUE(_in, "PPS: num_ref_idx_l1_active_minus1")};
+        pps.num_ref_idx_active_minus1 = new int[] {readUEtrace(_in, "PPS: num_ref_idx_l0_active_minus1"), readUEtrace(_in, "PPS: num_ref_idx_l1_active_minus1")};
         pps.weighted_pred_flag = readBool(_in, "PPS: weighted_pred_flag");
         pps.weighted_bipred_idc = readNBit(_in, 2, "PPS: weighted_bipred_idc");
         pps.pic_init_qp_minus26 = readSE(_in, "PPS: pic_init_qp_minus26");

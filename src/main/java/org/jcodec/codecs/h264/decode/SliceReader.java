@@ -12,7 +12,7 @@ import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readNBit;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readTE;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUEtrace;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
 import static org.jcodec.codecs.h264.io.model.MBType.B_8x8;
 import static org.jcodec.codecs.h264.io.model.MBType.I_16x16;
@@ -116,7 +116,7 @@ public class SliceReader {
 
         if (sh.slice_type.isInter() && !activePps.entropy_coding_mode_flag) {
             if (!prevMbSkipped && mbSkipRun == 0) {
-                mbSkipRun = readUE(reader, "mb_skip_run");
+                mbSkipRun = readUEtrace(reader, "mb_skip_run");
                 if (!moreRBSPData(reader)) {
                     endOfData = true;
                 }
@@ -191,7 +191,7 @@ public class SliceReader {
     int readChromaPredMode(int mbX, boolean leftAvailable, boolean topAvailable) {
         int chromaPredictionMode;
         if (!activePps.entropy_coding_mode_flag) {
-            chromaPredictionMode = readUE(reader, "MBP: intra_chroma_pred_mode");
+            chromaPredictionMode = readUEtrace(reader, "MBP: intra_chroma_pred_mode");
         } else {
             chromaPredictionMode = cabac.readIntraChromaPredMode(mDecoder, mbX, leftMBType, topMBType[mbX],
                     leftAvailable, topAvailable);
@@ -212,7 +212,7 @@ public class SliceReader {
             MBType leftMB, MBType topMB) {
 
         if (!activePps.entropy_coding_mode_flag)
-            return H264Const.CODED_BLOCK_PATTERN_INTRA_COLOR[readUE(reader, "coded_block_pattern")];
+            return H264Const.CODED_BLOCK_PATTERN_INTRA_COLOR[readUEtrace(reader, "coded_block_pattern")];
         else
             return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
     }
@@ -220,7 +220,7 @@ public class SliceReader {
     protected int readCodedBlockPatternInter(boolean leftAvailable, boolean topAvailable, int leftCBP, int topCBP,
             MBType leftMB, MBType topMB) {
         if (!activePps.entropy_coding_mode_flag) {
-            int code = readUE(reader, "coded_block_pattern");
+            int code = readUEtrace(reader, "coded_block_pattern");
             return H264Const.CODED_BLOCK_PATTERN_INTER_COLOR[code];
         } else
             return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
@@ -363,14 +363,14 @@ public class SliceReader {
 
     public int readSubMBTypeP() {
         if (!activePps.entropy_coding_mode_flag)
-            return readUE(reader, "SUB: sub_mb_type");
+            return readUEtrace(reader, "SUB: sub_mb_type");
         else
             return cabac.readSubMbTypeP(mDecoder);
     }
 
     public int readSubMBTypeB() {
         if (!activePps.entropy_coding_mode_flag)
-            return readUE(reader, "SUB: sub_mb_type");
+            return readUEtrace(reader, "SUB: sub_mb_type");
         else
             return cabac.readSubMbTypeB(mDecoder);
     }
@@ -403,7 +403,7 @@ public class SliceReader {
     public int decodeMBTypeI(int mbIdx, boolean leftAvailable, boolean topAvailable, MBType leftMBType, MBType topMBType) {
         int mbType;
         if (!activePps.entropy_coding_mode_flag)
-            mbType = readUE(reader, "MB: mb_type");
+            mbType = readUEtrace(reader, "MB: mb_type");
         else
             mbType = cabac.readMBTypeI(mDecoder, leftMBType, topMBType, leftAvailable, topAvailable);
         return mbType;
@@ -412,7 +412,7 @@ public class SliceReader {
     public int readMBTypeP() {
         int mbType;
         if (!activePps.entropy_coding_mode_flag)
-            mbType = readUE(reader, "MB: mb_type");
+            mbType = readUEtrace(reader, "MB: mb_type");
         else
             mbType = cabac.readMBTypeP(mDecoder);
         return mbType;
@@ -421,7 +421,7 @@ public class SliceReader {
     public int readMBTypeB(int mbIdx, boolean leftAvailable, boolean topAvailable, MBType leftMBType, MBType topMBType) {
         int mbType;
         if (!activePps.entropy_coding_mode_flag)
-            mbType = readUE(reader, "MB: mb_type");
+            mbType = readUEtrace(reader, "MB: mb_type");
         else
             mbType = cabac.readMBTypeB(mDecoder, leftMBType, topMBType, leftAvailable, topAvailable);
         return mbType;
@@ -944,9 +944,9 @@ public class SliceReader {
                 readChromaDC(mbX, leftAvailable, topAvailable, mBlock.dc1, 1, mBlock.curMbType);
                 readChromaDC(mbX, leftAvailable, topAvailable, mBlock.dc2, 2, mBlock.curMbType);
             }
-            readChromaAC(leftAvailable, topAvailable, mbX, mBlock.dc1, 1, mBlock.curMbType,
+            _readChromaAC(leftAvailable, topAvailable, mbX, mBlock.dc1, 1, mBlock.curMbType,
                     (mBlock.cbpChroma() & 2) > 0, mBlock.ac[1]);
-            readChromaAC(leftAvailable, topAvailable, mbX, mBlock.dc2, 2, mBlock.curMbType,
+            _readChromaAC(leftAvailable, topAvailable, mbX, mBlock.dc2, 2, mBlock.curMbType,
                     (mBlock.cbpChroma() & 2) > 0, mBlock.ac[2]);
         } else if (!sh.pps.entropy_coding_mode_flag) {
             setZeroCoeff(1, mbX << 1, 0);
@@ -956,7 +956,7 @@ public class SliceReader {
         }
     }
 
-    private void readChromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int[] dc, int comp,
+    private void _readChromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int[] dc, int comp,
             MBType curMbType, boolean codedAC, int[][] residualOut) {
         for (int i = 0; i < dc.length; i++) {
             int[] ac = residualOut[i];
