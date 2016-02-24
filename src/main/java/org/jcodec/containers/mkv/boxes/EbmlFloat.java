@@ -17,7 +17,7 @@ public class EbmlFloat extends EbmlBin {
         super(id);
     }
     
-    public void set(double value) {
+    public void setDouble(double value) {
         if (value < Float.MAX_VALUE) {
             ByteBuffer bb = ByteBuffer.allocate(4);
             bb.putFloat((float) value);
@@ -33,7 +33,7 @@ public class EbmlFloat extends EbmlBin {
         }
     }
 
-    public double get() {
+    public double getDouble() {
 
         if (data.limit() == 4)
             return data.duplicate().getFloat();

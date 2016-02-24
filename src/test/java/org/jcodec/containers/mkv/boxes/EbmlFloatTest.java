@@ -12,9 +12,9 @@ public class EbmlFloatTest {
     @Test
     public void test() {
         EbmlFloat durationElem = (EbmlFloat) createByType(Duration);
-        durationElem.set(5 * 1000.0);
+        durationElem.setDouble(5 * 1000.0);
         
-        Assert.assertEquals(5000.0, durationElem.get(),  0.0001);
+        Assert.assertEquals(5000.0, durationElem.getDouble(),  0.0001);
         
     }
 

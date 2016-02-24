@@ -20,10 +20,10 @@ public class EbmlString extends EbmlBin {
     
     public EbmlString(byte[] id, String value){
         super(id);
-        set(value);
+        setString(value);
     }
     
-    public String get() {
+    public String getString() {
         try {
             return new String(data.array(), charset);
         } catch (java.io.UnsupportedEncodingException ex) {
@@ -32,7 +32,7 @@ public class EbmlString extends EbmlBin {
         }
     }
     
-    public void set(String value){
+    public void setString(String value){
         try {
             this.data = ByteBuffer.wrap(value.getBytes(charset));
         } catch (java.io.UnsupportedEncodingException ex) {

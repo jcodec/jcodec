@@ -200,13 +200,13 @@ public class MKVMuxer {
 
     public static void createChild(EbmlMaster parent, MKVType type, long value) {
         EbmlUint se = (EbmlUint) createByType(type);
-        se.set(value);
+        se.setUint(value);
         parent.add(se);
     }
 
     public static void createChild(EbmlMaster parent, MKVType type, String value) {
         EbmlString se = (EbmlString) createByType(type);
-        se.set(value);
+        se.setString(value);
         parent.add(se);
     }
 
@@ -218,14 +218,14 @@ public class MKVMuxer {
 
     public static void createChild(EbmlMaster parent, MKVType type, ByteBuffer value) {
         EbmlBin se = (EbmlBin) createByType(type);
-        se.set(value);
+        se.setBuf(value);
         parent.add(se);
     }
 
     public static void createChild(EbmlMaster parent, MKVType type, double value) {
         try {
             EbmlFloat se = (EbmlFloat) createByType(type);
-            se.set(value);
+            se.setDouble(value);
             parent.add(se);
         } catch (ClassCastException cce) {
             throw new RuntimeException("Element of type " + type + " can't be cast to EbmlFloat", cce);

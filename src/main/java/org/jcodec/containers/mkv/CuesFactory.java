@@ -61,17 +61,17 @@ public class CuesFactory {
             EbmlMaster cuePoint = createByType(CuePoint);
             
             EbmlUint cueTime = createByType(CueTime);
-            cueTime.set(cpm.timecode);
+            cueTime.setUint(cpm.timecode);
             cuePoint.add(cueTime);
             
             EbmlMaster cueTrackPositions = createByType(CueTrackPositions);
             
             EbmlUint cueTrack = createByType(CueTrack);
-            cueTrack.set(videoTrackNr);
+            cueTrack.setUint(videoTrackNr);
             cueTrackPositions.add(cueTrack);
             
             EbmlUint cueClusterPosition = createByType(CueClusterPosition);
-            cueClusterPosition.set(cpm.elementOffset+estimatedSize);
+            cueClusterPosition.setUint(cpm.elementOffset+estimatedSize);
             if (cueClusterPosition.data.limit() != cpm.cueClusterPositionSize)
                 System.err.println("estimated size of CueClusterPosition differs from the one actually used. ElementId: "+EbmlUtil.toHexString(cpm.id)+" "+cueClusterPosition.getData().limit()+" vs "+cpm.cueClusterPositionSize);
             cueTrackPositions.add(cueClusterPosition);
@@ -149,7 +149,7 @@ public class CuesFactory {
         
         public static CuePointMock make(EbmlMaster c){
             EbmlUint tc = (EbmlUint) findFirst(c, Cluster, Timecode);
-            return make(c.id, tc.get(), c.size());
+            return make(c.id, tc.getUint(), c.size());
         }
 
         public static CuePointMock make(byte[] id, long timecode, long size) {

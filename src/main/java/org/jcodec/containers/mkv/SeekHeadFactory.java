@@ -50,11 +50,11 @@ public class SeekHeadFactory {
             EbmlMaster seek = createByType(Seek);
             
             EbmlBin seekId = createByType(SeekID);
-            seekId.set(ByteBuffer.wrap(z.id));
+            seekId.setBuf(ByteBuffer.wrap(z.id));
             seek.add(seekId);
             
             EbmlUint seekPosition = createByType(SeekPosition);
-            seekPosition.set(z.dataOffset+seekHeadSize);
+            seekPosition.setUint(z.dataOffset+seekHeadSize);
             if (seekPosition.data.limit() != z.seekPointerSize)
                 System.err.println("estimated size of seekPosition differs from the one actually used. ElementId: "+EbmlUtil.toHexString(z.id)+" "+seekPosition.getData().limit()+" vs "+z.seekPointerSize);
             seek.add(seekPosition);

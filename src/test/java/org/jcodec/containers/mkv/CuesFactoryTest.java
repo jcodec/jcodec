@@ -53,7 +53,7 @@ public class CuesFactoryTest {
 //        Assert.assertEquals(292, cueClusterPosition.get());
         
         EbmlUint origCueClusterPosition = (EbmlUint) MKVType.findFirst(origCues, MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition);
-        Assert.assertEquals(cueClusterPosition.get(), origCueClusterPosition.get());
+        Assert.assertEquals(cueClusterPosition.getUint(), origCueClusterPosition.getUint());
     }
 
     private long getSizeIfPresent(EbmlBase element) {

@@ -119,28 +119,28 @@ public class SeekHeadFactoryTest {
         EbmlMaster seek = MKVType.createByType(MKVType.Seek);
         createChild(seek, SeekID, ByteBuffer.wrap(Info.id));
         EbmlUint se = (EbmlUint) MKVType.createByType(SeekPosition);
-        se.set(64);
+        se.setUint(64);
         seek.add(se);
         seekHead.add(seek);
 
         seek = MKVType.createByType(MKVType.Seek);
         createChild(seek, SeekID, ByteBuffer.wrap(Tracks.id));
         se = (EbmlUint) MKVType.createByType(SeekPosition);
-        se.set(275);
+        se.setUint(275);
         seek.add(se);
         seekHead.add(seek);
 
         seek = MKVType.createByType(MKVType.Seek);
         createChild(seek, SeekID, ByteBuffer.wrap(Tags.id));
         se = (EbmlUint) MKVType.createByType(SeekPosition);
-        se.set(440);
+        se.setUint(440);
         seek.add(se);
         seekHead.add(seek);
 
         seek = MKVType.createByType(MKVType.Seek);
         createChild(seek, SeekID, ByteBuffer.wrap(Cues.id));
         se = (EbmlUint) MKVType.createByType(SeekPosition);
-        se.set(602);
+        se.setUint(602);
         seek.add(se);
         seekHead.add(seek);
 
@@ -232,13 +232,13 @@ public class SeekHeadFactoryTest {
 
     private void addFakeEbmlHeader(EbmlMaster ebmlHeaderElem) {
         EbmlString docTypeElem = (EbmlString) MKVType.createByType(MKVType.DocType);
-        docTypeElem.set("matroska");
+        docTypeElem.setString("matroska");
 
         EbmlUint docTypeVersionElem = (EbmlUint) MKVType.createByType(MKVType.DocTypeVersion);
-        docTypeVersionElem.set(2);
+        docTypeVersionElem.setUint(2);
 
         EbmlUint docTypeReadVersionElem = (EbmlUint) MKVType.createByType(MKVType.DocTypeReadVersion);
-        docTypeReadVersionElem.set(2);
+        docTypeReadVersionElem.setUint(2);
 
         ebmlHeaderElem.add(docTypeElem);
         ebmlHeaderElem.add(docTypeVersionElem);

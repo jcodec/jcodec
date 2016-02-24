@@ -68,11 +68,11 @@ public final class MKVDemuxer {
     private void demux() {
         EbmlUint ts = findFirst(t, Segment, Info, TimecodeScale);
         if (ts != null)
-            timescale = ts.get();
+            timescale = ts.getUint();
 
         for (EbmlMaster aTrack : findList(t, EbmlMaster.class, Segment, Tracks, TrackEntry)) {
-            long type = ((EbmlUint) findFirst(aTrack, TrackEntry, TrackType)).get();
-            long id = ((EbmlUint) findFirst(aTrack, TrackEntry, TrackNumber)).get();
+            long type = ((EbmlUint) findFirst(aTrack, TrackEntry, TrackType)).getUint();
+            long id = ((EbmlUint) findFirst(aTrack, TrackEntry, TrackNumber)).getUint();
             if (type == 1) {
                 // video
                 if (vTrack != null)
@@ -88,12 +88,12 @@ public final class MKVDemuxer {
                 EbmlUint dheight = (EbmlUint) findFirst(aTrack, TrackEntry, Video, DisplayHeight);  
                 EbmlUint unit = (EbmlUint) findFirst(aTrack, TrackEntry, Video, DisplayUnit);
                 if (width != null && height != null){
-                    pictureWidth = (int) width.get();
-                    pictureHeight = (int) height.get();
+                    pictureWidth = (int) width.getUint();
+                    pictureHeight = (int) height.getUint();
                 } else if (dwidth != null && dheight != null){
-                    if (unit == null || unit.get() == 0){
-                        pictureHeight = (int) dheight.get();
-                        pictureWidth  = (int) dwidth.get();
+                    if (unit == null || unit.getUint() == 0){
+                        pictureHeight = (int) dheight.getUint();
+                        pictureWidth  = (int) dwidth.getUint();
                     } else {
                         throw new RuntimeException("DisplayUnits other then 0 are not implemented yet");
                     }
@@ -105,13 +105,13 @@ public final class MKVDemuxer {
                 AudioTrack audioTrack = new AudioTrack((int) id, this);
                 EbmlFloat sf = (EbmlFloat) findFirst(aTrack, TrackEntry, Audio, SamplingFrequency);
                 if (sf != null)
-                    audioTrack.samplingFrequency = sf.get();
+                    audioTrack.samplingFrequency = sf.getDouble();
                 
                 aTracks.add(audioTrack);
             }
         }
         for (EbmlMaster aCluster : findList(t, EbmlMaster.class, Segment, Cluster)) {
-            long baseTimecode = ((EbmlUint) findFirst(aCluster, Cluster, Timecode)).get();
+            long baseTimecode = ((EbmlUint) findFirst(aCluster, Cluster, Timecode)).getUint();
             for (EbmlBase child : aCluster.children)
                 if (MKVType.SimpleBlock.equals(child.type)) {
                     MkvBlock b = (MkvBlock) child;

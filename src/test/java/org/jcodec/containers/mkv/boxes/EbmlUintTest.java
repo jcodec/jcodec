@@ -24,7 +24,7 @@ public class EbmlUintTest {
     @Test
     public void testUnsignedIntegerData() throws Exception {
         EbmlUint uie1 = new EbmlUint(BlockDuration.id);
-        uie1.set(128);
+        uie1.setUint(128);
         ByteBuffer bb = uie1.getData();
         Assert.assertArrayEquals(new byte[]{(byte)0x9B, (byte)0x81, (byte)0x80}, bb.array());
         
