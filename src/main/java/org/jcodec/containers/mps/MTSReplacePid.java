@@ -62,13 +62,13 @@ public class MTSReplacePid extends MTSUtils.TSReader {
 
     private void replaceRefs(IntIntMap replaceSpec, int guid, ByteBuffer buf, Set<Integer> pmtPids) {
         if (guid == 0) {
-            PATSection pat = PATSection.parse(buf);
+            PATSection pat = PATSection.parsePAT(buf);
             for (int pids : pat.getPrograms().values()) {
                 pmtPids.add(pids);
             }
         } else if (pmtPids.contains(guid)) {
             System.out.println(MainUtils.bold("PMT"));
-            PSISection.parse(buf);
+            PSISection.parsePSI(buf);
 
             buf.getShort();
 

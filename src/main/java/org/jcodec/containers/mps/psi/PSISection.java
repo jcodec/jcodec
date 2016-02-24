@@ -40,7 +40,7 @@ public class PSISection {
         this.lastSectionNumber = lastSectionNumber;
     }
 
-    public static PSISection parse(ByteBuffer data) {
+    public static PSISection parsePSI(ByteBuffer data) {
         int tableId = data.get() & 0xff;
         int w0 = data.getShort() & 0xffff;
         if ((w0 & 0xC000) != 0x8000)

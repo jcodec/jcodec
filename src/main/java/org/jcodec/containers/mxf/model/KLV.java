@@ -70,7 +70,7 @@ public class KLV {
 
         UL ul = UL.read(buffer);
 
-        long len = BER.decodeLength(buffer);
+        long len = BER.decodeLengthBuf(buffer);
         return new KLV(ul, len, offset, baseOffset + buffer.position());
     }
 }

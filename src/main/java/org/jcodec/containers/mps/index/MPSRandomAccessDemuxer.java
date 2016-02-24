@@ -62,7 +62,7 @@ public class MPSRandomAccessDemuxer {
 		private MPSRandomAccessDemuxer demuxer;
 
         public Stream(MPSRandomAccessDemuxer demuxer, MPSStreamIndex streamIndex, SeekableByteChannel source) throws IOException {
-            super(streamIndex);
+            super(streamIndex.streamId, streamIndex.fsizes, streamIndex.fpts, streamIndex.fdur, streamIndex.sync);
 			this.demuxer = demuxer;
             this.source = source;
 
@@ -89,10 +89,10 @@ public class MPSRandomAccessDemuxer {
             
             int fs = fsizes[curFrame];
             ByteBuffer result = ByteBuffer.allocate(fs);
-            return nextFrame(result);
+            return _nextFrame(result);
         }
 
-        public Packet nextFrame(ByteBuffer buf) throws IOException {
+        private Packet _nextFrame(ByteBuffer buf) throws IOException {
             seekToFrame();
 
             if (curFrame >= fsizes.length)

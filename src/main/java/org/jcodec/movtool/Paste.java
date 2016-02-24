@@ -4,7 +4,7 @@ import static java.util.Arrays.fill;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
-import static org.jcodec.movtool.Util.forceEditList;
+import static org.jcodec.movtool.Util.forceEditListMov;
 import static org.jcodec.movtool.Util.insertTo;
 import static org.jcodec.movtool.Util.shift;
 import static org.jcodec.movtool.Util.spread;
@@ -80,8 +80,8 @@ public class Paste {
 
         long displayTv = (long) (to.getTimescale() * sec);
 
-        forceEditList(to);
-        forceEditList(from);
+        forceEditListMov(to);
+        forceEditListMov(from);
         TrakBox[] fromTracks = from.getTracks();
         TrakBox[] toTracks = to.getTracks();
         int[][] matches = findMatches(fromTracks, toTracks);

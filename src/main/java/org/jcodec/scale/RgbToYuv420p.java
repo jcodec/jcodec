@@ -25,12 +25,6 @@ public class RgbToYuv420p implements Transform {
         this.downShiftChr = downShift + 2;
     }
 
-    public RgbToYuv420p(int upShift, int downShift, Levels pc) {
-        this.upShift = upShift;
-        this.downShift = downShift;
-        this.downShiftChr = downShift + 2;
-    }
-
     public void transform(Picture img, Picture dst) {
 
         int[] y = img.getData()[0];

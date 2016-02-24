@@ -69,12 +69,12 @@ public class MTSPktDump {
                     }
 
                     if (guid == 0) {
-                        PATSection pat = PATSection.parse(tsBuf);
+                        PATSection pat = PATSection.parsePAT(tsBuf);
                         IntIntMap programs = pat.getPrograms();
                         pmtPid = programs.values()[0];
                         printPat(pat);
                     } else if (guid == pmtPid) {
-                        PMTSection pmt = PMTSection.parse(tsBuf);
+                        PMTSection pmt = PMTSection.parsePMT(tsBuf);
                         printPmt(pmt);
                     }
                 } else {

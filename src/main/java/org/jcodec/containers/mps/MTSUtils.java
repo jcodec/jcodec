@@ -148,7 +148,7 @@ public class MTSUtils {
      */
     @Deprecated
     public static int parsePAT(ByteBuffer data) {
-        PATSection pat = PATSection.parse(data);
+        PATSection pat = PATSection.parsePAT(data);
         if (pat.getPrograms().size() > 0)
             return pat.getPrograms().values()[0];
         else
@@ -157,12 +157,12 @@ public class MTSUtils {
 
     @Deprecated
     public static PMTSection parsePMT(ByteBuffer data) {
-        return PMTSection.parse(data);
+        return PMTSection.parsePMT(data);
     }
 
     @Deprecated
     public static PSISection parseSection(ByteBuffer data) {
-        return PSISection.parse(data);
+        return PSISection.parsePSI(data);
     }
 
     private static void parseEsInfo(ByteBuffer read) {
@@ -173,13 +173,13 @@ public class MTSUtils {
         SeekableByteChannel ch = null;
         try {
             ch = NIOUtils.readableChannel(src);
-            return getProgramGuids(ch);
+            return getProgramGuidsFromChannel(ch);
         } finally {
             NIOUtils.closeQuietly(ch);
         }
     }
 
-    public static PMTStream[] getProgramGuids(SeekableByteChannel _in) throws IOException {
+    public static PMTStream[] getProgramGuidsFromChannel(SeekableByteChannel _in) throws IOException {
         PMTExtractor ex = new PMTExtractor();
         ex.readTsFile(_in);
         PMTSection pmt = ex.getPmt();
@@ -187,6 +187,10 @@ public class MTSUtils {
     }
 
     private static class PMTExtractor extends TSReader {
+        public PMTExtractor() {
+            super(false);
+        }
+
         private int pmtGuid = -1;
         private PMTSection pmt;
 
@@ -213,10 +217,6 @@ public class MTSUtils {
         // Buffer must have an integral number of MPEG TS packets
         public static final int BUFFER_SIZE = TS_PKT_SIZE << 9;
         private boolean flush;
-
-        public TSReader() {
-            this(false);
-        }
 
         public TSReader(boolean flush) {
             this.flush = flush;
@@ -286,7 +286,7 @@ public class MTSUtils {
     }
 
     public static int[] getMediaPids(SeekableByteChannel src) throws IOException {
-        return filterMediaPids(MTSUtils.getProgramGuids(src));
+        return filterMediaPids(MTSUtils.getProgramGuidsFromChannel(src));
     }
 
     public static int[] getMediaPids(File src) throws IOException {
