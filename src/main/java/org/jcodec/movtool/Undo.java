@@ -87,7 +87,7 @@ public class Undo {
         try {
             Box mov = NodeBox.parseBox(NIOUtils.fetchFromChannel(is, (int) atom.getHeader().getSize()), new Header("moov", atom
                     .getHeader().getSize()), BoxFactory.getDefault());
-            return (mov instanceof MovieBox) && Box.findFirst((NodeBox) mov, "mvhd") != null;
+            return (mov instanceof MovieBox) && Box.containsBox((NodeBox) mov, "mvhd");
         } catch (Throwable t) {
             return false;
         }

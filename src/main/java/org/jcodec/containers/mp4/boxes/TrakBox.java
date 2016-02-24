@@ -64,7 +64,7 @@ public class TrakBox extends NodeBox {
     }
 
     public List<Edit> getEdits() {
-        EditListBox elst = findFirst(this, EditListBox.class, "edts", "elst");
+        EditListBox elst = findFirstPath(this, EditListBox.class, Box.path("edts.elst"));
         if (elst == null)
             return null;
         return elst.getEdits();
@@ -91,7 +91,7 @@ public class TrakBox extends NodeBox {
     }
 
     public String getHandlerType() {
-        HandlerBox handlerBox = findFirst(this, HandlerBox.class, "mdia", "hdlr");
+        HandlerBox handlerBox = findFirstPath(this, HandlerBox.class, Box.path("mdia.hdlr"));
         if (handlerBox == null)
             return null;
         String type = handlerBox.getComponentSubType();
@@ -109,7 +109,7 @@ public class TrakBox extends NodeBox {
      * @return 'media timescale' of the track.
      */
     public int getTimescale() {
-        return findFirst(this, MediaHeaderBox.class, "mdia", "mdhd").getTimescale();
+        return findFirstPath(this, MediaHeaderBox.class, Box.path("mdia.mdhd")).getTimescale();
     }
 
     /**
@@ -120,7 +120,7 @@ public class TrakBox extends NodeBox {
      *            A new 'media timescale' of this track.
      */
     public void setTimescale(int timescale) {
-        findFirst(this, MediaHeaderBox.class, "mdia", "mdhd").setTimescale(timescale);
+        findFirstPath(this, MediaHeaderBox.class, Box.path("mdia.mdhd")).setTimescale(timescale);
     }
 
     public long rescale(long tv, long ts) {
@@ -136,7 +136,7 @@ public class TrakBox extends NodeBox {
     }
 
     public long getMediaDuration() {
-        return findFirst(this, MediaHeaderBox.class, "mdia", "mdhd").getDuration();
+        return findFirstPath(this, MediaHeaderBox.class, Box.path("mdia.mdhd")).getDuration();
     }
 
     public boolean isPureRef() {
@@ -173,8 +173,7 @@ public class TrakBox extends NodeBox {
     }
 
     public Rational getPAR() {
-        PixelAspectExt pasp = NodeBox
-                .findFirst(this, PixelAspectExt.class, "mdia", "minf", "stbl", "stsd", null, "pasp");
+        PixelAspectExt pasp = NodeBox.findFirstPath(this, PixelAspectExt.class, new String[] { "mdia", "minf", "stbl", "stsd", null, "pasp" });
         return pasp == null ? new Rational(1, 1) : pasp.getRational();
     }
 
@@ -186,7 +185,7 @@ public class TrakBox extends NodeBox {
     }
 
     public SampleEntry[] getSampleEntries() {
-        return NodeBox.findAll(this, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
+        return NodeBox.findAllPath(this, SampleEntry.class, new String[]{"mdia", "minf", "stbl", "stsd", null});
     }
 
     public void setClipRect(short x, short y, short width, short height) {
@@ -199,7 +198,7 @@ public class TrakBox extends NodeBox {
     }
 
     public long getSampleCount() {
-        return NodeBox.findFirst(this, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz").getCount();
+        return NodeBox.findFirstPath(this, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz")).getCount();
     }
 
     public void setAperture(Size sar, Size dar) {
@@ -217,17 +216,17 @@ public class TrakBox extends NodeBox {
     }
 
     public int getFrameCount() {
-        SampleSizesBox stsz = findFirst(this, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        SampleSizesBox stsz = findFirstPath(this, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         return stsz.getDefaultSize() != 0 ? stsz.getCount() : stsz.getSizes().length;
     }
 
     public String getName() {
-        NameBox nb = Box.findFirst(this, NameBox.class, "udta", "name");
+        NameBox nb = Box.findFirstPath(this, NameBox.class, Box.path("udta.name"));
         return nb == null ? null : nb.getName();
     }
 
     public void fixMediaTimescale(int ts) {
-        MediaHeaderBox mdhd = Box.findFirst(this, MediaHeaderBox.class, "mdia", "mdhd");
+        MediaHeaderBox mdhd = Box.findFirstPath(this, MediaHeaderBox.class, Box.path("mdia.mdhd"));
         int oldTs = mdhd.getTimescale();
 
         mdhd.setTimescale(ts);
@@ -238,7 +237,7 @@ public class TrakBox extends NodeBox {
                 edit.setMediaTime((ts * edit.getMediaTime()) / oldTs);
             }
         }
-        TimeToSampleBox tts = Box.findFirst(this, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
+        TimeToSampleBox tts = Box.findFirstPath(this, TimeToSampleBox.class, Box.path("mdia.minf.stbl.stts"));
         TimeToSampleEntry[] entries = tts.getEntries();
         for (TimeToSampleEntry tte : entries) {
             tte.setSampleDuration((ts * tte.getSampleDuration()) / oldTs);
@@ -276,34 +275,34 @@ public class TrakBox extends NodeBox {
     }
 
     public TimeToSampleBox getStts() {
-        return NodeBox.findFirst(this, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
+        return NodeBox.findFirstPath(this, TimeToSampleBox.class, Box.path("mdia.minf.stbl.stts"));
     }
 
     public ChunkOffsetsBox getStco() {
-        return NodeBox.findFirst(this, ChunkOffsetsBox.class, "mdia", "minf", "stbl", "stco");
+        return NodeBox.findFirstPath(this, ChunkOffsetsBox.class, Box.path("mdia.minf.stbl.stco" ));
     }
 
     public ChunkOffsets64Box getCo64() {
-        return NodeBox.findFirst(this, ChunkOffsets64Box.class, "mdia", "minf", "stbl", "co64");
+        return NodeBox.findFirstPath(this, ChunkOffsets64Box.class, Box.path("mdia.minf.stbl.co64" ));
     }
 
     public SampleSizesBox getStsz() {
-        return NodeBox.findFirst(this, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        return NodeBox.findFirstPath(this, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz" ));
     }
 
     public SampleToChunkBox getStsc() {
-        return NodeBox.findFirst(this, SampleToChunkBox.class, "mdia", "minf", "stbl", "stsc");
+        return NodeBox.findFirstPath(this, SampleToChunkBox.class, Box.path("mdia.minf.stbl.stsc" ));
     }
 
     public SampleDescriptionBox getStsd() {
-        return NodeBox.findFirst(this, SampleDescriptionBox.class, "mdia", "minf", "stbl", "stsd");
+        return NodeBox.findFirstPath(this, SampleDescriptionBox.class, Box.path("mdia.minf.stbl.stsd" ));
     }
 
     public SyncSamplesBox getStss() {
-        return Box.findFirst(this, SyncSamplesBox.class, "mdia", "minf", "stbl", "stss");
+        return Box.findFirstPath(this, SyncSamplesBox.class, Box.path("mdia.minf.stbl.stss" ));
     }
 
     public CompositionOffsetsBox getCtts() {
-        return Box.findFirst(this, CompositionOffsetsBox.class, "mdia", "minf", "stbl", "ctts");
+        return Box.findFirstPath(this, CompositionOffsetsBox.class, Box.path("mdia.minf.stbl.ctts" ));
     }
 }

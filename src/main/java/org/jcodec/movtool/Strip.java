@@ -3,7 +3,7 @@ package org.jcodec.movtool;
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
+import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
 
 import java.io.File;
 import java.io.IOException;
@@ -98,14 +98,13 @@ public class Strip {
             } else
                 result.add(chunk);
         }
-
-        NodeBox stbl = findFirst(track, NodeBox.class, "mdia", "minf", "stbl");
+        NodeBox stbl = findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
         stbl.replace("stts", getTimeToSamples(result));
         stbl.replace("stsz", getSampleSizes(result));
         stbl.replace("stsc", getSamplesToChunk(result));
         stbl.removeChildren("stco", "co64");
         stbl.add(getChunkOffsets(result));
-        findFirst(track, MediaHeaderBox.class, "mdia", "mdhd").setDuration(totalDuration(result));
+        findFirstPath(track, MediaHeaderBox.class, Box.path("mdia.mdhd")).setDuration(totalDuration(result));
     }
 
     private long totalDuration(List<Chunk> result) {

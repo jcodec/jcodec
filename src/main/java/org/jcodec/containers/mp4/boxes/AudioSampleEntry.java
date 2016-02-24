@@ -207,7 +207,7 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public Endian getEndian() {
-        EndianBox endianBox = Box.findFirst(this, EndianBox.class, WaveExtension.fourcc(), EndianBox.fourcc());
+        EndianBox endianBox = Box.findFirstPath(this, EndianBox.class, new String[] { WaveExtension.fourcc(), EndianBox.fourcc() });
         if (endianBox == null) {
             if ("twos".equals(header.getFourcc()))
                 return Endian.BIG_ENDIAN;

@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4.demuxer;
 
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
+import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -159,9 +160,7 @@ public class TimecodeMP4DemuxerTrack {
 
     public int parseTimecode(String tc) {
         String[] split = tc.split(":");
-
-        TimecodeSampleEntry tmcd = Box
-                .findFirst(box, TimecodeSampleEntry.class, "mdia", "minf", "stbl", "stsd", "tmcd");
+        TimecodeSampleEntry tmcd = Box.findFirstPath(box, TimecodeSampleEntry.class, Box.path("mdia.minf.stbl.stsd.tmcd"));
         byte nf = tmcd.getNumFrames();
 
         return Integer.parseInt(split[3]) + Integer.parseInt(split[2]) * nf + Integer.parseInt(split[1]) * 60 * nf

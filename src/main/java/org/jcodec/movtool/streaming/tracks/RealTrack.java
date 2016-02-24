@@ -46,7 +46,7 @@ public class RealTrack implements VirtualTrack {
 
     public RealTrack(MovieBox movie, TrakBox trak, ByteChannelPool pool) {
         this.movie = movie;
-        SampleSizesBox stsz = Box.findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        SampleSizesBox stsz = Box.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         if (stsz.getDefaultSize() == 0) {
             this.demuxer = new FramesMP4DemuxerTrack(movie, trak, null) {
                 @Override
@@ -98,8 +98,9 @@ public class RealTrack implements VirtualTrack {
             ByteBuffer codecPrivate = null;
             if ("mp4a".equals(ase.getFourcc())) {
                 LeafBox lb = Box.findFirst(se, LeafBox.class, "esds");
-                if (lb == null)
-                    lb = Box.findFirst(se, LeafBox.class, null, "esds");
+                if (lb == null) {
+                    lb = Box.findFirstPath(se, LeafBox.class, new String[] { null, "esds" });
+                }
                 codecPrivate = lb.getData();
             }
 

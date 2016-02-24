@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.jcodec.common.Assert;
+import org.jcodec.common.StringUtils;
 import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
@@ -40,18 +41,17 @@ public abstract class Box {
 
     public abstract void parse(ByteBuffer buf);
 
-    public static Box findFirst(NodeBox box, String... path) {
-        return findFirst(box, Box.class, path);
+    public static <T extends Box> T findFirst(NodeBox box, Class<T> clazz, String path) {
+        return findFirstPath(box, clazz, new String[]{path});
     }
-
-    public static <T extends Box> T findFirst(NodeBox box, Class<T> clazz, String... path) {
-        T[] result = (T[]) findAll(box, clazz, path);
-
+    
+    public static <T extends Box> T findFirstPath(NodeBox box, Class<T> clazz, String[] path) {
+        T[] result = (T[]) findAllPath(box, clazz, path);
         return result.length > 0 ? result[0] : null;
     }
 
-    public static Box[] findAll(Box box, String... path) {
-        return findAll(box, Box.class, path);
+    public static <T extends Box> T[] findAll(Box box, Class<T> class1, String path) {
+        return findAllPath(box, class1, new String[]{path});
     }
 
     public static void findBox(Box root, List<String> path, Collection<Box> result) {
@@ -72,7 +72,7 @@ public abstract class Box {
         }
     }
 
-    public static <T extends Box> T[] findAll(Box box, Class<T> class1, String... path) {
+    public static <T extends Box> T[] findAllPath(Box box, Class<T> class1, String[] path) {
         List<Box> result = new LinkedList<Box>();
         List<String> tlist = new LinkedList<String>();
         for (String type : path) {
@@ -177,4 +177,20 @@ public abstract class Box {
             throw new RuntimeException(e);
         }
     }
+
+    public static boolean containsBox(NodeBox box, String path) {
+        Box b = findFirstPath(box, Box.class, new String[]{path});
+        return b != null;
+    }
+    
+    public static boolean containsBox2(NodeBox box, String path1, String path2) {
+        Box b = findFirstPath(box, Box.class, new String[]{path1, path2});
+        return b != null;
+    }
+
+    public static String[] path(String path) {
+        return StringUtils.splitC(path, '.');
+    }
+
+    
 }

@@ -149,13 +149,12 @@ public class MovieBox extends NodeBox {
         TrakBox videoTrack = getVideoTrack();
         if (videoTrack == null)
             return null;
-        ClearApertureBox clef = NodeBox.findFirst(videoTrack, ClearApertureBox.class, "tapt", "clef");
+        ClearApertureBox clef = NodeBox.findFirstPath(videoTrack, ClearApertureBox.class, Box.path("tapt.clef"));
 
         if (clef != null) {
             return applyMatrix(videoTrack, new Size((int) clef.getWidth(), (int) clef.getHeight()));
         }
-
-        Box box = NodeBox.findFirst(videoTrack, SampleDescriptionBox.class, "mdia", "minf", "stbl", "stsd").getBoxes()
+        Box box = NodeBox.findFirstPath(videoTrack, SampleDescriptionBox.class, Box.path("mdia.minf.stbl.stsd")).getBoxes()
                 .get(0);
         if (box == null || !(box instanceof VideoSampleEntry))
             return null;
@@ -177,13 +176,12 @@ public class MovieBox extends NodeBox {
         TrakBox videoTrack = getVideoTrack();
         if (videoTrack == null)
             return null;
-        EncodedPixelBox enof = NodeBox.findFirst(videoTrack, EncodedPixelBox.class, "tapt", "enof");
+        EncodedPixelBox enof = NodeBox.findFirstPath(videoTrack, EncodedPixelBox.class, Box.path("tapt.enof"));
 
         if (enof != null) {
             return new Size((int) enof.getWidth(), (int) enof.getHeight());
         }
-
-        Box box = NodeBox.findFirst(videoTrack, SampleDescriptionBox.class, "mdia", "minf", "stbl", "stsd").getBoxes()
+        Box box = NodeBox.findFirstPath(videoTrack, SampleDescriptionBox.class, Box.path("mdia.minf.stbl.stsd")).getBoxes()
                 .get(0);
         if (box == null || !(box instanceof VideoSampleEntry))
             return null;

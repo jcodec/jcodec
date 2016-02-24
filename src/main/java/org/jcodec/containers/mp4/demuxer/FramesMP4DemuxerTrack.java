@@ -1,7 +1,7 @@
 package org.jcodec.containers.mp4.demuxer;
 
 import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
+import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
@@ -63,11 +63,10 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         super(trak);
         this.input = input;
         this.movie = mov;
-
-        SampleSizesBox stsz = findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
-        SyncSamplesBox stss = Box.findFirst(trak, SyncSamplesBox.class, "mdia", "minf", "stbl", "stss");
-        SyncSamplesBox stps = Box.findFirst(trak, SyncSamplesBox.class, "mdia", "minf", "stbl", "stps");
-        CompositionOffsetsBox ctts = Box.findFirst(trak, CompositionOffsetsBox.class, "mdia", "minf", "stbl", "ctts");
+        SampleSizesBox stsz = findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        SyncSamplesBox stss = Box.findFirstPath(trak, SyncSamplesBox.class, Box.path("mdia.minf.stbl.stss"));
+        SyncSamplesBox stps = Box.findFirstPath(trak, SyncSamplesBox.class, Box.path("mdia.minf.stbl.stps"));
+        CompositionOffsetsBox ctts = Box.findFirstPath(trak, CompositionOffsetsBox.class, Box.path("mdia.minf.stbl.ctts"));
         compOffsets = ctts == null ? null : ctts.getEntries();
         if (stss != null) {
             syncSamples = stss.getSyncSamples();
