@@ -206,7 +206,7 @@ public class MXFDemuxer {
         }
         try {
             MXFMetadata meta = class1.getConstructor(UL.class).newInstance(ul);
-            meta.read(_bb);
+            meta.readBuf(_bb);
             return meta;
         } catch (Exception e) {
         }
