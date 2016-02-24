@@ -311,7 +311,7 @@ public class ProresEncoder extends VideoEncoder {
         if (unsafe) {
             int mbHeightPix = 16 << vStep;
             Picture8Bit filled = Picture8Bit.create(sliceMbCount << 4, mbHeightPix, YUV422);
-            ImageOP.subImageWithFill(result, filled, new Rect(mbX << 4, mbY << (4 + vStep), sliceMbCount << 4, mbHeightPix));
+            ImageOP.subImageWithFillPic8(result, filled, new Rect(mbX << 4, mbY << (4 + vStep), sliceMbCount << 4, mbHeightPix));
 
             split(filled, out, 0, 0, sliceMbCount, vStep, vOffset);
         } else {

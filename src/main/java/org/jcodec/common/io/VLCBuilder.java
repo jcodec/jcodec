@@ -15,6 +15,14 @@ import org.jcodec.common.IntIntMap;
  */
 public class VLCBuilder {
 
+    public static VLCBuilder createVLCBuilder(int[] codes, int[] lens, int[] vals) {
+        VLCBuilder b = new VLCBuilder();
+        for (int i = 0; i < codes.length; i++) {
+            b.setInt(codes[i], lens[i], vals[i]);
+        }
+        return b;
+    }
+
     private IntIntMap forward;
     private IntIntMap inverse;
     private IntArrayList codes;
@@ -25,12 +33,6 @@ public class VLCBuilder {
         this.inverse = new IntIntMap();
         this.codes = new IntArrayList();
         this.codesSizes = new IntArrayList();
-    }
-
-    public VLCBuilder(int[] codes, int[] lens, int[] vals) {
-        for (int i = 0; i < codes.length; i++) {
-            setInt(codes[i], lens[i], vals[i]);
-        }
     }
 
     public VLCBuilder set(int val, String code) {

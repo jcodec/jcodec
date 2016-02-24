@@ -21,16 +21,12 @@ import org.jcodec.common.tools.MainUtils.ANSIColor;
  */
 public class OutLogSink implements Logger.LogSink {
 
+    public static OutLogSink createOutLogSink() {
+        return new OutLogSink(System.out, DEFAULT_FORMAT);
+    }
+
     private PrintStream out;
     private MessageFormat fmt;
-
-    public OutLogSink() {
-        this(System.out, DEFAULT_FORMAT);
-    }
-
-    public OutLogSink(MessageFormat fmt) {
-        this(System.out, fmt);
-    }
 
     public OutLogSink(PrintStream out, MessageFormat fmt) {
         this.out = out;

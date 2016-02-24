@@ -10,7 +10,7 @@ import java.nio.ShortBuffer;
  * 
  */
 public class Debug {
-    public final static void print8x8(int[] output) {
+    public final static void print8x8i(int[] output) {
         int i = 0;
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
@@ -21,7 +21,7 @@ public class Debug {
         }
     }
 
-    public final static void print8x8(short[] output) {
+    public final static void print8x8s(short[] output) {
         int i = 0;
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
@@ -32,7 +32,7 @@ public class Debug {
         }
     }
 
-    public final static void print8x8(ShortBuffer output) {
+    public final static void print8x8sb(ShortBuffer output) {
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
                 System.out.printf("%3d, ", output.get());
@@ -41,7 +41,7 @@ public class Debug {
         }
     }
 
-    public static void print(short[] table) {
+    public static void prints(short[] table) {
         int i = 0;
         for (int x = 0; x < 8; x++) {
             for (int y = 0; y < 8; y++) {
@@ -59,7 +59,7 @@ public class Debug {
 
     public final static boolean debug = false;
 
-    public static void print(int i) {
+    public static void printInt(int i) {
         if (debug)
             System.out.print(i);
     }

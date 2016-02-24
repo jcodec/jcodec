@@ -45,8 +45,8 @@ public class FfmpegIntDctTest {
 //        for (int i = 0; i < output.length; i++) {
 //            output[i] = (short) IntDCT.range_limit(output[i]);
 //        }
-        Debug.print8x8(expectedOutput);
-        Debug.print8x8(output);
+        Debug.print8x8i(expectedOutput);
+        Debug.print8x8s(output);
     }
 
 }

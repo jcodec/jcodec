@@ -65,9 +65,9 @@ public class DctTest {
         int[] output = dct.decode(input);
         boolean equals = Platform.arrayEqualsInt(expected, output);
         if (!equals) {
-            Debug.print8x8(expected);
+            Debug.print8x8i(expected);
             System.out.println();
-            Debug.print8x8(output);
+            Debug.print8x8i(output);
         }
         assertTrue(equals);
     }

@@ -72,7 +72,7 @@ public class CuesFactoryTest {
     @Test
     public void testLengthOfIndexWithSingleEntry() throws Exception {
         CuesFactory cf = new CuesFactory(1024, 1);
-        cf.add(CuesFactory.CuePointMock.make(Cluster.id, 0, 278539));
+        cf.add(CuesFactory.CuePointMock.doMake(Cluster.id, 0, 278539));
         byte[] array = cf.createCues().getData().array();
         Assert.assertEquals(19, array.length);
     }
@@ -80,8 +80,8 @@ public class CuesFactoryTest {
     @Test
     public void testLengthOfIndexWithTwoEntries() throws Exception {
         CuesFactory cf = new CuesFactory(1024, 1);
-        cf.add(CuesFactory.CuePointMock.make(Cluster.id, 0, 278539));
-        cf.add(CuesFactory.CuePointMock.make(Cluster.id, 2, 278539));
+        cf.add(CuesFactory.CuePointMock.doMake(Cluster.id, 0, 278539));
+        cf.add(CuesFactory.CuePointMock.doMake(Cluster.id, 2, 278539));
         byte[] array = cf.createCues().getData().array();
         Assert.assertEquals(34, array.length);
     }

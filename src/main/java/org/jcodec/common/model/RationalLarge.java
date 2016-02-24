@@ -82,7 +82,7 @@ public class RationalLarge {
         return new RationalLarge(num, den);
     }
 
-    public static RationalLarge R(long num) {
+    public static RationalLarge R1(long num) {
         return R(num, 1);
     }
 

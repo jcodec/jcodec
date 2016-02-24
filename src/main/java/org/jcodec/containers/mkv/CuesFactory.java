@@ -149,10 +149,10 @@ public class CuesFactory {
         
         public static CuePointMock make(EbmlMaster c){
             EbmlUint tc = (EbmlUint) findFirst(c, Cluster, Timecode);
-            return make(c.id, tc.getUint(), c.size());
+            return doMake(c.id, tc.getUint(), c.size());
         }
 
-        public static CuePointMock make(byte[] id, long timecode, long size) {
+        public static CuePointMock doMake(byte[] id, long timecode, long size) {
             CuePointMock mock = new CuePointMock();
             mock.id = id;
             mock.timecode = timecode; 

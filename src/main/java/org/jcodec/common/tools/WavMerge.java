@@ -34,7 +34,7 @@ public class WavMerge {
         merge(out, ins);
     }
 
-    public static void merge(File result, File... src) throws IOException {
+    public static void merge(File result, File[] src) throws IOException {
 
         WritableByteChannel out = null;
         ReadableByteChannel[] inputs = new ReadableByteChannel[src.length];

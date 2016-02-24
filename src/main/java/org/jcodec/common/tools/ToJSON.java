@@ -45,10 +45,10 @@ public class ToJSON {
     }
 
     public static List<String> allFields(Class claz) {
-        return allFieldsExcept(claz);
+        return allFieldsExcept(claz, new String[]{});
     }
 
-    public static List<String> allFieldsExcept(Class claz, String... except) {
+    public static List<String> allFieldsExcept(Class claz, String[] except) {
         List<String> result = new ArrayList<String>();
         for (Method method : Platform.getDeclaredMethods(claz)) {
             if (!isGetter(method))
@@ -86,7 +86,7 @@ public class ToJSON {
      * @param builder
      * @param fields
      */
-    public static void fieldsToJSON(Object obj, StringBuilder builder, String... fields) {
+    public static void fieldsToJSON(Object obj, StringBuilder builder, String[] fields) {
         Method[] methods = Platform.getMethods(obj.getClass());
         for (String field : fields) {
             Method m = findGetter(methods, field);
