@@ -31,7 +31,7 @@ public class QTEdit {
     }
 
     public static abstract class BaseCommand implements MP4Edit {
-        public void apply(MovieBox movie, FileChannel[][] refs) {
+        public void applyRefs(MovieBox movie, FileChannel[][] refs) {
             apply(movie);
         }
 
