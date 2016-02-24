@@ -119,7 +119,7 @@ public class Rational {
         return reduce(num * other.den + other.num * den, den * other.den);
     }
 
-    public RationalLarge plus(RationalLarge other) {
+    public RationalLarge plusLarge(RationalLarge other) {
         return reduceLong(num * other.den + other.num * den, den * other.den);
     }
 
@@ -131,7 +131,7 @@ public class Rational {
         return reduceLong(num * other.den - other.num * den, den * other.den);
     }
 
-    public Rational plus(int scalar) {
+    public Rational plusInt(int scalar) {
         return new Rational(num + scalar * den, den);
     }
 
