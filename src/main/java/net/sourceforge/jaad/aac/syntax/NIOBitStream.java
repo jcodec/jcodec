@@ -29,7 +29,7 @@ public class NIOBitStream implements IBitStream {
 
     @Override
     public void setData(byte[] data) {
-        br = new BitReader(ByteBuffer.wrap(data));
+        br = BitReader.createBitReader(ByteBuffer.wrap(data));
     }
 
     @Override

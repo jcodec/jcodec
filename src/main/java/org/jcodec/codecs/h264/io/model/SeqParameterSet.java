@@ -99,7 +99,7 @@ public class SeqParameterSet {
     }
 
     public static SeqParameterSet read(ByteBuffer is) {
-        BitReader _in = new BitReader(is);
+        BitReader _in = BitReader.createBitReader(is);
         SeqParameterSet sps = new SeqParameterSet();
 
         sps.profile_idc = readNBit(_in, 8, "SPS: profile_idc");

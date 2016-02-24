@@ -373,7 +373,7 @@ public class H264Decoder extends VideoDecoder {
         for (ByteBuffer nalUnit : H264Utils.splitFrame(data.duplicate())) {
             NALUnit marker = NALUnit.read(nalUnit);
             if (marker.type == NALUnitType.IDR_SLICE || marker.type == NALUnitType.NON_IDR_SLICE) {
-                BitReader reader = new BitReader(nalUnit);
+                BitReader reader = BitReader.createBitReader(nalUnit);
                 validSh = validSh(new SliceHeaderReader().readPart1(reader));
                 break;
             } else if (marker.type == NALUnitType.SPS) {

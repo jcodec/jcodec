@@ -30,7 +30,7 @@ public class TestVLC {
             out.flush();
 
             buf.flip();
-            BitReader _in = new BitReader(buf);
+            BitReader _in = BitReader.createBitReader(buf);
             int readVLC = vlc.readVLC(_in);
 
             Assert.assertEquals(readVLC, i);
@@ -50,7 +50,7 @@ public class TestVLC {
         out.flush();
         buf.flip();
         
-        BitReader _in = new BitReader(buf);
+        BitReader _in = BitReader.createBitReader(buf);
         for (int i = 0; i < codes.length; i++) {
             Assert.assertEquals(i, vlc.readVLC(_in));
         }
@@ -74,7 +74,7 @@ public class TestVLC {
         }
         buf.flip();
         
-        BitReader bis = new BitReader(buf);
+        BitReader bis = BitReader.createBitReader(buf);
         int[] actual = new int[decoded.length];
         for (int i = 0; i < decoded.length; i++) {
             actual[i] = vlc.readVLC(bis);

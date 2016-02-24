@@ -636,7 +636,7 @@ public class H264Utils {
 
             H264Utils.unescapeNAL(is);
 
-            BitReader reader = new BitReader(is);
+            BitReader reader = BitReader.createBitReader(is);
             SliceHeader sh = shr.readPart1(reader);
 
             PictureParameterSet pp = findPPS(pps, sh.pic_parameter_set_id);
@@ -649,7 +649,7 @@ public class H264Utils {
 
             H264Utils.unescapeNAL(is);
 
-            BitReader reader = new BitReader(is);
+            BitReader reader = BitReader.createBitReader(is);
             SliceHeader sh = shr.readPart1(reader);
 
             return part2(is, os, nu, sps, pps, nal, reader, sh);

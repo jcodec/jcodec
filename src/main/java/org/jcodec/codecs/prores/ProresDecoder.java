@@ -365,7 +365,7 @@ public class ProresDecoder extends VideoDecoder {
     }
 
     static final BitReader bitstream(ByteBuffer data, int dataSize) {
-        return new BitReader(NIOUtils.read(data, dataSize));
+        return BitReader.createBitReader(NIOUtils.read(data, dataSize));
     }
     
     byte clipTo8Bit(int val, int min, int max) {

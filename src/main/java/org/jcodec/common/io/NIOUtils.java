@@ -250,7 +250,7 @@ public class NIOUtils {
         return Platform.stringFromCharset(toArray(fork), charset);
     }
 
-    public static ByteBuffer read(ByteBuffer buffer) {
+    public static ByteBuffer readBuf(ByteBuffer buffer) {
         ByteBuffer result = buffer.duplicate();
         buffer.position(buffer.limit());
         return result;

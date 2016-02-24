@@ -10,22 +10,28 @@ import java.nio.ByteBuffer;
  * 
  */
 public class BitReader {
-    protected int deficit;
-    protected int curInt;
+    public static BitReader createBitReader(ByteBuffer bb) {
+        BitReader r = new BitReader(bb);
+        r.curInt = r.readInt();
+        r.deficit = 0;
+        return r;
+    }
+
+    private int deficit = -1;
+    private int curInt = -1;
     private ByteBuffer bb;
     private int initPos;
 
-    public BitReader(ByteBuffer bb) {
+    private BitReader(ByteBuffer bb) {
         this.bb = bb;
-        initPos = bb.position();
-        curInt = readInt();
-        deficit = 0;
+        this.initPos = bb.position();
     }
 
-    private BitReader(BitReader other) {
-        bb = other.bb.duplicate();
-        curInt = other.curInt;
-        deficit = other.deficit;
+    public BitReader fork() {
+        BitReader fork = new BitReader(this.bb.duplicate());
+        fork.curInt = this.curInt;
+        fork.deficit = this.deficit;
+        return fork;
     }
 
     public final int readInt() {
@@ -143,15 +149,15 @@ public class BitReader {
             deficit -= 16;
             curInt |= nextIgnore16() << deficit;
         }
-        
+
         if (deficit > 8) {
             deficit -= 8;
             curInt |= nextIgnore() << deficit;
         }
-        
+
         return curInt >>> 8;
     }
-    
+
     public int check16Bits() {
         if (deficit > 16) {
             deficit -= 16;
@@ -205,10 +211,6 @@ public class BitReader {
 
     public boolean lastByte() {
         return bb.remaining() + 4 - (deficit >> 3) <= 1;
-    }
-
-    public BitReader fork() {
-        return new BitReader(this);
     }
 
     public void terminate() {
