@@ -2,6 +2,8 @@ package org.jcodec.common.tools;
 
 import java.nio.ShortBuffer;
 
+import org.jcodec.common.ArrayUtil;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -52,12 +54,15 @@ public class Debug {
         }
     }
 
-    public static void trace(String format, Object... args) {
-        if (debug)
-            System.out.printf(format + ": %d\n", args);
+    public static void trace(Object... arguments) {
+        if (debug && arguments.length > 0) {
+            String format= (String) arguments[0];
+            ArrayUtil.shiftLeft1(arguments);
+            System.out.printf(format + ": %d\n", arguments);
+        }
     }
 
-    public final static boolean debug = false;
+    public static boolean debug = false;
 
     public static void printInt(int i) {
         if (debug)

@@ -131,11 +131,11 @@ public class NodeBox extends Box {
         }
     }
 
-    public void removeChildren(String... fourcc) {
+    public void removeChildren(String... arguments) {
         for (Iterator<Box> it = boxes.iterator(); it.hasNext();) {
             Box box = it.next();
             String fcc = box.getFourcc();
-            for (String cand : fourcc) {
+            for (String cand : arguments) {
                 if (cand.equals(fcc)) {
                     it.remove();
                     break;

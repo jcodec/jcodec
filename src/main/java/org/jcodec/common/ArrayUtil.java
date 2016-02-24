@@ -150,10 +150,10 @@ public class ArrayUtil {
         return (Object[]) array.clone();
     }
 
-    public static byte[] toByteArrayShifted(int... val) {
-        byte[] result = new byte[val.length];
-        for (int i = 0; i < val.length; i++)
-            result[i] = (byte) (val[i] - 128);
+    public static byte[] toByteArrayShifted(int... arguments) {
+        byte[] result = new byte[arguments.length];
+        for (int i = 0; i < arguments.length; i++)
+            result[i] = (byte) (arguments[i] - 128);
         return result;
     }
     
@@ -165,25 +165,25 @@ public class ArrayUtil {
         return result;
     }
 
-    public static int[] toIntArrayUnshifted(byte... array) {
-        int[] result = new int[array.length];
+    public static int[] toIntArrayUnshifted(byte... arguments) {
+        int[] result = new int[arguments.length];
         for (int i = 0; i < result.length; i++)
-            result[i] = (byte) (array[i] + 128);
+            result[i] = (byte) (arguments[i] + 128);
 
         return result;
     }
 
-    public static byte[] toByteArray(int... val) {
-        byte[] result = new byte[val.length];
-        for (int i = 0; i < val.length; i++)
-            result[i] = (byte) val[i];
+    public static byte[] toByteArray(int... arguments) {
+        byte[] result = new byte[arguments.length];
+        for (int i = 0; i < arguments.length; i++)
+            result[i] = (byte) arguments[i];
         return result;
     }
 
-    public static int[] toIntArray(byte... array) {
-        int[] result = new int[array.length];
+    public static int[] toIntArray(byte... arguments) {
+        int[] result = new int[arguments.length];
         for (int i = 0; i < result.length; i++)
-            result[i] = array[i];
+            result[i] = arguments[i];
 
         return result;
     }

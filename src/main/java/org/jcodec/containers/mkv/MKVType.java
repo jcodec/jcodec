@@ -516,14 +516,14 @@ public enum MKVType {
         return false;
     }
     
-    @SuppressWarnings("unchecked")
-    public static EbmlBase findFirst(EbmlBase master, MKVType... path){
+    public static EbmlBase findFirst(EbmlBase master, MKVType[] path){
         List<MKVType> tlist = new LinkedList<MKVType>(Arrays.asList(path));        
         return findFirstSub(master, tlist);
     }
+
     
     @SuppressWarnings("unchecked")
-    public static <T> T findFirst(List<? extends EbmlBase> tree, MKVType... path){
+    public static <T> T findFirstTree(List<? extends EbmlBase> tree, MKVType[] path){
         List<MKVType> tlist = new LinkedList<MKVType>(Arrays.asList(path));
         for(EbmlBase e : tree){
             EbmlBase z = findFirstSub(e, tlist);
@@ -533,6 +533,7 @@ public enum MKVType {
             
         return null;
     }
+
 
     private static EbmlBase findFirstSub(EbmlBase elem, List<MKVType> path) {
         if (path.size() == 0)
@@ -558,8 +559,7 @@ public enum MKVType {
         
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> List<T> findList(List<? extends EbmlBase> tree, Class<T> class1, MKVType... path) {
+    public static <T> List<T> findList(List<? extends EbmlBase> tree, Class<T> class1, MKVType[] path) {
         List<T> result = new LinkedList<T>();
         List<MKVType> tlist = new LinkedList<MKVType>(Arrays.asList(path));
         if (tlist.size() > 0)
@@ -593,7 +593,7 @@ public enum MKVType {
     }
     
     @SuppressWarnings("unchecked")
-    public static <T> T[] findAll(List<? extends EbmlBase> tree, Class<T> class1, MKVType... path) {
+    public static <T> T[] findAllTree(List<? extends EbmlBase> tree, Class<T> class1, MKVType[] path) {
         List<EbmlBase> result = new LinkedList<EbmlBase>();
         List<MKVType> tlist = new LinkedList<MKVType>(Arrays.asList(path));
         if (tlist.size() > 0)
@@ -607,9 +607,14 @@ public enum MKVType {
 
         return result.toArray((T[]) Array.newInstance(class1, 0));
     }
+
+    
+    public static <T> T[] findAll(EbmlBase master, Class<T> class1, MKVType... path) {
+        return findAll(master, class1, false, path);
+    }
     
     @SuppressWarnings("unchecked")
-    public static <T> T[] findAll(EbmlBase master, Class<T> class1, MKVType... path) {
+    public static <T> T[] findAll(EbmlBase master, Class<T> class1, boolean ga, MKVType[] path) {
         List<EbmlBase> result = new LinkedList<EbmlBase>();
         List<MKVType> tlist = new LinkedList<MKVType>(Arrays.asList(path));
         if (!master.type.equals(tlist.get(0)))
@@ -619,6 +624,7 @@ public enum MKVType {
         findSub(master, tlist, result);
         return result.toArray((T[]) Array.newInstance(class1, 0));
     }
+
 
     private static void findSub(EbmlBase master, List<MKVType> path, Collection<EbmlBase> result) {
         if (path.size() > 0) {

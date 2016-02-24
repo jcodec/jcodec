@@ -3,7 +3,7 @@ package org.jcodec.containers.mkv;
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
-import static org.jcodec.containers.mkv.MKVType.findAll;
+import static org.jcodec.containers.mkv.MKVType.findAllTree;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,7 +27,8 @@ public class CompareFramesTest {
         FileChannel channel = new FileInputStream("src/test/resources/mkv/single-frame.webm").getChannel();
         MKVParser p = new MKVParser(new FileChannelWrapper(channel));
         List<EbmlMaster> tree = p.parse();
-        EbmlMaster[] me = findAll(tree, EbmlMaster.class, Segment, Cluster);
+        MKVType[] path = { Segment, Cluster };
+        EbmlMaster[] me = findAllTree(tree, EbmlMaster.class, path);
         Assert.assertNotNull(me);
         Assert.assertEquals(1, me.length);
         List<MkvBlock> bs = MKVMuxerTest.getBlocksByTrackNumber(me[0], 1);
@@ -54,7 +55,8 @@ public class CompareFramesTest {
         try {
             MKVParser p = new MKVParser(new FileChannelWrapper(c));
             List<EbmlMaster> tree = p.parse();
-            EbmlMaster[] me = findAll(tree, EbmlMaster.class, Segment, Cluster);
+            MKVType[] path = { Segment, Cluster };
+            EbmlMaster[] me = findAllTree(tree, EbmlMaster.class, path);
             Assert.assertNotNull(me);
             Assert.assertEquals(1, me.length);
             List<MkvBlock> bs = MKVMuxerTest.getBlocksByTrackNumber(me[0], 1);

@@ -16,7 +16,7 @@ public class ES extends NodeDescriptor {
         super(tag, size);
     }
 
-    public ES(int trackId, Descriptor... children) {
+    public ES(int trackId, Descriptor[] children) {
         super(tag(), children);
         this.trackId = trackId;
     }

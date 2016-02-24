@@ -9,7 +9,7 @@ import static org.jcodec.containers.mkv.MKVType.CueTrackPositions;
 import static org.jcodec.containers.mkv.MKVType.Cues;
 import static org.jcodec.containers.mkv.MKVType.Timecode;
 import static org.jcodec.containers.mkv.MKVType.createByType;
-import static org.jcodec.containers.mkv.MKVType.findFirst;
+import static org.jcodec.containers.mkv.MKVType.findFirstTree;
 import static org.jcodec.containers.mkv.boxes.EbmlUint.calculatePayloadSize;
 
 import java.util.ArrayList;
@@ -18,6 +18,7 @@ import java.util.List;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.util.EbmlUtil;
+import static org.jcodec.containers.mkv.MKVType.findFirst;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -148,7 +149,8 @@ public class CuesFactory {
         private byte[] id;
         
         public static CuePointMock make(EbmlMaster c){
-            EbmlUint tc = (EbmlUint) findFirst(c, Cluster, Timecode);
+            MKVType[] path = { Cluster, Timecode };
+            EbmlUint tc = (EbmlUint) findFirst(c, path);
             return doMake(c.id, tc.getUint(), c.size());
         }
 

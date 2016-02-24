@@ -21,24 +21,24 @@ public class FilterSocket {
     private int totalInputs;
     private int totalOutputs;
 
-    public FilterSocket(AudioFilter... filters) {
+    public FilterSocket(AudioFilter... arguments) {
         totalInputs = 0;
         totalOutputs = 0;
 
-        for (int i = 0; i < filters.length; i++) {
-            totalInputs += filters[i].getNInputs();
-            totalOutputs += filters[i].getNOutputs();
+        for (int i = 0; i < arguments.length; i++) {
+            totalInputs += arguments[i].getNInputs();
+            totalOutputs += arguments[i].getNOutputs();
         }
 
         buffers = new FloatBuffer[totalInputs];
         positions = new long[totalInputs];
         delays = new int[totalInputs];
-        for (int i = 0, b = 0; i < filters.length; i++) {
-            for (int j = 0; j < filters[i].getNInputs(); j++, b++) {
-                delays[b] = filters[i].getDelay();
+        for (int i = 0, b = 0; i < arguments.length; i++) {
+            for (int j = 0; j < arguments[i].getNInputs(); j++, b++) {
+                delays[b] = arguments[i].getDelay();
             }
         }
-        this.filters = filters;
+        this.filters = arguments;
     }
 
     public void allocateBuffers(int bufferSize) {

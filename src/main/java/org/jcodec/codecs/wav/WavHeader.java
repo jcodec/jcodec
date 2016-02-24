@@ -271,30 +271,30 @@ public class WavHeader {
         return multiChannelWav(wavs.toArray(new File[0]));
     }
 
-    public static WavHeader multiChannelWav(File... wavs) throws IOException {
-        WavHeader headers[] = new WavHeader[wavs.length];
-        for (int i = 0; i < wavs.length; i++) {
-            headers[i] = read(wavs[i]);
+    public static WavHeader multiChannelWav(File... arguments) throws IOException {
+        WavHeader headers[] = new WavHeader[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            headers[i] = read(arguments[i]);
         }
         return multiChannelWav(headers);
     }
 
     /** Takes single channel wavs as input produces multi channel wav */
-    public static WavHeader multiChannelWav(WavHeader... wavs) {
+    public static WavHeader multiChannelWav(WavHeader... arguments) {
         WavHeader w = emptyWavHeader();
         int totalSize = 0;
-        for (WavHeader wavHeader : wavs) {
+        for (WavHeader wavHeader : arguments) {
             totalSize += wavHeader.dataSize;
         }
         w.dataSize = totalSize;
-        FmtChunk fmt = wavs[0].fmt;
+        FmtChunk fmt = arguments[0].fmt;
         int bitsPerSample = fmt.bitsPerSample;
         int bytesPerSample = bitsPerSample / 8;
         int sampleRate = (int) fmt.sampleRate;
         w.fmt.bitsPerSample = (short) bitsPerSample;
-        w.fmt.blockAlign = (short) (wavs.length * bytesPerSample);
-        w.fmt.byteRate = wavs.length * bytesPerSample * sampleRate;
-        w.fmt.numChannels = (short) wavs.length;
+        w.fmt.blockAlign = (short) (arguments.length * bytesPerSample);
+        w.fmt.byteRate = arguments.length * bytesPerSample * sampleRate;
+        w.fmt.numChannels = (short) arguments.length;
         w.fmt.sampleRate = sampleRate;
         return w;
     }

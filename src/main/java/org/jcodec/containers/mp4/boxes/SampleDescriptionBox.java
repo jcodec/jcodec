@@ -116,9 +116,9 @@ public class SampleDescriptionBox extends NodeBox {
         return "stsd";
     }
 
-    public static SampleDescriptionBox createSampleDescriptionBox(SampleEntry... entries) {
+    public static SampleDescriptionBox createSampleDescriptionBox(SampleEntry... arguments) {
         SampleDescriptionBox box = new SampleDescriptionBox(new Header(fourcc()));
-        for (SampleEntry e : entries) {
+        for (SampleEntry e : arguments) {
             box.boxes.add(e);
         }
         return box;
