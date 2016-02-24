@@ -162,7 +162,7 @@ public class AliasBox extends FullBox {
         return fileName;
     }
 
-    public List<ExtraField> getExtra() {
+    public List<ExtraField> getExtras() {
         return extra;
     }
 
