@@ -93,7 +93,7 @@ public class BitStream implements IBitStream {
 	 */
 	protected int readCache(boolean peek) throws AACException {
 		int i;
-		if(pos>buffer.length-WORD_BYTES) throw new AACException("end of stream", true);
+		if(pos>buffer.length-WORD_BYTES) throw AACException.endOfStream();
 		else i = ((buffer[pos]&BYTE_MASK)<<24)
 					|((buffer[pos+1]&BYTE_MASK)<<16)
 					|((buffer[pos+2]&BYTE_MASK)<<8)

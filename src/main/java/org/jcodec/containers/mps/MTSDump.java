@@ -1,9 +1,12 @@
 package org.jcodec.containers.mps;
 
+import static java.util.Arrays.asList;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -57,7 +60,7 @@ public class MTSDump extends MPSDump {
                 HashMap<String, String> map = new HashMap<String, String>();
                 map.put(STOP_AT, "Stop reading at timestamp");
                 map.put(DUMP_FROM, "Start dumping from timestamp");
-                MainUtils.printHelp(map, "file name", "guid");
+                MainUtils.printHelp(map, asList("file name", "guid"));
                 return;
             } else if (cmd.args.length == 1) {
                 System.out.println("MTS programs:");

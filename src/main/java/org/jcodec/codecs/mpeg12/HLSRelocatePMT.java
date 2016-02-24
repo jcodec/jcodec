@@ -36,10 +36,7 @@ public class HLSRelocatePMT {
 
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 2) {
-            MainUtils.printHelp(new HashMap<String, String>() {
-                {
-                }
-            }, "file _in", "file out");
+            MainUtils.printHelpNoFlags("file _in", "file out");
             return;
         }
 

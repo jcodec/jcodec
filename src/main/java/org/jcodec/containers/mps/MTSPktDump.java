@@ -27,10 +27,7 @@ public class MTSPktDump {
 
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 1) {
-            MainUtils.printHelp(new HashMap<String, String>() {
-                {
-                }
-            }, "file name");
+            MainUtils.printHelpNoFlags("file name");
             return;
         }
 
