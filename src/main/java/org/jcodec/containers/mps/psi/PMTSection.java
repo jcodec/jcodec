@@ -48,8 +48,8 @@ public class PMTSection extends PSISection {
         return streams;
     }
 
-    public static PMTSection parse(ByteBuffer data) {
-        PSISection psi = PSISection.parse(data);
+    public static PMTSection parsePMT(ByteBuffer data) {
+        PSISection psi = PSISection.parsePSI(data);
 
         int w1 = data.getShort() & 0xffff;
         int pcrPid = w1 & 0x1fff;

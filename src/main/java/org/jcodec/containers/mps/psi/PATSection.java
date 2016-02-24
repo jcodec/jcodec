@@ -33,8 +33,8 @@ public class PATSection extends PSISection {
         return programs;
     }
 
-    public static PATSection parse(ByteBuffer data) {
-        PSISection psi = PSISection.parse(data);
+    public static PATSection parsePAT(ByteBuffer data) {
+        PSISection psi = PSISection.parsePSI(data);
 
         IntArrayList networkPids = new IntArrayList();
         IntIntMap programs = new IntIntMap();

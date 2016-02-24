@@ -33,10 +33,6 @@ public class MPSIndex {
             this.sync = sync;
         }
 
-        public MPSStreamIndex(MPSStreamIndex other) {
-            this(other.streamId, other.fsizes, other.fpts, other.fdur, other.sync);
-        }
-
         public int getStreamId() {
             return streamId;
         }

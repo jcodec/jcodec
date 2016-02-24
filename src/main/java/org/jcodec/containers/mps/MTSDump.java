@@ -52,7 +52,7 @@ public class MTSDump extends MPSDump {
         this.tsBuf.position(tsBuf.limit());
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         ReadableByteChannel ch = null;
         try {
             Cmd cmd = MainUtils.parseArguments(args);
@@ -106,12 +106,12 @@ public class MTSDump extends MPSDump {
                 }
 
                 if (guid == 0) {
-                    PATSection pat = PATSection.parse(tsBuf);
+                    PATSection pat = PATSection.parsePAT(tsBuf);
                     IntIntMap programs = pat.getPrograms();
                     pmtPid = programs.values()[0];
                     printPat(pat);
                 } else if (guid == pmtPid) {
-                    PMTSection pmt = PMTSection.parse(tsBuf);
+                    PMTSection pmt = PMTSection.parsePMT(tsBuf);
                     printPmt(pmt);
                     return;
                 }

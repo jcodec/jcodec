@@ -30,14 +30,14 @@ public class MTSIndexer {
     private MTSAnalyser[] indexers;
 
     public void index(File source, NIOUtils.FileReaderListener listener) throws IOException {
-        index(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
+        indexReader(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
     }
 
-    public void index(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
-        index(listener, MTSUtils.getMediaPids(source)).readChannel(source, BUFFER_SIZE, listener);
+    public void indexChannel(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
+        indexReader(listener, MTSUtils.getMediaPids(source)).readChannel(source, BUFFER_SIZE, listener);
     }
 
-    public FileReader index(NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
+    public FileReader indexReader(NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
         indexers = new MTSAnalyser[targetGuids.length];
         for (int i = 0; i < targetGuids.length; i++) {
             indexers[i] = new MTSAnalyser(targetGuids[i]);

@@ -35,7 +35,7 @@ public class MTSMediaInfo {
         final List<MPEGTrackMetadata> result = new ArrayList<MPEGTrackMetadata>();
         try {
             ch = NIOUtils.readableChannel(f);
-            new MTSUtils.TSReader() {
+            new MTSUtils.TSReader(false) {
                 private ByteBuffer pmtBuffer;
                 private int pmtPid = -1;
                 private boolean pmtDone;

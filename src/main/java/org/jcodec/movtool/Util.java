@@ -251,7 +251,7 @@ public class Util {
         }
     }
 
-    public static void forceEditList(MovieBox movie) {
+    public static void forceEditListMov(MovieBox movie) {
         for (TrakBox trakBox : movie.getTracks()) {
             forceEditList(movie, trakBox);
         }
