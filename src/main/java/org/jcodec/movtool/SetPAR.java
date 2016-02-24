@@ -51,7 +51,7 @@ public class SetPAR {
             }
 
             @Override
-            public void apply(MovieBox mov, MovieFragmentBox[] fragmentBox) {
+            public void applyToFragment(MovieBox mov, MovieFragmentBox[] fragmentBox) {
                 throw new RuntimeException("Unsupported");
             }
         });

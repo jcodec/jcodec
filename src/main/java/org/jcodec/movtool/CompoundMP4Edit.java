@@ -23,9 +23,9 @@ public class CompoundMP4Edit implements MP4Edit {
     }
 
     @Override
-    public void apply(MovieBox mov, MovieFragmentBox[] fragmentBox) {
+    public void applyToFragment(MovieBox mov, MovieFragmentBox[] fragmentBox) {
         for (MP4Edit command : edits) {
-            command.apply(mov, fragmentBox);
+            command.applyToFragment(mov, fragmentBox);
         }
     }
 

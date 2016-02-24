@@ -17,7 +17,7 @@ public interface MP4Edit {
      * 
      * @param mov
      */
-    void apply(MovieBox mov, MovieFragmentBox[] fragmentBox);
+    void applyToFragment(MovieBox mov, MovieFragmentBox[] fragmentBox);
 
     /**
      * Operation performed on a movie header

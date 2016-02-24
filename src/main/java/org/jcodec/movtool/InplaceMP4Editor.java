@@ -175,7 +175,7 @@ public class InplaceMP4Editor {
                 temp.add(Tuple._2(fragBuffer, fragBox));
             }
 
-            edit.apply(moovBox, Tuple._2_project1(temp).toArray(new MovieFragmentBox[0]));
+            edit.applyToFragment(moovBox, Tuple._2_project1(temp).toArray(new MovieFragmentBox[0]));
 
             for (Tuple._2<ByteBuffer, ? extends Box> frag : temp) {
                 if (!rewriteBox(frag.v0, frag.v1))
