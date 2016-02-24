@@ -59,7 +59,7 @@ public class MXFDemuxer {
 
     public MXFDemuxer(SeekableByteChannel ch) throws IOException {
         this.ch = ch;
-        ch.position(0);
+        ch.setPosition(0);
         parseHeader(ch);
         findIndex();
         tracks = findTracks();
@@ -153,7 +153,7 @@ public class MXFDemuxer {
 
         partitions = new ArrayList<MXFPartition>();
         long nextPartition = ff.size();
-        ff.position(header.getPack().getFooterPartition());
+        ff.setPosition(header.getPack().getFooterPartition());
         do {
             long thisPartition = ff.position();
             kl = KLV.readKL(ff);
@@ -165,7 +165,7 @@ public class MXFDemuxer {
 
             metadata.addAll(0, readPartitionMeta(ff, header));
 
-            ff.position(header.getPack().getPrevPartition());
+            ff.setPosition(header.getPack().getPrevPartition());
             nextPartition = thisPartition;
         } while (header.getPack().getThisPartition() != 0);
     }
@@ -192,7 +192,7 @@ public class MXFDemuxer {
                 header = MXFPartition.read(kl.key, data, ff.position() - kl.offset, 0);
                 break;
             } else {
-                ff.position(ff.position() + kl.len);
+                ff.setPosition(ff.position() + kl.len);
             }
         }
         return header;
@@ -313,13 +313,13 @@ public class MXFDemuxer {
         private void cacheAudioFrameSizes(SeekableByteChannel ch) throws IOException {
             for (MXFPartition mxfPartition : demuxer.partitions) {
                 if (mxfPartition.getEssenceLength() > 0) {
-                    ch.position(mxfPartition.getEssenceFilePos());
+                    ch.setPosition(mxfPartition.getEssenceFilePos());
                     KLV kl;
                     do {
                         kl = KLV.readKL(ch);
                         if (kl == null)
                             break;
-                        ch.position(ch.position() + kl.len);
+                        ch.setPosition(ch.position() + kl.len);
                     } while (!essenceUL.equals(kl.key));
 
                     if (kl != null && essenceUL.equals(kl.key)) {
@@ -382,11 +382,11 @@ public class MXFDemuxer {
                 throws IOException {
         	SeekableByteChannel ch = demuxer.ch;
             synchronized (ch) {
-                ch.position(off);
+                ch.setPosition(off);
 
                 KLV kl = KLV.readKL(ch);
                 while (kl != null && !essenceUL.equals(kl.key)) {
-                    ch.position(ch.position() + kl.len);
+                    ch.setPosition(ch.position() + kl.len);
                     kl = KLV.readKL(ch);
                 }
 
@@ -514,7 +514,7 @@ public class MXFDemuxer {
             metadata.addAll(readPartitionMeta(ff, header));
             partitions.add(header);
 
-            ff.position(header.getPack().getFooterPartition());
+            ff.setPosition(header.getPack().getFooterPartition());
             KLV kl = KLV.readKL(ff);
             ByteBuffer fetchFrom = NIOUtils.fetchFromChannel(ff, (int) kl.len);
             MXFPartition footer = MXFPartition.read(kl.key, fetchFrom, ff.position() - kl.offset, ff.size());

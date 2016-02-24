@@ -63,7 +63,7 @@ public class MKVParser {
                 EbmlBin bin = (EbmlBin) e;
                 EbmlMaster traceTop = trace.peekFirst();
                 if ((traceTop.dataOffset + traceTop.dataLen) < (e.dataOffset + e.dataLen)) {
-                    channel.position((traceTop.dataOffset + traceTop.dataLen));
+                    channel.setPosition((traceTop.dataOffset + traceTop.dataLen));
                 } else
                     try {
                         bin.read(channel);
@@ -118,7 +118,7 @@ public class MKVParser {
 
         while ((typeId == null && !isKnownType(typeId)) && offset < channel.size()) {
             offset++;
-            channel.position(offset);
+            channel.setPosition(offset);
             typeId = MKVParser.readEbmlId(channel);
         }
 

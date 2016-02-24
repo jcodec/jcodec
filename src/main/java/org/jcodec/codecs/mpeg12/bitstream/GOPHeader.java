@@ -26,7 +26,7 @@ public class GOPHeader implements MPEGHeader {
     }
 
     public static GOPHeader read(ByteBuffer bb) {
-        BitReader _in = new BitReader(bb);
+        BitReader _in = BitReader.createBitReader(bb);
         boolean dropFrame = _in.read1Bit() == 1;
         short hours = (short) _in.readNBit(5);
         byte minutes = (byte) _in.readNBit(6);

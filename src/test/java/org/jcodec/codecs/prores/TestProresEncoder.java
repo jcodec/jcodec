@@ -62,7 +62,7 @@ public class TestProresEncoder {
         out.flip();
 
         ProresDecoder decoder = new ProresDecoder();
-        BitReader bits = new BitReader(out);
+        BitReader bits = BitReader.createBitReader(out);
         int[] result = new int[blocksPerSlice << 6];
         decoder.readDCCoeffs(bits, qMat, result, blocksPerSlice, 64);
         decoder.readACCoeffs(bits, qMat, result, blocksPerSlice, ProresConsts.progressive_scan, 64, 6);

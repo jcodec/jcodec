@@ -58,7 +58,7 @@ public class JpegDecoder extends VideoDecoder {
                 nn == 4 ? ColorSpace.YUV420J : (nn == 3 ? ColorSpace.YUV422J : ColorSpace.YUV444J), new Rect(0, 0,
                         width, height));
 
-        BitReader bits = new BitReader(data);
+        BitReader bits = BitReader.createBitReader(data);
         int[] dcPredictor = new int[] { 1024, 1024, 1024 };
         for (int by = 0; by < yBlocks; by++)
             for (int bx = 0; bx < xBlocks && bits.moreData(); bx++)
@@ -238,7 +238,7 @@ public class JpegDecoder extends VideoDecoder {
             for (int c = 0; c < length; c++) {
                 int val = data.get() & 0xff;
                 int code = levelStart++;
-                builder.set(code, i + 1, val);
+                builder.setInt(code, i + 1, val);
             }
             levelStart <<= 1;
         }

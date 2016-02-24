@@ -27,7 +27,7 @@ public class SliceHeaderTest {
         SliceHeaderReader shr = new SliceHeaderReader();
         SliceHeaderWriter shw = new SliceHeaderWriter();
 
-        BitReader reader = new BitReader(ByteBuffer.wrap(data));
+        BitReader reader = BitReader.createBitReader(ByteBuffer.wrap(data));
         ByteBuffer out = ByteBuffer.allocate(data.length);
         BitWriter writer = new BitWriter(out);
 

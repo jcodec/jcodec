@@ -28,8 +28,8 @@ public class MPSIndexer extends BaseIndexer {
         newReader().readFile(source, 0x10000, listener);
     }
 
-    public void index(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
-        newReader().readFile(source, 0x10000, listener);
+    public void indexChannel(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
+        newReader().readChannel(source, 0x10000, listener);
     }
 
     private FileReader newReader() {

@@ -54,7 +54,7 @@ public class Y4MDecoder {
             fps = new Rational(Integer.parseInt(numden[0]), Integer.parseInt(numden[1]));
         }
 
-        is.position(buf.position());
+        is.setPosition(buf.position());
         bufSize = width * height * 2;
     }
 

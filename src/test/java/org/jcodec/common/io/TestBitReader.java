@@ -41,7 +41,7 @@ public class TestBitReader {
         byte[] src = new byte[] { b("10011000") };
         boolean eof = false;
         try {
-            IBitStream bs = new NIOBitStream(new BitReader(ByteBuffer.wrap(src)));
+            IBitStream bs = new NIOBitStream(BitReader.createBitReader(ByteBuffer.wrap(src)));
             for (int i = 0; i < 10; i++) {
                 System.out.println(Integer.toBinaryString(bs.readBits(4)) + " " + bs.getBitsLeft());
             }
@@ -101,7 +101,7 @@ public class TestBitReader {
     }
 
     private BitReader reader(byte[] src) throws IOException {
-        return new BitReader(ByteBuffer.wrap(src));
+        return BitReader.createBitReader(ByteBuffer.wrap(src));
     }
 
     @Test
@@ -237,7 +237,7 @@ public class TestBitReader {
     }
 
     public void testReader5() throws Exception {
-        BitReader _in = new BitReader(NIOUtils.fetchFromFile(new File(
+        BitReader _in = BitReader.createBitReader(NIOUtils.fetchFromFile(new File(
                 "src/test/resources/h264/bitstream/data.dat")));
         DummyBitstreamReader in1 = new DummyBitstreamReader(new BufferedInputStream(new FileInputStream(
                 "src/test/resources/h264/bitstream/data.dat")));

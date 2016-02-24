@@ -24,7 +24,7 @@ public class EbmlVoid extends EbmlBase {
     }
     
     public void skip(SeekableByteChannel is) throws IOException{
-        is.position(this.dataOffset+this.dataLen);
+        is.setPosition(this.dataOffset+this.dataLen);
     }
 
 }

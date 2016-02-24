@@ -191,7 +191,7 @@ public class InplaceMP4Editor {
     }
 
     private void replaceBox(SeekableByteChannel fi, Atom atom, ByteBuffer buffer) throws IOException {
-        fi.position(atom.getOffset());
+        fi.setPosition(atom.getOffset());
         fi.write(buffer);
     }
 
@@ -213,7 +213,7 @@ public class InplaceMP4Editor {
     }
 
     private ByteBuffer fetchBox(SeekableByteChannel fi, Atom moov) throws IOException {
-        fi.position(moov.getOffset());
+        fi.setPosition(moov.getOffset());
         ByteBuffer oldMov = NIOUtils.fetchFromChannel(fi, (int) moov.getHeader().getSize());
         return oldMov;
     }

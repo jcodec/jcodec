@@ -47,8 +47,8 @@ public class SeekableByteChannelWrapper implements SeekableByteChannel {
     }
 
     @Override
-    public SeekableByteChannel position(long newPosition) throws IOException {
-        src.position(newPosition);
+    public SeekableByteChannel setPosition(long newPosition) throws IOException {
+        src.setPosition(newPosition);
         return this;
     }
 

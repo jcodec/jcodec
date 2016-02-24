@@ -223,7 +223,7 @@ public class MTSUtils {
         }
 
         public void readTsFile(SeekableByteChannel ch) throws IOException {
-            ch.position(0);
+            ch.setPosition(0);
             ByteBuffer buf = ByteBuffer.allocate(BUFFER_SIZE);
 
             for (long pos = ch.position(); ch.read(buf) >= TS_PKT_SIZE; pos = ch.position()) {
@@ -253,7 +253,7 @@ public class MTSUtils {
                 }
                 if (flush) {
                     buf.flip();
-                    ch.position(posRem);
+                    ch.setPosition(posRem);
                     ch.write(buf);
                 }
                 buf.clear();

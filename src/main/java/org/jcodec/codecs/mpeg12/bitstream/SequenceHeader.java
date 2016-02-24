@@ -53,7 +53,7 @@ public class SequenceHeader implements MPEGHeader {
     }
 
     public static SequenceHeader read(ByteBuffer bb) {
-        BitReader _in = new BitReader(bb);
+        BitReader _in = BitReader.createBitReader(bb);
         SequenceHeader sh = new SequenceHeader();
         sh.horizontal_size = _in.readNBit(12);
         sh.vertical_size = _in.readNBit(12);
@@ -82,7 +82,7 @@ public class SequenceHeader implements MPEGHeader {
     public static void readExtension(ByteBuffer bb, SequenceHeader sh) {
         _hasExtensions = true;
 
-        BitReader _in = new BitReader(bb);
+        BitReader _in = BitReader.createBitReader(bb);
         int extType = _in.readNBit(4);
         switch (extType) {
         case Sequence_Extension:

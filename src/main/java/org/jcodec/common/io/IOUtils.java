@@ -59,7 +59,7 @@ public class IOUtils {
         return NIOUtils.toArray(NIOUtils.fetchFromFile(file));
     }
 
-    public static String toString(InputStream is) throws IOException {
+    public static String readToString(InputStream is) throws IOException {
         return new String(toByteArray(is));
     }
 

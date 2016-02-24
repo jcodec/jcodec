@@ -265,7 +265,7 @@ public class MPEGDecoder extends VideoDecoder {
         ByteBuffer dup = segment.duplicate();
         dup.position(4);
         try {
-            decodeSlice(ph, startCode, context, buf, new BitReader(dup), vertOff, vertStep);
+            decodeSlice(ph, startCode, context, buf, BitReader.createBitReader(dup), vertOff, vertStep);
         } catch (RuntimeException e) {
             e.printStackTrace();
         }

@@ -72,7 +72,7 @@ public class FrameReader {
     }
 
     private SliceReader createSliceReader(ByteBuffer segment, NALUnit nalUnit) {
-        BitReader _in = new BitReader(segment);
+        BitReader _in = BitReader.createBitReader(segment);
         SliceHeaderReader shr = new SliceHeaderReader();
         SliceHeader sh = shr.readPart1(_in);
         sh.pps = pps.get(sh.pic_parameter_set_id);

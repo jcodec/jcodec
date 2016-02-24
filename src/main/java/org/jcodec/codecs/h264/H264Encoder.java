@@ -47,6 +47,10 @@ public class H264Encoder extends VideoEncoder {
     // private static final int QP = 20;
     private static final int KEY_INTERVAL_DEFAULT = 25;
 
+    public static H264Encoder createH264Encoder() {
+        return new H264Encoder(new DumbRateControl());
+    }
+
     private CAVLC[] cavlc;
     private byte[][] leftRow;
     private byte[][] topLine;
@@ -71,10 +75,6 @@ public class H264Encoder extends VideoEncoder {
     private EncodedMB[] topEncoded;
 
     private EncodedMB outMB;
-
-    public H264Encoder() {
-        this(new DumbRateControl());
-    }
 
     public H264Encoder(RateControl rc) {
         this.rc = rc;

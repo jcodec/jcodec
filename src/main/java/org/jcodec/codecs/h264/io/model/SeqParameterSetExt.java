@@ -32,7 +32,7 @@ public class SeqParameterSetExt {
     public int alpha_transparent_value;
 
     public static SeqParameterSetExt read(ByteBuffer is) {
-        BitReader _in = new BitReader(is);
+        BitReader _in = BitReader.createBitReader(is);
 
         SeqParameterSetExt spse = new SeqParameterSetExt();
         spse.seq_parameter_set_id = readUEtrace(_in, "SPSE: seq_parameter_set_id");

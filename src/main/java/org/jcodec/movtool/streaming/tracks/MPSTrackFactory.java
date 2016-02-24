@@ -144,7 +144,7 @@ public class MPSTrackFactory {
 
         protected ByteBuffer readPes(SeekableByteChannel ch, long pesPosition, int pesSize, int payloadSize, int pesIdx)
                 throws IOException {
-            ch.position(pesPosition);
+            ch.setPosition(pesPosition);
             ByteBuffer pes = NIOUtils.fetchFromChannel(ch, pesSize);
             readPESHeader(pes, 0);
             return pes;

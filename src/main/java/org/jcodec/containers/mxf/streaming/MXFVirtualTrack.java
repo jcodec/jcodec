@@ -75,11 +75,11 @@ public class MXFVirtualTrack implements VirtualTrack {
             SeekableByteChannel ch = null;
             try {
                 ch = track.fp.getChannel();
-                ch.position(pkt.getOffset());
+                ch.setPosition(pkt.getOffset());
 
                 KLV kl = KLV.readKL(ch);
                 while (kl != null && !track.essenceUL.equals(kl.key)) {
-                    ch.position(ch.position() + kl.len);
+                    ch.setPosition(ch.position() + kl.len);
                     kl = KLV.readKL(ch);
                 }
 

@@ -24,7 +24,7 @@ public class JPEGBitStream {
 
     public JPEGBitStream(ByteBuffer b, VLC[] huff, int lumaLen) {
         this.dcPredictor = new int[3];
-        this._in = new BitReader(b);
+        this._in = BitReader.createBitReader(b);
         this.huff = huff;
         this.lumaLen = lumaLen;
     }

@@ -80,7 +80,7 @@ public class PictureParameterSet {
     }
     
     public static PictureParameterSet read(ByteBuffer is) {
-        BitReader _in = new BitReader(is);
+        BitReader _in = BitReader.createBitReader(is);
         PictureParameterSet pps = new PictureParameterSet();
 
         pps.pic_parameter_set_id = readUEtrace(_in, "PPS: pic_parameter_set_id");

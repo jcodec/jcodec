@@ -135,7 +135,7 @@ public class Flattern {
         for (int i = 0; i < tracks.length; i++) {
             writers[i].apply();
         }
-        out.position(movieOff);
+        out.setPosition(movieOff);
         MP4Util.writeMovie(out, movie);
 
         long extra = mdatOff - out.position();
@@ -143,7 +143,7 @@ public class Flattern {
             throw new RuntimeException("Not enough space to write the header");
         out.write((ByteBuffer) ByteBuffer.allocate(8).putInt((int) extra).put(new byte[] { 'f', 'r', 'e', 'e' }).flip());
 
-        out.position(mdatOff + 8);
+        out.setPosition(mdatOff + 8);
         out.write(ByteBuffer.allocate(8).putLong(mdatSize));
     }
 

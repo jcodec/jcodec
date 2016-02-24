@@ -133,7 +133,7 @@ public class RealTrack implements VirtualTrack {
                 ch = track.pool.getChannel();
                 if(packet.getFileOff() >= ch.size())
                     return null;
-                ch.position(packet.getFileOff());
+                ch.setPosition(packet.getFileOff());
                 ch.read(bb);
                 bb.flip();
                 return track.demuxer.convertPacket(bb);

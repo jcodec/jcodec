@@ -59,7 +59,7 @@ public class PictureHeader implements MPEGHeader {
     }
 
     public static PictureHeader read(ByteBuffer bb) {
-        BitReader _in = new BitReader(bb);
+        BitReader _in = BitReader.createBitReader(bb);
         PictureHeader ph = new PictureHeader();
         ph.temporal_reference = _in.readNBit(10);
         ph.picture_coding_type = _in.readNBit(3);
@@ -81,7 +81,7 @@ public class PictureHeader implements MPEGHeader {
 
     public static void readExtension(ByteBuffer bb, PictureHeader ph, SequenceHeader sh) {
         ph._hasExtensions = true;
-        BitReader _in = new BitReader(bb);
+        BitReader _in = BitReader.createBitReader(bb);
         int extType = _in.readNBit(4);
         switch (extType) {
         case Quant_Matrix_Extension:

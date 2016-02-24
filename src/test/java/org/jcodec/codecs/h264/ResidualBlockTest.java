@@ -65,7 +65,7 @@ public class ResidualBlockTest {
     }
 
     private void testResidualCAVLC(String code, VLC coeffTokenTab, int[] expected) throws IOException {
-        BitReader reader = new BitReader(ByteBuffer.wrap(BinUtil.binaryStringToBytes(code)));
+        BitReader reader = BitReader.createBitReader(ByteBuffer.wrap(BinUtil.binaryStringToBytes(code)));
 
         CAVLC cavlc = new CAVLC(new SeqParameterSet(), new PictureParameterSet(), 4, 4);
         int[] actual = new int[expected.length];

@@ -38,6 +38,6 @@ public class DecoderSpecific extends Descriptor {
 
     @Override
     protected void parse(ByteBuffer input) {
-        data = NIOUtils.read(input);
+        data = NIOUtils.readBuf(input);
     }
 }

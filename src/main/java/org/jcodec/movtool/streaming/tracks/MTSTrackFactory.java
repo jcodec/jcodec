@@ -68,7 +68,7 @@ public class MTSTrackFactory {
             @Override
             protected ByteBuffer readPes(SeekableByteChannel ch, long pesPosition, int pesSize, int payloadSize,
                     int pesAbsIdx) throws IOException {
-                ch.position(pesPosition * 188);
+                ch.setPosition(pesPosition * 188);
                 ByteBuffer buf = NIOUtils.fetchFromChannel(ch, pesSize * 188);
 
                 // NOW REMOVE THE TS CRAP

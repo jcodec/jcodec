@@ -64,12 +64,12 @@ public class MTSRandomAccessDemuxer {
 
                     @Override
                     protected void skip(long leadingSize) throws IOException {
-                        source.position(source.position() + leadingSize * 188);
+                        source.setPosition(source.position() + leadingSize * 188);
                     }
 
                     @Override
                     protected void reset() throws IOException {
-                        source.position(0);
+                        source.setPosition(0);
                     }
 
                 };

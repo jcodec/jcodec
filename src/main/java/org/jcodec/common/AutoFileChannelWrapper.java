@@ -81,7 +81,7 @@ public class AutoFileChannelWrapper implements SeekableByteChannel, AutoResource
     }
 
     @Override
-    public SeekableByteChannel position(long newPosition) throws IOException {
+    public SeekableByteChannel setPosition(long newPosition) throws IOException {
         ensureOpen();
         ch.position(newPosition);
         savedPos = newPosition;

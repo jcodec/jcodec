@@ -59,7 +59,7 @@ public class IVFMuxer {
     }
 
     public void close() throws IOException {
-        ch.position(24);
+        ch.setPosition(24);
         NIOUtils.writeIntLE(ch, nFrames);
     }
 }

@@ -43,7 +43,7 @@ public class MTSDemuxer implements MPEGDemuxer {
                 guids.add(pkt.pid);
             }
         }
-        src.position(rem);
+        src.setPosition(rem);
         return guids;
     }
 
@@ -112,8 +112,8 @@ public class MTSDemuxer implements MPEGDemuxer {
             return src.position();
         }
 
-        public SeekableByteChannel position(long newPosition) throws IOException {
-            src.position(newPosition);
+        public SeekableByteChannel setPosition(long newPosition) throws IOException {
+            src.setPosition(newPosition);
             data = null;
             return this;
         }
@@ -218,7 +218,7 @@ public class MTSDemuxer implements MPEGDemuxer {
 
     @Override
     public void seekByte(long offset) throws IOException {
-        tsChannel.position(offset - (offset % 188));
+        tsChannel.setPosition(offset - (offset % 188));
         psDemuxer.reset();
     }
 }

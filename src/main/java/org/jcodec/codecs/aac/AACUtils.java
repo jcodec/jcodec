@@ -61,7 +61,7 @@ public class AACUtils {
     };
 
     public static AudioInfo parseAudioInfo(ByteBuffer privData) {
-        BitReader reader = new BitReader(privData);
+        BitReader reader = BitReader.createBitReader(privData);
 
         int objectType = getObjectType(reader);
         int index = reader.readNBit(4);

@@ -250,7 +250,7 @@ public class NIOUtils {
         return Platform.stringFromCharset(toArray(fork), charset);
     }
 
-    public static ByteBuffer read(ByteBuffer buffer) {
+    public static ByteBuffer readBuf(ByteBuffer buffer) {
         ByteBuffer result = buffer.duplicate();
         buffer.position(buffer.limit());
         return result;
@@ -385,7 +385,7 @@ public class NIOUtils {
 
         protected abstract void done();
 
-        public void readFile(SeekableByteChannel ch, int bufferSize, FileReaderListener listener) throws IOException {
+        public void readChannel(SeekableByteChannel ch, int bufferSize, FileReaderListener listener) throws IOException {
             ByteBuffer buf = ByteBuffer.allocate(bufferSize);
             long size = ch.size();
             for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
@@ -406,7 +406,7 @@ public class NIOUtils {
             SeekableByteChannel ch = null;
             try {
                 ch = NIOUtils.readableChannel(source);
-                readFile(ch, bufferSize, listener);
+                readChannel(ch, bufferSize, listener);
             } finally {
                 NIOUtils.closeQuietly(ch);
             }

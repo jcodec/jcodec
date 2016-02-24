@@ -57,7 +57,7 @@ public class ADTSParser {
 
     public static Header read(ByteBuffer data) {
         ByteBuffer dup = data.duplicate();
-		BitReader br = new BitReader(dup);
+		BitReader br = BitReader.createBitReader(dup);
         // int size, rdb, ch, sr;
         // int aot, crc_abs;
 

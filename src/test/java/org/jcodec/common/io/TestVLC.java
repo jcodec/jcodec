@@ -21,7 +21,7 @@ public class TestVLC {
     @Test
     public void testVLC1() throws IOException {
 
-        VLC vlc = new VLC(codes);
+        VLC vlc = VLC.createVLC(codes);
 
         for (int i = 0; i < codes.length; i++) {
             ByteBuffer buf = ByteBuffer.allocate(1024);
@@ -30,7 +30,7 @@ public class TestVLC {
             out.flush();
 
             buf.flip();
-            BitReader _in = new BitReader(buf);
+            BitReader _in = BitReader.createBitReader(buf);
             int readVLC = vlc.readVLC(_in);
 
             Assert.assertEquals(readVLC, i);
@@ -40,7 +40,7 @@ public class TestVLC {
     @Test
     public void testVLC2() throws IOException {
 
-        VLC vlc = new VLC(codes);
+        VLC vlc = VLC.createVLC(codes);
         ByteBuffer buf = ByteBuffer.allocate(1024);
         
         BitWriter out = new BitWriter(buf);
@@ -50,7 +50,7 @@ public class TestVLC {
         out.flush();
         buf.flip();
         
-        BitReader _in = new BitReader(buf);
+        BitReader _in = BitReader.createBitReader(buf);
         for (int i = 0; i < codes.length; i++) {
             Assert.assertEquals(i, vlc.readVLC(_in));
         }
@@ -64,7 +64,7 @@ public class TestVLC {
                 37, 14, 9, 56, 60, 57, 36, 29, 62, 63, 35, 24, 44, 3, 23, 62, 38, 49, 15, 56, 24, 48, 50, 45, 65, 1,
                 12, 1, 10, 6, 51, 10, 21, 41, 57, 34, 27, 65, 31, 64, 17, 64, 45, 46, 66, 31, 16, 18, 28, 66, 21, 51 };
 
-        VLC vlc = new VLC(codes);
+        VLC vlc = VLC.createVLC(codes);
 
         // vlc.printTable();
         ByteBuffer buf = ByteBuffer.allocate(1024);
@@ -74,7 +74,7 @@ public class TestVLC {
         }
         buf.flip();
         
-        BitReader bis = new BitReader(buf);
+        BitReader bis = BitReader.createBitReader(buf);
         int[] actual = new int[decoded.length];
         for (int i = 0; i < decoded.length; i++) {
             actual[i] = vlc.readVLC(bis);

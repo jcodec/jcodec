@@ -17,7 +17,7 @@ import java.nio.channels.WritableByteChannel;
 public interface SeekableByteChannel extends ByteChannel, Channel, Closeable, ReadableByteChannel, WritableByteChannel {
     long position() throws IOException;
 
-    SeekableByteChannel position(long newPosition) throws IOException;
+    SeekableByteChannel setPosition(long newPosition) throws IOException;
 
     long size() throws IOException;
 

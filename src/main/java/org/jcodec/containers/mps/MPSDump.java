@@ -233,7 +233,7 @@ public class MPSDump {
         }
 
         private void dumpExtension(ByteBuffer b) {
-            BitReader _in = new BitReader(b);
+            BitReader _in = BitReader.createBitReader(b);
             int extType = _in.readNBit(4);
             if (picHeader == null) {
                 if (sequenceHeader != null) {
