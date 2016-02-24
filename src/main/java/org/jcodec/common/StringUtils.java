@@ -178,7 +178,7 @@ public class StringUtils {
             return str;
         }
         int strLen = str.length();
-        StringBuffer buffer = new StringBuffer(strLen);
+        StringBuilder buffer = new StringBuilder(strLen);
         boolean capitalizeNext = true;
         for (int i = 0; i < strLen; i++) {
             char ch = str.charAt(i);
@@ -222,7 +222,7 @@ public class StringUtils {
         }
 
         bufSize *= ((array[startIndex] == null ? 16 : array[startIndex].toString().length()) + 1);
-        StringBuffer buf = new StringBuffer(bufSize);
+        StringBuilder buf = new StringBuilder(bufSize);
 
         for (int i = startIndex; i < endIndex; i++) {
             if (i > startIndex) {
