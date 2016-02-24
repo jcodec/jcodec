@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class Platform {
 
-    public static <T> T newInstance(Class<T> clazz, Object... params) {
+    public static <T> T newInstance(Class<T> clazz, Object[] params) {
         Class[] classes = new Class[params.length];
         for (int i = 0; i < params.length; i++) {
             classes[i] = params[i].getClass();
@@ -21,7 +21,7 @@ public class Platform {
         }
     }
 
-    public static void invokeMethod(Object target, String methodName, Object... params) throws NoSuchMethodException {
+    public static void invokeMethod(Object target, String methodName, Object[] params) throws NoSuchMethodException {
         Class[] parameterTypes = new Class[params.length];
         for (int i = 0; i < params.length; i++) {
             parameterTypes[i] = params[i].getClass();
