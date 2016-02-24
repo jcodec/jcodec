@@ -158,7 +158,7 @@ public class TestTool {
         InputStream cool = null;
         try {
             cool = Platform.getResourceAsStream(getClass(), "org/jcodec/testing/jm.conf");
-            String str = IOUtils.toString(cool);
+            String str = IOUtils.readToString(cool);
             str = str.replace("%input_file%", coded.getAbsolutePath());
             str = str.replace("%output_file%", decoded.getAbsolutePath());
             IOUtils.writeStringToFile(jmconf, str);
