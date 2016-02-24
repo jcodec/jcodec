@@ -231,7 +231,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     }
 
     public void seekByte(long offset) throws IOException {
-        channel.position(offset);
+        channel.setPosition(offset);
         reset();
     }
 

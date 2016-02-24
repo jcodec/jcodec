@@ -117,7 +117,7 @@ public class WavTrack implements VirtualTrack {
             SeekableByteChannel ch = null;
             try {
                 ch = track.pool.getChannel();
-                ch.position(offset);
+                ch.setPosition(offset);
                 ByteBuffer buffer = ByteBuffer.allocate(dataLen);
                 NIOUtils.readFromChannel(ch, buffer);
                 buffer.flip();

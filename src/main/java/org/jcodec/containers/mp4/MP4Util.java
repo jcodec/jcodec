@@ -88,12 +88,12 @@ public class MP4Util {
     }
 
     public static List<Atom> getRootAtoms(SeekableByteChannel input) throws IOException {
-        input.position(0);
+        input.setPosition(0);
         List<Atom> result = new ArrayList<Atom>();
         long off = 0;
         Header atom;
         while (off < input.size()) {
-            input.position(off);
+            input.setPosition(off);
             atom = Header.read(NIOUtils.fetchFromChannel(input, 16));
             if (atom == null)
                 break;
@@ -147,12 +147,12 @@ public class MP4Util {
         }
 
         public Box parseBox(SeekableByteChannel input) throws IOException {
-            input.position(offset + header.headerSize());
+            input.setPosition(offset + header.headerSize());
             return NodeBox.parseBox(NIOUtils.fetchFromChannel(input, (int) header.getBodySize()), header, BoxFactory.getDefault());
         }
 
         public void copy(SeekableByteChannel input, WritableByteChannel out) throws IOException {
-            input.position(offset);
+            input.setPosition(offset);
             NIOUtils.copy(input, out, header.getSize());
         }
     }

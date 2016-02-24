@@ -103,7 +103,7 @@ public class DataReader implements Closeable {
             buffer.position(relative);
         } else {
             buffer.limit(0);
-            channel.position(newPos);
+            channel.setPosition(newPos);
         }
         return position();
     }

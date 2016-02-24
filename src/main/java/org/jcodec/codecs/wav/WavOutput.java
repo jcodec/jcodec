@@ -39,7 +39,7 @@ public class WavOutput implements Closeable {
     }
 
     public void close() throws IOException {
-        out.position(0);
+        out.setPosition(0);
         new WavHeader(format, format.bytesToFrames(written)).write(out);
         NIOUtils.closeQuietly(out);
     }

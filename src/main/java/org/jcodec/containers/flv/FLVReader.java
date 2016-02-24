@@ -131,7 +131,7 @@ public class FLVReader {
             }
             long newPos = Math.max(0, oldPos - readBuf.capacity() / 2);
 
-            ch.position(newPos);
+            ch.setPosition(newPos);
             readBuf.clear();
             ch.read(readBuf);
             readBuf.flip();
@@ -171,7 +171,7 @@ public class FLVReader {
                     readBuf.position(readBuf.position() - TAG_HEADER_SIZE);
                     if (!repositionFile()) {
                         Logger.error(String.format("Corrupt FLV stream at %d, failed to reposition!", packetPos));
-                        ch.position(ch.size());
+                        ch.setPosition(ch.size());
                         eof = true;
                         return null;
                     }

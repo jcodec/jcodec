@@ -84,7 +84,7 @@ public class ChunkWriter {
 
     public void write(Chunk chunk) throws IOException {
         SeekableByteChannel input = getInput(chunk);
-        input.position(chunk.getOffset());
+        input.setPosition(chunk.getOffset());
         long pos = out.position();
 
         out.write(NIOUtils.fetchFromChannel(input, (int) chunk.getSize()));

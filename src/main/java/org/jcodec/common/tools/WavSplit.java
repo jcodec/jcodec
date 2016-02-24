@@ -44,7 +44,7 @@ public class WavSplit {
         Assert.assertEquals(2, wavHeader.fmt.numChannels);
         int dataOffset = wavHeader.dataOffset;
         FileChannelWrapper is = NIOUtils.readableChannel(s);
-        is.position(dataOffset);
+        is.setPosition(dataOffset);
 
         int channels = wavHeader.getFormat().getChannels();
         SeekableByteChannel[] out = new SeekableByteChannel[channels];

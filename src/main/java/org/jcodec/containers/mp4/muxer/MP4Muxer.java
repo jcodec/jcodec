@@ -152,7 +152,7 @@ public class MP4Muxer {
         long mdatSize = out.position() - mdatOffset + 8;
         MP4Util.writeMovie(out, movie);
 
-        out.position(mdatOffset);
+        out.setPosition(mdatOffset);
         NIOUtils.writeLong(out, mdatSize);
     }
 

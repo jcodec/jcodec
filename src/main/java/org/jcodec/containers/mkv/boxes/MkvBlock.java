@@ -82,7 +82,7 @@ public class MkvBlock extends EbmlBin {
         is.read(bb);
         bb.flip();
         this.read(bb);
-        is.position(this.dataOffset+this.dataLen);
+        is.setPosition(this.dataOffset+this.dataLen);
     }
 
     @Override

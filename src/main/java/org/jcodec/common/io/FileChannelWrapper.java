@@ -46,7 +46,7 @@ public class FileChannelWrapper implements SeekableByteChannel {
     }
 
     @Override
-    public SeekableByteChannel position(long newPosition) throws IOException {
+    public SeekableByteChannel setPosition(long newPosition) throws IOException {
         ch.position(newPosition);
         return this;
     }

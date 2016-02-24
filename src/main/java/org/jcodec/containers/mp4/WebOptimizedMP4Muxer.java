@@ -50,7 +50,7 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
     public WebOptimizedMP4Muxer(SeekableByteChannel output, Brand brand, int headerSize) throws IOException {
         super(output, brand);
         headerPos = output.position() - 24;
-        output.position(headerPos);
+        output.setPosition(headerPos);
 
         header = ByteBuffer.allocate(headerSize);
         output.write(header);
@@ -66,10 +66,10 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
     public void storeHeader(MovieBox movie) throws IOException {
         long mdatEnd = out.position();
         long mdatSize = mdatEnd - mdatOffset + 8;
-        out.position(mdatOffset);
+        out.setPosition(mdatOffset);
         NIOUtils.writeLong(out, mdatSize);
 
-        out.position(headerPos);
+        out.setPosition(headerPos);
         try {
             movie.write(header);
             header.flip();
@@ -83,7 +83,7 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.warn("Could not web-optimize, header is bigger then allocated space.");
             new Header("free", header.remaining()).write(out);
-            out.position(mdatEnd);
+            out.setPosition(mdatEnd);
             MP4Util.writeMovie(out, movie);
         }
     }

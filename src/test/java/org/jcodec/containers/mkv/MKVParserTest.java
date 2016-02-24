@@ -88,7 +88,7 @@ public class MKVParserTest {
         try {
             SeekableByteChannel channel = new FileChannelWrapper(fis.getChannel());
             Assert.assertArrayEquals(MKVType.EBML.id, MKVParser.readEbmlId(channel));
-            channel.position(0x0C);
+            channel.setPosition(0x0C);
             Assert.assertArrayEquals(new byte[]{0x42, (byte) 0x86}, MKVParser.readEbmlId(channel));
         } finally {
             fis.close();

@@ -230,7 +230,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
             throws IOException {
         ByteBuffer result = buffer.duplicate();
         synchronized (input) {
-            input.position(offset);
+            input.setPosition(offset);
             NIOUtils.readL(input, result, size);
         }
         result.flip();

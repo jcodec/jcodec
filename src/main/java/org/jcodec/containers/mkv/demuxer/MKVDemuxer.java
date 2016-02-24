@@ -183,7 +183,7 @@ public final class MKVDemuxer {
             /**
              * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually read only when Packet.getData() is executed.
              */
-            demuxer.channel.position(b.dataOffset);
+            demuxer.channel.setPosition(b.dataOffset);
             ByteBuffer data = ByteBuffer.allocate(b.dataLen);
             demuxer.channel.read(data);
             data.flip();
@@ -278,7 +278,7 @@ public final class MKVDemuxer {
                 /**
                  * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually rean only when Packet.getData() is executed.
                  */
-            	demuxer.channel.position(b.dataOffset);
+            	demuxer.channel.setPosition(b.dataOffset);
                 ByteBuffer data = ByteBuffer.allocate(b.dataLen);
                 demuxer.channel.read(data);
                 b.readFrames(data);
@@ -351,7 +351,7 @@ public final class MKVDemuxer {
                      * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually rean only when Packet.getData() is executed.
                      */
                     try {
-                    	demuxer.channel.position(b.dataOffset);
+                    	demuxer.channel.setPosition(b.dataOffset);
                         ByteBuffer data = ByteBuffer.allocate(b.dataLen);
                         demuxer.channel.read(data);
                         b.readFrames(data);

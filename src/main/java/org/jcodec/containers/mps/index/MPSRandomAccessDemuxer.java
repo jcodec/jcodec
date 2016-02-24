@@ -134,11 +134,11 @@ public class MPSRandomAccessDemuxer {
         }
         
         protected void skip(long leadingSize) throws IOException {
-            source.position(source.position() + leadingSize);
+            source.setPosition(source.position() + leadingSize);
         }
         
         protected void reset() throws IOException {
-            source.position(0);
+            source.setPosition(0);
         }
 
         @Override

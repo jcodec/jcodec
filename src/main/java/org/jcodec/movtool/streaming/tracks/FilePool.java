@@ -67,7 +67,7 @@ public class FilePool implements ByteChannelPool {
 		public PoolChannel(FilePool pool, SeekableByteChannel src) throws IOException {
             super(src);
 			this.pool = pool;
-            src.position(0);
+            src.setPosition(0);
         }
 
         public boolean isOpen() {
