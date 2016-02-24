@@ -123,7 +123,7 @@ public class Remux {
         if(edits == null)
             return;
         for (Edit edit : edits) {
-            result.add(new Edit(tsRatio.multiply(edit.getDuration()), edit.getMediaTime(), edit.getRate()));
+            result.add(new Edit(tsRatio.multiplyLong(edit.getDuration()), edit.getMediaTime(), edit.getRate()));
         }
 
         two.setEdits(result);

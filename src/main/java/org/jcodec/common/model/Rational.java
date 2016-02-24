@@ -83,11 +83,11 @@ public class Rational {
         return num / (den * val);
     }
 
-    public long multiply(long val) {
+    public long multiplyLong(long val) {
         return (num * val) / den;
     }
 
-    public long divide(long val) {
+    public long divideLong(long val) {
         return (den * val) / num;
     }
 
@@ -111,7 +111,7 @@ public class Rational {
         return num * sec.den >= sec.num * den;
     }
 
-    public boolean equals(Rational other) {
+    public boolean equalsRational(Rational other) {
         return num * other.den == other.num * den;
     }
 
@@ -127,7 +127,7 @@ public class Rational {
         return reduce(num * other.den - other.num * den, den * other.den);
     }
 
-    public RationalLarge minus(RationalLarge other) {
+    public RationalLarge minusLarge(RationalLarge other) {
         return reduceLong(num * other.den - other.num * den, den * other.den);
     }
 
@@ -135,19 +135,19 @@ public class Rational {
         return new Rational(num + scalar * den, den);
     }
 
-    public Rational minus(int scalar) {
+    public Rational minusInt(int scalar) {
         return new Rational(num - scalar * den, den);
     }
 
-    public Rational multiply(int scalar) {
+    public Rational multiplyInt(int scalar) {
         return new Rational(num * scalar, den);
     }
 
-    public Rational divide(int scalar) {
+    public Rational divideInt(int scalar) {
         return new Rational(den * scalar, num);
     }
 
-    public Rational divideBy(int scalar) {
+    public Rational divideByInt(int scalar) {
         return new Rational(num, den * scalar);
     }
 
@@ -155,7 +155,7 @@ public class Rational {
         return reduce(num * other.num, den * other.den);
     }
 
-    public RationalLarge multiply(RationalLarge other) {
+    public RationalLarge multiplyLarge(RationalLarge other) {
         return reduceLong(num * other.num, den * other.den);
     }
 
@@ -163,7 +163,7 @@ public class Rational {
         return reduce(other.num * den, other.den * num);
     }
 
-    public RationalLarge divide(RationalLarge other) {
+    public RationalLarge divideLarge(RationalLarge other) {
         return reduceLong(other.num * den, other.den * num);
     }
 
@@ -171,7 +171,7 @@ public class Rational {
         return reduce(num * other.den, den * other.num);
     }
 
-    public RationalLarge divideBy(RationalLarge other) {
+    public RationalLarge divideByLarge(RationalLarge other) {
         return reduceLong(num * other.den, den * other.num);
     }
 

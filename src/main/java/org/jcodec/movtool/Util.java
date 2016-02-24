@@ -261,7 +261,7 @@ public class Util {
         List<Edit> result = new ArrayList<Edit>();
         List<Edit> next = new ArrayList<Edit>(lower);
         for (Edit edit : higher) {
-            long startMv = mvByTrack.multiply(edit.getMediaTime());
+            long startMv = mvByTrack.multiplyLong(edit.getMediaTime());
             Pair<List<Edit>> split = split(next, mvByTrack.flip(), startMv);
             Pair<List<Edit>> split2 = split(split.getB(), mvByTrack.flip(), startMv + edit.getDuration());
             result.addAll(split2.getA());
