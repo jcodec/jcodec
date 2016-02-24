@@ -92,8 +92,8 @@ public class DisplayTimecodesTest {
         StringBuilder sb = new StringBuilder("info ");
         EbmlUint scale = (EbmlUint) findFirst(s, Segment, Info, TimecodeScale);
         EbmlFloat duration = (EbmlFloat) findFirst(s, Segment, Info, Duration);
-        appendIfExists(sb, "scale", scale);
-        appendIfExists(sb, "duration", duration);
+        appendUint(sb, "scale", scale);
+        appendFloat(sb, "duration", duration);
         sb.append("\n");
         System.out.println(sb.toString());
     }
@@ -104,33 +104,33 @@ public class DisplayTimecodesTest {
             EbmlUint time = (EbmlUint) findFirst(aCuePoint, CuePoint, CueTime);
             sb.append("cue time: ").append(time.get());
             for(EbmlMaster aCueTrackPosition : findAll(aCuePoint, EbmlMaster.class, CuePoint, CueTrackPositions)){
-                appendIfExists(sb, "track", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueTrack));
+                appendUint(sb, "track", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueTrack));
                 EbmlUint EbmlMaster = (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueClusterPosition);
                 if (EbmlMaster != null)
                     sb.append(" EbmlMaster offset ").append(EbmlMaster.get()+s.dataOffset);
-                appendIfExists(sb, "block", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueBlockNumber));
+                appendUint(sb, "block", (EbmlUint) findFirst(aCueTrackPosition, CueTrackPositions, CueBlockNumber));
             }
             sb.append("\n");
         }
         System.out.println(sb.toString());
     }
     
-    public static void appendIfExists(StringBuilder b, String caption, EbmlUint e){
+    public static void appendUint(StringBuilder b, String caption, EbmlUint e){
         if (e != null)
             b.append(" ").append(caption).append(": ").append(e.get());
     }
     
-    public static void appendIfExists(StringBuilder b, String caption, EbmlUlong e){
+    public static void appendUlong(StringBuilder b, String caption, EbmlUlong e){
         if (e != null)
             b.append(" ").append(caption).append(": ").append(e.get());
     }
     
-    public static void appendIfExists(StringBuilder b, String caption, EbmlString e){
+    public static void appendString(StringBuilder b, String caption, EbmlString e){
         if (e != null)
             b.append(" ").append(caption).append(": ").append(e.get());
     }
     
-    public static void appendIfExists(StringBuilder b, String caption, EbmlFloat e){
+    public static void appendFloat(StringBuilder b, String caption, EbmlFloat e){
         if (e != null)
             b.append(" ").append(caption).append(": ").append(e.get());
     }
@@ -141,7 +141,7 @@ public class DisplayTimecodesTest {
             EbmlUint time = (EbmlUint) findFirst(aEbmlMaster, Cluster, Timecode);
             EbmlUint position = (EbmlUint) findFirst(aEbmlMaster, Cluster, Position);
             sb.append("EbmlMaster time: ").append(time.get());
-            appendIfExists(sb, "position", position);
+            appendUint(sb, "position", position);
             sb.append(" offset: ").append(aEbmlMaster.offset).append("\n");
             for(EbmlBase aChild : aEbmlMaster.children){
                 if (aChild instanceof MkvBlock){
@@ -154,8 +154,8 @@ public class DisplayTimecodesTest {
                     sb.append("    block tarck: ").append(block.trackNumber).append(" timecode: ").append(block.timecode).append(" offset: ").append(block.offset).append("\n");
                     sb.append("    block real timecode: "+(time.get()+block.timecode));
                     
-                    appendIfExists(sb, "reference", (EbmlUint) findFirst(aEbmlMaster, BlockGroup, ReferenceBlock));
-                    appendIfExists(sb, "duration", (EbmlUint) findFirst(aEbmlMaster, Cluster, BlockDuration));
+                    appendUint(sb, "reference", (EbmlUint) findFirst(aEbmlMaster, BlockGroup, ReferenceBlock));
+                    appendUint(sb, "duration", (EbmlUint) findFirst(aEbmlMaster, Cluster, BlockDuration));
                     sb.append("\n");    
                 }
                 
@@ -169,45 +169,45 @@ public class DisplayTimecodesTest {
         StringBuilder sb = new StringBuilder();
         for(EbmlMaster anEntry : findAll(s, EbmlMaster.class, Segment, Tracks, TrackEntry)){
             sb.append("track ");
-            appendIfExists(sb, "name", (EbmlString) findFirst(anEntry, TrackEntry, Name));
-            appendIfExists(sb, "language", (EbmlString) findFirst(anEntry, TrackEntry, Language));
-            appendIfExists(sb, "number", (EbmlUint) findFirst(anEntry, TrackEntry, TrackNumber));
-            appendIfExists(sb, "type", (EbmlUint) findFirst(anEntry, TrackEntry, TrackType));
-            appendIfExists(sb, "enabled", (EbmlUint) findFirst(anEntry, TrackEntry, FlagEnabled));
-            appendIfExists(sb, "default", (EbmlUint) findFirst(anEntry, TrackEntry, FlagDefault));
-            appendIfExists(sb, "forced", (EbmlUint) findFirst(anEntry, TrackEntry, FlagForced));
-            appendIfExists(sb, "lacing", (EbmlUint) findFirst(anEntry, TrackEntry, FlagLacing));
-            appendIfExists(sb, "mincache", (EbmlUint) findFirst(anEntry, TrackEntry, MinCache));
-            appendIfExists(sb, "maccache", (EbmlUint) findFirst(anEntry, TrackEntry, MaxCache));
-            appendIfExists(sb, "defaultduration", (EbmlUint) findFirst(anEntry, TrackEntry, DefaultDuration));
-            appendIfExists(sb, "codecid", (EbmlString) findFirst(anEntry, TrackEntry, CodecID));
-            appendIfExists(sb, "codecname", (EbmlString) findFirst(anEntry, TrackEntry, CodecName));
-            appendIfExists(sb, "attachmentlink", (EbmlString) findFirst(anEntry, TrackEntry, AttachmentLink));
-            appendIfExists(sb, "codecdecodeall", (EbmlUint) findFirst(anEntry, TrackEntry, CodecDecodeAll));
-            appendIfExists(sb, "overlay", (EbmlUint) findFirst(anEntry, TrackEntry, TrackOverlay));
+            appendString(sb, "name", (EbmlString) findFirst(anEntry, TrackEntry, Name));
+            appendString(sb, "language", (EbmlString) findFirst(anEntry, TrackEntry, Language));
+            appendUint(sb, "number", (EbmlUint) findFirst(anEntry, TrackEntry, TrackNumber));
+            appendUint(sb, "type", (EbmlUint) findFirst(anEntry, TrackEntry, TrackType));
+            appendUint(sb, "enabled", (EbmlUint) findFirst(anEntry, TrackEntry, FlagEnabled));
+            appendUint(sb, "default", (EbmlUint) findFirst(anEntry, TrackEntry, FlagDefault));
+            appendUint(sb, "forced", (EbmlUint) findFirst(anEntry, TrackEntry, FlagForced));
+            appendUint(sb, "lacing", (EbmlUint) findFirst(anEntry, TrackEntry, FlagLacing));
+            appendUint(sb, "mincache", (EbmlUint) findFirst(anEntry, TrackEntry, MinCache));
+            appendUint(sb, "maccache", (EbmlUint) findFirst(anEntry, TrackEntry, MaxCache));
+            appendUint(sb, "defaultduration", (EbmlUint) findFirst(anEntry, TrackEntry, DefaultDuration));
+            appendString(sb, "codecid", (EbmlString) findFirst(anEntry, TrackEntry, CodecID));
+            appendString(sb, "codecname", (EbmlString) findFirst(anEntry, TrackEntry, CodecName));
+            appendString(sb, "attachmentlink", (EbmlString) findFirst(anEntry, TrackEntry, AttachmentLink));
+            appendUint(sb, "codecdecodeall", (EbmlUint) findFirst(anEntry, TrackEntry, CodecDecodeAll));
+            appendUint(sb, "overlay", (EbmlUint) findFirst(anEntry, TrackEntry, TrackOverlay));
             EbmlMaster video = (EbmlMaster) findFirst(anEntry, TrackEntry, Video);
             EbmlMaster audio = (EbmlMaster) findFirst(anEntry, TrackEntry, Audio);
             if (video != null){
                 sb.append("\n    video ");
-                appendIfExists(sb, "interlaced", (EbmlUint) findFirst(video, Video, FlagInterlaced));
-                appendIfExists(sb, "stereo", (EbmlUint) findFirst(video, Video, StereoMode));
-                appendIfExists(sb, "alpha", (EbmlUint) findFirst(video, Video, AlphaMode));
-                appendIfExists(sb, "pixelwidth", (EbmlUint) findFirst(video, Video, PixelWidth));
-                appendIfExists(sb, "pixelheight", (EbmlUint) findFirst(video, Video, PixelHeight));
-                appendIfExists(sb, "cropbottom", (EbmlUint) findFirst(video, Video, PixelCropBottom));
-                appendIfExists(sb, "croptop", (EbmlUint) findFirst(video, Video, PixelCropTop));
-                appendIfExists(sb, "cropleft", (EbmlUint) findFirst(video, Video, PixelCropLeft));
-                appendIfExists(sb, "cropright", (EbmlUint) findFirst(video, Video, PixelCropRight));
-                appendIfExists(sb, "displaywidth", (EbmlUint) findFirst(video, Video, DisplayWidth));
-                appendIfExists(sb, "displayheight", (EbmlUint) findFirst(video, Video, DisplayHeight));
-                appendIfExists(sb, "displayunit", (EbmlUint) findFirst(video, Video, DisplayUnit));
-                appendIfExists(sb, "aspectratiotype", (EbmlUint) findFirst(video, Video, AspectRatioType));
+                appendUint(sb, "interlaced", (EbmlUint) findFirst(video, Video, FlagInterlaced));
+                appendUint(sb, "stereo", (EbmlUint) findFirst(video, Video, StereoMode));
+                appendUint(sb, "alpha", (EbmlUint) findFirst(video, Video, AlphaMode));
+                appendUint(sb, "pixelwidth", (EbmlUint) findFirst(video, Video, PixelWidth));
+                appendUint(sb, "pixelheight", (EbmlUint) findFirst(video, Video, PixelHeight));
+                appendUint(sb, "cropbottom", (EbmlUint) findFirst(video, Video, PixelCropBottom));
+                appendUint(sb, "croptop", (EbmlUint) findFirst(video, Video, PixelCropTop));
+                appendUint(sb, "cropleft", (EbmlUint) findFirst(video, Video, PixelCropLeft));
+                appendUint(sb, "cropright", (EbmlUint) findFirst(video, Video, PixelCropRight));
+                appendUint(sb, "displaywidth", (EbmlUint) findFirst(video, Video, DisplayWidth));
+                appendUint(sb, "displayheight", (EbmlUint) findFirst(video, Video, DisplayHeight));
+                appendUint(sb, "displayunit", (EbmlUint) findFirst(video, Video, DisplayUnit));
+                appendUint(sb, "aspectratiotype", (EbmlUint) findFirst(video, Video, AspectRatioType));
             } else if (audio != null){
                 sb.append("\n    audio ");
-                appendIfExists(sb, "sampling", (EbmlFloat) findFirst(audio, Audio, SamplingFrequency));
-                appendIfExists(sb, "outputsampling", (EbmlFloat) findFirst(audio, Audio, OutputSamplingFrequency));
-                appendIfExists(sb, "channels", (EbmlUint) findFirst(audio, Audio, Channels));
-                appendIfExists(sb, "bitdepth", (EbmlUint) findFirst(audio, Audio, BitDepth));
+                appendFloat(sb, "sampling", (EbmlFloat) findFirst(audio, Audio, SamplingFrequency));
+                appendFloat(sb, "outputsampling", (EbmlFloat) findFirst(audio, Audio, OutputSamplingFrequency));
+                appendUint(sb, "channels", (EbmlUint) findFirst(audio, Audio, Channels));
+                appendUint(sb, "bitdepth", (EbmlUint) findFirst(audio, Audio, BitDepth));
             }
             sb.append("\n");
         }
