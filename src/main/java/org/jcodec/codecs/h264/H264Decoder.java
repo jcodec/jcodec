@@ -361,11 +361,11 @@ public class H264Decoder extends VideoDecoder {
     }
 
     public void addSps(List<ByteBuffer> spsList) {
-        reader.addSps(spsList);
+        reader.addSpsList(spsList);
     }
 
     public void addPps(List<ByteBuffer> ppsList) {
-        reader.addPps(ppsList);
+        reader.addPpsList(ppsList);
     }
 
     @Override

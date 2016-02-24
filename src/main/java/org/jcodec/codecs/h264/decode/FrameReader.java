@@ -99,7 +99,7 @@ public class FrameReader {
         return new SliceReader(sh.pps, cabac, cavlc, mDecoder, _in, mapper, sh, nalUnit);
     }
     
-    public void addSps(List<ByteBuffer> spsList) {
+    public void addSpsList(List<ByteBuffer> spsList) {
         for (ByteBuffer byteBuffer : spsList) {
             addSps(byteBuffer);
         }
@@ -112,7 +112,7 @@ public class FrameReader {
         sps.put(s.seq_parameter_set_id, s);
     }
 
-    public void addPps(List<ByteBuffer> ppsList) {
+    public void addPpsList(List<ByteBuffer> ppsList) {
         for (ByteBuffer byteBuffer : ppsList) {
             addPps(byteBuffer);
         }
