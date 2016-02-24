@@ -7,8 +7,16 @@ public abstract class BaseInputStream extends InputStream {
 
     protected abstract int readByte() throws IOException;
 
-    protected int readBuffer(byte[] b, int off, int len) throws IOException {
-        return super.read(b, off, len);
+    protected abstract int readBuffer(byte[] b, int from, int len) throws IOException;
+
+    @Override
+    public int read(byte[] b) throws IOException {
+        return readBuffer(b, 0, b.length);
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        return readBuffer(b, off, len);
     }
 
     @Override

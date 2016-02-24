@@ -73,6 +73,7 @@ public class AVCConcatTrack implements VirtualTrack {
             List<ByteBuffer> rawPPSs = H264Utils.getRawPPS(se.getCodecPrivate());
             for (ByteBuffer ppsBuffer : rawPPSs) {
                 PictureParameterSet pps = H264Utils.readPPS(NIOUtils.duplicate(ppsBuffer));
+                // Allow up to 256 SPS/PPS per clip
                 pps.pic_parameter_set_id |= i << 8;
                 pps.seq_parameter_set_id |= i << 8;
                 allPps.add(pps);
