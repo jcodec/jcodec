@@ -28,10 +28,7 @@ public class SetFPS {
     public static void main(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelp(new HashMap<String, String>() {
-                {
-                }
-            }, "movie", "num:den");
+            MainUtils.printHelpNoFlags("movie", "num:den");
             System.exit(-1);
         }
         final RationalLarge newFPS = RationalLarge.parse(cmd.getArg(1));

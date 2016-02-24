@@ -1,5 +1,6 @@
 package org.jcodec.containers.mps;
 
+import static java.util.Arrays.asList;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 
 import java.io.File;
@@ -8,6 +9,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.jcodec.codecs.mpeg12.MPEGUtil;
@@ -59,7 +61,7 @@ public class MPSDump {
                 HashMap<String, String> map = new HashMap<String, String>();
                 map.put(STOP_AT, "Stop reading at timestamp");
                 map.put(DUMP_FROM, "Start dumping from timestamp");
-                MainUtils.printHelp(map, "file name");
+                MainUtils.printHelp(map, asList("file name"));
                 return;
             }
 

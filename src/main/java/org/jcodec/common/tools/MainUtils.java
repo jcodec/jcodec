@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -239,15 +240,19 @@ public class MainUtils {
                 .newInstance(flags.getClass(), 0)));
     }
 
-    public static void printHelp(Map<String, String> flags, String... params) {
+    public static void printHelp(Map<String, String> flags, List<String> params) {
         printHelpOut(System.out, "", flags, params);
     }
+
+    public static void printHelpNoFlags(String... arguments) {
+        printHelpOut(System.out, "", new HashMap<String, String>(), Arrays.asList(arguments));
+    }
     
-    public static void printHelpCmd(String command, Map<String, String> flags, String... params) {
+    public static void printHelpCmd(String command, Map<String, String> flags, List<String> params) {
         printHelpOut(System.out, command, flags, params);
     }
 
-    public static void printHelpOut(PrintStream out, String command, Map<String, String> flags, String... params) {
+    public static void printHelpOut(PrintStream out, String command, Map<String, String> flags, List<String> params) {
         out.print(bold("Syntax: " + command));
         StringBuilder sample = new StringBuilder();
         StringBuilder detail = new StringBuilder();

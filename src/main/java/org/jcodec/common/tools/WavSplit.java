@@ -1,9 +1,12 @@
 package org.jcodec.common.tools;
 
+import static java.util.Arrays.asList;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.jcodec.codecs.wav.WavHeader;
@@ -30,7 +33,7 @@ public class WavSplit {
         if (cmd.argsLength() < 1) {
             HashMap<String, String> map = new HashMap<String, String>();
             map.put("pattern", "Output file name pattern, i.e. out%02d.wav");
-            MainUtils.printHelp(map, "filename.wav");
+            MainUtils.printHelp(map, asList("filename.wav"));
             System.exit(-1);
         }
 

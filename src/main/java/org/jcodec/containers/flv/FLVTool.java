@@ -3,11 +3,13 @@ package org.jcodec.containers.flv;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.util.Arrays.asList;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -61,7 +63,7 @@ public class FLVTool {
 
         Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length));
         if (cmd.args.length < 1) {
-            MainUtils.printHelpCmd(command, processors.get(command).getFlags(), "file _in", "?file out");
+            MainUtils.printHelpCmd(command, processors.get(command).getFlags(), asList("file _in", "?file out"));
             return;
         }
         int maxPackets = cmd.getIntegerFlagD("max-packets", Integer.MAX_VALUE);
