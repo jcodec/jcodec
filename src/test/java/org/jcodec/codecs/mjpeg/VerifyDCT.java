@@ -34,7 +34,7 @@ public class VerifyDCT extends DCT {
             diffcnt++;
 
             if (diffcnt == 10) {
-                throw new UnhandledStateException();
+                throw new UnhandledStateException("diffcnt == 10");
             }
         }
         return expected;

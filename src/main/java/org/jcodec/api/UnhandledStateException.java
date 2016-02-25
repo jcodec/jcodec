@@ -6,8 +6,4 @@ public class UnhandledStateException extends RuntimeException {
 		super(string);
 	}
 
-	public UnhandledStateException() {
-		super();
-	}
-
 }
