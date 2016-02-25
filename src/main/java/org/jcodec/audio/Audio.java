@@ -15,10 +15,10 @@ import java.nio.FloatBuffer;
 public class Audio {
 
     public static void transfer(AudioSource src, AudioSink sink) throws IOException {
-        transfer(src, new DummyFilter(1), sink);
+        filterTransfer(src, new DummyFilter(1), sink);
     }
 
-    public static void transfer(AudioSource src, AudioFilter filter, AudioSink sink) throws IOException {
+    public static void filterTransfer(AudioSource src, AudioFilter filter, AudioSink sink) throws IOException {
         if (filter.getNInputs() != 1)
             throw new IllegalArgumentException("Audio filter has # inputs != 1");
         if (filter.getNOutputs() != 1)
