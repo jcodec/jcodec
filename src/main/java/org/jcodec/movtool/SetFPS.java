@@ -25,7 +25,7 @@ import java.util.HashMap;
 public class SetFPS {
     private static final int MIN_TIMESCALE_ALLOWED = 25;
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 2) {
             MainUtils.printHelpNoFlags("movie", "num:den");

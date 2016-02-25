@@ -28,7 +28,7 @@ import org.jcodec.movtool.streaming.tracks.RealTrack;
  */
 public class ConcurrentMovieRangeServiceMain {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             System.out.println("Syntax: <movie.mov>");
             return;

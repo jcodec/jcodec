@@ -141,7 +141,7 @@ public class ProresConsts {
         }
     }
 
-    //    public static void main(String[] args) {
+    //    public static void main1(String[] args) {
     //        int[] qmat = new int[] { 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     //                4, 4, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 7, 7, 7 };
     //        int[] cool = new int[64];

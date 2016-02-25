@@ -16,7 +16,7 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
  * 
  */
 public class WebOptimize {
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             System.out.println("Syntax: optimize <movie>");
             System.exit(-1);

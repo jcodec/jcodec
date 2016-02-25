@@ -16,7 +16,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class ChangeTimescale {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: chts <movie> <timescale>");
             System.exit(-1);

@@ -53,7 +53,7 @@ public class MPSDump {
         this.ch = ch;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         FileChannelWrapper ch = null;
         try {
             Cmd cmd = MainUtils.parseArguments(args);

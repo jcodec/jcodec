@@ -26,7 +26,7 @@ import org.jcodec.movtool.streaming.tracks.RealTrack;
  */
 public class ConcatMain {
     
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         File folder = new File(System.getProperty("user.home"), "upload");
         File[] listFiles = folder.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {

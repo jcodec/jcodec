@@ -24,7 +24,7 @@ import org.jcodec.common.model.Picture;
  * 
  */
 public class ConformanceTestTool {
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
 
         (new ConformanceTestTool()).doIt(args);
     }

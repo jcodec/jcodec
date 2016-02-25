@@ -119,7 +119,7 @@ public class MTSTrackFactory {
         return ret;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         FilePool fp = new FilePool(new File(args[0]), 10);
         MTSTrackFactory factory = new MTSTrackFactory(NIOUtils.fetchFromFile(new File(args[1])), fp);
         Stream stream = factory.getVideoStreams().get(0);

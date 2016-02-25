@@ -20,7 +20,7 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
  * 
  */
 public class SetPAR {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: setpasp <movie> <num:den>");
             System.exit(-1);

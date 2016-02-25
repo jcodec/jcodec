@@ -233,7 +233,7 @@ public class MPSMediaInfo extends PESReader {
         return new ArrayList<MPEGTrackMetadata>(infos.values());
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         new MPSMediaInfo().getMediaInfo(new File(args[0]));
     }
 

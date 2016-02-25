@@ -98,7 +98,7 @@ public class MTSReplacePid extends MTSUtils.TSReader {
         return newPid;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 2) {
             MainUtils.printHelpNoFlags("pid_from:pid_to,[pid_from:pid_to...]", "file");

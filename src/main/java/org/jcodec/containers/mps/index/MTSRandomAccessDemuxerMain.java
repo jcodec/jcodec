@@ -15,7 +15,7 @@ import org.jcodec.containers.mps.index.MPSRandomAccessDemuxer.Stream;
 
 public class MTSRandomAccessDemuxerMain {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         MTSIndexer indexer = new MTSIndexer();
         File source = new File(args[0]);
 

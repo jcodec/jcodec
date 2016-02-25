@@ -260,7 +260,7 @@ public class MTSUtils {
             }
         }
 
-        public boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
+        protected boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
                 ByteBuffer fullPkt) {
             // DO NOTHING
             return true;

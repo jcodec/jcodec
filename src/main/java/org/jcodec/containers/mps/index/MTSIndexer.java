@@ -123,7 +123,7 @@ public class MTSIndexer {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         File src = new File(args[0]);
 
         MTSIndexer indexer = new MTSIndexer();

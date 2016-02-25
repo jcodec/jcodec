@@ -53,7 +53,7 @@ public class FrameUtil {
 		}
 	}
 
-	public static void main(String[] args) {
+	public static void main1(String[] args) {
 		FileInputStream is = null;
 		try {
 			is = new FileInputStream(args[0]);

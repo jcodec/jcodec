@@ -32,7 +32,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class Cut {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 1) {
             System.out
                     .println("Syntax: cut [-command arg]...[-command arg] [-self] <movie file>\n"

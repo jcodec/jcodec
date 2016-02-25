@@ -79,7 +79,7 @@ public class TestRgbToYuv420 {
         return r2;
     }
 
-    public static void main(String[] args) {
+    public static void main1(String[] args) {
         int[] rgb = new int[300];
         for (int i = 0; i < 300; i++) {
             rgb[i] = (int) (Math.random() * 256);
