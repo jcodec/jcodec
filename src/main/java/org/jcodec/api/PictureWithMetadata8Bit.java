@@ -14,9 +14,9 @@ public class PictureWithMetadata8Bit {
     private double timestamp;
     private double duration;
 
-    public PictureWithMetadata8Bit(Picture8Bit picture, double pts, double duration) {
+    public PictureWithMetadata8Bit(Picture8Bit picture, double timestamp, double duration) {
         this.picture = picture;
-        this.timestamp = pts;
+        this.timestamp = timestamp;
         this.duration = duration;
     }
 
@@ -29,6 +29,6 @@ public class PictureWithMetadata8Bit {
     }
 
     public double getDuration() {
-        return timestamp;
+        return duration;
     }
 }
