@@ -13,12 +13,8 @@ import org.jcodec.common.Assert;
  */
 public class SL extends Descriptor {
     
-    public SL(int tag, int size) {
-        super(tag, size);
-    }
-    
     public SL() {
-        super(tag());
+        super(tag(), 0);
     }
 
     protected void doWrite(ByteBuffer out) {

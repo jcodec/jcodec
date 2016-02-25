@@ -17,10 +17,6 @@ public abstract class Descriptor {
     private int size;
     private static DescriptorFactory factory = new DescriptorFactory();
 
-    public Descriptor(int tag) {
-        this(tag, 0);
-    }
-
     public Descriptor(int tag, int size) {
         this._tag = tag;
         this.size = size;

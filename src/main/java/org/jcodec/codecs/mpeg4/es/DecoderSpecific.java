@@ -15,12 +15,8 @@ public class DecoderSpecific extends Descriptor {
 
     private ByteBuffer data;
 
-    public DecoderSpecific(int tag, int size) {
-        super(tag, size);
-    }
-
     public DecoderSpecific(ByteBuffer data) {
-        super(tag());
+        super(tag(), 0);
         this.data = data;
     }
 

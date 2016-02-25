@@ -16,13 +16,8 @@ import java.util.Collection;
 public class NodeDescriptor extends Descriptor {
     private Collection<Descriptor> children;
     
-    public NodeDescriptor(int tag, int size) {
-        super(tag, size);
-        this.children = new ArrayList<Descriptor>();
-    }
-    
     public NodeDescriptor(int tag, Descriptor[] children) {
-        super(tag);
+        super(tag, 0);
         this.children = new ArrayList<Descriptor>();
         this.children.addAll(asList(children));
     }
