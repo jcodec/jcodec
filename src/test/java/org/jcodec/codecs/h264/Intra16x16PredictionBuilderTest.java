@@ -9,8 +9,9 @@ import junit.framework.TestCase;
 
 import org.jcodec.codecs.h264.decode.Intra16x16PredictionBuilder;
 import org.jcodec.common.tools.MathUtil;
+import org.junit.Test;
 
-public class Intra16x16PredictionBuilderTest extends TestCase {
+public class Intra16x16PredictionBuilderTest {
     
     private static int[][] emptyResidual = new int[16][16];
     private static int[][] testResidual = new int[16][16];
@@ -29,6 +30,7 @@ public class Intra16x16PredictionBuilderTest extends TestCase {
         return result;
     }
 
+    @Test
     public void testVertical() throws Exception {
         byte[] expected = toByteArrayShifted(28, 132, 205, 207, 207, 207, 207, 207, 207, 207, 207, 206, 206, 206, 206,
                 206, 28, 132, 205, 207, 207, 207, 207, 207, 207, 207, 207, 206, 206, 206, 206, 206, 28, 132, 205, 207,
@@ -53,6 +55,7 @@ public class Intra16x16PredictionBuilderTest extends TestCase {
         assertArrayEquals(offset(expected), actual);
     }
 
+    @Test
     public void testHorizontal() throws Exception {
         byte[] expected = toByteArrayShifted(234, 234, 234, 234, 234, 234, 234, 234, 234, 234, 234, 234, 234, 234, 234,
                 234, 233, 233, 233, 233, 233, 233, 233, 233, 233, 233, 233, 233, 233, 233, 233, 233, 232, 232, 232,
@@ -80,6 +83,7 @@ public class Intra16x16PredictionBuilderTest extends TestCase {
         assertArrayEquals(offset(expected), actual);
     }
 
+    @Test
     public void testDC() throws Exception {
         byte[] expected = toByteArrayShifted(194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194,
                 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194, 194,
@@ -106,6 +110,7 @@ public class Intra16x16PredictionBuilderTest extends TestCase {
         assertArrayEquals(offset(expected), actual);
     }
 
+    @Test
     public void testPlane() throws Exception {
 
         byte[] expected = toByteArrayShifted(105, 111, 117, 124, 130, 136, 143, 149, 155, 162, 168, 174, 181, 187, 193,
@@ -134,6 +139,7 @@ public class Intra16x16PredictionBuilderTest extends TestCase {
         assertArrayEquals(offset(expected), actual);
     }
 
+    @Test
     public void testPlane2() throws Exception {
 
         byte[] expected = toByteArrayShifted(125, 134, 143, 152, 161, 170, 179, 188, 197, 206, 215, 225, 234, 243, 252,

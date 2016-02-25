@@ -4,20 +4,20 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.nio.ByteBuffer;
 
-import junit.framework.TestCase;
-
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.VUIParameters;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Assert;
+import static org.junit.Assert.*;
+import org.junit.Before;
 import org.junit.Test;
 
-public class SPSReadTest extends TestCase {
+public class SPSReadTest {
 
     private SeqParameterSet sps1;
 
-    @Override
+    @Before
     protected void setUp() throws Exception {
         sps1 = new SeqParameterSet();
         sps1.profile_idc = 66;
