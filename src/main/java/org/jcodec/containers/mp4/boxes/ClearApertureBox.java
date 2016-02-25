@@ -24,13 +24,7 @@ public class ClearApertureBox extends FullBox {
     public ClearApertureBox(Header atom) {
         super(atom);
     }
-
-    public ClearApertureBox(Header header, int width, int height) {
-        super(header);
-        this.width = width;
-        this.height = height;
-    }
-
+ 
     public void parse(ByteBuffer input) {
         super.parse(input);
         width = input.getInt() / 65536f;

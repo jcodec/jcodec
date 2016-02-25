@@ -48,11 +48,15 @@ public class TrackFragmentHeaderBox extends FullBox {
     }
 
     public static Factory create(int trackId) {
-        return new Factory(trackId);
+        return new Factory(TrackFragmentHeaderBox.createTrackFragmentHeaderBoxWithId(trackId));
     }
 
     public static Factory copy(TrackFragmentHeaderBox other) {
-        return new Factory(other);
+        TrackFragmentHeaderBox box = TrackFragmentHeaderBox
+                .createTrackFragmentHeaderBox(other.trackId, other.baseDataOffset, other.sampleDescriptionIndex, other.defaultSampleDuration, other.defaultSampleSize, other.defaultSampleFlags);
+        box.setFlags(other.getFlags());
+        box.setVersion(other.getVersion());
+        return new Factory(box);
     }
 
     public static TrackFragmentHeaderBox createTrackFragmentHeaderBoxWithId(int trackId) {
@@ -65,15 +69,8 @@ public class TrackFragmentHeaderBox extends FullBox {
 
         private TrackFragmentHeaderBox box;
 
-        protected Factory(int trackId) {
-            box = TrackFragmentHeaderBox.createTrackFragmentHeaderBoxWithId(trackId);
-        }
-
-        public Factory(TrackFragmentHeaderBox other) {
-            box = TrackFragmentHeaderBox
-                    .createTrackFragmentHeaderBox(other.trackId, other.baseDataOffset, other.sampleDescriptionIndex, other.defaultSampleDuration, other.defaultSampleSize, other.defaultSampleFlags);
-            box.setFlags(other.getFlags());
-            box.setVersion(other.getVersion());
+        public Factory(TrackFragmentHeaderBox box) {
+            this.box = box;
         }
 
         public Factory baseDataOffset(long baseDataOffset) {
