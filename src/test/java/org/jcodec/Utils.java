@@ -70,7 +70,7 @@ public class Utils {
         System.out.println();
     }
 
-    public static void printArray(int[][] array, String[] title) {
+    public static void printArray2d(int[][] array, String[] title) {
         if (title.length > 0)
             System.out.println(title[0]);
         for (int i = 0; i < array.length; i++) {
