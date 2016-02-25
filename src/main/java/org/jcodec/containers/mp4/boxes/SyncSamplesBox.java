@@ -12,14 +12,11 @@ import java.nio.ByteBuffer;
  * 
  */
 public class SyncSamplesBox extends FullBox {
+    static final String STSS = "stss";
     protected int[] syncSamples;
 
-    public static String fourcc() {
-        return "stss";
-    }
-
     public static SyncSamplesBox createSyncSamplesBox(int[] array) {
-        SyncSamplesBox stss = new SyncSamplesBox(new Header(fourcc()));
+        SyncSamplesBox stss = new SyncSamplesBox(new Header(STSS));
         stss.syncSamples = array;
         return stss;
     }

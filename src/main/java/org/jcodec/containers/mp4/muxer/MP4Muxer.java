@@ -61,8 +61,8 @@ public class MP4Muxer {
 
         ByteBuffer buf = ByteBuffer.allocate(1024);
         ftyp.write(buf);
-        new Header("wide", 8).write(buf);
-        new Header("mdat", 1).write(buf);
+        Header.createHeader("wide", 8).write(buf);
+        Header.createHeader("mdat", 1).write(buf);
         mdatOffset = buf.position();
         buf.putLong(0);
         buf.flip();
@@ -95,7 +95,7 @@ public class MP4Muxer {
     public static AudioSampleEntry audioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
             int sampleRate, Endian endian) {
         AudioSampleEntry ase = AudioSampleEntry
-                .createAudioSampleEntry(new Header(fourcc, 0), (short) drefId, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65535, 0, 1, sampleSize, channels * sampleSize, sampleSize, (short) 1);
+                .createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65535, 0, 1, sampleSize, channels * sampleSize, sampleSize, (short) 1);
 
         NodeBox wave = new NodeBox(new Header("wave"));
         ase.add(wave);
@@ -111,7 +111,7 @@ public class MP4Muxer {
     public static AudioSampleEntry compressedAudioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
             int sampleRate, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame) {
         AudioSampleEntry ase = AudioSampleEntry
-                .createAudioSampleEntry(new Header(fourcc, 0), (short) drefId, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPacket, bytesPerPacket, bytesPerFrame, 16 / 8, (short) 1);
+                .createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPacket, bytesPerPacket, bytesPerFrame, 16 / 8, (short) 1);
         return ase;
     }
 
@@ -234,7 +234,7 @@ public class MP4Muxer {
         FramesMP4MuxerTrack track = addTrack(SOUND, timescale);
 
         AudioSampleEntry ase = AudioSampleEntry
-                .createAudioSampleEntry(new Header(fourcc, 0), (short) 1, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPkt, 0, 0, 2, (short) 1);
+                .createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) 1, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPkt, 0, 0, 2, (short) 1);
 
         NodeBox wave = new NodeBox(new Header("wave"));
         ase.add(wave);

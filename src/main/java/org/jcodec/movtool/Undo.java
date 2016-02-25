@@ -85,7 +85,7 @@ public class Undo {
     private boolean isMoov(SeekableByteChannel is, Atom atom) throws IOException {
         is.setPosition(atom.getOffset() + atom.getHeader().headerSize());
         try {
-            Box mov = NodeBox.parseBox(NIOUtils.fetchFromChannel(is, (int) atom.getHeader().getSize()), new Header("moov", atom
+            Box mov = NodeBox.parseBox(NIOUtils.fetchFromChannel(is, (int) atom.getHeader().getSize()), Header.createHeader("moov", atom
                     .getHeader().getSize()), BoxFactory.getDefault());
             return (mov instanceof MovieBox) && Box.containsBox((NodeBox) mov, "mvhd");
         } catch (Throwable t) {

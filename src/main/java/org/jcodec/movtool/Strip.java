@@ -118,7 +118,7 @@ public class Strip {
     private List<Edit> deepCopy(List<Edit> edits) {
         ArrayList<Edit> newList = new ArrayList<Edit>();
         for (Edit edit : edits) {
-            newList.add(new Edit(edit));
+            newList.add(Edit.createEdit(edit));
         }
         return newList;
     }

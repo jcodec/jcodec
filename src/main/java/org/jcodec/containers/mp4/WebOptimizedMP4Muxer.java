@@ -56,8 +56,8 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
         output.write(header);
         header.clear();
 
-        new Header("wide", 8).write(output);
-        new Header("mdat", 1).write(output);
+        Header.createHeader("wide", 8).writeChannel(output);
+        Header.createHeader("mdat", 1).writeChannel(output);
         mdatOffset = output.position();
         NIOUtils.writeLong(output, 0);
     }
@@ -79,10 +79,10 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
             }
             out.write(header);
             if (rem >= 8)
-                new Header("free", rem).write(out);
+                Header.createHeader("free", rem).writeChannel(out);
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.warn("Could not web-optimize, header is bigger then allocated space.");
-            new Header("free", header.remaining()).write(out);
+            Header.createHeader("free", header.remaining()).writeChannel(out);
             out.setPosition(mdatEnd);
             MP4Util.writeMovie(out, movie);
         }

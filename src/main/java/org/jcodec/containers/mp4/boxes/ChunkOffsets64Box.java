@@ -19,7 +19,7 @@ public class ChunkOffsets64Box extends FullBox {
     }
 
     public static ChunkOffsets64Box createChunkOffsets64Box(long[] offsets) {
-        ChunkOffsets64Box co64 = new ChunkOffsets64Box(new Header(fourcc(), 0));
+        ChunkOffsets64Box co64 = new ChunkOffsets64Box(Header.createHeader(fourcc(), 0));
         co64.chunkOffsets = offsets;
         return co64;
     }
