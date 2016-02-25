@@ -34,19 +34,21 @@ public class SequenceHeader implements MPEGHeader {
     public SequenceExtension sequenceExtension;
     public SequenceScalableExtension sequenceScalableExtension;
     public SequenceDisplayExtension sequenceDisplayExtension;
-    
-    public SequenceHeader(int horizontal_size, int vertical_size, int aspect_ratio_information, int frame_rate_code,
-            int bit_rate, int vbv_buffer_size_value, int constrained_parameters_flag, int[] intra_quantiser_matrix,
-            int[] non_intra_quantiser_matrix) {
-        this.horizontal_size = horizontal_size;
-        this.vertical_size = vertical_size;
-        this.aspect_ratio_information = aspect_ratio_information;
-        this.frame_rate_code = frame_rate_code;
-        this.bit_rate = bit_rate;
-        this.vbv_buffer_size_value = vbv_buffer_size_value;
-        this.constrained_parameters_flag = constrained_parameters_flag;
-        this.intra_quantiser_matrix = intra_quantiser_matrix;
-        this.non_intra_quantiser_matrix = non_intra_quantiser_matrix;
+
+    public static SequenceHeader createSequenceHeader(int horizontal_size, int vertical_size,
+            int aspect_ratio_information, int frame_rate_code, int bit_rate, int vbv_buffer_size_value,
+            int constrained_parameters_flag, int[] intra_quantiser_matrix, int[] non_intra_quantiser_matrix) {
+        SequenceHeader sh = new SequenceHeader();
+        sh.horizontal_size = horizontal_size;
+        sh.vertical_size = vertical_size;
+        sh.aspect_ratio_information = aspect_ratio_information;
+        sh.frame_rate_code = frame_rate_code;
+        sh.bit_rate = bit_rate;
+        sh.vbv_buffer_size_value = vbv_buffer_size_value;
+        sh.constrained_parameters_flag = constrained_parameters_flag;
+        sh.intra_quantiser_matrix = intra_quantiser_matrix;
+        sh.non_intra_quantiser_matrix = non_intra_quantiser_matrix;
+        return sh;
     }
     
     private SequenceHeader() {
