@@ -38,7 +38,7 @@ public class MPEGPredOct extends MPEGPred {
     };
 
     public MPEGPredOct(MPEGPred other) {
-        super(other);
+        super(other.fCode, other.chromaFormat, other.topFieldFirst);
         this.tmp = new int[16 * 21];
     }
 
