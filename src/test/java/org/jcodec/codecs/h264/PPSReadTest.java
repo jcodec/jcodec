@@ -3,16 +3,17 @@ package org.jcodec.codecs.h264;
 import java.io.File;
 import java.nio.ByteBuffer;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.*;
 
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.common.io.NIOUtils;
+import org.junit.Before;
 import org.junit.Test;
 
-public class PPSReadTest extends TestCase {
+public class PPSReadTest {
     private PictureParameterSet expected;
 
-    @Override
+    @Before
     protected void setUp() throws Exception {
         expected = new PictureParameterSet();
         expected.pic_parameter_set_id = 0;
