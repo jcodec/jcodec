@@ -54,6 +54,21 @@ public class Frame extends Picture8Bit {
         this.refsUsed = src.refsUsed;
         this.poc = src.poc;
     }
+    
+    /**
+     * Creates a cropped clone of this picture.
+     * 
+     * @return
+     */
+    public Frame cloneCropped() {
+        if (cropNeeded()) {
+            return cropped();
+        } else {
+            Frame clone = createFrame(this);
+            clone.copyFrom(this);
+            return clone;
+        }
+    }
 
     public int getFrameNo() {
         return frameNo;

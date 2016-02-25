@@ -130,14 +130,28 @@ public class Picture8Bit {
         for (int plane = 0; plane < color.nComp; plane++) {
             if (data[plane] == null)
                 continue;
-            arraycopy(src.data[plane], 0, data[plane], 0,
-                    (width >> color.compWidth[plane]) * (height >> color.compHeight[plane]));
+            arraycopy(src.data[plane], 0, data[plane], 0, (width >> color.compWidth[plane])
+                    * (height >> color.compHeight[plane]));
+        }
+    }
+
+    /**
+     * Creates a cropped clone of this picture.
+     * 
+     * @return
+     */
+    public Picture8Bit cloneCropped() {
+        if (cropNeeded()) {
+            return cropped();
+        } else {
+            Picture8Bit clone = createCompatible();
+            clone.copyFrom(this);
+            return clone;
         }
     }
 
     public Picture8Bit cropped() {
-        if (crop == null
-                || (crop.getX() == 0 && crop.getY() == 0 && crop.getWidth() == width && crop.getHeight() == height))
+        if (!cropNeeded())
             return this;
         Picture8Bit result = Picture8Bit.create(crop.getWidth(), crop.getHeight(), color);
 
@@ -150,6 +164,11 @@ public class Picture8Bit {
         }
 
         return result;
+    }
+
+    protected boolean cropNeeded() {
+        return crop != null
+                && (crop.getX() != 0 || crop.getY() != 0 || crop.getWidth() != width || crop.getHeight() != height);
     }
 
     private void cropSub(byte[] src, int x, int y, int w, int h, int srcStride, byte[] tgt) {
@@ -235,8 +254,8 @@ public class Picture8Bit {
     private boolean planeEquals(Picture8Bit other, int plane) {
         int cw = color.compWidth[plane];
         int ch = color.compHeight[plane];
-        int offA = other.getCrop() == null ? 0
-                : ((other.getCrop().getX() >> cw) + (other.getCrop().getY() >> ch) * (other.getWidth() >> cw));
+        int offA = other.getCrop() == null ? 0 : ((other.getCrop().getX() >> cw) + (other.getCrop().getY() >> ch)
+                * (other.getWidth() >> cw));
         int offB = crop == null ? 0 : ((crop.getX() >> cw) + (crop.getY() >> ch) * (width >> cw));
 
         byte[] planeData = other.getPlaneData(plane);
