@@ -201,7 +201,7 @@ public class JpegDecoder extends VideoDecoder {
 
                 Asserts.assertEquals(0, ri);
             } else {
-                throw new UnhandledStateException("unhandled marker " + JpegConst.toString(b));
+                throw new UnhandledStateException("unhandled marker " + JpegConst.markerToString(b));
             }
         }
 
