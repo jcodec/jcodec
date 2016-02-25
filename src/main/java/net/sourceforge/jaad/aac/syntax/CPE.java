@@ -41,7 +41,7 @@ public class CPE extends Element implements SyntaxConstants {
 			info.decode(_in, conf, commonWindow);
 			icsR.getInfo().setData(info);
 
-			msMask = MSMask.forInt(_in.readBits(2));
+			msMask = CPE.getMSMask(_in.readBits(2));
 			if(msMask.equals(MSMask.TYPE_USED)) {
 				final int maxSFB = info.getMaxSFB();
 				final int windowGroupCount = info.getWindowGroupCount();
@@ -90,4 +90,12 @@ public class CPE extends Element implements SyntaxConstants {
 	public boolean isCommonWindow() {
 		return commonWindow;
 	}
+
+    public static MSMask getMSMask(int i) throws AACException {
+        MSMask[] values = MSMask.values();
+        if (values.length >= i) {
+            throw new AACException("unknown MS mask type");
+        }
+        return values[i];
+    }
 }
