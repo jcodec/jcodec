@@ -33,11 +33,11 @@ public class VP8Encoder extends VideoEncoder {
 
     private ByteBuffer headerBuffer;
     private ByteBuffer dataBuffer;
-
-    public VP8Encoder(int qp) {
-        this(new NopRateControl(qp));
+    
+    public static VP8Encoder createVP8Encoder(int qp) {
+        return new VP8Encoder(new NopRateControl(qp));
     }
-
+    
     public VP8Encoder(RateControl rc) {
         this.rc = rc;
         this.tmp = new int[16];

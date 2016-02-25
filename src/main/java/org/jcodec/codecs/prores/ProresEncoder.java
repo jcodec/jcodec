@@ -123,7 +123,7 @@ public class ProresEncoder extends VideoEncoder {
         return (val << 1) ^ (val >> 31);
     }
 
-    private static final int toGolumb(int val, int sign) {
+    private static final int toGolumbSign(int val, int sign) {
         if (val == 0)
             return 0;
         return (val << 1) + sign;
@@ -146,7 +146,7 @@ public class ProresEncoder extends VideoEncoder {
         for (int i = 1; i < blocksPerSlice; i++, idx += 64) {
             int newDc = qScale(qMat, 0, _in[idx] - 16384);
             int delta = newDc - prevDc;
-            int newCode = toGolumb(getLevel(delta), diffSign(delta, sign));
+            int newCode = toGolumbSign(getLevel(delta), diffSign(delta, sign));
             writeCodeword(bits, dcCodebooks[min(code, 6)], newCode);
             code = newCode;
             sign = delta >> 31;
@@ -323,13 +323,13 @@ public class ProresEncoder extends VideoEncoder {
 
     private void split(Picture8Bit _in, Picture8Bit out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
 
-        split(_in.getPlaneData(0), out.getPlaneData(0), _in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
-        split(_in.getPlaneData(1), out.getPlaneData(1), _in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
-        split(_in.getPlaneData(2), out.getPlaneData(2), _in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        doSplit(_in.getPlaneData(0), out.getPlaneData(0), _in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
+        doSplit(_in.getPlaneData(1), out.getPlaneData(1), _in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        doSplit(_in.getPlaneData(2), out.getPlaneData(2), _in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
 
     }
 
-    private void split(byte[] _in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma, int vStep,
+    private void doSplit(byte[] _in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma, int vStep,
             int vOffset) {
         int outOff = 0;
         int off = (mbY << 4) * (stride << vStep) + (mbX << (4 - chroma)) + stride * vOffset;
