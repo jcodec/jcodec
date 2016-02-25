@@ -58,7 +58,7 @@ public class DctTest {
 
     private void doTestRelaxed(DCT dct, int[] input, int[] expected) {
         int[] output = dct.decode(input);
-        Asserts.assertEpsilonEquals(expected, output, 1);
+        Asserts.assertEpsilonEqualsInt(expected, output, 1);
     }
 
     private void doTestStrict(DCT dct, int[] input, int[] expected) {

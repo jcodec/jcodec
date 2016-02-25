@@ -21,7 +21,7 @@ public class Asserts {
         }
     }
 
-    public static void assertEpsilonEquals(int[] expected, int[] actual, int eps) {
+    public static void assertEpsilonEqualsInt(int[] expected, int[] actual, int eps) {
         if (expected.length != actual.length)
             throw new AssertionException("arrays of different size");
         for (int i = 0; i < expected.length; i++) {
