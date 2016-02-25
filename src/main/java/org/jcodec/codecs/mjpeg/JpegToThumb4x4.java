@@ -21,8 +21,8 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class JpegToThumb4x4 extends JpegDecoder {
 
-    public JpegToThumb4x4() {
-        super();
+    public static JpegToThumb4x4 createJpegToThumb4x4() {
+        return new JpegToThumb4x4(false, false);
     }
 
     public JpegToThumb4x4(boolean interlace, boolean topFieldFirst) {
