@@ -30,7 +30,7 @@ public class TimestampUtil {
     private static final String COMMAND_SCALE = "scale";
     private static final String COMMAND_ROUND = "round";
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 3) {
             System.out.println("A utility to tweak MPEG TS timestamps.");

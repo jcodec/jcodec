@@ -83,7 +83,7 @@ public class MTSMediaInfo {
         return result;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         List<MPEGTrackMetadata> info = new MTSMediaInfo().getMediaInfo(new File(args[0]));
         for (MPEGTrackMetadata stream : info) {
             System.out.println(stream.codec);

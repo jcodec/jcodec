@@ -28,7 +28,7 @@ import org.jcodec.common.tools.MainUtils.Cmd;
  * 
  */
 public class WavSplit {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 1) {
             HashMap<String, String> map = new HashMap<String, String>();

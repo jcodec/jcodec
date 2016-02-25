@@ -39,7 +39,7 @@ import org.jcodec.platform.Platform;
  */
 public class Flattern {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: self <ref movie> <out movie>");
             System.exit(-1);

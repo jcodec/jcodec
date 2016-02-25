@@ -58,7 +58,7 @@ public class MPSIndexer extends BaseIndexer {
         getAnalyser(stream).pkt(pesBuffer, pesHeader);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         MPSIndexer indexer = new MPSIndexer();
         indexer.index(new File(args[0]), new NIOUtils.FileReaderListener() {
             public void progress(int percentDone) {

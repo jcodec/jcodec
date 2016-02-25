@@ -20,7 +20,7 @@ public class SetBaseTimestamp extends FixTimestamp {
         this.baseTs = baseTs;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         File file = new File(args[0]);
         new SetBaseTimestamp("video".equalsIgnoreCase(args[1]), Integer.parseInt(args[2])).fix(file);
     }

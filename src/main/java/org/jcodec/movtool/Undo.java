@@ -28,7 +28,7 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
  * 
  */
 public class Undo {
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             System.err.println("Syntax: qt-undo [-l] <movie>");
             System.err.println("\t-l\t\tList all the previous versions of this movie.");

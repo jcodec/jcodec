@@ -52,7 +52,7 @@ import org.jcodec.scale.Yuv422pToRgb;
  */
 public class DemuxerMain {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         MP4Demuxer demuxer = new MP4Demuxer(readableFileChannel(args[0]));
         AbstractMP4DemuxerTrack vt = demuxer.getVideoTrack();
         ProresDecoder decoder = new ProresDecoder();

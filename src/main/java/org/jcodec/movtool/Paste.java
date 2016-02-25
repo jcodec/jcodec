@@ -38,7 +38,7 @@ import org.jcodec.platform.Platform;
  */
 public class Paste {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: paste <to movie> <from movie> [second]");
             System.exit(-1);

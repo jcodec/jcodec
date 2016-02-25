@@ -22,7 +22,7 @@ import org.jcodec.common.io.NIOUtils;
  */
 public class WavMerge {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 3) {
             System.out.println("wavmerge <output wav> <input wav> .... <input wav>");
             System.exit(-1);

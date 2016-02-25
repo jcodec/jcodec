@@ -24,7 +24,7 @@ import org.jcodec.platform.Platform;
  */
 public class VerifyTool {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length != 1) {
             System.out.println("Syntax: <error folder location>");
             return;

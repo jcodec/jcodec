@@ -23,7 +23,7 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
  */
 public class MovDump {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 1) {
             System.out.println("Syntax: movdump [options] <filename>");
             System.out

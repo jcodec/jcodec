@@ -23,7 +23,7 @@ import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
  */
 public class MTSPktDump {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
 
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 1) {

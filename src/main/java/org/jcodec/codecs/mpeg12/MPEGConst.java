@@ -420,7 +420,7 @@ public class MPEGConst {
         }
     }
 
-    // public static void main(String[] args) {
+    // public static void main1(String[] args) {
     // for (int i = 0; i < 64; i++) {
     // for (int j = 0; j < 64; j++)
     // if (zigzagFrame[j] == i)

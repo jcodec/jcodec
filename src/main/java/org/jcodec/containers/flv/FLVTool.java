@@ -54,7 +54,7 @@ public class FLVTool {
         processors.put("shift_pts", new ShiftPtsProcessor.Factory());
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             printGenericHelp();
             return;

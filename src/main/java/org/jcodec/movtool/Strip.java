@@ -40,7 +40,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class Strip {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: strip <ref movie> <out movie>");
             System.exit(-1);
