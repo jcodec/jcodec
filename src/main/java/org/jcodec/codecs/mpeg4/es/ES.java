@@ -12,10 +12,6 @@ import java.nio.ByteBuffer;
 public class ES extends NodeDescriptor {
     private int trackId;
     
-    public ES(int tag, int size) {
-        super(tag, size);
-    }
-
     public ES(int trackId, Descriptor[] children) {
         super(tag(), children);
         this.trackId = trackId;
