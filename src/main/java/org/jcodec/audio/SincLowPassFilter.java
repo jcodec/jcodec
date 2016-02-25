@@ -19,16 +19,15 @@ package org.jcodec.audio;
  * 
  */
 public class SincLowPassFilter extends ConvolutionFilter {
-
     private int kernelSize;
     private double cutoffFreq;
 
-    public SincLowPassFilter(int cutoffFreq, int samplingRate) {
-        this((double) cutoffFreq / samplingRate);
+    public static SincLowPassFilter createSincLowPassFilter(double cutoffFreq) {
+        return new SincLowPassFilter(40, cutoffFreq);
     }
 
-    public SincLowPassFilter(double cutoffFreq) {
-        this(40, cutoffFreq);
+    public static SincLowPassFilter createSincLowPassFilter2(int cutoffFreq, int samplingRate) {
+        return new SincLowPassFilter(40, (double) cutoffFreq / samplingRate);
     }
 
     public SincLowPassFilter(int kernelSize, double cutoffFreq) {
