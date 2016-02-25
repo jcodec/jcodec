@@ -56,10 +56,10 @@ public class MKVTestSuite {
     }
     
     public static MKVTestSuite read() throws IOException {
-        return read(new File("./src/test/resources/mkv/suite.properties"));
+        return readFile(new File("./src/test/resources/mkv/suite.properties"));
     }
 
-    public static MKVTestSuite read(File f) throws IOException {
+    public static MKVTestSuite readFile(File f) throws IOException {
         if (!f.exists())
             throw new RuntimeException(f.getAbsolutePath() + " doesn't exists");
         

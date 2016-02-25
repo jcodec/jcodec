@@ -46,7 +46,7 @@ public class PGMIO {
 		return new Picture(width, height, new int[][] {y}, ColorSpace.GREY);
 	}
 
-	public static Picture readPGM(File name) throws IOException {
+	public static Picture readPGMFile(File name) throws IOException {
 		InputStream is = null;
 
 		try {
