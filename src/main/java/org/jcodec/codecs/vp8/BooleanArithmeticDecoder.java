@@ -17,11 +17,6 @@ public class BooleanArithmeticDecoder {
         int value; /* contains at least 24 significant bits */
         long callCounter=0;
         private String debugName;
-        
-        public BooleanArithmeticDecoder(ByteBuffer input, int offset, String debugName) {
-            this(input, offset);
-            this.debugName = debugName;
-        }
 
         public BooleanArithmeticDecoder(ByteBuffer input, int offset) {
             this.input = input;
