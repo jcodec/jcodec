@@ -43,16 +43,17 @@ public class PictureHeader implements MPEGHeader {
     public PictureTemporalScalableExtension pictureTemporalScalableExtension;
     private boolean _hasExtensions;
     
-
-    public PictureHeader(int temporal_reference, int picture_coding_type, int vbv_delay, int full_pel_forward_vector,
-            int forward_f_code, int full_pel_backward_vector, int backward_f_code) {
-        this.temporal_reference = temporal_reference;
-        this.picture_coding_type = picture_coding_type;
-        this.vbv_delay = vbv_delay;
-        this.full_pel_forward_vector = full_pel_forward_vector;
-        this.forward_f_code = forward_f_code;
-        this.full_pel_backward_vector = full_pel_backward_vector;
-        this.backward_f_code = backward_f_code;
+    public static PictureHeader createPictureHeader(int temporal_reference, int picture_coding_type, int vbv_delay,
+            int full_pel_forward_vector, int forward_f_code, int full_pel_backward_vector, int backward_f_code) {
+        PictureHeader p = new PictureHeader();
+        p.temporal_reference = temporal_reference;
+        p.picture_coding_type = picture_coding_type;
+        p.vbv_delay = vbv_delay;
+        p.full_pel_forward_vector = full_pel_forward_vector;
+        p.forward_f_code = forward_f_code;
+        p.full_pel_backward_vector = full_pel_backward_vector;
+        p.backward_f_code = backward_f_code;
+        return p;
     }
     
     private PictureHeader() {

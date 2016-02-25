@@ -29,19 +29,21 @@ public class SequenceExtension implements MPEGHeader {
     public int frame_rate_extension_n;
     public int frame_rate_extension_d;
 
-    public SequenceExtension(int profile_and_level, int progressive_sequence, int chroma_format,
-            int horizontal_size_extension, int vertical_size_extension, int bit_rate_extension,
+    public static SequenceExtension createSequenceExtension(int profile_and_level, int progressive_sequence,
+            int chroma_format, int horizontal_size_extension, int vertical_size_extension, int bit_rate_extension,
             int vbv_buffer_size_extension, int low_delay, int frame_rate_extension_n, int frame_rate_extension_d) {
-        this.profile_and_level = profile_and_level;
-        this.progressive_sequence = progressive_sequence;
-        this.chroma_format = chroma_format;
-        this.horizontal_size_extension = horizontal_size_extension;
-        this.vertical_size_extension = vertical_size_extension;
-        this.bit_rate_extension = bit_rate_extension;
-        this.vbv_buffer_size_extension = vbv_buffer_size_extension;
-        this.low_delay = low_delay;
-        this.frame_rate_extension_n = frame_rate_extension_n;
-        this.frame_rate_extension_d = frame_rate_extension_d;
+        SequenceExtension se = new SequenceExtension();
+        se.profile_and_level = profile_and_level;
+        se.progressive_sequence = progressive_sequence;
+        se.chroma_format = chroma_format;
+        se.horizontal_size_extension = horizontal_size_extension;
+        se.vertical_size_extension = vertical_size_extension;
+        se.bit_rate_extension = bit_rate_extension;
+        se.vbv_buffer_size_extension = vbv_buffer_size_extension;
+        se.low_delay = low_delay;
+        se.frame_rate_extension_n = frame_rate_extension_n;
+        se.frame_rate_extension_d = frame_rate_extension_d;
+        return se;
     }
 
     private SequenceExtension() {
@@ -62,6 +64,7 @@ public class SequenceExtension implements MPEGHeader {
 
         return se;
     }
+
 
     @Override
     public void write(ByteBuffer bb) {

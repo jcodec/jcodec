@@ -230,7 +230,7 @@ public class MPEGDecoder extends VideoDecoder {
             while ((segment = nextSegment(buffer)) != null) {
                 int startCode = segment.get(3) & 0xff;
                 if (startCode >= SLICE_START_CODE_FIRST && startCode <= SLICE_START_CODE_LAST) {
-                    decodeSlice(context, ph, buf, vertOff, vertStep, segment);
+                    doDecodeSlice(context, ph, buf, vertOff, vertStep, segment);
                 } else if (startCode >= 0xB3 && startCode != 0xB6 && startCode != 0xB7) {
                     throw new RuntimeException("Unexpected start code " + startCode);
                 } else if (startCode == 0x0) {
@@ -252,7 +252,7 @@ public class MPEGDecoder extends VideoDecoder {
         }
     }
 
-    private void decodeSlice(Context context, PictureHeader ph, byte[][] buf, int vertOff, int vertStep,
+    private void doDecodeSlice(Context context, PictureHeader ph, byte[][] buf, int vertOff, int vertStep,
             ByteBuffer segment) throws IOException {
         int startCode = segment.get(3) & 0xff;
         ByteBuffer dup = segment.duplicate();

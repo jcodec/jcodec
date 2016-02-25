@@ -24,8 +24,8 @@ public class MPSIndexerTest {
 
     static byte[] mpegStreamParams = flatten(new byte[][] {
 //@formatter:off
-      syncMarker, {(byte)0xb3}, toHex(new SequenceHeader(1920, 1080, 1, 1, 512*1024, 0, 0, null, null)), 
-      syncMarker, {(byte)0xb5}, toHex(new SequenceExtension(100, 1, 1, 0, 0, 0, 0, 0, 0, 0)),
+      syncMarker, {(byte)0xb3}, toHex(SequenceHeader.createSequenceHeader(1920, 1080, 1, 1, 512*1024, 0, 0, null, null)), 
+      syncMarker, {(byte)0xb5}, toHex(SequenceExtension.createSequenceExtension(100, 1, 1, 0, 0, 0, 0, 0, 0, 0)),
       syncMarker, {(byte)0xb8}, toHex(new GOPHeader(new TapeTimecode((short)1, (byte)0, (byte)0, (byte)10, false), false, false)) 
   //@formatter:on
     });
@@ -41,7 +41,7 @@ public class MPSIndexerTest {
     static  byte[] mpegFrame(int tempRef, int frameType) {
         return flatten(new byte[][] {
 //@formatter:off
-      syncMarker, {0}, toHex(new PictureHeader(tempRef, frameType, 0, 0, 0, 0, 0)),
+      syncMarker, {0}, toHex(PictureHeader.createPictureHeader(tempRef, frameType, 0, 0, 0, 0, 0)),
       syncMarker, {(byte)0xb5}, toHex(new PictureCodingExtension()),
       mpegSlices
   //@formatter:on
