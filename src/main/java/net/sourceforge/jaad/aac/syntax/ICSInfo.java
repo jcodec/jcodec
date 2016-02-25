@@ -30,7 +30,7 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 		LONG_STOP_SEQUENCE;
 	}
 
-	public static WindowSequence getWindowSequence(int i) throws AACException {
+	public static WindowSequence windowSequenceFromInt(int i) throws AACException {
         WindowSequence[] values = WindowSequence.values();
         if (values.length >= i) {
             throw new AACException("unknown window sequence type");
@@ -69,7 +69,7 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 		if(sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE)) throw new AACException("invalid sample frequency");
 
 		_in.skipBit(); //reserved
-		windowSequence = getWindowSequence(_in.readBits(2));
+		windowSequence = windowSequenceFromInt(_in.readBits(2));
 		windowShape[PREVIOUS] = windowShape[CURRENT];
 		windowShape[CURRENT] = _in.readBit();
 

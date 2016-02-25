@@ -24,10 +24,6 @@ public class SegmentReader {
     private boolean done;
     private long pos;
 
-    public SegmentReader(ReadableByteChannel channel) throws IOException {
-        this(channel, 4096);
-    }
-
     public SegmentReader(ReadableByteChannel channel, int fetchSize) throws IOException {
         this.channel = channel;
         this.fetchSize = fetchSize;

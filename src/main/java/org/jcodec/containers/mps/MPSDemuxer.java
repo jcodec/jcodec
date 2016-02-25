@@ -45,7 +45,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     private List<ByteBuffer> bufPool;
 
     public MPSDemuxer(SeekableByteChannel channel) throws IOException {
-        super(channel);
+        super(channel, 4096);
         this.streams = new HashMap<Integer, BaseTrack>();
         this.channel = channel;
         this.bufPool = new ArrayList<ByteBuffer>();
@@ -141,7 +141,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         public MPEGTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
             super(demuxer, streamId, pkt);
-            this.es = new MPEGES(this);
+            this.es = new MPEGES(this, 4096);
         }
 
         public boolean isOpen() {

@@ -30,10 +30,6 @@ public class JpegDecoder extends VideoDecoder {
     private boolean topFieldFirst;
     int[] buf;
 
-    public JpegDecoder() {
-        this(false, false);
-    }
-
     public JpegDecoder(boolean interlace, boolean topFieldFirst) {
         this.buf = new int[64];
         this.interlace = interlace;
@@ -201,7 +197,7 @@ public class JpegDecoder extends VideoDecoder {
 
                 Asserts.assertEquals(0, ri);
             } else {
-                throw new UnhandledStateException("unhandled marker " + JpegConst.toString(b));
+                throw new UnhandledStateException("unhandled marker " + JpegConst.markerToString(b));
             }
         }
 
