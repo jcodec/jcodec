@@ -24,33 +24,20 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 	public static final int CURRENT = 1;
 
 	public static enum WindowSequence {
-
 		ONLY_LONG_SEQUENCE,
 		LONG_START_SEQUENCE,
 		EIGHT_SHORT_SEQUENCE,
 		LONG_STOP_SEQUENCE;
-
-		public static WindowSequence forInt(int i) throws AACException {
-			WindowSequence w;
-			switch(i) {
-				case 0:
-					w = ONLY_LONG_SEQUENCE;
-					break;
-				case 1:
-					w = LONG_START_SEQUENCE;
-					break;
-				case 2:
-					w = EIGHT_SHORT_SEQUENCE;
-					break;
-				case 3:
-					w = LONG_STOP_SEQUENCE;
-					break;
-				default:
-					throw new AACException("unknown window sequence type");
-			}
-			return w;
-		}
 	}
+
+	public static WindowSequence getWindowSequence(int i) throws AACException {
+        WindowSequence[] values = WindowSequence.values();
+        if (values.length >= i) {
+            throw new AACException("unknown window sequence type");
+        }
+        return values[i];
+    }
+    
 	private final int frameLength;
 	private WindowSequence windowSequence;
 	private int[] windowShape;
@@ -82,7 +69,7 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 		if(sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE)) throw new AACException("invalid sample frequency");
 
 		_in.skipBit(); //reserved
-		windowSequence = WindowSequence.forInt(_in.readBits(2));
+		windowSequence = getWindowSequence(_in.readBits(2));
 		windowShape[PREVIOUS] = windowShape[CURRENT];
 		windowShape[CURRENT] = _in.readBit();
 

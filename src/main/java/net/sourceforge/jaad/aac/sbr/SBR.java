@@ -1212,7 +1212,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 		return ret;
 	}
 
-	public int process(float[] left_chan, float[] right_chan,
+	public int _process(float[] left_chan, float[] right_chan,
 		boolean just_seeked) {
 		boolean dont_process = false;
 		int ret = 0;

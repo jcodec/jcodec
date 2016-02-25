@@ -269,7 +269,7 @@ public class SyntacticElements implements SyntaxConstants {
 			final SBR sbr = scelfe.getSBR();
 			if(sbr.isPSUsed()) {
 				chs = 2;
-				scelfe.getSBR().process(data[channel], data[channel+1], false);
+				scelfe.getSBR()._process(data[channel], data[channel+1], false);
 			}
 			else scelfe.getSBR().process(data[channel], false);
 		}
@@ -335,7 +335,7 @@ public class SyntacticElements implements SyntaxConstants {
 		//SBR
 		if(sbrPresent&&config.isSBREnabled()) {
 			if(data[channel].length==config.getFrameLength()) LOGGER.log(Level.WARNING, "SBR data present, but buffer has normal size!");
-			cpe.getSBR().process(data[channel], data[channel+1], false);
+			cpe.getSBR()._process(data[channel], data[channel+1], false);
 		}
 	}
 
