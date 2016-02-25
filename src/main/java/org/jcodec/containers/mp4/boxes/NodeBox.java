@@ -76,7 +76,7 @@ public class NodeBox extends Box {
             box.parse(input);
             return box;
         } else {
-            return new LeafBox(new Header("free", 8));
+            return new LeafBox(Header.createHeader("free", 8));
         }
     }
 
@@ -103,7 +103,7 @@ public class NodeBox extends Box {
         add(box);
     }
     
-    public void replace(Box box) {
+    public void replaceBox(Box box) {
         removeChildren(box.getFourcc());
         add(box);
     }

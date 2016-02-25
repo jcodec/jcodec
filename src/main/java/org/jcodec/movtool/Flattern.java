@@ -81,11 +81,11 @@ public class Flattern {
         movie.write(buf);
 
         int extraSpace = calcSpaceReq(movie);
-        new Header("free", 8 + extraSpace).write(buf);
+        Header.createHeader("free", 8 + extraSpace).write(buf);
         NIOUtils.skip(buf, extraSpace);
 
         long mdatOff = buf.position();
-        new Header("mdat", 0x100000001L).write(buf);
+        Header.createHeader("mdat", 0x100000001L).write(buf);
         buf.flip();
         out.write(buf);
 

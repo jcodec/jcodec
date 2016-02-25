@@ -165,7 +165,7 @@ public class MovieHelper {
 
         brand.getFileTypeBox().write(buf);
         movie.write(buf);
-        new Header("mdat", dataSize).write(buf);
+        Header.createHeader("mdat", dataSize).write(buf);
         buf.flip();
 
         return buf;
@@ -409,7 +409,7 @@ public class MovieHelper {
         minf.add(dinf);
         DataRefBox dref = DataRefBox.createDataRefBox();
         dinf.add(dref);
-        dref.add(LeafBox.createLeafBox(new Header("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
+        dref.add(LeafBox.createLeafBox(Header.createHeader("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
     }
 
     private static MovieHeaderBox movieHeader(NodeBox movie, int nTracks, long duration, int timescale) {

@@ -190,6 +190,6 @@ public abstract class AbstractMP4MuxerTrack {
         minf.add(dinf);
         DataRefBox dref = DataRefBox.createDataRefBox();
         dinf.add(dref);
-        dref.add(LeafBox.createLeafBox(new Header("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
+        dref.add(LeafBox.createLeafBox(Header.createHeader("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
     }
 }

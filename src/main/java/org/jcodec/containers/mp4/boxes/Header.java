@@ -31,21 +31,19 @@ public class Header {
         this.fourcc = fourcc;
     }
 
-    public Header(String fourcc, long size) {
-        this.size = size;
-        this.fourcc = fourcc;
+    public static Header createHeader(String fourcc, long size) {
+        Header header = new Header(fourcc);
+        header.size = size;
+        return header;
     }
-
-    public Header(Header h) {
-        this.fourcc = h.fourcc;
-        this.size = h.size;
+    
+    public static Header newHeader(String fourcc, long size, boolean lng) {
+        Header header = new Header(fourcc);
+        header.size = size;
+        header.lng = lng;
+        return header;
     }
-
-    public Header(String fourcc, long size, boolean lng) {
-        this(fourcc, size);
-        this.lng = lng;
-    }
-
+    
     public static Header read(ByteBuffer input) {
         long size = 0;
         while (input.remaining() >= 4 && (size = (((long) input.getInt()) & 0xffffffffL)) == 0)
@@ -67,8 +65,9 @@ public class Header {
             }
         }
 
-        return new Header(fourcc, size, lng);
+        return newHeader(fourcc, size, lng);
     }
+
 
     public void skip(InputStream di) throws IOException {
         StringReader.sureSkip(di, size - headerSize());
@@ -109,7 +108,7 @@ public class Header {
         }
     }
     
-    public void write(SeekableByteChannel output) throws IOException {
+    public void writeChannel(SeekableByteChannel output) throws IOException {
         ByteBuffer bb = ByteBuffer.allocate(16);
         write(bb);
         bb.flip();
