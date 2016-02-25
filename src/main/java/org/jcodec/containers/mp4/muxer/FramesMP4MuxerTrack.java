@@ -71,9 +71,9 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     public FramesMP4MuxerTrack(SeekableByteChannel out, int trackId, TrackType type, int timescale) {
         super(trackId, type, timescale);
         this.sampleDurations = new ArrayList<TimeToSampleEntry>();
-        this.chunkOffsets = new LongArrayList();
-        this.sampleSizes = new IntArrayList();
-        this.iframes = new IntArrayList();
+        this.chunkOffsets = LongArrayList.createLongArrayList();
+        this.sampleSizes = IntArrayList.createIntArrayList();
+        this.iframes = IntArrayList.createIntArrayList();
         this.compositionOffsets = new ArrayList<Entry>();
         
         this.out = out;

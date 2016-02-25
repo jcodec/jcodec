@@ -13,12 +13,13 @@ import static java.lang.System.arraycopy;
  */
 public class IntArrayList {
     private static final int DEFAULT_GROW_AMOUNT = 128;
+ 
     private int[] storage;
     private int _size;
     private int growAmount;
 
-    public IntArrayList() {
-        this(DEFAULT_GROW_AMOUNT);
+    public static IntArrayList createIntArrayList() {
+        return new IntArrayList(DEFAULT_GROW_AMOUNT);
     }
 
     public IntArrayList(int growAmount) {

@@ -359,7 +359,7 @@ public class MkvBlock extends EbmlBin {
     }
 
     public static byte[] muxEbmlLacing(int[] laceSizes) {
-        ByteArrayList bytes = new ByteArrayList();
+        ByteArrayList bytes = ByteArrayList.createByteArrayList();
 
         long[] laceSizeDiffs = calcEbmlLacingDiffs(laceSizes);
         bytes.addAll(EbmlUtil.ebmlEncode(laceSizeDiffs[0]));
@@ -371,7 +371,7 @@ public class MkvBlock extends EbmlBin {
     }
 
     public static byte[] muxXiphLacing(int[] laceSizes) {
-        ByteArrayList bytes = new ByteArrayList();
+        ByteArrayList bytes = ByteArrayList.createByteArrayList();
         for (int i = 0; i < laceSizes.length - 1; i++) {
             long laceSize = laceSizes[i];
             while (laceSize >= 255) {

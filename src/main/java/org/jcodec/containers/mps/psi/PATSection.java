@@ -36,7 +36,7 @@ public class PATSection extends PSISection {
     public static PATSection parsePAT(ByteBuffer data) {
         PSISection psi = PSISection.parsePSI(data);
 
-        IntArrayList networkPids = new IntArrayList();
+        IntArrayList networkPids = IntArrayList.createIntArrayList();
         IntIntMap programs = new IntIntMap();
 
         while (data.remaining() > 4) {

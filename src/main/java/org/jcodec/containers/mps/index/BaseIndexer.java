@@ -38,7 +38,7 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
 
     public BaseIndexer() {
         this.analyzers = new HashMap<Integer, BaseAnalyser>();
-        this.tokens = new LongArrayList();
+        this.tokens = LongArrayList.createLongArrayList();
         this.streams = new RunLength.Integer();
     }
 

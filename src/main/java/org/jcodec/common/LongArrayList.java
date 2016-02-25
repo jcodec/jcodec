@@ -14,12 +14,13 @@ import static java.lang.System.arraycopy;
 public class LongArrayList {
 
     private static final int DEFAULT_GROW_AMOUNT = 128;
+
     private long[] storage;
     private int _size;
     private int growAmount;
 
-    public LongArrayList() {
-        this(DEFAULT_GROW_AMOUNT);
+    public static LongArrayList createLongArrayList() {
+        return new LongArrayList(DEFAULT_GROW_AMOUNT);
     }
 
     public LongArrayList(int growAmount) {

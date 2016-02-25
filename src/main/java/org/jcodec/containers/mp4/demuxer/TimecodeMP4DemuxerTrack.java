@@ -127,7 +127,7 @@ public class TimecodeMP4DemuxerTrack {
     private void cacheSamples(SampleToChunkEntry[] sampleToChunks, long[] chunkOffsets) throws IOException {
         synchronized (input) {
             int stscInd = 0;
-            IntArrayList ss = new IntArrayList();
+            IntArrayList ss = IntArrayList.createIntArrayList();
             for (int chunkNo = 0; chunkNo < chunkOffsets.length; chunkNo++) {
                 int nSamples = sampleToChunks[stscInd].getCount();
                 if (stscInd < sampleToChunks.length - 1 && chunkNo + 1 >= sampleToChunks[stscInd + 1].getFirst())

@@ -260,8 +260,8 @@ public class SliceHeaderReader {
     }
 
     private static int[][] readReorderingEntries(BitReader _in) {
-        IntArrayList ops = new IntArrayList();
-        IntArrayList args = new IntArrayList();
+        IntArrayList ops = IntArrayList.createIntArrayList();
+        IntArrayList args = IntArrayList.createIntArrayList();
         do {
             int idc = readUEtrace(_in, "SH: reordering_of_pic_nums_idc");
             if (idc == 3)

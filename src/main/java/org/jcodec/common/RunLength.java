@@ -15,7 +15,7 @@ public abstract class RunLength {
     protected IntArrayList counts;
 
     public RunLength() {
-        this.counts = new IntArrayList();
+        this.counts = IntArrayList.createIntArrayList();
     }
 
     public int estimateSize() {
@@ -52,7 +52,7 @@ public abstract class RunLength {
         public Integer() {
             super();
             this.lastValue = Integer.MIN_VALUE;
-            this.values = new IntArrayList();
+            this.values = IntArrayList.createIntArrayList();
         }
 
         public void add(int value) {
@@ -144,7 +144,7 @@ public abstract class RunLength {
         public Long() {
             super();
             this.lastValue = Long.MIN_VALUE;
-            this.values = new LongArrayList();
+            this.values = LongArrayList.createLongArrayList();
         }
 
         public void add(long value) {
