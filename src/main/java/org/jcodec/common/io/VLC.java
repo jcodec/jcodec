@@ -21,8 +21,8 @@ public class VLC {
      * @return
      */
     public static VLC createVLC(String... arguments) {
-        IntArrayList _codes = new IntArrayList();
-        IntArrayList _codeSizes = new IntArrayList();
+        IntArrayList _codes = IntArrayList.createIntArrayList();
+        IntArrayList _codeSizes = IntArrayList.createIntArrayList();
         for (String string : arguments) {
             _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
             _codeSizes.add(string.length());
@@ -45,8 +45,8 @@ public class VLC {
     }
 
     private void _invert() {
-        IntArrayList values = new IntArrayList();
-        IntArrayList valueSizes = new IntArrayList();
+        IntArrayList values = IntArrayList.createIntArrayList();
+        IntArrayList valueSizes = IntArrayList.createIntArrayList();
         invert(0, 0, 0, values, valueSizes);
         this.values = values.toArray();
         this.valueSizes = valueSizes.toArray();

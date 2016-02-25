@@ -50,7 +50,7 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
     public PCMMP4MuxerTrack(SeekableByteChannel out, int trackId, TrackType type, int timescale, int frameDuration, int frameSize,
             SampleEntry se) {
         super(trackId, type, timescale);
-        this.chunkOffsets = new LongArrayList();
+        this.chunkOffsets = LongArrayList.createLongArrayList();
         this.out = out;
         this.frameDuration = frameDuration;
         this.frameSize = frameSize;

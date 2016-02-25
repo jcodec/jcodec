@@ -40,7 +40,7 @@ public class DownmixHelper {
         List<int[]> channelsBuilder = new ArrayList<int[]>();
         for (int tr = 0; tr < se.length; tr++) {
             Label[] channels = se[tr].getChannelLabels();
-            IntArrayList tmp = new IntArrayList();
+            IntArrayList tmp = IntArrayList.createIntArrayList();
             for (int ch = 0; ch < channels.length; ch++) {
                 if (solo != null && !solo[tr][ch])
                     continue;

@@ -46,7 +46,7 @@ public class FLVTrackDemuxer {
 		private FLVTrackDemuxer demuxer;
 
         public FLVDemuxerTrack(FLVTrackDemuxer demuxer, Type type) throws IOException {
-            this.framePositions = new LongArrayList();
+            this.framePositions = LongArrayList.createLongArrayList();
             this.demuxer = demuxer;
 			this.type = type;
             FLVTag frame = demuxer.nextFrameI(type, false);

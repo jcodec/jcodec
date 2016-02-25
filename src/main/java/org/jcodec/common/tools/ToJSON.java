@@ -70,7 +70,7 @@ public class ToJSON {
      */
     public static String toJSON(Object obj) {
         StringBuilder builder = new StringBuilder();
-        IntArrayList stack = new IntArrayList();
+        IntArrayList stack = IntArrayList.createIntArrayList();
         toJSONSub(obj, stack, builder);
         return builder.toString();
     }
@@ -92,7 +92,7 @@ public class ToJSON {
             Method m = findGetter(methods, field);
             if (m == null)
                 continue;
-            invoke(obj, new IntArrayList(), builder, m, field);
+            invoke(obj, IntArrayList.createIntArrayList(), builder, m, field);
         }
     }
 

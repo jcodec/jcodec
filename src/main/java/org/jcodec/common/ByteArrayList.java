@@ -13,13 +13,15 @@ import static java.lang.System.arraycopy;
  */
 public class ByteArrayList {
     private static final int DEFAULT_GROW_AMOUNT = 2048;
+    
+    public static ByteArrayList createByteArrayList() {
+        return new ByteArrayList(DEFAULT_GROW_AMOUNT);
+    }
+
     private byte[] storage;
     private int _size;
     private int growAmount;
 
-    public ByteArrayList() {
-        this(DEFAULT_GROW_AMOUNT);
-    }
 
     public ByteArrayList(int growAmount) {
         this.growAmount = growAmount;

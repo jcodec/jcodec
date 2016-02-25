@@ -190,7 +190,7 @@ public class MPSMediaInfo extends PESReader {
 
     private int[] parseSystem(ByteBuffer pesBuffer) {
         NIOUtils.skip(pesBuffer, 12);
-        IntArrayList result = new IntArrayList();
+        IntArrayList result = IntArrayList.createIntArrayList();
         while (pesBuffer.remaining() >= 3 && (pesBuffer.get(pesBuffer.position()) & 0x80) == 0x80) {
             result.add(pesBuffer.get() & 0xff);
             pesBuffer.getShort();

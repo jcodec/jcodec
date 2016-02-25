@@ -167,8 +167,8 @@ public class MTSDump extends MPSDump {
 
     @Override
     public int fillBuffer(ByteBuffer dst) throws IOException {
-        IntArrayList payloads = new IntArrayList();
-        IntArrayList nums = new IntArrayList();
+        IntArrayList payloads = IntArrayList.createIntArrayList();
+        IntArrayList nums = IntArrayList.createIntArrayList();
         int remaining = dst.remaining();
 
         try {

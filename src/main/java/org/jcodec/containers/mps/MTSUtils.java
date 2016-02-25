@@ -294,7 +294,7 @@ public class MTSUtils {
     }
 
     private static int[] filterMediaPids(PMTStream[] programs) {
-        IntArrayList result = new IntArrayList();
+        IntArrayList result = IntArrayList.createIntArrayList();
         for (PMTStream stream : programs) {
             if (stream.getStreamType().isVideo() || stream.getStreamType().isAudio())
                 result.add(stream.getPid());

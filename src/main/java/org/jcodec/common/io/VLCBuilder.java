@@ -31,8 +31,8 @@ public class VLCBuilder {
     public VLCBuilder() {
         this.forward = new IntIntMap();
         this.inverse = new IntIntMap();
-        this.codes = new IntArrayList();
-        this.codesSizes = new IntArrayList();
+        this.codes = IntArrayList.createIntArrayList();
+        this.codesSizes = IntArrayList.createIntArrayList();
     }
 
     public VLCBuilder set(int val, String code) {
