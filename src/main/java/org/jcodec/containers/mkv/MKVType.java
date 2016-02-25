@@ -608,11 +608,6 @@ public enum MKVType {
         return result.toArray((T[]) Array.newInstance(class1, 0));
     }
 
-    
-    public static <T> T[] findAll(EbmlBase master, Class<T> class1, MKVType... path) {
-        return findAll(master, class1, false, path);
-    }
-    
     @SuppressWarnings("unchecked")
     public static <T> T[] findAll(EbmlBase master, Class<T> class1, boolean ga, MKVType[] path) {
         List<EbmlBase> result = new LinkedList<EbmlBase>();

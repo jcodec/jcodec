@@ -25,11 +25,15 @@ import java.io.IOException;
 
 public class AVCClipCatTest {
 
+    private static final String SEQ_1_MP4 = "src/test/resources/video/seq_h264_1.mp4";
+    private static final String SEQ_2_MP4 = "src/test/resources/video/seq_h264_2.mp4";
+    private static final String SEQ_3_MP4 = "src/test/resources/video/seq_h264_3.mp4";
+
     @Test
     public void testClipCat() throws IOException, JCodecException {
-        File f1 = new File("src/test/resources/AVCClipCatTest/seq_1.mp4");
-        File f2 = new File("src/test/resources/AVCClipCatTest/seq_2.mp4");
-        File f3 = new File("src/test/resources/AVCClipCatTest/seq_3.mp4");
+        File f1 = new File(SEQ_1_MP4);
+        File f2 = new File(SEQ_2_MP4);
+        File f3 = new File(SEQ_3_MP4);
 
         MovieBox m1 = MP4Util.parseMovie(f1);
         MovieBox m2 = MP4Util.parseMovie(f2);
@@ -55,7 +59,7 @@ public class AVCClipCatTest {
 
     @Test
     public void testAVCClip() throws IOException, JCodecException {
-        File f1 = new File("src/test/resources/AVCClipCatTest/seq_1.mp4");
+        File f1 = new File(SEQ_1_MP4);
 
         MovieBox m1 = MP4Util.parseMovie(f1);
 
@@ -76,9 +80,9 @@ public class AVCClipCatTest {
 
     @Test
     public void testAVCClipCat() throws IOException, JCodecException {
-        File f1 = new File("src/test/resources/AVCClipCatTest/seq_1.mp4");
-        File f2 = new File("src/test/resources/AVCClipCatTest/seq_2.mp4");
-        File f3 = new File("src/test/resources/AVCClipCatTest/seq_3.mp4");
+        File f1 = new File(SEQ_1_MP4);
+        File f2 = new File(SEQ_2_MP4);
+        File f3 = new File(SEQ_3_MP4);
 
         MovieBox m1 = MP4Util.parseMovie(f1);
         MovieBox m2 = MP4Util.parseMovie(f2);
