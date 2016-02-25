@@ -56,11 +56,15 @@ public class TrunBox extends FullBox {
     }
 
     public static Factory create(int sampleCount) {
-        return new Factory(sampleCount);
+        return new Factory(TrunBox.createTrunBox1(sampleCount));
     }
 
     public static Factory copy(TrunBox other) {
-        return new Factory(other);
+        TrunBox box = TrunBox
+                .createTrunBox2(other.sampleCount, other.dataOffset, other.firstSampleFlags, other.sampleDuration, other.sampleSize, other.sampleFlags, other.sampleCompositionOffset);
+        box.setFlags(other.getFlags());
+        box.setVersion(other.getVersion());
+        return new Factory(box);
     }
 
     public TrunBox(Header header) {
@@ -90,15 +94,8 @@ public class TrunBox extends FullBox {
 
         private TrunBox box;
 
-        protected Factory(int sampleCount) {
-            box = TrunBox.createTrunBox1(sampleCount);
-        }
-
-        public Factory(TrunBox other) {
-            box = TrunBox
-                    .createTrunBox2(other.sampleCount, other.dataOffset, other.firstSampleFlags, other.sampleDuration, other.sampleSize, other.sampleFlags, other.sampleCompositionOffset);
-            box.setFlags(other.getFlags());
-            box.setVersion(other.getVersion());
+        protected Factory(TrunBox box) {
+            this.box = box;
         }
 
         public Factory dataOffset(long dataOffset) {
@@ -170,11 +167,11 @@ public class TrunBox extends FullBox {
         return firstSampleFlags;
     }
 
-    public int[] getSampleDuration() {
+    public int[] getSampleDurations() {
         return sampleDuration;
     }
 
-    public int[] getSampleSize() {
+    public int[] getSampleSizes() {
         return sampleSize;
     }
 
@@ -182,7 +179,7 @@ public class TrunBox extends FullBox {
         return sampleFlags;
     }
 
-    public int[] getSampleCompositionOffset() {
+    public int[] getSampleCompositionOffsets() {
         return sampleCompositionOffset;
     }
 
