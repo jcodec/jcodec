@@ -30,7 +30,7 @@ public class WavOutput implements Closeable {
     public WavOutput(SeekableByteChannel out, AudioFormat format) throws IOException {
         this.out = out;
         this.format = format;
-        header = new WavHeader(format, 0);
+        header = WavHeader.createWavHeader(format, 0);
         header.write(out);
     }
 
@@ -40,7 +40,7 @@ public class WavOutput implements Closeable {
 
     public void close() throws IOException {
         out.setPosition(0);
-        new WavHeader(format, format.bytesToFrames(written)).write(out);
+        WavHeader.createWavHeader(format, format.bytesToFrames(written)).write(out);
         NIOUtils.closeQuietly(out);
     }
 
@@ -70,15 +70,7 @@ public class WavOutput implements Closeable {
             this.out = out;
         }
 
-        public Sink(File f, AudioFormat format) throws IOException {
-            this(new WavOutFile(f, format));
-        }
-
-        public Sink(SeekableByteChannel ch, AudioFormat format) throws IOException {
-            this(new WavOutput(ch, format));
-        }
-
-        public void write(FloatBuffer data) throws IOException {
+        public void writeFloat(FloatBuffer data) throws IOException {
             ByteBuffer buf = ByteBuffer.allocate(out.format.samplesToBytes(data.remaining()));
             AudioUtil.fromFloat(data, out.format, buf);
             buf.flip();

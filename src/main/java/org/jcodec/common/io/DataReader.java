@@ -53,7 +53,7 @@ public class DataReader implements Closeable {
         if (n < buffer.remaining()) {
             buffer.position(buffer.position() + n);
         } else {
-            position(oldPosition + n);
+            setPosition(oldPosition + n);
         }
         return (int) (position() - oldPosition);
     }
@@ -97,7 +97,7 @@ public class DataReader implements Closeable {
         return channel.position() - buffer.limit() + buffer.position();
     }
 
-    public long position(long newPos) throws IOException {
+    public long setPosition(long newPos) throws IOException {
         int relative = (int) (newPos - (channel.position() - buffer.limit()));
         if (relative >= 0 && relative < buffer.limit()) {
             buffer.position(relative);

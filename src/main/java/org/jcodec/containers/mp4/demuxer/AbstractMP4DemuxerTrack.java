@@ -238,7 +238,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return result;
     }
 
-    public abstract MP4Packet nextFrame(ByteBuffer storage) throws IOException;
+    public abstract MP4Packet getNextFrame(ByteBuffer storage) throws IOException;
     
     public Codec getCodec() {
         SampleEntry se = getSampleEntries()[0];

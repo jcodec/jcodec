@@ -23,7 +23,7 @@ public class EbmlBin extends EbmlBase {
         this.id = id;
     }
     
-    public void read(SeekableByteChannel is) throws IOException {
+    public void readChannel(SeekableByteChannel is) throws IOException {
         ByteBuffer bb = ByteBuffer.allocate((int) this.dataLen);
         is.read(bb);
         bb.flip();
@@ -60,7 +60,7 @@ public class EbmlBin extends EbmlBase {
     
     public ByteBuffer getData() {
         int sizeSize = EbmlUtil.ebmlLength(data.limit());
-        byte[] size = EbmlUtil.ebmlEncode(data.limit(), sizeSize);
+        byte[] size = EbmlUtil.ebmlEncodeLen(data.limit(), sizeSize);
         
         ByteBuffer bb = ByteBuffer.allocate(id.length + sizeSize + data.limit());
         bb.put(id);

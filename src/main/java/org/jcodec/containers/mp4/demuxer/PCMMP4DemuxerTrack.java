@@ -65,11 +65,11 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         int frameSize = getFrameSize();
         int chSize = sampleToChunks[stscInd].getCount() * frameSize - posShift;
 
-        return nextFrame(ByteBuffer.allocate(chSize));
+        return getNextFrame(ByteBuffer.allocate(chSize));
     }
 
     @Override
-    public synchronized MP4Packet nextFrame(ByteBuffer buffer) throws IOException {
+    public synchronized MP4Packet getNextFrame(ByteBuffer buffer) throws IOException {
         if (stcoInd >= chunkOffsets.length)
             return null;
         int frameSize = getFrameSize();

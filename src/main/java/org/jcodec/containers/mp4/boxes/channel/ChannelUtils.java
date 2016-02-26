@@ -26,7 +26,7 @@ public class ChannelUtils {
     private static final List<Label> MATRIX_STEREO = Arrays.asList(Label.LeftTotal, Label.RightTotal);
     private static final Label[] EMPTY = new Label[0];
 
-    public static Label[] getLabels(AudioSampleEntry se) {
+    public static Label[] getLabelsFromSampleEntry(AudioSampleEntry se) {
         ChannelBox channel = Box.findFirst(se, ChannelBox.class, "chan");
         if (channel != null)
             return ChannelUtils.getLabels(channel);
@@ -54,17 +54,17 @@ public class ChannelUtils {
         }
     }
 
-    public static Label[] getLabels(TrakBox trakBox) {
-        return getLabels((AudioSampleEntry) trakBox.getSampleEntries()[0]);
+    public static Label[] getLabelsFromTrack(TrakBox trakBox) {
+        return getLabelsFromSampleEntry((AudioSampleEntry) trakBox.getSampleEntries()[0]);
     }
 
     public static void setLabel(TrakBox trakBox, int channel, Label label) {
-        Label[] labels = getLabels(trakBox);
+        Label[] labels = getLabelsFromTrack(trakBox);
         labels[channel] = label;
-        setLabels(trakBox, labels);
+        _setLabels(trakBox, labels);
     }
 
-    private static void setLabels(TrakBox trakBox, Label[] labels) {
+    private static void _setLabels(TrakBox trakBox, Label[] labels) {
         ChannelBox channel = Box.findFirstPath(trakBox, ChannelBox.class, new String[] { "mdia", "minf", "stbl", "stsd", null, "chan" });
         if (channel == null) {
             channel = ChannelBox.createChannelBox();

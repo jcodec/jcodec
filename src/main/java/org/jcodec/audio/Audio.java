@@ -36,7 +36,7 @@ public class Audio {
             pos[0] += ins[0].position();
             rotate(ins[0]);
             outs[0].flip();
-            sink.write(outs[0]);
+            sink.writeFloat(outs[0]);
             outs[0].clear();
         }
     }

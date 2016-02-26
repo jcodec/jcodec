@@ -109,14 +109,14 @@ public class MKVMuxer {
     private EbmlMaster defaultEbmlHeader() {
         EbmlMaster master = (EbmlMaster) createByType(EBML);
 
-        createChild(master, EBMLVersion, 1);
-        createChild(master, EBMLReadVersion, 1);
-        createChild(master, EBMLMaxIDLength, 4);
-        createChild(master, EBMLMaxSizeLength, 8);
+        createLong(master, EBMLVersion, 1);
+        createLong(master, EBMLReadVersion, 1);
+        createLong(master, EBMLMaxIDLength, 4);
+        createLong(master, EBMLMaxSizeLength, 8);
 
-        createChild(master, DocType, "webm");
-        createChild(master, DocTypeVersion, 2);
-        createChild(master, DocTypeReadVersion, 2);
+        createString(master, DocType, "webm");
+        createLong(master, DocTypeVersion, 2);
+        createLong(master, DocTypeReadVersion, 2);
 
         return master;
     }
@@ -124,13 +124,13 @@ public class MKVMuxer {
     private EbmlMaster muxInfo() {
         EbmlMaster master = (EbmlMaster) createByType(Info);
         int frameDurationInNanoseconds = MKVMuxerTrack.NANOSECONDS_IN_A_MILISECOND * 40;
-        createChild(master, TimecodeScale, frameDurationInNanoseconds);
-        createChild(master, WritingApp, "JCodec v0.1.7");
-        createChild(master, MuxingApp, "JCodec MKVStreamingMuxer v0.1.7");
+        createLong(master, TimecodeScale, frameDurationInNanoseconds);
+        createString(master, WritingApp, "JCodec v0.1.7");
+        createString(master, MuxingApp, "JCodec MKVStreamingMuxer v0.1.7");
 
         MkvBlock lastBlock = videoTrack.trackBlocks.get(videoTrack.trackBlocks.size() - 1);
-        createChild(master, MKVType.Duration, (lastBlock.absoluteTimecode + 1) * frameDurationInNanoseconds * 1.0);
-        createChild(master, DateUTC, new Date());
+        createDouble(master, MKVType.Duration, (lastBlock.absoluteTimecode + 1) * frameDurationInNanoseconds * 1.0);
+        createDate(master, DateUTC, new Date());
         return master;
     }
 
@@ -140,26 +140,26 @@ public class MKVMuxer {
             MKVMuxerTrack track = tracks.get(i);
             EbmlMaster trackEntryElem = (EbmlMaster) createByType(TrackEntry);
 
-            createChild(trackEntryElem, TrackNumber, track.trackNo);
+            createLong(trackEntryElem, TrackNumber, track.trackNo);
 
-            createChild(trackEntryElem, TrackUID, track.trackNo);
+            createLong(trackEntryElem, TrackUID, track.trackNo);
             if (MKVMuxerTrackType.VIDEO.equals(track.type)) {
-                createChild(trackEntryElem, TrackType, (byte) 0x01);
-                createChild(trackEntryElem, Name, "Track " + (i + 1) + " Video");
-                createChild(trackEntryElem, CodecID, track.codecId);
+                createLong(trackEntryElem, TrackType, (byte) 0x01);
+                createString(trackEntryElem, Name, "Track " + (i + 1) + " Video");
+                createString(trackEntryElem, CodecID, track.codecId);
                 //                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
                 //                VideoCodecMeta vcm = (VideoCodecMeta) codecMeta;
 
                 EbmlMaster trackVideoElem = (EbmlMaster) createByType(Video);
-                createChild(trackVideoElem, PixelWidth, track.frameDimentions.getWidth());
-                createChild(trackVideoElem, PixelHeight, track.frameDimentions.getHeight());
+                createLong(trackVideoElem, PixelWidth, track.frameDimentions.getWidth());
+                createLong(trackVideoElem, PixelHeight, track.frameDimentions.getHeight());
 
                 trackEntryElem.add(trackVideoElem);
 
             } else {
-                createChild(trackEntryElem, TrackType, (byte) 0x02);
-                createChild(trackEntryElem, Name, "Track " + (i + 1) + " Audio");
-                createChild(trackEntryElem, CodecID, track.codecId);
+                createLong(trackEntryElem, TrackType, (byte) 0x02);
+                createString(trackEntryElem, Name, "Track " + (i + 1) + " Audio");
+                createString(trackEntryElem, CodecID, track.codecId);
                 //                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
             }
 
@@ -185,7 +185,7 @@ public class MKVMuxer {
 
     private EbmlMaster singleBlockedCluster(MkvBlock aBlock) {
         EbmlMaster mkvCluster = createByType(MKVType.Cluster);
-        createChild(mkvCluster, MKVType.Timecode, aBlock.absoluteTimecode - aBlock.timecode);
+        createLong(mkvCluster, MKVType.Timecode, aBlock.absoluteTimecode - aBlock.timecode);
         mkvCluster.add(aBlock);
         return mkvCluster;
     }
@@ -198,31 +198,31 @@ public class MKVMuxer {
         return shi.indexSeekHead();
     }
 
-    public static void createChild(EbmlMaster parent, MKVType type, long value) {
+    public static void createLong(EbmlMaster parent, MKVType type, long value) {
         EbmlUint se = (EbmlUint) createByType(type);
         se.setUint(value);
         parent.add(se);
     }
 
-    public static void createChild(EbmlMaster parent, MKVType type, String value) {
+    public static void createString(EbmlMaster parent, MKVType type, String value) {
         EbmlString se = (EbmlString) createByType(type);
         se.setString(value);
         parent.add(se);
     }
 
-    public static void createChild(EbmlMaster parent, MKVType type, Date value) {
+    public static void createDate(EbmlMaster parent, MKVType type, Date value) {
         EbmlDate se = (EbmlDate) createByType(type);
         se.setDate(value);
         parent.add(se);
     }
 
-    public static void createChild(EbmlMaster parent, MKVType type, ByteBuffer value) {
+    public static void createBuffer(EbmlMaster parent, MKVType type, ByteBuffer value) {
         EbmlBin se = (EbmlBin) createByType(type);
         se.setBuf(value);
         parent.add(se);
     }
 
-    public static void createChild(EbmlMaster parent, MKVType type, double value) {
+    public static void createDouble(EbmlMaster parent, MKVType type, double value) {
         try {
             EbmlFloat se = (EbmlFloat) createByType(type);
             se.setDouble(value);

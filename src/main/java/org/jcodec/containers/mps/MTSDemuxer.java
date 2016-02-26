@@ -29,7 +29,7 @@ public class MTSDemuxer implements MPEGDemuxer {
     private MPSDemuxer psDemuxer;
     private SeekableByteChannel tsChannel;
 
-    public static Set<Integer> getPrograms(SeekableByteChannel src) throws IOException {
+    public static Set<Integer> getProgramsFromChannel(SeekableByteChannel src) throws IOException {
         long rem = src.position();
         Set<Integer> guids = new HashSet<Integer>();
         for (int i = 0; guids.size() == 0 || i < guids.size() * 500; i++) {
@@ -51,7 +51,7 @@ public class MTSDemuxer implements MPEGDemuxer {
         FileChannelWrapper fc = null;
         try {
             fc = NIOUtils.readableChannel(file);
-            return getPrograms(fc);
+            return getProgramsFromChannel(fc);
         } finally {
             NIOUtils.closeQuietly(fc);
         }

@@ -9,6 +9,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.jcodec.common.Assert;
@@ -17,7 +18,9 @@ import org.jcodec.common.IntIntMap;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
+import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
@@ -80,7 +83,7 @@ public class MTSDump extends MPSDump {
 
     private static void dumpProgramPids(ReadableByteChannel readableFileChannel) throws IOException {
         Set<Integer> pids = new HashSet<Integer>();
-        ByteBuffer buf = ByteBuffer.allocate(188 * 1024);
+        ByteBuffer buf = ByteBuffer.allocate(188 * 10240);
         readableFileChannel.read(buf);
         buf.flip();
         buf.limit(buf.limit() - (buf.limit() % 188));
@@ -89,7 +92,8 @@ public class MTSDump extends MPSDump {
             ByteBuffer tsBuf = NIOUtils.read(buf, 188);
             Assert.assertEquals(0x47, tsBuf.get() & 0xff);
             int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
-            int guid = (int) guidFlags & 0x1fff;
+            int guid = guidFlags & 0x1fff;
+            System.out.println(guid);
             if (guid != 0)
                 pids.add(guid);
             if (guid == 0 || guid == pmtPid) {
@@ -136,6 +140,9 @@ public class MTSDump extends MPSDump {
         System.out.print("PMT: ");
         for (PMTStream pmtStream : pmt.getStreams()) {
             System.out.print(pmtStream.getPid() + ":" + pmtStream.getStreamTypeTag() + ", ");
+            for (MPEGMediaDescriptor descriptor : pmtStream.getDesctiptors()) {
+                System.out.println(ToJSON.toJSON(descriptor));
+            }
         }
         System.out.println();
     }

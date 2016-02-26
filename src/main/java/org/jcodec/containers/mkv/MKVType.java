@@ -495,7 +495,7 @@ public enum MKVType {
         return candidates != null && candidates.contains(child.type);
     }
     
-    public static boolean possibleChild(EbmlMaster parent, byte[] typeId) {
+    public static boolean possibleChildById(EbmlMaster parent, byte[] typeId) {
         // Only EBML or Segment are allowed at top level
         if (parent == null && (Platform.arrayEqualsByte(EBML.id, typeId) || Platform.arrayEqualsByte(Segment.id, typeId)))
             return true;

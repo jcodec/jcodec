@@ -175,7 +175,7 @@ public class TrunBox extends FullBox {
         return sampleSize;
     }
 
-    public int[] getSampleFlags() {
+    public int[] getSamplesFlags() {
         return sampleFlags;
     }
 

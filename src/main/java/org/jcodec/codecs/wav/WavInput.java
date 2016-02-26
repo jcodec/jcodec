@@ -28,7 +28,7 @@ public class WavInput implements Closeable {
     protected AudioFormat format;
 
     public WavInput(ReadableByteChannel _in) throws IOException {
-        this.header = WavHeader.read(_in);
+        this.header = WavHeader.readChannel(_in);
         this.format = header.getFormat();
         this._in = _in;
     }

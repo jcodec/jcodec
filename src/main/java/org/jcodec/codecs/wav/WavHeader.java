@@ -159,20 +159,18 @@ public class WavHeader {
         this.dataSize = dataSize;
     }
 
-    public WavHeader(WavHeader header) {
-        this(header.chunkId, header.chunkSize, header.format,
+    public static WavHeader copyWithRate(WavHeader header, int rate) {
+        WavHeader result = new WavHeader(header.chunkId, header.chunkSize, header.format,
                 header.fmt instanceof FmtChunkExtended ? new FmtChunkExtended((FmtChunkExtended) header.fmt)
                         : new FmtChunk(header.fmt), header.dataOffset, header.dataSize);
-    }
-
-    public static WavHeader copyWithRate(WavHeader header, int rate) {
-        WavHeader result = new WavHeader(header);
         result.fmt.sampleRate = rate;
         return result;
     }
 
     public static WavHeader copyWithChannels(WavHeader header, int channels) {
-        WavHeader result = new WavHeader(header);
+        WavHeader result = new WavHeader(header.chunkId, header.chunkSize, header.format,
+                header.fmt instanceof FmtChunkExtended ? new FmtChunkExtended((FmtChunkExtended) header.fmt)
+                        : new FmtChunk(header.fmt), header.dataOffset, header.dataSize);
         result.fmt.numChannels = (short) channels;
         return result;
     }
@@ -183,19 +181,20 @@ public class WavHeader {
      * @param format
      * @param samples
      */
-    public WavHeader(AudioFormat format, int samples) {
-        this("RIFF", 40, "WAVE", new FmtChunk((short) 1, (short) format.getChannels(), format.getSampleRate(),
+    public static WavHeader createWavHeader(AudioFormat format, int samples) {
+        WavHeader w = new WavHeader("RIFF", 40, "WAVE", new FmtChunk((short) 1, (short) format.getChannels(), format.getSampleRate(),
                 format.getSampleRate() * format.getChannels() * (format.getSampleSizeInBits() >> 3),
                 (short) (format.getChannels() * (format.getSampleSizeInBits() >> 3)),
                 (short) format.getSampleSizeInBits()), 44, calcDataSize(format.getChannels(),
                 format.getSampleSizeInBits() >> 3, samples));
+        return w;
     }
 
     public static WavHeader stereo48k() {
-        return stereo48k(0);
+        return stereo48kWithSamples(0);
     }
 
-    public static WavHeader stereo48k(long samples) {
+    public static WavHeader stereo48kWithSamples(long samples) {
         return new WavHeader("RIFF", 40, "WAVE", new FmtChunk((short) 1, (short) 2, 48000, 48000 * 2 * 16 / 8,
                 (short) 4, (short) 16), 44, calcDataSize(2, 2, samples));
     }
@@ -213,13 +212,13 @@ public class WavHeader {
         ReadableByteChannel is = null;
         try {
             is = NIOUtils.readableChannel(file);
-            return read(is);
+            return readChannel(is);
         } finally {
             IOUtils.closeQuietly(is);
         }
     }
 
-    public static WavHeader read(ReadableByteChannel _in) throws IOException {
+    public static WavHeader readChannel(ReadableByteChannel _in) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(128);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         _in.read(buf);
@@ -267,11 +266,7 @@ public class WavHeader {
         return new WavHeader(chunkId, chunkSize, format, fmt, buf.position(), size);
     }
 
-    public static WavHeader multiChannelWav(List<File> wavs) throws IOException {
-        return multiChannelWav(wavs.toArray(new File[0]));
-    }
-
-    public static WavHeader multiChannelWav(File... arguments) throws IOException {
+    public static WavHeader multiChannelWavFromFiles(File... arguments) throws IOException {
         WavHeader headers[] = new WavHeader[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
             headers[i] = read(arguments[i]);

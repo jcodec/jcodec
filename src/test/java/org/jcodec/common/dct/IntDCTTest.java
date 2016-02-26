@@ -29,7 +29,7 @@ public class IntDCTTest {
             ws.clear();
             out.clear();
             inptr.clear();
-            dct.decode(inptr, ws, out);
+            dct.doDecode(inptr, ws, out);
         }
         long time = currentTimeMillis() - start;
         long kdctPerSec = count / time;

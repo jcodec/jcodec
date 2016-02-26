@@ -285,7 +285,7 @@ public class MTSUtils {
         throw new RuntimeException("No audio stream");
     }
 
-    public static int[] getMediaPids(SeekableByteChannel src) throws IOException {
+    public static int[] getMediaPidsFromChannel(SeekableByteChannel src) throws IOException {
         return filterMediaPids(MTSUtils.getProgramGuidsFromChannel(src));
     }
 

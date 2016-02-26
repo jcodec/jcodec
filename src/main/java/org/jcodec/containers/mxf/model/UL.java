@@ -45,7 +45,7 @@ public class UL {
         return true;
     }
 
-    public boolean equals(UL o, int mask) {
+    public boolean maskEquals(UL o, int mask) {
         if(o == null)
             return false;
         byte[] other = ((UL) o).bytes;

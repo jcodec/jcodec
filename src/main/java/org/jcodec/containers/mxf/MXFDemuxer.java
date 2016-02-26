@@ -175,7 +175,7 @@ public class MXFDemuxer {
         long basePos = ff.position();
         List<MXFMetadata> local = new ArrayList<MXFMetadata>();
         ByteBuffer metaBuffer = NIOUtils.fetchFromChannel(ff, (int) Math.max(0, header.getEssenceFilePos() - basePos));
-        while (metaBuffer.hasRemaining() && (kl = KLV.readKL(metaBuffer, basePos)) != null) {
+        while (metaBuffer.hasRemaining() && (kl = KLV.readKLFromBuffer(metaBuffer, basePos)) != null) {
             MXFMetadata meta = parseMeta(kl.key, NIOUtils.read(metaBuffer, (int) kl.len));
             if (meta != null)
                 local.add(meta);
@@ -451,7 +451,7 @@ public class MXFDemuxer {
                 return null;
 
             for (MXFCodecMapping codec : EnumSet.allOf(MXFConst.MXFCodecMapping.class)) {
-                if (codec.getUl().equals(codecUL, 0xff7f))
+                if (codec.getUl().maskEquals(codecUL, 0xff7f))
                     return codec;
             }
             Logger.warn("Unknown codec: " + codecUL);

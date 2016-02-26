@@ -77,7 +77,7 @@ public class MkvBlock extends EbmlBin {
     }
     
     @Override
-    public void read(SeekableByteChannel is) throws IOException {
+    public void readChannel(SeekableByteChannel is) throws IOException {
         ByteBuffer bb = ByteBuffer.allocate((int) 100);
         is.read(bb);
         bb.flip();
