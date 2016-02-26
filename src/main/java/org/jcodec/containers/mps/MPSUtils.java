@@ -352,7 +352,13 @@ public class MPSUtils {
     }
 
     public static class ISO639LanguageDescriptor extends MPEGMediaDescriptor {
-        private IntArrayList languageCodes = IntArrayList.createIntArrayList();
+        private IntArrayList languageCodes;
+        
+        public ISO639LanguageDescriptor() {
+            super();
+            this.languageCodes = IntArrayList.createIntArrayList();
+        }
+        
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
@@ -460,7 +466,12 @@ public class MPSUtils {
     
     public static class RegistrationDescriptor extends MPEGMediaDescriptor {
         private int formatIdentifier;
-        private IntArrayList additionalFormatIdentifiers = IntArrayList.createIntArrayList();
+        private IntArrayList additionalFormatIdentifiers;
+        
+        public RegistrationDescriptor() {
+            super();
+            this.additionalFormatIdentifiers = IntArrayList.createIntArrayList();
+        }
         
         @Override
         public void parse(ByteBuffer buf) {
