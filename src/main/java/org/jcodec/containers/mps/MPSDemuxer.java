@@ -221,7 +221,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null && pkt.streamId != streamId)
                 	demuxer.addToStream(pkt);
             }
-            return pkt == null ? null : new Packet(pkt.data, pkt.pts, 90000, 0, frameNo++, true, null);
+            return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, true, null);
         }
 
         public DemuxerTrackMeta getMeta() {
@@ -421,7 +421,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         public MPEGPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
                 TapeTimecode tapeTimecode) {
-            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode);
+            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
         }
 
         public long getOffset() {

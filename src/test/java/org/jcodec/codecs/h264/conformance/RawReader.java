@@ -63,7 +63,7 @@ public class RawReader {
 			cr[i] = is.read();
 		}
 
-		return new Picture(width, height, new int[][] {luma, cb, cr}, YUV420);
+		return Picture.createPicture(width, height, new int[][] {luma, cb, cr}, YUV420);
 	}
 
 }

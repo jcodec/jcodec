@@ -55,7 +55,7 @@ public class MTSDump extends MPSDump {
         this.tsBuf.position(tsBuf.limit());
     }
 
-    public static void main1(String[] args) throws IOException {
+    public static void main2(String[] args) throws IOException {
         ReadableByteChannel ch = null;
         try {
             Cmd cmd = MainUtils.parseArguments(args);

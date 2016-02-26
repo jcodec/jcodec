@@ -46,7 +46,7 @@ public class SequenceEncoder {
         this.ch = NIOUtils.writableChannel(out);
 
         // Muxer that will store the encoded frames
-        muxer = new MP4Muxer(ch, Brand.MP4);
+        muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
 
         // Add video track to muxer
         outTrack = muxer.addTrack(TrackType.VIDEO, 25);

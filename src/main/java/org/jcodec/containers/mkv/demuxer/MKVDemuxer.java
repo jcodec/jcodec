@@ -206,7 +206,7 @@ public final class MKVDemuxer {
             if (frameIdx < blocks.size())
                 duration = blocks.get(frameIdx).absoluteTimecode - b.absoluteTimecode;
 
-            return new Packet(b.frames[0].duplicate(), b.absoluteTimecode, demuxer.timescale, duration, frameIdx - 1, b._keyFrame, ZERO_TAPE_TIMECODE);
+            return Packet.createPacket(b.frames[0].duplicate(), b.absoluteTimecode, demuxer.timescale, duration, frameIdx - 1, b._keyFrame, ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -305,7 +305,7 @@ public final class MKVDemuxer {
                 frameInBlockIdx = 0;
             }
 
-            return new Packet(data, b.absoluteTimecode, Math.round(samplingFrequency), 1, 0, false, ZERO_TAPE_TIMECODE);
+            return Packet.createPacket(data, b.absoluteTimecode, Math.round(samplingFrequency), 1, 0, false, ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -391,7 +391,7 @@ public final class MKVDemuxer {
             for (ByteBuffer aFrame : packetFrames)
                 data.put(aFrame);
             
-            return new Packet(data, firstBlockInAPacket.absoluteTimecode,  Math.round(samplingFrequency),  packetFrames.size(), 0, false, ZERO_TAPE_TIMECODE);
+            return Packet.createPacket(data, firstBlockInAPacket.absoluteTimecode, Math.round(samplingFrequency), packetFrames.size(), 0, false, ZERO_TAPE_TIMECODE);
         }
 
         @Override

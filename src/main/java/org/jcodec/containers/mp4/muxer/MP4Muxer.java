@@ -47,12 +47,12 @@ public class MP4Muxer {
     private int nextTrackId = 1;
     protected SeekableByteChannel out;
 
-    public MP4Muxer(SeekableByteChannel output) throws IOException {
-        this(output, Brand.MP4);
+    public static MP4Muxer createMP4MuxerToChannel(SeekableByteChannel output) throws IOException {
+        return new MP4Muxer(output, Brand.MP4.getFileTypeBox());
     }
-
-    public MP4Muxer(SeekableByteChannel output, Brand brand) throws IOException {
-        this(output, brand.getFileTypeBox());
+    
+    public static MP4Muxer createMP4Muxer(SeekableByteChannel output, Brand brand) throws IOException {
+        return new MP4Muxer(output, brand.getFileTypeBox());
     }
 
     public MP4Muxer(SeekableByteChannel output, FileTypeBox ftyp) throws IOException {
@@ -220,10 +220,10 @@ public class MP4Muxer {
 
     public PCMMP4MuxerTrack addPCMAudioTrack(AudioFormat format) {
         return addPCMTrack((int) format.getSampleRate(), 1, (format.getSampleSizeInBits() >> 3)
-                * format.getChannels(), audioSampleEntry(format));
+                * format.getChannels(), _audioSampleEntry(format));
     }
 
-    public static AudioSampleEntry audioSampleEntry(AudioFormat format) {
+    public static AudioSampleEntry _audioSampleEntry(AudioFormat format) {
         return MP4Muxer.audioSampleEntry(lookupFourcc(format), 1,
         format.getSampleSizeInBits() >> 3, format.getChannels(), (int) format.getSampleRate(),
         format.isBigEndian() ? Endian.BIG_ENDIAN : Endian.LITTLE_ENDIAN);
