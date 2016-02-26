@@ -85,7 +85,7 @@ public class TimecodeMP4DemuxerTrack {
 
         int frameNo = (int) ((((2 * tv * tse.getTimescale()) / box.getTimescale()) / tse.getFrameDuration()) + 1) / 2;
 
-        return new MP4Packet(pkt, _getTimecode(getTimecodeSample(sample), frameNo, tse));
+        return MP4Packet.createMP4PacketWithTimecode(pkt, _getTimecode(getTimecodeSample(sample), frameNo, tse));
     }
 
     private int getTimecodeSample(int sample) throws IOException {

@@ -80,14 +80,6 @@ public class WavInput implements Closeable {
             this.format = src.getFormat();
         }
 
-        public Source(ReadableByteChannel ch) throws IOException {
-            this(new WavInput(ch));
-        }
-
-        public Source(File file) throws IOException {
-            this(new WavInput.WavFile(file));
-        }
-
         public AudioFormat getFormat() {
             return src.getFormat();
         }
@@ -107,7 +99,7 @@ public class WavInput implements Closeable {
             return format.bytesToFrames(read);
         }
 
-        public int read(FloatBuffer samples) throws IOException {
+        public int readFloat(FloatBuffer samples) throws IOException {
             ByteBuffer bb = ByteBuffer.allocate(format.samplesToBytes(samples.remaining()));
             int i = src.read(bb);
             if (i == -1)

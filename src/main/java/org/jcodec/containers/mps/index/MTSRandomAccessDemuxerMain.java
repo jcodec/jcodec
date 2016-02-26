@@ -44,9 +44,8 @@ public class MTSRandomAccessDemuxerMain {
         Packet pkt = video.nextFrame();
         long firstPts = pkt.getPts();
         for (int i = 0; pkt != null && i < 150; i++) {
-            videoTrack.addFrame(new MP4Packet(pkt.getData(), pkt.getPts() - firstPts, pkt.getTimescale(), pkt
-                    .getDuration(), pkt.getFrameNo(), pkt.isKeyFrame(), pkt.getTapeTimecode(), pkt.getPts() - firstPts,
-                    0));
+            videoTrack.addFrame(MP4Packet.createMP4Packet(pkt.getData(), pkt.getPts() - firstPts, pkt.getTimescale(), pkt
+                            .getDuration(), pkt.getFrameNo(), pkt.isKeyFrame(), pkt.getTapeTimecode(), 0, pkt.getPts() - firstPts, 0));
             pkt = video.nextFrame();
         }
         mp4Muxer.writeHeader();

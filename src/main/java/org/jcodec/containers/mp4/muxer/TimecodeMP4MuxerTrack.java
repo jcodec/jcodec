@@ -167,8 +167,7 @@ public class TimecodeMP4MuxerTrack extends FramesMP4MuxerTrack {
                 ByteBuffer sample = ByteBuffer.allocate(4);
                 sample.putInt(toCounter(firstTimecode, fpsEstimate));
                 sample.flip();
-                addFrame(new MP4Packet(sample, samplePts, timescale, sampleDuration, 0, true, null, samplePts,
-                        sampleEntries.size() - 1));
+                addFrame(MP4Packet.createMP4Packet(sample, samplePts, timescale, sampleDuration, 0, true, null, 0, samplePts, sampleEntries.size() - 1));
 
                 lower.add(new Edit(sampleDuration, samplePts, 1.0f));
             } else {

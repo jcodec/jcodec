@@ -32,16 +32,13 @@ public class WavHeader {
         int channelLayout;
         int guid;
 
-        public FmtChunkExtended(FmtChunk fmtChunk, short cbSize, short bitsPerCodedSample, int channelLayout, int guid) {
-            super(fmtChunk);
+        public FmtChunkExtended(FmtChunk other, short cbSize, short bitsPerCodedSample, int channelLayout, int guid) {
+            super(other.audioFormat, other.numChannels, other.sampleRate, other.byteRate, other.blockAlign,
+                    other.bitsPerSample);
             this.cbSize = cbSize;
             this.bitsPerCodedSample = bitsPerCodedSample;
             this.channelLayout = channelLayout;
             this.guid = guid;
-        }
-
-        public FmtChunkExtended(FmtChunkExtended fmt) {
-            this(fmt, fmt.cbSize, fmt.bitsPerCodedSample, fmt.channelLayout, fmt.guid);
         }
 
         public static FmtChunk read(ByteBuffer bb) throws IOException {
@@ -95,10 +92,6 @@ public class WavHeader {
         public short blockAlign;
         public short bitsPerSample;
 
-        public FmtChunk() {
-            this.audioFormat = 1;
-        }
-
         public FmtChunk(short audioFormat, short numChannels, int sampleRate, int byteRate, short blockAlign,
                 short bitsPerSample) {
             this.audioFormat = audioFormat;
@@ -107,11 +100,6 @@ public class WavHeader {
             this.byteRate = byteRate;
             this.blockAlign = blockAlign;
             this.bitsPerSample = bitsPerSample;
-        }
-
-        public FmtChunk(FmtChunk other) {
-            this(other.audioFormat, other.numChannels, other.sampleRate, other.byteRate, other.blockAlign,
-                    other.bitsPerSample);
         }
 
         public static FmtChunk get(ByteBuffer bb) throws IOException {
@@ -161,18 +149,27 @@ public class WavHeader {
 
     public static WavHeader copyWithRate(WavHeader header, int rate) {
         WavHeader result = new WavHeader(header.chunkId, header.chunkSize, header.format,
-                header.fmt instanceof FmtChunkExtended ? new FmtChunkExtended((FmtChunkExtended) header.fmt)
-                        : new FmtChunk(header.fmt), header.dataOffset, header.dataSize);
+                copyFmt(header.fmt), header.dataOffset, header.dataSize);
         result.fmt.sampleRate = rate;
         return result;
     }
 
     public static WavHeader copyWithChannels(WavHeader header, int channels) {
         WavHeader result = new WavHeader(header.chunkId, header.chunkSize, header.format,
-                header.fmt instanceof FmtChunkExtended ? new FmtChunkExtended((FmtChunkExtended) header.fmt)
-                        : new FmtChunk(header.fmt), header.dataOffset, header.dataSize);
+                copyFmt(header.fmt), header.dataOffset, header.dataSize);
         result.fmt.numChannels = (short) channels;
         return result;
+    }
+
+    private static FmtChunk copyFmt(FmtChunk fmt) {
+        if (fmt instanceof FmtChunkExtended) {
+            FmtChunkExtended fmtext = (FmtChunkExtended) fmt;
+            fmt = new FmtChunkExtended(fmtext, fmtext.cbSize, fmtext.bitsPerCodedSample, fmtext.channelLayout, fmtext.guid);
+        }        else {
+            fmt = new FmtChunk(fmt.audioFormat, fmt.numChannels, fmt.sampleRate, fmt.byteRate, fmt.blockAlign,
+                    fmt.bitsPerSample);
+        }
+        return fmt;
     }
 
     /**
@@ -205,7 +202,11 @@ public class WavHeader {
     }
 
     public static WavHeader emptyWavHeader() {
-        return new WavHeader("RIFF", 40, "WAVE", new FmtChunk(), 44, 0);
+        return new WavHeader("RIFF", 40, "WAVE", newFmtChunk(), 44, 0);
+    }
+
+    private static FmtChunk newFmtChunk() {
+        return new FmtChunk((short) 1, (short) 0, 0, 0, (short) 0, (short) 0);
     }
 
     public static WavHeader read(File file) throws IOException {
@@ -329,7 +330,7 @@ public class WavHeader {
     public static WavHeader create(AudioFormat af, int size) {
         WavHeader w = emptyWavHeader();
         w.dataSize = size;
-        FmtChunk fmt = new FmtChunk();
+        FmtChunk fmt = newFmtChunk();
         int bitsPerSample = af.getSampleSizeInBits();
         int bytesPerSample = bitsPerSample / 8;
         int sampleRate = (int) af.getSampleRate();

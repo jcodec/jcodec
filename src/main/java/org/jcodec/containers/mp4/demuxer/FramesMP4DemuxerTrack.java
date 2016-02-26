@@ -135,7 +135,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
 
         MP4Packet pkt = new MP4Packet(result == null ? null : convertPacket(result), mediaToEdited(box, realPts, movie.getTimescale()), timescale, duration,
-                curFrame, sync, null, realPts, sampleToChunks[stscInd].getEntry() - 1, pktPos, size, psync);
+                curFrame, sync, null, 0, realPts, sampleToChunks[stscInd].getEntry() - 1, pktPos, size, psync);
 
         offInChunk += size;
 
