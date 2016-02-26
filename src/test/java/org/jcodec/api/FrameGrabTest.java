@@ -43,7 +43,7 @@ public class FrameGrabTest {
         try {
             ch1 = NIOUtils.readableChannel(new File(compressed));
             ch2 = NIOUtils.readableChannel(new File(uncompressed));
-            FrameGrab8Bit frameGrab1 = new FrameGrab8Bit(ch1);
+            FrameGrab8Bit frameGrab1 = FrameGrab8Bit.createFrameGrab(ch1);
 
             PictureWithMetadata8Bit fr1;
             List<PictureWithMetadata8Bit> decoded = new ArrayList<PictureWithMetadata8Bit>();
