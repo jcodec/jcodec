@@ -30,7 +30,7 @@ public class Audio {
         FloatBuffer[] outs = new FloatBuffer[] { FloatBuffer.allocate(8192) };
         long[] pos = new long[1];
 
-        while (src.read(ins[0]) != -1) {
+        while (src.readFloat(ins[0]) != -1) {
             ins[0].flip();
             filter.filter(ins, pos, outs);
             pos[0] += ins[0].position();
