@@ -93,8 +93,7 @@ public class SequenceEncoder {
             pps = ppsList.get(0);
 
         // Add packet to video track
-        outTrack.addFrame(new MP4Packet(result, frameNo, 25, 1, frameNo, nu.type == NALUnitType.IDR_SLICE, null,
-                frameNo, 0));
+        outTrack.addFrame(MP4Packet.createMP4Packet(result, frameNo, 25, 1, frameNo, nu.type == NALUnitType.IDR_SLICE, null, 0, frameNo, 0));
 
         frameNo++;
     }
