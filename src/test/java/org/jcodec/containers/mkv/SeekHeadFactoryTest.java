@@ -27,7 +27,9 @@ import static org.jcodec.containers.mkv.MKVType.TrackUID;
 import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.WritingApp;
 import static org.jcodec.containers.mkv.boxes.EbmlUint.longToBytes;
-import static org.jcodec.containers.mkv.muxer.MKVMuxer.createChild;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createLong;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createDouble;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createBuffer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -54,6 +56,7 @@ import org.jcodec.containers.mkv.muxer.MKVMuxer;
 import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.junit.Assert;
 import org.junit.Test;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createString;
 
 public class SeekHeadFactoryTest {
 
@@ -117,28 +120,28 @@ public class SeekHeadFactoryTest {
         EbmlMaster seekHead = MKVType.createByType(MKVType.SeekHead);
 
         EbmlMaster seek = MKVType.createByType(MKVType.Seek);
-        createChild(seek, SeekID, ByteBuffer.wrap(Info.id));
+        createBuffer(seek, SeekID, ByteBuffer.wrap(Info.id));
         EbmlUint se = (EbmlUint) MKVType.createByType(SeekPosition);
         se.setUint(64);
         seek.add(se);
         seekHead.add(seek);
 
         seek = MKVType.createByType(MKVType.Seek);
-        createChild(seek, SeekID, ByteBuffer.wrap(Tracks.id));
+        createBuffer(seek, SeekID, ByteBuffer.wrap(Tracks.id));
         se = (EbmlUint) MKVType.createByType(SeekPosition);
         se.setUint(275);
         seek.add(se);
         seekHead.add(seek);
 
         seek = MKVType.createByType(MKVType.Seek);
-        createChild(seek, SeekID, ByteBuffer.wrap(Tags.id));
+        createBuffer(seek, SeekID, ByteBuffer.wrap(Tags.id));
         se = (EbmlUint) MKVType.createByType(SeekPosition);
         se.setUint(440);
         seek.add(se);
         seekHead.add(seek);
 
         seek = MKVType.createByType(MKVType.Seek);
-        createChild(seek, SeekID, ByteBuffer.wrap(Cues.id));
+        createBuffer(seek, SeekID, ByteBuffer.wrap(Cues.id));
         se = (EbmlUint) MKVType.createByType(SeekPosition);
         se.setUint(602);
         seek.add(se);
@@ -254,13 +257,13 @@ public class SeekHeadFactoryTest {
         segmentInfoElem.add(dateElem);
 
         // Add timecode scale
-        createChild(segmentInfoElem, TimecodeScale, 100000);
+        createLong(segmentInfoElem, TimecodeScale, 100000);
 
-        createChild(segmentInfoElem, Duration, 87336.0 * 1000.0);
+        createDouble(segmentInfoElem, Duration, 87336.0 * 1000.0);
 
-        createChild(segmentInfoElem, WritingApp, "JCodec v0.1.0");
+        createString(segmentInfoElem, WritingApp, "JCodec v0.1.0");
 
-        createChild(segmentInfoElem, MuxingApp, "Matroska Muxer v0.1a");
+        createString(segmentInfoElem, MuxingApp, "Matroska Muxer v0.1a");
 
         segmentElem.add(segmentInfoElem);
     }
@@ -270,44 +273,44 @@ public class SeekHeadFactoryTest {
         EbmlMaster tracksElem = (EbmlMaster) MKVType.createByType(Tracks);
 
         EbmlMaster trackEntryElem = (EbmlMaster) MKVType.createByType(TrackEntry);
-        createChild(trackEntryElem, TrackNumber, 1);
-        createChild(trackEntryElem, TrackUID, r.nextLong());
+        createLong(trackEntryElem, TrackNumber, 1);
+        createLong(trackEntryElem, TrackUID, r.nextLong());
 
-        createChild(trackEntryElem, TrackType, 1); // Video
+        createLong(trackEntryElem, TrackType, 1); // Video
 
-        createChild(trackEntryElem, Name, "Video");
+        createString(trackEntryElem, Name, "Video");
 
-        createChild(trackEntryElem, Language, "en");
+        createString(trackEntryElem, Language, "en");
 
-        createChild(trackEntryElem, CodecID, "V_UNCOMPRESSED");
+        createString(trackEntryElem, CodecID, "V_UNCOMPRESSED");
 
         // Now we add the audio/video dependant sub-elements
         EbmlMaster trackVideoElem = (EbmlMaster) MKVType.createByType(MKVType.Video);
 
-        createChild(trackVideoElem, PixelWidth, 1024);
-        createChild(trackVideoElem, PixelHeight, 768);
-        createChild(trackVideoElem, DisplayWidth, 1024);
-        createChild(trackVideoElem, DisplayHeight, 768);
+        createLong(trackVideoElem, PixelWidth, 1024);
+        createLong(trackVideoElem, PixelHeight, 768);
+        createLong(trackVideoElem, DisplayWidth, 1024);
+        createLong(trackVideoElem, DisplayHeight, 768);
 
         trackEntryElem.add(trackVideoElem);
         tracksElem.add(trackEntryElem);
 
         trackEntryElem = (EbmlMaster) MKVType.createByType(TrackEntry);
-        createChild(trackEntryElem, TrackNumber, 2);
-        createChild(trackEntryElem, TrackUID, r.nextLong());
+        createLong(trackEntryElem, TrackNumber, 2);
+        createLong(trackEntryElem, TrackUID, r.nextLong());
 
-        createChild(trackEntryElem, TrackType, 2); // Video
+        createLong(trackEntryElem, TrackType, 2); // Video
 
-        createChild(trackEntryElem, Name, "Audio");
+        createString(trackEntryElem, Name, "Audio");
 
-        createChild(trackEntryElem, Language, "en");
+        createString(trackEntryElem, Language, "en");
 
-        createChild(trackEntryElem, CodecID, "A_MPEG/L3");
+        createString(trackEntryElem, CodecID, "A_MPEG/L3");
 
         EbmlMaster trackAudioElem = (EbmlMaster) MKVType.createByType(Audio);
 
-        createChild(trackAudioElem, Channels, 2);
-        MKVMuxer.createChild(trackAudioElem, SamplingFrequency, 48000.0);
+        createLong(trackAudioElem, Channels, 2);
+        MKVMuxer.createDouble(trackAudioElem, SamplingFrequency, 48000.0);
 
         trackEntryElem.add(trackAudioElem);
         tracksElem.add(trackEntryElem);

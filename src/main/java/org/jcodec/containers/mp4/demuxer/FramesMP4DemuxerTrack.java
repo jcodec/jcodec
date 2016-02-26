@@ -88,11 +88,11 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             return null;
         int size = sizes[(int) curFrame];
 
-        return nextFrame(ByteBuffer.allocate(size));
+        return getNextFrame(ByteBuffer.allocate(size));
     }
 
     @Override
-    public synchronized MP4Packet nextFrame(ByteBuffer storage) throws IOException {
+    public synchronized MP4Packet getNextFrame(ByteBuffer storage) throws IOException {
 
         if (curFrame >= sizes.length)
             return null;

@@ -179,9 +179,9 @@ public class MPSUtils {
         }
         long pts = -1, dts = -1;
         if ((c & 0xf0) == 0x20) {
-            pts = readTs(is, c);
+            pts = _readTs(is, c);
         } else if ((c & 0xf0) == 0x30) {
-            pts = readTs(is, c);
+            pts = _readTs(is, c);
             dts = readTs(is);
         } else {
             if (c != 0x0f)
@@ -191,7 +191,7 @@ public class MPSUtils {
         return new PESPacket(null, pts, streamId, len, pos, dts);
     }
 
-    public static long readTs(ByteBuffer is, int c) {
+    public static long _readTs(ByteBuffer is, int c) {
         return (((long) c & 0x0e) << 29) | ((is.get() & 0xff) << 22) | (((is.get() & 0xff) >> 1) << 15)
                 | ((is.get() & 0xff) << 7) | ((is.get() & 0xff) >> 1);
     }
@@ -352,7 +352,7 @@ public class MPSUtils {
     }
 
     public static class ISO639LanguageDescriptor extends MPEGMediaDescriptor {
-        private IntArrayList languageCodes = new IntArrayList();
+        private IntArrayList languageCodes = IntArrayList.createIntArrayList();
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
@@ -460,7 +460,7 @@ public class MPSUtils {
     
     public static class RegistrationDescriptor extends MPEGMediaDescriptor {
         private int formatIdentifier;
-        private IntArrayList additionalFormatIdentifiers = new IntArrayList();
+        private IntArrayList additionalFormatIdentifiers = IntArrayList.createIntArrayList();
         
         @Override
         public void parse(ByteBuffer buf) {

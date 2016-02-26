@@ -189,7 +189,7 @@ public class QTTimeUtil {
      * @return
      * @throws IOException
      */
-    public static String qtPlayerTimecode(MovieBox movie, TimecodeMP4DemuxerTrack timecodeTrack, int mediaFrameNo)
+    public static String qtPlayerTimecodeFromMovie(MovieBox movie, TimecodeMP4DemuxerTrack timecodeTrack, int mediaFrameNo)
             throws IOException {
         TrakBox videoTrack = movie.getVideoTrack();
         long editedTv = mediaToEdited(videoTrack, frameToTimevalue(videoTrack, mediaFrameNo), movie.getTimescale());

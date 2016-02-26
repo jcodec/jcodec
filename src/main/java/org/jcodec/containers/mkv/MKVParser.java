@@ -66,7 +66,7 @@ public class MKVParser {
                     channel.setPosition((traceTop.dataOffset + traceTop.dataLen));
                 } else
                     try {
-                        bin.read(channel);
+                        bin.readChannel(channel);
                     } catch (OutOfMemoryError oome) {
                         throw new RuntimeException(e.type + " 0x" + toHexString(bin.id) + " size: " + toHexString(bin.dataLen) + " offset: 0x" + toHexString(e.offset), oome);
                     }

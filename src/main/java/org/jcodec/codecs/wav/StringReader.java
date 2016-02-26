@@ -12,11 +12,11 @@ import java.io.InputStream;
  */
 public abstract class StringReader {
     public static String readString(InputStream input, int len) throws IOException {
-        byte[] bs = sureRead(input, len);
+        byte[] bs = _sureRead(input, len);
         return bs == null ? null : new String(bs);
     }
 
-    public static byte[] sureRead(InputStream input, int len) throws IOException {
+    public static byte[] _sureRead(InputStream input, int len) throws IOException {
         byte[] res = new byte[len];
         if (sureRead(input, res, res.length) == len)
             return res;

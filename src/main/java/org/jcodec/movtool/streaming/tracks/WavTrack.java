@@ -46,7 +46,7 @@ public class WavTrack implements VirtualTrack {
         SeekableByteChannel ch = null;
         try {
             ch = pool.getChannel();
-            header = WavHeader.read(ch);
+            header = WavHeader.readChannel(ch);
             size = header.dataSize <= 0 ? ch.size() : header.dataSize;
         } finally {
             ch.close();

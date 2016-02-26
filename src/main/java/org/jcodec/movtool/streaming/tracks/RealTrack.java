@@ -70,7 +70,7 @@ public class RealTrack implements VirtualTrack {
 
     @Override
     public VirtualPacket nextPacket() throws IOException {
-        MP4Packet pkt = demuxer.nextFrame(null);
+        MP4Packet pkt = demuxer.getNextFrame(null);
         if (pkt == null)
             return null;
         return new RealPacket(this, pkt);
@@ -104,7 +104,7 @@ public class RealTrack implements VirtualTrack {
             }
 
             return AudioCodecMeta
-                    .createAudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(), (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), ChannelUtils.getLabels(ase), codecPrivate);
+                    .createAudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(), (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), ChannelUtils.getLabelsFromSampleEntry(ase), codecPrivate);
         } else
             throw new RuntimeException("Sample entry '" + se.getFourcc() + "' is not supported.");
     }

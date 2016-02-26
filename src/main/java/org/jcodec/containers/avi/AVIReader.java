@@ -1092,7 +1092,7 @@ static class AVITag_AviIndex extends AVIChunk {
                 dwChunkLength[i] = raf.readInt(); // raf.readInt();
             }
 
-            raf.position(this.getEndOfChunk());
+            raf.setPosition(this.getEndOfChunk());
 
             int alignment = getChunkSize() - dwChunkSize;
             if (alignment > 0)
@@ -1207,7 +1207,7 @@ static class AVITag_AviDmlSuperIndex extends AVIChunk {
                         dwSize[i], dwDuration[i]));
             }
 
-            raf.position(this.getEndOfChunk());
+            raf.setPosition(this.getEndOfChunk());
         }
 
         @Override
@@ -1283,7 +1283,7 @@ static class AVITag_AviDmlStandardIndex extends AVIChunk {
                 Logger.debug("Failed to read : " + toString());
             }
 
-            raf.position(this.getEndOfChunk());
+            raf.setPosition(this.getEndOfChunk());
         }
 
         @Override

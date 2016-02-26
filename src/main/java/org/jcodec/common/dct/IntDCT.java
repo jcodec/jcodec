@@ -22,11 +22,11 @@ public class IntDCT extends DCT {
         IntBuffer inptr = IntBuffer.wrap(orig);
         IntBuffer workspace = IntBuffer.allocate(64);
         IntBuffer outptr = IntBuffer.allocate(64);
-        decode(inptr, workspace, outptr);
+        doDecode(inptr, workspace, outptr);
         return outptr.array();
     }
 
-    protected IntBuffer decode(IntBuffer inptr, IntBuffer workspace,
+    protected IntBuffer doDecode(IntBuffer inptr, IntBuffer workspace,
             IntBuffer outptr) {
         pass1(inptr, workspace.duplicate());
         pass2(outptr, workspace.duplicate());

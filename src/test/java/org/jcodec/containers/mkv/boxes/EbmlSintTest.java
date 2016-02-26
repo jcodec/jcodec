@@ -5,6 +5,7 @@ import static org.jcodec.containers.mkv.boxes.EbmlSint.convertToBytes;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.ebmlSignedLength;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.signedComplement;
 import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlEncode;
+import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlEncodeLen;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -24,7 +25,7 @@ public class EbmlSintTest {
         
         int size = ebmlSignedLength(100500);
         Assert.assertEquals(3, size);
-        System.out.println(EbmlUtil.toHexString(ebmlEncode(100500, size)));
+        System.out.println(EbmlUtil.toHexString(ebmlEncodeLen(100500, size)));
     }
     
     
@@ -49,7 +50,7 @@ public class EbmlSintTest {
         int size = ebmlSignedLength(value);
         value += signedComplement[size];
         Assert.assertEquals(2, size);
-        Assert.assertArrayEquals(new byte[]{0x5f, 0x3f}, ebmlEncode(value, size));
+        Assert.assertArrayEquals(new byte[]{0x5f, 0x3f}, ebmlEncodeLen(value, size));
     }
 
     @Test

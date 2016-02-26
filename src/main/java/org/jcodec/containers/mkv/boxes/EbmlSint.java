@@ -60,6 +60,6 @@ public class EbmlSint extends EbmlBin {
         int num = ebmlSignedLength(val);
         val += signedComplement[num];
 
-        return EbmlUtil.ebmlEncode(val, num);
+        return EbmlUtil.ebmlEncodeLen(val, num);
     }
 }
