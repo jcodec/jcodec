@@ -48,7 +48,7 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
     }
 
     public WebOptimizedMP4Muxer(SeekableByteChannel output, Brand brand, int headerSize) throws IOException {
-        super(output, brand);
+        super(output, brand.getFileTypeBox());
         headerPos = output.position() - 24;
         output.setPosition(headerPos);
 

@@ -207,7 +207,7 @@ public class Picture8Bit {
     }
 
     public Picture toPicture(int bitDepth) {
-        Picture create = Picture.create(width, height, color, bitDepth, crop);
+        Picture create = Picture.doCreate(width, height, color, bitDepth, crop);
 
         return toPictureInternal(bitDepth, create);
     }

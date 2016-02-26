@@ -28,7 +28,7 @@ public class ReExport extends Remux {
         return new MP4Packet(pkt, out);
     }
 
-    public static void main1(String[] args) throws Exception {
+    public static void main2(String[] args) throws Exception {
         if (args.length < 1) {
             System.out.println("reexport <movie> <out>");
             return;

@@ -155,7 +155,7 @@ public class DemuxerMain {
         RandomAccessFile _in = new RandomAccessFile(wav, "r");
         _in.seek(header.dataOffset);
         FileChannel ch = _in.getChannel();
-        MP4Muxer muxer = new MP4Muxer(writableChannel(out));
+        MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(writableChannel(out));
         PCMMP4MuxerTrack track = muxer.addPCMTrack(48000, 1, 3,
                 MP4Muxer.audioSampleEntry("in24", 1, 3, 1, 48000, Endian.LITTLE_ENDIAN));
 
@@ -167,7 +167,7 @@ public class DemuxerMain {
     }
 
     private static void testRemux(File src, File dst) throws Exception {
-        MP4Muxer muxer = new MP4Muxer(writableChannel(dst));
+        MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(writableChannel(dst));
 
         MP4Demuxer demuxer1 = new MP4Demuxer(readableChannel(src));
         AbstractMP4DemuxerTrack vt1 = demuxer1.getVideoTrack();

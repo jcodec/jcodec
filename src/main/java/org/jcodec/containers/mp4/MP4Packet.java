@@ -20,14 +20,14 @@ public class MP4Packet extends Packet {
 
     public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
             TapeTimecode tapeTimecode, long mediaPts, int entryNo) {
-        super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode);
+        super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode, 0);
         this.mediaPts = mediaPts;
         this.entryNo = entryNo;
     }
     
     public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
             TapeTimecode tapeTimecode, long mediaPts, int entryNo, long fileOff, int size, boolean psync) {
-        super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode);
+        super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode, 0);
         this.mediaPts = mediaPts;
         this.entryNo = entryNo;
         this.fileOff = fileOff;
@@ -35,28 +35,28 @@ public class MP4Packet extends Packet {
         this.psync = psync;
     }
 
-    public MP4Packet(MP4Packet packet, ByteBuffer frm) {
-        super(packet, frm);
-        this.mediaPts = packet.mediaPts;
-        this.entryNo = packet.entryNo;
+    public MP4Packet(MP4Packet other, ByteBuffer frm) {
+        super(frm, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, other.tapeTimecode, other.displayOrder);
+        this.mediaPts = other.mediaPts;
+        this.entryNo = other.entryNo;
     }
 
-    public MP4Packet(MP4Packet packet, TapeTimecode timecode) {
-        super(packet, timecode);
-        this.mediaPts = packet.mediaPts;
-        this.entryNo = packet.entryNo;
+    public MP4Packet(MP4Packet other, TapeTimecode timecode) {
+        super(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, timecode, other.displayOrder);
+        this.mediaPts = other.mediaPts;
+        this.entryNo = other.entryNo;
     }
 
-    public MP4Packet(Packet packet, long mediaPts, int entryNo) {
-        super(packet);
+    public MP4Packet(Packet other, long mediaPts, int entryNo) {
+        super(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, other.tapeTimecode, other.displayOrder);
         this.mediaPts = mediaPts;
         this.entryNo = entryNo;
     }
 
-    public MP4Packet(MP4Packet packet) {
-        super(packet);
-        this.mediaPts = packet.mediaPts;
-        this.entryNo = packet.entryNo;
+    public MP4Packet(MP4Packet other) {
+        super(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, other.tapeTimecode, other.displayOrder);
+        this.mediaPts = other.mediaPts;
+        this.entryNo = other.entryNo;
     }
 
     /**

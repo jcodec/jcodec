@@ -49,7 +49,7 @@ public class TimecodeMP4MuxerTrack extends FramesMP4MuxerTrack {
     public void addTimecode(Packet packet) throws IOException {
         if (packet.isKeyFrame())
             processGop();
-        gop.add(new Packet(packet, (ByteBuffer) null));
+        gop.add(Packet.createPacketWithData(packet, (ByteBuffer) null));
     }
 
     private void processGop() throws IOException {

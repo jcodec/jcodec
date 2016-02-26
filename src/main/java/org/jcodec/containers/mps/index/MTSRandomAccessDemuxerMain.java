@@ -37,7 +37,7 @@ public class MTSRandomAccessDemuxerMain {
         Stream video = getVideoStream(demuxer.getProgramDemuxer(guids[0]));
 
         FileChannelWrapper ch = NIOUtils.writableChannel(new File(args[1]));
-        MP4Muxer mp4Muxer = new MP4Muxer(ch, Brand.MOV);
+        MP4Muxer mp4Muxer = MP4Muxer.createMP4Muxer(ch, Brand.MOV);
         FramesMP4MuxerTrack videoTrack = mp4Muxer.addVideoTrack("m2v1", new Size(1920, 1080), "jcod", 90000);
 
         video.gotoSyncFrame(175);

@@ -482,7 +482,7 @@ public class MXFDemuxer {
 
         public MXFPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
                 TapeTimecode tapeTimecode, long offset, int len) {
-            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode);
+            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
             this.offset = offset;
             this.len = len;
         }

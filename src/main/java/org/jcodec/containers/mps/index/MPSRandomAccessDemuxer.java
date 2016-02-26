@@ -121,7 +121,7 @@ public class MPSRandomAccessDemuxer {
             }
             result.flip();
 
-            Packet pkt = new Packet(result, fpts[curFrame], MPEG_TIMESCALE, fdur[curFrame], curFrame, sync.length == 0
+            Packet pkt = Packet.createPacket(result, fpts[curFrame], MPEG_TIMESCALE, fdur[curFrame], curFrame, sync.length == 0
                     || Arrays.binarySearch(sync, curFrame) >= 0, null);
 
             curFrame++;
