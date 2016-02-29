@@ -27,6 +27,8 @@ import org.jcodec.containers.mps.psi.PSISection;
  */
 public class MTSUtils {
     public final static class StreamType {
+        private final static List<StreamType> _values = new ArrayList<StreamType>();
+
         public final static StreamType RESERVED = new StreamType(0x0, false, false);
         public final static StreamType VIDEO_MPEG1 = new StreamType(0x01, true, false);
         public final static StreamType VIDEO_MPEG2 = new StreamType(0x02, true, false);
@@ -71,7 +73,6 @@ public class MTSUtils {
         private int tag;
         private boolean video;
         private boolean audio;
-        private final static List<StreamType> _values = new ArrayList<StreamType>();
 
         private StreamType(int tag, boolean video, boolean audio) {
             this.tag = tag;

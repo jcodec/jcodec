@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
  * 
  */
 public final class Label {
+    private final static List<Label> _values = new ArrayList<Label>();
+
 /** unknown role or unspecified other use for channel */
 public final static Label Unknown = new Label(0xFFFFFFFF);
 
@@ -133,7 +135,6 @@ public final static Label Discrete_65535         = new Label( (1<<16) | 65535);
     final int labelVal;
     final long bitmapVal;
     public final static Pattern channelMappingRegex = Pattern.compile("[_\\ \\.][a-zA-Z]+$");
-    private final static List<Label> _values = new ArrayList<Label>();
 
     private Label(int val) {
         this.labelVal = val;

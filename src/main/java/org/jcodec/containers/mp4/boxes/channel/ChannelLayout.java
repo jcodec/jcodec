@@ -13,6 +13,8 @@ import java.util.List;
  * 
  */
 public final class ChannelLayout {
+    private final static List<ChannelLayout> _values = new ArrayList<ChannelLayout>();
+
     public final static ChannelLayout kCAFChannelLayoutTag_UseChannelDescriptions = new ChannelLayout((0 << 16) | 0,
             new Label[] {});
     public final static ChannelLayout kCAFChannelLayoutTag_UseChannelBitmap = new ChannelLayout((1 << 16) | 0,
@@ -118,7 +120,6 @@ public final class ChannelLayout {
 
     private int code;
     private Label[] labels;
-    private final static List<ChannelLayout> _values = new ArrayList<ChannelLayout>();
 
     private ChannelLayout(int code, Label[] labels) {
         this.code = code;
