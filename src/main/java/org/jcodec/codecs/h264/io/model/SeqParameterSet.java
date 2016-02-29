@@ -85,14 +85,13 @@ public class SeqParameterSet {
     }
 
     public static int fromColor(ColorSpace color) {
-        switch (color) {
-        case MONO:
+        if (color == MONO) {
             return 0;
-        case YUV420J:
+        } else if (color == YUV420J) {
             return 1;
-        case YUV422:
+        } else if (color == YUV422) {
             return 2;
-        case YUV444:
+        } else if (color == YUV444) {
             return 3;
         }
         throw new RuntimeException("Colorspace not supported");

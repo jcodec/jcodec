@@ -1,5 +1,7 @@
 package org.jcodec.containers.mp4.boxes.channel;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -9,83 +11,144 @@ import java.util.regex.Pattern;
  * @author The JCodec project
  * 
  */
-public enum Label {
-    /** unknown role or unspecified other use for channel */
-    Unknown(0xFFFFFFFF),
-    /** channel is present, but has no intended role or destination */
-    Unused(0),
-    /** channel is described solely by the mCoordinates fields */
-    UseCoordinates(100),
+public final class Label {
+/** unknown role or unspecified other use for channel */
+public final static Label Unknown = new Label(0xFFFFFFFF);
 
-    Left(1), Right(2), Center(3), LFEScreen(4),
+/** channel is present, but has no intended role or destination */
+public final static Label Unused = new Label(0);
+
+/** channel is described solely by the mCoordinates fields */
+public final static Label     UseCoordinates = new Label(100);
+
+public final static Label     Left = new Label(1);
+public final static Label  Right = new Label(2);
+public final static Label  Center = new Label(3);
+public final static Label  LFEScreen = new Label(4);
 
     /** WAVE (.wav files): "Back Left" */
-    LeftSurround(5),
-    /** WAVE: "Back Right" */
-    RightSurround(6), LeftCenter(7), RightCenter(8),
-    /** WAVE: "Back  Center or  plain "Rear Surround" */
-    CenterSurround(9),
-    /** WAVE: "Side Left" */
-    LeftSurroundDirect(10),
-    /** WAVE: "Side Right" */
-    RightSurroundDirect(11), TopCenterSurround(12),
-    /** WAVE: "Top Front Left" */
-    VerticalHeightLeft(13),
-    /** WAVE: "Top Front Center" */
-    VerticalHeightCenter(14),
-    /** WAVE: "Top Front Right" */
-    VerticalHeightRight(15), TopBackLeft(16), TopBackCenter(17), TopBackRight(18),
+public final static Label LeftSurround = new Label(5);
 
-    RearSurroundLeft(33), RearSurroundRight(34), LeftWide(35), RightWide(36), LFE2(37),
+/** WAVE: "Back Right" */
+public final static Label     RightSurround = new Label(6);
+public final static Label  LeftCenter = new Label(7);
+public final static Label  RightCenter = new Label(8);
+
+    /** WAVE: "Back  Center or  plain "Rear Surround" */
+public final static Label CenterSurround = new Label(9);
+
+/** WAVE: "Side Left" */
+public final static Label LeftSurroundDirect = new Label(10);
+
+/** WAVE: "Side Right" */
+public final static Label     RightSurroundDirect = new Label(11);
+public final static Label  TopCenterSurround = new Label(12);
+
+    /** WAVE: "Top Front Left" */
+public final static Label VerticalHeightLeft = new Label(13);
+
+/** WAVE: "Top Front Center" */
+public final static Label VerticalHeightCenter = new Label(14);
+
+/** WAVE: "Top Front Right" */
+public final static Label     VerticalHeightRight = new Label(15);
+public final static Label  TopBackLeft = new Label(16);
+public final static Label  TopBackCenter = new Label(17);
+public final static Label  TopBackRight = new Label(18);
+
+public final static Label     RearSurroundLeft = new Label(33);
+public final static Label  RearSurroundRight = new Label(34);
+public final static Label  LeftWide = new Label(35);
+public final static Label  RightWide = new Label(36);
+public final static Label  LFE2 = new Label(37);
+
     /** matrix encoded 4 channels */
-    LeftTotal(38),
-    /** matrix encoded 4 channels */
-    RightTotal(39), HearingImpaired(40), Narration(41), Mono(42), DialogCentricMix(43),
+public final static Label LeftTotal = new Label(38);
+
+/** matrix encoded 4 channels */
+public final static Label     RightTotal = new Label(39);
+public final static Label  HearingImpaired = new Label(40);
+public final static Label  Narration = new Label(41);
+public final static Label  Mono = new Label(42);
+public final static Label  DialogCentricMix = new Label(43);
 
     /** center, non diffuse first order ambisonic channels */
-    CenterSurroundDirect(44), Ambisonic_W(200), Ambisonic_X(201), Ambisonic_Y(202), Ambisonic_Z(203),
+public final static Label     CenterSurroundDirect = new Label(44);
+public final static Label  Ambisonic_W = new Label(200);
+public final static Label  Ambisonic_X = new Label(201);
+public final static Label  Ambisonic_Y = new Label(202);
+public final static Label  Ambisonic_Z = new Label(203);
 
     /** Mid/Side Recording */
-    MS_Mid(204), MS_Side(205),
+public final static Label     MS_Mid = new Label(204);
+public final static Label  MS_Side = new Label(205);
 
     /** X-Y Recording */
-    XY_X(206), XY_Y(207),
+public final static Label     XY_X = new Label(206);
+public final static Label  XY_Y = new Label(207);
 
-    HeadphonesLeft(301), HeadphonesRight(302), ClickTrack(304), ForeignLanguage(305),
+public final static Label     HeadphonesLeft = new Label(301);
+public final static Label  HeadphonesRight = new Label(302);
+public final static Label  ClickTrack = new Label(304);
+public final static Label  ForeignLanguage = new Label(305);
+
     // generic discrete channel
-    Discrete              ( 400),
-    
-    // numbered discrete channel
-    Discrete_0            ( (1<<16) | 0),
-    Discrete_1            ( (1<<16) | 1),
-    Discrete_2            ( (1<<16) | 2),
-    Discrete_3            ( (1<<16) | 3),
-    Discrete_4            ( (1<<16) | 4),
-    Discrete_5            ( (1<<16) | 5),
-    Discrete_6            ( (1<<16) | 6),
-    Discrete_7            ( (1<<16) | 7),
-    Discrete_8            ( (1<<16) | 8),
-    Discrete_9            ( (1<<16) | 9),
-    Discrete_10           ( (1<<16) | 10),
-    Discrete_11           ( (1<<16) | 11),
-    Discrete_12           ( (1<<16) | 12),
-    Discrete_13           ( (1<<16) | 13),
-    Discrete_14           ( (1<<16) | 14),
-    Discrete_15           ( (1<<16) | 15),
-    Discrete_65535        ( (1<<16) | 65535);
+public final static Label Discrete               = new Label( 400);
+
+// numbered discrete channel
+public final static Label Discrete_0             = new Label( (1<<16) | 0);
+
+public final static Label Discrete_1             = new Label( (1<<16) | 1);
+
+public final static Label Discrete_2             = new Label( (1<<16) | 2);
+
+public final static Label Discrete_3             = new Label( (1<<16) | 3);
+
+public final static Label Discrete_4             = new Label( (1<<16) | 4);
+
+public final static Label Discrete_5             = new Label( (1<<16) | 5);
+
+public final static Label Discrete_6             = new Label( (1<<16) | 6);
+
+public final static Label Discrete_7             = new Label( (1<<16) | 7);
+
+public final static Label Discrete_8             = new Label( (1<<16) | 8);
+
+public final static Label Discrete_9             = new Label( (1<<16) | 9);
+
+public final static Label Discrete_10            = new Label( (1<<16) | 10);
+
+public final static Label Discrete_11            = new Label( (1<<16) | 11);
+
+public final static Label Discrete_12            = new Label( (1<<16) | 12);
+
+public final static Label Discrete_13            = new Label( (1<<16) | 13);
+
+public final static Label Discrete_14            = new Label( (1<<16) | 14);
+
+public final static Label Discrete_15            = new Label( (1<<16) | 15);
+
+public final static Label Discrete_65535         = new Label( (1<<16) | 65535);
     
     final int labelVal;
     final long bitmapVal;
     public final static Pattern channelMappingRegex = Pattern.compile("[_\\ \\.][a-zA-Z]+$");
+    private final static List<Label> _values = new ArrayList<Label>();
 
     private Label(int val) {
         this.labelVal = val;
         this.bitmapVal = (this.labelVal > 18 || this.labelVal < 1) ? 0x00000000 : 1 << (this.labelVal - 1);
-
+        _values.add(this);
+    }
+    
+    public static Label[] values() {
+        return _values.toArray(new Label[0]);
     }
 
     public static Label getByVal(int val) {
-        for (Label label : Label.values()) {
+        Label[] values = Label.values();
+        for (int i = 0; i < values.length; i++) {
+            Label label = values[i];
             if (label.labelVal == val)
                 return label;
         }
