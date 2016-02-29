@@ -4,6 +4,7 @@ import static org.jcodec.common.tools.Debug.trace;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.tools.Debug;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -87,7 +88,8 @@ public class CAVLCReader {
         while (bits.read1Bit() == 0 && count < 32)
             count++;
 
-        trace(message, String.valueOf(count));
+        if (Debug.debug)
+            trace(message, String.valueOf(count));
 
         return count;
     }
