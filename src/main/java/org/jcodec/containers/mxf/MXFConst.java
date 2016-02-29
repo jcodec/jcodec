@@ -50,6 +50,8 @@ public class MXFConst {
     public static UL GENERIC_DESCRIPTOR_KLV = newUL(0x06, 0x0E, 0x2B, 0x34, 0x02, 0x53, 0x01, 0x01, 0x0d, 0x01, 0x01, 0x01, 0x01, 0x01);
 
     public static final class MXFCodecMapping {
+        private final static List<MXFCodecMapping> _values =new ArrayList<MXFCodecMapping>();
+
         public final static MXFCodecMapping MPEG2_XDCAM = new MXFCodecMapping(
                 newUL(0x06, 0x0E, 0x2B, 0x34, 0x04, 0x01, 0x01, 0x03, 0x04, 0x01, 0x02, 0x02, 0x01, 0x04, 0x03, 0x00),
                 Codec.MPEG2);
@@ -109,7 +111,6 @@ public class MXFConst {
 
         private UL ul;
         private Codec codec;
-        private final static List<MXFCodecMapping> _values =new ArrayList<MXFCodecMapping>();
 
         private MXFCodecMapping(UL ul, Codec codec) {
             this.ul = ul;

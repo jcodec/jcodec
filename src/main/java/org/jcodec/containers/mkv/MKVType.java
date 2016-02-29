@@ -40,6 +40,7 @@ import org.jcodec.platform.Platform;
  * 
  */
 public final class MKVType {
+    private final static List<MKVType> _values =new ArrayList<MKVType>();
     // EBML Id's
 public final static MKVType     Void = new MKVType(new byte[]{(byte)0xEC}, EbmlVoid.class);
 public final static MKVType     CRC32 = new MKVType(new byte[]{(byte)0xBF}, EbmlBin.class);
@@ -346,7 +347,6 @@ public final static MKVType                   TagBinary = new MKVType(new byte[]
       static public MKVType[] firstLevelHeaders = {SeekHead, Info, Cluster, Tracks, Cues, Attachments, Chapters, Tags, EBMLVersion, EBMLReadVersion, EBMLMaxIDLength, EBMLMaxSizeLength, DocType, DocTypeVersion, DocTypeReadVersion };
       public final byte [] id;
       public final Class<? extends EbmlBase> clazz;
-      private final static List<MKVType> _values =new ArrayList<MKVType>();
 
     private MKVType(byte[] id, Class<? extends EbmlBase> clazz) {
         this.id = id;
