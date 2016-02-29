@@ -35,6 +35,7 @@ public class SequenceScalableExtension implements MPEGHeader {
     public int mux_to_progressive_sequence;
     public int picture_mux_order;
     public int picture_mux_factor;
+    public static final int Sequence_Scalable_Extension = 0x5;
 
     public static SequenceScalableExtension read(BitReader _in) {
         SequenceScalableExtension sse = new SequenceScalableExtension();
@@ -65,7 +66,7 @@ public class SequenceScalableExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(SequenceHeader.Sequence_Scalable_Extension, 4);
+        bw.writeNBit(SequenceScalableExtension.Sequence_Scalable_Extension, 4);
 
         bw.writeNBit(scalable_mode, 2);
         bw.writeNBit(layer_id, 4);
