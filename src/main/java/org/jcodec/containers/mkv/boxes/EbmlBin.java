@@ -20,7 +20,7 @@ public class EbmlBin extends EbmlBase {
     protected boolean dataRead = false;
     
     public EbmlBin(byte[] id) {
-        this.id = id;
+        super(id);
     }
     
     public void readChannel(SeekableByteChannel is) throws IOException {

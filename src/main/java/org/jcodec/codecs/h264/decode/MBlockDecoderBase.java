@@ -9,6 +9,7 @@ import static org.jcodec.common.model.ColorSpace.MONO;
 
 import java.util.Arrays;
 
+import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.MBType;
@@ -177,7 +178,7 @@ public class MBlockDecoderBase {
 
         for (int blk8x8 = 0; blk8x8 < 4; blk8x8++) {
             for (int list = 0; list < 2; list++) {
-                if (!predType[blk8x8].usesList(list))
+                if (!H264Const.usesList(predType[blk8x8], list))
                     continue;
                 for (int blk4x4 = 0; blk4x4 < 4; blk4x4++) {
                     int i = BLK_INV_MAP[(blk8x8 << 2) + blk4x4];

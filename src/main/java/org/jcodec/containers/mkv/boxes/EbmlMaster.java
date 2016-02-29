@@ -23,7 +23,7 @@ public class EbmlMaster extends EbmlBase {
     public final ArrayList<EbmlBase> children;
     
     public EbmlMaster(byte[] id) {
-        super();
+        super(id);
         this.children = new ArrayList<EbmlBase>();
         this.id = id;
     }

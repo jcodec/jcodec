@@ -120,7 +120,7 @@ public class AVIReader {
                                        // it
 
     public AVIReader(SeekableByteChannel src) {
-        this.raf = new DataReader(src, ByteOrder.LITTLE_ENDIAN);
+        this.raf = DataReader.createDataReader(src, ByteOrder.LITTLE_ENDIAN);
         this.aviIndexes = new ArrayList<AVITag_AviIndex>();
 
     }

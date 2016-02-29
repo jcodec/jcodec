@@ -27,10 +27,10 @@ public class MkvSegment extends EbmlMaster {
         super(id);
     }
     
-    public MkvSegment() {
-        super(Segment.id);
+    public static MkvSegment createMkvSegment() {
+        return new MkvSegment(Segment.id);
     }
-
+ 
     public ByteBuffer getHeader() {
         long headerSize = getHeaderSize();
         

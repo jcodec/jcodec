@@ -30,7 +30,8 @@ public class PMTSection extends PSISection {
     private PMTStream[] streams;
 
     public PMTSection(PSISection psi, int pcrPid, Tag[] tags, PMTStream[] streams) {
-        super(psi);
+        super(psi.tableId, psi.specificId, psi.versionNumber, psi.currentNextIndicator, psi.sectionNumber,
+                psi.lastSectionNumber);
         this.pcrPid = pcrPid;
         this.tags = tags;
         this.streams = streams;

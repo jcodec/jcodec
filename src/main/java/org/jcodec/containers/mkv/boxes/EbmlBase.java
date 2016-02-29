@@ -3,6 +3,7 @@ package org.jcodec.containers.mkv.boxes;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.MKVType;
 import org.jcodec.containers.mkv.util.EbmlUtil;
@@ -25,8 +26,10 @@ public abstract class EbmlBase {
     public long offset;
     public long dataOffset;
     public int typeSizeLength;
-    public EbmlBase() {
-        this.id = new byte[]{ 0x00 };
+    
+    @UsedViaReflection
+    public EbmlBase(byte[] id) {
+        this.id = id;
     }
     
     public boolean equalId(byte[] typeId) {

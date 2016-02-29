@@ -28,6 +28,7 @@ import org.jcodec.scale.Transform8Bit;
  * @author The JCodec project
  */
 public class SequenceEncoder8Bit {
+
     private SeekableByteChannel ch;
     private Picture8Bit toEncode;
     private Transform8Bit transform;
@@ -41,8 +42,8 @@ public class SequenceEncoder8Bit {
     private ByteBuffer sps;
     private ByteBuffer pps;
 
-    public SequenceEncoder8Bit(File out) throws IOException {
-        this(NIOUtils.writableChannel(out));
+    public static SequenceEncoder8Bit createSequenceEncoder8Bit(File out) throws IOException {
+        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out));
     }
     
     public SequenceEncoder8Bit(SeekableByteChannel ch) throws IOException {

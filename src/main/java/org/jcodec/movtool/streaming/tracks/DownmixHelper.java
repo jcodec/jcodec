@@ -1,5 +1,6 @@
 package org.jcodec.movtool.streaming.tracks;
 
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
 import org.jcodec.containers.mp4.boxes.channel.Label;
 import org.jcodec.movtool.streaming.AudioCodecMeta;
+import static org.jcodec.containers.mp4.boxes.channel.Label.*;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,44 +47,28 @@ public class DownmixHelper {
                 if (solo != null && !solo[tr][ch])
                     continue;
                 tmp.add(ch);
-                switch (channels[ch]) {
-                case Left:
-                case LeftTotal:
-                case LeftCenter:
+                Label label = channels[ch];
+                if (label == Left || label == LeftTotal || label == LeftCenter) {
                     matrixBuilder.add(new float[] { 1f, 0f });
                     countsBuilder.add(new int[] { 1, 0 });
-                    break;
-                case LeftSurround:
-                case RearSurroundLeft:
+                } else if (label == LeftSurround || label == RearSurroundLeft ) {
                     matrixBuilder.add(new float[] { .7f, 0f });
                     countsBuilder.add(new int[] { 1, 0 });
-                    break;
-                case Right:
-                case RightTotal:
-                case RightCenter:
+                } else if (label == Right || label == RightTotal || label == RightCenter ) {
                     matrixBuilder.add(new float[] { 0f, 1f });
                     countsBuilder.add(new int[] { 0, 1 });
-                    break;
-                case RightSurround:
-                case RearSurroundRight:
+                } else if (label == RightSurround || label == RearSurroundRight ) {
                     matrixBuilder.add(new float[] { 0f, .7f });
                     countsBuilder.add(new int[] { 0, 1 });
-                    break;
-                case Mono:
-                case LFEScreen:
-                case Center:
-                case LFE2:
-                case Discrete:
+                } else if (label == Mono || label == LFEScreen || label == Center || label == LFE2 || label == Discrete ) {
                     matrixBuilder.add(new float[] { .7f, .7f });
                     countsBuilder.add(new int[] { 1, 1 });
-                    break;
-                case Unused:
-                    break;
-                default:
-                    if((channels[ch].getVal() >>> 16) == 1) {
+                } else if (label == Unused) {
+                } else {
+                    if((label.getVal() >>> 16) == 1) {
                         matrixBuilder.add(new float[] { .7f, .7f });
                         countsBuilder.add(new int[] { 1, 1 });
-                        Logger.info("Discrete" + (channels[ch].getVal() & 0xffff));
+                        Logger.info("Discrete" + (label.getVal() & 0xffff));
                     }
                 }
             }

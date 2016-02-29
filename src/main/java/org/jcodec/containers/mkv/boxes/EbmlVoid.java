@@ -15,7 +15,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 public class EbmlVoid extends EbmlBase {
 
     public EbmlVoid(byte[] id) {
-        this.id = id;
+        super(id);
     }
 
     @Override

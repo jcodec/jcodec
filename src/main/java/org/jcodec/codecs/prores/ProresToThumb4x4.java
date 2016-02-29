@@ -64,7 +64,7 @@ public class ProresToThumb4x4 extends ProresDecoder {
                     interlaced_scan_4x4, fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
 
-        return new Picture8Bit(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
+        return Picture8Bit.createPicture8Bit(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
                 : ColorSpace.YUV444);
     }
 
