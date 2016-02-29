@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.mpeg4.es.DecoderConfig;
 import org.jcodec.codecs.mpeg4.es.DecoderSpecific;
 import org.jcodec.codecs.mpeg4.es.Descriptor;
+import org.jcodec.codecs.mpeg4.es.DescriptorFactory;
 import org.jcodec.codecs.mpeg4.es.ES;
 import org.jcodec.codecs.mpeg4.es.SL;
 import org.jcodec.common.io.BitWriter;
@@ -52,15 +53,15 @@ public class EsdsBox extends FullBox {
 
     public void parse(ByteBuffer input) {
         super.parse(input);
-        ES es = (ES) Descriptor.read(input);
+        ES es = (ES) DescriptorFactory.read(input);
 
         trackId = es.getTrackId();
-        DecoderConfig decoderConfig = Descriptor.find(es, DecoderConfig.class, DecoderConfig.tag());
+        DecoderConfig decoderConfig = DescriptorFactory.find(es, DecoderConfig.class, DecoderConfig.tag());
         objectType = decoderConfig.getObjectType();
         bufSize = decoderConfig.getBufSize();
         maxBitrate = decoderConfig.getMaxBitrate();
         avgBitrate = decoderConfig.getAvgBitrate();
-        DecoderSpecific decoderSpecific = Descriptor.find(decoderConfig, DecoderSpecific.class, DecoderSpecific.tag());
+        DecoderSpecific decoderSpecific = DescriptorFactory.find(decoderConfig, DecoderSpecific.class, DecoderSpecific.tag());
         streamInfo = decoderSpecific.getData();
     }
 

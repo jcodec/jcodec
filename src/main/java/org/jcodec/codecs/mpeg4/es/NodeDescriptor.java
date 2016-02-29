@@ -35,7 +35,7 @@ public class NodeDescriptor extends Descriptor {
     protected void parse(ByteBuffer input) {
         Descriptor d;
         do {
-            d = Descriptor.read(input);
+            d = DescriptorFactory.read(input);
             if (d != null)
                 children.add(d);
         } while (d != null);
