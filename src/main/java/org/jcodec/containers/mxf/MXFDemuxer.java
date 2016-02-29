@@ -462,7 +462,9 @@ public class MXFDemuxer {
             else
                 return null;
 
-            for (MXFCodecMapping codec : EnumSet.allOf(MXFConst.MXFCodecMapping.class)) {
+            MXFCodecMapping[] values = MXFConst.MXFCodecMapping.values();
+            for (int i = 0; i < values.length; i++) {
+                MXFCodecMapping codec = values[i];
                 if (codec.getUl().maskEquals(codecUL, 0xff7f))
                     return codec;
             }
