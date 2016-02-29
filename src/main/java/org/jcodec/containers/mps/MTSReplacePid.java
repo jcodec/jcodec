@@ -12,7 +12,6 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
-import org.jcodec.containers.mps.MTSUtils.StreamType;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PSISection;
 
@@ -76,7 +75,7 @@ public class MTSReplacePid extends MTSUtils.TSReader {
 
             while (buf.remaining() > 4) {
                 byte streamType = buf.get();
-                StreamType fromTag = MTSUtils.StreamType.fromTag(streamType);
+                MTSStreamType fromTag = MTSStreamType.fromTag(streamType);
                 System.out.print((fromTag == null ? "UNKNOWN" : fromTag) + "(" + String.format("0x%02x", streamType)
                         + "):\t");
                 int wn = buf.getShort() & 0xffff;

@@ -5,9 +5,7 @@ import static org.jcodec.common.io.NIOUtils.getRel;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
@@ -26,88 +24,6 @@ import org.jcodec.containers.mps.psi.PSISection;
  * 
  */
 public class MTSUtils {
-    public final static class StreamType {
-        private final static List<StreamType> _values = new ArrayList<StreamType>();
-
-        public final static StreamType RESERVED = new StreamType(0x0, false, false);
-        public final static StreamType VIDEO_MPEG1 = new StreamType(0x01, true, false);
-        public final static StreamType VIDEO_MPEG2 = new StreamType(0x02, true, false);
-        public final static StreamType AUDIO_MPEG1 = new StreamType(0x03, false, true);
-        public final static StreamType AUDIO_MPEG2 = new StreamType(0x04, false, true);
-        public final static StreamType PRIVATE_SECTION = new StreamType(0x05, false, false);
-        public final static StreamType PRIVATE_DATA = new StreamType(0x06, false, false);
-        public final static StreamType MHEG = new StreamType(0x7, false, false);
-        public final static StreamType DSM_CC = new StreamType(0x8, false, false);
-        public final static StreamType ATM_SYNC = new StreamType(0x9, false, false);
-        public final static StreamType DSM_CC_A = new StreamType(0xa, false, false);
-        public final static StreamType DSM_CC_B = new StreamType(0xb, false, false);
-        public final static StreamType DSM_CC_C = new StreamType(0xc, false, false);
-        public final static StreamType DSM_CC_D = new StreamType(0xd, false, false);
-        public final static StreamType MPEG_AUX = new StreamType(0xe, false, false);
-        public final static StreamType AUDIO_AAC_ADTS = new StreamType(0x0f, false, true);
-        public final static StreamType VIDEO_MPEG4 = new StreamType(0x10, true, false);
-        public final static StreamType AUDIO_AAC_LATM = new StreamType(0x11, false, true);
-        public final static StreamType FLEXMUX_PES = new StreamType(0x12, false, false);
-        public final static StreamType FLEXMUX_SEC = new StreamType(0x13, false, false);
-        public final static StreamType DSM_CC_SDP = new StreamType(0x14, false, false);
-        public final static StreamType META_PES = new StreamType(0x15, false, false);
-        public final static StreamType META_SEC = new StreamType(0x16, false, false);
-        public final static StreamType DSM_CC_DATA_CAROUSEL = new StreamType(0x17, false, false);
-        public final static StreamType DSM_CC_OBJ_CAROUSEL = new StreamType(0x18, false, false);
-        public final static StreamType DSM_CC_SDP1 = new StreamType(0x19, false, false);
-        public final static StreamType IPMP = new StreamType(0x1a, false, false);
-        public final static StreamType VIDEO_H264 = new StreamType(0x1b, true, false);
-        public final static StreamType AUDIO_AAC_RAW = new StreamType(0x1c, false, true);
-        public final static StreamType SUBS = new StreamType(0x1d, false, false);
-        public final static StreamType AUX_3D = new StreamType(0x1e, false, false);
-        public final static StreamType VIDEO_AVC_SVC = new StreamType(0x1f, true, false);
-        public final static StreamType VIDEO_AVC_MVC = new StreamType(0x20, true, false);
-        public final static StreamType VIDEO_J2K = new StreamType(0x21, true, false);
-        public final static StreamType VIDEO_MPEG2_3D = new StreamType(0x22, true, false);
-        public final static StreamType VIDEO_H264_3D = new StreamType(0x23, true, false);
-        public final static StreamType VIDEO_CAVS = new StreamType(0x42, false, true);
-        public final static StreamType IPMP_STREAM = new StreamType(0x7f, false, false);
-        public final static StreamType AUDIO_AC3 = new StreamType(0x81, false, true);
-        public final static StreamType AUDIO_DTS = new StreamType(0x8a, false, true);
-
-        private int tag;
-        private boolean video;
-        private boolean audio;
-
-        private StreamType(int tag, boolean video, boolean audio) {
-            this.tag = tag;
-            this.video = video;
-            this.audio = audio;
-            _values.add(this);
-        }
-
-        public static StreamType[] values() {
-            return _values.toArray(new StreamType[0]);
-        }
-
-        public static StreamType fromTag(int streamTypeTag) {
-            StreamType[] values = values();
-            for (int i = 0; i < values.length; i++) {
-                StreamType streamType = values[i];
-                if (streamType.tag == streamTypeTag)
-                    return streamType;
-            }
-            return null;
-        }
-
-        public int getTag() {
-            return tag;
-        }
-
-        public boolean isVideo() {
-            return video;
-        }
-
-        public boolean isAudio() {
-            return audio;
-        }
-    };
-
     /**
      * Parses PAT ( Program Association Table )
      * 
