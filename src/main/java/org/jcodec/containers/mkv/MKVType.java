@@ -54,7 +54,7 @@ public final static MKVType       DocType = new MKVType(new byte[]{0x42, (byte)0
 public final static MKVType       DocTypeVersion = new MKVType(new byte[]{0x42, (byte)0x87}, EbmlUint.class);
 public final static MKVType       DocTypeReadVersion = new MKVType(new byte[]{0x42, (byte)0x85}, EbmlUint.class);
 public final static MKVType 
-    Segment = new MKVType(new byte[]{0x18, 0x53, (byte)0x80, 0x67}, MkvSegment.class);
+    Segment = new MKVType(MkvSegment.SEGMENT_ID, MkvSegment.class);
 public final static MKVType       SeekHead = new MKVType(new byte[]{0x11, 0x4D, (byte)0x9B, 0x74}, EbmlMaster.class);
 public final static MKVType         Seek = new MKVType(new byte[]{0x4D, (byte)0xBB}, EbmlMaster.class);
 public final static MKVType           SeekID = new MKVType(new byte[]{0x53, (byte)0xAB}, EbmlBin.class);
@@ -101,11 +101,11 @@ public final static MKVType          Position = new MKVType(new byte[]{(byte)0xA
          // Size of the previous Cluster, in octets. Can be useful for backward playing.
 public final static MKVType          PrevSize = new MKVType(new byte[]{(byte)0xAB}, EbmlUint.class);  
          //Similar to Block but without all the extra information, mostly used to reduced overhead when no extra feature is needed. (see SimpleBlock Structure)
-public final static MKVType          SimpleBlock = new MKVType(new byte[]{(byte)0xA3}, MkvBlock.class); 
+public final static MKVType          SimpleBlock = new MKVType(MkvBlock.SIMPLEBLOCK_ID, MkvBlock.class); 
          //Basic container of information containing a single Block or BlockVirtual, and information specific to that Block/VirtualBlock.
 public final static MKVType          BlockGroup = new MKVType(new byte[]{(byte)0xA0}, EbmlMaster.class); 
            // Block containing the actual data to be rendered and a timecode relative to the Cluster Timecode. (see Block Structure)
-public final static MKVType            Block = new MKVType(new byte[]{(byte)0xA1}, MkvBlock.class); 
+public final static MKVType            Block = new MKVType(MkvBlock.BLOCK_ID, MkvBlock.class); 
            // Contain additional blocks to complete the main one. An EBML parser that has no knowledge of the Block structure could still see and use/skip these data.
 public final static MKVType            BlockAdditions = new MKVType(new byte[]{0x75, (byte) 0xA1}, EbmlMaster.class); 
                //  Contain the BlockAdditional and some parameters.

@@ -1,8 +1,6 @@
 package org.jcodec.containers.mkv.boxes;
 
 import static java.lang.System.arraycopy;
-import static org.jcodec.containers.mkv.MKVType.Block;
-import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.convertToBytes;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.signedComplement;
 
@@ -39,6 +37,8 @@ public class MkvBlock extends EbmlBin {
     public boolean discardable;
     public boolean lacingPresent;
     public ByteBuffer[] frames;
+    public static final byte[] BLOCK_ID = new byte[]{(byte)0xA1};
+    public static final byte[] SIMPLEBLOCK_ID = new byte[]{(byte)0xA3};
 
     public static MkvBlock copy(MkvBlock old) {
         MkvBlock be = new MkvBlock(old.id);
@@ -61,7 +61,7 @@ public class MkvBlock extends EbmlBin {
     }
 
     public static MkvBlock keyFrame(long trackNumber, int timecode, ByteBuffer frame) {
-        MkvBlock be = new MkvBlock(SimpleBlock.id);
+        MkvBlock be = new MkvBlock(SIMPLEBLOCK_ID);
         be.frames = new ByteBuffer[] { frame };
         be.frameSizes = new int[] { frame.limit() };
         be._keyFrame = true;
@@ -72,7 +72,7 @@ public class MkvBlock extends EbmlBin {
 
     public MkvBlock(byte[] type) {
         super(type);
-        if (!Platform.arrayEqualsByte(SimpleBlock.id, type) && !Platform.arrayEqualsByte(Block.id, type))
+        if (!Platform.arrayEqualsByte(SIMPLEBLOCK_ID, type) && !Platform.arrayEqualsByte(BLOCK_ID, type))
             throw new IllegalArgumentException("Block initiated with invalid id: " + EbmlUtil.toHexString(type));
     }
     
