@@ -61,10 +61,10 @@ public class Picture8Bit {
     }
 
     public static Picture8Bit create(int width, int height, ColorSpace colorSpace) {
-        return create(width, height, colorSpace, null);
+        return createCropped(width, height, colorSpace, null);
     }
 
-    public static Picture8Bit create(int width, int height, ColorSpace colorSpace, Rect crop) {
+    public static Picture8Bit createCropped(int width, int height, ColorSpace colorSpace, Rect crop) {
         int[] planeSizes = new int[MAX_PLANES];
         for (int i = 0; i < colorSpace.nComp; i++) {
             planeSizes[colorSpace.compPlane[i]] += (width >> colorSpace.compWidth[i])
@@ -195,7 +195,7 @@ public class Picture8Bit {
     }
 
     public static Picture8Bit fromPicture(Picture pic) {
-        Picture8Bit create = Picture8Bit.create(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
+        Picture8Bit create = Picture8Bit.createCropped(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
 
         for (int i = 0; i < Math.min(pic.getData().length, create.getData().length); i++) {
             for (int j = 0; j < Math.min(pic.getData()[i].length, create.getData()[i].length); j++) {
