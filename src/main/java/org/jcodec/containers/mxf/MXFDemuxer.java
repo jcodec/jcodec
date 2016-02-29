@@ -66,10 +66,19 @@ public class MXFDemuxer {
         timecode = MXFUtil.findMeta(metadata, TimecodeComponent.class);
     }
 
-    public enum OP {
-        OP1a(1, 1), OP1b(1, 2), OP1c(1, 3), OP2a(2, 1), OP2b(2, 2), OP2c(2, 3), OP3a(3, 1), OP3b(3, 2), OP3c(3, 3), OPAtom(
-                0x10, 0);
+    public static final class OP {
+        public final static OP OP1a = new OP(1, 1);
+        public final static OP OP1b = new OP(1, 2);
+        public final static OP OP1c = new OP(1, 3);
+        public final static OP OP2a = new OP(2, 1);
+        public final static OP OP2b = new OP(2, 2);
+        public final static OP OP2c = new OP(2, 3);
+        public final static OP OP3a = new OP(3, 1);
+        public final static OP OP3b = new OP(3, 2);
+        public final static OP OP3c = new OP(3, 3);
+        public final static OP OPAtom = new OP(0x10, 0);
 
+        private final static OP[] _values = new OP[] { OP1a, OP1b, OP1c, OP2a, OP2b, OP2c, OP3a, OP3b, OP3c, OPAtom };
         public int major;
         public int minor;
 
@@ -77,13 +86,18 @@ public class MXFDemuxer {
             this.major = major;
             this.minor = minor;
         }
+
+        public static OP[] values() {
+            return _values;
+        }
     }
 
     public OP getOp() {
         UL op = header.getPack().getOp();
 
-        EnumSet<OP> allOf = EnumSet.allOf(OP.class);
-        for (OP op2 : allOf) {
+        OP[] values = OP.values();
+        for (int i = 0; i < values.length; i++) {
+            OP op2 = values[i];
             if (op.get(12) == op2.major && op.get(13) == op2.minor)
                 return op2;
         }
