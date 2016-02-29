@@ -1,7 +1,6 @@
 package org.jcodec.containers.mkv.boxes;
 
 import static org.jcodec.containers.mkv.MKVType.Cluster;
-import static org.jcodec.containers.mkv.MKVType.Segment;
 import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlEncode;
 import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlLength;
 
@@ -22,13 +21,14 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
 public class MkvSegment extends EbmlMaster {
     
     int headerSize = 0;
+    public static final byte[] SEGMENT_ID = new byte[]{0x18, 0x53, (byte)0x80, 0x67};
 
     public MkvSegment(byte[] id) {
         super(id);
     }
     
     public static MkvSegment createMkvSegment() {
-        return new MkvSegment(Segment.id);
+        return new MkvSegment(SEGMENT_ID);
     }
  
     public ByteBuffer getHeader() {
