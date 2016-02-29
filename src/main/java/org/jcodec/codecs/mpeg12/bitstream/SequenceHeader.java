@@ -16,9 +16,6 @@ import org.jcodec.common.io.BitWriter;
  */
 public class SequenceHeader implements MPEGHeader {
 
-    public static final int Sequence_Extension = 0x1;
-    public static final int Sequence_Display_Extension = 0x2;
-    public static final int Sequence_Scalable_Extension = 0x5;
     private static boolean _hasExtensions;
 
     public int horizontal_size;
@@ -87,13 +84,13 @@ public class SequenceHeader implements MPEGHeader {
         BitReader _in = BitReader.createBitReader(bb);
         int extType = _in.readNBit(4);
         switch (extType) {
-        case Sequence_Extension:
+        case SequenceExtension.Sequence_Extension:
             sh.sequenceExtension = SequenceExtension.read(_in);
             break;
-        case Sequence_Scalable_Extension:
+        case SequenceScalableExtension.Sequence_Scalable_Extension:
             sh.sequenceScalableExtension = SequenceScalableExtension.read(_in);
             break;
-        case Sequence_Display_Extension:
+        case SequenceDisplayExtension.Sequence_Display_Extension:
             sh.sequenceDisplayExtension = SequenceDisplayExtension.read(_in);
             break;
         default:

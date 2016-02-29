@@ -17,6 +17,7 @@ public class SequenceDisplayExtension implements MPEGHeader {
     public int display_horizontal_size;
     public int display_vertical_size;
     public ColorDescription colorDescription;
+    public static final int Sequence_Display_Extension = 0x2;
 
     public static class ColorDescription {
         int colour_primaries;
@@ -54,7 +55,7 @@ public class SequenceDisplayExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(SequenceHeader.Sequence_Display_Extension, 4);
+        bw.writeNBit(SequenceDisplayExtension.Sequence_Display_Extension, 4);
         
         bw.writeNBit(video_format, 3);
         bw.write1Bit(colorDescription != null ? 1 : 0);

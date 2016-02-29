@@ -240,14 +240,14 @@ public class MPSDump {
             if (picHeader == null) {
                 if (sequenceHeader != null) {
                     switch (extType) {
-                    case SequenceHeader.Sequence_Extension:
+                    case SequenceExtension.Sequence_Extension:
                         sequenceExtension = SequenceExtension.read(_in);
                         dumpSequenceExtension(sequenceExtension);
                         break;
-                    case SequenceHeader.Sequence_Scalable_Extension:
+                    case SequenceScalableExtension.Sequence_Scalable_Extension:
                         dumpSequenceScalableExtension(SequenceScalableExtension.read(_in));
                         break;
-                    case SequenceHeader.Sequence_Display_Extension:
+                    case SequenceDisplayExtension.Sequence_Display_Extension:
                         dumpSequenceDisplayExtension(SequenceDisplayExtension.read(_in));
                         break;
                     default:
