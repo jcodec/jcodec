@@ -33,7 +33,7 @@ public class NodeDescriptor extends Descriptor {
         Collection<Descriptor> children = new ArrayList<Descriptor>();
         Descriptor d;
         do {
-            d = Descriptor.read(input);
+            d = DescriptorFactory.read(input);
             if (d != null)
                 children.add(d);
         } while (d != null);
