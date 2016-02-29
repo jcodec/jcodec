@@ -324,7 +324,7 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+    public static Picture8Bit getNativeFrameAtFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
         return new FrameGrab8Bit(vt, decoder).seekToFramePrecise(frameNumber).getNativeFrame();
     }
