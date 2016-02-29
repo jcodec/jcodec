@@ -11,9 +11,9 @@ import org.jcodec.containers.mp4.boxes.FileTypeBox;
  * @author The JCodec project
  *
  */
-public enum Brand {
-    MOV("qt  ", 0x00000200, new String[] { "qt  " }), MP4("isom", 0x00000200, new String[] { "isom", "iso2", "avc1",
-            "mp41" });
+public final class Brand {
+    public final static Brand MOV = new Brand("qt  ", 0x00000200, new String[] { "qt  " });
+    public final static Brand MP4 = new Brand("isom", 0x00000200, new String[] { "isom", "iso2", "avc1", "mp41" });
 
     private FileTypeBox ftyp;
 
