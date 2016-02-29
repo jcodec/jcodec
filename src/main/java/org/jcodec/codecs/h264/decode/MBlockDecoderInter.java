@@ -47,7 +47,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int address = mapper.getAddress(mBlock.mbIdx);
         int[][][] x = new int[2][][];
         int xx = mbX << 2;
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
+
         for (int list = 0; list < 2; list++) {
             predictInter16x16(mBlock, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, x, xx, list, p0);
@@ -191,7 +191,6 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int[][][] x = new int[2][][];
         int xx = mbX << 2;
 
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
         for (int list = 0; list < 2; list++) {
             predictInter16x8(mBlock, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, xx, x, p0, p1, list);
@@ -227,7 +226,6 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int address = mapper.getAddress(mBlock.mbIdx);
 
         int[][][] x = new int[2][][];
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
 
         for (int list = 0; list < 2; list++) {
             predictInter8x16(mBlock, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,

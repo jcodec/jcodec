@@ -133,8 +133,6 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
 
         int blk8x8X = mbX << 1;
 
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
-
         PartPred[] _pp = new PartPred[4];
         for (int i = 0; i < 4; i++) {
             if (p[i] == Direct)

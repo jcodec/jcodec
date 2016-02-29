@@ -54,6 +54,7 @@ public class H264Decoder extends VideoDecoder {
     private FrameReader reader;
     private ExecutorService tp;
     private boolean threaded;
+    private DeblockerInput di;
 
     public H264Decoder() {
         pictureBuffer = new ArrayList<Frame>();
@@ -93,10 +94,10 @@ public class H264Decoder extends VideoDecoder {
 
     @Override
     public Frame decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
-        return doDecodeFrame8Bit(H264Utils.splitFrame(data), buffer);
+        return decodeFrame8BitFromNals(H264Utils.splitFrame(data), buffer);
     }
 
-    private Frame doDecodeFrame8Bit(List<ByteBuffer> nalUnits, byte[][] buffer) {
+    public Frame decodeFrame8BitFromNals(List<ByteBuffer> nalUnits, byte[][] buffer) {
         return new FrameDecoder(this).decodeFrame(nalUnits, buffer);
     }
 
@@ -118,7 +119,7 @@ public class H264Decoder extends VideoDecoder {
         }
 
         public void run() {
-            new SliceDecoder(fdec.activeSps, fdec.dec.sRefs, fdec.dec.lRefs, fdec.di, result)
+            new SliceDecoder(fdec.activeSps, fdec.dec.sRefs, fdec.dec.lRefs, fdec.dec.di, result)
                     .decodeFromReader(sliceReader);
         }
     }
@@ -128,7 +129,6 @@ public class H264Decoder extends VideoDecoder {
         private DeblockingFilter filter;
         private SliceHeader firstSliceHeader;
         private NALUnit firstNu;
-        private DeblockerInput di;
         private H264Decoder dec;
 
         public FrameDecoder(H264Decoder decoder) {
@@ -152,7 +152,7 @@ public class H264Decoder extends VideoDecoder {
 
             } else {
                 for (SliceReader sliceReader : sliceReaders) {
-                    new SliceDecoder(activeSps, dec.sRefs, dec.lRefs, di, result).decodeFromReader(sliceReader);
+                    new SliceDecoder(activeSps, dec.sRefs, dec.lRefs, dec.di, result).decodeFromReader(sliceReader);
                 }
             }
 
@@ -191,18 +191,21 @@ public class H264Decoder extends VideoDecoder {
             firstSliceHeader = sliceReader.getSliceHeader();
             activeSps = firstSliceHeader.sps;
             int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
+            int picHeightInMbs = getPicHeightInMbs(activeSps);
 
             if (dec.sRefs == null) {
                 dec.sRefs = new Frame[1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4)];
                 dec.lRefs = new IntObjectMap<Frame>();
             }
 
-            di = new DeblockerInput(activeSps);
+            if (dec.di == null || dec.di.picWidthInMbs != picWidthInMbs || dec.di.picHeightInMbs != picHeightInMbs) {
+                dec.di = new DeblockerInput(activeSps);
+            }
 
-            Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type, di.mvs, di.refsUsed, dec.poc
-                    .calcPOC(firstSliceHeader, firstNu));
+            Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type,
+                    dec.di.mvs, dec.di.refsUsed, dec.poc.calcPOC(firstSliceHeader, firstNu));
 
-            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, di);
+            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, dec.di);
 
             return result;
         }
