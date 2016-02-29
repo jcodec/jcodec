@@ -741,11 +741,6 @@ public class MPEGDecoder extends VideoDecoder {
     public VideoDecoder downscaled(int ratio) {
         if(ratio == 1)
             return this;
-        else if(ratio == 2)
-            return new Mpeg2Thumb4x4();
-        else if(ratio == 4)
-            return new Mpeg2Thumb2x2();
-        else
-            return null;
+        return null;
     }
 }

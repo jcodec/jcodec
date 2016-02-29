@@ -3,8 +3,6 @@ package org.jcodec.common.logging;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.common.logging.Logger.Message;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -13,7 +11,7 @@ import org.jcodec.common.logging.Logger.Message;
  * 
  * @author The JCodec project
  */
-public class BufferLogSink implements Logger.LogSink {
+public class BufferLogSink implements LogSink {
 
     private List<Message> messages;
     
