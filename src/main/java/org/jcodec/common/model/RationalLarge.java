@@ -1,7 +1,7 @@
 package org.jcodec.common.model;
 
 import static org.jcodec.common.StringUtils.splitS;
-import static org.jcodec.common.tools.MathUtil.reduceLong;
+import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -12,8 +12,8 @@ import static org.jcodec.common.tools.MathUtil.reduceLong;
  */
 public class RationalLarge {
 
-    public static final Rational ONE = new Rational(1, 1);
-    public static final Rational HALF = new Rational(1, 2);
+    public static final RationalLarge ONE = new RationalLarge(1, 1);
+    public static final RationalLarge HALF = new RationalLarge(1, 2);
     public static final RationalLarge ZERO = new RationalLarge(0, 1);
 
     final long num;
@@ -177,5 +177,10 @@ public class RationalLarge {
     @Override
     public String toString() {
         return num + ":" + den;
+    }
+
+    public static RationalLarge reduceLong(long num, long den) {
+        long gcd = MathUtil.gcdLong(num, den);
+        return new RationalLarge(num / gcd, den / gcd);
     }
 }

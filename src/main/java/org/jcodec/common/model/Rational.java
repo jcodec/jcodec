@@ -1,8 +1,10 @@
 package org.jcodec.common.model;
 
 import static org.jcodec.common.StringUtils.splitS;
-import static org.jcodec.common.tools.MathUtil.reduce;
-import static org.jcodec.common.tools.MathUtil.reduceLong;
+import static org.jcodec.common.model.RationalLarge.reduceLong;
+
+import org.jcodec.common.tools.MathUtil;
+
 
 
 /**
@@ -181,5 +183,14 @@ public class Rational {
 
     public int scalarClip() {
         return num / den;
+    }
+
+    public static Rational reduce(int num, int den) {
+        int gcd = MathUtil.gcd(num, den);
+        return new Rational(num / gcd, den / gcd);
+    }
+
+    public static Rational reduceRational(Rational r) {
+        return reduce(r.getNum(), r.getDen());
     }
 }
