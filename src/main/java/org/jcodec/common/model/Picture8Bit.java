@@ -25,10 +25,10 @@ public class Picture8Bit {
 
     private Rect crop;
 
-    public Picture8Bit(int width, int height, byte[][] data, ColorSpace color) {
-        this(width, height, data, color, new Rect(0, 0, width, height));
+    public static Picture8Bit createPicture8Bit(int width, int height, byte[][] data, ColorSpace color) {
+        return new Picture8Bit(width, height, data, color, new Rect(0, 0, width, height));
     }
-
+    
     public Picture8Bit(int width, int height, byte[][] data, ColorSpace color, Rect crop) {
         this.width = width;
         this.height = height;
@@ -56,10 +56,10 @@ public class Picture8Bit {
         }
     }
 
-    public Picture8Bit(Picture8Bit other) {
-        this(other.width, other.height, other.data, other.color, other.crop);
+    public static Picture8Bit copyPicture8Bit(Picture8Bit other) {
+        return new Picture8Bit(other.width, other.height, other.data, other.color, other.crop);
     }
-
+    
     public static Picture8Bit create(int width, int height, ColorSpace colorSpace) {
         return createCropped(width, height, colorSpace, null);
     }
@@ -212,7 +212,7 @@ public class Picture8Bit {
         return toPictureInternal(bitDepth, create);
     }
 
-    public Picture toPicture(int bitDepth, int[][] buffer) {
+    public Picture toPictureWithBuffer(int bitDepth, int[][] buffer) {
         Picture create = new Picture(width, height, buffer, color, bitDepth, crop);
 
         return toPictureInternal(bitDepth, create);

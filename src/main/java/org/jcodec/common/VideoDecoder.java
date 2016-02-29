@@ -27,7 +27,7 @@ abstract public class VideoDecoder {
     @Deprecated
     public Picture decodeFrame(ByteBuffer data, int[][] buffer) {
         Picture8Bit frame = decodeFrame8Bit(data, getSameSizeBuffer(buffer));
-        return frame == null ? null : frame.toPicture(8, buffer);
+        return frame == null ? null : frame.toPictureWithBuffer(8, buffer);
     }
     
     /**

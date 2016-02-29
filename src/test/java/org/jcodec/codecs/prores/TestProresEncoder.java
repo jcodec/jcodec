@@ -75,7 +75,7 @@ public class TestProresEncoder {
         byte[] Y = randomByteArray(4096, (byte)1, (byte)254);
         byte[] U = randomByteArray(2048, (byte)1, (byte)254);
         byte[] V = randomByteArray(2048, (byte)1, (byte)254);
-        Picture8Bit picture = new Picture8Bit(64, 64, new byte[][] { Y, U, V }, ColorSpace.YUV422);
+        Picture8Bit picture = Picture8Bit.createPicture8Bit(64, 64, new byte[][] { Y, U, V }, ColorSpace.YUV422);
 
         ByteBuffer buf = ByteBuffer.allocate(64 * 64 * 6);
         new ProresEncoder(Profile.HQ, false).encodeFrame8Bit(picture, buf);
