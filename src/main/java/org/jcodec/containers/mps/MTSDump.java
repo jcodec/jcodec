@@ -1,9 +1,12 @@
 package org.jcodec.containers.mps;
 
+import static java.util.Arrays.asList;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,8 +36,8 @@ public class MTSDump extends MPSDump {
     private static final String STOP_AT = "stop-at";
 
     private int guid;
-    private ByteBuffer buf = ByteBuffer.allocate(188 * 1024);
-    private ByteBuffer tsBuf = ByteBuffer.allocate(188);
+    private ByteBuffer buf;
+    private ByteBuffer tsBuf;
     private int tsNo;
     private int globalPayload;
     private int[] payloads;
@@ -44,12 +47,15 @@ public class MTSDump extends MPSDump {
 
     public MTSDump(ReadableByteChannel ch, int targetGuid) {
         super(ch);
+        this.buf = ByteBuffer.allocate(188 * 1024);
+        this.tsBuf = ByteBuffer.allocate(188);
+
         this.guid = targetGuid;
         this.buf.position(buf.limit());
         this.tsBuf.position(tsBuf.limit());
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main2(String[] args) throws IOException {
         ReadableByteChannel ch = null;
         try {
             Cmd cmd = MainUtils.parseArguments(args);
@@ -57,15 +63,15 @@ public class MTSDump extends MPSDump {
                 HashMap<String, String> map = new HashMap<String, String>();
                 map.put(STOP_AT, "Stop reading at timestamp");
                 map.put(DUMP_FROM, "Start dumping from timestamp");
-                MainUtils.printHelp(map, "file name", "guid");
+                MainUtils.printHelp(map, asList("file name", "guid"));
                 return;
             } else if (cmd.args.length == 1) {
                 System.out.println("MTS programs:");
-                dumpProgramPids(NIOUtils.readableFileChannel(new File(cmd.args[0])));
+                dumpProgramPids(NIOUtils.readableChannel(new File(cmd.args[0])));
                 return;
             }
 
-            ch = NIOUtils.readableFileChannel(new File(cmd.args[0]));
+            ch = NIOUtils.readableChannel(new File(cmd.args[0]));
             Long dumpAfterPts = cmd.getLongFlag(DUMP_FROM);
             Long stopPts = cmd.getLongFlag(STOP_AT);
 
@@ -104,12 +110,12 @@ public class MTSDump extends MPSDump {
                 }
 
                 if (guid == 0) {
-                    PATSection pat = PATSection.parse(tsBuf);
+                    PATSection pat = PATSection.parsePAT(tsBuf);
                     IntIntMap programs = pat.getPrograms();
                     pmtPid = programs.values()[0];
                     printPat(pat);
                 } else if (guid == pmtPid) {
-                    PMTSection pmt = PMTSection.parse(tsBuf);
+                    PMTSection pmt = PMTSection.parsePMT(tsBuf);
                     printPmt(pmt);
                     return;
                 }
@@ -168,8 +174,8 @@ public class MTSDump extends MPSDump {
 
     @Override
     public int fillBuffer(ByteBuffer dst) throws IOException {
-        IntArrayList payloads = new IntArrayList();
-        IntArrayList nums = new IntArrayList();
+        IntArrayList payloads = IntArrayList.createIntArrayList();
+        IntArrayList nums = IntArrayList.createIntArrayList();
         int remaining = dst.remaining();
 
         try {

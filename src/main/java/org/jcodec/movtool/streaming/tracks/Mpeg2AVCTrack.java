@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
+import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.common.logging.Logger;
@@ -36,7 +37,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     private final int frameSize;
     protected VirtualTrack src;
     private CodecMeta se;
-    private ThreadLocal<MPEGToAVCTranscoder> transcoders = new ThreadLocal<MPEGToAVCTranscoder>();
+    private ThreadLocal<MPEGToAVCTranscoder> transcoders;
     int mbW;
     int mbH;
     int scaleFactor;
@@ -44,7 +45,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     int thumbHeight;
     private GOP gop;
     private GOP prevGop;
-    private VirtualPacket nextPacket;
+    private VirtualPacket _nextPacket;
 
     protected void checkFourCC(VirtualTrack srcTrack) {
         String fourcc = srcTrack.getCodecMeta().getFourcc();
@@ -57,13 +58,15 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     }
 
     public Mpeg2AVCTrack(VirtualTrack src) throws IOException {
+        this.transcoders = new ThreadLocal<MPEGToAVCTranscoder>();
+
         checkFourCC(src);
         this.src = src;
         H264FixedRateControl rc = new H264FixedRateControl(TARGET_RATE);
         H264Encoder encoder = new H264Encoder(rc);
 
-        nextPacket = src.nextPacket();
-        Size frameDim = MPEGDecoder.getSize(nextPacket.getData());
+        _nextPacket = src.nextPacket();
+        Size frameDim = MPEGDecoder.getSize(_nextPacket.getData());
 
         scaleFactor = selectScaleFactor(frameDim);
         thumbWidth = frameDim.getWidth() >> scaleFactor;
@@ -86,25 +89,25 @@ public class Mpeg2AVCTrack implements VirtualTrack {
 
     @Override
     public VirtualPacket nextPacket() throws IOException {
-        if (nextPacket == null)
+        if (_nextPacket == null)
             return null;
 
-        if (nextPacket.isKeyframe()) {
+        if (_nextPacket.isKeyframe()) {
             prevGop = gop;
-            gop = new GOP(this, nextPacket.getFrameNo(), prevGop);
+            gop = new GOP(this, _nextPacket.getFrameNo(), prevGop);
             if (prevGop != null)
                 prevGop.setNextGop(gop);
         }
 
-        VirtualPacket ret = gop.addPacket(nextPacket);
+        VirtualPacket ret = gop.addPacket(_nextPacket);
 
-        nextPacket = src.nextPacket();
+        _nextPacket = src.nextPacket();
 
         return ret;
     }
 
     private static class GOP {
-        private List<VirtualPacket> packets = new ArrayList<VirtualPacket>();
+        private List<VirtualPacket> packets;
         private ByteBuffer[] data;
         private int frameNo;
         private GOP nextGop;
@@ -113,6 +116,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
 		private Mpeg2AVCTrack track;
 
         public GOP(Mpeg2AVCTrack track, int frameNo, GOP prevGop) {
+            this.packets = new ArrayList<VirtualPacket>();
             this.track = track;
 			this.frameNo = frameNo;
             this.prevGop = prevGop;
@@ -148,7 +152,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                         VirtualPacket pkt = packets.get(i);
                         ByteBuffer pktData = pkt.getData();
                         int picType = getPicType(pktData.duplicate());
-                        if (picType != PictureHeader.BiPredictiveCoded) {
+                        if (picType != MPEGConst.BiPredictiveCoded) {
                             ++numRefs;
                         } else if (numRefs < 2) {
                             continue;
@@ -167,7 +171,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                             ByteBuffer pktData = pkt.getData();
 
                             int picType = getPicType(pktData.duplicate());
-                            if (picType != PictureHeader.BiPredictiveCoded)
+                            if (picType != MPEGConst.BiPredictiveCoded)
                                 ++numRefs;
                             if (numRefs >= 2)
                                 break;

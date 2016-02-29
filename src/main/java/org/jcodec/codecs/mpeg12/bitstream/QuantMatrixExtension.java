@@ -18,6 +18,7 @@ public class QuantMatrixExtension implements MPEGHeader {
     public int[] non_intra_quantiser_matrix;
     public int[] chroma_intra_quantiser_matrix;
     public int[] chroma_non_intra_quantiser_matrix;
+    public static final int Quant_Matrix_Extension = 0x3;
 
     public static QuantMatrixExtension read(BitReader _in) {
         QuantMatrixExtension qme = new QuantMatrixExtension();
@@ -43,7 +44,7 @@ public class QuantMatrixExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(PictureHeader.Quant_Matrix_Extension, 4);
+        bw.writeNBit(QuantMatrixExtension.Quant_Matrix_Extension, 4);
         
         bw.write1Bit(intra_quantiser_matrix != null ? 1 : 0);
         if (intra_quantiser_matrix != null)

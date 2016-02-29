@@ -1,6 +1,6 @@
 package org.jcodec.codecs.y4m;
 
-import static org.jcodec.common.StringUtils.split;
+import static org.jcodec.common.StringUtils.splitC;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -32,8 +32,8 @@ public class Y4MDecoder {
     private int bufSize;
 
     public Y4MDecoder(SeekableByteChannel is) throws IOException {
-        ByteBuffer buf = NIOUtils.fetchFrom(is, 2048);
-        String[] header = split(readLine(buf), ' ');
+        ByteBuffer buf = NIOUtils.fetchFromChannel(is, 2048);
+        String[] header = splitC(readLine(buf), ' ');
 
         if (!"YUV4MPEG2".equals(header[0])) {
             invalidFormat = "Not yuv4mpeg stream";
@@ -50,11 +50,11 @@ public class Y4MDecoder {
 
         String fpsStr = find(header, 'F');
         if (fpsStr != null) {
-            String[] numden = split(fpsStr, ':');
+            String[] numden = splitC(fpsStr, ':');
             fps = new Rational(Integer.parseInt(numden[0]), Integer.parseInt(numden[1]));
         }
 
-        is.position(buf.position());
+        is.setPosition(buf.position());
         bufSize = width * height * 2;
     }
 
@@ -62,7 +62,7 @@ public class Y4MDecoder {
         if (invalidFormat != null)
             throw new RuntimeException("Invalid input: " + invalidFormat);
         long pos = is.position();
-        ByteBuffer buf = NIOUtils.fetchFrom(is, 2048);
+        ByteBuffer buf = NIOUtils.fetchFromChannel(is, 2048);
         String frame = readLine(buf);
         if (frame == null || !frame.startsWith("FRAME"))
             return null;

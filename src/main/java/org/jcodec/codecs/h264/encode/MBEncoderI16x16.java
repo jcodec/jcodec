@@ -277,11 +277,11 @@ public class MBEncoderI16x16 {
         if (x == 0 && y == 0)
             dc = 0;
         else if (y == 0)
-            dc = (ArrayUtil.sum(leftRow[0]) + 8) >> 4;
+            dc = (ArrayUtil.sumByte(leftRow[0]) + 8) >> 4;
         else if (x == 0)
-            dc = (ArrayUtil.sum(topLine[0], x, 16) + 8) >> 4;
+            dc = (ArrayUtil.sumByte3(topLine[0], x, 16) + 8) >> 4;
         else
-            dc = (ArrayUtil.sum(leftRow[0]) + ArrayUtil.sum(topLine[0], x, 16) + 16) >> 5;
+            dc = (ArrayUtil.sumByte(leftRow[0]) + ArrayUtil.sumByte3(topLine[0], x, 16) + 16) >> 5;
 
         for (int i = 0; i < pred.length; i++)
             for (int j = 0; j < pred[i].length; j++)

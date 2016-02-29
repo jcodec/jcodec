@@ -34,20 +34,22 @@ public class MTSMediaInfo {
         final Map<Integer, MPSMediaInfo> pids = new HashMap<Integer, MPSMediaInfo>();
         final List<MPEGTrackMetadata> result = new ArrayList<MPEGTrackMetadata>();
         try {
-            ch = NIOUtils.readableFileChannel(f);
-            new MTSUtils.TSReader() {
+            ch = NIOUtils.readableChannel(f);
+            new MTSUtils.TSReader(false) {
                 private ByteBuffer pmtBuffer;
                 private int pmtPid = -1;
                 private boolean pmtDone;
 
-                protected boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos) {
+                @Override
+                protected boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
+                        ByteBuffer fullPkt) {
                     if (guid == 0) {
                         pmtPid = MTSUtils.parsePAT(tsBuf);
                     } else if (guid == pmtPid && !pmtDone) {
                         if (pmtBuffer == null) {
                             pmtBuffer = ByteBuffer.allocate(((tsBuf.duplicate().getInt() >> 8) & 0x3ff) + 3);
                         } else if (pmtBuffer.hasRemaining()) {
-                            NIOUtils.write(pmtBuffer, tsBuf, Math.min(pmtBuffer.remaining(), tsBuf.remaining()));
+                            NIOUtils.writeL(pmtBuffer, tsBuf, Math.min(pmtBuffer.remaining(), tsBuf.remaining()));
                         }
 
                         if (!pmtBuffer.hasRemaining()) {
@@ -81,7 +83,7 @@ public class MTSMediaInfo {
         return result;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         List<MPEGTrackMetadata> info = new MTSMediaInfo().getMediaInfo(new File(args[0]));
         for (MPEGTrackMetadata stream : info) {
             System.out.println(stream.codec);

@@ -31,7 +31,7 @@ public class TestWebmStreaming {
     private static final int CUES_START = 0x4D9;
     private static final int TWO_CUES_END = 0x4FB;
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
 
         File m1 = new File("src/test/resources/test.prores.mov");
 

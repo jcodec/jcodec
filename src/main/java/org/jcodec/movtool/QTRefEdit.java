@@ -20,8 +20,8 @@ public class QTRefEdit {
 
     protected final EditFactory[] factories;
 
-    public QTRefEdit(EditFactory... factories) {
-        this.factories = factories;
+    public QTRefEdit(EditFactory... arguments) {
+        this.factories = arguments;
     }
 
     public void execute(String[] args) throws Exception {
@@ -71,9 +71,9 @@ public class QTRefEdit {
             System.err.println("WARNING: Output file '" + output.getAbsolutePath() + "' exist, overwritting");
         }
 
-        MovieBox ref = MP4Util.createRefMovie(input);
+        MovieBox ref = MP4Util.createRefMovieFromFile(input);
         new CompoundMP4Edit(edits).apply(ref);
-        MP4Util.writeMovie(output, ref);
+        MP4Util.writeMovieToFile(output, ref);
         System.out.println("INFO: Created reference file: " + output.getAbsolutePath());
     }
 

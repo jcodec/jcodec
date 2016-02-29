@@ -18,23 +18,25 @@ import org.jcodec.common.io.NIOUtils;
  * 
  */
 public class FileTypeBox extends Box {
+    public FileTypeBox(Header header) {
+        super(header);
+        this.compBrands = new LinkedList<String>();
+    }
+
     private String majorBrand;
     private int minorVersion;
-    private Collection<String> compBrands = new LinkedList<String>();
+    private Collection<String> compBrands;
 
     public static String fourcc() {
         return "ftyp";
     }
 
-    public FileTypeBox(String majorBrand, int minorVersion, Collection<String> compBrands) {
-        super(new Header(fourcc()));
-        this.majorBrand = majorBrand;
-        this.minorVersion = minorVersion;
-        this.compBrands = compBrands;
-    }
-
-    public FileTypeBox() {
-        super(new Header(fourcc()));
+    public static FileTypeBox createFileTypeBox(String majorBrand, int minorVersion, Collection<String> compBrands) {
+        FileTypeBox ftyp = new FileTypeBox(new Header(fourcc()));
+        ftyp.majorBrand = majorBrand;
+        ftyp.minorVersion = minorVersion;
+        ftyp.compBrands = compBrands;
+        return ftyp;
     }
 
     public void parse(ByteBuffer input) {

@@ -12,6 +12,6 @@ import java.nio.FloatBuffer;
  */
 public interface AudioSink {
     
-    void write(FloatBuffer buffer) throws IOException;
+    void writeFloat(FloatBuffer buffer) throws IOException;
 
 }

@@ -3,8 +3,8 @@ package org.jcodec.movtool;
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.max;
 import static org.jcodec.common.JCodecUtil.removeExtension;
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
 import static org.jcodec.movtool.Util.forceEditList;
 
@@ -32,7 +32,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class Cut {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 1) {
             System.out
                     .println("Syntax: cut [-command arg]...[-command arg] [-self] <movie file>\n"
@@ -47,7 +47,7 @@ public class Cut {
         int shift = 0;
         while (true) {
             if ("-cut".equals(args[shift])) {
-                String[] pt = StringUtils.split(args[shift + 1], ":");
+                String[] pt = StringUtils.splitS(args[shift + 1], ":");
                 slices.add(new Slice(parseInt(pt[0]), parseInt(pt[1])));
                 if (pt.length > 2)
                     sliceNames.add(pt[2]);
@@ -66,20 +66,20 @@ public class Cut {
         SeekableByteChannel out = null;
         List<SeekableByteChannel> outs = new ArrayList<SeekableByteChannel>();
         try {
-            input = readableFileChannel(source);
+            input = readableChannel(source);
             MovieBox movie = createRefMovie(input, "file://" + source.getCanonicalPath());
             List<MovieBox> slicesMovs;
             if (!selfContained) {
-                out = writableFileChannel(new File(source.getParentFile(), removeExtension(source.getName())
+                out = writableChannel(new File(source.getParentFile(), removeExtension(source.getName())
                         + ".ref.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
                 MP4Util.writeMovie(out, movie);
             } else {
-                out = writableFileChannel(new File(source.getParentFile(), removeExtension(source.getName())
+                out = writableChannel(new File(source.getParentFile(), removeExtension(source.getName())
                         + ".self.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
                 new Strip().strip(movie);
-                new Flattern().flattern(movie, out);
+                new Flattern().flatternChannel(movie, out);
             }
             saveSlices(slicesMovs, sliceNames, source.getParentFile());
         } finally {
@@ -99,7 +99,7 @@ public class Cut {
                 continue;
             SeekableByteChannel out = null;
             try {
-                out = writableFileChannel(new File(parentFile, names.get(i)));
+                out = writableChannel(new File(parentFile, names.get(i)));
                 MP4Util.writeMovie(out, slices.get(i));
             } finally {
                 NIOUtils.closeQuietly(out);

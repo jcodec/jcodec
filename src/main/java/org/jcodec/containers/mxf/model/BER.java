@@ -39,7 +39,7 @@ public class BER {
         return length;
     }
 
-    public static long decodeLength(ByteBuffer buffer) {
+    public static long decodeLengthBuf(ByteBuffer buffer) {
         long length = 0;
         int lengthbyte = buffer.get() & 0xff;
 

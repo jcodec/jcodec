@@ -13,7 +13,7 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class MPEGPredOct extends MPEGPred {
     // Max block size is 16x16
-    private int[] tmp = new int[16 * 21];
+    private int[] tmp;
 
     // TODO: this really implements interpolation for QUAD downsampling, add another linear step for OCT.
     // This is also to be complient with MPEG spec which uses linear interpolation.
@@ -38,7 +38,8 @@ public class MPEGPredOct extends MPEGPred {
     };
 
     public MPEGPredOct(MPEGPred other) {
-        super(other);
+        super(other.fCode, other.chromaFormat, other.topFieldFirst);
+        this.tmp = new int[16 * 21];
     }
 
     @Override

@@ -12,7 +12,7 @@ import java.security.NoSuchAlgorithmException;
  *
  */
 public class MD5 {
-    public static String md5sum(byte[] bytes) {
+    public static String md5sumBytes(byte[] bytes) {
         MessageDigest md5 = getDigest();
         md5.update(bytes);
         return digestToString(md5.digest());

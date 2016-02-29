@@ -22,7 +22,7 @@ import org.jcodec.common.io.NIOUtils;
  */
 public class WavMerge {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 3) {
             System.out.println("wavmerge <output wav> <input wav> .... <input wav>");
             System.exit(-1);
@@ -34,7 +34,7 @@ public class WavMerge {
         merge(out, ins);
     }
 
-    public static void merge(File result, File... src) throws IOException {
+    public static void merge(File result, File[] src) throws IOException {
 
         WritableByteChannel out = null;
         ReadableByteChannel[] inputs = new ReadableByteChannel[src.length];
@@ -43,8 +43,8 @@ public class WavMerge {
         try {
             int sampleSize = -1;
             for (int i = 0; i < src.length; i++) {
-                inputs[i] = NIOUtils.readableFileChannel(src[i]);
-                WavHeader hdr = WavHeader.read(inputs[i]);
+                inputs[i] = NIOUtils.readableChannel(src[i]);
+                WavHeader hdr = WavHeader.readChannel(inputs[i]);
                 if (sampleSize != -1 && sampleSize != hdr.fmt.bitsPerSample)
                     throw new RuntimeException("Input files have different sample sizes");
                 sampleSize = hdr.fmt.bitsPerSample;
@@ -54,7 +54,7 @@ public class WavMerge {
             ByteBuffer outb = ByteBuffer.allocate(headers[0].getFormat().framesToBytes(4096) * src.length);
 
             WavHeader newHeader = WavHeader.multiChannelWav(headers);
-            out = NIOUtils.writableFileChannel(result);
+            out = NIOUtils.writableChannel(result);
             newHeader.write(out);
 
             for (boolean readOnce = true;;) {

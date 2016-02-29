@@ -17,22 +17,23 @@ public class CleanApertureExtension extends Box {
     private int apertureHeightNumerator;
     private int apertureWidthDenominator;
     private int apertureWidthNumerator;
-
-    public CleanApertureExtension(int apertureWidthN, int apertureWidthD, int apertureHeightN, int apertureHeightD,
-            int horizOffN, int horizOffD, int vertOffN, int vertOffD) {
-        super(new Header(fourcc()));
-        this.apertureWidthNumerator = apertureWidthN;
-        this.apertureWidthDenominator = apertureWidthD;
-        this.apertureHeightNumerator = apertureHeightN;
-        this.apertureHeightDenominator = apertureHeightD;
-        this.horizOffsetNumerator = horizOffN;
-        this.horizOffsetDenominator = horizOffD;
-        this.vertOffsetNumerator = vertOffN;
-        this.vertOffsetDenominator = vertOffD;
+    
+    public CleanApertureExtension(Header header) {
+        super(header);
     }
 
-    public CleanApertureExtension() {
-        super(new Header(fourcc()));
+    public static CleanApertureExtension createCleanApertureExtension(int apertureWidthN, int apertureWidthD,
+            int apertureHeightN, int apertureHeightD, int horizOffN, int horizOffD, int vertOffN, int vertOffD) {
+        CleanApertureExtension clap = new CleanApertureExtension(new Header(fourcc()));
+        clap.apertureWidthNumerator = apertureWidthN;
+        clap.apertureWidthDenominator = apertureWidthD;
+        clap.apertureHeightNumerator = apertureHeightN;
+        clap.apertureHeightDenominator = apertureHeightD;
+        clap.horizOffsetNumerator = horizOffN;
+        clap.horizOffsetDenominator = horizOffD;
+        clap.vertOffsetNumerator = vertOffN;
+        clap.vertOffsetDenominator = vertOffD;
+        return clap;
     }
 
     @Override
@@ -53,6 +54,7 @@ public class CleanApertureExtension extends Box {
     public static String fourcc() {
         return "clap";
     }
+
 
     @Override
     public void doWrite(ByteBuffer out) {

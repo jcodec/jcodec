@@ -18,23 +18,17 @@ import org.jcodec.common.io.NIOUtils;
  * 
  */
 public class SegmentTypeBox extends Box {
+    public SegmentTypeBox(Header header) {
+        super(header);
+        this.compBrands = new LinkedList<String>();
+    }
+
     private String majorBrand;
     private int minorVersion;
-    private Collection<String> compBrands = new LinkedList<String>();
+    private Collection<String> compBrands;
 
     public static String fourcc() {
         return "styp";
-    }
-
-    public SegmentTypeBox(String majorBrand, int minorVersion, Collection<String> compBrands) {
-        super(new Header(fourcc()));
-        this.majorBrand = majorBrand;
-        this.minorVersion = minorVersion;
-        this.compBrands = compBrands;
-    }
-
-    public SegmentTypeBox() {
-        super(new Header(fourcc()));
     }
 
     public void parse(ByteBuffer input) {

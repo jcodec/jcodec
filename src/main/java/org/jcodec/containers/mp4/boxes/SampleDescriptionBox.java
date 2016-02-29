@@ -116,22 +116,19 @@ public class SampleDescriptionBox extends NodeBox {
         return "stsd";
     }
 
+    public static SampleDescriptionBox createSampleDescriptionBox(SampleEntry... arguments) {
+        SampleDescriptionBox box = new SampleDescriptionBox(new Header(fourcc()));
+        for (SampleEntry e : arguments) {
+            box.boxes.add(e);
+        }
+        return box;
+    }
+
     public SampleDescriptionBox(Header header) {
         super(header);
         factory = FACTORY;
     }
-
-    public SampleDescriptionBox() {
-        this(new Header(fourcc()));
-    }
     
-    public SampleDescriptionBox(SampleEntry...entries) {
-        this();
-        for (SampleEntry e : entries) {
-            boxes.add(e);
-        }
-    }
-
     public void parse(ByteBuffer input) {
         input.getInt();
         input.getInt();

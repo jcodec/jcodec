@@ -18,17 +18,14 @@ public class EditListBox extends FullBox {
         return "elst";
     }
 
+    public static EditListBox createEditListBox(List<Edit> edits) {
+        EditListBox elst = new EditListBox(new Header(fourcc()));
+        elst.edits = edits;
+        return elst;
+    }
+
     public EditListBox(Header atom) {
         super(atom);
-    }
-
-    public EditListBox() {
-        this(new Header(fourcc()));
-    }
-
-    public EditListBox(List<Edit> edits) {
-        this();
-        this.edits = edits;
     }
 
     public void parse(ByteBuffer input) {

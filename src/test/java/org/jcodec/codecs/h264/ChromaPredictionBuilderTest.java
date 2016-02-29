@@ -1,14 +1,17 @@
 package org.jcodec.codecs.h264;
 
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
+import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
 import static org.junit.Assert.assertArrayEquals;
 import junit.framework.TestCase;
 
 import org.jcodec.codecs.h264.decode.ChromaPredictionBuilder;
+import org.junit.Test;
 
-public class ChromaPredictionBuilderTest extends TestCase {
-    private int[][] emptyResidual = new int[4][16];
+public class ChromaPredictionBuilderTest {
+    private static int[][] emptyResidual = new int[4][16];
 
+    @Test
     public void testVertical() throws Exception {
         byte[] expectedCb = toByteArrayShifted(129, 127, 122, 119, 116, 116, 116, 116, 129, 127, 122, 119, 116, 116,
                 116, 116, 129, 127, 122, 119, 116, 116, 116, 116, 129, 127, 122, 119, 116, 116, 116, 116, 129, 127,
@@ -32,6 +35,7 @@ public class ChromaPredictionBuilderTest extends TestCase {
         assertArrayEquals(expectedCr, actualCr);
     }
 
+    @Test
     public void testHorizontal() throws Exception {
         byte[] expectedCb = toByteArrayShifted(115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115,
                 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 115, 118, 118,
@@ -55,6 +59,7 @@ public class ChromaPredictionBuilderTest extends TestCase {
         assertArrayEquals(expectedCr, actualCr);
     }
 
+    @Test
     public void testDC() throws Exception {
         byte[] expectedCb = toByteArrayShifted(119, 119, 119, 119, 120, 120, 120, 120, 119, 119, 119, 119, 120, 120,
                 120, 120, 119, 119, 119, 119, 120, 120, 120, 120, 119, 119, 119, 119, 120, 120, 120, 120, 118, 118,
@@ -83,6 +88,7 @@ public class ChromaPredictionBuilderTest extends TestCase {
         assertArrayEquals(expectedCr, actualCr);
     }
 
+    @Test
     public void testPlane() throws Exception {
 
         byte[] expectedCb = toByteArrayShifted(115, 116, 116, 117, 117, 118, 118, 119, 116, 117, 117, 118, 118, 119,

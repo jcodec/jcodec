@@ -30,14 +30,6 @@ public class RawReader {
 		this.height = height;
 	}
 
-	public RawReader(RawReader old, int width, int height) {
-		this.rawFileName = old.rawFileName;
-		this.is = old.is;
-
-		this.width = width;
-		this.height = height;
-	}
-
 	public Picture readNextFrame() throws IOException {
 		if (is == null) {
 			is = new BufferedInputStream(new FileInputStream(rawFileName));
@@ -71,7 +63,7 @@ public class RawReader {
 			cr[i] = is.read();
 		}
 
-		return new Picture(width, height, new int[][] {luma, cb, cr}, YUV420);
+		return Picture.createPicture(width, height, new int[][] {luma, cb, cr}, YUV420);
 	}
 
 }

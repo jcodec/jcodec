@@ -28,8 +28,8 @@ public class MPSIndexer extends BaseIndexer {
         newReader().readFile(source, 0x10000, listener);
     }
 
-    public void index(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
-        newReader().readFile(source, 0x10000, listener);
+    public void indexChannel(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
+        newReader().readChannel(source, 0x10000, listener);
     }
 
     private FileReader newReader() {
@@ -58,7 +58,7 @@ public class MPSIndexer extends BaseIndexer {
         getAnalyser(stream).pkt(pesBuffer, pesHeader);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         MPSIndexer indexer = new MPSIndexer();
         indexer.index(new File(args[0]), new NIOUtils.FileReaderListener() {
             public void progress(int percentDone) {

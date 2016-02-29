@@ -25,16 +25,16 @@ public class Picture {
 
     private int bitDepth;
 
-    public Picture(int width, int height, int[][] data, ColorSpace color) {
-        this(width, height, data, color, 8, new Rect(0, 0, width, height));
+    public static Picture createPicture(int width, int height, int[][] data, ColorSpace color) {
+        return new Picture(width, height, data, color, 8, new Rect(0, 0, width, height));
     }
 
-    public Picture(int width, int height, int[][] data, ColorSpace color, int bitDepth) {
-        this(width, height, data, color, bitDepth, new Rect(0, 0, width, height));
+    public static Picture createPictureWithDepth(int width, int height, int[][] data, ColorSpace color, int bitDepth) {
+        return new Picture(width, height, data, color, bitDepth, new Rect(0, 0, width, height));
     }
 
-    public Picture(int width, int height, int[][] data, ColorSpace color, Rect crop) {
-        this(width, height, data, color, 8, crop);
+    public static Picture createPictureCropped(int width, int height, int[][] data, ColorSpace color, Rect crop) {
+        return new Picture(width, height, data, color, 8, crop);
     }
 
     public Picture(int width, int height, int[][] data, ColorSpace color, int bitDepth, Rect crop) {
@@ -46,23 +46,23 @@ public class Picture {
         this.bitDepth = bitDepth;
     }
 
-    public Picture(Picture other) {
-        this(other.width, other.height, other.data, other.color, other.bitDepth, other.crop);
+    public static Picture clonePicture(Picture other) {
+        return new Picture(other.width, other.height, other.data, other.color, other.bitDepth, other.crop);
     }
-
+    
     public static Picture create(int width, int height, ColorSpace colorSpace) {
-        return create(width, height, colorSpace, 8, null);
+        return doCreate(width, height, colorSpace, 8, null);
     }
 
-    public static Picture create(int width, int height, ColorSpace colorSpace, int bitDepth) {
-        return create(width, height, colorSpace, bitDepth, null);
+    public static Picture createWithDepth(int width, int height, ColorSpace colorSpace, int bitDepth) {
+        return doCreate(width, height, colorSpace, bitDepth, null);
     }
 
-    public static Picture create(int width, int height, ColorSpace colorSpace, Rect crop) {
-        return create(width, height, colorSpace, 8, crop);
+    public static Picture createCropped(int width, int height, ColorSpace colorSpace, Rect crop) {
+        return doCreate(width, height, colorSpace, 8, crop);
     }
 
-    public static Picture create(int width, int height, ColorSpace colorSpace, int bitDepth, Rect crop) {
+    public static Picture doCreate(int width, int height, ColorSpace colorSpace, int bitDepth, Rect crop) {
         int[] planeSizes = new int[MAX_PLANES];
         for (int i = 0; i < colorSpace.nComp; i++) {
             planeSizes[colorSpace.compPlane[i]] += (width >> colorSpace.compWidth[i])
@@ -81,6 +81,7 @@ public class Picture {
 
         return new Picture(width, height, data, colorSpace, 8, crop);
     }
+
 
     public int getWidth() {
         return width;
@@ -141,7 +142,7 @@ public class Picture {
         if (crop == null
                 || (crop.getX() == 0 && crop.getY() == 0 && crop.getWidth() == width && crop.getHeight() == height))
             return this;
-        Picture result = Picture.create(crop.getWidth(), crop.getHeight(), color, bitDepth);
+        Picture result = Picture.createWithDepth(crop.getWidth(), crop.getHeight(), color, bitDepth);
 
         for (int plane = 0; plane < color.nComp; plane++) {
             if (data[plane] == null)

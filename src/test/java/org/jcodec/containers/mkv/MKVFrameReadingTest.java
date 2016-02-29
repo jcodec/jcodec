@@ -83,8 +83,7 @@ public class MKVFrameReadingTest {
 
         Picture rgb = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
         BufferedImage bi = new BufferedImage(dem.getPictureWidth(), dem.getPictureHeight(), BufferedImage.TYPE_3BYTE_BGR);
-        AvcCBox avcC = new AvcCBox();
-        avcC.parse(((VideoTrack) inTrack).getCodecState());
+        AvcCBox avcC = AvcCBox.parseAvcCBox(((VideoTrack) inTrack).getCodecState());
 
         decoder.addSps(avcC.getSpsList());
         decoder.addPps(avcC.getPpsList());
@@ -92,13 +91,13 @@ public class MKVFrameReadingTest {
         Packet inFrame;
         for (int i = 1; (inFrame = inTrack.nextFrame()) != null && i <= 200; i++) {
             Picture buf = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.YUV422);
-            Picture pic = decoder.decodeFrame(splitMOVPacket(inFrame.getData(), avcC), buf.getData());
+            Picture pic = decoder.decodeFrameFromNals(splitMOVPacket(inFrame.getData(), avcC), buf.getData());
             if (bi == null)
                 bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
             if (rgb == null)
                 rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
             transform.transform(pic, rgb);
-            AWTUtil.toBufferedImage(rgb, bi);
+            AWTUtil.toBufferedImage2(rgb, bi);
             ImageIO.write(bi, "png", new File(format(outPattern, i++)));
 
         }
@@ -113,8 +112,7 @@ public class MKVFrameReadingTest {
         H264Decoder decoder = new H264Decoder();
         DemuxerTrack inTrack = dem.getVideoTrack();
 
-        AvcCBox avcC = new AvcCBox();
-        avcC.parse(((VideoTrack) inTrack).getCodecState());
+        AvcCBox avcC = AvcCBox.parseAvcCBox(((VideoTrack) inTrack).getCodecState());
 
         Assert.assertNotNull(avcC.getSpsList());
         Assert.assertFalse(avcC.getSpsList().isEmpty());
@@ -137,11 +135,11 @@ public class MKVFrameReadingTest {
         Assert.assertArrayEquals(rawFrame, MKVMuxerTest.bufferToArray(bb));
         
         Picture buf = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.YUV422);
-        Picture pic = decoder.decodeFrame(H264Utils.splitMOVPacket(inFrame.getData(), avcC), buf.getData());
+        Picture pic = decoder.decodeFrameFromNals(H264Utils.splitMOVPacket(inFrame.getData(), avcC), buf.getData());
         Picture rgb = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
         BufferedImage bi = new BufferedImage(dem.getPictureWidth(), dem.getPictureHeight(), BufferedImage.TYPE_3BYTE_BGR);
         transform.transform(pic, rgb);
-        AWTUtil.toBufferedImage(rgb, bi);
+        AWTUtil.toBufferedImage2(rgb, bi);
         File f = new File(format(outPattern, 0));
         System.out.println("Writing to file: "+f.getAbsolutePath());
         ImageIO.write(bi, "png", f);

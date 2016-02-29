@@ -22,17 +22,13 @@ import org.jcodec.common.tools.ToJSON;
  */
 public class NodeBox extends Box {
     private static final int MAX_BOX_SIZE = 128 * 1024 * 1024;
-    protected List<Box> boxes = new LinkedList<Box>();
-    protected BoxFactory factory = BoxFactory.getDefault();
+    protected List<Box> boxes;
+    protected BoxFactory factory;
 
     public NodeBox(Header atom) {
         super(atom);
-    }
-
-    public NodeBox(NodeBox other) {
-        super(other);
-        this.boxes = other.boxes;
-        this.factory = other.factory;
+        this.boxes = new LinkedList<Box>();
+        this.factory = BoxFactory.getDefault();
     }
 
     public void parse(ByteBuffer input) {
@@ -80,7 +76,7 @@ public class NodeBox extends Box {
             box.parse(input);
             return box;
         } else {
-            return new LeafBox(new Header("free", 8));
+            return new LeafBox(Header.createHeader("free", 8));
         }
     }
 
@@ -107,7 +103,7 @@ public class NodeBox extends Box {
         add(box);
     }
     
-    public void replace(Box box) {
+    public void replaceBox(Box box) {
         removeChildren(box.getFourcc());
         add(box);
     }
@@ -135,11 +131,11 @@ public class NodeBox extends Box {
         }
     }
 
-    public void removeChildren(String... fourcc) {
+    public void removeChildren(String... arguments) {
         for (Iterator<Box> it = boxes.iterator(); it.hasNext();) {
             Box box = it.next();
             String fcc = box.getFourcc();
-            for (String cand : fourcc) {
+            for (String cand : arguments) {
                 if (cand.equals(fcc)) {
                     it.remove();
                     break;

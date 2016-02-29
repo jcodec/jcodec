@@ -25,17 +25,10 @@ public class ColorExtension extends Box {
     final static byte AVCOL_RANGE_JPEG = 2; ///< the normal     2^n-1   "JPEG" YUV ranges
     private Byte colorRange = null;
 
-    public ColorExtension(short primariesIndex, short transferFunctionIndex, short matrixIndex) {
-        this();
-        this.primariesIndex = primariesIndex;
-        this.transferFunctionIndex = transferFunctionIndex;
-        this.matrixIndex = matrixIndex;
+    public ColorExtension(Header header) {
+        super(header);
     }
 
-    public ColorExtension() {
-        super(new Header(fourcc()));
-    }
-    
     public void setColorRange(Byte colorRange) {
         this.colorRange = colorRange;
     }
@@ -66,6 +59,19 @@ public class ColorExtension extends Box {
 
     public static String fourcc() {
         return "colr";
+    }
+
+    public static ColorExtension createColorExtension(short primariesIndex, short transferFunctionIndex,
+            short matrixIndex) {
+        ColorExtension c = new ColorExtension(new Header(fourcc()));
+        c.primariesIndex = primariesIndex;
+        c.transferFunctionIndex = transferFunctionIndex;
+        c.matrixIndex = matrixIndex;
+        return c;
+    }
+
+    public static ColorExtension createColr() {
+        return new ColorExtension(new Header(fourcc()));
     }
 
     public short getPrimariesIndex() {

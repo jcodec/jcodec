@@ -1,9 +1,9 @@
 package org.jcodec.movtool;
 
 import static java.lang.System.arraycopy;
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
+import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +40,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class Strip {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: strip <ref movie> <out movie>");
             System.exit(-1);
@@ -48,10 +48,10 @@ public class Strip {
         SeekableByteChannel input = null;
         SeekableByteChannel out = null;
         try {
-            input = readableFileChannel(new File(args[0]));
+            input = readableChannel(new File(args[0]));
             File file = new File(args[1]);
             Platform.deleteFile(file);
-            out = writableFileChannel(file);
+            out = writableChannel(file);
             MovieBox movie = MP4Util.createRefMovie(input, "file://" + new File(args[0]).getAbsolutePath());
             new Strip().strip(movie);
             MP4Util.writeMovie(out, movie);
@@ -98,14 +98,13 @@ public class Strip {
             } else
                 result.add(chunk);
         }
-
-        NodeBox stbl = findFirst(track, NodeBox.class, "mdia", "minf", "stbl");
+        NodeBox stbl = findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
         stbl.replace("stts", getTimeToSamples(result));
         stbl.replace("stsz", getSampleSizes(result));
         stbl.replace("stsc", getSamplesToChunk(result));
         stbl.removeChildren("stco", "co64");
         stbl.add(getChunkOffsets(result));
-        findFirst(track, MediaHeaderBox.class, "mdia", "mdhd").setDuration(totalDuration(result));
+        findFirstPath(track, MediaHeaderBox.class, Box.path("mdia.mdhd")).setDuration(totalDuration(result));
     }
 
     private long totalDuration(List<Chunk> result) {
@@ -119,7 +118,7 @@ public class Strip {
     private List<Edit> deepCopy(List<Edit> edits) {
         ArrayList<Edit> newList = new ArrayList<Edit>();
         for (Edit edit : edits) {
-            newList.add(new Edit(edit));
+            newList.add(Edit.createEdit(edit));
         }
         return newList;
     }
@@ -133,7 +132,7 @@ public class Strip {
                 longBox = true;
             result[i++] = chunk.getOffset();
         }
-        return longBox ? new ChunkOffsets64Box(result) : new ChunkOffsetsBox(result);
+        return longBox ? ChunkOffsets64Box.createChunkOffsets64Box(result) : ChunkOffsetsBox.createChunkOffsetsBox(result);
     }
 
     public TimeToSampleBox getTimeToSamples(List<Chunk> chunks) {
@@ -162,7 +161,7 @@ public class Strip {
         }
         if (cnt > 0)
             tts.add(new TimeToSampleEntry(cnt, curTts));
-        return new TimeToSampleBox(tts.toArray(new TimeToSampleEntry[0]));
+        return TimeToSampleBox.createTimeToSampleBox(tts.toArray(new TimeToSampleEntry[0]));
     }
 
     public SampleSizesBox getSampleSizes(List<Chunk> chunks) {
@@ -174,7 +173,7 @@ public class Strip {
         }
 
         if (prevSize > 0)
-            return new SampleSizesBox(prevSize, nSamples);
+            return SampleSizesBox.createSampleSizesBox(prevSize, nSamples);
 
         int[] sizes = new int[nSamples];
         int startSample = 0;
@@ -182,7 +181,7 @@ public class Strip {
             arraycopy(chunk.getSampleSizes(), 0, sizes, startSample, chunk.getSampleCount());
             startSample += chunk.getSampleCount();
         }
-        return new SampleSizesBox(sizes);
+        return SampleSizesBox.createSampleSizesBox2(sizes);
     }
 
     public SampleToChunkBox getSamplesToChunk(List<Chunk> chunks) {
@@ -207,7 +206,7 @@ public class Strip {
         }
         if (cnt > 0)
             result.add(new SampleToChunkEntry(first, curSz, curEntry));
-        return new SampleToChunkBox(result.toArray(new SampleToChunkEntry[0]));
+        return SampleToChunkBox.createSampleToChunkBox(result.toArray(new SampleToChunkEntry[0]));
     }
 
     private boolean intersects(long a, long b, long c, long d) {

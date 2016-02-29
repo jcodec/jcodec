@@ -58,16 +58,16 @@ public class DctTest {
 
     private void doTestRelaxed(DCT dct, int[] input, int[] expected) {
         int[] output = dct.decode(input);
-        Asserts.assertEpsilonEquals(expected, output, 1);
+        Asserts.assertEpsilonEqualsInt(expected, output, 1);
     }
 
     private void doTestStrict(DCT dct, int[] input, int[] expected) {
         int[] output = dct.decode(input);
-        boolean equals = Platform.arrayEquals(expected, output);
+        boolean equals = Platform.arrayEqualsInt(expected, output);
         if (!equals) {
-            Debug.print8x8(expected);
+            Debug.print8x8i(expected);
             System.out.println();
-            Debug.print8x8(output);
+            Debug.print8x8i(output);
         }
         assertTrue(equals);
     }

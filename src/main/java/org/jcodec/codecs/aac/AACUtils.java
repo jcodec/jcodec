@@ -61,7 +61,7 @@ public class AACUtils {
     };
 
     public static AudioInfo parseAudioInfo(ByteBuffer privData) {
-        BitReader reader = new BitReader(privData);
+        BitReader reader = BitReader.createBitReader(privData);
 
         int objectType = getObjectType(reader);
         int index = reader.readNBit(4);
@@ -79,11 +79,12 @@ public class AACUtils {
         if (!"mp4a".equals(mp4a.getFourcc()))
             throw new IllegalArgumentException("Not mp4a sample entry");
         LeafBox b = Box.findFirst(mp4a, LeafBox.class, "esds");
-        if (b == null)
-            b = Box.findFirst(mp4a, LeafBox.class, null, "esds");
+        if (b == null) {
+            b = Box.findFirstPath(mp4a, LeafBox.class, new String[] { null, "esds" });
+        }
         if (b == null)
             return null;
-        EsdsBox esds = new EsdsBox();
+        EsdsBox esds = EsdsBox.newEsdsBox();
         esds.parse(b.getData());
         return parseAudioInfo(esds.getStreamInfo());
     }

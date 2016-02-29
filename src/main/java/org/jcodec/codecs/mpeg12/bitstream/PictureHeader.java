@@ -1,6 +1,12 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
 import static org.jcodec.codecs.mpeg12.MPEGConst.EXTENSION_START_CODE;
+import static org.jcodec.codecs.mpeg12.bitstream.CopyrightExtension.Copyright_Extension;
+import static org.jcodec.codecs.mpeg12.bitstream.PictureCodingExtension.Picture_Coding_Extension;
+import static org.jcodec.codecs.mpeg12.bitstream.PictureDisplayExtension.Picture_Display_Extension;
+import static org.jcodec.codecs.mpeg12.bitstream.PictureSpatialScalableExtension.Picture_Spatial_Scalable_Extension;
+import static org.jcodec.codecs.mpeg12.bitstream.PictureTemporalScalableExtension.Picture_Temporal_Scalable_Extension;
+import static org.jcodec.codecs.mpeg12.bitstream.QuantMatrixExtension.Quant_Matrix_Extension;
 
 import java.nio.ByteBuffer;
 
@@ -16,17 +22,6 @@ import org.jcodec.common.io.BitWriter;
  */
 public class PictureHeader implements MPEGHeader {
 
-    public static final int Quant_Matrix_Extension = 0x3;
-    public static final int Copyright_Extension = 0x4;
-    public static final int Picture_Display_Extension = 0x7;
-    public static final int Picture_Coding_Extension = 0x8;
-    public static final int Picture_Spatial_Scalable_Extension = 0x9;
-    public static final int Picture_Temporal_Scalable_Extension = 0x10;
-
-    public static final int IntraCoded = 0x1;
-    public static final int PredictiveCoded = 0x2;
-    public static final int BiPredictiveCoded = 0x3;
-
     public int temporal_reference;
     public int picture_coding_type;
     public int vbv_delay;
@@ -41,25 +36,26 @@ public class PictureHeader implements MPEGHeader {
     public PictureCodingExtension pictureCodingExtension;
     public PictureSpatialScalableExtension pictureSpatialScalableExtension;
     public PictureTemporalScalableExtension pictureTemporalScalableExtension;
-    private boolean hasExtensions;
+    private boolean _hasExtensions;
     
-
-    public PictureHeader(int temporal_reference, int picture_coding_type, int vbv_delay, int full_pel_forward_vector,
-            int forward_f_code, int full_pel_backward_vector, int backward_f_code) {
-        this.temporal_reference = temporal_reference;
-        this.picture_coding_type = picture_coding_type;
-        this.vbv_delay = vbv_delay;
-        this.full_pel_forward_vector = full_pel_forward_vector;
-        this.forward_f_code = forward_f_code;
-        this.full_pel_backward_vector = full_pel_backward_vector;
-        this.backward_f_code = backward_f_code;
+    public static PictureHeader createPictureHeader(int temporal_reference, int picture_coding_type, int vbv_delay,
+            int full_pel_forward_vector, int forward_f_code, int full_pel_backward_vector, int backward_f_code) {
+        PictureHeader p = new PictureHeader();
+        p.temporal_reference = temporal_reference;
+        p.picture_coding_type = picture_coding_type;
+        p.vbv_delay = vbv_delay;
+        p.full_pel_forward_vector = full_pel_forward_vector;
+        p.forward_f_code = forward_f_code;
+        p.full_pel_backward_vector = full_pel_backward_vector;
+        p.backward_f_code = backward_f_code;
+        return p;
     }
     
     private PictureHeader() {
     }
 
     public static PictureHeader read(ByteBuffer bb) {
-        BitReader _in = new BitReader(bb);
+        BitReader _in = BitReader.createBitReader(bb);
         PictureHeader ph = new PictureHeader();
         ph.temporal_reference = _in.readNBit(10);
         ph.picture_coding_type = _in.readNBit(3);
@@ -80,8 +76,8 @@ public class PictureHeader implements MPEGHeader {
     }
 
     public static void readExtension(ByteBuffer bb, PictureHeader ph, SequenceHeader sh) {
-        ph.hasExtensions = true;
-        BitReader _in = new BitReader(bb);
+        ph._hasExtensions = true;
+        BitReader _in = BitReader.createBitReader(bb);
         int extType = _in.readNBit(4);
         switch (extType) {
         case Quant_Matrix_Extension:
@@ -161,6 +157,6 @@ public class PictureHeader implements MPEGHeader {
     }
 
     public boolean hasExtensions() {
-        return hasExtensions;
+        return _hasExtensions;
     }
 }

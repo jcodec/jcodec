@@ -12,10 +12,12 @@ import org.junit.Test;
 public class FixTimestampTest {
 
     public static class SetPTS extends FixTimestamp {
-        long delta = Long.MIN_VALUE;
+        long delta;
         private long setpts;
 
         public SetPTS(long setpts) {
+            this.delta = Long.MIN_VALUE;
+
             this.setpts = setpts;
         }
 

@@ -69,11 +69,15 @@ public class MPSUtils {
         private int pesLen;
         private long pesFileStart = -1;
         private int stream;
-        private boolean pes;
+        private boolean _pes;
         private int pesLeft;
 
-        private ByteBuffer pesBuffer = ByteBuffer.allocate(1 << 21);
-
+        private ByteBuffer pesBuffer;
+            
+        public PESReader() {
+            this.pesBuffer = ByteBuffer.allocate(1 << 21);
+        }
+        
         protected abstract void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream);
 
         public void analyseBuffer(ByteBuffer buf, long pos) {
@@ -88,32 +92,32 @@ public class MPSUtils {
                         long filePos = pos + buf.position() - init;
                         pes1(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
                         pesFileStart = -1;
-                        pes = false;
+                        _pes = false;
                         stream = -1;
                     }
                     continue;
                 }
                 int bt = buf.get() & 0xff;
-                if (pes)
+                if (_pes)
                     pesBuffer.put((byte) (marker >>> 24));
                 marker = (marker << 8) | bt;
                 if (marker >= SYSTEM && marker <= VIDEO_MAX) {
                     long filePos = pos + buf.position() - init - 4;
-                    if (pes)
+                    if (_pes)
                         pes1(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
                     pesFileStart = filePos;
 
-                    pes = true;
+                    _pes = true;
                     stream = marker & 0xff;
                     lenFieldLeft = 2;
                     pesLen = 0;
                 } else if (marker >= 0x1b9 && marker <= 0x1ff) {
-                    if (pes) {
+                    if (_pes) {
                         long filePos = pos + buf.position() - init - 4;
                         pes1(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
                     }
                     pesFileStart = -1;
-                    pes = false;
+                    _pes = false;
                     stream = -1;
                 } else if (lenFieldLeft > 0) {
                     pesLen = (pesLen << 8) | bt;
@@ -175,9 +179,9 @@ public class MPSUtils {
         }
         long pts = -1, dts = -1;
         if ((c & 0xf0) == 0x20) {
-            pts = readTs(is, c);
+            pts = _readTs(is, c);
         } else if ((c & 0xf0) == 0x30) {
-            pts = readTs(is, c);
+            pts = _readTs(is, c);
             dts = readTs(is);
         } else {
             if (c != 0x0f)
@@ -187,7 +191,7 @@ public class MPSUtils {
         return new PESPacket(null, pts, streamId, len, pos, dts);
     }
 
-    public static long readTs(ByteBuffer is, int c) {
+    public static long _readTs(ByteBuffer is, int c) {
         return (((long) c & 0x0e) << 29) | ((is.get() & 0xff) << 22) | (((is.get() & 0xff) >> 1) << 15)
                 | ((is.get() & 0xff) << 7) | ((is.get() & 0xff) >> 1);
     }
@@ -252,7 +256,14 @@ public class MPSUtils {
         private int profileAndLevel;
         private int chromaFormat;
         private int frameRateExtension;
+        Rational[] frameRates;
 
+        public VideoStreamDescriptor() {
+            this.frameRates = new Rational[] { null, new Rational(24000, 1001), new Rational(24, 1),
+                    new Rational(25, 1), new Rational(30000, 1001), new Rational(30, 1), new Rational(50, 1),
+                    new Rational(60000, 1001), new Rational(60, 1), null, null, null, null, null, null, null};
+        }
+            
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
@@ -269,12 +280,6 @@ public class MPSUtils {
                 frameRateExtension = (b1 >> 5) & 1;
             }
         }
-
-        Rational[] frameRates = new Rational[] { null, new Rational(24000, 1001), new Rational(24, 1),
-                new Rational(25, 1), new Rational(30000, 1001), new Rational(30, 1), new Rational(50, 1),
-                new Rational(60000, 1001), new Rational(60, 1), null, null, null, null, null, null, null
-
-        };
 
         public Rational getFrameRate() {
             return frameRates[frameRateCode];
@@ -347,7 +352,13 @@ public class MPSUtils {
     }
 
     public static class ISO639LanguageDescriptor extends MPEGMediaDescriptor {
-        private IntArrayList languageCodes = new IntArrayList();
+        private IntArrayList languageCodes;
+        
+        public ISO639LanguageDescriptor() {
+            super();
+            this.languageCodes = IntArrayList.createIntArrayList();
+        }
+        
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
@@ -455,7 +466,12 @@ public class MPSUtils {
     
     public static class RegistrationDescriptor extends MPEGMediaDescriptor {
         private int formatIdentifier;
-        private IntArrayList additionalFormatIdentifiers = new IntArrayList();
+        private IntArrayList additionalFormatIdentifiers;
+        
+        public RegistrationDescriptor() {
+            super();
+            this.additionalFormatIdentifiers = IntArrayList.createIntArrayList();
+        }
         
         @Override
         public void parse(ByteBuffer buf) {

@@ -1,6 +1,6 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +28,7 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
  * 
  */
 public class Undo {
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             System.err.println("Syntax: qt-undo [-l] <movie>");
             System.err.println("\t-l\t\tList all the previous versions of this movie.");
@@ -65,7 +65,7 @@ public class Undo {
         ArrayList<Atom> result = new ArrayList<Atom>();
         SeekableByteChannel is = null;
         try {
-            is = readableFileChannel(new File(fileName));
+            is = readableChannel(new File(fileName));
             int version = 0;
             for (Atom atom : MP4Util.getRootAtoms(is)) {
                 if ("free".equals(atom.getHeader().getFourcc()) && isMoov(is, atom)) {
@@ -83,11 +83,11 @@ public class Undo {
     }
 
     private boolean isMoov(SeekableByteChannel is, Atom atom) throws IOException {
-        is.position(atom.getOffset() + atom.getHeader().headerSize());
+        is.setPosition(atom.getOffset() + atom.getHeader().headerSize());
         try {
-            Box mov = NodeBox.parseBox(NIOUtils.fetchFrom(is, (int) atom.getHeader().getSize()), new Header("moov", atom
+            Box mov = NodeBox.parseBox(NIOUtils.fetchFromChannel(is, (int) atom.getHeader().getSize()), Header.createHeader("moov", atom
                     .getHeader().getSize()), BoxFactory.getDefault());
-            return (mov instanceof MovieBox) && Box.findFirst((NodeBox) mov, "mvhd") != null;
+            return (mov instanceof MovieBox) && Box.containsBox((NodeBox) mov, "mvhd");
         } catch (Throwable t) {
             return false;
         }

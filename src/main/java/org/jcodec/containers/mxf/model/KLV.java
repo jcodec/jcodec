@@ -62,7 +62,7 @@ public class KLV {
         return true;
     }
 
-    public static KLV readKL(ByteBuffer buffer, long baseOffset) {
+    public static KLV readKLFromBuffer(ByteBuffer buffer, long baseOffset) {
         if (buffer.remaining() < 17)
             return null;
 
@@ -70,7 +70,7 @@ public class KLV {
 
         UL ul = UL.read(buffer);
 
-        long len = BER.decodeLength(buffer);
+        long len = BER.decodeLengthBuf(buffer);
         return new KLV(ul, len, offset, baseOffset + buffer.position());
     }
 }

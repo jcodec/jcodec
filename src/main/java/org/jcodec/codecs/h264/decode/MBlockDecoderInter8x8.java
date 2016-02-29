@@ -22,6 +22,7 @@ import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
 
 import java.util.Arrays;
 
+import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -132,8 +133,6 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
 
         int blk8x8X = mbX << 1;
 
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
-
         PartPred[] _pp = new PartPred[4];
         for (int i = 0; i < 4; i++) {
             if (p[i] == Direct)
@@ -142,14 +141,14 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         }
 
         for (int list = 0; list < 2; list++) {
-            if (p[0].usesList(list)) {
+            if (H264Const.usesList(p[0], list)) {
                 decodeSubMb8x8(mBlock, 0, bSubMbTypes[mBlock.pb8x8.subMbTypes[0]], refs[list], mbX << 6, mbY << 6,
                         x[list], s.mvTopLeft[list], s.mvTop[list][mbX << 2], s.mvTop[list][(mbX << 2) + 1],
                         s.mvTop[list][(mbX << 2) + 2], s.mvLeft[list][0], s.mvLeft[list][1], tlAvailable, topAvailable,
                         topAvailable, leftAvailable, x[list][0], x[list][1], x[list][4], x[list][5],
                         mBlock.pb8x8.refIdx[list][0], mbb[list], 0, list);
             }
-            if (p[1].usesList(list)) {
+            if (H264Const.usesList(p[1], list)) {
                 decodeSubMb8x8(mBlock, 1, bSubMbTypes[mBlock.pb8x8.subMbTypes[1]], refs[list], (mbX << 6) + 32,
                         mbY << 6, x[list], s.mvTop[list][(mbX << 2) + 1], s.mvTop[list][(mbX << 2) + 2],
                         s.mvTop[list][(mbX << 2) + 3], s.mvTop[list][(mbX << 2) + 4], x[list][1], x[list][5],
@@ -157,14 +156,14 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
                         x[list][7], mBlock.pb8x8.refIdx[list][1], mbb[list], 8, list);
             }
 
-            if (p[2].usesList(list)) {
+            if (H264Const.usesList(p[2], list)) {
                 decodeSubMb8x8(mBlock, 2, bSubMbTypes[mBlock.pb8x8.subMbTypes[2]], refs[list], mbX << 6,
                         (mbY << 6) + 32, x[list], s.mvLeft[list][1], x[list][4], x[list][5], x[list][6],
                         s.mvLeft[list][2], s.mvLeft[list][3], leftAvailable, true, true, leftAvailable, x[list][8],
                         x[list][9], x[list][12], x[list][13], mBlock.pb8x8.refIdx[list][2], mbb[list], 128, list);
             }
 
-            if (p[3].usesList(list)) {
+            if (H264Const.usesList(p[3], list)) {
                 decodeSubMb8x8(mBlock, 3, bSubMbTypes[mBlock.pb8x8.subMbTypes[3]], refs[list], (mbX << 6) + 32,
                         (mbY << 6) + 32, x[list], x[list][5], x[list][6], x[list][7], null, x[list][9], x[list][13],
                         true, true, false, true, x[list][10], x[list][11], x[list][14], x[list][15],

@@ -202,11 +202,7 @@ public class DummyBitstreamReader {
     public int getCurBit() {
         return nBit;
     }
-
-    public boolean moreData(int bits) throws IOException {
-        throw new NotSupportedException();
-    }
-
+    
     public final int skip(int bits) throws IOException {
         nBit += bits;
         int was = nBit;

@@ -43,10 +43,10 @@ public class SequenceEncoder {
     private ByteBuffer pps;
 
     public SequenceEncoder(File out) throws IOException {
-        this.ch = NIOUtils.writableFileChannel(out);
+        this.ch = NIOUtils.writableChannel(out);
 
         // Muxer that will store the encoded frames
-        muxer = new MP4Muxer(ch, Brand.MP4);
+        muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
 
         // Add video track to muxer
         outTrack = muxer.addTrack(TrackType.VIDEO, 25);
@@ -55,7 +55,7 @@ public class SequenceEncoder {
         _out = ByteBuffer.allocate(1920 * 1080 * 6);
 
         // Create an instance of encoder
-        encoder = new H264Encoder();
+        encoder = H264Encoder.createH264Encoder();
 
         // Transform to convert between RGB and YUV
         transform = ColorUtil.getTransform(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
@@ -82,7 +82,7 @@ public class SequenceEncoder {
         // Based on the frame above form correct MP4 packet
         spsList.clear();
         ppsList.clear();
-        H264Utils.wipePS(result, spsList, ppsList);
+        H264Utils.wipePSinplace(result, spsList, ppsList);
         NALUnit nu = NALUnit.read(NIOUtils.from(result.duplicate(), 4));
         H264Utils.encodeMOVPacket(result);
 
@@ -93,8 +93,7 @@ public class SequenceEncoder {
             pps = ppsList.get(0);
 
         // Add packet to video track
-        outTrack.addFrame(new MP4Packet(result, frameNo, 25, 1, frameNo, nu.type == NALUnitType.IDR_SLICE, null,
-                frameNo, 0));
+        outTrack.addFrame(MP4Packet.createMP4Packet(result, frameNo, 25, 1, frameNo, nu.type == NALUnitType.IDR_SLICE, null, 0, frameNo, 0));
 
         frameNo++;
     }
@@ -108,7 +107,7 @@ public class SequenceEncoder {
             throw new RuntimeException(
                     "Somehow the encoder didn't generate SPS/PPS pair, did you encode at least one frame?");
         // Push saved SPS/PPS to a special storage in MP4
-        outTrack.addSampleEntry(H264Utils.createMOVSampleEntry(sps, pps, 4));
+        outTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromBuffer(sps, pps, 4));
 
         // Write MP4 header and finalize recording
         muxer.writeHeader();

@@ -1,6 +1,6 @@
 package org.jcodec.common.tools;
 
-import static org.jcodec.common.tools.MD5.md5sum;
+import static org.jcodec.common.tools.MD5.md5sumBytes;
 
 import java.nio.ByteBuffer;
 
@@ -36,8 +36,8 @@ public class MD5Test {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        System.out.println(md5sum(ByteBuffer.wrap(b1)));
-        System.out.println(md5sum(ByteBuffer.wrap(b2)));
+        System.out.println(MD5.md5sum(ByteBuffer.wrap(b1)));
+        System.out.println(MD5.md5sum(ByteBuffer.wrap(b2)));
 
     }
 }

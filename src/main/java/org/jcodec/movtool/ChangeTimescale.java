@@ -16,7 +16,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class ChangeTimescale {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: chts <movie> <timescale>");
             System.exit(-1);
@@ -29,7 +29,7 @@ public class ChangeTimescale {
         new InplaceMP4Editor().modify(new File(args[0]), new MP4Edit() {
             public void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
-                MediaHeaderBox mdhd = Box.findFirst(vt, MediaHeaderBox.class, "mdia", "mdhd");
+                MediaHeaderBox mdhd = Box.findFirstPath(vt, MediaHeaderBox.class, Box.path("mdia.mdhd"));
                 int oldTs = mdhd.getTimescale();
 
                 if (oldTs > ts) {
@@ -43,7 +43,7 @@ public class ChangeTimescale {
             }
 
             @Override
-            public void apply(MovieBox mov, MovieFragmentBox[] fragmentBox) {
+            public void applyToFragment(MovieBox mov, MovieFragmentBox[] fragmentBox) {
                 throw new RuntimeException("Unsupported");
             }
         });

@@ -16,17 +16,18 @@ public class EbmlUint extends EbmlBin {
         super(id);
     }
     
-    public EbmlUint(byte[] id, long value) {
-        super(id);
-        set(value);
+    public static EbmlUint createEbmlUint(byte[] id, long value) {
+        EbmlUint e = new EbmlUint(id);
+        e.setUint(value);
+        return e;
     }
     
-    public void set(long value){
+    public void setUint(long value){
         this.data = ByteBuffer.wrap(longToBytes(value));
         this.dataLen = this.data.limit();
     }
 
-    public long get() {
+    public long getUint() {
         long l = 0;
         long tmp = 0;
         for (int i = 0; i < data.limit(); i++) {

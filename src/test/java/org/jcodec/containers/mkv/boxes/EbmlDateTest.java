@@ -24,7 +24,7 @@ public class EbmlDateTest {
     @Ignore @Test
     public void testSet() throws Exception {
         EbmlDate d = MKVType.createByType(MKVType.DateUTC);
-        d.set(0);
+        d.setLong(0);
         Assert.assertEquals(getDate(1970, 1, 1), d.getDate());
         System.out.println(toHexString(d.data.array()));
         System.out.println(getDate(2001, 1, 1));

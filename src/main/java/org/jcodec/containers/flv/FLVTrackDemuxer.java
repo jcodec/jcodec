@@ -32,7 +32,7 @@ public class FLVTrackDemuxer {
 
     private FLVDemuxerTrack video;
     private FLVDemuxerTrack audio;
-    private LinkedList<FLVTag> packets = new LinkedList<FLVTag>();
+    private LinkedList<FLVTag> packets;
 
     private SeekableByteChannel _in;
 
@@ -41,11 +41,12 @@ public class FLVTrackDemuxer {
         private Type type;
         private int curFrame;
         private Codec codec;
-        private LongArrayList framePositions = new LongArrayList();
+        private LongArrayList framePositions;
         private byte[] codecPrivate;
 		private FLVTrackDemuxer demuxer;
 
         public FLVDemuxerTrack(FLVTrackDemuxer demuxer, Type type) throws IOException {
+            this.framePositions = LongArrayList.createLongArrayList();
             this.demuxer = demuxer;
 			this.type = type;
             FLVTag frame = demuxer.nextFrameI(type, false);
@@ -107,15 +108,16 @@ public class FLVTrackDemuxer {
     }
 
     public FLVTrackDemuxer(SeekableByteChannel _in) throws IOException {
+        this.packets = new LinkedList<FLVTag>();
         this._in = _in;
-        _in.position(0);
+        _in.setPosition(0);
         demuxer = new FLVReader(_in);
         video = new FLVDemuxerTrack(this, Type.VIDEO);
         audio = new FLVDemuxerTrack(this, Type.AUDIO);
     }
 
     private void resetToPosition(long position) throws IOException {
-        _in.position(position);
+        _in.setPosition(position);
         demuxer.reset();
         packets.clear();
     }
@@ -126,14 +128,14 @@ public class FLVTrackDemuxer {
         while ((base = demuxer.readNextPacket()) != null && base.getPtsD() == 0)
             ;
 
-        _in.position(base.getPosition() + 0x100000);
+        _in.setPosition(base.getPosition() + 0x100000);
         demuxer.reposition();
         FLVTag off = demuxer.readNextPacket();
 
         int byteRate = (int) ((off.getPosition() - base.getPosition()) / (off.getPtsD() - base.getPtsD()));
         long offset = base.getPosition() + (long) ((second - base.getPtsD()) * byteRate);
 
-        _in.position(offset);
+        _in.setPosition(offset);
         demuxer.reposition();
         // TODO: the implementation is incorrect
         // 5 reposition attempts
@@ -152,7 +154,7 @@ public class FLVTrackDemuxer {
             } else if (distance < 0 && distance > -MAX_CRAWL_DISTANCE_SEC) {
                 // Read back to the frame
                 System.out.println("Overshoot by: " + (-distance));
-                _in.position(pkt.getPosition() + (long) ((distance - 1) * byteRate));
+                _in.setPosition(pkt.getPosition() + (long) ((distance - 1) * byteRate));
                 demuxer.reposition();
             }
         }

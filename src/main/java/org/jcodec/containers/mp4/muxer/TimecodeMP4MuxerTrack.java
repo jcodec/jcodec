@@ -37,18 +37,19 @@ public class TimecodeMP4MuxerTrack extends FramesMP4MuxerTrack {
     private long sampleDuration;
     private long samplePts;
     private int tcFrames;
-    private List<Edit> lower = new ArrayList<Edit>();
-
-    private List<Packet> gop = new ArrayList<Packet>();
+    private List<Edit> lower;
+    private List<Packet> gop;
 
     public TimecodeMP4MuxerTrack(SeekableByteChannel out, int trackId, int timescale) {
         super(out, trackId, TrackType.TIMECODE, timescale);
+        this.lower = new ArrayList<Edit>();
+        this.gop = new ArrayList<Packet>();
     }
 
     public void addTimecode(Packet packet) throws IOException {
         if (packet.isKeyFrame())
             processGop();
-        gop.add(new Packet(packet, (ByteBuffer) null));
+        gop.add(Packet.createPacketWithData(packet, (ByteBuffer) null));
     }
 
     private void processGop() throws IOException {
@@ -161,14 +162,12 @@ public class TimecodeMP4MuxerTrack extends FramesMP4MuxerTrack {
             if (firstTimecode != null) {
                 if (fpsEstimate == -1)
                     fpsEstimate = prevTimecode.getFrame() + 1;
-                TimecodeSampleEntry tmcd = new TimecodeSampleEntry((firstTimecode.isDropFrame() ? 1 : 0),
-                        timescale, (int) (sampleDuration / tcFrames), fpsEstimate);
+                TimecodeSampleEntry tmcd = TimecodeSampleEntry.createTimecodeSampleEntry((firstTimecode.isDropFrame() ? 1 : 0), timescale, (int) (sampleDuration / tcFrames), fpsEstimate);
                 sampleEntries.add(tmcd);
                 ByteBuffer sample = ByteBuffer.allocate(4);
                 sample.putInt(toCounter(firstTimecode, fpsEstimate));
                 sample.flip();
-                addFrame(new MP4Packet(sample, samplePts, timescale, sampleDuration, 0, true, null, samplePts,
-                        sampleEntries.size() - 1));
+                addFrame(MP4Packet.createMP4Packet(sample, samplePts, timescale, sampleDuration, 0, true, null, 0, samplePts, sampleEntries.size() - 1));
 
                 lower.add(new Edit(sampleDuration, samplePts, 1.0f));
             } else {

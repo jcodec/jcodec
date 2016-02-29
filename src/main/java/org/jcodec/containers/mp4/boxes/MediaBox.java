@@ -13,12 +13,12 @@ public class MediaBox extends NodeBox {
         return "mdia";
     }
 
-    public MediaBox(Header atom) {
-        super(atom);
+    public static MediaBox createMediaBox() {
+        return new MediaBox(new Header(fourcc()));
     }
 
-    public MediaBox() {
-        super(new Header(fourcc()));
+    public MediaBox(Header atom) {
+        super(atom);
     }
 
     public MediaInfoBox getMinf() {

@@ -34,7 +34,10 @@ import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.Video;
 import static org.jcodec.containers.mkv.MKVType.WritingApp;
 import static org.jcodec.containers.mkv.MKVType.createByType;
-import static org.jcodec.containers.mkv.muxer.MKVMuxer.createChild;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createLong;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createString;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createDouble;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createBuffer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -54,6 +57,7 @@ import org.jcodec.movtool.streaming.MovieSegment;
 import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createDate;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -116,27 +120,27 @@ public class MKVStreamingMuxer {
     private EbmlMaster muxEbmlHeader(){
         EbmlMaster master = (EbmlMaster) createByType(EBML);
 
-        createChild(master, EBMLVersion, 1);
-        createChild(master, EBMLReadVersion, 1);
-        createChild(master, EBMLMaxIDLength, 4);
-        createChild(master, EBMLMaxSizeLength, 8);
+        createLong(master, EBMLVersion, 1);
+        createLong(master, EBMLReadVersion, 1);
+        createLong(master, EBMLMaxIDLength, 4);
+        createLong(master, EBMLMaxSizeLength, 8);
         
-        createChild(master, DocType, "webm");
-        createChild(master, DocTypeVersion, 2);
-        createChild(master, DocTypeReadVersion, 2);
+        createString(master, DocType, "webm");
+        createLong(master, DocTypeVersion, 2);
+        createLong(master, DocTypeReadVersion, 2);
 
         return master;
     }
     
     private EbmlMaster muxInfo(VirtualTrack[] tracks) {
         EbmlMaster master = (EbmlMaster) createByType(Info);
-        createChild(master, TimecodeScale, TIMESCALE);
-        createChild(master, WritingApp, "JCodec v0.1.7");
-        createChild(master, MuxingApp, "JCodec MKVStreamingMuxer v0.1.7");
+        createLong(master, TimecodeScale, TIMESCALE);
+        createString(master, WritingApp, "JCodec v0.1.7");
+        createString(master, MuxingApp, "JCodec MKVStreamingMuxer v0.1.7");
         
         WebmCluster lastCluster = webmClusters.get(webmClusters.size()-1);
-        createChild(master, MKVType.Duration, (lastCluster.pkt.getPts()+lastCluster.pkt.getDuration())*MULTIPLIER);
-        createChild(master, DateUTC, new Date());
+        createDouble(master, MKVType.Duration, (lastCluster.pkt.getPts()+lastCluster.pkt.getDuration())*MULTIPLIER);
+        createDate(master, DateUTC, new Date());
         return master;
     }
 
@@ -146,38 +150,38 @@ public class MKVStreamingMuxer {
             VirtualTrack track = tracks[i];
             EbmlMaster trackEntryElem = (EbmlMaster) createByType(TrackEntry);
 
-            createChild(trackEntryElem, TrackNumber, i + 1);
+            createLong(trackEntryElem, TrackNumber, i + 1);
 
-            createChild(trackEntryElem, TrackUID, i + 1);
+            createLong(trackEntryElem, TrackUID, i + 1);
             CodecMeta codecMeta = track.getCodecMeta();
             if (VP80_FOURCC.equalsIgnoreCase(track.getCodecMeta().getFourcc())) {
-                createChild(trackEntryElem, TrackType, (byte) 0x01);
-                createChild(trackEntryElem, Name, "Track " + (i + 1) + " Video");
-                createChild(trackEntryElem, CodecID, "V_VP8");
-                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
+                createLong(trackEntryElem, TrackType, (byte) 0x01);
+                createString(trackEntryElem, Name, "Track " + (i + 1) + " Video");
+                createString(trackEntryElem, CodecID, "V_VP8");
+                createBuffer(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
 
                 if (codecMeta instanceof VideoCodecMeta) {
                     VideoCodecMeta vcm = (VideoCodecMeta) codecMeta;
                     EbmlMaster trackVideoElem = (EbmlMaster) createByType(Video);
 
-                    createChild(trackVideoElem, PixelWidth, vcm.getSize().getWidth());
-                    createChild(trackVideoElem, PixelHeight, vcm.getSize().getHeight());
+                    createLong(trackVideoElem, PixelWidth, vcm.getSize().getWidth());
+                    createLong(trackVideoElem, PixelHeight, vcm.getSize().getHeight());
 
                     trackEntryElem.add(trackVideoElem);
                 }
                 
             } else if ("vrbs".equalsIgnoreCase(track.getCodecMeta().getFourcc())) {
-                createChild(trackEntryElem, TrackType, (byte) 0x02);
-                createChild(trackEntryElem, Name, "Track " + (i + 1) + " Audio");
-                createChild(trackEntryElem, CodecID, "A_VORBIS");
-                createChild(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
+                createLong(trackEntryElem, TrackType, (byte) 0x02);
+                createString(trackEntryElem, Name, "Track " + (i + 1) + " Audio");
+                createString(trackEntryElem, CodecID, "A_VORBIS");
+                createBuffer(trackEntryElem, CodecPrivate, codecMeta.getCodecPrivate());
                 
                 if (codecMeta instanceof AudioCodecMeta) {
                     AudioCodecMeta acm = (AudioCodecMeta) codecMeta;
                     EbmlMaster trackAudioElem = (EbmlMaster) createByType(Audio);
-                    createChild(trackAudioElem, Channels, acm.getChannelCount());
-                    createChild(trackAudioElem, BitDepth, acm.getSampleSize());
-                    createChild(trackAudioElem, SamplingFrequency, acm.getSampleRate()); 
+                    createLong(trackAudioElem, Channels, acm.getChannelCount());
+                    createLong(trackAudioElem, BitDepth, acm.getSampleSize());
+                    createLong(trackAudioElem, SamplingFrequency, acm.getSampleRate()); 
 
                     trackEntryElem.add(trackAudioElem);
                 }
@@ -218,8 +222,8 @@ public class MKVStreamingMuxer {
     
     public static class WebmCluster implements MovieSegment {
 
-        MkvBlock be = MKVType.createByType(SimpleBlock);
-        EbmlMaster c = MKVType.createByType(Cluster);
+        MkvBlock be;
+        EbmlMaster c;
         public VirtualPacket pkt;
         private int chunkNo;
         private int trackNo;
@@ -227,13 +231,16 @@ public class MKVStreamingMuxer {
 		private MKVStreamingMuxer muxer;
 
         public WebmCluster(MKVStreamingMuxer muxer, VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long previousClustersSize) {
+            this.be = MKVType.createByType(SimpleBlock);
+            this.c = MKVType.createByType(Cluster);
+
             this.muxer = muxer;
 			this.pkt = pkt;
             this.chunkNo = chunkNo;
             this.trackNo = trackNo+1;
             this.previousClustersSize = previousClustersSize;
             long timecode = (long) (pkt.getPts()*MULTIPLIER);
-            createChild(c, Timecode, timecode); 
+            createLong(c, Timecode, timecode); 
             
             try {
                 be.frameSizes = new int[] { this.pkt.getDataLen() };

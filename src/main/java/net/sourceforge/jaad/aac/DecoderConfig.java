@@ -1,5 +1,7 @@
 package net.sourceforge.jaad.aac;
 
+import static net.sourceforge.jaad.aac.Profile.*;
+
 import net.sourceforge.jaad.aac.syntax.BitStream;
 import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
@@ -143,7 +145,7 @@ public class DecoderConfig implements SyntaxConstants {
 	 * @return a DecoderConfig
 	 */
 	public static DecoderConfig parseMP4DecoderSpecificInfo(byte[] data) throws AACException {
-		final IBitStream _in = new BitStream(data);
+		final IBitStream _in = BitStream.createBitStream(data);
 		final DecoderConfig config = new DecoderConfig();
 
 		try {
@@ -154,57 +156,49 @@ public class DecoderConfig implements SyntaxConstants {
 			else config.sampleFrequency = SampleFrequency.forInt(sf);
 			config.channelConfiguration = ChannelConfiguration.forInt(_in.readBits(4));
 
-			switch(config.profile) {
-				case AAC_SBR:
-					config.extProfile = config.profile;
-					config.sbrPresent = true;
-					sf = _in.readBits(4);
-					//TODO: 24 bits already read; read again?
-					//if(sf==0xF) config.sampleFrequency = SampleFrequency.forFrequency(_in.readBits(24));
-					//if sample frequencies are the same: downsample SBR
-					config.downSampledSBR = config.sampleFrequency.getIndex()==sf;
-					config.sampleFrequency = SampleFrequency.forInt(sf);
-					config.profile = readProfile(_in);
-					break;
-				case AAC_MAIN:
-				case AAC_LC:
-				case AAC_SSR:
-				case AAC_LTP:
-				case ER_AAC_LC:
-				case ER_AAC_LTP:
-				case ER_AAC_LD:
-					//ga-specific info:
-					config.frameLengthFlag = _in.readBool();
-					if(config.frameLengthFlag) throw new AACException("config uses 960-sample frames, not yet supported"); //TODO: are 960-frames working yet?
-					config.dependsOnCoreCoder = _in.readBool();
-					if(config.dependsOnCoreCoder) config.coreCoderDelay = _in.readBits(14);
-					else config.coreCoderDelay = 0;
-					config.extensionFlag = _in.readBool();
+			Profile cp = config.profile;
+			if (AAC_SBR == cp) {
+                config.extProfile = cp;
+                config.sbrPresent = true;
+                sf = _in.readBits(4);
+                //TODO: 24 bits already read; read again?
+                //if(sf==0xF) config.sampleFrequency = SampleFrequency.forFrequency(_in.readBits(24));
+                //if sample frequencies are the same: downsample SBR
+                config.downSampledSBR = config.sampleFrequency.getIndex()==sf;
+                config.sampleFrequency = SampleFrequency.forInt(sf);
+                config.profile = readProfile(_in);
+			} else if (AAC_MAIN == cp || AAC_LC ==  cp || AAC_SSR == cp || AAC_LTP == cp || ER_AAC_LC == cp || ER_AAC_LTP == cp || ER_AAC_LD == cp ) {
+                //ga-specific info:
+                config.frameLengthFlag = _in.readBool();
+                if(config.frameLengthFlag) throw new AACException("config uses 960-sample frames, not yet supported"); //TODO: are 960-frames working yet?
+                config.dependsOnCoreCoder = _in.readBool();
+                if(config.dependsOnCoreCoder) config.coreCoderDelay = _in.readBits(14);
+                else config.coreCoderDelay = 0;
+                config.extensionFlag = _in.readBool();
 
-					if(config.extensionFlag) {
-						if(config.profile.isErrorResilientProfile()) {
-							config.sectionDataResilience = _in.readBool();
-							config.scalefactorResilience = _in.readBool();
-							config.spectralDataResilience = _in.readBool();
-						}
-						//extensionFlag3
-						_in.skipBit();
-					}
+                if(config.extensionFlag) {
+                    if(cp.isErrorResilientProfile()) {
+                        config.sectionDataResilience = _in.readBool();
+                        config.scalefactorResilience = _in.readBool();
+                        config.spectralDataResilience = _in.readBool();
+                    }
+                    //extensionFlag3
+                    _in.skipBit();
+                }
 
-					if(config.channelConfiguration==ChannelConfiguration.CHANNEL_CONFIG_NONE) {
-						//TODO: is this working correct? -> ISO 14496-3 part 1: 1.A.4.3
-						_in.skipBits(3); //PCE
-						PCE pce = new PCE();
-						pce.decode(_in);
-						config.profile = pce.getProfile();
-						config.sampleFrequency = pce.getSampleFrequency();
-						config.channelConfiguration = ChannelConfiguration.forInt(pce.getChannelCount());
-					}
+                if(config.channelConfiguration==ChannelConfiguration.CHANNEL_CONFIG_NONE) {
+                    //TODO: is this working correct? -> ISO 14496-3 part 1: 1.A.4.3
+                    _in.skipBits(3); //PCE
+                    PCE pce = new PCE();
+                    pce.decode(_in);
+                    config.profile = pce.getProfile();
+                    config.sampleFrequency = pce.getSampleFrequency();
+                    config.channelConfiguration = ChannelConfiguration.forInt(pce.getChannelCount());
+                }
 
-					if(_in.getBitsLeft()>10) readSyncExtension(_in, config);
-					break;
-				default:
-					throw new AACException("profile not supported: "+config.profile.getIndex());
+                if(_in.getBitsLeft()>10) readSyncExtension(_in, config);
+			} else {
+                throw new AACException("profile not supported: "+cp.getIndex());
 			}
 			return config;
 		}

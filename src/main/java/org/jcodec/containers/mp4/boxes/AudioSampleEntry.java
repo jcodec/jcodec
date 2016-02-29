@@ -26,17 +26,38 @@ import org.jcodec.containers.mp4.boxes.channel.Label;
  */
 public class AudioSampleEntry extends SampleEntry {
 
-//@formatter:off
-    public static int kAudioFormatFlagIsFloat           = 0x1;
-    public static int kAudioFormatFlagIsBigEndian       = 0x2;
-    public static int kAudioFormatFlagIsSignedInteger   = 0x4;
-    public static int kAudioFormatFlagIsPacked          = 0x8;
-    public static int kAudioFormatFlagIsAlignedHigh     = 0x10;
-    public static int kAudioFormatFlagIsNonInterleaved  = 0x20;
-    public static int kAudioFormatFlagIsNonMixable      = 0x40;
-//@formatter:on    
+    //@formatter:off
+    public static int kAudioFormatFlagIsFloat = 0x1;
+    public static int kAudioFormatFlagIsBigEndian = 0x2;
+    public static int kAudioFormatFlagIsSignedInteger = 0x4;
+    public static int kAudioFormatFlagIsPacked = 0x8;
+    public static int kAudioFormatFlagIsAlignedHigh = 0x10;
+    public static int kAudioFormatFlagIsNonInterleaved = 0x20;
+    public static int kAudioFormatFlagIsNonMixable = 0x40;
+    //@formatter:on    
 
     private static final MyFactory FACTORY = new MyFactory();
+
+    public static AudioSampleEntry createAudioSampleEntry(Header header, short drefInd, short channelCount,
+            short sampleSize, int sampleRate, short revision, int vendor, int compressionId, int pktSize,
+            int samplesPerPkt, int bytesPerPkt, int bytesPerFrame, int bytesPerSample, short version) {
+        AudioSampleEntry audio = new AudioSampleEntry(header);
+        audio.drefInd = drefInd;
+        audio.channelCount = channelCount;
+        audio.sampleSize = sampleSize;
+        audio.sampleRate = sampleRate;
+        audio.revision = revision;
+        audio.vendor = vendor;
+        audio.compressionId = compressionId;
+        audio.pktSize = pktSize;
+        audio.samplesPerPkt = samplesPerPkt;
+        audio.bytesPerPkt = bytesPerPkt;
+        audio.bytesPerFrame = bytesPerFrame;
+        audio.bytesPerSample = bytesPerSample;
+        audio.version = version;
+        return audio;
+    }
+
     private short channelCount;
     private short sampleSize;
     private float sampleRate;
@@ -55,24 +76,6 @@ public class AudioSampleEntry extends SampleEntry {
     public AudioSampleEntry(Header atom) {
         super(atom);
         factory = FACTORY;
-    }
-
-    public AudioSampleEntry(Header header, short drefInd, short channelCount, short sampleSize, int sampleRate,
-            short revision, int vendor, int compressionId, int pktSize, int samplesPerPkt, int bytesPerPkt,
-            int bytesPerFrame, int bytesPerSample, short version) {
-        super(header, drefInd);
-        this.channelCount = channelCount;
-        this.sampleSize = sampleSize;
-        this.sampleRate = sampleRate;
-        this.revision = revision;
-        this.vendor = vendor;
-        this.compressionId = compressionId;
-        this.pktSize = pktSize;
-        this.samplesPerPkt = samplesPerPkt;
-        this.bytesPerPkt = bytesPerPkt;
-        this.bytesPerFrame = bytesPerFrame;
-        this.bytesPerSample = bytesPerSample;
-        this.version = version;
     }
 
     public void parse(ByteBuffer input) {
@@ -189,9 +192,10 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public static class MyFactory extends BoxFactory {
-        private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
+        private final Map<String, Class<? extends Box>> mappings;
 
         public MyFactory() {
+            this.mappings = new HashMap<String, Class<? extends Box>>();
             mappings.put(WaveExtension.fourcc(), WaveExtension.class);
             mappings.put(ChannelBox.fourcc(), ChannelBox.class);
             mappings.put("esds", LeafBox.class);
@@ -203,7 +207,7 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public Endian getEndian() {
-        EndianBox endianBox = Box.findFirst(this, EndianBox.class, WaveExtension.fourcc(), EndianBox.fourcc());
+        EndianBox endianBox = Box.findFirstPath(this, EndianBox.class, new String[] { WaveExtension.fourcc(), EndianBox.fourcc() });
         if (endianBox == null) {
             if ("twos".equals(header.getFourcc()))
                 return Endian.BIG_ENDIAN;
@@ -223,6 +227,7 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public static Set<String> pcms = new HashSet<String>();
+
     static {
         pcms.add("raw ");
         pcms.add("twos");
@@ -312,6 +317,6 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     protected void getModelFields(List<String> list) {
-        ToJSON.allFieldsExcept(this.getClass(), "endian", "float", "format", "labels");
+        ToJSON.allFieldsExcept(this.getClass(), new String[]{"endian", "float", "format", "labels"});
     }
 }

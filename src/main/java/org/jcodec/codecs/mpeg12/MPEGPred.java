@@ -18,21 +18,16 @@ import org.jcodec.common.tools.MathUtil;
  * 
  */
 public class MPEGPred {
-    protected int[][][] mvPred = new int[2][2][2];
-    private int chromaFormat;
-    private int[][] fCode;
-    private boolean topFieldFirst;
+    protected int[][][] mvPred;
+    protected int chromaFormat;
+    protected int[][] fCode;
+    protected boolean topFieldFirst;
 
     public MPEGPred(int[][] fCode, int chromaFormat, boolean topFieldFirst) {
+        this.mvPred = new int[2][2][2];
         this.fCode = fCode;
         this.chromaFormat = chromaFormat;
         this.topFieldFirst = topFieldFirst;
-    }
-    
-    public MPEGPred(MPEGPred other) {
-        this.fCode = other.fCode;
-        this.chromaFormat = other.chromaFormat;
-        this.topFieldFirst = other.topFieldFirst;
     }
 
     public void predictFullXFullYSafe(byte[] ref, int refX, int refY, int refW, int refH, int refVertStep,

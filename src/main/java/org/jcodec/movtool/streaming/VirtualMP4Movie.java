@@ -21,13 +21,9 @@ import org.jcodec.containers.mp4.Brand;
 public class VirtualMP4Movie extends VirtualMovie {
     private Brand brand;
 
-    public VirtualMP4Movie(VirtualTrack... tracks) throws IOException {
-        this(Brand.MP4, tracks);
-    }
-
-    public VirtualMP4Movie(Brand brand, VirtualTrack... tracks) throws IOException {
-        super(tracks);
-        this.brand = brand;
+    public VirtualMP4Movie(VirtualTrack... arguments) throws IOException {
+        super(arguments);
+        this.brand = Brand.MP4;
         muxTracks();
     }
 

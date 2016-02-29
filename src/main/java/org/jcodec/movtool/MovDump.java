@@ -1,7 +1,7 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,7 +23,7 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
  */
 public class MovDump {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 1) {
             System.out.println("Syntax: movdump [options] <filename>");
             System.out
@@ -51,7 +51,7 @@ public class MovDump {
         if (atom == null)
             System.out.println(print(source));
         else {
-            String dump = print(source, atom);
+            String dump = printAtom(source, atom);
             if (dump != null)
                 System.out.println(dump);
         }
@@ -61,8 +61,8 @@ public class MovDump {
         SeekableByteChannel raf = null;
         SeekableByteChannel daos = null;
         try {
-            raf = readableFileChannel(source);
-            daos = writableFileChannel(headerFile);
+            raf = readableChannel(source);
+            daos = writableChannel(headerFile);
 
             for (Atom atom : MP4Util.getRootAtoms(raf)) {
                 String fourcc = atom.getHeader().getFourcc();
@@ -93,7 +93,7 @@ public class MovDump {
         return null;
     }
 
-    public static String print(File file, String atom) throws IOException {
+    public static String printAtom(File file, String atom) throws IOException {
         MovieBox mov = MP4Util.parseMovie(file);
 
         Box found = findDeep(mov, atom);

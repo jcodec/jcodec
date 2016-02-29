@@ -21,8 +21,8 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class JpegToThumb2x2 extends JpegDecoder {
 
-    public JpegToThumb2x2() {
-        super();
+    public static JpegToThumb2x2 createJpegToThumb2x2() {
+        return new JpegToThumb2x2(false, false);
     }
 
     public JpegToThumb2x2(boolean interlace, boolean topFieldFirst) {

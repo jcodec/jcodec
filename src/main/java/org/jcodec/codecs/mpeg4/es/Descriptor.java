@@ -13,16 +13,12 @@ import org.jcodec.common.io.NIOUtils;
  * 
  */
 public abstract class Descriptor {
-    private int tag;
+    private int _tag;
     private int size;
     private static DescriptorFactory factory = new DescriptorFactory();
 
-    public Descriptor(int tag) {
-        this(tag, 0);
-    }
-
     public Descriptor(int tag, int size) {
-        this.tag = tag;
+        this._tag = tag;
         this.size = size;
     }
 
@@ -32,7 +28,7 @@ public abstract class Descriptor {
         doWrite(out);
 
         int length = out.position() - fork.position() - 5;
-        fork.put((byte) tag);
+        fork.put((byte) _tag);
         JCodecUtil.writeBER32(fork, length);
     }
 
@@ -73,6 +69,6 @@ public abstract class Descriptor {
     }
 
     private int getTag() {
-        return tag;
+        return _tag;
     }
 }

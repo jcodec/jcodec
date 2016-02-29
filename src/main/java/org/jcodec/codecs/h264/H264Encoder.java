@@ -47,12 +47,16 @@ public class H264Encoder extends VideoEncoder {
     // private static final int QP = 20;
     private static final int KEY_INTERVAL_DEFAULT = 25;
 
+    public static H264Encoder createH264Encoder() {
+        return new H264Encoder(new DumbRateControl());
+    }
+
     private CAVLC[] cavlc;
     private byte[][] leftRow;
     private byte[][] topLine;
     private RateControl rc;
     private int frameNumber;
-    private int keyInterval = KEY_INTERVAL_DEFAULT;
+    private int keyInterval;
 
     private int maxPOC;
 
@@ -72,12 +76,9 @@ public class H264Encoder extends VideoEncoder {
 
     private EncodedMB outMB;
 
-    public H264Encoder() {
-        this(new DumbRateControl());
-    }
-
     public H264Encoder(RateControl rc) {
         this.rc = rc;
+        this.keyInterval = KEY_INTERVAL_DEFAULT;
     }
 
     public int getKeyInterval() {
@@ -100,7 +101,7 @@ public class H264Encoder extends VideoEncoder {
         SliceType sliceType = frameNumber == 0 ? SliceType.I : SliceType.P;
         boolean idr = frameNumber == 0;
 
-        return encodeFrame8Bit(pic, _out, idr, frameNumber++, sliceType);
+        return doEncodeFrame8Bit(pic, _out, idr, frameNumber++, sliceType);
     }
 
     /**
@@ -113,7 +114,7 @@ public class H264Encoder extends VideoEncoder {
      */
     public ByteBuffer encodeIDRFrame(Picture8Bit pic, ByteBuffer _out) {
         frameNumber = 0;
-        return encodeFrame8Bit(pic, _out, true, frameNumber, SliceType.I);
+        return doEncodeFrame8Bit(pic, _out, true, frameNumber, SliceType.I);
     }
 
     /**
@@ -127,10 +128,10 @@ public class H264Encoder extends VideoEncoder {
      */
     public ByteBuffer encodePFrame(Picture8Bit pic, ByteBuffer _out) {
         frameNumber++;
-        return encodeFrame8Bit(pic, _out, true, frameNumber, SliceType.P);
+        return doEncodeFrame8Bit(pic, _out, true, frameNumber, SliceType.P);
     }
 
-    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
+    public ByteBuffer doEncodeFrame8Bit(Picture8Bit pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
         ByteBuffer dup = _out.duplicate();
 
         if (idr) {
@@ -311,7 +312,7 @@ public class H264Encoder extends VideoEncoder {
 
     private void addToReference(int mbX, int mbY) {
         if (mbY > 0)
-            MBEncoderHelper.putBlk(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbY - 1) << 4);
+            MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbY - 1) << 4);
         EncodedMB tmp = topEncoded[mbX];
         topEncoded[mbX] = outMB;
         outMB = tmp;
@@ -321,7 +322,7 @@ public class H264Encoder extends VideoEncoder {
         int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
         int mbHeight = sps.pic_height_in_map_units_minus1 + 1;
         for (int mbX = 0; mbX < mbWidth; mbX++)
-            MBEncoderHelper.putBlk(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbHeight - 1) << 4);
+            MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbHeight - 1) << 4);
     }
 
     private void collectPredictors(Picture8Bit outMB, int mbX) {

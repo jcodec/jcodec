@@ -14,7 +14,7 @@ import static java.lang.System.arraycopy;
 public class IntObjectMap<T> {
     private static final int GROW_BY = 128;
     private Object[] storage;
-    private int size;
+    private int _size;
 
     public IntObjectMap() {
         this.storage = new Object[GROW_BY];
@@ -27,7 +27,7 @@ public class IntObjectMap<T> {
             storage = ns;
         }
         if (storage[key] == null)
-            size++;
+            _size++;
         storage[key] = val;
     }
 
@@ -37,7 +37,7 @@ public class IntObjectMap<T> {
     }
 
     public int[] keys() {
-        int[] result = new int[size];
+        int[] result = new int[_size];
         for (int i = 0, r = 0; i < storage.length; i++) {
             if (storage[i] != null)
                 result[r++] = i;
@@ -48,22 +48,22 @@ public class IntObjectMap<T> {
     public void clear() {
         for (int i = 0; i < storage.length; i++)
             storage[i] = null;
-        size = 0;
+        _size = 0;
     }
 
     public int size() {
-        return size;
+        return _size;
     }
 
     public void remove(int key) {
         if (storage[key] != null)
-            size--;
+            _size--;
         storage[key] = null;
     }
 
     @SuppressWarnings("unchecked")
     public T[] values(T[] runtime) {
-        T[] result = (T[]) Array.newInstance(runtime.getClass().getComponentType(), size);
+        T[] result = (T[]) Array.newInstance(runtime.getClass().getComponentType(), _size);
         for (int i = 0, r = 0; i < storage.length; i++) {
             if (storage[i] != null)
                 result[r++] = (T) storage[i];

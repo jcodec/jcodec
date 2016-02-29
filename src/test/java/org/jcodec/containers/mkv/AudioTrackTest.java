@@ -4,11 +4,10 @@ import static java.lang.System.arraycopy;
 import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVMuxerTest.bufferToArray;
-import static org.jcodec.containers.mkv.MKVMuxerTest.tildeExpand;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
 import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
-import static org.jcodec.containers.mkv.MKVType.findAll;
+import static org.jcodec.containers.mkv.MKVType.findAllTree;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -16,6 +15,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.jcodec.Utils;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
@@ -43,7 +43,7 @@ public class AudioTrackTest {
         audio.gotoFrame(9);
         
         Packet p = audio.nextFrame();
-        ByteBuffer audioSample = NIOUtils.fetchFrom(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
+        ByteBuffer audioSample = NIOUtils.fetchFromFile(Utils.tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
         
         Assert.assertArrayEquals(audioSample.array(), bufferToArray(p.getData()));
     }
@@ -55,8 +55,8 @@ public class AudioTrackTest {
         audio.gotoFrame(8);
         
         Packet p = audio.getFrames(2);
-        byte[] sample08 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3"));
-        byte[] sample09 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
+        byte[] sample08 = readFileToByteArray(Utils.tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3"));
+        byte[] sample09 = readFileToByteArray(Utils.tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
         byte[] twoSamples = new byte[sample08.length+sample09.length];
         arraycopy(sample08, 0, twoSamples, 0, sample08.length);
         arraycopy(sample09, 0, twoSamples, sample08.length, sample09.length);
@@ -77,7 +77,8 @@ public class AudioTrackTest {
             closeQuietly(inputStream);
         }
         if (showInterlacedBlocks) {
-            MkvBlock[] blocks = findAll(mkv, MkvBlock.class, Segment, Cluster, SimpleBlock);
+            MKVType[] path = { Segment, Cluster, SimpleBlock };
+            MkvBlock[] blocks = findAllTree(mkv, MkvBlock.class, path);
             for (MkvBlock be : blocks) {
                 System.out.println("\nTRACK " + be.trackNumber);
                 String pref = "";

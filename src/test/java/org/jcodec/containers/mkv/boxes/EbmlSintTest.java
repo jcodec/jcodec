@@ -5,6 +5,7 @@ import static org.jcodec.containers.mkv.boxes.EbmlSint.convertToBytes;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.ebmlSignedLength;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.signedComplement;
 import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlEncode;
+import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlEncodeLen;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -24,7 +25,7 @@ public class EbmlSintTest {
         
         int size = ebmlSignedLength(100500);
         Assert.assertEquals(3, size);
-        System.out.println(EbmlUtil.toHexString(ebmlEncode(100500, size)));
+        System.out.println(EbmlUtil.toHexString(ebmlEncodeLen(100500, size)));
     }
     
     
@@ -49,13 +50,13 @@ public class EbmlSintTest {
         int size = ebmlSignedLength(value);
         value += signedComplement[size];
         Assert.assertEquals(2, size);
-        Assert.assertArrayEquals(new byte[]{0x5f, 0x3f}, ebmlEncode(value, size));
+        Assert.assertArrayEquals(new byte[]{0x5f, 0x3f}, ebmlEncodeLen(value, size));
     }
 
     @Test
     public void test() throws IOException {
         EbmlSint sie = new EbmlSint(BlockDuration.id);
-        sie.set(100500);
+        sie.setLong(100500);
         ByteBuffer bb = sie.getData();
         
         Assert.assertArrayEquals(new byte[]{(byte)0x9B, (byte)0x83, 0x31, (byte)0x88, (byte)0x93}, bb.array());
@@ -64,7 +65,7 @@ public class EbmlSintTest {
     @Test
     public void testEdgeCase() throws Exception {
         EbmlSint sie = new EbmlSint(BlockDuration.id);
-        sie.set(-0x0FFFFF);
+        sie.setLong(-0x0FFFFF);
         ByteBuffer bb = sie.getData();
         Assert.assertArrayEquals(new byte[]{(byte)0x9B, (byte)0x83, 0x20, 0x00, 0x00}, bb.array());
     }

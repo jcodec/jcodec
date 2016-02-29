@@ -20,12 +20,17 @@ public class MKVMuxerTrack {
 
     public static enum MKVMuxerTrackType {VIDEO };
     
-    public MKVMuxerTrackType type = MKVMuxerTrackType.VIDEO;
+    public MKVMuxerTrackType type;
     public Size frameDimentions;
     public String codecId;
     public int trackNo;
     private int frameDuration;
-    List<MkvBlock> trackBlocks = new ArrayList<MkvBlock>();
+    List<MkvBlock> trackBlocks;
+    
+    public MKVMuxerTrack() {
+        this.trackBlocks = new ArrayList<MkvBlock>();
+        this.type = MKVMuxerTrackType.VIDEO;
+    }
     
     static final int DEFAULT_TIMESCALE = 1000000000; //NANOSECOND
     

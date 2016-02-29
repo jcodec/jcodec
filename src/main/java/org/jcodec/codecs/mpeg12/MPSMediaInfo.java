@@ -34,9 +34,13 @@ import org.jcodec.containers.mps.MPSUtils.PESReader;
  */
 public class MPSMediaInfo extends PESReader {
 
-    private Map<Integer, MPEGTrackMetadata> infos = new HashMap<Integer, MPSMediaInfo.MPEGTrackMetadata>();
+    private Map<Integer, MPEGTrackMetadata> infos;
     private int pesTried;
     private PSM psm;
+    
+    public MPSMediaInfo() {
+        this.infos = new HashMap<Integer, MPSMediaInfo.MPEGTrackMetadata>();
+    }
 
     public static class MPEGTimecodeMetadata {
 
@@ -186,7 +190,7 @@ public class MPSMediaInfo extends PESReader {
 
     private int[] parseSystem(ByteBuffer pesBuffer) {
         NIOUtils.skip(pesBuffer, 12);
-        IntArrayList result = new IntArrayList();
+        IntArrayList result = IntArrayList.createIntArrayList();
         while (pesBuffer.remaining() >= 3 && (pesBuffer.get(pesBuffer.position()) & 0x80) == 0x80) {
             result.add(pesBuffer.get() & 0xff);
             pesBuffer.getShort();
@@ -229,7 +233,7 @@ public class MPSMediaInfo extends PESReader {
         return new ArrayList<MPEGTrackMetadata>(infos.values());
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         new MPSMediaInfo().getMediaInfo(new File(args[0]));
     }
 

@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class StringUtils {
 
-    private static String[] splitWorker(String str, String separatorChars, int max, boolean preserveAllTokens) {
+    private static String[] splitWorker4(String str, String separatorChars, int max, boolean preserveAllTokens) {
         // Performance tuned for 2.0 (JDK1.4)
         // Direct code is quicker than StringTokenizer.
         // Also, StringTokenizer uses isSpace() not isWhitespace()
@@ -133,18 +133,18 @@ public class StringUtils {
     }
 
     public static String[] split(String str) {
-        return split(str, null, -1);
+        return splitS3(str, null, -1);
     }
 
-    public static String[] split(String str, String separatorChars) {
-        return splitWorker(str, separatorChars, -1, false);
+    public static String[] splitS(String str, String separatorChars) {
+        return splitWorker4(str, separatorChars, -1, false);
     }
 
-    public static String[] split(String str, String separatorChars, int max) {
-        return splitWorker(str, separatorChars, max, false);
+    public static String[] splitS3(String str, String separatorChars, int max) {
+        return splitWorker4(str, separatorChars, max, false);
     }
 
-    public static String[] split(String str, char separatorChar) {
+    public static String[] splitC(String str, char separatorChar) {
         return splitWorker(str, separatorChar, false);
     }
     
@@ -169,16 +169,16 @@ public class StringUtils {
     }
     
     public static String capitalize(String str) {
-        return capitalize(str, null);
+        return capitalizeD(str, null);
     }
     
-    public static String capitalize(String str, char[] delimiters) {
+    public static String capitalizeD(String str, char[] delimiters) {
         int delimLen = (delimiters == null ? -1 : delimiters.length);
         if (str == null || str.length() == 0 || delimLen == 0) {
             return str;
         }
         int strLen = str.length();
-        StringBuffer buffer = new StringBuffer(strLen);
+        StringBuilder buffer = new StringBuilder(strLen);
         boolean capitalizeNext = true;
         for (int i = 0; i < strLen; i++) {
             char ch = str.charAt(i);
@@ -199,20 +199,20 @@ public class StringUtils {
     
 
     public static String join(Object[] array) {
-        return join(array, null);
+        return joinS(array, null);
     }
 
    
-    public static String join(Object[] array, char separator) {
+    public static String join2(Object[] array, char separator) {
         if (array == null) {
             return null;
         }
 
-        return join(array, separator, 0, array.length);
+        return join4(array, separator, 0, array.length);
     }
 
     
-    public static String join(Object[] array, char separator, int startIndex, int endIndex) {
+    public static String join4(Object[] array, char separator, int startIndex, int endIndex) {
         if (array == null) {
             return null;
         }
@@ -222,7 +222,7 @@ public class StringUtils {
         }
 
         bufSize *= ((array[startIndex] == null ? 16 : array[startIndex].toString().length()) + 1);
-        StringBuffer buf = new StringBuffer(bufSize);
+        StringBuilder buf = new StringBuilder(bufSize);
 
         for (int i = startIndex; i < endIndex; i++) {
             if (i > startIndex) {
@@ -237,15 +237,15 @@ public class StringUtils {
 
 
     
-    public static String join(Object[] array, String separator) {
+    public static String joinS(Object[] array, String separator) {
         if (array == null) {
             return null;
         }
-        return join(array, separator, 0, array.length);
+        return joinS4(array, separator, 0, array.length);
     }
 
    
-    public static String join(Object[] array, String separator, int startIndex, int endIndex) {
+    public static String joinS4(Object[] array, String separator, int startIndex, int endIndex) {
         if (array == null) {
             return null;
         }
@@ -263,7 +263,7 @@ public class StringUtils {
         bufSize *= ((array[startIndex] == null ? 16 : array[startIndex].toString().length())
                         + separator.length());
 
-        StringBuffer buf = new StringBuffer(bufSize);
+        StringBuilder buf = new StringBuilder(bufSize);
 
         for (int i = startIndex; i < endIndex; i++) {
             if (i > startIndex) {

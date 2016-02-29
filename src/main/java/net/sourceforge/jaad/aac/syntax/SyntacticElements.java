@@ -1,5 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
 
+import static net.sourceforge.jaad.aac.ChannelConfiguration.*;
+
 import java.util.logging.Level;
 
 import net.sourceforge.jaad.aac.AACException;
@@ -104,42 +106,35 @@ public class SyntacticElements implements SyntaxConstants {
 		}
 		else {
 			//error resilient raw data block
-			switch(config.getChannelConfiguration()) {
-				case CHANNEL_CONFIG_MONO:
-					decodeSCE_LFE(_in);
-					break;
-				case CHANNEL_CONFIG_STEREO:
-					decodeCPE(_in);
-					break;
-				case CHANNEL_CONFIG_STEREO_PLUS_CENTER:
-					decodeSCE_LFE(_in);
-					decodeCPE(_in);
-					break;
-				case CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO:
-					decodeSCE_LFE(_in);
-					decodeCPE(_in);
-					decodeSCE_LFE(_in);
-					break;
-				case CHANNEL_CONFIG_FIVE:
-					decodeSCE_LFE(_in);
-					decodeCPE(_in);
-					decodeCPE(_in);
-					break;
-				case CHANNEL_CONFIG_FIVE_PLUS_ONE:
-					decodeSCE_LFE(_in);
-					decodeCPE(_in);
-					decodeCPE(_in);
-					decodeSCE_LFE(_in);
-					break;
-				case CHANNEL_CONFIG_SEVEN_PLUS_ONE:
-					decodeSCE_LFE(_in);
-					decodeCPE(_in);
-					decodeCPE(_in);
-					decodeCPE(_in);
-					decodeSCE_LFE(_in);
-					break;
-				default:
-					throw new AACException("unsupported channel configuration for error resilience: "+config.getChannelConfiguration());
+			ChannelConfiguration cc = config.getChannelConfiguration();
+			if (CHANNEL_CONFIG_MONO == cc) {
+                decodeSCE_LFE(_in);
+			} else if(CHANNEL_CONFIG_STEREO == cc) {
+                decodeCPE(_in);
+            } else if(CHANNEL_CONFIG_STEREO_PLUS_CENTER == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+            } else if(CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+                decodeSCE_LFE(_in);
+            } else if(CHANNEL_CONFIG_FIVE == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+                decodeCPE(_in);
+            } else if(CHANNEL_CONFIG_FIVE_PLUS_ONE == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+                decodeCPE(_in);
+                decodeSCE_LFE(_in);
+            } else if(CHANNEL_CONFIG_SEVEN_PLUS_ONE == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+                decodeCPE(_in);
+                decodeCPE(_in);
+                decodeSCE_LFE(_in);
+			} else {
+                throw new AACException("unsupported channel configuration for error resilience: "+cc);
 			}
 		}
 		_in.byteAlign();
@@ -269,7 +264,7 @@ public class SyntacticElements implements SyntaxConstants {
 			final SBR sbr = scelfe.getSBR();
 			if(sbr.isPSUsed()) {
 				chs = 2;
-				scelfe.getSBR().process(data[channel], data[channel+1], false);
+				scelfe.getSBR()._process(data[channel], data[channel+1], false);
 			}
 			else scelfe.getSBR().process(data[channel], false);
 		}
@@ -335,7 +330,7 @@ public class SyntacticElements implements SyntaxConstants {
 		//SBR
 		if(sbrPresent&&config.isSBREnabled()) {
 			if(data[channel].length==config.getFrameLength()) LOGGER.log(Level.WARNING, "SBR data present, but buffer has normal size!");
-			cpe.getSBR().process(data[channel], data[channel+1], false);
+			cpe.getSBR()._process(data[channel], data[channel+1], false);
 		}
 	}
 

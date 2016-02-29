@@ -19,11 +19,11 @@ public class DataRefBox extends NodeBox {
         return "dref";
     }
 
-    public DataRefBox() {
-        this(new Header(fourcc()));
+    public static DataRefBox createDataRefBox() {
+        return new DataRefBox(new Header(fourcc()));
     }
 
-    private DataRefBox(Header atom) {
+    public DataRefBox(Header atom) {
         super(atom);
         factory = FACTORY;
     }
@@ -43,9 +43,10 @@ public class DataRefBox extends NodeBox {
     }
 
     public static class MyFactory extends BoxFactory {
-        private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
+        private final Map<String, Class<? extends Box>> mappings;
 
         public MyFactory() {
+            this.mappings = new HashMap<String, Class<? extends Box>>();
             mappings.put(UrlBox.fourcc(), UrlBox.class);
             mappings.put(AliasBox.fourcc(), AliasBox.class);
             mappings.put("cios", AliasBox.class);

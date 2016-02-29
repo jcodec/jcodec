@@ -22,28 +22,28 @@ public class PS implements PSConstants, PSTables, PSHuffmanTables {
 	int nr_icc_par;
 	int frame_class;
 	int num_env;
-	int[] border_position = new int[MAX_PS_ENVELOPES+1];
-	boolean[] iid_dt = new boolean[MAX_PS_ENVELOPES];
-	boolean[] icc_dt = new boolean[MAX_PS_ENVELOPES];
+	int[] border_position;
+	boolean[] iid_dt;
+	boolean[] icc_dt;
 	boolean enable_ipdopd;
 	int ipd_mode;
-	boolean[] ipd_dt = new boolean[MAX_PS_ENVELOPES];
-	boolean[] opd_dt = new boolean[MAX_PS_ENVELOPES];
+	boolean[] ipd_dt;
+	boolean[] opd_dt;
 
 	/* indices */
-	int[] iid_index_prev = new int[34];
-	int[] icc_index_prev = new int[34];
-	int[] ipd_index_prev = new int[17];
-	int[] opd_index_prev = new int[17];
-	int[][] iid_index = new int[MAX_PS_ENVELOPES][34];
-	int[][] icc_index = new int[MAX_PS_ENVELOPES][34];
-	int[][] ipd_index = new int[MAX_PS_ENVELOPES][17];
-	int[][] opd_index = new int[MAX_PS_ENVELOPES][17];
+	int[] iid_index_prev;
+	int[] icc_index_prev;
+	int[] ipd_index_prev;
+	int[] opd_index_prev;
+	int[][] iid_index;
+	int[][] icc_index;
+	int[][] ipd_index;
+	int[][] opd_index;
 
-	int[] ipd_index_1 = new int[17];
-	int[] opd_index_1 = new int[17];
-	int[] ipd_index_2 = new int[17];
-	int[] opd_index_2 = new int[17];
+	int[] ipd_index_1;
+	int[] opd_index_1;
+	int[] ipd_index_2;
+	int[] opd_index_2;
 	/* ps data was correctly read */
 	int ps_data_available;
 	/* a header has been read */
@@ -61,34 +61,69 @@ public class PS implements PSConstants, PSTables, PSHuffmanTables {
 	int[] map_group2bk;
 	/* filter delay handling */
 	int saved_delay;
-	int[] delay_buf_index_ser = new int[NO_ALLPASS_LINKS];
-	int[] num_sample_delay_ser = new int[NO_ALLPASS_LINKS];
-	int[] delay_D = new int[64];
-	int[] delay_buf_index_delay = new int[64];
-	float[][][] delay_Qmf = new float[14][64][2]; /* 14 samples delay max, 64 QMF channels */
+	int[] delay_buf_index_ser;
+	int[] num_sample_delay_ser;
+	int[] delay_D;
+	int[] delay_buf_index_delay;
+	float[][][] delay_Qmf; /* 14 samples delay max, 64 QMF channels */
 
-	float[][][] delay_SubQmf = new float[2][32][2]; /* 2 samples delay max (SubQmf is always allpass filtered) */
+	float[][][] delay_SubQmf; /* 2 samples delay max (SubQmf is always allpass filtered) */
 
-	float[][][][] delay_Qmf_ser = new float[NO_ALLPASS_LINKS][5][64][2]; /* 5 samples delay max (table 8.34), 64 QMF channels */
+	float[][][][] delay_Qmf_ser; /* 5 samples delay max (table 8.34), 64 QMF channels */
 
-	float[][][][] delay_SubQmf_ser = new float[NO_ALLPASS_LINKS][5][32][2]; /* 5 samples delay max (table 8.34) */
+	float[][][][] delay_SubQmf_ser; /* 5 samples delay max (table 8.34) */
 	/* transients */
 
 	float alpha_decay;
 	float alpha_smooth;
-	float[] P_PeakDecayNrg = new float[34];
-	float[] P_prev = new float[34];
-	float[] P_SmoothPeakDecayDiffNrg_prev = new float[34];
+	float[] P_PeakDecayNrg;
+	float[] P_prev;
+	float[] P_SmoothPeakDecayDiffNrg_prev;
 	/* mixing and phase */
-	float[][] h11_prev = new float[50][2];
-	float[][] h12_prev = new float[50][2];
-	float[][] h21_prev = new float[50][2];
-	float[][] h22_prev = new float[50][2];
+	float[][] h11_prev;
+	float[][] h12_prev;
+	float[][] h21_prev;
+	float[][] h22_prev;
 	int phase_hist;
-	float[][][] ipd_prev = new float[20][2][2];
-	float[][][] opd_prev = new float[20][2][2];
+	float[][][] ipd_prev;
+	float[][][] opd_prev;
 
 	public PS(SampleFrequency sr, int numTimeSlotsRate) {
+	    this.border_position = new int[MAX_PS_ENVELOPES+1];
+        this.iid_dt = new boolean[MAX_PS_ENVELOPES];
+        this.icc_dt = new boolean[MAX_PS_ENVELOPES];
+        this.ipd_dt = new boolean[MAX_PS_ENVELOPES];
+        this.opd_dt = new boolean[MAX_PS_ENVELOPES];
+        this.iid_index_prev = new int[34];
+        this.icc_index_prev = new int[34];
+        this.ipd_index_prev = new int[17];
+        this.opd_index_prev = new int[17];
+        this.iid_index = new int[MAX_PS_ENVELOPES][34];
+        this.icc_index = new int[MAX_PS_ENVELOPES][34];
+        this.ipd_index = new int[MAX_PS_ENVELOPES][17];
+        this.opd_index = new int[MAX_PS_ENVELOPES][17];
+        this.ipd_index_1 = new int[17];
+        this.opd_index_1 = new int[17];
+        this.ipd_index_2 = new int[17];
+        this.opd_index_2 = new int[17];
+        this.delay_buf_index_ser = new int[NO_ALLPASS_LINKS];
+        this.num_sample_delay_ser = new int[NO_ALLPASS_LINKS];
+        this.delay_D = new int[64];
+        this.delay_buf_index_delay = new int[64];
+        this.delay_Qmf = new float[14][64][2]; /* 14 samples delay max, 64 QMF channels */
+        this.delay_SubQmf = new float[2][32][2]; /* 2 samples delay max (SubQmf is always allpass filtered) */
+        this.delay_Qmf_ser = new float[NO_ALLPASS_LINKS][5][64][2]; /* 5 samples delay max (table 8.34), 64 QMF channels */
+        this.delay_SubQmf_ser = new float[NO_ALLPASS_LINKS][5][32][2]; /* 5 samples delay max (table 8.34) */
+        this.P_PeakDecayNrg = new float[34];
+        this.P_prev = new float[34];
+        this.P_SmoothPeakDecayDiffNrg_prev = new float[34];
+        this.h11_prev = new float[50][2];
+        this.h12_prev = new float[50][2];
+        this.h21_prev = new float[50][2];
+        this.h22_prev = new float[50][2];
+        this.ipd_prev = new float[20][2][2];
+        this.opd_prev = new float[20][2][2];
+
 		int i;
 		int short_delay_band;
 

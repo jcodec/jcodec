@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class Platform {
 
-    public static <T> T newInstance(Class<T> clazz, Object... params) {
+    public static <T> T newInstance(Class<T> clazz, Object[] params) {
         Class[] classes = new Class[params.length];
         for (int i = 0; i < params.length; i++) {
             classes[i] = params[i].getClass();
@@ -21,7 +21,7 @@ public class Platform {
         }
     }
 
-    public static void invokeMethod(Object target, String methodName, Object... params) throws NoSuchMethodException {
+    public static void invokeMethod(Object target, String methodName, Object[] params) throws NoSuchMethodException {
         Class[] parameterTypes = new Class[params.length];
         for (int i = 0; i < params.length; i++) {
             parameterTypes[i] = params[i].getClass();
@@ -61,7 +61,7 @@ public class Platform {
         return class1.getClassLoader().getResourceAsStream(string);
     }
 
-    public static String stringFromCharset(byte[] data, int offset, int len, Charset charset) {
+    public static String stringFromCharset4(byte[] data, int offset, int len, Charset charset) {
         return new String(data, offset, len, charset);
     }
     
@@ -69,18 +69,17 @@ public class Platform {
         return class1.getResource(string);
  }
     
-    public static boolean arrayEquals(int[] a, int[] a2) {
+    public static boolean arrayEqualsInt(int[] a, int[] a2) {
         return Arrays.equals(a, a2);
     }
 
-    public static boolean arrayEquals(byte[] a, byte[] a2) {
+    public static boolean arrayEqualsByte(byte[] a, byte[] a2) {
         return Arrays.equals(a, a2);
     }
     
-    public static boolean arrayEquals(Object[] a, Object[] a2) {
+    public static boolean arrayEqualsObj(Object[] a, Object[] a2) {
         return Arrays.equals(a, a2);
     }
-
     
     public static <T> T[] copyOfRangeO(T[] original, int from, int to) {
         return Arrays.copyOfRange(original, from, to);

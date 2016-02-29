@@ -51,7 +51,7 @@ public class TestTool {
         prepareJMConf();
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length != 3) {
             System.out.println("JCodec h.264 test tool");
             System.out.println("Syntax: <path to ldecod> <movie file> <foder for errors>");
@@ -78,7 +78,7 @@ public class TestTool {
             AbstractMP4DemuxerTrack dt = (AbstractMP4DemuxerTrack) inTrack;
 
             byte[] codecPrivate = dt.getMeta().getCodecPrivate();
-            H264Decoder decoder = new H264Decoder(codecPrivate);
+            H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(codecPrivate);
 
             Packet inFrame;
 
@@ -94,10 +94,10 @@ public class TestTool {
                 ByteBuffer data = inFrame.getData();
                 List<ByteBuffer> nalUnits = H264Utils.splitFrame(data);
                 _rawData.clear();
-                H264Utils.joinNALUnits(nalUnits, _rawData);
+                H264Utils.joinNALUnitsToBuffer(nalUnits, _rawData);
                 _rawData.flip();
 
-                if (H264Utils.idrSlice(_rawData)) {
+                if (H264Utils.idrSliceFromBuffer(_rawData)) {
                     if (raw != null) {
                         raw.close();
                         runJMCompareResults(decodedPics, seqNo);
@@ -109,7 +109,7 @@ public class TestTool {
                 }
                 raw.write(_rawData);
 
-                decodedPics.add(decoder.decodeFrame(nalUnits,
+                decodedPics.add(decoder.decodeFrameFromNals(nalUnits,
                         Picture.create((ine.getWidth() + 15) & ~0xf, (ine.getHeight() + 15) & ~0xf, ColorSpace.YUV420)
                                 .getData()));
                 if (i % 500 == 0)
@@ -131,14 +131,14 @@ public class TestTool {
             Process process = Runtime.getRuntime().exec(jm + " -d " + jmconf.getAbsolutePath());
             process.waitFor();
 
-            ByteBuffer yuv = NIOUtils.fetchFrom(decoded);
+            ByteBuffer yuv = NIOUtils.fetchFromFile(decoded);
             for (Picture pic : decodedPics) {
                 pic = pic.cropped();
-                boolean equals = Platform.arrayEquals(getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0)),
+                boolean equals = Platform.arrayEqualsInt(getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0)),
                         pic.getPlaneData(0));
-                equals &= Platform.arrayEquals(getAsIntArray(yuv, pic.getPlaneWidth(1) * pic.getPlaneHeight(1)),
+                equals &= Platform.arrayEqualsInt(getAsIntArray(yuv, pic.getPlaneWidth(1) * pic.getPlaneHeight(1)),
                         pic.getPlaneData(1));
-                equals &= Platform.arrayEquals(getAsIntArray(yuv, pic.getPlaneWidth(2) * pic.getPlaneHeight(2)),
+                equals &= Platform.arrayEqualsInt(getAsIntArray(yuv, pic.getPlaneWidth(2) * pic.getPlaneHeight(2)),
                         pic.getPlaneData(2));
                 if (!equals)
                     diff(seqNo);
@@ -158,7 +158,7 @@ public class TestTool {
         InputStream cool = null;
         try {
             cool = Platform.getResourceAsStream(getClass(), "org/jcodec/testing/jm.conf");
-            String str = IOUtils.toString(cool);
+            String str = IOUtils.readToString(cool);
             str = str.replace("%input_file%", coded.getAbsolutePath());
             str = str.replace("%output_file%", decoded.getAbsolutePath());
             IOUtils.writeStringToFile(jmconf, str);

@@ -13,33 +13,24 @@ import java.util.Comparator;
  * 
  */
 public class Packet {
-    private ByteBuffer data;
-    private long pts;
-    private long timescale;
-    private long duration;
-    private long frameNo;
-    private boolean keyFrame;
-    private TapeTimecode tapeTimecode;
-    private int displayOrder;
 
-    public Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
-            TapeTimecode tapeTimecode) {
-        this(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
+    public ByteBuffer data;
+    public long pts;
+    public long timescale;
+    public long duration;
+    public long frameNo;
+    public boolean keyFrame;
+    public TapeTimecode tapeTimecode;
+    public int displayOrder;
+
+    public static Packet createPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo,
+            boolean keyFrame, TapeTimecode tapeTimecode) {
+        return new Packet(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
     }
 
-    public Packet(Packet other) {
-        this(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, other.tapeTimecode);
-        this.displayOrder = other.displayOrder;
-    }
-
-    public Packet(Packet other, ByteBuffer data) {
-        this(data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, other.tapeTimecode);
-        this.displayOrder = other.displayOrder;
-    }
-
-    public Packet(Packet other, TapeTimecode timecode) {
-        this(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, timecode);
-        this.displayOrder = other.displayOrder;
+    public static Packet createPacketWithData(Packet other, ByteBuffer data) {
+        return new Packet(data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame,
+                other.tapeTimecode, other.displayOrder);
     }
 
     public Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
@@ -97,7 +88,7 @@ public class Packet {
     public boolean isKeyFrame() {
         return keyFrame;
     }
-    
+
     public void setKeyFrame(boolean keyFrame) {
         this.keyFrame = keyFrame;
     }
@@ -105,11 +96,11 @@ public class Packet {
     public RationalLarge getPtsR() {
         return RationalLarge.R(pts, timescale);
     }
-    
+
     public double getPtsD() {
         return ((double) pts) / timescale;
     }
-    
+
     public double getDurationD() {
         return ((double) duration) / timescale;
     }

@@ -25,16 +25,18 @@ public class FilterGraph implements AudioFilter {
     }
 
     public static class Factory {
-        private List<FilterSocket> sockets = new ArrayList<FilterSocket>();
+        private List<FilterSocket> sockets;
 
         protected Factory(AudioFilter firstFilter) {
+            this.sockets = new ArrayList<FilterSocket>();
+
             if (firstFilter.getDelay() != 0) {
                 // Removing first filter delay using filter socket zero stuffing
                 // features
-                sockets.add(new FilterSocket(new DummyFilter(firstFilter.getNInputs())));
+                sockets.add(FilterSocket.createFilterSocket(new DummyFilter(firstFilter.getNInputs())));
                 addLevel(firstFilter);
             } else
-                sockets.add(new FilterSocket(firstFilter));
+                sockets.add(FilterSocket.createFilterSocket(firstFilter));
         }
 
 //@formatter:off
@@ -55,8 +57,8 @@ public class FilterGraph implements AudioFilter {
          * @return
          */
 //@formatter:on
-        public Factory addLevel(AudioFilter... filters) {
-            FilterSocket socket = new FilterSocket(filters);
+        public Factory addLevel(AudioFilter... arguments) {
+            FilterSocket socket = FilterSocket.createFilterSocket(arguments);
             socket.allocateBuffers(4096);
             sockets.add(socket);
             return this;
@@ -69,7 +71,7 @@ public class FilterGraph implements AudioFilter {
          * @param n
          * @return
          */
-        public Factory addLevel(AudioFilter filter, int n) {
+        public Factory addLevels(AudioFilter filter, int n) {
             AudioFilter[] filters = new AudioFilter[n];
             Arrays.fill(filters, filter);
             return addLevel(filters);
@@ -89,7 +91,7 @@ public class FilterGraph implements AudioFilter {
                 throw new IllegalArgumentException("Can't fill " + prevLevelOuts + " with multiple of "
                         + filter.getNInputs());
 
-            return addLevel(filter, prevLevelOuts / filter.getNInputs());
+            return addLevels(filter, prevLevelOuts / filter.getNInputs());
         }
 
         public FilterGraph create() {

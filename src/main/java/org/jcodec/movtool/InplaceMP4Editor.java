@@ -58,7 +58,7 @@ public class InplaceMP4Editor {
     public boolean modify(File file, MP4Edit edit) throws IOException {
         SeekableByteChannel fi = null;
         try {
-            fi = NIOUtils.rwFileChannel(file);
+            fi = NIOUtils.rwChannel(file);
 
             List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi, edit);
             if (fragments == null)
@@ -102,8 +102,8 @@ public class InplaceMP4Editor {
         SeekableByteChannel fi = null;
         SeekableByteChannel fo = null;
         try {
-            fi = NIOUtils.readableFileChannel(src);
-            fo = NIOUtils.writableFileChannel(dst);
+            fi = NIOUtils.readableChannel(src);
+            fo = NIOUtils.writableChannel(dst);
 
             List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi, edit);
             if (fragments == null)
@@ -165,7 +165,7 @@ public class InplaceMP4Editor {
         MovieBox moovBox = (MovieBox) parseBox(moovBuffer);
 
         List<Tuple._2<Atom, ByteBuffer>> fragments = new LinkedList<Tuple._2<Atom, ByteBuffer>>();
-        if (Box.findFirst(moovBox, "mvex") != null) {
+        if (Box.containsBox(moovBox, "mvex")) {
             List<Tuple._2<ByteBuffer, MovieFragmentBox>> temp = new LinkedList<Tuple._2<ByteBuffer, MovieFragmentBox>>();
             for (Atom fragAtom : getFragments(fi)) {
                 ByteBuffer fragBuffer = fetchBox(fi, fragAtom);
@@ -175,7 +175,7 @@ public class InplaceMP4Editor {
                 temp.add(Tuple._2(fragBuffer, fragBox));
             }
 
-            edit.apply(moovBox, Tuple._2_project1(temp).toArray(new MovieFragmentBox[0]));
+            edit.applyToFragment(moovBox, Tuple._2_project1(temp).toArray(new MovieFragmentBox[0]));
 
             for (Tuple._2<ByteBuffer, ? extends Box> frag : temp) {
                 if (!rewriteBox(frag.v0, frag.v1))
@@ -191,7 +191,7 @@ public class InplaceMP4Editor {
     }
 
     private void replaceBox(SeekableByteChannel fi, Atom atom, ByteBuffer buffer) throws IOException {
-        fi.position(atom.getOffset());
+        fi.setPosition(atom.getOffset());
         fi.write(buffer);
     }
 
@@ -213,8 +213,8 @@ public class InplaceMP4Editor {
     }
 
     private ByteBuffer fetchBox(SeekableByteChannel fi, Atom moov) throws IOException {
-        fi.position(moov.getOffset());
-        ByteBuffer oldMov = NIOUtils.fetchFrom(fi, (int) moov.getHeader().getSize());
+        fi.setPosition(moov.getOffset());
+        ByteBuffer oldMov = NIOUtils.fetchFromChannel(fi, (int) moov.getHeader().getSize());
         return oldMov;
     }
 

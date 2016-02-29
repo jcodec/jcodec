@@ -45,7 +45,7 @@ public class TestRgbToYuv420 {
         upshift(y, 2);
 
         RgbToYuv420p transform = new RgbToYuv420p(2, 0);
-        Picture _in = new Picture(10, 10, new int[][] { rgb, null, null, null }, ColorSpace.RGB);
+        Picture _in = Picture.createPicture(10, 10, new int[][] { rgb, null, null, null }, ColorSpace.RGB);
         Picture out = Picture.create(10, 10, ColorSpace.YUV420);
         transform.transform(_in, out);
 
@@ -79,7 +79,7 @@ public class TestRgbToYuv420 {
         return r2;
     }
 
-    public static void main(String[] args) {
+    public static void main1(String[] args) {
         int[] rgb = new int[300];
         for (int i = 0; i < 300; i++) {
             rgb[i] = (int) (Math.random() * 256);

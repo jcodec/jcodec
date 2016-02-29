@@ -62,7 +62,7 @@ public class TestProresEncoder {
         out.flip();
 
         ProresDecoder decoder = new ProresDecoder();
-        BitReader bits = new BitReader(out);
+        BitReader bits = BitReader.createBitReader(out);
         int[] result = new int[blocksPerSlice << 6];
         decoder.readDCCoeffs(bits, qMat, result, blocksPerSlice, 64);
         decoder.readACCoeffs(bits, qMat, result, blocksPerSlice, ProresConsts.progressive_scan, 64, 6);
@@ -75,7 +75,7 @@ public class TestProresEncoder {
         byte[] Y = randomByteArray(4096, (byte)1, (byte)254);
         byte[] U = randomByteArray(2048, (byte)1, (byte)254);
         byte[] V = randomByteArray(2048, (byte)1, (byte)254);
-        Picture8Bit picture = new Picture8Bit(64, 64, new byte[][] { Y, U, V }, ColorSpace.YUV422);
+        Picture8Bit picture = Picture8Bit.createPicture8Bit(64, 64, new byte[][] { Y, U, V }, ColorSpace.YUV422);
 
         ByteBuffer buf = ByteBuffer.allocate(64 * 64 * 6);
         new ProresEncoder(Profile.HQ, false).encodeFrame8Bit(picture, buf);
@@ -85,11 +85,11 @@ public class TestProresEncoder {
         Picture8Bit result = decoder.decodeFrame8Bit(buf, new byte[][] { new byte[4096], new byte[2048], new byte[2048] });
 
         System.out.println("Y");
-        assertArrayApproximatelyEquals(Y, result.getPlaneData(0), 20);
+        assertByteArrayApproximatelyEquals(Y, result.getPlaneData(0), 20);
         System.out.println("U");
-        assertArrayApproximatelyEquals(U, result.getPlaneData(1), 20);
+        assertByteArrayApproximatelyEquals(U, result.getPlaneData(1), 20);
         System.out.println("V");
-        assertArrayApproximatelyEquals(V, result.getPlaneData(2), 20);
+        assertByteArrayApproximatelyEquals(V, result.getPlaneData(2), 20);
     }
 
     @Test
@@ -105,11 +105,11 @@ public class TestProresEncoder {
         }
         
         SimpleIDCT10Bit.idct10(out, 0);
-        assertArrayApproximatelyEquals(rand, out, 50);
+        assertIntArrayApproximatelyEquals(rand, out, 50);
 
     }
     
-    private void assertArrayApproximatelyEquals(byte[] rand, byte[] newRand, int threash) {
+    private void assertByteArrayApproximatelyEquals(byte[] rand, byte[] newRand, int threash) {
         int maxDiff = 0;
         for (int i = 0; i < rand.length; i++) {
             int diff = Math.abs(rand[i] - newRand[i]);
@@ -119,7 +119,7 @@ public class TestProresEncoder {
         Assert.assertTrue("Maxdiff: " + maxDiff, maxDiff < threash);
     }
 
-    private void assertArrayApproximatelyEquals(int[] rand, int[] newRand, int threash) {
+    private void assertIntArrayApproximatelyEquals(int[] rand, int[] newRand, int threash) {
         int maxDiff = 0;
         for (int i = 0; i < rand.length; i++) {
             int diff = Math.abs(rand[i] - newRand[i]);

@@ -24,7 +24,7 @@ import org.jcodec.platform.Platform;
  */
 public class VerifyTool {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length != 1) {
             System.out.println("Syntax: <error folder location>");
             return;
@@ -58,11 +58,11 @@ public class VerifyTool {
     }
 
     private boolean test(File coded, File ref) throws IOException {
-        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFrom(coded));
+        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFromFile(coded));
         Picture buf = Picture.create(1920, 1088, ColorSpace.YUV420);
         H264Decoder dec = new H264Decoder();
         Packet nextFrame;
-        ByteBuffer _yuv = NIOUtils.fetchFrom(ref);
+        ByteBuffer _yuv = NIOUtils.fetchFromFile(ref);
         while ((nextFrame = es.nextFrame()) != null) {
             Picture out = dec.decodeFrame(nextFrame.getData(), buf.getData()).cropped();
             Picture pic = out.createCompatible();
@@ -73,11 +73,11 @@ public class VerifyTool {
 
             ByteBuffer yuv = NIOUtils.read(_yuv, lumaSize + crSize + cbSize);
 
-            if (!Platform.arrayEquals(getAsIntArray(yuv, lumaSize), pic.getPlaneData(0)))
+            if (!Platform.arrayEqualsInt(getAsIntArray(yuv, lumaSize), pic.getPlaneData(0)))
                 return false;
-            if (!Platform.arrayEquals(getAsIntArray(yuv, crSize), pic.getPlaneData(1)))
+            if (!Platform.arrayEqualsInt(getAsIntArray(yuv, crSize), pic.getPlaneData(1)))
                 return false;
-            if (!Platform.arrayEquals(getAsIntArray(yuv, cbSize), pic.getPlaneData(2)))
+            if (!Platform.arrayEqualsInt(getAsIntArray(yuv, cbSize), pic.getPlaneData(2)))
                 return false;
         }
         return true;

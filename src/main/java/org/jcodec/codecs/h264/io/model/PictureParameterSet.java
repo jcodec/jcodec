@@ -5,13 +5,13 @@ import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readNBit;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readU;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUEtrace;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeBool;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeNBit;
-import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE;
+import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSEtrace;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeTrailingBits;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeU;
-import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUE;
+import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeUEtrace;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -53,7 +53,7 @@ public class PictureParameterSet {
     }
 
     public boolean entropy_coding_mode_flag;
-    public int num_ref_idx_active_minus1[] = new int[2];
+    public int[] num_ref_idx_active_minus1;
     public int slice_group_change_rate_minus1;
     public int pic_parameter_set_id;
     public int seq_parameter_set_id;
@@ -74,32 +74,36 @@ public class PictureParameterSet {
     public boolean slice_group_change_direction_flag;
     public int[] slice_group_id;
     public PPSExt extended;
-
+    
+    public PictureParameterSet() {
+        this.num_ref_idx_active_minus1 = new int[2];
+    }
+    
     public static PictureParameterSet read(ByteBuffer is) {
-        BitReader _in = new BitReader(is);
+        BitReader _in = BitReader.createBitReader(is);
         PictureParameterSet pps = new PictureParameterSet();
 
-        pps.pic_parameter_set_id = readUE(_in, "PPS: pic_parameter_set_id");
-        pps.seq_parameter_set_id = readUE(_in, "PPS: seq_parameter_set_id");
+        pps.pic_parameter_set_id = readUEtrace(_in, "PPS: pic_parameter_set_id");
+        pps.seq_parameter_set_id = readUEtrace(_in, "PPS: seq_parameter_set_id");
         pps.entropy_coding_mode_flag = readBool(_in, "PPS: entropy_coding_mode_flag");
         pps.pic_order_present_flag = readBool(_in, "PPS: pic_order_present_flag");
-        pps.num_slice_groups_minus1 = readUE(_in, "PPS: num_slice_groups_minus1");
+        pps.num_slice_groups_minus1 = readUEtrace(_in, "PPS: num_slice_groups_minus1");
         if (pps.num_slice_groups_minus1 > 0) {
-            pps.slice_group_map_type = readUE(_in, "PPS: slice_group_map_type");
+            pps.slice_group_map_type = readUEtrace(_in, "PPS: slice_group_map_type");
             pps.top_left = new int[pps.num_slice_groups_minus1 + 1];
             pps.bottom_right = new int[pps.num_slice_groups_minus1 + 1];
             pps.run_length_minus1 = new int[pps.num_slice_groups_minus1 + 1];
             if (pps.slice_group_map_type == 0)
                 for (int iGroup = 0; iGroup <= pps.num_slice_groups_minus1; iGroup++)
-                    pps.run_length_minus1[iGroup] = readUE(_in, "PPS: run_length_minus1");
+                    pps.run_length_minus1[iGroup] = readUEtrace(_in, "PPS: run_length_minus1");
             else if (pps.slice_group_map_type == 2)
                 for (int iGroup = 0; iGroup < pps.num_slice_groups_minus1; iGroup++) {
-                    pps.top_left[iGroup] = readUE(_in, "PPS: top_left");
-                    pps.bottom_right[iGroup] = readUE(_in, "PPS: bottom_right");
+                    pps.top_left[iGroup] = readUEtrace(_in, "PPS: top_left");
+                    pps.bottom_right[iGroup] = readUEtrace(_in, "PPS: bottom_right");
                 }
             else if (pps.slice_group_map_type == 3 || pps.slice_group_map_type == 4 || pps.slice_group_map_type == 5) {
                 pps.slice_group_change_direction_flag = readBool(_in, "PPS: slice_group_change_direction_flag");
-                pps.slice_group_change_rate_minus1 = readUE(_in, "PPS: slice_group_change_rate_minus1");
+                pps.slice_group_change_rate_minus1 = readUEtrace(_in, "PPS: slice_group_change_rate_minus1");
             } else if (pps.slice_group_map_type == 6) {
                 int NumberBitsPerSliceGroupId;
                 if (pps.num_slice_groups_minus1 + 1 > 4)
@@ -108,14 +112,14 @@ public class PictureParameterSet {
                     NumberBitsPerSliceGroupId = 2;
                 else
                     NumberBitsPerSliceGroupId = 1;
-                int pic_size_in_map_units_minus1 = readUE(_in, "PPS: pic_size_in_map_units_minus1");
+                int pic_size_in_map_units_minus1 = readUEtrace(_in, "PPS: pic_size_in_map_units_minus1");
                 pps.slice_group_id = new int[pic_size_in_map_units_minus1 + 1];
                 for (int i = 0; i <= pic_size_in_map_units_minus1; i++) {
                     pps.slice_group_id[i] = readU(_in, NumberBitsPerSliceGroupId, "PPS: slice_group_id [" + i + "]f");
                 }
             }
         }
-        pps.num_ref_idx_active_minus1 = new int[] {readUE(_in, "PPS: num_ref_idx_l0_active_minus1"), readUE(_in, "PPS: num_ref_idx_l1_active_minus1")};
+        pps.num_ref_idx_active_minus1 = new int[] {readUEtrace(_in, "PPS: num_ref_idx_l0_active_minus1"), readUEtrace(_in, "PPS: num_ref_idx_l1_active_minus1")};
         pps.weighted_pred_flag = readBool(_in, "PPS: weighted_pred_flag");
         pps.weighted_bipred_idc = readNBit(_in, 2, "PPS: weighted_bipred_idc");
         pps.pic_init_qp_minus26 = readSE(_in, "PPS: pic_init_qp_minus26");
@@ -152,28 +156,28 @@ public class PictureParameterSet {
     public void write(ByteBuffer out) {
         BitWriter writer = new BitWriter(out);
 
-        writeUE(writer, pic_parameter_set_id, "PPS: pic_parameter_set_id");
-        writeUE(writer, seq_parameter_set_id, "PPS: seq_parameter_set_id");
+        writeUEtrace(writer, pic_parameter_set_id, "PPS: pic_parameter_set_id");
+        writeUEtrace(writer, seq_parameter_set_id, "PPS: seq_parameter_set_id");
         writeBool(writer, entropy_coding_mode_flag, "PPS: entropy_coding_mode_flag");
         writeBool(writer, pic_order_present_flag, "PPS: pic_order_present_flag");
-        writeUE(writer, num_slice_groups_minus1, "PPS: num_slice_groups_minus1");
+        writeUEtrace(writer, num_slice_groups_minus1, "PPS: num_slice_groups_minus1");
         if (num_slice_groups_minus1 > 0) {
-            writeUE(writer, slice_group_map_type, "PPS: slice_group_map_type");
+            writeUEtrace(writer, slice_group_map_type, "PPS: slice_group_map_type");
             int[] top_left = new int[1];
             int[] bottom_right = new int[1];
             int[] run_length_minus1 = new int[1];
             if (slice_group_map_type == 0) {
                 for (int iGroup = 0; iGroup <= num_slice_groups_minus1; iGroup++) {
-                    writeUE(writer, run_length_minus1[iGroup], "PPS: ");
+                    writeUEtrace(writer, run_length_minus1[iGroup], "PPS: ");
                 }
             } else if (slice_group_map_type == 2) {
                 for (int iGroup = 0; iGroup < num_slice_groups_minus1; iGroup++) {
-                    writeUE(writer, top_left[iGroup], "PPS: ");
-                    writeUE(writer, bottom_right[iGroup], "PPS: ");
+                    writeUEtrace(writer, top_left[iGroup], "PPS: ");
+                    writeUEtrace(writer, bottom_right[iGroup], "PPS: ");
                 }
             } else if (slice_group_map_type == 3 || slice_group_map_type == 4 || slice_group_map_type == 5) {
                 writeBool(writer, slice_group_change_direction_flag, "PPS: slice_group_change_direction_flag");
-                writeUE(writer, slice_group_change_rate_minus1, "PPS: slice_group_change_rate_minus1");
+                writeUEtrace(writer, slice_group_change_rate_minus1, "PPS: slice_group_change_rate_minus1");
             } else if (slice_group_map_type == 6) {
                 int NumberBitsPerSliceGroupId;
                 if (num_slice_groups_minus1 + 1 > 4)
@@ -182,19 +186,19 @@ public class PictureParameterSet {
                     NumberBitsPerSliceGroupId = 2;
                 else
                     NumberBitsPerSliceGroupId = 1;
-                writeUE(writer, slice_group_id.length, "PPS: ");
+                writeUEtrace(writer, slice_group_id.length, "PPS: ");
                 for (int i = 0; i <= slice_group_id.length; i++) {
                     writeU(writer, slice_group_id[i], NumberBitsPerSliceGroupId);
                 }
             }
         }
-        writeUE(writer, num_ref_idx_active_minus1[0], "PPS: num_ref_idx_l0_active_minus1");
-        writeUE(writer, num_ref_idx_active_minus1[1], "PPS: num_ref_idx_l1_active_minus1");
+        writeUEtrace(writer, num_ref_idx_active_minus1[0], "PPS: num_ref_idx_l0_active_minus1");
+        writeUEtrace(writer, num_ref_idx_active_minus1[1], "PPS: num_ref_idx_l1_active_minus1");
         writeBool(writer, weighted_pred_flag, "PPS: weighted_pred_flag");
         writeNBit(writer, weighted_bipred_idc, 2, "PPS: weighted_bipred_idc");
-        writeSE(writer, pic_init_qp_minus26, "PPS: pic_init_qp_minus26");
-        writeSE(writer, pic_init_qs_minus26, "PPS: pic_init_qs_minus26");
-        writeSE(writer, chroma_qp_index_offset, "PPS: chroma_qp_index_offset");
+        writeSEtrace(writer, pic_init_qp_minus26, "PPS: pic_init_qp_minus26");
+        writeSEtrace(writer, pic_init_qs_minus26, "PPS: pic_init_qs_minus26");
+        writeSEtrace(writer, chroma_qp_index_offset, "PPS: chroma_qp_index_offset");
         writeBool(writer, deblocking_filter_control_present_flag, "PPS: deblocking_filter_control_present_flag");
         writeBool(writer, constrained_intra_pred_flag, "PPS: constrained_intra_pred_flag");
         writeBool(writer, redundant_pic_cnt_present_flag, "PPS: redundant_pic_cnt_present_flag");
@@ -219,7 +223,7 @@ public class PictureParameterSet {
                     }
                 }
             }
-            writeSE(writer, extended.second_chroma_qp_index_offset, "PPS: ");
+            writeSEtrace(writer, extended.second_chroma_qp_index_offset, "PPS: ");
         }
 
         writeTrailingBits(writer);
@@ -264,7 +268,7 @@ public class PictureParameterSet {
         if (getClass() != obj.getClass())
             return false;
         PictureParameterSet other = (PictureParameterSet) obj;
-        if (!Platform.arrayEquals(bottom_right, other.bottom_right))
+        if (!Platform.arrayEqualsInt(bottom_right, other.bottom_right))
             return false;
         if (chroma_qp_index_offset != other.chroma_qp_index_offset)
             return false;
@@ -295,7 +299,7 @@ public class PictureParameterSet {
             return false;
         if (redundant_pic_cnt_present_flag != other.redundant_pic_cnt_present_flag)
             return false;
-        if (!Platform.arrayEquals(run_length_minus1, other.run_length_minus1))
+        if (!Platform.arrayEqualsInt(run_length_minus1, other.run_length_minus1))
             return false;
         if (seq_parameter_set_id != other.seq_parameter_set_id)
             return false;
@@ -303,11 +307,11 @@ public class PictureParameterSet {
             return false;
         if (slice_group_change_rate_minus1 != other.slice_group_change_rate_minus1)
             return false;
-        if (!Platform.arrayEquals(slice_group_id, other.slice_group_id))
+        if (!Platform.arrayEqualsInt(slice_group_id, other.slice_group_id))
             return false;
         if (slice_group_map_type != other.slice_group_map_type)
             return false;
-        if (!Platform.arrayEquals(top_left, other.top_left))
+        if (!Platform.arrayEqualsInt(top_left, other.top_left))
             return false;
         if (weighted_bipred_idc != other.weighted_bipred_idc)
             return false;

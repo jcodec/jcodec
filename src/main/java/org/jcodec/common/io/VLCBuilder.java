@@ -15,27 +15,33 @@ import org.jcodec.common.IntIntMap;
  */
 public class VLCBuilder {
 
-    private IntIntMap forward = new IntIntMap();
-    private IntIntMap inverse = new IntIntMap();
-    private IntArrayList codes = new IntArrayList();
-    private IntArrayList codesSizes = new IntArrayList();
-
-    public VLCBuilder() {
+    public static VLCBuilder createVLCBuilder(int[] codes, int[] lens, int[] vals) {
+        VLCBuilder b = new VLCBuilder();
+        for (int i = 0; i < codes.length; i++) {
+            b.setInt(codes[i], lens[i], vals[i]);
+        }
+        return b;
     }
 
-    public VLCBuilder(int[] codes, int[] lens, int[] vals) {
-        for (int i = 0; i < codes.length; i++) {
-            set(codes[i], lens[i], vals[i]);
-        }
+    private IntIntMap forward;
+    private IntIntMap inverse;
+    private IntArrayList codes;
+    private IntArrayList codesSizes;
+
+    public VLCBuilder() {
+        this.forward = new IntIntMap();
+        this.inverse = new IntIntMap();
+        this.codes = IntArrayList.createIntArrayList();
+        this.codesSizes = IntArrayList.createIntArrayList();
     }
 
     public VLCBuilder set(int val, String code) {
-        set(Integer.parseInt(code, 2), code.length(), val);
+        setInt(Integer.parseInt(code, 2), code.length(), val);
         
         return this;
     }
 
-    public VLCBuilder set(int code, int len, int val) {
+    public VLCBuilder setInt(int code, int len, int val) {
         codes.add(code << (32 - len));
         codesSizes.add(len);
         forward.put(val, codes.size() - 1);
@@ -56,7 +62,7 @@ public class VLCBuilder {
             }
 
             public void writeVLC(BitWriter out, int code) {
-                super.writeVLC(out, forward.get(code));
+                super.writeVLC(out, self.forward.get(code));
             }
         };
     }

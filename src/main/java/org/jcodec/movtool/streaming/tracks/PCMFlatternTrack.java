@@ -31,9 +31,10 @@ public class PCMFlatternTrack implements VirtualTrack {
     private VirtualPacket leftover;
     private int leftoverOffset;
     private int frameNo;
-    private List<VirtualPacket> pktBuffer = new ArrayList<VirtualPacket>();
+    private List<VirtualPacket> pktBuffer;
 
     public PCMFlatternTrack(VirtualTrack src, int samplesPerPkt) {
+        this.pktBuffer = new ArrayList<VirtualPacket>();
         this.framesPerPkt = samplesPerPkt;
         this.src = src;
         this.se = (AudioCodecMeta) src.getCodecMeta();
@@ -106,7 +107,7 @@ public class PCMFlatternTrack implements VirtualTrack {
             for (int i = 1; i < pN.length && result.hasRemaining(); i++) {
                 ByteBuffer dN = pN[i].getData();
                 int toWrite = Math.min(dN.remaining(), result.remaining());
-                NIOUtils.write(result, dN, toWrite);
+                NIOUtils.writeL(result, dN, toWrite);
             }
             result.flip();
             return result;

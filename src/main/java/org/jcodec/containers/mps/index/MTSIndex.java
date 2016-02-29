@@ -20,17 +20,17 @@ import org.jcodec.common.io.NIOUtils;
 public class MTSIndex {
     private MTSProgram[] programs;
 
+    public static MTSProgram createMTSProgram(MPSIndex mpsIndex, int target) {
+        MTSProgram m = new MTSProgram(mpsIndex.pesTokens, mpsIndex.pesStreamIds, mpsIndex.streams, target);
+        return m;
+    }
+    
     public static class MTSProgram extends MPSIndex {
         private int targetGuid;
 
         public MTSProgram(long[] pesTokens, Integer pesStreamIds, MPSStreamIndex[] streams, int targetGuid) {
             super(pesTokens, pesStreamIds, streams);
             this.targetGuid = targetGuid;
-        }
-
-        public MTSProgram(MPSIndex mpsIndex, int target) {
-            super(mpsIndex);
-            this.targetGuid = target;
         }
 
         public int getTargetGuid() {
@@ -45,7 +45,7 @@ public class MTSIndex {
 
         public static MTSProgram parse(ByteBuffer read) {
             int targetGuid = read.getInt();
-            return new MTSProgram(MPSIndex.parseIndex(read), targetGuid);
+            return createMTSProgram(MPSIndex.parseIndex(read), targetGuid);
         }
     }
 

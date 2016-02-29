@@ -12,9 +12,13 @@ import java.util.Arrays;
  * 
  */
 public class FixHLSTimestamps extends FixTimestamp {
-    private long[] lastPts = new long[256];
-
-    public static void main(String[] args) throws IOException {
+    private long[] lastPts;
+    
+    public FixHLSTimestamps() {
+        this.lastPts = new long[256];
+    }
+    
+    public static void main1(String[] args) throws IOException {
         String wildCard = args[0];
         int startIdx = Integer.parseInt(args[1]);
 

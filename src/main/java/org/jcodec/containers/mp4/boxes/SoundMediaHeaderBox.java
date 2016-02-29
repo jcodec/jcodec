@@ -3,8 +3,8 @@ package org.jcodec.containers.mp4.boxes;
 import java.nio.ByteBuffer;
 
 /**
- * This class is part of JCodec ( www.jcodec.org )
- * This software is distributed under FreeBSD License
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
  * 
  * Sound media header
  * 
@@ -13,17 +13,17 @@ import java.nio.ByteBuffer;
  */
 public class SoundMediaHeaderBox extends FullBox {
     private short balance;
-    
+
     public static String fourcc() {
         return "smhd";
     }
 
+    public static SoundMediaHeaderBox createSoundMediaHeaderBox() {
+        return new SoundMediaHeaderBox(new Header(fourcc()));
+    }
+
     public SoundMediaHeaderBox(Header atom) {
         super(atom);
-    }
-    
-    public SoundMediaHeaderBox() {
-        super(new Header(fourcc()));
     }
 
     public void parse(ByteBuffer input) {
@@ -35,7 +35,7 @@ public class SoundMediaHeaderBox extends FullBox {
     protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
         out.putShort(balance);
-        out.putShort((short)0);
+        out.putShort((short) 0);
     }
 
     public short getBalance() {

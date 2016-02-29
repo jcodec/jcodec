@@ -28,18 +28,19 @@ public class VP8Encoder extends VideoEncoder {
     private int[][] leftRow;
     private int[][] topLine;
     private VPXQuantizer quantizer;
-    private int[] tmp = new int[16];
+    private int[] tmp;
     private RateControl rc;
 
     private ByteBuffer headerBuffer;
     private ByteBuffer dataBuffer;
-
-    public VP8Encoder(int qp) {
-        this(new NopRateControl(qp));
+    
+    public static VP8Encoder createVP8Encoder(int qp) {
+        return new VP8Encoder(new NopRateControl(qp));
     }
-
+    
     public VP8Encoder(RateControl rc) {
         this.rc = rc;
+        this.tmp = new int[16];
     }
 
     public ByteBuffer encodeFrame(Picture pic, ByteBuffer _buf) {
@@ -408,11 +409,11 @@ public class VP8Encoder extends VideoEncoder {
             return 128;
 
         if (y == 0)
-            return (ArrayUtil.sum(leftRow[0]) + 8) >> 4;
+            return (ArrayUtil.sumInt(leftRow[0]) + 8) >> 4;
         if (x == 0)
-            return (ArrayUtil.sum(topLine[0], x, 16) + 8) >> 4;
+            return (ArrayUtil.sumInt3(topLine[0], x, 16) + 8) >> 4;
 
-        return (ArrayUtil.sum(leftRow[0]) + ArrayUtil.sum(topLine[0], x, 16) + 16) >> 5;
+        return (ArrayUtil.sumInt(leftRow[0]) + ArrayUtil.sumInt3(topLine[0], x, 16) + 16) >> 5;
     }
 
     private int[][] transform(Picture pic, int comp, int qp, int x, int y) {

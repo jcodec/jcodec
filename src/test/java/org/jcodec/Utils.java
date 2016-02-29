@@ -2,6 +2,7 @@ package org.jcodec;
 
 import static org.jcodec.common.tools.MathUtil.abs;
 import static org.jcodec.common.tools.MathUtil.clip;
+import static org.jcodec.common.tools.MathUtil.clipMax;
 import static org.junit.Assert.assertTrue;
 
 import java.io.EOFException;
@@ -37,7 +38,7 @@ public class Utils {
         return new File(path);
     }
 
-    public static void printArray(int[] array, String... title) {
+    public static void printArray(int[] array, String[] title) {
         if (title.length > 0)
             System.out.println(title[0]);
 
@@ -53,7 +54,7 @@ public class Utils {
         System.out.println();
     }
 
-    public static void printArrayHex(int[] array, String... title) {
+    public static void printArrayHex(int[] array, String[] title) {
         if (title.length > 0)
             System.out.println(title[0]);
 
@@ -69,11 +70,11 @@ public class Utils {
         System.out.println();
     }
 
-    public static void printArray(int[][] array, String... title) {
+    public static void printArray2d(int[][] array, String[] title) {
         if (title.length > 0)
             System.out.println(title[0]);
         for (int i = 0; i < array.length; i++) {
-            printArray(array[i]);
+            printArray(array[i], new String[0]);
         }
         System.out.println();
     }
@@ -88,10 +89,10 @@ public class Utils {
     public static void compareMP4H264Files(File file, File refFile) throws IOException, JCodecException {
         FileChannelWrapper ch1 = null, ch2 = null;
         try {
-            ch1 = NIOUtils.readableFileChannel(file);
-            ch2 = NIOUtils.readableFileChannel(refFile);
-            FrameGrab8Bit frameGrab1 = new FrameGrab8Bit(ch1);
-            FrameGrab8Bit frameGrab2 = new FrameGrab8Bit(ch2);
+            ch1 = NIOUtils.readableChannel(file);
+            ch2 = NIOUtils.readableChannel(refFile);
+            FrameGrab8Bit frameGrab1 = FrameGrab8Bit.createFrameGrab8Bit(ch1);
+            FrameGrab8Bit frameGrab2 = FrameGrab8Bit.createFrameGrab8Bit(ch2);
 
             Picture8Bit fr1, fr2;
             do {
@@ -135,7 +136,7 @@ public class Utils {
         for (int i = 0; i < fr2.getData().length; i++) {
             int maxDiff = findMaxDiff(fr2.getPlaneData(i), fr1.getPlaneData(i));
             if (maxDiff > 0) {
-                Logger.error("Max diff: " + maxDiff);
+                Logger.warn("Max diff: " + maxDiff);
             }
             if (maxDiff > threshold) {
                 return false;
@@ -181,7 +182,7 @@ public class Utils {
         byte[][] dataR = result.getData();
         Arrays.fill(dataR[1], (byte)64);
         for (int i = 0; i < dataO[0].length; i++) {
-            dataR[0][i] = (byte) (clip(abs(dataO[0][i] - dataT[0][i]) * mul, 255) - 128);
+            dataR[0][i] = (byte) (clipMax(abs(dataO[0][i] - dataT[0][i]) * mul, 255) - 128);
         }
 
         return result;

@@ -56,10 +56,10 @@ public class IOUtils {
     }
 
     public static byte[] readFileToByteArray(File file) throws IOException {
-        return NIOUtils.toArray(NIOUtils.fetchFrom(file));
+        return NIOUtils.toArray(NIOUtils.fetchFromFile(file));
     }
 
-    public static String toString(InputStream is) throws IOException {
+    public static String readToString(InputStream is) throws IOException {
         return new String(toByteArray(is));
     }
 
@@ -90,8 +90,8 @@ public class IOUtils {
         FileChannelWrapper _in = null;
         FileChannelWrapper out = null;
         try {
-            _in = NIOUtils.readableFileChannel(src);
-            out = NIOUtils.writableFileChannel(dst);
+            _in = NIOUtils.readableChannel(src);
+            out = NIOUtils.writableChannel(dst);
             NIOUtils.copy(_in, out, Long.MAX_VALUE);
         } finally {
             NIOUtils.closeQuietly(_in);

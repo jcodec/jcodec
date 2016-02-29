@@ -1,7 +1,7 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
 import java.io.File;
@@ -61,14 +61,14 @@ public class Remux {
         SeekableByteChannel output = null;
         SeekableByteChannel tci = null;
         try {
-            input = readableFileChannel(src);
-            output = writableFileChannel(tgt);
+            input = readableChannel(src);
+            output = writableChannel(tgt);
             MP4Demuxer demuxer = new MP4Demuxer(input);
 
             
             TimecodeMP4DemuxerTrack tt = null;
             if (timecode != null) {
-                tci = readableFileChannel(src);
+                tci = readableChannel(src);
                 MP4Demuxer tcd = new MP4Demuxer(tci);
                 tt = tcd.getTimecodeTrack();
             }
@@ -123,7 +123,7 @@ public class Remux {
         if(edits == null)
             return;
         for (Edit edit : edits) {
-            result.add(new Edit(tsRatio.multiply(edit.getDuration()), edit.getMediaTime(), edit.getRate()));
+            result.add(new Edit(tsRatio.multiplyLong(edit.getDuration()), edit.getMediaTime(), edit.getRate()));
         }
 
         two.setEdits(result);

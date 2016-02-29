@@ -24,7 +24,7 @@ import org.jcodec.common.model.Picture;
  * 
  */
 public class ConformanceTestTool {
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
 
         (new ConformanceTestTool()).doIt(args);
     }
@@ -93,7 +93,7 @@ public class ConformanceTestTool {
             InputStream is = null;
             try {
                 is = new BufferedInputStream(new FileInputStream(coded));
-                MappedH264ES demuxer = new MappedH264ES(NIOUtils.map(coded));
+                MappedH264ES demuxer = new MappedH264ES(NIOUtils.mapFile(coded));
                 H264Decoder decoder = new H264Decoder();
                 Picture buf = Picture.create(1920, 1088, ColorSpace.YUV420);
                 Picture pic;

@@ -15,15 +15,17 @@ import java.nio.ByteBuffer;
 public class UL {
     private byte[] bytes;
 
-    public UL(byte... bytes) {
-        this.bytes = bytes;
+    public UL(byte... arguments) {
+        this.bytes = arguments;
     }
 
-    public UL(int... bytes) {
-        this.bytes = new byte[bytes.length];
-        for (int i = 0; i < bytes.length; i++) {
-            this.bytes[i] = (byte) bytes[i];
+    public static UL newUL(int... arguments) {
+        byte[] bytes = new byte[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            bytes[i] = (byte) arguments[i];
         }
+
+        return new UL(bytes);
     }
 
     @Override
@@ -45,7 +47,7 @@ public class UL {
         return true;
     }
 
-    public boolean equals(UL o, int mask) {
+    public boolean maskEquals(UL o, int mask) {
         if(o == null)
             return false;
         byte[] other = ((UL) o).bytes;

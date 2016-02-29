@@ -20,10 +20,6 @@ public class MPEGES extends SegmentReader {
     private int frameNo;
     public long curPts;
 
-    public MPEGES(ReadableByteChannel channel) throws IOException {
-        super(channel, 4096);
-    }
-
     public MPEGES(ReadableByteChannel channel, int fetchSize) throws IOException {
         super(channel, fetchSize);
     }

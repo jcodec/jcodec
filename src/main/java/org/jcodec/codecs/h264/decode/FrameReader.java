@@ -1,6 +1,10 @@
 package org.jcodec.codecs.h264.decode;
 
 import static org.jcodec.codecs.h264.H264Utils.unescapeNAL;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.IDR_SLICE;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.NON_IDR_SLICE;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.PPS;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.SPS;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -31,8 +35,13 @@ import org.jcodec.common.logging.Logger;
  * 
  */
 public class FrameReader {
-    private IntObjectMap<SeqParameterSet> sps = new IntObjectMap<SeqParameterSet>();
-    private IntObjectMap<PictureParameterSet> pps = new IntObjectMap<PictureParameterSet>();
+    private IntObjectMap<SeqParameterSet> sps;
+    private IntObjectMap<PictureParameterSet> pps;
+
+    public FrameReader() {
+        this.sps = new IntObjectMap<SeqParameterSet>();
+        this.pps = new IntObjectMap<PictureParameterSet>();
+    }
 
     public List<SliceReader> readFrame(List<ByteBuffer> nalUnits) {
         List<SliceReader> result = new ArrayList<SliceReader>();
@@ -41,25 +50,18 @@ public class FrameReader {
             NALUnit nalUnit = NALUnit.read(nalData);
 
             unescapeNAL(nalData);
-
-            switch (nalUnit.type) {
-            case NON_IDR_SLICE:
-            case IDR_SLICE:
+            if (SPS == nalUnit.type) {
+                SeqParameterSet _sps = SeqParameterSet.read(nalData);
+                sps.put(_sps.seq_parameter_set_id, _sps);
+            } else if (PPS == nalUnit.type) {
+                PictureParameterSet _pps = PictureParameterSet.read(nalData);
+                pps.put(_pps.pic_parameter_set_id, _pps);
+            } else if (IDR_SLICE == nalUnit.type || NON_IDR_SLICE == nalUnit.type) {
                 if (sps.size() == 0 || pps.size() == 0) {
                     Logger.warn("Skipping frame as no SPS/PPS have been seen so far...");
                     return null;
                 }
                 result.add(createSliceReader(nalData, nalUnit));
-                break;
-            case SPS:
-                SeqParameterSet _sps = SeqParameterSet.read(nalData);
-                sps.put(_sps.seq_parameter_set_id, _sps);
-                break;
-            case PPS:
-                PictureParameterSet _pps = PictureParameterSet.read(nalData);
-                pps.put(_pps.pic_parameter_set_id, _pps);
-                break;
-            default:
             }
         }
 
@@ -67,7 +69,7 @@ public class FrameReader {
     }
 
     private SliceReader createSliceReader(ByteBuffer segment, NALUnit nalUnit) {
-        BitReader _in = new BitReader(segment);
+        BitReader _in = BitReader.createBitReader(segment);
         SliceHeaderReader shr = new SliceHeaderReader();
         SliceHeader sh = shr.readPart1(_in);
         sh.pps = pps.get(sh.pic_parameter_set_id);
@@ -94,7 +96,7 @@ public class FrameReader {
         return new SliceReader(sh.pps, cabac, cavlc, mDecoder, _in, mapper, sh, nalUnit);
     }
     
-    public void addSps(List<ByteBuffer> spsList) {
+    public void addSpsList(List<ByteBuffer> spsList) {
         for (ByteBuffer byteBuffer : spsList) {
             addSps(byteBuffer);
         }
@@ -107,7 +109,7 @@ public class FrameReader {
         sps.put(s.seq_parameter_set_id, s);
     }
 
-    public void addPps(List<ByteBuffer> ppsList) {
+    public void addPpsList(List<ByteBuffer> ppsList) {
         for (ByteBuffer byteBuffer : ppsList) {
             addPps(byteBuffer);
         }

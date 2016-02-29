@@ -206,7 +206,7 @@ public class ProresDecoder extends VideoDecoder {
 
             decodePicture(data, target[0], fh.width, fh.height, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan,
                     0, fh.chromaType);
-            return new Picture8Bit[] { new Picture8Bit(codedWidth, codedHeight, target[0], ColorSpace.YUV422) };
+            return new Picture8Bit[] { Picture8Bit.createPicture8Bit(codedWidth, codedHeight, target[0], ColorSpace.YUV422) };
         } else {
             lumaSize >>= 1;
             chromaSize >>= 1;
@@ -222,8 +222,8 @@ public class ProresDecoder extends VideoDecoder {
             decodePicture(data, target[fh.topFieldFirst ? 1 : 0], fh.width, fh.height >> 1, codedWidth >> 4,
                     fh.qMatLuma, fh.qMatChroma, fh.scan, 0, fh.chromaType);
 
-            return new Picture8Bit[] { new Picture8Bit(codedWidth, codedHeight >> 1, target[0], ColorSpace.YUV422),
-                    new Picture8Bit(codedWidth, codedHeight >> 1, target[1], ColorSpace.YUV422) };
+            return new Picture8Bit[] { Picture8Bit.createPicture8Bit(codedWidth, codedHeight >> 1, target[0], ColorSpace.YUV422),
+                    Picture8Bit.createPicture8Bit(codedWidth, codedHeight >> 1, target[1], ColorSpace.YUV422) };
         }
     }
 
@@ -365,7 +365,7 @@ public class ProresDecoder extends VideoDecoder {
     }
 
     static final BitReader bitstream(ByteBuffer data, int dataSize) {
-        return new BitReader(NIOUtils.read(data, dataSize));
+        return BitReader.createBitReader(NIOUtils.read(data, dataSize));
     }
     
     byte clipTo8Bit(int val, int min, int max) {

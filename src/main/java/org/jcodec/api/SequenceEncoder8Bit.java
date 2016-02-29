@@ -28,6 +28,7 @@ import org.jcodec.scale.Transform8Bit;
  * @author The JCodec project
  */
 public class SequenceEncoder8Bit {
+
     private SeekableByteChannel ch;
     private Picture8Bit toEncode;
     private Transform8Bit transform;
@@ -41,15 +42,15 @@ public class SequenceEncoder8Bit {
     private ByteBuffer sps;
     private ByteBuffer pps;
 
-    public SequenceEncoder8Bit(File out) throws IOException {
-        this(NIOUtils.writableFileChannel(out));
+    public static SequenceEncoder8Bit createSequenceEncoder8Bit(File out) throws IOException {
+        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out));
     }
     
     public SequenceEncoder8Bit(SeekableByteChannel ch) throws IOException {
         this.ch = ch;
 
         // Muxer that will store the encoded frames
-        muxer = new MP4Muxer(ch, Brand.MP4);
+        muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
 
         // Add video track to muxer
         outTrack = muxer.addTrack(TrackType.VIDEO, 25);
@@ -58,7 +59,7 @@ public class SequenceEncoder8Bit {
         _out = ByteBuffer.allocate(1920 * 1080 * 6);
 
         // Create an instance of encoder
-        encoder = new H264Encoder();
+        encoder = H264Encoder.createH264Encoder();
 
         // Transform to convert between RGB and YUV
         transform = ColorUtil.getTransform8Bit(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
@@ -85,7 +86,7 @@ public class SequenceEncoder8Bit {
         // Based on the frame above form correct MP4 packet
         spsList.clear();
         ppsList.clear();
-        H264Utils.wipePS(result, spsList, ppsList);
+        H264Utils.wipePSinplace(result, spsList, ppsList);
         NALUnit nu = NALUnit.read(NIOUtils.from(result.duplicate(), 4));
         H264Utils.encodeMOVPacket(result);
 
@@ -96,8 +97,7 @@ public class SequenceEncoder8Bit {
             pps = ppsList.get(0);
 
         // Add packet to video track
-        outTrack.addFrame(new MP4Packet(result, frameNo, 25, 1, frameNo, nu.type == NALUnitType.IDR_SLICE, null,
-                frameNo, 0));
+        outTrack.addFrame(MP4Packet.createMP4Packet(result, frameNo, 25, 1, frameNo, nu.type == NALUnitType.IDR_SLICE, null, 0, frameNo, 0));
 
         frameNo++;
     }
@@ -111,7 +111,7 @@ public class SequenceEncoder8Bit {
             throw new RuntimeException(
                     "Somehow the encoder didn't generate SPS/PPS pair, did you encode at least one frame?");
         // Push saved SPS/PPS to a special storage in MP4
-        outTrack.addSampleEntry(H264Utils.createMOVSampleEntry(sps, pps, 4));
+        outTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromBuffer(sps, pps, 4));
 
         // Write MP4 header and finalize recording
         muxer.writeHeader();

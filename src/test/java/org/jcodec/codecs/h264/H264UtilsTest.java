@@ -21,7 +21,7 @@ public class H264UtilsTest {
         ByteBuffer bb = ByteBuffer.wrap(b);
         bb.limit(bb.limit() - 2);
 
-        H264Utils.escapeNAL(bb);
+        H264Utils.escapeNALinplace(bb);
         
         for (byte c : b) {
             System.out.println(String.format("%02x", c & 0xff));
@@ -46,7 +46,7 @@ public class H264UtilsTest {
         ArrayList<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
         ppsList.add(ByteBuffer.wrap(new byte[] {'m', 'a', 'n'}));
         ppsList.add(ByteBuffer.wrap(new byte[] {'c', 'o', 'o', 'l'}));
-        AvcCBox avcCBox = new AvcCBox(66, 0, 42, 0, spsList, ppsList);
+        AvcCBox avcCBox = AvcCBox.createAvcCBox(66, 0, 42, 0, spsList, ppsList);
         byte[] res = H264Utils.avcCToAnnexB(avcCBox);
         Assert.assertArrayEquals(new byte[] { 0, 0, 0, 1, 0x67, 's', 't', 'a', 'n', 0, 0, 0, 1, 0x67, 't', 'h', 'e', 0,
                 0, 0, 1, 0x68, 'm', 'a', 'n', 0, 0, 0, 1, 0x68, 'c', 'o', 'o', 'l' }, res);

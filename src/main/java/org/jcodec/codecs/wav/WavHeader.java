@@ -32,16 +32,13 @@ public class WavHeader {
         int channelLayout;
         int guid;
 
-        public FmtChunkExtended(FmtChunk fmtChunk, short cbSize, short bitsPerCodedSample, int channelLayout, int guid) {
-            super(fmtChunk);
+        public FmtChunkExtended(FmtChunk other, short cbSize, short bitsPerCodedSample, int channelLayout, int guid) {
+            super(other.audioFormat, other.numChannels, other.sampleRate, other.byteRate, other.blockAlign,
+                    other.bitsPerSample);
             this.cbSize = cbSize;
             this.bitsPerCodedSample = bitsPerCodedSample;
             this.channelLayout = channelLayout;
             this.guid = guid;
-        }
-
-        public FmtChunkExtended(FmtChunkExtended fmt) {
-            this(fmt, fmt.cbSize, fmt.bitsPerCodedSample, fmt.channelLayout, fmt.guid);
         }
 
         public static FmtChunk read(ByteBuffer bb) throws IOException {
@@ -95,10 +92,6 @@ public class WavHeader {
         public short blockAlign;
         public short bitsPerSample;
 
-        public FmtChunk() {
-            this.audioFormat = 1;
-        }
-
         public FmtChunk(short audioFormat, short numChannels, int sampleRate, int byteRate, short blockAlign,
                 short bitsPerSample) {
             this.audioFormat = audioFormat;
@@ -107,11 +100,6 @@ public class WavHeader {
             this.byteRate = byteRate;
             this.blockAlign = blockAlign;
             this.bitsPerSample = bitsPerSample;
-        }
-
-        public FmtChunk(FmtChunk other) {
-            this(other.audioFormat, other.numChannels, other.sampleRate, other.byteRate, other.blockAlign,
-                    other.bitsPerSample);
         }
 
         public static FmtChunk get(ByteBuffer bb) throws IOException {
@@ -159,22 +147,29 @@ public class WavHeader {
         this.dataSize = dataSize;
     }
 
-    public WavHeader(WavHeader header) {
-        this(header.chunkId, header.chunkSize, header.format,
-                header.fmt instanceof FmtChunkExtended ? new FmtChunkExtended((FmtChunkExtended) header.fmt)
-                        : new FmtChunk(header.fmt), header.dataOffset, header.dataSize);
-    }
-
     public static WavHeader copyWithRate(WavHeader header, int rate) {
-        WavHeader result = new WavHeader(header);
+        WavHeader result = new WavHeader(header.chunkId, header.chunkSize, header.format,
+                copyFmt(header.fmt), header.dataOffset, header.dataSize);
         result.fmt.sampleRate = rate;
         return result;
     }
 
     public static WavHeader copyWithChannels(WavHeader header, int channels) {
-        WavHeader result = new WavHeader(header);
+        WavHeader result = new WavHeader(header.chunkId, header.chunkSize, header.format,
+                copyFmt(header.fmt), header.dataOffset, header.dataSize);
         result.fmt.numChannels = (short) channels;
         return result;
+    }
+
+    private static FmtChunk copyFmt(FmtChunk fmt) {
+        if (fmt instanceof FmtChunkExtended) {
+            FmtChunkExtended fmtext = (FmtChunkExtended) fmt;
+            fmt = new FmtChunkExtended(fmtext, fmtext.cbSize, fmtext.bitsPerCodedSample, fmtext.channelLayout, fmtext.guid);
+        }        else {
+            fmt = new FmtChunk(fmt.audioFormat, fmt.numChannels, fmt.sampleRate, fmt.byteRate, fmt.blockAlign,
+                    fmt.bitsPerSample);
+        }
+        return fmt;
     }
 
     /**
@@ -183,19 +178,20 @@ public class WavHeader {
      * @param format
      * @param samples
      */
-    public WavHeader(AudioFormat format, int samples) {
-        this("RIFF", 40, "WAVE", new FmtChunk((short) 1, (short) format.getChannels(), format.getSampleRate(),
+    public static WavHeader createWavHeader(AudioFormat format, int samples) {
+        WavHeader w = new WavHeader("RIFF", 40, "WAVE", new FmtChunk((short) 1, (short) format.getChannels(), format.getSampleRate(),
                 format.getSampleRate() * format.getChannels() * (format.getSampleSizeInBits() >> 3),
                 (short) (format.getChannels() * (format.getSampleSizeInBits() >> 3)),
                 (short) format.getSampleSizeInBits()), 44, calcDataSize(format.getChannels(),
                 format.getSampleSizeInBits() >> 3, samples));
+        return w;
     }
 
     public static WavHeader stereo48k() {
-        return stereo48k(0);
+        return stereo48kWithSamples(0);
     }
 
-    public static WavHeader stereo48k(long samples) {
+    public static WavHeader stereo48kWithSamples(long samples) {
         return new WavHeader("RIFF", 40, "WAVE", new FmtChunk((short) 1, (short) 2, 48000, 48000 * 2 * 16 / 8,
                 (short) 4, (short) 16), 44, calcDataSize(2, 2, samples));
     }
@@ -206,20 +202,24 @@ public class WavHeader {
     }
 
     public static WavHeader emptyWavHeader() {
-        return new WavHeader("RIFF", 40, "WAVE", new FmtChunk(), 44, 0);
+        return new WavHeader("RIFF", 40, "WAVE", newFmtChunk(), 44, 0);
+    }
+
+    private static FmtChunk newFmtChunk() {
+        return new FmtChunk((short) 1, (short) 0, 0, 0, (short) 0, (short) 0);
     }
 
     public static WavHeader read(File file) throws IOException {
         ReadableByteChannel is = null;
         try {
-            is = NIOUtils.readableFileChannel(file);
-            return read(is);
+            is = NIOUtils.readableChannel(file);
+            return readChannel(is);
         } finally {
             IOUtils.closeQuietly(is);
         }
     }
 
-    public static WavHeader read(ReadableByteChannel _in) throws IOException {
+    public static WavHeader readChannel(ReadableByteChannel _in) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(128);
         buf.order(ByteOrder.LITTLE_ENDIAN);
         _in.read(buf);
@@ -267,34 +267,30 @@ public class WavHeader {
         return new WavHeader(chunkId, chunkSize, format, fmt, buf.position(), size);
     }
 
-    public static WavHeader multiChannelWav(List<File> wavs) throws IOException {
-        return multiChannelWav(wavs.toArray(new File[0]));
-    }
-
-    public static WavHeader multiChannelWav(File... wavs) throws IOException {
-        WavHeader headers[] = new WavHeader[wavs.length];
-        for (int i = 0; i < wavs.length; i++) {
-            headers[i] = read(wavs[i]);
+    public static WavHeader multiChannelWavFromFiles(File... arguments) throws IOException {
+        WavHeader headers[] = new WavHeader[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            headers[i] = read(arguments[i]);
         }
         return multiChannelWav(headers);
     }
 
     /** Takes single channel wavs as input produces multi channel wav */
-    public static WavHeader multiChannelWav(WavHeader... wavs) {
+    public static WavHeader multiChannelWav(WavHeader... arguments) {
         WavHeader w = emptyWavHeader();
         int totalSize = 0;
-        for (WavHeader wavHeader : wavs) {
+        for (WavHeader wavHeader : arguments) {
             totalSize += wavHeader.dataSize;
         }
         w.dataSize = totalSize;
-        FmtChunk fmt = wavs[0].fmt;
+        FmtChunk fmt = arguments[0].fmt;
         int bitsPerSample = fmt.bitsPerSample;
         int bytesPerSample = bitsPerSample / 8;
         int sampleRate = (int) fmt.sampleRate;
         w.fmt.bitsPerSample = (short) bitsPerSample;
-        w.fmt.blockAlign = (short) (wavs.length * bytesPerSample);
-        w.fmt.byteRate = wavs.length * bytesPerSample * sampleRate;
-        w.fmt.numChannels = (short) wavs.length;
+        w.fmt.blockAlign = (short) (arguments.length * bytesPerSample);
+        w.fmt.byteRate = arguments.length * bytesPerSample * sampleRate;
+        w.fmt.numChannels = (short) arguments.length;
         w.fmt.sampleRate = sampleRate;
         return w;
     }
@@ -334,7 +330,7 @@ public class WavHeader {
     public static WavHeader create(AudioFormat af, int size) {
         WavHeader w = emptyWavHeader();
         w.dataSize = size;
-        FmtChunk fmt = new FmtChunk();
+        FmtChunk fmt = newFmtChunk();
         int bitsPerSample = af.getSampleSizeInBits();
         int bytesPerSample = bitsPerSample / 8;
         int sampleRate = (int) af.getSampleRate();

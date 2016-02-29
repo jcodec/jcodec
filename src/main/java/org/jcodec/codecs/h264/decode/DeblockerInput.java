@@ -24,10 +24,12 @@ public class DeblockerInput {
     public boolean[] tr8x8Used;
     public Frame[][][] refsUsed;
     public SliceHeader[] shs;
+    public int picWidthInMbs;
+    public int picHeightInMbs;
 
     public DeblockerInput(SeqParameterSet activeSps) {
-        int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
-        int picHeightInMbs = getPicHeightInMbs(activeSps);
+        picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
+        picHeightInMbs = getPicHeightInMbs(activeSps);
 
         nCoeff = new int[picHeightInMbs << 2][picWidthInMbs << 2];
         mvs = new int[2][picHeightInMbs << 2][picWidthInMbs << 2][3];

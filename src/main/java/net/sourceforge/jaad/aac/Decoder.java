@@ -135,7 +135,7 @@ public class Decoder implements SyntaxConstants {
             throw e;
         } catch (Exception e) {
             buffer.setData(new byte[0], 0, 0, 0, 0);
-            throw new AACException(e);
+            throw AACException.wrap(e);
         }
     }
 }

@@ -2,6 +2,7 @@ package org.jcodec.codecs.h264;
 
 import static org.jcodec.common.ArrayUtil.padLeft;
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
+import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.util.Arrays;
@@ -12,10 +13,10 @@ import org.junit.Test;
 
 public class Intra8x8PredictionBuilderTest {
 
-    private int[] testResidual = new int[64];
-    private int[] emptyResidual = new int[64];
+    private static int[] testResidual = new int[64];
+    private static int[] emptyResidual = new int[64];
 
-    {
+    static {
         for (int i = 0; i < 64; i++) {
             testResidual[i] = (i << 2) - 128;
         }

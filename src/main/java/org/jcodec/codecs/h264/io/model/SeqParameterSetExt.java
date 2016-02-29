@@ -2,7 +2,7 @@ package org.jcodec.codecs.h264.io.model;
 
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readU;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUEtrace;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeTrailingBits;
 
 import java.nio.ByteBuffer;
@@ -32,13 +32,13 @@ public class SeqParameterSetExt {
     public int alpha_transparent_value;
 
     public static SeqParameterSetExt read(ByteBuffer is) {
-        BitReader _in = new BitReader(is);
+        BitReader _in = BitReader.createBitReader(is);
 
         SeqParameterSetExt spse = new SeqParameterSetExt();
-        spse.seq_parameter_set_id = readUE(_in, "SPSE: seq_parameter_set_id");
-        spse.aux_format_idc = readUE(_in, "SPSE: aux_format_idc");
+        spse.seq_parameter_set_id = readUEtrace(_in, "SPSE: seq_parameter_set_id");
+        spse.aux_format_idc = readUEtrace(_in, "SPSE: aux_format_idc");
         if (spse.aux_format_idc != 0) {
-            spse.bit_depth_aux_minus8 = readUE(_in, "SPSE: bit_depth_aux_minus8");
+            spse.bit_depth_aux_minus8 = readUEtrace(_in, "SPSE: bit_depth_aux_minus8");
             spse.alpha_incr_flag = readBool(_in, "SPSE: alpha_incr_flag");
             spse.alpha_opaque_value = readU(_in, spse.bit_depth_aux_minus8 + 9, "SPSE: alpha_opaque_value");
             spse.alpha_transparent_value = readU(_in, spse.bit_depth_aux_minus8 + 9, "SPSE: alpha_transparent_value");

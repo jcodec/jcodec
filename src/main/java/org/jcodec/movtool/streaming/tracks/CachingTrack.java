@@ -25,10 +25,12 @@ import org.jcodec.movtool.streaming.VirtualTrack;
  */
 public class CachingTrack implements VirtualTrack {
     private VirtualTrack src;
-    private List<CachingPacket> cachedPackets = Collections.synchronizedList(new ArrayList<CachingPacket>());
+    private List<CachingPacket> cachedPackets;
     private ScheduledFuture<?> policyFuture;
 
     public CachingTrack(VirtualTrack src, final int policy, ScheduledExecutorService policyExecutor) {
+        this.cachedPackets = Collections.synchronizedList(new ArrayList<CachingPacket>());
+
         if (policy < 1)
             throw new IllegalArgumentException("Caching track with less then 1 entry.");
         this.src = src;

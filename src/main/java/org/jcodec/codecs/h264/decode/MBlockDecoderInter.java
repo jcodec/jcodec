@@ -15,6 +15,7 @@ import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveVect;
 import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
 import static org.jcodec.common.model.ColorSpace.MONO;
 
+import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -46,7 +47,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int address = mapper.getAddress(mBlock.mbIdx);
         int[][][] x = new int[2][][];
         int xx = mbX << 2;
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
+
         for (int list = 0; list < 2; list++) {
             predictInter16x16(mBlock, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, x, xx, list, p0);
@@ -76,7 +77,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int xx = mbX << 2;
 
         int mvX1 = 0, mvY1 = 0, r1 = -1, mvX2 = 0, mvY2 = 0, r2 = -1;
-        if (p0.usesList(list)) {
+        if (H264Const.usesList(p0, list)) {
             int mvpX1 = calcMVPrediction8x16Left(s.mvLeft[list][0], s.mvTop[list][mbX << 2],
                     s.mvTop[list][(mbX << 2) + 2], s.mvTopLeft[list], leftAvailable, topAvailable, topAvailable,
                     tlAvailable, mBlock.pb168x168.refIdx1[list], 0);
@@ -96,7 +97,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         }
         int[] v1 = { mvX1, mvY1, r1 };
 
-        if (p1.usesList(list)) {
+        if (H264Const.usesList(p1, list)) {
 
             int mvpX2 = calcMVPrediction8x16Right(v1, s.mvTop[list][(mbX << 2) + 2], s.mvTop[list][(mbX << 2) + 4],
                     s.mvTop[list][(mbX << 2) + 1], true, topAvailable, trAvailable, topAvailable,
@@ -131,7 +132,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             PartPred p0, PartPred p1, int list) {
 
         int mvX1 = 0, mvY1 = 0, mvX2 = 0, mvY2 = 0, r1 = -1, r2 = -1;
-        if (p0.usesList(list)) {
+        if (H264Const.usesList(p0, list)) {
 
             int mvpX1 = calcMVPrediction16x8Top(s.mvLeft[list][0], s.mvTop[list][mbX << 2],
                     s.mvTop[list][(mbX << 2) + 4], s.mvTopLeft[list], leftAvailable, topAvailable, trAvailable,
@@ -152,7 +153,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         }
         int[] v1 = { mvX1, mvY1, r1 };
 
-        if (p1.usesList(list)) {
+        if (H264Const.usesList(p1, list)) {
             int mvpX2 = calcMVPrediction16x8Bottom(s.mvLeft[list][2], v1, null, s.mvLeft[list][1], leftAvailable, true,
                     false, leftAvailable, mBlock.pb168x168.refIdx2[list], 0);
             int mvpY2 = calcMVPrediction16x8Bottom(s.mvLeft[list][2], v1, null, s.mvLeft[list][1], leftAvailable, true,
@@ -190,7 +191,6 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int[][][] x = new int[2][][];
         int xx = mbX << 2;
 
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
         for (int list = 0; list < 2; list++) {
             predictInter16x8(mBlock, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
                     topRightAvailable, xx, x, p0, p1, list);
@@ -226,7 +226,6 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         int address = mapper.getAddress(mBlock.mbIdx);
 
         int[][][] x = new int[2][][];
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
 
         for (int list = 0; list < 2; list++) {
             predictInter8x16(mBlock, mbb[list], refs, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
@@ -258,7 +257,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
             int list, PartPred curPred) {
 
         int mvX = 0, mvY = 0, r = -1;
-        if (curPred.usesList(list)) {
+        if (H264Const.usesList(curPred, list)) {
             int mvpX = calcMVPredictionMedian(s.mvLeft[list][0], s.mvTop[list][mbX << 2],
                     s.mvTop[list][(mbX << 2) + 4], s.mvTopLeft[list], leftAvailable, topAvailable, trAvailable,
                     tlAvailable, mBlock.pb16x16.refIdx[list], 0);

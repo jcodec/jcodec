@@ -2,6 +2,7 @@ package org.jcodec.containers.mps.index;
 
 import static org.jcodec.containers.mps.MPSUtils.mediaStream;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+import static org.jcodec.containers.mps.index.MTSIndex.createMTSProgram;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,14 +31,14 @@ public class MTSIndexer {
     private MTSAnalyser[] indexers;
 
     public void index(File source, NIOUtils.FileReaderListener listener) throws IOException {
-        index(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
+        indexReader(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
     }
 
-    public void index(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
-        index(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
+    public void indexChannel(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
+        indexReader(listener, MTSUtils.getMediaPidsFromChannel(source)).readChannel(source, BUFFER_SIZE, listener);
     }
 
-    public FileReader index(NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
+    public FileReader indexReader(NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
         indexers = new MTSAnalyser[targetGuids.length];
         for (int i = 0; i < targetGuids.length; i++) {
             indexers[i] = new MTSAnalyser(targetGuids[i]);
@@ -104,7 +105,7 @@ public class MTSIndexer {
         }
 
         public MTSProgram serializeTo() {
-            return new MTSProgram(super.serialize(), targetGuid);
+            return createMTSProgram(super.serialize(), targetGuid);
         }
 
         protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
@@ -123,7 +124,7 @@ public class MTSIndexer {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         File src = new File(args[0]);
 
         MTSIndexer indexer = new MTSIndexer();

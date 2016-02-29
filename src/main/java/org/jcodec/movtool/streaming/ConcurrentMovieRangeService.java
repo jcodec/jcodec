@@ -62,13 +62,15 @@ public class ConcurrentMovieRangeService {
 
     public static class ConcurrentMovieRange extends BaseInputStream {
         private static final int READ_AHEAD_SEGMENTS = 10;
-        private List<Future<ByteBuffer>> segments = new ArrayList<Future<ByteBuffer>>();
+        private List<Future<ByteBuffer>> segments;
         private int nextReadAheadNo;
         private long remaining;
         private long to;
 		private ConcurrentMovieRangeService svc;
 
         public ConcurrentMovieRange(ConcurrentMovieRangeService svc, long from, long to) throws IOException {
+            this.segments = new ArrayList<Future<ByteBuffer>>();
+
             this.svc = svc;
 			if (to < from)
                 throw new IllegalArgumentException("from < to");

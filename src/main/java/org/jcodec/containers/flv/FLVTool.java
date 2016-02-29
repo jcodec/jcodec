@@ -3,11 +3,13 @@ package org.jcodec.containers.flv;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.util.Arrays.asList;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,7 +54,7 @@ public class FLVTool {
         processors.put("shift_pts", new ShiftPtsProcessor.Factory());
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             printGenericHelp();
             return;
@@ -61,10 +63,10 @@ public class FLVTool {
 
         Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length));
         if (cmd.args.length < 1) {
-            MainUtils.printHelp(command, processors.get(command).getFlags(), "file _in", "?file out");
+            MainUtils.printHelpCmd(command, processors.get(command).getFlags(), asList("file _in", "?file out"));
             return;
         }
-        int maxPackets = cmd.getIntegerFlag("max-packets", Integer.MAX_VALUE);
+        int maxPackets = cmd.getIntegerFlagD("max-packets", Integer.MAX_VALUE);
 
         PacketProcessor processor = getProcessor(command, cmd);
         if (processor == null) {
@@ -76,9 +78,9 @@ public class FLVTool {
         SeekableByteChannel _in = null;
         SeekableByteChannel out = null;
         try {
-            _in = NIOUtils.readableFileChannel(new File(cmd.getArg(0)));
+            _in = NIOUtils.readableChannel(new File(cmd.getArg(0)));
             if (processor.hasOutput())
-                out = NIOUtils.writableFileChannel(new File(cmd.getArg(1)));
+                out = NIOUtils.writableChannel(new File(cmd.getArg(1)));
             FLVReader demuxer = new FLVReader(_in);
             FLVWriter muxer = new FLVWriter(out);
             FLVTag pkt = null;
@@ -97,7 +99,7 @@ public class FLVTool {
 
     private static void printGenericHelp() {
         System.err.println("Syntax: <command> [flags] <file in> [file out]\nWhere command is: ["
-                + StringUtils.join(processors.keySet().toArray(new String[0]), ", ") + "].");
+                + StringUtils.joinS(processors.keySet().toArray(new String[0]), ", ") + "].");
     }
 
     private static PacketProcessor getProcessor(String command, Cmd cmd) {
@@ -194,7 +196,7 @@ public class FLVTool {
     public static class FixPtsProcessor implements PacketProcessor {
         private double lastPtsAudio = 0;
         private double lastPtsVideo = 0;
-        private List<FLVTag> tags = new ArrayList<FLVTag>();
+        private List<FLVTag> tags;
         private int audioTagsInQueue;
         private int videoTagsInQueue;
         private static final double CORRECTION_PACE = 0.33;
@@ -212,6 +214,7 @@ public class FLVTool {
         }
 
         public FixPtsProcessor() {
+            this.tags = new ArrayList<FLVTag>();
         }
 
         public boolean processPacket(FLVTag pkt, FLVWriter writer) throws IOException {
@@ -290,7 +293,7 @@ public class FLVTool {
 
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new InfoPacketProcessor(flags.getBooleanFlag(FLAG_CHECK, false), flags.getEnumFlag(FLAG_STREAM,
+                return new InfoPacketProcessor(flags.getBooleanFlagD(FLAG_CHECK, false), flags.getEnumFlagD(FLAG_STREAM,
                         null, Type.class));
             }
 
@@ -346,12 +349,12 @@ public class FLVTool {
                     if (avct.getAvcPacketType() == 0) {
                         ByteBuffer frameData = pkt.getData().duplicate();
                         FLVReader.parseVideoTagHeader(frameData);
-                        AvcCBox avcc = H264Utils.parseAVCC(frameData);
-                        for (SeqParameterSet sps : H264Utils.readSPS(avcc.getSpsList())) {
+                        AvcCBox avcc = H264Utils.parseAVCCFromBuffer(frameData);
+                        for (SeqParameterSet sps : H264Utils.readSPSFromBufferList(avcc.getSpsList())) {
                             System.out.println();
                             System.out.print("  SPS[" + sps.getSeq_parameter_set_id() + "]:" + ToJSON.toJSON(sps));
                         }
-                        for (PictureParameterSet pps : H264Utils.readPPS(avcc.getPpsList())) {
+                        for (PictureParameterSet pps : H264Utils.readPPSFromBufferList(avcc.getPpsList())) {
                             System.out.println();
                             System.out.print("  PPS[" + pps.getPic_parameter_set_id() + "]:" + ToJSON.toJSON(pps));
                         }
@@ -402,8 +405,8 @@ public class FLVTool {
         public static class Factory implements PacketProcessorFactory {
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new ShiftPtsProcessor(flags.getIntegerFlag("to", 0), flags.getIntegerFlag("by"),
-                        flags.getBooleanFlag("wrap-around", false));
+                return new ShiftPtsProcessor(flags.getIntegerFlagD("to", 0), flags.getIntegerFlag("by"),
+                        flags.getBooleanFlagD("wrap-around", false));
             }
 
             @Override
@@ -420,11 +423,12 @@ public class FLVTool {
         private Integer shiftBy;
         private long ptsDelta;
         private boolean firstPtsSeen;
-        private List<FLVTag> savedTags = new LinkedList<FLVTag>();
+        private List<FLVTag> savedTags;
         private boolean expectWrapAround;
         private int prevPts;
 
         public ShiftPtsProcessor(int shiftTo, Integer shiftBy, boolean expectWrapAround) {
+            this.savedTags = new LinkedList<FLVTag>();
             this.shiftTo = shiftTo;
             this.shiftBy = shiftBy;
             this.expectWrapAround = true;

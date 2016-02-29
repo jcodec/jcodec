@@ -19,9 +19,10 @@ public class ChannelBox extends FullBox {
     public static class ChannelDescription {
         private int channelLabel;
         private int channelFlags;
-        private float[] coordinates = new float[3];
-
+        private float[] coordinates;
+        
         public ChannelDescription(int channelLabel, int channelFlags, float[] coordinates) {
+            this.coordinates = new float[3];
             this.channelLabel = channelLabel;
             this.channelFlags = channelFlags;
             this.coordinates = coordinates;
@@ -48,12 +49,12 @@ public class ChannelBox extends FullBox {
         super(atom);
     }
 
-    public ChannelBox() {
-        super(new Header(fourcc()));
-    }
-
     public static String fourcc() {
         return "chan";
+    }
+
+    public static ChannelBox createChannelBox() {
+        return new ChannelBox(new Header(fourcc()));
     }
 
     public void parse(ByteBuffer input) {

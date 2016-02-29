@@ -1,6 +1,7 @@
 package org.jcodec.codecs.mpeg12;
 
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
+import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
 import static org.jcodec.common.ArrayUtil.toIntArray;
 
 import java.util.Arrays;
@@ -10,7 +11,7 @@ import org.junit.Test;
 
 public class MPEGPredOctTest {
 
-    byte[] padded = toByteArrayShifted(new int[] {
+    static byte[] padded = toByteArrayShifted(new int[] {
 
     10, 10, 10, 20, 30, 40, 40, 40, 40,
 
@@ -32,7 +33,7 @@ public class MPEGPredOctTest {
 
     });
 
-    byte[] unpadded = toByteArrayShifted(new int[] {
+    static byte[] unpadded = toByteArrayShifted(new int[] {
 
     10, 20, 30, 40,
 
@@ -44,7 +45,7 @@ public class MPEGPredOctTest {
 
     });
 
-    int[][] interp = new int[][] {
+    static int[][] interp = new int[][] {
     /* 0-7,0 */
     { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160 },
             { 11, 21, 31, 40, 51, 61, 71, 80, 91, 101, 111, 120, 131, 141, 151, 160 },
@@ -118,7 +119,7 @@ public class MPEGPredOctTest {
             { 52, 62, 73, 75, 92, 103, 113, 115, 134, 144, 155, 157, 138, 148, 159, 161 },
             { 53, 63, 74, 75, 94, 104, 114, 115, 136, 146, 156, 157, 139, 149, 160, 160 } };
 
-    public static int[] topField(int[] pix, int w, int h) {
+    public static int[] topFieldInt(int[] pix, int w, int h) {
         int[] result = new int[pix.length * 2];
         for (int i = 0, soff = 0, roff = 0; i < h; i++) {
             for (int j = 0; j < w; j++, soff++, roff++) {
@@ -131,7 +132,7 @@ public class MPEGPredOctTest {
         return result;
     }
 
-    public static int[] bottomField(int[] pix, int w, int h) {
+    public static int[] bottomFieldInt(int[] pix, int w, int h) {
         int[] result = new int[pix.length * 2];
         for (int i = 0, soff = 0, roff = 0; i < h; i++) {
             for (int j = 0; j < w; j++, roff++) {
@@ -186,7 +187,7 @@ public class MPEGPredOctTest {
                 pred.predictPlane(topField(padded, 9, 9), (2 << 3) + x, (2 << 3) + y, 9, 18, 1, 0, result32, 0, 32, 32,
                         1);
 
-                Assert.assertArrayEquals("@ " + x + "," + y + ":tff", topField(interp[(y << 3) + x], 4, 4),
+                Assert.assertArrayEquals("@ " + x + "," + y + ":tff", topFieldInt(interp[(y << 3) + x], 4, 4),
                         result32);
 
                 Arrays.fill(result32, 0);
@@ -195,7 +196,7 @@ public class MPEGPredOctTest {
                         32, 1);
 
                 Assert.assertArrayEquals("@ " + x + "," + y + ":bff",
-                        bottomField(interp[(y << 3) + x], 4, 4), result32);
+                        bottomFieldInt(interp[(y << 3) + x], 4, 4), result32);
             }
         }
     }
@@ -215,7 +216,7 @@ public class MPEGPredOctTest {
 
                 pred.predictPlane(topField(unpadded, 4, 4), x, y, 4, 8, 1, 0, result32, 0, 32, 32, 1);
 
-                Assert.assertArrayEquals("@ " + x + "," + y + ":tff", topField(interp[(y << 3) + x], 4, 4),
+                Assert.assertArrayEquals("@ " + x + "," + y + ":tff", topFieldInt(interp[(y << 3) + x], 4, 4),
                         result32);
 
                 Arrays.fill(result32, 0);
@@ -223,7 +224,7 @@ public class MPEGPredOctTest {
                 pred.predictPlane(bottomField(unpadded, 4, 4), x, y, 4, 8, 1, 1, result32, 1, 32, 32, 1);
 
                 Assert.assertArrayEquals("@ " + x + "," + y + ":bff",
-                        bottomField(interp[(y << 3) + x], 4, 4), result32);
+                        bottomFieldInt(interp[(y << 3) + x], 4, 4), result32);
             }
         }
     }

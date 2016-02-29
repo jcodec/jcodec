@@ -77,7 +77,7 @@ public class PCMDVDTrack implements VirtualTrack {
 
     @Override
     public CodecMeta getCodecMeta() {
-        return new AudioCodecMeta(MP4Muxer.lookupFourcc(format), ByteBuffer.allocate(0), format, true, new Label[] {
+        return AudioCodecMeta.createAudioCodecMeta3(MP4Muxer.lookupFourcc(format), ByteBuffer.allocate(0), format, true, new Label[] {
                 Label.Left, Label.Right });
     }
 

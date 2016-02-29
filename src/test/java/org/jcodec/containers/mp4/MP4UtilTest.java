@@ -28,7 +28,7 @@ public class MP4UtilTest {
         File f = new File("src/test/resources/zhuker/1D158634-69DF-4C7F-AB6F-CCC83F04FEDB/1.mp4");
         MovieBox moov = MP4Util.parseMovie(f);
         MediaInfoBox minf = moov.getVideoTrack().getMdia().getMinf();
-        AvcCBox avcCBox = Box.findFirst(minf, AvcCBox.class, "stbl", "stsd", "avc1", "avcC");
+        AvcCBox avcCBox = Box.findFirstPath(minf, AvcCBox.class, Box.path("stbl.stsd.avc1.avcC"));
         long size = avcCBox.getHeader().getSize();
         ByteBuffer buf = ByteBuffer.allocate(128);
         avcCBox.write(buf);
@@ -47,7 +47,7 @@ public class MP4UtilTest {
         read.flip();
 
         Atom atom = MP4Util.findFirstAtom("moov", new AutoFileChannelWrapper(f));
-        MappedByteBuffer written = NIOUtils.map(f);
+        MappedByteBuffer written = NIOUtils.mapFile(f);
         written.position((int) atom.getOffset());
         written.limit((int) (written.position() + atom.getHeader().getSize()));
 

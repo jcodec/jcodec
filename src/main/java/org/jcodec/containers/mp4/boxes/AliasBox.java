@@ -77,12 +77,8 @@ public class AliasBox extends FullBox {
         }
 
         public String toString() {
-            return Platform.stringFromCharset(data, 0, len, utf16.contains(type) ? Charset.forName("UTF-16") : Charset.forName("UTF-8"));
+            return Platform.stringFromCharset4(data, 0, len, utf16.contains(type) ? Charset.forName("UTF-16") : Charset.forName("UTF-8"));
         }
-    }
-
-    public AliasBox() {
-        super(new Header(fourcc(), 0));
     }
 
     public AliasBox(Header atom) {
@@ -97,12 +93,12 @@ public class AliasBox extends FullBox {
         recordSize = is.getShort();
         version = is.getShort();
         kind = is.getShort();
-        volumeName = NIOUtils.readPascalString(is, 27);
+        volumeName = NIOUtils.readPascalStringL(is, 27);
         volumeCreateDate = is.getInt();
         volumeSignature = is.getShort();
         volumeType = is.getShort();
         parentDirId = is.getInt();
-        fileName = NIOUtils.readPascalString(is, 63);
+        fileName = NIOUtils.readPascalStringL(is, 63);
         fileNumber = is.getInt();
         createdLocalDate = is.getInt();
         fileTypeName = NIOUtils.readString(is, 4);
@@ -134,12 +130,12 @@ public class AliasBox extends FullBox {
         out.putShort(recordSize);
         out.putShort(version);
         out.putShort(kind);
-        NIOUtils.writePascalString(out, volumeName, 27);
+        NIOUtils.writePascalStringL(out, volumeName, 27);
         out.putInt(volumeCreateDate);
         out.putShort(volumeSignature);
         out.putShort(volumeType);
         out.putInt(parentDirId);
-        NIOUtils.writePascalString(out, fileName, 63);
+        NIOUtils.writePascalStringL(out, fileName, 63);
         out.putInt(fileNumber);
         out.putInt(createdLocalDate);
         out.put(JCodecUtil.asciiString(fileTypeName), 0, 4);
@@ -166,7 +162,7 @@ public class AliasBox extends FullBox {
         return fileName;
     }
 
-    public List<ExtraField> getExtra() {
+    public List<ExtraField> getExtras() {
         return extra;
     }
 
@@ -183,7 +179,7 @@ public class AliasBox extends FullBox {
     }
 
     public static AliasBox createSelfRef() {
-        AliasBox alis = new AliasBox();
+        AliasBox alis = new AliasBox(new Header(fourcc()));
         alis.setFlags(1);
         return alis;
     }

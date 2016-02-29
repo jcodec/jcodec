@@ -27,7 +27,7 @@ public class AWTUtil {
                 BufferedImage.TYPE_3BYTE_BGR);
 
         if (src.getCrop() == null)
-            toBufferedImage(src, dst);
+            toBufferedImage2(src, dst);
         else
             toBufferedImageCropped(src, dst);
 
@@ -50,7 +50,7 @@ public class AWTUtil {
         }
     }
 
-    public static void toBufferedImage8Bit(Picture8Bit src, BufferedImage dst) {
+    public static void toBufferedImage8Bit2(Picture8Bit src, BufferedImage dst) {
         byte[] data = ((DataBufferByte) dst.getRaster().getDataBuffer()).getData();
         byte[] srcData = src.getPlaneData(0);
         for (int i = 0; i < data.length; i++) {
@@ -73,7 +73,7 @@ public class AWTUtil {
                 BufferedImage.TYPE_3BYTE_BGR);
 
         if (src.getCrop() == null)
-            toBufferedImage8Bit(src, dst);
+            toBufferedImage8Bit2(src, dst);
         else
             toBufferedImageCropped8Bit(src, dst);
 
@@ -96,7 +96,7 @@ public class AWTUtil {
         }
     }
 
-    public static void toBufferedImage(Picture src, BufferedImage dst) {
+    public static void toBufferedImage2(Picture src, BufferedImage dst) {
         byte[] data = ((DataBufferByte) dst.getRaster().getDataBuffer()).getData();
         int[] srcData = src.getPlaneData(0);
         for (int i = 0; i < data.length; i++) {
@@ -106,11 +106,11 @@ public class AWTUtil {
 
     public static Picture fromBufferedImage(BufferedImage src) {
         Picture dst = Picture.create(src.getWidth(), src.getHeight(), RGB);
-        fromBufferedImage(src, dst);
+        fromBufferedImage2(src, dst);
         return dst;
     }
 
-    public static void fromBufferedImage(BufferedImage src, Picture dst) {
+    public static void fromBufferedImage2(BufferedImage src, Picture dst) {
         int[] dstData = dst.getPlaneData(0);
 
         int off = 0;

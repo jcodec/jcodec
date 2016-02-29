@@ -81,8 +81,7 @@ public class AVCClipTrack extends ClipTrack {
         rawSPS.add(H264Utils.writeSPS(encSPS, 128));
         rawPPS.add(H264Utils.writePPS(encPPS, 20));
 
-        se = new VideoCodecMeta("avc1", ByteBuffer.wrap(H264Utils.saveCodecPrivate(rawSPS, rawPPS)),
-                codecMeta.getSize(), codecMeta.getPasp());
+        se = VideoCodecMeta.createVideoCodecMeta("avc1", ByteBuffer.wrap(H264Utils.saveCodecPrivate(rawSPS, rawPPS)), codecMeta.getSize(), codecMeta.getPasp());
 
         int _frameSize = rc.calcFrameSize(mbW * mbH);
         _frameSize += _frameSize >> 4;
@@ -140,17 +139,17 @@ public class AVCClipTrack extends ClipTrack {
         }
 
         public List<ByteBuffer> transcode() throws IOException {
-            H264Decoder decoder = new H264Decoder(track.codecPrivate);
+            H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(track.codecPrivate);
             Picture8Bit buf = Picture8Bit.create(track.mbW << 4, track.mbH << 4, ColorSpace.YUV420J);
             Picture8Bit dec = null;
             for (VirtualPacket virtualPacket : head) {
-                dec = decoder.decodeFrame8Bit(H264Utils.splitFrame(virtualPacket.getData()), buf.getData());
+                dec = decoder.decodeFrame8Bit(virtualPacket.getData(), buf.getData());
             }
             ByteBuffer tmp = ByteBuffer.allocate(track.frameSize);
 
             List<ByteBuffer> result = new ArrayList<ByteBuffer>();
             for (VirtualPacket pkt : tail) {
-                dec = decoder.decodeFrame8Bit(H264Utils.splitFrame(pkt.getData()), buf.getData());
+                dec = decoder.decodeFrame8Bit(pkt.getData(), buf.getData());
 
                 tmp.clear();
                 ByteBuffer res = encoder.encodeFrame8Bit(dec, tmp);
@@ -181,7 +180,7 @@ public class AVCClipTrack extends ClipTrack {
                 if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
                     out.putInt(1);
                     nu.write(out);
-                    st.run(buf, out, nu, track.encSPS, track.encPPS);
+                    st.runSpsPps(buf, out, nu, track.encSPS, track.encPPS);
                 }
             }
 

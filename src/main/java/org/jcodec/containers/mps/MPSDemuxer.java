@@ -1,9 +1,13 @@
 package org.jcodec.containers.mps;
 
+import static org.jcodec.codecs.h264.io.model.NALUnitType.IDR_SLICE;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.NON_IDR_SLICE;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.PPS;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.SPS;
 import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
 import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
 import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
-import static org.jcodec.common.io.NIOUtils.asByteBuffer;
+import static org.jcodec.common.io.NIOUtils.asByteBufferInt;
 import static org.jcodec.containers.mps.MPSUtils.audioStream;
 import static org.jcodec.containers.mps.MPSUtils.psMarker;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
@@ -40,12 +44,16 @@ import org.jcodec.common.model.TapeTimecode;
 public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     private static final int BUFFER_SIZE = 0x100000;
 
-    private Map<Integer, BaseTrack> streams = new HashMap<Integer, BaseTrack>();
+    private Map<Integer, BaseTrack> streams;
     private SeekableByteChannel channel;
+    private List<ByteBuffer> bufPool;
 
     public MPSDemuxer(SeekableByteChannel channel) throws IOException {
-        super(channel);
+        super(channel, 4096);
+        this.streams = new HashMap<Integer, BaseTrack>();
         this.channel = channel;
+        this.bufPool = new ArrayList<ByteBuffer>();
+
         findStreams();
     }
 
@@ -76,7 +84,6 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
     }
 
-    private List<ByteBuffer> bufPool = new ArrayList<ByteBuffer>();
 
     public ByteBuffer getBuffer() {
         synchronized (bufPool) {
@@ -96,13 +103,14 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
     public static abstract class BaseTrack implements MPEGDemuxer.MPEGDemuxerTrack {
         protected int streamId;
-        protected List<PESPacket> pending = new ArrayList<PESPacket>();
+        protected List<PESPacket> _pending;
         protected MPSDemuxer demuxer;
 
         public BaseTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
+            this._pending = new ArrayList<PESPacket>();
             this.demuxer = demuxer;
 			this.streamId = streamId;
-            this.pending.add(pkt);
+            this._pending.add(pkt);
         }
 
         public int getSid() {
@@ -110,24 +118,24 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
 
         public void pending(PESPacket pkt) {
-            if (pending != null)
-                pending.add(pkt);
+            if (_pending != null)
+                _pending.add(pkt);
             else
             	demuxer.putBack(pkt.data);
         }
 
         public List<PESPacket> getPending() {
-            return pending;
+            return _pending;
         }
 
         @Override
         public void ignore() {
-            if (pending == null)
+            if (_pending == null)
                 return;
-            for (PESPacket pesPacket : pending) {
+            for (PESPacket pesPacket : _pending) {
             	demuxer.putBack(pesPacket.data);
             }
-            pending = null;
+            _pending = null;
         }
     }
 
@@ -137,7 +145,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         public MPEGTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
             super(demuxer, streamId, pkt);
-            this.es = new MPEGES(this);
+            this.es = new MPEGES(this, 4096);
         }
 
         public boolean isOpen() {
@@ -152,14 +160,14 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
 
         public int read(ByteBuffer arg0) throws IOException {
-            PESPacket pes = pending.size() > 0 ? pending.remove(0) : getPacket();
+            PESPacket pes = _pending.size() > 0 ? _pending.remove(0) : getPacket();
             if (pes == null || !pes.data.hasRemaining())
                 return -1;
             int toRead = Math.min(arg0.remaining(), pes.data.remaining());
             arg0.put(NIOUtils.read(pes.data, toRead));
 
             if (pes.data.hasRemaining())
-                pending.add(0, pes);
+                _pending.add(0, pes);
             else
                 demuxer.putBack(pes.data);
 
@@ -167,8 +175,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
 
         private PESPacket getPacket() throws IOException {
-            if (pending.size() > 0)
-                return pending.remove(0);
+            if (_pending.size() > 0)
+                return _pending.remove(0);
             PESPacket pkt;
             while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null) {
                 if (pkt.streamId == streamId) {
@@ -211,13 +219,13 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         @Override
         public Packet nextFrame(ByteBuffer buf) throws IOException {
             PESPacket pkt;
-            if (pending.size() > 0) {
-                pkt = pending.remove(0);
+            if (_pending.size() > 0) {
+                pkt = _pending.remove(0);
             } else {
                 while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null && pkt.streamId != streamId)
                 	demuxer.addToStream(pkt);
             }
-            return pkt == null ? null : new Packet(pkt.data, pkt.pts, 90000, 0, frameNo++, true, null);
+            return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, true, null);
         }
 
         public DemuxerTrackMeta getMeta() {
@@ -227,13 +235,13 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     }
 
     public void seekByte(long offset) throws IOException {
-        channel.position(offset);
+        channel.setPosition(offset);
         reset();
     }
 
     public void reset() {
         for (BaseTrack track : streams.values()) {
-            track.pending.clear();
+            track._pending.clear();
         }
     }
 
@@ -338,7 +346,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             marker = (marker << 8) | code;
 
             if (inNALUnit) {
-                NALUnit nu = NALUnit.read(asByteBuffer(code));
+                NALUnit nu = NALUnit.read(asByteBufferInt(code));
                 if (nu.type != null)
                     nuSeq.add(nu);
                 inNALUnit = false;
@@ -381,28 +389,23 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         int score = 0;
         boolean hasSps = false, hasPps = false, hasSlice = false;
         for (NALUnit nalUnit : nuSeq) {
-            switch (nalUnit.type) {
-            case SPS:
+            if (SPS == nalUnit.type) {
                 if (hasSps && !hasSlice)
                     score -= 30;
                 else
                     score += 30;
                 hasSps = true;
-                break;
-            case PPS:
+            } else if (PPS == nalUnit.type) {
                 if (hasPps && !hasSlice)
                     score -= 30;
                 if (hasSps)
                     score += 20;
                 hasPps = true;
-                break;
-            case IDR_SLICE:
-            case NON_IDR_SLICE:
+            } else if (IDR_SLICE == nalUnit.type || NON_IDR_SLICE == nalUnit.type) {
                 if (!hasSlice)
                     score += 50;
                 hasSlice = true;
-                break;
-            default:
+            } else {
                 score += 3;
             }
         }
@@ -417,7 +420,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         public MPEGPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
                 TapeTimecode tapeTimecode) {
-            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode);
+            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
         }
 
         public long getOffset() {

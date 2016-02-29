@@ -59,17 +59,26 @@ public class MXFDemuxer {
 
     public MXFDemuxer(SeekableByteChannel ch) throws IOException {
         this.ch = ch;
-        ch.position(0);
+        ch.setPosition(0);
         parseHeader(ch);
         findIndex();
         tracks = findTracks();
         timecode = MXFUtil.findMeta(metadata, TimecodeComponent.class);
     }
 
-    public enum OP {
-        OP1a(1, 1), OP1b(1, 2), OP1c(1, 3), OP2a(2, 1), OP2b(2, 2), OP2c(2, 3), OP3a(3, 1), OP3b(3, 2), OP3c(3, 3), OPAtom(
-                0x10, 0);
+    public static final class OP {
+        public final static OP OP1a = new OP(1, 1);
+        public final static OP OP1b = new OP(1, 2);
+        public final static OP OP1c = new OP(1, 3);
+        public final static OP OP2a = new OP(2, 1);
+        public final static OP OP2b = new OP(2, 2);
+        public final static OP OP2c = new OP(2, 3);
+        public final static OP OP3a = new OP(3, 1);
+        public final static OP OP3b = new OP(3, 2);
+        public final static OP OP3c = new OP(3, 3);
+        public final static OP OPAtom = new OP(0x10, 0);
 
+        private final static OP[] _values = new OP[] { OP1a, OP1b, OP1c, OP2a, OP2b, OP2c, OP3a, OP3b, OP3c, OPAtom };
         public int major;
         public int minor;
 
@@ -77,13 +86,18 @@ public class MXFDemuxer {
             this.major = major;
             this.minor = minor;
         }
+
+        public static OP[] values() {
+            return _values;
+        }
     }
 
     public OP getOp() {
         UL op = header.getPack().getOp();
 
-        EnumSet<OP> allOf = EnumSet.allOf(OP.class);
-        for (OP op2 : allOf) {
+        OP[] values = OP.values();
+        for (int i = 0; i < values.length; i++) {
+            OP op2 = values[i];
             if (op.get(12) == op2.major && op.get(13) == op2.minor)
                 return op2;
         }
@@ -109,9 +123,7 @@ public class MXFDemuxer {
                     Logger.warn("Track without descriptor: " + track.getTrackId());
                     continue;
                 }
-                MXFDemuxerTrack dt = createTrack(new UL(0x06, 0x0e, 0x2b, 0x34, 0x01, 0x02, 0x01, 0x01, 0x0d, 0x01,
-                        0x03, 0x01, (trackNumber >>> 24) & 0xff, (trackNumber >>> 16) & 0xff,
-                        (trackNumber >>> 8) & 0xff, trackNumber & 0xff), track, descriptor);
+                MXFDemuxerTrack dt = createTrack(UL.newUL(0x06, 0x0e, 0x2b, 0x34, 0x01, 0x02, 0x01, 0x01, 0x0d, 0x01, 0x03, 0x01, (trackNumber >>> 24) & 0xff, (trackNumber >>> 16) & 0xff, (trackNumber >>> 8) & 0xff, trackNumber & 0xff), track, descriptor);
                 if (dt.getCodec() != null || (descriptor instanceof WaveAudioDescriptor))
                     rt.add(dt);
             }
@@ -153,11 +165,11 @@ public class MXFDemuxer {
 
         partitions = new ArrayList<MXFPartition>();
         long nextPartition = ff.size();
-        ff.position(header.getPack().getFooterPartition());
+        ff.setPosition(header.getPack().getFooterPartition());
         do {
             long thisPartition = ff.position();
             kl = KLV.readKL(ff);
-            ByteBuffer fetchFrom = NIOUtils.fetchFrom(ff, (int) kl.len);
+            ByteBuffer fetchFrom = NIOUtils.fetchFromChannel(ff, (int) kl.len);
             header = MXFPartition.read(kl.key, fetchFrom, ff.position() - kl.offset, nextPartition);
 
             if (header.getPack().getNbEssenceContainers() > 0)
@@ -165,7 +177,7 @@ public class MXFDemuxer {
 
             metadata.addAll(0, readPartitionMeta(ff, header));
 
-            ff.position(header.getPack().getPrevPartition());
+            ff.setPosition(header.getPack().getPrevPartition());
             nextPartition = thisPartition;
         } while (header.getPack().getThisPartition() != 0);
     }
@@ -174,8 +186,8 @@ public class MXFDemuxer {
         KLV kl;
         long basePos = ff.position();
         List<MXFMetadata> local = new ArrayList<MXFMetadata>();
-        ByteBuffer metaBuffer = NIOUtils.fetchFrom(ff, (int) Math.max(0, header.getEssenceFilePos() - basePos));
-        while (metaBuffer.hasRemaining() && (kl = KLV.readKL(metaBuffer, basePos)) != null) {
+        ByteBuffer metaBuffer = NIOUtils.fetchFromChannel(ff, (int) Math.max(0, header.getEssenceFilePos() - basePos));
+        while (metaBuffer.hasRemaining() && (kl = KLV.readKLFromBuffer(metaBuffer, basePos)) != null) {
             MXFMetadata meta = parseMeta(kl.key, NIOUtils.read(metaBuffer, (int) kl.len));
             if (meta != null)
                 local.add(meta);
@@ -188,11 +200,11 @@ public class MXFDemuxer {
         MXFPartition header = null;
         while ((kl = KLV.readKL(ff)) != null) {
             if (MXFConst.HEADER_PARTITION_KLV.equals(kl.key)) {
-                ByteBuffer data = NIOUtils.fetchFrom(ff, (int) kl.len);
+                ByteBuffer data = NIOUtils.fetchFromChannel(ff, (int) kl.len);
                 header = MXFPartition.read(kl.key, data, ff.position() - kl.offset, 0);
                 break;
             } else {
-                ff.position(ff.position() + kl.len);
+                ff.setPosition(ff.position() + kl.len);
             }
         }
         return header;
@@ -206,7 +218,7 @@ public class MXFDemuxer {
         }
         try {
             MXFMetadata meta = class1.getConstructor(UL.class).newInstance(ul);
-            meta.read(_bb);
+            meta.readBuf(_bb);
             return meta;
         } catch (Exception e) {
         }
@@ -313,13 +325,13 @@ public class MXFDemuxer {
         private void cacheAudioFrameSizes(SeekableByteChannel ch) throws IOException {
             for (MXFPartition mxfPartition : demuxer.partitions) {
                 if (mxfPartition.getEssenceLength() > 0) {
-                    ch.position(mxfPartition.getEssenceFilePos());
+                    ch.setPosition(mxfPartition.getEssenceFilePos());
                     KLV kl;
                     do {
                         kl = KLV.readKL(ch);
                         if (kl == null)
                             break;
-                        ch.position(ch.position() + kl.len);
+                        ch.setPosition(ch.position() + kl.len);
                     } while (!essenceUL.equals(kl.key));
 
                     if (kl != null && essenceUL.equals(kl.key)) {
@@ -382,15 +394,15 @@ public class MXFDemuxer {
                 throws IOException {
         	SeekableByteChannel ch = demuxer.ch;
             synchronized (ch) {
-                ch.position(off);
+                ch.setPosition(off);
 
                 KLV kl = KLV.readKL(ch);
                 while (kl != null && !essenceUL.equals(kl.key)) {
-                    ch.position(ch.position() + kl.len);
+                    ch.setPosition(ch.position() + kl.len);
                     kl = KLV.readKL(ch);
                 }
 
-                return kl != null && essenceUL.equals(kl.key) ? new MXFPacket(NIOUtils.fetchFrom(ch, (int) kl.len),
+                return kl != null && essenceUL.equals(kl.key) ? new MXFPacket(NIOUtils.fetchFromChannel(ch, (int) kl.len),
                         pts, timescale, duration, frameNo, kf, null, off, len) : null;
             }
         }
@@ -450,8 +462,10 @@ public class MXFDemuxer {
             else
                 return null;
 
-            for (MXFCodecMapping codec : EnumSet.allOf(MXFConst.MXFCodecMapping.class)) {
-                if (codec.getUl().equals(codecUL, 0xff7f))
+            MXFCodecMapping[] values = MXFConst.MXFCodecMapping.values();
+            for (int i = 0; i < values.length; i++) {
+                MXFCodecMapping codec = values[i];
+                if (codec.getUl().maskEquals(codecUL, 0xff7f))
                     return codec;
             }
             Logger.warn("Unknown codec: " + codecUL);
@@ -482,7 +496,7 @@ public class MXFDemuxer {
 
         public MXFPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
                 TapeTimecode tapeTimecode, long offset, int len) {
-            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode);
+            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
             this.offset = offset;
             this.len = len;
         }
@@ -514,9 +528,9 @@ public class MXFDemuxer {
             metadata.addAll(readPartitionMeta(ff, header));
             partitions.add(header);
 
-            ff.position(header.getPack().getFooterPartition());
+            ff.setPosition(header.getPack().getFooterPartition());
             KLV kl = KLV.readKL(ff);
-            ByteBuffer fetchFrom = NIOUtils.fetchFrom(ff, (int) kl.len);
+            ByteBuffer fetchFrom = NIOUtils.fetchFromChannel(ff, (int) kl.len);
             MXFPartition footer = MXFPartition.read(kl.key, fetchFrom, ff.position() - kl.offset, ff.size());
 
             metadata.addAll(readPartitionMeta(ff, footer));

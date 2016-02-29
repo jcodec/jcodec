@@ -1,5 +1,8 @@
 package org.jcodec.containers.mp4.boxes.channel;
 
+import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelLayoutTag_UseChannelBitmap;
+import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -26,7 +29,7 @@ public class ChannelUtils {
     private static final List<Label> MATRIX_STEREO = Arrays.asList(Label.LeftTotal, Label.RightTotal);
     private static final Label[] EMPTY = new Label[0];
 
-    public static Label[] getLabels(AudioSampleEntry se) {
+    public static Label[] getLabelsFromSampleEntry(AudioSampleEntry se) {
         ChannelBox channel = Box.findFirst(se, ChannelBox.class, "chan");
         if (channel != null)
             return ChannelUtils.getLabels(channel);
@@ -54,27 +57,27 @@ public class ChannelUtils {
         }
     }
 
-    public static Label[] getLabels(TrakBox trakBox) {
-        return getLabels((AudioSampleEntry) trakBox.getSampleEntries()[0]);
+    public static Label[] getLabelsFromTrack(TrakBox trakBox) {
+        return getLabelsFromSampleEntry((AudioSampleEntry) trakBox.getSampleEntries()[0]);
     }
 
     public static void setLabel(TrakBox trakBox, int channel, Label label) {
-        Label[] labels = getLabels(trakBox);
+        Label[] labels = getLabelsFromTrack(trakBox);
         labels[channel] = label;
-        setLabels(trakBox, labels);
+        _setLabels(trakBox, labels);
     }
 
-    private static void setLabels(TrakBox trakBox, Label[] labels) {
-        ChannelBox channel = Box.findFirst(trakBox, ChannelBox.class, "mdia", "minf", "stbl", "stsd", null, "chan");
+    private static void _setLabels(TrakBox trakBox, Label[] labels) {
+        ChannelBox channel = Box.findFirstPath(trakBox, ChannelBox.class, new String[] { "mdia", "minf", "stbl", "stsd", null, "chan" });
         if (channel == null) {
-            channel = new ChannelBox();
-            Box.findFirst(trakBox, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null).add(channel);
+            channel = ChannelBox.createChannelBox();
+            Box.findFirstPath(trakBox, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null }).add(channel);
         }
         setLabels(labels, channel);
     }
 
     public static void setLabels(Label[] labels, ChannelBox channel) {
-        channel.setChannelLayout(ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions.getCode());
+        channel.setChannelLayout(kCAFChannelLayoutTag_UseChannelDescriptions.getCode());
         ChannelDescription[] list = new ChannelDescription[labels.length];
         for (int i = 0; i < labels.length; i++)
             list[i] = new ChannelBox.ChannelDescription(labels[i].getVal(), 0, new float[] { 0, 0, 0 });
@@ -90,14 +93,13 @@ public class ChannelUtils {
                 res[i] = Label.getByVal((1 << 16) | i);
             return res;
         }
-        for (ChannelLayout layout : EnumSet.allOf(ChannelLayout.class)) {
+        for (ChannelLayout layout : ChannelLayout.values()) {
             if (layout.getCode() == tag) {
-                switch (layout) {
-                case kCAFChannelLayoutTag_UseChannelDescriptions:
+                if (layout == kCAFChannelLayoutTag_UseChannelDescriptions) {
                     return extractLabels(box.getDescriptions());
-                case kCAFChannelLayoutTag_UseChannelBitmap:
+                } else if (layout == kCAFChannelLayoutTag_UseChannelBitmap) {
                     return getLabelsByBitmap(box.getChannelBitmap());
-                default:
+                } else {
                     return layout.getLabels();
                 }
             }

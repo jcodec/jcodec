@@ -24,14 +24,10 @@ public class SegmentReader {
     private boolean done;
     private long pos;
 
-    public SegmentReader(ReadableByteChannel channel) throws IOException {
-        this(channel, 4096);
-    }
-
     public SegmentReader(ReadableByteChannel channel, int fetchSize) throws IOException {
         this.channel = channel;
         this.fetchSize = fetchSize;
-        buf = NIOUtils.fetchFrom(channel, 4);
+        buf = NIOUtils.fetchFromChannel(channel, 4);
         pos = buf.remaining();
         curMarker = buf.getInt();
     }
@@ -51,7 +47,7 @@ public class SegmentReader {
                 out.put((byte) (curMarker >>> 24));
                 curMarker = (curMarker << 8) | (buf.get() & 0xff);
             }
-            buf = NIOUtils.fetchFrom(channel, fetchSize);
+            buf = NIOUtils.fetchFromChannel(channel, fetchSize);
             pos += buf.remaining();
         } while (buf.hasRemaining());
         out.putInt(curMarker);
@@ -70,7 +66,7 @@ public class SegmentReader {
                     return true;
                 }
             }
-            buf = NIOUtils.fetchFrom(channel, fetchSize);
+            buf = NIOUtils.fetchFromChannel(channel, fetchSize);
             pos += buf.remaining();
         } while (buf.hasRemaining());
         done = true;
@@ -88,7 +84,7 @@ public class SegmentReader {
                 out.put((byte) (curMarker >>> 24));
                 curMarker = (curMarker << 8) | (buf.get() & 0xff);
             }
-            buf = NIOUtils.fetchFrom(channel, fetchSize);
+            buf = NIOUtils.fetchFromChannel(channel, fetchSize);
             pos += buf.remaining();
         } while (buf.hasRemaining());
         out.putInt(curMarker);

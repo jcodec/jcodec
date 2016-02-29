@@ -43,10 +43,10 @@ public class PGMIO {
 			y[i] = buf[i] & 0xff;
 		}
 
-		return new Picture(width, height, new int[][] {y}, ColorSpace.GREY);
+		return Picture.createPicture(width, height, new int[][] {y}, ColorSpace.GREY);
 	}
 
-	public static Picture readPGM(File name) throws IOException {
+	public static Picture readPGMFile(File name) throws IOException {
 		InputStream is = null;
 
 		try {

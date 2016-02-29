@@ -13,7 +13,8 @@ import java.util.Map;
  * 
  */
 public class BoxFactory {
-    private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
+    private final Map<String, Class<? extends Box>> mappings;
+    
     private static BoxFactory instance = new BoxFactory();
 
     public static BoxFactory getDefault() {
@@ -21,6 +22,8 @@ public class BoxFactory {
     }
 
     public BoxFactory() {
+        this.mappings = new HashMap<String, Class<? extends Box>>();
+
         mappings.put(MovieExtendsBox.fourcc(), MovieExtendsBox.class);
         mappings.put(MovieExtendsHeaderBox.fourcc(), MovieExtendsHeaderBox.class);
         mappings.put(SegmentIndexBox.fourcc(), SegmentIndexBox.class);
@@ -42,8 +45,8 @@ public class BoxFactory {
         mappings.put("stbl", NodeBox.class);
         mappings.put(SampleDescriptionBox.fourcc(), SampleDescriptionBox.class);
         mappings.put(TimeToSampleBox.fourcc(), TimeToSampleBox.class);
-        mappings.put(SyncSamplesBox.fourcc(), SyncSamplesBox.class);
-        mappings.put(PartialSyncSamplesBox.fourcc(), PartialSyncSamplesBox.class);
+        mappings.put(SyncSamplesBox.STSS, SyncSamplesBox.class);
+        mappings.put(PartialSyncSamplesBox.STPS, PartialSyncSamplesBox.class);
         mappings.put(SampleToChunkBox.fourcc(), SampleToChunkBox.class);
         mappings.put(SampleSizesBox.fourcc(), SampleSizesBox.class);
         mappings.put(ChunkOffsetsBox.fourcc(), ChunkOffsetsBox.class);
@@ -65,9 +68,9 @@ public class BoxFactory {
         mappings.put("gmhd", NodeBox.class);
         mappings.put("tmcd", LeafBox.class);
         mappings.put("tref", NodeBox.class);
-        mappings.put(ClearApertureBox.fourcc(), ClearApertureBox.class);
-        mappings.put(ProductionApertureBox.fourcc(), ProductionApertureBox.class);
-        mappings.put(EncodedPixelBox.fourcc(), EncodedPixelBox.class);
+        mappings.put(ClearApertureBox.CLEF, ClearApertureBox.class);
+        mappings.put(ProductionApertureBox.PROF, ProductionApertureBox.class);
+        mappings.put(EncodedPixelBox.ENOF, EncodedPixelBox.class);
         mappings.put(GenericMediaInfoBox.fourcc(), GenericMediaInfoBox.class);
         mappings.put(TimecodeMediaInfoBox.fourcc(), TimecodeMediaInfoBox.class);
         mappings.put("udta", NodeBox.class);

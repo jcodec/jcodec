@@ -1,7 +1,7 @@
 package org.jcodec.codecs.h264.io.model;
 
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
-import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSE;
+import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeSEtrace;
 
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
@@ -25,7 +25,7 @@ public class ScalingList {
 
     public void write(BitWriter out)  {
         if (useDefaultScalingMatrixFlag) {
-            writeSE(out, 0, "SPS: ");
+            writeSEtrace(out, 0, "SPS: ");
             return;
         }
 
@@ -34,7 +34,7 @@ public class ScalingList {
         for (int j = 0; j < scalingList.length; j++) {
             if (nextScale != 0) {
                 int deltaScale = scalingList[j] - lastScale - 256;
-                writeSE(out, deltaScale, "SPS: ");
+                writeSEtrace(out, deltaScale, "SPS: ");
             }
             lastScale = scalingList[j];
         }

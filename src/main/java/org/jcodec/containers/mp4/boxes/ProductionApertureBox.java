@@ -1,6 +1,5 @@
 package org.jcodec.containers.mp4.boxes;
 
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -10,19 +9,17 @@ package org.jcodec.containers.mp4.boxes;
  */
 public class ProductionApertureBox extends ClearApertureBox {
 
-    public static String fourcc() {
-        return "prof";
+    static final String PROF = "prof";
+
+    public static ProductionApertureBox createProductionApertureBox(int width, int height) {
+        ProductionApertureBox prof = new ProductionApertureBox(new Header(PROF));
+        prof.width = width;
+        prof.height = height;
+        return prof;
     }
 
     public ProductionApertureBox(Header atom) {
         super(atom);
     }
 
-    public ProductionApertureBox() {
-        super(new Header(fourcc()));
-    }
-
-    public ProductionApertureBox(int width, int height) {
-        super(new Header(fourcc()), width, height);
-    }
 }

@@ -1,10 +1,10 @@
 package org.jcodec.movtool;
 
 import static java.util.Arrays.fill;
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
-import static org.jcodec.movtool.Util.forceEditList;
+import static org.jcodec.movtool.Util.forceEditListMov;
 import static org.jcodec.movtool.Util.insertTo;
 import static org.jcodec.movtool.Util.shift;
 import static org.jcodec.movtool.Util.spread;
@@ -15,6 +15,7 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ClipRegionBox;
 import org.jcodec.containers.mp4.boxes.LoadSettingsBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -37,7 +38,7 @@ import org.jcodec.platform.Platform;
  */
 public class Paste {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: paste <to movie> <from movie> [second]");
             System.exit(-1);
@@ -49,10 +50,10 @@ public class Paste {
         try {
             File outFile = new File(toFile.getParentFile(), toFile.getName().replaceAll("\\.mov$", "") + ".paste.mov");
             Platform.deleteFile(outFile);
-            out = writableFileChannel(outFile);
-            to = writableFileChannel(toFile);
+            out = writableChannel(outFile);
+            to = writableChannel(toFile);
             File fromFile = new File(args[1]);
-            from = readableFileChannel(fromFile);
+            from = readableChannel(fromFile);
             MovieBox toMov = createRefMovie(to, "file://" + toFile.getCanonicalPath());
             MovieBox fromMov = createRefMovie(from, "file://" + fromFile.getCanonicalPath());
             new Strip().strip(fromMov);
@@ -79,8 +80,8 @@ public class Paste {
 
         long displayTv = (long) (to.getTimescale() * sec);
 
-        forceEditList(to);
-        forceEditList(from);
+        forceEditListMov(to);
+        forceEditListMov(from);
         TrakBox[] fromTracks = from.getTracks();
         TrakBox[] toTracks = to.getTracks();
         int[][] matches = findMatches(fromTracks, toTracks);
@@ -150,22 +151,22 @@ public class Paste {
     }
 
     private boolean matchSampleSizes(TrakBox trakBox1, TrakBox trakBox2) {
-        SampleSizesBox stsz1 = NodeBox.findFirst(trakBox1, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
-        SampleSizesBox stsz2 = NodeBox.findFirst(trakBox1, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        SampleSizesBox stsz1 = NodeBox.findFirstPath(trakBox1, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        SampleSizesBox stsz2 = NodeBox.findFirstPath(trakBox1, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         return stsz1.getDefaultSize() == stsz2.getDefaultSize();
     }
 
     private boolean matchMediaHeader(TrakBox trakBox1, TrakBox trakBox2) {
-        VideoMediaHeaderBox vmhd1 = NodeBox.findFirst(trakBox1, VideoMediaHeaderBox.class, "mdia", "minf", "vmhd");
-        VideoMediaHeaderBox vmhd2 = NodeBox.findFirst(trakBox2, VideoMediaHeaderBox.class, "mdia", "minf", "vmhd");
+        VideoMediaHeaderBox vmhd1 = NodeBox.findFirstPath(trakBox1, VideoMediaHeaderBox.class, Box.path("mdia.minf.vmhd"));
+        VideoMediaHeaderBox vmhd2 = NodeBox.findFirstPath(trakBox2, VideoMediaHeaderBox.class, Box.path("mdia.minf.vmhd"));
         if ((vmhd1 != null && vmhd2 == null) || (vmhd1 == null && vmhd2 != null))
             return false;
         else if (vmhd1 != null && vmhd2 != null) {
             return vmhd1.getGraphicsMode() == vmhd2.getGraphicsMode() && vmhd1.getbOpColor() == vmhd2.getbOpColor()
                     && vmhd1.getgOpColor() == vmhd2.getgOpColor() && vmhd1.getrOpColor() == vmhd2.getrOpColor();
         } else {
-            SoundMediaHeaderBox smhd1 = NodeBox.findFirst(trakBox1, SoundMediaHeaderBox.class, "mdia", "minf", "smhd");
-            SoundMediaHeaderBox smhd2 = NodeBox.findFirst(trakBox2, SoundMediaHeaderBox.class, "mdia", "minf", "smhd");
+            SoundMediaHeaderBox smhd1 = NodeBox.findFirstPath(trakBox1, SoundMediaHeaderBox.class, Box.path("mdia.minf.smhd"));
+            SoundMediaHeaderBox smhd2 = NodeBox.findFirstPath(trakBox2, SoundMediaHeaderBox.class, Box.path("mdia.minf.smhd"));
             if ((smhd1 == null && smhd2 != null) || (smhd1 != null && smhd2 == null))
                 return false;
             else if (smhd1 != null && smhd2 != null)
@@ -179,7 +180,7 @@ public class Paste {
         TrackHeaderBox th1 = trakBox1.getTrackHeader();
         TrackHeaderBox th2 = trakBox2.getTrackHeader();
 
-        return ("vide".equals(trakBox1.getHandlerType()) && Platform.arrayEquals(th1.getMatrix(), th2.getMatrix())
+        return ("vide".equals(trakBox1.getHandlerType()) && Platform.arrayEqualsInt(th1.getMatrix(), th2.getMatrix())
                 && th1.getLayer() == th2.getLayer() && th1.getWidth() == th2.getWidth() && th1.getHeight() == th2
                 .getHeight())
                 || ("soun".equals(trakBox1.getHandlerType()) && th1.getVolume() == th2.getVolume())
@@ -201,8 +202,8 @@ public class Paste {
     }
 
     private boolean matchClip(TrakBox trakBox1, TrakBox trakBox2) {
-        ClipRegionBox crgn1 = NodeBox.findFirst(trakBox1, ClipRegionBox.class, "clip", "crgn");
-        ClipRegionBox crgn2 = NodeBox.findFirst(trakBox2, ClipRegionBox.class, "clip", "crgn");
+        ClipRegionBox crgn1 = NodeBox.findFirstPath(trakBox1, ClipRegionBox.class, Box.path("clip.crgn"));
+        ClipRegionBox crgn2 = NodeBox.findFirstPath(trakBox2, ClipRegionBox.class, Box.path("clip.crgn"));
         if ((crgn1 == null && crgn2 != null) || (crgn1 != null && crgn2 == null))
             return false;
         if (crgn1 == null && crgn2 == null)

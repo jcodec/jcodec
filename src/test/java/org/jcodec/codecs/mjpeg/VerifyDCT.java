@@ -17,13 +17,13 @@ public class VerifyDCT extends DCT {
     public int[] decode(int[] orig) {
         int[] expected = slow.decode(orig);
         int[] actual = fast.decode(orig);
-        if (!Platform.arrayEquals(expected, actual)) {
+        if (!Platform.arrayEqualsInt(expected, actual)) {
             System.out.println("\nwhile decoding: ");
-            Debug.print8x8(orig);
+            Debug.print8x8i(orig);
             System.out.println("expected: ");
-            Debug.print8x8(expected);
+            Debug.print8x8i(expected);
             System.out.println("actual: ");
-            Debug.print8x8(actual);
+            Debug.print8x8i(actual);
             System.out.println("diff: ");
             for (int i = 0; i < expected.length; i++) {
                 if (i % 8 == 0) {
@@ -34,7 +34,7 @@ public class VerifyDCT extends DCT {
             diffcnt++;
 
             if (diffcnt == 10) {
-                throw new UnhandledStateException();
+                throw new UnhandledStateException("diffcnt == 10");
             }
         }
         return expected;

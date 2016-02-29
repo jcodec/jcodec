@@ -29,7 +29,7 @@ public class MTSDemuxer implements MPEGDemuxer {
     private MPSDemuxer psDemuxer;
     private SeekableByteChannel tsChannel;
 
-    public static Set<Integer> getPrograms(SeekableByteChannel src) throws IOException {
+    public static Set<Integer> getProgramsFromChannel(SeekableByteChannel src) throws IOException {
         long rem = src.position();
         Set<Integer> guids = new HashSet<Integer>();
         for (int i = 0; guids.size() == 0 || i < guids.size() * 500; i++) {
@@ -43,15 +43,15 @@ public class MTSDemuxer implements MPEGDemuxer {
                 guids.add(pkt.pid);
             }
         }
-        src.position(rem);
+        src.setPosition(rem);
         return guids;
     }
 
     public static Set<Integer> getPrograms(File file) throws IOException {
         FileChannelWrapper fc = null;
         try {
-            fc = NIOUtils.readableFileChannel(file);
-            return getPrograms(fc);
+            fc = NIOUtils.readableChannel(file);
+            return getProgramsFromChannel(fc);
         } finally {
             NIOUtils.closeQuietly(fc);
         }
@@ -112,8 +112,8 @@ public class MTSDemuxer implements MPEGDemuxer {
             return src.position();
         }
 
-        public SeekableByteChannel position(long newPosition) throws IOException {
-            src.position(newPosition);
+        public SeekableByteChannel setPosition(long newPosition) throws IOException {
+            src.setPosition(newPosition);
             data = null;
             return this;
         }
@@ -158,7 +158,7 @@ public class MTSDemuxer implements MPEGDemuxer {
 
     public static MTSPacket readPacket(ReadableByteChannel channel) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(188);
-        if (NIOUtils.read(channel, buffer) != 188)
+        if (NIOUtils.readFromChannel(channel, buffer) != 188)
             return null;
         buffer.flip();
         return parsePacket(buffer);
@@ -208,7 +208,7 @@ public class MTSDemuxer implements MPEGDemuxer {
         int[] keys = streams.keys();
         for (int i : keys) {
             List<ByteBuffer> packets = streams.get(i);
-            int score = MPSDemuxer.probe(NIOUtils.combine(packets));
+            int score = MPSDemuxer.probe(NIOUtils.combineBuffers(packets));
             if (score > maxScore) {
                 maxScore = score + (packets.size() > 20 ? 50 : 0);
             }
@@ -218,7 +218,7 @@ public class MTSDemuxer implements MPEGDemuxer {
 
     @Override
     public void seekByte(long offset) throws IOException {
-        tsChannel.position(offset - (offset % 188));
+        tsChannel.setPosition(offset - (offset % 188));
         psDemuxer.reset();
     }
 }

@@ -36,7 +36,7 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
     private int frameSize;
     protected VirtualTrack src;
     private CodecMeta se;
-    private ThreadLocal<Transcoder> transcoders = new ThreadLocal<Transcoder>();
+    private ThreadLocal<Transcoder> transcoders;
     private int mbW;
     private int mbH;
     private int scaleFactor;
@@ -50,6 +50,8 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
     protected abstract void checkFourCC(VirtualTrack proresTrack);
 
     public Transcode2AVCTrack(VirtualTrack src, Size frameDim) {
+        this.transcoders = new ThreadLocal<Transcoder>();
+
         checkFourCC(src);
         this.src = src;
         H264FixedRateControl rc = new H264FixedRateControl(TARGET_RATE);
@@ -73,7 +75,7 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
         AvcCBox createAvcC = H264Utils
                 .createAvcC(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS(), 4);
         
-        return new VideoCodecMeta("avc1", H264Utils.getAvcCData(createAvcC), new Size(thumbWidth, thumbHeight), codecMeta.getPasp());
+        return VideoCodecMeta.createVideoCodecMeta("avc1", H264Utils.getAvcCData(createAvcC), new Size(thumbWidth, thumbHeight), codecMeta.getPasp());
     }
 
     @Override

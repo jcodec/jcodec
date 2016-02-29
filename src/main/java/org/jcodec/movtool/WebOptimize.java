@@ -16,7 +16,7 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
  * 
  */
 public class WebOptimize {
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             System.out.println("Syntax: optimize <movie>");
             System.exit(-1);
@@ -26,7 +26,7 @@ public class WebOptimize {
         tgt.renameTo(src);
 
         try {
-            MovieBox movie = MP4Util.createRefMovie(src);
+            MovieBox movie = MP4Util.createRefMovieFromFile(src);
 
             new Flattern().flattern(movie, tgt);
         } catch (Throwable t) {

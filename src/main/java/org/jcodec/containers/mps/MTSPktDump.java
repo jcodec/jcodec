@@ -23,20 +23,17 @@ import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
  */
 public class MTSPktDump {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
 
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 1) {
-            MainUtils.printHelp(new HashMap<String, String>() {
-                {
-                }
-            }, "file name");
+            MainUtils.printHelpNoFlags("file name");
             return;
         }
 
         ReadableByteChannel ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(new File(cmd.args[0]));
+            ch = NIOUtils.readableChannel(new File(cmd.args[0]));
             dumpTSPackets(ch);
         } finally {
             NIOUtils.closeQuietly(ch);
@@ -72,12 +69,12 @@ public class MTSPktDump {
                     }
 
                     if (guid == 0) {
-                        PATSection pat = PATSection.parse(tsBuf);
+                        PATSection pat = PATSection.parsePAT(tsBuf);
                         IntIntMap programs = pat.getPrograms();
                         pmtPid = programs.values()[0];
                         printPat(pat);
                     } else if (guid == pmtPid) {
-                        PMTSection pmt = PMTSection.parse(tsBuf);
+                        PMTSection pmt = PMTSection.parsePMT(tsBuf);
                         printPmt(pmt);
                     }
                 } else {

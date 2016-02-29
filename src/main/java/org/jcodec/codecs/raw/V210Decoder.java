@@ -61,6 +61,6 @@ public class V210Decoder {
             cr.put((i >> 10) & 0x3ff);
         }
 
-        return new Picture(width, height, new int[][] {y.array(), cb.array(), cr.array()}, YUV422_10);
+        return Picture.createPicture(width, height, new int[][] {y.array(), cb.array(), cr.array()}, YUV422_10);
     }
 }

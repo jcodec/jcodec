@@ -46,7 +46,7 @@ public class RealTrack implements VirtualTrack {
 
     public RealTrack(MovieBox movie, TrakBox trak, ByteChannelPool pool) {
         this.movie = movie;
-        SampleSizesBox stsz = Box.findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        SampleSizesBox stsz = Box.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         if (stsz.getDefaultSize() == 0) {
             this.demuxer = new FramesMP4DemuxerTrack(movie, trak, null) {
                 @Override
@@ -70,7 +70,7 @@ public class RealTrack implements VirtualTrack {
 
     @Override
     public VirtualPacket nextPacket() throws IOException {
-        MP4Packet pkt = demuxer.nextFrame(null);
+        MP4Packet pkt = demuxer.getNextFrame(null);
         if (pkt == null)
             return null;
         return new RealPacket(this, pkt);
@@ -91,20 +91,20 @@ public class RealTrack implements VirtualTrack {
             }
 
             byte[] codecPrivate = demuxer.getMeta().getCodecPrivate();
-            return new VideoCodecMeta(se.getFourcc(), ByteBuffer.wrap(codecPrivate), new Size(vse.getWidth(), vse.getHeight()),
-                    pasp != null ? pasp.getRational() : null, interlace, topField);
+            return VideoCodecMeta.createVideoCodecMeta2(se.getFourcc(), ByteBuffer.wrap(codecPrivate), new Size(vse.getWidth(), vse.getHeight()), pasp != null ? pasp.getRational() : null, interlace, topField);
         } else if (se instanceof AudioSampleEntry) {
             AudioSampleEntry ase = (AudioSampleEntry) se;
             ByteBuffer codecPrivate = null;
             if ("mp4a".equals(ase.getFourcc())) {
                 LeafBox lb = Box.findFirst(se, LeafBox.class, "esds");
-                if (lb == null)
-                    lb = Box.findFirst(se, LeafBox.class, null, "esds");
+                if (lb == null) {
+                    lb = Box.findFirstPath(se, LeafBox.class, new String[] { null, "esds" });
+                }
                 codecPrivate = lb.getData();
             }
 
-            return new AudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(),
-                    (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), ChannelUtils.getLabels(ase), codecPrivate);
+            return AudioCodecMeta
+                    .createAudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(), (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), ChannelUtils.getLabelsFromSampleEntry(ase), codecPrivate);
         } else
             throw new RuntimeException("Sample entry '" + se.getFourcc() + "' is not supported.");
     }
@@ -133,7 +133,7 @@ public class RealTrack implements VirtualTrack {
                 ch = track.pool.getChannel();
                 if(packet.getFileOff() >= ch.size())
                     return null;
-                ch.position(packet.getFileOff());
+                ch.setPosition(packet.getFileOff());
                 ch.read(bb);
                 bb.flip();
                 return track.demuxer.convertPacket(bb);

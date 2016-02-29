@@ -13,13 +13,15 @@ import static java.lang.System.arraycopy;
  */
 public class ByteArrayList {
     private static final int DEFAULT_GROW_AMOUNT = 2048;
+    
+    public static ByteArrayList createByteArrayList() {
+        return new ByteArrayList(DEFAULT_GROW_AMOUNT);
+    }
+
     private byte[] storage;
-    private int size;
+    private int _size;
     private int growAmount;
 
-    public ByteArrayList() {
-        this(DEFAULT_GROW_AMOUNT);
-    }
 
     public ByteArrayList(int growAmount) {
         this.growAmount = growAmount;
@@ -27,18 +29,18 @@ public class ByteArrayList {
     }
 
     public byte[] toArray() {
-        byte[] result = new byte[size];
-        arraycopy(storage, 0, result, 0, size);
+        byte[] result = new byte[_size];
+        arraycopy(storage, 0, result, 0, _size);
         return result;
     }
 
     public void add(byte val) {
-        if (size >= storage.length) {
+        if (_size >= storage.length) {
             byte[] ns = new byte[storage.length + growAmount];
             arraycopy(storage, 0, ns, 0, storage.length);
             storage = ns;
         }
-        storage[size++] = val;
+        storage[_size++] = val;
     }
     
     public void push(byte id) {
@@ -46,9 +48,9 @@ public class ByteArrayList {
     }
     
     public void pop() {
-        if (size == 0)
+        if (_size == 0)
             return;
-        size--;
+        _size--;
     }
 
     public void set(int index, byte value) {
@@ -66,25 +68,25 @@ public class ByteArrayList {
             storage = ns;
         }
         Arrays.fill(storage, start, end, val);
-        size = Math.max(size, end);
+        _size = Math.max(_size, end);
     }
 
     public int size() {
-        return size;
+        return _size;
     }
 
     public void addAll(byte[] other) {
-        if (size + other.length >= storage.length) {
-            byte[] ns = new byte[size + growAmount + other.length];
-            arraycopy(storage, 0, ns, 0, size);
+        if (_size + other.length >= storage.length) {
+            byte[] ns = new byte[_size + growAmount + other.length];
+            arraycopy(storage, 0, ns, 0, _size);
             storage = ns;
         }
-        arraycopy(other, 0, storage, size, other.length);
-        size += other.length;
+        arraycopy(other, 0, storage, _size, other.length);
+        _size += other.length;
     }
     
     public boolean contains(byte needle) {
-        for (int i = 0; i < size; i++)
+        for (int i = 0; i < _size; i++)
             if (storage[i] == needle)
                 return true;
         return false;

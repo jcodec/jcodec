@@ -1,9 +1,10 @@
 package org.jcodec.containers.mp4;
 
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.rwFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.rwChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
@@ -51,7 +52,7 @@ import org.jcodec.scale.Yuv422pToRgb;
  */
 public class DemuxerMain {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         MP4Demuxer demuxer = new MP4Demuxer(readableFileChannel(args[0]));
         AbstractMP4DemuxerTrack vt = demuxer.getVideoTrack();
         ProresDecoder decoder = new ProresDecoder();
@@ -69,7 +70,7 @@ public class DemuxerMain {
             File base) throws IOException {
 
         long pts = (long) (Math.random() * duration);
-        vt.seek(pts);
+        vt.seekPts(pts);
         for (int i = 0; i < 10; i++) {
             Packet frames = vt.nextFrame();
             Picture pic = decoder.decodeFrame(frames.getData(), allocBuffer(vt));
@@ -102,10 +103,10 @@ public class DemuxerMain {
     }
 
     private static void testAudio(File src, File wavFile) throws Exception {
-        MP4Demuxer demuxer = new MP4Demuxer(readableFileChannel(src));
+        MP4Demuxer demuxer = new MP4Demuxer(readableChannel(src));
         AbstractMP4DemuxerTrack demuxerTrack = demuxer.getAudioTracks().get(0);
 
-        FileChannelWrapper fos = NIOUtils.writableFileChannel(wavFile);
+        FileChannelWrapper fos = NIOUtils.writableChannel(wavFile);
 
         AudioSampleEntry se = (AudioSampleEntry) demuxerTrack.getSampleEntries()[0];
 
@@ -125,7 +126,7 @@ public class DemuxerMain {
         ProresDecoder decoder = new ProresDecoder();
         for (int i = 1;; i++) {
             System.out.println(i);
-            ByteBuffer buffer = NIOUtils.fetchFrom(new File(base, String.format("frame%08d.raw", i)));
+            ByteBuffer buffer = NIOUtils.fetchFromFile(new File(base, String.format("frame%08d.raw", i)));
 
             int sz = 1920 * 1080 * 2;
             decoder.decodeFrame(buffer, new int[][] { new int[sz], new int[sz], new int[sz] });
@@ -134,14 +135,14 @@ public class DemuxerMain {
 
     private static void testVideo(File src, File base) throws IOException, FileNotFoundException {
         int startFn = 7572;
-        MP4Demuxer demuxer = new MP4Demuxer(readableFileChannel(src));
+        MP4Demuxer demuxer = new MP4Demuxer(readableChannel(src));
         AbstractMP4DemuxerTrack vt = demuxer.getVideoTrack();
         vt.gotoFrame(startFn);
         for (int i = 0;; i++) {
             byte[] expected = readFileToByteArray(new File(base, String.format("frame%08d.raw", i + startFn
                     + 1)));
             Packet pkt = vt.nextFrame();
-            if(!Platform.arrayEquals(expected, NIOUtils.toArray(pkt.getData())))
+            if(!Platform.arrayEqualsByte(expected, NIOUtils.toArray(pkt.getData())))
                 throw new RuntimeException("not equal");
             System.out.print(".");
             if ((i % 100) == 0)
@@ -154,7 +155,7 @@ public class DemuxerMain {
         RandomAccessFile _in = new RandomAccessFile(wav, "r");
         _in.seek(header.dataOffset);
         FileChannel ch = _in.getChannel();
-        MP4Muxer muxer = new MP4Muxer(writableFileChannel(out));
+        MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(writableChannel(out));
         PCMMP4MuxerTrack track = muxer.addPCMTrack(48000, 1, 3,
                 MP4Muxer.audioSampleEntry("in24", 1, 3, 1, 48000, Endian.LITTLE_ENDIAN));
 
@@ -166,9 +167,9 @@ public class DemuxerMain {
     }
 
     private static void testRemux(File src, File dst) throws Exception {
-        MP4Muxer muxer = new MP4Muxer(writableFileChannel(dst));
+        MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(writableChannel(dst));
 
-        MP4Demuxer demuxer1 = new MP4Demuxer(readableFileChannel(src));
+        MP4Demuxer demuxer1 = new MP4Demuxer(readableChannel(src));
         AbstractMP4DemuxerTrack vt1 = demuxer1.getVideoTrack();
 
         FramesMP4MuxerTrack outTrack = muxer.addTrack(VIDEO, (int) vt1.getTimescale());
@@ -181,7 +182,7 @@ public class DemuxerMain {
     }
 
     private static void storeMdat(File src, File dst) throws Exception {
-        List<Atom> rootAtoms = MP4Util.getRootAtoms(readableFileChannel(src));
+        List<Atom> rootAtoms = MP4Util.getRootAtoms(readableChannel(src));
         long mdatOff = -1, mdatSize = 0;
         for (Atom atom : rootAtoms) {
             if ("mdat".equals(atom.getHeader().getFourcc())) {
@@ -205,8 +206,8 @@ public class DemuxerMain {
     }
 
     private static void narrowDown(File src, File dst) throws Exception {
-        SeekableByteChannel rw = rwFileChannel(dst);
-        SeekableByteChannel inp = readableFileChannel(src);
+        SeekableByteChannel rw = rwChannel(dst);
+        SeekableByteChannel inp = readableChannel(src);
         List<Atom> rootAtoms = MP4Util.getRootAtoms(inp);
         for (Atom atom : rootAtoms) {
             if ("moov".equals(atom.getHeader().getFourcc())) {

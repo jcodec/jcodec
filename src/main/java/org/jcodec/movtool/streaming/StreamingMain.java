@@ -28,7 +28,7 @@ import static java.lang.System.currentTimeMillis;
  */
 public class StreamingMain {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
 
         File m1 = new File(System.getProperty("user.home") + "/Desktop/supercool.mov");
 

@@ -7,76 +7,46 @@ package org.jcodec.codecs.h264.io.model;
  * @author The JCodec project
  * 
  */
-public enum MBType {
+public final class MBType {
 
-    I_NxN(true, 0),
-    
-    I_16x16(true, 1),
-    
-    I_PCM(true, 25),
-    
-    P_16x16(false, 0),
-    
-    P_16x8(false, 1),
-    
-    P_8x16(false, 2),
-    
-    P_8x8(false, 3),
-    
-    P_8x8ref0(false, 4),
-    
-    B_Direct_16x16(false, 0),
-    
-    B_L0_16x16(false, 1),
-    
-    B_L1_16x16(false, 2),
-    
-    B_Bi_16x16(false, 3),
-    
-    B_L0_L0_16x8(false, 4),
-    
-    B_L0_L0_8x16(false, 5),
-    
-    B_L1_L1_16x8(false, 6),
-    
-    B_L1_L1_8x16(false, 7),
-    
-    B_L0_L1_16x8(false, 8),
-    
-    B_L0_L1_8x16(false, 9),
-    
-    B_L1_L0_16x8(false, 10),
-    
-    B_L1_L0_8x16(false, 11),
-    
-    B_L0_Bi_16x8(false, 12),
-    
-    B_L0_Bi_8x16(false, 13),
-    
-    B_L1_Bi_16x8(false, 14),
-    
-    B_L1_Bi_8x16(false, 15),
-    
-    B_Bi_L0_16x8(false, 16),
-    
-    B_Bi_L0_8x16(false, 17),
-    
-    B_Bi_L1_16x8(false, 18),
-    
-    B_Bi_L1_8x16(false, 19),
-    
-    B_Bi_Bi_16x8(false, 20),
-    
-    B_Bi_Bi_8x16(false, 21),
-    
-    B_8x8(false, 22);
+public final static MBType I_NxN = new MBType(true, 0);
+public final static MBType I_16x16 = new MBType(true, 1);
+public final static MBType I_PCM = new MBType(true, 25);
+public final static MBType P_16x16 = new MBType(false, 0);
+public final static MBType P_16x8 = new MBType(false, 1);
+public final static MBType P_8x16 = new MBType(false, 2);
+public final static MBType P_8x8 = new MBType(false, 3);
+public final static MBType P_8x8ref0 = new MBType(false, 4);
+public final static MBType B_Direct_16x16 = new MBType(false, 0);
+public final static MBType B_L0_16x16 = new MBType(false, 1);
+public final static MBType B_L1_16x16 = new MBType(false, 2);
+public final static MBType B_Bi_16x16 = new MBType(false, 3);
+public final static MBType B_L0_L0_16x8 = new MBType(false, 4);
+public final static MBType B_L0_L0_8x16 = new MBType(false, 5);
+public final static MBType B_L1_L1_16x8 = new MBType(false, 6);
+public final static MBType B_L1_L1_8x16 = new MBType(false, 7);
+public final static MBType B_L0_L1_16x8 = new MBType(false, 8);
+public final static MBType B_L0_L1_8x16 = new MBType(false, 9);
+public final static MBType B_L1_L0_16x8 = new MBType(false, 10);
+public final static MBType B_L1_L0_8x16 = new MBType(false, 11);
+public final static MBType B_L0_Bi_16x8 = new MBType(false, 12);
+public final static MBType B_L0_Bi_8x16 = new MBType(false, 13);
+public final static MBType B_L1_Bi_16x8 = new MBType(false, 14);
+public final static MBType B_L1_Bi_8x16 = new MBType(false, 15);
+public final static MBType B_Bi_L0_16x8 = new MBType(false, 16);
+public final static MBType B_Bi_L0_8x16 = new MBType(false, 17);
+public final static MBType B_Bi_L1_16x8 = new MBType(false, 18);
+public final static MBType B_Bi_L1_8x16 = new MBType(false, 19);
+public final static MBType B_Bi_Bi_16x8 = new MBType(false, 20);
+public final static MBType B_Bi_Bi_8x16 = new MBType(false, 21);
+public final static MBType B_8x8 = new MBType(false, 22);
 
     public boolean intra;
-    public int code;
+    public int _code;
 
     private MBType(boolean intra, int code) {
         this.intra = intra;
-        this.code = code;
+        this._code = code;
     }
 
     public boolean isIntra() {
@@ -84,6 +54,6 @@ public enum MBType {
     }
 
     public int code() {
-        return code;
+        return _code;
     }
 }

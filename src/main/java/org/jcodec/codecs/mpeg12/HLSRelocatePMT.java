@@ -32,22 +32,19 @@ public class HLSRelocatePMT {
     private static final int CHUNK_SIZE_PKT = 1024;
     private static final int TS_PKT_SIZE = 188;
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
 
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 2) {
-            MainUtils.printHelp(new HashMap<String, String>() {
-                {
-                }
-            }, "file _in", "file out");
+            MainUtils.printHelpNoFlags("file _in", "file out");
             return;
         }
 
         ReadableByteChannel _in = null;
         WritableByteChannel out = null;
         try {
-            _in = NIOUtils.readableFileChannel(new File(cmd.args[0]));
-            out = NIOUtils.writableFileChannel(new File(cmd.args[1]));
+            _in = NIOUtils.readableChannel(new File(cmd.args[0]));
+            out = NIOUtils.writableChannel(new File(cmd.args[1]));
             System.err.println("Processed: " + replocatePMT(_in, out) + " packets.");
         } finally {
             NIOUtils.closeQuietly(_in);
@@ -88,7 +85,7 @@ public class HLSRelocatePMT {
 
                     if (guid == 0) {
                         patPkt = pkt;
-                        PATSection pat = PATSection.parse(pktRead);
+                        PATSection pat = PATSection.parsePAT(pktRead);
                         for (int pmtPid : pat.getPrograms().values())
                             pmtPids.add(pmtPid);
                     } else if (pmtPids.contains(guid)) {

@@ -19,21 +19,18 @@ public class VideoMediaHeaderBox extends FullBox {
         return "vmhd";
     }
 
-    public VideoMediaHeaderBox() {
-        super(new Header(fourcc()));
+    public static VideoMediaHeaderBox createVideoMediaHeaderBox(int graphicsMode, int rOpColor, int gOpColor,
+            int bOpColor) {
+        VideoMediaHeaderBox vmhd = new VideoMediaHeaderBox(new Header(fourcc()));
+        vmhd.graphicsMode = graphicsMode;
+        vmhd.rOpColor = rOpColor;
+        vmhd.gOpColor = gOpColor;
+        vmhd.bOpColor = bOpColor;
+        return vmhd;
     }
 
     public VideoMediaHeaderBox(Header header) {
         super(header);
-    }
-
-    public VideoMediaHeaderBox(int graphicsMode, int rOpColor, int gOpColor, int bOpColor) {
-        super(new Header(fourcc()));
-
-        this.graphicsMode = graphicsMode;
-        this.rOpColor = rOpColor;
-        this.gOpColor = gOpColor;
-        this.bOpColor = bOpColor;
     }
 
     @Override

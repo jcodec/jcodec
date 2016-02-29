@@ -15,10 +15,10 @@ import java.nio.FloatBuffer;
 public class Audio {
 
     public static void transfer(AudioSource src, AudioSink sink) throws IOException {
-        transfer(src, new DummyFilter(1), sink);
+        filterTransfer(src, new DummyFilter(1), sink);
     }
 
-    public static void transfer(AudioSource src, AudioFilter filter, AudioSink sink) throws IOException {
+    public static void filterTransfer(AudioSource src, AudioFilter filter, AudioSink sink) throws IOException {
         if (filter.getNInputs() != 1)
             throw new IllegalArgumentException("Audio filter has # inputs != 1");
         if (filter.getNOutputs() != 1)
@@ -30,13 +30,13 @@ public class Audio {
         FloatBuffer[] outs = new FloatBuffer[] { FloatBuffer.allocate(8192) };
         long[] pos = new long[1];
 
-        while (src.read(ins[0]) != -1) {
+        while (src.readFloat(ins[0]) != -1) {
             ins[0].flip();
             filter.filter(ins, pos, outs);
             pos[0] += ins[0].position();
             rotate(ins[0]);
             outs[0].flip();
-            sink.write(outs[0]);
+            sink.writeFloat(outs[0]);
             outs[0].clear();
         }
     }

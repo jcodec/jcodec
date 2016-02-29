@@ -23,7 +23,7 @@ import org.jcodec.common.io.SeekableByteChannel;
  */
 public class FilePool implements ByteChannelPool {
     private BlockingQueue<SeekableByteChannel> channels;
-    private List<SeekableByteChannel> allChannels = Collections.synchronizedList(new ArrayList<SeekableByteChannel>());
+    private List<SeekableByteChannel> allChannels;
     private File file;
     private int max;
 
@@ -31,6 +31,7 @@ public class FilePool implements ByteChannelPool {
         this.file = file;
         this.max = max;
         this.channels = new LinkedBlockingQueue<SeekableByteChannel>();
+        this.allChannels = Collections.synchronizedList(new ArrayList<SeekableByteChannel>());
     }
 
     @Override
@@ -57,7 +58,7 @@ public class FilePool implements ByteChannelPool {
     }
 
     protected SeekableByteChannel newChannel(File file) throws FileNotFoundException {
-        return NIOUtils.readableFileChannel(file);
+        return NIOUtils.readableChannel(file);
     }
 
     public static class PoolChannel extends SeekableByteChannelWrapper {
@@ -66,7 +67,7 @@ public class FilePool implements ByteChannelPool {
 		public PoolChannel(FilePool pool, SeekableByteChannel src) throws IOException {
             super(src);
 			this.pool = pool;
-            src.position(0);
+            src.setPosition(0);
         }
 
         public boolean isOpen() {

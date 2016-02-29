@@ -25,10 +25,10 @@ public class Picture8Bit {
 
     private Rect crop;
 
-    public Picture8Bit(int width, int height, byte[][] data, ColorSpace color) {
-        this(width, height, data, color, new Rect(0, 0, width, height));
+    public static Picture8Bit createPicture8Bit(int width, int height, byte[][] data, ColorSpace color) {
+        return new Picture8Bit(width, height, data, color, new Rect(0, 0, width, height));
     }
-
+    
     public Picture8Bit(int width, int height, byte[][] data, ColorSpace color, Rect crop) {
         this.width = width;
         this.height = height;
@@ -56,15 +56,15 @@ public class Picture8Bit {
         }
     }
 
-    public Picture8Bit(Picture8Bit other) {
-        this(other.width, other.height, other.data, other.color, other.crop);
+    public static Picture8Bit copyPicture8Bit(Picture8Bit other) {
+        return new Picture8Bit(other.width, other.height, other.data, other.color, other.crop);
     }
-
+    
     public static Picture8Bit create(int width, int height, ColorSpace colorSpace) {
-        return create(width, height, colorSpace, null);
+        return createCropped(width, height, colorSpace, null);
     }
 
-    public static Picture8Bit create(int width, int height, ColorSpace colorSpace, Rect crop) {
+    public static Picture8Bit createCropped(int width, int height, ColorSpace colorSpace, Rect crop) {
         int[] planeSizes = new int[MAX_PLANES];
         for (int i = 0; i < colorSpace.nComp; i++) {
             planeSizes[colorSpace.compPlane[i]] += (width >> colorSpace.compWidth[i])
@@ -195,7 +195,7 @@ public class Picture8Bit {
     }
 
     public static Picture8Bit fromPicture(Picture pic) {
-        Picture8Bit create = Picture8Bit.create(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
+        Picture8Bit create = Picture8Bit.createCropped(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
 
         for (int i = 0; i < Math.min(pic.getData().length, create.getData().length); i++) {
             for (int j = 0; j < Math.min(pic.getData()[i].length, create.getData()[i].length); j++) {
@@ -207,12 +207,12 @@ public class Picture8Bit {
     }
 
     public Picture toPicture(int bitDepth) {
-        Picture create = Picture.create(width, height, color, bitDepth, crop);
+        Picture create = Picture.doCreate(width, height, color, bitDepth, crop);
 
         return toPictureInternal(bitDepth, create);
     }
 
-    public Picture toPicture(int bitDepth, int[][] buffer) {
+    public Picture toPictureWithBuffer(int bitDepth, int[][] buffer) {
         Picture create = new Picture(width, height, buffer, color, bitDepth, crop);
 
         return toPictureInternal(bitDepth, create);

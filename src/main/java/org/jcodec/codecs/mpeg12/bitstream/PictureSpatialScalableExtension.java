@@ -19,6 +19,7 @@ public class PictureSpatialScalableExtension implements MPEGHeader {
     public int spatial_temporal_weight_code_table_index;
     public int lower_layer_progressive_frame;
     public int lower_layer_deinterlaced_field_select;
+    public static final int Picture_Spatial_Scalable_Extension = 0x9;
 
     public static PictureSpatialScalableExtension read(BitReader _in) {
         PictureSpatialScalableExtension psse = new PictureSpatialScalableExtension();
@@ -38,7 +39,7 @@ public class PictureSpatialScalableExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(PictureHeader.Picture_Spatial_Scalable_Extension, 4);
+        bw.writeNBit(PictureSpatialScalableExtension.Picture_Spatial_Scalable_Extension, 4);
 
         bw.writeNBit(lower_layer_temporal_reference, 10);
         bw.write1Bit(1); // todo: verify this

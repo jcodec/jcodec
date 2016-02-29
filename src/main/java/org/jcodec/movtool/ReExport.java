@@ -25,10 +25,10 @@ public class ReExport extends Remux {
         }
         ByteBuffer out = ProresFix.transcode(pkt.getData(), outBuf);
 
-        return new MP4Packet(pkt, out);
+        return MP4Packet.createMP4PacketWithData(pkt, out);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main2(String[] args) throws Exception {
         if (args.length < 1) {
             System.out.println("reexport <movie> <out>");
             return;

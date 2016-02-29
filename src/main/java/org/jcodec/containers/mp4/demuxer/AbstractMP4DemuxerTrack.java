@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4.demuxer;
 
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
+import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
 
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.codecs.h264.H264Decoder;
@@ -72,7 +73,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     public AbstractMP4DemuxerTrack(TrakBox trak) {
         no = trak.getTrackHeader().getNo();
         type = MP4Demuxer.getTrackType(trak);
-        sampleEntries = Box.findAll(trak, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
+        sampleEntries = Box.findAllPath(trak, SampleEntry.class, new String[]{"mdia", "minf", "stbl", "stsd", null});
 
         NodeBox stbl = trak.getMdia().getMinf().getStbl();
 
@@ -132,7 +133,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return pts >= 0 && pts < duration;
     }
 
-    public synchronized boolean seek(long pts) {
+    public synchronized boolean seekPts(long pts) {
         if (pts < 0)
             throw new IllegalArgumentException("Seeking to negative pts");
         if (pts >= duration)
@@ -185,17 +186,17 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
             return true;
 
         seekPointer(frameNo);
-        seekPts(frameNo);
+        seekFrame(frameNo);
 
         return true;
     }
     
     @Override
     public void seek(double second) {
-        seek((long) (second * timescale));
+        seekPts((long) (second * timescale));
     }
 
-    private void seekPts(long frameNo) {
+    private void seekFrame(long frameNo) {
         pts = sttsInd = sttsSubInd = 0;
         shiftPts(frameNo);
     }
@@ -211,14 +212,14 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     }
 
     public List<Edit> getEdits() {
-        EditListBox editListBox = Box.findFirst(box, EditListBox.class, "edts", "elst");
+        EditListBox editListBox = Box.findFirstPath(box, EditListBox.class, Box.path("edts.elst"));
         if (editListBox != null)
             return editListBox.getEdits();
         return null;
     }
 
     public String getName() {
-        NameBox nameBox = Box.findFirst(box, NameBox.class, "udta", "name");
+        NameBox nameBox = Box.findFirstPath(box, NameBox.class, Box.path("udta.name"));
         return nameBox != null ? nameBox.getName() : null;
     }
 
@@ -230,14 +231,14 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
             throws IOException {
         ByteBuffer result = buffer.duplicate();
         synchronized (input) {
-            input.position(offset);
-            NIOUtils.read(input, result, size);
+            input.setPosition(offset);
+            NIOUtils.readL(input, result, size);
         }
         result.flip();
         return result;
     }
 
-    public abstract MP4Packet nextFrame(ByteBuffer storage) throws IOException;
+    public abstract MP4Packet getNextFrame(ByteBuffer storage) throws IOException;
     
     public Codec getCodec() {
         SampleEntry se = getSampleEntries()[0];

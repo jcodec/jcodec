@@ -44,7 +44,7 @@ public class MTSRandomAccessDemuxer {
                         ByteBuffer bb = ByteBuffer.allocate(pesLen * 188);
                         
                         for(int i = 0; i < pesLen; i++) {
-                            ByteBuffer tsBuf = NIOUtils.fetchFrom(source, 188);
+                            ByteBuffer tsBuf = NIOUtils.fetchFromChannel(source, 188);
                             Assert.assertEquals(0x47, tsBuf.get() & 0xff);
                             int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                             int guid = (int) guidFlags & 0x1fff;
@@ -64,12 +64,12 @@ public class MTSRandomAccessDemuxer {
 
                     @Override
                     protected void skip(long leadingSize) throws IOException {
-                        source.position(source.position() + leadingSize * 188);
+                        source.setPosition(source.position() + leadingSize * 188);
                     }
 
                     @Override
                     protected void reset() throws IOException {
-                        source.position(0);
+                        source.setPosition(0);
                     }
 
                 };

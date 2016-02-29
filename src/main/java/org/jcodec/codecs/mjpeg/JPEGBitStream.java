@@ -17,13 +17,14 @@ import org.jcodec.common.io.VLC;
 public class JPEGBitStream {
     private VLC[] huff;
     private BitReader _in;
-    private int[] dcPredictor = new int[3];
+    private int[] dcPredictor;
     private int lumaLen;
     
     
 
     public JPEGBitStream(ByteBuffer b, VLC[] huff, int lumaLen) {
-        this._in = new BitReader(b);
+        this.dcPredictor = new int[3];
+        this._in = BitReader.createBitReader(b);
         this.huff = huff;
         this.lumaLen = lumaLen;
     }

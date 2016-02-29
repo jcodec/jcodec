@@ -28,14 +28,14 @@ public class WavInput implements Closeable {
     protected AudioFormat format;
 
     public WavInput(ReadableByteChannel _in) throws IOException {
-        this.header = WavHeader.read(_in);
+        this.header = WavHeader.readChannel(_in);
         this.format = header.getFormat();
         this._in = _in;
     }
 
     public int read(ByteBuffer buf) throws IOException {
         int maxRead = format.framesToBytes(format.bytesToFrames(buf.remaining()));
-        return NIOUtils.read(_in, buf, maxRead);
+        return NIOUtils.readL(_in, buf, maxRead);
     }
 
     public void close() throws IOException {
@@ -56,7 +56,7 @@ public class WavInput implements Closeable {
     public static class WavFile extends WavInput {
 
         public WavFile(File f) throws IOException {
-            super(NIOUtils.readableFileChannel(f));
+            super(NIOUtils.readableChannel(f));
         }
 
         @Override
@@ -80,14 +80,6 @@ public class WavInput implements Closeable {
             this.format = src.getFormat();
         }
 
-        public Source(ReadableByteChannel ch) throws IOException {
-            this(new WavInput(ch));
-        }
-
-        public Source(File file) throws IOException {
-            this(new WavInput.WavFile(file));
-        }
-
         public AudioFormat getFormat() {
             return src.getFormat();
         }
@@ -107,7 +99,7 @@ public class WavInput implements Closeable {
             return format.bytesToFrames(read);
         }
 
-        public int read(FloatBuffer samples) throws IOException {
+        public int readFloat(FloatBuffer samples) throws IOException {
             ByteBuffer bb = ByteBuffer.allocate(format.samplesToBytes(samples.remaining()));
             int i = src.read(bb);
             if (i == -1)

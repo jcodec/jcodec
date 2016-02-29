@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.jcodec.common.Assert;
+import org.jcodec.common.StringUtils;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
@@ -27,13 +29,10 @@ import org.jcodec.platform.Platform;
 public abstract class Box {
     private static final String GET_MODEL_FIELDS = "getModelFields";
     protected Header header;
-
+    
+    @UsedViaReflection
     public Box(Header header) {
         this.header = header;
-    }
-
-    public Box(Box other) {
-        this.header = other.header;
     }
 
     public Header getHeader() {
@@ -42,18 +41,17 @@ public abstract class Box {
 
     public abstract void parse(ByteBuffer buf);
 
-    public static Box findFirst(NodeBox box, String... path) {
-        return findFirst(box, Box.class, path);
+    public static <T extends Box> T findFirst(NodeBox box, Class<T> clazz, String path) {
+        return findFirstPath(box, clazz, new String[]{path});
     }
-
-    public static <T extends Box> T findFirst(NodeBox box, Class<T> clazz, String... path) {
-        T[] result = (T[]) findAll(box, clazz, path);
-
+    
+    public static <T extends Box> T findFirstPath(NodeBox box, Class<T> clazz, String[] path) {
+        T[] result = (T[]) findAllPath(box, clazz, path);
         return result.length > 0 ? result[0] : null;
     }
 
-    public static Box[] findAll(Box box, String... path) {
-        return findAll(box, Box.class, path);
+    public static <T extends Box> T[] findAll(Box box, Class<T> class1, String path) {
+        return findAllPath(box, class1, new String[]{path});
     }
 
     public static void findBox(Box root, List<String> path, Collection<Box> result) {
@@ -74,7 +72,7 @@ public abstract class Box {
         }
     }
 
-    public static <T extends Box> T[] findAll(Box box, Class<T> class1, String... path) {
+    public static <T extends Box> T[] findAllPath(Box box, Class<T> class1, String[] path) {
         List<Box> result = new LinkedList<Box>();
         List<String> tlist = new LinkedList<String>();
         for (String type : path) {
@@ -90,7 +88,7 @@ public abstract class Box {
             } else if (!class1.isAssignableFrom(next.getClass())) {
                 // Trying to reinterpret one box as the other
                 try {
-                    it.set(Box.as(class1, next));
+                    it.set(Box.asBox(class1, next));
                 } catch (Exception e) {
                     Logger.warn("Failed to reinterpret box: " + next.getFourcc() + " as: " + class1.getName() + "."
                             + e.getMessage());
@@ -139,7 +137,7 @@ public abstract class Box {
         collectModel(claz.getSuperclass(), model);
 
         try {
-            Platform.invokeMethod(this, GET_MODEL_FIELDS, model);
+            Platform.invokeMethod(this, GET_MODEL_FIELDS, new Object[]{model});
         } catch (NoSuchMethodException e) {
             checkWrongSignature(claz);
             model.addAll(ToJSON.allFields(claz));
@@ -157,7 +155,7 @@ public abstract class Box {
         }
     }
 
-    public static <T extends Box> T as(Class<T> class1, Box box) {
+    public static <T extends Box> T asBox(Class<T> class1, Box box) {
         try {
             T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
             ByteBuffer buffer = ByteBuffer.allocate((int)box.getHeader().getBodySize());
@@ -179,4 +177,20 @@ public abstract class Box {
             throw new RuntimeException(e);
         }
     }
+
+    public static boolean containsBox(NodeBox box, String path) {
+        Box b = findFirstPath(box, Box.class, new String[]{path});
+        return b != null;
+    }
+    
+    public static boolean containsBox2(NodeBox box, String path1, String path2) {
+        Box b = findFirstPath(box, Box.class, new String[]{path1, path2});
+        return b != null;
+    }
+
+    public static String[] path(String path) {
+        return StringUtils.splitC(path, '.');
+    }
+
+    
 }

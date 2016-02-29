@@ -17,14 +17,27 @@ import org.jcodec.common.io.NIOUtils;
  */
 public class TimecodeSampleEntry extends SampleEntry {
 
-//@formatter:off
-    public static final int FLAG_DROPFRAME      = 0x1;
-    public static final int FLAG_24HOURMAX      = 0x2;
+    private static final String TMCD = "tmcd";
+
+    //@formatter:off
+    public static final int FLAG_DROPFRAME = 0x1;
+    public static final int FLAG_24HOURMAX = 0x2;
     public static final int FLAG_NEGATIVETIMEOK = 0x4;
-    public static final int FLAG_COUNTER        = 0x8;
-//@formatter:on
+    public static final int FLAG_COUNTER = 0x8;
+    //@formatter:on
 
     private static final MyFactory FACTORY = new MyFactory();
+
+    public static TimecodeSampleEntry createTimecodeSampleEntry(int flags, int timescale, int frameDuration,
+            int numFrames) {
+        TimecodeSampleEntry tmcd = new TimecodeSampleEntry(new Header(TMCD));
+        tmcd.flags = flags;
+        tmcd.timescale = timescale;
+        tmcd.frameDuration = frameDuration;
+        tmcd.numFrames = (byte) numFrames;
+        return tmcd;
+    }
+
     private int flags;
     private int timescale;
     private int frameDuration;
@@ -33,19 +46,6 @@ public class TimecodeSampleEntry extends SampleEntry {
     public TimecodeSampleEntry(Header header) {
         super(header);
         factory = FACTORY;
-    }
-
-    public TimecodeSampleEntry() {
-        super(new Header("tmcd"));
-        factory = FACTORY;
-    }
-
-    public TimecodeSampleEntry(int flags, int timescale, int frameDuration, int numFrames) {
-        super(new Header("tmcd"));
-        this.flags = flags;
-        this.timescale = timescale;
-        this.frameDuration = frameDuration;
-        this.numFrames = (byte) numFrames;
     }
 
     public void parse(ByteBuffer input) {
@@ -70,9 +70,10 @@ public class TimecodeSampleEntry extends SampleEntry {
     }
 
     public static class MyFactory extends BoxFactory {
-        private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
+        private Map<String, Class<? extends Box>> mappings;
 
         public MyFactory() {
+            this.mappings = new HashMap<String, Class<? extends Box>>();
         }
 
         public Class<? extends Box> toClass(String fourcc) {

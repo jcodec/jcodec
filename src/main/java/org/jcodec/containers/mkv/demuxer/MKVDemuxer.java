@@ -18,7 +18,7 @@ import static org.jcodec.containers.mkv.MKVType.TrackNumber;
 import static org.jcodec.containers.mkv.MKVType.TrackType;
 import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.Video;
-import static org.jcodec.containers.mkv.MKVType.findFirst;
+import static org.jcodec.containers.mkv.MKVType.findFirstTree;
 import static org.jcodec.containers.mkv.MKVType.findList;
 
 import java.io.IOException;
@@ -41,6 +41,7 @@ import org.jcodec.containers.mkv.boxes.EbmlFloat;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
+import static org.jcodec.containers.mkv.MKVType.findFirst;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -51,7 +52,7 @@ import org.jcodec.containers.mkv.boxes.MkvBlock;
  */
 public final class MKVDemuxer {
     private VideoTrack vTrack = null;
-    private List<DemuxerTrack> aTracks = new ArrayList<DemuxerTrack>();
+    private List<DemuxerTrack> aTracks;
     private List<EbmlMaster> t;
     private SeekableByteChannel channel;
     long timescale = 1L;
@@ -59,40 +60,51 @@ public final class MKVDemuxer {
     int pictureHeight;
 
     public MKVDemuxer(List<EbmlMaster> t, SeekableByteChannel fileChannelWrapper) {
+        this.aTracks = new ArrayList<DemuxerTrack>();
         this.t = t;
         this.channel = fileChannelWrapper;
         demux();
     }
 
     private void demux() {
-        EbmlUint ts = findFirst(t, Segment, Info, TimecodeScale);
+        MKVType[] path = { Segment, Info, TimecodeScale };
+        EbmlUint ts = MKVType.findFirstTree(t, path);
         if (ts != null)
-            timescale = ts.get();
+            timescale = ts.getUint();
+        MKVType[] path9 = { Segment, Tracks, TrackEntry };
 
-        for (EbmlMaster aTrack : findList(t, EbmlMaster.class, Segment, Tracks, TrackEntry)) {
-            long type = ((EbmlUint) findFirst(aTrack, TrackEntry, TrackType)).get();
-            long id = ((EbmlUint) findFirst(aTrack, TrackEntry, TrackNumber)).get();
+        for (EbmlMaster aTrack : findList(t, EbmlMaster.class, path9)) {
+            MKVType[] path1 = { TrackEntry, TrackType };
+            long type = ((EbmlUint) findFirst(aTrack, path1)).getUint();
+            MKVType[] path2 = { TrackEntry, TrackNumber };
+            long id = ((EbmlUint) findFirst(aTrack, path2)).getUint();
             if (type == 1) {
                 // video
                 if (vTrack != null)
                     throw new RuntimeException("More then 1 video track, can not compute...");
-                EbmlBin videoCodecState = (EbmlBin) findFirst(aTrack, TrackEntry, CodecPrivate);
+                MKVType[] path3 = { TrackEntry, CodecPrivate };
+                EbmlBin videoCodecState = (EbmlBin) findFirst(aTrack, path3);
                 ByteBuffer state = null;
                 if (videoCodecState != null)
                     state = videoCodecState.data;
+                MKVType[] path4 = { TrackEntry, Video, PixelWidth };
                 
-                EbmlUint width = (EbmlUint) findFirst(aTrack, TrackEntry, Video, PixelWidth);
-                EbmlUint height = (EbmlUint) findFirst(aTrack, TrackEntry, Video, PixelHeight);
-                EbmlUint dwidth = (EbmlUint) findFirst(aTrack, TrackEntry, Video, DisplayWidth);
-                EbmlUint dheight = (EbmlUint) findFirst(aTrack, TrackEntry, Video, DisplayHeight);  
-                EbmlUint unit = (EbmlUint) findFirst(aTrack, TrackEntry, Video, DisplayUnit);
+                EbmlUint width = (EbmlUint) findFirst(aTrack, path4);
+                MKVType[] path5 = { TrackEntry, Video, PixelHeight };
+                EbmlUint height = (EbmlUint) findFirst(aTrack, path5);
+                MKVType[] path6 = { TrackEntry, Video, DisplayWidth };
+                EbmlUint dwidth = (EbmlUint) findFirst(aTrack, path6);
+                MKVType[] path7 = { TrackEntry, Video, DisplayHeight };
+                EbmlUint dheight = (EbmlUint) findFirst(aTrack, path7);
+                MKVType[] path8 = { TrackEntry, Video, DisplayUnit };  
+                EbmlUint unit = (EbmlUint) findFirst(aTrack, path8);
                 if (width != null && height != null){
-                    pictureWidth = (int) width.get();
-                    pictureHeight = (int) height.get();
+                    pictureWidth = (int) width.getUint();
+                    pictureHeight = (int) height.getUint();
                 } else if (dwidth != null && dheight != null){
-                    if (unit == null || unit.get() == 0){
-                        pictureHeight = (int) dheight.get();
-                        pictureWidth  = (int) dwidth.get();
+                    if (unit == null || unit.getUint() == 0){
+                        pictureHeight = (int) dheight.getUint();
+                        pictureWidth  = (int) dwidth.getUint();
                     } else {
                         throw new RuntimeException("DisplayUnits other then 0 are not implemented yet");
                     }
@@ -102,15 +114,18 @@ public final class MKVDemuxer {
 
             } else if (type == 2) {
                 AudioTrack audioTrack = new AudioTrack((int) id, this);
-                EbmlFloat sf = (EbmlFloat) findFirst(aTrack, TrackEntry, Audio, SamplingFrequency);
+                MKVType[] path3 = { TrackEntry, Audio, SamplingFrequency };
+                EbmlFloat sf = (EbmlFloat) findFirst(aTrack, path3);
                 if (sf != null)
-                    audioTrack.samplingFrequency = sf.get();
+                    audioTrack.samplingFrequency = sf.getDouble();
                 
                 aTracks.add(audioTrack);
             }
         }
-        for (EbmlMaster aCluster : findList(t, EbmlMaster.class, Segment, Cluster)) {
-            long baseTimecode = ((EbmlUint) findFirst(aCluster, Cluster, Timecode)).get();
+        MKVType[] path2 = { Segment, Cluster };
+        for (EbmlMaster aCluster : findList(t, EbmlMaster.class, path2)) {
+            MKVType[] path1 = { Cluster, Timecode };
+            long baseTimecode = ((EbmlUint) findFirst(aCluster, path1)).getUint();
             for (EbmlBase child : aCluster.children)
                 if (MKVType.SimpleBlock.equals(child.type)) {
                     MkvBlock b = (MkvBlock) child;
@@ -159,10 +174,11 @@ public final class MKVDemuxer {
         private ByteBuffer state;
         public final int trackNo;
         private int frameIdx = 0;
-        List<MkvBlock> blocks = new ArrayList<MkvBlock>();
+        List<MkvBlock> blocks;
 		private MKVDemuxer demuxer;
 
         public VideoTrack(MKVDemuxer demuxer, int trackNo, ByteBuffer state) {
+            this.blocks = new ArrayList<MkvBlock>();
             this.demuxer = demuxer;
 			this.trackNo = trackNo;
             this.state = state;
@@ -181,7 +197,7 @@ public final class MKVDemuxer {
             /**
              * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually read only when Packet.getData() is executed.
              */
-            demuxer.channel.position(b.dataOffset);
+            demuxer.channel.setPosition(b.dataOffset);
             ByteBuffer data = ByteBuffer.allocate(b.dataLen);
             demuxer.channel.read(data);
             data.flip();
@@ -190,7 +206,7 @@ public final class MKVDemuxer {
             if (frameIdx < blocks.size())
                 duration = blocks.get(frameIdx).absoluteTimecode - b.absoluteTimecode;
 
-            return new Packet(b.frames[0].duplicate(), b.absoluteTimecode, demuxer.timescale, duration, frameIdx - 1, b.keyFrame, ZERO_TAPE_TIMECODE);
+            return Packet.createPacket(b.frames[0].duplicate(), b.absoluteTimecode, demuxer.timescale, duration, frameIdx - 1, b._keyFrame, ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -249,7 +265,7 @@ public final class MKVDemuxer {
     public static class AudioTrack implements SeekableDemuxerTrack {
         public double samplingFrequency;
         public final int trackNo;
-        List<IndexedBlock> blocks = new ArrayList<IndexedBlock>();
+        List<IndexedBlock> blocks;
         private int framesCount = 0;
         private int frameIdx = 0;
         private int blockIdx = 0;
@@ -257,6 +273,8 @@ public final class MKVDemuxer {
 		private MKVDemuxer demuxer;
 
         public AudioTrack(int trackNo, MKVDemuxer demuxer) {
+            this.blocks = new ArrayList<IndexedBlock>();
+
             this.trackNo = trackNo;
 			this.demuxer = demuxer;
         }
@@ -274,7 +292,7 @@ public final class MKVDemuxer {
                 /**
                  * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually rean only when Packet.getData() is executed.
                  */
-            	demuxer.channel.position(b.dataOffset);
+            	demuxer.channel.setPosition(b.dataOffset);
                 ByteBuffer data = ByteBuffer.allocate(b.dataLen);
                 demuxer.channel.read(data);
                 b.readFrames(data);
@@ -287,7 +305,7 @@ public final class MKVDemuxer {
                 frameInBlockIdx = 0;
             }
 
-            return new Packet(data, b.absoluteTimecode, Math.round(samplingFrequency), 1, 0, false, ZERO_TAPE_TIMECODE);
+            return Packet.createPacket(data, b.absoluteTimecode, Math.round(samplingFrequency), 1, 0, false, ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -347,7 +365,7 @@ public final class MKVDemuxer {
                      * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually rean only when Packet.getData() is executed.
                      */
                     try {
-                    	demuxer.channel.position(b.dataOffset);
+                    	demuxer.channel.setPosition(b.dataOffset);
                         ByteBuffer data = ByteBuffer.allocate(b.dataLen);
                         demuxer.channel.read(data);
                         b.readFrames(data);
@@ -373,7 +391,7 @@ public final class MKVDemuxer {
             for (ByteBuffer aFrame : packetFrames)
                 data.put(aFrame);
             
-            return new Packet(data, firstBlockInAPacket.absoluteTimecode,  Math.round(samplingFrequency),  packetFrames.size(), 0, false, ZERO_TAPE_TIMECODE);
+            return Packet.createPacket(data, firstBlockInAPacket.absoluteTimecode, Math.round(samplingFrequency), packetFrames.size(), 0, false, ZERO_TAPE_TIMECODE);
         }
 
         @Override

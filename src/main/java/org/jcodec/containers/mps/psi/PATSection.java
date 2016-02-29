@@ -20,7 +20,8 @@ public class PATSection extends PSISection {
     private IntIntMap programs;
 
     public PATSection(PSISection psi, int[] networkPids, IntIntMap programs) {
-        super(psi);
+        super(psi.tableId, psi.specificId, psi.versionNumber, psi.currentNextIndicator, psi.sectionNumber,
+                psi.lastSectionNumber);
         this.networkPids = networkPids;
         this.programs = programs;
     }
@@ -33,10 +34,10 @@ public class PATSection extends PSISection {
         return programs;
     }
 
-    public static PATSection parse(ByteBuffer data) {
-        PSISection psi = PSISection.parse(data);
+    public static PATSection parsePAT(ByteBuffer data) {
+        PSISection psi = PSISection.parsePSI(data);
 
-        IntArrayList networkPids = new IntArrayList();
+        IntArrayList networkPids = IntArrayList.createIntArrayList();
         IntIntMap programs = new IntIntMap();
 
         while (data.remaining() > 4) {

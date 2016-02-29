@@ -13,40 +13,40 @@ import static java.lang.System.arraycopy;
  */
 public class ArrayUtil {
 
-    public static <T> void shiftRight(T[] array) {
+    public static <T> void shiftRight1(T[] array) {
         for (int i = 1; i < array.length; i++) {
             array[i] = array[i - 1];
         }
         array[0] = null;
     }
 
-    public static <T> void shiftLeft(T[] array) {
+    public static <T> void shiftLeft1(T[] array) {
         for (int i = 0; i < array.length - 1; i++) {
             array[i] = array[i + 1];
         }
         array[array.length - 1] = null;
     }
 
-    public static <T> void shiftRight(T[] array, int from, int to) {
+    public static <T> void shiftRight3(T[] array, int from, int to) {
         for (int i = to - 1; i > from; i--) {
             array[i] = array[i - 1];
         }
         array[from] = null;
     }
 
-    public static <T> void shiftLeft(T[] array, int from, int to) {
+    public static <T> void shiftLeft3(T[] array, int from, int to) {
         for (int i = from; i < to - 1; i++) {
             array[i] = array[i + 1];
         }
         array[to - 1] = null;
     }
 
-    public static <T> void shiftLeft(T[] array, int from) {
-        shiftLeft(array, from, array.length);
+    public static <T> void shiftLeft2(T[] array, int from) {
+        shiftLeft3(array, from, array.length);
     }
 
-    public static <T> void shiftRight(T[] array, int to) {
-        shiftRight(array, 0, to);
+    public static <T> void shiftRight2(T[] array, int to) {
+        shiftRight3(array, 0, to);
     }
 
     public static final void swap(int[] arr, int ind1, int ind2) {
@@ -55,7 +55,7 @@ public class ArrayUtil {
         arr[ind2] = tmp;
     }
 
-    public static final int sum(int[] array) {
+    public static final int sumInt(int[] array) {
         int result = 0;
         for (int i = 0; i < array.length; i++) {
             result += array[i];
@@ -63,7 +63,7 @@ public class ArrayUtil {
         return result;
     }
 
-    public static final int sum(byte[] array) {
+    public static final int sumByte(byte[] array) {
         int result = 0;
         for (int i = 0; i < array.length; i++) {
             result += array[i];
@@ -71,7 +71,7 @@ public class ArrayUtil {
         return result;
     }
 
-    public static int sum(int[] array, int from, int count) {
+    public static int sumInt3(int[] array, int from, int count) {
         int result = 0;
         for (int i = from; i < from + count; i++) {
             result += array[i];
@@ -79,7 +79,7 @@ public class ArrayUtil {
         return result;
     }
 
-    public static int sum(byte[] array, int from, int count) {
+    public static int sumByte3(byte[] array, int from, int count) {
         int result = 0;
         for (int i = from; i < from + count; i++) {
             result += array[i];
@@ -87,16 +87,16 @@ public class ArrayUtil {
         return result;
     }
 
-    public static void add(int[] array, int val) {
+    public static void addInt(int[] array, int val) {
         for (int i = 0; i < array.length; i++)
             array[i] += val;
     }
 
-    public static int[] addAll(int[] array1, int[] array2) {
+    public static int[] addAllInt(int[] array1, int[] array2) {
         if (array1 == null) {
-            return clone(array2);
+            return cloneInt(array2);
         } else if (array2 == null) {
-            return clone(array1);
+            return cloneInt(array1);
         }
         int[] joinedArray = new int[array1.length + array2.length];
         arraycopy(array1, 0, joinedArray, 0, array1.length);
@@ -104,11 +104,11 @@ public class ArrayUtil {
         return joinedArray;
     }
 
-    public static long[] addAll(long[] array1, long[] array2) {
+    public static long[] addAllLong(long[] array1, long[] array2) {
         if (array1 == null) {
-            return clone(array2);
+            return cloneLong(array2);
         } else if (array2 == null) {
-            return clone(array1);
+            return cloneLong(array1);
         }
         long[] joinedArray = new long[array1.length + array2.length];
         arraycopy(array1, 0, joinedArray, 0, array1.length);
@@ -116,11 +116,11 @@ public class ArrayUtil {
         return joinedArray;
     }
 
-    public static Object[] addAll(Object[] array1, Object[] array2) {
+    public static Object[] addAllObj(Object[] array1, Object[] array2) {
         if (array1 == null) {
-            return clone(array2);
+            return cloneObj(array2);
         } else if (array2 == null) {
-            return clone(array1);
+            return cloneObj(array1);
         }
         Object[] joinedArray = (Object[]) Array.newInstance(array1.getClass().getComponentType(), array1.length
                 + array2.length);
@@ -129,35 +129,35 @@ public class ArrayUtil {
         return joinedArray;
     }
 
-    public static int[] clone(int[] array) {
+    public static int[] cloneInt(int[] array) {
         if (array == null) {
             return null;
         }
         return (int[]) array.clone();
     }
 
-    public static long[] clone(long[] array) {
+    public static long[] cloneLong(long[] array) {
         if (array == null) {
             return null;
         }
         return (long[]) array.clone();
     }
 
-    public static Object[] clone(Object[] array) {
+    public static Object[] cloneObj(Object[] array) {
         if (array == null) {
             return null;
         }
         return (Object[]) array.clone();
     }
 
-    public static byte[] toByteArrayShifted(int... val) {
-        byte[] result = new byte[val.length];
-        for (int i = 0; i < val.length; i++)
-            result[i] = (byte) (val[i] - 128);
+    public static byte[] toByteArrayShifted(int... arguments) {
+        byte[] result = new byte[arguments.length];
+        for (int i = 0; i < arguments.length; i++)
+            result[i] = (byte) (arguments[i] - 128);
         return result;
     }
     
-    public static byte[][] toByteArrayShifted(int[][] intArray) {
+    public static byte[][] toByteArrayShifted2(int[][] intArray) {
         byte[][] result = new byte[intArray.length][];
         for (int i = 0; i < intArray.length; i++) {
             result[i] = toByteArrayShifted(intArray[i]);
@@ -165,25 +165,25 @@ public class ArrayUtil {
         return result;
     }
 
-    public static int[] toIntArrayUnshifted(byte... array) {
-        int[] result = new int[array.length];
+    public static int[] toIntArrayUnshifted(byte... arguments) {
+        int[] result = new int[arguments.length];
         for (int i = 0; i < result.length; i++)
-            result[i] = (byte) (array[i] + 128);
+            result[i] = (byte) (arguments[i] + 128);
 
         return result;
     }
 
-    public static byte[] toByteArray(int... val) {
-        byte[] result = new byte[val.length];
-        for (int i = 0; i < val.length; i++)
-            result[i] = (byte) val[i];
+    public static byte[] toByteArray(int... arguments) {
+        byte[] result = new byte[arguments.length];
+        for (int i = 0; i < arguments.length; i++)
+            result[i] = (byte) arguments[i];
         return result;
     }
 
-    public static int[] toIntArray(byte... array) {
-        int[] result = new int[array.length];
+    public static int[] toIntArray(byte... arguments) {
+        int[] result = new int[arguments.length];
         for (int i = 0; i < result.length; i++)
-            result[i] = array[i];
+            result[i] = arguments[i];
 
         return result;
     }

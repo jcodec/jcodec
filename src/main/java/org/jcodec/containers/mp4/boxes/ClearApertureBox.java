@@ -10,33 +10,21 @@ import java.nio.ByteBuffer;
  * 
  */
 public class ClearApertureBox extends FullBox {
-    private float width;
-    private float height;
+    static final String CLEF = "clef";
+    protected float width;
+    protected float height;
 
-    public static String fourcc() {
-        return "clef";
+    public static ClearApertureBox createClearApertureBox(int width, int height) {
+        ClearApertureBox clef = new ClearApertureBox(new Header(CLEF));
+        clef.width = width;
+        clef.height = height;
+        return clef;
     }
 
     public ClearApertureBox(Header atom) {
         super(atom);
     }
-
-    public ClearApertureBox() {
-        super(new Header(fourcc()));
-    }
-
-    public ClearApertureBox(int width, int height) {
-        this();
-        this.width = width;
-        this.height = height;
-    }
-
-    public ClearApertureBox(Header header, int width, int height) {
-        super(header);
-        this.width = width;
-        this.height = height;
-    }
-
+ 
     public void parse(ByteBuffer input) {
         super.parse(input);
         width = input.getInt() / 65536f;

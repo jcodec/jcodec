@@ -24,7 +24,7 @@ public class TrunBoxTest {
         box.write(bb);
         bb.flip();
 
-        TrunBox parsed = new TrunBox();
+        TrunBox parsed = TrunBox.createTrunBox();
         bb.getLong(); // box header
         parsed.parse(bb);
 
