@@ -12,14 +12,16 @@ import java.nio.ByteBuffer;
  */
 public class EbmlUlong extends EbmlBin {
 
+
     public EbmlUlong(byte[] id) {
         super(id);
         data = ByteBuffer.allocate(8);
     }
     
-    public EbmlUlong(byte[] id, long value) {
-        super(id);
-        setUlong(value);
+    public static EbmlUlong createEbmlUlong(byte[] id, long value) {
+        EbmlUlong e = new EbmlUlong(id);
+        e.setUlong(value);
+        return e;
     }
     
     public void setUlong(long value){

@@ -18,9 +18,10 @@ public class EbmlString extends EbmlBin {
         super(id);
     }
     
-    public EbmlString(byte[] id, String value){
-        super(id);
-        setString(value);
+    public static EbmlString createEbmlString(byte[] id, String value) {
+        EbmlString e = new EbmlString(id);
+        e.setString(value);
+        return e;
     }
     
     public String getString() {

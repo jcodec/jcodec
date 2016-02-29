@@ -2,6 +2,7 @@ package org.jcodec.containers.mps.index;
 
 import static org.jcodec.containers.mps.MPSUtils.mediaStream;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+import static org.jcodec.containers.mps.index.MTSIndex.createMTSProgram;
 
 import java.io.File;
 import java.io.IOException;
@@ -104,7 +105,7 @@ public class MTSIndexer {
         }
 
         public MTSProgram serializeTo() {
-            return new MTSProgram(super.serialize(), targetGuid);
+            return createMTSProgram(super.serialize(), targetGuid);
         }
 
         protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
