@@ -1,5 +1,9 @@
 package org.jcodec.containers.mps;
 
+import static org.jcodec.codecs.h264.io.model.NALUnitType.IDR_SLICE;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.NON_IDR_SLICE;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.PPS;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.SPS;
 import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
 import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
 import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
@@ -385,28 +389,23 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         int score = 0;
         boolean hasSps = false, hasPps = false, hasSlice = false;
         for (NALUnit nalUnit : nuSeq) {
-            switch (nalUnit.type) {
-            case SPS:
+            if (SPS == nalUnit.type) {
                 if (hasSps && !hasSlice)
                     score -= 30;
                 else
                     score += 30;
                 hasSps = true;
-                break;
-            case PPS:
+            } else if (PPS == nalUnit.type) {
                 if (hasPps && !hasSlice)
                     score -= 30;
                 if (hasSps)
                     score += 20;
                 hasPps = true;
-                break;
-            case IDR_SLICE:
-            case NON_IDR_SLICE:
+            } else if (IDR_SLICE == nalUnit.type || NON_IDR_SLICE == nalUnit.type) {
                 if (!hasSlice)
                     score += 50;
                 hasSlice = true;
-                break;
-            default:
+            } else {
                 score += 3;
             }
         }

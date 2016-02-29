@@ -491,7 +491,7 @@ public class SliceReader {
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
 
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p0, list) && numRef[list] > 1)
                 mBlock.pb16x16.refIdx[list] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                         predModeLeft[0], predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 4, list);
         }
@@ -507,7 +507,7 @@ public class SliceReader {
             PartPred p0, PartPred p1) {
         int blk8x8X = (mbX << 1);
 
-        if (p0.usesList(list)) {
+        if (H264Const.usesList(p0, list)) {
             mBlock.pb168x168.mvdX1[list] = readMVD(0, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                     predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 2, 4, list);
             mBlock.pb168x168.mvdY1[list] = readMVD(1, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
@@ -515,7 +515,7 @@ public class SliceReader {
 
         }
 
-        if (p1.usesList(list)) {
+        if (H264Const.usesList(p1, list)) {
             mBlock.pb168x168.mvdX2[list] = readMVD(0, true, topAvailable, MBType.P_8x16, topMBType[mbX], p0,
                     predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
             mBlock.pb168x168.mvdY2[list] = readMVD(1, true, topAvailable, MBType.P_8x16, topMBType[mbX], p0,
@@ -527,7 +527,7 @@ public class SliceReader {
     private void readPredictionInter16x8(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable,
             PartPred p0, PartPred p1, int list) {
         int blk8x8X = mbX << 1;
-        if (p0.usesList(list)) {
+        if (H264Const.usesList(p0, list)) {
 
             mBlock.pb168x168.mvdX1[list] = readMVD(0, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                     predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
@@ -535,7 +535,7 @@ public class SliceReader {
                     predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
         }
 
-        if (p1.usesList(list)) {
+        if (H264Const.usesList(p1, list)) {
             mBlock.pb168x168.mvdX2[list] = readMVD(0, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1],
                     p0, p1, mbX, 0, 2, 4, 2, list);
             mBlock.pb168x168.mvdY2[list] = readMVD(1, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1],
@@ -550,10 +550,10 @@ public class SliceReader {
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
 
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p0, list) && numRef[list] > 1)
                 mBlock.pb168x168.refIdx1[list] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                         predModeLeft[0], predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 2, list);
-            if (p1.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p1, list) && numRef[list] > 1)
                 mBlock.pb168x168.refIdx2[list] = readRefIdx(leftAvailable, true, leftMBType, mBlock.curMbType,
                         predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
         }
@@ -573,10 +573,10 @@ public class SliceReader {
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p0, list) && numRef[list] > 1)
                 mBlock.pb168x168.refIdx1[list] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                         predModeLeft[0], predModeTop[mbX << 1], p0, mbX, 0, 0, 2, 4, list);
-            if (p1.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p1, list) && numRef[list] > 1)
                 mBlock.pb168x168.refIdx2[list] = readRefIdx(true, topAvailable, mBlock.curMbType, topMBType[mbX], p0,
                         predModeTop[(mbX << 1) + 1], p1, mbX, 2, 0, 2, 4, list);
         }
@@ -593,7 +593,7 @@ public class SliceReader {
             int list, PartPred curPred) {
         int blk8x8X = (mbX << 1);
 
-        if (curPred.usesList(list)) {
+        if (H264Const.usesList(curPred, list)) {
             mBlock.pb16x16.mvdX[list] = readMVD(0, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                     predModeLeft[0], predModeTop[blk8x8X], curPred, mbX, 0, 0, 4, 4, list);
             mBlock.pb16x16.mvdY[list] = readMVD(1, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
@@ -695,16 +695,16 @@ public class SliceReader {
         for (int list = 0; list < 2; list++) {
             if (numRef[list] <= 1)
                 continue;
-            if (p[0].usesList(list))
+            if (H264Const.usesList(p[0], list))
                 mBlock.pb8x8.refIdx[list][0] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                         predModeLeft[0], predModeTop[mbX << 1], p[0], mbX, 0, 0, 2, 2, list);
-            if (p[1].usesList(list))
+            if (H264Const.usesList(p[1], list))
                 mBlock.pb8x8.refIdx[list][1] = readRefIdx(true, topAvailable, B_8x8, topMBType[mbX], p[0],
                         predModeTop[(mbX << 1) + 1], p[1], mbX, 2, 0, 2, 2, list);
-            if (p[2].usesList(list))
+            if (H264Const.usesList(p[2], list))
                 mBlock.pb8x8.refIdx[list][2] = readRefIdx(leftAvailable, true, leftMBType, B_8x8, predModeLeft[1],
                         p[0], p[2], mbX, 0, 2, 2, 2, list);
-            if (p[3].usesList(list))
+            if (H264Const.usesList(p[3], list))
                 mBlock.pb8x8.refIdx[list][3] = readRefIdx(true, true, B_8x8, B_8x8, p[2], p[1], p[3], mbX, 2, 2, 2, 2,
                         list);
         }
@@ -713,21 +713,21 @@ public class SliceReader {
 
         int blk8x8X = mbX << 1;
         for (int list = 0; list < 2; list++) {
-            if (p[0].usesList(list)) {
+            if (H264Const.usesList(p[0], list)) {
                 readSubMb8x8(mBlock, 0, bSubMbTypes[mBlock.pb8x8.subMbTypes[0]], topAvailable, leftAvailable, 0, 0,
                         mbX, leftMBType, topMBType[mbX], B_8x8, predModeLeft[0], predModeTop[blk8x8X], p[0], list);
             }
-            if (p[1].usesList(list)) {
+            if (H264Const.usesList(p[1], list)) {
                 readSubMb8x8(mBlock, 1, bSubMbTypes[mBlock.pb8x8.subMbTypes[1]], topAvailable, true, 2, 0, mbX, B_8x8,
                         topMBType[mbX], B_8x8, p[0], predModeTop[blk8x8X + 1], p[1], list);
             }
 
-            if (p[2].usesList(list)) {
+            if (H264Const.usesList(p[2], list)) {
                 readSubMb8x8(mBlock, 2, bSubMbTypes[mBlock.pb8x8.subMbTypes[2]], true, leftAvailable, 0, 2, mbX,
                         leftMBType, B_8x8, B_8x8, predModeLeft[1], p[0], p[2], list);
             }
 
-            if (p[3].usesList(list)) {
+            if (H264Const.usesList(p[3], list)) {
                 readSubMb8x8(mBlock, 3, bSubMbTypes[mBlock.pb8x8.subMbTypes[3]], true, true, 2, 2, mbX, B_8x8, B_8x8,
                         B_8x8, p[2], p[1], p[3], list);
             }
