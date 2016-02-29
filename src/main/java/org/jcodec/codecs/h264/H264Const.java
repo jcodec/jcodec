@@ -443,10 +443,6 @@ public class H264Const {
 
     public static enum PartPred {
         L0, L1, Bi, Direct;
-
-        public boolean usesList(int l) {
-            return this == Bi ? true : (this == L0 && l == 0 || this == L1 && l == 1);
-        }
     }
 
     public static PartPred[][] bPredModes = { null, { PartPred.L0 }, { PartPred.L1 }, { PartPred.Bi },
@@ -613,5 +609,9 @@ public class H264Const {
             off += 24;
         }
         return result;
+    }
+
+    public static boolean usesList(PartPred pred, int l) {
+        return pred == Bi ? true : (pred == L0 && l == 0 || pred == L1 && l == 1);
     }
 }

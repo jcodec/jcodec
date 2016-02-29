@@ -14,6 +14,7 @@ import static org.jcodec.common.tools.MathUtil.sign;
 
 import org.jcodec.codecs.common.biari.MDecoder;
 import org.jcodec.codecs.common.biari.MEncoder;
+import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.decode.CABACContst;
@@ -614,9 +615,9 @@ public class CABAC {
         int partAbsX = (mbX << 2) + partX;
 
         boolean predEqA = leftPred != null && leftPred != Direct
-                && (leftPred == Bi || leftPred == curPred || (curPred == Bi && leftPred.usesList(list)));
+                && (leftPred == Bi || leftPred == curPred || (curPred == Bi && H264Const.usesList(leftPred, list)));
         boolean predEqB = topPred != null && topPred != Direct
-                && (topPred == Bi || topPred == curPred || (curPred == Bi && topPred.usesList(list)));
+                && (topPred == Bi || topPred == curPred || (curPred == Bi && H264Const.usesList(topPred, list)));
 
         // prefix and suffix as given by UEG3 with signedValFlag=1, uCoff=9
         int absMvdComp = !leftAvailable || leftType == null || leftType.isIntra() || !predEqA ? 0 : Math
@@ -666,9 +667,9 @@ public class CABAC {
         int partAbsX = (mbX << 2) + partX;
 
         boolean predEqA = leftPred != null && leftPred != Direct
-                && (leftPred == Bi || leftPred == curPred || (curPred == Bi && leftPred.usesList(list)));
+                && (leftPred == Bi || leftPred == curPred || (curPred == Bi && H264Const.usesList(leftPred, list)));
         boolean predEqB = topPred != null && topPred != Direct
-                && (topPred == Bi || topPred == curPred || (curPred == Bi && topPred.usesList(list)));
+                && (topPred == Bi || topPred == curPred || (curPred == Bi && H264Const.usesList(topPred, list)));
 
         int ctA = !leftAvailable || leftType == null || leftType.isIntra() || !predEqA || refIdxLeft[list][partY] == 0 ? 0
                 : 1;
