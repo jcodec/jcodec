@@ -3,6 +3,7 @@ package org.jcodec.codecs.mpeg4.es;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 
 /**
