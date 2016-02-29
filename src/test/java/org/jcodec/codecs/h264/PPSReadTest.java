@@ -14,7 +14,7 @@ public class PPSReadTest {
     private PictureParameterSet expected;
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         expected = new PictureParameterSet();
         expected.pic_parameter_set_id = 0;
         expected.seq_parameter_set_id = 0;

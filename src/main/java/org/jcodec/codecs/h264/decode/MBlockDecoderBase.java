@@ -31,6 +31,7 @@ public class MBlockDecoderBase {
     protected DeblockerInput di;
     protected int poc;
     protected BlockInterpolator interpolator;
+    protected Picture8Bit[] mbb;
 
     public MBlockDecoderBase(SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
         this.interpolator = new BlockInterpolator();
@@ -38,6 +39,7 @@ public class MBlockDecoderBase {
         this.sh = sh;
         this.di = di;
         this.poc = poc;
+        this.mbb = new Picture8Bit[] { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
     }
 
     void residualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
@@ -172,8 +174,6 @@ public class MBlockDecoderBase {
 
     public void predictChromaInter(Frame[][] refs, int[][][] vectors, int x, int y, int comp, Picture8Bit mb,
             PartPred[] predType) {
-
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
 
         for (int blk8x8 = 0; blk8x8 < 4; blk8x8++) {
             for (int list = 0; list < 2; list++) {

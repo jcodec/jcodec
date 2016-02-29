@@ -18,7 +18,7 @@ public class SPSReadTest {
     private SeqParameterSet sps1;
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         sps1 = new SeqParameterSet();
         sps1.profile_idc = 66;
 
