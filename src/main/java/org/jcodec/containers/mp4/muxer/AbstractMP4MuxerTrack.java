@@ -159,18 +159,15 @@ public abstract class AbstractMP4MuxerTrack {
     }
     
     protected void mediaHeader(MediaInfoBox minf, TrackType type) {
-        switch (type) {
-        case VIDEO:
+        if (VIDEO == type) {
             VideoMediaHeaderBox vmhd = VideoMediaHeaderBox.createVideoMediaHeaderBox(0, 0, 0, 0);
             vmhd.setFlags(1);
             minf.add(vmhd);
-            break;
-        case SOUND:
+        } else if(SOUND == type) {
             SoundMediaHeaderBox smhd = SoundMediaHeaderBox.createSoundMediaHeaderBox();
             smhd.setFlags(1);
             minf.add(smhd);
-            break;
-        case TIMECODE:
+        } else if(TIMECODE == type) {
             NodeBox gmhd = new NodeBox(new Header("gmhd"));
             gmhd.add(GenericMediaInfoBox.createGenericMediaInfoBox());
             NodeBox tmcd = new NodeBox(new Header("tmcd"));
@@ -179,8 +176,7 @@ public abstract class AbstractMP4MuxerTrack {
                     .createTimecodeMediaInfoBox((short) 0, (short) 0, (short) 12, new short[] { 0, 0, 0 }, new short[] {
                             0xff, 0xff, 0xff }, "Lucida Grande"));
             minf.add(gmhd);
-            break;
-        default:
+        } else {
             throw new UnhandledStateException("Handler " + type.getHandler() + " not supported");
         }
     }
