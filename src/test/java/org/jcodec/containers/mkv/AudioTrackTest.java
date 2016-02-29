@@ -4,7 +4,6 @@ import static java.lang.System.arraycopy;
 import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVMuxerTest.bufferToArray;
-import static org.jcodec.containers.mkv.MKVMuxerTest.tildeExpand;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
 import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
