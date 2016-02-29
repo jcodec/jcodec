@@ -239,7 +239,7 @@ public class MPEGDecoder extends VideoDecoder {
                 }
             }
 
-            Picture8Bit pic = new Picture8Bit(context.codedWidth, context.codedHeight, buf, context.color);
+            Picture8Bit pic = Picture8Bit.createPicture8Bit(context.codedWidth, context.codedHeight, buf, context.color);
             if ((ph.picture_coding_type == PictureHeader.IntraCoded || ph.picture_coding_type == PictureHeader.PredictiveCoded)
                     && ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
                 refFields[ph.pictureCodingExtension.picture_structure - 1] = copyAndCreateIfNeeded(pic,

@@ -103,7 +103,7 @@ public class H264Decoder extends VideoDecoder {
     @Deprecated
     public Picture decodeFrameFromNals(List<ByteBuffer> nalUnits, int[][] buffer) {
         Frame frame = new FrameDecoder(this).decodeFrame(nalUnits, getSameSizeBuffer(buffer));
-        return frame == null ? null : frame.toPicture(8, buffer);
+        return frame == null ? null : frame.toPictureWithBuffer(8, buffer);
     }
 
     private static final class SliceDecoderRunnable implements Runnable {

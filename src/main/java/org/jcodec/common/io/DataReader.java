@@ -21,8 +21,8 @@ public class DataReader implements Closeable {
     private SeekableByteChannel channel;
     private ByteBuffer buffer;
 
-    public DataReader(SeekableByteChannel channel, ByteOrder order) {
-        this(channel, order, DEFAULT_BUFFER_SIZE);
+    public static DataReader createDataReader(SeekableByteChannel channel, ByteOrder order) {
+        return new DataReader(channel, order, DEFAULT_BUFFER_SIZE);
     }
 
     public DataReader(SeekableByteChannel channel, ByteOrder order, int bufferSize) {

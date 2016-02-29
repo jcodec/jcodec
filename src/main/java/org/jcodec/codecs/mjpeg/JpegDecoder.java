@@ -130,7 +130,7 @@ public class JpegDecoder extends VideoDecoder {
         if (interlace) {
             Picture8Bit r1 = decodeField(data, data2, topFieldFirst ? 0 : 1, 2);
             Picture8Bit r2 = decodeField(data, data2, topFieldFirst ? 1 : 0, 2);
-            return new Picture8Bit(r1.getWidth(), r1.getHeight() << 1, data2, r1.getColor());
+            return Picture8Bit.createPicture8Bit(r1.getWidth(), r1.getHeight() << 1, data2, r1.getColor());
         } else {
             return decodeField(data, data2, 0, 1);
         }
