@@ -6,8 +6,6 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.jcodec.common.logging.Logger.Level;
-import org.jcodec.common.logging.Logger.Message;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.ANSIColor;
 
@@ -19,7 +17,7 @@ import org.jcodec.common.tools.MainUtils.ANSIColor;
  * 
  * @author The JCodec project
  */
-public class OutLogSink implements Logger.LogSink {
+public class OutLogSink implements LogSink {
 
     public static OutLogSink createOutLogSink() {
         return new OutLogSink(System.out, DEFAULT_FORMAT);
@@ -47,12 +45,12 @@ public class OutLogSink implements Logger.LogSink {
 
     public static class SimpleFormat implements MessageFormat {
         private String fmt;
-        private static Map<Level, ANSIColor> colorMap = new HashMap<Logger.Level, MainUtils.ANSIColor>();
+        private static Map<LogLevel, ANSIColor> colorMap = new HashMap<LogLevel, MainUtils.ANSIColor>();
         static {
-            colorMap.put(Level.DEBUG, ANSIColor.BROWN);
-            colorMap.put(Level.INFO, ANSIColor.GREEN);
-            colorMap.put(Level.WARN, ANSIColor.MAGENTA);
-            colorMap.put(Level.ERROR, ANSIColor.RED);
+            colorMap.put(LogLevel.DEBUG, ANSIColor.BROWN);
+            colorMap.put(LogLevel.INFO, ANSIColor.GREEN);
+            colorMap.put(LogLevel.WARN, ANSIColor.MAGENTA);
+            colorMap.put(LogLevel.ERROR, ANSIColor.RED);
         };
 
         public SimpleFormat(String fmt) {
