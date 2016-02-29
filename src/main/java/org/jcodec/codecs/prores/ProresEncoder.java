@@ -45,10 +45,17 @@ public class ProresEncoder extends VideoEncoder {
     private static final int LOG_DEFAULT_SLICE_MB_WIDTH = 3;
     private static final int DEFAULT_SLICE_MB_WIDTH = 1 << LOG_DEFAULT_SLICE_MB_WIDTH;
 
-    public static enum Profile {
-        PROXY(QMAT_LUMA_APCO, QMAT_CHROMA_APCO, "apco", 1000, 4, 8), LT(QMAT_LUMA_APCS, QMAT_CHROMA_APCS, "apcs", 2100,
-                1, 9), STANDARD(QMAT_LUMA_APCN, QMAT_CHROMA_APCN, "apcn", 3500, 1, 6), HQ(QMAT_LUMA_APCH,
-                QMAT_CHROMA_APCH, "apch", 5400, 1, 6);
+    public final static class Profile {
+        public final static Profile PROXY = new Profile(QMAT_LUMA_APCO, QMAT_CHROMA_APCO, "apco", 1000, 4, 8);
+        public final static Profile LT = new Profile(QMAT_LUMA_APCS, QMAT_CHROMA_APCS, "apcs", 2100, 1, 9);
+        public final static Profile STANDARD = new Profile(QMAT_LUMA_APCN, QMAT_CHROMA_APCN, "apcn", 3500, 1, 6);
+        public final static Profile HQ = new Profile(QMAT_LUMA_APCH, QMAT_CHROMA_APCH, "apch", 5400, 1, 6);
+
+        private final static Profile[] _values = new Profile[] { PROXY, LT, STANDARD, HQ };
+
+        public static Profile[] values() {
+            return _values;
+        }
 
         final int[] qmatLuma;
         final int[] qmatChroma;
@@ -66,6 +73,7 @@ public class ProresEncoder extends VideoEncoder {
             this.firstQp = firstQp;
             this.lastQp = lastQp;
         }
+
     };
 
     protected Profile profile;

@@ -11,24 +11,25 @@ package net.sourceforge.jaad.aac;
  * More precisely, the ISO standard calls these 'object types'.
  * @author in-somnia
  */
-public enum Profile {
+public final class Profile {
 
-	UNKNOWN(-1, "unknown", false),
-	AAC_MAIN(1, "AAC Main Profile", true),
-	AAC_LC(2, "AAC Low Complexity", true),
-	AAC_SSR(3, "AAC Scalable Sample Rate", false),
-	AAC_LTP(4, "AAC Long Term Prediction", false),
-	AAC_SBR(5, "AAC SBR", true),
-	AAC_SCALABLE(6, "Scalable AAC", false),
-	TWIN_VQ(7, "TwinVQ", false),
-	AAC_LD(11, "AAC Low Delay", false),
-	ER_AAC_LC(17, "Error Resilient AAC Low Complexity", true),
-	ER_AAC_SSR(18, "Error Resilient AAC SSR", false),
-	ER_AAC_LTP(19, "Error Resilient AAC Long Term Prediction", false),
-	ER_AAC_SCALABLE(20, "Error Resilient Scalable AAC", false),
-	ER_TWIN_VQ(21, "Error Resilient TwinVQ", false),
-	ER_BSAC(22, "Error Resilient BSAC", false),
-	ER_AAC_LD(23, "Error Resilient AAC Low Delay", false);
+public final static Profile UNKNOWN = new Profile(-1, "unknown", false);
+public final static Profile AAC_MAIN = new Profile(1, "AAC Main Profile", true);
+public final static Profile AAC_LC = new Profile(2, "AAC Low Complexity", true);
+public final static Profile AAC_SSR = new Profile(3, "AAC Scalable Sample Rate", false);
+public final static Profile AAC_LTP = new Profile(4, "AAC Long Term Prediction", false);
+public final static Profile AAC_SBR = new Profile(5, "AAC SBR", true);
+public final static Profile AAC_SCALABLE = new Profile(6, "Scalable AAC", false);
+public final static Profile TWIN_VQ = new Profile(7, "TwinVQ", false);
+public final static Profile AAC_LD = new Profile(11, "AAC Low Delay", false);
+public final static Profile ER_AAC_LC = new Profile(17, "Error Resilient AAC Low Complexity", true);
+public final static Profile ER_AAC_SSR = new Profile(18, "Error Resilient AAC SSR", false);
+public final static Profile ER_AAC_LTP = new Profile(19, "Error Resilient AAC Long Term Prediction", false);
+public final static Profile ER_AAC_SCALABLE = new Profile(20, "Error Resilient Scalable AAC", false);
+public final static Profile ER_TWIN_VQ = new Profile(21, "Error Resilient TwinVQ", false);
+public final static Profile ER_BSAC = new Profile(22, "Error Resilient BSAC", false);
+public final static Profile ER_AAC_LD = new Profile(23, "Error Resilient AAC Low Delay", false);
+    
 	private static final Profile[] ALL = {
 		AAC_MAIN, AAC_LC, AAC_SSR, AAC_LTP, AAC_SBR, AAC_SCALABLE, TWIN_VQ,
 		null, null, null, AAC_LD, null, null, null, null, null, ER_AAC_LC, ER_AAC_SSR,
