@@ -19,11 +19,13 @@ public class UL {
         this.bytes = arguments;
     }
 
-    public UL(int... arguments) {
-        this.bytes = new byte[arguments.length];
+    public static UL newUL(int... arguments) {
+        byte[] bytes = new byte[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
-            this.bytes[i] = (byte) arguments[i];
+            bytes[i] = (byte) arguments[i];
         }
+
+        return new UL(bytes);
     }
 
     @Override

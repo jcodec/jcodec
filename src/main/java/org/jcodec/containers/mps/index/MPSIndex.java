@@ -14,9 +14,9 @@ import org.jcodec.common.RunLength;
  * 
  */
 public class MPSIndex {
-    private long[] pesTokens;
-    private RunLength.Integer pesStreamIds;
-    private MPSStreamIndex[] streams;
+    protected long[] pesTokens;
+    protected RunLength.Integer pesStreamIds;
+    protected MPSStreamIndex[] streams;
 
     public static class MPSStreamIndex {
         protected int streamId;
@@ -111,10 +111,6 @@ public class MPSIndex {
         this.pesTokens = pesTokens;
         this.pesStreamIds = pesStreamIds;
         this.streams = streams;
-    }
-
-    public MPSIndex(MPSIndex mpsIndex) {
-        this(mpsIndex.pesTokens, mpsIndex.pesStreamIds, mpsIndex.streams);
     }
 
     public long[] getPesTokens() {

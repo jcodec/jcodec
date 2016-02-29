@@ -16,9 +16,10 @@ public class EbmlUint extends EbmlBin {
         super(id);
     }
     
-    public EbmlUint(byte[] id, long value) {
-        super(id);
-        setUint(value);
+    public static EbmlUint createEbmlUint(byte[] id, long value) {
+        EbmlUint e = new EbmlUint(id);
+        e.setUint(value);
+        return e;
     }
     
     public void setUint(long value){

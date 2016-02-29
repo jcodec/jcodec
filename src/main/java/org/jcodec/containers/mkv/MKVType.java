@@ -359,7 +359,7 @@ public enum MKVType {
         @SuppressWarnings("unchecked")
         public static <T extends EbmlBase> T createByType(MKVType g) {
             try {
-                T elem = (T) create(g.clazz, g.id);
+                T elem = (T) Platform.newInstance(g.clazz, new Object[]{g.id});
                 elem.type = g;
                 return elem;
             } catch (Exception e) {
@@ -368,11 +368,6 @@ public enum MKVType {
             }
         }
 
-      private static <T extends EbmlBase> T create(Class<T> clazz, byte[] id) throws SecurityException, NoSuchMethodException, IllegalArgumentException, InvocationTargetException, InstantiationException,
-              IllegalAccessException {
-          return Platform.newInstance(clazz, new Object[]{id});
-      }
-      
       @SuppressWarnings("unchecked")
       public static <T extends EbmlBase> T createById(byte[] id, long offset) {
           for (MKVType t : values()){
