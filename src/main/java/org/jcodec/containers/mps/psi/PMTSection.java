@@ -8,7 +8,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
-import org.jcodec.containers.mps.MTSUtils.StreamType;
+import org.jcodec.containers.mps.MTSStreamType;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -109,20 +109,20 @@ public class PMTSection extends PSISection {
         private int streamTypeTag;
         private int pid;
         private List<MPEGMediaDescriptor> descriptors;
-        private StreamType streamType;
+        private MTSStreamType streamType;
 
         public PMTStream(int streamTypeTag, int pid, List<MPEGMediaDescriptor> descriptors) {
             this.streamTypeTag = streamTypeTag;
             this.pid = pid;
             this.descriptors = descriptors;
-            this.streamType = StreamType.fromTag(streamTypeTag);
+            this.streamType = MTSStreamType.fromTag(streamTypeTag);
         }
 
         public int getStreamTypeTag() {
             return streamTypeTag;
         }
 
-        public StreamType getStreamType() {
+        public MTSStreamType getStreamType() {
             return streamType;
         }
 

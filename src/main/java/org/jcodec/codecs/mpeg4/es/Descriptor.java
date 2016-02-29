@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 
 /**
