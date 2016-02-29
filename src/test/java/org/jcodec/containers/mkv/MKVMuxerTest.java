@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.jcodec.Utils;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
@@ -37,10 +38,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 public class MKVMuxerTest {
-
-    public static File tildeExpand(String path) {
-        return new File(path.replace("~", System.getProperty("user.home")));
-    }
 
     private MKVTestSuite suite;
 

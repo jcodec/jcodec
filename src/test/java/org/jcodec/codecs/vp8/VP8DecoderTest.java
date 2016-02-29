@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
+import org.jcodec.Utils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mkv.MKVMuxerTest;
 import org.jcodec.scale.AWTUtil;
@@ -23,13 +24,13 @@ public class VP8DecoderTest {
     public void testKF() throws Exception {
         dec.decode(bb.duplicate());
         
-        ImageIO.write(AWTUtil.toBufferedImage(dec.getPicture()), "png", MKVMuxerTest.tildeExpand("~/decoded.png"));
+        ImageIO.write(AWTUtil.toBufferedImage(dec.getPicture()), "png", Utils.tildeExpand("~/decoded.png"));
     }
     
     @Ignore @Test
     public void testKFToPicture() throws Exception {
         dec.decode(bb.duplicate());
-        ImageIO.write(AWTUtil.toBufferedImage(dec.getPicture()), "png", MKVMuxerTest.tildeExpand("~/decoded.pic.png"));
+        ImageIO.write(AWTUtil.toBufferedImage(dec.getPicture()), "png", Utils.tildeExpand("~/decoded.pic.png"));
     }
     
     public void pysch() throws Exception {

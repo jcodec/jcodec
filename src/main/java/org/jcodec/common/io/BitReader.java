@@ -29,6 +29,7 @@ public class BitReader {
 
     public BitReader fork() {
         BitReader fork = new BitReader(this.bb.duplicate());
+        fork.initPos = 0;
         fork.curInt = this.curInt;
         fork.deficit = this.deficit;
         return fork;
@@ -149,15 +150,15 @@ public class BitReader {
             deficit -= 16;
             curInt |= nextIgnore16() << deficit;
         }
-
+        
         if (deficit > 8) {
             deficit -= 8;
             curInt |= nextIgnore() << deficit;
         }
-
+        
         return curInt >>> 8;
     }
-
+    
     public int check16Bits() {
         if (deficit > 16) {
             deficit -= 16;
