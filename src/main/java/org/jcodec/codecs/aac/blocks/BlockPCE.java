@@ -89,7 +89,7 @@ public class BlockPCE extends Block {
             case AAC_CHANNEL_FRONT:
             case AAC_CHANNEL_BACK:
             case AAC_CHANNEL_SIDE:
-                syn_ele = RawDataBlockType.fromOrdinal(_in.read1Bit());
+                syn_ele = RawDataBlockType.values()[_in.read1Bit()];
                 break;
             case AAC_CHANNEL_CC:
                 _in.read1Bit();
