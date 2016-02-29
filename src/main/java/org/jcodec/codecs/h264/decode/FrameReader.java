@@ -1,6 +1,10 @@
 package org.jcodec.codecs.h264.decode;
 
 import static org.jcodec.codecs.h264.H264Utils.unescapeNAL;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.IDR_SLICE;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.NON_IDR_SLICE;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.PPS;
+import static org.jcodec.codecs.h264.io.model.NALUnitType.SPS;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -46,25 +50,18 @@ public class FrameReader {
             NALUnit nalUnit = NALUnit.read(nalData);
 
             unescapeNAL(nalData);
-
-            switch (nalUnit.type) {
-            case NON_IDR_SLICE:
-            case IDR_SLICE:
+            if (SPS == nalUnit.type) {
+                SeqParameterSet _sps = SeqParameterSet.read(nalData);
+                sps.put(_sps.seq_parameter_set_id, _sps);
+            } else if (PPS == nalUnit.type) {
+                PictureParameterSet _pps = PictureParameterSet.read(nalData);
+                pps.put(_pps.pic_parameter_set_id, _pps);
+            } else if (IDR_SLICE == nalUnit.type || NON_IDR_SLICE == nalUnit.type) {
                 if (sps.size() == 0 || pps.size() == 0) {
                     Logger.warn("Skipping frame as no SPS/PPS have been seen so far...");
                     return null;
                 }
                 result.add(createSliceReader(nalData, nalUnit));
-                break;
-            case SPS:
-                SeqParameterSet _sps = SeqParameterSet.read(nalData);
-                sps.put(_sps.seq_parameter_set_id, _sps);
-                break;
-            case PPS:
-                PictureParameterSet _pps = PictureParameterSet.read(nalData);
-                pps.put(_pps.pic_parameter_set_id, _pps);
-                break;
-            default:
             }
         }
 

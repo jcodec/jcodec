@@ -3,7 +3,7 @@ package org.jcodec.codecs.h264.decode;
 import static java.lang.System.arraycopy;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
-import static org.jcodec.codecs.h264.io.model.MBType.B_Direct_16x16;
+import static org.jcodec.codecs.h264.io.model.MBType.*;
 import static org.jcodec.codecs.h264.io.model.SliceType.P;
 
 import org.jcodec.codecs.h264.H264Const;
@@ -145,25 +145,18 @@ public class SliceDecoder {
     }
 
     private void decodeMBlockP(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
-        switch (mBlock.curMbType) {
-        case P_16x16:
+        if (P_16x16 == mBlock.curMbType) {
             decoderInter.decode16x16(mBlock, mb, references, L0);
-            break;
-        case P_16x8:
+        } else if (P_16x8 == mBlock.curMbType) {
             decoderInter.decode16x8(mBlock, mb, references, L0, L0);
-            break;
-        case P_8x16:
+        } else if (P_8x16 == mBlock.curMbType) {
             decoderInter.decode8x16(mBlock, mb, references, L0, L0);
-            break;
-        case P_8x8:
+        } else if (P_8x8 == mBlock.curMbType) {
             decoderInter8x8.decode(mBlock, references, mb, P, false);
-            break;
-        case P_8x8ref0:
+        } else if (P_8x8ref0 == mBlock.curMbType) {
             decoderInter8x8.decode(mBlock, references, mb, P, true);
-            break;
-        default:
+        } else {
             decodeMBlockIInt(mBlock, mb);
-            break;
         }
     }
 
