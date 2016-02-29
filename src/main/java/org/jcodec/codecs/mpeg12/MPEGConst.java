@@ -1,9 +1,5 @@
 package org.jcodec.codecs.mpeg12;
 
-import static org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension.SNR_SCALABILITY;
-import static org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension.SPATIAL_SCALABILITY;
-
-import org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
 
@@ -393,30 +389,6 @@ public class MPEGConst {
             1, 1, 1 };
     public static int[] SQUEEZE_X = new int[] { 0, 1, 1, 0 };
     public static int[] SQUEEZE_Y = new int[] { 0, 1, 0, 0 };
-
-    public static VLC vlcMBType(int picture_coding_type, SequenceScalableExtension sse) {
-        if (sse != null && sse.scalable_mode == SNR_SCALABILITY) {
-            return vlcMBTypeSNR;
-        } else if (sse != null && sse.scalable_mode == SPATIAL_SCALABILITY) {
-            return picture_coding_type == MPEGConst.IntraCoded ? vlcMBTypeISpat
-                    : (picture_coding_type == MPEGConst.PredictiveCoded ? vlcMBTypePSpat : vlcMBTypeBSpat);
-        } else {
-            return picture_coding_type == MPEGConst.IntraCoded ? vlcMBTypeI
-                    : (picture_coding_type == MPEGConst.PredictiveCoded ? vlcMBTypeP : vlcMBTypeB);
-        }
-    }
-
-    public static MBType[] mbTypeVal(int picture_coding_type, SequenceScalableExtension sse) {
-        if (sse != null && sse.scalable_mode == SNR_SCALABILITY) {
-            return mbTypeValSNR;
-        } else if (sse != null && sse.scalable_mode == SPATIAL_SCALABILITY) {
-            return picture_coding_type == MPEGConst.IntraCoded ? mbTypeValISpat
-                    : (picture_coding_type == MPEGConst.PredictiveCoded ? mbTypeValPSpat : mbTypeValBSpat);
-        } else {
-            return picture_coding_type == MPEGConst.IntraCoded ? mbTypeValI
-                    : (picture_coding_type == MPEGConst.PredictiveCoded ? mbTypeValP : mbTypeValB);
-        }
-    }
 
     public static final int IntraCoded = 0x1;
     public static final int PredictiveCoded = 0x2;

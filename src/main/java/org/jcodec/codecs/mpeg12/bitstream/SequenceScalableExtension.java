@@ -1,9 +1,13 @@
 package org.jcodec.codecs.mpeg12.bitstream;
 
+import static org.jcodec.codecs.mpeg12.MPEGConst.*;
+
 import java.nio.ByteBuffer;
 
+import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
+import org.jcodec.common.io.VLC;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,7 +41,7 @@ public class SequenceScalableExtension implements MPEGHeader {
         sse.scalable_mode = _in.readNBit(2);
         sse.layer_id = _in.readNBit(4);
 
-        if (sse.scalable_mode == SPATIAL_SCALABILITY) {
+        if (sse.scalable_mode == SequenceScalableExtension.SPATIAL_SCALABILITY) {
             sse.lower_layer_prediction_horizontal_size = _in.readNBit(14);
             _in.read1Bit();
             sse.lower_layer_prediction_vertical_size = _in.readNBit(14);
@@ -66,7 +70,7 @@ public class SequenceScalableExtension implements MPEGHeader {
         bw.writeNBit(scalable_mode, 2);
         bw.writeNBit(layer_id, 4);
 
-        if (scalable_mode == SPATIAL_SCALABILITY) {
+        if (scalable_mode == SequenceScalableExtension.SPATIAL_SCALABILITY) {
             bw.writeNBit(lower_layer_prediction_horizontal_size, 14);
             bw.write1Bit(1); // todo: check this
             bw.writeNBit(lower_layer_prediction_vertical_size, 14);
@@ -84,5 +88,29 @@ public class SequenceScalableExtension implements MPEGHeader {
             bw.writeNBit(picture_mux_factor, 3);
         }
         bw.flush();
+    }
+
+    public static MPEGConst.MBType[] mbTypeVal(int picture_coding_type, SequenceScalableExtension sse) {
+        if (sse != null && sse.scalable_mode == SNR_SCALABILITY) {
+            return MPEGConst.mbTypeValSNR;
+        } else if (sse != null && sse.scalable_mode == SPATIAL_SCALABILITY) {
+            return picture_coding_type == IntraCoded ? mbTypeValISpat
+                    : (picture_coding_type == PredictiveCoded ? mbTypeValPSpat : mbTypeValBSpat);
+        } else {
+            return picture_coding_type == IntraCoded ? mbTypeValI
+                    : (picture_coding_type == PredictiveCoded ? mbTypeValP : mbTypeValB);
+        }
+    }
+
+    public static VLC vlcMBType(int picture_coding_type, SequenceScalableExtension sse) {
+        if (sse != null && sse.scalable_mode == SNR_SCALABILITY) {
+            return vlcMBTypeSNR;
+        } else if (sse != null && sse.scalable_mode == SPATIAL_SCALABILITY) {
+            return picture_coding_type == IntraCoded ? vlcMBTypeISpat
+                    : (picture_coding_type == PredictiveCoded ? vlcMBTypePSpat : vlcMBTypeBSpat);
+        } else {
+            return picture_coding_type == IntraCoded ? vlcMBTypeI
+                    : (picture_coding_type == PredictiveCoded ? vlcMBTypeP : vlcMBTypeB);
+        }
     }
 }

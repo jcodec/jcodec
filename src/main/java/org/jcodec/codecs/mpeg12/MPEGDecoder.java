@@ -10,14 +10,12 @@ import static org.jcodec.codecs.mpeg12.MPEGConst.SLICE_START_CODE_LAST;
 import static org.jcodec.codecs.mpeg12.MPEGConst.SQUEEZE_X;
 import static org.jcodec.codecs.mpeg12.MPEGConst.SQUEEZE_Y;
 import static org.jcodec.codecs.mpeg12.MPEGConst.USER_DATA_START_CODE;
-import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeVal;
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcAddressIncrement;
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcCBP;
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcCoeff0;
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcCoeff1;
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcDCSizeChroma;
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcDCSizeLuma;
-import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBType;
 import static org.jcodec.codecs.mpeg12.MPEGUtil.gotoNextMarker;
 import static org.jcodec.codecs.mpeg12.MPEGUtil.nextSegment;
 import static org.jcodec.codecs.mpeg12.bitstream.PictureCodingExtension.Frame;
@@ -347,8 +345,8 @@ public class MPEGDecoder extends VideoDecoder {
                     vertOff, vertStep);
         }
 
-        VLC vlcMBType = vlcMBType(ph.picture_coding_type, sh.sequenceScalableExtension);
-        MBType[] mbTypeVal = mbTypeVal(ph.picture_coding_type, sh.sequenceScalableExtension);
+        VLC vlcMBType = SequenceScalableExtension.vlcMBType(ph.picture_coding_type, sh.sequenceScalableExtension);
+        MBType[] mbTypeVal = SequenceScalableExtension.mbTypeVal(ph.picture_coding_type, sh.sequenceScalableExtension);
 
         MBType mbType = mbTypeVal[vlcMBType.readVLC(bits)];
 
