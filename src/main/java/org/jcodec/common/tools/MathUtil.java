@@ -2,9 +2,6 @@ package org.jcodec.common.tools;
 
 import static java.lang.Math.max;
 
-import org.jcodec.common.model.Rational;
-import org.jcodec.common.model.RationalLarge;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -94,20 +91,6 @@ public class MathUtil {
             return gcdLong(b, a % b);
         else
             return a;
-    }
-
-    public static Rational reduceRational(Rational r) {
-        return reduce(r.getNum(), r.getDen());
-    }
-
-    public static Rational reduce(int num, int den) {
-        int gcd = gcd(num, den);
-        return new Rational(num / gcd, den / gcd);
-    }
-
-    public static RationalLarge reduceLong(long num, long den) {
-        long gcd = gcdLong(num, den);
-        return new RationalLarge(num / gcd, den / gcd);
     }
 
     public static final int clip(int val, int from, int to) {
