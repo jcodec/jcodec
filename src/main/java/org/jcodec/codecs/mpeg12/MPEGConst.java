@@ -1,7 +1,5 @@
 package org.jcodec.codecs.mpeg12;
 
-import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.IntraCoded;
-import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.PredictiveCoded;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension.SNR_SCALABILITY;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension.SPATIAL_SCALABILITY;
 
@@ -400,11 +398,11 @@ public class MPEGConst {
         if (sse != null && sse.scalable_mode == SNR_SCALABILITY) {
             return vlcMBTypeSNR;
         } else if (sse != null && sse.scalable_mode == SPATIAL_SCALABILITY) {
-            return picture_coding_type == IntraCoded ? vlcMBTypeISpat
-                    : (picture_coding_type == PredictiveCoded ? vlcMBTypePSpat : vlcMBTypeBSpat);
+            return picture_coding_type == MPEGConst.IntraCoded ? vlcMBTypeISpat
+                    : (picture_coding_type == MPEGConst.PredictiveCoded ? vlcMBTypePSpat : vlcMBTypeBSpat);
         } else {
-            return picture_coding_type == IntraCoded ? vlcMBTypeI
-                    : (picture_coding_type == PredictiveCoded ? vlcMBTypeP : vlcMBTypeB);
+            return picture_coding_type == MPEGConst.IntraCoded ? vlcMBTypeI
+                    : (picture_coding_type == MPEGConst.PredictiveCoded ? vlcMBTypeP : vlcMBTypeB);
         }
     }
 
@@ -412,13 +410,17 @@ public class MPEGConst {
         if (sse != null && sse.scalable_mode == SNR_SCALABILITY) {
             return mbTypeValSNR;
         } else if (sse != null && sse.scalable_mode == SPATIAL_SCALABILITY) {
-            return picture_coding_type == IntraCoded ? mbTypeValISpat
-                    : (picture_coding_type == PredictiveCoded ? mbTypeValPSpat : mbTypeValBSpat);
+            return picture_coding_type == MPEGConst.IntraCoded ? mbTypeValISpat
+                    : (picture_coding_type == MPEGConst.PredictiveCoded ? mbTypeValPSpat : mbTypeValBSpat);
         } else {
-            return picture_coding_type == IntraCoded ? mbTypeValI
-                    : (picture_coding_type == PredictiveCoded ? mbTypeValP : mbTypeValB);
+            return picture_coding_type == MPEGConst.IntraCoded ? mbTypeValI
+                    : (picture_coding_type == MPEGConst.PredictiveCoded ? mbTypeValP : mbTypeValB);
         }
     }
+
+    public static final int IntraCoded = 0x1;
+    public static final int PredictiveCoded = 0x2;
+    public static final int BiPredictiveCoded = 0x3;
 
     // public static void main1(String[] args) {
     // for (int i = 0; i < 64; i++) {

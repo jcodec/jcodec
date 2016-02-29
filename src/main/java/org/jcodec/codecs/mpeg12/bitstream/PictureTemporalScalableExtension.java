@@ -16,6 +16,7 @@ public class PictureTemporalScalableExtension implements MPEGHeader {
     public int reference_select_code;
     public int forward_temporal_reference;
     public int backward_temporal_reference;
+    public static final int Picture_Temporal_Scalable_Extension = 0x10;
 
     public static PictureTemporalScalableExtension read(BitReader _in) {
         PictureTemporalScalableExtension ptse = new PictureTemporalScalableExtension();
@@ -30,7 +31,7 @@ public class PictureTemporalScalableExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(PictureHeader.Picture_Temporal_Scalable_Extension, 4);
+        bw.writeNBit(PictureTemporalScalableExtension.Picture_Temporal_Scalable_Extension, 4);
 
         bw.writeNBit(reference_select_code, 2);
         bw.writeNBit(forward_temporal_reference, 10);

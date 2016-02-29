@@ -115,8 +115,8 @@ public class MPEGDecoder extends VideoDecoder {
             decodePicture(context, ph, ByteBuffer, buf, 0, 0);
         }
 
-        if (ph.picture_coding_type == PictureHeader.IntraCoded
-                || ph.picture_coding_type == PictureHeader.PredictiveCoded) {
+        if (ph.picture_coding_type == MPEGConst.IntraCoded
+                || ph.picture_coding_type == MPEGConst.PredictiveCoded) {
             Picture8Bit unused = refFrames[1];
             refFrames[1] = refFrames[0];
             refFrames[0] = copyAndCreateIfNeeded(pic, unused);
@@ -240,7 +240,7 @@ public class MPEGDecoder extends VideoDecoder {
             }
 
             Picture8Bit pic = Picture8Bit.createPicture8Bit(context.codedWidth, context.codedHeight, buf, context.color);
-            if ((ph.picture_coding_type == PictureHeader.IntraCoded || ph.picture_coding_type == PictureHeader.PredictiveCoded)
+            if ((ph.picture_coding_type == MPEGConst.IntraCoded || ph.picture_coding_type == MPEGConst.PredictiveCoded)
                     && ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
                 refFields[ph.pictureCodingExtension.picture_structure - 1] = copyAndCreateIfNeeded(pic,
                         refFields[ph.pictureCodingExtension.picture_structure - 1]);
@@ -340,7 +340,7 @@ public class MPEGDecoder extends VideoDecoder {
                     new int[1 << (chromaFormat + 5)] };
             int mbX = i % context.mbWidth;
             int mbY = i / context.mbWidth;
-            if (ph.picture_coding_type == PictureHeader.PredictiveCoded)
+            if (ph.picture_coding_type == MPEGConst.PredictiveCoded)
                 pred.reset();
             mvZero(context, ph, pred, mbX, mbY, predFwd);
             put(predFwd, buf, stride, chromaFormat, mbX, mbY, context.codedWidth, context.codedHeight >> vertStep,
@@ -394,13 +394,13 @@ public class MPEGDecoder extends VideoDecoder {
             } else
                 pred.reset();
         } else if (mbType.macroblock_motion_forward != 0) {
-            int refIdx = ph.picture_coding_type == PictureHeader.PredictiveCoded ? 0 : 1;
+            int refIdx = ph.picture_coding_type == MPEGConst.PredictiveCoded ? 0 : 1;
             predFwd = new int[][] { new int[256], new int[1 << (chromaFormat + 5)], new int[1 << (chromaFormat + 5)] };
             if (ph.pictureCodingExtension == null || ph.pictureCodingExtension.picture_structure == Frame) {
                 pred.predictInFrame(refFrames[refIdx], mbX << 4, mbY << 4, predFwd, bits, motion_type, 0,
                         spatial_temporal_weight_code);
             } else {
-                if (ph.picture_coding_type == PictureHeader.PredictiveCoded) {
+                if (ph.picture_coding_type == MPEGConst.PredictiveCoded) {
                     pred.predictInField(refFields, mbX << 4, mbY << 4, predFwd, bits, motion_type, 0,
                             ph.pictureCodingExtension.picture_structure - 1);
                 } else {
@@ -408,7 +408,7 @@ public class MPEGDecoder extends VideoDecoder {
                             predFwd, bits, motion_type, 0, ph.pictureCodingExtension.picture_structure - 1);
                 }
             }
-        } else if (ph.picture_coding_type == PictureHeader.PredictiveCoded) {
+        } else if (ph.picture_coding_type == MPEGConst.PredictiveCoded) {
             predFwd = new int[][] { new int[256], new int[1 << (chromaFormat + 5)], new int[1 << (chromaFormat + 5)] };
             pred.reset();
             mvZero(context, ph, pred, mbX, mbY, predFwd);
@@ -520,7 +520,7 @@ public class MPEGDecoder extends VideoDecoder {
     }
 
     private void mvZero(Context context, PictureHeader ph, MPEGPred pred, int mbX, int mbY, int[][] mbPix) {
-        if (ph.picture_coding_type == PictureHeader.PredictiveCoded) {
+        if (ph.picture_coding_type == MPEGConst.PredictiveCoded) {
             pred.predict16x16NoMV(refFrames[0], mbX << 4, mbY << 4, ph.pictureCodingExtension == null ? Frame
                     : ph.pictureCodingExtension.picture_structure, 0, mbPix);
         } else {

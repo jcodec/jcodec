@@ -15,6 +15,7 @@ import org.jcodec.common.model.Point;
  */
 public class PictureDisplayExtension implements MPEGHeader {
     public Point[] frame_centre_offsets;
+    public static final int Picture_Display_Extension = 0x7;
 
     public static PictureDisplayExtension read(BitReader bits, SequenceExtension se, PictureCodingExtension pce) {
         PictureDisplayExtension pde = new PictureDisplayExtension();
@@ -57,7 +58,7 @@ public class PictureDisplayExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(PictureHeader.Picture_Display_Extension, 4);
+        bw.writeNBit(PictureDisplayExtension.Picture_Display_Extension, 4);
         
         for (Point point : frame_centre_offsets) {
             bw.writeNBit(point.getX(), 16);

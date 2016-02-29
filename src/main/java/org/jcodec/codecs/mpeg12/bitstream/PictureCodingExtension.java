@@ -31,6 +31,7 @@ public class PictureCodingExtension implements MPEGHeader {
     public int chroma_420_type;
     public int progressive_frame;
     public CompositeDisplay compositeDisplay;
+    public static final int Picture_Coding_Extension = 0x8;
     
     public PictureCodingExtension() {
         this.f_code = new int[2][2];
@@ -89,7 +90,7 @@ public class PictureCodingExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(PictureHeader.Picture_Coding_Extension, 4);
+        bw.writeNBit(PictureCodingExtension.Picture_Coding_Extension, 4);
         bw.writeNBit(f_code[0][0], 4);
         bw.writeNBit(f_code[0][1], 4);
         bw.writeNBit(f_code[1][0], 4);

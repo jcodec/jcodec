@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
+import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
@@ -150,7 +150,7 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
                     else if (phOffset == 6) {
                         int picCodingType = (b >> 3) & 0x7;
                         lastFrame.tempRef |= b >> 6;
-                        if (picCodingType == PictureHeader.IntraCoded) {
+                        if (picCodingType == MPEGConst.IntraCoded) {
                             keyFrames.add(frameNo - 1);
                             if (curGop.size() > 0)
                                 outGop();
