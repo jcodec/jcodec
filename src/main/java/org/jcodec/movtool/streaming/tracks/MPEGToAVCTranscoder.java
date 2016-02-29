@@ -32,6 +32,7 @@ import org.jcodec.scale.Transform;
  * 
  */
 public class MPEGToAVCTranscoder {
+    public static final int TARGET_RATE = 1024;
     private VideoDecoder decoder;
     private H264Encoder encoder;
     private Picture pic0;
@@ -44,7 +45,7 @@ public class MPEGToAVCTranscoder {
 
     public MPEGToAVCTranscoder(int scaleFactor) {
         this.scaleFactor = scaleFactor;
-        rc = new H264FixedRateControl(Mpeg2AVCTrack.TARGET_RATE);
+        rc = new H264FixedRateControl(MPEGToAVCTranscoder.TARGET_RATE);
         this.decoder = getDecoder(scaleFactor);
         this.encoder = new H264Encoder(rc);
     }
@@ -88,7 +89,7 @@ public class MPEGToAVCTranscoder {
             toEnc = decoded;
         }
         pic1.setCrop(new Rect(0, 0, thumbWidth, thumbHeight));
-        int rate = Mpeg2AVCTrack.TARGET_RATE;
+        int rate = MPEGToAVCTranscoder.TARGET_RATE;
         do {
             try {
                 encoder.doEncodeFrame8Bit(Picture8Bit.fromPicture(toEnc), dst, iframe, poc, SliceType.I);
@@ -99,10 +100,14 @@ public class MPEGToAVCTranscoder {
                 rc.setRate(rate);
             }
         } while (rate > 10);
-        rc.setRate(Mpeg2AVCTrack.TARGET_RATE);
+        rc.setRate(MPEGToAVCTranscoder.TARGET_RATE);
 
         H264Utils.encodeMOVPacket(dst);
 
         return dst;
+    }
+
+    protected static MPEGToAVCTranscoder createTranscoder(int scaleFactor) {
+        return new MPEGToAVCTranscoder(scaleFactor);
     }
 }

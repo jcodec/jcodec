@@ -3,6 +3,7 @@ package org.jcodec.movtool.streaming.tracks;
 import static java.util.Arrays.binarySearch;
 import static org.jcodec.codecs.mpeg12.MPEGConst.PICTURE_START_CODE;
 import static org.jcodec.codecs.mpeg12.MPEGUtil.nextSegment;
+import static org.jcodec.movtool.streaming.tracks.MPEGToAVCTranscoder.createTranscoder;
 import static org.jcodec.movtool.streaming.tracks.Transcode2AVCTrack.createCodecMeta;
 
 import java.io.IOException;
@@ -33,7 +34,6 @@ import org.jcodec.movtool.streaming.VirtualTrack;
  */
 public class Mpeg2AVCTrack implements VirtualTrack {
 
-    public static final int TARGET_RATE = 1024;
     private final int frameSize;
     protected VirtualTrack src;
     private CodecMeta se;
@@ -62,7 +62,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
 
         checkFourCC(src);
         this.src = src;
-        H264FixedRateControl rc = new H264FixedRateControl(TARGET_RATE);
+        H264FixedRateControl rc = new H264FixedRateControl(MPEGToAVCTranscoder.TARGET_RATE);
         H264Encoder encoder = new H264Encoder(rc);
 
         _nextPacket = src.nextPacket();
@@ -141,7 +141,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                 try {
                     MPEGToAVCTranscoder t = track.transcoders.get();
                     if (t == null) {
-                        t = track.createTranscoder(track.scaleFactor);
+                        t = createTranscoder(track.scaleFactor);
                         track.transcoders.set(t);
                     }
                     carryLeadingBOver();
@@ -212,10 +212,6 @@ public class Mpeg2AVCTrack implements VirtualTrack {
             }
             return data[i];
         }
-    }
-
-    protected MPEGToAVCTranscoder createTranscoder(int scaleFactor) {
-        return new MPEGToAVCTranscoder(scaleFactor);
     }
 
     public static int getPicType(ByteBuffer buf) {
