@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.List;
 
+import org.jcodec.Utils;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
@@ -20,7 +21,7 @@ public class CuesFactoryTest {
 
     @Ignore @Test
     public void testWithValidCues() throws IOException {
-        FileInputStream inputStream = new FileInputStream(MKVMuxerTest.tildeExpand("~/References/mkv.test/test2.webm"));
+        FileInputStream inputStream = new FileInputStream(Utils.tildeExpand("~/References/mkv.test/test2.webm"));
         FileChannel iFS = inputStream.getChannel();
         MKVParser p = new MKVParser(new FileChannelWrapper(iFS));
         List<EbmlMaster> t = null;

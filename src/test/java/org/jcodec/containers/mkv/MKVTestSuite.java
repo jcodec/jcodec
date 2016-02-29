@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Properties;
 
+import org.jcodec.Utils;
 import org.jcodec.common.io.IOUtils;
 
 public class MKVTestSuite {
@@ -65,7 +66,7 @@ public class MKVTestSuite {
         
         Properties props = loadProperties(f);
         String path = props.getProperty("mkv.test.suite.path");
-        File dir = MKVMuxerTest.tildeExpand(path);
+        File dir = Utils.tildeExpand(path);
 
         return new MKVTestSuite(dir);
     }

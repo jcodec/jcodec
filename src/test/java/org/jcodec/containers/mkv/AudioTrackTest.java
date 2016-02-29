@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.jcodec.Utils;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
@@ -43,7 +44,7 @@ public class AudioTrackTest {
         audio.gotoFrame(9);
         
         Packet p = audio.nextFrame();
-        ByteBuffer audioSample = NIOUtils.fetchFromFile(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
+        ByteBuffer audioSample = NIOUtils.fetchFromFile(Utils.tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
         
         Assert.assertArrayEquals(audioSample.array(), bufferToArray(p.getData()));
     }
@@ -55,8 +56,8 @@ public class AudioTrackTest {
         audio.gotoFrame(8);
         
         Packet p = audio.getFrames(2);
-        byte[] sample08 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3"));
-        byte[] sample09 = readFileToByteArray(tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
+        byte[] sample08 = readFileToByteArray(Utils.tildeExpand("./src/test/resources/mkv/test1.audiosample08.mp3"));
+        byte[] sample09 = readFileToByteArray(Utils.tildeExpand("./src/test/resources/mkv/test1.audiosample09.mp3"));
         byte[] twoSamples = new byte[sample08.length+sample09.length];
         arraycopy(sample08, 0, twoSamples, 0, sample08.length);
         arraycopy(sample09, 0, twoSamples, sample08.length, sample09.length);
