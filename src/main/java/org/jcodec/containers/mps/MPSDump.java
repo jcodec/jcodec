@@ -258,25 +258,25 @@ public class MPSDump {
                 }
             } else {
                 switch (extType) {
-                case PictureHeader.Quant_Matrix_Extension:
+                case QuantMatrixExtension.Quant_Matrix_Extension:
                     dumpQuantMatrixExtension(QuantMatrixExtension.read(_in));
                     break;
-                case PictureHeader.Copyright_Extension:
+                case CopyrightExtension.Copyright_Extension:
                     dumpCopyrightExtension(CopyrightExtension.read(_in));
                     break;
-                case PictureHeader.Picture_Display_Extension:
+                case PictureDisplayExtension.Picture_Display_Extension:
                     if (sequenceHeader != null && pictureCodingExtension != null)
                         dumpPictureDisplayExtension(PictureDisplayExtension.read(_in, sequenceExtension,
                                 pictureCodingExtension));
                     break;
-                case PictureHeader.Picture_Coding_Extension:
+                case PictureCodingExtension.Picture_Coding_Extension:
                     pictureCodingExtension = PictureCodingExtension.read(_in);
                     dumpPictureCodingExtension(pictureCodingExtension);
                     break;
-                case PictureHeader.Picture_Spatial_Scalable_Extension:
+                case PictureSpatialScalableExtension.Picture_Spatial_Scalable_Extension:
                     dumpPictureSpatialScalableExtension(PictureSpatialScalableExtension.read(_in));
                     break;
-                case PictureHeader.Picture_Temporal_Scalable_Extension:
+                case PictureTemporalScalableExtension.Picture_Temporal_Scalable_Extension:
                     dumpPictureTemporalScalableExtension(PictureTemporalScalableExtension.read(_in));
                     break;
                 default:

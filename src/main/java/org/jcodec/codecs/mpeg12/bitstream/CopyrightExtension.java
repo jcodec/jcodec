@@ -19,6 +19,7 @@ public class CopyrightExtension implements MPEGHeader {
     public int copyright_number_1;
     public int copyright_number_2;
     public int copyright_number_3;
+    public static final int Copyright_Extension = 0x4;
 
     public static CopyrightExtension read(BitReader _in) {
         CopyrightExtension ce = new CopyrightExtension();
@@ -38,7 +39,7 @@ public class CopyrightExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(PictureHeader.Copyright_Extension, 4);
+        bw.writeNBit(CopyrightExtension.Copyright_Extension, 4);
 
         bw.write1Bit(copyright_flag);
         bw.writeNBit(copyright_identifier, 8);

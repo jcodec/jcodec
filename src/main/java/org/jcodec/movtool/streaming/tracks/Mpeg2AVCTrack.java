@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
+import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.common.logging.Logger;
@@ -151,7 +152,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                         VirtualPacket pkt = packets.get(i);
                         ByteBuffer pktData = pkt.getData();
                         int picType = getPicType(pktData.duplicate());
-                        if (picType != PictureHeader.BiPredictiveCoded) {
+                        if (picType != MPEGConst.BiPredictiveCoded) {
                             ++numRefs;
                         } else if (numRefs < 2) {
                             continue;
@@ -170,7 +171,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
                             ByteBuffer pktData = pkt.getData();
 
                             int picType = getPicType(pktData.duplicate());
-                            if (picType != PictureHeader.BiPredictiveCoded)
+                            if (picType != MPEGConst.BiPredictiveCoded)
                                 ++numRefs;
                             if (numRefs >= 2)
                                 break;
