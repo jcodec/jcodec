@@ -1,5 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
 
+import static net.sourceforge.jaad.aac.Profile.*;
+
 import org.jcodec.platform.Platform;
 
 import net.sourceforge.jaad.aac.AACException;
@@ -101,34 +103,30 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 	}
 
 	private void readPredictionData(IBitStream _in, Profile profile, SampleFrequency sf, boolean commonWindow) throws AACException {
-		switch(profile) {
-			case AAC_MAIN:
-				if(icPredict==null) icPredict = new ICPrediction();
-				icPredict.decode(_in, maxSFB, sf);
-				break;
-			case AAC_LTP:
-				if(ltpData1Present = _in.readBool()) {
-					if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
-					ltPredict1.decode(_in, this, profile);
-				}
-				if(commonWindow) {
-					if(ltpData2Present = _in.readBool()) {
-						if(ltPredict2==null) ltPredict2 = new LTPrediction(frameLength);
-						ltPredict2.decode(_in, this, profile);
-					}
-				}
-				break;
-			case ER_AAC_LTP:
-				if(!commonWindow) {
-					if(ltpData1Present = _in.readBool()) {
-						if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
-						ltPredict1.decode(_in, this, profile);
-					}
-				}
-				break;
-			default:
-				throw new AACException("unexpected profile for LTP: "+profile);
-		}
+	    if (AAC_MAIN == profile) {
+            if(icPredict==null) icPredict = new ICPrediction();
+            icPredict.decode(_in, maxSFB, sf);
+	    } else if (AAC_LTP == profile) {
+            if(ltpData1Present = _in.readBool()) {
+                if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
+                ltPredict1.decode(_in, this, profile);
+            }
+            if(commonWindow) {
+                if(ltpData2Present = _in.readBool()) {
+                    if(ltPredict2==null) ltPredict2 = new LTPrediction(frameLength);
+                    ltPredict2.decode(_in, this, profile);
+                }
+            }
+	    } else if(ER_AAC_LTP == profile) {
+            if(!commonWindow) {
+                if(ltpData1Present = _in.readBool()) {
+                    if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
+                    ltPredict1.decode(_in, this, profile);
+                }
+            }
+	    } else {
+            throw new AACException("unexpected profile for LTP: "+profile);
+	    }
 	}
 
 	/* =========== gets ============ */
