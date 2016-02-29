@@ -20,7 +20,8 @@ public class PATSection extends PSISection {
     private IntIntMap programs;
 
     public PATSection(PSISection psi, int[] networkPids, IntIntMap programs) {
-        super(psi);
+        super(psi.tableId, psi.specificId, psi.versionNumber, psi.currentNextIndicator, psi.sectionNumber,
+                psi.lastSectionNumber);
         this.networkPids = networkPids;
         this.programs = programs;
     }
