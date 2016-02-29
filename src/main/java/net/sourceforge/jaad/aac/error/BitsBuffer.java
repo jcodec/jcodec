@@ -13,6 +13,9 @@ import net.sourceforge.jaad.aac.syntax.IBitStream;
 public class BitsBuffer {
 
 	int bufa, bufb, len;
+    //bit-twiddling helpers
+    static final int[] S = {1, 2, 4, 8, 16};
+    static final int[] B = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF, 0x0000FFFF};
 
 	public BitsBuffer() {
 		len = 0;
@@ -62,7 +65,7 @@ public class BitsBuffer {
 
 	public void rewindReverse() {
 		if(len==0) return;
-		final int[] i = HCR.rewindReverse64(bufb, bufa, len);
+		final int[] i = BitsBuffer.rewindReverse64(bufb, bufa, len);
 		bufb = i[0];
 		bufa = i[1];
 	}
@@ -108,4 +111,45 @@ public class BitsBuffer {
 			bufb = 0;
 		}
 	}
+
+    //32 bit rewind and reverse
+    static int rewindReverse32(int v, int len) {
+        v = ((v>>S[0])&B[0])|((v<<S[0])&~B[0]);
+        v = ((v>>S[1])&B[1])|((v<<S[1])&~B[1]);
+        v = ((v>>S[2])&B[2])|((v<<S[2])&~B[2]);
+        v = ((v>>S[3])&B[3])|((v<<S[3])&~B[3]);
+        v = ((v>>S[4])&B[4])|((v<<S[4])&~B[4]);
+    
+        //shift off low bits
+        v >>= (32-len);
+    
+        return v;
+    }
+    
+    //64 bit rewind and reverse
+    static int[] rewindReverse64(int hi, int lo, int len) {
+    	int[] i = new int[2];
+    	if(len<=32) {
+    		i[0] = 0;
+    		i[1] = rewindReverse32(lo, len);
+    	}
+    	else {
+    		lo = ((lo>>S[0])&B[0])|((lo<<S[0])&~B[0]);
+    		hi = ((hi>>S[0])&B[0])|((hi<<S[0])&~B[0]);
+    		lo = ((lo>>S[1])&B[1])|((lo<<S[1])&~B[1]);
+    		hi = ((hi>>S[1])&B[1])|((hi<<S[1])&~B[1]);
+    		lo = ((lo>>S[2])&B[2])|((lo<<S[2])&~B[2]);
+    		hi = ((hi>>S[2])&B[2])|((hi<<S[2])&~B[2]);
+    		lo = ((lo>>S[3])&B[3])|((lo<<S[3])&~B[3]);
+    		hi = ((hi>>S[3])&B[3])|((hi<<S[3])&~B[3]);
+    		lo = ((lo>>S[4])&B[4])|((lo<<S[4])&~B[4]);
+    		hi = ((hi>>S[4])&B[4])|((hi<<S[4])&~B[4]);
+    
+    		//shift off low bits
+    		i[1] = (hi>>(64-len))|(lo<<(len-32));
+    		i[1] = lo>>(64-len);
+    	}
+    	return i;
+    }
+
 }
