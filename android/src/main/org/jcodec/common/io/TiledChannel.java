@@ -84,7 +84,7 @@ public class TiledChannel implements SeekableByteChannel {
     }
 
     @Override
-    public SeekableByteChannel position(long newPosition) throws IOException {
+    public SeekableByteChannel setPosition(long newPosition) throws IOException {
         if (newPosition > size()) {
             newPosition = size();
         }
@@ -97,7 +97,7 @@ public class TiledChannel implements SeekableByteChannel {
         }
         long tileStart = newPosition - (newPosition % TILE_CAPACITY);
         cur.reset(tileStart);
-        ch.position(tileStart);
+        ch.setPosition(tileStart);
         Log.d(LOG_TAG_TILED_CHANNEL, "Seeking to: " + newPosition + ", tile @" + cur.tileStart);
         return this;
     }

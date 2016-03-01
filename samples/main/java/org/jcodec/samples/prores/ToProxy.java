@@ -1,7 +1,7 @@
 package org.jcodec.samples.prores;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -34,15 +34,15 @@ public class ToProxy {
             return;
         }
 
-        SeekableByteChannel input = readableFileChannel(new File(args[0]));
+        SeekableByteChannel input = readableChannel(new File(args[0]));
         MP4Demuxer demuxer = new MP4Demuxer(input);
-        SeekableByteChannel output = writableFileChannel(new File(args[1]));
-        MP4Muxer muxer = new MP4Muxer(output, Brand.MOV);
+        SeekableByteChannel output = writableChannel(new File(args[1]));
+        MP4Muxer muxer = MP4Muxer.createMP4Muxer(output, Brand.MOV);
 
         AbstractMP4DemuxerTrack inVideo = demuxer.getVideoTrack();
         VideoSampleEntry entry = (VideoSampleEntry) inVideo.getSampleEntries()[0];
-        int width = (int) entry.getWidth();
-        int height = (int) entry.getHeight();
+        int width = entry.getWidth();
+        int height = entry.getHeight();
         ProresToProxy toProxy = new ProresToProxy(width, height, 65536);
         FramesMP4MuxerTrack outVideo = muxer.addTrack(TrackType.VIDEO, (int) inVideo.getTimescale());
 
@@ -56,7 +56,7 @@ public class ToProxy {
             ByteBuffer out = ByteBuffer.allocate(pkt.getData().remaining());
             toProxy.transcode(pkt.getData(), out);
             out.flip();
-            outVideo.addFrame(new MP4Packet(pkt, out));
+            outVideo.addFrame(MP4Packet.createMP4PacketWithData(pkt, out));
             frame++;
             long cur = System.currentTimeMillis();
             if (cur - last > 5000) {

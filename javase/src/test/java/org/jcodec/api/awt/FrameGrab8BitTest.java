@@ -1,11 +1,11 @@
 package org.jcodec.api.awt;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 
 import org.jcodec.api.JCodecException;
 import org.jcodec.api.specific.ContainerAdaptor;
@@ -36,14 +36,14 @@ public class FrameGrab8BitTest {
         ContainerAdaptor adaptor = mock(ContainerAdaptor.class);
         SeekableDemuxerTrack videoTrack = mock(SeekableDemuxerTrack.class);
 
-        FrameGrab8Bit grab = new FrameGrab8Bit(videoTrack, adaptor);
+        AWTFrameGrab8Bit grab = new AWTFrameGrab8Bit(videoTrack, adaptor);
         Picture8Bit pic = Picture8Bit.create(16, 16, ColorSpace.YUV420J);
 
         Arrays.fill(pic.getPlaneData(0), (byte) (169 - 128));
         Arrays.fill(pic.getPlaneData(1), (byte) (45 - 128));
         Arrays.fill(pic.getPlaneData(2), (byte) (103 - 128));
 
-        MP4Packet packet = new MP4Packet(null, 0, 25, 1, 0, true, null, 0, 0, 0, 42, true);
+        MP4Packet packet = new MP4Packet(null, 0, 25, 1, 0, true, null, 0, 0, 0, 0, 42, true);
         when(adaptor.decodeFrame8Bit(any(Packet.class), any(BYTE_DOUBLE_ARRAY_CLASS))).thenReturn(pic);
         when(videoTrack.nextFrame()).thenReturn(packet);
 
@@ -65,7 +65,7 @@ public class FrameGrab8BitTest {
         ContainerAdaptor adaptor = mock(ContainerAdaptor.class);
         SeekableDemuxerTrack videoTrack = mock(SeekableDemuxerTrack.class);
 
-        FrameGrab8Bit grab = new FrameGrab8Bit(videoTrack, adaptor);
+        AWTFrameGrab8Bit grab = new AWTFrameGrab8Bit(videoTrack, adaptor);
 
         int[] keyFrames = new int[] { 0, 11, 25, 34, 48, 59, 100 };
         DemuxerTrackMeta meta = new DemuxerTrackMeta(Type.VIDEO, Codec.H264, keyFrames, 120, 120, new Size(320, 240),
@@ -85,15 +85,15 @@ public class FrameGrab8BitTest {
         ContainerAdaptor adaptor = mock(ContainerAdaptor.class);
         SeekableDemuxerTrack videoTrack = mock(SeekableDemuxerTrack.class);
 
-        FrameGrab8Bit grab = new FrameGrab8Bit(videoTrack, adaptor);
+        AWTFrameGrab8Bit grab = new AWTFrameGrab8Bit(videoTrack, adaptor);
 
         int[] keyFrames = new int[] { 0, 11, 25, 40, 48, 59, 100 };
         DemuxerTrackMeta meta = new DemuxerTrackMeta(Type.VIDEO, Codec.H264, keyFrames, 120, 120, new Size(320, 240),
                 null);
 
-        MP4Packet frame40 = new MP4Packet(null, 40, 25, 1, 40, true, null, 0, 0, 0, 42, true);
-        MP4Packet frame41 = new MP4Packet(null, 41, 25, 1, 41, true, null, 0, 0, 0, 42, true);
-        MP4Packet frame42 = new MP4Packet(null, 42, 25, 1, 42, true, null, 0, 0, 0, 42, true);
+        MP4Packet frame40 = new MP4Packet(null, 40, 25, 1, 40, true, null, 0, 0, 0, 0, 42, true);
+        MP4Packet frame41 = new MP4Packet(null, 41, 25, 1, 41, true, null, 0, 0, 0, 0, 42, true);
+        MP4Packet frame42 = new MP4Packet(null, 42, 25, 1, 42, true, null, 0, 0, 0, 0, 42, true);
 
         when(videoTrack.getMeta()).thenReturn(meta);
         when(videoTrack.getCurFrame()).thenReturn(42L);

@@ -37,7 +37,7 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 @Deprecated
 public class FrameGrab {
 
-    private DemuxerTrack videoTrack;
+    private SeekableDemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
     private ThreadLocal<int[][]> buffers;
 
@@ -93,9 +93,7 @@ public class FrameGrab {
         default:
             throw new UnsupportedFormatException("Container format is not supported by JCodec");
         }
-        ContainerAdaptor decoder = detectDecoder(videoTrack);
-        FrameGrab fg = new FrameGrab(videoTrack, decoder);
-        return fg;
+        return new FrameGrab(videoTrack, detectDecoder(videoTrack));
     }
 
     public FrameGrab(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
@@ -323,5 +321,13 @@ public class FrameGrab {
         } finally {
             NIOUtils.closeQuietly(ch);
         }
+    }
+
+    public SeekableDemuxerTrack getVideoTrack() {
+        return videoTrack;
+    }
+
+    public ContainerAdaptor getDecoder() {
+        return decoder;
     }
 }

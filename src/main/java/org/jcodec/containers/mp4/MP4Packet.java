@@ -13,11 +13,13 @@ import org.jcodec.common.model.TapeTimecode;
  */
 public class MP4Packet extends Packet {
     public static MP4Packet createMP4PacketWithTimecode(MP4Packet other, TapeTimecode timecode) {
-        return createMP4Packet(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, timecode, other.displayOrder, other.mediaPts, other.entryNo);
+        return createMP4Packet(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame,
+                timecode, other.displayOrder, other.mediaPts, other.entryNo);
     }
 
     public static MP4Packet createMP4PacketWithData(MP4Packet other, ByteBuffer frm) {
-        return createMP4Packet(frm, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame, other.tapeTimecode, other.displayOrder, other.mediaPts, other.entryNo);
+        return createMP4Packet(frm, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame,
+                other.tapeTimecode, other.displayOrder, other.mediaPts, other.entryNo);
     }
 
     public static MP4Packet createMP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo,

@@ -1,19 +1,19 @@
-package org.jcodec.api.android;
+package org.jcodec.api.awt;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
+import org.jcodec.api.FrameGrab;
 import org.jcodec.api.JCodecException;
 import org.jcodec.api.UnsupportedFormatException;
 import org.jcodec.api.specific.ContainerAdaptor;
-import org.jcodec.common.AndroidUtil;
+import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.model.Picture;
-
-import android.graphics.Bitmap;
+import org.jcodec.scale.AWTUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,27 +28,23 @@ import android.graphics.Bitmap;
  * NOTE: Supports only AVC ( H.264 ) in MP4 ( ISO BMF, QuickTime ) at this
  * point.
  * 
- * NOTE: Android specific routines
+ * NOTE: AWT specific routines
  * 
  * @author The JCodec project
- * @deprecated use {@link org.jcodec.api.android.FrameGrab8Bit} instead.
  * 
  */
 @Deprecated
-public class FrameGrab extends org.jcodec.api.FrameGrab {
+public class AWTFrameGrab extends FrameGrab {
+    public AWTFrameGrab(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
+        super(videoTrack, decoder);
+    }
+    
+    public static AWTFrameGrab createAWTFrameGrab(SeekableByteChannel _in) throws IOException, JCodecException {
+        org.jcodec.api.FrameGrab fg = createAWTFrameGrab(_in);
+        return new AWTFrameGrab(fg.getVideoTrack(), fg.getDecoder());
+    }
 
-	public FrameGrab(SeekableByteChannel in) throws IOException,
-			JCodecException {
-		super(in);
-	}
-
-	public FrameGrab(SeekableDemuxerTrack videoTrack,
-			ContainerAdaptor decoder) {
-		super(videoTrack, decoder);
-	}
-	
-	
-	/**
+    /**
      * Get frame at a specified second as AWT image
      * 
      * @param file
@@ -57,11 +53,11 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Bitmap getFrame(File file, double second) throws IOException, JCodecException {
+    public static BufferedImage getFrame(File file, double second) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
-            return ((FrameGrab)new FrameGrab(ch).seekToSecondPrecise(second)).getFrame();
+            ch = NIOUtils.readableChannel(file);
+            return ((AWTFrameGrab) createAWTFrameGrab(ch).seekToSecondPrecise(second)).getFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -76,31 +72,21 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws UnsupportedFormatException
      * @throws IOException
      */
-    public static Bitmap getFrame(SeekableByteChannel file, double second) throws JCodecException, IOException {
-        return ((FrameGrab)new FrameGrab(file).seekToSecondPrecise(second)).getFrame();
+    public static BufferedImage getFrame(SeekableByteChannel file, double second) throws JCodecException, IOException {
+        return ((AWTFrameGrab) createAWTFrameGrab(file).seekToSecondPrecise(second)).getFrame();
     }
-    
+
     /**
      * Get frame at current position in AWT image
      * 
      * @return
      * @throws IOException
      */
-    public Bitmap getFrame() throws IOException {
-        return AndroidUtil.toBitmap(getNativeFrame());
+    public BufferedImage getFrame() throws IOException {
+        Picture nativeFrame = getNativeFrame();
+        return nativeFrame == null ? null : AWTUtil.toBufferedImage(nativeFrame);
     }
-    
-    /**
-     * Get frame at current position in AWT image
-     * 
-     * @return
-     * @throws IOException
-     */
-    public void getFrame(Bitmap bmp) throws IOException {
-    	Picture picture = getNativeFrame();
-        AndroidUtil.toBitmap(picture, bmp);
-    }
-    
+
     /**
      * Get frame at a specified frame number as AWT image
      * 
@@ -110,16 +96,16 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Bitmap getFrame(File file, int frameNumber) throws IOException, JCodecException {
+    public static BufferedImage getFrame(File file, int frameNumber) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
-            return ((FrameGrab)new FrameGrab(ch).seekToFramePrecise(frameNumber)).getFrame();
+            ch = NIOUtils.readableChannel(file);
+            return ((AWTFrameGrab) createAWTFrameGrab(ch).seekToFramePrecise(frameNumber)).getFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
     }
-    
+
     /**
      * Get frame at a specified frame number as AWT image
      * 
@@ -129,10 +115,10 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Bitmap getFrame(SeekableByteChannel file, int frameNumber) throws JCodecException, IOException {
-        return ((FrameGrab)new FrameGrab(file).seekToFramePrecise(frameNumber)).getFrame();
+    public static BufferedImage getFrame(SeekableByteChannel file, int frameNumber) throws JCodecException, IOException {
+        return ((AWTFrameGrab) createAWTFrameGrab(file).seekToFramePrecise(frameNumber)).getFrame();
     }
-    
+
     /**
      * Get a specified frame by number from an already open demuxer track
      * 
@@ -143,9 +129,9 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Bitmap getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+    public static BufferedImage getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
-        return ((FrameGrab)new FrameGrab(vt, decoder).seekToFramePrecise(frameNumber)).getFrame();
+        return ((AWTFrameGrab) new AWTFrameGrab(vt, decoder).seekToFramePrecise(frameNumber)).getFrame();
     }
 
     /**
@@ -158,9 +144,9 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Bitmap getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+    public static BufferedImage getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
-        return ((FrameGrab)new FrameGrab(vt, decoder).seekToSecondPrecise(second)).getFrame();
+        return ((AWTFrameGrab) new AWTFrameGrab(vt, decoder).seekToSecondPrecise(second)).getFrame();
     }
 
     /**
@@ -174,11 +160,11 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Bitmap getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+    public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
-        return ((FrameGrab)new FrameGrab(vt, decoder).seekToFrameSloppy(frameNumber)).getFrame();
+        return ((AWTFrameGrab) new AWTFrameGrab(vt, decoder).seekToFrameSloppy(frameNumber)).getFrame();
     }
-    
+
     /**
      * Get a specified frame by second from an already open demuxer track (
      * sloppy mode, i.e. nearest keyframe )
@@ -190,8 +176,9 @@ public class FrameGrab extends org.jcodec.api.FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Bitmap getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+    public static BufferedImage getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
-        return ((FrameGrab)new FrameGrab(vt, decoder).seekToSecondSloppy(second)).getFrame();
+        return ((AWTFrameGrab) new AWTFrameGrab(vt, decoder).seekToSecondSloppy(second)).getFrame();
     }
+
 }

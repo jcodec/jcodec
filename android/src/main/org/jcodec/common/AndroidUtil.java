@@ -80,7 +80,7 @@ public class AndroidUtil {
             return null;
 
         Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
-        Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
+        Picture rgb = Picture.createCropped(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
         transform.transform(pic, rgb);
         return bitmapUtil.toBitmapImpl(rgb);
     }
@@ -90,7 +90,7 @@ public class AndroidUtil {
             return null;
 
         Transform8Bit transform = ColorUtil.getTransform8Bit(pic.getColor(), ColorSpace.RGB);
-        Picture8Bit rgb = Picture8Bit.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
+        Picture8Bit rgb = Picture8Bit.createCropped(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
         transform.transform(pic, rgb);
         return bitmapUtil.toBitmap8BitImpl(rgb);
     }
@@ -103,7 +103,7 @@ public class AndroidUtil {
             throw new IllegalArgumentException("Out bitmap is null");
 
         Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
-        Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
+        Picture rgb = Picture.createCropped(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
         transform.transform(pic, rgb);
         bitmapUtil.toBitmapImpl(rgb, out);
     }
@@ -115,7 +115,7 @@ public class AndroidUtil {
             throw new IllegalArgumentException("Out bitmap is null");
 
         Transform8Bit transform = ColorUtil.getTransform8Bit(pic.getColor(), ColorSpace.RGB);
-        Picture8Bit rgb = Picture8Bit.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
+        Picture8Bit rgb = Picture8Bit.createCropped(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
         transform.transform(pic, rgb);
         bitmapUtil.toBitmap8BitImpl(rgb, out);
     }

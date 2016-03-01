@@ -1,6 +1,6 @@
 package org.jcodec.samples.api;
 
-import org.jcodec.api.awt.SequenceEncoder8Bit;
+import org.jcodec.api.awt.AWTSequenceEncoder8Bit;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
@@ -27,7 +27,7 @@ public class SequenceEncoderDemo {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelp(new HashMap<String, String>() {
+            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
                 {
                     put(FLAG_NUM_FRAMES, "Maximum frames to encode.");
                     put(FLAG_IN_PATTERN, "Output folder for the frames.");
@@ -36,13 +36,13 @@ public class SequenceEncoderDemo {
             return;
         }
 
-        int maxFrames = cmd.getIntegerFlag(FLAG_NUM_FRAMES, Integer.MAX_VALUE);
-        String outDir = cmd.getStringFlag(FLAG_IN_PATTERN,
+        int maxFrames = cmd.getIntegerFlagD(FLAG_NUM_FRAMES, Integer.MAX_VALUE);
+        String outDir = cmd.getStringFlagD(FLAG_IN_PATTERN,
                 new File(System.getProperty("user.home"), "frame%08d.jpg").getAbsolutePath());
         FileChannelWrapper out = null;
         try {
-            out = NIOUtils.writableFileChannel(MainUtils.tildeExpand(cmd.getArg(0)));
-            SequenceEncoder8Bit encoder = new SequenceEncoder8Bit(out);
+            out = NIOUtils.writableChannel(MainUtils.tildeExpand(cmd.getArg(0)));
+            AWTSequenceEncoder8Bit encoder = new AWTSequenceEncoder8Bit(out);
 
             for (int i = 0; i < maxFrames; i++) {
                 File file = new File(String.format(outDir, i));

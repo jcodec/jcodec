@@ -26,7 +26,7 @@ public class AWTUtil {
     public static BufferedImage toBufferedImage(Picture src) {
         if (src.getColor() != ColorSpace.RGB) {
             Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
-            Picture rgb = Picture.create(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
+            Picture rgb = Picture.createCropped(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
             transform.transform(src, rgb);
             new RgbToBgr().transform(rgb, rgb);
             src = rgb;
@@ -46,7 +46,7 @@ public class AWTUtil {
     public static BufferedImage toBufferedImage8Bit(Picture8Bit src) {
         if (src.getColor() != ColorSpace.RGB) {
             Transform8Bit transform = ColorUtil.getTransform8Bit(src.getColor(), ColorSpace.RGB);
-            Picture8Bit rgb = Picture8Bit.create(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
+            Picture8Bit rgb = Picture8Bit.createCropped(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
             transform.transform(src, rgb);
             new RgbToBgr8Bit().transform(rgb, rgb);
             src = rgb;

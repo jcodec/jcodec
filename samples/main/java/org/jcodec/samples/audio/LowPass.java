@@ -9,7 +9,9 @@ import org.jcodec.audio.AudioFilter;
 import org.jcodec.audio.FilterGraph;
 import org.jcodec.audio.SincLowPassFilter;
 import org.jcodec.codecs.wav.WavInput;
+import org.jcodec.codecs.wav.WavInput.WavFile;
 import org.jcodec.codecs.wav.WavOutput;
+import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 
@@ -26,7 +28,7 @@ public class LowPass {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelp(new HashMap<String, String>() {
+            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
                 {
                     put("freq", "Cut-off frequency");
                     put("size", "Kernel size of this filter");
@@ -35,18 +37,20 @@ public class LowPass {
             System.exit(-1);
         }
 
-        WavInput.Source source = new WavInput.Source(new File(cmd.getArg(0)));
-        WavOutput.Sink sink = new WavOutput.Sink(new File(cmd.getArg(1)), source.getFormat());
+        WavFile wavFile = new WavInput.WavFile(new File(cmd.getArg(0)));
+        WavInput.Source source = new WavInput.Source(wavFile);
+        WavOutFile wavOutFile = new WavOutput.WavOutFile(new File(cmd.getArg(1)), source.getFormat());
+        WavOutput.Sink sink = new WavOutput.Sink(wavOutFile);
 
-        int cutOff = cmd.getIntegerFlag("freq", 8000);
-        int size = cmd.getIntegerFlag("size", 40);
+        int cutOff = cmd.getIntegerFlagD("freq", 8000);
+        int size = cmd.getIntegerFlagD("size", 40);
 
 //@formatter:off
         AudioFilter filter = FilterGraph
                 .addLevel(new SincLowPassFilter(size, (double) cutOff / source.getFormat().getSampleRate()))
                 .create();
 //@formatter:on
-        Audio.transfer(source, filter, sink);
+        Audio.filterTransfer(source, filter, sink);
 
         source.close();
         sink.close();

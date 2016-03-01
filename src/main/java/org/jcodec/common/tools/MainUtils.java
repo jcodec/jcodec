@@ -240,6 +240,9 @@ public class MainUtils {
                 .newInstance(flags.getClass(), 0)));
     }
 
+    public static void printHelpVarArgs(Map<String, String> flags, String ... arguments) {
+        printHelpOut(System.out, "", flags, Arrays.asList(arguments));
+    }
     public static void printHelp(Map<String, String> flags, List<String> params) {
         printHelpOut(System.out, "", flags, params);
     }

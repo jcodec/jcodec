@@ -14,6 +14,6 @@ import org.jcodec.common.AudioFormat;
  */
 public interface AudioSource {
     AudioFormat getFormat();
-
+    
     int readFloat(FloatBuffer buffer) throws IOException;
 }
