@@ -1,10 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.NIOUtils;
 
@@ -18,8 +15,6 @@ import org.jcodec.common.io.NIOUtils;
  * 
  */
 public class VideoSampleEntry extends SampleEntry {
-    private static final MyFactory FACTORY = new MyFactory();
-
     public static VideoSampleEntry createVideoSampleEntry(Header atom, short version, short revision, String vendor,
             int temporalQual, int spacialQual, short width, short height, long hRes, long vRes, short frameCount,
             String compressorName, short depth, short drefInd, short clrTbl) {
@@ -57,7 +52,6 @@ public class VideoSampleEntry extends SampleEntry {
 
     public VideoSampleEntry(Header atom) {
         super(atom);
-        factory = FACTORY;
     }
 
     public void parse(ByteBuffer input) {
@@ -168,24 +162,5 @@ public class VideoSampleEntry extends SampleEntry {
 
     public short getClrTbl() {
         return clrTbl;
-    }
-
-    public static class MyFactory extends BoxFactory {
-        private Map<String, Class<? extends Box>> mappings;
-
-        public MyFactory() {
-            this.mappings = new HashMap<String, Class<? extends Box>>();
-
-            mappings.put(PixelAspectExt.fourcc(), PixelAspectExt.class);
-            mappings.put(AvcCBox.fourcc(), AvcCBox.class);
-            mappings.put(ColorExtension.fourcc(), ColorExtension.class);
-            mappings.put(GamaExtension.fourcc(), GamaExtension.class);
-            mappings.put(CleanApertureExtension.fourcc(), CleanApertureExtension.class);
-            mappings.put(FielExtension.fourcc(), FielExtension.class);
-        }
-
-        public Class<? extends Box> toClass(String fourcc) {
-            return mappings.get(fourcc);
-        }
     }
 }

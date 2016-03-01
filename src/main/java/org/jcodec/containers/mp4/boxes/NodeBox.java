@@ -6,8 +6,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.ToJSON;
+import org.jcodec.containers.mp4.BoxUtil;
+import org.jcodec.containers.mp4.IBoxFactory;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,62 +22,25 @@ import org.jcodec.common.tools.ToJSON;
  * 
  */
 public class NodeBox extends Box {
-    private static final int MAX_BOX_SIZE = 128 * 1024 * 1024;
+    public static final int MAX_BOX_SIZE = 128 * 1024 * 1024;
     protected List<Box> boxes;
-    protected BoxFactory factory;
+    protected IBoxFactory factory;
 
     public NodeBox(Header atom) {
         super(atom);
         this.boxes = new LinkedList<Box>();
-        this.factory = BoxFactory.getDefault();
     }
 
+    public void setFactory(IBoxFactory factory) {
+        this.factory = factory;
+    }
+    
     public void parse(ByteBuffer input) {
 
         while (input.remaining() >= 8) {
-            Box child = parseChildBox(input, factory);
+            Box child = BoxUtil.parseChildBox(input, factory);
             if (child != null)
                 boxes.add(child);
-        }
-    }
-
-    public static Box parseChildBox(ByteBuffer input, BoxFactory factory) {
-        ByteBuffer fork = input.duplicate();
-        while (input.remaining() >= 4 && fork.getInt() == 0)
-            input.getInt();
-        if (input.remaining() < 4)
-            return null;
-
-        Header childAtom = Header.read(input);
-        if (childAtom != null && input.remaining() >= childAtom.getBodySize())
-            return parseBox(NIOUtils.read(input, (int) childAtom.getBodySize()), childAtom, factory);
-        else
-            return null;
-    }
-
-    public static Box newBox(Header header, BoxFactory factory) {
-        Class<? extends Box> claz = factory.toClass(header.getFourcc());
-        if (claz == null)
-            return new LeafBox(header);
-        try {
-            try {
-                return claz.getConstructor(Header.class).newInstance(header);
-            } catch (NoSuchMethodException e) {
-                return claz.newInstance();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static Box parseBox(ByteBuffer input, Header childAtom, BoxFactory factory) {
-        Box box = newBox(childAtom, factory);
-
-        if (childAtom.getBodySize() < MAX_BOX_SIZE) {
-            box.parse(input);
-            return box;
-        } else {
-            return new LeafBox(Header.createHeader("free", 8));
         }
     }
 

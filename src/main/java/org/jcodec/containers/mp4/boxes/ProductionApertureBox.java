@@ -9,7 +9,7 @@ package org.jcodec.containers.mp4.boxes;
  */
 public class ProductionApertureBox extends ClearApertureBox {
 
-    static final String PROF = "prof";
+    public static final String PROF = "prof";
 
     public static ProductionApertureBox createProductionApertureBox(int width, int height) {
         ProductionApertureBox prof = new ProductionApertureBox(new Header(PROF));

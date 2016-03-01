@@ -8,7 +8,7 @@ import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ChannelLabel;
-import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 
@@ -78,9 +78,9 @@ public class AACUtils {
     public static AudioInfo getChannels(SampleEntry mp4a) {
         if (!"mp4a".equals(mp4a.getFourcc()))
             throw new IllegalArgumentException("Not mp4a sample entry");
-        LeafBox b = Box.findFirst(mp4a, LeafBox.class, "esds");
+        LeafBox b = BoxUtil.findFirst(mp4a, LeafBox.class, "esds");
         if (b == null) {
-            b = Box.findFirstPath(mp4a, LeafBox.class, new String[] { null, "esds" });
+            b = BoxUtil.findFirstPath(mp4a, LeafBox.class, new String[] { null, "esds" });
         }
         if (b == null)
             return null;

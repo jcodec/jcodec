@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
  * 
  */
 public class SyncSamplesBox extends FullBox {
-    static final String STSS = "stss";
+    public static final String STSS = "stss";
     protected int[] syncSamples;
 
     public static SyncSamplesBox createSyncSamplesBox(int[] array) {

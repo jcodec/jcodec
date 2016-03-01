@@ -13,6 +13,7 @@ import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ClearApertureBox;
@@ -105,7 +106,7 @@ public abstract class AbstractMP4MuxerTrack {
         int width = 0, height = 0;
         if (sampleEntries.get(0) instanceof VideoSampleEntry) {
             VideoSampleEntry vse = (VideoSampleEntry) sampleEntries.get(0);
-            PixelAspectExt paspBox = Box.findFirst(vse, PixelAspectExt.class, PixelAspectExt.fourcc());
+            PixelAspectExt paspBox = BoxUtil.findFirst(vse, PixelAspectExt.class, PixelAspectExt.fourcc());
             Rational pasp = paspBox != null ? paspBox.getRational() : new Rational(1, 1);
             width = (int) (pasp.getNum() * vse.getWidth()) / pasp.getDen();
             height = (int) vse.getHeight();

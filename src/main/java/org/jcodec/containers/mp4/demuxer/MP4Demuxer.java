@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4.demuxer;
 
-import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
+import static org.jcodec.containers.mp4.BoxUtil.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -10,9 +10,9 @@ import java.util.List;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.TrackType;
-import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
@@ -37,7 +37,7 @@ public class MP4Demuxer {
     private SeekableByteChannel input;
 
     public AbstractMP4DemuxerTrack create(TrakBox trak) {
-        SampleSizesBox stsz = findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        SampleSizesBox stsz = BoxUtil.findFirstPath(trak, SampleSizesBox.class, BoxUtil.path("mdia.minf.stbl.stsz"));
         if (stsz.getDefaultSize() == 0)
             return new FramesMP4DemuxerTrack(movie, trak, input);
         else
@@ -64,8 +64,8 @@ public class MP4Demuxer {
 
     private void processHeader(NodeBox moov) throws IOException {
         TrakBox tt = null;
-        for (TrakBox trak : Box.findAll(moov, TrakBox.class, "trak")) {
-            SampleEntry se = Box.findFirstPath(trak, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null });
+        for (TrakBox trak : BoxUtil.findAll(moov, TrakBox.class, "trak")) {
+            SampleEntry se = BoxUtil.findFirstPath(trak, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null });
             if ("tmcd".equals(se.getFourcc())) {
                 tt = trak;
             } else {
@@ -80,7 +80,7 @@ public class MP4Demuxer {
     }
 
     public static TrackType getTrackType(TrakBox trak) {
-        HandlerBox handler = findFirstPath(trak, HandlerBox.class, Box.path("mdia.hdlr"));
+        HandlerBox handler = BoxUtil.findFirstPath(trak, HandlerBox.class, BoxUtil.path("mdia.hdlr"));
         return TrackType.fromHandler(handler.getComponentSubType());
     }
 

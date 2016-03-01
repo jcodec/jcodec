@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
  * 
  */
 public class ClearApertureBox extends FullBox {
-    static final String CLEF = "clef";
+    public static final String CLEF = "clef";
     protected float width;
     protected float height;
 
