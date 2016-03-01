@@ -9,7 +9,7 @@ package org.jcodec.containers.mp4.boxes;
  */
 public class EncodedPixelBox extends ClearApertureBox {
 
-    static final String ENOF = "enof";
+    public static final String ENOF = "enof";
 
     public static EncodedPixelBox createEncodedPixelBox(int width, int height) {
         EncodedPixelBox enof = new EncodedPixelBox(new Header(ENOF));

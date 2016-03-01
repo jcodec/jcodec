@@ -1,12 +1,12 @@
 package org.jcodec.codecs.raw;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
-import static org.jcodec.common.model.ColorSpace.YUV422_10;
+import static org.jcodec.common.model.ColorSpace.YUV422;
+
+import org.jcodec.common.model.Picture8Bit;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-
-import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -32,35 +32,39 @@ public class V210Decoder {
         this.height = height;
     }
 
-    public Picture decode(byte[] data) {
-        ByteBuffer littleEndian = (ByteBuffer) ByteBuffer.wrap(data).order(LITTLE_ENDIAN);
+    public Picture8Bit decode(byte[] data) {
+        ByteBuffer littleEndian = ByteBuffer.wrap(data).order(LITTLE_ENDIAN);
         IntBuffer dat = littleEndian.asIntBuffer();
-        IntBuffer y = IntBuffer.wrap(new int[width * height]);
-        IntBuffer cb = IntBuffer.wrap(new int[width * height / 2]);
-        IntBuffer cr = IntBuffer.wrap(new int[width * height / 2]);
+        ByteBuffer y = ByteBuffer.wrap(new byte[width * height]);
+        ByteBuffer cb = ByteBuffer.wrap(new byte[width * height / 2]);
+        ByteBuffer cr = ByteBuffer.wrap(new byte[width * height / 2]);
 
         while (dat.hasRemaining()) {
             int i = dat.get();
-            cr.put(i >> 20);
-            y.put((i >> 10) & 0x3ff);
-            cb.put(i & 0x3ff);
+            cr.put(to8Bit(i >> 20));
+            y.put(to8Bit((i >> 10) & 0x3ff));
+            cb.put(to8Bit(i & 0x3ff));
 
             i = dat.get();
-            y.put(i & 0x3ff);
-            y.put(i >> 20);
-            cb.put((i >> 10) & 0x3ff);
+            y.put(to8Bit(i & 0x3ff));
+            y.put(to8Bit(i >> 20));
+            cb.put(to8Bit((i >> 10) & 0x3ff));
 
             i = dat.get();
-            cb.put(i >> 20);
-            y.put((i >> 10) & 0x3ff);
-            cr.put(i & 0x3ff);
+            cb.put(to8Bit(i >> 20));
+            y.put(to8Bit((i >> 10) & 0x3ff));
+            cr.put(to8Bit(i & 0x3ff));
 
             i = dat.get();
-            y.put(i & 0x3ff);
-            y.put(i >> 20);
-            cr.put((i >> 10) & 0x3ff);
+            y.put(to8Bit(i & 0x3ff));
+            y.put(to8Bit(i >> 20));
+            cr.put(to8Bit((i >> 10) & 0x3ff));
         }
 
-        return Picture.createPicture(width, height, new int[][] {y.array(), cb.array(), cr.array()}, YUV422_10);
+        return Picture8Bit.createPicture8Bit(width, height, new byte[][] { y.array(), cb.array(), cr.array() }, YUV422);
+    }
+
+    private byte to8Bit(int i) {
+        return (byte)(((i + 2) >> 2) - 128);
     }
 }

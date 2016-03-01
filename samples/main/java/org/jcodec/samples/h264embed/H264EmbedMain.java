@@ -1,26 +1,23 @@
 package org.jcodec.samples.h264embed;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 
 import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,11 +42,11 @@ public class H264EmbedMain {
         SeekableByteChannel sink = null;
         SeekableByteChannel source = null;
         try {
-            source = readableFileChannel(new File(args[0]));
-            sink = writableFileChannel(new File(args[1]));
+            source = readableChannel(new File(args[0]));
+            sink = writableChannel(new File(args[1]));
 
             MP4Demuxer demux = new MP4Demuxer(source);
-            MP4Muxer muxer = new MP4Muxer(sink, Brand.MOV);
+            MP4Muxer muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
 
             EmbedTranscoder transcoder = new EmbedTranscoder();
 
@@ -67,7 +64,7 @@ public class H264EmbedMain {
                 ByteBuffer data = inFrame.getData();
                 _out.clear();
                 ByteBuffer result = transcoder.transcode(H264Utils.splitFrame(data), _out);
-                outTrack.addFrame(new MP4Packet((MP4Packet)inFrame, result));
+                outTrack.addFrame(MP4Packet.createMP4PacketWithData((MP4Packet)inFrame, result));
 
                 if (i % 100 == 0)
                     System.out.println((i * 100 / totalFrames) + "%");

@@ -2,12 +2,12 @@ package org.jcodec.codecs.raw;
 
 import static java.lang.System.arraycopy;
 
+import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.tools.MathUtil;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
-import org.jcodec.common.model.Picture;
-import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,15 +23,15 @@ import org.jcodec.common.tools.MathUtil;
  * 
  */
 public class V210Encoder {
-    public ByteBuffer encodeFrame(ByteBuffer _out, Picture frame) throws IOException {
+    public ByteBuffer encodeFrame8Bit(ByteBuffer _out, Picture8Bit frame) throws IOException {
         ByteBuffer out = _out.duplicate();
         out.order(ByteOrder.LITTLE_ENDIAN);
         int tgtStride = ((frame.getPlaneWidth(0) + 47) / 48) * 48;
-        int[][] data = frame.getData();
+        byte[][] data = frame.getData();
 
-        int[] tmpY = new int[tgtStride];
-        int[] tmpCb = new int[tgtStride >> 1];
-        int[] tmpCr = new int[tgtStride >> 1];
+        byte[] tmpY = new byte[tgtStride];
+        byte[] tmpCb = new byte[tgtStride >> 1];
+        byte[] tmpCr = new byte[tgtStride >> 1];
 
         int yOff = 0, cbOff = 0, crOff = 0;
         for (int yy = 0; yy < frame.getHeight(); yy++) {
@@ -73,7 +73,7 @@ public class V210Encoder {
         return out;
     }
 
-    static final int clip(int val) {
-        return MathUtil.clip(val, 8, 1019);
+    static final int clip(byte val) {
+        return MathUtil.clip((val + 128) << 2, 8, 1019);
     }
 }

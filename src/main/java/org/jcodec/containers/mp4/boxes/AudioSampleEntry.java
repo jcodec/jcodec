@@ -11,6 +11,7 @@ import java.util.Set;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.tools.ToJSON;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
 import org.jcodec.containers.mp4.boxes.channel.ChannelUtils;
 import org.jcodec.containers.mp4.boxes.channel.Label;
@@ -35,8 +36,6 @@ public class AudioSampleEntry extends SampleEntry {
     public static int kAudioFormatFlagIsNonInterleaved = 0x20;
     public static int kAudioFormatFlagIsNonMixable = 0x40;
     //@formatter:on    
-
-    private static final MyFactory FACTORY = new MyFactory();
 
     public static AudioSampleEntry createAudioSampleEntry(Header header, short drefInd, short channelCount,
             short sampleSize, int sampleRate, short revision, int vendor, int compressionId, int pktSize,
@@ -75,7 +74,6 @@ public class AudioSampleEntry extends SampleEntry {
 
     public AudioSampleEntry(Header atom) {
         super(atom);
-        factory = FACTORY;
     }
 
     public void parse(ByteBuffer input) {
@@ -191,23 +189,8 @@ public class AudioSampleEntry extends SampleEntry {
         return version;
     }
 
-    public static class MyFactory extends BoxFactory {
-        private final Map<String, Class<? extends Box>> mappings;
-
-        public MyFactory() {
-            this.mappings = new HashMap<String, Class<? extends Box>>();
-            mappings.put(WaveExtension.fourcc(), WaveExtension.class);
-            mappings.put(ChannelBox.fourcc(), ChannelBox.class);
-            mappings.put("esds", LeafBox.class);
-        }
-
-        public Class<? extends Box> toClass(String fourcc) {
-            return mappings.get(fourcc);
-        }
-    }
-
     public Endian getEndian() {
-        EndianBox endianBox = Box.findFirstPath(this, EndianBox.class, new String[] { WaveExtension.fourcc(), EndianBox.fourcc() });
+        EndianBox endianBox = BoxUtil.findFirstPath(this, EndianBox.class, new String[] { WaveExtension.fourcc(), EndianBox.fourcc() });
         if (endianBox == null) {
             if ("twos".equals(header.getFourcc()))
                 return Endian.BIG_ENDIAN;
@@ -249,7 +232,7 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public ChannelLabel[] getLabels() {
-        ChannelBox channelBox = Box.findFirst(this, ChannelBox.class, "chan");
+        ChannelBox channelBox = BoxUtil.findFirst(this, ChannelBox.class, "chan");
         if (channelBox != null) {
             Label[] labels = ChannelUtils.getLabels(channelBox);
             if (channelCount == 2)

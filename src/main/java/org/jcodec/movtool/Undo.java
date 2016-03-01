@@ -10,10 +10,11 @@ import java.util.List;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mp4.BoxFactory;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.BoxFactory;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
@@ -85,9 +86,9 @@ public class Undo {
     private boolean isMoov(SeekableByteChannel is, Atom atom) throws IOException {
         is.setPosition(atom.getOffset() + atom.getHeader().headerSize());
         try {
-            Box mov = NodeBox.parseBox(NIOUtils.fetchFromChannel(is, (int) atom.getHeader().getSize()), Header.createHeader("moov", atom
+            Box mov = BoxUtil.parseBox(NIOUtils.fetchFromChannel(is, (int) atom.getHeader().getSize()), Header.createHeader("moov", atom
                     .getHeader().getSize()), BoxFactory.getDefault());
-            return (mov instanceof MovieBox) && Box.containsBox((NodeBox) mov, "mvhd");
+            return (mov instanceof MovieBox) && BoxUtil.containsBox((NodeBox) mov, "mvhd");
         } catch (Throwable t) {
             return false;
         }

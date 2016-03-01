@@ -1,15 +1,8 @@
 package org.jcodec.samples.mashup;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import junit.framework.Assert;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
@@ -20,11 +13,11 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.Assert;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4DemuxerException;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -33,6 +26,10 @@ import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -55,13 +52,12 @@ public class MovStitch2 {
         changePPS(in1, in2, out);
     }
 
-    public static void changePPS(File in1, File in2, File out) throws IOException, MP4DemuxerException,
-            FileNotFoundException {
-        MP4Muxer muxer = new MP4Muxer(writableFileChannel(out), Brand.MOV);
+    public static void changePPS(File in1, File in2, File out) throws IOException {
+        MP4Muxer muxer = MP4Muxer.createMP4Muxer(writableChannel(out), Brand.MOV);
 
-        MP4Demuxer demuxer1 = new MP4Demuxer(readableFileChannel(in1));
+        MP4Demuxer demuxer1 = new MP4Demuxer(readableChannel(in1));
         AbstractMP4DemuxerTrack vt1 = demuxer1.getVideoTrack();
-        MP4Demuxer demuxer2 = new MP4Demuxer(readableFileChannel(in2));
+        MP4Demuxer demuxer2 = new MP4Demuxer(readableChannel(in2));
         AbstractMP4DemuxerTrack vt2 = demuxer2.getVideoTrack();
         checkCompatible(vt1, vt2);
 
@@ -81,7 +77,7 @@ public class MovStitch2 {
         for (int i = 0; i < vt2.getFrameCount(); i++) {
             MP4Packet packet = (MP4Packet) vt2.nextFrame();
             ByteBuffer frm = doFrame(packet.getData(), shr, shw, sps, pps);
-            outTrack.addFrame(new MP4Packet(packet, frm));
+            outTrack.addFrame(MP4Packet.createMP4PacketWithData(packet, frm));
         }
 
         AvcCBox first = Box.findFirst(vt1.getSampleEntries()[0], AvcCBox.class, AvcCBox.fourcc());
@@ -132,7 +128,7 @@ public class MovStitch2 {
 
     public static void copyNU(SliceHeaderReader shr, SliceHeaderWriter shw, NALUnit nu, ByteBuffer is, ByteBuffer os,
             SeqParameterSet sps, PictureParameterSet pps) {
-        BitReader reader = new BitReader(is);
+        BitReader reader = BitReader.createBitReader(is);
         BitWriter writer = new BitWriter(os);
 
         SliceHeader sh = shr.readPart1(reader);

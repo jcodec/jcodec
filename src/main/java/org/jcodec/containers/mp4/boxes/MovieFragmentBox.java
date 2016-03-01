@@ -2,6 +2,8 @@ package org.jcodec.containers.mp4.boxes;
 
 import java.util.List;
 
+import org.jcodec.containers.mp4.BoxUtil;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -36,11 +38,11 @@ public class MovieFragmentBox extends NodeBox {
     }
 
     public TrackFragmentBox[] getTracks() {
-        return Box.findAll(this, TrackFragmentBox.class, TrackFragmentBox.fourcc());
+        return BoxUtil.findAll(this, TrackFragmentBox.class, TrackFragmentBox.fourcc());
     }
 
     public int getSequenceNumber() {
-        MovieFragmentHeaderBox mfhd = Box
+        MovieFragmentHeaderBox mfhd = BoxUtil
                 .findFirst(this, MovieFragmentHeaderBox.class, MovieFragmentHeaderBox.fourcc());
         if (mfhd == null)
             throw new RuntimeException("Corrupt movie fragment, no header atom found");

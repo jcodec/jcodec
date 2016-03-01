@@ -1,7 +1,5 @@
 package org.jcodec.containers.mp4.demuxer;
 
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
 
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.codecs.h264.H264Decoder;
@@ -21,9 +19,11 @@ import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.RationalLarge;
+import org.jcodec.containers.mp4.BoxUtil;
+import static org.jcodec.containers.mp4.BoxUtil.*;
+import static org.jcodec.containers.mp4.BoxUtil.findFirstPath;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
-import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.Edit;
@@ -73,14 +73,14 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     public AbstractMP4DemuxerTrack(TrakBox trak) {
         no = trak.getTrackHeader().getNo();
         type = MP4Demuxer.getTrackType(trak);
-        sampleEntries = Box.findAllPath(trak, SampleEntry.class, new String[]{"mdia", "minf", "stbl", "stsd", null});
+        sampleEntries = BoxUtil.findAllPath(trak, SampleEntry.class, new String[]{"mdia", "minf", "stbl", "stsd", null});
 
         NodeBox stbl = trak.getMdia().getMinf().getStbl();
 
-        TimeToSampleBox stts = findFirst(stbl, TimeToSampleBox.class, "stts");
-        SampleToChunkBox stsc = findFirst(stbl, SampleToChunkBox.class, "stsc");
-        ChunkOffsetsBox stco = findFirst(stbl, ChunkOffsetsBox.class, "stco");
-        ChunkOffsets64Box co64 = findFirst(stbl, ChunkOffsets64Box.class, "co64");
+        TimeToSampleBox stts = BoxUtil.findFirst(stbl, TimeToSampleBox.class, "stts");
+        SampleToChunkBox stsc = BoxUtil.findFirst(stbl, SampleToChunkBox.class, "stsc");
+        ChunkOffsetsBox stco = BoxUtil.findFirst(stbl, ChunkOffsetsBox.class, "stco");
+        ChunkOffsets64Box co64 = BoxUtil.findFirst(stbl, ChunkOffsets64Box.class, "co64");
 
         timeToSamples = stts.getEntries();
         sampleToChunks = stsc.getSampleToChunk();
@@ -212,14 +212,14 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     }
 
     public List<Edit> getEdits() {
-        EditListBox editListBox = Box.findFirstPath(box, EditListBox.class, Box.path("edts.elst"));
+        EditListBox editListBox = BoxUtil.findFirstPath(box, EditListBox.class, BoxUtil.path("edts.elst"));
         if (editListBox != null)
             return editListBox.getEdits();
         return null;
     }
 
     public String getName() {
-        NameBox nameBox = Box.findFirstPath(box, NameBox.class, Box.path("udta.name"));
+        NameBox nameBox = BoxUtil.findFirstPath(box, NameBox.class, BoxUtil.path("udta.name"));
         return nameBox != null ? nameBox.getName() : null;
     }
 

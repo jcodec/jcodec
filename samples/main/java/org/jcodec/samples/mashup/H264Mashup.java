@@ -44,7 +44,7 @@ public class H264Mashup {
 
     public void mashup(File if1, File if2, File of) throws IOException {
         {
-            MappedByteBuffer map = NIOUtils.map(if1);
+            MappedByteBuffer map = NIOUtils.mapFile(if1);
             FileOutputStream os = null;
             try {
                 os = new FileOutputStream(of);
@@ -58,7 +58,7 @@ public class H264Mashup {
         {
             FileOutputStream os = null;
             try {
-                MappedByteBuffer map = NIOUtils.map(if1);
+                MappedByteBuffer map = NIOUtils.mapFile(if1);
                 os = new FileOutputStream(of, true);
 
                 NALUnitWriter out = new NALUnitWriter(os.getChannel());
@@ -112,7 +112,7 @@ public class H264Mashup {
                 System.out.println("PPS");
             } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
                 ByteBuffer res = ByteBuffer.allocate(nus.remaining() + 10);
-                BitReader r = new BitReader(nus);
+                BitReader r = BitReader.createBitReader(nus);
                 SliceHeader header = reader.readPart1(r);
                 reader.readPart2(header, nu, sps, pps, r);
                 header.pic_parameter_set_id = lastPPS;

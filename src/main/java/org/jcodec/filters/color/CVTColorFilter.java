@@ -1,9 +1,8 @@
 package org.jcodec.filters.color;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import org.jcodec.common.model.Picture8Bit;
 
-import org.jcodec.common.model.Picture;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -14,16 +13,16 @@ import org.jcodec.common.model.Picture;
  */
 public class CVTColorFilter {
 
-    public void yuv42210BitTObgr24(Picture yuv, ByteBuffer rgb32) {
-        IntBuffer y = IntBuffer.wrap(yuv.getPlaneData(0));
-        IntBuffer cb = IntBuffer.wrap(yuv.getPlaneData(1));
-        IntBuffer cr = IntBuffer.wrap(yuv.getPlaneData(2));
+    public void yuv422BitTObgr24(Picture8Bit yuv, ByteBuffer rgb32) {
+        ByteBuffer y = ByteBuffer.wrap(yuv.getPlaneData(0));
+        ByteBuffer cb = ByteBuffer.wrap(yuv.getPlaneData(1));
+        ByteBuffer cr = ByteBuffer.wrap(yuv.getPlaneData(2));
 
         while (y.hasRemaining()) {
-            int c1 = y.get() - 64;
-            int c2 = y.get() - 64;
-            int d = cb.get() - 512;
-            int e = cr.get() - 512;
+            int c1 = (y.get() + 112) << 2;
+            int c2 = (y.get() + 112) << 2;
+            int d = cb.get() << 2;
+            int e = cr.get() << 2;
 
             rgb32.put(blue(d, c1));
             rgb32.put(green(d, e, c1));

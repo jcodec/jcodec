@@ -6,11 +6,9 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
@@ -27,9 +25,9 @@ public class SampleOffsetUtils {
     public static ByteBuffer getSampleData(int sample, File file) throws IOException {
         MovieBox moov = MP4Util.parseMovie(file);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
-        ChunkOffsetsBox stco = NodeBox.findFirstPath(minf, ChunkOffsetsBox.class, Box.path("stbl.stco"));
-        SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));
-        SampleSizesBox stsz = NodeBox.findFirstPath(minf, SampleSizesBox.class, Box.path("stbl.stsz"));
+        ChunkOffsetsBox stco = BoxUtil.findFirstPath(minf, ChunkOffsetsBox.class, BoxUtil.path("stbl.stco"));
+        SampleToChunkBox stsc = BoxUtil.findFirstPath(minf, SampleToChunkBox.class, BoxUtil.path("stbl.stsc"));
+        SampleSizesBox stsz = BoxUtil.findFirstPath(minf, SampleSizesBox.class, BoxUtil.path("stbl.stsz"));
         long sampleOffset = getSampleOffset(sample, stsc, stco, stsz);
         MappedByteBuffer map = NIOUtils.mapFile(file);
         map.position((int) sampleOffset);

@@ -45,6 +45,10 @@ public class AvcCBox extends Box {
         return avcCBox;
     }
 
+    public static AvcCBox createEmpty() {
+        return new AvcCBox(new Header(fourcc()));
+    }
+    
     public static AvcCBox createAvcCBox(int profile, int profileCompat, int level, int nalLengthSize,
             List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
         AvcCBox avcc = new AvcCBox(new Header(fourcc()));
