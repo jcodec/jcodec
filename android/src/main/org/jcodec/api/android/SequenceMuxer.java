@@ -30,10 +30,10 @@ public class SequenceMuxer {
     private Size size;
 
     public SequenceMuxer(File out) throws IOException {
-        this.ch = NIOUtils.writableFileChannel(out);
+        this.ch = NIOUtils.writableChannel(out);
 
         // Muxer that will store the encoded frames
-        muxer = new MP4Muxer(ch, Brand.MP4);
+        muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
 
         // Add video track to muxer
         outTrack = muxer.addTrack(TrackType.VIDEO, 25);
@@ -45,7 +45,8 @@ public class SequenceMuxer {
             size = new Size(read.getWidth(), read.getHeight());
         }
         // Add packet to video track
-        outTrack.addFrame(new MP4Packet(NIOUtils.fetchFrom(png), frameNo, 25, 1, frameNo, true, null, frameNo, 0));
+        outTrack.addFrame(MP4Packet.createMP4Packet(NIOUtils.fetchFromFile(png), frameNo, 25, 1, frameNo, true, null, 0,
+                frameNo, 0));
 
         frameNo++;
     }

@@ -42,8 +42,12 @@ public class SequenceEncoder {
     private ByteBuffer sps;
     private ByteBuffer pps;
 
-    public SequenceEncoder(File out) throws IOException {
-        this.ch = NIOUtils.writableChannel(out);
+    public static SequenceEncoder createSequenceEncoder(File out) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out));
+    }
+    
+    public SequenceEncoder(SeekableByteChannel ch) throws IOException {
+        this.ch = ch;
 
         // Muxer that will store the encoded frames
         muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
@@ -64,7 +68,6 @@ public class SequenceEncoder {
         // MP4
         spsList = new ArrayList<ByteBuffer>();
         ppsList = new ArrayList<ByteBuffer>();
-
     }
 
     public void encodeNativeFrame(Picture pic) throws IOException {

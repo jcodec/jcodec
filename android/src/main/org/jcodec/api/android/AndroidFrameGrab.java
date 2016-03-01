@@ -3,8 +3,8 @@ package org.jcodec.api.android;
 import java.io.File;
 import java.io.IOException;
 
+import org.jcodec.api.FrameGrab;
 import org.jcodec.api.JCodecException;
-import org.jcodec.api.PictureWithMetadata8Bit;
 import org.jcodec.api.UnsupportedFormatException;
 import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.common.AndroidUtil;
@@ -12,7 +12,7 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 import android.graphics.Bitmap;
 
@@ -32,15 +32,18 @@ import android.graphics.Bitmap;
  * NOTE: Android specific routines
  * 
  * @author The JCodec project
+ * @deprecated use {@link org.jcodec.api.android.AndroidFrameGrab8Bit} instead.
  * 
  */
-public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
+@Deprecated
+public class AndroidFrameGrab extends FrameGrab {
 
-    public FrameGrab8Bit(SeekableByteChannel in) throws IOException, JCodecException {
-        super(in);
+    public static AndroidFrameGrab createAndroidFrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
+        FrameGrab frameGrab = createFrameGrab(in);
+        return new AndroidFrameGrab(frameGrab.getVideoTrack(), frameGrab.getDecoder());
     }
 
-    public FrameGrab8Bit(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
+    public AndroidFrameGrab(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
         super(videoTrack, decoder);
     }
 
@@ -49,15 +52,15 @@ public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
      * 
      * @param file
      * @param second
-     * @return A decoded frame from a given point in video.
+     * @return
      * @throws IOException
      * @throws JCodecException
      */
     public static Bitmap getFrame(File file, double second) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
-            return ((FrameGrab8Bit) new FrameGrab8Bit(ch).seekToSecondPrecise(second)).getFrame();
+            ch = NIOUtils.readableChannel(file);
+            return ((AndroidFrameGrab) createAndroidFrameGrab(ch).seekToSecondPrecise(second)).getFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -68,61 +71,33 @@ public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
      * 
      * @param file
      * @param second
-     * @return A decoded frame from a given point in video.
+     * @return
      * @throws UnsupportedFormatException
      * @throws IOException
      */
     public static Bitmap getFrame(SeekableByteChannel file, double second) throws JCodecException, IOException {
-        return ((FrameGrab8Bit) new FrameGrab8Bit(file).seekToSecondPrecise(second)).getFrame();
+        return ((AndroidFrameGrab) createAndroidFrameGrab(file).seekToSecondPrecise(second)).getFrame();
     }
 
     /**
      * Get frame at current position in AWT image
      * 
-     * @return A decoded frame with metadata.
-     * @throws IOException
-     */
-    public BitmapWithMetadata getFrameWithMetadata() throws IOException {
-        PictureWithMetadata8Bit pictureWithMeta = getNativeFrameWithMetadata();
-        if (pictureWithMeta == null)
-            return null;
-        Bitmap bitmap = AndroidUtil.toBitmap8Bit(pictureWithMeta.getPicture());
-        return new BitmapWithMetadata(bitmap, pictureWithMeta.getTimestamp(), pictureWithMeta.getDuration());
-    }
-
-    /**
-     * Get frame at current position in AWT image
-     * 
-     * @return A decoded frame.
+     * @return
      * @throws IOException
      */
     public Bitmap getFrame() throws IOException {
-        return AndroidUtil.toBitmap8Bit(getNativeFrame());
+        return AndroidUtil.toBitmap(getNativeFrame());
     }
 
     /**
      * Get frame at current position in AWT image
      * 
+     * @return
      * @throws IOException
      */
     public void getFrame(Bitmap bmp) throws IOException {
-        Picture8Bit picture = getNativeFrame();
-        AndroidUtil.toBitmap8Bit(picture, bmp);
-    }
-
-    /**
-     * Get frame at current position in AWT image
-     * 
-     * @return A decoded picture with metadata. A bitmap provided is used.
-     * 
-     * @throws IOException
-     */
-    public BitmapWithMetadata getFrameWithMetadata(Bitmap bmp) throws IOException {
-        PictureWithMetadata8Bit pictureWithMetadata = getNativeFrameWithMetadata();
-        if (pictureWithMetadata == null)
-            return null;
-        AndroidUtil.toBitmap8Bit(pictureWithMetadata.getPicture(), bmp);
-        return new BitmapWithMetadata(bmp, pictureWithMetadata.getTimestamp(), pictureWithMetadata.getDuration());
+        Picture picture = getNativeFrame();
+        AndroidUtil.toBitmap(picture, bmp);
     }
 
     /**
@@ -137,8 +112,8 @@ public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
     public static Bitmap getFrame(File file, int frameNumber) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
-            return ((FrameGrab8Bit) new FrameGrab8Bit(ch).seekToFramePrecise(frameNumber)).getFrame();
+            ch = NIOUtils.readableChannel(file);
+            return ((AndroidFrameGrab) createAndroidFrameGrab(ch).seekToFramePrecise(frameNumber)).getFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -154,7 +129,7 @@ public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
      * @throws JCodecException
      */
     public static Bitmap getFrame(SeekableByteChannel file, int frameNumber) throws JCodecException, IOException {
-        return ((FrameGrab8Bit) new FrameGrab8Bit(file).seekToFramePrecise(frameNumber)).getFrame();
+        return ((AndroidFrameGrab) createAndroidFrameGrab(file).seekToFramePrecise(frameNumber)).getFrame();
     }
 
     /**
@@ -169,7 +144,7 @@ public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
      */
     public static Bitmap getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
-        return ((FrameGrab8Bit) new FrameGrab8Bit(vt, decoder).seekToFramePrecise(frameNumber)).getFrame();
+        return ((AndroidFrameGrab) new AndroidFrameGrab(vt, decoder).seekToFramePrecise(frameNumber)).getFrame();
     }
 
     /**
@@ -184,7 +159,7 @@ public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
      */
     public static Bitmap getFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
-        return ((FrameGrab8Bit) new FrameGrab8Bit(vt, decoder).seekToSecondPrecise(second)).getFrame();
+        return ((AndroidFrameGrab) new AndroidFrameGrab(vt, decoder).seekToSecondPrecise(second)).getFrame();
     }
 
     /**
@@ -200,7 +175,7 @@ public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
      */
     public static Bitmap getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
-        return ((FrameGrab8Bit) new FrameGrab8Bit(vt, decoder).seekToFrameSloppy(frameNumber)).getFrame();
+        return ((AndroidFrameGrab) new AndroidFrameGrab(vt, decoder).seekToFrameSloppy(frameNumber)).getFrame();
     }
 
     /**
@@ -216,6 +191,6 @@ public class FrameGrab8Bit extends org.jcodec.api.FrameGrab8Bit {
      */
     public static Bitmap getFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
-        return ((FrameGrab8Bit) new FrameGrab8Bit(vt, decoder).seekToSecondSloppy(second)).getFrame();
+        return ((AndroidFrameGrab) new AndroidFrameGrab(vt, decoder).seekToSecondSloppy(second)).getFrame();
     }
 }

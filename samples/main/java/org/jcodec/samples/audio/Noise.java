@@ -11,7 +11,9 @@ import org.jcodec.audio.ChannelMerge;
 import org.jcodec.audio.ChannelSplit;
 import org.jcodec.audio.FilterGraph;
 import org.jcodec.codecs.wav.WavInput;
+import org.jcodec.codecs.wav.WavInput.WavFile;
 import org.jcodec.codecs.wav.WavOutput;
+import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 
@@ -28,18 +30,19 @@ public class Noise {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelp(new HashMap<String, String>() {
+            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
                 {
                     put("level", "Desired noise level, between -90 and -15.");
                 }
             }, "input.wav", "output.wav");
             System.exit(-1);
         }
+        WavFile wavFile = new WavInput.WavFile(new File(cmd.getArg(0)));
+        WavOutFile wavOutFile = new WavOutput.WavOutFile(new File(cmd.getArg(1)), wavFile.getFormat());
+        WavInput.Source source = new WavInput.Source(wavFile); 
+        WavOutput.Sink sink = new WavOutput.Sink(wavOutFile); 
 
-        WavInput.Source source = new WavInput.Source(new File(cmd.getArg(0)));
-        WavOutput.Sink sink = new WavOutput.Sink(new File(cmd.getArg(1)), source.getFormat());
-
-        int dB = cmd.getIntegerFlag("level", -22);
+        int dB = cmd.getIntegerFlagD("level", -22);
         if (dB > -15 || dB < -90) {
             System.out.println("Impractical noise level of: " + dB + ", exiting!");
             System.exit(-1);
@@ -52,7 +55,7 @@ public class Noise {
                 .addLevel(new ChannelMerge(source.getFormat()))
                 .create();
 //@formatter:on
-        Audio.transfer(source, filter, sink);
+        Audio.filterTransfer(source, filter, sink);
 
         source.close();
         sink.close();

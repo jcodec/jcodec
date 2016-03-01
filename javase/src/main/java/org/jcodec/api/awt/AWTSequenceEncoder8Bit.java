@@ -1,5 +1,7 @@
 package org.jcodec.api.awt;
 
+import org.jcodec.api.SequenceEncoder8Bit;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.scale.AWTUtil;
 
@@ -14,14 +16,14 @@ import java.io.IOException;
  * @author The JCodec project
  * 
  */
-public class SequenceEncoder8Bit extends org.jcodec.api.SequenceEncoder8Bit {
+public class AWTSequenceEncoder8Bit extends SequenceEncoder8Bit {
 
-    public SequenceEncoder8Bit(SeekableByteChannel out) throws IOException {
+    public AWTSequenceEncoder8Bit(SeekableByteChannel out) throws IOException {
         super(out);
     }
-    
-    public SequenceEncoder8Bit(File out) throws IOException {
-        super(out);
+
+    public static AWTSequenceEncoder8Bit createSequenceEncoder8Bit(File out) throws IOException {
+        return new AWTSequenceEncoder8Bit(NIOUtils.writableChannel(out));
     }
 
     public void encodeImage(BufferedImage bi) throws IOException {

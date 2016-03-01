@@ -44,7 +44,7 @@ public class HttpChannel implements SeekableByteChannel {
     }
 
     @Override
-    public SeekableByteChannel position(long newPosition) throws IOException {
+    public SeekableByteChannel setPosition(long newPosition) throws IOException {
         if (newPosition == pos)
             return this;
         if (ch != null) {

@@ -1,31 +1,22 @@
 package org.jcodec.api;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.api.specific.ContainerAdaptor;
-import org.jcodec.codecs.h264.H264Decoder;
-import org.jcodec.codecs.mpeg12.MPEGDecoder;
-import org.jcodec.codecs.prores.ProresDecoder;
-import org.jcodec.common.Codec;
-import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,22 +36,21 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
  */
 public class FrameGrab8Bit {
 
-    private DemuxerTrack videoTrack;
+    private SeekableDemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
     private ThreadLocal<byte[][]> buffers;
 
     public static FrameGrab8Bit createFrameGrab8Bit(SeekableByteChannel _in) throws IOException, JCodecException {
-        FrameGrab8Bit fg = new FrameGrab8Bit(null, null);
-        fg.buffers = new ThreadLocal<byte[][]>();
         ByteBuffer header = ByteBuffer.allocate(65536);
         _in.read(header);
         header.flip();
         Format detectFormat = JCodecUtil.detectFormatBuffer(header);
+        AbstractMP4DemuxerTrack videoTrack_;
 
         switch (detectFormat) {
         case MOV:
             MP4Demuxer d1 = new MP4Demuxer(_in);
-            fg.videoTrack = d1.getVideoTrack();
+            videoTrack_ = d1.getVideoTrack();
             break;
         case MPEG_PS:
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");
@@ -69,6 +59,7 @@ public class FrameGrab8Bit {
         default:
             throw new UnsupportedFormatException("Container format is not supported by JCodec");
         }
+        FrameGrab8Bit fg = new FrameGrab8Bit(videoTrack_, detectDecoder(videoTrack_));
         fg.decodeLeadingFrames();
         return fg;
     }
@@ -76,6 +67,7 @@ public class FrameGrab8Bit {
     public FrameGrab8Bit(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
         this.videoTrack = videoTrack;
         this.decoder = decoder;
+        this.buffers = new ThreadLocal<byte[][]>();
     }
 
     private SeekableDemuxerTrack sdt() throws JCodecException {
@@ -178,7 +170,7 @@ public class FrameGrab8Bit {
 
         Packet frame = sdt.nextFrame();
         if (decoder == null)
-            decoder = detectDecoder(sdt, frame);
+            decoder = detectDecoder(sdt);
 
         while (frame.getFrameNo() < curFrame) {
             decoder.decodeFrame8Bit(frame, getBuffer());
@@ -209,7 +201,7 @@ public class FrameGrab8Bit {
         return prev;
     }
 
-    private ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack, Packet frame) throws JCodecException {
+    private static ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack) throws JCodecException {
         DemuxerTrackMeta meta = videoTrack.getMeta();
         switch (meta.getCodec()) {
         case H264:
@@ -383,5 +375,19 @@ public class FrameGrab8Bit {
      */
     public MediaInfo getMediaInfo() {
         return decoder.getMediaInfo();
+    }
+
+    /**
+     * @return the videoTrack
+     */
+    public SeekableDemuxerTrack getVideoTrack() {
+        return videoTrack;
+    }
+
+    /**
+     * @return the decoder
+     */
+    public ContainerAdaptor getDecoder() {
+        return decoder;
     }
 }

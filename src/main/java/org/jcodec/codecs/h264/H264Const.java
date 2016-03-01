@@ -1,19 +1,17 @@
 package org.jcodec.codecs.h264;
 
-import static org.jcodec.codecs.h264.H264Const.BLK_X;
 import static org.jcodec.codecs.h264.H264Const.PartPred.Bi;
 import static org.jcodec.codecs.h264.H264Const.PartPred.Direct;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L1;
 import static org.jcodec.codecs.h264.io.CAVLC.coeffToken;
 
-import java.util.Arrays;
-
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

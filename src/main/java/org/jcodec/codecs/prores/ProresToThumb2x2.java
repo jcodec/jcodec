@@ -1,13 +1,12 @@
 package org.jcodec.codecs.prores;
 
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.common.dct.IDCT2x2;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.nio.ByteBuffer;
 
 /**
  * 
@@ -37,6 +36,7 @@ public class ProresToThumb2x2 extends ProresDecoder {
         }
     }
 
+    @Override
     public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] target) {
         FrameHeader fh = readFrameHeader(data);
 

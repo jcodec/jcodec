@@ -10,7 +10,7 @@ import android.view.MenuItem;
 import android.widget.ImageView;
 
 import org.jcodec.api.android.BitmapWithMetadata;
-import org.jcodec.api.android.FrameGrab8Bit;
+import org.jcodec.api.android.AndroidFrameGrab8Bit;
 import org.jcodec.common.io.HttpChannel;
 import org.jcodec.common.io.TiledChannel;
 
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
     private static final String MOVIE_LOCATION = "http://jcodec.org/downloads/sample.mov";
 
-    private FrameGrab8Bit frameGrab;
+    private AndroidFrameGrab8Bit frameGrab;
     private List<Bitmap> available = new LinkedList<Bitmap>();
     private List<BitmapWithMetadata> decoded = new LinkedList<BitmapWithMetadata>();
     private Comparator<BitmapWithMetadata> cmp = new Comparator<BitmapWithMetadata>() {
@@ -49,7 +49,8 @@ public class MainActivity extends AppCompatActivity {
         protected BitmapWithMetadata doInBackground(URL ...url) {
             try {
                 if(frameGrab == null)
-                    frameGrab = new FrameGrab8Bit(new TiledChannel(new HttpChannel(url[0])));
+                    frameGrab = AndroidFrameGrab8Bit.createAndroidFrameGrab8Bit(
+                            new TiledChannel(new HttpChannel(url[0])));
                 if(available.isEmpty())
                     return frameGrab.getFrameWithMetadata();
                 else

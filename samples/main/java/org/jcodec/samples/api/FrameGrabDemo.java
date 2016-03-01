@@ -8,7 +8,7 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 
 import org.jcodec.api.JCodecException;
-import org.jcodec.api.awt.FrameGrab8Bit;
+import org.jcodec.api.awt.AWTFrameGrab8Bit;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
@@ -28,7 +28,7 @@ public class FrameGrabDemo {
     public static void main(String[] args) throws IOException, JCodecException {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelp(new HashMap<String, String>() {
+            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
                 {
                     put(FLAG_NUM_FRAMES, "Maximum frames to decode.");
                     put(FLAG_OUT_PATTERN, "Output folder for the frames.");
@@ -37,13 +37,13 @@ public class FrameGrabDemo {
             return;
         }
 
-        int maxFrames = cmd.getIntegerFlag(FLAG_NUM_FRAMES, Integer.MAX_VALUE);
-        String outDir = cmd.getStringFlag(FLAG_OUT_PATTERN,
+        int maxFrames = cmd.getIntegerFlagD(FLAG_NUM_FRAMES, Integer.MAX_VALUE);
+        String outDir = cmd.getStringFlagD(FLAG_OUT_PATTERN,
                 new File(System.getProperty("user.home"), "frame%08d.jpg").getAbsolutePath());
         FileChannelWrapper in = null;
         try {
-            in = NIOUtils.readableFileChannel(MainUtils.tildeExpand(cmd.getArg(0)));
-            FrameGrab8Bit fg = new FrameGrab8Bit(in);
+            in = NIOUtils.readableChannel(MainUtils.tildeExpand(cmd.getArg(0)));
+            AWTFrameGrab8Bit fg = AWTFrameGrab8Bit.createAWTFrameGrab8Bit(in);
             for (int i = 0; i < maxFrames; i++) {
                 BufferedImage frame = fg.getFrame();
                 ImageIO.write(frame, "jpeg", new File(String.format(outDir, i)));
