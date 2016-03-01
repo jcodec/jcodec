@@ -1,8 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.jcodec.common.io.NIOUtils;
 
@@ -26,8 +24,6 @@ public class TimecodeSampleEntry extends SampleEntry {
     public static final int FLAG_COUNTER = 0x8;
     //@formatter:on
 
-    private static final MyFactory FACTORY = new MyFactory();
-
     public static TimecodeSampleEntry createTimecodeSampleEntry(int flags, int timescale, int frameDuration,
             int numFrames) {
         TimecodeSampleEntry tmcd = new TimecodeSampleEntry(new Header(TMCD));
@@ -45,7 +41,6 @@ public class TimecodeSampleEntry extends SampleEntry {
 
     public TimecodeSampleEntry(Header header) {
         super(header);
-        factory = FACTORY;
     }
 
     public void parse(ByteBuffer input) {
@@ -67,18 +62,6 @@ public class TimecodeSampleEntry extends SampleEntry {
         out.putInt(frameDuration);
         out.put(numFrames);
         out.put((byte) 207);
-    }
-
-    public static class MyFactory extends BoxFactory {
-        private Map<String, Class<? extends Box>> mappings;
-
-        public MyFactory() {
-            this.mappings = new HashMap<String, Class<? extends Box>>();
-        }
-
-        public Class<? extends Box> toClass(String fourcc) {
-            return mappings.get(fourcc);
-        }
     }
 
     public int getFlags() {

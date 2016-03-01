@@ -21,7 +21,6 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.BoxFactory;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
@@ -29,7 +28,6 @@ import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
@@ -148,7 +146,7 @@ public class MP4Util {
 
         public Box parseBox(SeekableByteChannel input) throws IOException {
             input.setPosition(offset + header.headerSize());
-            return NodeBox.parseBox(NIOUtils.fetchFromChannel(input, (int) header.getBodySize()), header, BoxFactory.getDefault());
+            return BoxUtil.parseBox(NIOUtils.fetchFromChannel(input, (int) header.getBodySize()), header, BoxFactory.getDefault());
         }
 
         public void copy(SeekableByteChannel input, WritableByteChannel out) throws IOException {
@@ -239,11 +237,11 @@ public class MP4Util {
         return doCloneBox(box, approxSize, BoxFactory.getDefault());
     }
 
-    public static Box doCloneBox(Box box, int approxSize, BoxFactory bf) {
+    public static Box doCloneBox(Box box, int approxSize, IBoxFactory bf) {
         ByteBuffer buf = ByteBuffer.allocate(approxSize);
         box.write(buf);
         buf.flip();
-        return NodeBox.parseChildBox(buf, bf);
+        return BoxUtil.parseChildBox(buf, bf);
     }
 
     public static String getFourcc(Codec codec) {

@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
-import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChannelBox;
 import org.jcodec.containers.mp4.boxes.ChannelBox.ChannelDescription;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -30,7 +30,7 @@ public class ChannelUtils {
     private static final Label[] EMPTY = new Label[0];
 
     public static Label[] getLabelsFromSampleEntry(AudioSampleEntry se) {
-        ChannelBox channel = Box.findFirst(se, ChannelBox.class, "chan");
+        ChannelBox channel = BoxUtil.findFirst(se, ChannelBox.class, "chan");
         if (channel != null)
             return ChannelUtils.getLabels(channel);
         else {
@@ -68,10 +68,10 @@ public class ChannelUtils {
     }
 
     private static void _setLabels(TrakBox trakBox, Label[] labels) {
-        ChannelBox channel = Box.findFirstPath(trakBox, ChannelBox.class, new String[] { "mdia", "minf", "stbl", "stsd", null, "chan" });
+        ChannelBox channel = BoxUtil.findFirstPath(trakBox, ChannelBox.class, new String[] { "mdia", "minf", "stbl", "stsd", null, "chan" });
         if (channel == null) {
             channel = ChannelBox.createChannelBox();
-            Box.findFirstPath(trakBox, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null }).add(channel);
+            BoxUtil.findFirstPath(trakBox, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null }).add(channel);
         }
         setLabels(labels, channel);
     }

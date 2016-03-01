@@ -13,14 +13,14 @@ import org.jcodec.common.Tuple;
 import org.jcodec.common.Tuple._2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mp4.BoxFactory;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.BoxFactory;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -165,7 +165,7 @@ public class InplaceMP4Editor {
         MovieBox moovBox = (MovieBox) parseBox(moovBuffer);
 
         List<Tuple._2<Atom, ByteBuffer>> fragments = new LinkedList<Tuple._2<Atom, ByteBuffer>>();
-        if (Box.containsBox(moovBox, "mvex")) {
+        if (BoxUtil.containsBox(moovBox, "mvex")) {
             List<Tuple._2<ByteBuffer, MovieFragmentBox>> temp = new LinkedList<Tuple._2<ByteBuffer, MovieFragmentBox>>();
             for (Atom fragAtom : getFragments(fi)) {
                 ByteBuffer fragBuffer = fetchBox(fi, fragAtom);
@@ -220,7 +220,7 @@ public class InplaceMP4Editor {
 
     private Box parseBox(ByteBuffer oldMov) {
         Header header = Header.read(oldMov);
-        Box box = NodeBox.parseBox(oldMov, header, BoxFactory.getDefault());
+        Box box = BoxUtil.parseBox(oldMov, header, BoxFactory.getDefault());
         return box;
     }
 

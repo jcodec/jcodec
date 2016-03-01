@@ -6,9 +6,9 @@ import java.util.List;
 
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
-import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.FielExtension;
 import org.jcodec.containers.mp4.boxes.LeafBox;
@@ -46,7 +46,7 @@ public class RealTrack implements VirtualTrack {
 
     public RealTrack(MovieBox movie, TrakBox trak, ByteChannelPool pool) {
         this.movie = movie;
-        SampleSizesBox stsz = Box.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        SampleSizesBox stsz = BoxUtil.findFirstPath(trak, SampleSizesBox.class, BoxUtil.path("mdia.minf.stbl.stsz"));
         if (stsz.getDefaultSize() == 0) {
             this.demuxer = new FramesMP4DemuxerTrack(movie, trak, null) {
                 @Override
@@ -81,9 +81,9 @@ public class RealTrack implements VirtualTrack {
         SampleEntry se = trak.getSampleEntries()[0];
         if (se instanceof VideoSampleEntry) {
             VideoSampleEntry vse = (VideoSampleEntry) se;
-            PixelAspectExt pasp = Box.findFirst(se, PixelAspectExt.class, "pasp");
+            PixelAspectExt pasp = BoxUtil.findFirst(se, PixelAspectExt.class, "pasp");
             
-            FielExtension fiel = Box.findFirst(se, FielExtension.class, "fiel");
+            FielExtension fiel = BoxUtil.findFirst(se, FielExtension.class, "fiel");
             boolean interlace = false, topField = false;
             if(fiel != null) {
                 interlace = fiel.isInterlaced();
@@ -96,9 +96,9 @@ public class RealTrack implements VirtualTrack {
             AudioSampleEntry ase = (AudioSampleEntry) se;
             ByteBuffer codecPrivate = null;
             if ("mp4a".equals(ase.getFourcc())) {
-                LeafBox lb = Box.findFirst(se, LeafBox.class, "esds");
+                LeafBox lb = BoxUtil.findFirst(se, LeafBox.class, "esds");
                 if (lb == null) {
-                    lb = Box.findFirstPath(se, LeafBox.class, new String[] { null, "esds" });
+                    lb = BoxUtil.findFirstPath(se, LeafBox.class, new String[] { null, "esds" });
                 }
                 codecPrivate = lb.getData();
             }

@@ -2,7 +2,7 @@ package org.jcodec.movtool;
 
 import java.io.File;
 
-import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.boxes.MediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
@@ -29,7 +29,7 @@ public class ChangeTimescale {
         new InplaceMP4Editor().modify(new File(args[0]), new MP4Edit() {
             public void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
-                MediaHeaderBox mdhd = Box.findFirstPath(vt, MediaHeaderBox.class, Box.path("mdia.mdhd"));
+                MediaHeaderBox mdhd = BoxUtil.findFirstPath(vt, MediaHeaderBox.class, BoxUtil.path("mdia.mdhd"));
                 int oldTs = mdhd.getTimescale();
 
                 if (oldTs > ts) {

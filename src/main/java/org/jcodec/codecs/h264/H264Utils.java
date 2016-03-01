@@ -26,6 +26,7 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -538,7 +539,7 @@ public class H264Utils {
     }
 
     public static AvcCBox parseAVCC(VideoSampleEntry vse) {
-        Box lb = Box.findFirst(vse, Box.class, "avcC");
+        Box lb = BoxUtil.findFirst(vse, Box.class, "avcC");
         if (lb instanceof AvcCBox)
             return (AvcCBox) lb;
         else {
