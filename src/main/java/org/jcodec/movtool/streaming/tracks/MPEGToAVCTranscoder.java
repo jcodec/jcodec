@@ -1,9 +1,5 @@
 package org.jcodec.movtool.streaming.tracks;
 
-import java.io.IOException;
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
@@ -14,12 +10,15 @@ import org.jcodec.codecs.mpeg12.Mpeg2Thumb4x4;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform;
+import org.jcodec.scale.Transform8Bit;
+
+import java.io.IOException;
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -34,9 +33,9 @@ import org.jcodec.scale.Transform;
 public class MPEGToAVCTranscoder {
     private VideoDecoder decoder;
     private H264Encoder encoder;
-    private Picture pic0;
-    private Picture pic1;
-    private Transform transform;
+    private Picture8Bit pic0;
+    private Picture8Bit pic1;
+    private Transform8Bit transform;
     private H264FixedRateControl rc;
     private int scaleFactor;
     private int thumbWidth;
@@ -73,14 +72,14 @@ public class MPEGToAVCTranscoder {
             int mbW = (thumbWidth + 8) >> 4;
             int mbH = (thumbHeight + 8) >> 4;
 
-            pic0 = Picture.create(mbW << 4, (mbH + 1) << 4, ColorSpace.YUV444);
+            pic0 = Picture8Bit.create(mbW << 4, (mbH + 1) << 4, ColorSpace.YUV444);
         }
-        Picture decoded = decoder.decodeFrame(src, pic0.getData());
+        Picture8Bit decoded = decoder.decodeFrame8Bit(src, pic0.getData());
         if (pic1 == null) {
-            pic1 = Picture.create(decoded.getWidth(), decoded.getHeight(), encoder.getSupportedColorSpaces()[0]);
-            transform = ColorUtil.getTransform(decoded.getColor(), encoder.getSupportedColorSpaces()[0]);
+            pic1 = Picture8Bit.create(decoded.getWidth(), decoded.getHeight(), encoder.getSupportedColorSpaces()[0]);
+            transform = ColorUtil.getTransform8Bit(decoded.getColor(), encoder.getSupportedColorSpaces()[0]);
         }
-        Picture toEnc;
+        Picture8Bit toEnc;
         if (transform != null) {
             transform.transform(decoded, pic1);
             toEnc = pic1;
@@ -91,7 +90,7 @@ public class MPEGToAVCTranscoder {
         int rate = Mpeg2AVCTrack.TARGET_RATE;
         do {
             try {
-                encoder.doEncodeFrame8Bit(Picture8Bit.fromPicture(toEnc), dst, iframe, poc, SliceType.I);
+                encoder.doEncodeFrame8Bit(toEnc, dst, iframe, poc, SliceType.I);
                 break;
             } catch (BufferOverflowException ex) {
                 Logger.warn("Abandon frame, buffer too small: " + dst.capacity());

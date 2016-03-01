@@ -1316,7 +1316,7 @@ public class TranscodeMain {
 
             Y4MDecoder frames = new Y4MDecoder(y4m);
 
-            Picture outPic = Picture.create(frames.getWidth(), frames.getHeight(), ColorSpace.YUV420);
+            Picture8Bit outPic = Picture8Bit.create(frames.getWidth(), frames.getHeight(), ColorSpace.YUV420);
 
             SeekableByteChannel sink = null;
             MP4Muxer muxer = null;
@@ -1330,18 +1330,18 @@ public class TranscodeMain {
                 muxer = MP4Muxer.createMP4MuxerToChannel(sink);
                 ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
 
-                Yuv420pToYuv422p color = new Yuv420pToYuv422p(0, 0);
+                Yuv420pToYuv422p8Bit color = new Yuv420pToYuv422p8Bit();
                 FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("apch", frames.getSize(), APPLE_PRO_RES_422,
                         fps.getNum());
                 videoTrack.setTgtChunkDuration(HALF, SEC);
-                Picture picture = Picture.create(frames.getSize().getWidth(), frames.getSize().getHeight(),
+                Picture8Bit picture = Picture8Bit.create(frames.getSize().getWidth(), frames.getSize().getHeight(),
                         ColorSpace.YUV422);
-                Picture frame;
+                Picture8Bit frame;
                 int i = 0;
                 ByteBuffer buf = ByteBuffer.allocate(frames.getSize().getWidth() * frames.getSize().getHeight() * 6);
-                while ((frame = frames.nextFrame(outPic.getData())) != null) {
+                while ((frame = frames.nextFrame8Bit(outPic.getData())) != null) {
                     color.transform(frame, picture);
-                    encoder.encodeFrame(picture, buf);
+                    encoder.encodeFrame8Bit(picture, buf);
                     // TODO: Error if chunk has more then one frame
                     videoTrack.addFrame(MP4Packet.createMP4Packet(buf, i * fps.getDen(), fps.getNum(), fps.getDen(), i,
                             true, null, 0, i * fps.getDen(), 0));
