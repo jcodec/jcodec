@@ -121,8 +121,8 @@ public class MBlockDecoderUtils {
     static void saveMvs(DeblockerInput di, int[][][] x, int mbX, int mbY) {
         for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
             for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
-                di.mvs[0][blkOffY][blkOffX] = x[0][blkInd];
-                di.mvs[1][blkOffY][blkOffX] = x[1][blkInd];
+                copyVect(di.mvs[0][blkOffY][blkOffX], x[0][blkInd]);
+                copyVect(di.mvs[1][blkOffY][blkOffX], x[1][blkInd]);
             }
         }
     }

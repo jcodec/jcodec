@@ -35,16 +35,20 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
         this.bDirectDecoder = bDirectDecoder;
     }
 
+    private int[][][] x = new int[2][16][3];
+
     public void decodeSkip(MBlock mBlock, Frame[][] refs, Picture8Bit mb, SliceType sliceType) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         int mbAddr = mapper.getAddress(mBlock.mbIdx);
 
-        int[][][] x = new int[2][16][3];
         PartPred[] pp = new PartPred[4];
 
-        for (int i = 0; i < 16; i++)
+        for (int i = 0; i < 16; i++) {
+            x[0][i][0] = x[1][i][0] = 0;
+            x[0][i][1] = x[1][i][1] = 0;
             x[0][i][2] = x[1][i][2] = -1;
+        }
 
         if (sliceType == P) {
             predictPSkip(refs, mbX, mbY, mapper.leftAvailable(mBlock.mbIdx), mapper.topAvailable(mBlock.mbIdx),
