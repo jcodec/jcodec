@@ -1,18 +1,17 @@
 package org.jcodec.codecs.vp8;
-
 import static java.nio.ByteBuffer.wrap;
 import static org.jcodec.codecs.vp8.BooleanArithmeticDecoder.leadingZeroCountInByte;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.jcodec.common.ArithmeticCoderTest;
 import org.jcodec.common.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
 public class BooleanCodingTest {
     
     @Test

@@ -1,9 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
-
-import java.nio.ByteBuffer;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
 
 public class ColorExtensionTest {
     @Test

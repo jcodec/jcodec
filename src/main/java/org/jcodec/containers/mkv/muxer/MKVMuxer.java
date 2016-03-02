@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv.muxer;
-
 import static org.jcodec.containers.mkv.MKVType.CodecID;
 import static org.jcodec.containers.mkv.MKVType.Cues;
 import static org.jcodec.containers.mkv.MKVType.DateUTC;
@@ -27,13 +26,6 @@ import static org.jcodec.containers.mkv.MKVType.Video;
 import static org.jcodec.containers.mkv.MKVType.WritingApp;
 import static org.jcodec.containers.mkv.MKVType.createByType;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mkv.CuesFactory;
@@ -48,6 +40,13 @@ import org.jcodec.containers.mkv.boxes.EbmlString;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.muxer.MKVMuxerTrack.MKVMuxerTrackType;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

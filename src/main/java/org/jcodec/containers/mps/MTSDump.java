@@ -1,16 +1,5 @@
 package org.jcodec.containers.mps;
-
 import static java.util.Arrays.asList;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
@@ -19,11 +8,19 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.ToJSON;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

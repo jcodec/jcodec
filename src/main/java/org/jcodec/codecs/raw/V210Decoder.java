@@ -1,5 +1,4 @@
 package org.jcodec.codecs.raw;
-
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 
@@ -33,7 +32,7 @@ public class V210Decoder {
     }
 
     public Picture8Bit decode(byte[] data) {
-        ByteBuffer littleEndian = ByteBuffer.wrap(data).order(LITTLE_ENDIAN);
+        ByteBuffer littleEndian = (ByteBuffer) ByteBuffer.wrap(data).order(LITTLE_ENDIAN);
         IntBuffer dat = littleEndian.asIntBuffer();
         ByteBuffer y = ByteBuffer.wrap(new byte[width * height]);
         ByteBuffer cb = ByteBuffer.wrap(new byte[width * height / 2]);

@@ -1,6 +1,7 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.io.File;
 
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -8,9 +9,12 @@ import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+
+import java.io.File;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -33,7 +37,7 @@ public class SetPAR {
             public void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
                 vt.setPAR(newPAR);
-                Box box = BoxUtil.findFirstPath(vt, SampleDescriptionBox.class, BoxUtil.path("mdia.minf.stbl.stsd")).getBoxes()
+                Box box = NodeBox.findFirstPath(vt, SampleDescriptionBox.class, Box.path("mdia.minf.stbl.stsd")).getBoxes()
                         .get(0);
                 if (box != null && (box instanceof VideoSampleEntry)) {
                     VideoSampleEntry vs = (VideoSampleEntry) box;

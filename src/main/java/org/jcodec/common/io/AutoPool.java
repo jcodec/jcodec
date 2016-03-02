@@ -1,5 +1,9 @@
 package org.jcodec.common.io;
 
+import static java.lang.System.currentTimeMillis;
+
+import java.lang.Runnable;
+import java.lang.Thread;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -7,8 +11,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-
-import static java.lang.System.currentTimeMillis;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

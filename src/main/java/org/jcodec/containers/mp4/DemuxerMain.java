@@ -1,5 +1,4 @@
 package org.jcodec.containers.mp4;
-
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.readableFileChannel;
@@ -7,20 +6,6 @@ import static org.jcodec.common.io.NIOUtils.rwChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.List;
 
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.wav.WavHeader;
@@ -32,7 +17,6 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
-import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
@@ -42,6 +26,22 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
 import org.jcodec.platform.Platform;
 import org.jcodec.scale.Yuv422pToRgb;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -157,7 +157,7 @@ public class DemuxerMain {
         FileChannel ch = _in.getChannel();
         MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(writableChannel(out));
         PCMMP4MuxerTrack track = muxer.addPCMTrack(48000, 1, 3,
-                MP4Muxer.audioSampleEntry("in24", 1, 3, 1, 48000, Endian.LITTLE_ENDIAN));
+                MP4Muxer.audioSampleEntry("in24", 1, 3, 1, 48000, ByteOrder.LITTLE_ENDIAN));
 
         ByteBuffer buffer = ByteBuffer.allocate(3 * 24000);
         while (ch.read(buffer) != -1) {

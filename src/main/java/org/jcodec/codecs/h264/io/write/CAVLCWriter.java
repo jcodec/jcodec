@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.io.write;
-
 import static org.jcodec.common.tools.Debug.trace;
 
 import org.jcodec.api.NotImplementedException;

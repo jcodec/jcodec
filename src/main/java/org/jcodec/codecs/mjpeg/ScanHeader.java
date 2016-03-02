@@ -1,6 +1,4 @@
 package org.jcodec.codecs.mjpeg;
-
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**

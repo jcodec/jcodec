@@ -1,11 +1,11 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.common.JCodecUtil2;
+import org.jcodec.common.io.NIOUtils;
+
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.LinkedList;
-
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -58,11 +58,11 @@ public class FileTypeBox extends Box {
     }
 
     public void doWrite(ByteBuffer out) {
-        out.put(JCodecUtil.asciiString(majorBrand));
+        out.put(JCodecUtil2.asciiString(majorBrand));
         out.putInt(minorVersion);
 
         for (String string : compBrands) {
-            out.put(JCodecUtil.asciiString(string));
+            out.put(JCodecUtil2.asciiString(string));
         }
     }
 }

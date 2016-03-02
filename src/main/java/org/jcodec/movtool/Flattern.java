@@ -1,18 +1,13 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.IllegalArgumentException;
 
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.ChunkWriter;
@@ -24,9 +19,17 @@ import org.jcodec.containers.mp4.boxes.DataRefBox;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.UrlBox;
 import org.jcodec.platform.Platform;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -161,7 +164,7 @@ public class Flattern {
         TrakBox[] tracks = movie.getTracks();
         SeekableByteChannel[][] result = new SeekableByteChannel[tracks.length][];
         for (int i = 0; i < tracks.length; i++) {
-            DataRefBox drefs = BoxUtil.findFirstPath(tracks[i], DataRefBox.class, BoxUtil.path("mdia.minf.dinf.dref"));
+            DataRefBox drefs = NodeBox.findFirstPath(tracks[i], DataRefBox.class, Box.path("mdia.minf.dinf.dref"));
             if (drefs == null) {
                 throw new RuntimeException("No data references");
             }

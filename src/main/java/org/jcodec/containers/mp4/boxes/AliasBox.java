@@ -1,15 +1,16 @@
 package org.jcodec.containers.mp4.boxes;
 
+import static org.jcodec.common.JCodecUtil2.asciiString;
+
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -126,7 +127,7 @@ public class AliasBox extends FullBox {
         super.doWrite(out);
         if ((flags & 0x1) != 0) // self ref
             return;
-        out.put(JCodecUtil.asciiString(type), 0, 4);
+        out.put(asciiString(type), 0, 4);
         out.putShort(recordSize);
         out.putShort(version);
         out.putShort(kind);
@@ -138,8 +139,8 @@ public class AliasBox extends FullBox {
         NIOUtils.writePascalStringL(out, fileName, 63);
         out.putInt(fileNumber);
         out.putInt(createdLocalDate);
-        out.put(JCodecUtil.asciiString(fileTypeName), 0, 4);
-        out.put(JCodecUtil.asciiString(creatorName), 0, 4);
+        out.put(asciiString(fileTypeName), 0, 4);
+        out.put(asciiString(creatorName), 0, 4);
         out.putShort(nlvlFrom);
         out.putShort(nlvlTo);
         out.putInt(volumeAttributes);

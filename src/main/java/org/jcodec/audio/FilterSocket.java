@@ -1,9 +1,7 @@
 package org.jcodec.audio;
-
 import org.jcodec.platform.Platform;
 
-import java.lang.IllegalAccessException; import java.lang.StackTraceElement;
-
+import java.lang.IllegalArgumentException;
 import java.nio.FloatBuffer;
 
 /**

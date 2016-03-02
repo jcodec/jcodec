@@ -1,12 +1,10 @@
 package org.jcodec.common;
-
 import static org.jcodec.common.tools.MathUtil.clip;
+
+import org.jcodec.api.NotSupportedException;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-
-import org.jcodec.api.NotSupportedException;
-import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

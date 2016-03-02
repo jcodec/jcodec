@@ -1,8 +1,7 @@
 package org.jcodec.codecs.common.biari;
+import org.jcodec.codecs.vpx.VPXConst;
 
 import java.nio.ByteBuffer;
-
-import org.jcodec.codecs.vpx.VPXConst;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

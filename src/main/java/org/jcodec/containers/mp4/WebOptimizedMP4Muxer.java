@@ -1,8 +1,4 @@
 package org.jcodec.containers.mp4;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
@@ -13,6 +9,9 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

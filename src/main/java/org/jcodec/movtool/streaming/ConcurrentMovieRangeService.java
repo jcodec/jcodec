@@ -1,7 +1,16 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.IllegalArgumentException;
+
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.BaseInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.InterruptedException;
+import java.lang.Runnable;
+import java.lang.Thread;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.platform.BaseInputStream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

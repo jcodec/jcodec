@@ -1,8 +1,6 @@
 package org.jcodec.codecs.h264.decode.aso;
+import static org.jcodec.codecs.h264.io.model.SeqParameterSet.getPicHeightInMbs;
 
-import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
-
-import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
@@ -32,7 +30,7 @@ public class MapManager {
         if (numGroups > 1) {
             int[] map;
             int picWidthInMbs = sps.pic_width_in_mbs_minus1 + 1;
-            int picHeightInMbs = getPicHeightInMbs(sps);
+            int picHeightInMbs = SeqParameterSet.getPicHeightInMbs(sps);
 
             if (pps.slice_group_map_type == 0) {
                 int[] runLength = new int[numGroups];
@@ -90,7 +88,7 @@ public class MapManager {
             prevSliceGroupChangeCycle = sh.slice_group_change_cycle;
 
             int picWidthInMbs = sps.pic_width_in_mbs_minus1 + 1;
-            int picHeightInMbs = getPicHeightInMbs(sps);
+            int picHeightInMbs = SeqParameterSet.getPicHeightInMbs(sps);
             int picSizeInMapUnits = picWidthInMbs * picHeightInMbs;
             int mapUnitsInSliceGroup0 = sh.slice_group_change_cycle * (pps.slice_group_change_rate_minus1 + 1);
             mapUnitsInSliceGroup0 = mapUnitsInSliceGroup0 > picSizeInMapUnits ? picSizeInMapUnits

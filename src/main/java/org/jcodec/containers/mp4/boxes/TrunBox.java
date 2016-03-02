@@ -1,5 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
-
+import java.lang.IllegalArgumentException;
+import java.lang.IllegalStateException;
 import java.nio.ByteBuffer;
 import java.util.List;
 

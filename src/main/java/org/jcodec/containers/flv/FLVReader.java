@@ -1,14 +1,4 @@
 package org.jcodec.containers.flv;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.io.NIOUtils;
@@ -22,6 +12,16 @@ import org.jcodec.containers.flv.FLVTag.TagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
 import org.jcodec.platform.Platform;
+
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

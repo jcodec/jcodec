@@ -1,6 +1,36 @@
 package org.jcodec.containers.mp4.boxes.channel;
 
-import static org.jcodec.containers.mp4.boxes.channel.Label.*;
+import static org.jcodec.common.model.Label.Ambisonic_W;
+import static org.jcodec.common.model.Label.Ambisonic_X;
+import static org.jcodec.common.model.Label.Ambisonic_Y;
+import static org.jcodec.common.model.Label.Ambisonic_Z;
+import static org.jcodec.common.model.Label.Center;
+import static org.jcodec.common.model.Label.CenterSurround;
+import static org.jcodec.common.model.Label.HeadphonesLeft;
+import static org.jcodec.common.model.Label.HeadphonesRight;
+import static org.jcodec.common.model.Label.LFE2;
+import static org.jcodec.common.model.Label.LFEScreen;
+import static org.jcodec.common.model.Label.Left;
+import static org.jcodec.common.model.Label.LeftCenter;
+import static org.jcodec.common.model.Label.LeftSurround;
+import static org.jcodec.common.model.Label.LeftTotal;
+import static org.jcodec.common.model.Label.MS_Mid;
+import static org.jcodec.common.model.Label.MS_Side;
+import static org.jcodec.common.model.Label.Mono;
+import static org.jcodec.common.model.Label.RearSurroundLeft;
+import static org.jcodec.common.model.Label.RearSurroundRight;
+import static org.jcodec.common.model.Label.Right;
+import static org.jcodec.common.model.Label.RightCenter;
+import static org.jcodec.common.model.Label.RightSurround;
+import static org.jcodec.common.model.Label.RightTotal;
+import static org.jcodec.common.model.Label.TopBackCenter;
+import static org.jcodec.common.model.Label.TopBackLeft;
+import static org.jcodec.common.model.Label.TopBackRight;
+import static org.jcodec.common.model.Label.TopCenterSurround;
+import static org.jcodec.common.model.Label.XY_X;
+import static org.jcodec.common.model.Label.XY_Y;
+
+import org.jcodec.common.model.Label;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,23 +1,21 @@
 package org.jcodec.containers.mp4.demuxer;
-
+import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
+import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
+import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
 import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
-import static org.jcodec.containers.mp4.BoxUtil.*;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
@@ -25,7 +23,9 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.platform.Platform;
 
-import static org.jcodec.common.DemuxerTrackMeta.Type.*;
+import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -63,10 +63,10 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         super(trak);
         this.input = input;
         this.movie = mov;
-        SampleSizesBox stsz = BoxUtil.findFirstPath(trak, SampleSizesBox.class, BoxUtil.path("mdia.minf.stbl.stsz"));
-        SyncSamplesBox stss = BoxUtil.findFirstPath(trak, SyncSamplesBox.class, BoxUtil.path("mdia.minf.stbl.stss"));
-        SyncSamplesBox stps = BoxUtil.findFirstPath(trak, SyncSamplesBox.class, BoxUtil.path("mdia.minf.stbl.stps"));
-        CompositionOffsetsBox ctts = BoxUtil.findFirstPath(trak, CompositionOffsetsBox.class, BoxUtil.path("mdia.minf.stbl.ctts"));
+        SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        SyncSamplesBox stss = NodeBox.findFirstPath(trak, SyncSamplesBox.class, Box.path("mdia.minf.stbl.stss"));
+        SyncSamplesBox stps = NodeBox.findFirstPath(trak, SyncSamplesBox.class, Box.path("mdia.minf.stbl.stps"));
+        CompositionOffsetsBox ctts = NodeBox.findFirstPath(trak, CompositionOffsetsBox.class, Box.path("mdia.minf.stbl.ctts"));
         compOffsets = ctts == null ? null : ctts.getEntries();
         if (stss != null) {
             syncSamples = stss.getSyncSamples();
@@ -240,7 +240,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         DemuxerTrackMeta meta = new DemuxerTrackMeta(t, getCodec(), seekFrames, sizes.length, (double) duration / timescale,
                 box.getCodedSize(), getCodecPrivate());
         if(type == TrackType.VIDEO) {
-            PixelAspectExt pasp = BoxUtil.findFirst(getSampleEntries()[0], PixelAspectExt.class, "pasp");
+            PixelAspectExt pasp = NodeBox.findFirst(getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if(pasp != null)
                 meta.setPixelAspectRatio(pasp.getRational());
         }

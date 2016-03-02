@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVType.Block;
 import static org.jcodec.containers.mkv.MKVType.BlockGroup;
@@ -11,15 +10,7 @@ import static org.jcodec.containers.mkv.MKVType.TrackEntry;
 import static org.jcodec.containers.mkv.MKVType.TrackNumber;
 import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.findAllTree;
-import static org.jcodec.containers.mkv.MKVType.findFirstTree;
 import static org.jcodec.containers.mkv.MKVType.findFirst;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.List;
 
 import org.jcodec.codecs.vp8.VP8Decoder;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -33,6 +24,13 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.List;
 public class BlockOrderingTest {
     
     @Test

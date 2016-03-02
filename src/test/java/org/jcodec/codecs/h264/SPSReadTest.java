@@ -1,17 +1,19 @@
 package org.jcodec.codecs.h264;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.nio.ByteBuffer;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.VUIParameters;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Assert;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.nio.ByteBuffer;
 
 public class SPSReadTest {
 

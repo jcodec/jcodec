@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.containers.mkv.MKVType.Seek;
 import static org.jcodec.containers.mkv.MKVType.SeekHead;
 import static org.jcodec.containers.mkv.MKVType.SeekID;
@@ -7,15 +6,16 @@ import static org.jcodec.containers.mkv.MKVType.SeekPosition;
 import static org.jcodec.containers.mkv.MKVType.createByType;
 import static org.jcodec.containers.mkv.boxes.EbmlUint.calculatePayloadSize;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlBin;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.util.EbmlUtil;
+
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License

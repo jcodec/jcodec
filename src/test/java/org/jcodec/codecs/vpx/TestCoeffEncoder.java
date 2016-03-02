@@ -1,8 +1,6 @@
 package org.jcodec.codecs.vpx;
-
-import junit.framework.Assert;
-
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestCoeffEncoder {

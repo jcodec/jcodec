@@ -1,10 +1,9 @@
 package org.jcodec.codecs.mpeg12;
+import org.jcodec.containers.mps.MPEGPacket;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-
-import org.jcodec.containers.mps.MPSDemuxer.MPEGPacket;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

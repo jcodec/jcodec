@@ -1,21 +1,22 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+
+import org.jcodec.common.Assert;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.movtool.streaming.VirtualPacket;
+import org.jcodec.movtool.streaming.tracks.MPSTrackFactory.Stream;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.common.Assert;
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mps.MPSDemuxer;
-import org.jcodec.containers.mps.MPSUtils;
-import org.jcodec.movtool.streaming.VirtualPacket;
-import org.jcodec.movtool.streaming.tracks.MPSTrackFactory.Stream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

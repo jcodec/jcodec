@@ -1,13 +1,11 @@
 package org.jcodec.codecs.h264;
-
-import java.nio.ByteBuffer;
-
-import junit.framework.Assert;
-
 import org.jcodec.codecs.common.biari.MDecoder;
 import org.jcodec.codecs.h264.io.CABAC;
 import org.jcodec.codecs.h264.io.model.SliceType;
+import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
 
 public class MDecoderTest {
 

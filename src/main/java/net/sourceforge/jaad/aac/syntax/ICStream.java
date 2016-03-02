@@ -1,6 +1,6 @@
 package net.sourceforge.jaad.aac.syntax;
-
 import java.util.Arrays;
+import java.util.logging.Level;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.ChannelConfiguration;
 import net.sourceforge.jaad.aac.DecoderConfig;
@@ -9,8 +9,6 @@ import net.sourceforge.jaad.aac.gain.GainControl;
 import net.sourceforge.jaad.aac.huffman.HCB;
 import net.sourceforge.jaad.aac.huffman.Huffman;
 import net.sourceforge.jaad.aac.tools.TNS;
-import java.util.logging.Level;
-import net.sourceforge.jaad.aac.Decoder;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

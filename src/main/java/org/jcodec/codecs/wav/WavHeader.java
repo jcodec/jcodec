@@ -1,4 +1,10 @@
 package org.jcodec.codecs.wav;
+import org.jcodec.api.UnhandledStateException;
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.JCodecUtil2;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.ChannelLabel;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,13 +15,6 @@ import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.jcodec.api.UnhandledStateException;
-import org.jcodec.common.AudioFormat;
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.IOUtils;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.ChannelLabel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -306,14 +305,14 @@ public class WavHeader {
             chunkSize = 40;
         }
 
-        bb.put(JCodecUtil.asciiString("RIFF"));
+        bb.put(JCodecUtil2.asciiString("RIFF"));
         bb.putInt((int) chunkSize);
-        bb.put(JCodecUtil.asciiString("WAVE"));
+        bb.put(JCodecUtil2.asciiString("WAVE"));
 
-        bb.put(JCodecUtil.asciiString("fmt "));
+        bb.put(JCodecUtil2.asciiString("fmt "));
         bb.putInt(fmt.size());
         fmt.put(bb);
-        bb.put(JCodecUtil.asciiString("data"));
+        bb.put(JCodecUtil2.asciiString("data"));
         if (dataSize <= 0xffffffffL) {
             bb.putInt((int) dataSize);
         } else {

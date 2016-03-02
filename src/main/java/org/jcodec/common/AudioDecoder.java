@@ -1,9 +1,8 @@
 package org.jcodec.common;
+import org.jcodec.common.model.AudioBuffer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.model.AudioBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

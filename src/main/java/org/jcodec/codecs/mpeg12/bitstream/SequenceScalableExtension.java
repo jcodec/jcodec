@@ -1,13 +1,26 @@
 package org.jcodec.codecs.mpeg12.bitstream;
-
-import static org.jcodec.codecs.mpeg12.MPEGConst.*;
-
-import java.nio.ByteBuffer;
+import static org.jcodec.codecs.mpeg12.MPEGConst.IntraCoded;
+import static org.jcodec.codecs.mpeg12.MPEGConst.PredictiveCoded;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValB;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValBSpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValI;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValISpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValP;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValPSpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeB;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeBSpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeI;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeISpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeP;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypePSpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeSNR;
 
 import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.VLC;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

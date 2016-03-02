@@ -1,13 +1,12 @@
 package org.jcodec.containers.mps.index;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 import org.jcodec.containers.mps.index.MTSIndex.MTSProgram;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

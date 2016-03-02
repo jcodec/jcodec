@@ -1,7 +1,7 @@
 package org.jcodec.codecs.mpeg12;
-
 import java.io.File;
 import java.io.IOException;
+import java.lang.System;
 import java.util.Arrays;
 
 /**

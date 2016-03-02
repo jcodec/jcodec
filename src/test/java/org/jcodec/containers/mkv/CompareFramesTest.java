@@ -1,16 +1,8 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
 import static org.jcodec.containers.mkv.MKVType.findAllTree;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.List;
 
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
@@ -18,6 +10,13 @@ import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.List;
 
 public class CompareFramesTest {
 

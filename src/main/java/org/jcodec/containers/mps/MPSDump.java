@@ -1,16 +1,6 @@
 package org.jcodec.containers.mps;
-
 import static java.util.Arrays.asList;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.Arrays;
-import java.util.HashMap;
 
 import org.jcodec.codecs.mpeg12.MPEGUtil;
 import org.jcodec.codecs.mpeg12.bitstream.CopyrightExtension;
@@ -30,8 +20,19 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 import org.jcodec.platform.Platform;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.IllegalAccessException;
+import java.lang.IllegalArgumentException;
+import java.lang.StringBuilder;
+import java.lang.System;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.util.HashMap;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

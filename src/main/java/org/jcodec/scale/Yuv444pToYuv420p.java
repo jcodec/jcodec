@@ -1,8 +1,7 @@
 package org.jcodec.scale;
+import static java.lang.System.arraycopy;
 
 import org.jcodec.common.model.Picture;
-
-import static java.lang.System.arraycopy;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

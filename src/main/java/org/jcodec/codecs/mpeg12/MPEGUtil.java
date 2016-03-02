@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg12;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 

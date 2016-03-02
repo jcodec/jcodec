@@ -1,11 +1,5 @@
 package org.jcodec.containers.mps;
-
 import static org.jcodec.common.io.NIOUtils.getRel;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.EnumSet;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
@@ -15,6 +9,10 @@ import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 import org.jcodec.containers.mps.psi.PSISection;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

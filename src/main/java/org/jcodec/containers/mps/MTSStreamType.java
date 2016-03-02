@@ -1,5 +1,4 @@
 package org.jcodec.containers.mps;
-
 import java.util.ArrayList;
 import java.util.List;
 

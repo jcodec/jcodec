@@ -1,11 +1,12 @@
 package org.jcodec.codecs.mjpeg;
-
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.dct.DCT;
 import org.jcodec.common.dct.IntDCT;
 import org.jcodec.common.dct.SlowDCT;
 import org.jcodec.common.tools.Debug;
 import org.jcodec.platform.Platform;
+
+import java.lang.System;
 
 public class VerifyDCT extends DCT {
 

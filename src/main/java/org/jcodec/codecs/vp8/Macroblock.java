@@ -1,15 +1,14 @@
 package org.jcodec.codecs.vp8;
-
 import static org.jcodec.codecs.vp8.VP8Util.PRED_BLOCK_127;
 import static org.jcodec.codecs.vp8.VP8Util.pickDefaultPrediction;
 
-import java.util.Arrays;
-
 import org.jcodec.api.NotImplementedException;
 import org.jcodec.api.NotSupportedException;
-import org.jcodec.codecs.vp8.VP8Util.PLANE;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
+
+import java.lang.System;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

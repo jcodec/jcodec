@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg12.bitstream;
-
 import java.nio.ByteBuffer;
 
 /**

@@ -1,19 +1,14 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static org.jcodec.containers.mp4.TrackType.SOUND;
 import static org.jcodec.containers.mp4.TrackType.TIMECODE;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.io.NIOUtils;
@@ -22,7 +17,7 @@ import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
-import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.ChannelBox;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ClearApertureBox;
@@ -35,7 +30,6 @@ import org.jcodec.containers.mp4.boxes.EncodedPixelBox;
 import org.jcodec.containers.mp4.boxes.GenericMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.Header;
-import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.MediaBox;
 import org.jcodec.containers.mp4.boxes.MediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
@@ -57,11 +51,17 @@ import org.jcodec.containers.mp4.boxes.TimecodeMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
-import org.jcodec.containers.mp4.boxes.channel.ChannelUtils;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.movtool.streaming.VirtualMP4Movie.PacketChunk;
 import org.jcodec.movtool.streaming.VirtualTrack.VirtualEdit;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -198,7 +198,7 @@ public class MovieHelper {
             }
 
             ChannelBox chan = ChannelBox.createChannelBox();
-            ChannelUtils.setLabels(ss.getChannelLabels(), chan);
+            AudioSampleEntry.setLabels(ss.getChannelLabels(), chan);
             vse.add(chan);
         }
 

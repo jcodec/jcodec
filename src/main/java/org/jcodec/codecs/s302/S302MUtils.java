@@ -1,5 +1,4 @@
 package org.jcodec.codecs.s302;
-
 import org.jcodec.common.model.ChannelLabel;
 
 /**

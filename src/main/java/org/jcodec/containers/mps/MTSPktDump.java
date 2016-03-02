@@ -1,11 +1,4 @@
 package org.jcodec.containers.mps;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.HashMap;
-
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntIntMap;
 import org.jcodec.common.io.NIOUtils;
@@ -14,6 +7,12 @@ import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

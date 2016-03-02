@@ -1,5 +1,4 @@
 package net.sourceforge.jaad.aac.sbr;
-
 import java.util.Arrays;
 
 /**

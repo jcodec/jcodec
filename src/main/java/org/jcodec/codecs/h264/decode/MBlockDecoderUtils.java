@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.decode;
-
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.ArrayUtil.shiftLeft1;
 import static org.jcodec.common.tools.MathUtil.clip;

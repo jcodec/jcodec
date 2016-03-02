@@ -1,10 +1,6 @@
 package org.jcodec.codecs.h264.decode;
-
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
 import static org.jcodec.common.tools.MathUtil.wrap;
-
-import java.util.Arrays;
-import java.util.Comparator;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -13,6 +9,9 @@ import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.platform.Platform;
+
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Contains reference picture list management logic

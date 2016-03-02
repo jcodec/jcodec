@@ -1,12 +1,6 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.List;
 
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.model.Packet;
@@ -17,6 +11,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.List;
 
 public class MKVDemuxerTest {
     MKVDemuxer dem = null;

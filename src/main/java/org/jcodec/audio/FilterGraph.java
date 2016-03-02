@@ -1,11 +1,11 @@
 package org.jcodec.audio;
+import org.jcodec.audio.Audio.DummyFilter;
 
+import java.lang.IllegalArgumentException;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.jcodec.audio.Audio.DummyFilter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -1,10 +1,8 @@
 package org.jcodec.containers.mkv.boxes;
-
 import static org.jcodec.containers.mkv.MKVType.Duration;
 import static org.jcodec.containers.mkv.MKVType.createByType;
-import junit.framework.Assert;
 
-import org.jcodec.containers.mkv.boxes.EbmlFloat;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class EbmlFloatTest {

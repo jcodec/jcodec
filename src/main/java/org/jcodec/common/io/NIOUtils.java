@@ -1,7 +1,10 @@
 package org.jcodec.common.io;
 
 import static java.lang.Math.min;
-import static org.jcodec.common.JCodecUtil.asciiString;
+
+import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.AutoFileChannelWrapper;
+import org.jcodec.platform.Platform;
 
 import java.io.Closeable;
 import java.io.File;
@@ -20,11 +23,6 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
-
-import org.jcodec.common.ArrayUtil;
-import org.jcodec.common.AutoFileChannelWrapper;
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -228,9 +226,18 @@ public class NIOUtils {
         skip(buffer, maxLen - string.length());
     }
 
+    public static byte[] asciiString(String fourcc) {
+        char[] ch = fourcc.toCharArray();
+        byte[] result = new byte[ch.length];
+        for (int i = 0; i < ch.length; i++) {
+            result[i] = (byte) ch[i];
+        }
+        return result;
+    }
+    
     public static void writePascalString(ByteBuffer buffer, String name) {
         buffer.put((byte) name.length());
-        buffer.put(JCodecUtil.asciiString(name));
+        buffer.put(asciiString(name));
     }
 
     public static String readPascalString(ByteBuffer buffer) {

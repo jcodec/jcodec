@@ -1,10 +1,9 @@
 package org.jcodec.testing;
-
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
-import static org.jcodec.common.JCodecUtil.getAsIntArray;
 
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
@@ -22,6 +21,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.Process;
+import java.lang.Runtime;
+import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,13 +137,13 @@ public class TestTool {
             for (Picture8Bit pic : decodedPics) {
                 pic = pic.cropped();
                 boolean equals = Platform.arrayEqualsByte(
-                        toByteArrayShifted(getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0))),
+                        toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0))),
                         pic.getPlaneData(0));
                 equals &= Platform.arrayEqualsByte(
-                        toByteArrayShifted(getAsIntArray(yuv, pic.getPlaneWidth(1) * pic.getPlaneHeight(1))),
+                        toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, pic.getPlaneWidth(1) * pic.getPlaneHeight(1))),
                         pic.getPlaneData(1));
                 equals &= Platform.arrayEqualsByte(
-                        toByteArrayShifted(getAsIntArray(yuv, pic.getPlaneWidth(2) * pic.getPlaneHeight(2))),
+                        toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, pic.getPlaneWidth(2) * pic.getPlaneHeight(2))),
                         pic.getPlaneData(2));
                 if (!equals)
                     diff(seqNo);

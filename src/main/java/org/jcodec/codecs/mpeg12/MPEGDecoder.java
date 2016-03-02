@@ -1,6 +1,20 @@
 package org.jcodec.codecs.mpeg12;
-
-import static org.jcodec.codecs.mpeg12.MPEGConst.*;
+import static org.jcodec.codecs.mpeg12.MPEGConst.BLOCK_TO_CC;
+import static org.jcodec.codecs.mpeg12.MPEGConst.EXTENSION_START_CODE;
+import static org.jcodec.codecs.mpeg12.MPEGConst.GROUP_START_CODE;
+import static org.jcodec.codecs.mpeg12.MPEGConst.PICTURE_START_CODE;
+import static org.jcodec.codecs.mpeg12.MPEGConst.SEQUENCE_HEADER_CODE;
+import static org.jcodec.codecs.mpeg12.MPEGConst.SLICE_START_CODE_FIRST;
+import static org.jcodec.codecs.mpeg12.MPEGConst.SLICE_START_CODE_LAST;
+import static org.jcodec.codecs.mpeg12.MPEGConst.SQUEEZE_X;
+import static org.jcodec.codecs.mpeg12.MPEGConst.SQUEEZE_Y;
+import static org.jcodec.codecs.mpeg12.MPEGConst.USER_DATA_START_CODE;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcAddressIncrement;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcCBP;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcCoeff0;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcCoeff1;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcDCSizeChroma;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcDCSizeLuma;
 import static org.jcodec.codecs.mpeg12.MPEGUtil.gotoNextMarker;
 import static org.jcodec.codecs.mpeg12.MPEGUtil.nextSegment;
 import static org.jcodec.codecs.mpeg12.bitstream.PictureCodingExtension.Frame;
@@ -10,10 +24,6 @@ import static org.jcodec.codecs.mpeg12.bitstream.SequenceExtension.Chroma444;
 import static org.jcodec.common.model.ColorSpace.YUV420;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.model.ColorSpace.YUV444;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 import org.jcodec.codecs.mpeg12.MPEGConst.MBType;
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
@@ -31,6 +41,10 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

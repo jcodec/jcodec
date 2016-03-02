@@ -1,10 +1,9 @@
 package org.jcodec.containers.mkv.boxes;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mkv.util.EbmlUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mkv.util.EbmlUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License

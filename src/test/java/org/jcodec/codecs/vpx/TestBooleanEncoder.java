@@ -1,11 +1,10 @@
 package org.jcodec.codecs.vpx;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
 
 public class TestBooleanEncoder {
 

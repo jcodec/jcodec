@@ -1,8 +1,8 @@
 package org.jcodec.common.tools;
-
-import java.nio.ShortBuffer;
-
 import org.jcodec.common.ArrayUtil;
+
+import java.lang.System;
+import java.nio.ShortBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

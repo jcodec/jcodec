@@ -1,16 +1,15 @@
 package org.jcodec.codecs.wav;
+import org.jcodec.audio.AudioSink;
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.AudioUtil;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-
-import org.jcodec.audio.AudioSink;
-import org.jcodec.common.AudioFormat;
-import org.jcodec.common.AudioUtil;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

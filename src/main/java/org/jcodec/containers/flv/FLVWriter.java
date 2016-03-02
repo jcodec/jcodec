@@ -1,11 +1,10 @@
 package org.jcodec.containers.flv;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.flv.FLVTag.Type;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

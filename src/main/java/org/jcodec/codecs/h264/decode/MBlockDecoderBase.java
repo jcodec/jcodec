@@ -1,13 +1,10 @@
 package org.jcodec.codecs.h264.decode;
-
 import static org.jcodec.codecs.h264.H264Const.BLK8x8_BLOCKS;
 import static org.jcodec.codecs.h264.H264Const.BLK_8x8_MB_OFF_CHROMA;
 import static org.jcodec.codecs.h264.H264Const.BLK_INV_MAP;
 import static org.jcodec.codecs.h264.H264Const.QP_SCALE_CR;
 import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
 import static org.jcodec.common.model.ColorSpace.MONO;
-
-import java.util.Arrays;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
@@ -16,6 +13,8 @@ import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
+
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

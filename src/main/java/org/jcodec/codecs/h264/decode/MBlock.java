@@ -1,9 +1,8 @@
 package org.jcodec.codecs.h264.decode;
-
-import java.util.Arrays;
-
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.model.ColorSpace;
+
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

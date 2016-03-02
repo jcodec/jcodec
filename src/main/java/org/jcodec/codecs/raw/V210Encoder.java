@@ -1,5 +1,4 @@
 package org.jcodec.codecs.raw;
-
 import static java.lang.System.arraycopy;
 
 import org.jcodec.common.model.Picture8Bit;

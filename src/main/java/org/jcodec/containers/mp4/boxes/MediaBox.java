@@ -1,7 +1,5 @@
 package org.jcodec.containers.mp4.boxes;
 
-import org.jcodec.containers.mp4.BoxUtil;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -24,6 +22,6 @@ public class MediaBox extends NodeBox {
     }
 
     public MediaInfoBox getMinf() {
-        return BoxUtil.findFirst(this, MediaInfoBox.class, "minf");
+        return NodeBox.findFirst(this, MediaInfoBox.class, "minf");
     }
 }

@@ -1,13 +1,11 @@
 package net.sourceforge.jaad.aac.tools;
-
+import java.util.logging.Level;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
-import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
-
-import java.util.logging.Level;
+import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

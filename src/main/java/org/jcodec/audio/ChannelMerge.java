@@ -1,9 +1,9 @@
 package org.jcodec.audio;
-
-import java.nio.FloatBuffer;
-
 import org.jcodec.common.Assert;
 import org.jcodec.common.AudioFormat;
+
+import java.lang.IllegalArgumentException;
+import java.nio.FloatBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

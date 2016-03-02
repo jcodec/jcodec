@@ -1,13 +1,11 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -18,13 +16,18 @@ import org.jcodec.containers.mp4.WebOptimizedMP4Muxer;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.TimecodeMP4DemuxerTrack;
 import org.jcodec.containers.mp4.muxer.AbstractMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

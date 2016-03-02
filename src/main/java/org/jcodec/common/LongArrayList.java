@@ -1,8 +1,8 @@
 package org.jcodec.common;
 
-import java.util.Arrays;
-
 import static java.lang.System.arraycopy;
+
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
