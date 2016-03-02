@@ -15,7 +15,10 @@ import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
 import org.jcodec.common.Assert;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -210,14 +213,14 @@ public class VP8Decoder {
 
     }
 
-    public Picture getPicture() {
-        Picture p = Picture.create(width, height, ColorSpace.YUV420);
+    public Picture8Bit getPicture8Bit() {
+        Picture8Bit p = Picture8Bit.create(width, height, ColorSpace.YUV420);
 
-        int[] luma = p.getPlaneData(0);
+        byte[] luma = p.getPlaneData(0);
         // int strideLuma = p.getPlaneWidth(0);
 
-        int[] cb = p.getPlaneData(1);
-        int[] cr = p.getPlaneData(2);
+        byte[] cb = p.getPlaneData(1);
+        byte[] cr = p.getPlaneData(2);
         // int strideChroma = p.getPlaneWidth(1);
         int mbWidth = getMacroblockCount(width);
         int mbHeight = getMacroblockCount(height);
@@ -238,7 +241,7 @@ public class VP8Decoder {
                                     continue;
 
                                 int yy = mb.ySubblocks[lumaRow][lumaCol].val[lumaPRow * 4 + lumaPCol];
-                                luma[strideLuma * y + x] = yy;
+                                luma[strideLuma * y + x] = (byte)(yy - 128);
                             }
 
                 for (int chromaRow = 0; chromaRow < 2; chromaRow++)
@@ -252,8 +255,8 @@ public class VP8Decoder {
 
                                 int u = mb.uSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
                                 int v = mb.vSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
-                                cb[strideChroma * y + x] = u;
-                                cr[strideChroma * y + x] = v;
+                                cb[strideChroma * y + x] = (byte)(u - 128);
+                                cr[strideChroma * y + x] = (byte)(v - 128);
                             }
             }
         }

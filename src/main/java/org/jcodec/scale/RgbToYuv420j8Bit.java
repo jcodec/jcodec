@@ -22,6 +22,7 @@ public class RgbToYuv420j8Bit implements Transform8Bit {
     public RgbToYuv420j8Bit() {
     }
 
+    @Override
     public void transform(Picture8Bit img, Picture8Bit dst) {
 
         byte[] y = img.getData()[0];
