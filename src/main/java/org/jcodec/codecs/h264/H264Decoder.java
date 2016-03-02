@@ -198,9 +198,9 @@ public class H264Decoder extends VideoDecoder {
                 dec.lRefs = new IntObjectMap<Frame>();
             }
 
-            if (dec.di == null || dec.di.picWidthInMbs != picWidthInMbs || dec.di.picHeightInMbs != picHeightInMbs) {
+//            if (dec.di == null || dec.di.picWidthInMbs != picWidthInMbs || dec.di.picHeightInMbs != picHeightInMbs) {
                 dec.di = new DeblockerInput(activeSps);
-            }
+//            }
 
             Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type,
                     dec.di.mvs, dec.di.refsUsed, dec.poc.calcPOC(firstSliceHeader, firstNu));
