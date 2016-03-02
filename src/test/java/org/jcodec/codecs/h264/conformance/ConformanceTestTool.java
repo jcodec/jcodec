@@ -1,21 +1,19 @@
 package org.jcodec.codecs.h264.conformance;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.MappedH264ES;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 /**
  * A tool to test jcodec for conformance
@@ -95,17 +93,17 @@ public class ConformanceTestTool {
                 is = new BufferedInputStream(new FileInputStream(coded));
                 MappedH264ES demuxer = new MappedH264ES(NIOUtils.mapFile(coded));
                 H264Decoder decoder = new H264Decoder();
-                Picture buf = Picture.create(1920, 1088, ColorSpace.YUV420);
-                Picture pic;
+                Picture8Bit buf = Picture8Bit.create(1920, 1088, ColorSpace.YUV420);
+                Picture8Bit pic;
                 int i = 0;
-                while ((pic = decoder.decodeFrame(reorder(demuxer.nextFrame()), buf.getData())) != null) {
+                while ((pic = decoder.decodeFrame8Bit(reorder(demuxer.nextFrame()), buf.getData())) != null) {
                     if (rawReader == null || oldWidth != pic.getWidth() || oldHeight != pic.getHeight()) {
                         rawReader = new RawReader(decoded, pic.getWidth(), pic.getHeight());
                         oldWidth = pic.getWidth();
                         oldHeight = pic.getHeight();
                     }
 
-                    Picture ref = rawReader.readNextFrame();
+                    Picture8Bit ref = rawReader.readNextFrame8Bit();
                     if (!compare(ref, pic)) {
                         System.err.println(" - FAILED (" + i + ")");
                         sb.append("FAILED");
@@ -113,7 +111,7 @@ public class ConformanceTestTool {
                     }
                     i++;
                 }
-                Picture ref = rawReader.readNextFrame();
+                Picture8Bit ref = rawReader.readNextFrame8Bit();
                 if (ref != null) {
                     System.err.println(" - FAILED");
                     sb.append("FAILED");
@@ -135,26 +133,26 @@ public class ConformanceTestTool {
         throw new RuntimeException("Display order reordering!!!");
     }
 
-    private static boolean compare(Picture expected, Picture actual) {
+    private static boolean compare(Picture8Bit expected, Picture8Bit actual) {
 
         int size = expected.getWidth() * expected.getHeight();
 
-        int[] expY = expected.getPlaneData(0);
-        int[] actY = actual.getPlaneData(0);
+        byte[] expY = expected.getPlaneData(0);
+        byte[] actY = actual.getPlaneData(0);
         for (int i = 0; i < size; i++) {
             if (expY[i] != actY[i])
                 return false;
         }
 
-        int[] expCb = expected.getPlaneData(1);
-        int[] actCb = actual.getPlaneData(1);
+        byte[] expCb = expected.getPlaneData(1);
+        byte[] actCb = actual.getPlaneData(1);
         for (int i = 0; i < (size >> 2); i++) {
             if (expCb[i] != actCb[i])
                 return false;
         }
 
-        int[] expCr = expected.getPlaneData(2);
-        int[] actCr = actual.getPlaneData(2);
+        byte[] expCr = expected.getPlaneData(2);
+        byte[] actCr = actual.getPlaneData(2);
         for (int i = 0; i < (size >> 2); i++) {
             if (expCr[i] != actCr[i])
                 return false;

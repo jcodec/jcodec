@@ -3,19 +3,18 @@ package org.jcodec.codecs.prores;
 import static org.jcodec.common.ArrayUtil.randomByteArray;
 import static org.jcodec.common.ArrayUtil.randomIntArray;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class TestProresEncoder {
 

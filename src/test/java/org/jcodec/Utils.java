@@ -1,9 +1,21 @@
 package org.jcodec;
 
 import static org.jcodec.common.tools.MathUtil.abs;
-import static org.jcodec.common.tools.MathUtil.clip;
 import static org.jcodec.common.tools.MathUtil.clipMax;
 import static org.junit.Assert.assertTrue;
+
+import org.jcodec.api.FrameGrab8Bit;
+import org.jcodec.api.JCodecException;
+import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.logging.Logger;
+import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.tools.MathUtil;
+import org.jcodec.scale.AWTUtil;
+import org.junit.Assert;
 
 import java.io.EOFException;
 import java.io.File;
@@ -13,21 +25,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
 
 import javax.imageio.ImageIO;
-
-import org.jcodec.api.FrameGrab8Bit;
-import org.jcodec.api.JCodecException;
-import org.jcodec.codecs.h264.io.model.Frame;
-import org.jcodec.common.ArrayUtil;
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.IOUtils;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.logging.Logger;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.common.tools.MathUtil;
-import org.jcodec.scale.AWTUtil;
-import org.junit.Assert;
 
 public class Utils {
 

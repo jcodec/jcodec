@@ -6,8 +6,6 @@ import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_LEFT;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_TOP;
 import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
 
-import java.util.Arrays;
-
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.BlockInterpolator;
 import org.jcodec.codecs.h264.decode.CoeffTransformer;
@@ -16,8 +14,9 @@ import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.common.io.BitWriter;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -80,7 +79,7 @@ public class MBEncoderP16x16 {
         CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvdy
 
         Picture8Bit mbRef = Picture8Bit.create(16, 16, sps.chroma_format_idc);
-        Picture mb = Picture.create(16, 16, sps.chroma_format_idc);
+        int[][] mb = new int[][] {new int[256], new int[256 >> (cw + ch)], new int[256 >> (cw + ch)]};
 
         interpolator.getBlockLuma(ref, mbRef, 0, (mbX << 6) + mv[0], (mbY << 6) + mv[1], 16, 16);
 
@@ -90,25 +89,25 @@ public class MBEncoderP16x16 {
                 mbRef.getPlaneData(2), 0, mbRef.getPlaneWidth(2), (mbX << 6) + mv[0], (mbY << 6) + mv[1], 8, 8);
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4,
-                mbY << 4, mb.getPlaneData(0), mbRef.getPlaneData(0), 16, 16);
+                mbY << 4, mb[0], mbRef.getPlaneData(0), 16, 16);
         MBEncoderHelper.takeSubtract(pic.getPlaneData(1), pic.getPlaneWidth(1), pic.getPlaneHeight(1), mbX << (4 - cw),
-                mbY << (4 - ch), mb.getPlaneData(1), mbRef.getPlaneData(1), 16 >> cw, 16 >> ch);
+                mbY << (4 - ch), mb[1], mbRef.getPlaneData(1), 16 >> cw, 16 >> ch);
         MBEncoderHelper.takeSubtract(pic.getPlaneData(2), pic.getPlaneWidth(2), pic.getPlaneHeight(2), mbX << (4 - cw),
-                mbY << (4 - ch), mb.getPlaneData(2), mbRef.getPlaneData(2), 16 >> cw, 16 >> ch);
+                mbY << (4 - ch), mb[2], mbRef.getPlaneData(2), 16 >> cw, 16 >> ch);
 
         int codedBlockPattern = getCodedBlockPattern();
         CAVLCWriter.writeUE(out, H264Const.CODED_BLOCK_PATTERN_INTER_COLOR_INV[codedBlockPattern]);
 
         CAVLCWriter.writeSE(out, qpDelta);
 
-        luma(pic, mb.getPlaneData(0), mbX, mbY, out, qp, outMB.getNc());
-        chroma(pic, mb.getPlaneData(1), mb.getPlaneData(2), mbX, mbY, out, qp);
+        luma(pic, mb[0], mbX, mbY, out, qp, outMB.getNc());
+        chroma(pic, mb[1], mb[2], mbX, mbY, out, qp);
 
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(0), mb.getPlaneData(0), mbRef.getPlaneData(0), 4, 0, 0,
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(0), mb[0], mbRef.getPlaneData(0), 4, 0, 0,
                 16, 16);
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb.getPlaneData(1), mbRef.getPlaneData(1), 4 - cw, 0,
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb[1], mbRef.getPlaneData(1), 4 - cw, 0,
                 0, 16 >> cw, 16 >> ch);
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb.getPlaneData(2), mbRef.getPlaneData(2), 4 - cw, 0,
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb[2], mbRef.getPlaneData(2), 4 - cw, 0,
                 0, 16 >> cw, 16 >> ch);
 
         Arrays.fill(outMB.getMx(), mv[0]);

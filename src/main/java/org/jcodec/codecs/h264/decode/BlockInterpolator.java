@@ -3,7 +3,6 @@ package org.jcodec.codecs.h264.decode;
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 
-import org.jcodec.codecs.aac.blocks.Block;
 import org.jcodec.common.model.Picture8Bit;
 
 /**
