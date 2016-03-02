@@ -1,6 +1,6 @@
 package org.jcodec.codecs.h264.decode;
 
-import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
+import static org.jcodec.codecs.h264.io.model.SeqParameterSet.getPicHeightInMbs;
 
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.MBType;

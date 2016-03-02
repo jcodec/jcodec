@@ -1,8 +1,8 @@
 package org.jcodec.containers;
-
-import java.nio.ByteBuffer;
-
 import org.junit.Test;
+
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class ByteBufferManipulationTest {
 

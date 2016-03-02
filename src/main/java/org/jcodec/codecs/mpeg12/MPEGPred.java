@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg12;
-
 import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMotionCode;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceExtension.Chroma420;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceExtension.Chroma444;

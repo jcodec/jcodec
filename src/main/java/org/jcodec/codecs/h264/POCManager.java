@@ -1,13 +1,10 @@
 package org.jcodec.codecs.h264;
-
 import static org.jcodec.codecs.h264.io.model.NALUnitType.IDR_SLICE;
 
 import org.jcodec.codecs.h264.io.model.NALUnit;
-import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.RefPicMarking.InstrType;
 import org.jcodec.codecs.h264.io.model.RefPicMarking.Instruction;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.codecs.h264.io.model.SliceType;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

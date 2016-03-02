@@ -1,19 +1,8 @@
 package org.jcodec.containers.flv;
-
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.Arrays.asList;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
@@ -35,6 +24,16 @@ import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
 import org.jcodec.platform.Platform;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

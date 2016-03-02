@@ -1,16 +1,19 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jcodec.common.Assert;
+import org.jcodec.common.StringUtils;
 import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
+import org.jcodec.containers.mp4.IBoxFactory;
 import org.jcodec.platform.Platform;
+
+import java.lang.StringBuilder;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,6 +27,7 @@ import org.jcodec.platform.Platform;
 public abstract class Box {
     private static final String GET_MODEL_FIELDS = "getModelFields";
     public Header header;
+    public static final int MAX_BOX_SIZE = 128 * 1024 * 1024;
     
     @UsedViaReflection
     public Box(Header header) {
@@ -92,6 +96,27 @@ public abstract class Box {
         }
     }
 
+    public static String[] path(String path) {
+        return StringUtils.splitC(path, '.');
+    }
+
+    public static LeafBox createLeafBox(Header atom, ByteBuffer data) {
+        LeafBox leaf = new LeafBox(atom);
+        leaf.data = data;
+        return leaf;
+    }
+
+    public static Box parseBox(ByteBuffer input, Header childAtom, IBoxFactory factory) {
+        Box box = factory.newBox(childAtom);
+    
+        if (childAtom.getBodySize() < Box.MAX_BOX_SIZE) {
+            box.parse(input);
+            return box;
+        } else {
+            return new LeafBox(Header.createHeader("free", 8));
+        }
+    }
+
     public static <T extends Box> T asBox(Class<T> class1, Box box) {
         try {
             T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
@@ -104,6 +129,26 @@ public abstract class Box {
             throw new RuntimeException(e);
         }
     }
+    
+    public static class LeafBox extends Box {
+        ByteBuffer data;
 
+        public LeafBox(Header atom) {
+            super(atom);
+        }
+
+        public void parse(ByteBuffer input) {
+            data = NIOUtils.read(input, (int) header.getBodySize());
+        }
+
+        public ByteBuffer getData() {
+            return data.duplicate();
+        }
+
+        @Override
+        protected void doWrite(ByteBuffer out) {
+            NIOUtils.write(out, data);
+        }
+    }
     
 }

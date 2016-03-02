@@ -1,5 +1,4 @@
 package org.jcodec.codecs.vpx;
-
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 

@@ -1,14 +1,13 @@
 package org.jcodec.codecs.h264.encode;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jcodec.Utils;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MBDeblockerTest {
 

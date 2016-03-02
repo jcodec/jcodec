@@ -1,6 +1,4 @@
 package org.jcodec.codecs.vpx;
-
-import org.jcodec.codecs.vpx.VPXDCT;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -1,9 +1,5 @@
 package org.jcodec.codecs.mjpeg;
-
 import static org.jcodec.codecs.mjpeg.JpegConst.naturalOrder;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.mjpeg.tools.Asserts;
@@ -17,6 +13,9 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.MathUtil;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

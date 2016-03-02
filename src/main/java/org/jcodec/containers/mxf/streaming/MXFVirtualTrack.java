@@ -1,16 +1,14 @@
 package org.jcodec.containers.mxf.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Label;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
-import org.jcodec.containers.mp4.boxes.channel.Label;
 import org.jcodec.containers.mxf.MXFConst.MXFCodecMapping;
 import org.jcodec.containers.mxf.MXFDemuxer;
 import org.jcodec.containers.mxf.MXFDemuxer.MXFDemuxerTrack;
@@ -27,6 +25,11 @@ import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.movtool.streaming.tracks.ByteChannelPool;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -137,8 +140,8 @@ public class MXFVirtualTrack implements VirtualTrack {
             Arrays.fill(labels, Label.Mono);
 
             return AudioCodecMeta.createAudioCodecMeta(sampleSize == 3 ? "in24" : "sowt", sampleSize, sed.getChannelCount(), (int) sed
-                    .getAudioSamplingRate().scalar(), codec == MXFCodecMapping.PCM_S16BE ? Endian.BIG_ENDIAN
-            : Endian.LITTLE_ENDIAN, true, labels, null);
+                    .getAudioSamplingRate().scalar(), codec == MXFCodecMapping.PCM_S16BE ? ByteOrder.BIG_ENDIAN
+            : ByteOrder.LITTLE_ENDIAN, true, labels, null);
         }
         throw new RuntimeException("Can't get sample entry");
     }

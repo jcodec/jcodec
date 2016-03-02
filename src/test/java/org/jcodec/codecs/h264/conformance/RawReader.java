@@ -1,9 +1,7 @@
 package org.jcodec.codecs.h264.conformance;
 
-import static org.jcodec.common.model.ColorSpace.YUV420;
-
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -63,7 +61,7 @@ public class RawReader {
             cr[i] = (byte) (is.read() - 128);
         }
 
-        return Picture8Bit.createPicture8Bit(width, height, new byte[][] { luma, cb, cr }, YUV420);
+        return Picture8Bit.createPicture8Bit(width, height, new byte[][] { luma, cb, cr }, ColorSpace.YUV420);
     }
 
 }

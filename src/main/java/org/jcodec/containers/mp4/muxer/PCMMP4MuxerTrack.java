@@ -1,9 +1,4 @@
 package org.jcodec.containers.mp4.muxer;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Date;
-
 import org.jcodec.common.Assert;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -24,11 +19,16 @@ import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
+import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
+import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
-import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
+
+import java.io.IOException;
+import java.lang.IllegalStateException;
+import java.nio.ByteBuffer;
+import java.util.Date;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

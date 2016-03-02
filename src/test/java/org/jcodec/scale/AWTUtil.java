@@ -1,13 +1,13 @@
 package org.jcodec.scale;
-
 import static org.jcodec.common.model.ColorSpace.RGB;
-
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.lang.IllegalArgumentException;
 
 public class AWTUtil {
 

@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
@@ -8,12 +7,6 @@ import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
 import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
 import static org.jcodec.containers.mkv.MKVType.findAllTree;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.jcodec.Utils;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -28,6 +21,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 public class AudioTrackTest {
 

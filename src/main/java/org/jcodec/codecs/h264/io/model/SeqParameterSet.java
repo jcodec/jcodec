@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.io.model;
-
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readNBit;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
@@ -14,11 +13,11 @@ import static org.jcodec.common.model.ColorSpace.YUV420J;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.model.ColorSpace.YUV444;
 
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -571,5 +570,10 @@ public class SeqParameterSet {
 
     public int getNum_ref_frames_in_pic_order_cnt_cycle() {
         return num_ref_frames_in_pic_order_cnt_cycle;
+    }
+
+    public static int getPicHeightInMbs(SeqParameterSet sps) {
+        int picHeightInMbs = (sps.pic_height_in_map_units_minus1 + 1) << (sps.frame_mbs_only_flag ? 0 : 1);
+        return picHeightInMbs;
     }
 }

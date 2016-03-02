@@ -1,14 +1,13 @@
 package org.jcodec.codecs.h264;
-
 import static org.jcodec.common.ArrayUtil.padLeft;
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.util.Arrays;
-
 import org.jcodec.codecs.h264.decode.Intra4x4PredictionBuilder;
 import org.jcodec.common.tools.MathUtil;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 public class Intra4x4PredictionBuilderTest {
     private static int[] emptyResidual = new int[16];

@@ -1,8 +1,7 @@
 package org.jcodec.codecs.mpeg4.es;
+import org.jcodec.common.Assert;
 
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,7 +20,7 @@ public class SL extends Descriptor {
         out.put((byte)0x2);
     }
 
-    protected static SL parse(ByteBuffer input) {
+    protected static SL parse(ByteBuffer input, IDescriptorFactory factory) {
         Assert.assertEquals(0x2, input.get() & 0xff);
         return new SL();
     }

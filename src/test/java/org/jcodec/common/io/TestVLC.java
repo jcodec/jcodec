@@ -1,10 +1,9 @@
 package org.jcodec.common.io;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 public class TestVLC {
     static String[] codes = new String[] { "101111110001", "1000000", "101111100101", "1000001", "101111110100",

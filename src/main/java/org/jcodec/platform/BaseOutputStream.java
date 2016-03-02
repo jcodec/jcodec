@@ -9,7 +9,7 @@ public abstract class BaseOutputStream extends OutputStream {
 
     @Override
     public void write(int b) throws IOException {
-        write(b);
+        writeByte(b);
     }
 
 }

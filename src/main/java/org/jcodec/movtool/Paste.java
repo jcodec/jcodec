@@ -1,4 +1,7 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static java.util.Arrays.fill;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
@@ -9,22 +12,21 @@ import static org.jcodec.movtool.Util.insertTo;
 import static org.jcodec.movtool.Util.shift;
 import static org.jcodec.movtool.Util.spread;
 
-import java.io.File;
-
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ClipRegionBox;
 import org.jcodec.containers.mp4.boxes.LoadSettingsBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SoundMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.platform.Platform;
+
+import java.io.File;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -150,22 +152,22 @@ public class Paste {
     }
 
     private boolean matchSampleSizes(TrakBox trakBox1, TrakBox trakBox2) {
-        SampleSizesBox stsz1 = BoxUtil.findFirstPath(trakBox1, SampleSizesBox.class, BoxUtil.path("mdia.minf.stbl.stsz"));
-        SampleSizesBox stsz2 = BoxUtil.findFirstPath(trakBox1, SampleSizesBox.class, BoxUtil.path("mdia.minf.stbl.stsz"));
+        SampleSizesBox stsz1 = NodeBox.findFirstPath(trakBox1, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        SampleSizesBox stsz2 = NodeBox.findFirstPath(trakBox1, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         return stsz1.getDefaultSize() == stsz2.getDefaultSize();
     }
 
     private boolean matchMediaHeader(TrakBox trakBox1, TrakBox trakBox2) {
-        VideoMediaHeaderBox vmhd1 = BoxUtil.findFirstPath(trakBox1, VideoMediaHeaderBox.class, BoxUtil.path("mdia.minf.vmhd"));
-        VideoMediaHeaderBox vmhd2 = BoxUtil.findFirstPath(trakBox2, VideoMediaHeaderBox.class, BoxUtil.path("mdia.minf.vmhd"));
+        VideoMediaHeaderBox vmhd1 = NodeBox.findFirstPath(trakBox1, VideoMediaHeaderBox.class, Box.path("mdia.minf.vmhd"));
+        VideoMediaHeaderBox vmhd2 = NodeBox.findFirstPath(trakBox2, VideoMediaHeaderBox.class, Box.path("mdia.minf.vmhd"));
         if ((vmhd1 != null && vmhd2 == null) || (vmhd1 == null && vmhd2 != null))
             return false;
         else if (vmhd1 != null && vmhd2 != null) {
             return vmhd1.getGraphicsMode() == vmhd2.getGraphicsMode() && vmhd1.getbOpColor() == vmhd2.getbOpColor()
                     && vmhd1.getgOpColor() == vmhd2.getgOpColor() && vmhd1.getrOpColor() == vmhd2.getrOpColor();
         } else {
-            SoundMediaHeaderBox smhd1 = BoxUtil.findFirstPath(trakBox1, SoundMediaHeaderBox.class, BoxUtil.path("mdia.minf.smhd"));
-            SoundMediaHeaderBox smhd2 = BoxUtil.findFirstPath(trakBox2, SoundMediaHeaderBox.class, BoxUtil.path("mdia.minf.smhd"));
+            SoundMediaHeaderBox smhd1 = NodeBox.findFirstPath(trakBox1, SoundMediaHeaderBox.class, Box.path("mdia.minf.smhd"));
+            SoundMediaHeaderBox smhd2 = NodeBox.findFirstPath(trakBox2, SoundMediaHeaderBox.class, Box.path("mdia.minf.smhd"));
             if ((smhd1 == null && smhd2 != null) || (smhd1 != null && smhd2 == null))
                 return false;
             else if (smhd1 != null && smhd2 != null)
@@ -187,8 +189,8 @@ public class Paste {
     }
 
     private boolean matchLoad(TrakBox trakBox1, TrakBox trakBox2) {
-        LoadSettingsBox load1 = BoxUtil.findFirst(trakBox1, LoadSettingsBox.class, "load");
-        LoadSettingsBox load2 = BoxUtil.findFirst(trakBox2, LoadSettingsBox.class, "load");
+        LoadSettingsBox load1 = NodeBox.findFirst(trakBox1, LoadSettingsBox.class, "load");
+        LoadSettingsBox load2 = NodeBox.findFirst(trakBox2, LoadSettingsBox.class, "load");
         if (load1 == null && load2 == null)
             return true;
         if ((load1 == null && load2 != null) || (load1 != null && load2 == null))
@@ -201,8 +203,8 @@ public class Paste {
     }
 
     private boolean matchClip(TrakBox trakBox1, TrakBox trakBox2) {
-        ClipRegionBox crgn1 = BoxUtil.findFirstPath(trakBox1, ClipRegionBox.class, BoxUtil.path("clip.crgn"));
-        ClipRegionBox crgn2 = BoxUtil.findFirstPath(trakBox2, ClipRegionBox.class, BoxUtil.path("clip.crgn"));
+        ClipRegionBox crgn1 = NodeBox.findFirstPath(trakBox1, ClipRegionBox.class, Box.path("clip.crgn"));
+        ClipRegionBox crgn2 = NodeBox.findFirstPath(trakBox2, ClipRegionBox.class, Box.path("clip.crgn"));
         if ((crgn1 == null && crgn2 != null) || (crgn1 != null && crgn2 == null))
             return false;
         if (crgn1 == null && crgn2 == null)

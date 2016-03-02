@@ -1,18 +1,15 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
-import static org.jcodec.containers.mp4.BoxUtil.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.MP4Util;
@@ -28,8 +25,13 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
-import org.jcodec.platform.Platform;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.platform.Platform;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -99,13 +101,13 @@ public class Strip {
             } else
                 result.add(chunk);
         }
-        NodeBox stbl = BoxUtil.findFirstPath(track, NodeBox.class, BoxUtil.path("mdia.minf.stbl"));
+        NodeBox stbl = NodeBox.findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
         stbl.replace("stts", getTimeToSamples(result));
         stbl.replace("stsz", getSampleSizes(result));
         stbl.replace("stsc", getSamplesToChunk(result));
         stbl.removeChildren("stco", "co64");
         stbl.add(getChunkOffsets(result));
-        BoxUtil.findFirstPath(track, MediaHeaderBox.class, BoxUtil.path("mdia.mdhd")).setDuration(totalDuration(result));
+        NodeBox.findFirstPath(track, MediaHeaderBox.class, Box.path("mdia.mdhd")).setDuration(totalDuration(result));
     }
 
     private long totalDuration(List<Chunk> result) {

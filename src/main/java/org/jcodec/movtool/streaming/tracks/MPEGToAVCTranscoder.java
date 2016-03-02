@@ -1,4 +1,7 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.IllegalArgumentException;
 
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;

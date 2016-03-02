@@ -1,5 +1,4 @@
 package org.jcodec.common.tools;
-
 import static java.lang.Math.min;
 import static java.lang.System.arraycopy;
 

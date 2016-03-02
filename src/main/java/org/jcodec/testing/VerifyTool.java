@@ -1,11 +1,9 @@
 package org.jcodec.testing;
 
-import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
-import static org.jcodec.common.JCodecUtil.getAsIntArray;
-import static org.jcodec.platform.Platform.arrayEqualsByte;
-
+import org.jcodec.common.ArrayUtil;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.MappedH264ES;
+import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
@@ -15,6 +13,7 @@ import org.jcodec.platform.Platform;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.lang.System;
 import java.nio.ByteBuffer;
 
 /**
@@ -75,11 +74,11 @@ public class VerifyTool {
 
             ByteBuffer yuv = NIOUtils.read(_yuv, lumaSize + crSize + cbSize);
 
-            if (!arrayEqualsByte(toByteArrayShifted(getAsIntArray(yuv, lumaSize)), pic.getPlaneData(0)))
+            if (!Platform.arrayEqualsByte(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, lumaSize)), pic.getPlaneData(0)))
                 return false;
-            if (!arrayEqualsByte(toByteArrayShifted(getAsIntArray(yuv, crSize)), pic.getPlaneData(1)))
+            if (!Platform.arrayEqualsByte(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, crSize)), pic.getPlaneData(1)))
                 return false;
-            if (!arrayEqualsByte(toByteArrayShifted(getAsIntArray(yuv, cbSize)), pic.getPlaneData(2)))
+            if (!Platform.arrayEqualsByte(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, cbSize)), pic.getPlaneData(2)))
                 return false;
         }
         return true;

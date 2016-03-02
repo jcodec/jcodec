@@ -1,10 +1,8 @@
 package org.jcodec.common.io;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
 
 public class ByteBufferManipulationTest {
 

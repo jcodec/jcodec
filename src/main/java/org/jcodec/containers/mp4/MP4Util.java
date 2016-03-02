@@ -1,18 +1,5 @@
 package org.jcodec.containers.mp4;
-
 import static org.jcodec.common.io.NIOUtils.readableChannel;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.Codec;
@@ -33,6 +20,16 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -231,17 +228,6 @@ public class MP4Util {
                     : 0;
         }
         return sizeHint;
-    }
-
-    public static Box cloneBox(Box box, int approxSize) {
-        return doCloneBox(box, approxSize, BoxFactory.getDefault());
-    }
-
-    public static Box doCloneBox(Box box, int approxSize, IBoxFactory bf) {
-        ByteBuffer buf = ByteBuffer.allocate(approxSize);
-        box.write(buf);
-        buf.flip();
-        return BoxUtil.parseChildBox(buf, bf);
     }
 
     public static String getFourcc(Codec codec) {

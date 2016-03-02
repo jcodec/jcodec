@@ -1,13 +1,13 @@
 package org.jcodec.common;
-
 import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.File;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Test;
+
+import java.io.File;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

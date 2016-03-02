@@ -1,15 +1,5 @@
 package org.jcodec.codecs.h264;
-
 import static java.util.Arrays.asList;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
@@ -26,12 +16,22 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.LeafBox;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -166,12 +166,6 @@ public class H264Utils {
             p1 = p2;
             p2 = b;
         }
-    }
-
-    public static int golomb2Signed(int val) {
-        int sign = ((val & 0x1) << 1) - 1;
-        val = ((val >> 1) + (val & 0x1)) * sign;
-        return val;
     }
 
     public static List<ByteBuffer> splitMOVPacket(ByteBuffer buf, AvcCBox avcC) {
@@ -410,7 +404,7 @@ public class H264Utils {
     public static SampleEntry createMOVSampleEntryFromAvcC(AvcCBox avcC) {
         SeqParameterSet sps = SeqParameterSet.read(avcC.getSpsList().get(0).duplicate());
         int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
-        int codedHeight = getPicHeightInMbs(sps) << 4;
+        int codedHeight = SeqParameterSet.getPicHeightInMbs(sps) << 4;
 
         int width = sps.frame_cropping_flag ? codedWidth
                 - ((sps.frame_crop_right_offset + sps.frame_crop_left_offset) << sps.chroma_format_idc.compWidth[1])
@@ -485,11 +479,6 @@ public class H264Utils {
         }
     }
 
-    public static int getPicHeightInMbs(SeqParameterSet sps) {
-        int picHeightInMbs = (sps.pic_height_in_map_units_minus1 + 1) << (sps.frame_mbs_only_flag ? 0 : 1);
-        return picHeightInMbs;
-    }
-
     public static List<ByteBuffer> splitFrame(ByteBuffer frame) {
         ArrayList<ByteBuffer> result = new ArrayList<ByteBuffer>();
 
@@ -539,7 +528,7 @@ public class H264Utils {
     }
 
     public static AvcCBox parseAVCC(VideoSampleEntry vse) {
-        Box lb = BoxUtil.findFirst(vse, Box.class, "avcC");
+        Box lb = NodeBox.findFirst(vse, Box.class, "avcC");
         if (lb instanceof AvcCBox)
             return (AvcCBox) lb;
         else {
@@ -725,7 +714,7 @@ public class H264Utils {
 
     public static Size getPicSize(SeqParameterSet sps) {
         int w = (sps.pic_width_in_mbs_minus1 + 1) << 4;
-        int h = getPicHeightInMbs(sps) << 4;
+        int h = SeqParameterSet.getPicHeightInMbs(sps) << 4;
         if (sps.frame_cropping_flag) {
             w -= (sps.frame_crop_left_offset + sps.frame_crop_right_offset) << sps.chroma_format_idc.compWidth[1];
             h -= (sps.frame_crop_top_offset + sps.frame_crop_bottom_offset) << sps.chroma_format_idc.compHeight[1];

@@ -1,6 +1,7 @@
 package org.jcodec.movtool.streaming.tracks;
-
-import java.nio.ByteBuffer;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.ThreadLocal;
 
 import org.jcodec.codecs.prores.ProresToThumb2x2;
 import org.jcodec.codecs.prores.ProresToThumb4x4;
@@ -10,6 +11,8 @@ import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.Size;
 import org.jcodec.movtool.streaming.VirtualTrack;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -1,15 +1,13 @@
 package org.jcodec.codecs.h264;
-
 import static org.jcodec.common.ArrayUtil.padLeft;
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
-import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
 import static org.junit.Assert.assertArrayEquals;
-
-import java.util.Arrays;
 
 import org.jcodec.codecs.h264.decode.Intra8x8PredictionBuilder;
 import org.jcodec.common.tools.MathUtil;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 public class Intra8x8PredictionBuilderTest {
 

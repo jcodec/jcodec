@@ -1,15 +1,15 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.common.JCodecUtil2;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.io.StringReader;
+import org.jcodec.common.logging.Logger;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-
-import org.jcodec.codecs.wav.StringReader;
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.logging.Logger;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -102,7 +102,7 @@ public class Header {
             out.putInt(1);
         else
             out.putInt((int) size);
-        out.put(JCodecUtil.asciiString(fourcc));
+        out.put(JCodecUtil2.asciiString(fourcc));
         if (size > MAX_UNSIGNED_INT) {
             out.putLong(size);
         }

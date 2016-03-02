@@ -1,8 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

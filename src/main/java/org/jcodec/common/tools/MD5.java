@@ -1,5 +1,5 @@
 package org.jcodec.common.tools;
-
+import java.lang.StringBuilder;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

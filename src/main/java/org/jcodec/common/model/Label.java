@@ -1,4 +1,4 @@
-package org.jcodec.containers.mp4.boxes.channel;
+package org.jcodec.common.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -133,7 +133,7 @@ public final static Label Discrete_15            = new Label( (1<<16) | 15);
 public final static Label Discrete_65535         = new Label( (1<<16) | 65535);
     
     final int labelVal;
-    final long bitmapVal;
+    public final long bitmapVal;
     public final static Pattern channelMappingRegex = Pattern.compile("[_\\ \\.][a-zA-Z]+$");
 
     private Label(int val) {

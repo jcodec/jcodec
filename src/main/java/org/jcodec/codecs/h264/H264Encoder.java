@@ -1,9 +1,6 @@
 package org.jcodec.codecs.h264;
-
 import static java.lang.System.arraycopy;
 import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
-
-import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.h264.encode.EncodedMB;
@@ -30,6 +27,8 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MathUtil;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

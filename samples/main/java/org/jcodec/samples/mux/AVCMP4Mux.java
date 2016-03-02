@@ -1,6 +1,5 @@
 package org.jcodec.samples.mux;
 
-import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
 import java.io.File;
@@ -86,7 +85,7 @@ public class AVCMP4Mux {
 
     private static void addSampleEntry(FramesMP4MuxerTrack track, SeqParameterSet[] spss, PictureParameterSet[] ppss) {
         SeqParameterSet sps = spss[0];
-        Size size = new Size((sps.pic_width_in_mbs_minus1 + 1) << 4, getPicHeightInMbs(sps) << 4);
+        Size size = new Size((sps.pic_width_in_mbs_minus1 + 1) << 4, SeqParameterSet.getPicHeightInMbs(sps) << 4);
 
         SampleEntry se = MP4Muxer.videoSampleEntry("avc1", size, "JCodec");
 

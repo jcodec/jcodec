@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg4.es;
-
 import java.nio.ByteBuffer;
 import java.util.Collection;
 
@@ -28,10 +27,10 @@ public class ES extends NodeDescriptor {
         super.doWrite(out);
     }
     
-    protected static ES parse(ByteBuffer input) {
+    protected static ES parse(ByteBuffer input, IDescriptorFactory factory) {
         int trackId = input.getShort();
         input.get();
-        NodeDescriptor node = NodeDescriptor.parse(input);
+        NodeDescriptor node = NodeDescriptor.parse(input, factory);
         return new ES(trackId, node.getChildren());
     }
 

@@ -1,5 +1,4 @@
 package org.jcodec.codecs.common.biari;
-
 import org.jcodec.platform.BaseOutputStream;
 
 import java.io.ByteArrayInputStream;

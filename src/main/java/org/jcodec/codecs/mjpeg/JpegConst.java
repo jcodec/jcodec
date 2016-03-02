@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mjpeg;
-
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
 

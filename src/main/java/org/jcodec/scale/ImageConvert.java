@@ -1,5 +1,4 @@
 package org.jcodec.scale;
-
 import java.nio.ByteBuffer;
 
 /**

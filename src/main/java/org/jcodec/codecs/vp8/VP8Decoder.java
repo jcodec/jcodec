@@ -1,5 +1,4 @@
 package org.jcodec.codecs.vp8;
-
 import static org.jcodec.codecs.vp8.VP8Util.MAX_MODE_LF_DELTAS;
 import static org.jcodec.codecs.vp8.VP8Util.MAX_REF_LF_DELTAS;
 import static org.jcodec.codecs.vp8.VP8Util.getBitInBytes;
@@ -17,6 +16,9 @@ import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
 import org.jcodec.common.Assert;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

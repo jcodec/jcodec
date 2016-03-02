@@ -1,5 +1,4 @@
 package net.sourceforge.jaad.aac.syntax;
-
 import java.util.logging.Logger;
 
 /**

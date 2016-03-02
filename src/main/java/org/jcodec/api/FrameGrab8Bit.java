@@ -1,5 +1,4 @@
 package org.jcodec.api;
-
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.common.DemuxerTrackMeta;
@@ -16,6 +15,7 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ThreadLocal;
 import java.nio.ByteBuffer;
 
 /**

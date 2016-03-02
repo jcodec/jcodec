@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 package org.jcodec;
-
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.ArrayIndexOutOfBoundsException;
+import java.lang.IllegalArgumentException;
+import java.lang.StringBuilder;
+import java.lang.System;
 import java.nio.ByteBuffer;
-
 /**
  * Dumps data in hexadecimal format.
  * <p>

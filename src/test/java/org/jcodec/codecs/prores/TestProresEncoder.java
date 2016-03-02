@@ -1,5 +1,4 @@
 package org.jcodec.codecs.prores;
-
 import static org.jcodec.common.ArrayUtil.randomByteArray;
 import static org.jcodec.common.ArrayUtil.randomIntArray;
 
@@ -13,6 +12,7 @@ import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 

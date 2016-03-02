@@ -1,9 +1,7 @@
 package org.jcodec.common.io;
-
 import java.io.IOException;
 import java.io.InputStream;
-
-import org.jcodec.api.NotSupportedException;
+import java.lang.IllegalArgumentException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

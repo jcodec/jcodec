@@ -1,7 +1,4 @@
 package org.jcodec.codecs.h264;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
@@ -16,6 +13,8 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.Packet;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

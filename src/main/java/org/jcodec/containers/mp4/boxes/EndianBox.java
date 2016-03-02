@@ -1,8 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
-
-import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
+import java.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -13,17 +12,13 @@ import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
  */
 public class EndianBox extends Box {
 
-    public static enum Endian {
-        LITTLE_ENDIAN, BIG_ENDIAN
-    };
-
-    private Endian endian;
+    private ByteOrder endian;
 
     public static String fourcc() {
         return "enda";
     }
 
-    public static EndianBox createEndianBox(Endian endian) {
+    public static EndianBox createEndianBox(ByteOrder endian) {
         EndianBox endianBox = new EndianBox(new Header(fourcc()));
         endianBox.endian = endian;
         return endianBox;
@@ -36,17 +31,17 @@ public class EndianBox extends Box {
     public void parse(ByteBuffer input) {
         long end = input.getShort();
         if (end == 1) {
-            this.endian = Endian.LITTLE_ENDIAN;
+            this.endian = ByteOrder.LITTLE_ENDIAN;
         } else {
-            this.endian = Endian.BIG_ENDIAN;
+            this.endian = ByteOrder.BIG_ENDIAN;
         }
     }
 
     protected void doWrite(ByteBuffer out) {
-        out.putShort((short) (endian == Endian.LITTLE_ENDIAN ? 1 : 0));
+        out.putShort((short) (endian == ByteOrder.LITTLE_ENDIAN ? 1 : 0));
     }
 
-    public Endian getEndian() {
+    public ByteOrder getEndian() {
         return endian;
     }
 

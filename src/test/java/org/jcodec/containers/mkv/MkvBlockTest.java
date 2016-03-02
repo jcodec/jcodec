@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.containers.mkv.MKVType.Block;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
@@ -7,15 +6,16 @@ import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
 import static org.jcodec.containers.mkv.MKVType.findAllTree;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.FileInputStream;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.FileInputStream;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class MkvBlockTest {
     

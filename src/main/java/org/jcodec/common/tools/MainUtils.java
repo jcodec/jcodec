@@ -1,7 +1,12 @@
 package org.jcodec.common.tools;
 
+import org.jcodec.common.StringUtils;
+import org.jcodec.platform.Platform;
+
 import java.io.File;
 import java.io.PrintStream;
+import java.lang.StringBuilder;
+import java.lang.System;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,9 +17,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jcodec.common.StringUtils;
-import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -241,6 +243,10 @@ public class MainUtils {
     }
 
     public static void printHelpVarArgs(Map<String, String> flags, String ... arguments) {
+        printHelpOut(System.out, "", flags, Arrays.asList(arguments));
+    }
+    
+    public static void printHelpArgs(Map<String, String> flags, String [] arguments) {
         printHelpOut(System.out, "", flags, Arrays.asList(arguments));
     }
     public static void printHelp(Map<String, String> flags, List<String> params) {

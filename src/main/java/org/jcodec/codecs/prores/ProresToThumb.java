@@ -1,11 +1,11 @@
 package org.jcodec.codecs.prores;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 /**
  * 

@@ -1,5 +1,4 @@
 package org.jcodec.common.dct;
-
 import org.jcodec.api.NotSupportedException;
 
 /**

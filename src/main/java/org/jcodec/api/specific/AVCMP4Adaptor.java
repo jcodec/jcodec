@@ -1,7 +1,5 @@
 package org.jcodec.api.specific;
-
 import org.jcodec.api.MediaInfo;
-import org.jcodec.api.PictureWithMetadata8Bit;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.NALUnit;
@@ -55,7 +53,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
             int ww = sps.pic_width_in_mbs_minus1 + 1;
             if (ww > w)
                 w = ww;
-            int hh = H264Utils.getPicHeightInMbs(sps);
+            int hh = SeqParameterSet.getPicHeightInMbs(sps);
             if (hh > h)
                 h = hh;
         }

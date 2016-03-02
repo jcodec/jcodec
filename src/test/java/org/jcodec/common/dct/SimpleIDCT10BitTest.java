@@ -1,5 +1,4 @@
 package org.jcodec.common.dct;
-
 import static org.junit.Assert.assertArrayEquals;
 
 import org.junit.Test;

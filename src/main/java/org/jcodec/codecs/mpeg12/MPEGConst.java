@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg12;
-
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
 

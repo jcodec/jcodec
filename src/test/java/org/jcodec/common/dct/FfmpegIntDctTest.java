@@ -1,11 +1,12 @@
 package org.jcodec.common.dct;
+import static java.lang.System.arraycopy;
+import static java.lang.System.currentTimeMillis;
 
 import org.jcodec.common.tools.Debug;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static java.lang.System.arraycopy;
-import static java.lang.System.currentTimeMillis;
+import java.lang.System;
 
 public class FfmpegIntDctTest {
     

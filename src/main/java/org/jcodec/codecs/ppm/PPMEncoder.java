@@ -1,10 +1,10 @@
 package org.jcodec.codecs.ppm;
-
-import java.nio.ByteBuffer;
-
-import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.lang.IllegalArgumentException;
+import java.nio.ByteBuffer;
 
 /**
  * 
@@ -20,7 +20,7 @@ public class PPMEncoder {
         if (picture.getColor() != ColorSpace.RGB)
             throw new IllegalArgumentException("Only RGB image can be stored in PPM");
         ByteBuffer buffer = ByteBuffer.allocate(picture.getWidth() * picture.getHeight() * 3 + 200);
-        buffer.put(JCodecUtil.asciiString("P6 " + picture.getWidth() + " " + picture.getHeight() + " 255\n"));
+        buffer.put(JCodecUtil2.asciiString("P6 " + picture.getWidth() + " " + picture.getHeight() + " 255\n"));
 
         byte[][] data = picture.getData();
         for (int i = 0; i < picture.getWidth() * picture.getHeight() * 3; i += 3) {

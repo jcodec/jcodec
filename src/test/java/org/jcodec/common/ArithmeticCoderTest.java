@@ -1,14 +1,16 @@
 package org.jcodec.common;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.jcodec.codecs.vp8.BooleanArithmeticDecoder;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.StringBuilder;
+import java.lang.System;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * See for theoretical details: http://www.youtube.com/playlist?list=PLE125425EC837021F

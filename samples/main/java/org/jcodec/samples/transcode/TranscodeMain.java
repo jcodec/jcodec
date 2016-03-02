@@ -75,6 +75,7 @@ import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
@@ -738,7 +739,7 @@ public class TranscodeMain {
                     VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
 
                     totalFrames = (int) inTrack.getFrameCount();
-                    pasp = Box.findFirst(inTrack.getSampleEntries()[0], PixelAspectExt.class, "pasp");
+                    pasp = NodeBox.findFirst(inTrack.getSampleEntries()[0], PixelAspectExt.class, "pasp");
 
                     decoder = H264Decoder.createH264DecoderFromCodecPrivate(inTrack.getMeta().getCodecPrivate());
 
@@ -826,7 +827,7 @@ public class TranscodeMain {
                     } else {
                         SeqParameterSet sps = ((MappedH264ES) videoTrack).getSps()[0];
                         width = (sps.pic_width_in_mbs_minus1 + 1) << 4;
-                        height = H264Utils.getPicHeightInMbs(sps) << 4;
+                        height = SeqParameterSet.getPicHeightInMbs(sps) << 4;
                         target1 = Picture8Bit.create(width, height, ColorSpace.YUV420);
                         long start = System.nanoTime();
                         dec = decoder.decodeFrame8Bit(data, target1.getData());

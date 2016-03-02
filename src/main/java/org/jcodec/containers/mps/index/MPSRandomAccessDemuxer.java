@@ -1,11 +1,5 @@
 package org.jcodec.containers.mps.index;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
 import org.jcodec.api.NotSupportedException;
-import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
@@ -14,6 +8,10 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 import org.jcodec.platform.Platform;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

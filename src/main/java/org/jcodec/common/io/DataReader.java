@@ -1,5 +1,4 @@
 package org.jcodec.common.io;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;

@@ -29,14 +29,29 @@ public class NodeDescriptor extends Descriptor {
         return children;
     }
 
-    protected static NodeDescriptor parse(ByteBuffer input) {
+    protected static NodeDescriptor parse(ByteBuffer input, IDescriptorFactory factory) {
         Collection<Descriptor> children = new ArrayList<Descriptor>();
         Descriptor d;
         do {
-            d = DescriptorFactory.read(input);
+            d = Descriptor.read(input, factory);
             if (d != null)
                 children.add(d);
         } while (d != null);
         return new NodeDescriptor(0, children);
+    }
+
+    public static <T> T find(Descriptor es, Class<T> class1, int tag) {
+        if (es.getTag() == tag)
+            return (T) es;
+        else {
+            if (es instanceof NodeDescriptor) {
+                for (Descriptor descriptor : ((NodeDescriptor) es).getChildren()) {
+                    T res = find(descriptor, class1, tag);
+                    if (res != null)
+                        return res;
+                }
+            }
+        }
+        return null;
     }
 }

@@ -1,16 +1,14 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.ThreadLocal;
+import java.lang.IllegalArgumentException;
 
 import static java.util.Arrays.binarySearch;
 import static org.jcodec.codecs.mpeg12.MPEGConst.PICTURE_START_CODE;
 import static org.jcodec.codecs.mpeg12.MPEGUtil.nextSegment;
 import static org.jcodec.movtool.streaming.tracks.MPEGToAVCTranscoder.createTranscoder;
 import static org.jcodec.movtool.streaming.tracks.Transcode2AVCTrack.createCodecMeta;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
@@ -22,6 +20,12 @@ import org.jcodec.common.model.Size;
 import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

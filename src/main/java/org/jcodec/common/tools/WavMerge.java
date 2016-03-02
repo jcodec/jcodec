@@ -1,15 +1,15 @@
 package org.jcodec.common.tools;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.common.AudioUtil;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

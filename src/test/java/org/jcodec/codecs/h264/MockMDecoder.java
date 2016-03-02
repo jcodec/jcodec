@@ -1,8 +1,6 @@
 package org.jcodec.codecs.h264;
-
-import junit.framework.Assert;
-
 import org.jcodec.codecs.common.biari.MDecoder;
+import org.junit.Assert;
 
 public class MockMDecoder extends MDecoder {
 

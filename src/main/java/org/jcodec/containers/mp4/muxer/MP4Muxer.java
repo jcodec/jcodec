@@ -1,13 +1,6 @@
 package org.jcodec.containers.mp4.muxer;
-
 import static org.jcodec.containers.mp4.TrackType.SOUND;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.AudioFormat;
@@ -19,17 +12,23 @@ import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.EndianBox;
-import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.FormatBox;
 import org.jcodec.containers.mp4.boxes.Header;
-import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -93,7 +92,7 @@ public class MP4Muxer {
     }
 
     public static AudioSampleEntry audioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
-            int sampleRate, Endian endian) {
+            int sampleRate, ByteOrder endian) {
         AudioSampleEntry ase = AudioSampleEntry
                 .createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId, (short) channels, (short) 16, sampleRate, (short) 0, 0, 65535, 0, 1, sampleSize, channels * sampleSize, sampleSize, (short) 1);
 
@@ -226,7 +225,7 @@ public class MP4Muxer {
     public static AudioSampleEntry _audioSampleEntry(AudioFormat format) {
         return MP4Muxer.audioSampleEntry(lookupFourcc(format), 1,
         format.getSampleSizeInBits() >> 3, format.getChannels(), (int) format.getSampleRate(),
-        format.isBigEndian() ? Endian.BIG_ENDIAN : Endian.LITTLE_ENDIAN);
+        format.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
     }
 
     public FramesMP4MuxerTrack addCompressedAudioTrack(String fourcc, int timescale, int channels, int sampleRate,

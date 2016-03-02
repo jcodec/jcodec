@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-
 import static java.lang.String.format;
 import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
 import static org.jcodec.common.model.ColorSpace.RGB;
@@ -24,8 +23,8 @@ import org.junit.Test;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.lang.System;
 import java.nio.ByteBuffer;
-
 import javax.imageio.ImageIO;
 
 public class MKVFrameReadingTest {

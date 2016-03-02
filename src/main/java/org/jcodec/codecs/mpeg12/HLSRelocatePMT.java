@@ -1,21 +1,20 @@
 package org.jcodec.codecs.mpeg12;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.psi.PATSection;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

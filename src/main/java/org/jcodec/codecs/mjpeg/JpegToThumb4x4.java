@@ -1,13 +1,12 @@
 package org.jcodec.codecs.mjpeg;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.dct.IDCT4x4;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.MathUtil;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

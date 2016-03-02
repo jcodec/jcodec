@@ -1,4 +1,7 @@
 package org.jcodec.movtool.streaming.tracks.avc;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Encoder;
@@ -62,7 +65,7 @@ public class AVCClipTrack extends ClipTrack {
         SeqParameterSet sps = H264Utils.readSPS(rawSPS.get(0));
 
         mbW = sps.pic_width_in_mbs_minus1 + 1;
-        mbH = H264Utils.getPicHeightInMbs(sps);
+        mbH = SeqParameterSet.getPicHeightInMbs(sps);
 
         encSPS = encoder.initSPS(H264Utils.getPicSize(sps));
         encSPS.seq_parameter_set_id = 1;

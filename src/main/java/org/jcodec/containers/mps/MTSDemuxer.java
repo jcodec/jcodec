@@ -1,4 +1,10 @@
 package org.jcodec.containers.mps;
+import org.jcodec.api.NotSupportedException;
+import org.jcodec.common.Assert;
+import org.jcodec.common.IntObjectMap;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,13 +14,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.jcodec.api.NotSupportedException;
-import org.jcodec.common.Assert;
-import org.jcodec.common.IntObjectMap;
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

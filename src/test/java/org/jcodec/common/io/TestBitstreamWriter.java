@@ -1,9 +1,9 @@
 package org.jcodec.common.io;
-
-import java.nio.ByteBuffer;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class TestBitstreamWriter {
 

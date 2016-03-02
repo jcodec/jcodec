@@ -1,10 +1,4 @@
 package org.jcodec.api;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.NALUnit;
@@ -20,6 +14,11 @@ import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

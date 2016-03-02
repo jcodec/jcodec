@@ -10,8 +10,9 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
+import java.lang.System;
+import java.nio.ByteBuffer;
 import javax.imageio.ImageIO;
 
 public class VP8DecoderTest {

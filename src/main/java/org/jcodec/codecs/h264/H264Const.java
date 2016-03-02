@@ -1,10 +1,8 @@
 package org.jcodec.codecs.h264;
-
 import static org.jcodec.codecs.h264.H264Const.PartPred.Bi;
 import static org.jcodec.codecs.h264.H264Const.PartPred.Direct;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L1;
-import static org.jcodec.codecs.h264.io.CAVLC.coeffToken;
 
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.io.VLC;
@@ -22,7 +20,7 @@ import java.util.Arrays;
  */
 public class H264Const {
 
-    public static VLC[] coeffToken = new VLC[10];
+    public static VLC[] CoeffToken = new VLC[10];
     public static VLC coeffTokenChromaDCY420;
     public static VLC coeffTokenChromaDCY422;
     public static VLC[] run;
@@ -93,7 +91,7 @@ public class H264Const {
         vbl.set(coeffToken(16, 1), "0000000000000110");
         vbl.set(coeffToken(16, 2), "0000000000000101");
         vbl.set(coeffToken(16, 3), "0000000000001000");
-        coeffToken[0] = coeffToken[1] = vbl.getVLC();
+        CoeffToken[0] = CoeffToken[1] = vbl.getVLC();
     }
 
     static {
@@ -160,7 +158,7 @@ public class H264Const {
         vbl.set(coeffToken(16, 1), "00000000000110");
         vbl.set(coeffToken(16, 2), "00000000000101");
         vbl.set(coeffToken(16, 3), "00000000000100");
-        coeffToken[2] = coeffToken[3] = vbl.getVLC();
+        CoeffToken[2] = CoeffToken[3] = vbl.getVLC();
     }
 
     static {
@@ -228,7 +226,7 @@ public class H264Const {
         vbl.set(coeffToken(16, 1), "0000000100");
         vbl.set(coeffToken(16, 2), "0000000011");
         vbl.set(coeffToken(16, 3), "0000000010");
-        coeffToken[4] = coeffToken[5] = coeffToken[6] = coeffToken[7] = vbl.getVLC();
+        CoeffToken[4] = CoeffToken[5] = CoeffToken[6] = CoeffToken[7] = vbl.getVLC();
     }
 
     static {
@@ -295,7 +293,7 @@ public class H264Const {
         vbl.set(coeffToken(16, 1), "111101");
         vbl.set(coeffToken(16, 2), "111110");
         vbl.set(coeffToken(16, 3), "111111");
-        coeffToken[8] = vbl.getVLC();
+        CoeffToken[8] = vbl.getVLC();
     }
 
     static {
@@ -611,5 +609,9 @@ public class H264Const {
 
     public static boolean usesList(PartPred pred, int l) {
         return pred == Bi ? true : (pred == L0 && l == 0 || pred == L1 && l == 1);
+    }
+
+    public static final int coeffToken(int totalCoeff, int trailingOnes) {
+        return (totalCoeff << 4) | trailingOnes;
     }
 }

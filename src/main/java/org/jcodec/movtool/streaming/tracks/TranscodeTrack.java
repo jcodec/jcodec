@@ -1,4 +1,7 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.ThreadLocal;
 
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.VideoEncoder;

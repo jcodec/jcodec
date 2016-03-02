@@ -1,5 +1,4 @@
 package org.jcodec;
-
 import static org.jcodec.common.tools.MathUtil.abs;
 import static org.jcodec.common.tools.MathUtil.clipMax;
 import static org.junit.Assert.assertTrue;
@@ -20,10 +19,11 @@ import org.junit.Assert;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.System;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
-
 import javax.imageio.ImageIO;
 
 public class Utils {

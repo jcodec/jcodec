@@ -1,5 +1,4 @@
 package org.jcodec.containers.mps;
-
 import static org.jcodec.codecs.h264.io.model.NALUnitType.IDR_SLICE;
 import static org.jcodec.codecs.h264.io.model.NALUnitType.NON_IDR_SLICE;
 import static org.jcodec.codecs.h264.io.model.NALUnitType.PPS;
@@ -13,16 +12,7 @@ import static org.jcodec.containers.mps.MPSUtils.psMarker;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 import static org.jcodec.containers.mps.MPSUtils.videoStream;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.jcodec.codecs.h264.io.model.NALUnit;
-import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.SegmentReader;
 import org.jcodec.common.Codec;
@@ -30,7 +20,14 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.TapeTimecode;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -65,25 +62,6 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             addToStream(nextPacket);
         }
     }
-
-    public static class PESPacket {
-        public ByteBuffer data;
-        public long pts;
-        public int streamId;
-        public int length;
-        public long pos;
-        public long dts;
-
-        public PESPacket(ByteBuffer data, long pts, int streamId, int length, long pos, long dts) {
-            this.data = data;
-            this.pts = pts;
-            this.streamId = streamId;
-            this.length = length;
-            this.pos = pos;
-            this.dts = dts;
-        }
-    }
-
 
     public ByteBuffer getBuffer() {
         synchronized (bufPool) {
@@ -410,33 +388,5 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             }
         }
         return score;
-    }
-
-    public static class MPEGPacket extends Packet {
-        private long offset;
-        private ByteBuffer seq;
-        private int gop;
-        private int timecode;
-
-        public MPEGPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
-                TapeTimecode tapeTimecode) {
-            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
-        }
-
-        public long getOffset() {
-            return offset;
-        }
-
-        public ByteBuffer getSeq() {
-            return seq;
-        }
-
-        public int getGOP() {
-            return gop;
-        }
-
-        public int getTimecode() {
-            return timecode;
-        }
     }
 }

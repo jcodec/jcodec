@@ -1,10 +1,13 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.nio.ByteBuffer;
 
 import org.jcodec.common.AudioFormat;
-import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
-import org.jcodec.containers.mp4.boxes.channel.Label;
+import org.jcodec.common.model.Label;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -16,7 +19,7 @@ import org.jcodec.containers.mp4.boxes.channel.Label;
 public class AudioCodecMeta extends CodecMeta {
 
     public static AudioCodecMeta createAudioCodecMeta(String fourcc, int sampleSize, int channelCount, int sampleRate,
-            Endian endian, boolean pcm, Label[] labels, ByteBuffer codecPrivate) {
+            ByteOrder endian, boolean pcm, Label[] labels, ByteBuffer codecPrivate) {
         AudioCodecMeta self = new AudioCodecMeta(fourcc, codecPrivate);
         self.sampleSize = sampleSize;
         self.channelCount = channelCount;
@@ -28,7 +31,7 @@ public class AudioCodecMeta extends CodecMeta {
     }
 
     public static AudioCodecMeta createAudioCodecMeta2(String fourcc, int sampleSize, int channelCount, int sampleRate,
-            Endian endian, boolean pcm, Label[] labels, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame,
+            ByteOrder endian, boolean pcm, Label[] labels, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame,
             ByteBuffer codecPrivate) {
         AudioCodecMeta self = new AudioCodecMeta(fourcc, codecPrivate);
         self.sampleSize = sampleSize;
@@ -49,7 +52,7 @@ public class AudioCodecMeta extends CodecMeta {
         self.sampleSize = format.getSampleSizeInBits() >> 3;
         self.channelCount = format.getChannels();
         self.sampleRate = format.getSampleRate();
-        self.endian = format.isBigEndian() ? Endian.BIG_ENDIAN : Endian.LITTLE_ENDIAN;
+        self.endian = format.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
         self.pcm = pcm;
         self.labels = labels;
         return self;
@@ -62,7 +65,7 @@ public class AudioCodecMeta extends CodecMeta {
     private int sampleSize;
     private int channelCount;
     private int sampleRate;
-    private Endian endian;
+    private ByteOrder endian;
     private int samplesPerPacket;
     private int bytesPerPacket;
     private int bytesPerFrame;
@@ -97,7 +100,7 @@ public class AudioCodecMeta extends CodecMeta {
         return bytesPerFrame;
     }
 
-    public Endian getEndian() {
+    public ByteOrder getEndian() {
         return endian;
     }
 
@@ -106,7 +109,7 @@ public class AudioCodecMeta extends CodecMeta {
     }
 
     public AudioFormat getFormat() {
-        return new AudioFormat(sampleRate, sampleSize << 3, channelCount, true, endian == Endian.BIG_ENDIAN);
+        return new AudioFormat(sampleRate, sampleSize << 3, channelCount, true, endian == ByteOrder.BIG_ENDIAN);
     }
 
     public Label[] getChannelLabels() {

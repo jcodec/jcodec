@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg4.es;
-
 import java.nio.ByteBuffer;
 import java.util.Collection;
 
@@ -24,7 +23,7 @@ public class DecoderConfig extends NodeDescriptor {
         this.avgBitrate = avgBitrate;
     }
 
-    protected static DecoderConfig parse(ByteBuffer input) {
+    protected static DecoderConfig parse(ByteBuffer input, IDescriptorFactory factory) {
 
         int objectType = input.get() & 0xff;
         input.get();
@@ -32,7 +31,7 @@ public class DecoderConfig extends NodeDescriptor {
         int maxBitrate = input.getInt();
         int avgBitrate = input.getInt();
 
-        NodeDescriptor node = NodeDescriptor.parse(input);
+        NodeDescriptor node = NodeDescriptor.parse(input, factory);
         return new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, node.getChildren());
     }
 

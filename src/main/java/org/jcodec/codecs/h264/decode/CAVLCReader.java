@@ -2,7 +2,7 @@ package org.jcodec.codecs.h264.decode;
 
 import static org.jcodec.common.tools.Debug.trace;
 
-import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.H264Utils2;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.tools.Debug;
 
@@ -53,7 +53,7 @@ public class CAVLCReader {
     public static int readSE(BitReader bits, String message)  {
         int val = readUE(bits);
 
-        val = H264Utils.golomb2Signed(val);
+        val = H264Utils2.golomb2Signed(val);
 
         trace(message, val);
 

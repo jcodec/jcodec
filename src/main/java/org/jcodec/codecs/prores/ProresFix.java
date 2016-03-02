@@ -1,5 +1,4 @@
 package org.jcodec.codecs.prores;
-
 import static java.lang.Math.min;
 import static org.jcodec.codecs.prores.ProresConsts.dcCodebooks;
 import static org.jcodec.codecs.prores.ProresConsts.firstDCCodebook;
@@ -13,15 +12,15 @@ import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.sign;
 import static org.jcodec.common.tools.MathUtil.toSigned;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

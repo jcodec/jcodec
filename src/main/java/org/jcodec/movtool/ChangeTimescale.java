@@ -1,12 +1,16 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.io.File;
 
-import org.jcodec.containers.mp4.BoxUtil;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.MediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+
+import java.io.File;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,7 +33,7 @@ public class ChangeTimescale {
         new InplaceMP4Editor().modify(new File(args[0]), new MP4Edit() {
             public void apply(MovieBox mov) {
                 TrakBox vt = mov.getVideoTrack();
-                MediaHeaderBox mdhd = BoxUtil.findFirstPath(vt, MediaHeaderBox.class, BoxUtil.path("mdia.mdhd"));
+                MediaHeaderBox mdhd = NodeBox.findFirstPath(vt, MediaHeaderBox.class, Box.path("mdia.mdhd"));
                 int oldTs = mdhd.getTimescale();
 
                 if (oldTs > ts) {

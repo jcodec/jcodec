@@ -1,15 +1,15 @@
 package org.jcodec.codecs.mpeg12;
+import org.jcodec.common.Assert;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.containers.mps.MTSUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
-
-import org.jcodec.common.Assert;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.containers.mps.MTSUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

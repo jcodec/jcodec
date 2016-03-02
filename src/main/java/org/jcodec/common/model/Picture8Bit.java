@@ -3,6 +3,7 @@ package org.jcodec.common.model;
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.model.ColorSpace.MAX_PLANES;
 
+import java.lang.IllegalArgumentException;
 import java.util.Arrays;
 
 /**

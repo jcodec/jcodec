@@ -1,5 +1,4 @@
 package org.jcodec.codecs.prores;
-
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.common.dct.IDCT2x2;
 import org.jcodec.common.io.BitReader;

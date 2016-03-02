@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.decode;
-
 import static org.jcodec.codecs.h264.H264Const.ARRAY;
 import static org.jcodec.codecs.h264.H264Const.BLK8x8_BLOCKS;
 import static org.jcodec.codecs.h264.H264Const.BLK_8x8_MB_OFF_LUMA;
@@ -20,8 +19,6 @@ import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveMvs;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.savePrediction8x8;
 import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
 
-import java.util.Arrays;
-
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
@@ -29,6 +26,8 @@ import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.util.Arrays;
 
 /**
  * A decoder for Inter 16x16, 16x8 and 8x16 macroblocks

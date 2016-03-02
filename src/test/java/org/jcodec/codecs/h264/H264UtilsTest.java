@@ -1,10 +1,10 @@
 package org.jcodec.codecs.h264;
-
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 

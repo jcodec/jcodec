@@ -1,18 +1,36 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.ThreadLocal;
 
+
+import static org.jcodec.common.model.Label.Center;
+import static org.jcodec.common.model.Label.Discrete;
+import static org.jcodec.common.model.Label.LFE2;
+import static org.jcodec.common.model.Label.LFEScreen;
+import static org.jcodec.common.model.Label.Left;
+import static org.jcodec.common.model.Label.LeftCenter;
+import static org.jcodec.common.model.Label.LeftSurround;
+import static org.jcodec.common.model.Label.LeftTotal;
+import static org.jcodec.common.model.Label.Mono;
+import static org.jcodec.common.model.Label.RearSurroundLeft;
+import static org.jcodec.common.model.Label.RearSurroundRight;
+import static org.jcodec.common.model.Label.Right;
+import static org.jcodec.common.model.Label.RightCenter;
+import static org.jcodec.common.model.Label.RightSurround;
+import static org.jcodec.common.model.Label.RightTotal;
+import static org.jcodec.common.model.Label.Unused;
+
+import org.jcodec.common.IntArrayList;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.logging.Logger;
+import org.jcodec.common.model.Label;
+import org.jcodec.movtool.streaming.AudioCodecMeta;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.common.IntArrayList;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.logging.Logger;
-import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
-import org.jcodec.containers.mp4.boxes.channel.Label;
-import org.jcodec.movtool.streaming.AudioCodecMeta;
-import static org.jcodec.containers.mp4.boxes.channel.Label.*;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -144,7 +162,7 @@ public class DownmixHelper {
         if (se.getSampleSize() == 3) {
             int step = nCh * 3;
             maxSamples = Math.min(nSamples, len / step);
-            if (se.getEndian() == Endian.BIG_ENDIAN) {
+            if (se.getEndian() == ByteOrder.BIG_ENDIAN) {
                 for (int s = 0, bi = off + ch * 3; s < maxSamples; s++, bi += step) {
                     fSamples[s] = nextSample24BE(ba, bi);
                 }
@@ -156,7 +174,7 @@ public class DownmixHelper {
         } else {
             int step = nCh * 2;
             maxSamples = Math.min(nSamples, len / step);
-            if (se.getEndian() == Endian.BIG_ENDIAN) {
+            if (se.getEndian() == ByteOrder.BIG_ENDIAN) {
                 for (int s = 0, bi = off + ch * 2; s < maxSamples; s++, bi += step) {
                     fSamples[s] = nextSample16BE(ba, bi);
                 }

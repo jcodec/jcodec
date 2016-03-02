@@ -1,22 +1,8 @@
 package org.jcodec.containers.mkv;
-
 import static java.lang.Long.toHexString;
 import static org.jcodec.containers.mkv.util.EbmlUtil.toHexString;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlBin;
@@ -30,6 +16,19 @@ import org.jcodec.containers.mkv.boxes.EbmlVoid;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.boxes.MkvSegment;
 import org.jcodec.platform.Platform;
+
+import java.lang.System;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -89,7 +88,7 @@ public final static MKVType         MuxingApp = new MKVType(new byte[]{0x4D, (by
 public final static MKVType         WritingApp = new MKVType(new byte[]{0x57,       0x41}, EbmlString.class);
        
      //The lower level EbmlBase containing the (monolithic) Block structure.
-public final static MKVType      Cluster = new MKVType(new byte[]{0x1F, (byte)0x43, (byte)0xB6, (byte)0x75}, EbmlMaster.class); 
+public final static MKVType      Cluster = new MKVType(EbmlMaster.CLUSTER_ID, EbmlMaster.class); 
          //Absolute timecode of the cluster (based on TimecodeScale).
 public final static MKVType          Timecode = new MKVType(new byte[]{(byte)0xE7}, EbmlUint.class); 
          //  The list of tracks that are not used in that part of the stream. It is useful when using overlay tracks on seeking. Then you should decide what track to use.

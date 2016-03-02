@@ -1,5 +1,4 @@
 package org.jcodec.common;
-
 import java.util.concurrent.Callable;
 
 /**
