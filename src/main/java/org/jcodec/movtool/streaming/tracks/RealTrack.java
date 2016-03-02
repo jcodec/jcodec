@@ -1,24 +1,23 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.FielExtension;
-import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.boxes.channel.ChannelUtils;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.PCMMP4DemuxerTrack;
@@ -27,6 +26,10 @@ import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -46,7 +49,7 @@ public class RealTrack implements VirtualTrack {
 
     public RealTrack(MovieBox movie, TrakBox trak, ByteChannelPool pool) {
         this.movie = movie;
-        SampleSizesBox stsz = BoxUtil.findFirstPath(trak, SampleSizesBox.class, BoxUtil.path("mdia.minf.stbl.stsz"));
+        SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         if (stsz.getDefaultSize() == 0) {
             this.demuxer = new FramesMP4DemuxerTrack(movie, trak, null) {
                 @Override
@@ -81,9 +84,9 @@ public class RealTrack implements VirtualTrack {
         SampleEntry se = trak.getSampleEntries()[0];
         if (se instanceof VideoSampleEntry) {
             VideoSampleEntry vse = (VideoSampleEntry) se;
-            PixelAspectExt pasp = BoxUtil.findFirst(se, PixelAspectExt.class, "pasp");
+            PixelAspectExt pasp = NodeBox.findFirst(se, PixelAspectExt.class, "pasp");
             
-            FielExtension fiel = BoxUtil.findFirst(se, FielExtension.class, "fiel");
+            FielExtension fiel = NodeBox.findFirst(se, FielExtension.class, "fiel");
             boolean interlace = false, topField = false;
             if(fiel != null) {
                 interlace = fiel.isInterlaced();
@@ -96,15 +99,15 @@ public class RealTrack implements VirtualTrack {
             AudioSampleEntry ase = (AudioSampleEntry) se;
             ByteBuffer codecPrivate = null;
             if ("mp4a".equals(ase.getFourcc())) {
-                LeafBox lb = BoxUtil.findFirst(se, LeafBox.class, "esds");
+                LeafBox lb = NodeBox.findFirst(se, LeafBox.class, "esds");
                 if (lb == null) {
-                    lb = BoxUtil.findFirstPath(se, LeafBox.class, new String[] { null, "esds" });
+                    lb = NodeBox.findFirstPath(se, LeafBox.class, new String[] { null, "esds" });
                 }
                 codecPrivate = lb.getData();
             }
 
             return AudioCodecMeta
-                    .createAudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(), (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), ChannelUtils.getLabelsFromSampleEntry(ase), codecPrivate);
+                    .createAudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(), (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), AudioSampleEntry.getLabelsFromSampleEntry(ase), codecPrivate);
         } else
             throw new RuntimeException("Sample entry '" + se.getFourcc() + "' is not supported.");
     }

@@ -1,9 +1,8 @@
 package org.jcodec.codecs.mpeg4.es;
+import org.jcodec.common.JCodecUtil2;
+import org.jcodec.common.io.NIOUtils;
 
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,6 +14,8 @@ import org.jcodec.common.io.NIOUtils;
 public abstract class Descriptor {
     private int _tag;
     private int size;
+    protected IDescriptorFactory factory;
+    
     public Descriptor(int tag, int size) {
         this._tag = tag;
         this.size = size;
@@ -27,7 +28,7 @@ public abstract class Descriptor {
 
         int length = out.position() - fork.position() - 5;
         fork.put((byte) _tag);
-        JCodecUtil.writeBER32(fork, length);
+        JCodecUtil2.writeBER32(fork, length);
     }
 
     protected abstract void doWrite(ByteBuffer out);
@@ -36,5 +37,27 @@ public abstract class Descriptor {
 
     int getTag() {
         return _tag;
+    }
+
+    public static Descriptor read(ByteBuffer input, IDescriptorFactory factory) {
+        if(input.remaining() < 2)
+            return null;
+        int tag = input.get() & 0xff;
+        int size = JCodecUtil2.readBER32(input);
+        
+        Class<? extends Descriptor> cls = factory.byTag(tag);
+        Descriptor descriptor;
+        try {
+            descriptor = cls.getConstructor(Integer.TYPE, Integer.TYPE).newInstance(tag, (int) size);
+            descriptor.setFactory(factory);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        descriptor.parse(NIOUtils.read(input, size));
+        return descriptor;
+    }
+
+    private void setFactory(IDescriptorFactory factory) {
+        this.factory = factory;
     }
 }

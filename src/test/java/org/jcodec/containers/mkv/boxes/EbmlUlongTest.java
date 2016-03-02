@@ -1,11 +1,10 @@
 package org.jcodec.containers.mkv.boxes;
-
 import static org.jcodec.containers.mkv.MKVType.CueClusterPosition;
-
-import java.nio.ByteBuffer;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
 
 public class EbmlUlongTest {
 

@@ -1,12 +1,11 @@
 package org.jcodec.codecs.vpx;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Packet;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.model.Packet;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

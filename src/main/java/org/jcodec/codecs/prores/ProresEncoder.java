@@ -1,5 +1,4 @@
 package org.jcodec.codecs.prores;
-
 import static java.lang.Math.min;
 import static org.jcodec.codecs.prores.ProresConsts.QMAT_CHROMA_APCH;
 import static org.jcodec.codecs.prores.ProresConsts.QMAT_CHROMA_APCN;
@@ -20,8 +19,6 @@ import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.sign;
 
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
@@ -29,6 +26,8 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.ImageOP;
+
+import java.nio.ByteBuffer;
 
 /**
  * 

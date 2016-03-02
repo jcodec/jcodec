@@ -5,9 +5,9 @@ import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
-public class SampleBoxesFactory extends BoxFactory {
+public class SampleBoxes extends Boxes {
 
-    public SampleBoxesFactory() {
+    public SampleBoxes() {
         clear();
         
         override("ap4h", VideoSampleEntry.class);

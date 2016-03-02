@@ -1,5 +1,4 @@
 package org.jcodec.codecs.vpx;
-
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.jcodec.common.tools.MathUtil;
 

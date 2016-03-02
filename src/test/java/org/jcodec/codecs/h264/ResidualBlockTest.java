@@ -1,9 +1,5 @@
 package org.jcodec.codecs.h264;
-
 import static org.junit.Assert.assertArrayEquals;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.common.biari.MDecoder;
 import org.jcodec.codecs.common.biari.MEncoder;
@@ -17,6 +13,9 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 public class ResidualBlockTest {
 
     @Test
@@ -26,7 +25,7 @@ public class ResidualBlockTest {
         String code = "0000100 01110010111101101";
         int[] coeffs = { 0, 3, 0, 1, -1, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        testResidualCAVLC(code, H264Const.coeffToken[0], coeffs);
+        testResidualCAVLC(code, H264Const.CoeffToken[0], coeffs);
     }
 
     @Test
@@ -35,7 +34,7 @@ public class ResidualBlockTest {
         String code = "0000000110 10001001000010111001100";
         int[] coeffs = { -2, 4, 3, -3, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        testResidualCAVLC(code, H264Const.coeffToken[0], coeffs);
+        testResidualCAVLC(code, H264Const.CoeffToken[0], coeffs);
     }
 
     @Test
@@ -44,7 +43,7 @@ public class ResidualBlockTest {
         String code = "00011 10001110010";
         int[] coeffs = { 0, 0, 0, 1, 0, 1, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0 };
 
-        testResidualCAVLC(code, H264Const.coeffToken[0], coeffs);
+        testResidualCAVLC(code, H264Const.CoeffToken[0], coeffs);
     }
 
     @Test
@@ -54,7 +53,7 @@ public class ResidualBlockTest {
 
         int[] coeffs = { 1, -3, 2, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0 };
 
-        testResidualCAVLC(code, H264Const.coeffToken[0], coeffs);
+        testResidualCAVLC(code, H264Const.CoeffToken[0], coeffs);
     }
 
     private int[] zigzag(int[] src, int[] tab) {

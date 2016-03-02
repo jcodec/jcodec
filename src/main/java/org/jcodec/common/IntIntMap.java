@@ -1,8 +1,8 @@
 package org.jcodec.common;
-
 import static java.lang.Integer.MIN_VALUE;
 import static java.lang.System.arraycopy;
 
+import java.lang.IllegalArgumentException;
 import java.util.Arrays;
 
 /**

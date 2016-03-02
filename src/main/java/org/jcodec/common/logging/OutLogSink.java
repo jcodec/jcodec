@@ -2,12 +2,13 @@ package org.jcodec.common.logging;
 
 import static org.jcodec.common.tools.MainUtils.colorString;
 
-import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.ANSIColor;
+
+import java.io.PrintStream;
+import java.lang.System;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

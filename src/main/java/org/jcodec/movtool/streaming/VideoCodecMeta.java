@@ -1,9 +1,12 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.nio.ByteBuffer;
 
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

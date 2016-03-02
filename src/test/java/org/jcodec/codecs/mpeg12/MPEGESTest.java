@@ -1,15 +1,14 @@
 package org.jcodec.codecs.mpeg12;
-
 import static org.junit.Assert.assertArrayEquals;
+
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.Packet;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.Packet;
-import org.junit.Test;
 
 public class MPEGESTest {
 

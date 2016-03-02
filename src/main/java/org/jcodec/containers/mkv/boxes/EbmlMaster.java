@@ -1,11 +1,11 @@
 package org.jcodec.containers.mkv.boxes;
-
 import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlLength;
 
+import org.jcodec.containers.mkv.util.EbmlUtil;
+
+import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-
-import org.jcodec.containers.mkv.util.EbmlUtil;
 
 
 /**
@@ -21,6 +21,7 @@ public class EbmlMaster extends EbmlBase {
     
     protected long usedSize;
     public final ArrayList<EbmlBase> children;
+    public static final byte[] CLUSTER_ID = new byte[]{0x1F, (byte)0x43, (byte)0xB6, (byte)0x75};
     
     public EbmlMaster(byte[] id) {
         super(id);

@@ -1,14 +1,5 @@
 package org.jcodec.api;
-
 import static org.jcodec.Utils.picturesRoughlyEqual;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 import org.jcodec.Utils;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -18,6 +9,15 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.System;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class FrameGrabTest {
     private static final String SEQ_1_MP4 = "src/test/resources/video/seq_h264_1.mp4";

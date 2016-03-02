@@ -16,7 +16,7 @@ import org.jcodec.codecs.common.biari.MDecoder;
 import org.jcodec.codecs.common.biari.MEncoder;
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
-import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.H264Utils2;
 import org.jcodec.codecs.h264.decode.CABACContst;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceType;
@@ -389,7 +389,7 @@ public class CABAC {
                     val++;
             }
         }
-        prevMbQpDelta = H264Utils.golomb2Signed(val);
+        prevMbQpDelta = H264Utils2.golomb2Signed(val);
 
         return prevMbQpDelta;
     }

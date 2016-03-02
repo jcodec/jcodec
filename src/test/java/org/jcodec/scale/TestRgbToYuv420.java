@@ -1,9 +1,10 @@
 package org.jcodec.scale;
-
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.lang.System;
 
 public class TestRgbToYuv420 {
 

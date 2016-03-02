@@ -1,9 +1,13 @@
 package net.sourceforge.jaad.aac.syntax;
-
-import static net.sourceforge.jaad.aac.ChannelConfiguration.*;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_FIVE;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_FIVE_PLUS_ONE;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_MONO;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_SEVEN_PLUS_ONE;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO;
 
 import java.util.logging.Level;
-
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.ChannelConfiguration;
 import net.sourceforge.jaad.aac.DecoderConfig;
@@ -13,7 +17,7 @@ import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
 import net.sourceforge.jaad.aac.sbr.SBR;
 import net.sourceforge.jaad.aac.tools.IS;
-import net.sourceforge.jaad.aac.tools.LTPrediction;
+import net.sourceforge.jaad.aac.syntax.ICSInfo.LTPrediction;
 import net.sourceforge.jaad.aac.tools.MS;
 
 /**

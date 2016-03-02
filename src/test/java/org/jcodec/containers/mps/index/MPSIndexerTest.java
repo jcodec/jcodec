@@ -1,8 +1,4 @@
 package org.jcodec.containers.mps.index;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.MPEGHeader;
 import org.jcodec.codecs.mpeg12.bitstream.PictureCodingExtension;
@@ -17,6 +13,10 @@ import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class MPSIndexerTest {
 

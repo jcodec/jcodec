@@ -1,5 +1,4 @@
 package org.jcodec.codecs.y4m;
-
 import static org.jcodec.common.StringUtils.splitC;
 
 import org.jcodec.common.io.NIOUtils;
@@ -11,9 +10,6 @@ import org.jcodec.common.model.Size;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

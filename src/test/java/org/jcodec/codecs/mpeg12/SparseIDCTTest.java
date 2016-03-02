@@ -1,11 +1,12 @@
 package org.jcodec.codecs.mpeg12;
-
 import org.jcodec.common.dct.DCTRef;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.dct.SparseIDCT;
 import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.lang.System;
 
 public class SparseIDCTTest {
 

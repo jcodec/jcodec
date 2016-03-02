@@ -1,14 +1,12 @@
 package org.jcodec.containers.mps.psi;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.containers.mps.MPSUtils;
+import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
+import org.jcodec.containers.mps.MTSStreamType;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.logging.Logger;
-import org.jcodec.containers.mps.MPSUtils;
-import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
-import org.jcodec.containers.mps.MTSStreamType;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

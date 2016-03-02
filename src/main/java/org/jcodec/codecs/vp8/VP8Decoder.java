@@ -1,5 +1,4 @@
 package org.jcodec.codecs.vp8;
-
 import static org.jcodec.codecs.vp8.VP8Util.MAX_MODE_LF_DELTAS;
 import static org.jcodec.codecs.vp8.VP8Util.MAX_REF_LF_DELTAS;
 import static org.jcodec.codecs.vp8.VP8Util.getBitInBytes;
@@ -10,9 +9,6 @@ import static org.jcodec.codecs.vp8.VP8Util.keyFrameYModeProb;
 import static org.jcodec.codecs.vp8.VP8Util.keyFrameYModeTree;
 import static org.jcodec.codecs.vp8.VP8Util.vp8CoefUpdateProbs;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vp8.Macroblock.Subblock;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
@@ -20,6 +16,9 @@ import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
 import org.jcodec.common.Assert;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

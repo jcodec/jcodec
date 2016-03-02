@@ -1,12 +1,9 @@
 package org.jcodec.codecs.h264.encode;
-
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_LEFT;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_TOP;
 import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
-
-import java.util.Arrays;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.BlockInterpolator;
@@ -18,6 +15,8 @@ import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

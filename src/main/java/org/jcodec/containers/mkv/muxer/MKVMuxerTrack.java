@@ -1,13 +1,12 @@
 package org.jcodec.containers.mkv.muxer;
-
 import static org.jcodec.containers.mkv.boxes.MkvBlock.keyFrame;
+
+import org.jcodec.common.model.Size;
+import org.jcodec.containers.mkv.boxes.MkvBlock;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.common.model.Size;
-import org.jcodec.containers.mkv.boxes.MkvBlock;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

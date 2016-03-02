@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg12;
-
 import static org.jcodec.codecs.mpeg12.MPEGConst.BLOCK_TO_CC;
 import static org.jcodec.codecs.mpeg12.MPEGConst.SQUEEZE_X;
 import static org.jcodec.codecs.mpeg12.MPEGConst.SQUEEZE_Y;

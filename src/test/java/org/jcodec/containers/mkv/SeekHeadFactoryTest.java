@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVType.Audio;
 import static org.jcodec.containers.mkv.MKVType.Channels;
@@ -27,18 +26,10 @@ import static org.jcodec.containers.mkv.MKVType.TrackUID;
 import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.WritingApp;
 import static org.jcodec.containers.mkv.boxes.EbmlUint.longToBytes;
-import static org.jcodec.containers.mkv.muxer.MKVMuxer.createLong;
-import static org.jcodec.containers.mkv.muxer.MKVMuxer.createDouble;
 import static org.jcodec.containers.mkv.muxer.MKVMuxer.createBuffer;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createDouble;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createLong;
+import static org.jcodec.containers.mkv.muxer.MKVMuxer.createString;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -56,7 +47,16 @@ import org.jcodec.containers.mkv.muxer.MKVMuxer;
 import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.junit.Assert;
 import org.junit.Test;
-import static org.jcodec.containers.mkv.muxer.MKVMuxer.createString;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
 
 public class SeekHeadFactoryTest {
 

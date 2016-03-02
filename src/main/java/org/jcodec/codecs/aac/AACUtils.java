@@ -1,16 +1,16 @@
 package org.jcodec.codecs.aac;
-
 import static org.jcodec.codecs.aac.ObjectType.AOT_ESCAPE;
-
-import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ChannelLabel;
-import org.jcodec.containers.mp4.BoxUtil;
-import org.jcodec.containers.mp4.boxes.LeafBox;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+
+import java.lang.IllegalArgumentException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -78,9 +78,9 @@ public class AACUtils {
     public static AudioInfo getChannels(SampleEntry mp4a) {
         if (!"mp4a".equals(mp4a.getFourcc()))
             throw new IllegalArgumentException("Not mp4a sample entry");
-        LeafBox b = BoxUtil.findFirst(mp4a, LeafBox.class, "esds");
+        LeafBox b = NodeBox.findFirst(mp4a, LeafBox.class, "esds");
         if (b == null) {
-            b = BoxUtil.findFirstPath(mp4a, LeafBox.class, new String[] { null, "esds" });
+            b = NodeBox.findFirstPath(mp4a, LeafBox.class, new String[] { null, "esds" });
         }
         if (b == null)
             return null;

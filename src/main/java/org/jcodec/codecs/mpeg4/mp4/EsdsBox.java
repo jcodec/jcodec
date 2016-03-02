@@ -1,17 +1,17 @@
 package org.jcodec.codecs.mpeg4.mp4;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.mpeg4.es.DecoderConfig;
 import org.jcodec.codecs.mpeg4.es.DecoderSpecific;
 import org.jcodec.codecs.mpeg4.es.Descriptor;
 import org.jcodec.codecs.mpeg4.es.DescriptorFactory;
 import org.jcodec.codecs.mpeg4.es.ES;
+import org.jcodec.codecs.mpeg4.es.NodeDescriptor;
 import org.jcodec.codecs.mpeg4.es.SL;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.FullBox;
 import org.jcodec.containers.mp4.boxes.Header;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -53,15 +53,15 @@ public class EsdsBox extends FullBox {
 
     public void parse(ByteBuffer input) {
         super.parse(input);
-        ES es = (ES) DescriptorFactory.read(input);
+        ES es = (ES) Descriptor.read(input, DescriptorFactory.getInstance());
 
         trackId = es.getTrackId();
-        DecoderConfig decoderConfig = DescriptorFactory.find(es, DecoderConfig.class, DecoderConfig.tag());
+        DecoderConfig decoderConfig = NodeDescriptor.find(es, DecoderConfig.class, DecoderConfig.tag());
         objectType = decoderConfig.getObjectType();
         bufSize = decoderConfig.getBufSize();
         maxBitrate = decoderConfig.getMaxBitrate();
         avgBitrate = decoderConfig.getAvgBitrate();
-        DecoderSpecific decoderSpecific = DescriptorFactory.find(decoderConfig, DecoderSpecific.class, DecoderSpecific.tag());
+        DecoderSpecific decoderSpecific = NodeDescriptor.find(decoderConfig, DecoderSpecific.class, DecoderSpecific.tag());
         streamInfo = decoderSpecific.getData();
     }
 

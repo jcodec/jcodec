@@ -1,11 +1,11 @@
 package org.jcodec.containers.mxf.model;
-
-import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.jcodec.common.logging.Logger;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

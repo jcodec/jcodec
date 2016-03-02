@@ -1,21 +1,15 @@
 package org.jcodec.containers.mp4.muxer;
-
 import static org.jcodec.containers.mp4.TrackType.SOUND;
 import static org.jcodec.containers.mp4.TrackType.TIMECODE;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
-import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.ClearApertureBox;
 import org.jcodec.containers.mp4.boxes.DataInfoBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
@@ -24,7 +18,6 @@ import org.jcodec.containers.mp4.boxes.EditListBox;
 import org.jcodec.containers.mp4.boxes.EncodedPixelBox;
 import org.jcodec.containers.mp4.boxes.GenericMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.Header;
-import org.jcodec.containers.mp4.boxes.LeafBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.NameBox;
@@ -38,6 +31,12 @@ import org.jcodec.containers.mp4.boxes.TimecodeMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+
+import java.io.IOException;
+import java.lang.IllegalStateException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -106,7 +105,7 @@ public abstract class AbstractMP4MuxerTrack {
         int width = 0, height = 0;
         if (sampleEntries.get(0) instanceof VideoSampleEntry) {
             VideoSampleEntry vse = (VideoSampleEntry) sampleEntries.get(0);
-            PixelAspectExt paspBox = BoxUtil.findFirst(vse, PixelAspectExt.class, PixelAspectExt.fourcc());
+            PixelAspectExt paspBox = NodeBox.findFirst(vse, PixelAspectExt.class, PixelAspectExt.fourcc());
             Rational pasp = paspBox != null ? paspBox.getRational() : new Rational(1, 1);
             width = (int) (pasp.getNum() * vse.getWidth()) / pasp.getDen();
             height = (int) vse.getHeight();

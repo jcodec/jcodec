@@ -1,6 +1,6 @@
 package org.jcodec.codecs.h264.decode;
 
-import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
+import static org.jcodec.codecs.h264.io.model.SeqParameterSet.getPicHeightInMbs;
 
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.MBType;
@@ -29,7 +29,7 @@ public class DeblockerInput {
 
     public DeblockerInput(SeqParameterSet activeSps) {
         picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
-        picHeightInMbs = getPicHeightInMbs(activeSps);
+        picHeightInMbs = SeqParameterSet.getPicHeightInMbs(activeSps);
 
         nCoeff = new int[picHeightInMbs << 2][picWidthInMbs << 2];
         mvs = new int[2][picHeightInMbs << 2][picWidthInMbs << 2][3];

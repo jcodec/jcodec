@@ -1,9 +1,4 @@
 package org.jcodec.containers.mp4;
-
-import static org.jcodec.containers.mp4.BoxUtil.*;
-
-import java.io.IOException;
-
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.boxes.AliasBox;
@@ -16,6 +11,8 @@ import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+
+import java.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -51,7 +48,7 @@ public class ChunkWriter {
     }
 
     public void apply() {
-        NodeBox stbl = BoxUtil.findFirstPath(trak, NodeBox.class, BoxUtil.path("mdia.minf.stbl"));
+        NodeBox stbl = NodeBox.findFirstPath(trak, NodeBox.class, Box.path("mdia.minf.stbl"));
         stbl.removeChildren("stco", "co64");
 
         stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(offsets));

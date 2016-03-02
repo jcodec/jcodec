@@ -1,14 +1,13 @@
 package org.jcodec.codecs.h264;
-
-import java.io.File;
-import java.nio.ByteBuffer;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.nio.ByteBuffer;
 
 public class PPSReadTest {
     private PictureParameterSet expected;

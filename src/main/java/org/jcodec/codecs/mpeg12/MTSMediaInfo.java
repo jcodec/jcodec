@@ -1,13 +1,4 @@
 package org.jcodec.codecs.mpeg12;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.jcodec.codecs.mpeg12.MPSMediaInfo.MPEGTrackMetadata;
 import org.jcodec.codecs.mpeg12.MPSMediaInfo.MediaInfoDone;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -16,6 +7,15 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.MTSUtils;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

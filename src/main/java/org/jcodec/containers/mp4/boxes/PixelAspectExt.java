@@ -1,8 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.model.Rational;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

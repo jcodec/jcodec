@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.decode;
-
 import static org.jcodec.codecs.h264.H264Const.identityMapping4;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.calcMVPredictionMedian;
@@ -10,14 +9,14 @@ import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.savePrediction8x8
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveVect;
 import static org.jcodec.codecs.h264.io.model.SliceType.P;
 
-import java.util.Arrays;
-
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.util.Arrays;
 
 /**
  * A decoder for P skip macroblocks

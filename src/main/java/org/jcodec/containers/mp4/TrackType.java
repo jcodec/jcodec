@@ -1,7 +1,5 @@
 package org.jcodec.containers.mp4;
 
-import java.util.EnumSet;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License

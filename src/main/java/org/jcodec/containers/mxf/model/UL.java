@@ -1,5 +1,5 @@
 package org.jcodec.containers.mxf.model;
-
+import java.lang.StringBuilder;
 import java.nio.ByteBuffer;
 
 /**

@@ -1,7 +1,8 @@
 package org.jcodec.containers.flv;
 import org.jcodec.platform.Platform;
 
-
+import java.lang.IllegalAccessException;
+import java.lang.IllegalArgumentException;
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.Map;

@@ -1,8 +1,7 @@
 package org.jcodec.codecs.mpeg4.es;
+import org.jcodec.common.Assert;
 
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

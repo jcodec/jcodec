@@ -1,14 +1,14 @@
 package org.jcodec.containers.mp4.demuxer;
-
-import java.io.File;
-import java.net.URL;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.platform.Platform;
 import org.junit.Test;
+
+import java.io.File;
+import java.lang.System;
+import java.net.URL;
+import java.nio.ByteBuffer;
 
 public class MP4DemuxerTest {
 

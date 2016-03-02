@@ -1,14 +1,13 @@
 package org.jcodec.codecs.h264;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class MacroblockINxNDecodingTest {
     @Test

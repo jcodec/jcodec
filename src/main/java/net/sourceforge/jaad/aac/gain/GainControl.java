@@ -1,12 +1,11 @@
 package net.sourceforge.jaad.aac.gain;
+import static java.lang.System.arraycopy;
+
+import org.jcodec.platform.Platform;
 
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo.WindowSequence;
-
-import static java.lang.System.arraycopy;
-
-import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

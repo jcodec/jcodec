@@ -1,13 +1,10 @@
 package org.jcodec.codecs.mpeg12;
-
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
-import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
-import static org.jcodec.common.ArrayUtil.toIntArray;
-
-import java.util.Arrays;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 public class MPEGPredOctTest {
 

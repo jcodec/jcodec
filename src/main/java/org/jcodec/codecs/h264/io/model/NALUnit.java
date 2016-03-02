@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.io.model;
-
 import java.nio.ByteBuffer;
 
 /**

@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg4.es;
-
 import java.nio.ByteBuffer;
 
 /**

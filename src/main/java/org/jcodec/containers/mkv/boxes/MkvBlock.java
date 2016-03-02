@@ -1,18 +1,20 @@
 package org.jcodec.containers.mkv.boxes;
-
 import static java.lang.System.arraycopy;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.convertToBytes;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.signedComplement;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 import org.jcodec.common.ByteArrayList;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.jcodec.platform.Platform;
+
+import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.StringBuilder;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

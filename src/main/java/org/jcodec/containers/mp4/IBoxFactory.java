@@ -5,7 +5,5 @@ import org.jcodec.containers.mp4.boxes.Header;
 
 public interface IBoxFactory {
 
-    Class<? extends Box> toClass(String fourcc);
-
     Box newBox(Header header);
 }

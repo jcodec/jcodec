@@ -1,19 +1,24 @@
 package org.jcodec.common.tools;
 
+import java.util.Iterator;
+
+import org.jcodec.common.IntArrayList;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
+
+import java.lang.IllegalArgumentException;
+import java.lang.NullPointerException;
+import java.lang.StringBuilder;
+import java.lang.System;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.jcodec.common.IntArrayList;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -302,8 +307,8 @@ public class ToJSON {
             return false;
         if (method.getParameterTypes().length != 0)
             return false;
-        if (void.class.equals(method.getReturnType()))
-            return false;
+//        if (void.class.equals(method.getReturnType()))
+//            return false;
         return true;
     }
 }

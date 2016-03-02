@@ -1,11 +1,5 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.containers.mkv.MKVType.Cluster;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.util.List;
 
 import org.jcodec.Utils;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -16,6 +10,12 @@ import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.channels.FileChannel;
+import java.util.List;
 
 public class CuesFactoryTest {
 

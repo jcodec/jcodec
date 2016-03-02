@@ -1,12 +1,13 @@
 package org.jcodec.containers.mkv.boxes;
-
-import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlEncode;
 import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlLength;
-
-import java.nio.ByteBuffer;
+import static org.jcodec.platform.Platform.arrayEqualsByte;
 
 import org.jcodec.containers.mkv.util.EbmlUtil;
+import org.jcodec.platform.Platform;
+
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 
 /**
@@ -44,7 +45,7 @@ public class MkvSegment extends EbmlMaster {
         if (children != null && !children.isEmpty()){
             // all non-cluster elements go to header
             for(EbmlBase e : children){
-                if (Cluster.equals(e.type))
+                if (arrayEqualsByte(CLUSTER_ID, e.type.id))
                     continue;
                 
                 bb.put(e.getData()); 
@@ -61,7 +62,7 @@ public class MkvSegment extends EbmlMaster {
         returnValue += ebmlLength(getDataLen());
         if (children != null && !children.isEmpty()){
             for(EbmlBase e : children){
-                if (Cluster.equals(e.type))
+                if (arrayEqualsByte(CLUSTER_ID, e.type.id))
                     continue;
                 
                 returnValue += e.size(); 

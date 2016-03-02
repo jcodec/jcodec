@@ -1,10 +1,5 @@
 package org.jcodec.containers.mxf;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import static org.jcodec.containers.mxf.model.UL.newUL;
 
 import org.jcodec.common.Codec;
 import org.jcodec.containers.mxf.model.AES3PCMDescriptor;
@@ -31,8 +26,13 @@ import org.jcodec.containers.mxf.model.SourcePackage;
 import org.jcodec.containers.mxf.model.TimecodeComponent;
 import org.jcodec.containers.mxf.model.TimelineTrack;
 import org.jcodec.containers.mxf.model.UL;
-import static org.jcodec.containers.mxf.model.UL.newUL;
 import org.jcodec.containers.mxf.model.WaveAudioDescriptor;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

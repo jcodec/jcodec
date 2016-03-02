@@ -1,5 +1,4 @@
 package org.jcodec.common.dct;
-
 import static java.lang.Math.PI;
 import static java.lang.Math.cos;
 import static java.lang.Math.round;

@@ -1,5 +1,4 @@
 package org.jcodec.audio;
-
 import java.nio.FloatBuffer;
 
 /**

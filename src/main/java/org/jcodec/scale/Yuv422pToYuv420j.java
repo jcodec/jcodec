@@ -1,7 +1,7 @@
 package org.jcodec.scale;
-
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.tools.MathUtil;
+
+import java.lang.IllegalArgumentException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

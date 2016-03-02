@@ -1,5 +1,4 @@
 package org.jcodec.common.dct;
-
 import java.nio.IntBuffer;
 
 /**
@@ -104,7 +103,7 @@ public class IntDCT extends DCT {
             outptr.put(range_limit(DESCALE(tmp11 - tmp2, D) & RANGE_MASK));
             outptr.put(range_limit(DESCALE(tmp10 - tmp3, D) & RANGE_MASK));
 
-            wsptr = advance(wsptr, DCTSIZE); /* advance pointer to next row */
+            wsptr = doAdvance(wsptr, DCTSIZE); /* advance pointer to next row */
 
         }
     }
@@ -258,10 +257,10 @@ public class IntDCT extends DCT {
      * advance pointers to next column
      */
     private static IntBuffer advance(IntBuffer ptr) {
-        return advance(ptr, 1);
+        return doAdvance(ptr, 1);
     }
 
-    private static IntBuffer advance(IntBuffer ptr, int size) {
+    private static IntBuffer doAdvance(IntBuffer ptr, int size) {
         ptr.position(ptr.position() + size);
         return ptr.slice();
     }

@@ -1,9 +1,5 @@
 package org.jcodec.containers.flv;
-
-import java.io.IOException;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.ListIterator;
 
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
@@ -14,6 +10,11 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.flv.FLVTag.Type;
+
+import java.io.IOException;
+import java.lang.System;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

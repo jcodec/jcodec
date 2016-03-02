@@ -1,8 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
+import static java.lang.System.arraycopy;
 
 import net.sourceforge.jaad.aac.AACException;
-
-import static java.lang.System.arraycopy;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

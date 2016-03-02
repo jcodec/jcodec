@@ -1,6 +1,5 @@
 package org.jcodec.codecs.h264;
-
-import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
+import static org.jcodec.codecs.h264.io.model.SeqParameterSet.getPicHeightInMbs;
 import static org.jcodec.common.tools.MathUtil.wrap;
 
 import org.jcodec.codecs.h264.decode.DeblockerInput;
@@ -25,6 +24,10 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 
+import java.lang.InterruptedException;
+import java.lang.Runnable;
+import java.lang.Runtime;
+import java.lang.Thread;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -191,7 +194,7 @@ public class H264Decoder extends VideoDecoder {
             firstSliceHeader = sliceReader.getSliceHeader();
             activeSps = firstSliceHeader.sps;
             int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
-            int picHeightInMbs = getPicHeightInMbs(activeSps);
+            int picHeightInMbs = SeqParameterSet.getPicHeightInMbs(activeSps);
 
             if (dec.sRefs == null) {
                 dec.sRefs = new Frame[1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4)];
@@ -349,7 +352,7 @@ public class H264Decoder extends VideoDecoder {
     public static Frame createFrame(SeqParameterSet sps, byte[][] buffer, int frameNum, SliceType frameType,
             int[][][][] mvs, Frame[][][] refsUsed, int POC) {
         int width = sps.pic_width_in_mbs_minus1 + 1 << 4;
-        int height = getPicHeightInMbs(sps) << 4;
+        int height = SeqParameterSet.getPicHeightInMbs(sps) << 4;
 
         Rect crop = null;
         if (sps.frame_cropping_flag) {

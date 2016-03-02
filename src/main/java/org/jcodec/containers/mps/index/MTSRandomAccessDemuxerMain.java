@@ -1,8 +1,4 @@
 package org.jcodec.containers.mps.index;
-
-import java.io.File;
-import java.io.IOException;
-
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
@@ -12,6 +8,10 @@ import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mps.index.MPSRandomAccessDemuxer.Stream;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
 
 public class MTSRandomAccessDemuxerMain {
 

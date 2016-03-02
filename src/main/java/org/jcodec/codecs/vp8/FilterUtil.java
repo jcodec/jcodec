@@ -1,11 +1,9 @@
 package org.jcodec.codecs.vp8;
-
 import static java.lang.Math.abs;
 import static org.jcodec.codecs.vp8.FilterUtil.Segment.horizontal;
 import static org.jcodec.codecs.vp8.FilterUtil.Segment.vertical;
 
 import org.jcodec.api.NotImplementedException;
-import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vp8.Macroblock.Subblock;
 
 /**

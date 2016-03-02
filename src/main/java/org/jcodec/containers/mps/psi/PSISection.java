@@ -1,5 +1,4 @@
 package org.jcodec.containers.mps.psi;
-
 import java.nio.ByteBuffer;
 
 /**

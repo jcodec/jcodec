@@ -1,10 +1,8 @@
 package org.jcodec.common.tools;
-
-import static org.jcodec.common.tools.MD5.md5sumBytes;
-
-import java.nio.ByteBuffer;
-
 import org.junit.Test;
+
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class MD5Test {
     @Test

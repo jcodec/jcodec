@@ -1,9 +1,6 @@
 package org.jcodec.codecs.h264;
-
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
-import static org.jcodec.common.ArrayUtil.toByteArrayShifted2;
 import static org.junit.Assert.assertArrayEquals;
-import junit.framework.TestCase;
 
 import org.jcodec.codecs.h264.decode.ChromaPredictionBuilder;
 import org.junit.Test;

@@ -1,10 +1,10 @@
 package org.jcodec.codecs.mpeg12.bitstream;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Point;
+
+import java.lang.IllegalArgumentException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

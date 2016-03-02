@@ -1,10 +1,8 @@
 package org.jcodec.codecs.mpeg12;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
 
 public class MPEGDecoderTest {
 

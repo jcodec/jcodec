@@ -1,5 +1,8 @@
 package org.jcodec.common.logging;
 
+import java.lang.IllegalStateException;
+import java.lang.StackTraceElement;
+import java.lang.Thread;
 import java.util.LinkedList;
 import java.util.List;
 

@@ -1,16 +1,9 @@
 package org.jcodec.containers.mxf;
-
 import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
 import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
 import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
 import static org.jcodec.containers.mxf.MXFConst.klMetadataMapping;
 import static org.jcodec.containers.mxf.model.MXFUtil.findAllMeta;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
 
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.DemuxerTrackMeta;
@@ -35,6 +28,11 @@ import org.jcodec.containers.mxf.model.TimecodeComponent;
 import org.jcodec.containers.mxf.model.TimelineTrack;
 import org.jcodec.containers.mxf.model.UL;
 import org.jcodec.containers.mxf.model.WaveAudioDescriptor;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

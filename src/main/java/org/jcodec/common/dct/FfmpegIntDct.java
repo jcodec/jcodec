@@ -1,5 +1,4 @@
 package org.jcodec.common.dct;
-
 import java.nio.ShortBuffer;
 
 /**

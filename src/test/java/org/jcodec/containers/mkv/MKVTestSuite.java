@@ -1,4 +1,6 @@
 package org.jcodec.containers.mkv;
+import org.jcodec.Utils;
+import org.jcodec.common.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -6,9 +8,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Properties;
-
-import org.jcodec.Utils;
-import org.jcodec.common.io.IOUtils;
 
 public class MKVTestSuite {
     

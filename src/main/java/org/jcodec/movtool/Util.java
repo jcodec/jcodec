@@ -1,16 +1,11 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.ArrayUtil.addAllObj;
 import static org.jcodec.common.ArrayUtil.addAllInt;
-import static org.jcodec.containers.mp4.BoxUtil.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
+import static org.jcodec.common.ArrayUtil.addAllObj;
 
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.model.Rational;
-import org.jcodec.containers.mp4.BoxUtil;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
@@ -27,6 +22,11 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+
+import java.lang.IllegalArgumentException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -139,8 +139,8 @@ public class Util {
     }
 
     private static void updateDuration(TrakBox dest, TrakBox src) {
-        MediaHeaderBox mdhd1 = BoxUtil.findFirstPath(dest, MediaHeaderBox.class, BoxUtil.path("mdia.mdhd"));
-        MediaHeaderBox mdhd2 = BoxUtil.findFirstPath(src, MediaHeaderBox.class, BoxUtil.path("mdia.mdhd"));
+        MediaHeaderBox mdhd1 = NodeBox.findFirstPath(dest, MediaHeaderBox.class, Box.path("mdia.mdhd"));
+        MediaHeaderBox mdhd2 = NodeBox.findFirstPath(src, MediaHeaderBox.class, Box.path("mdia.mdhd"));
         mdhd1.setDuration(mdhd1.getDuration() + mdhd2.getDuration());
     }
 
@@ -180,7 +180,7 @@ public class Util {
         } else {
             stszr = SampleSizesBox.createSampleSizesBox2(addAllInt(stsz1.getSizes(), stsz2.getSizes()));
         }
-        BoxUtil.findFirstPath(trakBox1, NodeBox.class, BoxUtil.path("mdia.minf.stbl")).replace("stsz", stszr);
+        NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl")).replace("stsz", stszr);
     }
 
     private static void appendSampleToChunk(TrakBox trakBox1, TrakBox trakBox2, int off) {
@@ -193,7 +193,7 @@ public class Util {
             shifted[i] = new SampleToChunkEntry(orig[i].getFirst() + stsc1.getSampleToChunk().length,
                     orig[i].getCount(), orig[i].getEntry() + off);
         }
-        BoxUtil.findFirstPath(trakBox1, NodeBox.class, BoxUtil.path("mdia.minf.stbl")).replace("stsc",
+        NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl")).replace("stsc",
                 SampleToChunkBox.createSampleToChunkBox((SampleToChunkEntry[]) ArrayUtil.addAllObj(stsc1.getSampleToChunk(), shifted)));
     }
 
@@ -208,13 +208,13 @@ public class Util {
             se.setDrefInd((short) (se.getDrefInd() + ent1.length));
             stsd.add(se);
         }
-        BoxUtil.findFirstPath(trakBox1, NodeBox.class, BoxUtil.path("mdia.minf.stbl")).replace("stsd", stsd);
+        NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl")).replace("stsd", stsd);
         return ent1.length;
     }
 
     private static void appendDrefs(TrakBox trakBox1, TrakBox trakBox2) {
-        DataRefBox dref1 = BoxUtil.findFirstPath(trakBox1, DataRefBox.class, BoxUtil.path("mdia.minf.dinf.dref"));
-        DataRefBox dref2 = BoxUtil.findFirstPath(trakBox2, DataRefBox.class, BoxUtil.path("mdia.minf.dinf.dref"));
+        DataRefBox dref1 = NodeBox.findFirstPath(trakBox1, DataRefBox.class, Box.path("mdia.minf.dinf.dref"));
+        DataRefBox dref2 = NodeBox.findFirstPath(trakBox2, DataRefBox.class, Box.path("mdia.minf.dinf.dref"));
         dref1.getBoxes().addAll(dref2.getBoxes());
     }
 
@@ -223,7 +223,7 @@ public class Util {
         TimeToSampleBox stts2 = trakBox2.getStts();
         TimeToSampleBox sttsNew = TimeToSampleBox.createTimeToSampleBox((TimeToSampleEntry[]) addAllObj(stts1.getEntries(),
                 stts2.getEntries()));
-        BoxUtil.findFirstPath(trakBox1, NodeBox.class, BoxUtil.path("mdia.minf.stbl")).replace("stts", sttsNew);
+        NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl")).replace("stts", sttsNew);
     }
 
     private static void appendChunkOffsets(TrakBox trakBox1, TrakBox trakBox2) {
@@ -234,7 +234,7 @@ public class Util {
 
         long[] off1 = stco1 == null ? co641.getChunkOffsets() : stco1.getChunkOffsets();
         long[] off2 = stco2 == null ? co642.getChunkOffsets() : stco2.getChunkOffsets();
-        NodeBox stbl1 = BoxUtil.findFirstPath(trakBox1, NodeBox.class, BoxUtil.path("mdia.minf.stbl"));
+        NodeBox stbl1 = NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl"));
         stbl1.removeChildren("stco", "co64");
         stbl1.add(co641 == null && co642 == null ? ChunkOffsetsBox.createChunkOffsetsBox(ArrayUtil.addAllLong(off1, off2)) : ChunkOffsets64Box.createChunkOffsets64Box(ArrayUtil.addAllLong(off1, off2)));
     }
@@ -242,7 +242,7 @@ public class Util {
     public static void forceEditList(MovieBox movie, TrakBox trakBox) {
         List<Edit> edits = trakBox.getEdits();
         if (edits == null || edits.size() == 0) {
-            MovieHeaderBox mvhd = BoxUtil.findFirst(movie, MovieHeaderBox.class, "mvhd");
+            MovieHeaderBox mvhd = NodeBox.findFirst(movie, MovieHeaderBox.class, "mvhd");
             edits = new ArrayList<Edit>();
             trakBox.setEdits(edits);
             edits.add(new Edit((int) mvhd.getDuration(), 0, 1.0f));

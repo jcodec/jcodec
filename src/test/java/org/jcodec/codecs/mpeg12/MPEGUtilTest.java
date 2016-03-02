@@ -1,13 +1,12 @@
 package org.jcodec.codecs.mpeg12;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
 
 public class MPEGUtilTest {
 

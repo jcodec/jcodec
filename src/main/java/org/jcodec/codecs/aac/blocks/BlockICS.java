@@ -1,5 +1,4 @@
 package org.jcodec.codecs.aac.blocks;
-
 import static java.lang.Math.min;
 import static java.lang.Math.pow;
 import static java.lang.String.format;
@@ -16,8 +15,9 @@ import org.jcodec.codecs.aac.Profile;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
-import org.jcodec.common.io.VLCBuilder;
 import org.jcodec.common.tools.MathUtil;
+
+import java.lang.System;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

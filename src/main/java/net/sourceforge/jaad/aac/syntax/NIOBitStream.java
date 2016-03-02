@@ -1,9 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.BitReader;
 
+import java.nio.ByteBuffer;
 import net.sourceforge.jaad.aac.AACException;
 
 /**

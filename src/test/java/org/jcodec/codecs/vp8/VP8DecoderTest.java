@@ -1,19 +1,17 @@
 package org.jcodec.codecs.vp8;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import javax.imageio.ImageIO;
-
 import org.jcodec.Utils;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.containers.mkv.MKVMuxerTest;
 import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import javax.imageio.ImageIO;
 
 public class VP8DecoderTest {
 

@@ -1,29 +1,26 @@
 package org.jcodec.containers.mp4.demuxer;
-
-import static org.jcodec.containers.mp4.BoxUtil.*;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.TapeTimecode;
-import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.QTTimeUtil;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
+import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
+import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
-import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -52,10 +49,10 @@ public class TimecodeMP4DemuxerTrack {
 
         NodeBox stbl = trak.getMdia().getMinf().getStbl();
 
-        TimeToSampleBox stts = BoxUtil.findFirst(stbl, TimeToSampleBox.class, "stts");
-        SampleToChunkBox stsc = BoxUtil.findFirst(stbl, SampleToChunkBox.class, "stsc");
-        ChunkOffsetsBox stco = BoxUtil.findFirst(stbl, ChunkOffsetsBox.class, "stco");
-        ChunkOffsets64Box co64 = BoxUtil.findFirst(stbl, ChunkOffsets64Box.class, "co64");
+        TimeToSampleBox stts = NodeBox.findFirst(stbl, TimeToSampleBox.class, "stts");
+        SampleToChunkBox stsc = NodeBox.findFirst(stbl, SampleToChunkBox.class, "stsc");
+        ChunkOffsetsBox stco = NodeBox.findFirst(stbl, ChunkOffsetsBox.class, "stco");
+        ChunkOffsets64Box co64 = NodeBox.findFirst(stbl, ChunkOffsets64Box.class, "co64");
 
         timeToSamples = stts.getEntries();
         chunkOffsets = stco != null ? stco.getChunkOffsets() : co64.getChunkOffsets();
@@ -159,7 +156,7 @@ public class TimecodeMP4DemuxerTrack {
 
     public int parseTimecode(String tc) {
         String[] split = tc.split(":");
-        TimecodeSampleEntry tmcd = BoxUtil.findFirstPath(box, TimecodeSampleEntry.class, BoxUtil.path("mdia.minf.stbl.stsd.tmcd"));
+        TimecodeSampleEntry tmcd = NodeBox.findFirstPath(box, TimecodeSampleEntry.class, Box.path("mdia.minf.stbl.stsd.tmcd"));
         byte nf = tmcd.getNumFrames();
 
         return Integer.parseInt(split[3]) + Integer.parseInt(split[2]) * nf + Integer.parseInt(split[1]) * 60 * nf

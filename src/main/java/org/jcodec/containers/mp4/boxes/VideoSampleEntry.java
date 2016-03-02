@@ -1,9 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.nio.ByteBuffer;
-
-import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -89,7 +89,7 @@ public class VideoSampleEntry extends SampleEntry {
 
         out.putShort(version);
         out.putShort(revision);
-        out.put(JCodecUtil.asciiString(vendor), 0, 4);
+        out.put(JCodecUtil2.asciiString(vendor), 0, 4);
         out.putInt(temporalQual);
         out.putInt(spacialQual);
 

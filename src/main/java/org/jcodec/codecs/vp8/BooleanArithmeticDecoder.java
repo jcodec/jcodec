@@ -1,5 +1,4 @@
 package org.jcodec.codecs.vp8;
-
 import java.nio.ByteBuffer;
 
 /**

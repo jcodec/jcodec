@@ -1,8 +1,8 @@
 package org.jcodec.codecs.h264.decode;
-
-import java.util.Arrays;
-
 import org.jcodec.common.ArrayUtil;
+
+import java.lang.IllegalArgumentException;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
