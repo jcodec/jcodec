@@ -54,7 +54,6 @@ public class H264Decoder extends VideoDecoder {
     private FrameReader reader;
     private ExecutorService tp;
     private boolean threaded;
-    private DeblockerInput di;
 
     public H264Decoder() {
         pictureBuffer = new ArrayList<Frame>();
@@ -119,7 +118,7 @@ public class H264Decoder extends VideoDecoder {
         }
 
         public void run() {
-            new SliceDecoder(fdec.activeSps, fdec.dec.sRefs, fdec.dec.lRefs, fdec.dec.di, result)
+            new SliceDecoder(fdec.activeSps, fdec.dec.sRefs, fdec.dec.lRefs, fdec.di, result)
                     .decodeFromReader(sliceReader);
         }
     }
@@ -130,6 +129,7 @@ public class H264Decoder extends VideoDecoder {
         private SliceHeader firstSliceHeader;
         private NALUnit firstNu;
         private H264Decoder dec;
+        private DeblockerInput di;
 
         public FrameDecoder(H264Decoder decoder) {
             this.dec = decoder;
@@ -152,7 +152,7 @@ public class H264Decoder extends VideoDecoder {
 
             } else {
                 for (SliceReader sliceReader : sliceReaders) {
-                    new SliceDecoder(activeSps, dec.sRefs, dec.lRefs, dec.di, result).decodeFromReader(sliceReader);
+                    new SliceDecoder(activeSps, dec.sRefs, dec.lRefs, di, result).decodeFromReader(sliceReader);
                 }
             }
 
@@ -198,14 +198,12 @@ public class H264Decoder extends VideoDecoder {
                 dec.lRefs = new IntObjectMap<Frame>();
             }
 
-//            if (dec.di == null || dec.di.picWidthInMbs != picWidthInMbs || dec.di.picHeightInMbs != picHeightInMbs) {
-                dec.di = new DeblockerInput(activeSps);
-//            }
+            di = new DeblockerInput(activeSps);
 
             Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type,
-                    dec.di.mvs, dec.di.refsUsed, dec.poc.calcPOC(firstSliceHeader, firstNu));
+                    di.mvs, di.refsUsed, dec.poc.calcPOC(firstSliceHeader, firstNu));
 
-            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, dec.di);
+            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, di);
 
             return result;
         }
