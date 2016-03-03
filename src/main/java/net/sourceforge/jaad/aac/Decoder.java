@@ -32,7 +32,7 @@ public class Decoder implements SyntaxConstants {
         h.setLevel(Level.ALL);
         LOGGER.addHandler(h);
     }
-    private final DecoderConfig config;
+    private final AACDecoderConfig config;
     private final SyntacticElements syntacticElements;
     private final FilterBank filterBank;
     private IBitStream _in;
@@ -63,7 +63,7 @@ public class Decoder implements SyntaxConstants {
      *             if the specified profile is not supported
      */
     public Decoder(byte[] decoderSpecificInfo) throws AACException {
-        config = DecoderConfig.parseMP4DecoderSpecificInfo(decoderSpecificInfo);
+        config = AACDecoderConfig.parseMP4DecoderSpecificInfo(decoderSpecificInfo);
         if (config == null)
             throw new IllegalArgumentException("illegal MP4 decoder specific info");
 
@@ -80,7 +80,7 @@ public class Decoder implements SyntaxConstants {
         LOGGER.log(Level.FINE, "channels: {0}", config.getChannelConfiguration().getDescription());
     }
 
-    public DecoderConfig getConfig() {
+    public AACDecoderConfig getConfig() {
         return config;
     }
 

@@ -1,7 +1,5 @@
 package org.jcodec.codecs.h264.decode;
 
-import static org.jcodec.codecs.h264.io.model.SeqParameterSet.getPicHeightInMbs;
-
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
@@ -31,12 +29,16 @@ public class DeblockerInput {
         picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
         picHeightInMbs = SeqParameterSet.getPicHeightInMbs(activeSps);
 
-        nCoeff = new int[picHeightInMbs << 2][picWidthInMbs << 2];
-        mvs = new int[2][picHeightInMbs << 2][picWidthInMbs << 2][3];
-        mbTypes = new MBType[picHeightInMbs * picWidthInMbs];
-        tr8x8Used = new boolean[picHeightInMbs * picWidthInMbs];
-        mbQps = new int[3][picHeightInMbs * picWidthInMbs];
-        shs = new SliceHeader[picHeightInMbs * picWidthInMbs];
-        refsUsed = new Frame[picHeightInMbs * picWidthInMbs][][];
+        int picHeight = picHeightInMbs << 2;
+        int picWidth = picWidthInMbs << 2;
+        int mbCount = picHeightInMbs * picWidthInMbs;
+
+        nCoeff = new int[picHeight][picWidth];
+        mvs = new int[2][picHeight][picWidth][3];
+        mbTypes = new MBType[mbCount];
+        tr8x8Used = new boolean[mbCount];
+        mbQps = new int[3][mbCount];
+        shs = new SliceHeader[mbCount];
+        refsUsed = new Frame[mbCount][][];
     }
 }
