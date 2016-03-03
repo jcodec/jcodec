@@ -56,7 +56,9 @@ public class MTSMediaInfo {
                             pmtBuffer.flip();
                             PMTSection pmt = MTSUtils.parsePMT(pmtBuffer);
                             pmtSections.add(pmt);
-                            for (PMTStream stream : pmt.getStreams()) {
+                            PMTStream[] streams = pmt.getStreams();
+                            for (int i = 0; i < streams.length; i++) {
+                                PMTStream stream = streams[i];
                                 if (!pids.containsKey(stream.getPid()))
                                     pids.put(stream.getPid(), new MPSMediaInfo());
                             }

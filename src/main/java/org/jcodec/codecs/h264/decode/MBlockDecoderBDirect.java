@@ -103,12 +103,15 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
     private void predictBTemporalDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
             boolean trAvb, int[][][] x, PartPred[] pp, Picture8Bit mb, int[] blocks8x8) {
 
-        for (int blk8x8 : blocks8x8) {
+        for (int i = 0; i < blocks8x8.length; i++) {
+            int blk8x8 = blocks8x8[i];
             int blk4x4_0 = H264Const.BLK8x8_BLOCKS[blk8x8][0];
             pp[blk8x8] = Bi;
 
-            if (!sh.sps.direct_8x8_inference_flag)
-                for (int blk4x4 : BLK8x8_BLOCKS[blk8x8]) {
+            if (!sh.sps.direct_8x8_inference_flag) {
+                int[] js = BLK8x8_BLOCKS[blk8x8];
+                for (int j = 0; j < js.length; j++) {
+                    int blk4x4 = js[j];
                     predTemp4x4(refs, mbX, mbY, x, blk4x4);
 
                     int blkIndX = blk4x4 & 3;
@@ -125,7 +128,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                     interpolator.getBlockLuma(refs[1][0], mbb[1], BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                             + x[1][blk4x4][0], blkPredY + x[1][blk4x4][1], 4, 4);
                 }
-            else {
+            } else {
                 int blk4x4Pred = BLK_INV_MAP[blk8x8 * 5];
                 predTemp4x4(refs, mbX, mbY, x, blk4x4Pred);
                 propagatePred(x, blk8x8, blk4x4Pred);
@@ -218,8 +221,11 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         int refIdxL1 = calcRef(a1, b1, c1, d1, lAvb, tAvb, tlAvb, trAvb, mbX);
 
         if (refIdxL0 < 0 && refIdxL1 < 0) {
-            for (int blk8x8 : blocks8x8) {
-                for (int blk4x4 : BLK8x8_BLOCKS[blk8x8]) {
+            for (int i = 0; i < blocks8x8.length; i++) {
+                int blk8x8 = blocks8x8[i];
+                int[] js = BLK8x8_BLOCKS[blk8x8];
+                for (int j = 0; j < js.length; j++) {
+                    int blk4x4 = js[j];
                     x[0][blk4x4][0] = x[0][blk4x4][1] = x[0][blk4x4][2] = x[1][blk4x4][0] = x[1][blk4x4][1] = x[1][blk4x4][2] = 0;
                 }
                 pp[blk8x8] = Bi;
@@ -243,11 +249,14 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
 
         Frame col = refs[1][0];
         PartPred partPred = refIdxL0 >= 0 && refIdxL1 >= 0 ? Bi : (refIdxL0 >= 0 ? L0 : L1);
-        for (int blk8x8 : blocks8x8) {
+        for (int i = 0; i < blocks8x8.length; i++) {
+            int blk8x8 = blocks8x8[i];
             int blk4x4_0 = H264Const.BLK8x8_BLOCKS[blk8x8][0];
 
-            if (!sh.sps.direct_8x8_inference_flag)
-                for (int blk4x4 : BLK8x8_BLOCKS[blk8x8]) {
+            if (!sh.sps.direct_8x8_inference_flag) {
+                int[] js = BLK8x8_BLOCKS[blk8x8];
+                for (int j = 0; j < js.length; j++) {
+                    int blk4x4 = js[j];
                     pred4x4(mbX, mbY, x, pp, refIdxL0, refIdxL1, mvX0, mvY0, mvX1, mvY1, col, partPred, blk4x4);
 
                     int blkIndX = blk4x4 & 3;
@@ -266,7 +275,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                         interpolator.getBlockLuma(refs[1][refIdxL1], mbb[1], BLK_4x4_MB_OFF_LUMA[blk4x4], blkPredX
                                 + x[1][blk4x4][0], blkPredY + x[1][blk4x4][1], 4, 4);
                 }
-            else {
+            } else {
                 int blk4x4Pred = BLK_INV_MAP[blk8x8 * 5];
                 pred4x4(mbX, mbY, x, pp, refIdxL0, refIdxL1, mvX0, mvY0, mvX1, mvY1, col, partPred, blk4x4Pred);
                 propagatePred(x, blk8x8, blk4x4Pred);

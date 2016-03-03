@@ -67,7 +67,9 @@ public class Strip {
     }
 
     public void strip(MovieBox movie) throws IOException {
-        for (TrakBox track : movie.getTracks()) {
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox track = tracks[i];
             stripTrack(movie, track);
         }
     }

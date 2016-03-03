@@ -2,6 +2,7 @@ package org.jcodec.common.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -13,7 +14,7 @@ import java.io.InputStream;
 public abstract class StringReader {
     public static String readString(InputStream input, int len) throws IOException {
         byte[] bs = _sureRead(input, len);
-        return bs == null ? null : new String(bs);
+        return bs == null ? null : Platform.stringFromBytes(bs);
     }
 
     public static byte[] _sureRead(InputStream input, int len) throws IOException {

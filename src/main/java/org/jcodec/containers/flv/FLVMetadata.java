@@ -40,7 +40,8 @@ public class FLVMetadata {
 
     public FLVMetadata(Map<String, Object> md) {
         Field[] declaredFields = Platform.getDeclaredFields(this.getClass());
-        for (Field field : declaredFields) {
+        for (int i = 0; i < declaredFields.length; i++) {
+            Field field = declaredFields[i];
             Object object = md.get(field.getName());
             try {
                 if (object instanceof Double) {
@@ -50,8 +51,7 @@ public class FLVMetadata {
                 } else {
                     field.set(this, object);
                 }
-            } catch (IllegalArgumentException e) {
-            } catch (IllegalAccessException e) {
+            } catch (Exception e) {
             }
         }
     }

@@ -267,7 +267,8 @@ public class AudioSampleEntry extends SampleEntry {
     private ChannelLabel[] translate(Map<Label, ChannelLabel> translation, Label[] labels) {
         ChannelLabel[] result = new ChannelLabel[labels.length];
         int i = 0;
-        for (Label label : labels) {
+        for (int j = 0; j < labels.length; j++) {
+            Label label = labels[j];
             result[i++] = translation.get(label);
         }
         return result;
@@ -396,7 +397,9 @@ public class AudioSampleEntry extends SampleEntry {
      */
     public static Label[] getLabelsByBitmap(long channelBitmap) {
         List<Label> result = new ArrayList<Label>();
-        for (Label label : Label.values()) {
+        Label[] values = Label.values();
+        for (int i = 0; i < values.length; i++) {
+            Label label = values[i];
             if ((label.bitmapVal & channelBitmap) != 0)
                 result.add(label);
         }
@@ -419,7 +422,9 @@ public class AudioSampleEntry extends SampleEntry {
                 res[i] = Label.getByVal((1 << 16) | i);
             return res;
         }
-        for (ChannelLayout layout : ChannelLayout.values()) {
+        ChannelLayout[] values = ChannelLayout.values();
+        for (int i = 0; i < values.length; i++) {
+            ChannelLayout layout = values[i];
             if (layout.getCode() == tag) {
                 if (layout == kCAFChannelLayoutTag_UseChannelDescriptions) {
                     return extractLabels(box.getDescriptions());

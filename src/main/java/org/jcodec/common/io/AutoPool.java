@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class AutoPool {
-    private static AutoPool instance = new AutoPool();
     private final List<AutoResource> resources;
     private ScheduledExecutorService scheduler;
 
@@ -57,4 +56,6 @@ public class AutoPool {
     public void add(AutoResource res) {
         resources.add(res);
     }
+    
+    private static AutoPool instance = new AutoPool();
 }

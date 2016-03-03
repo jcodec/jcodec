@@ -178,7 +178,9 @@ public class TrakBox extends NodeBox {
     }
 
     public void setPAR(Rational par) {
-        for (SampleEntry sampleEntry : getSampleEntries()) {
+        SampleEntry[] sampleEntries = getSampleEntries();
+        for (int i = 0; i < sampleEntries.length; i++) {
+            SampleEntry sampleEntry = sampleEntries[i];
             sampleEntry.removeChildren("pasp");
             sampleEntry.add(PixelAspectExt.createPixelAspectExt(par));
         }
@@ -239,7 +241,8 @@ public class TrakBox extends NodeBox {
         }
         TimeToSampleBox tts = NodeBox.findFirstPath(this, TimeToSampleBox.class, Box.path("mdia.minf.stbl.stts"));
         TimeToSampleEntry[] entries = tts.getEntries();
-        for (TimeToSampleEntry tte : entries) {
+        for (int i = 0; i < entries.length; i++) {
+            TimeToSampleEntry tte = entries[i];
             tte.setSampleDuration((ts * tte.getSampleDuration()) / oldTs);
         }
     }

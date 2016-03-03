@@ -340,8 +340,7 @@ public class MPSDump {
                 if (fields[i].getType().isPrimitive()) {
                     try {
                         bldr.append(fields[i].get(read));
-                    } catch (IllegalArgumentException e) {
-                    } catch (IllegalAccessException e) {
+                    } catch (Exception e) {
                     }
                 } else {
                     try {
@@ -350,8 +349,7 @@ public class MPSDump {
                             bldr.append(dumpBin(val));
                         else
                             bldr.append("N/A");
-                    } catch (IllegalArgumentException e) {
-                    } catch (IllegalAccessException e) {
+                    } catch (Exception e) {
                     }
                 }
                 if (i < fields.length - 1)

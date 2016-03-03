@@ -103,7 +103,8 @@ public class HLSFixPMT {
             }
         });
         HLSFixPMT fix = new HLSFixPMT();
-        for (File file : listFiles) {
+        for (int i = 0; i < listFiles.length; i++) {
+            File file = listFiles[i];
             System.err.println("Processing: " + file.getName());
             fix.fix(file);
         }

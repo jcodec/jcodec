@@ -204,7 +204,8 @@ public class Util {
         SampleEntry[] ent2 = trakBox2.getSampleEntries();
 
         SampleDescriptionBox stsd = SampleDescriptionBox.createSampleDescriptionBox(ent1);
-        for (SampleEntry se : ent2) {
+        for (int i = 0; i < ent2.length; i++) {
+            SampleEntry se = ent2[i];
             se.setDrefInd((short) (se.getDrefInd() + ent1.length));
             stsd.add(se);
         }
@@ -251,7 +252,9 @@ public class Util {
     }
 
     public static void forceEditListMov(MovieBox movie) {
-        for (TrakBox trakBox : movie.getTracks()) {
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             forceEditList(movie, trakBox);
         }
     }

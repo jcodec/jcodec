@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.jcodec.common.StringUtils;
+import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -240,7 +241,7 @@ public class TestBitReader {
                 "src/test/resources/h264/bitstream/data.dat")));
         DummyBitstreamReader in1 = new DummyBitstreamReader(new BufferedInputStream(new FileInputStream(
                 "src/test/resources/h264/bitstream/data.dat")));
-        String readFileToString = new String(NIOUtils.toArray(NIOUtils.fetchFromFile(new File("src/test/resources/h264/bitstream/reads.csv"))));
+        String readFileToString = Platform.stringFromBytes(NIOUtils.toArray(NIOUtils.fetchFromFile(new File("src/test/resources/h264/bitstream/reads.csv"))));
 
         String[] split = StringUtils.splitS(readFileToString, ",");
         for (String string : split) {

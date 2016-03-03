@@ -60,7 +60,8 @@ public class PictureDisplayExtension implements MPEGHeader {
         BitWriter bw = new BitWriter(bb);
         bw.writeNBit(PictureDisplayExtension.Picture_Display_Extension, 4);
         
-        for (Point point : frame_centre_offsets) {
+        for (int i = 0; i < frame_centre_offsets.length; i++) {
+            Point point = frame_centre_offsets[i];
             bw.writeNBit(point.getX(), 16);
             bw.writeNBit(point.getY(), 16);
         }

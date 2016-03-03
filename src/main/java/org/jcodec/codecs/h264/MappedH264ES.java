@@ -229,7 +229,9 @@ public class MappedH264ES implements DemuxerTrack {
         if (refPicMarkingNonIDR == null)
             return false;
 
-        for (RefPicMarking.Instruction instr : refPicMarkingNonIDR.getInstructions()) {
+        RefPicMarking.Instruction[] instructions = refPicMarkingNonIDR.getInstructions();
+        for (int i = 0; i < instructions.length; i++) {
+            RefPicMarking.Instruction instr = instructions[i];
             if (instr.getType() == InstrType.CLEAR) {
                 return true;
             }

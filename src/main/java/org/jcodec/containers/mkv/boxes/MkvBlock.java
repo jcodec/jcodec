@@ -262,8 +262,10 @@ public class MkvBlock extends EbmlBin {
             bb.put(muxLacingInfo());
         }
 
-        for (ByteBuffer frame : frames)
+        for (int i = 0; i < frames.length; i++) {
+            ByteBuffer frame = frames[i];
             bb.put(frame);
+        }
 
         bb.flip();
         return bb;

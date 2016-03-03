@@ -278,7 +278,8 @@ public class WavHeader {
     public static WavHeader multiChannelWav(WavHeader... arguments) {
         WavHeader w = emptyWavHeader();
         int totalSize = 0;
-        for (WavHeader wavHeader : arguments) {
+        for (int i = 0; i < arguments.length; i++) {
+            WavHeader wavHeader = arguments[i];
             totalSize += wavHeader.dataSize;
         }
         w.dataSize = totalSize;

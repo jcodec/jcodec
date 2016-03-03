@@ -15,8 +15,8 @@ import java.nio.ByteBuffer;
 public class UL {
     private byte[] bytes;
 
-    public UL(byte... arguments) {
-        this.bytes = arguments;
+    public UL(byte[] bytes) {
+        this.bytes = bytes;
     }
 
     public static UL newUL(int... arguments) {

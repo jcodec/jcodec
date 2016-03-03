@@ -86,7 +86,8 @@ public class Tuple {
 
     public static <T0, T1> Map<T0, T1> arrayAsMap(_2<T0, T1>[] arr) {
         HashMap<T0, T1> result = new HashMap<T0, T1>();
-        for (_2<T0, T1> el : arr) {
+        for (int i = 0; i < arr.length; i++) {
+            _2<T0, T1> el = arr[i];
             result.put(el.v0, el.v1);
         }
         return result;

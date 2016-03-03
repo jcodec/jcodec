@@ -85,7 +85,8 @@ public class POCManager {
     private boolean hasMMCO5(SliceHeader firstSliceHeader, NALUnit firstNu) {
         if (firstNu.type != IDR_SLICE && firstSliceHeader.refPicMarkingNonIDR != null) {
             Instruction[] instructions = firstSliceHeader.refPicMarkingNonIDR.getInstructions();
-            for (Instruction instruction : instructions) {
+            for (int i = 0; i < instructions.length; i++) {
+                Instruction instruction = instructions[i];
                 if (instruction.getType() == InstrType.CLEAR)
                     return true;
             }

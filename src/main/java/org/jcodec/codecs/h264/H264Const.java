@@ -485,8 +485,6 @@ public class H264Const {
         {10, 11, 14, 15}
     };
     public static final int[][] ARRAY = {{0}, {1}, {2}, {3}};
-    public static final int[][] PIX_MAP_SPLIT_4x4 = buildPixSplitMap4x4();
-    public static final int[][] PIX_MAP_SPLIT_2x2 = buildPixSplitMap2x2();
 
     public static int[] CODED_BLOCK_PATTERN_INTRA_COLOR = new int[] { 47, 31, 15, 0, 23, 27, 29, 30, 7, 11, 13, 14, 39,
             43, 45, 46, 16, 3, 5, 10, 12, 19, 21, 26, 28, 35, 37, 42, 44, 1, 2, 4, 8, 17, 18, 20, 24, 6, 9, 22, 25, 32,
@@ -499,6 +497,14 @@ public class H264Const {
             11, 13, 14, 6, 9, 31, 35, 37, 42, 44, 33, 34, 36, 40, 39, 43, 45, 46, 17, 18, 20, 24, 19, 21, 26, 28, 23,
             27, 29, 30, 22, 25, 38, 41 };
     
+    private static int[] inverse(int[] arr) {
+        int[] inv = new int[arr.length];
+        for(int i = 0; i < inv.length; i++) {
+            inv[arr[i]] = i;
+        }
+        return inv;
+    }
+
     public static int[] CODED_BLOCK_PATTERN_INTER_COLOR_INV = inverse(CODED_BLOCK_PATTERN_INTER_COLOR);
 
     public static int[] coded_block_pattern_inter_monochrome = new int[] { 0, 1, 2, 4, 8, 3, 5, 10, 12, 15, 7, 11, 13,
@@ -571,14 +577,6 @@ public class H264Const {
             dstOff += stride;
         }
     }
-    
-    private static int[] inverse(int[] arr) {
-        int[] inv = new int[arr.length];
-        for(int i = 0; i < inv.length; i++) {
-            inv[arr[i]] = i;
-        }
-        return inv;
-    }
 
     private static int[][] buildPixSplitMap4x4() {
         int[][] result = new int[][] { { 0, 1, 2, 3, 16, 17, 18, 19, 32, 33, 34, 35, 48, 49, 50, 51 }, new int[16],
@@ -614,4 +612,8 @@ public class H264Const {
     public static final int coeffToken(int totalCoeff, int trailingOnes) {
         return (totalCoeff << 4) | trailingOnes;
     }
+    
+    public static final int[][] PIX_MAP_SPLIT_4x4 = buildPixSplitMap4x4();
+    public static final int[][] PIX_MAP_SPLIT_2x2 = buildPixSplitMap2x2();
+
 }
