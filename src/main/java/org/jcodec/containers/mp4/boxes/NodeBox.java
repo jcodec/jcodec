@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -118,7 +119,8 @@ public class NodeBox extends Box {
         for (Iterator<Box> it = boxes.iterator(); it.hasNext();) {
             Box box = it.next();
             String fcc = box.getFourcc();
-            for (String cand : arguments) {
+            for (int i = 0; i < arguments.length; i++) {
+                String cand = arguments[i];
                 if (cand.equals(fcc)) {
                     it.remove();
                     break;
@@ -154,7 +156,8 @@ public class NodeBox extends Box {
     public static <T extends Box> T[] findAllPath(Box box, Class<T> class1, String[] path) {
         List<Box> result = new LinkedList<Box>();
         List<String> tlist = new LinkedList<String>();
-        for (String type : path) {
+        for (int i = 0; i < path.length; i++) {
+            String type = path[i];
             tlist.add(type);
         }
     
@@ -164,7 +167,7 @@ public class NodeBox extends Box {
             Box next = it.next();
             if (next == null) {
                 it.remove();
-            } else if (!class1.isAssignableFrom(next.getClass())) {
+            } else if (!Platform.isAssignableFrom(class1, next.getClass())) {
                 // Trying to reinterpret one box as the other
                 try {
                     it.set(Box.asBox(class1, next));

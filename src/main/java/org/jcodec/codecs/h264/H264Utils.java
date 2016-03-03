@@ -756,13 +756,15 @@ public class H264Utils {
 
     public static void dumpFrame(FileChannelWrapper ch, SeqParameterSet[] values, PictureParameterSet[] values2,
             List<ByteBuffer> nalUnits) throws IOException {
-        for (SeqParameterSet sps : values) {
+        for (int i = 0; i < values.length; i++) {
+            SeqParameterSet sps = values[i];
             NIOUtils.writeInt(ch, 1);
             NIOUtils.writeByte(ch, (byte) 0x67);
             ch.write(writeSPS(sps, 128));
         }
 
-        for (PictureParameterSet pps : values2) {
+        for (int i = 0; i < values2.length; i++) {
+            PictureParameterSet pps = values2[i];
             NIOUtils.writeInt(ch, 1);
             NIOUtils.writeByte(ch, (byte) 0x68);
             ch.write(writePPS(pps, 256));

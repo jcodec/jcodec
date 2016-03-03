@@ -145,9 +145,7 @@ public class ConcurrentMovieRangeService {
             ByteBuffer segmentData;
             try {
                 segmentData = segments.get(0).get();
-            } catch (InterruptedException e) {
-                throw new IOException(e);
-            } catch (ExecutionException e) {
+            } catch (Exception e) {
                 throw new IOException(e);
             }
             return segmentData;

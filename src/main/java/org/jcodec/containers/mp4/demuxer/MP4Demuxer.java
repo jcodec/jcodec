@@ -8,6 +8,7 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.platform.Platform;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -59,7 +60,9 @@ public class MP4Demuxer {
 
     private void processHeader(NodeBox moov) throws IOException {
         TrakBox tt = null;
-        for (TrakBox trak : NodeBox.findAll(moov, TrakBox.class, "trak")) {
+        TrakBox[] trakBoxs = NodeBox.findAll(moov, TrakBox.class, "trak");
+        for (int i = 0; i < trakBoxs.length; i++) {
+            TrakBox trak = trakBoxs[i];
             SampleEntry se = NodeBox.findFirstPath(trak, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null });
             if ("tmcd".equals(se.getFourcc())) {
                 tt = trak;
@@ -106,12 +109,24 @@ public class MP4Demuxer {
     public TimecodeMP4DemuxerTrack getTimecodeTrack() {
         return timecodeTrack;
     }
+    
+    static private int makeInt(byte b3, byte b2, byte b1, byte b0) {
+        return (((b3       ) << 24) |
+                ((b2 & 0xff) << 16) |
+                ((b1 & 0xff) <<  8) |
+                ((b0 & 0xff)      ));
+    }
 
-    private static int ftyp = ('f' << 24) | ('t' << 16) | ('y' << 8) | 'p';
-    private static int free = ('f' << 24) | ('r' << 16) | ('e' << 8) | 'e';
-    private static int moov = ('m' << 24) | ('o' << 16) | ('o' << 8) | 'v';
-    private static int mdat = ('m' << 24) | ('d' << 16) | ('a' << 8) | 't';
-    private static int wide = ('w' << 24) | ('i' << 16) | ('d' << 8) | 'e';
+    private static int intFourcc(String string) {
+        byte[] b = Platform.getBytes(string);
+        return makeInt(b[0], b[1], b[2], b[3]);
+    }
+
+    private static int ftyp = intFourcc("ftyp");
+    private static int free = intFourcc("free"); 
+    private static int moov = intFourcc("moov");
+    private static int mdat = intFourcc("mdat");
+    private static int wide = intFourcc("wide");
     
     public static int probe(final ByteBuffer b) {
         ByteBuffer fork = b.duplicate();
@@ -136,4 +151,5 @@ public class MP4Demuxer {
 
         return total == 0 ? 0 : success * 100 / total;
     }
+
 }

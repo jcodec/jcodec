@@ -84,7 +84,8 @@ public class SampleToChunkBox extends FullBox {
         super.doWrite(out);
         out.putInt(sampleToChunk.length);
 
-        for (SampleToChunkEntry stc : sampleToChunk) {
+        for (int i = 0; i < sampleToChunk.length; i++) {
+            SampleToChunkEntry stc = sampleToChunk[i];
             out.putInt((int) stc.getFirst());
             out.putInt((int) stc.getCount());
             out.putInt((int) stc.getEntry());

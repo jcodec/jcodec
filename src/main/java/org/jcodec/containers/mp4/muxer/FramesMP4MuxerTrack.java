@@ -255,7 +255,8 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     }
 
     public void addSampleEntries(SampleEntry[] sampleEntries) {
-        for (SampleEntry se : sampleEntries) {
+        for (int i = 0; i < sampleEntries.length; i++) {
+            SampleEntry se = sampleEntries[i];
             addSampleEntry(se);
         }
     }

@@ -78,7 +78,8 @@ public class ChannelBox extends FullBox {
         out.putInt(channelBitmap);
         out.putInt(descriptions.length);
 
-        for (ChannelDescription channelDescription : descriptions) {
+        for (int i = 0; i < descriptions.length; i++) {
+            ChannelDescription channelDescription = descriptions[i];
             out.putInt(channelDescription.getChannelLabel());
             out.putInt(channelDescription.getChannelFlags());
 

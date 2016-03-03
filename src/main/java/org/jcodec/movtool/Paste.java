@@ -107,7 +107,9 @@ public class Paste {
     }
 
     public void addToMovie(MovieBox to, MovieBox from) {
-        for (TrakBox track : from.getTracks()) {
+        TrakBox[] tracks = from.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox track = tracks[i];
             to.appendTrack(to.importTrack(from, track));
         }
     }

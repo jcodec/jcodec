@@ -18,17 +18,6 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class MBDeblocker {
 
-    private static int[][] P_POS_V = buildPPosV();
-    private static int[][] Q_POS_V = buildQPosV();
-    private static int[][] P_POS_H = buildPPosH();
-    private static int[][] Q_POS_H = buildQPosH();
-
-    private static int[][] P_POS_V_CHR = buildPPosVChr();
-    private static int[][] Q_POS_V_CHR = buildQPosVChr();
-
-    private static int[][] P_POS_H_CHR = buildPPosHChr();
-    private static int[][] Q_POS_H_CHR = buildQPosHChr();
-
     static int[][] LOOKUP_IDX_P_V = new int[][] { { 3, 7, 11, 15 }, { 0, 4, 8, 12 }, { 1, 5, 9, 13 }, { 2, 6, 10, 14 } };
     static int[][] LOOKUP_IDX_Q_V = new int[][] { { 0, 4, 8, 12 }, { 1, 5, 9, 13 }, { 2, 6, 10, 14 }, { 3, 7, 11, 15 } };
     static int[][] LOOKUP_IDX_P_H = new int[][] { { 12, 13, 14, 15 }, { 0, 1, 2, 3 }, { 4, 5, 6, 7 }, { 8, 9, 10, 11 } };
@@ -416,4 +405,16 @@ public class MBDeblocker {
     private static int strengthMv(int v0, int v1) {
         return abs(v0 - v1) >= 4 ? 1 : 0;
     }
+
+    private static int[][] P_POS_V = buildPPosV();
+    private static int[][] Q_POS_V = buildQPosV();
+    private static int[][] P_POS_H = buildPPosH();
+    private static int[][] Q_POS_H = buildQPosH();
+
+    private static int[][] P_POS_V_CHR = buildPPosVChr();
+    private static int[][] Q_POS_V_CHR = buildQPosVChr();
+
+    private static int[][] P_POS_H_CHR = buildPPosHChr();
+    private static int[][] Q_POS_H_CHR = buildQPosHChr();
+
 }

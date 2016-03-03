@@ -171,8 +171,7 @@ public class H264Decoder extends VideoDecoder {
                 try {
                     future.get();
                     break;
-                } catch (InterruptedException e) {
-                } catch (ExecutionException e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -253,7 +252,9 @@ public class H264Decoder extends VideoDecoder {
             Frame saved = saveRef(picture);
 
             if (refPicMarking != null) {
-                for (RefPicMarking.Instruction instr : refPicMarking.getInstructions()) {
+                RefPicMarking.Instruction[] instructions = refPicMarking.getInstructions();
+                for (int i = 0; i < instructions.length; i++) {
+                    RefPicMarking.Instruction instr = instructions[i];
                     switch (instr.getType()) {
                     case REMOVE_SHORT:
                         unrefShortTerm(instr.getArg1());

@@ -69,9 +69,7 @@ public class ConcurrentMovieRangeServiceMain {
         for (int i = 0; i < 1000; i++) {
             try {
                 ff[i].get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

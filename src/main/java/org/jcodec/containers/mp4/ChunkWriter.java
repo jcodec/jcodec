@@ -72,7 +72,9 @@ public class ChunkWriter {
         dref.getBoxes().clear();
         dref.add(AliasBox.createSelfRef());
 
-        for (SampleEntry entry : trak.getSampleEntries()) {
+        SampleEntry[] sampleEntries = trak.getSampleEntries();
+        for (int i = 0; i < sampleEntries.length; i++) {
+            SampleEntry entry = sampleEntries[i];
             entry.setDrefInd((short) 1);
         }
     }

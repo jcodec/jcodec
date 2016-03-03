@@ -34,12 +34,7 @@ public class JCodecUtil2 {
     }
 
     public static byte[] asciiString(String fourcc) {
-        char[] ch = fourcc.toCharArray();
-        byte[] result = new byte[ch.length];
-        for (int i = 0; i < ch.length; i++) {
-            result[i] = (byte) ch[i];
-        }
-        return result;
+        return Platform.getBytes(fourcc);
     }
 
     public static int[] getAsIntArray(ByteBuffer yuv, int size) {

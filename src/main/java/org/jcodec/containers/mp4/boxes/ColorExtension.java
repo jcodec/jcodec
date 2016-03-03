@@ -3,6 +3,7 @@ package org.jcodec.containers.mp4.boxes;
 import static org.jcodec.common.JCodecUtil2.asciiString;
 
 import java.nio.ByteBuffer;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,7 +38,7 @@ public class ColorExtension extends Box {
     public void parse(ByteBuffer input) {
         byte[] dst = new byte[4];
         input.get(dst);
-        this.type = new String(dst);
+        this.type = Platform.stringFromBytes(dst);
         primariesIndex = input.getShort();
         transferFunctionIndex = input.getShort();
         matrixIndex = input.getShort();

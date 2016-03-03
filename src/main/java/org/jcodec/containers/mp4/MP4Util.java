@@ -51,7 +51,9 @@ public class MP4Util {
     public static MovieBox createRefMovie(SeekableByteChannel input, String url) throws IOException {
         MovieBox movie = parseMovieChannel(input);
 
-        for (TrakBox trakBox : movie.getTracks()) {
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             trakBox.setDataRef(url);
         }
         return movie;
@@ -207,7 +209,9 @@ public class MP4Util {
      */
     public static int estimateMoovBoxSize(MovieBox movie) {
         int sizeHint = 4 << 10; // 4K plus
-        for (TrakBox trak : movie.getTracks()) {
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trak = tracks[i];
             sizeHint += 4 << 10; // 4K per track
             List<Edit> edits = trak.getEdits();
             sizeHint += edits != null ? (edits.size() << 3) + (edits.size() << 2) : 0;

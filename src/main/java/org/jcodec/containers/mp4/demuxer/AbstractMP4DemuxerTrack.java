@@ -76,7 +76,8 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         sampleToChunks = stsc.getSampleToChunk();
         chunkOffsets = stco != null ? stco.getChunkOffsets() : co64.getChunkOffsets();
 
-        for (TimeToSampleEntry ttse : timeToSamples) {
+        for (int i = 0; i < timeToSamples.length; i++) {
+            TimeToSampleEntry ttse = timeToSamples[i];
             duration += ttse.getSampleCount() * ttse.getSampleDuration();
         }
         box = trak;

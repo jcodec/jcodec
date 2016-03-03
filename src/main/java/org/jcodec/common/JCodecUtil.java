@@ -62,7 +62,8 @@ public class JCodecUtil {
     public static VideoDecoder detectDecoder(ByteBuffer b) {
         int maxProbe = 0;
         VideoDecoder selected = null;
-        for (VideoDecoder vd : knownDecoders) {
+        for (int i = 0; i < knownDecoders.length; i++) {
+            VideoDecoder vd = knownDecoders[i];
             int probe = vd.probe(b);
             if (probe > maxProbe) {
                 selected = vd;

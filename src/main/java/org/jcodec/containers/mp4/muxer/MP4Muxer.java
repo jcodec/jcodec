@@ -13,6 +13,7 @@ import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Box.LeafBox;
+import org.jcodec.platform.Platform;
 import org.jcodec.containers.mp4.boxes.EndianBox;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.FormatBox;
@@ -115,7 +116,7 @@ public class MP4Muxer {
     }
 
     public static LeafBox terminatorAtom() {
-        return LeafBox.createLeafBox(new Header(new String(new byte[4])), ByteBuffer.allocate(0));
+        return LeafBox.createLeafBox(new Header(Platform.stringFromBytes(new byte[4])), ByteBuffer.allocate(0));
     }
 
     public TimecodeMP4MuxerTrack addTimecodeTrack(int timescale) {
@@ -239,8 +240,10 @@ public class MP4Muxer {
         ase.add(wave);
 
         wave.add(FormatBox.createFormatBox(fourcc));
-        for (Box box : extra)
+        for (int i = 0; i < extra.length; i++) {
+            Box box = extra[i];
             wave.add(box);
+        }
 
         wave.add(terminatorAtom());
 

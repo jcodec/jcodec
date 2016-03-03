@@ -79,15 +79,16 @@ public abstract class Box {
 
         try {
             Platform.invokeMethod(this, GET_MODEL_FIELDS, new Object[]{model});
-        } catch (NoSuchMethodException e) {
+        } catch (Exception e) {
             checkWrongSignature(claz);
             model.addAll(ToJSON.allFields(claz));
-        } catch (Exception e) {
         }
     }
 
     private void checkWrongSignature(Class claz) {
-        for (Method method : Platform.getDeclaredMethods(claz)) {
+        Method[] declaredMethods = Platform.getDeclaredMethods(claz);
+        for (int i = 0; i < declaredMethods.length; i++) {
+            Method method = declaredMethods[i];
             if (method.getName().equals(GET_MODEL_FIELDS)) {
                 Logger.warn("Class " + claz.getCanonicalName() + " contains 'getModelFields' of wrong signature.\n"
                         + "Did you mean to define 'protected void " + GET_MODEL_FIELDS + "(List<String> model) ?");
@@ -119,7 +120,7 @@ public abstract class Box {
 
     public static <T extends Box> T asBox(Class<T> class1, Box box) {
         try {
-            T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
+            T res = Platform.newInstance(class1, new Object[]{box.getHeader()});
             ByteBuffer buffer = ByteBuffer.allocate((int)box.getHeader().getBodySize());
             box.doWrite(buffer);
             buffer.flip();
