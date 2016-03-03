@@ -4,6 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.jcodec.common.StringUtils;
+import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 

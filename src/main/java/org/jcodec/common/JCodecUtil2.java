@@ -1,6 +1,7 @@
 package org.jcodec.common;
 
 import org.jcodec.common.tools.MathUtil;
+import org.jcodec.platform.Platform;
 
 import java.nio.ByteBuffer;
 
