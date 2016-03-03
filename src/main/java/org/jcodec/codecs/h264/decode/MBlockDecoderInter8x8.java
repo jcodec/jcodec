@@ -46,6 +46,8 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         this.bDirectDecoder = bDirectDecoder;
     }
 
+    private int[][][] x = new int[2][16][3];
+
     public void decode(MBlock mBlock, Frame[][] references, Picture8Bit mb, SliceType sliceType, boolean ref0) {
 
         int mbX = mapper.getMbX(mBlock.mbIdx);
@@ -55,10 +57,14 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         int mbAddr = mapper.getAddress(mBlock.mbIdx);
         boolean topLeftAvailable = mapper.topLeftAvailable(mBlock.mbIdx);
         boolean topRightAvailable = mapper.topRightAvailable(mBlock.mbIdx);
-        int[][][] x = new int[2][16][3];
+
         PartPred[] pp = new PartPred[4];
-        for (int i = 0; i < 16; i++)
+
+        for (int i = 0; i < 16; i++) {
+            x[0][i][0] = x[1][i][0] = 0;
+            x[0][i][1] = x[1][i][1] = 0;
             x[0][i][2] = x[1][i][2] = -1;
+        }
 
         if (sliceType == SliceType.P) {
             predict8x8P(mBlock, references[0], mb, ref0, mbX, mbY, leftAvailable, topAvailable, topLeftAvailable,
