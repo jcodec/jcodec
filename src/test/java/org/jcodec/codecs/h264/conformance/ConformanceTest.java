@@ -60,10 +60,10 @@ public class ConformanceTest {
 
     private ByteBuffer readFile(String path) throws IOException {
         File file = new File(path);
-        InputStream in = new BufferedInputStream(new FileInputStream(file));
+        InputStream _in = new BufferedInputStream(new FileInputStream(file));
         byte[] buf = new byte[(int) file.length()];
-        in.read(buf);
-        in.close();
+        _in.read(buf);
+        _in.close();
         return ByteBuffer.wrap(buf);
     }
 
