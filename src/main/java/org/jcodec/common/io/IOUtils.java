@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -60,7 +61,7 @@ public class IOUtils {
     }
 
     public static String readToString(InputStream is) throws IOException {
-        return new String(toByteArray(is));
+        return Platform.stringFromBytes(toByteArray(is));
     }
 
     public static void writeStringToFile(File file, String str) throws IOException {

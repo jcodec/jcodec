@@ -1,4 +1,5 @@
 package org.jcodec.platform;
+
 import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -6,6 +7,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+
+import org.jcodec.containers.mp4.boxes.Box;
 
 public class Platform {
 
@@ -64,11 +67,11 @@ public class Platform {
     public static String stringFromCharset4(byte[] data, int offset, int len, Charset charset) {
         return new String(data, offset, len, charset);
     }
-    
+
     public static URL getResource(Class<?> class1, String string) {
         return class1.getResource(string);
- }
-    
+    }
+
     public static boolean arrayEqualsInt(int[] a, int[] a2) {
         return Arrays.equals(a, a2);
     }
@@ -76,11 +79,11 @@ public class Platform {
     public static boolean arrayEqualsByte(byte[] a, byte[] a2) {
         return Arrays.equals(a, a2);
     }
-    
+
     public static boolean arrayEqualsObj(Object[] a, Object[] a2) {
         return Arrays.equals(a, a2);
     }
-    
+
     public static <T> T[] copyOfRangeO(T[] original, int from, int to) {
         return Arrays.copyOfRange(original, from, to);
     }
@@ -116,13 +119,25 @@ public class Platform {
     public static byte[] copyOfByte(byte[] original, int newLength) {
         return Arrays.copyOf(original, newLength);
     }
-    
+
     public static String arrayToString(Object[] a) {
         return Arrays.toString(a);
     }
 
     public static void deleteFile(File file) {
         file.delete();
+    }
+
+    public static byte[] getBytes(String fourcc) {
+        return fourcc.getBytes();
+    }
+
+    public static String stringFromBytes(byte[] bytes) {
+        return new String(bytes);
+    }
+
+    public static boolean isAssignableFrom(Class class1, Class class2) {
+        return class1.isAssignableFrom(class2);
     }
 
 }

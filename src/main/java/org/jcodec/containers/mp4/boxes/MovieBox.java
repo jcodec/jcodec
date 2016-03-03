@@ -35,7 +35,9 @@ public class MovieBox extends NodeBox {
     }
 
     public TrakBox getVideoTrack() {
-        for (TrakBox trakBox : getTracks()) {
+        TrakBox[] tracks = getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             if (trakBox.isVideo())
                 return trakBox;
         }
@@ -43,7 +45,9 @@ public class MovieBox extends NodeBox {
     }
 
     public TrakBox getTimecodeTrack() {
-        for (TrakBox trakBox : getTracks()) {
+        TrakBox[] tracks = getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             if (trakBox.isTimecode())
                 return trakBox;
         }
@@ -62,7 +66,9 @@ public class MovieBox extends NodeBox {
         int oldTs = getTimescale();
         setTimescale(newTs);
 
-        for (TrakBox trakBox : getTracks()) {
+        TrakBox[] tracks = getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             trakBox.setDuration(rescale(trakBox.getDuration(), oldTs));
 
             List<Edit> edits = trakBox.getEdits();
@@ -92,7 +98,9 @@ public class MovieBox extends NodeBox {
 
     public List<TrakBox> getAudioTracks() {
         ArrayList<TrakBox> result = new ArrayList<TrakBox>();
-        for (TrakBox trakBox : getTracks()) {
+        TrakBox[] tracks = getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             if (trakBox.isAudio())
                 result.add(trakBox);
         }
@@ -128,7 +136,9 @@ public class MovieBox extends NodeBox {
 
     public boolean isPureRefMovie(MovieBox movie) {
         boolean pureRef = true;
-        for (TrakBox trakBox : movie.getTracks()) {
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             pureRef &= trakBox.isPureRef();
         }
         return pureRef;
@@ -137,7 +147,8 @@ public class MovieBox extends NodeBox {
     public void updateDuration() {
         TrakBox[] tracks = getTracks();
         long min = Integer.MAX_VALUE;
-        for (TrakBox trakBox : tracks) {
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             if (trakBox.getDuration() < min)
                 min = trakBox.getDuration();
         }

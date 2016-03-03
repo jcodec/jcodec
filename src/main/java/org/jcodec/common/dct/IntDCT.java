@@ -277,6 +277,10 @@ public class IntDCT extends DCT {
         return i * j;
     }
 
+    private final static int FIX(double x) {
+        return ((int) ((x) * (1 << CONST_BITS) + 0.5));
+    }
+
     private final static int FIX_0_298631336 = FIX(0.298631336);
     private final static int FIX_0_390180644 = FIX(0.390180644);
     private final static int FIX_0_541196100 = FIX(0.541196100);
@@ -292,9 +296,4 @@ public class IntDCT extends DCT {
 
     private static final int CONST_BITS = 13;
     private static final int ONE_HALF = (1 << (CONST_BITS - 1));
-
-    private final static int FIX(double x) {
-        return ((int) ((x) * (1 << CONST_BITS) + 0.5));
-    }
-
 }

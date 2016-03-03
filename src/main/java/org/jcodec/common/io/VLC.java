@@ -23,7 +23,8 @@ public class VLC {
     public static VLC createVLC(String... arguments) {
         IntArrayList _codes = IntArrayList.createIntArrayList();
         IntArrayList _codeSizes = IntArrayList.createIntArrayList();
-        for (String string : arguments) {
+        for (int i = 0; i < arguments.length; i++) {
+            String string = arguments[i];
             _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
             _codeSizes.add(string.length());
         }

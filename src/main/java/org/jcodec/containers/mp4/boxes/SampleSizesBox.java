@@ -72,7 +72,8 @@ public class SampleSizesBox extends FullBox {
 
         if (defaultSize == 0) {
             out.putInt(count);
-            for (long size : sizes) {
+            for (int i = 0; i < sizes.length; i++) {
+                long size = sizes[i];
                 out.putInt((int) size);
             }
         } else {

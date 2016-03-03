@@ -40,7 +40,8 @@ public class ChunkOffsets64Box extends FullBox {
     protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
         out.putInt(chunkOffsets.length);
-        for (long offset : chunkOffsets) {
+        for (int i = 0; i < chunkOffsets.length; i++) {
+            long offset = chunkOffsets[i];
             out.putLong(offset);
         }
     }

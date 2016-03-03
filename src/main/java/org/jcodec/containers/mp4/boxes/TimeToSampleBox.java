@@ -76,7 +76,8 @@ public class TimeToSampleBox extends FullBox {
     public void doWrite(ByteBuffer out) {
         super.doWrite(out);
         out.putInt(entries.length);
-        for (TimeToSampleEntry timeToSampleEntry : entries) {
+        for (int i = 0; i < entries.length; i++) {
+            TimeToSampleEntry timeToSampleEntry = entries[i];
             out.putInt(timeToSampleEntry.getSampleCount());
             out.putInt(timeToSampleEntry.getSampleDuration());
         }

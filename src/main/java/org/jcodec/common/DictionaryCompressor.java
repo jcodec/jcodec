@@ -59,7 +59,8 @@ public class DictionaryCompressor {
             }
 
             BitWriter br = new BitWriter(bb);
-            for (long l : values) {
+            for (int j = 0; j < values.length; j++) {
+                long l = values[j];
                 for (int i = 0; i < keys.length; i++)
                     if (keys[i] == l) {
                         vlc.writeVLC(br, i);
@@ -74,7 +75,8 @@ public class DictionaryCompressor {
             long[] copy = Platform.copyOfLong(values, values.length);
             Arrays.sort(copy);
             RunLength.Long rl = new RunLength.Long();
-            for (long l : copy) {
+            for (int i = 0; i < copy.length; i++) {
+                long l = copy[i];
                 rl.add(l);
             }
             return rl;
@@ -98,7 +100,8 @@ public class DictionaryCompressor {
             }
 
             BitWriter br = new BitWriter(bb);
-            for (int l : values) {
+            for (int j = 0; j < values.length; j++) {
+                int l = values[j];
                 for (int i = 0; i < keys.length; i++)
                     if (keys[i] == l) {
                         vlc.writeVLC(br, i);
@@ -113,7 +116,8 @@ public class DictionaryCompressor {
             int[] copy = Platform.copyOfInt(values, values.length);
             Arrays.sort(copy);
             RunLength.Integer rl = new RunLength.Integer();
-            for (int l : copy) {
+            for (int i = 0; i < copy.length; i++) {
+                int l = copy[i];
                 rl.add(l);
             }
             return rl;

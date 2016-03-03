@@ -17,7 +17,8 @@ public class SampleDescriptionBox extends NodeBox {
 
     public static SampleDescriptionBox createSampleDescriptionBox(SampleEntry... arguments) {
         SampleDescriptionBox box = new SampleDescriptionBox(new Header(fourcc()));
-        for (SampleEntry e : arguments) {
+        for (int i = 0; i < arguments.length; i++) {
+            SampleEntry e = arguments[i];
             box.boxes.add(e);
         }
         return box;

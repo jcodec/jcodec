@@ -132,7 +132,9 @@ public class SliceHeaderWriter {
             writeBool(writer, sliceHeader.refPicMarkingNonIDR != null, "SH: adaptive_ref_pic_marking_mode_flag");
             if (sliceHeader.refPicMarkingNonIDR != null) {
                 RefPicMarking drpmidr = sliceHeader.refPicMarkingNonIDR;
-                for (Instruction mmop : drpmidr.getInstructions()) {
+                Instruction[] instructions = drpmidr.getInstructions();
+                for (int i = 0; i < instructions.length; i++) {
+                    Instruction mmop = instructions[i];
                     switch (mmop.getType()) {
                     case REMOVE_SHORT:
                         writeUEtrace(writer, 1, "SH: memory_management_control_operation");

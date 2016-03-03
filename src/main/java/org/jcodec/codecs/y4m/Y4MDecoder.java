@@ -1,5 +1,6 @@
 package org.jcodec.codecs.y4m;
 import static org.jcodec.common.StringUtils.splitC;
+import static org.jcodec.platform.Platform.stringFromBytes;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -7,6 +8,7 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.platform.Platform;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -82,7 +84,8 @@ public class Y4MDecoder {
     }
 
     private static String find(String[] header, char c) {
-        for (String string : header) {
+        for (int i = 0; i < header.length; i++) {
+            String string = header[i];
             if (string.charAt(0) == c)
                 return string.substring(1);
         }
@@ -95,7 +98,7 @@ public class Y4MDecoder {
             ;
         if (y4m.hasRemaining())
             duplicate.limit(y4m.position() - 1);
-        return new String(NIOUtils.toArray(duplicate));
+        return stringFromBytes(NIOUtils.toArray(duplicate));
     }
 
     public int getWidth() {

@@ -85,8 +85,11 @@ public class HLSRelocatePMT {
                     if (guid == 0) {
                         patPkt = pkt;
                         PATSection pat = PATSection.parsePAT(pktRead);
-                        for (int pmtPid : pat.getPrograms().values())
+                        int[] values = pat.getPrograms().values();
+                        for (int i = 0; i < values.length; i++) {
+                            int pmtPid = values[i];
                             pmtPids.add(pmtPid);
+                        }
                     } else if (pmtPids.contains(guid)) {
                         pmtPkt = pkt;
                         out.write(patPkt);

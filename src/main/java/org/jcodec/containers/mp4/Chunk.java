@@ -65,7 +65,8 @@ public class Chunk {
         if (sampleDur > 0)
             return sampleDur * sampleCount;
         int sum = 0;
-        for (int i : sampleDurs) {
+        for (int j = 0; j < sampleDurs.length; j++) {
+            int i = sampleDurs[j];
             sum += i;
         }
         return sum;
@@ -75,7 +76,8 @@ public class Chunk {
         if (sampleSize > 0)
             return sampleSize * sampleCount;
         long sum = 0;
-        for (int i : sampleSizes) {
+        for (int j = 0; j < sampleSizes.length; j++) {
+            int i = sampleSizes[j];
             sum += i;
         }
         return sum;

@@ -20,7 +20,8 @@ public class MD5 {
 
     private static String digestToString(byte[] digest) {
         StringBuilder sb = new StringBuilder();
-        for (byte item : digest) {
+        for (int i = 0; i < digest.length; i++) {
+            byte item = digest[i];
             int b = item & 0xFF;
             if (b < 0x10)
                 sb.append('0');

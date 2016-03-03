@@ -30,6 +30,9 @@ public class AACException extends IOException {
     }
 
     public static AACException wrap(Exception e) {
+        if (e != null && e instanceof AACException) {
+            return (AACException) e;
+        }
         if (e != null && e.getMessage() != null) {
             return new AACException(e.getMessage());
         }

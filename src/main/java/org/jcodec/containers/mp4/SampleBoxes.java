@@ -1,9 +1,12 @@
 package org.jcodec.containers.mp4;
 
+import static org.jcodec.platform.Platform.stringFromBytes;
+
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.platform.Platform;
 
 public class SampleBoxes extends Boxes {
 
@@ -69,8 +72,8 @@ public class SampleBoxes extends Boxes {
         override("samr", AudioSampleEntry.class);
         override("AUDB", AudioSampleEntry.class);
         override("ilbc", AudioSampleEntry.class);
-        override(new String(new byte[] {0x6D, 0x73, 0x00, 0x11}), AudioSampleEntry.class);
-        override(new String(new byte[] {0x6D, 0x73, 0x00, 0x31}), AudioSampleEntry.class);
+        override(stringFromBytes(new byte[] {0x6D, 0x73, 0x00, 0x11}), AudioSampleEntry.class);
+        override(stringFromBytes(new byte[] {0x6D, 0x73, 0x00, 0x31}), AudioSampleEntry.class);
         override("aes3", AudioSampleEntry.class);
         override("NONE", AudioSampleEntry.class);
         override("raw ", AudioSampleEntry.class);

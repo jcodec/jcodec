@@ -130,7 +130,8 @@ public class Cut {
             movie.fixTimescale(videoTrack.getTimescale());
 
         TrakBox[] tracks = movie.getTracks();
-        for (TrakBox trakBox : tracks) {
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             forceEditList(movie, trakBox);
             List<Edit> edits = trakBox.getEdits();
             for (Slice cut : commands) {

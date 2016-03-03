@@ -56,7 +56,8 @@ public class BitIO {
         byte[] compressed = new byte[(decompressed.length >> 3) + 1];
         OutputBits out = outputFromArray(compressed);
         try {
-            for (int bit : decompressed) {
+            for (int i = 0; i < decompressed.length; i++) {
+                int bit = decompressed[i];
                 out.putBit(bit);
             }
         } catch (IOException e) {

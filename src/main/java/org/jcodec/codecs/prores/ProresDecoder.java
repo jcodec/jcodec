@@ -20,6 +20,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
+import org.jcodec.platform.Platform;
 
 import java.lang.System;
 import java.nio.ByteBuffer;
@@ -291,7 +292,7 @@ public class ProresDecoder extends VideoDecoder {
     static final String readSig(ByteBuffer inp) {
         byte[] sig = new byte[4];
         inp.get(sig);
-        return new String(sig);
+        return Platform.stringFromBytes(sig);
     }
 
     protected void decodePicture(ByteBuffer data, byte[][] result, int width, int height, int mbWidth, int[] qMatLuma,

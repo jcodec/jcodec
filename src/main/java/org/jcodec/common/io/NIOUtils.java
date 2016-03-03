@@ -1,6 +1,7 @@
 package org.jcodec.common.io;
 
 import static java.lang.Math.min;
+import static org.jcodec.platform.Platform.stringFromBytes;
 
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.AutoFileChannelWrapper;
@@ -212,12 +213,12 @@ public class NIOUtils {
     }
 
     public static String readString(ByteBuffer buffer, int len) {
-        return new String(toArray(read(buffer, len)));
+        return stringFromBytes(toArray(read(buffer, len)));
     }
 
     public static String readPascalStringL(ByteBuffer buffer, int maxLen) {
         ByteBuffer sub = read(buffer, maxLen + 1);
-        return new String(toArray(NIOUtils.read(sub, Math.min(sub.get() & 0xff, maxLen))));
+        return stringFromBytes(toArray(NIOUtils.read(sub, Math.min(sub.get() & 0xff, maxLen))));
     }
 
     public static void writePascalStringL(ByteBuffer buffer, String string, int maxLen) {
@@ -227,12 +228,7 @@ public class NIOUtils {
     }
 
     public static byte[] asciiString(String fourcc) {
-        char[] ch = fourcc.toCharArray();
-        byte[] result = new byte[ch.length];
-        for (int i = 0; i < ch.length; i++) {
-            result[i] = (byte) ch[i];
-        }
-        return result;
+        return Platform.getBytes(fourcc);
     }
     
     public static void writePascalString(ByteBuffer buffer, String name) {
