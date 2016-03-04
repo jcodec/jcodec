@@ -9,6 +9,7 @@ import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mp4.AvcCUtil;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -78,7 +79,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         sizes = stsz.getSizes();
         
         if (getCodec() == Codec.H264) {
-            avcC = H264Utils.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
+            avcC = AvcCUtil.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
         }
     }
 
@@ -155,7 +156,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     @Override
     public ByteBuffer convertPacket(ByteBuffer result) {
         if(avcC != null)
-            return H264Utils.decodeMOVPacket(result, avcC);
+            return AvcCUtil.decodeMOVPacket(result, avcC);
         return result;
     }
 

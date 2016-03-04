@@ -7,6 +7,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.containers.mp4.AvcCUtil;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
@@ -109,7 +110,7 @@ public class SequenceEncoder {
             throw new RuntimeException(
                     "Somehow the encoder didn't generate SPS/PPS pair, did you encode at least one frame?");
         // Push saved SPS/PPS to a special storage in MP4
-        outTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromBuffer(sps, pps, 4));
+        outTrack.addSampleEntry(AvcCUtil.createMOVSampleEntryFromBuffer(sps, pps, 4));
 
         // Write MP4 header and finalize recording
         muxer.writeHeader();

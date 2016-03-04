@@ -23,6 +23,7 @@ import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
+import org.jcodec.containers.mp4.AvcCUtil;
 import org.jcodec.platform.Platform;
 
 import java.io.File;
@@ -348,7 +349,7 @@ public class FLVTool {
                     if (avct.getAvcPacketType() == 0) {
                         ByteBuffer frameData = pkt.getData().duplicate();
                         FLVReader.parseVideoTagHeader(frameData);
-                        AvcCBox avcc = H264Utils.parseAVCCFromBuffer(frameData);
+                        AvcCBox avcc = AvcCUtil.parseAVCCFromBuffer(frameData);
                         for (SeqParameterSet sps : H264Utils.readSPSFromBufferList(avcc.getSpsList())) {
                             System.out.println();
                             System.out.print("  SPS[" + sps.getSeq_parameter_set_id() + "]:" + ToJSON.toJSON(sps));

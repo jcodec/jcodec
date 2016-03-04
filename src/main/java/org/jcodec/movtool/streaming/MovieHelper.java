@@ -14,6 +14,7 @@ import org.jcodec.common.LongArrayList;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.AvcCUtil;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
@@ -180,7 +181,7 @@ public class MovieHelper {
         Rational pasp = null;
         SampleEntry vse;
         if ("avc1".equals(se.getFourcc())) {
-            vse = H264Utils.createMOVSampleEntryFromBytes(NIOUtils.toArray(se.getCodecPrivate()));
+            vse = AvcCUtil.createMOVSampleEntryFromBytes(NIOUtils.toArray(se.getCodecPrivate()));
             pasp = ((VideoCodecMeta) se).getPasp();
         } else if (se instanceof VideoCodecMeta) {
             VideoCodecMeta ss = (VideoCodecMeta) se;

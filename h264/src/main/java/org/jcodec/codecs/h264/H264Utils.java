@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264;
-import static java.util.Arrays.asList;
 
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
@@ -13,16 +12,12 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
 
-import java.io.File;
 import java.io.IOException;
-import java.lang.IllegalArgumentException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -37,6 +32,19 @@ public class H264Utils {
 
     private static SliceHeaderReader shr = new SliceHeaderReader();
     private static SliceHeaderWriter shw = new SliceHeaderWriter();
+
+    /**
+     * Joins buffers containing individual NAL units into a single AnnexB delimited buffer.
+     * Each NAL unit will be separated with 00 00 00 01 markers.
+     * @param nalUnits
+     * @param out
+     */
+    public static void joinNALUnitsToBuffer(List<ByteBuffer> nalUnits, ByteBuffer out) {
+        for (ByteBuffer nal : nalUnits) {
+            out.putInt(1);
+            out.put(nal.duplicate());
+        }
+    }
 
     public static ByteBuffer nextNALUnit(ByteBuffer buf) {
         skipToNALUnit(buf);
@@ -161,21 +169,6 @@ public class H264Utils {
         }
     }
 
-    private static int readLen(ByteBuffer dup, int nls) {
-        switch (nls) {
-        case 1:
-            return dup.get() & 0xff;
-        case 2:
-            return dup.getShort() & 0xffff;
-        case 3:
-            return ((dup.getShort() & 0xffff) << 8) | (dup.get() & 0xff);
-        case 4:
-            return dup.getInt();
-        default:
-            throw new IllegalArgumentException("NAL Unit length size can not be " + nls);
-        }
-    }
-
     /**
      * Encodes AVC frame in ISO BMF format. Takes Annex B format.
      * 
@@ -205,7 +198,7 @@ public class H264Utils {
     /**
      * Wipes AVC parameter sets ( SPS/PPS ) from the packet
      * 
-     * @param in
+     * @param _in
      *            AVC frame encoded in Annex B NAL unit format
      * @param out
      *            Buffer where packet without PS will be put
@@ -243,7 +236,7 @@ public class H264Utils {
      * Wipes AVC parameter sets ( SPS/PPS ) from the packet ( inplace operation
      * )
      * 
-     * @param in
+     * @param _in
      *            AVC frame encoded in Annex B NAL unit format
      * @param spsList
      *            Storage for leading SPS structures ( can be null, then all
@@ -332,36 +325,6 @@ public class H264Utils {
         }
 
         return result;
-    }
-
-    /**
-     * Joins buffers containing individual NAL units into a single AnnexB delimited buffer.
-     * Each NAL unit will be separated with 00 00 00 01 markers. Allocates a new byte buffer
-     * and writes data into it. 
-     * @param nalUnits
-     * @param out
-     */
-    public static ByteBuffer joinNALUnits(List<ByteBuffer> nalUnits) {
-        int size = 0;
-        for (ByteBuffer nal : nalUnits) {
-            size += 4 + nal.remaining();
-        }
-        ByteBuffer allocate = ByteBuffer.allocate(size);
-        joinNALUnitsToBuffer(nalUnits, allocate);
-        return allocate;
-    }
-    
-    /**
-     * Joins buffers containing individual NAL units into a single AnnexB delimited buffer.
-     * Each NAL unit will be separated with 00 00 00 01 markers. 
-     * @param nalUnits
-     * @param out
-     */
-    public static void joinNALUnitsToBuffer(List<ByteBuffer> nalUnits, ByteBuffer out) {
-        for (ByteBuffer nal : nalUnits) {
-            out.putInt(1);
-            out.put(nal.duplicate());
-        }
     }
 
     public static byte[] saveCodecPrivate(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {

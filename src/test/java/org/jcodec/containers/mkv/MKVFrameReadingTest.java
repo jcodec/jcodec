@@ -1,6 +1,6 @@
 package org.jcodec.containers.mkv;
 import static java.lang.String.format;
-import static org.jcodec.codecs.h264.H264Utils.splitMOVPacket;
+import static org.jcodec.containers.mp4.AvcCUtil.splitMOVPacket;
 import static org.jcodec.common.model.ColorSpace.RGB;
 
 import org.jcodec.codecs.h264.H264Decoder;
@@ -127,7 +127,7 @@ public class MKVFrameReadingTest {
         Assert.assertArrayEquals(rawFrame, MKVMuxerTest.bufferToArray(bb));
         
         Picture8Bit buf = Picture8Bit.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.YUV422);
-        Picture8Bit pic = decoder.decodeFrame8BitFromNals(H264Utils.splitMOVPacket(inFrame.getData(), avcC), buf.getData());
+        Picture8Bit pic = decoder.decodeFrame8BitFromNals(splitMOVPacket(inFrame.getData(), avcC), buf.getData());
         Picture8Bit rgb = Picture8Bit.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
         BufferedImage bi = new BufferedImage(dem.getPictureWidth(), dem.getPictureHeight(), BufferedImage.TYPE_3BYTE_BGR);
         transform.transform(pic, rgb);

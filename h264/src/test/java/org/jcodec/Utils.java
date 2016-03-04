@@ -5,7 +5,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
-import org.jcodec.scale.AWTUtil;
+//import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
 
 import javax.imageio.ImageIO;
@@ -133,7 +133,7 @@ public class Utils {
     }
 
     public static void saveImage(Picture8Bit fr2, String formatName, String name) throws IOException {
-        ImageIO.write(AWTUtil.toBufferedImage8Bit(fr2), formatName, new File(name));
+//        ImageIO.write(AWTUtil.toBufferedImage8Bit(fr2), formatName, new File(name));
     }
 
     public static Picture8Bit diff(Picture8Bit one, Picture8Bit two, int mul) {

@@ -1,5 +1,8 @@
 package org.jcodec.common.logging;
 
+import org.jcodec.common.logging.LogSink;
+import org.jcodec.common.logging.Message;
+
 import java.util.LinkedList;
 import java.util.List;
 

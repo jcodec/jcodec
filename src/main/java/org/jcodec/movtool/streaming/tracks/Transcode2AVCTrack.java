@@ -13,6 +13,7 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.AvcCUtil;
 import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
@@ -78,9 +79,9 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
             int thumbHeight) {
         VideoCodecMeta codecMeta = (VideoCodecMeta) src.getCodecMeta();
 
-        AvcCBox createAvcC = H264Utils.createAvcC(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS(),
+        AvcCBox createAvcC = AvcCUtil.createAvcC(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS(),
                 4);
-        return VideoCodecMeta.createVideoCodecMeta("avc1", H264Utils.getAvcCData(createAvcC), new Size(thumbWidth, thumbHeight),
+        return VideoCodecMeta.createVideoCodecMeta("avc1", AvcCUtil.getAvcCData(createAvcC), new Size(thumbWidth, thumbHeight),
                 codecMeta.getPasp());
     }
 

@@ -6,6 +6,7 @@ import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.RationalLarge;
+import org.jcodec.containers.mp4.AvcCUtil;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -248,8 +249,8 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     public byte[] getCodecPrivate() {
         SampleEntry se = getSampleEntries()[0];
         if ("avc1".equals(se.getFourcc())) {
-            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
-            return H264Utils.avcCToAnnexB(avcC);
+            AvcCBox avcC = AvcCUtil.parseAVCC((VideoSampleEntry) se);
+            return AvcCUtil.avcCToAnnexB(avcC);
 
         }
         // This codec does not have private section

@@ -113,7 +113,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.jcodec</groupId>
-			<artifactId>jcodec-base</artifactId>
+			<artifactId>jcodec-h264</artifactId>
 			<version>0.2</version>
 		</dependency>
 	</dependencies>
