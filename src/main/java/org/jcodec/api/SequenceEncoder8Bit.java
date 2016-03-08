@@ -13,6 +13,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
@@ -41,19 +42,38 @@ public class SequenceEncoder8Bit {
     private MP4Muxer muxer;
     private ByteBuffer sps;
     private ByteBuffer pps;
+    private int timestamp;
+    private Rational fps;
 
-    public static SequenceEncoder8Bit createSequenceEncoder8Bit(File out) throws IOException {
-        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out));
+    public static SequenceEncoder8Bit createSequenceEncoder8Bit(File out, int fps) throws IOException {
+        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(fps, 1));
     }
     
-    public SequenceEncoder8Bit(SeekableByteChannel ch) throws IOException {
+    public static SequenceEncoder8Bit create25Fps(File out) throws IOException {
+        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(25, 1));
+    }
+    
+    public static SequenceEncoder8Bit create30Fps(File out) throws IOException {
+        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(30, 1));
+    }
+    
+    public static SequenceEncoder8Bit create2997Fps(File out) throws IOException {
+        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(30000, 1001));
+    }
+    
+    public static SequenceEncoder8Bit create24Fps(File out) throws IOException {
+        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(24, 1));
+    }
+    
+    public SequenceEncoder8Bit(SeekableByteChannel ch, Rational fps) throws IOException {
         this.ch = ch;
+        this.fps = fps;
 
         // Muxer that will store the encoded frames
         muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
 
         // Add video track to muxer
-        outTrack = muxer.addTrack(TrackType.VIDEO, 25);
+        outTrack = muxer.addTrack(TrackType.VIDEO, fps.getNum());
 
         // Allocate a buffer big enough to hold output frames
         _out = ByteBuffer.allocate(1920 * 1080 * 6);
@@ -68,9 +88,13 @@ public class SequenceEncoder8Bit {
         // MP4
         spsList = new ArrayList<ByteBuffer>();
         ppsList = new ArrayList<ByteBuffer>();
-
     }
-
+    
+    /**
+     * Encodes a frame into a movie.
+     * @param pic
+     * @throws IOException
+     */
     public void encodeNativeFrame(Picture8Bit pic) throws IOException {
         if (toEncode == null) {
             toEncode = Picture8Bit.create(pic.getWidth(), pic.getHeight(), encoder.getSupportedColorSpaces()[0]);
@@ -97,8 +121,10 @@ public class SequenceEncoder8Bit {
             pps = ppsList.get(0);
 
         // Add packet to video track
-        outTrack.addFrame(MP4Packet.createMP4Packet(result, frameNo, 25, 1, frameNo, nu.type == NALUnitType.IDR_SLICE, null, 0, frameNo, 0));
-
+        outTrack.addFrame(MP4Packet.createMP4Packet(result, timestamp, fps.getNum(), fps.getDen(), frameNo,
+                nu.type == NALUnitType.IDR_SLICE, null, 0, timestamp, 0));
+        
+        timestamp += fps.getDen();
         frameNo++;
     }
 
