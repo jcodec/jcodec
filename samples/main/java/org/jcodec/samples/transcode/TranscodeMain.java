@@ -12,8 +12,12 @@ import static org.jcodec.common.model.Unit.SEC;
 import static org.jcodec.common.tools.MainUtils.tildeExpand;
 import static org.jcodec.containers.mp4.TrackType.SOUND;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
+import net.sourceforge.jaad.aac.Decoder;
+import net.sourceforge.jaad.aac.SampleBuffer;
 
 import org.jcodec.codecs.aac.AACConts;
+import org.jcodec.codecs.aac.AACUtils;
+import org.jcodec.codecs.aac.AACUtils.AACMetadata;
 import org.jcodec.codecs.aac.ADTSParser;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Encoder;
@@ -40,7 +44,9 @@ import org.jcodec.codecs.prores.ProresToThumb4x4;
 import org.jcodec.codecs.vp8.VP8Decoder;
 import org.jcodec.codecs.vpx.IVFMuxer;
 import org.jcodec.codecs.vpx.VP8Encoder;
+import org.jcodec.codecs.wav.WavOutput;
 import org.jcodec.codecs.y4m.Y4MDecoder;
+import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.DemuxerTrackMeta.Type;
@@ -51,6 +57,7 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
@@ -69,6 +76,7 @@ import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
+import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
@@ -144,6 +152,7 @@ public class TranscodeMain {
         profiles.put("tsavc2png", new TsAvc2Png());
         profiles.put("y4m2prores", new Y4m2prores());
         profiles.put("webm2png", new Webm2png());
+        profiles.put("mp42wav", new MP42Wav());
     }
 
     public static void main(String[] args) throws Exception {
@@ -1557,6 +1566,69 @@ public class TranscodeMain {
                     return profile2;
             }
             return null;
+        }
+    }
+    
+    protected static class MP42Wav implements Profile {
+        @Override
+        public void transcode(Cmd cmd) throws IOException {
+            SeekableByteChannel source = null;
+            SeekableByteChannel sink = null;
+            WavOutput wavOutput = null;
+            try {
+                source = readableChannel(new File(cmd.getArg(0)));
+                sink = writableChannel(new File(cmd.getArg(1)));
+
+                MP4Demuxer demuxer = new MP4Demuxer(source);
+
+                List<AbstractMP4DemuxerTrack> tracks = demuxer.getAudioTracks();
+                AbstractMP4DemuxerTrack selectedTrack = null;
+                for (AbstractMP4DemuxerTrack track : tracks) {
+                    if (track.getCodec() == Codec.AAC) {
+                        selectedTrack = track;
+                        break;
+                    }
+                }
+                if (selectedTrack == null) {
+                    Logger.error("Could not find an AAC track");
+                    return;
+                } else {
+                    Logger.info("Using the AAC track: " + selectedTrack.getNo());
+                }
+                SampleEntry sampleEntry = selectedTrack.getSampleEntries()[0];
+                AACMetadata meta = AACUtils.getMetadata(sampleEntry);
+                wavOutput = new WavOutput(sink, meta.getFormat());
+                Decoder aacDecoder = new Decoder(NIOUtils.toArray(AACUtils.getCodecPrivate(sampleEntry)));
+                SampleBuffer sampleBuffer = new SampleBuffer();
+
+                Packet packet;
+                while ((packet = selectedTrack.nextFrame()) != null) {
+                    aacDecoder.decodeFrame(NIOUtils.toArray(packet.getData()), sampleBuffer);
+                    if (sampleBuffer.isBigEndian())
+                        toLittleEndian(sampleBuffer);
+                    wavOutput.write(ByteBuffer.wrap(sampleBuffer.getData()));
+                }
+            } finally {
+                NIOUtils.closeQuietly(source);
+                NIOUtils.closeQuietly(wavOutput);
+            }
+        }
+
+        private void toLittleEndian(SampleBuffer sampleBuffer) {
+            byte[] data = sampleBuffer.getData();
+            for (int i = 0; i < data.length; i += 2) {
+                byte tmp = data[i];
+                data[i] = data[i + 1];
+                data[i + 1] = tmp;
+            }
+        }
+
+        @Override
+        public void printHelp(PrintStream err) {
+            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
+                {
+                }
+            }, "in file", "out file");
         }
     }
 }

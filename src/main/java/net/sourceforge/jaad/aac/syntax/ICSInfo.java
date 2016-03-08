@@ -34,7 +34,7 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 
 	public static WindowSequence windowSequenceFromInt(int i) throws AACException {
         WindowSequence[] values = WindowSequence.values();
-        if (values.length >= i) {
+        if (i >= values.length) {
             throw new AACException("unknown window sequence type");
         }
         return values[i];

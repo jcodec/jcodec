@@ -250,6 +250,8 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         } else if (fourcc.equals("apco") || fourcc.equals("apcs") || fourcc.equals("apcn") || fourcc.equals("apch")
                 || fourcc.equals("ap4h")) {
             return Codec.PRORES;
+        } else if (fourcc.equals("mp4a")) {
+            return Codec.AAC;
         }
         return null;        
     }

@@ -1,5 +1,6 @@
 package org.jcodec.codecs.mpeg4.es;
 
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.JCodecUtil;
@@ -43,15 +44,13 @@ public abstract class Descriptor {
         Class<? extends Descriptor> cls = factory.byTag(tag);
         Descriptor descriptor;
         try {
-            descriptor = cls.getConstructor(Integer.TYPE, Integer.TYPE).newInstance(tag, (int) size);
+            Method method = cls.getDeclaredMethod("parse", ByteBuffer.class);
+            descriptor = (Descriptor)method.invoke(null, NIOUtils.read(input, size));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        descriptor.parse(NIOUtils.read(input, size));
         return descriptor;
     }
-
-    protected abstract void parse(ByteBuffer input);
 
     public static <T> T find(Descriptor es, Class<T> class1, int tag) {
         if (es.getTag() == tag)

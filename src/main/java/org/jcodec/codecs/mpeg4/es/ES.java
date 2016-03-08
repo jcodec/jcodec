@@ -1,6 +1,7 @@
 package org.jcodec.codecs.mpeg4.es;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -12,7 +13,7 @@ import java.nio.ByteBuffer;
 public class ES extends NodeDescriptor {
     private int trackId;
     
-    public ES(int trackId, Descriptor[] children) {
+    public ES(int trackId, Collection<Descriptor> children) {
         super(tag(), children);
         this.trackId = trackId;
     }
@@ -27,10 +28,11 @@ public class ES extends NodeDescriptor {
         super.doWrite(out);
     }
     
-    protected void parse(ByteBuffer input) {
-        trackId = input.getShort();
+    protected static ES parse(ByteBuffer input) {
+        int trackId = input.getShort();
         input.get();
-        super.parse(input);
+        NodeDescriptor node = NodeDescriptor.parse(input);
+        return new ES(trackId, node.getChildren());
     }
 
     public int getTrackId() {
