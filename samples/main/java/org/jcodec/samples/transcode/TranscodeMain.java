@@ -83,6 +83,7 @@ import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
 import org.jcodec.containers.mps.MPEGDemuxer;
 import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
@@ -725,6 +726,9 @@ public class TranscodeMain {
                 int totalFrames = Integer.MAX_VALUE;
                 PixelAspectExt pasp = null;
                 DemuxerTrack videoTrack;
+                DemuxerTrack audioTrack = null;
+                AACMetadata meta = null;
+                Decoder aacDecoder = null;
                 int width = 0, height = 0;
                 H264Decoder decoder = null;
                 if (!raw) {
@@ -742,10 +746,30 @@ public class TranscodeMain {
 
                     width = (ine.getWidth() + 15) & ~0xf;
                     height = (ine.getHeight() + 15) & ~0xf;
+                    
+                    List<AbstractMP4DemuxerTrack> tracks = demux.getAudioTracks();
+                    AbstractMP4DemuxerTrack selectedTrack = null;
+                    for (AbstractMP4DemuxerTrack track : tracks) {
+                        if (track.getCodec() == Codec.AAC) {
+                            selectedTrack = track;
+                            break;
+                        }
+                    }
+                    if (selectedTrack != null) {
+                        Logger.info("Using the AAC track: " + selectedTrack.getNo());
+                        audioTrack = selectedTrack;
+                    }
+                    SampleEntry sampleEntry = selectedTrack.getSampleEntries()[0];
+                    meta = AACUtils.getMetadata(sampleEntry);
+                    aacDecoder = new Decoder(NIOUtils.toArray(AACUtils.getCodecPrivate(sampleEntry)));
                 } else {
                     videoTrack = new MappedH264ES(NIOUtils.fetchFromFile(new File(cmd.getArg(0))));
                 }
                 MP4Muxer muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
+                PCMMP4MuxerTrack pcmOutTrack = null;
+                if(audioTrack != null) {
+                    pcmOutTrack = muxer.addPCMAudioTrack(meta.getFormat());
+                }
 
                 ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
 
@@ -772,6 +796,21 @@ public class TranscodeMain {
                 long totalH264 = 0, totalProRes = 0;
                 int maxFrames = cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE);
                 for (i = 0; (gopLen + i) < maxFrames && (inFrame = videoTrack.nextFrame()) != null;) {
+                    
+                    if(audioTrack != null) {
+                        Packet audioPkt;
+                        do {
+                            audioPkt = audioTrack.nextFrame();
+                            if(audioPkt == null)
+                                break;
+                            SampleBuffer sampleBuffer = new SampleBuffer();
+                            aacDecoder.decodeFrame(NIOUtils.toArray(audioPkt.getData()), sampleBuffer);
+                            if (sampleBuffer.isBigEndian())
+                                toLittleEndian(sampleBuffer);
+                           pcmOutTrack.addSamples(ByteBuffer.wrap(sampleBuffer.getData()));
+                        } while(audioPkt.getPtsD() < inFrame.getPtsD() + 0.2);
+                    }
+                    
                     ByteBuffer data = inFrame.getData();
                     Picture8Bit target1;
                     Frame dec;
@@ -823,6 +862,15 @@ public class TranscodeMain {
                     sink.close();
                 if (source != null)
                     source.close();
+            }
+        }
+        
+        private void toLittleEndian(SampleBuffer sampleBuffer) {
+            byte[] data = sampleBuffer.getData();
+            for (int i = 0; i < data.length; i += 2) {
+                byte tmp = data[i];
+                data[i] = data[i + 1];
+                data[i + 1] = tmp;
             }
         }
 
