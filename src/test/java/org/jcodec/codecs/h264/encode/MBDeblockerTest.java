@@ -6,8 +6,8 @@ import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+import js.util.ArrayList;
+import js.util.List;
 
 public class MBDeblockerTest {
 

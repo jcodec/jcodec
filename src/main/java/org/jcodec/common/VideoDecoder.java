@@ -3,8 +3,8 @@ package org.jcodec.common;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

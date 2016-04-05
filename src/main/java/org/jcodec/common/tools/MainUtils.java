@@ -3,20 +3,20 @@ package org.jcodec.common.tools;
 import org.jcodec.common.StringUtils;
 import org.jcodec.platform.Platform;
 
-import java.io.File;
-import java.io.PrintStream;
-import java.lang.StringBuilder;
-import java.lang.System;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import js.io.File;
+import js.io.PrintStream;
+import js.lang.StringBuilder;
+import js.lang.System;
+import js.lang.reflect.Array;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.EnumSet;
+import js.util.HashMap;
+import js.util.List;
+import js.util.Map;
+import js.util.Map.Entry;
+import js.util.regex.Matcher;
+import js.util.regex.Pattern;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

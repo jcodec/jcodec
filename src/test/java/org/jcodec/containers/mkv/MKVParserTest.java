@@ -10,14 +10,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.StringBuilder;
-import java.lang.System;
-import java.nio.channels.FileChannel;
-import java.util.List;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.io.OutputStream;
+import js.lang.StringBuilder;
+import js.lang.System;
+import js.nio.channels.FileChannel;
+import js.util.List;
 
 public class MKVParserTest {
     

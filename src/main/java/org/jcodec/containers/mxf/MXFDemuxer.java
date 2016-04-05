@@ -29,10 +29,10 @@ import org.jcodec.containers.mxf.model.TimelineTrack;
 import org.jcodec.containers.mxf.model.UL;
 import org.jcodec.containers.mxf.model.WaveAudioDescriptor;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -173,7 +173,7 @@ public class MXFDemuxer {
             if (header.getPack().getNbEssenceContainers() > 0)
                 partitions.add(0, header);
 
-            metadata.addAll(0, readPartitionMeta(ff, header));
+            metadata.addAllAt(0, readPartitionMeta(ff, header));
 
             ff.setPosition(header.getPack().getPrevPartition());
             nextPartition = thisPartition;
@@ -391,7 +391,7 @@ public class MXFDemuxer {
         public MXFPacket readPacket(long off, int len, long pts, int timescale, int duration, int frameNo, boolean kf)
                 throws IOException {
         	SeekableByteChannel ch = demuxer.ch;
-            synchronized (ch) {
+             {
                 ch.setPosition(off);
 
                 KLV kl = KLV.readKL(ch);

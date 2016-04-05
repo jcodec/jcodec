@@ -14,7 +14,7 @@ import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.Packet;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -79,7 +79,7 @@ public class MappedH264ES implements DemuxerTrack {
             }
         }
 
-        result.limit(bb.position());
+        result.setLimit(bb.position());
 
         return prevSh == null ? null : detectPoc(result, prevNu, prevSh);
     }

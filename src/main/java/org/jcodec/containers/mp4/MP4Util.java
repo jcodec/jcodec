@@ -21,15 +21,15 @@ import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import js.io.File;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.channels.WritableByteChannel;
+import js.util.ArrayList;
+import js.util.HashMap;
+import js.util.LinkedList;
+import js.util.List;
+import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

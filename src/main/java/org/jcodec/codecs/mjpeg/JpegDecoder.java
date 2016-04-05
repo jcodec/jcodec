@@ -14,8 +14,8 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.MathUtil;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import js.nio.ByteBuffer;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -212,7 +212,7 @@ public class JpegDecoder extends VideoDecoder {
                 if (b1 == 0)
                     out.put((byte) -1);
                 else {
-                    data.position(data.position() - 2);
+                    data.setPosition(data.position() - 2);
                     break;
                 }
             } else

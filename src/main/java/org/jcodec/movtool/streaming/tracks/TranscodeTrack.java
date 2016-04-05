@@ -1,7 +1,7 @@
 package org.jcodec.movtool.streaming.tracks;
-import java.lang.IllegalStateException;
-import java.lang.System;
-import java.lang.ThreadLocal;
+import js.lang.IllegalStateException;
+import js.lang.System;
+import js.lang.ThreadLocal;
 
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.VideoEncoder;
@@ -17,9 +17,9 @@ import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform8Bit;
 
-import java.io.IOException;
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.BufferOverflowException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

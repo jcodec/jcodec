@@ -1,5 +1,5 @@
 package net.sourceforge.jaad.aac.sbr;
-import java.util.Arrays;
+import js.util.Arrays;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

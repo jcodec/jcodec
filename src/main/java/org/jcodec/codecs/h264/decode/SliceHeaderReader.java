@@ -20,7 +20,7 @@ import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.BitReader;
 
-import java.util.ArrayList;
+import js.util.ArrayList;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

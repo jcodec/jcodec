@@ -1,9 +1,9 @@
 package org.jcodec.movtool.streaming;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
-import static java.lang.System.currentTimeMillis;
+import static js.lang.System.currentTimeMillis;
 
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mp4.MP4Util;
@@ -15,12 +15,12 @@ import org.jcodec.movtool.streaming.tracks.Prores2AVCTrack;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
 import org.jcodec.movtool.streaming.tracks.StereoDownmixTrack;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import js.io.BufferedOutputStream;
+import js.io.File;
+import js.io.FileOutputStream;
+import js.io.IOException;
+import js.util.concurrent.Executors;
+import js.util.concurrent.ScheduledExecutorService;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

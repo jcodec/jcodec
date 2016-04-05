@@ -11,11 +11,11 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.channels.FileChannel;
-import java.util.List;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.channels.FileChannel;
+import js.util.List;
 
 public class CuesFactoryTest {
 

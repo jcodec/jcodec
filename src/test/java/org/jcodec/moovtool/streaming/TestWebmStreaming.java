@@ -1,12 +1,13 @@
 package org.jcodec.moovtool.streaming;
+import js.lang.System;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import js.io.BufferedOutputStream;
+import js.io.ByteArrayOutputStream;
+import js.io.File;
+import js.io.FileOutputStream;
+import js.io.IOException;
+import js.util.concurrent.Executors;
+import js.util.concurrent.ScheduledExecutorService;
 
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mkv.MKVType;
@@ -24,7 +25,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static java.lang.System.currentTimeMillis;
+import static js.lang.System.currentTimeMillis;
 
 public class TestWebmStreaming {
 

@@ -42,9 +42,9 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -146,7 +146,7 @@ public class MPEGDecoder extends VideoDecoder {
             } else if (code == PICTURE_START_CODE) {
                 ph = PictureHeader.read(segment);
             } else if (code == EXTENSION_START_CODE) {
-                int extType = segment.get(4) >> 4;
+                int extType = segment.getAt(4) >> 4;
                 if (extType == SequenceExtension.Sequence_Extension || extType == SequenceScalableExtension.Sequence_Scalable_Extension
                         || extType == SequenceDisplayExtension.Sequence_Display_Extension)
                     SequenceHeader.readExtension(segment, sh);
@@ -157,7 +157,7 @@ public class MPEGDecoder extends VideoDecoder {
             } else {
                 break;
             }
-            buffer.position(fork.position());
+            buffer.setPosition(fork.position());
         }
         return ph;
     }
@@ -223,7 +223,7 @@ public class MPEGDecoder extends VideoDecoder {
         try {
             ByteBuffer segment;
             while ((segment = nextSegment(buffer)) != null) {
-                int startCode = segment.get(3) & 0xff;
+                int startCode = segment.getAt(3) & 0xff;
                 if (startCode >= SLICE_START_CODE_FIRST && startCode <= SLICE_START_CODE_LAST) {
                     doDecodeSlice(context, ph, buf, vertOff, vertStep, segment);
                 } else if (startCode >= 0xB3 && startCode != 0xB6 && startCode != 0xB7) {
@@ -249,9 +249,9 @@ public class MPEGDecoder extends VideoDecoder {
 
     private void doDecodeSlice(Context context, PictureHeader ph, byte[][] buf, int vertOff, int vertStep,
             ByteBuffer segment) throws IOException {
-        int startCode = segment.get(3) & 0xff;
+        int startCode = segment.getAt(3) & 0xff;
         ByteBuffer dup = segment.duplicate();
-        dup.position(4);
+        dup.setPosition(4);
         try {
             decodeSlice(ph, startCode, context, buf, BitReader.createBitReader(dup), vertOff, vertStep);
         } catch (RuntimeException e) {

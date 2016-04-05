@@ -2,7 +2,7 @@ package org.jcodec.codecs.aac.blocks;
 import org.jcodec.codecs.aac.ChannelPosition;
 import org.jcodec.common.io.BitReader;
 
-import java.io.IOException;
+import js.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -5,7 +5,7 @@ import static org.jcodec.containers.mp4.TimeUtil.toMovTime;
 
 import org.jcodec.common.io.NIOUtils;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -138,9 +138,9 @@ public class MovieHeaderBox extends FullBox {
         out.putInt((int) duration);
         writeFixed1616(out, rate);
         writeFixed88(out, volume);
-        out.put(new byte[10]);
+        out.putArr(new byte[10]);
         writeMatrix(out);
-        out.put(new byte[24]);
+        out.putArr(new byte[24]);
         out.putInt(nextTrackId);
     }
 

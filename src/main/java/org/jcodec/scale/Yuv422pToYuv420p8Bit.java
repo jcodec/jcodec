@@ -1,6 +1,6 @@
 package org.jcodec.scale;
 
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 
 import org.jcodec.common.model.Picture8Bit;
 

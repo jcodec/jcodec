@@ -1,13 +1,13 @@
 package org.jcodec.movtool.streaming;
-import java.lang.IllegalStateException;
-import java.lang.System;
-import java.lang.IllegalArgumentException;
+import js.lang.IllegalStateException;
+import js.lang.System;
+import js.lang.IllegalArgumentException;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.BaseInputStream;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -49,10 +49,10 @@ public class MovieRange extends BaseInputStream {
             chunkDataLen = Math.max(0, chunkDataLen);
 
             if (chunkDataLen < chunkData.remaining() || chunkData.capacity() - chunkData.position() >= chunkDataLen) {
-                chunkData.limit(chunkData.position() + chunkDataLen);
+                chunkData.setLimit(chunkData.position() + chunkDataLen);
             } else {
                 ByteBuffer correct = ByteBuffer.allocate(chunkDataLen);
-                correct.put(chunkData);
+                correct.putBuf(chunkData);
                 correct.clear();
                 return correct;
             }
@@ -71,7 +71,7 @@ public class MovieRange extends BaseInputStream {
         while (len > 0) {
             int toRead = Math.min(chunkData.remaining(), len);
 
-            chunkData.get(b, from, toRead);
+            chunkData.getBuf3(b, from, toRead);
             totalRead += toRead;
             len -= toRead;
             from += toRead;

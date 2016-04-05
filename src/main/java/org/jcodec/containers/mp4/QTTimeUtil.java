@@ -10,8 +10,8 @@ import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.demuxer.TimecodeMP4DemuxerTrack;
 
-import java.io.IOException;
-import java.util.List;
+import js.io.IOException;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

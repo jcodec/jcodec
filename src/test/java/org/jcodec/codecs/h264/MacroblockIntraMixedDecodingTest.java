@@ -9,9 +9,9 @@ import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.File;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 public class MacroblockIntraMixedDecodingTest {
 
@@ -144,7 +144,7 @@ public class MacroblockIntraMixedDecodingTest {
     private int[] getAsIntArray(ByteBuffer yuv, int size) {
         byte[] b = new byte[size];
         int[] result = new int[size];
-        yuv.get(b);
+        yuv.getBuf(b);
         for (int i = 0; i < b.length; i++) {
             result[i] = b[i] & 0xff;
         }

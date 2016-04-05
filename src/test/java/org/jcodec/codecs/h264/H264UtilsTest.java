@@ -4,9 +4,9 @@ import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
 
 public class H264UtilsTest {
 
@@ -19,7 +19,7 @@ public class H264UtilsTest {
         
         byte[] b = Platform.copyOfByte(asByteArray(src), src.length + 2);
         ByteBuffer bb = ByteBuffer.wrap(b);
-        bb.limit(bb.limit() - 2);
+        bb.setLimit(bb.limit() - 2);
 
         H264Utils.escapeNALinplace(bb);
         

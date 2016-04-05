@@ -6,8 +6,8 @@ import org.jcodec.common.io.NIOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.nio.ByteBuffer;
+import js.io.File;
+import js.nio.ByteBuffer;
 
 public class PPSReadTest {
     private PictureParameterSet expected;

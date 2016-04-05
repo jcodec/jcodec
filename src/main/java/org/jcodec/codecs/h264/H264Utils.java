@@ -1,5 +1,5 @@
 package org.jcodec.codecs.h264;
-import static java.util.Arrays.asList;
+import static js.util.Arrays.asList;
 
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
@@ -22,16 +22,17 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.stjs.javascript.Global;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import js.io.File;
+import js.io.IOException;
+import js.lang.IllegalArgumentException;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.Collection;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -60,7 +61,7 @@ public class H264Utils {
             val <<= 8;
             val |= (buf.get() & 0xff);
             if ((val & 0xffffff) == 1) {
-                buf.position(buf.position());
+                buf.setPosition(buf.position());
                 break;
             }
         }
@@ -91,8 +92,8 @@ public class H264Utils {
             val <<= 8;
             val |= (buf.get() & 0xff);
             if ((val & 0xffffff) == 1) {
-                buf.position(buf.position() - (val == 1 ? 4 : 3));
-                result.limit(buf.position() - from);
+                buf.setPosition(buf.position() - (val == 1 ? 4 : 3));
+                result.setLimit(buf.position() - from);
                 break;
             }
         }
@@ -115,20 +116,20 @@ public class H264Utils {
             p1 = p2;
             p2 = b;
         }
-        _buf.limit(out.position());
+        _buf.setLimit(out.position());
     }
 
     public static final void escapeNALinplace(ByteBuffer src) {
         int[] loc = searchEscapeLocations(src);
 
         int old = src.limit();
-        src.limit(src.limit() + loc.length);
+        src.setLimit(src.limit() + loc.length);
 
         for (int newPos = src.limit() - 1, oldPos = old - 1, locIdx = loc.length - 1; newPos >= src.position(); newPos--, oldPos--) {
-            src.put(newPos, src.get(oldPos));
+            src.putAt(newPos, src.getAt(oldPos));
             if (locIdx >= 0 && loc[locIdx] == oldPos) {
                 newPos--;
-                src.put(newPos, (byte) 3);
+                src.putAt(newPos, (byte) 3);
                 locIdx--;
             }
         }
@@ -216,7 +217,7 @@ public class H264Utils {
             ByteBuffer buf = H264Utils.nextNALUnit(dup);
             if (buf == null)
                 break;
-            d1.position(tot);
+            d1.setPosition(tot);
             d1.putInt(buf.remaining());
             tot += buf.remaining() + 4;
         }
@@ -250,9 +251,9 @@ public class H264Utils {
         ByteBuffer dup = result.duplicate();
         while (dup.remaining() >= 4) {
             int size = dup.getInt();
-            dup.position(dup.position() - 4);
+            dup.setPosition(dup.position() - 4);
             dup.putInt(1);
-            dup.position(dup.position() + size);
+            dup.setPosition(dup.position() + size);
         }
     }
 
@@ -287,7 +288,7 @@ public class H264Utils {
                     spsList.add(NIOUtils.duplicate(buf));
             } else {
                 out.putInt(1);
-                out.put(buf);
+                out.putBuf(buf);
             }
         }
         out.flip();
@@ -317,11 +318,11 @@ public class H264Utils {
             if (nu.type == NALUnitType.PPS) {
                 if (ppsList != null)
                     ppsList.add(NIOUtils.duplicate(buf));
-                _in.position(dup.position());
+                _in.setPosition(dup.position());
             } else if (nu.type == NALUnitType.SPS) {
                 if (spsList != null)
                     spsList.add(NIOUtils.duplicate(buf));
-                _in.position(dup.position());
+                _in.setPosition(dup.position());
             } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE)
                 break;
         }
@@ -516,7 +517,7 @@ public class H264Utils {
     public static void joinNALUnitsToBuffer(List<ByteBuffer> nalUnits, ByteBuffer out) {
         for (ByteBuffer nal : nalUnits) {
             out.putInt(1);
-            out.put(nal.duplicate());
+            out.putBuf(nal.duplicate());
         }
     }
 
@@ -549,12 +550,12 @@ public class H264Utils {
         for (ByteBuffer byteBuffer : spsList) {
             bb.putInt(1);
             bb.put((byte)0x67);
-            bb.put(byteBuffer.duplicate());
+            bb.putBuf(byteBuffer.duplicate());
         }
         for (ByteBuffer byteBuffer : ppsList) {
             bb.putInt(1);
             bb.put((byte)0x68);
-            bb.put(byteBuffer.duplicate());
+            bb.putBuf(byteBuffer.duplicate());
         }
         bb.flip();
         return NIOUtils.toArray(bb);
@@ -659,11 +660,11 @@ public class H264Utils {
             else
                 copyDataCAVLC(is, os, reader, writer);
 
-            nal.limit(os.position());
+            nal.setLimit(os.position());
 
             H264Utils.escapeNALinplace(nal);
 
-            os.position(nal.limit());
+            os.setPosition(nal.limit());
 
             return sh;
         }
@@ -691,7 +692,7 @@ public class H264Utils {
                 os.put((byte) (inp << shift));
             } else {
                 reader.stop();
-                os.put(is);
+                os.putBuf(is);
             }
         }
 
@@ -708,7 +709,7 @@ public class H264Utils {
             writer.flush();
             reader.stop();
 
-            os.put(is);
+            os.putBuf(is);
         }
     }
 
@@ -800,7 +801,7 @@ public class H264Utils {
         dst.flip();
         codecPrivate.putInt(1);
         codecPrivate.put((byte) nalType);
-        codecPrivate.put(dst);
+        codecPrivate.putBuf(dst);
     }
 
     /**

@@ -12,8 +12,8 @@ import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -67,7 +67,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     }
 
     @Override
-    public synchronized MP4Packet getNextFrame(ByteBuffer buffer) throws IOException {
+    public  MP4Packet getNextFrame(ByteBuffer buffer) throws IOException {
         if (stcoInd >= chunkOffsets.length)
             return null;
         int frameSize = getFrameSize();

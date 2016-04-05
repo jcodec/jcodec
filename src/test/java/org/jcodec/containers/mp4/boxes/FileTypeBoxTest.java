@@ -9,22 +9,22 @@ import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
-import java.util.List;
+import js.nio.ByteBuffer;
+import js.util.List;
 
 public class FileTypeBoxTest {
     @Test
     public void testParse() throws Exception {
         ByteBuffer buf = ByteBuffer.allocate(0x1c + 8);
         buf.putInt(0x1c);
-        buf.put("ftyp".getBytes());
-        buf.put("mp42".getBytes());
+        buf.putArr("ftyp".getBytes());
+        buf.putArr("mp42".getBytes());
         buf.putInt(1);
-        buf.put("mp41".getBytes());
-        buf.put("mp42".getBytes());
-        buf.put("isom".getBytes());
+        buf.putArr("mp41".getBytes());
+        buf.putArr("mp42".getBytes());
+        buf.putArr("isom".getBytes());
         buf.putInt(8);
-        buf.put("free".getBytes());
+        buf.putArr("free".getBytes());
         buf.clear();
 
         SeekableByteChannel input = new ByteBufferSeekableByteChannel(buf);

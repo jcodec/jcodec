@@ -12,10 +12,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.List;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.util.List;
 
 public class MKVDemuxerTest {
     MKVDemuxer dem = null;

@@ -1,5 +1,5 @@
 package org.jcodec.common.dct;
-import static java.lang.System.currentTimeMillis;
+import static js.lang.System.currentTimeMillis;
 import static org.jcodec.common.dct.IntDCT.DESCALE;
 import static org.jcodec.common.dct.IntDCT.range_limit;
 
@@ -7,8 +7,8 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.lang.System;
-import java.nio.IntBuffer;
+import js.lang.System;
+import js.nio.IntBuffer;
 
 public class IntDCTTest {
     

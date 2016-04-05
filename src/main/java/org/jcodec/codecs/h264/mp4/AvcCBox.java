@@ -1,13 +1,16 @@
 package org.jcodec.codecs.h264.mp4;
 
+import static org.stjs.javascript.Global.console;
+
 import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;
+import org.stjs.javascript.Global;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -87,7 +90,6 @@ public class AvcCBox extends Box {
 
     @Override
     public void doWrite(ByteBuffer out) {
-
         out.put((byte) 0x1); // version
         out.put((byte) profile);
         out.put((byte) profileCompat);

@@ -1,6 +1,6 @@
 package org.jcodec.movtool.streaming.tracks;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
@@ -12,11 +12,11 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.tracks.MPSTrackFactory.Stream;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import js.io.File;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -85,12 +85,12 @@ public class MTSTrackFactory {
                         if ((b0 & 0x20) != 0) {
                             NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
                         }
-                        dst.put(tsBuf);
+                        dst.putBuf(tsBuf);
                     }
                 }
                 dst.flip();
                 readPESHeader(dst, 0);
-                dst.limit(dst.position() + payloadSize);
+                dst.setLimit(dst.position() + payloadSize);
                 return dst;
             }
         }

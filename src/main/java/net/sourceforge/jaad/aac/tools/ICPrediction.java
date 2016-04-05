@@ -1,5 +1,5 @@
 package net.sourceforge.jaad.aac.tools;
-import java.util.logging.Level;
+import js.util.logging.Level;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.syntax.IBitStream;

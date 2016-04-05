@@ -1,9 +1,9 @@
 package org.jcodec.movtool.streaming.tracks;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 
 import org.jcodec.common.RunLength;
@@ -19,16 +19,16 @@ import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.platform.Platform;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import js.io.File;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.HashMap;
+import js.util.List;
+import js.util.Map;
+import js.util.Map.Entry;
+import js.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -209,7 +209,7 @@ public class MPSTrackFactory {
             @Override
             public ByteBuffer getData() throws IOException {
                 ByteBuffer result = ByteBuffer.allocate(s.siLen + s.fsizes[curFrame]);
-                result.put(s.si.duplicate());
+                result.putBuf(s.si.duplicate());
                 SeekableByteChannel ch = null;
                 try {
                     ch = s.factory.fp.getChannel();
@@ -220,7 +220,7 @@ public class MPSTrackFactory {
                     curOff += s.pesLen(s.factory.pesTokens[pesIdx]);
 
                     NIOUtils.skip(pesBuf, pesOff);
-                    result.put(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
+                    result.putBuf(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
 
                     for (int idx = pesIdx; result.hasRemaining();) {
                         long posShift = 0;
@@ -232,7 +232,7 @@ public class MPSTrackFactory {
                                 s.payloadLen(s.factory.pesTokens[idx]), idx);
                         curOff += posShift + s.leadingSize(s.factory.pesTokens[idx]) + s.pesLen(s.factory.pesTokens[idx]);
 
-                        result.put(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
+                        result.putBuf(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
                     }
                     result.flip();
 

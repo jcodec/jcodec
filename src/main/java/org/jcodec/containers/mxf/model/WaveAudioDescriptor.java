@@ -1,10 +1,10 @@
 package org.jcodec.containers.mxf.model;
 import java.util.Iterator;
 
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.Map.Entry;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.util.Map;
+import js.util.Map.Entry;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

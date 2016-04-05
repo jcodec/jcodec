@@ -4,7 +4,7 @@ import static org.jcodec.common.JCodecUtil2.asciiString;
 
 import org.jcodec.common.io.NIOUtils;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -58,14 +58,14 @@ public class HandlerBox extends FullBox {
     public void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        out.put(asciiString(componentType));
-        out.put(asciiString(componentSubType));
-        out.put(asciiString(componentManufacturer));
+        out.putArr(asciiString(componentType));
+        out.putArr(asciiString(componentSubType));
+        out.putArr(asciiString(componentManufacturer));
 
         out.putInt(componentFlags);
         out.putInt(componentFlagsMask);
         if (componentName != null) {
-            out.put(asciiString(componentName));
+            out.putArr(asciiString(componentName));
         }
     }
 

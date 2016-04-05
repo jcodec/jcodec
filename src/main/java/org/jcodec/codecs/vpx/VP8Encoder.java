@@ -1,5 +1,5 @@
 package org.jcodec.codecs.vpx;
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
@@ -9,9 +9,9 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Arrays;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -110,8 +110,8 @@ public class VP8Encoder extends VideoEncoder {
 
         out.order(ByteOrder.LITTLE_ENDIAN);
         writeHeader(out, pic.getWidth(), pic.getHeight(), headerBuffer.remaining());
-        out.put(headerBuffer);
-        out.put(dataBuffer);
+        out.putBuf(headerBuffer);
+        out.putBuf(dataBuffer);
 
         out.flip();
 

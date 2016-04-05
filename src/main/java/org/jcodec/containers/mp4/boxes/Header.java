@@ -5,11 +5,12 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.io.StringReader;
 import org.jcodec.common.logging.Logger;
+import org.stjs.javascript.Global;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
+import js.io.ByteArrayOutputStream;
+import js.io.IOException;
+import js.io.InputStream;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -102,7 +103,7 @@ public class Header {
             out.putInt(1);
         else
             out.putInt((int) size);
-        out.put(JCodecUtil2.asciiString(fourcc));
+        out.putArr(JCodecUtil2.asciiString(fourcc));
         if (size > MAX_UNSIGNED_INT) {
             out.putLong(size);
         }

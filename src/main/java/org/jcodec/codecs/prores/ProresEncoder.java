@@ -27,7 +27,7 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.ImageOP;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * 
@@ -222,13 +222,13 @@ public class ProresEncoder extends VideoEncoder {
         if (bits(sizes) > high && qp < profile.lastQp) {
             do {
                 ++qp;
-                out.position(rem);
+                out.setPosition(rem);
                 encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, ac, qp, sizes);
             } while (bits(sizes) > high && qp < profile.lastQp);
         } else if (bits(sizes) < low && qp > profile.firstQp) {
             do {
                 --qp;
-                out.position(rem);
+                out.setPosition(rem);
                 encodeSliceData(out, scaledLuma[qp - 1], scaledChroma[qp - 1], scan, sliceMbCount, ac, qp, sizes);
             } while (bits(sizes) < low && qp > profile.firstQp);
         }
@@ -386,19 +386,19 @@ public class ProresEncoder extends VideoEncoder {
 
         short headerSize = 148;
         outp.putInt(headerSize + 8 + header.payloadSize);
-        outp.put(new byte[] { 'i', 'c', 'p', 'f' });
+        outp.putArr(new byte[] { 'i', 'c', 'p', 'f' });
 
         outp.putShort(headerSize); // header size
         outp.putShort((short) 0);
 
-        outp.put(new byte[] { 'a', 'p', 'l', '0' });
+        outp.putArr(new byte[] { 'a', 'p', 'l', '0' });
 
         outp.putShort((short) header.width);
         outp.putShort((short) header.height);
 
         outp.put((byte) (header.frameType == 0 ? 0x83 : 0x87)); // {10}(422){00}[{00}(frame),{01}(field)}{11}
 
-        outp.put(new byte[] { 0, 2, 2, 6, 32, 0 });
+        outp.putArr(new byte[] { 0, 2, 2, 6, 32, 0 });
 
         outp.put((byte) 3); // flags2
         writeQMat(outp, header.qMatLuma);

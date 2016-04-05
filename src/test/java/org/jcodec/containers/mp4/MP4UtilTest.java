@@ -18,10 +18,10 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
+import js.io.File;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.nio.MappedByteBuffer;
 
 public class MP4UtilTest {
     @Test
@@ -68,8 +68,8 @@ public class MP4UtilTest {
 
         Atom atom = MP4Util.findFirstAtom("moov", new AutoFileChannelWrapper(f));
         MappedByteBuffer written = NIOUtils.mapFile(f);
-        written.position((int) atom.getOffset());
-        written.limit((int) (written.position() + atom.getHeader().getSize()));
+        written.setPosition((int) atom.getOffset());
+        written.setLimit((int) (written.position() + atom.getHeader().getSize()));
 
         boolean equals = read.equals(written);
         if (!equals) {

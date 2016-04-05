@@ -1,8 +1,8 @@
 package org.jcodec.common.tools;
 import org.junit.Test;
 
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
 public class MD5Test {
     @Test

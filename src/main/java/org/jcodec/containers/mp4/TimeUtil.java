@@ -1,8 +1,8 @@
 package org.jcodec.containers.mp4;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
+import js.util.Calendar;
+import js.util.Date;
+import js.util.TimeZone;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

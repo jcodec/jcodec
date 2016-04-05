@@ -5,9 +5,9 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.lang.IllegalArgumentException;
+import js.awt.image.BufferedImage;
+import js.awt.image.DataBufferByte;
+import js.lang.IllegalArgumentException;
 
 public class AWTUtil {
 

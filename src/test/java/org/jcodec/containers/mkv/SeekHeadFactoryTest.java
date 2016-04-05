@@ -48,15 +48,15 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import js.io.File;
+import js.io.FileOutputStream;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.Date;
+import js.util.List;
+import js.util.Random;
 
 public class SeekHeadFactoryTest {
 

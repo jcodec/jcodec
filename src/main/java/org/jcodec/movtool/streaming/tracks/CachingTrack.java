@@ -1,22 +1,22 @@
 package org.jcodec.movtool.streaming.tracks;
-import java.lang.IllegalStateException;
-import java.lang.System;
-import java.lang.IllegalArgumentException;
+import js.lang.IllegalStateException;
+import js.lang.System;
+import js.lang.IllegalArgumentException;
 
 
 import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
-import java.io.IOException;
-import java.lang.Runnable;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import js.io.IOException;
+import js.lang.Runnable;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.Collections;
+import js.util.List;
+import js.util.concurrent.ScheduledExecutorService;
+import js.util.concurrent.ScheduledFuture;
+import js.util.concurrent.TimeUnit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -70,14 +70,14 @@ public class CachingTrack implements VirtualTrack {
             this.track = track;
         }
 
-        public synchronized void wipe() {
+        public  void wipe() {
             if (track.cachedPackets.indexOf(this) == 0) {
                 track.cachedPackets.remove(0);
                 cache = null;
             }
         }
 
-        public synchronized ByteBuffer getData() throws IOException {
+        public  ByteBuffer getData() throws IOException {
             // This packet will receive new place _in the queue
             track.cachedPackets.remove(this);
             if (cache == null) {

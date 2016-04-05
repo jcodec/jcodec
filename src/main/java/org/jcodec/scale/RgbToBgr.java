@@ -3,7 +3,7 @@ import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 
-import java.lang.IllegalArgumentException;
+import js.lang.IllegalArgumentException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -7,16 +7,16 @@ import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import js.io.BufferedInputStream;
+import js.io.BufferedOutputStream;
+import js.io.DataInputStream;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.FileOutputStream;
+import js.io.IOException;
+import js.io.InputStream;
+import js.io.OutputStream;
+import js.io.PrintStream;
 
 public class PGMIO {
 

@@ -1,6 +1,6 @@
 package org.jcodec.codecs.prores;
 import static java.lang.Math.min;
-import static java.util.Arrays.fill;
+import static js.util.Arrays.fill;
 import static org.jcodec.codecs.prores.ProresConsts.dcCodebooks;
 import static org.jcodec.codecs.prores.ProresConsts.firstDCCodebook;
 import static org.jcodec.codecs.prores.ProresConsts.interlaced_scan;
@@ -22,8 +22,8 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.platform.Platform;
 
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
 /**
  * 
@@ -282,7 +282,7 @@ public class ProresDecoder extends VideoDecoder {
             fill(qMatChroma, 4);
         }
 
-        inp.position(inp.position() + hdrSize
+        inp.setPosition(inp.position() + hdrSize
                 - (20 + (hasQMatLuma(flags2) ? 64 : 0) + (hasQMatChroma(flags2) ? 64 : 0)));
 
         return new FrameHeader(frameSize - hdrSize - 8, width, height, frameType, topFieldFirst, scan, qMatLuma,
@@ -291,7 +291,7 @@ public class ProresDecoder extends VideoDecoder {
 
     static final String readSig(ByteBuffer inp) {
         byte[] sig = new byte[4];
-        inp.get(sig);
+        inp.getBuf(sig);
         return Platform.stringFromBytes(sig);
     }
 
@@ -427,7 +427,7 @@ public class ProresDecoder extends VideoDecoder {
 
     static final void readQMat(ByteBuffer inp, int[] qMatLuma, int[] scan) {
         byte[] b = new byte[64];
-        inp.get(b);
+        inp.getBuf(b);
         for (int i = 0; i < 64; i++) {
             qMatLuma[i] = b[scan[i]] & 0xff;
         }
@@ -438,11 +438,11 @@ public class ProresDecoder extends VideoDecoder {
     }
 
     public boolean isProgressive(ByteBuffer data) {
-        return (((data.get(20) & 0xff) >> 2) & 3) == 0;
+        return (((data.getAt(20) & 0xff) >> 2) & 3) == 0;
     }
 
     public int probe(ByteBuffer data) {
-        if (data.get(4) == 'i' && data.get(5) == 'c' && data.get(6) == 'p' && data.get(7) == 'f')
+        if (data.getAt(4) == 'i' && data.getAt(5) == 'c' && data.getAt(6) == 'p' && data.getAt(7) == 'f')
             return 100;
         return 0;
     }

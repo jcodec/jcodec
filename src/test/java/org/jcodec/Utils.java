@@ -16,16 +16,16 @@ import org.jcodec.common.tools.MathUtil;
 import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.Arrays;
+import js.io.EOFException;
+import js.io.File;
+import js.io.IOException;
+import js.lang.IllegalArgumentException;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.nio.channels.ReadableByteChannel;
+import js.util.Arrays;
 
-import javax.imageio.ImageIO;
+import jsx.imageio.ImageIO;
 
 public class Utils {
 

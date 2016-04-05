@@ -1,6 +1,6 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import org.jcodec.containers.mp4.boxes.MovieBox;

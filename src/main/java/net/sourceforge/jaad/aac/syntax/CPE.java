@@ -1,5 +1,5 @@
 package net.sourceforge.jaad.aac.syntax;
-import java.util.Arrays;
+import js.util.Arrays;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.AACDecoderConfig;
 import net.sourceforge.jaad.aac.Profile;

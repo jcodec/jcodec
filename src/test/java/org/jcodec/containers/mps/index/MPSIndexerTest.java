@@ -1,4 +1,5 @@
 package org.jcodec.containers.mps.index;
+
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.MPEGHeader;
 import org.jcodec.codecs.mpeg12.bitstream.PictureCodingExtension;
@@ -14,9 +15,9 @@ import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
 public class MPSIndexerTest {
     private static <T extends MPEGHeader> byte[] toHex(T struct) {

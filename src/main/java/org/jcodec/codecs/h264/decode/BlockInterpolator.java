@@ -1,5 +1,5 @@
 package org.jcodec.codecs.h264.decode;
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.common.model.Picture8Bit;

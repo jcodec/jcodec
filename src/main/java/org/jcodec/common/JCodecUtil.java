@@ -12,16 +12,16 @@ import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform8Bit;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.Runnable;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.concurrent.Callable;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import js.io.File;
+import js.io.IOException;
+import js.lang.Runnable;
+import js.nio.ByteBuffer;
+import js.nio.channels.ReadableByteChannel;
+import js.util.concurrent.Callable;
+import js.util.concurrent.PriorityBlockingQueue;
+import js.util.concurrent.RunnableFuture;
+import js.util.concurrent.ThreadPoolExecutor;
+import js.util.concurrent.TimeUnit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

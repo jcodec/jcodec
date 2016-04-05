@@ -5,9 +5,9 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.System;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.lang.System;
 
 public class FrameUtil {
 

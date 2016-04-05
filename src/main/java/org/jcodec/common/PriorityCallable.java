@@ -1,5 +1,5 @@
 package org.jcodec.common;
-import java.util.concurrent.Callable;
+import js.util.concurrent.Callable;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -1,7 +1,7 @@
 package org.jcodec.codecs.common.biari;
 import org.jcodec.codecs.vpx.VPXConst;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,12 +45,12 @@ public class VPxBooleanEncoder {
             if (((lowvalue << (offset - 1)) & 0x80000000) != 0) {
                 int x = out.position() - 1;
 
-                while (x >= 0 && out.get(x) == -1) {
-                    out.put(x, (byte) 0);
+                while (x >= 0 && out.getAt(x) == -1) {
+                    out.putAt(x, (byte) 0);
                     x--;
                 }
 
-                out.put(x, (byte) ((out.get(x) & 0xff) + 1));
+                out.putAt(x, (byte) ((out.getAt(x) & 0xff) + 1));
             }
 
             out.put((byte) (lowvalue >> (24 - offset)));

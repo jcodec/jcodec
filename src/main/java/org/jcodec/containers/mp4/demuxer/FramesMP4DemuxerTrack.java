@@ -23,9 +23,9 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.platform.Platform;
 
-import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.lang.IllegalArgumentException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -83,7 +83,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     }
 
     @Override
-    public synchronized MP4Packet nextFrame() throws IOException {
+    public  MP4Packet nextFrame() throws IOException {
         if (curFrame >= sizes.length)
             return null;
         int size = sizes[(int) curFrame];
@@ -92,7 +92,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     }
 
     @Override
-    public synchronized MP4Packet getNextFrame(ByteBuffer storage) throws IOException {
+    public  MP4Packet getNextFrame(ByteBuffer storage) throws IOException {
 
         if (curFrame >= sizes.length)
             return null;

@@ -1,6 +1,6 @@
 package org.jcodec.codecs.common.biari;
-import java.io.IOException;
-import java.io.InputStream;
+import js.io.IOException;
+import js.io.InputStream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

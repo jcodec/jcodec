@@ -1,6 +1,6 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import org.jcodec.common.logging.Logger;
@@ -13,7 +13,7 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import java.io.File;
+import js.io.File;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

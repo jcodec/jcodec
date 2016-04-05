@@ -32,8 +32,8 @@ import static org.jcodec.common.model.Label.XY_Y;
 
 import org.jcodec.common.model.Label;
 
-import java.util.ArrayList;
-import java.util.List;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

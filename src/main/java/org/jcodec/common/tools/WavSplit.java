@@ -1,5 +1,5 @@
 package org.jcodec.common.tools;
-import static java.util.Arrays.asList;
+import static js.util.Arrays.asList;
 
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.common.Assert;
@@ -10,12 +10,12 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.tools.MainUtils.Cmd;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.HashMap;
+import js.io.File;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.nio.channels.ReadableByteChannel;
+import js.util.HashMap;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

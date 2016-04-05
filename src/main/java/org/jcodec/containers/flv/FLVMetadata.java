@@ -1,11 +1,11 @@
 package org.jcodec.containers.flv;
 import org.jcodec.platform.Platform;
 
-import java.lang.IllegalAccessException;
-import java.lang.IllegalArgumentException;
-import java.lang.reflect.Field;
-import java.util.Date;
-import java.util.Map;
+import js.lang.IllegalAccessException;
+import js.lang.IllegalArgumentException;
+import js.lang.reflect.Field;
+import js.util.Date;
+import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

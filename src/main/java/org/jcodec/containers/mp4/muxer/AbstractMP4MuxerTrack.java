@@ -32,11 +32,11 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
-import java.io.IOException;
-import java.lang.IllegalStateException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import js.io.IOException;
+import js.lang.IllegalStateException;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

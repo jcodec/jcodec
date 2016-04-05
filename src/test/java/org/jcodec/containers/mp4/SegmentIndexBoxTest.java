@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.jcodec.containers.mp4.boxes.SegmentIndexBox;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 public class SegmentIndexBoxTest {
 
@@ -25,7 +25,7 @@ public class SegmentIndexBoxTest {
     public void testParse() throws Exception {
         SegmentIndexBox sidx = SegmentIndexBox.createSegmentIndexBox();
         ByteBuffer input = ByteBuffer.wrap(expected);
-        input.position(8);
+        input.setPosition(8);
         sidx.parse(input);
         assertEquals(90000L, sidx.timescale);
         assertEquals(1, sidx.reference_count);

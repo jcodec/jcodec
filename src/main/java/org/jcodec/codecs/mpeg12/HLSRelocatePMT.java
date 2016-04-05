@@ -5,16 +5,16 @@ import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.psi.PATSection;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import js.io.File;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.nio.channels.ReadableByteChannel;
+import js.nio.channels.WritableByteChannel;
+import js.util.ArrayList;
+import js.util.HashSet;
+import js.util.List;
+import js.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -61,7 +61,7 @@ public class HLSRelocatePMT {
         int totalPkt = 0;
         while (_in.read(buf) != -1) {
             buf.flip();
-            buf.limit((buf.limit() / TS_PKT_SIZE) * TS_PKT_SIZE);
+            buf.setLimit((buf.limit() / TS_PKT_SIZE) * TS_PKT_SIZE);
 
             while (buf.hasRemaining()) {
                 ByteBuffer pkt = NIOUtils.read(buf, TS_PKT_SIZE);

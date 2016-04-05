@@ -1,6 +1,6 @@
 package org.jcodec.common.io;
-import java.lang.IllegalArgumentException;
-import java.nio.ByteBuffer;
+import js.lang.IllegalArgumentException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

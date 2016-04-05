@@ -17,10 +17,10 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.util.regex.Matcher;
+import js.util.regex.Pattern;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -88,7 +88,7 @@ public class TimecodeMP4DemuxerTrack {
         if (sampleCache != null)
             return sampleCache[sample];
         else {
-            synchronized (input) {
+             {
                 int stscInd, stscSubInd;
                 for (stscInd = 0, stscSubInd = sample; stscInd < sampleToChunks.length
                         && stscSubInd >= sampleToChunks[stscInd].getCount(); stscSubInd -= sampleToChunks[stscInd]
@@ -121,7 +121,7 @@ public class TimecodeMP4DemuxerTrack {
     }
 
     private void cacheSamples(SampleToChunkEntry[] sampleToChunks, long[] chunkOffsets) throws IOException {
-        synchronized (input) {
+         {
             int stscInd = 0;
             IntArrayList ss = IntArrayList.createIntArrayList();
             for (int chunkNo = 0; chunkNo < chunkOffsets.length; chunkNo++) {

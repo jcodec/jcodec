@@ -1,9 +1,9 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
-import static java.util.Arrays.fill;
+import static js.util.Arrays.fill;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
@@ -26,7 +26,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.platform.Platform;
 
-import java.io.File;
+import js.io.File;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

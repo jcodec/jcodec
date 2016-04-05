@@ -18,9 +18,9 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -149,7 +149,7 @@ public class ProresFix {
         PictureHeader ph = ProresDecoder.readPictureHeader(inBuf);
         ProresEncoder.writePictureHeader(ph.log2SliceMbWidth, ph.sliceSizes.length, outBuf);
         ByteBuffer fork = outBuf.duplicate();
-        outBuf.position(outBuf.position() + (ph.sliceSizes.length << 1));
+        outBuf.setPosition(outBuf.position() + (ph.sliceSizes.length << 1));
 
         int mbWidth = (fh.width + 15) >> 4;
 
@@ -225,7 +225,7 @@ public class ProresFix {
 
         int flags1 = data.get();
 
-        data.position(data.position() + headerSize - 13);
+        data.setPosition(data.position() + headerSize - 13);
 
         if (((flags1 >> 2) & 3) == 0) {
             checkPicture(data, width, height, messages);

@@ -10,8 +10,8 @@ import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.platform.Platform;
 
-import java.util.Arrays;
-import java.util.Comparator;
+import js.util.Arrays;
+import js.util.Comparator;
 
 /**
  * Contains reference picture list management logic

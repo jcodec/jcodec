@@ -1,11 +1,11 @@
 package org.jcodec.common.io;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.channels.ByteChannel;
-import java.nio.channels.Channel;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
+import js.io.Closeable;
+import js.io.IOException;
+import js.nio.channels.ByteChannel;
+import js.nio.channels.Channel;
+import js.nio.channels.ReadableByteChannel;
+import js.nio.channels.WritableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

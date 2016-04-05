@@ -5,10 +5,10 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.platform.Platform;
 import org.junit.Test;
 
-import java.io.File;
-import java.lang.System;
-import java.net.URL;
-import java.nio.ByteBuffer;
+import js.io.File;
+import js.lang.System;
+import js.net.URL;
+import js.nio.ByteBuffer;
 
 public class MP4DemuxerTest {
 

@@ -5,8 +5,8 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 import org.jcodec.containers.mps.index.MTSIndex.MTSProgram;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -55,7 +55,7 @@ public class MTSRandomAccessDemuxer {
                             if ((b0 & 0x20) != 0) {
                                 NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
                             }
-                            bb.put(tsBuf);
+                            bb.putBuf(tsBuf);
                         }
                         bb.flip();
                         return bb;

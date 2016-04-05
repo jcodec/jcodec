@@ -9,8 +9,8 @@ import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 
-import java.lang.IllegalArgumentException;
-import java.nio.ByteBuffer;
+import js.lang.IllegalArgumentException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

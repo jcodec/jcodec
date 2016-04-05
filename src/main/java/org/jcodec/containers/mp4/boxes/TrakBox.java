@@ -5,9 +5,9 @@ import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 
-import java.lang.IllegalArgumentException;
-import java.util.List;
-import java.util.ListIterator;
+import js.lang.IllegalArgumentException;
+import js.util.List;
+import js.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

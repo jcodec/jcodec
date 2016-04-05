@@ -12,8 +12,8 @@ import org.jcodec.common.io.NIOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
 public class SliceHeaderTest {
 

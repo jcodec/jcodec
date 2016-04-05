@@ -1,6 +1,6 @@
 package org.jcodec.common.tools;
 import static java.lang.Math.min;
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;

@@ -1,7 +1,7 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
-import java.lang.IllegalArgumentException;
+import js.lang.IllegalStateException;
+import js.lang.System;
+import js.lang.IllegalArgumentException;
 
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
@@ -24,12 +24,12 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.UrlBox;
 import org.jcodec.platform.Platform;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import js.io.File;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -144,7 +144,7 @@ public class Flattern {
         long extra = mdatOff - out.position();
         if (extra < 0)
             throw new RuntimeException("Not enough space to write the header");
-        out.write((ByteBuffer) ByteBuffer.allocate(8).putInt((int) extra).put(new byte[] { 'f', 'r', 'e', 'e' }).flip());
+        out.write((ByteBuffer) ByteBuffer.allocate(8).putInt((int) extra).putArr(new byte[] { 'f', 'r', 'e', 'e' }).flip());
 
         out.setPosition(mdatOff + 8);
         out.write(ByteBuffer.allocate(8).putLong(mdatSize));

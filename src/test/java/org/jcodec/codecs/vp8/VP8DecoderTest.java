@@ -7,12 +7,12 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.io.File;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
-import javax.imageio.ImageIO;
+import jsx.imageio.ImageIO;
 
 public class VP8DecoderTest {
 

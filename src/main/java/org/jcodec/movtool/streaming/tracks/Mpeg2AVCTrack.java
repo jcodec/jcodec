@@ -1,10 +1,10 @@
 package org.jcodec.movtool.streaming.tracks;
-import java.lang.IllegalStateException;
-import java.lang.System;
-import java.lang.ThreadLocal;
-import java.lang.IllegalArgumentException;
+import js.lang.IllegalStateException;
+import js.lang.System;
+import js.lang.ThreadLocal;
+import js.lang.IllegalArgumentException;
 
-import static java.util.Arrays.binarySearch;
+import static js.util.Arrays.binarySearch;
 import static org.jcodec.codecs.mpeg12.MPEGConst.PICTURE_START_CODE;
 import static org.jcodec.codecs.mpeg12.MPEGUtil.nextSegment;
 import static org.jcodec.movtool.streaming.tracks.MPEGToAVCTranscoder.createTranscoder;
@@ -21,11 +21,11 @@ import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -135,7 +135,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
             return new TranscodePacket(pkt, this, packets.size() - 1, track.frameSize);
         }
 
-        private synchronized void transcode() throws IOException {
+        private  void transcode() throws IOException {
             if (data != null)
                 return;
 
@@ -200,7 +200,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
             return pts;
         }
 
-        private synchronized void carryLeadingBOver() {
+        private  void carryLeadingBOver() {
             if (leadingB != null) {
                 for (int i = 0; i < leadingB.size(); i++) {
                     data[i] = leadingB.get(i);

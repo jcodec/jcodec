@@ -1,13 +1,13 @@
 package org.jcodec.movtool.streaming.tracks;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
-import java.io.IOException;
+import js.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

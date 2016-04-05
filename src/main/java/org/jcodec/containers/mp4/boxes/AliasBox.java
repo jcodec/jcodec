@@ -5,12 +5,12 @@ import static org.jcodec.common.JCodecUtil2.asciiString;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.Platform;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import js.nio.ByteBuffer;
+import js.nio.charset.Charset;
+import js.util.ArrayList;
+import js.util.HashSet;
+import js.util.List;
+import js.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -127,7 +127,7 @@ public class AliasBox extends FullBox {
         super.doWrite(out);
         if ((flags & 0x1) != 0) // self ref
             return;
-        out.put(asciiString(type), 0, 4);
+        out.put3(asciiString(type), 0, 4);
         out.putShort(recordSize);
         out.putShort(version);
         out.putShort(kind);
@@ -139,17 +139,17 @@ public class AliasBox extends FullBox {
         NIOUtils.writePascalStringL(out, fileName, 63);
         out.putInt(fileNumber);
         out.putInt(createdLocalDate);
-        out.put(asciiString(fileTypeName), 0, 4);
-        out.put(asciiString(creatorName), 0, 4);
+        out.put3(asciiString(fileTypeName), 0, 4);
+        out.put3(asciiString(creatorName), 0, 4);
         out.putShort(nlvlFrom);
         out.putShort(nlvlTo);
         out.putInt(volumeAttributes);
         out.putShort(fsId);
-        out.put(new byte[10]);
+        out.putArr(new byte[10]);
         for (ExtraField extraField : extra) {
             out.putShort(extraField.type);
             out.putShort((short) extraField.len);
-            out.put(extraField.data);
+            out.putArr(extraField.data);
         }
         out.putShort((short) -1);
         out.putShort((short) 0);

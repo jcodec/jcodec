@@ -1,20 +1,20 @@
 package org.jcodec.movtool.streaming.tracks;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.lang.InterruptedException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import js.io.File;
+import js.io.FileNotFoundException;
+import js.io.IOException;
+import js.lang.InterruptedException;
+import js.util.ArrayList;
+import js.util.Collections;
+import js.util.List;
+import js.util.concurrent.BlockingQueue;
+import js.util.concurrent.LinkedBlockingQueue;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

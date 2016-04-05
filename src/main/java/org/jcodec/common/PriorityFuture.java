@@ -1,10 +1,10 @@
 package org.jcodec.common;
-import java.lang.Runnable;
-import java.util.Comparator;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import js.lang.Runnable;
+import js.util.Comparator;
+import js.util.concurrent.ExecutionException;
+import js.util.concurrent.RunnableFuture;
+import js.util.concurrent.TimeUnit;
+import js.util.concurrent.TimeoutException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -39,13 +39,17 @@ public class PriorityFuture<T> implements RunnableFuture<T> {
         return src.isDone();
     }
 
-    public T get() throws InterruptedException, ExecutionException {
-        return src.get();
+    public T get(Object... arguments) {
+        return src.get(arguments);
     }
 
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        return src.get();
-    }
+//    public T get() throws InterruptedException, ExecutionException {
+//        return src.get();
+//    }
+//
+//    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+//        return src.get();
+//    }
 
     public void run() {
         src.run();

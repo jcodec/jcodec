@@ -3,14 +3,14 @@ import org.jcodec.codecs.vp8.BooleanArithmeticDecoder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.lang.StringBuilder;
-import java.lang.System;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import js.io.ByteArrayOutputStream;
+import js.io.IOException;
+import js.lang.IllegalArgumentException;
+import js.lang.StringBuilder;
+import js.lang.System;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.List;
 
 /**
  * See for theoretical details: http://www.youtube.com/playlist?list=PLE125425EC837021F

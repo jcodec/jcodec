@@ -18,10 +18,10 @@ import org.jcodec.movtool.streaming.tracks.avc.AVCClipTrack;
 import org.jcodec.movtool.streaming.tracks.avc.AVCConcatTrack;
 import org.junit.Test;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import js.io.BufferedOutputStream;
+import js.io.File;
+import js.io.FileOutputStream;
+import js.io.IOException;
 
 public class AVCClipCatTest {
 

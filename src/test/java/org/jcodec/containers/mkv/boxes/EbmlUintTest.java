@@ -7,7 +7,7 @@ import static org.jcodec.containers.mkv.boxes.EbmlUint.calculatePayloadSize;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 public class EbmlUintTest {
     

@@ -6,14 +6,14 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import js.io.File;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.channels.ReadableByteChannel;
+import js.util.ArrayList;
+import js.util.HashSet;
+import js.util.List;
+import js.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -99,7 +99,7 @@ public class MTSDemuxer implements MPEGDemuxer {
                 data = packet.payload;
             }
             int toRead = Math.min(dst.remaining(), data.remaining());
-            dst.put(NIOUtils.read(data, toRead));
+            dst.putBuf(NIOUtils.read(data, toRead));
             return toRead;
         }
 

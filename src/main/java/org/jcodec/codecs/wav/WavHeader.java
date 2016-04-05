@@ -6,15 +6,15 @@ import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ChannelLabel;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import js.io.File;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
+import js.nio.channels.ReadableByteChannel;
+import js.nio.channels.WritableByteChannel;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,7 +42,7 @@ public class WavHeader {
 
         public static FmtChunk read(ByteBuffer bb) throws IOException {
             FmtChunk fmtChunk = FmtChunk.get(bb);
-            ByteOrder old = (ByteOrder) bb.order();
+            ByteOrder old = (ByteOrder) bb.getOrder();
             try {
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 return new FmtChunkExtended(fmtChunk, bb.getShort(), bb.getShort(), bb.getInt(), bb.getInt());
@@ -53,7 +53,7 @@ public class WavHeader {
 
         public void put(ByteBuffer bb) throws IOException {
             super.put(bb);
-            ByteOrder old = (ByteOrder) bb.order();
+            ByteOrder old = (ByteOrder) bb.getOrder();
             bb.order(ByteOrder.LITTLE_ENDIAN);
             bb.putShort(cbSize);
             bb.putShort(bitsPerCodedSample);
@@ -102,7 +102,7 @@ public class WavHeader {
         }
 
         public static FmtChunk get(ByteBuffer bb) throws IOException {
-            ByteOrder old = (ByteOrder) bb.order();
+            ByteOrder old = (ByteOrder) bb.getOrder();
             try {
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 return new FmtChunk(bb.getShort(), bb.getShort(), bb.getInt(), bb.getInt(), bb.getShort(),
@@ -113,7 +113,7 @@ public class WavHeader {
         }
 
         public void put(ByteBuffer bb) throws IOException {
-            ByteOrder old = (ByteOrder) bb.order();
+            ByteOrder old = (ByteOrder) bb.getOrder();
             bb.order(ByteOrder.LITTLE_ENDIAN);
             bb.putShort(audioFormat);
             bb.putShort(numChannels);
@@ -306,14 +306,14 @@ public class WavHeader {
             chunkSize = 40;
         }
 
-        bb.put(JCodecUtil2.asciiString("RIFF"));
+        bb.putArr(JCodecUtil2.asciiString("RIFF"));
         bb.putInt((int) chunkSize);
-        bb.put(JCodecUtil2.asciiString("WAVE"));
+        bb.putArr(JCodecUtil2.asciiString("WAVE"));
 
-        bb.put(JCodecUtil2.asciiString("fmt "));
+        bb.putArr(JCodecUtil2.asciiString("fmt "));
         bb.putInt(fmt.size());
         fmt.put(bb);
-        bb.put(JCodecUtil2.asciiString("data"));
+        bb.putArr(JCodecUtil2.asciiString("data"));
         if (dataSize <= 0xffffffffL) {
             bb.putInt((int) dataSize);
         } else {

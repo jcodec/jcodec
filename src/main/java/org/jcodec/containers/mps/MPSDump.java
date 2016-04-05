@@ -1,5 +1,5 @@
 package org.jcodec.containers.mps;
-import static java.util.Arrays.asList;
+import static js.util.Arrays.asList;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 
 import org.jcodec.codecs.mpeg12.MPEGUtil;
@@ -22,17 +22,17 @@ import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.platform.Platform;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.IllegalAccessException;
-import java.lang.IllegalArgumentException;
-import java.lang.StringBuilder;
-import java.lang.System;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.HashMap;
+import js.io.File;
+import js.io.IOException;
+import js.lang.IllegalAccessException;
+import js.lang.IllegalArgumentException;
+import js.lang.StringBuilder;
+import js.lang.System;
+import js.lang.reflect.Field;
+import js.lang.reflect.Modifier;
+import js.nio.ByteBuffer;
+import js.nio.channels.ReadableByteChannel;
+import js.util.HashMap;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -165,8 +165,8 @@ public class MPSDump {
         while (copy.hasRemaining()) {
             int marker = copy.duplicate().getInt();
             if (marker >= 0x1b9) {
-                result.limit(copy.position());
-                buffer.position(copy.position());
+                result.setLimit(copy.position());
+                buffer.setPosition(copy.position());
                 return result;
             }
             copy.getInt();

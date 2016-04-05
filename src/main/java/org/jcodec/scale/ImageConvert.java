@@ -1,5 +1,5 @@
 package org.jcodec.scale;
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

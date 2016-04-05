@@ -3,9 +3,9 @@ package org.jcodec.containers.mp4.boxes;
 import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.LinkedList;
+import js.nio.ByteBuffer;
+import js.util.Collection;
+import js.util.LinkedList;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -50,11 +50,11 @@ public class SegmentTypeBox extends Box {
     }
 
     public void doWrite(ByteBuffer out) {
-        out.put(JCodecUtil2.asciiString(majorBrand));
+        out.putArr(JCodecUtil2.asciiString(majorBrand));
         out.putInt(minorVersion);
 
         for (String string : compBrands) {
-            out.put(JCodecUtil2.asciiString(string));
+            out.putArr(JCodecUtil2.asciiString(string));
         }
     }
 }

@@ -1,5 +1,5 @@
 package org.jcodec.codecs.h264.decode;
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
 import static org.jcodec.codecs.h264.io.model.MBType.B_Direct_16x16;

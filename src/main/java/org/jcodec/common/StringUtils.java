@@ -1,8 +1,8 @@
 package org.jcodec.common;
 
-import java.lang.StringBuilder;
-import java.util.ArrayList;
-import java.util.List;
+import js.lang.StringBuilder;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -9,9 +9,9 @@ import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 import org.jcodec.platform.Platform;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -99,11 +99,11 @@ public class MPSRandomAccessDemuxer {
             int fs = fsizes[curFrame];
 
             ByteBuffer result = buf.duplicate();
-            result.limit(result.position() + fs);
+            result.setLimit(result.position() + fs);
 
             while (result.hasRemaining()) {
                 if (pesBuf.hasRemaining()) {
-                    result.put(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
+                    result.putBuf(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
                 } else {
                     ++curPesIdx;
                     long posShift = 0;

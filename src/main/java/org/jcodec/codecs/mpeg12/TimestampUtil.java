@@ -4,11 +4,11 @@ import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
-import java.util.Arrays;
-import java.util.HashMap;
+import js.io.File;
+import js.io.IOException;
+import js.lang.System;
+import js.util.Arrays;
+import js.util.HashMap;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

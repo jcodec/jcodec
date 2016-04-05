@@ -1,6 +1,6 @@
 package org.jcodec.containers.mps;
-import java.util.ArrayList;
-import java.util.List;
+import js.util.ArrayList;
+import js.util.List;
 
 public final class MTSStreamType {
     private final static List<MTSStreamType> _values = new ArrayList<MTSStreamType>();

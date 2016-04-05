@@ -1,6 +1,6 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import static org.jcodec.common.io.NIOUtils.readableChannel;
@@ -13,9 +13,9 @@ import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import js.io.File;
+import js.io.FileNotFoundException;
+import js.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

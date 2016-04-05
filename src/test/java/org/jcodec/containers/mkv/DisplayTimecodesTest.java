@@ -68,11 +68,11 @@ import org.jcodec.containers.mkv.boxes.EbmlUlong;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.StringBuilder;
-import java.lang.System;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.lang.StringBuilder;
+import js.lang.System;
 
 public class DisplayTimecodesTest {
 

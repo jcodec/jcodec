@@ -1,9 +1,9 @@
 package org.jcodec.codecs.mpeg12;
 import org.jcodec.common.io.NIOUtils;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.channels.ReadableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -1,7 +1,7 @@
 package org.jcodec.common.model;
 
-import java.nio.ByteBuffer;
-import java.util.Comparator;
+import js.nio.ByteBuffer;
+import js.util.Comparator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

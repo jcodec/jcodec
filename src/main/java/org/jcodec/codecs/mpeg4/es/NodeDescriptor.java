@@ -1,9 +1,9 @@
 package org.jcodec.codecs.mpeg4.es;
-import static java.util.Arrays.asList;
+import static js.util.Arrays.asList;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.Collection;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

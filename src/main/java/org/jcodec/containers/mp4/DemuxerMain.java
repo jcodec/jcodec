@@ -27,21 +27,21 @@ import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
 import org.jcodec.platform.Platform;
 import org.jcodec.scale.Yuv422pToRgb;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
-import java.util.List;
+import js.io.BufferedInputStream;
+import js.io.BufferedOutputStream;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.FileNotFoundException;
+import js.io.FileOutputStream;
+import js.io.IOException;
+import js.io.InputStream;
+import js.io.OutputStream;
+import js.io.RandomAccessFile;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
+import js.nio.channels.FileChannel;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

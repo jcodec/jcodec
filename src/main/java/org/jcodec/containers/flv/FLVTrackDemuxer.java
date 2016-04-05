@@ -11,10 +11,10 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.flv.FLVTag.Type;
 
-import java.io.IOException;
-import java.lang.System;
-import java.util.LinkedList;
-import java.util.ListIterator;
+import js.io.IOException;
+import js.lang.System;
+import js.util.LinkedList;
+import js.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

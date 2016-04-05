@@ -3,9 +3,9 @@ package org.jcodec.containers.mp4.boxes;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
+import js.util.ArrayList;
+import js.util.List;
+import js.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

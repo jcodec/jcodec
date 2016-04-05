@@ -5,11 +5,11 @@ import org.jcodec.common.AudioUtil;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
+import js.io.Closeable;
+import js.io.File;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.FloatBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

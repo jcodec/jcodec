@@ -1,7 +1,7 @@
 package org.jcodec.common.logging;
 
-import java.util.LinkedList;
-import java.util.List;
+import js.util.LinkedList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

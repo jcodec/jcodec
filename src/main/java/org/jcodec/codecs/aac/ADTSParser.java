@@ -2,7 +2,7 @@ package org.jcodec.codecs.aac;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -86,7 +86,7 @@ public class ADTSParser {
         int rdb = br.readNBit(2); /* number_of_raw_data_blocks_in_frame */
         br.stop();
         
-        data.position(dup.position());
+        data.setPosition(dup.position());
 
         return new Header(aot + 1, ch, crc_abs, rdb + 1, sr);
     }

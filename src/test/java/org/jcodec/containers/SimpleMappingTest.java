@@ -7,12 +7,12 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.nio.channels.FileChannel;
+import js.nio.channels.ReadableByteChannel;
 
 public class SimpleMappingTest {
 

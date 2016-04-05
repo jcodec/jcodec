@@ -16,17 +16,17 @@ import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.platform.Platform;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.Process;
-import java.lang.Runtime;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.FileOutputStream;
+import js.io.IOException;
+import js.io.InputStream;
+import js.lang.Process;
+import js.lang.Runtime;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

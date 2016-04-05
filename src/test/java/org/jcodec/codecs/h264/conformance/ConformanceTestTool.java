@@ -7,21 +7,21 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
+import js.io.BufferedInputStream;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.io.InputStream;
+import js.nio.ByteBuffer;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.StringBuilder;
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.io.BufferedInputStream;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.io.InputStream;
+import js.lang.StringBuilder;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
 /**
  * A tool to test jcodec for conformance

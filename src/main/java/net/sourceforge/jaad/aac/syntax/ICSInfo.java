@@ -9,7 +9,7 @@ import net.sourceforge.jaad.aac.AACDecoderConfig;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.tools.ICPrediction;
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 
 import org.jcodec.platform.Platform;
 

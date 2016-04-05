@@ -2,10 +2,10 @@ package org.jcodec.common.tools;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import js.util.ArrayList;
+import js.util.LinkedHashMap;
+import js.util.List;
+import js.util.Map;
 
 public class ToJSONTest {
 

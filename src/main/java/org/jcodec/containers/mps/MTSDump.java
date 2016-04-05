@@ -1,5 +1,5 @@
 package org.jcodec.containers.mps;
-import static java.util.Arrays.asList;
+import static js.util.Arrays.asList;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
@@ -13,14 +13,14 @@ import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import js.io.File;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.nio.channels.ReadableByteChannel;
+import js.util.HashMap;
+import js.util.HashSet;
+import js.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -48,8 +48,8 @@ public class MTSDump extends MPSDump {
         this.tsBuf = ByteBuffer.allocate(188);
 
         this.guid = targetGuid;
-        this.buf.position(buf.limit());
-        this.tsBuf.position(tsBuf.limit());
+        this.buf.setPosition(buf.limit());
+        this.tsBuf.setPosition(tsBuf.limit());
     }
 
     public static void main2(String[] args) throws IOException {
@@ -83,7 +83,7 @@ public class MTSDump extends MPSDump {
         ByteBuffer buf = ByteBuffer.allocate(188 * 10240);
         readableFileChannel.read(buf);
         buf.flip();
-        buf.limit(buf.limit() - (buf.limit() % 188));
+        buf.setLimit(buf.limit() - (buf.limit() % 188));
         int pmtPid = -1;
         while (buf.hasRemaining()) {
             ByteBuffer tsBuf = NIOUtils.read(buf, 188);
@@ -176,7 +176,7 @@ public class MTSDump extends MPSDump {
         int remaining = dst.remaining();
 
         try {
-            dst.put(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
+            dst.putBuf(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
             while (dst.hasRemaining()) {
                 if (!buf.hasRemaining()) {
                     ByteBuffer dub = buf.duplicate();
@@ -185,7 +185,7 @@ public class MTSDump extends MPSDump {
                     if (read == -1)
                         return dst.remaining() != remaining ? remaining - dst.remaining() : -1;
                     dub.flip();
-                    dub.limit(dub.limit() - (dub.limit() % 188));
+                    dub.setLimit(dub.limit() - (dub.limit() % 188));
                     buf = dub;
                 }
 
@@ -207,7 +207,7 @@ public class MTSDump extends MPSDump {
                 payloads.add(tsBuf.remaining());
                 nums.add(tsNo - 1);
 
-                dst.put(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
+                dst.putBuf(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
             }
         } finally {
             this.prevPayloads = this.payloads;

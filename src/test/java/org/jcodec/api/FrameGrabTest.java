@@ -10,14 +10,14 @@ import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.lang.System;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import js.io.File;
+import js.io.FileNotFoundException;
+import js.io.IOException;
+import js.lang.System;
+import js.util.ArrayList;
+import js.util.Collections;
+import js.util.Comparator;
+import js.util.List;
 
 public class FrameGrabTest {
     private static final String SEQ_1_MP4 = "src/test/resources/video/seq_h264_1.mp4";

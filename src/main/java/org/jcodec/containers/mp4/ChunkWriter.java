@@ -12,7 +12,7 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import java.io.IOException;
+import js.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

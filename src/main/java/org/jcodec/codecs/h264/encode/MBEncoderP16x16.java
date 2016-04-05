@@ -15,7 +15,7 @@ import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.util.Arrays;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

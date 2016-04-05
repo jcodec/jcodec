@@ -6,8 +6,8 @@ import static org.jcodec.platform.Platform.arrayEqualsByte;
 import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.jcodec.platform.Platform;
 
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
 
 /**
@@ -39,8 +39,8 @@ public class MkvSegment extends EbmlMaster {
             System.out.println("MkvSegment.getHeader: id.length "+id.length+"  Element.getEbmlSize("+dataLen+"): "+EbmlUtil.ebmlLength(dataLen)+" size: "+dataLen);
         ByteBuffer bb = ByteBuffer.allocate((int)headerSize);
 
-        bb.put(id);
-        bb.put(ebmlEncode(getDataLen()));
+        bb.putArr(id);
+        bb.putArr(ebmlEncode(getDataLen()));
 
         if (children != null && !children.isEmpty()){
             // all non-cluster elements go to header
@@ -48,7 +48,7 @@ public class MkvSegment extends EbmlMaster {
                 if (arrayEqualsByte(CLUSTER_ID, e.type.id))
                     continue;
                 
-                bb.put(e.getData()); 
+                bb.putBuf(e.getData()); 
             }
         }
         

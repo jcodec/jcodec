@@ -8,14 +8,14 @@ import org.jcodec.containers.mps.MTSUtils;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import js.io.File;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.HashMap;
+import js.util.List;
+import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

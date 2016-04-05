@@ -11,9 +11,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.nio.ByteBuffer;
+import js.io.BufferedInputStream;
+import js.io.File;
+import js.nio.ByteBuffer;
 
 public class SPSReadTest {
 

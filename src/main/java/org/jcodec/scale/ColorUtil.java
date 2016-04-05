@@ -1,12 +1,12 @@
 package org.jcodec.scale;
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.util.HashMap;
-import java.util.Map;
+import js.util.HashMap;
+import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

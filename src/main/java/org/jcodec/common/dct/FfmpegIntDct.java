@@ -1,5 +1,5 @@
 package org.jcodec.common.dct;
-import java.nio.ShortBuffer;
+import js.nio.ShortBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

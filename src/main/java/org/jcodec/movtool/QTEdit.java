@@ -1,17 +1,17 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.movtool.Flattern.ProgressListener;
 
-import java.io.File;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import js.io.File;
+import js.nio.channels.FileChannel;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.LinkedList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

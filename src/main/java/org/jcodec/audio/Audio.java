@@ -1,8 +1,8 @@
 package org.jcodec.audio;
-import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.lang.System;
-import java.nio.FloatBuffer;
+import js.io.IOException;
+import js.lang.IllegalArgumentException;
+import js.lang.System;
+import js.nio.FloatBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

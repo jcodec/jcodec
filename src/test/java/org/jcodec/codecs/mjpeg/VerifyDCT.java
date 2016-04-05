@@ -6,7 +6,7 @@ import org.jcodec.common.dct.SlowDCT;
 import org.jcodec.common.tools.Debug;
 import org.jcodec.platform.Platform;
 
-import java.lang.System;
+import js.lang.System;
 
 public class VerifyDCT extends DCT {
 

@@ -1,5 +1,5 @@
 package org.jcodec.codecs.vp8;
-import static java.nio.ByteBuffer.wrap;
+import static js.nio.ByteBuffer.wrap;
 import static org.jcodec.codecs.vp8.BooleanArithmeticDecoder.leadingZeroCountInByte;
 
 import org.jcodec.common.ArithmeticCoderTest;
@@ -7,11 +7,11 @@ import org.jcodec.common.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
 public class BooleanCodingTest {
     
     @Test
@@ -139,8 +139,8 @@ public class BooleanCodingTest {
         bb.put((byte)255);
         BooleanArithmeticEncoder.add_one_to_output(bb);
         Assert.assertEquals(2, bb.position());
-        Assert.assertEquals((byte)0,  bb.get(bb.position()-1));
-        Assert.assertEquals((byte)25, bb.get(bb.position()-2));        
+        Assert.assertEquals((byte)0,  bb.getAt(bb.position()-1));
+        Assert.assertEquals((byte)25, bb.getAt(bb.position()-2));        
     }
     
     @Test
@@ -149,8 +149,8 @@ public class BooleanCodingTest {
         bb.put((byte)24);
         bb.put((byte)255);
         Assert.assertEquals(2, bb.position());
-        Assert.assertEquals((byte)255, bb.get(bb.position()-1));
-        Assert.assertEquals((byte)24, bb.get(bb.position()-2));        
+        Assert.assertEquals((byte)255, bb.getAt(bb.position()-1));
+        Assert.assertEquals((byte)24, bb.getAt(bb.position()-2));        
     }
     
     @Test

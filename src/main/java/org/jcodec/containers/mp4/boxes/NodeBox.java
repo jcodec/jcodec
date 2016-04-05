@@ -1,21 +1,26 @@
 package org.jcodec.containers.mp4.boxes;
 
+import static org.stjs.javascript.Global.console;
+
 import java.util.Iterator;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.IBoxFactory;
-
-import java.lang.StringBuilder;
-import java.lang.reflect.Array;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
 import org.jcodec.platform.Platform;
+import org.stjs.javascript.Global;
+import org.stjs.javascript.JSCollections;
+import org.stjs.javascript.JSObjectAdapter;
+
+import js.lang.StringBuilder;
+import js.lang.reflect.Array;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.Collection;
+import js.util.LinkedList;
+import js.util.List;
+import js.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -46,7 +51,7 @@ public class NodeBox extends Box {
         while (input.remaining() >= 8) {
             Box child = parseChildBox(input, factory);
             if (child != null)
-                boxes.add(child);
+                add(child);
         }
     }
     
@@ -88,6 +93,7 @@ public class NodeBox extends Box {
     }
     
     public void replaceBox(Box box) {
+        console.log("replaceBox", box.header.getFourcc());
         removeChildren(box.getFourcc());
         add(box);
     }

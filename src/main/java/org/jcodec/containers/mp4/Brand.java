@@ -1,7 +1,7 @@
 package org.jcodec.containers.mp4;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
 
-import java.util.Arrays;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

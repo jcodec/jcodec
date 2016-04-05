@@ -24,18 +24,18 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 
-import java.lang.InterruptedException;
-import java.lang.Runnable;
-import java.lang.Runtime;
-import java.lang.Thread;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
+import js.lang.InterruptedException;
+import js.lang.Runnable;
+import js.lang.Runtime;
+import js.lang.Thread;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
+import js.util.concurrent.ExecutionException;
+import js.util.concurrent.ExecutorService;
+import js.util.concurrent.Executors;
+import js.util.concurrent.Future;
+import js.util.concurrent.ThreadFactory;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

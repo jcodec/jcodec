@@ -1,6 +1,6 @@
 package org.jcodec.common.io;
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -36,14 +36,14 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
             return -1;
         }
         int toRead = Math.min(backing.remaining(), dst.remaining());
-        dst.put(NIOUtils.read(backing, toRead));
+        dst.putBuf(NIOUtils.read(backing, toRead));
         contentLength = Math.max(contentLength, backing.position());
         return toRead;
     }
 
     public int write(ByteBuffer src) throws IOException {
         int toWrite = Math.min(backing.remaining(), src.remaining());
-        backing.put(NIOUtils.read(src, toWrite));
+        backing.putBuf(NIOUtils.read(src, toWrite));
         contentLength = Math.max(contentLength, backing.position());
         return toWrite;
     }
@@ -53,7 +53,7 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
     }
 
     public SeekableByteChannel setPosition(long newPosition) throws IOException {
-        backing.position((int) newPosition);
+        backing.setPosition((int) newPosition);
         contentLength = Math.max(contentLength, backing.position());
         return this;
     }
@@ -69,8 +69,8 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
 
     public ByteBuffer getContents() {
         ByteBuffer contents = backing.duplicate();
-        contents.position(0);
-        contents.limit(contentLength);
+        contents.setPosition(0);
+        contents.setLimit(contentLength);
         return contents;
     }
 }

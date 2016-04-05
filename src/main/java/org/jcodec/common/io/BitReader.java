@@ -1,6 +1,6 @@
 package org.jcodec.common.io;
-import java.lang.IllegalArgumentException;
-import java.nio.ByteBuffer;
+import js.lang.IllegalArgumentException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -122,7 +122,7 @@ public class BitReader {
             deficit = 32;
             if (left > 31) {
                 int skip = Math.min(left >> 3, bb.remaining());
-                bb.position(bb.position() + skip);
+                bb.setPosition(bb.position() + skip);
                 left -= skip << 3;
             }
             curInt = readInt();
@@ -216,7 +216,7 @@ public class BitReader {
 
     public void terminate() {
         int putBack = (32 - deficit) >> 3;
-        bb.position(bb.position() - putBack);
+        bb.setPosition(bb.position() - putBack);
     }
 
     public int position() {
@@ -228,7 +228,7 @@ public class BitReader {
      * byte unread byte
      */
     public void stop() {
-        bb.position(bb.position() - ((32 - deficit) >> 3));
+        bb.setPosition(bb.position() - ((32 - deficit) >> 3));
     }
 
     public int checkAllBits() {

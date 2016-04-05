@@ -6,7 +6,7 @@
 	<name>JCodec</name>
 	<url>http://jcodec.org</url>
 	<packaging>jar</packaging>
-	<version>0.2.0</version>
+	<version>0.2.0-stjs</version>
 	<description>Pure Java implementation of video/audio codecs and formats</description>
 	<licenses>
 		<license>
@@ -28,6 +28,8 @@
 	</developers>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<stjs.version>3.3.1-SNAPSHOT</stjs.version>
+		<stjs.plugin.version>3.3.1-SNAPSHOT</stjs.plugin.version>
 	</properties>
 
 	<build>
@@ -55,10 +57,68 @@
 					<artifactId>maven-site-plugin</artifactId>
 					<version>2.0</version>
 				</plugin>
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.st-js</groupId>
+										<artifactId>
+											stjs-maven-plugin
+										</artifactId>
+										<versionRange>
+											[${stjs.plugin.version},)
+										</versionRange>
+										<goals>
+											<goal>generate</goal>
+											<goal>generate-test</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute>
+											<runOnIncremental>true</runOnIncremental>
+										</execute>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
 
 			</plugins>
 		</pluginManagement>
 		<plugins>
+			<plugin>
+				<groupId>org.st-js</groupId>
+				<artifactId>stjs-maven-plugin</artifactId>
+				<version>${stjs.plugin.version}</version>
+				<executions>
+					<execution>
+						<id>main</id>
+						<goals>
+							<goal>generate</goal>
+							<goal>generate-test</goal>
+							<goal>copy-js</goal>
+						</goals>
+						<configuration>
+							<pack>true</pack>
+							<generateSourceMap>true</generateSourceMap>
+						</configuration>
+					</execution>
+					<execution>
+						<id>test</id>
+						<goals>
+							<goal>generate-test</goal>
+						</goals>
+					</execution>
+				</executions>
+
+			</plugin>
+		
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -73,8 +133,8 @@
 				<version>3.3</version>
 				<configuration>
 					<encoding>UTF-8</encoding>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -105,6 +165,12 @@
 		</plugins>
 	</build>
 	<dependencies>
+		<dependency>
+			<groupId>com.vg</groupId>
+			<artifactId>jslang</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+	
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

@@ -4,7 +4,7 @@ import static org.jcodec.codecs.vp8.VP8EncoderTest.LinearAlgebraUtil.substractVe
 import org.jcodec.codecs.vp8.VP8EncoderTest.LinearAlgebraUtil;
 import org.junit.Test;
 
-import java.lang.System;
+import js.lang.System;
 
 public class DCTTest {
 

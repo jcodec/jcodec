@@ -2,10 +2,10 @@ package org.jcodec.containers.mxf.model;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.Platform;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.Calendar;
-import java.util.Date;
+import js.nio.ByteBuffer;
+import js.nio.charset.Charset;
+import js.util.Calendar;
+import js.util.Date;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

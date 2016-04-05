@@ -9,9 +9,9 @@ import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.File;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 public class MacroblockInterDecodingTest {
 

@@ -4,7 +4,7 @@ import static org.jcodec.codecs.vp8.VP8EncoderTest.LinearAlgebraUtil.substractSc
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.System;
+import js.lang.System;
 
 /**
  * @see http://multimedia.cx/eggs/category/vp8/

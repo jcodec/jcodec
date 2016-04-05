@@ -1,22 +1,23 @@
 package org.jcodec.codecs.h264.conformance;
 
-import org.jcodec.Utils;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.platform.Platform;
 import org.junit.Test;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import js.io.BufferedInputStream;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.io.InputStream;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
 
 import static java.lang.Integer.parseInt;
-import static java.util.Collections.singletonList;
+import static js.util.Collections.singletonList;
 import static org.jcodec.common.Assert.assertTrue;
 
 public class ConformanceTest {
@@ -26,7 +27,8 @@ public class ConformanceTest {
         String dir = "src/test/resources/video/seq_h264_4";
         String yuv = "src/test/resources/video/seq_h264_4.yuv";
 
-        String info = new String(readFile(dir + "/info.txt").array());
+        String info = Platform.stringFromBytes(readFile(dir + "/info.txt").array());
+        System.out.println("info "+info);
         int width = parseInt(info.split(" ")[0]);
         int height = parseInt(info.split(" ")[1]);
         int frameCount = parseInt(info.split(" ")[2]);
@@ -42,6 +44,7 @@ public class ConformanceTest {
 //        OutputStream out = new FileOutputStream(dir + "/yuv");
 
         for (int fn = 0; fn < frameCount; fn++) {
+            System.out.println("fn "+fn);
             ByteBuffer buf = readFile(dir + "/" + zeroPad3(fn));
             Picture8Bit pic = decoder.decodeFrame8BitFromNals(extractNALUnits(buf), picData);
 

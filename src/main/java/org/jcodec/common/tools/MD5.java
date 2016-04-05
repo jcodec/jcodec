@@ -1,8 +1,8 @@
 package org.jcodec.common.tools;
-import java.lang.StringBuilder;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import js.lang.StringBuilder;
+import js.nio.ByteBuffer;
+import js.security.MessageDigest;
+import js.security.NoSuchAlgorithmException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

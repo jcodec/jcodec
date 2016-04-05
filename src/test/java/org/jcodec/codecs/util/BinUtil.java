@@ -1,5 +1,5 @@
 package org.jcodec.codecs.util;
-import java.io.ByteArrayOutputStream;
+import js.io.ByteArrayOutputStream;
 
 public class BinUtil {
 

@@ -9,19 +9,19 @@ import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
-import java.util.List;
+import js.nio.ByteBuffer;
+import js.util.List;
 
 public class SegmentTypeBoxTest {
     @Test
     public void testParse() throws Exception {
         ByteBuffer buf = ByteBuffer.allocate(0x18 + 8);
         buf.putInt(0x18);
-        buf.put("stypmsdh".getBytes());
+        buf.putArr("stypmsdh".getBytes());
         buf.putInt(0);
-        buf.put("msdhmsix".getBytes());
+        buf.putArr("msdhmsix".getBytes());
         buf.putInt(8);
-        buf.put("free".getBytes());
+        buf.putArr("free".getBytes());
         buf.clear();
 
         SeekableByteChannel input = new ByteBufferSeekableByteChannel(buf);

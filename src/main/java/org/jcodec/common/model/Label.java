@@ -1,8 +1,8 @@
 package org.jcodec.common.model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
+import js.util.ArrayList;
+import js.util.List;
+import js.util.regex.Pattern;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

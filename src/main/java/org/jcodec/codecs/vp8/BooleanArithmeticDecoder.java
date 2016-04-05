@@ -1,5 +1,5 @@
 package org.jcodec.codecs.vp8;
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -166,7 +166,7 @@ public class BooleanArithmeticDecoder {
         }
 
         public void seek() {
-            input.position(offset);
+            input.setPosition(offset);
         }
 
         public String toString() {

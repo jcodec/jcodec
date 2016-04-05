@@ -1,5 +1,5 @@
 package net.sourceforge.jaad.aac.syntax;
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 
 import net.sourceforge.jaad.aac.AACException;
 

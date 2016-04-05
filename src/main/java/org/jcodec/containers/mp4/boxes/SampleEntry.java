@@ -1,6 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.nio.ByteBuffer;
+import static org.stjs.javascript.Global.console;
+
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -31,7 +33,7 @@ public class SampleEntry extends NodeBox {
     }
 
     protected void doWrite(ByteBuffer out) {
-        out.put(new byte[] { 0, 0, 0, 0, 0, 0 });
+        out.putArr(new byte[] { 0, 0, 0, 0, 0, 0 });
         out.putShort(drefInd); // data ref index
     }
     

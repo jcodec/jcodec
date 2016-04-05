@@ -5,10 +5,10 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
+import js.io.ByteArrayInputStream;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.channels.Channels;
 
 public class MPEGESTest {
 

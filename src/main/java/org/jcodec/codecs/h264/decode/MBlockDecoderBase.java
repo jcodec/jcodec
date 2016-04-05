@@ -13,8 +13,9 @@ import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
+import org.stjs.javascript.Global;
 
-import java.util.Arrays;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -189,7 +190,7 @@ public class MBlockDecoderBase {
 
                     int xx = ((x + blkPox) << 3) + mv[0];
                     int yy = ((y + blkPoy) << 3) + mv[1];
-
+                    
                     interpolator.getBlockChroma(ref.getPlaneData(comp), ref.getPlaneWidth(comp),
                             ref.getPlaneHeight(comp), mbb[list].getPlaneData(comp), blkPoy * mb.getPlaneWidth(comp)
                                     + blkPox, mb.getPlaneWidth(comp), xx, yy, 2, 2);

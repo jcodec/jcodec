@@ -6,24 +6,25 @@ import static org.jcodec.platform.Platform.stringFromBytes;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.platform.Platform;
+import org.stjs.javascript.Global;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.List;
+import js.io.Closeable;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.FileNotFoundException;
+import js.io.FileOutputStream;
+import js.io.IOException;
+import js.io.RandomAccessFile;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
+import js.nio.MappedByteBuffer;
+import js.nio.channels.FileChannel;
+import js.nio.channels.FileChannel.MapMode;
+import js.nio.channels.ReadableByteChannel;
+import js.nio.channels.WritableByteChannel;
+import js.nio.charset.Charset;
+import js.util.Arrays;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -43,8 +44,8 @@ public class NIOUtils {
                 ++step;
                 if (step == param.length) {
                     if (n == 0) {
-                        buffer.position(rem);
-                        result.limit(buffer.position());
+                        buffer.setPosition(rem);
+                        result.setLimit(buffer.position());
                         break;
                     }
                     n--;
@@ -54,7 +55,7 @@ public class NIOUtils {
                 if (step != 0) {
                     step = 0;
                     ++rem;
-                    buffer.position(rem);
+                    buffer.setPosition(rem);
                 } else
                     rem = buffer.position();
             }
@@ -65,8 +66,8 @@ public class NIOUtils {
     public static final ByteBuffer read(ByteBuffer buffer, int count) {
         ByteBuffer slice = buffer.duplicate();
         int limit = buffer.position() + count;
-        slice.limit(limit);
-        buffer.position(limit);
+        slice.setLimit(limit);
+        buffer.setPosition(limit);
         return slice;
     }
 
@@ -93,7 +94,7 @@ public class NIOUtils {
      */
     public static ByteBuffer fetchFrom(ByteBuffer buf, ReadableByteChannel ch, int size) throws IOException {
         ByteBuffer result = buf.duplicate();
-        result.limit(size);
+        result.setLimit(size);
         NIOUtils.readFromChannel(ch, result);
         result.flip();
         return result;
@@ -121,26 +122,26 @@ public class NIOUtils {
 
     public static byte[] toArray(ByteBuffer buffer) {
         byte[] result = new byte[buffer.remaining()];
-        buffer.duplicate().get(result);
+        buffer.duplicate().getBuf(result);
         return result;
     }
 
     public static byte[] toArrayL(ByteBuffer buffer, int count) {
         byte[] result = new byte[Math.min(buffer.remaining(), count)];
-        buffer.duplicate().get(result);
+        buffer.duplicate().getBuf(result);
         return result;
     }
 
     public static int readL(ReadableByteChannel channel, ByteBuffer buffer, int length) throws IOException {
         ByteBuffer fork = buffer.duplicate();
-        fork.limit(min(fork.position() + length, fork.limit()));
+        fork.setLimit(min(fork.position() + length, fork.limit()));
         int read;
         while ((read = channel.read(fork)) != -1 && fork.hasRemaining())
             ;
         if (read == -1)
             return -1;
 
-        buffer.position(fork.position());
+        buffer.setPosition(fork.position());
         return read;
     }
 
@@ -153,17 +154,17 @@ public class NIOUtils {
 
     public static void write(ByteBuffer to, ByteBuffer from) {
         if (from.hasArray()) {
-            to.put(from.array(), from.arrayOffset() + from.position(), Math.min(to.remaining(), from.remaining()));
+            to.put3(from.array(), from.arrayOffset() + from.position(), Math.min(to.remaining(), from.remaining()));
         } else {
-            to.put(toArrayL(from, to.remaining()));
+            to.putArr(toArrayL(from, to.remaining()));
         }
     }
 
     public static void writeL(ByteBuffer to, ByteBuffer from, int count) {
         if (from.hasArray()) {
-            to.put(from.array(), from.arrayOffset() + from.position(), Math.min(from.remaining(), count));
+            to.put3(from.array(), from.arrayOffset() + from.position(), Math.min(from.remaining(), count));
         } else {
-            to.put(toArrayL(from, count));
+            to.putArr(toArrayL(from, count));
         }
     }
 
@@ -185,13 +186,13 @@ public class NIOUtils {
 
     public static int skip(ByteBuffer buffer, int count) {
         int toSkip = Math.min(buffer.remaining(), count);
-        buffer.position(buffer.position() + toSkip);
+        buffer.setPosition(buffer.position() + toSkip);
         return toSkip;
     }
 
     public static ByteBuffer from(ByteBuffer buffer, int offset) {
         ByteBuffer dup = buffer.duplicate();
-        dup.position(dup.position() + offset);
+        dup.setPosition(dup.position() + offset);
         return dup;
     }
 
@@ -223,7 +224,7 @@ public class NIOUtils {
 
     public static void writePascalStringL(ByteBuffer buffer, String string, int maxLen) {
         buffer.put((byte) string.length());
-        buffer.put(asciiString(string));
+        buffer.putArr(asciiString(string));
         skip(buffer, maxLen - string.length());
     }
 
@@ -233,7 +234,7 @@ public class NIOUtils {
     
     public static void writePascalString(ByteBuffer buffer, String name) {
         buffer.put((byte) name.length());
-        buffer.put(asciiString(name));
+        buffer.putArr(asciiString(name));
     }
 
     public static String readPascalString(ByteBuffer buffer) {
@@ -249,13 +250,13 @@ public class NIOUtils {
         while (buffer.hasRemaining() && buffer.get() != 0)
             ;
         if (buffer.hasRemaining())
-            fork.limit(buffer.position() - 1);
+            fork.setLimit(buffer.position() - 1);
         return Platform.stringFromCharset(toArray(fork), charset);
     }
 
     public static ByteBuffer readBuf(ByteBuffer buffer) {
         ByteBuffer result = buffer.duplicate();
-        buffer.position(buffer.limit());
+        buffer.setPosition(buffer.limit());
         return result;
     }
 
@@ -263,8 +264,8 @@ public class NIOUtils {
         ByteBuffer buf = ByteBuffer.allocate(0x10000);
         int read;
         do {
-            buf.position(0);
-            buf.limit((int) Math.min(amount, buf.capacity()));
+            buf.setPosition(0);
+            buf.setLimit((int) Math.min(amount, buf.capacity()));
             read = _in.read(buf);
             if (read != -1) {
                 buf.flip();
@@ -363,7 +364,7 @@ public class NIOUtils {
 
     public static ByteBuffer duplicate(ByteBuffer bb) {
         ByteBuffer out = ByteBuffer.allocate(bb.remaining());
-        out.put(bb.duplicate());
+        out.putBuf(bb.duplicate());
         out.flip();
         return out;
     }
@@ -417,19 +418,19 @@ public class NIOUtils {
     }
 
     public static byte getRel(ByteBuffer bb, int rel) {
-        return bb.get(bb.position() + rel);
+        return bb.getAt(bb.position() + rel);
     }
 
     public static ByteBuffer cloneBuffer(ByteBuffer pesBuffer) {
         ByteBuffer res = ByteBuffer.allocate(pesBuffer.remaining());
-        res.put(pesBuffer.duplicate());
+        res.putBuf(pesBuffer.duplicate());
         res.clear();
         return res;
     }
 
     public static ByteBuffer clone(ByteBuffer byteBuffer) {
         ByteBuffer result = ByteBuffer.allocate(byteBuffer.remaining());
-        result.put(byteBuffer.duplicate());
+        result.putBuf(byteBuffer.duplicate());
         result.flip();
         return result;
     }

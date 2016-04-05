@@ -17,11 +17,11 @@ import org.jcodec.common.Assert;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -38,7 +38,7 @@ public class VP8Decoder {
 
     public void decode(ByteBuffer frame) throws IOException {
         byte[] firstThree = new byte[3];
-        frame.get(firstThree);
+        frame.getBuf(firstThree);
 
         boolean keyFrame = getBitInBytes(firstThree, 0) == 0;
         int version = getBitsInBytes(firstThree, 1, 3);
@@ -102,7 +102,7 @@ public class VP8Decoder {
         long runningSize = 0;
         long zSize = frame.limit() - (partitionSize + headerOffset);
         ByteBuffer tokenBuffer = frame.duplicate();
-        tokenBuffer.position(partitionSize + headerOffset);
+        tokenBuffer.setPosition(partitionSize + headerOffset);
         BooleanArithmeticDecoder decoder = new BooleanArithmeticDecoder(tokenBuffer, 0);
 
         int yacIndex = headerDecoder.decodeInt(7);

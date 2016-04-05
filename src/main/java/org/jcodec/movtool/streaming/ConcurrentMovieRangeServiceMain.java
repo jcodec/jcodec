@@ -1,6 +1,6 @@
 package org.jcodec.movtool.streaming;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import org.jcodec.common.io.IOUtils;
@@ -9,21 +9,21 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.movtool.streaming.tracks.FilePool;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.InterruptedException;
-import java.lang.Runnable;
-import java.lang.Thread;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.FileOutputStream;
+import js.io.IOException;
+import js.io.InputStream;
+import js.lang.InterruptedException;
+import js.lang.Runnable;
+import js.lang.Thread;
+import js.nio.channels.Channels;
+import js.nio.channels.FileChannel;
+import js.util.concurrent.ExecutionException;
+import js.util.concurrent.ExecutorService;
+import js.util.concurrent.Executors;
+import js.util.concurrent.Future;
+import js.util.concurrent.ThreadFactory;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

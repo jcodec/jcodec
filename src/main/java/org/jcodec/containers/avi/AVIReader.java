@@ -1,20 +1,20 @@
 package org.jcodec.containers.avi;
-import static java.lang.System.currentTimeMillis;
+import static js.lang.System.currentTimeMillis;
 
 import org.jcodec.api.FormatException;
 import org.jcodec.common.io.DataReader;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.lang.IllegalArgumentException;
-import java.lang.IllegalStateException;
-import java.lang.StringBuilder;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.List;
+import js.io.IOException;
+import js.io.PrintStream;
+import js.lang.IllegalArgumentException;
+import js.lang.IllegalStateException;
+import js.lang.StringBuilder;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

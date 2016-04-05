@@ -1,11 +1,11 @@
 package org.jcodec.codecs.raw;
-import static java.nio.ByteOrder.LITTLE_ENDIAN;
+import static js.nio.ByteOrder.LITTLE_ENDIAN;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 
 import org.jcodec.common.model.Picture8Bit;
 
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import js.nio.ByteBuffer;
+import js.nio.IntBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

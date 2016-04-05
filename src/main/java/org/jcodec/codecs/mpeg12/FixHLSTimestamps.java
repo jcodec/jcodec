@@ -1,8 +1,8 @@
 package org.jcodec.codecs.mpeg12;
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
-import java.util.Arrays;
+import js.io.File;
+import js.io.IOException;
+import js.lang.System;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

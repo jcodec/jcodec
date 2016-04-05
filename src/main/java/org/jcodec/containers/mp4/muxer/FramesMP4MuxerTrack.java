@@ -31,12 +31,12 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import java.io.IOException;
-import java.lang.IllegalStateException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import js.io.IOException;
+import js.lang.IllegalStateException;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.Date;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

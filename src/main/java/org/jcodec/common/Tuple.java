@@ -1,11 +1,11 @@
 package org.jcodec.common;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import js.util.HashMap;
+import js.util.LinkedList;
+import js.util.List;
+import js.util.Map;
+import js.util.Map.Entry;
+import js.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

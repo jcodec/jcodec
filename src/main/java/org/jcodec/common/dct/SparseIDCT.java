@@ -1,5 +1,5 @@
 package org.jcodec.common.dct;
-import java.util.Arrays;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

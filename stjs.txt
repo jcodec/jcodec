@@ -1,0 +1,81 @@
+import static java.lang.System
+import static js.lang.System
+
+import static java.util.
+import static js.util.
+
+import static java.nio.
+import static js.nio.
+
+import java.
+import js.
+
+import javax.
+import jsx.
+
+import js.util.Iterator;
+import java.util.Iterator;
+
+synchronized \(\S*\)
+EMPTY_STRING
+
+synchronized
+EMPTY_STRING
+
+# change jcodec.Assert
+# change Platform
+# change BaseInputStream
+# change BaseOutputStream
+
+
+# ToJSON
+# stjs bug:  /*} else if (obj instanceof Object[]) {
+# stjs bug:  /*} else if (obj instanceof long[]) {
+
+
+Generate main JS
+
+# mvn clean process-classes
+
+produces: target/classes/jcodec.js
+
+Generate TestCase JS
+
+# mvn process-test-classes
+
+produces: target/generated-test-js/jcodec.js
+
+
+Run in nodejs
+
+# sh mktest.sh >nodetest.js
+# node nodetest.js
+
+Profile in nodejs
+
+# node --prof nodetest.js
+
+# npm install -g tick
+# node-tick-processor *v8.log
+
+
+
+Dependencies
+
+STJS
+Dropbox/m2 .... stjs
+
+<dependency>
+        <groupId>org.st-js</groupId>
+        <artifactId>shared</artifactId>
+        <version>3.3.1-SNAPSHOT</version>
+</dependency>
+
+https://github.com/zhuker/st-js/tree/typed-arrays
+
+JSLang 
+
+https://github.com/zhuker/jslang
+
+node-jslang branch
+

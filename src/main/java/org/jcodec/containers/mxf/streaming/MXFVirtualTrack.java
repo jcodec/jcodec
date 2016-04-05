@@ -1,6 +1,6 @@
 package org.jcodec.containers.mxf.streaming;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import org.jcodec.common.io.NIOUtils;
@@ -26,10 +26,10 @@ import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.movtool.streaming.tracks.ByteChannelPool;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Arrays;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

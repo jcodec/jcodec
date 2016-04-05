@@ -1,5 +1,5 @@
 package org.jcodec.codecs.vp8;
-import java.io.IOException;
+import js.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

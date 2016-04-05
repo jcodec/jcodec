@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg4.es;
-import java.util.HashMap;
-import java.util.Map;
+import js.util.HashMap;
+import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

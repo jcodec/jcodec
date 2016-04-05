@@ -18,9 +18,9 @@ import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

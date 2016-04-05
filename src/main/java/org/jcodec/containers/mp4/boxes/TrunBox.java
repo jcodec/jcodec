@@ -1,8 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
-import java.lang.IllegalArgumentException;
-import java.lang.IllegalStateException;
-import java.nio.ByteBuffer;
-import java.util.List;
+import js.lang.IllegalArgumentException;
+import js.lang.IllegalStateException;
+import js.nio.ByteBuffer;
+import js.util.List;
 
 //@formatter:off
 /**

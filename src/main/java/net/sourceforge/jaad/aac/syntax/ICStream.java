@@ -1,6 +1,6 @@
 package net.sourceforge.jaad.aac.syntax;
-import java.util.Arrays;
-import java.util.logging.Level;
+import js.util.Arrays;
+import js.util.logging.Level;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.ChannelConfiguration;
 import net.sourceforge.jaad.aac.AACDecoderConfig;

@@ -17,18 +17,18 @@ import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.boxes.MkvSegment;
 import org.jcodec.platform.Platform;
 
-import java.lang.System;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import js.lang.System;
+import js.lang.reflect.Array;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.Collection;
+import js.util.HashMap;
+import js.util.HashSet;
+import js.util.LinkedList;
+import js.util.List;
+import js.util.Map;
+import js.util.Map.Entry;
+import js.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License

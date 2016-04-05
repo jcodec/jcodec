@@ -5,10 +5,10 @@ import static org.jcodec.common.tools.MainUtils.colorString;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.ANSIColor;
 
-import java.io.PrintStream;
-import java.lang.System;
-import java.util.HashMap;
-import java.util.Map;
+import js.io.PrintStream;
+import js.lang.System;
+import js.util.HashMap;
+import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

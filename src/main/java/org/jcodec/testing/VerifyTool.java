@@ -12,11 +12,11 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.platform.Platform;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.io.File;
+import js.io.FilenameFilter;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

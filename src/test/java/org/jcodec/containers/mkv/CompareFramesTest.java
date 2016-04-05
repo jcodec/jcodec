@@ -11,12 +11,12 @@ import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.List;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.channels.FileChannel;
+import js.util.List;
 
 public class CompareFramesTest {
 

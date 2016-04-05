@@ -1,5 +1,5 @@
 package org.jcodec.containers.mkv.boxes;
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.convertToBytes;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.signedComplement;
 
@@ -8,13 +8,13 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.jcodec.platform.Platform;
 
-import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.lang.StringBuilder;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.Arrays;
+import js.io.IOException;
+import js.lang.IllegalArgumentException;
+import js.lang.StringBuilder;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.nio.channels.FileChannel;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -218,9 +218,9 @@ public class MkvBlock extends EbmlBin {
         for (int i = 0; i < frameSizes.length; i++) {
             if (frameOffsets[i] > source.limit())
                 System.err.println("frame offset: " + frameOffsets[i] + " limit: " + source.limit());
-            source.position(frameOffsets[i]);
+            source.setPosition(frameOffsets[i]);
             ByteBuffer bb = source.slice();
-            bb.limit(frameSizes[i]);
+            bb.setLimit(frameSizes[i]);
             frames[i] = bb;
         }
         return frames;
@@ -234,10 +234,10 @@ public class MkvBlock extends EbmlBin {
     public ByteBuffer getData() {
         int dataSize = (int) getDataSize();
         ByteBuffer bb = ByteBuffer.allocate(dataSize + EbmlUtil.ebmlLength(dataSize) + id.length);
-        bb.put(id);
-        bb.put(EbmlUtil.ebmlEncode(dataSize));
+        bb.putArr(id);
+        bb.putArr(EbmlUtil.ebmlEncode(dataSize));
 
-        bb.put(EbmlUtil.ebmlEncode(trackNumber));
+        bb.putArr(EbmlUtil.ebmlEncode(trackNumber));
         bb.put((byte) ((timecode >>> 8) & 0xFF));
         bb.put((byte) (timecode & 0xFF));
 
@@ -259,12 +259,12 @@ public class MkvBlock extends EbmlBin {
 
         if ((flags & 0x06) != 0) {
             bb.put((byte) ((frames.length - 1) & 0xFF));
-            bb.put(muxLacingInfo());
+            bb.putArr(muxLacingInfo());
         }
 
         for (int i = 0; i < frames.length; i++) {
             ByteBuffer frame = frames[i];
-            bb.put(frame);
+            bb.putBuf(frame);
         }
 
         bb.flip();

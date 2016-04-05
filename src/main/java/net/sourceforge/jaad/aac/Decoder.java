@@ -1,8 +1,8 @@
 package net.sourceforge.jaad.aac;
-import java.lang.IllegalArgumentException;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
+import js.lang.IllegalArgumentException;
+import js.util.logging.ConsoleHandler;
+import js.util.logging.Handler;
+import js.util.logging.Level;
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
 import net.sourceforge.jaad.aac.syntax.BitStream;
 import net.sourceforge.jaad.aac.syntax.IBitStream;

@@ -12,9 +12,9 @@ import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.util.Arrays;
 
 public class TestProresEncoder {
 

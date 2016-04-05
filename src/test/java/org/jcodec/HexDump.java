@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 package org.jcodec;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.ArrayIndexOutOfBoundsException;
-import java.lang.IllegalArgumentException;
-import java.lang.StringBuilder;
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.io.OutputStream;
+import js.lang.ArrayIndexOutOfBoundsException;
+import js.lang.IllegalArgumentException;
+import js.lang.StringBuilder;
+import js.lang.System;
+import js.nio.ByteBuffer;
 /**
  * Dumps data in hexadecimal format.
  * <p>
@@ -141,14 +141,14 @@ public class HexDump {
             dumpLong(buffer, display_offset).append(' ');
             for (int k = 0; k < 16; k++) {
                 if (k < chars_read) {
-                    dumpByte(buffer, data.get(k + j));
+                    dumpByte(buffer, data.getAt(k + j));
                 } else {
                     buffer.append("  ");
                 }
                 buffer.append(' ');
             }
             for (int k = 0; k < chars_read; k++) {
-                byte b = data.get(k + j);
+                byte b = data.getAt(k + j);
                 if (b >= ' ' && b < 127) {
                     buffer.append((char) b);
                 } else {

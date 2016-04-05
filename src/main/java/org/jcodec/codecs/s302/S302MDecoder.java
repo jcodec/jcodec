@@ -4,9 +4,9 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.tools.MathUtil;
 
-import java.lang.IllegalArgumentException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import js.lang.IllegalArgumentException;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

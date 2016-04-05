@@ -8,12 +8,13 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.IBoxFactory;
 import org.jcodec.platform.Platform;
+import org.stjs.javascript.Global;
 
-import java.lang.StringBuilder;
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
+import js.lang.StringBuilder;
+import js.lang.reflect.Method;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -119,6 +120,7 @@ public abstract class Box {
     }
 
     public static <T extends Box> T asBox(Class<T> class1, Box box) {
+        Global.console.log("asBox",box.header);
         try {
             T res = Platform.newInstance(class1, new Object[]{box.getHeader()});
             ByteBuffer buffer = ByteBuffer.allocate((int)box.getHeader().getBodySize());

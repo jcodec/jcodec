@@ -1,5 +1,5 @@
 package org.jcodec.codecs.mjpeg;
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

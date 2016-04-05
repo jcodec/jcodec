@@ -21,13 +21,13 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import js.io.IOException;
+import js.nio.ByteBuffer;
+import js.nio.channels.ReadableByteChannel;
+import js.util.ArrayList;
+import js.util.HashMap;
+import js.util.List;
+import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -64,7 +64,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     }
 
     public ByteBuffer getBuffer() {
-        synchronized (bufPool) {
+         {
             if (bufPool.size() > 0) {
                 return bufPool.remove(0);
             }
@@ -74,7 +74,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
     public void putBack(ByteBuffer buffer) {
         buffer.clear();
-        synchronized (bufPool) {
+         {
             bufPool.add(buffer);
         }
     }
@@ -142,7 +142,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             if (pes == null || !pes.data.hasRemaining())
                 return -1;
             int toRead = Math.min(arg0.remaining(), pes.data.remaining());
-            arg0.put(NIOUtils.read(pes.data, toRead));
+            arg0.putBuf(NIOUtils.read(pes.data, toRead));
 
             if (pes.data.hasRemaining())
                 _pending.add(0, pes);
@@ -253,7 +253,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         } else {
             read(dup, pkt.length - dup.position() + 6);
         }
-        fork.limit(dup.position());
+        fork.setLimit(dup.position());
         pkt.data = fork;
         return pkt;
     }

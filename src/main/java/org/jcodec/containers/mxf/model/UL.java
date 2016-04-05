@@ -1,6 +1,8 @@
 package org.jcodec.containers.mxf.model;
-import java.lang.StringBuilder;
-import java.nio.ByteBuffer;
+import org.stjs.javascript.Global;
+
+import js.lang.StringBuilder;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -81,7 +83,7 @@ public class UL {
 
     public static UL read(ByteBuffer _bb) {
         byte[] umid = new byte[16];
-        _bb.get(umid);
+        _bb.getBuf(umid);
         return new UL(umid);
     }
 }

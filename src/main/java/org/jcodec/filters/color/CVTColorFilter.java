@@ -1,7 +1,7 @@
 package org.jcodec.filters.color;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

@@ -1,13 +1,13 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 
-import java.io.File;
-import java.io.IOException;
+import js.io.File;
+import js.io.IOException;
 
 /**
  * A full fledged MP4 editor.

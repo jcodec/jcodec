@@ -12,10 +12,10 @@ import org.jcodec.containers.mps.MTSUtils;
 import org.jcodec.containers.mps.PESPacket;
 import org.jcodec.containers.mps.index.MTSIndex.MTSProgram;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.io.File;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

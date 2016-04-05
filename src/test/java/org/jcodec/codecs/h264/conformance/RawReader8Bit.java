@@ -2,11 +2,11 @@ package org.jcodec.codecs.h264.conformance;
 
 import org.jcodec.common.model.Picture8Bit;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import js.io.BufferedInputStream;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.IOException;
+import js.io.InputStream;
 
 import static org.jcodec.common.model.ColorSpace.YUV420;
 

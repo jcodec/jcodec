@@ -10,15 +10,15 @@ import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.boxes.ChannelBox.ChannelDescription;
 import org.jcodec.containers.mp4.boxes.channel.ChannelLayout;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
+import js.util.ArrayList;
+import js.util.Arrays;
+import js.util.HashMap;
+import js.util.HashSet;
+import js.util.List;
+import js.util.Map;
+import js.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

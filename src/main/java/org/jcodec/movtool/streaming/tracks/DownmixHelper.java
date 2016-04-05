@@ -1,7 +1,7 @@
 package org.jcodec.movtool.streaming.tracks;
-import java.lang.IllegalStateException;
-import java.lang.System;
-import java.lang.ThreadLocal;
+import js.lang.IllegalStateException;
+import js.lang.System;
+import js.lang.ThreadLocal;
 
 
 import static org.jcodec.common.model.Label.Center;
@@ -27,10 +27,10 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Label;
 import org.jcodec.movtool.streaming.AudioCodecMeta;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.List;
+import js.nio.ByteBuffer;
+import js.nio.ByteOrder;
+import js.util.ArrayList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -101,7 +101,7 @@ public class DownmixHelper {
         out.order(ByteOrder.LITTLE_ENDIAN);
         
         if (matrix.length == 0) {
-            out.limit(nSamples << 2);
+            out.setLimit(nSamples << 2);
             return;
         }
 

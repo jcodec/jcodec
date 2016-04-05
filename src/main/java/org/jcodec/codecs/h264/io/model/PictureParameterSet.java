@@ -16,8 +16,8 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.platform.Platform;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import js.nio.ByteBuffer;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

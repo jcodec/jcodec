@@ -23,10 +23,10 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import java.lang.IllegalArgumentException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
+import js.lang.IllegalArgumentException;
+import js.util.ArrayList;
+import js.util.List;
+import js.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -165,7 +165,7 @@ public class Util {
         for (Edit edit : src.getEdits()) {
             edit.shift(dest.getMediaDuration());
         }
-        dest.getEdits().addAll(ind, src.getEdits());
+        dest.getEdits().addAllAt(ind, src.getEdits());
         dest.setEdits(dest.getEdits());
     }
 

@@ -1,25 +1,25 @@
 package org.jcodec.movtool.streaming;
-import java.lang.IllegalStateException;
-import java.lang.System;
-import java.lang.IllegalArgumentException;
+import js.lang.IllegalStateException;
+import js.lang.System;
+import js.lang.IllegalArgumentException;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.BaseInputStream;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.InterruptedException;
-import java.lang.Runnable;
-import java.lang.Thread;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
+import js.io.IOException;
+import js.io.InputStream;
+import js.lang.InterruptedException;
+import js.lang.Runnable;
+import js.lang.Thread;
+import js.nio.ByteBuffer;
+import js.util.ArrayList;
+import js.util.List;
+import js.util.concurrent.Callable;
+import js.util.concurrent.ExecutionException;
+import js.util.concurrent.ExecutorService;
+import js.util.concurrent.Executors;
+import js.util.concurrent.Future;
+import js.util.concurrent.ThreadFactory;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -109,7 +109,7 @@ public class ConcurrentMovieRangeService {
                 ByteBuffer segmentData = segmentData();
                 int toRead = Math.min(segmentData.remaining(), len);
 
-                segmentData.get(b, from, toRead);
+                segmentData.getBuf3(b, from, toRead);
                 totalRead += toRead;
                 len -= toRead;
                 from += toRead;

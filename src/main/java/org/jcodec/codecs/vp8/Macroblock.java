@@ -7,8 +7,8 @@ import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
 
-import java.lang.System;
-import java.util.Arrays;
+import js.lang.System;
+import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -1,6 +1,6 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import js.lang.IllegalStateException;
+import js.lang.System;
 
 
 import org.jcodec.common.Assert;
@@ -17,13 +17,13 @@ import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import js.io.File;
+import js.io.IOException;
+import js.nio.BufferOverflowException;
+import js.nio.ByteBuffer;
+import js.util.LinkedList;
+import js.util.List;
+import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -206,7 +206,7 @@ public class InplaceMP4Editor {
                 if (buffer.remaining() < 8)
                     return false;
                 buffer.putInt(buffer.remaining());
-                buffer.put(new byte[] { 'f', 'r', 'e', 'e' });
+                buffer.putArr(new byte[] { 'f', 'r', 'e', 'e' });
             }
             buffer.flip();
             return true;

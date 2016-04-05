@@ -9,9 +9,9 @@ import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mps.index.MPSRandomAccessDemuxer.Stream;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
+import js.io.File;
+import js.io.IOException;
+import js.lang.System;
 
 public class MTSRandomAccessDemuxerMain {
 

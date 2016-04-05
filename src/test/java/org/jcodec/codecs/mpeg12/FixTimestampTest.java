@@ -2,11 +2,11 @@ package org.jcodec.codecs.mpeg12;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.channels.FileChannel;
+import js.io.File;
+import js.io.FileInputStream;
+import js.io.FileOutputStream;
+import js.io.IOException;
+import js.nio.channels.FileChannel;
 
 public class FixTimestampTest {
 

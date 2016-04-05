@@ -13,8 +13,8 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 public class ResidualBlockTest {
 

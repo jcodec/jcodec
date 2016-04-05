@@ -2,8 +2,8 @@ package org.jcodec.containers.mp4;
 
 import org.jcodec.containers.mp4.boxes.Box;
 
-import java.util.HashMap;
-import java.util.Map;
+import js.util.HashMap;
+import js.util.Map;
 
 public abstract class Boxes {
     protected final Map<String, Class<? extends Box>> mappings;

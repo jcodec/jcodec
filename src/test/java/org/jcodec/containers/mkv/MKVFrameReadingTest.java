@@ -21,12 +21,12 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.lang.System;
-import java.nio.ByteBuffer;
+import js.awt.image.BufferedImage;
+import js.io.File;
+import js.lang.System;
+import js.nio.ByteBuffer;
 
-import javax.imageio.ImageIO;
+import jsx.imageio.ImageIO;
 
 public class MKVFrameReadingTest {
 

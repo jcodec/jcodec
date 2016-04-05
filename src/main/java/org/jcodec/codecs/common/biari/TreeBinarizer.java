@@ -1,5 +1,5 @@
 package org.jcodec.codecs.common.biari;
-import java.io.IOException;
+import js.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

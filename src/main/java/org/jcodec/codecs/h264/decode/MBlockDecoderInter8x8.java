@@ -27,7 +27,7 @@ import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.util.Arrays;
+import js.util.Arrays;
 
 /**
  * A decoder for Inter 16x16, 16x8 and 8x16 macroblocks

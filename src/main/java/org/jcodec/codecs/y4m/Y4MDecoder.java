@@ -10,8 +10,8 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.platform.Platform;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import js.io.IOException;
+import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -97,7 +97,7 @@ public class Y4MDecoder {
         while (y4m.hasRemaining() && y4m.get() != '\n')
             ;
         if (y4m.hasRemaining())
-            duplicate.limit(y4m.position() - 1);
+            duplicate.setLimit(y4m.position() - 1);
         return stringFromBytes(NIOUtils.toArray(duplicate));
     }
 

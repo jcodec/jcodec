@@ -1,5 +1,5 @@
 package net.sourceforge.jaad.aac.syntax;
-import java.util.logging.Logger;
+import js.util.logging.Logger;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

@@ -5,7 +5,7 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 
-import java.nio.ByteBuffer;
+import js.nio.ByteBuffer;
 
 /**
  * 

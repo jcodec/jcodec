@@ -1,5 +1,5 @@
 package org.jcodec.containers.mkv;
-import static java.lang.System.arraycopy;
+import static js.lang.System.arraycopy;
 import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVMuxerTest.bufferToArray;
@@ -22,12 +22,12 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.util.List;
+import js.io.FileInputStream;
+import js.io.FileNotFoundException;
+import js.io.IOException;
+import js.lang.System;
+import js.nio.ByteBuffer;
+import js.util.List;
 
 public class AudioTrackTest {
 

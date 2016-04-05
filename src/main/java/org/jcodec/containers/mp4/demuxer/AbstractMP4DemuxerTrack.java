@@ -20,13 +20,14 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
+import org.stjs.javascript.Global;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
-import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.nio.ByteBuffer;
-import java.util.List;
+import js.io.IOException;
+import js.lang.IllegalArgumentException;
+import js.nio.ByteBuffer;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -124,7 +125,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return pts >= 0 && pts < duration;
     }
 
-    public synchronized boolean seekPts(long pts) {
+    public  boolean seekPts(long pts) {
         if (pts < 0)
             throw new IllegalArgumentException("Seeking to negative pts");
         if (pts >= duration)
@@ -168,7 +169,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         }
     }
     
-    public synchronized boolean gotoFrame(long frameNo) {
+    public  boolean gotoFrame(long frameNo) {
         if (frameNo < 0)
             throw new IllegalArgumentException("negative frame number");
         if (frameNo >= getFrameCount())
@@ -221,7 +222,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     protected ByteBuffer readPacketData(SeekableByteChannel input, ByteBuffer buffer, long offset, int size)
             throws IOException {
         ByteBuffer result = buffer.duplicate();
-        synchronized (input) {
+         {
             input.setPosition(offset);
             NIOUtils.readL(input, result, size);
         }
