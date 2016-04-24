@@ -45,7 +45,8 @@ public class Rational {
 
     public static Rational parse(String string) {
         String[] split = splitS(string, ":");
-        return new Rational(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+        return split.length > 1 ? Rational.R(Integer.parseInt(split[0]), Integer.parseInt(split[1])) : Rational.R(
+                Integer.parseInt(string), 1);
     }
 
     @Override

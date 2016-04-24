@@ -2,6 +2,7 @@ package org.jcodec.codecs.mpeg4.es;
 import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 
 /**
@@ -33,12 +34,10 @@ public abstract class Descriptor {
 
     protected abstract void doWrite(ByteBuffer out);
 
-    protected abstract void parse(ByteBuffer input);
-
     int getTag() {
         return _tag;
     }
-
+    
     public static Descriptor read(ByteBuffer input, IDescriptorFactory factory) {
         if(input.remaining() < 2)
             return null;
@@ -48,12 +47,12 @@ public abstract class Descriptor {
         Class<? extends Descriptor> cls = factory.byTag(tag);
         Descriptor descriptor;
         try {
-            descriptor = cls.getConstructor(Integer.TYPE, Integer.TYPE).newInstance(tag, (int) size);
+            Method method = cls.getDeclaredMethod("parse", ByteBuffer.class, IDescriptorFactory.class);
+            descriptor = (Descriptor)method.invoke(null, NIOUtils.read(input, size), factory);
             descriptor.setFactory(factory);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        descriptor.parse(NIOUtils.read(input, size));
         return descriptor;
     }
 

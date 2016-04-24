@@ -21,11 +21,11 @@ import java.nio.ByteBuffer;
  */
 public class AACUtils {
 
-    public static class AudioInfo {
+    public static class AACMetadata {
         private AudioFormat format;
         private ChannelLabel[] labels;
 
-        public AudioInfo(AudioFormat format, ChannelLabel[] labels) {
+        public AACMetadata(AudioFormat format, ChannelLabel[] labels) {
             this.format = format;
             this.labels = labels;
         }
@@ -60,7 +60,7 @@ public class AACUtils {
                     ChannelLabel.SIDE_RIGHT, ChannelLabel.REAR_LEFT, ChannelLabel.REAR_RIGHT, ChannelLabel.LFE } //
     };
 
-    public static AudioInfo parseAudioInfo(ByteBuffer privData) {
+    public static AACMetadata parseAudioInfo(ByteBuffer privData) {
         BitReader reader = BitReader.createBitReader(privData);
 
         int objectType = getObjectType(reader);
@@ -72,12 +72,20 @@ public class AACUtils {
             return null;
 
         ChannelLabel[] channels = AAC_DEFAULT_CONFIGS[channelConfig];
-        return new AudioInfo(new AudioFormat(sampleRate, 16, channels.length, true, false), channels);
+        return new AACMetadata(new AudioFormat(sampleRate, 16, channels.length, true, false), channels);
     }
 
-    public static AudioInfo getChannels(SampleEntry mp4a) {
+    public static AACMetadata getMetadata(SampleEntry mp4a) {
         if (!"mp4a".equals(mp4a.getFourcc()))
             throw new IllegalArgumentException("Not mp4a sample entry");
+        ByteBuffer b = getCodecPrivate(mp4a);
+        if (b == null)
+            return null;
+
+        return parseAudioInfo(b);
+    }
+
+    public static ByteBuffer getCodecPrivate(SampleEntry mp4a) {
         LeafBox b = NodeBox.findFirst(mp4a, LeafBox.class, "esds");
         if (b == null) {
             b = NodeBox.findFirstPath(mp4a, LeafBox.class, new String[] { null, "esds" });
@@ -86,6 +94,6 @@ public class AACUtils {
             return null;
         EsdsBox esds = EsdsBox.newEsdsBox();
         esds.parse(b.getData());
-        return parseAudioInfo(esds.getStreamInfo());
+        return esds.getStreamInfo();
     }
 }

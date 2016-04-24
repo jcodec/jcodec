@@ -20,6 +20,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
@@ -80,8 +81,8 @@ public class MovStitch2 {
             outTrack.addFrame(MP4Packet.createMP4PacketWithData(packet, frm));
         }
 
-        AvcCBox first = Box.findFirst(vt1.getSampleEntries()[0], AvcCBox.class, AvcCBox.fourcc());
-        AvcCBox second = Box.findFirst(vt2.getSampleEntries()[0], AvcCBox.class, AvcCBox.fourcc());
+        AvcCBox first = NodeBox.findFirst(vt1.getSampleEntries()[0], AvcCBox.class, AvcCBox.fourcc());
+        AvcCBox second = NodeBox.findFirst(vt2.getSampleEntries()[0], AvcCBox.class, AvcCBox.fourcc());
         first.getSpsList().addAll(second.getSpsList());
         first.getPpsList().addAll(second.getPpsList());
 

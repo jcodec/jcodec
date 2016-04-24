@@ -92,7 +92,7 @@ public class CPE extends Element implements SyntaxConstants {
 
     public static MSMask msMaskFromInt(int i) throws AACException {
         MSMask[] values = MSMask.values();
-        if (values.length >= i) {
+        if (i >= values.length) {
             throw new AACException("unknown MS mask type");
         }
         return values[i];

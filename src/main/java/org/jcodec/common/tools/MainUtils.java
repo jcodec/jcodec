@@ -245,6 +245,10 @@ public class MainUtils {
     public static void printHelpVarArgs(Map<String, String> flags, String [] arguments) {
         printHelpOut(System.out, "", flags, Arrays.asList(arguments));
     }
+    
+    public static void printHelpArgs(Map<String, String> flags, String [] arguments) {
+        printHelpOut(System.out, "", flags, Arrays.asList(arguments));
+    }
     public static void printHelp(Map<String, String> flags, List<String> params) {
         printHelpOut(System.out, "", flags, params);
     }

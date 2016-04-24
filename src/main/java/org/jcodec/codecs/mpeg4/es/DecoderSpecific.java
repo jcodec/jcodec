@@ -31,8 +31,8 @@ public class DecoderSpecific extends Descriptor {
         return data;
     }
 
-    @Override
-    protected void parse(ByteBuffer input) {
-        data = NIOUtils.readBuf(input);
+    protected static DecoderSpecific parse(ByteBuffer input, IDescriptorFactory factory) {
+        ByteBuffer data = NIOUtils.readBuf(input);
+        return new DecoderSpecific(data);
     }
 }

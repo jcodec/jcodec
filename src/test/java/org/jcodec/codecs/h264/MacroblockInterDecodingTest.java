@@ -3,6 +3,8 @@ import org.jcodec.common.JCodecUtil2;
 
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
 import static org.jcodec.common.JCodecUtil2.getAsIntArray;
+import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
@@ -29,15 +31,15 @@ public class MacroblockInterDecodingTest {
 
         ByteBuffer yuv = NIOUtils.fetchFromFile(new File("src/test/resources/h264/cabac/p_1/seq_dec.yuv"));
 
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[0].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[0].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[0].getPlaneData(2));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[1].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[1].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[1].getPlaneData(2));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[2].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[2].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[2].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[0].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[0].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[0].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[1].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[1].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[1].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[2].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[2].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[2].getPlaneData(2));
     }
 
     @Test
@@ -54,15 +56,15 @@ public class MacroblockInterDecodingTest {
 
         ByteBuffer yuv = NIOUtils.fetchFromFile(new File("src/test/resources/h264/cabac/p_2/seq_dec.yuv"));
 
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[0].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[0].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[0].getPlaneData(2));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[1].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[1].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[1].getPlaneData(2));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[2].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[2].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[2].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[0].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[0].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[0].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[1].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[1].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[1].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[2].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[2].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[2].getPlaneData(2));
     }
 
     @Test
@@ -78,15 +80,15 @@ public class MacroblockInterDecodingTest {
                         Picture8Bit.create(32, 32, ColorSpace.YUV420).getData()) };
 
         ByteBuffer yuv = NIOUtils.fetchFromFile(new File("src/test/resources/h264/cavlc/p_1/seq_dec.yuv"));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[0].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[0].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[0].getPlaneData(2));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[1].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[1].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[1].getPlaneData(2));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[2].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[2].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[2].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[0].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[0].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[0].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[1].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[1].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[1].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[2].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[2].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[2].getPlaneData(2));
     }
 
     @Test
@@ -102,14 +104,14 @@ public class MacroblockInterDecodingTest {
                         Picture8Bit.create(32, 32, ColorSpace.YUV420).getData()) };
 
         ByteBuffer yuv = NIOUtils.fetchFromFile(new File("src/test/resources/h264/cavlc/p_2/seq_dec.yuv"));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[0].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[0].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[0].getPlaneData(2));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[1].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[1].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[1].getPlaneData(2));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 1024)), out[2].getPlaneData(0));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[2].getPlaneData(1));
-        Assert.assertArrayEquals(toByteArrayShifted(getAsIntArray(yuv, 256)), out[2].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[0].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[0].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[0].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[1].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[1].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[1].getPlaneData(2));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)), out[2].getPlaneData(0));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[2].getPlaneData(1));
+        Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)), out[2].getPlaneData(2));
     }
 }

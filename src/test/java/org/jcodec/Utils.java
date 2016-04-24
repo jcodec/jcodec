@@ -24,7 +24,6 @@ import java.lang.System;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
-
 import javax.imageio.ImageIO;
 
 public class Utils {

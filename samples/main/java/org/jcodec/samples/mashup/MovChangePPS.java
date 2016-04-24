@@ -14,9 +14,11 @@ import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.containers.mp4.BoxFactory;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
@@ -68,8 +70,8 @@ public class MovChangePPS {
     private static AvcCBox doSampleEntry(AbstractMP4DemuxerTrack videoTrack, FramesMP4MuxerTrack outTrack) throws IOException {
         SampleEntry se = videoTrack.getSampleEntries()[0];
 
-        AvcCBox avcC = Box.findFirst(se, AvcCBox.class, AvcCBox.fourcc());
-        AvcCBox old = (AvcCBox) MP4Util.cloneBox(avcC, 2048);
+        AvcCBox avcC = NodeBox.findFirst(se, AvcCBox.class, AvcCBox.fourcc());
+        AvcCBox old = (AvcCBox) NodeBox.cloneBox(avcC, 2048, BoxFactory.getDefault());
 
         for (int i = 0; i < avcC.getPpsList().size(); i++) {
             avcC.getPpsList().set(i, MovStitch2.updatePps(avcC.getPpsList().get(i)));
