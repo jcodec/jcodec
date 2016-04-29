@@ -9,6 +9,7 @@ import org.stjs.javascript.Array;
 import org.stjs.javascript.Global;
 import org.stjs.javascript.JSFunctionAdapter;
 import org.stjs.javascript.JSGlobal;
+import org.stjs.javascript.typed.Int8Array;
 
 import js.io.File;
 import js.io.InputStream;
@@ -99,7 +100,7 @@ public class Platform {
     }
 
     public static URL getResource(Class<?> class1, String string) {
-//        return class1.getResource(string);
+        //        return class1.getResource(string);
         throw new RuntimeException("TODO");
     }
 
@@ -140,8 +141,7 @@ public class Platform {
 
     public static <T> T[] copyOfObj(T[] original, int newLength) {
         Object[] copy = new Object[newLength];
-        js.lang.System.arraycopy(original, 0, copy, 0,
-                         Math.min(original.length, newLength));
+        js.lang.System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
         return (T[]) copy;
     }
 
@@ -152,8 +152,7 @@ public class Platform {
 
     public static int[] copyOfInt(int[] original, int newLength) {
         int[] copy = new int[newLength];
-        js.lang.System.arraycopy(original, 0, copy, 0,
-                         Math.min(original.length, newLength));
+        js.lang.System.arraycopy(original, 0, copy, 0, Math.min(original.length, newLength));
         return copy;
     }
 
@@ -198,7 +197,13 @@ public class Platform {
 
     public static boolean isAssignableFrom(Class parent, Class child) {
         return StJs.stjs.isInstanceOf(child, parent);
-//        return parent.isAssignableFrom(child);
+        //        return parent.isAssignableFrom(child);
+    }
+
+    public static void arraycopyByte(byte[] src, int srcPos, byte[] dst, int dstPos, int len) {
+        Int8Array _src = (Int8Array) (Object) src;
+        Int8Array _dst = (Int8Array) (Object) dst;
+        _dst.subarray(dstPos, dstPos + len).set(_src.subarray(srcPos, srcPos + len), 0);
     }
 
 }

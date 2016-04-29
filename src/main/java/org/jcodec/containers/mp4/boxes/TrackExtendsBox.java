@@ -88,4 +88,12 @@ public class TrackExtendsBox extends FullBox {
         this.defaultSampleFlags = defaultSampleFlags;
     }
 
+    public static TrackExtendsBox createTrackExtendsBox(int trackId, int sampleDescIndex, int sampleFlags) {
+        TrackExtendsBox trex = new TrackExtendsBox(new Header(fourcc()));
+        trex.setTrackId(sampleDescIndex);
+        trex.setDefaultSampleDescriptionIndex(sampleDescIndex);
+        trex.setDefaultSampleFlags(sampleFlags);
+        return trex;
+    }
+
 }

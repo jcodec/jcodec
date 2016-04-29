@@ -28,10 +28,13 @@ public class TrackFragmentBox extends NodeBox {
     }
 
     public int getTrackId() {
-        TrackFragmentHeaderBox tfhd = NodeBox
-                .findFirst(this, TrackFragmentHeaderBox.class, TrackFragmentHeaderBox.fourcc());
+        TrackFragmentHeaderBox tfhd = NodeBox.findFirst(this, TrackFragmentHeaderBox.class, TrackFragmentHeaderBox.fourcc());
         if (tfhd == null)
             throw new RuntimeException("Corrupt track fragment, no header atom found");
         return tfhd.getTrackId();
+    }
+
+    public static TrackFragmentBox createTrackFragmentBox() {
+        return new TrackFragmentBox(new Header(fourcc()));
     }
 }

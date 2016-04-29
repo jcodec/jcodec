@@ -41,4 +41,8 @@ public class MovieExtendsHeaderBox extends FullBox {
     public void setFragmentDuration(int fragmentDuration) {
         this.fragmentDuration = fragmentDuration;
     }
+
+    public static MovieExtendsHeaderBox createMovieExtendsHeaderBox() {
+        return new MovieExtendsHeaderBox(new Header(fourcc()));
+    }
 }

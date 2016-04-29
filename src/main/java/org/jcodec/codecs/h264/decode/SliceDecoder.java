@@ -9,6 +9,7 @@ import static org.jcodec.codecs.h264.io.model.MBType.P_8x16;
 import static org.jcodec.codecs.h264.io.model.MBType.P_8x8;
 import static org.jcodec.codecs.h264.io.model.MBType.P_8x8ref0;
 import static org.jcodec.codecs.h264.io.model.SliceType.P;
+import static org.jcodec.platform.Platform.arraycopyByte;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.aso.MapManager;
@@ -21,6 +22,7 @@ import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

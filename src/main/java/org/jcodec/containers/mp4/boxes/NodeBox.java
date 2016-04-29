@@ -73,8 +73,9 @@ public class NodeBox extends Box {
         return boxes;
     }
 
-    public void add(Box box) {
+    public NodeBox add(Box box) {
         boxes.add(box);
+        return this;
     }
 
     protected void doWrite(ByteBuffer out) {

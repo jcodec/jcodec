@@ -6,6 +6,7 @@ import org.jcodec.common.io.NIOUtils;
 import js.nio.ByteBuffer;
 import js.util.Collection;
 import js.util.LinkedList;
+import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,6 +22,15 @@ public class SegmentTypeBox extends Box {
     public SegmentTypeBox(Header header) {
         super(header);
         this.compBrands = new LinkedList<String>();
+    }
+
+    public static SegmentTypeBox createSegmentTypeBox(String majorBrand, int minorVersion,
+            Collection<String> compBrands) {
+        SegmentTypeBox styp = new SegmentTypeBox(new Header(fourcc()));
+        styp.majorBrand = majorBrand;
+        styp.minorVersion = minorVersion;
+        styp.compBrands = compBrands;
+        return styp;
     }
 
     private String majorBrand;

@@ -16,4 +16,8 @@ public class MovieExtendsBox extends NodeBox {
         return "mvex";
     }
 
+    public static MovieExtendsBox createMovieExtendsBox() {
+        return new MovieExtendsBox(new Header(fourcc()));
+    }
+
 }

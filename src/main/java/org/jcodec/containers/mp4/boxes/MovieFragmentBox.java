@@ -40,10 +40,13 @@ public class MovieFragmentBox extends NodeBox {
     }
 
     public int getSequenceNumber() {
-        MovieFragmentHeaderBox mfhd = NodeBox
-                .findFirst(this, MovieFragmentHeaderBox.class, MovieFragmentHeaderBox.fourcc());
+        MovieFragmentHeaderBox mfhd = NodeBox.findFirst(this, MovieFragmentHeaderBox.class, MovieFragmentHeaderBox.fourcc());
         if (mfhd == null)
             throw new RuntimeException("Corrupt movie fragment, no header atom found");
         return mfhd.getSequenceNumber();
+    }
+
+    public static MovieFragmentBox createMovieFragmentBox() {
+        return new MovieFragmentBox(new Header(fourcc()));
     }
 }

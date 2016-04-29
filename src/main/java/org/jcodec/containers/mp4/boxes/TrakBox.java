@@ -70,7 +70,7 @@ public class TrakBox extends NodeBox {
         return elst.getEdits();
     }
 
-    public void setEdits(List<Edit> edits) {
+    public TrakBox setEdits(List<Edit> edits) {
         NodeBox edts = NodeBox.findFirst(this, NodeBox.class, "edts");
         if (edts == null) {
             edts = new NodeBox(new Header("edts"));
@@ -80,6 +80,7 @@ public class TrakBox extends NodeBox {
 
         edts.add(EditListBox.createEditListBox(edits));
         getTrackHeader().setDuration(getEditedDuration(this));
+        return this;
     }
 
     public boolean isVideo() {
