@@ -5,6 +5,8 @@ import static java.lang.Math.min;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
 
+import java.util.HashMap;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -15,6 +17,7 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class MotionEstimator {
     private int maxSearchRange;
+    private HashMap<Integer, Integer> scores = new HashMap<Integer, Integer>();
 
     public MotionEstimator(int maxSearchRange) {
         this.maxSearchRange = maxSearchRange;
@@ -22,7 +25,7 @@ public class MotionEstimator {
 
     public int[] estimate(Picture8Bit ref, byte[] patch, int mbX, int mbY, int mvpx, int mvpy) {
         byte[] searchPatch = new byte[(maxSearchRange * 2 + 16) * (maxSearchRange * 2 + 16)];
-
+        scores.clear();
         int startX = (mbX << 4) /* + (mvpx >> 2)*/;
         int startY = (mbY << 4) /* + (mvpy >> 2)*/;
 
@@ -66,6 +69,11 @@ public class MotionEstimator {
     }
 
     private int sad(byte[] big, int bigStride, byte[] small, int offX, int offY) {
+        int key = bigStride * 1000 + offX * 10 + offY;
+        Integer cachedScore = scores.get(key);
+        if (cachedScore != null) {
+            return cachedScore;
+        }
         int score = 0, bigOff = offY * bigStride + offX, smallOff = 0;
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 16; j++, ++bigOff, ++smallOff) {
@@ -73,6 +81,7 @@ public class MotionEstimator {
             }
             bigOff += bigStride - 16;
         }
+        scores.put(key, score);
         return score;
     }
 }
