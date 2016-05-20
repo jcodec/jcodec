@@ -11,21 +11,14 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.TrackType;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
+import org.jcodec.containers.mp4.boxes.*;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
-import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
-import org.jcodec.containers.mp4.boxes.PixelAspectExt;
-import org.jcodec.containers.mp4.boxes.SampleSizesBox;
-import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
-import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.platform.Platform;
 
 import java.io.IOException;
 import java.lang.IllegalArgumentException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -243,6 +236,20 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             PixelAspectExt pasp = NodeBox.findFirst(getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if(pasp != null)
                 meta.setPixelAspectRatio(pasp.getRational());
+
+            TrackHeaderBox tkhd = NodeBox.findFirstPath(box, TrackHeaderBox.class, Box.path("tkhd"));
+            DemuxerTrackMeta.Orientation orientation;
+            if (tkhd.isOrientation90())
+                orientation = DemuxerTrackMeta.Orientation.D_90;
+            else if (tkhd.isOrientation180())
+                orientation = DemuxerTrackMeta.Orientation.D_180;
+            else if (tkhd.isOrientation270())
+                orientation = DemuxerTrackMeta.Orientation.D_270;
+            else
+                orientation = DemuxerTrackMeta.Orientation.D_0;
+
+            meta.setOrientation(orientation);
+
         }
         
         return meta;
