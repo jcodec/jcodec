@@ -239,14 +239,14 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
             TrackHeaderBox tkhd = NodeBox.findFirstPath(box, TrackHeaderBox.class, Box.path("tkhd"));
             DemuxerTrackMeta.Orientation orientation;
-            if (tkhd.isOrientation90())
+            if (tkhd.isOrientation0())
+                orientation = DemuxerTrackMeta.Orientation.D_0;
+            else if (tkhd.isOrientation90())
                 orientation = DemuxerTrackMeta.Orientation.D_90;
             else if (tkhd.isOrientation180())
                 orientation = DemuxerTrackMeta.Orientation.D_180;
-            else if (tkhd.isOrientation270())
-                orientation = DemuxerTrackMeta.Orientation.D_270;
             else
-                orientation = DemuxerTrackMeta.Orientation.D_0;
+                orientation = DemuxerTrackMeta.Orientation.D_270;
 
             meta.setOrientation(orientation);
 
