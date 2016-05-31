@@ -195,4 +195,8 @@ public class TrackFragmentHeaderBox extends FullBox {
     public void setDefaultSampleFlags(int defaultSampleFlags) {
         this.defaultSampleFlags = defaultSampleFlags;
     }
+
+    public static TrackFragmentHeaderBox createTrackFragmentHeaderBox() {
+        return new TrackFragmentHeaderBox(new Header(fourcc()));
+    }
 }

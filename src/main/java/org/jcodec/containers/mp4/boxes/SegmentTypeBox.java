@@ -26,6 +26,14 @@ public class SegmentTypeBox extends Box {
     private String majorBrand;
     private int minorVersion;
     private Collection<String> compBrands;
+    
+    public static SegmentTypeBox createSegmentTypeBox(String majorBrand, int minorVersion, Collection<String> compBrands) {
+        SegmentTypeBox styp = new SegmentTypeBox(new Header(fourcc()));
+        styp.majorBrand = majorBrand;
+        styp.minorVersion = minorVersion;
+        styp.compBrands = compBrands;
+        return styp;
+    }
 
     public static String fourcc() {
         return "styp";

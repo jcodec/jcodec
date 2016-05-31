@@ -46,4 +46,8 @@ public class MovieFragmentBox extends NodeBox {
             throw new RuntimeException("Corrupt movie fragment, no header atom found");
         return mfhd.getSequenceNumber();
     }
+
+    public static MovieFragmentBox createMovieFragmentBox() {
+        return new MovieFragmentBox(new Header(fourcc()));
+    }
 }
