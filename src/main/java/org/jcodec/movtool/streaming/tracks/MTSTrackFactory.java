@@ -1,21 +1,22 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+
+import org.jcodec.common.Assert;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.movtool.streaming.VirtualPacket;
+import org.jcodec.movtool.streaming.tracks.MPSTrackFactory.Stream;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.common.Assert;
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mps.MPSDemuxer;
-import org.jcodec.containers.mps.MPSUtils;
-import org.jcodec.movtool.streaming.VirtualPacket;
-import org.jcodec.movtool.streaming.tracks.MPSTrackFactory.Stream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -27,9 +28,10 @@ import org.jcodec.movtool.streaming.tracks.MPSTrackFactory.Stream;
  * 
  */
 public class MTSTrackFactory {
-    private List<MTSProgram> programs = new ArrayList<MTSProgram>();
+    private List<MTSProgram> programs;
 
     public MTSTrackFactory(ByteBuffer index, FilePool fp) throws IOException {
+        this.programs = new ArrayList<MTSProgram>();
         while (index.remaining() >= 6) {
             int len = index.getInt() - 4;
             ByteBuffer sub = NIOUtils.read(index, len);
@@ -37,7 +39,7 @@ public class MTSTrackFactory {
         }
     }
 
-    public class MTSProgram extends MPSTrackFactory {
+    public static class MTSProgram extends MPSTrackFactory {
         private int targetGuid;
 
         public MTSProgram(ByteBuffer index, FilePool fp) throws IOException {
@@ -52,20 +54,23 @@ public class MTSTrackFactory {
 
         @Override
         protected Stream createStream(int streamId) {
-            return new MTSStream(streamId);
+            return new MTSStream(streamId, this);
         }
 
-        public class MTSStream extends Stream {
+        public static class MTSStream extends Stream {
 
-            public MTSStream(int streamId) {
-                super(streamId);
+            private MTSProgram program;
+
+			public MTSStream(int streamId, MTSProgram program) {
+                super(streamId, program);
+				this.program = program;
             }
 
             @Override
             protected ByteBuffer readPes(SeekableByteChannel ch, long pesPosition, int pesSize, int payloadSize,
                     int pesAbsIdx) throws IOException {
-                ch.position(pesPosition * 188);
-                ByteBuffer buf = NIOUtils.fetchFrom(ch, pesSize * 188);
+                ch.setPosition(pesPosition * 188);
+                ByteBuffer buf = NIOUtils.fetchFromChannel(ch, pesSize * 188);
 
                 // NOW REMOVE THE TS CRAP
                 ByteBuffer dst = buf.duplicate();
@@ -74,7 +79,7 @@ public class MTSTrackFactory {
                     Assert.assertEquals(0x47, tsBuf.get() & 0xff);
                     int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                     int guid = (int) guidFlags & 0x1fff;
-                    if (guid == targetGuid) {
+                    if (guid == program.targetGuid) {
                         int b0 = tsBuf.get() & 0xff;
                         int counter = b0 & 0xf;
                         if ((b0 & 0x20) != 0) {
@@ -115,11 +120,11 @@ public class MTSTrackFactory {
         return ret;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         FilePool fp = new FilePool(new File(args[0]), 10);
-        MTSTrackFactory factory = new MTSTrackFactory(NIOUtils.fetchFrom(new File(args[1])), fp);
+        MTSTrackFactory factory = new MTSTrackFactory(NIOUtils.fetchFromFile(new File(args[1])), fp);
         Stream stream = factory.getVideoStreams().get(0);
-        FileChannelWrapper ch = NIOUtils.writableFileChannel(new File(args[2]));
+        FileChannelWrapper ch = NIOUtils.writableChannel(new File(args[2]));
 
         List<VirtualPacket> pkt = new ArrayList<VirtualPacket>();
         for (int i = 0; i < 2000; i++) {

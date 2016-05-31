@@ -1,14 +1,16 @@
 package org.jcodec.common;
 
+import static java.lang.System.currentTimeMillis;
+
+import org.jcodec.common.io.AutoPool;
+import org.jcodec.common.io.AutoResource;
+import org.jcodec.common.io.SeekableByteChannel;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-
-import org.jcodec.common.io.AutoPool;
-import org.jcodec.common.io.AutoResource;
-import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,7 +31,7 @@ public class AutoFileChannelWrapper implements SeekableByteChannel, AutoResource
 
     public AutoFileChannelWrapper(File file) throws IOException {
         this.file = file;
-        this.curTime = System.currentTimeMillis();
+        this.curTime = currentTimeMillis();
         AutoPool.getInstance().add(this);
         ensureOpen();
     }
@@ -79,7 +81,7 @@ public class AutoFileChannelWrapper implements SeekableByteChannel, AutoResource
     }
 
     @Override
-    public SeekableByteChannel position(long newPosition) throws IOException {
+    public SeekableByteChannel setPosition(long newPosition) throws IOException {
         ensureOpen();
         ch.position(newPosition);
         savedPos = newPosition;

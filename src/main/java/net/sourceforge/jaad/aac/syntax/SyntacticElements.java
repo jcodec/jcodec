@@ -1,7 +1,13 @@
 package net.sourceforge.jaad.aac.syntax;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_FIVE;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_FIVE_PLUS_ONE;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_MONO;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_SEVEN_PLUS_ONE;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER;
+import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO;
 
 import java.util.logging.Level;
-
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.ChannelConfiguration;
 import net.sourceforge.jaad.aac.DecoderConfig;
@@ -11,7 +17,7 @@ import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
 import net.sourceforge.jaad.aac.sbr.SBR;
 import net.sourceforge.jaad.aac.tools.IS;
-import net.sourceforge.jaad.aac.tools.LTPrediction;
+import net.sourceforge.jaad.aac.syntax.ICSInfo.LTPrediction;
 import net.sourceforge.jaad.aac.tools.MS;
 
 /**
@@ -58,42 +64,42 @@ public class SyntacticElements implements SyntaxConstants {
 		bitsRead = 0;
 	}
 
-	public void decode(IBitStream in) throws AACException {
-		final int start = in.getPosition(); //should be 0
+	public void decode(IBitStream _in) throws AACException {
+		final int start = _in.getPosition(); //should be 0
 
 		int type;
 		Element prev = null;
 		boolean content = true;
 		if(!config.getProfile().isErrorResilientProfile()) {
-			while(content&&(type = in.readBits(3))!=ELEMENT_END) {
+			while(content&&(type = _in.readBits(3))!=ELEMENT_END) {
 				switch(type) {
 					case ELEMENT_SCE:
 					case ELEMENT_LFE:
 						LOGGER.finest("SCE");
-						prev = decodeSCE_LFE(in);
+						prev = decodeSCE_LFE(_in);
 						break;
 					case ELEMENT_CPE:
 						LOGGER.finest("CPE");
-						prev = decodeCPE(in);
+						prev = decodeCPE(_in);
 						break;
 					case ELEMENT_CCE:
 						LOGGER.finest("CCE");
-						decodeCCE(in);
+						decodeCCE(_in);
 						prev = null;
 						break;
 					case ELEMENT_DSE:
 						LOGGER.finest("DSE");
-						decodeDSE(in);
+						decodeDSE(_in);
 						prev = null;
 						break;
 					case ELEMENT_PCE:
 						LOGGER.finest("PCE");
-						decodePCE(in);
+						decodePCE(_in);
 						prev = null;
 						break;
 					case ELEMENT_FIL:
 						LOGGER.finest("FIL");
-						decodeFIL(in, prev);
+						decodeFIL(_in, prev);
 						prev = null;
 						break;
 				}
@@ -104,88 +110,81 @@ public class SyntacticElements implements SyntaxConstants {
 		}
 		else {
 			//error resilient raw data block
-			switch(config.getChannelConfiguration()) {
-				case CHANNEL_CONFIG_MONO:
-					decodeSCE_LFE(in);
-					break;
-				case CHANNEL_CONFIG_STEREO:
-					decodeCPE(in);
-					break;
-				case CHANNEL_CONFIG_STEREO_PLUS_CENTER:
-					decodeSCE_LFE(in);
-					decodeCPE(in);
-					break;
-				case CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO:
-					decodeSCE_LFE(in);
-					decodeCPE(in);
-					decodeSCE_LFE(in);
-					break;
-				case CHANNEL_CONFIG_FIVE:
-					decodeSCE_LFE(in);
-					decodeCPE(in);
-					decodeCPE(in);
-					break;
-				case CHANNEL_CONFIG_FIVE_PLUS_ONE:
-					decodeSCE_LFE(in);
-					decodeCPE(in);
-					decodeCPE(in);
-					decodeSCE_LFE(in);
-					break;
-				case CHANNEL_CONFIG_SEVEN_PLUS_ONE:
-					decodeSCE_LFE(in);
-					decodeCPE(in);
-					decodeCPE(in);
-					decodeCPE(in);
-					decodeSCE_LFE(in);
-					break;
-				default:
-					throw new AACException("unsupported channel configuration for error resilience: "+config.getChannelConfiguration());
+			ChannelConfiguration cc = config.getChannelConfiguration();
+			if (CHANNEL_CONFIG_MONO == cc) {
+                decodeSCE_LFE(_in);
+			} else if(CHANNEL_CONFIG_STEREO == cc) {
+                decodeCPE(_in);
+            } else if(CHANNEL_CONFIG_STEREO_PLUS_CENTER == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+            } else if(CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+                decodeSCE_LFE(_in);
+            } else if(CHANNEL_CONFIG_FIVE == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+                decodeCPE(_in);
+            } else if(CHANNEL_CONFIG_FIVE_PLUS_ONE == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+                decodeCPE(_in);
+                decodeSCE_LFE(_in);
+            } else if(CHANNEL_CONFIG_SEVEN_PLUS_ONE == cc) {
+                decodeSCE_LFE(_in);
+                decodeCPE(_in);
+                decodeCPE(_in);
+                decodeCPE(_in);
+                decodeSCE_LFE(_in);
+			} else {
+                throw new AACException("unsupported channel configuration for error resilience: "+cc);
 			}
 		}
-		in.byteAlign();
+		_in.byteAlign();
 
-		bitsRead = in.getPosition()-start;
+		bitsRead = _in.getPosition()-start;
 	}
 
-	private Element decodeSCE_LFE(IBitStream in) throws AACException {
+	private Element decodeSCE_LFE(IBitStream _in) throws AACException {
 		if(elements[curElem]==null) elements[curElem] = new SCE_LFE(config.getFrameLength());
-		((SCE_LFE) elements[curElem]).decode(in, config);
+		((SCE_LFE) elements[curElem]).decode(_in, config);
 		curElem++;
 		return elements[curElem-1];
 	}
 
-	private Element decodeCPE(IBitStream in) throws AACException {
+	private Element decodeCPE(IBitStream _in) throws AACException {
 		if(elements[curElem]==null) elements[curElem] = new CPE(config.getFrameLength());
-		((CPE) elements[curElem]).decode(in, config);
+		((CPE) elements[curElem]).decode(_in, config);
 		curElem++;
 		return elements[curElem-1];
 	}
 
-	private void decodeCCE(IBitStream in) throws AACException {
+	private void decodeCCE(IBitStream _in) throws AACException {
 		if(curCCE==MAX_ELEMENTS) throw new AACException("too much CCE elements");
 		if(cces[curCCE]==null) cces[curCCE] = new CCE(config.getFrameLength());
-		cces[curCCE].decode(in, config);
+		cces[curCCE].decode(_in, config);
 		curCCE++;
 	}
 
-	private void decodeDSE(IBitStream in) throws AACException {
+	private void decodeDSE(IBitStream _in) throws AACException {
 		if(curDSE==MAX_ELEMENTS) throw new AACException("too much CCE elements");
 		if(dses[curDSE]==null) dses[curDSE] = new DSE();
-		dses[curDSE].decode(in);
+		dses[curDSE].decode(_in);
 		curDSE++;
 	}
 
-	private void decodePCE(IBitStream in) throws AACException {
-		pce.decode(in);
+	private void decodePCE(IBitStream _in) throws AACException {
+		pce.decode(_in);
 		config.setProfile(pce.getProfile());
 		config.setSampleFrequency(pce.getSampleFrequency());
 		config.setChannelConfiguration(ChannelConfiguration.forInt(pce.getChannelCount()));
 	}
 
-	private void decodeFIL(IBitStream in, Element prev) throws AACException {
+	private void decodeFIL(IBitStream _in, Element prev) throws AACException {
 		if(curFIL==MAX_ELEMENTS) throw new AACException("too much FIL elements");
 		if(fils[curFIL]==null) fils[curFIL] = new FIL(config.isSBRDownSampled());
-		fils[curFIL].decode(in, prev, config.getSampleFrequency(), config.isSBREnabled(), config.isSmallFrameUsed());
+		fils[curFIL].decode(_in, prev, config.getSampleFrequency(), config.isSBREnabled(), config.isSmallFrameUsed());
 		curFIL++;
 
 		if(prev!=null&&prev.isSBRPresent()) {
@@ -269,7 +268,7 @@ public class SyntacticElements implements SyntaxConstants {
 			final SBR sbr = scelfe.getSBR();
 			if(sbr.isPSUsed()) {
 				chs = 2;
-				scelfe.getSBR().process(data[channel], data[channel+1], false);
+				scelfe.getSBR()._process(data[channel], data[channel+1], false);
 			}
 			else scelfe.getSBR().process(data[channel], false);
 		}
@@ -335,7 +334,7 @@ public class SyntacticElements implements SyntaxConstants {
 		//SBR
 		if(sbrPresent&&config.isSBREnabled()) {
 			if(data[channel].length==config.getFrameLength()) LOGGER.log(Level.WARNING, "SBR data present, but buffer has normal size!");
-			cpe.getSBR().process(data[channel], data[channel+1], false);
+			cpe.getSBR()._process(data[channel], data[channel+1], false);
 		}
 	}
 

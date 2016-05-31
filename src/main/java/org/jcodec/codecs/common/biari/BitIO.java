@@ -1,4 +1,5 @@
 package org.jcodec.codecs.common.biari;
+import org.jcodec.platform.BaseOutputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,10 +41,10 @@ public class BitIO {
     }
 
     public static OutputBits outputFromArray(final byte[] bytes) {
-        return new StreamOutputBits(new OutputStream() {
+        return new StreamOutputBits(new BaseOutputStream() {
             int ptr;
 
-            public void write(int b) throws IOException {
+            protected void writeByte(int b) throws IOException {
                 if (ptr >= bytes.length)
                     throw new IOException("Buffer is full");
                 bytes[ptr++] = (byte) b;
@@ -55,7 +56,8 @@ public class BitIO {
         byte[] compressed = new byte[(decompressed.length >> 3) + 1];
         OutputBits out = outputFromArray(compressed);
         try {
-            for (int bit : decompressed) {
+            for (int i = 0; i < decompressed.length; i++) {
+                int bit = decompressed[i];
                 out.putBit(bit);
             }
         } catch (IOException e) {
@@ -78,18 +80,18 @@ public class BitIO {
     }
 
     public static class StreamInputBits implements InputBits {
-        private InputStream in;
+        private InputStream _in;
         private int cur;
         private int bit;
 
-        public StreamInputBits(InputStream in) {
-            this.in = in;
+        public StreamInputBits(InputStream _in) {
+            this._in = _in;
             this.bit = 8;
         }
 
         public int getBit() throws IOException {
             if (bit > 7) {
-                cur = in.read();
+                cur = _in.read();
                 if (cur == -1)
                     return -1;
                 bit = 0;

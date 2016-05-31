@@ -1,12 +1,11 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.common.model.Rational;
+import org.jcodec.common.model.Size;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-
-import org.jcodec.common.model.Rational;
-import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.MP4Util;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -27,20 +26,18 @@ public class MovieBox extends NodeBox {
         return "moov";
     }
 
-    public MovieBox() {
-        super(new Header(fourcc()));
-    }
-
-    public MovieBox(MovieBox movie) {
-        super(movie);
+    public static MovieBox createMovieBox() {
+        return new MovieBox(new Header(fourcc()));
     }
 
     public TrakBox[] getTracks() {
-        return findAll(this, TrakBox.class, "trak");
+        return NodeBox.findAll(this, TrakBox.class, "trak");
     }
 
     public TrakBox getVideoTrack() {
-        for (TrakBox trakBox : getTracks()) {
+        TrakBox[] tracks = getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             if (trakBox.isVideo())
                 return trakBox;
         }
@@ -48,7 +45,9 @@ public class MovieBox extends NodeBox {
     }
 
     public TrakBox getTimecodeTrack() {
-        for (TrakBox trakBox : getTracks()) {
+        TrakBox[] tracks = getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             if (trakBox.isTimecode())
                 return trakBox;
         }
@@ -67,7 +66,9 @@ public class MovieBox extends NodeBox {
         int oldTs = getTimescale();
         setTimescale(newTs);
 
-        for (TrakBox trakBox : getTracks()) {
+        TrakBox[] tracks = getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             trakBox.setDuration(rescale(trakBox.getDuration(), oldTs));
 
             List<Edit> edits = trakBox.getEdits();
@@ -84,7 +85,7 @@ public class MovieBox extends NodeBox {
     }
 
     private void setTimescale(int newTs) {
-        findFirst(this, MovieHeaderBox.class, "mvhd").setTimescale(newTs);
+        NodeBox.findFirst(this, MovieHeaderBox.class, "mvhd").setTimescale(newTs);
     }
 
     public void setDuration(long movDuration) {
@@ -92,12 +93,14 @@ public class MovieBox extends NodeBox {
     }
 
     private MovieHeaderBox getMovieHeader() {
-        return findFirst(this, MovieHeaderBox.class, "mvhd");
+        return NodeBox.findFirst(this, MovieHeaderBox.class, "mvhd");
     }
 
     public List<TrakBox> getAudioTracks() {
         ArrayList<TrakBox> result = new ArrayList<TrakBox>();
-        for (TrakBox trakBox : getTracks()) {
+        TrakBox[] tracks = getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             if (trakBox.isAudio())
                 result.add(trakBox);
         }
@@ -109,7 +112,7 @@ public class MovieBox extends NodeBox {
     }
 
     public TrakBox importTrack(MovieBox movie, TrakBox track) {
-        TrakBox newTrack = (TrakBox) MP4Util.cloneBox(track, 1024 * 1024);
+        TrakBox newTrack = (TrakBox) NodeBox.cloneBox(track, 1024 * 1024, factory);
 
         List<Edit> edits = newTrack.getEdits();
 
@@ -133,7 +136,9 @@ public class MovieBox extends NodeBox {
 
     public boolean isPureRefMovie(MovieBox movie) {
         boolean pureRef = true;
-        for (TrakBox trakBox : movie.getTracks()) {
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             pureRef &= trakBox.isPureRef();
         }
         return pureRef;
@@ -142,7 +147,8 @@ public class MovieBox extends NodeBox {
     public void updateDuration() {
         TrakBox[] tracks = getTracks();
         long min = Integer.MAX_VALUE;
-        for (TrakBox trakBox : tracks) {
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             if (trakBox.getDuration() < min)
                 min = trakBox.getDuration();
         }
@@ -153,13 +159,12 @@ public class MovieBox extends NodeBox {
         TrakBox videoTrack = getVideoTrack();
         if (videoTrack == null)
             return null;
-        ClearApertureBox clef = NodeBox.findFirst(videoTrack, ClearApertureBox.class, "tapt", "clef");
+        ClearApertureBox clef = NodeBox.findFirstPath(videoTrack, ClearApertureBox.class, Box.path("tapt.clef"));
 
         if (clef != null) {
             return applyMatrix(videoTrack, new Size((int) clef.getWidth(), (int) clef.getHeight()));
         }
-
-        Box box = NodeBox.findFirst(videoTrack, SampleDescriptionBox.class, "mdia", "minf", "stbl", "stsd").getBoxes()
+        Box box = NodeBox.findFirstPath(videoTrack, SampleDescriptionBox.class, Box.path("mdia.minf.stbl.stsd")).getBoxes()
                 .get(0);
         if (box == null || !(box instanceof VideoSampleEntry))
             return null;
@@ -181,13 +186,12 @@ public class MovieBox extends NodeBox {
         TrakBox videoTrack = getVideoTrack();
         if (videoTrack == null)
             return null;
-        EncodedPixelBox enof = NodeBox.findFirst(videoTrack, EncodedPixelBox.class, "tapt", "enof");
+        EncodedPixelBox enof = NodeBox.findFirstPath(videoTrack, EncodedPixelBox.class, Box.path("tapt.enof"));
 
         if (enof != null) {
             return new Size((int) enof.getWidth(), (int) enof.getHeight());
         }
-
-        Box box = NodeBox.findFirst(videoTrack, SampleDescriptionBox.class, "mdia", "minf", "stbl", "stsd").getBoxes()
+        Box box = NodeBox.findFirstPath(videoTrack, SampleDescriptionBox.class, Box.path("mdia.minf.stbl.stsd")).getBoxes()
                 .get(0);
         if (box == null || !(box instanceof VideoSampleEntry))
             return null;

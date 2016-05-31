@@ -1,9 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.nio.ByteBuffer;
-
-import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -19,13 +19,10 @@ public class NameBox extends Box {
         return "name";
     }
 
-    public NameBox(String name) {
-        this();
-        this.name = name;
-    }
-
-    public NameBox() {
-        super(new Header(fourcc()));
+    public static NameBox createNameBox(String name) {
+        NameBox box = new NameBox(new Header(fourcc()));
+        box.name = name;
+        return box;
     }
 
     private NameBox(Header header) {
@@ -37,7 +34,7 @@ public class NameBox extends Box {
     }
 
     protected void doWrite(ByteBuffer out) {
-        out.put(JCodecUtil.asciiString(name));
+        out.put(JCodecUtil2.asciiString(name));
         out.putInt(0);
     }
 

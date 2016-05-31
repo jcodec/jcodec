@@ -1,16 +1,36 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.ThreadLocal;
+
+
+import static org.jcodec.common.model.Label.Center;
+import static org.jcodec.common.model.Label.Discrete;
+import static org.jcodec.common.model.Label.LFE2;
+import static org.jcodec.common.model.Label.LFEScreen;
+import static org.jcodec.common.model.Label.Left;
+import static org.jcodec.common.model.Label.LeftCenter;
+import static org.jcodec.common.model.Label.LeftSurround;
+import static org.jcodec.common.model.Label.LeftTotal;
+import static org.jcodec.common.model.Label.Mono;
+import static org.jcodec.common.model.Label.RearSurroundLeft;
+import static org.jcodec.common.model.Label.RearSurroundRight;
+import static org.jcodec.common.model.Label.Right;
+import static org.jcodec.common.model.Label.RightCenter;
+import static org.jcodec.common.model.Label.RightSurround;
+import static org.jcodec.common.model.Label.RightTotal;
+import static org.jcodec.common.model.Label.Unused;
+
+import org.jcodec.common.IntArrayList;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.logging.Logger;
+import org.jcodec.common.model.Label;
+import org.jcodec.movtool.streaming.AudioCodecMeta;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.common.IntArrayList;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.logging.Logger;
-import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
-import org.jcodec.containers.mp4.boxes.channel.Label;
-import org.jcodec.movtool.streaming.AudioCodecMeta;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,13 +44,14 @@ import org.jcodec.movtool.streaming.AudioCodecMeta;
 public class DownmixHelper {
 
     private int nSamples;
-    private ThreadLocal<float[][]> fltBuf = new ThreadLocal<float[][]>();
+    private ThreadLocal<float[][]> fltBuf;
     private float[][] matrix;
     private int[][] counts;
     private int[][] channels;
     private AudioCodecMeta[] se;
 
     public DownmixHelper(AudioCodecMeta[] se, int nSamples, boolean[][] solo) {
+        this.fltBuf = new ThreadLocal<float[][]>();
         this.nSamples = nSamples;
         this.se = se;
 
@@ -39,49 +60,33 @@ public class DownmixHelper {
         List<int[]> channelsBuilder = new ArrayList<int[]>();
         for (int tr = 0; tr < se.length; tr++) {
             Label[] channels = se[tr].getChannelLabels();
-            IntArrayList tmp = new IntArrayList();
+            IntArrayList tmp = IntArrayList.createIntArrayList();
             for (int ch = 0; ch < channels.length; ch++) {
                 if (solo != null && !solo[tr][ch])
                     continue;
                 tmp.add(ch);
-                switch (channels[ch]) {
-                case Left:
-                case LeftTotal:
-                case LeftCenter:
+                Label label = channels[ch];
+                if (label == Left || label == LeftTotal || label == LeftCenter) {
                     matrixBuilder.add(new float[] { 1f, 0f });
                     countsBuilder.add(new int[] { 1, 0 });
-                    break;
-                case LeftSurround:
-                case RearSurroundLeft:
+                } else if (label == LeftSurround || label == RearSurroundLeft ) {
                     matrixBuilder.add(new float[] { .7f, 0f });
                     countsBuilder.add(new int[] { 1, 0 });
-                    break;
-                case Right:
-                case RightTotal:
-                case RightCenter:
+                } else if (label == Right || label == RightTotal || label == RightCenter ) {
                     matrixBuilder.add(new float[] { 0f, 1f });
                     countsBuilder.add(new int[] { 0, 1 });
-                    break;
-                case RightSurround:
-                case RearSurroundRight:
+                } else if (label == RightSurround || label == RearSurroundRight ) {
                     matrixBuilder.add(new float[] { 0f, .7f });
                     countsBuilder.add(new int[] { 0, 1 });
-                    break;
-                case Mono:
-                case LFEScreen:
-                case Center:
-                case LFE2:
-                case Discrete:
+                } else if (label == Mono || label == LFEScreen || label == Center || label == LFE2 || label == Discrete ) {
                     matrixBuilder.add(new float[] { .7f, .7f });
                     countsBuilder.add(new int[] { 1, 1 });
-                    break;
-                case Unused:
-                    break;
-                default:
-                    if((channels[ch].getVal() >>> 16) == 1) {
+                } else if (label == Unused) {
+                } else {
+                    if((label.getVal() >>> 16) == 1) {
                         matrixBuilder.add(new float[] { .7f, .7f });
                         countsBuilder.add(new int[] { 1, 1 });
-                        Logger.info("Discrete" + (channels[ch].getVal() & 0xffff));
+                        Logger.info("Discrete" + (label.getVal() & 0xffff));
                     }
                 }
             }
@@ -157,7 +162,7 @@ public class DownmixHelper {
         if (se.getSampleSize() == 3) {
             int step = nCh * 3;
             maxSamples = Math.min(nSamples, len / step);
-            if (se.getEndian() == Endian.BIG_ENDIAN) {
+            if (se.getEndian() == ByteOrder.BIG_ENDIAN) {
                 for (int s = 0, bi = off + ch * 3; s < maxSamples; s++, bi += step) {
                     fSamples[s] = nextSample24BE(ba, bi);
                 }
@@ -169,7 +174,7 @@ public class DownmixHelper {
         } else {
             int step = nCh * 2;
             maxSamples = Math.min(nSamples, len / step);
-            if (se.getEndian() == Endian.BIG_ENDIAN) {
+            if (se.getEndian() == ByteOrder.BIG_ENDIAN) {
                 for (int s = 0, bi = off + ch * 2; s < maxSamples; s++, bi += step) {
                     fSamples[s] = nextSample16BE(ba, bi);
                 }

@@ -1,11 +1,10 @@
 package org.jcodec.containers.mxf.model;
+import org.jcodec.common.io.NIOUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,7 +22,7 @@ public abstract class MXFInterchangeObject extends MXFMetadata {
         super(ul);
     }
 
-    public void read(ByteBuffer bb) {
+    public void readBuf(ByteBuffer bb) {
         bb.order(ByteOrder.BIG_ENDIAN);
         Map<Integer, ByteBuffer> tags = new HashMap<Integer, ByteBuffer>();
         while (bb.hasRemaining()) {

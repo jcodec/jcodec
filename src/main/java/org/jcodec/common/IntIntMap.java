@@ -1,7 +1,8 @@
 package org.jcodec.common;
-
 import static java.lang.Integer.MIN_VALUE;
+import static java.lang.System.arraycopy;
 
+import java.lang.IllegalArgumentException;
 import java.util.Arrays;
 
 /**
@@ -15,7 +16,7 @@ public class IntIntMap {
 
     private static final int GROW_BY = 128;
     private int[] storage;
-    private int size;
+    private int _size;
 
     public IntIntMap() {
         this.storage = createArray(GROW_BY);
@@ -28,12 +29,12 @@ public class IntIntMap {
         
         if (storage.length <= key) {
             int[] ns = createArray(key + GROW_BY);
-            System.arraycopy(storage, 0, ns, 0, storage.length);
+            arraycopy(storage, 0, ns, 0, storage.length);
             Arrays.fill(ns, storage.length, ns.length, MIN_VALUE);
             storage = ns;
         }
         if (storage[key] == MIN_VALUE)
-            size++;
+            _size++;
         storage[key] = val;
     }
 
@@ -46,7 +47,7 @@ public class IntIntMap {
     }
 
     public int[] keys() {
-        int[] result = new int[size];
+        int[] result = new int[_size];
         for (int i = 0, r = 0; i < storage.length; i++) {
             if (storage[i] != MIN_VALUE)
                 result[r++] = i;
@@ -57,21 +58,21 @@ public class IntIntMap {
     public void clear() {
         for (int i = 0; i < storage.length; i++)
             storage[i] = MIN_VALUE;
-        size = 0;
+        _size = 0;
     }
 
     public int size() {
-        return size;
+        return _size;
     }
 
     public void remove(int key) {
         if (storage[key] != Integer.MIN_VALUE)
-            size--;
+            _size--;
         storage[key] = MIN_VALUE;
     }
 
     public int[] values() {
-        int[] result = createArray(size);
+        int[] result = createArray(_size);
         for (int i = 0, r = 0; i < storage.length; i++) {
             if (storage[i] != MIN_VALUE)
                 result[r++] = storage[i];

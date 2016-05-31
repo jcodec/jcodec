@@ -1,11 +1,21 @@
 package org.jcodec.codecs.vpx;
-
-import junit.framework.Assert;
-
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class TestCoeffEncoder {
+
+    public static int[][][][] cloneProb() {
+        int[][][][] ref = VPXConst.tokenDefaultBinProbs;
+        int[][][][] result = new int[4][8][3][11];
+        for (int i = 0; i < ref.length; i++)
+            for (int j = 0; j < ref[i].length; j++)
+                for (int k = 0; k < ref[i][j].length; k++)
+                    for (int l = 0; l < ref[i][j][k].length; l++)
+                        result[i][j][k][l] = ref[i][j][k][l];
+        return result;
+    }
+    
     static int[][][][] binProbs1 = cloneProb();
     static int[][][][] binProbs2 = cloneProb();
     static int[][][][] binProbs3 = cloneProb();
@@ -205,18 +215,8 @@ public class TestCoeffEncoder {
         }
     }
 
-    public static int[][][][] cloneProb() {
-        int[][][][] ref = VPXConst.tokenDefaultBinProbs;
-        int[][][][] result = new int[4][8][3][11];
-        for (int i = 0; i < ref.length; i++)
-            for (int j = 0; j < ref[i].length; j++)
-                for (int k = 0; k < ref[i][j].length; k++)
-                    for (int l = 0; l < ref[i][j][k].length; l++)
-                        result[i][j][k][l] = ref[i][j][k][l];
-        return result;
-    }
 
-    // public static void main(String[] args) {
+    // public static void main1(String[] args) {
     // int[][][][] ref = VPXConst.tokenDefaultBinProbs;
     // int[][][][] comp = binProbs3;
     // for (int i = 0; i < ref.length; i++) {

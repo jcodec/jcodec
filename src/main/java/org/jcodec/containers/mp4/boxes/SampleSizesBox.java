@@ -10,6 +10,10 @@ import java.nio.ByteBuffer;
  *
  */
 public class SampleSizesBox extends FullBox {
+    public SampleSizesBox(Header atom) {
+        super(atom);
+    }
+
     private int defaultSize;
     private int count;
     private int[] sizes;
@@ -18,20 +22,18 @@ public class SampleSizesBox extends FullBox {
         return "stsz";
     }
 
-    public SampleSizesBox(int defaultSize, int count) {
-        this();
-        this.defaultSize = defaultSize;
-        this.count = count;
-    }
-    
-    public SampleSizesBox(int[] sizes) {
-        this();
-        this.sizes = sizes;
-        this.count = sizes.length;
+    public static SampleSizesBox createSampleSizesBox(int defaultSize, int count) {
+        SampleSizesBox stsz = new SampleSizesBox(new Header(fourcc()));
+        stsz.defaultSize = defaultSize;
+        stsz.count = count;
+        return stsz;
     }
 
-    public SampleSizesBox() {
-        super(new Header(fourcc()));
+    public static SampleSizesBox createSampleSizesBox2(int[] sizes) {
+        SampleSizesBox stsz = new SampleSizesBox(new Header(fourcc()));
+        stsz.sizes = sizes;
+        stsz.count = sizes.length;
+        return stsz;
     }
 
     public void parse(ByteBuffer input) {
@@ -70,7 +72,8 @@ public class SampleSizesBox extends FullBox {
 
         if (defaultSize == 0) {
             out.putInt(count);
-            for (long size : sizes) {
+            for (int i = 0; i < sizes.length; i++) {
+                long size = sizes[i];
                 out.putInt((int) size);
             }
         } else {

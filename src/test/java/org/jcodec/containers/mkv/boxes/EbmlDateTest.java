@@ -1,15 +1,15 @@
 package org.jcodec.containers.mkv.boxes;
-
 import static org.jcodec.containers.mkv.util.EbmlUtil.toHexString;
-
-import java.nio.ByteBuffer;
-import java.util.Calendar;
-import java.util.Date;
 
 import org.jcodec.containers.mkv.MKVType;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.Calendar;
+import java.util.Date;
 
 public class EbmlDateTest {
 
@@ -24,7 +24,7 @@ public class EbmlDateTest {
     @Ignore @Test
     public void testSet() throws Exception {
         EbmlDate d = MKVType.createByType(MKVType.DateUTC);
-        d.set(0);
+        d.setLong(0);
         Assert.assertEquals(getDate(1970, 1, 1), d.getDate());
         System.out.println(toHexString(d.data.array()));
         System.out.println(getDate(2001, 1, 1));

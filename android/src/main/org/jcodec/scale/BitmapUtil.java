@@ -138,8 +138,8 @@ public class BitmapUtil {
 
         for (int i = 0, dstOff = 0, srcOff = 0; i < src.getCroppedHeight(); i++) {
             for (int j = 0; j < src.getCroppedWidth(); j++, dstOff++, srcOff += 3) {
-                packed[dstOff] = (255 << 24) | (srcData[srcOff] << 16) | (srcData[srcOff + 1] << 8)
-                        | srcData[srcOff + 2];
+                packed[dstOff] = (255 << 24) | (srcData[srcOff + 2] << 16) | (srcData[srcOff + 1] << 8)
+                        | (srcData[srcOff]);
             }
             srcOff += src.getWidth() - src.getCroppedWidth();
         }
@@ -152,8 +152,8 @@ public class BitmapUtil {
 
         for (int i = 0, dstOff = 0, srcOff = 0; i < src.getCroppedHeight(); i++) {
             for (int j = 0; j < src.getCroppedWidth(); j++, dstOff++, srcOff += 3) {
-                packed[dstOff] = (255 << 24) | ((srcData[srcOff] + 128) << 16) | ((srcData[srcOff + 1] + 128) << 8)
-                        | (srcData[srcOff + 2] + 128);
+                packed[dstOff] = (255 << 24) | ((srcData[srcOff + 2] + 128) << 16) | ((srcData[srcOff + 1] + 128) << 8)
+                        | (srcData[srcOff] + 128);
             }
             srcOff += src.getWidth() - src.getCroppedWidth();
         }

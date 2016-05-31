@@ -1,4 +1,5 @@
 package org.jcodec.common.dct;
+import org.jcodec.api.NotSupportedException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -9,7 +10,7 @@ package org.jcodec.common.dct;
  */
 public abstract class DCT {
     public short[] encode(byte[] orig) {
-        throw new UnsupportedOperationException();
+        throw new NotSupportedException();
     }
 
     public abstract int[] decode(int[] orig);

@@ -3,8 +3,8 @@ package org.jcodec.containers.mp4.boxes;
 import java.nio.ByteBuffer;
 
 /**
- * This class is part of JCodec ( www.jcodec.org )
- * This software is distributed under FreeBSD License
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
  * 
  * A box storing a list of synch samples
  * 
@@ -12,19 +12,13 @@ import java.nio.ByteBuffer;
  * 
  */
 public class SyncSamplesBox extends FullBox {
-    private int[] syncSamples;
-    
-    public static String fourcc() {
-        return "stss";
-    }
+    public static final String STSS = "stss";
+    protected int[] syncSamples;
 
-    public SyncSamplesBox() {
-        super(new Header(fourcc()));
-    }
-
-    public SyncSamplesBox(int[] array) {
-        this();
-        this.syncSamples = array;
+    public static SyncSamplesBox createSyncSamplesBox(int[] array) {
+        SyncSamplesBox stss = new SyncSamplesBox(new Header(STSS));
+        stss.syncSamples = array;
+        return stss;
     }
 
     public SyncSamplesBox(Header header) {

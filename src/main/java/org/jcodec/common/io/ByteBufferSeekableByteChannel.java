@@ -1,5 +1,4 @@
 package org.jcodec.common.io;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -53,7 +52,7 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
         return backing.position();
     }
 
-    public SeekableByteChannel position(long newPosition) throws IOException {
+    public SeekableByteChannel setPosition(long newPosition) throws IOException {
         backing.position((int) newPosition);
         contentLength = Math.max(contentLength, backing.position());
         return this;

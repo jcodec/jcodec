@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv.boxes;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -18,12 +17,13 @@ public class EbmlString extends EbmlBin {
         super(id);
     }
     
-    public EbmlString(byte[] id, String value){
-        super(id);
-        set(value);
+    public static EbmlString createEbmlString(byte[] id, String value) {
+        EbmlString e = new EbmlString(id);
+        e.setString(value);
+        return e;
     }
     
-    public String get() {
+    public String getString() {
         try {
             return new String(data.array(), charset);
         } catch (java.io.UnsupportedEncodingException ex) {
@@ -32,7 +32,7 @@ public class EbmlString extends EbmlBin {
         }
     }
     
-    public void set(String value){
+    public void setString(String value){
         try {
             this.data = ByteBuffer.wrap(value.getBytes(charset));
         } catch (java.io.UnsupportedEncodingException ex) {

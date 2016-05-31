@@ -1,9 +1,26 @@
 package org.jcodec.codecs.mpeg12.bitstream;
+import static org.jcodec.codecs.mpeg12.MPEGConst.IntraCoded;
+import static org.jcodec.codecs.mpeg12.MPEGConst.PredictiveCoded;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValB;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValBSpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValI;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValISpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValP;
+import static org.jcodec.codecs.mpeg12.MPEGConst.mbTypeValPSpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeB;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeBSpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeI;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeISpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeP;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypePSpat;
+import static org.jcodec.codecs.mpeg12.MPEGConst.vlcMBTypeSNR;
 
-import java.nio.ByteBuffer;
-
+import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
+import org.jcodec.common.io.VLC;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -31,28 +48,29 @@ public class SequenceScalableExtension implements MPEGHeader {
     public int mux_to_progressive_sequence;
     public int picture_mux_order;
     public int picture_mux_factor;
+    public static final int Sequence_Scalable_Extension = 0x5;
 
-    public static SequenceScalableExtension read(BitReader in) {
+    public static SequenceScalableExtension read(BitReader _in) {
         SequenceScalableExtension sse = new SequenceScalableExtension();
-        sse.scalable_mode = in.readNBit(2);
-        sse.layer_id = in.readNBit(4);
+        sse.scalable_mode = _in.readNBit(2);
+        sse.layer_id = _in.readNBit(4);
 
-        if (sse.scalable_mode == SPATIAL_SCALABILITY) {
-            sse.lower_layer_prediction_horizontal_size = in.readNBit(14);
-            in.read1Bit();
-            sse.lower_layer_prediction_vertical_size = in.readNBit(14);
-            sse.horizontal_subsampling_factor_m = in.readNBit(5);
-            sse.horizontal_subsampling_factor_n = in.readNBit(5);
-            sse.vertical_subsampling_factor_m = in.readNBit(5);
-            sse.vertical_subsampling_factor_n = in.readNBit(5);
+        if (sse.scalable_mode == SequenceScalableExtension.SPATIAL_SCALABILITY) {
+            sse.lower_layer_prediction_horizontal_size = _in.readNBit(14);
+            _in.read1Bit();
+            sse.lower_layer_prediction_vertical_size = _in.readNBit(14);
+            sse.horizontal_subsampling_factor_m = _in.readNBit(5);
+            sse.horizontal_subsampling_factor_n = _in.readNBit(5);
+            sse.vertical_subsampling_factor_m = _in.readNBit(5);
+            sse.vertical_subsampling_factor_n = _in.readNBit(5);
         }
 
         if (sse.scalable_mode == TEMPORAL_SCALABILITY) {
-            sse.picture_mux_enable = in.read1Bit();
+            sse.picture_mux_enable = _in.read1Bit();
             if (sse.picture_mux_enable != 0)
-                sse.mux_to_progressive_sequence = in.read1Bit();
-            sse.picture_mux_order = in.readNBit(3);
-            sse.picture_mux_factor = in.readNBit(3);
+                sse.mux_to_progressive_sequence = _in.read1Bit();
+            sse.picture_mux_order = _in.readNBit(3);
+            sse.picture_mux_factor = _in.readNBit(3);
         }
 
         return sse;
@@ -61,12 +79,12 @@ public class SequenceScalableExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(SequenceHeader.Sequence_Scalable_Extension, 4);
+        bw.writeNBit(SequenceScalableExtension.Sequence_Scalable_Extension, 4);
 
         bw.writeNBit(scalable_mode, 2);
         bw.writeNBit(layer_id, 4);
 
-        if (scalable_mode == SPATIAL_SCALABILITY) {
+        if (scalable_mode == SequenceScalableExtension.SPATIAL_SCALABILITY) {
             bw.writeNBit(lower_layer_prediction_horizontal_size, 14);
             bw.write1Bit(1); // todo: check this
             bw.writeNBit(lower_layer_prediction_vertical_size, 14);
@@ -84,5 +102,29 @@ public class SequenceScalableExtension implements MPEGHeader {
             bw.writeNBit(picture_mux_factor, 3);
         }
         bw.flush();
+    }
+
+    public static MPEGConst.MBType[] mbTypeVal(int picture_coding_type, SequenceScalableExtension sse) {
+        if (sse != null && sse.scalable_mode == SNR_SCALABILITY) {
+            return MPEGConst.mbTypeValSNR;
+        } else if (sse != null && sse.scalable_mode == SPATIAL_SCALABILITY) {
+            return picture_coding_type == IntraCoded ? mbTypeValISpat
+                    : (picture_coding_type == PredictiveCoded ? mbTypeValPSpat : mbTypeValBSpat);
+        } else {
+            return picture_coding_type == IntraCoded ? mbTypeValI
+                    : (picture_coding_type == PredictiveCoded ? mbTypeValP : mbTypeValB);
+        }
+    }
+
+    public static VLC vlcMBType(int picture_coding_type, SequenceScalableExtension sse) {
+        if (sse != null && sse.scalable_mode == SNR_SCALABILITY) {
+            return vlcMBTypeSNR;
+        } else if (sse != null && sse.scalable_mode == SPATIAL_SCALABILITY) {
+            return picture_coding_type == IntraCoded ? vlcMBTypeISpat
+                    : (picture_coding_type == PredictiveCoded ? vlcMBTypePSpat : vlcMBTypeBSpat);
+        } else {
+            return picture_coding_type == IntraCoded ? vlcMBTypeI
+                    : (picture_coding_type == PredictiveCoded ? vlcMBTypeP : vlcMBTypeB);
+        }
     }
 }

@@ -1,13 +1,12 @@
 package org.jcodec.codecs.mpeg12;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mps.MTSUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mps.MTSUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,11 +22,12 @@ public abstract class FixTimestamp {
         try {
             ra = new RandomAccessFile(file, "rw");
             SeekableByteChannel ch = new FileChannelWrapper(ra.getChannel());
+            final FixTimestamp self = this;
             new MTSUtils.TSReader(true) {
                 @Override
                 public boolean onPkt(int guid, boolean payloadStart, ByteBuffer bb, long filePos,
                         boolean sectionSyntax, ByteBuffer fullPkt) {
-                    return processPacket(payloadStart, bb, sectionSyntax, fullPkt);
+                    return self.processPacket(payloadStart, bb, sectionSyntax, fullPkt);
                 }
             }.readTsFile(ch);
         } finally {

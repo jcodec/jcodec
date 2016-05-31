@@ -1,5 +1,4 @@
 package org.jcodec.codecs.prores;
-
 import static java.lang.Math.min;
 import static java.util.Arrays.fill;
 import static org.jcodec.codecs.prores.ProresConsts.dcCodebooks;
@@ -12,8 +11,6 @@ import static org.jcodec.common.dct.SimpleIDCT10Bit.idct10;
 import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.toSigned;
 
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
 import org.jcodec.common.VideoDecoder;
@@ -23,6 +20,10 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
+import org.jcodec.platform.Platform;
+
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 /**
  * 
@@ -206,7 +207,7 @@ public class ProresDecoder extends VideoDecoder {
 
             decodePicture(data, target[0], fh.width, fh.height, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan,
                     0, fh.chromaType);
-            return new Picture8Bit[] { new Picture8Bit(codedWidth, codedHeight, target[0], ColorSpace.YUV422) };
+            return new Picture8Bit[] { Picture8Bit.createPicture8Bit(codedWidth, codedHeight, target[0], ColorSpace.YUV422) };
         } else {
             lumaSize >>= 1;
             chromaSize >>= 1;
@@ -222,8 +223,8 @@ public class ProresDecoder extends VideoDecoder {
             decodePicture(data, target[fh.topFieldFirst ? 1 : 0], fh.width, fh.height >> 1, codedWidth >> 4,
                     fh.qMatLuma, fh.qMatChroma, fh.scan, 0, fh.chromaType);
 
-            return new Picture8Bit[] { new Picture8Bit(codedWidth, codedHeight >> 1, target[0], ColorSpace.YUV422),
-                    new Picture8Bit(codedWidth, codedHeight >> 1, target[1], ColorSpace.YUV422) };
+            return new Picture8Bit[] { Picture8Bit.createPicture8Bit(codedWidth, codedHeight >> 1, target[0], ColorSpace.YUV422),
+                    Picture8Bit.createPicture8Bit(codedWidth, codedHeight >> 1, target[1], ColorSpace.YUV422) };
         }
     }
 
@@ -291,7 +292,7 @@ public class ProresDecoder extends VideoDecoder {
     static final String readSig(ByteBuffer inp) {
         byte[] sig = new byte[4];
         inp.get(sig);
-        return new String(sig);
+        return Platform.stringFromBytes(sig);
     }
 
     protected void decodePicture(ByteBuffer data, byte[][] result, int width, int height, int mbWidth, int[] qMatLuma,
@@ -365,7 +366,7 @@ public class ProresDecoder extends VideoDecoder {
     }
 
     static final BitReader bitstream(ByteBuffer data, int dataSize) {
-        return new BitReader(NIOUtils.read(data, dataSize));
+        return BitReader.createBitReader(NIOUtils.read(data, dataSize));
     }
     
     byte clipTo8Bit(int val, int min, int max) {

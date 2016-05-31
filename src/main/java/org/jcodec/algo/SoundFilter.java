@@ -89,7 +89,7 @@ public class SoundFilter {
         }
     }
 
-    public static void in(AudioFormat fmt, byte[] samples, int[] func) {
+    public static void _in(AudioFormat fmt, byte[] samples, int[] func) {
         in16BitSignedLE(samples, fmt.getChannels(), func);
     }
 

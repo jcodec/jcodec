@@ -33,17 +33,18 @@ public class CompositionOffsetsBox extends FullBox {
         }
     }
 
-    public CompositionOffsetsBox() {
-        super(new Header(fourcc()));
-    }
-
-    public CompositionOffsetsBox(Entry[] entries) {
-        super(new Header(fourcc()));
-        this.entries = entries;
+    public CompositionOffsetsBox(Header header) {
+        super(header);
     }
 
     public static String fourcc() {
         return "ctts";
+    }
+
+    public static CompositionOffsetsBox createCompositionOffsetsBox(Entry[] entries) {
+        CompositionOffsetsBox ctts = new CompositionOffsetsBox(new Header(fourcc()));
+        ctts.entries = entries;
+        return ctts;
     }
 
     @Override

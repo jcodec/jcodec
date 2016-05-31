@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVType.Block;
 import static org.jcodec.containers.mkv.MKVType.BlockGroup;
@@ -13,16 +12,6 @@ import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
 import static org.jcodec.containers.mkv.MKVType.Timecode;
 import static org.jcodec.containers.mkv.MKVType.findFirst;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
@@ -35,11 +24,18 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class MKVMuxerTest {
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
-    public static File tildeExpand(String path) {
-        return new File(path.replace("~", System.getProperty("user.home")));
-    }
+public class MKVMuxerTest {
 
     private MKVTestSuite suite;
 
@@ -68,7 +64,8 @@ public class MKVMuxerTest {
                 inputStream.close();
             inputStream = null;
         }
-        EbmlMaster[] cc =  MKVType.findAll(tree, EbmlMaster.class, MKVType.Segment, MKVType.Cluster);
+        MKVType[] path = { MKVType.Segment, MKVType.Cluster };
+        EbmlMaster[] cc =  MKVType.findAllTree(tree, EbmlMaster.class, path);
         inputStream = new FileInputStream(file);
         Assert.assertNotNull(cc);
         Assert.assertEquals(2, cc.length);
@@ -116,14 +113,16 @@ public class MKVMuxerTest {
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
-        for (EbmlMaster c : MKVType.findAll(t, EbmlMaster.class, Segment, Cluster)) {
+        MKVType[] path1 = { Segment, Cluster };
+        for (EbmlMaster c : MKVType.findAllTree(t, EbmlMaster.class, path1)) {
             for (EbmlBase e : c.children) {
                 if (e.type.equals(SimpleBlock)) {
                     MkvBlock be = (MkvBlock) e;
                     System.out.println("offset: " + be.size() + " timecode: " + be.timecode);
 
                 } else if (e.type.equals(BlockGroup)) {
-                    MkvBlock be = (MkvBlock) MKVType.findFirst(e, BlockGroup, MKVType.Block);
+                    MKVType[] path = { BlockGroup, MKVType.Block };
+                    MkvBlock be = (MkvBlock) MKVType.findFirst(e, path);
                     System.out.println("offset: " + be.size() + " timecode: " + be.timecode);
                 }
             }
@@ -141,9 +140,10 @@ public class MKVMuxerTest {
                 inputStream.close();
             inputStream = null;
         }
-        EbmlUint[] tcs = MKVType.findAll(tree, EbmlUint.class, MKVType.Segment, MKVType.Cues, MKVType.CuePoint, MKVType.CueTime);
+        MKVType[] path = { MKVType.Segment, MKVType.Cues, MKVType.CuePoint, MKVType.CueTime };
+        EbmlUint[] tcs = MKVType.findAllTree(tree, EbmlUint.class, path);
         for (EbmlUint tc : tcs)
-            System.out.println("CueTime " + tc.get() + " " + tc.offset);
+            System.out.println("CueTime " + tc.getUint() + " " + tc.offset);
     }
 
     @Ignore @Test
@@ -156,13 +156,13 @@ public class MKVMuxerTest {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
         EbmlString docTypeElem = (EbmlString) MKVType.createByType(DocType);
-        docTypeElem.set("matroska");
+        docTypeElem.setString("matroska");
 
         EbmlUint docTypeVersionElem = (EbmlUint) MKVType.createByType(DocTypeVersion);
-        docTypeVersionElem.set(1);
+        docTypeVersionElem.setUint(1);
 
         EbmlUint docTypeReadVersionElem = (EbmlUint) MKVType.createByType(DocTypeReadVersion);
-        docTypeReadVersionElem.set(1);
+        docTypeReadVersionElem.setUint(1);
 
         ebmlHeaderElem.add(docTypeElem);
         ebmlHeaderElem.add(docTypeVersionElem);
@@ -177,7 +177,7 @@ public class MKVMuxerTest {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
         EbmlString docTypeElem = (EbmlString) MKVType.createByType(DocType);
-        docTypeElem.set("matroska");
+        docTypeElem.setString("matroska");
 
         ebmlHeaderElem.add(docTypeElem);
         ByteBuffer bb = ebmlHeaderElem.getData();
@@ -222,7 +222,8 @@ public class MKVMuxerTest {
 
         try {
             FileChannel channel = remuxerInputStream.getChannel();
-            for (MkvBlock be : MKVType.findAll(tree, MkvBlock.class, Segment, Cluster, SimpleBlock)) {
+            MKVType[] path = { Segment, Cluster, SimpleBlock };
+            for (MkvBlock be : MKVType.findAllTree(tree, MkvBlock.class, path)) {
                 ByteBuffer bb = ByteBuffer.allocate(be.dataLen);
                 
                 channel.position(be.dataOffset);
@@ -230,8 +231,9 @@ public class MKVMuxerTest {
                 bb.flip();
                 be.readFrames(bb);
             }
+            MKVType[] path1 = { Segment, Cluster, BlockGroup, Block };
             
-            for (MkvBlock be : MKVType.findAll(tree, MkvBlock.class, Segment, Cluster, BlockGroup, Block)) {
+            for (MkvBlock be : MKVType.findAllTree(tree, MkvBlock.class, path1)) {
                 ByteBuffer bb = ByteBuffer.allocate(be.dataLen);
                 
                 channel.position(be.dataOffset);
@@ -262,7 +264,8 @@ public class MKVMuxerTest {
                 inputStream.close();
             inputStream = null;
         }
-        EbmlMaster[] cc = MKVType.findAll(tree, EbmlMaster.class, MKVType.Segment, MKVType.Cluster);
+        MKVType[] path = { MKVType.Segment, MKVType.Cluster };
+        EbmlMaster[] cc = MKVType.findAllTree(tree, EbmlMaster.class, path);
         printCueTable(cc);
     }
 
@@ -271,7 +274,8 @@ public class MKVMuxerTest {
         long predictedOffset = 0;
         for (EbmlMaster c : cc) {
             long csize = c.size();
-            System.out.println("cluster " + ((EbmlUint) MKVType.findFirst(c, MKVType.Cluster, MKVType.Timecode)).get() + " size: " + csize + " predOffset: " + predictedOffset);
+            MKVType[] path = { MKVType.Cluster, MKVType.Timecode };
+            System.out.println("cluster " + ((EbmlUint) MKVType.findFirst(c, path)).getUint() + " size: " + csize + " predOffset: " + predictedOffset);
             long min = getMinTimecode(c, 1);
             long max = getMaxTimecode(c, 1);
             while (min <= time && time <= max) {
@@ -283,8 +287,9 @@ public class MKVMuxerTest {
     }
     
     public static long getMinTimecode(EbmlMaster c, int trackNr) {
-        EbmlUint timecode = (EbmlUint) MKVType.findFirst(c, Cluster, Timecode);
-        long clusterTimecode = timecode.get();
+        MKVType[] path = { Cluster, Timecode };
+        EbmlUint timecode = (EbmlUint) MKVType.findFirst(c, path);
+        long clusterTimecode = timecode.getUint();
         long minTimecode = clusterTimecode;
         for (MkvBlock be : getBlocksByTrackNumber(c, trackNr))
             if (clusterTimecode + be.timecode < minTimecode)
@@ -294,8 +299,9 @@ public class MKVMuxerTest {
     }
 
     public static long getMaxTimecode(EbmlMaster c, int trackNr) {
-        EbmlUint timecode = (EbmlUint) findFirst(c, Cluster, Timecode);
-        long clusterTimecode = timecode.get();
+        MKVType[] path = { Cluster, Timecode };
+        EbmlUint timecode = (EbmlUint) findFirst(c, path);
+        long clusterTimecode = timecode.getUint();
         long maxTimecode = clusterTimecode;
         for (MkvBlock be : getBlocksByTrackNumber(c, trackNr))
             if (clusterTimecode + be.timecode > maxTimecode)
@@ -310,9 +316,10 @@ public class MKVMuxerTest {
             MkvBlock block = null;
             if (child.type.equals(SimpleBlock))
                 block = (MkvBlock) child;
-            else if (child.type.equals(BlockGroup))
-                block = (MkvBlock) findFirst(child, BlockGroup, Block);
-            else
+            else if (child.type.equals(BlockGroup)) {
+                MKVType[] path = { BlockGroup, Block };
+                block = (MkvBlock) findFirst(child, path);
+            } else
                 continue;
 
             if (block.trackNumber == nr)

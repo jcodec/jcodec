@@ -1,8 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.NIOUtils;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -16,26 +16,30 @@ public class TimecodeMediaInfoBox extends FullBox {
     private short font;
     private short face;
     private short size;
-    private short[] color = new short[3];
-    private short[] bgcolor = new short[3];
+    private short[] color;
+    private short[] bgcolor;
     private String name;
 
     public static String fourcc() {
         return "tcmi";
     }
 
-    public TimecodeMediaInfoBox(short font, short face, short size, short[] color, short[] bgcolor, String name) {
-        this(new Header(fourcc()));
-        this.font = font;
-        this.face = face;
-        this.size = size;
-        this.color = color;
-        this.bgcolor = bgcolor;
-        this.name = name;
+    public static TimecodeMediaInfoBox createTimecodeMediaInfoBox(short font, short face, short size, short[] color,
+            short[] bgcolor, String name) {
+        TimecodeMediaInfoBox box = new TimecodeMediaInfoBox(new Header(fourcc()));
+        box.font = font;
+        box.face = face;
+        box.size = size;
+        box.color = color;
+        box.bgcolor = bgcolor;
+        box.name = name;
+        return box;
     }
 
     public TimecodeMediaInfoBox(Header atom) {
         super(atom);
+        this.color = new short[3];
+        this.bgcolor = new short[3];
     }
 
     @Override

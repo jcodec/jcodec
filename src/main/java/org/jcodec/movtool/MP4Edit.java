@@ -1,4 +1,7 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
@@ -17,7 +20,7 @@ public interface MP4Edit {
      * 
      * @param mov
      */
-    void apply(MovieBox mov, MovieFragmentBox[] fragmentBox);
+    void applyToFragment(MovieBox mov, MovieFragmentBox[] fragmentBox);
 
     /**
      * Operation performed on a movie header

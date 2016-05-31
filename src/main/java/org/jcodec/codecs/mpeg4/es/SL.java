@@ -1,8 +1,7 @@
 package org.jcodec.codecs.mpeg4.es;
+import org.jcodec.common.Assert;
 
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -13,20 +12,17 @@ import org.jcodec.common.Assert;
  */
 public class SL extends Descriptor {
     
-    public SL(int tag, int size) {
-        super(tag, size);
-    }
-    
     public SL() {
-        super(tag());
+        super(tag(), 0);
     }
 
     protected void doWrite(ByteBuffer out) {
         out.put((byte)0x2);
     }
 
-    protected void parse(ByteBuffer input) {
+    protected static SL parse(ByteBuffer input, IDescriptorFactory factory) {
         Assert.assertEquals(0x2, input.get() & 0xff);
+        return new SL();
     }
 
     public static int tag() {

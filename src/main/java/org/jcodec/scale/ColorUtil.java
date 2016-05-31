@@ -1,11 +1,12 @@
 package org.jcodec.scale;
-
-import java.util.HashMap;
-import java.util.Map;
+import static java.lang.System.arraycopy;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -85,6 +86,7 @@ public class ColorUtil {
         rgb8Bit.put(ColorSpace.RGB, new Idential8Bit());
         rgb8Bit.put(ColorSpace.YUV420J, new RgbToYuv420j8Bit());
         rgb8Bit.put(ColorSpace.YUV420, new RgbToYuv420p8Bit());
+        rgb8Bit.put(ColorSpace.YUV422, new RgbToYuv422p8Bit());
         map8Bit.put(ColorSpace.RGB, rgb8Bit);
 
         Map<ColorSpace, Transform8Bit> yuv4208Bit = new HashMap<ColorSpace, Transform8Bit>();
@@ -95,6 +97,8 @@ public class ColorUtil {
 
         Map<ColorSpace, Transform8Bit> yuv4228Bit = new HashMap<ColorSpace, Transform8Bit>();
         yuv4228Bit.put(ColorSpace.YUV422, new Idential8Bit());
+        yuv4228Bit.put(ColorSpace.YUV420, new Yuv422pToYuv420p8Bit());
+        yuv4228Bit.put(ColorSpace.RGB, new Yuv422pToRgb8Bit());
         map8Bit.put(ColorSpace.YUV422, yuv4228Bit);
 
         Map<ColorSpace, Transform8Bit> yuv4448Bit = new HashMap<ColorSpace, Transform8Bit>();
@@ -125,7 +129,7 @@ public class ColorUtil {
         @Override
         public void transform(Picture src, Picture dst) {
             for (int i = 0; i < 3; i++)
-                System.arraycopy(
+                arraycopy(
                         src.getPlaneData(i),
                         0,
                         dst.getPlaneData(i),
@@ -140,7 +144,7 @@ public class ColorUtil {
         @Override
         public void transform(Picture8Bit src, Picture8Bit dst) {
             for (int i = 0; i < 3; i++)
-                System.arraycopy(
+                arraycopy(
                         src.getPlaneData(i),
                         0,
                         dst.getPlaneData(i),

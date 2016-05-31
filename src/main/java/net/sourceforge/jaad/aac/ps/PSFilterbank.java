@@ -10,14 +10,17 @@ package net.sourceforge.jaad.aac.ps;
 class PSFilterbank implements PSTables {
 
 	private int frame_len;
-	private int[] resolution20 = new int[3];
-	private int[] resolution34 = new int[5];
+	private int[] resolution20;
+	private int[] resolution34;
 
 	private float[][] work;
 	private float[][][] buffer;
 	private float[][][] temp;
 
 	PSFilterbank(int numTimeSlotsRate) {
+	    this.resolution20 = new int[3];
+	    this.resolution34 = new int[5];
+
 		int i;
 
 		this.resolution34[0] = 12;

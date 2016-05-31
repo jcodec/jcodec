@@ -1,21 +1,20 @@
 package org.jcodec.codecs.mpeg12;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.psi.PATSection;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,30 +31,27 @@ public class HLSRelocatePMT {
     private static final int CHUNK_SIZE_PKT = 1024;
     private static final int TS_PKT_SIZE = 188;
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
 
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 2) {
-            MainUtils.printHelp(new HashMap<String, String>() {
-                {
-                }
-            }, "file in", "file out");
+            MainUtils.printHelpNoFlags("file _in", "file out");
             return;
         }
 
-        ReadableByteChannel in = null;
+        ReadableByteChannel _in = null;
         WritableByteChannel out = null;
         try {
-            in = NIOUtils.readableFileChannel(new File(cmd.args[0]));
-            out = NIOUtils.writableFileChannel(new File(cmd.args[1]));
-            System.err.println("Processed: " + replocatePMT(in, out) + " packets.");
+            _in = NIOUtils.readableChannel(new File(cmd.args[0]));
+            out = NIOUtils.writableChannel(new File(cmd.args[1]));
+            System.err.println("Processed: " + replocatePMT(_in, out) + " packets.");
         } finally {
-            NIOUtils.closeQuietly(in);
+            NIOUtils.closeQuietly(_in);
             NIOUtils.closeQuietly(out);
         }
     }
 
-    private static int replocatePMT(ReadableByteChannel in, WritableByteChannel out) throws IOException {
+    private static int replocatePMT(ReadableByteChannel _in, WritableByteChannel out) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(TS_PKT_SIZE * CHUNK_SIZE_PKT);
         Set<Integer> pmtPids = new HashSet<Integer>();
         List<ByteBuffer> held = new ArrayList<ByteBuffer>();
@@ -63,7 +59,7 @@ public class HLSRelocatePMT {
         ByteBuffer pmtPkt = null;
 
         int totalPkt = 0;
-        while (in.read(buf) != -1) {
+        while (_in.read(buf) != -1) {
             buf.flip();
             buf.limit((buf.limit() / TS_PKT_SIZE) * TS_PKT_SIZE);
 
@@ -88,9 +84,12 @@ public class HLSRelocatePMT {
 
                     if (guid == 0) {
                         patPkt = pkt;
-                        PATSection pat = PATSection.parse(pktRead);
-                        for (int pmtPid : pat.getPrograms().values())
+                        PATSection pat = PATSection.parsePAT(pktRead);
+                        int[] values = pat.getPrograms().values();
+                        for (int i = 0; i < values.length; i++) {
+                            int pmtPid = values[i];
                             pmtPids.add(pmtPid);
+                        }
                     } else if (pmtPids.contains(guid)) {
                         pmtPkt = pkt;
                         out.write(patPkt);

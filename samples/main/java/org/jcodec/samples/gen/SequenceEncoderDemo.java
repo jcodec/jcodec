@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.jcodec.api.awt.SequenceEncoder8Bit;
+import org.jcodec.api.awt.AWTSequenceEncoder8Bit;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 
@@ -25,7 +25,7 @@ public class SequenceEncoderDemo {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelp(new HashMap<String, String>() {
+            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
                 {
                     put("n-frames", "Total frames to encode");
                 }
@@ -35,9 +35,9 @@ public class SequenceEncoderDemo {
         final int speed = 4;
         final int ballSize = 40;
 
-        SequenceEncoder8Bit enc = new SequenceEncoder8Bit(new File(cmd.getArg(0)));
+        AWTSequenceEncoder8Bit enc = AWTSequenceEncoder8Bit.create25Fps(new File(cmd.getArg(0)));
         enc.getEncoder().setKeyInterval(25);
-        int framesToEncode = cmd.getIntegerFlag("n-frames", 100);
+        int framesToEncode = cmd.getIntegerFlagD("n-frames", 100);
 
         long totalNano = 0;
         BufferedImage image = new BufferedImage(640, 480, BufferedImage.TYPE_3BYTE_BGR);

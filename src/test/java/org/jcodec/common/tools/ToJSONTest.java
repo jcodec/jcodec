@@ -1,16 +1,15 @@
 package org.jcodec.common.tools;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 public class ToJSONTest {
 
-    class Cl1 {
+    static class Cl1 {
         private List<Cl2> arr;
 
         public Cl1() {
@@ -26,7 +25,7 @@ public class ToJSONTest {
         }
     }
 
-    class Cl2 {
+    static class Cl2 {
         private Cl1 owner;
 
         public Cl2(Cl1 owner) {
@@ -56,17 +55,18 @@ public class ToJSONTest {
     @Test
     public void testMap() {
 //@formatter:off
-        Map<String, Map<String, String[]>> map = new LinkedHashMap<String, Map<String, String[]>>() {{
-            put("europe", new LinkedHashMap<String, String[]>() {{
-                put("ukraine", new String[] {"Kyiv", "Lviv", "Odessa", "Kharkiv"});
-                put("russia", new String[] {"Moscow", "St. Petersburg", "Tver", "Novosibirsk"});
-            }});
-            put("asia", new LinkedHashMap<String, String[]>() {{
-                put("china", new String[] {"Beijing", "Shanghai", "Chongqing", "Tianjin"});
-                put("japan", new String[] {"Tokyo", "Kyoto", "Osaka", "Hakone"});
-                put("korea", new String[] {"Seoul", "Busan", "Daegu", "Daejon"});
-            }});
-        }};
+        Map<String, String[]> europe = new LinkedHashMap<String, String[]>();
+        europe.put("ukraine", new String[] {"Kyiv", "Lviv", "Odessa", "Kharkiv"});
+        europe.put("russia", new String[] {"Moscow", "St. Petersburg", "Tver", "Novosibirsk"});
+        
+        Map<String, String[]> asia = new LinkedHashMap<String, String[]>();
+        asia.put("china", new String[] {"Beijing", "Shanghai", "Chongqing", "Tianjin"});
+        asia.put("japan", new String[] {"Tokyo", "Kyoto", "Osaka", "Hakone"});
+        asia.put("korea", new String[] {"Seoul", "Busan", "Daegu", "Daejon"});
+
+        Map<String, Map<String, String[]>> map = new LinkedHashMap<String, Map<String, String[]>>();
+        map.put("europe",  europe);
+        map.put("asia", asia);
 //@formatter:on
         Assert.assertEquals("{" + "\"europe\":" + "{" + "\"ukraine\":[\"Kyiv\",\"Lviv\",\"Odessa\",\"Kharkiv\"],"
                 + "\"russia\":[\"Moscow\",\"St. Petersburg\",\"Tver\",\"Novosibirsk\"]" + "}," + "\"asia\":" + "{"

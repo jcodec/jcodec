@@ -24,7 +24,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 	boolean just_seeked;
 	int ret;
 
-	boolean[] amp_res = new boolean[2];
+	boolean[] amp_res;
 
 	int k0;
 	int kx;
@@ -33,60 +33,60 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 	int N_high;
 	int N_low;
 	int N_Q;
-	int[] N_L = new int[4];
-	int[] n = new int[2];
+	int[] N_L;
+	int[] n;
 
-	int[] f_master = new int[64];
-	int[][] f_table_res = new int[2][64];
-	int[] f_table_noise = new int[64];
-	int[][] f_table_lim = new int[4][64];
+	int[] f_master;
+	int[][] f_table_res;
+	int[] f_table_noise;
+	int[][] f_table_lim;
 
-	int[] table_map_k_to_g = new int[64];
+	int[] table_map_k_to_g;
 
-	int[] abs_bord_lead = new int[2];
-	int[] abs_bord_trail = new int[2];
-	int[] n_rel_lead = new int[2];
-	int[] n_rel_trail = new int[2];
+	int[] abs_bord_lead;
+	int[] abs_bord_trail;
+	int[] n_rel_lead;
+	int[] n_rel_trail;
 
-	int[] L_E = new int[2];
-	int[] L_E_prev = new int[2];
-	int[] L_Q = new int[2];
+	int[] L_E;
+	int[] L_E_prev;
+	int[] L_Q;
 
-	int[][] t_E = new int[2][MAX_L_E+1];
-	int[][] t_Q = new int[2][3];
-	int[][] f = new int[2][MAX_L_E+1];
-	int[] f_prev = new int[2];
+	int[][] t_E;
+	int[][] t_Q;
+	int[][] f;
+	int[] f_prev;
 
-	float[][][] G_temp_prev = new float[2][5][64];
-	float[][][] Q_temp_prev = new float[2][5][64];
-	int[] GQ_ringbuf_index = new int[2];
+	float[][][] G_temp_prev;
+	float[][][] Q_temp_prev;
+	int[] GQ_ringbuf_index;
 
-	int[][][] E = new int[2][64][MAX_L_E];
-	int[][] E_prev = new int[2][64];
-	float[][][] E_orig = new float[2][64][MAX_L_E];
-	float[][][] E_curr = new float[2][64][MAX_L_E];
-	int[][][] Q = new int[2][64][2];
-	float[][][] Q_div = new float[2][64][2];
-	float[][][] Q_div2 = new float[2][64][2];
-	int[][] Q_prev = new int[2][64];
+	int[][][] E;
+	int[][] E_prev;
+	float[][][] E_orig;
+	float[][][] E_curr;
+	int[][][] Q;
+	float[][][] Q_div;
+	float[][][] Q_div2;
+	int[][] Q_prev;
 
-	int[] l_A = new int[2];
-	int[] l_A_prev = new int[2];
+	int[] l_A;
+	int[] l_A_prev;
 
-	int[][] bs_invf_mode = new int[2][MAX_L_E];
-	int[][] bs_invf_mode_prev = new int[2][MAX_L_E];
-	float[][] bwArray = new float[2][64];
-	float[][] bwArray_prev = new float[2][64];
+	int[][] bs_invf_mode;
+	int[][] bs_invf_mode_prev;
+	float[][] bwArray;
+	float[][] bwArray_prev;
 
 	int noPatches;
-	int[] patchNoSubbands = new int[64];
-	int[] patchStartSubband = new int[64];
+	int[] patchNoSubbands;
+	int[] patchStartSubband;
 
-	int[][] bs_add_harmonic = new int[2][64];
-	int[][] bs_add_harmonic_prev = new int[2][64];
+	int[][] bs_add_harmonic;
+	int[][] bs_add_harmonic_prev;
 
-	int[] index_noise_prev = new int[2];
-	int[] psi_is_prev = new int[2];
+	int[] index_noise_prev;
+	int[] psi_is_prev;
 
 	int bs_start_freq_prev;
 	int bs_stop_freq_prev;
@@ -95,7 +95,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 	boolean bs_alter_scale_prev;
 	int bs_noise_bands_prev;
 
-	int[] prevEnvIsShort = new int[2];
+	int[] prevEnvIsShort;
 
 	int kx_prev;
 	int bsco;
@@ -107,10 +107,10 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 	int header_count;
 
 	boolean stereo;
-	AnalysisFilterbank[] qmfa = new AnalysisFilterbank[2];
-	SynthesisFilterbank[] qmfs = new SynthesisFilterbank[2];
+	AnalysisFilterbank[] qmfa;
+	SynthesisFilterbank[] qmfs;
 
-	float[][][][] Xsbr = new float[2][MAX_NTSRHFG][64][2];
+	float[][][][] Xsbr;
 
 	int numTimeSlotsRate;
 	int numTimeSlots;
@@ -141,25 +141,86 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 	boolean bs_interpol_freq;
 	boolean bs_smoothing_mode;
 	int bs_samplerate_mode;
-	boolean[] bs_add_harmonic_flag = new boolean[2];
-	boolean[] bs_add_harmonic_flag_prev = new boolean[2];
+	boolean[] bs_add_harmonic_flag;
+	boolean[] bs_add_harmonic_flag_prev;
 	boolean bs_extended_data;
 	int bs_extension_id;
 	int bs_extension_data;
 	boolean bs_coupling;
-	int[] bs_frame_class = new int[2];
-	int[][] bs_rel_bord = new int[2][9];
-	int[][] bs_rel_bord_0 = new int[2][9];
-	int[][] bs_rel_bord_1 = new int[2][9];
-	int[] bs_pointer = new int[2];
-	int[] bs_abs_bord_0 = new int[2];
-	int[] bs_abs_bord_1 = new int[2];
-	int[] bs_num_rel_0 = new int[2];
-	int[] bs_num_rel_1 = new int[2];
-	int[][] bs_df_env = new int[2][9];
-	int[][] bs_df_noise = new int[2][3];
+	int[] bs_frame_class;
+	int[][] bs_rel_bord;
+	int[][] bs_rel_bord_0;
+	int[][] bs_rel_bord_1;
+	int[] bs_pointer;
+	int[] bs_abs_bord_0;
+	int[] bs_abs_bord_1;
+	int[] bs_num_rel_0;
+	int[] bs_num_rel_1;
+	int[][] bs_df_env;
+	int[][] bs_df_noise;
 
 	public SBR(boolean smallFrames, boolean stereo, SampleFrequency sample_rate, boolean downSampledSBR) {
+        this.amp_res = new boolean[2];
+        this.N_L = new int[4];
+        this.n = new int[2];
+        this.f_master = new int[64];
+        this.f_table_res = new int[2][64];
+        this.f_table_noise = new int[64];
+        this.f_table_lim = new int[4][64];
+        this.table_map_k_to_g = new int[64];
+        this.abs_bord_lead = new int[2];
+        this.abs_bord_trail = new int[2];
+        this.n_rel_lead = new int[2];
+        this.n_rel_trail = new int[2];
+        this.L_E = new int[2];
+        this.L_E_prev = new int[2];
+        this.L_Q = new int[2];
+        this.t_E = new int[2][MAX_L_E+1];
+        this.t_Q = new int[2][3];
+        this.f = new int[2][MAX_L_E+1];
+        this.f_prev = new int[2];
+        this.G_temp_prev = new float[2][5][64];
+        this.Q_temp_prev = new float[2][5][64];
+        this.GQ_ringbuf_index = new int[2];
+        this.E = new int[2][64][MAX_L_E];
+        this.E_prev = new int[2][64];
+        this.E_orig = new float[2][64][MAX_L_E];
+        this.E_curr = new float[2][64][MAX_L_E];
+        this.Q = new int[2][64][2];
+        this.Q_div = new float[2][64][2];
+        this.Q_div2 = new float[2][64][2];
+        this.Q_prev = new int[2][64];
+        this.l_A = new int[2];
+        this.l_A_prev = new int[2];
+        this.bs_invf_mode = new int[2][MAX_L_E];
+        this.bs_invf_mode_prev = new int[2][MAX_L_E];
+        this.bwArray = new float[2][64];
+        this.bwArray_prev = new float[2][64];
+        this.patchNoSubbands = new int[64];
+        this.patchStartSubband = new int[64];
+        this.bs_add_harmonic = new int[2][64];
+        this.bs_add_harmonic_prev = new int[2][64];
+        this.index_noise_prev = new int[2];
+        this.psi_is_prev = new int[2];
+        this.prevEnvIsShort = new int[2];
+        this.qmfa = new AnalysisFilterbank[2];
+        this.qmfs = new SynthesisFilterbank[2];
+        this.Xsbr = new float[2][MAX_NTSRHFG][64][2];
+        this.bs_add_harmonic_flag = new boolean[2];
+        this.bs_add_harmonic_flag_prev = new boolean[2];
+        this.bs_frame_class = new int[2];
+        this.bs_rel_bord = new int[2][9];
+        this.bs_rel_bord_0 = new int[2][9];
+        this.bs_rel_bord_1 = new int[2][9];
+        this.bs_pointer = new int[2];
+        this.bs_abs_bord_0 = new int[2];
+        this.bs_abs_bord_1 = new int[2];
+        this.bs_num_rel_0 = new int[2];
+        this.bs_num_rel_1 = new int[2];
+        this.bs_df_env = new int[2][9];
+        this.bs_df_noise = new int[2][3];
+
+	    
 		this.downSampledSBR = downSampledSBR;
 		this.stereo = stereo;
 		this.sample_rate = sample_rate;
@@ -1151,7 +1212,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 		return ret;
 	}
 
-	public int process(float[] left_chan, float[] right_chan,
+	public int _process(float[] left_chan, float[] right_chan,
 		boolean just_seeked) {
 		boolean dont_process = false;
 		int ret = 0;

@@ -1,19 +1,15 @@
 package org.jcodec.codecs.h264;
-
-import static org.jcodec.codecs.h264.H264Const.BLK_X;
 import static org.jcodec.codecs.h264.H264Const.PartPred.Bi;
 import static org.jcodec.codecs.h264.H264Const.PartPred.Direct;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L1;
-import static org.jcodec.codecs.h264.io.CAVLC.coeffToken;
-
-import java.util.Arrays;
 
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,7 +20,7 @@ import org.jcodec.common.model.Picture8Bit;
  */
 public class H264Const {
 
-    public static VLC[] coeffToken = new VLC[10];
+    public static VLC[] CoeffToken = new VLC[10];
     public static VLC coeffTokenChromaDCY420;
     public static VLC coeffTokenChromaDCY422;
     public static VLC[] run;
@@ -95,7 +91,7 @@ public class H264Const {
         vbl.set(coeffToken(16, 1), "0000000000000110");
         vbl.set(coeffToken(16, 2), "0000000000000101");
         vbl.set(coeffToken(16, 3), "0000000000001000");
-        coeffToken[0] = coeffToken[1] = vbl.getVLC();
+        CoeffToken[0] = CoeffToken[1] = vbl.getVLC();
     }
 
     static {
@@ -162,7 +158,7 @@ public class H264Const {
         vbl.set(coeffToken(16, 1), "00000000000110");
         vbl.set(coeffToken(16, 2), "00000000000101");
         vbl.set(coeffToken(16, 3), "00000000000100");
-        coeffToken[2] = coeffToken[3] = vbl.getVLC();
+        CoeffToken[2] = CoeffToken[3] = vbl.getVLC();
     }
 
     static {
@@ -230,7 +226,7 @@ public class H264Const {
         vbl.set(coeffToken(16, 1), "0000000100");
         vbl.set(coeffToken(16, 2), "0000000011");
         vbl.set(coeffToken(16, 3), "0000000010");
-        coeffToken[4] = coeffToken[5] = coeffToken[6] = coeffToken[7] = vbl.getVLC();
+        CoeffToken[4] = CoeffToken[5] = CoeffToken[6] = CoeffToken[7] = vbl.getVLC();
     }
 
     static {
@@ -297,7 +293,7 @@ public class H264Const {
         vbl.set(coeffToken(16, 1), "111101");
         vbl.set(coeffToken(16, 2), "111110");
         vbl.set(coeffToken(16, 3), "111111");
-        coeffToken[8] = vbl.getVLC();
+        CoeffToken[8] = vbl.getVLC();
     }
 
     static {
@@ -443,10 +439,6 @@ public class H264Const {
 
     public static enum PartPred {
         L0, L1, Bi, Direct;
-
-        public boolean usesList(int l) {
-            return this == Bi ? true : (this == L0 && l == 0 || this == L1 && l == 1);
-        }
     }
 
     public static PartPred[][] bPredModes = { null, { PartPred.L0 }, { PartPred.L1 }, { PartPred.Bi },
@@ -481,7 +473,7 @@ public class H264Const {
             21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 34, 35, 35, 36, 36, 37, 37, 37, 38, 38, 38,
             39, 39, 39, 39 };
 
-    public static final Picture8Bit NO_PIC = new Picture8Bit(0, 0, null, null);
+    public static final Picture8Bit NO_PIC = Picture8Bit.createPicture8Bit(0, 0, null, null);
     public static final int[] BLK_8x8_MB_OFF_LUMA = {0, 8, 128, 136};
     public static final int[] BLK_8x8_MB_OFF_CHROMA = {0, 4, 32, 36};
     public static final int[] BLK_4x4_MB_OFF_LUMA = {0, 4, 8, 12, 64, 68, 72, 76, 128, 132, 136, 140, 192, 196, 200, 204};
@@ -493,8 +485,6 @@ public class H264Const {
         {10, 11, 14, 15}
     };
     public static final int[][] ARRAY = {{0}, {1}, {2}, {3}};
-    public static final int[][] PIX_MAP_SPLIT_4x4 = buildPixSplitMap4x4();
-    public static final int[][] PIX_MAP_SPLIT_2x2 = buildPixSplitMap2x2();
 
     public static int[] CODED_BLOCK_PATTERN_INTRA_COLOR = new int[] { 47, 31, 15, 0, 23, 27, 29, 30, 7, 11, 13, 14, 39,
             43, 45, 46, 16, 3, 5, 10, 12, 19, 21, 26, 28, 35, 37, 42, 44, 1, 2, 4, 8, 17, 18, 20, 24, 6, 9, 22, 25, 32,
@@ -507,6 +497,14 @@ public class H264Const {
             11, 13, 14, 6, 9, 31, 35, 37, 42, 44, 33, 34, 36, 40, 39, 43, 45, 46, 17, 18, 20, 24, 19, 21, 26, 28, 23,
             27, 29, 30, 22, 25, 38, 41 };
     
+    private static int[] inverse(int[] arr) {
+        int[] inv = new int[arr.length];
+        for(int i = 0; i < inv.length; i++) {
+            inv[arr[i]] = i;
+        }
+        return inv;
+    }
+
     public static int[] CODED_BLOCK_PATTERN_INTER_COLOR_INV = inverse(CODED_BLOCK_PATTERN_INTER_COLOR);
 
     public static int[] coded_block_pattern_inter_monochrome = new int[] { 0, 1, 2, 4, 8, 3, 5, 10, 12, 15, 7, 11, 13,
@@ -571,21 +569,13 @@ public class H264Const {
         }
     }
 
-    private static void putBlk(int[] in, int blkX, int blkY, int blkW, int blkH, int stride, int[] out) {
+    private static void putBlk(int[] _in, int blkX, int blkY, int blkW, int blkH, int stride, int[] out) {
         for (int line = 0, srcOff = 0, dstOff = blkY * stride + blkX; line < blkH; line++) {
             for(int i = 0; i < blkW; i++)
-                out[dstOff + i] = in[srcOff + i];
+                out[dstOff + i] = _in[srcOff + i];
             srcOff += blkW;
             dstOff += stride;
         }
-    }
-    
-    private static int[] inverse(int[] arr) {
-        int[] inv = new int[arr.length];
-        for(int i = 0; i < inv.length; i++) {
-            inv[arr[i]] = i;
-        }
-        return inv;
     }
 
     private static int[][] buildPixSplitMap4x4() {
@@ -614,4 +604,16 @@ public class H264Const {
         }
         return result;
     }
+
+    public static boolean usesList(PartPred pred, int l) {
+        return pred == Bi ? true : (pred == L0 && l == 0 || pred == L1 && l == 1);
+    }
+
+    public static final int coeffToken(int totalCoeff, int trailingOnes) {
+        return (totalCoeff << 4) | trailingOnes;
+    }
+    
+    public static final int[][] PIX_MAP_SPLIT_4x4 = buildPixSplitMap4x4();
+    public static final int[][] PIX_MAP_SPLIT_2x2 = buildPixSplitMap2x2();
+
 }

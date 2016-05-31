@@ -1,14 +1,11 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.ArrayUtil.addAll;
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
+import static org.jcodec.common.ArrayUtil.addAllInt;
+import static org.jcodec.common.ArrayUtil.addAllObj;
 
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.model.Rational;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
@@ -25,6 +22,11 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+
+import java.lang.IllegalArgumentException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -55,7 +57,7 @@ public class Util {
         }
     }
 
-    public static Pair<List<Edit>> split(List<Edit> edits, Rational trackByMv, long tvMv) {
+    public static Pair<List<Edit>> splitEdits(List<Edit> edits, Rational trackByMv, long tvMv) {
         long total = 0;
         List<Edit> l = new ArrayList<Edit>();
         List<Edit> r = new ArrayList<Edit>();
@@ -99,7 +101,7 @@ public class Util {
      * @return
      */
     public static Pair<List<Edit>> split(MovieBox movie, TrakBox track, long tvMv) {
-        return split(track.getEdits(), new Rational(track.getTimescale(), movie.getTimescale()), tvMv);
+        return splitEdits(track.getEdits(), new Rational(track.getTimescale(), movie.getTimescale()), tvMv);
     }
 
     public static void spread(MovieBox movie, TrakBox track, long tvMv, long durationMv) {
@@ -137,8 +139,8 @@ public class Util {
     }
 
     private static void updateDuration(TrakBox dest, TrakBox src) {
-        MediaHeaderBox mdhd1 = NodeBox.findFirst(dest, MediaHeaderBox.class, "mdia", "mdhd");
-        MediaHeaderBox mdhd2 = NodeBox.findFirst(src, MediaHeaderBox.class, "mdia", "mdhd");
+        MediaHeaderBox mdhd1 = NodeBox.findFirstPath(dest, MediaHeaderBox.class, Box.path("mdia.mdhd"));
+        MediaHeaderBox mdhd2 = NodeBox.findFirstPath(src, MediaHeaderBox.class, Box.path("mdia.mdhd"));
         mdhd1.setDuration(mdhd1.getDuration() + mdhd2.getDuration());
     }
 
@@ -174,11 +176,11 @@ public class Util {
             throw new IllegalArgumentException("Can't append to track that has different default sample size");
         SampleSizesBox stszr;
         if (stsz1.getDefaultSize() > 0) {
-            stszr = new SampleSizesBox(stsz1.getDefaultSize(), stsz1.getCount() + stsz2.getCount());
+            stszr = SampleSizesBox.createSampleSizesBox(stsz1.getDefaultSize(), stsz1.getCount() + stsz2.getCount());
         } else {
-            stszr = new SampleSizesBox(addAll(stsz1.getSizes(), stsz2.getSizes()));
+            stszr = SampleSizesBox.createSampleSizesBox2(addAllInt(stsz1.getSizes(), stsz2.getSizes()));
         }
-        NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stsz", stszr);
+        NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl")).replace("stsz", stszr);
     }
 
     private static void appendSampleToChunk(TrakBox trakBox1, TrakBox trakBox2, int off) {
@@ -191,8 +193,8 @@ public class Util {
             shifted[i] = new SampleToChunkEntry(orig[i].getFirst() + stsc1.getSampleToChunk().length,
                     orig[i].getCount(), orig[i].getEntry() + off);
         }
-        NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stsc",
-                new SampleToChunkBox((SampleToChunkEntry[]) ArrayUtil.addAll(stsc1.getSampleToChunk(), shifted)));
+        NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl")).replace("stsc",
+                SampleToChunkBox.createSampleToChunkBox((SampleToChunkEntry[]) ArrayUtil.addAllObj(stsc1.getSampleToChunk(), shifted)));
     }
 
     private static int appendEntries(TrakBox trakBox1, TrakBox trakBox2) {
@@ -201,28 +203,28 @@ public class Util {
         SampleEntry[] ent1 = trakBox1.getSampleEntries();
         SampleEntry[] ent2 = trakBox2.getSampleEntries();
 
-        SampleDescriptionBox stsd = new SampleDescriptionBox(ent1);
-        for (SampleEntry se : ent2) {
+        SampleDescriptionBox stsd = SampleDescriptionBox.createSampleDescriptionBox(ent1);
+        for (int i = 0; i < ent2.length; i++) {
+            SampleEntry se = ent2[i];
             se.setDrefInd((short) (se.getDrefInd() + ent1.length));
             stsd.add(se);
         }
-
-        NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stsd", stsd);
+        NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl")).replace("stsd", stsd);
         return ent1.length;
     }
 
     private static void appendDrefs(TrakBox trakBox1, TrakBox trakBox2) {
-        DataRefBox dref1 = NodeBox.findFirst(trakBox1, DataRefBox.class, "mdia", "minf", "dinf", "dref");
-        DataRefBox dref2 = NodeBox.findFirst(trakBox2, DataRefBox.class, "mdia", "minf", "dinf", "dref");
+        DataRefBox dref1 = NodeBox.findFirstPath(trakBox1, DataRefBox.class, Box.path("mdia.minf.dinf.dref"));
+        DataRefBox dref2 = NodeBox.findFirstPath(trakBox2, DataRefBox.class, Box.path("mdia.minf.dinf.dref"));
         dref1.getBoxes().addAll(dref2.getBoxes());
     }
 
     private static void appendTimeToSamples(TrakBox trakBox1, TrakBox trakBox2) {
         TimeToSampleBox stts1 = trakBox1.getStts();
         TimeToSampleBox stts2 = trakBox2.getStts();
-        TimeToSampleBox sttsNew = new TimeToSampleBox((TimeToSampleEntry[]) addAll(stts1.getEntries(),
+        TimeToSampleBox sttsNew = TimeToSampleBox.createTimeToSampleBox((TimeToSampleEntry[]) addAllObj(stts1.getEntries(),
                 stts2.getEntries()));
-        NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl").replace("stts", sttsNew);
+        NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl")).replace("stts", sttsNew);
     }
 
     private static void appendChunkOffsets(TrakBox trakBox1, TrakBox trakBox2) {
@@ -233,16 +235,15 @@ public class Util {
 
         long[] off1 = stco1 == null ? co641.getChunkOffsets() : stco1.getChunkOffsets();
         long[] off2 = stco2 == null ? co642.getChunkOffsets() : stco2.getChunkOffsets();
-        NodeBox stbl1 = NodeBox.findFirst(trakBox1, NodeBox.class, "mdia", "minf", "stbl");
+        NodeBox stbl1 = NodeBox.findFirstPath(trakBox1, NodeBox.class, Box.path("mdia.minf.stbl"));
         stbl1.removeChildren("stco", "co64");
-        stbl1.add(co641 == null && co642 == null ? new ChunkOffsetsBox(addAll(off1, off2)) : new ChunkOffsets64Box(
-                addAll(off1, off2)));
+        stbl1.add(co641 == null && co642 == null ? ChunkOffsetsBox.createChunkOffsetsBox(ArrayUtil.addAllLong(off1, off2)) : ChunkOffsets64Box.createChunkOffsets64Box(ArrayUtil.addAllLong(off1, off2)));
     }
 
     public static void forceEditList(MovieBox movie, TrakBox trakBox) {
         List<Edit> edits = trakBox.getEdits();
         if (edits == null || edits.size() == 0) {
-            MovieHeaderBox mvhd = findFirst(movie, MovieHeaderBox.class, "mvhd");
+            MovieHeaderBox mvhd = NodeBox.findFirst(movie, MovieHeaderBox.class, "mvhd");
             edits = new ArrayList<Edit>();
             trakBox.setEdits(edits);
             edits.add(new Edit((int) mvhd.getDuration(), 0, 1.0f));
@@ -250,8 +251,10 @@ public class Util {
         }
     }
 
-    public static void forceEditList(MovieBox movie) {
-        for (TrakBox trakBox : movie.getTracks()) {
+    public static void forceEditListMov(MovieBox movie) {
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             forceEditList(movie, trakBox);
         }
     }
@@ -260,9 +263,9 @@ public class Util {
         List<Edit> result = new ArrayList<Edit>();
         List<Edit> next = new ArrayList<Edit>(lower);
         for (Edit edit : higher) {
-            long startMv = mvByTrack.multiply(edit.getMediaTime());
-            Pair<List<Edit>> split = split(next, mvByTrack.flip(), startMv);
-            Pair<List<Edit>> split2 = split(split.getB(), mvByTrack.flip(), startMv + edit.getDuration());
+            long startMv = mvByTrack.multiplyLong(edit.getMediaTime());
+            Pair<List<Edit>> split = splitEdits(next, mvByTrack.flip(), startMv);
+            Pair<List<Edit>> split2 = splitEdits(split.getB(), mvByTrack.flip(), startMv + edit.getDuration());
             result.addAll(split2.getA());
             next = split2.getB();
         }

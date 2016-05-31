@@ -1,8 +1,7 @@
 package org.jcodec.containers.mps.index;
+import org.jcodec.common.RunLength;
 
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.RunLength;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -14,9 +13,9 @@ import org.jcodec.common.RunLength;
  * 
  */
 public class MPSIndex {
-    private long[] pesTokens;
-    private RunLength.Integer pesStreamIds;
-    private MPSStreamIndex[] streams;
+    protected long[] pesTokens;
+    protected RunLength.Integer pesStreamIds;
+    protected MPSStreamIndex[] streams;
 
     public static class MPSStreamIndex {
         protected int streamId;
@@ -31,10 +30,6 @@ public class MPSIndex {
             this.fpts = fpts;
             this.fdur = fdur;
             this.sync = sync;
-        }
-
-        public MPSStreamIndex(MPSStreamIndex other) {
-            this(other.streamId, other.fsizes, other.fpts, other.fdur, other.sync);
         }
 
         public int getStreamId() {
@@ -115,10 +110,6 @@ public class MPSIndex {
         this.pesTokens = pesTokens;
         this.pesStreamIds = pesStreamIds;
         this.streams = streams;
-    }
-
-    public MPSIndex(MPSIndex mpsIndex) {
-        this(mpsIndex.pesTokens, mpsIndex.pesStreamIds, mpsIndex.streams);
     }
 
     public long[] getPesTokens() {

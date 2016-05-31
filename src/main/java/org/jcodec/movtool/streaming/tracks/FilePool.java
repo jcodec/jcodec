@@ -1,16 +1,20 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
+
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.InterruptedException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,7 +27,7 @@ import org.jcodec.common.io.SeekableByteChannel;
  */
 public class FilePool implements ByteChannelPool {
     private BlockingQueue<SeekableByteChannel> channels;
-    private List<SeekableByteChannel> allChannels = Collections.synchronizedList(new ArrayList<SeekableByteChannel>());
+    private List<SeekableByteChannel> allChannels;
     private File file;
     private int max;
 
@@ -31,6 +35,7 @@ public class FilePool implements ByteChannelPool {
         this.file = file;
         this.max = max;
         this.channels = new LinkedBlockingQueue<SeekableByteChannel>();
+        this.allChannels = Collections.synchronizedList(new ArrayList<SeekableByteChannel>());
     }
 
     @Override
@@ -53,17 +58,20 @@ public class FilePool implements ByteChannelPool {
                 }
             }
         }
-        return new PoolChannel(channel);
+        return new PoolChannel(this, channel);
     }
 
     protected SeekableByteChannel newChannel(File file) throws FileNotFoundException {
-        return NIOUtils.readableFileChannel(file);
+        return NIOUtils.readableChannel(file);
     }
 
-    public class PoolChannel extends SeekableByteChannelWrapper {
-        public PoolChannel(SeekableByteChannel src) throws IOException {
+    public static class PoolChannel extends SeekableByteChannelWrapper {
+        private FilePool pool;
+
+		public PoolChannel(FilePool pool, SeekableByteChannel src) throws IOException {
             super(src);
-            src.position(0);
+			this.pool = pool;
+            src.setPosition(0);
         }
 
         public boolean isOpen() {
@@ -75,7 +83,7 @@ public class FilePool implements ByteChannelPool {
             src = null;
             while (true) {
                 try {
-                    channels.put(ret);
+                	pool.channels.put(ret);
                     break;
                 } catch (InterruptedException e) {
                 }

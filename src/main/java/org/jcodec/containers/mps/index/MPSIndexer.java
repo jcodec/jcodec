@@ -1,16 +1,16 @@
 package org.jcodec.containers.mps.index;
-
 import static org.jcodec.containers.mps.MPSUtils.mediaStream;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.NIOUtils.FileReader;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mps.PESPacket;
+
 import java.io.File;
 import java.io.IOException;
+import java.lang.System;
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.io.NIOUtils.FileReader;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,8 +28,8 @@ public class MPSIndexer extends BaseIndexer {
         newReader().readFile(source, 0x10000, listener);
     }
 
-    public void index(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
-        newReader().readFile(source, 0x10000, listener);
+    public void indexChannel(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
+        newReader().readChannel(source, 0x10000, listener);
     }
 
     private FileReader newReader() {
@@ -58,7 +58,7 @@ public class MPSIndexer extends BaseIndexer {
         getAnalyser(stream).pkt(pesBuffer, pesHeader);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         MPSIndexer indexer = new MPSIndexer();
         indexer.index(new File(args[0]), new NIOUtils.FileReaderListener() {
             public void progress(int percentDone) {

@@ -15,6 +15,10 @@ import java.nio.ByteBuffer;
  * 
  */
 public class MediaHeaderBox extends FullBox {
+    public MediaHeaderBox(Header atom) {
+        super(atom);
+    }
+
     private long created;
     private long modified;
     private int timescale;
@@ -26,18 +30,16 @@ public class MediaHeaderBox extends FullBox {
         return "mdhd";
     }
 
-    public MediaHeaderBox(int timescale, long duration, int language, long created, long modified, int quality) {
-        super(new Header(fourcc()));
-        this.timescale = timescale;
-        this.duration = duration;
-        this.language = language;
-        this.created = created;
-        this.modified = modified;
-        this.quality = quality;
-    }
-
-    public MediaHeaderBox() {
-        super(new Header(fourcc()));
+    public static MediaHeaderBox createMediaHeaderBox(int timescale, long duration, int language, long created,
+            long modified, int quality) {
+        MediaHeaderBox mdhd = new MediaHeaderBox(new Header(fourcc()));
+        mdhd.timescale = timescale;
+        mdhd.duration = duration;
+        mdhd.language = language;
+        mdhd.created = created;
+        mdhd.modified = modified;
+        mdhd.quality = quality;
+        return mdhd;
     }
 
     public int getTimescale() {

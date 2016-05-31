@@ -1,14 +1,13 @@
 package org.jcodec.containers.mp4.boxes;
-
-import java.nio.ByteBuffer;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
 
 public class ColorExtensionTest {
     @Test
     public void testColorIsom() throws Exception {
-        ColorExtension color = new ColorExtension();
+        ColorExtension color = ColorExtension.createColr();
         color.setColorRange((byte) 2);
         ByteBuffer buf = ByteBuffer.allocate(64);
         color.write(buf);
@@ -18,7 +17,7 @@ public class ColorExtensionTest {
     
     @Test
     public void testColorMov() throws Exception {
-        ColorExtension color = new ColorExtension();
+        ColorExtension color = ColorExtension.createColr();
         ByteBuffer buf = ByteBuffer.allocate(64);
         color.write(buf);
         buf.flip();

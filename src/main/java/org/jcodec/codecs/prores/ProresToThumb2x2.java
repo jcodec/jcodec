@@ -1,13 +1,11 @@
 package org.jcodec.codecs.prores;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.common.dct.IDCT2x2;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
+
+import java.nio.ByteBuffer;
 
 /**
  * 
@@ -37,6 +35,7 @@ public class ProresToThumb2x2 extends ProresDecoder {
         }
     }
 
+    @Override
     public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] target) {
         FrameHeader fh = readFrameHeader(data);
 
@@ -62,7 +61,7 @@ public class ProresToThumb2x2 extends ProresDecoder {
                     new int[] { 0, 2, 1, 3 }, fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
 
-        return new Picture8Bit(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
+        return Picture8Bit.createPicture8Bit(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
                 : ColorSpace.YUV444);
     }
 
@@ -71,17 +70,17 @@ public class ProresToThumb2x2 extends ProresDecoder {
             int shift, int chromaType, int sliceMbCount) {
         int chromaStride = lumaStride >> 1;
 
-        putLuma(result[0], shift * lumaStride, lumaStride << dist, mbX, mbY, y, sliceMbCount, dist, shift);
+        _putLuma(result[0], shift * lumaStride, lumaStride << dist, mbX, mbY, y, sliceMbCount, dist, shift);
         if (chromaType == 2) {
-            putChroma(result[1], shift * chromaStride, chromaStride << dist, mbX, mbY, u, sliceMbCount, dist, shift);
-            putChroma(result[2], shift * chromaStride, chromaStride << dist, mbX, mbY, v, sliceMbCount, dist, shift);
+            _putChroma(result[1], shift * chromaStride, chromaStride << dist, mbX, mbY, u, sliceMbCount, dist, shift);
+            _putChroma(result[2], shift * chromaStride, chromaStride << dist, mbX, mbY, v, sliceMbCount, dist, shift);
         } else {
-            putLuma(result[1], shift * lumaStride, lumaStride << dist, mbX, mbY, u, sliceMbCount, dist, shift);
-            putLuma(result[2], shift * lumaStride, lumaStride << dist, mbX, mbY, v, sliceMbCount, dist, shift);
+            _putLuma(result[1], shift * lumaStride, lumaStride << dist, mbX, mbY, u, sliceMbCount, dist, shift);
+            _putLuma(result[2], shift * lumaStride, lumaStride << dist, mbX, mbY, v, sliceMbCount, dist, shift);
         }
     }
 
-    private void putLuma(byte[] y, int off, int stride, int mbX, int mbY, int[] luma, int mbPerSlice, int dist, int shift) {
+    private void _putLuma(byte[] y, int off, int stride, int mbX, int mbY, int[] luma, int mbPerSlice, int dist, int shift) {
         off += (mbX << 2) + (mbY << 2) * stride;
         int tstride = stride * 3;
         for (int k = 0, sOff = 0; k < mbPerSlice; k++) {
@@ -116,7 +115,7 @@ public class ProresToThumb2x2 extends ProresDecoder {
         }
     }
 
-    private void putChroma(byte[] y, int off, int stride, int mbX, int mbY, int[] chroma, int mbPerSlice, int dist,
+    private void _putChroma(byte[] y, int off, int stride, int mbX, int mbY, int[] chroma, int mbPerSlice, int dist,
             int shift) {
         int tstride = stride * 3;
         off += (mbX << 1) + (mbY << 2) * stride;

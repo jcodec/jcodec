@@ -1,19 +1,24 @@
 package org.jcodec.containers.mp4.boxes;
 
+import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelLayoutTag_UseChannelBitmap;
+import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions;
+
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.model.ChannelLabel;
+import org.jcodec.common.model.Label;
+import org.jcodec.common.tools.ToJSON;
+import org.jcodec.containers.mp4.boxes.ChannelBox.ChannelDescription;
+import org.jcodec.containers.mp4.boxes.channel.ChannelLayout;
+
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.jcodec.common.AudioFormat;
-import org.jcodec.common.model.ChannelLabel;
-import org.jcodec.common.tools.ToJSON;
-import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
-import org.jcodec.containers.mp4.boxes.channel.ChannelUtils;
-import org.jcodec.containers.mp4.boxes.channel.Label;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -26,17 +31,36 @@ import org.jcodec.containers.mp4.boxes.channel.Label;
  */
 public class AudioSampleEntry extends SampleEntry {
 
-//@formatter:off
-    public static int kAudioFormatFlagIsFloat           = 0x1;
-    public static int kAudioFormatFlagIsBigEndian       = 0x2;
-    public static int kAudioFormatFlagIsSignedInteger   = 0x4;
-    public static int kAudioFormatFlagIsPacked          = 0x8;
-    public static int kAudioFormatFlagIsAlignedHigh     = 0x10;
-    public static int kAudioFormatFlagIsNonInterleaved  = 0x20;
-    public static int kAudioFormatFlagIsNonMixable      = 0x40;
-//@formatter:on    
+    //@formatter:off
+    public static int kAudioFormatFlagIsFloat = 0x1;
+    public static int kAudioFormatFlagIsBigEndian = 0x2;
+    public static int kAudioFormatFlagIsSignedInteger = 0x4;
+    public static int kAudioFormatFlagIsPacked = 0x8;
+    public static int kAudioFormatFlagIsAlignedHigh = 0x10;
+    public static int kAudioFormatFlagIsNonInterleaved = 0x20;
+    public static int kAudioFormatFlagIsNonMixable = 0x40;
+    //@formatter:on    
 
-    private static final MyFactory FACTORY = new MyFactory();
+    public static AudioSampleEntry createAudioSampleEntry(Header header, short drefInd, short channelCount,
+            short sampleSize, int sampleRate, short revision, int vendor, int compressionId, int pktSize,
+            int samplesPerPkt, int bytesPerPkt, int bytesPerFrame, int bytesPerSample, short version) {
+        AudioSampleEntry audio = new AudioSampleEntry(header);
+        audio.drefInd = drefInd;
+        audio.channelCount = channelCount;
+        audio.sampleSize = sampleSize;
+        audio.sampleRate = sampleRate;
+        audio.revision = revision;
+        audio.vendor = vendor;
+        audio.compressionId = compressionId;
+        audio.pktSize = pktSize;
+        audio.samplesPerPkt = samplesPerPkt;
+        audio.bytesPerPkt = bytesPerPkt;
+        audio.bytesPerFrame = bytesPerFrame;
+        audio.bytesPerSample = bytesPerSample;
+        audio.version = version;
+        return audio;
+    }
+
     private short channelCount;
     private short sampleSize;
     private float sampleRate;
@@ -51,28 +75,13 @@ public class AudioSampleEntry extends SampleEntry {
     private int bytesPerSample;
     private short version;
     private int lpcmFlags;
+    private static final List<Label> MONO = Arrays.asList(Label.Mono);
+    private static final List<Label> STEREO = Arrays.asList(Label.Left, Label.Right);
+    private static final List<Label> MATRIX_STEREO = Arrays.asList(Label.LeftTotal, Label.RightTotal);
+    public static final Label[] EMPTY = new Label[0];
 
     public AudioSampleEntry(Header atom) {
         super(atom);
-        factory = FACTORY;
-    }
-
-    public AudioSampleEntry(Header header, short drefInd, short channelCount, short sampleSize, int sampleRate,
-            short revision, int vendor, int compressionId, int pktSize, int samplesPerPkt, int bytesPerPkt,
-            int bytesPerFrame, int bytesPerSample, short version) {
-        super(header, drefInd);
-        this.channelCount = channelCount;
-        this.sampleSize = sampleSize;
-        this.sampleRate = sampleRate;
-        this.revision = revision;
-        this.vendor = vendor;
-        this.compressionId = compressionId;
-        this.pktSize = pktSize;
-        this.samplesPerPkt = samplesPerPkt;
-        this.bytesPerPkt = bytesPerPkt;
-        this.bytesPerFrame = bytesPerFrame;
-        this.bytesPerSample = bytesPerSample;
-        this.version = version;
     }
 
     public void parse(ByteBuffer input) {
@@ -188,31 +197,17 @@ public class AudioSampleEntry extends SampleEntry {
         return version;
     }
 
-    public static class MyFactory extends BoxFactory {
-        private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
-
-        public MyFactory() {
-            mappings.put(WaveExtension.fourcc(), WaveExtension.class);
-            mappings.put(ChannelBox.fourcc(), ChannelBox.class);
-            mappings.put("esds", LeafBox.class);
-        }
-
-        public Class<? extends Box> toClass(String fourcc) {
-            return mappings.get(fourcc);
-        }
-    }
-
-    public Endian getEndian() {
-        EndianBox endianBox = Box.findFirst(this, EndianBox.class, WaveExtension.fourcc(), EndianBox.fourcc());
+    public ByteOrder getEndian() {
+        EndianBox endianBox = NodeBox.findFirstPath(this, EndianBox.class, new String[] { WaveExtension.fourcc(), EndianBox.fourcc() });
         if (endianBox == null) {
             if ("twos".equals(header.getFourcc()))
-                return Endian.BIG_ENDIAN;
+                return ByteOrder.BIG_ENDIAN;
             else if ("lpcm".equals(header.getFourcc()))
-                return (lpcmFlags & kAudioFormatFlagIsBigEndian) != 0 ? Endian.BIG_ENDIAN : Endian.LITTLE_ENDIAN;
+                return (lpcmFlags & kAudioFormatFlagIsBigEndian) != 0 ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
             else if ("sowt".equals(header.getFourcc()))
-                return Endian.LITTLE_ENDIAN;
+                return ByteOrder.LITTLE_ENDIAN;
             else
-                return Endian.BIG_ENDIAN;
+                return ByteOrder.BIG_ENDIAN;
         }
         return endianBox.getEndian();
     }
@@ -223,6 +218,7 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     public static Set<String> pcms = new HashSet<String>();
+
     static {
         pcms.add("raw ");
         pcms.add("twos");
@@ -240,13 +236,13 @@ public class AudioSampleEntry extends SampleEntry {
 
     public AudioFormat getFormat() {
         return new AudioFormat((int) sampleRate, calcSampleSize() << 3, channelCount, true,
-                getEndian() == Endian.BIG_ENDIAN);
+                getEndian() == ByteOrder.BIG_ENDIAN);
     }
 
     public ChannelLabel[] getLabels() {
-        ChannelBox channelBox = Box.findFirst(this, ChannelBox.class, "chan");
+        ChannelBox channelBox = NodeBox.findFirst(this, ChannelBox.class, "chan");
         if (channelBox != null) {
-            Label[] labels = ChannelUtils.getLabels(channelBox);
+            Label[] labels = AudioSampleEntry.getLabelsFromChan(channelBox);
             if (channelCount == 2)
                 return translate(translationStereo, labels);
             else
@@ -271,7 +267,8 @@ public class AudioSampleEntry extends SampleEntry {
     private ChannelLabel[] translate(Map<Label, ChannelLabel> translation, Label[] labels) {
         ChannelLabel[] result = new ChannelLabel[labels.length];
         int i = 0;
-        for (Label label : labels) {
+        for (int j = 0; j < labels.length; j++) {
+            Label label = labels[j];
             result[i++] = translation.get(label);
         }
         return result;
@@ -312,6 +309,134 @@ public class AudioSampleEntry extends SampleEntry {
     }
 
     protected void getModelFields(List<String> list) {
-        ToJSON.allFieldsExcept(this.getClass(), "endian", "float", "format", "labels");
+        ToJSON.allFieldsExcept(this.getClass(), new String[]{"endian", "float", "format", "labels"});
     }
+
+    public static Label[] getLabelsFromSampleEntry(AudioSampleEntry se) {
+        ChannelBox channel = NodeBox.findFirst(se, ChannelBox.class, "chan");
+        if (channel != null)
+            return getLabelsFromChan(channel);
+        else {
+            short channelCount = se.getChannelCount();
+            switch (channelCount) {
+            case 1:
+                return new Label[] { Label.Mono };
+            case 2:
+                return new Label[] { Label.Left, Label.Right };
+            case 3:
+                return new Label[] { Label.Left, Label.Right, Label.Center };
+            case 4:
+                return new Label[] { Label.Left, Label.Right, Label.LeftSurround, Label.RightSurround };
+            case 5:
+                return new Label[] { Label.Left, Label.Right, Label.Center, Label.LeftSurround, Label.RightSurround };
+            case 6:
+                return new Label[] { Label.Left, Label.Right, Label.Center, Label.LFEScreen, Label.LeftSurround,
+                        Label.RightSurround };
+            default:
+                Label[] res = new Label[channelCount];
+                Arrays.fill(res, Label.Mono);
+                return res;
+            }
+        }
+    }
+
+    public static Label[] getLabelsFromTrack(TrakBox trakBox) {
+        return AudioSampleEntry.getLabelsFromSampleEntry((AudioSampleEntry) trakBox.getSampleEntries()[0]);
+    }
+
+    public static void setLabel(TrakBox trakBox, int channel, Label label) {
+        Label[] labels = AudioSampleEntry.getLabelsFromTrack(trakBox);
+        labels[channel] = label;
+        _setLabels(trakBox, labels);
+    }
+
+    public static void _setLabels(TrakBox trakBox, Label[] labels) {
+        ChannelBox channel = NodeBox.findFirstPath(trakBox, ChannelBox.class, new String[] { "mdia", "minf", "stbl", "stsd", null, "chan" });
+        if (channel == null) {
+            channel = ChannelBox.createChannelBox();
+            NodeBox.findFirstPath(trakBox, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null }).add(channel);
+        }
+        setLabels(labels, channel);
+    }
+
+    public static void setLabels(Label[] labels, ChannelBox channel) {
+        channel.setChannelLayout(kCAFChannelLayoutTag_UseChannelDescriptions.getCode());
+        ChannelDescription[] list = new ChannelDescription[labels.length];
+        for (int i = 0; i < labels.length; i++)
+            list[i] = new ChannelBox.ChannelDescription(labels[i].getVal(), 0, new float[] { 0, 0, 0 });
+        channel.setDescriptions(list);
+    }
+
+    /**
+     * <code>
+        enum
+        {
+            kCAFChannelBit_Left                 = (1<<0),
+            kCAFChannelBit_Right                = (1<<1),
+            kCAFChannelBit_Center               = (1<<2),
+            kCAFChannelBit_LFEScreen            = (1<<3),
+            kCAFChannelBit_LeftSurround         = (1<<4),   // WAVE: "Back Left"
+            kCAFChannelBit_RightSurround        = (1<<5),   // WAVE: "Back Right"
+            kCAFChannelBit_LeftCenter           = (1<<6),
+            kCAFChannelBit_RightCenter          = (1<<7),
+            kCAFChannelBit_CenterSurround       = (1<<8),   // WAVE: "Back Center"
+            kCAFChannelBit_LeftSurroundDirect   = (1<<9),   // WAVE: "Side Left"
+            kCAFChannelBit_RightSurroundDirect  = (1<<10), // WAVE: "Side Right"
+            kCAFChannelBit_TopCenterSurround    = (1<<11),
+            kCAFChannelBit_VerticalHeightLeft   = (1<<12), // WAVE: "Top Front Left"
+            kCAFChannelBit_VerticalHeightCenter = (1<<13), // WAVE: "Top Front Center"
+            kCAFChannelBit_VerticalHeightRight  = (1<<14), // WAVE: "Top Front Right"
+            kCAFChannelBit_TopBackLeft          = (1<<15),
+            kCAFChannelBit_TopBackCenter        = (1<<16),
+            kCAFChannelBit_TopBackRight         = (1<<17)
+        };
+        </code>
+     * 
+     * @param channelBitmap
+     * @return
+     */
+    public static Label[] getLabelsByBitmap(long channelBitmap) {
+        List<Label> result = new ArrayList<Label>();
+        Label[] values = Label.values();
+        for (int i = 0; i < values.length; i++) {
+            Label label = values[i];
+            if ((label.bitmapVal & channelBitmap) != 0)
+                result.add(label);
+        }
+        return result.toArray(new Label[0]);
+    }
+
+    public static Label[] extractLabels(ChannelDescription[] descriptions) {
+        Label[] result = new Label[descriptions.length];
+        for (int i = 0; i < descriptions.length; i++)
+            result[i] = descriptions[i].getLabel();
+        return result;
+    }
+
+    public static Label[] getLabelsFromChan(ChannelBox box) {
+        long tag = box.getChannelLayout();
+        if ((tag >> 16) == 147) {
+            int n = (int) tag & 0xffff;
+            Label[] res = new Label[n];
+            for (int i = 0; i < n; i++)
+                res[i] = Label.getByVal((1 << 16) | i);
+            return res;
+        }
+        ChannelLayout[] values = ChannelLayout.values();
+        for (int i = 0; i < values.length; i++) {
+            ChannelLayout layout = values[i];
+            if (layout.getCode() == tag) {
+                if (layout == kCAFChannelLayoutTag_UseChannelDescriptions) {
+                    return extractLabels(box.getDescriptions());
+                } else if (layout == kCAFChannelLayoutTag_UseChannelBitmap) {
+                    return getLabelsByBitmap(box.getChannelBitmap());
+                } else {
+                    return layout.getLabels();
+                }
+            }
+        }
+        return AudioSampleEntry.EMPTY;
+    }
+    
+    
 }

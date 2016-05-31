@@ -1,10 +1,10 @@
 package org.jcodec.codecs.mpeg12.bitstream;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Point;
+
+import java.lang.IllegalArgumentException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,6 +15,7 @@ import org.jcodec.common.model.Point;
  */
 public class PictureDisplayExtension implements MPEGHeader {
     public Point[] frame_centre_offsets;
+    public static final int Picture_Display_Extension = 0x7;
 
     public static PictureDisplayExtension read(BitReader bits, SequenceExtension se, PictureCodingExtension pce) {
         PictureDisplayExtension pde = new PictureDisplayExtension();
@@ -57,9 +58,10 @@ public class PictureDisplayExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(PictureHeader.Picture_Display_Extension, 4);
+        bw.writeNBit(PictureDisplayExtension.Picture_Display_Extension, 4);
         
-        for (Point point : frame_centre_offsets) {
+        for (int i = 0; i < frame_centre_offsets.length; i++) {
+            Point point = frame_centre_offsets[i];
             bw.writeNBit(point.getX(), 16);
             bw.writeNBit(point.getY(), 16);
         }

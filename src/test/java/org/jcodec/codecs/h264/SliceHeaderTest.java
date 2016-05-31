@@ -1,7 +1,4 @@
 package org.jcodec.codecs.h264;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
@@ -15,6 +12,9 @@ import org.jcodec.common.io.NIOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.lang.System;
+import java.nio.ByteBuffer;
+
 public class SliceHeaderTest {
 
     @Test
@@ -27,7 +27,7 @@ public class SliceHeaderTest {
         SliceHeaderReader shr = new SliceHeaderReader();
         SliceHeaderWriter shw = new SliceHeaderWriter();
 
-        BitReader reader = new BitReader(ByteBuffer.wrap(data));
+        BitReader reader = BitReader.createBitReader(ByteBuffer.wrap(data));
         ByteBuffer out = ByteBuffer.allocate(data.length);
         BitWriter writer = new BitWriter(out);
 

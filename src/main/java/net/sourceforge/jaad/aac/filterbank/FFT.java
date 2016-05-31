@@ -46,14 +46,14 @@ class FFT implements FFTTables {
 		e2 = new float[2];
 	}
 
-	void process(float[][] in, boolean forward) {
+	void process(float[][] _in, boolean forward) {
 		final int imOff = (forward ? 2 : 1);
 		final int scale = (forward ? length: 1);
 		//bit-reversal
 		int ii = 0;
 		for(int i = 0; i<length; i++) {
-			rev[i][0] = in[ii][0];
-			rev[i][1] = in[ii][1];
+			rev[i][0] = _in[ii][0];
+			rev[i][1] = _in[ii][1];
 			int k = length>>1;
 			while(ii>=k&&k>0) {
 				ii -= k;
@@ -62,40 +62,40 @@ class FFT implements FFTTables {
 			ii += k;
 		}
 		for(int i = 0; i<length; i++) {
-			in[i][0] = rev[i][0];
-			in[i][1] = rev[i][1];
+			_in[i][0] = rev[i][0];
+			_in[i][1] = rev[i][1];
 		}
 
 		//bottom base-4 round
 		for(int i = 0; i<length; i += 4) {
-			a[0] = in[i][0]+in[i+1][0];
-			a[1] = in[i][1]+in[i+1][1];
-			b[0] = in[i+2][0]+in[i+3][0];
-			b[1] = in[i+2][1]+in[i+3][1];
-			c[0] = in[i][0]-in[i+1][0];
-			c[1] = in[i][1]-in[i+1][1];
-			d[0] = in[i+2][0]-in[i+3][0];
-			d[1] = in[i+2][1]-in[i+3][1];
-			in[i][0] = a[0]+b[0];
-			in[i][1] = a[1]+b[1];
-			in[i+2][0] = a[0]-b[0];
-			in[i+2][1] = a[1]-b[1];
+			a[0] = _in[i][0]+_in[i+1][0];
+			a[1] = _in[i][1]+_in[i+1][1];
+			b[0] = _in[i+2][0]+_in[i+3][0];
+			b[1] = _in[i+2][1]+_in[i+3][1];
+			c[0] = _in[i][0]-_in[i+1][0];
+			c[1] = _in[i][1]-_in[i+1][1];
+			d[0] = _in[i+2][0]-_in[i+3][0];
+			d[1] = _in[i+2][1]-_in[i+3][1];
+			_in[i][0] = a[0]+b[0];
+			_in[i][1] = a[1]+b[1];
+			_in[i+2][0] = a[0]-b[0];
+			_in[i+2][1] = a[1]-b[1];
 
 			e1[0] = c[0]-d[1];
 			e1[1] = c[1]+d[0];
 			e2[0] = c[0]+d[1];
 			e2[1] = c[1]-d[0];
 			if(forward) {
-				in[i+1][0] = e2[0];
-				in[i+1][1] = e2[1];
-				in[i+3][0] = e1[0];
-				in[i+3][1] = e1[1];
+				_in[i+1][0] = e2[0];
+				_in[i+1][1] = e2[1];
+				_in[i+3][0] = e1[0];
+				_in[i+3][1] = e1[1];
 			}
 			else {
-				in[i+1][0] = e1[0];
-				in[i+1][1] = e1[1];
-				in[i+3][0] = e2[0];
-				in[i+3][1] = e2[1];
+				_in[i+1][0] = e1[0];
+				_in[i+1][1] = e1[1];
+				_in[i+3][0] = e2[0];
+				_in[i+3][1] = e2[1];
 			}
 		}
 
@@ -110,13 +110,13 @@ class FFT implements FFTTables {
 					km = k*m;
 					rootRe = roots[km][0];
 					rootIm = roots[km][imOff];
-					zRe = in[i+j+k][0]*rootRe-in[i+j+k][1]*rootIm;
-					zIm = in[i+j+k][0]*rootIm+in[i+j+k][1]*rootRe;
+					zRe = _in[i+j+k][0]*rootRe-_in[i+j+k][1]*rootIm;
+					zIm = _in[i+j+k][0]*rootIm+_in[i+j+k][1]*rootRe;
 
-					in[i+j+k][0] = (in[j+k][0]-zRe)*scale;
-					in[i+j+k][1] = (in[j+k][1]-zIm)*scale;
-					in[j+k][0] = (in[j+k][0]+zRe)*scale;
-					in[j+k][1] = (in[j+k][1]+zIm)*scale;
+					_in[i+j+k][0] = (_in[j+k][0]-zRe)*scale;
+					_in[i+j+k][1] = (_in[j+k][1]-zIm)*scale;
+					_in[j+k][0] = (_in[j+k][0]+zRe)*scale;
+					_in[j+k][1] = (_in[j+k][1]+zIm)*scale;
 				}
 			}
 		}

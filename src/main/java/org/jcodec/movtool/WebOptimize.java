@@ -1,12 +1,15 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static org.jcodec.movtool.Remux.hidFile;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -16,7 +19,7 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
  * 
  */
 public class WebOptimize {
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             System.out.println("Syntax: optimize <movie>");
             System.exit(-1);
@@ -26,7 +29,7 @@ public class WebOptimize {
         tgt.renameTo(src);
 
         try {
-            MovieBox movie = MP4Util.createRefMovie(src);
+            MovieBox movie = MP4Util.createRefMovieFromFile(src);
 
             new Flattern().flattern(movie, tgt);
         } catch (Throwable t) {

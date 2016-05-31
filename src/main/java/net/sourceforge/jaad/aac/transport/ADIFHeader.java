@@ -23,41 +23,41 @@ public final class ADIFHeader {
 	private int[] adifBufferFullness;
 	private PCE[] pces;
 
-	public static boolean isPresent(IBitStream in) throws AACException {
-		return in.peekBits(32)==ADIF_ID;
+	public static boolean isPresent(IBitStream _in) throws AACException {
+		return _in.peekBits(32)==ADIF_ID;
 	}
 
 	private ADIFHeader() {
 		copyrightID = new byte[9];
 	}
 
-	public static ADIFHeader readHeader(IBitStream in) throws AACException {
+	public static ADIFHeader readHeader(IBitStream _in) throws AACException {
 		final ADIFHeader h = new ADIFHeader();
-		h.decode(in);
+		h.decode(_in);
 		return h;
 	}
 
-	private void decode(IBitStream in) throws AACException {
+	private void decode(IBitStream _in) throws AACException {
 		int i;
-		id = in.readBits(32); //'ADIF'
-		copyrightIDPresent = in.readBool();
+		id = _in.readBits(32); //'ADIF'
+		copyrightIDPresent = _in.readBool();
 		if(copyrightIDPresent) {
 			for(i = 0; i<9; i++) {
-				copyrightID[i] = (byte) in.readBits(8);
+				copyrightID[i] = (byte) _in.readBits(8);
 			}
 		}
-		originalCopy = in.readBool();
-		home = in.readBool();
-		bitstreamType = in.readBool();
-		bitrate = in.readBits(23);
-		pceCount = in.readBits(4)+1;
+		originalCopy = _in.readBool();
+		home = _in.readBool();
+		bitstreamType = _in.readBool();
+		bitrate = _in.readBits(23);
+		pceCount = _in.readBits(4)+1;
 		pces = new PCE[pceCount];
 		adifBufferFullness = new int[pceCount];
 		for(i = 0; i<pceCount; i++) {
 			if(bitstreamType) adifBufferFullness[i] = -1;
-			else adifBufferFullness[i] = in.readBits(20);
+			else adifBufferFullness[i] = _in.readBits(20);
 			pces[i] = new PCE();
-			pces[i].decode(in);
+			pces[i].decode(_in);
 		}
 	}
 

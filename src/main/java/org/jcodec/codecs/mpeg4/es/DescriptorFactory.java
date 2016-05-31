@@ -10,7 +10,7 @@ import java.util.Map;
  * @author The JCodec project
  * 
  */
-public class DescriptorFactory {
+public class DescriptorFactory implements IDescriptorFactory {
     private static Map<Integer, Class<? extends Descriptor>> map = new HashMap<Integer, Class<? extends Descriptor>>();
     static {
         map.put(ES.tag(), ES.class);
@@ -19,7 +19,14 @@ public class DescriptorFactory {
         map.put(DecoderSpecific.tag(), DecoderSpecific.class);
     }
 
+    static DescriptorFactory factory = new DescriptorFactory();
+
     public Class<? extends Descriptor> byTag(int tag) {
         return map.get(tag);
+    }
+
+
+    public static IDescriptorFactory getInstance() {
+        return factory;
     }
 }

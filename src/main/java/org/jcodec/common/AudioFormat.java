@@ -104,21 +104,22 @@ public class AudioFormat {
         return new AudioFormat(44100, 24, n, true, false);
     }
 
+    public static AudioFormat createAudioFormat(AudioFormat format) {
+        return new AudioFormat(format.sampleRate, format.sampleSizeInBits, format.channelCount, format.signed, format.bigEndian);
+    }
+
+    public static AudioFormat createAudioFormat2(AudioFormat format, int newSampleRate) {
+        AudioFormat af = new AudioFormat(format.sampleRate, format.sampleSizeInBits, format.channelCount, format.signed, format.bigEndian);
+        af.sampleRate = newSampleRate;
+        return af;
+    }
+
     public AudioFormat(int sampleRate, int sampleSizeInBits, int channelCount, boolean signed, boolean bigEndian) {
         this.sampleRate = sampleRate;
         this.sampleSizeInBits = sampleSizeInBits;
         this.channelCount = channelCount;
         this.signed = signed;
         this.bigEndian = bigEndian;
-    }
-
-    public AudioFormat(AudioFormat format, int newSampleRate) {
-        this(format);
-        this.sampleRate = newSampleRate;
-    }
-
-    public AudioFormat(AudioFormat format) {
-        this(format.sampleRate, format.sampleSizeInBits, format.channelCount, format.signed, format.bigEndian);
     }
 
     public int getChannels() {

@@ -11,6 +11,7 @@ import org.jcodec.audio.AudioSource;
 import org.jcodec.audio.FilterGraph;
 import org.jcodec.audio.LanczosInterpolator;
 import org.jcodec.codecs.wav.WavOutput;
+import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
@@ -30,7 +31,7 @@ public class ToneInterpolation {
 
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelp(new HashMap<String, String>() {
+            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
                 {
                     put("tone_freq", "Frequency of the tone to generate");
                     put("tone_rate", "Sampling rate of the tone");
@@ -40,18 +41,19 @@ public class ToneInterpolation {
             System.exit(-1);
         }
 
-        int toneFreq = cmd.getIntegerFlag("tone_freq", 500);
-        int toneRate = cmd.getIntegerFlag("tone_rate", 48000);
-        int outRate = cmd.getIntegerFlag("out_rate", 44100);
+        int toneFreq = cmd.getIntegerFlagD("tone_freq", 500);
+        int toneRate = cmd.getIntegerFlagD("tone_rate", 48000);
+        int outRate = cmd.getIntegerFlagD("out_rate", 44100);
 
         Tone source = new Tone(toneRate, toneFreq);
-        WavOutput.Sink sink = new WavOutput.Sink(new File(cmd.getArg(0)), AudioFormat.MONO_S16_LE(outRate));
+        WavOutFile wavOutFile = new WavOutput.WavOutFile(new File(cmd.getArg(0)), AudioFormat.MONO_S16_LE(outRate));
+        WavOutput.Sink sink = new WavOutput.Sink(wavOutFile);
 //@formatter:off
         AudioFilter filter = FilterGraph
                 .addLevel(new LanczosInterpolator(toneRate, outRate))
                 .create();
 //@formatter:on
-        Audio.transfer(source, filter, sink);
+        Audio.filterTransfer(source, filter, sink);
 
         sink.close();
     }
@@ -73,7 +75,7 @@ public class ToneInterpolation {
         }
 
         @Override
-        public int read(FloatBuffer buffer) throws IOException {
+        public int readFloat(FloatBuffer buffer) throws IOException {
             if (sample > 480000)
                 return -1;
             int i = 0;

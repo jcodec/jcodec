@@ -1,9 +1,9 @@
 package org.jcodec.audio;
-
-import java.nio.FloatBuffer;
-
 import org.jcodec.common.Assert;
 import org.jcodec.common.AudioFormat;
+
+import java.lang.IllegalArgumentException;
+import java.nio.FloatBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -22,8 +22,8 @@ public class ChannelMerge implements AudioFilter {
     }
 
     @Override
-    public void filter(FloatBuffer[] in, long[] inPos, FloatBuffer[] out) {
-        if (in.length != format.getChannels()) {
+    public void filter(FloatBuffer[] _in, long[] inPos, FloatBuffer[] out) {
+        if (_in.length != format.getChannels()) {
             throw new IllegalArgumentException("Channel merge must be supplied with " + format.getChannels()
                     + " input buffers to hold the channels.");
         }
@@ -35,21 +35,21 @@ public class ChannelMerge implements AudioFilter {
         FloatBuffer out0 = out[0];
 
         int min = Integer.MAX_VALUE;
-        for (int i = 0; i < in.length; i++) {
-            if (in[i].remaining() < min)
-                min = in[i].remaining();
+        for (int i = 0; i < _in.length; i++) {
+            if (_in[i].remaining() < min)
+                min = _in[i].remaining();
         }
-        for (int i = 0; i < in.length; i++) {
-            Assert.assertEquals(in[i].remaining(), min);
+        for (int i = 0; i < _in.length; i++) {
+            Assert.assertEquals(_in[i].remaining(), min);
         }
 
-        if (out0.remaining() < min * in.length)
+        if (out0.remaining() < min * _in.length)
             throw new IllegalArgumentException("Supplied output buffer is not big enough to hold " + min + " * "
-                    + in.length + " = " + (min * in.length) + " output samples.");
+                    + _in.length + " = " + (min * _in.length) + " output samples.");
 
         for (int i = 0; i < min; i++) {
-            for (int j = 0; j < in.length; j++)
-                out0.put(in[j].get());
+            for (int j = 0; j < _in.length; j++)
+                out0.put(_in[j].get());
         }
     }
 

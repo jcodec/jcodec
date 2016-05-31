@@ -1,8 +1,7 @@
 package org.jcodec.containers.mkv.boxes;
+import org.jcodec.containers.mkv.util.EbmlUtil;
 
 import java.nio.ByteBuffer;
-
-import org.jcodec.containers.mkv.util.EbmlUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -18,11 +17,11 @@ public class EbmlSint extends EbmlBin {
         super(id);
     }
 
-    public void set(long value) {
+    public void setLong(long value) {
         this.data = ByteBuffer.wrap(convertToBytes(value));
     }
 
-    public long get() {
+    public long getLong() {
         if ((data.limit()-data.position()) == 8)
             return data.duplicate().getLong();
         
@@ -60,6 +59,6 @@ public class EbmlSint extends EbmlBin {
         int num = ebmlSignedLength(val);
         val += signedComplement[num];
 
-        return EbmlUtil.ebmlEncode(val, num);
+        return EbmlUtil.ebmlEncodeLen(val, num);
     }
 }

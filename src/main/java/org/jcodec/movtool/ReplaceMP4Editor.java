@@ -1,10 +1,13 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.io.File;
-import java.io.IOException;
 
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * A full fledged MP4 editor.
@@ -32,7 +35,7 @@ public class ReplaceMP4Editor {
     }
 
     public void copy(File src, File dst, MP4Edit edit) throws IOException {
-        final MovieBox movie = MP4Util.createRefMovie(src);
+        final MovieBox movie = MP4Util.createRefMovieFromFile(src);
         edit.apply(movie);
         Flattern fl = new Flattern();
 

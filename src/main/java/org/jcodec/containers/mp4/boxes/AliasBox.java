@@ -1,14 +1,16 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.UnsupportedEncodingException;
+import static org.jcodec.common.JCodecUtil2.asciiString;
+
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
+
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -76,16 +78,8 @@ public class AliasBox extends FullBox {
         }
 
         public String toString() {
-            try {
-                return new String(data, 0, len, utf16.contains(type) ? "UTF-16" : "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-            }
-            return null;
+            return Platform.stringFromCharset4(data, 0, len, utf16.contains(type) ? Charset.forName("UTF-16") : Charset.forName("UTF-8"));
         }
-    }
-
-    public AliasBox() {
-        super(new Header(fourcc(), 0));
     }
 
     public AliasBox(Header atom) {
@@ -100,12 +94,12 @@ public class AliasBox extends FullBox {
         recordSize = is.getShort();
         version = is.getShort();
         kind = is.getShort();
-        volumeName = NIOUtils.readPascalString(is, 27);
+        volumeName = NIOUtils.readPascalStringL(is, 27);
         volumeCreateDate = is.getInt();
         volumeSignature = is.getShort();
         volumeType = is.getShort();
         parentDirId = is.getInt();
-        fileName = NIOUtils.readPascalString(is, 63);
+        fileName = NIOUtils.readPascalStringL(is, 63);
         fileNumber = is.getInt();
         createdLocalDate = is.getInt();
         fileTypeName = NIOUtils.readString(is, 4);
@@ -133,20 +127,20 @@ public class AliasBox extends FullBox {
         super.doWrite(out);
         if ((flags & 0x1) != 0) // self ref
             return;
-        out.put(JCodecUtil.asciiString(type), 0, 4);
+        out.put(asciiString(type), 0, 4);
         out.putShort(recordSize);
         out.putShort(version);
         out.putShort(kind);
-        NIOUtils.writePascalString(out, volumeName, 27);
+        NIOUtils.writePascalStringL(out, volumeName, 27);
         out.putInt(volumeCreateDate);
         out.putShort(volumeSignature);
         out.putShort(volumeType);
         out.putInt(parentDirId);
-        NIOUtils.writePascalString(out, fileName, 63);
+        NIOUtils.writePascalStringL(out, fileName, 63);
         out.putInt(fileNumber);
         out.putInt(createdLocalDate);
-        out.put(JCodecUtil.asciiString(fileTypeName), 0, 4);
-        out.put(JCodecUtil.asciiString(creatorName), 0, 4);
+        out.put(asciiString(fileTypeName), 0, 4);
+        out.put(asciiString(creatorName), 0, 4);
         out.putShort(nlvlFrom);
         out.putShort(nlvlTo);
         out.putInt(volumeAttributes);
@@ -169,7 +163,7 @@ public class AliasBox extends FullBox {
         return fileName;
     }
 
-    public List<ExtraField> getExtra() {
+    public List<ExtraField> getExtras() {
         return extra;
     }
 
@@ -186,7 +180,7 @@ public class AliasBox extends FullBox {
     }
 
     public static AliasBox createSelfRef() {
-        AliasBox alis = new AliasBox();
+        AliasBox alis = new AliasBox(new Header(fourcc()));
         alis.setFlags(1);
         return alis;
     }

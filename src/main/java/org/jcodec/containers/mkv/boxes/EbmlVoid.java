@@ -1,9 +1,8 @@
 package org.jcodec.containers.mkv.boxes;
+import org.jcodec.common.io.SeekableByteChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,7 +14,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 public class EbmlVoid extends EbmlBase {
 
     public EbmlVoid(byte[] id) {
-        this.id = id;
+        super(id);
     }
 
     @Override
@@ -24,7 +23,7 @@ public class EbmlVoid extends EbmlBase {
     }
     
     public void skip(SeekableByteChannel is) throws IOException{
-        is.position(this.dataOffset+this.dataLen);
+        is.setPosition(this.dataOffset+this.dataLen);
     }
 
 }

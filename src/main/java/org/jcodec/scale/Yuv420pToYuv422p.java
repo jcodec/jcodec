@@ -23,17 +23,17 @@ public class Yuv420pToYuv422p implements Transform {
         copy(src.getPlaneData(0), dst.getPlaneData(0), src.getWidth(), dst.getWidth(), dst.getHeight(), shiftUp,
                 shiftDown);
 
-        copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
+        _copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
                 src.getHeight() >> 1, dst.getHeight(), shiftUp, shiftDown);
-        copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
+        _copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
                 src.getHeight() >> 1, dst.getHeight(), shiftUp, shiftDown);
-        copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
+        _copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
                 src.getHeight() >> 1, dst.getHeight(), shiftUp, shiftDown);
-        copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
+        _copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
                 src.getHeight() >> 1, dst.getHeight(), shiftUp, shiftDown);
     }
 
-    private static final void copy(int[] src, int[] dest, int offX, int offY, int stepX, int stepY, int strideSrc,
+    private static final void _copy(int[] src, int[] dest, int offX, int offY, int stepX, int stepY, int strideSrc,
             int strideDest, int heightSrc, int heightDst, int upShift, int downShift) {
         int offD = offX + offY * strideDest, srcOff = 0;
         for (int i = 0; i < heightSrc; i++) {

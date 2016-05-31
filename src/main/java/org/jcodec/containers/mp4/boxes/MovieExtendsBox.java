@@ -8,11 +8,12 @@ package org.jcodec.containers.mp4.boxes;
  * 
  */
 public class MovieExtendsBox extends NodeBox {
+    public MovieExtendsBox(Header atom) {
+        super(atom);
+    }
+
     public static String fourcc() {
         return "mvex";
     }
 
-    public MovieExtendsBox() {
-        super(new Header(fourcc()));
-    }
 }

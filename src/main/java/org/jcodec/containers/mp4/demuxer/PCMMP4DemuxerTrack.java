@@ -1,20 +1,19 @@
 package org.jcodec.containers.mp4.demuxer;
-
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.QTTimeUtil;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -48,8 +47,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
         this.movie = movie;
         this.input = input;
-
-        SampleSizesBox stsz = findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         defaultSampleSize = stsz.getDefaultSize();
 
         int chunks = 0;
@@ -65,11 +63,11 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         int frameSize = getFrameSize();
         int chSize = sampleToChunks[stscInd].getCount() * frameSize - posShift;
 
-        return nextFrame(ByteBuffer.allocate(chSize));
+        return getNextFrame(ByteBuffer.allocate(chSize));
     }
 
     @Override
-    public synchronized MP4Packet nextFrame(ByteBuffer buffer) throws IOException {
+    public synchronized MP4Packet getNextFrame(ByteBuffer buffer) throws IOException {
         if (stcoInd >= chunkOffsets.length)
             return null;
         int frameSize = getFrameSize();
@@ -86,7 +84,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         shiftPts(doneFrames);
 
         MP4Packet pkt = new MP4Packet(result, QTTimeUtil.mediaToEdited(box, ptsRem, movie.getTimescale()), timescale,
-                (int) (pts - ptsRem), curFrame, true, null, ptsRem, se - 1, pktOff, pktSize, true);
+                (int) (pts - ptsRem), curFrame, true, null, 0, ptsRem, se - 1, pktOff, pktSize, true);
 
         curFrame += doneFrames;
 

@@ -15,19 +15,19 @@ public class MediaInfoBox extends NodeBox {
         return "minf";
     }
 
+    public static MediaInfoBox createMediaInfoBox() {
+        return new MediaInfoBox(new Header(fourcc()));
+    }
+
     public MediaInfoBox(Header atom) {
         super(atom);
     }
 
-    public MediaInfoBox() {
-        super(new Header(fourcc()));
-    }
-
     public DataInfoBox getDinf() {
-        return findFirst(this, DataInfoBox.class, "dinf");
+        return NodeBox.findFirst(this, DataInfoBox.class, "dinf");
     }
 
     public NodeBox getStbl() {
-        return findFirst(this, NodeBox.class, "stbl");
+        return NodeBox.findFirst(this, NodeBox.class, "stbl");
     }
 }

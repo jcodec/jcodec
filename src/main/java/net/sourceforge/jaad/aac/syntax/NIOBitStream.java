@@ -1,9 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.BitReader;
 
+import java.nio.ByteBuffer;
 import net.sourceforge.jaad.aac.AACException;
 
 /**
@@ -29,7 +27,7 @@ public class NIOBitStream implements IBitStream {
 
     @Override
     public void setData(byte[] data) {
-        br = new BitReader(ByteBuffer.wrap(data));
+        br = BitReader.createBitReader(ByteBuffer.wrap(data));
     }
 
     @Override
@@ -57,7 +55,7 @@ public class NIOBitStream implements IBitStream {
         if (br.remaining() >= n) {
             return br.readNBit(n);
         }
-        throw new AACException("eos", true);
+        throw AACException.endOfStream();
     }
 
     @Override
@@ -65,7 +63,7 @@ public class NIOBitStream implements IBitStream {
         if (br.remaining() >= 1) {
             return br.read1Bit();
         }
-        throw new AACException("eos", true);
+        throw AACException.endOfStream();
     }
 
     @Override

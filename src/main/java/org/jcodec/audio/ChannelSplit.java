@@ -1,8 +1,8 @@
 package org.jcodec.audio;
-
-import java.nio.FloatBuffer;
-
 import org.jcodec.common.AudioFormat;
+
+import java.lang.IllegalArgumentException;
+import java.nio.FloatBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -22,8 +22,8 @@ public class ChannelSplit implements AudioFilter {
     }
 
     @Override
-    public void filter(FloatBuffer[] in, long[] inPos, FloatBuffer[] out) {
-        if (in.length != 1) {
+    public void filter(FloatBuffer[] _in, long[] inPos, FloatBuffer[] out) {
+        if (_in.length != 1) {
             throw new IllegalArgumentException("Channel split invoked on more then one input");
         }
         if (out.length != format.getChannels()) {
@@ -31,7 +31,7 @@ public class ChannelSplit implements AudioFilter {
                     + " output buffers to hold the channels.");
         }
 
-        FloatBuffer in0 = in[0];
+        FloatBuffer in0 = _in[0];
 
         int outSampleCount = in0.remaining() / out.length;
         for (int i = 0; i < out.length; i++) {

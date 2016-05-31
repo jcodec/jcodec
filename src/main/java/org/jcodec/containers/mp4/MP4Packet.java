@@ -1,9 +1,8 @@
 package org.jcodec.containers.mp4;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -12,6 +11,22 @@ import org.jcodec.common.model.TapeTimecode;
  * @author The JCodec project
  */
 public class MP4Packet extends Packet {
+    public static MP4Packet createMP4PacketWithTimecode(MP4Packet other, TapeTimecode timecode) {
+        return createMP4Packet(other.data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame,
+                timecode, other.displayOrder, other.mediaPts, other.entryNo);
+    }
+
+    public static MP4Packet createMP4PacketWithData(MP4Packet other, ByteBuffer frm) {
+        return createMP4Packet(frm, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame,
+                other.tapeTimecode, other.displayOrder, other.mediaPts, other.entryNo);
+    }
+
+    public static MP4Packet createMP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo,
+            boolean iframe, TapeTimecode tapeTimecode, int displayOrder, long mediaPts, int entryNo) {
+        return new MP4Packet(data, pts, timescale, duration, frameNo, iframe, tapeTimecode, displayOrder, mediaPts,
+                entryNo, 0, 0, false);
+    }
+
     private long mediaPts;
     private int entryNo;
     private long fileOff;
@@ -19,44 +34,14 @@ public class MP4Packet extends Packet {
     private boolean psync;
 
     public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
-            TapeTimecode tapeTimecode, long mediaPts, int entryNo) {
-        super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode);
-        this.mediaPts = mediaPts;
-        this.entryNo = entryNo;
-    }
-    
-    public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
-            TapeTimecode tapeTimecode, long mediaPts, int entryNo, long fileOff, int size, boolean psync) {
-        super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode);
+            TapeTimecode tapeTimecode, int displayOrder, long mediaPts, int entryNo, long fileOff, int size,
+            boolean psync) {
+        super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode, displayOrder);
         this.mediaPts = mediaPts;
         this.entryNo = entryNo;
         this.fileOff = fileOff;
         this.size = size;
         this.psync = psync;
-    }
-
-    public MP4Packet(MP4Packet packet, ByteBuffer frm) {
-        super(packet, frm);
-        this.mediaPts = packet.mediaPts;
-        this.entryNo = packet.entryNo;
-    }
-
-    public MP4Packet(MP4Packet packet, TapeTimecode timecode) {
-        super(packet, timecode);
-        this.mediaPts = packet.mediaPts;
-        this.entryNo = packet.entryNo;
-    }
-
-    public MP4Packet(Packet packet, long mediaPts, int entryNo) {
-        super(packet);
-        this.mediaPts = mediaPts;
-        this.entryNo = entryNo;
-    }
-
-    public MP4Packet(MP4Packet packet) {
-        super(packet);
-        this.mediaPts = packet.mediaPts;
-        this.entryNo = packet.entryNo;
     }
 
     /**

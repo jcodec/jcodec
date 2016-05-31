@@ -1,13 +1,10 @@
 package org.jcodec.codecs.h264;
-
 import static org.jcodec.codecs.h264.io.model.NALUnitType.IDR_SLICE;
 
 import org.jcodec.codecs.h264.io.model.NALUnit;
-import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.RefPicMarking.InstrType;
 import org.jcodec.codecs.h264.io.model.RefPicMarking.Instruction;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.codecs.h264.io.model.SliceType;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -88,7 +85,8 @@ public class POCManager {
     private boolean hasMMCO5(SliceHeader firstSliceHeader, NALUnit firstNu) {
         if (firstNu.type != IDR_SLICE && firstSliceHeader.refPicMarkingNonIDR != null) {
             Instruction[] instructions = firstSliceHeader.refPicMarkingNonIDR.getInstructions();
-            for (Instruction instruction : instructions) {
+            for (int i = 0; i < instructions.length; i++) {
+                Instruction instruction = instructions[i];
                 if (instruction.getType() == InstrType.CLEAR)
                     return true;
             }

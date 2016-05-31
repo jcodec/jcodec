@@ -15,8 +15,8 @@ import java.util.List;
  */
 public class TrackFragmentBox extends NodeBox {
 
-    public TrackFragmentBox() {
-        super(new Header(fourcc()));
+    public TrackFragmentBox(Header atom) {
+        super(atom);
     }
 
     public static String fourcc() {
@@ -28,7 +28,7 @@ public class TrackFragmentBox extends NodeBox {
     }
 
     public int getTrackId() {
-        TrackFragmentHeaderBox tfhd = Box
+        TrackFragmentHeaderBox tfhd = NodeBox
                 .findFirst(this, TrackFragmentHeaderBox.class, TrackFragmentHeaderBox.fourcc());
         if (tfhd == null)
             throw new RuntimeException("Corrupt track fragment, no header atom found");

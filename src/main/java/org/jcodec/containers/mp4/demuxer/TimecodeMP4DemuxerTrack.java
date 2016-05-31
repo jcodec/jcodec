@@ -1,12 +1,4 @@
 package org.jcodec.containers.mp4.demuxer;
-
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -19,11 +11,16 @@ import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
+import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
+import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
-import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -52,10 +49,10 @@ public class TimecodeMP4DemuxerTrack {
 
         NodeBox stbl = trak.getMdia().getMinf().getStbl();
 
-        TimeToSampleBox stts = findFirst(stbl, TimeToSampleBox.class, "stts");
-        SampleToChunkBox stsc = findFirst(stbl, SampleToChunkBox.class, "stsc");
-        ChunkOffsetsBox stco = findFirst(stbl, ChunkOffsetsBox.class, "stco");
-        ChunkOffsets64Box co64 = findFirst(stbl, ChunkOffsets64Box.class, "co64");
+        TimeToSampleBox stts = NodeBox.findFirst(stbl, TimeToSampleBox.class, "stts");
+        SampleToChunkBox stsc = NodeBox.findFirst(stbl, SampleToChunkBox.class, "stsc");
+        ChunkOffsetsBox stco = NodeBox.findFirst(stbl, ChunkOffsetsBox.class, "stco");
+        ChunkOffsets64Box co64 = NodeBox.findFirst(stbl, ChunkOffsets64Box.class, "co64");
 
         timeToSamples = stts.getEntries();
         chunkOffsets = stco != null ? stco.getChunkOffsets() : co64.getChunkOffsets();
@@ -84,7 +81,7 @@ public class TimecodeMP4DemuxerTrack {
 
         int frameNo = (int) ((((2 * tv * tse.getTimescale()) / box.getTimescale()) / tse.getFrameDuration()) + 1) / 2;
 
-        return new MP4Packet(pkt, getTimecode(getTimecodeSample(sample), frameNo, tse));
+        return MP4Packet.createMP4PacketWithTimecode(pkt, _getTimecode(getTimecodeSample(sample), frameNo, tse));
     }
 
     private int getTimecodeSample(int sample) throws IOException {
@@ -100,14 +97,14 @@ public class TimecodeMP4DemuxerTrack {
                 long offset = chunkOffsets[stscInd]
                         + (Math.min(stscSubInd, sampleToChunks[stscInd].getCount() - 1) << 2);
                 if (input.position() != offset)
-                    input.position(offset);
-                ByteBuffer buf = NIOUtils.fetchFrom(input, 4);
+                    input.setPosition(offset);
+                ByteBuffer buf = NIOUtils.fetchFromChannel(input, 4);
                 return buf.getInt();
             }
         }
     }
 
-    private TapeTimecode getTimecode(int startCounter, int frameNo, TimecodeSampleEntry entry) {
+    private TapeTimecode _getTimecode(int startCounter, int frameNo, TimecodeSampleEntry entry) {
         int frame = dropFrameAdjust(frameNo + startCounter, entry);
         int sec = frame / entry.getNumFrames();
         return new TapeTimecode((short) (sec / 3600), (byte) ((sec / 60) % 60), (byte) (sec % 60),
@@ -126,14 +123,14 @@ public class TimecodeMP4DemuxerTrack {
     private void cacheSamples(SampleToChunkEntry[] sampleToChunks, long[] chunkOffsets) throws IOException {
         synchronized (input) {
             int stscInd = 0;
-            IntArrayList ss = new IntArrayList();
+            IntArrayList ss = IntArrayList.createIntArrayList();
             for (int chunkNo = 0; chunkNo < chunkOffsets.length; chunkNo++) {
                 int nSamples = sampleToChunks[stscInd].getCount();
                 if (stscInd < sampleToChunks.length - 1 && chunkNo + 1 >= sampleToChunks[stscInd + 1].getFirst())
                     stscInd++;
                 long offset = chunkOffsets[chunkNo];
-                input.position(offset);
-                ByteBuffer buf = NIOUtils.fetchFrom(input, nSamples * 4);
+                input.setPosition(offset);
+                ByteBuffer buf = NIOUtils.fetchFromChannel(input, nSamples * 4);
                 for (int i = 0; i < nSamples; i++) {
                     ss.add(buf.getInt());
                 }
@@ -159,9 +156,7 @@ public class TimecodeMP4DemuxerTrack {
 
     public int parseTimecode(String tc) {
         String[] split = tc.split(":");
-
-        TimecodeSampleEntry tmcd = Box
-                .findFirst(box, TimecodeSampleEntry.class, "mdia", "minf", "stbl", "stsd", "tmcd");
+        TimecodeSampleEntry tmcd = NodeBox.findFirstPath(box, TimecodeSampleEntry.class, Box.path("mdia.minf.stbl.stsd.tmcd"));
         byte nf = tmcd.getNumFrames();
 
         return Integer.parseInt(split[3]) + Integer.parseInt(split[2]) * nf + Integer.parseInt(split[1]) * 60 * nf

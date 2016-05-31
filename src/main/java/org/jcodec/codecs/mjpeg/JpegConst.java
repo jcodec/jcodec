@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mjpeg;
-
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
 
@@ -449,7 +448,7 @@ public class JpegConst {
         names[0xdd] = "DRI";
     }
 
-    public static String toString(int marker) {
+    public static String markerToString(int marker) {
         return names[marker];
     }
 

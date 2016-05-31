@@ -1,20 +1,18 @@
 package org.jcodec.containers.mps;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.jcodec.common.IntIntMap;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
-import org.jcodec.containers.mps.MTSUtils.StreamType;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PSISection;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -27,11 +25,12 @@ import org.jcodec.containers.mps.psi.PSISection;
  */
 public class MTSReplacePid extends MTSUtils.TSReader {
 
-    private Set<Integer> pmtPids = new HashSet<Integer>();
+    private Set<Integer> pmtPids;
     private IntIntMap replaceSpec;
 
     public MTSReplacePid(IntIntMap replaceSpec) {
         super(true);
+        this.pmtPids = new HashSet<Integer>();
         this.replaceSpec = replaceSpec;
     }
 
@@ -61,13 +60,13 @@ public class MTSReplacePid extends MTSUtils.TSReader {
 
     private void replaceRefs(IntIntMap replaceSpec, int guid, ByteBuffer buf, Set<Integer> pmtPids) {
         if (guid == 0) {
-            PATSection pat = PATSection.parse(buf);
+            PATSection pat = PATSection.parsePAT(buf);
             for (int pids : pat.getPrograms().values()) {
                 pmtPids.add(pids);
             }
         } else if (pmtPids.contains(guid)) {
             System.out.println(MainUtils.bold("PMT"));
-            PSISection.parse(buf);
+            PSISection.parsePSI(buf);
 
             buf.getShort();
 
@@ -75,7 +74,7 @@ public class MTSReplacePid extends MTSUtils.TSReader {
 
             while (buf.remaining() > 4) {
                 byte streamType = buf.get();
-                StreamType fromTag = MTSUtils.StreamType.fromTag(streamType);
+                MTSStreamType fromTag = MTSStreamType.fromTag(streamType);
                 System.out.print((fromTag == null ? "UNKNOWN" : fromTag) + "(" + String.format("0x%02x", streamType)
                         + "):\t");
                 int wn = buf.getShort() & 0xffff;
@@ -97,13 +96,10 @@ public class MTSReplacePid extends MTSUtils.TSReader {
         return newPid;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 2) {
-            MainUtils.printHelp(new HashMap<String, String>() {
-                {
-                }
-            }, "pid_from:pid_to,[pid_from:pid_to...]", "file");
+            MainUtils.printHelpNoFlags("pid_from:pid_to,[pid_from:pid_to...]", "file");
             return;
         }
 
@@ -111,7 +107,7 @@ public class MTSReplacePid extends MTSUtils.TSReader {
 
         SeekableByteChannel ch = null;
         try {
-            ch = NIOUtils.rwFileChannel(new File(cmd.getArg(1)));
+            ch = NIOUtils.rwChannel(new File(cmd.getArg(1)));
 
             new MTSReplacePid(replaceSpec).readTsFile(ch);
         } finally {

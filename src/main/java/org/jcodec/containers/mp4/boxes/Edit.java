@@ -8,6 +8,10 @@ package org.jcodec.containers.mp4.boxes;
  *
  */
 public class Edit {
+    public static Edit createEdit(Edit edit) {
+        return new Edit(edit.duration, edit.mediaTime, edit.rate);
+    }
+
     private long duration;
     private long mediaTime;
     private float rate;
@@ -16,12 +20,6 @@ public class Edit {
         this.duration = duration;
         this.mediaTime = mediaTime;
         this.rate = rate;
-    }
-
-    public Edit(Edit edit) {
-        this.duration = edit.duration;
-        this.mediaTime = edit.mediaTime;
-        this.rate = edit.rate;
     }
 
     public long getDuration() {

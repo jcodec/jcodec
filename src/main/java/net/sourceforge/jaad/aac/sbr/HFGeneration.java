@@ -13,12 +13,20 @@ class HFGeneration {
 
 	private static class acorr_coef {
 
-		float[] r01 = new float[2];
-		float[] r02 = new float[2];
-		float[] r11 = new float[2];
-		float[] r12 = new float[2];
-		float[] r22 = new float[2];
+		float[] r01;
+		float[] r02;
+		float[] r11;
+		float[] r12;
+		float[] r22;
 		float det;
+		
+		public acorr_coef() {
+	        this.r01 = new float[2];
+	        this.r02 = new float[2];
+	        this.r11 = new float[2];
+	        this.r12 = new float[2];
+	        this.r22 = new float[2];
+        }
 	}
 
 	public static void hf_generation(SBR sbr, float[][][] Xlow,

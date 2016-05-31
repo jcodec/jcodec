@@ -1,5 +1,5 @@
 package org.jcodec.common.io;
-
+import java.lang.IllegalArgumentException;
 import java.nio.ByteBuffer;
 
 /**
@@ -15,7 +15,7 @@ public class BitWriter {
 
     private final ByteBuffer buf;
     private int curInt;
-    private int curBit;
+    private int _curBit;
     private int initPos;
 
     public BitWriter(ByteBuffer buf) {
@@ -23,15 +23,16 @@ public class BitWriter {
         initPos = buf.position();
     }
 
-    private BitWriter(ByteBuffer os, int curBit, int curInt, int initPos) {
-        this.buf = os;
-        this.curBit = curBit;
-        this.curInt = curInt;
-        this.initPos = initPos;
+    public BitWriter fork() {
+        BitWriter fork = new BitWriter(buf.duplicate());
+        fork._curBit = this._curBit;
+        fork.curInt = this.curInt;
+        fork.initPos = this.initPos;
+        return fork;
     }
 
     public void flush() {
-        int toWrite = (curBit + 7) >> 3;
+        int toWrite = (_curBit + 7) >> 3;
         for (int i = 0; i < toWrite; i++) {
             buf.put((byte) (curInt >>> 24));
             curInt <<= 8;
@@ -51,43 +52,39 @@ public class BitWriter {
         if (n == 0)
             return;
         value &= -1 >>> (32 - n);
-        if (32 - curBit >= n) {
-            curInt |= value << (32 - curBit - n);
-            curBit += n;
-            if (curBit == 32) {
+        if (32 - _curBit >= n) {
+            curInt |= value << (32 - _curBit - n);
+            _curBit += n;
+            if (_curBit == 32) {
                 putInt(curInt);
-                curBit = 0;
+                _curBit = 0;
                 curInt = 0;
             }
         } else {
-            int secPart = n - (32 - curBit);
+            int secPart = n - (32 - _curBit);
             curInt |= value >>> secPart;
             putInt(curInt);
             curInt = value << (32 - secPart);
-            curBit = secPart;
+            _curBit = secPart;
         }
     }
 
     public void write1Bit(int bit) {
-        curInt |= bit << (32 - curBit - 1);
-        ++curBit;
-        if (curBit == 32) {
+        curInt |= bit << (32 - _curBit - 1);
+        ++_curBit;
+        if (_curBit == 32) {
             putInt(curInt);
-            curBit = 0;
+            _curBit = 0;
             curInt = 0;
         }
     }
 
     public int curBit() {
-        return curBit & 0x7;
-    }
-
-    public BitWriter fork() {
-        return new BitWriter(buf.duplicate(), curBit, curInt, initPos);
+        return _curBit & 0x7;
     }
 
     public int position() {
-        return ((buf.position() - initPos) << 3) + curBit;
+        return ((buf.position() - initPos) << 3) + _curBit;
     }
 
     public ByteBuffer getBuffer() {

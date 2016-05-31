@@ -1,20 +1,19 @@
 package org.jcodec.codecs.h264;
-
 import static java.lang.String.format;
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
-import static org.jcodec.common.JCodecUtil.getAsIntArray;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.h264.io.model.Frame;
+import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class MacroblockBiDecodingTest {
     @Test
@@ -340,7 +339,7 @@ public class MacroblockBiDecodingTest {
     }
 
     private void testOneFile(String encoded, String decoded, int nFrames, int[] reorderMap) throws IOException {
-        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFrom(new File(encoded)));
+        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFromFile(new File(encoded)));
         H264Decoder dec = new H264Decoder();
 
         Frame[] out = new Frame[nFrames];
@@ -349,13 +348,13 @@ public class MacroblockBiDecodingTest {
                     .getData());
         }
 
-        ByteBuffer yuv = NIOUtils.fetchFrom(new File(decoded));
+        ByteBuffer yuv = NIOUtils.fetchFromFile(new File(decoded));
         for (int i = 0; i < nFrames; i++) {
-            Assert.assertArrayEquals(format("Frame %d luma", i), toByteArrayShifted(getAsIntArray(yuv, 1024)),
+            Assert.assertArrayEquals(format("Frame %d luma", i), toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 1024)),
                     out[reorderMap[i]].getPlaneData(0));
-            Assert.assertArrayEquals(format("Frame %d cb", i), toByteArrayShifted(getAsIntArray(yuv, 256)),
+            Assert.assertArrayEquals(format("Frame %d cb", i), toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)),
                     out[reorderMap[i]].getPlaneData(1));
-            Assert.assertArrayEquals(format("Frame %d cr", i), toByteArrayShifted(getAsIntArray(yuv, 256)),
+            Assert.assertArrayEquals(format("Frame %d cr", i), toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, 256)),
                     out[reorderMap[i]].getPlaneData(2));
         }
     }

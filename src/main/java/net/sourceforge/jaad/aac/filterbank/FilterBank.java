@@ -43,12 +43,12 @@ public class FilterBank implements SyntaxConstants, SineWindows, KBDWindows {
 		buf = new float[2*length];
 	}
 
-	public void process(WindowSequence windowSequence, int windowShape, int windowShapePrev, float[] in, float[] out, int channel) {
+	public void process(WindowSequence windowSequence, int windowShape, int windowShapePrev, float[] _in, float[] out, int channel) {
 		int i;
 		float[] overlap = overlaps[channel];
 		switch(windowSequence) {
 			case ONLY_LONG_SEQUENCE:
-				mdctLong.process(in, 0, buf, 0);
+				mdctLong.process(_in, 0, buf, 0);
 				//add second half output of previous frame to windowed output of current frame
 				for(i = 0; i<length; i++) {
 					out[i] = overlap[i]+(buf[i]*LONG_WINDOWS[windowShapePrev][i]);
@@ -60,7 +60,7 @@ public class FilterBank implements SyntaxConstants, SineWindows, KBDWindows {
 				}
 				break;
 			case LONG_START_SEQUENCE:
-				mdctLong.process(in, 0, buf, 0);
+				mdctLong.process(_in, 0, buf, 0);
 				//add second half output of previous frame to windowed output of current frame
 				for(i = 0; i<length; i++) {
 					out[i] = overlap[i]+(buf[i]*LONG_WINDOWS[windowShapePrev][i]);
@@ -79,7 +79,7 @@ public class FilterBank implements SyntaxConstants, SineWindows, KBDWindows {
 				break;
 			case EIGHT_SHORT_SEQUENCE:
 				for(i = 0; i<8; i++) {
-					mdctShort.process(in, i*shortLen, buf, 2*i*shortLen);
+					mdctShort.process(_in, i*shortLen, buf, 2*i*shortLen);
 				}
 
 				//add second half output of previous frame to windowed output of current frame
@@ -107,7 +107,7 @@ public class FilterBank implements SyntaxConstants, SineWindows, KBDWindows {
 				}
 				break;
 			case LONG_STOP_SEQUENCE:
-				mdctLong.process(in, 0, buf, 0);
+				mdctLong.process(_in, 0, buf, 0);
 				//add second half output of previous frame to windowed output of current frame
 				//construct first half window using padding with 1's and 0's
 				for(i = 0; i<mid; i++) {
@@ -128,26 +128,26 @@ public class FilterBank implements SyntaxConstants, SineWindows, KBDWindows {
 	}
 
 	//only for LTP: no overlapping, no short blocks
-	public void processLTP(WindowSequence windowSequence, int windowShape, int windowShapePrev, float[] in, float[] out) {
+	public void processLTP(WindowSequence windowSequence, int windowShape, int windowShapePrev, float[] _in, float[] out) {
 		int i;
 
 		switch(windowSequence) {
 			case ONLY_LONG_SEQUENCE:
 				for(i = length-1; i>=0; i--) {
-					buf[i] = in[i]*LONG_WINDOWS[windowShapePrev][i];
-					buf[i+length] = in[i+length]*LONG_WINDOWS[windowShape][length-1-i];
+					buf[i] = _in[i]*LONG_WINDOWS[windowShapePrev][i];
+					buf[i+length] = _in[i+length]*LONG_WINDOWS[windowShape][length-1-i];
 				}
 				break;
 
 			case LONG_START_SEQUENCE:
 				for(i = 0; i<length; i++) {
-					buf[i] = in[i]*LONG_WINDOWS[windowShapePrev][i];
+					buf[i] = _in[i]*LONG_WINDOWS[windowShapePrev][i];
 				}
 				for(i = 0; i<mid; i++) {
-					buf[i+length] = in[i+length];
+					buf[i+length] = _in[i+length];
 				}
 				for(i = 0; i<shortLen; i++) {
-					buf[i+length+mid] = in[i+length+mid]*SHORT_WINDOWS[windowShape][shortLen-1-i];
+					buf[i+length+mid] = _in[i+length+mid]*SHORT_WINDOWS[windowShape][shortLen-1-i];
 				}
 				for(i = 0; i<mid; i++) {
 					buf[i+length+mid+shortLen] = 0;
@@ -159,13 +159,13 @@ public class FilterBank implements SyntaxConstants, SineWindows, KBDWindows {
 					buf[i] = 0;
 				}
 				for(i = 0; i<shortLen; i++) {
-					buf[i+mid] = in[i+mid]*SHORT_WINDOWS[windowShapePrev][i];
+					buf[i+mid] = _in[i+mid]*SHORT_WINDOWS[windowShapePrev][i];
 				}
 				for(i = 0; i<mid; i++) {
-					buf[i+mid+shortLen] = in[i+mid+shortLen];
+					buf[i+mid+shortLen] = _in[i+mid+shortLen];
 				}
 				for(i = 0; i<length; i++) {
-					buf[i+length] = in[i+length]*LONG_WINDOWS[windowShape][length-1-i];
+					buf[i+length] = _in[i+length]*LONG_WINDOWS[windowShape][length-1-i];
 				}
 				break;
 		}

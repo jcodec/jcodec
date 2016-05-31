@@ -1,12 +1,11 @@
 package org.jcodec.containers.mps;
+import org.jcodec.common.IntArrayList;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.Rational;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.Rational;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,7 +31,8 @@ public class MPSUtils {
     public static final int PRIVATE_2 = 0x1bf;
 
     public static final boolean mediaStream(int streamId) {
-        return (streamId >= $(AUDIO_MIN) && streamId <= $(VIDEO_MAX) || streamId == $(PRIVATE_1) || streamId == $(PRIVATE_2));
+        return (streamId >= $(AUDIO_MIN) && streamId <= $(VIDEO_MAX) || streamId == $(PRIVATE_1)
+                || streamId == $(PRIVATE_2));
     }
 
     public static final boolean mediaMarker(int marker) {
@@ -67,11 +67,15 @@ public class MPSUtils {
         private int pesLen;
         private long pesFileStart = -1;
         private int stream;
-        private boolean pes;
+        private boolean _pes;
         private int pesLeft;
 
-        private ByteBuffer pesBuffer = ByteBuffer.allocate(1 << 21);
-
+        private ByteBuffer pesBuffer;
+            
+        public PESReader() {
+            this.pesBuffer = ByteBuffer.allocate(1 << 21);
+        }
+        
         protected abstract void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream);
 
         public void analyseBuffer(ByteBuffer buf, long pos) {
@@ -86,32 +90,32 @@ public class MPSUtils {
                         long filePos = pos + buf.position() - init;
                         pes1(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
                         pesFileStart = -1;
-                        pes = false;
+                        _pes = false;
                         stream = -1;
                     }
                     continue;
                 }
                 int bt = buf.get() & 0xff;
-                if (pes)
+                if (_pes)
                     pesBuffer.put((byte) (marker >>> 24));
                 marker = (marker << 8) | bt;
                 if (marker >= SYSTEM && marker <= VIDEO_MAX) {
                     long filePos = pos + buf.position() - init - 4;
-                    if (pes)
+                    if (_pes)
                         pes1(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
                     pesFileStart = filePos;
 
-                    pes = true;
+                    _pes = true;
                     stream = marker & 0xff;
                     lenFieldLeft = 2;
                     pesLen = 0;
                 } else if (marker >= 0x1b9 && marker <= 0x1ff) {
-                    if (pes) {
+                    if (_pes) {
                         long filePos = pos + buf.position() - init - 4;
                         pes1(pesBuffer, pesFileStart, (int) (filePos - pesFileStart), stream);
                     }
                     pesFileStart = -1;
-                    pes = false;
+                    _pes = false;
                     stream = -1;
                 } else if (lenFieldLeft > 0) {
                     pesLen = (pesLen << 8) | bt;
@@ -173,9 +177,9 @@ public class MPSUtils {
         }
         long pts = -1, dts = -1;
         if ((c & 0xf0) == 0x20) {
-            pts = readTs(is, c);
+            pts = _readTs(is, c);
         } else if ((c & 0xf0) == 0x30) {
-            pts = readTs(is, c);
+            pts = _readTs(is, c);
             dts = readTs(is);
         } else {
             if (c != 0x0f)
@@ -185,7 +189,7 @@ public class MPSUtils {
         return new PESPacket(null, pts, streamId, len, pos, dts);
     }
 
-    public static long readTs(ByteBuffer is, int c) {
+    public static long _readTs(ByteBuffer is, int c) {
         return (((long) c & 0x0e) << 29) | ((is.get() & 0xff) << 22) | (((is.get() & 0xff) >> 1) << 15)
                 | ((is.get() & 0xff) << 7) | ((is.get() & 0xff) >> 1);
     }
@@ -231,6 +235,13 @@ public class MPSUtils {
             len = buf.get() & 0xff;
         }
 
+        public int getTag() {
+            return tag;
+        }
+
+        public int getLen() {
+            return len;
+        }
     }
 
     public static class VideoStreamDescriptor extends MPEGMediaDescriptor {
@@ -243,7 +254,14 @@ public class MPSUtils {
         private int profileAndLevel;
         private int chromaFormat;
         private int frameRateExtension;
+        Rational[] frameRates;
 
+        public VideoStreamDescriptor() {
+            this.frameRates = new Rational[] { null, new Rational(24000, 1001), new Rational(24, 1),
+                    new Rational(25, 1), new Rational(30000, 1001), new Rational(30, 1), new Rational(50, 1),
+                    new Rational(60000, 1001), new Rational(60, 1), null, null, null, null, null, null, null};
+        }
+            
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
@@ -261,37 +279,94 @@ public class MPSUtils {
             }
         }
 
-        Rational[] frameRates = new Rational[] { null, new Rational(24000, 1001), new Rational(24, 1),
-                new Rational(25, 1), new Rational(30000, 1001), new Rational(30, 1), new Rational(50, 1),
-                new Rational(60000, 1001), new Rational(60, 1), null, null, null, null, null, null, null
-
-        };
-
         public Rational getFrameRate() {
             return frameRates[frameRateCode];
+        }
+
+        public int getMultipleFrameRate() {
+            return multipleFrameRate;
+        }
+
+        public int getFrameRateCode() {
+            return frameRateCode;
+        }
+
+        public boolean isMpeg1Only() {
+            return mpeg1Only;
+        }
+
+        public int getConstrainedParameter() {
+            return constrainedParameter;
+        }
+
+        public int getStillPicture() {
+            return stillPicture;
+        }
+
+        public int getProfileAndLevel() {
+            return profileAndLevel;
+        }
+
+        public int getChromaFormat() {
+            return chromaFormat;
+        }
+
+        public int getFrameRateExtension() {
+            return frameRateExtension;
         }
     }
 
     public static class AudioStreamDescriptor extends MPEGMediaDescriptor {
+        private int variableRateAudioIndicator;
+        private int freeFormatFlag;
+        private int id;
+        private int layer;
+
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
             int b0 = buf.get() & 0xff;
-            int free_format_flag = (b0 >> 7) & 1;
-            int ID = (b0 >> 6) & 1;
-            int layer = (b0 >> 5) & 3;
-            int variable_rate_audio_indicator = (b0 >> 3) & 1;
+            freeFormatFlag = (b0 >> 7) & 1;
+            id = (b0 >> 6) & 1;
+            layer = (b0 >> 5) & 3;
+            variableRateAudioIndicator = (b0 >> 3) & 1;
+        }
 
+        public int getVariableRateAudioIndicator() {
+            return variableRateAudioIndicator;
+        }
+
+        public int getFreeFormatFlag() {
+            return freeFormatFlag;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public int getLayer() {
+            return layer;
         }
     }
 
     public static class ISO639LanguageDescriptor extends MPEGMediaDescriptor {
+        private IntArrayList languageCodes;
+        
+        public ISO639LanguageDescriptor() {
+            super();
+            this.languageCodes = IntArrayList.createIntArrayList();
+        }
+        
         @Override
         public void parse(ByteBuffer buf) {
             super.parse(buf);
             while (buf.remaining() >= 4) {
-                int i = buf.getInt();
+                languageCodes.add(buf.getInt());
             }
+        }
+
+        public IntArrayList getLanguageCodes() {
+            return languageCodes;
         }
     }
 
@@ -314,6 +389,10 @@ public class MPSUtils {
             super.parse(buf);
             profileLevel = buf.get() & 0xff;
         }
+
+        public int getProfileLevel() {
+            return profileLevel;
+        }
     }
 
     public static class AVCVideoDescriptor extends MPEGMediaDescriptor {
@@ -329,6 +408,18 @@ public class MPSUtils {
             flags = buf.get() & 0xff;
             level = buf.get() & 0xff;
         }
+
+        public int getProfileIdc() {
+            return profileIdc;
+        }
+
+        public int getFlags() {
+            return flags;
+        }
+
+        public int getLevel() {
+            return level;
+        }
     }
 
     public static class AACAudioDescriptor extends MPEGMediaDescriptor {
@@ -343,10 +434,59 @@ public class MPSUtils {
             channel = buf.get() & 0xff;
             flags = buf.get() & 0xff;
         }
+
+        public int getProfile() {
+            return profile;
+        }
+
+        public int getChannel() {
+            return channel;
+        }
+
+        public int getFlags() {
+            return flags;
+        }
     }
 
-    public static class MP4TextDescriptor extends MPEGMediaDescriptor {
+    public static class DataStreamAlignmentDescriptor extends MPEGMediaDescriptor {
+        private int alignmentType;
+        
+        @Override
+        public void parse(ByteBuffer buf) {
+            super.parse(buf);
+            alignmentType = buf.get() & 0xff;
+        }
 
+        public int getAlignmentType() {
+            return alignmentType;
+        }
+    }
+    
+    public static class RegistrationDescriptor extends MPEGMediaDescriptor {
+        private int formatIdentifier;
+        private IntArrayList additionalFormatIdentifiers;
+        
+        public RegistrationDescriptor() {
+            super();
+            this.additionalFormatIdentifiers = IntArrayList.createIntArrayList();
+        }
+        
+        @Override
+        public void parse(ByteBuffer buf) {
+            super.parse(buf);
+            formatIdentifier = buf.getInt();
+            while(buf.hasRemaining()) {
+                additionalFormatIdentifiers.add(buf.get() & 0xff);
+            }
+        }
+
+        public int getFormatIdentifier() {
+            return formatIdentifier;
+        }
+
+        public IntArrayList getAdditionalFormatIdentifiers() {
+            return additionalFormatIdentifiers;
+        }
     }
 
     public static Class<? extends MPEGMediaDescriptor>[] dMapping = new Class[256];
@@ -354,6 +494,8 @@ public class MPSUtils {
     static {
         dMapping[2] = VideoStreamDescriptor.class;
         dMapping[3] = AudioStreamDescriptor.class;
+        dMapping[6] = DataStreamAlignmentDescriptor.class;
+        dMapping[5] = RegistrationDescriptor.class;
         dMapping[10] = ISO639LanguageDescriptor.class;
         dMapping[27] = Mpeg4VideoDescriptor.class;
         dMapping[28] = Mpeg4AudioDescriptor.class;
@@ -364,11 +506,15 @@ public class MPSUtils {
     public static List<MPEGMediaDescriptor> parseDescriptors(ByteBuffer bb) {
         List<MPEGMediaDescriptor> result = new ArrayList<MPEGMediaDescriptor>();
         while (bb.remaining() >= 2) {
-            int tag = bb.get() & 0xff;
-            ByteBuffer buf = NIOUtils.read(bb, bb.get() & 0xff);
+            ByteBuffer dup = bb.duplicate();
+            int tag = dup.get() & 0xff;
+            int len = dup.get() & 0xff;
+            ByteBuffer descriptorBuffer = NIOUtils.read(bb, len + 2);
             if (dMapping[tag] != null)
                 try {
-                    dMapping[tag].newInstance().parse(buf);
+                    MPEGMediaDescriptor descriptor = dMapping[tag].newInstance();
+                    descriptor.parse(descriptorBuffer);
+                    result.add(descriptor);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

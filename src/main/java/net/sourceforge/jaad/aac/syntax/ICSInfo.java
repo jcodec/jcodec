@@ -1,12 +1,26 @@
 package net.sourceforge.jaad.aac.syntax;
 
+import static net.sourceforge.jaad.aac.Profile.*;
+
+import org.jcodec.platform.Platform;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.DecoderConfig;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.tools.ICPrediction;
-import net.sourceforge.jaad.aac.tools.LTPrediction;
-import java.util.Arrays;
+import static java.lang.System.arraycopy;
+
+import org.jcodec.platform.Platform;
+
+import net.sourceforge.jaad.aac.AACException;
+import net.sourceforge.jaad.aac.Profile;
+import net.sourceforge.jaad.aac.SampleFrequency;
+import net.sourceforge.jaad.aac.filterbank.FilterBank;
+import net.sourceforge.jaad.aac.syntax.IBitStream;
+import net.sourceforge.jaad.aac.syntax.ICSInfo;
+import net.sourceforge.jaad.aac.syntax.ICStream;
+import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -16,6 +30,134 @@ import java.util.Arrays;
  * @author in-somnia
  */
 public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
+    public static class LTPrediction implements SyntaxConstants {
+
+        private static final float[] CODEBOOK = {
+            0.570829f,
+            0.696616f,
+            0.813004f,
+            0.911304f,
+            0.984900f,
+            1.067894f,
+            1.194601f,
+            1.369533f
+        };
+        private final int frameLength;
+        private final int[] states;
+        private int coef, lag, lastBand;
+        private boolean lagUpdate;
+        private boolean[] shortUsed, shortLagPresent, longUsed;
+        private int[] shortLag;
+
+        public LTPrediction(int frameLength) {
+            this.frameLength = frameLength;
+            states = new int[4*frameLength];
+        }
+
+        public void decode(IBitStream _in, ICSInfo info, Profile profile) throws AACException {
+            lag = 0;
+            if(profile.equals(Profile.AAC_LD)) {
+                lagUpdate = _in.readBool();
+                if(lagUpdate) lag = _in.readBits(10);
+            }
+            else lag = _in.readBits(11);
+            if(lag>(frameLength<<1)) throw new AACException("LTP lag too large: "+lag);
+            coef = _in.readBits(3);
+
+            final int windowCount = info.getWindowCount();
+
+            if(info.isEightShortFrame()) {
+                shortUsed = new boolean[windowCount];
+                shortLagPresent = new boolean[windowCount];
+                shortLag = new int[windowCount];
+                for(int w = 0; w<windowCount; w++) {
+                    if((shortUsed[w] = _in.readBool())) {
+                        shortLagPresent[w] = _in.readBool();
+                        if(shortLagPresent[w]) shortLag[w] = _in.readBits(4);
+                    }
+                }
+            }
+            else {
+                lastBand = Math.min(info.getMaxSFB(), MAX_LTP_SFB);
+                longUsed = new boolean[lastBand];
+                for(int i = 0; i<lastBand; i++) {
+                    longUsed[i] = _in.readBool();
+                }
+            }
+        }
+
+        public void setPredictionUnused(int sfb) {
+            if(longUsed!=null) longUsed[sfb] = false;
+        }
+
+        public void process(ICStream ics, float[] data, FilterBank filterBank, SampleFrequency sf) {
+            final ICSInfo info = ics.getInfo();
+
+            if(!info.isEightShortFrame()) {
+                final int samples = frameLength<<1;
+                final float[] _in = new float[2048];
+                final float[] out = new float[2048];
+
+                for(int i = 0; i<samples; i++) {
+                    _in[i] = states[samples+i-lag]*CODEBOOK[coef];
+                }
+
+                filterBank.processLTP(info.getWindowSequence(), info.getWindowShape(ICSInfo.CURRENT),
+                        info.getWindowShape(ICSInfo.PREVIOUS), _in, out);
+
+                if(ics.isTNSDataPresent()) ics.getTNS().process(ics, out, sf, true);
+
+                final int[] swbOffsets = info.getSWBOffsets();
+                final int swbOffsetMax = info.getSWBOffsetMax();
+                int low, high, bin;
+                for(int sfb = 0; sfb<lastBand; sfb++) {
+                    if(longUsed[sfb]) {
+                        low = swbOffsets[sfb];
+                        high = Math.min(swbOffsets[sfb+1], swbOffsetMax);
+
+                        for(bin = low; bin<high; bin++) {
+                            data[bin] += out[bin];
+                        }
+                    }
+                }
+            }
+        }
+
+        public void updateState(float[] time, float[] overlap, Profile profile) {
+            int i;
+            if(profile.equals(Profile.AAC_LD)) {
+                for(i = 0; i<frameLength; i++) {
+                    states[i] = states[i+frameLength];
+                    states[frameLength+i] = states[i+(frameLength*2)];
+                    states[(frameLength*2)+i] = Math.round(time[i]);
+                    states[(frameLength*3)+i] = Math.round(overlap[i]);
+                }
+            }
+            else {
+                for(i = 0; i<frameLength; i++) {
+                    states[i] = states[i+frameLength];
+                    states[frameLength+i] = Math.round(time[i]);
+                    states[(frameLength*2)+i] = Math.round(overlap[i]);
+                }
+            }
+        }
+
+        public static boolean isLTPProfile(Profile profile) {
+            return profile.equals(Profile.AAC_LTP)||profile.equals(Profile.ER_AAC_LTP)||profile.equals(Profile.AAC_LD);
+        }
+
+        public void copy(LTPrediction ltp) {
+            arraycopy(ltp.states, 0, states, 0, states.length);
+            coef = ltp.coef;
+            lag = ltp.lag;
+            lastBand = ltp.lastBand;
+            lagUpdate = ltp.lagUpdate;
+            shortUsed = Platform.copyOfBool(ltp.shortUsed, ltp.shortUsed.length);
+            shortLagPresent = Platform.copyOfBool(ltp.shortLagPresent, ltp.shortLagPresent.length);
+            shortLag = Platform.copyOfInt(ltp.shortLag, ltp.shortLag.length);
+            longUsed = Platform.copyOfBool(ltp.longUsed, ltp.longUsed.length);
+        }
+    }
 
 	public static final int WINDOW_SHAPE_SINE = 0;
 	public static final int WINDOW_SHAPE_KAISER = 1;
@@ -23,33 +165,20 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 	public static final int CURRENT = 1;
 
 	public static enum WindowSequence {
-
 		ONLY_LONG_SEQUENCE,
 		LONG_START_SEQUENCE,
 		EIGHT_SHORT_SEQUENCE,
 		LONG_STOP_SEQUENCE;
-
-		public static WindowSequence forInt(int i) throws AACException {
-			WindowSequence w;
-			switch(i) {
-				case 0:
-					w = ONLY_LONG_SEQUENCE;
-					break;
-				case 1:
-					w = LONG_START_SEQUENCE;
-					break;
-				case 2:
-					w = EIGHT_SHORT_SEQUENCE;
-					break;
-				case 3:
-					w = LONG_STOP_SEQUENCE;
-					break;
-				default:
-					throw new AACException("unknown window sequence type");
-			}
-			return w;
-		}
 	}
+
+	public static WindowSequence windowSequenceFromInt(int i) throws AACException {
+        WindowSequence[] values = WindowSequence.values();
+        if (i >= values.length) {
+            throw new AACException("unknown window sequence type");
+        }
+        return values[i];
+    }
+    
 	private final int frameLength;
 	private WindowSequence windowSequence;
 	private int[] windowShape;
@@ -76,22 +205,22 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 	}
 
 	/* ========== decoding ========== */
-	public void decode(IBitStream in, DecoderConfig conf, boolean commonWindow) throws AACException {
+	public void decode(IBitStream _in, DecoderConfig conf, boolean commonWindow) throws AACException {
 		final SampleFrequency sf = conf.getSampleFrequency();
 		if(sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE)) throw new AACException("invalid sample frequency");
 
-		in.skipBit(); //reserved
-		windowSequence = WindowSequence.forInt(in.readBits(2));
+		_in.skipBit(); //reserved
+		windowSequence = windowSequenceFromInt(_in.readBits(2));
 		windowShape[PREVIOUS] = windowShape[CURRENT];
-		windowShape[CURRENT] = in.readBit();
+		windowShape[CURRENT] = _in.readBit();
 
 		windowGroupCount = 1;
 		windowGroupLength[0] = 1;
 		if(windowSequence.equals(WindowSequence.EIGHT_SHORT_SEQUENCE)) {
-			maxSFB = in.readBits(4);
+			maxSFB = _in.readBits(4);
 			int i;
 			for(i = 0; i<7; i++) {
-				if(in.readBool()) windowGroupLength[windowGroupCount-1]++;
+				if(_in.readBool()) windowGroupLength[windowGroupCount-1]++;
 				else {
 					windowGroupCount++;
 					windowGroupLength[windowGroupCount-1] = 1;
@@ -103,44 +232,40 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 			predictionDataPresent = false;
 		}
 		else {
-			maxSFB = in.readBits(6);
+			maxSFB = _in.readBits(6);
 			windowCount = 1;
 			swbOffsets = SWB_OFFSET_LONG_WINDOW[sf.getIndex()];
 			swbCount = SWB_LONG_WINDOW_COUNT[sf.getIndex()];
-			predictionDataPresent = in.readBool();
-			if(predictionDataPresent) readPredictionData(in, conf.getProfile(), sf, commonWindow);
+			predictionDataPresent = _in.readBool();
+			if(predictionDataPresent) readPredictionData(_in, conf.getProfile(), sf, commonWindow);
 		}
 	}
 
-	private void readPredictionData(IBitStream in, Profile profile, SampleFrequency sf, boolean commonWindow) throws AACException {
-		switch(profile) {
-			case AAC_MAIN:
-				if(icPredict==null) icPredict = new ICPrediction();
-				icPredict.decode(in, maxSFB, sf);
-				break;
-			case AAC_LTP:
-				if(ltpData1Present = in.readBool()) {
-					if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
-					ltPredict1.decode(in, this, profile);
-				}
-				if(commonWindow) {
-					if(ltpData2Present = in.readBool()) {
-						if(ltPredict2==null) ltPredict2 = new LTPrediction(frameLength);
-						ltPredict2.decode(in, this, profile);
-					}
-				}
-				break;
-			case ER_AAC_LTP:
-				if(!commonWindow) {
-					if(ltpData1Present = in.readBool()) {
-						if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
-						ltPredict1.decode(in, this, profile);
-					}
-				}
-				break;
-			default:
-				throw new AACException("unexpected profile for LTP: "+profile);
-		}
+	private void readPredictionData(IBitStream _in, Profile profile, SampleFrequency sf, boolean commonWindow) throws AACException {
+	    if (AAC_MAIN == profile) {
+            if(icPredict==null) icPredict = new ICPrediction();
+            icPredict.decode(_in, maxSFB, sf);
+	    } else if (AAC_LTP == profile) {
+            if(ltpData1Present = _in.readBool()) {
+                if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
+                ltPredict1.decode(_in, this, profile);
+            }
+            if(commonWindow) {
+                if(ltpData2Present = _in.readBool()) {
+                    if(ltPredict2==null) ltPredict2 = new LTPrediction(frameLength);
+                    ltPredict2.decode(_in, this, profile);
+                }
+            }
+	    } else if(ER_AAC_LTP == profile) {
+            if(!commonWindow) {
+                if(ltpData1Present = _in.readBool()) {
+                    if(ltPredict1==null) ltPredict1 = new LTPrediction(frameLength);
+                    ltPredict1.decode(_in, this, profile);
+                }
+            }
+	    } else {
+            throw new AACException("unexpected profile for LTP: "+profile);
+	    }
 	}
 
 	/* =========== gets ============ */
@@ -228,8 +353,8 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 		}
 		windowCount = info.windowCount;
 		windowGroupCount = info.windowGroupCount;
-		windowGroupLength = Arrays.copyOf(info.windowGroupLength, info.windowGroupLength.length);
+		windowGroupLength = Platform.copyOfInt(info.windowGroupLength, info.windowGroupLength.length);
 		swbCount = info.swbCount;
-		swbOffsets = Arrays.copyOf(info.swbOffsets, info.swbOffsets.length);
+		swbOffsets = Platform.copyOfInt(info.swbOffsets, info.swbOffsets.length);
 	}
 }

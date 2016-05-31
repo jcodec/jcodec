@@ -1,5 +1,4 @@
 package net.sourceforge.jaad.aac.syntax;
-
 import java.util.Arrays;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.DecoderConfig;
@@ -28,26 +27,26 @@ public class CPE extends Element implements SyntaxConstants {
 		icsR = new ICStream(frameLength);
 	}
 
-	void decode(IBitStream in, DecoderConfig conf) throws AACException {
+	void decode(IBitStream _in, DecoderConfig conf) throws AACException {
 		final Profile profile = conf.getProfile();
 		final SampleFrequency sf = conf.getSampleFrequency();
 		if(sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE)) throw new AACException("invalid sample frequency");
 
-		readElementInstanceTag(in);
+		readElementInstanceTag(_in);
 
-		commonWindow = in.readBool();
+		commonWindow = _in.readBool();
 		final ICSInfo info = icsL.getInfo();
 		if(commonWindow) {
-			info.decode(in, conf, commonWindow);
+			info.decode(_in, conf, commonWindow);
 			icsR.getInfo().setData(info);
 
-			msMask = MSMask.forInt(in.readBits(2));
+			msMask = CPE.msMaskFromInt(_in.readBits(2));
 			if(msMask.equals(MSMask.TYPE_USED)) {
 				final int maxSFB = info.getMaxSFB();
 				final int windowGroupCount = info.getWindowGroupCount();
 
 				for(int idx = 0; idx<windowGroupCount*maxSFB; idx++) {
-					msUsed[idx] = in.readBool();
+					msUsed[idx] = _in.readBool();
 				}
 			}
 			else if(msMask.equals(MSMask.TYPE_ALL_1)) Arrays.fill(msUsed, true);
@@ -60,11 +59,11 @@ public class CPE extends Element implements SyntaxConstants {
 		}
 
 		if(profile.isErrorResilientProfile()&&(info.isLTPrediction1Present())) {
-			if(info.ltpData2Present = in.readBool()) info.getLTPrediction2().decode(in, info, profile);
+			if(info.ltpData2Present = _in.readBool()) info.getLTPrediction2().decode(_in, info, profile);
 		}
 
-		icsL.decode(in, commonWindow, conf);
-		icsR.decode(in, commonWindow, conf);
+		icsL.decode(_in, commonWindow, conf);
+		icsR.decode(_in, commonWindow, conf);
 	}
 
 	public ICStream getLeftChannel() {
@@ -90,4 +89,12 @@ public class CPE extends Element implements SyntaxConstants {
 	public boolean isCommonWindow() {
 		return commonWindow;
 	}
+
+    public static MSMask msMaskFromInt(int i) throws AACException {
+        MSMask[] values = MSMask.values();
+        if (i >= values.length) {
+            throw new AACException("unknown MS mask type");
+        }
+        return values[i];
+    }
 }

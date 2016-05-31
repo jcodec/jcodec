@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.io.model;
-
 import org.jcodec.common.tools.ToJSON;
 
 /**
@@ -51,7 +50,7 @@ public class SliceHeader {
 
     public boolean num_ref_idx_active_override_flag;
 
-    public int[] num_ref_idx_active_minus1 = new int[2];
+    public int[] num_ref_idx_active_minus1;
 
     public int cabac_init_idc;
 
@@ -68,6 +67,10 @@ public class SliceHeader {
     public int slice_beta_offset_div2;
 
     public int slice_group_change_cycle;
+    
+    public SliceHeader() {
+        this.num_ref_idx_active_minus1 = new int[2];
+    }
     
     @Override
     public String toString() {

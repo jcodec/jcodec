@@ -1,5 +1,4 @@
 package org.jcodec.common.dct;
-
 import java.nio.ShortBuffer;
 
 /**
@@ -34,8 +33,8 @@ public class FfmpegIntDct {
     }
 
     private static ShortBuffer advance(ShortBuffer dataptr, int size) {
-        return ((ShortBuffer) dataptr.position(dataptr.position() + size))
-                .slice();
+        dataptr.position(dataptr.position() + size);
+        return dataptr.slice();
     }
 
     /*

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -56,11 +57,11 @@ public class IOUtils {
     }
 
     public static byte[] readFileToByteArray(File file) throws IOException {
-        return NIOUtils.toArray(NIOUtils.fetchFrom(file));
+        return NIOUtils.toArray(NIOUtils.fetchFromFile(file));
     }
 
-    public static String toString(InputStream is) throws IOException {
-        return new String(toByteArray(is));
+    public static String readToString(InputStream is) throws IOException {
+        return Platform.stringFromBytes(toByteArray(is));
     }
 
     public static void writeStringToFile(File file, String str) throws IOException {
@@ -87,14 +88,14 @@ public class IOUtils {
     }
 
     public static void copyFile(File src, File dst) throws IOException {
-        FileChannelWrapper in = null;
+        FileChannelWrapper _in = null;
         FileChannelWrapper out = null;
         try {
-            in = NIOUtils.readableFileChannel(src);
-            out = NIOUtils.writableFileChannel(dst);
-            NIOUtils.copy(in, out, Long.MAX_VALUE);
+            _in = NIOUtils.readableChannel(src);
+            out = NIOUtils.writableChannel(dst);
+            NIOUtils.copy(_in, out, Long.MAX_VALUE);
         } finally {
-            NIOUtils.closeQuietly(in);
+            NIOUtils.closeQuietly(_in);
             NIOUtils.closeQuietly(out);
         }
     }

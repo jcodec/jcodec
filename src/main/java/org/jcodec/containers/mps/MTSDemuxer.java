@@ -1,4 +1,10 @@
 package org.jcodec.containers.mps;
+import org.jcodec.api.NotSupportedException;
+import org.jcodec.common.Assert;
+import org.jcodec.common.IntObjectMap;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,12 +14,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.jcodec.common.Assert;
-import org.jcodec.common.IntObjectMap;
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,7 +28,7 @@ public class MTSDemuxer implements MPEGDemuxer {
     private MPSDemuxer psDemuxer;
     private SeekableByteChannel tsChannel;
 
-    public static Set<Integer> getPrograms(SeekableByteChannel src) throws IOException {
+    public static Set<Integer> getProgramsFromChannel(SeekableByteChannel src) throws IOException {
         long rem = src.position();
         Set<Integer> guids = new HashSet<Integer>();
         for (int i = 0; guids.size() == 0 || i < guids.size() * 500; i++) {
@@ -42,15 +42,15 @@ public class MTSDemuxer implements MPEGDemuxer {
                 guids.add(pkt.pid);
             }
         }
-        src.position(rem);
+        src.setPosition(rem);
         return guids;
     }
 
     public static Set<Integer> getPrograms(File file) throws IOException {
         FileChannelWrapper fc = null;
         try {
-            fc = NIOUtils.readableFileChannel(file);
-            return getPrograms(fc);
+            fc = NIOUtils.readableChannel(file);
+            return getProgramsFromChannel(fc);
         } finally {
             NIOUtils.closeQuietly(fc);
         }
@@ -104,15 +104,15 @@ public class MTSDemuxer implements MPEGDemuxer {
         }
 
         public int write(ByteBuffer src) throws IOException {
-            throw new UnsupportedOperationException();
+            throw new NotSupportedException();
         }
 
         public long position() throws IOException {
             return src.position();
         }
 
-        public SeekableByteChannel position(long newPosition) throws IOException {
-            src.position(newPosition);
+        public SeekableByteChannel setPosition(long newPosition) throws IOException {
+            src.setPosition(newPosition);
             data = null;
             return this;
         }
@@ -157,7 +157,7 @@ public class MTSDemuxer implements MPEGDemuxer {
 
     public static MTSPacket readPacket(ReadableByteChannel channel) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(188);
-        if (NIOUtils.read(channel, buffer) != 188)
+        if (NIOUtils.readFromChannel(channel, buffer) != 188)
             return null;
         buffer.flip();
         return parsePacket(buffer);
@@ -206,16 +206,18 @@ public class MTSDemuxer implements MPEGDemuxer {
         int maxScore = 0;
         int[] keys = streams.keys();
         for (int i : keys) {
-            int score = MPSDemuxer.probe(NIOUtils.combine(streams.get(i)));
-            if (score > maxScore)
-                maxScore = score;
+            List<ByteBuffer> packets = streams.get(i);
+            int score = MPSDemuxer.probe(NIOUtils.combineBuffers(packets));
+            if (score > maxScore) {
+                maxScore = score + (packets.size() > 20 ? 50 : 0);
+            }
         }
         return maxScore;
     }
 
     @Override
     public void seekByte(long offset) throws IOException {
-        tsChannel.position(offset - (offset % 188));
+        tsChannel.setPosition(offset - (offset % 188));
         psDemuxer.reset();
     }
 }

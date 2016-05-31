@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.io.model;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -21,8 +20,8 @@ public class NALUnit {
         this.nal_ref_idc = nal_ref_idc;
     }
 
-    public static NALUnit read(ByteBuffer in) {
-        int nalu = in.get() & 0xff;
+    public static NALUnit read(ByteBuffer _in) {
+        int nalu = _in.get() & 0xff;
         int nal_ref_idc = (nalu >> 5) & 0x3;
         int nb = nalu & 0x1f;
 

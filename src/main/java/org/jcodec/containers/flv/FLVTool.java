@@ -1,18 +1,8 @@
 package org.jcodec.containers.flv;
-
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import static java.util.Arrays.asList;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
@@ -33,6 +23,17 @@ import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
+import org.jcodec.platform.Platform;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,28 +45,27 @@ import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
  * 
  */
 public class FLVTool {
-    private static Map<String, PacketProcessorFactory> processors = new HashMap<String, PacketProcessorFactory>() {
-        {
-            put("clip", new ClipPacketProcessor.Factory());
-            put("fix_pts", new FixPtsProcessor.Factory());
-            put("info", new InfoPacketProcessor.Factory());
-            put("shift_pts", new ShiftPtsProcessor.Factory());
-        }
-    };
+    private static Map<String, PacketProcessorFactory> processors = new HashMap<String, PacketProcessorFactory>();
+    static {
+        processors.put("clip", new ClipPacketProcessor.Factory());
+        processors.put("fix_pts", new FixPtsProcessor.Factory());
+        processors.put("info", new InfoPacketProcessor.Factory());
+        processors.put("shift_pts", new ShiftPtsProcessor.Factory());
+    }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             printGenericHelp();
             return;
         }
         String command = args[0];
 
-        Cmd cmd = MainUtils.parseArguments(Arrays.copyOfRange(args, 1, args.length));
+        Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length));
         if (cmd.args.length < 1) {
-            MainUtils.printHelp(command, processors.get(command).getFlags(), "file in", "?file out");
+            MainUtils.printHelpCmd(command, processors.get(command).getFlags(), asList("file _in", "?file out"));
             return;
         }
-        int maxPackets = cmd.getIntegerFlag("max-packets", Integer.MAX_VALUE);
+        int maxPackets = cmd.getIntegerFlagD("max-packets", Integer.MAX_VALUE);
 
         PacketProcessor processor = getProcessor(command, cmd);
         if (processor == null) {
@@ -74,13 +74,13 @@ public class FLVTool {
             return;
         }
 
-        SeekableByteChannel in = null;
+        SeekableByteChannel _in = null;
         SeekableByteChannel out = null;
         try {
-            in = NIOUtils.readableFileChannel(new File(cmd.getArg(0)));
+            _in = NIOUtils.readableChannel(new File(cmd.getArg(0)));
             if (processor.hasOutput())
-                out = NIOUtils.writableFileChannel(new File(cmd.getArg(1)));
-            FLVReader demuxer = new FLVReader(in);
+                out = NIOUtils.writableChannel(new File(cmd.getArg(1)));
+            FLVReader demuxer = new FLVReader(_in);
             FLVWriter muxer = new FLVWriter(out);
             FLVTag pkt = null;
             for (int i = 0; i < maxPackets && (pkt = demuxer.readNextPacket()) != null; i++) {
@@ -91,14 +91,14 @@ public class FLVTool {
             if (processor.hasOutput())
                 muxer.finish();
         } finally {
-            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(_in);
             IOUtils.closeQuietly(out);
         }
     }
 
     private static void printGenericHelp() {
         System.err.println("Syntax: <command> [flags] <file in> [file out]\nWhere command is: ["
-                + StringUtils.join(processors.keySet().toArray(new String[0]), ", ") + "].");
+                + StringUtils.joinS(processors.keySet().toArray(new String[0]), ", ") + "].");
     }
 
     private static PacketProcessor getProcessor(String command, Cmd cmd) {
@@ -140,13 +140,11 @@ public class FLVTool {
 
             @Override
             public Map<String, String> getFlags() {
-                return new HashMap<String, String>() {
-                    {
-                        put("from", "From timestamp (in seconds, i.e 67.49)");
-                        put("to", "To timestamp");
-
-                    }
-                };
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("from", "From timestamp (in seconds, i.e 67.49)");
+                map.put("from", "From timestamp (_in seconds, i.e 67.49)");
+                map.put("to", "To timestamp");
+                return map;
             }
         }
 
@@ -197,7 +195,7 @@ public class FLVTool {
     public static class FixPtsProcessor implements PacketProcessor {
         private double lastPtsAudio = 0;
         private double lastPtsVideo = 0;
-        private List<FLVTag> tags = new ArrayList<FLVTag>();
+        private List<FLVTag> tags;
         private int audioTagsInQueue;
         private int videoTagsInQueue;
         private static final double CORRECTION_PACE = 0.33;
@@ -215,6 +213,7 @@ public class FLVTool {
         }
 
         public FixPtsProcessor() {
+            this.tags = new ArrayList<FLVTag>();
         }
 
         public boolean processPacket(FLVTag pkt, FLVWriter writer) throws IOException {
@@ -293,18 +292,16 @@ public class FLVTool {
 
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new InfoPacketProcessor(flags.getBooleanFlag(FLAG_CHECK, false), flags.getEnumFlag(FLAG_STREAM,
+                return new InfoPacketProcessor(flags.getBooleanFlagD(FLAG_CHECK, false), flags.getEnumFlagD(FLAG_STREAM,
                         null, Type.class));
             }
 
             @Override
             public Map<String, String> getFlags() {
-                return new HashMap<String, String>() {
-                    {
-                        put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated.");
-                        put(FLAG_STREAM, "Stream selector, can be one of: ['video', 'audio', 'script'].");
-                    }
-                };
+                HashMap<String, String> map = new HashMap<String, String>() ;
+                map.put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated.");
+                map.put(FLAG_STREAM, "Stream selector, can be one of: ['video', 'audio', 'script'].");
+                return map;
             }
         }
 
@@ -351,12 +348,12 @@ public class FLVTool {
                     if (avct.getAvcPacketType() == 0) {
                         ByteBuffer frameData = pkt.getData().duplicate();
                         FLVReader.parseVideoTagHeader(frameData);
-                        AvcCBox avcc = H264Utils.parseAVCC(frameData);
-                        for (SeqParameterSet sps : H264Utils.readSPS(avcc.getSpsList())) {
+                        AvcCBox avcc = H264Utils.parseAVCCFromBuffer(frameData);
+                        for (SeqParameterSet sps : H264Utils.readSPSFromBufferList(avcc.getSpsList())) {
                             System.out.println();
                             System.out.print("  SPS[" + sps.getSeq_parameter_set_id() + "]:" + ToJSON.toJSON(sps));
                         }
-                        for (PictureParameterSet pps : H264Utils.readPPS(avcc.getPpsList())) {
+                        for (PictureParameterSet pps : H264Utils.readPPSFromBufferList(avcc.getPpsList())) {
                             System.out.println();
                             System.out.print("  PPS[" + pps.getPic_parameter_set_id() + "]:" + ToJSON.toJSON(pps));
                         }
@@ -407,19 +404,17 @@ public class FLVTool {
         public static class Factory implements PacketProcessorFactory {
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new ShiftPtsProcessor(flags.getIntegerFlag("to", 0), flags.getIntegerFlag("by"),
-                        flags.getBooleanFlag("wrap-around", false));
+                return new ShiftPtsProcessor(flags.getIntegerFlagD("to", 0), flags.getIntegerFlag("by"),
+                        flags.getBooleanFlagD("wrap-around", false));
             }
 
             @Override
             public Map<String, String> getFlags() {
-                return new HashMap<String, String>() {
-                    {
-                        put("to", "Shift first pts to this value, and all subsequent pts accordingly.");
-                        put("by", "Shift all pts by this value.");
-                        put("wrap-around", "Expect wrap around of timestamps.");
-                    }
-                };
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("to", "Shift first pts to this value, and all subsequent pts accordingly.");
+                map.put("by", "Shift all pts by this value.");
+                map.put("wrap-around", "Expect wrap around of timestamps.");
+                return map;
             }
         }
 
@@ -427,11 +422,12 @@ public class FLVTool {
         private Integer shiftBy;
         private long ptsDelta;
         private boolean firstPtsSeen;
-        private List<FLVTag> savedTags = new LinkedList<FLVTag>();
+        private List<FLVTag> savedTags;
         private boolean expectWrapAround;
         private int prevPts;
 
         public ShiftPtsProcessor(int shiftTo, Integer shiftBy, boolean expectWrapAround) {
+            this.savedTags = new LinkedList<FLVTag>();
             this.shiftTo = shiftTo;
             this.shiftBy = shiftBy;
             this.expectWrapAround = true;

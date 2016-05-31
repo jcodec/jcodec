@@ -1,10 +1,13 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
+
+import org.jcodec.containers.mkv.MKVStreamingMuxer;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.containers.mkv.MKVStreamingMuxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -18,8 +21,8 @@ public class VirtualWebmMovie extends VirtualMovie {
     
     private MKVStreamingMuxer muxer = null;
 
-    public VirtualWebmMovie(VirtualTrack... tracks) throws IOException {
-        super(tracks);
+    public VirtualWebmMovie(VirtualTrack... arguments) throws IOException {
+        super(arguments);
         muxer = new MKVStreamingMuxer();
         muxTracks();
     }
@@ -50,8 +53,8 @@ public class VirtualWebmMovie extends VirtualMovie {
             heads[min] = tracks[min].nextPacket();
         }
         
-        headerChunk = headerChunk(chch, tracks, size);
-        size += headerChunk.getDataLen()+currentlyAddedContentSize;
+        _headerChunk = headerChunk(chch, tracks, _size);
+        _size += _headerChunk.getDataLen()+currentlyAddedContentSize;
         
         chunks = chch.toArray(new MovieSegment[0]);
     }

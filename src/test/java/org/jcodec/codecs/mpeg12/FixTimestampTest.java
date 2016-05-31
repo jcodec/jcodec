@@ -1,4 +1,6 @@
 package org.jcodec.codecs.mpeg12;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -6,16 +8,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
 public class FixTimestampTest {
 
     public static class SetPTS extends FixTimestamp {
-        long delta = Long.MIN_VALUE;
+        long delta;
         private long setpts;
 
         public SetPTS(long setpts) {
+            this.delta = Long.MIN_VALUE;
+
             this.setpts = setpts;
         }
 

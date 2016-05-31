@@ -1,5 +1,5 @@
 package org.jcodec.containers.mkv.util;
-
+import java.lang.StringBuilder;
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
  * 
@@ -19,7 +19,7 @@ public class EbmlUtil {
      *            ebml sequence length
      * @return
      */
-    public static byte[] ebmlEncode(long value, int length) {
+    public static byte[] ebmlEncodeLen(long value, int length) {
         byte[] b = new byte[length];
         for (int idx = 0; idx < length; idx++) {
             // Rightmost bytes should go to end of array to preserve big-endian notation
@@ -38,7 +38,7 @@ public class EbmlUtil {
      * @return
      */
     public static byte[] ebmlEncode(long value) {
-        return ebmlEncode(value, ebmlLength(value));
+        return ebmlEncodeLen(value, ebmlLength(value));
     }
 
     public static final byte[] lengthOptions = { 0, (byte) 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };

@@ -1,12 +1,5 @@
 package org.jcodec.containers.mps;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import static java.util.Arrays.asList;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
@@ -14,10 +7,20 @@ import org.jcodec.common.IntIntMap;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
+import org.jcodec.common.tools.ToJSON;
+import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -30,8 +33,8 @@ public class MTSDump extends MPSDump {
     private static final String STOP_AT = "stop-at";
 
     private int guid;
-    private ByteBuffer buf = ByteBuffer.allocate(188 * 1024);
-    private ByteBuffer tsBuf = ByteBuffer.allocate(188);
+    private ByteBuffer buf;
+    private ByteBuffer tsBuf;
     private int tsNo;
     private int globalPayload;
     private int[] payloads;
@@ -41,30 +44,31 @@ public class MTSDump extends MPSDump {
 
     public MTSDump(ReadableByteChannel ch, int targetGuid) {
         super(ch);
+        this.buf = ByteBuffer.allocate(188 * 1024);
+        this.tsBuf = ByteBuffer.allocate(188);
+
         this.guid = targetGuid;
         this.buf.position(buf.limit());
         this.tsBuf.position(tsBuf.limit());
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main2(String[] args) throws IOException {
         ReadableByteChannel ch = null;
         try {
             Cmd cmd = MainUtils.parseArguments(args);
             if (cmd.args.length < 1) {
-                MainUtils.printHelp(new HashMap<String, String>() {
-                    {
-                        put(STOP_AT, "Stop reading at timestamp");
-                        put(DUMP_FROM, "Start dumping from timestamp");
-                    }
-                }, "file name", "guid");
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put(STOP_AT, "Stop reading at timestamp");
+                map.put(DUMP_FROM, "Start dumping from timestamp");
+                MainUtils.printHelp(map, asList("file name", "guid"));
                 return;
             } else if (cmd.args.length == 1) {
                 System.out.println("MTS programs:");
-                dumpProgramPids(NIOUtils.readableFileChannel(new File(cmd.args[0])));
+                dumpProgramPids(NIOUtils.readableChannel(new File(cmd.args[0])));
                 return;
             }
 
-            ch = NIOUtils.readableFileChannel(new File(cmd.args[0]));
+            ch = NIOUtils.readableChannel(new File(cmd.args[0]));
             Long dumpAfterPts = cmd.getLongFlag(DUMP_FROM);
             Long stopPts = cmd.getLongFlag(STOP_AT);
 
@@ -76,7 +80,7 @@ public class MTSDump extends MPSDump {
 
     private static void dumpProgramPids(ReadableByteChannel readableFileChannel) throws IOException {
         Set<Integer> pids = new HashSet<Integer>();
-        ByteBuffer buf = ByteBuffer.allocate(188 * 1024);
+        ByteBuffer buf = ByteBuffer.allocate(188 * 10240);
         readableFileChannel.read(buf);
         buf.flip();
         buf.limit(buf.limit() - (buf.limit() % 188));
@@ -85,7 +89,8 @@ public class MTSDump extends MPSDump {
             ByteBuffer tsBuf = NIOUtils.read(buf, 188);
             Assert.assertEquals(0x47, tsBuf.get() & 0xff);
             int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
-            int guid = (int) guidFlags & 0x1fff;
+            int guid = guidFlags & 0x1fff;
+            System.out.println(guid);
             if (guid != 0)
                 pids.add(guid);
             if (guid == 0 || guid == pmtPid) {
@@ -102,12 +107,12 @@ public class MTSDump extends MPSDump {
                 }
 
                 if (guid == 0) {
-                    PATSection pat = PATSection.parse(tsBuf);
+                    PATSection pat = PATSection.parsePAT(tsBuf);
                     IntIntMap programs = pat.getPrograms();
                     pmtPid = programs.values()[0];
                     printPat(pat);
                 } else if (guid == pmtPid) {
-                    PMTSection pmt = PMTSection.parse(tsBuf);
+                    PMTSection pmt = PMTSection.parsePMT(tsBuf);
                     printPmt(pmt);
                     return;
                 }
@@ -132,6 +137,9 @@ public class MTSDump extends MPSDump {
         System.out.print("PMT: ");
         for (PMTStream pmtStream : pmt.getStreams()) {
             System.out.print(pmtStream.getPid() + ":" + pmtStream.getStreamTypeTag() + ", ");
+            for (MPEGMediaDescriptor descriptor : pmtStream.getDesctiptors()) {
+                System.out.println(ToJSON.toJSON(descriptor));
+            }
         }
         System.out.println();
     }
@@ -163,8 +171,8 @@ public class MTSDump extends MPSDump {
 
     @Override
     public int fillBuffer(ByteBuffer dst) throws IOException {
-        IntArrayList payloads = new IntArrayList();
-        IntArrayList nums = new IntArrayList();
+        IntArrayList payloads = IntArrayList.createIntArrayList();
+        IntArrayList nums = IntArrayList.createIntArrayList();
         int remaining = dst.remaining();
 
         try {

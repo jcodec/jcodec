@@ -1,12 +1,7 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.util.List;
-
+import org.jcodec.Utils;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
@@ -16,11 +11,17 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.channels.FileChannel;
+import java.util.List;
+
 public class CuesFactoryTest {
 
     @Ignore @Test
     public void testWithValidCues() throws IOException {
-        FileInputStream inputStream = new FileInputStream(MKVMuxerTest.tildeExpand("~/References/mkv.test/test2.webm"));
+        FileInputStream inputStream = new FileInputStream(Utils.tildeExpand("~/References/mkv.test/test2.webm"));
         FileChannel iFS = inputStream.getChannel();
         MKVParser p = new MKVParser(new FileChannelWrapper(iFS));
         List<EbmlMaster> t = null;
@@ -29,31 +30,43 @@ public class CuesFactoryTest {
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
-        EbmlMaster[] ccs = MKVType.findAll(t, EbmlMaster.class, MKVType.Segment, MKVType.Cluster);
+        MKVType[] path7 = { MKVType.Segment, MKVType.Cluster };
+        EbmlMaster[] ccs = MKVType.findAllTree(t, EbmlMaster.class, path7);
         long baseOffset = 0;
+        MKVType[] path = { MKVType.Segment, MKVType.SeekHead };
         
-        baseOffset += getSizeIfPresent(MKVType.<EbmlBase>findFirst(t, MKVType.Segment, MKVType.SeekHead));
-        baseOffset += getSizeIfPresent(MKVType.<EbmlBase>findFirst(t, MKVType.Segment, MKVType.Info));
-        baseOffset += getSizeIfPresent(MKVType.<EbmlBase>findFirst(t, MKVType.Segment, MKVType.Tracks));
-        baseOffset += getSizeIfPresent(MKVType.<EbmlBase>findFirst(t, MKVType.Segment, MKVType.Tags ));
+        baseOffset += getSizeIfPresent(MKVType.<EbmlBase>findFirstTree(t, path));
+        MKVType[] path1 = { MKVType.Segment, MKVType.Info };
+        baseOffset += getSizeIfPresent(MKVType.<EbmlBase>findFirstTree(t, path1));
+        MKVType[] path2 = { MKVType.Segment, MKVType.Tracks };
+        baseOffset += getSizeIfPresent(MKVType.<EbmlBase>findFirstTree(t, path2));
+        MKVType[] path3 = { MKVType.Segment, MKVType.Tags };
+        baseOffset += getSizeIfPresent(MKVType.<EbmlBase>findFirstTree(t, path3));
 
         System.out.println(" baseOffset "+baseOffset);
         CuesFactory indexer = new CuesFactory(baseOffset, 1);
-        EbmlBase origCues = MKVType.findFirst(t, MKVType.Segment, MKVType.Cues);
+        MKVType[] path4 = { MKVType.Segment, MKVType.Cues };
+        EbmlBase origCues = MKVType.findFirstTree(t, path4);
         for (EbmlMaster c : ccs)
             indexer.add(CuesFactory.CuePointMock.make(c));
         
         EbmlMaster cues = indexer.createCues();
+        MKVType[] path8 = { MKVType.Cues, MKVType.CuePoint };
+        MKVType[] path9 = { MKVType.Cues, MKVType.CuePoint };
 //        Assert.assertEquals(131, cues.size());
-        Assert.assertEquals("Number of CuePoints must match", MKVType.findAll(origCues, EbmlBase.class, MKVType.Cues, MKVType.CuePoint).length, MKVType.findAll(cues, EbmlBase.class, MKVType.Cues, MKVType.CuePoint).length);
-        Assert.assertEquals("Number of CueClusterPositions must match", MKVType.findAll(origCues, EbmlBase.class, MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition).length, MKVType.findAll(cues, EbmlBase.class, MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition).length);
+        Assert.assertEquals("Number of CuePoints must match", MKVType.findAll(origCues, EbmlBase.class, false, path8).length, MKVType.findAll(cues, EbmlBase.class, false, path9).length);
+        MKVType[] path10 = { MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition };
+        MKVType[] path11 = { MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition };
+        Assert.assertEquals("Number of CueClusterPositions must match", MKVType.findAll(origCues, EbmlBase.class, false, path10).length, MKVType.findAll(cues, EbmlBase.class, false, path11).length);
         Assert.assertEquals(origCues.size(), cues.size());
+        MKVType[] path5 = { MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition };
         
-        EbmlUint cueClusterPosition = (EbmlUint) MKVType.findFirst(cues, MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition);
+        EbmlUint cueClusterPosition = (EbmlUint) MKVType.findFirst(cues, path5);
+        MKVType[] path6 = { MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition };
 //        Assert.assertEquals(292, cueClusterPosition.get());
         
-        EbmlUint origCueClusterPosition = (EbmlUint) MKVType.findFirst(origCues, MKVType.Cues, MKVType.CuePoint, MKVType.CueTrackPositions, MKVType.CueClusterPosition);
-        Assert.assertEquals(cueClusterPosition.get(), origCueClusterPosition.get());
+        EbmlUint origCueClusterPosition = (EbmlUint) MKVType.findFirst(origCues, path6);
+        Assert.assertEquals(cueClusterPosition.getUint(), origCueClusterPosition.getUint());
     }
 
     private long getSizeIfPresent(EbmlBase element) {
@@ -72,7 +85,7 @@ public class CuesFactoryTest {
     @Test
     public void testLengthOfIndexWithSingleEntry() throws Exception {
         CuesFactory cf = new CuesFactory(1024, 1);
-        cf.add(CuesFactory.CuePointMock.make(Cluster.id, 0, 278539));
+        cf.add(CuesFactory.CuePointMock.doMake(Cluster.id, 0, 278539));
         byte[] array = cf.createCues().getData().array();
         Assert.assertEquals(19, array.length);
     }
@@ -80,8 +93,8 @@ public class CuesFactoryTest {
     @Test
     public void testLengthOfIndexWithTwoEntries() throws Exception {
         CuesFactory cf = new CuesFactory(1024, 1);
-        cf.add(CuesFactory.CuePointMock.make(Cluster.id, 0, 278539));
-        cf.add(CuesFactory.CuePointMock.make(Cluster.id, 2, 278539));
+        cf.add(CuesFactory.CuePointMock.doMake(Cluster.id, 0, 278539));
+        cf.add(CuesFactory.CuePointMock.doMake(Cluster.id, 2, 278539));
         byte[] array = cf.createCues().getData().array();
         Assert.assertEquals(34, array.length);
     }

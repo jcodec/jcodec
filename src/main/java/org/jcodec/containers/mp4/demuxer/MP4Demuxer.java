@@ -1,24 +1,20 @@
 package org.jcodec.containers.mp4.demuxer;
-
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.boxes.SampleSizesBox;
+import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.platform.Platform;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.TrackType;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.HandlerBox;
-import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.boxes.SampleSizesBox;
-import org.jcodec.containers.mp4.boxes.TrakBox;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,7 +33,7 @@ public class MP4Demuxer {
     private SeekableByteChannel input;
 
     public AbstractMP4DemuxerTrack create(TrakBox trak) {
-        SampleSizesBox stsz = findFirst(trak, SampleSizesBox.class, "mdia", "minf", "stbl", "stsz");
+        SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         if (stsz.getDefaultSize() == 0)
             return new FramesMP4DemuxerTrack(movie, trak, input);
         else
@@ -55,7 +51,7 @@ public class MP4Demuxer {
     }
 
     private void findMovieBox(SeekableByteChannel input) throws IOException {
-        movie = MP4Util.parseMovie(input);
+        movie = MP4Util.parseMovieChannel(input);
         if (movie == null)
             throw new IOException("Could not find movie meta information box");
 
@@ -64,8 +60,10 @@ public class MP4Demuxer {
 
     private void processHeader(NodeBox moov) throws IOException {
         TrakBox tt = null;
-        for (TrakBox trak : Box.findAll(moov, TrakBox.class, "trak")) {
-            SampleEntry se = Box.findFirst(trak, SampleEntry.class, "mdia", "minf", "stbl", "stsd", null);
+        TrakBox[] trakBoxs = NodeBox.findAll(moov, TrakBox.class, "trak");
+        for (int i = 0; i < trakBoxs.length; i++) {
+            TrakBox trak = trakBoxs[i];
+            SampleEntry se = NodeBox.findFirstPath(trak, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null });
             if ("tmcd".equals(se.getFourcc())) {
                 tt = trak;
             } else {
@@ -77,11 +75,6 @@ public class MP4Demuxer {
             if (video != null)
                 timecodeTrack = new TimecodeMP4DemuxerTrack(movie, tt, input);
         }
-    }
-
-    public static TrackType getTrackType(TrakBox trak) {
-        HandlerBox handler = findFirst(trak, HandlerBox.class, "mdia", "hdlr");
-        return TrackType.fromHandler(handler.getComponentSubType());
     }
 
     public AbstractMP4DemuxerTrack getVideoTrack() {
@@ -116,12 +109,24 @@ public class MP4Demuxer {
     public TimecodeMP4DemuxerTrack getTimecodeTrack() {
         return timecodeTrack;
     }
+    
+    static private int makeInt(byte b3, byte b2, byte b1, byte b0) {
+        return (((b3       ) << 24) |
+                ((b2 & 0xff) << 16) |
+                ((b1 & 0xff) <<  8) |
+                ((b0 & 0xff)      ));
+    }
 
-    private static int ftyp = ('f' << 24) | ('t' << 16) | ('y' << 8) | 'p';
-    private static int free = ('f' << 24) | ('r' << 16) | ('e' << 8) | 'e';
-    private static int moov = ('m' << 24) | ('o' << 16) | ('o' << 8) | 'v';
-    private static int mdat = ('m' << 24) | ('d' << 16) | ('a' << 8) | 't';
-    private static int wide = ('w' << 24) | ('i' << 16) | ('d' << 8) | 'e';
+    private static int intFourcc(String string) {
+        byte[] b = Platform.getBytes(string);
+        return makeInt(b[0], b[1], b[2], b[3]);
+    }
+
+    private static int ftyp = intFourcc("ftyp");
+    private static int free = intFourcc("free"); 
+    private static int moov = intFourcc("moov");
+    private static int mdat = intFourcc("mdat");
+    private static int wide = intFourcc("wide");
     
     public static int probe(final ByteBuffer b) {
         ByteBuffer fork = b.duplicate();
@@ -146,4 +151,5 @@ public class MP4Demuxer {
 
         return total == 0 ? 0 : success * 100 / total;
     }
+
 }

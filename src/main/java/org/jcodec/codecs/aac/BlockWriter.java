@@ -17,7 +17,7 @@ import org.jcodec.common.io.BitWriter;
 public class BlockWriter {
     
     public void nextBlock(BitWriter bits, Block block) {
-        bits.writeNBit(block.getType().getCode(), 3);
+        bits.writeNBit(block.getType().ordinal(), 3);
         
         if (block.getType() == TYPE_END)
             return;

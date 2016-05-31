@@ -1,5 +1,4 @@
 package org.jcodec.containers.mps.psi;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -13,22 +12,12 @@ import java.nio.ByteBuffer;
  * 
  */
 public class PSISection {
-    private int tableId;
-    private int specificId;
-    private int versionNumber;
-    private int currentNextIndicator;
-    private int sectionNumber;
-    private int lastSectionNumber;
-
-    /**
-     * A copy constructor
-     * 
-     * @param other
-     */
-    public PSISection(PSISection other) {
-        this(other.tableId, other.specificId, other.versionNumber, other.currentNextIndicator, other.sectionNumber,
-                other.lastSectionNumber);
-    }
+    protected int tableId;
+    protected int specificId;
+    protected int versionNumber;
+    protected int currentNextIndicator;
+    protected int sectionNumber;
+    protected int lastSectionNumber;
 
     public PSISection(int tableId, int specificId, int versionNumber, int currentNextIndicator, int sectionNumber,
             int lastSectionNumber) {
@@ -40,7 +29,7 @@ public class PSISection {
         this.lastSectionNumber = lastSectionNumber;
     }
 
-    public static PSISection parse(ByteBuffer data) {
+    public static PSISection parsePSI(ByteBuffer data) {
         int tableId = data.get() & 0xff;
         int w0 = data.getShort() & 0xffff;
         if ((w0 & 0xC000) != 0x8000)

@@ -1,8 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.nio.ByteBuffer;
+import org.jcodec.common.model.Label;
 
-import org.jcodec.containers.mp4.boxes.channel.Label;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -19,9 +19,10 @@ public class ChannelBox extends FullBox {
     public static class ChannelDescription {
         private int channelLabel;
         private int channelFlags;
-        private float[] coordinates = new float[3];
-
+        private float[] coordinates;
+        
         public ChannelDescription(int channelLabel, int channelFlags, float[] coordinates) {
+            this.coordinates = new float[3];
             this.channelLabel = channelLabel;
             this.channelFlags = channelFlags;
             this.coordinates = coordinates;
@@ -48,12 +49,12 @@ public class ChannelBox extends FullBox {
         super(atom);
     }
 
-    public ChannelBox() {
-        super(new Header(fourcc()));
-    }
-
     public static String fourcc() {
         return "chan";
+    }
+
+    public static ChannelBox createChannelBox() {
+        return new ChannelBox(new Header(fourcc()));
     }
 
     public void parse(ByteBuffer input) {
@@ -77,7 +78,8 @@ public class ChannelBox extends FullBox {
         out.putInt(channelBitmap);
         out.putInt(descriptions.length);
 
-        for (ChannelDescription channelDescription : descriptions) {
+        for (int i = 0; i < descriptions.length; i++) {
+            ChannelDescription channelDescription = descriptions[i];
             out.putInt(channelDescription.getChannelLabel());
             out.putInt(channelDescription.getChannelFlags());
 

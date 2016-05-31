@@ -1,11 +1,14 @@
 package org.jcodec.codecs.mpeg4.mp4;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 import org.jcodec.codecs.mpeg4.es.DecoderConfig;
 import org.jcodec.codecs.mpeg4.es.DecoderSpecific;
 import org.jcodec.codecs.mpeg4.es.Descriptor;
+import org.jcodec.codecs.mpeg4.es.DescriptorFactory;
 import org.jcodec.codecs.mpeg4.es.ES;
+import org.jcodec.codecs.mpeg4.es.NodeDescriptor;
 import org.jcodec.codecs.mpeg4.es.SL;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -38,42 +41,36 @@ public class EsdsBox extends FullBox {
         super(atom);
     }
 
-    public EsdsBox() {
-        super(new Header(fourcc()));
-    }
-
-    public EsdsBox(ByteBuffer streamInfo, int objectType, int bufSize, int maxBitrate, int avgBitrate, int trackId) {
-        super(new Header(fourcc()));
-        this.objectType = objectType;
-        this.bufSize = bufSize;
-        this.maxBitrate = maxBitrate;
-        this.avgBitrate = avgBitrate;
-        this.trackId = trackId;
-        this.streamInfo = streamInfo;
-    }
-
     @Override
     protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        if (streamInfo != null && streamInfo.remaining() > 0)
-            new ES(trackId, new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, new DecoderSpecific(
-                    streamInfo)), new SL()).write(out);
-        else
-            new ES(trackId, new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate), new SL()).write(out);
+        if (streamInfo != null && streamInfo.remaining() > 0) {
+            ArrayList<Descriptor> l = new ArrayList<Descriptor>();
+            ArrayList<Descriptor> l1 = new ArrayList<Descriptor>();
+            l1.add(new DecoderSpecific(streamInfo));
+            l.add(new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, l1));
+            l.add(new SL());
+            new ES(trackId, l).write(out);
+        } else {
+            ArrayList<Descriptor> l = new ArrayList<Descriptor>();
+            l.add(new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, new ArrayList<Descriptor>()));
+            l.add(new SL());
+            new ES(trackId, l).write(out);
+        }
     }
 
     public void parse(ByteBuffer input) {
         super.parse(input);
-        ES es = (ES) Descriptor.read(input);
+        ES es = (ES) Descriptor.read(input, DescriptorFactory.getInstance());
 
         trackId = es.getTrackId();
-        DecoderConfig decoderConfig = Descriptor.find(es, DecoderConfig.class, DecoderConfig.tag());
+        DecoderConfig decoderConfig = NodeDescriptor.find(es, DecoderConfig.class, DecoderConfig.tag());
         objectType = decoderConfig.getObjectType();
         bufSize = decoderConfig.getBufSize();
         maxBitrate = decoderConfig.getMaxBitrate();
         avgBitrate = decoderConfig.getAvgBitrate();
-        DecoderSpecific decoderSpecific = Descriptor.find(decoderConfig, DecoderSpecific.class, DecoderSpecific.tag());
+        DecoderSpecific decoderSpecific = NodeDescriptor.find(decoderConfig, DecoderSpecific.class, DecoderSpecific.tag());
         streamInfo = decoderSpecific.getData();
     }
 
@@ -102,14 +99,30 @@ public class EsdsBox extends FullBox {
     }
 
     public static Box fromADTS(org.jcodec.codecs.aac.ADTSParser.Header hdr) {
-    	ByteBuffer si = ByteBuffer.allocate(2);
-    	BitWriter wr = new BitWriter(si);
-    	wr.writeNBit(hdr.getObjectType(), 5);
-    	wr.writeNBit(hdr.getSamplingIndex(), 4);
-    	wr.writeNBit(hdr.getChanConfig(), 4);
-    	wr.flush();
-    	si.clear();
-    	
-        return new EsdsBox(si, hdr.getObjectType() << 5, 0, 210750, 133350, 2);
+        ByteBuffer si = ByteBuffer.allocate(2);
+        BitWriter wr = new BitWriter(si);
+        wr.writeNBit(hdr.getObjectType(), 5);
+        wr.writeNBit(hdr.getSamplingIndex(), 4);
+        wr.writeNBit(hdr.getChanConfig(), 4);
+        wr.flush();
+        si.clear();
+
+        return createEsdsBox(si, hdr.getObjectType() << 5, 0, 210750, 133350, 2);
+    }
+
+    public static EsdsBox createEsdsBox(ByteBuffer streamInfo, int objectType, int bufSize, int maxBitrate,
+            int avgBitrate, int trackId) {
+        EsdsBox esds = new EsdsBox(new Header(fourcc()));
+        esds.objectType = objectType;
+        esds.bufSize = bufSize;
+        esds.maxBitrate = maxBitrate;
+        esds.avgBitrate = avgBitrate;
+        esds.trackId = trackId;
+        esds.streamInfo = streamInfo;
+        return esds;
+    }
+
+    public static EsdsBox newEsdsBox() {
+        return new EsdsBox(new Header(fourcc()));
     }
 }

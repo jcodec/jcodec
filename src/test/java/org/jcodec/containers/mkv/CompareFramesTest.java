@@ -1,16 +1,8 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.common.io.IOUtils.readFileToByteArray;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
-import static org.jcodec.containers.mkv.MKVType.findAll;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.List;
+import static org.jcodec.containers.mkv.MKVType.findAllTree;
 
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
@@ -18,6 +10,13 @@ import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.List;
 
 public class CompareFramesTest {
 
@@ -27,7 +26,8 @@ public class CompareFramesTest {
         FileChannel channel = new FileInputStream("src/test/resources/mkv/single-frame.webm").getChannel();
         MKVParser p = new MKVParser(new FileChannelWrapper(channel));
         List<EbmlMaster> tree = p.parse();
-        EbmlMaster[] me = findAll(tree, EbmlMaster.class, Segment, Cluster);
+        MKVType[] path = { Segment, Cluster };
+        EbmlMaster[] me = findAllTree(tree, EbmlMaster.class, path);
         Assert.assertNotNull(me);
         Assert.assertEquals(1, me.length);
         List<MkvBlock> bs = MKVMuxerTest.getBlocksByTrackNumber(me[0], 1);
@@ -54,7 +54,8 @@ public class CompareFramesTest {
         try {
             MKVParser p = new MKVParser(new FileChannelWrapper(c));
             List<EbmlMaster> tree = p.parse();
-            EbmlMaster[] me = findAll(tree, EbmlMaster.class, Segment, Cluster);
+            MKVType[] path = { Segment, Cluster };
+            EbmlMaster[] me = findAllTree(tree, EbmlMaster.class, path);
             Assert.assertNotNull(me);
             Assert.assertEquals(1, me.length);
             List<MkvBlock> bs = MKVMuxerTest.getBlocksByTrackNumber(me[0], 1);

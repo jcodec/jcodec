@@ -16,17 +16,17 @@ public abstract class Element implements SyntaxConstants {
 	private int elementInstanceTag;
 	private SBR sbr;
 
-	protected void readElementInstanceTag(IBitStream in) throws AACException {
-		elementInstanceTag = in.readBits(4);
+	protected void readElementInstanceTag(IBitStream _in) throws AACException {
+		elementInstanceTag = _in.readBits(4);
 	}
 
 	public int getElementInstanceTag() {
 		return elementInstanceTag;
 	}
 
-	void decodeSBR(IBitStream in, SampleFrequency sf, int count, boolean stereo, boolean crc, boolean downSampled,boolean smallFrames) throws AACException {
+	void decodeSBR(IBitStream _in, SampleFrequency sf, int count, boolean stereo, boolean crc, boolean downSampled,boolean smallFrames) throws AACException {
 		if(sbr==null) sbr = new SBR(smallFrames,elementInstanceTag==ELEMENT_CPE,sf,downSampled);
-		sbr.decode(in, count);
+		sbr.decode(_in, count);
 	}
 
 	boolean isSBRPresent() {

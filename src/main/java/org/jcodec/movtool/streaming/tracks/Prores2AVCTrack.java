@@ -1,6 +1,8 @@
 package org.jcodec.movtool.streaming.tracks;
-
-import java.util.EnumSet;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.ThreadLocal;
+import java.lang.IllegalArgumentException;
 
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
@@ -29,7 +31,9 @@ public class Prores2AVCTrack extends Transcode2AVCTrack {
         String fourcc = proresTrack.getCodecMeta().getFourcc();
         if ("ap4h".equals(fourcc))
             return;
-        for (Profile profile : EnumSet.allOf(ProresEncoder.Profile.class)) {
+        Profile[] values = ProresEncoder.Profile.values();
+        for (int i = 0; i < values.length; i++) {
+            Profile profile = values[i];
             if (profile.fourcc.equals(fourcc))
                 return;
         }

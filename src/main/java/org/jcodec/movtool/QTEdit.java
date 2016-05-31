@@ -1,4 +1,10 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
+
+import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.movtool.Flattern.ProgressListener;
 
 import java.io.File;
 import java.nio.channels.FileChannel;
@@ -6,9 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.movtool.Flattern.ProgressListener;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,7 +23,7 @@ import org.jcodec.movtool.Flattern.ProgressListener;
 public class QTEdit {
 
     protected final EditFactory[] factories;
-    private final List<ProgressListener> listeners = new ArrayList<ProgressListener>();
+    private final List<ProgressListener> listeners;
 
     public static interface EditFactory {
         String getName();
@@ -31,15 +34,16 @@ public class QTEdit {
     }
 
     public static abstract class BaseCommand implements MP4Edit {
-        public void apply(MovieBox movie, FileChannel[][] refs) {
+        public void applyRefs(MovieBox movie, FileChannel[][] refs) {
             apply(movie);
         }
 
         public abstract void apply(MovieBox movie);
     }
 
-    public QTEdit(EditFactory... factories) {
-        this.factories = factories;
+    public QTEdit(EditFactory... arguments) {
+        this.listeners = new ArrayList<ProgressListener>();
+        this.factories = arguments;
     }
 
     public void addProgressListener(ProgressListener listener) {

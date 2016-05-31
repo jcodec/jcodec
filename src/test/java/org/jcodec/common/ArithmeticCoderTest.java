@@ -1,14 +1,16 @@
 package org.jcodec.common;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.jcodec.codecs.vp8.BooleanArithmeticDecoder;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.StringBuilder;
+import java.lang.System;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * See for theoretical details: http://www.youtube.com/playlist?list=PLE125425EC837021F
@@ -310,8 +312,11 @@ public class ArithmeticCoderTest {
     public static class Emitter{
         private int i=0;
         private byte buffer=0;
-        private ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        private ByteArrayOutputStream baos;
         
+        public Emitter() {
+            this.baos = new ByteArrayOutputStream();
+        }
         public void emit(int b) throws IOException {
             if (b != 1 && b != 0)
                 throw new IllegalArgumentException("Only 0's and 1's are accepted");

@@ -1,20 +1,19 @@
 package org.jcodec.codecs.h264;
-
 import static org.jcodec.common.ArrayUtil.padLeft;
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
 import static org.junit.Assert.assertArrayEquals;
-
-import java.util.Arrays;
 
 import org.jcodec.codecs.h264.decode.Intra4x4PredictionBuilder;
 import org.jcodec.common.tools.MathUtil;
 import org.junit.Test;
 
-public class Intra4x4PredictionBuilderTest {
-    private int[] emptyResidual = new int[16];
-    private int[] testResidual = new int[16];
+import java.util.Arrays;
 
-    {
+public class Intra4x4PredictionBuilderTest {
+    private static int[] emptyResidual = new int[16];
+    private static int[] testResidual = new int[16];
+
+    static {
         for (int i = 0; i < 16; i++) {
             testResidual[i] = 16 * i - 128;
         }

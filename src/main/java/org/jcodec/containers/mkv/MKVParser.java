@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-
 import static java.lang.Long.toHexString;
 import static org.jcodec.containers.mkv.MKVType.Attachments;
 import static org.jcodec.containers.mkv.MKVType.Chapters;
@@ -12,18 +11,19 @@ import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.createById;
 import static org.jcodec.containers.mkv.util.EbmlUtil.toHexString;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlBin;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlVoid;
 import org.jcodec.containers.mkv.util.EbmlUtil;
+
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -36,10 +36,12 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
 public class MKVParser {
 
     private SeekableByteChannel channel;
-    private LinkedList<EbmlMaster> trace = new LinkedList<EbmlMaster>();
+    private LinkedList<EbmlMaster> trace;
 
     public MKVParser(SeekableByteChannel channel) {
         this.channel = channel;
+        this.trace = new LinkedList<EbmlMaster>();
+
     }
     
     public List<EbmlMaster> parse() throws IOException {
@@ -61,10 +63,10 @@ public class MKVParser {
                 EbmlBin bin = (EbmlBin) e;
                 EbmlMaster traceTop = trace.peekFirst();
                 if ((traceTop.dataOffset + traceTop.dataLen) < (e.dataOffset + e.dataLen)) {
-                    channel.position((traceTop.dataOffset + traceTop.dataLen));
+                    channel.setPosition((traceTop.dataOffset + traceTop.dataLen));
                 } else
                     try {
-                        bin.read(channel);
+                        bin.readChannel(channel);
                     } catch (OutOfMemoryError oome) {
                         throw new RuntimeException(e.type + " 0x" + toHexString(bin.id) + " size: " + toHexString(bin.dataLen) + " offset: 0x" + toHexString(e.offset), oome);
                     }
@@ -116,7 +118,7 @@ public class MKVParser {
 
         while ((typeId == null && !isKnownType(typeId)) && offset < channel.size()) {
             offset++;
-            channel.position(offset);
+            channel.setPosition(offset);
             typeId = MKVParser.readEbmlId(channel);
         }
 

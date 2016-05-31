@@ -1,11 +1,11 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.common.JCodecUtil2;
+import org.jcodec.common.io.NIOUtils;
+
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.LinkedList;
-
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -18,23 +18,25 @@ import org.jcodec.common.io.NIOUtils;
  * 
  */
 public class FileTypeBox extends Box {
+    public FileTypeBox(Header header) {
+        super(header);
+        this.compBrands = new LinkedList<String>();
+    }
+
     private String majorBrand;
     private int minorVersion;
-    private Collection<String> compBrands = new LinkedList<String>();
+    private Collection<String> compBrands;
 
     public static String fourcc() {
         return "ftyp";
     }
 
-    public FileTypeBox(String majorBrand, int minorVersion, Collection<String> compBrands) {
-        super(new Header(fourcc()));
-        this.majorBrand = majorBrand;
-        this.minorVersion = minorVersion;
-        this.compBrands = compBrands;
-    }
-
-    public FileTypeBox() {
-        super(new Header(fourcc()));
+    public static FileTypeBox createFileTypeBox(String majorBrand, int minorVersion, Collection<String> compBrands) {
+        FileTypeBox ftyp = new FileTypeBox(new Header(fourcc()));
+        ftyp.majorBrand = majorBrand;
+        ftyp.minorVersion = minorVersion;
+        ftyp.compBrands = compBrands;
+        return ftyp;
     }
 
     public void parse(ByteBuffer input) {
@@ -56,11 +58,11 @@ public class FileTypeBox extends Box {
     }
 
     public void doWrite(ByteBuffer out) {
-        out.put(JCodecUtil.asciiString(majorBrand));
+        out.put(JCodecUtil2.asciiString(majorBrand));
         out.putInt(minorVersion);
 
         for (String string : compBrands) {
-            out.put(JCodecUtil.asciiString(string));
+            out.put(JCodecUtil2.asciiString(string));
         }
     }
 }

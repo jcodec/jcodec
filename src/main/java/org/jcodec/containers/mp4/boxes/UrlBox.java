@@ -1,9 +1,10 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-
-import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -19,14 +20,11 @@ public class UrlBox extends FullBox {
     public static String fourcc() {
         return "url ";
     }
-    
-    public UrlBox() {
-        super(new Header(fourcc()));
-    }
 
-    public UrlBox(String url) {
-        super(new Header(fourcc()));
-        this.url = url;
+    public static UrlBox createUrlBox(String url) {
+        UrlBox urlBox = new UrlBox(new Header(fourcc()));
+        urlBox.url = url;
+        return urlBox;
     }
 
     public UrlBox(Header atom) {
@@ -39,8 +37,8 @@ public class UrlBox extends FullBox {
         if ((flags & 0x1) != 0)
             return;
         Charset utf8 = Charset.forName("utf-8");
-        
-        url = NIOUtils.readNullTermString(input, utf8);
+
+        url = NIOUtils.readNullTermStringCharset(input, utf8);
     }
 
     @Override
@@ -50,7 +48,7 @@ public class UrlBox extends FullBox {
         Charset utf8 = Charset.forName("utf-8");
 
         if (url != null) {
-            NIOUtils.write(out, ByteBuffer.wrap(url.getBytes(utf8)));
+            NIOUtils.write(out, ByteBuffer.wrap(Platform.getBytesForCharset(url, utf8)));
             out.put((byte) 0);
         }
     }

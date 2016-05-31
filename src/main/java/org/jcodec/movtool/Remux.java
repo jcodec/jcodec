@@ -1,13 +1,11 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.TrackType.VIDEO;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -18,13 +16,18 @@ import org.jcodec.containers.mp4.WebOptimizedMP4Muxer;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.TimecodeMP4DemuxerTrack;
 import org.jcodec.containers.mp4.muxer.AbstractMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -61,14 +64,14 @@ public class Remux {
         SeekableByteChannel output = null;
         SeekableByteChannel tci = null;
         try {
-            input = readableFileChannel(src);
-            output = writableFileChannel(tgt);
+            input = readableChannel(src);
+            output = writableChannel(tgt);
             MP4Demuxer demuxer = new MP4Demuxer(input);
 
             
             TimecodeMP4DemuxerTrack tt = null;
             if (timecode != null) {
-                tci = readableFileChannel(src);
+                tci = readableChannel(src);
                 MP4Demuxer tcd = new MP4Demuxer(tci);
                 tt = tcd.getTimecodeTrack();
             }
@@ -123,7 +126,7 @@ public class Remux {
         if(edits == null)
             return;
         for (Edit edit : edits) {
-            result.add(new Edit(tsRatio.multiply(edit.getDuration()), edit.getMediaTime(), edit.getRate()));
+            result.add(new Edit(tsRatio.multiplyLong(edit.getDuration()), edit.getMediaTime(), edit.getRate()));
         }
 
         two.setEdits(result);

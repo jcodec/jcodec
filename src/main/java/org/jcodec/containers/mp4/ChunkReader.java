@@ -1,7 +1,4 @@
 package org.jcodec.containers.mp4;
-
-import static java.util.Arrays.copyOfRange;
-
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
@@ -13,6 +10,7 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -84,7 +82,7 @@ public class ChunkReader {
         if (stsz.getDefaultSize() > 0) {
             size = getFrameSize();
         } else {
-            sizes = copyOfRange(stsz.getSizes(), sampleNo, sampleNo + sampleCount);
+            sizes = Platform.copyOfRangeI(stsz.getSizes(), sampleNo, sampleNo + sampleCount);
         }
 
         int dref = sampleToChunk[s2cIndex].getEntry();

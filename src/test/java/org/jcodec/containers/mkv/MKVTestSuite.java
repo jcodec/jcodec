@@ -1,4 +1,6 @@
 package org.jcodec.containers.mkv;
+import org.jcodec.Utils;
+import org.jcodec.common.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -6,8 +8,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Properties;
-
-import org.jcodec.common.io.IOUtils;
 
 public class MKVTestSuite {
     
@@ -56,16 +56,16 @@ public class MKVTestSuite {
     }
     
     public static MKVTestSuite read() throws IOException {
-        return read(new File("./src/test/resources/mkv/suite.properties"));
+        return readFile(new File("./src/test/resources/mkv/suite.properties"));
     }
 
-    public static MKVTestSuite read(File f) throws IOException {
+    public static MKVTestSuite readFile(File f) throws IOException {
         if (!f.exists())
             throw new RuntimeException(f.getAbsolutePath() + " doesn't exists");
         
         Properties props = loadProperties(f);
         String path = props.getProperty("mkv.test.suite.path");
-        File dir = MKVMuxerTest.tildeExpand(path);
+        File dir = Utils.tildeExpand(path);
 
         return new MKVTestSuite(dir);
     }

@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv.boxes;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -12,22 +11,24 @@ import java.nio.ByteBuffer;
  */
 public class EbmlUlong extends EbmlBin {
 
+
     public EbmlUlong(byte[] id) {
         super(id);
         data = ByteBuffer.allocate(8);
     }
     
-    public EbmlUlong(byte[] id, long value) {
-        super(id);
-        set(value);
+    public static EbmlUlong createEbmlUlong(byte[] id, long value) {
+        EbmlUlong e = new EbmlUlong(id);
+        e.setUlong(value);
+        return e;
     }
     
-    public void set(long value){
+    public void setUlong(long value){
         data.putLong(value);
         data.flip();
     }
 
-    public long get() {
+    public long getUlong() {
         return data.duplicate().getLong();
     }
 

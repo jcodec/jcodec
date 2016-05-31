@@ -34,7 +34,7 @@ public final class MS implements SyntaxConstants, HCB {
 			for(i = 0; i<maxSFB; i++, idx++) {
 				if(cpe.isMSUsed(idx)&&sfbCBl[idx]<NOISE_HCB&&sfbCBr[idx]<NOISE_HCB) {
 					for(w = 0; w<info.getWindowGroupLength(g); w++) {
-						final int off = groupOff+w*128+offsets[i];
+						int off = groupOff+w*128+offsets[i];
 						for(j = 0; j<offsets[i+1]-offsets[i]; j++) {
 							float t = specL[off+j]-specR[off+j];
 							specL[off+j] += specR[off+j];

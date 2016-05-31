@@ -1,13 +1,16 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
+
+import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.movtool.QTEdit.EditFactory;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-
-import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.movtool.QTEdit.EditFactory;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,8 +23,8 @@ public class QTRefEdit {
 
     protected final EditFactory[] factories;
 
-    public QTRefEdit(EditFactory... factories) {
-        this.factories = factories;
+    public QTRefEdit(EditFactory... arguments) {
+        this.factories = arguments;
     }
 
     public void execute(String[] args) throws Exception {
@@ -71,9 +74,9 @@ public class QTRefEdit {
             System.err.println("WARNING: Output file '" + output.getAbsolutePath() + "' exist, overwritting");
         }
 
-        MovieBox ref = MP4Util.createRefMovie(input);
+        MovieBox ref = MP4Util.createRefMovieFromFile(input);
         new CompoundMP4Edit(edits).apply(ref);
-        MP4Util.writeMovie(output, ref);
+        MP4Util.writeMovieToFile(output, ref);
         System.out.println("INFO: Created reference file: " + output.getAbsolutePath());
     }
 

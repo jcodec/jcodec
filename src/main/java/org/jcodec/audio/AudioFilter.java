@@ -1,5 +1,4 @@
 package org.jcodec.audio;
-
 import java.nio.FloatBuffer;
 
 /**
@@ -11,7 +10,7 @@ import java.nio.FloatBuffer;
  */
 public interface AudioFilter {
 
-    void filter(FloatBuffer[] in, long[] inPos, FloatBuffer[] out);
+    void filter(FloatBuffer[] _in, long[] inPos, FloatBuffer[] out);
 
     int getDelay();
 

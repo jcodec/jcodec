@@ -13,11 +13,11 @@ import java.util.List;
  */
 public class MovieFragmentBox extends NodeBox {
 
-    private MovieBox moov;
-
-    public MovieFragmentBox() {
-        super(new Header(fourcc()));
+    public MovieFragmentBox(Header atom) {
+        super(atom);
     }
+
+    private MovieBox moov;
 
     public static String fourcc() {
         return "moof";
@@ -36,11 +36,11 @@ public class MovieFragmentBox extends NodeBox {
     }
 
     public TrackFragmentBox[] getTracks() {
-        return Box.findAll(this, TrackFragmentBox.class, TrackFragmentBox.fourcc());
+        return NodeBox.findAll(this, TrackFragmentBox.class, TrackFragmentBox.fourcc());
     }
 
     public int getSequenceNumber() {
-        MovieFragmentHeaderBox mfhd = Box
+        MovieFragmentHeaderBox mfhd = NodeBox
                 .findFirst(this, MovieFragmentHeaderBox.class, MovieFragmentHeaderBox.fourcc());
         if (mfhd == null)
             throw new RuntimeException("Corrupt movie fragment, no header atom found");

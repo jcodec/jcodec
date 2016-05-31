@@ -18,17 +18,14 @@ public class ChunkOffsets64Box extends FullBox {
         return "co64";
     }
 
-    public ChunkOffsets64Box(Header atom) {
-        super(atom);
-    }
-    
-    public ChunkOffsets64Box() {
-        super(new Header(fourcc(), 0));
+    public static ChunkOffsets64Box createChunkOffsets64Box(long[] offsets) {
+        ChunkOffsets64Box co64 = new ChunkOffsets64Box(Header.createHeader(fourcc(), 0));
+        co64.chunkOffsets = offsets;
+        return co64;
     }
 
-    public ChunkOffsets64Box(long[] offsets) {
-        this();
-        this.chunkOffsets = offsets;
+    public ChunkOffsets64Box(Header atom) {
+        super(atom);
     }
 
     public void parse(ByteBuffer input) {
@@ -43,7 +40,8 @@ public class ChunkOffsets64Box extends FullBox {
     protected void doWrite(ByteBuffer out) {
         super.doWrite(out);
         out.putInt(chunkOffsets.length);
-        for (long offset : chunkOffsets) {
+        for (int i = 0; i < chunkOffsets.length; i++) {
+            long offset = chunkOffsets[i];
             out.putLong(offset);
         }
     }

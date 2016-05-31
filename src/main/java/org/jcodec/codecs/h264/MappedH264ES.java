@@ -1,7 +1,5 @@
 package org.jcodec.codecs.h264;
-
-import java.nio.ByteBuffer;
-
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
@@ -16,6 +14,8 @@ import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.Packet;
 
+import java.nio.ByteBuffer;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -28,8 +28,8 @@ import org.jcodec.common.model.Packet;
 public class MappedH264ES implements DemuxerTrack {
     private ByteBuffer bb;
     private SliceHeaderReader shr;
-    private IntObjectMap<PictureParameterSet> pps = new IntObjectMap<PictureParameterSet>();
-    private IntObjectMap<SeqParameterSet> sps = new IntObjectMap<SeqParameterSet>();
+    private IntObjectMap<PictureParameterSet> pps;
+    private IntObjectMap<SeqParameterSet> sps;
 
     // POC and framenum detection
     private int prevFrameNumOffset;
@@ -39,6 +39,9 @@ public class MappedH264ES implements DemuxerTrack {
     private int frameNo;
 
     public MappedH264ES(ByteBuffer bb) {
+        this.pps = new IntObjectMap<PictureParameterSet>();
+        this.sps = new IntObjectMap<SeqParameterSet>();
+
         this.bb = bb;
         this.shr = new SliceHeaderReader();
         this.frameNo = 0;
@@ -82,7 +85,7 @@ public class MappedH264ES implements DemuxerTrack {
     }
 
     private SliceHeader readSliceHeader(ByteBuffer buf, NALUnit nu) {
-        BitReader br = new BitReader(buf);
+        BitReader br = BitReader.createBitReader(buf);
         SliceHeader sh = shr.readPart1(br);
         PictureParameterSet pp = pps.get(sh.pic_parameter_set_id);
         shr.readPart2(sh, nu, sps.get(pp.seq_parameter_set_id), pp, br);
@@ -226,7 +229,9 @@ public class MappedH264ES implements DemuxerTrack {
         if (refPicMarkingNonIDR == null)
             return false;
 
-        for (RefPicMarking.Instruction instr : refPicMarkingNonIDR.getInstructions()) {
+        RefPicMarking.Instruction[] instructions = refPicMarkingNonIDR.getInstructions();
+        for (int i = 0; i < instructions.length; i++) {
+            RefPicMarking.Instruction instr = instructions[i];
             if (instr.getType() == InstrType.CLEAR) {
                 return true;
             }
@@ -244,6 +249,6 @@ public class MappedH264ES implements DemuxerTrack {
 
     @Override
     public DemuxerTrackMeta getMeta() {
-        throw new UnsupportedOperationException();
+        throw new NotSupportedException();
     }
 }

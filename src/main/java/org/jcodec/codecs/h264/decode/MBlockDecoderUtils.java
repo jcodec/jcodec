@@ -1,5 +1,6 @@
 package org.jcodec.codecs.h264.decode;
-
+import static java.lang.System.arraycopy;
+import static org.jcodec.common.ArrayUtil.shiftLeft1;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.common.logging.Logger;
@@ -9,49 +10,16 @@ public class MBlockDecoderUtils {
     private static boolean debug;
     public static final int[] NULL_VECTOR = new int[] { 0, 0, -1 };
 
-    public static void debugPrint(String str) {
-        if (debug)
-            Logger.debug(str);
-    }
-
-    public static void debugPrint(String str, int p0) {
-        if (debug)
-            Logger.debug(String.format(str, p0));
-    }
-
-    public static void debugPrint(String str, int p0, int p1) {
-        if (debug)
-            Logger.debug(String.format(str, p0, p1));
-    }
-
-    public static void debugPrint(String str, int p0, int p1, int p2) {
-        if (debug)
-            Logger.debug(String.format(str, p0, p1, p2));
-    }
-
-    public static void debugPrint(String str, int p0, int p1, int p2, int p3) {
-        if (debug)
-            Logger.debug(String.format(str, p0, p1, p2, p3));
-    }
-
-    public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4) {
-        if (debug)
-            Logger.debug(String.format(str, p0, p1, p2, p3, p4));
-    }
-
-    public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4, int p5) {
-        if (debug)
-            Logger.debug(String.format(str, p0, p1, p2, p3, p4, p5));
-    }
-
-    public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4, int p5, int p6) {
-        if (debug)
-            Logger.debug(String.format(str, p0, p1, p2, p3, p4, p5, p6));
-    }
-
-    public static void debugPrint(String str, int p0, int p1, int p2, int p3, int p4, int p5, int p6, int p7) {
-        if (debug)
-            Logger.debug(String.format(str, p0, p1, p2, p3, p4, p5, p6, p7));
+    public static void debugPrint(Object... arguments) {
+        if (debug && arguments.length > 0) {
+            if (arguments.length == 1) {
+                Logger.debug(""+arguments[0]);
+            } else {
+                String fmt = (String)arguments[0];
+                shiftLeft1(arguments);
+                Logger.debug(String.format(fmt, arguments));
+            }
+        }
     }
 
     static void collectPredictors(DecoderState sharedState, Picture8Bit outMB, int mbX) {
@@ -59,7 +27,7 @@ public class MBlockDecoderUtils {
         sharedState.topLeft[0][1] = outMB.getPlaneData(0)[63];
         sharedState.topLeft[0][2] = outMB.getPlaneData(0)[127];
         sharedState.topLeft[0][3] = outMB.getPlaneData(0)[191];
-        System.arraycopy(outMB.getPlaneData(0), 240, sharedState.topLine[0], mbX << 4, 16);
+        arraycopy(outMB.getPlaneData(0), 240, sharedState.topLine[0], mbX << 4, 16);
         copyCol(outMB.getPlaneData(0), 16, 15, 16, sharedState.leftRow[0]);
 
         collectChromaPredictors(sharedState, outMB, mbX);
@@ -69,8 +37,8 @@ public class MBlockDecoderUtils {
         sharedState.topLeft[1][0] = sharedState.topLine[1][(mbX << 3) + 7];
         sharedState.topLeft[2][0] = sharedState.topLine[2][(mbX << 3) + 7];
 
-        System.arraycopy(outMB.getPlaneData(1), 56, sharedState.topLine[1], mbX << 3, 8);
-        System.arraycopy(outMB.getPlaneData(2), 56, sharedState.topLine[2], mbX << 3, 8);
+        arraycopy(outMB.getPlaneData(1), 56, sharedState.topLine[1], mbX << 3, 8);
+        arraycopy(outMB.getPlaneData(2), 56, sharedState.topLine[2], mbX << 3, 8);
 
         copyCol(outMB.getPlaneData(1), 8, 7, 8, sharedState.leftRow[1]);
         copyCol(outMB.getPlaneData(2), 8, 7, 8, sharedState.leftRow[2]);

@@ -1,7 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.platform.Platform;
+
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -10,6 +11,14 @@ import java.util.Arrays;
  * @author The JCodec project
  */
 public class SegmentIndexBox extends FullBox {
+    public SegmentIndexBox(Header atom) {
+        super(atom);
+    }
+
+    public static SegmentIndexBox createSegmentIndexBox() {
+        return new SegmentIndexBox(new Header(fourcc()));
+    }
+
     public long reference_ID;
     public long timescale;
     public long earliest_presentation_time;
@@ -37,10 +46,6 @@ public class SegmentIndexBox extends FullBox {
 
     public static String fourcc() {
         return "sidx";
-    }
-
-    public SegmentIndexBox() {
-        super(new Header(fourcc()));
     }
 
     @Override
@@ -111,8 +116,8 @@ public class SegmentIndexBox extends FullBox {
         return "SegmentIndexBox [reference_ID=" + reference_ID + ", timescale=" + timescale
                 + ", earliest_presentation_time=" + earliest_presentation_time + ", first_offset=" + first_offset
                 + ", reserved=" + reserved + ", reference_count=" + reference_count + ", references="
-                + Arrays.toString(references) + ", version=" + version + ", flags=" + flags + ", header=" + header
-                + "]";
+                + Platform.arrayToString(references) + ", version=" + version + ", flags=" + flags + ", header="
+                + header + "]";
     }
 
 }

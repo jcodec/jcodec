@@ -1,5 +1,4 @@
 package org.jcodec.codecs.vp8;
-
 import static org.jcodec.codecs.vp8.VP8Util.MAX_MODE_LF_DELTAS;
 import static org.jcodec.codecs.vp8.VP8Util.MAX_REF_LF_DELTAS;
 import static org.jcodec.codecs.vp8.VP8Util.getBitInBytes;
@@ -10,15 +9,19 @@ import static org.jcodec.codecs.vp8.VP8Util.keyFrameYModeProb;
 import static org.jcodec.codecs.vp8.VP8Util.keyFrameYModeTree;
 import static org.jcodec.codecs.vp8.VP8Util.vp8CoefUpdateProbs;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vp8.Macroblock.Subblock;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
 import org.jcodec.common.Assert;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -131,7 +134,7 @@ public class VP8Decoder {
             for (int mbCol = 0; mbCol < numberOfMBCols; mbCol++) {
                 Macroblock mb = mbs[mbRow + 1][mbCol + 1];
                 if ((segmentation > 0))
-                    throw new UnsupportedOperationException("TODO: frames with multiple segments are not supported yet");
+                    throw new NotSupportedException("TODO: frames with multiple segments are not supported yet");
 
                 if (loopFilterDeltaFlag > 0) {
                     int level = filterLevel;
@@ -139,7 +142,7 @@ public class VP8Decoder {
                     level = (level < 0) ? 0 : (level > 63) ? 63 : level;
                     mb.filterLevel = level;
                 } else
-                    throw new UnsupportedOperationException(
+                    throw new NotSupportedException(
                             "TODO: frames with loopFilterDeltaFlag <= 0 are not supported yet");
 
                 if (macroBlockNoCoeffSkip > 0)
@@ -210,14 +213,14 @@ public class VP8Decoder {
 
     }
 
-    public Picture getPicture() {
-        Picture p = Picture.create(width, height, ColorSpace.YUV420);
+    public Picture8Bit getPicture8Bit() {
+        Picture8Bit p = Picture8Bit.create(width, height, ColorSpace.YUV420);
 
-        int[] luma = p.getPlaneData(0);
+        byte[] luma = p.getPlaneData(0);
         // int strideLuma = p.getPlaneWidth(0);
 
-        int[] cb = p.getPlaneData(1);
-        int[] cr = p.getPlaneData(2);
+        byte[] cb = p.getPlaneData(1);
+        byte[] cr = p.getPlaneData(2);
         // int strideChroma = p.getPlaneWidth(1);
         int mbWidth = getMacroblockCount(width);
         int mbHeight = getMacroblockCount(height);
@@ -238,7 +241,7 @@ public class VP8Decoder {
                                     continue;
 
                                 int yy = mb.ySubblocks[lumaRow][lumaCol].val[lumaPRow * 4 + lumaPCol];
-                                luma[strideLuma * y + x] = yy;
+                                luma[strideLuma * y + x] = (byte)(yy - 128);
                             }
 
                 for (int chromaRow = 0; chromaRow < 2; chromaRow++)
@@ -252,8 +255,8 @@ public class VP8Decoder {
 
                                 int u = mb.uSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
                                 int v = mb.vSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
-                                cb[strideChroma * y + x] = u;
-                                cr[strideChroma * y + x] = v;
+                                cb[strideChroma * y + x] = (byte)(u - 128);
+                                cr[strideChroma * y + x] = (byte)(v - 128);
                             }
             }
         }

@@ -42,50 +42,6 @@ public class HCR implements SyntaxConstants {
 	private static final int[] PRE_SORT_CB_ER = {11, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 9, 7, 5, 3, 1};
 	private static final int[] MAX_CW_LEN = {0, 11, 9, 20, 16, 13, 11, 14, 12, 17, 14, 49,
 		0, 0, 0, 0, 14, 17, 21, 21, 25, 25, 29, 29, 29, 29, 33, 33, 33, 37, 37, 41};
-	//bit-twiddling helpers
-	private static final int[] S = {1, 2, 4, 8, 16};
-	private static final int[] B = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF, 0x0000FFFF};
-
-	//32 bit rewind and reverse
-	private static int rewindReverse(int v, int len) {
-		v = ((v>>S[0])&B[0])|((v<<S[0])&~B[0]);
-		v = ((v>>S[1])&B[1])|((v<<S[1])&~B[1]);
-		v = ((v>>S[2])&B[2])|((v<<S[2])&~B[2]);
-		v = ((v>>S[3])&B[3])|((v<<S[3])&~B[3]);
-		v = ((v>>S[4])&B[4])|((v<<S[4])&~B[4]);
-
-		//shift off low bits
-		v >>= (32-len);
-
-		return v;
-	}
-
-	//64 bit rewind and reverse
-	static int[] rewindReverse64(int hi, int lo, int len) {
-		int[] i = new int[2];
-		if(len<=32) {
-			i[0] = 0;
-			i[1] = rewindReverse(lo, len);
-		}
-		else {
-			lo = ((lo>>S[0])&B[0])|((lo<<S[0])&~B[0]);
-			hi = ((hi>>S[0])&B[0])|((hi<<S[0])&~B[0]);
-			lo = ((lo>>S[1])&B[1])|((lo<<S[1])&~B[1]);
-			hi = ((hi>>S[1])&B[1])|((hi<<S[1])&~B[1]);
-			lo = ((lo>>S[2])&B[2])|((lo<<S[2])&~B[2]);
-			hi = ((hi>>S[2])&B[2])|((hi<<S[2])&~B[2]);
-			lo = ((lo>>S[3])&B[3])|((lo<<S[3])&~B[3]);
-			hi = ((hi>>S[3])&B[3])|((hi<<S[3])&~B[3]);
-			lo = ((lo>>S[4])&B[4])|((lo<<S[4])&~B[4]);
-			hi = ((hi>>S[4])&B[4])|((hi<<S[4])&~B[4]);
-
-			//shift off low bits
-			i[1] = (hi>>(64-len))|(lo<<(len-32));
-			i[1] = lo>>(64-len);
-		}
-		return i;
-	}
-
 	private static boolean isGoodCB(int cb, int sectCB) {
 		boolean b = false;
 		if((sectCB>HCB.ZERO_HCB&&sectCB<=HCB.ESCAPE_HCB)||(sectCB>=VCB11_FIRST&&sectCB<=VCB11_LAST)) {
@@ -96,7 +52,7 @@ public class HCR implements SyntaxConstants {
 	}
 
 	//sectionDataResilience = hDecoder->aacSectionDataResilienceFlag
-	public static void decodeReorderedSpectralData(ICStream ics, IBitStream in, short[] spectralData, boolean sectionDataResilience) throws AACException {
+	public static void decodeReorderedSpectralData(ICStream ics, IBitStream _in, short[] spectralData, boolean sectionDataResilience) throws AACException {
 		final ICSInfo info = ics.getInfo();
 		final int windowGroupCount = info.getWindowGroupCount();
 		final int maxSFB = info.getMaxSFB();
@@ -174,7 +130,7 @@ public class HCR implements SyntaxConstants {
 										if(PCWs_done==0) {
 											//read in normal segments
 											if(bitsread+segwidth<=spDataLen) {
-												segment[segmentsCount].readSegment(segwidth, in);
+												segment[segmentsCount].readSegment(segwidth, _in);
 												bitsread += segwidth;
 
 												//Huffman.decodeSpectralDataER(segment[segmentsCount], thisSectCB, spectralData, sp);
@@ -187,9 +143,9 @@ public class HCR implements SyntaxConstants {
 											else {
 												//remaining after last segment
 												if(bitsread<spDataLen) {
-													final int additional_bits = spDataLen-bitsread;
+													int additional_bits = spDataLen-bitsread;
 
-													segment[segmentsCount].readSegment(additional_bits, in);
+													segment[segmentsCount].readSegment(additional_bits, _in);
 													segment[segmentsCount].len += segment[segmentsCount-1].len;
 													segment[segmentsCount].rewindReverse();
 
@@ -225,7 +181,7 @@ public class HCR implements SyntaxConstants {
 			}
 		}
 
-		if(segmentsCount==0) throw new AACException("no segments in HCR");
+		if(segmentsCount==0) throw new AACException("no segments _in HCR");
 
 		final int numberOfSets = numberOfCodewords/segmentsCount;
 

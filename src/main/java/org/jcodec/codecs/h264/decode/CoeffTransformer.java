@@ -1,8 +1,8 @@
 package org.jcodec.codecs.h264.decode;
-
-import java.util.Arrays;
-
 import org.jcodec.common.ArrayUtil;
+
+import java.lang.IllegalArgumentException;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,8 +15,8 @@ import org.jcodec.common.ArrayUtil;
  */
 public class CoeffTransformer {
 
-    private int[] fieldScan4x4 = { 0, 4, 1, 8, 12, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15 };
-    private int[] fieldScan8x8 = { 0, 8, 16, 1, 9, 24, 32, 17, 2, 25, 40, 48, 56, 33, 10, 3, 18, 41, 49, 57, 26, 11, 4,
+    private static int[] fieldScan4x4 = { 0, 4, 1, 8, 12, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15 };
+    private static int[] fieldScan8x8 = { 0, 8, 16, 1, 9, 24, 32, 17, 2, 25, 40, 48, 56, 33, 10, 3, 18, 41, 49, 57, 26, 11, 4,
             19, 34, 42, 50, 58, 27, 12, 5, 20, 35, 43, 51, 58, 28, 13, 6, 21, 36, 44, 52, 60, 29, 14, 22, 37, 45, 53,
             61, 30, 7, 15, 38, 46, 54, 62, 23, 31, 39, 47, 55, 63 };
 
@@ -84,10 +84,10 @@ public class CoeffTransformer {
      * @return
      */
     public final static void idct4x4(int[] block) {
-        idct4x4(block, block);
+        _idct4x4(block, block);
     }
 
-    public static final void idct4x4(int[] block, int[] out) {
+    public static final void _idct4x4(int[] block, int[] out) {
         // Horisontal
         for (int i = 0; i < 16; i += 4) {
             int e0 = block[i] + block[i + 2];

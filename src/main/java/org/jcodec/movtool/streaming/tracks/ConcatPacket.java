@@ -1,9 +1,12 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
+
+import org.jcodec.movtool.streaming.VirtualPacket;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import org.jcodec.movtool.streaming.VirtualPacket;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

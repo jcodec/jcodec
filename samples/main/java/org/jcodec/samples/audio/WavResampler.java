@@ -12,7 +12,9 @@ import org.jcodec.audio.FilterGraph;
 import org.jcodec.audio.LanczosInterpolator;
 import org.jcodec.audio.SincLowPassFilter;
 import org.jcodec.codecs.wav.WavInput;
+import org.jcodec.codecs.wav.WavInput.WavFile;
 import org.jcodec.codecs.wav.WavOutput;
+import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.tools.MainUtils;
@@ -33,7 +35,7 @@ public class WavResampler {
 
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelp(new HashMap<String, String>() {
+            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
                 {
                     put("out_rate", "Output sample rate");
                 }
@@ -41,15 +43,18 @@ public class WavResampler {
             System.exit(-1);
         }
 
-        int outRate = cmd.getIntegerFlag("out_rate", 44100);
+        int outRate = cmd.getIntegerFlagD("out_rate", 44100);
 
         WavInput.Source wavIn = null;
         WavOutput.Sink wavOut = null;
         try {
-            wavIn = new WavInput.Source(new File(cmd.getArg(0)));
+            WavFile wavFile = new WavInput.WavFile(new File(cmd.getArg(0)));
+            wavIn = new WavInput.Source(wavFile);
             AudioFormat inf = wavIn.getFormat();
 
-            wavOut = new WavOutput.Sink(new File(cmd.getArg(1)), new AudioFormat(inf, outRate));
+            WavOutFile wavOutFile = new WavOutput.WavOutFile(new File(cmd.getArg(1)),
+                    AudioFormat.createAudioFormat2(inf, outRate));
+            wavOut = new WavOutput.Sink(wavOutFile);
             AudioFilter lowPass = new SincLowPassFilter(outRate / 3, inf.getSampleRate());
 
             // Two interpolations for the sake of the demo, just to make our
@@ -68,7 +73,7 @@ public class WavResampler {
                     .addLevel(merge)
                     .create();
 //@formatter:on
-            Audio.transfer(wavIn, cf, wavOut);
+            Audio.filterTransfer(wavIn, cf, wavOut);
         } finally {
             IOUtils.closeQuietly(wavIn);
             IOUtils.closeQuietly(wavOut);

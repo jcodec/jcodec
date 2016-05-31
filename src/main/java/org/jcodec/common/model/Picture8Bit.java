@@ -1,7 +1,9 @@
 package org.jcodec.common.model;
 
+import static java.lang.System.arraycopy;
 import static org.jcodec.common.model.ColorSpace.MAX_PLANES;
 
+import java.lang.IllegalArgumentException;
 import java.util.Arrays;
 
 /**
@@ -24,10 +26,10 @@ public class Picture8Bit {
 
     private Rect crop;
 
-    public Picture8Bit(int width, int height, byte[][] data, ColorSpace color) {
-        this(width, height, data, color, new Rect(0, 0, width, height));
+    public static Picture8Bit createPicture8Bit(int width, int height, byte[][] data, ColorSpace color) {
+        return new Picture8Bit(width, height, data, color, new Rect(0, 0, width, height));
     }
-
+    
     public Picture8Bit(int width, int height, byte[][] data, ColorSpace color, Rect crop) {
         this.width = width;
         this.height = height;
@@ -55,15 +57,15 @@ public class Picture8Bit {
         }
     }
 
-    public Picture8Bit(Picture8Bit other) {
-        this(other.width, other.height, other.data, other.color, other.crop);
+    public static Picture8Bit copyPicture8Bit(Picture8Bit other) {
+        return new Picture8Bit(other.width, other.height, other.data, other.color, other.crop);
     }
-
+    
     public static Picture8Bit create(int width, int height, ColorSpace colorSpace) {
-        return create(width, height, colorSpace, null);
+        return createCropped(width, height, colorSpace, null);
     }
 
-    public static Picture8Bit create(int width, int height, ColorSpace colorSpace, Rect crop) {
+    public static Picture8Bit createCropped(int width, int height, ColorSpace colorSpace, Rect crop) {
         int[] planeSizes = new int[MAX_PLANES];
         for (int i = 0; i < colorSpace.nComp; i++) {
             planeSizes[colorSpace.compPlane[i]] += (width >> colorSpace.compWidth[i])
@@ -129,14 +131,28 @@ public class Picture8Bit {
         for (int plane = 0; plane < color.nComp; plane++) {
             if (data[plane] == null)
                 continue;
-            System.arraycopy(src.data[plane], 0, data[plane], 0,
-                    (width >> color.compWidth[plane]) * (height >> color.compHeight[plane]));
+            arraycopy(src.data[plane], 0, data[plane], 0, (width >> color.compWidth[plane])
+                    * (height >> color.compHeight[plane]));
+        }
+    }
+
+    /**
+     * Creates a cropped clone of this picture.
+     * 
+     * @return
+     */
+    public Picture8Bit cloneCropped() {
+        if (cropNeeded()) {
+            return cropped();
+        } else {
+            Picture8Bit clone = createCompatible();
+            clone.copyFrom(this);
+            return clone;
         }
     }
 
     public Picture8Bit cropped() {
-        if (crop == null
-                || (crop.getX() == 0 && crop.getY() == 0 && crop.getWidth() == width && crop.getHeight() == height))
+        if (!cropNeeded())
             return this;
         Picture8Bit result = Picture8Bit.create(crop.getWidth(), crop.getHeight(), color);
 
@@ -149,6 +165,11 @@ public class Picture8Bit {
         }
 
         return result;
+    }
+
+    protected boolean cropNeeded() {
+        return crop != null
+                && (crop.getX() != 0 || crop.getY() != 0 || crop.getWidth() != width || crop.getHeight() != height);
     }
 
     private void cropSub(byte[] src, int x, int y, int w, int h, int srcStride, byte[] tgt) {
@@ -175,7 +196,7 @@ public class Picture8Bit {
     }
 
     public static Picture8Bit fromPicture(Picture pic) {
-        Picture8Bit create = Picture8Bit.create(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
+        Picture8Bit create = Picture8Bit.createCropped(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
 
         for (int i = 0; i < Math.min(pic.getData().length, create.getData().length); i++) {
             for (int j = 0; j < Math.min(pic.getData()[i].length, create.getData()[i].length); j++) {
@@ -187,12 +208,12 @@ public class Picture8Bit {
     }
 
     public Picture toPicture(int bitDepth) {
-        Picture create = Picture.create(width, height, color, bitDepth, crop);
+        Picture create = Picture.doCreate(width, height, color, bitDepth, crop);
 
         return toPictureInternal(bitDepth, create);
     }
 
-    public Picture toPicture(int bitDepth, int[][] buffer) {
+    public Picture toPictureWithBuffer(int bitDepth, int[][] buffer) {
         Picture create = new Picture(width, height, buffer, color, bitDepth, crop);
 
         return toPictureInternal(bitDepth, create);
@@ -234,8 +255,8 @@ public class Picture8Bit {
     private boolean planeEquals(Picture8Bit other, int plane) {
         int cw = color.compWidth[plane];
         int ch = color.compHeight[plane];
-        int offA = other.getCrop() == null ? 0
-                : ((other.getCrop().getX() >> cw) + (other.getCrop().getY() >> ch) * (other.getWidth() >> cw));
+        int offA = other.getCrop() == null ? 0 : ((other.getCrop().getX() >> cw) + (other.getCrop().getY() >> ch)
+                * (other.getWidth() >> cw));
         int offB = crop == null ? 0 : ((crop.getX() >> cw) + (crop.getY() >> ch) * (width >> cw));
 
         byte[] planeData = other.getPlaneData(plane);

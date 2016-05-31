@@ -1,5 +1,8 @@
 package org.jcodec.containers.flv;
+import org.jcodec.platform.Platform;
 
+import java.lang.IllegalAccessException;
+import java.lang.IllegalArgumentException;
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.Map;
@@ -36,8 +39,9 @@ public class FLVMetadata {
     private double audiodatarate;
 
     public FLVMetadata(Map<String, Object> md) {
-        Field[] declaredFields = this.getClass().getDeclaredFields();
-        for (Field field : declaredFields) {
+        Field[] declaredFields = Platform.getDeclaredFields(this.getClass());
+        for (int i = 0; i < declaredFields.length; i++) {
+            Field field = declaredFields[i];
             Object object = md.get(field.getName());
             try {
                 if (object instanceof Double) {
@@ -47,8 +51,7 @@ public class FLVMetadata {
                 } else {
                     field.set(this, object);
                 }
-            } catch (IllegalArgumentException e) {
-            } catch (IllegalAccessException e) {
+            } catch (Exception e) {
             }
         }
     }

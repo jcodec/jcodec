@@ -14,8 +14,9 @@ import static org.jcodec.common.tools.MathUtil.sign;
 
 import org.jcodec.codecs.common.biari.MDecoder;
 import org.jcodec.codecs.common.biari.MEncoder;
+import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
-import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.H264Utils2;
 import org.jcodec.codecs.h264.decode.CABACContst;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceType;
@@ -30,13 +31,21 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class CABAC {
 
-    public enum BlockType {
-        LUMA_16_DC(85, 105, 166, 277, 338, 227, 0), LUMA_15_AC(89, 120, 181, 292, 353, 237, 0), LUMA_16(93, 134, 195,
-                306, 367, 247, 0), CHROMA_DC(97, 149, 210, 321, 382, 257, 1), CHROMA_AC(101, 152, 213, 324, 385, 266, 0), LUMA_64(
-                1012, 402, 417, 436, 451, 426, 0), CB_16_DC(460, 484, 572, 776, 864, 952, 0), CB_15x16_AC(464, 499,
-                587, 791, 879, 962, 0), CB_16(468, 513, 601, 805, 893, 972, 0), CB_64(1016, 660, 690, 675, 699, 708, 0), CR_16_DC(
-                472, 528, 616, 820, 908, 982, 0), CR_15x16_AC(476, 543, 631, 835, 923, 992, 0), CR_16(480, 557, 645,
-                849, 937, 1002, 0), CR_64(1020, 718, 748, 733, 757, 766, 0);
+    public final static class BlockType {
+        public final static BlockType LUMA_16_DC = new BlockType(85, 105, 166, 277, 338, 227, 0);
+        public final static BlockType LUMA_15_AC = new BlockType(89, 120, 181, 292, 353, 237, 0);
+        public final static BlockType LUMA_16 = new BlockType(93, 134, 195, 306, 367, 247, 0);
+        public final static BlockType CHROMA_DC = new BlockType(97, 149, 210, 321, 382, 257, 1);
+        public final static BlockType CHROMA_AC = new BlockType(101, 152, 213, 324, 385, 266, 0);
+        public final static BlockType LUMA_64 = new BlockType(1012, 402, 417, 436, 451, 426, 0);
+        public final static BlockType CB_16_DC = new BlockType(460, 484, 572, 776, 864, 952, 0);
+        public final static BlockType CB_15x16_AC = new BlockType(464, 499, 587, 791, 879, 962, 0);
+        public final static BlockType CB_16 = new BlockType(468, 513, 601, 805, 893, 972, 0);
+        public final static BlockType CB_64 = new BlockType(1016, 660, 690, 675, 699, 708, 0);
+        public final static BlockType CR_16_DC = new BlockType(472, 528, 616, 820, 908, 982, 0);
+        public final static BlockType CR_15x16_AC = new BlockType(476, 543, 631, 835, 923, 992, 0);
+        public final static BlockType CR_16 = new BlockType(480, 557, 645, 849, 937, 1002, 0);
+        public final static BlockType CR_64 = new BlockType(1020, 718, 748, 733, 757, 766, 0);
 
         public int codedBlockCtxOff;
         public int sigCoeffFlagCtxOff;
@@ -78,9 +87,10 @@ public class CABAC {
     private int[][][] mvdTop;
     private int[][][] mvdLeft;
 
-    public int[] tmp = new int[16];
+    public int[] tmp;
 
     public CABAC(int mbWidth) {
+        this.tmp = new int[16];
         this.chromaPredModeLeft = 0;
         this.chromaPredModeTop = new int[mbWidth];
         this.codedBlkLeft = new int[][] { new int[4], new int[2], new int[2] };
@@ -379,7 +389,7 @@ public class CABAC {
                     val++;
             }
         }
-        prevMbQpDelta = H264Utils.golomb2Signed(val);
+        prevMbQpDelta = H264Utils2.golomb2Signed(val);
 
         return prevMbQpDelta;
     }
@@ -567,10 +577,10 @@ public class CABAC {
 
     public int codedBlockPatternIntra(MDecoder mDecoder, boolean leftAvailable, boolean topAvailable, int cbpLeft,
             int cbpTop, MBType mbLeft, MBType mbTop) {
-        int cbp0 = mDecoder.decodeBin(73 + condTerm(leftAvailable, mbLeft, (cbpLeft >> 1) & 1) + 2
-                * condTerm(topAvailable, mbTop, (cbpTop >> 2) & 1));
-        int cbp1 = mDecoder.decodeBin(73 + (1 - cbp0) + 2 * condTerm(topAvailable, mbTop, (cbpTop >> 3) & 1));
-        int cbp2 = mDecoder.decodeBin(73 + condTerm(leftAvailable, mbLeft, (cbpLeft >> 3) & 1) + 2 * (1 - cbp0));
+        int cbp0 = mDecoder.decodeBin(73 + _condTerm(leftAvailable, mbLeft, (cbpLeft >> 1) & 1) + 2
+                * _condTerm(topAvailable, mbTop, (cbpTop >> 2) & 1));
+        int cbp1 = mDecoder.decodeBin(73 + (1 - cbp0) + 2 * _condTerm(topAvailable, mbTop, (cbpTop >> 3) & 1));
+        int cbp2 = mDecoder.decodeBin(73 + _condTerm(leftAvailable, mbLeft, (cbpLeft >> 3) & 1) + 2 * (1 - cbp0));
         int cbp3 = mDecoder.decodeBin(73 + (1 - cbp2) + 2 * (1 - cbp1));
 
         int cr0 = mDecoder.decodeBin(77 + condTermCr0(leftAvailable, mbLeft, cbpLeft >> 4) + 2
@@ -589,7 +599,7 @@ public class CABAC {
         return avb && (mbt == I_PCM || mbt != null && (cbpChroma & 2) != 0) ? 1 : 0;
     }
 
-    private int condTerm(boolean avb, MBType mbt, int cbp) {
+    private int _condTerm(boolean avb, MBType mbt, int cbp) {
         return !avb || mbt == I_PCM || (mbt != null && cbp == 1) ? 0 : 1;
     }
 
@@ -605,9 +615,9 @@ public class CABAC {
         int partAbsX = (mbX << 2) + partX;
 
         boolean predEqA = leftPred != null && leftPred != Direct
-                && (leftPred == Bi || leftPred == curPred || (curPred == Bi && leftPred.usesList(list)));
+                && (leftPred == Bi || leftPred == curPred || (curPred == Bi && H264Const.usesList(leftPred, list)));
         boolean predEqB = topPred != null && topPred != Direct
-                && (topPred == Bi || topPred == curPred || (curPred == Bi && topPred.usesList(list)));
+                && (topPred == Bi || topPred == curPred || (curPred == Bi && H264Const.usesList(topPred, list)));
 
         // prefix and suffix as given by UEG3 with signedValFlag=1, uCoff=9
         int absMvdComp = !leftAvailable || leftType == null || leftType.isIntra() || !predEqA ? 0 : Math
@@ -657,9 +667,9 @@ public class CABAC {
         int partAbsX = (mbX << 2) + partX;
 
         boolean predEqA = leftPred != null && leftPred != Direct
-                && (leftPred == Bi || leftPred == curPred || (curPred == Bi && leftPred.usesList(list)));
+                && (leftPred == Bi || leftPred == curPred || (curPred == Bi && H264Const.usesList(leftPred, list)));
         boolean predEqB = topPred != null && topPred != Direct
-                && (topPred == Bi || topPred == curPred || (curPred == Bi && topPred.usesList(list)));
+                && (topPred == Bi || topPred == curPred || (curPred == Bi && H264Const.usesList(topPred, list)));
 
         int ctA = !leftAvailable || leftType == null || leftType.isIntra() || !predEqA || refIdxLeft[list][partY] == 0 ? 0
                 : 1;

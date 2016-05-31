@@ -1,13 +1,12 @@
 package org.jcodec.containers.mps.index;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 import org.jcodec.containers.mps.index.MTSIndex.MTSProgram;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -38,13 +37,13 @@ public class MTSRandomAccessDemuxer {
         return new MPSRandomAccessDemuxer(ch, index) {
             @Override
             protected Stream newStream(SeekableByteChannel ch, MPSStreamIndex streamIndex) throws IOException {
-                return new Stream(streamIndex, ch) {
+                return new Stream(this, streamIndex, ch) {
                     @Override
                     protected ByteBuffer fetch(int pesLen) throws IOException {
                         ByteBuffer bb = ByteBuffer.allocate(pesLen * 188);
                         
                         for(int i = 0; i < pesLen; i++) {
-                            ByteBuffer tsBuf = NIOUtils.fetchFrom(source, 188);
+                            ByteBuffer tsBuf = NIOUtils.fetchFromChannel(source, 188);
                             Assert.assertEquals(0x47, tsBuf.get() & 0xff);
                             int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                             int guid = (int) guidFlags & 0x1fff;
@@ -64,12 +63,12 @@ public class MTSRandomAccessDemuxer {
 
                     @Override
                     protected void skip(long leadingSize) throws IOException {
-                        source.position(source.position() + leadingSize * 188);
+                        source.setPosition(source.position() + leadingSize * 188);
                     }
 
                     @Override
                     protected void reset() throws IOException {
-                        source.position(0);
+                        source.setPosition(0);
                     }
 
                 };

@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv.boxes;
-
 import java.nio.ByteBuffer;
 import java.util.Date;
 
@@ -26,16 +25,17 @@ public class EbmlDate extends EbmlSint {
     }
 
     public Date getDate() {
-        long val = get();
+        long val = getLong();
         val = val / NANOSECONDS_IN_A_MILISECOND + MILISECONDS_SINCE_UNIX_EPOCH_START;
         return new Date(val);
     }
 
     private void setMiliseconds(long milliseconds) {
-        set((milliseconds - MILISECONDS_SINCE_UNIX_EPOCH_START) * NANOSECONDS_IN_A_MILISECOND);
+        setLong((milliseconds - MILISECONDS_SINCE_UNIX_EPOCH_START) * NANOSECONDS_IN_A_MILISECOND);
     }
 
-    public void set(long value) {
+    @Override
+    public void setLong(long value) {
         this.data = ByteBuffer.allocate(8);
         this.data.putLong(value);
         this.data.flip();

@@ -1,18 +1,17 @@
 package org.jcodec.codecs.vpx;
-
+import static java.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Arrays;
 
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,24 +23,26 @@ import org.jcodec.common.tools.MathUtil;
 public class VP8Encoder extends VideoEncoder {
 
     private VPXBitstream bitstream;
-    private int[][] leftRow;
-    private int[][] topLine;
+    private byte[][] leftRow;
+    private byte[][] topLine;
     private VPXQuantizer quantizer;
-    private int[] tmp = new int[16];
+    private int[] tmp;
     private RateControl rc;
 
     private ByteBuffer headerBuffer;
     private ByteBuffer dataBuffer;
-
-    public VP8Encoder(int qp) {
-        this(new NopRateControl(qp));
+    
+    public static VP8Encoder createVP8Encoder(int qp) {
+        return new VP8Encoder(new NopRateControl(qp));
     }
-
+    
     public VP8Encoder(RateControl rc) {
         this.rc = rc;
+        this.tmp = new int[16];
     }
 
-    public ByteBuffer encodeFrame(Picture pic, ByteBuffer _buf) {
+    @Override
+    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _buf) {
         ByteBuffer out = _buf.duplicate();
         int mbWidth = ((pic.getWidth() + 15) >> 4);
         int mbHeight = ((pic.getHeight() + 15) >> 4);
@@ -49,14 +50,14 @@ public class VP8Encoder extends VideoEncoder {
         prepareBuffers(mbWidth, mbHeight);
 
         bitstream = new VPXBitstream(VPXConst.tokenDefaultBinProbs, mbWidth);
-        leftRow = new int[][] { new int[16], new int[8], new int[8] };
-        topLine = new int[][] { new int[mbWidth << 4], new int[mbWidth << 3], new int[mbWidth << 3] };
-        initValue(leftRow, 129);
-        initValue(topLine, 127);
+        leftRow = new byte[][] { new byte[16], new byte[8], new byte[8] };
+        topLine = new byte[][] { new byte[mbWidth << 4], new byte[mbWidth << 3], new byte[mbWidth << 3] };
+        initValue(leftRow, (byte)1);
+        initValue(topLine, (byte)-1);
 
         quantizer = new VPXQuantizer();
 
-        Picture outMB = Picture.create(16, 16, ColorSpace.YUV420);
+        Picture8Bit outMB = Picture8Bit.create(16, 16, ColorSpace.YUV420);
 
         int[] segmentQps = rc.getSegmentQps();
 
@@ -66,7 +67,7 @@ public class VP8Encoder extends VideoEncoder {
 
         // MB residuals
         for (int mbY = 0, mbAddr = 0; mbY < mbHeight; mbY++) {
-            initValue(leftRow, 129);
+            initValue(leftRow, (byte)1);
 
             for (int mbX = 0; mbX < mbWidth; mbX++, mbAddr++) {
 
@@ -159,7 +160,7 @@ public class VP8Encoder extends VideoEncoder {
         return result;
     }
 
-    private void initValue(int[][] leftRow2, int val) {
+    private void initValue(byte[][] leftRow2, byte val) {
         Arrays.fill(leftRow2[0], val);
         Arrays.fill(leftRow2[1], val);
         Arrays.fill(leftRow2[2], val);
@@ -242,24 +243,24 @@ public class VP8Encoder extends VideoEncoder {
         out.putShort((short) height);
     }
 
-    private void collectPredictors(Picture outMB, int mbX) {
-        System.arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
-        System.arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
-        System.arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
+    private void collectPredictors(Picture8Bit outMB, int mbX) {
+        arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
+        arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
+        arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
 
         copyCol(outMB.getPlaneData(0), 15, 16, leftRow[0]);
         copyCol(outMB.getPlaneData(1), 7, 8, leftRow[1]);
         copyCol(outMB.getPlaneData(2), 7, 8, leftRow[2]);
     }
 
-    private void copyCol(int[] planeData, int off, int stride, int[] out) {
+    private void copyCol(byte[] planeData, int off, int stride, byte[] out) {
         for (int i = 0; i < out.length; i++) {
             out[i] = planeData[off];
             off += stride;
         }
     }
 
-    private void luma(Picture pic, int mbX, int mbY, VPxBooleanEncoder out, int qp, Picture outMB) {
+    private void luma(Picture8Bit pic, int mbX, int mbY, VPxBooleanEncoder out, int qp, Picture8Bit outMB) {
         int x = mbX << 4;
         int y = mbY << 4;
         int[][] ac = transform(pic, 0, qp, x, y);
@@ -297,7 +298,7 @@ public class VP8Encoder extends VideoEncoder {
         return tmp2;
     }
 
-    private void chroma(Picture pic, int mbX, int mbY, VPxBooleanEncoder boolEnc, int qp, Picture outMB) {
+    private void chroma(Picture8Bit pic, int mbX, int mbY, VPxBooleanEncoder boolEnc, int qp, Picture8Bit outMB) {
         int x = mbX << 3;
         int y = mbY << 3;
         int chromaPred1 = chromaPredBlk(1, x, y);
@@ -315,7 +316,7 @@ public class VP8Encoder extends VideoEncoder {
         putChroma(outMB.getData()[2], 2, x, y, ac2, chromaPred2);
     }
 
-    private int[][] transformChroma(Picture pic, int comp, int qp, int x, int y, Picture outMB, int chromaPred) {
+    private int[][] transformChroma(Picture8Bit pic, int comp, int qp, int x, int y, Picture8Bit outMB, int chromaPred) {
         int[][] ac = new int[4][16];
 
         for (int blk = 0; blk < ac.length; blk++) {
@@ -330,22 +331,22 @@ public class VP8Encoder extends VideoEncoder {
         return ac;
     }
 
-    private void putChroma(int[] mb, int comp, int x, int y, int[][] ac, int chromaPred) {
+    private void putChroma(byte[] mb, int comp, int x, int y, int[][] ac, int chromaPred) {
         for (int blk = 0; blk < 4; blk++)
             putBlk(mb, chromaPred, ac[blk], 3, (blk & 1) << 2, (blk >> 1) << 2);
     }
 
-    private final int chromaPredOne(int[] pix, int x) {
-        return (pix[x] + pix[x + 1] + pix[x + 2] + pix[x + 3] + pix[x + 4] + pix[x + 5] + pix[x + 6] + pix[x + 7] + 4) >> 3;
+    private final byte chromaPredOne(byte[] pix, int x) {
+        return (byte)((pix[x] + pix[x + 1] + pix[x + 2] + pix[x + 3] + pix[x + 4] + pix[x + 5] + pix[x + 6] + pix[x + 7] + 4) >> 3);
     }
 
-    private final int chromaPredTwo(int[] pix1, int[] pix2, int x, int y) {
-        return (pix1[x] + pix1[x + 1] + pix1[x + 2] + pix1[x + 3] + pix1[x + 4] + pix1[x + 5] + pix1[x + 6]
+    private final byte chromaPredTwo(byte[] pix1, byte[] pix2, int x, int y) {
+        return (byte)((pix1[x] + pix1[x + 1] + pix1[x + 2] + pix1[x + 3] + pix1[x + 4] + pix1[x + 5] + pix1[x + 6]
                 + pix1[x + 7] + pix2[y] + pix2[y + 1] + pix2[y + 2] + pix2[y + 3] + pix2[y + 4] + pix2[y + 5]
-                + pix2[y + 6] + pix2[y + 7] + 8) >> 4;
+                + pix2[y + 6] + pix2[y + 7] + 8) >> 4);
     }
 
-    private int chromaPredBlk(int comp, int x, int y) {
+    private byte chromaPredBlk(int comp, int x, int y) {
         int predY = y & 0x7;
         if (x != 0 && y != 0)
             return chromaPredTwo(leftRow[comp], topLine[comp], predY, x);
@@ -354,10 +355,10 @@ public class VP8Encoder extends VideoEncoder {
         else if (y != 0)
             return chromaPredOne(topLine[comp], x);
         else
-            return 128;
+            return 0;
     }
 
-    private void putLuma(int[] planeData, int pred, int[][] ac, int log2stride) {
+    private void putLuma(byte[] planeData, int pred, int[][] ac, int log2stride) {
         for (int blk = 0; blk < ac.length; blk++) {
             int blkOffX = (blk & 3) << 2;
             int blkOffY = blk & ~3;
@@ -365,13 +366,13 @@ public class VP8Encoder extends VideoEncoder {
         }
     }
 
-    private void putBlk(int[] planeData, int pred, int[] block, int log2stride, int blkX, int blkY) {
+    private void putBlk(byte[] planeData, int pred, int[] block, int log2stride, int blkX, int blkY) {
         int stride = 1 << log2stride;
         for (int line = 0, srcOff = 0, dstOff = (blkY << log2stride) + blkX; line < 4; line++) {
-            planeData[dstOff] = clip(block[srcOff] + pred, 0, 255);
-            planeData[dstOff + 1] = clip(block[srcOff + 1] + pred, 0, 255);
-            planeData[dstOff + 2] = clip(block[srcOff + 2] + pred, 0, 255);
-            planeData[dstOff + 3] = clip(block[srcOff + 3] + pred, 0, 255);
+            planeData[dstOff] = (byte)(clip(block[srcOff] + pred, -128, 127));
+            planeData[dstOff + 1] = (byte)(clip(block[srcOff + 1] + pred, -128, 127));
+            planeData[dstOff + 2] = (byte)(clip(block[srcOff + 2] + pred, -128, 127));
+            planeData[dstOff + 3] = (byte)(clip(block[srcOff + 3] + pred, -128, 127));
             srcOff += 4;
             dstOff += stride;
         }
@@ -402,19 +403,19 @@ public class VP8Encoder extends VideoEncoder {
         return dc;
     }
 
-    private int lumaDCPred(int x, int y) {
+    private byte lumaDCPred(int x, int y) {
         if (x == 0 && y == 0)
-            return 128;
+            return 0;
 
         if (y == 0)
-            return (ArrayUtil.sum(leftRow[0]) + 8) >> 4;
+            return (byte)((ArrayUtil.sumByte(leftRow[0]) + 8) >> 4);
         if (x == 0)
-            return (ArrayUtil.sum(topLine[0], x, 16) + 8) >> 4;
+            return (byte)((ArrayUtil.sumByte3(topLine[0], x, 16) + 8) >> 4);
 
-        return (ArrayUtil.sum(leftRow[0]) + ArrayUtil.sum(topLine[0], x, 16) + 16) >> 5;
+        return (byte)((ArrayUtil.sumByte(leftRow[0]) + ArrayUtil.sumByte3(topLine[0], x, 16) + 16) >> 5);
     }
 
-    private int[][] transform(Picture pic, int comp, int qp, int x, int y) {
+    private int[][] transform(Picture8Bit pic, int comp, int qp, int x, int y) {
         int dcc = lumaDCPred(x, y);
 
         int[][] ac = new int[16][16];
@@ -429,7 +430,7 @@ public class VP8Encoder extends VideoEncoder {
         return ac;
     }
 
-    private final void takeSubtract(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff, int dc) {
+    private final void takeSubtract(byte[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff, int dc) {
         if (x + 4 < planeWidth && y + 4 < planeHeight)
             takeSubtractSafe(planeData, planeWidth, planeHeight, x, y, coeff, dc);
         else
@@ -437,7 +438,7 @@ public class VP8Encoder extends VideoEncoder {
 
     }
 
-    private final void takeSubtractSafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
+    private final void takeSubtractSafe(byte[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
             int dc) {
         for (int i = 0, srcOff = y * planeWidth + x, dstOff = 0; i < 4; i++, srcOff += planeWidth, dstOff += 4) {
             coeff[dstOff] = planeData[srcOff] - dc;
@@ -447,7 +448,7 @@ public class VP8Encoder extends VideoEncoder {
         }
     }
 
-    private final void takeSubtractUnsafe(int[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
+    private final void takeSubtractUnsafe(byte[] planeData, int planeWidth, int planeHeight, int x, int y, int[] coeff,
             int dc) {
         int outOff = 0;
 
@@ -475,10 +476,5 @@ public class VP8Encoder extends VideoEncoder {
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
         return new ColorSpace[] { ColorSpace.YUV420J };
-    }
-
-    @Override
-    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out) {
-        throw new RuntimeException("Unsupported");
     }
 }

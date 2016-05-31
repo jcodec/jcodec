@@ -1,26 +1,31 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static java.lang.Integer.parseInt;
 import static java.lang.Math.max;
-import static org.jcodec.common.JCodecUtil.removeExtension;
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
 import static org.jcodec.movtool.Util.forceEditList;
+
+import org.jcodec.common.JCodecUtil2;
+import org.jcodec.common.StringUtils;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mp4.BoxFactory;
+import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.Edit;
+import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.TrakBox;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-
-import org.jcodec.common.StringUtils;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.boxes.Edit;
-import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.containers.mp4.boxes.TrakBox;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,7 +37,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class Cut {
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 1) {
             System.out
                     .println("Syntax: cut [-command arg]...[-command arg] [-self] <movie file>\n"
@@ -47,7 +52,7 @@ public class Cut {
         int shift = 0;
         while (true) {
             if ("-cut".equals(args[shift])) {
-                String[] pt = StringUtils.split(args[shift + 1], ":");
+                String[] pt = StringUtils.splitS(args[shift + 1], ":");
                 slices.add(new Slice(parseInt(pt[0]), parseInt(pt[1])));
                 if (pt.length > 2)
                     sliceNames.add(pt[2]);
@@ -66,20 +71,20 @@ public class Cut {
         SeekableByteChannel out = null;
         List<SeekableByteChannel> outs = new ArrayList<SeekableByteChannel>();
         try {
-            input = readableFileChannel(source);
+            input = readableChannel(source);
             MovieBox movie = createRefMovie(input, "file://" + source.getCanonicalPath());
             List<MovieBox> slicesMovs;
             if (!selfContained) {
-                out = writableFileChannel(new File(source.getParentFile(), removeExtension(source.getName())
+                out = writableChannel(new File(source.getParentFile(), JCodecUtil2.removeExtension(source.getName())
                         + ".ref.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
                 MP4Util.writeMovie(out, movie);
             } else {
-                out = writableFileChannel(new File(source.getParentFile(), removeExtension(source.getName())
+                out = writableChannel(new File(source.getParentFile(), JCodecUtil2.removeExtension(source.getName())
                         + ".self.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
                 new Strip().strip(movie);
-                new Flattern().flattern(movie, out);
+                new Flattern().flatternChannel(movie, out);
             }
             saveSlices(slicesMovs, sliceNames, source.getParentFile());
         } finally {
@@ -99,7 +104,7 @@ public class Cut {
                 continue;
             SeekableByteChannel out = null;
             try {
-                out = writableFileChannel(new File(parentFile, names.get(i)));
+                out = writableChannel(new File(parentFile, names.get(i)));
                 MP4Util.writeMovie(out, slices.get(i));
             } finally {
                 NIOUtils.closeQuietly(out);
@@ -111,9 +116,9 @@ public class Cut {
         private double inSec;
         private double outSec;
 
-        public Slice(double in, double out) {
+        public Slice(double _in, double out) {
             super();
-            this.inSec = in;
+            this.inSec = _in;
             this.outSec = out;
         }
     }
@@ -125,7 +130,8 @@ public class Cut {
             movie.fixTimescale(videoTrack.getTimescale());
 
         TrakBox[] tracks = movie.getTracks();
-        for (TrakBox trakBox : tracks) {
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             forceEditList(movie, trakBox);
             List<Edit> edits = trakBox.getEdits();
             for (Slice cut : commands) {
@@ -135,7 +141,7 @@ public class Cut {
         }
         ArrayList<MovieBox> result = new ArrayList<MovieBox>();
         for (Slice cut : commands) {
-            MovieBox clone = (MovieBox) MP4Util.cloneBox(movie, 16 * 1024 * 1024);
+            MovieBox clone = (MovieBox) NodeBox.cloneBox(movie, 16 * 1024 * 1024, BoxFactory.getDefault());
             for (TrakBox trakBox : clone.getTracks()) {
                 selectInner(trakBox.getEdits(), cut, movie, trakBox);
             }

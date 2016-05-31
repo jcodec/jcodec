@@ -1,8 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.nio.ByteBuffer;
+import static org.jcodec.common.JCodecUtil2.asciiString;
 
-import org.jcodec.common.JCodecUtil;
+import java.nio.ByteBuffer;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -25,17 +26,10 @@ public class ColorExtension extends Box {
     final static byte AVCOL_RANGE_JPEG = 2; ///< the normal     2^n-1   "JPEG" YUV ranges
     private Byte colorRange = null;
 
-    public ColorExtension(short primariesIndex, short transferFunctionIndex, short matrixIndex) {
-        this();
-        this.primariesIndex = primariesIndex;
-        this.transferFunctionIndex = transferFunctionIndex;
-        this.matrixIndex = matrixIndex;
+    public ColorExtension(Header header) {
+        super(header);
     }
 
-    public ColorExtension() {
-        super(new Header(fourcc()));
-    }
-    
     public void setColorRange(Byte colorRange) {
         this.colorRange = colorRange;
     }
@@ -44,7 +38,7 @@ public class ColorExtension extends Box {
     public void parse(ByteBuffer input) {
         byte[] dst = new byte[4];
         input.get(dst);
-        this.type = new String(dst);
+        this.type = Platform.stringFromBytes(dst);
         primariesIndex = input.getShort();
         transferFunctionIndex = input.getShort();
         matrixIndex = input.getShort();
@@ -55,7 +49,7 @@ public class ColorExtension extends Box {
 
     @Override
     public void doWrite(ByteBuffer out) {
-        out.put(JCodecUtil.asciiString(type));
+        out.put(asciiString(type));
         out.putShort(primariesIndex);
         out.putShort(transferFunctionIndex);
         out.putShort(matrixIndex);
@@ -66,6 +60,19 @@ public class ColorExtension extends Box {
 
     public static String fourcc() {
         return "colr";
+    }
+
+    public static ColorExtension createColorExtension(short primariesIndex, short transferFunctionIndex,
+            short matrixIndex) {
+        ColorExtension c = new ColorExtension(new Header(fourcc()));
+        c.primariesIndex = primariesIndex;
+        c.transferFunctionIndex = transferFunctionIndex;
+        c.matrixIndex = matrixIndex;
+        return c;
+    }
+
+    public static ColorExtension createColr() {
+        return new ColorExtension(new Header(fourcc()));
     }
 
     public short getPrimariesIndex() {

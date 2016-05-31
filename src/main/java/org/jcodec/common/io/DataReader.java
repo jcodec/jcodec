@@ -1,5 +1,4 @@
 package org.jcodec.common.io;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,8 +20,8 @@ public class DataReader implements Closeable {
     private SeekableByteChannel channel;
     private ByteBuffer buffer;
 
-    public DataReader(SeekableByteChannel channel, ByteOrder order) {
-        this(channel, order, DEFAULT_BUFFER_SIZE);
+    public static DataReader createDataReader(SeekableByteChannel channel, ByteOrder order) {
+        return new DataReader(channel, order, DEFAULT_BUFFER_SIZE);
     }
 
     public DataReader(SeekableByteChannel channel, ByteOrder order, int bufferSize) {
@@ -32,7 +31,7 @@ public class DataReader implements Closeable {
         this.buffer.order(order);
     }
 
-    public int readFully(byte[] b, int off, int len) throws IOException {
+    public int readFully3(byte[] b, int off, int len) throws IOException {
         int initOff = off;
         while (len > 0) {
             fetchIfNeeded(len);
@@ -53,7 +52,7 @@ public class DataReader implements Closeable {
         if (n < buffer.remaining()) {
             buffer.position(buffer.position() + n);
         } else {
-            position(oldPosition + n);
+            setPosition(oldPosition + n);
         }
         return (int) (position() - oldPosition);
     }
@@ -97,13 +96,13 @@ public class DataReader implements Closeable {
         return channel.position() - buffer.limit() + buffer.position();
     }
 
-    public long position(long newPos) throws IOException {
+    public long setPosition(long newPos) throws IOException {
         int relative = (int) (newPos - (channel.position() - buffer.limit()));
         if (relative >= 0 && relative < buffer.limit()) {
             buffer.position(relative);
         } else {
             buffer.limit(0);
-            channel.position(newPos);
+            channel.setPosition(newPos);
         }
         return position();
     }
@@ -134,6 +133,6 @@ public class DataReader implements Closeable {
     }
 
     public int readFully(byte[] b) throws IOException {
-        return readFully(b, 0, b.length);
+        return readFully3(b, 0, b.length);
     }
 }

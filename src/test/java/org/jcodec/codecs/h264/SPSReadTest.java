@@ -1,24 +1,26 @@
 package org.jcodec.codecs.h264;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.nio.ByteBuffer;
-
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.VUIParameters;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-public class SPSReadTest extends TestCase {
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.nio.ByteBuffer;
+
+public class SPSReadTest {
 
     private SeqParameterSet sps1;
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         sps1 = new SeqParameterSet();
         sps1.profile_idc = 66;
 
@@ -73,7 +75,7 @@ public class SPSReadTest extends TestCase {
         String path = "src/test/resources/h264/sps/sps1.dat";
         BufferedInputStream is = null;
         try {
-            SeqParameterSet sps = SeqParameterSet.read(NIOUtils.fetchFrom(new File(path)));
+            SeqParameterSet sps = SeqParameterSet.read(NIOUtils.fetchFromFile(new File(path)));
 
             assertEquals(sps.profile_idc, 66);
 
@@ -130,7 +132,7 @@ public class SPSReadTest extends TestCase {
         sps1.write(bb);
         bb.flip();
 
-        ByteBuffer expect = NIOUtils.fetchFrom(new File(path));
+        ByteBuffer expect = NIOUtils.fetchFromFile(new File(path));
 
         Assert.assertArrayEquals(NIOUtils.toArray(bb), NIOUtils.toArray(expect));
 

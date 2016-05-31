@@ -1,5 +1,9 @@
 package org.jcodec.common.io;
 
+import static java.lang.System.currentTimeMillis;
+
+import java.lang.Runnable;
+import java.lang.Thread;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,16 +20,16 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class AutoPool {
-    private static AutoPool instance = new AutoPool();
-    private List<AutoResource> resources = Collections.synchronizedList(new ArrayList<AutoResource>());
+    private final List<AutoResource> resources;
     private ScheduledExecutorService scheduler;
 
     private AutoPool() {
+        this.resources = Collections.synchronizedList(new ArrayList<AutoResource>());
         scheduler = Executors.newScheduledThreadPool(1, daemonThreadFactory());
+        final List<AutoResource> res = resources;
         scheduler.scheduleAtFixedRate(new Runnable() {
             public void run() {
-                long curTime = System.currentTimeMillis();
-                List<AutoResource> res = resources;
+                long curTime = currentTimeMillis();
                 for (AutoResource autoResource : res) {
                     autoResource.setCurTime(curTime);
                 }
@@ -52,4 +56,6 @@ public class AutoPool {
     public void add(AutoResource res) {
         resources.add(res);
     }
+    
+    private static AutoPool instance = new AutoPool();
 }

@@ -1,8 +1,4 @@
 package org.jcodec.containers.mps.index;
-
-import java.io.File;
-import java.io.IOException;
-
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
@@ -13,9 +9,13 @@ import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mps.index.MPSRandomAccessDemuxer.Stream;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+
 public class MTSRandomAccessDemuxerMain {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         MTSIndexer indexer = new MTSIndexer();
         File source = new File(args[0]);
 
@@ -28,25 +28,24 @@ public class MTSRandomAccessDemuxerMain {
             NIOUtils.writeTo(index.serialize(), indexFile);
         } else {
             System.out.println("Reading index from: " + indexFile.getName());
-            index = MTSIndex.parse(NIOUtils.fetchFrom(indexFile));
+            index = MTSIndex.parse(NIOUtils.fetchFromFile(indexFile));
         }
 
-        MTSRandomAccessDemuxer demuxer = new MTSRandomAccessDemuxer(NIOUtils.readableFileChannel(source), index);
+        MTSRandomAccessDemuxer demuxer = new MTSRandomAccessDemuxer(NIOUtils.readableChannel(source), index);
         int[] guids = demuxer.getGuids();
 
         Stream video = getVideoStream(demuxer.getProgramDemuxer(guids[0]));
 
-        FileChannelWrapper ch = NIOUtils.writableFileChannel(new File(args[1]));
-        MP4Muxer mp4Muxer = new MP4Muxer(ch, Brand.MOV);
+        FileChannelWrapper ch = NIOUtils.writableChannel(new File(args[1]));
+        MP4Muxer mp4Muxer = MP4Muxer.createMP4Muxer(ch, Brand.MOV);
         FramesMP4MuxerTrack videoTrack = mp4Muxer.addVideoTrack("m2v1", new Size(1920, 1080), "jcod", 90000);
 
         video.gotoSyncFrame(175);
         Packet pkt = video.nextFrame();
         long firstPts = pkt.getPts();
         for (int i = 0; pkt != null && i < 150; i++) {
-            videoTrack.addFrame(new MP4Packet(pkt.getData(), pkt.getPts() - firstPts, pkt.getTimescale(), pkt
-                    .getDuration(), pkt.getFrameNo(), pkt.isKeyFrame(), pkt.getTapeTimecode(), pkt.getPts() - firstPts,
-                    0));
+            videoTrack.addFrame(MP4Packet.createMP4Packet(pkt.getData(), pkt.getPts() - firstPts, pkt.getTimescale(), pkt
+                            .getDuration(), pkt.getFrameNo(), pkt.isKeyFrame(), pkt.getTapeTimecode(), 0, pkt.getPts() - firstPts, 0));
             pkt = video.nextFrame();
         }
         mp4Muxer.writeHeader();

@@ -1,10 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
-
-import java.nio.ByteBuffer;
-
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
+
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class TrunBoxTest {
 
@@ -24,7 +23,7 @@ public class TrunBoxTest {
         box.write(bb);
         bb.flip();
 
-        TrunBox parsed = new TrunBox();
+        TrunBox parsed = TrunBox.createTrunBox();
         bb.getLong(); // box header
         parsed.parse(bb);
 

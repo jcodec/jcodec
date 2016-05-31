@@ -1,9 +1,12 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.util.List;
 
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
+
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,9 +26,9 @@ public class CompoundMP4Edit implements MP4Edit {
     }
 
     @Override
-    public void apply(MovieBox mov, MovieFragmentBox[] fragmentBox) {
+    public void applyToFragment(MovieBox mov, MovieFragmentBox[] fragmentBox) {
         for (MP4Edit command : edits) {
-            command.apply(mov, fragmentBox);
+            command.applyToFragment(mov, fragmentBox);
         }
     }
 

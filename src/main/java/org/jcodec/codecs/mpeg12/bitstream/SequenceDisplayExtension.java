@@ -1,9 +1,8 @@
 package org.jcodec.codecs.mpeg12.bitstream;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -17,17 +16,18 @@ public class SequenceDisplayExtension implements MPEGHeader {
     public int display_horizontal_size;
     public int display_vertical_size;
     public ColorDescription colorDescription;
+    public static final int Sequence_Display_Extension = 0x2;
 
     public static class ColorDescription {
         int colour_primaries;
         int transfer_characteristics;
         int matrix_coefficients;
 
-        public static ColorDescription read(BitReader in) {
+        public static ColorDescription read(BitReader _in) {
             ColorDescription cd = new ColorDescription();
-            cd.colour_primaries = in.readNBit(8);
-            cd.transfer_characteristics = in.readNBit(8);
-            cd.matrix_coefficients = in.readNBit(8);
+            cd.colour_primaries = _in.readNBit(8);
+            cd.transfer_characteristics = _in.readNBit(8);
+            cd.matrix_coefficients = _in.readNBit(8);
             return cd;
         }
 
@@ -38,15 +38,15 @@ public class SequenceDisplayExtension implements MPEGHeader {
         }
     }
 
-    public static SequenceDisplayExtension read(BitReader in) {
+    public static SequenceDisplayExtension read(BitReader _in) {
         SequenceDisplayExtension sde = new SequenceDisplayExtension();
-        sde.video_format = in.readNBit(3);
-        if (in.read1Bit() == 1) {
-            sde.colorDescription = ColorDescription.read(in);
+        sde.video_format = _in.readNBit(3);
+        if (_in.read1Bit() == 1) {
+            sde.colorDescription = ColorDescription.read(_in);
         }
-        sde.display_horizontal_size = in.readNBit(14);
-        in.read1Bit();
-        sde.display_vertical_size = in.readNBit(14);
+        sde.display_horizontal_size = _in.readNBit(14);
+        _in.read1Bit();
+        sde.display_vertical_size = _in.readNBit(14);
 
         return sde;
     }
@@ -54,7 +54,7 @@ public class SequenceDisplayExtension implements MPEGHeader {
     @Override
     public void write(ByteBuffer bb) {
         BitWriter bw = new BitWriter(bb);
-        bw.writeNBit(SequenceHeader.Sequence_Display_Extension, 4);
+        bw.writeNBit(SequenceDisplayExtension.Sequence_Display_Extension, 4);
         
         bw.writeNBit(video_format, 3);
         bw.write1Bit(colorDescription != null ? 1 : 0);

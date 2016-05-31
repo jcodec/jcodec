@@ -1,5 +1,4 @@
 package org.jcodec.common.dct;
-
 import java.nio.IntBuffer;
 
 /**
@@ -22,11 +21,11 @@ public class IntDCT extends DCT {
         IntBuffer inptr = IntBuffer.wrap(orig);
         IntBuffer workspace = IntBuffer.allocate(64);
         IntBuffer outptr = IntBuffer.allocate(64);
-        decode(inptr, workspace, outptr);
+        doDecode(inptr, workspace, outptr);
         return outptr.array();
     }
 
-    protected IntBuffer decode(IntBuffer inptr, IntBuffer workspace,
+    protected IntBuffer doDecode(IntBuffer inptr, IntBuffer workspace,
             IntBuffer outptr) {
         pass1(inptr, workspace.duplicate());
         pass2(outptr, workspace.duplicate());
@@ -104,7 +103,7 @@ public class IntDCT extends DCT {
             outptr.put(range_limit(DESCALE(tmp11 - tmp2, D) & RANGE_MASK));
             outptr.put(range_limit(DESCALE(tmp10 - tmp3, D) & RANGE_MASK));
 
-            wsptr = advance(wsptr, DCTSIZE); /* advance pointer to next row */
+            wsptr = doAdvance(wsptr, DCTSIZE); /* advance pointer to next row */
 
         }
     }
@@ -258,11 +257,12 @@ public class IntDCT extends DCT {
      * advance pointers to next column
      */
     private static IntBuffer advance(IntBuffer ptr) {
-        return advance(ptr, 1);
+        return doAdvance(ptr, 1);
     }
 
-    private static IntBuffer advance(IntBuffer ptr, int size) {
-        return ((IntBuffer) ptr.position(ptr.position() + size)).slice();
+    private static IntBuffer doAdvance(IntBuffer ptr, int size) {
+        ptr.position(ptr.position() + size);
+        return ptr.slice();
     }
 
     static int DESCALE(int x, int n) {
@@ -275,6 +275,10 @@ public class IntDCT extends DCT {
 
     private static final int MULTIPLY(int i, int j) {
         return i * j;
+    }
+
+    private final static int FIX(double x) {
+        return ((int) ((x) * (1 << CONST_BITS) + 0.5));
     }
 
     private final static int FIX_0_298631336 = FIX(0.298631336);
@@ -292,9 +296,4 @@ public class IntDCT extends DCT {
 
     private static final int CONST_BITS = 13;
     private static final int ONE_HALF = (1 << (CONST_BITS - 1));
-
-    private final static int FIX(double x) {
-        return ((int) ((x) * (1 << CONST_BITS) + 0.5));
-    }
-
 }

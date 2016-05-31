@@ -1,13 +1,9 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static java.lang.Integer.parseInt;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.util.Arrays;
-import java.util.Comparator;
 
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mp4.MP4Util;
@@ -16,6 +12,13 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.movtool.streaming.tracks.ConcatTrack;
 import org.jcodec.movtool.streaming.tracks.FilePool;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FilenameFilter;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -26,7 +29,7 @@ import org.jcodec.movtool.streaming.tracks.RealTrack;
  */
 public class ConcatMain {
     
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         File folder = new File(System.getProperty("user.home"), "upload");
         File[] listFiles = folder.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {

@@ -1,11 +1,14 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.ThreadLocal;
+import java.lang.IllegalArgumentException;
 
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mjpeg.JpegToThumb2x2;
 import org.jcodec.codecs.mjpeg.JpegToThumb4x4;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.Size;
-import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualTrack;
 

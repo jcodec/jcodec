@@ -8,30 +8,22 @@ package org.jcodec.common.model;
  * @author The JCodec project
  * 
  */
-public enum ColorSpace {
-    BGR(3, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }),
-    
-    RGB(3, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }),
-
-    YUV420(3, new int[] { 0, 1, 2 }, new int[] { 0, 1, 1 }, new int[] { 0, 1, 1 }),
-
-    YUV420J(3, new int[] { 0, 1, 2 }, new int[] { 0, 1, 1 }, new int[] { 0, 1, 1 }),
-
-    YUV422(3, new int[] { 0, 1, 2 }, new int[] { 0, 1, 1 }, new int[] { 0, 0, 0 }),
-    
-    YUV422J(3, new int[] { 0, 1, 2 }, new int[] { 0, 1, 1 }, new int[] { 0, 0, 0 }),
-
-    YUV444(3, new int[] { 0, 1, 2 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }),
-    
-    YUV444J(3, new int[] { 0, 1, 2 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }),
-
-    YUV422_10(3, new int[] { 0, 1, 2 }, new int[] { 0, 1, 1 }, new int[] { 0, 0, 0 }),
-
-    GREY(1, new int[] { 0 }, new int[] { 0 }, new int[] { 0 }),
-
-    MONO(1, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 }),
-
-    YUV444_10(3, new int[] { 0, 1, 2 }, new int[] { 0, 0, 0 }, new int[] { 0, 0, 0 });
+public final class ColorSpace {
+    private static final int[] _000 = new int[] { 0, 0, 0 };
+    private static final int[] _011 = new int[] { 0, 1, 1 };
+    private static final int[] _012 = new int[] { 0, 1, 2 };
+    public final static ColorSpace BGR = new ColorSpace("BGR", 3, _000, _000, _000);
+    public final static ColorSpace RGB = new ColorSpace("RGB", 3, _000, _000, _000);
+    public final static ColorSpace YUV420 = new ColorSpace("YUV420", 3, _012, _011, _011);
+    public final static ColorSpace YUV420J = new ColorSpace("YUV420J", 3, _012, _011, _011);
+    public final static ColorSpace YUV422 = new ColorSpace("YUV422", 3, _012, _011, _000);
+    public final static ColorSpace YUV422J = new ColorSpace("YUV422J", 3, _012, _011, _000);
+    public final static ColorSpace YUV444 = new ColorSpace("YUV444", 3, _012, _000, _000);
+    public final static ColorSpace YUV444J = new ColorSpace("YUV444J", 3, _012, _000, _000);
+    public final static ColorSpace YUV422_10 = new ColorSpace("YUV422_10", 3, _012, _011, _000);
+    public final static ColorSpace GREY = new ColorSpace("GREY", 1, new int[] { 0 }, new int[] { 0 }, new int[] { 0 });
+    public final static ColorSpace MONO = new ColorSpace("MONO", 1, _000, _000, _000);
+    public final static ColorSpace YUV444_10 = new ColorSpace("YUV444_10", 3, _012, _000, _000);
 
     public static final int MAX_PLANES = 4;
 
@@ -42,11 +34,18 @@ public enum ColorSpace {
     public int[] compWidth;
 
     public int[] compHeight;
+    private String _name;
 
-    private ColorSpace(int nComp, int[] compPlane, int[] compWidth, int[] compHeight) {
+    private ColorSpace(String name, int nComp, int[] compPlane, int[] compWidth, int[] compHeight) {
+        this._name = name;
         this.nComp = nComp;
         this.compPlane = compPlane;
         this.compWidth = compWidth;
         this.compHeight = compHeight;
+    }
+
+    @Override
+    public String toString() {
+        return _name;
     }
 }

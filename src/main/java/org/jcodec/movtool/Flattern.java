@@ -1,14 +1,10 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.IllegalArgumentException;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.writableChannel;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -26,6 +22,14 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.UrlBox;
+import org.jcodec.platform.Platform;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -38,17 +42,17 @@ import org.jcodec.containers.mp4.boxes.UrlBox;
  */
 public class Flattern {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: self <ref movie> <out movie>");
             System.exit(-1);
         }
         File outFile = new File(args[1]);
-        outFile.delete();
+        Platform.deleteFile(outFile);
         SeekableByteChannel input = null;
         try {
-            input = readableFileChannel(new File(args[0]));
-            MovieBox movie = MP4Util.parseMovie(input);
+            input = readableChannel(new File(args[0]));
+            MovieBox movie = MP4Util.parseMovieChannel(input);
             new Flattern().flattern(movie, outFile);
         } finally {
             if (input != null)
@@ -56,7 +60,11 @@ public class Flattern {
         }
     }
 
-    public List<ProgressListener> listeners = new ArrayList<Flattern.ProgressListener>();
+    public List<ProgressListener> listeners;
+    
+    public Flattern() {
+        this.listeners = new ArrayList<Flattern.ProgressListener>();
+    }
 
     public interface ProgressListener {
         public void trigger(int progress);
@@ -66,21 +74,21 @@ public class Flattern {
         this.listeners.add(listener);
     }
 
-    public void flattern(MovieBox movie, SeekableByteChannel out) throws IOException {
+    public void flatternChannel(MovieBox movie, SeekableByteChannel out) throws IOException {
         if (!movie.isPureRefMovie(movie))
             throw new IllegalArgumentException("movie should be reference");
         ByteBuffer buf = ByteBuffer.allocate(16 * 1024 * 1024);
-        FileTypeBox ftyp = new FileTypeBox("qt  ", 0x20050300, Arrays.asList(new String[] { "qt  " }));
+        FileTypeBox ftyp = FileTypeBox.createFileTypeBox("qt  ", 0x20050300, Arrays.asList(new String[] { "qt  " }));
         ftyp.write(buf);
         long movieOff = buf.position();
         movie.write(buf);
 
         int extraSpace = calcSpaceReq(movie);
-        new Header("free", 8 + extraSpace).write(buf);
+        Header.createHeader("free", 8 + extraSpace).write(buf);
         NIOUtils.skip(buf, extraSpace);
 
         long mdatOff = buf.position();
-        new Header("mdat", 0x100000001L).write(buf);
+        Header.createHeader("mdat", 0x100000001L).write(buf);
         buf.flip();
         out.write(buf);
 
@@ -130,7 +138,7 @@ public class Flattern {
         for (int i = 0; i < tracks.length; i++) {
             writers[i].apply();
         }
-        out.position(movieOff);
+        out.setPosition(movieOff);
         MP4Util.writeMovie(out, movie);
 
         long extra = mdatOff - out.position();
@@ -138,7 +146,7 @@ public class Flattern {
             throw new RuntimeException("Not enough space to write the header");
         out.write((ByteBuffer) ByteBuffer.allocate(8).putInt((int) extra).put(new byte[] { 'f', 'r', 'e', 'e' }).flip());
 
-        out.position(mdatOff + 8);
+        out.setPosition(mdatOff + 8);
         out.write(ByteBuffer.allocate(8).putLong(mdatSize));
     }
 
@@ -156,7 +164,7 @@ public class Flattern {
         TrakBox[] tracks = movie.getTracks();
         SeekableByteChannel[][] result = new SeekableByteChannel[tracks.length][];
         for (int i = 0; i < tracks.length; i++) {
-            DataRefBox drefs = NodeBox.findFirst(tracks[i], DataRefBox.class, "mdia", "minf", "dinf", "dref");
+            DataRefBox drefs = NodeBox.findFirstPath(tracks[i], DataRefBox.class, Box.path("mdia.minf.dinf.dref"));
             if (drefs == null) {
                 throw new RuntimeException("No data references");
             }
@@ -173,7 +181,9 @@ public class Flattern {
 
     private int calcSpaceReq(MovieBox movie) {
         int sum = 0;
-        for (TrakBox trakBox : movie.getTracks()) {
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
             ChunkOffsetsBox stco = trakBox.getStco();
             if (stco != null)
                 sum += stco.getChunkOffsets().length * 4;
@@ -186,23 +196,23 @@ public class Flattern {
             String url = ((UrlBox) box).getUrl();
             if (!url.startsWith("file://"))
                 throw new RuntimeException("Only file:// urls are supported in data reference");
-            return readableFileChannel(new File(url.substring(7)));
+            return readableChannel(new File(url.substring(7)));
         } else if (box instanceof AliasBox) {
             String uxPath = ((AliasBox) box).getUnixPath();
             if (uxPath == null)
                 throw new RuntimeException("Could not resolve alias");
-            return readableFileChannel(new File(uxPath));
+            return readableChannel(new File(uxPath));
         } else {
             throw new RuntimeException(box.getHeader().getFourcc() + " dataref type is not supported");
         }
     }
 
     public void flattern(MovieBox movie, File video) throws IOException {
-        video.delete();
+        Platform.deleteFile(video);
         SeekableByteChannel out = null;
         try {
-            out = writableFileChannel(video);
-            flattern(movie, out);
+            out = writableChannel(video);
+            flatternChannel(movie, out);
         } finally {
             if (out != null)
                 out.close();

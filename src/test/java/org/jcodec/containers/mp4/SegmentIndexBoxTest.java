@@ -1,12 +1,11 @@
 package org.jcodec.containers.mp4;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
-import java.nio.ByteBuffer;
-
 import org.jcodec.containers.mp4.boxes.SegmentIndexBox;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
 
 public class SegmentIndexBoxTest {
 
@@ -24,7 +23,7 @@ public class SegmentIndexBoxTest {
 
     @Test
     public void testParse() throws Exception {
-        SegmentIndexBox sidx = new SegmentIndexBox();
+        SegmentIndexBox sidx = SegmentIndexBox.createSegmentIndexBox();
         ByteBuffer input = ByteBuffer.wrap(expected);
         input.position(8);
         sidx.parse(input);

@@ -1,11 +1,9 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+
+import static java.lang.System.currentTimeMillis;
 
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.containers.mp4.MP4Util;
@@ -17,6 +15,13 @@ import org.jcodec.movtool.streaming.tracks.Prores2AVCTrack;
 import org.jcodec.movtool.streaming.tracks.RealTrack;
 import org.jcodec.movtool.streaming.tracks.StereoDownmixTrack;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -26,7 +31,7 @@ import org.jcodec.movtool.streaming.tracks.StereoDownmixTrack;
  */
 public class StreamingMain {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
 
         File m1 = new File(System.getProperty("user.home") + "/Desktop/supercool.mov");
 
@@ -39,12 +44,12 @@ public class StreamingMain {
                 new RealTrack(mov1, mov1.getAudioTracks().get(1), ch1), new RealTrack(mov1, mov1.getAudioTracks()
                         .get(2), ch1), new RealTrack(mov1, mov1.getAudioTracks().get(3), ch1));
 
-        long start = System.currentTimeMillis();
+        long start = currentTimeMillis();
         ScheduledExecutorService cachePolicyExec = Executors.newSingleThreadScheduledExecutor();
 
         VirtualMovie vm = new VirtualMP4Movie(new CachingTrack(new Prores2AVCTrack(rt, v1.getCodedSize()), 10,
                 cachePolicyExec), new CachingTrack(rt1, 10, cachePolicyExec));
-        System.out.println(System.currentTimeMillis() - start);
+        System.out.println(currentTimeMillis() - start);
 
         BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home")
                 + "/Desktop/megashit.mov"));

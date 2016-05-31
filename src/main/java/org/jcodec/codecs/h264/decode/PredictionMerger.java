@@ -77,7 +77,7 @@ public class PredictionMerger {
     private static void mergeAvg(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
             byte[] out) {
         if (p0 == Bi)
-            mergePrediction(blk0, blk1, stride, p0, off, blkW, blkH, out);
+            _mergePrediction(blk0, blk1, stride, p0, off, blkW, blkH, out);
         else if (p0 == L0)
             copyPrediction(blk0, stride, off, blkW, blkH, out);
         else if (p0 == L1)
@@ -96,14 +96,14 @@ public class PredictionMerger {
         }
     }
 
-    private static void copyPrediction(byte[] in, int stride, int off, int blkW, int blkH, byte[] out) {
+    private static void copyPrediction(byte[] _in, int stride, int off, int blkW, int blkH, byte[] out) {
 
         for (int i = 0; i < blkH; i++, off += stride - blkW)
             for (int j = 0; j < blkW; j++, off++)
-                out[off] = in[off];
+                out[off] = _in[off];
     }
 
-    private static void mergePrediction(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
+    private static void _mergePrediction(byte[] blk0, byte[] blk1, int stride, PartPred p0, int off, int blkW, int blkH,
             byte[] out) {
 
         for (int i = 0; i < blkH; i++, off += stride - blkW)
@@ -127,9 +127,9 @@ public class PredictionMerger {
         int round = 1 << (logWD - 1);
 
         if (logWD >= 1) {
-            // Necessary to correctly scale in [-128, 127] range,
-            // i.e. x = ay / b; x,y in [0, 255] is
-            // x = a * (y + 128) / b - 128; x,y in [-128, 127]
+            // Necessary to correctly scale _in [-128, 127] range,
+            // i.e. x = ay / b; x,y _in [0, 255] is
+            // x = a * (y + 128) / b - 128; x,y _in [-128, 127]
             o -= 128;
             round += w << 7;
             for (int i = 0; i < blkH; i++, off += stride - blkW)

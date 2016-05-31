@@ -1,5 +1,4 @@
 package org.jcodec.containers.mxf.model;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -30,7 +29,7 @@ public class MXFPartition {
         boolean complete = ul.get(14) > 2;
 
         MXFPartitionPack pp = new MXFPartitionPack(ul);
-        pp.read(bb);
+        pp.readBuf(bb);
 
         long essenceFilePos = roundToKag(pp.getThisPartition() + packSize, pp.getKagSize())
                 + roundToKag(pp.getHeaderByteCount(), pp.getKagSize())

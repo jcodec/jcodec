@@ -1,19 +1,17 @@
 package org.jcodec.containers.mp4;
-
-import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-
-import java.io.IOException;
-import java.util.List;
-
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.demuxer.TimecodeMP4DemuxerTrack;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -54,7 +52,7 @@ public class QTTimeUtil {
      * @return
      */
     public static long frameToTimevalue(TrakBox trak, int frameNumber) {
-        TimeToSampleBox stts = findFirst(trak, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts");
+        TimeToSampleBox stts = NodeBox.findFirstPath(trak, TimeToSampleBox.class, Box.path("mdia.minf.stbl.stts"));
         TimeToSampleEntry[] timeToSamples = stts.getEntries();
         long pts = 0;
         int sttsInd = 0, sttsSubInd = frameNumber;
@@ -74,7 +72,7 @@ public class QTTimeUtil {
      * @return
      */
     public static int timevalueToFrame(TrakBox trak, long tv) {
-        TimeToSampleEntry[] tts = findFirst(trak, TimeToSampleBox.class, "mdia", "minf", "stbl", "stts").getEntries();
+        TimeToSampleEntry[] tts = NodeBox.findFirstPath(trak, TimeToSampleBox.class, Box.path("mdia.minf.stbl.stts")).getEntries();
         int frame = 0;
         for (int i = 0; tv > 0 && i < tts.length; i++) {
             long rem = tv / tts[i].getSampleDuration();
@@ -156,7 +154,7 @@ public class QTTimeUtil {
         TrakBox videoTrack = movie.getVideoTrack();
         TrakBox timecodeTrack = movie.getTimecodeTrack();
         
-        if (timecodeTrack != null && Box.findFirst(videoTrack, "tref", "tmcd") != null) {
+        if (timecodeTrack != null && BoxUtil.containsBox2(videoTrack, "tref", "tmcd")) {
             return timevalueToTimecodeFrame(timecodeTrack, new RationalLarge(tv, videoTrack.getTimescale()),
                     movie.getTimescale());
         } else {
@@ -189,7 +187,7 @@ public class QTTimeUtil {
      * @return
      * @throws IOException
      */
-    public static String qtPlayerTimecode(MovieBox movie, TimecodeMP4DemuxerTrack timecodeTrack, int mediaFrameNo)
+    public static String qtPlayerTimecodeFromMovie(MovieBox movie, TimecodeMP4DemuxerTrack timecodeTrack, int mediaFrameNo)
             throws IOException {
         TrakBox videoTrack = movie.getVideoTrack();
         long editedTv = mediaToEdited(videoTrack, frameToTimevalue(videoTrack, mediaFrameNo), movie.getTimescale());
@@ -247,8 +245,7 @@ public class QTTimeUtil {
      * @return
      */
     public static String formatTimecode(TrakBox timecodeTrack, int counter) {
-        TimecodeSampleEntry tmcd = Box.findFirst(timecodeTrack, TimecodeSampleEntry.class, "mdia", "minf", "stbl",
-                "stsd", "tmcd");
+        TimecodeSampleEntry tmcd = NodeBox.findFirstPath(timecodeTrack, TimecodeSampleEntry.class, Box.path("mdia.minf.stbl.stsd.tmcd"));
         byte nf = tmcd.getNumFrames();
 
         String tc = String.format("%02d", counter % nf);

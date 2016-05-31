@@ -1,12 +1,12 @@
 package org.jcodec.containers.mkv.boxes;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.MKVType;
 import org.jcodec.containers.mkv.util.EbmlUtil;
+import org.jcodec.platform.Platform;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -20,14 +20,19 @@ public abstract class EbmlBase {
 
     protected EbmlMaster parent;
     public MKVType type;
-    public byte[] id = { 0x00 };
+    public byte[] id;
     public int dataLen = 0;
     public long offset;
     public long dataOffset;
     public int typeSizeLength;
-
+    
+    @UsedViaReflection
+    public EbmlBase(byte[] id) {
+        this.id = id;
+    }
+    
     public boolean equalId(byte[] typeId) {
-        return Arrays.equals(this.id, typeId);
+        return Platform.arrayEqualsByte(this.id, typeId);
     }
     
     public abstract ByteBuffer getData();

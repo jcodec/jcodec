@@ -13,15 +13,15 @@ public class MediaBox extends NodeBox {
         return "mdia";
     }
 
+    public static MediaBox createMediaBox() {
+        return new MediaBox(new Header(fourcc()));
+    }
+
     public MediaBox(Header atom) {
         super(atom);
     }
 
-    public MediaBox() {
-        super(new Header(fourcc()));
-    }
-
     public MediaInfoBox getMinf() {
-        return Box.findFirst(this, MediaInfoBox.class, "minf");
+        return NodeBox.findFirst(this, MediaInfoBox.class, "minf");
     }
 }

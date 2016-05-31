@@ -1,14 +1,10 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.containers.mkv.MKVType.Block;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.Segment;
 import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
-import static org.jcodec.containers.mkv.MKVType.findAll;
+import static org.jcodec.containers.mkv.MKVType.findAllTree;
 import static org.junit.Assert.assertArrayEquals;
-
-import java.io.FileInputStream;
-import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
@@ -17,13 +13,17 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.FileInputStream;
+import java.lang.System;
+import java.nio.ByteBuffer;
+
 public class MkvBlockTest {
     
     @Test
     public void testXiph() {
-        int[] in = new int[]{187, 630, 255, 60, 0xFFFFFF};
+        int[] _in = new int[]{187, 630, 255, 60, 0xFFFFFF};
         byte[] expecteds = new byte[]{(byte)187, (byte)255, (byte)255, 120, (byte)255, 0, 60};
-        assertArrayEquals(expecteds, MkvBlock.muxXiphLacing(in));
+        assertArrayEquals(expecteds, MkvBlock.muxXiphLacing(_in));
     }
     
     @Test
@@ -37,13 +37,13 @@ public class MkvBlockTest {
     
     @Test
     public void testEbml() {
-        int[] in = new int[]{187, 630, 255, 60, 0xFFFFFF};
+        int[] _in = new int[]{187, 630, 255, 60, 0xFFFFFF};
         long[] expecteds = new long[]{187, 443, -375, -195};
-        assertArrayEquals(expecteds, MkvBlock.calcEbmlLacingDiffs(in));
+        assertArrayEquals(expecteds, MkvBlock.calcEbmlLacingDiffs(_in));
         
-        in = new int[]{480, 576, 672, 672, 672, 672, 576, 672};
+        _in = new int[]{480, 576, 672, 672, 672, 672, 576, 672};
         expecteds = new long[]{480, 96, 96, 0, 0, 0, -96};
-        assertArrayEquals(expecteds, MkvBlock.calcEbmlLacingDiffs(in));
+        assertArrayEquals(expecteds, MkvBlock.calcEbmlLacingDiffs(_in));
     }
     
     @Test
@@ -128,8 +128,9 @@ public class MkvBlockTest {
         FileInputStream inputStream = new FileInputStream(suite.test1);
         try {
             MKVParser reader = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
+            MKVType[] path = { Segment, Cluster, SimpleBlock };
             
-            MkvBlock[] blocks = findAll(reader.parse(), MkvBlock.class, Segment, Cluster, SimpleBlock);
+            MkvBlock[] blocks = findAllTree(reader.parse(), MkvBlock.class, path);
             for (MkvBlock be : blocks)
                 if (be.lacingPresent){
                     Assert.assertEquals("    "+be.lacing+" Lacing block offset "+be.offset, be.dataLen+(be.dataOffset-be.offset), be.size());

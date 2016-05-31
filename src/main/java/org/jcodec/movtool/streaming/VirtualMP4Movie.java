@@ -1,13 +1,16 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import static org.jcodec.movtool.streaming.MovieHelper.produceHeader;
+
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.containers.mp4.Brand;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
-
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.containers.mp4.Brand;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,13 +24,9 @@ import org.jcodec.containers.mp4.Brand;
 public class VirtualMP4Movie extends VirtualMovie {
     private Brand brand;
 
-    public VirtualMP4Movie(VirtualTrack... tracks) throws IOException {
-        this(Brand.MP4, tracks);
-    }
-
-    public VirtualMP4Movie(Brand brand, VirtualTrack... tracks) throws IOException {
-        super(tracks);
-        this.brand = brand;
+    public VirtualMP4Movie(VirtualTrack... arguments) throws IOException {
+        super(arguments);
+        this.brand = Brand.MP4;
         muxTracks();
     }
 
@@ -65,7 +64,7 @@ public class VirtualMP4Movie extends VirtualMovie {
         return new PacketChunk(pkt, trackNo, chunkNo, pos, track.getCodecMeta().getFourcc());
     }
 
-    public class PacketChunk implements MovieSegment {
+    public static class PacketChunk implements MovieSegment {
         private VirtualPacket packet;
         private int track;
         private int no;

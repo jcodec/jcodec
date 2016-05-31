@@ -1,13 +1,4 @@
 package org.jcodec.codecs.mpeg12;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.jcodec.codecs.mpeg12.MPSMediaInfo.MPEGTrackMetadata;
 import org.jcodec.codecs.mpeg12.MPSMediaInfo.MediaInfoDone;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -16,6 +7,15 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.MTSUtils;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -34,27 +34,31 @@ public class MTSMediaInfo {
         final Map<Integer, MPSMediaInfo> pids = new HashMap<Integer, MPSMediaInfo>();
         final List<MPEGTrackMetadata> result = new ArrayList<MPEGTrackMetadata>();
         try {
-            ch = NIOUtils.readableFileChannel(f);
-            new MTSUtils.TSReader() {
+            ch = NIOUtils.readableChannel(f);
+            new MTSUtils.TSReader(false) {
                 private ByteBuffer pmtBuffer;
                 private int pmtPid = -1;
                 private boolean pmtDone;
 
-                protected boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos) {
+                @Override
+                protected boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
+                        ByteBuffer fullPkt) {
                     if (guid == 0) {
                         pmtPid = MTSUtils.parsePAT(tsBuf);
                     } else if (guid == pmtPid && !pmtDone) {
                         if (pmtBuffer == null) {
                             pmtBuffer = ByteBuffer.allocate(((tsBuf.duplicate().getInt() >> 8) & 0x3ff) + 3);
                         } else if (pmtBuffer.hasRemaining()) {
-                            NIOUtils.write(pmtBuffer, tsBuf, Math.min(pmtBuffer.remaining(), tsBuf.remaining()));
+                            NIOUtils.writeL(pmtBuffer, tsBuf, Math.min(pmtBuffer.remaining(), tsBuf.remaining()));
                         }
 
                         if (!pmtBuffer.hasRemaining()) {
                             pmtBuffer.flip();
                             PMTSection pmt = MTSUtils.parsePMT(pmtBuffer);
                             pmtSections.add(pmt);
-                            for (PMTStream stream : pmt.getStreams()) {
+                            PMTStream[] streams = pmt.getStreams();
+                            for (int i = 0; i < streams.length; i++) {
+                                PMTStream stream = streams[i];
                                 if (!pids.containsKey(stream.getPid()))
                                     pids.put(stream.getPid(), new MPSMediaInfo());
                             }
@@ -81,7 +85,7 @@ public class MTSMediaInfo {
         return result;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         List<MPEGTrackMetadata> info = new MTSMediaInfo().getMediaInfo(new File(args[0]));
         for (MPEGTrackMetadata stream : info) {
             System.out.println(stream.codec);

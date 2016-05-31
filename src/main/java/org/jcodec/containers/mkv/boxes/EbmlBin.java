@@ -1,10 +1,9 @@
 package org.jcodec.containers.mkv.boxes;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mkv.util.EbmlUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mkv.util.EbmlUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -20,10 +19,10 @@ public class EbmlBin extends EbmlBase {
     protected boolean dataRead = false;
     
     public EbmlBin(byte[] id) {
-        this.id = id;
+        super(id);
     }
     
-    public void read(SeekableByteChannel is) throws IOException {
+    public void readChannel(SeekableByteChannel is) throws IOException {
         ByteBuffer bb = ByteBuffer.allocate((int) this.dataLen);
         is.read(bb);
         bb.flip();
@@ -53,14 +52,14 @@ public class EbmlBin extends EbmlBase {
         return totalSize; 
     }
 
-    public void set(ByteBuffer data) {
+    public void setBuf(ByteBuffer data) {
         this.data = data.slice();
         this.dataLen = this.data.limit();
     }
     
     public ByteBuffer getData() {
         int sizeSize = EbmlUtil.ebmlLength(data.limit());
-        byte[] size = EbmlUtil.ebmlEncode(data.limit(), sizeSize);
+        byte[] size = EbmlUtil.ebmlEncodeLen(data.limit(), sizeSize);
         
         ByteBuffer bb = ByteBuffer.allocate(id.length + sizeSize + data.limit());
         bb.put(id);

@@ -1,5 +1,4 @@
 package org.jcodec.audio;
-
 import java.io.IOException;
 import java.nio.FloatBuffer;
 
@@ -12,6 +11,6 @@ import java.nio.FloatBuffer;
  */
 public interface AudioSink {
     
-    void write(FloatBuffer buffer) throws IOException;
+    void writeFloat(FloatBuffer buffer) throws IOException;
 
 }

@@ -41,36 +41,36 @@ public class BlockCCE extends Block {
         this.bandType = bandType;
     }
 
-    public void parse(BitReader in) {
+    public void parse(BitReader _in) {
         int num_gain = 0;
-        coupling_point = 2 * in.read1Bit();
-        num_coupled = in.readNBit(3);
+        coupling_point = 2 * _in.read1Bit();
+        num_coupled = _in.readNBit(3);
         for (int c = 0; c <= num_coupled; c++) {
             num_gain++;
-            type[c] = in.read1Bit() != 0 ? TYPE_CPE : TYPE_SCE;
-            id_select[c] = in.readNBit(4);
+            type[c] = _in.read1Bit() != 0 ? TYPE_CPE : TYPE_SCE;
+            id_select[c] = _in.readNBit(4);
             if (type[c] == TYPE_CPE) {
-                ch_select[c] = in.readNBit(2);
+                ch_select[c] = _in.readNBit(2);
                 if (ch_select[c] == 3)
                     num_gain++;
             } else
                 ch_select[c] = 2;
         }
-        coupling_point += in.read1Bit() | (coupling_point >> 1);
+        coupling_point += _in.read1Bit() | (coupling_point >> 1);
 
-        sign = in.read1Bit();
-        scale = cce_scale[in.readNBit(2)];
+        sign = _in.read1Bit();
+        scale = cce_scale[_in.readNBit(2)];
 
         blockICS = new BlockICS();
-        blockICS.parse(in);
+        blockICS.parse(_in);
 
         for (int c = 0; c < num_gain; c++) {
             int idx = 0;
             int cge = 1;
             int gain = 0;
             if (c != 0) {
-                cge = coupling_point == AFTER_IMDCT.ordinal() ? 1 : in.read1Bit();
-                gain = cge != 0 ? vlc.readVLC(in) - 60 : 0;
+                cge = coupling_point == AFTER_IMDCT.ordinal() ? 1 : _in.read1Bit();
+                gain = cge != 0 ? vlc.readVLC(_in) - 60 : 0;
                 // gain_cache = powf(scale, -gain);
             }
             if (coupling_point != AFTER_IMDCT.ordinal()) {
@@ -78,7 +78,7 @@ public class BlockCCE extends Block {
                     for (int sfb = 0; sfb < blockICS.maxSfb; sfb++, idx++) {
                         if (bandType[idx] != ZERO_BT) {
                             if (cge == 0) {
-                                int t = vlc.readVLC(in) - 60;
+                                int t = vlc.readVLC(_in) - 60;
                             }
                         }
                     }

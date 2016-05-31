@@ -1,8 +1,8 @@
 package org.jcodec.common.io;
+import org.jcodec.common.IntArrayList;
 
 import java.io.PrintStream;
-
-import org.jcodec.common.IntArrayList;
+import java.lang.StringBuilder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,6 +15,23 @@ import org.jcodec.common.IntArrayList;
  */
 public class VLC {
 
+    /**
+     * @param arguments
+     *            vlc codes
+     * @return
+     */
+    public static VLC createVLC(String... arguments) {
+        IntArrayList _codes = IntArrayList.createIntArrayList();
+        IntArrayList _codeSizes = IntArrayList.createIntArrayList();
+        for (int i = 0; i < arguments.length; i++) {
+            String string = arguments[i];
+            _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
+            _codeSizes.add(string.length());
+        }
+        VLC vlc = new VLC(_codes.toArray(), _codeSizes.toArray());
+        return vlc;
+    }
+
     private int[] codes;
     private int[] codeSizes;
 
@@ -25,25 +42,12 @@ public class VLC {
         this.codes = codes;
         this.codeSizes = codeSizes;
 
-        invert();
+        _invert();
     }
 
-    public VLC(String... codes) {
-        IntArrayList _codes = new IntArrayList();
-        IntArrayList _codeSizes = new IntArrayList();
-        for (String string : codes) {
-            _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
-            _codeSizes.add(string.length());
-        }
-        this.codes = _codes.toArray();
-        this.codeSizes = _codeSizes.toArray();
-
-        invert();
-    }
-
-    private void invert() {
-        IntArrayList values = new IntArrayList();
-        IntArrayList valueSizes = new IntArrayList();
+    private void _invert() {
+        IntArrayList values = IntArrayList.createIntArrayList();
+        IntArrayList valueSizes = IntArrayList.createIntArrayList();
         invert(0, 0, 0, values, valueSizes);
         this.values = values.toArray();
         this.valueSizes = valueSizes.toArray();
@@ -78,10 +82,10 @@ public class VLC {
 
         return tableEnd;
     }
-    
-    public int readVLC16(BitReader in) {
-        
-        int string = in.check16Bits();
+
+    public int readVLC16(BitReader _in) {
+
+        int string = _in.check16Bits();
         int b = string >>> 8;
         int code = values[b];
         int len = valueSizes[b];
@@ -89,18 +93,18 @@ public class VLC {
         if (len == 0) {
             b = (string & 0xff) + code;
             code = values[b];
-            in.skipFast(8 + valueSizes[b]);
+            _in.skipFast(8 + valueSizes[b]);
         } else
-            in.skipFast(len);
-        
+            _in.skipFast(len);
+
         return code;
     }
-    
-    public int readVLC(BitReader in) {
+
+    public int readVLC(BitReader _in) {
 
         int code = 0, len = 0, overall = 0, total = 0;
         for (int i = 0; len == 0; i++) {
-            int string = in.checkNBit(8);
+            int string = _in.checkNBit(8);
             int ind = string + code;
             code = values[ind];
             len = valueSizes[ind];
@@ -108,7 +112,7 @@ public class VLC {
             int bits = len != 0 ? len : 8;
             total += bits;
             overall = (overall << bits) | (string >> (8 - bits));
-            in.skip(bits);
+            _in.skip(bits);
 
             if (code == -1)
                 throw new RuntimeException("Invalid code prefix " + binary(overall, (i << 3) + bits));

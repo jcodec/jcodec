@@ -9,6 +9,7 @@ import org.jcodec.audio.Audio;
 import org.jcodec.audio.AudioSource;
 import org.jcodec.codecs.wav.WavOutput;
 import org.jcodec.codecs.wav.WavOutput.Sink;
+import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
@@ -27,7 +28,7 @@ public class ToneGen {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.args.length < 1) {
-            MainUtils.printHelp(new HashMap<String, String>() {
+            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
                 {
                     put("freq", "Frequency of tone");
                     put("channels", "Number of channels");
@@ -36,11 +37,12 @@ public class ToneGen {
             System.exit(-1);
         }
 
-        int channels = cmd.getIntegerFlag("channels", 1);
-        int[] freq = cmd.getMultiIntegerFlag("freq", new int[] { 500 });
+        int channels = cmd.getIntegerFlagD("channels", 1);
+        int[] freq = cmd.getMultiIntegerFlagD("freq", new int[] { 500 });
 
         ToneSource tone = new ToneSource(channels, freq);
-        Sink wavOutput = new WavOutput.Sink(new File(cmd.getArg(0)), tone.getFormat());
+        WavOutFile wavOutFile = new WavOutput.WavOutFile(new File(cmd.getArg(0)), tone.getFormat());
+        Sink wavOutput = new WavOutput.Sink(wavOutFile);
 
         Audio.transfer(tone, wavOutput);
 
@@ -72,7 +74,7 @@ public class ToneGen {
         }
 
         @Override
-        public int read(FloatBuffer buffer) throws IOException {
+        public int readFloat(FloatBuffer buffer) throws IOException {
             if (sample[0] > 480000)
                 return -1;
             int rem = buffer.remaining();

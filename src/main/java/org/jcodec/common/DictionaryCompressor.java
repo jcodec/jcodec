@@ -1,11 +1,11 @@
 package org.jcodec.common;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.tools.MathUtil;
+import org.jcodec.platform.Platform;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -59,7 +59,8 @@ public class DictionaryCompressor {
             }
 
             BitWriter br = new BitWriter(bb);
-            for (long l : values) {
+            for (int j = 0; j < values.length; j++) {
+                long l = values[j];
                 for (int i = 0; i < keys.length; i++)
                     if (keys[i] == l) {
                         vlc.writeVLC(br, i);
@@ -71,10 +72,11 @@ public class DictionaryCompressor {
         }
 
         private RunLength.Long getValueStats(long[] values) {
-            long[] copy = Arrays.copyOf(values, values.length);
+            long[] copy = Platform.copyOfLong(values, values.length);
             Arrays.sort(copy);
             RunLength.Long rl = new RunLength.Long();
-            for (long l : copy) {
+            for (int i = 0; i < copy.length; i++) {
+                long l = copy[i];
                 rl.add(l);
             }
             return rl;
@@ -98,7 +100,8 @@ public class DictionaryCompressor {
             }
 
             BitWriter br = new BitWriter(bb);
-            for (int l : values) {
+            for (int j = 0; j < values.length; j++) {
+                int l = values[j];
                 for (int i = 0; i < keys.length; i++)
                     if (keys[i] == l) {
                         vlc.writeVLC(br, i);
@@ -110,10 +113,11 @@ public class DictionaryCompressor {
         }
 
         private RunLength.Integer getValueStats(int[] values) {
-            int[] copy = Arrays.copyOf(values, values.length);
+            int[] copy = Platform.copyOfInt(values, values.length);
             Arrays.sort(copy);
             RunLength.Integer rl = new RunLength.Integer();
-            for (int l : copy) {
+            for (int i = 0; i < copy.length; i++) {
+                int l = copy[i];
                 rl.add(l);
             }
             return rl;

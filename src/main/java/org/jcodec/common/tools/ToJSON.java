@@ -1,18 +1,24 @@
 package org.jcodec.common.tools;
 
+import java.util.Iterator;
+
+import org.jcodec.common.IntArrayList;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
+
+import java.lang.IllegalArgumentException;
+import java.lang.NullPointerException;
+import java.lang.StringBuilder;
+import java.lang.System;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.jcodec.common.IntArrayList;
-import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,12 +50,12 @@ public class ToJSON {
     }
 
     public static List<String> allFields(Class claz) {
-        return allFieldsExcept(claz);
+        return allFieldsExcept(claz, new String[]{});
     }
 
-    public static List<String> allFieldsExcept(Class claz, String... except) {
+    public static List<String> allFieldsExcept(Class claz, String[] except) {
         List<String> result = new ArrayList<String>();
-        for (Method method : claz.getDeclaredMethods()) {
+        for (Method method : Platform.getDeclaredMethods(claz)) {
             if (!isGetter(method))
                 continue;
             try {
@@ -69,7 +75,7 @@ public class ToJSON {
      */
     public static String toJSON(Object obj) {
         StringBuilder builder = new StringBuilder();
-        IntArrayList stack = new IntArrayList();
+        IntArrayList stack = IntArrayList.createIntArrayList();
         toJSONSub(obj, stack, builder);
         return builder.toString();
     }
@@ -85,13 +91,13 @@ public class ToJSON {
      * @param builder
      * @param fields
      */
-    public static void fieldsToJSON(Object obj, StringBuilder builder, String... fields) {
-        Method[] methods = obj.getClass().getMethods();
+    public static void fieldsToJSON(Object obj, StringBuilder builder, String[] fields) {
+        Method[] methods = Platform.getMethods(obj.getClass());
         for (String field : fields) {
             Method m = findGetter(methods, field);
             if (m == null)
                 continue;
-            invoke(obj, new IntArrayList(), builder, m, field);
+            invoke(obj, IntArrayList.createIntArrayList(), builder, m, field);
         }
     }
 
@@ -107,7 +113,7 @@ public class ToJSON {
 
     private static String getterName(String pref, String field) {
         if (field == null)
-            throw new IllegalArgumentException("Passed null string as field name");
+            throw new NullPointerException("Passed null string as field name");
         char[] ch = field.toCharArray();
         if (ch.length == 0)
             return pref;
@@ -244,7 +250,7 @@ public class ToJSON {
             builder.append(String.valueOf(obj));
         } else {
             builder.append("{");
-            for (Method method : obj.getClass().getMethods()) {
+            for (Method method : Platform.getMethods(obj.getClass())) {
                 if (omitMethods.contains(method.getName()) || !isGetter(method))
                     continue;
 
@@ -301,8 +307,8 @@ public class ToJSON {
             return false;
         if (method.getParameterTypes().length != 0)
             return false;
-        if (void.class.equals(method.getReturnType()))
-            return false;
+//        if (void.class.equals(method.getReturnType()))
+//            return false;
         return true;
     }
 }

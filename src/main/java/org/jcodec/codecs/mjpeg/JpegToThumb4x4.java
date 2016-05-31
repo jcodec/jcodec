@@ -1,13 +1,12 @@
 package org.jcodec.codecs.mjpeg;
-
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.dct.IDCT4x4;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.MathUtil;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -21,8 +20,8 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class JpegToThumb4x4 extends JpegDecoder {
 
-    public JpegToThumb4x4() {
-        super();
+    public static JpegToThumb4x4 createJpegToThumb4x4() {
+        return new JpegToThumb4x4(false, false);
     }
 
     public JpegToThumb4x4(boolean interlace, boolean topFieldFirst) {
@@ -59,32 +58,32 @@ public class JpegToThumb4x4 extends JpegDecoder {
     }
 
     @Override
-    void readACValues(BitReader in, int[] target, VLC table, int[] quantTable) {
+    void readACValues(BitReader _in, int[] target, VLC table, int[] quantTable) {
         int code;
         int curOff = 1;
         do {
-            code = table.readVLC16(in);
+            code = table.readVLC16(_in);
             if (code == 0xF0) {
                 curOff += 16;
             } else if (code > 0) {
                 int rle = code >> 4;
                 curOff += rle;
                 int len = code & 0xf;
-                target[mapping4x4[curOff]] = toValue(in.readNBit(len), len) * quantTable[curOff];
+                target[mapping4x4[curOff]] = toValue(_in.readNBit(len), len) * quantTable[curOff];
                 curOff++;
             }
         } while (code != 0 && curOff < 19);
 
         if (code != 0) {
             do {
-                code = table.readVLC16(in);
+                code = table.readVLC16(_in);
                 if (code == 0xF0) {
                     curOff += 16;
                 } else if (code > 0) {
                     int rle = code >> 4;
                     curOff += rle;
                     int len = code & 0xf;
-                    in.skip(len);
+                    _in.skip(len);
                     curOff++;
                 }
             } while (code != 0 && curOff < 64);

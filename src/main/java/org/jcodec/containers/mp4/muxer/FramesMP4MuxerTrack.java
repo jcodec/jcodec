@@ -1,11 +1,4 @@
 package org.jcodec.containers.mp4.muxer;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
@@ -18,6 +11,7 @@ import org.jcodec.containers.mp4.TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
+import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.Header;
@@ -30,13 +24,19 @@ import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
+import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
+import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
-import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
-import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
+
+import java.io.IOException;
+import java.lang.IllegalStateException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -47,15 +47,15 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
  */
 public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
-    private List<TimeToSampleEntry> sampleDurations = new ArrayList<TimeToSampleEntry>();
+    private List<TimeToSampleEntry> sampleDurations;
     private long sameDurCount = 0;
     private long curDuration = -1;
 
-    private LongArrayList chunkOffsets = new LongArrayList();
-    private IntArrayList sampleSizes = new IntArrayList();
-    private IntArrayList iframes = new IntArrayList();
+    private LongArrayList chunkOffsets;
+    private IntArrayList sampleSizes;
+    private IntArrayList iframes;
 
-    private List<Entry> compositionOffsets = new ArrayList<Entry>();
+    private List<Entry> compositionOffsets;
     private int lastCompositionOffset = 0;
     private int lastCompositionSamples = 0;
     private long ptsEstimate = 0;
@@ -70,6 +70,11 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     public FramesMP4MuxerTrack(SeekableByteChannel out, int trackId, TrackType type, int timescale) {
         super(trackId, type, timescale);
+        this.sampleDurations = new ArrayList<TimeToSampleEntry>();
+        this.chunkOffsets = LongArrayList.createLongArrayList();
+        this.sampleSizes = IntArrayList.createIntArrayList();
+        this.iframes = IntArrayList.createIntArrayList();
+        this.compositionOffsets = new ArrayList<Entry>();
         
         this.out = out;
 
@@ -170,28 +175,26 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         }
         finished = true;
 
-        TrakBox trak = new TrakBox();
+        TrakBox trak = TrakBox.createTrakBox();
         Size dd = getDisplayDimensions();
-        TrackHeaderBox tkhd = new TrackHeaderBox(trackId, ((long) mvhd.getTimescale() * trackTotalDuration)
-                / timescale, dd.getWidth(), dd.getHeight(), new Date().getTime(), new Date().getTime(), 1.0f,
-                (short) 0, 0, new int[] { 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 });
+        TrackHeaderBox tkhd = TrackHeaderBox.createTrackHeaderBox(trackId, ((long) mvhd.getTimescale() * trackTotalDuration)
+                / timescale, dd.getWidth(), dd.getHeight(), new Date().getTime(), new Date().getTime(), 1.0f, (short) 0, 0, new int[] { 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 });
         tkhd.setFlags(0xf);
         trak.add(tkhd);
 
         tapt(trak);
 
-        MediaBox media = new MediaBox();
+        MediaBox media = MediaBox.createMediaBox();
         trak.add(media);
-        media.add(new MediaHeaderBox(timescale, trackTotalDuration, 0, new Date().getTime(), new Date().getTime(),
-                0));
+        media.add(MediaHeaderBox.createMediaHeaderBox(timescale, trackTotalDuration, 0, new Date().getTime(), new Date().getTime(), 0));
 
-        HandlerBox hdlr = new HandlerBox("mhlr", type.getHandler(), "appl", 0, 0);
+        HandlerBox hdlr = HandlerBox.createHandlerBox("mhlr", type.getHandler(), "appl", 0, 0);
         media.add(hdlr);
 
-        MediaInfoBox minf = new MediaInfoBox();
+        MediaInfoBox minf = MediaInfoBox.createMediaInfoBox();
         media.add(minf);
         mediaHeader(minf, type);
-        minf.add(new HandlerBox("dhlr", "url ", "appl", 0, 0));
+        minf.add(HandlerBox.createHandlerBox("dhlr", "url ", "appl", 0, 0));
         addDref(minf);
         NodeBox stbl = new NodeBox(new Header("stbl"));
         minf.add(stbl);
@@ -200,13 +203,13 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         putEdits(trak);
         putName(trak);
 
-        stbl.add(new SampleDescriptionBox(sampleEntries.toArray(new SampleEntry[0])));
-        stbl.add(new SampleToChunkBox(samplesInChunks.toArray(new SampleToChunkEntry[0])));
-        stbl.add(new SampleSizesBox(sampleSizes.toArray()));
-        stbl.add(new TimeToSampleBox(sampleDurations.toArray(new TimeToSampleEntry[] {})));
-        stbl.add(new ChunkOffsets64Box(chunkOffsets.toArray()));
+        stbl.add(SampleDescriptionBox.createSampleDescriptionBox(sampleEntries.toArray(new SampleEntry[0])));
+        stbl.add(SampleToChunkBox.createSampleToChunkBox(samplesInChunks.toArray(new SampleToChunkEntry[0])));
+        stbl.add(SampleSizesBox.createSampleSizesBox2(sampleSizes.toArray()));
+        stbl.add(TimeToSampleBox.createTimeToSampleBox(sampleDurations.toArray(new TimeToSampleEntry[] {})));
+        stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(chunkOffsets.toArray()));
         if (!allIframes && iframes.size() > 0)
-            stbl.add(new SyncSamplesBox(iframes.toArray()));
+            stbl.add(SyncSamplesBox.createSyncSamplesBox(iframes.toArray()));
 
         return trak;
     }
@@ -234,7 +237,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
                 }
             }
 
-            stbl.add(new CompositionOffsetsBox(compositionOffsets.toArray(new Entry[0])));
+            stbl.add(CompositionOffsetsBox.createCompositionOffsetsBox(compositionOffsets.toArray(new Entry[0])));
         }
     }
 
@@ -252,7 +255,8 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     }
 
     public void addSampleEntries(SampleEntry[] sampleEntries) {
-        for (SampleEntry se : sampleEntries) {
+        for (int i = 0; i < sampleEntries.length; i++) {
+            SampleEntry se = sampleEntries[i];
             addSampleEntry(se);
         }
     }

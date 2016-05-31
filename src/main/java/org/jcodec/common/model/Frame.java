@@ -1,5 +1,4 @@
 package org.jcodec.common.model;
-
 import java.util.List;
 
 /**

@@ -1,8 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -13,19 +11,16 @@ import java.util.Map;
  */
 public class DataRefBox extends NodeBox {
 
-    private static final MyFactory FACTORY = new MyFactory();
-
     public static String fourcc() {
         return "dref";
     }
 
-    public DataRefBox() {
-        this(new Header(fourcc()));
+    public static DataRefBox createDataRefBox() {
+        return new DataRefBox(new Header(fourcc()));
     }
 
-    private DataRefBox(Header atom) {
+    public DataRefBox(Header atom) {
         super(atom);
-        factory = FACTORY;
     }
 
     @Override
@@ -40,19 +35,5 @@ public class DataRefBox extends NodeBox {
         out.putInt(0);
         out.putInt(boxes.size());
         super.doWrite(out);
-    }
-
-    public static class MyFactory extends BoxFactory {
-        private Map<String, Class<? extends Box>> mappings = new HashMap<String, Class<? extends Box>>();
-
-        public MyFactory() {
-            mappings.put(UrlBox.fourcc(), UrlBox.class);
-            mappings.put(AliasBox.fourcc(), AliasBox.class);
-            mappings.put("cios", AliasBox.class);
-        }
-
-        public Class<? extends Box> toClass(String fourcc) {
-            return mappings.get(fourcc);
-        }
     }
 }

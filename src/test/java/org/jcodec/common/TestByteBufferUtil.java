@@ -1,12 +1,13 @@
 package org.jcodec.common;
-
+import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertArrayEquals;
-
-import java.io.File;
-import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Test;
+
+import java.io.File;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -38,20 +39,20 @@ public class TestByteBufferUtil {
     
     @Test
     public void testSliceVsPut() throws Exception {
-        ByteBuffer rawFrame = NIOUtils.fetchFrom(new File("src/test/resources/mkv/single-frame01.vp8"));
+        ByteBuffer rawFrame = NIOUtils.fetchFromFile(new File("src/test/resources/mkv/single-frame01.vp8"));
         ByteBuffer newFrame = ByteBuffer.allocate(rawFrame.limit());
         
-        long start = System.currentTimeMillis();
+        long start = currentTimeMillis();
         for (int i=0;i < 10E7; i++){
             newFrame.put(rawFrame);
             newFrame.flip();
         }
-        System.out.println((System.currentTimeMillis()-start)+"ms for put");
+        System.out.println((currentTimeMillis()-start)+"ms for put");
         
-        start = System.currentTimeMillis();
+        start = currentTimeMillis();
         for (int i=0;i < 10E7; i++){
             newFrame = rawFrame.slice();
         }
-        System.out.println((System.currentTimeMillis()-start)+"ms for slice");
+        System.out.println((currentTimeMillis()-start)+"ms for slice");
     }
 }

@@ -1,9 +1,12 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.nio.ByteBuffer;
 
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -14,25 +17,32 @@ import org.jcodec.common.model.Size;
  */
 public class VideoCodecMeta extends CodecMeta {
 
+    public static VideoCodecMeta createVideoCodecMeta(String fourcc, ByteBuffer codecPrivate, Size size,
+            Rational pasp) {
+        VideoCodecMeta self = new VideoCodecMeta(fourcc, codecPrivate);
+        self.size = size;
+        self.pasp = pasp;
+        return self;
+    }
+
+    public static VideoCodecMeta createVideoCodecMeta2(String fourcc, ByteBuffer codecPrivate, Size size, Rational pasp,
+            boolean interlaced, boolean topFieldFirst) {
+        VideoCodecMeta self = new VideoCodecMeta(fourcc, codecPrivate);
+        self.size = size;
+        self.pasp = pasp;
+        self.interlaced = interlaced;
+        self.topFieldFirst = topFieldFirst;
+        return self;
+    }
+
+    public VideoCodecMeta(String fourcc, ByteBuffer codecPrivate) {
+        super(fourcc, codecPrivate);
+    }
+
     private Size size;
     private Rational pasp;
     private boolean interlaced;
     private boolean topFieldFirst;
-
-    public VideoCodecMeta(String fourcc, ByteBuffer codecPrivate, Size size, Rational pasp) {
-        super(fourcc, codecPrivate);
-        this.size = size;
-        this.pasp = pasp;
-    }
-
-    public VideoCodecMeta(String fourcc, ByteBuffer codecPrivate, Size size, Rational pasp, boolean interlaced,
-            boolean topFieldFirst) {
-        super(fourcc, codecPrivate);
-        this.size = size;
-        this.pasp = pasp;
-        this.interlaced = interlaced;
-        this.topFieldFirst = topFieldFirst;
-    }
 
     public Size getSize() {
         return size;

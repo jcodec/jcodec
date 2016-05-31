@@ -1,14 +1,13 @@
 package org.jcodec.codecs.h264.io.model;
-
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readU;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUEtrace;
 import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeTrailingBits;
-
-import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,18 +31,18 @@ public class SeqParameterSetExt {
     public int alpha_transparent_value;
 
     public static SeqParameterSetExt read(ByteBuffer is) {
-        BitReader in = new BitReader(is);
+        BitReader _in = BitReader.createBitReader(is);
 
         SeqParameterSetExt spse = new SeqParameterSetExt();
-        spse.seq_parameter_set_id = readUE(in, "SPSE: seq_parameter_set_id");
-        spse.aux_format_idc = readUE(in, "SPSE: aux_format_idc");
+        spse.seq_parameter_set_id = readUEtrace(_in, "SPSE: seq_parameter_set_id");
+        spse.aux_format_idc = readUEtrace(_in, "SPSE: aux_format_idc");
         if (spse.aux_format_idc != 0) {
-            spse.bit_depth_aux_minus8 = readUE(in, "SPSE: bit_depth_aux_minus8");
-            spse.alpha_incr_flag = readBool(in, "SPSE: alpha_incr_flag");
-            spse.alpha_opaque_value = readU(in, spse.bit_depth_aux_minus8 + 9, "SPSE: alpha_opaque_value");
-            spse.alpha_transparent_value = readU(in, spse.bit_depth_aux_minus8 + 9, "SPSE: alpha_transparent_value");
+            spse.bit_depth_aux_minus8 = readUEtrace(_in, "SPSE: bit_depth_aux_minus8");
+            spse.alpha_incr_flag = readBool(_in, "SPSE: alpha_incr_flag");
+            spse.alpha_opaque_value = readU(_in, spse.bit_depth_aux_minus8 + 9, "SPSE: alpha_opaque_value");
+            spse.alpha_transparent_value = readU(_in, spse.bit_depth_aux_minus8 + 9, "SPSE: alpha_transparent_value");
         }
-        spse.additional_extension_flag = readBool(in, "SPSE: additional_extension_flag");
+        spse.additional_extension_flag = readBool(_in, "SPSE: additional_extension_flag");
 
         return spse;
     }

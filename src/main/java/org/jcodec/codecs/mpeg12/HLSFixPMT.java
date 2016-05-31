@@ -1,15 +1,15 @@
 package org.jcodec.codecs.mpeg12;
+import org.jcodec.common.Assert;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.containers.mps.MTSUtils;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
-
-import org.jcodec.common.Assert;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.containers.mps.MTSUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -88,7 +88,7 @@ public class HLSFixPMT {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1)
             exit("Please specify package location");
 
@@ -103,7 +103,8 @@ public class HLSFixPMT {
             }
         });
         HLSFixPMT fix = new HLSFixPMT();
-        for (File file : listFiles) {
+        for (int i = 0; i < listFiles.length; i++) {
+            File file = listFiles[i];
             System.err.println("Processing: " + file.getName());
             fix.fix(file);
         }

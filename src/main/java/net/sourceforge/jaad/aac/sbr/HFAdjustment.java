@@ -1,4 +1,5 @@
 package net.sourceforge.jaad.aac.sbr;
+import static java.lang.System.arraycopy;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -18,10 +19,16 @@ class HFAdjustment implements SBRConstants, NoiseTable {
 	private static final int[] phi_im = {0, 1, 0, -1};
 	private static final float[] limGain = {0.5f, 1.0f, 2.0f, 1e10f};
 	private static final float EPS = 1e-12f;
-	private float[][] G_lim_boost = new float[MAX_L_E][MAX_M];
-	private float[][] Q_M_lim_boost = new float[MAX_L_E][MAX_M];
-	private float[][] S_M_boost = new float[MAX_L_E][MAX_M];
+	private float[][] G_lim_boost;
+	private float[][] Q_M_lim_boost;
+	private float[][] S_M_boost;
 
+	public HFAdjustment() {
+	    this.G_lim_boost = new float[MAX_L_E][MAX_M];
+	    this.Q_M_lim_boost = new float[MAX_L_E][MAX_M];
+	    this.S_M_boost = new float[MAX_L_E][MAX_M];
+    }
+	
 	public static int hf_adjustment(SBR sbr, float[][][] Xsbr, int ch) {
 		HFAdjustment adj = new HFAdjustment();
 		int ret = 0;
@@ -181,8 +188,8 @@ class HFAdjustment implements SBRConstants, NoiseTable {
 
 			if(assembly_reset) {
 				for(n = 0; n<4; n++) {
-					System.arraycopy(adj.G_lim_boost[l], 0, sbr.G_temp_prev[ch][n], 0, sbr.M);
-					System.arraycopy(adj.Q_M_lim_boost[l], 0, sbr.Q_temp_prev[ch][n], 0, sbr.M);
+					arraycopy(adj.G_lim_boost[l], 0, sbr.G_temp_prev[ch][n], 0, sbr.M);
+					arraycopy(adj.Q_M_lim_boost[l], 0, sbr.Q_temp_prev[ch][n], 0, sbr.M);
 				}
 				/* reset ringbuffer index */
 				sbr.GQ_ringbuf_index[ch] = 4;
@@ -191,8 +198,8 @@ class HFAdjustment implements SBRConstants, NoiseTable {
 
 			for(i = sbr.t_E[ch][l]; i<sbr.t_E[ch][l+1]; i++) {
 				/* load new values into ringbuffer */
-				System.arraycopy(adj.G_lim_boost[l], 0, sbr.G_temp_prev[ch][sbr.GQ_ringbuf_index[ch]], 0, sbr.M);
-				System.arraycopy(adj.Q_M_lim_boost[l], 0, sbr.Q_temp_prev[ch][sbr.GQ_ringbuf_index[ch]], 0, sbr.M);
+				arraycopy(adj.G_lim_boost[l], 0, sbr.G_temp_prev[ch][sbr.GQ_ringbuf_index[ch]], 0, sbr.M);
+				arraycopy(adj.Q_M_lim_boost[l], 0, sbr.Q_temp_prev[ch][sbr.GQ_ringbuf_index[ch]], 0, sbr.M);
 
 				for(m = 0; m<sbr.M; m++) {
 					float[] psi = new float[2];

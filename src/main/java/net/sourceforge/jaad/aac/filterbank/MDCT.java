@@ -42,13 +42,13 @@ class MDCT implements MDCTTables {
 		tmp = new float[2];
 	}
 
-	void process(float[] in, int inOff, float[] out, int outOff) {
+	void process(float[] _in, int inOff, float[] out, int outOff) {
 		int k;
 
 		//pre-IFFT complex multiplication
 		for(k = 0; k<N4; k++) {
-			buf[k][1] = (in[inOff+2*k]*sincos[k][0])+(in[inOff+N2-1-2*k]*sincos[k][1]);
-			buf[k][0] = (in[inOff+N2-1-2*k]*sincos[k][0])-(in[inOff+2*k]*sincos[k][1]);
+			buf[k][1] = (_in[inOff+2*k]*sincos[k][0])+(_in[inOff+N2-1-2*k]*sincos[k][1]);
+			buf[k][0] = (_in[inOff+N2-1-2*k]*sincos[k][0])-(_in[inOff+2*k]*sincos[k][1]);
 		}
 
 		//complex IFFT, non-scaling
@@ -90,13 +90,13 @@ class MDCT implements MDCTTables {
 		}
 	}
 
-	void processForward(float[] in, float[] out) {
+	void processForward(float[] _in, float[] out) {
 		int n, k;
 		//pre-FFT complex multiplication
 		for(k = 0; k<N8; k++) {
 			n = k<<1;
-			tmp[0] = in[N-N4-1-n]+in[N-N4+n];
-			tmp[1] = in[N4+n]-in[N4-1-n];
+			tmp[0] = _in[N-N4-1-n]+_in[N-N4+n];
+			tmp[1] = _in[N4+n]-_in[N4-1-n];
 
 			buf[k][0] = (tmp[0]*sincos[k][0])+(tmp[1]*sincos[k][1]);
 			buf[k][1] = (tmp[1]*sincos[k][0])-(tmp[0]*sincos[k][1]);
@@ -104,8 +104,8 @@ class MDCT implements MDCTTables {
 			buf[k][0] *= N;
 			buf[k][1] *= N;
 
-			tmp[0] = in[N2-1-n]-in[n];
-			tmp[1] = in[N2+n]+in[N-1-n];
+			tmp[0] = _in[N2-1-n]-_in[n];
+			tmp[1] = _in[N2+n]+_in[N-1-n];
 
 			buf[k+N8][0] = (tmp[0]*sincos[k+N8][0])+(tmp[1]*sincos[k+N8][1]);
 			buf[k+N8][1] = (tmp[1]*sincos[k+N8][0])-(tmp[0]*sincos[k+N8][1]);

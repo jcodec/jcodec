@@ -1,4 +1,14 @@
 package org.jcodec.containers.mps.index;
+import org.jcodec.codecs.mpeg12.MPEGConst;
+import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.IntArrayList;
+import org.jcodec.common.LongArrayList;
+import org.jcodec.common.RunLength;
+import org.jcodec.common.logging.Logger;
+import org.jcodec.common.tools.MathUtil;
+import org.jcodec.containers.mps.MPSUtils;
+import org.jcodec.containers.mps.PESPacket;
+import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -9,17 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
-import org.jcodec.common.ArrayUtil;
-import org.jcodec.common.IntArrayList;
-import org.jcodec.common.LongArrayList;
-import org.jcodec.common.RunLength;
-import org.jcodec.common.logging.Logger;
-import org.jcodec.common.tools.MathUtil;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
-import org.jcodec.containers.mps.MPSUtils;
-import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,9 +31,15 @@ import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
  */
 public abstract class BaseIndexer extends MPSUtils.PESReader {
 
-    private Map<Integer, BaseAnalyser> analyzers = new HashMap<Integer, BaseAnalyser>();
-    private LongArrayList tokens = new LongArrayList();
-    private RunLength.Integer streams = new RunLength.Integer();
+    private Map<Integer, BaseAnalyser> analyzers;
+    private LongArrayList tokens;
+    private RunLength.Integer streams;
+
+    public BaseIndexer() {
+        this.analyzers = new HashMap<Integer, BaseAnalyser>();
+        this.tokens = LongArrayList.createLongArrayList();
+        this.streams = new RunLength.Integer();
+    }
 
     public int estimateSize() {
         int sizeEstimate = (tokens.size() << 3) + streams.estimateSize() + 128;
@@ -44,9 +49,14 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
         return sizeEstimate;
     }
 
-    protected abstract class BaseAnalyser {
-        protected IntArrayList pts = new IntArrayList(250000);
-        protected IntArrayList dur = new IntArrayList(250000);
+    protected static abstract class BaseAnalyser {
+        protected IntArrayList pts;
+        protected IntArrayList dur;
+
+        public BaseAnalyser() {
+            this.pts = new IntArrayList(250000);
+            this.dur = new IntArrayList(250000);
+        }
 
         public abstract void pkt(ByteBuffer pkt, PESPacket pesHeader);
 
@@ -61,10 +71,15 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
 
     // TODO: check how ES are packetized in the following audio formats:
     // mp1, mp2, s302m, aac, pcm_s16le, pcm_s16be, pcm_dvd, mp3, ac3, dts, 
-    private class GenericAnalyser extends BaseAnalyser {
-        private IntArrayList sizes = new IntArrayList(250000);
+    private static class GenericAnalyser extends BaseAnalyser {
+        private IntArrayList sizes;
         private int knownDuration;
         private long lastPts;
+
+        public GenericAnalyser() {
+            super();
+            this.sizes = new IntArrayList(250000);
+        }
 
         public void pkt(ByteBuffer pkt, PESPacket pesHeader) {
             sizes.add(pkt.remaining());
@@ -93,20 +108,27 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
         }
     }
 
-    private class MPEGVideoAnalyser extends BaseAnalyser {
+    private static class MPEGVideoAnalyser extends BaseAnalyser {
         private int marker = -1;
         private long position;
-        private IntArrayList sizes = new IntArrayList(250000);
-        private IntArrayList keyFrames = new IntArrayList(20000);
+        private IntArrayList sizes;
+        private IntArrayList keyFrames;
         private int frameNo;
         private boolean inFrameData;
 
         private Frame lastFrame;
-        private List<Frame> curGop = new ArrayList<Frame>();
+        private List<Frame> curGop;
         private long phPos = -1;
         private Frame lastFrameOfLastGop;
 
-        private class Frame {
+        public MPEGVideoAnalyser() {
+            super();
+            this.sizes = new IntArrayList(250000);
+            this.keyFrames = new IntArrayList(20000);
+            this.curGop = new ArrayList<Frame>();
+        }
+
+        private static class Frame {
             long offset;
             int size;
             int pts;
@@ -127,7 +149,7 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
                     else if (phOffset == 6) {
                         int picCodingType = (b >> 3) & 0x7;
                         lastFrame.tempRef |= b >> 6;
-                        if (picCodingType == PictureHeader.IntraCoded) {
+                        if (picCodingType == MPEGConst.IntraCoded) {
                             keyFrames.add(frameNo - 1);
                             if (curGop.size() > 0)
                                 outGop();
@@ -152,8 +174,8 @@ public abstract class BaseIndexer extends MPSUtils.PESReader {
                     Frame frame = new Frame();
                     frame.pts = (int) pesHeader.pts;
                     frame.offset = position - 4;
-                    Logger.info(String.format("FRAME[%d]: %012x, %d", frameNo, (pesHeader.pos + pkt.position() - 4),
-                            pesHeader.pts));
+                    Logger.info(String.format("FRAME[%d]: %012x, %d", frameNo, (pesHeader.pos + pkt.position()
+                            - 4), pesHeader.pts));
                     frameNo++;
                     lastFrame = frame;
                 }

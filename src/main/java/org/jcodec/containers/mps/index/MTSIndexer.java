@@ -1,20 +1,21 @@
 package org.jcodec.containers.mps.index;
-
 import static org.jcodec.containers.mps.MPSUtils.mediaStream;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import static org.jcodec.containers.mps.index.MTSIndex.createMTSProgram;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.io.NIOUtils.FileReader;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 import org.jcodec.containers.mps.MTSUtils;
+import org.jcodec.containers.mps.PESPacket;
 import org.jcodec.containers.mps.index.MTSIndex.MTSProgram;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -30,54 +31,19 @@ public class MTSIndexer {
     private MTSAnalyser[] indexers;
 
     public void index(File source, NIOUtils.FileReaderListener listener) throws IOException {
-        index(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
+        indexReader(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
     }
 
-    public void index(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
-        index(listener, MTSUtils.getMediaPids(source)).readFile(source, BUFFER_SIZE, listener);
+    public void indexChannel(SeekableByteChannel source, NIOUtils.FileReaderListener listener) throws IOException {
+        indexReader(listener, MTSUtils.getMediaPidsFromChannel(source)).readChannel(source, BUFFER_SIZE, listener);
     }
 
-    public FileReader index(NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
+    public FileReader indexReader(NIOUtils.FileReaderListener listener, int[] targetGuids) throws IOException {
         indexers = new MTSAnalyser[targetGuids.length];
         for (int i = 0; i < targetGuids.length; i++) {
             indexers[i] = new MTSAnalyser(targetGuids[i]);
         }
-
-        return new NIOUtils.FileReader() {
-            protected void data(ByteBuffer data, long filePos) {
-                analyseBuffer(data, filePos);
-            }
-
-            protected void analyseBuffer(ByteBuffer buf, long pos) {
-                while (buf.hasRemaining()) {
-                    ByteBuffer tsBuf = NIOUtils.read(buf, 188);
-                    pos += 188;
-                    Assert.assertEquals(0x47, tsBuf.get() & 0xff);
-                    int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
-                    int guid = (int) guidFlags & 0x1fff;
-
-                    for (int i = 0; i < indexers.length; i++) {
-
-                        if (guid == indexers[i].targetGuid) {
-                            int payloadStart = (guidFlags >> 14) & 0x1;
-                            int b0 = tsBuf.get() & 0xff;
-                            int counter = b0 & 0xf;
-                            if ((b0 & 0x20) != 0) {
-                                NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
-                            }
-                            indexers[i].analyseBuffer(tsBuf, pos - tsBuf.remaining());
-                        }
-                    }
-                }
-            }
-
-            @Override
-            protected void done() {
-                for (MTSAnalyser mtsAnalyser : indexers) {
-                    mtsAnalyser.finishAnalyse();
-                }
-            }
-        };
+        return new MTSFileReader(this);
     }
 
     public MTSIndex serialize() {
@@ -87,7 +53,49 @@ public class MTSIndexer {
         return new MTSIndex(programs);
     }
 
-    private class MTSAnalyser extends BaseIndexer {
+    private static final class MTSFileReader extends NIOUtils.FileReader {
+        private MTSIndexer indexer;
+
+        public MTSFileReader(MTSIndexer indexer) {
+            this.indexer = indexer;
+        }
+
+        protected void data(ByteBuffer data, long filePos) {
+            analyseBuffer(data, filePos);
+        }
+
+        protected void analyseBuffer(ByteBuffer buf, long pos) {
+            while (buf.hasRemaining()) {
+                ByteBuffer tsBuf = NIOUtils.read(buf, 188);
+                pos += 188;
+                Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+                int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
+                int guid = (int) guidFlags & 0x1fff;
+
+                for (int i = 0; i < indexer.indexers.length; i++) {
+
+                    if (guid == indexer.indexers[i].targetGuid) {
+                        int payloadStart = (guidFlags >> 14) & 0x1;
+                        int b0 = tsBuf.get() & 0xff;
+                        int counter = b0 & 0xf;
+                        if ((b0 & 0x20) != 0) {
+                            NIOUtils.skip(tsBuf, tsBuf.get() & 0xff);
+                        }
+                        indexer.indexers[i].analyseBuffer(tsBuf, pos - tsBuf.remaining());
+                    }
+                }
+            }
+        }
+
+        @Override
+        protected void done() {
+            for (MTSAnalyser mtsAnalyser : indexer.indexers) {
+                mtsAnalyser.finishAnalyse();
+            }
+        }
+    }
+
+    private static class MTSAnalyser extends BaseIndexer {
 
         private int targetGuid;
         private long predFileStartInTsPkt;
@@ -97,7 +105,7 @@ public class MTSIndexer {
         }
 
         public MTSProgram serializeTo() {
-            return new MTSProgram(super.serialize(), targetGuid);
+            return createMTSProgram(super.serialize(), targetGuid);
         }
 
         protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
@@ -116,7 +124,7 @@ public class MTSIndexer {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         File src = new File(args[0]);
 
         MTSIndexer indexer = new MTSIndexer();

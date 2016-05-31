@@ -1,5 +1,4 @@
 package org.jcodec.common;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -43,7 +42,7 @@ public class CollectionsTest {
     
     @Test
     public void testByteArrayList() {
-        ByteArrayList intal = new ByteArrayList();
+        ByteArrayList intal = ByteArrayList.createByteArrayList();
         byte[] arr = new byte[200];
         for (int i = 0; i < 200; i++) {
             intal.add((byte)i);
@@ -64,7 +63,7 @@ public class CollectionsTest {
 
     @Test
     public void testIntArrayList() {
-        IntArrayList intal = new IntArrayList();
+        IntArrayList intal = IntArrayList.createIntArrayList();
         int[] arr = new int[200];
         for (int i = 0; i < 200; i++) {
             intal.add(i * 10);
@@ -85,7 +84,7 @@ public class CollectionsTest {
     
     @Test
     public void testLongArrayList() {
-        LongArrayList intal = new LongArrayList();
+        LongArrayList intal = LongArrayList.createLongArrayList();
         long[] arr = new long[200];
         for (int i = 0; i < 200; i++) {
             intal.add(i * 10);

@@ -1,5 +1,4 @@
 package org.jcodec.codecs.prores;
-
 import static java.lang.Math.min;
 import static org.jcodec.codecs.prores.ProresConsts.dcCodebooks;
 import static org.jcodec.codecs.prores.ProresConsts.firstDCCodebook;
@@ -13,15 +12,15 @@ import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.sign;
 import static org.jcodec.common.tools.MathUtil.toSigned;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -77,17 +76,17 @@ public class ProresFix {
         }
     }
 
-    static final void writeDCCoeffs(BitWriter bits, int[] in, int blocksPerSlice) {
-        writeCodeword(bits, firstDCCodebook, in[0]);
+    static final void writeDCCoeffs(BitWriter bits, int[] _in, int blocksPerSlice) {
+        writeCodeword(bits, firstDCCodebook, _in[0]);
 
         int code = 5, idx = 64;
         for (int i = 1; i < blocksPerSlice; i++, idx += 64) {
-            writeCodeword(bits, dcCodebooks[min(code, 6)], in[idx]);
-            code = in[idx];
+            writeCodeword(bits, dcCodebooks[min(code, 6)], _in[idx]);
+            code = _in[idx];
         }
     }
 
-    static final void writeACCoeffs(BitWriter bits, int[] in, int blocksPerSlice, int[] scan) {
+    static final void writeACCoeffs(BitWriter bits, int[] _in, int blocksPerSlice, int[] scan) {
         int prevRun = 4;
         int prevLevel = 2;
 
@@ -95,7 +94,7 @@ public class ProresFix {
         for (int i = 1; i < 64; i++) {
             int indp = scan[i];
             for (int j = 0; j < blocksPerSlice; j++) {
-                int val = in[(j << 6) + indp];
+                int val = _in[(j << 6) + indp];
                 if (val == 0)
                     run++;
                 else {

@@ -1,15 +1,18 @@
 package org.jcodec.movtool.streaming.tracks;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.IllegalArgumentException;
 
 import org.jcodec.common.AudioFormat;
-import org.jcodec.containers.mp4.boxes.EndianBox.Endian;
-import org.jcodec.containers.mp4.boxes.channel.Label;
+import org.jcodec.common.model.Label;
 import org.jcodec.movtool.streaming.AudioCodecMeta;
 import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -33,13 +36,13 @@ public class StereoDownmixTrack implements VirtualTrack {
     private boolean[][] solo;
     private DownmixHelper downmix;
 
-    public StereoDownmixTrack(VirtualTrack... tracks) {
+    public StereoDownmixTrack(VirtualTrack... arguments) {
         this.rate = -1;
-        sources = new VirtualTrack[tracks.length];
+        sources = new VirtualTrack[arguments.length];
         sampleEntries = new AudioCodecMeta[sources.length];
-        solo = new boolean[tracks.length][];
-        for (int i = 0; i < tracks.length; i++) {
-            CodecMeta se = tracks[i].getCodecMeta();
+        solo = new boolean[arguments.length][];
+        for (int i = 0; i < arguments.length; i++) {
+            CodecMeta se = arguments[i].getCodecMeta();
             if (!(se instanceof AudioCodecMeta))
                 throw new IllegalArgumentException("Non audio track");
             AudioCodecMeta ase = (AudioCodecMeta) se;
@@ -50,7 +53,7 @@ public class StereoDownmixTrack implements VirtualTrack {
                 throw new IllegalArgumentException("Can not downmix tracks of different rate.");
             rate = (int) format.getFrameRate();
             sampleEntries[i] = ase;
-            sources[i] = new PCMFlatternTrack(tracks[i], FRAMES_IN_OUT_PACKET);
+            sources[i] = new PCMFlatternTrack(arguments[i], FRAMES_IN_OUT_PACKET);
             solo[i] = new boolean[format.getChannels()];
         }
         
@@ -105,7 +108,7 @@ public class StereoDownmixTrack implements VirtualTrack {
         if (allNull)
             return null;
 
-        VirtualPacket ret = new DownmixVirtualPacket(packets, frameNo);
+        VirtualPacket ret = new DownmixVirtualPacket(this, packets, frameNo);
 
         frameNo += FRAMES_IN_OUT_PACKET;
 
@@ -114,7 +117,7 @@ public class StereoDownmixTrack implements VirtualTrack {
 
     @Override
     public CodecMeta getCodecMeta() {
-        return new AudioCodecMeta("sowt", 2, 2, rate, Endian.LITTLE_ENDIAN, true, new Label[] {Label.Left, Label.Right}, null);
+        return AudioCodecMeta.createAudioCodecMeta("sowt", 2, 2, rate, ByteOrder.LITTLE_ENDIAN, true, new Label[] {Label.Left, Label.Right}, null);
     }
 
     @Override
@@ -124,11 +127,13 @@ public class StereoDownmixTrack implements VirtualTrack {
         }
     }
 
-    protected class DownmixVirtualPacket implements VirtualPacket {
+    protected static class DownmixVirtualPacket implements VirtualPacket {
         private VirtualPacket[] packets;
         private int frameNo;
+        private StereoDownmixTrack track;
 
-        public DownmixVirtualPacket(VirtualPacket[] packets, int pktNo) {
+        public DownmixVirtualPacket(StereoDownmixTrack track, VirtualPacket[] packets, int pktNo) {
+            this.track = track;
             this.packets = packets;
             this.frameNo = pktNo;
         }
@@ -140,7 +145,7 @@ public class StereoDownmixTrack implements VirtualTrack {
                 data[i] = packets[i] == null ? null : packets[i].getData();
             ByteBuffer out = ByteBuffer.allocate(FRAMES_IN_OUT_PACKET << 2);
 
-            downmix.downmix(data, out);
+            track.downmix.downmix(data, out);
 
             return out;
         }
@@ -152,12 +157,12 @@ public class StereoDownmixTrack implements VirtualTrack {
 
         @Override
         public double getPts() {
-            return (double) frameNo / rate;
+            return (double) frameNo / track.rate;
         }
 
         @Override
         public double getDuration() {
-            return (double) FRAMES_IN_OUT_PACKET / rate;
+            return (double) FRAMES_IN_OUT_PACKET / track.rate;
         }
 
         @Override

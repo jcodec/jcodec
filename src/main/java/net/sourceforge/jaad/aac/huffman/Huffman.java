@@ -19,51 +19,51 @@ public class Huffman implements Codebooks {
 	private Huffman() {
 	}
 
-	private static int findOffset(IBitStream in, int[][] table) throws AACException {
+	private static int findOffset(IBitStream _in, int[][] table) throws AACException {
 		int off = 0;
 		int len = table[off][0];
-		int cw = in.readBits(len);
+		int cw = _in.readBits(len);
 		int j;
 		while(cw!=table[off][1]) {
 			off++;
 			j = table[off][0]-len;
 			len = table[off][0];
 			cw <<= j;
-			cw |= in.readBits(j);
+			cw |= _in.readBits(j);
 		}
 		return off;
 	}
 
-	private static void signValues(IBitStream in, int[] data, int off, int len) throws AACException {
+	private static void signValues(IBitStream _in, int[] data, int off, int len) throws AACException {
 		for(int i = off; i<off+len; i++) {
 			if(data[i]!=0) {
-				if(in.readBool()) data[i] = -data[i];
+				if(_in.readBool()) data[i] = -data[i];
 			}
 		}
 	}
 
-	private static int getEscape(IBitStream in, int s) throws AACException {
+	private static int getEscape(IBitStream _in, int s) throws AACException {
 		final boolean neg = s<0;
 
 		int i = 4;
-		while(in.readBool()) {
+		while(_in.readBool()) {
 			i++;
 		}
-		final int j = in.readBits(i)|(1<<i);
+		final int j = _in.readBits(i)|(1<<i);
 
 		return (neg ? -j : j);
 	}
 
-	public static int decodeScaleFactor(IBitStream in) throws AACException {
-		final int offset = findOffset(in, HCB_SF);
+	public static int decodeScaleFactor(IBitStream _in) throws AACException {
+		final int offset = findOffset(_in, HCB_SF);
 		return HCB_SF[offset][2];
 	}
 
-	public static void decodeSpectralData(IBitStream in, int cb, int[] data, int off) throws AACException {
+	public static void decodeSpectralData(IBitStream _in, int cb, int[] data, int off) throws AACException {
 		final int[][] HCB = CODEBOOKS[cb-1];
 
 		//find index
-		final int offset = findOffset(in, HCB);
+		final int offset = findOffset(_in, HCB);
 
 		//copy data
 		data[off] = HCB[offset][2];
@@ -75,12 +75,12 @@ public class Huffman implements Codebooks {
 
 		//sign & escape
 		if(cb<11) {
-			if(UNSIGNED[cb-1]) signValues(in, data, off, cb<5 ? QUAD_LEN : PAIR_LEN);
+			if(UNSIGNED[cb-1]) signValues(_in, data, off, cb<5 ? QUAD_LEN : PAIR_LEN);
 		}
 		else if(cb==11||cb>15) {
-			signValues(in, data, off, cb<5 ? QUAD_LEN : PAIR_LEN); //virtual codebooks are always unsigned
-			if(Math.abs(data[off])==16) data[off] = getEscape(in, data[off]);
-			if(Math.abs(data[off+1])==16) data[off+1] = getEscape(in, data[off+1]);
+			signValues(_in, data, off, cb<5 ? QUAD_LEN : PAIR_LEN); //virtual codebooks are always unsigned
+			if(Math.abs(data[off])==16) data[off] = getEscape(_in, data[off]);
+			if(Math.abs(data[off+1])==16) data[off+1] = getEscape(_in, data[off+1]);
 		}
 		else throw new AACException("Huffman: unknown spectral codebook: "+cb);
 	}

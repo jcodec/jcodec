@@ -13,6 +13,10 @@ import java.nio.ByteBuffer;
  */
 public class TimeToSampleBox extends FullBox {
 
+    public TimeToSampleBox(Header atom) {
+        super(atom);
+    }
+
     public static class TimeToSampleEntry {
         int sampleCount;
         int sampleDuration;
@@ -47,16 +51,13 @@ public class TimeToSampleBox extends FullBox {
         return "stts";
     }
 
+    public static TimeToSampleBox createTimeToSampleBox(TimeToSampleEntry[] timeToSamples) {
+        TimeToSampleBox box = new TimeToSampleBox(new Header(fourcc()));
+        box.entries = timeToSamples;
+        return box;
+    }
+
     private TimeToSampleEntry[] entries;
-
-    public TimeToSampleBox(TimeToSampleEntry[] timeToSamples) {
-        super(new Header(fourcc()));
-        this.entries = timeToSamples;
-    }
-
-    public TimeToSampleBox() {
-        super(new Header(fourcc()));
-    }
 
     public void parse(ByteBuffer input) {
         super.parse(input);
@@ -75,7 +76,8 @@ public class TimeToSampleBox extends FullBox {
     public void doWrite(ByteBuffer out) {
         super.doWrite(out);
         out.putInt(entries.length);
-        for (TimeToSampleEntry timeToSampleEntry : entries) {
+        for (int i = 0; i < entries.length; i++) {
+            TimeToSampleEntry timeToSampleEntry = entries[i];
             out.putInt(timeToSampleEntry.getSampleCount());
             out.putInt(timeToSampleEntry.getSampleDuration());
         }

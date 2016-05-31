@@ -1,10 +1,9 @@
 package org.jcodec.containers.mxf.model;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -39,7 +38,7 @@ public class BER {
         return length;
     }
 
-    public static long decodeLength(ByteBuffer buffer) {
+    public static long decodeLengthBuf(ByteBuffer buffer) {
         long length = 0;
         int lengthbyte = buffer.get() & 0xff;
 

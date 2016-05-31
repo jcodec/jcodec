@@ -1,15 +1,14 @@
 package net.sourceforge.jaad.aac;
-
+import java.lang.IllegalArgumentException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
-
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
 import net.sourceforge.jaad.aac.syntax.BitStream;
-import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.PCE;
 import net.sourceforge.jaad.aac.syntax.SyntacticElements;
+import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 import net.sourceforge.jaad.aac.transport.ADIFHeader;
 
 /**
@@ -36,7 +35,7 @@ public class Decoder implements SyntaxConstants {
     private final DecoderConfig config;
     private final SyntacticElements syntacticElements;
     private final FilterBank filterBank;
-    private IBitStream in;
+    private IBitStream _in;
     private ADIFHeader adifHeader;
 
     /**
@@ -74,7 +73,7 @@ public class Decoder implements SyntaxConstants {
         syntacticElements = new SyntacticElements(config);
         filterBank = new FilterBank(config.isSmallFrameUsed(), config.getChannelConfiguration().getChannelCount());
 
-        in = new BitStream();
+        _in = new BitStream();
 
         LOGGER.log(Level.FINE, "profile: {0}", config.getProfile());
         LOGGER.log(Level.FINE, "sf: {0}", config.getSampleFrequency().getFrequency());
@@ -97,8 +96,8 @@ public class Decoder implements SyntaxConstants {
      */
     public void decodeFrame(byte[] frame, SampleBuffer buffer) throws AACException {
         if (frame != null)
-            in.setData(frame);
-        LOGGER.finest("bits left " + in.getBitsLeft());
+            _in.setData(frame);
+        LOGGER.finest("bits left " + _in.getBitsLeft());
         try {
             decode(buffer);
         } catch (AACException e) {
@@ -110,8 +109,8 @@ public class Decoder implements SyntaxConstants {
     }
 
     private void decode(SampleBuffer buffer) throws AACException {
-        if (ADIFHeader.isPresent(in)) {
-            adifHeader = ADIFHeader.readHeader(in);
+        if (ADIFHeader.isPresent(_in)) {
+            adifHeader = ADIFHeader.readHeader(_in);
             final PCE pce = adifHeader.getFirstPCE();
             config.setProfile(pce.getProfile());
             config.setSampleFrequency(pce.getSampleFrequency());
@@ -125,7 +124,7 @@ public class Decoder implements SyntaxConstants {
 
         try {
             //1: bitstream parsing and noiseless coding
-            syntacticElements.decode(in);
+            syntacticElements.decode(_in);
             //2: spectral processing
             syntacticElements.process(filterBank);
             //3: send to output buffer
@@ -135,7 +134,7 @@ public class Decoder implements SyntaxConstants {
             throw e;
         } catch (Exception e) {
             buffer.setData(new byte[0], 0, 0, 0, 0);
-            throw new AACException(e);
+            throw AACException.wrap(e);
         }
     }
 }

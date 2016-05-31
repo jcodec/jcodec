@@ -1,4 +1,7 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,12 +20,12 @@ import java.util.List;
  */
 public abstract class VirtualMovie {
     public MovieSegment[] chunks;
-    public MovieSegment headerChunk;
-    protected long size;
+    public MovieSegment _headerChunk;
+    protected long _size;
     protected VirtualTrack[] tracks;
 
-    public VirtualMovie(VirtualTrack... tracks) throws IOException {
-        this.tracks = tracks;
+    public VirtualMovie(VirtualTrack... arguments) throws IOException {
+        this.tracks = arguments;
     }
 
     protected void muxTracks() throws IOException {
@@ -44,17 +47,17 @@ public abstract class VirtualMovie {
             if (min == -1)
                 break;
 
-            chch.add(packetChunk(tracks[min], heads[min], curChunk, min, size));
+            chch.add(packetChunk(tracks[min], heads[min], curChunk, min, _size));
             if (heads[min].getDataLen() >= 0)
-                size += heads[min].getDataLen();
+                _size += heads[min].getDataLen();
             else
                 System.err.println("WARN: Negative frame data len!!!");
             tails[min] = heads[min];
             heads[min] = tracks[min].nextPacket();
         }
 
-        headerChunk = headerChunk(chch, tracks, size);
-        size += headerChunk.getDataLen();
+        _headerChunk = headerChunk(chch, tracks, _size);
+        _size += _headerChunk.getDataLen();
 
         chunks = chch.toArray(new MovieSegment[0]);
     }
@@ -72,13 +75,13 @@ public abstract class VirtualMovie {
     }
 
     public MovieSegment getPacketAt(long position) throws IOException {
-        if (position >= 0 && position < headerChunk.getDataLen())
-            return headerChunk;
+        if (position >= 0 && position < _headerChunk.getDataLen())
+            return _headerChunk;
         for (int i = 0; i < chunks.length - 1; i++) {
             if (chunks[i + 1].getPos() > position)
                 return chunks[i];
         }
-        if (position < size)
+        if (position < _size)
             return chunks[chunks.length - 1];
         return null;
     }
@@ -87,11 +90,11 @@ public abstract class VirtualMovie {
         if (no > chunks.length)
             return null;
         if (no == 0)
-            return headerChunk;
+            return _headerChunk;
         return chunks[no - 1];
     }
 
     public long size() {
-        return size;
+        return _size;
     }
 }

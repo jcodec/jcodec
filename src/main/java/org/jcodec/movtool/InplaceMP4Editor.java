@@ -1,4 +1,21 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
+
+import org.jcodec.common.Assert;
+import org.jcodec.common.Tuple;
+import org.jcodec.common.Tuple._2;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mp4.BoxFactory;
+import org.jcodec.containers.mp4.BoxUtil;
+import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Atom;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.Header;
+import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,20 +24,6 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import org.jcodec.common.Assert;
-import org.jcodec.common.Tuple;
-import org.jcodec.common.Tuple._2;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.MP4Util.Atom;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.BoxFactory;
-import org.jcodec.containers.mp4.boxes.Header;
-import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -58,7 +61,7 @@ public class InplaceMP4Editor {
     public boolean modify(File file, MP4Edit edit) throws IOException {
         SeekableByteChannel fi = null;
         try {
-            fi = NIOUtils.rwFileChannel(file);
+            fi = NIOUtils.rwChannel(file);
 
             List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi, edit);
             if (fragments == null)
@@ -102,8 +105,8 @@ public class InplaceMP4Editor {
         SeekableByteChannel fi = null;
         SeekableByteChannel fo = null;
         try {
-            fi = NIOUtils.readableFileChannel(src);
-            fo = NIOUtils.writableFileChannel(dst);
+            fi = NIOUtils.readableChannel(src);
+            fo = NIOUtils.writableChannel(dst);
 
             List<Tuple._2<Atom, ByteBuffer>> fragments = doTheFix(fi, edit);
             if (fragments == null)
@@ -165,7 +168,7 @@ public class InplaceMP4Editor {
         MovieBox moovBox = (MovieBox) parseBox(moovBuffer);
 
         List<Tuple._2<Atom, ByteBuffer>> fragments = new LinkedList<Tuple._2<Atom, ByteBuffer>>();
-        if (Box.findFirst(moovBox, "mvex") != null) {
+        if (BoxUtil.containsBox(moovBox, "mvex")) {
             List<Tuple._2<ByteBuffer, MovieFragmentBox>> temp = new LinkedList<Tuple._2<ByteBuffer, MovieFragmentBox>>();
             for (Atom fragAtom : getFragments(fi)) {
                 ByteBuffer fragBuffer = fetchBox(fi, fragAtom);
@@ -175,7 +178,7 @@ public class InplaceMP4Editor {
                 temp.add(Tuple._2(fragBuffer, fragBox));
             }
 
-            edit.apply(moovBox, Tuple._2_project1(temp).toArray(new MovieFragmentBox[0]));
+            edit.applyToFragment(moovBox, Tuple._2_project1(temp).toArray(new MovieFragmentBox[0]));
 
             for (Tuple._2<ByteBuffer, ? extends Box> frag : temp) {
                 if (!rewriteBox(frag.v0, frag.v1))
@@ -191,7 +194,7 @@ public class InplaceMP4Editor {
     }
 
     private void replaceBox(SeekableByteChannel fi, Atom atom, ByteBuffer buffer) throws IOException {
-        fi.position(atom.getOffset());
+        fi.setPosition(atom.getOffset());
         fi.write(buffer);
     }
 
@@ -213,14 +216,14 @@ public class InplaceMP4Editor {
     }
 
     private ByteBuffer fetchBox(SeekableByteChannel fi, Atom moov) throws IOException {
-        fi.position(moov.getOffset());
-        ByteBuffer oldMov = NIOUtils.fetchFrom(fi, (int) moov.getHeader().getSize());
+        fi.setPosition(moov.getOffset());
+        ByteBuffer oldMov = NIOUtils.fetchFromChannel(fi, (int) moov.getHeader().getSize());
         return oldMov;
     }
 
     private Box parseBox(ByteBuffer oldMov) {
         Header header = Header.read(oldMov);
-        Box box = NodeBox.parseBox(oldMov, header, BoxFactory.getDefault());
+        Box box = BoxUtil.parseBox(oldMov, header, BoxFactory.getDefault());
         return box;
     }
 

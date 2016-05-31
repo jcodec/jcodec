@@ -1,18 +1,19 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-
 import org.jcodec.common.Assert;
+import org.jcodec.common.StringUtils;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
+import org.jcodec.containers.mp4.IBoxFactory;
+import org.jcodec.platform.Platform;
+
+import java.lang.StringBuilder;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -25,14 +26,12 @@ import org.jcodec.common.tools.ToJSON;
  */
 public abstract class Box {
     private static final String GET_MODEL_FIELDS = "getModelFields";
-    protected Header header;
-
+    public Header header;
+    public static final int MAX_BOX_SIZE = 128 * 1024 * 1024;
+    
+    @UsedViaReflection
     public Box(Header header) {
         this.header = header;
-    }
-
-    public Box(Box other) {
-        this.header = other.header;
     }
 
     public Header getHeader() {
@@ -40,65 +39,6 @@ public abstract class Box {
     }
 
     public abstract void parse(ByteBuffer buf);
-
-    public static Box findFirst(NodeBox box, String... path) {
-        return findFirst(box, Box.class, path);
-    }
-
-    public static <T extends Box> T findFirst(NodeBox box, Class<T> clazz, String... path) {
-        T[] result = (T[]) findAll(box, clazz, path);
-
-        return result.length > 0 ? result[0] : null;
-    }
-
-    public static Box[] findAll(Box box, String... path) {
-        return findAll(box, Box.class, path);
-    }
-
-    public static void findBox(Box root, List<String> path, Collection<Box> result) {
-
-        if (path.size() > 0) {
-            String head = path.remove(0);
-            if (root instanceof NodeBox) {
-                NodeBox nb = (NodeBox) root;
-                for (Box candidate : nb.getBoxes()) {
-                    if (head == null || head.equals(candidate.header.getFourcc())) {
-                        findBox(candidate, path, result);
-                    }
-                }
-            }
-            path.add(0, head);
-        } else {
-            result.add(root);
-        }
-    }
-
-    public static <T extends Box> T[] findAll(Box box, Class<T> class1, String... path) {
-        List<Box> result = new LinkedList<Box>();
-        List<String> tlist = new LinkedList<String>();
-        for (String type : path) {
-            tlist.add(type);
-        }
-
-        findBox(box, tlist, result);
-
-        for (ListIterator<Box> it = result.listIterator(); it.hasNext();) {
-            Box next = it.next();
-            if (next == null) {
-                it.remove();
-            } else if (!class1.isAssignableFrom(next.getClass())) {
-                // Trying to reinterpret one box as the other
-                try {
-                    it.set(Box.as(class1, next));
-                } catch (Exception e) {
-                    Logger.warn("Failed to reinterpret box: " + next.getFourcc() + " as: " + class1.getName() + "."
-                            + e.getMessage());
-                    it.remove();
-                }
-            }
-        }
-        return result.toArray((T[]) Array.newInstance(class1, 0));
-    }
 
     public void write(ByteBuffer buf) {
         ByteBuffer dup = buf.duplicate();
@@ -138,17 +78,17 @@ public abstract class Box {
         collectModel(claz.getSuperclass(), model);
 
         try {
-            Method method = claz.getDeclaredMethod(GET_MODEL_FIELDS, List.class);
-            method.invoke(this, model);
-        } catch (NoSuchMethodException e) {
+            Platform.invokeMethod(this, GET_MODEL_FIELDS, new Object[]{model});
+        } catch (Exception e) {
             checkWrongSignature(claz);
             model.addAll(ToJSON.allFields(claz));
-        } catch (Exception e) {
         }
     }
 
     private void checkWrongSignature(Class claz) {
-        for (Method method : claz.getDeclaredMethods()) {
+        Method[] declaredMethods = Platform.getDeclaredMethods(claz);
+        for (int i = 0; i < declaredMethods.length; i++) {
+            Method method = declaredMethods[i];
             if (method.getName().equals(GET_MODEL_FIELDS)) {
                 Logger.warn("Class " + claz.getCanonicalName() + " contains 'getModelFields' of wrong signature.\n"
                         + "Did you mean to define 'protected void " + GET_MODEL_FIELDS + "(List<String> model) ?");
@@ -157,9 +97,30 @@ public abstract class Box {
         }
     }
 
-    public static <T extends Box> T as(Class<T> class1, Box box) {
+    public static String[] path(String path) {
+        return StringUtils.splitC(path, '.');
+    }
+
+    public static LeafBox createLeafBox(Header atom, ByteBuffer data) {
+        LeafBox leaf = new LeafBox(atom);
+        leaf.data = data;
+        return leaf;
+    }
+
+    public static Box parseBox(ByteBuffer input, Header childAtom, IBoxFactory factory) {
+        Box box = factory.newBox(childAtom);
+    
+        if (childAtom.getBodySize() < Box.MAX_BOX_SIZE) {
+            box.parse(input);
+            return box;
+        } else {
+            return new LeafBox(Header.createHeader("free", 8));
+        }
+    }
+
+    public static <T extends Box> T asBox(Class<T> class1, Box box) {
         try {
-            T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
+            T res = Platform.newInstance(class1, new Object[]{box.getHeader()});
             ByteBuffer buffer = ByteBuffer.allocate((int)box.getHeader().getBodySize());
             box.doWrite(buffer);
             buffer.flip();
@@ -170,13 +131,25 @@ public abstract class Box {
         }
     }
     
-    public static <T extends Box> T as(Class<T> class1, LeafBox box) {
-        try {
-            T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
-            res.parse(box.getData().duplicate());
-            return res;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    public static class LeafBox extends Box {
+        ByteBuffer data;
+
+        public LeafBox(Header atom) {
+            super(atom);
+        }
+
+        public void parse(ByteBuffer input) {
+            data = NIOUtils.read(input, (int) header.getBodySize());
+        }
+
+        public ByteBuffer getData() {
+            return data.duplicate();
+        }
+
+        @Override
+        protected void doWrite(ByteBuffer out) {
+            NIOUtils.write(out, data);
         }
     }
+    
 }

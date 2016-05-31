@@ -1,5 +1,4 @@
 package org.jcodec.codecs.common.biari;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -14,14 +13,14 @@ import java.nio.ByteBuffer;
  */
 public class MDecoder {
 
-    private ByteBuffer in;
+    private ByteBuffer _in;
     private int range;
     private int code;
     private int nBitsPending;
     private int[][] cm;
 
-    public MDecoder(ByteBuffer in, int[][] cm) {
-        this.in = in;
+    public MDecoder(ByteBuffer _in, int[][] cm) {
+        this._in = _in;
         this.range = 510;
         this.cm = cm;
 
@@ -46,9 +45,9 @@ public class MDecoder {
     }
 
     protected void readOneByte() {
-        if (!in.hasRemaining())
+        if (!_in.hasRemaining())
             return;
-        int b = in.get() & 0xff;
+        int b = _in.get() & 0xff;
         code |= b;
         nBitsPending += 8;
     }

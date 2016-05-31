@@ -1,19 +1,17 @@
 package org.jcodec.codecs.y4m;
-
-import static org.jcodec.common.StringUtils.split;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
+import static org.jcodec.common.StringUtils.splitC;
+import static org.jcodec.platform.Platform.stringFromBytes;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.platform.Platform;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,16 +22,17 @@ import org.jcodec.common.model.Size;
  */
 public class Y4MDecoder {
 
-    private FileChannel is;
+    private SeekableByteChannel is;
     private int width;
     private int height;
     private String invalidFormat;
     private Rational fps;
     private int bufSize;
 
-    public Y4MDecoder(SeekableByteChannel is) throws IOException {
-        ByteBuffer buf = NIOUtils.fetchFrom(is, 2048);
-        String[] header = split(readLine(buf), ' ');
+    public Y4MDecoder(SeekableByteChannel _is) throws IOException {
+        this.is = _is;
+        ByteBuffer buf = NIOUtils.fetchFromChannel(is, 2048);
+        String[] header = splitC(readLine(buf), ' ');
 
         if (!"YUV4MPEG2".equals(header[0])) {
             invalidFormat = "Not yuv4mpeg stream";
@@ -50,42 +49,43 @@ public class Y4MDecoder {
 
         String fpsStr = find(header, 'F');
         if (fpsStr != null) {
-            String[] numden = split(fpsStr, ':');
+            String[] numden = splitC(fpsStr, ':');
             fps = new Rational(Integer.parseInt(numden[0]), Integer.parseInt(numden[1]));
         }
 
-        is.position(buf.position());
-        bufSize = width * height * 2;
+        is.setPosition(buf.position());
+        bufSize = width * height;
+        bufSize += bufSize / 2;
     }
 
-    public Picture nextFrame(int[][] buffer) throws IOException {
+    public Picture8Bit nextFrame8Bit(byte[][] buffer) throws IOException {
         if (invalidFormat != null)
             throw new RuntimeException("Invalid input: " + invalidFormat);
-        long pos = is.position();
-        ByteBuffer buf = NIOUtils.fetchFrom(is, 2048);
+        ByteBuffer buf = NIOUtils.fetchFromChannel(is, 2048);
         String frame = readLine(buf);
         if (frame == null || !frame.startsWith("FRAME"))
             return null;
 
-        MappedByteBuffer pix = is.map(MapMode.READ_ONLY, pos + buf.position(), bufSize);
-        is.position(pos + buf.position() + bufSize);
+        is.setPosition(is.position() - buf.remaining());
+        ByteBuffer pix = NIOUtils.fetchFromChannel(is, bufSize);
 
-        Picture create = Picture.create(width, height, ColorSpace.YUV420);
-        copy(pix, create.getPlaneData(0));
-        copy(pix, create.getPlaneData(1));
-        copy(pix, create.getPlaneData(2));
+        Picture8Bit create = Picture8Bit.createPicture8Bit(width, height, buffer, ColorSpace.YUV420);
+        copy(pix, create.getPlaneData(0), width*height);
+        copy(pix, create.getPlaneData(1), width*height / 4);
+        copy(pix, create.getPlaneData(2), width*height / 4);
 
         return create;
     }
 
-    void copy(ByteBuffer b, int[] ii) {
-        for (int i = 0; b.hasRemaining(); i++) {
-            ii[i] = b.get() & 0xff;
+    void copy(ByteBuffer b, byte[] ii, int size) {
+        for (int i = 0; b.hasRemaining() && i < size; i++) {
+            ii[i] = (byte) ((b.get() & 0xff) - 128);
         }
     }
 
     private static String find(String[] header, char c) {
-        for (String string : header) {
+        for (int i = 0; i < header.length; i++) {
+            String string = header[i];
             if (string.charAt(0) == c)
                 return string.substring(1);
         }
@@ -98,7 +98,7 @@ public class Y4MDecoder {
             ;
         if (y4m.hasRemaining())
             duplicate.limit(y4m.position() - 1);
-        return new String(NIOUtils.toArray(duplicate));
+        return stringFromBytes(NIOUtils.toArray(duplicate));
     }
 
     public int getWidth() {

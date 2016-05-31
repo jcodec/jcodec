@@ -1,14 +1,12 @@
 package org.jcodec.containers.mps.psi;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.containers.mps.MPSUtils;
+import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
+import org.jcodec.containers.mps.MTSStreamType;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.logging.Logger;
-import org.jcodec.containers.mps.MPSUtils;
-import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
-import org.jcodec.containers.mps.MTSUtils.StreamType;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -30,7 +28,8 @@ public class PMTSection extends PSISection {
     private PMTStream[] streams;
 
     public PMTSection(PSISection psi, int pcrPid, Tag[] tags, PMTStream[] streams) {
-        super(psi);
+        super(psi.tableId, psi.specificId, psi.versionNumber, psi.currentNextIndicator, psi.sectionNumber,
+                psi.lastSectionNumber);
         this.pcrPid = pcrPid;
         this.tags = tags;
         this.streams = streams;
@@ -48,8 +47,8 @@ public class PMTSection extends PSISection {
         return streams;
     }
 
-    public static PMTSection parse(ByteBuffer data) {
-        PSISection psi = PSISection.parse(data);
+    public static PMTSection parsePMT(ByteBuffer data) {
+        PSISection psi = PSISection.parsePSI(data);
 
         int w1 = data.getShort() & 0xffff;
         int pcrPid = w1 & 0x1fff;
@@ -108,20 +107,20 @@ public class PMTSection extends PSISection {
         private int streamTypeTag;
         private int pid;
         private List<MPEGMediaDescriptor> descriptors;
-        private StreamType streamType;
+        private MTSStreamType streamType;
 
         public PMTStream(int streamTypeTag, int pid, List<MPEGMediaDescriptor> descriptors) {
             this.streamTypeTag = streamTypeTag;
             this.pid = pid;
             this.descriptors = descriptors;
-            this.streamType = StreamType.fromTag(streamTypeTag);
+            this.streamType = MTSStreamType.fromTag(streamTypeTag);
         }
 
         public int getStreamTypeTag() {
             return streamTypeTag;
         }
 
-        public StreamType getStreamType() {
+        public MTSStreamType getStreamType() {
             return streamType;
         }
 

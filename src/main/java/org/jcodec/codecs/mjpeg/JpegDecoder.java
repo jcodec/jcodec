@@ -1,10 +1,7 @@
 package org.jcodec.codecs.mjpeg;
-
 import static org.jcodec.codecs.mjpeg.JpegConst.naturalOrder;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
+import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.mjpeg.tools.Asserts;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
@@ -17,6 +14,9 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.MathUtil;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -27,12 +27,10 @@ import org.jcodec.common.tools.MathUtil;
 public class JpegDecoder extends VideoDecoder {
     private boolean interlace;
     private boolean topFieldFirst;
-
-    public JpegDecoder() {
-        this(false, false);
-    }
+    int[] buf;
 
     public JpegDecoder(boolean interlace, boolean topFieldFirst) {
+        this.buf = new int[64];
         this.interlace = interlace;
         this.topFieldFirst = topFieldFirst;
     }
@@ -55,7 +53,7 @@ public class JpegDecoder extends VideoDecoder {
                 nn == 4 ? ColorSpace.YUV420J : (nn == 3 ? ColorSpace.YUV422J : ColorSpace.YUV444J), new Rect(0, 0,
                         width, height));
 
-        BitReader bits = new BitReader(data);
+        BitReader bits = BitReader.createBitReader(data);
         int[] dcPredictor = new int[] { 1024, 1024, 1024 };
         for (int by = 0; by < yBlocks; by++)
             for (int bx = 0; bx < xBlocks && bits.moreData(); bx++)
@@ -74,7 +72,6 @@ public class JpegDecoder extends VideoDecoder {
         }
     }
 
-    int[] buf = new int[64];
 
     void decodeMCU(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture8Bit result, int bx, int by,
             int blockH, int blockV, int field, int step) {
@@ -101,23 +98,23 @@ public class JpegDecoder extends VideoDecoder {
         putBlock(result.getPlaneData(plane), result.getPlaneWidth(plane), buf, blkX, blkY, field, step);
     }
 
-    int readDCValue(BitReader in, VLC table) {
-        int code = table.readVLC16(in);
-        return code != 0 ? toValue(in.readNBit(code), code) : 0;
+    int readDCValue(BitReader _in, VLC table) {
+        int code = table.readVLC16(_in);
+        return code != 0 ? toValue(_in.readNBit(code), code) : 0;
     }
 
-    void readACValues(BitReader in, int[] target, VLC table, int[] quantTable) {
+    void readACValues(BitReader _in, int[] target, VLC table, int[] quantTable) {
         int code;
         int curOff = 1;
         do {
-            code = table.readVLC16(in);
+            code = table.readVLC16(_in);
             if (code == 0xF0) {
                 curOff += 16;
             } else if (code > 0) {
                 int rle = code >> 4;
                 curOff += rle;
                 int len = code & 0xf;
-                target[naturalOrder[curOff]] = toValue(in.readNBit(len), len) * quantTable[curOff];
+                target[naturalOrder[curOff]] = toValue(_in.readNBit(len), len) * quantTable[curOff];
                 curOff++;
             }
         } while (code != 0 && curOff < 64);
@@ -132,7 +129,7 @@ public class JpegDecoder extends VideoDecoder {
         if (interlace) {
             Picture8Bit r1 = decodeField(data, data2, topFieldFirst ? 0 : 1, 2);
             Picture8Bit r2 = decodeField(data, data2, topFieldFirst ? 1 : 0, 2);
-            return new Picture8Bit(r1.getWidth(), r1.getHeight() << 1, data2, r1.getColor());
+            return Picture8Bit.createPicture8Bit(r1.getWidth(), r1.getHeight() << 1, data2, r1.getColor());
         } else {
             return decodeField(data, data2, 0, 1);
         }
@@ -178,7 +175,7 @@ public class JpegDecoder extends VideoDecoder {
             } else if (b == JpegConst.SOS) {
 
                 if (scan != null) {
-                    throw new IllegalStateException("unhandled - more than one scan header");
+                    throw new UnhandledStateException("unhandled - more than one scan header");
                 }
                 scan = ScanHeader.read(data);
                 // Debug.trace("    %s", image.scan);
@@ -199,7 +196,7 @@ public class JpegDecoder extends VideoDecoder {
 
                 Asserts.assertEquals(0, ri);
             } else {
-                throw new IllegalStateException("unhandled marker " + JpegConst.toString(b));
+                throw new UnhandledStateException("unhandled marker " + JpegConst.markerToString(b));
             }
         }
 
@@ -236,7 +233,7 @@ public class JpegDecoder extends VideoDecoder {
             for (int c = 0; c < length; c++) {
                 int val = data.get() & 0xff;
                 int code = levelStart++;
-                builder.set(code, i + 1, val);
+                builder.setInt(code, i + 1, val);
             }
             levelStart <<= 1;
         }

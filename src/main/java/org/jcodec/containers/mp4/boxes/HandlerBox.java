@@ -1,9 +1,10 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.nio.ByteBuffer;
+import static org.jcodec.common.JCodecUtil2.asciiString;
 
-import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.NIOUtils;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,6 +16,10 @@ import org.jcodec.common.io.NIOUtils;
  * 
  */
 public class HandlerBox extends FullBox {
+    public HandlerBox(Header atom) {
+        super(atom);
+    }
+
     private String componentType;
     private String componentSubType;
     private String componentManufacturer;
@@ -26,19 +31,16 @@ public class HandlerBox extends FullBox {
         return "hdlr";
     }
 
-    public HandlerBox(String componentType, String componentSubType, String componentManufacturer, int componentFlags,
-            int componentFlagsMask) {
-        super(new Header("hdlr"));
-        this.componentType = componentType;
-        this.componentSubType = componentSubType;
-        this.componentManufacturer = componentManufacturer;
-        this.componentFlags = componentFlags;
-        this.componentFlagsMask = componentFlagsMask;
-        this.componentName = "";
-    }
-
-    public HandlerBox() {
-        super(new Header(fourcc()));
+    public static HandlerBox createHandlerBox(String componentType, String componentSubType,
+            String componentManufacturer, int componentFlags, int componentFlagsMask) {
+        HandlerBox hdlr = new HandlerBox(new Header(fourcc()));
+        hdlr.componentType = componentType;
+        hdlr.componentSubType = componentSubType;
+        hdlr.componentManufacturer = componentManufacturer;
+        hdlr.componentFlags = componentFlags;
+        hdlr.componentFlagsMask = componentFlagsMask;
+        hdlr.componentName = "";
+        return hdlr;
     }
 
     public void parse(ByteBuffer input) {
@@ -56,14 +58,14 @@ public class HandlerBox extends FullBox {
     public void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        out.put(JCodecUtil.asciiString(componentType));
-        out.put(JCodecUtil.asciiString(componentSubType));
-        out.put(JCodecUtil.asciiString(componentManufacturer));
+        out.put(asciiString(componentType));
+        out.put(asciiString(componentSubType));
+        out.put(asciiString(componentManufacturer));
 
         out.putInt(componentFlags);
         out.putInt(componentFlagsMask);
         if (componentName != null) {
-            out.put(JCodecUtil.asciiString(componentName));
+            out.put(asciiString(componentName));
         }
     }
 

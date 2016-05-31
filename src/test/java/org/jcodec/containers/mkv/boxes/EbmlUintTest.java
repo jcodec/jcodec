@@ -1,14 +1,13 @@
 package org.jcodec.containers.mkv.boxes;
-
 import static org.jcodec.containers.mkv.MKVType.BlockDuration;
 import static org.jcodec.containers.mkv.MKVType.CueClusterPosition;
 import static org.jcodec.containers.mkv.MKVType.TrackNumber;
 import static org.jcodec.containers.mkv.boxes.EbmlUint.calculatePayloadSize;
 
-import java.nio.ByteBuffer;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.nio.ByteBuffer;
 
 public class EbmlUintTest {
     
@@ -24,18 +23,18 @@ public class EbmlUintTest {
     @Test
     public void testUnsignedIntegerData() throws Exception {
         EbmlUint uie1 = new EbmlUint(BlockDuration.id);
-        uie1.set(128);
+        uie1.setUint(128);
         ByteBuffer bb = uie1.getData();
         Assert.assertArrayEquals(new byte[]{(byte)0x9B, (byte)0x81, (byte)0x80}, bb.array());
         
-        EbmlUint uie2 = new EbmlUint(TrackNumber.id, 1);
+        EbmlUint uie2 = EbmlUint.createEbmlUint(TrackNumber.id, 1);
         bb = uie2.getData();
         Assert.assertArrayEquals(new byte[]{(byte)0xD7, (byte)0x81, 0x01}, bb.array());
     }
     
     @Test
     public void testElementMuxing2() throws Exception {
-        EbmlUint uie = new EbmlUint(CueClusterPosition.id, 145582);
+        EbmlUint uie = EbmlUint.createEbmlUint(CueClusterPosition.id, 145582);
         ByteBuffer bb = uie.getData();
         Assert.assertArrayEquals(new byte[]{(byte)0xF1, (byte)0x83, 0x02, 0x38, (byte)0xAE}, bb.array());
     }

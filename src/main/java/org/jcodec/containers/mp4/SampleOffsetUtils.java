@@ -1,11 +1,6 @@
 package org.jcodec.containers.mp4;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -13,6 +8,11 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -26,11 +26,11 @@ public class SampleOffsetUtils {
     public static ByteBuffer getSampleData(int sample, File file) throws IOException {
         MovieBox moov = MP4Util.parseMovie(file);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
-        ChunkOffsetsBox stco = NodeBox.findFirst(minf, ChunkOffsetsBox.class, "stbl", "stco");
-        SampleToChunkBox stsc = NodeBox.findFirst(minf, SampleToChunkBox.class, "stbl", "stsc");
-        SampleSizesBox stsz = NodeBox.findFirst(minf, SampleSizesBox.class, "stbl", "stsz");
+        ChunkOffsetsBox stco = NodeBox.findFirstPath(minf, ChunkOffsetsBox.class, Box.path("stbl.stco"));
+        SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));
+        SampleSizesBox stsz = NodeBox.findFirstPath(minf, SampleSizesBox.class, Box.path("stbl.stsz"));
         long sampleOffset = getSampleOffset(sample, stsc, stco, stsz);
-        MappedByteBuffer map = NIOUtils.map(file);
+        MappedByteBuffer map = NIOUtils.mapFile(file);
         map.position((int) sampleOffset);
         map.limit(map.position() + stsz.getSizes()[sample]);
         return map;

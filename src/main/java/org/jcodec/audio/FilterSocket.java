@@ -1,7 +1,8 @@
 package org.jcodec.audio;
+import org.jcodec.platform.Platform;
 
+import java.lang.IllegalArgumentException;
 import java.nio.FloatBuffer;
-import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -18,24 +19,26 @@ public class FilterSocket {
     private int totalInputs;
     private int totalOutputs;
 
-    public FilterSocket(AudioFilter... filters) {
-        totalInputs = 0;
-        totalOutputs = 0;
+    public static FilterSocket createFilterSocket(AudioFilter... arguments) {
+        FilterSocket fs = new FilterSocket();
+        fs.totalInputs = 0;
+        fs.totalOutputs = 0;
 
-        for (int i = 0; i < filters.length; i++) {
-            totalInputs += filters[i].getNInputs();
-            totalOutputs += filters[i].getNOutputs();
+        for (int i = 0; i < arguments.length; i++) {
+            fs.totalInputs += arguments[i].getNInputs();
+            fs.totalOutputs += arguments[i].getNOutputs();
         }
 
-        buffers = new FloatBuffer[totalInputs];
-        positions = new long[totalInputs];
-        delays = new int[totalInputs];
-        for (int i = 0, b = 0; i < filters.length; i++) {
-            for (int j = 0; j < filters[i].getNInputs(); j++, b++) {
-                delays[b] = filters[i].getDelay();
+        fs.buffers = new FloatBuffer[fs.totalInputs];
+        fs.positions = new long[fs.totalInputs];
+        fs.delays = new int[fs.totalInputs];
+        for (int i = 0, b = 0; i < arguments.length; i++) {
+            for (int j = 0; j < arguments[i].getNInputs(); j++, b++) {
+                fs.delays[b] = arguments[i].getDelay();
             }
         }
-        this.filters = filters;
+        fs.filters = arguments;
+        return fs;
     }
 
     public void allocateBuffers(int bufferSize) {
@@ -44,14 +47,19 @@ public class FilterSocket {
             buffers[i].position(delays[i]);
         }
     }
-
-    FilterSocket(AudioFilter filter, FloatBuffer[] buffers, long[] positions) {
-        this.filters = new AudioFilter[] { filter };
-        this.buffers = buffers;
-        this.positions = positions;
-        this.delays = new int[] { filter.getDelay() };
-        this.totalInputs = filter.getNInputs();
-        this.totalOutputs = filter.getNOutputs();
+    
+    public static FilterSocket createFilterSocket2(AudioFilter filter, FloatBuffer[] buffers, long[] positions) {
+        FilterSocket fs = new FilterSocket();
+        fs.filters = new AudioFilter[] { filter };
+        fs.buffers = buffers;
+        fs.positions = positions;
+        fs.delays = new int[] { filter.getDelay() };
+        fs.totalInputs = filter.getNInputs();
+        fs.totalOutputs = filter.getNOutputs();
+        return fs;
+    }
+    
+    private FilterSocket() {
     }
 
     public void filter(FloatBuffer[] outputs) {
@@ -60,9 +68,9 @@ public class FilterSocket {
                     + outputs.length + "!=" + totalOutputs + ")");
         for (int i = 0, ii = 0, oi = 0; i < filters.length; ii += filters[i].getNInputs(), oi += filters[i]
                 .getNOutputs(), i++) {
-            filters[i].filter(Arrays.copyOfRange(buffers, ii, filters[i].getNInputs() + ii),
-                    Arrays.copyOfRange(positions, ii, filters[i].getNInputs() + ii),
-                    Arrays.copyOfRange(outputs, oi, filters[i].getNOutputs() + oi));
+            filters[i].filter(Platform.copyOfRangeO(buffers, ii, filters[i].getNInputs() + ii),
+                    Platform.copyOfRangeL(positions, ii, filters[i].getNInputs() + ii),
+                    Platform.copyOfRangeO(outputs, oi, filters[i].getNOutputs() + oi));
         }
     }
 

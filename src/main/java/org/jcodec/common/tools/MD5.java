@@ -1,5 +1,5 @@
 package org.jcodec.common.tools;
-
+import java.lang.StringBuilder;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -12,7 +12,7 @@ import java.security.NoSuchAlgorithmException;
  *
  */
 public class MD5 {
-    public static String md5sum(byte[] bytes) {
+    public static String md5sumBytes(byte[] bytes) {
         MessageDigest md5 = getDigest();
         md5.update(bytes);
         return digestToString(md5.digest());
@@ -20,7 +20,8 @@ public class MD5 {
 
     private static String digestToString(byte[] digest) {
         StringBuilder sb = new StringBuilder();
-        for (byte item : digest) {
+        for (int i = 0; i < digest.length; i++) {
+            byte item = digest[i];
             int b = item & 0xFF;
             if (b < 0x10)
                 sb.append('0');

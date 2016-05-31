@@ -1,31 +1,22 @@
 package org.jcodec.api;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.api.specific.ContainerAdaptor;
-import org.jcodec.codecs.h264.H264Decoder;
-import org.jcodec.codecs.mpeg12.MPEGDecoder;
-import org.jcodec.codecs.prores.ProresDecoder;
-import org.jcodec.common.Codec;
-import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.ThreadLocal;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,20 +36,21 @@ import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
  */
 public class FrameGrab8Bit {
 
-    private DemuxerTrack videoTrack;
+    private SeekableDemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
-    private ThreadLocal<byte[][]> buffers = new ThreadLocal<byte[][]>();
+    private ThreadLocal<byte[][]> buffers;
 
-    public FrameGrab8Bit(SeekableByteChannel in) throws IOException, JCodecException {
+    public static FrameGrab8Bit createFrameGrab8Bit(SeekableByteChannel _in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
-        in.read(header);
+        _in.read(header);
         header.flip();
-        Format detectFormat = JCodecUtil.detectFormat(header);
+        Format detectFormat = JCodecUtil.detectFormatBuffer(header);
+        AbstractMP4DemuxerTrack videoTrack_;
 
         switch (detectFormat) {
         case MOV:
-            MP4Demuxer d1 = new MP4Demuxer(in);
-            videoTrack = d1.getVideoTrack();
+            MP4Demuxer d1 = new MP4Demuxer(_in);
+            videoTrack_ = d1.getVideoTrack();
             break;
         case MPEG_PS:
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");
@@ -67,12 +59,15 @@ public class FrameGrab8Bit {
         default:
             throw new UnsupportedFormatException("Container format is not supported by JCodec");
         }
-        decodeLeadingFrames();
+        FrameGrab8Bit fg = new FrameGrab8Bit(videoTrack_, detectDecoder(videoTrack_));
+        fg.decodeLeadingFrames();
+        return fg;
     }
 
     public FrameGrab8Bit(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
         this.videoTrack = videoTrack;
         this.decoder = decoder;
+        this.buffers = new ThreadLocal<byte[][]>();
     }
 
     private SeekableDemuxerTrack sdt() throws JCodecException {
@@ -175,7 +170,7 @@ public class FrameGrab8Bit {
 
         Packet frame = sdt.nextFrame();
         if (decoder == null)
-            decoder = detectDecoder(sdt, frame);
+            decoder = detectDecoder(sdt);
 
         while (frame.getFrameNo() < curFrame) {
             decoder.decodeFrame8Bit(frame, getBuffer());
@@ -206,7 +201,7 @@ public class FrameGrab8Bit {
         return prev;
     }
 
-    private ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack, Packet frame) throws JCodecException {
+    private static ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack) throws JCodecException {
         DemuxerTrackMeta meta = videoTrack.getMeta();
         switch (meta.getCodec()) {
         case H264:
@@ -214,6 +209,21 @@ public class FrameGrab8Bit {
         default:
             throw new UnsupportedFormatException("Codec is not supported");
         }
+    }
+
+    /**
+     * Get frame at current position in JCodec native image
+     * 
+     * @return A decoded picture with metadata.
+     * @throws IOException
+     */
+    public PictureWithMetadata8Bit getNativeFrameWithMetadata() throws IOException {
+        Packet frame = videoTrack.nextFrame();
+        if (frame == null)
+            return null;
+
+        Picture8Bit picture = decoder.decodeFrame8Bit(frame, getBuffer());
+        return new PictureWithMetadata8Bit(picture, frame.getPtsD(), frame.getDurationD());
     }
 
     /**
@@ -239,11 +249,11 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrame(File file, double second) throws IOException, JCodecException {
+    public static Picture8Bit getFrameAtSec(File file, double second) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
-            return new FrameGrab8Bit(ch).seekToSecondPrecise(second).getNativeFrame();
+            ch = NIOUtils.readableChannel(file);
+            return createFrameGrab8Bit(ch).seekToSecondPrecise(second).getNativeFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -258,9 +268,9 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrame(SeekableByteChannel file, double second)
+    public static Picture8Bit getFrameFromChannelAtSec(SeekableByteChannel file, double second)
             throws JCodecException, IOException {
-        return new FrameGrab8Bit(file).seekToSecondPrecise(second).getNativeFrame();
+        return createFrameGrab8Bit(file).seekToSecondPrecise(second).getNativeFrame();
     }
 
     /**
@@ -272,11 +282,11 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrame(File file, int frameNumber) throws IOException, JCodecException {
+    public static Picture8Bit getFrameFromFile(File file, int frameNumber) throws IOException, JCodecException {
         FileChannelWrapper ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(file);
-            return new FrameGrab8Bit(ch).seekToFramePrecise(frameNumber).getNativeFrame();
+            ch = NIOUtils.readableChannel(file);
+            return createFrameGrab8Bit(ch).seekToFramePrecise(frameNumber).getNativeFrame();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -291,9 +301,9 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrame(SeekableByteChannel file, int frameNumber)
+    public static Picture8Bit getFrameFromChannel(SeekableByteChannel file, int frameNumber)
             throws JCodecException, IOException {
-        return new FrameGrab8Bit(file).seekToFramePrecise(frameNumber).getNativeFrame();
+        return createFrameGrab8Bit(file).seekToFramePrecise(frameNumber).getNativeFrame();
     }
 
     /**
@@ -306,7 +316,7 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+    public static Picture8Bit getNativeFrameAtFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
             throws IOException, JCodecException {
         return new FrameGrab8Bit(vt, decoder).seekToFramePrecise(frameNumber).getNativeFrame();
     }
@@ -321,7 +331,7 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+    public static Picture8Bit getNativeFrameAtSec(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
         return new FrameGrab8Bit(vt, decoder).seekToSecondPrecise(second).getNativeFrame();
     }
@@ -353,7 +363,7 @@ public class FrameGrab8Bit {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture8Bit getNativeFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+    public static Picture8Bit getNativeFrameAtSecSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
             throws IOException, JCodecException {
         return new FrameGrab8Bit(vt, decoder).seekToSecondSloppy(second).getNativeFrame();
     }
@@ -365,5 +375,19 @@ public class FrameGrab8Bit {
      */
     public MediaInfo getMediaInfo() {
         return decoder.getMediaInfo();
+    }
+
+    /**
+     * @return the videoTrack
+     */
+    public SeekableDemuxerTrack getVideoTrack() {
+        return videoTrack;
+    }
+
+    /**
+     * @return the decoder
+     */
+    public ContainerAdaptor getDecoder() {
+        return decoder;
     }
 }

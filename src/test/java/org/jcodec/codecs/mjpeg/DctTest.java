@@ -1,15 +1,15 @@
 package org.jcodec.codecs.mjpeg;
-
-import static junit.framework.Assert.assertTrue;
-
-import java.util.Arrays;
+import static org.junit.Assert.assertTrue;
 
 import org.jcodec.codecs.mjpeg.tools.Asserts;
 import org.jcodec.common.dct.DCT;
 import org.jcodec.common.dct.IntDCT;
 import org.jcodec.common.dct.SlowDCT;
 import org.jcodec.common.tools.Debug;
+import org.jcodec.platform.Platform;
 import org.junit.Test;
+
+import java.lang.System;
 
 public class DctTest {
     static int[] input = new int[] { -416, -33, -60, 32, 48, -40, 0, 0, 0, -24,
@@ -59,16 +59,16 @@ public class DctTest {
 
     private void doTestRelaxed(DCT dct, int[] input, int[] expected) {
         int[] output = dct.decode(input);
-        Asserts.assertEpsilonEquals(expected, output, 1);
+        Asserts.assertEpsilonEqualsInt(expected, output, 1);
     }
 
     private void doTestStrict(DCT dct, int[] input, int[] expected) {
         int[] output = dct.decode(input);
-        boolean equals = Arrays.equals(expected, output);
+        boolean equals = Platform.arrayEqualsInt(expected, output);
         if (!equals) {
-            Debug.print8x8(expected);
+            Debug.print8x8i(expected);
             System.out.println();
-            Debug.print8x8(output);
+            Debug.print8x8i(output);
         }
         assertTrue(equals);
     }

@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg4.es;
-
 import java.nio.ByteBuffer;
+import java.util.Collection;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,11 +15,7 @@ public class DecoderConfig extends NodeDescriptor {
     private int maxBitrate;
     private int avgBitrate;
 
-    public DecoderConfig(int tag, int size) {
-        super(tag, size);
-    }
-
-    public DecoderConfig(int objectType, int bufSize, int maxBitrate, int avgBitrate, Descriptor... children) {
+    public DecoderConfig(int objectType, int bufSize, int maxBitrate, int avgBitrate, Collection<Descriptor> children) {
         super(tag(), children);
         this.objectType = objectType;
         this.bufSize = bufSize;
@@ -27,15 +23,16 @@ public class DecoderConfig extends NodeDescriptor {
         this.avgBitrate = avgBitrate;
     }
 
-    protected void parse(ByteBuffer input) {
+    protected static DecoderConfig parse(ByteBuffer input, IDescriptorFactory factory) {
 
-        objectType = input.get() & 0xff;
+        int objectType = input.get() & 0xff;
         input.get();
-        bufSize = ((input.get() & 0xff) << 16) | (input.getShort() & 0xffff);
-        maxBitrate = input.getInt();
-        avgBitrate = input.getInt();
+        int bufSize = ((input.get() & 0xff) << 16) | (input.getShort() & 0xffff);
+        int maxBitrate = input.getInt();
+        int avgBitrate = input.getInt();
 
-        super.parse(input);
+        NodeDescriptor node = NodeDescriptor.parse(input, factory);
+        return new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, node.getChildren());
     }
 
     protected void doWrite(ByteBuffer out) {

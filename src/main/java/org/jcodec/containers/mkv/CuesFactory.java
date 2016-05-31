@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.CueClusterPosition;
 import static org.jcodec.containers.mkv.MKVType.CuePoint;
@@ -12,12 +11,13 @@ import static org.jcodec.containers.mkv.MKVType.createByType;
 import static org.jcodec.containers.mkv.MKVType.findFirst;
 import static org.jcodec.containers.mkv.boxes.EbmlUint.calculatePayloadSize;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.util.EbmlUtil;
+
+import java.lang.System;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -28,12 +28,13 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
  * 
  */
 public class CuesFactory {
-    List<CuePointMock> a = new ArrayList<CuePointMock>();
+    List<CuePointMock> a;
     private final long offsetBase;
     private long currentDataOffset = 0;
     private long videoTrackNr;
     
     public CuesFactory(long offset, long videoTrack){
+        this.a = new ArrayList<CuePointMock>();
         this.offsetBase = offset;
         this.videoTrackNr = videoTrack;
         this.currentDataOffset += offsetBase;
@@ -60,17 +61,17 @@ public class CuesFactory {
             EbmlMaster cuePoint = createByType(CuePoint);
             
             EbmlUint cueTime = createByType(CueTime);
-            cueTime.set(cpm.timecode);
+            cueTime.setUint(cpm.timecode);
             cuePoint.add(cueTime);
             
             EbmlMaster cueTrackPositions = createByType(CueTrackPositions);
             
             EbmlUint cueTrack = createByType(CueTrack);
-            cueTrack.set(videoTrackNr);
+            cueTrack.setUint(videoTrackNr);
             cueTrackPositions.add(cueTrack);
             
             EbmlUint cueClusterPosition = createByType(CueClusterPosition);
-            cueClusterPosition.set(cpm.elementOffset+estimatedSize);
+            cueClusterPosition.setUint(cpm.elementOffset+estimatedSize);
             if (cueClusterPosition.data.limit() != cpm.cueClusterPositionSize)
                 System.err.println("estimated size of CueClusterPosition differs from the one actually used. ElementId: "+EbmlUtil.toHexString(cpm.id)+" "+cueClusterPosition.getData().limit()+" vs "+cpm.cueClusterPositionSize);
             cueTrackPositions.add(cueClusterPosition);
@@ -147,11 +148,12 @@ public class CuesFactory {
         private byte[] id;
         
         public static CuePointMock make(EbmlMaster c){
-            EbmlUint tc = (EbmlUint) findFirst(c, Cluster, Timecode);
-            return make(c.id, tc.get(), c.size());
+            MKVType[] path = { Cluster, Timecode };
+            EbmlUint tc = (EbmlUint) findFirst(c, path);
+            return doMake(c.id, tc.getUint(), c.size());
         }
 
-        public static CuePointMock make(byte[] id, long timecode, long size) {
+        public static CuePointMock doMake(byte[] id, long timecode, long size) {
             CuePointMock mock = new CuePointMock();
             mock.id = id;
             mock.timecode = timecode; 

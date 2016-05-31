@@ -1,7 +1,16 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.IllegalArgumentException;
+
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.BaseInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.InterruptedException;
+import java.lang.Runnable;
+import java.lang.Thread;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,8 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-
-import org.jcodec.common.io.NIOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,7 +51,7 @@ public class ConcurrentMovieRangeService {
     }
 
     public InputStream getRange(long from, long to) throws IOException {
-        return new ConcurrentMovieRange(from, to);
+        return new ConcurrentMovieRange(this, from, to);
     }
 
     static class GetCallable implements Callable<ByteBuffer> {
@@ -59,21 +66,25 @@ public class ConcurrentMovieRangeService {
         }
     }
 
-    public class ConcurrentMovieRange extends InputStream {
+    public static class ConcurrentMovieRange extends BaseInputStream {
         private static final int READ_AHEAD_SEGMENTS = 10;
-        private List<Future<ByteBuffer>> segments = new ArrayList<Future<ByteBuffer>>();
+        private List<Future<ByteBuffer>> segments;
         private int nextReadAheadNo;
         private long remaining;
         private long to;
+		private ConcurrentMovieRangeService svc;
 
-        public ConcurrentMovieRange(long from, long to) throws IOException {
-            if (to < from)
+        public ConcurrentMovieRange(ConcurrentMovieRangeService svc, long from, long to) throws IOException {
+            this.segments = new ArrayList<Future<ByteBuffer>>();
+
+            this.svc = svc;
+			if (to < from)
                 throw new IllegalArgumentException("from < to");
 
             this.remaining = to - from + 1;
             this.to = to;
 
-            MovieSegment segment = movie.getPacketAt(from);
+            MovieSegment segment = svc.movie.getPacketAt(from);
             if (segment != null) {
 
                 nextReadAheadNo = segment.getNo();
@@ -88,7 +99,7 @@ public class ConcurrentMovieRangeService {
         }
 
         @Override
-        public int read(byte[] b, int from, int len) throws IOException {
+        protected int readBuffer(byte[] b, int from, int len) throws IOException {
             if (segments.size() == 0 || remaining == 0)
                 return -1;
 
@@ -118,14 +129,14 @@ public class ConcurrentMovieRangeService {
         }
 
         private void tryReadAhead() {
-            MovieSegment segment = movie.getPacketByNo(nextReadAheadNo);
+            MovieSegment segment = svc.movie.getPacketByNo(nextReadAheadNo);
             if (segment != null && segment.getPos() < to) {
                 scheduleSegmentRetrieve(segment);
             }
         }
 
         private void scheduleSegmentRetrieve(MovieSegment segment) {
-            Future<ByteBuffer> submit = exec.submit(new GetCallable(segment));
+            Future<ByteBuffer> submit = svc.exec.submit(new GetCallable(segment));
             segments.add(submit);
             nextReadAheadNo++;
         }
@@ -134,9 +145,7 @@ public class ConcurrentMovieRangeService {
             ByteBuffer segmentData;
             try {
                 segmentData = segments.get(0).get();
-            } catch (InterruptedException e) {
-                throw new IOException(e);
-            } catch (ExecutionException e) {
+            } catch (Exception e) {
                 throw new IOException(e);
             }
             return segmentData;
@@ -150,7 +159,7 @@ public class ConcurrentMovieRangeService {
         }
 
         @Override
-        public int read() throws IOException {
+        protected int readByte() throws IOException {
             if (segments.size() == 0 || remaining == 0)
                 return -1;
 

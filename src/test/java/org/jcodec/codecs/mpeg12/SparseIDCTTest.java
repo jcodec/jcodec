@@ -1,12 +1,12 @@
 package org.jcodec.codecs.mpeg12;
-
-import java.util.Arrays;
-
 import org.jcodec.common.dct.DCTRef;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.dct.SparseIDCT;
+import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.lang.System;
 
 public class SparseIDCTTest {
 
@@ -25,11 +25,11 @@ public class SparseIDCTTest {
             pixels[i] = (int) (Math.random() * 256);
         }
 
-        int[] dct = Arrays.copyOf(pixels, 64);
+        int[] dct = Platform.copyOfInt(pixels, 64);
 
         DCTRef.fdct(dct, 0);
 
-        int[] refidct = Arrays.copyOf(dct, 64);
+        int[] refidct = Platform.copyOfInt(dct, 64);
         SimpleIDCT10Bit.idct10(refidct, 0);
 
         int[] sparse = new int[64];

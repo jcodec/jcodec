@@ -1,18 +1,20 @@
 package org.jcodec.containers.mkv.boxes;
-
-import static org.jcodec.containers.mkv.MKVType.Block;
-import static org.jcodec.containers.mkv.MKVType.SimpleBlock;
+import static java.lang.System.arraycopy;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.convertToBytes;
 import static org.jcodec.containers.mkv.boxes.EbmlSint.signedComplement;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.Arrays;
 
 import org.jcodec.common.ByteArrayList;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mkv.util.EbmlUtil;
+import org.jcodec.platform.Platform;
+
+import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.StringBuilder;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -31,19 +33,21 @@ public class MkvBlock extends EbmlBin {
     public long trackNumber;
     public int timecode;
     public long absoluteTimecode;
-    public boolean keyFrame;
+    public boolean _keyFrame;
     public int headerSize;
     public String lacing;
     public boolean discardable;
     public boolean lacingPresent;
     public ByteBuffer[] frames;
+    public static final byte[] BLOCK_ID = new byte[]{(byte)0xA1};
+    public static final byte[] SIMPLEBLOCK_ID = new byte[]{(byte)0xA3};
 
     public static MkvBlock copy(MkvBlock old) {
         MkvBlock be = new MkvBlock(old.id);
         be.trackNumber = old.trackNumber;
         be.timecode = old.timecode;
         be.absoluteTimecode = old.absoluteTimecode;
-        be.keyFrame = old.keyFrame;
+        be._keyFrame = old._keyFrame;
         be.headerSize = old.headerSize;
         be.lacing = old.lacing;
         be.discardable = old.discardable;
@@ -53,16 +57,16 @@ public class MkvBlock extends EbmlBin {
         be.dataOffset = old.dataOffset;
         be.offset = old.offset;
         be.type = old.type;
-        System.arraycopy(old.frameOffsets, 0, be.frameOffsets, 0, be.frameOffsets.length);
-        System.arraycopy(old.frameSizes, 0, be.frameSizes, 0, be.frameSizes.length);
+        arraycopy(old.frameOffsets, 0, be.frameOffsets, 0, be.frameOffsets.length);
+        arraycopy(old.frameSizes, 0, be.frameSizes, 0, be.frameSizes.length);
         return be;
     }
 
     public static MkvBlock keyFrame(long trackNumber, int timecode, ByteBuffer frame) {
-        MkvBlock be = new MkvBlock(SimpleBlock.id);
+        MkvBlock be = new MkvBlock(SIMPLEBLOCK_ID);
         be.frames = new ByteBuffer[] { frame };
         be.frameSizes = new int[] { frame.limit() };
-        be.keyFrame = true;
+        be._keyFrame = true;
         be.trackNumber = trackNumber;
         be.timecode = timecode;
         return be;
@@ -70,17 +74,17 @@ public class MkvBlock extends EbmlBin {
 
     public MkvBlock(byte[] type) {
         super(type);
-        if (!Arrays.equals(SimpleBlock.id, type) && !Arrays.equals(Block.id, type))
+        if (!Platform.arrayEqualsByte(SIMPLEBLOCK_ID, type) && !Platform.arrayEqualsByte(BLOCK_ID, type))
             throw new IllegalArgumentException("Block initiated with invalid id: " + EbmlUtil.toHexString(type));
     }
     
     @Override
-    public void read(SeekableByteChannel is) throws IOException {
+    public void readChannel(SeekableByteChannel is) throws IOException {
         ByteBuffer bb = ByteBuffer.allocate((int) 100);
         is.read(bb);
         bb.flip();
         this.read(bb);
-        is.position(this.dataOffset+this.dataLen);
+        is.setPosition(this.dataOffset+this.dataLen);
     }
 
     @Override
@@ -93,7 +97,7 @@ public class MkvBlock extends EbmlBin {
         timecode = (short) (((short) tcPart1 << 8) | (short) tcPart2);
 
         int flags = bb.get() & 0xFF;
-        keyFrame = (flags & 0x80) > 0;
+        _keyFrame = (flags & 0x80) > 0;
         discardable = (flags & 0x01) > 0;
         int laceFlags = flags & 0x06;
 
@@ -198,7 +202,7 @@ public class MkvBlock extends EbmlBin {
         sb.append("{dataOffset: ").append(dataOffset);
         sb.append(", trackNumber: ").append(trackNumber);
         sb.append(", timecode: ").append(timecode);
-        sb.append(", keyFrame: ").append(keyFrame);
+        sb.append(", keyFrame: ").append(_keyFrame);
         sb.append(", headerSize: ").append(headerSize);
         sb.append(", lacing: ").append(lacing);
         for (int i = 0; i < frameSizes.length; i++)
@@ -248,7 +252,7 @@ public class MkvBlock extends EbmlBin {
 
         if (discardable)
             flags |= 0x01;
-        if (keyFrame)
+        if (_keyFrame)
             flags |= 0x80;
 
         bb.put(flags);
@@ -258,8 +262,10 @@ public class MkvBlock extends EbmlBin {
             bb.put(muxLacingInfo());
         }
 
-        for (ByteBuffer frame : frames)
+        for (int i = 0; i < frames.length; i++) {
+            ByteBuffer frame = frames[i];
             bb.put(frame);
+        }
 
         bb.flip();
         return bb;
@@ -357,7 +363,7 @@ public class MkvBlock extends EbmlBin {
     }
 
     public static byte[] muxEbmlLacing(int[] laceSizes) {
-        ByteArrayList bytes = new ByteArrayList();
+        ByteArrayList bytes = ByteArrayList.createByteArrayList();
 
         long[] laceSizeDiffs = calcEbmlLacingDiffs(laceSizes);
         bytes.addAll(EbmlUtil.ebmlEncode(laceSizeDiffs[0]));
@@ -369,7 +375,7 @@ public class MkvBlock extends EbmlBin {
     }
 
     public static byte[] muxXiphLacing(int[] laceSizes) {
-        ByteArrayList bytes = new ByteArrayList();
+        ByteArrayList bytes = ByteArrayList.createByteArrayList();
         for (int i = 0; i < laceSizes.length - 1; i++) {
             long laceSize = laceSizes[i];
             while (laceSize >= 255) {

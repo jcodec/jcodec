@@ -14,20 +14,21 @@ public class Yuv420pToYuv422p8Bit implements Transform8Bit {
     public Yuv420pToYuv422p8Bit() {
     }
 
+    @Override
     public void transform(Picture8Bit src, Picture8Bit dst) {
         copy(src.getPlaneData(0), dst.getPlaneData(0), src.getWidth(), dst.getWidth(), dst.getHeight());
 
-        copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
+        _copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
                 src.getHeight() >> 1, dst.getHeight());
-        copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
+        _copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
                 src.getHeight() >> 1, dst.getHeight());
-        copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
+        _copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
                 src.getHeight() >> 1, dst.getHeight());
-        copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
+        _copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
                 src.getHeight() >> 1, dst.getHeight());
     }
 
-    private static final void copy(byte[] src, byte[] dest, int offX, int offY, int stepX, int stepY, int strideSrc,
+    private static final void _copy(byte[] src, byte[] dest, int offX, int offY, int stepX, int stepY, int strideSrc,
             int strideDest, int heightSrc, int heightDst) {
         int offD = offX + offY * strideDest, srcOff = 0;
         for (int i = 0; i < heightSrc; i++) {

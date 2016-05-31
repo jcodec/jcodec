@@ -1,5 +1,4 @@
 package org.jcodec.codecs.vpx;
-
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.jcodec.common.tools.MathUtil;
 
@@ -17,10 +16,11 @@ public class VPXBitstream {
     private int[][][][] tokenBinProbs;
     private int whtNzLeft = 0;
     private int[] whtNzTop;
-    private int[][] dctNzLeft = new int[][] { new int[4], new int[2], new int[2] };
+    private int[][] dctNzLeft;
     private int[][] dctNzTop;
 
     public VPXBitstream(int[][][][] tokenBinProbs, int mbWidth) {
+        this.dctNzLeft = new int[][] { new int[4], new int[2], new int[2] };
         this.tokenBinProbs = tokenBinProbs;
 
         whtNzTop = new int[mbWidth];

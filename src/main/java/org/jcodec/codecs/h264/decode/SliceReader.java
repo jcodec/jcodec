@@ -12,7 +12,7 @@ import static org.jcodec.codecs.h264.decode.CAVLCReader.readBool;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readNBit;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readSE;
 import static org.jcodec.codecs.h264.decode.CAVLCReader.readTE;
-import static org.jcodec.codecs.h264.decode.CAVLCReader.readUE;
+import static org.jcodec.codecs.h264.decode.CAVLCReader.readUEtrace;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
 import static org.jcodec.codecs.h264.io.model.MBType.B_8x8;
 import static org.jcodec.codecs.h264.io.model.MBType.I_16x16;
@@ -116,7 +116,7 @@ public class SliceReader {
 
         if (sh.slice_type.isInter() && !activePps.entropy_coding_mode_flag) {
             if (!prevMbSkipped && mbSkipRun == 0) {
-                mbSkipRun = readUE(reader, "mb_skip_run");
+                mbSkipRun = readUEtrace(reader, "mb_skip_run");
                 if (!moreRBSPData(reader)) {
                     endOfData = true;
                 }
@@ -191,7 +191,7 @@ public class SliceReader {
     int readChromaPredMode(int mbX, boolean leftAvailable, boolean topAvailable) {
         int chromaPredictionMode;
         if (!activePps.entropy_coding_mode_flag) {
-            chromaPredictionMode = readUE(reader, "MBP: intra_chroma_pred_mode");
+            chromaPredictionMode = readUEtrace(reader, "MBP: intra_chroma_pred_mode");
         } else {
             chromaPredictionMode = cabac.readIntraChromaPredMode(mDecoder, mbX, leftMBType, topMBType[mbX],
                     leftAvailable, topAvailable);
@@ -212,7 +212,7 @@ public class SliceReader {
             MBType leftMB, MBType topMB) {
 
         if (!activePps.entropy_coding_mode_flag)
-            return H264Const.CODED_BLOCK_PATTERN_INTRA_COLOR[readUE(reader, "coded_block_pattern")];
+            return H264Const.CODED_BLOCK_PATTERN_INTRA_COLOR[readUEtrace(reader, "coded_block_pattern")];
         else
             return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
     }
@@ -220,7 +220,7 @@ public class SliceReader {
     protected int readCodedBlockPatternInter(boolean leftAvailable, boolean topAvailable, int leftCBP, int topCBP,
             MBType leftMB, MBType topMB) {
         if (!activePps.entropy_coding_mode_flag) {
-            int code = readUE(reader, "coded_block_pattern");
+            int code = readUEtrace(reader, "coded_block_pattern");
             return H264Const.CODED_BLOCK_PATTERN_INTER_COLOR[code];
         } else
             return cabac.codedBlockPatternIntra(mDecoder, leftAvailable, topAvailable, leftCBP, topCBP, leftMB, topMB);
@@ -363,14 +363,14 @@ public class SliceReader {
 
     public int readSubMBTypeP() {
         if (!activePps.entropy_coding_mode_flag)
-            return readUE(reader, "SUB: sub_mb_type");
+            return readUEtrace(reader, "SUB: sub_mb_type");
         else
             return cabac.readSubMbTypeP(mDecoder);
     }
 
     public int readSubMBTypeB() {
         if (!activePps.entropy_coding_mode_flag)
-            return readUE(reader, "SUB: sub_mb_type");
+            return readUEtrace(reader, "SUB: sub_mb_type");
         else
             return cabac.readSubMbTypeB(mDecoder);
     }
@@ -403,7 +403,7 @@ public class SliceReader {
     public int decodeMBTypeI(int mbIdx, boolean leftAvailable, boolean topAvailable, MBType leftMBType, MBType topMBType) {
         int mbType;
         if (!activePps.entropy_coding_mode_flag)
-            mbType = readUE(reader, "MB: mb_type");
+            mbType = readUEtrace(reader, "MB: mb_type");
         else
             mbType = cabac.readMBTypeI(mDecoder, leftMBType, topMBType, leftAvailable, topAvailable);
         return mbType;
@@ -412,7 +412,7 @@ public class SliceReader {
     public int readMBTypeP() {
         int mbType;
         if (!activePps.entropy_coding_mode_flag)
-            mbType = readUE(reader, "MB: mb_type");
+            mbType = readUEtrace(reader, "MB: mb_type");
         else
             mbType = cabac.readMBTypeP(mDecoder);
         return mbType;
@@ -421,7 +421,7 @@ public class SliceReader {
     public int readMBTypeB(int mbIdx, boolean leftAvailable, boolean topAvailable, MBType leftMBType, MBType topMBType) {
         int mbType;
         if (!activePps.entropy_coding_mode_flag)
-            mbType = readUE(reader, "MB: mb_type");
+            mbType = readUEtrace(reader, "MB: mb_type");
         else
             mbType = cabac.readMBTypeB(mDecoder, leftMBType, topMBType, leftAvailable, topAvailable);
         return mbType;
@@ -466,7 +466,7 @@ public class SliceReader {
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean lAvb = mapper.leftAvailable(mBlock.mbIdx);
         boolean tAvb = mapper.topAvailable(mBlock.mbIdx);
-        mBlock.cbp = readCodedBlockPatternInter(lAvb, tAvb, leftCBPLuma | (leftCBPChroma << 4), topCBPLuma[mbX]
+        mBlock._cbp = readCodedBlockPatternInter(lAvb, tAvb, leftCBPLuma | (leftCBPChroma << 4), topCBPLuma[mbX]
                 | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
@@ -491,7 +491,7 @@ public class SliceReader {
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
 
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p0, list) && numRef[list] > 1)
                 mBlock.pb16x16.refIdx[list] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                         predModeLeft[0], predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 4, list);
         }
@@ -507,7 +507,7 @@ public class SliceReader {
             PartPred p0, PartPred p1) {
         int blk8x8X = (mbX << 1);
 
-        if (p0.usesList(list)) {
+        if (H264Const.usesList(p0, list)) {
             mBlock.pb168x168.mvdX1[list] = readMVD(0, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                     predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 2, 4, list);
             mBlock.pb168x168.mvdY1[list] = readMVD(1, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
@@ -515,7 +515,7 @@ public class SliceReader {
 
         }
 
-        if (p1.usesList(list)) {
+        if (H264Const.usesList(p1, list)) {
             mBlock.pb168x168.mvdX2[list] = readMVD(0, true, topAvailable, MBType.P_8x16, topMBType[mbX], p0,
                     predModeTop[blk8x8X + 1], p1, mbX, 2, 0, 2, 4, list);
             mBlock.pb168x168.mvdY2[list] = readMVD(1, true, topAvailable, MBType.P_8x16, topMBType[mbX], p0,
@@ -527,7 +527,7 @@ public class SliceReader {
     private void readPredictionInter16x8(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable,
             PartPred p0, PartPred p1, int list) {
         int blk8x8X = mbX << 1;
-        if (p0.usesList(list)) {
+        if (H264Const.usesList(p0, list)) {
 
             mBlock.pb168x168.mvdX1[list] = readMVD(0, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                     predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
@@ -535,7 +535,7 @@ public class SliceReader {
                     predModeLeft[0], predModeTop[blk8x8X], p0, mbX, 0, 0, 4, 2, list);
         }
 
-        if (p1.usesList(list)) {
+        if (H264Const.usesList(p1, list)) {
             mBlock.pb168x168.mvdX2[list] = readMVD(0, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1],
                     p0, p1, mbX, 0, 2, 4, 2, list);
             mBlock.pb168x168.mvdY2[list] = readMVD(1, leftAvailable, true, leftMBType, MBType.P_16x8, predModeLeft[1],
@@ -550,10 +550,10 @@ public class SliceReader {
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
 
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p0, list) && numRef[list] > 1)
                 mBlock.pb168x168.refIdx1[list] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                         predModeLeft[0], predModeTop[(mbX << 1)], p0, mbX, 0, 0, 4, 2, list);
-            if (p1.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p1, list) && numRef[list] > 1)
                 mBlock.pb168x168.refIdx2[list] = readRefIdx(leftAvailable, true, leftMBType, mBlock.curMbType,
                         predModeLeft[1], p0, p1, mbX, 0, 2, 4, 2, list);
         }
@@ -573,10 +573,10 @@ public class SliceReader {
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
         for (int list = 0; list < 2; list++) {
-            if (p0.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p0, list) && numRef[list] > 1)
                 mBlock.pb168x168.refIdx1[list] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                         predModeLeft[0], predModeTop[mbX << 1], p0, mbX, 0, 0, 2, 4, list);
-            if (p1.usesList(list) && numRef[list] > 1)
+            if (H264Const.usesList(p1, list) && numRef[list] > 1)
                 mBlock.pb168x168.refIdx2[list] = readRefIdx(true, topAvailable, mBlock.curMbType, topMBType[mbX], p0,
                         predModeTop[(mbX << 1) + 1], p1, mbX, 2, 0, 2, 4, list);
         }
@@ -593,7 +593,7 @@ public class SliceReader {
             int list, PartPred curPred) {
         int blk8x8X = (mbX << 1);
 
-        if (curPred.usesList(list)) {
+        if (H264Const.usesList(curPred, list)) {
             mBlock.pb16x16.mvdX[list] = readMVD(0, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                     predModeLeft[0], predModeTop[blk8x8X], curPred, mbX, 0, 0, 4, 4, list);
             mBlock.pb16x16.mvdY[list] = readMVD(1, leftAvailable, topAvailable, leftMBType, topMBType[mbX],
@@ -602,7 +602,7 @@ public class SliceReader {
     }
 
     private void readResidualInter(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
-        mBlock.cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
+        mBlock._cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
                 topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
@@ -641,7 +641,7 @@ public class SliceReader {
                     && bSubMbTypes[mBlock.pb8x8.subMbTypes[3]] == 0;
         }
 
-        mBlock.cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
+        mBlock._cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
                 topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         mBlock.transform8x8Used = false;
@@ -695,16 +695,16 @@ public class SliceReader {
         for (int list = 0; list < 2; list++) {
             if (numRef[list] <= 1)
                 continue;
-            if (p[0].usesList(list))
+            if (H264Const.usesList(p[0], list))
                 mBlock.pb8x8.refIdx[list][0] = readRefIdx(leftAvailable, topAvailable, leftMBType, topMBType[mbX],
                         predModeLeft[0], predModeTop[mbX << 1], p[0], mbX, 0, 0, 2, 2, list);
-            if (p[1].usesList(list))
+            if (H264Const.usesList(p[1], list))
                 mBlock.pb8x8.refIdx[list][1] = readRefIdx(true, topAvailable, B_8x8, topMBType[mbX], p[0],
                         predModeTop[(mbX << 1) + 1], p[1], mbX, 2, 0, 2, 2, list);
-            if (p[2].usesList(list))
+            if (H264Const.usesList(p[2], list))
                 mBlock.pb8x8.refIdx[list][2] = readRefIdx(leftAvailable, true, leftMBType, B_8x8, predModeLeft[1],
                         p[0], p[2], mbX, 0, 2, 2, 2, list);
-            if (p[3].usesList(list))
+            if (H264Const.usesList(p[3], list))
                 mBlock.pb8x8.refIdx[list][3] = readRefIdx(true, true, B_8x8, B_8x8, p[2], p[1], p[3], mbX, 2, 2, 2, 2,
                         list);
         }
@@ -713,21 +713,21 @@ public class SliceReader {
 
         int blk8x8X = mbX << 1;
         for (int list = 0; list < 2; list++) {
-            if (p[0].usesList(list)) {
+            if (H264Const.usesList(p[0], list)) {
                 readSubMb8x8(mBlock, 0, bSubMbTypes[mBlock.pb8x8.subMbTypes[0]], topAvailable, leftAvailable, 0, 0,
                         mbX, leftMBType, topMBType[mbX], B_8x8, predModeLeft[0], predModeTop[blk8x8X], p[0], list);
             }
-            if (p[1].usesList(list)) {
+            if (H264Const.usesList(p[1], list)) {
                 readSubMb8x8(mBlock, 1, bSubMbTypes[mBlock.pb8x8.subMbTypes[1]], topAvailable, true, 2, 0, mbX, B_8x8,
                         topMBType[mbX], B_8x8, p[0], predModeTop[blk8x8X + 1], p[1], list);
             }
 
-            if (p[2].usesList(list)) {
+            if (H264Const.usesList(p[2], list)) {
                 readSubMb8x8(mBlock, 2, bSubMbTypes[mBlock.pb8x8.subMbTypes[2]], true, leftAvailable, 0, 2, mbX,
                         leftMBType, B_8x8, B_8x8, predModeLeft[1], p[0], p[2], list);
             }
 
-            if (p[3].usesList(list)) {
+            if (H264Const.usesList(p[3], list)) {
                 readSubMb8x8(mBlock, 3, bSubMbTypes[mBlock.pb8x8.subMbTypes[3]], true, true, 2, 2, mbX, B_8x8, B_8x8,
                         B_8x8, p[2], p[1], p[3], list);
             }
@@ -848,7 +848,7 @@ public class SliceReader {
         }
         mBlock.chromaPredictionMode = readChromaPredMode(mbX, leftAvailable, topAvailable);
 
-        mBlock.cbp = readCodedBlockPatternIntra(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
+        mBlock._cbp = readCodedBlockPatternIntra(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
                 topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
@@ -887,7 +887,7 @@ public class SliceReader {
                     blkOffLeft, blkOffTop, blkX, blkY, mBlock.ac[0][i]);
         }
 
-        savePrevCBP(mBlock.cbp);
+        savePrevCBP(mBlock._cbp);
     }
 
     private void readLuma8x8CABAC(MBlock mBlock, int mbX, int mbY) {
@@ -906,7 +906,7 @@ public class SliceReader {
             int blk4x4Offset = i << 2;
             mBlock.nCoeff[blk4x4Offset] = mBlock.nCoeff[blk4x4Offset + 1] = mBlock.nCoeff[blk4x4Offset + 2] = mBlock.nCoeff[blk4x4Offset + 3] = nCoeff;
         }
-        savePrevCBP(mBlock.cbp);
+        savePrevCBP(mBlock._cbp);
     }
 
     private void readLuma8x8CAVLC(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
@@ -944,9 +944,9 @@ public class SliceReader {
                 readChromaDC(mbX, leftAvailable, topAvailable, mBlock.dc1, 1, mBlock.curMbType);
                 readChromaDC(mbX, leftAvailable, topAvailable, mBlock.dc2, 2, mBlock.curMbType);
             }
-            readChromaAC(leftAvailable, topAvailable, mbX, mBlock.dc1, 1, mBlock.curMbType,
+            _readChromaAC(leftAvailable, topAvailable, mbX, mBlock.dc1, 1, mBlock.curMbType,
                     (mBlock.cbpChroma() & 2) > 0, mBlock.ac[1]);
-            readChromaAC(leftAvailable, topAvailable, mbX, mBlock.dc2, 2, mBlock.curMbType,
+            _readChromaAC(leftAvailable, topAvailable, mbX, mBlock.dc2, 2, mBlock.curMbType,
                     (mBlock.cbpChroma() & 2) > 0, mBlock.ac[2]);
         } else if (!sh.pps.entropy_coding_mode_flag) {
             setZeroCoeff(1, mbX << 1, 0);
@@ -956,7 +956,7 @@ public class SliceReader {
         }
     }
 
-    private void readChromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int[] dc, int comp,
+    private void _readChromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int[] dc, int comp,
             MBType curMbType, boolean codedAC, int[][] residualOut) {
         for (int i = 0; i < dc.length; i++) {
             int[] ac = residualOut[i];

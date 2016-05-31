@@ -1,11 +1,5 @@
 package org.jcodec.containers.mps;
-
 import static org.jcodec.common.io.NIOUtils.getRel;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.EnumSet;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
@@ -16,6 +10,10 @@ import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 import org.jcodec.containers.mps.psi.PSISection;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -24,119 +22,6 @@ import org.jcodec.containers.mps.psi.PSISection;
  * 
  */
 public class MTSUtils {
-    public static enum StreamType {
-        RESERVED(0x0, false, false),
-
-        VIDEO_MPEG1(0x01, true, false),
-
-        VIDEO_MPEG2(0x02, true, false),
-
-        AUDIO_MPEG1(0x03, false, true),
-
-        AUDIO_MPEG2(0x04, false, true),
-
-        PRIVATE_SECTION(0x05, false, false),
-
-        PRIVATE_DATA(0x06, false, false),
-
-        MHEG(0x7, false, false),
-
-        DSM_CC(0x8, false, false),
-
-        ATM_SYNC(0x9, false, false),
-
-        DSM_CC_A(0xa, false, false),
-
-        DSM_CC_B(0xb, false, false),
-
-        DSM_CC_C(0xc, false, false),
-
-        DSM_CC_D(0xd, false, false),
-
-        MPEG_AUX(0xe, false, false),
-
-        AUDIO_AAC_ADTS(0x0f, false, true),
-
-        VIDEO_MPEG4(0x10, true, false),
-
-        AUDIO_AAC_LATM(0x11, false, true),
-
-        FLEXMUX_PES(0x12, false, false),
-
-        FLEXMUX_SEC(0x13, false, false),
-
-        DSM_CC_SDP(0x14, false, false),
-
-        META_PES(0x15, false, false),
-
-        META_SEC(0x16, false, false),
-
-        DSM_CC_DATA_CAROUSEL(0x17, false, false),
-
-        DSM_CC_OBJ_CAROUSEL(0x18, false, false),
-
-        DSM_CC_SDP1(0x19, false, false),
-
-        IPMP(0x1a, false, false),
-
-        VIDEO_H264(0x1b, true, false),
-
-        AUDIO_AAC_RAW(0x1c, false, true),
-
-        SUBS(0x1d, false, false),
-
-        AUX_3D(0x1e, false, false),
-
-        VIDEO_AVC_SVC(0x1f, true, false),
-
-        VIDEO_AVC_MVC(0x20, true, false),
-
-        VIDEO_J2K(0x21, true, false),
-
-        VIDEO_MPEG2_3D(0x22, true, false),
-
-        VIDEO_H264_3D(0x23, true, false),
-
-        VIDEO_CAVS(0x42, false, true),
-
-        IPMP_STREAM(0x7f, false, false),
-
-        AUDIO_AC3(0x81, false, true),
-
-        AUDIO_DTS(0x8a, false, true);
-
-        private int tag;
-        private boolean video;
-        private boolean audio;
-        private static EnumSet<StreamType> typeEnum = EnumSet.allOf(StreamType.class);
-
-        private StreamType(int tag, boolean video, boolean audio) {
-            this.tag = tag;
-            this.video = video;
-            this.audio = audio;
-        }
-
-        public static StreamType fromTag(int streamTypeTag) {
-            for (StreamType streamType : typeEnum) {
-                if (streamType.tag == streamTypeTag)
-                    return streamType;
-            }
-            return null;
-        }
-
-        public int getTag() {
-            return tag;
-        }
-
-        public boolean isVideo() {
-            return video;
-        }
-
-        public boolean isAudio() {
-            return audio;
-        }
-    };
-
     /**
      * Parses PAT ( Program Association Table )
      * 
@@ -148,7 +33,7 @@ public class MTSUtils {
      */
     @Deprecated
     public static int parsePAT(ByteBuffer data) {
-        PATSection pat = PATSection.parse(data);
+        PATSection pat = PATSection.parsePAT(data);
         if (pat.getPrograms().size() > 0)
             return pat.getPrograms().values()[0];
         else
@@ -157,12 +42,12 @@ public class MTSUtils {
 
     @Deprecated
     public static PMTSection parsePMT(ByteBuffer data) {
-        return PMTSection.parse(data);
+        return PMTSection.parsePMT(data);
     }
 
     @Deprecated
     public static PSISection parseSection(ByteBuffer data) {
-        return PSISection.parse(data);
+        return PSISection.parsePSI(data);
     }
 
     private static void parseEsInfo(ByteBuffer read) {
@@ -172,21 +57,25 @@ public class MTSUtils {
     public static PMTStream[] getProgramGuids(File src) throws IOException {
         SeekableByteChannel ch = null;
         try {
-            ch = NIOUtils.readableFileChannel(src);
-            return getProgramGuids(ch);
+            ch = NIOUtils.readableChannel(src);
+            return getProgramGuidsFromChannel(ch);
         } finally {
             NIOUtils.closeQuietly(ch);
         }
     }
 
-    public static PMTStream[] getProgramGuids(SeekableByteChannel in) throws IOException {
+    public static PMTStream[] getProgramGuidsFromChannel(SeekableByteChannel _in) throws IOException {
         PMTExtractor ex = new PMTExtractor();
-        ex.readTsFile(in);
+        ex.readTsFile(_in);
         PMTSection pmt = ex.getPmt();
         return pmt.getStreams();
     }
 
     private static class PMTExtractor extends TSReader {
+        public PMTExtractor() {
+            super(false);
+        }
+
         private int pmtGuid = -1;
         private PMTSection pmt;
 
@@ -214,16 +103,12 @@ public class MTSUtils {
         public static final int BUFFER_SIZE = TS_PKT_SIZE << 9;
         private boolean flush;
 
-        public TSReader() {
-            this(false);
-        }
-
         public TSReader(boolean flush) {
             this.flush = flush;
         }
 
         public void readTsFile(SeekableByteChannel ch) throws IOException {
-            ch.position(0);
+            ch.setPosition(0);
             ByteBuffer buf = ByteBuffer.allocate(BUFFER_SIZE);
 
             for (long pos = ch.position(); ch.read(buf) >= TS_PKT_SIZE; pos = ch.position()) {
@@ -253,14 +138,14 @@ public class MTSUtils {
                 }
                 if (flush) {
                     buf.flip();
-                    ch.position(posRem);
+                    ch.setPosition(posRem);
                     ch.write(buf);
                 }
                 buf.clear();
             }
         }
 
-        public boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
+        protected boolean onPkt(int guid, boolean payloadStart, ByteBuffer tsBuf, long filePos, boolean sectionSyntax,
                 ByteBuffer fullPkt) {
             // DO NOTHING
             return true;
@@ -285,8 +170,8 @@ public class MTSUtils {
         throw new RuntimeException("No audio stream");
     }
 
-    public static int[] getMediaPids(SeekableByteChannel src) throws IOException {
-        return filterMediaPids(MTSUtils.getProgramGuids(src));
+    public static int[] getMediaPidsFromChannel(SeekableByteChannel src) throws IOException {
+        return filterMediaPids(MTSUtils.getProgramGuidsFromChannel(src));
     }
 
     public static int[] getMediaPids(File src) throws IOException {
@@ -294,7 +179,7 @@ public class MTSUtils {
     }
 
     private static int[] filterMediaPids(PMTStream[] programs) {
-        IntArrayList result = new IntArrayList();
+        IntArrayList result = IntArrayList.createIntArrayList();
         for (PMTStream stream : programs) {
             if (stream.getStreamType().isVideo() || stream.getStreamType().isAudio())
                 result.add(stream.getPid());

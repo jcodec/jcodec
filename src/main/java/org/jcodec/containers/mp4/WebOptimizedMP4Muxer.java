@@ -1,8 +1,4 @@
 package org.jcodec.containers.mp4;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
@@ -13,6 +9,9 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -48,16 +47,16 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
     }
 
     public WebOptimizedMP4Muxer(SeekableByteChannel output, Brand brand, int headerSize) throws IOException {
-        super(output, brand);
+        super(output, brand.getFileTypeBox());
         headerPos = output.position() - 24;
-        output.position(headerPos);
+        output.setPosition(headerPos);
 
         header = ByteBuffer.allocate(headerSize);
         output.write(header);
         header.clear();
 
-        new Header("wide", 8).write(output);
-        new Header("mdat", 1).write(output);
+        Header.createHeader("wide", 8).writeChannel(output);
+        Header.createHeader("mdat", 1).writeChannel(output);
         mdatOffset = output.position();
         NIOUtils.writeLong(output, 0);
     }
@@ -66,10 +65,10 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
     public void storeHeader(MovieBox movie) throws IOException {
         long mdatEnd = out.position();
         long mdatSize = mdatEnd - mdatOffset + 8;
-        out.position(mdatOffset);
+        out.setPosition(mdatOffset);
         NIOUtils.writeLong(out, mdatSize);
 
-        out.position(headerPos);
+        out.setPosition(headerPos);
         try {
             movie.write(header);
             header.flip();
@@ -79,11 +78,11 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
             }
             out.write(header);
             if (rem >= 8)
-                new Header("free", rem).write(out);
+                Header.createHeader("free", rem).writeChannel(out);
         } catch (ArrayIndexOutOfBoundsException e) {
             Logger.warn("Could not web-optimize, header is bigger then allocated space.");
-            new Header("free", header.remaining()).write(out);
-            out.position(mdatEnd);
+            Header.createHeader("free", header.remaining()).writeChannel(out);
+            out.setPosition(mdatEnd);
             MP4Util.writeMovie(out, movie);
         }
     }

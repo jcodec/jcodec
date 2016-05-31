@@ -1,4 +1,5 @@
 package net.sourceforge.jaad.aac.syntax;
+import static java.lang.System.arraycopy;
 
 import net.sourceforge.jaad.aac.AACException;
 
@@ -14,17 +15,20 @@ public class BitStream implements IBitStream {
 	private static final int WORD_BITS = 32;
 	private static final int WORD_BYTES = 4;
 	private static final int BYTE_MASK = 0xff;
-	private byte[] buffer;
+	
+	public static BitStream createBitStream(byte[] data) {
+        BitStream bs = new BitStream();
+        bs.setData(data);
+        return bs;
+    }
+
+    private byte[] buffer;
 	private int pos; //offset in the buffer array
 	private int cache; //current 4 bytes, that are read from the buffer
 	protected int bitsCached; //remaining bits in current cache
 	protected int position; //number of total bits read
 
 	public BitStream() {
-	}
-
-	public BitStream(byte[] data) {
-		setData(data);
 	}
 
 	/* (non-Javadoc)
@@ -45,7 +49,7 @@ public class BitStream implements IBitStream {
 		final int size = WORD_BYTES*((data.length+WORD_BYTES-1)/WORD_BYTES);
 		//only reallocate if needed
 		if(buffer==null||buffer.length!=size) buffer = new byte[size];
-		System.arraycopy(data, 0, buffer, 0, data.length);
+		arraycopy(data, 0, buffer, 0, data.length);
 		reset();
 	}
 
@@ -91,7 +95,7 @@ public class BitStream implements IBitStream {
 	 */
 	protected int readCache(boolean peek) throws AACException {
 		int i;
-		if(pos>buffer.length-WORD_BYTES) throw new AACException("end of stream", true);
+		if(pos>buffer.length-WORD_BYTES) throw AACException.endOfStream();
 		else i = ((buffer[pos]&BYTE_MASK)<<24)
 					|((buffer[pos+1]&BYTE_MASK)<<16)
 					|((buffer[pos+2]&BYTE_MASK)<<8)

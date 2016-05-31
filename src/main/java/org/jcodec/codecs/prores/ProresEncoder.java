@@ -1,5 +1,4 @@
 package org.jcodec.codecs.prores;
-
 import static java.lang.Math.min;
 import static org.jcodec.codecs.prores.ProresConsts.QMAT_CHROMA_APCH;
 import static org.jcodec.codecs.prores.ProresConsts.QMAT_CHROMA_APCN;
@@ -20,8 +19,6 @@ import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.sign;
 
-import java.nio.ByteBuffer;
-
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
@@ -29,6 +26,8 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.ImageOP;
+
+import java.nio.ByteBuffer;
 
 /**
  * 
@@ -45,10 +44,17 @@ public class ProresEncoder extends VideoEncoder {
     private static final int LOG_DEFAULT_SLICE_MB_WIDTH = 3;
     private static final int DEFAULT_SLICE_MB_WIDTH = 1 << LOG_DEFAULT_SLICE_MB_WIDTH;
 
-    public static enum Profile {
-        PROXY(QMAT_LUMA_APCO, QMAT_CHROMA_APCO, "apco", 1000, 4, 8), LT(QMAT_LUMA_APCS, QMAT_CHROMA_APCS, "apcs", 2100,
-                1, 9), STANDARD(QMAT_LUMA_APCN, QMAT_CHROMA_APCN, "apcn", 3500, 1, 6), HQ(QMAT_LUMA_APCH,
-                QMAT_CHROMA_APCH, "apch", 5400, 1, 6);
+    public final static class Profile {
+        public final static Profile PROXY = new Profile(QMAT_LUMA_APCO, QMAT_CHROMA_APCO, "apco", 1000, 4, 8);
+        public final static Profile LT = new Profile(QMAT_LUMA_APCS, QMAT_CHROMA_APCS, "apcs", 2100, 1, 9);
+        public final static Profile STANDARD = new Profile(QMAT_LUMA_APCN, QMAT_CHROMA_APCN, "apcn", 3500, 1, 6);
+        public final static Profile HQ = new Profile(QMAT_LUMA_APCH, QMAT_CHROMA_APCH, "apch", 5400, 1, 6);
+
+        private final static Profile[] _values = new Profile[] { PROXY, LT, STANDARD, HQ };
+
+        public static Profile[] values() {
+            return _values;
+        }
 
         final int[] qmatLuma;
         final int[] qmatChroma;
@@ -66,6 +72,7 @@ public class ProresEncoder extends VideoEncoder {
             this.firstQp = firstQp;
             this.lastQp = lastQp;
         }
+
     };
 
     protected Profile profile;
@@ -123,7 +130,7 @@ public class ProresEncoder extends VideoEncoder {
         return (val << 1) ^ (val >> 31);
     }
 
-    private static final int toGolumb(int val, int sign) {
+    private static final int toGolumbSign(int val, int sign) {
         if (val == 0)
             return 0;
         return (val << 1) + sign;
@@ -138,15 +145,15 @@ public class ProresEncoder extends VideoEncoder {
         return (val ^ sign) - sign;
     }
 
-    static final void writeDCCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice) {
-        int prevDc = qScale(qMat, 0, in[0] - 16384);
+    static final void writeDCCoeffs(BitWriter bits, int[] qMat, int[] _in, int blocksPerSlice) {
+        int prevDc = qScale(qMat, 0, _in[0] - 16384);
         writeCodeword(bits, firstDCCodebook, toGolumb(prevDc));
 
         int code = 5, sign = 0, idx = 64;
         for (int i = 1; i < blocksPerSlice; i++, idx += 64) {
-            int newDc = qScale(qMat, 0, in[idx] - 16384);
+            int newDc = qScale(qMat, 0, _in[idx] - 16384);
             int delta = newDc - prevDc;
-            int newCode = toGolumb(getLevel(delta), diffSign(delta, sign));
+            int newCode = toGolumbSign(getLevel(delta), diffSign(delta, sign));
             writeCodeword(bits, dcCodebooks[min(code, 6)], newCode);
             code = newCode;
             sign = delta >> 31;
@@ -154,7 +161,7 @@ public class ProresEncoder extends VideoEncoder {
         }
     }
 
-    static final void writeACCoeffs(BitWriter bits, int[] qMat, int[] in, int blocksPerSlice, int[] scan, int maxCoeff) {
+    static final void writeACCoeffs(BitWriter bits, int[] qMat, int[] _in, int blocksPerSlice, int[] scan, int maxCoeff) {
         int prevRun = 4;
         int prevLevel = 2;
 
@@ -162,7 +169,7 @@ public class ProresEncoder extends VideoEncoder {
         for (int i = 1; i < maxCoeff; i++) {
             int indp = scan[i];
             for (int j = 0; j < blocksPerSlice; j++) {
-                int val = qScale(qMat, indp, in[(j << 6) + indp]);
+                int val = qScale(qMat, indp, _in[(j << 6) + indp]);
                 if (val == 0)
                     run++;
                 else {
@@ -178,15 +185,15 @@ public class ProresEncoder extends VideoEncoder {
         }
     }
 
-    static final void encodeOnePlane(BitWriter bits, int blocksPerSlice, int[] qMat, int[] scan, int[] in) {
+    static final void encodeOnePlane(BitWriter bits, int blocksPerSlice, int[] qMat, int[] scan, int[] _in) {
 
-        writeDCCoeffs(bits, qMat, in, blocksPerSlice);
-        writeACCoeffs(bits, qMat, in, blocksPerSlice, scan, 64);
+        writeDCCoeffs(bits, qMat, _in, blocksPerSlice);
+        writeACCoeffs(bits, qMat, _in, blocksPerSlice, scan, 64);
     }
 
-    private void dctOnePlane(int blocksPerSlice, byte[] in, int[] out) {
+    private void dctOnePlane(int blocksPerSlice, byte[] _in, int[] out) {
         for (int i = 0; i < blocksPerSlice; i++) {
-            fdct10(in, i << 6, out);
+            fdct10(_in, i << 6, out);
         }
     }
 
@@ -311,7 +318,7 @@ public class ProresEncoder extends VideoEncoder {
         if (unsafe) {
             int mbHeightPix = 16 << vStep;
             Picture8Bit filled = Picture8Bit.create(sliceMbCount << 4, mbHeightPix, YUV422);
-            ImageOP.subImageWithFill(result, filled, new Rect(mbX << 4, mbY << (4 + vStep), sliceMbCount << 4, mbHeightPix));
+            ImageOP.subImageWithFillPic8(result, filled, new Rect(mbX << 4, mbY << (4 + vStep), sliceMbCount << 4, mbHeightPix));
 
             split(filled, out, 0, 0, sliceMbCount, vStep, vOffset);
         } else {
@@ -321,27 +328,27 @@ public class ProresEncoder extends VideoEncoder {
         return out;
     }
 
-    private void split(Picture8Bit in, Picture8Bit out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
+    private void split(Picture8Bit _in, Picture8Bit out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
 
-        split(in.getPlaneData(0), out.getPlaneData(0), in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
-        split(in.getPlaneData(1), out.getPlaneData(1), in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
-        split(in.getPlaneData(2), out.getPlaneData(2), in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        doSplit(_in.getPlaneData(0), out.getPlaneData(0), _in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
+        doSplit(_in.getPlaneData(1), out.getPlaneData(1), _in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        doSplit(_in.getPlaneData(2), out.getPlaneData(2), _in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
 
     }
 
-    private void split(byte[] in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma, int vStep,
+    private void doSplit(byte[] _in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma, int vStep,
             int vOffset) {
         int outOff = 0;
         int off = (mbY << 4) * (stride << vStep) + (mbX << (4 - chroma)) + stride * vOffset;
         stride <<= vStep;
 
         for (int i = 0; i < sliceMbCount; i++) {
-            splitBlock(in, stride, off, out, outOff);
-            splitBlock(in, stride, off + (stride << 3), out, outOff + (128 >> chroma));
+            splitBlock(_in, stride, off, out, outOff);
+            splitBlock(_in, stride, off + (stride << 3), out, outOff + (128 >> chroma));
 
             if (chroma == 0) {
-                splitBlock(in, stride, off + 8, out, outOff + 64);
-                splitBlock(in, stride, off + (stride << 3) + 8, out, outOff + 192);
+                splitBlock(_in, stride, off + 8, out, outOff + 64);
+                splitBlock(_in, stride, off + (stride << 3) + 8, out, outOff + 192);
             }
 
             outOff += (256 >> chroma);

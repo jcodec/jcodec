@@ -1,10 +1,22 @@
 package org.jcodec.movtool.streaming;
+import java.lang.IllegalStateException;
+import java.lang.System;
+
+
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.movtool.streaming.tracks.FilePool;
+import org.jcodec.movtool.streaming.tracks.RealTrack;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.InterruptedException;
+import java.lang.Runnable;
+import java.lang.Thread;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.ExecutionException;
@@ -12,12 +24,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-
-import org.jcodec.common.io.IOUtils;
-import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.movtool.streaming.tracks.FilePool;
-import org.jcodec.movtool.streaming.tracks.RealTrack;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,7 +34,7 @@ import org.jcodec.movtool.streaming.tracks.RealTrack;
  */
 public class ConcurrentMovieRangeServiceMain {
 
-    public static void main(String[] args) throws IOException {
+    public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             System.out.println("Syntax: <movie.mov>");
             return;
@@ -63,9 +69,7 @@ public class ConcurrentMovieRangeServiceMain {
         for (int i = 0; i < 1000; i++) {
             try {
                 ff[i].get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -93,9 +97,9 @@ public class ConcurrentMovieRangeServiceMain {
 
                 InputStream is1 = cmrs.getRange(from, to);
 
-                FileChannel in = new FileInputStream(ref).getChannel();
-                in.position(from);
-                InputStream is2 = Channels.newInputStream(in);
+                FileChannel _in = new FileInputStream(ref).getChannel();
+                _in.position(from);
+                InputStream is2 = Channels.newInputStream(_in);
                 byte[] buf1 = new byte[4096], buf2 = new byte[4096];
                 int b, ii = 0;
                 do {

@@ -1,15 +1,20 @@
 package org.jcodec.containers.avi;
+import static java.lang.System.currentTimeMillis;
+
+import org.jcodec.api.FormatException;
+import org.jcodec.common.io.DataReader;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.logging.Logger;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.IllegalArgumentException;
+import java.lang.IllegalStateException;
+import java.lang.StringBuilder;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jcodec.common.io.DataReader;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.logging.Logger;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -107,7 +112,7 @@ public class AVIReader {
     private AVITag_STRH[] streamHeaders;
     private AVIChunk[] streamFormats;
 
-    private List<AVITag_AviIndex> aviIndexes = new ArrayList<AVITag_AviIndex>();
+    private List<AVITag_AviIndex> aviIndexes;
     private AVITag_AviDmlSuperIndex[] openDmlSuperIndex;
 
     private PrintStream ps = null;
@@ -116,7 +121,9 @@ public class AVIReader {
                                        // it
 
     public AVIReader(SeekableByteChannel src) {
-        this.raf = new DataReader(src, ByteOrder.LITTLE_ENDIAN);
+        this.raf = DataReader.createDataReader(src, ByteOrder.LITTLE_ENDIAN);
+        this.aviIndexes = new ArrayList<AVITag_AviIndex>();
+
     }
 
     public static int fromFourCC(final String str) {
@@ -157,7 +164,7 @@ public class AVIReader {
 
     public void parse() throws IOException {
         try {
-            long t1 = System.currentTimeMillis();
+            long t1 = currentTimeMillis();
 
             long fileSize = raf.size();
             fileLeft = fileSize;
@@ -170,7 +177,7 @@ public class AVIReader {
 
             int dwFourCC = raf.readInt();
             if (dwFourCC != FOURCC_RIFF)
-                throw new IllegalArgumentException("No RIFF header found");
+                throw new FormatException("No RIFF header found");
 
             AVIChunk aviItem = new AVIList();
             aviItem.read(dwFourCC, raf);
@@ -224,7 +231,7 @@ public class AVIReader {
 
                 case FOURCC_STRH: {
                     if (streamIndex >= numStreams) {
-                        throw new IllegalArgumentException("Read more stream headers than expected, expected ["
+                        throw new IllegalStateException("Read more stream headers than expected, expected ["
                                 + numStreams + "]");
                     }
 
@@ -293,7 +300,7 @@ public class AVIReader {
 
                     if (dwFourCCStr.endsWith("db")) {
                         // uncompressed video chunk
-                        aviItem = new AVITag_VideoChunk(false);
+                        aviItem = new AVITag_VideoChunk(false, raf);
                         aviItem.read(dwFourCC, raf);
 
                         if (skipFrames) {
@@ -306,7 +313,7 @@ public class AVIReader {
                         }
                     } else if (dwFourCCStr.endsWith("dc")) {
                         // compressed video chunk
-                        aviItem = new AVITag_VideoChunk(true);
+                        aviItem = new AVITag_VideoChunk(true, raf);
                         aviItem.read(dwFourCC, raf);
 
                         ((AVITag_VideoChunk) aviItem).setFrameNo(videoFrameNo);
@@ -366,7 +373,7 @@ public class AVIReader {
 
             } while (fileLeft > 0);
 
-            long t2 = System.currentTimeMillis();
+            long t2 = currentTimeMillis();
 
             Logger.debug("\tFile Left [" + fileLeft + "]");
             Logger.debug("\tParse time : " + (t2 - t1) + "ms");
@@ -381,7 +388,7 @@ public class AVIReader {
     /*
      * Generic AVI Chunk class
      */
-    class AVIChunk {
+static class AVIChunk {
         protected int dwFourCC;
         protected String fwFourCCStr;
         protected int dwChunkSize;
@@ -444,7 +451,7 @@ public class AVIReader {
     /*
      * Generic AVI List class
      */
-    class AVIList extends AVIChunk {
+static class AVIList extends AVIChunk {
         protected int dwListTypeFourCC;
         protected String dwListTypeFourCCStr;
 
@@ -452,7 +459,7 @@ public class AVIReader {
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
 
-            dwChunkSize -= 4; // Correct for next field being in between the
+            dwChunkSize -= 4; // Correct for next field being _in between the
                               // size and the data
             dwListTypeFourCC = raf.readInt();
             dwListTypeFourCCStr = AVIReader.toFourCC(dwListTypeFourCC);
@@ -477,7 +484,7 @@ public class AVIReader {
         }
     }
 
-    class AVI_SEGM extends AVIChunk {
+static class AVI_SEGM extends AVIChunk {
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -499,10 +506,10 @@ public class AVIReader {
         }
     }
 
-    class AVITag_AVIH extends AVIChunk {
+static class AVITag_AVIH extends AVIChunk {
         // public byte[] fcc = new byte[]{'a','v','i','h'};
 
-        public String getHeight;
+        public String _getHeight;
         final static int AVIF_HASINDEX = 0x00000010; // Index at end of file?
         final static int AVIF_MUSTUSEINDEX = 0x00000020;
         final static int AVIF_ISINTERLEAVED = 0x00000100;
@@ -521,8 +528,13 @@ public class AVIReader {
         private int dwSuggestedBufferSize;
         private int dwWidth; // replace with correct value
         private int dwHeight; // replace with correct value
-        private int[] dwReserved = new int[4];
-
+        private int[] dwReserved;
+        
+        public AVITag_AVIH() {
+            super();
+            this.dwReserved = new int[4];
+        }
+        
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -584,7 +596,7 @@ public class AVIReader {
         }
     }
 
-    class AVITag_STRH extends AVIChunk {
+static class AVITag_STRH extends AVIChunk {
         final static int AVISF_DISABLED = 0x00000001;
         final static int AVISF_VIDEO_PALCHANGES = 0x00010000;
 
@@ -670,7 +682,7 @@ public class AVIReader {
      * biSizeImage; LONG biXPelsPerMeter; LONG biYPelsPerMeter; DWORD biClrUsed;
      * DWORD biClrImportant; } BITMAPINFOHEADER;
      */
-    class AVITag_BitmapInfoHeader extends AVIChunk {
+static class AVITag_BitmapInfoHeader extends AVIChunk {
         private int biSize;
         private int biWidth; // long
         private int biHeight; // long
@@ -756,7 +768,7 @@ public class AVIReader {
      * WAVEFORMATEXTENSIBLE, *PWAVEFORMATEXTENSIBLE;
      */
 
-    class AVITag_WaveFormatEx extends AVIChunk {
+static class AVITag_WaveFormatEx extends AVIChunk {
         public final static int SPEAKER_FRONT_LEFT = 0x1;
         public final static int SPEAKER_FRONT_RIGHT = 0x2;
         public final static int SPEAKER_FRONT_CENTER = 0x4;
@@ -798,7 +810,7 @@ public class AVIReader {
         protected int guid_data1;
         protected short guid_data2;
         protected short guid_data3;
-        protected byte[] guid_data4 = new byte[8];
+        protected byte[] guid_data4;
 
         // Optional MP3 parameters if wFormatTag = 0x0055
         protected boolean mp3Flag = false;
@@ -809,7 +821,11 @@ public class AVIReader {
         protected short nCodecDelay;
 
         private String audioFormat = "?";
-
+        
+        public AVITag_WaveFormatEx() {
+            this.guid_data4 = new byte[8];
+        }
+        
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -932,15 +948,17 @@ public class AVIReader {
      * of SRT/SSA text file char data[dwSize]; // entire SRT/SSA file
      */
 
-    class AVITag_VideoChunk extends AVIChunk {
+static class AVITag_VideoChunk extends AVIChunk {
         protected int streamNo;
         protected boolean compressed = false;
         protected int frameNo = -1;
+		private DataReader raf;
 
-        public AVITag_VideoChunk(final boolean compressed) {
+        public AVITag_VideoChunk(final boolean compressed, DataReader raf) {
             super();
 
             this.compressed = compressed;
+			this.raf = raf;
         }
 
         public int getStreamNo() {
@@ -994,12 +1012,14 @@ public class AVIReader {
         }
     }
 
-    class AVITag_AudioChunk extends AVIChunk {
+static class AVITag_AudioChunk extends AVIChunk {
         protected int streamNo;
+		private DataReader raf;
 
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
-            super.read(dwFourCC, raf);
+            this.raf = raf;
+			super.read(dwFourCC, raf);
 
             String fourccStr = toFourCC(dwFourCC);
             streamNo = Integer.parseInt(fourccStr.substring(0, 2));
@@ -1048,7 +1068,7 @@ public class AVIReader {
      * 0x00000010 #define AVIIF_NO_TIME 0x00000100 #define AVIIF_COMPRESSOR
      * 0x0FFF0000 // unused?
      */
-    class AVITag_AviIndex extends AVIChunk {
+static class AVITag_AviIndex extends AVIChunk {
         protected int numIndexes = 0;
         protected int[] ckid;
         protected int[] dwFlags;
@@ -1073,7 +1093,7 @@ public class AVIReader {
                 dwChunkLength[i] = raf.readInt(); // raf.readInt();
             }
 
-            raf.position(this.getEndOfChunk());
+            raf.setPosition(this.getEndOfChunk());
 
             int alignment = getChunkSize() - dwChunkSize;
             if (alignment > 0)
@@ -1130,14 +1150,14 @@ public class AVIReader {
 
     // Open DML style AVI Super Index. Extension index when the first is not
     // enough, mainly for files > 1gb
-    class AVITag_AviDmlSuperIndex extends AVIChunk {
+static class AVITag_AviDmlSuperIndex extends AVIChunk {
         // Read
         protected short wLongsPerEntry;
         protected byte bIndexSubType;
         protected byte bIndexType;
         protected int nEntriesInUse;
         protected int dwChunkId;
-        protected int[] dwReserved = new int[3];
+        protected int[] dwReserved;
         protected long[] qwOffset;
         protected int[] dwSize;
         protected int[] dwDuration;
@@ -1145,9 +1165,16 @@ public class AVIReader {
         private int numIndexFill;
 
         // Generated
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb;
         private int streamNo = 0;
+        
+        public AVITag_AviDmlSuperIndex() {
+            super();
+            this.dwReserved = new int[3];
+            this.sb = new StringBuilder();
 
+        }
+        
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -1181,7 +1208,7 @@ public class AVIReader {
                         dwSize[i], dwDuration[i]));
             }
 
-            raf.position(this.getEndOfChunk());
+            raf.setPosition(this.getEndOfChunk());
         }
 
         @Override
@@ -1210,7 +1237,7 @@ public class AVIReader {
 
     // Open DML style AVI Standard Index. Extension index when the first is not
     // enough, mainly for files > 1gb
-    class AVITag_AviDmlStandardIndex extends AVIChunk {
+static class AVITag_AviDmlStandardIndex extends AVIChunk {
         protected short wLongsPerEntry;
         protected byte bIndexSubType;
         protected byte bIndexType;
@@ -1257,7 +1284,7 @@ public class AVIReader {
                 Logger.debug("Failed to read : " + toString());
             }
 
-            raf.position(this.getEndOfChunk());
+            raf.setPosition(this.getEndOfChunk());
         }
 
         @Override

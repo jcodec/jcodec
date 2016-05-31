@@ -1,14 +1,4 @@
 package org.jcodec.containers.flv;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.io.NIOUtils;
@@ -21,6 +11,17 @@ import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.TagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
+import org.jcodec.platform.Platform;
+
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -130,7 +131,7 @@ public class FLVReader {
             }
             long newPos = Math.max(0, oldPos - readBuf.capacity() / 2);
 
-            ch.position(newPos);
+            ch.setPosition(newPos);
             readBuf.clear();
             ch.read(readBuf);
             readBuf.flip();
@@ -170,7 +171,7 @@ public class FLVReader {
                     readBuf.position(readBuf.position() - TAG_HEADER_SIZE);
                     if (!repositionFile()) {
                         Logger.error(String.format("Corrupt FLV stream at %d, failed to reposition!", packetPos));
-                        ch.position(ch.size());
+                        ch.setPosition(ch.size());
                         eof = true;
                         return null;
                     }
@@ -267,7 +268,7 @@ public class FLVReader {
 
     private static String readAMFString(ByteBuffer input) {
         int size = input.getShort() & 0xffff;
-        return new String(NIOUtils.toArray(NIOUtils.read(input, size)), Charset.forName("UTF-8"));
+        return Platform.stringFromCharset(NIOUtils.toArray(NIOUtils.read(input, size)), Charset.forName("UTF-8"));
     }
 
     private static Object readAMFObject(ByteBuffer input) {

@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mjpeg;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -91,7 +90,8 @@ public class FrameHeader {
 
     public int getHmax() {
         int max = 0;
-        for (Component c : components) {
+        for (int i = 0; i < components.length; i++) {
+            Component c = components[i];
             max = Math.max(max, c.subH);
         }
         return max;
@@ -99,7 +99,8 @@ public class FrameHeader {
 
     public int getVmax() {
         int max = 0;
-        for (Component c : components) {
+        for (int i = 0; i < components.length; i++) {
+            Component c = components[i];
             max = Math.max(max, c.subV);
         }
         return max;

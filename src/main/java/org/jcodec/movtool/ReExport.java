@@ -1,10 +1,13 @@
 package org.jcodec.movtool;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-import java.io.File;
-import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresFix;
 import org.jcodec.containers.mp4.MP4Packet;
+
+import java.io.File;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -25,10 +28,10 @@ public class ReExport extends Remux {
         }
         ByteBuffer out = ProresFix.transcode(pkt.getData(), outBuf);
 
-        return new MP4Packet(pkt, out);
+        return MP4Packet.createMP4PacketWithData(pkt, out);
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main2(String[] args) throws Exception {
         if (args.length < 1) {
             System.out.println("reexport <movie> <out>");
             return;

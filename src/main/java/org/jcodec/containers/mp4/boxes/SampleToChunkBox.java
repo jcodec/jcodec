@@ -13,6 +13,10 @@ import java.nio.ByteBuffer;
  */
 public class SampleToChunkBox extends FullBox {
 
+    public SampleToChunkBox(Header atom) {
+        super(atom);
+    }
+
     public static class SampleToChunkEntry {
         private long first;
         private int count;
@@ -53,16 +57,12 @@ public class SampleToChunkBox extends FullBox {
         return "stsc";
     }
 
+    public static SampleToChunkBox createSampleToChunkBox(SampleToChunkEntry[] sampleToChunk) {
+        SampleToChunkBox box = new SampleToChunkBox(new Header(fourcc()));
+        box.sampleToChunk = sampleToChunk;
+        return box;
+    }
     private SampleToChunkEntry[] sampleToChunk;
-
-    public SampleToChunkBox(SampleToChunkEntry[] sampleToChunk) {
-        super(new Header(fourcc()));
-        this.sampleToChunk = sampleToChunk;
-    }
-
-    public SampleToChunkBox() {
-        super(new Header(fourcc()));
-    }
 
     public void parse(ByteBuffer input) {
         super.parse(input);
@@ -84,7 +84,8 @@ public class SampleToChunkBox extends FullBox {
         super.doWrite(out);
         out.putInt(sampleToChunk.length);
 
-        for (SampleToChunkEntry stc : sampleToChunk) {
+        for (int i = 0; i < sampleToChunk.length; i++) {
+            SampleToChunkEntry stc = sampleToChunk[i];
             out.putInt((int) stc.getFirst());
             out.putInt((int) stc.getCount());
             out.putInt((int) stc.getEntry());

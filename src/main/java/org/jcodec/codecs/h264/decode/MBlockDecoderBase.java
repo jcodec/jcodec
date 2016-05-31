@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.decode;
-
 import static org.jcodec.codecs.h264.H264Const.BLK8x8_BLOCKS;
 import static org.jcodec.codecs.h264.H264Const.BLK_8x8_MB_OFF_CHROMA;
 import static org.jcodec.codecs.h264.H264Const.BLK_INV_MAP;
@@ -7,14 +6,15 @@ import static org.jcodec.codecs.h264.H264Const.QP_SCALE_CR;
 import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
 import static org.jcodec.common.model.ColorSpace.MONO;
 
-import java.util.Arrays;
-
+import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
+
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -30,18 +30,21 @@ public class MBlockDecoderBase {
     protected SliceHeader sh;
     protected DeblockerInput di;
     protected int poc;
-    protected BlockInterpolator interpolator = new BlockInterpolator();
+    protected BlockInterpolator interpolator;
+    protected Picture8Bit[] mbb;
 
     public MBlockDecoderBase(SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
+        this.interpolator = new BlockInterpolator();
         this.s = decoderState;
         this.sh = sh;
         this.di = di;
         this.poc = poc;
+        this.mbb = new Picture8Bit[] { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
     }
 
     void residualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         if (!mBlock.transform8x8Used) {
-            residualLuma(mBlock);
+            _residualLuma(mBlock);
         } else if (sh.pps.entropy_coding_mode_flag) {
             residualLuma8x8CABAC(mBlock);
         } else {
@@ -49,7 +52,7 @@ public class MBlockDecoderBase {
         }
     }
 
-    private void residualLuma(MBlock mBlock) {
+    private void _residualLuma(MBlock mBlock) {
 
         for (int i = 0; i < 16; i++) {
             if ((mBlock.cbpLuma() & (1 << (i >> 2))) == 0) {
@@ -172,11 +175,9 @@ public class MBlockDecoderBase {
     public void predictChromaInter(Frame[][] refs, int[][][] vectors, int x, int y, int comp, Picture8Bit mb,
             PartPred[] predType) {
 
-        Picture8Bit[] mbb = { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
-
         for (int blk8x8 = 0; blk8x8 < 4; blk8x8++) {
             for (int list = 0; list < 2; list++) {
-                if (!predType[blk8x8].usesList(list))
+                if (!H264Const.usesList(predType[blk8x8], list))
                     continue;
                 for (int blk4x4 = 0; blk4x4 < 4; blk4x4++) {
                     int i = BLK_INV_MAP[(blk8x8 << 2) + blk4x4];

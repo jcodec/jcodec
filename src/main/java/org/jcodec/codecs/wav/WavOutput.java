@@ -1,15 +1,15 @@
 package org.jcodec.codecs.wav;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
-
 import org.jcodec.audio.AudioSink;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.AudioUtil;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,7 +29,7 @@ public class WavOutput implements Closeable {
     public WavOutput(SeekableByteChannel out, AudioFormat format) throws IOException {
         this.out = out;
         this.format = format;
-        header = new WavHeader(format, 0);
+        header = WavHeader.createWavHeader(format, 0);
         header.write(out);
     }
 
@@ -38,18 +38,18 @@ public class WavOutput implements Closeable {
     }
 
     public void close() throws IOException {
-        out.position(0);
-        new WavHeader(format, format.bytesToFrames(written)).write(out);
+        out.setPosition(0);
+        WavHeader.createWavHeader(format, format.bytesToFrames(written)).write(out);
         NIOUtils.closeQuietly(out);
     }
 
     /**
      * Manages the file resource on top of WavOutput
      */
-    public static class File extends WavOutput {
+    public static class WavOutFile extends WavOutput {
 
-        public File(java.io.File f, AudioFormat format) throws IOException {
-            super(NIOUtils.writableFileChannel(f), format);
+        public WavOutFile(File f, AudioFormat format) throws IOException {
+            super(NIOUtils.writableChannel(f), format);
         }
 
         @Override
@@ -69,15 +69,7 @@ public class WavOutput implements Closeable {
             this.out = out;
         }
 
-        public Sink(java.io.File f, AudioFormat format) throws IOException {
-            this(new File(f, format));
-        }
-
-        public Sink(SeekableByteChannel ch, AudioFormat format) throws IOException {
-            this(new WavOutput(ch, format));
-        }
-
-        public void write(FloatBuffer data) throws IOException {
+        public void writeFloat(FloatBuffer data) throws IOException {
             ByteBuffer buf = ByteBuffer.allocate(out.format.samplesToBytes(data.remaining()));
             AudioUtil.fromFloat(data, out.format, buf);
             buf.flip();

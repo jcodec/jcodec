@@ -1,13 +1,11 @@
 package net.sourceforge.jaad.aac.tools;
-
+import java.util.logging.Level;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
-import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
-
-import java.util.logging.Level;
+import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -44,16 +42,16 @@ public class ICPrediction {
 		resetAllPredictors();
 	}
 
-	public void decode(IBitStream in, int maxSFB, SampleFrequency sf) throws AACException {
+	public void decode(IBitStream _in, int maxSFB, SampleFrequency sf) throws AACException {
 		final int predictorCount = sf.getPredictorCount();
 
-		if(predictorReset = in.readBool()) predictorResetGroup = in.readBits(5);
+		if(predictorReset = _in.readBool()) predictorResetGroup = _in.readBits(5);
 
 		final int maxPredSFB = sf.getMaximalPredictionSFB();
 		final int length = Math.min(maxSFB, maxPredSFB);
 		predictionUsed = new boolean[length];
 		for(int sfb = 0; sfb<length; sfb++) {
-			predictionUsed[sfb] = in.readBool();
+			predictionUsed[sfb] = _in.readBool();
 		}
 		SyntaxConstants.LOGGER.log(Level.WARNING, "ICPrediction: maxSFB={0}, maxPredSFB={1}", new int[]{maxSFB, maxPredSFB});
 		/*//if maxSFB<maxPredSFB set remaining to false

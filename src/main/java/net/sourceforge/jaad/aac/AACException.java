@@ -1,5 +1,4 @@
 package net.sourceforge.jaad.aac;
-
 import java.io.IOException;
 
 /**
@@ -14,23 +13,29 @@ import java.io.IOException;
  */
 public class AACException extends IOException {
 
-	private final boolean eos;
+    public static AACException endOfStream() {
+        AACException ex = new AACException("end of stream");
+        ex.eos = true;
+        return ex;
+    }
 
-	public AACException(String message) {
-		this(message, false);
-	}
+    private boolean eos;
 
-	public AACException(String message, boolean eos) {
-		super(message);
-		this.eos = eos;
-	}
+    public AACException(String message) {
+        super(message);
+    }
 
-	public AACException(Throwable cause) {
-		super(cause);
-		eos = false;
-	}
+    public boolean isEndOfStream() {
+        return eos;
+    }
 
-	public boolean isEndOfStream() {
-		return eos;
-	}
+    public static AACException wrap(Exception e) {
+        if (e != null && e instanceof AACException) {
+            return (AACException) e;
+        }
+        if (e != null && e.getMessage() != null) {
+            return new AACException(e.getMessage());
+        }
+        return new AACException("" + e);
+    }
 }

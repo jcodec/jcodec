@@ -1,5 +1,4 @@
 package org.jcodec.codecs.wav;
-
 import java.io.IOException;
 import java.io.OutputStream;
 

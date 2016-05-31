@@ -1,6 +1,15 @@
 package org.jcodec.movtool.streaming.tracks;
+import java.lang.IllegalStateException;
+import java.lang.System;
+import java.lang.IllegalArgumentException;
+
+
+import org.jcodec.movtool.streaming.CodecMeta;
+import org.jcodec.movtool.streaming.VirtualPacket;
+import org.jcodec.movtool.streaming.VirtualTrack;
 
 import java.io.IOException;
+import java.lang.Runnable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,11 +17,6 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.movtool.streaming.CodecMeta;
-import org.jcodec.movtool.streaming.VirtualPacket;
-import org.jcodec.movtool.streaming.VirtualTrack;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -25,17 +29,20 @@ import org.jcodec.movtool.streaming.VirtualTrack;
  */
 public class CachingTrack implements VirtualTrack {
     private VirtualTrack src;
-    private List<CachingPacket> cachedPackets = Collections.synchronizedList(new ArrayList<CachingPacket>());
+    private List<CachingPacket> cachedPackets;
     private ScheduledFuture<?> policyFuture;
 
     public CachingTrack(VirtualTrack src, final int policy, ScheduledExecutorService policyExecutor) {
+        this.cachedPackets = Collections.synchronizedList(new ArrayList<CachingPacket>());
+
         if (policy < 1)
             throw new IllegalArgumentException("Caching track with less then 1 entry.");
         this.src = src;
+        final CachingTrack self = this;
         policyFuture = policyExecutor.scheduleAtFixedRate(new Runnable() {
             public void run() {
-                while (cachedPackets.size() > policy) {
-                    cachedPackets.get(0).wipe();
+                while (self.cachedPackets.size() > policy) {
+                    self.cachedPackets.get(0).wipe();
                 }
             }
         }, 200, 200, TimeUnit.MILLISECONDS);
@@ -51,30 +58,32 @@ public class CachingTrack implements VirtualTrack {
         VirtualPacket pkt = src.nextPacket();
         if (pkt == null)
             return null;
-        return new CachingPacket(pkt);
+        return new CachingPacket(this, pkt);
     }
 
-    public class CachingPacket extends VirtualPacketWrapper {
+    public static class CachingPacket extends VirtualPacketWrapper {
         private ByteBuffer cache;
+        private CachingTrack track;
 
-        public CachingPacket(VirtualPacket src) {
+        public CachingPacket(CachingTrack track, VirtualPacket src) {
             super(src);
+            this.track = track;
         }
 
         public synchronized void wipe() {
-            if (cachedPackets.indexOf(this) == 0) {
-                cachedPackets.remove(0);
+            if (track.cachedPackets.indexOf(this) == 0) {
+                track.cachedPackets.remove(0);
                 cache = null;
             }
         }
 
         public synchronized ByteBuffer getData() throws IOException {
-            // This packet will receive new place in the queue
-            cachedPackets.remove(this);
+            // This packet will receive new place _in the queue
+            track.cachedPackets.remove(this);
             if (cache == null) {
                 cache = src.getData();
             }
-            cachedPackets.add(this);
+            track.cachedPackets.add(this);
 
             return cache == null ? null : cache.duplicate();
         }

@@ -13,19 +13,21 @@ import java.nio.ByteBuffer;
  */
 
 public class ChunkOffsetsBox extends FullBox {
+
+    public ChunkOffsetsBox(Header atom) {
+        super(atom);
+    }
+
     private long[] chunkOffsets;
     
     public static String fourcc() {
         return "stco";
     }
 
-    public ChunkOffsetsBox(long[] chunkOffsets) {
-        super(new Header(fourcc()));
-        this.chunkOffsets = chunkOffsets;
-    }
-
-    public ChunkOffsetsBox() {
-        super(new Header(fourcc()));
+    public static ChunkOffsetsBox createChunkOffsetsBox(long[] chunkOffsets) {
+        ChunkOffsetsBox stco = new ChunkOffsetsBox(new Header(fourcc()));
+        stco.chunkOffsets = chunkOffsets;
+        return stco;
     }
 
     public void parse(ByteBuffer input) {
@@ -41,7 +43,8 @@ public class ChunkOffsetsBox extends FullBox {
     public void doWrite(ByteBuffer out) {
         super.doWrite(out);
         out.putInt(chunkOffsets.length);
-        for (long offset : chunkOffsets) {
+        for (int i = 0; i < chunkOffsets.length; i++) {
+            long offset = chunkOffsets[i];
             out.putInt((int) offset);
         }
     }

@@ -1,9 +1,10 @@
 package org.jcodec.codecs.vp8;
-
 import static org.jcodec.codecs.vp8.VP8EncoderTest.LinearAlgebraUtil.substractScalar;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.lang.System;
 
 /**
  * @see http://multimedia.cx/eggs/category/vp8/
@@ -45,18 +46,18 @@ public class VP8EncoderTest {
     }
     
 //    public void testName() throws Exception {
-//        BufferedImage in = ImageIO.read(MKVMuxerTest.tildeExpand("src/test/resources/olezha422.jpg"));
+//        BufferedImage _in = ImageIO.read(MKVMuxerTest.tildeExpand("src/test/resources/olezha422.jpg"));
 //        Transform t = ColorUtil.getTransform(ColorSpace.RGB, ColorSpace.YUV420);
-//        Picture yuv = Picture.create(in.getWidth(), in.getHeight(), ColorSpace.YUV420);
-//        t.transform(AWTUtil.fromBufferedImage(in), yuv);
-//        int mbCols = VP8Util.getMacroblockCount(in.getWidth());
-//        int mbRows = VP8Util.getMacroblockCount(in.getHeight());
-//        System.out.println("image: "+in.getHeight()+"x"+in.getWidth()+" macroblocks: "+mbRows+"x"+mbCols);
-//        getMbData(yuv.getData()[0], in.getHeight(), in.getWidth(), mbRows, mbCols);
+//        Picture yuv = Picture.create(_in.getWidth(), _in.getHeight(), ColorSpace.YUV420);
+//        t.transform(AWTUtil.fromBufferedImage(_in), yuv);
+//        int mbCols = VP8Util.getMacroblockCount(_in.getWidth());
+//        int mbRows = VP8Util.getMacroblockCount(_in.getHeight());
+//        System.out.println("image: "+_in.getHeight()+"x"+_in.getWidth()+" macroblocks: "+mbRows+"x"+mbCols);
+//        getMbData(yuv.getData()[0], _in.getHeight(), _in.getWidth(), mbRows, mbCols);
 //        
 //    }
     
-    int[] yPlane = {
+    static int[] yPlane = {
             
             /*---------------------Macrobloc[0,0]---------------------+-----------Macroblock[1,0]---------*/
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, /* | */ 17, 18, 19, 20, 21, 22, 23, 24,
@@ -266,18 +267,18 @@ public class VP8EncoderTest {
             return result;
         }
         
-        public static int[] serialize2DTo1DArray(int[][] in){
-            if (in.length == 0 )
-                throw new RuntimeException("in.length == 0. Two-dimentional array required.");
+        public static int[] serialize2DTo1DArray(int[][] _in){
+            if (_in.length == 0 )
+                throw new RuntimeException("_in.length == 0. Two-dimentional array required.");
             
-            int width = in[0].length;
-            int[] result = new int[in.length * width];
-            for(int i=0;i<in.length;i++){
-                if (width != in[i].length)
-                    throw new RuntimeException("in["+i+"].length != in[0].length. A rectangular two-dimentional array required.");
+            int width = _in[0].length;
+            int[] result = new int[_in.length * width];
+            for(int i=0;i<_in.length;i++){
+                if (width != _in[i].length)
+                    throw new RuntimeException("_in["+i+"].length != _in[0].length. A rectangular two-dimentional array required.");
                 
-                for(int j=0;j<in[i].length;j++){
-                    result[i*width+j] = in[i][j];
+                for(int j=0;j<_in[i].length;j++){
+                    result[i*width+j] = _in[i][j];
                 }
             }
             return result;

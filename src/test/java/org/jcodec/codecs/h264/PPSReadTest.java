@@ -1,19 +1,19 @@
 package org.jcodec.codecs.h264;
+import static org.junit.Assert.assertEquals;
+
+import org.jcodec.codecs.h264.io.model.PictureParameterSet;
+import org.jcodec.common.io.NIOUtils;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.nio.ByteBuffer;
 
-import junit.framework.TestCase;
-
-import org.jcodec.codecs.h264.io.model.PictureParameterSet;
-import org.jcodec.common.io.NIOUtils;
-import org.junit.Test;
-
-public class PPSReadTest extends TestCase {
+public class PPSReadTest {
     private PictureParameterSet expected;
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         expected = new PictureParameterSet();
         expected.pic_parameter_set_id = 0;
         expected.seq_parameter_set_id = 0;
@@ -34,7 +34,7 @@ public class PPSReadTest extends TestCase {
     @Test
     public void testRead() throws Exception {
 
-        ByteBuffer bb = NIOUtils.fetchFrom(new File("src/test/resources/h264/pps/pps.dat"));
+        ByteBuffer bb = NIOUtils.fetchFromFile(new File("src/test/resources/h264/pps/pps.dat"));
         PictureParameterSet pps = PictureParameterSet.read(bb);
         assertEquals(expected, pps);
     }
