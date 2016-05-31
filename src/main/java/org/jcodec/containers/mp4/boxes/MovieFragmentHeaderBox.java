@@ -43,4 +43,8 @@ public class MovieFragmentHeaderBox extends FullBox {
     public void setSequenceNumber(int sequenceNumber) {
         this.sequenceNumber = sequenceNumber;
     }
+
+    public static MovieFragmentHeaderBox createMovieFragmentHeaderBox() {
+        return new MovieFragmentHeaderBox(new Header(fourcc()));
+    }
 }

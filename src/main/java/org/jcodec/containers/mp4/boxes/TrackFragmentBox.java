@@ -34,4 +34,8 @@ public class TrackFragmentBox extends NodeBox {
             throw new RuntimeException("Corrupt track fragment, no header atom found");
         return tfhd.getTrackId();
     }
+
+    public static TrackFragmentBox createTrackFragmentBox() {
+        return new TrackFragmentBox(new Header(fourcc()));
+    }
 }
