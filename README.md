@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/jcodec/jcodec.svg?branch=master)](https://travis-ci.org/jcodec/jcodec)
+
 jcodec - a pure java implementation of video/audio codecs.
 
 # About 
