@@ -31,10 +31,6 @@ public class MovieFragmentBox extends NodeBox {
         this.moov = moov;
     }
 
-    protected void getModelFields(List<String> model) {
-
-    }
-
     public TrackFragmentBox[] getTracks() {
         return NodeBox.findAll(this, TrackFragmentBox.class, TrackFragmentBox.fourcc());
     }

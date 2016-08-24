@@ -23,10 +23,6 @@ public class TrackFragmentBox extends NodeBox {
         return "traf";
     }
 
-    protected void getModelFields(List<String> model) {
-
-    }
-
     public int getTrackId() {
         TrackFragmentHeaderBox tfhd = NodeBox
                 .findFirst(this, TrackFragmentHeaderBox.class, TrackFragmentHeaderBox.fourcc());

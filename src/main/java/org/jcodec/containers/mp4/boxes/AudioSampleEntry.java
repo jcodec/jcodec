@@ -308,10 +308,6 @@ public class AudioSampleEntry extends SampleEntry {
         translationSurround.put(Label.RightWide, ChannelLabel.STEREO_RIGHT);
     }
 
-    protected void getModelFields(List<String> list) {
-        ToJSON.allFieldsExcept(this.getClass(), new String[]{"endian", "float", "format", "labels"});
-    }
-
     public static Label[] getLabelsFromSampleEntry(AudioSampleEntry se) {
         ChannelBox channel = NodeBox.findFirst(se, ChannelBox.class, "chan");
         if (channel != null)

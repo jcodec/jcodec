@@ -25,7 +25,6 @@ import java.util.List;
  * 
  */
 public abstract class Box {
-    private static final String GET_MODEL_FIELDS = "getModelFields";
     public Header header;
     public static final int MAX_BOX_SIZE = 128 * 1024 * 1024;
     
@@ -66,35 +65,8 @@ public abstract class Box {
     protected void dump(StringBuilder sb) {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
         List<String> fields = new ArrayList<String>(0);
-        collectModel(this.getClass(), fields);
         ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[0]));
         sb.append("}");
-    }
-
-    protected void collectModel(Class claz, List<String> model) {
-        if (Box.class == claz || !Box.class.isAssignableFrom(claz))
-            return;
-
-        collectModel(claz.getSuperclass(), model);
-
-        try {
-            Platform.invokeMethod(this, GET_MODEL_FIELDS, new Object[]{model});
-        } catch (Exception e) {
-            checkWrongSignature(claz);
-            model.addAll(ToJSON.allFields(claz));
-        }
-    }
-
-    private void checkWrongSignature(Class claz) {
-        Method[] declaredMethods = Platform.getDeclaredMethods(claz);
-        for (int i = 0; i < declaredMethods.length; i++) {
-            Method method = declaredMethods[i];
-            if (method.getName().equals(GET_MODEL_FIELDS)) {
-                Logger.warn("Class " + claz.getCanonicalName() + " contains 'getModelFields' of wrong signature.\n"
-                        + "Did you mean to define 'protected void " + GET_MODEL_FIELDS + "(List<String> model) ?");
-                break;
-            }
-        }
     }
 
     public static String[] path(String path) {

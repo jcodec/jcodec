@@ -95,16 +95,11 @@ public class NodeBox extends Box {
     protected void dump(StringBuilder sb) {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
         List<String> fields = new ArrayList<String>(0);
-        collectModel(this.getClass(), fields);
         ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[0]));
         sb.append("\"boxes\": [");
         dumpBoxes(sb);
         sb.append("]");
         sb.append("}");
-    }
-
-    protected void getModelFields(List<String> model) {
-
     }
 
     protected void dumpBoxes(StringBuilder sb) {
