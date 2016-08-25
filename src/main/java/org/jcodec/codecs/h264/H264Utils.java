@@ -714,7 +714,7 @@ public class H264Utils {
         private SliceHeader part2(ByteBuffer is, ByteBuffer os, NALUnit nu, SeqParameterSet sps,
                 PictureParameterSet pps, ByteBuffer nal, BitReader reader, SliceHeader sh) {
             BitWriter writer = new BitWriter(os);
-            shr.readPart2(sh, nu, sps, pps, reader);
+            SliceHeaderReader.readPart2(sh, nu, sps, pps, reader);
 
             tweak(sh);
 
