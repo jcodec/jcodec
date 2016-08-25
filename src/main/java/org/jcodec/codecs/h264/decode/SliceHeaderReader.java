@@ -33,7 +33,7 @@ import java.util.ArrayList;
  */
 public class SliceHeaderReader {
 
-    public SliceHeader readPart1(BitReader _in) {
+    public static SliceHeader readPart1(BitReader _in) {
 
         SliceHeader sh = new SliceHeader();
         sh.first_mb_in_slice = readUEtrace(_in, "SH: first_mb_in_slice");
@@ -46,7 +46,7 @@ public class SliceHeaderReader {
         return sh;
     }
 
-    public SliceHeader readPart2(SliceHeader sh, NALUnit nalUnit, SeqParameterSet sps, PictureParameterSet pps,
+    public static SliceHeader readPart2(SliceHeader sh, NALUnit nalUnit, SeqParameterSet sps, PictureParameterSet pps,
             BitReader _in) {
         sh.pps = pps;
         sh.sps = sps;

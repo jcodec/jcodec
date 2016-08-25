@@ -24,7 +24,6 @@ public class SliceHeaderTest {
                 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x64, 0x1e, 0x2c, 0x5c, 0x90 };
         short[] pps = new short[] { 0xeb, 0xc2, 0xcb, 0x22, 0xc0 };
 
-        SliceHeaderReader shr = new SliceHeaderReader();
         SliceHeaderWriter shw = new SliceHeaderWriter();
 
         BitReader reader = BitReader.createBitReader(ByteBuffer.wrap(data));
@@ -33,8 +32,8 @@ public class SliceHeaderTest {
 
         SeqParameterSet sps1 = SeqParameterSet.read(ByteBuffer.wrap(asByteArray(sps)));
         PictureParameterSet pps1 = PictureParameterSet.read(ByteBuffer.wrap(asByteArray(pps)));
-        SliceHeader sh = shr.readPart1(reader);
-        shr.readPart2(sh, new NALUnit(NALUnitType.NON_IDR_SLICE, 1), sps1, pps1, reader);
+        SliceHeader sh = SliceHeaderReader.readPart1(reader);
+        SliceHeaderReader.readPart2(sh, new NALUnit(NALUnitType.NON_IDR_SLICE, 1), sps1, pps1, reader);
 
         shw.write(sh, false, 1, writer);
 

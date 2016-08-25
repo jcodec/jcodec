@@ -69,11 +69,10 @@ public class FrameReader {
 
     private SliceReader createSliceReader(ByteBuffer segment, NALUnit nalUnit) {
         BitReader _in = BitReader.createBitReader(segment);
-        SliceHeaderReader shr = new SliceHeaderReader();
-        SliceHeader sh = shr.readPart1(_in);
+        SliceHeader sh = SliceHeaderReader.readPart1(_in);
         sh.pps = pps.get(sh.pic_parameter_set_id);
         sh.sps = sps.get(sh.pps.seq_parameter_set_id);
-        shr.readPart2(sh, nalUnit, sh.sps, sh.pps, _in);
+        SliceHeaderReader.readPart2(sh, nalUnit, sh.sps, sh.pps, _in);
 
         Mapper mapper = new MapManager(sh.sps, sh.pps).getMapper(sh);
 

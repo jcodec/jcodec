@@ -27,7 +27,6 @@ import java.nio.ByteBuffer;
  */
 public class MappedH264ES implements DemuxerTrack {
     private ByteBuffer bb;
-    private SliceHeaderReader shr;
     private IntObjectMap<PictureParameterSet> pps;
     private IntObjectMap<SeqParameterSet> sps;
 
@@ -43,7 +42,6 @@ public class MappedH264ES implements DemuxerTrack {
         this.sps = new IntObjectMap<SeqParameterSet>();
 
         this.bb = bb;
-        this.shr = new SliceHeaderReader();
         this.frameNo = 0;
     }
 
@@ -86,9 +84,9 @@ public class MappedH264ES implements DemuxerTrack {
 
     private SliceHeader readSliceHeader(ByteBuffer buf, NALUnit nu) {
         BitReader br = BitReader.createBitReader(buf);
-        SliceHeader sh = shr.readPart1(br);
+        SliceHeader sh = SliceHeaderReader.readPart1(br);
         PictureParameterSet pp = pps.get(sh.pic_parameter_set_id);
-        shr.readPart2(sh, nu, sps.get(pp.seq_parameter_set_id), pp, br);
+        SliceHeaderReader.readPart2(sh, nu, sps.get(pp.seq_parameter_set_id), pp, br);
         return sh;
     }
 
