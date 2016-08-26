@@ -32,6 +32,24 @@ public class CompositionOffsetsBox extends FullBox {
             return offset;
         }
     }
+    
+    public static class LongEntry {
+        public long count;
+        public long offset;
+
+        public LongEntry(long count, long offset) {
+            this.count = count;
+            this.offset = offset;
+        }
+
+        public long getCount() {
+            return count;
+        }
+
+        public long getOffset() {
+            return offset;
+        }
+    }
 
     public CompositionOffsetsBox(Header header) {
         super(header);
