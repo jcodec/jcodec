@@ -1,4 +1,10 @@
 package org.jcodec.containers.mp4.muxer;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
@@ -12,6 +18,7 @@ import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
+import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.LongEntry;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.Header;
@@ -31,13 +38,6 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import java.io.IOException;
-import java.lang.IllegalStateException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -55,9 +55,9 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     private IntArrayList sampleSizes;
     private IntArrayList iframes;
 
-    private List<Entry> compositionOffsets;
-    private int lastCompositionOffset = 0;
-    private int lastCompositionSamples = 0;
+    private List<LongEntry> compositionOffsets;
+    private long lastCompositionOffset = 0;
+    private long lastCompositionSamples = 0;
     private long ptsEstimate = 0;
 
     private int lastEntry = -1;
@@ -74,7 +74,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         this.chunkOffsets = LongArrayList.createLongArrayList();
         this.sampleSizes = IntArrayList.createIntArrayList();
         this.iframes = IntArrayList.createIntArrayList();
-        this.compositionOffsets = new ArrayList<Entry>();
+        this.compositionOffsets = new ArrayList<LongEntry>();
         
         this.out = out;
 
@@ -86,10 +86,10 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
             throw new IllegalStateException("The muxer track has finished muxing");
         int entryNo = pkt.getEntryNo() + 1;
 
-        int compositionOffset = (int) (pkt.getPts() - ptsEstimate);
+        long compositionOffset = (pkt.getPts() - ptsEstimate);
         if (compositionOffset != lastCompositionOffset) {
             if (lastCompositionSamples > 0)
-                compositionOffsets.add(new Entry(lastCompositionSamples, lastCompositionOffset));
+                compositionOffsets.add(new LongEntry(lastCompositionSamples, lastCompositionOffset));
             lastCompositionOffset = compositionOffset;
             lastCompositionSamples = 0;
         }
@@ -216,16 +216,16 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     private void putCompositionOffsets(NodeBox stbl) {
         if (compositionOffsets.size() > 0) {
-            compositionOffsets.add(new Entry(lastCompositionSamples, lastCompositionOffset));
+            compositionOffsets.add(new LongEntry(lastCompositionSamples, lastCompositionOffset));
 
-            int min = minOffset(compositionOffsets);
+            long min = minLongOffset(compositionOffsets);
             if (min > 0) {
-                for (Entry entry : compositionOffsets) {
+                for (LongEntry entry : compositionOffsets) {
                     entry.offset -= min;
                 }
             }
 
-            Entry first = compositionOffsets.get(0);
+            LongEntry first = compositionOffsets.get(0);
             if (first.getOffset() > 0) {
                 if (edits == null) {
                     edits = new ArrayList<Edit>();
@@ -236,16 +236,29 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
                     }
                 }
             }
+            
+            Entry[] intEntries = new Entry[compositionOffsets.size()];
+            for (int i = 0; i < compositionOffsets.size(); i++) {
+                LongEntry longEntry = compositionOffsets.get(i);
+                intEntries[i] = new Entry(checkedCast(longEntry.count), checkedCast(longEntry.offset));
+            }
 
-            stbl.add(CompositionOffsetsBox.createCompositionOffsetsBox(compositionOffsets.toArray(new Entry[0])));
+            stbl.add(CompositionOffsetsBox.createCompositionOffsetsBox(intEntries));
         }
     }
 
+    public static long minLongOffset(List<LongEntry> offs) {
+        long min = Long.MAX_VALUE;
+        for (LongEntry entry : offs) {
+            min = Math.min(min, entry.getOffset());
+        }
+        return min;
+    }
+    
     public static int minOffset(List<Entry> offs) {
         int min = Integer.MAX_VALUE;
         for (Entry entry : offs) {
-            if (entry.getOffset() < min)
-                min = entry.getOffset();
+            min = Math.min(min, entry.getOffset());
         }
         return min;
     }
@@ -267,5 +280,22 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     public void setTimecode(TimecodeMP4MuxerTrack timecodeTrack) {
         this.timecodeTrack = timecodeTrack;
+    }
+
+    /**
+     * Returns the {@code int} value that is equal to {@code value}, if possible.
+     *
+     * @param value any value in the range of the {@code int} type
+     * @return the {@code int} value that equals {@code value}
+     * @throws IllegalArgumentException if {@code value} is greater than {@link
+     *     Integer#MAX_VALUE} or less than {@link Integer#MIN_VALUE}
+     */
+    public static int checkedCast(long value) {
+      int result = (int) value;
+      if (result != value) {
+        // don't use checkArgument here, to avoid boxing
+        throw new IllegalArgumentException("Out of range: " + value);
+      }
+      return result;
     }
 }
