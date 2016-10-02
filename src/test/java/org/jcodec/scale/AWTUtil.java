@@ -123,4 +123,32 @@ public class AWTUtil {
             }
         }
     }
+    
+    public static Picture8Bit fromBufferedImage8Bit(BufferedImage src, ColorSpace tgtColor) {
+        Picture8Bit rgb = fromBufferedImageRGB8Bit(src);
+        Transform8Bit tr = ColorUtil.getTransform8Bit(rgb.getColor(), tgtColor);
+        Picture8Bit res = Picture8Bit.create(rgb.getWidth(), rgb.getHeight(), tgtColor);
+        tr.transform(rgb, res);
+        return res;
+    }
+    
+    public static Picture8Bit fromBufferedImageRGB8Bit(BufferedImage src) {
+        Picture8Bit dst = Picture8Bit.create(src.getWidth(), src.getHeight(), RGB);
+        fromBufferedImage8Bit(src, dst);
+        return dst;
+    }
+
+    public static void fromBufferedImage8Bit(BufferedImage src, Picture8Bit dst) {
+        byte[] dstData = dst.getPlaneData(0);
+
+        int off = 0;
+        for (int i = 0; i < src.getHeight(); i++) {
+            for (int j = 0; j < src.getWidth(); j++) {
+                int rgb1 = src.getRGB(j, i);
+                dstData[off++] = (byte) (((rgb1 >> 16) & 0xff) - 128);
+                dstData[off++] = (byte) (((rgb1 >> 8) & 0xff) - 128);
+                dstData[off++] = (byte) ((rgb1 & 0xff) - 128);
+            }
+        }
+    }
 }

@@ -1,7 +1,21 @@
 package org.jcodec;
+
 import static org.jcodec.common.tools.MathUtil.abs;
 import static org.jcodec.common.tools.MathUtil.clipMax;
 import static org.junit.Assert.assertTrue;
+
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
+
+import javax.imageio.ImageIO;
 
 import org.jcodec.api.FrameGrab8Bit;
 import org.jcodec.api.JCodecException;
@@ -15,16 +29,6 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
-
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.Arrays;
-import javax.imageio.ImageIO;
 
 public class Utils {
 
@@ -131,11 +135,11 @@ public class Utils {
             return false;
 
         for (int i = 0; i < fr2.getData().length; i++) {
-            int maxDiff = findMaxDiff(fr2.getPlaneData(i), fr1.getPlaneData(i));
-            if (maxDiff > 0) {
-                Logger.warn("Max diff: " + maxDiff);
+            int avgDiff = findAvgDiff(fr2.getPlaneData(i), fr1.getPlaneData(i));
+            if (avgDiff > 0) {
+                Logger.warn("Avg diff: " + avgDiff);
             }
-            if (maxDiff > threshold) {
+            if (avgDiff > threshold) {
                 return false;
             }
         }
@@ -150,6 +154,14 @@ public class Utils {
                 maxDiff = diff;
         }
         return maxDiff;
+    }
+    
+    public static int findAvgDiff(byte[] one, byte[] two) {
+        int totalDiff = 0;
+        for (int i = 0; i < one.length; i++) {
+            totalDiff += Math.abs(one[i] - two[i]);
+        }
+        return totalDiff / one.length;
     }
 
     public static Picture8Bit readYuvFrame(ReadableByteChannel ch, int width, int height) throws IOException {
@@ -177,11 +189,54 @@ public class Utils {
         byte[][] dataO = one.getData();
         byte[][] dataT = two.getData();
         byte[][] dataR = result.getData();
-        Arrays.fill(dataR[1], (byte)64);
+        Arrays.fill(dataR[1], (byte) 64);
         for (int i = 0; i < dataO[0].length; i++) {
             dataR[0][i] = (byte) (clipMax(abs(dataO[0][i] - dataT[0][i]) * mul, 255) - 128);
         }
 
         return result;
+    }
+
+    public static BufferedImage scale(BufferedImage source, int width, int height) {
+        AffineTransform at = AffineTransform.getScaleInstance(((double) width) / source.getWidth(), ((double) height)
+                / source.getHeight());
+        AffineTransformOp bilinearScaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BICUBIC);
+
+        return bilinearScaleOp.filter(
+            source,
+            new BufferedImage(width, height, source.getType()));
+    }
+    
+    private static double clampVector(double d) {
+        return d < 0 ? 0 : (d > 1 ? 1 : d);
+    }
+    
+    public static Picture8Bit buildSmoothRandomPic(int width, int height, int smooth, double vectorSmooth) {
+        Picture8Bit pic = Picture8Bit.create(width, height, ColorSpace.YUV420);
+        int[] prevRow = new int[width];
+        double vector = Math.random();
+        for (int p = 0; p < pic.getColor().nComp; p++) {
+            int val = (int) (Math.random() * 255);
+            pic.getPlaneData(p)[0] = (byte) (val - 128);
+            prevRow[0] = val;
+
+            for (int i = 1; i < pic.getPlaneData(p).length; i++) {
+                int predInd = i % pic.getPlaneWidth(p);
+                int pred;
+                if (i < pic.getPlaneWidth(p)) {
+                    pred = prevRow[predInd - 1];
+                } else if (predInd == 0) {
+                    pred = prevRow[predInd];
+                } else {
+                    vector = clampVector(vector + Math.random() * vectorSmooth - vectorSmooth / 2);
+                    pred = (int) (prevRow[predInd] * vector + prevRow[predInd - 1] * (1 - vector));
+                }
+                int delta = (int) (Math.random() * smooth) - (pred * smooth) / 256;
+                val = MathUtil.clip(pred + delta, 0, 255);
+                pic.getPlaneData(p)[i] = (byte) (val - 128);
+                prevRow[predInd] = val;
+            }
+        }
+        return pic;
     }
 }
