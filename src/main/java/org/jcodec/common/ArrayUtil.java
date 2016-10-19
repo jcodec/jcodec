@@ -52,6 +52,8 @@ public class ArrayUtil {
     }
 
     public static final void swap(int[] arr, int ind1, int ind2) {
+        if (ind1 == ind2)
+            return;
         int tmp = arr[ind1];
         arr[ind1] = arr[ind2];
         arr[ind2] = tmp;
@@ -158,7 +160,7 @@ public class ArrayUtil {
             result[i] = (byte) (arguments[i] - 128);
         return result;
     }
-    
+
     public static byte[][] toByteArrayShifted2(int[][] intArray) {
         byte[][] result = new byte[intArray.length][];
         for (int i = 0; i < intArray.length; i++) {
@@ -253,11 +255,11 @@ public class ArrayUtil {
 
     public static byte[] padLeft(byte[] array, int padLength) {
         byte[] result = new byte[array.length + padLength];
-        for(int i = padLength; i < result.length; i++)
+        for (int i = padLength; i < result.length; i++)
             result[i] = array[i - padLength];
         return result;
     }
-    
+
     public static int[] randomIntArray(int size, int from, int to) {
         int width = to - from;
         int[] result = new int[size];
@@ -265,12 +267,68 @@ public class ArrayUtil {
             result[i] = (int) ((Math.random() * width) % width) + from;
         return result;
     }
-    
+
     public static byte[] randomByteArray(int size, byte from, byte to) {
-        byte width = (byte)(to - from);
+        byte width = (byte) (to - from);
         byte[] result = new byte[size];
         for (int i = 0; i < size; i++)
             result[i] = (byte) (((Math.random() * width) % width) + from);
         return result;
     }
+
+    /**
+     * Implements a quicksort algorithm
+     */
+    public static void quickSort(int[] a, int start, int end, int[] p) {
+        int len = end - start;
+        if (len < 2) {
+            return;
+        } else {
+            int startPlus1 = start + 1;
+            if (len == 2) {
+                if (a[start] > a[startPlus1]) {
+                    swap(a, start, startPlus1);
+                    if (p != null)
+                        swap(p, start, startPlus1);
+                }
+                return;
+            } else if (len == 3) {
+                if (a[start] > a[startPlus1]) {
+                    swap(a, start, startPlus1);
+                    if (p != null)
+                        swap(p, start, startPlus1);
+                }
+                int startPlus2 = start + 2;
+                if (a[startPlus1] > a[startPlus2]) {
+                    swap(a, startPlus1, startPlus2);
+                    if (p != null)
+                        swap(p, startPlus1, startPlus2);
+                }
+                if (a[start] > a[startPlus1]) {
+                    swap(a, start, startPlus1);
+                    if (p != null)
+                        swap(p, start, startPlus1);
+                }
+            }
+        }
+        int pivot = a[0];
+
+        // partially sort
+        int p_large = end - 1;
+        for (int i = end - 1; i >= start; i--) {
+            if (a[i] > pivot) {
+                swap(a, i, p_large);
+                if (p != null)
+                    swap(p, i, p_large);
+                p_large--;
+            }
+        }
+        swap(a, start, p_large);
+        if (p != null)
+            swap(p, start, p_large);
+
+        quickSort(a, start, p_large, p);
+        quickSort(a, p_large + 1, end, p);
+    }
+
 }
