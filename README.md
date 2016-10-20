@@ -53,7 +53,7 @@ OR download it from here (you will need both jars):
 * [JCodec JavaSE 0.1.9 JAR](http://jcodec.org/downloads/jcodec-javase-0.1.9.jar), [GPG Sign](http://jcodec.org/downloads/jcodec-javase-0.1.9.jar.asc), [POM](http://jcodec.org/downloads/jcodec-javase-0.1.9.pom)
 
 There is virtually no documentation right now but the plan is to catch up on this so stay tuned. stackoverflow.com contains quite a bit information at this point.
-Also check the 'samples' subfolder. It's a maven project, and it contains some of the code samples for the popular use-cases:
+Also check the 'samples' subfolder. It's a maven project, and it contains some code samples for the popular use-cases:
 * Encoding using high-level API -- [SequenceEncoderDemo.java](https://github.com/jcodec/jcodec/blob/master/samples/main/java/org/jcodec/samples/gen/SequenceEncoderDemo.java);
 * Encoding/decoding using low-level API -- [TranscodeMain.java](https://github.com/jcodec/jcodec/blob/master/samples/main/java/org/jcodec/samples/transcode/TranscodeMain.java);
 
