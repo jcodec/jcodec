@@ -3,6 +3,10 @@ package org.jcodec.movtool;
 import static org.jcodec.common.ArrayUtil.addAllInt;
 import static org.jcodec.common.ArrayUtil.addAllObj;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
+
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -22,11 +26,6 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-
-import java.lang.IllegalArgumentException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

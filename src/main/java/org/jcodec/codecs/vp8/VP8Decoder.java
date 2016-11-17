@@ -9,16 +9,19 @@ import static org.jcodec.codecs.vp8.VP8Util.keyFrameYModeProb;
 import static org.jcodec.codecs.vp8.VP8Util.keyFrameYModeTree;
 import static org.jcodec.codecs.vp8.VP8Util.vp8CoefUpdateProbs;
 
+import java.nio.ByteBuffer;
+
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vp8.Macroblock.Subblock;
 import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
 import org.jcodec.common.Assert;
+import org.jcodec.common.VideoCodecMeta;
+import org.jcodec.common.VideoDecoder;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import org.jcodec.common.model.Size;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,17 +33,20 @@ import java.nio.ByteBuffer;
  * @author The JCodec project
  * 
  */
-public class VP8Decoder {
+public class VP8Decoder extends VideoDecoder {
 
     private Macroblock[][] mbs;
     private int width;
     private int height;
 
-    public void decode(ByteBuffer frame) throws IOException {
+    @Override
+    public Picture8Bit decodeFrame8Bit(ByteBuffer frame, byte[][] buffer) {
         byte[] firstThree = new byte[3];
         frame.get(firstThree);
 
         boolean keyFrame = getBitInBytes(firstThree, 0) == 0;
+        if(!keyFrame)
+            return null;
         int version = getBitsInBytes(firstThree, 1, 3);
         boolean showFrame = getBitInBytes(firstThree, 4) > 0;
         int partitionSize = getBitsInBytes(firstThree, 5, 19);
@@ -142,8 +148,7 @@ public class VP8Decoder {
                     level = (level < 0) ? 0 : (level > 63) ? 63 : level;
                     mb.filterLevel = level;
                 } else
-                    throw new NotSupportedException(
-                            "TODO: frames with loopFilterDeltaFlag <= 0 are not supported yet");
+                    throw new NotSupportedException("TODO: frames with loopFilterDeltaFlag <= 0 are not supported yet");
 
                 if (macroBlockNoCoeffSkip > 0)
                     mb.skipCoeff = headerDecoder.decodeBool(probSkipFalse);
@@ -211,17 +216,11 @@ public class VP8Decoder {
             }
         }
 
-    }
+        Picture8Bit p = Picture8Bit.createPicture8Bit(width, height, buffer, ColorSpace.YUV420);
 
-    public Picture8Bit getPicture8Bit() {
-        Picture8Bit p = Picture8Bit.create(width, height, ColorSpace.YUV420);
-
-        byte[] luma = p.getPlaneData(0);
-        // int strideLuma = p.getPlaneWidth(0);
-
-        byte[] cb = p.getPlaneData(1);
-        byte[] cr = p.getPlaneData(2);
-        // int strideChroma = p.getPlaneWidth(1);
+        byte[] luma = buffer[0];
+        byte[] cb = buffer[1];
+        byte[] cr = buffer[2];
         int mbWidth = getMacroblockCount(width);
         int mbHeight = getMacroblockCount(height);
         int strideLuma = mbWidth * 16;
@@ -241,7 +240,7 @@ public class VP8Decoder {
                                     continue;
 
                                 int yy = mb.ySubblocks[lumaRow][lumaCol].val[lumaPRow * 4 + lumaPCol];
-                                luma[strideLuma * y + x] = (byte)(yy - 128);
+                                luma[strideLuma * y + x] = (byte) (yy - 128);
                             }
 
                 for (int chromaRow = 0; chromaRow < 2; chromaRow++)
@@ -255,15 +254,33 @@ public class VP8Decoder {
 
                                 int u = mb.uSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
                                 int v = mb.vSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
-                                cb[strideChroma * y + x] = (byte)(u - 128);
-                                cr[strideChroma * y + x] = (byte)(v - 128);
+                                cb[strideChroma * y + x] = (byte) (u - 128);
+                                cr[strideChroma * y + x] = (byte) (v - 128);
                             }
             }
         }
         return p;
     }
 
+    public static int probe(ByteBuffer data) {
+        if ((data.get(3) & 0xff) == 0x9d && (data.get(4) & 0xff) == 0x1 && (data.get(5) & 0xff) == 0x2a)
+            return 100;
+        return 0;
+    }
+
     public static String printHexByte(byte b) {
         return "0x" + Integer.toHexString(b & 0xFF);
+    }
+
+    @Override
+    public VideoCodecMeta getCodecMeta(ByteBuffer frame) {
+        NIOUtils.skip(frame, 6);
+
+        int twoBytesWidth = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
+        int twoBytesHeight = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
+        width = (twoBytesWidth & 0x3fff);
+        height = (twoBytesHeight & 0x3fff);
+
+        return new VideoCodecMeta(new Size(width, height));
     }
 }

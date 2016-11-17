@@ -235,6 +235,24 @@ public class ArrayUtil {
         return result;
     }
 
+    public static void printMatrix(byte[] array, String format, int width) {
+        String[] strings = new String[array.length];
+        int maxLen = 0;
+        for (int i = 0; i < array.length; i++) {
+            strings[i] = String.format(format, array[i]);
+            maxLen = Math.max(maxLen, strings[i].length());
+        }
+        for (int ind = 0; ind < strings.length;) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < width && ind < strings.length; i++, ind++) {
+                for (int j = 0; j < maxLen - strings[ind].length() + 1; j++)
+                    builder.append(' ');
+                builder.append(strings[ind]);
+            }
+            System.out.println(builder);
+        }
+    }
+    
     public static void printMatrix(int[] array, String format, int width) {
         String[] strings = new String[array.length];
         int maxLen = 0;

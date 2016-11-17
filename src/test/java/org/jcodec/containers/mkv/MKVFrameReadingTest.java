@@ -70,7 +70,7 @@ public class MKVFrameReadingTest {
         H264Decoder decoder = new H264Decoder();
         Transform8Bit transform = new Yuv420pToRgb8Bit();
 
-        DemuxerTrack inTrack = dem.getVideoTrack();
+        DemuxerTrack inTrack = dem.getVideoTracks().get(0);
 
         Picture8Bit rgb = Picture8Bit.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
         BufferedImage bi = new BufferedImage(dem.getPictureWidth(), dem.getPictureHeight(), BufferedImage.TYPE_3BYTE_BGR);
@@ -101,7 +101,7 @@ public class MKVFrameReadingTest {
         Transform8Bit transform = new Yuv420pToRgb8Bit();
 
         H264Decoder decoder = new H264Decoder();
-        DemuxerTrack inTrack = dem.getVideoTrack();
+        DemuxerTrack inTrack = dem.getVideoTracks().get(0);
 
         AvcCBox avcC = AvcCBox.parseAvcCBox(((VideoTrack) inTrack).getCodecState());
 

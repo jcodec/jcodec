@@ -13,6 +13,6 @@ import java.io.IOException;
  */
 public interface DemuxerTrack {
     Packet nextFrame() throws IOException;
-
+    
     DemuxerTrackMeta getMeta();
 }

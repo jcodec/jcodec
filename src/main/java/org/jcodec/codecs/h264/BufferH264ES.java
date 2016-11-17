@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  * @author The JCodec project
  * 
  */
-public class MappedH264ES implements DemuxerTrack {
+public class BufferH264ES implements DemuxerTrack {
     private ByteBuffer bb;
     private SliceHeaderReader shr;
     private IntObjectMap<PictureParameterSet> pps;
@@ -38,7 +38,7 @@ public class MappedH264ES implements DemuxerTrack {
     private int prevPicOrderCntLsb;
     private int frameNo;
 
-    public MappedH264ES(ByteBuffer bb) {
+    public BufferH264ES(ByteBuffer bb) {
         this.pps = new IntObjectMap<PictureParameterSet>();
         this.sps = new IntObjectMap<SeqParameterSet>();
 

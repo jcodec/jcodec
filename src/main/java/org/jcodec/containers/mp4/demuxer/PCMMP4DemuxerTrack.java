@@ -1,5 +1,11 @@
 package org.jcodec.containers.mp4.demuxer;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.MP4Packet;
@@ -11,9 +17,6 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -129,7 +132,9 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     @Override
     public DemuxerTrackMeta getMeta() {
-        return new DemuxerTrackMeta(DemuxerTrackMeta.Type.AUDIO, getCodec(), null, totalFrames,
-                (double) duration / timescale, null, getCodecPrivate());
+        AudioSampleEntry ase = (AudioSampleEntry) getSampleEntries()[0];
+        AudioCodecMeta audioCodecMeta = new AudioCodecMeta(ase.getFormat());
+        return new DemuxerTrackMeta(TrackType.AUDIO, getCodec(), (double) duration / timescale, null, totalFrames,
+                getCodecPrivate(), null, audioCodecMeta);
     }
 }

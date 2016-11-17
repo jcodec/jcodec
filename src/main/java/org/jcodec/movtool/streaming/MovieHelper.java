@@ -3,9 +3,9 @@ import java.lang.IllegalStateException;
 import java.lang.System;
 
 
-import static org.jcodec.containers.mp4.TrackType.SOUND;
-import static org.jcodec.containers.mp4.TrackType.TIMECODE;
-import static org.jcodec.containers.mp4.TrackType.VIDEO;
+import static org.jcodec.containers.mp4.MP4TrackType.SOUND;
+import static org.jcodec.containers.mp4.MP4TrackType.TIMECODE;
+import static org.jcodec.containers.mp4.MP4TrackType.VIDEO;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.h264.H264Utils;
@@ -15,7 +15,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.ChannelBox;
@@ -135,8 +135,8 @@ public class MovieHelper {
             trak.add(media);
             media.add(MediaHeaderBox.createMediaHeaderBox(trackTimescale, totalDur, 0, new Date().getTime(), new Date().getTime(), 0));
 
-            TrackType tt = (codecMeta instanceof AudioCodecMeta) ? TrackType.SOUND : TrackType.VIDEO;
-            if (tt == TrackType.VIDEO) {
+            MP4TrackType tt = (codecMeta instanceof AudioCodecMeta) ? MP4TrackType.SOUND : MP4TrackType.VIDEO;
+            if (tt == MP4TrackType.VIDEO) {
                 NodeBox tapt = new NodeBox(new Header("tapt"));
                 tapt.add(ClearApertureBox.createClearApertureBox(dd.getWidth(), dd.getHeight()));
                 tapt.add(ProductionApertureBox.createProductionApertureBox(dd.getWidth(), dd.getHeight()));
@@ -180,7 +180,7 @@ public class MovieHelper {
         Rational pasp = null;
         SampleEntry vse;
         if ("avc1".equals(se.getFourcc())) {
-            vse = H264Utils.createMOVSampleEntryFromBytes(NIOUtils.toArray(se.getCodecPrivate()));
+            vse = H264Utils.createMOVSampleEntryFromBytes(se.getCodecPrivate().duplicate());
             pasp = ((VideoCodecMeta) se).getPasp();
         } else if (se instanceof VideoCodecMeta) {
             VideoCodecMeta ss = (VideoCodecMeta) se;
@@ -381,7 +381,7 @@ public class MovieHelper {
         throw new RuntimeException("Crap");
     }
 
-    private static void mediaHeader(MediaInfoBox minf, TrackType type) {
+    private static void mediaHeader(MediaInfoBox minf, MP4TrackType type) {
         if (VIDEO == type) {
             VideoMediaHeaderBox vmhd = VideoMediaHeaderBox.createVideoMediaHeaderBox(0, 0, 0, 0);
             vmhd.setFlags(1);

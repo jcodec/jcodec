@@ -1,4 +1,7 @@
 package org.jcodec.api.specific;
+
+import java.nio.ByteBuffer;
+
 import org.jcodec.api.MediaInfo;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
@@ -13,8 +16,6 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
-
-import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,7 +43,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     private void calcBufferSize() {
         int w = Integer.MIN_VALUE, h = Integer.MIN_VALUE;
         
-        ByteBuffer bb = ByteBuffer.wrap(meta.getCodecPrivate());
+        ByteBuffer bb = meta.getCodecPrivate().duplicate();
         ByteBuffer b;
         while((b = H264Utils.nextNALUnit(bb)) != null) {
             NALUnit nu = NALUnit.read(b);
@@ -66,7 +67,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         updateState(packet);
 
         Picture pic = decoder.decodeFrameFromNals(H264Utils.splitFrame(packet.getData()), data);
-        Rational pasp = meta.getPixelAspectRatio();
+        Rational pasp = meta.getVideoCodecMeta().getPixelAspectRatio();
 
         if (pasp != null) {
             // TODO: transform
@@ -80,7 +81,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         updateState(packet);
 
         Picture8Bit pic = decoder.decodeFrame8Bit(packet.getData(), data);
-        Rational pasp = meta.getPixelAspectRatio();
+        Rational pasp = meta.getVideoCodecMeta().getPixelAspectRatio();
 
         if (pasp != null) {
             // TODO: transform

@@ -20,11 +20,24 @@ import static org.jcodec.containers.mkv.MKVType.Video;
 import static org.jcodec.containers.mkv.MKVType.findFirst;
 import static org.jcodec.containers.mkv.MKVType.findList;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.Codec;
+import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mkv.MKVParser;
 import org.jcodec.containers.mkv.MKVType;
@@ -32,13 +45,9 @@ import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlBin;
 import org.jcodec.containers.mkv.boxes.EbmlFloat;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
+import org.jcodec.containers.mkv.boxes.EbmlString;
 import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -47,19 +56,27 @@ import java.util.List;
  * @author The JCodec project
  * 
  */
-public final class MKVDemuxer {
+public final class MKVDemuxer implements Demuxer {
     private VideoTrack vTrack = null;
     private List<DemuxerTrack> aTracks;
     private List<EbmlMaster> t;
     private SeekableByteChannel channel;
-    long timescale = 1L;
+    int timescale = 1;
     int pictureWidth;
     int pictureHeight;
 
-    public MKVDemuxer(List<EbmlMaster> t, SeekableByteChannel fileChannelWrapper) {
-        this.aTracks = new ArrayList<DemuxerTrack>();
-        this.t = t;
+    private static Map<String, Codec> codecMapping = new HashMap<String, Codec>();
+    static {
+        codecMapping.put("V_VP8", Codec.VP8);
+        codecMapping.put("V_VP9", Codec.VP9);
+        codecMapping.put("V_MPEG4/ISO/AVC", Codec.H264);
+    }
+
+    public MKVDemuxer(SeekableByteChannel fileChannelWrapper) throws IOException {
         this.channel = fileChannelWrapper;
+        this.aTracks = new ArrayList<DemuxerTrack>();
+        MKVParser parser = new MKVParser(channel);
+        this.t = parser.parse();
         demux();
     }
 
@@ -67,7 +84,7 @@ public final class MKVDemuxer {
         MKVType[] path = { Segment, Info, TimecodeScale };
         EbmlUint ts = MKVType.findFirstTree(t, path);
         if (ts != null)
-            timescale = ts.getUint();
+            timescale = (int) ts.getUint();
         MKVType[] path9 = { Segment, Tracks, TrackEntry };
 
         for (EbmlMaster aTrack : findList(t, EbmlMaster.class, path9)) {
@@ -80,12 +97,17 @@ public final class MKVDemuxer {
                 if (vTrack != null)
                     throw new RuntimeException("More then 1 video track, can not compute...");
                 MKVType[] path3 = { TrackEntry, CodecPrivate };
+                MKVType[] path10 = { TrackEntry, MKVType.CodecID };
+                EbmlString codecId = (EbmlString) findFirst(aTrack, path10);
+                Codec codec = codecMapping.get(codecId.getString());
+                
                 EbmlBin videoCodecState = (EbmlBin) findFirst(aTrack, path3);
                 ByteBuffer state = null;
                 if (videoCodecState != null)
                     state = videoCodecState.data;
+
                 MKVType[] path4 = { TrackEntry, Video, PixelWidth };
-                
+
                 EbmlUint width = (EbmlUint) findFirst(aTrack, path4);
                 MKVType[] path5 = { TrackEntry, Video, PixelHeight };
                 EbmlUint height = (EbmlUint) findFirst(aTrack, path5);
@@ -93,21 +115,21 @@ public final class MKVDemuxer {
                 EbmlUint dwidth = (EbmlUint) findFirst(aTrack, path6);
                 MKVType[] path7 = { TrackEntry, Video, DisplayHeight };
                 EbmlUint dheight = (EbmlUint) findFirst(aTrack, path7);
-                MKVType[] path8 = { TrackEntry, Video, DisplayUnit };  
+                MKVType[] path8 = { TrackEntry, Video, DisplayUnit };
                 EbmlUint unit = (EbmlUint) findFirst(aTrack, path8);
-                if (width != null && height != null){
+                if (width != null && height != null) {
                     pictureWidth = (int) width.getUint();
                     pictureHeight = (int) height.getUint();
-                } else if (dwidth != null && dheight != null){
-                    if (unit == null || unit.getUint() == 0){
+                } else if (dwidth != null && dheight != null) {
+                    if (unit == null || unit.getUint() == 0) {
                         pictureHeight = (int) dheight.getUint();
-                        pictureWidth  = (int) dwidth.getUint();
+                        pictureWidth = (int) dwidth.getUint();
                     } else {
                         throw new RuntimeException("DisplayUnits other then 0 are not implemented yet");
                     }
                 }
 
-                vTrack = new VideoTrack(this, (int) id, state);
+                vTrack = new VideoTrack(this, (int) id, state, codec);
 
             } else if (type == 2) {
                 AudioTrack audioTrack = new AudioTrack((int) id, this);
@@ -115,7 +137,7 @@ public final class MKVDemuxer {
                 EbmlFloat sf = (EbmlFloat) findFirst(aTrack, path3);
                 if (sf != null)
                     audioTrack.samplingFrequency = sf.getDouble();
-                
+
                 aTracks.add(audioTrack);
             }
         }
@@ -156,32 +178,31 @@ public final class MKVDemuxer {
         }
     }
 
-    public static MKVDemuxer getDemuxer(SeekableByteChannel channel) throws IOException {
-        MKVParser parser = new MKVParser(channel);
-        return new MKVDemuxer(parser.parse(), channel);
-    }
-
-    public DemuxerTrack getVideoTrack() {
-        return vTrack;
-    }
-
-    private static final TapeTimecode ZERO_TAPE_TIMECODE = new TapeTimecode((short) 0, (byte) 0, (byte) 0, (byte) 0, false);
+    private static final TapeTimecode ZERO_TAPE_TIMECODE = new TapeTimecode((short) 0, (byte) 0, (byte) 0, (byte) 0,
+            false);
 
     public static class VideoTrack implements SeekableDemuxerTrack {
         private ByteBuffer state;
         public final int trackNo;
         private int frameIdx = 0;
         List<MkvBlock> blocks;
-		private MKVDemuxer demuxer;
+        private MKVDemuxer demuxer;
+        private Codec codec;
+        private AvcCBox avcC;
 
-        public VideoTrack(MKVDemuxer demuxer, int trackNo, ByteBuffer state) {
+        public VideoTrack(MKVDemuxer demuxer, int trackNo, ByteBuffer state, Codec codec) {
             this.blocks = new ArrayList<MkvBlock>();
             this.demuxer = demuxer;
-			this.trackNo = trackNo;
-            this.state = state;
-
+            this.trackNo = trackNo;
+            this.codec = codec;
+            if (codec == Codec.H264) {
+                avcC = H264Utils.parseAVCCFromBuffer(state);
+                this.state = H264Utils.avcCToAnnexB(avcC);
+            } else {
+                this.state = state;
+            }
         }
-
+        
         @Override
         public Packet nextFrame() throws IOException {
             if (frameIdx >= blocks.size())
@@ -192,7 +213,9 @@ public final class MKVDemuxer {
                 throw new RuntimeException("Something somewhere went wrong.");
             frameIdx++;
             /**
-             * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually read only when Packet.getData() is executed.
+             * This part could be moved withing yet-another inner class, say
+             * MKVPacket to that channel is actually read only when
+             * Packet.getData() is executed.
              */
             demuxer.channel.setPosition(b.dataOffset);
             ByteBuffer data = ByteBuffer.allocate(b.dataLen);
@@ -202,8 +225,12 @@ public final class MKVDemuxer {
             long duration = 1;
             if (frameIdx < blocks.size())
                 duration = blocks.get(frameIdx).absoluteTimecode - b.absoluteTimecode;
-
-            return Packet.createPacket(b.frames[0].duplicate(), b.absoluteTimecode, demuxer.timescale, duration, frameIdx - 1, b._keyFrame, ZERO_TAPE_TIMECODE);
+            ByteBuffer result = b.frames[0].duplicate();
+            if (codec == Codec.H264) {
+                result = H264Utils.decodeMOVPacket(result, avcC);
+            }
+            return Packet.createPacket(result, b.absoluteTimecode, demuxer.timescale, duration,
+                    frameIdx - 1, b._keyFrame, ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -238,7 +265,8 @@ public final class MKVDemuxer {
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            throw new RuntimeException("Unsupported");
+            return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, codec, 0, null, 0, state,
+                    new VideoCodecMeta(new Size(demuxer.pictureWidth, demuxer.pictureHeight)), null);
         }
 
         @Override
@@ -267,13 +295,13 @@ public final class MKVDemuxer {
         private int frameIdx = 0;
         private int blockIdx = 0;
         private int frameInBlockIdx = 0;
-		private MKVDemuxer demuxer;
+        private MKVDemuxer demuxer;
 
         public AudioTrack(int trackNo, MKVDemuxer demuxer) {
             this.blocks = new ArrayList<IndexedBlock>();
 
             this.trackNo = trackNo;
-			this.demuxer = demuxer;
+            this.demuxer = demuxer;
         }
 
         @Override
@@ -287,9 +315,11 @@ public final class MKVDemuxer {
 
             if (b.frames == null || b.frames.length == 0) {
                 /**
-                 * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually rean only when Packet.getData() is executed.
+                 * This part could be moved withing yet-another inner class, say
+                 * MKVPacket to that channel is actually rean only when
+                 * Packet.getData() is executed.
                  */
-            	demuxer.channel.setPosition(b.dataOffset);
+                demuxer.channel.setPosition(b.dataOffset);
                 ByteBuffer data = ByteBuffer.allocate(b.dataLen);
                 demuxer.channel.read(data);
                 b.readFrames(data);
@@ -302,7 +332,8 @@ public final class MKVDemuxer {
                 frameInBlockIdx = 0;
             }
 
-            return Packet.createPacket(data, b.absoluteTimecode, Math.round(samplingFrequency), 1, 0, false, ZERO_TAPE_TIMECODE);
+            return Packet.createPacket(data, b.absoluteTimecode, (int) Math.round(samplingFrequency), 1, 0, false,
+                    ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -359,15 +390,18 @@ public final class MKVDemuxer {
                 MkvBlock b = blocks.get(blockIdx).block;
                 if (b.frames == null || b.frames.length == 0) {
                     /**
-                     * This part could be moved withing yet-another inner class, say MKVPacket to that channel is actually rean only when Packet.getData() is executed.
+                     * This part could be moved withing yet-another inner class,
+                     * say MKVPacket to that channel is actually rean only when
+                     * Packet.getData() is executed.
                      */
                     try {
-                    	demuxer.channel.setPosition(b.dataOffset);
+                        demuxer.channel.setPosition(b.dataOffset);
                         ByteBuffer data = ByteBuffer.allocate(b.dataLen);
                         demuxer.channel.read(data);
                         b.readFrames(data);
                     } catch (IOException ioe) {
-                        throw new RuntimeException("while reading frames of a Block at offset 0x" + Long.toHexString(b.dataOffset).toUpperCase() + ")", ioe);
+                        throw new RuntimeException("while reading frames of a Block at offset 0x"
+                                + Long.toHexString(b.dataOffset).toUpperCase() + ")", ioe);
                     }
                 }
                 packetFrames.add(b.frames[frameInBlockIdx].duplicate());
@@ -379,21 +413,22 @@ public final class MKVDemuxer {
                 }
                 count--;
             }
-            
+
             int size = 0;
             for (ByteBuffer aFrame : packetFrames)
                 size += aFrame.limit();
-            
+
             ByteBuffer data = ByteBuffer.allocate(size);
             for (ByteBuffer aFrame : packetFrames)
                 data.put(aFrame);
-            
-            return Packet.createPacket(data, firstBlockInAPacket.absoluteTimecode, Math.round(samplingFrequency), packetFrames.size(), 0, false, ZERO_TAPE_TIMECODE);
+
+            return Packet.createPacket(data, firstBlockInAPacket.absoluteTimecode, (int) Math.round(samplingFrequency),
+                    packetFrames.size(), 0, false, ZERO_TAPE_TIMECODE);
         }
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            throw new RuntimeException("Unsupported");
+            return null;
         }
 
         @Override
@@ -410,8 +445,31 @@ public final class MKVDemuxer {
         return pictureHeight;
     }
 
+    @Override
     public List<DemuxerTrack> getAudioTracks() {
         return aTracks;
     }
 
+    @Override
+    public List<DemuxerTrack> getTracks() {
+        ArrayList<DemuxerTrack> tracks = new ArrayList<DemuxerTrack>(aTracks);
+        tracks.add(vTrack);
+        return tracks;
+    }
+
+    @Override
+    public List<DemuxerTrack> getVideoTracks() {
+        ArrayList<DemuxerTrack> tracks = new ArrayList<DemuxerTrack>();
+        tracks.add(vTrack);
+        return tracks;
+    }
+
+    public List<? extends EbmlBase> getTree() {
+        return t;
+    }
+
+    @Override
+    public void close() throws IOException {
+        channel.close();
+    }
 }

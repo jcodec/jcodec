@@ -1,20 +1,20 @@
 package org.jcodec.containers.flv;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Size;
 import org.jcodec.containers.flv.FLVTag.Type;
-
-import java.io.IOException;
-import java.lang.System;
-import java.util.LinkedList;
-import java.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,12 +44,12 @@ public class FLVTrackDemuxer {
         private Codec codec;
         private LongArrayList framePositions;
         private byte[] codecPrivate;
-		private FLVTrackDemuxer demuxer;
+        private FLVTrackDemuxer demuxer;
 
         public FLVDemuxerTrack(FLVTrackDemuxer demuxer, Type type) throws IOException {
             this.framePositions = LongArrayList.createLongArrayList();
             this.demuxer = demuxer;
-			this.type = type;
+            this.type = type;
             FLVTag frame = demuxer.nextFrameI(type, false);
             codec = frame.getTagHeader().getCodec();
         }
@@ -72,16 +72,15 @@ public class FLVTrackDemuxer {
             // framePositions.add(nextFrameI.getPosition());
             return toPacket(frame);
         }
-        
+
         private Packet toPacket(FLVTag frame) {
             return null;
         }
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            DemuxerTrackMeta.Type t = type == Type.VIDEO ? DemuxerTrackMeta.Type.VIDEO : DemuxerTrackMeta.Type.AUDIO;
-            return new DemuxerTrackMeta(t, codec,
-                    null, 0, 0, new Size(0, 0), codecPrivate);
+            TrackType t = type == Type.VIDEO ? TrackType.VIDEO : TrackType.AUDIO;
+            return new DemuxerTrackMeta(t, codec, 0, null, 0, ByteBuffer.wrap(codecPrivate), null, null);
         }
 
         @Override
@@ -104,7 +103,7 @@ public class FLVTrackDemuxer {
 
         @Override
         public void seek(double second) throws IOException {
-        	demuxer.seekI(second);
+            demuxer.seekI(second);
         }
     }
 

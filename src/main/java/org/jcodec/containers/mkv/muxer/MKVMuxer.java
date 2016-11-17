@@ -26,8 +26,21 @@ import static org.jcodec.containers.mkv.MKVType.Video;
 import static org.jcodec.containers.mkv.MKVType.WritingApp;
 import static org.jcodec.containers.mkv.MKVType.createByType;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.Codec;
+import org.jcodec.common.Muxer;
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.model.Size;
 import org.jcodec.containers.mkv.CuesFactory;
 import org.jcodec.containers.mkv.MKVType;
 import org.jcodec.containers.mkv.SeekHeadFactory;
@@ -41,13 +54,6 @@ import org.jcodec.containers.mkv.boxes.EbmlUint;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.muxer.MKVMuxerTrack.MKVMuxerTrackType;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -55,33 +61,43 @@ import java.util.List;
  * @author The JCodec project
  * 
  */
-public class MKVMuxer {
+public class MKVMuxer implements Muxer {
 
     private List<MKVMuxerTrack> tracks;
-    private MKVMuxerTrack videoTrack = null;
+    private MKVMuxerTrack audioTrack;
+    private MKVMuxerTrack videoTrack;
     private EbmlMaster mkvInfo;
     private EbmlMaster mkvTracks;
     private EbmlMaster mkvCues;
     private EbmlMaster mkvSeekHead;
     private List<EbmlMaster> clusterList;
+    private SeekableByteChannel sink;
+    
+    private static Map<Codec, String> codec2mkv = new HashMap<Codec, String>();
+    static {
+        codec2mkv.put(Codec.H264, "V_MPEG4/ISO/AVC");
+        codec2mkv.put(Codec.VP8, "V_VP8");
+        codec2mkv.put(Codec.VP9, "V_VP9");
+    }
 
-    public MKVMuxer() {
+    public MKVMuxer(SeekableByteChannel s) {
+        this.sink = s;
         this.tracks = new ArrayList<MKVMuxerTrack>();
         this.clusterList = new LinkedList<EbmlMaster>();
     }
 
-    public MKVMuxerTrack createVideoTrack(Size dimentions, String codecId) {
+    public MKVMuxerTrack createVideoTrack(VideoCodecMeta meta, String codecId) {
         if (videoTrack == null) {
             videoTrack = new MKVMuxerTrack();
             tracks.add(videoTrack);
             videoTrack.codecId = codecId;
-            videoTrack.frameDimentions = dimentions;
+            videoTrack.videoMeta = meta;
             videoTrack.trackNo = tracks.size();
         }
         return videoTrack;
     }
 
-    public void mux(SeekableByteChannel s) throws IOException {
+    public void finish() throws IOException {
         List<EbmlMaster> mkvFile = new ArrayList<EbmlMaster>();
         EbmlMaster ebmlHeader = defaultEbmlHeader();
         mkvFile.add(ebmlHeader);
@@ -102,7 +118,7 @@ public class MKVMuxer {
         mkvFile.add(segmentElem);
 
         for (EbmlMaster el : mkvFile)
-            el.mux(s);
+            el.mux(sink);
     }
 
     private EbmlMaster defaultEbmlHeader() {
@@ -124,11 +140,17 @@ public class MKVMuxer {
         EbmlMaster master = (EbmlMaster) createByType(Info);
         int frameDurationInNanoseconds = MKVMuxerTrack.NANOSECONDS_IN_A_MILISECOND * 40;
         createLong(master, TimecodeScale, frameDurationInNanoseconds);
-        createString(master, WritingApp, "JCodec v0.1.7");
-        createString(master, MuxingApp, "JCodec MKVStreamingMuxer v0.1.7");
+        createString(master, WritingApp, "JCodec");
+        createString(master, MuxingApp, "JCodec");
 
-        MkvBlock lastBlock = videoTrack.trackBlocks.get(videoTrack.trackBlocks.size() - 1);
-        createDouble(master, MKVType.Duration, (lastBlock.absoluteTimecode + 1) * frameDurationInNanoseconds * 1.0);
+        List<MKVMuxerTrack> tracks2 = tracks;
+        long max = 0;
+        for (MKVMuxerTrack track : tracks2) {
+            MkvBlock lastBlock = track.trackBlocks.get(track.trackBlocks.size() - 1);
+            if (lastBlock.absoluteTimecode > max)
+                max = lastBlock.absoluteTimecode;
+        }
+        createDouble(master, MKVType.Duration, (max + 1) * frameDurationInNanoseconds * 1.0);
         createDate(master, DateUTC, new Date());
         return master;
     }
@@ -150,8 +172,8 @@ public class MKVMuxer {
                 //                VideoCodecMeta vcm = (VideoCodecMeta) codecMeta;
 
                 EbmlMaster trackVideoElem = (EbmlMaster) createByType(Video);
-                createLong(trackVideoElem, PixelWidth, track.frameDimentions.getWidth());
-                createLong(trackVideoElem, PixelHeight, track.frameDimentions.getHeight());
+                createLong(trackVideoElem, PixelWidth, track.videoMeta.getSize().getWidth());
+                createLong(trackVideoElem, PixelHeight, track.videoMeta.getSize().getHeight());
 
                 trackEntryElem.add(trackVideoElem);
 
@@ -169,7 +191,7 @@ public class MKVMuxer {
 
     private void muxCues() {
         CuesFactory cf = new CuesFactory(mkvSeekHead.size() + mkvInfo.size() + mkvTracks.size(),
-                videoTrack.trackNo - 1);
+                videoTrack.trackNo);
         for (MkvBlock aBlock : videoTrack.trackBlocks) {
             EbmlMaster mkvCluster = singleBlockedCluster(aBlock);
             clusterList.add(mkvCluster);
@@ -231,4 +253,17 @@ public class MKVMuxer {
         }
     }
 
+    @Override
+    public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
+        return createVideoTrack(meta, codec2mkv.get(codec));
+    }
+
+    @Override
+    public MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta) {
+        audioTrack = new MKVMuxerTrack();
+        tracks.add(audioTrack);
+        audioTrack.codecId = codec2mkv.get(codec);
+        audioTrack.trackNo = tracks.size();
+        return audioTrack;
+    }
 }

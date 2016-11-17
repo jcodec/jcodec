@@ -1,13 +1,28 @@
 package org.jcodec.containers.mp4.muxer;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.jcodec.codecs.aac.ADTSParser;
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.common.Assert;
+import org.jcodec.common.Codec;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
@@ -30,13 +45,6 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-
-import java.io.IOException;
-import java.lang.IllegalStateException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -67,24 +75,53 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     private boolean allIframes = true;
     private TimecodeMP4MuxerTrack timecodeTrack;
     private SeekableByteChannel out;
+    private Codec codec;
 
-    public FramesMP4MuxerTrack(SeekableByteChannel out, int trackId, TrackType type, int timescale) {
-        super(trackId, type, timescale);
+    // SPS/PPS lists when h.264 is stored, otherwise these lists are not used.
+    private List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
+    private List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+
+    // ADTS header used to construct audio sample entry for AAC
+    private ADTSParser.Header adtsHeader;
+
+    public FramesMP4MuxerTrack(SeekableByteChannel out, int trackId, MP4TrackType type, Codec codec) {
+        super(trackId, type);
         this.sampleDurations = new ArrayList<TimeToSampleEntry>();
         this.chunkOffsets = LongArrayList.createLongArrayList();
         this.sampleSizes = IntArrayList.createIntArrayList();
         this.iframes = IntArrayList.createIntArrayList();
         this.compositionOffsets = new ArrayList<Entry>();
-        
+
         this.out = out;
+
+        this.codec = codec;
 
         setTgtChunkDuration(new Rational(1, 1), Unit.FRAME);
     }
 
-    public void addFrame(MP4Packet pkt) throws IOException {
+    public void addFrame(Packet pkt) throws IOException {
+        if (codec == Codec.H264) {
+            ByteBuffer result = pkt.getData();
+            H264Utils.wipePSinplace(result, spsList, ppsList);
+            result = H264Utils.encodeMOVPacket(result);
+            pkt = Packet.createPacketWithData(pkt, result);
+        } else if (codec == Codec.AAC && adtsHeader == null) {
+            adtsHeader = ADTSParser.read(pkt.getData());
+        }
+        addFrameInternal(pkt, 1);
+        processTimecode(pkt);
+    }
+
+    public void addFrameInternal(Packet pkt, int entryNo) throws IOException {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
-        int entryNo = pkt.getEntryNo() + 1;
+
+        if (_timescale != NO_TIMESCALE_SET && pkt.getTimescale() != _timescale)
+            throw new RuntimeException(
+                    "Mix and match of timescale is not supported, was: " + _timescale + ", now: " + pkt.getTimescale());
+
+        if (_timescale == NO_TIMESCALE_SET)
+            _timescale = pkt.getTimescale();
 
         int compositionOffset = (int) (pkt.getPts() - ptsEstimate);
         if (compositionOffset != lastCompositionOffset) {
@@ -121,12 +158,10 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
         outChunkIfNeeded(entryNo);
 
-        processTimecode(pkt);
-
         lastEntry = entryNo;
     }
 
-    private void processTimecode(MP4Packet pkt) throws IOException {
+    private void processTimecode(Packet pkt) throws IOException {
         if (timecodeTrack != null)
             timecodeTrack.addTimecode(pkt);
     }
@@ -138,7 +173,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
                 && curChunk.size() * tgtChunkDuration.getDen() == tgtChunkDuration.getNum()) {
             outChunk(entryNo);
         } else if (tgtChunkDurationUnit == Unit.SEC && chunkDuration > 0
-                && chunkDuration * tgtChunkDuration.getDen() >= tgtChunkDuration.getNum() * timescale) {
+                && chunkDuration * tgtChunkDuration.getDen() >= tgtChunkDuration.getNum() * _timescale) {
             outChunk(entryNo);
         }
     }
@@ -167,6 +202,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     protected Box finish(MovieHeaderBox mvhd) throws IOException {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
+        setCodecPrivateIfNeeded();
 
         outChunk(lastEntry);
 
@@ -177,8 +213,10 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
         TrakBox trak = TrakBox.createTrakBox();
         Size dd = getDisplayDimensions();
-        TrackHeaderBox tkhd = TrackHeaderBox.createTrackHeaderBox(trackId, ((long) mvhd.getTimescale() * trackTotalDuration)
-                / timescale, dd.getWidth(), dd.getHeight(), new Date().getTime(), new Date().getTime(), 1.0f, (short) 0, 0, new int[] { 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 });
+        TrackHeaderBox tkhd = TrackHeaderBox.createTrackHeaderBox(trackId,
+                ((long) mvhd.getTimescale() * trackTotalDuration) / _timescale, dd.getWidth(), dd.getHeight(),
+                new Date().getTime(), new Date().getTime(), 1.0f, (short) 0, 0,
+                new int[] { 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 });
         tkhd.setFlags(0xf);
         trak.add(tkhd);
 
@@ -186,7 +224,8 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
         MediaBox media = MediaBox.createMediaBox();
         trak.add(media);
-        media.add(MediaHeaderBox.createMediaHeaderBox(timescale, trackTotalDuration, 0, new Date().getTime(), new Date().getTime(), 0));
+        media.add(MediaHeaderBox.createMediaHeaderBox(_timescale, trackTotalDuration, 0, new Date().getTime(),
+                new Date().getTime(), 0));
 
         HandlerBox hdlr = HandlerBox.createHandlerBox("mhlr", type.getHandler(), "appl", 0, 0);
         media.add(hdlr);
@@ -267,5 +306,49 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     public void setTimecode(TimecodeMP4MuxerTrack timecodeTrack) {
         this.timecodeTrack = timecodeTrack;
+    }
+
+    public void setCodecPrivateIfNeeded() {
+        if (codec == Codec.H264) {
+            getEntries().get(0).add(H264Utils.createAvcCFromPS(selectUnique(spsList), selectUnique(ppsList), 4));
+        } else if (codec == Codec.AAC) {
+            getEntries().get(0).add(EsdsBox.fromADTS(adtsHeader));
+        }
+    }
+
+    private static class ByteArrayWrapper {
+        private byte[] bytes;
+
+        public ByteArrayWrapper(ByteBuffer bytes) {
+            this.bytes = NIOUtils.toArray(bytes);
+        }
+
+        public ByteBuffer get() {
+            return ByteBuffer.wrap(bytes);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof ByteArrayWrapper))
+                return false;
+            return Arrays.equals(bytes, ((ByteArrayWrapper) obj).bytes);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(bytes);
+        }
+    }
+
+    private List<ByteBuffer> selectUnique(List<ByteBuffer> bblist) {
+        Set<ByteArrayWrapper> all = new HashSet<ByteArrayWrapper>();
+        for (ByteBuffer byteBuffer : bblist) {
+            all.add(new ByteArrayWrapper(byteBuffer));
+        }
+        List<ByteBuffer> result = new ArrayList<ByteBuffer>();
+        for (ByteArrayWrapper bs : all) {
+            result.add(bs.get());
+        }
+        return result;
     }
 }

@@ -64,15 +64,10 @@ public class WavResampler {
             ChannelSplit split = new ChannelSplit(inf);
             ChannelMerge merge = new ChannelMerge(inf);
 
-//@formatter:off
-            FilterGraph cf = FilterGraph
-                    .addLevel(split)
-                    .addLevelSpan(lowPass)
-                    .addLevelSpan(r0)
-                    .addLevelSpan(r1)
-                    .addLevel(merge)
-                    .create();
-//@formatter:on
+            // @formatter:off
+            FilterGraph cf = FilterGraph.addLevel(split).addLevelSpan(lowPass).addLevelSpan(r0).addLevelSpan(r1)
+                    .addLevel(merge).create();
+            // @formatter:on
             Audio.filterTransfer(wavIn, cf, wavOut);
         } finally {
             IOUtils.closeQuietly(wavIn);

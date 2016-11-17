@@ -1,15 +1,4 @@
 package org.jcodec.containers.mp4.muxer;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Rational;
-import org.jcodec.common.model.TapeTimecode;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.Edit;
-import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
-import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
-import org.jcodec.movtool.Util;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -17,6 +6,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import org.jcodec.common.Codec;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Rational;
+import org.jcodec.common.model.TapeTimecode;
+import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.containers.mp4.MP4TrackType;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.Edit;
+import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
+import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
+import org.jcodec.movtool.Util;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -39,13 +41,17 @@ public class TimecodeMP4MuxerTrack extends FramesMP4MuxerTrack {
     private List<Edit> lower;
     private List<Packet> gop;
 
-    public TimecodeMP4MuxerTrack(SeekableByteChannel out, int trackId, int timescale) {
-        super(out, trackId, TrackType.TIMECODE, timescale);
+    public TimecodeMP4MuxerTrack(SeekableByteChannel out, int trackId) {
+        super(out, trackId, MP4TrackType.TIMECODE, Codec.TIMECODE);
         this.lower = new ArrayList<Edit>();
         this.gop = new ArrayList<Packet>();
     }
 
     public void addTimecode(Packet packet) throws IOException {
+        if(_timescale == NO_TIMESCALE_SET)
+            _timescale = packet.getTimescale();
+        if(_timescale != NO_TIMESCALE_SET && _timescale != packet.getTimescale())
+            throw new RuntimeException("MP4 timecode track doesn't support timescale switching.");
         if (packet.isKeyFrame())
             processGop();
         gop.add(Packet.createPacketWithData(packet, (ByteBuffer) null));
@@ -161,12 +167,12 @@ public class TimecodeMP4MuxerTrack extends FramesMP4MuxerTrack {
             if (firstTimecode != null) {
                 if (fpsEstimate == -1)
                     fpsEstimate = prevTimecode.getFrame() + 1;
-                TimecodeSampleEntry tmcd = TimecodeSampleEntry.createTimecodeSampleEntry((firstTimecode.isDropFrame() ? 1 : 0), timescale, (int) (sampleDuration / tcFrames), fpsEstimate);
+                TimecodeSampleEntry tmcd = TimecodeSampleEntry.createTimecodeSampleEntry((firstTimecode.isDropFrame() ? 1 : 0), _timescale, (int) (sampleDuration / tcFrames), fpsEstimate);
                 sampleEntries.add(tmcd);
                 ByteBuffer sample = ByteBuffer.allocate(4);
                 sample.putInt(toCounter(firstTimecode, fpsEstimate));
                 sample.flip();
-                addFrame(MP4Packet.createMP4Packet(sample, samplePts, timescale, sampleDuration, 0, true, null, 0, samplePts, sampleEntries.size() - 1));
+                addFrame(MP4Packet.createMP4Packet(sample, samplePts, _timescale, sampleDuration, 0, true, null, 0, samplePts, sampleEntries.size() - 1));
 
                 lower.add(new Edit(sampleDuration, samplePts, 1.0f));
             } else {

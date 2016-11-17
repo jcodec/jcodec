@@ -1,4 +1,10 @@
 package org.jcodec.containers.mp4.demuxer;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
+
+import org.jcodec.codecs.aac.AACUtils;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
@@ -7,7 +13,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
@@ -23,11 +29,6 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
-import java.io.IOException;
-import java.lang.IllegalArgumentException;
-import java.nio.ByteBuffer;
-import java.util.List;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -39,7 +40,7 @@ import java.util.List;
  */
 public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     protected TrakBox box;
-    private TrackType type;
+    private MP4TrackType type;
     private int no;
     protected SampleEntry[] sampleEntries;
 
@@ -98,7 +99,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return sample + (int) (tv / timeToSamples[ttsInd].getSampleDuration());
     }
 
-    public TrackType getType() {
+    public MP4TrackType getType() {
         return type;
     }
 
@@ -243,16 +244,20 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
             return Codec.PRORES;
         } else if (fourcc.equals("mp4a")) {
             return Codec.AAC;
+        } else if (fourcc.equals("jpeg")) {
+            return Codec.JPEG;
         }
         return null;        
     }
     
-    public byte[] getCodecPrivate() {
-        SampleEntry se = getSampleEntries()[0];
-        if ("avc1".equals(se.getFourcc())) {
-            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
+    public ByteBuffer getCodecPrivate() {
+        Codec codec = getCodec();
+        if (codec == Codec.H264) {
+            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
             return H264Utils.avcCToAnnexB(avcC);
 
+        } else if(codec == Codec.AAC) {
+            return AACUtils.getCodecPrivate(getSampleEntries()[0]);
         }
         // This codec does not have private section
         return null;

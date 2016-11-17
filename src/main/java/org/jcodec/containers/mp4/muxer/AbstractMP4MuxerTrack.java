@@ -1,13 +1,19 @@
 package org.jcodec.containers.mp4.muxer;
-import static org.jcodec.containers.mp4.TrackType.SOUND;
-import static org.jcodec.containers.mp4.TrackType.TIMECODE;
-import static org.jcodec.containers.mp4.TrackType.VIDEO;
+import static org.jcodec.containers.mp4.MP4TrackType.SOUND;
+import static org.jcodec.containers.mp4.MP4TrackType.TIMECODE;
+import static org.jcodec.containers.mp4.MP4TrackType.VIDEO;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jcodec.api.UnhandledStateException;
+import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.ClearApertureBox;
@@ -32,12 +38,6 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
-import java.io.IOException;
-import java.lang.IllegalStateException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -45,10 +45,12 @@ import java.util.List;
  * @author The JCodec project
  * 
  */
-public abstract class AbstractMP4MuxerTrack {
+public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
+    protected static final int NO_TIMESCALE_SET = -1;
+    
     protected int trackId;
-    protected TrackType type;
-    protected int timescale;
+    protected MP4TrackType type;
+    protected int _timescale = NO_TIMESCALE_SET;
 
     protected Rational tgtChunkDuration;
     protected Unit tgtChunkDurationUnit;
@@ -66,14 +68,13 @@ public abstract class AbstractMP4MuxerTrack {
     protected List<Edit> edits;
     private String name;
 
-    public AbstractMP4MuxerTrack(int trackId, TrackType type, int timescale) {
+    public AbstractMP4MuxerTrack(int trackId, MP4TrackType type) {
         this.curChunk = new ArrayList<ByteBuffer>();
         this.samplesInChunks = new ArrayList<SampleToChunkEntry>();
         this.sampleEntries = new ArrayList<SampleEntry>();
 
         this.trackId = trackId;
         this.type = type;
-        this.timescale = timescale;
     }
 
     public void setTgtChunkDuration(Rational duration, Unit unit) {
@@ -82,10 +83,6 @@ public abstract class AbstractMP4MuxerTrack {
     }
 
     public abstract long getTrackTotalDuration();
-
-    public int getTimescale() {
-        return timescale;
-    }
 
     protected abstract Box finish(MovieHeaderBox mvhd) throws IOException;
 
@@ -124,7 +121,7 @@ public abstract class AbstractMP4MuxerTrack {
         }
     }
 
-    public void addSampleEntry(SampleEntry se) {
+    protected void addSampleEntry(SampleEntry se) {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
         sampleEntries.add(se);
@@ -158,7 +155,7 @@ public abstract class AbstractMP4MuxerTrack {
         }
     }
     
-    protected void mediaHeader(MediaInfoBox minf, TrackType type) {
+    protected void mediaHeader(MediaInfoBox minf, MP4TrackType type) {
         if (VIDEO == type) {
             VideoMediaHeaderBox vmhd = VideoMediaHeaderBox.createVideoMediaHeaderBox(0, 0, 0, 0);
             vmhd.setFlags(1);
@@ -187,5 +184,9 @@ public abstract class AbstractMP4MuxerTrack {
         DataRefBox dref = DataRefBox.createDataRefBox();
         dinf.add(dref);
         dref.add(LeafBox.createLeafBox(Header.createHeader("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
+    }
+
+    protected int getTimescale() {
+        return _timescale;
     }
 }

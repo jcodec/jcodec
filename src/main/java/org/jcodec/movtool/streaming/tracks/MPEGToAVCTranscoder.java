@@ -70,7 +70,7 @@ public class MPEGToAVCTranscoder {
             return null;
 
         if (pic0 == null) {
-            Size size = MPEGDecoder.getSize(src.duplicate());
+            Size size = new MPEGDecoder().getCodecMeta(src.duplicate()).getSize();
             thumbWidth = size.getWidth() >> this.scaleFactor;
             thumbHeight = size.getHeight() >> this.scaleFactor;
             int mbW = (thumbWidth + 8) >> 4;
@@ -104,7 +104,7 @@ public class MPEGToAVCTranscoder {
         } while (rate > 10);
         rc.setRate(MPEGToAVCTranscoder.TARGET_RATE);
 
-        H264Utils.encodeMOVPacket(dst);
+        H264Utils.encodeMOVPacketInplace(dst);
 
         return dst;
     }

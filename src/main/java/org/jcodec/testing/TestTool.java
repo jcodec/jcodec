@@ -1,9 +1,19 @@
 package org.jcodec.testing;
 import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.common.JCodecUtil2;
+import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
@@ -11,22 +21,9 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
+import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.platform.Platform;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.Process;
-import java.lang.Runtime;
-import java.lang.System;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -72,13 +69,11 @@ public class TestTool {
 
             MP4Demuxer demux = new MP4Demuxer(source);
 
-            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
-
-            VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
+            SeekableDemuxerTrack inTrack = (SeekableDemuxerTrack) demux.getVideoTrack();
 
             ByteBuffer _rawData = ByteBuffer.allocate(1920 * 1088 * 6);
 
-            byte[] codecPrivate = inTrack.getMeta().getCodecPrivate();
+            ByteBuffer codecPrivate = inTrack.getMeta().getCodecPrivate();
             H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(codecPrivate);
 
             Packet inFrame;
@@ -90,7 +85,7 @@ public class TestTool {
             inTrack.gotoFrame(inFrame.getFrameNo());
 
             List<Picture8Bit> decodedPics = new ArrayList<Picture8Bit>();
-            int totalFrames = (int) inTrack.getFrameCount(), seqNo = 0;
+            int totalFrames = (int) inTrack.getMeta().getTotalFrames(), seqNo = 0;
             for (int i = sf; (inFrame = inTrack.nextFrame()) != null; i++) {
                 ByteBuffer data = inFrame.getData();
                 List<ByteBuffer> nalUnits = H264Utils.splitFrame(data);
@@ -106,14 +101,15 @@ public class TestTool {
                         seqNo = i;
                     }
                     raw = new FileChannelWrapper(new FileOutputStream(coded).getChannel());
-                    raw.write(ByteBuffer.wrap(codecPrivate));
+                    raw.write(codecPrivate);
                 }
                 raw.write(_rawData);
 
-                decodedPics.add(decoder.decodeFrame8BitFromNals(nalUnits,
-                        Picture8Bit
-                                .create((ine.getWidth() + 15) & ~0xf, (ine.getHeight() + 15) & ~0xf, ColorSpace.YUV420)
-                                .getData()));
+                Size size = inTrack.getMeta().getVideoCodecMeta().getSize();
+
+                decodedPics.add(decoder.decodeFrame8BitFromNals(nalUnits, Picture8Bit
+                        .create((size.getWidth() + 15) & ~0xf, (size.getHeight() + 15) & ~0xf, ColorSpace.YUV420)
+                        .getData()));
                 if (i % 500 == 0)
                     System.out.println((i * 100 / totalFrames) + "%");
             }

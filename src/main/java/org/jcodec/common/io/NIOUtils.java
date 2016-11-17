@@ -207,6 +207,10 @@ public class NIOUtils {
         result.flip();
         return result;
     }
+    
+    public static boolean combineBuffersInto(ByteBuffer dup, List<ByteBuffer> buffers) {
+        throw new RuntimeException("Stan");
+    }
 
     public static ByteBuffer combine(ByteBuffer... arguments) {
         return combineBuffers(Arrays.asList(arguments));

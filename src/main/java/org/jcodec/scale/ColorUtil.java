@@ -93,11 +93,13 @@ public class ColorUtil {
         yuv4208Bit.put(ColorSpace.YUV420, new Idential8Bit());
         yuv4208Bit.put(ColorSpace.YUV422, new Yuv420pToYuv422p8Bit());
         yuv4208Bit.put(ColorSpace.RGB, new Yuv420pToRgb8Bit());
+        yuv4208Bit.put(ColorSpace.YUV420J, new Idential8Bit());
         map8Bit.put(ColorSpace.YUV420, yuv4208Bit);
 
         Map<ColorSpace, Transform8Bit> yuv4228Bit = new HashMap<ColorSpace, Transform8Bit>();
         yuv4228Bit.put(ColorSpace.YUV422, new Idential8Bit());
         yuv4228Bit.put(ColorSpace.YUV420, new Yuv422pToYuv420p8Bit());
+        yuv4228Bit.put(ColorSpace.YUV420J, new Yuv422pToYuv420p8Bit());
         yuv4228Bit.put(ColorSpace.RGB, new Yuv422pToRgb8Bit());
         map8Bit.put(ColorSpace.YUV422, yuv4228Bit);
 
@@ -107,7 +109,9 @@ public class ColorUtil {
 
         Map<ColorSpace, Transform8Bit> yuv420j8Bit = new HashMap<ColorSpace, Transform8Bit>();
         yuv420j8Bit.put(ColorSpace.YUV420J, new Idential8Bit());
+        yuv420j8Bit.put(ColorSpace.YUV422, new Yuv420pToYuv422p8Bit());
         yuv420j8Bit.put(ColorSpace.RGB, new Yuv420jToRgb8Bit());
+        yuv420j8Bit.put(ColorSpace.YUV420, new Idential8Bit());
         map8Bit.put(ColorSpace.YUV420J, yuv420j8Bit);
     }
 
@@ -129,13 +133,8 @@ public class ColorUtil {
         @Override
         public void transform(Picture src, Picture dst) {
             for (int i = 0; i < 3; i++)
-                arraycopy(
-                        src.getPlaneData(i),
-                        0,
-                        dst.getPlaneData(i),
-                        0,
-                        Math.min(src.getPlaneWidth(i) * src.getPlaneHeight(i),
-                                dst.getPlaneWidth(i) * dst.getPlaneHeight(i)));
+                arraycopy(src.getPlaneData(i), 0, dst.getPlaneData(i), 0, Math.min(
+                        src.getPlaneWidth(i) * src.getPlaneHeight(i), dst.getPlaneWidth(i) * dst.getPlaneHeight(i)));
 
         }
     }
@@ -143,14 +142,9 @@ public class ColorUtil {
     public static class Idential8Bit implements Transform8Bit {
         @Override
         public void transform(Picture8Bit src, Picture8Bit dst) {
-            for (int i = 0; i < 3; i++)
-                arraycopy(
-                        src.getPlaneData(i),
-                        0,
-                        dst.getPlaneData(i),
-                        0,
-                        Math.min(src.getPlaneWidth(i) * src.getPlaneHeight(i),
-                                dst.getPlaneWidth(i) * dst.getPlaneHeight(i)));
+            for (int i = 0; i < Math.min(src.getData().length, dst.getData().length); i++)
+                arraycopy(src.getPlaneData(i), 0, dst.getPlaneData(i), 0,
+                        Math.min(src.getPlaneData(i).length, dst.getPlaneData(i).length));
 
         }
     }

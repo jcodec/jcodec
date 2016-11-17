@@ -1,17 +1,19 @@
 package org.jcodec.containers.mps.index;
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
-import org.jcodec.containers.mp4.muxer.MP4Muxer;
-import org.jcodec.containers.mps.index.MPSRandomAccessDemuxer.Stream;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.System;
+
+import org.jcodec.codecs.mpeg12.MPEGDecoder;
+import org.jcodec.common.Codec;
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoCodecMeta;
+import org.jcodec.common.io.FileChannelWrapper;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.Packet;
+import org.jcodec.containers.mp4.Brand;
+import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.containers.mps.index.MPSRandomAccessDemuxer.Stream;
 
 public class MTSRandomAccessDemuxerMain {
 
@@ -38,17 +40,18 @@ public class MTSRandomAccessDemuxerMain {
 
         FileChannelWrapper ch = NIOUtils.writableChannel(new File(args[1]));
         MP4Muxer mp4Muxer = MP4Muxer.createMP4Muxer(ch, Brand.MOV);
-        FramesMP4MuxerTrack videoTrack = mp4Muxer.addVideoTrack("m2v1", new Size(1920, 1080), "jcod", 90000);
 
         video.gotoSyncFrame(175);
         Packet pkt = video.nextFrame();
+        VideoCodecMeta meta = new MPEGDecoder().getCodecMeta(pkt.getData());
+        MuxerTrack videoTrack = mp4Muxer.addVideoTrack(Codec.MPEG2, meta);
         long firstPts = pkt.getPts();
         for (int i = 0; pkt != null && i < 150; i++) {
             videoTrack.addFrame(MP4Packet.createMP4Packet(pkt.getData(), pkt.getPts() - firstPts, pkt.getTimescale(), pkt
                             .getDuration(), pkt.getFrameNo(), pkt.isKeyFrame(), pkt.getTapeTimecode(), 0, pkt.getPts() - firstPts, 0));
             pkt = video.nextFrame();
         }
-        mp4Muxer.writeHeader();
+        mp4Muxer.finish();
         NIOUtils.closeQuietly(ch);
     }
 

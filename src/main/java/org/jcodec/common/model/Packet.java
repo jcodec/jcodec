@@ -16,14 +16,14 @@ public class Packet {
 
     public ByteBuffer data;
     public long pts;
-    public long timescale;
+    public int timescale;
     public long duration;
     public long frameNo;
     public boolean keyFrame;
     public TapeTimecode tapeTimecode;
     public int displayOrder;
 
-    public static Packet createPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo,
+    public static Packet createPacket(ByteBuffer data, long pts, int timescale, long duration, long frameNo,
             boolean keyFrame, TapeTimecode tapeTimecode) {
         return new Packet(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
     }
@@ -33,7 +33,7 @@ public class Packet {
                 other.tapeTimecode, other.displayOrder);
     }
 
-    public Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
+    public Packet(ByteBuffer data, long pts, int timescale, long duration, long frameNo, boolean keyFrame,
             TapeTimecode tapeTimecode, int displayOrder) {
         this.data = data;
         this.pts = pts;
@@ -53,7 +53,7 @@ public class Packet {
         return pts;
     }
 
-    public long getTimescale() {
+    public int getTimescale() {
         return timescale;
     }
 
@@ -107,6 +107,10 @@ public class Packet {
 
     public void setData(ByteBuffer data) {
         this.data = data;
+    }
+    
+    public void setPts(long pts) {
+        this.pts = pts;
     }
 
     public static final Comparator<Packet> FRAME_ASC = new Comparator<Packet>() {

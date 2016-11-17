@@ -1,5 +1,6 @@
 package org.jcodec.containers.mp4.demuxer;
 import org.jcodec.common.AutoFileChannelWrapper;
+import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.platform.Platform;
@@ -23,7 +24,7 @@ public class MP4DemuxerTest {
         File source = new File(resource.getFile());
         SeekableByteChannel input = new AutoFileChannelWrapper(source);
         MP4Demuxer demuxer = new MP4Demuxer(input);
-        AbstractMP4DemuxerTrack track = demuxer.getAudioTracks().get(0);
+        DemuxerTrack track = demuxer.getAudioTracks().get(0);
         Packet packet;
         while (null != (packet = track.nextFrame())) {
             ByteBuffer data = packet.getData();

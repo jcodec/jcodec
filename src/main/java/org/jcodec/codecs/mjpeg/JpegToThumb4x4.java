@@ -20,14 +20,6 @@ import java.nio.ByteBuffer;
  */
 public class JpegToThumb4x4 extends JpegDecoder {
 
-    public static JpegToThumb4x4 createJpegToThumb4x4() {
-        return new JpegToThumb4x4(false, false);
-    }
-
-    public JpegToThumb4x4(boolean interlace, boolean topFieldFirst) {
-        super(interlace, topFieldFirst);
-    }
-
     private static final int mapping4x4[] = new int[] { 0, 1, 4, 8, 5, 2, 3, 6, 9, 12, 16, 13, 10, 7, 16, 16, 16, 11,
             14, 16, 16, 16, 16, 16, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
             16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 };

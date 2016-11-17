@@ -45,10 +45,11 @@ public class ProresEncoder extends VideoEncoder {
     private static final int DEFAULT_SLICE_MB_WIDTH = 1 << LOG_DEFAULT_SLICE_MB_WIDTH;
 
     public final static class Profile {
-        public final static Profile PROXY = new Profile(QMAT_LUMA_APCO, QMAT_CHROMA_APCO, "apco", 1000, 4, 8);
-        public final static Profile LT = new Profile(QMAT_LUMA_APCS, QMAT_CHROMA_APCS, "apcs", 2100, 1, 9);
-        public final static Profile STANDARD = new Profile(QMAT_LUMA_APCN, QMAT_CHROMA_APCN, "apcn", 3500, 1, 6);
-        public final static Profile HQ = new Profile(QMAT_LUMA_APCH, QMAT_CHROMA_APCH, "apch", 5400, 1, 6);
+        public final static Profile PROXY = new Profile("PROXY", QMAT_LUMA_APCO, QMAT_CHROMA_APCO, "apco", 1000, 4, 8);
+        public final static Profile LT = new Profile("LT", QMAT_LUMA_APCS, QMAT_CHROMA_APCS, "apcs", 2100, 1, 9);
+        public final static Profile STANDARD = new Profile("STANDARD", QMAT_LUMA_APCN, QMAT_CHROMA_APCN, "apcn", 3500,
+                1, 6);
+        public final static Profile HQ = new Profile("HQ", QMAT_LUMA_APCH, QMAT_CHROMA_APCH, "apch", 5400, 1, 6);
 
         private final static Profile[] _values = new Profile[] { PROXY, LT, STANDARD, HQ };
 
@@ -56,6 +57,16 @@ public class ProresEncoder extends VideoEncoder {
             return _values;
         }
 
+        public static Profile valueOf(String name) {
+            String nameU = name.toUpperCase();
+            for (ProresEncoder.Profile profile2 : _values) {
+                if (name.equals(nameU))
+                    return profile2;
+            }
+            return null;
+        }
+
+        final String name;
         final int[] qmatLuma;
         final int[] qmatChroma;
         final public String fourcc;
@@ -64,7 +75,9 @@ public class ProresEncoder extends VideoEncoder {
         final int firstQp;
         final int lastQp;
 
-        private Profile(int[] qmatLuma, int[] qmatChroma, String fourcc, int bitrate, int firstQp, int lastQp) {
+        private Profile(String name, int[] qmatLuma, int[] qmatChroma, String fourcc, int bitrate, int firstQp,
+                int lastQp) {
+            this.name = name;
             this.qmatLuma = qmatLuma;
             this.qmatChroma = qmatChroma;
             this.fourcc = fourcc;
@@ -79,6 +92,10 @@ public class ProresEncoder extends VideoEncoder {
     private int[][] scaledLuma;
     private int[][] scaledChroma;
     private boolean interlaced;
+
+    public ProresEncoder(String profile, boolean interlaced) {
+        this(profile == null ? ProresEncoder.Profile.HQ : ProresEncoder.Profile.valueOf(profile), interlaced);
+    }
 
     public ProresEncoder(Profile profile, boolean interlaced) {
         this.profile = profile;
@@ -161,7 +178,8 @@ public class ProresEncoder extends VideoEncoder {
         }
     }
 
-    static final void writeACCoeffs(BitWriter bits, int[] qMat, int[] _in, int blocksPerSlice, int[] scan, int maxCoeff) {
+    static final void writeACCoeffs(BitWriter bits, int[] qMat, int[] _in, int blocksPerSlice, int[] scan,
+            int maxCoeff) {
         int prevRun = 4;
         int prevLevel = 2;
 
@@ -318,7 +336,8 @@ public class ProresEncoder extends VideoEncoder {
         if (unsafe) {
             int mbHeightPix = 16 << vStep;
             Picture8Bit filled = Picture8Bit.create(sliceMbCount << 4, mbHeightPix, YUV422);
-            ImageOP.subImageWithFillPic8(result, filled, new Rect(mbX << 4, mbY << (4 + vStep), sliceMbCount << 4, mbHeightPix));
+            ImageOP.subImageWithFillPic8(result, filled,
+                    new Rect(mbX << 4, mbY << (4 + vStep), sliceMbCount << 4, mbHeightPix));
 
             split(filled, out, 0, 0, sliceMbCount, vStep, vOffset);
         } else {
@@ -330,9 +349,12 @@ public class ProresEncoder extends VideoEncoder {
 
     private void split(Picture8Bit _in, Picture8Bit out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
 
-        doSplit(_in.getPlaneData(0), out.getPlaneData(0), _in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
-        doSplit(_in.getPlaneData(1), out.getPlaneData(1), _in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
-        doSplit(_in.getPlaneData(2), out.getPlaneData(2), _in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        doSplit(_in.getPlaneData(0), out.getPlaneData(0), _in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep,
+                vOffset);
+        doSplit(_in.getPlaneData(1), out.getPlaneData(1), _in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep,
+                vOffset);
+        doSplit(_in.getPlaneData(2), out.getPlaneData(2), _in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep,
+                vOffset);
 
     }
 
@@ -365,7 +387,7 @@ public class ProresEncoder extends VideoEncoder {
     }
 
     @Override
-    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer buffer) {
+    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer buffer) {
         ByteBuffer out = buffer.duplicate();
         ByteBuffer fork = out.duplicate();
 
@@ -379,7 +401,7 @@ public class ProresEncoder extends VideoEncoder {
         out.flip();
         fork.putInt(out.remaining());
 
-        return out;
+        return new EncodedFrame(out, true);
     }
 
     public static void writeFrameHeader(ByteBuffer outp, ProresConsts.FrameHeader header) {
@@ -413,5 +435,10 @@ public class ProresEncoder extends VideoEncoder {
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
         return new ColorSpace[] { ColorSpace.YUV422 };
+    }
+
+    @Override
+    public int estimateBufferSize(Picture8Bit frame) {
+        return (3 * frame.getWidth() * frame.getHeight()) / 2;
     }
 }
