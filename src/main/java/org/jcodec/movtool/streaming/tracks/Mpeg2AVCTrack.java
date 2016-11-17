@@ -66,7 +66,7 @@ public class Mpeg2AVCTrack implements VirtualTrack {
         H264Encoder encoder = new H264Encoder(rc);
 
         _nextPacket = src.nextPacket();
-        Size frameDim = MPEGDecoder.getSize(_nextPacket.getData());
+		Size frameDim = MPEGDecoder.getMeta(_nextPacket.getData()).getDimensions();
 
         scaleFactor = selectScaleFactor(frameDim);
         thumbWidth = frameDim.getWidth() >> scaleFactor;

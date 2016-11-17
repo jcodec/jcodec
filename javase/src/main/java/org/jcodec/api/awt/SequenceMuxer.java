@@ -10,10 +10,10 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
+import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -36,7 +36,7 @@ public class SequenceMuxer {
         muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
 
         // Add video track to muxer
-        outTrack = muxer.addTrack(TrackType.VIDEO, 25);
+        outTrack = muxer.addTrack(MP4TrackType.VIDEO, 25);
     }
 
     public void encodeImage(File png) throws IOException {

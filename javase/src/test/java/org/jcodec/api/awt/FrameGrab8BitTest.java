@@ -7,12 +7,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Arrays;
+
 import org.jcodec.api.JCodecException;
 import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.DemuxerTrackMeta.Type;
 import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
@@ -21,10 +25,6 @@ import org.jcodec.containers.mp4.MP4Packet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.InOrder;
-
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.Arrays;
 
 public class FrameGrab8BitTest {
 
@@ -68,7 +68,7 @@ public class FrameGrab8BitTest {
         AWTFrameGrab8Bit grab = new AWTFrameGrab8Bit(videoTrack, adaptor);
 
         int[] keyFrames = new int[] { 0, 11, 25, 34, 48, 59, 100 };
-        DemuxerTrackMeta meta = new DemuxerTrackMeta(Type.VIDEO, Codec.H264, keyFrames, 120, 120, new Size(320, 240),
+        DemuxerTrackMeta meta = new DemuxerTrackMeta(TrackType.VIDEO, Codec.H264, keyFrames, 120, 120, new Size(320, 240),
                 null);
 
         when(videoTrack.getMeta()).thenReturn(meta);
@@ -88,7 +88,7 @@ public class FrameGrab8BitTest {
         AWTFrameGrab8Bit grab = new AWTFrameGrab8Bit(videoTrack, adaptor);
 
         int[] keyFrames = new int[] { 0, 11, 25, 40, 48, 59, 100 };
-        DemuxerTrackMeta meta = new DemuxerTrackMeta(Type.VIDEO, Codec.H264, keyFrames, 120, 120, new Size(320, 240),
+        DemuxerTrackMeta meta = new DemuxerTrackMeta(TrackType.VIDEO, Codec.H264, keyFrames, 120, 120, new Size(320, 240),
                 null);
 
         MP4Packet frame40 = new MP4Packet(null, 40, 25, 1, 40, true, null, 0, 0, 0, 0, 42, true);

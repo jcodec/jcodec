@@ -19,6 +19,7 @@ import org.jcodec.Utils;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
+import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
@@ -31,14 +32,12 @@ import org.junit.Test;
 
 public class AudioTrackTest {
 
-    private MKVParser par;
-    private FileInputStream demInputStream;
-    private MKVDemuxer dem;
+    private MKVDemuxer demuxer;
     private boolean showInterlacedBlocks = false;
 
     @Ignore @Test
     public void testSoundSamples() throws Exception {
-        AudioTrack audio = (AudioTrack) dem.getAudioTracks().get(0);
+        AudioTrack audio = (AudioTrack) demuxer.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
         audio.gotoFrame(9);
         
@@ -50,7 +49,7 @@ public class AudioTrackTest {
 
     @Ignore @Test
     public void testTwoSoundSamples() throws Exception {
-        AudioTrack audio = (AudioTrack) dem.getAudioTracks().get(0);
+        AudioTrack audio = (AudioTrack) demuxer.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
         audio.gotoFrame(8);
         
@@ -68,17 +67,12 @@ public class AudioTrackTest {
         MKVTestSuite suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())
             Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");
-        FileInputStream inputStream = new FileInputStream(suite.test1);
-        par = new MKVParser(new FileChannelWrapper(inputStream .getChannel()));
-        List<EbmlMaster> mkv = null;
-        try {
-            mkv = par.parse();
-        } finally {
-            closeQuietly(inputStream);
-        }
+        
+        demuxer = new MKVDemuxer(NIOUtils.readableChannel(suite.test1));
+        List<? extends EbmlBase> tree = demuxer.getTree();
         if (showInterlacedBlocks) {
             MKVType[] path = { Segment, Cluster, SimpleBlock };
-            MkvBlock[] blocks = findAllTree(mkv, MkvBlock.class, path);
+            MkvBlock[] blocks = findAllTree(tree, MkvBlock.class, path);
             for (MkvBlock be : blocks) {
                 System.out.println("\nTRACK " + be.trackNumber);
                 String pref = "";
@@ -89,14 +83,11 @@ public class AudioTrackTest {
                     System.out.println(pref+"sample offset " + Long.toHexString(offset));
             }
         }
-        
-        demInputStream = new FileInputStream(suite.test1);
-        dem = new MKVDemuxer(mkv, new FileChannelWrapper(demInputStream.getChannel()));
     }
     
     @After
     public void tearDown(){
-        closeQuietly(demInputStream);
+        closeQuietly(demuxer);
     }
 
 }

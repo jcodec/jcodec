@@ -94,7 +94,7 @@ public class AVCConcatTrack implements VirtualTrack {
 
         VideoCodecMeta codecMeta = (VideoCodecMeta) arguments[0].getCodecMeta();
 
-        se = VideoCodecMeta.createVideoCodecMeta("avc1", ByteBuffer.wrap(H264Utils.saveCodecPrivate(H264Utils.saveSPS(allSps), H264Utils.savePPS(allPps))), codecMeta.getSize(), codecMeta.getPasp());
+        se = VideoCodecMeta.createVideoCodecMeta("avc1", H264Utils.saveCodecPrivate(H264Utils.saveSPS(allSps), H264Utils.savePPS(allPps)), codecMeta.getSize(), codecMeta.getPasp());
     }
 
     private void mergePS(List<SeqParameterSet> allSps, List<PictureParameterSet> allPps, Map<Integer, Integer> map) {

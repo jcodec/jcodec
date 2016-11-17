@@ -10,7 +10,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
@@ -47,7 +47,7 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
     private int totalFrames;
     private SeekableByteChannel out;
 
-    public PCMMP4MuxerTrack(SeekableByteChannel out, int trackId, TrackType type, int timescale, int frameDuration, int frameSize,
+    public PCMMP4MuxerTrack(SeekableByteChannel out, int trackId, MP4TrackType type, int timescale, int frameDuration, int frameSize,
             SampleEntry se) {
         super(trackId, type, timescale);
         this.chunkOffsets = LongArrayList.createLongArrayList();

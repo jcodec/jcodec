@@ -23,7 +23,7 @@ import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
@@ -57,7 +57,7 @@ public class AVCMP4Mux {
 
         SeekableByteChannel file = writableChannel(out);
         MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(file);
-        FramesMP4MuxerTrack track = muxer.addTrack(TrackType.VIDEO, 25);
+        FramesMP4MuxerTrack track = muxer.addTrack(MP4TrackType.VIDEO, 25);
 
         mux(track, in);
 

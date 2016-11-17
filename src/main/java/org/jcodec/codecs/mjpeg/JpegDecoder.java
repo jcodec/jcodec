@@ -30,8 +30,11 @@ public class JpegDecoder extends VideoDecoder {
     private boolean topFieldFirst;
     int[] buf;
 
-    public JpegDecoder(boolean interlace, boolean topFieldFirst) {
+    public JpegDecoder() {
         this.buf = new int[64];
+    }
+    
+    public void setInterlace(boolean interlace, boolean topFieldFirst) {
         this.interlace = interlace;
         this.topFieldFirst = topFieldFirst;
     }
@@ -248,10 +251,5 @@ public class JpegDecoder extends VideoDecoder {
             result[i] = data.get() & 0xff;
         }
         return result;
-    }
-
-    @Override
-    public int probe(ByteBuffer data) {
-        return 0;
     }
 }

@@ -14,7 +14,7 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
@@ -68,7 +68,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     private TimecodeMP4MuxerTrack timecodeTrack;
     private SeekableByteChannel out;
 
-    public FramesMP4MuxerTrack(SeekableByteChannel out, int trackId, TrackType type, int timescale) {
+    public FramesMP4MuxerTrack(SeekableByteChannel out, int trackId, MP4TrackType type, int timescale) {
         super(trackId, type, timescale);
         this.sampleDurations = new ArrayList<TimeToSampleEntry>();
         this.chunkOffsets = LongArrayList.createLongArrayList();

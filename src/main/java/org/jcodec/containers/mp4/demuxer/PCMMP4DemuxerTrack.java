@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.MP4Packet;
@@ -131,7 +132,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     @Override
     public DemuxerTrackMeta getMeta() {
-        return new DemuxerTrackMeta(DemuxerTrackMeta.Type.AUDIO, getCodec(), null, totalFrames,
+        return new DemuxerTrackMeta(TrackType.AUDIO, getCodec(), null, totalFrames,
                 (double) duration / timescale, null, getCodecPrivate());
     }
 }

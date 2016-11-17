@@ -16,7 +16,7 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.ColorUtil;
@@ -73,7 +73,7 @@ public class SequenceEncoder8Bit {
         muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
 
         // Add video track to muxer
-        outTrack = muxer.addTrack(TrackType.VIDEO, fps.getNum());
+        outTrack = muxer.addTrack(MP4TrackType.VIDEO, fps.getNum());
 
         // Allocate a buffer big enough to hold output frames
         _out = ByteBuffer.allocate(1920 * 1080 * 6);

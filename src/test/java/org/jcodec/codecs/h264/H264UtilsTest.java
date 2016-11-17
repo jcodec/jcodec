@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264;
 
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,7 +48,7 @@ public class H264UtilsTest {
         ppsList.add(ByteBuffer.wrap(new byte[] {'m', 'a', 'n'}));
         ppsList.add(ByteBuffer.wrap(new byte[] {'c', 'o', 'o', 'l'}));
         AvcCBox avcCBox = AvcCBox.createAvcCBox(66, 0, 42, 0, spsList, ppsList);
-        byte[] res = H264Utils.avcCToAnnexB(avcCBox);
+        byte[] res = NIOUtils.toArray(H264Utils.avcCToAnnexB(avcCBox));
         Assert.assertArrayEquals(new byte[] { 0, 0, 0, 1, 0x67, 's', 't', 'a', 'n', 0, 0, 0, 1, 0x67, 't', 'h', 'e', 0,
                 0, 0, 1, 0x68, 'm', 'a', 'n', 0, 0, 0, 1, 0x68, 'c', 'o', 'o', 'l' }, res);
         

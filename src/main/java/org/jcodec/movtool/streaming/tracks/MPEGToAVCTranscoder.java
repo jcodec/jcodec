@@ -66,7 +66,7 @@ public class MPEGToAVCTranscoder {
             return null;
 
         if (pic0 == null) {
-            Size size = MPEGDecoder.getSize(src.duplicate());
+            Size size = MPEGDecoder.getMeta(src.duplicate()).getDimensions();
             thumbWidth = size.getWidth() >> this.scaleFactor;
             thumbHeight = size.getHeight() >> this.scaleFactor;
             int mbW = (thumbWidth + 8) >> 4;

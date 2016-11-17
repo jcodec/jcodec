@@ -21,14 +21,6 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class JpegToThumb2x2 extends JpegDecoder {
 
-    public static JpegToThumb2x2 createJpegToThumb2x2() {
-        return new JpegToThumb2x2(false, false);
-    }
-
-    public JpegToThumb2x2(boolean interlace, boolean topFieldFirst) {
-        super(interlace, topFieldFirst);
-    }
-
     private static final int mapping2x2[] = new int[] { 0, 1, 2, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
             4, 4, 4, 4, 4, 4, 4 };
 

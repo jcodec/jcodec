@@ -10,7 +10,7 @@ import org.jcodec.codecs.prores.ProresToProxy;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
@@ -44,7 +44,7 @@ public class ToProxy {
         int width = entry.getWidth();
         int height = entry.getHeight();
         ProresToProxy toProxy = new ProresToProxy(width, height, 65536);
-        FramesMP4MuxerTrack outVideo = muxer.addTrack(TrackType.VIDEO, (int) inVideo.getTimescale());
+        FramesMP4MuxerTrack outVideo = muxer.addTrack(MP4TrackType.VIDEO, (int) inVideo.getTimescale());
 
         TrackHeaderBox th = inVideo.getBox().getTrackHeader();
         System.out.println(toProxy.getFrameSize());

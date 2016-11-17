@@ -546,7 +546,7 @@ public class H264Utils {
         }
     }
     
-    public static byte[] saveCodecPrivate(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
+    public static ByteBuffer saveCodecPrivate(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {
         int totalCodecPrivateSize = 0;
         for (ByteBuffer byteBuffer : spsList) {
             totalCodecPrivateSize += byteBuffer.remaining() + 5;
@@ -567,10 +567,10 @@ public class H264Utils {
             bb.put(byteBuffer.duplicate());
         }
         bb.flip();
-        return NIOUtils.toArray(bb);
+        return bb;
     }
     
-    public static byte[] avcCToAnnexB(AvcCBox avcC) {
+    public static ByteBuffer avcCToAnnexB(AvcCBox avcC) {
         return saveCodecPrivate(avcC.getSpsList(), avcC.getPpsList());
     }
 

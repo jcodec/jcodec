@@ -8,5 +8,20 @@ package org.jcodec.common;
  * 
  */
 public enum Codec {
-    MPEG2, PRORES, H264, J2K, MPEG4, DV, VC3, V210, ALAW, AC3, MP3, MP2, DTS, PCM_DVD, TRUEHD, PCM, ADPCM, NELLYMOSER, G711, AAC, SPEEX, SORENSON, FLASH_SCREEN_VIDEO, VP6, FLASH_SCREEN_V2;
+    MPEG2(TrackType.VIDEO), PRORES(TrackType.VIDEO), H264(TrackType.VIDEO), J2K(TrackType.VIDEO), MPEG4(TrackType.VIDEO), DV(TrackType.VIDEO), VC3(
+            TrackType.VIDEO), V210(TrackType.VIDEO), ALAW(TrackType.AUDIO), AC3(TrackType.AUDIO), MP3(TrackType.AUDIO), MP2(TrackType.AUDIO), DTS(
+            TrackType.AUDIO), PCM_DVD(TrackType.AUDIO), TRUEHD(TrackType.AUDIO), PCM(TrackType.AUDIO), ADPCM(TrackType.AUDIO), NELLYMOSER(
+            TrackType.AUDIO), G711(TrackType.AUDIO), AAC(TrackType.AUDIO), SPEEX(TrackType.AUDIO), SORENSON(TrackType.VIDEO), FLASH_SCREEN_VIDEO(
+            TrackType.VIDEO), VP6(TrackType.VIDEO), FLASH_SCREEN_V2(TrackType.VIDEO), PNG(TrackType.VIDEO), VP8(TrackType.VIDEO), VP9(TrackType.VIDEO), JPEG(
+            TrackType.VIDEO), RAW(null), VORBIS(TrackType.VIDEO);
+
+    private TrackType type;
+
+    private Codec(TrackType type) {
+        this.type = type;
+    }
+
+    public TrackType getType() {
+        return type;
+    }
 }

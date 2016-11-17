@@ -2,18 +2,19 @@ package org.jcodec.codecs.y4m;
 
 import static org.jcodec.common.StringUtils.splitC;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
+
+import org.jcodec.common.Demuxer;
+import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -22,7 +23,7 @@ import java.nio.channels.FileChannel.MapMode;
  * @author The JCodec project
  * 
  */
-public class Y4MDecoder {
+public class Y4MDecoder extends VideoDecoder implements Demuxer {
 
     private SeekableByteChannel is;
     private int width;
@@ -116,5 +117,35 @@ public class Y4MDecoder {
 
     public Size getSize() {
         return new Size(width, height);
+    }
+
+    @Override
+    public List<? extends DemuxerTrack> getTracks() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<? extends DemuxerTrack> getVideoTracks() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<? extends DemuxerTrack> getAudioTracks() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

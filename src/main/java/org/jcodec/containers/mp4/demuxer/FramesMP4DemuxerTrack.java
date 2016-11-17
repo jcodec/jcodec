@@ -11,9 +11,10 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
@@ -25,7 +26,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.platform.Platform;
 
-import static org.jcodec.common.DemuxerTrackMeta.Type.*;
+import static org.jcodec.common.TrackType.*;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -235,11 +236,11 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
                 seekFrames[i]--;
         }
 
-        TrackType type = getType();
-        DemuxerTrackMeta.Type t = type == TrackType.VIDEO ? VIDEO : (type == TrackType.SOUND ? AUDIO : OTHER);
+        MP4TrackType type = getType();
+        TrackType t = type == MP4TrackType.VIDEO ? VIDEO : (type == MP4TrackType.SOUND ? AUDIO : OTHER);
         DemuxerTrackMeta meta = new DemuxerTrackMeta(t, getCodec(), seekFrames, sizes.length, (double) duration / timescale,
                 box.getCodedSize(), getCodecPrivate());
-        if(type == TrackType.VIDEO) {
+        if(type == MP4TrackType.VIDEO) {
             PixelAspectExt pasp = Box.findFirst(getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if(pasp != null)
                 meta.setPixelAspectRatio(pasp.getRational());

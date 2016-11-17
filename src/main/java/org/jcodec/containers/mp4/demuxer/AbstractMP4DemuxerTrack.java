@@ -1,28 +1,20 @@
 package org.jcodec.containers.mp4.demuxer;
 
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
-
-import org.jcodec.api.specific.AVCMP4Adaptor;
-import org.jcodec.codecs.h264.H264Decoder;
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.io.model.SeqParameterSet;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.codecs.mpeg12.MPEGDecoder;
-import org.jcodec.codecs.prores.ProresDecoder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
 import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
@@ -49,7 +41,7 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
  */
 public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     protected TrakBox box;
-    private TrackType type;
+    private MP4TrackType type;
     private int no;
     protected SampleEntry[] sampleEntries;
 
@@ -107,7 +99,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return sample + (int) (tv / timeToSamples[ttsInd].getSampleDuration());
     }
 
-    public TrackType getType() {
+    public MP4TrackType getType() {
         return type;
     }
 
@@ -256,7 +248,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return null;        
     }
     
-    public byte[] getCodecPrivate() {
+    public ByteBuffer getCodecPrivate() {
         SampleEntry se = getSampleEntries()[0];
         if ("avc1".equals(se.getFourcc())) {
             AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);

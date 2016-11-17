@@ -221,4 +221,9 @@ public class MTSDemuxer implements MPEGDemuxer {
         tsChannel.setPosition(offset - (offset % 188));
         psDemuxer.reset();
     }
+
+    @Override
+    public void close() throws IOException {
+        tsChannel.close();
+    }
 }

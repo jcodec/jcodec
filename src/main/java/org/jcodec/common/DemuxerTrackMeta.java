@@ -1,5 +1,7 @@
 package org.jcodec.common;
 
+import java.nio.ByteBuffer;
+
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 
@@ -13,21 +15,16 @@ import org.jcodec.common.model.Size;
  * 
  */
 public class DemuxerTrackMeta {
-
-    public static enum Type {
-        VIDEO, AUDIO, OTHER
-    };
-
-    private Type type;
+    private TrackType type;
     private Codec codec;
     private int[] seekFrames;
     private int totalFrames;
     private double totalDuration;
     private Size dimensions;
-    private byte[] codecPrivate;
+    private ByteBuffer codecPrivate;
     private Rational pixelAspectRatio;
 
-    public DemuxerTrackMeta(Type type, Codec codec, int[] seekFrames, int totalFrames, double totalDuration, Size dimensions, byte[] codecPrivate) {
+    public DemuxerTrackMeta(TrackType type, Codec codec, int[] seekFrames, int totalFrames, double totalDuration, Size dimensions, ByteBuffer codecPrivate) {
         this.type = type;
         this.codec = codec;
         this.seekFrames = seekFrames;
@@ -37,7 +34,7 @@ public class DemuxerTrackMeta {
         this.codecPrivate = codecPrivate;
     }
 
-    public Type getType() {
+    public TrackType getType() {
         return type;
     }
     
@@ -72,7 +69,7 @@ public class DemuxerTrackMeta {
         return dimensions;
     }
 
-    public byte[] getCodecPrivate() {
+    public ByteBuffer getCodecPrivate() {
         return codecPrivate;
     }
 

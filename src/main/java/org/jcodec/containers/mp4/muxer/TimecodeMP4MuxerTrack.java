@@ -12,7 +12,7 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
@@ -41,7 +41,7 @@ public class TimecodeMP4MuxerTrack extends FramesMP4MuxerTrack {
     private List<Packet> gop;
 
     public TimecodeMP4MuxerTrack(SeekableByteChannel out, int trackId, int timescale) {
-        super(out, trackId, TrackType.TIMECODE, timescale);
+        super(out, trackId, MP4TrackType.TIMECODE, timescale);
         this.lower = new ArrayList<Edit>();
         this.gop = new ArrayList<Packet>();
     }

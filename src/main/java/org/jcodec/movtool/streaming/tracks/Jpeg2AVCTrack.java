@@ -42,15 +42,21 @@ public class Jpeg2AVCTrack extends Transcode2AVCTrack {
     protected VideoDecoder getDecoder(int scaleFactor) {
         VideoCodecMeta meta = (VideoCodecMeta)src.getCodecMeta();
         
+        JpegDecoder decoder;
         switch (scaleFactor) {
         case 2:
-            return new JpegToThumb2x2(meta.isInterlaced(), meta.isTopFieldFirst());
+            decoder = new JpegToThumb2x2();
+            break;
         case 1:
-            return new JpegToThumb4x4(meta.isInterlaced(), meta.isTopFieldFirst());
+            decoder = new JpegToThumb4x4();
+            break;
         case 0:
-            return new JpegDecoder(meta.isInterlaced(), meta.isTopFieldFirst());
+            decoder = new JpegDecoder();
+            break;
         default:
             throw new IllegalArgumentException("Unsupported scale factor: " + scaleFactor);
         }
+        decoder.setInterlace(meta.isInterlaced(), meta.isTopFieldFirst());
+        return decoder;
     }
 }

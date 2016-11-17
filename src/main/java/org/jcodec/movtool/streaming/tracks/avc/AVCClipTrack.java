@@ -44,7 +44,7 @@ public class AVCClipTrack extends ClipTrack {
     private final int frameSize;
     private SeqParameterSet encSPS;
     private PictureParameterSet encPPS;
-    private byte[] codecPrivate;
+    private ByteBuffer codecPrivate;
 
     public AVCClipTrack(VirtualTrack src, int frameFrom, int frameTo) {
         super(src, frameFrom, frameTo);
@@ -56,7 +56,8 @@ public class AVCClipTrack extends ClipTrack {
         rc = new H264FixedRateControl(1024);
         H264Encoder encoder = getEncoder();
         ByteBuffer codecPrivate = codecMeta.getCodecPrivate();
-        this.codecPrivate = NIOUtils.toArray(codecPrivate);
+        codecPrivate.reset();
+        this.codecPrivate = codecPrivate;
         List<ByteBuffer> rawSPS = H264Utils.getRawSPS(codecPrivate);
         List<ByteBuffer> rawPPS = H264Utils.getRawPPS(codecPrivate);
         SeqParameterSet sps = H264Utils.readSPS(rawSPS.get(0));
@@ -81,7 +82,7 @@ public class AVCClipTrack extends ClipTrack {
         rawSPS.add(H264Utils.writeSPS(encSPS, 128));
         rawPPS.add(H264Utils.writePPS(encPPS, 20));
 
-        se = VideoCodecMeta.createVideoCodecMeta("avc1", ByteBuffer.wrap(H264Utils.saveCodecPrivate(rawSPS, rawPPS)), codecMeta.getSize(), codecMeta.getPasp());
+        se = VideoCodecMeta.createVideoCodecMeta("avc1", H264Utils.saveCodecPrivate(rawSPS, rawPPS), codecMeta.getSize(), codecMeta.getPasp());
 
         int _frameSize = rc.calcFrameSize(mbW * mbH);
         _frameSize += _frameSize >> 4;

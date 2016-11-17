@@ -76,7 +76,7 @@ public class TestTool {
 
             ByteBuffer _rawData = ByteBuffer.allocate(1920 * 1088 * 6);
 
-            byte[] codecPrivate = inTrack.getMeta().getCodecPrivate();
+            ByteBuffer codecPrivate = inTrack.getMeta().getCodecPrivate();
             H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(codecPrivate);
 
             Packet inFrame;
@@ -104,7 +104,7 @@ public class TestTool {
                         seqNo = i;
                     }
                     raw = new FileChannelWrapper(new FileOutputStream(coded).getChannel());
-                    raw.write(ByteBuffer.wrap(codecPrivate));
+                    raw.write(codecPrivate);
                 }
                 raw.write(_rawData);
 

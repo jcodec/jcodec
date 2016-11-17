@@ -8,10 +8,11 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.jcodec.common.Demuxer;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -29,7 +30,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * @author The JCodec project
  * 
  */
-public class MP4Demuxer {
+public class MP4Demuxer implements Demuxer {
 
     private List<AbstractMP4DemuxerTrack> tracks;
     private TimecodeMP4DemuxerTrack timecodeTrack;
@@ -48,10 +49,6 @@ public class MP4Demuxer {
         this.input = input;
         tracks = new LinkedList<AbstractMP4DemuxerTrack>();
         findMovieBox(input);
-    }
-
-    public AbstractMP4DemuxerTrack[] getTracks() {
-        return tracks.toArray(new AbstractMP4DemuxerTrack[] {});
     }
 
     private void findMovieBox(SeekableByteChannel input) throws IOException {
@@ -79,9 +76,9 @@ public class MP4Demuxer {
         }
     }
 
-    public static TrackType getTrackType(TrakBox trak) {
+    public static MP4TrackType getTrackType(TrakBox trak) {
         HandlerBox handler = findFirstPath(trak, HandlerBox.class, Box.path("mdia.hdlr"));
-        return TrackType.fromHandler(handler.getComponentSubType());
+        return MP4TrackType.fromHandler(handler.getComponentSubType());
     }
 
     public AbstractMP4DemuxerTrack getVideoTrack() {
@@ -103,7 +100,23 @@ public class MP4Demuxer {
         }
         return null;
     }
+    
+    @Override
+    public List<AbstractMP4DemuxerTrack> getTracks() {
+        return new ArrayList<AbstractMP4DemuxerTrack>(tracks);
+    }
 
+    @Override
+    public List<AbstractMP4DemuxerTrack> getVideoTracks() {
+        ArrayList<AbstractMP4DemuxerTrack> result = new ArrayList<AbstractMP4DemuxerTrack>();
+        for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
+            if (demuxerTrack.box.isVideo())
+                result.add(demuxerTrack);
+        }
+        return result;
+    }
+    
+    @Override
     public List<AbstractMP4DemuxerTrack> getAudioTracks() {
         ArrayList<AbstractMP4DemuxerTrack> result = new ArrayList<AbstractMP4DemuxerTrack>();
         for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
@@ -145,5 +158,10 @@ public class MP4Demuxer {
         }
 
         return total == 0 ? 0 : success * 100 / total;
+    }
+
+    @Override
+    public void close() throws IOException {
+        input.close();
     }
 }

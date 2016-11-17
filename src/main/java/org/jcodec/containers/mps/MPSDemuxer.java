@@ -4,9 +4,9 @@ import static org.jcodec.codecs.h264.io.model.NALUnitType.IDR_SLICE;
 import static org.jcodec.codecs.h264.io.model.NALUnitType.NON_IDR_SLICE;
 import static org.jcodec.codecs.h264.io.model.NALUnitType.PPS;
 import static org.jcodec.codecs.h264.io.model.NALUnitType.SPS;
-import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
-import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
-import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
+import static org.jcodec.common.TrackType.AUDIO;
+import static org.jcodec.common.TrackType.OTHER;
+import static org.jcodec.common.TrackType.VIDEO;
 import static org.jcodec.common.io.NIOUtils.asByteBufferInt;
 import static org.jcodec.containers.mps.MPSUtils.audioStream;
 import static org.jcodec.containers.mps.MPSUtils.psMarker;
@@ -22,11 +22,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.jcodec.codecs.h264.io.model.NALUnit;
-import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.SegmentReader;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -84,7 +84,6 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
     }
 
-
     public ByteBuffer getBuffer() {
         synchronized (bufPool) {
             if (bufPool.size() > 0) {
@@ -109,7 +108,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         public BaseTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
             this._pending = new ArrayList<PESPacket>();
             this.demuxer = demuxer;
-			this.streamId = streamId;
+            this.streamId = streamId;
             this._pending.add(pkt);
         }
 
@@ -121,7 +120,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             if (_pending != null)
                 _pending.add(pkt);
             else
-            	demuxer.putBack(pkt.data);
+                demuxer.putBack(pkt.data);
         }
 
         public List<PESPacket> getPending() {
@@ -133,7 +132,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             if (_pending == null)
                 return;
             for (PESPacket pesPacket : _pending) {
-            	demuxer.putBack(pesPacket.data);
+                demuxer.putBack(pesPacket.data);
             }
             _pending = null;
         }
@@ -184,20 +183,26 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                         es.curPts = pkt.pts;
                     }
                     return pkt;
-                } else
-                	demuxer.addToStream(pkt);
+                } else {
+                    demuxer.addToStream(pkt);
+                }
             }
             return null;
         }
 
         @Override
-        public Packet nextFrame(ByteBuffer buf) throws IOException {
+        public Packet nextFrameWithBuffer(ByteBuffer buf) throws IOException {
             return es.getFrame(buf);
+        }
+        
+        @Override
+        public Packet nextFrame() throws IOException {
+            return es.getFrame();
         }
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            DemuxerTrackMeta.Type t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
+            TrackType t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
             return new DemuxerTrackMeta(t, Codec.MP2, null, 0, 0, null, null);
         }
     }
@@ -217,19 +222,24 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         }
 
         @Override
-        public Packet nextFrame(ByteBuffer buf) throws IOException {
+        public Packet nextFrameWithBuffer(ByteBuffer buf) throws IOException {
             PESPacket pkt;
             if (_pending.size() > 0) {
                 pkt = _pending.remove(0);
             } else {
                 while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null && pkt.streamId != streamId)
-                	demuxer.addToStream(pkt);
+                    demuxer.addToStream(pkt);
             }
             return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, true, null);
         }
+        
+        @Override
+        public Packet nextFrame() throws IOException {
+            return nextFrameWithBuffer(null);
+        }
 
         public DemuxerTrackMeta getMeta() {
-            DemuxerTrackMeta.Type t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
+            TrackType t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
             return new DemuxerTrackMeta(t, Codec.MP2, null, 0, 0, null, null);
         }
     }
@@ -382,7 +392,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             }
         }
 
-        return !nuSeq.isEmpty() ? rateSeq(nuSeq) : score ;
+        return !nuSeq.isEmpty() ? rateSeq(nuSeq) : score;
     }
 
     private static int rateSeq(List<NALUnit> nuSeq) {
@@ -438,5 +448,10 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         public int getTimecode() {
             return timecode;
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        channel.close();
     }
 }

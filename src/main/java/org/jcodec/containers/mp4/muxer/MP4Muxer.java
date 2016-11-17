@@ -1,7 +1,7 @@
 package org.jcodec.containers.mp4.muxer;
 
-import static org.jcodec.containers.mp4.TrackType.SOUND;
-import static org.jcodec.containers.mp4.TrackType.VIDEO;
+import static org.jcodec.containers.mp4.MP4TrackType.SOUND;
+import static org.jcodec.containers.mp4.MP4TrackType.VIDEO;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,7 +16,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.EndianBox;
@@ -125,7 +125,7 @@ public class MP4Muxer {
         return track;
     }
 
-    public FramesMP4MuxerTrack addTrack(TrackType type, int timescale) {
+    public FramesMP4MuxerTrack addTrack(MP4TrackType type, int timescale) {
         FramesMP4MuxerTrack track = new FramesMP4MuxerTrack(out, nextTrackId++, type, timescale);
         tracks.add(track);
         return track;
@@ -133,7 +133,7 @@ public class MP4Muxer {
 
     public PCMMP4MuxerTrack addPCMTrack(int timescale, int sampleDuration, int sampleSize,
             SampleEntry se) {
-        PCMMP4MuxerTrack track = new PCMMP4MuxerTrack(out, nextTrackId++, TrackType.SOUND, timescale, sampleDuration, sampleSize, se);
+        PCMMP4MuxerTrack track = new PCMMP4MuxerTrack(out, nextTrackId++, MP4TrackType.SOUND, timescale, sampleDuration, sampleSize, se);
         tracks.add(track);
         return track;
     }

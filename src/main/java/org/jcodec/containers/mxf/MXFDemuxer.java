@@ -1,20 +1,17 @@
 package org.jcodec.containers.mxf;
 
-import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
-import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
-import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
 import static org.jcodec.containers.mxf.MXFConst.klMetadataMapping;
 import static org.jcodec.containers.mxf.model.MXFUtil.findAllMeta;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
@@ -485,7 +482,7 @@ public class MXFDemuxer {
                 size = new Size(pd.getStoredWidth(), pd.getStoredHeight());
             }
 
-            DemuxerTrackMeta.Type t = video ? VIDEO : (audio ? AUDIO : OTHER);
+            TrackType t = video ? TrackType.VIDEO : (audio ? TrackType.AUDIO : TrackType.OTHER);
             return new DemuxerTrackMeta(t, getCodec().getCodec(), null, demuxer.totalFrames, demuxer.duration, size, null);
         }
     }

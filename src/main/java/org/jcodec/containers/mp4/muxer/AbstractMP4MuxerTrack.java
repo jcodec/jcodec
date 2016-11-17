@@ -1,8 +1,8 @@
 package org.jcodec.containers.mp4.muxer;
 
-import static org.jcodec.containers.mp4.TrackType.SOUND;
-import static org.jcodec.containers.mp4.TrackType.TIMECODE;
-import static org.jcodec.containers.mp4.TrackType.VIDEO;
+import static org.jcodec.containers.mp4.MP4TrackType.SOUND;
+import static org.jcodec.containers.mp4.MP4TrackType.TIMECODE;
+import static org.jcodec.containers.mp4.MP4TrackType.VIDEO;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -13,7 +13,7 @@ import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ClearApertureBox;
 import org.jcodec.containers.mp4.boxes.DataInfoBox;
@@ -47,7 +47,7 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
  */
 public abstract class AbstractMP4MuxerTrack {
     protected int trackId;
-    protected TrackType type;
+    protected MP4TrackType type;
     protected int timescale;
 
     protected Rational tgtChunkDuration;
@@ -66,7 +66,7 @@ public abstract class AbstractMP4MuxerTrack {
     protected List<Edit> edits;
     private String name;
 
-    public AbstractMP4MuxerTrack(int trackId, TrackType type, int timescale) {
+    public AbstractMP4MuxerTrack(int trackId, MP4TrackType type, int timescale) {
         this.curChunk = new ArrayList<ByteBuffer>();
         this.samplesInChunks = new ArrayList<SampleToChunkEntry>();
         this.sampleEntries = new ArrayList<SampleEntry>();
@@ -158,7 +158,7 @@ public abstract class AbstractMP4MuxerTrack {
         }
     }
     
-    protected void mediaHeader(MediaInfoBox minf, TrackType type) {
+    protected void mediaHeader(MediaInfoBox minf, MP4TrackType type) {
         if (VIDEO == type) {
             VideoMediaHeaderBox vmhd = VideoMediaHeaderBox.createVideoMediaHeaderBox(0, 0, 0, 0);
             vmhd.setFlags(1);

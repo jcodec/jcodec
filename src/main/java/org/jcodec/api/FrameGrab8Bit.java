@@ -4,7 +4,7 @@ import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.JCodecUtil.Format;
+import org.jcodec.common.Format;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;

@@ -40,15 +40,7 @@ abstract public class VideoDecoder {
      */
     public abstract Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer);
 
-    /**
-     * Tests if compressed frame can be decoded with this decoder
-     * 
-     * @param data
-     *            Compressed frame data
-     * @return
-     */
-    public abstract int probe(ByteBuffer data);
-    
+   
     protected byte[][] getSameSizeBuffer(int[][] buffer) {
         if (byteBuffer == null || byteBuffer.length != buffer.length || byteBuffer[0].length != buffer[0].length)
             byteBuffer = ArrayUtil.create2D(buffer[0].length, buffer.length);

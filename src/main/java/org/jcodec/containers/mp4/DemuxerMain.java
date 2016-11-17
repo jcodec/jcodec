@@ -6,7 +6,7 @@ import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 import static org.jcodec.common.io.NIOUtils.rwChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.common.model.ColorSpace.RGB;
-import static org.jcodec.containers.mp4.TrackType.VIDEO;
+import static org.jcodec.containers.mp4.MP4TrackType.VIDEO;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

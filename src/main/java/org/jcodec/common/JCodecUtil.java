@@ -2,28 +2,39 @@ package org.jcodec.common;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.jcodec.codecs.aac.AACDecoder;
 import org.jcodec.codecs.h264.H264Decoder;
+import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
+import org.jcodec.codecs.vp8.VP8Decoder;
+import org.jcodec.codecs.y4m.Y4MDecoder;
+import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
+import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
+import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform;
 import org.jcodec.scale.Transform8Bit;
 
 /**
@@ -35,17 +46,19 @@ import org.jcodec.scale.Transform8Bit;
  */
 public class JCodecUtil {
 
-    private static final VideoDecoder[] knownDecoders = new VideoDecoder[] { new ProresDecoder(), new MPEGDecoder(),
-            new H264Decoder() };
+    private static final Map<Codec, Class<? extends VideoDecoder>> knownDecoders = new HashMap<Codec, Class<? extends VideoDecoder>>();
 
-    public enum Format {
-        MOV, MPEG_PS, MPEG_TS
-    }
+    static {
+    	knownDecoders.put(Codec.VP8, VP8Decoder.class);
+        knownDecoders.put(Codec.PRORES, ProresDecoder.class);
+        knownDecoders.put(Codec.MPEG2, MPEGDecoder.class);
+        knownDecoders.put(Codec.H264, H264Decoder.class);
+    };
 
     public static Format detectFormat(File f) throws IOException {
         return detectFormatBuffer(NIOUtils.fetchFromFileL(f, 200 * 1024));
     }
-    
+
     public static Format detectFormatChannel(ReadableByteChannel f) throws IOException {
         return detectFormatBuffer(NIOUtils.fetchFromChannel(f, 200 * 1024));
     }
@@ -55,21 +68,28 @@ public class JCodecUtil {
         int psScore = MPSDemuxer.probe(b.duplicate());
         int tsScore = MTSDemuxer.probe(b.duplicate());
 
-        if (movScore == 0 && psScore == 0 && tsScore == 0)
+        if (movScore < 20 && psScore < 20 && tsScore < 20)
             return null;
 
         return movScore > psScore ? (movScore > tsScore ? Format.MOV : Format.MPEG_TS)
                 : (psScore > tsScore ? Format.MPEG_PS : Format.MPEG_TS);
     }
 
-    public static VideoDecoder detectDecoder(ByteBuffer b) {
+    public static Codec detectDecoder(ByteBuffer b) {
         int maxProbe = 0;
-        VideoDecoder selected = null;
-        for (VideoDecoder vd : knownDecoders) {
-            int probe = vd.probe(b);
-            if (probe > maxProbe) {
-                selected = vd;
-                maxProbe = probe;
+        Codec selected = null;
+        for (Map.Entry<Codec, Class<? extends VideoDecoder>> vd : knownDecoders.entrySet()) {
+            try {
+                Method method = vd.getValue().getDeclaredMethod("probe", ByteBuffer.class);
+                if (method != null) {
+                    int probe;
+                    probe = (Integer) method.invoke(null, b);
+                    if (probe > maxProbe) {
+                        selected = vd.getKey();
+                        maxProbe = probe;
+                    }
+                }
+            } catch (Exception e) {
             }
         }
         return selected;
@@ -107,14 +127,14 @@ public class JCodecUtil {
         buffer.put((byte) ((value >> 7) | 0x80));
         buffer.put((byte) (value & 0x7F));
     }
-    
+
     public static void writeBER32Var(ByteBuffer bb, int value) {
         for (int i = 0, bits = MathUtil.log2(value); i < 4 && bits > 0; i++) {
             bits -= 7;
             int out = value >> bits;
-            if(bits > 0)
+            if (bits > 0)
                 out |= 0x80;
-            bb.put((byte)out);
+            bb.put((byte) out);
         }
     }
 
@@ -151,8 +171,70 @@ public class JCodecUtil {
     }
 
     public static String removeExtension(String name) {
-        if(name == null)
+        if (name == null)
             return null;
         return name.replaceAll("\\.[^\\.]+$", "");
+    }
+
+    public static Demuxer createDemuxer(Format format, File input) throws IOException {
+        FileChannelWrapper ch = null;
+        if (format != Format.IMG) {
+            ch = NIOUtils.readableChannel(input);
+        }
+        switch (format) {
+        case MOV:
+            return new MP4Demuxer(ch);
+        case MPEG_TS:
+            return createM2TSDemuxer(ch);
+        case MPEG_PS:
+            return new MPSDemuxer(ch);
+        case MKV:
+            return new MKVDemuxer(ch);
+        case IMG:
+            return new ImageSequenceDemuxer(input);
+        case Y4M:
+            return new Y4MDecoder(ch);
+        default:
+            Logger.error("Format " + format + " is not supported");
+        }
+        return null;
+    }
+
+    private static Demuxer createM2TSDemuxer(SeekableByteChannel input) throws IOException {
+        Set<Integer> programs = MTSDemuxer.getProgramsFromChannel(input);
+        if(programs.size() == 0) {
+            Logger.error("The MPEG TS stream contains no programs");
+            return null;
+        }
+        int programId = programs.iterator().next();
+        Logger.info("Using M2TS program: " + programId);
+        input.setPosition(0);
+        return new MTSDemuxer(input, programId);
+    }
+
+    public static AudioDecoder createAudioDecoder(Codec codec, ByteBuffer decoderSpecific) throws Exception {
+        switch (codec) {
+        case AAC:
+            return new AACDecoder(decoderSpecific);
+        default:
+            Logger.error("Codec " + codec + " is not supported");
+        }
+        return null;
+    }
+    
+    public static VideoDecoder createVideoDecoder(Codec codec, ByteBuffer decoderSpecific) {
+        switch (codec) {
+        case H264:
+            return H264Decoder.createH264DecoderFromCodecPrivate(decoderSpecific);
+        case MPEG2:
+            return new MPEGDecoder();
+        case VP8:
+            return new VP8Decoder();
+        case JPEG:
+            return new JpegDecoder();
+        default:
+            Logger.error("Codec " + codec + " is not supported");
+        }
+        return null;
     }
 }

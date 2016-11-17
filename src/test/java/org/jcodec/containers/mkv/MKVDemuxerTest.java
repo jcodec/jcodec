@@ -21,22 +21,11 @@ import org.junit.Test;
 public class MKVDemuxerTest {
     MKVDemuxer dem = null;
     private FileInputStream demInputStream;
-    private MKVParser par;
     
     @Before
     public void setUp() throws IOException{
-        
-        FileInputStream inputStream = new FileInputStream("./src/test/resources/mkv/10frames.webm");
-        par = new MKVParser(new FileChannelWrapper(inputStream .getChannel()));
-        List<EbmlMaster> t = null;
-        try {
-            t = par.parse();
-        } finally {
-            closeQuietly(inputStream);
-        }
-        
         demInputStream = new FileInputStream("./src/test/resources/mkv/10frames.webm");
-        dem = new MKVDemuxer(t, new FileChannelWrapper(demInputStream.getChannel()));
+        dem = new MKVDemuxer(new FileChannelWrapper(demInputStream.getChannel()));
     }
     
     @After
@@ -48,9 +37,9 @@ public class MKVDemuxerTest {
     public void testGetFrame() throws IOException {
         
         Assert.assertNotNull(dem);
-        Assert.assertNotNull(dem.getVideoTrack());
+        Assert.assertNotNull(dem.getVideoTracks().get(0));
         
-        VideoTrack video = (VideoTrack) dem.getVideoTrack();
+        VideoTrack video = (VideoTrack) dem.getVideoTracks().get(0);
         Packet frame = video.nextFrame();
         
         Assert.assertNotNull(video);
@@ -62,9 +51,9 @@ public class MKVDemuxerTest {
     public void testPosition() throws IOException {
         
         Assert.assertNotNull(dem);
-        Assert.assertNotNull(dem.getVideoTrack());
+        Assert.assertNotNull(dem.getVideoTracks().get(0));
         
-        VideoTrack video = (VideoTrack) dem.getVideoTrack();
+        VideoTrack video = (VideoTrack) dem.getVideoTracks().get(0);
         video.gotoFrame(1);
         Packet frame = video.nextFrame();
         
