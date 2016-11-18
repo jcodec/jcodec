@@ -4,18 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.TrackType;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 
 /**
@@ -23,6 +20,8 @@ import org.jcodec.common.model.Size;
  * under FreeBSD License
  * 
  * A demuxer that reads image files out of a folder.
+ * 
+ * Supports both sequences starting with 0 and 1 index.
  * 
  * @author Stanislav Vitvitskyy
  * 
@@ -35,26 +34,25 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
     private Packet curFrame;
     private Codec codec;
     private Size dimensions;
-    private int maxFrame;
-    private int minFrame;
+    private int maxAvailableFrame;
+    private int maxFrames;
 
-    public ImageSequenceDemuxer(File fileWithPattern) throws IOException {
-        this.namePattern = fileWithPattern.getAbsolutePath();
+    public ImageSequenceDemuxer(String namePattern, int maxFrames) throws IOException {
+        this.namePattern = namePattern;
+        this.maxFrames = maxFrames;
+        this.maxAvailableFrame = -1;
         this.curFrame = loadFrame();
-        codec = JCodecUtil.detectDecoder(curFrame.getData());
-        Picture8Bit frame = JCodecUtil.createVideoDecoder(codec, null).decodeFrame8Bit(curFrame.getData(),
-                new byte[3][1920 * 1088]);
-        dimensions = new Size(frame.getWidth(), frame.getHeight());
-        Pattern p = Pattern.compile(this.namePattern.replace("%d", "([0-9]+)"));
-        minFrame = Integer.MAX_VALUE;
-        for (String fileName : fileWithPattern.getParentFile().list()) {
-            Matcher m = p.matcher(fileName);
-            if (m.matches()) {
-                int frameNo = Integer.parseInt(m.group(1));
-                maxFrame = Math.max(frameNo, maxFrame);
-                minFrame = Math.min(frameNo, minFrame);
-            }
+        // codec = JCodecUtil.detectDecoder(curFrame.getData());
+        String lowerCase = namePattern.toLowerCase();
+        if (lowerCase.endsWith(".png")) {
+            codec = Codec.PNG;
+        } else if (lowerCase.endsWith(".jpg") || lowerCase.endsWith(".jpeg")) {
+            codec = Codec.JPEG;
         }
+        // Picture8Bit frame = JCodecUtil.createVideoDecoder(codec,
+        // null).decodeFrame8Bit(curFrame.getData(),
+        // new byte[3][1920 * 1088]);
+        // dimensions = new Size(frame.getWidth(), frame.getHeight());
     }
 
     @Override
@@ -88,16 +86,63 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
     }
 
     private Packet loadFrame() throws IOException {
-        String name = String.format(namePattern, frameNo);
-        File file = new File(name);
+        if (frameNo > maxFrames) {
+            return null;
+        }
+
+        File file = null;
+        do {
+            String name = String.format(namePattern, frameNo);
+            file = new File(name);
+            if (file.exists() || frameNo > 0)
+                break;
+            frameNo++;
+        } while (frameNo < 2);
+
         if (!file.exists())
             return null;
-        return new Packet(NIOUtils.fetchFromFile(file), frameNo, VIDEO_FPS, 1, frameNo, true, null, frameNo);
+
+        Packet ret = new Packet(NIOUtils.fetchFromFile(file), frameNo, VIDEO_FPS, 1, frameNo, true, null, frameNo);
+        ++frameNo;
+        return ret;
+    }
+
+    private static final int MAX_MAX = 60 * 60 * 60 * 24; // Longest possible
+                                                          // movie
+
+    /**
+     * Finds maximum frame of a sequence by bisecting the range.
+     * 
+     * Performs at max at max 48 Stat calls ( 2*log2(MAX_MAX) ).
+     * 
+     * @return
+     */
+    public int getMaxAvailableFrame() {
+        if (maxAvailableFrame == -1) {
+
+            int firstPoint = 0;
+            for (int i = MAX_MAX; i >= 0; i /= 2) {
+                if (new File(String.format(namePattern, i)).exists()) {
+                    firstPoint = i;
+                    break;
+                }
+            }
+            int pos = firstPoint;
+            for (int interv = firstPoint / 2; interv > 1; interv /= 2) {
+                if (new File(String.format(namePattern, pos + interv)).exists()) {
+                    pos += interv;
+                }
+            }
+            maxAvailableFrame = pos;
+            Logger.info("Max frame found: " + maxAvailableFrame);
+        }
+        return Math.min(maxAvailableFrame, maxFrames);
     }
 
     @Override
     public DemuxerTrackMeta getMeta() {
-        return new DemuxerTrackMeta(TrackType.VIDEO, codec, null, maxFrame + 1, (maxFrame + 1) * VIDEO_FPS, dimensions,
-                null);
+        int durationFrames = getMaxAvailableFrame();
+        return new DemuxerTrackMeta(TrackType.VIDEO, codec, null, durationFrames + 1, (durationFrames + 1) * VIDEO_FPS,
+                dimensions, null);
     }
 }

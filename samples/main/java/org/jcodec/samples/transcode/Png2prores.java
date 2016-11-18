@@ -70,8 +70,8 @@ class Png2prores implements Profile {
 
                 encoder.encodeFrame8Bit(yuv, buf);
                 // TODO: Error if chunk has more then one frame
-                videoTrack.addFrame(MP4Packet.createMP4Packet(buf, i * 1001, 24000, 1001, i, true, null, 0,
-                        i * 1001, 0));
+                videoTrack
+                        .addFrame(MP4Packet.createMP4Packet(buf, i * 1001, 24000, 1001, i, true, null, 0, i * 1001, 0));
             }
             if (i == 1) {
                 System.out.println("Image sequence not found");

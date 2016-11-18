@@ -24,7 +24,9 @@ import static org.jcodec.containers.mkv.MKVType.findList;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
@@ -60,6 +62,13 @@ public final class MKVDemuxer implements Demuxer {
 	long timescale = 1L;
 	int pictureWidth;
 	int pictureHeight;
+	
+	private static Map<String, Codec> codecMapping = new HashMap<String, Codec>();
+	static {
+		codecMapping.put("V_VP8", Codec.VP8);
+		codecMapping.put("V_VP9", Codec.VP9);
+		codecMapping.put("V_MPEG4/ISO/AVC", Codec.H264);
+	}
 
 	public MKVDemuxer(SeekableByteChannel fileChannelWrapper) throws IOException {
 		this.channel = fileChannelWrapper;
@@ -244,8 +253,7 @@ public final class MKVDemuxer implements Demuxer {
 
 		@Override
 		public DemuxerTrackMeta getMeta() {
-			Codec codec = Codec.valueOf(codecId.substring(2));
-			return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, codec, null, 0, 0,
+			return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, codecMapping.get(codecId), null, 0, 0,
 					new Size(demuxer.pictureWidth, demuxer.pictureHeight), state);
 		}
 

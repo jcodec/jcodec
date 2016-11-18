@@ -49,11 +49,10 @@ public class TranscodeMain {
     static {
         profiles.add(new Avc2png());
         profiles.add(new Avc2prores());
-        profiles.add(new Jpeg2avc());
-        profiles.add(new Hls2png());
+        profiles.add(new MP4Jpeg2avc());
         profiles.add(new Mkv2png());
         profiles.add(new Mpeg2img());
-        profiles.add(new Png2avc());
+        profiles.add(new Img2AvcMP4());
         profiles.add(new Png2mkv());
         profiles.add(new Png2prores());
         profiles.add(new Png2vp8());
@@ -176,16 +175,16 @@ public class TranscodeMain {
         if (inputFormatRaw == null) {
             inputFormat = getFormatFromExtension(input);
             if (inputFormat != Format.IMG) {
-            	Format detectFormat = JCodecUtil.detectFormat(new File(input));
-            	if(detectFormat != null)
-            		inputFormat = detectFormat;
+                Format detectFormat = JCodecUtil.detectFormat(new File(input));
+                if (detectFormat != null)
+                    inputFormat = detectFormat;
             }
         } else {
             inputFormat = Format.valueOf(inputFormatRaw.toUpperCase());
         }
-        if(inputFormat == null) {
-        	Logger.error("Input format could not be detected");
-        	return;
+        if (inputFormat == null) {
+            Logger.error("Input format could not be detected");
+            return;
         }
 
         String outputFormatRaw = cmd.getStringFlag(FLAG_OUTPUT_FORMAT);

@@ -17,45 +17,46 @@ import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 
 /**
  * A profile to convert WEBM VP8 to images
+ * 
  * @author Stanislav Vitvitskiy
  */
 class Webm2png extends ToImgProfile {
-	@Override
-	public Set<Format> inputFormat() {
-		return TranscodeMain.formats(Format.MKV);
-	}
+    @Override
+    public Set<Format> inputFormat() {
+        return TranscodeMain.formats(Format.MKV);
+    }
 
-	@Override
-	public Set<Codec> inputVideoCodec() {
-		return TranscodeMain.codecs(Codec.VP8);
-	}
+    @Override
+    public Set<Codec> inputVideoCodec() {
+        return TranscodeMain.codecs(Codec.VP8);
+    }
 
-	@Override
-	protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException {
-		return new VP8Decoder();
-	}
+    @Override
+    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException {
+        return new VP8Decoder();
+    }
 
-	@Override
-	protected DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException {
-		MKVDemuxer demux = new MKVDemuxer(source);
-		return demux.getVideoTracks().get(0);
-	}
+    @Override
+    protected DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException {
+        MKVDemuxer demux = new MKVDemuxer(source);
+        return demux.getVideoTracks().get(0);
+    }
 
-	@Override
-	protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, Packet pkt) {
-		if (!pkt.isKeyFrame())
-			return null;
+    @Override
+    protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, Packet pkt) {
+        if (!pkt.isKeyFrame())
+            return null;
 
-		try {
-			return decoder.decodeFrame8Bit(pkt.getData(), target1.getData());
-		} catch (AssertionError ae) {
-			ae.printStackTrace(System.err);
-			return null;
-		}
-	}
+        try {
+            return decoder.decodeFrame8Bit(pkt.getData(), target1.getData());
+        } catch (AssertionError ae) {
+            ae.printStackTrace(System.err);
+            return null;
+        }
+    }
 
-	@Override
-	protected Packet nextPacket(DemuxerTrack inTrack) throws IOException {
-		return inTrack.nextFrame();
-	}
+    @Override
+    protected Packet nextPacket(DemuxerTrack inTrack) throws IOException {
+        return inTrack.nextFrame();
+    }
 }

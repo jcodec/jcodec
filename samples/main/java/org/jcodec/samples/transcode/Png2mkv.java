@@ -50,8 +50,7 @@ class Png2mkv implements Profile {
                 BufferedImage rgb = ImageIO.read(nextImg);
 
                 if (videoTrack == null) {
-                    videoTrack = muxer.createVideoTrack(new Size(rgb.getWidth(), rgb.getHeight()),
-                            "V_MPEG4/ISO/AVC");
+                    videoTrack = muxer.createVideoTrack(new Size(rgb.getWidth(), rgb.getHeight()), "V_MPEG4/ISO/AVC");
                 }
 
                 Picture8Bit yuv = Picture8Bit.create(rgb.getWidth(), rgb.getHeight(), ColorSpace.YUV420);

@@ -191,7 +191,7 @@ public class JCodecUtil {
         case MKV:
             return new MKVDemuxer(ch);
         case IMG:
-            return new ImageSequenceDemuxer(input);
+            return new ImageSequenceDemuxer(input.getAbsolutePath(), Integer.MAX_VALUE);
         case Y4M:
             return new Y4MDecoder(ch);
         default:

@@ -117,8 +117,8 @@ class Prores2avc implements Profile {
                     System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
                 }
             }
-            outTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromSpsPpsList(spsList.subList(0, 1),
-                    ppsList.subList(0, 1), 4));
+            outTrack.addSampleEntry(
+                    H264Utils.createMOVSampleEntryFromSpsPpsList(spsList.subList(0, 1), ppsList.subList(0, 1), 4));
 
             muxer.writeHeader();
         } finally {

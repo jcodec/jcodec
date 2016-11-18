@@ -63,8 +63,8 @@ class Ts2mp4 implements Profile {
                     DemuxerTrackMeta meta = track.getMeta();
 
                     top[nTracks] = track.nextFrameWithBuffer(ByteBuffer.allocate(1920 * 1088));
-                    dstTracks[nTracks] = muxer.addTrack(meta.getType() == TrackType.VIDEO ? MP4TrackType.VIDEO
-                            : MP4TrackType.SOUND, 90000);
+                    dstTracks[nTracks] = muxer.addTrack(
+                            meta.getType() == TrackType.VIDEO ? MP4TrackType.VIDEO : MP4TrackType.SOUND, 90000);
                     if (meta.getType() == TrackType.VIDEO) {
                         h264[nTracks] = true;
                     }
@@ -107,8 +107,8 @@ class Ts2mp4 implements Profile {
         }
     }
 
-    private static void muxPacket(Packet packet, FramesMP4MuxerTrack dstTrack, boolean h264, long minPts,
-            long duration) throws IOException {
+    private static void muxPacket(Packet packet, FramesMP4MuxerTrack dstTrack, boolean h264, long minPts, long duration)
+            throws IOException {
         if (h264) {
             if (dstTrack.getEntries().size() == 0) {
                 List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
@@ -132,9 +132,9 @@ class Ts2mp4 implements Profile {
                 ase.add(EsdsBox.fromADTS(header));
             }
         }
-        dstTrack.addFrame(MP4Packet.createMP4Packet(packet.getData(), packet.getPts() - minPts,
-                packet.getTimescale(), duration, packet.getFrameNo(), packet.isKeyFrame(),
-                packet.getTapeTimecode(), 0, packet.getPts() - minPts, 0));
+        dstTrack.addFrame(MP4Packet.createMP4Packet(packet.getData(), packet.getPts() - minPts, packet.getTimescale(),
+                duration, packet.getFrameNo(), packet.isKeyFrame(), packet.getTapeTimecode(), 0,
+                packet.getPts() - minPts, 0));
     }
 
     @Override

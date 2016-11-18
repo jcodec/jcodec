@@ -18,24 +18,25 @@ import org.jcodec.containers.mps.MPSDemuxer;
 
 /**
  * A profile specific to MPEG PS containers
+ * 
  * @author Stanislav Vitvitskiy
  */
 public abstract class MPSToImg extends ToImgProfile {
     private ThreadLocal<ByteBuffer> buffers = new ThreadLocal<ByteBuffer>();
-   
+
     @Override
     protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException {
-        VideoDecoder decoder = JCodecUtil.createVideoDecoder(JCodecUtil.detectDecoder(firstFrame.duplicate()), inTrack
-                .getMeta().getCodecPrivate());
+        VideoDecoder decoder = JCodecUtil.createVideoDecoder(JCodecUtil.detectDecoder(firstFrame.duplicate()),
+                inTrack.getMeta().getCodecPrivate());
 
         return decoder;
     }
-    
+
     @Override
-	protected DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException {
-		MPEGDemuxer mpsDemuxer = new MPSDemuxer(source);
-		return mpsDemuxer.getVideoTracks().get(0);
-	}
+    protected DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException {
+        MPEGDemuxer mpsDemuxer = new MPSDemuxer(source);
+        return mpsDemuxer.getVideoTracks().get(0);
+    }
 
     @Override
     protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, Packet pkt) {
@@ -52,7 +53,7 @@ public abstract class MPSToImg extends ToImgProfile {
         bb.clear();
         return ((MPEGDemuxerTrack) inTrack).nextFrameWithBuffer(bb);
     }
-    
+
     @Override
     public Set<Format> inputFormat() {
         return TranscodeMain.formats(Format.MPEG_PS);

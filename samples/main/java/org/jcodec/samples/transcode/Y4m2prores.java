@@ -48,8 +48,8 @@ class Y4m2prores implements Profile {
             ProresEncoder encoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
 
             Yuv420pToYuv422p8Bit color = new Yuv420pToYuv422p8Bit();
-            FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("apch", frames.getSize(), TranscodeMain.APPLE_PRO_RES_422,
-                    fps.getNum());
+            FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("apch", frames.getSize(),
+                    TranscodeMain.APPLE_PRO_RES_422, fps.getNum());
             videoTrack.setTgtChunkDuration(HALF, SEC);
             Picture8Bit picture = Picture8Bit.create(frames.getSize().getWidth(), frames.getSize().getHeight(),
                     ColorSpace.YUV422);

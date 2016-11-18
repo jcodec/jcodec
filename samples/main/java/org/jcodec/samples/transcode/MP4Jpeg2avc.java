@@ -37,7 +37,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform8Bit;
 
-class Jpeg2avc implements Profile {
+class MP4Jpeg2avc implements Profile {
     public static final String FLAG_DOWNSCALE = "downscale";
 
     @Override
@@ -72,8 +72,7 @@ class Jpeg2avc implements Profile {
             } else if (downscale == 4) {
                 decoder = new JpegToThumb2x2();
             } else {
-                throw new IllegalArgumentException("Downscale factor of " + downscale
-                        + " is not supported ([2,4]).");
+                throw new IllegalArgumentException("Downscale factor of " + downscale + " is not supported ([2,4]).");
             }
 
             Set<ByteBuffer> spsList = new HashSet<ByteBuffer>();
@@ -87,8 +86,7 @@ class Jpeg2avc implements Profile {
                     transform = ColorUtil.getTransform8Bit(dec.getColor(), encoder.getSupportedColorSpaces()[0]);
                 }
                 if (target2 == null) {
-                    target2 = Picture8Bit.create(dec.getWidth(), dec.getHeight(),
-                            encoder.getSupportedColorSpaces()[0]);
+                    target2 = Picture8Bit.create(dec.getWidth(), dec.getHeight(), encoder.getSupportedColorSpaces()[0]);
                 }
                 transform.transform(dec, target2);
                 _out.clear();
@@ -102,8 +100,8 @@ class Jpeg2avc implements Profile {
                     System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
                 }
             }
-            outTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromSpsPpsList(
-                    new ArrayList<ByteBuffer>(spsList), new ArrayList<ByteBuffer>(ppsList), 4));
+            outTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromSpsPpsList(new ArrayList<ByteBuffer>(spsList),
+                    new ArrayList<ByteBuffer>(ppsList), 4));
 
             muxer.writeHeader();
         } finally {

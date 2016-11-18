@@ -13,12 +13,13 @@ import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 
 /**
  * Profile specific to MPEG TS containers
+ * 
  * @author Stanislav Vitvitskiy
  *
  */
 public abstract class MTSToImg extends MPSToImg {
-	
-	@Override
+
+    @Override
     protected DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException {
         Set<Integer> programs = MTSDemuxer.getProgramsFromChannel(source);
         for (int program : programs) {
@@ -41,8 +42,8 @@ public abstract class MTSToImg extends MPSToImg {
         }
         return null;
     }
-	
-	@Override
+
+    @Override
     public Set<Format> inputFormat() {
         return TranscodeMain.formats(Format.MPEG_TS);
     }
