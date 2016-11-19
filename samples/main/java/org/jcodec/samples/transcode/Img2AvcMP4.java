@@ -42,10 +42,10 @@ class Img2AvcMP4 extends FromImgProfile {
     }
 
     @Override
-    protected FramesMP4MuxerTrack getMuxerTrack(SeekableByteChannel sink, DemuxerTrackMeta inTrackMeta, Picture8Bit yuv)
+    protected FramesMP4MuxerTrack getMuxerTrack(SeekableByteChannel sink, DemuxerTrackMeta inTrackMeta, Picture8Bit yuv,  Packet firstPacket)
             throws IOException {
         muxer = MP4Muxer.createMP4MuxerToChannel(sink);
-        track = muxer.addTrack(MP4TrackType.VIDEO, 25);
+        track = muxer.addTrack(MP4TrackType.VIDEO, (int)firstPacket.getTimescale());
         return track;
     }
 

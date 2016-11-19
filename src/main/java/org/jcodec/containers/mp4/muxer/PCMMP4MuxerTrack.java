@@ -7,6 +7,7 @@ import java.util.Date;
 import org.jcodec.common.Assert;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
@@ -59,6 +60,11 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
         setTgtChunkDuration(new Rational(1, 2), Unit.SEC);
     }
 
+    @Override
+    public void addFrame(Packet outPacket) throws IOException {
+        addSamples(outPacket.getData().duplicate());
+    }
+    
     public void addSamples(ByteBuffer buffer) throws IOException {
         curChunk.add(buffer);
 

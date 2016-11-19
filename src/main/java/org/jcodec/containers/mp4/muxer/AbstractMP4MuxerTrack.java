@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.api.UnhandledStateException;
+import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
@@ -45,7 +46,7 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
  * @author The JCodec project
  * 
  */
-public abstract class AbstractMP4MuxerTrack {
+public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
     protected int trackId;
     protected MP4TrackType type;
     protected int timescale;

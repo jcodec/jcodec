@@ -17,6 +17,7 @@ import org.jcodec.common.Codec;
 import org.jcodec.common.Format;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils;
@@ -47,7 +48,7 @@ class Prores2webm implements Profile {
 
             VP8Encoder encoder = VP8Encoder.createVP8Encoder(10); // qp
 
-            MKVMuxer muxer = new MKVMuxer();
+            MKVMuxer muxer = new MKVMuxer(sink);
             MKVMuxerTrack videoTrack = null;
 
             AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
@@ -85,14 +86,14 @@ class Prores2webm implements Profile {
                 // inFrame.getDuration(), inFrame.getFrameNo(), true, null);
                 byte[] array = new byte[result.limit()];
                 System.arraycopy(result.array(), result.position(), array, 0, array.length);
-                videoTrack.addSampleEntry(ByteBuffer.wrap(array), i - 1);
+                videoTrack.addFrame(new Packet(ByteBuffer.wrap(array), i - 1, 25, 1, i - 1, true, null, i - 1));
 
                 if (i % 100 == 0) {
                     long elapse = System.currentTimeMillis() - start;
                     System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
                 }
             }
-            muxer.mux(sink);
+            muxer.mux();
         } finally {
             if (sink != null)
                 sink.close();

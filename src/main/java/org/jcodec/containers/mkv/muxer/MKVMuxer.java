@@ -65,8 +65,10 @@ public class MKVMuxer {
     private EbmlMaster mkvCues;
     private EbmlMaster mkvSeekHead;
     private List<EbmlMaster> clusterList;
+    private SeekableByteChannel sink;
 
-    public MKVMuxer() {
+    public MKVMuxer(SeekableByteChannel s) {
+        this.sink = s;
         this.tracks = new ArrayList<MKVMuxerTrack>();
         this.clusterList = new LinkedList<EbmlMaster>();
     }
@@ -82,7 +84,7 @@ public class MKVMuxer {
         return videoTrack;
     }
 
-    public void mux(SeekableByteChannel s) throws IOException {
+    public void mux() throws IOException {
         List<EbmlMaster> mkvFile = new ArrayList<EbmlMaster>();
         EbmlMaster ebmlHeader = defaultEbmlHeader();
         mkvFile.add(ebmlHeader);
@@ -103,7 +105,7 @@ public class MKVMuxer {
         mkvFile.add(segmentElem);
 
         for (EbmlMaster el : mkvFile)
-            el.mux(s);
+            el.mux(sink);
     }
 
     private EbmlMaster defaultEbmlHeader() {

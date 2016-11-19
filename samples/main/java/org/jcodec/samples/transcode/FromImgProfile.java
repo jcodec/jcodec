@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
@@ -15,6 +16,7 @@ import javax.imageio.ImageIO;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
+import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
@@ -26,8 +28,6 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform8Bit;
@@ -44,12 +44,15 @@ abstract class FromImgProfile implements Profile {
     // Protected interface
     protected abstract VideoEncoder getEncoder();
 
-    protected abstract FramesMP4MuxerTrack getMuxerTrack(SeekableByteChannel sink, DemuxerTrackMeta inTrackMeta,
-            Picture8Bit yuv) throws IOException;
+    protected abstract MuxerTrack getMuxerTrack(SeekableByteChannel sink, DemuxerTrackMeta inTrackMeta,
+            Picture8Bit yuv, Packet firstPacket) throws IOException;
 
     protected abstract void finalizeMuxer() throws IOException;
 
-    protected abstract MP4Packet encodeFrame(VideoEncoder encoder, Picture8Bit yuv, Packet inPacket, ByteBuffer buf);
+    protected abstract Packet encodeFrame(VideoEncoder encoder, Picture8Bit yuv, Packet inPacket, ByteBuffer buf);
+    
+    protected void populateAdditionalFlags(Map<String, String> flags) {
+    }
 
     @Override
     public void transcode(Cmd cmd) throws IOException {
@@ -65,7 +68,7 @@ abstract class FromImgProfile implements Profile {
                     cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE));
 
             Packet inPacket = null;
-            FramesMP4MuxerTrack track = null;
+            MuxerTrack track = null;
             while ((inPacket = demuxer.nextFrame()) != null) {
                 byte[] array = NIOUtils.toArray(inPacket.getData());
                 BufferedImage rgb = ImageIO.read(new ByteArrayInputStream(array));
@@ -75,10 +78,10 @@ abstract class FromImgProfile implements Profile {
                 transform8Bit.transform(AWTUtil.fromBufferedImageRGB8Bit(rgb), yuv);
                 ByteBuffer buf = ByteBuffer.allocate(rgb.getWidth() * rgb.getHeight() * 3);
 
-                MP4Packet outPacket = encodeFrame(encoder, yuv, inPacket, buf);
+                Packet outPacket = encodeFrame(encoder, yuv, inPacket, buf);
 
                 if (track == null) {
-                    track = getMuxerTrack(sink, demuxer.getMeta(), yuv);
+                    track = getMuxerTrack(sink, demuxer.getMeta(), yuv, inPacket);
                 }
                 track.addFrame(outPacket);
             }
@@ -95,11 +98,10 @@ abstract class FromImgProfile implements Profile {
 
     @Override
     public void printHelp(PrintStream err) {
-        MainUtils.printHelpVarArgs(new HashMap<String, String>() {
-            {
-                put(FLAG_MAX_FRAMES, "Number of frames to transcode");
-            }
-        }, "pattern", "out file");
+        HashMap<String, String> hashMap = new HashMap<String, String>();
+        hashMap.put(FLAG_MAX_FRAMES, "Number of frames to transcode");
+        populateAdditionalFlags(hashMap);
+        MainUtils.printHelpVarArgs(hashMap, "pattern", "out file");
     }
 
     @Override

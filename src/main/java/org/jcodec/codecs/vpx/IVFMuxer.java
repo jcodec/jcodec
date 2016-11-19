@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -15,7 +16,7 @@ import org.jcodec.common.model.Packet;
  * @author The JCodec project
  * 
  */
-public class IVFMuxer {
+public class IVFMuxer implements MuxerTrack {
 
     private SeekableByteChannel ch;
     private int nFrames;
@@ -43,6 +44,7 @@ public class IVFMuxer {
         this.ch = ch;
     }
 
+    @Override
     public void addFrame(Packet pkt) throws IOException {
 
         ByteBuffer fh = ByteBuffer.allocate(12);

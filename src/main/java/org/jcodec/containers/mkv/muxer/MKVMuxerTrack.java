@@ -2,10 +2,11 @@ package org.jcodec.containers.mkv.muxer;
 
 import static org.jcodec.containers.mkv.boxes.MkvBlock.keyFrame;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 
@@ -16,7 +17,7 @@ import org.jcodec.containers.mkv.boxes.MkvBlock;
  * @author The JCodec project
  * 
  */
-public class MKVMuxerTrack {
+public class MKVMuxerTrack implements MuxerTrack {
 
     public static enum MKVMuxerTrackType {VIDEO };
     
@@ -41,14 +42,14 @@ public class MKVMuxerTrack {
         return NANOSECONDS_IN_A_MILISECOND;
     }
 
-    public void addSampleEntry(ByteBuffer frameData, int pts) {
-        MkvBlock frame = keyFrame(trackNo, 0, frameData);
-        frame.absoluteTimecode = pts - 1;
+    @Override
+    public void addFrame(Packet outPacket) {
+        MkvBlock frame = keyFrame(trackNo, 0, outPacket.getData());
+        frame.absoluteTimecode = outPacket.getPts() - 1;
         trackBlocks.add(frame);
     }
 
     public long getTrackNo() {
         return trackNo;
     }
-
 }

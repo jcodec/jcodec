@@ -10,6 +10,7 @@ import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
@@ -81,9 +82,10 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         setTgtChunkDuration(new Rational(1, 1), Unit.FRAME);
     }
 
-    public void addFrame(MP4Packet pkt) throws IOException {
+    public void addFrame(Packet pkt_) throws IOException {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
+        MP4Packet pkt = (MP4Packet)pkt_;
         int entryNo = pkt.getEntryNo() + 1;
 
         int compositionOffset = (int) (pkt.getPts() - ptsEstimate);
