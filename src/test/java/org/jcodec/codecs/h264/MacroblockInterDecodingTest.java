@@ -17,7 +17,7 @@ public class MacroblockInterDecodingTest {
 
     @Test
     public void testMBlockCABAC1() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cabac/p_1/seq.264")));
         H264Decoder dec = new H264Decoder();
 
@@ -41,7 +41,7 @@ public class MacroblockInterDecodingTest {
 
     @Test
     public void testMBlockCABAC2() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cabac/p_2/seq.264")));
         H264Decoder dec = new H264Decoder();
 
@@ -65,7 +65,7 @@ public class MacroblockInterDecodingTest {
 
     @Test
     public void testMBlockCAVLC1() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cavlc/p_1/seq.264")));
         H264Decoder dec = new H264Decoder();
 
@@ -89,7 +89,7 @@ public class MacroblockInterDecodingTest {
 
     @Test
     public void testMBlockCAVLC2() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cavlc/p_2/seq.264")));
         H264Decoder dec = new H264Decoder();
 

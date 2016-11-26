@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.MappedH264ES;
+import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
@@ -67,7 +67,7 @@ public class AVCMP4Mux {
     }
 
     private static void mux(FramesMP4MuxerTrack track, File f) throws IOException {
-        MappedH264ES es = new MappedH264ES(NIOUtils.mapFile(f));
+        BufferH264ES es = new BufferH264ES(NIOUtils.mapFile(f));
 
         ArrayList<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
         ArrayList<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();

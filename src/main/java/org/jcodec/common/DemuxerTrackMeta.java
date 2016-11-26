@@ -24,7 +24,8 @@ public class DemuxerTrackMeta {
     private ByteBuffer codecPrivate;
     private Rational pixelAspectRatio;
 
-    public DemuxerTrackMeta(TrackType type, Codec codec, int[] seekFrames, int totalFrames, double totalDuration, Size dimensions, ByteBuffer codecPrivate) {
+    public DemuxerTrackMeta(TrackType type, Codec codec, int[] seekFrames, int totalFrames, double totalDuration,
+            Size dimensions, ByteBuffer codecPrivate) {
         this.type = type;
         this.codec = codec;
         this.seekFrames = seekFrames;
@@ -37,7 +38,7 @@ public class DemuxerTrackMeta {
     public TrackType getType() {
         return type;
     }
-    
+
     public Codec getCodec() {
         return codec;
     }
@@ -79,5 +80,9 @@ public class DemuxerTrackMeta {
 
     public void setPixelAspectRatio(Rational pixelAspectRatio) {
         this.pixelAspectRatio = pixelAspectRatio;
+    }
+
+    public int getIndex() {
+        return 0;
     }
 }

@@ -38,7 +38,6 @@ public class TranscodeMain {
     private static final String FLAG_INPUT_VIDEO_CODEC = "i:vc";
     private static final String FLAG_OUTPUT_FORMAT = "o:f";
     private static final String FLAG_INPUT_FORMAT = "i:f";
-    static final String APPLE_PRO_RES_422 = "Apple ProRes 422";
 
     private static List<Profile> profiles = new ArrayList<Profile>();
     private static Map<String, Format> extensionToF = new HashMap<String, Format>();
@@ -235,6 +234,8 @@ public class TranscodeMain {
         } else {
             outputCodecAudio = Codec.valueOf(outputCodecAudioRaw.toUpperCase());
         }
+        if(inputCodecAudio == null)
+            outputCodecAudio = null;
 
         List<Profile> candidates = new ArrayList<Profile>(profiles);
         for (Iterator<Profile> it = candidates.iterator(); it.hasNext();) {

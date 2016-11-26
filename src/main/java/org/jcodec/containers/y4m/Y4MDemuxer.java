@@ -1,18 +1,20 @@
-package org.jcodec.codecs.y4m;
+package org.jcodec.containers.y4m;
 
 import static org.jcodec.common.StringUtils.splitC;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.VideoDecoder;
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 
@@ -23,7 +25,7 @@ import org.jcodec.common.model.Size;
  * @author The JCodec project
  * 
  */
-public class Y4MDecoder extends VideoDecoder implements Demuxer {
+public class Y4MDemuxer implements DemuxerTrack, Demuxer {
 
     private SeekableByteChannel is;
     private int width;
@@ -31,8 +33,11 @@ public class Y4MDecoder extends VideoDecoder implements Demuxer {
     private String invalidFormat;
     private Rational fps;
     private int bufSize;
+    private int frameNum;
+    private int totalFrames;
+    private int totalDuration;
 
-    public Y4MDecoder(SeekableByteChannel _is) throws IOException {
+    public Y4MDemuxer(SeekableByteChannel _is) throws IOException {
         this.is = _is;
         ByteBuffer buf = NIOUtils.fetchFromChannel(is, 2048);
         String[] header = splitC(readLine(buf), ' ');
@@ -59,9 +64,13 @@ public class Y4MDecoder extends VideoDecoder implements Demuxer {
         is.setPosition(buf.position());
         bufSize = width * height;
         bufSize += bufSize / 2;
+        long fileSize = is.size();
+        totalFrames = (int) (fileSize / (bufSize + 7));
+        totalDuration = (totalFrames * fps.getDen()) / fps.getNum();
     }
 
-    public Picture8Bit nextFrame8Bit(byte[][] buffer) throws IOException {
+    @Override
+    public Packet nextFrame() throws IOException {
         if (invalidFormat != null)
             throw new RuntimeException("Invalid input: " + invalidFormat);
         ByteBuffer buf = NIOUtils.fetchFromChannel(is, 2048);
@@ -71,19 +80,9 @@ public class Y4MDecoder extends VideoDecoder implements Demuxer {
 
         is.setPosition(is.position() - buf.remaining());
         ByteBuffer pix = NIOUtils.fetchFromChannel(is, bufSize);
-
-        Picture8Bit create = Picture8Bit.createPicture8Bit(width, height, buffer, ColorSpace.YUV420);
-        copy(pix, create.getPlaneData(0), width*height);
-        copy(pix, create.getPlaneData(1), width*height / 4);
-        copy(pix, create.getPlaneData(2), width*height / 4);
-
-        return create;
-    }
-
-    void copy(ByteBuffer b, byte[] ii, int size) {
-        for (int i = 0; b.hasRemaining() && i < size; i++) {
-            ii[i] = (byte) ((b.get() & 0xff) - 128);
-        }
+        Packet packet = new Packet(pix, frameNum * fps.getDen(), fps.getNum(), fps.getDen(), frameNum, true, null, frameNum);
+        ++frameNum;
+        return packet;
     }
 
     private static String find(String[] header, char c) {
@@ -103,49 +102,35 @@ public class Y4MDecoder extends VideoDecoder implements Demuxer {
         return new String(NIOUtils.toArray(duplicate));
     }
 
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
     public Rational getFps() {
         return fps;
     }
 
-    public Size getSize() {
-        return new Size(width, height);
-    }
-
     @Override
-    public List<? extends DemuxerTrack> getTracks() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public List<? extends DemuxerTrack> getVideoTracks() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public List<? extends DemuxerTrack> getAudioTracks() {
-        // TODO Auto-generated method stub
-        return null;
+    public DemuxerTrackMeta getMeta() {
+        return new DemuxerTrackMeta(TrackType.VIDEO, Codec.RAW, null, totalFrames, totalDuration,
+                new Size(width, height), null);
     }
 
     @Override
     public void close() throws IOException {
-        // TODO Auto-generated method stub
-        
+        is.close();
     }
 
     @Override
-    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
-        // TODO Auto-generated method stub
-        return null;
+    public List<? extends DemuxerTrack> getTracks() {
+        List<DemuxerTrack> list = new ArrayList<DemuxerTrack>();
+        list.add(this);
+        return list;
+    }
+
+    @Override
+    public List<? extends DemuxerTrack> getVideoTracks() {
+        return getTracks();
+    }
+
+    @Override
+    public List<? extends DemuxerTrack> getAudioTracks() {
+        return new ArrayList<DemuxerTrack>();
     }
 }

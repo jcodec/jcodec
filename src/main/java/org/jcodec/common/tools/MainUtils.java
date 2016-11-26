@@ -29,6 +29,20 @@ public class MainUtils {
 
     public static boolean isColorSupported = System.console() != null
             || Boolean.parseBoolean(System.getProperty(JCODEC_LOG_SINK_COLOR));
+    
+    public static class Flag {
+        private String longName;
+        private String shortName;
+
+        public Flag(String longName) {
+            this(longName, null);
+        }
+        
+        public Flag(String longName, String shortName) {
+            this.longName = longName;
+            this.shortName = shortName;
+        }
+    }
 
     public static class Cmd {
         public Map<String, String> flags;
@@ -122,7 +136,7 @@ public class MainUtils {
         }
 
         public Boolean getBooleanFlag(String flagName) {
-            return getBooleanFlagInternal(flags, flagName, null);
+            return getBooleanFlagInternal(flags, flagName, false);
         }
 
         public Boolean getBooleanFlagID(int arg, String flagName, Boolean defaultValue) {

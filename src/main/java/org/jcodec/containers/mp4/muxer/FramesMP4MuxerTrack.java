@@ -82,11 +82,21 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         setTgtChunkDuration(new Rational(1, 1), Unit.FRAME);
     }
 
-    public void addFrame(Packet pkt_) throws IOException {
+    public void addMp4Frame(MP4Packet pkt) throws IOException {
+        int entryNo = pkt.getEntryNo() + 1;
+        
+        addFrameInternal(pkt, entryNo);
+
+        processTimecode(pkt);
+    }
+
+    public void addFrame(Packet pkt) throws IOException {
+        addFrameInternal(pkt, 1);
+    }
+    
+    public void addFrameInternal(Packet pkt, int entryNo) throws IOException {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
-        MP4Packet pkt = (MP4Packet)pkt_;
-        int entryNo = pkt.getEntryNo() + 1;
 
         int compositionOffset = (int) (pkt.getPts() - ptsEstimate);
         if (compositionOffset != lastCompositionOffset) {
@@ -122,8 +132,6 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         trackTotalDuration += pkt.getDuration();
 
         outChunkIfNeeded(entryNo);
-
-        processTimecode(pkt);
 
         lastEntry = entryNo;
     }
@@ -268,5 +276,9 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     public void setTimecode(TimecodeMP4MuxerTrack timecodeTrack) {
         this.timecodeTrack = timecodeTrack;
+    }
+
+    public void setTimescale(int timescale) {
+        this.timescale = timescale;
     }
 }

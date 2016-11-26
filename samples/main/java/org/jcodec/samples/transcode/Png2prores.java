@@ -77,13 +77,15 @@ class Png2prores extends FromImgProfile {
     protected VideoEncoder getEncoder() {
         return new ProresEncoder(profile, interlaced);
     }
-
+    
+    static final String APPLE_PRO_RES_422 = "Apple ProRes 422";
+    
     @Override
     protected FramesMP4MuxerTrack getMuxerTrack(SeekableByteChannel sink, DemuxerTrackMeta inTrackMeta, Picture8Bit yuv,
             Packet firstPacket) throws IOException {
         muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
         FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack(profile.fourcc, new Size(yuv.getWidth(), yuv.getHeight()),
-                TranscodeMain.APPLE_PRO_RES_422, (int)firstPacket.getTimescale());
+                APPLE_PRO_RES_422, (int)firstPacket.getTimescale());
         videoTrack.setTgtChunkDuration(HALF, SEC);
         return videoTrack;
     }

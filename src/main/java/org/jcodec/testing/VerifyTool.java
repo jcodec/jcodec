@@ -5,7 +5,7 @@ import static org.jcodec.common.JCodecUtil.getAsIntArray;
 import static org.jcodec.platform.Platform.arrayEqualsByte;
 
 import org.jcodec.codecs.h264.H264Decoder;
-import org.jcodec.codecs.h264.MappedH264ES;
+import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
@@ -60,7 +60,7 @@ public class VerifyTool {
     }
 
     private boolean test(File coded, File ref) throws IOException {
-        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFromFile(coded));
+        BufferH264ES es = new BufferH264ES(NIOUtils.fetchFromFile(coded));
         Picture8Bit buf = Picture8Bit.create(1920, 1088, ColorSpace.YUV420);
         H264Decoder dec = new H264Decoder();
         Packet nextFrame;

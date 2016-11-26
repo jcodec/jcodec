@@ -21,7 +21,6 @@ import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.vp8.VP8Decoder;
-import org.jcodec.codecs.y4m.Y4MDecoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -34,6 +33,7 @@ import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
+import org.jcodec.containers.y4m.Y4MDemuxer;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform8Bit;
 
@@ -193,7 +193,7 @@ public class JCodecUtil {
         case IMG:
             return new ImageSequenceDemuxer(input.getAbsolutePath(), Integer.MAX_VALUE);
         case Y4M:
-            return new Y4MDecoder(ch);
+            return new Y4MDemuxer(ch);
         default:
             Logger.error("Format " + format + " is not supported");
         }
