@@ -1,18 +1,9 @@
 package org.jcodec.samples.transcode;
 
-import static org.jcodec.common.io.NIOUtils.readableChannel;
-import static org.jcodec.common.io.NIOUtils.writableChannel;
-
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-
-import net.sourceforge.jaad.aac.Decoder;
-import net.sourceforge.jaad.aac.SampleBuffer;
 
 import org.jcodec.codecs.aac.AACUtils;
 import org.jcodec.codecs.aac.AACUtils.AACMetadata;
@@ -23,72 +14,106 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
-class MP42Wav implements Transcoder {
-    @Override
-    public void transcode(Cmd cmd, Profile profile) throws IOException {
-        SeekableByteChannel source = null;
-        SeekableByteChannel sink = null;
-        WavOutput wavOutput = null;
-        try {
-            source = readableChannel(new File(cmd.getArg(0)));
-            sink = writableChannel(new File(cmd.getArg(1)));
+import net.sourceforge.jaad.aac.Decoder;
+import net.sourceforge.jaad.aac.SampleBuffer;
 
+class MP42Wav extends V2VTranscoder {
+
+    protected class MP42WavTranscoder extends GenericTranscoder {
+
+        private AbstractMP4DemuxerTrack audioInputTrack;
+        private WavOutput audioOutputTrack;
+        private Decoder audioDecoder;
+
+        public MP42WavTranscoder(Cmd cmd, Profile profile) {
+            super(cmd, profile);
+        }
+
+        @Override
+        protected void initDecode(SeekableByteChannel source) throws IOException {
             MP4Demuxer demuxer = new MP4Demuxer(source);
 
             List<AbstractMP4DemuxerTrack> tracks = demuxer.getAudioTracks();
-            AbstractMP4DemuxerTrack selectedTrack = null;
+            audioInputTrack = null;
             for (AbstractMP4DemuxerTrack track : tracks) {
                 if (track.getCodec() == Codec.AAC) {
-                    selectedTrack = track;
+                    audioInputTrack = track;
                     break;
                 }
             }
-            if (selectedTrack == null) {
+            if (audioInputTrack == null) {
                 Logger.error("Could not find an AAC track");
                 return;
             } else {
-                Logger.info("Using the AAC track: " + selectedTrack.getNo());
+                Logger.info("Using the AAC track: " + audioInputTrack.getNo());
             }
-            SampleEntry sampleEntry = selectedTrack.getSampleEntries()[0];
+            SampleEntry sampleEntry = audioInputTrack.getSampleEntries()[0];
+            audioDecoder = new Decoder(NIOUtils.toArray(AACUtils.getCodecPrivate(sampleEntry)));
+        }
+
+        @Override
+        protected void initEncode(SeekableByteChannel sink) throws IOException {
+            SampleEntry sampleEntry = audioInputTrack.getSampleEntries()[0];
             AACMetadata meta = AACUtils.getMetadata(sampleEntry);
-            wavOutput = new WavOutput(sink, meta.getFormat());
-            Decoder aacDecoder = new Decoder(NIOUtils.toArray(AACUtils.getCodecPrivate(sampleEntry)));
+            audioOutputTrack = new WavOutput(sink, meta.getFormat());
+        }
+
+        @Override
+        protected void finishEncode() throws IOException {
+        }
+
+        @Override
+        protected Packet inputVideoPacket() throws IOException {
+            return null;
+        }
+
+        @Override
+        protected void outputVideoPacket(Packet packet) throws IOException {
+        }
+
+        @Override
+        protected boolean haveAudio() {
+            return true;
+        }
+
+        @Override
+        protected Packet inputAudioPacket() throws IOException {
+            return audioInputTrack.nextFrame();
+        }
+
+        @Override
+        protected void outputAudioPacket(Packet audioPkt) throws IOException {
+            audioOutputTrack.write(audioPkt.getData());
+        }
+
+        @Override
+        protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
             SampleBuffer sampleBuffer = new SampleBuffer();
 
-            Packet packet;
-            while ((packet = selectedTrack.nextFrame()) != null) {
-                aacDecoder.decodeFrame(NIOUtils.toArray(packet.getData()), sampleBuffer);
-                if (sampleBuffer.isBigEndian())
-                    toLittleEndian(sampleBuffer);
-                wavOutput.write(ByteBuffer.wrap(sampleBuffer.getData()));
-            }
-        } finally {
-            NIOUtils.closeQuietly(source);
-            NIOUtils.closeQuietly(wavOutput);
+            audioDecoder.decodeFrame(NIOUtils.toArray(audioPkt), sampleBuffer);
+            if (sampleBuffer.isBigEndian())
+                toLittleEndian(sampleBuffer);
+            return ByteBuffer.wrap(sampleBuffer.getData());
         }
-    }
-
-    private void toLittleEndian(SampleBuffer sampleBuffer) {
-        byte[] data = sampleBuffer.getData();
-        for (int i = 0; i < data.length; i += 2) {
-            byte tmp = data[i];
-            data[i] = data[i + 1];
-            data[i + 1] = tmp;
+        
+        @Override
+        protected ByteBuffer encodeAudio(ByteBuffer wrap) {
+            return wrap;
         }
-    }
 
-    @Override
-    public void printHelp(PrintStream err) {
-        MainUtils.printHelpVarArgs(new HashMap<String, String>() {
-            {
+        private void toLittleEndian(SampleBuffer sampleBuffer) {
+            byte[] data = sampleBuffer.getData();
+            for (int i = 0; i < data.length; i += 2) {
+                byte tmp = data[i];
+                data[i] = data[i + 1];
+                data[i + 1] = tmp;
             }
-        }, "in file", "out file");
+        }
     }
 
     @Override
@@ -119,5 +144,10 @@ class MP42Wav implements Transcoder {
     @Override
     public Set<Codec> outputAudioCodec() {
         return TranscodeMain.codecs(Codec.PCM);
+    }
+
+    @Override
+    protected GenericTranscoder getTranscoder(Cmd cmd, Profile profile) {
+        return new MP42WavTranscoder(cmd, profile);
     }
 }

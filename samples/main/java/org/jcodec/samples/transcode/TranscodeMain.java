@@ -130,6 +130,7 @@ public class TranscodeMain {
 
         videoCodecsForF.put(Format.MKV, Codec.VP8);
         audioCodecsForF.put(Format.MKV, Codec.VORBIS);
+        audioCodecsForF.put(Format.WAV, Codec.PCM);
 
         videoCodecsForF.put(Format.H264, Codec.H264);
         videoCodecsForF.put(Format.RAW, Codec.RAW);
@@ -236,7 +237,7 @@ public class TranscodeMain {
         boolean audioCopy = false;
         if (outputCodecAudioRaw == null) {
             if (outputFormat.isAudio())
-                outputCodecAudio = getFirstAudioCodecForFormat(inputFormat);
+                outputCodecAudio = getFirstAudioCodecForFormat(outputFormat);
         } else {
             if ("copy".equalsIgnoreCase(outputCodecAudioRaw)) {
                 audioCopy = true;

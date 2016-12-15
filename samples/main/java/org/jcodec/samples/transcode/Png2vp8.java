@@ -21,7 +21,7 @@ import org.jcodec.common.model.Picture8Bit;
  * @author Stanislav Vitvitskiy
  *
  */
-class Png2vp8 extends FromImgProfile {
+class Png2vp8 extends FromImgTranscoder {
     @Override
     public Set<Format> outputFormat() {
         return TranscodeMain.formats(Format.IVF);

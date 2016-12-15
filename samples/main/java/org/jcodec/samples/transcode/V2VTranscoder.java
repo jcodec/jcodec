@@ -21,7 +21,6 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
-import org.jcodec.samples.transcode.Transcoder.Profile;
 import org.jcodec.samples.transcode.filters.ColorTransformFilter;
 
 /**
@@ -202,18 +201,8 @@ public abstract class V2VTranscoder implements Transcoder {
                     }
                     framesDecoded = true;
                     if (haveAudio()) {
-                        Packet audioPkt;
-                        do {
-                            audioPkt = inputAudioPacket();
-                            if (audioPkt == null)
-                                break;
-                            if (!audioCodecCopy()) {
-                                ByteBuffer decodedAudio = decodeAudio(audioPkt.getData());
-                                outputAudioPacket(Packet.createPacketWithData(audioPkt, encodeAudio(decodedAudio)));
-                            } else {
-                                outputAudioPacket(audioPkt);
-                            }
-                        } while (audioPkt.getPtsD() < inVideoPacket.getPtsD() + 0.2);
+                        double endPts = inVideoPacket.getPtsD() + 0.2;
+                        outputAudioPacketsTo(endPts);
                     }
 
                     if (!videoCodecCopy()) {
@@ -239,11 +228,28 @@ public abstract class V2VTranscoder implements Transcoder {
                 if (reorderBuffer.size() > 0) {
                     outFrames(reorderBuffer, pixelsStore, reorderBuffer.size());
                 }
+                // Remaining audio packets
+                outputAudioPacketsTo(Double.MAX_VALUE);
                 finishEncode();
             } finally {
                 IOUtils.closeQuietly(sink);
                 IOUtils.closeQuietly(source);
             }
+        }
+
+        private void outputAudioPacketsTo(double endPts) throws IOException {
+            Packet audioPkt;
+            do {
+                audioPkt = inputAudioPacket();
+                if (audioPkt == null)
+                    break;
+                if (!audioCodecCopy()) {
+                    ByteBuffer decodedAudio = decodeAudio(audioPkt.getData());
+                    outputAudioPacket(Packet.createPacketWithData(audioPkt, encodeAudio(decodedAudio)));
+                } else {
+                    outputAudioPacket(audioPkt);
+                }
+            } while (audioPkt.getPtsD() < endPts);
         }
 
         private void printLegend(int frameNo, int maxFrames, Packet inVideoPacket) {

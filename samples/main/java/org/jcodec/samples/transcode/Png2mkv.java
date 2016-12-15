@@ -20,7 +20,7 @@ import org.jcodec.containers.mkv.muxer.MKVMuxer;
  * A profile to transcode into AVC (H.264) muxed into MKV. 
  * @author Stanislav Vitvitskiy
  */
-class Png2mkv extends FromImgProfile {
+class Png2mkv extends FromImgTranscoder {
     private MKVMuxer muxer;
 
     @Override

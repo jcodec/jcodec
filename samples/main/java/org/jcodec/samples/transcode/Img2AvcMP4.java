@@ -29,7 +29,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * @author Stanislav Vitvitskiy
  *
  */
-class Img2AvcMP4 extends FromImgProfile {
+class Img2AvcMP4 extends FromImgTranscoder {
 
     private MP4Muxer muxer;
     private FramesMP4MuxerTrack track;

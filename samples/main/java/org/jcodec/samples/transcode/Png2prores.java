@@ -29,7 +29,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * @author Stanislav Vitvitskiy
  *
  */
-class Png2prores extends FromImgProfile {
+class Png2prores extends FromImgTranscoder {
     private static final String DEFAULT_PROFILE = "apch";
     private static final String FLAG_FOURCC = "fourcc";
     private static final String FLAG_INTERLACED = "interlaced";

@@ -38,7 +38,7 @@ import org.jcodec.scale.Transform8Bit;
  * @author Stanislav Vitvitskiy
  *
  */
-abstract class FromImgProfile implements Transcoder {
+abstract class FromImgTranscoder implements Transcoder {
     private static final String FLAG_MAX_FRAMES = "maxFrames";
 
     // Protected interface

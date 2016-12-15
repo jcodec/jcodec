@@ -22,7 +22,7 @@ import org.jcodec.containers.mkv.muxer.MKVMuxer;
  * @author Stanislav Vitvitskiy
  *
  */
-class Png2webm extends FromImgProfile {
+class Png2webm extends FromImgTranscoder {
 
     private MKVMuxer muxer;
 

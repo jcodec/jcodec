@@ -1,6 +1,5 @@
 package org.jcodec.samples.transcode;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
@@ -14,7 +13,6 @@ import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
-import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
