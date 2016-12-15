@@ -91,7 +91,7 @@ class Prores2avc extends V2VTranscoder {
         }
 
         @Override
-        protected Picture8Bit createPixelBuffer(ColorSpace colorspace) {
+        protected Picture8Bit createPixelBuffer(ColorSpace colorspace, ByteBuffer firstFrame) {
             Size size = videoInputTrack.getMeta().getDimensions();
             return Picture8Bit.create(size.getWidth(), size.getHeight(), colorspace);
         }

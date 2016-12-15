@@ -25,7 +25,7 @@ public abstract class MPSToImg extends ToImgTranscoder {
     private ThreadLocal<ByteBuffer> buffers = new ThreadLocal<ByteBuffer>();
 
     @Override
-    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException {
+    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) {
         VideoDecoder decoder = JCodecUtil.createVideoDecoder(JCodecUtil.detectDecoder(firstFrame.duplicate()),
                 inTrack.getMeta().getCodecPrivate());
 
@@ -39,8 +39,8 @@ public abstract class MPSToImg extends ToImgTranscoder {
     }
 
     @Override
-    protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, Packet pkt) {
-        return decoder.decodeFrame8Bit(pkt.getData(), target1.getData());
+    protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, ByteBuffer pkt) {
+        return decoder.decodeFrame8Bit(pkt, target1.getData());
     }
 
     @Override

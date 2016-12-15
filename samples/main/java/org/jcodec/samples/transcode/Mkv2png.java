@@ -38,7 +38,7 @@ class Mkv2png extends ToImgTranscoder {
     }
 
     @Override
-    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException {
+    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) {
         H264Decoder decoder = new H264Decoder();
         decoder.addSps(avcC.getSpsList());
         decoder.addPps(avcC.getPpsList());
@@ -55,8 +55,8 @@ class Mkv2png extends ToImgTranscoder {
     }
 
     @Override
-    protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, Packet pkt) {
-        return ((H264Decoder) decoder).decodeFrame8BitFromNals(H264Utils.splitMOVPacket(pkt.getData(), avcC),
+    protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, ByteBuffer pkt) {
+        return ((H264Decoder) decoder).decodeFrame8BitFromNals(H264Utils.splitMOVPacket(pkt, avcC),
                 target1.getData());
     }
 

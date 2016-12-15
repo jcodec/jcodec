@@ -32,7 +32,7 @@ class Webm2png extends ToImgTranscoder {
     }
 
     @Override
-    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException {
+    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) {
         return new VP8Decoder();
     }
 
@@ -43,12 +43,9 @@ class Webm2png extends ToImgTranscoder {
     }
 
     @Override
-    protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, Packet pkt) {
-        if (!pkt.isKeyFrame())
-            return null;
-
+    protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, ByteBuffer pkt) {
         try {
-            return decoder.decodeFrame8Bit(pkt.getData(), target1.getData());
+            return decoder.decodeFrame8Bit(pkt, target1.getData());
         } catch (AssertionError ae) {
             ae.printStackTrace(System.err);
             return null;

@@ -1,6 +1,5 @@
 package org.jcodec.samples.transcode;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
@@ -17,7 +16,7 @@ class Mpeg2img extends MPSToImg {
     private static final String FLAG_DOWNSCALE = "downscale";
 
     @Override
-    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException {
+    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) {
         VideoDecoder decoder = super.getDecoder(cmd, inTrack, firstFrame);
         Integer downscale = cmd.getIntegerFlag(FLAG_DOWNSCALE);
         if (downscale != null) {

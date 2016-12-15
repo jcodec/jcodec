@@ -1,14 +1,13 @@
 package org.jcodec.samples.transcode;
 
 import static java.lang.String.format;
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 import static org.jcodec.common.tools.MainUtils.tildeExpand;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
@@ -18,25 +17,35 @@ import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
 import org.jcodec.common.VideoDecoder;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
-import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.scale.AWTUtil;
-import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.RgbToBgr8Bit;
-import org.jcodec.scale.Transform8Bit;
 
-public abstract class ToImgTranscoder implements Transcoder {
+public abstract class ToImgTranscoder extends V2VTranscoder {
 
-    protected abstract VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException;
+    @Override
+    protected GenericTranscoder getTranscoder(Cmd cmd, Profile profile) {
+        return new ToImgTranscoder2(cmd, profile);
+    }
+
+    protected void populateAdditionalFlags(Map<String, String> flags) {
+    }
+
+    protected boolean validateArguments(Cmd cmd) {
+        return true;
+    }
+
+    protected abstract VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame);
 
     protected abstract DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException;
 
-    protected abstract Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, Packet pkt);
+    protected abstract Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, ByteBuffer data);
 
     protected abstract Packet nextPacket(DemuxerTrack inTrack) throws IOException;
 
@@ -44,98 +53,96 @@ public abstract class ToImgTranscoder implements Transcoder {
         return inTrack.getMeta();
     }
 
-    protected void populateAdditionalFlags(HashMap<String, String> flags) {
-    }
+    protected class ToImgTranscoder2 extends GenericTranscoder {
 
-    protected boolean validateArguments(Cmd cmd) {
-        return true;
-    }
+        private BufferedImage bi;
+        private RgbToBgr8Bit rgbToBgr;
+        private DemuxerTrack demuxer;
+        private VideoDecoder decoder;
 
-    @Override
-    public void transcode(Cmd cmd, Profile profile) throws IOException {
-        if (!validateArguments(cmd))
-            return;
-        SeekableByteChannel source = null;
-        try {
-            source = readableFileChannel(cmd.getArg(0));
 
-            DemuxerTrack inTrack = getDemuxer(cmd, source);
-            Picture8Bit target1 = null;
-
-            Picture8Bit rgb = null;
-            // ByteBuffer _out = ByteBuffer.allocate(videoSize.getWidth() *
-            // videoSize.getHeight() * 6);
-            BufferedImage bi = null;
-
-            Transform8Bit transform = null;
-            RgbToBgr8Bit rgbToBgr = new RgbToBgr8Bit();
-
-            Packet inFrame;
-            VideoDecoder decoder = null;
-            int totalFrames = 0;
-            for (int i = 0; (inFrame = nextPacket(inTrack)) != null; i++) {
-                ByteBuffer data = inFrame.getData();
-
-                if (decoder == null) {
-                    decoder = getDecoder(cmd, inTrack, data);
-                }
-
-                if (target1 == null) {
-                    DemuxerTrackMeta meta = getTrackMeta(inTrack, data);
-                    if (meta != null && meta.getDimensions() != null) {
-                        Size videoSize = meta.getDimensions();
-                        target1 = Picture8Bit.create((videoSize.getWidth() + 15) & ~0xf,
-                                (videoSize.getHeight() + 15) & ~0xf, ColorSpace.YUV444);
-                    } else {
-                        target1 = Picture8Bit.create(1920, 1088, ColorSpace.YUV444);
-                    }
-                    totalFrames = meta.getTotalFrames();
-                }
-                Picture8Bit dec = decodeFrame(decoder, target1, inFrame);
-                // Some decoders might not decode some frames
-                if (dec == null)
-                    continue;
-                if (transform == null) {
-                    transform = ColorUtil.getTransform8Bit(dec.getColor(), ColorSpace.RGB);
-                    if (transform == null) {
-                        System.err.println(
-                                "Couldn't get transforem from " + dec.getColor() + " to RGB required for PNG output.");
-                    }
-                }
-                if (rgb == null) {
-                    rgb = Picture8Bit.create(dec.getWidth(), dec.getHeight(), ColorSpace.RGB);
-                    bi = new BufferedImage(dec.getWidth(), dec.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-                }
-                transform.transform(dec, rgb);
-                rgbToBgr.transform(rgb, rgb);
-                // _out.clear();
-
-                AWTUtil.toBufferedImage8Bit(rgb, bi);
-                ImageIO.write(bi, profile.getOutputVideoCodec() == Codec.PNG ? "png" : "jpeg",
-                        tildeExpand(format(cmd.getArg(1), i)));
-                if (i % 100 == 0) {
-                    if (totalFrames > 0)
-                        System.out.print((i * 100 / totalFrames) + "%\r");
-                    else
-                        System.out.print(i + "\r");
-                }
+        @Override
+        protected ByteBuffer encodeVideo(Picture8Bit dec, ByteBuffer _out) {
+            if (bi == null) {
+                bi = new BufferedImage(dec.getWidth(), dec.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
             }
-        } finally {
-            if (source != null)
-                source.close();
+            rgbToBgr.transform(dec, dec);
+
+            AWTUtil.toBufferedImage8Bit(dec, bi);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try {
+                ImageIO.write(bi, profile.getOutputVideoCodec() == Codec.PNG ? "png" : "jpeg", baos);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return ByteBuffer.wrap(baos.toByteArray());
+        }
+        
+        @Override
+        protected ColorSpace getEncoderColorspace() {
+            return ColorSpace.RGB;
+        }
+        
+        public ToImgTranscoder2(Cmd cmd, Profile profile) {
+            super(cmd, profile);
+        }
+
+        @Override
+        protected void initDecode(SeekableByteChannel source) throws IOException {
+            demuxer = getDemuxer(cmd, source);
+        }
+        
+        @Override
+        protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
+            DemuxerTrackMeta trackMeta = getTrackMeta(demuxer, firstFrame);
+            Size dim = trackMeta.getDimensions();
+            return Picture8Bit.create(dim.getWidth(), dim.getHeight(), yuv444);
+        }
+
+        @Override
+        protected Picture8Bit decodeVideo(ByteBuffer data, Picture8Bit target1) {
+            if (decoder == null)
+                decoder = getDecoder(cmd, demuxer, data);
+            return decodeFrame(decoder, target1, data);
+        }
+
+        @Override
+        protected void initEncode(SeekableByteChannel sink) throws IOException {
+            rgbToBgr = new RgbToBgr8Bit();
+        }
+
+        @Override
+        protected void finishEncode() throws IOException {
+        }
+
+        @Override
+        protected Packet inputVideoPacket() throws IOException {
+            return nextPacket(demuxer);
+        }
+
+        @Override
+        protected void outputVideoPacket(Packet packet) throws IOException {
+            NIOUtils.writeTo(packet.getData(), tildeExpand(format(cmd.getArg(1), packet.getFrameNo())));
+        }
+
+        @Override
+        protected boolean haveAudio() {
+            return false;
+        }
+
+        @Override
+        protected Packet inputAudioPacket() throws IOException {
+            return null;
+        }
+
+        @Override
+        protected void outputAudioPacket(Packet audioPkt) throws IOException {
         }
     }
 
     @Override
-    public void printHelp(PrintStream err) {
-        HashMap<String, String> flags = new HashMap<String, String>();
+    protected void additionalFlags(Map<String, String> flags) {
         populateAdditionalFlags(flags);
-        MainUtils.printHelpVarArgs(flags, "in file", "pattern");
-    }
-
-    @Override
-    public Set<Format> inputFormat() {
-        return TranscodeMain.formats(Format.MOV);
     }
 
     @Override

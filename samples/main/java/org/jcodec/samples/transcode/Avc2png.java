@@ -33,8 +33,8 @@ class Avc2png extends ToImgTranscoder {
     }
 
     @Override
-    protected Frame decodeFrame(VideoDecoder decoder, Picture8Bit target1, Packet pkt) {
-        return ((H264Decoder) decoder).decodeFrame8BitFromNals(H264Utils.splitFrame(pkt.getData()), target1.getData());
+    protected Frame decodeFrame(VideoDecoder decoder, Picture8Bit target1, ByteBuffer pkt) {
+        return ((H264Decoder) decoder).decodeFrame8BitFromNals(H264Utils.splitFrame(pkt), target1.getData());
     }
 
     @Override

@@ -82,7 +82,7 @@ class MP4Jpeg2avc extends V2VTranscoder {
         }
 
         @Override
-        protected Picture8Bit createPixelBuffer(ColorSpace yuv444) {
+        protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
             Size dim = inputVideoTrack.getMeta().getDimensions();
             return Picture8Bit.create(dim.getWidth(), dim.getHeight(), yuv444);
         }

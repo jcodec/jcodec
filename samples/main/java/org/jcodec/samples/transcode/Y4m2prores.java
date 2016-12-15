@@ -100,7 +100,7 @@ class Y4m2prores extends V2VTranscoder {
         }
 
         @Override
-        protected Picture8Bit createPixelBuffer(ColorSpace yuv444) {
+        protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
             Size dim = videoInputTrack.getMeta().getDimensions();
             return Picture8Bit.create(dim.getWidth(), dim.getHeight(), ColorSpace.YUV420);
         }

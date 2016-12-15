@@ -3,6 +3,7 @@ package org.jcodec.samples.transcode;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.jcodec.codecs.prores.ProresDecoder;
@@ -26,7 +27,7 @@ class Prores2png extends ToImgTranscoder {
     private static final String FLAG_DOWNSCALE = "downscale";
 
     @Override
-    protected void populateAdditionalFlags(HashMap<String, String> flags) {
+    protected void populateAdditionalFlags(Map<String, String> flags) {
         flags.put(FLAG_DOWNSCALE, "Downscale factor, i.e. [2, 4, 8].");
     }
 
@@ -61,7 +62,7 @@ class Prores2png extends ToImgTranscoder {
     }
 
     @Override
-    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException {
+    protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) {
         Integer downscale = cmd.getIntegerFlag(FLAG_DOWNSCALE);
         if (downscale == null) {
             return new ProresDecoder();
@@ -93,8 +94,8 @@ class Prores2png extends ToImgTranscoder {
     }
 
     @Override
-    protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, Packet pkt) {
-        return decoder.decodeFrame8Bit(pkt.getData(), target1.getData());
+    protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, ByteBuffer pkt) {
+        return decoder.decodeFrame8Bit(pkt, target1.getData());
     }
 
     @Override

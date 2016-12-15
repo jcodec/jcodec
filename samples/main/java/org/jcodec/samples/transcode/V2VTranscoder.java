@@ -89,7 +89,7 @@ public abstract class V2VTranscoder implements Transcoder {
 
         protected abstract void finishEncode() throws IOException;
 
-        protected Picture8Bit createPixelBuffer(ColorSpace yuv444) {
+        protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
             return null;
         }
 
@@ -208,7 +208,7 @@ public abstract class V2VTranscoder implements Transcoder {
                     if (!videoCodecCopy()) {
                         Picture8Bit pixelBuffer = pixelBufferStore.get();
                         if (pixelBuffer == null) {
-                            pixelBuffer = createPixelBuffer(ColorSpace.YUV444);
+                            pixelBuffer = createPixelBuffer(ColorSpace.YUV444, inVideoPacket.getData());
                             pixelBufferStore.set(pixelBuffer);
                         }
                         Picture8Bit decodedFrame = decodeVideo(inVideoPacket.getData(), pixelBuffer);
