@@ -30,7 +30,7 @@ import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.RgbToBgr8Bit;
 import org.jcodec.scale.Transform8Bit;
 
-public abstract class ToImgProfile implements Profile {
+public abstract class ToImgTranscoder implements Transcoder {
 
     protected abstract VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) throws IOException;
 
@@ -52,7 +52,7 @@ public abstract class ToImgProfile implements Profile {
     }
 
     @Override
-    public void transcode(Cmd cmd) throws IOException {
+    public void transcode(Cmd cmd, Profile profile) throws IOException {
         if (!validateArguments(cmd))
             return;
         SeekableByteChannel source = null;
@@ -111,7 +111,8 @@ public abstract class ToImgProfile implements Profile {
                 // _out.clear();
 
                 AWTUtil.toBufferedImage8Bit(rgb, bi);
-                ImageIO.write(bi, "png", tildeExpand(format(cmd.getArg(1), i)));
+                ImageIO.write(bi, profile.getOutputVideoCodec() == Codec.PNG ? "png" : "jpeg",
+                        tildeExpand(format(cmd.getArg(1), i)));
                 if (i % 100 == 0) {
                     if (totalFrames > 0)
                         System.out.print((i * 100 / totalFrames) + "%\r");

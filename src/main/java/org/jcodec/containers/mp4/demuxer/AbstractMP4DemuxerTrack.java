@@ -244,6 +244,8 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
             return Codec.PRORES;
         } else if (fourcc.equals("mp4a")) {
             return Codec.AAC;
+        } else if (fourcc.equals("jpeg")) {
+            return Codec.JPEG;
         }
         return null;        
     }

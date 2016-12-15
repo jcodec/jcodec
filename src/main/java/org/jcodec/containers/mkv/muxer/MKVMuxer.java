@@ -172,7 +172,7 @@ public class MKVMuxer {
 
     private void muxCues() {
         CuesFactory cf = new CuesFactory(mkvSeekHead.size() + mkvInfo.size() + mkvTracks.size(),
-                videoTrack.trackNo - 1);
+                videoTrack.trackNo);
         for (MkvBlock aBlock : videoTrack.trackBlocks) {
             EbmlMaster mkvCluster = singleBlockedCluster(aBlock);
             clusterList.add(mkvCluster);

@@ -21,7 +21,7 @@ import org.jcodec.containers.mps.MPSDemuxer;
  * 
  * @author Stanislav Vitvitskiy
  */
-public abstract class MPSToImg extends ToImgProfile {
+public abstract class MPSToImg extends ToImgTranscoder {
     private ThreadLocal<ByteBuffer> buffers = new ThreadLocal<ByteBuffer>();
 
     @Override

@@ -45,10 +45,10 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     private static final int BUFFER_SIZE = 0x100000;
 
     private Map<Integer, BaseTrack> streams;
-    private SeekableByteChannel channel;
+    private ReadableByteChannel channel;
     private List<ByteBuffer> bufPool;
 
-    public MPSDemuxer(SeekableByteChannel channel) throws IOException {
+    public MPSDemuxer(ReadableByteChannel channel) throws IOException {
         super(channel, 4096);
         this.streams = new HashMap<Integer, BaseTrack>();
         this.channel = channel;
@@ -203,7 +203,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         @Override
         public DemuxerTrackMeta getMeta() {
             TrackType t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
-            return new DemuxerTrackMeta(t, Codec.MP2, null, 0, 0, null, null);
+            return new DemuxerTrackMeta(t, null, null, 0, 0, null, null);
         }
     }
 
@@ -240,13 +240,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         public DemuxerTrackMeta getMeta() {
             TrackType t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
-            return new DemuxerTrackMeta(t, Codec.MP2, null, 0, 0, null, null);
+            return new DemuxerTrackMeta(t, null, null, 0, 0, null, null);
         }
-    }
-
-    public void seekByte(long offset) throws IOException {
-        channel.setPosition(offset);
-        reset();
     }
 
     public void reset() {

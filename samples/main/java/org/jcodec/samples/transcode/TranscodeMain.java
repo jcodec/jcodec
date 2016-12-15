@@ -20,6 +20,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.samples.transcode.Transcoder.Profile;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -39,7 +40,7 @@ public class TranscodeMain {
     private static final String FLAG_OUTPUT_FORMAT = "o:f";
     private static final String FLAG_INPUT_FORMAT = "i:f";
 
-    private static List<Profile> profiles = new ArrayList<Profile>();
+    private static List<Transcoder> profiles = new ArrayList<Transcoder>();
     private static Map<String, Format> extensionToF = new HashMap<String, Format>();
     private static Map<String, Codec> extensionToC = new HashMap<String, Codec>();
     private static Map<Format, Codec> videoCodecsForF = new HashMap<Format, Codec>();
@@ -58,7 +59,6 @@ public class TranscodeMain {
         profiles.add(new Png2webm());
         profiles.add(new Prores2avc());
         profiles.add(new Prores2png());
-        profiles.add(new Prores2vp8());
         profiles.add(new Prores2webm());
         profiles.add(new Ts2mp4());
         profiles.add(new TsAvc2Png());
@@ -207,13 +207,18 @@ public class TranscodeMain {
         }
 
         String outputCodecVideoRaw = cmd.getStringFlag(FLAG_OUTPUT_VIDEO_CODEC);
-        Codec outputCodecVideo;
+        Codec outputCodecVideo = null;
+        boolean videoCopy = false;
         if (outputCodecVideoRaw == null) {
             outputCodecVideo = getCodecFromExtension(output);
             if (outputCodecVideo == null)
                 outputCodecVideo = getFirstVideoCodecForFormat(outputFormat);
         } else {
-            outputCodecVideo = Codec.valueOf(outputCodecVideoRaw.toUpperCase());
+            if ("copy".equalsIgnoreCase(outputCodecVideoRaw)) {
+                videoCopy = true;
+            } else {
+                outputCodecVideo = Codec.valueOf(outputCodecVideoRaw.toUpperCase());
+            }
         }
 
         String inputCodecAudioRaw = cmd.getStringFlag(FLAG_INPUT_AUDIO_CODEC);
@@ -228,55 +233,64 @@ public class TranscodeMain {
 
         String outputCodecAudioRaw = cmd.getStringFlag(FLAG_OUTPUT_AUDIO_CODEC);
         Codec outputCodecAudio = null;
+        boolean audioCopy = false;
         if (outputCodecAudioRaw == null) {
             if (outputFormat.isAudio())
                 outputCodecAudio = getFirstAudioCodecForFormat(inputFormat);
         } else {
-            outputCodecAudio = Codec.valueOf(outputCodecAudioRaw.toUpperCase());
+            if ("copy".equalsIgnoreCase(outputCodecAudioRaw)) {
+                audioCopy = true;
+            } else {
+                outputCodecAudio = Codec.valueOf(outputCodecAudioRaw.toUpperCase());
+            }
         }
-        if(inputCodecAudio == null)
+        if (inputCodecAudio == null)
             outputCodecAudio = null;
 
-        List<Profile> candidates = new ArrayList<Profile>(profiles);
-        for (Iterator<Profile> it = candidates.iterator(); it.hasNext();) {
-            Profile next = it.next();
+        List<Transcoder> candidates = new ArrayList<Transcoder>(profiles);
+        for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
+            Transcoder next = it.next();
             if (!next.inputFormat().contains(inputFormat))
                 it.remove();
         }
-        for (Iterator<Profile> it = candidates.iterator(); it.hasNext();) {
-            Profile next = it.next();
+        for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
+            Transcoder next = it.next();
             if (!next.outputFormat().contains(outputFormat))
                 it.remove();
         }
 
         if (inputCodecVideo != null) {
-            for (Iterator<Profile> it = candidates.iterator(); it.hasNext();) {
-                Profile next = it.next();
+            for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
+                Transcoder next = it.next();
                 if (next.inputVideoCodec() != null && !next.inputVideoCodec().contains(inputCodecVideo))
                     it.remove();
             }
         }
 
-        if (outputCodecVideo != null) {
-            for (Iterator<Profile> it = candidates.iterator(); it.hasNext();) {
-                Profile next = it.next();
-                if (next.outputVideoCodec() != null && !next.outputVideoCodec().contains(outputCodecVideo))
+        if (outputCodecVideo != null || videoCopy) {
+            for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
+                Transcoder next = it.next();
+                if (next.outputVideoCodec() == null && !videoCopy)
+                    it.remove();
+                else if (next.outputVideoCodec() != null && !next.outputVideoCodec().contains(outputCodecVideo))
                     it.remove();
             }
         }
 
         if (inputCodecAudio != null) {
-            for (Iterator<Profile> it = candidates.iterator(); it.hasNext();) {
-                Profile next = it.next();
+            for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
+                Transcoder next = it.next();
                 if (next.inputAudioCodec() != null && !next.inputAudioCodec().contains(inputCodecAudio))
                     it.remove();
             }
         }
 
-        if (outputCodecAudio != null) {
-            for (Iterator<Profile> it = candidates.iterator(); it.hasNext();) {
-                Profile next = it.next();
-                if (next.outputAudioCodec() != null && !next.outputAudioCodec().contains(outputCodecAudio))
+        if (outputCodecAudio != null || audioCopy) {
+            for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
+                Transcoder next = it.next();
+                if (next.outputAudioCodec() == null && !audioCopy)
+                    it.remove();
+                else if (next.outputAudioCodec() != null && !next.outputAudioCodec().contains(outputCodecAudio))
                     it.remove();
             }
         }
@@ -286,7 +300,8 @@ public class TranscodeMain {
             return;
         }
 
-        candidates.get(0).transcode(cmd);
+        candidates.get(0).transcode(cmd, new Profile(inputFormat, outputFormat, inputCodecVideo, outputCodecVideo,
+                inputCodecAudio, outputCodecAudio));
     }
 
     private static Codec getFirstAudioCodecForFormat(Format inputFormat) {
@@ -302,6 +317,9 @@ public class TranscodeMain {
         List<? extends DemuxerTrack> video = demuxer.getVideoTracks();
         if (video.size() == 0)
             return null;
+        Codec codec = video.get(0).getMeta().getCodec();
+        if (codec != null)
+            return codec;
         Packet packet = video.get(0).nextFrame();
         if (packet == null)
             return null;
@@ -311,10 +329,13 @@ public class TranscodeMain {
 
     private static Codec detectDecoderAudio(String input, Format format) throws IOException {
         Demuxer demuxer = JCodecUtil.createDemuxer(format, new File(input));
-        List<? extends DemuxerTrack> video = demuxer.getAudioTracks();
-        if (video.size() == 0)
+        List<? extends DemuxerTrack> audio = demuxer.getAudioTracks();
+        if (audio.size() == 0)
             return null;
-        Packet packet = video.get(0).nextFrame();
+        Codec codec = audio.get(0).getMeta().getCodec();
+        if (codec != null)
+            return codec;
+        Packet packet = audio.get(0).nextFrame();
         if (packet == null)
             return null;
 

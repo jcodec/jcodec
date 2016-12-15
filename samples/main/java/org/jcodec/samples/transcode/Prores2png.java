@@ -22,7 +22,7 @@ import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
-class Prores2png extends ToImgProfile {
+class Prores2png extends ToImgTranscoder {
     private static final String FLAG_DOWNSCALE = "downscale";
 
     @Override

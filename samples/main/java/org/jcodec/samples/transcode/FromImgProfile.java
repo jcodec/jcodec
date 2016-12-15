@@ -38,7 +38,7 @@ import org.jcodec.scale.Transform8Bit;
  * @author Stanislav Vitvitskiy
  *
  */
-abstract class FromImgProfile implements Profile {
+abstract class FromImgProfile implements Transcoder {
     private static final String FLAG_MAX_FRAMES = "maxFrames";
 
     // Protected interface
@@ -55,7 +55,7 @@ abstract class FromImgProfile implements Profile {
     }
 
     @Override
-    public void transcode(Cmd cmd) throws IOException {
+    public void transcode(Cmd cmd, Profile profile) throws IOException {
         FileChannelWrapper sink = null;
         ImageSequenceDemuxer demuxer = null;
         try {

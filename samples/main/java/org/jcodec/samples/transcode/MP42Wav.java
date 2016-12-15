@@ -29,9 +29,9 @@ import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
-class MP42Wav implements Profile {
+class MP42Wav implements Transcoder {
     @Override
-    public void transcode(Cmd cmd) throws IOException {
+    public void transcode(Cmd cmd, Profile profile) throws IOException {
         SeekableByteChannel source = null;
         SeekableByteChannel sink = null;
         WavOutput wavOutput = null;

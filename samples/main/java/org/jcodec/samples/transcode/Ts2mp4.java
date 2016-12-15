@@ -1,14 +1,9 @@
 package org.jcodec.samples.transcode;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
-
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -17,132 +12,190 @@ import org.jcodec.codecs.aac.ADTSParser;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.common.Codec;
-import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.Format;
-import org.jcodec.common.TrackType;
-import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
-import org.jcodec.containers.mps.MPEGDemuxer;
-import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
+import org.jcodec.containers.mps.MPSDemuxer;
+import org.jcodec.containers.mps.MTSDemuxer;
 
-class Ts2mp4 implements Profile {
-    @Override
-    public void transcode(Cmd cmd) throws IOException {
-        File fin = new File(cmd.getArg(0));
-        SeekableByteChannel sink = null;
-        List<SeekableByteChannel> sources = new ArrayList<SeekableByteChannel>();
-        try {
-            sink = writableFileChannel(cmd.getArg(1));
-            MP4Muxer muxer = MP4Muxer.createMP4Muxer(sink, Brand.MP4);
+class Ts2mp4 extends V2VTranscoder {
+    private static class Ts2mp4Transcoder extends GenericTranscoder {
 
-            Set<Integer> programs = MTSDemuxer.getPrograms(fin);
-            MPEGDemuxer.MPEGDemuxerTrack[] srcTracks = new MPEGDemuxer.MPEGDemuxerTrack[100];
-            FramesMP4MuxerTrack[] dstTracks = new FramesMP4MuxerTrack[100];
-            boolean[] h264 = new boolean[100];
-            Packet[] top = new Packet[100];
-            int nTracks = 0;
-            long minPts = Long.MAX_VALUE;
-            ByteBuffer[] used = new ByteBuffer[100];
-            for (Integer guid : programs) {
-                SeekableByteChannel sx = readableFileChannel(cmd.getArg(0));
-                sources.add(sx);
-                MTSDemuxer demuxer = new MTSDemuxer(sx, guid);
-                for (MPEGDemuxerTrack track : demuxer.getTracks()) {
-                    srcTracks[nTracks] = track;
-                    DemuxerTrackMeta meta = track.getMeta();
+        private static final Set<Codec> supportedCodecs = new HashSet<Codec>();
+        private MP4Muxer muxer;
+        private DemuxerTrack videoInputTrack;
+        private DemuxerTrack audioInputTrack;
+        private FramesMP4MuxerTrack videoOutputTrack;
+        private FramesMP4MuxerTrack audioOutputTrack;
+        private int videoTrackNo = -1;
+        private int audioTrackNo = -1;
 
-                    top[nTracks] = track.nextFrameWithBuffer(ByteBuffer.allocate(1920 * 1088));
-                    dstTracks[nTracks] = muxer.addTrack(
-                            meta.getType() == TrackType.VIDEO ? MP4TrackType.VIDEO : MP4TrackType.SOUND, 90000);
-                    if (meta.getType() == TrackType.VIDEO) {
-                        h264[nTracks] = true;
-                    }
-                    used[nTracks] = ByteBuffer.allocate(1920 * 1088);
-                    if (top[nTracks].getPts() < minPts)
-                        minPts = top[nTracks].getPts();
-                    nTracks++;
+        static {
+            // Track selection will only pick up these tracks
+            supportedCodecs.add(Codec.H264);
+            supportedCodecs.add(Codec.AAC);
+        }
+
+        public Ts2mp4Transcoder(Cmd cmd, Profile profile) {
+            super(cmd, profile);
+        }
+
+        @Override
+        protected void initDecode(SeekableByteChannel source) throws IOException {
+            selectTracks(source);
+            if (videoTrackNo < 0 && audioTrackNo < 0)
+                throw new IOException("No suitable tracks found for transcode.");
+            source.setPosition(0);
+            openDemuxers(source);
+        }
+
+        private void openDemuxers(SeekableByteChannel source) throws IOException {
+            int trackNo = 0;
+            MTSDemuxer mtsDemuxer = new MTSDemuxer(source);
+            for (int pid : mtsDemuxer.getPrograms()) {
+                MPSDemuxer program = new MPSDemuxer(mtsDemuxer.getProgram(pid));
+                boolean demuxerUsed = false;
+                for (MPEGDemuxerTrack track : program.getVideoTracks()) {
+                    if (trackNo == videoTrackNo) {
+                        videoInputTrack = track;
+                        demuxerUsed = true;
+                    } else
+                        track.ignore();
+                    ++trackNo;
                 }
-            }
-
-            long[] prevDuration = new long[100];
-            while (true) {
-                long min = Integer.MAX_VALUE;
-                int mini = -1;
-                for (int i = 0; i < nTracks; i++) {
-                    if (top[i] != null && top[i].getPts() < min) {
-                        min = top[i].getPts();
-                        mini = i;
-                    }
+                for (MPEGDemuxerTrack track : program.getAudioTracks()) {
+                    if (trackNo == audioTrackNo) {
+                        audioInputTrack = track;
+                        demuxerUsed = true;
+                    } else
+                        track.ignore();
+                    ++trackNo;
                 }
-                if (mini == -1)
+                if (!demuxerUsed)
+                    program.close();
+                if (videoTrackNo >= 0 && audioTrackNo >= 0)
                     break;
-
-                Packet next = srcTracks[mini].nextFrameWithBuffer(used[mini]);
-                if (next != null)
-                    prevDuration[mini] = next.getPts() - top[mini].getPts();
-                muxPacket(top[mini], dstTracks[mini], h264[mini], minPts, prevDuration[mini]);
-                used[mini] = top[mini].getData();
-                used[mini].clear();
-                top[mini] = next;
             }
+        }
 
+        private void selectTracks(SeekableByteChannel source) throws IOException {
+            int trackNo = 0;
+            MTSDemuxer mtsDemuxer = new MTSDemuxer(source);
+            for (int pid : mtsDemuxer.getPrograms()) {
+                MPSDemuxer demuxer = new MPSDemuxer(mtsDemuxer.getProgram(pid));
+                for (MPEGDemuxerTrack track : demuxer.getVideoTracks()) {
+                    if (videoTrackNo == -1 && checkTrack(track))
+                        videoTrackNo = trackNo;
+                    ++trackNo;
+                }
+                for (MPEGDemuxerTrack track : demuxer.getAudioTracks()) {
+                    if (audioTrackNo == -1 && checkTrack(track))
+                        audioTrackNo = trackNo;
+                    ++trackNo;
+                }
+                if (videoTrackNo >= 0 && audioTrackNo >= 0)
+                    break;
+            }
+        }
+
+        private boolean checkTrack(MPEGDemuxerTrack track) throws IOException {
+            Codec codec = track.getMeta().getCodec();
+            for (int i = 0; i < 2; i++) {
+                if (codec != null && supportedCodecs.contains(codec))
+                    return true;
+                if (codec == null) {
+                    Packet firstFrame = track.nextFrame();
+                    codec = JCodecUtil.detectDecoder(firstFrame.getData());
+                }
+            }
+            return false;
+        }
+
+        @Override
+        protected void initEncode(SeekableByteChannel sink) throws IOException {
+            muxer = MP4Muxer.createMP4Muxer(sink, Brand.MP4);
+            if (videoInputTrack != null) {
+                videoOutputTrack = muxer.addTrack(MP4TrackType.VIDEO, 90000);
+            }
+            if (audioInputTrack != null) {
+                audioOutputTrack = muxer.addTrack(MP4TrackType.SOUND, 90000);
+            }
+        }
+
+        @Override
+        protected void finishEncode() throws IOException {
             muxer.writeHeader();
-
-        } finally {
-            for (SeekableByteChannel sx : sources) {
-                NIOUtils.closeQuietly(sx);
-            }
-            NIOUtils.closeQuietly(sink);
         }
-    }
 
-    private static void muxPacket(Packet packet, FramesMP4MuxerTrack dstTrack, boolean h264, long minPts, long duration)
-            throws IOException {
-        if (h264) {
-            if (dstTrack.getEntries().size() == 0) {
-                List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
-                List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
-                H264Utils.wipePSinplace(packet.getData(), spsList, ppsList);
-                dstTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromSpsPpsList(spsList, ppsList, 4));
-            } else {
-                H264Utils.wipePSinplace(packet.getData(), null, null);
-            }
-            H264Utils.encodeMOVPacket(packet.getData());
-        } else {
-            org.jcodec.codecs.aac.ADTSParser.Header header = ADTSParser.read(packet.getData());
-            if (dstTrack.getEntries().size() == 0) {
+        @Override
+        protected Packet inputVideoPacket() throws IOException {
+            return videoInputTrack != null ? videoInputTrack.nextFrame() : null;
+        }
 
-                AudioSampleEntry ase = AudioSampleEntry.createAudioSampleEntry(Header.createHeader("mp4a", 0),
-                        (short) 1, (short) AACConts.AAC_CHANNEL_COUNT[header.getChanConfig()], (short) 16,
-                        AACConts.AAC_SAMPLE_RATES[header.getSamplingIndex()], (short) 0, 0, 0, 0, 0, 0, 0, 2,
-                        (short) 0);
-
-                dstTrack.addSampleEntry(ase);
-                ase.add(EsdsBox.fromADTS(header));
+        @Override
+        protected void outputVideoPacket(Packet packet) throws IOException {
+            if (videoOutputTrack != null) {
+                if (videoOutputTrack.getEntries().size() == 0) {
+                    List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
+                    List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+                    H264Utils.wipePSinplace(packet.getData(), spsList, ppsList);
+                    videoOutputTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromSpsPpsList(spsList, ppsList, 4));
+                } else {
+                    H264Utils.wipePSinplace(packet.getData(), null, null);
+                }
+                H264Utils.encodeMOVPacket(packet.getData());
+                videoOutputTrack.addFrame(packet);
             }
         }
-        dstTrack.addFrame(MP4Packet.createMP4Packet(packet.getData(), packet.getPts() - minPts, packet.getTimescale(),
-                duration, packet.getFrameNo(), packet.isKeyFrame(), packet.getTapeTimecode(), 0,
-                packet.getPts() - minPts, 0));
-    }
 
-    @Override
-    public void printHelp(PrintStream err) {
-        MainUtils.printHelpVarArgs(new HashMap<String, String>() {
-            {
+        @Override
+        protected boolean haveAudio() {
+            return audioInputTrack != null;
+        }
+
+        @Override
+        protected Packet inputAudioPacket() throws IOException {
+            return audioInputTrack != null ? audioInputTrack.nextFrame() : null;
+        }
+
+        @Override
+        protected void outputAudioPacket(Packet audioPkt) throws IOException {
+            if (audioOutputTrack != null) {
+                org.jcodec.codecs.aac.ADTSParser.Header header = ADTSParser.read(audioPkt.getData());
+                if (audioOutputTrack.getEntries().size() == 0) {
+
+                    AudioSampleEntry ase = AudioSampleEntry.createAudioSampleEntry(Header.createHeader("mp4a", 0),
+                            (short) 1, (short) AACConts.AAC_CHANNEL_COUNT[header.getChanConfig()], (short) 16,
+                            AACConts.AAC_SAMPLE_RATES[header.getSamplingIndex()], (short) 0, 0, 0, 0, 0, 0, 0, 2,
+                            (short) 0);
+
+                    audioOutputTrack.addSampleEntry(ase);
+                    ase.add(EsdsBox.fromADTS(header));
+                }
+
+                audioOutputTrack.addFrame(audioPkt);
             }
-        }, "in file", "out file");
+        }
+
+        @Override
+        protected boolean audioCodecCopy() {
+            return true;
+        }
+
+        @Override
+        protected boolean videoCodecCopy() {
+            return true;
+        }
     }
 
     @Override
@@ -162,7 +215,7 @@ class Ts2mp4 implements Profile {
 
     @Override
     public Set<Codec> outputVideoCodec() {
-        return TranscodeMain.codecs(Codec.H264);
+        return null;
     }
 
     @Override
@@ -173,5 +226,10 @@ class Ts2mp4 implements Profile {
     @Override
     public Set<Codec> outputAudioCodec() {
         return TranscodeMain.codecs(Codec.AAC);
+    }
+
+    @Override
+    protected GenericTranscoder getTranscoder(Cmd cmd, Profile profile) {
+        return new Ts2mp4Transcoder(cmd, profile);
     }
 }

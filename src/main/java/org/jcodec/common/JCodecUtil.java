@@ -49,7 +49,7 @@ public class JCodecUtil {
     private static final Map<Codec, Class<? extends VideoDecoder>> knownDecoders = new HashMap<Codec, Class<? extends VideoDecoder>>();
 
     static {
-    	knownDecoders.put(Codec.VP8, VP8Decoder.class);
+        knownDecoders.put(Codec.VP8, VP8Decoder.class);
         knownDecoders.put(Codec.PRORES, ProresDecoder.class);
         knownDecoders.put(Codec.MPEG2, MPEGDecoder.class);
         knownDecoders.put(Codec.H264, H264Decoder.class);
@@ -201,15 +201,16 @@ public class JCodecUtil {
     }
 
     private static Demuxer createM2TSDemuxer(SeekableByteChannel input) throws IOException {
-        Set<Integer> programs = MTSDemuxer.getProgramsFromChannel(input);
-        if(programs.size() == 0) {
+        MTSDemuxer mts = new MTSDemuxer(input);
+        Set<Integer> programs = mts.getPrograms();
+        if (programs.size() == 0) {
             Logger.error("The MPEG TS stream contains no programs");
             return null;
         }
         int programId = programs.iterator().next();
         Logger.info("Using M2TS program: " + programId);
-        input.setPosition(0);
-        return new MTSDemuxer(input, programId);
+        // input.setPosition(0);
+        return new MPSDemuxer(mts.getProgram(programId));
     }
 
     public static AudioDecoder createAudioDecoder(Codec codec, ByteBuffer decoderSpecific) throws Exception {
@@ -221,11 +222,12 @@ public class JCodecUtil {
         }
         return null;
     }
-    
+
     public static VideoDecoder createVideoDecoder(Codec codec, ByteBuffer decoderSpecific) {
         switch (codec) {
         case H264:
-            return H264Decoder.createH264DecoderFromCodecPrivate(decoderSpecific);
+            return decoderSpecific != null ? H264Decoder.createH264DecoderFromCodecPrivate(decoderSpecific)
+                    : new H264Decoder();
         case MPEG2:
             return new MPEGDecoder();
         case VP8:

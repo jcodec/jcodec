@@ -20,8 +20,6 @@ public interface MPEGDemuxer extends Demuxer {
     List<? extends MPEGDemuxerTrack> getVideoTracks();
     List<? extends MPEGDemuxerTrack> getAudioTracks();
     
-    void seekByte(long offset) throws IOException;
-
     public static interface MPEGDemuxerTrack extends DemuxerTrack {
         Packet nextFrameWithBuffer(ByteBuffer buf) throws IOException;
         DemuxerTrackMeta getMeta();

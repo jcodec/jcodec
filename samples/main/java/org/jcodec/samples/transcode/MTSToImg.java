@@ -6,10 +6,12 @@ import java.util.Set;
 
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.Format;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
+import org.jcodec.containers.mps.MPSDemuxer;
 
 /**
  * Profile specific to MPEG TS containers
@@ -21,26 +23,32 @@ public abstract class MTSToImg extends MPSToImg {
 
     @Override
     protected DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException {
-        Set<Integer> programs = MTSDemuxer.getProgramsFromChannel(source);
-        for (int program : programs) {
+        MTSDemuxer mts = new MTSDemuxer(source);
+        DemuxerTrack videoTrack = null;
+        for (int program : mts.getPrograms()) {
+            if(videoTrack != null) {
+                // Close the programs we don't need
+                NIOUtils.closeQuietly(mts.getProgram(program));
+            }
             System.out.println("Transcoding program " + String.format("%x", program));
-            source.setPosition(0);
-            MTSDemuxer mts = new MTSDemuxer(source, program);
+            MPSDemuxer mps = new MPSDemuxer(mts.getProgram(program));
             // We ignore all audio tracks
-            for (MPEGDemuxerTrack track : mts.getAudioTracks()) {
+            for (MPEGDemuxerTrack track : mps.getAudioTracks()) {
                 track.ignore();
             }
-            List<? extends MPEGDemuxerTrack> videoTracks = mts.getVideoTracks();
+            List<? extends MPEGDemuxerTrack> videoTracks = mps.getVideoTracks();
             if (videoTracks.size() == 0)
                 continue;
-            MPEGDemuxerTrack videoTrack = videoTracks.remove(0);
+            videoTrack = videoTracks.get(0);
             // We ignore all video tracks but the first
             for (MPEGDemuxerTrack track : videoTracks) {
-                track.ignore();
+                if(track != videoTrack) {
+                    // Ignore the streams we don't need
+                    track.ignore();
+                }
             }
-            return videoTrack;
         }
-        return null;
+        return videoTrack;
     }
 
     @Override

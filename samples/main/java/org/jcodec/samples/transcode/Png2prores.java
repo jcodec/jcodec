@@ -34,19 +34,19 @@ class Png2prores extends FromImgProfile {
     private static final String FLAG_FOURCC = "fourcc";
     private static final String FLAG_INTERLACED = "interlaced";
     private MP4Muxer muxer;
-    private ProresEncoder.Profile profile;
+    private ProresEncoder.Profile proresProfile;
     private boolean interlaced;
 
     @Override
-    public void transcode(Cmd cmd) throws IOException {
+    public void transcode(Cmd cmd, Profile profile) throws IOException {
         String fourccName = cmd.getStringFlagD(FLAG_FOURCC, DEFAULT_PROFILE);
-        profile = getProfile(fourccName);
-        if (profile == null) {
+        proresProfile = getProfile(fourccName);
+        if (proresProfile == null) {
             System.out.println("Unsupported fourcc: " + fourccName);
             return;
         }
         interlaced = cmd.getBooleanFlagD(FLAG_INTERLACED, false);
-        super.transcode(cmd);
+        super.transcode(cmd, profile);
     }
 
     @Override
@@ -75,7 +75,7 @@ class Png2prores extends FromImgProfile {
 
     @Override
     protected VideoEncoder getEncoder() {
-        return new ProresEncoder(profile, interlaced);
+        return new ProresEncoder(proresProfile, interlaced);
     }
     
     static final String APPLE_PRO_RES_422 = "Apple ProRes 422";
@@ -84,7 +84,7 @@ class Png2prores extends FromImgProfile {
     protected FramesMP4MuxerTrack getMuxerTrack(SeekableByteChannel sink, DemuxerTrackMeta inTrackMeta, Picture8Bit yuv,
             Packet firstPacket) throws IOException {
         muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
-        FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack(profile.fourcc, new Size(yuv.getWidth(), yuv.getHeight()),
+        FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack(proresProfile.fourcc, new Size(yuv.getWidth(), yuv.getHeight()),
                 APPLE_PRO_RES_422, (int)firstPacket.getTimescale());
         videoTrack.setTgtChunkDuration(HALF, SEC);
         return videoTrack;

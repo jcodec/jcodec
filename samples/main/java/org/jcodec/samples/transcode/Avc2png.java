@@ -18,7 +18,7 @@ import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
-class Avc2png extends ToImgProfile {
+class Avc2png extends ToImgTranscoder {
 
     @Override
     protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) {

@@ -17,6 +17,7 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.y4m.Y4MDemuxer;
@@ -26,13 +27,8 @@ import org.jcodec.containers.y4m.Y4MDemuxer;
  * 
  * @author Stanislav Vitvitskyy
  */
-class Y4m2prores extends TranscodeGenericProfile {
+class Y4m2prores extends V2VTranscoder {
     static final String APPLE_PRO_RES_422 = "Apple ProRes 422";
-    private MP4Muxer muxer;
-    private Y4MDemuxer videoInputTrack;
-    private FramesMP4MuxerTrack videoOutputTrack;
-    private ProresEncoder encoder;
-    private VideoDecoder videoDecoder;
 
     @Override
     public Set<Format> inputFormat() {
@@ -63,92 +59,110 @@ class Y4m2prores extends TranscodeGenericProfile {
     public Set<Codec> outputAudioCodec() {
         return null;
     }
-
+    
     @Override
-    protected void initDecode(SeekableByteChannel source) throws IOException {
-        videoInputTrack = new Y4MDemuxer(source);
-        Size dim = videoInputTrack.getMeta().getDimensions();
-        videoDecoder = new RAWVideoDecoder(dim.getWidth(), dim.getHeight());
+    public GenericTranscoder getTranscoder(Cmd cmd, Profile profile) {
+        return new Y4m2proresTranscoder(cmd, profile);
     }
 
-    @Override
-    protected void initEncode(SeekableByteChannel sink) throws IOException {
-        muxer = MP4Muxer.createMP4MuxerToChannel(sink);
-        encoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
+    private static class Y4m2proresTranscoder extends GenericTranscoder {
 
-        videoOutputTrack = muxer.addVideoTrack("apch", videoInputTrack.getMeta().getDimensions(), APPLE_PRO_RES_422,
-                25000);
-        videoOutputTrack.setTgtChunkDuration(HALF, SEC);
-    }
+        private MP4Muxer muxer;
+        private Y4MDemuxer videoInputTrack;
+        private FramesMP4MuxerTrack videoOutputTrack;
+        private ProresEncoder encoder;
+        private VideoDecoder videoDecoder;
+        
+        public Y4m2proresTranscoder(Cmd cmd, Profile profile) {
+            super(cmd, profile);
+        }
 
-    @Override
-    protected void finishEncode() throws IOException {
-        muxer.writeHeader();
-    }
+        @Override
+        protected void initDecode(SeekableByteChannel source) throws IOException {
+            videoInputTrack = new Y4MDemuxer(source);
+            Size dim = videoInputTrack.getMeta().getDimensions();
+            videoDecoder = new RAWVideoDecoder(dim.getWidth(), dim.getHeight());
+        }
 
-    @Override
-    protected Picture8Bit createPixelBuffer(ColorSpace yuv444) {
-        Size dim = videoInputTrack.getMeta().getDimensions();
-        return Picture8Bit.create(dim.getWidth(), dim.getHeight(), ColorSpace.YUV420);
-    }
+        @Override
+        protected void initEncode(SeekableByteChannel sink) throws IOException {
+            muxer = MP4Muxer.createMP4MuxerToChannel(sink);
+            encoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
 
-    @Override
-    protected ColorSpace getEncoderColorspace() {
-        return encoder.getSupportedColorSpaces()[0];
-    }
+            videoOutputTrack = muxer.addVideoTrack("apch", videoInputTrack.getMeta().getDimensions(), APPLE_PRO_RES_422,
+                    25000);
+            videoOutputTrack.setTgtChunkDuration(HALF, SEC);
+        }
 
-    @Override
-    protected Packet inputVideoPacket() throws IOException {
-        return videoInputTrack.nextFrame();
-    }
+        @Override
+        protected void finishEncode() throws IOException {
+            muxer.writeHeader();
+        }
 
-    @Override
-    protected void outputVideoPacket(Packet packet) throws IOException {
-        videoOutputTrack.setTimescale((int) packet.getTimescale());
-        videoOutputTrack.addFrame(packet);
-    }
+        @Override
+        protected Picture8Bit createPixelBuffer(ColorSpace yuv444) {
+            Size dim = videoInputTrack.getMeta().getDimensions();
+            return Picture8Bit.create(dim.getWidth(), dim.getHeight(), ColorSpace.YUV420);
+        }
 
-    @Override
-    protected Picture8Bit decodeVideo(ByteBuffer data, Picture8Bit target1) {
-        return videoDecoder.decodeFrame8Bit(data, target1.getData());
-    }
+        @Override
+        protected ColorSpace getEncoderColorspace() {
+            return encoder.getSupportedColorSpaces()[0];
+        }
 
-    @Override
-    protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
-        return encoder.encodeFrame8Bit(frame, _out);
-    }
+        @Override
+        protected Packet inputVideoPacket() throws IOException {
+            return videoInputTrack.nextFrame();
+        }
 
-    @Override
-    protected boolean haveAudio() {
-        return false;
-    }
+        @Override
+        protected void outputVideoPacket(Packet packet) throws IOException {
+            videoOutputTrack.setTimescale((int) packet.getTimescale());
+            videoOutputTrack.addFrame(packet);
+        }
 
-    @Override
-    protected Packet inputAudioPacket() throws IOException {
-        return null;
-    }
+        @Override
+        protected Picture8Bit decodeVideo(ByteBuffer data, Picture8Bit target1) {
+            return videoDecoder.decodeFrame8Bit(data, target1.getData());
+        }
 
-    @Override
-    protected void outputAudioPacket(Packet audioPkt) throws IOException {
-    }
+        @Override
+        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+            return encoder.encodeFrame8Bit(frame, _out);
+        }
 
-    @Override
-    protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
-        return null;
-    }
+        @Override
+        protected boolean haveAudio() {
+            return false;
+        }
 
-    @Override
-    protected ByteBuffer encodeAudio(ByteBuffer wrap) {
-        return null;
-    }
+        @Override
+        protected Packet inputAudioPacket() throws IOException {
+            return null;
+        }
 
-    @Override
-    protected boolean seek(int frame) throws IOException {
-        return false;
-    }
+        @Override
+        protected void outputAudioPacket(Packet audioPkt) throws IOException {
+        }
 
-    @Override
-    protected int getBufferSize(Picture8Bit frame) {
-        return (3 * frame.getWidth() * frame.getHeight()) / 2;
+        @Override
+        protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
+            return null;
+        }
+
+        @Override
+        protected ByteBuffer encodeAudio(ByteBuffer wrap) {
+            return null;
+        }
+
+        @Override
+        protected boolean seek(int frame) throws IOException {
+            return false;
+        }
+
+        @Override
+        protected int getBufferSize(Picture8Bit frame) {
+            return (3 * frame.getWidth() * frame.getHeight()) / 2;
+        }
     }
 }

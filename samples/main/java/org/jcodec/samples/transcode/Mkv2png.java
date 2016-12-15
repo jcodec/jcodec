@@ -24,7 +24,7 @@ import org.jcodec.containers.mkv.demuxer.MKVDemuxer.VideoTrack;
  * @author Stanislav Vitvitskiy
  *
  */
-class Mkv2png extends ToImgProfile {
+class Mkv2png extends ToImgTranscoder {
     private AvcCBox avcC;
 
     @Override

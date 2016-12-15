@@ -40,171 +40,178 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import net.sourceforge.jaad.aac.Decoder;
 import net.sourceforge.jaad.aac.SampleBuffer;
 
-class Avc2prores extends TranscodeGenericProfile {
+class Avc2prores extends V2VTranscoder {
     // private static final String FLAG_RAW = "raw";
     // private static final String FLAG_MAX_FRAMES = "max-frames";
     private static final String FLAG_DUMPMV = "dumpMv";
     private static final String FLAG_DUMPMVJS = "dumpMvJs";
-    private MP4Demuxer demux;
-    private MP4Muxer muxer;
-    private FramesMP4MuxerTrack videoOutputTrack;
-    private DemuxerTrack videoInputTrack;
-    private DemuxerTrack audioInputTrack;
-    private MuxerTrack audioOutputTrack;
-    private Decoder audioDecoder;
-    private H264Decoder videoDecoder;
-    private ProresEncoder videoEncoder;
 
-    private DemuxerTrack selectAudioTrack(List<? extends DemuxerTrack> tracks) {
-        DemuxerTrack selectedAudioTrack = null;
-        for (DemuxerTrack track : tracks) {
-            if (track.getMeta().getCodec() == Codec.AAC) {
-                selectedAudioTrack = track;
-                break;
+    private static class Avc2proresTranscoder extends GenericTranscoder {
+        private MP4Demuxer demux;
+        private MP4Muxer muxer;
+        private FramesMP4MuxerTrack videoOutputTrack;
+        private DemuxerTrack videoInputTrack;
+        private DemuxerTrack audioInputTrack;
+        private MuxerTrack audioOutputTrack;
+        private Decoder audioDecoder;
+        private H264Decoder videoDecoder;
+        private ProresEncoder videoEncoder;
+        
+        public Avc2proresTranscoder(Cmd cmd, Profile profile) {
+            super(cmd, profile);
+        }
+
+        private DemuxerTrack selectAudioTrack(List<? extends DemuxerTrack> tracks) {
+            DemuxerTrack selectedAudioTrack = null;
+            for (DemuxerTrack track : tracks) {
+                if (track.getMeta().getCodec() == Codec.AAC) {
+                    selectedAudioTrack = track;
+                    break;
+                }
+            }
+            return selectedAudioTrack;
+        }
+
+        @Override
+        protected void initDecode(SeekableByteChannel source) throws IOException {
+            demux = new MP4Demuxer(source);
+            videoInputTrack = demux.getVideoTrack();
+            AbstractMP4DemuxerTrack videoTrack = demux.getVideoTrack();
+            videoDecoder = H264Decoder.createH264DecoderFromCodecPrivate(videoTrack.getMeta().getCodecPrivate());
+            DemuxerTrack selectedAudioTrack = selectAudioTrack(demux.getAudioTracks());
+            if (selectedAudioTrack != null) {
+                Logger.info("Using the audio track: " + selectedAudioTrack.getMeta().getIndex());
+                this.audioInputTrack = selectedAudioTrack;
+                SampleEntry sampleEntry = ((AbstractMP4DemuxerTrack) selectedAudioTrack).getSampleEntries()[0];
+                audioDecoder = new Decoder(NIOUtils.toArray(AACUtils.getCodecPrivate(sampleEntry)));
+                AACMetadata meta = AACUtils.getMetadata(sampleEntry);
+                this.audioOutputTrack = muxer.addPCMAudioTrack(meta.getFormat());
             }
         }
-        return selectedAudioTrack;
-    }
 
-    @Override
-    protected void initDecode(SeekableByteChannel source) throws IOException {
-        demux = new MP4Demuxer(source);
-        videoInputTrack = demux.getVideoTrack();
-        AbstractMP4DemuxerTrack videoTrack = demux.getVideoTrack();
-        videoDecoder = H264Decoder.createH264DecoderFromCodecPrivate(videoTrack.getMeta().getCodecPrivate());
-        DemuxerTrack selectedAudioTrack = selectAudioTrack(demux.getAudioTracks());
-        if (selectedAudioTrack != null) {
-            Logger.info("Using the audio track: " + selectedAudioTrack.getMeta().getIndex());
-            this.audioInputTrack = selectedAudioTrack;
-            SampleEntry sampleEntry = ((AbstractMP4DemuxerTrack) selectedAudioTrack).getSampleEntries()[0];
-            audioDecoder = new Decoder(NIOUtils.toArray(AACUtils.getCodecPrivate(sampleEntry)));
-            AACMetadata meta = AACUtils.getMetadata(sampleEntry);
-            this.audioOutputTrack = muxer.addPCMAudioTrack(meta.getFormat());
+        static final String APPLE_PRO_RES_422 = "Apple ProRes 422";
+
+        @Override
+        protected void initEncode(SeekableByteChannel sink) throws IOException {
+            muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
+            VideoSampleEntry videoSampleEntry = (VideoSampleEntry) ((MP4Demuxer) demux).getVideoTrack()
+                    .getSampleEntries()[0];
+            PixelAspectExt pasp = Box.findFirst(videoSampleEntry, PixelAspectExt.class, "pasp");
+            Size dim = videoInputTrack.getMeta().getDimensions();
+            videoOutputTrack = muxer.addVideoTrack("apch", dim, APPLE_PRO_RES_422, 25000);
+            if (pasp != null)
+                videoOutputTrack.getEntries().get(0).add(pasp);
+            videoEncoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
+        }
+
+        @Override
+        protected void finishEncode() throws IOException {
+            muxer.writeHeader();
+        }
+
+        @Override
+        protected Picture8Bit createPixelBuffer(ColorSpace yuv444) {
+            Size dim = videoInputTrack.getMeta().getDimensions();
+            return Picture8Bit.create(dim.getWidth(), dim.getHeight(), ColorSpace.YUV420);
+        }
+
+        @Override
+        protected ColorSpace getEncoderColorspace() {
+            return videoEncoder.getSupportedColorSpaces()[0];
+        }
+
+        @Override
+        protected Packet inputVideoPacket() throws IOException {
+            return videoInputTrack.nextFrame();
+        }
+
+        @Override
+        protected void outputVideoPacket(Packet packet) throws IOException {
+            videoOutputTrack.setTimescale((int) packet.getTimescale());
+            videoOutputTrack.addFrame(packet);
+        }
+
+        @Override
+        protected Picture8Bit decodeVideo(ByteBuffer data, Picture8Bit target1) {
+            return ((H264Decoder) videoDecoder).decodeFrame8BitFromNals(H264Utils.splitFrame(data), target1.getData());
+        }
+
+        @Override
+        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+            return videoEncoder.encodeFrame8Bit(frame, _out);
+        }
+
+        protected boolean haveAudio() {
+            return audioInputTrack != null;
+        }
+
+        @Override
+        protected Packet inputAudioPacket() throws IOException {
+            return audioInputTrack.nextFrame();
+        }
+
+        @Override
+        protected void outputAudioPacket(Packet audioPkt) throws IOException {
+            audioOutputTrack.addFrame(audioPkt);
+        }
+
+        @Override
+        protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
+            SampleBuffer sampleBuffer = new SampleBuffer();
+            audioDecoder.decodeFrame(NIOUtils.toArray(audioPkt), sampleBuffer);
+            if (sampleBuffer.isBigEndian())
+                toLittleEndian(sampleBuffer);
+            return ByteBuffer.wrap(sampleBuffer.getData());
+        }
+
+        @Override
+        protected ByteBuffer encodeAudio(ByteBuffer wrap) {
+            return wrap;
+        }
+
+        @Override
+        protected boolean seek(int frame) throws IOException {
+            Packet inFrame;
+
+            if (videoInputTrack instanceof SeekableDemuxerTrack) {
+                SeekableDemuxerTrack seekable = (SeekableDemuxerTrack) videoInputTrack;
+                seekable.gotoFrame(frame);
+                while ((inFrame = inputVideoPacket()) != null && !inFrame.isKeyFrame())
+                    ;
+                seekable.gotoFrame(inFrame.getFrameNo());
+            } else {
+                Logger.error("Can not seek in " + videoInputTrack + " container.");
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        protected int getBufferSize(Picture8Bit frame) {
+            return (3 * frame.getWidth() * frame.getHeight()) / 2;
+        }
+
+        private void toLittleEndian(SampleBuffer sampleBuffer) {
+            byte[] data = sampleBuffer.getData();
+            for (int i = 0; i < data.length; i += 2) {
+                byte tmp = data[i];
+                data[i] = data[i + 1];
+                data[i + 1] = tmp;
+            }
+        }
+
+        @Override
+        protected List<Filter> getFilters() {
+            List<Filter> filters = new ArrayList<Filter>();
+            if (cmd.getBooleanFlag(FLAG_DUMPMV))
+                filters.add(new DumpMvFilter(false));
+            else if (cmd.getBooleanFlag(FLAG_DUMPMVJS))
+                filters.add(new DumpMvFilter(true));
+            return filters;
         }
     }
 
-    static final String APPLE_PRO_RES_422 = "Apple ProRes 422";
-
-    @Override
-    protected void initEncode(SeekableByteChannel sink) throws IOException {
-        muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
-        VideoSampleEntry videoSampleEntry = (VideoSampleEntry) ((MP4Demuxer) demux).getVideoTrack()
-                .getSampleEntries()[0];
-        PixelAspectExt pasp = Box.findFirst(videoSampleEntry, PixelAspectExt.class, "pasp");
-        Size dim = videoInputTrack.getMeta().getDimensions();
-        videoOutputTrack = muxer.addVideoTrack("apch", dim, APPLE_PRO_RES_422, 25000);
-        if (pasp != null)
-            videoOutputTrack.getEntries().get(0).add(pasp);
-        videoEncoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
-    }
-
-    @Override
-    protected void finishEncode() throws IOException {
-        muxer.writeHeader();
-    }
-
-    @Override
-    protected Picture8Bit createPixelBuffer(ColorSpace yuv444) {
-        Size dim = videoInputTrack.getMeta().getDimensions();
-        return Picture8Bit.create(dim.getWidth(), dim.getHeight(), ColorSpace.YUV420);
-    }
-
-    @Override
-    protected ColorSpace getEncoderColorspace() {
-        return videoEncoder.getSupportedColorSpaces()[0];
-    }
-
-    @Override
-    protected Packet inputVideoPacket() throws IOException {
-        return videoInputTrack.nextFrame();
-    }
-
-    @Override
-    protected void outputVideoPacket(Packet packet) throws IOException {
-        videoOutputTrack.setTimescale((int) packet.getTimescale());
-        videoOutputTrack.addFrame(packet);
-    }
-
-    @Override
-    protected Picture8Bit decodeVideo(ByteBuffer data, Picture8Bit target1) {
-        return ((H264Decoder) videoDecoder).decodeFrame8BitFromNals(H264Utils.splitFrame(data), target1.getData());
-    }
-
-    @Override
-    protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
-        return videoEncoder.encodeFrame8Bit(frame, _out);
-    }
-
-    protected boolean haveAudio() {
-        return audioInputTrack != null;
-    }
-
-    @Override
-    protected Packet inputAudioPacket() throws IOException {
-        return audioInputTrack.nextFrame();
-    }
-
-    @Override
-    protected void outputAudioPacket(Packet audioPkt) throws IOException {
-        audioOutputTrack.addFrame(audioPkt);
-    }
-
-    @Override
-    protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
-        SampleBuffer sampleBuffer = new SampleBuffer();
-        audioDecoder.decodeFrame(NIOUtils.toArray(audioPkt), sampleBuffer);
-        if (sampleBuffer.isBigEndian())
-            toLittleEndian(sampleBuffer);
-        return ByteBuffer.wrap(sampleBuffer.getData());
-    }
-
-    @Override
-    protected ByteBuffer encodeAudio(ByteBuffer wrap) {
-        return wrap;
-    }
-
-    @Override
-    protected boolean seek(int frame) throws IOException {
-        Packet inFrame;
-
-        if (videoInputTrack instanceof SeekableDemuxerTrack) {
-            SeekableDemuxerTrack seekable = (SeekableDemuxerTrack) videoInputTrack;
-            seekable.gotoFrame(frame);
-            while ((inFrame = inputVideoPacket()) != null && !inFrame.isKeyFrame())
-                ;
-            seekable.gotoFrame(inFrame.getFrameNo());
-        } else {
-            Logger.error("Can not seek in " + videoInputTrack + " container.");
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    protected int getBufferSize(Picture8Bit frame) {
-        return (3 * frame.getWidth() * frame.getHeight()) / 2;
-    }
-
-    private void toLittleEndian(SampleBuffer sampleBuffer) {
-        byte[] data = sampleBuffer.getData();
-        for (int i = 0; i < data.length; i += 2) {
-            byte tmp = data[i];
-            data[i] = data[i + 1];
-            data[i + 1] = tmp;
-        }
-    }
-
-    @Override
-    protected List<Filter> getFilters(Cmd cmd) {
-        List<Filter> filters = new ArrayList<Filter>();
-        if (cmd.getBooleanFlag(FLAG_DUMPMV))
-            filters.add(new DumpMvFilter(false));
-        else if (cmd.getBooleanFlag(FLAG_DUMPMVJS))
-            filters.add(new DumpMvFilter(true));
-        return filters;
-    }
-
-    private class DumpMvFilter implements Filter {
+    private static class DumpMvFilter implements Filter {
         private boolean js;
 
         public DumpMvFilter(boolean js) {
@@ -314,5 +321,10 @@ class Avc2prores extends TranscodeGenericProfile {
     @Override
     public Set<Codec> outputAudioCodec() {
         return TranscodeMain.codecs(Codec.PCM);
+    }
+
+    @Override
+    protected GenericTranscoder getTranscoder(Cmd cmd, Profile profile) {
+        return new Avc2proresTranscoder(cmd, profile);
     }
 }

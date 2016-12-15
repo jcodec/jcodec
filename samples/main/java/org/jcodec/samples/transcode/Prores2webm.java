@@ -1,9 +1,6 @@
 package org.jcodec.samples.transcode;
 
-import static org.jcodec.common.io.NIOUtils.readableChannel;
-import static org.jcodec.common.io.NIOUtils.writableChannel;
-import static org.jcodec.common.tools.MainUtils.tildeExpand;
-
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
@@ -12,9 +9,12 @@ import java.util.Set;
 
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresToThumb2x2;
+import org.jcodec.codecs.vpx.IVFMuxer;
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.common.Codec;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
@@ -24,81 +24,128 @@ import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mkv.muxer.MKVMuxer;
 import org.jcodec.containers.mkv.muxer.MKVMuxerTrack;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.jcodec.scale.Transform8Bit;
-import org.jcodec.scale.Yuv422pToYuv420p8Bit;
 
-class Prores2webm implements Profile {
+class Prores2webm extends V2VTranscoder {
     public static final String FLAG_THUMBNAIL = "thumbnail";
 
-    @Override
-    public void transcode(Cmd cmd) throws IOException {
-        SeekableByteChannel sink = null;
-        SeekableByteChannel source = null;
-        try {
-            sink = writableChannel(tildeExpand(cmd.getArg(1)));
-            source = readableChannel(tildeExpand(cmd.getArg(0)));
+    private static class Prores2webmTranscoder extends GenericTranscoder {
 
+        private AbstractMP4DemuxerTrack inputVideoTrack;
+        private ProresDecoder videoDecoder;
+        private VP8Encoder videoEncoder;
+        private MKVMuxerTrack outputVideoTrack;
+        private MKVMuxer mkv;
+        private IVFMuxer ivf;
+        private boolean useMkv;
+
+        public Prores2webmTranscoder(Cmd cmd, Profile profile) {
+            super(cmd, profile);
+            useMkv = profile.getOutputFormat() == Format.MKV;
+        }
+
+        @Override
+        protected void initDecode(SeekableByteChannel source) throws IOException {
             MP4Demuxer demux = new MP4Demuxer(source);
-
-            Transform8Bit transform = new Yuv422pToYuv420p8Bit();
-
-            VP8Encoder encoder = VP8Encoder.createVP8Encoder(10); // qp
-
-            MKVMuxer muxer = new MKVMuxer(sink);
-            MKVMuxerTrack videoTrack = null;
-
-            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
-
-            VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
-            Picture8Bit target1 = Picture8Bit.create(1920, 1088, ColorSpace.YUV422);
-            Picture8Bit target2 = null;
-            ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
-
-            int fps = (int) (inTrack.getFrameCount() / inTrack.getDuration().scalar());
-
-            ProresDecoder decoder;
+            inputVideoTrack = demux.getVideoTrack();
             if (cmd.getBooleanFlagD(FLAG_THUMBNAIL, false)) {
-                decoder = new ProresToThumb2x2();
+                videoDecoder = new ProresToThumb2x2();
             } else {
-                decoder = new ProresDecoder();
+                videoDecoder = new ProresDecoder();
             }
-            MP4Packet inFrame;
-            int totalFrames = (int) inTrack.getFrameCount();
-            long start = System.currentTimeMillis();
-            for (int i = 0; (inFrame = (MP4Packet) inTrack.nextFrame()) != null; i++) {
-                Picture8Bit dec = decoder.decodeFrame8Bit(inFrame.getData(), target1.getData());
-                if (target2 == null) {
-                    target2 = Picture8Bit.create(dec.getWidth(), dec.getHeight(), ColorSpace.YUV420);
-                }
-                transform.transform(dec, target2);
-                _out.clear();
+        }
 
-                ByteBuffer result = encoder.encodeFrame8Bit(target2, _out);
-                if (videoTrack == null)
-                    videoTrack = muxer.createVideoTrack(new Size(dec.getWidth(), dec.getHeight()), "V_VP8");
-
-                // Packet packet = new Packet(result, inFrame.getMediaPts(),
-                // inFrame.getTimescale(),
-                // inFrame.getDuration(), inFrame.getFrameNo(), true, null);
-                byte[] array = new byte[result.limit()];
-                System.arraycopy(result.array(), result.position(), array, 0, array.length);
-                videoTrack.addFrame(new Packet(ByteBuffer.wrap(array), i - 1, 25, 1, i - 1, true, null, i - 1));
-
-                if (i % 100 == 0) {
-                    long elapse = System.currentTimeMillis() - start;
-                    System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
-                }
+        @Override
+        protected void initEncode(SeekableByteChannel sink) throws IOException {
+            Size dim = inputVideoTrack.getMeta().getDimensions();
+            if (useMkv) {
+                mkv = new MKVMuxer(sink);
+                outputVideoTrack = mkv.createVideoTrack(new Size(dim.getWidth(), dim.getHeight()), "V_VP8");
+            } else {
+                DemuxerTrackMeta meta = inputVideoTrack.getMeta();
+                int fps = (int) (meta.getTotalFrames() / meta.getTotalDuration());
+                ivf = new IVFMuxer(sink, dim.getWidth(), dim.getHeight(), fps);
             }
-            muxer.mux();
-        } finally {
-            if (sink != null)
-                sink.close();
-            if (source != null)
-                source.close();
+            videoEncoder = VP8Encoder.createVP8Encoder(10);
+        }
+
+        @Override
+        protected void finishEncode() throws IOException {
+            if (useMkv) {
+                mkv.mux();
+            }
+        }
+
+        @Override
+        protected Picture8Bit createPixelBuffer(ColorSpace yuv444) {
+            Size dim = inputVideoTrack.getMeta().getDimensions();
+            return Picture8Bit.create(dim.getWidth(), dim.getHeight(), yuv444);
+        }
+
+        @Override
+        protected ColorSpace getEncoderColorspace() {
+            return videoEncoder.getSupportedColorSpaces()[0];
+        }
+
+        @Override
+        protected Packet inputVideoPacket() throws IOException {
+            return inputVideoTrack.nextFrame();
+        }
+
+        @Override
+        protected void outputVideoPacket(Packet packet) throws IOException {
+            // ivf.addFrame(Packet.createPacketWithData(packet,
+            // NIOUtils.clone(packet.getData())));
+            if (useMkv) {
+                outputVideoTrack.addFrame(packet);
+            } else {
+                ivf.addFrame(packet);
+            }
+        }
+
+        @Override
+        protected Picture8Bit decodeVideo(ByteBuffer data, Picture8Bit target1) {
+            return videoDecoder.decodeFrame8Bit(data, target1.getData());
+        }
+
+        @Override
+        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+            return videoEncoder.encodeFrame8Bit(frame, _out);
+        }
+
+        @Override
+        protected boolean haveAudio() {
+            return false;
+        }
+
+        @Override
+        protected Packet inputAudioPacket() throws IOException {
+            return null;
+        }
+
+        @Override
+        protected void outputAudioPacket(Packet audioPkt) throws IOException {
+        }
+
+        @Override
+        protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
+            return null;
+        }
+
+        @Override
+        protected ByteBuffer encodeAudio(ByteBuffer wrap) {
+            return null;
+        }
+
+        @Override
+        protected boolean seek(int frame) throws IOException {
+            return false;
+        }
+
+        @Override
+        protected int getBufferSize(Picture8Bit frame) {
+            return frame.getWidth() * frame.getHeight() / 2;
         }
 
     }
@@ -119,7 +166,7 @@ class Prores2webm implements Profile {
 
     @Override
     public Set<Format> outputFormat() {
-        return TranscodeMain.formats(Format.MKV);
+        return TranscodeMain.formats(Format.MKV, Format.IVF);
     }
 
     @Override
@@ -140,5 +187,10 @@ class Prores2webm implements Profile {
     @Override
     public Set<Codec> outputAudioCodec() {
         return null;
+    }
+
+    @Override
+    protected GenericTranscoder getTranscoder(Cmd cmd, Profile profile) {
+        return new Prores2webmTranscoder(cmd, profile);
     }
 }

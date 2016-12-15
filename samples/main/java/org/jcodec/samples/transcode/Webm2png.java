@@ -20,7 +20,7 @@ import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
  * 
  * @author Stanislav Vitvitskiy
  */
-class Webm2png extends ToImgProfile {
+class Webm2png extends ToImgTranscoder {
     @Override
     public Set<Format> inputFormat() {
         return TranscodeMain.formats(Format.MKV);

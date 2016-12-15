@@ -1,8 +1,5 @@
 package org.jcodec.samples.transcode;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-import static org.jcodec.common.io.NIOUtils.writableFileChannel;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
@@ -27,38 +24,50 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4TrackType;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
-import org.jcodec.scale.Transform8Bit;
-import org.jcodec.scale.Yuv422pToYuv420p8Bit;
 
-class Prores2avc implements Profile {
+class Prores2avc extends V2VTranscoder {
     private static final int DEFAULT_FIXED_BITS_PER_MB = 1024;
     private static final String FLAG_THUMBNAIL = "thumbnail";
     private static final String FLAG_RC = "rc";
     private static final String FLAG_BITS_PER_MB = "bitsPerMb";
 
-    @Override
-    public void transcode(Cmd cmd) throws IOException {
-        SeekableByteChannel sink = null;
-        SeekableByteChannel source = null;
-        try {
-            sink = writableFileChannel(cmd.getArg(1));
-            source = readableFileChannel(cmd.getArg(0));
+    public static class Prores2avcTranscoder extends GenericTranscoder {
+        private AbstractMP4DemuxerTrack videoInputTrack;
+        private MP4Muxer muxer;
+        private FramesMP4MuxerTrack videoOutputTrack;
+        private H264Encoder videoEncoder;
+        private ProresDecoder videoDecoder;
+        private List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
+        private List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
 
+        public Prores2avcTranscoder(Cmd cmd, Profile profile) {
+            super(cmd, profile);
+        }
+
+        @Override
+        protected void initDecode(SeekableByteChannel source) throws IOException {
             MP4Demuxer demux = new MP4Demuxer(source);
-            MP4Muxer muxer = MP4Muxer.createMP4Muxer(sink, Brand.MP4);
+            videoInputTrack = demux.getVideoTrack();
+            if (cmd.getBooleanFlagD(FLAG_THUMBNAIL, false)) {
+                videoDecoder = new ProresToThumb2x2();
+            } else {
+                videoDecoder = new ProresDecoder();
+            }
+        }
 
-            Transform8Bit transform = new Yuv422pToYuv420p8Bit();
-
+        @Override
+        protected void initEncode(SeekableByteChannel sink) throws IOException {
+            muxer = MP4Muxer.createMP4Muxer(sink, Brand.MP4);
+            videoOutputTrack = muxer.addTrack(MP4TrackType.VIDEO, (int) videoInputTrack.getTimescale());
             String rcName = cmd.getStringFlagD(FLAG_RC, "dumb");
             RateControl rc;
             if ("dumb".equals(rcName)) {
@@ -69,63 +78,88 @@ class Prores2avc implements Profile {
                 System.err.println("Unsupported rate control mode: " + rcName);
                 return;
             }
+            videoEncoder = new H264Encoder(rc);
+            videoEncoder.setKeyInterval(25);
+        }
 
-            H264Encoder encoder = new H264Encoder(rc);
-            encoder.setKeyInterval(25);
-
-            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
-            FramesMP4MuxerTrack outTrack = muxer.addTrack(MP4TrackType.VIDEO, (int) inTrack.getTimescale());
-
-            VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
-            Picture8Bit target1 = Picture8Bit.create(1920, 1088, ColorSpace.YUV422);
-            Picture8Bit target2 = null;
-            ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
-
-            List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
-            List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
-            ProresDecoder decoder;
-            if (cmd.getBooleanFlagD(FLAG_THUMBNAIL, false)) {
-                decoder = new ProresToThumb2x2();
-            } else {
-                decoder = new ProresDecoder();
-            }
-            Packet inFrame;
-            int totalFrames = (int) inTrack.getFrameCount();
-            long start = System.currentTimeMillis();
-            for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
-                Picture8Bit dec = decoder.decodeFrame8Bit(inFrame.getData(), target1.getData());
-                if (target2 == null) {
-                    target2 = Picture8Bit.createCropped(dec.getWidth(), dec.getHeight(),
-                            encoder.getSupportedColorSpaces()[0], dec.getCrop());
-                }
-                transform.transform(dec, target2);
-                _out.clear();
-                ByteBuffer result = encoder.encodeFrame8Bit(target2, _out);
-                if (rc instanceof H264FixedRateControl) {
-                    int mbWidth = (dec.getWidth() + 15) >> 4;
-                    int mbHeight = (dec.getHeight() + 15) >> 4;
-                    result.limit(((H264FixedRateControl) rc).calcFrameSize(mbWidth * mbHeight));
-                }
-                H264Utils.wipePSinplace(result, spsList, ppsList);
-                NALUnit nu = NALUnit.read(NIOUtils.from(result.duplicate(), 4));
-                H264Utils.encodeMOVPacket(result);
-                MP4Packet pkt = MP4Packet.createMP4PacketWithData((MP4Packet) inFrame, result);
-                pkt.setKeyFrame(nu.type == NALUnitType.IDR_SLICE);
-                outTrack.addFrame(pkt);
-                if (i % 100 == 0) {
-                    long elapse = System.currentTimeMillis() - start;
-                    System.out.println((i * 100 / totalFrames) + "%, " + (i * 1000 / elapse) + "fps");
-                }
-            }
-            outTrack.addSampleEntry(
+        @Override
+        protected void finishEncode() throws IOException {
+            videoOutputTrack.addSampleEntry(
                     H264Utils.createMOVSampleEntryFromSpsPpsList(spsList.subList(0, 1), ppsList.subList(0, 1), 4));
 
             muxer.writeHeader();
-        } finally {
-            if (sink != null)
-                sink.close();
-            if (source != null)
-                source.close();
+        }
+
+        @Override
+        protected Picture8Bit createPixelBuffer(ColorSpace colorspace) {
+            Size size = videoInputTrack.getMeta().getDimensions();
+            return Picture8Bit.create(size.getWidth(), size.getHeight(), colorspace);
+        }
+
+        @Override
+        protected ColorSpace getEncoderColorspace() {
+            return videoEncoder.getSupportedColorSpaces()[0];
+        }
+
+        @Override
+        protected Packet inputVideoPacket() throws IOException {
+            return videoInputTrack.nextFrame();
+        }
+
+        @Override
+        protected void outputVideoPacket(Packet packet) throws IOException {
+            ByteBuffer result = packet.getData();
+            H264Utils.wipePSinplace(result, spsList, ppsList);
+            NALUnit nu = NALUnit.read(NIOUtils.from(result.duplicate(), 4));
+            H264Utils.encodeMOVPacket(result);
+            Packet pkt = Packet.createPacketWithData(packet, result);
+            pkt.setKeyFrame(nu.type == NALUnitType.IDR_SLICE);
+            videoOutputTrack.addFrame(pkt);
+        }
+
+        @Override
+        protected Picture8Bit decodeVideo(ByteBuffer data, Picture8Bit target1) {
+            return videoDecoder.decodeFrame8Bit(data, target1.getData());
+        }
+
+        @Override
+        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+            return videoEncoder.encodeFrame8Bit(frame, _out);
+        }
+
+        @Override
+        protected boolean haveAudio() {
+            return false;
+        }
+
+        @Override
+        protected Packet inputAudioPacket() throws IOException {
+            return null;
+        }
+
+        @Override
+        protected void outputAudioPacket(Packet audioPkt) throws IOException {
+        }
+
+        @Override
+        protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
+            return null;
+        }
+
+        @Override
+        protected ByteBuffer encodeAudio(ByteBuffer wrap) {
+            return null;
+        }
+
+        @Override
+        protected boolean seek(int frame) throws IOException {
+            return false;
+        }
+
+        @Override
+        protected int getBufferSize(Picture8Bit frame) {
+            // Assume 4x min compression for h.264
+            return frame.getWidth() * frame.getHeight() / 4;
         }
     }
 
@@ -167,5 +201,10 @@ class Prores2avc implements Profile {
     @Override
     public Set<Codec> outputAudioCodec() {
         return null;
+    }
+
+    @Override
+    public GenericTranscoder getTranscoder(Cmd cmd, Profile profile) {
+        return new Prores2avcTranscoder(cmd, profile);
     }
 }
