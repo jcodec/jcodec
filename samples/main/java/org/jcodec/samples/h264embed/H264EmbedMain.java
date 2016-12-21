@@ -3,21 +3,21 @@ package org.jcodec.samples.h264embed;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.MP4TrackType;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -50,26 +50,27 @@ public class H264EmbedMain {
 
             EmbedTranscoder transcoder = new EmbedTranscoder();
 
-            AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
-            VideoSampleEntry ine = (VideoSampleEntry) inTrack.getSampleEntries()[0];
+            DemuxerTrack inTrack = demux.getVideoTrack();
 
-            FramesMP4MuxerTrack outTrack = muxer.addTrack(MP4TrackType.VIDEO, (int) inTrack.getTimescale());
-            outTrack.addSampleEntry(ine);
+            DemuxerTrackMeta meta = inTrack.getMeta();
+            VideoCodecMeta videoCodecMeta = meta.getVideoCodecMeta();
+            MuxerTrack outTrack = muxer.addVideoTrack(meta.getCodec(), videoCodecMeta);
 
-            ByteBuffer _out = ByteBuffer.allocate(ine.getWidth() * ine.getHeight() * 6);
+            ByteBuffer _out = ByteBuffer
+                    .allocate(videoCodecMeta.getSize().getWidth() * videoCodecMeta.getSize().getHeight() * 6);
 
             Packet inFrame;
-            int totalFrames = (int) inTrack.getFrameCount();
+            int totalFrames = (int) meta.getTotalFrames();
             for (int i = 0; (inFrame = inTrack.nextFrame()) != null; i++) {
                 ByteBuffer data = inFrame.getData();
                 _out.clear();
                 ByteBuffer result = transcoder.transcode(H264Utils.splitFrame(data), _out);
-                outTrack.addFrame(MP4Packet.createMP4PacketWithData((MP4Packet)inFrame, result));
+                outTrack.addFrame(MP4Packet.createMP4PacketWithData((MP4Packet) inFrame, result));
 
                 if (i % 100 == 0)
                     System.out.println((i * 100 / totalFrames) + "%");
             }
-            muxer.writeHeader();
+            muxer.finish();
         } finally {
             if (sink != null)
                 sink.close();

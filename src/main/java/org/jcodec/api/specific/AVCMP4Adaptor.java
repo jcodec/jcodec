@@ -67,7 +67,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         updateState(packet);
 
         Picture pic = decoder.decodeFrameFromNals(H264Utils.splitFrame(packet.getData()), data);
-        Rational pasp = meta.getPixelAspectRatio();
+        Rational pasp = meta.getVideoCodecMeta().getPixelAspectRatio();
 
         if (pasp != null) {
             // TODO: transform
@@ -81,7 +81,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         updateState(packet);
 
         Picture8Bit pic = decoder.decodeFrame8Bit(packet.getData(), data);
-        Rational pasp = meta.getPixelAspectRatio();
+        Rational pasp = meta.getVideoCodecMeta().getPixelAspectRatio();
 
         if (pasp != null) {
             // TODO: transform

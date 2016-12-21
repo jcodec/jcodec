@@ -1,31 +1,21 @@
 package org.jcodec.samples.mux;
 
-import static org.jcodec.codecs.h264.H264Utils.getPicHeightInMbs;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
-import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.BufferH264ES;
-import org.jcodec.codecs.h264.io.model.PictureParameterSet;
-import org.jcodec.codecs.h264.io.model.SeqParameterSet;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.codecs.h264.H264Decoder;
+import org.jcodec.common.Codec;
+import org.jcodec.common.Muxer;
+import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Size;
-import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.MP4TrackType;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
@@ -39,8 +29,6 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * 
  */
 public class AVCMP4Mux {
-    private static AvcCBox avcC;
-
     public static void main(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args);
         if (cmd.argsLength() < 2) {
@@ -57,63 +45,24 @@ public class AVCMP4Mux {
 
         SeekableByteChannel file = writableChannel(out);
         MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(file);
-        FramesMP4MuxerTrack track = muxer.addTrack(MP4TrackType.VIDEO, 25);
+        mux(muxer, in);
 
-        mux(track, in);
-
-        muxer.writeHeader();
+        muxer.finish();
 
         file.close();
     }
 
-    private static void mux(FramesMP4MuxerTrack track, File f) throws IOException {
+    private static void mux(Muxer muxer, File f) throws IOException {
+        MuxerTrack track = null;
         BufferH264ES es = new BufferH264ES(NIOUtils.mapFile(f));
 
-        ArrayList<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
-        ArrayList<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
         Packet frame = null;
         while ((frame = es.nextFrame()) != null) {
-            ByteBuffer data = NIOUtils.cloneBuffer(frame.getData());
-            H264Utils.wipePSinplace(data, spsList, ppsList);
-            H264Utils.encodeMOVPacket(data);
-            MP4Packet pkt = MP4Packet.createMP4Packet(data, frame.getPts(), frame.getTimescale(), frame.getDuration(),
-                    frame.getFrameNo(), frame.isKeyFrame(), null, frame.getDisplayOrder(), frame.getPts(), 0);
-            System.out.println(pkt.getFrameNo());
-            track.addFrame(pkt);
+            if(track == null) {
+                track = muxer.addVideoTrack(Codec.H264, new H264Decoder().getCodecMeta(frame.getData()));
+            }
+
+            track.addFrame(frame);
         }
-        addSampleEntry(track, es.getSps(), es.getPps());
-    }
-
-    private static void addSampleEntry(FramesMP4MuxerTrack track, SeqParameterSet[] spss, PictureParameterSet[] ppss) {
-        SeqParameterSet sps = spss[0];
-        Size size = new Size((sps.pic_width_in_mbs_minus1 + 1) << 4, getPicHeightInMbs(sps) << 4);
-
-        SampleEntry se = MP4Muxer.videoSampleEntry("avc1", size, "JCodec");
-
-        avcC = AvcCBox.createAvcCBox(sps.profile_idc, 0, sps.level_idc, 4, write(spss), write(ppss));
-        se.add(avcC);
-        track.addSampleEntry(se);
-    }
-
-    private static List<ByteBuffer> write(PictureParameterSet[] ppss) {
-        List<ByteBuffer> result = new ArrayList<ByteBuffer>();
-        for (PictureParameterSet pps : ppss) {
-            ByteBuffer buf = ByteBuffer.allocate(1024);
-            pps.write(buf);
-            buf.flip();
-            result.add(buf);
-        }
-        return result;
-    }
-
-    private static List<ByteBuffer> write(SeqParameterSet[] spss) {
-        List<ByteBuffer> result = new ArrayList<ByteBuffer>();
-        for (SeqParameterSet sps : spss) {
-            ByteBuffer buf = ByteBuffer.allocate(1024);
-            sps.write(buf);
-            buf.flip();
-            result.add(buf);
-        }
-        return result;
     }
 }

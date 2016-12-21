@@ -21,13 +21,15 @@ public class ADTSParser {
         private int numAACFrames;
         private int samplingIndex;
         private int samples;
+        private int size;
 
-        public Header(int object_type, int chanConfig, int crcAbsent, int numAACFrames, int samplingIndex) {
+        public Header(int object_type, int chanConfig, int crcAbsent, int numAACFrames, int samplingIndex, int size) {
             this.objectType = object_type;
             this.chanConfig = chanConfig;
             this.crcAbsent = crcAbsent;
             this.numAACFrames = numAACFrames;
             this.samplingIndex = samplingIndex;
+            this.size = size;
         }
 
         public int getObjectType() {
@@ -53,11 +55,15 @@ public class ADTSParser {
         public int getSamples() {
             return samples;
         }
+
+        public int getSize() {
+            return size;
+        }
     }
 
     public static Header read(ByteBuffer data) {
         ByteBuffer dup = data.duplicate();
-		BitReader br = BitReader.createBitReader(dup);
+        BitReader br = BitReader.createBitReader(dup);
         // int size, rdb, ch, sr;
         // int aot, crc_abs;
 
@@ -86,12 +92,12 @@ public class ADTSParser {
         int buffer = br.readNBit(11); /* adts_buffer_fullness */
         int rdb = br.readNBit(2); /* number_of_raw_data_blocks_in_frame */
         br.stop();
-        
+
         data.position(dup.position());
 
-        return new Header(aot + 1, ch, crc_abs, rdb + 1, sr);
+        return new Header(aot + 1, ch, crc_abs, rdb + 1, sr, size);
     }
-    
+
     public static ByteBuffer write(Header header, ByteBuffer buf, int frameSize) {
         ByteBuffer data = buf.duplicate();
         BitWriter br = new BitWriter(data);

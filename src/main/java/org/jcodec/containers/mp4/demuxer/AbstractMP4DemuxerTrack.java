@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.jcodec.codecs.aac.AACUtils;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
@@ -251,11 +252,13 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     }
     
     public ByteBuffer getCodecPrivate() {
-        SampleEntry se = getSampleEntries()[0];
-        if ("avc1".equals(se.getFourcc())) {
-            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
+        Codec codec = getCodec();
+        if (codec == Codec.H264) {
+            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
             return H264Utils.avcCToAnnexB(avcC);
 
+        } else if(codec == Codec.AAC) {
+            return AACUtils.getCodecPrivate(getSampleEntries()[0]);
         }
         // This codec does not have private section
         return null;

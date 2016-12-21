@@ -7,8 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jcodec.codecs.aac.AACUtils;
-import org.jcodec.codecs.aac.AACUtils.AACMetadata;
+import org.jcodec.codecs.aac.AACDecoder;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -16,47 +15,38 @@ import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
 import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
+import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.PixelAspectExt;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
-import net.sourceforge.jaad.aac.Decoder;
-import net.sourceforge.jaad.aac.SampleBuffer;
-
 class Avc2prores extends V2VTranscoder {
-    // private static final String FLAG_RAW = "raw";
-    // private static final String FLAG_MAX_FRAMES = "max-frames";
     private static final String FLAG_DUMPMV = "dumpMv";
     private static final String FLAG_DUMPMVJS = "dumpMvJs";
 
     private static class Avc2proresTranscoder extends GenericTranscoder {
         private MP4Demuxer demux;
         private MP4Muxer muxer;
-        private FramesMP4MuxerTrack videoOutputTrack;
+        private MuxerTrack videoOutputTrack;
         private DemuxerTrack videoInputTrack;
         private DemuxerTrack audioInputTrack;
         private MuxerTrack audioOutputTrack;
-        private Decoder audioDecoder;
+        private AACDecoder audioDecoder;
         private H264Decoder videoDecoder;
         private ProresEncoder videoEncoder;
-        
+
         public Avc2proresTranscoder(Cmd cmd, Profile profile) {
             super(cmd, profile);
         }
@@ -76,16 +66,14 @@ class Avc2prores extends V2VTranscoder {
         protected void initDecode(SeekableByteChannel source) throws IOException {
             demux = new MP4Demuxer(source);
             videoInputTrack = demux.getVideoTrack();
-            AbstractMP4DemuxerTrack videoTrack = demux.getVideoTrack();
+            DemuxerTrack videoTrack = demux.getVideoTrack();
             videoDecoder = H264Decoder.createH264DecoderFromCodecPrivate(videoTrack.getMeta().getCodecPrivate());
             DemuxerTrack selectedAudioTrack = selectAudioTrack(demux.getAudioTracks());
             if (selectedAudioTrack != null) {
                 Logger.info("Using the audio track: " + selectedAudioTrack.getMeta().getIndex());
                 this.audioInputTrack = selectedAudioTrack;
-                SampleEntry sampleEntry = ((AbstractMP4DemuxerTrack) selectedAudioTrack).getSampleEntries()[0];
-                audioDecoder = new Decoder(NIOUtils.toArray(AACUtils.getCodecPrivate(sampleEntry)));
-                AACMetadata meta = AACUtils.getMetadata(sampleEntry);
-                this.audioOutputTrack = muxer.addPCMAudioTrack(meta.getFormat());
+                DemuxerTrackMeta meta = audioInputTrack.getMeta();
+                audioDecoder = new AACDecoder(meta.getCodecPrivate());
             }
         }
 
@@ -94,25 +82,19 @@ class Avc2prores extends V2VTranscoder {
         @Override
         protected void initEncode(SeekableByteChannel sink) throws IOException {
             muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
-            VideoSampleEntry videoSampleEntry = (VideoSampleEntry) ((MP4Demuxer) demux).getVideoTrack()
-                    .getSampleEntries()[0];
-            PixelAspectExt pasp = Box.findFirst(videoSampleEntry, PixelAspectExt.class, "pasp");
-            Size dim = videoInputTrack.getMeta().getDimensions();
-            videoOutputTrack = muxer.addVideoTrack("apch", dim, APPLE_PRO_RES_422, 25000);
-            if (pasp != null)
-                videoOutputTrack.getEntries().get(0).add(pasp);
+            videoOutputTrack = muxer.addVideoTrack(Codec.PRORES, videoInputTrack.getMeta().getVideoCodecMeta());
             videoEncoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
         }
 
         @Override
         protected void finishEncode() throws IOException {
-            muxer.writeHeader();
+            muxer.finish();
         }
 
         @Override
         protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
-            Size dim = videoInputTrack.getMeta().getDimensions();
-            return Picture8Bit.create(dim.getWidth(), dim.getHeight(), ColorSpace.YUV420);
+            Size dim = videoInputTrack.getMeta().getVideoCodecMeta().getSize();
+            return Picture8Bit.create((dim.getWidth() + 15) & ~0xf, (dim.getHeight() + 15) & ~0xf, ColorSpace.YUV420);
         }
 
         @Override
@@ -127,7 +109,6 @@ class Avc2prores extends V2VTranscoder {
 
         @Override
         protected void outputVideoPacket(Packet packet) throws IOException {
-            videoOutputTrack.setTimescale((int) packet.getTimescale());
             videoOutputTrack.addFrame(packet);
         }
 
@@ -137,7 +118,7 @@ class Avc2prores extends V2VTranscoder {
         }
 
         @Override
-        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+        protected EncodedFrame encodeVideo(Picture8Bit frame, ByteBuffer _out) {
             return videoEncoder.encodeFrame8Bit(frame, _out);
         }
 
@@ -147,6 +128,8 @@ class Avc2prores extends V2VTranscoder {
 
         @Override
         protected Packet inputAudioPacket() throws IOException {
+            if (audioInputTrack == null)
+                return null;
             return audioInputTrack.nextFrame();
         }
 
@@ -157,11 +140,11 @@ class Avc2prores extends V2VTranscoder {
 
         @Override
         protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
-            SampleBuffer sampleBuffer = new SampleBuffer();
-            audioDecoder.decodeFrame(NIOUtils.toArray(audioPkt), sampleBuffer);
-            if (sampleBuffer.isBigEndian())
-                toLittleEndian(sampleBuffer);
-            return ByteBuffer.wrap(sampleBuffer.getData());
+            AudioBuffer decodeFrame = audioDecoder.decodeFrame(audioPkt, null);
+            if (audioOutputTrack == null) {
+                this.audioOutputTrack = muxer.addPCMAudioTrack(decodeFrame.getFormat());
+            }
+            return decodeFrame.getData();
         }
 
         @Override
@@ -188,16 +171,7 @@ class Avc2prores extends V2VTranscoder {
 
         @Override
         protected int getBufferSize(Picture8Bit frame) {
-            return (3 * frame.getWidth() * frame.getHeight()) / 2;
-        }
-
-        private void toLittleEndian(SampleBuffer sampleBuffer) {
-            byte[] data = sampleBuffer.getData();
-            for (int i = 0; i < data.length; i += 2) {
-                byte tmp = data[i];
-                data[i] = data[i + 1];
-                data[i + 1] = tmp;
-            }
+            return videoEncoder.estimateBufferSize(frame);
         }
 
         @Override

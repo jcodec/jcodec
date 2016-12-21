@@ -39,6 +39,7 @@ abstract public class VideoDecoder {
      * @throws IOException
      */
     public abstract Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer);
+    public abstract VideoCodecMeta getCodecMeta(ByteBuffer data);
 
    
     protected byte[][] getSameSizeBuffer(int[][] buffer) {

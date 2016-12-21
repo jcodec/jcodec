@@ -13,4 +13,5 @@ public interface MuxerTrack {
 
     void addFrame(Packet outPacket) throws IOException;
 
+//    void setCodecPrivate(ByteBuffer codecPrivate);
 }

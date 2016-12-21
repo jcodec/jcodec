@@ -22,7 +22,7 @@ public class MP4Packet extends Packet {
                 other.tapeTimecode, other.displayOrder, other.mediaPts, other.entryNo);
     }
 
-    public static MP4Packet createMP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo,
+    public static MP4Packet createMP4Packet(ByteBuffer data, long pts, int timescale, long duration, long frameNo,
             boolean iframe, TapeTimecode tapeTimecode, int displayOrder, long mediaPts, int entryNo) {
         return new MP4Packet(data, pts, timescale, duration, frameNo, iframe, tapeTimecode, displayOrder, mediaPts,
                 entryNo, 0, 0, false);
@@ -34,7 +34,7 @@ public class MP4Packet extends Packet {
     private int size;
     private boolean psync;
 
-    public MP4Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean iframe,
+    public MP4Packet(ByteBuffer data, long pts, int timescale, long duration, long frameNo, boolean iframe,
             TapeTimecode tapeTimecode, int displayOrder, long mediaPts, int entryNo, long fileOff, int size,
             boolean psync) {
         super(data, pts, timescale, duration, frameNo, iframe, tapeTimecode, displayOrder);

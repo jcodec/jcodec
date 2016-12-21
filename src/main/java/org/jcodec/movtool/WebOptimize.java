@@ -1,7 +1,5 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.movtool.Remux.hidFile;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -34,5 +32,15 @@ public class WebOptimize {
             tgt.renameTo(new File(tgt.getParentFile(), tgt.getName() + ".error"));
             src.renameTo(tgt);
         }
+    }
+    public static File hidFile(File tgt) {
+        File src = new File(tgt.getParentFile(), "." + tgt.getName());
+        if (src.exists()) {
+            int i = 1;
+            do {
+                src = new File(tgt.getParentFile(), "." + tgt.getName() + "." + (i++));
+            } while (src.exists());
+        }
+        return src;
     }
 }

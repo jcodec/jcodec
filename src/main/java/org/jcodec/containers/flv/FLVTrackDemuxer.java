@@ -14,7 +14,6 @@ import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.TrackType;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Size;
 import org.jcodec.containers.flv.FLVTag.Type;
 
 /**
@@ -81,7 +80,7 @@ public class FLVTrackDemuxer {
         @Override
         public DemuxerTrackMeta getMeta() {
             TrackType t = type == Type.VIDEO ? TrackType.VIDEO : TrackType.AUDIO;
-            return new DemuxerTrackMeta(t, codec, null, 0, 0, new Size(0, 0), ByteBuffer.wrap(codecPrivate));
+            return new DemuxerTrackMeta(t, codec, 0, null, 0, ByteBuffer.wrap(codecPrivate), null, null);
         }
 
         @Override

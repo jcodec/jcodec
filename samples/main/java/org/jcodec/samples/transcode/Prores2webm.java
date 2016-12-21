@@ -11,8 +11,11 @@ import org.jcodec.codecs.prores.ProresToThumb2x2;
 import org.jcodec.codecs.vpx.IVFMuxer;
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.common.Codec;
-import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.Format;
+import org.jcodec.common.Muxer;
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
@@ -21,8 +24,6 @@ import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mkv.muxer.MKVMuxer;
-import org.jcodec.containers.mkv.muxer.MKVMuxerTrack;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
 class Prores2webm extends V2VTranscoder {
@@ -30,12 +31,11 @@ class Prores2webm extends V2VTranscoder {
 
     private static class Prores2webmTranscoder extends GenericTranscoder {
 
-        private AbstractMP4DemuxerTrack inputVideoTrack;
+        private DemuxerTrack inputVideoTrack;
         private ProresDecoder videoDecoder;
         private VP8Encoder videoEncoder;
-        private MKVMuxerTrack outputVideoTrack;
-        private MKVMuxer mkv;
-        private IVFMuxer ivf;
+        private MuxerTrack outputVideoTrack;
+        private Muxer muxer;
         private boolean useMkv;
 
         public Prores2webmTranscoder(Cmd cmd, Profile profile) {
@@ -55,29 +55,27 @@ class Prores2webm extends V2VTranscoder {
         }
 
         @Override
+
         protected void initEncode(SeekableByteChannel sink) throws IOException {
-            Size dim = inputVideoTrack.getMeta().getDimensions();
             if (useMkv) {
-                mkv = new MKVMuxer(sink);
-                outputVideoTrack = mkv.createVideoTrack(new Size(dim.getWidth(), dim.getHeight()), "V_VP8");
+                muxer = new MKVMuxer(sink);
             } else {
-                DemuxerTrackMeta meta = inputVideoTrack.getMeta();
-                int fps = (int) (meta.getTotalFrames() / meta.getTotalDuration());
-                ivf = new IVFMuxer(sink, dim.getWidth(), dim.getHeight(), fps);
+                muxer = new IVFMuxer(sink);
             }
+            outputVideoTrack = muxer.addVideoTrack(Codec.VP8, inputVideoTrack.getMeta().getVideoCodecMeta());
             videoEncoder = VP8Encoder.createVP8Encoder(10);
         }
 
         @Override
         protected void finishEncode() throws IOException {
             if (useMkv) {
-                mkv.mux();
+                muxer.finish();
             }
         }
 
         @Override
         protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
-            Size dim = inputVideoTrack.getMeta().getDimensions();
+            Size dim = inputVideoTrack.getMeta().getVideoCodecMeta().getSize();
             return Picture8Bit.create(dim.getWidth(), dim.getHeight(), yuv444);
         }
 
@@ -93,13 +91,7 @@ class Prores2webm extends V2VTranscoder {
 
         @Override
         protected void outputVideoPacket(Packet packet) throws IOException {
-            // ivf.addFrame(Packet.createPacketWithData(packet,
-            // NIOUtils.clone(packet.getData())));
-            if (useMkv) {
-                outputVideoTrack.addFrame(packet);
-            } else {
-                ivf.addFrame(packet);
-            }
+            outputVideoTrack.addFrame(packet);
         }
 
         @Override
@@ -108,7 +100,7 @@ class Prores2webm extends V2VTranscoder {
         }
 
         @Override
-        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+        protected EncodedFrame encodeVideo(Picture8Bit frame, ByteBuffer _out) {
             return videoEncoder.encodeFrame8Bit(frame, _out);
         }
 

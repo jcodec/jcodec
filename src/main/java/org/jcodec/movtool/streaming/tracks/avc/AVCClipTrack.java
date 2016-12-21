@@ -10,6 +10,7 @@ import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
@@ -153,9 +154,9 @@ public class AVCClipTrack extends ClipTrack {
                 dec = decoder.decodeFrame8Bit(pkt.getData(), buf.getData());
 
                 tmp.clear();
-                ByteBuffer res = encoder.encodeFrame8Bit(dec, tmp);
+                EncodedFrame res = encoder.encodeFrame8Bit(dec, tmp);
                 ByteBuffer out = ByteBuffer.allocate(track.frameSize);
-                processFrame(res, out);
+                processFrame(res.getData(), out);
 
                 result.add(out);
             }

@@ -1,8 +1,5 @@
 package org.jcodec.samples.transcode;
 
-import static org.jcodec.common.model.Rational.HALF;
-import static org.jcodec.common.model.Unit.SEC;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Set;
@@ -11,14 +8,15 @@ import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.raw.RAWVideoDecoder;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Format;
+import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoDecoder;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils.Cmd;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.y4m.Y4MDemuxer;
 
@@ -59,7 +57,7 @@ class Y4m2prores extends V2VTranscoder {
     public Set<Codec> outputAudioCodec() {
         return null;
     }
-    
+
     @Override
     public GenericTranscoder getTranscoder(Cmd cmd, Profile profile) {
         return new Y4m2proresTranscoder(cmd, profile);
@@ -69,10 +67,10 @@ class Y4m2prores extends V2VTranscoder {
 
         private MP4Muxer muxer;
         private Y4MDemuxer videoInputTrack;
-        private FramesMP4MuxerTrack videoOutputTrack;
+        private MuxerTrack videoOutputTrack;
         private ProresEncoder encoder;
         private VideoDecoder videoDecoder;
-        
+
         public Y4m2proresTranscoder(Cmd cmd, Profile profile) {
             super(cmd, profile);
         }
@@ -80,7 +78,7 @@ class Y4m2prores extends V2VTranscoder {
         @Override
         protected void initDecode(SeekableByteChannel source) throws IOException {
             videoInputTrack = new Y4MDemuxer(source);
-            Size dim = videoInputTrack.getMeta().getDimensions();
+            Size dim = videoInputTrack.getMeta().getVideoCodecMeta().getSize();
             videoDecoder = new RAWVideoDecoder(dim.getWidth(), dim.getHeight());
         }
 
@@ -89,19 +87,19 @@ class Y4m2prores extends V2VTranscoder {
             muxer = MP4Muxer.createMP4MuxerToChannel(sink);
             encoder = new ProresEncoder(ProresEncoder.Profile.HQ, false);
 
-            videoOutputTrack = muxer.addVideoTrack("apch", videoInputTrack.getMeta().getDimensions(), APPLE_PRO_RES_422,
-                    25000);
-            videoOutputTrack.setTgtChunkDuration(HALF, SEC);
+            videoOutputTrack = muxer.addVideoTrack(Codec.PRORES,
+                    videoInputTrack.getMeta().getVideoCodecMeta());
+            // videoOutputTrack.setTgtChunkDuration(HALF, SEC);
         }
 
         @Override
         protected void finishEncode() throws IOException {
-            muxer.writeHeader();
+            muxer.finish();
         }
 
         @Override
         protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
-            Size dim = videoInputTrack.getMeta().getDimensions();
+            Size dim = videoInputTrack.getMeta().getVideoCodecMeta().getSize();
             return Picture8Bit.create(dim.getWidth(), dim.getHeight(), ColorSpace.YUV420);
         }
 
@@ -117,7 +115,7 @@ class Y4m2prores extends V2VTranscoder {
 
         @Override
         protected void outputVideoPacket(Packet packet) throws IOException {
-            videoOutputTrack.setTimescale((int) packet.getTimescale());
+            // videoOutputTrack.setTimescale((int) packet.getTimescale());
             videoOutputTrack.addFrame(packet);
         }
 
@@ -127,7 +125,7 @@ class Y4m2prores extends V2VTranscoder {
         }
 
         @Override
-        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+        protected EncodedFrame encodeVideo(Picture8Bit frame, ByteBuffer _out) {
             return encoder.encodeFrame8Bit(frame, _out);
         }
 

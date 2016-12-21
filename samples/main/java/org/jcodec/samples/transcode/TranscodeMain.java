@@ -14,8 +14,10 @@ import java.util.Set;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
 import org.jcodec.common.JCodecUtil;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
@@ -146,9 +148,6 @@ public class TranscodeMain {
         videoCodecsForF.put(Format.IVF, Codec.VP8);
 
         videoCodecsForF.put(Format.Y4M, Codec.RAW);
-
-        videoCodecsForF.put(Format.WAV, Codec.PCM);
-
     }
 
     public static void main(String[] args) throws Exception {
@@ -217,6 +216,7 @@ public class TranscodeMain {
         } else {
             if ("copy".equalsIgnoreCase(outputCodecVideoRaw)) {
                 videoCopy = true;
+                outputCodecVideo = inputCodecVideo;
             } else {
                 outputCodecVideo = Codec.valueOf(outputCodecVideoRaw.toUpperCase());
             }
@@ -241,6 +241,7 @@ public class TranscodeMain {
         } else {
             if ("copy".equalsIgnoreCase(outputCodecAudioRaw)) {
                 audioCopy = true;
+                outputCodecAudio = inputCodecAudio;
             } else {
                 outputCodecAudio = Codec.valueOf(outputCodecAudioRaw.toUpperCase());
             }
@@ -314,13 +315,16 @@ public class TranscodeMain {
     }
 
     private static Codec detectDecoderVideo(String input, Format format) throws IOException {
-        Demuxer demuxer = JCodecUtil.createDemuxer(format, new File(input));
+        Demuxer demuxer = JCodecUtil.createDemuxer(format, new File(input), TrackType.VIDEO);
         List<? extends DemuxerTrack> video = demuxer.getVideoTracks();
         if (video.size() == 0)
             return null;
-        Codec codec = video.get(0).getMeta().getCodec();
-        if (codec != null)
-            return codec;
+        DemuxerTrackMeta meta = video.get(0).getMeta();
+        if (meta != null) {
+            Codec codec = meta.getCodec();
+            if (codec != null)
+                return codec;
+        }
         Packet packet = video.get(0).nextFrame();
         if (packet == null)
             return null;
@@ -329,13 +333,16 @@ public class TranscodeMain {
     }
 
     private static Codec detectDecoderAudio(String input, Format format) throws IOException {
-        Demuxer demuxer = JCodecUtil.createDemuxer(format, new File(input));
+        Demuxer demuxer = JCodecUtil.createDemuxer(format, new File(input), TrackType.AUDIO);
         List<? extends DemuxerTrack> audio = demuxer.getAudioTracks();
         if (audio.size() == 0)
             return null;
-        Codec codec = audio.get(0).getMeta().getCodec();
-        if (codec != null)
-            return codec;
+        DemuxerTrackMeta meta = audio.get(0).getMeta();
+        if (meta != null) {
+            Codec codec = meta.getCodec();
+            if (codec != null)
+                return codec;
+        }
         Packet packet = audio.get(0).nextFrame();
         if (packet == null)
             return null;

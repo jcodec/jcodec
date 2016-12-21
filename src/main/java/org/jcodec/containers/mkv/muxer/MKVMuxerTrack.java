@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Size;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 
 /**
@@ -22,7 +22,7 @@ public class MKVMuxerTrack implements MuxerTrack {
     public static enum MKVMuxerTrackType {VIDEO };
     
     public MKVMuxerTrackType type;
-    public Size frameDimentions;
+    public VideoCodecMeta videoMeta;
     public String codecId;
     public int trackNo;
     private int frameDuration;

@@ -21,6 +21,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.codecs.aac.AACConts;
+import org.jcodec.codecs.aac.ADTSParser;
+import org.jcodec.codecs.aac.ADTSParser.Header;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.SegmentReader;
@@ -141,6 +144,12 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     public static class MPEGTrack extends BaseTrack implements ReadableByteChannel {
 
         private MPEGES es;
+        // PTS estimation machinery
+        private long firstPacketPts = -1;
+        private int ptsDeltaEstimate = 3003; // Default likely value
+        private long lastPts;
+        private long lastPtsUsed;
+        private int nFrames;
 
         public MPEGTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
             super(demuxer, streamId, pkt);
@@ -180,7 +189,9 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null) {
                 if (pkt.streamId == streamId) {
                     if (pkt.pts != -1) {
-                        es.curPts = pkt.pts;
+                        lastPts = pkt.pts;
+                        if (firstPacketPts == -1)
+                            firstPacketPts = lastPts;
                     }
                     return pkt;
                 } else {
@@ -194,21 +205,33 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         public Packet nextFrameWithBuffer(ByteBuffer buf) throws IOException {
             return es.getFrame(buf);
         }
-        
+
         @Override
         public Packet nextFrame() throws IOException {
-            return es.getFrame();
+            MPEGPacket pkt = es.getFrame();
+            if (lastPtsUsed == lastPts) {
+                lastPts += ptsDeltaEstimate;
+            } else if (lastPts > firstPacketPts) {
+                ptsDeltaEstimate = (int) ((lastPts - firstPacketPts) / nFrames);
+            }
+            pkt.setPts(lastPts);
+            pkt.setDuration(ptsDeltaEstimate);
+            lastPtsUsed = lastPts;
+            ++nFrames;
+
+            return pkt;
         }
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            TrackType t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
-            return new DemuxerTrackMeta(t, null, null, 0, 0, null, null);
+            return null;
         }
     }
 
     public static class PlainTrack extends BaseTrack {
         private int frameNo;
+        private Packet lastFrame;
+        private long lastKnownDuration = 3003; // Dummy value that matches video
 
         public PlainTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
             super(demuxer, streamId, pkt);
@@ -232,15 +255,60 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             }
             return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, true, null);
         }
-        
+
         @Override
         public Packet nextFrame() throws IOException {
-            return nextFrameWithBuffer(null);
+            if (lastFrame == null)
+                lastFrame = nextFrameWithBuffer(null);
+            if (lastFrame == null)
+                return null;
+            Packet toReturn = lastFrame;
+            lastFrame = nextFrameWithBuffer(null);
+            if (lastFrame != null) {
+                lastKnownDuration = lastFrame.getPts() - toReturn.getPts();
+            }
+            toReturn.setDuration(lastKnownDuration);
+
+            return toReturn;
         }
 
         public DemuxerTrackMeta getMeta() {
             TrackType t = videoStream(streamId) ? VIDEO : (audioStream(streamId) ? AUDIO : OTHER);
-            return new DemuxerTrackMeta(t, null, null, 0, 0, null, null);
+            return null;
+        }
+    }
+
+    public static class AACTrack extends PlainTrack {
+        private List<Packet> audioStash = new ArrayList<Packet>();
+
+        public AACTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
+            super(demuxer, streamId, pkt);
+        }
+
+        @Override
+        public Packet nextFrame() throws IOException {
+            if (audioStash.size() == 0) {
+                Packet nextFrame = nextFrameWithBuffer(null);
+                if (nextFrame != null) {
+                    ByteBuffer data = nextFrame.getData();
+                    Header adts = ADTSParser.read(data.duplicate());
+                    long nextPts = nextFrame.getPts();
+                    while (data.hasRemaining()) {
+                        ByteBuffer data2 = NIOUtils.read(data, adts.getSize());
+                        Packet pkt = Packet.createPacketWithData(nextFrame, data2);
+                        pkt.setDuration(
+                                (pkt.getTimescale() * 1024) / AACConts.AAC_SAMPLE_RATES[adts.getSamplingIndex()]);
+                        pkt.setPts(nextPts);
+                        nextPts += pkt.getDuration();
+                        audioStash.add(pkt);
+                        if (data.hasRemaining())
+                            adts = ADTSParser.read(data.duplicate());
+                    }
+                }
+            }
+            if (audioStash.size() == 0)
+                return null;
+            return audioStash.remove(0);
         }
     }
 
@@ -255,7 +323,9 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         if (pes == null) {
             if (isMPEG(pkt.data))
                 pes = new MPEGTrack(this, pkt.streamId, pkt);
-            else
+            else if (isAAC(pkt.data)) {
+                pes = new AACTrack(this, pkt.streamId, pkt);
+            } else
                 pes = new PlainTrack(this, pkt.streamId, pkt);
             streams.put(pkt.streamId, pes);
         } else {
@@ -305,6 +375,11 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 result.add(p);
         }
         return result;
+    }
+
+    private boolean isAAC(ByteBuffer _data) {
+        Header read = ADTSParser.read(_data.duplicate());
+        return read != null;
     }
 
     private boolean isMPEG(ByteBuffer _data) {
@@ -423,7 +498,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         private int gop;
         private int timecode;
 
-        public MPEGPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
+        public MPEGPacket(ByteBuffer data, long pts, int timescale, long duration, long frameNo, boolean keyFrame,
                 TapeTimecode tapeTimecode) {
             super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
         }

@@ -13,7 +13,6 @@ import org.jcodec.common.TrackType;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Size;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -33,7 +32,6 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
     private int frameNo;
     private Packet curFrame;
     private Codec codec;
-    private Size dimensions;
     private int maxAvailableFrame;
     private int maxFrames;
 
@@ -142,7 +140,7 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
     @Override
     public DemuxerTrackMeta getMeta() {
         int durationFrames = getMaxAvailableFrame();
-        return new DemuxerTrackMeta(TrackType.VIDEO, codec, null, durationFrames + 1, (durationFrames + 1) * VIDEO_FPS,
-                dimensions, null);
+        return new DemuxerTrackMeta(TrackType.VIDEO, codec, (durationFrames + 1) * VIDEO_FPS, null, durationFrames + 1,
+                null, null, null);
     }
 }

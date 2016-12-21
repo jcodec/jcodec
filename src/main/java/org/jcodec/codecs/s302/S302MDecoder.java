@@ -1,8 +1,10 @@
 package org.jcodec.codecs.s302;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioDecoder;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.AudioBuffer;
@@ -91,5 +93,19 @@ public class S302MDecoder implements AudioDecoder {
             dup.flip();
             return new AudioBuffer(dup, new AudioFormat(SAMPLE_RATE, 16, channels, true, true), nSamples / channels);
         }
+    }
+
+    @Override
+    public AudioCodecMeta getCodecMeta(ByteBuffer _data) throws IOException {
+        ByteBuffer frame = _data.duplicate();
+        frame.order(ByteOrder.BIG_ENDIAN);
+
+        int h = frame.getInt();
+        int frameSize = (h >> 16) & 0xffff;
+        if (frame.remaining() != frameSize)
+            throw new IllegalArgumentException("Wrong s302m frame");
+        int channels = ((h >> 14) & 0x0003) * 2 + 2;
+        int sampleSizeInBits = ((h >> 4) & 0x0003) * 4 + 16;
+        return new AudioCodecMeta(new AudioFormat(SAMPLE_RATE, sampleSizeInBits, channels, true, true));
     }
 }

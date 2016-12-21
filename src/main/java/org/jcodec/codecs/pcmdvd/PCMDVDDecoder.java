@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioDecoder;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.NIOUtils;
@@ -80,6 +81,38 @@ public class PCMDVDDecoder implements AudioDecoder {
         }
         dst.flip();
 
-        return new AudioBuffer(dst, new AudioFormat(sampleRate, 16, channelCount, true, false), nFrames);
+        return new AudioBuffer(dst, new AudioFormat(sampleRate, sampleSizeInBits, channelCount, true, false), nFrames);
+    }
+
+    @Override
+    public AudioCodecMeta getCodecMeta(ByteBuffer _frame) throws IOException {
+        ByteBuffer frame = _frame.duplicate();
+
+        frame.order(ByteOrder.BIG_ENDIAN);
+
+        int dvdaudioSubstreamType = frame.get() & 0xff;
+        NIOUtils.skip(frame, 3);
+
+        if ((dvdaudioSubstreamType & 0xe0) == 0xa0) {
+            // OK CODEC_ID_PCM_DVD
+        } else if ((dvdaudioSubstreamType & 0xe0) == 0x80) {
+            if ((dvdaudioSubstreamType & 0xf8) == 0x88)
+                throw new RuntimeException("CODEC_ID_DTS");
+            else
+                throw new RuntimeException("CODEC_ID_AC3");
+        } else
+            throw new RuntimeException("MPEG DVD unknown coded");
+
+        // emphasis (1), muse(1), reserved(1), frame number(5)
+        int b0 = frame.get() & 0xff;
+        // quant (2), freq(2), reserved(1), channels(3)
+        int b1 = frame.get() & 0xff;
+        // dynamic range control (0x80 = off)
+        int b2 = frame.get() & 0xff;
+        int freq = (b1 >> 4) & 3;
+        int sampleRate = lpcm_freq_tab[freq];
+        int channelCount = 1 + (b1 & 7);
+        int sampleSizeInBits = 16 + ((b1 >> 6) & 3) * 4;
+        return new AudioCodecMeta(new AudioFormat(sampleRate, sampleSizeInBits, channelCount, true, false));
     }
 }

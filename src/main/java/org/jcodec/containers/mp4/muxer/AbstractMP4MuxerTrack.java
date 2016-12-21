@@ -47,9 +47,11 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
  * 
  */
 public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
+    protected static final int NO_TIMESCALE_SET = -1;
+    
     protected int trackId;
     protected MP4TrackType type;
-    protected int timescale;
+    protected int _timescale = NO_TIMESCALE_SET;
 
     protected Rational tgtChunkDuration;
     protected Unit tgtChunkDurationUnit;
@@ -67,14 +69,13 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
     protected List<Edit> edits;
     private String name;
 
-    public AbstractMP4MuxerTrack(int trackId, MP4TrackType type, int timescale) {
+    public AbstractMP4MuxerTrack(int trackId, MP4TrackType type) {
         this.curChunk = new ArrayList<ByteBuffer>();
         this.samplesInChunks = new ArrayList<SampleToChunkEntry>();
         this.sampleEntries = new ArrayList<SampleEntry>();
 
         this.trackId = trackId;
         this.type = type;
-        this.timescale = timescale;
     }
 
     public void setTgtChunkDuration(Rational duration, Unit unit) {
@@ -83,10 +84,6 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
     }
 
     public abstract long getTrackTotalDuration();
-
-    public int getTimescale() {
-        return timescale;
-    }
 
     protected abstract Box finish(MovieHeaderBox mvhd) throws IOException;
 
@@ -125,7 +122,7 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
         }
     }
 
-    public void addSampleEntry(SampleEntry se) {
+    protected void addSampleEntry(SampleEntry se) {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
         sampleEntries.add(se);
@@ -188,5 +185,9 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
         DataRefBox dref = DataRefBox.createDataRefBox();
         dinf.add(dref);
         dref.add(LeafBox.createLeafBox(Header.createHeader("alis", 0), ByteBuffer.wrap(new byte[] { 0, 0, 0, 1 })));
+    }
+
+    protected int getTimescale() {
+        return _timescale;
     }
 }

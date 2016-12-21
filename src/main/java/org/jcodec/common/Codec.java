@@ -13,7 +13,7 @@ public enum Codec {
             TrackType.AUDIO), PCM_DVD(TrackType.AUDIO), TRUEHD(TrackType.AUDIO), PCM(TrackType.AUDIO), ADPCM(TrackType.AUDIO), NELLYMOSER(
             TrackType.AUDIO), G711(TrackType.AUDIO), AAC(TrackType.AUDIO), SPEEX(TrackType.AUDIO), SORENSON(TrackType.VIDEO), FLASH_SCREEN_VIDEO(
             TrackType.VIDEO), VP6(TrackType.VIDEO), FLASH_SCREEN_V2(TrackType.VIDEO), PNG(TrackType.VIDEO), VP8(TrackType.VIDEO), VP9(TrackType.VIDEO), JPEG(
-            TrackType.VIDEO), RAW(null), VORBIS(TrackType.VIDEO);
+            TrackType.VIDEO), RAW(null), VORBIS(TrackType.VIDEO), TIMECODE(TrackType.OTHER);
 
     private TrackType type;
 

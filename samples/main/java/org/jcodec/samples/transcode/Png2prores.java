@@ -1,8 +1,5 @@
 package org.jcodec.samples.transcode;
 
-import static org.jcodec.common.model.Rational.HALF;
-import static org.jcodec.common.model.Unit.SEC;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -10,17 +7,17 @@ import java.util.Set;
 
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.common.Codec;
-import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
+import org.jcodec.common.Muxer;
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoEncoder;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
@@ -77,28 +74,30 @@ class Png2prores extends FromImgTranscoder {
     protected VideoEncoder getEncoder() {
         return new ProresEncoder(proresProfile, interlaced);
     }
-    
+
     static final String APPLE_PRO_RES_422 = "Apple ProRes 422";
-    
-    @Override
-    protected FramesMP4MuxerTrack getMuxerTrack(SeekableByteChannel sink, DemuxerTrackMeta inTrackMeta, Picture8Bit yuv,
-            Packet firstPacket) throws IOException {
-        muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
-        FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack(proresProfile.fourcc, new Size(yuv.getWidth(), yuv.getHeight()),
-                APPLE_PRO_RES_422, (int)firstPacket.getTimescale());
-        videoTrack.setTgtChunkDuration(HALF, SEC);
-        return videoTrack;
-    }
 
     @Override
     protected void finalizeMuxer() throws IOException {
-        muxer.writeHeader();
+        muxer.finish();
     }
 
     @Override
-    protected MP4Packet encodeFrame(VideoEncoder encoder, Picture8Bit yuv, Packet inPacket, ByteBuffer buf) {
-        ByteBuffer encoded = encoder.encodeFrame8Bit(yuv, buf);
-        return MP4Packet.createMP4Packet(encoded, inPacket.getPts(), inPacket.getTimescale(), inPacket.getDuration(),
-                inPacket.getFrameNo(), true, null, (int) inPacket.getFrameNo(), inPacket.getPts(), 0);
+    protected EncodedFrame encodeFrame(VideoEncoder encoder, Picture8Bit yuv, ByteBuffer buf) {
+        return encoder.encodeFrame8Bit(yuv, buf);
+    }
+
+    @Override
+    protected Muxer createMuxer(SeekableByteChannel sink) throws IOException {
+        muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
+        return muxer;
+    }
+
+    @Override
+    protected MuxerTrack getMuxerTrack(Muxer muxer, Picture8Bit yuv) {
+        MuxerTrack videoTrack = muxer.addVideoTrack(Codec.PRORES,
+                new VideoCodecMeta(new Size(yuv.getWidth(), yuv.getHeight())));
+        // videoTrack.setTgtChunkDuration(HALF, SEC);
+        return videoTrack;
     }
 }

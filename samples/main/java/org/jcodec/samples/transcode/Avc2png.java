@@ -15,7 +15,6 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MainUtils.Cmd;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
 class Avc2png extends ToImgTranscoder {
@@ -27,9 +26,7 @@ class Avc2png extends ToImgTranscoder {
 
     @Override
     protected DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException {
-        MP4Demuxer demux = new MP4Demuxer(source);
-        AbstractMP4DemuxerTrack inTrack = demux.getVideoTrack();
-        return inTrack;
+        return new MP4Demuxer(source).getVideoTrack();
     }
 
     @Override

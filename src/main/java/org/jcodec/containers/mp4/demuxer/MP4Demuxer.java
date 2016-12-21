@@ -9,10 +9,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.jcodec.common.Demuxer;
+import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4TrackType;
+import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -62,7 +63,8 @@ public class MP4Demuxer implements Demuxer {
     private void processHeader(NodeBox moov) throws IOException {
         TrakBox tt = null;
         for (TrakBox trak : Box.findAll(moov, TrakBox.class, "trak")) {
-            SampleEntry se = Box.findFirstPath(trak, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null });
+            SampleEntry se = Box.findFirstPath(trak, SampleEntry.class,
+                    new String[] { "mdia", "minf", "stbl", "stsd", null });
             if ("tmcd".equals(se.getFourcc())) {
                 tt = trak;
             } else {
@@ -70,7 +72,7 @@ public class MP4Demuxer implements Demuxer {
             }
         }
         if (tt != null) {
-            AbstractMP4DemuxerTrack video = getVideoTrack();
+            DemuxerTrack video = getVideoTrack();
             if (video != null)
                 timecodeTrack = new TimecodeMP4DemuxerTrack(movie, tt, input);
         }
@@ -81,7 +83,7 @@ public class MP4Demuxer implements Demuxer {
         return MP4TrackType.fromHandler(handler.getComponentSubType());
     }
 
-    public AbstractMP4DemuxerTrack getVideoTrack() {
+    public DemuxerTrack getVideoTrack() {
         for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
             if (demuxerTrack.box.isVideo())
                 return demuxerTrack;
@@ -100,28 +102,28 @@ public class MP4Demuxer implements Demuxer {
         }
         return null;
     }
-    
+
     @Override
     public List<AbstractMP4DemuxerTrack> getTracks() {
         return new ArrayList<AbstractMP4DemuxerTrack>(tracks);
     }
 
     @Override
-    public List<AbstractMP4DemuxerTrack> getVideoTracks() {
-        ArrayList<AbstractMP4DemuxerTrack> result = new ArrayList<AbstractMP4DemuxerTrack>();
+    public List<DemuxerTrack> getVideoTracks() {
+        ArrayList<DemuxerTrack> result = new ArrayList<DemuxerTrack>();
         for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
             if (demuxerTrack.box.isVideo())
-                result.add(demuxerTrack);
+                result.add((DemuxerTrack) demuxerTrack);
         }
         return result;
     }
-    
+
     @Override
-    public List<AbstractMP4DemuxerTrack> getAudioTracks() {
-        ArrayList<AbstractMP4DemuxerTrack> result = new ArrayList<AbstractMP4DemuxerTrack>();
+    public List<DemuxerTrack> getAudioTracks() {
+        ArrayList<DemuxerTrack> result = new ArrayList<DemuxerTrack>();
         for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
             if (demuxerTrack.box.isAudio())
-                result.add(demuxerTrack);
+                result.add((DemuxerTrack) demuxerTrack);
         }
         return result;
     }
@@ -135,7 +137,7 @@ public class MP4Demuxer implements Demuxer {
     private static int moov = ('m' << 24) | ('o' << 16) | ('o' << 8) | 'v';
     private static int mdat = ('m' << 24) | ('d' << 16) | ('a' << 8) | 't';
     private static int wide = ('w' << 24) | ('i' << 16) | ('d' << 8) | 'e';
-    
+
     public static int probe(final ByteBuffer b) {
         ByteBuffer fork = b.duplicate();
         int success = 0;
@@ -149,7 +151,8 @@ public class MP4Demuxer implements Demuxer {
                 hdrLen = 16;
             } else if (len < 8)
                 break;
-            if (fcc == ftyp && len < 64 || fcc == moov && len < 100 * 1024 * 1024 || fcc == free || fcc == mdat || fcc == wide)
+            if (fcc == ftyp && len < 64 || fcc == moov && len < 100 * 1024 * 1024 || fcc == free || fcc == mdat
+                    || fcc == wide)
                 success++;
             total++;
             if (len >= Integer.MAX_VALUE)

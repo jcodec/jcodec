@@ -2,6 +2,7 @@ package org.jcodec.movtool.streaming.tracks;
 
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.VideoEncoder;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
@@ -140,7 +141,7 @@ public abstract class TranscodeTrack implements VirtualTrack {
             for (int i = 0; i < encoder.length; i++) {
                 try {
                     dst.clear();
-                    ByteBuffer out = encoder[i].encodeFrame8Bit(pic1, dst);
+                    EncodedFrame out = encoder[i].encodeFrame8Bit(pic1, dst);
                     break;
                 } catch (BufferOverflowException ex) {
                     System.out.println("Abandon frame!!!");

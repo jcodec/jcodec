@@ -6,12 +6,13 @@ import java.util.Set;
 
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.common.Codec;
-import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
+import org.jcodec.common.Muxer;
 import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoEncoder;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mkv.muxer.MKVMuxer;
@@ -42,20 +43,23 @@ class Png2webm extends FromImgTranscoder {
     }
 
     @Override
-    protected MuxerTrack getMuxerTrack(SeekableByteChannel sink, DemuxerTrackMeta inTrackMeta, Picture8Bit yuv,
-            Packet firstPacket) throws IOException {
-        muxer = new MKVMuxer(sink);
-        return muxer.createVideoTrack(new Size(yuv.getWidth(), yuv.getHeight()), "V_VP8");
-    }
-
-    @Override
     protected void finalizeMuxer() throws IOException {
-        muxer.mux();
+        muxer.finish();
     }
 
     @Override
-    protected Packet encodeFrame(VideoEncoder encoder, Picture8Bit yuv, Packet inPacket, ByteBuffer buf) {
-        ByteBuffer frame = encoder.encodeFrame8Bit(yuv, buf);
-        return Packet.createPacketWithData(inPacket, frame);
+    protected Muxer createMuxer(SeekableByteChannel sink) throws IOException {
+        muxer = new MKVMuxer(sink);
+        return muxer;
+    }
+
+    @Override
+    protected MuxerTrack getMuxerTrack(Muxer muxer, Picture8Bit yuv) {
+        return muxer.addVideoTrack(Codec.VP8, new VideoCodecMeta(new Size(yuv.getWidth(), yuv.getHeight())));
+    }
+
+    @Override
+    protected EncodedFrame encodeFrame(VideoEncoder encoder, Picture8Bit yuv, ByteBuffer buf) {
+        return encoder.encodeFrame8Bit(yuv, buf);
     }
 }

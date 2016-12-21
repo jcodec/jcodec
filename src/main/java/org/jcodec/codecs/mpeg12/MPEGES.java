@@ -21,7 +21,7 @@ import org.jcodec.containers.mps.MPSDemuxer.MPEGPacket;
 public class MPEGES extends SegmentReader {
 
     private int frameNo;
-    public long curPts;
+    public long lastKnownDuration;
 
     public MPEGES(ReadableByteChannel channel, int fetchSize) throws IOException {
         super(channel, fetchSize);
@@ -55,11 +55,12 @@ public class MPEGES extends SegmentReader {
 
         dup.flip();
 
-        return dup.hasRemaining() ? new MPEGPacket(dup, curPts, 90000, 0, frameNo++, true, null) : null;
+        return dup.hasRemaining() ? new MPEGPacket(dup, 0, 90000, 0, frameNo++, true, null) : null;
     }
-    
+
     /**
      * Reads one MPEG1/2 video frame from MPEG1/2 elementary stream.
+     * 
      * @return A packet with a video frame or null at the end of stream.
      * @throws IOException
      */
@@ -83,7 +84,6 @@ public class MPEGES extends SegmentReader {
             readToNextMarkerBuffers(buffers);
 
         ByteBuffer dup = NIOUtils.combineBuffers(buffers);
-
-        return dup.hasRemaining() ? new MPEGPacket(dup, curPts, 90000, 0, frameNo++, true, null) : null;
+        return dup.hasRemaining() ? new MPEGPacket(dup, 0, 90000, 0, frameNo++, true, null) : null;
     }
 }

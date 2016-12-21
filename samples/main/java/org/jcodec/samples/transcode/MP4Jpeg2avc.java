@@ -3,19 +3,19 @@ package org.jcodec.samples.transcode;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.jcodec.codecs.h264.H264Encoder;
-import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mjpeg.JpegToThumb2x2;
 import org.jcodec.codecs.mjpeg.JpegToThumb4x4;
 import org.jcodec.common.Codec;
+import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.Format;
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
@@ -24,22 +24,16 @@ import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.MP4TrackType;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 class MP4Jpeg2avc extends V2VTranscoder {
     public static final String FLAG_DOWNSCALE = "downscale";
 
     public static class MP4Jpeg2avcTranscoder extends GenericTranscoder {
-        Set<ByteBuffer> spsList = new HashSet<ByteBuffer>();
-        Set<ByteBuffer> ppsList = new HashSet<ByteBuffer>();
-        private AbstractMP4DemuxerTrack inputVideoTrack;
+        private DemuxerTrack inputVideoTrack;
         private MP4Muxer muxer;
-        private FramesMP4MuxerTrack outputVideoTrack;
+        private MuxerTrack outputVideoTrack;
         private H264Encoder videoEncoder;
         private JpegDecoder videoDecoder;
 
@@ -71,19 +65,17 @@ class MP4Jpeg2avc extends V2VTranscoder {
 
             videoEncoder = new H264Encoder(new DumbRateControl());
 
-            outputVideoTrack = muxer.addTrack(MP4TrackType.VIDEO, (int) inputVideoTrack.getTimescale());
+            outputVideoTrack = muxer.addVideoTrack(Codec.H264, inputVideoTrack.getMeta().getVideoCodecMeta());
         }
 
         @Override
         protected void finishEncode() throws IOException {
-            outputVideoTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromSpsPpsList(
-                    new ArrayList<ByteBuffer>(spsList), new ArrayList<ByteBuffer>(ppsList), 4));
-            muxer.writeHeader();
+            muxer.finish();
         }
 
         @Override
         protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
-            Size dim = inputVideoTrack.getMeta().getDimensions();
+            Size dim = inputVideoTrack.getMeta().getVideoCodecMeta().getSize();
             return Picture8Bit.create(dim.getWidth(), dim.getHeight(), yuv444);
         }
 
@@ -99,10 +91,7 @@ class MP4Jpeg2avc extends V2VTranscoder {
 
         @Override
         protected void outputVideoPacket(Packet packet) throws IOException {
-            ByteBuffer result = packet.getData().duplicate();
-            H264Utils.wipePSinplace(result, spsList, ppsList);
-            H264Utils.encodeMOVPacket(result);
-            outputVideoTrack.addFrame(MP4Packet.createPacketWithData(packet, result));
+            outputVideoTrack.addFrame(packet);
         }
 
         @Override
@@ -111,7 +100,7 @@ class MP4Jpeg2avc extends V2VTranscoder {
         }
 
         @Override
-        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+        protected EncodedFrame encodeVideo(Picture8Bit frame, ByteBuffer _out) {
             return videoEncoder.encodeFrame8Bit(frame, _out);
         }
 
@@ -146,7 +135,7 @@ class MP4Jpeg2avc extends V2VTranscoder {
 
         @Override
         protected int getBufferSize(Picture8Bit frame) {
-            return frame.getWidth() * frame.getHeight() / 2;
+            return videoEncoder.estimateBufferSize(frame);
         }
     }
 

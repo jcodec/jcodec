@@ -46,13 +46,14 @@ import org.jcodec.scale.Transform8Bit;
  */
 public class JCodecUtil {
 
-    private static final Map<Codec, Class<? extends VideoDecoder>> knownDecoders = new HashMap<Codec, Class<? extends VideoDecoder>>();
+    private static final Map<Codec, Class<?>> decoders = new HashMap<Codec, Class<?>>();
 
     static {
-        knownDecoders.put(Codec.VP8, VP8Decoder.class);
-        knownDecoders.put(Codec.PRORES, ProresDecoder.class);
-        knownDecoders.put(Codec.MPEG2, MPEGDecoder.class);
-        knownDecoders.put(Codec.H264, H264Decoder.class);
+        decoders.put(Codec.VP8, VP8Decoder.class);
+        decoders.put(Codec.PRORES, ProresDecoder.class);
+        decoders.put(Codec.MPEG2, MPEGDecoder.class);
+        decoders.put(Codec.H264, H264Decoder.class);
+        decoders.put(Codec.AAC, AACDecoder.class);
     };
 
     public static Format detectFormat(File f) throws IOException {
@@ -76,23 +77,27 @@ public class JCodecUtil {
     }
 
     public static Codec detectDecoder(ByteBuffer b) {
-        int maxProbe = 0;
+        int maxScore = 0;
         Codec selected = null;
-        for (Map.Entry<Codec, Class<? extends VideoDecoder>> vd : knownDecoders.entrySet()) {
-            try {
-                Method method = vd.getValue().getDeclaredMethod("probe", ByteBuffer.class);
-                if (method != null) {
-                    int probe;
-                    probe = (Integer) method.invoke(null, b);
-                    if (probe > maxProbe) {
-                        selected = vd.getKey();
-                        maxProbe = probe;
-                    }
-                }
-            } catch (Exception e) {
+        for (Map.Entry<Codec, Class<?>> vd : decoders.entrySet()) {
+            int score = probe(b, vd);
+            if (score > maxScore) {
+                selected = vd.getKey();
+                maxScore = score;
             }
         }
         return selected;
+    }
+
+    private static int probe(ByteBuffer b, Map.Entry<Codec, Class<?>> vd) {
+        try {
+            Method method = vd.getValue().getDeclaredMethod("probe", ByteBuffer.class);
+            if (method != null) {
+                return (Integer) method.invoke(null, b);
+            }
+        } catch (Exception e) {
+        }
+        return 0;
     }
 
     public static VideoDecoder getVideoDecoder(String fourcc) {
@@ -176,7 +181,7 @@ public class JCodecUtil {
         return name.replaceAll("\\.[^\\.]+$", "");
     }
 
-    public static Demuxer createDemuxer(Format format, File input) throws IOException {
+    public static Demuxer createDemuxer(Format format, File input, TrackType targetTrack) throws IOException {
         FileChannelWrapper ch = null;
         if (format != Format.IMG) {
             ch = NIOUtils.readableChannel(input);
@@ -185,7 +190,7 @@ public class JCodecUtil {
         case MOV:
             return new MP4Demuxer(ch);
         case MPEG_TS:
-            return createM2TSDemuxer(ch);
+            return createM2TSDemuxer(ch, targetTrack);
         case MPEG_PS:
             return new MPSDemuxer(ch);
         case MKV:
@@ -200,20 +205,32 @@ public class JCodecUtil {
         return null;
     }
 
-    private static Demuxer createM2TSDemuxer(SeekableByteChannel input) throws IOException {
+    private static Demuxer createM2TSDemuxer(SeekableByteChannel input, TrackType targetTrack) throws IOException {
         MTSDemuxer mts = new MTSDemuxer(input);
         Set<Integer> programs = mts.getPrograms();
         if (programs.size() == 0) {
             Logger.error("The MPEG TS stream contains no programs");
             return null;
         }
-        int programId = programs.iterator().next();
-        Logger.info("Using M2TS program: " + programId);
-        // input.setPosition(0);
-        return new MPSDemuxer(mts.getProgram(programId));
+        MPSDemuxer found = null;
+        for (Integer pid : programs) {
+            ReadableByteChannel program = mts.getProgram(pid);
+            if(found != null) {
+                program.close();
+                continue;
+            }
+            MPSDemuxer demuxer = new MPSDemuxer(program);
+            if(targetTrack == TrackType.AUDIO && demuxer.getAudioTracks().size() > 0 || targetTrack == TrackType.VIDEO && demuxer.getVideoTracks().size() > 0) {
+                found = demuxer;
+                Logger.info("Using M2TS program: " + pid + " for " + targetTrack + " track.");
+            } else {
+                program.close();
+            }
+        }
+        return found; 
     }
 
-    public static AudioDecoder createAudioDecoder(Codec codec, ByteBuffer decoderSpecific) throws Exception {
+    public static AudioDecoder createAudioDecoder(Codec codec, ByteBuffer decoderSpecific) throws IOException {
         switch (codec) {
         case AAC:
             return new AACDecoder(decoderSpecific);

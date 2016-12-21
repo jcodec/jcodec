@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -105,7 +106,7 @@ public abstract class V2VTranscoder implements Transcoder {
             return null;
         }
 
-        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+        protected EncodedFrame encodeVideo(Picture8Bit frame, ByteBuffer _out) {
             return null;
         }
 
@@ -268,9 +269,10 @@ public abstract class V2VTranscoder implements Transcoder {
                     bufferStore.set(buffer);
                 }
                 buffer.clear();
-                ByteBuffer enc = encodeVideo(frame.frame, buffer);
+                EncodedFrame enc = encodeVideo(frame.frame, buffer);
                 pixelStore.putBack(frame.frame);
-                Packet outputVideoPacket = Packet.createPacketWithData(frame.packet, NIOUtils.clone(enc));
+                Packet outputVideoPacket = Packet.createPacketWithData(frame.packet, NIOUtils.clone(enc.getData()));
+                outputVideoPacket.setKeyFrame(enc.isKeyFrame());
                 outputVideoPacket(outputVideoPacket);
             }
         }

@@ -7,6 +7,7 @@ import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.MainUtils.Cmd;
@@ -43,7 +44,7 @@ class Mpeg2img extends MPSToImg {
         return TranscodeMain.codecs(Codec.MPEG2);
     }
 
-    protected DemuxerTrackMeta getTrackMeta(DemuxerTrack inTrack, ByteBuffer firstFrame) {
-        return MPEGDecoder.getMeta(firstFrame);
+    protected VideoCodecMeta getTrackMeta(DemuxerTrack inTrack, ByteBuffer firstFrame) {
+        return new MPEGDecoder().getCodecMeta(firstFrame);
     }
 }

@@ -7,15 +7,14 @@ import java.io.File;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresToProxy;
+import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.MP4TrackType;
-import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
@@ -39,14 +38,12 @@ public class ToProxy {
         SeekableByteChannel output = writableChannel(new File(args[1]));
         MP4Muxer muxer = MP4Muxer.createMP4Muxer(output, Brand.MOV);
 
-        AbstractMP4DemuxerTrack inVideo = demuxer.getVideoTrack();
-        VideoSampleEntry entry = (VideoSampleEntry) inVideo.getSampleEntries()[0];
-        int width = entry.getWidth();
-        int height = entry.getHeight();
-        ProresToProxy toProxy = new ProresToProxy(width, height, 65536);
-        FramesMP4MuxerTrack outVideo = muxer.addTrack(MP4TrackType.VIDEO, (int) inVideo.getTimescale());
+        DemuxerTrack inVideo = demuxer.getVideoTrack();
+        DemuxerTrackMeta meta = inVideo.getMeta();
+        Size size = meta.getVideoCodecMeta().getSize();
+        ProresToProxy toProxy = new ProresToProxy(size.getWidth(), size.getHeight(), 65536);
+        MuxerTrack outVideo = muxer.addVideoTrack(meta.getCodec(), meta.getVideoCodecMeta());
 
-        TrackHeaderBox th = inVideo.getBox().getTrackHeader();
         System.out.println(toProxy.getFrameSize());
         int frame = 0;
         long from = System.currentTimeMillis();
@@ -64,10 +61,8 @@ public class ToProxy {
                 last = cur;
             }
         }
-        entry.setMediaType("apco");
-        outVideo.addSampleEntry(entry);
 
-        muxer.writeHeader();
+        muxer.finish();
         output.close();
         input.close();
     }

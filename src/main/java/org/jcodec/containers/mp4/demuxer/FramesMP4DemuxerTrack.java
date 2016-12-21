@@ -1,20 +1,25 @@
 package org.jcodec.containers.mp4.demuxer;
 
+import static org.jcodec.common.TrackType.AUDIO;
+import static org.jcodec.common.TrackType.OTHER;
+import static org.jcodec.common.TrackType.VIDEO;
 import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
-
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.TrackType;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4TrackType;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
@@ -25,8 +30,6 @@ import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.platform.Platform;
-
-import static org.jcodec.common.TrackType.*;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -240,14 +243,20 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
         MP4TrackType type = getType();
         TrackType t = type == MP4TrackType.VIDEO ? VIDEO : (type == MP4TrackType.SOUND ? AUDIO : OTHER);
-        DemuxerTrackMeta meta = new DemuxerTrackMeta(t, getCodec(), seekFrames, sizes.length,
-                (double) duration / timescale, type == MP4TrackType.VIDEO ? box.getCodedSize() : null,
-                getCodecPrivate());
+        VideoCodecMeta videoCodecMeta = null;
+        AudioCodecMeta audioCodecMeta = null;
         if (type == MP4TrackType.VIDEO) {
+            videoCodecMeta = new VideoCodecMeta(box.getCodedSize());
             PixelAspectExt pasp = Box.findFirst(getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if (pasp != null)
-                meta.setPixelAspectRatio(pasp.getRational());
+                videoCodecMeta.setPixelAspectRatio(pasp.getRational());
+        } else if (type == MP4TrackType.SOUND) {
+            AudioSampleEntry ase = (AudioSampleEntry) getSampleEntries()[0];
+            audioCodecMeta = new AudioCodecMeta(ase.getFormat());
+
         }
+        DemuxerTrackMeta meta = new DemuxerTrackMeta(t, getCodec(), (double) duration / timescale, seekFrames,
+                sizes.length, getCodecPrivate(), videoCodecMeta, audioCodecMeta);
 
         return meta;
     }

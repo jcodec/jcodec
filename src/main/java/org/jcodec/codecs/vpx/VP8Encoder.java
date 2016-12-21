@@ -3,16 +3,16 @@ package org.jcodec.codecs.vpx;
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
+
 import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -43,7 +43,7 @@ public class VP8Encoder extends VideoEncoder {
     }
 
     @Override
-    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _buf) {
+    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer _buf) {
         ByteBuffer out = _buf.duplicate();
         int mbWidth = ((pic.getWidth() + 15) >> 4);
         int mbHeight = ((pic.getHeight() + 15) >> 4);
@@ -116,7 +116,7 @@ public class VP8Encoder extends VideoEncoder {
 
         out.flip();
 
-        return out;
+        return new EncodedFrame(out, true);
     }
 
     private void prepareBuffers(int mbWidth, int mbHeight) {
@@ -477,5 +477,10 @@ public class VP8Encoder extends VideoEncoder {
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
         return new ColorSpace[] { ColorSpace.YUV420J };
+    }
+
+    @Override
+    public int estimateBufferSize(Picture8Bit frame) {
+        return frame.getWidth() * frame.getHeight() / 2;
     }
 }

@@ -14,4 +14,6 @@ import org.jcodec.common.model.AudioBuffer;
  */
 public interface AudioDecoder {
     AudioBuffer decodeFrame(ByteBuffer frame, ByteBuffer dst) throws IOException;
+
+    AudioCodecMeta getCodecMeta(ByteBuffer data) throws IOException;
 }

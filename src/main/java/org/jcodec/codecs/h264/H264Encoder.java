@@ -93,7 +93,7 @@ public class H264Encoder extends VideoEncoder {
      * Encode this picture into h.264 frame. Frame type will be selected by
      * encoder.
      */
-    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out) {
+    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out) {
         if (frameNumber >= keyInterval) {
             frameNumber = 0;
         }
@@ -101,7 +101,8 @@ public class H264Encoder extends VideoEncoder {
         SliceType sliceType = frameNumber == 0 ? SliceType.I : SliceType.P;
         boolean idr = frameNumber == 0;
 
-        return doEncodeFrame8Bit(pic, _out, idr, frameNumber++, sliceType);
+        ByteBuffer data = doEncodeFrame8Bit(pic, _out, idr, frameNumber++, sliceType);
+        return new EncodedFrame(data, idr);
     }
 
     /**
@@ -345,5 +346,10 @@ public class H264Encoder extends VideoEncoder {
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
         return new ColorSpace[] { ColorSpace.YUV420J };
+    }
+
+    @Override
+    public int estimateBufferSize(Picture8Bit frame) {
+        return frame.getWidth() * frame.getHeight() / 2;
     }
 }

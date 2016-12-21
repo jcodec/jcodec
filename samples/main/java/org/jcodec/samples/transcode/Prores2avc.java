@@ -13,13 +13,13 @@ import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.encode.RateControl;
-import org.jcodec.codecs.h264.io.model.NALUnit;
-import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresToThumb2x2;
 import org.jcodec.common.Codec;
+import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.Format;
-import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
@@ -28,10 +28,7 @@ import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4TrackType;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 class Prores2avc extends V2VTranscoder {
@@ -41,13 +38,11 @@ class Prores2avc extends V2VTranscoder {
     private static final String FLAG_BITS_PER_MB = "bitsPerMb";
 
     public static class Prores2avcTranscoder extends GenericTranscoder {
-        private AbstractMP4DemuxerTrack videoInputTrack;
+        private DemuxerTrack videoInputTrack;
         private MP4Muxer muxer;
-        private FramesMP4MuxerTrack videoOutputTrack;
+        private MuxerTrack videoOutputTrack;
         private H264Encoder videoEncoder;
         private ProresDecoder videoDecoder;
-        private List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
-        private List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
 
         public Prores2avcTranscoder(Cmd cmd, Profile profile) {
             super(cmd, profile);
@@ -67,7 +62,7 @@ class Prores2avc extends V2VTranscoder {
         @Override
         protected void initEncode(SeekableByteChannel sink) throws IOException {
             muxer = MP4Muxer.createMP4Muxer(sink, Brand.MP4);
-            videoOutputTrack = muxer.addTrack(MP4TrackType.VIDEO, (int) videoInputTrack.getTimescale());
+            videoOutputTrack = muxer.addVideoTrack(Codec.H264, videoInputTrack.getMeta().getVideoCodecMeta());
             String rcName = cmd.getStringFlagD(FLAG_RC, "dumb");
             RateControl rc;
             if ("dumb".equals(rcName)) {
@@ -84,15 +79,12 @@ class Prores2avc extends V2VTranscoder {
 
         @Override
         protected void finishEncode() throws IOException {
-            videoOutputTrack.addSampleEntry(
-                    H264Utils.createMOVSampleEntryFromSpsPpsList(spsList.subList(0, 1), ppsList.subList(0, 1), 4));
-
-            muxer.writeHeader();
+            muxer.finish();
         }
 
         @Override
         protected Picture8Bit createPixelBuffer(ColorSpace colorspace, ByteBuffer firstFrame) {
-            Size size = videoInputTrack.getMeta().getDimensions();
+            Size size = videoInputTrack.getMeta().getVideoCodecMeta().getSize();
             return Picture8Bit.create(size.getWidth(), size.getHeight(), colorspace);
         }
 
@@ -108,13 +100,7 @@ class Prores2avc extends V2VTranscoder {
 
         @Override
         protected void outputVideoPacket(Packet packet) throws IOException {
-            ByteBuffer result = packet.getData();
-            H264Utils.wipePSinplace(result, spsList, ppsList);
-            NALUnit nu = NALUnit.read(NIOUtils.from(result.duplicate(), 4));
-            H264Utils.encodeMOVPacket(result);
-            Packet pkt = Packet.createPacketWithData(packet, result);
-            pkt.setKeyFrame(nu.type == NALUnitType.IDR_SLICE);
-            videoOutputTrack.addFrame(pkt);
+            videoOutputTrack.addFrame(packet);
         }
 
         @Override
@@ -123,7 +109,7 @@ class Prores2avc extends V2VTranscoder {
         }
 
         @Override
-        protected ByteBuffer encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+        protected EncodedFrame encodeVideo(Picture8Bit frame, ByteBuffer _out) {
             return videoEncoder.encodeFrame8Bit(frame, _out);
         }
 

@@ -28,11 +28,14 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
+import org.jcodec.common.model.Size;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -323,8 +326,8 @@ public class H264Decoder extends VideoDecoder {
         }
 
         private void convert(int shortNo, int longNo) {
-            int ind = wrap(firstSliceHeader.frame_num
-                    - shortNo, 1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4));
+            int ind = wrap(firstSliceHeader.frame_num - shortNo,
+                    1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4));
             releaseRef(dec.lRefs.get(longNo));
             dec.lRefs.put(longNo, dec.sRefs[ind]);
             dec.sRefs[ind] = null;
@@ -337,8 +340,8 @@ public class H264Decoder extends VideoDecoder {
         }
 
         private void unrefShortTerm(int shortNo) {
-            int ind = wrap(firstSliceHeader.frame_num
-                    - shortNo, 1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4));
+            int ind = wrap(firstSliceHeader.frame_num - shortNo,
+                    1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4));
             releaseRef(dec.sRefs[ind]);
             dec.sRefs[ind] = null;
         }
@@ -397,5 +400,19 @@ public class H264Decoder extends VideoDecoder {
 
     private static boolean validPps(PictureParameterSet pps) {
         return pps.pic_init_qp_minus26 <= 26 && pps.seq_parameter_set_id <= 2 && pps.pic_parameter_set_id <= 2;
+    }
+
+    @Override
+    public VideoCodecMeta getCodecMeta(ByteBuffer data) {
+        List<ByteBuffer> rawSPS = H264Utils.getRawSPS(data.duplicate());
+        List<ByteBuffer> rawPPS = H264Utils.getRawPPS(data.duplicate());
+        if (rawSPS.size() == 0) {
+            Logger.warn("Can not extract metadata from the packet not containing an SPS.");
+            return null;
+        }
+        SeqParameterSet sps = SeqParameterSet.read(rawSPS.get(0));
+        Size size = H264Utils.getPicSize(sps);
+//, H264Utils.saveCodecPrivate(rawSPS, rawPPS)
+        return new VideoCodecMeta(size);
     }
 }

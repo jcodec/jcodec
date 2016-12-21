@@ -2,9 +2,6 @@ package org.jcodec.common;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.model.Rational;
-import org.jcodec.common.model.Size;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -17,22 +14,23 @@ import org.jcodec.common.model.Size;
 public class DemuxerTrackMeta {
     private TrackType type;
     private Codec codec;
+    private double totalDuration;
     private int[] seekFrames;
     private int totalFrames;
-    private double totalDuration;
-    private Size dimensions;
     private ByteBuffer codecPrivate;
-    private Rational pixelAspectRatio;
+    private VideoCodecMeta videoCodecMeta;
+    private AudioCodecMeta audioCodecMeta;
+    private int index;
 
-    public DemuxerTrackMeta(TrackType type, Codec codec, int[] seekFrames, int totalFrames, double totalDuration,
-            Size dimensions, ByteBuffer codecPrivate) {
+    public DemuxerTrackMeta(TrackType type, Codec codec, double totalDuration, int[] seekFrames, int totalFrames, ByteBuffer codecPrivate, VideoCodecMeta videoCodecMeta, AudioCodecMeta audioCodecMeta) {
         this.type = type;
         this.codec = codec;
+        this.totalDuration = totalDuration;
         this.seekFrames = seekFrames;
         this.totalFrames = totalFrames;
-        this.totalDuration = totalDuration;
-        this.dimensions = dimensions;
         this.codecPrivate = codecPrivate;
+        this.videoCodecMeta = videoCodecMeta;
+        this.audioCodecMeta = audioCodecMeta;
     }
 
     public TrackType getType() {
@@ -41,6 +39,13 @@ public class DemuxerTrackMeta {
 
     public Codec getCodec() {
         return codec;
+    }
+
+    /**
+     * @return Total duration in seconds of the media track
+     */
+    public double getTotalDuration() {
+        return totalDuration;
     }
 
     /**
@@ -59,30 +64,19 @@ public class DemuxerTrackMeta {
         return totalFrames;
     }
 
-    /**
-     * @return Total duration in seconds of the media track
-     */
-    public double getTotalDuration() {
-        return totalDuration;
-    }
-
-    public Size getDimensions() {
-        return dimensions;
+    public int getIndex() {
+        return index;
     }
 
     public ByteBuffer getCodecPrivate() {
         return codecPrivate;
     }
 
-    public Rational getPixelAspectRatio() {
-        return pixelAspectRatio;
+    public VideoCodecMeta getVideoCodecMeta() {
+        return videoCodecMeta;
     }
 
-    public void setPixelAspectRatio(Rational pixelAspectRatio) {
-        this.pixelAspectRatio = pixelAspectRatio;
-    }
-
-    public int getIndex() {
-        return 0;
+    public AudioCodecMeta getAudioCodecMeta() {
+        return audioCodecMeta;
     }
 }

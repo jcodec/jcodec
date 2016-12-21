@@ -84,7 +84,7 @@ public class FrameGrab {
         switch (detectFormat) {
         case MOV:
             MP4Demuxer d1 = new MP4Demuxer(_in);
-            videoTrack = d1.getVideoTrack();
+            videoTrack = (SeekableDemuxerTrack)d1.getVideoTrack();
             break;
         case MPEG_PS:
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");

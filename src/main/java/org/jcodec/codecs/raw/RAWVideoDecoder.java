@@ -2,9 +2,11 @@ package org.jcodec.codecs.raw;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Size;
 
 public class RAWVideoDecoder extends VideoDecoder {
     private int width;
@@ -31,5 +33,10 @@ public class RAWVideoDecoder extends VideoDecoder {
         for (int i = 0; b.hasRemaining() && i < size; i++) {
             ii[i] = (byte) ((b.get() & 0xff) - 128);
         }
+    }
+
+    @Override
+    public VideoCodecMeta getCodecMeta(ByteBuffer data) {
+        return new VideoCodecMeta(new Size(width, height));
     }
 }

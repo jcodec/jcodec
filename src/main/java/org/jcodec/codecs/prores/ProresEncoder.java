@@ -366,7 +366,7 @@ public class ProresEncoder extends VideoEncoder {
     }
 
     @Override
-    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer buffer) {
+    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer buffer) {
         ByteBuffer out = buffer.duplicate();
         ByteBuffer fork = out.duplicate();
 
@@ -380,7 +380,7 @@ public class ProresEncoder extends VideoEncoder {
         out.flip();
         fork.putInt(out.remaining());
 
-        return out;
+        return new EncodedFrame(out, true);
     }
 
     public static void writeFrameHeader(ByteBuffer outp, ProresConsts.FrameHeader header) {
@@ -414,5 +414,10 @@ public class ProresEncoder extends VideoEncoder {
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
         return new ColorSpace[] { ColorSpace.YUV422 };
+    }
+
+    @Override
+    public int estimateBufferSize(Picture8Bit frame) {
+        return (3 * frame.getWidth() * frame.getHeight()) / 2;
     }
 }

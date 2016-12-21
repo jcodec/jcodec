@@ -14,9 +14,10 @@ import javax.imageio.ImageIO;
 
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
@@ -49,8 +50,8 @@ public abstract class ToImgTranscoder extends V2VTranscoder {
 
     protected abstract Packet nextPacket(DemuxerTrack inTrack) throws IOException;
 
-    protected DemuxerTrackMeta getTrackMeta(DemuxerTrack inTrack, ByteBuffer firstFrame) {
-        return inTrack.getMeta();
+    protected VideoCodecMeta getTrackMeta(DemuxerTrack inTrack, ByteBuffer firstFrame) {
+        return inTrack.getMeta().getVideoCodecMeta();
     }
 
     protected class ToImgTranscoder2 extends GenericTranscoder {
@@ -62,7 +63,7 @@ public abstract class ToImgTranscoder extends V2VTranscoder {
 
 
         @Override
-        protected ByteBuffer encodeVideo(Picture8Bit dec, ByteBuffer _out) {
+        protected EncodedFrame encodeVideo(Picture8Bit dec, ByteBuffer _out) {
             if (bi == null) {
                 bi = new BufferedImage(dec.getWidth(), dec.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
             }
@@ -75,7 +76,7 @@ public abstract class ToImgTranscoder extends V2VTranscoder {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return ByteBuffer.wrap(baos.toByteArray());
+            return new EncodedFrame(ByteBuffer.wrap(baos.toByteArray()), true);
         }
         
         @Override
@@ -94,8 +95,8 @@ public abstract class ToImgTranscoder extends V2VTranscoder {
         
         @Override
         protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
-            DemuxerTrackMeta trackMeta = getTrackMeta(demuxer, firstFrame);
-            Size dim = trackMeta.getDimensions();
+            VideoCodecMeta trackMeta = getTrackMeta(demuxer, firstFrame);
+            Size dim = trackMeta.getSize();
             return Picture8Bit.create(dim.getWidth(), dim.getHeight(), yuv444);
         }
 
