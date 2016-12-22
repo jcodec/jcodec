@@ -108,7 +108,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     public int getFrameSize() {
         SampleEntry entry = sampleEntries[sampleToChunks[stscInd].getEntry() - 1];
-        if (entry instanceof AudioSampleEntry) {
+        if (entry instanceof AudioSampleEntry && defaultSampleSize == 0) {
             return ((AudioSampleEntry) entry).calcFrameSize();
         } else {
             return defaultSampleSize;
