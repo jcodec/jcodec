@@ -103,6 +103,13 @@
 				</configuration> <executions> <execution> <id>analyze-compile</id> <phase>compile</phase> 
 				<goals> <goal>check</goal> </goals> </execution> </executions> </plugin -->
 		</plugins>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>1.0-beta-6</version>
+            </extension>
+        </extensions>
 	</build>
 	<dependencies>
 		<dependency>
