@@ -5,8 +5,6 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 
 import org.jcodec.codecs.h264.H264Decoder;
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.Format;
@@ -16,7 +14,6 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
-import org.jcodec.containers.mkv.demuxer.MKVDemuxer.VideoTrack;
 
 /**
  * A profile to convert mkv with AVC to PNG images.
@@ -25,7 +22,7 @@ import org.jcodec.containers.mkv.demuxer.MKVDemuxer.VideoTrack;
  *
  */
 class Mkv2png extends ToImgTranscoder {
-    private AvcCBox avcC;
+    private H264Decoder decoder;
 
     @Override
     public Set<Format> inputFormat() {
@@ -39,9 +36,6 @@ class Mkv2png extends ToImgTranscoder {
 
     @Override
     protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) {
-        H264Decoder decoder = new H264Decoder();
-        decoder.addSps(avcC.getSpsList());
-        decoder.addPps(avcC.getPpsList());
         return decoder;
     }
 
@@ -49,15 +43,13 @@ class Mkv2png extends ToImgTranscoder {
     protected DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException {
         MKVDemuxer demux = new MKVDemuxer(source);
         DemuxerTrack inTrack = demux.getVideoTracks().get(0);
-        avcC = AvcCBox.createEmpty();
-        avcC.parse(((VideoTrack) inTrack).getCodecState());
+        decoder = H264Decoder.createH264DecoderFromCodecPrivate(inTrack.getMeta().getCodecPrivate());
         return inTrack;
     }
 
     @Override
     protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, ByteBuffer pkt) {
-        return ((H264Decoder) decoder).decodeFrame8BitFromNals(H264Utils.splitMOVPacket(pkt, avcC),
-                target1.getData());
+        return decoder.decodeFrame8Bit(pkt, target1.getData());
     }
 
     @Override

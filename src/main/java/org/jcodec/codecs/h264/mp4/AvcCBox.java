@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.common.Assert;
-import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;

@@ -43,6 +43,8 @@ public class VP8Decoder extends VideoDecoder {
         frame.get(firstThree);
 
         boolean keyFrame = getBitInBytes(firstThree, 0) == 0;
+        if(!keyFrame)
+            return null;
         int version = getBitsInBytes(firstThree, 1, 3);
         boolean showFrame = getBitInBytes(firstThree, 4) > 0;
         int partitionSize = getBitsInBytes(firstThree, 5, 19);

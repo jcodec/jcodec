@@ -3,11 +3,8 @@ package org.jcodec.samples.transcode;
 import java.nio.ByteBuffer;
 import java.util.Set;
 
-import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.MainUtils.Cmd;
@@ -42,9 +39,5 @@ class Mpeg2img extends MPSToImg {
     @Override
     public Set<Codec> inputVideoCodec() {
         return TranscodeMain.codecs(Codec.MPEG2);
-    }
-
-    protected VideoCodecMeta getTrackMeta(DemuxerTrack inTrack, ByteBuffer firstFrame) {
-        return new MPEGDecoder().getCodecMeta(firstFrame);
     }
 }

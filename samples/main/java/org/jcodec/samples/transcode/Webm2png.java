@@ -38,18 +38,12 @@ class Webm2png extends ToImgTranscoder {
 
     @Override
     protected DemuxerTrack getDemuxer(Cmd cmd, SeekableByteChannel source) throws IOException {
-        MKVDemuxer demux = new MKVDemuxer(source);
-        return demux.getVideoTracks().get(0);
+        return new MKVDemuxer(source).getVideoTracks().get(0);
     }
 
     @Override
     protected Picture8Bit decodeFrame(VideoDecoder decoder, Picture8Bit target1, ByteBuffer pkt) {
-        try {
-            return decoder.decodeFrame8Bit(pkt, target1.getData());
-        } catch (AssertionError ae) {
-            ae.printStackTrace(System.err);
-            return null;
-        }
+        return decoder.decodeFrame8Bit(pkt, target1.getData());
     }
 
     @Override

@@ -36,6 +36,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.text.StyledEditorKit.ForegroundAction;
+
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Muxer;
@@ -141,11 +143,17 @@ public class MKVMuxer implements Muxer {
         EbmlMaster master = (EbmlMaster) createByType(Info);
         int frameDurationInNanoseconds = MKVMuxerTrack.NANOSECONDS_IN_A_MILISECOND * 40;
         createLong(master, TimecodeScale, frameDurationInNanoseconds);
-        createString(master, WritingApp, "JCodec v0.1.7");
-        createString(master, MuxingApp, "JCodec MKVStreamingMuxer v0.1.7");
+        createString(master, WritingApp, "JCodec");
+        createString(master, MuxingApp, "JCodec");
 
-        MkvBlock lastBlock = audioTrack.trackBlocks.get(audioTrack.trackBlocks.size() - 1);
-        createDouble(master, MKVType.Duration, (lastBlock.absoluteTimecode + 1) * frameDurationInNanoseconds * 1.0);
+        List<MKVMuxerTrack> tracks2 = tracks;
+        long max = 0;
+        for (MKVMuxerTrack track : tracks2) {
+            MkvBlock lastBlock = track.trackBlocks.get(track.trackBlocks.size() - 1);
+            if (lastBlock.absoluteTimecode > max)
+                max = lastBlock.absoluteTimecode;
+        }
+        createDouble(master, MKVType.Duration, (max + 1) * frameDurationInNanoseconds * 1.0);
         createDate(master, DateUTC, new Date());
         return master;
     }
@@ -186,8 +194,8 @@ public class MKVMuxer implements Muxer {
 
     private void muxCues() {
         CuesFactory cf = new CuesFactory(mkvSeekHead.size() + mkvInfo.size() + mkvTracks.size(),
-                audioTrack.trackNo);
-        for (MkvBlock aBlock : audioTrack.trackBlocks) {
+                videoTrack.trackNo);
+        for (MkvBlock aBlock : videoTrack.trackBlocks) {
             EbmlMaster mkvCluster = singleBlockedCluster(aBlock);
             clusterList.add(mkvCluster);
             cf.add(CuesFactory.CuePointMock.make(mkvCluster));

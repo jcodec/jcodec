@@ -213,6 +213,8 @@ public abstract class V2VTranscoder implements Transcoder {
                             pixelBufferStore.set(pixelBuffer);
                         }
                         Picture8Bit decodedFrame = decodeVideo(inVideoPacket.getData(), pixelBuffer);
+                        if(decodedFrame == null)
+                            continue;
                         printLegend(frameNo, maxFrames, inVideoPacket);
                         for (Filter filter : filters) {
                             decodedFrame = filter.filter(decodedFrame, pixelsStore);

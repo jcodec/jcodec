@@ -3,13 +3,10 @@ package org.jcodec.samples.transcode;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 
 import org.jcodec.codecs.h264.H264Encoder;
-import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.encode.RateControl;

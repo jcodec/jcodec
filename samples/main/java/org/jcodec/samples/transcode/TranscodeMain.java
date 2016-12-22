@@ -334,6 +334,8 @@ public class TranscodeMain {
 
     private static Codec detectDecoderAudio(String input, Format format) throws IOException {
         Demuxer demuxer = JCodecUtil.createDemuxer(format, new File(input), TrackType.AUDIO);
+        if(demuxer == null)
+            return null;
         List<? extends DemuxerTrack> audio = demuxer.getAudioTracks();
         if (audio.size() == 0)
             return null;

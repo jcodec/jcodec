@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.Set;
 
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.VideoDecoder;
@@ -13,7 +14,6 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.MPEGDemuxer;
-import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 
 /**
@@ -22,12 +22,11 @@ import org.jcodec.containers.mps.MPSDemuxer;
  * @author Stanislav Vitvitskiy
  */
 public abstract class MPSToImg extends ToImgTranscoder {
-    private ThreadLocal<ByteBuffer> buffers = new ThreadLocal<ByteBuffer>();
-
     @Override
     protected VideoDecoder getDecoder(Cmd cmd, DemuxerTrack inTrack, ByteBuffer firstFrame) {
+        DemuxerTrackMeta meta = inTrack.getMeta();
         VideoDecoder decoder = JCodecUtil.createVideoDecoder(JCodecUtil.detectDecoder(firstFrame.duplicate()),
-                inTrack.getMeta().getCodecPrivate());
+                meta == null ? null : meta.getCodecPrivate());
 
         return decoder;
     }
@@ -45,13 +44,7 @@ public abstract class MPSToImg extends ToImgTranscoder {
 
     @Override
     protected Packet nextPacket(DemuxerTrack inTrack) throws IOException {
-        ByteBuffer bb = buffers.get();
-        if (bb == null) {
-            bb = ByteBuffer.allocate(500 << 10);
-            buffers.set(bb);
-        }
-        bb.clear();
-        return ((MPEGDemuxerTrack) inTrack).nextFrameWithBuffer(bb);
+        return inTrack.nextFrame();
     }
 
     @Override

@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
@@ -83,7 +85,7 @@ public final class MKVDemuxer implements Demuxer {
         MKVType[] path = { Segment, Info, TimecodeScale };
         EbmlUint ts = MKVType.findFirstTree(t, path);
         if (ts != null)
-            timescale = (int)ts.getUint();
+            timescale = (int) ts.getUint();
         MKVType[] path9 = { Segment, Tracks, TrackEntry };
 
         for (EbmlMaster aTrack : findList(t, EbmlMaster.class, path9)) {
@@ -96,13 +98,14 @@ public final class MKVDemuxer implements Demuxer {
                 if (vTrack != null)
                     throw new RuntimeException("More then 1 video track, can not compute...");
                 MKVType[] path3 = { TrackEntry, CodecPrivate };
+                MKVType[] path10 = { TrackEntry, MKVType.CodecID };
+                EbmlString codecId = (EbmlString) findFirst(aTrack, path10);
+                Codec codec = codecMapping.get(codecId.getString());
+                
                 EbmlBin videoCodecState = (EbmlBin) findFirst(aTrack, path3);
                 ByteBuffer state = null;
                 if (videoCodecState != null)
                     state = videoCodecState.data;
-
-                MKVType[] path10 = { TrackEntry, MKVType.CodecID };
-                EbmlString codecId = (EbmlString) findFirst(aTrack, path10);
 
                 MKVType[] path4 = { TrackEntry, Video, PixelWidth };
 
@@ -127,7 +130,7 @@ public final class MKVDemuxer implements Demuxer {
                     }
                 }
 
-                vTrack = new VideoTrack(this, (int) id, state, codecId.getString());
+                vTrack = new VideoTrack(this, (int) id, state, codec);
 
             } else if (type == 2) {
                 AudioTrack audioTrack = new AudioTrack((int) id, this);
@@ -185,16 +188,22 @@ public final class MKVDemuxer implements Demuxer {
         private int frameIdx = 0;
         List<MkvBlock> blocks;
         private MKVDemuxer demuxer;
-        private String codecId;
+        private Codec codec;
+        private AvcCBox avcC;
 
-        public VideoTrack(MKVDemuxer demuxer, int trackNo, ByteBuffer state, String codecId) {
+        public VideoTrack(MKVDemuxer demuxer, int trackNo, ByteBuffer state, Codec codec) {
             this.blocks = new ArrayList<MkvBlock>();
             this.demuxer = demuxer;
             this.trackNo = trackNo;
-            this.state = state;
-            this.codecId = codecId;
+            this.codec = codec;
+            if (codec == Codec.H264) {
+                avcC = H264Utils.parseAVCCFromBuffer(state);
+                this.state = H264Utils.avcCToAnnexB(avcC);
+            } else {
+                this.state = state;
+            }
         }
-
+        
         @Override
         public Packet nextFrame() throws IOException {
             if (frameIdx >= blocks.size())
@@ -217,8 +226,11 @@ public final class MKVDemuxer implements Demuxer {
             long duration = 1;
             if (frameIdx < blocks.size())
                 duration = blocks.get(frameIdx).absoluteTimecode - b.absoluteTimecode;
-
-            return Packet.createPacket(b.frames[0].duplicate(), b.absoluteTimecode, demuxer.timescale, duration,
+            ByteBuffer result = b.frames[0].duplicate();
+            if (codec == Codec.H264) {
+                result = H264Utils.decodeMOVPacket(result, avcC);
+            }
+            return Packet.createPacket(result, b.absoluteTimecode, demuxer.timescale, duration,
                     frameIdx - 1, b._keyFrame, ZERO_TAPE_TIMECODE);
         }
 
@@ -254,7 +266,7 @@ public final class MKVDemuxer implements Demuxer {
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, codecMapping.get(codecId), 0, null, 0, state,
+            return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, codec, 0, null, 0, state,
                     new VideoCodecMeta(new Size(demuxer.pictureWidth, demuxer.pictureHeight)), null);
         }
 
@@ -321,7 +333,7 @@ public final class MKVDemuxer implements Demuxer {
                 frameInBlockIdx = 0;
             }
 
-            return Packet.createPacket(data, b.absoluteTimecode, (int)Math.round(samplingFrequency), 1, 0, false,
+            return Packet.createPacket(data, b.absoluteTimecode, (int) Math.round(samplingFrequency), 1, 0, false,
                     ZERO_TAPE_TIMECODE);
         }
 
@@ -411,7 +423,7 @@ public final class MKVDemuxer implements Demuxer {
             for (ByteBuffer aFrame : packetFrames)
                 data.put(aFrame);
 
-            return Packet.createPacket(data, firstBlockInAPacket.absoluteTimecode, (int)Math.round(samplingFrequency),
+            return Packet.createPacket(data, firstBlockInAPacket.absoluteTimecode, (int) Math.round(samplingFrequency),
                     packetFrames.size(), 0, false, ZERO_TAPE_TIMECODE);
         }
 

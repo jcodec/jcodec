@@ -150,6 +150,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         private long lastPts;
         private long lastPtsUsed;
         private int nFrames;
+        private long lastPtsUsedForE;
 
         public MPEGTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
             super(demuxer, streamId, pkt);
@@ -209,10 +210,15 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         @Override
         public Packet nextFrame() throws IOException {
             MPEGPacket pkt = es.getFrame();
+            if (pkt == null)
+                return null;
             if (lastPtsUsed == lastPts) {
                 lastPts += ptsDeltaEstimate;
             } else if (lastPts > firstPacketPts) {
-                ptsDeltaEstimate = (int) ((lastPts - firstPacketPts) / nFrames);
+                if (lastPtsUsedForE < lastPts) {
+                    ptsDeltaEstimate = (int) ((lastPts - firstPacketPts) / nFrames);
+                    lastPtsUsedForE = lastPts;
+                }
             }
             pkt.setPts(lastPts);
             pkt.setDuration(ptsDeltaEstimate);

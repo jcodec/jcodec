@@ -14,8 +14,8 @@ import javax.imageio.ImageIO;
 
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
-import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.NIOUtils;
@@ -50,17 +50,12 @@ public abstract class ToImgTranscoder extends V2VTranscoder {
 
     protected abstract Packet nextPacket(DemuxerTrack inTrack) throws IOException;
 
-    protected VideoCodecMeta getTrackMeta(DemuxerTrack inTrack, ByteBuffer firstFrame) {
-        return inTrack.getMeta().getVideoCodecMeta();
-    }
-
     protected class ToImgTranscoder2 extends GenericTranscoder {
 
         private BufferedImage bi;
         private RgbToBgr8Bit rgbToBgr;
         private DemuxerTrack demuxer;
         private VideoDecoder decoder;
-
 
         @Override
         protected EncodedFrame encodeVideo(Picture8Bit dec, ByteBuffer _out) {
@@ -78,12 +73,12 @@ public abstract class ToImgTranscoder extends V2VTranscoder {
             }
             return new EncodedFrame(ByteBuffer.wrap(baos.toByteArray()), true);
         }
-        
+
         @Override
         protected ColorSpace getEncoderColorspace() {
             return ColorSpace.RGB;
         }
-        
+
         public ToImgTranscoder2(Cmd cmd, Profile profile) {
             super(cmd, profile);
         }
@@ -92,11 +87,19 @@ public abstract class ToImgTranscoder extends V2VTranscoder {
         protected void initDecode(SeekableByteChannel source) throws IOException {
             demuxer = getDemuxer(cmd, source);
         }
-        
+
         @Override
         protected Picture8Bit createPixelBuffer(ColorSpace yuv444, ByteBuffer firstFrame) {
-            VideoCodecMeta trackMeta = getTrackMeta(demuxer, firstFrame);
-            Size dim = trackMeta.getSize();
+            DemuxerTrackMeta meta = demuxer.getMeta();
+            Size dim;
+            if (meta == null) {
+                if (decoder == null)
+                    decoder = getDecoder(cmd, demuxer, firstFrame);
+                VideoDecoder decoder = getDecoder(cmd, demuxer, firstFrame);
+                dim = decoder.getCodecMeta(firstFrame).getSize();
+            } else {
+                dim = meta.getVideoCodecMeta().getSize();
+            }
             return Picture8Bit.create(dim.getWidth(), dim.getHeight(), yuv444);
         }
 
