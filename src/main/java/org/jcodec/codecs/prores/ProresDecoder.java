@@ -44,6 +44,18 @@ public class ProresDecoder extends VideoDecoder {
     public ProresDecoder() {
     }
 
+    public static ProresDecoder createProresDecoder(int downscale) {
+        if (2 == downscale) {
+            return new ProresToThumb4x4();
+        } else if (4 == downscale) {
+            return new ProresToThumb2x2();
+        } else if (8 == downscale) {
+            return new ProresToThumb();
+        } else {
+            return new ProresDecoder();
+        }
+    }
+
     static final int[] table = new int[] { 8, 7, 6, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
             3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
             2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,

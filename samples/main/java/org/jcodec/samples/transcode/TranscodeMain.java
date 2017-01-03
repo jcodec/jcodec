@@ -1,12 +1,14 @@
 package org.jcodec.samples.transcode;
 
+import static org.jcodec.common.Tuple._2;
+import static org.jcodec.common.Tuple._3;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,18 +24,22 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
-import org.jcodec.samples.transcode.Transcoder.Profile;
+import org.jcodec.common.tools.MathUtil;
+import org.jcodec.samples.transcode.Transcoder.Filter;
+import org.jcodec.samples.transcode.filters.DumpMvFilter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * Basic transcoder interface.
+ * Transcoder command line.
  * 
  * @author The JCodec project
  * 
  */
 public class TranscodeMain {
+    private static final String FLAG_SEEK_FRAMES = "seek-frames";
+    private static final String FLAG_MAX_FRAMES = "max-frames";
 
     private static final String FLAG_OUTPUT_AUDIO_CODEC = "o:ac";
     private static final String FLAG_INPUT_AUDIO_CODEC = "i:ac";
@@ -42,32 +48,21 @@ public class TranscodeMain {
     private static final String FLAG_OUTPUT_FORMAT = "o:f";
     private static final String FLAG_INPUT_FORMAT = "i:f";
 
-    private static List<Transcoder> profiles = new ArrayList<Transcoder>();
+    private static final String FLAG_PROFILE = "profile";
+    private static final String FLAG_INTERLACED = "interlaced";
+
+    private static final String FLAG_DUMPMV = "dumpMv";
+    private static final String FLAG_DUMPMVJS = "dumpMvJs";
+
+    private static final String FLAG_DOWNSCALE = "downscale";
+
     private static Map<String, Format> extensionToF = new HashMap<String, Format>();
     private static Map<String, Codec> extensionToC = new HashMap<String, Codec>();
     private static Map<Format, Codec> videoCodecsForF = new HashMap<Format, Codec>();
     private static Map<Format, Codec> audioCodecsForF = new HashMap<Format, Codec>();
+    private static Set<Codec> supportedDecoders = new HashSet<Codec>();
 
     static {
-        profiles.add(new Avc2png());
-        profiles.add(new Avc2prores());
-        profiles.add(new MP4Jpeg2avc());
-        profiles.add(new Mkv2png());
-        profiles.add(new Mpeg2img());
-        profiles.add(new Img2AvcMP4());
-        profiles.add(new Png2mkv());
-        profiles.add(new Png2prores());
-        profiles.add(new Png2vp8());
-        profiles.add(new Png2webm());
-        profiles.add(new Prores2avc());
-        profiles.add(new Prores2png());
-        profiles.add(new Prores2webm());
-        profiles.add(new Ts2mp4());
-        profiles.add(new TsAvc2Png());
-        profiles.add(new Y4m2prores());
-        profiles.add(new Webm2png());
-        profiles.add(new MP42Wav());
-
         extensionToF.put("mpg", Format.MPEG_PS);
         extensionToF.put("mpeg", Format.MPEG_PS);
         extensionToF.put("m2p", Format.MPEG_PS);
@@ -129,25 +124,27 @@ public class TranscodeMain {
         audioCodecsForF.put(Format.MPEG_PS, Codec.MP2);
         videoCodecsForF.put(Format.MOV, Codec.H264);
         audioCodecsForF.put(Format.MOV, Codec.AAC);
-
         videoCodecsForF.put(Format.MKV, Codec.VP8);
         audioCodecsForF.put(Format.MKV, Codec.VORBIS);
         audioCodecsForF.put(Format.WAV, Codec.PCM);
-
         videoCodecsForF.put(Format.H264, Codec.H264);
         videoCodecsForF.put(Format.RAW, Codec.RAW);
-
         videoCodecsForF.put(Format.FLV, Codec.H264);
-
         videoCodecsForF.put(Format.AVI, Codec.MPEG4);
-
         videoCodecsForF.put(Format.IMG, Codec.PNG);
-
         videoCodecsForF.put(Format.MJPEG, Codec.JPEG);
-
         videoCodecsForF.put(Format.IVF, Codec.VP8);
-
         videoCodecsForF.put(Format.Y4M, Codec.RAW);
+
+        supportedDecoders.add(Codec.AAC);
+        supportedDecoders.add(Codec.H264);
+        supportedDecoders.add(Codec.JPEG);
+        supportedDecoders.add(Codec.MPEG2);
+        supportedDecoders.add(Codec.PCM);
+        supportedDecoders.add(Codec.PNG);
+        supportedDecoders.add(Codec.PRORES);
+        supportedDecoders.add(Codec.RAW);
+        supportedDecoders.add(Codec.VP8);
     }
 
     public static void main(String[] args) throws Exception {
@@ -161,6 +158,13 @@ public class TranscodeMain {
                     put(FLAG_OUTPUT_VIDEO_CODEC, "Output video codec [default=auto].");
                     put(FLAG_INPUT_AUDIO_CODEC, "Input audio codec [default=auto].");
                     put(FLAG_OUTPUT_AUDIO_CODEC, "Output audio codec [default=auto].");
+                    put(FLAG_SEEK_FRAMES, "Seek frames");
+                    put(FLAG_MAX_FRAMES, "Max frames");
+                    put(FLAG_PROFILE, "Profile to use (supported by some encoders).");
+                    put(FLAG_INTERLACED, "Encode output as interlaced (supported by Prores encoder).");
+                    put(FLAG_DUMPMV, "Dump motion vectors (supported by h.264 decoder).");
+                    put(FLAG_DUMPMVJS, "Dump motion vectors in form of JASON file (supported by h.264 decoder).");
+                    put(FLAG_DOWNSCALE, "Decode frames in downscale (supported by MPEG, Prores and Jpeg decoders).");
                 }
             }, "input", "output");
             return;
@@ -194,16 +198,17 @@ public class TranscodeMain {
             outputFormat = Format.valueOf(outputFormatRaw.toUpperCase());
         }
 
+        int videoTrackNo = -1;
         String inputCodecVideoRaw = cmd.getStringFlag(FLAG_INPUT_VIDEO_CODEC);
-        Codec inputCodecVideo = null;
+        _3<Integer, Integer, Codec> inputCodecVideo = null;
         if (inputCodecVideoRaw == null) {
             if (inputFormat == Format.IMG) {
-                inputCodecVideo = getCodecFromExtension(input);
+                inputCodecVideo = _3(0, 0, getCodecFromExtension(input));
             } else if (inputFormat.isVideo()) {
-                inputCodecVideo = detectDecoderVideo(input, inputFormat);
+                inputCodecVideo = selectSuitableTrack(input, inputFormat, TrackType.VIDEO);
             }
         } else {
-            inputCodecVideo = Codec.valueOf(inputCodecVideoRaw.toUpperCase());
+            inputCodecVideo = _3(0, 0, Codec.valueOf(inputCodecVideoRaw.toUpperCase()));
         }
 
         String outputCodecVideoRaw = cmd.getStringFlag(FLAG_OUTPUT_VIDEO_CODEC);
@@ -216,20 +221,20 @@ public class TranscodeMain {
         } else {
             if ("copy".equalsIgnoreCase(outputCodecVideoRaw)) {
                 videoCopy = true;
-                outputCodecVideo = inputCodecVideo;
+                outputCodecVideo = inputCodecVideo.v2;
             } else {
                 outputCodecVideo = Codec.valueOf(outputCodecVideoRaw.toUpperCase());
             }
         }
 
         String inputCodecAudioRaw = cmd.getStringFlag(FLAG_INPUT_AUDIO_CODEC);
-        Codec inputCodecAudio = null;
+        _3<Integer, Integer, Codec> inputCodecAudio = null;
         if (inputCodecAudioRaw == null) {
             if (inputFormat.isAudio()) {
-                inputCodecAudio = detectDecoderAudio(input, inputFormat);
+                inputCodecAudio = selectSuitableTrack(input, inputFormat, TrackType.AUDIO);
             }
         } else {
-            inputCodecAudio = Codec.valueOf(inputCodecAudioRaw.toUpperCase());
+            inputCodecAudio = _3(0, 0, Codec.valueOf(inputCodecAudioRaw.toUpperCase()));
         }
 
         String outputCodecAudioRaw = cmd.getStringFlag(FLAG_OUTPUT_AUDIO_CODEC);
@@ -241,7 +246,7 @@ public class TranscodeMain {
         } else {
             if ("copy".equalsIgnoreCase(outputCodecAudioRaw)) {
                 audioCopy = true;
-                outputCodecAudio = inputCodecAudio;
+                outputCodecAudio = inputCodecAudio.v2;
             } else {
                 outputCodecAudio = Codec.valueOf(outputCodecAudioRaw.toUpperCase());
             }
@@ -249,61 +254,26 @@ public class TranscodeMain {
         if (inputCodecAudio == null)
             outputCodecAudio = null;
 
-        List<Transcoder> candidates = new ArrayList<Transcoder>(profiles);
-        for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
-            Transcoder next = it.next();
-            if (!next.inputFormat().contains(inputFormat))
-                it.remove();
-        }
-        for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
-            Transcoder next = it.next();
-            if (!next.outputFormat().contains(outputFormat))
-                it.remove();
-        }
+        List<Filter> filters = new ArrayList<Filter>();
+        if (cmd.getBooleanFlag(FLAG_DUMPMV))
+            filters.add(new DumpMvFilter(false));
+        else if (cmd.getBooleanFlag(FLAG_DUMPMVJS))
+            filters.add(new DumpMvFilter(true));
 
-        if (inputCodecVideo != null) {
-            for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
-                Transcoder next = it.next();
-                if (next.inputVideoCodec() != null && !next.inputVideoCodec().contains(inputCodecVideo))
-                    it.remove();
-            }
+        Transcoder transcoder = new Transcoder(cmd.getArg(0), cmd.getArg(1), inputFormat, outputFormat, inputCodecVideo,
+                outputCodecVideo, inputCodecAudio, outputCodecAudio, videoCopy, audioCopy, filters);
+        transcoder.setSeekFrames(cmd.getIntegerFlagD(FLAG_SEEK_FRAMES, 0));
+        transcoder.setMaxFrames(cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE));
+        transcoder.setProfile(cmd.getStringFlag(FLAG_PROFILE));
+        transcoder.setInterlaced(cmd.getBooleanFlagD(FLAG_INTERLACED, false));
+        Integer downscale = cmd.getIntegerFlagD(FLAG_DOWNSCALE, 1);
+        if (downscale != null && (1 << MathUtil.log2(downscale)) != downscale) {
+            Logger.error(
+                    "Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE + ", the option will have no effect.");
+        } else {
+            transcoder.setDownscale(downscale);
         }
-
-        if (outputCodecVideo != null || videoCopy) {
-            for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
-                Transcoder next = it.next();
-                if (next.outputVideoCodec() == null && !videoCopy)
-                    it.remove();
-                else if (next.outputVideoCodec() != null && !next.outputVideoCodec().contains(outputCodecVideo))
-                    it.remove();
-            }
-        }
-
-        if (inputCodecAudio != null) {
-            for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
-                Transcoder next = it.next();
-                if (next.inputAudioCodec() != null && !next.inputAudioCodec().contains(inputCodecAudio))
-                    it.remove();
-            }
-        }
-
-        if (outputCodecAudio != null || audioCopy) {
-            for (Iterator<Transcoder> it = candidates.iterator(); it.hasNext();) {
-                Transcoder next = it.next();
-                if (next.outputAudioCodec() == null && !audioCopy)
-                    it.remove();
-                else if (next.outputAudioCodec() != null && !next.outputAudioCodec().contains(outputCodecAudio))
-                    it.remove();
-            }
-        }
-
-        if (candidates.size() == 0) {
-            Logger.error("Transcoding profile not found for the parameters specified");
-            return;
-        }
-
-        candidates.get(0).transcode(cmd, new Profile(inputFormat, outputFormat, inputCodecVideo, outputCodecVideo,
-                inputCodecAudio, outputCodecAudio));
+        transcoder.transcode();
     }
 
     private static Codec getFirstAudioCodecForFormat(Format inputFormat) {
@@ -314,42 +284,41 @@ public class TranscodeMain {
         return videoCodecsForF.get(inputFormat);
     }
 
-    private static Codec detectDecoderVideo(String input, Format format) throws IOException {
-        Demuxer demuxer = JCodecUtil.createDemuxer(format, new File(input), TrackType.VIDEO);
-        List<? extends DemuxerTrack> video = demuxer.getVideoTracks();
-        if (video.size() == 0)
-            return null;
-        DemuxerTrackMeta meta = video.get(0).getMeta();
+    private static Codec detectVideoDecoder(DemuxerTrack track) throws IOException {
+        DemuxerTrackMeta meta = track.getMeta();
         if (meta != null) {
             Codec codec = meta.getCodec();
             if (codec != null)
                 return codec;
         }
-        Packet packet = video.get(0).nextFrame();
+        Packet packet = track.nextFrame();
         if (packet == null)
             return null;
 
         return JCodecUtil.detectDecoder(packet.getData());
     }
 
-    private static Codec detectDecoderAudio(String input, Format format) throws IOException {
-        Demuxer demuxer = JCodecUtil.createDemuxer(format, new File(input), TrackType.AUDIO);
-        if(demuxer == null)
-            return null;
-        List<? extends DemuxerTrack> audio = demuxer.getAudioTracks();
-        if (audio.size() == 0)
-            return null;
-        DemuxerTrackMeta meta = audio.get(0).getMeta();
-        if (meta != null) {
-            Codec codec = meta.getCodec();
-            if (codec != null)
-                return codec;
+    private static _3<Integer, Integer, Codec> selectSuitableTrack(String input, Format format, TrackType targetType)
+            throws IOException {
+        _2<Integer, Demuxer> demuxerPid;
+        if (format == Format.MPEG_TS) {
+            demuxerPid = JCodecUtil.createM2TSDemuxer(new File(input), targetType);
+        } else {
+            demuxerPid = _2(0, JCodecUtil.createDemuxer(format, new File(input)));
         }
-        Packet packet = audio.get(0).nextFrame();
-        if (packet == null)
+        if(demuxerPid == null || demuxerPid.v1 == null)
             return null;
-
-        return JCodecUtil.detectDecoder(packet.getData());
+        int trackNo = 0;
+        List<? extends DemuxerTrack> tracks = targetType == TrackType.VIDEO ? demuxerPid.v1.getVideoTracks()
+                : demuxerPid.v1.getAudioTracks();
+        for (DemuxerTrack demuxerTrack : tracks) {
+            Codec codec = detectVideoDecoder(demuxerTrack);
+            if (supportedDecoders.contains(codec)) {
+                return _3(demuxerPid.v0, trackNo, codec);
+            }
+            trackNo++;
+        }
+        return null;
     }
 
     private static Format getFormatFromExtension(String output) {

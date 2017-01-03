@@ -160,7 +160,7 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
             } while (rate > 10);
             rc.setRate(TARGET_RATE);
 
-            H264Utils.encodeMOVPacket(dst);
+            H264Utils.encodeMOVPacketInplace(dst);
 
             return dst;
         }

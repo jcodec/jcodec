@@ -68,6 +68,15 @@ public class MPEGDecoder extends VideoDecoder {
     private Picture8Bit[] refFrames;
     private Picture8Bit[] refFields;
 
+    public static MPEGDecoder createMpegDecoder(int downscale) {
+        if (downscale == 2)
+            return new Mpeg2Thumb4x4();
+        else if (downscale == 4)
+            return new Mpeg2Thumb2x2();
+        else
+            return new MPEGDecoder();
+    }
+
     public MPEGDecoder() {
         this.refFrames = new Picture8Bit[2];
         this.refFields = new Picture8Bit[2];
@@ -93,9 +102,9 @@ public class MPEGDecoder extends VideoDecoder {
     }
 
     @Override
-    public Picture8Bit decodeFrame8Bit(ByteBuffer ByteBuffer, byte[][] buf) {
+    public Picture8Bit decodeFrame8Bit(ByteBuffer buffer, byte[][] buf) {
 
-        PictureHeader ph = readHeader(ByteBuffer);
+        PictureHeader ph = readHeader(buffer);
         if (refFrames[0] == null && ph.picture_coding_type > 1 || refFrames[1] == null && ph.picture_coding_type > 2) {
             throw new RuntimeException(
                     "Not enough references to decode " + (ph.picture_coding_type == 1 ? "P" : "B") + " frame");
@@ -104,12 +113,12 @@ public class MPEGDecoder extends VideoDecoder {
         Picture8Bit pic = new Picture8Bit(context.codedWidth, context.codedHeight, buf, context.color,
                 new Rect(0, 0, context.picWidth, context.picHeight));
         if (ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
-            decodePicture(context, ph, ByteBuffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
-            ph = readHeader(ByteBuffer);
+            decodePicture(context, ph, buffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
+            ph = readHeader(buffer);
             context = initContext(sh, ph);
-            decodePicture(context, ph, ByteBuffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
+            decodePicture(context, ph, buffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
         } else {
-            decodePicture(context, ph, ByteBuffer, buf, 0, 0);
+            decodePicture(context, ph, buffer, buf, 0, 0);
         }
 
         if (ph.picture_coding_type == MPEGConst.IntraCoded || ph.picture_coding_type == MPEGConst.PredictiveCoded) {
@@ -730,16 +739,25 @@ public class MPEGDecoder extends VideoDecoder {
         }
         return null;
     }
-
-    @Override
-    public VideoDecoder downscaled(int ratio) {
-        if (ratio == 1)
-            return this;
-        else if (ratio == 2)
-            return new Mpeg2Thumb4x4();
-        else if (ratio == 4)
-            return new Mpeg2Thumb2x2();
+    
+    private static ByteBuffer getPictureHeader(ByteBuffer data) {
+        ByteBuffer segment = nextSegment(data);
+        while (segment != null) {
+            int marker = segment.getInt();
+            if (marker == (0x100 | PICTURE_START_CODE)) {
+                return segment;
+            }
+            segment = nextSegment(data);
+        }
         return null;
+    }
+    
+    public static int getSequenceNumber(ByteBuffer data) {
+        ByteBuffer bb = getPictureHeader(data);
+        if(bb == null)
+            return -1;
+        PictureHeader ph = PictureHeader.read(bb);
+        return ph.temporal_reference;
     }
 
     @Override

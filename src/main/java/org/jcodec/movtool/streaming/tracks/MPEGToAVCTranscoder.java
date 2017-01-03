@@ -100,7 +100,7 @@ public class MPEGToAVCTranscoder {
         } while (rate > 10);
         rc.setRate(Mpeg2AVCTrack.TARGET_RATE);
 
-        H264Utils.encodeMOVPacket(dst);
+        H264Utils.encodeMOVPacketInplace(dst);
 
         return dst;
     }

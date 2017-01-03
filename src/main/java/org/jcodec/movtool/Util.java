@@ -1,9 +1,8 @@
 package org.jcodec.movtool;
 
-import static org.jcodec.common.ArrayUtil.addAllObj;
 import static org.jcodec.common.ArrayUtil.addAllInt;
+import static org.jcodec.common.ArrayUtil.addAllObj;
 import static org.jcodec.containers.mp4.boxes.Box.findFirst;
-import static org.jcodec.containers.mp4.boxes.Box.findFirstPath;
 
 import java.util.ArrayList;
 import java.util.List;

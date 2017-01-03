@@ -10,6 +10,7 @@ import org.jcodec.audio.FilterGraph;
 import org.jcodec.audio.SincLowPassFilter;
 import org.jcodec.codecs.wav.WavInput;
 import org.jcodec.codecs.wav.WavInput.WavFile;
+import org.jcodec.codecs.wav.WavMuxer;
 import org.jcodec.codecs.wav.WavOutput;
 import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.tools.MainUtils;

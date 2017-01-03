@@ -35,6 +35,16 @@ public class JpegDecoder extends VideoDecoder {
     public JpegDecoder() {
         this.buf = new int[64];
     }
+    
+    public static JpegDecoder createJpegDecoder(int downscale) {
+        if (downscale == 2) {
+            return new JpegToThumb4x4();
+        } else if (downscale == 4) {
+            return new JpegToThumb2x2();
+        } else {
+            return new JpegDecoder();
+        }
+    }
 
     public void setInterlace(boolean interlace, boolean topFieldFirst) {
         this.interlace = interlace;
@@ -258,17 +268,13 @@ public class JpegDecoder extends VideoDecoder {
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
         FrameHeader header = null;
         while (data.hasRemaining()) {
-            int marker = data.get() & 0xff;
-            if (marker == 0)
+            while (data.hasRemaining() && (data.get() & 0xff) != 0xff)
                 continue;
-            if (marker != 0xFF)
-                throw new RuntimeException(
-                        "@" + Long.toHexString(data.position()) + " Marker expected: 0x" + Integer.toHexString(marker));
 
-            int b;
-            while ((b = data.get() & 0xff) == 0xff)
+            int type;
+            while ((type = data.get() & 0xff) == 0xff)
                 ;
-            if (b == JpegConst.SOF0) {
+            if (type == JpegConst.SOF0) {
                 header = FrameHeader.read(data);
                 break;
             }

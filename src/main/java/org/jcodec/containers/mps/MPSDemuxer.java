@@ -25,10 +25,14 @@ import org.jcodec.codecs.aac.AACConts;
 import org.jcodec.codecs.aac.ADTSParser;
 import org.jcodec.codecs.aac.ADTSParser.Header;
 import org.jcodec.codecs.h264.io.model.NALUnit;
+import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.MPEGES;
 import org.jcodec.codecs.mpeg12.SegmentReader;
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.IntIntHistogram;
+import org.jcodec.common.IntIntMap;
+import org.jcodec.common.LongArrayList;
 import org.jcodec.common.TrackType;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -145,12 +149,12 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         private MPEGES es;
         // PTS estimation machinery
-        private long firstPacketPts = -1;
-        private int ptsDeltaEstimate = 3003; // Default likely value
+        private LongArrayList ptsSeen = new LongArrayList(32);
         private long lastPts;
-        private long lastPtsUsed;
-        private int nFrames;
-        private long lastPtsUsedForE;
+        private int lastSeq = Integer.MIN_VALUE;
+        private int lastSeqSeen = Integer.MAX_VALUE - 1000;
+        private int seqWrap = Integer.MAX_VALUE - 1000;
+        private IntIntHistogram durationHistogram = new IntIntHistogram();
 
         public MPEGTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
             super(demuxer, streamId, pkt);
@@ -190,9 +194,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null) {
                 if (pkt.streamId == streamId) {
                     if (pkt.pts != -1) {
-                        lastPts = pkt.pts;
-                        if (firstPacketPts == -1)
-                            firstPacketPts = lastPts;
+                        ptsSeen.add(pkt.pts);
                     }
                     return pkt;
                 } else {
@@ -212,19 +214,23 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             MPEGPacket pkt = es.getFrame();
             if (pkt == null)
                 return null;
-            if (lastPtsUsed == lastPts) {
-                lastPts += ptsDeltaEstimate;
-            } else if (lastPts > firstPacketPts) {
-                if (lastPtsUsedForE < lastPts) {
-                    ptsDeltaEstimate = (int) ((lastPts - firstPacketPts) / nFrames);
-                    lastPtsUsedForE = lastPts;
+            int seq = MPEGDecoder.getSequenceNumber(pkt.getData());
+            if (seq == 0)
+                seqWrap = lastSeqSeen + 1;
+            lastSeqSeen = seq;
+            if (ptsSeen.size() <= 0) {
+                pkt.setPts(Math.min(seq - lastSeq, seq - lastSeq + seqWrap) * durationHistogram.max() + lastPts);
+            } else {
+                pkt.setPts(ptsSeen.shift());
+                if (lastSeq >= 0 && seq > lastSeq) {
+                    durationHistogram.increment((int) (pkt.getPts() - lastPts)
+                            / Math.min(seq - lastSeq, seq - lastSeq + seqWrap));
                 }
+                lastPts = pkt.getPts();
+                lastSeq = seq;
             }
-            pkt.setPts(lastPts);
-            pkt.setDuration(ptsDeltaEstimate);
-            lastPtsUsed = lastPts;
-            ++nFrames;
-
+            pkt.setDuration(durationHistogram.max());
+            System.out.println(seq);
             return pkt;
         }
 

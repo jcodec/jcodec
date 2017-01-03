@@ -3,8 +3,8 @@ package org.jcodec.samples.transcode.filters;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.samples.transcode.V2VTranscoder.Filter;
-import org.jcodec.samples.transcode.V2VTranscoder.PixelStore;
+import org.jcodec.samples.transcode.Transcoder.Filter;
+import org.jcodec.samples.transcode.Transcoder.PixelStore;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform8Bit;
 

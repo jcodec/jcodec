@@ -21,6 +21,7 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 
 /**
@@ -103,9 +104,9 @@ public class FrameReader {
     }
 
     public void addSps(ByteBuffer byteBuffer) {
-        ByteBuffer dup = byteBuffer.duplicate();
-        unescapeNAL(dup);
-        SeqParameterSet s = SeqParameterSet.read(dup);
+        ByteBuffer clone = NIOUtils.clone(byteBuffer);
+        unescapeNAL(clone);
+        SeqParameterSet s = SeqParameterSet.read(clone);
         sps.put(s.seq_parameter_set_id, s);
     }
 
@@ -116,9 +117,9 @@ public class FrameReader {
     }
 
     public void addPps(ByteBuffer byteBuffer) {
-        ByteBuffer dup = byteBuffer.duplicate();
-        unescapeNAL(dup);
-        PictureParameterSet p = PictureParameterSet.read(dup);
+        ByteBuffer clone = NIOUtils.clone(byteBuffer);
+        unescapeNAL(clone);
+        PictureParameterSet p = PictureParameterSet.read(clone);
         pps.put(p.pic_parameter_set_id, p);
     }
 }

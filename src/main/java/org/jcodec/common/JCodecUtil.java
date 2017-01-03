@@ -1,5 +1,7 @@
 package org.jcodec.common;
 
+import static org.jcodec.common.Tuple._2;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -23,7 +25,6 @@ import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.vp8.VP8Decoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
@@ -181,7 +182,7 @@ public class JCodecUtil {
         return name.replaceAll("\\.[^\\.]+$", "");
     }
 
-    public static Demuxer createDemuxer(Format format, File input, TrackType targetTrack) throws IOException {
+    public static Demuxer createDemuxer(Format format, File input) throws IOException {
         FileChannelWrapper ch = null;
         if (format != Format.IMG) {
             ch = NIOUtils.readableChannel(input);
@@ -189,8 +190,6 @@ public class JCodecUtil {
         switch (format) {
         case MOV:
             return new MP4Demuxer(ch);
-        case MPEG_TS:
-            return createM2TSDemuxer(ch, targetTrack);
         case MPEG_PS:
             return new MPSDemuxer(ch);
         case MKV:
@@ -205,29 +204,31 @@ public class JCodecUtil {
         return null;
     }
 
-    private static Demuxer createM2TSDemuxer(SeekableByteChannel input, TrackType targetTrack) throws IOException {
-        MTSDemuxer mts = new MTSDemuxer(input);
+    public static _2<Integer, Demuxer> createM2TSDemuxer(File input, TrackType targetTrack) throws IOException {
+        FileChannelWrapper ch = NIOUtils.readableChannel(input);
+        MTSDemuxer mts = new MTSDemuxer(ch);
         Set<Integer> programs = mts.getPrograms();
         if (programs.size() == 0) {
             Logger.error("The MPEG TS stream contains no programs");
             return null;
         }
-        MPSDemuxer found = null;
+        Tuple._2<Integer, Demuxer> found = null;
         for (Integer pid : programs) {
             ReadableByteChannel program = mts.getProgram(pid);
-            if(found != null) {
+            if (found != null) {
                 program.close();
                 continue;
             }
             MPSDemuxer demuxer = new MPSDemuxer(program);
-            if(targetTrack == TrackType.AUDIO && demuxer.getAudioTracks().size() > 0 || targetTrack == TrackType.VIDEO && demuxer.getVideoTracks().size() > 0) {
-                found = demuxer;
+            if (targetTrack == TrackType.AUDIO && demuxer.getAudioTracks().size() > 0
+                    || targetTrack == TrackType.VIDEO && demuxer.getVideoTracks().size() > 0) {
+                found = _2(pid, (Demuxer) demuxer);
                 Logger.info("Using M2TS program: " + pid + " for " + targetTrack + " track.");
             } else {
                 program.close();
             }
         }
-        return found; 
+        return found;
     }
 
     public static AudioDecoder createAudioDecoder(Codec codec, ByteBuffer decoderSpecific) throws IOException {

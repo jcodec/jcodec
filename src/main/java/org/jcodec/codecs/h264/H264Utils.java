@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import javax.swing.text.StyledEditorKit.ForegroundAction;
+
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
@@ -19,6 +21,7 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
@@ -50,7 +53,6 @@ public class H264Utils {
     }
 
     public static final void skipToNALUnit(ByteBuffer buf) {
-
         if (!buf.hasRemaining())
             return;
 
@@ -207,13 +209,12 @@ public class H264Utils {
      * 
      * Scans the packet for each NAL Unit starting with 00 00 00 01 and replaces
      * this 4 byte sequence with 4 byte integer representing this NAL unit
-     * length. Removes any leading SPS/PPS structures and collects them into a
-     * provided storaae.
+     * length.
      * 
      * @param avcFrame
      *            AVC frame encoded in Annex B NAL unit format
      */
-    public static void encodeMOVPacket(ByteBuffer avcFrame) {
+    public static void encodeMOVPacketInplace(ByteBuffer avcFrame) {
 
         ByteBuffer dup = avcFrame.duplicate();
         ByteBuffer d1 = avcFrame.duplicate();
@@ -226,6 +227,36 @@ public class H264Utils {
             d1.putInt(buf.remaining());
             tot += buf.remaining() + 4;
         }
+    }
+    
+    /**
+     * Encodes AVC frame in ISO BMF format. Takes Annex B format.
+     * 
+     * Scans the packet for each NAL Unit starting with 00 00 00 01 and replaces
+     * this 4 byte sequence with 4 byte integer representing this NAL unit
+     * length.
+     * 
+     * @param avcFrame
+     *            AVC frame encoded in Annex B NAL unit format
+     */
+    public static ByteBuffer encodeMOVPacket(ByteBuffer avcFrame) {
+
+        ByteBuffer dup = avcFrame.duplicate();
+
+        List<ByteBuffer> list = new ArrayList<ByteBuffer>();
+        ByteBuffer buf;
+        int totalLen = 0;
+        while ((buf = H264Utils.nextNALUnit(dup)) != null) {
+            list.add(buf);
+            totalLen += buf.remaining();
+        }
+        ByteBuffer result = ByteBuffer.allocate(list.size() * 4 + totalLen);
+        for (ByteBuffer byteBuffer : list) {
+            result.putInt(byteBuffer.remaining());
+            result.put(byteBuffer);
+        }
+        result.flip();
+        return result;
     }
 
     /**

@@ -12,6 +12,7 @@ import java.util.Set;
 import org.jcodec.codecs.aac.ADTSParser;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
+import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.Assert;
 import org.jcodec.common.Codec;
 import org.jcodec.common.IntArrayList;
@@ -103,7 +104,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         if (codec == Codec.H264) {
             ByteBuffer result = pkt.getData();
             H264Utils.wipePSinplace(result, spsList, ppsList);
-            H264Utils.encodeMOVPacket(result);
+            result = H264Utils.encodeMOVPacket(result);
             pkt = Packet.createPacketWithData(pkt, result);
         } else if (codec == Codec.AAC && adtsHeader == null) {
             adtsHeader = ADTSParser.read(pkt.getData());

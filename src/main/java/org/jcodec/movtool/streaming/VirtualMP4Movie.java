@@ -79,7 +79,7 @@ public class VirtualMP4Movie extends VirtualMovie {
         @Override
         public ByteBuffer getData() throws IOException {
             ByteBuffer buf = packet.getData().duplicate();
-            H264Utils.encodeMOVPacket(buf);
+            H264Utils.encodeMOVPacketInplace(buf);
 //            if ("avc1".equals(fourcc)) {
 //                H264Utils.wipePS(buf, null, null);
 //                H264Utils.encodeMOVPacket(buf);
