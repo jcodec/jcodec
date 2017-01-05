@@ -23,7 +23,8 @@ public class PNGEncoder extends VideoEncoder {
     private RgbToBgr8Bit rgbToBgr;
 
     @Override
-    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out) {
+    public EncodedFrame encodeFrame8Bit(Picture8Bit _pic, ByteBuffer _out) {
+        Picture8Bit pic = _pic.cropped();
         if (bi == null) {
             bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         }
