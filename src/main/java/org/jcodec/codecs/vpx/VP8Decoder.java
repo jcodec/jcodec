@@ -1,20 +1,20 @@
-package org.jcodec.codecs.vp8;
-import static org.jcodec.codecs.vp8.VP8Util.MAX_MODE_LF_DELTAS;
-import static org.jcodec.codecs.vp8.VP8Util.MAX_REF_LF_DELTAS;
-import static org.jcodec.codecs.vp8.VP8Util.getBitInBytes;
-import static org.jcodec.codecs.vp8.VP8Util.getBitsInBytes;
-import static org.jcodec.codecs.vp8.VP8Util.getDefaultCoefProbs;
-import static org.jcodec.codecs.vp8.VP8Util.getMacroblockCount;
-import static org.jcodec.codecs.vp8.VP8Util.keyFrameYModeProb;
-import static org.jcodec.codecs.vp8.VP8Util.keyFrameYModeTree;
-import static org.jcodec.codecs.vp8.VP8Util.vp8CoefUpdateProbs;
+package org.jcodec.codecs.vpx;
+import static org.jcodec.codecs.vpx.VP8Util.MAX_MODE_LF_DELTAS;
+import static org.jcodec.codecs.vpx.VP8Util.MAX_REF_LF_DELTAS;
+import static org.jcodec.codecs.vpx.VP8Util.getBitInBytes;
+import static org.jcodec.codecs.vpx.VP8Util.getBitsInBytes;
+import static org.jcodec.codecs.vpx.VP8Util.getDefaultCoefProbs;
+import static org.jcodec.codecs.vpx.VP8Util.getMacroblockCount;
+import static org.jcodec.codecs.vpx.VP8Util.keyFrameYModeProb;
+import static org.jcodec.codecs.vpx.VP8Util.keyFrameYModeTree;
+import static org.jcodec.codecs.vpx.VP8Util.vp8CoefUpdateProbs;
 
 import java.nio.ByteBuffer;
 
 import org.jcodec.api.NotSupportedException;
-import org.jcodec.codecs.vp8.Macroblock.Subblock;
-import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
-import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
+import org.jcodec.codecs.vpx.Macroblock.Subblock;
+import org.jcodec.codecs.vpx.VP8Util.QuantizationParams;
+import org.jcodec.codecs.vpx.VP8Util.SubblockConstants;
 import org.jcodec.common.Assert;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
@@ -68,7 +68,7 @@ public class VP8Decoder extends VideoDecoder {
                 mbs[row][col] = new Macroblock(row, col);
 
         int headerOffset = frame.position();
-        BooleanArithmeticDecoder headerDecoder = new BooleanArithmeticDecoder(frame, 0);
+        VPXBooleanDecoder headerDecoder = new VPXBooleanDecoder(frame, 0);
         boolean isYUVColorSpace = (headerDecoder.decodeBit() == 0);
 
         boolean clampingRequired = headerDecoder.decodeBit() == 0;
@@ -109,7 +109,7 @@ public class VP8Decoder extends VideoDecoder {
         long zSize = frame.limit() - (partitionSize + headerOffset);
         ByteBuffer tokenBuffer = frame.duplicate();
         tokenBuffer.position(partitionSize + headerOffset);
-        BooleanArithmeticDecoder decoder = new BooleanArithmeticDecoder(tokenBuffer, 0);
+        VPXBooleanDecoder decoder = new VPXBooleanDecoder(tokenBuffer, 0);
 
         int yacIndex = headerDecoder.decodeInt(7);
         int ydcDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);

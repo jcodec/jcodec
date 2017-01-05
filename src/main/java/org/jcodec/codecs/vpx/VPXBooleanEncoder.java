@@ -1,4 +1,4 @@
-package org.jcodec.codecs.common.biari;
+package org.jcodec.codecs.vpx;
 import org.jcodec.codecs.vpx.VPXConst;
 
 import java.nio.ByteBuffer;
@@ -12,13 +12,13 @@ import java.nio.ByteBuffer;
  * @author The JCodec project
  * 
  */
-public class VPxBooleanEncoder {
+public class VPXBooleanEncoder {
     private ByteBuffer out;
     private int lowvalue;
     private int range;
     private int count;
 
-    public VPxBooleanEncoder(ByteBuffer out) {
+    public VPXBooleanEncoder(ByteBuffer out) {
         this.out = out;
         lowvalue = 0;
         range = 255;

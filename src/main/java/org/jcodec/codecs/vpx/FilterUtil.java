@@ -1,10 +1,10 @@
-package org.jcodec.codecs.vp8;
+package org.jcodec.codecs.vpx;
 import static java.lang.Math.abs;
-import static org.jcodec.codecs.vp8.FilterUtil.Segment.horizontal;
-import static org.jcodec.codecs.vp8.FilterUtil.Segment.vertical;
+import static org.jcodec.codecs.vpx.FilterUtil.Segment.horizontal;
+import static org.jcodec.codecs.vpx.FilterUtil.Segment.vertical;
 
 import org.jcodec.api.NotImplementedException;
-import org.jcodec.codecs.vp8.Macroblock.Subblock;
+import org.jcodec.codecs.vpx.Macroblock.Subblock;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

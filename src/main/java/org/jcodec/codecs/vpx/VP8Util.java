@@ -1,4 +1,4 @@
-package org.jcodec.codecs.vp8;
+package org.jcodec.codecs.vpx;
 import java.io.IOException;
 
 /**
@@ -32,7 +32,7 @@ public class VP8Util {
      * @return
      * @throws IOException
      */
-    public static int delta(BooleanArithmeticDecoder bc) {
+    public static int delta(VPXBooleanDecoder bc) {
         int magnitude = bc.decodeInt(4);
 
         if (bc.decodeBit() > 0)

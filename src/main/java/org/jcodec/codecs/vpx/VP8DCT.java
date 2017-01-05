@@ -1,4 +1,4 @@
-package org.jcodec.codecs.vp8;
+package org.jcodec.codecs.vpx;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

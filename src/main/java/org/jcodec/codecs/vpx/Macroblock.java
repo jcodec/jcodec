@@ -1,11 +1,11 @@
-package org.jcodec.codecs.vp8;
-import static org.jcodec.codecs.vp8.VP8Util.PRED_BLOCK_127;
-import static org.jcodec.codecs.vp8.VP8Util.pickDefaultPrediction;
+package org.jcodec.codecs.vpx;
+import static org.jcodec.codecs.vpx.VP8Util.PRED_BLOCK_127;
+import static org.jcodec.codecs.vpx.VP8Util.pickDefaultPrediction;
 
 import org.jcodec.api.NotImplementedException;
 import org.jcodec.api.NotSupportedException;
-import org.jcodec.codecs.vp8.VP8Util.QuantizationParams;
-import org.jcodec.codecs.vp8.VP8Util.SubblockConstants;
+import org.jcodec.codecs.vpx.VP8Util.QuantizationParams;
+import org.jcodec.codecs.vpx.VP8Util.SubblockConstants;
 
 import java.lang.System;
 import java.util.Arrays;
@@ -462,7 +462,7 @@ public class Macroblock {
         return null;
     }
 
-    public void decodeMacroBlock(Macroblock[][] mbs, BooleanArithmeticDecoder tockenDecoder, int[][][][] coefProbs) {
+    public void decodeMacroBlock(Macroblock[][] mbs, VPXBooleanDecoder tockenDecoder, int[][][][] coefProbs) {
         if (this.skipCoeff > 0) {
             this.skipFilter = this.lumaMode != SubblockConstants.B_PRED;
         } else if (this.lumaMode != SubblockConstants.B_PRED)
@@ -471,7 +471,7 @@ public class Macroblock {
             decodeMacroBlockTokens(false, mbs, tockenDecoder, coefProbs);
     }
 
-    private void decodeMacroBlockTokens(boolean withY2, Macroblock[][] mbs, BooleanArithmeticDecoder decoder, int[][][][] coefProbs) {
+    private void decodeMacroBlockTokens(boolean withY2, Macroblock[][] mbs, VPXBooleanDecoder decoder, int[][][][] coefProbs) {
         skipFilter = false;
         if (withY2) {
             skipFilter = skipFilter | decodePlaneTokens(1, VP8Util.PLANE.Y2, false, mbs, decoder, coefProbs);
@@ -482,7 +482,7 @@ public class Macroblock {
         skipFilter = !skipFilter;
     }
 
-    private boolean decodePlaneTokens(int dimentions, VP8Util.PLANE plane, boolean withY2, Macroblock[][] mbs, BooleanArithmeticDecoder decoder, int[][][][] coefProbs) {
+    private boolean decodePlaneTokens(int dimentions, VP8Util.PLANE plane, boolean withY2, Macroblock[][] mbs, VPXBooleanDecoder decoder, int[][][][] coefProbs) {
         boolean r = false;
         for (int row = 0; row < dimentions; row++) {
             for (int col = 0; col < dimentions; col++) {
@@ -718,7 +718,7 @@ public class Macroblock {
             
         }
 
-        public void decodeSubBlock(BooleanArithmeticDecoder decoder, int[][][][] allProbs, int ilc, int type, boolean withY2) {
+        public void decodeSubBlock(VPXBooleanDecoder decoder, int[][][][] allProbs, int ilc, int type, boolean withY2) {
             int startAt = 0;
             if (withY2)
                 startAt = 1;
@@ -759,7 +759,7 @@ public class Macroblock {
                     someValuePresent = true;
         }
 
-        private int decodeToken(BooleanArithmeticDecoder decoder, int initialValue) {
+        private int decodeToken(VPXBooleanDecoder decoder, int initialValue) {
             int token = initialValue;
 
             if (initialValue == SubblockConstants.cat_5_6) {
@@ -788,7 +788,7 @@ public class Macroblock {
             return token;
         }
 
-        private int DCTextra(BooleanArithmeticDecoder decoder, int p[]) {
+        private int DCTextra(VPXBooleanDecoder decoder, int p[]) {
             int v = 0;
             int offset = 0;
             do {

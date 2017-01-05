@@ -22,7 +22,7 @@ import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
-import org.jcodec.codecs.vp8.VP8Decoder;
+import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;

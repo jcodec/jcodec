@@ -1,4 +1,4 @@
-package org.jcodec.codecs.vp8;
+package org.jcodec.codecs.vpx;
 import java.nio.ByteBuffer;
 
 /**
@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * @author The JCodec project
  * 
  */
-public class BooleanArithmeticDecoder {
+public class VPXBooleanDecoder {
         int bit_count; /* # of bits shifted out of value, at most 7 */
         ByteBuffer input;
         int offset; /* pointer to next compressed data byte */
@@ -17,7 +17,7 @@ public class BooleanArithmeticDecoder {
         long callCounter=0;
         private String debugName;
 
-        public BooleanArithmeticDecoder(ByteBuffer input, int offset) {
+        public VPXBooleanDecoder(ByteBuffer input, int offset) {
             this.input = input;
             this.offset = offset;
             initBoolDecoder();

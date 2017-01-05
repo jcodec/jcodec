@@ -19,7 +19,7 @@ import org.jcodec.codecs.png.PNGEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.raw.RAWVideoDecoder;
-import org.jcodec.codecs.vp8.VP8Decoder;
+import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.codecs.vpx.IVFMuxer;
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.codecs.wav.WavMuxer;
