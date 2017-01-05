@@ -1,6 +1,7 @@
 package org.jcodec.codecs.vp8;
 
 import org.jcodec.Utils;
+import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;

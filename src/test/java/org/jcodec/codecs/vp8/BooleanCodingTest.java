@@ -1,7 +1,8 @@
 package org.jcodec.codecs.vp8;
 import static java.nio.ByteBuffer.wrap;
-import static org.jcodec.codecs.vp8.BooleanArithmeticDecoder.leadingZeroCountInByte;
+import static org.jcodec.codecs.vpx.VPXBooleanDecoder.leadingZeroCountInByte;
 
+import org.jcodec.codecs.vpx.VPXBooleanDecoder;
 import org.jcodec.common.ArithmeticCoderTest;
 import org.jcodec.common.io.IOUtils;
 import org.junit.Assert;
@@ -25,17 +26,17 @@ public class BooleanCodingTest {
     
     @Test
     public void testBitInByte() throws Exception {
-        Assert.assertEquals(1, BooleanArithmeticDecoder.getBitInBytes(new byte[] { (byte) 0x80 }, 0));
-        Assert.assertEquals(0, BooleanArithmeticDecoder.getBitInBytes(new byte[] { (byte) 0x80 }, 1));
-        Assert.assertEquals(1, BooleanArithmeticDecoder.getBitInBytes(new byte[] { (byte) 0x90 }, 3));
-        Assert.assertEquals(1, BooleanArithmeticDecoder.getBitInBytes(new byte[] { (byte) 0x91 }, 7));
-        Assert.assertEquals(1, BooleanArithmeticDecoder.getBitInBytes(new byte[] { 0x00, (byte) 0x91 }, 15));
+        Assert.assertEquals(1, VPXBooleanDecoder.getBitInBytes(new byte[] { (byte) 0x80 }, 0));
+        Assert.assertEquals(0, VPXBooleanDecoder.getBitInBytes(new byte[] { (byte) 0x80 }, 1));
+        Assert.assertEquals(1, VPXBooleanDecoder.getBitInBytes(new byte[] { (byte) 0x90 }, 3));
+        Assert.assertEquals(1, VPXBooleanDecoder.getBitInBytes(new byte[] { (byte) 0x91 }, 7));
+        Assert.assertEquals(1, VPXBooleanDecoder.getBitInBytes(new byte[] { 0x00, (byte) 0x91 }, 15));
     }
 
     @Test
     public void test() throws IOException {
         byte[] b = IOUtils.toByteArray(new FileInputStream(new File("src/test/resources/part1.vp8.mb")));
-        BooleanArithmeticDecoder bac = new BooleanArithmeticDecoder(ByteBuffer.wrap(b), 0);
+        VPXBooleanDecoder bac = new VPXBooleanDecoder(ByteBuffer.wrap(b), 0);
          Assert.assertEquals("clear type is expected to be 0", 0, bac.decodeBit());
          Assert.assertEquals("clamp type is expected to be 0", 0, bac.decodeBit());
          Assert.assertEquals("segmentation is expected to be disabled", 0, bac.decodeBit());
@@ -164,7 +165,7 @@ public class BooleanCodingTest {
         bae.flushRemaining();
         byte[] array = bae.output.array();
         System.out.println(ArithmeticCoderTest.printArrayAsHex(array));
-        BooleanArithmeticDecoder bac = new BooleanArithmeticDecoder(wrap(array), 0);
+        VPXBooleanDecoder bac = new VPXBooleanDecoder(wrap(array), 0);
         for (int d : data)
             Assert.assertTrue(d == bac.decodeBool(probability));
         

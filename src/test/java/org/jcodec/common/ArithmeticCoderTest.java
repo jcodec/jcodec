@@ -1,5 +1,5 @@
 package org.jcodec.common;
-import org.jcodec.codecs.vp8.BooleanArithmeticDecoder;
+import org.jcodec.codecs.vpx.VPXBooleanDecoder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -244,7 +244,7 @@ public class ArithmeticCoderTest {
             long z = 0;
             long i = 0;
             while (i < precission && i < bs.length * 8) {
-                if (BooleanArithmeticDecoder.getBitInBytes(bs, (int)i) != 0x00) {
+                if (VPXBooleanDecoder.getBitInBytes(bs, (int)i) != 0x00) {
                     z += (1L << (precission - i - 1));
                 }
                 i++;
@@ -275,7 +275,7 @@ public class ArithmeticCoderTest {
                         z = 2*(z - half);
                     }
                     if (i < (bs.length * 8)){
-                        if (BooleanArithmeticDecoder.getBitInBytes(bs, (int)i) == 0x01)
+                        if (VPXBooleanDecoder.getBitInBytes(bs, (int)i) == 0x01)
                             z++;
                         i++;
                     }
@@ -286,7 +286,7 @@ public class ArithmeticCoderTest {
                     b = (b - quater) << 1;
                     z = (z - quater) << 1;
                     if (i < (bs.length * 8) ){
-                        if (BooleanArithmeticDecoder.getBitInBytes(bs, (int)i) == 0x01)
+                        if (VPXBooleanDecoder.getBitInBytes(bs, (int)i) == 0x01)
                             z++;
                         i++;
                     }
