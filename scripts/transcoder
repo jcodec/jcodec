@@ -1,0 +1,5 @@
+#!/bin/bash
+(mvn -Dmaven.test.skip=true compile jar:jar)
+(cd javase; mvn -Dmaven.test.skip=true compile jar:jar)
+(cd samples; mvn -Dmaven.test.skip=true compile jar:jar)
+java -cp "target/jcodec-0.2.0.jar:javase/target/jcodec-javase-0.2.0.jar:samples/target/jcodec-samples-0.2.0.jar" org.jcodec.samples.transcode.TranscodeMain "$@"
