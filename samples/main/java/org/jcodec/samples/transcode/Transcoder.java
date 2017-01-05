@@ -340,20 +340,23 @@ public class Transcoder {
             muxer = new WavMuxer(destStream);
             break;
         }
-        switch (outputVideoCodec) {
-        case PRORES:
-            videoEncoder = new ProresEncoder(profile, interlaced);
-            break;
-        case H264:
-            videoEncoder = H264Encoder.createH264Encoder();
-            break;
-        case VP8:
-            videoEncoder = VP8Encoder.createVP8Encoder(10);
-            break;
-        case PNG:
-            videoEncoder = new PNGEncoder();
-        }
-        if (videoEncoder != null) {
+        if(outputVideoCodec != null) {
+            switch (outputVideoCodec) {
+            case PRORES:
+                videoEncoder = new ProresEncoder(profile, interlaced);
+                break;
+            case H264:
+                videoEncoder = H264Encoder.createH264Encoder();
+                break;
+            case VP8:
+                videoEncoder = VP8Encoder.createVP8Encoder(10);
+                break;
+            case PNG:
+                videoEncoder = new PNGEncoder();
+                break;
+            default:
+                throw new RuntimeException("Could not find encoder for the codec: " + outputVideoCodec);
+            }
             filters.add(0, new ColorTransformFilter(videoEncoder.getSupportedColorSpaces()[0]));
             filters.addAll(extraFilters);
         }
