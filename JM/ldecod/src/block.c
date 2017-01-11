@@ -25,6 +25,28 @@
 #include "quant.h"
 #include "memalloc.h"
 
+void print1DImg(Macroblock *currMB, imgpel **pix, int off_x, int off_y, int blk_sz) {
+  FILE* f = currMB->p_Slice->p_Vid->json_trace;
+  fprintf(f, "          [");
+  for (int y = 0; y < blk_sz; y++) {
+    for (int x = 0; x < blk_sz; x++) {
+      fprintf(f, "%d,", pix[y + off_y][x + off_x]);
+    }
+  }
+  fprintf(f, "],\n");
+}
+
+void print1DInt(Macroblock *currMB, int **pix, int off_x, int off_y, int blk_sz) {
+  FILE* f = currMB->p_Slice->p_Vid->json_trace;
+  fprintf(f, "          [");
+  for (int y = 0; y < blk_sz; y++) {
+    for (int x = 0; x < blk_sz; x++) {
+      fprintf(f, "%d,", pix[y + off_y][x + off_x]);
+    }
+  }
+  fprintf(f, "],\n");
+}
+
 /*!
  ***********************************************************************
  * \brief
@@ -612,6 +634,7 @@ void itrans_sp_cr(Macroblock *currMB, int uv)
 void iMBtrans4x4(Macroblock *currMB, ColorPlane pl, int smb)
 {
   Slice *currSlice = currMB->p_Slice;
+  FILE* json = currMB->p_Slice->p_Vid->json_trace;
   //VideoParameters *p_Vid = currMB->p_Vid;
 
   StorablePicture *dec_picture = currMB->p_Slice->dec_picture;
@@ -648,8 +671,13 @@ void iMBtrans4x4(Macroblock *currMB, ColorPlane pl, int smb)
 
     if (currMB->is_intra_block == FALSE)
     {
+      fprintf(json, "       coeff_luma: [\n");
       if (currMB->cbp & 0x01)
       {
+        print1DInt(currMB, cof, 0, 0, 4);
+        print1DInt(currMB, cof, 0, 4, 4);
+        print1DInt(currMB, cof, 4, 0, 4);
+        print1DInt(currMB, cof, 4, 4, 4);
         inverse4x4(cof, mb_rres, 0, 0);
         inverse4x4(cof, mb_rres, 0, 4);
         inverse4x4(cof, mb_rres, 4, 0);
@@ -657,6 +685,10 @@ void iMBtrans4x4(Macroblock *currMB, ColorPlane pl, int smb)
       }
       if (currMB->cbp & 0x02)
       {
+        print1DInt(currMB, cof, 0, 8,  4);
+        print1DInt(currMB, cof, 0, 12, 4);
+        print1DInt(currMB, cof, 4, 8,  4);
+        print1DInt(currMB, cof, 4, 12, 4);
         inverse4x4(cof, mb_rres, 0, 8);
         inverse4x4(cof, mb_rres, 0, 12);
         inverse4x4(cof, mb_rres, 4, 8);
@@ -664,6 +696,10 @@ void iMBtrans4x4(Macroblock *currMB, ColorPlane pl, int smb)
       }
       if (currMB->cbp & 0x04)
       {
+        print1DInt(currMB, cof, 8, 0,  4);
+        print1DInt(currMB, cof, 8, 4,  4);
+        print1DInt(currMB, cof, 12, 0, 4);
+        print1DInt(currMB, cof, 12, 4, 4);
         inverse4x4(cof, mb_rres, 8, 0);
         inverse4x4(cof, mb_rres, 8, 4);
         inverse4x4(cof, mb_rres, 12, 0);
@@ -671,21 +707,71 @@ void iMBtrans4x4(Macroblock *currMB, ColorPlane pl, int smb)
       }
       if (currMB->cbp & 0x08)
       {
+        print1DInt(currMB, cof, 8, 8,   4);
+        print1DInt(currMB, cof, 8, 12,  4);
+        print1DInt(currMB, cof, 12, 8,  4);
+        print1DInt(currMB, cof, 12, 12, 4);
         inverse4x4(cof, mb_rres, 8, 8);
         inverse4x4(cof, mb_rres, 8, 12);
         inverse4x4(cof, mb_rres, 12, 8);
         inverse4x4(cof, mb_rres, 12, 12);
       }
+      fprintf(json, "        ],\n");
+      fprintf(json, "        pix_luma: [\n");
+      if (currMB->cbp & 0x01)
+      {
+        print1DInt(currMB, mb_rres, 0, 0, 4);
+        print1DInt(currMB, mb_rres, 0, 4, 4);
+        print1DInt(currMB, mb_rres, 4, 0, 4);
+        print1DInt(currMB, mb_rres, 4, 4, 4);
+      }
+      if (currMB->cbp & 0x02)
+      {
+        print1DInt(currMB, mb_rres, 0, 8,  4);
+        print1DInt(currMB, mb_rres, 0, 12, 4);
+        print1DInt(currMB, mb_rres, 4, 8,  4);
+        print1DInt(currMB, mb_rres, 4, 12, 4);
+      }
+      if (currMB->cbp & 0x04)
+      {
+        print1DInt(currMB, mb_rres, 8, 0,  4);
+        print1DInt(currMB, mb_rres, 8, 4,  4);
+        print1DInt(currMB, mb_rres, 12, 0, 4);
+        print1DInt(currMB, mb_rres, 12, 4, 4);
+      }
+      if (currMB->cbp & 0x08)
+      {
+        print1DInt(currMB, mb_rres, 8, 8,   4);
+        print1DInt(currMB, mb_rres, 8, 12,  4);
+        print1DInt(currMB, mb_rres, 12, 8,  4);
+        print1DInt(currMB, mb_rres, 12, 12, 4);
+      }
+      fprintf(json, "        ],\n");
     }
     else
     {
+      fprintf(json, "        coeff_luma: [\n");
       for (jj = 0; jj < MB_BLOCK_SIZE; jj += BLOCK_SIZE)
       {
+        print1DInt(currMB, cof, jj, 0,  4);
+        print1DInt(currMB, cof, jj, 4,  4);
+        print1DInt(currMB, cof, jj, 8,  4);
+        print1DInt(currMB, cof, jj, 12, 4);
         inverse4x4(cof, mb_rres, jj, 0);
         inverse4x4(cof, mb_rres, jj, 4);
         inverse4x4(cof, mb_rres, jj, 8);
         inverse4x4(cof, mb_rres, jj, 12);
       }
+      fprintf(json, "        ],\n");
+      fprintf(json, "        pix_luma: [\n");
+      for (jj = 0; jj < MB_BLOCK_SIZE; jj += BLOCK_SIZE)
+      {
+        print1DInt(currMB, mb_rres, jj, 0,  4);
+        print1DInt(currMB, mb_rres, jj, 4,  4);
+        print1DInt(currMB, mb_rres, jj, 8,  4);
+        print1DInt(currMB, mb_rres, jj, 12, 4);
+      }
+      fprintf(json, "        ],\n");
     }
     sample_reconstruct (currSlice->mb_rec[pl], currSlice->mb_pred[pl], mb_rres, 0, 0, MB_BLOCK_SIZE, MB_BLOCK_SIZE, currMB->p_Vid->max_pel_value_comp[pl], DQ_BITS);
   }
@@ -696,31 +782,52 @@ void iMBtrans4x4(Macroblock *currMB, ColorPlane pl, int smb)
 
 void iMBtrans8x8(Macroblock *currMB, ColorPlane pl)
 {
+  FILE* json = currMB->p_Slice->p_Vid->json_trace;
   //VideoParameters *p_Vid = currMB->p_Vid;
   StorablePicture *dec_picture = currMB->p_Slice->dec_picture;
   imgpel **curr_img = pl ? dec_picture->imgUV[pl - 1]: dec_picture->imgY;
 
+  int **mb_rres = currMB->p_Slice->mb_rres[pl];
+  fprintf(json, "        coeff_luma: [\n");
   // Perform 8x8 idct
-  if (currMB->cbp & 0x01) 
+  if (currMB->cbp & 0x01) {
+    print1DInt(currMB, mb_rres, 0, 0, 8);
     itrans8x8(currMB, pl, 0, 0);
-  else
+  } else
     icopy8x8(currMB, pl, 0, 0);
 
-  if (currMB->cbp & 0x02) 
+  if (currMB->cbp & 0x02) {
+    print1DInt(currMB, mb_rres, 8, 0, 8);
     itrans8x8(currMB, pl, 8, 0);
-  else
+  } else
     icopy8x8(currMB, pl, 8, 0);
 
-  if (currMB->cbp & 0x04) 
+  if (currMB->cbp & 0x04) {
+    print1DInt(currMB, mb_rres, 0, 8, 8);
     itrans8x8(currMB, pl, 0, 8);
-  else
+  } else
     icopy8x8(currMB, pl, 0, 8);
 
-  if (currMB->cbp & 0x08) 
+  if (currMB->cbp & 0x08) {
+    print1DInt(currMB, mb_rres, 8, 8, 8);
     itrans8x8(currMB, pl, 8, 8);
-  else
+  } else
     icopy8x8(currMB, pl, 8, 8);
-
+  fprintf(json, "        ],\n");
+  fprintf(json, "        pix_luma: [\n");
+  if (currMB->cbp & 0x01) {
+    print1DInt(currMB, mb_rres, 0, 0, 8);
+  }
+  if (currMB->cbp & 0x02) {
+    print1DInt(currMB, mb_rres, 8, 0, 8);
+  }
+  if (currMB->cbp & 0x04) {
+    print1DInt(currMB, mb_rres, 0, 8, 8);
+  }
+  if (currMB->cbp & 0x08) {
+    print1DInt(currMB, mb_rres, 8, 8, 8);
+  }
+  fprintf(json, "      ],\n");
   copy_image_data_16x16(&curr_img[currMB->pix_y], currMB->p_Slice->mb_rec[pl], currMB->pix_x, 0);
 }
 
@@ -729,14 +836,19 @@ void iTransform(Macroblock *currMB, ColorPlane pl, int smb)
   Slice *currSlice = currMB->p_Slice;
   VideoParameters *p_Vid = currMB->p_Vid;
   StorablePicture *dec_picture = currSlice->dec_picture;
+  FILE* json = currMB->p_Slice->p_Vid->json_trace;
   imgpel **curr_img;
   int uv = pl-1; 
 
+  fprintf(json, "        cbp: %d,\n", currMB->cbp);
+  fprintf(json, "        luma8x8: %d,\n", currMB->luma_transform_size_8x8_flag);
+  fprintf(json, "        lossless: %d,\n", currMB->is_lossless);
+  
   if ((currMB->cbp & 15) != 0 || smb)
   {
     if(currMB->luma_transform_size_8x8_flag == 0) // 4x4 inverse transform
     {
-      iMBtrans4x4(currMB, pl, smb); 
+      iMBtrans4x4(currMB, pl, smb);
     }
     else // 8x8 inverse transform
     {  
@@ -753,6 +865,7 @@ void iTransform(Macroblock *currMB, ColorPlane pl, int smb)
 
   if ((dec_picture->chroma_format_idc != YUV400) && (dec_picture->chroma_format_idc != YUV444)) 
   {
+    const char* const PLANE_NAMES[] = {"luma", "cb", "cr"};
     imgpel **curUV;
     int b8;
     int ioff, joff;
@@ -760,6 +873,7 @@ void iTransform(Macroblock *currMB, ColorPlane pl, int smb)
 
     for(uv = PLANE_U; uv <= PLANE_V; ++uv)
     {
+      // printArrayInt(currMB, PLANE_NAMES[uv], currSlice->cof[0], 16);
       // =============== 4x4 itrans ================
       // -------------------------------------------
       curUV = &dec_picture->imgUV[uv - 1][currMB->pix_c_y]; 
@@ -770,17 +884,34 @@ void iTransform(Macroblock *currMB, ColorPlane pl, int smb)
         if (currMB->is_lossless == FALSE)
         {
           const unsigned char *x_pos, *y_pos;
-
+          fprintf(json, "        coeff_%s: [\n", PLANE_NAMES[uv]);
           for (b8 = 0; b8 < (p_Vid->num_uv_blocks); ++b8)
           {
             x_pos = subblk_offset_x[1][b8];
             y_pos = subblk_offset_y[1][b8];
 
+            print1DInt(currMB, currSlice->cof[uv], *x_pos, *y_pos, 4);
             itrans4x4(currMB, uv, *x_pos++, *y_pos++);
+            print1DInt(currMB, currSlice->cof[uv], *x_pos, *y_pos, 4);
             itrans4x4(currMB, uv, *x_pos++, *y_pos++);
+            print1DInt(currMB, currSlice->cof[uv], *x_pos, *y_pos, 4);
             itrans4x4(currMB, uv, *x_pos++, *y_pos++);
+            print1DInt(currMB, currSlice->cof[uv], *x_pos, *y_pos, 4);
             itrans4x4(currMB, uv, *x_pos  , *y_pos  );
           }
+          fprintf(json, "        ],\n");
+          fprintf(json, "        pix_%s: [\n", PLANE_NAMES[uv]);
+          for (b8 = 0; b8 < (p_Vid->num_uv_blocks); ++b8)
+          {
+            x_pos = subblk_offset_x[1][b8];
+            y_pos = subblk_offset_y[1][b8];
+
+            print1DInt(currMB, currSlice->mb_rres[uv], *x_pos++, *y_pos++, 4);
+            print1DInt(currMB, currSlice->mb_rres[uv], *x_pos++, *y_pos++, 4);
+            print1DInt(currMB, currSlice->mb_rres[uv], *x_pos++, *y_pos++, 4);
+            print1DInt(currMB, currSlice->mb_rres[uv], *x_pos, *y_pos, 4);
+          }
+          fprintf(json, "        ],\n");
           sample_reconstruct (mb_rec, currSlice->mb_pred[uv], currSlice->mb_rres[uv], 0, 0, 
             p_Vid->mb_size[1][0], p_Vid->mb_size[1][1], currMB->p_Vid->max_pel_value_comp[uv], DQ_BITS);
         }

@@ -1098,6 +1098,8 @@ int mb_pred_b_d4x4spatial(Macroblock *currMB, ColorPlane curr_plane, imgpel **cu
 
 int mb_pred_b_inter8x8(Macroblock *currMB, ColorPlane curr_plane, StorablePicture *dec_picture)
 {
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "        type: \"i8x8\",\n");
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "        addr: %d,\n", currMB->mbAddrX);
   char l0_rFrame = -1, l1_rFrame = -1;
   MotionVector pmvl0 = zero_mv, pmvl1 = zero_mv;
   int block_size_x, block_size_y;
@@ -1118,8 +1120,11 @@ int mb_pred_b_inter8x8(Macroblock *currMB, ColorPlane curr_plane, StorablePictur
 
   for (block8x8=0; block8x8<4; block8x8++)
   {
+    fprintf(currMB->p_Slice->p_Vid->json_trace, "          { // 8x8x\n");
     int mv_mode  = currMB->b8mode[block8x8];
     int pred_dir = currMB->b8pdir[block8x8];
+    fprintf(currMB->p_Slice->p_Vid->json_trace, "          mv_mode: %d,\n", mv_mode);
+    fprintf(currMB->p_Slice->p_Vid->json_trace, "          pred_dir: %d,\n", pred_dir);
 
     if ( mv_mode != 0 )
     {
@@ -1210,6 +1215,7 @@ int mb_pred_b_inter8x8(Macroblock *currMB, ColorPlane curr_plane, StorablePictur
         perform_mc(currMB, curr_plane, dec_picture, pred_dir, i, j, block_size_x, block_size_y);
       } 
     }
+    fprintf(currMB->p_Slice->p_Vid->json_trace, "          }, // 8x8x\n");
   }
 
   iTransform(currMB, curr_plane, 0);
@@ -1235,29 +1241,40 @@ int mb_pred_ipcm(Macroblock *currMB)
   Slice *currSlice = currMB->p_Slice;
   VideoParameters *p_Vid = currMB->p_Vid;
   StorablePicture *dec_picture = currSlice->dec_picture;
+  
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "        type: \"ipcm\",\n");
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "        addr: %d,\n", currMB->mbAddrX);
 
   //Copy coefficients to decoded picture buffer
   //IPCM coefficients are stored in currSlice->cof which is set in function read_IPCM_coeffs_from_NAL()
 
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "        luma_out: [\n");
   for(i = 0; i < MB_BLOCK_SIZE; ++i)
   {
     for(j = 0;j < MB_BLOCK_SIZE ; ++j)
     {
       dec_picture->imgY[currMB->pix_y + i][currMB->pix_x + j] = (imgpel) currSlice->cof[0][i][j];
+      fprintf(currMB->p_Slice->p_Vid->json_trace, "%d,", (int)currSlice->cof[0][i][j]);
     }
+    fprintf(currMB->p_Slice->p_Vid->json_trace, "\n");
   }
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "        ],\n");
 
   if ((dec_picture->chroma_format_idc != YUV400) && (p_Vid->separate_colour_plane_flag == 0))
   {
     for (k = 0; k < 2; ++k)
     {
+      fprintf(currMB->p_Slice->p_Vid->json_trace, "        cr%d_out: [\n", k);
       for(i = 0; i < p_Vid->mb_cr_size_y; ++i)
       {
         for(j = 0;j < p_Vid->mb_cr_size_x; ++j)
         {
           dec_picture->imgUV[k][currMB->pix_c_y+i][currMB->pix_c_x + j] = (imgpel) currSlice->cof[k + 1][i][j];  
+          fprintf(currMB->p_Slice->p_Vid->json_trace, "%d,", (int)currSlice->cof[k + 1][i][j]);
         }
+        fprintf(currMB->p_Slice->p_Vid->json_trace, "\n");
       }
+      fprintf(currMB->p_Slice->p_Vid->json_trace, "        ],\n");
     }
   }
 

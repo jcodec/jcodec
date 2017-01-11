@@ -1442,6 +1442,11 @@ static void perform_mc_single_wp(Macroblock *currMB, ColorPlane pl, StorablePict
 
 static void perform_mc_single(Macroblock *currMB, ColorPlane pl, StorablePicture *dec_picture, int pred_dir, int i, int j, int block_size_x, int block_size_y)
 {
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "          { // block\n");
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "            x: %d,\n", i);
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "            y: %d,\n", j);
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "            w: %d,\n", block_size_x >> 2);
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "            h: %d,\n", block_size_y >> 2);
   VideoParameters *p_Vid = currMB->p_Vid;  
   Slice *currSlice = currMB->p_Slice;
   seq_parameter_set_rbsp_t *active_sps = currSlice->active_sps;
@@ -1522,6 +1527,7 @@ static void perform_mc_single(Macroblock *currMB, ColorPlane pl, StorablePicture
     mc_prediction(&currSlice->mb_pred[1][joff_cr], tmp_block_l0, block_size_y_cr, block_size_x_cr, ioff_cr);
     mc_prediction(&currSlice->mb_pred[2][joff_cr], tmp_block_l1, block_size_y_cr, block_size_x_cr, ioff_cr);
   }
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "          } // block\n");
 }
 
 static void perform_mc_bi_wp(Macroblock *currMB, ColorPlane pl, StorablePicture *dec_picture, int i, int j, int block_size_x, int block_size_y)

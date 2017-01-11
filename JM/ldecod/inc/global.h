@@ -950,6 +950,9 @@ typedef struct video_par
 /******************* end deprecative variables; ***************************************/
 
   struct dec_stat_parameters *dec_stats;
+  
+  /// STAN trace stuff
+  FILE* json_trace;
 } VideoParameters;
 
 

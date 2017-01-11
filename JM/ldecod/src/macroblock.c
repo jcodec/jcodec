@@ -7,7 +7,7 @@
  *
  * \author
  *    Main contributors (see contributors.h for copyright, address and affiliation details)
- *    - Inge Lille-Langøy               <inge.lille-langoy@telenor.com>
+ *    - Inge Lille-Langï¿½y               <inge.lille-langoy@telenor.com>
  *    - Rickard Sjoberg                 <rickard.sjoberg@era.ericsson.se>
  *    - Jani Lainema                    <jani.lainema@nokia.com>
  *    - Sebastian Purreiter             <sebastian.purreiter@mch.siemens.de>
@@ -1216,6 +1216,7 @@ void check_dp_neighbors (Macroblock *currMB)
 
 static int decode_one_component_i_slice(Macroblock *currMB, ColorPlane curr_plane, imgpel **currImg, StorablePicture *dec_picture)
 {
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "      { // component\n");
   //For residual DPCM
   currMB->ipmode_DPCM = NO_INTRA_PMODE; 
   if(currMB->mb_type == IPCM)
@@ -1226,6 +1227,7 @@ static int decode_one_component_i_slice(Macroblock *currMB, ColorPlane curr_plan
     mb_pred_intra4x4(currMB, curr_plane, currImg, dec_picture);
   else if (currMB->mb_type == I8MB) 
     mb_pred_intra8x8(currMB, curr_plane, currImg, dec_picture);
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "      } // component\n");
 
   return 1;
 }
@@ -1238,6 +1240,7 @@ static int decode_one_component_i_slice(Macroblock *currMB, ColorPlane curr_plan
  */
 static int decode_one_component_p_slice(Macroblock *currMB, ColorPlane curr_plane, imgpel **currImg, StorablePicture *dec_picture)
 {
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "      { // component\n");
   //For residual DPCM
   currMB->ipmode_DPCM = NO_INTRA_PMODE; 
   if(currMB->mb_type == IPCM)
@@ -1258,7 +1261,7 @@ static int decode_one_component_p_slice(Macroblock *currMB, ColorPlane curr_plan
     mb_pred_p_inter8x16(currMB, curr_plane, dec_picture);
   else
     mb_pred_p_inter8x8(currMB, curr_plane, dec_picture);
-
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "      } // component\n");
   return 1;
 }
 
@@ -1307,6 +1310,7 @@ static int decode_one_component_sp_slice(Macroblock *currMB, ColorPlane curr_pla
 
 static int decode_one_component_b_slice(Macroblock *currMB, ColorPlane curr_plane, imgpel **currImg, StorablePicture *dec_picture)
 {  
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "      { // component\n");
   //For residual DPCM
   currMB->ipmode_DPCM = NO_INTRA_PMODE; 
 
@@ -1344,7 +1348,7 @@ static int decode_one_component_b_slice(Macroblock *currMB, ColorPlane curr_plan
   }
   else
     mb_pred_b_inter8x8 (currMB, curr_plane, dec_picture);
-
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "      } // component\n");
  return 1;
 }
 
@@ -1401,6 +1405,7 @@ static void init_cur_imgy(VideoParameters *p_Vid,Slice *currSlice,int pl)
 
 int decode_one_macroblock(Macroblock *currMB, StorablePicture *dec_picture)
 {
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "    { // macroblock\n");
   Slice *currSlice = currMB->p_Slice;
   VideoParameters *p_Vid = currMB->p_Vid;  
 
@@ -1429,6 +1434,7 @@ int decode_one_macroblock(Macroblock *currMB, StorablePicture *dec_picture)
   {
     currSlice->decode_one_component(currMB, PLANE_Y, dec_picture->imgY, dec_picture);
   }
+  fprintf(currMB->p_Slice->p_Vid->json_trace, "    }, // macroblock\n");
 
   return 0;
 }

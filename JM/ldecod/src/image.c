@@ -732,6 +732,7 @@ void init_slice(VideoParameters *p_Vid, Slice *currSlice)
 
 void decode_slice(Slice *currSlice, int current_header)
 {
+  fprintf(currSlice->p_Vid->json_trace, "  { // slice\n");
   if (currSlice->active_pps->entropy_coding_mode_flag)
   {
     init_contexts  (currSlice);
@@ -750,7 +751,7 @@ void decode_slice(Slice *currSlice, int current_header)
   // setMB-Nr in case this slice was lost
   // if(currSlice->ei_flag)
   //   p_Vid->current_mb_nr = currSlice->last_mb_nr + 1;
-
+  fprintf(currSlice->p_Vid->json_trace, "  }, // slice\n");
 }
 
 
@@ -814,6 +815,11 @@ int decode_one_frame(DecoderParams *pDecoder)
   Slice *currSlice; // = p_Vid->currentSlice;
   Slice **ppSliceList = p_Vid->ppSliceList;
   int iSliceNo;
+  
+  char buf[256];
+  sprintf(buf, "/tmp/frame_%d.json", p_Vid->frame_no);
+  p_Vid->json_trace = fopen(buf, "w");
+  fprintf(p_Vid->json_trace, "{ // frame\n");
   
   //read one picture first;
   p_Vid->iSliceNumOfCurrPic=0;
@@ -959,6 +965,11 @@ int decode_one_frame(DecoderParams *pDecoder)
   exit_picture(p_Vid, &p_Vid->dec_picture);
   p_Vid->previous_frame_num = ppSliceList[0]->frame_num;
   return (iRet);
+  
+  fprintf(p_Vid->json_trace, "}, // frame\n");
+  if (p_Vid->json_trace != NULL) {
+    fclose(p_Vid->json_trace);
+  }
 }
 
 /*!
@@ -1200,7 +1211,7 @@ void find_snr(VideoParameters *p_Vid,
     ret = read(*p_ref, buf, comp_size_x[k] * comp_size_y[k] * symbol_size_in_bytes);
     if (ret != comp_size_x[k] * comp_size_y[k] * symbol_size_in_bytes)
     {
-      printf ("Warning: could not read from reconstructed file\n");
+      fprintf (stderr, "Warning: could not read from reconstructed file\n");
       fast_memset (buf, 0, comp_size_x[k] * comp_size_y[k] * symbol_size_in_bytes);
       close(*p_ref);
       *p_ref = -1;
@@ -1232,7 +1243,7 @@ void find_snr(VideoParameters *p_Vid,
   // picture error concealment
   if(p->concealed_pic)
   {
-    fprintf(stdout,"%04d(P)  %8d %5d %5d %7.4f %7.4f %7.4f  %s %5d\n",
+    fprintf(stderr,"%04d(P)  %8d %5d %5d %7.4f %7.4f %7.4f  %s %5d\n",
       p_Vid->frame_no, p->frame_poc, p->pic_num, p->qp,
       snr->snr[0], snr->snr[1], snr->snr[2], yuv_types[p->chroma_format_idc], 0);
   }
@@ -1252,7 +1263,7 @@ void reorder_lists(Slice *currSlice)
     if (p_Vid->no_reference_picture == currSlice->listX[0][currSlice->num_ref_idx_active[LIST_0] - 1])
     {
       if (p_Vid->non_conforming_stream)
-        printf("RefPicList0[ %d ] is equal to 'no reference picture'\n", currSlice->num_ref_idx_active[LIST_0] - 1);
+        fprintf(stderr, "RefPicList0[ %d ] is equal to 'no reference picture'\n", currSlice->num_ref_idx_active[LIST_0] - 1);
       else
         error("RefPicList0[ num_ref_idx_l0_active_minus1 ] is equal to 'no reference picture', invalid bitstream",500);
     }
@@ -1269,7 +1280,7 @@ void reorder_lists(Slice *currSlice)
     if (p_Vid->no_reference_picture == currSlice->listX[1][currSlice->num_ref_idx_active[LIST_1]-1])
     {
       if (p_Vid->non_conforming_stream)
-        printf("RefPicList1[ %d ] is equal to 'no reference picture'\n", currSlice->num_ref_idx_active[LIST_1] - 1);
+        fprintf(stderr, "RefPicList1[ %d ] is equal to 'no reference picture'\n", currSlice->num_ref_idx_active[LIST_1] - 1);
       else
         error("RefPicList1[ num_ref_idx_l1_active_minus1 ] is equal to 'no reference picture', invalid bitstream",500);
     }
@@ -1289,11 +1300,11 @@ void reorder_lists(Slice *currSlice)
     {
       if(currSlice->listXsize[0]>0)
       {
-        printf("\n");
-        printf(" ** (FinalViewID:%d) %s Ref Pic List 0 ****\n", currSlice->view_id, currSlice->structure==FRAME ? "FRM":(currSlice->structure==TOP_FIELD ? "TOP":"BOT"));
+        fprintf(stderr, "\n");
+        fprintf(stderr, " ** (FinalViewID:%d) %s Ref Pic List 0 ****\n", currSlice->view_id, currSlice->structure==FRAME ? "FRM":(currSlice->structure==TOP_FIELD ? "TOP":"BOT"));
         for(i=0; i<(unsigned int)(currSlice->listXsize[0]); i++)  //ref list 0
         {
-          printf("   %2d -> POC: %4d PicNum: %4d ViewID: %d\n", i, currSlice->listX[0][i]->poc, currSlice->listX[0][i]->pic_num, currSlice->listX[0][i]->view_id);
+          fprintf(stderr, "   %2d -> POC: %4d PicNum: %4d ViewID: %d\n", i, currSlice->listX[0][i]->poc, currSlice->listX[0][i]->pic_num, currSlice->listX[0][i]->view_id);
         }
       }
     }
@@ -1309,21 +1320,21 @@ void reorder_lists(Slice *currSlice)
     if((p_Vid->profile_idc == MVC_HIGH || p_Vid->profile_idc == STEREO_HIGH) && currSlice->current_slice_nr==0)
     {
       if((currSlice->listXsize[0]>0) || (currSlice->listXsize[1]>0))
-        printf("\n");
+        fprintf(stderr, "\n");
       if(currSlice->listXsize[0]>0)
       {
-        printf(" ** (FinalViewID:%d) %s Ref Pic List 0 ****\n", currSlice->view_id, currSlice->structure==FRAME ? "FRM":(currSlice->structure==TOP_FIELD ? "TOP":"BOT"));
+        fprintf(stderr, " ** (FinalViewID:%d) %s Ref Pic List 0 ****\n", currSlice->view_id, currSlice->structure==FRAME ? "FRM":(currSlice->structure==TOP_FIELD ? "TOP":"BOT"));
         for(i=0; i<(unsigned int)(currSlice->listXsize[0]); i++)  //ref list 0
         {
-          printf("   %2d -> POC: %4d PicNum: %4d ViewID: %d\n", i, currSlice->listX[0][i]->poc, currSlice->listX[0][i]->pic_num, currSlice->listX[0][i]->view_id);
+          fprintf(stderr, "   %2d -> POC: %4d PicNum: %4d ViewID: %d\n", i, currSlice->listX[0][i]->poc, currSlice->listX[0][i]->pic_num, currSlice->listX[0][i]->view_id);
         }
       }
       if(currSlice->listXsize[1]>0)
       {
-        printf(" ** (FinalViewID:%d) %s Ref Pic List 1 ****\n", currSlice->view_id, currSlice->structure==FRAME ? "FRM":(currSlice->structure==TOP_FIELD ? "TOP":"BOT"));
+        fprintf(stderr, " ** (FinalViewID:%d) %s Ref Pic List 1 ****\n", currSlice->view_id, currSlice->structure==FRAME ? "FRM":(currSlice->structure==TOP_FIELD ? "TOP":"BOT"));
         for(i=0; i<(unsigned int)(currSlice->listXsize[1]); i++)  //ref list 1
         {
-          printf("   %2d -> POC: %4d PicNum: %4d ViewID: %d\n", i, currSlice->listX[1][i]->poc, currSlice->listX[1][i]->pic_num, currSlice->listX[1][i]->view_id);
+          fprintf(stderr, "   %2d -> POC: %4d PicNum: %4d ViewID: %d\n", i, currSlice->listX[1][i]->poc, currSlice->listX[1][i]->pic_num, currSlice->listX[1][i]->view_id);
         }
       }
     }
@@ -1417,7 +1428,7 @@ process_nalu:
         {
           if (nalu->nal_unit_type != NALU_TYPE_IDR)
           {
-            printf("Warning: Decoding does not start with an IDR picture.\n");
+            fprintf(stderr, "Warning: Decoding does not start with an IDR picture.\n");
             p_Vid->non_conforming_stream = 1;
           }
           else
@@ -1650,7 +1661,7 @@ process_nalu:
 
         if ((slice_id_b != slice_id_a) || (nalu->lost_packets))
         {
-          printf ("Waning: got a data partition B which does not match DP_A (DP loss!)\n");
+          fprintf (stderr, "Waning: got a data partition B which does not match DP_A (DP loss!)\n");
           currSlice->dpB_NotPresent =1; 
           currSlice->dpC_NotPresent =1; 
         }
@@ -1684,7 +1695,7 @@ process_nalu:
         slice_id_c  = read_ue_v("NALU: DP_C slice_id", currStream, &p_Dec->UsedBits);
         if ((slice_id_c != slice_id_a)|| (nalu->lost_packets))
         {
-          printf ("Warning: got a data partition C which does not match DP_A(DP loss!)\n");
+          fprintf (stderr, "Warning: got a data partition C which does not match DP_A(DP loss!)\n");
           //currSlice->dpB_NotPresent =1;
           currSlice->dpC_NotPresent =1;
         }
@@ -1713,13 +1724,13 @@ process_nalu:
     case NALU_TYPE_DPB:
       if (p_Inp->silent == FALSE)
       {
-        printf ("found data partition B without matching DP A, discarding\n");
+        fprintf (stderr, "found data partition B without matching DP A, discarding\n");
       }
       break;
     case NALU_TYPE_DPC:
       if (p_Inp->silent == FALSE)
       {
-        printf ("found data partition C without matching DP A, discarding\n");
+        fprintf (stderr, "found data partition C without matching DP A, discarding\n");
       }
       break;
     case NALU_TYPE_SEI:
@@ -1770,19 +1781,19 @@ process_nalu:
       else
       {
         if (p_Inp->silent == FALSE)
-          printf ("Found Subsequence SPS NALU. Ignoring.\n");
+          fprintf (stderr, "Found Subsequence SPS NALU. Ignoring.\n");
       }
       break;
     case NALU_TYPE_SLC_EXT:
       //printf ("Found NALU_TYPE_SLC_EXT\n");
       if (p_Inp->DecodeAllLayers == 0 &&  (p_Inp->silent == FALSE))
-        printf ("Found SVC extension NALU (%d). Ignoring.\n", (int) nalu->nal_unit_type);
+        fprintf (stderr, "Found SVC extension NALU (%d). Ignoring.\n", (int) nalu->nal_unit_type);
       break;
 #endif
     default:
       {
         if (p_Inp->silent == FALSE)
-          printf ("Found NALU type %d, len %d undefined, ignore NALU, moving on\n", (int) nalu->nal_unit_type, (int) nalu->len);
+          fprintf (stderr, "Found NALU type %d, len %d undefined, ignore NALU, moving on\n", (int) nalu->nal_unit_type, (int) nalu->len);
       }
       break;
     }
@@ -2071,16 +2082,16 @@ void exit_picture(VideoParameters *p_Vid, StorablePicture **dec_picture)
     {
       SNRParameters   *snr = p_Vid->snr;
       if (p_Vid->p_ref != -1)
-        fprintf(stdout,"%05d(%s%5d %5d %5d %8.4f %8.4f %8.4f  %s %7d\n",
+        fprintf(stderr,"%05d(%s%5d %5d %5d %8.4f %8.4f %8.4f  %s %7d\n",
         p_Vid->frame_no, p_Vid->cslice_type, frame_poc, pic_num, qp, snr->snr[0], snr->snr[1], snr->snr[2], yuvFormat, (int) tmp_time);
       else
-        fprintf(stdout,"%05d(%s%5d %5d %5d                             %s %7d\n",
+        fprintf(stderr,"%05d(%s%5d %5d %5d                             %s %7d\n",
         p_Vid->frame_no, p_Vid->cslice_type, frame_poc, pic_num, qp, yuvFormat, (int)tmp_time);
     }
     else
-      fprintf(stdout,"Completed Decoding frame %05d.\r",snr->frame_ctr);
+      fprintf(stderr,"Completed Decoding frame %05d.\r",snr->frame_ctr);
 
-    fflush(stdout);
+    fflush(stderr);
 
     if(slice_type == I_SLICE || slice_type == SI_SLICE || slice_type == P_SLICE || refpic)   // I or P pictures
     {
