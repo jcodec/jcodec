@@ -1,0 +1,167 @@
+Fidelity Range Extensions Development
+======================================================================
+
+for later FRExt Changes see CHANGES.txt
+
+
+From v.2.1 to v.2.2
+----------------
+- fixed bug on wrong assignment of luma_transform_size_8x8_flag when intra coding is selected in inter pictures for CAVLC
+- changed normalization for SAD cost for 4x4 and 8x8
+- allow Intra16x16 to be included in Transform8x8Mode=2
+- changed calculation of coefficient cost for dct_luma8x8 for CAVLC
+- fixed bug on difference in debug and release mode for I pictures in encoder
+- fixed bug on initialisation error for cost when transform 8x8 mode is 0 during P coding in encoder
+- fixed CAVLC decoding of level > 16
+- merge up to JM 8.6
+
+From v.2.0a to v.2.1
+----------------
+- Residue Color Transform(RCT) is implemented (can be used for RGB-sequences)
+- file I/O part is modified to support 8-9-9 bit file input (luma 8 bit, chroma 9 bit)
+- added the maximum pixel value for chroma part (different bitdepth values for luma and chroma)
+- encoder: fixed the difference between  the FRExt spec and  JM  code  for determining ctxIdxInc for significant_.. (field coded macroblocks).
+- encoder: fixed DC_PRED initialisation of intrapred[][]-array for non-4x4/8x8 intra MBs
+- encoder: fixed overflowing of diff-variables while distortion calculation (for huge frame sizes)
+- encoder: fixed clipping of chroma QP value in dct_chroma()
+- encoder: fixed pre-filtering for 8x8 intra
+- encoder: the range for delta_qp is extended (depends on YUV-Format)
+- encoder: fixed pos2ctx_map and pos2ctx_last context mapping for chroma YUV422/YUV444
+- decoder: fixed conditional statement for qp_per_uv in CHROMA DC YUV444 path
+- decoder: 64 bit file access for output and reference file (KS)
+- decoder: complete VUI parsing (fixes streams with _real_ VUI data) (KS)
+- decoder: known bug - QP report
+
+From v.2.0 to v.2.0a
+----------------
+- in config file: luma/chroma bitdepth info is extended to 12 bit
+- CBP intra/inter mapping for 8x8-intra macroblocks is fixed
+- CABAC context switching (frame/field) while MBAFF mode is fixed (in write_significance_map())
+
+From v.1.9c to v.2.0
+----------------
+- updated to JM reference software ver. 8.4 (all corresponding changes are in CHANGES.TXT)
+- merged  JM 8.5 POC mode 1 fix
+- added new CABAC ctx ini-tables
+- CAVLC coding mode support for 8x8 transform 
+- PicUnitBitDepth is changed to BitDepthLuma and BitDepthChroma (encoder cfg-file changed)
+- FREXT chrominance qp offsets CbQPOffset and CrQPOffset are added (encoder cfg-file changed)
+- FREXT profile idc numbers are updated (beginning from 100 now) and through #define implemented
+- fixes for lossless mode: rgb-sequence reading (cfg file is updated with 'RGBinput' parameter)
+- bug fixed for writing/reading of trasform_size_8x8_flag when DIRECT-mode and DirectInferenceFlag is disabled
+- encoder: bit setting for cbp_blk-chroma is alligned to decoder method
+- decoder: error concealment is aligned to FREXT but not tested
+- decoder: fixed bug of encoder-decoder mismatch in MBAFF mode
+
+
+From v.1.9b to v.1.9c
+----------------
+- setting of available Q-matrix pic scaling list is changed
+- decoder: added new default Q-matrix (in v.1.9a was not complete implemented)
+- added lossless_qpprime_y_zero funcionality (encoder config file is also extended)
+- decoder: bug fixed in derivation of QPy while mb_qp_delta reading
+
+From v.1.9a to v.1.9b
+----------------
+- encoder: bug fixed for B_Direct_8x8 (while Non-RDOpt Mode)
+
+From v.1.9 to v.1.9a
+----------------
+- added new default Q-matrix
+- encoder: bug fixed, restoring of motion vector data for P8x8 MBs with transform size 4x4
+- encoder: bug fixed in YUV422 transform and quantizing process (q_bits422, qp_const422 added)
+- encoder: changed the mode choosing for 8x8 and 4x4 transform sizes for P8x8-MBtype (now modes 0(B_DIRECT_8x8) and/or 4 can be taken for 8x8 transform)
+- changed transform_size_8x8_flag bitstream output to intra-part and inter-part(with checking for cbp_luma==0)
+- changed frame statistic output for 8x8 and 4x4 transform separation (with considering of CBP_luma==0)
+
+
+From v.1.8 to v.1.9
+----------------
+- TRANSFORM SIZE FLAG Context Models for P-Frame are extended (CABAC)
+- fixed qp_const assigning for luma coeff reading in decoder
+- removed rounding for chroma (YUV 420) while dequantizing (refer to FRExt Spec.)
+- fixed QP assigning for Macroblock after Delta-QP reading in decoder
+- fixed DIAG_DOWN_RIGHT pred mode for 8x8 intra pred
+- removed CBP writing when B-Skip and CABAC while rdopt
+- code restructuring: writeMBHeader() is changed to writeMBLayer()
+- Changed slice-based rounding offset to MB-based rounding offset in the encoder  ( this improves significantly picture quality, can we keep this way? )
+- When Transform8x8Mode==2, Direct_8x8 mode sub-macroblock type is disabled. 
+- Configuration file encoder_highquality_HD.cfg is added to assist encoding of high-res HD content.
+
+
+From v.1.7 to v.1.8
+----------------
+- inserted syntax for Constraint_set3 flag in encoder and decoder
+- fixed syntax error during luma 8x8 coefficient decoding when the total number of coefficient is 64
+- changed syntax for transform_size_8x8_flag to be placed at the correct location for mb_type with sub_mb_pred for encoder and decoder to follow the standards
+- changed order of 8x8 transform direction to performing vertical direction first instead of horizontal first.
+- added condition to check for intra-coded neighbours when constrained intra prediction flag is on,  for intra 8x8 coding for encoder
+- added setting of high cost for temporal direct mode when 8x8transform only is chosen and co-located pic is not available in encoder
+- changed high cost for direct mode when temporal direct mode is not allowed in encoder. Previous value will cause overflow in total cost
+- fixed B_skip mode to stop sending/reading of 8x8 transform flag in encoder and decoder
+- changed encoding using 8x8transform to be only equal to 1 when Transform8x8Mode in cfg file is equal to 2 for RD-on for encoder
+- skipped selecting of B_skip mode with 8x8transform_flag=1 when RD-on in encoder because it is not valid mode
+- fixed setting of NoSubMbPartSizeLessThan8x8Flag to zero when Intra16x16 mode is chosen in encoder to prevent encoder sending of 8x8transform flag
+
+- fixed sending (in encoder) and receiving (in decoder) of q_matrix values only in zig_zag scan
+- fixed the correct mapping of matrix data to quantisation values in encoder and decoder
+- fixed using of wrong quantized levels for de-quantisation in encoder and decoder
+- switch order of getting transform values and inverse DC chroma420 level in encoder and decoder
+- removed Intra8x8_ChromaU, Intra8x8_ChromaV, Inter8x8_ChromaU, Inter8x8_ChromaV matrix in encoder and decoder
+- changed total matrix list to 8 according to standards
+- changed scalingList routine to follow the style stated in the standards in encoder and decoder
+- changed variables' names in encoder and decoder:
+  Old Names                              -> New Names
+  scaling_matrix_present_flag            -> seq_scaling_matrix_present_flag
+  scaling_list_present_flag              -> seq_scaling_list_present_flag
+  scaling_matrix_refinement_present_flag -> pic_scaling_matrix_present_flag
+  scaling_list_refinement_present_flag   -> pic_scaling_list_present_flag
+
+- changed assigning of default matrix and fall-back rule for q matrix
+- added syntax in sps for chroma_format_idc and lossless_qpprime in encoder and decoder
+- changed location of pps fidelity range extension syntax to end of pps in encoder and decoder
+
+From v.1.6 to v.1.7
+----------------
+- changed Chroma Intra DC calculation for YUV422 and YUV444
+
+From v.1.3 to v.1.6
+----------------
+- added YUV422, YUV444 Formats
+
+V.1.3
+----------------
+- added Q-matrix syntax and semantics in encoder and decoder
+- Q-matrix parameters are obtained from a file set in encoder.cfg
+- Q-matrix flags can be set in the encoder.cfg
+- fixed calculating of cost for Intra8x8 using SATD8x8
+- 8x8 transform is now able to be used with rd-off
+- New option for Transform8x8Mode, 2 for rd-off 8x8 transform mode only
+- changed getting of qp_const in dct to be macroblock-based instead of slice-based
+- changed output display to show Intra MB for all coding type
+- fixed bug on I8MB, storing of ipredmode in wrong location
+- fixed bug on I8MB, include setting of ipredmode to DC if Inter 8x8 is chosen
+- fixed ref idx for direct mode
+- updated changes from jm81a
+
+
+v.1.2
+----------------
+- new PROFILE_IDCs (for Fidelity Extensions) are added
+- Transform8x8Mode can be managed only at encoder site
+- LowPassForIntra8x8 is turned off
+- '#ifdef MIXED_TRANSFORM_SIZES' removed
+- small code resructuring and cleaning
+
+
+v.1.1
+----------------
+- QP scaling added (negative QPs are possible now)
+- lambda(rdcost) scaling added
+- luma/chroma bit depth variables to SPS added
+
+v.1.0
+----------------
+- Mixed Transform Sizes and Variable Bit Depth (v.6.0) added 
+
+
