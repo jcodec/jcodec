@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LDECOD="$HOME/JM/bin/ldecod.exe"
+LDECOD="JM/h264dec"
 
 INPUT_FILE="$1"
 OUTPUT_FILE="$2"
@@ -26,6 +26,7 @@ IntraProfileDeblocking = 1\n\
 DecFrmNum = 50\n\
 DecodeAllLayers = 0" > $CONFIG
 
+(cd JM; make)
 $LDECOD -d /tmp/dec.cfg 2>&1 | tee /tmp/decode.log
 
 rm $BITSTREAM_FILE

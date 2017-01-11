@@ -23,7 +23,7 @@ OPENMP?= 0
 
 DEPEND= dependencies
 
-BINDIR= ../bin
+BINDIR= ..
 INCDIR= inc
 SRCDIR= src
 OBJDIR= obj
@@ -68,7 +68,7 @@ OBJSUF= .o$(SUFFIX)
 SRC=    $(wildcard $(SRCDIR)/*.c) 
 ADDSRC= $(wildcard $(ADDSRCDIR)/*.c)
 OBJ=    $(SRC:$(SRCDIR)/%.c=$(OBJDIR)/%.o$(SUFFIX)) $(ADDSRC:$(ADDSRCDIR)/%.c=$(OBJDIR)/%.o$(SUFFIX)) 
-BIN=    $(BINDIR)/$(NAME)$(SUFFIX).exe
+BIN=    $(BINDIR)/h264dec
 
 .PHONY: default distclean clean tags depend
 
