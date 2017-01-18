@@ -6,6 +6,7 @@ import org.jcodec.api.NotImplementedException;
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vpx.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vpx.VP8Util.SubblockConstants;
+import org.jcodec.common.model.Picture8Bit;
 
 import java.lang.System;
 import java.util.Arrays;
@@ -811,5 +812,40 @@ public class Macroblock {
             residue = VP8DCT.decodeDCT(adjustedValues);
 
         }
+    }
+
+    public void put(int mbRow, int mbCol, Picture8Bit p) {
+        byte[] luma = p.getPlaneData(0);
+        byte[] cb = p.getPlaneData(1);
+        byte[] cr = p.getPlaneData(2);
+        int strideLuma = p.getPlaneWidth(0);
+        int strideChroma = p.getPlaneWidth(1);
+        for (int lumaRow = 0; lumaRow < 4; lumaRow++)
+            for (int lumaCol = 0; lumaCol < 4; lumaCol++)
+                for (int lumaPRow = 0; lumaPRow < 4; lumaPRow++)
+                    for (int lumaPCol = 0; lumaPCol < 4; lumaPCol++) {
+                        int y = (mbRow << 4) + (lumaRow << 2) + lumaPRow;
+                        int x = (mbCol << 4) + (lumaCol << 2) + lumaPCol;
+                        if (x >= strideLuma || y >= luma.length / strideLuma)
+                            continue;
+
+                        int yy = ySubblocks[lumaRow][lumaCol].val[lumaPRow * 4 + lumaPCol];
+                        luma[strideLuma * y + x] = (byte) (yy - 128);
+                    }
+
+        for (int chromaRow = 0; chromaRow < 2; chromaRow++)
+            for (int chromaCol = 0; chromaCol < 2; chromaCol++)
+                for (int chromaPRow = 0; chromaPRow < 4; chromaPRow++)
+                    for (int chromaPCol = 0; chromaPCol < 4; chromaPCol++) {
+                        int y = (mbRow << 3) + (chromaRow << 2) + chromaPRow;
+                        int x = (mbCol << 3) + (chromaCol << 2) + chromaPCol;
+                        if (x >= strideChroma || y >= cb.length / strideChroma)
+                            continue;
+
+                        int u = uSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
+                        int v = vSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
+                        cb[strideChroma * y + x] = (byte) (u - 128);
+                        cr[strideChroma * y + x] = (byte) (v - 128);
+                    }
     }
 }

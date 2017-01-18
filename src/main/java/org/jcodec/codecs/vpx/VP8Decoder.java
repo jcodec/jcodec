@@ -23,9 +23,6 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -34,10 +31,6 @@ import java.nio.ByteBuffer;
  * 
  */
 public class VP8Decoder extends VideoDecoder {
-
-    private Macroblock[][] mbs;
-    private int width;
-    private int height;
 
     @Override
     public Picture8Bit decodeFrame8Bit(ByteBuffer frame, byte[][] buffer) {
@@ -55,14 +48,13 @@ public class VP8Decoder extends VideoDecoder {
 
         int twoBytesWidth = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
         int twoBytesHeight = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
-        width = (twoBytesWidth & 0x3fff);
-        height = (twoBytesHeight & 0x3fff);
-
+        int width = (twoBytesWidth & 0x3fff);
+        int height = (twoBytesHeight & 0x3fff);
         int numberOfMBRows = getMacroblockCount(height);
         int numberOfMBCols = getMacroblockCount(width);
 
         /** Init macroblocks and subblocks */
-        mbs = new Macroblock[numberOfMBRows + 2][numberOfMBCols + 2];
+        Macroblock[][] mbs = new Macroblock[numberOfMBRows + 2][numberOfMBCols + 2];
         for (int row = 0; row < numberOfMBRows + 2; row++)
             for (int col = 0; col < numberOfMBCols + 2; col++)
                 mbs[row][col] = new Macroblock(row, col);
@@ -218,45 +210,13 @@ public class VP8Decoder extends VideoDecoder {
 
         Picture8Bit p = Picture8Bit.createPicture8Bit(width, height, buffer, ColorSpace.YUV420);
 
-        byte[] luma = buffer[0];
-        byte[] cb = buffer[1];
-        byte[] cr = buffer[2];
         int mbWidth = getMacroblockCount(width);
         int mbHeight = getMacroblockCount(height);
-        int strideLuma = mbWidth * 16;
-        int strideChroma = mbWidth * 8;
 
         for (int mbRow = 0; mbRow < mbHeight; mbRow++) {
             for (int mbCol = 0; mbCol < mbWidth; mbCol++) {
                 Macroblock mb = mbs[mbRow + 1][mbCol + 1];
-
-                for (int lumaRow = 0; lumaRow < 4; lumaRow++)
-                    for (int lumaCol = 0; lumaCol < 4; lumaCol++)
-                        for (int lumaPRow = 0; lumaPRow < 4; lumaPRow++)
-                            for (int lumaPCol = 0; lumaPCol < 4; lumaPCol++) {
-                                int y = (mbRow << 4) + (lumaRow << 2) + lumaPRow;
-                                int x = (mbCol << 4) + (lumaCol << 2) + lumaPCol;
-                                if (x >= strideLuma || y >= luma.length / strideLuma)
-                                    continue;
-
-                                int yy = mb.ySubblocks[lumaRow][lumaCol].val[lumaPRow * 4 + lumaPCol];
-                                luma[strideLuma * y + x] = (byte) (yy - 128);
-                            }
-
-                for (int chromaRow = 0; chromaRow < 2; chromaRow++)
-                    for (int chromaCol = 0; chromaCol < 2; chromaCol++)
-                        for (int chromaPRow = 0; chromaPRow < 4; chromaPRow++)
-                            for (int chromaPCol = 0; chromaPCol < 4; chromaPCol++) {
-                                int y = (mbRow << 3) + (chromaRow << 2) + chromaPRow;
-                                int x = (mbCol << 3) + (chromaCol << 2) + chromaPCol;
-                                if (x >= strideChroma || y >= cb.length / strideChroma)
-                                    continue;
-
-                                int u = mb.uSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
-                                int v = mb.vSubblocks[chromaRow][chromaCol].val[chromaPRow * 4 + chromaPCol];
-                                cb[strideChroma * y + x] = (byte) (u - 128);
-                                cr[strideChroma * y + x] = (byte) (v - 128);
-                            }
+                mb.put(mbRow, mbCol, p);
             }
         }
         return p;
@@ -278,8 +238,8 @@ public class VP8Decoder extends VideoDecoder {
 
         int twoBytesWidth = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
         int twoBytesHeight = (frame.get() & 0xFF) | (frame.get() & 0xFF) << 8;
-        width = (twoBytesWidth & 0x3fff);
-        height = (twoBytesHeight & 0x3fff);
+        int width = (twoBytesWidth & 0x3fff);
+        int height = (twoBytesHeight & 0x3fff);
 
         return new VideoCodecMeta(new Size(width, height));
     }
