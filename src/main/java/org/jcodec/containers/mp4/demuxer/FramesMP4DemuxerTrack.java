@@ -7,6 +7,9 @@ import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.jcodec.codecs.aac.AACUtils;
+import org.jcodec.codecs.aac.ADTSParser;
+import org.jcodec.codecs.aac.ADTSParser.Header;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.AudioCodecMeta;
@@ -14,7 +17,9 @@ import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.TrackType;
 import org.jcodec.common.VideoCodecMeta;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
@@ -60,6 +65,8 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     private MovieBox movie;
 
+    private ByteBuffer codecPrivate;
+
     private AvcCBox avcC;
 
     public FramesMP4DemuxerTrack(MovieBox mov, TrakBox trak, SeekableByteChannel input) {
@@ -83,6 +90,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         if (getCodec() == Codec.H264) {
             avcC = H264Utils.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
         }
+        codecPrivate = getCodecPrivate();
     }
 
     @Override
@@ -138,8 +146,9 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
 
         MP4Packet pkt = new MP4Packet(result == null ? null : convertPacket(result),
-                mediaToEdited(box, realPts, movie.getTimescale()), timescale, duration, curFrame, sync, null, 0,
-                realPts, sampleToChunks[stscInd].getEntry() - 1, pktPos, size, psync);
+                mediaToEdited(box, realPts, movie.getTimescale()), timescale, duration, curFrame,
+                sync ? FrameType.KEY : FrameType.INTER, null, 0, realPts, sampleToChunks[stscInd].getEntry() - 1,
+                pktPos, size, psync);
 
         offInChunk += size;
 
@@ -158,8 +167,22 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     @Override
     public ByteBuffer convertPacket(ByteBuffer result) {
-        if (avcC != null)
-            return H264Utils.decodeMOVPacket(result, avcC);
+        if (codecPrivate != null) {
+            if (getCodec() == Codec.H264) {
+                ByteBuffer annexbCoded = H264Utils.decodeMOVPacket(result, avcC);
+                if (H264Utils.isByteBufferIDRSlice(annexbCoded)) {
+                    return NIOUtils.combine(codecPrivate, annexbCoded);
+                } else {
+                    return annexbCoded;
+                }
+            } else if (getCodec() == Codec.AAC) {
+                // !!! crcAbsent, numAACFrames
+                Header adts = AACUtils.streamInfoToADTS(codecPrivate, true, 1, result.remaining());
+                ByteBuffer adtsRaw = ByteBuffer.allocate(7);
+                ADTSParser.write(adts, adtsRaw);
+                return NIOUtils.combine(adtsRaw, result);
+            }
+        }
         return result;
     }
 
@@ -222,6 +245,19 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     @Override
     public long getFrameCount() {
         return sizes.length;
+    }
+    
+    public ByteBuffer getCodecPrivate() {
+        Codec codec = getCodec();
+        if (codec == Codec.H264) {
+            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
+            return H264Utils.avcCToAnnexB(avcC);
+
+        } else if(codec == Codec.AAC) {
+            return AACUtils.getCodecPrivate(getSampleEntries()[0]);
+        }
+        // This codec does not have private section
+        return null;
     }
 
     @Override

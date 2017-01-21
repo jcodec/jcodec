@@ -13,6 +13,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -102,7 +103,7 @@ public class SequenceEncoder8Bit {
 
         // Add packet to video track
         outTrack.addFrame(Packet.createPacket(result, timestamp, fps.getNum(), fps.getDen(), frameNo,
-                ef.isKeyFrame(), null));
+                ef.isKeyFrame() ? FrameType.KEY : FrameType.INTER, null));
 
         timestamp += fps.getDen();
         frameNo++;

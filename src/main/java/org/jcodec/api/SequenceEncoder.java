@@ -15,6 +15,7 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.ColorUtil;
@@ -77,7 +78,8 @@ public class SequenceEncoder {
         ByteBuffer result = ef.getData();
 
         // Add packet to video track
-        outTrack.addFrame(Packet.createPacket(result, frameNo, 25, 1, frameNo, ef.isKeyFrame(), null));
+        outTrack.addFrame(Packet.createPacket(result, frameNo, 25, 1, frameNo,
+                ef.isKeyFrame() ? FrameType.KEY : FrameType.INTER, null));
 
         frameNo++;
     }

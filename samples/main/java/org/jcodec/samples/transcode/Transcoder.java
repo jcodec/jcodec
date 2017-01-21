@@ -12,6 +12,7 @@ import java.util.List;
 import org.jcodec.codecs.aac.AACDecoder;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Encoder;
+import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.png.PNGDecoder;
@@ -19,12 +20,14 @@ import org.jcodec.codecs.png.PNGEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.raw.RAWVideoDecoder;
-import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.codecs.vpx.IVFMuxer;
+import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.codecs.wav.WavMuxer;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioDecoder;
+import org.jcodec.common.AudioEncoder;
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
@@ -45,6 +48,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
@@ -99,6 +103,7 @@ public class Transcoder {
     private DemuxerTrack audioInputTrack;
     private MuxerTrack audioOutputTrack;
     private AudioDecoder audioDecoder;
+    private AudioEncoder audioEncoder;
     private VideoDecoder videoDecoder;
     private VideoEncoder videoEncoder;
 
@@ -125,6 +130,16 @@ public class Transcoder {
         this.videoCodecCopy = videoCodecCopy;
         this.audioCodecCopy = audioCodecCopy;
         this.extraFilters = extraFilters;
+        
+        // Inferring video-only or audio-only output
+        if(!outputFormat.isVideo()) {
+            this.inputVideoCodec = null;
+            this.outputVideoCodec = null;
+        }
+        if(!outputFormat.isAudio()) {
+            this.inputAudioCodec = null;
+            this.outputAudioCodec = null;
+        }
     }
 
     public Format getInputFormat() {
@@ -261,20 +276,24 @@ public class Transcoder {
                 }
             }
         }
-        List<? extends DemuxerTrack> videoTracks = demuxVideo.getVideoTracks();
-        if (inputVideoCodec != null && videoTracks.size() > 0) {
-            videoInputTrack = videoTracks.get(inputVideoCodec.v1);
-            DemuxerTrackMeta meta = videoInputTrack.getMeta();
-            if (meta != null)
-                videoDecoder = createVideoDecoder(inputVideoCodec.v2, downscale, meta.getCodecPrivate(),
-                        meta.getVideoCodecMeta());
+        if (demuxVideo != null && inputVideoCodec != null) {
+            List<? extends DemuxerTrack> videoTracks = demuxVideo.getVideoTracks();
+            if (videoTracks.size() > 0) {
+                videoInputTrack = videoTracks.get(inputVideoCodec.v1);
+                DemuxerTrackMeta meta = videoInputTrack.getMeta();
+                if (meta != null)
+                    videoDecoder = createVideoDecoder(inputVideoCodec.v2, downscale, meta.getCodecPrivate(),
+                            meta.getVideoCodecMeta());
+            }
         }
-        List<? extends DemuxerTrack> audioTracks = demuxVideo.getAudioTracks();
-        if (audioTracks.size() > 0 && inputAudioCodec != null) {
-            audioInputTrack = audioTracks.get(inputAudioCodec.v1);
-            DemuxerTrackMeta meta = audioInputTrack.getMeta();
-            if (meta != null)
-                audioDecoder = createAudioDecoder(meta.getCodecPrivate());
+        if (demuxAudio != null && inputAudioCodec != null) {
+            List<? extends DemuxerTrack> audioTracks = demuxAudio.getAudioTracks();
+            if (audioTracks.size() > 0) {
+                audioInputTrack = audioTracks.get(inputAudioCodec.v1);
+                DemuxerTrackMeta meta = audioInputTrack.getMeta();
+                if (meta != null)
+                    audioDecoder = createAudioDecoder(meta.getCodecPrivate());
+            }
         }
     }
 
@@ -310,7 +329,7 @@ public class Transcoder {
 
     private MPEGDemuxerTrack openTSTrack(MPSDemuxer demuxerVideo, Integer selectedTrack) {
         int trackNo = 0;
-        for (MPEGDemuxerTrack track : demuxerVideo.getVideoTracks()) {
+        for (MPEGDemuxerTrack track : demuxerVideo.getTracks()) {
             if (trackNo == selectedTrack) {
                 return track;
             } else
@@ -340,7 +359,7 @@ public class Transcoder {
             muxer = new WavMuxer(destStream);
             break;
         }
-        if(outputVideoCodec != null) {
+        if (outputVideoCodec != null) {
             switch (outputVideoCodec) {
             case PRORES:
                 videoEncoder = new ProresEncoder(profile, interlaced);
@@ -384,6 +403,8 @@ public class Transcoder {
     }
 
     protected Packet inputVideoPacket() throws IOException {
+        if(videoInputTrack == null)
+            return null;
         Packet nextFrame = videoInputTrack.nextFrame();
         if (nextFrame != null)
             Logger.debug(
@@ -391,8 +412,10 @@ public class Transcoder {
         if (videoDecoder == null) {
             videoDecoder = createVideoDecoder(inputVideoCodec.v2, downscale, nextFrame.getData(), null);
         }
+
         if (videoCodecCopy && videoOutputTrack == null) {
             VideoCodecMeta meta = videoDecoder.getCodecMeta(nextFrame.getData());
+            ;
             videoOutputTrack = muxer.addVideoTrack(inputVideoCodec.v2, meta);
         }
         return nextFrame;
@@ -427,7 +450,7 @@ public class Transcoder {
         }
         if (audioOutputTrack == null) {
             AudioCodecMeta meta = audioDecoder.getCodecMeta(packet.getData());
-            audioOutputTrack = muxer.addAudioTrack(inputAudioCodec.v2, meta);
+            audioOutputTrack = muxer.addAudioTrack(outputAudioCodec, meta);
         }
         return packet;
     }
@@ -437,15 +460,41 @@ public class Transcoder {
     }
 
     protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
-        AudioBuffer decodeFrame = audioDecoder.decodeFrame(audioPkt, null);
-        if (audioOutputTrack == null) {
-            this.audioOutputTrack = muxer.addAudioTrack(outputAudioCodec, new AudioCodecMeta(decodeFrame.getFormat()));
+        if (inputAudioCodec.v2 == Codec.PCM) {
+            AudioFormat format = audioInputTrack.getMeta().getAudioCodecMeta().getFormat();
+            if (audioEncoder == null) {
+                audioEncoder = createAudioEncoder(inputAudioCodec.v2, format);
+            }
+            return audioPkt;
+        } else {
+            AudioBuffer decodeFrame = audioDecoder.decodeFrame(audioPkt, null);
+            if (audioOutputTrack == null) {
+                this.audioOutputTrack = muxer.addAudioTrack(outputAudioCodec,
+                        new AudioCodecMeta(decodeFrame.getFormat()));
+            }
+            if (audioEncoder == null) {
+                audioEncoder = createAudioEncoder(outputAudioCodec, decodeFrame.getFormat());
+            }
+            return decodeFrame.getData();
         }
-        return decodeFrame.getData();
+    }
+
+    private AudioEncoder createAudioEncoder(Codec codec, AudioFormat format) {
+        if (codec != Codec.PCM) {
+            throw new RuntimeException("Only PCM audio encoding (RAW audio) is supported.");
+        }
+        return new RawAudioEncoder();
+    }
+
+    private static class RawAudioEncoder implements AudioEncoder {
+        @Override
+        public ByteBuffer encode(ByteBuffer audioPkt, ByteBuffer buf) {
+            return audioPkt;
+        }
     }
 
     protected ByteBuffer encodeAudio(ByteBuffer wrap) {
-        return wrap;
+        return audioEncoder.encode(wrap, null);
     }
 
     protected boolean seek(int frame) throws IOException {
@@ -521,8 +570,12 @@ public class Transcoder {
                     skipFrames--;
                     continue;
                 }
-                if (!inVideoPacket.isKeyFrame() && !framesDecoded) {
-                    continue;
+                if (!videoCodecCopy() && !framesDecoded) {
+                    if (inVideoPacket.getFrameType() == FrameType.UNKOWN) {
+                        detectFrameType(inVideoPacket);
+                    }
+                    if (!inVideoPacket.isKeyFrame())
+                        continue;
                 }
                 framesDecoded = true;
                 if (haveAudio()) {
@@ -563,6 +616,14 @@ public class Transcoder {
             finishDecode();
             finishEncode();
         }
+    }
+
+    private void detectFrameType(Packet inVideoPacket) {
+        if (inputVideoCodec.v2 != Codec.H264) {
+            throw new RuntimeException("Input frame type detection is only supported for h.264");
+        }
+        inVideoPacket.setFrameType(
+                H264Utils.isByteBufferIDRSlice(inVideoPacket.getData()) ? FrameType.KEY : FrameType.INTER);
     }
 
     private void finishDecode() {
@@ -610,7 +671,7 @@ public class Transcoder {
                 EncodedFrame enc = encodeVideo(frame.frame, buffer);
                 pixelStore.putBack(frame.frame);
                 outputVideoPacket = Packet.createPacketWithData(frame.packet, NIOUtils.clone(enc.getData()));
-                outputVideoPacket.setKeyFrame(enc.isKeyFrame());
+                outputVideoPacket.setFrameType(enc.isKeyFrame() ? FrameType.KEY : FrameType.INTER);
             } else {
                 outputVideoPacket = Packet.createPacketWithData(frame.packet, NIOUtils.clone(frame.packet.getData()));
             }

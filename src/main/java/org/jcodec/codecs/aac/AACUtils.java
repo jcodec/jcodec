@@ -108,4 +108,13 @@ public class AACUtils {
         si.clear();
         return si;
     }
+    
+    public static org.jcodec.codecs.aac.ADTSParser.Header streamInfoToADTS(ByteBuffer si, boolean crcAbsent,
+            int numAACFrames, int frameSize) {
+        BitReader rd = BitReader.createBitReader(si.duplicate());
+        int objectType = rd.readNBit(5);
+        int samplingIndex = rd.readNBit(4);
+        int chanConfig = rd.readNBit(4);
+        return new ADTSParser.Header(objectType, chanConfig, crcAbsent ? 1 : 0, numAACFrames, samplingIndex, 7 + frameSize);
+    }
 }

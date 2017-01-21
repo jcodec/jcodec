@@ -39,6 +39,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mkv.MKVParser;
 import org.jcodec.containers.mkv.MKVType;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
@@ -230,7 +231,7 @@ public final class MKVDemuxer implements Demuxer {
                 result = H264Utils.decodeMOVPacket(result, avcC);
             }
             return Packet.createPacket(result, b.absoluteTimecode, demuxer.timescale, duration,
-                    frameIdx - 1, b._keyFrame, ZERO_TAPE_TIMECODE);
+                    frameIdx - 1, b._keyFrame ? FrameType.KEY : FrameType.INTER, ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -332,7 +333,7 @@ public final class MKVDemuxer implements Demuxer {
                 frameInBlockIdx = 0;
             }
 
-            return Packet.createPacket(data, b.absoluteTimecode, (int) Math.round(samplingFrequency), 1, 0, false,
+            return Packet.createPacket(data, b.absoluteTimecode, (int) Math.round(samplingFrequency), 1, 0, FrameType.KEY,
                     ZERO_TAPE_TIMECODE);
         }
 
@@ -423,7 +424,7 @@ public final class MKVDemuxer implements Demuxer {
                 data.put(aFrame);
 
             return Packet.createPacket(data, firstBlockInAPacket.absoluteTimecode, (int) Math.round(samplingFrequency),
-                    packetFrames.size(), 0, false, ZERO_TAPE_TIMECODE);
+                    packetFrames.size(), 0, FrameType.KEY, ZERO_TAPE_TIMECODE);
         }
 
         @Override

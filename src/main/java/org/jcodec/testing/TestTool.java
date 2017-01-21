@@ -93,7 +93,7 @@ public class TestTool {
                 H264Utils.joinNALUnitsToBuffer(nalUnits, _rawData);
                 _rawData.flip();
 
-                if (H264Utils.idrSliceFromBuffer(_rawData)) {
+                if (H264Utils.isByteBufferIDRSlice(_rawData)) {
                     if (raw != null) {
                         raw.close();
                         runJMCompareResults(decodedPics, seqNo);

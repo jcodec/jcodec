@@ -740,7 +740,7 @@ public class MPEGDecoder extends VideoDecoder {
         return null;
     }
     
-    private static ByteBuffer getPictureHeader(ByteBuffer data) {
+    private static ByteBuffer getRawPictureHeader(ByteBuffer data) {
         ByteBuffer segment = nextSegment(data);
         while (segment != null) {
             int marker = segment.getInt();
@@ -753,11 +753,18 @@ public class MPEGDecoder extends VideoDecoder {
     }
     
     public static int getSequenceNumber(ByteBuffer data) {
-        ByteBuffer bb = getPictureHeader(data);
-        if(bb == null)
+        PictureHeader ph = getPictureHeader(data);
+        if(ph == null)
             return -1;
-        PictureHeader ph = PictureHeader.read(bb);
         return ph.temporal_reference;
+    }
+
+    public static PictureHeader getPictureHeader(ByteBuffer data) {
+        ByteBuffer bb = getRawPictureHeader(data);
+        if(bb == null)
+            return null;
+        PictureHeader ph = PictureHeader.read(bb);
+        return ph;
     }
 
     @Override

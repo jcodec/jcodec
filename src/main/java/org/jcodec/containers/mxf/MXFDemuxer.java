@@ -18,6 +18,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mxf.MXFConst.MXFCodecMapping;
 import org.jcodec.containers.mxf.model.FileDescriptor;
 import org.jcodec.containers.mxf.model.GenericDescriptor;
@@ -405,7 +406,7 @@ public class MXFDemuxer {
 
                 return kl != null && essenceUL.equals(kl.key)
                         ? new MXFPacket(NIOUtils.fetchFromChannel(ch, (int) kl.len), pts, timescale, duration, frameNo,
-                                kf, null, off, len)
+                                kf ? FrameType.KEY : FrameType.INTER, null, off, len)
                         : null;
             }
         }
@@ -499,9 +500,9 @@ public class MXFDemuxer {
         private long offset;
         private int len;
 
-        public MXFPacket(ByteBuffer data, long pts, int timescale, long duration, long frameNo, boolean keyFrame,
+        public MXFPacket(ByteBuffer data, long pts, int timescale, long duration, long frameNo, FrameType frameType,
                 TapeTimecode tapeTimecode, long offset, int len) {
-            super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
+            super(data, pts, timescale, duration, frameNo, frameType, tapeTimecode, 0);
             this.offset = offset;
             this.len = len;
         }

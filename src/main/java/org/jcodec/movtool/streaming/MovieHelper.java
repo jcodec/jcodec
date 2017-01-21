@@ -1,17 +1,19 @@
 package org.jcodec.movtool.streaming;
-import java.lang.IllegalStateException;
-import java.lang.System;
-
-
 import static org.jcodec.containers.mp4.MP4TrackType.SOUND;
 import static org.jcodec.containers.mp4.MP4TrackType.TIMECODE;
 import static org.jcodec.containers.mp4.MP4TrackType.VIDEO;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
-import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
@@ -55,13 +57,6 @@ import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.movtool.streaming.VirtualMP4Movie.PacketChunk;
 import org.jcodec.movtool.streaming.VirtualTrack.VirtualEdit;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -193,8 +188,9 @@ public class MovieHelper {
                 vse = MP4Muxer.audioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
                         ss.getSampleRate(), ss.getEndian());
             } else {
-                vse = MP4Muxer.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
-                        ss.getSampleRate(), ss.getSamplesPerPacket(), ss.getBytesPerPacket(), ss.getBytesPerFrame());
+                vse = FramesMP4MuxerTrack.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(),
+                        ss.getChannelCount(), ss.getSampleRate(), ss.getSamplesPerPacket(), ss.getBytesPerPacket(),
+                        ss.getBytesPerFrame());
             }
 
             ChannelBox chan = ChannelBox.createChannelBox();

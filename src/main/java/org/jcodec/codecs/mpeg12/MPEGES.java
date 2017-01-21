@@ -5,7 +5,9 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mps.MPEGPacket;
 
 /**
@@ -53,8 +55,11 @@ public class MPEGES extends SegmentReader {
             ;
 
         dup.flip();
+        
+        PictureHeader ph = MPEGDecoder.getPictureHeader(dup.duplicate());
 
-        return dup.hasRemaining() ? new MPEGPacket(dup, 0, 90000, 0, frameNo++, true, null) : null;
+        return dup.hasRemaining() ? new MPEGPacket(dup, 0, 90000, 0, frameNo++,
+                ph.picture_coding_type <= MPEGConst.IntraCoded ? FrameType.KEY : FrameType.INTER, null) : null;
     }
 
     /**
@@ -83,6 +88,9 @@ public class MPEGES extends SegmentReader {
             readToNextMarkerBuffers(buffers);
 
         ByteBuffer dup = NIOUtils.combineBuffers(buffers);
-        return dup.hasRemaining() ? new MPEGPacket(dup, 0, 90000, 0, frameNo++, true, null) : null;
+        PictureHeader ph = MPEGDecoder.getPictureHeader(dup.duplicate());
+        
+        return dup.hasRemaining() ? new MPEGPacket(dup, 0, 90000, 0, frameNo++,
+                ph.picture_coding_type <= MPEGConst.IntraCoded ? FrameType.KEY : FrameType.INTER, null) : null;
     }
 }

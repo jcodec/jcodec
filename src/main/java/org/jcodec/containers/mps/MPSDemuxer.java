@@ -33,6 +33,7 @@ import org.jcodec.common.LongArrayList;
 import org.jcodec.common.TrackType;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -242,7 +243,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null && pkt.streamId != streamId)
                     demuxer.addToStream(pkt);
             }
-            return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, true, null);
+            return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, FrameType.UNKOWN, null);
         }
 
         @Override

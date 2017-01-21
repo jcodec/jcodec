@@ -5,24 +5,31 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jcodec.codecs.aac.ADTSParser;
 import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.common.Assert;
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
 import org.jcodec.containers.mp4.MP4TrackType;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
@@ -35,6 +42,7 @@ import org.jcodec.containers.mp4.boxes.MediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
@@ -54,6 +62,17 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
  * 
  */
 public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
+
+    private static Map<Codec, String> codec2fourcc = new HashMap<Codec, String>();
+
+    static {
+        codec2fourcc.put(Codec.H264, "avc1");
+        codec2fourcc.put(Codec.AAC, "mp4a");
+        codec2fourcc.put(Codec.PRORES, "apch");
+        codec2fourcc.put(Codec.JPEG, "mjpg");
+        codec2fourcc.put(Codec.PNG, "png ");
+        codec2fourcc.put(Codec.V210, "v210");
+    }
 
     private List<TimeToSampleEntry> sampleDurations;
     private long sameDurCount = 0;
@@ -102,11 +121,21 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     public void addFrame(Packet pkt) throws IOException {
         if (codec == Codec.H264) {
             ByteBuffer result = pkt.getData();
+            
+            if (pkt.frameType == FrameType.UNKOWN) {
+                pkt.setFrameType(H264Utils.isByteBufferIDRSlice(result) ? FrameType.KEY : FrameType.INTER);
+            }
+            
             H264Utils.wipePSinplace(result, spsList, ppsList);
             result = H264Utils.encodeMOVPacket(result);
             pkt = Packet.createPacketWithData(pkt, result);
-        } else if (codec == Codec.AAC && adtsHeader == null) {
-            adtsHeader = ADTSParser.read(pkt.getData());
+        } else if (codec == Codec.AAC) {
+            ByteBuffer result = pkt.getData();
+            adtsHeader = ADTSParser.read(result);
+            System.out.println(String.format("crc_absent: %d, num_aac_frames: %d, size: %d, remaining: %d, %d, %d, %d",
+                    adtsHeader.getCrcAbsent(), adtsHeader.getNumAACFrames(), adtsHeader.getSize(), result.remaining(),
+                    adtsHeader.getObjectType(), adtsHeader.getSamplingIndex(), adtsHeader.getChanConfig()));
+            pkt = Packet.createPacketWithData(pkt, result);
         }
         addFrameInternal(pkt, 1);
         processTimecode(pkt);
@@ -116,22 +145,34 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
 
-        if (_timescale != NO_TIMESCALE_SET && pkt.getTimescale() != _timescale)
-            throw new RuntimeException(
-                    "Mix and match of timescale is not supported, was: " + _timescale + ", now: " + pkt.getTimescale());
-
-        if (_timescale == NO_TIMESCALE_SET)
-            _timescale = pkt.getTimescale();
-
-        int compositionOffset = (int) (pkt.getPts() - ptsEstimate);
-        if (compositionOffset != lastCompositionOffset) {
-            if (lastCompositionSamples > 0)
-                compositionOffsets.add(new Entry(lastCompositionSamples, lastCompositionOffset));
-            lastCompositionOffset = compositionOffset;
-            lastCompositionSamples = 0;
+        if (_timescale == NO_TIMESCALE_SET) {
+            if (adtsHeader != null) {
+                _timescale = adtsHeader.getSampleRate();
+            } else {
+                _timescale = pkt.getTimescale();
+            }
         }
-        lastCompositionSamples++;
-        ptsEstimate += pkt.getDuration();
+        
+        if (_timescale != pkt.getTimescale()) {
+            pkt.setPts((pkt.getPts() * _timescale) / pkt.getTimescale());
+            pkt.setDuration((pkt.getPts() * _timescale) / pkt.getDuration());
+        }
+        
+        if (adtsHeader != null) {
+            pkt.setDuration(1024);
+        }
+
+        if(type == MP4TrackType.VIDEO) {
+            int compositionOffset = (int) (pkt.getPts() - ptsEstimate);
+            if (compositionOffset != lastCompositionOffset) {
+                if (lastCompositionSamples > 0)
+                    compositionOffsets.add(new Entry(lastCompositionSamples, lastCompositionOffset));
+                lastCompositionOffset = compositionOffset;
+                lastCompositionSamples = 0;
+            }
+            lastCompositionSamples++;
+            ptsEstimate += pkt.getDuration();
+        }
 
         if (lastEntry != -1 && lastEntry != entryNo) {
             outChunk(lastEntry);
@@ -202,6 +243,16 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     protected Box finish(MovieHeaderBox mvhd) throws IOException {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
+        if (getEntries().isEmpty()) {
+            if (codec == Codec.H264) {
+                SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
+                Size size = H264Utils.getPicSize(sps);
+                VideoCodecMeta meta = new VideoCodecMeta(size);
+                addVideoSampleEntry(meta);
+            } else {
+                throw new RuntimeException("Sample entry missing not supported for anything other then H.264");
+            }
+        }
         setCodecPrivateIfNeeded();
 
         outChunk(lastEntry);
@@ -251,6 +302,13 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
             stbl.add(SyncSamplesBox.createSyncSamplesBox(iframes.toArray()));
 
         return trak;
+    }
+
+    void addVideoSampleEntry(VideoCodecMeta meta) {
+        SampleEntry se = MP4Muxer.videoSampleEntry(codec2fourcc.get(codec), meta.getSize(), "JCodec");
+        if (meta.getPixelAspectRatio() != null)
+            se.add(PixelAspectExt.createPixelAspectExt(meta.getPixelAspectRatio()));
+        addSampleEntry(se);
     }
 
     private void putCompositionOffsets(NodeBox stbl) {
@@ -350,5 +408,20 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
             result.add(bs.get());
         }
         return result;
+    }
+
+    public static AudioSampleEntry compressedAudioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
+            int sampleRate, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame) {
+        AudioSampleEntry ase = AudioSampleEntry.createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId,
+                (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPacket, bytesPerPacket,
+                bytesPerFrame, 16 / 8, (short) 0);
+        return ase;
+    }
+
+    void addAudioSampleEntry(AudioFormat format) {
+        AudioSampleEntry ase = compressedAudioSampleEntry(codec2fourcc.get(codec), (short) 1, (short) 16,
+                format.getChannels(), format.getSampleRate(), 0, 0, 0);
+
+        addSampleEntry(ase);
     }
 }

@@ -13,6 +13,7 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 
 import java.nio.ByteBuffer;
 
@@ -130,7 +131,7 @@ public class BufferH264ES implements DemuxerTrack {
         if (nu.type == NALUnitType.NON_IDR_SLICE) {
             poc = calcPoc(absFrameNum, nu, sh);
         }
-        return new Packet(result, absFrameNum, 1, 1, frameNo++, nu.type == NALUnitType.IDR_SLICE, null, poc);
+        return new Packet(result, absFrameNum, 1, 1, frameNo++, nu.type == NALUnitType.IDR_SLICE ? FrameType.KEY : FrameType.INTER, null, poc);
     }
 
     private int updateFrameNumber(int frameNo, int maxFrameNum, boolean mmco5) {

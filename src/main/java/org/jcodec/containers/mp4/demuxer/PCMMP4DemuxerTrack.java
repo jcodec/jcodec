@@ -8,6 +8,7 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.TrackType;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.QTTimeUtil;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
@@ -87,7 +88,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         shiftPts(doneFrames);
 
         MP4Packet pkt = new MP4Packet(result, QTTimeUtil.mediaToEdited(box, ptsRem, movie.getTimescale()), timescale,
-                (int) (pts - ptsRem), curFrame, true, null, 0, ptsRem, se - 1, pktOff, pktSize, true);
+                (int) (pts - ptsRem), curFrame, FrameType.KEY, null, 0, ptsRem, se - 1, pktOff, pktSize, true);
 
         curFrame += doneFrames;
 
@@ -135,6 +136,6 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         AudioSampleEntry ase = (AudioSampleEntry) getSampleEntries()[0];
         AudioCodecMeta audioCodecMeta = new AudioCodecMeta(ase.getFormat());
         return new DemuxerTrackMeta(TrackType.AUDIO, getCodec(), (double) duration / timescale, null, totalFrames,
-                getCodecPrivate(), null, audioCodecMeta);
+                null, null, audioCodecMeta);
     }
 }

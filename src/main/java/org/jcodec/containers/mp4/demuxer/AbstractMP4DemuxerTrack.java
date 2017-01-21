@@ -250,19 +250,6 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return null;        
     }
     
-    public ByteBuffer getCodecPrivate() {
-        Codec codec = getCodec();
-        if (codec == Codec.H264) {
-            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
-            return H264Utils.avcCToAnnexB(avcC);
-
-        } else if(codec == Codec.AAC) {
-            return AACUtils.getCodecPrivate(getSampleEntries()[0]);
-        }
-        // This codec does not have private section
-        return null;
-    }
-    
     public ByteBuffer convertPacket(ByteBuffer _in) {
         return _in;
     }

@@ -224,6 +224,9 @@ public class TranscodeMain {
             if ("copy".equalsIgnoreCase(outputCodecVideoRaw)) {
                 videoCopy = true;
                 outputCodecVideo = inputCodecVideo.v2;
+            } else if("none".equalsIgnoreCase(outputCodecVideoRaw)) {
+                outputCodecVideo = null;
+                inputCodecVideo = null;
             } else {
                 outputCodecVideo = Codec.valueOf(outputCodecVideoRaw.toUpperCase());
             }
@@ -249,6 +252,9 @@ public class TranscodeMain {
             if ("copy".equalsIgnoreCase(outputCodecAudioRaw)) {
                 audioCopy = true;
                 outputCodecAudio = inputCodecAudio.v2;
+            } else if("none".equalsIgnoreCase(outputCodecVideoRaw)) {
+                outputCodecAudio = null;
+                inputCodecAudio = null;
             } else {
                 outputCodecAudio = Codec.valueOf(outputCodecAudioRaw.toUpperCase());
             }

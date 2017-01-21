@@ -13,6 +13,7 @@ import org.jcodec.common.TrackType;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -100,7 +101,7 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
         if (!file.exists())
             return null;
 
-        Packet ret = new Packet(NIOUtils.fetchFromFile(file), frameNo, VIDEO_FPS, 1, frameNo, true, null, frameNo);
+        Packet ret = new Packet(NIOUtils.fetchFromFile(file), frameNo, VIDEO_FPS, 1, frameNo, FrameType.KEY, null, frameNo);
         ++frameNo;
         return ret;
     }

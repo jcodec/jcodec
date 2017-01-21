@@ -12,6 +12,7 @@ import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
@@ -47,7 +48,7 @@ public class GradGen {
         MuxerTrack videoTrack = muxer.addVideoTrack(Codec.V210, new VideoCodecMeta(new Size(width, height)));
 
         for (int i = 0; i < Integer.parseInt(args[1]); i++) {
-            videoTrack.addFrame(MP4Packet.createMP4Packet(frame, i * 1001, 24000, 1001, i, true, null, 0, i * 1001, 0));
+            videoTrack.addFrame(MP4Packet.createMP4Packet(frame, i * 1001, 24000, 1001, i, FrameType.KEY, null, 0, i * 1001, 0));
         }
         muxer.finish();
     }

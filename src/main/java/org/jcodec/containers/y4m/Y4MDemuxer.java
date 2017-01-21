@@ -19,6 +19,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Packet.FrameType;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -82,7 +83,7 @@ public class Y4MDemuxer implements DemuxerTrack, Demuxer {
 
         is.setPosition(is.position() - buf.remaining());
         ByteBuffer pix = NIOUtils.fetchFromChannel(is, bufSize);
-        Packet packet = new Packet(pix, frameNum * fps.getDen(), fps.getNum(), fps.getDen(), frameNum, true, null, frameNum);
+        Packet packet = new Packet(pix, frameNum * fps.getDen(), fps.getNum(), fps.getDen(), frameNum, FrameType.KEY, null, frameNum);
         ++frameNum;
         return packet;
     }

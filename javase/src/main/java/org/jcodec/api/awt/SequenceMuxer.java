@@ -12,6 +12,7 @@ import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4TrackType;
@@ -48,7 +49,7 @@ public class SequenceMuxer {
             outTrack = muxer.addVideoTrack(Codec.PNG, new VideoCodecMeta(size));
         }
         // Add packet to video track
-        outTrack.addFrame(MP4Packet.createMP4Packet(NIOUtils.fetchFromFile(png), frameNo, 25, 1, frameNo, true, null,
+        outTrack.addFrame(MP4Packet.createMP4Packet(NIOUtils.fetchFromFile(png), frameNo, 25, 1, frameNo, FrameType.KEY, null,
                 frameNo, frameNo, 0));
 
         frameNo++;

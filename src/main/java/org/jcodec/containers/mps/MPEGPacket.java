@@ -11,7 +11,7 @@ public class MPEGPacket extends Packet {
     private int gop;
     private int timecode;
 
-    public MPEGPacket(ByteBuffer data, long pts, int timescale, long duration, long frameNo, boolean keyFrame,
+    public MPEGPacket(ByteBuffer data, long pts, int timescale, long duration, long frameNo, FrameType keyFrame,
             TapeTimecode tapeTimecode) {
         super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
     }

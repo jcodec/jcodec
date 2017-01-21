@@ -16,6 +16,7 @@ import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.IntArrayList;
@@ -479,8 +480,24 @@ public class H264Utils {
         return createMOVSampleEntryFromSpsPpsList(Arrays.asList(new ByteBuffer[] { sps }),
                 Arrays.asList(new ByteBuffer[] { pps }), nalLengthSize);
     }
+    
+    public static boolean iFrame(ByteBuffer _data) {
+        ByteBuffer data = _data.duplicate();
+        SliceHeaderReader shr = new SliceHeaderReader();
+        ByteBuffer segment;
+        while ((segment = H264Utils.nextNALUnit(data)) != null) {
+            NALUnitType type = NALUnit.read(segment).type;
+            if (type == NALUnitType.IDR_SLICE || type == NALUnitType.NON_IDR_SLICE) {
+                unescapeNAL(segment);
+                BitReader reader = BitReader.createBitReader(segment);
+                SliceHeader part1 = shr.readPart1(reader);
+                return part1.slice_type == SliceType.I;
+            }
+        }
+        return false;
+    }
 
-    public static boolean idrSliceFromBuffer(ByteBuffer _data) {
+    public static boolean isByteBufferIDRSlice(ByteBuffer _data) {
         ByteBuffer data = _data.duplicate();
         ByteBuffer segment;
         while ((segment = H264Utils.nextNALUnit(data)) != null) {

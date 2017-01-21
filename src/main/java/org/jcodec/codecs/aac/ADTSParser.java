@@ -58,6 +58,10 @@ public class ADTSParser {
         public int getSize() {
             return size;
         }
+        
+        public int getSampleRate() {
+            return AACConts.AAC_SAMPLE_RATES[samplingIndex];
+        }
     }
 
     public static Header read(ByteBuffer data) {
@@ -97,7 +101,7 @@ public class ADTSParser {
         return new Header(aot + 1, ch, crc_abs, rdb + 1, sr, size);
     }
 
-    public static ByteBuffer write(Header header, ByteBuffer buf, int frameSize) {
+    public static ByteBuffer write(Header header, ByteBuffer buf) {
         ByteBuffer data = buf.duplicate();
         BitWriter br = new BitWriter(data);
         // int size, rdb, ch, sr;
@@ -108,7 +112,7 @@ public class ADTSParser {
         br.write1Bit(1); /* id */
         br.writeNBit(0, 2); /* layer */
         br.write1Bit(header.getCrcAbsent()); /* protection_absent */
-        br.writeNBit(header.getObjectType(), 2); /* profile_objecttype */
+        br.writeNBit(header.getObjectType() - 1, 2); /* profile_objecttype */
         br.writeNBit(header.getSamplingIndex(), 4); /* sample_frequency_index */
         br.write1Bit(0); /* private_bit */
         br.writeNBit(header.getChanConfig(), 3); /* channel_configuration */
@@ -119,10 +123,10 @@ public class ADTSParser {
         /* adts_variable_header */
         br.write1Bit(0); /* copyright_identification_bit */
         br.write1Bit(0); /* copyright_identification_start */
-        br.writeNBit(frameSize + 7, 13); /* aac_frame_length */
+        br.writeNBit(header.getSize(), 13); /* aac_frame_length */
 
         br.writeNBit(0, 11); /* adts_buffer_fullness */
-        br.writeNBit(header.getNumAACFrames(), 2); /* number_of_raw_data_blocks_in_frame */
+        br.writeNBit(header.getNumAACFrames() - 1, 2); /* number_of_raw_data_blocks_in_frame */
         br.flush();
 
         data.flip();

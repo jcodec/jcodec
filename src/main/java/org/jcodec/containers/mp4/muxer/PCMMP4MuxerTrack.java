@@ -1,5 +1,7 @@
 package org.jcodec.containers.mp4.muxer;
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.Assert;
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -7,6 +9,7 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
 import org.jcodec.containers.mp4.MP4TrackType;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
@@ -29,6 +32,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import java.io.IOException;
 import java.lang.IllegalStateException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Date;
 
 /**
@@ -48,16 +52,31 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
     private int totalFrames;
     private SeekableByteChannel out;
 
-    public PCMMP4MuxerTrack(SeekableByteChannel out, int trackId, MP4TrackType type, int frameDuration, int frameSize,
-            SampleEntry se) {
-        super(trackId, type);
+    public PCMMP4MuxerTrack(SeekableByteChannel out, int trackId, AudioFormat format) {
+        super(trackId, MP4TrackType.SOUND);
         this.chunkOffsets = LongArrayList.createLongArrayList();
         this.out = out;
-        this.frameDuration = frameDuration;
-        this.frameSize = frameSize;
-        addSampleEntry(se);
+        this.frameDuration = 1;
+        this.frameSize = (format.getSampleSizeInBits() >> 3) * format.getChannels();
+        addSampleEntry(_audioSampleEntry(format));
+        this._timescale = format.getSampleRate();
 
         setTgtChunkDuration(new Rational(1, 2), Unit.SEC);
+    }
+    
+    public static AudioSampleEntry _audioSampleEntry(AudioFormat format) {
+        return MP4Muxer.audioSampleEntry(lookupFourcc(format), 1, format.getSampleSizeInBits() >> 3,
+                format.getChannels(), (int) format.getSampleRate(),
+                format.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+    }
+    
+    public static String lookupFourcc(AudioFormat format) {
+        if (format.getSampleSizeInBits() == 16 && !format.isBigEndian())
+            return "sowt";
+        else if (format.getSampleSizeInBits() == 24)
+            return "in24";
+        else
+            throw new NotSupportedException("Audio format " + format + " is not supported.");
     }
 
     @Override
