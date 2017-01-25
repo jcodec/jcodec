@@ -40,6 +40,8 @@ public class AACDecoder implements AudioDecoder {
 
     @Override
     public AudioBuffer decodeFrame(ByteBuffer frame, ByteBuffer dst) throws IOException {
+        // Internally all AAC streams are ADTS wrapped
+        ADTSParser.read(frame);
         SampleBuffer sampleBuffer = new SampleBuffer();
         decoder.decodeFrame(NIOUtils.toArray(frame), sampleBuffer);
         if (sampleBuffer.isBigEndian()) {
