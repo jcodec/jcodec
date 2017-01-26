@@ -33,6 +33,7 @@ public class Macroblock {
     boolean skipFilter;
     public int segment = 0;
     public boolean debug = true;
+    public QuantizationParams quants;
 
     public Macroblock(int y, int x) {
         this.ySubblocks = new Subblock[4][4];
@@ -52,7 +53,8 @@ public class Macroblock {
             }
     }
 
-    public void dequantMacroBlock(Macroblock[][] mbs, QuantizationParams p) {
+    public void dequantMacroBlock(Macroblock[][] mbs) {
+        QuantizationParams p = this.quants;
         if (this.lumaMode != SubblockConstants.B_PRED) {
             int acQValue = p.y2AC;
             int dcQValue = p.y2DC;
@@ -300,7 +302,7 @@ public class Macroblock {
             System.exit(0);
         }
     }
-
+    
     private void predictY(Macroblock[][] mbs) {
         Macroblock aboveMb = mbs[Rrow - 1][column];
         Macroblock leftMb = mbs[Rrow][column - 1];

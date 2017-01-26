@@ -116,6 +116,7 @@ public class DataReader implements Closeable {
         if (buffer.remaining() < length) {
             moveRemainderToTheStart(buffer);
             channel.read(buffer);
+            buffer.flip();
         }
     }
 

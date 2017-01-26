@@ -60,6 +60,7 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
+import org.jcodec.containers.webp.WebpDemuxer;
 import org.jcodec.containers.y4m.Y4MDemuxer;
 import org.jcodec.samples.transcode.filters.ColorTransformFilter;
 
@@ -245,6 +246,9 @@ public class Transcoder {
         case IMG:
             demuxVideo = new ImageSequenceDemuxer(sourceName, maxFrames);
             break;
+        case WEBP:
+            demuxVideo = new WebpDemuxer(sourceStream);
+            break;
         case MPEG_PS:
             demuxVideo = demuxAudio = new MPSDemuxer(sourceStream);
             break;
@@ -275,6 +279,8 @@ public class Transcoder {
                     mtsDemuxer.getProgram(pid).close();
                 }
             }
+            default:
+                throw new RuntimeException("Input format: " + inputFormat + " is not supported.");
         }
         if (demuxVideo != null && inputVideoCodec != null) {
             List<? extends DemuxerTrack> videoTracks = demuxVideo.getVideoTracks();

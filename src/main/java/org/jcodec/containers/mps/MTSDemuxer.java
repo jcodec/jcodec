@@ -153,7 +153,8 @@ public class MTSDemuxer {
         return new MTSPacket(guid, payloadStart == 1, ((b0 & 0x10) != 0) ? buffer : null);
     }
 
-    public static int probe(final ByteBuffer b) {
+    public static int probe(final ByteBuffer b_) {
+        ByteBuffer b = b_.duplicate();
         IntObjectMap<List<ByteBuffer>> streams = new IntObjectMap<List<ByteBuffer>>();
         while (true) {
             try {

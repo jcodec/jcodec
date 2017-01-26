@@ -405,7 +405,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         return score > 50;
     }
 
-    public static int probe(ByteBuffer b) {
+    public static int probe(ByteBuffer b_) {
+        ByteBuffer b = b_.duplicate();
         int marker = 0xffffffff;
 
         int score = 0;

@@ -406,6 +406,12 @@ public class VP8Util {
         -SubblockConstants.DC_PRED, -SubblockConstants.V_PRED, 
         -SubblockConstants.H_PRED, -SubblockConstants.TM_PRED };
     
+    public static int segmentTree[] = {
+        2,  4,     /* root: "0", "1" subtrees */
+        -0, -1,    /* "00" = 0th value, "01" = 1st value */
+        -2, -3     /* "10" = 2nd value, "11" = 3rd value */
+    };
+    
     
     public static int getBitInBytes(byte[] bs, int i) {
         int byteIndex = i >> 3;

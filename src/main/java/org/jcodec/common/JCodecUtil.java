@@ -34,6 +34,7 @@ import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
+import org.jcodec.containers.webp.WebpDemuxer;
 import org.jcodec.containers.y4m.Y4MDemuxer;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform8Bit;
@@ -48,6 +49,7 @@ import org.jcodec.scale.Transform8Bit;
 public class JCodecUtil {
 
     private static final Map<Codec, Class<?>> decoders = new HashMap<Codec, Class<?>>();
+    private static final Map<Format, Class<?>> demuxers = new HashMap<Format, Class<?>>();
 
     static {
         decoders.put(Codec.VP8, VP8Decoder.class);
@@ -55,6 +57,11 @@ public class JCodecUtil {
         decoders.put(Codec.MPEG2, MPEGDecoder.class);
         decoders.put(Codec.H264, H264Decoder.class);
         decoders.put(Codec.AAC, AACDecoder.class);
+        
+        demuxers.put(Format.MPEG_TS, MTSDemuxer.class);
+        demuxers.put(Format.MPEG_PS, MPSDemuxer.class);
+        demuxers.put(Format.MOV, MP4Demuxer.class);
+        demuxers.put(Format.WEBP, WebpDemuxer.class);
     };
 
     public static Format detectFormat(File f) throws IOException {
@@ -66,22 +73,10 @@ public class JCodecUtil {
     }
 
     public static Format detectFormatBuffer(ByteBuffer b) {
-        int movScore = MP4Demuxer.probe(b.duplicate());
-        int psScore = MPSDemuxer.probe(b.duplicate());
-        int tsScore = MTSDemuxer.probe(b.duplicate());
-
-        if (movScore < 20 && psScore < 20 && tsScore < 20)
-            return null;
-
-        return movScore > psScore ? (movScore > tsScore ? Format.MOV : Format.MPEG_TS)
-                : (psScore > tsScore ? Format.MPEG_PS : Format.MPEG_TS);
-    }
-
-    public static Codec detectDecoder(ByteBuffer b) {
         int maxScore = 0;
-        Codec selected = null;
-        for (Map.Entry<Codec, Class<?>> vd : decoders.entrySet()) {
-            int score = probe(b, vd);
+        Format selected = null;
+        for (Map.Entry<Format, Class<?>> vd : demuxers.entrySet()) {
+            int score = probe(b.duplicate(), vd.getValue());
             if (score > maxScore) {
                 selected = vd.getKey();
                 maxScore = score;
@@ -90,9 +85,22 @@ public class JCodecUtil {
         return selected;
     }
 
-    private static int probe(ByteBuffer b, Map.Entry<Codec, Class<?>> vd) {
+    public static Codec detectDecoder(ByteBuffer b) {
+        int maxScore = 0;
+        Codec selected = null;
+        for (Map.Entry<Codec, Class<?>> vd : decoders.entrySet()) {
+            int score = probe(b.duplicate(), vd.getValue());
+            if (score > maxScore) {
+                selected = vd.getKey();
+                maxScore = score;
+            }
+        }
+        return selected;
+    }
+
+    private static int probe(ByteBuffer b, Class<?> vd) {
         try {
-            Method method = vd.getValue().getDeclaredMethod("probe", ByteBuffer.class);
+            Method method = vd.getDeclaredMethod("probe", ByteBuffer.class);
             if (method != null) {
                 return (Integer) method.invoke(null, b);
             }
@@ -198,6 +206,8 @@ public class JCodecUtil {
             return new ImageSequenceDemuxer(input.getAbsolutePath(), Integer.MAX_VALUE);
         case Y4M:
             return new Y4MDemuxer(ch);
+        case WEBP:
+            return new WebpDemuxer(ch);
         default:
             Logger.error("Format " + format + " is not supported");
         }
@@ -256,5 +266,14 @@ public class JCodecUtil {
             Logger.error("Codec " + codec + " is not supported");
         }
         return null;
+    }
+
+    public static String dwToFourCC(int fourCC) {
+        char[] ch = new char[4];
+        ch[0] = (char)((fourCC >> 24) & 0xff);
+        ch[1] = (char)((fourCC >> 16) & 0xff);
+        ch[2] = (char)((fourCC >> 8) & 0xff);
+        ch[3] = (char)((fourCC >> 0) & 0xff);
+        return new String(ch);
     }
 }

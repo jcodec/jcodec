@@ -12,7 +12,7 @@ package org.jcodec.common;
 public enum Format {
     MOV(true, true), MPEG_PS(true, true), MPEG_TS(true, true), MKV(true, true), H264(true, false), RAW(true, true), FLV(
             true, true), AVI(true, true), IMG(true, false), IVF(true, false), MJPEG(true, false), Y4M(true, false), WAV(
-            false, true);
+            false, true), WEBP(true, false);
 
     private boolean video;
     private boolean audio;
