@@ -35,6 +35,7 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
     private Codec codec;
     private int maxAvailableFrame;
     private int maxFrames;
+    private String prevName;
 
     public ImageSequenceDemuxer(String namePattern, int maxFrames) throws IOException {
         this.namePattern = namePattern;
@@ -92,6 +93,12 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
         File file = null;
         do {
             String name = String.format(namePattern, frameNo);
+            // In case the name doesn't contain placeholders, to prevent infinitely
+            // looping around the same file.
+            if (name.equals(prevName)) {
+                return null;
+            }
+            prevName = name;
             file = new File(name);
             if (file.exists() || frameNo > 0)
                 break;
