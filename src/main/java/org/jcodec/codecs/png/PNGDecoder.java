@@ -3,6 +3,7 @@ package org.jcodec.codecs.png;
 import static org.jcodec.common.tools.MathUtil.abs;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -20,6 +21,10 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.tools.MainUtils;
+import org.jcodec.scale.AWTUtil;
+import org.jcodec.scale.ColorUtil;
+import org.jcodec.scale.Transform8Bit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -35,6 +40,7 @@ public class PNGDecoder extends VideoDecoder {
     private static final long MNGSIG = 0x8a4d4e470d0a1a0aL;
     private static final int TAG_IHDR = 0x49484452;
     private static final int TAG_IDAT = 0x49444154;
+    private static final int TAG_PLTE = 0x504c5445;
     private static final int TAG_IEND = 0x49454e44;
 
     private static final int FILTER_TYPE_LOCO = 64;
@@ -62,6 +68,7 @@ public class PNGDecoder extends VideoDecoder {
             throw new RuntimeException("Not a PNG file.");
 
         IHDR ihdr = null;
+        PLTE plte = null;
         List<ByteBuffer> list = new ArrayList<ByteBuffer>();
         while (data.remaining() >= 8) {
             int length = data.getInt();
@@ -75,6 +82,10 @@ public class PNGDecoder extends VideoDecoder {
                 ihdr = new IHDR();
                 ihdr.parse(data);
                 break;
+            case TAG_PLTE:
+                plte = new PLTE();
+                plte.parse(data, length);
+                break;
             case TAG_IDAT:
                 list.add(NIOUtils.read(data, length));
                 NIOUtils.skip(data, 4); // CRC
@@ -87,14 +98,14 @@ public class PNGDecoder extends VideoDecoder {
             }
         }
         try {
-            decodeData(ihdr, list, buffer);
+            decodeData(ihdr, plte, list, buffer);
         } catch (DataFormatException e) {
             return null;
         }
         return Picture8Bit.createPicture8Bit(ihdr.width, ihdr.height, buffer, ihdr.colorSpace());
     }
 
-    private void decodeData(IHDR ihdr, List<ByteBuffer> list, byte[][] buffer) throws DataFormatException {
+    private void decodeData(IHDR ihdr, PLTE plte, List<ByteBuffer> list, byte[][] buffer) throws DataFormatException {
         int rowSize = ihdr.rowSize() + 1;
         int bpp = (ihdr.getBitsPerPixel() + 7) >> 3;
         Inflater inflater = new Inflater();
@@ -121,8 +132,8 @@ public class PNGDecoder extends VideoDecoder {
             int filter = uncompressed[0];
             switch (filter) {
             case FILTER_VALUE_NONE:
-                for(int i = 0; i < rowSize - 1; i++) {
-                    lastRow[i] = (byte)((uncompressed[i + 1] & 0xff) - 128);
+                for (int i = 0; i < rowSize - 1; i++) {
+                    lastRow[i] = uncompressed[i + 1];
                 }
                 break;
             case FILTER_VALUE_SUB:
@@ -139,15 +150,25 @@ public class PNGDecoder extends VideoDecoder {
                 break;
             }
 
-            for (int i = 0; i < rowSize - 1; i += bpp, bptr += bpp) {
-                if (ihdr.filterType != FILTER_TYPE_LOCO) {
-                    buffer[0][bptr] = lastRow[i];
-                    buffer[0][bptr+1] = lastRow[i + 1];
-                    buffer[0][bptr+2] = lastRow[i + 2];
-                } else {
-                    buffer[0][bptr] = (byte) (lastRow[i] + lastRow[i + 1]);
-                    buffer[0][bptr+1] = lastRow[i + 1];
-                    buffer[0][bptr+2] = (byte) (lastRow[i + 2] + lastRow[i + 1]);
+            int bptrWas = bptr;
+            if((ihdr.colorType & PNG_COLOR_MASK_PALETTE) != 0) {
+                for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
+                    int plt = plte.palette[lastRow[i] & 0xff];
+                    buffer[0][bptr] = (byte)(((plt >> 16) & 0xff) - 128);
+                    buffer[0][bptr + 1] = (byte)(((plt >> 8) & 0xff) - 128);
+                    buffer[0][bptr + 2] = (byte)((plt & 0xff) - 128);
+                }
+            } else {
+                for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
+                    buffer[0][bptr] = (byte)((lastRow[i] & 0xff) - 128);
+                    buffer[0][bptr + 1] = (byte)((lastRow[i + 1] & 0xff) - 128);
+                    buffer[0][bptr + 2] = (byte)((lastRow[i + 2] & 0xff) - 128);
+                }
+            }
+            if (ihdr.filterType == FILTER_TYPE_LOCO) {
+                for (int i = bptrWas; i < bptr; i+=3) {
+                    buffer[0][i] = (byte) (buffer[0][i] + buffer[0][i + 1]);
+                    buffer[0][i + 2] = (byte) (buffer[0][i + 2] + buffer[0][i + 1]);
                 }
             }
         }
@@ -327,24 +348,6 @@ public class PNGDecoder extends VideoDecoder {
             return (width * getBitsPerPixel() + 7) >> 3;
         }
 
-        public void write(ByteBuffer data) {
-            ByteBuffer from = data.duplicate();
-            data.putInt(width);
-            data.putInt(height);
-            data.put(bitDepth);
-            data.put(colorType);
-            data.put(compressionType);
-            data.put(filterType);
-            data.put(interlaceType);
-            data.putInt(crc32(data, from));
-        }
-
-        private int crc32(ByteBuffer data, ByteBuffer dup) {
-            CRC32 crc32 = new CRC32();
-            crc32.update(NIOUtils.toArray(NIOUtils.read(dup, data.position() - dup.position())));
-            return (int) crc32.getValue();
-        }
-
         public int getNBChannels() {
             int channels;
             channels = 1;
@@ -361,6 +364,25 @@ public class PNGDecoder extends VideoDecoder {
 
         public ColorSpace colorSpace() {
             return ColorSpace.RGB;
+        }
+    }
+    
+    private static class PLTE {
+        
+        private int[] palette;
+
+        public void parse(ByteBuffer data, int length) {
+            if ((length % 3) != 0 || length > 256 * 3)
+                throw new RuntimeException("Invalid data");
+            int n = length / 3;
+            palette = new int[n];
+            int i = 0;
+            for (i = 0; i < n; i++) {
+                palette[i] = (0xff << 24) | ((data.get() & 0xff) << 16) | ((data.get() & 0xff) << 8) | (data.get() & 0xff);
+            }
+            for (; i < 256; i++)
+                palette[i] = (0xff << 24);
+            data.getInt(); // crc
         }
     }
 
@@ -409,20 +431,6 @@ public class PNGDecoder extends VideoDecoder {
         if (sig == PNGSIG && sig == MNGSIG)
             return 100;
         return 0;
-    }
-
-    public static byte[] compress(byte[] data) throws IOException {
-        Deflater deflater = new Deflater();
-        deflater.setInput(data);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-        deflater.finish();
-        byte[] buffer = new byte[1024];
-        while (!deflater.finished()) {
-            int count = deflater.deflate(buffer); // returns the generated
-                                                  // code... index
-            baos.write(buffer, 0, count);
-        }
-        return baos.toByteArray();
     }
 
     public static byte[] deflate(byte[] data, Inflater inflater) throws DataFormatException {
