@@ -15,8 +15,8 @@ import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
-import org.jcodec.codecs.png.PNGDecoder;
-import org.jcodec.codecs.png.PNGEncoder;
+import org.jcodec.codecs.pngawt.PNGDecoder;
+import org.jcodec.codecs.pngawt.PNGEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.raw.RAWVideoDecoder;
@@ -112,7 +112,7 @@ public class Transcoder {
     private Boolean interlaced;
     private Integer downscale;
 
-    private Size videoDim;
+    private VideoCodecMeta videoCool;
 
     private List<Filter> filters = new ArrayList<Filter>();
 
@@ -131,13 +131,13 @@ public class Transcoder {
         this.videoCodecCopy = videoCodecCopy;
         this.audioCodecCopy = audioCodecCopy;
         this.extraFilters = extraFilters;
-        
+
         // Inferring video-only or audio-only output
-        if(!outputFormat.isVideo()) {
+        if (!outputFormat.isVideo()) {
             this.inputVideoCodec = null;
             this.outputVideoCodec = null;
         }
-        if(!outputFormat.isAudio()) {
+        if (!outputFormat.isAudio()) {
             this.inputAudioCodec = null;
             this.outputAudioCodec = null;
         }
@@ -279,8 +279,8 @@ public class Transcoder {
                     mtsDemuxer.getProgram(pid).close();
                 }
             }
-            default:
-                throw new RuntimeException("Input format: " + inputFormat + " is not supported.");
+        default:
+            throw new RuntimeException("Input format: " + inputFormat + " is not supported.");
         }
         if (demuxVideo != null && inputVideoCodec != null) {
             List<? extends DemuxerTrack> videoTracks = demuxVideo.getVideoTracks();
@@ -394,22 +394,21 @@ public class Transcoder {
         }
     }
 
-    protected Picture8Bit createPixelBuffer(ColorSpace color, ByteBuffer firstFrame) {
-        if (videoDim == null) {
+    protected Picture8Bit createPixelBuffer(ByteBuffer firstFrame) {
+        if (videoCool == null) {
             DemuxerTrackMeta meta = videoInputTrack.getMeta();
-            VideoCodecMeta codecMeta;
             if (meta != null && meta.getVideoCodecMeta() != null) {
-                codecMeta = meta.getVideoCodecMeta();
+                videoCool = meta.getVideoCodecMeta();
             } else {
-                codecMeta = videoDecoder.getCodecMeta(firstFrame);
+                videoCool = videoDecoder.getCodecMeta(firstFrame);
             }
-            videoDim = codecMeta.getSize();
         }
-        return Picture8Bit.create((videoDim.getWidth() + 15) & ~0xf, (videoDim.getHeight() + 15) & ~0xf, color);
+        Size size = videoCool.getSize();
+        return Picture8Bit.create((size.getWidth() + 15) & ~0xf, (size.getHeight() + 15) & ~0xf, videoCool.getColor());
     }
 
     protected Packet inputVideoPacket() throws IOException {
-        if(videoInputTrack == null)
+        if (videoInputTrack == null)
             return null;
         Packet nextFrame = videoInputTrack.nextFrame();
         if (nextFrame != null)
@@ -438,7 +437,7 @@ public class Transcoder {
     protected EncodedFrame encodeVideo(Picture8Bit frame, ByteBuffer _out) {
         if (videoOutputTrack == null) {
             videoOutputTrack = muxer.addVideoTrack(outputVideoCodec,
-                    new VideoCodecMeta(new Size(frame.getWidth(), frame.getHeight())));
+                    new VideoCodecMeta(new Size(frame.getWidth(), frame.getHeight()), frame.getColor()));
         }
         return videoEncoder.encodeFrame8Bit(frame, _out);
     }
@@ -593,7 +592,7 @@ public class Transcoder {
                 if (!videoCodecCopy()) {
                     Picture8Bit pixelBuffer = pixelBufferStore.get();
                     if (pixelBuffer == null) {
-                        pixelBuffer = createPixelBuffer(ColorSpace.YUV444, inVideoPacket.getData());
+                        pixelBuffer = createPixelBuffer(inVideoPacket.getData());
                         pixelBufferStore.set(pixelBuffer);
                     }
                     decodedFrame = decodeVideo(inVideoPacket.getData(), pixelBuffer);

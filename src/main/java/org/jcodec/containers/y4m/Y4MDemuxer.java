@@ -16,6 +16,7 @@ import org.jcodec.common.TrackType;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -113,7 +114,7 @@ public class Y4MDemuxer implements DemuxerTrack, Demuxer {
     @Override
     public DemuxerTrackMeta getMeta() {
         return new DemuxerTrackMeta(TrackType.VIDEO, Codec.RAW, totalDuration, null, totalFrames, null,
-                new VideoCodecMeta(new Size(width, height)), null);
+                new VideoCodecMeta(new Size(width, height), ColorSpace.YUV420), null);
     }
 
     @Override

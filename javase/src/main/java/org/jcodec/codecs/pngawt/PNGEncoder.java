@@ -1,4 +1,4 @@
-package org.jcodec.codecs.png;
+package org.jcodec.codecs.pngawt;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;

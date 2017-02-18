@@ -19,6 +19,7 @@ import org.jcodec.common.TrackType;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.MP4TrackType;
@@ -281,7 +282,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         VideoCodecMeta videoCodecMeta = null;
         AudioCodecMeta audioCodecMeta = null;
         if (type == MP4TrackType.VIDEO) {
-            videoCodecMeta = new VideoCodecMeta(box.getCodedSize());
+            videoCodecMeta = new VideoCodecMeta(box.getCodedSize(), ColorSpace.YUV420);
             PixelAspectExt pasp = NodeBox.findFirst(getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if (pasp != null)
                 videoCodecMeta.setPixelAspectRatio(pasp.getRational());

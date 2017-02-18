@@ -771,6 +771,6 @@ public class MPEGDecoder extends VideoDecoder {
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
         ByteBuffer codecPrivate = getSequenceHeader(data.duplicate());
         SequenceHeader sh = SequenceHeader.read(codecPrivate.duplicate());
-        return new VideoCodecMeta(new Size(sh.horizontal_size, sh.vertical_size));
+        return new VideoCodecMeta(new Size(sh.horizontal_size, sh.vertical_size), ColorSpace.YUV420);
     }
 }

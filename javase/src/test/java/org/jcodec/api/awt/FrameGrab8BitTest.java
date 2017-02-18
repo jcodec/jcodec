@@ -71,7 +71,7 @@ public class FrameGrab8BitTest {
 
         int[] keyFrames = new int[] { 0, 11, 25, 34, 48, 59, 100 };
         DemuxerTrackMeta meta = new DemuxerTrackMeta(TrackType.VIDEO, Codec.H264, 120, keyFrames, 120, null,
-                new VideoCodecMeta(new Size(320, 240)), null);
+                new VideoCodecMeta(new Size(320, 240), ColorSpace.YUV420), null);
 
         when(videoTrack.getMeta()).thenReturn(meta);
         when(videoTrack.getCurFrame()).thenReturn(42L);
@@ -91,7 +91,7 @@ public class FrameGrab8BitTest {
 
         int[] keyFrames = new int[] { 0, 11, 25, 40, 48, 59, 100 };
         DemuxerTrackMeta meta = new DemuxerTrackMeta(TrackType.VIDEO, Codec.H264, 120, keyFrames, 120, null,
-                new VideoCodecMeta(new Size(320, 240)), null);
+                new VideoCodecMeta(new Size(320, 240), ColorSpace.YUV420), null);
 
         MP4Packet frame40 = new MP4Packet(null, 40, 25, 1, 40, FrameType.KEY, null, 0, 0, 0, 0, 42, true);
         MP4Packet frame41 = new MP4Packet(null, 41, 25, 1, 41, FrameType.KEY, null, 0, 0, 0, 0, 42, true);

@@ -36,6 +36,7 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
@@ -267,7 +268,7 @@ public final class MKVDemuxer implements Demuxer {
         @Override
         public DemuxerTrackMeta getMeta() {
             return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, codec, 0, null, 0, state,
-                    new VideoCodecMeta(new Size(demuxer.pictureWidth, demuxer.pictureHeight)), null);
+                    new VideoCodecMeta(new Size(demuxer.pictureWidth, demuxer.pictureHeight), ColorSpace.YUV420), null);
         }
 
         @Override

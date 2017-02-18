@@ -1,4 +1,4 @@
-package org.jcodec.codecs.png;
+package org.jcodec.codecs.pngawt;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -10,6 +10,7 @@ import javax.imageio.ImageIO;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.scale.AWTUtil;
@@ -35,7 +36,7 @@ public class PNGDecoder extends VideoDecoder {
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
         try {
             BufferedImage rgb = ImageIO.read(new ByteArrayInputStream(NIOUtils.toArray(data)));
-            return new VideoCodecMeta(new Size(rgb.getWidth(), rgb.getHeight()));
+            return new VideoCodecMeta(new Size(rgb.getWidth(), rgb.getHeight()), ColorSpace.RGB);
         } catch (IOException e) {
             return null;
         }

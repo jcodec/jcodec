@@ -23,6 +23,7 @@ import org.jcodec.common.LongArrayList;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.common.model.Rational;
@@ -247,7 +248,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
             if (codec == Codec.H264) {
                 SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
                 Size size = H264Utils.getPicSize(sps);
-                VideoCodecMeta meta = new VideoCodecMeta(size);
+                VideoCodecMeta meta = new VideoCodecMeta(size, ColorSpace.YUV420);
                 addVideoSampleEntry(meta);
             } else {
                 throw new RuntimeException("Sample entry missing not supported for anything other then H.264");

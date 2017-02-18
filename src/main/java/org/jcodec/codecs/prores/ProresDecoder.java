@@ -464,6 +464,6 @@ public class ProresDecoder extends VideoDecoder {
     @Override
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
         FrameHeader fh = readFrameHeader(data);
-        return new VideoCodecMeta(new Size(fh.width, fh.height));
+        return new VideoCodecMeta(new Size(fh.width, fh.height), ColorSpace.YUV420);
     }
 }
