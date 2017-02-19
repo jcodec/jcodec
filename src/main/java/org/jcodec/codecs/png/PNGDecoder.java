@@ -137,16 +137,16 @@ public class PNGDecoder extends VideoDecoder {
                 }
                 break;
             case FILTER_VALUE_SUB:
-                filterSub(uncompressed, 1, rowSize, lastRow, bpp);
+                filterSub(uncompressed, rowSize - 1, lastRow, bpp);
                 break;
             case FILTER_VALUE_UP:
-                filterUp(uncompressed, 1, rowSize, lastRow);
+                filterUp(uncompressed, rowSize - 1, lastRow);
                 break;
             case FILTER_VALUE_AVG:
-                filterAvg(uncompressed, 1, rowSize, lastRow, bpp);
+                filterAvg(uncompressed, rowSize - 1, lastRow, bpp);
                 break;
             case FILTER_VALUE_PAETH:
-                filterPaeth(uncompressed, 1, rowSize, lastRow, bpp);
+                filterPaeth(uncompressed, rowSize - 1, lastRow, bpp);
                 break;
             }
 
@@ -174,14 +174,16 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
-    private void filterPaeth(byte[] uncompressed, int from, int rowSize, byte[] lastRow, int bpp) {
+    private byte[] ca = new byte[4];
+    private void filterPaeth(byte[] uncompressed, int rowSize, byte[] lastRow, int bpp) {
         for (int i = 0; i < bpp; i++) {
-            uncompressed[from + i] = (byte) (uncompressed[from + i] + lastRow[i]);
+            ca[i] = lastRow[i];
+            lastRow[i] = (byte) ((uncompressed[i + 1] & 0xff) + (lastRow[i] & 0xff));
         }
         for (int i = bpp; i < rowSize; i++) {
-            int a = uncompressed[from + i - bpp];
-            int b = lastRow[i];
-            int c = lastRow[i - bpp];
+            int a = lastRow[i - bpp] & 0xff;
+            int b = lastRow[i] & 0xff;
+            int c = ca[i % bpp] & 0xff;
             int p = b - c;
             int pc = a - c;
 
@@ -195,132 +197,127 @@ public class PNGDecoder extends VideoDecoder {
                 p = b;
             else
                 p = c;
-            lastRow[i] = uncompressed[from + i] = (byte) (p + uncompressed[from + i]);
+            ca[i % bpp] = lastRow[i];
+            lastRow[i] = (byte) (p + (uncompressed[i + 1] & 0xff));
         }
     }
 
-    private void filterSub(byte[] uncompressed, int from, int rowSize, byte[] lastRow, int bpp) {
+    private void filterSub(byte[] uncompressed, int rowSize, byte[] lastRow, int bpp) {
         switch (bpp) {
         case 1:
-            filterSub1(uncompressed, from, lastRow, rowSize);
+            filterSub1(uncompressed, lastRow, rowSize);
             break;
         case 2:
-            filterSub2(uncompressed, from, lastRow, rowSize);
+            filterSub2(uncompressed, lastRow, rowSize);
             break;
         case 3:
-            filterSub3(uncompressed, from, lastRow, rowSize);
+            filterSub3(uncompressed, lastRow, rowSize);
             break;
         default:
-            filterSub4(uncompressed, from, lastRow, rowSize);
+            filterSub4(uncompressed, lastRow, rowSize);
         }
     }
 
-    private void filterAvg(byte[] uncompressed, int from, int rowSize, byte[] lastRow, int bpp) {
+    private void filterAvg(byte[] uncompressed, int rowSize, byte[] lastRow, int bpp) {
         switch (bpp) {
         case 1:
-            filterAvg1(uncompressed, from, lastRow, rowSize);
+            filterAvg1(uncompressed, lastRow, rowSize);
             break;
         case 2:
-            filterAvg2(uncompressed, from, lastRow, rowSize);
+            filterAvg2(uncompressed, lastRow, rowSize);
             break;
         case 3:
-            filterAvg3(uncompressed, from, lastRow, rowSize);
+            filterAvg3(uncompressed, lastRow, rowSize);
             break;
         default:
-            filterAvg4(uncompressed, from, lastRow, rowSize);
+            filterAvg4(uncompressed, lastRow, rowSize);
         }
 
     }
 
-    private void filterSub1(byte[] uncompressed, int from, byte[] lastRow, int rowSize) {
-        byte p = lastRow[0] = uncompressed[from];
+    private void filterSub1(byte[] uncompressed, byte[] lastRow, int rowSize) {
+        byte p = lastRow[0] = uncompressed[1];
         for (int i = 1; i < rowSize; i++) {
-            p = lastRow[i] = uncompressed[from + i] = (byte) (p + uncompressed[from + i]);
+            p = lastRow[i] = (byte) ((p & 0xff) + (uncompressed[i + 1] & 0xff));
         }
     }
 
-    private void filterUp(byte[] uncompressed, int from, int rowSize, byte[] lastRow) {
+    private void filterUp(byte[] uncompressed, int rowSize, byte[] lastRow) {
         for (int i = 0; i < rowSize; i++) {
-            lastRow[i] = uncompressed[from + i] = (byte) (lastRow[i] + uncompressed[from + i]);
+            lastRow[i] = (byte) ((lastRow[i] & 0xff) + (uncompressed[i + 1] & 0xff));
         }
     }
 
-    private void filterAvg1(byte[] uncompressed, int from, byte[] lastRow, int rowSize) {
-        byte p = lastRow[0] = (byte) (uncompressed[from] + (lastRow[0] >> 1));
+    private void filterAvg1(byte[] uncompressed, byte[] lastRow, int rowSize) {
+        byte p = lastRow[0] = (byte) ((uncompressed[1] & 0xff) + ((lastRow[0] & 0xff) >> 1));
         for (int i = 1; i < rowSize; i++) {
-            p = lastRow[i] = uncompressed[from + i] = (byte) (((lastRow[i] + p) >> 1) + uncompressed[from + i]);
+            p = lastRow[i] = (byte) ((((lastRow[i] & 0xff) + (p & 0xff)) >> 1) + (uncompressed[i + 1] & 0xff));
         }
     }
 
-    private void filterSub2(byte[] uncompressed, int from, byte[] lastRow, int rowSize) {
-        byte p0 = lastRow[0] = uncompressed[from];
-        byte p1 = lastRow[1] = uncompressed[from + 1];
+    private void filterSub2(byte[] uncompressed, byte[] lastRow, int rowSize) {
+        byte p0 = lastRow[0] = uncompressed[1];
+        byte p1 = lastRow[1] = uncompressed[2];
         for (int i = 2; i < rowSize; i += 2) {
-            p0 = lastRow[i] = uncompressed[from + i] = (byte) (p0 + uncompressed[from + i]);
-            p1 = lastRow[i + 1] = uncompressed[from + i + 1] = (byte) (p1 + uncompressed[from + i + 1]);
+            p0 = lastRow[i] = (byte) ((p0 & 0xff) + (uncompressed[1 + i] & 0xff));
+            p1 = lastRow[i + 1] = (byte) ((p1 & 0xff) + (uncompressed[2 + i] & 0xff));
         }
     }
 
-    private void filterAvg2(byte[] uncompressed, int from, byte[] lastRow, int rowSize) {
-        byte p0 = lastRow[0] = (byte) (uncompressed[from] + (lastRow[0] >> 1));
-        byte p1 = lastRow[1] = (byte) (uncompressed[from + 1] + (lastRow[1] >> 1));
+    private void filterAvg2(byte[] uncompressed, byte[] lastRow, int rowSize) {
+        byte p0 = lastRow[0] = (byte) ((uncompressed[1] & 0xff) + ((lastRow[0] & 0xff) >> 1));
+        byte p1 = lastRow[1] = (byte) ((uncompressed[2] & 0xff) + ((lastRow[1] & 0xff) >> 1));
         for (int i = 2; i < rowSize; i += 2) {
-            p0 = lastRow[i] = uncompressed[from + i] = (byte) (((lastRow[i] + p0) >> 1) + uncompressed[from + i]);
-            p1 = lastRow[i + 1] = uncompressed[from + i
-                    + 1] = (byte) (((lastRow[i + 1] + p1) >> 1) + uncompressed[from + i + 1]);
+            p0 = lastRow[i] = (byte) ((((lastRow[i] & 0xff) + (p0 & 0xff)) >> 1) + (uncompressed[1 + i] & 0xff));
+            p1 = lastRow[i + 1] = (byte) ((((lastRow[i + 1] & 0xff) + (p1 & 0xff)) >> 1) + (uncompressed[i + 2] & 0xff));
         }
     }
 
-    private void filterSub3(byte[] uncompressed, int from, byte[] lastRow, int rowSize) {
-        byte p0 = lastRow[0] = uncompressed[from];
-        byte p1 = lastRow[1] = uncompressed[from + 1];
-        byte p2 = lastRow[2] = uncompressed[from + 2];
+    private void filterSub3(byte[] uncompressed, byte[] lastRow, int rowSize) {
+        byte p0 = lastRow[0] = uncompressed[1];
+        byte p1 = lastRow[1] = uncompressed[2];
+        byte p2 = lastRow[2] = uncompressed[3];
         for (int i = 3; i < rowSize; i += 3) {
-            p0 = lastRow[i] = uncompressed[from + i] = (byte) (p0 + uncompressed[from + i]);
-            p1 = lastRow[i + 1] = uncompressed[from + i + 1] = (byte) (p1 + uncompressed[from + i + 1]);
-            p2 = lastRow[i + 2] = uncompressed[from + i + 2] = (byte) (p2 + uncompressed[from + i + 2]);
+            p0 = lastRow[i] = (byte) ((p0 & 0xff) + (uncompressed[i + 1] & 0xff));
+            p1 = lastRow[i + 1] = (byte) ((p1 & 0xff) + (uncompressed[i + 2] & 0xff));
+            p2 = lastRow[i + 2] = (byte) ((p2 & 0xff) + (uncompressed[i + 3] & 0xff));
         }
     }
 
-    private void filterAvg3(byte[] uncompressed, int from, byte[] lastRow, int rowSize) {
-        byte p0 = lastRow[0] = (byte) (uncompressed[from] + (lastRow[0] >> 1));
-        byte p1 = lastRow[1] = (byte) (uncompressed[from + 1] + (lastRow[1] >> 1));
-        byte p2 = lastRow[2] = (byte) (uncompressed[from + 2] + (lastRow[2] >> 1));
+    private void filterAvg3(byte[] uncompressed, byte[] lastRow, int rowSize) {
+        byte p0 = lastRow[0] = (byte) ((uncompressed[1] & 0xff) + ((lastRow[0] & 0xff) >> 1));
+        byte p1 = lastRow[1] = (byte) ((uncompressed[2] & 0xff) + ((lastRow[1] & 0xff) >> 1));
+        byte p2 = lastRow[2] = (byte) ((uncompressed[3] & 0xff) + ((lastRow[2] & 0xff) >> 1));
         for (int i = 3; i < rowSize; i += 3) {
-            p0 = lastRow[i] = uncompressed[from + i] = (byte) (((lastRow[i] + p0) >> 1) + uncompressed[from + i]);
-            p1 = lastRow[i + 1] = uncompressed[from + i
-                    + 1] = (byte) (((lastRow[i + 1] + p1) >> 1) + uncompressed[from + i + 1]);
-            p2 = lastRow[i + 2] = uncompressed[from + i
-                    + 2] = (byte) (((lastRow[i + 2] + p2) >> 1) + uncompressed[from + i + 2]);
+            p0 = lastRow[i] = (byte) ((((lastRow[i] & 0xff) + (p0 & 0xff)) >> 1) + (uncompressed[i + 1] & 0xff));
+            p1 = lastRow[i + 1] = (byte) ((((lastRow[i + 1] & 0xff) + (p1 & 0xff)) >> 1) + (uncompressed[i + 2] & 0xff));
+            p2 = lastRow[i + 2] = (byte) ((((lastRow[i + 2] & 0xff) + (p2 & 0xff)) >> 1) + (uncompressed[i + 3] & 0xff));
         }
     }
 
-    private void filterSub4(byte[] uncompressed, int from, byte[] lastRow, int rowSize) {
-        byte p0 = lastRow[0] = uncompressed[from];
-        byte p1 = lastRow[1] = uncompressed[from + 1];
-        byte p2 = lastRow[2] = uncompressed[from + 2];
-        byte p3 = lastRow[3] = uncompressed[from + 3];
+    private void filterSub4(byte[] uncompressed, byte[] lastRow, int rowSize) {
+        byte p0 = lastRow[0] = uncompressed[1];
+        byte p1 = lastRow[1] = uncompressed[2];
+        byte p2 = lastRow[2] = uncompressed[3];
+        byte p3 = lastRow[3] = uncompressed[4];
         for (int i = 4; i < rowSize; i += 4) {
-            p0 = lastRow[i] = uncompressed[from + i] = (byte) (p0 + uncompressed[from + i]);
-            p1 = lastRow[i + 1] = uncompressed[from + i + 1] = (byte) (p1 + uncompressed[from + i + 1]);
-            p2 = lastRow[i + 2] = uncompressed[from + i + 2] = (byte) (p2 + uncompressed[from + i + 2]);
-            p3 = lastRow[i + 3] = uncompressed[from + i + 3] = (byte) (p3 + uncompressed[from + i + 3]);
+            p0 = lastRow[i] = (byte) ((p0 & 0xff) + (uncompressed[i + 1] & 0xff));
+            p1 = lastRow[i + 1] = (byte) ((p1 & 0xff) + (uncompressed[i + 2] & 0xff));
+            p2 = lastRow[i + 2] = (byte) ((p2 & 0xff) + (uncompressed[i + 3] & 0xff));
+            p3 = lastRow[i + 3] = (byte) ((p3 & 0xff) + (uncompressed[i + 4] & 0xff));
         }
     }
 
-    private void filterAvg4(byte[] uncompressed, int from, byte[] lastRow, int rowSize) {
-        byte p0 = lastRow[0] = (byte) (uncompressed[from] + (lastRow[0] >> 1));
-        byte p1 = lastRow[1] = (byte) (uncompressed[from + 1] + (lastRow[1] >> 1));
-        byte p2 = lastRow[2] = (byte) (uncompressed[from + 2] + (lastRow[2] >> 1));
-        byte p3 = lastRow[3] = (byte) (uncompressed[from + 3] + (lastRow[3] >> 1));
+    private void filterAvg4(byte[] uncompressed, byte[] lastRow, int rowSize) {
+        byte p0 = lastRow[0] = (byte) ((uncompressed[1] & 0xff) + ((lastRow[0] & 0xff) >> 1));
+        byte p1 = lastRow[1] = (byte) ((uncompressed[2] & 0xff) + ((lastRow[1] & 0xff) >> 1));
+        byte p2 = lastRow[2] = (byte) ((uncompressed[3] & 0xff) + ((lastRow[2] & 0xff) >> 1));
+        byte p3 = lastRow[3] = (byte) ((uncompressed[4] & 0xff) + ((lastRow[3] & 0xff) >> 1));
         for (int i = 4; i < rowSize; i += 4) {
-            p0 = lastRow[i] = uncompressed[from + i] = (byte) (((lastRow[i] + p0) >> 1) + uncompressed[from + i]);
-            p1 = lastRow[i + 1] = uncompressed[from + i
-                    + 1] = (byte) (((lastRow[i + 1] + p1) >> 1) + uncompressed[from + i + 1]);
-            p2 = lastRow[i + 2] = uncompressed[from + i
-                    + 2] = (byte) (((lastRow[i + 2] + p2) >> 1) + uncompressed[from + i + 2]);
-            p3 = lastRow[i + 3] = uncompressed[from + i
-                    + 3] = (byte) (((lastRow[i + 3] + p3) >> 1) + uncompressed[from + i + 3]);
+            p0 = lastRow[i] = (byte) ((((lastRow[i] & 0xff) + (p0 & 0xff)) >> 1) + (uncompressed[i + 1] & 0xff));
+            p1 = lastRow[i + 1] = (byte) ((((lastRow[i + 1] & 0xff) + (p1 & 0xff)) >> 1) + (uncompressed[i + 2] & 0xff));
+            p2 = lastRow[i + 2] = (byte) ((((lastRow[i + 2] & 0xff) + (p2 & 0xff)) >> 1) + (uncompressed[i + 3] & 0xff));
+            p3 = lastRow[i + 3] = (byte) ((((lastRow[i + 3] & 0xff) + (p3 & 0xff)) >> 1) + (uncompressed[i + 4] & 0xff));
         }
     }
 
