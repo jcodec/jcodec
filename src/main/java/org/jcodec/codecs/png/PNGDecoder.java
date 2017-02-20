@@ -32,6 +32,8 @@ import org.jcodec.scale.Transform8Bit;
  * 
  * PNG image decoder.
  * 
+ * Supports: RGB, palette, grey, alpha, interlace.
+ * 
  * @author Stanislav Vitvitskyy
  * 
  */
@@ -60,10 +62,15 @@ public class PNGDecoder extends VideoDecoder {
     private static final int PNG_COLOR_TYPE_RGB = (PNG_COLOR_MASK_COLOR);
     private static final int PNG_COLOR_TYPE_RGB_ALPHA = (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_ALPHA);
     private static final int PNG_COLOR_TYPE_GRAY_ALPHA = (PNG_COLOR_MASK_ALPHA);
-    
+
     private static final int alphaR = 0x7f;
     private static final int alphaG = 0x7f;
     private static final int alphaB = 0x7f;
+    
+    public static final int[] logPassStep = { 3, 3, 2, 2, 1, 1, 0 };
+    public static final int[] logPassRowStep = { 3, 3, 3, 2, 2, 1, 1 };
+    public static final int[] passOff = { 0, 4, 0, 2, 0, 1, 0 };
+    public static final int[] passRowOff = { 0, 0, 4, 0, 2, 0, 1 };
 
     @Override
     public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
@@ -110,87 +117,107 @@ public class PNGDecoder extends VideoDecoder {
     }
 
     private void decodeData(IHDR ihdr, PLTE plte, List<ByteBuffer> list, byte[][] buffer) throws DataFormatException {
-        int rowSize = ihdr.rowSize() + 1;
         int bpp = (ihdr.getBitsPerPixel() + 7) >> 3;
+        int passes = ihdr.interlaceType == 0 ? 1 : 7;
         Inflater inflater = new Inflater();
         Iterator<ByteBuffer> it = list.iterator();
-        byte[] lastRow = new byte[ihdr.rowSize()];
-        byte[] uncompressed = new byte[ihdr.rowSize() + 1];
 
-        for (int row = 0, bptr = 0; row < ihdr.height; row++) {
-            int count = inflater.inflate(uncompressed);
-            if (count < uncompressed.length && inflater.needsInput()) {
-                if (!it.hasNext()) {
-                    Logger.warn(String.format("Data truncation at row %d", row));
-                    break;
-                }
-                ByteBuffer next = it.next();
-                inflater.setInput(NIOUtils.toArray(next));
-                int toRead = uncompressed.length - count;
-                count = inflater.inflate(uncompressed, count, toRead);
-                if (count != toRead) {
-                    Logger.warn(String.format("Data truncation at row %d", row));
-                    break;
-                }
-            }
-            int filter = uncompressed[0];
-            switch (filter) {
-            case FILTER_VALUE_NONE:
-                for (int i = 0; i < rowSize - 1; i++) {
-                    lastRow[i] = uncompressed[i + 1];
-                }
-                break;
-            case FILTER_VALUE_SUB:
-                filterSub(uncompressed, rowSize - 1, lastRow, bpp);
-                break;
-            case FILTER_VALUE_UP:
-                filterUp(uncompressed, rowSize - 1, lastRow);
-                break;
-            case FILTER_VALUE_AVG:
-                filterAvg(uncompressed, rowSize - 1, lastRow, bpp);
-                break;
-            case FILTER_VALUE_PAETH:
-                filterPaeth(uncompressed, rowSize - 1, lastRow, bpp);
-                break;
-            }
-
-            int bptrWas = bptr;
-            if((ihdr.colorType & PNG_COLOR_MASK_PALETTE) != 0) {
-                for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
-                    int plt = plte.palette[lastRow[i] & 0xff];
-                    buffer[0][bptr] = (byte)(((plt >> 16) & 0xff) - 128);
-                    buffer[0][bptr + 1] = (byte)(((plt >> 8) & 0xff) - 128);
-                    buffer[0][bptr + 2] = (byte)((plt & 0xff) - 128);
-                }
-            } else if((ihdr.colorType & PNG_COLOR_MASK_COLOR) != 0) {
-                for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
-                    buffer[0][bptr] = (byte)((lastRow[i] & 0xff) - 128);
-                    buffer[0][bptr + 1] = (byte)((lastRow[i + 1] & 0xff) - 128);
-                    buffer[0][bptr + 2] = (byte)((lastRow[i + 2] & 0xff) - 128);
-                }
+        for (int pass = 0; pass < passes; pass++) {
+            int rowSize, rowStart, rowStep, colStart, colStep;
+            if (ihdr.interlaceType == 0) {
+                rowSize = ihdr.rowSize() + 1;
+                colStart = rowStart = 0;
+                colStep = rowStep = 1;
             } else {
-                for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
-                    buffer[0][bptr] = buffer[0][bptr + 1] = buffer[0][bptr + 2] = (byte) ((lastRow[i] & 0xff) - 128);
-                }
+                int round = (1 << logPassStep[pass]) - 1;
+                rowSize = ((ihdr.width + round) >> logPassStep[pass]) + 1;
+                rowStart = passRowOff[pass];
+                rowStep = 1 << logPassRowStep[pass];
+                colStart = passOff[pass];
+                colStep = 1 << logPassStep[pass];
             }
-            if (ihdr.filterType == FILTER_TYPE_LOCO) {
-                for (int i = bptrWas; i < bptr; i+=3) {
-                    buffer[0][i] = (byte) (buffer[0][i] + buffer[0][i + 1]);
-                    buffer[0][i + 2] = (byte) (buffer[0][i + 2] + buffer[0][i + 1]);
+            byte[] lastRow = new byte[rowSize - 1];
+            byte[] uncompressed = new byte[rowSize];
+            int bptr = 3 * (ihdr.width * rowStart + colStart);
+            for (int row = rowStart; row < ihdr.height; row += rowStep) {
+                int count = inflater.inflate(uncompressed);
+                if (count < uncompressed.length && inflater.needsInput()) {
+                    if (!it.hasNext()) {
+                        Logger.warn(String.format("Data truncation at row %d", row));
+                        break;
+                    }
+                    ByteBuffer next = it.next();
+                    inflater.setInput(NIOUtils.toArray(next));
+                    int toRead = uncompressed.length - count;
+                    count = inflater.inflate(uncompressed, count, toRead);
+                    if (count != toRead) {
+                        Logger.warn(String.format("Data truncation at row %d", row));
+                        break;
+                    }
                 }
-            }
-            if ((ihdr.colorType & PNG_COLOR_MASK_ALPHA) != 0) {
-                for (int i = bpp - 1, j = bptrWas; i < rowSize - 1; i += bpp, j += 3) {
-                    int alpha = lastRow[i] & 0xff, nalpha = 256 - alpha;
-                    buffer[0][j] = (byte) ((alphaR * nalpha + buffer[0][j] * alpha) >> 8);
-                    buffer[0][j + 1] = (byte) ((alphaG * nalpha + buffer[0][j + 1] * alpha) >> 8);
-                    buffer[0][j + 2] = (byte) ((alphaB * nalpha + buffer[0][j + 2] * alpha) >> 8);
+
+                int filter = uncompressed[0];
+                switch (filter) {
+                case FILTER_VALUE_NONE:
+                    for (int i = 0; i < rowSize - 1; i++) {
+                        lastRow[i] = uncompressed[i + 1];
+                    }
+                    break;
+                case FILTER_VALUE_SUB:
+                    filterSub(uncompressed, rowSize - 1, lastRow, bpp);
+                    break;
+                case FILTER_VALUE_UP:
+                    filterUp(uncompressed, rowSize - 1, lastRow);
+                    break;
+                case FILTER_VALUE_AVG:
+                    filterAvg(uncompressed, rowSize - 1, lastRow, bpp);
+                    break;
+                case FILTER_VALUE_PAETH:
+                    filterPaeth(uncompressed, rowSize - 1, lastRow, bpp);
+                    break;
                 }
+
+                int bptrWas = bptr;
+                if ((ihdr.colorType & PNG_COLOR_MASK_PALETTE) != 0) {
+                    for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3 * colStep) {
+                        int plt = plte.palette[lastRow[i] & 0xff];
+                        buffer[0][bptr] = (byte) (((plt >> 16) & 0xff) - 128);
+                        buffer[0][bptr + 1] = (byte) (((plt >> 8) & 0xff) - 128);
+                        buffer[0][bptr + 2] = (byte) ((plt & 0xff) - 128);
+                    }
+                } else if ((ihdr.colorType & PNG_COLOR_MASK_COLOR) != 0) {
+                    for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
+                        buffer[0][bptr] = (byte) ((lastRow[i] & 0xff) - 128);
+                        buffer[0][bptr + 1] = (byte) ((lastRow[i + 1] & 0xff) - 128);
+                        buffer[0][bptr + 2] = (byte) ((lastRow[i + 2] & 0xff) - 128);
+                    }
+                } else {
+                    for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
+                        buffer[0][bptr] = buffer[0][bptr
+                                + 1] = buffer[0][bptr + 2] = (byte) ((lastRow[i] & 0xff) - 128);
+                    }
+                }
+                if (ihdr.filterType == FILTER_TYPE_LOCO) {
+                    for (int i = bptrWas; i < bptr; i += 3) {
+                        buffer[0][i] = (byte) (buffer[0][i] + buffer[0][i + 1]);
+                        buffer[0][i + 2] = (byte) (buffer[0][i + 2] + buffer[0][i + 1]);
+                    }
+                }
+                if ((ihdr.colorType & PNG_COLOR_MASK_ALPHA) != 0) {
+                    for (int i = bpp - 1, j = bptrWas; i < rowSize - 1; i += bpp, j += 3) {
+                        int alpha = lastRow[i] & 0xff, nalpha = 256 - alpha;
+                        buffer[0][j] = (byte) ((alphaR * nalpha + buffer[0][j] * alpha) >> 8);
+                        buffer[0][j + 1] = (byte) ((alphaG * nalpha + buffer[0][j + 1] * alpha) >> 8);
+                        buffer[0][j + 2] = (byte) ((alphaB * nalpha + buffer[0][j + 2] * alpha) >> 8);
+                    }
+                }
+                bptr = bptrWas + (3 * ihdr.width * rowStep);
             }
         }
     }
 
     private byte[] ca = new byte[4];
+
     private void filterPaeth(byte[] uncompressed, int rowSize, byte[] lastRow, int bpp) {
         for (int i = 0; i < bpp; i++) {
             ca[i] = lastRow[i];
@@ -285,7 +312,8 @@ public class PNGDecoder extends VideoDecoder {
         byte p1 = lastRow[1] = (byte) ((uncompressed[2] & 0xff) + ((lastRow[1] & 0xff) >> 1));
         for (int i = 2; i < rowSize; i += 2) {
             p0 = lastRow[i] = (byte) ((((lastRow[i] & 0xff) + (p0 & 0xff)) >> 1) + (uncompressed[1 + i] & 0xff));
-            p1 = lastRow[i + 1] = (byte) ((((lastRow[i + 1] & 0xff) + (p1 & 0xff)) >> 1) + (uncompressed[i + 2] & 0xff));
+            p1 = lastRow[i
+                    + 1] = (byte) ((((lastRow[i + 1] & 0xff) + (p1 & 0xff)) >> 1) + (uncompressed[i + 2] & 0xff));
         }
     }
 
@@ -306,8 +334,10 @@ public class PNGDecoder extends VideoDecoder {
         byte p2 = lastRow[2] = (byte) ((uncompressed[3] & 0xff) + ((lastRow[2] & 0xff) >> 1));
         for (int i = 3; i < rowSize; i += 3) {
             p0 = lastRow[i] = (byte) ((((lastRow[i] & 0xff) + (p0 & 0xff)) >> 1) + (uncompressed[i + 1] & 0xff));
-            p1 = lastRow[i + 1] = (byte) ((((lastRow[i + 1] & 0xff) + (p1 & 0xff)) >> 1) + (uncompressed[i + 2] & 0xff));
-            p2 = lastRow[i + 2] = (byte) ((((lastRow[i + 2] & 0xff) + (p2 & 0xff)) >> 1) + (uncompressed[i + 3] & 0xff));
+            p1 = lastRow[i
+                    + 1] = (byte) ((((lastRow[i + 1] & 0xff) + (p1 & 0xff)) >> 1) + (uncompressed[i + 2] & 0xff));
+            p2 = lastRow[i
+                    + 2] = (byte) ((((lastRow[i + 2] & 0xff) + (p2 & 0xff)) >> 1) + (uncompressed[i + 3] & 0xff));
         }
     }
 
@@ -331,9 +361,12 @@ public class PNGDecoder extends VideoDecoder {
         byte p3 = lastRow[3] = (byte) ((uncompressed[4] & 0xff) + ((lastRow[3] & 0xff) >> 1));
         for (int i = 4; i < rowSize; i += 4) {
             p0 = lastRow[i] = (byte) ((((lastRow[i] & 0xff) + (p0 & 0xff)) >> 1) + (uncompressed[i + 1] & 0xff));
-            p1 = lastRow[i + 1] = (byte) ((((lastRow[i + 1] & 0xff) + (p1 & 0xff)) >> 1) + (uncompressed[i + 2] & 0xff));
-            p2 = lastRow[i + 2] = (byte) ((((lastRow[i + 2] & 0xff) + (p2 & 0xff)) >> 1) + (uncompressed[i + 3] & 0xff));
-            p3 = lastRow[i + 3] = (byte) ((((lastRow[i + 3] & 0xff) + (p3 & 0xff)) >> 1) + (uncompressed[i + 4] & 0xff));
+            p1 = lastRow[i
+                    + 1] = (byte) ((((lastRow[i + 1] & 0xff) + (p1 & 0xff)) >> 1) + (uncompressed[i + 2] & 0xff));
+            p2 = lastRow[i
+                    + 2] = (byte) ((((lastRow[i + 2] & 0xff) + (p2 & 0xff)) >> 1) + (uncompressed[i + 3] & 0xff));
+            p3 = lastRow[i
+                    + 3] = (byte) ((((lastRow[i + 3] & 0xff) + (p3 & 0xff)) >> 1) + (uncompressed[i + 4] & 0xff));
         }
     }
 
@@ -379,9 +412,9 @@ public class PNGDecoder extends VideoDecoder {
             return ColorSpace.RGB;
         }
     }
-    
+
     private static class PLTE {
-        
+
         private int[] palette;
 
         public void parse(ByteBuffer data, int length) {
@@ -391,27 +424,13 @@ public class PNGDecoder extends VideoDecoder {
             palette = new int[n];
             int i = 0;
             for (i = 0; i < n; i++) {
-                palette[i] = (0xff << 24) | ((data.get() & 0xff) << 16) | ((data.get() & 0xff) << 8) | (data.get() & 0xff);
+                palette[i] = (0xff << 24) | ((data.get() & 0xff) << 16) | ((data.get() & 0xff) << 8)
+                        | (data.get() & 0xff);
             }
             for (; i < 256; i++)
                 palette[i] = (0xff << 24);
             data.getInt(); // crc
         }
-    }
-
-    private static int[] passMin = new int[] { 0, 4, 0, 2, 0, 1, 0 };
-
-    private static int[] passShift = new int[] { 3, 3, 2, 2, 1, 1, 0 };
-
-    int passRowSize(int pass, IHDR ihdr) {
-        int shift, xmin, pass_width;
-
-        xmin = passMin[pass];
-        if (ihdr.width <= xmin)
-            return 0;
-        shift = passShift[pass];
-        pass_width = (ihdr.width - xmin + (1 << shift) - 1) >> shift;
-        return (pass_width * ihdr.bitDepth + 7) >> 3;
     }
 
     @Override
