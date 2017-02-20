@@ -79,8 +79,8 @@ public class PNGEncoder extends VideoEncoder {
 
         // We do one extra iteration here to flush the deflator
         for (int row = 0, bptr = 0; row < pic.getHeight() + 1; row++) {
-            while (!deflater.needsInput()) {
-                int count = deflater.deflate(buffer, ptr, len);
+            int count;
+            while ((count = deflater.deflate(buffer, ptr, len)) > 0) {
                 ptr += count;
                 len -= count;
 
@@ -108,7 +108,7 @@ public class PNGEncoder extends VideoEncoder {
             if (row >= pic.getHeight() - 1)
                 deflater.finish();
         }
-        if (ptr >= 0) {
+        if (ptr > 0) {
             _out.putInt(ptr);
             crcFrom = _out.duplicate();
             _out.putInt(TAG_IDAT);
