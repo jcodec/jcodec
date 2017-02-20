@@ -3,15 +3,11 @@ package org.jcodec.codecs.png;
 import static org.jcodec.common.tools.MathUtil.abs;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.zip.CRC32;
 import java.util.zip.DataFormatException;
-import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 import org.jcodec.common.VideoCodecMeta;
@@ -21,10 +17,6 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
-import org.jcodec.common.tools.MainUtils;
-import org.jcodec.scale.AWTUtil;
-import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform8Bit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,7 +24,7 @@ import org.jcodec.scale.Transform8Bit;
  * 
  * PNG image decoder.
  * 
- * Supports: RGB, palette, grey, alpha, interlace.
+ * Supports: RGB, palette, grey, alpha, interlace, transparency.
  * 
  * @author Stanislav Vitvitskyy
  * 
@@ -43,6 +35,7 @@ public class PNGDecoder extends VideoDecoder {
     private static final int TAG_IHDR = 0x49484452;
     private static final int TAG_IDAT = 0x49444154;
     private static final int TAG_PLTE = 0x504c5445;
+    private static final int TAG_tRNS = 0x74524e53;
     private static final int TAG_IEND = 0x49454e44;
 
     private static final int FILTER_TYPE_LOCO = 64;
@@ -51,7 +44,6 @@ public class PNGDecoder extends VideoDecoder {
     private static final int FILTER_VALUE_UP = 2;
     private static final int FILTER_VALUE_AVG = 3;
     private static final int FILTER_VALUE_PAETH = 4;
-    private static final int FILTER_VALUE_MIXED = 5;
 
     private static final int PNG_COLOR_MASK_PALETTE = 1;
     private static final int PNG_COLOR_MASK_COLOR = 2;
@@ -60,17 +52,17 @@ public class PNGDecoder extends VideoDecoder {
     private static final int PNG_COLOR_TYPE_GRAY = 0;
     private static final int PNG_COLOR_TYPE_PALETTE = (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_PALETTE);
     private static final int PNG_COLOR_TYPE_RGB = (PNG_COLOR_MASK_COLOR);
-    private static final int PNG_COLOR_TYPE_RGB_ALPHA = (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_ALPHA);
-    private static final int PNG_COLOR_TYPE_GRAY_ALPHA = (PNG_COLOR_MASK_ALPHA);
 
     private static final int alphaR = 0x7f;
     private static final int alphaG = 0x7f;
     private static final int alphaB = 0x7f;
-    
+
     public static final int[] logPassStep = { 3, 3, 2, 2, 1, 1, 0 };
     public static final int[] logPassRowStep = { 3, 3, 3, 2, 2, 1, 1 };
     public static final int[] passOff = { 0, 4, 0, 2, 0, 1, 0 };
     public static final int[] passRowOff = { 0, 0, 4, 0, 2, 0, 1 };
+    
+    private byte[] ca = new byte[4];
 
     @Override
     public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
@@ -80,6 +72,7 @@ public class PNGDecoder extends VideoDecoder {
 
         IHDR ihdr = null;
         PLTE plte = null;
+        TRNS trns = null;
         List<ByteBuffer> list = new ArrayList<ByteBuffer>();
         while (data.remaining() >= 8) {
             int length = data.getInt();
@@ -97,6 +90,10 @@ public class PNGDecoder extends VideoDecoder {
                 plte = new PLTE();
                 plte.parse(data, length);
                 break;
+            case TAG_tRNS:
+                trns = new TRNS(ihdr.colorType);
+                trns.parse(data, length);
+                break;
             case TAG_IDAT:
                 list.add(NIOUtils.read(data, length));
                 NIOUtils.skip(data, 4); // CRC
@@ -109,14 +106,15 @@ public class PNGDecoder extends VideoDecoder {
             }
         }
         try {
-            decodeData(ihdr, plte, list, buffer);
+            decodeData(ihdr, plte, trns, list, buffer);
         } catch (DataFormatException e) {
             return null;
         }
         return Picture8Bit.createPicture8Bit(ihdr.width, ihdr.height, buffer, ihdr.colorSpace());
     }
 
-    private void decodeData(IHDR ihdr, PLTE plte, List<ByteBuffer> list, byte[][] buffer) throws DataFormatException {
+    private void decodeData(IHDR ihdr, PLTE plte, TRNS trns, List<ByteBuffer> list, byte[][] buffer)
+            throws DataFormatException {
         int bpp = (ihdr.getBitsPerPixel() + 7) >> 3;
         int passes = ihdr.interlaceType == 0 ? 1 : 7;
         Inflater inflater = new Inflater();
@@ -186,37 +184,65 @@ public class PNGDecoder extends VideoDecoder {
                         buffer[0][bptr + 2] = (byte) ((plt & 0xff) - 128);
                     }
                 } else if ((ihdr.colorType & PNG_COLOR_MASK_COLOR) != 0) {
-                    for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
+                    for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3 * colStep) {
                         buffer[0][bptr] = (byte) ((lastRow[i] & 0xff) - 128);
                         buffer[0][bptr + 1] = (byte) ((lastRow[i + 1] & 0xff) - 128);
                         buffer[0][bptr + 2] = (byte) ((lastRow[i + 2] & 0xff) - 128);
                     }
                 } else {
-                    for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
+                    for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3 * colStep) {
                         buffer[0][bptr] = buffer[0][bptr
                                 + 1] = buffer[0][bptr + 2] = (byte) ((lastRow[i] & 0xff) - 128);
                     }
                 }
                 if (ihdr.filterType == FILTER_TYPE_LOCO) {
-                    for (int i = bptrWas; i < bptr; i += 3) {
+                    for (int i = bptrWas; i < bptr; i += 3 * colStep) {
                         buffer[0][i] = (byte) (buffer[0][i] + buffer[0][i + 1]);
                         buffer[0][i + 2] = (byte) (buffer[0][i + 2] + buffer[0][i + 1]);
                     }
                 }
                 if ((ihdr.colorType & PNG_COLOR_MASK_ALPHA) != 0) {
-                    for (int i = bpp - 1, j = bptrWas; i < rowSize - 1; i += bpp, j += 3) {
+                    for (int i = bpp - 1, j = bptrWas; i < rowSize - 1; i += bpp, j += 3 * colStep) {
                         int alpha = lastRow[i] & 0xff, nalpha = 256 - alpha;
                         buffer[0][j] = (byte) ((alphaR * nalpha + buffer[0][j] * alpha) >> 8);
                         buffer[0][j + 1] = (byte) ((alphaG * nalpha + buffer[0][j + 1] * alpha) >> 8);
                         buffer[0][j + 2] = (byte) ((alphaB * nalpha + buffer[0][j + 2] * alpha) >> 8);
+                    }
+                } else if (trns != null) {
+                    if (ihdr.colorType == PNG_COLOR_TYPE_PALETTE) {
+                        for (int i = 0, j = bptrWas; i < rowSize - 1; i++, j += 3 * colStep) {
+                            int alpha = trns.alphaPal[lastRow[i] & 0xff] & 0xff, nalpha = 256 - alpha;
+                            buffer[0][j] = (byte) ((alphaR * nalpha + buffer[0][j] * alpha) >> 8);
+                            buffer[0][j + 1] = (byte) ((alphaG * nalpha + buffer[0][j + 1] * alpha) >> 8);
+                            buffer[0][j + 2] = (byte) ((alphaB * nalpha + buffer[0][j + 2] * alpha) >> 8);
+                        }
+                    } else if (ihdr.colorType == PNG_COLOR_TYPE_RGB) {
+                        int ar = (trns.alphaR & 0xff) - 128;
+                        int ag = (trns.alphaG & 0xff) - 128;
+                        int ab = (trns.alphaB & 0xff) - 128;
+                        if (ab != alphaB || ag != alphaG || ar != alphaR) {
+                            for (int i = 0, j = bptrWas; i < rowSize - 1; i += bpp, j += 3 * colStep) {
+                                if (buffer[0][j] == ar && buffer[0][j + 1] == ag && buffer[0][j + 2] == ab) {
+                                    buffer[0][j] = alphaR;
+                                    buffer[0][j + 1] = alphaG;
+                                    buffer[0][j + 2] = alphaB;
+                                }
+                            }
+                        }
+                    } else if (ihdr.colorType == PNG_COLOR_TYPE_GRAY) {
+                        for (int i = 0, j = bptrWas; i < rowSize - 1; i++, j += 3 * colStep) {
+                            if (lastRow[i] == trns.alphaGrey) {
+                                buffer[0][j] = alphaR;
+                                buffer[0][j + 1] = alphaG;
+                                buffer[0][j + 2] = alphaB;
+                            }
+                        }
                     }
                 }
                 bptr = bptrWas + (3 * ihdr.width * rowStep);
             }
         }
     }
-
-    private byte[] ca = new byte[4];
 
     private void filterPaeth(byte[] uncompressed, int rowSize, byte[] lastRow, int bpp) {
         for (int i = 0; i < bpp; i++) {
@@ -413,6 +439,9 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
+    /**
+     * Palette descriptor.
+     */
     private static class PLTE {
 
         private int[] palette;
@@ -429,6 +458,39 @@ public class PNGDecoder extends VideoDecoder {
             }
             for (; i < 256; i++)
                 palette[i] = (0xff << 24);
+            data.getInt(); // crc
+        }
+    }
+
+    /**
+     * Transparency descriptor for paletted data
+     */
+    public static class TRNS {
+        private int colorType;
+        private byte[] alphaPal;
+        private byte alphaGrey;
+        private byte alphaR;
+        private byte alphaG;
+        private byte alphaB;
+
+        public TRNS(byte colorType) {
+            this.colorType = colorType;
+        }
+
+        public void parse(ByteBuffer data, int length) {
+            if (colorType == PNG_COLOR_TYPE_PALETTE) {
+                alphaPal = new byte[256];
+                data.get(alphaPal, 0, length);
+                for (int i = length; i < 256; i++) {
+                    alphaPal[i] = (byte) 0xff;
+                }
+            } else if (colorType == PNG_COLOR_TYPE_GRAY) {
+                alphaGrey = data.get();
+            } else if (colorType == PNG_COLOR_TYPE_RGB) {
+                alphaR = data.get();
+                alphaG = data.get();
+                alphaG = data.get();
+            }
             data.getInt(); // crc
         }
     }
