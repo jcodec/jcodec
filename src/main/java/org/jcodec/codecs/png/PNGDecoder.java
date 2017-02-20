@@ -60,6 +60,10 @@ public class PNGDecoder extends VideoDecoder {
     private static final int PNG_COLOR_TYPE_RGB = (PNG_COLOR_MASK_COLOR);
     private static final int PNG_COLOR_TYPE_RGB_ALPHA = (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_ALPHA);
     private static final int PNG_COLOR_TYPE_GRAY_ALPHA = (PNG_COLOR_MASK_ALPHA);
+    
+    private static final int alphaR = 0x7f;
+    private static final int alphaG = 0x7f;
+    private static final int alphaB = 0x7f;
 
     @Override
     public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
@@ -169,6 +173,14 @@ public class PNGDecoder extends VideoDecoder {
                 for (int i = bptrWas; i < bptr; i+=3) {
                     buffer[0][i] = (byte) (buffer[0][i] + buffer[0][i + 1]);
                     buffer[0][i + 2] = (byte) (buffer[0][i + 2] + buffer[0][i + 1]);
+                }
+            }
+            if (bpp == 4) {
+                for (int i = 3, j = bptrWas; i < rowSize - 1; i += 4, j += 3) {
+                    int alpha = lastRow[i] & 0xff, nalpha = 256 - alpha;
+                    buffer[0][j] = (byte) ((alphaR * nalpha + buffer[0][j] * alpha) >> 8);
+                    buffer[0][j + 1] = (byte) ((alphaG * nalpha + buffer[0][j + 1] * alpha) >> 8);
+                    buffer[0][j + 2] = (byte) ((alphaB * nalpha + buffer[0][j + 2] * alpha) >> 8);
                 }
             }
         }
