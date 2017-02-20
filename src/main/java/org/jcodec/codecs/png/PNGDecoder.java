@@ -162,11 +162,15 @@ public class PNGDecoder extends VideoDecoder {
                     buffer[0][bptr + 1] = (byte)(((plt >> 8) & 0xff) - 128);
                     buffer[0][bptr + 2] = (byte)((plt & 0xff) - 128);
                 }
-            } else {
+            } else if((ihdr.colorType & PNG_COLOR_MASK_COLOR) != 0) {
                 for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
                     buffer[0][bptr] = (byte)((lastRow[i] & 0xff) - 128);
                     buffer[0][bptr + 1] = (byte)((lastRow[i + 1] & 0xff) - 128);
                     buffer[0][bptr + 2] = (byte)((lastRow[i + 2] & 0xff) - 128);
+                }
+            } else {
+                for (int i = 0; i < rowSize - 1; i += bpp, bptr += 3) {
+                    buffer[0][bptr] = buffer[0][bptr + 1] = buffer[0][bptr + 2] = (byte) ((lastRow[i] & 0xff) - 128);
                 }
             }
             if (ihdr.filterType == FILTER_TYPE_LOCO) {
@@ -175,8 +179,8 @@ public class PNGDecoder extends VideoDecoder {
                     buffer[0][i + 2] = (byte) (buffer[0][i + 2] + buffer[0][i + 1]);
                 }
             }
-            if (bpp == 4) {
-                for (int i = 3, j = bptrWas; i < rowSize - 1; i += 4, j += 3) {
+            if ((ihdr.colorType & PNG_COLOR_MASK_ALPHA) != 0) {
+                for (int i = bpp - 1, j = bptrWas; i < rowSize - 1; i += bpp, j += 3) {
                     int alpha = lastRow[i] & 0xff, nalpha = 256 - alpha;
                     buffer[0][j] = (byte) ((alphaR * nalpha + buffer[0][j] * alpha) >> 8);
                     buffer[0][j + 1] = (byte) ((alphaG * nalpha + buffer[0][j + 1] * alpha) >> 8);
