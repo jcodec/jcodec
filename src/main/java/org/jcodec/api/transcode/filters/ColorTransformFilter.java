@@ -1,10 +1,10 @@
-package org.jcodec.samples.transcode.filters;
+package org.jcodec.api.transcode.filters;
 
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.samples.transcode.Transcoder.Filter;
-import org.jcodec.samples.transcode.Transcoder.PixelStore;
+import org.jcodec.api.transcode.Transcoder.Filter;
+import org.jcodec.api.transcode.Transcoder.PixelStore;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform8Bit;
 

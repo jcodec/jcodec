@@ -1,10 +1,10 @@
-package org.jcodec.samples.transcode.filters;
+package org.jcodec.api.transcode.filters;
 
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.samples.transcode.Transcoder.Filter;
-import org.jcodec.samples.transcode.Transcoder.PixelStore;
+import org.jcodec.api.transcode.Transcoder.Filter;
+import org.jcodec.api.transcode.Transcoder.PixelStore;
 
 public class DumpMvFilter implements Filter {
     private boolean js;

@@ -1,4 +1,4 @@
-package org.jcodec.samples.transcode;
+package org.jcodec.api.transcode;
 
 import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 import static org.jcodec.common.io.NIOUtils.writableFileChannel;
@@ -62,7 +62,7 @@ import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.webp.WebpDemuxer;
 import org.jcodec.containers.y4m.Y4MDemuxer;
-import org.jcodec.samples.transcode.filters.ColorTransformFilter;
+import org.jcodec.api.transcode.filters.ColorTransformFilter;
 
 import net.sourceforge.jaad.aac.AACException;
 

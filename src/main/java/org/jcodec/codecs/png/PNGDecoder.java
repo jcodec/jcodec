@@ -195,12 +195,6 @@ public class PNGDecoder extends VideoDecoder {
                                 + 1] = buffer[0][bptr + 2] = (byte) ((lastRow[i] & 0xff) - 128);
                     }
                 }
-                if (ihdr.filterType == FILTER_TYPE_LOCO) {
-                    for (int i = bptrWas; i < bptr; i += 3 * colStep) {
-                        buffer[0][i] = (byte) (buffer[0][i] + buffer[0][i + 1]);
-                        buffer[0][i + 2] = (byte) (buffer[0][i + 2] + buffer[0][i + 1]);
-                    }
-                }
                 if ((ihdr.colorType & PNG_COLOR_MASK_ALPHA) != 0) {
                     for (int i = bpp - 1, j = bptrWas; i < rowSize - 1; i += bpp, j += 3 * colStep) {
                         int alpha = lastRow[i] & 0xff, nalpha = 256 - alpha;
@@ -496,7 +490,8 @@ public class PNGDecoder extends VideoDecoder {
     }
 
     @Override
-    public VideoCodecMeta getCodecMeta(ByteBuffer data) {
+    public VideoCodecMeta getCodecMeta(ByteBuffer _data) {
+        ByteBuffer data = _data.duplicate();
         long sig = data.getLong();
         if (sig != PNGSIG && sig != MNGSIG)
             throw new RuntimeException("Not a PNG file.");

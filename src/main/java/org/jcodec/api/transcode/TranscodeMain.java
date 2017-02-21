@@ -1,4 +1,4 @@
-package org.jcodec.samples.transcode;
+package org.jcodec.api.transcode;
 
 import static org.jcodec.common.Tuple._2;
 import static org.jcodec.common.Tuple._3;
@@ -26,8 +26,8 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MathUtil;
-import org.jcodec.samples.transcode.Transcoder.Filter;
-import org.jcodec.samples.transcode.filters.DumpMvFilter;
+import org.jcodec.api.transcode.Transcoder.Filter;
+import org.jcodec.api.transcode.filters.DumpMvFilter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
