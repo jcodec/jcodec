@@ -18,6 +18,7 @@ import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.mergeResidual;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveMvs;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.savePrediction8x8;
 import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
+import static org.jcodec.codecs.h264.decode.PredictionMerger.weightPrediction;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
@@ -89,7 +90,7 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
 
         mergeResidual(mb, mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 mBlock.transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
-
+        
         collectPredictors(s, mb, mbX);
 
         di.mbTypes[mbAddr] = mBlock.curMbType;
@@ -117,6 +118,13 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
         decodeSubMb8x8(mBlock, 3, mBlock.pb8x8.subMbTypes[3], references, (mbX << 6) + 32, (mbY << 6) + 32, x[0],
                 x[0][5], x[0][6], x[0][7], null, x[0][9], x[0][13], true, true, false, true, x[0][10], x[0][11],
                 x[0][14], x[0][15], mBlock.pb8x8.refIdx[0][3], mb, 136, 0);
+        
+        for (int i = 0; i < 4; i++) {
+            // TODO(stan): refactor this
+            int blk4x4 = BLK8x8_BLOCKS[i][0];
+            weightPrediction(sh, x[0][blk4x4][2], 0, mb.getPlaneData(0), BLK_8x8_MB_OFF_LUMA[i], 16, 8,
+                    8, mb.getPlaneData(0));
+        }
 
         savePrediction8x8(s, mbX, x[0], 0);
         Arrays.fill(pp, L0);
