@@ -8,6 +8,7 @@ import org.jcodec.codecs.h264.io.model.RefPicMarking;
 import org.jcodec.codecs.h264.io.model.RefPicMarking.InstrType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.IntObjectMap;
@@ -15,7 +16,9 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -26,7 +29,7 @@ import java.nio.ByteBuffer;
  * @author The JCodec project
  * 
  */
-public class BufferH264ES implements DemuxerTrack {
+public class BufferH264ES implements DemuxerTrack, Demuxer {
     private ByteBuffer bb;
     private SliceHeaderReader shr;
     private IntObjectMap<PictureParameterSet> pps;
@@ -251,5 +254,29 @@ public class BufferH264ES implements DemuxerTrack {
     @Override
     public DemuxerTrackMeta getMeta() {
         throw new NotSupportedException();
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public List<? extends DemuxerTrack> getTracks() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<? extends DemuxerTrack> getVideoTracks() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<? extends DemuxerTrack> getAudioTracks() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

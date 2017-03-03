@@ -117,6 +117,8 @@ public class MP4Muxer implements Muxer {
 
     @Override
     public void finish() throws IOException {
+        if(tracks.size() == 0)
+            throw new RuntimeException("Can not save header with 0 tracks.");
         MovieBox movie = finalizeHeader();
 
         storeHeader(movie);
@@ -200,13 +202,10 @@ public class MP4Muxer implements Muxer {
     @Override
     public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
         FramesMP4MuxerTrack track = addTrack(MP4TrackType.VIDEO, codec);
-        if (meta != null) {
-            if (codec == Codec.H264) {
-                track.addVideoSampleEntry(meta);
-            } else {
-                throw new RuntimeException("VideoCodecMeta is required upfront for all codecs but H.264");
-            }
+        if (meta == null && codec != Codec.H264) {
+            throw new RuntimeException("VideoCodecMeta is required upfront for all codecs but H.264");
         }
+        track.addVideoSampleEntry(meta);
         return track;
     }
 

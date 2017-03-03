@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.jcodec.codecs.aac.AACDecoder;
+import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
@@ -115,6 +116,8 @@ public class Transcoder {
     private VideoCodecMeta videoCool;
 
     private List<Filter> filters = new ArrayList<Filter>();
+
+    private boolean framesOutput;
 
     public Transcoder(String sourceName, String destName, Format inputFormat, Format outputFormat,
             _3<Integer, Integer, Codec> inputVideoCodec, Codec outputVideoCodec,
@@ -257,6 +260,9 @@ public class Transcoder {
             demuxVideo = demuxAudio = y4mDemuxer;
             videoInputTrack = y4mDemuxer;
             break;
+        case H264:
+            new BufferH264ES(NIOUtils.fetchFromChannel(sourceStream));
+            break;
         case MPEG_TS:
             MTSDemuxer mtsDemuxer = new MTSDemuxer(sourceStream);
             MPSDemuxer mpsDemuxer = null;
@@ -388,7 +394,11 @@ public class Transcoder {
     }
 
     protected void finishEncode() throws IOException {
-        muxer.finish();
+        if(framesOutput) {
+            muxer.finish();
+        } else {
+            Logger.warn("No frames output.");
+        }
         if (destStream != null) {
             IOUtils.closeQuietly(destStream);
         }
@@ -428,6 +438,7 @@ public class Transcoder {
 
     protected void outputVideoPacket(Packet packet) throws IOException {
         videoOutputTrack.addFrame(packet);
+        framesOutput = true;
     }
 
     protected Picture8Bit decodeVideo(ByteBuffer data, Picture8Bit target1) {
@@ -462,6 +473,7 @@ public class Transcoder {
 
     protected void outputAudioPacket(Packet audioPkt) throws IOException {
         audioOutputTrack.addFrame(audioPkt);
+        framesOutput = true;
     }
 
     protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {

@@ -86,6 +86,8 @@ public class TranscodeMain {
         extensionToF.put("webm", Format.MKV);
 
         extensionToF.put("264", Format.H264);
+        extensionToF.put("jsv", Format.H264);
+        extensionToF.put("h264", Format.H264);
         extensionToF.put("raw", Format.RAW);
         extensionToF.put("", Format.RAW);
         extensionToF.put("flv", Format.FLV);

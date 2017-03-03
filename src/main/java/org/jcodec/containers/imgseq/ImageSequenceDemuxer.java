@@ -49,10 +49,6 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
         } else if (lowerCase.endsWith(".jpg") || lowerCase.endsWith(".jpeg")) {
             codec = Codec.JPEG;
         }
-        // Picture8Bit frame = JCodecUtil.createVideoDecoder(codec,
-        // null).decodeFrame8Bit(curFrame.getData(),
-        // new byte[3][1920 * 1088]);
-        // dimensions = new Size(frame.getWidth(), frame.getHeight());
     }
 
     @Override
@@ -127,7 +123,7 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
         if (maxAvailableFrame == -1) {
 
             int firstPoint = 0;
-            for (int i = MAX_MAX; i >= 0; i /= 2) {
+            for (int i = MAX_MAX; i > 0; i /= 2) {
                 if (new File(String.format(namePattern, i)).exists()) {
                     firstPoint = i;
                     break;
