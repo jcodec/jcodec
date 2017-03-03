@@ -261,7 +261,7 @@ public class Transcoder {
             videoInputTrack = y4mDemuxer;
             break;
         case H264:
-            new BufferH264ES(NIOUtils.fetchFromChannel(sourceStream));
+            demuxVideo = new BufferH264ES(NIOUtils.fetchFromChannel(sourceStream));
             break;
         case MPEG_TS:
             MTSDemuxer mtsDemuxer = new MTSDemuxer(sourceStream);

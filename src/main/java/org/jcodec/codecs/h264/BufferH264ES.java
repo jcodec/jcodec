@@ -18,6 +18,7 @@ import org.jcodec.common.model.Packet.FrameType;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -253,7 +254,7 @@ public class BufferH264ES implements DemuxerTrack, Demuxer {
 
     @Override
     public DemuxerTrackMeta getMeta() {
-        throw new NotSupportedException();
+        return null;
     }
 
     @Override
@@ -264,19 +265,19 @@ public class BufferH264ES implements DemuxerTrack, Demuxer {
 
     @Override
     public List<? extends DemuxerTrack> getTracks() {
-        // TODO Auto-generated method stub
-        return null;
+        return getVideoTracks();
     }
 
     @Override
     public List<? extends DemuxerTrack> getVideoTracks() {
-        // TODO Auto-generated method stub
-        return null;
+        List<DemuxerTrack> tracks = new ArrayList<DemuxerTrack>();
+        tracks.add(this);
+        return tracks;
     }
 
     @Override
     public List<? extends DemuxerTrack> getAudioTracks() {
-        // TODO Auto-generated method stub
-        return null;
+        List<DemuxerTrack> tracks = new ArrayList<DemuxerTrack>();
+        return tracks;
     }
 }

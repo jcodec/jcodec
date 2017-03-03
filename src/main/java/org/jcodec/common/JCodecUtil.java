@@ -17,6 +17,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.jcodec.codecs.aac.AACDecoder;
+import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
@@ -208,6 +209,8 @@ public class JCodecUtil {
             return new Y4MDemuxer(ch);
         case WEBP:
             return new WebpDemuxer(ch);
+        case H264:
+            return new BufferH264ES(NIOUtils.fetchFromChannel(ch));
         default:
             Logger.error("Format " + format + " is not supported");
         }

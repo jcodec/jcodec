@@ -22,6 +22,7 @@ import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -79,6 +80,17 @@ public class NIOUtils {
         NIOUtils.readFromChannel(ch, buf);
         buf.flip();
         return buf;
+    }
+    
+    public static ByteBuffer fetchFromChannel(SeekableByteChannel ch) throws IOException {
+        List<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
+        ByteBuffer buf;
+        do {
+            buf = fetchFromChannel(ch, 1 << 20);
+            buffers.add(buf);
+        } while(buf.hasRemaining());
+        
+        return combineBuffers(buffers);
     }
 
     /**
