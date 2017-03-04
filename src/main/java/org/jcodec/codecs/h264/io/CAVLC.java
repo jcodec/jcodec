@@ -188,6 +188,8 @@ public class CAVLC {
     protected VLC codeTableChromaDC() {
         if (color == ColorSpace.YUV420J) {
             return H264Const.coeffTokenChromaDCY420;
+        } else if (color == ColorSpace.YUV420) {
+            return H264Const.coeffTokenChromaDCY420;
         } else if (color == YUV422) {
             return H264Const.coeffTokenChromaDCY422;
         } else if (color == YUV444) {
