@@ -65,7 +65,7 @@ public class MP4Demuxer implements Demuxer {
         for (int i = 0; i < trakBoxs.length; i++) {
             TrakBox trak = trakBoxs[i];
             SampleEntry se = NodeBox.findFirstPath(trak, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null });
-            if ("tmcd".equals(se.getFourcc())) {
+            if (se != null && "tmcd".equals(se.getFourcc())) {
                 tt = trak;
             } else {
                 tracks.add(create(trak));

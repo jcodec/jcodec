@@ -233,8 +233,9 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     public abstract MP4Packet getNextFrame(ByteBuffer storage) throws IOException;
     
     public Codec getCodec() {
-        SampleEntry se = getSampleEntries()[0];
-        String fourcc = se.getHeader().getFourcc();
+        SampleEntry[] ses = getSampleEntries();
+        SampleEntry se = ses == null || ses.length == 0 ? null : ses[0];
+        String fourcc = se == null ? "" : se.getHeader().getFourcc();
         if (fourcc.equals("avc1")) {
             return Codec.H264;
         } else if (fourcc.equals("m1v1") || fourcc.equals("m2v1")) {

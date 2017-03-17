@@ -306,7 +306,7 @@ public class TrakBox extends NodeBox {
     
     public static MP4TrackType getTrackType(TrakBox trak) {
         HandlerBox handler = NodeBox.findFirstPath(trak, HandlerBox.class, Box.path("mdia.hdlr"));
-        return MP4TrackType.fromHandler(handler.getComponentSubType());
+        return handler == null ? null : MP4TrackType.fromHandler(handler.getComponentSubType());
     }
 
     /**
