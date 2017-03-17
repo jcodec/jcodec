@@ -307,7 +307,7 @@ public class TrakBox extends NodeBox {
     
     public static TrackType getTrackType(TrakBox trak) {
         HandlerBox handler = NodeBox.findFirstPath(trak, HandlerBox.class, Box.path("mdia.hdlr"));
-        return TrackType.fromHandler(handler.getComponentSubType());
+        return handler == null ? null : TrackType.fromHandler(handler.getComponentSubType());
     }
 
     /**
