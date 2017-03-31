@@ -33,7 +33,7 @@ JCodec is free software distributed under FreeBSD License.
     * Improve H.264 encoder: CABAC, rate control;
     * Performance optimize H.264 decoder;
     * Implement H.264 encoder on RenderScript;
-    * Native optiomizations for decoders and encoders;
+    * Native optimizations for decoders and encoders;
 * Audio
     * AAC encoder;
 
