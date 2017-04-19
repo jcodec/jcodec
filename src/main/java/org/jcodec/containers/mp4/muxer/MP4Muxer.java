@@ -130,6 +130,18 @@ public class MP4Muxer {
         tracks.add(track);
         return track;
     }
+    
+    public FramesMP4MuxerTrack addTrackWithId(TrackType type, int timescale, int trackId) {
+        for(AbstractMP4MuxerTrack t : tracks) {
+            if (t.getTrackId() == trackId) {
+                throw new IllegalArgumentException("track with id " + trackId + " already exists");
+            }
+        }
+        FramesMP4MuxerTrack track = new FramesMP4MuxerTrack(out, trackId, type, timescale);
+        tracks.add(track);
+        nextTrackId = Math.max(nextTrackId, trackId+1);
+        return track;
+    }
 
     public PCMMP4MuxerTrack addPCMTrack(int timescale, int sampleDuration, int sampleSize,
             SampleEntry se) {

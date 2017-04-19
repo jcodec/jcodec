@@ -100,6 +100,10 @@ public abstract class AbstractMP4MuxerTrack {
     public boolean isAudio() {
         return type == SOUND;
     }
+    
+    public int getTrackId() {
+        return trackId;
+    }
 
     public Size getDisplayDimensions() {
         int width = 0, height = 0;
