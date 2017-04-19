@@ -26,9 +26,10 @@ public final class TrackType {
     public final static TrackType THREE_D = new TrackType("qd3d");
     public final static TrackType STREAMING = new TrackType("strm");
     public final static TrackType OBJECTS = new TrackType("obje");
+    public final static TrackType DATA = new TrackType("url ");
 
     private final static TrackType[] _values = new TrackType[] { VIDEO, SOUND, TIMECODE, HINT, TEXT, HYPER_TEXT, CC,
-            SUB, MUSIC, MPEG1, SPRITE, TWEEN, CHAPTERS, THREE_D, STREAMING, OBJECTS };
+            SUB, MUSIC, MPEG1, SPRITE, TWEEN, CHAPTERS, THREE_D, STREAMING, OBJECTS, DATA };
 
     private String handler;
 
