@@ -18,6 +18,7 @@ public class ThreadUtil {
                 q.put(el);
                 break;
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -27,6 +28,7 @@ public class ThreadUtil {
             try {
                 return audio.take();
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -37,6 +39,7 @@ public class ThreadUtil {
         try {
             Thread.sleep(nanos / 1000000, (int) (nanos % 1000000));
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -44,6 +47,7 @@ public class ThreadUtil {
         try {
             o.wait(timeout);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -53,6 +57,7 @@ public class ThreadUtil {
                 thread.join();
                 break;
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
     }
@@ -61,6 +66,7 @@ public class ThreadUtil {
         try {
             o.wait();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -68,6 +74,7 @@ public class ThreadUtil {
         try {
             return videoDrain.poll(ms, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return null;
         }
     }
