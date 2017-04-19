@@ -54,6 +54,7 @@ public class FilePool implements ByteChannelPool {
                         channel = channels.take();
                         break;
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     }
                 }
             }
@@ -86,6 +87,7 @@ public class FilePool implements ByteChannelPool {
                 	pool.channels.put(ret);
                     break;
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             }
         }
