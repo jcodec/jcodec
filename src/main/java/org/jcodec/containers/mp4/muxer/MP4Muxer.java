@@ -104,6 +104,18 @@ public class MP4Muxer implements Muxer {
         tracks.add(track);
         return track;
     }
+    
+    public FramesMP4MuxerTrack addTrackWithId(MP4TrackType type, Codec codec, int trackId) {
+        for(AbstractMP4MuxerTrack t : tracks) {
+            if (t.getTrackId() == trackId) {
+                throw new IllegalArgumentException("track with id " + trackId + " already exists");
+            }
+        }
+        FramesMP4MuxerTrack track = new FramesMP4MuxerTrack(out, trackId, type, codec);
+        tracks.add(track);
+        nextTrackId = Math.max(nextTrackId, trackId+1);
+        return track;
+    }
 
     private FramesMP4MuxerTrack addTrack(MP4TrackType type, Codec codec) {
         FramesMP4MuxerTrack track = new FramesMP4MuxerTrack(out, nextTrackId++, type, codec);
