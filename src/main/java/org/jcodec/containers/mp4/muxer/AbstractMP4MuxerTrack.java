@@ -100,7 +100,7 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
 
     public Size getDisplayDimensions() {
         int width = 0, height = 0;
-        if (sampleEntries.get(0) instanceof VideoSampleEntry) {
+        if (sampleEntries != null && !sampleEntries.isEmpty() && sampleEntries.get(0) instanceof VideoSampleEntry) {
             VideoSampleEntry vse = (VideoSampleEntry) sampleEntries.get(0);
             PixelAspectExt paspBox = NodeBox.findFirst(vse, PixelAspectExt.class, PixelAspectExt.fourcc());
             Rational pasp = paspBox != null ? paspBox.getRational() : new Rational(1, 1);

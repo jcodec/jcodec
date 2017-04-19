@@ -37,7 +37,8 @@ public class SampleDescriptionBox extends NodeBox {
     @Override
     public void doWrite(ByteBuffer out) {
         out.putInt(0);
-        out.putInt(boxes.size());
+        //even if there is no sample descriptors entry count can not be less than 1
+        out.putInt(Math.max(1, boxes.size()));
         super.doWrite(out);
     }
 }
