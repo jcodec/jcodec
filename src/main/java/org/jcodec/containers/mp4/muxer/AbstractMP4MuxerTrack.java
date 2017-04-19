@@ -98,6 +98,10 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
         return type == SOUND;
     }
     
+    public MP4TrackType getType() {
+        return type;
+    }
+    
     public int getTrackId() {
         return trackId;
     }
@@ -177,6 +181,8 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
                     .createTimecodeMediaInfoBox((short) 0, (short) 0, (short) 12, new short[] { 0, 0, 0 }, new short[] {
                             0xff, 0xff, 0xff }, "Lucida Grande"));
             minf.add(gmhd);
+        } else if(MP4TrackType.DATA == type) {
+            //do nothing
         } else {
             throw new UnhandledStateException("Handler " + type.getHandler() + " not supported");
         }

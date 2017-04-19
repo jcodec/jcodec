@@ -27,9 +27,10 @@ public final class MP4TrackType {
     public final static MP4TrackType THREE_D = new MP4TrackType("qd3d");
     public final static MP4TrackType STREAMING = new MP4TrackType("strm");
     public final static MP4TrackType OBJECTS = new MP4TrackType("obje");
+    public final static MP4TrackType DATA = new MP4TrackType("url ");
 
     private final static MP4TrackType[] _values = new MP4TrackType[] { VIDEO, SOUND, TIMECODE, HINT, TEXT, HYPER_TEXT, CC,
-            SUB, MUSIC, MPEG1, SPRITE, TWEEN, CHAPTERS, THREE_D, STREAMING, OBJECTS };
+            SUB, MUSIC, MPEG1, SPRITE, TWEEN, CHAPTERS, THREE_D, STREAMING, OBJECTS, DATA };
 
     private String handler;
 
