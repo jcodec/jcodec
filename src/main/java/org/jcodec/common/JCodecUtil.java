@@ -24,6 +24,7 @@ import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.vpx.VP8Decoder;
+import org.jcodec.codecs.wav.WavDemuxer;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
@@ -211,6 +212,8 @@ public class JCodecUtil {
             return new WebpDemuxer(ch);
         case H264:
             return new BufferH264ES(NIOUtils.fetchFromChannel(ch));
+        case WAV:
+            return new WavDemuxer(ch);
         default:
             Logger.error("Format " + format + " is not supported");
         }

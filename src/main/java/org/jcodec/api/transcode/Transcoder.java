@@ -24,6 +24,7 @@ import org.jcodec.codecs.raw.RAWVideoDecoder;
 import org.jcodec.codecs.vpx.IVFMuxer;
 import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.codecs.vpx.VP8Encoder;
+import org.jcodec.codecs.wav.WavDemuxer;
 import org.jcodec.codecs.wav.WavMuxer;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioDecoder;
@@ -263,6 +264,9 @@ public class Transcoder {
         case H264:
             demuxVideo = new BufferH264ES(NIOUtils.fetchFromChannel(sourceStream));
             break;
+        case WAV:
+            demuxAudio = new WavDemuxer(sourceStream);
+            break;
         case MPEG_TS:
             MTSDemuxer mtsDemuxer = new MTSDemuxer(sourceStream);
             MPSDemuxer mpsDemuxer = null;
@@ -313,6 +317,8 @@ public class Transcoder {
         switch (inputAudioCodec.v2) {
         case AAC:
             return new AACDecoder(codecPrivate);
+        case PCM:
+            return new RawAudioDecoder(audioInputTrack.getMeta().getAudioCodecMeta().getFormat());
         }
         return null;
     }
@@ -394,7 +400,7 @@ public class Transcoder {
     }
 
     protected void finishEncode() throws IOException {
-        if(framesOutput) {
+        if (framesOutput) {
             muxer.finish();
         } else {
             Logger.warn("No frames output.");
@@ -422,8 +428,7 @@ public class Transcoder {
             return null;
         Packet nextFrame = videoInputTrack.nextFrame();
         if (nextFrame != null)
-            Logger.debug(
-                    String.format("Input frame: pts=%d, duration=%d", nextFrame.getPts(), nextFrame.getDuration()));
+            Logger.debug(String.format("Input frame: pts=%d, duration=%d", nextFrame.getPts(), nextFrame.getDuration()));
         if (videoDecoder == null) {
             videoDecoder = createVideoDecoder(inputVideoCodec.v2, downscale, nextFrame.getData(), null);
         }
@@ -447,8 +452,8 @@ public class Transcoder {
 
     protected EncodedFrame encodeVideo(Picture8Bit frame, ByteBuffer _out) {
         if (videoOutputTrack == null) {
-            videoOutputTrack = muxer.addVideoTrack(outputVideoCodec,
-                    new VideoCodecMeta(new Size(frame.getWidth(), frame.getHeight()), frame.getColor()));
+            videoOutputTrack = muxer.addVideoTrack(outputVideoCodec, new VideoCodecMeta(new Size(frame.getWidth(),
+                    frame.getHeight()), frame.getColor()));
         }
         return videoEncoder.encodeFrame8Bit(frame, _out);
     }
@@ -507,6 +512,24 @@ public class Transcoder {
         @Override
         public ByteBuffer encode(ByteBuffer audioPkt, ByteBuffer buf) {
             return audioPkt;
+        }
+    }
+
+    private static class RawAudioDecoder implements AudioDecoder {
+        private AudioFormat format;
+
+        public RawAudioDecoder(AudioFormat format) {
+            this.format = format;
+        }
+
+        @Override
+        public AudioBuffer decodeFrame(ByteBuffer frame, ByteBuffer dst) throws IOException {
+            return new AudioBuffer(frame, format, frame.remaining() / format.getFrameSize());
+        }
+
+        @Override
+        public AudioCodecMeta getCodecMeta(ByteBuffer data) throws IOException {
+            return new AudioCodecMeta(format);
         }
     }
 
@@ -639,8 +662,8 @@ public class Transcoder {
         if (inputVideoCodec.v2 != Codec.H264) {
             throw new RuntimeException("Input frame type detection is only supported for h.264");
         }
-        inVideoPacket.setFrameType(
-                H264Utils.isByteBufferIDRSlice(inVideoPacket.getData()) ? FrameType.KEY : FrameType.INTER);
+        inVideoPacket.setFrameType(H264Utils.isByteBufferIDRSlice(inVideoPacket.getData()) ? FrameType.KEY
+                : FrameType.INTER);
     }
 
     private void finishDecode() {
