@@ -25,7 +25,7 @@ public class NameBox extends Box {
         return box;
     }
 
-    private NameBox(Header header) {
+    public NameBox(Header header) {
         super(header);
     }
 
