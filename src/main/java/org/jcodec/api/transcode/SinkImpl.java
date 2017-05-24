@@ -8,9 +8,11 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.png.PNGEncoder;
 import org.jcodec.codecs.prores.ProresEncoder;
+import org.jcodec.codecs.raw.RAWVideoEncoder;
 import org.jcodec.codecs.vpx.IVFMuxer;
 import org.jcodec.codecs.vpx.VP8Encoder;
 import org.jcodec.codecs.wav.WavMuxer;
+import org.jcodec.codecs.y4m.Y4MMuxer;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioEncoder;
 import org.jcodec.common.AudioFormat;
@@ -99,6 +101,9 @@ public class SinkImpl implements Sink, PacketSink {
         case WAV:
             muxer = new WavMuxer(destStream);
             break;
+        case Y4M:
+            muxer = new Y4MMuxer(destStream);
+            break;
         }
     }
 
@@ -137,6 +142,9 @@ public class SinkImpl implements Sink, PacketSink {
                 break;
             case PNG:
                 videoEncoder = new PNGEncoder();
+                break;
+            case RAW:
+                videoEncoder = new RAWVideoEncoder();
                 break;
             default:
                 throw new RuntimeException("Could not find encoder for the codec: " + outputVideoCodec);
