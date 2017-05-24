@@ -75,7 +75,8 @@ public class SourceImpl implements Source, PacketSource {
     private _3<Integer, Integer, Codec> inputVideoCodec;
     private _3<Integer, Integer, Codec> inputAudioCodec;
 
-    private List<VideoFrameWithPacket> reorderBuffer = new ArrayList<VideoFrameWithPacket>();
+    private List<VideoFrameWithPacket> frameReorderBuffer = new ArrayList<VideoFrameWithPacket>();
+    private List<Packet> videoPacketReorderBuffer = new ArrayList<Packet>();
     private PixelStore pixelStore;
     private VideoCodecMeta videoCodecMeta;
     private AudioCodecMeta audioCodecMeta;
@@ -191,11 +192,34 @@ public class SourceImpl implements Source, PacketSource {
 
     @Override
     public Packet inputVideoPacket() throws IOException {
+        while (true) {
+            Packet packet = getNextVideoPacket();
+            if (packet != null)
+                videoPacketReorderBuffer.add(packet);
+            if (packet == null || videoPacketReorderBuffer.size() > Transcoder.REORDER_BUFFER_SIZE) {
+                if (videoPacketReorderBuffer.size() == 0)
+                    return null;
+                Packet out = videoPacketReorderBuffer.remove(0);
+                int duration = Integer.MAX_VALUE;
+                for (Packet packet2 : videoPacketReorderBuffer) {
+                    int cand = (int)(packet2.getPts() - out.getPts());
+                    if (cand > 0 && cand < duration)
+                        duration = cand;
+                }
+                if (duration != Integer.MAX_VALUE)
+                    out.setDuration(duration);
+                return out;
+            }
+        }
+    }
+
+    private Packet getNextVideoPacket() throws IOException {
         if (videoInputTrack == null)
             return null;
         Packet nextFrame = videoInputTrack.nextFrame();
-//        if (nextFrame != null)
-//            Logger.debug(String.format("Input frame: pts=%d, duration=%d", nextFrame.getPts(), nextFrame.getDuration()));
+        // if (nextFrame != null)
+        // Logger.debug(String.format("Input frame: pts=%d, duration=%d",
+        // nextFrame.getPts(), nextFrame.getDuration()));
 
         if (videoDecoder == null) {
             videoDecoder = createVideoDecoder(inputVideoCodec.v2, downscale, nextFrame.getData(), null);
@@ -336,14 +360,14 @@ public class SourceImpl implements Source, PacketSource {
         // All the frames starting from the key frame must be actually
         // decoded in the decoder so that the decoder is 'warmed up'
         Packet inVideoPacket;
-        for (; skipFrames > 0 && (inVideoPacket = inputVideoPacket()) != null;) {
+        for (; skipFrames > 0 && (inVideoPacket = getNextVideoPacket()) != null;) {
             Picture8Bit decodedFrame = decodeVideo(inVideoPacket.getData(), getPixelBuffer(inVideoPacket.getData()));
             if (decodedFrame == null)
                 continue;
-            reorderBuffer.add(new VideoFrameWithPacket(inVideoPacket, decodedFrame));
-            if (reorderBuffer.size() > Transcoder.REORDER_BUFFER_SIZE) {
-                Collections.sort(reorderBuffer);
-                VideoFrameWithPacket removed = reorderBuffer.remove(0);
+            frameReorderBuffer.add(new VideoFrameWithPacket(inVideoPacket, decodedFrame));
+            if (frameReorderBuffer.size() > Transcoder.REORDER_BUFFER_SIZE) {
+                Collections.sort(frameReorderBuffer);
+                VideoFrameWithPacket removed = frameReorderBuffer.remove(0);
                 skipFrames--;
                 if (removed.getFrame() != null)
                     pixelStore.putBack(removed.getFrame());
@@ -355,8 +379,8 @@ public class SourceImpl implements Source, PacketSource {
         if (inputVideoCodec.v2 != Codec.H264) {
             return;
         }
-        inVideoPacket.setFrameType(H264Utils.isByteBufferIDRSlice(inVideoPacket.getData()) ? FrameType.KEY
-                : FrameType.INTER);
+        inVideoPacket.setFrameType(
+                H264Utils.isByteBufferIDRSlice(inVideoPacket.getData()) ? FrameType.KEY : FrameType.INTER);
     }
 
     /**
@@ -386,7 +410,7 @@ public class SourceImpl implements Source, PacketSource {
     @Override
     public VideoFrameWithPacket getNextVideoFrame() throws IOException {
         Packet inVideoPacket;
-        while ((inVideoPacket = inputVideoPacket()) != null) {
+        while ((inVideoPacket = getNextVideoPacket()) != null) {
             if (inVideoPacket.getFrameType() == FrameType.UNKOWN) {
                 detectFrameType(inVideoPacket);
             }
@@ -395,22 +419,31 @@ public class SourceImpl implements Source, PacketSource {
             decodedFrame = decodeVideo(inVideoPacket.getData(), pixelBuffer);
             if (decodedFrame == null)
                 continue;
-            reorderBuffer.add(new VideoFrameWithPacket(inVideoPacket, decodedFrame));
-            if (reorderBuffer.size() > Transcoder.REORDER_BUFFER_SIZE) {
-                Collections.sort(reorderBuffer);
-                return reorderBuffer.remove(0);
+            frameReorderBuffer.add(new VideoFrameWithPacket(inVideoPacket, decodedFrame));
+            if (frameReorderBuffer.size() > Transcoder.REORDER_BUFFER_SIZE) {
+                return removeFirstFixDuration(frameReorderBuffer);
             }
         }
 
         // We don't have any more compressed video packets
-        if (reorderBuffer.size() > 0) {
-            Collections.sort(reorderBuffer);
-            return reorderBuffer.remove(0);
+        if (frameReorderBuffer.size() > 0) {
+            return removeFirstFixDuration(frameReorderBuffer);
         }
 
         // We don't have any more compressed video packets and nothing's in
         // the buffers
         return null;
+    }
+
+    private VideoFrameWithPacket removeFirstFixDuration(List<VideoFrameWithPacket> reorderBuffer) {
+        Collections.sort(reorderBuffer);
+        VideoFrameWithPacket frame = reorderBuffer.remove(0);
+        if (!reorderBuffer.isEmpty()) {
+            // Setting duration
+            VideoFrameWithPacket nextFrame = reorderBuffer.get(0);
+            frame.getPacket().setDuration(nextFrame.getPacket().getPts() - frame.getPacket().getPts());
+        }
+        return frame;
     }
 
     @Override
