@@ -3,8 +3,8 @@ package org.jcodec.api.transcode.filters;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.api.transcode.Transcoder.Filter;
-import org.jcodec.api.transcode.Transcoder.PixelStore;
+import org.jcodec.api.transcode.Filter;
+import org.jcodec.api.transcode.PixelStore;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform8Bit;
 
@@ -31,5 +31,16 @@ public class ColorTransformFilter implements Filter {
         outFrame.setCrop(picture.getCrop());
         transform.transform(picture, outFrame);
         return outFrame;
+    }
+
+    @Override
+    public ColorSpace getInputColor() {
+        // Any color space
+        return null;
+    }
+
+    @Override
+    public ColorSpace getOutputColor() {
+        return encoderColor;
     }
 }

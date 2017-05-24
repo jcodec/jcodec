@@ -3,7 +3,6 @@ package org.jcodec.api.transcode;
 import static org.jcodec.common.Tuple._2;
 import static org.jcodec.common.Tuple._3;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MathUtil;
-import org.jcodec.api.transcode.Transcoder.Filter;
 import org.jcodec.api.transcode.filters.DumpMvFilter;
 
 /**
@@ -274,14 +272,14 @@ public class TranscodeMain {
                 outputCodecVideo, inputCodecAudio, outputCodecAudio, videoCopy, audioCopy, filters);
         transcoder.setSeekFrames(cmd.getIntegerFlagD(FLAG_SEEK_FRAMES, 0));
         transcoder.setMaxFrames(cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE));
-        transcoder.setProfile(cmd.getStringFlag(FLAG_PROFILE));
-        transcoder.setInterlaced(cmd.getBooleanFlagD(FLAG_INTERLACED, false));
+        transcoder.setOption(Options.PROFILE, cmd.getStringFlag(FLAG_PROFILE));
+        transcoder.setOption(Options.INTERLACED, cmd.getBooleanFlagD(FLAG_INTERLACED, false));
         Integer downscale = cmd.getIntegerFlagD(FLAG_DOWNSCALE, 1);
         if (downscale != null && (1 << MathUtil.log2(downscale)) != downscale) {
             Logger.error(
                     "Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE + ", the option will have no effect.");
         } else {
-            transcoder.setDownscale(downscale);
+            transcoder.setOption(Options.DOWNSCALE, downscale);
         }
         transcoder.transcode();
     }

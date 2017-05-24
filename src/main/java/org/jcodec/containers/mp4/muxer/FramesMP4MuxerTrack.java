@@ -133,9 +133,9 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         } else if (codec == Codec.AAC) {
             ByteBuffer result = pkt.getData();
             adtsHeader = ADTSParser.read(result);
-            System.out.println(String.format("crc_absent: %d, num_aac_frames: %d, size: %d, remaining: %d, %d, %d, %d",
-                    adtsHeader.getCrcAbsent(), adtsHeader.getNumAACFrames(), adtsHeader.getSize(), result.remaining(),
-                    adtsHeader.getObjectType(), adtsHeader.getSamplingIndex(), adtsHeader.getChanConfig()));
+//            System.out.println(String.format("crc_absent: %d, num_aac_frames: %d, size: %d, remaining: %d, %d, %d, %d",
+//                    adtsHeader.getCrcAbsent(), adtsHeader.getNumAACFrames(), adtsHeader.getSize(), result.remaining(),
+//                    adtsHeader.getObjectType(), adtsHeader.getSamplingIndex(), adtsHeader.getChanConfig()));
             pkt = Packet.createPacketWithData(pkt, result);
         }
         addFrameInternal(pkt, 1);
