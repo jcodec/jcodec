@@ -138,6 +138,7 @@ public class SourceImpl implements Source, PacketSource {
                     mtsDemuxer.getProgram(pid).close();
                 }
             }
+            break;
         default:
             throw new RuntimeException("Input format: " + inputFormat + " is not supported.");
         }

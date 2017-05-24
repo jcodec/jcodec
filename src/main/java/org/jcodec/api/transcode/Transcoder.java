@@ -110,10 +110,7 @@ public class Transcoder {
                         pixelStore.putBack(filteredFrame);
                     }
                 }
-            }
-
-            // Remaining audio packets
-            if (source.haveAudio() && outputFormat.isAudio()) {
+            } else if (source.haveAudio() && outputFormat.isAudio()) {
                 outputAudioPacketsTo(Double.MAX_VALUE);
             }
         } catch (Exception e) {
