@@ -1,6 +1,8 @@
 package net.sourceforge.jaad.aac.syntax;
 import java.util.Arrays;
-import java.util.logging.Level;
+
+import org.jcodec.common.logging.Logger;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.ChannelConfiguration;
 import net.sourceforge.jaad.aac.DecoderConfig;
@@ -69,7 +71,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 		pulseDataPresent = _in.readBool();
 		if(pulseDataPresent) {
 			if(info.isEightShortFrame()) throw new AACException("pulse data not allowed for short frames");
-			LOGGER.log(Level.FINE, "PULSE");
+			Logger.debug("PULSE");
 			decodePulseData(_in);
 		}
 
@@ -82,7 +84,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 		gainControlPresent = _in.readBool();
 		if(gainControlPresent) {
 			if(gainControl==null) gainControl = new GainControl(frameLength);
-			LOGGER.log(Level.FINE, "GAIN");
+			Logger.debug("GAIN");
 			gainControl.decode(_in, info.getWindowSequence());
 		}
 

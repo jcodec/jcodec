@@ -1,8 +1,6 @@
 package net.sourceforge.jaad.aac;
-import java.lang.IllegalArgumentException;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
+import org.jcodec.common.logging.Logger;
+
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
 import net.sourceforge.jaad.aac.syntax.BitStream;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
@@ -21,17 +19,6 @@ import net.sourceforge.jaad.aac.transport.ADIFHeader;
  * @author in-somnia
  */
 public class Decoder implements SyntaxConstants {
-
-    static {
-        for (Handler h : LOGGER.getHandlers()) {
-            LOGGER.removeHandler(h);
-        }
-        LOGGER.setLevel(Level.ALL);
-
-        final ConsoleHandler h = new ConsoleHandler();
-        h.setLevel(Level.ALL);
-        LOGGER.addHandler(h);
-    }
     private final DecoderConfig config;
     private final SyntacticElements syntacticElements;
     private final FilterBank filterBank;
@@ -75,9 +62,9 @@ public class Decoder implements SyntaxConstants {
 
         _in = new BitStream();
 
-        LOGGER.log(Level.FINE, "profile: {0}", config.getProfile());
-        LOGGER.log(Level.FINE, "sf: {0}", config.getSampleFrequency().getFrequency());
-        LOGGER.log(Level.FINE, "channels: {0}", config.getChannelConfiguration().getDescription());
+        Logger.debug("profile: {0}", config.getProfile());
+        Logger.debug("sf: {0}", config.getSampleFrequency().getFrequency());
+        Logger.debug("channels: {0}", config.getChannelConfiguration().getDescription());
     }
 
     public DecoderConfig getConfig() {
@@ -97,14 +84,14 @@ public class Decoder implements SyntaxConstants {
     public void decodeFrame(byte[] frame, SampleBuffer buffer) throws AACException {
         if (frame != null)
             _in.setData(frame);
-        LOGGER.finest("bits left " + _in.getBitsLeft());
+        Logger.debug("bits left " + _in.getBitsLeft());
         try {
             decode(buffer);
         } catch (AACException e) {
             if (!e.isEndOfStream())
                 throw e;
             else
-                LOGGER.warning("unexpected end of frame");
+                Logger.warn("unexpected end of frame");
         }
     }
 

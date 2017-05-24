@@ -7,8 +7,9 @@ public class Message {
     private int lineNumber;
     private String message;
     private String methodName;
+    private Object[] args;
 
-    public Message(LogLevel level, String fileName, String className, String methodName, int lineNumber, String message) {
+    public Message(LogLevel level, String fileName, String className, String methodName, int lineNumber, String message, Object[] args) {
         this.level = level;
         this.fileName = fileName;
         this.className = className;
@@ -16,6 +17,7 @@ public class Message {
         this.message = methodName;
         this.lineNumber = lineNumber;
         this.message = message;
+        this.args = args;
     }
 
     public LogLevel getLevel() {
@@ -40,5 +42,9 @@ public class Message {
 
     public String getMessage() {
         return message;
+    }
+
+    public Object[] getArgs() {
+        return args;
     }
 }

@@ -8,6 +8,9 @@ import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STERE
 import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO;
 
 import java.util.logging.Level;
+
+import org.jcodec.common.logging.Logger;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.ChannelConfiguration;
 import net.sourceforge.jaad.aac.DecoderConfig;
@@ -75,36 +78,36 @@ public class SyntacticElements implements SyntaxConstants {
 				switch(type) {
 					case ELEMENT_SCE:
 					case ELEMENT_LFE:
-						LOGGER.finest("SCE");
+					    Logger.debug("SCE");
 						prev = decodeSCE_LFE(_in);
 						break;
 					case ELEMENT_CPE:
-						LOGGER.finest("CPE");
+					    Logger.debug("CPE");
 						prev = decodeCPE(_in);
 						break;
 					case ELEMENT_CCE:
-						LOGGER.finest("CCE");
+					    Logger.debug("CCE");
 						decodeCCE(_in);
 						prev = null;
 						break;
 					case ELEMENT_DSE:
-						LOGGER.finest("DSE");
+					    Logger.debug("DSE");
 						decodeDSE(_in);
 						prev = null;
 						break;
 					case ELEMENT_PCE:
-						LOGGER.finest("PCE");
+					    Logger.debug("PCE");
 						decodePCE(_in);
 						prev = null;
 						break;
 					case ELEMENT_FIL:
-						LOGGER.finest("FIL");
+					    Logger.debug("FIL");
 						decodeFIL(_in, prev);
 						prev = null;
 						break;
 				}
 			}
-			LOGGER.finest("END");
+			Logger.debug("END");
 			content = false;
 			prev = null;
 		}
@@ -264,7 +267,8 @@ public class SyntacticElements implements SyntaxConstants {
 		//SBR
 		int chs = 1;
 		if(sbrPresent&&config.isSBREnabled()) {
-			if(data[channel].length==config.getFrameLength()) LOGGER.log(Level.WARNING, "SBR data present, but buffer has normal size!");
+			if(data[channel].length==config.getFrameLength())
+			    Logger.warn("SBR data present, but buffer has normal size!");
 			final SBR sbr = scelfe.getSBR();
 			if(sbr.isPSUsed()) {
 				chs = 2;
@@ -333,7 +337,8 @@ public class SyntacticElements implements SyntaxConstants {
 
 		//SBR
 		if(sbrPresent&&config.isSBREnabled()) {
-			if(data[channel].length==config.getFrameLength()) LOGGER.log(Level.WARNING, "SBR data present, but buffer has normal size!");
+			if(data[channel].length==config.getFrameLength()) 
+			    Logger.warn("SBR data present, but buffer has normal size!");
 			cpe.getSBR()._process(data[channel], data[channel+1], false);
 		}
 	}

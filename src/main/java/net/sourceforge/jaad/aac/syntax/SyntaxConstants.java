@@ -1,5 +1,4 @@
 package net.sourceforge.jaad.aac.syntax;
-import java.util.logging.Logger;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -10,7 +9,6 @@ import java.util.logging.Logger;
  */
 public interface SyntaxConstants {
 
-	Logger LOGGER = Logger.getLogger("jaad"); //for debugging
 	int MAX_ELEMENTS = 16;
 	int BYTE_MASK = 0xFF;
 	int MIN_INPUT_SIZE = 768; //6144 bits/channel
