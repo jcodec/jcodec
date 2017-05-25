@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.api.transcode.filters.ColorTransformFilter;
-import org.jcodec.common.Codec;
 import org.jcodec.common.Format;
-import org.jcodec.common.Tuple._3;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
@@ -17,6 +15,10 @@ import org.jcodec.common.model.Picture8Bit;
  * under FreeBSD License
  * 
  * Transcoder core.
+ * 
+ * The simplest way to create a transcoder with default options:
+ *   Transcoder.newTranscoder(source, sink).create();
+ * The source and the sink are essential to the transcoder and must be provided.
  * 
  * @author The JCodec project
  * 
@@ -36,20 +38,28 @@ public class Transcoder {
     private Format outputFormat;
     private boolean colorTransformInit;
 
-    public Transcoder(String sourceName, String destName, Format inputFormat, Format outputFormat,
-            _3<Integer, Integer, Codec> inputVideoCodec, Codec outputVideoCodec,
-            _3<Integer, Integer, Codec> inputAudioCodec, Codec outputAudioCodec, boolean videoCodecCopy,
-            boolean audioCodecCopy, List<Filter> extraFilters) {
+    /**
+     * Use TranscoderBuilder (method newTranscoder below) to create a transcoder
+     * 
+     * @param source
+     * @param sink
+     * @param videoCodecCopy
+     * @param audioCodecCopy
+     * @param extraFilters
+     */
+    private Transcoder(Source source, Sink sink, boolean videoCodecCopy, boolean audioCodecCopy,
+            List<Filter> extraFilters, int seekFrames, int maxFrames) {
         this.extraFilters = extraFilters;
         this.videoCodecCopy = videoCodecCopy;
         this.audioCodecCopy = audioCodecCopy;
 
-        this.inputFormat = inputFormat;
-        this.outputFormat = outputFormat;
-
-        sink = new SinkImpl(destName, outputFormat, outputVideoCodec, outputAudioCodec);
-        source = new SourceImpl(sourceName, inputFormat, inputVideoCodec, inputAudioCodec);
-        // TODO(stan): check v+a -> audio only / video only
+        this.inputFormat = source.getInputFormat();
+        this.outputFormat = sink.getOutputFormat();
+        this.seekFrames = seekFrames;
+        this.maxFrames = maxFrames;
+        
+        this.source = source;
+        this.sink = sink;
     }
 
     protected boolean audioCodecCopy() {
@@ -159,18 +169,52 @@ public class Transcoder {
             System.out.print(String.format("[%6d]\r", frameNo));
     }
 
-    public void setSeekFrames(Integer seekFrames) {
-        this.seekFrames = seekFrames;
+    public static class TranscoderBuilder {
+
+        private Source source;
+        private Sink sink;
+        private boolean videoCopy;
+        private boolean audioCopy;
+        private List<Filter> filters = new ArrayList<Filter>();
+        private int seekFrames;
+        private int maxFrames;
+
+        public TranscoderBuilder(Source source, Sink sink) {
+            this.source = source;
+            this.sink = sink;
+        }
+
+        public TranscoderBuilder setVideoCopy(boolean videoCopy) {
+            this.videoCopy = videoCopy;
+            return this;
+        }
+
+        public TranscoderBuilder setAudioCopy(boolean audioCopy) {
+            this.audioCopy = audioCopy;
+            return this;
+        }
+
+        public TranscoderBuilder addFilters(List<Filter> filters) {
+            this.filters.addAll(filters);
+            return this;
+        }
+
+        public Transcoder create() {
+            return new Transcoder(source, sink, videoCopy, audioCopy, filters, seekFrames, maxFrames);
+        }
+
+        public TranscoderBuilder setSeekFrames(int seekFrames) {
+            this.seekFrames = seekFrames;
+            return this;
+        }
+
+        public TranscoderBuilder setMaxFrames(int maxFrames) {
+            this.maxFrames = maxFrames;
+            return this;
+        }
     }
 
-    public void setMaxFrames(Integer integerFlagD) {
-        this.maxFrames = integerFlagD;
-
-    }
-
-    public void setOption(Options option, Object value) {
-        source.setOption(option, value);
-        sink.setOption(option, value);
-
+    public static TranscoderBuilder newTranscoder(Source source, Sink sink) {
+        return new TranscoderBuilder(source, sink);
     }
 }

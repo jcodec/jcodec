@@ -58,7 +58,7 @@ public class SinkImpl implements Sink, PacketSink {
     private AudioEncoder audioEncoder;
     private VideoEncoder videoEncoder;
     private String profile;
-    private Boolean interlaced;
+    private boolean interlaced;
 
     @Override
     public void outputVideoPacket(Packet packet, VideoCodecMeta codecMeta) throws IOException {
@@ -182,6 +182,7 @@ public class SinkImpl implements Sink, PacketSink {
         return audioEncoder.encode(audioBuffer.getData(), null);
     }
 
+    @Override
     public Format getOutputFormat() {
         return outputFormat;
     }
@@ -240,8 +241,8 @@ public class SinkImpl implements Sink, PacketSink {
     @Override
     public void setOption(Options option, Object value) {
         if (option == Options.PROFILE)
-            profile = (String) (value);
+            profile = (String) value;
         else if (option == Options.INTERLACED)
-            interlaced = (Boolean) (value);
+            interlaced = (Boolean) value;
     }
 }

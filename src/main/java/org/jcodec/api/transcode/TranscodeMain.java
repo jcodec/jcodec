@@ -224,7 +224,7 @@ public class TranscodeMain {
             if ("copy".equalsIgnoreCase(outputCodecVideoRaw)) {
                 videoCopy = true;
                 outputCodecVideo = inputCodecVideo.v2;
-            } else if("none".equalsIgnoreCase(outputCodecVideoRaw)) {
+            } else if ("none".equalsIgnoreCase(outputCodecVideoRaw)) {
                 outputCodecVideo = null;
                 inputCodecVideo = null;
             } else {
@@ -252,7 +252,7 @@ public class TranscodeMain {
             if ("copy".equalsIgnoreCase(outputCodecAudioRaw)) {
                 audioCopy = true;
                 outputCodecAudio = inputCodecAudio.v2;
-            } else if("none".equalsIgnoreCase(outputCodecVideoRaw)) {
+            } else if ("none".equalsIgnoreCase(outputCodecVideoRaw)) {
                 outputCodecAudio = null;
                 inputCodecAudio = null;
             } else {
@@ -268,19 +268,26 @@ public class TranscodeMain {
         else if (cmd.getBooleanFlag(FLAG_DUMPMVJS))
             filters.add(new DumpMvFilter(true));
 
-        Transcoder transcoder = new Transcoder(cmd.getArg(0), cmd.getArg(1), inputFormat, outputFormat, inputCodecVideo,
-                outputCodecVideo, inputCodecAudio, outputCodecAudio, videoCopy, audioCopy, filters);
-        transcoder.setSeekFrames(cmd.getIntegerFlagD(FLAG_SEEK_FRAMES, 0));
-        transcoder.setMaxFrames(cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE));
-        transcoder.setOption(Options.PROFILE, cmd.getStringFlag(FLAG_PROFILE));
-        transcoder.setOption(Options.INTERLACED, cmd.getBooleanFlagD(FLAG_INTERLACED, false));
+        Sink sink = new SinkImpl(cmd.getArg(1), outputFormat, outputCodecVideo, outputCodecAudio);
         Integer downscale = cmd.getIntegerFlagD(FLAG_DOWNSCALE, 1);
         if (downscale != null && (1 << MathUtil.log2(downscale)) != downscale) {
-            Logger.error(
-                    "Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE + ", the option will have no effect.");
+            Logger.error("Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE
+                    + ", the option will have no effect.");
         } else {
-            transcoder.setOption(Options.DOWNSCALE, downscale);
+            sink.setOption(Options.DOWNSCALE, downscale);
         }
+        Source source = new SourceImpl(cmd.getArg(0), inputFormat, inputCodecVideo, inputCodecAudio);
+        source.setOption(Options.PROFILE, cmd.getStringFlag(FLAG_PROFILE));
+        source.setOption(Options.INTERLACED, cmd.getBooleanFlagD(FLAG_INTERLACED, false));
+
+        Transcoder transcoder = Transcoder.newTranscoder(source, sink)
+                .setVideoCopy(videoCopy)
+                .setAudioCopy(audioCopy)
+                .addFilters(filters)
+                .setSeekFrames(cmd.getIntegerFlagD(FLAG_SEEK_FRAMES, 0))
+                .setMaxFrames(cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE))
+                .create();
+
         transcoder.transcode();
     }
 
@@ -314,7 +321,7 @@ public class TranscodeMain {
         } else {
             demuxerPid = _2(0, JCodecUtil.createDemuxer(format, new File(input)));
         }
-        if(demuxerPid == null || demuxerPid.v1 == null)
+        if (demuxerPid == null || demuxerPid.v1 == null)
             return null;
         int trackNo = 0;
         List<? extends DemuxerTrack> tracks = targetType == TrackType.VIDEO ? demuxerPid.v1.getVideoTracks()

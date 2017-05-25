@@ -84,7 +84,7 @@ public class SourceImpl implements Source, PacketSource {
     private AudioDecoder audioDecoder;
     private VideoDecoder videoDecoder;
 
-    private Integer downscale;
+    private int downscale = 1;
 
     public void initDemuxer() throws FileNotFoundException, IOException {
         if (inputFormat != Format.IMG)
@@ -231,6 +231,7 @@ public class SourceImpl implements Source, PacketSource {
         return nextFrame;
     }
 
+    @Override
     public Format getInputFormat() {
         return inputFormat;
     }
@@ -468,10 +469,6 @@ public class SourceImpl implements Source, PacketSource {
 
     public _3<Integer, Integer, Codec> getInputAudioCode() {
         return inputAudioCodec;
-    }
-
-    public void setDownscale(int downscale) {
-        this.downscale = downscale;
     }
 
     @Override
