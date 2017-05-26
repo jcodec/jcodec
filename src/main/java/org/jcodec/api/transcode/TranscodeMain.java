@@ -24,6 +24,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.MainUtils.Flag;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.api.transcode.filters.DumpMvFilter;
 
@@ -37,23 +38,26 @@ import org.jcodec.api.transcode.filters.DumpMvFilter;
  * 
  */
 public class TranscodeMain {
-    private static final String FLAG_SEEK_FRAMES = "seek-frames";
-    private static final String FLAG_MAX_FRAMES = "max-frames";
+    private static final Flag FLAG_SEEK_FRAMES = new Flag("seek-frames", "Seek frames");
+    private static final Flag FLAG_MAX_FRAMES = new Flag("max-frames", "Max frames");
 
-    private static final String FLAG_OUTPUT_AUDIO_CODEC = "o:ac";
-    private static final String FLAG_INPUT_AUDIO_CODEC = "i:ac";
-    private static final String FLAG_OUTPUT_VIDEO_CODEC = "o:vc";
-    private static final String FLAG_INPUT_VIDEO_CODEC = "i:vc";
-    private static final String FLAG_OUTPUT_FORMAT = "o:f";
-    private static final String FLAG_INPUT_FORMAT = "i:f";
+    private static final Flag FLAG_OUTPUT_AUDIO_CODEC = new Flag("o:ac", "Output audio codec [default=auto].");
+    private static final Flag FLAG_INPUT_AUDIO_CODEC = new Flag("i:ac", "Input audio codec [default=auto].");
+    private static final Flag FLAG_OUTPUT_VIDEO_CODEC = new Flag("o:vc", "Output video codec [default=auto].");
+    private static final Flag FLAG_INPUT_VIDEO_CODEC = new Flag("i:vc", "Input video codec [default=auto].");
+    private static final Flag FLAG_OUTPUT_FORMAT = new Flag("o:f", "Output format [default=auto].");
+    private static final Flag FLAG_INPUT_FORMAT = new Flag("i:f", "Input format [default=auto].");
 
-    private static final String FLAG_PROFILE = "profile";
-    private static final String FLAG_INTERLACED = "interlaced";
+    private static final Flag FLAG_PROFILE = new Flag("profile", "Profile to use (supported by some encoders).");
+    private static final Flag FLAG_INTERLACED = new Flag("interlaced",
+            "Encode output as interlaced (supported by Prores encoder).");
 
-    private static final String FLAG_DUMPMV = "dumpMv";
-    private static final String FLAG_DUMPMVJS = "dumpMvJs";
+    private static final Flag FLAG_DUMPMV = new Flag("dumpMv", "Dump motion vectors (supported by h.264 decoder).");
+    private static final Flag FLAG_DUMPMVJS = new Flag("dumpMvJs",
+            "Dump motion vectors in form of JASON file (supported by h.264 decoder).");
 
-    private static final String FLAG_DOWNSCALE = "downscale";
+    private static final Flag FLAG_DOWNSCALE = new Flag("downscale",
+            "Decode frames in downscale (supported by MPEG, Prores and Jpeg decoders).");
 
     private static Map<String, Format> extensionToF = new HashMap<String, Format>();
     private static Map<String, Codec> extensionToC = new HashMap<String, Codec>();
@@ -151,23 +155,20 @@ public class TranscodeMain {
     public static void main(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args);
         if (args.length < 2) {
-            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
-                {
-
-                    put(FLAG_INPUT_FORMAT, "Input format [default=auto].");
-                    put(FLAG_OUTPUT_FORMAT, "Output format [default=auto].");
-                    put(FLAG_INPUT_VIDEO_CODEC, "Input video codec [default=auto].");
-                    put(FLAG_OUTPUT_VIDEO_CODEC, "Output video codec [default=auto].");
-                    put(FLAG_INPUT_AUDIO_CODEC, "Input audio codec [default=auto].");
-                    put(FLAG_OUTPUT_AUDIO_CODEC, "Output audio codec [default=auto].");
-                    put(FLAG_SEEK_FRAMES, "Seek frames");
-                    put(FLAG_MAX_FRAMES, "Max frames");
-                    put(FLAG_PROFILE, "Profile to use (supported by some encoders).");
-                    put(FLAG_INTERLACED, "Encode output as interlaced (supported by Prores encoder).");
-                    put(FLAG_DUMPMV, "Dump motion vectors (supported by h.264 decoder).");
-                    put(FLAG_DUMPMVJS, "Dump motion vectors in form of JASON file (supported by h.264 decoder).");
-                    put(FLAG_DOWNSCALE, "Decode frames in downscale (supported by MPEG, Prores and Jpeg decoders).");
-                }
+            MainUtils.printHelpVarArgs(new Flag[] {
+                    FLAG_INPUT_FORMAT,
+                    FLAG_OUTPUT_FORMAT,
+                    FLAG_INPUT_VIDEO_CODEC,
+                    FLAG_OUTPUT_VIDEO_CODEC,
+                    FLAG_INPUT_AUDIO_CODEC,
+                    FLAG_OUTPUT_AUDIO_CODEC,
+                    FLAG_SEEK_FRAMES,
+                    FLAG_MAX_FRAMES,
+                    FLAG_PROFILE,
+                    FLAG_INTERLACED,
+                    FLAG_DUMPMV,
+                    FLAG_DUMPMVJS,
+                    FLAG_DOWNSCALE
             }, "input", "output");
             return;
         }
@@ -271,8 +272,8 @@ public class TranscodeMain {
         Sink sink = new SinkImpl(cmd.getArg(1), outputFormat, outputCodecVideo, outputCodecAudio);
         Integer downscale = cmd.getIntegerFlagD(FLAG_DOWNSCALE, 1);
         if (downscale != null && (1 << MathUtil.log2(downscale)) != downscale) {
-            Logger.error("Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE
-                    + ", the option will have no effect.");
+            Logger.error(
+                    "Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE + ", the option will have no effect.");
         } else {
             sink.setOption(Options.DOWNSCALE, downscale);
         }
@@ -280,13 +281,9 @@ public class TranscodeMain {
         source.setOption(Options.PROFILE, cmd.getStringFlag(FLAG_PROFILE));
         source.setOption(Options.INTERLACED, cmd.getBooleanFlagD(FLAG_INTERLACED, false));
 
-        Transcoder transcoder = Transcoder.newTranscoder(source, sink)
-                .setVideoCopy(videoCopy)
-                .setAudioCopy(audioCopy)
-                .addFilters(filters)
-                .setSeekFrames(cmd.getIntegerFlagD(FLAG_SEEK_FRAMES, 0))
-                .setMaxFrames(cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE))
-                .create();
+        Transcoder transcoder = Transcoder.newTranscoder(source, sink).setVideoCopy(videoCopy).setAudioCopy(audioCopy)
+                .addFilters(filters).setSeekFrames(cmd.getIntegerFlagD(FLAG_SEEK_FRAMES, 0))
+                .setMaxFrames(cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE)).create();
 
         transcoder.transcode();
     }
