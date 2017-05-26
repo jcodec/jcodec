@@ -39,7 +39,8 @@ JCodec is free software distributed under FreeBSD License.
 
 # Getting started
 
-You can get JCodec automatically with maven. For this just add below snippet to your pom.xml .
+Build from the source and include both JARs (jcodec.jar and jcodec-javase.jar) in your projects. Alternatively, obsolete
+versions can be included automatically with maven. For this just add below snippet to your pom.xml-
 
 ```xml
 <dependency>
@@ -62,21 +63,25 @@ Also check the 'samples' subfolder. It's a maven project, and it contains some c
 Getting a single frame from a movie ( supports only AVC, H.264 in MP4, ISO BMF, Quicktime container ):
 ```java
     int frameNumber = 150;
-    BufferedImage frame = FrameGrab.getFrame(new File("filename.mp4"), frameNumber);
+    BufferedImage frame = AWTFrameGrab8Bit.getFrame(new File("filename.mp4"), frameNumber);
     ImageIO.write(frame, "png", new File("frame_150.png"));
 ```
 
 Getting a sequence of frames from a movie ( supports only AVC, H.264 in MP4, ISO BMF, Quicktime container ):
 ```java
     double startSec = 51.632;
+    int frameCount = 10;
     FileChannelWrapper ch = null;
     try {
-        ch = NIOUtils.readableFileChannel(new File("filename.mp4"));
-        FrameGrab fg = new FrameGrab(ch);
-        grab.seek(startSec);
-        for (int i = 0; i < 100; i++) {
-            ImageIO.write(grab.getFrame(), "png",
-                new File(System.getProperty("user.home"), String.format("Desktop/frame_%08d.png", i)));
+        ch = NIOUtils.readableChannel(new File("filename.mp4"));
+        AWTFrameGrab8Bit fg = AWTFrameGrab8Bit.createAWTFrameGrab8Bit(ch);
+        fg.seekToSecondPrecise(startSec);
+        for (int i = 0; i < frameCount; i++) {
+            BufferedImage frameImage = grab.getFrame();
+            if (frameImage != null) {
+                ImageIO.write(grab.getFrame(), "png",
+                    new File(System.getProperty("user.home"), String.format("Desktop/frame_%08d.png", i)));
+            } else break;
         }
     } finally {
         NIOUtils.closeQuietly(ch);
