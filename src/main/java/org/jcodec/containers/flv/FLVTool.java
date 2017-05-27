@@ -1,4 +1,5 @@
 package org.jcodec.containers.flv;
+
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -52,7 +53,7 @@ public class FLVTool {
         processors.put("info", new InfoPacketProcessor.Factory());
         processors.put("shift_pts", new ShiftPtsProcessor.Factory());
     }
-    
+
     private static final Flag FLAG_MAX_PACKETS = new Flag("max-packets", "m", "Maximum number of packets to process");
 
     public static void main1(String[] args) throws IOException {
@@ -61,20 +62,20 @@ public class FLVTool {
             return;
         }
         String command = args[0];
-
-        Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length));
-        if (cmd.args.length < 1) {
-            MainUtils.printHelpCmd(command, processors.get(command).getFlags(), asList("file _in", "?file out"));
-            return;
-        }
-        int maxPackets = cmd.getIntegerFlagD(FLAG_MAX_PACKETS, Integer.MAX_VALUE);
-
-        PacketProcessor processor = getProcessor(command, cmd);
-        if (processor == null) {
+        PacketProcessorFactory processorFactory = processors.get(command);
+        if (processorFactory == null) {
             System.err.println("Unknown command: " + command);
             printGenericHelp();
             return;
         }
+
+        Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length), processorFactory.getFlags());
+        if (cmd.args.length < 1) {
+            MainUtils.printHelpCmd(command, processorFactory.getFlags(), asList("file in", "?file out"));
+            return;
+        }
+        PacketProcessor processor = processorFactory.newPacketProcessor(cmd);
+        int maxPackets = cmd.getIntegerFlagD(FLAG_MAX_PACKETS, Integer.MAX_VALUE);
 
         SeekableByteChannel _in = null;
         SeekableByteChannel out = null;
@@ -133,7 +134,7 @@ public class FLVTool {
         private boolean copying = false;
         private Double from;
         private Double to;
-        
+
         private static final Flag FLAG_FROM = new Flag("from", "From timestamp (in seconds, i.e 67.49)");
         private static final Flag FLAG_TO = new Flag("to", "To timestamp");
 
@@ -145,7 +146,7 @@ public class FLVTool {
 
             @Override
             public Flag[] getFlags() {
-                return new Flag[] {FLAG_FROM, FLAG_TO};
+                return new Flag[] { FLAG_FROM, FLAG_TO };
             }
         }
 
@@ -242,10 +243,8 @@ public class FLVTool {
             } else if (tag.getType() == Type.VIDEO) {
                 double duration = (((double) 1024 * audioTagsInQueue) / (48000 * videoTagsInQueue));
                 tag.setPts((int) Math.round(lastPtsVideo * 1000));
-                lastPtsVideo += min(
-                        (1 + CORRECTION_PACE) * duration,
-                        max((1 - CORRECTION_PACE) * duration, duration + min(1, abs(lastPtsAudio - lastPtsVideo))
-                                * (lastPtsAudio - lastPtsVideo)));
+                lastPtsVideo += min((1 + CORRECTION_PACE) * duration, max((1 - CORRECTION_PACE) * duration,
+                        duration + min(1, abs(lastPtsAudio - lastPtsVideo)) * (lastPtsAudio - lastPtsVideo)));
                 --videoTagsInQueue;
                 System.out.println(lastPtsVideo + " - " + lastPtsAudio);
             } else {
@@ -288,18 +287,20 @@ public class FLVTool {
         private FLVTag prevAudioTag;
 
         public static class Factory implements PacketProcessorFactory {
-            private static final Flag FLAG_CHECK = new Flag("check", "Check sanity and report errors only, no packet dump will be generated.");
-            private static final Flag FLAG_STREAM = new Flag("stream", "Stream selector, can be one of: ['video', 'audio', 'script'].");
+            private static final Flag FLAG_CHECK = new Flag("check",
+                    "Check sanity and report errors only, no packet dump will be generated.");
+            private static final Flag FLAG_STREAM = new Flag("stream",
+                    "Stream selector, can be one of: ['video', 'audio', 'script'].");
 
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new InfoPacketProcessor(flags.getBooleanFlagD(FLAG_CHECK, false), flags.getEnumFlagD(FLAG_STREAM,
-                        null, Type.class));
+                return new InfoPacketProcessor(flags.getBooleanFlagD(FLAG_CHECK, false),
+                        flags.getEnumFlagD(FLAG_STREAM, null, Type.class));
             }
 
             @Override
             public Flag[] getFlags() {
-                return new Flag[] {FLAG_CHECK, FLAG_STREAM};
+                return new Flag[] { FLAG_CHECK, FLAG_STREAM };
             }
         }
 
@@ -398,8 +399,9 @@ public class FLVTool {
 
         private static final long WRAP_AROUND_VALUE = 0x80000000L;
         private static final int HALF_WRAP_AROUND_VALUE = 0x40000000;
-        
-        private static final Flag FLAG_TO = new Flag("to", "Shift first pts to this value, and all subsequent pts accordingly.");
+
+        private static final Flag FLAG_TO = new Flag("to",
+                "Shift first pts to this value, and all subsequent pts accordingly.");
         private static final Flag FLAG_BY = new Flag("by", "Shift all pts by this value.");
         private static final Flag FLAG_WRAP_AROUND = new Flag("wrap-around", "Expect wrap around of timestamps.");
 
@@ -412,7 +414,7 @@ public class FLVTool {
 
             @Override
             public Flag[] getFlags() {
-                return new Flag[] {FLAG_TO, FLAG_BY, FLAG_WRAP_AROUND};
+                return new Flag[] { FLAG_TO, FLAG_BY, FLAG_WRAP_AROUND };
             }
         }
 

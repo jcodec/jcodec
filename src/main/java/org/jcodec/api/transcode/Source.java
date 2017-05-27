@@ -3,6 +3,7 @@ package org.jcodec.api.transcode;
 import java.io.IOException;
 
 import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.Codec;
 import org.jcodec.common.Format;
 import org.jcodec.common.VideoCodecMeta;
 
@@ -73,5 +74,6 @@ public interface Source {
      */
     AudioCodecMeta getAudioCodecMeta();
 
-    Format getInputFormat();
+    boolean isVideo();
+    boolean isAudio();
 }

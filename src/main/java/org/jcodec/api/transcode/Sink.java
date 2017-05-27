@@ -2,7 +2,6 @@ package org.jcodec.api.transcode;
 
 import java.io.IOException;
 
-import org.jcodec.common.Format;
 import org.jcodec.common.model.ColorSpace;
 
 /**
@@ -52,5 +51,6 @@ public interface Sink {
 
     void setOption(Options profile, Object value);
 
-    Format getOutputFormat();
+    boolean isVideo();
+    boolean isAudio();
 }

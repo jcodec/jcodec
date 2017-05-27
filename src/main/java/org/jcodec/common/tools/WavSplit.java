@@ -27,10 +27,11 @@ import org.jcodec.common.tools.MainUtils.Flag;
  */
 public class WavSplit {
     public static final Flag FLAG_PATTERN = new Flag("pattern", "p", "Output file name pattern, i.e. out%02d.wav");
+    private static final Flag[] ALL_FLAGS = new Flag[] {FLAG_PATTERN};
     public static void main1(String[] args) throws Exception {
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelp(new Flag[] {FLAG_PATTERN}, asList("filename.wav"));
+            MainUtils.printHelp(ALL_FLAGS, asList("filename.wav"));
             System.exit(-1);
         }
 

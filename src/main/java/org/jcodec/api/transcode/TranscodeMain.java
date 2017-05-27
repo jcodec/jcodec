@@ -25,7 +25,9 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
+import org.jcodec.common.tools.MainUtils.FlagType;
 import org.jcodec.common.tools.MathUtil;
+import org.jcodec.api.transcode.Transcoder.TranscoderBuilder;
 import org.jcodec.api.transcode.filters.DumpMvFilter;
 
 /**
@@ -38,15 +40,17 @@ import org.jcodec.api.transcode.filters.DumpMvFilter;
  * 
  */
 public class TranscodeMain {
+    private static final Flag FLAG_INPUT = new Flag("input", "i", "Designates an input argument", FlagType.VOID);
+    private static final Flag FLAG_MAP_VIDEO = new Flag("map:v", "mv",
+            "Map a video from a specified input into this output");
+    private static final Flag FLAG_MAP_AUDIO = new Flag("map:a", "ma",
+            "Map a audio from a specified input into this output");
     private static final Flag FLAG_SEEK_FRAMES = new Flag("seek-frames", "Seek frames");
-    private static final Flag FLAG_MAX_FRAMES = new Flag("max-frames", "Max frames");
+    private static final Flag FLAG_MAX_FRAMES = new Flag("max-frames", "limit", "Max frames");
 
-    private static final Flag FLAG_OUTPUT_AUDIO_CODEC = new Flag("o:ac", "Output audio codec [default=auto].");
-    private static final Flag FLAG_INPUT_AUDIO_CODEC = new Flag("i:ac", "Input audio codec [default=auto].");
-    private static final Flag FLAG_OUTPUT_VIDEO_CODEC = new Flag("o:vc", "Output video codec [default=auto].");
-    private static final Flag FLAG_INPUT_VIDEO_CODEC = new Flag("i:vc", "Input video codec [default=auto].");
-    private static final Flag FLAG_OUTPUT_FORMAT = new Flag("o:f", "Output format [default=auto].");
-    private static final Flag FLAG_INPUT_FORMAT = new Flag("i:f", "Input format [default=auto].");
+    private static final Flag FLAG_AUDIO_CODEC = new Flag("codec:audio", "acodec", "Audio codec [default=auto].");
+    private static final Flag FLAG_VIDEO_CODEC = new Flag("codec:video", "vcodec", "Video codec [default=auto].");
+    private static final Flag FLAG_FORMAT = new Flag("format", "f", "Format [default=auto].");
 
     private static final Flag FLAG_PROFILE = new Flag("profile", "Profile to use (supported by some encoders).");
     private static final Flag FLAG_INTERLACED = new Flag("interlaced",
@@ -58,6 +62,10 @@ public class TranscodeMain {
 
     private static final Flag FLAG_DOWNSCALE = new Flag("downscale",
             "Decode frames in downscale (supported by MPEG, Prores and Jpeg decoders).");
+
+    private static final Flag[] ALL_FLAGS = new Flag[] { FLAG_INPUT, FLAG_FORMAT, FLAG_VIDEO_CODEC, FLAG_AUDIO_CODEC,
+            FLAG_SEEK_FRAMES, FLAG_MAX_FRAMES, FLAG_PROFILE, FLAG_INTERLACED, FLAG_DUMPMV, FLAG_DUMPMVJS,
+            FLAG_DOWNSCALE };
 
     private static Map<String, Format> extensionToF = new HashMap<String, Format>();
     private static Map<String, Codec> extensionToC = new HashMap<String, Codec>();
@@ -153,115 +161,138 @@ public class TranscodeMain {
     }
 
     public static void main(String[] args) throws Exception {
-        Cmd cmd = MainUtils.parseArguments(args);
-        if (args.length < 2) {
-            MainUtils.printHelpVarArgs(new Flag[] {
-                    FLAG_INPUT_FORMAT,
-                    FLAG_OUTPUT_FORMAT,
-                    FLAG_INPUT_VIDEO_CODEC,
-                    FLAG_OUTPUT_VIDEO_CODEC,
-                    FLAG_INPUT_AUDIO_CODEC,
-                    FLAG_OUTPUT_AUDIO_CODEC,
-                    FLAG_SEEK_FRAMES,
-                    FLAG_MAX_FRAMES,
-                    FLAG_PROFILE,
-                    FLAG_INTERLACED,
-                    FLAG_DUMPMV,
-                    FLAG_DUMPMVJS,
-                    FLAG_DOWNSCALE
-            }, "input", "output");
-            return;
-        }
+        Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
 
-        String input = cmd.getArg(0);
-        String output = cmd.getArg(1);
+        TranscoderBuilder builder = Transcoder.newTranscoder();
 
-        String inputFormatRaw = cmd.getStringFlag(FLAG_INPUT_FORMAT);
-        Format inputFormat;
-        if (inputFormatRaw == null) {
-            inputFormat = getFormatFromExtension(input);
-            if (inputFormat != Format.IMG) {
-                Format detectFormat = JCodecUtil.detectFormat(new File(input));
-                if (detectFormat != null)
-                    inputFormat = detectFormat;
-            }
-        } else {
-            inputFormat = Format.valueOf(inputFormatRaw.toUpperCase());
-        }
-        if (inputFormat == null) {
-            Logger.error("Input format could not be detected");
-            return;
-        }
-
-        String outputFormatRaw = cmd.getStringFlag(FLAG_OUTPUT_FORMAT);
-        Format outputFormat;
-        if (outputFormatRaw == null) {
-            outputFormat = getFormatFromExtension(output);
-        } else {
-            outputFormat = Format.valueOf(outputFormatRaw.toUpperCase());
-        }
-
-        int videoTrackNo = -1;
-        String inputCodecVideoRaw = cmd.getStringFlag(FLAG_INPUT_VIDEO_CODEC);
+        List<Source> sources = new ArrayList<Source>();
         _3<Integer, Integer, Codec> inputCodecVideo = null;
-        if (inputCodecVideoRaw == null) {
-            if (inputFormat == Format.IMG) {
-                inputCodecVideo = _3(0, 0, getCodecFromExtension(input));
-            } else if (inputFormat.isVideo()) {
-                inputCodecVideo = selectSuitableTrack(input, inputFormat, TrackType.VIDEO);
-            }
-        } else {
-            inputCodecVideo = _3(0, 0, Codec.valueOf(inputCodecVideoRaw.toUpperCase()));
-        }
-
-        String outputCodecVideoRaw = cmd.getStringFlag(FLAG_OUTPUT_VIDEO_CODEC);
-        Codec outputCodecVideo = null;
-        boolean videoCopy = false;
-        if (outputCodecVideoRaw == null) {
-            outputCodecVideo = getCodecFromExtension(output);
-            if (outputCodecVideo == null)
-                outputCodecVideo = getFirstVideoCodecForFormat(outputFormat);
-        } else {
-            if ("copy".equalsIgnoreCase(outputCodecVideoRaw)) {
-                videoCopy = true;
-                outputCodecVideo = inputCodecVideo.v2;
-            } else if ("none".equalsIgnoreCase(outputCodecVideoRaw)) {
-                outputCodecVideo = null;
-                inputCodecVideo = null;
-            } else {
-                outputCodecVideo = Codec.valueOf(outputCodecVideoRaw.toUpperCase());
-            }
-        }
-
-        String inputCodecAudioRaw = cmd.getStringFlag(FLAG_INPUT_AUDIO_CODEC);
         _3<Integer, Integer, Codec> inputCodecAudio = null;
-        if (inputCodecAudioRaw == null) {
-            if (inputFormat.isAudio()) {
-                inputCodecAudio = selectSuitableTrack(input, inputFormat, TrackType.AUDIO);
+        // All the inputs and related flags
+        for (int index = 0; index < cmd.argsLength(); index++) {
+            if (!cmd.getBooleanFlagI(index, FLAG_INPUT))
+                continue;
+            String input = cmd.getArg(index);
+
+            String inputFormatRaw = cmd.getStringFlagI(index, FLAG_FORMAT);
+            Format inputFormat;
+            if (inputFormatRaw == null) {
+                inputFormat = getFormatFromExtension(input);
+                if (inputFormat != Format.IMG) {
+                    Format detectFormat = JCodecUtil.detectFormat(new File(input));
+                    if (detectFormat != null)
+                        inputFormat = detectFormat;
+                }
+            } else {
+                inputFormat = Format.valueOf(inputFormatRaw.toUpperCase());
             }
-        } else {
-            inputCodecAudio = _3(0, 0, Codec.valueOf(inputCodecAudioRaw.toUpperCase()));
+            if (inputFormat == null) {
+                Logger.error("Input format could not be detected");
+                return;
+            }
+
+            int videoTrackNo = -1;
+            String inputCodecVideoRaw = cmd.getStringFlagI(index, FLAG_VIDEO_CODEC);
+            if (inputCodecVideoRaw == null) {
+                if (inputFormat == Format.IMG) {
+                    inputCodecVideo = _3(0, 0, getCodecFromExtension(input));
+                } else if (inputFormat.isVideo()) {
+                    inputCodecVideo = selectSuitableTrack(input, inputFormat, TrackType.VIDEO);
+                }
+            } else {
+                inputCodecVideo = _3(0, 0, Codec.valueOf(inputCodecVideoRaw.toUpperCase()));
+            }
+
+            String inputCodecAudioRaw = cmd.getStringFlagI(index, FLAG_AUDIO_CODEC);
+            if (inputCodecAudioRaw == null) {
+                if (inputFormat.isAudio()) {
+                    inputCodecAudio = selectSuitableTrack(input, inputFormat, TrackType.AUDIO);
+                }
+            } else {
+                inputCodecAudio = _3(0, 0, Codec.valueOf(inputCodecAudioRaw.toUpperCase()));
+            }
+
+            Source source = new SourceImpl(input, inputFormat, inputCodecVideo, inputCodecAudio);
+            source.setOption(Options.PROFILE, cmd.getStringFlagI(index, FLAG_PROFILE));
+            source.setOption(Options.INTERLACED, cmd.getBooleanFlagID(index, FLAG_INTERLACED, false));
+            sources.add(source);
+            builder.addSource(source);
         }
 
-        String outputCodecAudioRaw = cmd.getStringFlag(FLAG_OUTPUT_AUDIO_CODEC);
-        Codec outputCodecAudio = null;
-        boolean audioCopy = false;
-        if (outputCodecAudioRaw == null) {
-            if (outputFormat.isAudio())
-                outputCodecAudio = getFirstAudioCodecForFormat(outputFormat);
-        } else {
-            if ("copy".equalsIgnoreCase(outputCodecAudioRaw)) {
-                audioCopy = true;
-                outputCodecAudio = inputCodecAudio.v2;
-            } else if ("none".equalsIgnoreCase(outputCodecVideoRaw)) {
-                outputCodecAudio = null;
-                inputCodecAudio = null;
-            } else {
-                outputCodecAudio = Codec.valueOf(outputCodecAudioRaw.toUpperCase());
-            }
+        if (sources.isEmpty()) {
+            MainUtils.printHelpVarArgs(ALL_FLAGS, "input", "output");
+            return;
         }
-        if (inputCodecAudio == null)
-            outputCodecAudio = null;
+
+        // All the outputs and related flags
+        List<Sink> sinks = new ArrayList<Sink>();
+        for (int index = 0; index < cmd.argsLength(); index++) {
+            if (cmd.getBooleanFlagI(index, FLAG_INPUT))
+                continue;
+            String output = cmd.getArg(index);
+            String outputFormatRaw = cmd.getStringFlagI(index, FLAG_FORMAT);
+            Format outputFormat;
+            if (outputFormatRaw == null) {
+                outputFormat = getFormatFromExtension(output);
+            } else {
+                outputFormat = Format.valueOf(outputFormatRaw.toUpperCase());
+            }
+            String outputCodecVideoRaw = cmd.getStringFlagI(index, FLAG_VIDEO_CODEC);
+            Codec outputCodecVideo = null;
+            boolean videoCopy = false;
+            if (outputCodecVideoRaw == null) {
+                outputCodecVideo = getCodecFromExtension(output);
+                if (outputCodecVideo == null)
+                    outputCodecVideo = getFirstVideoCodecForFormat(outputFormat);
+            } else {
+                if ("copy".equalsIgnoreCase(outputCodecVideoRaw)) {
+                    videoCopy = true;
+                } else if ("none".equalsIgnoreCase(outputCodecVideoRaw)) {
+                    outputCodecVideo = null;
+                } else {
+                    outputCodecVideo = Codec.valueOf(outputCodecVideoRaw.toUpperCase());
+                }
+            }
+
+            String outputCodecAudioRaw = cmd.getStringFlagI(index, FLAG_AUDIO_CODEC);
+            Codec outputCodecAudio = null;
+            boolean audioCopy = false;
+            if (outputCodecAudioRaw == null) {
+                if (outputFormat.isAudio())
+                    outputCodecAudio = getFirstAudioCodecForFormat(outputFormat);
+            } else {
+                if ("copy".equalsIgnoreCase(outputCodecAudioRaw)) {
+                    audioCopy = true;
+                } else if ("none".equalsIgnoreCase(outputCodecVideoRaw)) {
+                    outputCodecAudio = null;
+                } else {
+                    outputCodecAudio = Codec.valueOf(outputCodecAudioRaw.toUpperCase());
+                }
+            }
+            
+            if(videoCopy)
+                outputCodecVideo = inputCodecVideo.v2;
+            if(audioCopy)
+                outputCodecAudio = inputCodecAudio.v2;
+
+            Sink sink = new SinkImpl(output, outputFormat, outputCodecVideo, outputCodecAudio);
+            Integer downscale = cmd.getIntegerFlagID(index, FLAG_DOWNSCALE, 1);
+            if (downscale != null && (1 << MathUtil.log2(downscale)) != downscale) {
+                Logger.error("Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE
+                        + ", the option will have no effect.");
+            } else {
+                sink.setOption(Options.DOWNSCALE, downscale);
+            }
+            sinks.add(sink);
+            builder.addSink(sink);
+            builder.addVideoMapping(sources.get(0), sink, videoCopy);
+            builder.addAudioMapping(sources.get(0), sink, audioCopy);
+        }
+
+        if (sources.isEmpty() || sinks.isEmpty()) {
+            MainUtils.printHelpVarArgs(ALL_FLAGS, "input", "output");
+            return;
+        }
 
         List<Filter> filters = new ArrayList<Filter>();
         if (cmd.getBooleanFlag(FLAG_DUMPMV))
@@ -269,20 +300,7 @@ public class TranscodeMain {
         else if (cmd.getBooleanFlag(FLAG_DUMPMVJS))
             filters.add(new DumpMvFilter(true));
 
-        Sink sink = new SinkImpl(cmd.getArg(1), outputFormat, outputCodecVideo, outputCodecAudio);
-        Integer downscale = cmd.getIntegerFlagD(FLAG_DOWNSCALE, 1);
-        if (downscale != null && (1 << MathUtil.log2(downscale)) != downscale) {
-            Logger.error(
-                    "Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE + ", the option will have no effect.");
-        } else {
-            sink.setOption(Options.DOWNSCALE, downscale);
-        }
-        Source source = new SourceImpl(cmd.getArg(0), inputFormat, inputCodecVideo, inputCodecAudio);
-        source.setOption(Options.PROFILE, cmd.getStringFlag(FLAG_PROFILE));
-        source.setOption(Options.INTERLACED, cmd.getBooleanFlagD(FLAG_INTERLACED, false));
-
-        Transcoder transcoder = Transcoder.newTranscoder(source, sink).setVideoCopy(videoCopy).setAudioCopy(audioCopy)
-                .addFilters(filters).setSeekFrames(cmd.getIntegerFlagD(FLAG_SEEK_FRAMES, 0))
+        Transcoder transcoder = builder.addFilters(filters).setSeekFrames(cmd.getIntegerFlagD(FLAG_SEEK_FRAMES, 0))
                 .setMaxFrames(cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE)).create();
 
         transcoder.transcode();

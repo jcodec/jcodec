@@ -43,6 +43,7 @@ import org.jcodec.platform.Platform;
 public class MPSDump {
     private static final Flag DUMP_FROM = new Flag("dump-from", "Stop reading at timestamp");
     private static final Flag STOP_AT = new Flag("stop-at", "Start dumping from timestamp");
+    private static final Flag[] ALL_FLAGS = new Flag[] {DUMP_FROM, STOP_AT};
     
     protected ReadableByteChannel ch;
 
@@ -53,9 +54,9 @@ public class MPSDump {
     public static void main1(String[] args) throws IOException {
         FileChannelWrapper ch = null;
         try {
-            Cmd cmd = MainUtils.parseArguments(args);
+            Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
             if (cmd.args.length < 1) {
-                MainUtils.printHelp(new Flag[] {DUMP_FROM, STOP_AT}, asList("file name"));
+                MainUtils.printHelp(ALL_FLAGS, asList("file name"));
                 return;
             }
 

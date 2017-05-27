@@ -182,19 +182,6 @@ public class SinkImpl implements Sink, PacketSink {
         return audioEncoder.encode(audioBuffer.getData(), null);
     }
 
-    @Override
-    public Format getOutputFormat() {
-        return outputFormat;
-    }
-
-    public Codec getOutputVideoCodec() {
-        return outputVideoCodec;
-    }
-
-    public Codec getOutputAudioCodec() {
-        return outputAudioCodec;
-    }
-
     public void setProfile(String profile) {
         this.profile = profile;
     }
@@ -244,5 +231,15 @@ public class SinkImpl implements Sink, PacketSink {
             profile = (String) value;
         else if (option == Options.INTERLACED)
             interlaced = (Boolean) value;
+    }
+
+    @Override
+    public boolean isVideo() {
+        return outputFormat.isVideo();
+    }
+
+    @Override
+    public boolean isAudio() {
+        return outputFormat.isAudio();
     }
 }

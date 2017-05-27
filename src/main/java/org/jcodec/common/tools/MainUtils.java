@@ -7,10 +7,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,19 +29,29 @@ public class MainUtils {
     public static boolean isColorSupported = System.console() != null
             || Boolean.parseBoolean(System.getProperty(JCODEC_LOG_SINK_COLOR));
 
+    public static enum FlagType {
+        VOID, STRING, INT, LONG, DOUBLE, MULT, ENUM, ANY
+    }
+
     public static class Flag {
         private String longName;
         private String shortName;
         private String description;
+        private FlagType type;
 
         public Flag(String longName, String description) {
             this(longName, null, description);
         }
 
         public Flag(String longName, String shortName, String description) {
+            this(longName, shortName, description, FlagType.ANY);
+        }
+
+        public Flag(String longName, String shortName, String description, FlagType type) {
             this.longName = longName;
             this.shortName = shortName;
             this.description = description;
+            this.type = type;
         }
 
         public String getLongName() {
@@ -54,8 +62,12 @@ public class MainUtils {
             return description;
         }
 
-        public Object getShortName() {
+        public String getShortName() {
             return shortName;
+        }
+
+        public FlagType getType() {
+            return type;
         }
     }
 
@@ -191,7 +203,7 @@ public class MainUtils {
         }
 
         public Boolean getBooleanFlagI(int arg, Flag flagName) {
-            return getBooleanFlagInternal(longArgFlags[arg], shortArgFlags[arg], flagName, null);
+            return getBooleanFlagInternal(longArgFlags[arg], shortArgFlags[arg], flagName, false);
         }
 
         public Double getDoubleFlagD(Flag flagName, Double defaultValue) {
@@ -274,7 +286,7 @@ public class MainUtils {
 
     private static Pattern flagPattern = Pattern.compile("^--([^=]+)=(.*)$");
 
-    public static Cmd parseArguments(String[] args) {
+    public static Cmd parseArguments(String[] args, Flag[] flags) {
         Map<String, String> longFlags = new HashMap<String, String>();
         Map<String, String> shortFlags = new HashMap<String, String>();
         Map<String, String> allLongFlags = new HashMap<String, String>();
@@ -292,13 +304,23 @@ public class MainUtils {
                     longFlags.put(args[arg].substring(2), "true");
                 }
             } else if (args[arg].startsWith("-")) {
-                shortFlags.put(args[arg].substring(1), args[++arg]);
+                String shortName = args[arg].substring(1);
+                for (Flag flag : flags) {
+                    if (shortName.equals(flag.getShortName())) {
+                        if (flag.getType() != FlagType.VOID)
+                            shortFlags.put(shortName, args[++arg]);
+                        else
+                            shortFlags.put(shortName, "true");
+                    }
+                }
             } else {
                 allLongFlags.putAll(longFlags);
                 allShortFlags.putAll(shortFlags);
                 outArgs.add(args[arg]);
                 argLongFlags.add(longFlags);
                 argShortFlags.add(shortFlags);
+                longFlags = new HashMap<String, String>();
+                shortFlags = new HashMap<String, String>();
             }
         }
 

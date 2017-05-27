@@ -31,6 +31,7 @@ import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 public class MTSDump extends MPSDump {
     private static final Flag DUMP_FROM = new Flag("dump-from", "Stop reading at timestamp");
     private static final Flag STOP_AT = new Flag("stop-at", "Start dumping from timestamp");
+    private static final Flag[] ALL_FLAGS = new Flag[] { DUMP_FROM, STOP_AT };
 
     private int guid;
     private ByteBuffer buf;
@@ -55,9 +56,9 @@ public class MTSDump extends MPSDump {
     public static void main2(String[] args) throws IOException {
         ReadableByteChannel ch = null;
         try {
-            Cmd cmd = MainUtils.parseArguments(args);
+            Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
             if (cmd.args.length < 1) {
-                MainUtils.printHelp(new Flag[] { DUMP_FROM, STOP_AT }, asList("file name", "guid"));
+                MainUtils.printHelp(ALL_FLAGS, asList("file name", "guid"));
                 return;
             } else if (cmd.args.length == 1) {
                 System.out.println("MTS programs:");

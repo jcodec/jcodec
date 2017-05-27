@@ -232,11 +232,6 @@ public class SourceImpl implements Source, PacketSource {
     }
 
     @Override
-    public Format getInputFormat() {
-        return inputFormat;
-    }
-
-    @Override
     public Packet inputAudioPacket() throws IOException {
         if (audioInputTrack == null)
             return null;
@@ -480,5 +475,15 @@ public class SourceImpl implements Source, PacketSource {
     @Override
     public AudioCodecMeta getAudioCodecMeta() {
         return audioCodecMeta;
+    }
+
+    @Override
+    public boolean isVideo() {
+        return inputFormat.isVideo();
+    }
+
+    @Override
+    public boolean isAudio() {
+        return inputFormat.isAudio();
     }
 }
