@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jcodec.api.transcode.Transcoder.TranscoderBuilder;
+import org.jcodec.api.transcode.filters.DumpMvFilter;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
@@ -27,8 +29,6 @@ import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
 import org.jcodec.common.tools.MainUtils.FlagType;
 import org.jcodec.common.tools.MathUtil;
-import org.jcodec.api.transcode.Transcoder.TranscoderBuilder;
-import org.jcodec.api.transcode.filters.DumpMvFilter;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -65,7 +65,7 @@ public class TranscodeMain {
 
     private static final Flag[] ALL_FLAGS = new Flag[] { FLAG_INPUT, FLAG_FORMAT, FLAG_VIDEO_CODEC, FLAG_AUDIO_CODEC,
             FLAG_SEEK_FRAMES, FLAG_MAX_FRAMES, FLAG_PROFILE, FLAG_INTERLACED, FLAG_DUMPMV, FLAG_DUMPMVJS,
-            FLAG_DOWNSCALE };
+            FLAG_DOWNSCALE, FLAG_MAP_VIDEO, FLAG_MAP_AUDIO};
 
     private static Map<String, Format> extensionToF = new HashMap<String, Format>();
     private static Map<String, Codec> extensionToC = new HashMap<String, Codec>();
@@ -166,12 +166,13 @@ public class TranscodeMain {
         TranscoderBuilder builder = Transcoder.newTranscoder();
 
         List<Source> sources = new ArrayList<Source>();
-        _3<Integer, Integer, Codec> inputCodecVideo = null;
-        _3<Integer, Integer, Codec> inputCodecAudio = null;
+        List<_3<Integer, Integer, Codec>> inputCodecsVideo = new ArrayList<_3<Integer, Integer, Codec>>();
+        List<_3<Integer, Integer, Codec>> inputCodecsAudio = new ArrayList<_3<Integer, Integer, Codec>>();
         // All the inputs and related flags
         for (int index = 0; index < cmd.argsLength(); index++) {
             if (!cmd.getBooleanFlagI(index, FLAG_INPUT))
                 continue;
+            _3<Integer, Integer, Codec> inputCodecVideo = null, inputCodecAudio = null;
             String input = cmd.getArg(index);
 
             String inputFormatRaw = cmd.getStringFlagI(index, FLAG_FORMAT);
@@ -216,6 +217,8 @@ public class TranscodeMain {
             source.setOption(Options.PROFILE, cmd.getStringFlagI(index, FLAG_PROFILE));
             source.setOption(Options.INTERLACED, cmd.getBooleanFlagID(index, FLAG_INTERLACED, false));
             sources.add(source);
+            inputCodecsVideo.add(inputCodecVideo);
+            inputCodecsAudio.add(inputCodecAudio);
             builder.addSource(source);
         }
 
@@ -269,11 +272,25 @@ public class TranscodeMain {
                     outputCodecAudio = Codec.valueOf(outputCodecAudioRaw.toUpperCase());
                 }
             }
-            
-            if(videoCopy)
-                outputCodecVideo = inputCodecVideo.v2;
-            if(audioCopy)
-                outputCodecAudio = inputCodecAudio.v2;
+
+            int audioMap = cmd.getIntegerFlagID(index, FLAG_MAP_AUDIO, 0);
+            if (audioMap > sources.size()) {
+                Logger.error(
+                        "Can not map audio from source " + audioMap + ", " + sources.size() + " sources specified.");
+            }
+            int videoMap = cmd.getIntegerFlagID(index, FLAG_MAP_VIDEO, 0);
+            if (videoMap > sources.size()) {
+                Logger.error(
+                        "Can not map video from source " + videoMap + ", " + sources.size() + " sources specified.");
+            }
+            if (videoCopy) {
+                _3<Integer, Integer, Codec> inputCodecVideo = inputCodecsVideo.get(videoMap);
+                outputCodecVideo = inputCodecVideo != null ? inputCodecVideo.v2 : null;
+            }
+            if (audioCopy) {
+                _3<Integer, Integer, Codec> inputCodecAudio = inputCodecsAudio.get(audioMap);
+                outputCodecAudio = inputCodecAudio != null ? inputCodecAudio.v2 : null;
+            }
 
             Sink sink = new SinkImpl(output, outputFormat, outputCodecVideo, outputCodecAudio);
             Integer downscale = cmd.getIntegerFlagID(index, FLAG_DOWNSCALE, 1);
@@ -285,8 +302,8 @@ public class TranscodeMain {
             }
             sinks.add(sink);
             builder.addSink(sink);
-            builder.addVideoMapping(sources.get(0), sink, videoCopy);
-            builder.addAudioMapping(sources.get(0), sink, audioCopy);
+            builder.setAudioMapping(audioMap, sinks.size() - 1, audioCopy);
+            builder.setVideoMapping(videoMap, sinks.size() - 1, videoCopy);
         }
 
         if (sources.isEmpty() || sinks.isEmpty()) {

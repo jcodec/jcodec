@@ -305,14 +305,18 @@ public class MainUtils {
                 }
             } else if (args[arg].startsWith("-")) {
                 String shortName = args[arg].substring(1);
+                boolean found = false;
                 for (Flag flag : flags) {
                     if (shortName.equals(flag.getShortName())) {
+                        found = true;
                         if (flag.getType() != FlagType.VOID)
                             shortFlags.put(shortName, args[++arg]);
                         else
                             shortFlags.put(shortName, "true");
                     }
                 }
+                if (!found)
+                    ++arg;
             } else {
                 allLongFlags.putAll(longFlags);
                 allShortFlags.putAll(shortFlags);
