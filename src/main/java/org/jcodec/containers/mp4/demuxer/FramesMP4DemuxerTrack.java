@@ -1,9 +1,4 @@
 package org.jcodec.containers.mp4.demuxer;
-import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
-import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
-import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
-import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
-
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Codec;
@@ -19,13 +14,18 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
+import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.platform.Platform;
 
 import java.io.IOException;
-import java.lang.IllegalArgumentException;
 import java.nio.ByteBuffer;
+
+import static org.jcodec.common.DemuxerTrackMeta.Type.AUDIO;
+import static org.jcodec.common.DemuxerTrackMeta.Type.OTHER;
+import static org.jcodec.common.DemuxerTrackMeta.Type.VIDEO;
+import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -243,6 +243,20 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             PixelAspectExt pasp = NodeBox.findFirst(getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if(pasp != null)
                 meta.setPixelAspectRatio(pasp.getRational());
+
+            TrackHeaderBox tkhd = NodeBox.findFirstPath(box, TrackHeaderBox.class, Box.path("tkhd"));
+            DemuxerTrackMeta.Orientation orientation;
+            if (tkhd.isOrientation90())
+                orientation = DemuxerTrackMeta.Orientation.D_90;
+            else if (tkhd.isOrientation180())
+                orientation = DemuxerTrackMeta.Orientation.D_180;
+            else if (tkhd.isOrientation270())
+                orientation = DemuxerTrackMeta.Orientation.D_270;
+            else
+                orientation = DemuxerTrackMeta.Orientation.D_0;
+
+            meta.setOrientation(orientation);
+
         }
         
         return meta;

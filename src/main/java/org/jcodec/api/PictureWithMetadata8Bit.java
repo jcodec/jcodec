@@ -1,5 +1,6 @@
 package org.jcodec.api;
 
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.model.Picture8Bit;
 
 /**
@@ -13,11 +14,20 @@ public class PictureWithMetadata8Bit {
     private Picture8Bit picture;
     private double timestamp;
     private double duration;
+    private DemuxerTrackMeta.Orientation orientation;
 
     public PictureWithMetadata8Bit(Picture8Bit picture, double timestamp, double duration) {
         this.picture = picture;
         this.timestamp = timestamp;
         this.duration = duration;
+        this.orientation = DemuxerTrackMeta.Orientation.D_0;
+    }
+
+    public PictureWithMetadata8Bit(Picture8Bit picture, double timestamp, double duration, DemuxerTrackMeta.Orientation orientation) {
+        this.picture = picture;
+        this.timestamp = timestamp;
+        this.duration = duration;
+        this.orientation = orientation;
     }
 
     public Picture8Bit getPicture() {
@@ -30,5 +40,9 @@ public class PictureWithMetadata8Bit {
 
     public double getDuration() {
         return duration;
+    }
+
+    public DemuxerTrackMeta.Orientation getOrientation() {
+        return orientation;
     }
 }

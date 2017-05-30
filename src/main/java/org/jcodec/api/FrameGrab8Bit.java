@@ -223,7 +223,7 @@ public class FrameGrab8Bit {
             return null;
 
         Picture8Bit picture = decoder.decodeFrame8Bit(frame, getBuffer());
-        return new PictureWithMetadata8Bit(picture, frame.getPtsD(), frame.getDurationD());
+        return new PictureWithMetadata8Bit(picture, frame.getPtsD(), frame.getDurationD(), videoTrack.getMeta().getOrientation());
     }
 
     /**

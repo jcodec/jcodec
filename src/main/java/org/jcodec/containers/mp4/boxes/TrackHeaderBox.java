@@ -1,9 +1,9 @@
 package org.jcodec.containers.mp4.boxes;
 
+import java.nio.ByteBuffer;
+
 import static org.jcodec.containers.mp4.TimeUtil.fromMovTime;
 import static org.jcodec.containers.mp4.TimeUtil.toMovTime;
-
-import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -86,7 +86,7 @@ public class TrackHeaderBox extends FullBox {
     private void readMatrix(ByteBuffer input) {
         matrix = new int[9];
         for (int i = 0; i < 9; i++)
-            matrix[i] = input.getInt();
+            matrix[i] = input.getInt() / 65536;
     }
 
     private float readVolume(ByteBuffer input) {
@@ -189,4 +189,9 @@ public class TrackHeaderBox extends FullBox {
     public void setNo(int no) {
         this.trackId = no;
     }
+
+    public boolean isOrientation0() { return matrix != null && matrix[0] == 1 && matrix[4] == 1;}
+    public boolean isOrientation90() { return matrix != null && matrix[1] == 1 && matrix[3] == -1;}
+    public boolean isOrientation180() { return matrix != null && matrix[0] == -1 && matrix[4] == -1;}
+    public boolean isOrientation270() { return matrix != null && matrix[1] == -1 && matrix[3] == 1;}
 }

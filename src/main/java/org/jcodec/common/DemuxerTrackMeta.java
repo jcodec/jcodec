@@ -14,9 +14,13 @@ import org.jcodec.common.model.Size;
  */
 public class DemuxerTrackMeta {
 
-    public static enum Type {
+    public enum Type {
         VIDEO, AUDIO, OTHER
-    };
+    }
+
+    public enum Orientation {
+        D_0, D_90, D_180, D_270
+    }
 
     private Type type;
     private Codec codec;
@@ -26,6 +30,7 @@ public class DemuxerTrackMeta {
     private Size dimensions;
     private byte[] codecPrivate;
     private Rational pixelAspectRatio;
+    private Orientation orientation;
 
     public DemuxerTrackMeta(Type type, Codec codec, int[] seekFrames, int totalFrames, double totalDuration, Size dimensions, byte[] codecPrivate) {
         this.type = type;
@@ -35,6 +40,7 @@ public class DemuxerTrackMeta {
         this.totalDuration = totalDuration;
         this.dimensions = dimensions;
         this.codecPrivate = codecPrivate;
+        this.orientation = Orientation.D_0;
     }
 
     public Type getType() {
@@ -82,5 +88,13 @@ public class DemuxerTrackMeta {
 
     public void setPixelAspectRatio(Rational pixelAspectRatio) {
         this.pixelAspectRatio = pixelAspectRatio;
+    }
+
+    public void setOrientation(Orientation orientation) {
+        this.orientation = orientation;
+    }
+
+    public Orientation getOrientation() {
+        return orientation;
     }
 }
