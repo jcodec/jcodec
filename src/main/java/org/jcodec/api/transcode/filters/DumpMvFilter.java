@@ -6,6 +6,7 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.api.transcode.Filter;
 import org.jcodec.api.transcode.PixelStore;
+import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 
 public class DumpMvFilter implements Filter {
     private boolean js;
@@ -15,13 +16,13 @@ public class DumpMvFilter implements Filter {
     }
 
     @Override
-    public Picture8Bit filter(Picture8Bit picture, PixelStore pixelStore) {
+    public LoanerPicture filter(Picture8Bit picture, PixelStore pixelStore) {
         Frame dec = (Frame) picture;
         if (!js)
             dumpMvTxt(dec);
         else
             dumpMvJs(dec);
-        return picture;
+        return null;
     }
 
     private void dumpMvTxt(Frame dec) {

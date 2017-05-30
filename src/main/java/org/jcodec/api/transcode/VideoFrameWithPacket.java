@@ -1,7 +1,7 @@
 package org.jcodec.api.transcode;
 
+import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture8Bit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -11,9 +11,9 @@ import org.jcodec.common.model.Picture8Bit;
  */
 class VideoFrameWithPacket implements Comparable<VideoFrameWithPacket> {
     private Packet packet;
-    private Picture8Bit frame;
+    private LoanerPicture frame;
 
-    public VideoFrameWithPacket(Packet inFrame, Picture8Bit dec2) {
+    public VideoFrameWithPacket(Packet inFrame, LoanerPicture dec2) {
         this.packet = inFrame;
         this.frame = dec2;
     }
@@ -33,7 +33,7 @@ class VideoFrameWithPacket implements Comparable<VideoFrameWithPacket> {
         return packet;
     }
 
-    public Picture8Bit getFrame() {
+    public LoanerPicture getFrame() {
         return frame;
     }
 }

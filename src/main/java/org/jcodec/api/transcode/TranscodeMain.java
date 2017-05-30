@@ -65,7 +65,7 @@ public class TranscodeMain {
 
     private static final Flag[] ALL_FLAGS = new Flag[] { FLAG_INPUT, FLAG_FORMAT, FLAG_VIDEO_CODEC, FLAG_AUDIO_CODEC,
             FLAG_SEEK_FRAMES, FLAG_MAX_FRAMES, FLAG_PROFILE, FLAG_INTERLACED, FLAG_DUMPMV, FLAG_DUMPMVJS,
-            FLAG_DOWNSCALE, FLAG_MAP_VIDEO, FLAG_MAP_AUDIO};
+            FLAG_DOWNSCALE, FLAG_MAP_VIDEO, FLAG_MAP_AUDIO };
 
     private static Map<String, Format> extensionToF = new HashMap<String, Format>();
     private static Map<String, Codec> extensionToC = new HashMap<String, Codec>();
@@ -220,6 +220,8 @@ public class TranscodeMain {
             inputCodecsVideo.add(inputCodecVideo);
             inputCodecsAudio.add(inputCodecAudio);
             builder.addSource(source);
+            builder.setSeekFrames(sources.size() - 1, cmd.getIntegerFlagID(index, FLAG_SEEK_FRAMES, 0))
+                    .setMaxFrames(sources.size() - 1, cmd.getIntegerFlagID(index, FLAG_MAX_FRAMES, Integer.MAX_VALUE));
         }
 
         if (sources.isEmpty()) {
@@ -304,6 +306,12 @@ public class TranscodeMain {
             builder.addSink(sink);
             builder.setAudioMapping(audioMap, sinks.size() - 1, audioCopy);
             builder.setVideoMapping(videoMap, sinks.size() - 1, videoCopy);
+
+            // Custom filters
+            if (cmd.getBooleanFlagI(index, FLAG_DUMPMV))
+                builder.addFilter(sinks.size() - 1, new DumpMvFilter(false));
+            else if (cmd.getBooleanFlagI(index, FLAG_DUMPMVJS))
+                builder.addFilter(sinks.size() - 1, new DumpMvFilter(true));
         }
 
         if (sources.isEmpty() || sinks.isEmpty()) {
@@ -311,14 +319,7 @@ public class TranscodeMain {
             return;
         }
 
-        List<Filter> filters = new ArrayList<Filter>();
-        if (cmd.getBooleanFlag(FLAG_DUMPMV))
-            filters.add(new DumpMvFilter(false));
-        else if (cmd.getBooleanFlag(FLAG_DUMPMVJS))
-            filters.add(new DumpMvFilter(true));
-
-        Transcoder transcoder = builder.addFilters(filters).setSeekFrames(cmd.getIntegerFlagD(FLAG_SEEK_FRAMES, 0))
-                .setMaxFrames(cmd.getIntegerFlagD(FLAG_MAX_FRAMES, Integer.MAX_VALUE)).create();
+        Transcoder transcoder = builder.create();
 
         transcoder.transcode();
     }

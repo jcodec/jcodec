@@ -11,6 +11,7 @@ import java.util.List;
 
 import net.sourceforge.jaad.aac.AACException;
 
+import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 import org.jcodec.codecs.aac.AACDecoder;
 import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.codecs.h264.H264Decoder;
@@ -202,7 +203,7 @@ public class SourceImpl implements Source, PacketSource {
                 Packet out = videoPacketReorderBuffer.remove(0);
                 int duration = Integer.MAX_VALUE;
                 for (Packet packet2 : videoPacketReorderBuffer) {
-                    int cand = (int)(packet2.getPts() - out.getPts());
+                    int cand = (int) (packet2.getPts() - out.getPts());
                     if (cand > 0 && cand < duration)
                         duration = cand;
                 }
@@ -357,10 +358,13 @@ public class SourceImpl implements Source, PacketSource {
         // decoded in the decoder so that the decoder is 'warmed up'
         Packet inVideoPacket;
         for (; skipFrames > 0 && (inVideoPacket = getNextVideoPacket()) != null;) {
-            Picture8Bit decodedFrame = decodeVideo(inVideoPacket.getData(), getPixelBuffer(inVideoPacket.getData()));
-            if (decodedFrame == null)
+            LoanerPicture loanerBuffer = getPixelBuffer(inVideoPacket.getData());
+            Picture8Bit decodedFrame = decodeVideo(inVideoPacket.getData(), loanerBuffer.getPicture());
+            if (decodedFrame == null) {
+                pixelStore.putBack(loanerBuffer);
                 continue;
-            frameReorderBuffer.add(new VideoFrameWithPacket(inVideoPacket, decodedFrame));
+            }
+            frameReorderBuffer.add(new VideoFrameWithPacket(inVideoPacket, new LoanerPicture(decodedFrame, 1)));
             if (frameReorderBuffer.size() > Transcoder.REORDER_BUFFER_SIZE) {
                 Collections.sort(frameReorderBuffer);
                 VideoFrameWithPacket removed = frameReorderBuffer.remove(0);
@@ -387,7 +391,7 @@ public class SourceImpl implements Source, PacketSource {
      * @param firstFrame
      * @return
      */
-    protected Picture8Bit getPixelBuffer(ByteBuffer firstFrame) {
+    protected LoanerPicture getPixelBuffer(ByteBuffer firstFrame) {
         VideoCodecMeta videoMeta = getVideoCodecMeta();
         Size size = videoMeta.getSize();
         return pixelStore.getPicture((size.getWidth() + 15) & ~0xf, (size.getHeight() + 15) & ~0xf,
@@ -411,11 +415,13 @@ public class SourceImpl implements Source, PacketSource {
                 detectFrameType(inVideoPacket);
             }
             Picture8Bit decodedFrame = null;
-            Picture8Bit pixelBuffer = getPixelBuffer(inVideoPacket.getData());
-            decodedFrame = decodeVideo(inVideoPacket.getData(), pixelBuffer);
-            if (decodedFrame == null)
+            LoanerPicture pixelBuffer = getPixelBuffer(inVideoPacket.getData());
+            decodedFrame = decodeVideo(inVideoPacket.getData(), pixelBuffer.getPicture());
+            if (decodedFrame == null) {
+                pixelStore.putBack(pixelBuffer);
                 continue;
-            frameReorderBuffer.add(new VideoFrameWithPacket(inVideoPacket, decodedFrame));
+            }
+            frameReorderBuffer.add(new VideoFrameWithPacket(inVideoPacket, new LoanerPicture(decodedFrame, 1)));
             if (frameReorderBuffer.size() > Transcoder.REORDER_BUFFER_SIZE) {
                 return removeFirstFixDuration(frameReorderBuffer);
             }
@@ -474,6 +480,10 @@ public class SourceImpl implements Source, PacketSource {
 
     @Override
     public AudioCodecMeta getAudioCodecMeta() {
+        if (audioInputTrack != null && audioInputTrack.getMeta() != null
+                && audioInputTrack.getMeta().getAudioCodecMeta() != null) {
+            return audioInputTrack.getMeta().getAudioCodecMeta();
+        }
         return audioCodecMeta;
     }
 

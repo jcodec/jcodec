@@ -196,13 +196,13 @@ public class SinkImpl implements Sink, PacketSink {
             return;
         Packet outputVideoPacket;
         ByteBuffer buffer = bufferStore.get();
-        int bufferSize = videoEncoder.estimateBufferSize(videoFrame.getFrame());
+        int bufferSize = videoEncoder.estimateBufferSize(videoFrame.getFrame().getPicture());
         if (buffer == null || bufferSize < buffer.capacity()) {
             buffer = ByteBuffer.allocate(bufferSize);
             bufferStore.set(buffer);
         }
         buffer.clear();
-        Picture8Bit frame = videoFrame.getFrame();
+        Picture8Bit frame = videoFrame.getFrame().getPicture();
         EncodedFrame enc = encodeVideo(frame, buffer);
         outputVideoPacket = Packet.createPacketWithData(videoFrame.getPacket(), NIOUtils.clone(enc.getData()));
         outputVideoPacket.setFrameType(enc.isKeyFrame() ? FrameType.KEY : FrameType.INTER);

@@ -4,12 +4,13 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.api.transcode.Filter;
 import org.jcodec.api.transcode.PixelStore;
+import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 
 public class ScaleFilter implements Filter {
 
     @Override
-    public Picture8Bit filter(Picture8Bit picture, PixelStore store) {
-        return picture;
+    public LoanerPicture filter(Picture8Bit picture, PixelStore store) {
+        return null;
     }
 
     @Override
