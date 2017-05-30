@@ -1,17 +1,17 @@
 package org.jcodec.scale;
 
-import static org.jcodec.common.model.ColorSpace.RGB;
-
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
 
-import javax.imageio.ImageIO;
+import static org.jcodec.common.model.ColorSpace.RGB;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -61,6 +61,72 @@ public class AWTUtil {
             toBufferedImageCropped8Bit(src, dst);
 
         return dst;
+    }
+
+    public static BufferedImage toBufferedImage8Bit(Picture8Bit src, DemuxerTrackMeta.Orientation orientation) {
+        if (src.getColor() != ColorSpace.RGB) {
+            Transform8Bit transform = ColorUtil.getTransform8Bit(src.getColor(), ColorSpace.RGB);
+            Picture8Bit rgb = Picture8Bit.createCropped(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
+            transform.transform(src, rgb);
+            new RgbToBgr8Bit().transform(rgb, rgb);
+            src = rgb;
+        }
+
+        BufferedImage dst = new BufferedImage(src.getCroppedWidth(), src.getCroppedHeight(),
+                BufferedImage.TYPE_3BYTE_BGR);
+
+        if (src.getCrop() == null)
+            toBufferedImage8Bit(src, dst);
+        else
+            toBufferedImageCropped8Bit(src, dst);
+
+        if (orientation.equals(DemuxerTrackMeta.Orientation.D_90))
+            return rotate90ToRight(dst);
+        else if (orientation.equals(DemuxerTrackMeta.Orientation.D_180))
+            return rotate180(dst);
+        else if (orientation.equals(DemuxerTrackMeta.Orientation.D_270))
+            return rotate90ToLeft(dst);
+
+        return dst;
+    }
+
+    public static BufferedImage rotate90ToRight( BufferedImage inputImage ) {
+        int width = inputImage.getWidth();
+        int height = inputImage.getHeight();
+        BufferedImage returnImage = new BufferedImage( height, width , inputImage.getType() );
+
+        for( int x = 0; x < width; x++ ) {
+            for( int y = 0; y < height; y++ ) {
+                returnImage.setRGB( height - y - 1, x, inputImage.getRGB(x, y) );
+            }
+        }
+        return returnImage;
+    }
+
+    public static BufferedImage rotate180( BufferedImage inputImage ) {
+        int width = inputImage.getWidth();
+        int height = inputImage.getHeight();
+        BufferedImage returnImage = new BufferedImage( width, height, inputImage.getType() );
+
+        for( int x = 0; x < width; x++ ) {
+            for( int y = 0; y < height; y++ ) {
+                returnImage.setRGB( width - x - 1, height - y - 1, inputImage.getRGB(x, y) );
+            }
+        }
+        return returnImage;
+    }
+
+    public static BufferedImage rotate90ToLeft( BufferedImage inputImage ) {
+        int width = inputImage.getWidth();
+        int height = inputImage.getHeight();
+        BufferedImage returnImage = new BufferedImage( height, width , inputImage.getType() );
+
+        for( int x = 0; x < width; x++ ) {
+            for( int y = 0; y < height; y++ ) {
+                returnImage.setRGB( y, width - x - 1, inputImage.getRGB( x, y ) );
+            }
+        }
+        return returnImage;
     }
 
     @Deprecated

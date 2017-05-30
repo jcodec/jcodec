@@ -2,6 +2,7 @@ package org.jcodec.api.awt;
 
 import org.jcodec.api.FrameGrab8Bit;
 import org.jcodec.api.JCodecException;
+import org.jcodec.api.PictureWithMetadata8Bit;
 import org.jcodec.api.UnsupportedFormatException;
 import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.common.SeekableDemuxerTrack;
@@ -56,7 +57,7 @@ public class AWTFrameGrab8Bit extends FrameGrab8Bit {
         FileChannelWrapper ch = null;
         try {
             ch = NIOUtils.readableChannel(file);
-            return ((AWTFrameGrab8Bit) createAWTFrameGrab8Bit(ch).seekToSecondPrecise(second)).getFrame();
+            return ((AWTFrameGrab8Bit) createAWTFrameGrab8Bit(ch).seekToSecondPrecise(second)).getFrameWithOrientation();
         } finally {
             NIOUtils.closeQuietly(ch);
         }
@@ -84,6 +85,11 @@ public class AWTFrameGrab8Bit extends FrameGrab8Bit {
     public BufferedImage getFrame() throws IOException {
         Picture8Bit nativeFrame = getNativeFrame();
         return nativeFrame == null ? null : AWTUtil.toBufferedImage8Bit(nativeFrame);
+    }
+
+    public BufferedImage getFrameWithOrientation() throws IOException {
+        PictureWithMetadata8Bit nativeFrame = getNativeFrameWithMetadata();
+        return nativeFrame == null ? null : AWTUtil.toBufferedImage8Bit(nativeFrame.getPicture(), nativeFrame.getOrientation());
     }
 
     /**

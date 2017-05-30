@@ -21,6 +21,11 @@ public class DemuxerTrackMeta {
     private VideoCodecMeta videoCodecMeta;
     private AudioCodecMeta audioCodecMeta;
     private int index;
+    private Orientation orientation;
+
+	public enum Orientation {
+		D_0, D_90, D_180, D_270
+	}
 
     public DemuxerTrackMeta(TrackType type, Codec codec, double totalDuration, int[] seekFrames, int totalFrames, ByteBuffer codecPrivate, VideoCodecMeta videoCodecMeta, AudioCodecMeta audioCodecMeta) {
         this.type = type;
@@ -31,6 +36,7 @@ public class DemuxerTrackMeta {
         this.codecPrivate = codecPrivate;
         this.videoCodecMeta = videoCodecMeta;
         this.audioCodecMeta = audioCodecMeta;
+        this.orientation = Orientation.D_0;
     }
 
     public TrackType getType() {
@@ -78,5 +84,13 @@ public class DemuxerTrackMeta {
 
     public AudioCodecMeta getAudioCodecMeta() {
         return audioCodecMeta;
+    }
+
+    public void setOrientation(Orientation orientation) {
+        this.orientation = orientation;
+    }
+
+    public Orientation getOrientation() {
+        return orientation;
     }
 }

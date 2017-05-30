@@ -1,11 +1,4 @@
 package org.jcodec.containers.mp4.demuxer;
-import static org.jcodec.common.TrackType.AUDIO;
-import static org.jcodec.common.TrackType.OTHER;
-import static org.jcodec.common.TrackType.VIDEO;
-import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.aac.AACUtils;
 import org.jcodec.codecs.aac.ADTSParser;
@@ -32,9 +25,18 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
+import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.platform.Platform;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+import static org.jcodec.common.TrackType.AUDIO;
+import static org.jcodec.common.TrackType.OTHER;
+import static org.jcodec.common.TrackType.VIDEO;
+import static org.jcodec.containers.mp4.QTTimeUtil.mediaToEdited;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -247,7 +249,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     public long getFrameCount() {
         return sizes.length;
     }
-    
+
     public ByteBuffer getCodecPrivate() {
         Codec codec = getCodec();
         if (codec == Codec.H264) {
@@ -292,6 +294,22 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
         DemuxerTrackMeta meta = new DemuxerTrackMeta(t, getCodec(), (double) duration / timescale, seekFrames,
                 sizes.length, getCodecPrivate(), videoCodecMeta, audioCodecMeta);
+
+        if (type == MP4TrackType.VIDEO) {
+            TrackHeaderBox tkhd = NodeBox.findFirstPath(box, TrackHeaderBox.class, Box.path("tkhd"));
+
+            DemuxerTrackMeta.Orientation orientation;
+            if (tkhd.isOrientation90())
+                orientation = DemuxerTrackMeta.Orientation.D_90;
+            else if (tkhd.isOrientation180())
+                orientation = DemuxerTrackMeta.Orientation.D_180;
+            else if (tkhd.isOrientation270())
+                orientation = DemuxerTrackMeta.Orientation.D_270;
+            else
+                orientation = DemuxerTrackMeta.Orientation.D_0;
+
+            meta.setOrientation(orientation);
+        }
 
         return meta;
     }
