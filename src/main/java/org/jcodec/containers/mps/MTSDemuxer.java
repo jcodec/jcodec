@@ -1,19 +1,18 @@
 package org.jcodec.containers.mps;
-import org.jcodec.api.NotSupportedException;
-import org.jcodec.common.Assert;
-import org.jcodec.common.IntObjectMap;
-import org.jcodec.common.io.FileChannelWrapper;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import org.jcodec.common.Assert;
+import org.jcodec.common.IntObjectMap;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,11 +23,15 @@ import java.util.Set;
  * @author The JCodec project
  * 
  */
-public class MTSDemuxer implements MPEGDemuxer {
-    private MPSDemuxer psDemuxer;
-    private SeekableByteChannel tsChannel;
+public class MTSDemuxer {
+    private SeekableByteChannel channel;
+    private Map<Integer, ProgramChannel> programs = new HashMap<Integer, ProgramChannel>();
 
-    public static Set<Integer> getProgramsFromChannel(SeekableByteChannel src) throws IOException {
+    public Set<Integer> getPrograms() {
+        return programs.keySet();
+    }
+
+    public Set<Integer> findPrograms(SeekableByteChannel src) throws IOException {
         long rem = src.position();
         Set<Integer> guids = new HashSet<Integer>();
         for (int i = 0; guids.size() == 0 || i < guids.size() * 500; i++) {
@@ -46,101 +49,71 @@ public class MTSDemuxer implements MPEGDemuxer {
         return guids;
     }
 
-    public static Set<Integer> getPrograms(File file) throws IOException {
-        FileChannelWrapper fc = null;
-        try {
-            fc = NIOUtils.readableChannel(file);
-            return getProgramsFromChannel(fc);
-        } finally {
-            NIOUtils.closeQuietly(fc);
+    public MTSDemuxer(SeekableByteChannel src) throws IOException {
+        this.channel = src;
+        for (int pid : findPrograms(src)) {
+            programs.put(pid, new ProgramChannel());
         }
+        src.setPosition(0);
     }
 
-    public MTSDemuxer(final SeekableByteChannel src, int filterGuid) throws IOException {
-        this.tsChannel = (new TSChannel(src, filterGuid));
-        psDemuxer = new MPSDemuxer(this.tsChannel);
+    public ReadableByteChannel getProgram(int pid) {
+        return programs.get(pid);
     }
 
-    public List<? extends MPEGDemuxerTrack> getTracks() {
-        return psDemuxer.getTracks();
-    }
+    private class ProgramChannel implements ReadableByteChannel {
+        private List<ByteBuffer> data;
+        private boolean closed;
 
-    public List<? extends MPEGDemuxerTrack> getVideoTracks() {
-        return psDemuxer.getVideoTracks();
-    }
-
-    public List<? extends MPEGDemuxerTrack> getAudioTracks() {
-        return psDemuxer.getAudioTracks();
-    }
-
-    private static class TSChannel implements SeekableByteChannel {
-        private SeekableByteChannel src;
-        private ByteBuffer data;
-        private int filterGuid;
-
-        public TSChannel(SeekableByteChannel source, int filterGuid) {
-            this.src = source;
-            this.filterGuid = filterGuid;
+        public ProgramChannel() {
+            this.data = new ArrayList<ByteBuffer>();
         }
 
+        @Override
         public boolean isOpen() {
-            return src.isOpen();
+            return !closed && channel.isOpen();
         }
 
+        @Override
         public void close() throws IOException {
-            src.close();
+            closed = true;
+            data.clear();
         }
 
+        @Override
         public int read(ByteBuffer dst) throws IOException {
-            while (data == null || !data.hasRemaining()) {
-                MTSPacket packet = getPacket(src);
-                if (packet == null)
-                    return -1;
-                data = packet.payload;
+            int bytesRead = 0;
+            while (dst.hasRemaining()) {
+                while (data.size() == 0) {
+                    if (!readAndDispatchNextTSPacket())
+                        return bytesRead > 0 ? bytesRead : -1;
+                }
+                ByteBuffer first = data.get(0);
+                int toRead = Math.min(dst.remaining(), first.remaining());
+                dst.put(NIOUtils.read(first, toRead));
+                if (!first.hasRemaining())
+                    data.remove(0);
+                bytesRead += toRead;
             }
-            int toRead = Math.min(dst.remaining(), data.remaining());
-            dst.put(NIOUtils.read(data, toRead));
-            return toRead;
+            return bytesRead;
         }
 
-        public int write(ByteBuffer src) throws IOException {
-            throw new NotSupportedException();
+        public void storePacket(MTSPacket pkt) {
+            if(closed)
+                return;
+            data.add(pkt.payload);
         }
+    }
 
-        public long position() throws IOException {
-            return src.position();
+    private boolean readAndDispatchNextTSPacket() throws IOException {
+        MTSPacket pkt = readPacket(channel);
+        if (pkt == null)
+            return false;
+        ProgramChannel program = programs.get(pkt.pid);
+        if (program != null) {
+            program.storePacket(pkt);
         }
-
-        public SeekableByteChannel setPosition(long newPosition) throws IOException {
-            src.setPosition(newPosition);
-            data = null;
-            return this;
-        }
-
-        public long size() throws IOException {
-            return src.size();
-        }
-
-        public SeekableByteChannel truncate(long size) throws IOException {
-            return src.truncate(size);
-        }
-
-        protected MTSPacket getPacket(ReadableByteChannel channel) throws IOException {
-            MTSPacket pkt;
-            do {
-                pkt = readPacket(channel);
-                if (pkt == null)
-                    return null;
-            } while (pkt.pid <= 0xf || pkt.pid == 0x1fff || pkt.payload == null);
-
-            while (pkt.pid != filterGuid) {
-                pkt = readPacket(channel);
-                if (pkt == null)
-                    return null;
-            }
-
-            return pkt;
-        }
+        return true;
     }
 
     public static class MTSPacket {
@@ -180,7 +153,8 @@ public class MTSDemuxer implements MPEGDemuxer {
         return new MTSPacket(guid, payloadStart == 1, ((b0 & 0x10) != 0) ? buffer : null);
     }
 
-    public static int probe(final ByteBuffer b) {
+    public static int probe(final ByteBuffer b_) {
+        ByteBuffer b = b_.duplicate();
         IntObjectMap<List<ByteBuffer>> streams = new IntObjectMap<List<ByteBuffer>>();
         while (true) {
             try {
@@ -213,11 +187,5 @@ public class MTSDemuxer implements MPEGDemuxer {
             }
         }
         return maxScore;
-    }
-
-    @Override
-    public void seekByte(long offset) throws IOException {
-        tsChannel.setPosition(offset - (offset % 188));
-        psDemuxer.reset();
     }
 }

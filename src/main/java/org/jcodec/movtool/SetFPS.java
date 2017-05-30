@@ -1,7 +1,5 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
-
+import java.io.File;
 
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.RationalLarge;
@@ -12,8 +10,6 @@ import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-
-import java.io.File;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,7 +24,7 @@ public class SetFPS {
     private static final int MIN_TIMESCALE_ALLOWED = 25;
 
     public static void main1(String[] args) throws Exception {
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, new MainUtils.Flag[] {});
         if (cmd.argsLength() < 2) {
             MainUtils.printHelpNoFlags("movie", "num:den");
             System.exit(-1);

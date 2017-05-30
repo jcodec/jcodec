@@ -1,5 +1,6 @@
 package org.jcodec.codecs.vp8;
 
+import org.jcodec.codecs.vpx.VP8Util;
 import org.junit.Assert;
 import org.junit.Test;
 

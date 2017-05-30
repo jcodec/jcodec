@@ -22,22 +22,38 @@ public class Logger {
     private static List<LogSink> sinks;
 
     public static void debug(String message) {
-        message(LogLevel.DEBUG, message);
+        message(LogLevel.DEBUG, message, null);
+    }
+    
+    public static void debug(String message, Object ... args) {
+        message(LogLevel.DEBUG, message, args);
     }
 
     public static void info(String message) {
-        message(LogLevel.INFO, message);
+        message(LogLevel.INFO, message, null);
+    }
+    
+    public static void info(String message, Object ...args) {
+        message(LogLevel.INFO, message, args);
     }
 
     public static void warn(String message) {
-        message(LogLevel.WARN, message);
+        message(LogLevel.WARN, message, null);
+    }
+    
+    public static void warn(String message, Object ...args) {
+        message(LogLevel.WARN, message, args);
     }
 
     public static void error(String message) {
-        message(LogLevel.ERROR, message);
+        message(LogLevel.ERROR, message, null);
+    }
+    
+    public static void error(String message, Object...args) {
+        message(LogLevel.ERROR, message, args);
     }
 
-    private static void message(LogLevel level, String message) {
+    private static void message(LogLevel level, String message, Object[] args) {
         if (sinks == null) {
             synchronized (Logger.class) {
                 if (sinks == null) {
@@ -50,7 +66,7 @@ public class Logger {
         }
         StackTraceElement tr = Thread.currentThread().getStackTrace()[3];
         Message msg = new Message(level, tr.getFileName(), tr.getClassName(), tr.getMethodName(), tr.getLineNumber(),
-                message);
+                message, args);
         for (LogSink logSink : sinks) {
             logSink.postMessage(msg);
         }

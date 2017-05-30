@@ -2,17 +2,20 @@ package org.jcodec.samples.gen;
 
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
+import java.io.File;
+import java.nio.ByteBuffer;
+
 import org.jcodec.codecs.raw.V210Encoder;
+import org.jcodec.common.Codec;
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
-
-import java.io.File;
-import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,12 +45,12 @@ public class GradGen {
         ByteBuffer out = ByteBuffer.allocate(width * height * 10);
         ByteBuffer frame = encoder.encodeFrame8Bit(out, pic);
 
-        FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("v210", new Size(width, height), "jcodec", 24000);
+        MuxerTrack videoTrack = muxer.addVideoTrack(Codec.V210, new VideoCodecMeta(new Size(width, height), ColorSpace.YUV422_10));
 
         for (int i = 0; i < Integer.parseInt(args[1]); i++) {
-            videoTrack.addFrame(MP4Packet.createMP4Packet(frame, i * 1001, 24000, 1001, i, true, null, 0, i * 1001, 0));
+            videoTrack.addFrame(MP4Packet.createMP4Packet(frame, i * 1001, 24000, 1001, i, FrameType.KEY, null, 0, i * 1001, 0));
         }
-        muxer.writeHeader();
+        muxer.finish();
     }
 
     private static void drawGrad(byte[] y, Size ySize) {

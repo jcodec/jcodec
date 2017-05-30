@@ -24,7 +24,7 @@ public class MTSPktDump {
 
     public static void main1(String[] args) throws IOException {
 
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, new MainUtils.Flag[] {});
         if (cmd.args.length < 1) {
             MainUtils.printHelpNoFlags("file name");
             return;

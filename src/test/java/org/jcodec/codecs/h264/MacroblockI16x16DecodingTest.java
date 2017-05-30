@@ -15,7 +15,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCABAC1() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cabac/i16x16_1/16x16.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(16, 16, ColorSpace.YUV420);
@@ -29,7 +29,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCABAC2() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cabac/i16x16_2/32x32.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(32, 32, ColorSpace.YUV420);
@@ -43,7 +43,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCABAC3() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cabac/i16x16_3/32x32.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(32, 32, ColorSpace.YUV420);
@@ -57,7 +57,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCABAC4() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cabac/i16x16_4/32x32.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(32, 32, ColorSpace.YUV420);
@@ -71,7 +71,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCABAC5() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cabac/i16x16_5/32x32.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(32, 32, ColorSpace.YUV420);
@@ -85,7 +85,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCAVLC() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cavlc/i16x16_420/16x16.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(16, 16, ColorSpace.YUV420);
@@ -99,7 +99,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCAVLC1() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cavlc/i16x16_420_1/32x32_1.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(32, 32, ColorSpace.YUV420);
@@ -113,7 +113,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCAVLC2() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cavlc/i16x16_420_2/32x32_2.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(32, 32, ColorSpace.YUV420);
@@ -127,7 +127,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCAVLC3() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cavlc/i16x16_420_3/32x32_3.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(32, 32, ColorSpace.YUV420);
@@ -141,7 +141,7 @@ public class MacroblockI16x16DecodingTest {
 
     @Test
     public void testMBlockCAVLC4() throws IOException {
-        MappedH264ES es = new MappedH264ES(
+        BufferH264ES es = new BufferH264ES(
                 NIOUtils.fetchFromFile(new File("src/test/resources/h264/cavlc/i16x16_420_4/32x32_4.264")));
         ByteBuffer data = es.nextFrame().getData();
         Picture8Bit buf = Picture8Bit.create(32, 32, ColorSpace.YUV420);

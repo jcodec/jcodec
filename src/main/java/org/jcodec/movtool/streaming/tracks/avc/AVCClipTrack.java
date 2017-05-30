@@ -13,6 +13,7 @@ import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
@@ -47,7 +48,7 @@ public class AVCClipTrack extends ClipTrack {
     private final int frameSize;
     private SeqParameterSet encSPS;
     private PictureParameterSet encPPS;
-    private byte[] codecPrivate;
+    private ByteBuffer codecPrivate;
 
     public AVCClipTrack(VirtualTrack src, int frameFrom, int frameTo) {
         super(src, frameFrom, frameTo);
@@ -59,7 +60,8 @@ public class AVCClipTrack extends ClipTrack {
         rc = new H264FixedRateControl(1024);
         H264Encoder encoder = getEncoder();
         ByteBuffer codecPrivate = codecMeta.getCodecPrivate();
-        this.codecPrivate = NIOUtils.toArray(codecPrivate);
+        codecPrivate.reset();
+        this.codecPrivate = codecPrivate;
         List<ByteBuffer> rawSPS = H264Utils.getRawSPS(codecPrivate);
         List<ByteBuffer> rawPPS = H264Utils.getRawPPS(codecPrivate);
         SeqParameterSet sps = H264Utils.readSPS(rawSPS.get(0));
@@ -84,7 +86,7 @@ public class AVCClipTrack extends ClipTrack {
         rawSPS.add(H264Utils.writeSPS(encSPS, 128));
         rawPPS.add(H264Utils.writePPS(encPPS, 20));
 
-        se = VideoCodecMeta.createVideoCodecMeta("avc1", ByteBuffer.wrap(H264Utils.saveCodecPrivate(rawSPS, rawPPS)), codecMeta.getSize(), codecMeta.getPasp());
+        se = VideoCodecMeta.createVideoCodecMeta("avc1", H264Utils.saveCodecPrivate(rawSPS, rawPPS), codecMeta.getSize(), codecMeta.getPasp());
 
         int _frameSize = rc.calcFrameSize(mbW * mbH);
         _frameSize += _frameSize >> 4;
@@ -155,9 +157,9 @@ public class AVCClipTrack extends ClipTrack {
                 dec = decoder.decodeFrame8Bit(pkt.getData(), buf.getData());
 
                 tmp.clear();
-                ByteBuffer res = encoder.encodeFrame8Bit(dec, tmp);
+                EncodedFrame res = encoder.encodeFrame8Bit(dec, tmp);
                 ByteBuffer out = ByteBuffer.allocate(track.frameSize);
-                processFrame(res, out);
+                processFrame(res.getData(), out);
 
                 result.add(out);
             }

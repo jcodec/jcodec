@@ -1,7 +1,6 @@
 package org.jcodec.common;
 
-import org.jcodec.common.model.Rational;
-import org.jcodec.common.model.Size;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -13,42 +12,46 @@ import org.jcodec.common.model.Size;
  * 
  */
 public class DemuxerTrackMeta {
-
-    public enum Type {
-        VIDEO, AUDIO, OTHER
-    }
-
-    public enum Orientation {
-        D_0, D_90, D_180, D_270
-    }
-
-    private Type type;
+    private TrackType type;
     private Codec codec;
+    private double totalDuration;
     private int[] seekFrames;
     private int totalFrames;
-    private double totalDuration;
-    private Size dimensions;
-    private byte[] codecPrivate;
-    private Rational pixelAspectRatio;
+    private ByteBuffer codecPrivate;
+    private VideoCodecMeta videoCodecMeta;
+    private AudioCodecMeta audioCodecMeta;
+    private int index;
     private Orientation orientation;
 
-    public DemuxerTrackMeta(Type type, Codec codec, int[] seekFrames, int totalFrames, double totalDuration, Size dimensions, byte[] codecPrivate) {
+	public enum Orientation {
+		D_0, D_90, D_180, D_270
+	}
+
+    public DemuxerTrackMeta(TrackType type, Codec codec, double totalDuration, int[] seekFrames, int totalFrames, ByteBuffer codecPrivate, VideoCodecMeta videoCodecMeta, AudioCodecMeta audioCodecMeta) {
         this.type = type;
         this.codec = codec;
+        this.totalDuration = totalDuration;
         this.seekFrames = seekFrames;
         this.totalFrames = totalFrames;
-        this.totalDuration = totalDuration;
-        this.dimensions = dimensions;
         this.codecPrivate = codecPrivate;
+        this.videoCodecMeta = videoCodecMeta;
+        this.audioCodecMeta = audioCodecMeta;
         this.orientation = Orientation.D_0;
     }
 
-    public Type getType() {
+    public TrackType getType() {
         return type;
     }
-    
+
     public Codec getCodec() {
         return codec;
+    }
+
+    /**
+     * @return Total duration in seconds of the media track
+     */
+    public double getTotalDuration() {
+        return totalDuration;
     }
 
     /**
@@ -67,27 +70,20 @@ public class DemuxerTrackMeta {
         return totalFrames;
     }
 
-    /**
-     * @return Total duration in seconds of the media track
-     */
-    public double getTotalDuration() {
-        return totalDuration;
+    public int getIndex() {
+        return index;
     }
 
-    public Size getDimensions() {
-        return dimensions;
-    }
-
-    public byte[] getCodecPrivate() {
+    public ByteBuffer getCodecPrivate() {
         return codecPrivate;
     }
 
-    public Rational getPixelAspectRatio() {
-        return pixelAspectRatio;
+    public VideoCodecMeta getVideoCodecMeta() {
+        return videoCodecMeta;
     }
 
-    public void setPixelAspectRatio(Rational pixelAspectRatio) {
-        this.pixelAspectRatio = pixelAspectRatio;
+    public AudioCodecMeta getAudioCodecMeta() {
+        return audioCodecMeta;
     }
 
     public void setOrientation(Orientation orientation) {

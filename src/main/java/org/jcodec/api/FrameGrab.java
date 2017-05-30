@@ -4,7 +4,7 @@ import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.JCodecUtil.Format;
+import org.jcodec.common.Format;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
@@ -85,7 +85,7 @@ public class FrameGrab {
         switch (detectFormat) {
         case MOV:
             MP4Demuxer d1 = new MP4Demuxer(_in);
-            videoTrack = d1.getVideoTrack();
+            videoTrack = (SeekableDemuxerTrack)d1.getVideoTrack();
             break;
         case MPEG_PS:
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");

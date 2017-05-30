@@ -1,22 +1,21 @@
 package org.jcodec.api;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.Format;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.ThreadLocal;
-import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,12 +44,12 @@ public class FrameGrab8Bit {
         _in.read(header);
         header.flip();
         Format detectFormat = JCodecUtil.detectFormatBuffer(header);
-        AbstractMP4DemuxerTrack videoTrack_;
+        SeekableDemuxerTrack videoTrack_;
 
         switch (detectFormat) {
         case MOV:
             MP4Demuxer d1 = new MP4Demuxer(_in);
-            videoTrack_ = d1.getVideoTrack();
+            videoTrack_ = (SeekableDemuxerTrack)d1.getVideoTrack();
             break;
         case MPEG_PS:
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");

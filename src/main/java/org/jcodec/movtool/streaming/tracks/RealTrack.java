@@ -93,8 +93,9 @@ public class RealTrack implements VirtualTrack {
                 topField = fiel.topFieldFirst();
             }
 
-            byte[] codecPrivate = demuxer.getMeta().getCodecPrivate();
-            return VideoCodecMeta.createVideoCodecMeta2(se.getFourcc(), ByteBuffer.wrap(codecPrivate), new Size(vse.getWidth(), vse.getHeight()), pasp != null ? pasp.getRational() : null, interlace, topField);
+            ByteBuffer codecPrivate = demuxer.getMeta().getCodecPrivate();
+            codecPrivate.reset();
+            return VideoCodecMeta.createVideoCodecMeta2(se.getFourcc(), codecPrivate, new Size(vse.getWidth(), vse.getHeight()), pasp != null ? pasp.getRational() : null, interlace, topField);
         } else if (se instanceof AudioSampleEntry) {
             AudioSampleEntry ase = (AudioSampleEntry) se;
             ByteBuffer codecPrivate = null;

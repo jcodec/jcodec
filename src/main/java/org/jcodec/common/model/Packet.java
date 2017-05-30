@@ -13,34 +13,38 @@ import java.util.Comparator;
  * 
  */
 public class Packet {
+    
+    public static enum FrameType {
+        KEY, INTER, UNKOWN
+    };
 
     public ByteBuffer data;
     public long pts;
-    public long timescale;
+    public int timescale;
     public long duration;
     public long frameNo;
-    public boolean keyFrame;
+    public FrameType frameType;
     public TapeTimecode tapeTimecode;
     public int displayOrder;
 
-    public static Packet createPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo,
-            boolean keyFrame, TapeTimecode tapeTimecode) {
-        return new Packet(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
+    public static Packet createPacket(ByteBuffer data, long pts, int timescale, long duration, long frameNo,
+            FrameType frameType, TapeTimecode tapeTimecode) {
+        return new Packet(data, pts, timescale, duration, frameNo, frameType, tapeTimecode, 0);
     }
 
     public static Packet createPacketWithData(Packet other, ByteBuffer data) {
-        return new Packet(data, other.pts, other.timescale, other.duration, other.frameNo, other.keyFrame,
+        return new Packet(data, other.pts, other.timescale, other.duration, other.frameNo, other.frameType,
                 other.tapeTimecode, other.displayOrder);
     }
 
-    public Packet(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
+    public Packet(ByteBuffer data, long pts, int timescale, long duration, long frameNo, FrameType frameType,
             TapeTimecode tapeTimecode, int displayOrder) {
         this.data = data;
         this.pts = pts;
         this.timescale = timescale;
         this.duration = duration;
         this.frameNo = frameNo;
-        this.keyFrame = keyFrame;
+        this.frameType = frameType;
         this.tapeTimecode = tapeTimecode;
         this.displayOrder = displayOrder;
     }
@@ -53,7 +57,7 @@ public class Packet {
         return pts;
     }
 
-    public long getTimescale() {
+    public int getTimescale() {
         return timescale;
     }
 
@@ -85,12 +89,12 @@ public class Packet {
         this.displayOrder = displayOrder;
     }
 
-    public boolean isKeyFrame() {
-        return keyFrame;
+    public FrameType getFrameType() {
+        return frameType;
     }
 
-    public void setKeyFrame(boolean keyFrame) {
-        this.keyFrame = keyFrame;
+    public void setFrameType(FrameType frameType) {
+        this.frameType = frameType;
     }
 
     public RationalLarge getPtsR() {
@@ -108,6 +112,10 @@ public class Packet {
     public void setData(ByteBuffer data) {
         this.data = data;
     }
+    
+    public void setPts(long pts) {
+        this.pts = pts;
+    }
 
     public static final Comparator<Packet> FRAME_ASC = new Comparator<Packet>() {
         public int compare(Packet o1, Packet o2) {
@@ -123,5 +131,9 @@ public class Packet {
 
     public void setDuration(long duration) {
         this.duration = duration;
+    }
+
+    public boolean isKeyFrame() {
+        return frameType == FrameType.KEY;
     }
 }

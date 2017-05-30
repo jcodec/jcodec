@@ -1,21 +1,23 @@
 package org.jcodec.movtool.streaming;
-import java.lang.IllegalStateException;
-import java.lang.System;
+import static org.jcodec.containers.mp4.MP4TrackType.SOUND;
+import static org.jcodec.containers.mp4.MP4TrackType.TIMECODE;
+import static org.jcodec.containers.mp4.MP4TrackType.VIDEO;
 
-
-import static org.jcodec.containers.mp4.TrackType.SOUND;
-import static org.jcodec.containers.mp4.TrackType.TIMECODE;
-import static org.jcodec.containers.mp4.TrackType.VIDEO;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
-import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.ChannelBox;
@@ -55,13 +57,6 @@ import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.movtool.streaming.VirtualMP4Movie.PacketChunk;
 import org.jcodec.movtool.streaming.VirtualTrack.VirtualEdit;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -135,8 +130,8 @@ public class MovieHelper {
             trak.add(media);
             media.add(MediaHeaderBox.createMediaHeaderBox(trackTimescale, totalDur, 0, new Date().getTime(), new Date().getTime(), 0));
 
-            TrackType tt = (codecMeta instanceof AudioCodecMeta) ? TrackType.SOUND : TrackType.VIDEO;
-            if (tt == TrackType.VIDEO) {
+            MP4TrackType tt = (codecMeta instanceof AudioCodecMeta) ? MP4TrackType.SOUND : MP4TrackType.VIDEO;
+            if (tt == MP4TrackType.VIDEO) {
                 NodeBox tapt = new NodeBox(new Header("tapt"));
                 tapt.add(ClearApertureBox.createClearApertureBox(dd.getWidth(), dd.getHeight()));
                 tapt.add(ProductionApertureBox.createProductionApertureBox(dd.getWidth(), dd.getHeight()));
@@ -180,7 +175,7 @@ public class MovieHelper {
         Rational pasp = null;
         SampleEntry vse;
         if ("avc1".equals(se.getFourcc())) {
-            vse = H264Utils.createMOVSampleEntryFromBytes(NIOUtils.toArray(se.getCodecPrivate()));
+            vse = H264Utils.createMOVSampleEntryFromBytes(se.getCodecPrivate().duplicate());
             pasp = ((VideoCodecMeta) se).getPasp();
         } else if (se instanceof VideoCodecMeta) {
             VideoCodecMeta ss = (VideoCodecMeta) se;
@@ -193,8 +188,9 @@ public class MovieHelper {
                 vse = MP4Muxer.audioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
                         ss.getSampleRate(), ss.getEndian());
             } else {
-                vse = MP4Muxer.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
-                        ss.getSampleRate(), ss.getSamplesPerPacket(), ss.getBytesPerPacket(), ss.getBytesPerFrame());
+                vse = FramesMP4MuxerTrack.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(),
+                        ss.getChannelCount(), ss.getSampleRate(), ss.getSamplesPerPacket(), ss.getBytesPerPacket(),
+                        ss.getBytesPerFrame());
             }
 
             ChannelBox chan = ChannelBox.createChannelBox();
@@ -381,7 +377,7 @@ public class MovieHelper {
         throw new RuntimeException("Crap");
     }
 
-    private static void mediaHeader(MediaInfoBox minf, TrackType type) {
+    private static void mediaHeader(MediaInfoBox minf, MP4TrackType type) {
         if (VIDEO == type) {
             VideoMediaHeaderBox vmhd = VideoMediaHeaderBox.createVideoMediaHeaderBox(0, 0, 0, 0);
             vmhd.setFlags(1);

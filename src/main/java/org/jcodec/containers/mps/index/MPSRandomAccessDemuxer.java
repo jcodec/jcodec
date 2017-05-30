@@ -5,6 +5,7 @@ import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 import org.jcodec.platform.Platform;
@@ -120,7 +121,7 @@ public class MPSRandomAccessDemuxer {
             result.flip();
 
             Packet pkt = Packet.createPacket(result, fpts[curFrame], MPEG_TIMESCALE, fdur[curFrame], curFrame, sync.length == 0
-                    || Arrays.binarySearch(sync, curFrame) >= 0, null);
+                    || Arrays.binarySearch(sync, curFrame) >= 0 ? FrameType.KEY : FrameType.INTER, null);
 
             curFrame++;
 

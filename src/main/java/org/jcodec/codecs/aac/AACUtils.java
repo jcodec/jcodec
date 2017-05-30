@@ -4,6 +4,7 @@ import static org.jcodec.codecs.aac.ObjectType.AOT_ESCAPE;
 import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
@@ -95,5 +96,25 @@ public class AACUtils {
         EsdsBox esds = EsdsBox.newEsdsBox();
         esds.parse(b.getData());
         return esds.getStreamInfo();
+    }
+    
+    public static ByteBuffer adtsToStreamInfo(org.jcodec.codecs.aac.ADTSParser.Header hdr) {
+        ByteBuffer si = ByteBuffer.allocate(2);
+        BitWriter wr = new BitWriter(si);
+        wr.writeNBit(hdr.getObjectType(), 5);
+        wr.writeNBit(hdr.getSamplingIndex(), 4);
+        wr.writeNBit(hdr.getChanConfig(), 4);
+        wr.flush();
+        si.clear();
+        return si;
+    }
+    
+    public static org.jcodec.codecs.aac.ADTSParser.Header streamInfoToADTS(ByteBuffer si, boolean crcAbsent,
+            int numAACFrames, int frameSize) {
+        BitReader rd = BitReader.createBitReader(si.duplicate());
+        int objectType = rd.readNBit(5);
+        int samplingIndex = rd.readNBit(4);
+        int chanConfig = rd.readNBit(4);
+        return new ADTSParser.Header(objectType, chanConfig, crcAbsent ? 1 : 0, numAACFrames, samplingIndex, 7 + frameSize);
     }
 }

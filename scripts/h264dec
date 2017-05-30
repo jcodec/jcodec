@@ -1,0 +1,40 @@
+#!/bin/bash
+
+LDECOD="JM/h264dec"
+
+INPUT_FILE="$1"
+OUTPUT_FILE="$2"
+BITSTREAM_FILE="/tmp/$(basename $INPUT_FILE).h264"
+YUV_FILE="/tmp/$(basename $INPUT_FILE).yuv"
+CONFIG="/tmp/dec.cfg"
+
+ffmpeg -i "$INPUT_FILE" -vcodec copy -an "$BITSTREAM_FILE"
+
+echo -e "InputFile = \"$BITSTREAM_FILE\"\n\
+OutputFile = \"$YUV_FILE\"\n\
+RefFile = \"/tmp/throwavay\"\n\
+WriteUV = 1\n\
+FileFormat = 0\n\
+RefOffset = 0\n\
+POCScale = 2\n\
+DisplayDecParams = 0\n\
+ConcealMode = 0\n\
+RefPOCGap = 2\n\
+POCGap = 2\n\
+Silent = 0\n\
+IntraProfileDeblocking = 1\n\
+DecFrmNum = 50\n\
+DecodeAllLayers = 0" > $CONFIG
+
+(cd JM; make)
+$LDECOD -d /tmp/dec.cfg 2>&1 | tee /tmp/decode.log
+
+rm $BITSTREAM_FILE
+rm $CONFIG
+size=$(cat /tmp/decode.log | grep "Image Format :" | sed "s/Image Format : \([^ ]*\) .*/\1/g")
+echo $size
+ffmpeg -s $size -i $YUV_FILE $OUTPUT_FILE
+
+rm $YUV_FILE
+rm /tmp/decode.log
+

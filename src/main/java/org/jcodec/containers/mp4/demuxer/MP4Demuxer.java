@@ -1,20 +1,25 @@
 package org.jcodec.containers.mp4.demuxer;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.boxes.SampleSizesBox;
-import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.platform.Platform;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import org.jcodec.common.Demuxer;
+import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mp4.MP4TrackType;
+import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.HandlerBox;
+import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.boxes.SampleSizesBox;
+import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -25,7 +30,7 @@ import java.util.List;
  * @author The JCodec project
  * 
  */
-public class MP4Demuxer {
+public class MP4Demuxer implements Demuxer {
 
     private List<AbstractMP4DemuxerTrack> tracks;
     private TimecodeMP4DemuxerTrack timecodeTrack;
@@ -44,10 +49,6 @@ public class MP4Demuxer {
         this.input = input;
         tracks = new LinkedList<AbstractMP4DemuxerTrack>();
         findMovieBox(input);
-    }
-
-    public AbstractMP4DemuxerTrack[] getTracks() {
-        return tracks.toArray(new AbstractMP4DemuxerTrack[] {});
     }
 
     private void findMovieBox(SeekableByteChannel input) throws IOException {
@@ -71,13 +72,18 @@ public class MP4Demuxer {
             }
         }
         if (tt != null) {
-            AbstractMP4DemuxerTrack video = getVideoTrack();
+            DemuxerTrack video = getVideoTrack();
             if (video != null)
                 timecodeTrack = new TimecodeMP4DemuxerTrack(movie, tt, input);
         }
     }
 
-    public AbstractMP4DemuxerTrack getVideoTrack() {
+    public static MP4TrackType getTrackType(TrakBox trak) {
+        HandlerBox handler = NodeBox.findFirstPath(trak, HandlerBox.class, Box.path("mdia.hdlr"));
+        return MP4TrackType.fromHandler(handler.getComponentSubType());
+    }
+
+    public DemuxerTrack getVideoTrack() {
         for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
             if (demuxerTrack.box.isVideo())
                 return demuxerTrack;
@@ -97,11 +103,27 @@ public class MP4Demuxer {
         return null;
     }
 
-    public List<AbstractMP4DemuxerTrack> getAudioTracks() {
-        ArrayList<AbstractMP4DemuxerTrack> result = new ArrayList<AbstractMP4DemuxerTrack>();
+    @Override
+    public List<AbstractMP4DemuxerTrack> getTracks() {
+        return new ArrayList<AbstractMP4DemuxerTrack>(tracks);
+    }
+
+    @Override
+    public List<DemuxerTrack> getVideoTracks() {
+        ArrayList<DemuxerTrack> result = new ArrayList<DemuxerTrack>();
+        for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
+            if (demuxerTrack.box.isVideo())
+                result.add((DemuxerTrack) demuxerTrack);
+        }
+        return result;
+    }
+
+    @Override
+    public List<DemuxerTrack> getAudioTracks() {
+        ArrayList<DemuxerTrack> result = new ArrayList<DemuxerTrack>();
         for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
             if (demuxerTrack.box.isAudio())
-                result.add(demuxerTrack);
+                result.add((DemuxerTrack) demuxerTrack);
         }
         return result;
     }
@@ -141,7 +163,8 @@ public class MP4Demuxer {
                 hdrLen = 16;
             } else if (len < 8)
                 break;
-            if (fcc == ftyp && len < 64 || fcc == moov && len < 100 * 1024 * 1024 || fcc == free || fcc == mdat || fcc == wide)
+            if (fcc == ftyp && len < 64 || fcc == moov && len < 100 * 1024 * 1024 || fcc == free || fcc == mdat
+                    || fcc == wide)
                 success++;
             total++;
             if (len >= Integer.MAX_VALUE)
@@ -152,4 +175,8 @@ public class MP4Demuxer {
         return total == 0 ? 0 : success * 100 / total;
     }
 
+    @Override
+    public void close() throws IOException {
+        input.close();
+    }
 }

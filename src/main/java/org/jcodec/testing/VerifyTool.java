@@ -1,20 +1,19 @@
 package org.jcodec.testing;
 
-import org.jcodec.common.ArrayUtil;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.codecs.h264.H264Decoder;
-import org.jcodec.codecs.h264.MappedH264ES;
+import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.platform.Platform;
-
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.lang.System;
-import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -59,7 +58,7 @@ public class VerifyTool {
     }
 
     private boolean test(File coded, File ref) throws IOException {
-        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFromFile(coded));
+        BufferH264ES es = new BufferH264ES(NIOUtils.fetchFromFile(coded));
         Picture8Bit buf = Picture8Bit.create(1920, 1088, ColorSpace.YUV420);
         H264Decoder dec = new H264Decoder();
         Packet nextFrame;

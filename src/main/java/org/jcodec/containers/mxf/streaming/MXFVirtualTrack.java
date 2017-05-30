@@ -8,6 +8,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Label;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mxf.MXFConst.MXFCodecMapping;
 import org.jcodec.containers.mxf.MXFDemuxer;
@@ -173,7 +174,7 @@ public class MXFVirtualTrack implements VirtualTrack {
                 @Override
                 public MXFPacket readPacket(long off, int len, long pts, int timescale, int duration, int frameNo,
                         boolean kf) throws IOException {
-                    return new MXFPacket(null, pts, timescale, duration, frameNo, kf, null, off, len);
+                    return new MXFPacket(null, pts, timescale, duration, frameNo, kf ? FrameType.KEY : FrameType.INTER, null, off, len);
                 }
             };
         }

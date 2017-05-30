@@ -1,5 +1,4 @@
 package org.jcodec.codecs.vpx;
-import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -197,7 +196,7 @@ public class TestCoeffEncoder {
                 0);
     }
 
-    public static class MockVpxBooleanEncoder extends VPxBooleanEncoder {
+    public static class MockVpxBooleanEncoder extends VPXBooleanEncoder {
         private int[] probs;
         private int[] bits;
         private int cur;

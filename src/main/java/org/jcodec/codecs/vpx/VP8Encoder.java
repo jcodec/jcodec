@@ -2,16 +2,15 @@ package org.jcodec.codecs.vpx;
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 
-import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
+
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,7 +41,7 @@ public class VP8Encoder extends VideoEncoder {
     }
 
     @Override
-    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _buf) {
+    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer _buf) {
         ByteBuffer out = _buf.duplicate();
         int mbWidth = ((pic.getWidth() + 15) >> 4);
         int mbHeight = ((pic.getHeight() + 15) >> 4);
@@ -61,7 +60,7 @@ public class VP8Encoder extends VideoEncoder {
 
         int[] segmentQps = rc.getSegmentQps();
 
-        VPxBooleanEncoder boolEnc = new VPxBooleanEncoder(dataBuffer);
+        VPXBooleanEncoder boolEnc = new VPXBooleanEncoder(dataBuffer);
 
         int[] segmentMap = new int[mbWidth * mbHeight];
 
@@ -86,7 +85,7 @@ public class VP8Encoder extends VideoEncoder {
         boolEnc.stop();
         dataBuffer.flip();
 
-        boolEnc = new VPxBooleanEncoder(headerBuffer);
+        boolEnc = new VPXBooleanEncoder(headerBuffer);
         int[] probs = calcSegmentProbs(segmentMap);
 
         writeHeader2(boolEnc, segmentQps, probs);
@@ -115,7 +114,7 @@ public class VP8Encoder extends VideoEncoder {
 
         out.flip();
 
-        return out;
+        return new EncodedFrame(out, true);
     }
 
     private void prepareBuffers(int mbWidth, int mbHeight) {
@@ -133,7 +132,7 @@ public class VP8Encoder extends VideoEncoder {
             dataBuffer.clear();
     }
 
-    private void writeSegmetId(VPxBooleanEncoder boolEnc, int id, int[] probs) {
+    private void writeSegmetId(VPXBooleanEncoder boolEnc, int id, int[] probs) {
         int bit1 = (id >> 1) & 1;
         boolEnc.writeBit(probs[0], bit1);
         boolEnc.writeBit(probs[1 + bit1], id & 1);
@@ -166,7 +165,7 @@ public class VP8Encoder extends VideoEncoder {
         Arrays.fill(leftRow2[2], val);
     }
 
-    private void writeHeader2(VPxBooleanEncoder boolEnc, int[] segmentQps, int[] probs) {
+    private void writeHeader2(VPXBooleanEncoder boolEnc, int[] segmentQps, int[] probs) {
         boolEnc.writeBit(128, 0); // clr_type
         boolEnc.writeBit(128, 0); // clamp_type
         boolEnc.writeBit(128, 1); // segmentation enabled
@@ -220,7 +219,7 @@ public class VP8Encoder extends VideoEncoder {
         boolEnc.writeBit(128, 0); // mb_no_coeff_skip
     }
 
-    void writeInt(VPxBooleanEncoder boolEnc, int data, int bits) {
+    void writeInt(VPXBooleanEncoder boolEnc, int data, int bits) {
         int bit;
 
         for (bit = bits - 1; bit >= 0; bit--)
@@ -260,7 +259,7 @@ public class VP8Encoder extends VideoEncoder {
         }
     }
 
-    private void luma(Picture8Bit pic, int mbX, int mbY, VPxBooleanEncoder out, int qp, Picture8Bit outMB) {
+    private void luma(Picture8Bit pic, int mbX, int mbY, VPXBooleanEncoder out, int qp, Picture8Bit outMB) {
         int x = mbX << 4;
         int y = mbY << 4;
         int[][] ac = transform(pic, 0, qp, x, y);
@@ -272,20 +271,20 @@ public class VP8Encoder extends VideoEncoder {
         putLuma(outMB.getPlaneData(0), lumaDCPred(x, y), ac, 4);
     }
 
-    private void writeLumaAC(int mbX, int mbY, VPxBooleanEncoder out, int[][] ac, int qp) {
+    private void writeLumaAC(int mbX, int mbY, VPXBooleanEncoder out, int[][] ac, int qp) {
         for (int i = 0; i < 16; i++) {
             quantizer.quantizeY(ac[i], qp);
             bitstream.encodeCoeffsDCT15(out, zigzag(ac[i], tmp), mbX, i & 3, i >> 2);
         }
     }
 
-    private void writeLumaDC(int mbX, int mbY, VPxBooleanEncoder out, int qp, int[] dc) {
+    private void writeLumaDC(int mbX, int mbY, VPXBooleanEncoder out, int qp, int[] dc) {
         VPXDCT.walsh4x4(dc);
         quantizer.quantizeY2(dc, qp);
         bitstream.encodeCoeffsWHT(out, zigzag(dc, tmp), mbX);
     }
 
-    private void writeChroma(int comp, int mbX, int mbY, VPxBooleanEncoder boolEnc, int[][] ac, int qp) {
+    private void writeChroma(int comp, int mbX, int mbY, VPXBooleanEncoder boolEnc, int[][] ac, int qp) {
         for (int i = 0; i < 4; i++) {
             quantizer.quantizeUV(ac[i], qp);
             bitstream.encodeCoeffsDCTUV(boolEnc, zigzag(ac[i], tmp), comp, mbX, i & 1, i >> 1);
@@ -298,7 +297,7 @@ public class VP8Encoder extends VideoEncoder {
         return tmp2;
     }
 
-    private void chroma(Picture8Bit pic, int mbX, int mbY, VPxBooleanEncoder boolEnc, int qp, Picture8Bit outMB) {
+    private void chroma(Picture8Bit pic, int mbX, int mbY, VPXBooleanEncoder boolEnc, int qp, Picture8Bit outMB) {
         int x = mbX << 3;
         int y = mbY << 3;
         int chromaPred1 = chromaPredBlk(1, x, y);
@@ -476,5 +475,10 @@ public class VP8Encoder extends VideoEncoder {
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
         return new ColorSpace[] { ColorSpace.YUV420J };
+    }
+
+    @Override
+    public int estimateBufferSize(Picture8Bit frame) {
+        return frame.getWidth() * frame.getHeight() / 2;
     }
 }

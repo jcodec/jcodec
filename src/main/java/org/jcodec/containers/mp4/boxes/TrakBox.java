@@ -1,13 +1,12 @@
 package org.jcodec.containers.mp4.boxes;
 
-import org.jcodec.common.model.Rational;
-import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.TrackType;
-import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
-
-import java.lang.IllegalArgumentException;
 import java.util.List;
 import java.util.ListIterator;
+
+import org.jcodec.common.model.Rational;
+import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.MP4TrackType;
+import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -309,9 +308,9 @@ public class TrakBox extends NodeBox {
         return NodeBox.findFirstPath(this, CompositionOffsetsBox.class, Box.path("mdia.minf.stbl.ctts" ));
     }
     
-    public static TrackType getTrackType(TrakBox trak) {
+    public static MP4TrackType getTrackType(TrakBox trak) {
         HandlerBox handler = NodeBox.findFirstPath(trak, HandlerBox.class, Box.path("mdia.hdlr"));
-        return TrackType.fromHandler(handler.getComponentSubType());
+        return MP4TrackType.fromHandler(handler.getComponentSubType());
     }
 
     /**

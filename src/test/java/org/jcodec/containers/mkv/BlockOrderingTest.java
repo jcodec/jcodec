@@ -12,7 +12,7 @@ import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.findAllTree;
 import static org.jcodec.containers.mkv.MKVType.findFirst;
 
-import org.jcodec.codecs.vp8.VP8Decoder;
+import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;

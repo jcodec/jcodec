@@ -156,12 +156,17 @@ public class Picture8Bit {
             return this;
         Picture8Bit result = Picture8Bit.create(crop.getWidth(), crop.getHeight(), color);
 
-        for (int plane = 0; plane < color.nComp; plane++) {
-            if (data[plane] == null)
-                continue;
-            cropSub(data[plane], crop.getX() >> color.compWidth[plane], crop.getY() >> color.compHeight[plane],
-                    crop.getWidth() >> color.compWidth[plane], crop.getHeight() >> color.compHeight[plane],
-                    width >> color.compWidth[plane], result.data[plane]);
+        if(color.planar) {
+            for (int plane = 0; plane < data.length; plane++) {
+                if (data[plane] == null)
+                    continue;
+                cropSub(data[plane], crop.getX() >> color.compWidth[plane], crop.getY() >> color.compHeight[plane],
+                        crop.getWidth() >> color.compWidth[plane], crop.getHeight() >> color.compHeight[plane],
+                        width >> color.compWidth[plane], crop.getWidth() >> color.compWidth[plane], result.data[plane]);
+            }
+        } else {
+           cropSub(data[0], crop.getX(), crop.getY(), crop.getWidth(), 
+            crop.getHeight(), width * color.nComp, crop.getWidth() * color.nComp, result.data[0]);
         }
 
         return result;
@@ -172,14 +177,14 @@ public class Picture8Bit {
                 && (crop.getX() != 0 || crop.getY() != 0 || crop.getWidth() != width || crop.getHeight() != height);
     }
 
-    private void cropSub(byte[] src, int x, int y, int w, int h, int srcStride, byte[] tgt) {
+    private void cropSub(byte[] src, int x, int y, int w, int h, int srcStride, int dstStride, byte[] tgt) {
         int srcOff = y * srcStride + x, dstOff = 0;
         for (int i = 0; i < h; i++) {
-            for (int j = 0; j < w; j++)
+            for (int j = 0; j < dstStride; j++)
                 tgt[dstOff + j] = src[srcOff + j];
 
             srcOff += srcStride;
-            dstOff += w;
+            dstOff += dstStride;
         }
     }
 

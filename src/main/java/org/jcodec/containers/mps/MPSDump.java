@@ -2,6 +2,13 @@ package org.jcodec.containers.mps;
 import static java.util.Arrays.asList;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+
 import org.jcodec.codecs.mpeg12.MPEGUtil;
 import org.jcodec.codecs.mpeg12.bitstream.CopyrightExtension;
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
@@ -20,19 +27,8 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.MainUtils.Flag;
 import org.jcodec.platform.Platform;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.IllegalAccessException;
-import java.lang.IllegalArgumentException;
-import java.lang.StringBuilder;
-import java.lang.System;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
-import java.util.HashMap;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,8 +41,9 @@ import java.util.HashMap;
  * 
  */
 public class MPSDump {
-    private static final String DUMP_FROM = "dump-from";
-    private static final String STOP_AT = "stop-at";
+    private static final Flag DUMP_FROM = new Flag("dump-from", "Stop reading at timestamp");
+    private static final Flag STOP_AT = new Flag("stop-at", "Start dumping from timestamp");
+    private static final Flag[] ALL_FLAGS = new Flag[] {DUMP_FROM, STOP_AT};
     
     protected ReadableByteChannel ch;
 
@@ -57,12 +54,9 @@ public class MPSDump {
     public static void main1(String[] args) throws IOException {
         FileChannelWrapper ch = null;
         try {
-            Cmd cmd = MainUtils.parseArguments(args);
+            Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
             if (cmd.args.length < 1) {
-                HashMap<String, String> map = new HashMap<String, String>();
-                map.put(STOP_AT, "Stop reading at timestamp");
-                map.put(DUMP_FROM, "Start dumping from timestamp");
-                MainUtils.printHelp(map, asList("file name"));
+                MainUtils.printHelp(ALL_FLAGS, asList("file name"));
                 return;
             }
 

@@ -1,14 +1,13 @@
 package org.jcodec.codecs.mpeg12;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.System;
-import java.util.Arrays;
-import java.util.HashMap;
+import org.jcodec.common.tools.MainUtils.Flag;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,20 +23,20 @@ public class TimestampUtil {
     private static final String STREAM_AUDIO = "audio";
     private static final String STRAM_VIDEO = "video";
 
-    private static final String FLAG_STREAM = "stream";
-
+    private static final Flag FLAG_STREAM = new Flag("stream", "s", "A stream to shift, i.e. '" + STRAM_VIDEO + "' or '" + STREAM_AUDIO + "' or '"
+            + STREAM_ALL + "' [default]");
+    
+    private static final Flag[] ALL_FLAGS = new Flag[] {FLAG_STREAM};
+    
     private static final String COMMAND_SHIFT = "shift";
     private static final String COMMAND_SCALE = "scale";
     private static final String COMMAND_ROUND = "round";
-
+    
     public static void main1(String[] args) throws IOException {
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
         if (cmd.args.length < 3) {
             System.out.println("A utility to tweak MPEG TS timestamps.");
-            HashMap<String, String> map = new HashMap<String, String>();
-            map.put(FLAG_STREAM, "A stream to shift, i.e. '" + STRAM_VIDEO + "' or '" + STREAM_AUDIO + "' or '"
-                    + STREAM_ALL + "' [default]");
-            MainUtils.printHelp(map, Arrays.asList("command", "arg", "in name", "?out file"));
+            MainUtils.printHelp(ALL_FLAGS, Arrays.asList("command", "arg", "in name", "?out file"));
             System.out.println("Where command is:\n" +
 
             "\t" + COMMAND_SHIFT + "\tShift timestamps of selected stream by arg." + "\n" +

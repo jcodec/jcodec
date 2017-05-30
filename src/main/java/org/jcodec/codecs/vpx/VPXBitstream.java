@@ -1,5 +1,4 @@
 package org.jcodec.codecs.vpx;
-import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -27,14 +26,14 @@ public class VPXBitstream {
         dctNzTop = new int[][] { new int[mbWidth << 2], new int[mbWidth << 1], new int[mbWidth << 1] };
     }
 
-    public void encodeCoeffsWHT(VPxBooleanEncoder bc, int[] coeffs, int mbX) {
+    public void encodeCoeffsWHT(VPXBooleanEncoder bc, int[] coeffs, int mbX) {
         int nCoeff = fastCountCoeffWHT(coeffs);
         encodeCoeffs(bc, coeffs, 0, nCoeff, 1, (mbX == 0 || whtNzLeft <= 0 ? 0 : 1) + (whtNzTop[mbX] > 0 ? 1 : 0));
         whtNzLeft = nCoeff;
         whtNzTop[mbX] = nCoeff;
     }
 
-    public void encodeCoeffsDCT15(VPxBooleanEncoder bc, int[] coeffs, int mbX, int blkX, int blkY) {
+    public void encodeCoeffsDCT15(VPXBooleanEncoder bc, int[] coeffs, int mbX, int blkX, int blkY) {
         int nCoeff = countCoeff(coeffs, 16);
         int blkAbsX = (mbX << 2) + blkX;
         encodeCoeffs(bc, coeffs, 1, nCoeff, 0, (blkAbsX == 0 || dctNzLeft[0][blkY] <= 0 ? 0 : 1) + (dctNzTop[0][blkAbsX] > 0 ? 1 : 0));
@@ -42,7 +41,7 @@ public class VPXBitstream {
         dctNzTop[0][blkAbsX] = Math.max(nCoeff - 1, 0);
     }
 
-    public void encodeCoeffsDCT16(VPxBooleanEncoder bc, int[] coeffs, int mbX, int blkX, int blkY) {
+    public void encodeCoeffsDCT16(VPXBooleanEncoder bc, int[] coeffs, int mbX, int blkX, int blkY) {
         int nCoeff = countCoeff(coeffs, 16);
         int blkAbsX = (mbX << 2) + blkX;
         encodeCoeffs(bc, coeffs, 0, nCoeff, 3, (blkAbsX == 0 || dctNzLeft[0][blkY] <= 0 ? 0 : 1) + (dctNzTop[0][blkAbsX] > 0 ? 1 : 0));
@@ -50,7 +49,7 @@ public class VPXBitstream {
         dctNzTop[0][blkAbsX] = nCoeff;
     }
 
-    public void encodeCoeffsDCTUV(VPxBooleanEncoder bc, int[] coeffs, int comp, int mbX, int blkX, int blkY) {
+    public void encodeCoeffsDCTUV(VPXBooleanEncoder bc, int[] coeffs, int comp, int mbX, int blkX, int blkY) {
         int nCoeff = countCoeff(coeffs, 16);
         int blkAbsX = (mbX << 1) + blkX;
         encodeCoeffs(bc, coeffs, 0, nCoeff, 2, (blkAbsX == 0 || dctNzLeft[comp][blkY] <= 0 ? 0 : 1)
@@ -66,7 +65,7 @@ public class VPXBitstream {
      * @param bc
      * @param coeffs
      */
-    public void encodeCoeffs(VPxBooleanEncoder bc, int[] coeffs, int firstCoeff, int nCoeff, int blkType, int ctx) {
+    public void encodeCoeffs(VPXBooleanEncoder bc, int[] coeffs, int firstCoeff, int nCoeff, int blkType, int ctx) {
         boolean prevZero = false;
 
         int i;
@@ -143,14 +142,14 @@ public class VPXBitstream {
         }
     }
 
-    private static void writeCat3Ext(VPxBooleanEncoder bc, int coeff) {
+    private static void writeCat3Ext(VPXBooleanEncoder bc, int coeff) {
         int d = coeff - 11;
         bc.writeBit(173, d >> 2);
         bc.writeBit(148, (d >> 1) & 1);
         bc.writeBit(140, d & 1);
     }
 
-    private static void writeCat4Ext(VPxBooleanEncoder bc, int coeff) {
+    private static void writeCat4Ext(VPXBooleanEncoder bc, int coeff) {
         int d = coeff - 19;
         bc.writeBit(176, d >> 3);
         bc.writeBit(155, (d >> 2) & 1);
@@ -158,7 +157,7 @@ public class VPXBitstream {
         bc.writeBit(135, d & 1);
     }
 
-    private static final void writeCatExt(VPxBooleanEncoder bc, int coeff, int catOff, int[] cat) {
+    private static final void writeCatExt(VPXBooleanEncoder bc, int coeff, int catOff, int[] cat) {
         int d = coeff - catOff;
         for (int b = cat.length - 1, i = 0; b >= 0; b--) {
             bc.writeBit(cat[i++], (d >> b) & 1);

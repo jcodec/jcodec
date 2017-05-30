@@ -13,4 +13,6 @@ import java.nio.ByteBuffer;
  */
 public interface AudioDecoder {
     AudioBuffer decodeFrame(ByteBuffer frame, ByteBuffer dst) throws IOException;
+
+    AudioCodecMeta getCodecMeta(ByteBuffer data) throws IOException;
 }

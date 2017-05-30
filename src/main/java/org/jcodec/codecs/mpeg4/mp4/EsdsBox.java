@@ -3,6 +3,7 @@ package org.jcodec.codecs.mpeg4.mp4;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import org.jcodec.codecs.aac.AACUtils;
 import org.jcodec.codecs.mpeg4.es.DecoderConfig;
 import org.jcodec.codecs.mpeg4.es.DecoderSpecific;
 import org.jcodec.codecs.mpeg4.es.Descriptor;
@@ -98,16 +99,8 @@ public class EsdsBox extends FullBox {
         return trackId;
     }
 
-    public static Box fromADTS(org.jcodec.codecs.aac.ADTSParser.Header hdr) {
-        ByteBuffer si = ByteBuffer.allocate(2);
-        BitWriter wr = new BitWriter(si);
-        wr.writeNBit(hdr.getObjectType(), 5);
-        wr.writeNBit(hdr.getSamplingIndex(), 4);
-        wr.writeNBit(hdr.getChanConfig(), 4);
-        wr.flush();
-        si.clear();
-
-        return createEsdsBox(si, hdr.getObjectType() << 5, 0, 210750, 133350, 2);
+    public static EsdsBox fromADTS(org.jcodec.codecs.aac.ADTSParser.Header hdr) {
+        return createEsdsBox(AACUtils.adtsToStreamInfo(hdr), hdr.getObjectType() << 5, 0, 210750, 133350, 2);
     }
 
     public static EsdsBox createEsdsBox(ByteBuffer streamInfo, int objectType, int bufSize, int maxBitrate,

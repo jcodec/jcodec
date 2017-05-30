@@ -3,6 +3,7 @@ package org.jcodec.extras.streaming;
 import java.io.IOException;
 
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -24,12 +25,6 @@ public class FFMpegAACTrack implements VirtualTrack {
 	}
 
 	@Override
-	public SampleEntry getSampleEntry() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public VirtualEdit[] getEdits() {
 		// TODO Auto-generated method stub
 		return null;
@@ -46,4 +41,9 @@ public class FFMpegAACTrack implements VirtualTrack {
 		// TODO Auto-generated method stub
 		
 	}
+
+    @Override
+    public CodecMeta getCodecMeta() {
+        throw new RuntimeException("TODO VirtualTrack.getCodecMeta");
+    }
 }

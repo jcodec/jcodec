@@ -1,0 +1,195 @@
+Detailed Changes for JM 13.0
+----------------------------
+
+JVT-U043
+--------
+
+(1) Highlight of the changes to encoder: 
+
+* Two fields - ToneMappingSEIPresentFlag and ToneMappingFile are added to the bottom of encoder.cfg
+  ToneMappingFile is the tone mapping configuation file
+  
+* #define PRINT_TONE_MAPPING in sei.c to print the tone mapping sei messages
+  several tone mapping related functions are implemented in sei.c
+  
+* Writing SEI message into bitstream is done at the end of init_frame () in image.c
+	
+
+(2) Highlight of the changes to decoder: 
+
+* Define PRINT_TONE_MAPPING at the top of in sei.c to print out the tone mapping sei messages
+  Tone mapping SEI messages is interpreted in interpret_tone_mapping() in sei.c 
+
+* Define ENABLE_OUTPUT_TONEMAPPING in defines.h to enable the tone-mappping processing.
+  The actual tone mapping processing is done in  output.c  write_out_picture() 
+  A tone_mapping flag and tone-mapping look-up-table is added to the StorablePicture stucture.
+
+
+(3) Note: 
+* The actual tone-mapping processing is perormed only when tone_map_id ==0.
+For other tone_map_id, the tone-mapping sei messages are printed out, but no actual processing is performed.
+
+* Curretnly only the RGB 4:4:4 tone mapping is supported. For other format, it needs color format 
+conversion before performing the tone mapping process.
+
+
+(4) Test bitstreams: 
+source Crew_10.rgb, size 1280x720,  bit-depth 10, RGB 4:4:4; 10 frames, encoded with all intra
+source Crew_8.rgb, size 1280x720,   bit-depth 8, RGB 4:4:4; 10 frames, encoded with all intra
+   
+    1) test1.264    // test processing by different model_id. These models are intentionally very different, so that one can easily tell that different tone mappings are applied.
+
+at frame 0, send: tone_map_id=0, tone_map_cancel_flag=0, tone_map_repetition_period=1, coded_data_bit_depth=10, sei_bit_depth=8, model_id=0
+at frame=2, send: tone_map_id=0, tone_map_cancel_flag=0, tone_map_repetition_period=1, coded_data_bit_depth=10, sei_bit_depth=8, model_id=1
+at frame=4, send: tone_map_id=0, tone_map_cancel_flag=0, tone_map_repetition_period=1, coded_data_bit_depth=10, sei_bit_depth=8, model_id=2
+at frame=6, send: tone_map_id=0, tone_map_cancel_flag=0, tone_map_repetition_period=1, coded_data_bit_depth=10, sei_bit_depth=8, model_id=3
+
+    2) test2.264    // test the tone_map_repetition_period and tone_map cancel flag
+
+at frame 0, send: tone_map_id=0, tone_map_cancel_flag=0, tone_map_repetition_period=0, coded_data_bit_depth=8, sei_bit_depth=8, model_id=1
+at frame 2, send: tone_map_id=0, tone_map_cancel_flag=0, tone_map_repetition_period=5, coded_data_bit_depth=8, sei_bit_depth=8, model_id=1
+at frame 8, send: tone_map_id=0, tone_map_cancel_flag=1
+
+    3) test3.264   // test the case of tone_map_id != 0
+at frame 0, send: tone_map_id=1, tone_map_cancel_flag=0, tone_map_repetition_period=1, coded_data_bit_depth=10, sei_bit_depth=8, model_id=1
+
+
+
+Sharp
+2/1/2007
+
+Changes for JM 7.5
+------------------
+I updated the reference encoder with proper reference picture list handling
+(independent list_0 and list_1 prediction), especially for MB and picture AFF.
+
+Also picture and MB AFF can now be enabled independently in the config file.
+
+I merged the updated deblocking filter along with many other fixes that were
+already in the decoder dpb code.
+
+This version is not a complete working encoder, but it's a big step forward
+in code correction and cleanup.
+
+I only worked through the main code paths, which means RD-optimization on,
+standard motion estimation (no fme), no stored B pictures, no rate-control,
+no prediction weights, no FMO.
+
+The Non-RD-optimized code should probably work, but hasn't been tested.
+
+The FME implementation copies large sections of encode_one_macroblock inside
+a #define. That code duplication is bad coding style, which is the main
+reason why I didn't touch it. I did some modifications in fast_me.c, but
+due to some interface changes the file won't compile when enabling the
+#define FAST_ME
+
+The rate control makes many assumptions from the config file AFF options. 
+I tried to update these, but I'm not sure if this works. In some places the 
+if/else decisions seemed redundant. There were also lots of flags that
+indicated frame or field coding. I tried to reduce these to a minimum.
+
+I put some suggestions for updating FME/rate control in the section 
+"implementation hints" below.
+
+RDopt=2 mode: The simulated decoders of this mode actually don't have 
+anything to do with current real decoders. I also think, the compile fixes 
+that went into this section probably broke the mode at all. I would suggest
+to remove the mode as long as there is nobody willing to invest much
+time in a proper upgrade. So, is somebody interested in working on
+this mode? TU Munich?
+
+The weigted prediction functions make some keen assumptions on the reference
+picture list organization (e.g. that there is only one list which contains 
+exactly one backward reference picture in case of B pictures...)
+I vaguely remember Jill Boyce saying something like: WP can't work properly
+in the current reference software. We will fix that when there is working
+reference picture list support.
+Well, we now have proper reference picture list support...
+
+In case of enabling stored B pictures the bidirectional prediction functions
+need also an update. They make also assumptions about the reference picture
+list sturcture.
+
+
+known problems:
+---------------
+- num_slice_groups_minus1>0 (FMO) is broken
+
+- slice coding needs to be checked (fixed number of bytes has been reported to fail)
+
+- weigted prediction doesn't work
+
+- RDOpt mode 2 doesn't work
+
+- stored B pictures need to be checkeded (function call is disabled)
+
+- rate control needs to be checked
+
+- FME needs update
+
+- direct mode mismatches with HHI software if direct_8x8_inference_flag=false
+  (ldecod matches lencod)
+
+- data partitioning?
+
+- profile and level are set hard coded
+
+- CABAC doesn't work for mb aff (context model selection problem at the encoder,
+  HHI is working on a fix)
+
+
+implementation hints:
+---------------------
+- all reference picture indexes and motion vectors are stored in enc_picture
+  (global arrays are removed)
+
+- all_mv has additional dimension for LIST_0 / LIST_1
+
+- img->MbAffFrameFlag=1 indicates MB AFF coding in current picture
+
+- img->mb_data[img->current_mb_nr].mb_field=1 indicates field coding for current mb pair
+
+- (img->current_mb_nr%2)==0 indicates top mb (of mb pair)
+
+- img->structure= TOP_FIELD/BOTTOM_FIELD/FRAME indiactes picture structure
+
+- img->pix_x, img->pix_y -> current pixel coordinates in enc_picture
+
+- img->opix_x, img->opix_y -> current pixel coordinates in original and reference picture
+
+- img->block_x, img->block_y -> current 4x4 block coordinates in enc_picture
+
+
+(KS)
+
+
+Changes for JM 6.2
+------------------
+
+The decoder should be nearly in JVT-G50 (final draft) state. 
+
+Known problems:
+  - the old Parameter Set syntax is used by default. Enable
+    #define G50_SPS
+    in defines.h for the new syntax
+  - the transform/inverse transform has not been reversed
+  - the direct modes seem to have some mismatches (compared with the
+    HHI implementation) for MB AFF (Alexis Tourapis is working on that)
+  - PCM macroblock mode not supported
+  - deblocking filter is not aligned to the text
+  - reference picture reordering / mmco hasn't got much testing
+
+The encoder in this version is completely broken. I started merging some
+code from the decoder, but currently don't have the time to finish that.
+
+If you're interested in encoder work, please contact me.
+
+Karsten
+Changes for JM 7.1 encoder
+--------------------------
+Known problems:
+   - Decoder sometimes can't decode the bitstream with CABAC on, 
+     multiple reference and B slice coding option.
+   - constrained intra prediction
+
+Siwei

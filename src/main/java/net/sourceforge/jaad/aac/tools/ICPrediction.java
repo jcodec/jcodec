@@ -1,11 +1,11 @@
 package net.sourceforge.jaad.aac.tools;
-import java.util.logging.Level;
+import org.jcodec.common.logging.Logger;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
-import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -53,7 +53,7 @@ public class ICPrediction {
 		for(int sfb = 0; sfb<length; sfb++) {
 			predictionUsed[sfb] = _in.readBool();
 		}
-		SyntaxConstants.LOGGER.log(Level.WARNING, "ICPrediction: maxSFB={0}, maxPredSFB={1}", new int[]{maxSFB, maxPredSFB});
+		Logger.warn("ICPrediction: maxSFB={0}, maxPredSFB={1}", new int[]{maxSFB, maxPredSFB});
 		/*//if maxSFB<maxPredSFB set remaining to false
 		for(int sfb = length; sfb<maxPredSFB; sfb++) {
 		predictionUsed[sfb] = false;
