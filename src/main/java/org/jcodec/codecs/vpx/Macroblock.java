@@ -784,7 +784,7 @@ public class Macroblock {
                 token = 67 + DCTextra(decoder, SubblockConstants.Pcat6);
             }
             if (initialValue != SubblockConstants.DCT_0 && initialValue != SubblockConstants.dct_eob) {
-                if (decoder.decodeBit() > 0)
+                if (decoder.readBitEq() > 0)
                     token = -token;
             }
 
@@ -795,7 +795,7 @@ public class Macroblock {
             int v = 0;
             int offset = 0;
             do {
-                v += v + decoder.decodeBool(p[offset]);
+                v += v + decoder.readBit(p[offset]);
                 offset++;
             } while (p[offset] > 0);
             return v;

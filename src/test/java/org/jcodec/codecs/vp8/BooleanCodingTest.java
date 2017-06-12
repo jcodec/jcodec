@@ -37,10 +37,10 @@ public class BooleanCodingTest {
     public void test() throws IOException {
         byte[] b = IOUtils.toByteArray(new FileInputStream(new File("src/test/resources/part1.vp8.mb")));
         VPXBooleanDecoder bac = new VPXBooleanDecoder(ByteBuffer.wrap(b), 0);
-         Assert.assertEquals("clear type is expected to be 0", 0, bac.decodeBit());
-         Assert.assertEquals("clamp type is expected to be 0", 0, bac.decodeBit());
-         Assert.assertEquals("segmentation is expected to be disabled", 0, bac.decodeBit());
-         Assert.assertEquals("simple filter disabled", 0, bac.decodeBit());
+         Assert.assertEquals("clear type is expected to be 0", 0, bac.readBitEq());
+         Assert.assertEquals("clamp type is expected to be 0", 0, bac.readBitEq());
+         Assert.assertEquals("segmentation is expected to be disabled", 0, bac.readBitEq());
+         Assert.assertEquals("simple filter disabled", 0, bac.readBitEq());
          Assert.assertEquals("filter level is 8", 8, bac.decodeInt(6));
          Assert.assertEquals("sharpness level is 0", 0, bac.decodeInt(3));
 //        System.out.println("clear type is expected to be 0" + "  " + 0 + "  " + bac.decodeBit());
@@ -50,7 +50,7 @@ public class BooleanCodingTest {
 //        System.out.println("filter level is 8" + "  " + 8 + "  " + bac.decodeInt(6));
 //        System.out.println("Sharpness level: " + bac.decodeInt(3));
 //        System.out.println("mode_ref_lf_delta_update: " + bac.decodeBit());
-         Assert.assertEquals(1, bac.decodeBit());
+         Assert.assertEquals(1, bac.readBitEq());
     }
 
     public static class BooleanArithmeticEncoder {
@@ -167,7 +167,7 @@ public class BooleanCodingTest {
         System.out.println(ArithmeticCoderTest.printArrayAsHex(array));
         VPXBooleanDecoder bac = new VPXBooleanDecoder(wrap(array), 0);
         for (int d : data)
-            Assert.assertTrue(d == bac.decodeBool(probability));
+            Assert.assertTrue(d == bac.readBit(probability));
         
     }
 }

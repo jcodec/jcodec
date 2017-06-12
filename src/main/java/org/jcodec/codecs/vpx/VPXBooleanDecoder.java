@@ -36,11 +36,11 @@ public class VPXBooleanDecoder {
             bit_count = 0; /* have not yet shifted out any bits */
         }
 
-        public int decodeBit()  {
-            return decodeBool(128);
+        public int readBitEq()  {
+            return readBit(128);
         }
 
-        public int decodeBool(int probability) {
+        public int readBit(int probability) {
             int bit = 0;
             int range = this.range;
             int value = this.value;
@@ -86,7 +86,7 @@ public class VPXBooleanDecoder {
         public int decodeInt(int sizeInBits) {
             int v = 0;
             while (sizeInBits-- > 0)
-                v = (v << 1) | decodeBool(128);
+                v = (v << 1) | readBit(128);
             return v;
         }
 
@@ -147,10 +147,18 @@ public class VPXBooleanDecoder {
              * 3. tree[i+decodedBool] get corresponding (left of right) value
              * 4. repeat until tree[i+decodedBool] is positive 
              */
-            while ((i = tree[i + decodeBool(probability[i >> 1])]) > 0) {
+            while ((i = tree[i + readBit(probability[i >> 1])]) > 0) {
             }
             return -i; /* negate the return value */
 
+        }
+        
+        public int readTree(int[] tree, int prob0, int prob1) {
+            int i = 0; 
+            if ((i = tree[i + readBit(prob0)]) > 0) {
+                while ((i = tree[i + readBit(prob1)]) > 0) ;
+            }
+            return -i; /* negate the return value */
         }
 
         public int readTreeSkip(int t[], /* tree specification */
@@ -159,7 +167,7 @@ public class VPXBooleanDecoder {
             int i = skip_branches * 2; /* begin at root */
 
             /* Descend tree until leaf is reached */
-            while ((i = t[i + decodeBool(p[i >> 1])]) > 0) {
+            while ((i = t[i + readBit(p[i >> 1])]) > 0) {
             }
             return -i; /* return value is negation of nonpositive index */
 
@@ -198,5 +206,4 @@ public class VPXBooleanDecoder {
              * http://aggregate.ee.engr.uky.edu/MAGIC/#Leading Zero Count 
              */
         }
-        
     }

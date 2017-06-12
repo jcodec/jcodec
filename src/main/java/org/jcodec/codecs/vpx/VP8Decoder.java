@@ -69,10 +69,10 @@ public class VP8Decoder extends VideoDecoder {
 
         int headerOffset = frame.position();
         VPXBooleanDecoder headerDecoder = new VPXBooleanDecoder(frame, 0);
-        boolean isYUVColorSpace = (headerDecoder.decodeBit() == 0);
+        boolean isYUVColorSpace = (headerDecoder.readBitEq() == 0);
 
-        boolean clampingRequired = headerDecoder.decodeBit() == 0;
-        int segmentation = headerDecoder.decodeBit();
+        boolean clampingRequired = headerDecoder.readBitEq() == 0;
+        int segmentation = headerDecoder.readBitEq();
         SegmentBasedAdjustments segmentBased = null;
         if(segmentation != 0) {
             segmentBased = updateSegmentation(headerDecoder);
@@ -83,28 +83,28 @@ public class VP8Decoder extends VideoDecoder {
                 }
             }
         }
-        int simpleFilter = headerDecoder.decodeBit();
+        int simpleFilter = headerDecoder.readBitEq();
         int filterLevel = headerDecoder.decodeInt(6);
         int filterType = (filterLevel == 0) ? 0 : (simpleFilter > 0) ? 1 : 2;
         int sharpnessLevel = headerDecoder.decodeInt(3);
-        int loopFilterDeltaFlag = headerDecoder.decodeBit();
+        int loopFilterDeltaFlag = headerDecoder.readBitEq();
         if(loopFilterDeltaFlag == 1) {
-            int loopFilterDeltaUpdate = headerDecoder.decodeBit();
+            int loopFilterDeltaUpdate = headerDecoder.readBitEq();
             if (loopFilterDeltaUpdate == 1) {
                 for (int i = 0; i < MAX_REF_LF_DELTAS; i++) {
 
-                    if (headerDecoder.decodeBit() > 0) {
+                    if (headerDecoder.readBitEq() > 0) {
                         refLoopFilterDeltas[i] = headerDecoder.decodeInt(6);
                         ;
-                        if (headerDecoder.decodeBit() > 0) // Apply sign
+                        if (headerDecoder.readBitEq() > 0) // Apply sign
                             refLoopFilterDeltas[i] = refLoopFilterDeltas[i] * -1;
                     }
                 }
                 for (int i = 0; i < MAX_MODE_LF_DELTAS; i++) {
 
-                    if (headerDecoder.decodeBit() > 0) {
+                    if (headerDecoder.readBitEq() > 0) {
                         modeLoopFilterDeltas[i] = headerDecoder.decodeInt(6);
-                        if (headerDecoder.decodeBit() > 0) // Apply sign
+                        if (headerDecoder.readBitEq() > 0) // Apply sign
                             modeLoopFilterDeltas[i] = modeLoopFilterDeltas[i] * -1;
                     }
                 }
@@ -121,12 +121,12 @@ public class VP8Decoder extends VideoDecoder {
         VPXBooleanDecoder decoder = new VPXBooleanDecoder(tokenBuffer, 0);
 
         int yacIndex = headerDecoder.decodeInt(7);
-        int ydcDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-        int y2dcDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-        int y2acDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-        int chromaDCDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-        int chromaACDelta = ((headerDecoder.decodeBit() > 0) ? VP8Util.delta(headerDecoder) : 0);
-        boolean refreshProbs = headerDecoder.decodeBit() == 0;
+        int ydcDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        int y2dcDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        int y2acDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        int chromaDCDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        int chromaACDelta = ((headerDecoder.readBitEq() > 0) ? VP8Util.delta(headerDecoder) : 0);
+        boolean refreshProbs = headerDecoder.readBitEq() == 0;
         QuantizationParams quants = new QuantizationParams(yacIndex, ydcDelta, y2dcDelta, y2acDelta, chromaDCDelta,
                 chromaACDelta);
 
@@ -136,13 +136,13 @@ public class VP8Decoder extends VideoDecoder {
                 for (int k = 0; k < VP8Util.PREV_COEF_CONTEXTS; k++)
                     for (int l = 0; l < VP8Util.MAX_ENTROPY_TOKENS - 1; l++) {
 
-                        if (headerDecoder.decodeBool(vp8CoefUpdateProbs[i][j][k][l]) > 0) {
+                        if (headerDecoder.readBit(vp8CoefUpdateProbs[i][j][k][l]) > 0) {
                             int newp = headerDecoder.decodeInt(8);
                             coefProbs[i][j][k][l] = newp;
                         }
                     }
 
-        int macroBlockNoCoeffSkip = (int) headerDecoder.decodeBit();
+        int macroBlockNoCoeffSkip = (int) headerDecoder.readBitEq();
         Assert.assertEquals(1, macroBlockNoCoeffSkip);
         int probSkipFalse = headerDecoder.decodeInt(8);
         for (int mbRow = 0; mbRow < numberOfMBRows; mbRow++) {
@@ -185,7 +185,7 @@ public class VP8Decoder extends VideoDecoder {
                 }
 
                 if (macroBlockNoCoeffSkip > 0)
-                    mb.skipCoeff = headerDecoder.decodeBool(probSkipFalse);
+                    mb.skipCoeff = headerDecoder.readBit(probSkipFalse);
 
                 mb.lumaMode = headerDecoder.readTree(keyFrameYModeTree, keyFrameYModeProb);
                 // 1 is added to account for non-displayed framing macroblocks,
@@ -300,8 +300,8 @@ public class VP8Decoder extends VideoDecoder {
     }
 
     private SegmentBasedAdjustments updateSegmentation(VPXBooleanDecoder headerDecoder) {
-        int updateMBSegmentationMap = headerDecoder.decodeBit();
-        int updateSegmentFeatureData = headerDecoder.decodeBit();
+        int updateMBSegmentationMap = headerDecoder.readBitEq();
+        int updateSegmentFeatureData = headerDecoder.readBitEq();
 
         int[] qp = null;
         int[] lf = null;
@@ -309,26 +309,26 @@ public class VP8Decoder extends VideoDecoder {
         if (updateSegmentFeatureData != 0) {
             qp = new int[4];
             lf = new int[4];
-            abs = headerDecoder.decodeBit();
+            abs = headerDecoder.readBitEq();
             for (int i = 0; i < 4; i++) {
-                int quantizerUpdate = headerDecoder.decodeBit();
+                int quantizerUpdate = headerDecoder.readBitEq();
                 if (quantizerUpdate != 0) {
                     qp[i] = headerDecoder.decodeInt(7);
-                    qp[i] = headerDecoder.decodeBit() != 0 ? -qp[i] : qp[i];
+                    qp[i] = headerDecoder.readBitEq() != 0 ? -qp[i] : qp[i];
                 }
             }
             for (int i = 0; i < 4; i++) {
-                int loopFilterUpdate = headerDecoder.decodeBit();
+                int loopFilterUpdate = headerDecoder.readBitEq();
                 if (loopFilterUpdate != 0) {
                     lf[i] = headerDecoder.decodeInt(6);
-                    lf[i] = headerDecoder.decodeBit() != 0 ? -lf[i] : lf[i];
+                    lf[i] = headerDecoder.readBitEq() != 0 ? -lf[i] : lf[i];
                 }
             }
         }
         int[] segmentProbs = new int[3];
         if (updateMBSegmentationMap != 0) {
             for (int i = 0; i < 3; i++) {
-                int segmentProbUpdate = headerDecoder.decodeBit();
+                int segmentProbUpdate = headerDecoder.readBitEq();
                 if (segmentProbUpdate != 0)
                     segmentProbs[i] = headerDecoder.decodeInt(8);
                 else

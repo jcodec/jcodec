@@ -35,7 +35,7 @@ public class VP8Util {
     public static int delta(VPXBooleanDecoder bc) {
         int magnitude = bc.decodeInt(4);
 
-        if (bc.decodeBit() > 0)
+        if (bc.readBitEq() > 0)
             magnitude = -magnitude;
         return magnitude;
 

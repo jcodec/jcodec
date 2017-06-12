@@ -1,0 +1,415 @@
+package org.jcodec.codecs.vpx.vp9;
+
+/**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
+ * @author The JCodec project
+ * 
+ */
+public class Consts {
+
+    public static final int SEG_LVL_ALT_Q = 0; // Index for quantizer segment
+                                               // feature
+    public static final int SEG_LVL_ALT_L = 1; // Index for loop filter segment
+                                               // feature
+    public static final int SEG_LVL_REF_FRAME = 2; // Index for reference frame
+                                                   // segment feature
+    public static final int SEG_LVL_SKIP = 3; // Index for skip segment feature
+
+    /**
+     * Specifies how the transform size is determined. For tx_mode not equal to
+     * 4, the inverse transform will use the largest transform size possible up
+     * to the limit set in tx_mode. For tx_mode equal to 4, the choice of size
+     * is specified explicitly for each block.
+     */
+    public static final int ONLY_4X4 = 0;
+    public static final int ALLOW_8X8 = 1;
+    public static final int ALLOW_16X16 = 2;
+    public static final int ALLOW_32X32 = 3;
+    public static final int TX_MODE_SELECT = 4;
+
+    public static final int PARTITION_NONE = 0;
+    public static final int PARTITION_HORZ = 1;
+    public static final int PARTITION_VERT = 2;
+    public static final int PARTITION_SPLIT = 3;
+
+    public static final int BLOCK_INVALID = -1;
+    public static final int BLOCK_4X4 = 0;
+    public static final int BLOCK_4X8 = 1;
+    public static final int BLOCK_8X4 = 2;
+    public static final int BLOCK_8X8 = 3;
+    public static final int BLOCK_8X16 = 4;
+    public static final int BLOCK_16X8 = 5;
+    public static final int BLOCK_16X16 = 6;
+    public static final int BLOCK_16X32 = 7;
+    public static final int BLOCK_32X16 = 8;
+    public static final int BLOCK_32X32 = 9;
+    public static final int BLOCK_32X64 = 10;
+    public static final int BLOCK_64X32 = 11;
+    public static final int BLOCK_64X64 = 12;
+
+    public static final int TX_4X4 = 0;
+    public static final int TX_8X8 = 1;
+    public static final int TX_16X16 = 2;
+    public static final int TX_32X32 = 3;
+
+    public static final int LAST_FRAME = 0;
+    public static final int ALTREF_FRAME = 1;
+    public static final int GOLDEN_FRAME = 2;
+    public static final int INTRA_FRAME = 3;
+
+    public static final int DC_PRED = 0;
+    public static final int TM_PRED = 1;
+    public static final int V_PRED = 2;
+    public static final int H_PRED = 3;
+    public static final int D135_PRED = 4;
+    public static final int D117_PRED = 5;
+    public static final int D45_PRED = 6;
+    public static final int D63_PRED = 7;
+    public static final int D153_PRED = 8;
+    public static final int D207_PRED = 9;
+    public static final int NEARESTMV = 10;
+    public static final int NEARMV = 11;
+    public static final int ZEROMV = 12;
+    public static final int NEWMV = 13;
+
+    public static final int SINGLE_REF = 0;
+    public static final int COMPOUND_REF = 1;
+    public static final int REFERENCE_MODE_SELECT = 2;
+
+    public static final int NORMAL = 0;
+    public static final int SMOOTH = 1;
+    public static final int SHARP = 2;
+    public static final int SWITCHABLE = 3;
+    
+    public static final int EIGHTTAP = 0;
+    public static final int EIGHTTAP_SMOOTH = 1;
+    public static final int EIGHTTAP_SHARP = 2;
+    
+    
+    public static final int BOTH_ZERO = 0;
+    public static final int ZERO_PLUS_PREDICTED = 1;
+    public static final int BOTH_PREDICTED = 2;
+    public static final int NEW_PLUS_NON_INTRA = 3;
+    public static final int BOTH_NEW = 4;
+    public static final int INTRA_PLUS_NON_INTRA = 5;
+    public static final int BOTH_INTRA = 6;
+    public static final int INVALID_CASE = 9;
+    
+    public static final int MV_JOINT_ZERO = 0;
+    public static final int MV_JOINT_HNZVZ = 1;
+    public static final int MV_JOINT_HZVNZ = 2;
+    public static final int MV_JOINT_HNZVNZ = 3;
+    
+    public static final int CLASS0_SIZE = 2;
+    
+    public static final int ZERO_TOKEN = 0;
+    public static final int ONE_TOKEN = 1;
+    public static final int TWO_TOKEN = 2;
+    public static final int THREE_TOKEN = 3;
+    public static final int FOUR_TOKEN = 4;
+    public static final int DCT_VAL_CAT1 = 5;
+    public static final int DCT_VAL_CAT2 = 6;
+    public static final int DCT_VAL_CAT3 = 7;
+    public static final int DCT_VAL_CAT4 = 8;
+    public static final int DCT_VAL_CAT5 = 9;
+    public static final int DCT_VAL_CAT6 = 10;
+    
+    public static final int[] TREE_SEGMENT_ID = new int[] { 2, 4, 6, 8, 10, 12, 0, -1, -2, -3, -4, -5, -6, -7 };
+    public static final int[][] TREE_TX_SIZE = new int[][] { null, { -TX_4X4, -TX_8X8 },
+            { -TX_4X4, 2, -TX_8X8, -TX_16X16 }, { -TX_4X4, 2, -TX_8X8, 4, -TX_16X16, -TX_32X32 } };
+
+    public static final int[] maxTxLookup = new int[] { 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3 };
+    public static final int[] blW = new int[] { 1, 1, 1, 1, 1, 2, 2, 2, 4, 4, 4, 8, 8 };
+    public static final int[] blH = new int[] { 1, 1, 1, 1, 2, 1, 2, 4, 2, 4, 8, 4, 8 };
+
+    public static final int[] TREE_INTRA_MODE = new int[] { -DC_PRED, 2, -TM_PRED, 4, -V_PRED, 6, 8, 12, -H_PRED, 10,
+            -D135_PRED, -D117_PRED, -D45_PRED, 14, -D63_PRED, 16, -D153_PRED, -D207_PRED };
+
+    public static final int[] size_group_lookup = new int[] { 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3 };
+
+    public static final int[] TREE_INTERP_FILTER = new int[] { -EIGHTTAP, 2, -EIGHTTAP_SMOOTH, -EIGHTTAP_SHARP };
+
+    public static final int[] TREE_INTER_MODE = new int[] { -(ZEROMV - NEARESTMV), 2, -(NEARESTMV - NEARESTMV), 4,
+            -(NEARMV - NEARESTMV), -(NEWMV - NEARESTMV) };
+
+    // 0 -> (-1,0); 1 -> (0,-1); 2 -> (-1,1); 3 -> (1,-1), 4 -> (-1, 3), 5 ->
+    // (3, -1)
+    public static final int[][] mv_ref_blocks_sm = new int[][] { { 0, 1 }, { 0, 1 }, { 0, 1 }, { 0, 1 }, { 1, 0 },
+            { 0, 1 }, { 0, 1 }, { 1, 0 }, { 0, 1 }, { 2, 3 }, { 1, 0 }, { 0, 1 }, { 4, 5 } };
+
+    // 6 -> (-1, 2), 7 -> (2, -1), 8 -> (-1, 4), 9 -> (4, -1), 10 -> (-1, 6), 11
+    // -> (-1, -1), 12 -> (-2, 0)
+    // 13 -> (0, -2), 14 -> (-3, 0), 15 -> (0, -3), 16 -> (-2, -1), 17 -> (-1,
+    // -2), 18 -> (-2, -2), 19 -> (-3, -3)
+    public static final int[][] mv_ref_blocks = new int[][] { { 0, 1, 11, 12, 13, 16, 17, 18 },
+            { 0, 1, 11, 12, 13, 16, 17, 18 }, { 0, 1, 11, 12, 13, 16, 17, 18 }, { 0, 1, 11, 12, 13, 16, 17, 18 },
+            { 1, 0, 3, 11, 13, 12, 16, 17 }, { 0, 1, 2, 11, 12, 13, 17, 16 }, { 0, 1, 2, 3, 11, 14, 15, 19 },
+            { 1, 0, 7, 11, 2, 15, 14, 19 }, { 0, 1, 6, 11, 3, 14, 15, 19 }, { 2, 3, 6, 7, 11, 14, 15, 19 },
+            { 1, 0, 9, 6, 11, 15, 14, 7 }, { 0, 1, 8, 7, 11, 14, 15, 6 }, { 4, 5, 8, 9, 11, 0, 1, 10 } };
+
+    public static final int[] TREE_MV_JOINT = new int[] { -MV_JOINT_ZERO, 2, -MV_JOINT_HNZVZ, 4, -MV_JOINT_HZVNZ,
+            -MV_JOINT_HNZVNZ };
+
+    public static final int[] MV_CLASS_TREE = new int[] { -0, 2, -1, 4, 6, 8, -2, -3, 10, 12, -4, -5, -6, 14, 16, 18,
+            -7, -8, -9, -10, };
+
+    public static final int[] MV_FR_TREE = new int[] { -0, 2, -1, 4, -2, -3 };
+    
+    public static final int[][] PARETO_TABLE = new int[][]  {
+        { 3, 86, 128, 6, 86, 23, 88, 29},
+        { 9, 86, 129, 17, 88, 61, 94, 76},
+        { 15, 87, 129, 28, 89, 93, 100, 110},
+        { 20, 88, 130, 38, 91, 118, 106, 136},
+        { 26, 89, 131, 48, 92, 139, 111, 156},
+        { 31, 90, 131, 58, 94, 156, 117, 171},
+        { 37, 90, 132, 66, 95, 171, 122, 184},
+        { 42, 91, 132, 75, 97, 183, 127, 194},
+        { 47, 92, 133, 83, 98, 193, 132, 202},
+        { 52, 93, 133, 90, 100, 201, 137, 208},
+        { 57, 94, 134, 98, 101, 208, 142, 214},
+        { 62, 94, 135, 105, 103, 214, 146, 218},
+        { 66, 95, 135, 111, 104, 219, 151, 222},
+        { 71, 96, 136, 117, 106, 224, 155, 225},
+        { 76, 97, 136, 123, 107, 227, 159, 228},
+        { 80, 98, 137, 129, 109, 231, 162, 231},
+        { 84, 98, 138, 134, 110, 234, 166, 233},
+        { 89, 99, 138, 140, 112, 236, 170, 235},
+        { 93, 100, 139, 145, 113, 238, 173, 236},
+        { 97, 101, 140, 149, 115, 240, 176, 238},
+        {101, 102, 140, 154, 116, 242, 179, 239},
+        {105, 103, 141, 158, 118, 243, 182, 240},
+        {109, 104, 141, 162, 119, 244, 185, 241},
+        {113, 104, 142, 166, 120, 245, 187, 242},
+        {116, 105, 143, 170, 122, 246, 190, 243},
+        {120, 106, 143, 173, 123, 247, 192, 244},
+        {123, 107, 144, 177, 125, 248, 195, 244},
+        {127, 108, 145, 180, 126, 249, 197, 245},
+        {130, 109, 145, 183, 128, 249, 199, 245},
+        {134, 110, 146, 186, 129, 250, 201, 246},
+        {137, 111, 147, 189, 131, 251, 203, 246},
+        {140, 112, 147, 192, 132, 251, 205, 247},
+        {143, 113, 148, 194, 133, 251, 207, 247},
+        {146, 114, 149, 197, 135, 252, 208, 248},
+        {149, 115, 149, 199, 136, 252, 210, 248},
+        {152, 115, 150, 201, 138, 252, 211, 248},
+        {155, 116, 151, 204, 139, 253, 213, 249},
+        {158, 117, 151, 206, 140, 253, 214, 249},
+        {161, 118, 152, 208, 142, 253, 216, 249},
+        {163, 119, 153, 210, 143, 253, 217, 249},
+        {166, 120, 153, 212, 144, 254, 218, 250},
+        {168, 121, 154, 213, 146, 254, 220, 250},
+        {171, 122, 155, 215, 147, 254, 221, 250},
+        {173, 123, 155, 217, 148, 254, 222, 250},
+        {176, 124, 156, 218, 150, 254, 223, 250},
+        {178, 125, 157, 220, 151, 254, 224, 251},
+        {180, 126, 157, 221, 152, 254, 225, 251},
+        {183, 127, 158, 222, 153, 254, 226, 251},
+        {185, 128, 159, 224, 155, 255, 227, 251},
+        {187, 129, 160, 225, 156, 255, 228, 251},
+        {189, 131, 160, 226, 157, 255, 228, 251},
+        {191, 132, 161, 227, 159, 255, 229, 251},
+        {193, 133, 162, 228, 160, 255, 230, 252},
+        {195, 134, 163, 230, 161, 255, 231, 252},
+        {197, 135, 163, 231, 162, 255, 231, 252},
+        {199, 136, 164, 232, 163, 255, 232, 252},
+        {201, 137, 165, 233, 165, 255, 233, 252},
+        {202, 138, 166, 233, 166, 255, 233, 252},
+        {204, 139, 166, 234, 167, 255, 234, 252},
+        {206, 140, 167, 235, 168, 255, 235, 252},
+        {207, 141, 168, 236, 169, 255, 235, 252},
+        {209, 142, 169, 237, 171, 255, 236, 252},
+        {210, 144, 169, 237, 172, 255, 236, 252},
+        {212, 145, 170, 238, 173, 255, 237, 252},
+        {214, 146, 171, 239, 174, 255, 237, 253},
+        {215, 147, 172, 240, 175, 255, 238, 253},
+        {216, 148, 173, 240, 176, 255, 238, 253},
+        {218, 149, 173, 241, 177, 255, 239, 253},
+        {219, 150, 174, 241, 179, 255, 239, 253},
+        {220, 152, 175, 242, 180, 255, 240, 253},
+        {222, 153, 176, 242, 181, 255, 240, 253},
+        {223, 154, 177, 243, 182, 255, 240, 253},
+        {224, 155, 178, 244, 183, 255, 241, 253},
+        {225, 156, 178, 244, 184, 255, 241, 253},
+        {226, 158, 179, 244, 185, 255, 242, 253},
+        {228, 159, 180, 245, 186, 255, 242, 253},
+        {229, 160, 181, 245, 187, 255, 242, 253},
+        {230, 161, 182, 246, 188, 255, 243, 253},
+        {231, 163, 183, 246, 189, 255, 243, 253},
+        {232, 164, 184, 247, 190, 255, 243, 253},
+        {233, 165, 185, 247, 191, 255, 244, 253},
+        {234, 166, 185, 247, 192, 255, 244, 253},
+        {235, 168, 186, 248, 193, 255, 244, 253},
+        {236, 169, 187, 248, 194, 255, 244, 253},
+        {236, 170, 188, 248, 195, 255, 245, 253},
+        {237, 171, 189, 249, 196, 255, 245, 254},
+        {238, 173, 190, 249, 197, 255, 245, 254},
+        {239, 174, 191, 249, 198, 255, 245, 254},
+        {240, 175, 192, 249, 199, 255, 246, 254},
+        {240, 177, 193, 250, 200, 255, 246, 254},
+        {241, 178, 194, 250, 201, 255, 246, 254},
+        {242, 179, 195, 250, 202, 255, 246, 254},
+        {242, 181, 196, 250, 203, 255, 247, 254},
+        {243, 182, 197, 251, 204, 255, 247, 254},
+        {244, 184, 198, 251, 205, 255, 247, 254},
+        {244, 185, 199, 251, 206, 255, 247, 254},
+        {245, 186, 200, 251, 207, 255, 247, 254},
+        {246, 188, 201, 252, 207, 255, 248, 254},
+        {246, 189, 202, 252, 208, 255, 248, 254},
+        {247, 191, 203, 252, 209, 255, 248, 254},
+        {247, 192, 204, 252, 210, 255, 248, 254},
+        {248, 194, 205, 252, 211, 255, 248, 254},
+        {248, 195, 206, 252, 212, 255, 249, 254},
+        {249, 197, 207, 253, 213, 255, 249, 254},
+        {249, 198, 208, 253, 214, 255, 249, 254},
+        {250, 200, 210, 253, 215, 255, 249, 254},
+        {250, 201, 211, 253, 215, 255, 249, 254},
+        {250, 203, 212, 253, 216, 255, 249, 254},
+        {251, 204, 213, 253, 217, 255, 250, 254},
+        {251, 206, 214, 254, 218, 255, 250, 254},
+        {252, 207, 216, 254, 219, 255, 250, 254},
+        {252, 209, 217, 254, 220, 255, 250, 254},
+        {252, 211, 218, 254, 221, 255, 250, 254},
+        {253, 213, 219, 254, 222, 255, 250, 254},
+        {253, 214, 221, 254, 223, 255, 250, 254},
+        {253, 216, 222, 254, 224, 255, 251, 254},
+        {253, 218, 224, 254, 225, 255, 251, 254},
+        {254, 220, 225, 254, 225, 255, 251, 254},
+        {254, 222, 227, 255, 226, 255, 251, 254},
+        {254, 224, 228, 255, 227, 255, 251, 254},
+        {254, 226, 230, 255, 228, 255, 251, 254},
+        {255, 228, 231, 255, 230, 255, 251, 254},
+        {255, 230, 233, 255, 231, 255, 252, 254},
+        {255, 232, 235, 255, 232, 255, 252, 254},
+        {255, 235, 237, 255, 233, 255, 252, 254},
+        {255, 238, 240, 255, 235, 255, 252, 255},
+        {255, 241, 243, 255, 236, 255, 252, 254},
+        {255, 246, 247, 255, 239, 255, 253, 255}
+        };
+        
+        public static final int[][] extra_bits = new int[][] {
+            { 0, 0, 0},
+            { 0, 0, 1},
+            { 0, 0, 2},
+            { 0, 0, 3},
+            { 0, 0, 4},
+            { 1, 1, 5},
+            { 2, 2, 7},
+            { 3, 3, 11},
+            { 4, 4, 19},
+            { 5, 5, 35},
+            { 6, 14, 67}
+        };
+        
+        public static final int[][] cat_probs = new int[][] {
+                { 0},
+                { 159},
+                { 165, 145},
+                { 173, 148, 140},
+                { 176, 155, 140, 135},
+                { 180, 157, 141, 134, 130},
+                { 254, 254, 254, 252, 249, 243, 230, 196, 177, 153, 140, 133, 130, 129}
+                };
+                
+                public static final int DCT_DCT = 0;
+                public static final int ADST_DCT = 1;
+                public static final int DCT_ADST = 2; 
+                public static final int ADST_ADST = 3;
+                
+    public static final int[] TOKEN_TREE = new int[] { -ZERO_TOKEN, 2, -ONE_TOKEN, 4, 6, 10, -TWO_TOKEN, 8,
+            -THREE_TOKEN, -FOUR_TOKEN, 12, 14, -DCT_VAL_CAT1, -DCT_VAL_CAT2, 16, 18, -DCT_VAL_CAT3, -DCT_VAL_CAT4,
+            -DCT_VAL_CAT5, -DCT_VAL_CAT6 };
+    
+    public static final int[] coefband_4x4 = new int[] {0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 5, 5, 5};
+    
+    public static final int[] coefband_8x8plus = new int[] {
+            0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4,
+            4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+            };
+    
+    public static final int SZ_8x8 = 0;
+    public static final int SZ_16x16 = 1;
+    public static final int SZ_32x32 = 2;
+    public static final int SZ_64x64 = 3;
+
+    public static final int[][] blSizeLookup = new int[][] {
+            { BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8, BLOCK_8X16,
+                    BLOCK_16X8, BLOCK_16X16, BLOCK_16X32, BLOCK_32X16,
+                    BLOCK_32X32, BLOCK_32X64, BLOCK_64X32, BLOCK_64X64, },
+            { -1, -1, -1, BLOCK_8X4, -1, -1, BLOCK_16X8, -1, -1, BLOCK_32X16, -1, -1,
+                    BLOCK_64X32, },
+            { -1, -1, -1, BLOCK_4X8, -1, 1, BLOCK_8X16, -1, -1, BLOCK_16X32, -1, -1,
+                    BLOCK_32X64, },
+            { -1, -1, -1, BLOCK_4X4, -1, -1, BLOCK_8X8, -1, -1, BLOCK_16X16, -1, -1,
+                    BLOCK_32X32, } };
+
+    public static final int[] TREE_PARTITION = new int[] { -PARTITION_NONE, 2, -PARTITION_HORZ, 4,
+            -PARTITION_VERT, PARTITION_SPLIT };
+    public static final int[] TREE_PARTITION_RIGHT_E = new int[] { -PARTITION_NONE,
+            -PARTITION_VERT };
+    public static final int[] TREE_PARTITION_BOTTOM_E = new int[] { -PARTITION_NONE,
+            -PARTITION_HORZ };
+}
