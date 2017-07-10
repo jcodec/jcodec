@@ -72,6 +72,11 @@ public class BitReader {
 
         return ret;
     }
+    
+    public int readNBitSigned(int n) {
+        int v = readNBit(n);
+        return read1Bit() == 0 ? v : -v;
+    }
 
     public int readNBit(int n) {
         if (n > 32)
