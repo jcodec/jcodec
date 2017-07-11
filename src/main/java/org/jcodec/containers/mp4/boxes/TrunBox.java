@@ -306,24 +306,4 @@ public class TrunBox extends FullBox {
         }
     }
 
-    protected void getModelFields(List<String> model) {
-        model.add("sampleCount");
-        if (isDataOffsetAvailable())
-            model.add("dataOffset");
-
-        if (isFirstSampleFlagsAvailable())
-            model.add("firstSampleFlags");
-
-        if (isSampleDurationAvailable())
-            model.add("sampleDuration");
-
-        if (isSampleSizeAvailable())
-            model.add("sampleSize");
-
-        if (isSampleFlagsAvailable())
-            model.add("sampleFlags");
-
-        if (isSampleCompositionOffsetAvailable())
-            model.add("sampleCompositionOffset");
-    }
 }

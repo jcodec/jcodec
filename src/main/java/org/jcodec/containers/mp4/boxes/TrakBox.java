@@ -272,10 +272,6 @@ public class TrakBox extends NodeBox {
         return new Size(vse.getWidth(), vse.getHeight());
     }
 
-    protected void getModelFields(List<String> model) {
-
-    }
-
     public TimeToSampleBox getStts() {
         return NodeBox.findFirstPath(this, TimeToSampleBox.class, Box.path("mdia.minf.stbl.stts"));
     }
