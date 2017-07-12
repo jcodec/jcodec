@@ -1,4 +1,5 @@
 package org.jcodec.containers.mp4;
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 
 import org.jcodec.common.AutoFileChannelWrapper;
@@ -182,7 +183,7 @@ public class MP4Util {
             out = NIOUtils.writableChannel(f);
             writeMovie(out, movie);
         } finally {
-            out.close();
+            closeQuietly(out);
         }
     }
 

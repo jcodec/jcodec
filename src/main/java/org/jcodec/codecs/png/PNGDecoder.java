@@ -91,6 +91,9 @@ public class PNGDecoder extends VideoDecoder {
                 plte.parse(data, length);
                 break;
             case TAG_tRNS:
+                if (ihdr == null) {
+                    throw new IllegalStateException("tRNS tag before IHDR");
+                }
                 trns = new TRNS(ihdr.colorType);
                 trns.parse(data, length);
                 break;
@@ -109,6 +112,9 @@ public class PNGDecoder extends VideoDecoder {
             decodeData(ihdr, plte, trns, list, buffer);
         } catch (DataFormatException e) {
             return null;
+        }
+        if (ihdr == null) {
+            throw new IllegalStateException("no IHDR tag");
         }
         return Picture8Bit.createPicture8Bit(ihdr.width, ihdr.height, buffer, ihdr.colorSpace());
     }

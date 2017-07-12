@@ -278,7 +278,9 @@ public class JpegDecoder extends VideoDecoder {
                 break;
             }
         }
-
-        return new VideoCodecMeta(new Size(header.width, header.height), ColorSpace.YUV420J);
+        if (header != null) {
+            return new VideoCodecMeta(new Size(header.width, header.height), ColorSpace.YUV420J);
+        }
+        return null;
     }
 }

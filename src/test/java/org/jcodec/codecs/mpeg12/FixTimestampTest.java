@@ -1,6 +1,9 @@
 package org.jcodec.codecs.mpeg12;
+import org.jcodec.common.io.IOUtils;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -76,10 +79,10 @@ public class FixTimestampTest {
                 pos += output.transferFrom(input, pos, count);
             }
         } finally {
-            output.close();
-            fos.close();
-            input.close();
-            fis.close();
+            closeQuietly(output);
+            closeQuietly(fos);
+            closeQuietly(input);
+            closeQuietly(fis);
         }
 
         if (srcFile.length() != destFile.length()) {

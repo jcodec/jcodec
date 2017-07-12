@@ -5,6 +5,7 @@ import java.lang.System;
 
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.common.AudioFormat;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Label;
@@ -12,6 +13,8 @@ import org.jcodec.movtool.streaming.AudioCodecMeta;
 import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
+
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -52,7 +55,7 @@ public class WavTrack implements VirtualTrack {
             header = WavHeader.readChannel(ch);
             size = header.dataSize <= 0 ? ch.size() : header.dataSize;
         } finally {
-            ch.close();
+            closeQuietly(ch);
         }
 
         se = AudioCodecMeta.createAudioCodecMeta3("sowt", ByteBuffer.allocate(0), new AudioFormat(header.fmt.sampleRate,
@@ -126,7 +129,7 @@ public class WavTrack implements VirtualTrack {
                 buffer.flip();
                 return buffer;
             } finally {
-                ch.close();
+                closeQuietly(ch);
             }
         }
 

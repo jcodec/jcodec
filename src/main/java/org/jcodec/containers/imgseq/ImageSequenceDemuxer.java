@@ -101,7 +101,7 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
             frameNo++;
         } while (frameNo < 2);
 
-        if (!file.exists())
+        if (file == null || !file.exists())
             return null;
 
         Packet ret = new Packet(NIOUtils.fetchFromFile(file), frameNo, VIDEO_FPS, 1, frameNo, FrameType.KEY, null, frameNo);

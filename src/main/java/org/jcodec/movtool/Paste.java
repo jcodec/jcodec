@@ -193,26 +193,26 @@ public class Paste {
     private boolean matchLoad(TrakBox trakBox1, TrakBox trakBox2) {
         LoadSettingsBox load1 = NodeBox.findFirst(trakBox1, LoadSettingsBox.class, "load");
         LoadSettingsBox load2 = NodeBox.findFirst(trakBox2, LoadSettingsBox.class, "load");
+        if (load1 != null && load2 != null) { 
+            return load1.getPreloadStartTime() == load2.getPreloadStartTime()
+                    && load1.getPreloadDuration() == load2.getPreloadDuration()
+                    && load1.getPreloadFlags() == load2.getPreloadFlags()
+                    && load1.getDefaultHints() == load2.getDefaultHints();
+        }
         if (load1 == null && load2 == null)
             return true;
-        if ((load1 == null && load2 != null) || (load1 != null && load2 == null))
-            return false;
-
-        return load1.getPreloadStartTime() == load2.getPreloadStartTime()
-                && load1.getPreloadDuration() == load2.getPreloadDuration()
-                && load1.getPreloadFlags() == load2.getPreloadFlags()
-                && load1.getDefaultHints() == load2.getDefaultHints();
+        return false;
     }
 
     private boolean matchClip(TrakBox trakBox1, TrakBox trakBox2) {
         ClipRegionBox crgn1 = NodeBox.findFirstPath(trakBox1, ClipRegionBox.class, Box.path("clip.crgn"));
         ClipRegionBox crgn2 = NodeBox.findFirstPath(trakBox2, ClipRegionBox.class, Box.path("clip.crgn"));
-        if ((crgn1 == null && crgn2 != null) || (crgn1 != null && crgn2 == null))
-            return false;
+        if (crgn1 != null && crgn2 != null) {
+            return crgn1.getRgnSize() == crgn2.getRgnSize() && crgn1.getX() == crgn2.getX() && crgn1.getY() == crgn2.getY()
+                    && crgn1.getWidth() == crgn2.getWidth() && crgn1.getHeight() == crgn2.getHeight();
+        }
         if (crgn1 == null && crgn2 == null)
             return true;
-
-        return crgn1.getRgnSize() == crgn2.getRgnSize() && crgn1.getX() == crgn2.getX() && crgn1.getY() == crgn2.getY()
-                && crgn1.getWidth() == crgn2.getWidth() && crgn1.getHeight() == crgn2.getHeight();
+        return false;
     }
 }

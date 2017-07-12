@@ -2,9 +2,10 @@ package org.jcodec.movtool;
 import java.lang.IllegalStateException;
 import java.lang.System;
 
-
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.BoxFactory;
@@ -61,7 +62,7 @@ public class Undo {
             raf.seek(versions.get(versions.size() - 1).getOffset() + 4);
             raf.write(new byte[] { 'f', 'r', 'e', 'e' });
         } finally {
-            raf.close();
+            closeQuietly(raf);
         }
     }
 
@@ -81,7 +82,7 @@ public class Undo {
                 }
             }
         } finally {
-            is.close();
+            closeQuietly(is);
         }
         return result;
     }

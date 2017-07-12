@@ -127,6 +127,11 @@ public class FLVTrackDemuxer {
         FLVTag base;
         while ((base = demuxer.readNextPacket()) != null && base.getPtsD() == 0)
             ;
+        
+        if (base == null) {
+            //cant seek if base not found
+            return;
+        }
 
         _in.setPosition(base.getPosition() + 0x100000);
         demuxer.reposition();
