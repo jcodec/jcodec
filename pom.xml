@@ -23,9 +23,17 @@
 	</scm>
 	<developers>
 		<developer>
-			<name>Jay Codec</name>
-			<email>jcodecproject@gmail.com</email>
+			<name>Stanislav Vitvitskyy</name>
+			<email>stanislav.vitvitskiy@gmail.com</email>
 		</developer>
+        <developer>
+            <name>Alex Zhukov</name>
+            <email>zhukov.alex@gmail.com</email>
+        </developer>
+        <developer>
+            <name>Oleksandr Chugai</name>
+            <email>chugai@gmail.com</email>
+        </developer>
 	</developers>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
