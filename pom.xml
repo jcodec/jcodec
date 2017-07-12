@@ -6,7 +6,7 @@
 	<name>JCodec</name>
 	<url>http://jcodec.org</url>
 	<packaging>jar</packaging>
-	<version>0.2.0</version>
+	<version>0.2.0-SNAPSHOT</version>
 	<description>Pure Java implementation of video/audio codecs and formats</description>
 	<licenses>
 		<license>
@@ -18,7 +18,8 @@
 	<scm>
 		<connection>scm:git:git://github.com/jcodec/jcodec.git</connection>
 		<developerConnection>scm:https://github.com/jcodec/jcodec.git</developerConnection>
-		<url>http://git.jcodec.org</url>
+		<url>https://github.com/jcodec/jcodec</url>
+        <tag>HEAD</tag>
 	</scm>
 	<developers>
 		<developer>
@@ -97,11 +98,11 @@
 					<template>site.vm</template>
 				</configuration>
 			</plugin>
-			<!-- plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>findbugs-maven-plugin</artifactId> 
-				<version>2.5.2</version> <configuration> <effort>Max</effort> <threshold>Max</threshold> 
-				<failOnError>false</failOnError> <xmlOutput>false</xmlOutput> <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory> 
-				</configuration> <executions> <execution> <id>analyze-compile</id> <phase>compile</phase> 
-				<goals> <goal>check</goal> </goals> </execution> </executions> </plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+            </plugin>
 		</plugins>
         <extensions>
             <extension>
