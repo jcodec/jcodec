@@ -13,6 +13,7 @@ import java.util.List;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.common.JCodecUtil2;
+import org.jcodec.common.Preconditions;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
@@ -82,6 +83,9 @@ public class TestTool {
             inTrack.gotoFrame(sf);
             while ((inFrame = inTrack.nextFrame()) != null && !inFrame.isKeyFrame())
                 ;
+            if (inFrame == null) {
+                throw new NullPointerException("inFrame == null");
+            }
             inTrack.gotoFrame(inFrame.getFrameNo());
 
             List<Picture8Bit> decodedPics = new ArrayList<Picture8Bit>();
@@ -102,6 +106,9 @@ public class TestTool {
                     }
                     raw = new FileChannelWrapper(new FileOutputStream(coded).getChannel());
                     raw.write(codecPrivate);
+                }
+                if (raw == null) {
+                    throw new IllegalStateException("IDR slice not found");
                 }
                 raw.write(_rawData);
 

@@ -1,4 +1,5 @@
 package org.jcodec.containers;
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.containers.mkv.util.EbmlUtil.computeLength;
 
 import org.jcodec.containers.mkv.MKVTestSuite;
@@ -26,7 +27,7 @@ public class SimpleMappingTest {
             fileInputStream = new FileInputStream(suite.test2);
             readEBMLElements(fileInputStream.getChannel());
         } finally {
-            fileInputStream.close();
+            closeQuietly(fileInputStream);
         }
 
     }

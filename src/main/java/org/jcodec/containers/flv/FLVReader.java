@@ -208,7 +208,12 @@ public class FLVReader {
                 System.out.println("NON AV packet");
                 continue;
             }
-            boolean keyFrame = packetType == 0x8 || packetType == 9 && ((VideoTagHeader) tagHeader).getFrameType() == 1;
+            boolean keyFrame = false;
+            if (tagHeader != null && tagHeader instanceof VideoTagHeader) {
+                VideoTagHeader vth = (VideoTagHeader) tagHeader;
+                keyFrame &= vth.getFrameType() == 1;
+            }
+            keyFrame &= packetType == 0x8 || packetType == 9;
 
             return new FLVTag(type, packetPos, tagHeader, timestamp, payload, keyFrame, frameNo++, streamId,
                     prevPacketSize);

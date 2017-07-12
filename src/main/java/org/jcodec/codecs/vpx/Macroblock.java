@@ -499,6 +499,8 @@ public class Macroblock {
                     sb = vSubblocks[row][col];
                 } else if (VP8Util.PLANE.Y2.equals(plane)) {
                     sb = y2;
+                } else {
+                    throw new IllegalStateException("unknown plane type " + plane);
                 }
                 // System.out.println("mb["+mb.x+"]["+mb.y+"];");
                 // System.out.println("sb["+sb.x+"]["+sb.y+"];");

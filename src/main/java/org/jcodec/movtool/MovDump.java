@@ -2,10 +2,11 @@ package org.jcodec.movtool;
 import java.lang.IllegalStateException;
 import java.lang.System;
 
-
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
@@ -74,8 +75,8 @@ public class MovDump {
                 }
             }
         } finally {
-            raf.close();
-            daos.close();
+            closeQuietly(raf);
+            closeQuietly(daos);
         }
     }
 

@@ -120,6 +120,9 @@ public class ConformanceTestTool {
                     }
                     i++;
                 }
+                if (rawReader == null) {
+                    throw new IllegalStateException("rawReader == null");
+                }
                 Picture8Bit ref = rawReader.readNextFrame8Bit();
                 if (ref != null) {
                     System.err.println(" - FAILED");

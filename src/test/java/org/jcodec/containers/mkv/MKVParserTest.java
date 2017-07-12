@@ -10,6 +10,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static org.jcodec.common.io.IOUtils.closeQuietly;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -59,7 +61,8 @@ public class MKVParserTest {
                 if (simpleBlocks == null || simpleBlocks.length == 0)
                     System.err.println("No simple blocks / block groups found. Looks suspicious");
             }
-            System.out.println(" simple blocks found: "+simpleBlocks.length);
+            int len = simpleBlocks == null ? 0 : simpleBlocks.length;
+            System.out.println(" simple blocks found: "+len);
         }
     }
 
@@ -83,7 +86,7 @@ public class MKVParserTest {
             Assert.assertNotNull(allClusters);
             Assert.assertEquals(25, allClusters.length);
         } finally {
-            stream.close();
+            closeQuietly(stream);
         }
     }
 

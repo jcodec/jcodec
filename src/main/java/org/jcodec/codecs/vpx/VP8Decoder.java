@@ -148,12 +148,12 @@ public class VP8Decoder extends VideoDecoder {
         for (int mbRow = 0; mbRow < numberOfMBRows; mbRow++) {
             for (int mbCol = 0; mbCol < numberOfMBCols; mbCol++) {
                 Macroblock mb = mbs[mbRow + 1][mbCol + 1];
-                if (segmentation != 0 && segmentBased.segmentProbs != null) {
+                if (segmentation != 0 && segmentBased != null && segmentBased.segmentProbs != null) {
                     // if segmentation is on and if segment map is updated
                     mb.segment = headerDecoder.readTree(VP8Util.segmentTree, segmentBased.segmentProbs);
                     segmentationMap[mbRow][mbCol] = (byte) mb.segment;
                 }
-                if (segmentation != 0 && segmentBased.qp != null) {
+                if (segmentation != 0 && segmentBased != null && segmentBased.qp != null) {
                     int qIndex = yacIndex;
                     if (segmentBased.abs != 0)
                         qIndex = segmentBased.qp[mb.segment];
@@ -175,7 +175,7 @@ public class VP8Decoder extends VideoDecoder {
                 }
                 
                 // Segment based filter level adjustment
-                if (segmentation != 0 && segmentBased.lf != null) {
+                if (segmentation != 0 && segmentBased != null && segmentBased.lf != null) {
                     if (segmentBased.abs != 0) {
                         mb.filterLevel = segmentBased.lf[mb.segment];
                     } else {
