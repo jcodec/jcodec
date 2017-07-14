@@ -1,4 +1,5 @@
 package org.jcodec.containers.mps;
+
 import static org.jcodec.codecs.h264.io.model.NALUnitType.IDR_SLICE;
 import static org.jcodec.codecs.h264.io.model.NALUnitType.NON_IDR_SLICE;
 import static org.jcodec.codecs.h264.io.model.NALUnitType.PPS;
@@ -243,7 +244,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null && pkt.streamId != streamId)
                     demuxer.addToStream(pkt);
             }
-            return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, FrameType.UNKOWN, null);
+            return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, FrameType.UNKOWN,
+                    null);
         }
 
         @Override
@@ -286,8 +288,8 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                     while (data.hasRemaining()) {
                         ByteBuffer data2 = NIOUtils.read(data, adts.getSize());
                         Packet pkt = Packet.createPacketWithData(nextFrame, data2);
-                        pkt.setDuration(
-                                (pkt.getTimescale() * 1024) / AACConts.AAC_SAMPLE_RATES[adts.getSamplingIndex()]);
+                        pkt.setDuration((pkt.getTimescale() * 1024)
+                                / AACConts.AAC_SAMPLE_RATES[adts.getSamplingIndex()]);
                         pkt.setPts(nextPts);
                         nextPts += pkt.getDuration();
                         audioStash.add(pkt);
@@ -408,12 +410,18 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     public static int probe(ByteBuffer b_) {
         ByteBuffer b = b_.duplicate();
         int marker = 0xffffffff;
+        int sliceSize = 0;
 
-        int score = 0;
-        boolean inVideoPes = false, hasHeader = false, slicesStarted = false, inNALUnit = false;
+        boolean videoPes = false;
+        int state = 0;
+        int errors = 0;
+        boolean inNALUnit = false;
         List<NALUnit> nuSeq = new ArrayList<NALUnit>();
         while (b.hasRemaining()) {
             int code = b.get() & 0xff;
+            if (state >= 3) {
+                sliceSize ++;
+            }
             marker = (marker << 8) | code;
 
             if (inNALUnit) {
@@ -423,37 +431,62 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 inNALUnit = false;
             }
 
-            if (inVideoPes && marker == 0x1) {
+            if (videoPes && marker == 0x1) {
                 inNALUnit = true; // h.264 case
                 continue;
             } else if (marker < 0x100 || marker > 0x1ff)
                 continue;
-
-            if (MPSUtils.videoMarker(marker)) {
-                if (inVideoPes)
-                    break;
-                else
-                    inVideoPes = true;
-            } else if (marker >= 0x1B0 && marker <= 0x1B8 && inVideoPes) {
-                if ((hasHeader && marker != 0x1B5 && marker != 0x1B2) || slicesStarted)
-                    break;
-                score += 5;
-            } else if (marker == 0x100 && inVideoPes) {
-                if (slicesStarted)
-                    break;
-                hasHeader = true;
-            } else if (marker > 0x100 && marker < 0x1B0) {
-                if (!hasHeader)
-                    continue;
-                if (!slicesStarted) {
-                    score += 50;
-                    slicesStarted = true;
-                }
-                score += 1;
+            
+            // PS marker
+            if(marker >= 0x1ba) {
+                videoPes = MPSUtils.videoMarker(marker);
+                continue;
             }
+            
+            if (!videoPes)
+                continue;
+            
+            boolean stop = false;
+            switch(state) {
+            case 0:
+                if (marker >= 0x1B0 && marker <= 0x1B8)
+                    state = 1;
+                else if(marker == 0x100)
+                    state = 2;
+                else
+                    state = 0;
+                break;
+            case 1:
+                if(marker == 0x100)
+                    state = 2;
+                else if (marker >= 0x1B0 && marker <= 0x1B8)
+                    state = 1;
+                else
+                    errors ++;
+                break;
+            case 2:
+                if (marker == 0x101)
+                    state = 3;
+                else if(marker == 0x1B5 || marker == 0x1B2)
+                    state = 2;
+                else
+                    errors ++;
+                break;
+            default:
+                System.out.println(marker);
+                if (state > 3 && sliceSize < 1) {
+                    errors ++;
+                }
+                sliceSize = 0;
+                if (state - 1 == marker - 0x100)
+                    state = marker - 0x100 + 2;
+                else if(marker == 0x100 || marker >= 0x1B0)
+                    stop = true;
+            }
+            if(stop)
+                break;
         }
-
-        return !nuSeq.isEmpty() ? rateSeq(nuSeq) : score;
+        return Math.max(rateSeq(nuSeq), state >= 3 ? 100 / (1 + errors) : 0);
     }
 
     private static int rateSeq(List<NALUnit> nuSeq) {
@@ -474,15 +507,12 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 hasPps = true;
             } else if (IDR_SLICE == nalUnit.type || NON_IDR_SLICE == nalUnit.type) {
                 if (!hasSlice)
-                    score += 50;
+                    score += 20;
                 hasSlice = true;
-            } else {
-                score += 3;
             }
         }
         return score;
     }
-
 
     @Override
     public void close() throws IOException {
