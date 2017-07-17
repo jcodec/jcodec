@@ -19,7 +19,11 @@ public class EncodedMB {
     private int[] my;
 
     public EncodedMB() {
-        pixels = Picture8Bit.create(16, 16, ColorSpace.YUV420J);
+        this(ColorSpace.YUV420J);
+    }
+
+    public EncodedMB(ColorSpace colorSpace) {
+        pixels = Picture8Bit.create(16, 16, colorSpace);
         nc = new int[16];
         mx = new int[16];
         my = new int[16];

@@ -56,6 +56,7 @@ public class H264Encoder extends VideoEncoder {
     private RateControl rc;
     private int frameNumber;
     private int keyInterval;
+    private ColorSpace colorSpace = ColorSpace.YUV420J;
 
     private int maxPOC;
 
@@ -87,7 +88,21 @@ public class H264Encoder extends VideoEncoder {
     public void setKeyInterval(int keyInterval) {
         this.keyInterval = keyInterval;
     }
-    
+
+    public ColorSpace getColorSpace() {
+        return this.colorSpace;
+    }
+
+    public void setColorSpace(ColorSpace colorSpace) {
+        for (ColorSpace cs : getSupportedColorSpaces()) {
+            if (cs == colorSpace) {
+                this.colorSpace = colorSpace;
+                return;
+            }
+        }
+        throw new IllegalArgumentException("ColorSpace " + colorSpace + " is not supported.");
+    }
+
     /**
      * Encode this picture into h.264 frame. Frame type will be selected by
      * encoder.
@@ -159,10 +174,10 @@ public class H264Encoder extends VideoEncoder {
         topLine = new byte[][] { new byte[mbWidth << 4], new byte[mbWidth << 3], new byte[mbWidth << 3] };
         picOut = Picture8Bit.create(mbWidth << 4, mbHeight << 4, pic.getColor());
 
-        outMB = new EncodedMB();
+        outMB = new EncodedMB(this.colorSpace);
         topEncoded = new EncodedMB[mbWidth];
         for (int i = 0; i < mbWidth; i++)
-            topEncoded[i] = new EncodedMB();
+            topEncoded[i] = new EncodedMB(this.colorSpace);
 
         encodeSlice(sps, pps, pic, dup, idr, frameNumber, frameType);
 
@@ -198,7 +213,7 @@ public class H264Encoder extends VideoEncoder {
         SeqParameterSet sps = new SeqParameterSet();
         sps.pic_width_in_mbs_minus1 = ((sz.getWidth() + 15) >> 4) - 1;
         sps.pic_height_in_map_units_minus1 = ((sz.getHeight() + 15) >> 4) - 1;
-        sps.chroma_format_idc = ColorSpace.YUV420J;
+        sps.chroma_format_idc = this.colorSpace;
         sps.profile_idc = 66;
         sps.level_idc = 40;
         sps.frame_mbs_only_flag = true;
@@ -344,7 +359,7 @@ public class H264Encoder extends VideoEncoder {
 
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
-        return new ColorSpace[] { ColorSpace.YUV420J };
+        return new ColorSpace[] { ColorSpace.YUV420J, ColorSpace.YUV420 };
     }
 
     @Override
