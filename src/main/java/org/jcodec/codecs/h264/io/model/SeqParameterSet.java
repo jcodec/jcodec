@@ -168,12 +168,12 @@ public class SeqParameterSet {
         for (int i = 0; i < 8; i++) {
             boolean seqScalingListPresentFlag = readBool(_in, "SPS: seqScalingListPresentFlag");
             if (seqScalingListPresentFlag) {
-                sps.scalingMatrix.ScalingList4x4 = new ScalingList[8];
-                sps.scalingMatrix.ScalingList8x8 = new ScalingList[8];
+                sps.scalingMatrix.scalingList4x4 = new ScalingList[8];
+                sps.scalingMatrix.scalingList8x8 = new ScalingList[8];
                 if (i < 6) {
-                    sps.scalingMatrix.ScalingList4x4[i] = ScalingList.read(_in, 16);
+                    sps.scalingMatrix.scalingList4x4[i] = ScalingList.read(_in, 16);
                 } else {
-                    sps.scalingMatrix.ScalingList8x8[i - 6] = ScalingList.read(_in, 64);
+                    sps.scalingMatrix.scalingList8x8[i - 6] = ScalingList.read(_in, 64);
                 }
             }
         }
@@ -289,14 +289,14 @@ public class SeqParameterSet {
             if (scalingMatrix != null) {
                 for (int i = 0; i < 8; i++) {
                     if (i < 6) {
-                        writeBool(writer, scalingMatrix.ScalingList4x4[i] != null, "SPS: ");
-                        if (scalingMatrix.ScalingList4x4[i] != null) {
-                            scalingMatrix.ScalingList4x4[i].write(writer);
+                        writeBool(writer, scalingMatrix.scalingList4x4[i] != null, "SPS: ");
+                        if (scalingMatrix.scalingList4x4[i] != null) {
+                            scalingMatrix.scalingList4x4[i].write(writer);
                         }
                     } else {
-                        writeBool(writer, scalingMatrix.ScalingList8x8[i - 6] != null, "SPS: ");
-                        if (scalingMatrix.ScalingList8x8[i - 6] != null) {
-                            scalingMatrix.ScalingList8x8[i - 6].write(writer);
+                        writeBool(writer, scalingMatrix.scalingList8x8[i - 6] != null, "SPS: ");
+                        if (scalingMatrix.scalingList8x8[i - 6] != null) {
+                            scalingMatrix.scalingList8x8[i - 6].write(writer);
                         }
                     }
                 }

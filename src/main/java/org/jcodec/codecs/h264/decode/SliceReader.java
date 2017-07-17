@@ -90,7 +90,7 @@ public class SliceReader {
         topCBPLuma = new int[mbWidth];
         topCBPChroma = new int[mbWidth];
         chromaFormat = sh.sps.chroma_format_idc;
-        transform8x8 = sh.pps.extended == null ? false : sh.pps.extended.transform_8x8_mode_flag;
+        transform8x8 = sh.pps.extended == null ? false : sh.pps.extended.transform8x8ModeFlag;
         if (sh.num_ref_idx_active_override_flag)
             numRef = new int[] { sh.num_ref_idx_active_minus1[0] + 1, sh.num_ref_idx_active_minus1[1] + 1 };
         else

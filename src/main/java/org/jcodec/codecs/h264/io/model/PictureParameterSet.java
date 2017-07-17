@@ -33,21 +33,22 @@ import java.util.Arrays;
 public class PictureParameterSet {
 
     public static class PPSExt {
-        public boolean transform_8x8_mode_flag;
-        public ScalingMatrix scalindMatrix;
-        public int second_chroma_qp_index_offset;
-        public boolean[] pic_scaling_list_present_flag;
-        public boolean isTransform_8x8_mode_flag() {
-            return transform_8x8_mode_flag;
+        public boolean transform8x8ModeFlag;
+        public ScalingMatrix scalingMatrix;
+        public int secondChromaQpIndexOffset;
+
+        public boolean isTransform8x8ModeFlag() {
+            // transform_8x8_mode_flag
+            return transform8x8ModeFlag;
         }
-        public ScalingMatrix getScalindMatrix() {
-            return scalindMatrix;
+
+        public ScalingMatrix getScalingMatrix() {
+            return scalingMatrix;
         }
-        public int getSecond_chroma_qp_index_offset() {
-            return second_chroma_qp_index_offset;
-        }
-        public boolean[] getPic_scaling_list_present_flag() {
-            return pic_scaling_list_present_flag;
+
+        public int getSecondChromaQpIndexOffset() {
+            // second_chroma_qp_index_offset
+            return secondChromaQpIndexOffset;
         }
     }
 
@@ -129,24 +130,23 @@ public class PictureParameterSet {
         pps.redundant_pic_cnt_present_flag = readBool(_in, "PPS: redundant_pic_cnt_present_flag");
         if (moreRBSPData(_in)) {
             pps.extended = new PictureParameterSet.PPSExt();
-            pps.extended.transform_8x8_mode_flag = readBool(_in, "PPS: transform_8x8_mode_flag");
+            pps.extended.transform8x8ModeFlag = readBool(_in, "PPS: transform_8x8_mode_flag");
             boolean pic_scaling_matrix_present_flag = readBool(_in, "PPS: pic_scaling_matrix_present_flag");
             if (pic_scaling_matrix_present_flag) {
-                for (int i = 0; i < 6 + 2 * (pps.extended.transform_8x8_mode_flag ? 1 : 0); i++) {
-                    boolean pic_scaling_list_present_flag = readBool(_in, "PPS: pic_scaling_list_present_flag");
-                    if (pic_scaling_list_present_flag) {
-                        pps.extended.scalindMatrix = new ScalingMatrix();
-                        pps.extended.scalindMatrix.ScalingList4x4 = new ScalingList[8];
-                        pps.extended.scalindMatrix.ScalingList8x8 = new ScalingList[8];
+                for (int i = 0; i < 6 + 2 * (pps.extended.transform8x8ModeFlag ? 1 : 0); i++) {
+                    if (readBool(_in, "PPS: pic_scaling_list_present_flag")) {
+                        pps.extended.scalingMatrix = new ScalingMatrix();
+                        pps.extended.scalingMatrix.scalingList4x4 = new ScalingList[8];
+                        pps.extended.scalingMatrix.scalingList8x8 = new ScalingList[8];
                         if (i < 6) {
-                            pps.extended.scalindMatrix.ScalingList4x4[i] = ScalingList.read(_in, 16);
+                            pps.extended.scalingMatrix.scalingList4x4[i] = ScalingList.read(_in, 16);
                         } else {
-                            pps.extended.scalindMatrix.ScalingList8x8[i - 6] = ScalingList.read(_in, 64);
+                            pps.extended.scalingMatrix.scalingList8x8[i - 6] = ScalingList.read(_in, 64);
                         }
                     }
                 }
             }
-            pps.extended.second_chroma_qp_index_offset = readSE(_in, "PPS: second_chroma_qp_index_offset");
+            pps.extended.secondChromaQpIndexOffset = readSE(_in, "PPS: second_chroma_qp_index_offset");
         }
 
         return pps;
@@ -202,27 +202,27 @@ public class PictureParameterSet {
         writeBool(writer, constrained_intra_pred_flag, "PPS: constrained_intra_pred_flag");
         writeBool(writer, redundant_pic_cnt_present_flag, "PPS: redundant_pic_cnt_present_flag");
         if (extended != null) {
-            writeBool(writer, extended.transform_8x8_mode_flag, "PPS: transform_8x8_mode_flag");
-            writeBool(writer, extended.scalindMatrix != null, "PPS: scalindMatrix");
-            if (extended.scalindMatrix != null) {
-                for (int i = 0; i < 6 + 2 * (extended.transform_8x8_mode_flag ? 1 : 0); i++) {
+            writeBool(writer, extended.transform8x8ModeFlag, "PPS: transform_8x8_mode_flag");
+            writeBool(writer, extended.scalingMatrix != null, "PPS: scalindMatrix");
+            if (extended.scalingMatrix != null) {
+                for (int i = 0; i < 6 + 2 * (extended.transform8x8ModeFlag ? 1 : 0); i++) {
                     if (i < 6) {
 
-                        writeBool(writer, extended.scalindMatrix.ScalingList4x4[i] != null, "PPS: ");
-                        if (extended.scalindMatrix.ScalingList4x4[i] != null) {
-                            extended.scalindMatrix.ScalingList4x4[i].write(writer);
+                        writeBool(writer, extended.scalingMatrix.scalingList4x4[i] != null, "PPS: ");
+                        if (extended.scalingMatrix.scalingList4x4[i] != null) {
+                            extended.scalingMatrix.scalingList4x4[i].write(writer);
                         }
 
                     } else {
 
-                        writeBool(writer, extended.scalindMatrix.ScalingList8x8[i - 6] != null, "PPS: ");
-                        if (extended.scalindMatrix.ScalingList8x8[i - 6] != null) {
-                            extended.scalindMatrix.ScalingList8x8[i - 6].write(writer);
+                        writeBool(writer, extended.scalingMatrix.scalingList8x8[i - 6] != null, "PPS: ");
+                        if (extended.scalingMatrix.scalingList8x8[i - 6] != null) {
+                            extended.scalingMatrix.scalingList8x8[i - 6].write(writer);
                         }
                     }
                 }
             }
-            writeSEtrace(writer, extended.second_chroma_qp_index_offset, "PPS: ");
+            writeSEtrace(writer, extended.secondChromaQpIndexOffset, "PPS: ");
         }
 
         writeTrailingBits(writer);

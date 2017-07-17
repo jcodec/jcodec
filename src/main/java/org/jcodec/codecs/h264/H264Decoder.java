@@ -33,6 +33,7 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.tools.ToJSON;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -189,6 +190,9 @@ public class H264Decoder extends VideoDecoder {
 
             firstSliceHeader = sliceReader.getSliceHeader();
             activeSps = firstSliceHeader.sps;
+
+            validateSupportedFeatures(firstSliceHeader.sps, firstSliceHeader.pps);
+
             int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
             int picHeightInMbs = SeqParameterSet.getPicHeightInMbs(activeSps);
 
@@ -205,6 +209,21 @@ public class H264Decoder extends VideoDecoder {
             filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, di);
 
             return result;
+        }
+
+        private void validateSupportedFeatures(SeqParameterSet sps, PictureParameterSet pps) {
+            if (sps.mb_adaptive_frame_field_flag)
+                throw new RuntimeException("Unsupported h264 feature: MBAFF.");
+            if (sps.bit_depth_luma_minus8 != 0 || sps.bit_depth_chroma_minus8 != 0)
+                throw new RuntimeException("Unsupported h264 feature: High bit depth.");
+            if (sps.chroma_format_idc != ColorSpace.YUV420J)
+                throw new RuntimeException("Unsupported h264 feature: " + sps.chroma_format_idc + " color.");
+            if (!sps.frame_mbs_only_flag || sps.field_pic_flag)
+                throw new RuntimeException("Unsupported h264 feature: interlace.");
+            if (!pps.constrained_intra_pred_flag)
+                throw new RuntimeException("Unsupported h264 feature: constrained intra prediction.");
+            if (pps.extended != null && pps.extended.getScalingMatrix() != null)
+                throw new RuntimeException("Unsupported h264 feature: scaling list.");
         }
 
         public void performIDRMarking(RefPicMarkingIDR refPicMarkingIDR, Frame picture) {

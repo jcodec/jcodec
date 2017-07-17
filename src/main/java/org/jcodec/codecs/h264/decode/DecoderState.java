@@ -28,7 +28,7 @@ public class DecoderState {
     public DecoderState(SliceHeader sh) {
         int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
         chromaQpOffset = new int[] { sh.pps.chroma_qp_index_offset,
-                sh.pps.extended != null ? sh.pps.extended.second_chroma_qp_index_offset : sh.pps.chroma_qp_index_offset };
+                sh.pps.extended != null ? sh.pps.extended.secondChromaQpIndexOffset : sh.pps.chroma_qp_index_offset };
 
         chromaFormat = sh.sps.chroma_format_idc;
 
