@@ -92,12 +92,12 @@ public class SliceDecoder {
     }
 
     private void decodeMacroblocks(Frame[][] refList) {
-        Picture8Bit mb = Picture8Bit.create(16, 16, activeSps.chroma_format_idc);
-        int mbWidth = activeSps.pic_width_in_mbs_minus1 + 1;
+        Picture8Bit mb = Picture8Bit.create(16, 16, activeSps.chromaFormatIdc);
+        int mbWidth = activeSps.picWidthInMbsMinus1 + 1;
 
-        MBlock mBlock = new MBlock(activeSps.chroma_format_idc);
+        MBlock mBlock = new MBlock(activeSps.chromaFormatIdc);
         while (parser.readMacroblock(mBlock)) {
-            decode(mBlock, parser.getSliceHeader().slice_type, mb, refList);
+            decode(mBlock, parser.getSliceHeader().sliceType, mb, refList);
             int mbAddr = mapper.getAddress(mBlock.mbIdx);
             int mbX = mbAddr % mbWidth;
             int mbY = mbAddr / mbWidth;

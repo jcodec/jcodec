@@ -30,84 +30,84 @@ public class SliceHeaderWriter {
     public void write(SliceHeader sliceHeader, boolean idrSlice, int nalRefIdc, BitWriter writer) {
         SeqParameterSet sps = sliceHeader.sps;
         PictureParameterSet pps = sliceHeader.pps;
-        writeUEtrace(writer, sliceHeader.first_mb_in_slice, "SH: first_mb_in_slice");
-        writeUEtrace(writer, sliceHeader.slice_type.ordinal() + (sliceHeader.slice_type_restr ? 5 : 0), "SH: slice_type");
-        writeUEtrace(writer, sliceHeader.pic_parameter_set_id, "SH: pic_parameter_set_id");
-        if (sliceHeader.frame_num > (1 << (sps.log2_max_frame_num_minus4 + 4))) {
-            throw new IllegalArgumentException("frame_num > " + (1 << (sps.log2_max_frame_num_minus4 + 4)));
+        writeUEtrace(writer, sliceHeader.firstMbInSlice, "SH: first_mb_in_slice");
+        writeUEtrace(writer, sliceHeader.sliceType.ordinal() + (sliceHeader.sliceTypeRestr ? 5 : 0), "SH: slice_type");
+        writeUEtrace(writer, sliceHeader.picParameterSetId, "SH: pic_parameter_set_id");
+        if (sliceHeader.frameNum > (1 << (sps.log2MaxFrameNumMinus4 + 4))) {
+            throw new IllegalArgumentException("frame_num > " + (1 << (sps.log2MaxFrameNumMinus4 + 4)));
         }
-        writeUtrace(writer, sliceHeader.frame_num, sps.log2_max_frame_num_minus4 + 4, "SH: frame_num");
-        if (!sps.frame_mbs_only_flag) {
-            writeBool(writer, sliceHeader.field_pic_flag, "SH: field_pic_flag");
-            if (sliceHeader.field_pic_flag) {
-                writeBool(writer, sliceHeader.bottom_field_flag, "SH: bottom_field_flag");
+        writeUtrace(writer, sliceHeader.frameNum, sps.log2MaxFrameNumMinus4 + 4, "SH: frame_num");
+        if (!sps.frameMbsOnlyFlag) {
+            writeBool(writer, sliceHeader.fieldPicFlag, "SH: field_pic_flag");
+            if (sliceHeader.fieldPicFlag) {
+                writeBool(writer, sliceHeader.bottomFieldFlag, "SH: bottom_field_flag");
             }
         }
         if (idrSlice) {
-            writeUEtrace(writer, sliceHeader.idr_pic_id, "SH: idr_pic_id");
+            writeUEtrace(writer, sliceHeader.idrPicId, "SH: idr_pic_id");
         }
-        if (sps.pic_order_cnt_type == 0) {
-            if(sliceHeader.pic_order_cnt_lsb > (1 << (sps.log2_max_pic_order_cnt_lsb_minus4 + 4))) {
-                throw new IllegalArgumentException("pic_order_cnt_lsb > " + (1 << (sps.log2_max_pic_order_cnt_lsb_minus4 + 4)));
+        if (sps.picOrderCntType == 0) {
+            if(sliceHeader.picOrderCntLsb > (1 << (sps.log2MaxPicOrderCntLsbMinus4 + 4))) {
+                throw new IllegalArgumentException("pic_order_cnt_lsb > " + (1 << (sps.log2MaxPicOrderCntLsbMinus4 + 4)));
             }
-            writeU(writer, sliceHeader.pic_order_cnt_lsb, sps.log2_max_pic_order_cnt_lsb_minus4 + 4);
-            if (pps.pic_order_present_flag && !sps.field_pic_flag) {
-                writeSEtrace(writer, sliceHeader.delta_pic_order_cnt_bottom, "SH: delta_pic_order_cnt_bottom");
+            writeU(writer, sliceHeader.picOrderCntLsb, sps.log2MaxPicOrderCntLsbMinus4 + 4);
+            if (pps.picOrderPresentFlag && !sps.fieldPicFlag) {
+                writeSEtrace(writer, sliceHeader.deltaPicOrderCntBottom, "SH: delta_pic_order_cnt_bottom");
             }
         }
-        if (sps.pic_order_cnt_type == 1 && !sps.delta_pic_order_always_zero_flag) {
-            writeSEtrace(writer, sliceHeader.delta_pic_order_cnt[0], "SH: delta_pic_order_cnt");
-            if (pps.pic_order_present_flag && !sps.field_pic_flag)
-                writeSEtrace(writer, sliceHeader.delta_pic_order_cnt[1], "SH: delta_pic_order_cnt");
+        if (sps.picOrderCntType == 1 && !sps.deltaPicOrderAlwaysZeroFlag) {
+            writeSEtrace(writer, sliceHeader.deltaPicOrderCnt[0], "SH: delta_pic_order_cnt");
+            if (pps.picOrderPresentFlag && !sps.fieldPicFlag)
+                writeSEtrace(writer, sliceHeader.deltaPicOrderCnt[1], "SH: delta_pic_order_cnt");
         }
-        if (pps.redundant_pic_cnt_present_flag) {
-            writeUEtrace(writer, sliceHeader.redundant_pic_cnt, "SH: redundant_pic_cnt");
+        if (pps.redundantPicCntPresentFlag) {
+            writeUEtrace(writer, sliceHeader.redundantPicCnt, "SH: redundant_pic_cnt");
         }
-        if (sliceHeader.slice_type == SliceType.B) {
-            writeBool(writer, sliceHeader.direct_spatial_mv_pred_flag, "SH: direct_spatial_mv_pred_flag");
+        if (sliceHeader.sliceType == SliceType.B) {
+            writeBool(writer, sliceHeader.directSpatialMvPredFlag, "SH: direct_spatial_mv_pred_flag");
         }
-        if (sliceHeader.slice_type == SliceType.P || sliceHeader.slice_type == SliceType.SP
-                || sliceHeader.slice_type == SliceType.B) {
-            writeBool(writer, sliceHeader.num_ref_idx_active_override_flag, "SH: num_ref_idx_active_override_flag");
-            if (sliceHeader.num_ref_idx_active_override_flag) {
-                writeUEtrace(writer, sliceHeader.num_ref_idx_active_minus1[0], "SH: num_ref_idx_l0_active_minus1");
-                if (sliceHeader.slice_type == SliceType.B) {
-                    writeUEtrace(writer, sliceHeader.num_ref_idx_active_minus1[1], "SH: num_ref_idx_l1_active_minus1");
+        if (sliceHeader.sliceType == SliceType.P || sliceHeader.sliceType == SliceType.SP
+                || sliceHeader.sliceType == SliceType.B) {
+            writeBool(writer, sliceHeader.numRefIdxActiveOverrideFlag, "SH: num_ref_idx_active_override_flag");
+            if (sliceHeader.numRefIdxActiveOverrideFlag) {
+                writeUEtrace(writer, sliceHeader.numRefIdxActiveMinus1[0], "SH: num_ref_idx_l0_active_minus1");
+                if (sliceHeader.sliceType == SliceType.B) {
+                    writeUEtrace(writer, sliceHeader.numRefIdxActiveMinus1[1], "SH: num_ref_idx_l1_active_minus1");
                 }
             }
         }
         writeRefPicListReordering(sliceHeader, writer);
-        if ((pps.weighted_pred_flag && (sliceHeader.slice_type == SliceType.P || sliceHeader.slice_type == SliceType.SP))
-                || (pps.weighted_bipred_idc == 1 && sliceHeader.slice_type == SliceType.B))
+        if ((pps.weightedPredFlag && (sliceHeader.sliceType == SliceType.P || sliceHeader.sliceType == SliceType.SP))
+                || (pps.weightedBipredIdc == 1 && sliceHeader.sliceType == SliceType.B))
             writePredWeightTable(sliceHeader, writer);
         if (nalRefIdc != 0)
             writeDecRefPicMarking(sliceHeader, idrSlice, writer);
-        if (pps.entropy_coding_mode_flag && sliceHeader.slice_type.isInter()) {
-            writeUEtrace(writer, sliceHeader.cabac_init_idc, "SH: cabac_init_idc");
+        if (pps.entropyCodingModeFlag && sliceHeader.sliceType.isInter()) {
+            writeUEtrace(writer, sliceHeader.cabacInitIdc, "SH: cabac_init_idc");
         }
-        writeSEtrace(writer, sliceHeader.slice_qp_delta, "SH: slice_qp_delta");
-        if (sliceHeader.slice_type == SliceType.SP || sliceHeader.slice_type == SliceType.SI) {
-            if (sliceHeader.slice_type == SliceType.SP) {
-                writeBool(writer, sliceHeader.sp_for_switch_flag, "SH: sp_for_switch_flag");
+        writeSEtrace(writer, sliceHeader.sliceQpDelta, "SH: slice_qp_delta");
+        if (sliceHeader.sliceType == SliceType.SP || sliceHeader.sliceType == SliceType.SI) {
+            if (sliceHeader.sliceType == SliceType.SP) {
+                writeBool(writer, sliceHeader.spForSwitchFlag, "SH: sp_for_switch_flag");
             }
-            writeSEtrace(writer, sliceHeader.slice_qs_delta, "SH: slice_qs_delta");
+            writeSEtrace(writer, sliceHeader.sliceQsDelta, "SH: slice_qs_delta");
         }
-        if (pps.deblocking_filter_control_present_flag) {
-            writeUEtrace(writer, sliceHeader.disable_deblocking_filter_idc, "SH: disable_deblocking_filter_idc");
-            if (sliceHeader.disable_deblocking_filter_idc != 1) {
-                writeSEtrace(writer, sliceHeader.slice_alpha_c0_offset_div2, "SH: slice_alpha_c0_offset_div2");
-                writeSEtrace(writer, sliceHeader.slice_beta_offset_div2, "SH: slice_beta_offset_div2");
+        if (pps.deblockingFilterControlPresentFlag) {
+            writeUEtrace(writer, sliceHeader.disableDeblockingFilterIdc, "SH: disable_deblocking_filter_idc");
+            if (sliceHeader.disableDeblockingFilterIdc != 1) {
+                writeSEtrace(writer, sliceHeader.sliceAlphaC0OffsetDiv2, "SH: slice_alpha_c0_offset_div2");
+                writeSEtrace(writer, sliceHeader.sliceBetaOffsetDiv2, "SH: slice_beta_offset_div2");
             }
         }
-        if (pps.num_slice_groups_minus1 > 0 && pps.slice_group_map_type >= 3 && pps.slice_group_map_type <= 5) {
-            int len = (sps.pic_height_in_map_units_minus1 + 1) * (sps.pic_width_in_mbs_minus1 + 1)
-                    / (pps.slice_group_change_rate_minus1 + 1);
-            if (((sps.pic_height_in_map_units_minus1 + 1) * (sps.pic_width_in_mbs_minus1 + 1))
-                    % (pps.slice_group_change_rate_minus1 + 1) > 0)
+        if (pps.numSliceGroupsMinus1 > 0 && pps.sliceGroupMapType >= 3 && pps.sliceGroupMapType <= 5) {
+            int len = (sps.picHeightInMapUnitsMinus1 + 1) * (sps.picWidthInMbsMinus1 + 1)
+                    / (pps.sliceGroupChangeRateMinus1 + 1);
+            if (((sps.picHeightInMapUnitsMinus1 + 1) * (sps.picWidthInMbsMinus1 + 1))
+                    % (pps.sliceGroupChangeRateMinus1 + 1) > 0)
                 len += 1;
 
             len = CeilLog2(len + 1);
-            writeU(writer, sliceHeader.slice_group_change_cycle, len);
+            writeU(writer, sliceHeader.sliceGroupChangeCycle, len);
         }
 
     }
@@ -169,54 +169,54 @@ public class SliceHeaderWriter {
 
     private void writePredWeightTable(SliceHeader sliceHeader, BitWriter writer) {
         SeqParameterSet sps = sliceHeader.sps;
-        writeUEtrace(writer, sliceHeader.pred_weight_table.luma_log2_weight_denom, "SH: luma_log2_weight_denom");
-        if (sps.chroma_format_idc != MONO) {
-            writeUEtrace(writer, sliceHeader.pred_weight_table.chroma_log2_weight_denom, "SH: chroma_log2_weight_denom");
+        writeUEtrace(writer, sliceHeader.predWeightTable.lumaLog2WeightDenom, "SH: luma_log2_weight_denom");
+        if (sps.chromaFormatIdc != MONO) {
+            writeUEtrace(writer, sliceHeader.predWeightTable.chromaLog2WeightDenom, "SH: chroma_log2_weight_denom");
         }
 
         writeOffsetWeight(sliceHeader, writer, 0);
-        if (sliceHeader.slice_type == SliceType.B) {
+        if (sliceHeader.sliceType == SliceType.B) {
             writeOffsetWeight(sliceHeader, writer, 1);
         }
     }
 
     private void writeOffsetWeight(SliceHeader sliceHeader, BitWriter writer, int list) {
         SeqParameterSet sps = sliceHeader.sps;
-        int defaultLW = 1 << sliceHeader.pred_weight_table.luma_log2_weight_denom;
-        int defaultCW = 1 << sliceHeader.pred_weight_table.chroma_log2_weight_denom;
+        int defaultLW = 1 << sliceHeader.predWeightTable.lumaLog2WeightDenom;
+        int defaultCW = 1 << sliceHeader.predWeightTable.chromaLog2WeightDenom;
         
-        for (int i = 0; i < sliceHeader.pred_weight_table.luma_weight[list].length; i++) {
-            boolean flagLuma = sliceHeader.pred_weight_table.luma_weight[list][i] != defaultLW
-                    || sliceHeader.pred_weight_table.luma_offset[list][i] != 0;
+        for (int i = 0; i < sliceHeader.predWeightTable.lumaWeight[list].length; i++) {
+            boolean flagLuma = sliceHeader.predWeightTable.lumaWeight[list][i] != defaultLW
+                    || sliceHeader.predWeightTable.lumaOffset[list][i] != 0;
             writeBool(writer, flagLuma, "SH: luma_weight_l0_flag");
             if (flagLuma) {
-                writeSEtrace(writer, sliceHeader.pred_weight_table.luma_weight[list][i], "SH: luma_weight_l" + list);
-                writeSEtrace(writer, sliceHeader.pred_weight_table.luma_offset[list][i], "SH: luma_offset_l" + list);
+                writeSEtrace(writer, sliceHeader.predWeightTable.lumaWeight[list][i], "SH: luma_weight_l" + list);
+                writeSEtrace(writer, sliceHeader.predWeightTable.lumaOffset[list][i], "SH: luma_offset_l" + list);
             }
-            if (sps.chroma_format_idc != MONO) {
-                boolean flagChroma = sliceHeader.pred_weight_table.chroma_weight[list][0][i] != defaultCW
-                        || sliceHeader.pred_weight_table.chroma_offset[list][0][i] != 0
-                        || sliceHeader.pred_weight_table.chroma_weight[list][1][i] != defaultCW
-                        || sliceHeader.pred_weight_table.chroma_offset[list][1][i] != 0;
+            if (sps.chromaFormatIdc != MONO) {
+                boolean flagChroma = sliceHeader.predWeightTable.chromaWeight[list][0][i] != defaultCW
+                        || sliceHeader.predWeightTable.chromaOffset[list][0][i] != 0
+                        || sliceHeader.predWeightTable.chromaWeight[list][1][i] != defaultCW
+                        || sliceHeader.predWeightTable.chromaOffset[list][1][i] != 0;
                 writeBool(writer, flagChroma, "SH: chroma_weight_l0_flag");
                 if (flagChroma)
                     for (int j = 0; j < 2; j++) {
-                        writeSEtrace(writer, sliceHeader.pred_weight_table.chroma_weight[list][j][i], "SH: chroma_weight_l" + list);
-                        writeSEtrace(writer, sliceHeader.pred_weight_table.chroma_offset[list][j][i], "SH: chroma_offset_l" + list);
+                        writeSEtrace(writer, sliceHeader.predWeightTable.chromaWeight[list][j][i], "SH: chroma_weight_l" + list);
+                        writeSEtrace(writer, sliceHeader.predWeightTable.chromaOffset[list][j][i], "SH: chroma_offset_l" + list);
                     }
             }
         }
     }
 
     private void writeRefPicListReordering(SliceHeader sliceHeader, BitWriter writer) {
-        if (sliceHeader.slice_type.isInter()) {
+        if (sliceHeader.sliceType.isInter()) {
             boolean l0ReorderingPresent = sliceHeader.refPicReordering != null
                     && sliceHeader.refPicReordering[0] != null;
             writeBool(writer, l0ReorderingPresent, "SH: ref_pic_list_reordering_flag_l0");
             if (l0ReorderingPresent)
                 writeReorderingList(sliceHeader.refPicReordering[0], writer);
         }
-        if (sliceHeader.slice_type == SliceType.B) {
+        if (sliceHeader.sliceType == SliceType.B) {
             boolean l1ReorderingPresent = sliceHeader.refPicReordering != null
                     && sliceHeader.refPicReordering[1] != null;
             writeBool(writer, l1ReorderingPresent, "SH: ref_pic_list_reordering_flag_l1");

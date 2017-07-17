@@ -34,9 +34,9 @@ public class CAVLC {
     private int mbMask;
 
     public CAVLC(SeqParameterSet sps, PictureParameterSet pps, int mbW, int mbH) {
-        this.color = sps.chroma_format_idc;
+        this.color = sps.chromaFormatIdc;
         this.chromaDCVLC = codeTableChromaDC();
-        this.mbWidth = sps.pic_width_in_mbs_minus1 + 1;
+        this.mbWidth = sps.picWidthInMbsMinus1 + 1;
 
         this.mbMask = (1 << mbH) - 1;
 

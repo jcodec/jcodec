@@ -51,7 +51,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
                 continue;
             SeqParameterSet sps = H264Utils.readSPS(b);
         
-            int ww = sps.pic_width_in_mbs_minus1 + 1;
+            int ww = sps.picWidthInMbsMinus1 + 1;
             if (ww > w)
                 w = ww;
             int hh = SeqParameterSet.getPicHeightInMbs(sps);

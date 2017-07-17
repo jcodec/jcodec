@@ -66,21 +66,21 @@ public class AVCClipTrack extends ClipTrack {
         List<ByteBuffer> rawPPS = H264Utils.getRawPPS(codecPrivate);
         SeqParameterSet sps = H264Utils.readSPS(rawSPS.get(0));
 
-        mbW = sps.pic_width_in_mbs_minus1 + 1;
+        mbW = sps.picWidthInMbsMinus1 + 1;
         mbH = SeqParameterSet.getPicHeightInMbs(sps);
 
         encSPS = encoder.initSPS(H264Utils.getPicSize(sps));
-        encSPS.seq_parameter_set_id = 1;
+        encSPS.seqParameterSetId = 1;
         encPPS = encoder.initPPS();
-        encPPS.seq_parameter_set_id = 1;
-        encPPS.pic_parameter_set_id = 1;
-        encSPS.profile_idc = sps.profile_idc;
-        encSPS.level_idc = sps.level_idc;
-        encSPS.frame_mbs_only_flag = sps.frame_mbs_only_flag;
-        encSPS.frame_crop_bottom_offset = sps.frame_crop_bottom_offset;
-        encSPS.frame_crop_left_offset = sps.frame_crop_left_offset;
-        encSPS.frame_crop_right_offset = sps.frame_crop_right_offset;
-        encSPS.frame_crop_top_offset = sps.frame_crop_top_offset;
+        encPPS.seqParameterSetId = 1;
+        encPPS.picParameterSetId = 1;
+        encSPS.profileIdc = sps.profileIdc;
+        encSPS.levelIdc = sps.levelIdc;
+        encSPS.frameMbsOnlyFlag = sps.frameMbsOnlyFlag;
+        encSPS.frameCropBottomOffset = sps.frameCropBottomOffset;
+        encSPS.frameCropLeftOffset = sps.frameCropLeftOffset;
+        encSPS.frameCropRightOffset = sps.frameCropRightOffset;
+        encSPS.frameCropTopOffset = sps.frameCropTopOffset;
         encSPS.vuiParams = sps.vuiParams;
 
         rawSPS.add(H264Utils.writeSPS(encSPS, 128));
@@ -171,7 +171,7 @@ public class AVCClipTrack extends ClipTrack {
             SliceHeaderTweaker st = new H264Utils.SliceHeaderTweaker() {
                 @Override
                 protected void tweak(SliceHeader sh) {
-                    sh.pic_parameter_set_id = 1;
+                    sh.picParameterSetId = 1;
                 }
             };
 

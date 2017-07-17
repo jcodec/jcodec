@@ -94,7 +94,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
 
     public void predictBDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
             boolean trAvb, int[][][] x, PartPred[] pp, Picture8Bit mb, int[] blocks) {
-        if (sh.direct_spatial_mv_pred_flag)
+        if (sh.directSpatialMvPredFlag)
             predictBSpatialDirect(refs, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, x, pp, mb, blocks);
         else
             predictBTemporalDirect(refs, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, x, pp, mb, blocks);
@@ -108,7 +108,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
             int blk4x4_0 = H264Const.BLK8x8_BLOCKS[blk8x8][0];
             pp[blk8x8] = Bi;
 
-            if (!sh.sps.direct_8x8_inference_flag) {
+            if (!sh.sps.direct8x8InferenceFlag) {
                 int[] js = BLK8x8_BLOCKS[blk8x8];
                 for (int j = 0; j < js.length; j++) {
                     int blk4x4 = js[j];
@@ -153,7 +153,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
     }
 
     private void predTemp4x4(Frame[][] refs, int mbX, int mbY, int[][][] x, int blk4x4) {
-        int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
+        int mbWidth = sh.sps.picWidthInMbsMinus1 + 1;
 
         Frame picCol = refs[1][0];
         int blkIndX = blk4x4 & 3;
@@ -253,7 +253,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
             int blk8x8 = blocks8x8[i];
             int blk4x4_0 = H264Const.BLK8x8_BLOCKS[blk8x8][0];
 
-            if (!sh.sps.direct_8x8_inference_flag) {
+            if (!sh.sps.direct8x8InferenceFlag) {
                 int[] js = BLK8x8_BLOCKS[blk8x8];
                 for (int j = 0; j < js.length; j++) {
                     int blk4x4 = js[j];

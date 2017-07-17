@@ -369,7 +369,7 @@ public class H264Utils {
         serialPps.flip();
         H264Utils.escapeNALinplace(serialPps);
 
-        AvcCBox avcC = AvcCBox.createAvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, asList(serialSps),
+        AvcCBox avcC = AvcCBox.createAvcCBox(sps.profileIdc, 0, sps.levelIdc, nalLengthSize, asList(serialSps),
                 asList(serialPps));
 
         return avcC;
@@ -381,7 +381,7 @@ public class H264Utils {
         List<ByteBuffer> serialPps = savePPS(initPPS);
 
         SeqParameterSet sps = initSPS.get(0);
-        return AvcCBox.createAvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, serialSps, serialPps);
+        return AvcCBox.createAvcCBox(sps.profileIdc, 0, sps.levelIdc, nalLengthSize, serialSps, serialPps);
     }
 
     /**
@@ -453,12 +453,12 @@ public class H264Utils {
 
     public static AvcCBox createAvcCFromPS(List<ByteBuffer> spsList, List<ByteBuffer> ppsList, int nalLengthSize) {
         SeqParameterSet sps = readSPS(NIOUtils.duplicate(spsList.get(0)));
-        return AvcCBox.createAvcCBox(sps.profile_idc, 0, sps.level_idc, nalLengthSize, spsList, ppsList);
+        return AvcCBox.createAvcCBox(sps.profileIdc, 0, sps.levelIdc, nalLengthSize, spsList, ppsList);
     }
 
     public static SampleEntry createMOVSampleEntryFromAvcC(AvcCBox avcC) {
         SeqParameterSet sps = SeqParameterSet.read(avcC.getSpsList().get(0).duplicate());
-        int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
+        int codedWidth = (sps.picWidthInMbsMinus1 + 1) << 4;
         int codedHeight = SeqParameterSet.getPicHeightInMbs(sps) << 4;
 
         SampleEntry se = MP4Muxer.videoSampleEntry("avc1", getPicSize(sps), "JCodec");
@@ -491,7 +491,7 @@ public class H264Utils {
                 unescapeNAL(segment);
                 BitReader reader = BitReader.createBitReader(segment);
                 SliceHeader part1 = shr.readPart1(reader);
-                return part1.slice_type == SliceType.I;
+                return part1.sliceType == SliceType.I;
             }
         }
         return false;
@@ -665,7 +665,7 @@ public class H264Utils {
 
     public static PictureParameterSet findPPS(List<PictureParameterSet> ppss, int id) {
         for (PictureParameterSet pps : ppss) {
-            if (pps.pic_parameter_set_id == id)
+            if (pps.picParameterSetId == id)
                 return pps;
         }
         return null;
@@ -673,7 +673,7 @@ public class H264Utils {
 
     public static SeqParameterSet findSPS(List<SeqParameterSet> spss, int id) {
         for (SeqParameterSet sps : spss) {
-            if (sps.seq_parameter_set_id == id)
+            if (sps.seqParameterSetId == id)
                 return sps;
         }
         return null;
@@ -694,9 +694,9 @@ public class H264Utils {
             BitReader reader = BitReader.createBitReader(is);
             SliceHeader sh = shr.readPart1(reader);
 
-            PictureParameterSet pp = findPPS(pps, sh.pic_parameter_set_id);
+            PictureParameterSet pp = findPPS(pps, sh.picParameterSetId);
 
-            return part2(is, os, nu, findSPS(sps, pp.pic_parameter_set_id), pp, nal, reader, sh);
+            return part2(is, os, nu, findSPS(sps, pp.picParameterSetId), pp, nal, reader, sh);
         }
 
         public SliceHeader runSpsPps(ByteBuffer is, ByteBuffer os, NALUnit nu, SeqParameterSet sps,
@@ -720,7 +720,7 @@ public class H264Utils {
 
             shw.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
 
-            if (pps.entropy_coding_mode_flag)
+            if (pps.entropyCodingModeFlag)
                 copyDataCABAC(is, os, reader, writer);
             else
                 copyDataCAVLC(is, os, reader, writer);
@@ -779,11 +779,11 @@ public class H264Utils {
     }
 
     public static Size getPicSize(SeqParameterSet sps) {
-        int w = (sps.pic_width_in_mbs_minus1 + 1) << 4;
+        int w = (sps.picWidthInMbsMinus1 + 1) << 4;
         int h = SeqParameterSet.getPicHeightInMbs(sps) << 4;
-        if (sps.frame_cropping_flag) {
-            w -= (sps.frame_crop_left_offset + sps.frame_crop_right_offset) << sps.chroma_format_idc.compWidth[1];
-            h -= (sps.frame_crop_top_offset + sps.frame_crop_bottom_offset) << sps.chroma_format_idc.compHeight[1];
+        if (sps.frameCroppingFlag) {
+            w -= (sps.frameCropLeftOffset + sps.frameCropRightOffset) << sps.chromaFormatIdc.compWidth[1];
+            h -= (sps.frameCropTopOffset + sps.frameCropBottomOffset) << sps.chromaFormatIdc.compHeight[1];
         }
         return new Size(w, h);
     }

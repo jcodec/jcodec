@@ -52,10 +52,10 @@ public class FrameReader {
             unescapeNAL(nalData);
             if (SPS == nalUnit.type) {
                 SeqParameterSet _sps = SeqParameterSet.read(nalData);
-                sps.put(_sps.seq_parameter_set_id, _sps);
+                sps.put(_sps.seqParameterSetId, _sps);
             } else if (PPS == nalUnit.type) {
                 PictureParameterSet _pps = PictureParameterSet.read(nalData);
-                pps.put(_pps.pic_parameter_set_id, _pps);
+                pps.put(_pps.picParameterSetId, _pps);
             } else if (IDR_SLICE == nalUnit.type || NON_IDR_SLICE == nalUnit.type) {
                 if (sps.size() == 0 || pps.size() == 0) {
                     Logger.warn("Skipping frame as no SPS/PPS have been seen so far...");
@@ -71,8 +71,8 @@ public class FrameReader {
     private SliceReader createSliceReader(ByteBuffer segment, NALUnit nalUnit) {
         BitReader _in = BitReader.createBitReader(segment);
         SliceHeader sh = SliceHeaderReader.readPart1(_in);
-        sh.pps = pps.get(sh.pic_parameter_set_id);
-        sh.sps = sps.get(sh.pps.seq_parameter_set_id);
+        sh.pps = pps.get(sh.picParameterSetId);
+        sh.sps = sps.get(sh.pps.seqParameterSetId);
         SliceHeaderReader.readPart2(sh, nalUnit, sh.sps, sh.pps, _in);
 
         Mapper mapper = new MapManager(sh.sps, sh.pps).getMapper(sh);
@@ -80,15 +80,15 @@ public class FrameReader {
         CAVLC[] cavlc = new CAVLC[] { new CAVLC(sh.sps, sh.pps, 2, 2), new CAVLC(sh.sps, sh.pps, 1, 1),
                 new CAVLC(sh.sps, sh.pps, 1, 1) };
 
-        int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
+        int mbWidth = sh.sps.picWidthInMbsMinus1 + 1;
         CABAC cabac = new CABAC(mbWidth);
 
         MDecoder mDecoder = null;
-        if (sh.pps.entropy_coding_mode_flag) {
+        if (sh.pps.entropyCodingModeFlag) {
             _in.terminate();
             int[][] cm = new int[2][1024];
-            int qp = sh.pps.pic_init_qp_minus26 + 26 + sh.slice_qp_delta;
-            cabac.initModels(cm, sh.slice_type, sh.cabac_init_idc, qp);
+            int qp = sh.pps.picInitQpMinus26 + 26 + sh.sliceQpDelta;
+            cabac.initModels(cm, sh.sliceType, sh.cabacInitIdc, qp);
             mDecoder = new MDecoder(segment, cm);
         }
 
@@ -105,7 +105,7 @@ public class FrameReader {
         ByteBuffer clone = NIOUtils.clone(byteBuffer);
         unescapeNAL(clone);
         SeqParameterSet s = SeqParameterSet.read(clone);
-        sps.put(s.seq_parameter_set_id, s);
+        sps.put(s.seqParameterSetId, s);
     }
 
     public void addPpsList(List<ByteBuffer> ppsList) {
@@ -118,6 +118,6 @@ public class FrameReader {
         ByteBuffer clone = NIOUtils.clone(byteBuffer);
         unescapeNAL(clone);
         PictureParameterSet p = PictureParameterSet.read(clone);
-        pps.put(p.pic_parameter_set_id, p);
+        pps.put(p.picParameterSetId, p);
     }
 }

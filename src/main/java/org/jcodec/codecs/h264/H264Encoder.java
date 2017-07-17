@@ -138,8 +138,8 @@ public class H264Encoder extends VideoEncoder {
             sps = initSPS(new Size(pic.getCroppedWidth(), pic.getCroppedHeight()));
             pps = initPPS();
 
-            maxPOC = 1 << (sps.log2_max_pic_order_cnt_lsb_minus4 + 4);
-            maxFrameNumber = 1 << (sps.log2_max_frame_num_minus4 + 4);
+            maxPOC = 1 << (sps.log2MaxPicOrderCntLsbMinus4 + 4);
+            maxFrameNumber = 1 << (sps.log2MaxFrameNumMinus4 + 4);
         }
 
         if (idr) {
@@ -152,8 +152,8 @@ public class H264Encoder extends VideoEncoder {
             writePPS(dup, pps);
         }
 
-        int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
-        int mbHeight = sps.pic_height_in_map_units_minus1 + 1;
+        int mbWidth = sps.picWidthInMbsMinus1 + 1;
+        int mbHeight = sps.picHeightInMapUnitsMinus1 + 1;
 
         leftRow = new byte[][] { new byte[16], new byte[8], new byte[8] };
         topLine = new byte[][] { new byte[mbWidth << 4], new byte[mbWidth << 3], new byte[mbWidth << 3] };
@@ -190,25 +190,25 @@ public class H264Encoder extends VideoEncoder {
 
     public PictureParameterSet initPPS() {
         PictureParameterSet pps = new PictureParameterSet();
-        pps.pic_init_qp_minus26 = rc.getInitQp(SliceType.I) - 26;
+        pps.picInitQpMinus26 = rc.getInitQp(SliceType.I) - 26;
         return pps;
     }
 
     public SeqParameterSet initSPS(Size sz) {
         SeqParameterSet sps = new SeqParameterSet();
-        sps.pic_width_in_mbs_minus1 = ((sz.getWidth() + 15) >> 4) - 1;
-        sps.pic_height_in_map_units_minus1 = ((sz.getHeight() + 15) >> 4) - 1;
-        sps.chroma_format_idc = ColorSpace.YUV420J;
-        sps.profile_idc = 66;
-        sps.level_idc = 40;
-        sps.frame_mbs_only_flag = true;
-        sps.log2_max_frame_num_minus4 = Math.max(0, MathUtil.log2(keyInterval) - 3);
+        sps.picWidthInMbsMinus1 = ((sz.getWidth() + 15) >> 4) - 1;
+        sps.picHeightInMapUnitsMinus1 = ((sz.getHeight() + 15) >> 4) - 1;
+        sps.chromaFormatIdc = ColorSpace.YUV420J;
+        sps.profileIdc = 66;
+        sps.levelIdc = 40;
+        sps.frameMbsOnlyFlag = true;
+        sps.log2MaxFrameNumMinus4 = Math.max(0, MathUtil.log2(keyInterval) - 3);
 
-        int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
-        int codedHeight = (sps.pic_height_in_map_units_minus1 + 1) << 4;
-        sps.frame_cropping_flag = codedWidth != sz.getWidth() || codedHeight != sz.getHeight();
-        sps.frame_crop_right_offset = (codedWidth - sz.getWidth() + 1) >> 1;
-        sps.frame_crop_bottom_offset = (codedHeight - sz.getHeight() + 1) >> 1;
+        int codedWidth = (sps.picWidthInMbsMinus1 + 1) << 4;
+        int codedHeight = (sps.picHeightInMapUnitsMinus1 + 1) << 4;
+        sps.frameCroppingFlag = codedWidth != sz.getWidth() || codedHeight != sz.getHeight();
+        sps.frameCropRightOffset = (codedWidth - sz.getWidth() + 1) >> 1;
+        sps.frameCropBottomOffset = (codedHeight - sz.getHeight() + 1) >> 1;
 
         return sps;
     }
@@ -229,21 +229,21 @@ public class H264Encoder extends VideoEncoder {
         dup.putInt(0x1);
         new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 3).write(dup);
         SliceHeader sh = new SliceHeader();
-        sh.slice_type = sliceType;
+        sh.sliceType = sliceType;
         if (idr)
             sh.refPicMarkingIDR = new RefPicMarkingIDR(false, false);
         sh.pps = pps;
         sh.sps = sps;
-        sh.pic_order_cnt_lsb = (frameNum << 1) % maxPOC;
-        sh.frame_num = frameNum % maxFrameNumber;
-        sh.slice_qp_delta = qp - (pps.pic_init_qp_minus26 + 26);
+        sh.picOrderCntLsb = (frameNum << 1) % maxPOC;
+        sh.frameNum = frameNum % maxFrameNumber;
+        sh.sliceQpDelta = qp - (pps.picInitQpMinus26 + 26);
 
         ByteBuffer buf = ByteBuffer.allocate(pic.getWidth() * pic.getHeight());
         BitWriter sliceData = new BitWriter(buf);
         new SliceHeaderWriter().write(sh, idr, 2, sliceData);
 
-        for (int mbY = 0; mbY < sps.pic_height_in_map_units_minus1 + 1; mbY++) {
-            for (int mbX = 0; mbX < sps.pic_width_in_mbs_minus1 + 1; mbX++) {
+        for (int mbY = 0; mbY < sps.picHeightInMapUnitsMinus1 + 1; mbY++) {
+            for (int mbX = 0; mbX < sps.picWidthInMbsMinus1 + 1; mbX++) {
                 if (sliceType == SliceType.P) {
                     CAVLCWriter.writeUE(sliceData, 0); // number of skipped mbs
                 }
@@ -319,8 +319,8 @@ public class H264Encoder extends VideoEncoder {
     }
 
     private void putLastMBLine() {
-        int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
-        int mbHeight = sps.pic_height_in_map_units_minus1 + 1;
+        int mbWidth = sps.picWidthInMbsMinus1 + 1;
+        int mbHeight = sps.picHeightInMapUnitsMinus1 + 1;
         for (int mbX = 0; mbX < mbWidth; mbX++)
             MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbHeight - 1) << 4);
     }

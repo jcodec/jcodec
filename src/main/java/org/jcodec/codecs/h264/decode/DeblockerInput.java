@@ -26,7 +26,7 @@ public class DeblockerInput {
     public SliceHeader[] shs;
 
     public DeblockerInput(SeqParameterSet activeSps) {
-        int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
+        int picWidthInMbs = activeSps.picWidthInMbsMinus1 + 1;
         int picHeightInMbs = getPicHeightInMbs(activeSps);
 
         nCoeff = new int[picHeightInMbs << 2][picWidthInMbs << 2];

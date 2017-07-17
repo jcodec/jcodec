@@ -45,7 +45,7 @@ public class MBlockDecoderBase {
     void residualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         if (!mBlock.transform8x8Used) {
             _residualLuma(mBlock);
-        } else if (sh.pps.entropy_coding_mode_flag) {
+        } else if (sh.pps.entropyCodingModeFlag) {
             residualLuma8x8CABAC(mBlock);
         } else {
             residualLuma8x8CAVLC(mBlock);
@@ -103,7 +103,7 @@ public class MBlockDecoderBase {
         if (mBlock.cbpChroma() != 0) {
             decodeChromaResidual(mBlock, leftAvailable, topAvailable, mbX, mbY, qp1, qp2);
         }
-        int addr = mbY * (sh.sps.pic_width_in_mbs_minus1 + 1) + mbX;
+        int addr = mbY * (sh.sps.picWidthInMbsMinus1 + 1) + mbX;
         di.mbQps[1][addr] = qp1;
         di.mbQps[2][addr] = qp2;
         ChromaPredictionBuilder.predictWithMode(mBlock.ac[1], mBlock.chromaPredictionMode, mbX, leftAvailable,

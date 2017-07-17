@@ -22,51 +22,51 @@ public class SPSReadTest {
     @Before
     public void setUp() throws Exception {
         sps1 = new SeqParameterSet();
-        sps1.profile_idc = 66;
+        sps1.profileIdc = 66;
 
-        sps1.constraint_set_0_flag = false;
-        sps1.constraint_set_1_flag = false;
-        sps1.constraint_set_2_flag = false;
-        sps1.constraint_set_3_flag = false;
-        sps1.constraint_set_4_flag = false;
-        sps1.constraint_set_5_flag = false;
-        sps1.level_idc = 30;
-        sps1.seq_parameter_set_id = 0;
-        sps1.log2_max_frame_num_minus4 = 5;
-        sps1.pic_order_cnt_type = 0;
-        sps1.log2_max_pic_order_cnt_lsb_minus4 = 6;
-        sps1.num_ref_frames = 1;
-        sps1.gaps_in_frame_num_value_allowed_flag = false;
-        sps1.pic_width_in_mbs_minus1 = 31;
-        sps1.pic_height_in_map_units_minus1 = 23;
-        sps1.frame_mbs_only_flag = true;
-        sps1.direct_8x8_inference_flag = true;
+        sps1.constraintSet0Flag = false;
+        sps1.constraintSet1Flag = false;
+        sps1.constraintSet2Flag = false;
+        sps1.constraintSet3Flag = false;
+        sps1.constraintSet4Flag = false;
+        sps1.constraintSet5Flag = false;
+        sps1.levelIdc = 30;
+        sps1.seqParameterSetId = 0;
+        sps1.log2MaxFrameNumMinus4 = 5;
+        sps1.picOrderCntType = 0;
+        sps1.log2MaxPicOrderCntLsbMinus4 = 6;
+        sps1.numRefFrames = 1;
+        sps1.gapsInFrameNumValueAllowedFlag = false;
+        sps1.picWidthInMbsMinus1 = 31;
+        sps1.picHeightInMapUnitsMinus1 = 23;
+        sps1.frameMbsOnlyFlag = true;
+        sps1.direct8x8InferenceFlag = true;
 
-        sps1.frame_cropping_flag = false;
+        sps1.frameCroppingFlag = false;
         sps1.vuiParams = new VUIParameters();
-        sps1.vuiParams.aspect_ratio_info_present_flag = false;
-        sps1.vuiParams.overscan_info_present_flag = false;
-        sps1.vuiParams.video_signal_type_present_flag = false;
-        sps1.vuiParams.chroma_loc_info_present_flag = false;
-        sps1.vuiParams.timing_info_present_flag = true;
-        sps1.vuiParams.num_units_in_tick = 1000;
-        sps1.vuiParams.time_scale = 50000;
-        sps1.vuiParams.fixed_frame_rate_flag = true;
-        sps1.vuiParams.pic_struct_present_flag = false;
+        sps1.vuiParams.aspectRatioInfoPresentFlag = false;
+        sps1.vuiParams.overscanInfoPresentFlag = false;
+        sps1.vuiParams.videoSignalTypePresentFlag = false;
+        sps1.vuiParams.chromaLocInfoPresentFlag = false;
+        sps1.vuiParams.timingInfoPresentFlag = true;
+        sps1.vuiParams.numUnitsInTick = 1000;
+        sps1.vuiParams.timeScale = 50000;
+        sps1.vuiParams.fixedFrameRateFlag = true;
+        sps1.vuiParams.picStructPresentFlag = false;
         sps1.vuiParams.bitstreamRestriction = new VUIParameters.BitstreamRestriction();
 
-        sps1.vuiParams.bitstreamRestriction.motion_vectors_over_pic_boundaries_flag = true;
+        sps1.vuiParams.bitstreamRestriction.motionVectorsOverPicBoundariesFlag = true;
 
-        sps1.vuiParams.bitstreamRestriction.max_bytes_per_pic_denom = 0;
+        sps1.vuiParams.bitstreamRestriction.maxBytesPerPicDenom = 0;
 
-        sps1.vuiParams.bitstreamRestriction.max_bits_per_mb_denom = 0;
+        sps1.vuiParams.bitstreamRestriction.maxBitsPerMbDenom = 0;
 
-        sps1.vuiParams.bitstreamRestriction.log2_max_mv_length_horizontal = 10;
+        sps1.vuiParams.bitstreamRestriction.log2MaxMvLengthHorizontal = 10;
 
-        sps1.vuiParams.bitstreamRestriction.log2_max_mv_length_vertical = 10;
-        sps1.vuiParams.bitstreamRestriction.num_reorder_frames = 0;
+        sps1.vuiParams.bitstreamRestriction.log2MaxMvLengthVertical = 10;
+        sps1.vuiParams.bitstreamRestriction.numReorderFrames = 0;
 
-        sps1.vuiParams.bitstreamRestriction.max_dec_frame_buffering = 1;
+        sps1.vuiParams.bitstreamRestriction.maxDecFrameBuffering = 1;
 
     }
 
@@ -77,47 +77,47 @@ public class SPSReadTest {
         try {
             SeqParameterSet sps = SeqParameterSet.read(NIOUtils.fetchFromFile(new File(path)));
 
-            assertEquals(sps.profile_idc, 66);
+            assertEquals(sps.profileIdc, 66);
 
-            assertEquals(sps.constraint_set_0_flag, false);
-            assertEquals(sps.constraint_set_1_flag, false);
-            assertEquals(sps.constraint_set_2_flag, false);
-            assertEquals(sps.constraint_set_3_flag, false);
-            assertEquals(sps.constraint_set_4_flag, false);
-            assertEquals(sps.constraint_set_5_flag, false);
-            assertEquals(sps.level_idc, 30);
-            assertEquals(sps.seq_parameter_set_id, 0);
-            assertEquals(sps.log2_max_frame_num_minus4, 5);
-            assertEquals(sps.pic_order_cnt_type, 0);
-            assertEquals(sps.log2_max_pic_order_cnt_lsb_minus4, 6);
-            assertEquals(sps.num_ref_frames, 1);
-            assertEquals(sps.gaps_in_frame_num_value_allowed_flag, false);
-            assertEquals(sps.pic_width_in_mbs_minus1, 31);
-            assertEquals(sps.pic_height_in_map_units_minus1, 23);
-            assertEquals(sps.frame_mbs_only_flag, true);
-            assertEquals(sps.direct_8x8_inference_flag, true);
+            assertEquals(sps.constraintSet0Flag, false);
+            assertEquals(sps.constraintSet1Flag, false);
+            assertEquals(sps.constraintSet2Flag, false);
+            assertEquals(sps.constraintSet3Flag, false);
+            assertEquals(sps.constraintSet4Flag, false);
+            assertEquals(sps.constraintSet5Flag, false);
+            assertEquals(sps.levelIdc, 30);
+            assertEquals(sps.seqParameterSetId, 0);
+            assertEquals(sps.log2MaxFrameNumMinus4, 5);
+            assertEquals(sps.picOrderCntType, 0);
+            assertEquals(sps.log2MaxPicOrderCntLsbMinus4, 6);
+            assertEquals(sps.numRefFrames, 1);
+            assertEquals(sps.gapsInFrameNumValueAllowedFlag, false);
+            assertEquals(sps.picWidthInMbsMinus1, 31);
+            assertEquals(sps.picHeightInMapUnitsMinus1, 23);
+            assertEquals(sps.frameMbsOnlyFlag, true);
+            assertEquals(sps.direct8x8InferenceFlag, true);
 
-            assertEquals(sps.frame_cropping_flag, false);
+            assertEquals(sps.frameCroppingFlag, false);
             assertNotNull(sps.vuiParams);
-            assertEquals(sps.vuiParams.aspect_ratio_info_present_flag, false);
-            assertEquals(sps.vuiParams.overscan_info_present_flag, false);
-            assertEquals(sps.vuiParams.video_signal_type_present_flag, false);
-            assertEquals(sps.vuiParams.chroma_loc_info_present_flag, false);
-            assertEquals(sps.vuiParams.timing_info_present_flag, true);
-            assertEquals(sps.vuiParams.num_units_in_tick, 1000);
-            assertEquals(sps.vuiParams.time_scale, 50000);
-            assertEquals(sps.vuiParams.fixed_frame_rate_flag, true);
+            assertEquals(sps.vuiParams.aspectRatioInfoPresentFlag, false);
+            assertEquals(sps.vuiParams.overscanInfoPresentFlag, false);
+            assertEquals(sps.vuiParams.videoSignalTypePresentFlag, false);
+            assertEquals(sps.vuiParams.chromaLocInfoPresentFlag, false);
+            assertEquals(sps.vuiParams.timingInfoPresentFlag, true);
+            assertEquals(sps.vuiParams.numUnitsInTick, 1000);
+            assertEquals(sps.vuiParams.timeScale, 50000);
+            assertEquals(sps.vuiParams.fixedFrameRateFlag, true);
             assertNull(sps.vuiParams.nalHRDParams);
             assertNull(sps.vuiParams.vclHRDParams);
-            assertEquals(sps.vuiParams.pic_struct_present_flag, false);
+            assertEquals(sps.vuiParams.picStructPresentFlag, false);
             assertNotNull(sps.vuiParams.bitstreamRestriction);
-            assertEquals(sps.vuiParams.bitstreamRestriction.motion_vectors_over_pic_boundaries_flag, true);
-            assertEquals(sps.vuiParams.bitstreamRestriction.max_bytes_per_pic_denom, 0);
-            assertEquals(sps.vuiParams.bitstreamRestriction.max_bits_per_mb_denom, 0);
-            assertEquals(sps.vuiParams.bitstreamRestriction.log2_max_mv_length_horizontal, 10);
-            assertEquals(sps.vuiParams.bitstreamRestriction.log2_max_mv_length_vertical, 10);
-            assertEquals(sps.vuiParams.bitstreamRestriction.num_reorder_frames, 0);
-            assertEquals(sps.vuiParams.bitstreamRestriction.max_dec_frame_buffering, 1);
+            assertEquals(sps.vuiParams.bitstreamRestriction.motionVectorsOverPicBoundariesFlag, true);
+            assertEquals(sps.vuiParams.bitstreamRestriction.maxBytesPerPicDenom, 0);
+            assertEquals(sps.vuiParams.bitstreamRestriction.maxBitsPerMbDenom, 0);
+            assertEquals(sps.vuiParams.bitstreamRestriction.log2MaxMvLengthHorizontal, 10);
+            assertEquals(sps.vuiParams.bitstreamRestriction.log2MaxMvLengthVertical, 10);
+            assertEquals(sps.vuiParams.bitstreamRestriction.numReorderFrames, 0);
+            assertEquals(sps.vuiParams.bitstreamRestriction.maxDecFrameBuffering, 1);
 
         } finally {
             IOUtils.closeQuietly(is);

@@ -75,10 +75,10 @@ public class BufferH264ES implements DemuxerTrack, Demuxer {
                 prevNu = nu;
             } else if (nu.type == NALUnitType.PPS) {
                 PictureParameterSet read = PictureParameterSet.read(buf);
-                pps.put(read.pic_parameter_set_id, read);
+                pps.put(read.picParameterSetId, read);
             } else if (nu.type == NALUnitType.SPS) {
                 SeqParameterSet read = SeqParameterSet.read(buf);
-                sps.put(read.seq_parameter_set_id, read);
+                sps.put(read.seqParameterSetId, read);
             }
         }
 
@@ -90,24 +90,24 @@ public class BufferH264ES implements DemuxerTrack, Demuxer {
     private SliceHeader readSliceHeader(ByteBuffer buf, NALUnit nu) {
         BitReader br = BitReader.createBitReader(buf);
         SliceHeader sh = SliceHeaderReader.readPart1(br);
-        PictureParameterSet pp = pps.get(sh.pic_parameter_set_id);
-        SliceHeaderReader.readPart2(sh, nu, sps.get(pp.seq_parameter_set_id), pp, br);
+        PictureParameterSet pp = pps.get(sh.picParameterSetId);
+        SliceHeaderReader.readPart2(sh, nu, sps.get(pp.seqParameterSetId), pp, br);
         return sh;
     }
 
     private boolean sameFrame(NALUnit nu1, NALUnit nu2, SliceHeader sh1, SliceHeader sh2) {
-        if (sh1.pic_parameter_set_id != sh2.pic_parameter_set_id)
+        if (sh1.picParameterSetId != sh2.picParameterSetId)
             return false;
 
-        if (sh1.frame_num != sh2.frame_num)
+        if (sh1.frameNum != sh2.frameNum)
             return false;
 
         SeqParameterSet sps = sh1.sps;
 
-        if ((sps.pic_order_cnt_type == 0 && sh1.pic_order_cnt_lsb != sh2.pic_order_cnt_lsb))
+        if ((sps.picOrderCntType == 0 && sh1.picOrderCntLsb != sh2.picOrderCntLsb))
             return false;
 
-        if ((sps.pic_order_cnt_type == 1 && (sh1.delta_pic_order_cnt[0] != sh2.delta_pic_order_cnt[0] || sh1.delta_pic_order_cnt[1] != sh2.delta_pic_order_cnt[1])))
+        if ((sps.picOrderCntType == 1 && (sh1.deltaPicOrderCnt[0] != sh2.deltaPicOrderCnt[0] || sh1.deltaPicOrderCnt[1] != sh2.deltaPicOrderCnt[1])))
             return false;
 
         if (((nu1.nal_ref_idc == 0 || nu2.nal_ref_idc == 0) && nu1.nal_ref_idc != nu2.nal_ref_idc))
@@ -116,18 +116,18 @@ public class BufferH264ES implements DemuxerTrack, Demuxer {
         if (((nu1.type == NALUnitType.IDR_SLICE) != (nu2.type == NALUnitType.IDR_SLICE)))
             return false;
 
-        if (sh1.idr_pic_id != sh2.idr_pic_id)
+        if (sh1.idrPicId != sh2.idrPicId)
             return false;
 
         return true;
     }
 
     private Packet detectPoc(ByteBuffer result, NALUnit nu, SliceHeader sh) {
-        int maxFrameNum = 1 << (sh.sps.log2_max_frame_num_minus4 + 4);
+        int maxFrameNum = 1 << (sh.sps.log2MaxFrameNumMinus4 + 4);
         if (detectGap(sh, maxFrameNum)) {
             issueNonExistingPic(sh, maxFrameNum);
         }
-        int absFrameNum = updateFrameNumber(sh.frame_num, maxFrameNum, detectMMCO5(sh.refPicMarkingNonIDR));
+        int absFrameNum = updateFrameNumber(sh.frameNum, maxFrameNum, detectMMCO5(sh.refPicMarkingNonIDR));
 
         int poc = 0;
         if (nu.type == NALUnitType.NON_IDR_SLICE) {
@@ -157,13 +157,13 @@ public class BufferH264ES implements DemuxerTrack, Demuxer {
     }
 
     private boolean detectGap(SliceHeader sh, int maxFrameNum) {
-        return sh.frame_num != prevFrameNum && sh.frame_num != ((prevFrameNum + 1) % maxFrameNum);
+        return sh.frameNum != prevFrameNum && sh.frameNum != ((prevFrameNum + 1) % maxFrameNum);
     }
 
     private int calcPoc(int absFrameNum, NALUnit nu, SliceHeader sh) {
-        if (sh.sps.pic_order_cnt_type == 0) {
+        if (sh.sps.picOrderCntType == 0) {
             return calcPOC0(nu, sh);
-        } else if (sh.sps.pic_order_cnt_type == 1) {
+        } else if (sh.sps.picOrderCntType == 1) {
             return calcPOC1(absFrameNum, nu, sh);
         } else {
             return calcPOC2(absFrameNum, nu, sh);
@@ -180,19 +180,19 @@ public class BufferH264ES implements DemuxerTrack, Demuxer {
 
     private int calcPOC1(int absFrameNum, NALUnit nu, SliceHeader sh) {
 
-        if (sh.sps.num_ref_frames_in_pic_order_cnt_cycle == 0)
+        if (sh.sps.numRefFramesInPicOrderCntCycle == 0)
             absFrameNum = 0;
         if (nu.nal_ref_idc == 0 && absFrameNum > 0)
             absFrameNum = absFrameNum - 1;
 
         int expectedDeltaPerPicOrderCntCycle = 0;
-        for (int i = 0; i < sh.sps.num_ref_frames_in_pic_order_cnt_cycle; i++)
+        for (int i = 0; i < sh.sps.numRefFramesInPicOrderCntCycle; i++)
             expectedDeltaPerPicOrderCntCycle += sh.sps.offsetForRefFrame[i];
 
         int expectedPicOrderCnt;
         if (absFrameNum > 0) {
-            int picOrderCntCycleCnt = (absFrameNum - 1) / sh.sps.num_ref_frames_in_pic_order_cnt_cycle;
-            int frameNumInPicOrderCntCycle = (absFrameNum - 1) % sh.sps.num_ref_frames_in_pic_order_cnt_cycle;
+            int picOrderCntCycleCnt = (absFrameNum - 1) / sh.sps.numRefFramesInPicOrderCntCycle;
+            int frameNumInPicOrderCntCycle = (absFrameNum - 1) % sh.sps.numRefFramesInPicOrderCntCycle;
 
             expectedPicOrderCnt = picOrderCntCycleCnt * expectedDeltaPerPicOrderCntCycle;
             for (int i = 0; i <= frameNumInPicOrderCntCycle; i++)
@@ -201,15 +201,15 @@ public class BufferH264ES implements DemuxerTrack, Demuxer {
             expectedPicOrderCnt = 0;
         }
         if (nu.nal_ref_idc == 0)
-            expectedPicOrderCnt = expectedPicOrderCnt + sh.sps.offset_for_non_ref_pic;
+            expectedPicOrderCnt = expectedPicOrderCnt + sh.sps.offsetForNonRefPic;
 
-        return expectedPicOrderCnt + sh.delta_pic_order_cnt[0];
+        return expectedPicOrderCnt + sh.deltaPicOrderCnt[0];
     }
 
     private int calcPOC0(NALUnit nu, SliceHeader sh) {
 
-        int pocCntLsb = sh.pic_order_cnt_lsb;
-        int maxPicOrderCntLsb = 1 << (sh.sps.log2_max_pic_order_cnt_lsb_minus4 + 4);
+        int pocCntLsb = sh.picOrderCntLsb;
+        int maxPicOrderCntLsb = 1 << (sh.sps.log2MaxPicOrderCntLsbMinus4 + 4);
 
         // TODO prevPicOrderCntMsb should be wrapped!!
         int picOrderCntMsb;

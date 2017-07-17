@@ -9,15 +9,25 @@ package org.jcodec.codecs.h264.io.model;
  */
 public class HRDParameters {
 
-    public int cpb_cnt_minus1;
-    public int bit_rate_scale;
-    public int cpb_size_scale;
-    public int[] bit_rate_value_minus1;
-    public int[] cpb_size_value_minus1;
-    public boolean[] cbr_flag;
-    public int initial_cpb_removal_delay_length_minus1;
-    public int cpb_removal_delay_length_minus1;
-    public int dpb_output_delay_length_minus1;
-    public int time_offset_length;
+    // cpb_cnt_minus1
+    public int cpbCntMinus1;
+    // bit_rate_scale
+    public int bitRateScale;
+    // cpb_size_scale
+    public int cpbSizeScale;
+    // bit_rate_value_minus1
+    public int[] bitRateValueMinus1;
+    // cpb_size_value_minus1
+    public int[] cpbSizeValueMinus1;
+    // cbr_flag
+    public boolean[] cbrFlag;
+    // initial_cpb_removal_delay_length_minus1
+    public int initialCpbRemovalDelayLengthMinus1;
+    // cpb_removal_delay_length_minus1
+    public int cpbRemovalDelayLengthMinus1;
+    // dpb_output_delay_length_minus1
+    public int dpbOutputDelayLengthMinus1;
+    // time_offset_length
+    public int timeOffsetLength;
 
 }

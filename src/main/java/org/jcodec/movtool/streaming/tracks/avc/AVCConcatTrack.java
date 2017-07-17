@@ -79,14 +79,14 @@ public class AVCConcatTrack implements VirtualTrack {
             for (ByteBuffer ppsBuffer : rawPPSs) {
                 PictureParameterSet pps = H264Utils.readPPS(NIOUtils.duplicate(ppsBuffer));
                 // Allow up to 256 SPS/PPS per clip
-                pps.pic_parameter_set_id |= i << 8;
-                pps.seq_parameter_set_id |= i << 8;
+                pps.picParameterSetId |= i << 8;
+                pps.seqParameterSetId |= i << 8;
                 allPps.add(pps);
             }
             List<ByteBuffer> rawSPSs = H264Utils.getRawSPS(se.getCodecPrivate());
             for (ByteBuffer spsBuffer : rawSPSs) {
                 SeqParameterSet sps = H264Utils.readSPS(NIOUtils.duplicate(spsBuffer));
-                sps.seq_parameter_set_id |= i << 8;
+                sps.seqParameterSetId |= i << 8;
                 allSps.add(sps);
             }
             int idx2 = i;
@@ -102,8 +102,8 @@ public class AVCConcatTrack implements VirtualTrack {
     private void mergePS(List<SeqParameterSet> allSps, List<PictureParameterSet> allPps, Map<Integer, Integer> map) {
         List<ByteBuffer> spsRef = new ArrayList<ByteBuffer>();
         for (SeqParameterSet sps : allSps) {
-            int spsId = sps.seq_parameter_set_id;
-            sps.seq_parameter_set_id = 0;
+            int spsId = sps.seqParameterSetId;
+            sps.seqParameterSetId = 0;
             ByteBuffer serial = H264Utils.writeSPS(sps, 32);
             int idx = NIOUtils.find(spsRef, serial);
             if (idx == -1) {
@@ -111,14 +111,14 @@ public class AVCConcatTrack implements VirtualTrack {
                 spsRef.add(serial);
             }
             for (PictureParameterSet pps : allPps) {
-                if (pps.seq_parameter_set_id == spsId)
-                    pps.seq_parameter_set_id = idx;
+                if (pps.seqParameterSetId == spsId)
+                    pps.seqParameterSetId = idx;
             }
         }
         List<ByteBuffer> ppsRef = new ArrayList<ByteBuffer>();
         for (PictureParameterSet pps : allPps) {
-            int ppsId = pps.pic_parameter_set_id;
-            pps.pic_parameter_set_id = 0;
+            int ppsId = pps.picParameterSetId;
+            pps.picParameterSetId = 0;
             ByteBuffer serial = H264Utils.writePPS(pps, 128);
             int idx = NIOUtils.find(ppsRef, serial);
             if (idx == -1) {
@@ -130,14 +130,14 @@ public class AVCConcatTrack implements VirtualTrack {
         allSps.clear();
         for (int i = 0; i < spsRef.size(); i++) {
             SeqParameterSet sps = H264Utils.readSPS(spsRef.get(i));
-            sps.seq_parameter_set_id = i;
+            sps.seqParameterSetId = i;
             allSps.add(sps);
         }
 
         allPps.clear();
         for (int i = 0; i < ppsRef.size(); i++) {
             PictureParameterSet pps = H264Utils.readPPS(ppsRef.get(i));
-            pps.pic_parameter_set_id = i;
+            pps.picParameterSetId = i;
             allPps.add(pps);
         }
     }
@@ -221,7 +221,7 @@ public class AVCConcatTrack implements VirtualTrack {
 
         @Override
         protected void tweak(SliceHeader sh) {
-            sh.pic_parameter_set_id = track.map.get((idx2 << 8) | sh.pic_parameter_set_id);
+            sh.picParameterSetId = track.map.get((idx2 << 8) | sh.picParameterSetId);
         }
     }
 

@@ -44,8 +44,8 @@ public class MBEncoderP16x16 {
         this.cavlc = cavlc;
         this.ref = ref;
         this.me = me;
-        mvTopX = new int[sps.pic_width_in_mbs_minus1 + 1];
-        mvTopY = new int[sps.pic_width_in_mbs_minus1 + 1];
+        mvTopX = new int[sps.picWidthInMbsMinus1 + 1];
+        mvTopY = new int[sps.picWidthInMbsMinus1 + 1];
         interpolator = new BlockInterpolator();
     }
 
@@ -54,12 +54,12 @@ public class MBEncoderP16x16 {
         int cw = pic.getColor().compWidth[1];
         int ch = pic.getColor().compHeight[1];
 
-        if (sps.num_ref_frames > 1) {
+        if (sps.numRefFrames > 1) {
             int refIdx = decideRef();
-            CAVLCWriter.writeTE(out, refIdx, sps.num_ref_frames - 1);
+            CAVLCWriter.writeTE(out, refIdx, sps.numRefFrames - 1);
         }
 
-        boolean trAvb = mbY > 0 && mbX < sps.pic_width_in_mbs_minus1;
+        boolean trAvb = mbY > 0 && mbX < sps.picWidthInMbsMinus1;
         boolean tlAvb = mbX > 0 && mbY > 0;
         int mvpx = median(mvLeftX, mvTopX[mbX], trAvb ? mvTopX[mbX + 1] : 0, tlAvb ? mvTopLeftX : 0, mbX > 0, mbY > 0,
                 trAvb, tlAvb);
@@ -77,7 +77,7 @@ public class MBEncoderP16x16 {
         CAVLCWriter.writeSE(out, mv[0] - mvpx); // mvdx
         CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvdy
 
-        Picture8Bit mbRef = Picture8Bit.create(16, 16, sps.chroma_format_idc);
+        Picture8Bit mbRef = Picture8Bit.create(16, 16, sps.chromaFormatIdc);
         int[][] mb = new int[][] {new int[256], new int[256 >> (cw + ch)], new int[256 >> (cw + ch)]};
 
         interpolator.getBlockLuma(ref, mbRef, 0, (mbX << 6) + mv[0], (mbY << 6) + mv[1], 16, 16);

@@ -36,12 +36,12 @@ public class SliceHeaderReader {
     public static SliceHeader readPart1(BitReader _in) {
 
         SliceHeader sh = new SliceHeader();
-        sh.first_mb_in_slice = readUEtrace(_in, "SH: first_mb_in_slice");
-        int sh_type = readUEtrace(_in, "SH: slice_type");
-        sh.slice_type = SliceType.fromValue(sh_type % 5);
-        sh.slice_type_restr = (sh_type / 5) > 0;
+        sh.firstMbInSlice = readUEtrace(_in, "SH: first_mb_in_slice");
+        int shType = readUEtrace(_in, "SH: slice_type");
+        sh.sliceType = SliceType.fromValue(shType % 5);
+        sh.sliceTypeRestr = (shType / 5) > 0;
 
-        sh.pic_parameter_set_id = readUEtrace(_in, "SH: pic_parameter_set_id");
+        sh.picParameterSetId = readUEtrace(_in, "SH: pic_parameter_set_id");
 
         return sh;
     }
@@ -51,75 +51,75 @@ public class SliceHeaderReader {
         sh.pps = pps;
         sh.sps = sps;
 
-        sh.frame_num = readU(_in, sps.log2_max_frame_num_minus4 + 4, "SH: frame_num");
-        if (!sps.frame_mbs_only_flag) {
-            sh.field_pic_flag = readBool(_in, "SH: field_pic_flag");
-            if (sh.field_pic_flag) {
-                sh.bottom_field_flag = readBool(_in, "SH: bottom_field_flag");
+        sh.frameNum = readU(_in, sps.log2MaxFrameNumMinus4 + 4, "SH: frame_num");
+        if (!sps.frameMbsOnlyFlag) {
+            sh.fieldPicFlag = readBool(_in, "SH: field_pic_flag");
+            if (sh.fieldPicFlag) {
+                sh.bottomFieldFlag = readBool(_in, "SH: bottom_field_flag");
             }
         }
         if (nalUnit.type == NALUnitType.IDR_SLICE) {
-            sh.idr_pic_id = readUEtrace(_in, "SH: idr_pic_id");
+            sh.idrPicId = readUEtrace(_in, "SH: idr_pic_id");
         }
-        if (sps.pic_order_cnt_type == 0) {
-            sh.pic_order_cnt_lsb = readU(_in, sps.log2_max_pic_order_cnt_lsb_minus4 + 4, "SH: pic_order_cnt_lsb");
-            if (pps.pic_order_present_flag && !sps.field_pic_flag) {
-                sh.delta_pic_order_cnt_bottom = readSE(_in, "SH: delta_pic_order_cnt_bottom");
+        if (sps.picOrderCntType == 0) {
+            sh.picOrderCntLsb = readU(_in, sps.log2MaxPicOrderCntLsbMinus4 + 4, "SH: pic_order_cnt_lsb");
+            if (pps.picOrderPresentFlag && !sps.fieldPicFlag) {
+                sh.deltaPicOrderCntBottom = readSE(_in, "SH: delta_pic_order_cnt_bottom");
             }
         }
-        sh.delta_pic_order_cnt = new int[2];
-        if (sps.pic_order_cnt_type == 1 && !sps.delta_pic_order_always_zero_flag) {
-            sh.delta_pic_order_cnt[0] = readSE(_in, "SH: delta_pic_order_cnt[0]");
-            if (pps.pic_order_present_flag && !sps.field_pic_flag)
-                sh.delta_pic_order_cnt[1] = readSE(_in, "SH: delta_pic_order_cnt[1]");
+        sh.deltaPicOrderCnt = new int[2];
+        if (sps.picOrderCntType == 1 && !sps.deltaPicOrderAlwaysZeroFlag) {
+            sh.deltaPicOrderCnt[0] = readSE(_in, "SH: delta_pic_order_cnt[0]");
+            if (pps.picOrderPresentFlag && !sps.fieldPicFlag)
+                sh.deltaPicOrderCnt[1] = readSE(_in, "SH: delta_pic_order_cnt[1]");
         }
-        if (pps.redundant_pic_cnt_present_flag) {
-            sh.redundant_pic_cnt = readUEtrace(_in, "SH: redundant_pic_cnt");
+        if (pps.redundantPicCntPresentFlag) {
+            sh.redundantPicCnt = readUEtrace(_in, "SH: redundant_pic_cnt");
         }
-        if (sh.slice_type == SliceType.B) {
-            sh.direct_spatial_mv_pred_flag = readBool(_in, "SH: direct_spatial_mv_pred_flag");
+        if (sh.sliceType == SliceType.B) {
+            sh.directSpatialMvPredFlag = readBool(_in, "SH: direct_spatial_mv_pred_flag");
         }
-        if (sh.slice_type == SliceType.P || sh.slice_type == SliceType.SP || sh.slice_type == SliceType.B) {
-            sh.num_ref_idx_active_override_flag = readBool(_in, "SH: num_ref_idx_active_override_flag");
-            if (sh.num_ref_idx_active_override_flag) {
-                sh.num_ref_idx_active_minus1[0] = readUEtrace(_in, "SH: num_ref_idx_l0_active_minus1");
-                if (sh.slice_type == SliceType.B) {
-                    sh.num_ref_idx_active_minus1[1] = readUEtrace(_in, "SH: num_ref_idx_l1_active_minus1");
+        if (sh.sliceType == SliceType.P || sh.sliceType == SliceType.SP || sh.sliceType == SliceType.B) {
+            sh.numRefIdxActiveOverrideFlag = readBool(_in, "SH: num_ref_idx_active_override_flag");
+            if (sh.numRefIdxActiveOverrideFlag) {
+                sh.numRefIdxActiveMinus1[0] = readUEtrace(_in, "SH: num_ref_idx_l0_active_minus1");
+                if (sh.sliceType == SliceType.B) {
+                    sh.numRefIdxActiveMinus1[1] = readUEtrace(_in, "SH: num_ref_idx_l1_active_minus1");
                 }
             }
         }
         readRefPicListReordering(sh, _in);
-        if ((pps.weighted_pred_flag && (sh.slice_type == SliceType.P || sh.slice_type == SliceType.SP))
-                || (pps.weighted_bipred_idc == 1 && sh.slice_type == SliceType.B))
+        if ((pps.weightedPredFlag && (sh.sliceType == SliceType.P || sh.sliceType == SliceType.SP))
+                || (pps.weightedBipredIdc == 1 && sh.sliceType == SliceType.B))
             readPredWeightTable(sps, pps, sh, _in);
         if (nalUnit.nal_ref_idc != 0)
             readDecoderPicMarking(nalUnit, sh, _in);
-        if (pps.entropy_coding_mode_flag && sh.slice_type.isInter()) {
-            sh.cabac_init_idc = readUEtrace(_in, "SH: cabac_init_idc");
+        if (pps.entropyCodingModeFlag && sh.sliceType.isInter()) {
+            sh.cabacInitIdc = readUEtrace(_in, "SH: cabac_init_idc");
         }
-        sh.slice_qp_delta = readSE(_in, "SH: slice_qp_delta");
-        if (sh.slice_type == SliceType.SP || sh.slice_type == SliceType.SI) {
-            if (sh.slice_type == SliceType.SP) {
-                sh.sp_for_switch_flag = readBool(_in, "SH: sp_for_switch_flag");
+        sh.sliceQpDelta = readSE(_in, "SH: slice_qp_delta");
+        if (sh.sliceType == SliceType.SP || sh.sliceType == SliceType.SI) {
+            if (sh.sliceType == SliceType.SP) {
+                sh.spForSwitchFlag = readBool(_in, "SH: sp_for_switch_flag");
             }
-            sh.slice_qs_delta = readSE(_in, "SH: slice_qs_delta");
+            sh.sliceQsDelta = readSE(_in, "SH: slice_qs_delta");
         }
-        if (pps.deblocking_filter_control_present_flag) {
-            sh.disable_deblocking_filter_idc = readUEtrace(_in, "SH: disable_deblocking_filter_idc");
-            if (sh.disable_deblocking_filter_idc != 1) {
-                sh.slice_alpha_c0_offset_div2 = readSE(_in, "SH: slice_alpha_c0_offset_div2");
-                sh.slice_beta_offset_div2 = readSE(_in, "SH: slice_beta_offset_div2");
+        if (pps.deblockingFilterControlPresentFlag) {
+            sh.disableDeblockingFilterIdc = readUEtrace(_in, "SH: disable_deblocking_filter_idc");
+            if (sh.disableDeblockingFilterIdc != 1) {
+                sh.sliceAlphaC0OffsetDiv2 = readSE(_in, "SH: slice_alpha_c0_offset_div2");
+                sh.sliceBetaOffsetDiv2 = readSE(_in, "SH: slice_beta_offset_div2");
             }
         }
-        if (pps.num_slice_groups_minus1 > 0 && pps.slice_group_map_type >= 3 && pps.slice_group_map_type <= 5) {
-            int len = getPicHeightInMbs(sps) * (sps.pic_width_in_mbs_minus1 + 1)
-                    / (pps.slice_group_change_rate_minus1 + 1);
-            if ((getPicHeightInMbs(sps) * (sps.pic_width_in_mbs_minus1 + 1))
-                    % (pps.slice_group_change_rate_minus1 + 1) > 0)
+        if (pps.numSliceGroupsMinus1 > 0 && pps.sliceGroupMapType >= 3 && pps.sliceGroupMapType <= 5) {
+            int len = getPicHeightInMbs(sps) * (sps.picWidthInMbsMinus1 + 1)
+                    / (pps.sliceGroupChangeRateMinus1 + 1);
+            if ((getPicHeightInMbs(sps) * (sps.picWidthInMbsMinus1 + 1))
+                    % (pps.sliceGroupChangeRateMinus1 + 1) > 0)
                 len += 1;
 
             len = CeilLog2(len + 1);
-            sh.slice_group_change_cycle = readU(_in, len, "SH: slice_group_change_cycle");
+            sh.sliceGroupChangeCycle = readU(_in, len, "SH: slice_group_change_cycle");
         }
 
         return sh;
@@ -140,20 +140,20 @@ public class SliceHeaderReader {
 
     private static void readDecoderPicMarking(NALUnit nalUnit, SliceHeader sh, BitReader _in) {
         if (nalUnit.type == NALUnitType.IDR_SLICE) {
-            boolean no_output_of_prior_pics_flag = readBool(_in, "SH: no_output_of_prior_pics_flag");
-            boolean long_term_reference_flag = readBool(_in, "SH: long_term_reference_flag");
-            sh.refPicMarkingIDR = new RefPicMarkingIDR(no_output_of_prior_pics_flag, long_term_reference_flag);
+            boolean noOutputOfPriorPicsFlag = readBool(_in, "SH: no_output_of_prior_pics_flag");
+            boolean longTermReferenceFlag = readBool(_in, "SH: long_term_reference_flag");
+            sh.refPicMarkingIDR = new RefPicMarkingIDR(noOutputOfPriorPicsFlag, longTermReferenceFlag);
         } else {
-            boolean adaptive_ref_pic_marking_mode_flag = readBool(_in, "SH: adaptive_ref_pic_marking_mode_flag");
-            if (adaptive_ref_pic_marking_mode_flag) {
+            boolean adaptiveRefPicMarkingModeFlag = readBool(_in, "SH: adaptive_ref_pic_marking_mode_flag");
+            if (adaptiveRefPicMarkingModeFlag) {
                 ArrayList<Instruction> mmops = new ArrayList<Instruction>();
-                int memory_management_control_operation;
+                int memoryManagementControlOperation;
                 do {
-                    memory_management_control_operation = readUEtrace(_in, "SH: memory_management_control_operation");
+                    memoryManagementControlOperation = readUEtrace(_in, "SH: memory_management_control_operation");
 
                     Instruction instr = null;
 
-                    switch (memory_management_control_operation) {
+                    switch (memoryManagementControlOperation) {
                     case 1:
                         instr = new RefPicMarking.Instruction(InstrType.REMOVE_SHORT, readUEtrace(_in,
                                 "SH: difference_of_pic_nums_minus1") + 1, 0);
@@ -180,42 +180,42 @@ public class SliceHeaderReader {
                     }
                     if (instr != null)
                         mmops.add(instr);
-                } while (memory_management_control_operation != 0);
+                } while (memoryManagementControlOperation != 0);
                 sh.refPicMarkingNonIDR = new RefPicMarking(mmops.toArray(new Instruction[] {}));
             }
         }
     }
 
     private static void readPredWeightTable(SeqParameterSet sps, PictureParameterSet pps, SliceHeader sh, BitReader _in) {
-        sh.pred_weight_table = new PredictionWeightTable();
-        int[] numRefsMinus1 = sh.num_ref_idx_active_override_flag ? sh.num_ref_idx_active_minus1
-                : pps.num_ref_idx_active_minus1;
+        sh.predWeightTable = new PredictionWeightTable();
+        int[] numRefsMinus1 = sh.numRefIdxActiveOverrideFlag ? sh.numRefIdxActiveMinus1
+                : pps.numRefIdxActiveMinus1;
         int[] nr = new int[] {numRefsMinus1[0] + 1, numRefsMinus1[1] + 1};
 
-        sh.pred_weight_table.luma_log2_weight_denom = readUEtrace(_in, "SH: luma_log2_weight_denom");
-        if (sps.chroma_format_idc != MONO) {
-            sh.pred_weight_table.chroma_log2_weight_denom = readUEtrace(_in, "SH: chroma_log2_weight_denom");
+        sh.predWeightTable.lumaLog2WeightDenom = readUEtrace(_in, "SH: luma_log2_weight_denom");
+        if (sps.chromaFormatIdc != MONO) {
+            sh.predWeightTable.chromaLog2WeightDenom = readUEtrace(_in, "SH: chroma_log2_weight_denom");
         }
-        int defaultLW = 1 << sh.pred_weight_table.luma_log2_weight_denom;
-        int defaultCW = 1 << sh.pred_weight_table.chroma_log2_weight_denom;
+        int defaultLW = 1 << sh.predWeightTable.lumaLog2WeightDenom;
+        int defaultCW = 1 << sh.predWeightTable.chromaLog2WeightDenom;
 
         for (int list = 0; list < 2; list++) {
-            sh.pred_weight_table.luma_weight[list] = new int[nr[list]];
-            sh.pred_weight_table.luma_offset[list] = new int[nr[list]];
-            sh.pred_weight_table.chroma_weight[list] = new int[2][nr[list]];
-            sh.pred_weight_table.chroma_offset[list] = new int[2][nr[list]];
+            sh.predWeightTable.lumaWeight[list] = new int[nr[list]];
+            sh.predWeightTable.lumaOffset[list] = new int[nr[list]];
+            sh.predWeightTable.chromaWeight[list] = new int[2][nr[list]];
+            sh.predWeightTable.chromaOffset[list] = new int[2][nr[list]];
             for (int i = 0; i < nr[list]; i++) {
-                sh.pred_weight_table.luma_weight[list][i] = defaultLW;
-                sh.pred_weight_table.luma_offset[list][i] = 0;
-                sh.pred_weight_table.chroma_weight[list][0][i] = defaultCW;
-                sh.pred_weight_table.chroma_offset[list][0][i] = 0;
-                sh.pred_weight_table.chroma_weight[list][1][i] = defaultCW;
-                sh.pred_weight_table.chroma_offset[list][1][i] = 0;
+                sh.predWeightTable.lumaWeight[list][i] = defaultLW;
+                sh.predWeightTable.lumaOffset[list][i] = 0;
+                sh.predWeightTable.chromaWeight[list][0][i] = defaultCW;
+                sh.predWeightTable.chromaOffset[list][0][i] = 0;
+                sh.predWeightTable.chromaWeight[list][1][i] = defaultCW;
+                sh.predWeightTable.chromaOffset[list][1][i] = 0;
             }
         }
 
         readWeightOffset(sps, pps, sh, _in, nr, 0);
-        if (sh.slice_type == SliceType.B) {
+        if (sh.sliceType == SliceType.B) {
             readWeightOffset(sps, pps, sh, _in, nr, 1);
         }
     }
@@ -224,18 +224,18 @@ public class SliceHeaderReader {
             int[] numRefs, int list) {
 
         for (int i = 0; i < numRefs[list]; i++) {
-            boolean luma_weight_l0_flag = readBool(_in, "SH: luma_weight_l0_flag");
-            if (luma_weight_l0_flag) {
-                sh.pred_weight_table.luma_weight[list][i] = readSE(_in, "SH: weight");
-                sh.pred_weight_table.luma_offset[list][i] = readSE(_in, "SH: offset");
+            boolean lumaWeightL0Flag = readBool(_in, "SH: luma_weight_l0_flag");
+            if (lumaWeightL0Flag) {
+                sh.predWeightTable.lumaWeight[list][i] = readSE(_in, "SH: weight");
+                sh.predWeightTable.lumaOffset[list][i] = readSE(_in, "SH: offset");
             }
-            if (sps.chroma_format_idc != MONO) {
-                boolean chroma_weight_l0_flag = readBool(_in, "SH: chroma_weight_l0_flag");
-                if (chroma_weight_l0_flag) {
-                    sh.pred_weight_table.chroma_weight[list][0][i] = readSE(_in, "SH: weight");
-                    sh.pred_weight_table.chroma_offset[list][0][i] = readSE(_in, "SH: offset");
-                    sh.pred_weight_table.chroma_weight[list][1][i] = readSE(_in, "SH: weight");
-                    sh.pred_weight_table.chroma_offset[list][1][i] = readSE(_in, "SH: offset");
+            if (sps.chromaFormatIdc != MONO) {
+                boolean chromaWeightL0Flag = readBool(_in, "SH: chroma_weight_l0_flag");
+                if (chromaWeightL0Flag) {
+                    sh.predWeightTable.chromaWeight[list][0][i] = readSE(_in, "SH: weight");
+                    sh.predWeightTable.chromaOffset[list][0][i] = readSE(_in, "SH: offset");
+                    sh.predWeightTable.chromaWeight[list][1][i] = readSE(_in, "SH: weight");
+                    sh.predWeightTable.chromaOffset[list][1][i] = readSE(_in, "SH: offset");
                 }
             }
         }
@@ -244,15 +244,15 @@ public class SliceHeaderReader {
     private static void readRefPicListReordering(SliceHeader sh, BitReader _in) {
         sh.refPicReordering = new int[2][][];
         // System.out.println(i++);
-        if (sh.slice_type.isInter()) {
-            boolean ref_pic_list_reordering_flag_l0 = readBool(_in, "SH: ref_pic_list_reordering_flag_l0");
-            if (ref_pic_list_reordering_flag_l0) {
+        if (sh.sliceType.isInter()) {
+            boolean refPicListReorderingFlagL0 = readBool(_in, "SH: ref_pic_list_reordering_flag_l0");
+            if (refPicListReorderingFlagL0) {
                 sh.refPicReordering[0] = readReorderingEntries(_in);
             }
         }
-        if (sh.slice_type == SliceType.B) {
-            boolean ref_pic_list_reordering_flag_l1 = readBool(_in, "SH: ref_pic_list_reordering_flag_l1");
-            if (ref_pic_list_reordering_flag_l1) {
+        if (sh.sliceType == SliceType.B) {
+            boolean refPicListReorderingFlagL1 = readBool(_in, "SH: ref_pic_list_reordering_flag_l1");
+            if (refPicListReorderingFlagL1) {
                 sh.refPicReordering[1] = readReorderingEntries(_in);
             }
         }
