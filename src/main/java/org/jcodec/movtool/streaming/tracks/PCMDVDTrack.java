@@ -8,7 +8,7 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.Label;
-import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 
@@ -76,7 +76,7 @@ public class PCMDVDTrack implements VirtualTrack {
 
     @Override
     public CodecMeta getCodecMeta() {
-        return AudioCodecMeta.createAudioCodecMeta3(PCMMP4MuxerTrack.lookupFourcc(format), ByteBuffer.allocate(0),
+        return AudioCodecMeta.createAudioCodecMeta3(AudioSampleEntry.lookupFourcc(format), ByteBuffer.allocate(0),
                 format, true, new Label[] { Label.Left, Label.Right });
     }
 

@@ -2,6 +2,7 @@ package org.jcodec.containers.mp4.boxes;
 
 import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.Size;
 
 import java.nio.ByteBuffer;
 
@@ -15,6 +16,12 @@ import java.nio.ByteBuffer;
  * 
  */
 public class VideoSampleEntry extends SampleEntry {
+    public static VideoSampleEntry videoSampleEntry(String fourcc, Size size, String encoderName) {
+        return createVideoSampleEntry(new Header(fourcc), (short) 0, (short) 0, "jcod", 0, 768,
+                (short) size.getWidth(), (short) size.getHeight(), 72, 72, (short) 1,
+                encoderName != null ? encoderName : "jcodec", (short) 24, (short) 1, (short) -1);
+    }
+
     public static VideoSampleEntry createVideoSampleEntry(Header atom, short version, short revision, String vendor,
             int temporalQual, int spacialQual, short width, short height, long hRes, long vRes, short frameCount,
             String compressorName, short depth, short drefInd, short clrTbl) {
@@ -50,7 +57,7 @@ public class VideoSampleEntry extends SampleEntry {
     private short depth;
     private short clrTbl;
 
-    public VideoSampleEntry(Header atom) {
+    VideoSampleEntry(Header atom) {
         super(atom);
     }
 

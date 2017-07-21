@@ -69,6 +69,10 @@ public abstract class Box {
         sb.append("}");
     }
 
+    public static Box terminatorAtom() {
+        return createLeafBox(new Header(Platform.stringFromBytes(new byte[4])), ByteBuffer.allocate(0));
+    }
+
     public static String[] path(String path) {
         return StringUtils.splitC(path, '.');
     }

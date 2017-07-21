@@ -55,6 +55,7 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -307,7 +308,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
     }
 
     void addVideoSampleEntry(VideoCodecMeta meta) {
-        SampleEntry se = MP4Muxer.videoSampleEntry(codec2fourcc.get(codec), meta.getSize(), "JCodec");
+        SampleEntry se = VideoSampleEntry.videoSampleEntry(codec2fourcc.get(codec), meta.getSize(), "JCodec");
         if (meta.getPixelAspectRatio() != null)
             se.add(PixelAspectExt.createPixelAspectExt(meta.getPixelAspectRatio()));
         addSampleEntry(se);
