@@ -1,5 +1,11 @@
 package org.jcodec.containers.mp4.demuxer;
 
+import static org.jcodec.common.Fourcc.free;
+import static org.jcodec.common.Fourcc.ftyp;
+import static org.jcodec.common.Fourcc.mdat;
+import static org.jcodec.common.Fourcc.moov;
+import static org.jcodec.common.Fourcc.wide;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -8,6 +14,7 @@ import java.util.List;
 
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.Fourcc;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4TrackType;
@@ -19,7 +26,6 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -131,24 +137,6 @@ public class MP4Demuxer implements Demuxer {
     public TimecodeMP4DemuxerTrack getTimecodeTrack() {
         return timecodeTrack;
     }
-    
-    static private int makeInt(byte b3, byte b2, byte b1, byte b0) {
-        return (((b3       ) << 24) |
-                ((b2 & 0xff) << 16) |
-                ((b1 & 0xff) <<  8) |
-                ((b0 & 0xff)      ));
-    }
-
-    private static int intFourcc(String string) {
-        byte[] b = Platform.getBytes(string);
-        return makeInt(b[0], b[1], b[2], b[3]);
-    }
-
-    private static int ftyp = intFourcc("ftyp");
-    private static int free = intFourcc("free"); 
-    private static int moov = intFourcc("moov");
-    private static int mdat = intFourcc("mdat");
-    private static int wide = intFourcc("wide");
     
     public static int probe(final ByteBuffer b) {
         ByteBuffer fork = b.duplicate();
