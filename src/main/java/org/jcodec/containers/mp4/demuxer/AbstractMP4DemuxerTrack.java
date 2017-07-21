@@ -4,10 +4,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.jcodec.codecs.aac.AACUtils;
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.Codec;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -27,7 +23,6 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -169,6 +164,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         }
     }
     
+    @Override
     public synchronized boolean gotoFrame(long frameNo) {
         if (frameNo < 0)
             throw new IllegalArgumentException("negative frame number");
@@ -199,6 +195,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
 
     public abstract long getFrameCount();
 
+    @Override
     public long getCurFrame() {
         return curFrame;
     }
@@ -216,7 +213,10 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     }
 
     public String getFourcc() {
-        return getSampleEntries()[0].getFourcc();
+        SampleEntry[] entries = getSampleEntries();
+        SampleEntry se = entries == null || entries.length == 0 ? null : entries[0];
+        String fourcc = se == null ? null : se.getHeader().getFourcc();
+        return fourcc;
     }
 
     protected ByteBuffer readPacketData(SeekableByteChannel input, ByteBuffer buffer, long offset, int size)
@@ -231,25 +231,6 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     }
 
     public abstract MP4Packet getNextFrame(ByteBuffer storage) throws IOException;
-    
-    public Codec getCodec() {
-        SampleEntry[] ses = getSampleEntries();
-        SampleEntry se = ses == null || ses.length == 0 ? null : ses[0];
-        String fourcc = se == null ? "" : se.getHeader().getFourcc();
-        if (fourcc.equals("avc1")) {
-            return Codec.H264;
-        } else if (fourcc.equals("m1v1") || fourcc.equals("m2v1")) {
-            return Codec.MPEG2;
-        } else if (fourcc.equals("apco") || fourcc.equals("apcs") || fourcc.equals("apcn") || fourcc.equals("apch")
-                || fourcc.equals("ap4h")) {
-            return Codec.PRORES;
-        } else if (fourcc.equals("mp4a")) {
-            return Codec.AAC;
-        } else if (fourcc.equals("jpeg")) {
-            return Codec.JPEG;
-        }
-        return null;        
-    }
     
     public ByteBuffer convertPacket(ByteBuffer _in) {
         return _in;

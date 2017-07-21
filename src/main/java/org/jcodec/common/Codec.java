@@ -24,4 +24,20 @@ public enum Codec {
     public TrackType getType() {
         return type;
     }
+
+    public static Codec codecByFourcc(String fourcc) {
+        if (fourcc.equals("avc1")) {
+            return H264;
+        } else if (fourcc.equals("m1v1") || fourcc.equals("m2v1")) {
+            return MPEG2;
+        } else if (fourcc.equals("apco") || fourcc.equals("apcs") || fourcc.equals("apcn") || fourcc.equals("apch")
+                || fourcc.equals("ap4h")) {
+            return PRORES;
+        } else if (fourcc.equals("mp4a")) {
+            return AAC;
+        } else if (fourcc.equals("jpeg")) {
+            return JPEG;
+        }
+        return null;
+    }
 }
