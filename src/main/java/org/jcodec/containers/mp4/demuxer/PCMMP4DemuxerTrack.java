@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.TrackType;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -63,6 +64,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         totalFrames += sampleToChunks[sampleToChunks.length - 1].getCount() * (chunkOffsets.length - chunks);
     }
 
+    @Override
     public Packet nextFrame() throws IOException {
         int frameSize = getFrameSize();
         int chSize = sampleToChunks[stscInd].getCount() * frameSize - posShift;
@@ -115,6 +117,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         }
     }
 
+    @Override
     protected void seekPointer(long frameNo) {
         for (stcoInd = 0, stscInd = 0, curFrame = 0;;) {
             long nextFrame = curFrame + sampleToChunks[stscInd].getCount();
@@ -127,6 +130,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         curFrame = frameNo;
     }
 
+    @Override
     public long getFrameCount() {
         return totalFrames;
     }
@@ -135,7 +139,7 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     public DemuxerTrackMeta getMeta() {
         AudioSampleEntry ase = (AudioSampleEntry) getSampleEntries()[0];
         AudioCodecMeta audioCodecMeta = org.jcodec.common.AudioCodecMeta.fromAudioFormat(ase.getFormat());
-        return new DemuxerTrackMeta(TrackType.AUDIO, getCodec(), (double) duration / timescale, null, totalFrames,
+        return new DemuxerTrackMeta(TrackType.AUDIO, Codec.codecByFourcc(getFourcc()), (double) duration / timescale, null, totalFrames,
                 null, null, audioCodecMeta);
     }
 }

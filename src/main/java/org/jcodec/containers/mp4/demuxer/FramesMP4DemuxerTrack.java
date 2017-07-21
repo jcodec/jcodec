@@ -90,7 +90,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
         sizes = stsz.getSizes();
 
-        if (getCodec() == Codec.H264) {
+        if (Codec.codecByFourcc(getFourcc()) == Codec.H264) {
             avcC = H264Utils.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
         }
         codecPrivate = getCodecPrivate();
@@ -171,14 +171,14 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     @Override
     public ByteBuffer convertPacket(ByteBuffer result) {
         if (codecPrivate != null) {
-            if (getCodec() == Codec.H264) {
+            if (Codec.codecByFourcc(getFourcc()) == Codec.H264) {
                 ByteBuffer annexbCoded = H264Utils.decodeMOVPacket(result, avcC);
                 if (H264Utils.isByteBufferIDRSlice(annexbCoded)) {
                     return NIOUtils.combine(codecPrivate, annexbCoded);
                 } else {
                     return annexbCoded;
                 }
-            } else if (getCodec() == Codec.AAC) {
+            } else if (Codec.codecByFourcc(getFourcc()) == Codec.AAC) {
                 // !!! crcAbsent, numAACFrames
                 Header adts = AACUtils.streamInfoToADTS(codecPrivate, true, 1, result.remaining());
                 ByteBuffer adtsRaw = ByteBuffer.allocate(7);
@@ -251,7 +251,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
     }
 
     public ByteBuffer getCodecPrivate() {
-        Codec codec = getCodec();
+        Codec codec = Codec.codecByFourcc(getFourcc());
         if (codec == Codec.H264) {
             AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) getSampleEntries()[0]);
             return H264Utils.avcCToAnnexB(avcC);
@@ -292,7 +292,7 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             AudioSampleEntry ase = (AudioSampleEntry) getSampleEntries()[0];
             audioCodecMeta = org.jcodec.common.AudioCodecMeta.fromAudioFormat(ase.getFormat());
         }
-        DemuxerTrackMeta meta = new DemuxerTrackMeta(t, getCodec(), (double) duration / timescale, seekFrames,
+        DemuxerTrackMeta meta = new DemuxerTrackMeta(t, Codec.codecByFourcc(getFourcc()), (double) duration / timescale, seekFrames,
                 sizes.length, getCodecPrivate(), videoCodecMeta, audioCodecMeta);
 
         if (type == MP4TrackType.VIDEO) {
