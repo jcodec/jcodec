@@ -57,7 +57,7 @@ public class VideoSampleEntry extends SampleEntry {
     private short depth;
     private short clrTbl;
 
-    VideoSampleEntry(Header atom) {
+    public VideoSampleEntry(Header atom) {
         super(atom);
     }
 
