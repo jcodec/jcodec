@@ -1,10 +1,14 @@
 package org.jcodec.containers.mp4.muxer;
 
+import static org.jcodec.common.Preconditions.checkArgument;
+import static org.jcodec.common.Preconditions.checkNotNull;
+import static org.jcodec.common.Preconditions.checkState;
 import static org.jcodec.containers.mp4.MP4TrackType.SOUND;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -24,7 +28,6 @@ import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
-import org.jcodec.containers.mp4.boxes.NodeBox;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -70,32 +73,47 @@ public class MP4Muxer implements Muxer {
         return track;
     }
     
-    public FramesMP4MuxerTrack addTrackWithId(MP4TrackType type, Codec codec, int trackId) {
-        for(AbstractMP4MuxerTrack t : tracks) {
-            if (t.getTrackId() == trackId) {
-                throw new IllegalArgumentException("track with id " + trackId + " already exists");
-            }
-        }
-        FramesMP4MuxerTrack track = new FramesMP4MuxerTrack(out, trackId, type, codec);
+    public CodecMP4MuxerTrack addTrackWithId(MP4TrackType type, Codec codec, int trackId) {
+        checkArgument(!hasTrackId(trackId), "track with id %s already exists", trackId);
+        CodecMP4MuxerTrack track = new CodecMP4MuxerTrack(out, trackId, type, codec);
         tracks.add(track);
-        nextTrackId = Math.max(nextTrackId, trackId+1);
+        nextTrackId = Math.max(nextTrackId, trackId + 1);
+        return track;
+    }
+    
+    public int getNextTrackId() {
+        return nextTrackId;
+    }
+
+    private CodecMP4MuxerTrack addTrack(MP4TrackType type, Codec codec) {
+        return addTrack(new CodecMP4MuxerTrack(out, nextTrackId++, type, codec));
+    }
+    
+    public <T extends AbstractMP4MuxerTrack> T addTrack(T track) {
+        checkNotNull(track, "track can not be null");
+        int trackId = track.getTrackId();
+        checkArgument(trackId <= nextTrackId);
+        checkArgument(!hasTrackId(trackId), "track with id %s already exists", trackId);
+        tracks.add(track);
         return track;
     }
 
-    private FramesMP4MuxerTrack addTrack(MP4TrackType type, Codec codec) {
-        FramesMP4MuxerTrack track = new FramesMP4MuxerTrack(out, nextTrackId++, type, codec);
-        tracks.add(track);
-        return track;
+    public boolean hasTrackId(int trackId) {
+        for (AbstractMP4MuxerTrack t : tracks) {
+            if (t.getTrackId() == trackId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<AbstractMP4MuxerTrack> getTracks() {
-        return tracks;
+        return Collections.unmodifiableList(tracks);
     }
 
     @Override
     public void finish() throws IOException {
-        if(tracks.size() == 0)
-            throw new RuntimeException("Can not save header with 0 tracks.");
+        checkState(tracks.size() != 0, "Can not save header with 0 tracks.");
         MovieBox movie = finalizeHeader();
 
         storeHeader(movie);
@@ -111,7 +129,7 @@ public class MP4Muxer implements Muxer {
 
     public MovieBox finalizeHeader() throws IOException {
         MovieBox movie = MovieBox.createMovieBox();
-        MovieHeaderBox mvhd = movieHeader(movie);
+        MovieHeaderBox mvhd = movieHeader();
         movie.addFirst(mvhd);
 
         for (AbstractMP4MuxerTrack track : tracks) {
@@ -150,7 +168,7 @@ public class MP4Muxer implements Muxer {
         return result;
     }
 
-    private MovieHeaderBox movieHeader(NodeBox movie) {
+    private MovieHeaderBox movieHeader() {
         int timescale = tracks.get(0).getTimescale();
         long duration = tracks.get(0).getTrackTotalDuration();
         AbstractMP4MuxerTrack videoTrack = getVideoTrack();
@@ -164,13 +182,11 @@ public class MP4Muxer implements Muxer {
     }
 
     public PCMMP4MuxerTrack addPCMAudioTrack(AudioFormat format) {
-        PCMMP4MuxerTrack track = new PCMMP4MuxerTrack(out, nextTrackId++, format);
-        tracks.add(track);
-        return track;
+        return addTrack(new PCMMP4MuxerTrack(out, nextTrackId++, format));
     }
 
-    public FramesMP4MuxerTrack addCompressedAudioTrack(Codec codec, AudioFormat format) {
-        FramesMP4MuxerTrack track = addTrack(SOUND, codec);
+    public CodecMP4MuxerTrack addCompressedAudioTrack(Codec codec, AudioFormat format) {
+        CodecMP4MuxerTrack track = addTrack(SOUND, codec);
         track.addAudioSampleEntry(format);
 
         return track;
@@ -178,10 +194,9 @@ public class MP4Muxer implements Muxer {
 
     @Override
     public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
-        FramesMP4MuxerTrack track = addTrack(MP4TrackType.VIDEO, codec);
-        if (meta == null && codec != Codec.H264) {
-            throw new RuntimeException("VideoCodecMeta is required upfront for all codecs but H.264");
-        }
+        CodecMP4MuxerTrack track = addTrack(MP4TrackType.VIDEO, codec);
+        checkArgument(meta != null || codec == Codec.H264,
+                "VideoCodecMeta is required upfront for all codecs but H.264");
         track.addVideoSampleEntry(meta);
         return track;
     }
