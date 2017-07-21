@@ -275,6 +275,14 @@ public class AudioSampleEntry extends SampleEntry {
         return result;
     }
 
+    public static AudioSampleEntry compressedAudioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
+            int sampleRate, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame) {
+        AudioSampleEntry ase = createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId,
+                (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPacket, bytesPerPacket,
+                bytesPerFrame, 16 / 8, (short) 0);
+        return ase;
+    }
+
     public static AudioSampleEntry audioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
             int sampleRate, ByteOrder endian) {
         AudioSampleEntry ase = createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId,

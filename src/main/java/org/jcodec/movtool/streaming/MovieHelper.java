@@ -191,7 +191,7 @@ public class MovieHelper {
                 vse = AudioSampleEntry.audioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
                         ss.getSampleRate(), ss.getEndian());
             } else {
-                vse = FramesMP4MuxerTrack.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(),
+                vse = AudioSampleEntry.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(),
                         ss.getChannelCount(), ss.getSampleRate(), ss.getSamplesPerPacket(), ss.getBytesPerPacket(),
                         ss.getBytesPerFrame());
             }

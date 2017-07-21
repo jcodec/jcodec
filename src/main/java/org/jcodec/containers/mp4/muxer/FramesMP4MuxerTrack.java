@@ -426,16 +426,8 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
         return result;
     }
 
-    public static AudioSampleEntry compressedAudioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
-            int sampleRate, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame) {
-        AudioSampleEntry ase = AudioSampleEntry.createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId,
-                (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPacket, bytesPerPacket,
-                bytesPerFrame, 16 / 8, (short) 0);
-        return ase;
-    }
-
     void addAudioSampleEntry(AudioFormat format) {
-        AudioSampleEntry ase = compressedAudioSampleEntry(codec2fourcc.get(codec), (short) 1, (short) 16,
+        AudioSampleEntry ase = AudioSampleEntry.compressedAudioSampleEntry(codec2fourcc.get(codec), (short) 1, (short) 16,
                 format.getChannels(), format.getSampleRate(), 0, 0, 0);
 
         addSampleEntry(ase);
