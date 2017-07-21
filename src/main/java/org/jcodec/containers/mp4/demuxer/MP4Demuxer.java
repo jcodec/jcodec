@@ -14,7 +14,6 @@ import java.util.List;
 
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.Fourcc;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4TrackType;
@@ -41,17 +40,35 @@ public class MP4Demuxer implements Demuxer {
     private List<AbstractMP4DemuxerTrack> tracks;
     private TimecodeMP4DemuxerTrack timecodeTrack;
     MovieBox movie;
-    private SeekableByteChannel input;
-
-    public AbstractMP4DemuxerTrack create(TrakBox trak) {
-        SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
-        if (stsz.getDefaultSize() == 0)
-            return new FramesMP4DemuxerTrack(movie, trak, input);
-        else
-            return new PCMMP4DemuxerTrack(movie, trak, input);
+    protected SeekableByteChannel input;
+    
+    //modifies h264 to conform to annexb and aac to contain adts header
+    public static MP4Demuxer createMP4Demuxer(SeekableByteChannel input) throws IOException {
+        return new MP4Demuxer(input);
     }
 
-    public MP4Demuxer(SeekableByteChannel input) throws IOException {
+    //does not modify packets
+    public static MP4Demuxer createRawMP4Demuxer(SeekableByteChannel input) throws IOException {
+        return new MP4Demuxer(input) {
+            @Override
+            protected AbstractMP4DemuxerTrack newTrack(TrakBox trak) {
+                return new MP4DemuxerTrack(movie, trak, this.input);
+            }
+        };
+    }
+
+    private AbstractMP4DemuxerTrack fromTrakBox(TrakBox trak) {
+        SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
+        if (stsz.getDefaultSize() == 0)
+            return newTrack(trak);
+        return new PCMMP4DemuxerTrack(movie, trak, input);
+    }
+
+    protected AbstractMP4DemuxerTrack newTrack(TrakBox trak) {
+        return new CodecMP4DemuxerTrack(movie, trak, input);
+    }
+
+    MP4Demuxer(SeekableByteChannel input) throws IOException {
         this.input = input;
         tracks = new LinkedList<AbstractMP4DemuxerTrack>();
         findMovieBox(input);
@@ -74,7 +91,7 @@ public class MP4Demuxer implements Demuxer {
             if (se != null && "tmcd".equals(se.getFourcc())) {
                 tt = trak;
             } else {
-                tracks.add(create(trak));
+                tracks.add(fromTrakBox(trak));
             }
         }
         if (tt != null) {
@@ -119,7 +136,7 @@ public class MP4Demuxer implements Demuxer {
         ArrayList<DemuxerTrack> result = new ArrayList<DemuxerTrack>();
         for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
             if (demuxerTrack.box.isVideo())
-                result.add((DemuxerTrack) demuxerTrack);
+                result.add(demuxerTrack);
         }
         return result;
     }
@@ -129,7 +146,7 @@ public class MP4Demuxer implements Demuxer {
         ArrayList<DemuxerTrack> result = new ArrayList<DemuxerTrack>();
         for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
             if (demuxerTrack.box.isAudio())
-                result.add((DemuxerTrack) demuxerTrack);
+                result.add(demuxerTrack);
         }
         return result;
     }

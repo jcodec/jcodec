@@ -48,7 +48,7 @@ public class FrameGrab8Bit {
 
         switch (detectFormat) {
         case MOV:
-            MP4Demuxer d1 = new MP4Demuxer(_in);
+            MP4Demuxer d1 = MP4Demuxer.createMP4Demuxer(_in);
             videoTrack_ = (SeekableDemuxerTrack)d1.getVideoTrack();
             break;
         case MPEG_PS:

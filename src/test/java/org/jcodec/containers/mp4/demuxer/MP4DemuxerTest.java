@@ -26,7 +26,7 @@ public class MP4DemuxerTest {
         System.out.println(resource);
         File source = new File(resource.getFile());
         SeekableByteChannel input = new AutoFileChannelWrapper(source);
-        MP4Demuxer demuxer = new MP4Demuxer(input);
+        MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
         DemuxerTrack track = demuxer.getAudioTracks().get(0);
         Packet packet;
         while (null != (packet = track.nextFrame())) {
@@ -41,7 +41,7 @@ public class MP4DemuxerTest {
         URL resource = Platform.getResource(this.getClass(), "a01_0023.mp4");
         File source = new File(resource.getFile());
         SeekableByteChannel input = new AutoFileChannelWrapper(source);
-        MP4Demuxer demuxer = new MP4Demuxer(input);
+        MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
         PCMMP4DemuxerTrack track = (PCMMP4DemuxerTrack) demuxer.getAudioTracks().get(0);
         assertEquals(6, track.getFrameSize());
     }

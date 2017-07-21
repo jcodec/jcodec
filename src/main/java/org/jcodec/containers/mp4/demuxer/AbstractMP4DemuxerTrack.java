@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -234,5 +235,10 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     
     public ByteBuffer convertPacket(ByteBuffer _in) {
         return _in;
+    }
+    
+    @Override
+    public DemuxerTrackMeta getMeta() {
+        return MP4DemuxerTrackMeta.fromTrack(this);
     }
 }
