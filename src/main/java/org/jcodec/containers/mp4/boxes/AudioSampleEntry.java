@@ -81,7 +81,7 @@ public class AudioSampleEntry extends SampleEntry {
     private static final List<Label> MATRIX_STEREO = Arrays.asList(Label.LeftTotal, Label.RightTotal);
     public static final Label[] EMPTY = new Label[0];
 
-    AudioSampleEntry(Header atom) {
+    public AudioSampleEntry(Header atom) {
         super(atom);
     }
 
