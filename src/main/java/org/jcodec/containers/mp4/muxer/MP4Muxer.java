@@ -68,14 +68,12 @@ public class MP4Muxer implements Muxer {
     }
 
     public TimecodeMP4MuxerTrack addTimecodeTrack() {
-        TimecodeMP4MuxerTrack track = new TimecodeMP4MuxerTrack(out, nextTrackId++);
-        tracks.add(track);
-        return track;
+        return addTrack(new TimecodeMP4MuxerTrack(nextTrackId++));
     }
     
     public CodecMP4MuxerTrack addTrackWithId(MP4TrackType type, Codec codec, int trackId) {
         checkArgument(!hasTrackId(trackId), "track with id %s already exists", trackId);
-        CodecMP4MuxerTrack track = new CodecMP4MuxerTrack(out, trackId, type, codec);
+        CodecMP4MuxerTrack track = new CodecMP4MuxerTrack(trackId, type, codec);
         tracks.add(track);
         nextTrackId = Math.max(nextTrackId, trackId + 1);
         return track;
@@ -86,7 +84,7 @@ public class MP4Muxer implements Muxer {
     }
 
     private CodecMP4MuxerTrack addTrack(MP4TrackType type, Codec codec) {
-        return addTrack(new CodecMP4MuxerTrack(out, nextTrackId++, type, codec));
+        return addTrack(new CodecMP4MuxerTrack(nextTrackId++, type, codec));
     }
     
     public <T extends AbstractMP4MuxerTrack> T addTrack(T track) {
@@ -94,7 +92,8 @@ public class MP4Muxer implements Muxer {
         int trackId = track.getTrackId();
         checkArgument(trackId <= nextTrackId);
         checkArgument(!hasTrackId(trackId), "track with id %s already exists", trackId);
-        tracks.add(track);
+        tracks.add(track.setOut(out));
+        nextTrackId = Math.max(trackId + 1, nextTrackId);
         return track;
     }
 
@@ -182,7 +181,7 @@ public class MP4Muxer implements Muxer {
     }
 
     public PCMMP4MuxerTrack addPCMAudioTrack(AudioFormat format) {
-        return addTrack(new PCMMP4MuxerTrack(out, nextTrackId++, format));
+        return addTrack(new PCMMP4MuxerTrack(nextTrackId++, format));
     }
 
     public CodecMP4MuxerTrack addCompressedAudioTrack(Codec codec, AudioFormat format) {

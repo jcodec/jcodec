@@ -8,7 +8,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.jcodec.common.Codec;
-import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.TapeTimecode;
@@ -42,8 +41,8 @@ public class TimecodeMP4MuxerTrack extends CodecMP4MuxerTrack {
     private List<Edit> lower;
     private List<Packet> gop;
 
-    public TimecodeMP4MuxerTrack(SeekableByteChannel out, int trackId) {
-        super(out, trackId, MP4TrackType.TIMECODE, Codec.TIMECODE);
+    public TimecodeMP4MuxerTrack(int trackId) {
+        super(trackId, MP4TrackType.TIMECODE, Codec.TIMECODE);
         this.lower = new ArrayList<Edit>();
         this.gop = new ArrayList<Packet>();
     }
@@ -70,6 +69,7 @@ public class TimecodeMP4MuxerTrack extends CodecMP4MuxerTrack {
     private List<Packet> sortByDisplay(List<Packet> gop) {
         ArrayList<Packet> result = new ArrayList<Packet>(gop);
         Collections.sort(result, new Comparator<Packet>() {
+            @Override
             public int compare(Packet o1, Packet o2) {
                 if (o1 == null && o2 == null)
                     return 0;
@@ -85,6 +85,7 @@ public class TimecodeMP4MuxerTrack extends CodecMP4MuxerTrack {
         return result;
     }
 
+    @Override
     protected Box finish(MovieHeaderBox mvhd) throws IOException {
         processGop();
         outTimecodeSample();
@@ -193,7 +194,7 @@ public class TimecodeMP4MuxerTrack extends CodecMP4MuxerTrack {
         return frames;
     }
 
-    private int toSec(TapeTimecode tc) {
+    private static int toSec(TapeTimecode tc) {
         return tc.getHour() * 3600 + tc.getMinute() * 60 + tc.getSecond();
     }
 }

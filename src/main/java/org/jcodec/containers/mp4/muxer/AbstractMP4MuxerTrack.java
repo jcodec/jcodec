@@ -1,4 +1,5 @@
 package org.jcodec.containers.mp4.muxer;
+import static org.jcodec.common.Preconditions.checkState;
 import static org.jcodec.containers.mp4.MP4TrackType.SOUND;
 import static org.jcodec.containers.mp4.MP4TrackType.TIMECODE;
 import static org.jcodec.containers.mp4.MP4TrackType.VIDEO;
@@ -10,6 +11,7 @@ import java.util.List;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
@@ -68,6 +70,8 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
     protected List<Edit> edits;
     private String name;
 
+    protected SeekableByteChannel out;
+
     public AbstractMP4MuxerTrack(int trackId, MP4TrackType type) {
         this.curChunk = new ArrayList<ByteBuffer>();
         this.samplesInChunks = new ArrayList<SampleToChunkEntry>();
@@ -75,6 +79,11 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
 
         this.trackId = trackId;
         this.type = type;
+    }
+    
+    AbstractMP4MuxerTrack setOut(SeekableByteChannel out) {
+        this.out = out;
+        return this;
     }
 
     public void setTgtChunkDuration(Rational duration, Unit unit) {
@@ -112,8 +121,8 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
             VideoSampleEntry vse = (VideoSampleEntry) sampleEntries.get(0);
             PixelAspectExt paspBox = NodeBox.findFirst(vse, PixelAspectExt.class, PixelAspectExt.fourcc());
             Rational pasp = paspBox != null ? paspBox.getRational() : new Rational(1, 1);
-            width = (int) (pasp.getNum() * vse.getWidth()) / pasp.getDen();
-            height = (int) vse.getHeight();
+            width = pasp.getNum() * vse.getWidth() / pasp.getDen();
+            height = vse.getHeight();
         }
         return new Size(width, height);
     }
@@ -129,10 +138,10 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
         }
     }
 
-    protected void addSampleEntry(SampleEntry se) {
-        if (finished)
-            throw new IllegalStateException("The muxer track has finished muxing");
+    public AbstractMP4MuxerTrack addSampleEntry(SampleEntry se) {
+        checkState(!finished, "The muxer track has finished muxing");
         sampleEntries.add(se);
+        return this;
     }
 
     public List<SampleEntry> getEntries() {
