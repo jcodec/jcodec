@@ -57,7 +57,7 @@ import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
+import org.jcodec.containers.mp4.muxer.CodecMP4MuxerTrack;
 import org.jcodec.movtool.streaming.VirtualMP4Movie.PacketChunk;
 import org.jcodec.movtool.streaming.VirtualTrack.VirtualEdit;
 
@@ -326,7 +326,7 @@ public class MovieHelper {
 
     private static void compositionOffsets(List<Entry> compositionOffsets, NodeBox stbl) {
         if (compositionOffsets.size() > 0) {
-            int min = FramesMP4MuxerTrack.minOffset(compositionOffsets);
+            int min = CodecMP4MuxerTrack.minOffset(compositionOffsets);
             for (Entry entry : compositionOffsets) {
                 entry.offset -= min;
             }

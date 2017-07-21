@@ -30,7 +30,7 @@ import org.jcodec.movtool.Util;
  * @author The JCodec project
  * 
  */
-public class TimecodeMP4MuxerTrack extends FramesMP4MuxerTrack {
+public class TimecodeMP4MuxerTrack extends CodecMP4MuxerTrack {
 
     private TapeTimecode prevTimecode;
     private TapeTimecode firstTimecode;
