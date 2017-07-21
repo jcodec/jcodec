@@ -21,7 +21,7 @@ import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
-import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.CodecMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.PCMMP4DemuxerTrack;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
@@ -50,7 +50,7 @@ public class RealTrack implements VirtualTrack {
         this.movie = movie;
         SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         if (stsz.getDefaultSize() == 0) {
-            this.demuxer = new FramesMP4DemuxerTrack(movie, trak, null) {
+            this.demuxer = new CodecMP4DemuxerTrack(movie, trak, null) {
                 @Override
                 protected ByteBuffer readPacketData(SeekableByteChannel ch, ByteBuffer buffer, long position, int size)
                         throws IOException {

@@ -199,7 +199,7 @@ public class JCodecUtil {
         }
         switch (format) {
         case MOV:
-            return new MP4Demuxer(ch);
+            return MP4Demuxer.createMP4Demuxer(ch);
         case MPEG_PS:
             return new MPSDemuxer(ch);
         case MKV:

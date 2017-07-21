@@ -68,7 +68,7 @@ public class TestTool {
         try {
             source = new FileChannelWrapper(new FileInputStream(_in).getChannel());
 
-            MP4Demuxer demux = new MP4Demuxer(source);
+            MP4Demuxer demux = MP4Demuxer.createMP4Demuxer(source);
 
             SeekableDemuxerTrack inTrack = (SeekableDemuxerTrack) demux.getVideoTrack();
 

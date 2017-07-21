@@ -93,7 +93,7 @@ public class SourceImpl implements Source, PacketSource {
 
         switch (inputFormat) {
         case MOV:
-            demuxVideo = demuxAudio = new MP4Demuxer(sourceStream);
+            demuxVideo = demuxAudio = MP4Demuxer.createMP4Demuxer(sourceStream);
             break;
         case MKV:
             demuxVideo = demuxAudio = new MKVDemuxer(sourceStream);
