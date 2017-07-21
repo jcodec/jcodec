@@ -91,7 +91,7 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
 
     @Override
     public void addFrameInternal(Packet pkt, int entryNo) throws IOException {
-        checkState(finished, "The muxer track has finished muxing");
+        checkState(!finished, "The muxer track has finished muxing");
 
         if (_timescale == NO_TIMESCALE_SET) {
             if (adtsHeader != null) {
@@ -115,7 +115,7 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
 
     @Override
     protected Box finish(MovieHeaderBox mvhd) throws IOException {
-        checkState(finished, "The muxer track has finished muxing");
+        checkState(!finished, "The muxer track has finished muxing");
         if (getEntries().isEmpty()) {
             if (codec == Codec.H264) {
                 SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
