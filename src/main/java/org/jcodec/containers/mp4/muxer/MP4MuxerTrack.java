@@ -178,7 +178,7 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     @Override
     protected Box finish(MovieHeaderBox mvhd) throws IOException {
-        checkState(finished, "The muxer track has finished muxing");
+        checkState(!finished, "The muxer track has finished muxing");
 
         outChunk(lastEntry);
 
