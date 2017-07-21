@@ -4,7 +4,6 @@ import static org.jcodec.containers.mp4.MP4TrackType.SOUND;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,22 +16,15 @@ import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
-import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.Box.LeafBox;
-import org.jcodec.containers.mp4.boxes.EndianBox;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
-import org.jcodec.containers.mp4.boxes.FormatBox;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -70,33 +62,6 @@ public class MP4Muxer implements Muxer {
         buf.putLong(0);
         buf.flip();
         output.write(buf);
-    }
-
-    public static VideoSampleEntry videoSampleEntry(String fourcc, Size size, String encoderName) {
-        return VideoSampleEntry.createVideoSampleEntry(new Header(fourcc), (short) 0, (short) 0, "jcod", 0, 768,
-                (short) size.getWidth(), (short) size.getHeight(), 72, 72, (short) 1,
-                encoderName != null ? encoderName : "jcodec", (short) 24, (short) 1, (short) -1);
-    }
-
-    public static AudioSampleEntry audioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
-            int sampleRate, ByteOrder endian) {
-        AudioSampleEntry ase = AudioSampleEntry.createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId,
-                (short) channels, (short) 16, sampleRate, (short) 0, 0, 65535, 0, 1, sampleSize, channels * sampleSize,
-                sampleSize, (short) 1);
-
-        NodeBox wave = new NodeBox(new Header("wave"));
-        ase.add(wave);
-
-        wave.add(FormatBox.createFormatBox(fourcc));
-        wave.add(EndianBox.createEndianBox(endian));
-        wave.add(terminatorAtom());
-        // ase.add(new ChannelBox(atom));
-
-        return ase;
-    }
-
-    public static LeafBox terminatorAtom() {
-        return LeafBox.createLeafBox(new Header(Platform.stringFromBytes(new byte[4])), ByteBuffer.allocate(0));
     }
 
     public TimecodeMP4MuxerTrack addTimecodeTrack() {

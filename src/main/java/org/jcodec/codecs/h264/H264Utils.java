@@ -31,7 +31,6 @@ import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -461,7 +460,7 @@ public class H264Utils {
         int codedWidth = (sps.picWidthInMbsMinus1 + 1) << 4;
         int codedHeight = SeqParameterSet.getPicHeightInMbs(sps) << 4;
 
-        SampleEntry se = MP4Muxer.videoSampleEntry("avc1", getPicSize(sps), "JCodec");
+        SampleEntry se = VideoSampleEntry.videoSampleEntry("avc1", getPicSize(sps), "JCodec");
         se.add(avcC);
         return se;
     }

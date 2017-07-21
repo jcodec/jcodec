@@ -56,8 +56,8 @@ import org.jcodec.containers.mp4.boxes.TimecodeMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
+import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
-import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.movtool.streaming.VirtualMP4Movie.PacketChunk;
 import org.jcodec.movtool.streaming.VirtualTrack.VirtualEdit;
 
@@ -183,12 +183,12 @@ public class MovieHelper {
         } else if (se instanceof VideoCodecMeta) {
             VideoCodecMeta ss = (VideoCodecMeta) se;
             pasp = ss.getPasp();
-            vse = MP4Muxer.videoSampleEntry(se.getFourcc(), ss.getSize(), "JCodec");
+            vse = VideoSampleEntry.videoSampleEntry(se.getFourcc(), ss.getSize(), "JCodec");
         } else {
             AudioCodecMeta ss = (AudioCodecMeta) se;
 
             if (ss.isPCM()) {
-                vse = MP4Muxer.audioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
+                vse = AudioSampleEntry.audioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
                         ss.getSampleRate(), ss.getEndian());
             } else {
                 vse = FramesMP4MuxerTrack.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(),

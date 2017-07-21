@@ -3,6 +3,7 @@ package org.jcodec.containers.mp4.boxes;
 import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelLayoutTag_UseChannelBitmap;
 import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions;
 
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Label;
@@ -80,7 +81,7 @@ public class AudioSampleEntry extends SampleEntry {
     private static final List<Label> MATRIX_STEREO = Arrays.asList(Label.LeftTotal, Label.RightTotal);
     public static final Label[] EMPTY = new Label[0];
 
-    public AudioSampleEntry(Header atom) {
+    AudioSampleEntry(Header atom) {
         super(atom);
     }
 
@@ -272,6 +273,38 @@ public class AudioSampleEntry extends SampleEntry {
             result[i++] = translation.get(label);
         }
         return result;
+    }
+
+    public static AudioSampleEntry audioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
+            int sampleRate, ByteOrder endian) {
+        AudioSampleEntry ase = createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId,
+                (short) channels, (short) 16, sampleRate, (short) 0, 0, 65535, 0, 1, sampleSize, channels * sampleSize,
+                sampleSize, (short) 1);
+    
+        NodeBox wave = new NodeBox(new Header("wave"));
+        ase.add(wave);
+    
+        wave.add(FormatBox.createFormatBox(fourcc));
+        wave.add(EndianBox.createEndianBox(endian));
+        wave.add(Box.terminatorAtom());
+        // ase.add(new ChannelBox(atom));
+    
+        return ase;
+    }
+
+    public static String lookupFourcc(AudioFormat format) {
+        if (format.getSampleSizeInBits() == 16 && !format.isBigEndian())
+            return "sowt";
+        else if (format.getSampleSizeInBits() == 24)
+            return "in24";
+        else
+            throw new NotSupportedException("Audio format " + format + " is not supported.");
+    }
+
+    public static AudioSampleEntry audioSampleEntryPCM(AudioFormat format) {
+        return audioSampleEntry(AudioSampleEntry.lookupFourcc(format), 1, format.getSampleSizeInBits() >> 3,
+                format.getChannels(), (int) format.getSampleRate(),
+                format.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
     }
 
     private static Map<Label, ChannelLabel> translationStereo = new HashMap<Label, ChannelLabel>();
