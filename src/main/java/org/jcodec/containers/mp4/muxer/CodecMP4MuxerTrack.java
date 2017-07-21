@@ -20,7 +20,6 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
@@ -62,8 +61,8 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
     // ADTS header used to construct audio sample entry for AAC
     private ADTSParser.Header adtsHeader;
 
-    public CodecMP4MuxerTrack(SeekableByteChannel out, int trackId, MP4TrackType type, Codec codec) {
-        super(out, trackId, type);
+    public CodecMP4MuxerTrack(int trackId, MP4TrackType type, Codec codec) {
+        super(trackId, type);
         this.codec = codec;
     }
 

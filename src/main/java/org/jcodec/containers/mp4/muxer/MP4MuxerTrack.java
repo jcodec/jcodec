@@ -11,7 +11,6 @@ import java.util.List;
 
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
-import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -69,17 +68,13 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
     private int curFrame;
     private boolean allIframes = true;
     private TimecodeMP4MuxerTrack timecodeTrack;
-    private SeekableByteChannel out;
-
-    public MP4MuxerTrack(SeekableByteChannel out, int trackId, MP4TrackType type) {
+    public MP4MuxerTrack(int trackId, MP4TrackType type) {
         super(trackId, type);
         this.sampleDurations = new ArrayList<TimeToSampleEntry>();
         this.chunkOffsets = LongArrayList.createLongArrayList();
         this.sampleSizes = IntArrayList.createIntArrayList();
         this.iframes = IntArrayList.createIntArrayList();
         this.compositionOffsets = new ArrayList<LongEntry>();
-        
-        this.out = out;
 
         setTgtChunkDuration(new Rational(1, 1), Unit.FRAME);
     }
@@ -286,13 +281,6 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
     @Override
     public long getTrackTotalDuration() {
         return trackTotalDuration;
-    }
-
-    public void addSampleEntries(SampleEntry[] sampleEntries) {
-        for (int i = 0; i < sampleEntries.length; i++) {
-            SampleEntry se = sampleEntries[i];
-            addSampleEntry(se);
-        }
     }
 
     public TimecodeMP4MuxerTrack getTimecodeTrack() {

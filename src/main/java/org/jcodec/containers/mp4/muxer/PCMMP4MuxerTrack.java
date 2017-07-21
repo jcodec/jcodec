@@ -2,7 +2,6 @@ package org.jcodec.containers.mp4.muxer;
 import org.jcodec.common.Assert;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.LongArrayList;
-import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
@@ -48,12 +47,9 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     private LongArrayList chunkOffsets;
     private int totalFrames;
-    private SeekableByteChannel out;
-
-    public PCMMP4MuxerTrack(SeekableByteChannel out, int trackId, AudioFormat format) {
+    public PCMMP4MuxerTrack(int trackId, AudioFormat format) {
         super(trackId, MP4TrackType.SOUND);
         this.chunkOffsets = LongArrayList.createLongArrayList();
-        this.out = out;
         this.frameDuration = 1;
         this.frameSize = (format.getSampleSizeInBits() >> 3) * format.getChannels();
         addSampleEntry(AudioSampleEntry.audioSampleEntryPCM(format));
@@ -113,6 +109,7 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
         chunkDuration = 0;
     }
 
+    @Override
     protected Box finish(MovieHeaderBox mvhd) throws IOException {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
@@ -161,6 +158,7 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
         return trak;
     }
 
+    @Override
     public long getTrackTotalDuration() {
         return totalFrames * frameDuration;
     }
