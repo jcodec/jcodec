@@ -1,5 +1,6 @@
 package org.jcodec.codecs.h264.decode;
 
+import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.ColorSpace;
 
@@ -21,9 +22,9 @@ public class DecoderState {
 
     ColorSpace chromaFormat;
 
-    int[][][] mvTop;
-    int[][][] mvLeft;
-    int[][] mvTopLeft;
+    H264Utils.MvList mvTop;
+    H264Utils.MvList mvLeft;
+    H264Utils.MvList mvTopLeft;
 
     public DecoderState(SliceHeader sh) {
         int mbWidth = sh.sps.picWidthInMbsMinus1 + 1;
@@ -32,9 +33,9 @@ public class DecoderState {
 
         chromaFormat = sh.sps.chromaFormatIdc;
 
-        mvTop = new int[2][(mbWidth << 2) + 1][3];
-        mvLeft = new int[2][4][3];
-        mvTopLeft = new int[2][3];
+        mvTop = new H264Utils.MvList((mbWidth << 2) + 1);
+        mvLeft = new H264Utils.MvList(4);
+        mvTopLeft = new H264Utils.MvList(1);
 
         leftRow = new byte[3][16];
         topLeft = new byte[3][4];

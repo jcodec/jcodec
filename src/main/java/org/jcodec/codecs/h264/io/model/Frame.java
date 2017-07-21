@@ -1,5 +1,7 @@
 package org.jcodec.codecs.h264.io.model;
 
+import org.jcodec.codecs.h264.H264Utils.MvList;
+import org.jcodec.codecs.h264.H264Utils.MvList2D;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
@@ -18,13 +20,13 @@ import java.util.Comparator;
 public class Frame extends Picture8Bit {
     private int frameNo;
     private SliceType frameType;
-    private int[][][][] mvs;
+    private MvList2D mvs;
     private Frame[][][] refsUsed;
     private boolean shortTerm;
     private int poc;
 
     public Frame(int width, int height, byte[][] data, ColorSpace color, Rect crop, int frameNo, SliceType frameType,
-            int[][][][] mvs, Frame[][][] refsUsed, int poc) {
+            MvList2D mvs, Frame[][][] refsUsed, int poc) {
         super(width, height, data, color, crop);
         this.frameNo = frameNo;
         this.mvs = mvs;
@@ -73,7 +75,7 @@ public class Frame extends Picture8Bit {
         return frameNo;
     }
 
-    public int[][][][] getMvs() {
+    public MvList2D getMvs() {
         return mvs;
     }
 

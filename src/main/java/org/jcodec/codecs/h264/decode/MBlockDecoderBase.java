@@ -3,18 +3,22 @@ import static org.jcodec.codecs.h264.H264Const.BLK8x8_BLOCKS;
 import static org.jcodec.codecs.h264.H264Const.BLK_8x8_MB_OFF_CHROMA;
 import static org.jcodec.codecs.h264.H264Const.BLK_INV_MAP;
 import static org.jcodec.codecs.h264.H264Const.QP_SCALE_CR;
+import static org.jcodec.codecs.h264.H264Utils.Mv.mvRef;
+import static org.jcodec.codecs.h264.H264Utils.Mv.mvX;
+import static org.jcodec.codecs.h264.H264Utils.Mv.mvY;
 import static org.jcodec.codecs.h264.decode.PredictionMerger.mergePrediction;
 import static org.jcodec.common.model.ColorSpace.MONO;
 
+import java.util.Arrays;
+
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.H264Const.PartPred;
+import org.jcodec.codecs.h264.H264Utils.MvList;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.tools.MathUtil;
-
-import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -172,7 +176,7 @@ public class MBlockDecoderBase {
     // di.mbQps[2][mbAddr] = qp2;
     // }
 
-    public void predictChromaInter(Frame[][] refs, int[][][] vectors, int x, int y, int comp, Picture8Bit mb,
+    public void predictChromaInter(Frame[][] refs, MvList vectors, int x, int y, int comp, Picture8Bit mb,
             PartPred[] predType) {
 
         for (int blk8x8 = 0; blk8x8 < 4; blk8x8++) {
@@ -181,14 +185,14 @@ public class MBlockDecoderBase {
                     continue;
                 for (int blk4x4 = 0; blk4x4 < 4; blk4x4++) {
                     int i = BLK_INV_MAP[(blk8x8 << 2) + blk4x4];
-                    int[] mv = vectors[list][i];
-                    Picture8Bit ref = refs[list][mv[2]];
+                    int mv = vectors.getMv(i, list);
+                    Picture8Bit ref = refs[list][mvRef(mv)];
 
                     int blkPox = (i & 3) << 1;
                     int blkPoy = (i >> 2) << 1;
 
-                    int xx = ((x + blkPox) << 3) + mv[0];
-                    int yy = ((y + blkPoy) << 3) + mv[1];
+                    int xx = ((x + blkPox) << 3) + mvX(mv);
+                    int yy = ((y + blkPoy) << 3) + mvY(mv);
 
                     interpolator.getBlockChroma(ref.getPlaneData(comp), ref.getPlaneWidth(comp),
                             ref.getPlaneHeight(comp), mbb[list].getPlaneData(comp), blkPoy * mb.getPlaneWidth(comp)
@@ -197,7 +201,7 @@ public class MBlockDecoderBase {
             }
 
             int blk4x4 = BLK8x8_BLOCKS[blk8x8][0];
-            mergePrediction(sh, vectors[0][blk4x4][2], vectors[1][blk4x4][2], predType[blk8x8], comp,
+            mergePrediction(sh, vectors.mv0R(blk4x4), vectors.mv1R(blk4x4), predType[blk8x8], comp,
                     mbb[0].getPlaneData(comp), mbb[1].getPlaneData(comp), BLK_8x8_MB_OFF_CHROMA[blk8x8],
                     mb.getPlaneWidth(comp), 4, 4, mb.getPlaneData(comp), refs, poc);
         }

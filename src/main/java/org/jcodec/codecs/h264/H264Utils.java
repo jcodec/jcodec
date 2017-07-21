@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import junit.framework.Assert;
+
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
 import org.jcodec.codecs.h264.io.model.NALUnit;
 import org.jcodec.codecs.h264.io.model.NALUnitType;
@@ -899,5 +901,163 @@ public class H264Utils {
             }
         }
         return result;
+    }
+    
+    /**
+     * A collection of functions to work with a compact representation of a motion vector.
+     * 
+     * Motion vector is represented as long:
+     * 
+     * ||rrrrrr|vvvvvvvvvvvv|hhhhhhhhhhhhhh||
+     * 
+     */
+    public static class Mv {
+        public static int mvX(int mv) {
+            return (mv << 18) >> 18;
+        }
+
+        public static int mvY(int mv) {
+            return ((mv << 6) >> 20);
+        }
+
+        public static int mvRef(int mv) {
+            return (mv >> 26);
+        }
+
+        public static int packMv(int mvx, int mvy, int r) {
+            return ((r & 0x3f) << 26) | ((mvy & 0xfff) << 14) | (mvx & 0x3fff); 
+        }
+
+        public static int mvC(int mv, int comp) {
+            return comp == 0 ? mvX(mv) : mvY(mv);
+        }
+    }
+
+    /**
+     * A collection of functions to work with a compact representation of a
+     * motion vector list.
+     * 
+     * Motion vector list contains interleaved pairs of forward and backward
+     * motion vectors packed into integers.
+     * 
+     */
+    public static class MvList {
+        private int[] list;
+        private static final int NA = Mv.packMv(0, 0, -1);
+        
+        public MvList(int size) {
+            list = new int[size << 1];
+            clear();
+        }
+
+        public void clear() {
+            for (int i = 0; i < list.length; i += 2) {
+                list[i] = list[i + 1] = NA;
+            }
+        }
+
+        public int mv0X(int off) {
+            return Mv.mvX(list[off << 1]);
+        }
+
+        public int mv0Y(int off) {
+            return Mv.mvY(list[off << 1]);
+        }
+
+        public int mv0R(int off) {
+            return Mv.mvRef(list[off << 1]);
+        }
+
+        public int mv1X(int off) {
+            return Mv.mvX(list[(off << 1) + 1]);
+        }
+
+        public int mv1Y(int off) {
+            return Mv.mvY(list[(off << 1) + 1]);
+        }
+
+        public int mv1R(int off) {
+            return Mv.mvRef(list[(off << 1) + 1]);
+        }
+
+        public int getMv(int off, int forward) {
+            return list[(off << 1) + forward];
+        }
+
+        public void setMv(int off, int forward, int mv) {
+            list[(off << 1) + forward] = mv;
+        }
+        
+        public void setPair(int off, int mv0, int mv1) {
+            list[(off << 1)] = mv0;
+            list[(off << 1) + 1] = mv1;
+        }
+        
+        public void copyPair(int off, MvList other, int otherOff) {
+            list[(off << 1)] = other.list[otherOff << 1];
+            list[(off << 1) + 1] = other.list[(otherOff << 1) + 1];
+        }
+    }
+    
+    public static class MvList2D {
+        private int[] list;
+        private int stride;
+        private int width;
+        private int height;
+        private static final int NA = Mv.packMv(0, 0, -1);
+
+        public MvList2D(int width, int height) {
+            list = new int[(width << 1) * height];
+            stride = width << 1;
+            this.width = width;
+            this.height = height;
+            clear();
+        }
+
+        public void clear() {
+            for (int i = 0; i < list.length; i += 2) {
+                list[i] = list[i + 1] = NA;
+            }
+        }
+
+        public int mv0X(int offX, int offY) {
+            return Mv.mvX(list[(offX << 1) + stride * offY]);
+        }
+
+        public int mv0Y(int offX, int offY) {
+            return Mv.mvY(list[(offX << 1) + stride * offY]);
+        }
+
+        public int mv0R(int offX, int offY) {
+            return Mv.mvRef(list[(offX << 1) + stride * offY]);
+        }
+
+        public int mv1X(int offX, int offY) {
+            return Mv.mvX(list[(offX << 1) + stride * offY + 1]);
+        }
+
+        public int mv1Y(int offX, int offY) {
+            return Mv.mvY(list[(offX << 1) + stride * offY + 1]);
+        }
+
+        public int mv1R(int offX, int offY) {
+            return Mv.mvRef(list[(offX << 1) + stride * offY + 1]);
+        }
+
+        public int getMv(int offX, int offY, int forward) {
+            return list[(offX << 1) + stride * offY + forward];
+        }
+
+        public void setMv(int offX, int offY, int forward, int mv) {
+            list[(offX << 1) + stride * offY + forward] = mv;
+        }
+
+        public int getHeight() {
+            return height;
+        }
+
+        public int getWidth() {
+            return width;
+        }
     }
 }

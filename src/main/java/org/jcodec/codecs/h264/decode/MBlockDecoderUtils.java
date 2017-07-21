@@ -1,14 +1,18 @@
 package org.jcodec.codecs.h264.decode;
 import static java.lang.System.arraycopy;
+import static org.jcodec.codecs.h264.H264Utils.Mv.mvC;
+import static org.jcodec.codecs.h264.H264Utils.Mv.mvRef;
+import static org.jcodec.codecs.h264.H264Utils.Mv.packMv;
 import static org.jcodec.common.ArrayUtil.shiftLeft1;
 import static org.jcodec.common.tools.MathUtil.clip;
 
+import org.jcodec.codecs.h264.H264Utils.MvList;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Picture8Bit;
 
 public class MBlockDecoderUtils {
     private static boolean debug;
-    public static final int[] NULL_VECTOR = new int[] { 0, 0, -1 };
+    public static final int NULL_VECTOR = packMv(0, 0, -1);
 
     public static void debugPrint(Object... arguments) {
         if (debug && arguments.length > 0) {
@@ -53,8 +57,8 @@ public class MBlockDecoderUtils {
     static void saveMvsIntra(DeblockerInput di, int mbX, int mbY) {
         for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
             for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
-                di.mvs[0][blkOffY][blkOffX] = NULL_VECTOR;
-                di.mvs[1][blkOffY][blkOffX] = NULL_VECTOR;
+                di.mvs.setMv(blkOffX, blkOffY, 0, NULL_VECTOR);
+                di.mvs.setMv(blkOffX, blkOffY, 1, NULL_VECTOR);
             }
         }
     }
@@ -68,16 +72,18 @@ public class MBlockDecoderUtils {
         }
     }
 
-    static void saveVect(int[][] mv, int from, int to, int x, int y, int r) {
+    static void saveVect(MvList mv, int list, int from, int to, int vect) {
         for (int i = from; i < to; i++) {
-            mv[i][0] = x;
-            mv[i][1] = y;
-            mv[i][2] = r;
+            mv.setMv(i, list, vect);
         }
     }
 
-    public static int calcMVPredictionMedian(int[] a, int[] b, int[] c, int[] d, boolean aAvb, boolean bAvb,
-            boolean cAvb, boolean dAvb, int ref, int comp) {
+    /**
+     * Calculates median prediction 
+     * @param a, b, c and d are packed motion vectors
+     */
+    public static int calcMVPredictionMedian(int a, int b, int c, int d, boolean aAvb, boolean bAvb, boolean cAvb,
+            boolean dAvb, int ref, int comp) {
 
         if (!cAvb) {
             c = d;
@@ -93,14 +99,15 @@ public class MBlockDecoderUtils {
         b = bAvb ? b : NULL_VECTOR;
         c = cAvb ? c : NULL_VECTOR;
 
-        if (a[2] == ref && b[2] != ref && c[2] != ref)
-            return a[comp];
-        else if (b[2] == ref && a[2] != ref && c[2] != ref)
-            return b[comp];
-        else if (c[2] == ref && a[2] != ref && b[2] != ref)
-            return c[comp];
+        if (mvRef(a) == ref && mvRef(b) != ref && mvRef(c) != ref)
+            return mvC(a, comp);
+        else if (mvRef(b) == ref && mvRef(a) != ref && mvRef(c) != ref)
+            return mvC(b, comp);
+        else if (mvRef(c) == ref && mvRef(a) != ref && mvRef(b) != ref)
+            return mvC(c, comp);
 
-        return a[comp] + b[comp] + c[comp] - min(a[comp], b[comp], c[comp]) - max(a[comp], b[comp], c[comp]);
+        return mvC(a, comp) + mvC(b, comp) + mvC(c, comp) - min(mvC(a, comp), mvC(b, comp), mvC(c, comp))
+                - max(mvC(a, comp), mvC(b, comp), mvC(c, comp));
     }
 
     public static int max(int x, int x2, int x3) {
@@ -111,43 +118,35 @@ public class MBlockDecoderUtils {
         return x < x2 ? (x < x3 ? x : x3) : (x2 < x3 ? x2 : x3);
     }
 
-    static void copyVect(int[] to, int[] from) {
-        to[0] = from[0];
-        to[1] = from[1];
-        to[2] = from[2];
-    }
-
-    static void saveMvs(DeblockerInput di, int[][][] x, int mbX, int mbY) {
+    static void saveMvs(DeblockerInput di, MvList x, int mbX, int mbY) {
         for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
             for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
-                di.mvs[0][blkOffY][blkOffX] = x[0][blkInd];
-                di.mvs[1][blkOffY][blkOffX] = x[1][blkInd];
+                di.mvs.setMv(blkOffX, blkOffY, 0, x.getMv(blkInd, 0));
+                di.mvs.setMv(blkOffX, blkOffY, 1, x.getMv(blkInd, 1));
             }
         }
     }
 
-    static void savePrediction8x8(DecoderState sharedState, int mbX, int[][] x, int list) {
-        copyVect(sharedState.mvTopLeft[list], sharedState.mvTop[list][(mbX << 2) + 3]);
-        copyVect(sharedState.mvLeft[list][0], x[3]);
-        copyVect(sharedState.mvLeft[list][1], x[7]);
-        copyVect(sharedState.mvLeft[list][2], x[11]);
-        copyVect(sharedState.mvLeft[list][3], x[15]);
-        copyVect(sharedState.mvTop[list][mbX << 2], x[12]);
-        copyVect(sharedState.mvTop[list][(mbX << 2) + 1], x[13]);
-        copyVect(sharedState.mvTop[list][(mbX << 2) + 2], x[14]);
-        copyVect(sharedState.mvTop[list][(mbX << 2) + 3], x[15]);
+    static void savePrediction8x8(DecoderState sharedState, int mbX, MvList x) {
+        sharedState.mvTopLeft.copyPair(0, sharedState.mvTop, (mbX << 2) + 3);
+        sharedState.mvLeft.copyPair(0, x, 3);
+        sharedState.mvLeft.copyPair(1, x, 7);
+        sharedState.mvLeft.copyPair(2, x, 11);
+        sharedState.mvLeft.copyPair(3, x, 15);
+        sharedState.mvTop.copyPair(mbX << 2, x, 12);
+        sharedState.mvTop.copyPair((mbX << 2) + 1, x, 13);
+        sharedState.mvTop.copyPair((mbX << 2) + 2, x, 14);
+        sharedState.mvTop.copyPair((mbX << 2) + 3, x, 15);
     }
 
     public static void saveVectIntra(DecoderState sharedState, int mbX) {
         int xx = mbX << 2;
 
-        copyVect(sharedState.mvTopLeft[0], sharedState.mvTop[0][xx + 3]);
-        copyVect(sharedState.mvTopLeft[1], sharedState.mvTop[1][xx + 3]);
+        sharedState.mvTopLeft.copyPair(0, sharedState.mvTop, xx + 3);
 
-        saveVect(sharedState.mvTop[0], xx, xx + 4, 0, 0, -1);
-        saveVect(sharedState.mvLeft[0], 0, 4, 0, 0, -1);
-        saveVect(sharedState.mvTop[1], xx, xx + 4, 0, 0, -1);
-        saveVect(sharedState.mvLeft[1], 0, 4, 0, 0, -1);
+        saveVect(sharedState.mvTop, 0, xx, xx + 4, NULL_VECTOR);
+        saveVect(sharedState.mvLeft, 0, 0, 4, NULL_VECTOR);
+        saveVect(sharedState.mvTop, 1, xx, xx + 4, NULL_VECTOR);
+        saveVect(sharedState.mvLeft, 1, 0, 4, NULL_VECTOR);
     }
-
 }

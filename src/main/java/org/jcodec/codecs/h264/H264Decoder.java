@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
+import org.jcodec.codecs.h264.H264Utils.MvList2D;
 import org.jcodec.codecs.h264.decode.DeblockerInput;
 import org.jcodec.codecs.h264.decode.FrameReader;
 import org.jcodec.codecs.h264.decode.SliceDecoder;
@@ -36,7 +37,6 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
-import org.jcodec.common.tools.ToJSON;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -372,7 +372,7 @@ public class H264Decoder extends VideoDecoder {
     }
 
     public static Frame createFrame(SeqParameterSet sps, byte[][] buffer, int frameNum, SliceType frameType,
-            int[][][][] mvs, Frame[][][] refsUsed, int POC) {
+            MvList2D mvs, Frame[][][] refsUsed, int POC) {
         int width = sps.picWidthInMbsMinus1 + 1 << 4;
         int height = SeqParameterSet.getPicHeightInMbs(sps) << 4;
 

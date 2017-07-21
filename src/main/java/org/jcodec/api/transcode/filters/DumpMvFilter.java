@@ -1,12 +1,17 @@
 package org.jcodec.api.transcode.filters;
 
+import static org.jcodec.codecs.h264.H264Utils.Mv.mvRef;
+import static org.jcodec.codecs.h264.H264Utils.Mv.mvX;
+import static org.jcodec.codecs.h264.H264Utils.Mv.mvY;
+
+import org.jcodec.api.transcode.Filter;
+import org.jcodec.api.transcode.PixelStore;
+import org.jcodec.api.transcode.PixelStore.LoanerPicture;
+import org.jcodec.codecs.h264.H264Utils.MvList2D;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.api.transcode.Filter;
-import org.jcodec.api.transcode.PixelStore;
-import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 
 public class DumpMvFilter implements Filter {
     private boolean js;
@@ -29,12 +34,12 @@ public class DumpMvFilter implements Filter {
         System.err.println("FRAME ================================================================");
         if (dec.getFrameType() == SliceType.I)
             return;
-        int[][][][] mvs = dec.getMvs();
+        MvList2D mvs = dec.getMvs();
         for (int i = 0; i < 2; i++) {
 
             System.err.println((i == 0 ? "BCK" : "FWD")
                     + " ===========================================================================");
-            for (int blkY = 0; blkY < mvs[i].length; ++blkY) {
+            for (int blkY = 0; blkY < mvs.getHeight(); ++blkY) {
                 StringBuilder line0 = new StringBuilder();
                 StringBuilder line1 = new StringBuilder();
                 StringBuilder line2 = new StringBuilder();
@@ -43,11 +48,11 @@ public class DumpMvFilter implements Filter {
                 line1.append("|");
                 line2.append("|");
                 line3.append("|");
-                for (int blkX = 0; blkX < mvs[i][0].length; ++blkX) {
+                for (int blkX = 0; blkX < mvs.getWidth(); ++blkX) {
                     line0.append("------+");
-                    line1.append(String.format("%6d|", mvs[i][blkY][blkX][0]));
-                    line2.append(String.format("%6d|", mvs[i][blkY][blkX][1]));
-                    line3.append(String.format("    %2d|", mvs[i][blkY][blkX][2]));
+                    line1.append(String.format("%6d|", mvX(mvs.getMv(blkX, blkY, i))));
+                    line2.append(String.format("%6d|", mvY(mvs.getMv(blkX, blkY, i))));
+                    line3.append(String.format("    %2d|", mvRef(mvs.getMv(blkX, blkY, i))));
                 }
                 System.err.println(line0.toString());
                 System.err.println(line1.toString());
@@ -63,14 +68,15 @@ public class DumpMvFilter implements Filter {
         System.err.println("{");
         if (dec.getFrameType() == SliceType.I)
             return;
-        int[][][][] mvs = dec.getMvs();
+        MvList2D mvs = dec.getMvs();
         for (int i = 0; i < 2; i++) {
 
             System.err.println((i == 0 ? "backRef" : "forwardRef") + ": [");
-            for (int blkY = 0; blkY < mvs[i].length; ++blkY) {
-                for (int blkX = 0; blkX < mvs[i][0].length; ++blkX) {
-                    System.err.println("{x: " + blkX + ", y: " + blkY + ", mx: " + mvs[i][blkY][blkX][0] + ", my: "
-                            + mvs[i][blkY][blkX][1] + ", ridx:" + mvs[i][blkY][blkX][2] + "},");
+            for (int blkY = 0; blkY < mvs.getHeight(); ++blkY) {
+                for (int blkX = 0; blkX < mvs.getWidth(); ++blkX) {
+                    System.err.println("{x: " + blkX + ", y: " + blkY + ", mx: " + mvX(mvs.getMv(blkX, blkY, i))
+                            + ", my: " + mvY(mvs.getMv(blkX, blkY, i)) + ", ridx:" + mvRef(mvs.getMv(blkX, blkY, i))
+                            + "},");
                 }
             }
             System.err.println("],");

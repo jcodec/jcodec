@@ -1,4 +1,6 @@
 package org.jcodec.codecs.h264;
+import org.jcodec.codecs.h264.H264Utils.Mv;
+import org.jcodec.codecs.h264.H264Utils.MvList;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.Platform;
@@ -52,5 +54,106 @@ public class H264UtilsTest {
         Assert.assertArrayEquals(new byte[] { 0, 0, 0, 1, 0x67, 's', 't', 'a', 'n', 0, 0, 0, 1, 0x67, 't', 'h', 'e', 0,
                 0, 0, 1, 0x68, 'm', 'a', 'n', 0, 0, 0, 1, 0x68, 'c', 'o', 'o', 'l' }, res);
         
+    }
+    
+    @Test
+    public void testMv() {
+        int mv = 0;
+        Assert.assertEquals(0, Mv.mvX(mv));
+        Assert.assertEquals(0, Mv.mvY(mv));
+        mv = Mv.packMv(42, 143, 11);
+        Assert.assertEquals(42, Mv.mvX(mv));
+        Assert.assertEquals(143, Mv.mvY(mv));
+        Assert.assertEquals(42, Mv.mvC(mv, 0));
+        Assert.assertEquals(143, Mv.mvC(mv, 1));
+        Assert.assertEquals(11, Mv.mvRef(mv));
+        mv = Mv.packMv(-42, 143, 11);
+        Assert.assertEquals(-42, Mv.mvX(mv));
+        Assert.assertEquals(143, Mv.mvY(mv));
+        Assert.assertEquals(11, Mv.mvRef(mv));
+        mv = Mv.packMv(42, -143, 11);
+        Assert.assertEquals(42, Mv.mvX(mv));
+        Assert.assertEquals(-143, Mv.mvY(mv));
+        Assert.assertEquals(11, Mv.mvRef(mv));
+        mv = Mv.packMv(-42, -143, 11);
+        Assert.assertEquals(-42, Mv.mvX(mv));
+        Assert.assertEquals(-143, Mv.mvY(mv));
+        Assert.assertEquals(-42, Mv.mvC(mv, 0));
+        Assert.assertEquals(-143, Mv.mvC(mv, 1));
+        Assert.assertEquals(11, Mv.mvRef(mv));
+        mv = Mv.packMv(-42, -143, -11);
+        Assert.assertEquals(-42, Mv.mvX(mv));
+        Assert.assertEquals(-143, Mv.mvY(mv));
+        Assert.assertEquals(-11, Mv.mvRef(mv));
+    }
+    
+    @Test
+    public void testMvList() {
+        MvList pair = new MvList(2);
+        Assert.assertEquals(0, pair.mv0X(0));
+        Assert.assertEquals(0, pair.mv0Y(0));
+        Assert.assertEquals(-1, pair.mv0R(0));
+        Assert.assertEquals(0, pair.mv1X(0));
+        Assert.assertEquals(0, pair.mv1Y(0));
+        Assert.assertEquals(-1, pair.mv1R(0));
+
+        pair.setMv(0, 0, Mv.packMv(42, 143, 11));
+        Assert.assertEquals(42, pair.mv0X(0));
+        Assert.assertEquals(143, pair.mv0Y(0));
+        Assert.assertEquals(11, pair.mv0R(0));
+        Assert.assertEquals(0, pair.mv1X(0));
+        Assert.assertEquals(0, pair.mv1Y(0));
+        Assert.assertEquals(-1, pair.mv1R(0));
+        
+        pair.setMv(1, 1, Mv.packMv(-42, -43, 11));
+        Assert.assertEquals(0, pair.mv0X(1));
+        Assert.assertEquals(0, pair.mv0Y(1));
+        Assert.assertEquals(-1, pair.mv0R(1));
+        Assert.assertEquals(-42, pair.mv1X(1));
+        Assert.assertEquals(-43, pair.mv1Y(1));
+        Assert.assertEquals(11, pair.mv1R(1));
+        
+        pair.clear();
+        Assert.assertEquals(0, pair.mv0X(0));
+        Assert.assertEquals(0, pair.mv0Y(0));
+        Assert.assertEquals(-1, pair.mv0R(0));
+        Assert.assertEquals(0, pair.mv1X(0));
+        Assert.assertEquals(0, pair.mv1Y(0));
+        Assert.assertEquals(-1, pair.mv1R(0));
+    }
+    
+    @Test
+    public void testMvList2D() {
+        H264Utils.MvList2D pair = new H264Utils.MvList2D(2, 2);
+        Assert.assertEquals(0, pair.mv0X(1, 1));
+        Assert.assertEquals(0, pair.mv0Y(1, 1));
+        Assert.assertEquals(-1, pair.mv0R(1, 1));
+        Assert.assertEquals(0, pair.mv1X(1, 1));
+        Assert.assertEquals(0, pair.mv1Y(1, 1));
+        Assert.assertEquals(-1, pair.mv1R(1, 1));
+
+        pair.setMv(1, 0, 0, Mv.packMv(42, 143, 11));
+        Assert.assertEquals(42, pair.mv0X(1, 0));
+        Assert.assertEquals(143, pair.mv0Y(1, 0));
+        Assert.assertEquals(11, pair.mv0R(1, 0));
+        Assert.assertEquals(0, pair.mv1X(1, 0));
+        Assert.assertEquals(0, pair.mv1Y(1, 0));
+        Assert.assertEquals(-1, pair.mv1R(1, 0));
+        
+        pair.setMv(1, 1, 1, Mv.packMv(-42, -43, 11));
+        Assert.assertEquals(0, pair.mv0X(1, 1));
+        Assert.assertEquals(0, pair.mv0Y(1, 1));
+        Assert.assertEquals(-1, pair.mv0R(1, 1));
+        Assert.assertEquals(-42, pair.mv1X(1, 1));
+        Assert.assertEquals(-43, pair.mv1Y(1, 1));
+        Assert.assertEquals(11, pair.mv1R(1, 1));
+        
+        pair.clear();
+        Assert.assertEquals(0, pair.mv0X(1, 1));
+        Assert.assertEquals(0, pair.mv0Y(1, 1));
+        Assert.assertEquals(-1, pair.mv0R(1, 1));
+        Assert.assertEquals(0, pair.mv1X(1, 1));
+        Assert.assertEquals(0, pair.mv1Y(1, 1));
+        Assert.assertEquals(-1, pair.mv1R(1, 1));
     }
 }
