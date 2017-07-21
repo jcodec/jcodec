@@ -15,9 +15,9 @@ import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
+import org.jcodec.common.CodecMeta;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Size;
-import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 

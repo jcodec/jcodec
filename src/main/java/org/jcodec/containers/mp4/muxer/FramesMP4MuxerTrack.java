@@ -249,7 +249,7 @@ public class FramesMP4MuxerTrack extends AbstractMP4MuxerTrack {
             if (codec == Codec.H264) {
                 SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
                 Size size = H264Utils.getPicSize(sps);
-                VideoCodecMeta meta = new VideoCodecMeta(size, ColorSpace.YUV420);
+                VideoCodecMeta meta = org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(size, ColorSpace.YUV420);
                 addVideoSampleEntry(meta);
             } else {
                 throw new RuntimeException("Sample entry missing not supported for anything other then H.264");

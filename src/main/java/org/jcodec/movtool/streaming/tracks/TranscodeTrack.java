@@ -3,6 +3,8 @@ import java.lang.IllegalStateException;
 import java.lang.System;
 import java.lang.ThreadLocal;
 
+import org.jcodec.common.CodecMeta;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.VideoEncoder.EncodedFrame;
@@ -11,8 +13,6 @@ import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
-import org.jcodec.movtool.streaming.CodecMeta;
-import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.scale.ColorUtil;

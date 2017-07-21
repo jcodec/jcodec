@@ -2,6 +2,7 @@ package org.jcodec.movtool.streaming;
 import java.lang.IllegalStateException;
 import java.lang.System;
 
+import org.jcodec.common.CodecMeta;
 
 import java.io.IOException;
 

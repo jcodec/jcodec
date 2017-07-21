@@ -513,7 +513,7 @@ public class PNGDecoder extends VideoDecoder {
             case TAG_IHDR:
                 IHDR ihdr = new IHDR();
                 ihdr.parse(data);
-                return new VideoCodecMeta(new Size(ihdr.width, ihdr.height), ColorSpace.RGB);
+                return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(ihdr.width, ihdr.height), ColorSpace.RGB);
             default:
                 data.position(data.position() + length + 4);
             }

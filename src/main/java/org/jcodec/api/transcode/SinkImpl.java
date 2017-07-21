@@ -207,7 +207,7 @@ public class SinkImpl implements Sink, PacketSink {
         outputVideoPacket = Packet.createPacketWithData(videoFrame.getPacket(), NIOUtils.clone(enc.getData()));
         outputVideoPacket.setFrameType(enc.isKeyFrame() ? FrameType.KEY : FrameType.INTER);
         outputVideoPacket(outputVideoPacket,
-                new VideoCodecMeta(new Size(frame.getWidth(), frame.getHeight()), frame.getColor()));
+                org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(frame.getWidth(), frame.getHeight()), frame.getColor()));
     }
 
     @Override
@@ -215,7 +215,7 @@ public class SinkImpl implements Sink, PacketSink {
         if (!outputFormat.isAudio())
             return;
         outputAudioPacket(Packet.createPacketWithData(audioFrame.getPacket(), encodeAudio(audioFrame.getAudio())),
-                new AudioCodecMeta(audioFrame.getAudio().getFormat()));
+                org.jcodec.common.AudioCodecMeta.fromAudioFormat(audioFrame.getAudio().getFormat()));
     }
 
     @Override

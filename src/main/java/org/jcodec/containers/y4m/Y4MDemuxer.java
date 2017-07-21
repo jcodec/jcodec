@@ -114,7 +114,7 @@ public class Y4MDemuxer implements DemuxerTrack, Demuxer {
     @Override
     public DemuxerTrackMeta getMeta() {
         return new DemuxerTrackMeta(TrackType.VIDEO, Codec.RAW, totalDuration, null, totalFrames, null,
-                new VideoCodecMeta(new Size(width, height), ColorSpace.YUV420), null);
+                org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(width, height), ColorSpace.YUV420), null);
     }
 
     @Override

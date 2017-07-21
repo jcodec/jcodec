@@ -3,12 +3,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.pcmdvd.PCMDVDDecoder;
+import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioFormat;
+import org.jcodec.common.CodecMeta;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.Label;
 import org.jcodec.containers.mp4.muxer.PCMMP4MuxerTrack;
-import org.jcodec.movtool.streaming.AudioCodecMeta;
-import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 

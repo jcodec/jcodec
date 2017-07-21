@@ -90,7 +90,7 @@ public class SequenceEncoder8Bit {
         }
         if (outTrack == null) {
             // Add video track to muxer
-            outTrack = muxer.addVideoTrack(Codec.H264, new VideoCodecMeta(new Size(pic.getWidth(), pic.getHeight()), pic.getColor()));
+            outTrack = muxer.addVideoTrack(Codec.H264, org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(pic.getWidth(), pic.getHeight()), pic.getColor()));
         }
 
         // Perform conversion

@@ -2,8 +2,7 @@ package org.jcodec.movtool.streaming.tracks;
 import java.lang.IllegalStateException;
 import java.lang.System;
 
-
-import org.jcodec.movtool.streaming.CodecMeta;
+import org.jcodec.common.CodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 

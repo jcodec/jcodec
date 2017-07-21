@@ -493,7 +493,7 @@ public class MXFDemuxer {
 
             TrackType t = video ? TrackType.VIDEO : (audio ? TrackType.AUDIO : TrackType.OTHER);
             return new DemuxerTrackMeta(t, getCodec().getCodec(), demuxer.duration, null, demuxer.totalFrames, null,
-                    new VideoCodecMeta(size, ColorSpace.YUV420), null);
+                    org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(size, ColorSpace.YUV420), null);
         }
     }
 

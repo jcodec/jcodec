@@ -2,7 +2,9 @@ package org.jcodec.movtool.streaming.tracks;
 import java.lang.IllegalStateException;
 import java.lang.System;
 
-
+import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.CodecMeta;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
@@ -21,9 +23,6 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.FramesMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.PCMMP4DemuxerTrack;
-import org.jcodec.movtool.streaming.AudioCodecMeta;
-import org.jcodec.movtool.streaming.CodecMeta;
-import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 

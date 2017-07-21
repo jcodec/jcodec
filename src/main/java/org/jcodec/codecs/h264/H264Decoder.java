@@ -437,6 +437,6 @@ public class H264Decoder extends VideoDecoder {
         SeqParameterSet sps = SeqParameterSet.read(rawSPS.get(0));
         Size size = H264Utils.getPicSize(sps);
 //, H264Utils.saveCodecPrivate(rawSPS, rawPPS)
-        return new VideoCodecMeta(size, ColorSpace.YUV420);
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(size, ColorSpace.YUV420);
     }
 }
