@@ -65,7 +65,7 @@ public class WavDemuxer implements Demuxer, DemuxerTrack {
     @Override
     public DemuxerTrackMeta getMeta() {
         AudioFormat format = header.getFormat();
-        AudioCodecMeta audioCodecMeta = new AudioCodecMeta(format);
+        AudioCodecMeta audioCodecMeta = org.jcodec.common.AudioCodecMeta.fromAudioFormat(format);
         long totalFrames = dataSize / format.getFrameSize();
         return new DemuxerTrackMeta(TrackType.AUDIO, Codec.PCM, (double) totalFrames / format.getFrameRate(), null,
                 (int) totalFrames, null, null, audioCodecMeta);

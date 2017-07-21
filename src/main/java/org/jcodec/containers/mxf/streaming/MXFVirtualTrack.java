@@ -2,7 +2,9 @@ package org.jcodec.containers.mxf.streaming;
 import java.lang.IllegalStateException;
 import java.lang.System;
 
-
+import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.CodecMeta;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Label;
@@ -20,9 +22,6 @@ import org.jcodec.containers.mxf.model.GenericSoundEssenceDescriptor;
 import org.jcodec.containers.mxf.model.KLV;
 import org.jcodec.containers.mxf.model.TimelineTrack;
 import org.jcodec.containers.mxf.model.UL;
-import org.jcodec.movtool.streaming.AudioCodecMeta;
-import org.jcodec.movtool.streaming.CodecMeta;
-import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.movtool.streaming.tracks.ByteChannelPool;

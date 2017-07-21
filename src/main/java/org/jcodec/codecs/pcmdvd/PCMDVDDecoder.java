@@ -112,6 +112,6 @@ public class PCMDVDDecoder implements AudioDecoder {
         int sampleRate = lpcm_freq_tab[freq];
         int channelCount = 1 + (b1 & 7);
         int sampleSizeInBits = 16 + ((b1 >> 6) & 3) * 4;
-        return new AudioCodecMeta(new AudioFormat(sampleRate, sampleSizeInBits, channelCount, true, false));
+        return org.jcodec.common.AudioCodecMeta.fromAudioFormat(new AudioFormat(sampleRate, sampleSizeInBits, channelCount, true, false));
     }
 }

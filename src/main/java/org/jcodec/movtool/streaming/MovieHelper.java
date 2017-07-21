@@ -12,8 +12,11 @@ import java.util.List;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.CodecMeta;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;

@@ -268,7 +268,7 @@ public final class MKVDemuxer implements Demuxer {
         @Override
         public DemuxerTrackMeta getMeta() {
             return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, codec, 0, null, 0, state,
-                    new VideoCodecMeta(new Size(demuxer.pictureWidth, demuxer.pictureHeight), ColorSpace.YUV420), null);
+                    org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(demuxer.pictureWidth, demuxer.pictureHeight), ColorSpace.YUV420), null);
         }
 
         @Override

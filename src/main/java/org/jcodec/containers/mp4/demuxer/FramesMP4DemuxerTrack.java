@@ -284,13 +284,13 @@ public class FramesMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
         VideoCodecMeta videoCodecMeta = null;
         AudioCodecMeta audioCodecMeta = null;
         if (type == MP4TrackType.VIDEO) {
-            videoCodecMeta = new VideoCodecMeta(box.getCodedSize(), ColorSpace.YUV420);
+            videoCodecMeta = org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(box.getCodedSize(), ColorSpace.YUV420);
             PixelAspectExt pasp = NodeBox.findFirst(getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if (pasp != null)
                 videoCodecMeta.setPixelAspectRatio(pasp.getRational());
         } else if (type == MP4TrackType.SOUND) {
             AudioSampleEntry ase = (AudioSampleEntry) getSampleEntries()[0];
-            audioCodecMeta = new AudioCodecMeta(ase.getFormat());
+            audioCodecMeta = org.jcodec.common.AudioCodecMeta.fromAudioFormat(ase.getFormat());
         }
         DemuxerTrackMeta meta = new DemuxerTrackMeta(t, getCodec(), (double) duration / timescale, seekFrames,
                 sizes.length, getCodecPrivate(), videoCodecMeta, audioCodecMeta);

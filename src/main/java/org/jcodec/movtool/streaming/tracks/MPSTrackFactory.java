@@ -6,15 +6,15 @@ import java.lang.System;
 import static java.lang.System.arraycopy;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 
+import org.jcodec.common.CodecMeta;
 import org.jcodec.common.RunLength;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mps.MPSUtils;
-import org.jcodec.movtool.streaming.CodecMeta;
-import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.platform.Platform;

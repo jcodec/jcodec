@@ -63,7 +63,7 @@ public class AACDecoder implements AudioDecoder {
         decoder.decodeFrame(NIOUtils.toArray(data), sampleBuffer);
         sampleBuffer.setBigEndian(false);
 
-        return new AudioCodecMeta(toAudioFormat(sampleBuffer));
+        return org.jcodec.common.AudioCodecMeta.fromAudioFormat(toAudioFormat(sampleBuffer));
     }
 
     public static int probe(ByteBuffer data) {

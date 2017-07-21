@@ -1,4 +1,4 @@
-package org.jcodec.movtool.streaming;
+package org.jcodec.common;
 import java.lang.IllegalStateException;
 import java.lang.System;
 

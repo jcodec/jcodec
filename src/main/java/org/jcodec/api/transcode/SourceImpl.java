@@ -341,7 +341,7 @@ public class SourceImpl implements Source, PacketSource {
 
         @Override
         public AudioCodecMeta getCodecMeta(ByteBuffer data) throws IOException {
-            return new AudioCodecMeta(format);
+            return org.jcodec.common.AudioCodecMeta.fromAudioFormat(format);
         }
     }
 

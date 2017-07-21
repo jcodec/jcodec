@@ -44,14 +44,14 @@ import static org.jcodec.containers.mkv.muxer.MKVMuxer.createLong;
 import static org.jcodec.containers.mkv.muxer.MKVMuxer.createString;
 
 import org.jcodec.common.Assert;
+import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.CodecMeta;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.MkvBlock;
 import org.jcodec.containers.mkv.boxes.MkvSegment;
-import org.jcodec.movtool.streaming.AudioCodecMeta;
-import org.jcodec.movtool.streaming.CodecMeta;
 import org.jcodec.movtool.streaming.MovieSegment;
-import org.jcodec.movtool.streaming.VideoCodecMeta;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 

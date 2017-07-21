@@ -357,6 +357,6 @@ public class VP8Decoder extends VideoDecoder {
         int width = (twoBytesWidth & 0x3fff);
         int height = (twoBytesHeight & 0x3fff);
 
-        return new VideoCodecMeta(new Size(width, height), ColorSpace.YUV420);
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(width, height), ColorSpace.YUV420);
     }
 }

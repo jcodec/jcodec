@@ -44,6 +44,6 @@ public class RAWVideoDecoder extends VideoDecoder {
 
     @Override
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
-        return new VideoCodecMeta(new Size(width, height), ColorSpace.YUV420);
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(width, height), ColorSpace.YUV420);
     }
 }

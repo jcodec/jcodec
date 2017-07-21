@@ -106,6 +106,6 @@ public class S302MDecoder implements AudioDecoder {
             throw new IllegalArgumentException("Wrong s302m frame");
         int channels = ((h >> 14) & 0x0003) * 2 + 2;
         int sampleSizeInBits = ((h >> 4) & 0x0003) * 4 + 16;
-        return new AudioCodecMeta(new AudioFormat(SAMPLE_RATE, sampleSizeInBits, channels, true, true));
+        return org.jcodec.common.AudioCodecMeta.fromAudioFormat(new AudioFormat(SAMPLE_RATE, sampleSizeInBits, channels, true, true));
     }
 }
