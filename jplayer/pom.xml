@@ -88,12 +88,16 @@
 			<version>1.1</version>
 			<type>jar</type>
 		</dependency>
+        <dependency>
+            <groupId>org.jcodec</groupId>
+            <artifactId>jcodec-javase</artifactId>
+            <version>0.2.0-SNAPSHOT</version>
+        </dependency>
 		<dependency>
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec</artifactId>
 			<version>0.2.0-SNAPSHOT</version>
 		</dependency>
-
 		<dependency>
 			<groupId>sun.plugin</groupId>
 			<artifactId>plugin</artifactId>
@@ -104,7 +108,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.11</version>
+			<version>4.12</version>
 		</dependency>
 		<dependency>
 			<groupId>net.sf.trove4j</groupId>
@@ -121,10 +125,5 @@
 			<artifactId>gson</artifactId>
 			<version>2.2.3</version>
 		</dependency>
-        <dependency>
-            <groupId>org.jcodec</groupId>
-            <artifactId>jcodec-javase</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 </project>
