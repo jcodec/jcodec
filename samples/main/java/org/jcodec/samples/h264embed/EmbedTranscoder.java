@@ -37,10 +37,10 @@ public class EmbedTranscoder {
             } else {
                 if (marker.type == NALUnitType.SPS) {
                     SeqParameterSet _sps = SeqParameterSet.read(nalUnit.duplicate());
-                    sps.put(_sps.seq_parameter_set_id, _sps);
+                    sps.put(_sps.seqParameterSetId, _sps);
                 } else if (marker.type == NALUnitType.PPS) {
                     PictureParameterSet _pps = PictureParameterSet.read(nalUnit.duplicate());
-                    pps.put(_pps.pic_parameter_set_id, _pps);
+                    pps.put(_pps.picParameterSetId, _pps);
                 }
                 NIOUtils.write(_out, nalUnit);
             }

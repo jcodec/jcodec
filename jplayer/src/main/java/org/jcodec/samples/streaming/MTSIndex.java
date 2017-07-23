@@ -1,6 +1,6 @@
 package org.jcodec.samples.streaming;
 
-import static org.jcodec.containers.mps.MPSDemuxer.videoStream;
+import static org.jcodec.containers.mps.MPSUtils.videoStream;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,7 +16,7 @@ import java.util.Set;
 
 import junit.framework.Assert;
 
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.TapeTimecode;
 
 /**
@@ -190,7 +190,7 @@ public class MTSIndex {
                 ArrayList<ByteBuffer> extraData = new ArrayList<ByteBuffer>();
                 int size = NIOUtils.readInt(is);
                 long pos = is.position();
-                ByteBuffer buf = NIOUtils.fetchFrom(is, size);
+                ByteBuffer buf = NIOUtils.fetchFromChannel(is, size);
 
                 int sid = buf.get() & 0xff;
                 while (buf.get() == 0) {

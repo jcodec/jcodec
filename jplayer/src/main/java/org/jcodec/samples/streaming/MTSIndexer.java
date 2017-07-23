@@ -1,10 +1,10 @@
 package org.jcodec.samples.streaming;
 
-import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.BiPredictiveCoded;
-import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.IntraCoded;
-import static org.jcodec.common.NIOUtils.from;
-import static org.jcodec.containers.mps.MPSDemuxer.videoStream;
-import gnu.trove.map.hash.TIntObjectHashMap;
+import static org.jcodec.codecs.mpeg12.MPEGConst.BiPredictiveCoded;
+import static org.jcodec.codecs.mpeg12.MPEGConst.IntraCoded;
+import static org.jcodec.common.io.NIOUtils.from;
+import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+import static org.jcodec.containers.mps.MPSUtils.videoStream;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,13 +21,15 @@ import java.util.Set;
 
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.TapeTimecode;
-import org.jcodec.containers.mps.MPSDemuxer;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer.MTSPacket;
+import org.jcodec.containers.mps.PESPacket;
 import org.jcodec.samples.streaming.MTSIndex.FrameEntry;
 import org.jcodec.samples.streaming.MTSIndex.VideoFrameEntry;
+
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -74,7 +76,7 @@ public class MTSIndexer {
                     program.packet(pkt, offset);
             }
         } finally {
-            channel.close();
+            IOUtils.closeQuietly(channel);
             done = true;
         }
     }
@@ -101,7 +103,7 @@ public class MTSIndexer {
 
             if (pkt.payloadStart && markerStart(data)) {
                 int streamId = data.get(3);
-                pes = MPSDemuxer.readPES(data, 0);
+                pes = readPESHeader(data, 0);
 
                 if (!videoStream(streamId)) {
                     FrameEntry last = index.last(pes.streamId);

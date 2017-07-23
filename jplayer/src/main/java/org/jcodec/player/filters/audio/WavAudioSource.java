@@ -6,10 +6,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
-import javax.sound.sampled.AudioFormat;
-
 import org.jcodec.codecs.wav.WavHeader;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.player.filters.MediaInfo;
@@ -51,7 +50,7 @@ public class WavAudioSource implements AudioSource {
             throw new IllegalArgumentException("Data won't fit");
         ByteBuffer dd = data.duplicate();
         int read;
-        if ((read = NIOUtils.read(src, dd, toRead)) != toRead) {
+        if ((read = NIOUtils.readL(src, dd, toRead)) != toRead) {
             NIOUtils.fill(dd, (byte) 0);
         }
         long pts = (src.position() - headerSize) / header.fmt.blockAlign;

@@ -3,7 +3,6 @@ package org.jcodec.samples.audio;
 import java.io.File;
 import java.io.IOException;
 import java.nio.FloatBuffer;
-import java.util.HashMap;
 
 import org.jcodec.audio.Audio;
 import org.jcodec.audio.AudioFilter;
@@ -16,6 +15,7 @@ import org.jcodec.codecs.wav.WavOutput;
 import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.MainUtils.Flag;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -27,14 +27,14 @@ import org.jcodec.common.tools.MainUtils.Cmd;
  * 
  */
 public class Noise {
+    private static final Flag FLAG_LEVEL = new Flag("level", "level", "Desired noise level, between -90 and -15.");
+    private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_LEVEL};
+    
+
     public static void main(String[] args) throws IOException {
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
-                {
-                    put("level", "Desired noise level, between -90 and -15.");
-                }
-            }, "input.wav", "output.wav");
+            MainUtils.printHelpVarArgs(FLAGS, "input.wav", "output.wav");
             System.exit(-1);
         }
         WavFile wavFile = new WavInput.WavFile(new File(cmd.getArg(0)));
@@ -42,7 +42,7 @@ public class Noise {
         WavInput.Source source = new WavInput.Source(wavFile); 
         WavOutput.Sink sink = new WavOutput.Sink(wavOutFile); 
 
-        int dB = cmd.getIntegerFlagD("level", -22);
+        int dB = cmd.getIntegerFlagD(FLAG_LEVEL, -22);
         if (dB > -15 || dB < -90) {
             System.out.println("Impractical noise level of: " + dB + ", exiting!");
             System.exit(-1);

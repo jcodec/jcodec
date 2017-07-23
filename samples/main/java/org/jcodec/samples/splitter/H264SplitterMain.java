@@ -17,6 +17,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.jcodec.common.io.IOUtils;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -122,7 +123,7 @@ public class H264SplitterMain extends H264SplitterBase {
 
             split(io);
         } finally {
-            io.close();
+            IOUtils.closeQuietly(io);
         }
     }
 

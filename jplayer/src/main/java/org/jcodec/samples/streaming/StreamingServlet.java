@@ -46,16 +46,16 @@ public class StreamingServlet extends HttpServlet {
     }
 
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String[] path = StringUtils.split(req.getPathInfo(), "/");
+        String[] path = StringUtils.splitS(req.getPathInfo(), "/");
 
         File file = null;
         Integer track = null, frameS = null, frameE = null;
         for (int i = path.length - 1; i >= 0; i--) {
-            File test = new File(base, StringUtils.join(path, "/", 0, i + 1));
+            File test = new File(base, StringUtils.joinS4(path, "/", 0, i + 1));
             if (test.exists() && !test.isDirectory()) {
                 track = i < path.length - 1 ? Integer.parseInt(path[i + 1]) : null;
                 if (i < path.length - 2) {
-                    String[] split = StringUtils.split(path[i + 2], ':');
+                    String[] split = StringUtils.splitC(path[i + 2], ':');
                     if (split.length == 1) {
                         frameS = frameE = Integer.parseInt(split[0]);
                     } else {
@@ -71,7 +71,7 @@ public class StreamingServlet extends HttpServlet {
         Adapter adapter = getAdapter(file);
 
         try {
-            if (frameS != null) {
+            if (frameS != null && track != null && frameE != null) {
                 frame(adapter, track, frameS, frameE, resp);
             } else if (track != null) {
                 if (req.getParameter("pts") != null)

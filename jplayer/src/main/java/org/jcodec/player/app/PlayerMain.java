@@ -13,7 +13,7 @@ import java.util.List;
 
 import javax.swing.JFrame;
 
-import org.jcodec.common.IOUtils;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.player.Player;
 import org.jcodec.player.Stepper;

@@ -17,11 +17,11 @@
 		</repository>
 	</repositories>
 	<build>
-		<sourceDirectory>main/java</sourceDirectory>
-		<testSourceDirectory>tests/java</testSourceDirectory>
+		<sourceDirectory>src/main/java</sourceDirectory>
+		<testSourceDirectory>src/tests/java</testSourceDirectory>
 		<resources>
 			<resource>
-				<directory>main/java</directory>
+				<directory>src/main/java</directory>
 				<excludes>
 					<exclude>**/*.java</exclude>
 				</excludes>
@@ -29,7 +29,7 @@
 		</resources>
 		<testResources>
 			<testResource>
-				<directory>tests/java</directory>
+				<directory>src/tests/java</directory>
 				<excludes>
 					<exclude>**/*.java</exclude>
 				</excludes>
@@ -91,7 +91,7 @@
 		<dependency>
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec</artifactId>
-			<version>0.1.9</version>
+			<version>0.2.0-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -121,5 +121,10 @@
 			<artifactId>gson</artifactId>
 			<version>2.2.3</version>
 		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>org.jcodec</groupId>
+            <artifactId>jcodec-javase</artifactId>
+            <version>0.2.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
 </project>

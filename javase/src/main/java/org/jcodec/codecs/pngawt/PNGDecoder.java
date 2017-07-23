@@ -36,7 +36,7 @@ public class PNGDecoder extends VideoDecoder {
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
         try {
             BufferedImage rgb = ImageIO.read(new ByteArrayInputStream(NIOUtils.toArray(data)));
-            return new VideoCodecMeta(new Size(rgb.getWidth(), rgb.getHeight()), ColorSpace.RGB);
+            return VideoCodecMeta.createSimpleVideoCodecMeta(new Size(rgb.getWidth(), rgb.getHeight()), ColorSpace.RGB);
         } catch (IOException e) {
             return null;
         }

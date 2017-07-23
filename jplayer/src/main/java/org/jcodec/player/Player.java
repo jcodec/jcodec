@@ -18,8 +18,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.sound.sampled.AudioFormat;
-
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.SoundUtil;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Frame;
 import org.jcodec.common.model.Picture;
@@ -114,7 +114,7 @@ public class Player {
 
         AudioInfo ai = audioSource.getAudioInfo();
         af = ai.getFormat();
-        ao.open(af, 1024 * PACKETS_IN_BUFFER);
+        ao.open(SoundUtil.toJavax(af), 1024 * PACKETS_IN_BUFFER);
 
         mi = videoSource.getMediaInfo();
 
@@ -440,7 +440,7 @@ public class Player {
 
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
-                dst = Picture.create(src.getWidth(), src.getHeight(), vo.getColorSpace(), src.getCrop());
+                dst = Picture.createCropped(src.getWidth(), src.getHeight(), vo.getColorSpace(), src.getCrop());
 
             ColorUtil.getTransform(src.getColor(), vo.getColorSpace()).transform(src, dst);
 

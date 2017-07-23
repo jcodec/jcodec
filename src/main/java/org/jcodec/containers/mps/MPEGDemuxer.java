@@ -22,6 +22,11 @@ public interface MPEGDemuxer extends Demuxer {
     public static interface MPEGDemuxerTrack extends DemuxerTrack {
         Packet nextFrameWithBuffer(ByteBuffer buf) throws IOException;
         DemuxerTrackMeta getMeta();
+
+        int getSid();
+
+        List<PESPacket> getPending();
+
         void ignore();
     }
 }

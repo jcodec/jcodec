@@ -1,10 +1,11 @@
 package org.jcodec.samples.streaming;
 
-import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.IntraCoded;
+import static org.jcodec.codecs.mpeg12.MPEGConst.IntraCoded;
 import static org.jcodec.codecs.s302.S302MUtils.labels;
 import static org.jcodec.codecs.s302.S302MUtils.name;
-import static org.jcodec.common.NIOUtils.readableFileChannel;
-import static org.jcodec.containers.mps.MPSDemuxer.videoStream;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
+import static org.jcodec.containers.mps.MPSUtils.videoStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,13 +15,13 @@ import java.util.List;
 
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
-import org.jcodec.common.FileChannelWrapper;
+import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mps.MPEGDemuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
-import org.jcodec.containers.mps.MPSDemuxer.Track;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.samples.streaming.MTSIndex.FrameEntry;
 import org.jcodec.samples.streaming.MTSIndex.VideoFrameEntry;
@@ -42,10 +43,10 @@ public class MPSAdapter implements Adapter {
     private FileChannelWrapper channel;
 
     public MPSAdapter(File mtsFile, MTSIndex index) throws IOException {
-        channel = readableFileChannel(mtsFile);
+        channel = readableChannel(mtsFile);
         demuxer = new MPSDemuxer(channel);
-        List<Track> tracks2 = demuxer.getTracks();
-        for (Track track : tracks2) {
+        List<MPEGDemuxer.MPEGDemuxerTrack> tracks2 = demuxer.getTracks();
+        for (MPEGDemuxer.MPEGDemuxerTrack track : tracks2) {
             if (videoStream(track.getSid()))
                 tracks.add(new MPSVideoAdapterTrack(track));
             else
@@ -56,9 +57,9 @@ public class MPSAdapter implements Adapter {
     }
 
     abstract class MPSAdapterTrack implements AdapterTrack {
-        protected Track track;
+        protected MPEGDemuxer.MPEGDemuxerTrack track;
 
-        public MPSAdapterTrack(Track track) {
+        public MPSAdapterTrack(MPEGDemuxer.MPEGDemuxerTrack track) {
             this.track = track;
         }
 
@@ -72,7 +73,7 @@ public class MPSAdapter implements Adapter {
     class MPSAudioAdapterTrack extends MPSAdapterTrack implements Adapter.AudioAdapterTrack {
         private int curFrame = -1;
 
-        public MPSAudioAdapterTrack(Track track) {
+        public MPSAudioAdapterTrack(MPEGDemuxer.MPEGDemuxerTrack track) {
             super(track);
         }
 
@@ -94,7 +95,10 @@ public class MPSAdapter implements Adapter {
                 return null;
             synchronized (demuxer) {
                 if (curFrame != frameId) {
-                    demuxer.seekByte(curFrame);
+                    if (true) {
+                        throw new RuntimeException("TODO: supposed to do demuxer.seekByte("+curFrame+")");
+//                    demuxer.seekByte(curFrame);
+                    }
                     curFrame = frameId;
                 }
                 return frame(e);
@@ -102,21 +106,21 @@ public class MPSAdapter implements Adapter {
         }
 
         private Packet frame(FrameEntry e) throws IOException {
-            Packet frame = track.getFrame(ByteBuffer.allocate(0x20000));
-            return new Packet(frame.getData(), e.pts, 90000, e.duration, e.frameNo, true, null);
+            Packet frame = track.nextFrameWithBuffer(ByteBuffer.allocate(0x20000));
+            return new Packet(frame.getData(), e.pts, 90000, e.duration, e.frameNo, Packet.FrameType.KEY, null, 0);
         }
     }
 
     class MPSVideoAdapterTrack extends MPSAdapterTrack implements Adapter.VideoAdapterTrack {
         private int curFrame = -1;
 
-        public MPSVideoAdapterTrack(Track track) {
+        public MPSVideoAdapterTrack(MPEGDemuxer.MPEGDemuxerTrack track) {
             super(track);
         }
 
         public MediaInfo getMediaInfo() throws IOException {
             Packet frame = getFrame(0);
-            Size sz = MPEGDecoder.getSize(frame.getData());
+            Size sz = track.getMeta().getVideoCodecMeta().getSize();
 
             int frames = index.getNumFrames(track.getSid());
             FrameEntry e = index.frame(track.getSid(), frames - 1);
@@ -177,18 +181,19 @@ public class MPSAdapter implements Adapter {
 
             synchronized (demuxer) {
                 if (e.frameNo != curFrame) {
-                    demuxer.seekByte(e.dataOffset);
+                    channel.setPosition(e.dataOffset);
+//                    demuxer.seekByte(e.dataOffset);
                     curFrame = e.frameNo;
                 }
-                frame = track.getFrame(ByteBuffer.allocate(0x40000));
+                frame = track.nextFrameWithBuffer(ByteBuffer.allocate(0x40000));
             }
             if (frame == null)
                 return null;
 
             // packets.add(0, index.getExtraData(sid, e.edInd));
             // NIOUtils.combine(packets)
-            Packet pkt = new Packet(frame.getData(), e.pts, 90000, e.duration, e.frameNo, e.frameType == IntraCoded,
-                    e.getTapeTimecode());
+            Packet pkt = new Packet(frame.getData(), e.pts, 90000, e.duration, e.frameNo, e.frameType == IntraCoded ? Packet.FrameType.KEY : Packet.FrameType.UNKOWN,
+                    e.getTapeTimecode(), 0);
             pkt.setDisplayOrder(e.displayOrder);
 
             return pkt;

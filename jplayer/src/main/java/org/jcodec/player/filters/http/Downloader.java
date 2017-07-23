@@ -22,7 +22,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.params.CookiePolicy;
 import org.apache.http.util.EntityUtils;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.StringUtils;
 import org.jcodec.common.model.Packet;
@@ -93,7 +94,7 @@ public class Downloader {
         List<Packet> result = new ArrayList<Packet>();
         ByteBuffer to;
         do {
-            NIOUtils.search(buffer, 0, (byte) 13, (byte) 10);
+            NIOUtils.search(buffer, 0, new byte[]{13, 10});
             buffer.getShort();
             NIOUtils.search(buffer, 0, sep1);
             to = NIOUtils.search(buffer, 0, sep1);
@@ -120,12 +121,12 @@ public class Downloader {
     private static TapeTimecode parseTimecode(String timecodeRaw) {
         if (StringUtils.isEmpty(timecodeRaw))
             return null;
-        String[] split = StringUtils.split(timecodeRaw, ":");
+        String[] split = StringUtils.splitS(timecodeRaw, ":");
         if (split.length == 4) {
             return new TapeTimecode(Short.parseShort(split[0]), Byte.parseByte(split[1]), Byte.parseByte(split[2]),
                     Byte.parseByte(split[3]), false);
         } else if (split.length == 3) {
-            String[] split1 = StringUtils.split(split[2], ";");
+            String[] split1 = StringUtils.splitS(split[2], ";");
             if (split1.length == 2)
                 return new TapeTimecode(Short.parseShort(split[0]), Byte.parseByte(split[1]),
                         Byte.parseByte(split1[0]), Byte.parseByte(split1[1]), true);
@@ -155,7 +156,7 @@ public class Downloader {
     }
 
     private static String[] getLines(ByteBuffer read) {
-        return StringUtils.split(new String(NIOUtils.toArray(read)), "\r\n");
+        return StringUtils.splitS(new String(NIOUtils.toArray(read)), "\r\n");
     }
 
     private ByteBuffer toBuffer(ByteBuffer bfr, HttpEntity entity) throws IOException {
@@ -163,11 +164,11 @@ public class Downloader {
         try {
             in = entity.getContent();
             ByteBuffer fork = bfr.duplicate();
-            NIOUtils.read(Channels.newChannel(in), fork);
+            NIOUtils.readFromChannel(Channels.newChannel(in), fork);
             fork.flip();
             return fork;
         } finally {
-            in.close();
+            IOUtils.closeQuietly(in);
         }
     }
 
@@ -211,7 +212,7 @@ public class Downloader {
         boolean key = boolOrFalse(headers.get("JCodec-Key"));
         TapeTimecode timecode = parseTimecode(headers.get("JCodec-TapeTimecode"));
 
-        return new Packet(data, pts, 0, duration, frameNo, key, timecode);
+        return new Packet(data, pts, 0, duration, frameNo, key ? Packet.FrameType.KEY : Packet.FrameType.UNKOWN, timecode, 0);
     }
 
     // private static List<String> getLines(Buffer buffer) {

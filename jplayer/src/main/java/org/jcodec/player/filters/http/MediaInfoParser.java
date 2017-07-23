@@ -1,7 +1,6 @@
 package org.jcodec.player.filters.http;
 
-import javax.sound.sampled.AudioFormat;
-
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;

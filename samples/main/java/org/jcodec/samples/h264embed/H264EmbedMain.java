@@ -45,7 +45,7 @@ public class H264EmbedMain {
             source = readableChannel(new File(args[0]));
             sink = writableChannel(new File(args[1]));
 
-            MP4Demuxer demux = new MP4Demuxer(source);
+            MP4Demuxer demux = MP4Demuxer.createMP4Demuxer(source);
             MP4Muxer muxer = MP4Muxer.createMP4Muxer(sink, Brand.MOV);
 
             EmbedTranscoder transcoder = new EmbedTranscoder();

@@ -3,7 +3,6 @@ package org.jcodec.samples.audio;
 import java.io.File;
 import java.io.IOException;
 import java.nio.FloatBuffer;
-import java.util.HashMap;
 
 import org.jcodec.audio.Audio;
 import org.jcodec.audio.AudioSource;
@@ -13,6 +12,7 @@ import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.MainUtils.Flag;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,21 +24,20 @@ import org.jcodec.common.tools.MainUtils.Cmd;
  * 
  */
 public class ToneGen {
+    private static final Flag FLAG_FREQ = new Flag("tone-frequency", "freq", "Frequency of tone");
+    private static final Flag FLAG_CHANNELS = new Flag("channels", "channels", "Number of channels");
+    private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FREQ, FLAG_CHANNELS};
+    
 
     public static void main(String[] args) throws IOException {
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, new MainUtils.Flag[] {});
         if (cmd.args.length < 1) {
-            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
-                {
-                    put("freq", "Frequency of tone");
-                    put("channels", "Number of channels");
-                }
-            }, "filename");
+            MainUtils.printHelpVarArgs(FLAGS, "filename");
             System.exit(-1);
         }
 
-        int channels = cmd.getIntegerFlagD("channels", 1);
-        int[] freq = cmd.getMultiIntegerFlagD("freq", new int[] { 500 });
+        int channels = cmd.getIntegerFlagD(FLAG_CHANNELS, 1);
+        int[] freq = cmd.getMultiIntegerFlagD(FLAG_FREQ, new int[] { 500 });
 
         ToneSource tone = new ToneSource(channels, freq);
         WavOutFile wavOutFile = new WavOutput.WavOutFile(new File(cmd.getArg(0)), tone.getFormat());

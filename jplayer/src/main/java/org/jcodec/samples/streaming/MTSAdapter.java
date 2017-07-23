@@ -1,8 +1,10 @@
 package org.jcodec.samples.streaming;
 
-import static org.jcodec.codecs.mpeg12.bitstream.PictureHeader.IntraCoded;
-import static org.jcodec.containers.mps.MPSDemuxer.mediaStream;
-import static org.jcodec.containers.mps.MPSDemuxer.videoStream;
+import static org.jcodec.codecs.mpeg12.MPEGConst.IntraCoded;
+import static org.jcodec.containers.mps.MPSUtils.audioStream;
+import static org.jcodec.containers.mps.MPSUtils.mediaStream;
+import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
+import static org.jcodec.containers.mps.MPSUtils.videoStream;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,16 +17,16 @@ import java.util.List;
 
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mps.MPSDemuxer;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer.MTSPacket;
+import org.jcodec.containers.mps.PESPacket;
 import org.jcodec.player.filters.MediaInfo;
 import org.jcodec.samples.streaming.MTSIndex.FrameEntry;
 import org.jcodec.samples.streaming.MTSIndex.VideoFrameEntry;
@@ -54,7 +56,7 @@ public class MTSAdapter implements Adapter {
         for (Integer sid : index.getStreamIds()) {
             if (videoStream(sid))
                 tracks.add(new VideoAdapterTrack(sid));
-            else if (MPSDemuxer.audioStream(sid))
+            else if (audioStream(sid))
                 tracks.add(new AudioAdapterTrack(sid));
         }
     }
@@ -93,7 +95,7 @@ public class MTSAdapter implements Adapter {
             Assert.assertEquals(sid, ts.payload.get(3));
 
             List<ByteBuffer> packets = new LinkedList<ByteBuffer>();
-            PESPacket pes = MPSDemuxer.readPES(ts.payload, 0);
+            PESPacket pes = readPESHeader(ts.payload, 0);
             int remaining = pes.length <= 0 ? Integer.MAX_VALUE : pes.length;
 
             while (remaining > 0) {
@@ -113,9 +115,9 @@ public class MTSAdapter implements Adapter {
                     break;
             }
 
-            ByteBuffer data = NIOUtils.combine(packets);
+            ByteBuffer data = NIOUtils.combineBuffers(packets);
 
-            return new Packet(data, e.pts, 90000, e.duration, e.frameNo, true, null);
+            return new Packet(data, e.pts, 90000, e.duration, e.frameNo, Packet.FrameType.KEY, null, 0);
         }
 
         @Override
@@ -259,7 +261,7 @@ public class MTSAdapter implements Adapter {
                 int streamId = ts.payload.get(3);
                 if (ts.payloadStart || (pes.length <= 0 && markerStart(ts.payload) && mediaStream(streamId))) {
                     skip = streamId != sid;
-                    pes = MPSDemuxer.readPES(ts.payload, 0);
+                    pes = readPESHeader(ts.payload, 0);
                 }
 
                 ByteBuffer data = ts.payload;
@@ -277,8 +279,9 @@ public class MTSAdapter implements Adapter {
                         leading.limit(data.position() - 3);
                         packets.add(leading);
                         packets.add(0, index.getExtraData(sid, e.edInd));
-                        Packet pkt = new Packet(NIOUtils.combine(packets), e.pts, 90000, e.duration, e.frameNo,
-                                e.frameType == IntraCoded, e.getTapeTimecode());
+                        Packet.FrameType b = e.frameType == IntraCoded ? Packet.FrameType.KEY : Packet.FrameType.UNKOWN;
+                        Packet pkt = new Packet(NIOUtils.combineBuffers(packets), e.pts, 90000, e.duration, e.frameNo,
+                                b, e.getTapeTimecode(), 0);
                         pkt.setDisplayOrder(e.displayOrder);
                         return pkt;
                     }
@@ -303,7 +306,11 @@ public class MTSAdapter implements Adapter {
         @Override
         public MediaInfo getMediaInfo() throws IOException {
             Packet frame = getFrame(0);
-            Size sz = MPEGDecoder.getSize(frame.getData());
+            if (true) {
+                throw new RuntimeException("TODO: supposed to get the dimensions of video stream here");
+                //Size sz = MPEGDecoder.getSize(frame.getData());
+            }
+            Size sz = null; //MPEGDecoder.getSize(frame.getData());
 
             int frames = index.getNumFrames(sid);
             FrameEntry e = index.frame(sid, frames - 1);

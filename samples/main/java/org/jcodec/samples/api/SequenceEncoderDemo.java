@@ -6,11 +6,11 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.MainUtils.Flag;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
@@ -22,27 +22,21 @@ import javax.imageio.ImageIO;
  * 
  */
 public class SequenceEncoderDemo {
-    private static final String FLAG_NUM_FRAMES = "num-frames";
-    private static final String FLAG_IN_PATTERN = "in-pattern";
-    private static final String FLAG_FPS = "fps";
+    private static final Flag FLAG_FPS = new Flag("fps", "fps", "Rational fps, i.e 25:1 (for 25fps), 30:1 (for 30fps), 30000:1001 (for 29.97fps), etc.");
+    private static final Flag FLAG_FRAMES = new Flag("num-frames", "num-frames", "Maximum frames to decode.");
+    private static final Flag FLAG_PATTERN = new Flag("out-pattern", "out-pattern", "Input folder/frame%04.png pattern.");
+    private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FPS, FLAG_FRAMES, FLAG_PATTERN};
 
     public static void main(String[] args) throws IOException {
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
-                {
-                    put(FLAG_NUM_FRAMES, "Maximum frames to encode.");
-                    put(FLAG_IN_PATTERN, "Output folder for the frames.");
-                    put(FLAG_FPS,
-                            "Rational fps, i.e 25:1 (for 25fps), 30:1 (for 30fps), 30000:1001 (for 29.97fps), etc.");
-                }
-            }, "output file name");
+            MainUtils.printHelpVarArgs(FLAGS, "output file name");
             return;
         }
 
-        int maxFrames = cmd.getIntegerFlagD(FLAG_NUM_FRAMES, Integer.MAX_VALUE);
+        int maxFrames = cmd.getIntegerFlagD(FLAG_FRAMES, Integer.MAX_VALUE);
         String fpsRaw = cmd.getStringFlagD(FLAG_FPS, "25:1");
-        String outDir = cmd.getStringFlagD(FLAG_IN_PATTERN,
+        String outDir = cmd.getStringFlagD(FLAG_PATTERN,
                 new File(System.getProperty("user.home"), "frame%08d.jpg").getAbsolutePath());
         FileChannelWrapper out = null;
         try {

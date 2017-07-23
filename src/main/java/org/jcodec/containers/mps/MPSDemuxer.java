@@ -98,6 +98,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             this._pending.add(pkt);
         }
 
+        @Override
         public int getSid() {
             return streamId;
         }
@@ -109,6 +110,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 demuxer.putBack(pkt.data);
         }
 
+        @Override
         public List<PESPacket> getPending() {
             return _pending;
         }
