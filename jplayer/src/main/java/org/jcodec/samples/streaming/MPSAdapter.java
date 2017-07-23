@@ -4,7 +4,6 @@ import static org.jcodec.codecs.mpeg12.MPEGConst.IntraCoded;
 import static org.jcodec.codecs.s302.S302MUtils.labels;
 import static org.jcodec.codecs.s302.S302MUtils.name;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 import static org.jcodec.containers.mps.MPSUtils.videoStream;
 
 import java.io.File;
@@ -13,7 +12,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.model.AudioBuffer;
@@ -192,7 +190,7 @@ public class MPSAdapter implements Adapter {
 
             // packets.add(0, index.getExtraData(sid, e.edInd));
             // NIOUtils.combine(packets)
-            Packet pkt = new Packet(frame.getData(), e.pts, 90000, e.duration, e.frameNo, e.frameType == IntraCoded ? Packet.FrameType.KEY : Packet.FrameType.UNKOWN,
+            Packet pkt = new Packet(frame.getData(), e.pts, 90000, e.duration, e.frameNo, e.frameType == IntraCoded ? Packet.FrameType.KEY : Packet.FrameType.UNKNOWN,
                     e.getTapeTimecode(), 0);
             pkt.setDisplayOrder(e.displayOrder);
 

@@ -1,7 +1,5 @@
 package org.jcodec.samples.streaming;
 
-import static org.jcodec.common.io.NIOUtils.readableFileChannel;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,7 +12,6 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
-import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -136,7 +133,7 @@ public class QTAdapter implements Adapter {
             if (packet == null)
                 return null;
             return new Packet(packet.getData(), packet.getPts(), packet.getTimescale(), packet.getDuration(),
-                    packet.getFrameNo() >> 11, packet.isKeyFrame() ? Packet.FrameType.KEY : Packet.FrameType.UNKOWN, packet.getTapeTimecode(), 0);
+                    packet.getFrameNo() >> 11, packet.isKeyFrame() ? Packet.FrameType.KEY : Packet.FrameType.UNKNOWN, packet.getTapeTimecode(), 0);
         }
 
         @Override

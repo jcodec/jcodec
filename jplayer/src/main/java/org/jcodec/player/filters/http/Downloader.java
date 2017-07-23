@@ -212,7 +212,7 @@ public class Downloader {
         boolean key = boolOrFalse(headers.get("JCodec-Key"));
         TapeTimecode timecode = parseTimecode(headers.get("JCodec-TapeTimecode"));
 
-        return new Packet(data, pts, 0, duration, frameNo, key ? Packet.FrameType.KEY : Packet.FrameType.UNKOWN, timecode, 0);
+        return new Packet(data, pts, 0, duration, frameNo, key ? Packet.FrameType.KEY : Packet.FrameType.UNKNOWN, timecode, 0);
     }
 
     // private static List<String> getLines(Buffer buffer) {

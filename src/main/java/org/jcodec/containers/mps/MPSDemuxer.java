@@ -246,7 +246,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 while ((pkt = demuxer.nextPacket(demuxer.getBuffer())) != null && pkt.streamId != streamId)
                     demuxer.addToStream(pkt);
             }
-            return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, FrameType.UNKOWN,
+            return pkt == null ? null : Packet.createPacket(pkt.data, pkt.pts, 90000, 0, frameNo++, FrameType.UNKNOWN,
                     null);
         }
 
