@@ -277,7 +277,7 @@ public class MTSAdapter implements Adapter {
                         leading.limit(data.position() - 3);
                         packets.add(leading);
                         packets.add(0, index.getExtraData(sid, e.edInd));
-                        Packet.FrameType b = e.frameType == IntraCoded ? Packet.FrameType.KEY : Packet.FrameType.UNKOWN;
+                        Packet.FrameType b = e.frameType == IntraCoded ? Packet.FrameType.KEY : Packet.FrameType.UNKNOWN;
                         Packet pkt = new Packet(NIOUtils.combineBuffers(packets), e.pts, 90000, e.duration, e.frameNo,
                                 b, e.getTapeTimecode(), 0);
                         pkt.setDisplayOrder(e.displayOrder);

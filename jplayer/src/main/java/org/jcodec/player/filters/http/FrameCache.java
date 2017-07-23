@@ -140,7 +140,7 @@ public class FrameCache {
 
             out.flip();
 
-            return new Packet(out, record.pts, 0, record.duration, frameNo, record.key ? Packet.FrameType.KEY : Packet.FrameType.UNKOWN, record.tapeTimecode, 0);
+            return new Packet(out, record.pts, 0, record.duration, frameNo, record.key ? Packet.FrameType.KEY : Packet.FrameType.UNKNOWN, record.tapeTimecode, 0);
         }
     }
 

@@ -411,7 +411,7 @@ public class SourceImpl implements Source, PacketSource {
     public VideoFrameWithPacket getNextVideoFrame() throws IOException {
         Packet inVideoPacket;
         while ((inVideoPacket = getNextVideoPacket()) != null) {
-            if (inVideoPacket.getFrameType() == FrameType.UNKOWN) {
+            if (inVideoPacket.getFrameType() == FrameType.UNKNOWN) {
                 detectFrameType(inVideoPacket);
             }
             Picture8Bit decodedFrame = null;

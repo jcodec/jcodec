@@ -71,7 +71,7 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
         if (codec == Codec.H264) {
             ByteBuffer result = pkt.getData();
             
-            if (pkt.frameType == FrameType.UNKOWN) {
+            if (pkt.frameType == FrameType.UNKNOWN) {
                 pkt.setFrameType(H264Utils.isByteBufferIDRSlice(result) ? FrameType.KEY : FrameType.INTER);
             }
             

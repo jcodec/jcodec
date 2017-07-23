@@ -14,8 +14,8 @@ import java.util.Comparator;
  */
 public class Packet {
     
-    public static enum FrameType {
-        KEY, INTER, UNKOWN
+    public enum FrameType {
+        KEY, INTER, UNKNOWN
     };
 
     public ByteBuffer data;
