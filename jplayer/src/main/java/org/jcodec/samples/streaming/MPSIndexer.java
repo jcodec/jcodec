@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.MPEGDemuxer;
 import org.jcodec.containers.mps.MPEGPacket;
@@ -55,7 +56,7 @@ public class MPSIndexer {
                 }
             }
         } finally {
-            channel.close();
+            IOUtils.closeQuietly(channel);
             done = true;
         }
     }

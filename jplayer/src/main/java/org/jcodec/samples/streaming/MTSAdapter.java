@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.s302.S302MDecoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.AudioBuffer;
@@ -23,7 +22,6 @@ import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer.MTSPacket;
 import org.jcodec.containers.mps.PESPacket;
@@ -259,7 +257,7 @@ public class MTSAdapter implements Adapter {
             int marker = 0xffffffff;
             while (ts != null) {
                 int streamId = ts.payload.get(3);
-                if (ts.payloadStart || (pes.length <= 0 && markerStart(ts.payload) && mediaStream(streamId))) {
+                if (ts.payloadStart || (pes != null && pes.length <= 0 && markerStart(ts.payload) && mediaStream(streamId))) {
                     skip = streamId != sid;
                     pes = readPESHeader(ts.payload, 0);
                 }
