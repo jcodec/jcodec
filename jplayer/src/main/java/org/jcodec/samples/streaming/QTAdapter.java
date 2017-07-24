@@ -1,19 +1,21 @@
 package org.jcodec.samples.streaming;
 
-import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
@@ -39,9 +41,9 @@ public class QTAdapter implements Adapter {
     private SeekableByteChannel is;
 
     public QTAdapter(File file) throws IOException {
-        is = readableFileChannel(file);
+        is = NIOUtils.readableChannel(file);
 
-        demuxer = new MP4Demuxer(is);
+        demuxer = MP4Demuxer.createMP4Demuxer(is);
         tracks = new ArrayList<AdapterTrack>();
         for (AbstractMP4DemuxerTrack demuxerTrack : demuxer.getTracks()) {
             if (demuxerTrack.getBox().isAudio()) {
@@ -72,7 +74,7 @@ public class QTAdapter implements Adapter {
         }
 
         public synchronized int search(long pts) throws IOException {
-            if (!demuxerTrack.seek(pts))
+            if (!demuxerTrack.seekPts(pts))
                 return -1;
             return (int) demuxerTrack.getCurFrame();
         }
@@ -81,7 +83,7 @@ public class QTAdapter implements Adapter {
         public MediaInfo getMediaInfo() {
             TrakBox box = demuxerTrack.getBox();
             VideoSampleEntry vse = (VideoSampleEntry) box.getSampleEntries()[0];
-            PixelAspectExt pasp = Box.findFirst(vse, PixelAspectExt.class, "pasp");
+            PixelAspectExt pasp = NodeBox.findFirst(vse, PixelAspectExt.class, "pasp");
 
             Rational r = new Rational(1, 1);
             if (pasp != null) {
@@ -134,7 +136,7 @@ public class QTAdapter implements Adapter {
             if (packet == null)
                 return null;
             return new Packet(packet.getData(), packet.getPts(), packet.getTimescale(), packet.getDuration(),
-                    packet.getFrameNo() >> 11, packet.isKeyFrame(), packet.getTapeTimecode());
+                    packet.getFrameNo() >> 11, packet.isKeyFrame() ? Packet.FrameType.KEY : Packet.FrameType.UNKOWN, packet.getTapeTimecode(), 0);
         }
 
         @Override
@@ -161,7 +163,7 @@ public class QTAdapter implements Adapter {
             if (isPCM(demuxerTrack)) {
                 return searchFramePCM(pts);
             } else {
-                if (!demuxerTrack.seek(pts))
+                if (!demuxerTrack.seekPts(pts))
                     return -1;
                 return (int) demuxerTrack.getCurFrame();
             }

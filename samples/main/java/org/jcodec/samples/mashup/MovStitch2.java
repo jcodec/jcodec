@@ -55,9 +55,9 @@ public class MovStitch2 {
     public static void changePPS(File in1, File in2, File out) throws IOException {
         MP4Muxer muxer = MP4Muxer.createMP4Muxer(writableChannel(out), Brand.MOV);
 
-        MP4Demuxer demuxer1 = new MP4Demuxer(readableChannel(in1));
+        MP4Demuxer demuxer1 = MP4Demuxer.createMP4Demuxer(readableChannel(in1));
         DemuxerTrack vt1 = demuxer1.getVideoTrack();
-        MP4Demuxer demuxer2 = new MP4Demuxer(readableChannel(in2));
+        MP4Demuxer demuxer2 = MP4Demuxer.createMP4Demuxer(readableChannel(in2));
         DemuxerTrack vt2 = demuxer2.getVideoTrack();
         checkCompatible(vt1, vt2);
 
@@ -130,9 +130,9 @@ public class MovStitch2 {
         BitReader reader = BitReader.createBitReader(is);
         BitWriter writer = new BitWriter(os);
 
-        SliceHeader sh = shr.readPart1(reader);
-        shr.readPart2(sh, nu, sps, pps, reader);
-        sh.pic_parameter_set_id = 1;
+        SliceHeader sh = SliceHeaderReader.readPart1(reader);
+        SliceHeaderReader.readPart2(sh, nu, sps, pps, reader);
+        sh.picParameterSetId = 1;
 
         nu.write(os);
         shw.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
@@ -168,7 +168,7 @@ public class MovStitch2 {
 
     static ByteBuffer updateSps(ByteBuffer bb) {
         SeqParameterSet sps = SeqParameterSet.read(bb);
-        sps.seq_parameter_set_id = 1;
+        sps.seqParameterSetId = 1;
         ByteBuffer out = ByteBuffer.allocate(bb.capacity() + 10);
         sps.write(out);
         out.flip();
@@ -177,9 +177,9 @@ public class MovStitch2 {
 
     static ByteBuffer updatePps(ByteBuffer bb) {
         PictureParameterSet pps = PictureParameterSet.read(bb);
-        Assert.assertTrue(pps.entropy_coding_mode_flag);
-        pps.seq_parameter_set_id = 1;
-        pps.pic_parameter_set_id = 1;
+        Assert.assertTrue(pps.entropyCodingModeFlag);
+        pps.seqParameterSetId = 1;
+        pps.picParameterSetId = 1;
         ByteBuffer out = ByteBuffer.allocate(bb.capacity() + 10);
         pps.write(out);
         out.flip();

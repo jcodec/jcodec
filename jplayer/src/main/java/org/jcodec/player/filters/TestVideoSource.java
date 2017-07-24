@@ -57,7 +57,7 @@ public class TestVideoSource implements VideoSource {
             data[i] = 0;
         }
 
-        return new Frame(new Picture(WIDTH, HEIGHT, buf, YUV420), new RationalLarge(pts, 24000), new RationalLarge(
+        return new Frame(Picture.createPicture(WIDTH, HEIGHT, buf, YUV420), new RationalLarge(pts, 24000), new RationalLarge(
                 1001, 24000), new Rational(1, 1), 0, null, null);
     }
 

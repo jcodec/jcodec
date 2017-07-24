@@ -1,16 +1,18 @@
 package org.jcodec.samples.streaming;
 
-import static org.jcodec.common.NIOUtils.readableFileChannel;
+import static org.jcodec.common.io.NIOUtils.readableChannel;
+import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.jcodec.common.SeekableByteChannel;
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.containers.mps.MPEGDemuxer;
+import org.jcodec.containers.mps.MPEGPacket;
 import org.jcodec.containers.mps.MPSDemuxer;
-import org.jcodec.containers.mps.MPSDemuxer.MPEGPacket;
-import org.jcodec.containers.mps.MPSDemuxer.PESPacket;
-import org.jcodec.containers.mps.MPSDemuxer.Track;
+import org.jcodec.containers.mps.PESPacket;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -35,18 +37,18 @@ public class MPSIndexer {
     public void index() throws IOException {
         SeekableByteChannel channel = null;
         try {
-            channel = readableFileChannel(mtsFile);
+            channel = readableChannel(mtsFile);
             MPSDemuxer demuxer = new MPSDemuxer(channel);
             while (true) {
-                for (Track track : demuxer.getVideoTracks()) {
-                    MPEGPacket frame = track.getFrame(null);
+                for (MPEGDemuxer.MPEGDemuxerTrack track : demuxer.getVideoTracks()) {
+                    MPEGPacket frame = (MPEGPacket) track.nextFrameWithBuffer(null);
                     if (frame == null)
                         break;
                     index.addVideo(track.getSid(), frame.getOffset(), frame.getPts(), (int) frame.getDuration(),
                             frame.getSeq(), frame.getGOP(), frame.getTimecode(), (short)frame.getDisplayOrder(),
                             (byte)(frame.isKeyFrame() ? 0 : 1));
                 }
-                for (Track track : demuxer.getAudioTracks()) {
+                for (MPEGDemuxer.MPEGDemuxerTrack track : demuxer.getAudioTracks()) {
                     List<PESPacket> pending = track.getPending();
                     for (PESPacket pesPacket : pending) {
                         index.addAudio(track.getSid(), pesPacket.pos, pesPacket.pts, 0);
@@ -54,7 +56,7 @@ public class MPSIndexer {
                 }
             }
         } finally {
-            channel.close();
+            IOUtils.closeQuietly(channel);
             done = true;
         }
     }

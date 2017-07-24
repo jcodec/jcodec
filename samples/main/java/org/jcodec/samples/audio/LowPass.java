@@ -2,7 +2,6 @@ package org.jcodec.samples.audio;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 import org.jcodec.audio.Audio;
 import org.jcodec.audio.AudioFilter;
@@ -10,11 +9,11 @@ import org.jcodec.audio.FilterGraph;
 import org.jcodec.audio.SincLowPassFilter;
 import org.jcodec.codecs.wav.WavInput;
 import org.jcodec.codecs.wav.WavInput.WavFile;
-import org.jcodec.codecs.wav.WavMuxer;
 import org.jcodec.codecs.wav.WavOutput;
 import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.MainUtils.Flag;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -26,15 +25,15 @@ import org.jcodec.common.tools.MainUtils.Cmd;
  * 
  */
 public class LowPass {
+    private static final Flag FLAG_FREQ = new Flag("cut-off-frequency", "freq", "Cut-off frequency");
+    private static final Flag FLAG_SIZE = new Flag("kernel-size", "size", "Kernel size of this filter");
+    private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FREQ, FLAG_SIZE};
+    
     public static void main(String[] args) throws IOException {
-        Cmd cmd = MainUtils.parseArguments(args);
+
+        Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
-                {
-                    put("freq", "Cut-off frequency");
-                    put("size", "Kernel size of this filter");
-                }
-            }, "input file", "output file");
+            MainUtils.printHelpVarArgs(FLAGS, "input file", "output file");
             System.exit(-1);
         }
 
@@ -43,8 +42,8 @@ public class LowPass {
         WavOutFile wavOutFile = new WavOutput.WavOutFile(new File(cmd.getArg(1)), source.getFormat());
         WavOutput.Sink sink = new WavOutput.Sink(wavOutFile);
 
-        int cutOff = cmd.getIntegerFlagD("freq", 8000);
-        int size = cmd.getIntegerFlagD("size", 40);
+        int cutOff = cmd.getIntegerFlagD(FLAG_FREQ, 8000);
+        int size = cmd.getIntegerFlagD(FLAG_SIZE, 40);
 
 //@formatter:off
         AudioFilter filter = FilterGraph

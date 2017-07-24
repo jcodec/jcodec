@@ -1,7 +1,7 @@
 package org.jcodec.player.app;
 
 import static java.lang.Math.round;
-import static org.jcodec.common.IOUtils.forceMkdir;
+import static org.jcodec.common.io.IOUtils.forceMkdir;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -19,7 +19,6 @@ import javax.swing.JApplet;
 
 import netscape.javascript.JSObject;
 
-import org.jcodec.common.IOUtils;
 import org.jcodec.common.StringUtils;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.RationalLarge;

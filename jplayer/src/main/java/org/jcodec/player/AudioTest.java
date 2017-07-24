@@ -1,16 +1,19 @@
 package org.jcodec.player;
 
+import static org.jcodec.common.SoundUtil.toJavax;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
 import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.SoundUtil;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.player.filters.AudioOut;
 import org.jcodec.player.filters.JSoundAudioOut;
 import org.jcodec.player.filters.MediaInfo.AudioInfo;
@@ -36,7 +39,7 @@ public class AudioTest {
         AudioInfo audioInfo = tone.getAudioInfo();
         AudioFormat af = audioInfo.getFormat();
         ByteBuffer pkt = ByteBuffer.allocate(af.getFrameSize() * 96000);
-        qqq.open(af, 1024 * Player.PACKETS_IN_BUFFER);
+        qqq.open(toJavax(af), 1024 * Player.PACKETS_IN_BUFFER);
         // int i = 0;
         // System.gc();
         while (true) {
@@ -70,7 +73,7 @@ public class AudioTest {
         AudioSource tone = new ToneAudioSource();
         AudioInfo audioInfo = tone.getAudioInfo();
         AudioFormat af = audioInfo.getFormat();
-        DataLine.Info info = new DataLine.Info(SourceDataLine.class, tone.getAudioInfo().getFormat());
+        DataLine.Info info = new DataLine.Info(SourceDataLine.class, toJavax(tone.getAudioInfo().getFormat()));
         if (!AudioSystem.isLineSupported(info)) {
             throw new RuntimeException("Line matching " + info + " not supported.");
         }
@@ -78,7 +81,7 @@ public class AudioTest {
         ByteBuffer bb = ByteBuffer.allocate(af.getFrameSize() * 96000);
         tone.getFrame(bb);
         byte[] array = NIOUtils.toArray(bb);
-        clip.open(af, array, 0, array.length);
+        clip.open(toJavax(af), array, 0, array.length);
         clip.start();
         clip.drain();
 

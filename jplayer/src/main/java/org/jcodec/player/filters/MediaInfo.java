@@ -3,8 +3,7 @@ package org.jcodec.player.filters;
 import java.io.Serializable;
 import java.util.Arrays;
 
-import javax.sound.sampled.AudioFormat;
-
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;

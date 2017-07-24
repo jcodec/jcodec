@@ -3,8 +3,7 @@ package org.jcodec.player.filters.audio;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import javax.sound.sampled.AudioFormat;
-
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.RationalLarge;

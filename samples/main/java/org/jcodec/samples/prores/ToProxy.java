@@ -34,7 +34,7 @@ public class ToProxy {
         }
 
         SeekableByteChannel input = readableChannel(new File(args[0]));
-        MP4Demuxer demuxer = new MP4Demuxer(input);
+        MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
         SeekableByteChannel output = writableChannel(new File(args[1]));
         MP4Muxer muxer = MP4Muxer.createMP4Muxer(output, Brand.MOV);
 

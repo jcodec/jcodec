@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jcodec.common.AudioDecoder;
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.Ints;
+import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.RationalLarge;
@@ -51,8 +54,8 @@ public class JCodecAudioSource implements AudioSource {
         Packet packet = pkt.getPacket(buffer);
         if (packet == null)
             return null;
-        return new AudioFrame(decoder.decodeFrame(packet.getData(), out), packet.getPts(), packet.getDuration(),
-                packet.getTimescale(), (int) packet.getFrameNo());
+        AudioBuffer audioBuffer = decoder.decodeFrame(packet.getData(), out);
+        return new AudioFrame(audioBuffer.getData(), audioBuffer.getFormat(), audioBuffer.getNFrames(), packet.getPts(), packet.getDuration(), packet.getTimescale(), Ints.checkedCast(packet.getFrameNo()));
     }
 
     private ByteBuffer allocateBuffer() {
