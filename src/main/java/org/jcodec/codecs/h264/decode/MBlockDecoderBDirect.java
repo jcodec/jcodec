@@ -59,12 +59,10 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         boolean tlAvb = mapper.topLeftAvailable(mBlock.mbIdx);
         boolean trAvb = mapper.topRightAvailable(mBlock.mbIdx);
 
-        PartPred[] pp = new PartPred[4];
+        predictBDirect(references, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, mBlock.x, mBlock.partPreds, mb, identityMapping4);
 
-        predictBDirect(references, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, mBlock.x, pp, mb, identityMapping4);
-
-        predictChromaInter(references, mBlock.x, mbX << 3, mbY << 3, 1, mb, pp);
-        predictChromaInter(references, mBlock.x, mbX << 3, mbY << 3, 2, mb, pp);
+        predictChromaInter(references, mBlock.x, mbX << 3, mbY << 3, 1, mb, mBlock.partPreds);
+        predictChromaInter(references, mBlock.x, mbX << 3, mbY << 3, 2, mb, mBlock.partPreds);
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
             s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;

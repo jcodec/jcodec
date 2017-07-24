@@ -53,16 +53,6 @@ public class CoeffTransformerTest {
     }
 
     @Test
-    public void testReorder() {
-        int[] coeffs = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-        int[] expected = { 0, 1, 5, 6, 2, 4, 7, 12, 3, 8, 11, 13, 9, 10, 14, 15 };
-
-        int[] reordered = CoeffTransformer.unzigzagAC(coeffs);
-
-        assertArrayEquals(expected, reordered);
-    }
-
-    @Test
     public void testQuantizeDC4x4() {
         int[] dc = { 1765, -3340, 1340, -3432, 1435, -4056, 6743, -2454, 3432, -1234, 7643, -1432, 1654, -5643, 2345,
                 -1786 };

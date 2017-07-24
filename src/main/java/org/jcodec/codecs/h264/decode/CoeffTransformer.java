@@ -248,23 +248,6 @@ public class CoeffTransformer {
         }
     }
 
-    public static int[] unzigzagAC(int[] coeffs) {
-        int[] tab;
-        if (coeffs.length == 16) {
-            tab = zigzag4x4;
-        } else if (coeffs.length == 64) {
-            tab = zigzag8x8;
-        } else
-            throw new IllegalArgumentException("Coefficients array should be of either 16 or 64 length.");
-
-        int[] result = new int[coeffs.length];
-        for (int i = 0; i < coeffs.length; i++) {
-            result[tab[i]] = coeffs[i];
-        }
-
-        return result;
-    }
-
     public static void dequantizeDC4x4(int[] coeffs, int qp) {
         int group = qp % 6;
 
