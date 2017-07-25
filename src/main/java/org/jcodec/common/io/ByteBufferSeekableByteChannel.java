@@ -17,10 +17,6 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
     private boolean open;
     private int contentLength;
 
-    public ByteBufferSeekableByteChannel(ByteBuffer backing) {
-        this(backing, backing.remaining());
-    }
-    
     public ByteBufferSeekableByteChannel(ByteBuffer backing, int contentLength) {
         this.backing = backing;
         this.contentLength = contentLength;
@@ -32,7 +28,7 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
     }
     
     public static ByteBufferSeekableByteChannel readFromByteBuffer(ByteBuffer buf) {
-        return new ByteBufferSeekableByteChannel(buf);
+        return new ByteBufferSeekableByteChannel(buf, buf.remaining());
     }
     
     @Override
