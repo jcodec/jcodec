@@ -2,8 +2,13 @@ package org.jcodec.codecs.h264.conformance;
 
 import org.jcodec.Utils;
 import org.jcodec.codecs.h264.H264Decoder;
+import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.junit.Test;
 
 import java.io.BufferedInputStream;
@@ -23,72 +28,29 @@ public class ConformanceTest {
 
     @Test
     public void testNoContainer() throws IOException {
-        String dir = "src/test/resources/video/seq_h264_4";
+        String dir = "src/test/resources/video/seq_h264_4.mp4";
         String yuv = "src/test/resources/video/seq_h264_4.yuv";
 
-        String info = new String(readFile(dir + "/info.txt").array());
-        int width = parseInt(info.split(" ")[0]);
-        int height = parseInt(info.split(" ")[1]);
-        int frameCount = parseInt(info.split(" ")[2]);
-
-        byte[][] picData = Picture8Bit.create(width, height, ColorSpace.YUV420J).getData();
-
-        H264Decoder decoder = new H264Decoder();
-        decoder.addSps(singletonList(readFile(dir + "/sps")));
-        decoder.addPps(singletonList(readFile(dir + "/pps")));
-
+        MP4Demuxer mp4Demuxer = MP4Demuxer.createMP4Demuxer(NIOUtils.readableChannel(new File(dir)));
+        DemuxerTrack videoTrack = mp4Demuxer.getVideoTrack();
+        DemuxerTrackMeta meta = videoTrack.getMeta();
+        H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(meta.getCodecPrivate());
+        int width = meta.getVideoCodecMeta().getSize().getWidth();
+        int height = meta.getVideoCodecMeta().getSize().getHeight();
+        Picture8Bit tmp = Picture8Bit.create(width, height, ColorSpace.YUV420);
         RawReader8Bit rawReader = new RawReader8Bit(new File(yuv), width, height);
 
-//        OutputStream out = new FileOutputStream(dir + "/yuv");
-
-        for (int fn = 0; fn < frameCount; fn++) {
-            ByteBuffer buf = readFile(dir + "/" + zeroPad3(fn));
-            Picture8Bit pic = decoder.decodeFrame8BitFromNals(extractNALUnits(buf), picData);
-
-//            out.write(picData[0]);
-//            out.write(picData[1]);
-//            out.write(picData[2]);
-
-//            Utils.saveImage(pic, "png", dir + "/" + zeroPad3(fn) + "_.png");
+        for (int fn = 0; fn < meta.getTotalFrames(); fn++) {
+            Packet pkt = videoTrack.nextFrame();
+            Picture8Bit pic = decoder.decodeFrame8Bit(pkt.getData(), tmp.getData());
 
             Picture8Bit ref = rawReader.readNextFrame();
+            if (ref == null)
+                break;
             assertTrue("frame=" + fn + " FAILED", compare(ref, pic));
         }
 
-//        out.close();
-    }
-
-    private ByteBuffer readFile(String path) throws IOException {
-        File file = new File(path);
-        InputStream _in = new BufferedInputStream(new FileInputStream(file));
-        byte[] buf = new byte[(int) file.length()];
-        _in.read(buf);
-        _in.close();
-        return ByteBuffer.wrap(buf);
-    }
-
-    private String zeroPad3(int n) {
-        String s = n + "";
-        while (s.length() < 3)
-            s = "0" + s;
-        return s;
-    }
-
-    private List<ByteBuffer> extractNALUnits(ByteBuffer buf) {
-        buf = buf.duplicate();
-        List<ByteBuffer> nalUnits = new ArrayList<ByteBuffer>();
-
-        while (buf.remaining() > 4) {
-            int length = buf.getInt();
-            ByteBuffer nalUnit = ByteBuffer.allocate(length);
-            for (int i = 0; i < length; i++) {
-                nalUnit.put(buf.get());
-            }
-            nalUnit.flip();
-            nalUnits.add(nalUnit);
-        }
-
-        return nalUnits;
+        mp4Demuxer.close();
     }
 
     private static boolean compare(Picture8Bit expected, Picture8Bit actual) {
