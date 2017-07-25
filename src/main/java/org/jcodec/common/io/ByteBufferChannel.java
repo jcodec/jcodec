@@ -2,6 +2,9 @@ package org.jcodec.common.io;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -11,15 +14,14 @@ import java.nio.ByteBuffer;
  * @author The JCodec project
  * 
  */
-public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
+public class ByteBufferChannel implements SeekableByteChannel {
 
     private ByteBuffer backing;
     private boolean open;
     private int contentLength;
 
-    public ByteBufferSeekableByteChannel(ByteBuffer backing) {
+    public ByteBufferChannel(ByteBuffer backing) {
         this.backing = backing;
-        this.contentLength = backing.remaining();
         this.open = true;
     }
 
@@ -40,7 +42,6 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
         }
         int toRead = Math.min(backing.remaining(), dst.remaining());
         dst.put(NIOUtils.read(backing, toRead));
-        contentLength = Math.max(contentLength, backing.position());
         return toRead;
     }
 
@@ -60,7 +61,6 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
     @Override
     public SeekableByteChannel setPosition(long newPosition) throws IOException {
         backing.position((int) newPosition);
-        contentLength = Math.max(contentLength, backing.position());
         return this;
     }
 

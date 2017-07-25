@@ -7,14 +7,25 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.platform.Platform;
 import org.junit.Test;
 
+import static org.junit.Assert.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 
-import static org.junit.Assert.assertEquals;
-
 public class MP4DemuxerTest {
+    
+    @Test
+    public void testRawDemuxer() throws Exception {
+        URL resource = Platform.getResource(this.getClass(), "37.mp4");
+        System.out.println(resource);
+        File source = new File(resource.getFile());
+        SeekableByteChannel input = new AutoFileChannelWrapper(source);
+        MP4Demuxer rawMP4Demuxer = MP4Demuxer.createRawMP4Demuxer(input);
+        int dataSize = rawMP4Demuxer.getAudioTracks().get(0).nextFrame().getData().remaining();
+        assertEquals(229, dataSize);
+    }
 
     // broken file
     // iphone generated video has 171 samples at 84 samples per chunk but only 2 chunks
