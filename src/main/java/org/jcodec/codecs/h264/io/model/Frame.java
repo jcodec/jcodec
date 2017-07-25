@@ -1,12 +1,11 @@
 package org.jcodec.codecs.h264.io.model;
 
-import org.jcodec.codecs.h264.H264Utils.MvList;
+import java.util.Comparator;
+
 import org.jcodec.codecs.h264.H264Utils.MvList2D;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
-
-import java.util.Comparator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,39 +19,40 @@ import java.util.Comparator;
 public class Frame extends Picture8Bit {
     private int frameNo;
     private SliceType frameType;
-    private MvList2D mvs;
-    private Frame[][][] refsUsed;
     private boolean shortTerm;
     private int poc;
+    private MvList2D mvs;
+    private Frame[][] refs;
 
-    public Frame(int width, int height, byte[][] data, ColorSpace color, Rect crop, int frameNo, SliceType frameType,
-            MvList2D mvs, Frame[][][] refsUsed, int poc) {
+    public Frame(int width, int height, byte[][] data, ColorSpace color, Rect crop, int frameNo, SliceType frameType, int poc) {
         super(width, height, data, color, crop);
         this.frameNo = frameNo;
-        this.mvs = mvs;
-        this.refsUsed = refsUsed;
         this.poc = poc;
         shortTerm = true;
+        int blkWidth = width >> 2;
+        int blkHeight = height >> 2;
+        int mbWidth = blkWidth >> 2;
+        int mbHeight = blkHeight >> 2;
+        mvs = new MvList2D(blkWidth, blkHeight);
+        refs = new Frame[mbWidth * mbHeight * 2][];
     }
 
     public static Frame createFrame(Frame pic) {
         Picture8Bit comp = pic.createCompatible();
         return new Frame(comp.getWidth(), comp.getHeight(), comp.getData(), comp.getColor(), pic.getCrop(),
-                pic.frameNo, pic.frameType, pic.mvs, pic.refsUsed, pic.poc);
+                pic.frameNo, pic.frameType, pic.poc);
     }
 
     public Frame cropped() {
         Picture8Bit cropped = super.cropped();
         return new Frame(cropped.getWidth(), cropped.getHeight(), cropped.getData(), cropped.getColor(), null, frameNo,
-                frameType, mvs, refsUsed, poc);
+                frameType, poc);
     }
 
     public void copyFromFrame(Frame src) {
         super.copyFrom(src);
         this.frameNo = src.frameNo;
-        this.mvs = src.mvs;
         this.shortTerm = src.shortTerm;
-        this.refsUsed = src.refsUsed;
         this.poc = src.poc;
     }
     
@@ -73,10 +73,6 @@ public class Frame extends Picture8Bit {
 
     public int getFrameNo() {
         return frameNo;
-    }
-
-    public MvList2D getMvs() {
-        return mvs;
     }
 
     public boolean isShortTerm() {
@@ -117,11 +113,15 @@ public class Frame extends Picture8Bit {
         }
     };
 
-    public Frame[][][] getRefsUsed() {
-        return refsUsed;
-    }
-
     public SliceType getFrameType() {
         return frameType;
+    }
+
+    public MvList2D getMvs() {
+        return mvs;
+    }
+
+    public Frame[][] getRefsUsed() {
+        return refs;
     }
 }

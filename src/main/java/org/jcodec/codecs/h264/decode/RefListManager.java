@@ -23,9 +23,9 @@ public class RefListManager {
     private int[] numRef;
     private Frame[] sRefs;
     private IntObjectMap<Frame> lRefs;
-    private Frame frameOut;
+    private int framePOC;
 
-    public RefListManager(SliceHeader sh, Frame[] sRefs, IntObjectMap<Frame> lRefs, Frame frameOut) {
+    public RefListManager(SliceHeader sh, Frame[] sRefs, IntObjectMap<Frame> lRefs, int framePOC) {
         this.sh = sh;
         this.sRefs = sRefs;
         this.lRefs = lRefs;
@@ -33,7 +33,7 @@ public class RefListManager {
             numRef = new int[] { sh.numRefIdxActiveMinus1[0] + 1, sh.numRefIdxActiveMinus1[1] + 1 };
         else
             numRef = new int[] { sh.pps.numRefIdxActiveMinus1[0] + 1, sh.pps.numRefIdxActiveMinus1[1] + 1 };
-        this.frameOut = frameOut;
+        this.framePOC = framePOC;
     }
 
     public Frame[][] getRefList() {
@@ -83,8 +83,8 @@ public class RefListManager {
 
     private Frame[][] buildRefListB() {
 
-        Frame[] l0 = buildList(Frame.POCDesc, Frame.POCAsc);
-        Frame[] l1 = buildList(Frame.POCAsc, Frame.POCDesc);
+        Frame[] l0 = buildList(false, true);
+        Frame[] l1 = buildList(true, false);
 
         if (Platform.arrayEqualsObj(l0, l1) && count(l1) > 1) {
             Frame frame = l1[1];
@@ -100,10 +100,10 @@ public class RefListManager {
         return result;
     }
 
-    private Frame[] buildList(Comparator<Frame> cmpFwd, Comparator<Frame> cmpInv) {
+    private Frame[] buildList(boolean fwdAsc, boolean invAsc) {
         Frame[] refs = new Frame[sRefs.length + lRefs.size()];
-        Frame[] fwd = copySort(cmpFwd, frameOut);
-        Frame[] inv = copySort(cmpInv, frameOut);
+        Frame[] fwd = copySort(fwdAsc, framePOC);
+        Frame[] inv = copySort(invAsc, framePOC);
         int nFwd = count(fwd);
         int nInv = count(inv);
 
@@ -128,12 +128,13 @@ public class RefListManager {
         return arr.length;
     }
 
-    private Frame[] copySort(Comparator<Frame> fwd, Frame dummy) {
+    private Frame[] copySort(boolean asc, int thisPOC) {
+        Comparator<Frame> cmp = asc ? Frame.POCAsc : Frame.POCDesc;  
         Frame[] copyOf = Platform.copyOfObj(sRefs, sRefs.length);
         for (int i = 0; i < copyOf.length; i++)
-            if (fwd.compare(dummy, copyOf[i]) > 0)
+            if (copyOf[i] != null && (asc && thisPOC > copyOf[i].getPOC() || !asc && thisPOC < copyOf[i].getPOC()))
                 copyOf[i] = null;
-        Arrays.sort(copyOf, fwd);
+        Arrays.sort(copyOf, cmp);
         return copyOf;
     }
 

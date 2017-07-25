@@ -104,7 +104,7 @@ public class SliceReader {
         i4x4PredTop = new int[mbWidth << 2];
     }
 
-    public boolean readMacroblock(MBlock mBlock) {
+    public boolean readMacroblock(CodedMBlock mBlock) {
         if (endOfData && mbSkipRun == 0)
             return false;
 
@@ -431,7 +431,7 @@ public class SliceReader {
         return cabac.readMBSkipFlag(mDecoder, slType, leftAvailable, topAvailable, mbX);
     }
 
-    public void readIntra16x16(int mbType, MBlock mBlock) {
+    public void readIntra16x16(int mbType, CodedMBlock mBlock) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
@@ -461,7 +461,7 @@ public class SliceReader {
         }
     }
 
-    public void readMBlockBDirect(MBlock mBlock) {
+    public void readMBlockBDirect(CodedMBlock mBlock) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean lAvb = mapper.leftAvailable(mBlock.mbIdx);
@@ -484,7 +484,7 @@ public class SliceReader {
         predModeTop[mbX << 1] = predModeTop[(mbX << 1) + 1] = predModeLeft[0] = predModeLeft[1] = Direct;
     }
 
-    public void readInter16x16(PartPred p0, MBlock mBlock) {
+    public void readInter16x16(PartPred p0, CodedMBlock mBlock) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
@@ -503,7 +503,7 @@ public class SliceReader {
         predModeLeft[0] = predModeLeft[1] = predModeTop[mbX << 1] = predModeTop[(mbX << 1) + 1] = p0;
     }
 
-    private void readPredInter8x16(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable, int list,
+    private void readPredInter8x16(CodedMBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable, int list,
             PartPred p0, PartPred p1) {
         int blk8x8X = (mbX << 1);
 
@@ -524,7 +524,7 @@ public class SliceReader {
         }
     }
 
-    private void readPredictionInter16x8(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable,
+    private void readPredictionInter16x8(CodedMBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable,
             PartPred p0, PartPred p1, int list) {
         int blk8x8X = mbX << 1;
         if (H264Const.usesList(p0, list)) {
@@ -543,7 +543,7 @@ public class SliceReader {
         }
     }
 
-    public void readInter16x8(PartPred p0, PartPred p1, MBlock mBlock) {
+    public void readInter16x8(PartPred p0, PartPred p1, CodedMBlock mBlock) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
@@ -567,7 +567,7 @@ public class SliceReader {
         predModeLeft[1] = predModeTop[mbX << 1] = predModeTop[(mbX << 1) + 1] = p1;
     }
 
-    public void readIntra8x16(PartPred p0, PartPred p1, MBlock mBlock) {
+    public void readIntra8x16(PartPred p0, PartPred p1, CodedMBlock mBlock) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
@@ -589,7 +589,7 @@ public class SliceReader {
         predModeTop[(mbX << 1) + 1] = predModeLeft[0] = predModeLeft[1] = p1;
     }
 
-    private void readPredictionInter16x16(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable,
+    private void readPredictionInter16x16(CodedMBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable,
             int list, PartPred curPred) {
         int blk8x8X = (mbX << 1);
 
@@ -601,7 +601,7 @@ public class SliceReader {
         }
     }
 
-    private void readResidualInter(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
+    private void readResidualInter(CodedMBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         mBlock._cbp = readCodedBlockPatternInter(leftAvailable, topAvailable, leftCBPLuma | (leftCBPChroma << 4),
                 topCBPLuma[mbX] | (topCBPChroma[mbX] << 4), leftMBType, topMBType[mbX]);
 
@@ -622,7 +622,7 @@ public class SliceReader {
         }
     }
 
-    public void readMBlock8x8(MBlock mBlock) {
+    public void readMBlock8x8(CodedMBlock mBlock) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
@@ -657,7 +657,7 @@ public class SliceReader {
         readChromaResidual(mBlock, leftAvailable, topAvailable, mbX);
     }
 
-    private void readPrediction8x8P(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable) {
+    private void readPrediction8x8P(CodedMBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable) {
         for (int i = 0; i < 4; i++) {
             mBlock.pb8x8.subMbTypes[i] = readSubMBTypeP();
         }
@@ -685,7 +685,7 @@ public class SliceReader {
         predModeLeft[0] = predModeLeft[1] = predModeTop[blk8x8X] = predModeTop[blk8x8X + 1] = L0;
     }
 
-    private void readPrediction8x8B(MBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable) {
+    private void readPrediction8x8B(CodedMBlock mBlock, int mbX, boolean leftAvailable, boolean topAvailable) {
         PartPred[] p = new PartPred[4];
         for (int i = 0; i < 4; i++) {
             mBlock.pb8x8.subMbTypes[i] = readSubMBTypeB();
@@ -738,7 +738,7 @@ public class SliceReader {
         predModeLeft[1] = predModeTop[blk8x8X + 1] = p[3];
     }
 
-    private void readSubMb8x8(MBlock mBlock, int partNo, int subMbType, boolean tAvb, boolean lAvb, int blk8x8X,
+    private void readSubMb8x8(CodedMBlock mBlock, int partNo, int subMbType, boolean tAvb, boolean lAvb, int blk8x8X,
             int blk8x8Y, int mbX, MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred,
             PartPred topPred, PartPred partPred, int list) {
         switch (subMbType) {
@@ -760,7 +760,7 @@ public class SliceReader {
         }
     }
 
-    private void readSub8x8(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
+    private void readSub8x8(CodedMBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
             MBType leftMBType, MBType topMBType, PartPred leftPred, PartPred topPred, PartPred partPred, int list) {
         mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
                 mbX, blk8x8X, blk8x8Y, 2, 2, list);
@@ -769,7 +769,7 @@ public class SliceReader {
         debugPrint("mvd: (%d, %d)", mBlock.pb8x8.mvdX1[list][partNo], mBlock.pb8x8.mvdY1[list][partNo]);
     }
 
-    private void readSub8x4(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
+    private void readSub8x4(CodedMBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
             MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
             PartPred partPred, int list) {
         mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
@@ -783,7 +783,7 @@ public class SliceReader {
                 mbX, blk8x8X, blk8x8Y + 1, 2, 1, list);
     }
 
-    private void readSub4x8(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
+    private void readSub4x8(CodedMBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
             MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
             PartPred partPred, int list) {
         mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
@@ -796,7 +796,7 @@ public class SliceReader {
                 mbX, blk8x8X + 1, blk8x8Y, 1, 2, list);
     }
 
-    private void readSub4x4(MBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
+    private void readSub4x4(CodedMBlock mBlock, int partNo, boolean tAvb, boolean lAvb, int blk8x8X, int blk8x8Y, int mbX,
             MBType leftMBType, MBType topMBType, MBType curMBType, PartPred leftPred, PartPred topPred,
             PartPred partPred, int list) {
         mBlock.pb8x8.mvdX1[list][partNo] = readMVD(0, lAvb, tAvb, leftMBType, topMBType, leftPred, topPred, partPred,
@@ -817,7 +817,7 @@ public class SliceReader {
                 mbX, blk8x8X + 1, blk8x8Y + 1, 1, 1, list);
     }
 
-    public void readIntraNxN(MBlock mBlock) {
+    public void readIntraNxN(CodedMBlock mBlock) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
@@ -860,7 +860,7 @@ public class SliceReader {
         }
     }
 
-    public void readResidualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
+    public void readResidualLuma(CodedMBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         if (!mBlock.transform8x8Used) {
             readLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
         } else if (sh.pps.entropyCodingModeFlag) {
@@ -870,7 +870,7 @@ public class SliceReader {
         }
     }
 
-    private void readLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
+    private void readLuma(CodedMBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         for (int i = 0; i < 16; i++) {
             int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
             int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
@@ -890,7 +890,7 @@ public class SliceReader {
         savePrevCBP(mBlock._cbp);
     }
 
-    private void readLuma8x8CABAC(MBlock mBlock, int mbX, int mbY) {
+    private void readLuma8x8CABAC(CodedMBlock mBlock, int mbX, int mbY) {
         for (int i = 0; i < 4; i++) {
             int blkOffLeft = (i & 1) << 1;
             int blkOffTop = i & 2;
@@ -909,7 +909,7 @@ public class SliceReader {
         savePrevCBP(mBlock._cbp);
     }
 
-    private void readLuma8x8CAVLC(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
+    private void readLuma8x8CAVLC(CodedMBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         for (int i = 0; i < 4; i++) {
             int blk8x8OffLeft = (i & 1) << 1;
             int blk8x8OffTop = i & 2;
@@ -938,7 +938,7 @@ public class SliceReader {
         }
     }
 
-    public void readChromaResidual(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX) {
+    public void readChromaResidual(CodedMBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX) {
         if (mBlock.cbpChroma() != 0) {
             if ((mBlock.cbpChroma() & 3) > 0) {
                 readChromaDC(mbX, leftAvailable, topAvailable, mBlock.dc1, 1, mBlock.curMbType);
@@ -974,7 +974,7 @@ public class SliceReader {
         }
     }
 
-    private void readIPCM(MBlock mBlock) {
+    private void readIPCM(CodedMBlock mBlock) {
         reader.align();
 
         for (int i = 0; i < 256; i++) {
@@ -988,7 +988,7 @@ public class SliceReader {
         }
     }
 
-    public void readMBlock(MBlock mBlock, SliceType sliceType) {
+    public void readMBlock(CodedMBlock mBlock, SliceType sliceType) {
 
         if (sliceType == SliceType.I) {
             readMBlockI(mBlock);
@@ -1003,7 +1003,7 @@ public class SliceReader {
         tf8x8Left = tf8x8Top[mbX] = mBlock.transform8x8Used;
     }
 
-    private void readMBlockI(MBlock mBlock) {
+    private void readMBlockI(CodedMBlock mBlock) {
 
         mBlock.mbType = decodeMBTypeI(mBlock.mbIdx, mapper.leftAvailable(mBlock.mbIdx),
                 mapper.topAvailable(mBlock.mbIdx), leftMBType, topMBType[mapper.getMbX(mBlock.mbIdx)]);
@@ -1011,7 +1011,7 @@ public class SliceReader {
         readMBlockIInt(mBlock, mBlock.mbType);
     }
 
-    private void readMBlockIInt(MBlock mBlock, int mbType) {
+    private void readMBlockIInt(CodedMBlock mBlock, int mbType) {
         if (mbType == 0) {
             mBlock.curMbType = MBType.I_NxN;
             readIntraNxN(mBlock);
@@ -1025,7 +1025,7 @@ public class SliceReader {
         }
     }
 
-    private void readMBlockP(MBlock mBlock) {
+    private void readMBlockP(CodedMBlock mBlock) {
         mBlock.mbType = readMBTypeP();
 
         switch (mBlock.mbType) {
@@ -1054,7 +1054,7 @@ public class SliceReader {
         }
     }
 
-    private void readMBlockB(MBlock mBlock) {
+    private void readMBlockB(CodedMBlock mBlock) {
         mBlock.mbType = readMBTypeB(mBlock.mbIdx, mapper.leftAvailable(mBlock.mbIdx),
                 mapper.topAvailable(mBlock.mbIdx), leftMBType, topMBType[mapper.getMbX(mBlock.mbIdx)]);
         if (mBlock.mbType >= 23) {

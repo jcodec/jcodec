@@ -30,37 +30,36 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
     private MBlockDecoderBDirect bDirectDecoder;
 
     public MBlockSkipDecoder(Mapper mapper, MBlockDecoderBDirect bDirectDecoder,
-            SliceHeader sh, DeblockerInput di, int poc, DecoderState sharedState) {
-        super(sh, di, poc, sharedState);
+            SliceHeader sh, int poc, DecoderState sharedState) {
+        super(sh, poc, sharedState);
         this.mapper = mapper;
         this.bDirectDecoder = bDirectDecoder;
     }
 
-    public void decodeSkip(MBlock mBlock, Frame[][] refs, Picture8Bit mb, SliceType sliceType) {
+    public void decodeSkip(CodedMBlock mBlock, Frame[][] refs, DecodedMBlock mb, SliceType sliceType) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
-        int mbAddr = mapper.getAddress(mBlock.mbIdx);
 
         if (sliceType == P) {
             predictPSkip(refs, mbX, mbY, mapper.leftAvailable(mBlock.mbIdx), mapper.topAvailable(mBlock.mbIdx),
-                    mapper.topLeftAvailable(mBlock.mbIdx), mapper.topRightAvailable(mBlock.mbIdx), mBlock.x, mb);
+                    mapper.topLeftAvailable(mBlock.mbIdx), mapper.topRightAvailable(mBlock.mbIdx), mBlock.x, mb.mb);
             Arrays.fill(mBlock.partPreds, PartPred.L0);
         } else {
             bDirectDecoder.predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mBlock.mbIdx),
                     mapper.topAvailable(mBlock.mbIdx), mapper.topLeftAvailable(mBlock.mbIdx),
-                    mapper.topRightAvailable(mBlock.mbIdx), mBlock.x, mBlock.partPreds, mb, identityMapping4);
+                    mapper.topRightAvailable(mBlock.mbIdx), mBlock.x, mBlock.partPreds, mb.mb, identityMapping4);
             savePrediction8x8(s, mbX, mBlock.x);
         }
 
-        decodeChromaSkip(refs, mBlock.x, mBlock.partPreds, mbX, mbY, mb);
+        decodeChromaSkip(refs, mBlock.x, mBlock.partPreds, mbX, mbY, mb.mb);
 
-        collectPredictors(s, mb, mbX);
+        collectPredictors(s, mb.mb, mbX);
 
-        saveMvs(di, mBlock.x, mbX, mbY);
-        di.mbTypes[mbAddr] = mBlock.curMbType;
-        di.mbQps[0][mbAddr] = s.qp;
-        di.mbQps[1][mbAddr] = calcQpChroma(s.qp, s.chromaQpOffset[0]);
-        di.mbQps[2][mbAddr] = calcQpChroma(s.qp, s.chromaQpOffset[1]);
+        saveMvs(mb, mBlock.x);
+        mb.mbTypes = mBlock.curMbType;
+        mb.mbQps[0] = s.qp;
+        mb.mbQps[1] = calcQpChroma(s.qp, s.chromaQpOffset[0]);
+        mb.mbQps[2] = calcQpChroma(s.qp, s.chromaQpOffset[1]);
     }
     
     public void predictPSkip(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,

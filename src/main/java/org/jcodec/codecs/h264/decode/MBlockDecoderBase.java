@@ -32,21 +32,19 @@ import org.jcodec.common.tools.MathUtil;
 public class MBlockDecoderBase {
     protected DecoderState s;
     protected SliceHeader sh;
-    protected DeblockerInput di;
     protected int poc;
     protected BlockInterpolator interpolator;
     protected Picture8Bit[] mbb;
 
-    public MBlockDecoderBase(SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
+    public MBlockDecoderBase(SliceHeader sh, int poc, DecoderState decoderState) {
         this.interpolator = new BlockInterpolator();
         this.s = decoderState;
         this.sh = sh;
-        this.di = di;
         this.poc = poc;
         this.mbb = new Picture8Bit[] { Picture8Bit.create(16, 16, s.chromaFormat), Picture8Bit.create(16, 16, s.chromaFormat) };
     }
 
-    void residualLuma(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
+    void residualLuma(CodedMBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         if (!mBlock.transform8x8Used) {
             _residualLuma(mBlock);
         } else if (sh.pps.entropyCodingModeFlag) {
@@ -56,7 +54,7 @@ public class MBlockDecoderBase {
         }
     }
 
-    private void _residualLuma(MBlock mBlock) {
+    private void _residualLuma(CodedMBlock mBlock) {
 
         for (int i = 0; i < 16; i++) {
             if ((mBlock.cbpLuma() & (1 << (i >> 2))) == 0) {
@@ -68,7 +66,7 @@ public class MBlockDecoderBase {
         }
     }
 
-    private void residualLuma8x8CABAC(MBlock mBlock) {
+    private void residualLuma8x8CABAC(CodedMBlock mBlock) {
 
         for (int i = 0; i < 4; i++) {
             if ((mBlock.cbpLuma() & (1 << i)) == 0) {
@@ -80,7 +78,7 @@ public class MBlockDecoderBase {
         }
     }
 
-    private void residualLuma8x8CAVLC(MBlock mBlock) {
+    private void residualLuma8x8CAVLC(CodedMBlock mBlock) {
 
         for (int i = 0; i < 4; i++) {
             if ((mBlock.cbpLuma() & (1 << i)) == 0) {
@@ -92,12 +90,12 @@ public class MBlockDecoderBase {
         }
     }
 
-    public void decodeChroma(MBlock mBlock, int mbX, int mbY, boolean leftAvailable, boolean topAvailable,
-            Picture8Bit mb, int qp) {
+    public void decodeChroma(CodedMBlock mBlock, int mbX, int mbY, boolean leftAvailable, boolean topAvailable,
+            DecodedMBlock mb, int qp) {
 
         if (s.chromaFormat == MONO) {
-            Arrays.fill(mb.getPlaneData(1), (byte) 0);
-            Arrays.fill(mb.getPlaneData(2), (byte) 0);
+            Arrays.fill(mb.mb.getPlaneData(1), (byte) 0);
+            Arrays.fill(mb.mb.getPlaneData(2), (byte) 0);
             return;
         }
 
@@ -107,16 +105,15 @@ public class MBlockDecoderBase {
         if (mBlock.cbpChroma() != 0) {
             decodeChromaResidual(mBlock, leftAvailable, topAvailable, mbX, mbY, qp1, qp2);
         }
-        int addr = mbY * (sh.sps.picWidthInMbsMinus1 + 1) + mbX;
-        di.mbQps[1][addr] = qp1;
-        di.mbQps[2][addr] = qp2;
+        mb.mbQps[1] = qp1;
+        mb.mbQps[2] = qp2;
         ChromaPredictionBuilder.predictWithMode(mBlock.ac[1], mBlock.chromaPredictionMode, mbX, leftAvailable,
-                topAvailable, s.leftRow[1], s.topLine[1], s.topLeft[1], mb.getPlaneData(1));
+                topAvailable, s.leftRow[1], s.topLine[1], s.topLeft[1], mb.mb.getPlaneData(1));
         ChromaPredictionBuilder.predictWithMode(mBlock.ac[2], mBlock.chromaPredictionMode, mbX, leftAvailable,
-                topAvailable, s.leftRow[2], s.topLine[2], s.topLeft[2], mb.getPlaneData(2));
+                topAvailable, s.leftRow[2], s.topLine[2], s.topLeft[2], mb.mb.getPlaneData(2));
     }
 
-    void decodeChromaResidual(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY, int crQp1,
+    void decodeChromaResidual(CodedMBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY, int crQp1,
             int crQp2) {
         if (mBlock.cbpChroma() != 0) {
             if ((mBlock.cbpChroma() & 3) > 0) {

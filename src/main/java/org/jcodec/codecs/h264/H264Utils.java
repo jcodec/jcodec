@@ -31,6 +31,7 @@ import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.junit.Test;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -1056,6 +1057,16 @@ public class H264Utils {
 
         public int getWidth() {
             return width;
+        }
+    }
+    
+    public static class Ui2Vector {
+        public static int get(int vect, int n) {
+            return (vect >>> (n << 1)) & 0x3;
+        }
+        
+        public static int set(int vect, int n, int elem) {
+            return (vect & ~(0x3 << (n << 1))) | ((elem & 0x3) << (n << 1));
         }
     }
 }

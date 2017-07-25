@@ -15,7 +15,7 @@ import org.jcodec.common.model.ColorSpace;
  * @author The JCodec project
  * 
  */
-public class MBlock {
+public class CodedMBlock {
 
     public int chromaPredictionMode;
     public int mbQPDelta;
@@ -43,7 +43,7 @@ public class MBlock {
     // Number of coefficients in AC blocks, stored in 8x8 encoding order: 0 1 4 5 2 3 6 7 8 9 12 13 10 11 14 15
     public int[] nCoeff;
 
-    public MBlock(ColorSpace chromaFormat) {
+    public CodedMBlock(ColorSpace chromaFormat) {
         this.pb8x8 = new PB8x8();
         this.pb16x16 = new PB16x16();
         this.pb168x168 = new PB168x168();

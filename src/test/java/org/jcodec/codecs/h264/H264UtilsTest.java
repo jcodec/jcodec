@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264;
 import org.jcodec.codecs.h264.H264Utils.Mv;
 import org.jcodec.codecs.h264.H264Utils.MvList;
+import org.jcodec.codecs.h264.H264Utils.Ui2Vector;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.Platform;
@@ -155,5 +156,17 @@ public class H264UtilsTest {
         Assert.assertEquals(0, pair.mv1X(1, 1));
         Assert.assertEquals(0, pair.mv1Y(1, 1));
         Assert.assertEquals(-1, pair.mv1R(1, 1));
+    }
+    
+    @Test
+    public void testUi2Vector() {
+        int vect = 0;
+        
+        for (int i = 0; i < 16; i++) {
+            Assert.assertEquals(0, Ui2Vector.get(vect, i));
+            vect = Ui2Vector.set(vect, i, i);
+            Assert.assertEquals(i & 0x3, Ui2Vector.get(vect, i));
+        }
+            
     }
 }

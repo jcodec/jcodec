@@ -1,5 +1,4 @@
 package org.jcodec.codecs.h264.decode;
-import static java.lang.System.arraycopy;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
 import static org.jcodec.codecs.h264.io.model.MBType.B_Direct_16x16;
@@ -20,7 +19,6 @@ import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.common.model.Picture8Bit;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,83 +43,77 @@ public class SliceDecoder {
     private MBlockDecoderIPCM decoderIPCM;
     private SliceReader parser;
     private SeqParameterSet activeSps;
-    private Frame frameOut;
+    private DecodedFrame frameOut;
     private DecoderState decoderState;
-    private DeblockerInput di;
     private IntObjectMap<Frame> lRefs;
     private Frame[] sRefs;
 
     public SliceDecoder(SeqParameterSet activeSps, Frame[] sRefs,
-            IntObjectMap<Frame> lRefs, DeblockerInput di, Frame result) {
-        this.di = di;
+            IntObjectMap<Frame> lRefs, DecodedFrame result) {
         this.activeSps = activeSps;
         this.frameOut = result;
         this.sRefs = sRefs;
         this.lRefs = lRefs;
     }
 
-    public void decodeFromReader(SliceReader sliceReader) {
+    public void decodeFromReader(SliceReader sliceReader, int poc) {
 
         parser = sliceReader;
         
-        initContext();
+        initContext(poc);
 
-        debugPrint("============%d============= ", frameOut.getPOC());
+        debugPrint("============%d============= ", poc);
 
         Frame[][] refList = refListManager.getRefList();
 
         decodeMacroblocks(refList);
     }
 
-    private void initContext() {
+    private void initContext(int poc) {
         
         SliceHeader sh = parser.getSliceHeader();
         
         decoderState = new DecoderState(sh);
         mapper = new MapManager(sh.sps, sh.pps).getMapper(sh);
 
-        decoderIntra16x16 = new MBlockDecoderIntra16x16(mapper, sh, di, frameOut.getPOC(), decoderState);
-        decoderIntraNxN = new MBlockDecoderIntraNxN(mapper, sh, di, frameOut.getPOC(), decoderState);
-        decoderInter = new MBlockDecoderInter(mapper, sh, di, frameOut.getPOC(), decoderState);
-        decoderBDirect = new MBlockDecoderBDirect(mapper, sh, di, frameOut.getPOC(), decoderState);
-        decoderInter8x8 = new MBlockDecoderInter8x8(mapper, decoderBDirect, sh, di, frameOut.getPOC(), decoderState);
-        skipDecoder = new MBlockSkipDecoder(mapper, decoderBDirect, sh, di, frameOut.getPOC(), decoderState);
+        decoderIntra16x16 = new MBlockDecoderIntra16x16(mapper, sh, poc, decoderState);
+        decoderIntraNxN = new MBlockDecoderIntraNxN(mapper, sh, poc, decoderState);
+        decoderInter = new MBlockDecoderInter(mapper, sh, poc, decoderState);
+        decoderBDirect = new MBlockDecoderBDirect(mapper, sh, poc, decoderState);
+        decoderInter8x8 = new MBlockDecoderInter8x8(mapper, decoderBDirect, sh, poc, decoderState);
+        skipDecoder = new MBlockSkipDecoder(mapper, decoderBDirect, sh, poc, decoderState);
         decoderIPCM = new MBlockDecoderIPCM(mapper, decoderState);
 
-        refListManager = new RefListManager(sh, sRefs, lRefs, frameOut);
+        refListManager = new RefListManager(sh, sRefs, lRefs, poc);
     }
 
     private void decodeMacroblocks(Frame[][] refList) {
-        Picture8Bit mb = Picture8Bit.create(16, 16, activeSps.chromaFormatIdc);
         int mbWidth = activeSps.picWidthInMbsMinus1 + 1;
 
-        MBlock mBlock = new MBlock(activeSps.chromaFormatIdc);
+        CodedMBlock mBlock = new CodedMBlock(activeSps.chromaFormatIdc);
         while (parser.readMacroblock(mBlock)) {
-            decode(mBlock, parser.getSliceHeader().sliceType, mb, refList);
             int mbAddr = mapper.getAddress(mBlock.mbIdx);
             int mbX = mbAddr % mbWidth;
             int mbY = mbAddr / mbWidth;
-            putMacroblock(frameOut, mb, mbX, mbY);
-            di.shs[mbAddr] = parser.getSliceHeader();
-            di.refsUsed[mbAddr] = refList;
-            fillCoeff(mBlock, mbX, mbY);
-            mb.fill(0);
+            DecodedMBlock mb = frameOut.getMb(mbX, mbY);
+            decode(mBlock, parser.getSliceHeader().sliceType, mb, refList);
+            mb.shs = parser.getSliceHeader();
+            mb.refsUsed = refList;
+            fillCoeff(mBlock, mb);
             mBlock.clear();
         }
     }
 
-    private void fillCoeff(MBlock mBlock, int mbX, int mbY) {
+    private void fillCoeff(CodedMBlock mBlock, DecodedMBlock mb) {
         for (int i = 0; i < 16; i++) {
             int blkOffLeft = H264Const.MB_BLK_OFF_LEFT[i];
             int blkOffTop = H264Const.MB_BLK_OFF_TOP[i];
-            int blkX = (mbX << 2) + blkOffLeft;
-            int blkY = (mbY << 2) + blkOffTop;
 
-            di.nCoeff[blkY][blkX] = mBlock.nCoeff[i];
+            mb.nCoeff[blkOffTop][blkOffLeft] = mBlock.nCoeff[i];
         }
     }
 
-    public void decode(MBlock mBlock, SliceType sliceType, Picture8Bit mb, Frame[][] references) {
+    public void decode(CodedMBlock mBlock, SliceType sliceType, DecodedMBlock mb, Frame[][] references) {
         if (mBlock.skipped) {
             skipDecoder.decodeSkip(mBlock, references, mb, sliceType);
         } else if (sliceType == SliceType.I) {
@@ -133,11 +125,11 @@ public class SliceDecoder {
         }
     }
 
-    private void decodeMBlockI(MBlock mBlock, Picture8Bit mb) {
+    private void decodeMBlockI(CodedMBlock mBlock, DecodedMBlock mb) {
         decodeMBlockIInt(mBlock, mb);
     }
 
-    private void decodeMBlockIInt(MBlock mBlock, Picture8Bit mb) {
+    private void decodeMBlockIInt(CodedMBlock mBlock, DecodedMBlock mb) {
         if (mBlock.curMbType == MBType.I_NxN) {
             decoderIntraNxN.decode(mBlock, mb);
         } else if (mBlock.curMbType == MBType.I_16x16) {
@@ -148,7 +140,7 @@ public class SliceDecoder {
         }
     }
 
-    private void decodeMBlockP(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+    private void decodeMBlockP(CodedMBlock mBlock, DecodedMBlock mb, Frame[][] references) {
         if (P_16x16 == mBlock.curMbType) {
             decoderInter.decode16x16(mBlock, mb, references, L0);
         } else if (P_16x8 == mBlock.curMbType) {
@@ -164,7 +156,7 @@ public class SliceDecoder {
         }
     }
 
-    private void decodeMBlockB(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+    private void decodeMBlockB(CodedMBlock mBlock, DecodedMBlock mb, Frame[][] references) {
         if (mBlock.curMbType.isIntra()) {
             decodeMBlockIInt(mBlock, mb);
         } else {
@@ -181,28 +173,6 @@ public class SliceDecoder {
                 decoderInter.decode8x16(mBlock, mb, references, H264Const.bPredModes[mBlock.mbType][0],
                         H264Const.bPredModes[mBlock.mbType][1]);
             }
-        }
-    }
-
-    public void putMacroblock(Picture8Bit tgt, Picture8Bit decoded, int mbX, int mbY) {
-
-        byte[] luma = tgt.getPlaneData(0);
-        int stride = tgt.getPlaneWidth(0);
-
-        byte[] cb = tgt.getPlaneData(1);
-        byte[] cr = tgt.getPlaneData(2);
-        int strideChroma = tgt.getPlaneWidth(1);
-
-        int dOff = 0;
-        for (int i = 0; i < 16; i++) {
-            arraycopy(decoded.getPlaneData(0), dOff, luma, (mbY * 16 + i) * stride + mbX * 16, 16);
-            dOff += 16;
-        }
-        for (int i = 0; i < 8; i++) {
-            arraycopy(decoded.getPlaneData(1), i * 8, cb, (mbY * 8 + i) * strideChroma + mbX * 8, 8);
-        }
-        for (int i = 0; i < 8; i++) {
-            arraycopy(decoded.getPlaneData(2), i * 8, cr, (mbY * 8 + i) * strideChroma + mbX * 8, 8);
         }
     }
 }

@@ -18,35 +18,35 @@ public class MBlockDecoderIntra16x16 extends MBlockDecoderBase {
 
     private Mapper mapper;
 
-    public MBlockDecoderIntra16x16(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc,
+    public MBlockDecoderIntra16x16(Mapper mapper, SliceHeader sh, int poc,
             DecoderState decoderState) {
-        super(sh, di, poc, decoderState);
+        super(sh, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode(MBlock mBlock, Picture8Bit mb) {
+    public void decode(CodedMBlock mBlock, DecodedMBlock mb) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         int address = mapper.getAddress(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
         boolean topAvailable = mapper.topAvailable(mBlock.mbIdx);
         s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;
-        di.mbQps[0][address] = s.qp;
+        mb.mbQps[0] = s.qp;
 
         residualLumaI16x16(mBlock, leftAvailable, topAvailable, mbX, mbY);
 
         Intra16x16PredictionBuilder.predictWithMode(mBlock.luma16x16Mode, mBlock.ac[0], leftAvailable, topAvailable,
-                s.leftRow[0], s.topLine[0], s.topLeft[0], mbX << 4, mb.getPlaneData(0));
+                s.leftRow[0], s.topLine[0], s.topLeft[0], mbX << 4, mb.mb.getPlaneData(0));
 
         decodeChroma(mBlock, mbX, mbY, leftAvailable, topAvailable, mb, s.qp);
-        di.mbTypes[address] = mBlock.curMbType;
+        mb.mbTypes = mBlock.curMbType;
 
-        collectPredictors(s, mb, mbX);
-        saveMvsIntra(di, mbX, mbY);
+        collectPredictors(s, mb.mb, mbX);
+        saveMvsIntra(mb);
         saveVectIntra(s, mapper.getMbX(mBlock.mbIdx));
     }
 
-    private void residualLumaI16x16(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
+    private void residualLumaI16x16(CodedMBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         CoeffTransformer.invDC4x4(mBlock.dc);
         CoeffTransformer.dequantizeDC4x4(mBlock.dc, s.qp);
         reorderDC4x4(mBlock.dc);

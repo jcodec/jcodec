@@ -54,11 +54,11 @@ public class MBlockDecoderUtils {
         }
     }
 
-    static void saveMvsIntra(DeblockerInput di, int mbX, int mbY) {
-        for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
-            for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
-                di.mvs.setMv(blkOffX, blkOffY, 0, NULL_VECTOR);
-                di.mvs.setMv(blkOffX, blkOffY, 1, NULL_VECTOR);
+    static void saveMvsIntra(DecodedMBlock di) {
+        for (int j = 0; j < 4; j++) {
+            for (int i = 0; i < 4; i++) {
+                di.mvs.setMv(i, j, 0, NULL_VECTOR);
+                di.mvs.setMv(i, j, 1, NULL_VECTOR);
             }
         }
     }
@@ -118,11 +118,11 @@ public class MBlockDecoderUtils {
         return x < x2 ? (x < x3 ? x : x3) : (x2 < x3 ? x2 : x3);
     }
 
-    static void saveMvs(DeblockerInput di, MvList x, int mbX, int mbY) {
-        for (int j = 0, blkOffY = mbY << 2, blkInd = 0; j < 4; j++, blkOffY++) {
-            for (int i = 0, blkOffX = mbX << 2; i < 4; i++, blkOffX++, blkInd++) {
-                di.mvs.setMv(blkOffX, blkOffY, 0, x.getMv(blkInd, 0));
-                di.mvs.setMv(blkOffX, blkOffY, 1, x.getMv(blkInd, 1));
+    static void saveMvs(DecodedMBlock di, MvList x) {
+        for (int j = 0, blkInd = 0; j < 4; j++) {
+            for (int i = 0; i < 4; i++, blkInd++) {
+                di.mvs.setMv(i, j, 0, x.getMv(blkInd, 0));
+                di.mvs.setMv(i, j, 1, x.getMv(blkInd, 1));
             }
         }
     }

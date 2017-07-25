@@ -45,50 +45,49 @@ import org.jcodec.common.tools.MathUtil;
 public class MBlockDecoderBDirect extends MBlockDecoderBase {
     private Mapper mapper;
 
-    public MBlockDecoderBDirect(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc, DecoderState decoderState) {
-        super(sh, di, poc, decoderState);
+    public MBlockDecoderBDirect(Mapper mapper, SliceHeader sh, int poc, DecoderState decoderState) {
+        super(sh, poc, decoderState);
         this.mapper = mapper;
     }
 
-    public void decode(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+    public void decode(CodedMBlock mBlock, DecodedMBlock mb, Frame[][] references) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean lAvb = mapper.leftAvailable(mBlock.mbIdx);
         boolean tAvb = mapper.topAvailable(mBlock.mbIdx);
-        int mbAddr = mapper.getAddress(mBlock.mbIdx);
         boolean tlAvb = mapper.topLeftAvailable(mBlock.mbIdx);
         boolean trAvb = mapper.topRightAvailable(mBlock.mbIdx);
 
-        predictBDirect(references, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, mBlock.x, mBlock.partPreds, mb, identityMapping4);
+        predictBDirect(references, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, mBlock.x, mBlock.partPreds, mb.mb, identityMapping4);
 
-        predictChromaInter(references, mBlock.x, mbX << 3, mbY << 3, 1, mb, mBlock.partPreds);
-        predictChromaInter(references, mBlock.x, mbX << 3, mbY << 3, 2, mb, mBlock.partPreds);
+        predictChromaInter(references, mBlock.x, mbX << 3, mbY << 3, 1, mb.mb, mBlock.partPreds);
+        predictChromaInter(references, mBlock.x, mbX << 3, mbY << 3, 2, mb.mb, mBlock.partPreds);
 
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
             s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;
         }
-        di.mbQps[0][mbAddr] = s.qp;
+        mb.mbQps[0] = s.qp;
 
         residualLuma(mBlock, lAvb, tAvb, mbX, mbY);
 
         savePrediction8x8(s, mbX, mBlock.x);
-        saveMvs(di, mBlock.x, mbX, mbY);
+        saveMvs(mb, mBlock.x);
 
         int qp1 = calcQpChroma(s.qp, s.chromaQpOffset[0]);
         int qp2 = calcQpChroma(s.qp, s.chromaQpOffset[1]);
 
         decodeChromaResidual(mBlock, lAvb, tAvb, mbX, mbY, qp1, qp2);
 
-        di.mbQps[1][mbAddr] = qp1;
-        di.mbQps[2][mbAddr] = qp2;
+        mb.mbQps[1] = qp1;
+        mb.mbQps[2] = qp2;
 
-        mergeResidual(mb, mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
+        mergeResidual(mb.mb, mBlock.ac, mBlock.transform8x8Used ? COMP_BLOCK_8x8_LUT : COMP_BLOCK_4x4_LUT,
                 mBlock.transform8x8Used ? COMP_POS_8x8_LUT : COMP_POS_4x4_LUT);
 
-        collectPredictors(s, mb, mbX);
+        collectPredictors(s, mb.mb, mbX);
 
-        di.mbTypes[mbAddr] = mBlock.curMbType;
-        di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
+        mb.mbTypes = mBlock.curMbType;
+        mb.tr8x8Used = mBlock.transform8x8Used;
     }
 
     public void predictBDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
@@ -170,11 +169,11 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
                 refIdxL0 = 0;
                 refL0 = refs[0][0];
             } else {
-                refL0 = picCol.getRefsUsed()[mbY * mbWidth + mbX][1][mvRef(mvCol)];
+                refL0 = picCol.getRefsUsed()[((mbY * mbWidth + mbX) << 1) + 1][mvRef(mvCol)];
                 refIdxL0 = findPic(refs[0], refL0);
             }
         } else {
-            refL0 = picCol.getRefsUsed()[mbY * mbWidth + mbX][0][mvRef(mvCol)];
+            refL0 = picCol.getRefsUsed()[((mbY * mbWidth + mbX) << 1)][mvRef(mvCol)];
             refIdxL0 = findPic(refs[0], refL0);
         }
         

@@ -3,7 +3,6 @@ package org.jcodec.codecs.h264.decode;
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.common.model.Picture8Bit;
 
 /**
  * A decoder for I16x16 macroblocks
@@ -14,14 +13,14 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
     private Mapper mapper;
     private Intra8x8PredictionBuilder prediction8x8Builder;
 
-    public MBlockDecoderIntraNxN(Mapper mapper, SliceHeader sh, DeblockerInput di, int poc,
+    public MBlockDecoderIntraNxN(Mapper mapper, SliceHeader sh, int poc,
             DecoderState decoderState) {
-        super(sh, di, poc, decoderState);
+        super(sh, poc, decoderState);
         this.mapper = mapper;
         this.prediction8x8Builder = new Intra8x8PredictionBuilder();
     }
 
-    public void decode(MBlock mBlock, Picture8Bit mb) {
+    public void decode(CodedMBlock mBlock, DecodedMBlock mb) {
 
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
@@ -34,7 +33,7 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
         if (mBlock.cbpLuma() > 0 || mBlock.cbpChroma() > 0) {
             s.qp = (s.qp + mBlock.mbQPDelta + 52) % 52;
         }
-        di.mbQps[0][mbAddr] = s.qp;
+        mb.mbQps[0] = s.qp;
 
         residualLuma(mBlock, leftAvailable, topAvailable, mbX, mbY);
 
@@ -50,7 +49,7 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
 
                 Intra4x4PredictionBuilder.predictWithMode(mBlock.lumaModes[bi], mBlock.ac[0][bi],
                         blkX == 0 ? leftAvailable : true, blkY == 0 ? topAvailable : true, trAvailable, s.leftRow[0],
-                        s.topLine[0], s.topLeft[0], (mbX << 4), blkX, blkY, mb.getPlaneData(0));
+                        s.topLine[0], s.topLeft[0], (mbX << 4), blkX, blkY, mb.mb.getPlaneData(0));
             }
         } else {
             for (int i = 0; i < 4; i++) {
@@ -63,18 +62,18 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
 
                 prediction8x8Builder.predictWithMode(mBlock.lumaModes[i], mBlock.ac[0][i],
                         blkX == 0 ? leftAvailable : true, blkY == 0 ? topAvailable : true, tlAvailable, trAvailable,
-                        s.leftRow[0], s.topLine[0], s.topLeft[0], (mbX << 4), blkX << 2, blkY << 2, mb.getPlaneData(0));
+                        s.leftRow[0], s.topLine[0], s.topLeft[0], (mbX << 4), blkX << 2, blkY << 2, mb.mb.getPlaneData(0));
             }
         }
 
         decodeChroma(mBlock, mbX, mbY, leftAvailable, topAvailable, mb, s.qp);
 
-        di.mbTypes[mbAddr] = mBlock.curMbType;
-        di.tr8x8Used[mbAddr] = mBlock.transform8x8Used;
+        mb.mbTypes = mBlock.curMbType;
+        mb.tr8x8Used = mBlock.transform8x8Used;
 
-        MBlockDecoderUtils.collectChromaPredictors(s, mb, mbX);
+        MBlockDecoderUtils.collectChromaPredictors(s, mb.mb, mbX);
 
-        MBlockDecoderUtils.saveMvsIntra(di, mbX, mbY);
+        MBlockDecoderUtils.saveMvsIntra(mb);
         MBlockDecoderUtils.saveVectIntra(s, mapper.getMbX(mbAddr));
     }
 }
