@@ -9,7 +9,6 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.Codec;
 import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.io.ByteBufferChannel;
 import org.jcodec.common.io.ByteBufferSeekableByteChannel;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Size;
@@ -24,7 +23,7 @@ public class MP4MuxerTest {
     @Test
     public void testAddEmptyTracks() throws Exception {
         ByteBuffer buf = ByteBuffer.allocate(1024);
-        ByteBufferChannel output = new ByteBufferChannel(buf);
+        ByteBufferSeekableByteChannel output = new ByteBufferSeekableByteChannel(buf, 0);
         MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(output);
         muxer.addVideoTrack(H264, createSimpleVideoCodecMeta(new Size(42, 43), YUV420));
         muxer.finish();
