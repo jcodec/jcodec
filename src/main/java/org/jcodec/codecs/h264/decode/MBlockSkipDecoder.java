@@ -41,20 +41,18 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
         int mbY = mapper.getMbY(mBlock.mbIdx);
         int mbAddr = mapper.getAddress(mBlock.mbIdx);
 
-        PartPred[] pp = new PartPred[4];
-
         if (sliceType == P) {
             predictPSkip(refs, mbX, mbY, mapper.leftAvailable(mBlock.mbIdx), mapper.topAvailable(mBlock.mbIdx),
                     mapper.topLeftAvailable(mBlock.mbIdx), mapper.topRightAvailable(mBlock.mbIdx), mBlock.x, mb);
-            Arrays.fill(pp, PartPred.L0);
+            Arrays.fill(mBlock.partPreds, PartPred.L0);
         } else {
             bDirectDecoder.predictBDirect(refs, mbX, mbY, mapper.leftAvailable(mBlock.mbIdx),
                     mapper.topAvailable(mBlock.mbIdx), mapper.topLeftAvailable(mBlock.mbIdx),
-                    mapper.topRightAvailable(mBlock.mbIdx), mBlock.x, pp, mb, identityMapping4);
+                    mapper.topRightAvailable(mBlock.mbIdx), mBlock.x, mBlock.partPreds, mb, identityMapping4);
             savePrediction8x8(s, mbX, mBlock.x);
         }
 
-        decodeChromaSkip(refs, mBlock.x, pp, mbX, mbY, mb);
+        decodeChromaSkip(refs, mBlock.x, mBlock.partPreds, mbX, mbY, mb);
 
         collectPredictors(s, mb, mbX);
 

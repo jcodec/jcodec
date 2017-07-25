@@ -139,24 +139,21 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
             p[i] = bPartPredModes[mBlock.pb8x8.subMbTypes[i]];
         }
 
-        int blk8x8X = mbX << 1;
-
-        PartPred[] _pp = new PartPred[4];
         for (int i = 0; i < 4; i++) {
             if (p[i] == Direct)
                 bDirectDecoder.predictBDirect(refs, mbX, mbY, leftAvailable, topAvailable, tlAvailable,
-                        topRightAvailable, x, _pp, mb, ARRAY[i]);
+                        topRightAvailable, x, p, mb, ARRAY[i]);
         }
 
         for (int list = 0; list < 2; list++) {
-            if (H264Const.usesList(p[0], list)) {
+            if (H264Const.usesList(bPartPredModes[mBlock.pb8x8.subMbTypes[0]], list)) {
                 decodeSubMb8x8(mBlock, 0, bSubMbTypes[mBlock.pb8x8.subMbTypes[0]], refs[list], mbX << 6, mbY << 6,
                         s.mvTopLeft.getMv(0, list), s.mvTop.getMv(mbX << 2, list), s.mvTop.getMv((mbX << 2) + 1, list),
                         s.mvTop.getMv((mbX << 2) + 2, list), s.mvLeft.getMv(0, list), s.mvLeft.getMv(1, list),
                         tlAvailable, topAvailable, topAvailable, leftAvailable, x, 0, 1, 4, 5,
                         mBlock.pb8x8.refIdx[list][0], mbb[list], 0, list);
             }
-            if (H264Const.usesList(p[1], list)) {
+            if (H264Const.usesList(bPartPredModes[mBlock.pb8x8.subMbTypes[1]], list)) {
                 decodeSubMb8x8(mBlock, 1, bSubMbTypes[mBlock.pb8x8.subMbTypes[1]], refs[list], (mbX << 6) + 32,
                         mbY << 6, s.mvTop.getMv((mbX << 2) + 1, list), s.mvTop.getMv((mbX << 2) + 2, list),
                         s.mvTop.getMv((mbX << 2) + 3, list), s.mvTop.getMv((mbX << 2) + 4, list), x.getMv(1, list),
@@ -164,14 +161,14 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
                         mBlock.pb8x8.refIdx[list][1], mbb[list], 8, list);
             }
 
-            if (H264Const.usesList(p[2], list)) {
+            if (H264Const.usesList(bPartPredModes[mBlock.pb8x8.subMbTypes[2]], list)) {
                 decodeSubMb8x8(mBlock, 2, bSubMbTypes[mBlock.pb8x8.subMbTypes[2]], refs[list], mbX << 6,
                         (mbY << 6) + 32, s.mvLeft.getMv(1, list), x.getMv(4, list), x.getMv(5, list), x.getMv(6, list),
                         s.mvLeft.getMv(2, list), s.mvLeft.getMv(3, list), leftAvailable, true, true, leftAvailable, x,
                         8, 9, 12, 13, mBlock.pb8x8.refIdx[list][2], mbb[list], 128, list);
             }
 
-            if (H264Const.usesList(p[3], list)) {
+            if (H264Const.usesList(bPartPredModes[mBlock.pb8x8.subMbTypes[3]], list)) {
                 decodeSubMb8x8(mBlock, 3, bSubMbTypes[mBlock.pb8x8.subMbTypes[3]], refs[list], (mbX << 6) + 32,
                         (mbY << 6) + 32, x.getMv(5, list), x.getMv(6, list), x.getMv(7, list), NULL_VECTOR,
                         x.getMv(9, list), x.getMv(13, list), true, true, false, true, x, 10, 11, 14, 15,
@@ -181,15 +178,12 @@ public class MBlockDecoderInter8x8 extends MBlockDecoderBase {
 
         for (int i = 0; i < 4; i++) {
             int blk4x4 = BLK8x8_BLOCKS[i][0];
-            mergePrediction(sh, x.mv0R(blk4x4), x.mv1R(blk4x4), p[i], 0, mbb[0].getPlaneData(0),
-                    mbb[1].getPlaneData(0), BLK_8x8_MB_OFF_LUMA[i], 16, 8, 8, mb.getPlaneData(0), refs, poc);
+            mergePrediction(sh, x.mv0R(blk4x4), x.mv1R(blk4x4), bPartPredModes[mBlock.pb8x8.subMbTypes[i]], 0,
+                    mbb[0].getPlaneData(0), mbb[1].getPlaneData(0), BLK_8x8_MB_OFF_LUMA[i], 16, 8, 8,
+                    mb.getPlaneData(0), refs, poc);
         }
 
         savePrediction8x8(s, mbX, x);
-
-        for (int i = 0; i < 4; i++)
-            if (p[i] == Direct)
-                p[i] = _pp[i];
     }
 
     private void decodeSubMb8x8(MBlock mBlock, int partNo, int subMbType, Picture8Bit[] references, int offX, int offY,
