@@ -29,7 +29,7 @@ public class MP4MuxerTest {
         muxer.finish();
 
         ByteBuffer contents = output.getContents();
-        MP4Demuxer demuxer = MP4Demuxer.createRawMP4Demuxer(new ByteBufferSeekableByteChannel(contents));
+        MP4Demuxer demuxer = MP4Demuxer.createRawMP4Demuxer(ByteBufferSeekableByteChannel.readFromByteBuffer(contents));
         DemuxerTrack videoTrack = demuxer.getVideoTrack();
         assertNotNull(videoTrack);
         assertEquals(1, demuxer.getVideoTracks().size());
@@ -39,7 +39,7 @@ public class MP4MuxerTest {
     @Test
     public void testAddTrackWithId() throws Exception {
         ByteBuffer buf = ByteBuffer.allocate(1024);
-        SeekableByteChannel output = new ByteBufferSeekableByteChannel(buf);
+        SeekableByteChannel output = ByteBufferSeekableByteChannel.readFromByteBuffer(buf);
         MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(output);
         muxer.addTrackWithId(MP4TrackType.SOUND, Codec.AAC, 2);
         muxer.addTrackWithId(MP4TrackType.VIDEO, Codec.H264, 1);
@@ -54,7 +54,7 @@ public class MP4MuxerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testAddTrackWithSameId() throws Exception {
-        SeekableByteChannel output = new ByteBufferSeekableByteChannel(ByteBuffer.allocate(64 * 1024));
+        SeekableByteChannel output = ByteBufferSeekableByteChannel.readFromByteBuffer(ByteBuffer.allocate(64 * 1024));
         MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(output);
         muxer.addTrackWithId(MP4TrackType.SOUND, Codec.AAC, 1);
         muxer.addTrackWithId(MP4TrackType.VIDEO, Codec.H264, 1);

@@ -24,7 +24,7 @@ public class SegmentTypeBoxTest {
         buf.put("free".getBytes());
         buf.clear();
 
-        SeekableByteChannel input = new ByteBufferSeekableByteChannel(buf);
+        SeekableByteChannel input = ByteBufferSeekableByteChannel.readFromByteBuffer(buf);
         List<Atom> rootAtoms = MP4Util.getRootAtoms(input);
         assertEquals(2, rootAtoms.size());
         Atom atom = rootAtoms.get(0);
