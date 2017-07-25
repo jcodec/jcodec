@@ -18,11 +18,23 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
     private int contentLength;
 
     public ByteBufferSeekableByteChannel(ByteBuffer backing) {
+        this(backing, backing.remaining());
+    }
+    
+    public ByteBufferSeekableByteChannel(ByteBuffer backing, int contentLength) {
         this.backing = backing;
-        this.contentLength = backing.remaining();
+        this.contentLength = contentLength;
         this.open = true;
     }
-
+    
+    public static ByteBufferSeekableByteChannel writeToByteBuffer(ByteBuffer buf) {
+        return new ByteBufferSeekableByteChannel(buf, 0);
+    }
+    
+    public static ByteBufferSeekableByteChannel readFromByteBuffer(ByteBuffer buf) {
+        return new ByteBufferSeekableByteChannel(buf);
+    }
+    
     @Override
     public boolean isOpen() {
         return open;
@@ -35,10 +47,11 @@ public class ByteBufferSeekableByteChannel implements SeekableByteChannel {
 
     @Override
     public int read(ByteBuffer dst) throws IOException {
-        if (!backing.hasRemaining()) {
+        if (!backing.hasRemaining() || contentLength <= 0) {
             return -1;
         }
         int toRead = Math.min(backing.remaining(), dst.remaining());
+        toRead = Math.min(toRead, contentLength);
         dst.put(NIOUtils.read(backing, toRead));
         contentLength = Math.max(contentLength, backing.position());
         return toRead;
