@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4.muxer;
 
 import static org.jcodec.common.Preconditions.checkState;
+import static org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -117,14 +118,11 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
     protected Box finish(MovieHeaderBox mvhd) throws IOException {
         checkState(!finished, "The muxer track has finished muxing");
         if (getEntries().isEmpty()) {
-            if (codec == Codec.H264) {
+            if (codec == Codec.H264 && !spsList.isEmpty()) {
                 SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
                 Size size = H264Utils.getPicSize(sps);
-                VideoCodecMeta meta = org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(size,
-                        ColorSpace.YUV420);
+                VideoCodecMeta meta = createSimpleVideoCodecMeta(size, ColorSpace.YUV420);
                 addVideoSampleEntry(meta);
-            } else {
-                checkState(false, "Sample entry missing not supported for anything other then H.264");
             }
         }
         setCodecPrivateIfNeeded();
@@ -153,9 +151,15 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
 
     public void setCodecPrivateIfNeeded() {
         if (codec == Codec.H264) {
-            getEntries().get(0).add(H264Utils.createAvcCFromPS(selectUnique(spsList), selectUnique(ppsList), 4));
+            List<ByteBuffer> sps = selectUnique(spsList);
+            List<ByteBuffer> pps = selectUnique(ppsList);
+            if (!sps.isEmpty() && !pps.isEmpty()) {
+                getEntries().get(0).add(H264Utils.createAvcCFromPS(sps, pps, 4));
+            }
         } else if (codec == Codec.AAC) {
-            getEntries().get(0).add(EsdsBox.fromADTS(adtsHeader));
+            if (adtsHeader != null) {
+                getEntries().get(0).add(EsdsBox.fromADTS(adtsHeader));
+            }
         }
     }
 
