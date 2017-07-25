@@ -21,6 +21,7 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
@@ -123,6 +124,8 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
                 Size size = H264Utils.getPicSize(sps);
                 VideoCodecMeta meta = createSimpleVideoCodecMeta(size, ColorSpace.YUV420);
                 addVideoSampleEntry(meta);
+            } else {
+                Logger.warn("CodecMP4MuxerTrack: Creating a track without sample entry");
             }
         }
         setCodecPrivateIfNeeded();
@@ -155,10 +158,14 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
             List<ByteBuffer> pps = selectUnique(ppsList);
             if (!sps.isEmpty() && !pps.isEmpty()) {
                 getEntries().get(0).add(H264Utils.createAvcCFromPS(sps, pps, 4));
+            } else {
+                Logger.warn("CodecMP4MuxerTrack: Not adding a sample entry for h.264 track, missing any SPS/PPS NAL units");
             }
         } else if (codec == Codec.AAC) {
             if (adtsHeader != null) {
                 getEntries().get(0).add(EsdsBox.fromADTS(adtsHeader));
+            } else {
+                Logger.warn("CodecMP4MuxerTrack: Not adding a sample entry for AAC track, missing any ADTS headers.");
             }
         }
     }
