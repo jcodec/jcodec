@@ -114,7 +114,7 @@ public class Transcoder {
                 return;
             if (videoCopy && videoQueue.size() < REORDER_LENGTH)
                 return;
-            if (!haveEnoughAudio())
+            if (!hasLeadingAudio())
                 return;
             VideoFrameWithPacket firstVideoFrame;
             firstVideoFrame = videoQueue.get(0);
@@ -148,21 +148,26 @@ public class Transcoder {
                 ((PacketSink) sink).outputVideoPacket(firstVideoFrame.getPacket(), videoCodecMeta);
             } else {
                 // Filtering the pixels
-                LoanerPicture frame = firstVideoFrame.getFrame();
-                for (Filter filter : filters) {
-                    LoanerPicture old = frame;
-                    frame = filter.filter(frame.getPicture(), pixelStore);
-                    // Filters that don't change the original picture will
-                    // return null
-                    if (frame == null) {
-                        frame = old;
-                    } else {
-                        pixelStore.putBack(old);
-                    }
-                }
+                LoanerPicture frame = filterFrame(firstVideoFrame);
                 sink.outputVideoFrame(new VideoFrameWithPacket(firstVideoFrame.getPacket(), frame));
                 pixelStore.putBack(frame);
             }
+        }
+
+        private LoanerPicture filterFrame(VideoFrameWithPacket firstVideoFrame) {
+            LoanerPicture frame = firstVideoFrame.getFrame();
+            for (Filter filter : filters) {
+                LoanerPicture old = frame;
+                frame = filter.filter(frame.getPicture(), pixelStore);
+                // Filters that don't change the original picture will
+                // return null
+                if (frame == null) {
+                    frame = old;
+                } else {
+                    pixelStore.putBack(old);
+                }
+            }
+            return frame;
         }
 
         public void finalFlushQueues() throws IOException {
@@ -187,8 +192,9 @@ public class Transcoder {
                         if (videoCopy && (sink instanceof PacketSink)) {
                             ((PacketSink) sink).outputVideoPacket(videoFrame.getPacket(), videoCodecMeta);
                         } else {
-                            sink.outputVideoFrame(videoFrame);
-                            pixelStore.putBack(videoFrame.getFrame());
+                            LoanerPicture frame = filterFrame(videoFrame);
+                            sink.outputVideoFrame(new VideoFrameWithPacket(videoFrame.getPacket(), frame));
+                            pixelStore.putBack(frame);
                         }
                     }
                 }
@@ -214,10 +220,10 @@ public class Transcoder {
                 return true;
             if (videoCopy && videoQueue.size() < REORDER_LENGTH)
                 return true;
-            return haveEnoughAudio();
+            return false;
         }
 
-        private boolean haveEnoughAudio() {
+        public boolean hasLeadingAudio() {
             VideoFrameWithPacket firstVideoFrame = videoQueue.get(0);
             for (AudioFrameWithPacket audioFrame : audioQueue) {
                 if (audioFrame.getPacket().getPtsD() >= firstVideoFrame.getPacket().getPtsD() + AUDIO_LEADING_TIME) {
@@ -277,7 +283,7 @@ public class Transcoder {
                     // frame just yet
                     boolean needsVideoFrame = !finishedVideo[s];
                     for (Stream stream : videoStreams[s]) {
-                        needsVideoFrame &= stream.needsVideoFrame();
+                        needsVideoFrame &= stream.needsVideoFrame() || stream.hasLeadingAudio() || finishedAudio[s];
                     }
 
                     if (needsVideoFrame) {
