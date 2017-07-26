@@ -34,7 +34,6 @@ import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 
@@ -102,12 +101,6 @@ public class H264Decoder extends VideoDecoder {
 
     public Frame decodeFrame8BitFromNals(List<ByteBuffer> nalUnits, byte[][] buffer) {
         return new FrameDecoder(this).decodeFrame(nalUnits, buffer);
-    }
-
-    @Deprecated
-    public Picture decodeFrameFromNals(List<ByteBuffer> nalUnits, int[][] buffer) {
-        Frame frame = new FrameDecoder(this).decodeFrame(nalUnits, getSameSizeBuffer(buffer));
-        return frame == null ? null : frame.toPictureWithBuffer(8, buffer);
     }
 
     private static final class SliceDecoderRunnable implements Runnable {

@@ -18,7 +18,7 @@ import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.Frame;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
@@ -72,7 +72,7 @@ public class JCodecVideoSource implements VideoSource {
     static int cnt = 0;
 
     @Override
-    public Frame decode(int[][] buf) throws IOException {
+    public Frame decode(byte[][] buf) throws IOException {
         seekLock.lock();
         Packet nextPacket;
         try {
@@ -84,7 +84,7 @@ public class JCodecVideoSource implements VideoSource {
         if (nextPacket == null)
             return null;
 
-        final Future<Picture> job = tp.submit(new FrameCallable(nextPacket, buf));
+        final Future<Picture8Bit> job = tp.submit(new FrameCallable(nextPacket, buf));
 
         Frame frm = new FutureFrame(job, new RationalLarge(nextPacket.getPts(), nextPacket.getTimescale()),
                 new RationalLarge(nextPacket.getDuration(), nextPacket.getTimescale()), mi.getPAR(),
@@ -127,9 +127,9 @@ public class JCodecVideoSource implements VideoSource {
 
     public class FutureFrame extends Frame {
 
-        private Future<Picture> job;
+        private Future<Picture8Bit> job;
 
-        public FutureFrame(Future<Picture> job, RationalLarge pts, RationalLarge duration, Rational pixelAspect,
+        public FutureFrame(Future<Picture8Bit> job, RationalLarge pts, RationalLarge duration, Rational pixelAspect,
                 int frameNo, TapeTimecode tapeTimecode, List<String> messages) {
             super(null, pts, duration, pixelAspect, frameNo, tapeTimecode, messages);
             this.job = job;
@@ -141,7 +141,7 @@ public class JCodecVideoSource implements VideoSource {
         }
 
         @Override
-        public Picture getPic() {
+        public Picture8Bit getPic() {
             try {
                 return job.get();
             } catch (Exception e) {
@@ -150,23 +150,23 @@ public class JCodecVideoSource implements VideoSource {
         }
     }
 
-    class FrameCallable implements Callable<Picture> {
+    class FrameCallable implements Callable<Picture8Bit> {
         private Packet pkt;
-        private int[][] out;
+        private byte[][] out;
 
-        public FrameCallable(Packet pkt, int[][] out) {
+        public FrameCallable(Packet pkt, byte[][] out) {
             this.pkt = pkt;
             this.out = out;
         }
 
-        public Picture call() {
+        public Picture8Bit call() {
             VideoDecoder decoder = decoders.get();
             if (decoder == null) {
                 decoder = JCodecUtil.getVideoDecoder(mi.getFourcc());
                 decoders.set(decoder);
             }
 
-            Picture pic = decoder.decodeFrame(pkt.getData(), out);
+            Picture8Bit pic = decoder.decodeFrame8Bit(pkt.getData(), out);
             synchronized (drain) {
                 drain.add(pkt.getData());
             }

@@ -1,13 +1,9 @@
 package org.jcodec.codecs.util;
-import org.jcodec.common.io.IOUtils;
-import org.jcodec.common.model.Picture;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.Picture8Bit;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.lang.System;
 
 public class FrameUtil {
 

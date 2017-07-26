@@ -9,7 +9,7 @@ import java.util.List;
  * 
  */
 public class Frame {
-    private Picture pic;
+    private Picture8Bit pic;
     private RationalLarge pts;
     private RationalLarge duration;
     private Rational pixelAspect;
@@ -17,7 +17,7 @@ public class Frame {
     private int frameNo;
     private List<String> messages;
 
-    public Frame(Picture pic, RationalLarge pts, RationalLarge duration, Rational pixelAspect, int frameNo,
+    public Frame(Picture8Bit pic, RationalLarge pts, RationalLarge duration, Rational pixelAspect, int frameNo,
             TapeTimecode tapeTimecode, List<String> messages) {
         this.pic = pic;
         this.pts = pts;
@@ -28,7 +28,7 @@ public class Frame {
         this.messages = messages;
     }
 
-    public Picture getPic() {
+    public Picture8Bit getPic() {
         return pic;
     }
 

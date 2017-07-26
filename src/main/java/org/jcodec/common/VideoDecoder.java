@@ -1,6 +1,5 @@
 package org.jcodec.common;
 
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 
 import java.io.IOException;
@@ -15,20 +14,6 @@ import java.nio.ByteBuffer;
  */
 abstract public class VideoDecoder {
     private byte[][] byteBuffer;
-    
-    /**
-     * Decodes a video frame to an uncompressed picture in codec native
-     * colorspace
-     * 
-     * @param data
-     *            Compressed frame data
-     * @throws IOException
-     */
-    @Deprecated
-    public Picture decodeFrame(ByteBuffer data, int[][] buffer) {
-        Picture8Bit frame = decodeFrame8Bit(data, getSameSizeBuffer(buffer));
-        return frame == null ? null : frame.toPictureWithBuffer(8, buffer);
-    }
     
     /**
      * Decodes a video frame to an uncompressed picture in codec native

@@ -3,7 +3,6 @@ import static java.lang.Math.min;
 import static java.lang.System.arraycopy;
 
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rect;
 
@@ -74,20 +73,6 @@ public class ImageOP {
         }
     }
 
-    public static void subImageWithFillPic(Picture _in, Picture out, Rect rect) {
-        int width = _in.getWidth();
-        int height = _in.getHeight();
-        ColorSpace color = _in.getColor();
-        int[][] data = _in.getData();
-
-        for (int i = 0; i < data.length; i++) {
-            subImageWithFillInt(data[i], width >> color.compWidth[i], height >> color.compHeight[i],
-                    out.getPlaneData(i), rect.getWidth() >> color.compWidth[i],
-                    rect.getHeight() >> color.compHeight[i], rect.getX() >> color.compWidth[i],
-                    rect.getY() >> color.compHeight[i]);
-        }
-    }
-    
     public static void subImageWithFillPic8(Picture8Bit _in, Picture8Bit out, Rect rect) {
         int width = _in.getWidth();
         int height = _in.getHeight();
