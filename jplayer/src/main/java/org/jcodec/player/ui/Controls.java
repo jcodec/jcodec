@@ -10,7 +10,7 @@ import javax.imageio.ImageIO;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Frame;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 import org.jcodec.player.Player;
 import org.jcodec.player.ui.DraggableButton.DragListener;
@@ -34,7 +34,7 @@ public class Controls {
     private State state;
     private Timer timer;
     private TimerTask task;
-    private Picture offscreen;
+    private Picture8Bit offscreen;
 
     private int posX;
     private int posY;
@@ -84,11 +84,11 @@ public class Controls {
         controls.add(playhead);
         state = State.HIDDEN;
         timer = new Timer();
-        offscreen = Picture.create(WIDTH, HEIGHT, ColorSpace.YUV420);
+        offscreen = Picture8Bit.create(WIDTH, HEIGHT, ColorSpace.YUV420);
         bufferLevel = 50;
     }
 
-    public void draw(Picture f) {
+    public void draw(Picture8Bit f) {
         posX = (f.getWidth() - WIDTH) >> 1;
         posY = f.getHeight() - BOTTOM - HEIGHT;
         if (state == State.SHOWING) {

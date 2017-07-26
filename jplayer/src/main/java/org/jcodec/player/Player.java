@@ -22,7 +22,7 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.SoundUtil;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Frame;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
@@ -64,7 +64,7 @@ public class Player {
     private long lastAudio;
 
     private List<Frame> video = Collections.synchronizedList(new ArrayList<Frame>());
-    private BlockingQueue<int[][]> videoDrain = new LinkedBlockingQueue<int[][]>();
+    private BlockingQueue<byte[][]> videoDrain = new LinkedBlockingQueue<byte[][]>();
 
     private volatile boolean stop;
 
@@ -72,7 +72,7 @@ public class Player {
     private BlockingQueue<ByteBuffer> audioDrain = new LinkedBlockingQueue<ByteBuffer>();
 
     private AudioFormat af;
-    private Picture dst;
+    private Picture8Bit dst;
     private Object seekLock = new Object();
     private Object pausedEvent = new Object();
     private MediaInfo.VideoInfo mi;
@@ -273,10 +273,10 @@ public class Player {
         }
     }
 
-    private int[][] createTarget() {
+    private byte[][] createTarget() {
         Size dim = mi.getDim();
         int sz = 2 * dim.getWidth() * dim.getHeight();
-        return new int[][] { new int[sz], new int[sz], new int[sz] };
+        return new byte[][] { new byte[sz], new byte[sz], new byte[sz] };
     }
 
     private void startVideoDecode() {
@@ -357,7 +357,7 @@ public class Player {
     }
 
     private void decodeJustOneFrame() throws IOException {
-        int[][] buf = take(videoDrain, 20);
+        byte[][] buf = take(videoDrain, 20);
         if (buf == null)
             return;
         Frame frame = videoSource.decode(buf);
@@ -432,7 +432,7 @@ public class Player {
     }
 
     private void show(Frame frame) {
-        Picture src = frame.getPic();
+        Picture8Bit src = frame.getPic();
 
         notifyTime(frame);
 
@@ -440,9 +440,9 @@ public class Player {
 
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
-                dst = Picture.createCropped(src.getWidth(), src.getHeight(), vo.getColorSpace(), src.getCrop());
+                dst = Picture8Bit.createCropped(src.getWidth(), src.getHeight(), vo.getColorSpace(), src.getCrop());
 
-            ColorUtil.getTransform(src.getColor(), vo.getColorSpace()).transform(src, dst);
+            ColorUtil.getTransform8Bit(src.getColor(), vo.getColorSpace()).transform(src, dst);
 
             vo.show(dst, frame.getPixelAspect());
         } else {

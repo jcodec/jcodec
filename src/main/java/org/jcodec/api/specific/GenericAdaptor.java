@@ -4,7 +4,6 @@ import org.jcodec.api.MediaInfo;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Size;
 
@@ -26,12 +25,6 @@ public class GenericAdaptor implements ContainerAdaptor {
     }
 
     @Override
-    @Deprecated
-    public Picture decodeFrame(Packet packet, int[][] data) {
-        return decoder.decodeFrame(packet.getData(), data);
-    }
-
-    @Override
     public Picture8Bit decodeFrame8Bit(Packet packet, byte[][] data) {
         return decoder.decodeFrame8Bit(packet.getData(), data);
     }
@@ -39,12 +32,6 @@ public class GenericAdaptor implements ContainerAdaptor {
     @Override
     public boolean canSeek(Packet data) {
         return true;
-    }
-
-    @Override
-    @Deprecated
-    public int[][] allocatePicture() {
-        return Picture.create(1920, 1088, ColorSpace.YUV444).getData();
     }
 
     @Override

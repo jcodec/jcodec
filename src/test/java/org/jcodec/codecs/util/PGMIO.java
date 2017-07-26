@@ -1,12 +1,4 @@
 package org.jcodec.codecs.util;
-import org.jcodec.common.io.IOUtils;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
-
-import org.jcodec.common.io.IOUtils;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -17,6 +9,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+
+import org.jcodec.common.io.IOUtils;
+import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Picture8Bit;
 
 public class PGMIO {
 

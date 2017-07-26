@@ -200,41 +200,6 @@ public class Picture8Bit {
         return crop == null ? height : crop.getHeight();
     }
 
-    public static Picture8Bit fromPicture(Picture pic) {
-        Picture8Bit create = Picture8Bit.createCropped(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
-
-        for (int i = 0; i < Math.min(pic.getData().length, create.getData().length); i++) {
-            for (int j = 0; j < Math.min(pic.getData()[i].length, create.getData()[i].length); j++) {
-                create.getData()[i][j] = (byte) (((pic.getData()[i][j] << 8) >> pic.getBitDepth()) - 128);
-            }
-        }
-
-        return create;
-    }
-
-    public Picture toPicture(int bitDepth) {
-        Picture create = Picture.doCreate(width, height, color, bitDepth, crop);
-
-        return toPictureInternal(bitDepth, create);
-    }
-
-    public Picture toPictureWithBuffer(int bitDepth, int[][] buffer) {
-        Picture create = new Picture(width, height, buffer, color, bitDepth, crop);
-
-        return toPictureInternal(bitDepth, create);
-    }
-
-    private Picture toPictureInternal(int bitDepth, Picture create) {
-        for (int i = 0; i < data.length; i++) {
-            int planeSize = getPlaneWidth(i) * getPlaneHeight(i);
-            for (int j = 0; j < planeSize; j++) {
-                create.getData()[i][j] = ((data[i][j] + 128) << bitDepth) >> 8;
-            }
-        }
-
-        return create;
-    }
-
     public void fill(int val) {
         for (int i = 0; i < data.length; i++) {
             Arrays.fill(data[i], (byte) val);
