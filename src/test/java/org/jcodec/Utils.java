@@ -17,7 +17,7 @@ import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
-import org.jcodec.api.FrameGrab8Bit;
+import org.jcodec.api.FrameGrab;
 import org.jcodec.api.JCodecException;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -25,7 +25,7 @@ import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
@@ -92,10 +92,10 @@ public class Utils {
         try {
             ch1 = NIOUtils.readableChannel(file);
             ch2 = NIOUtils.readableChannel(refFile);
-            FrameGrab8Bit frameGrab1 = FrameGrab8Bit.createFrameGrab8Bit(ch1);
-            FrameGrab8Bit frameGrab2 = FrameGrab8Bit.createFrameGrab8Bit(ch2);
+            FrameGrab frameGrab1 = FrameGrab.createFrameGrab(ch1);
+            FrameGrab frameGrab2 = FrameGrab.createFrameGrab(ch2);
 
-            Picture8Bit fr1, fr2;
+            Picture fr1, fr2;
             do {
                 fr1 = frameGrab1.getNativeFrame();
                 fr2 = frameGrab2.getNativeFrame();
@@ -116,7 +116,7 @@ public class Utils {
         }
     }
 
-    public static int maxDiff(Picture8Bit fr1, Picture8Bit fr2) {
+    public static int maxDiff(Picture fr1, Picture fr2) {
         if (fr2.getWidth() != fr1.getWidth() || fr2.getHeight() != fr1.getHeight())
             throw new IllegalArgumentException("Diffing pictures of different sizes.");
 
@@ -130,7 +130,7 @@ public class Utils {
         return maxDiff;
     }
 
-    public static boolean picturesRoughlyEqual(Picture8Bit fr1, Picture8Bit fr2, int threshold) {
+    public static boolean picturesRoughlyEqual(Picture fr1, Picture fr2, int threshold) {
         if (fr2.getWidth() != fr1.getWidth() || fr2.getHeight() != fr1.getHeight())
             return false;
 
@@ -164,8 +164,8 @@ public class Utils {
         return totalDiff / one.length;
     }
 
-    public static Picture8Bit readYuvFrame(ReadableByteChannel ch, int width, int height) throws IOException {
-        Picture8Bit result = Picture8Bit.create(width, height, ColorSpace.YUV420J);
+    public static Picture readYuvFrame(ReadableByteChannel ch, int width, int height) throws IOException {
+        Picture result = Picture.create(width, height, ColorSpace.YUV420J);
 
         for (int i = 0; i < result.getData().length; i++) {
             byte[] planeData = result.getPlaneData(i);
@@ -180,12 +180,12 @@ public class Utils {
         return result;
     }
 
-    public static void saveImage(Picture8Bit fr2, String formatName, String name) throws IOException {
-        ImageIO.write(AWTUtil.toBufferedImage8Bit(fr2), formatName, new File(name));
+    public static void saveImage(Picture fr2, String formatName, String name) throws IOException {
+        ImageIO.write(AWTUtil.toBufferedImage(fr2), formatName, new File(name));
     }
 
-    public static Picture8Bit diff(Picture8Bit one, Picture8Bit two, int mul) {
-        Picture8Bit result = Picture8Bit.create(one.getWidth(), one.getHeight(), one.getColor());
+    public static Picture diff(Picture one, Picture two, int mul) {
+        Picture result = Picture.create(one.getWidth(), one.getHeight(), one.getColor());
         byte[][] dataO = one.getData();
         byte[][] dataT = two.getData();
         byte[][] dataR = result.getData();
@@ -211,8 +211,8 @@ public class Utils {
         return d < 0 ? 0 : (d > 1 ? 1 : d);
     }
     
-    public static Picture8Bit buildSmoothRandomPic(int width, int height, int smooth, double vectorSmooth) {
-        Picture8Bit pic = Picture8Bit.create(width, height, ColorSpace.YUV420);
+    public static Picture buildSmoothRandomPic(int width, int height, int smooth, double vectorSmooth) {
+        Picture pic = Picture.create(width, height, ColorSpace.YUV420);
         int[] prevRow = new int[width];
         double vector = Math.random();
         for (int p = 0; p < pic.getColor().nComp; p++) {

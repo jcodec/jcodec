@@ -3,7 +3,7 @@ import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.common.dct.IDCT4x4;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 import java.nio.ByteBuffer;
 
@@ -38,7 +38,7 @@ public class ProresToThumb4x4 extends ProresDecoder {
 
     public static int interlaced_scan_4x4[] = new int[] { 0, 4, 1, 5, 8, 12, 9, 13, 2, 6, 3, 7, 10, 14, 11, 15 };
 
-    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] target) {
+    public Picture decodeFrame(ByteBuffer data, byte[][] target) {
         FrameHeader fh = readFrameHeader(data);
 
         int codedWidth = ((fh.width + 15) & ~0xf) >> 1;
@@ -63,7 +63,7 @@ public class ProresToThumb4x4 extends ProresDecoder {
                     interlaced_scan_4x4, fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
 
-        return Picture8Bit.createPicture8Bit(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
+        return Picture.createPicture(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
                 : ColorSpace.YUV444);
     }
 

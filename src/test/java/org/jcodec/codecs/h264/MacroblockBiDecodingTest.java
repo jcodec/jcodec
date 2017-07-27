@@ -6,7 +6,7 @@ import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -344,7 +344,7 @@ public class MacroblockBiDecodingTest {
 
         Frame[] out = new Frame[nFrames];
         for (int i = 0; i < nFrames; i++) {
-            out[i] = dec.decodeFrame8Bit(es.nextFrame().getData(), Picture8Bit.create(32, 32, ColorSpace.YUV420)
+            out[i] = dec.decodeFrame(es.nextFrame().getData(), Picture.create(32, 32, ColorSpace.YUV420)
                     .getData());
         }
 

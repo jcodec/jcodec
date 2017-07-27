@@ -1,7 +1,7 @@
 package org.jcodec.player.filters;
 
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 
 /**
@@ -15,7 +15,7 @@ import org.jcodec.common.model.Rational;
  */
 public interface VideoOutput {
 
-    void show(Picture8Bit pic, Rational rational);
+    void show(Picture pic, Rational rational);
     
     ColorSpace getColorSpace();
 

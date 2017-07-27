@@ -6,7 +6,7 @@ import org.jcodec.api.NotImplementedException;
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vpx.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vpx.VP8Util.SubblockConstants;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 import java.lang.System;
 import java.util.Arrays;
@@ -818,7 +818,7 @@ public class Macroblock {
         }
     }
 
-    public void put(int mbRow, int mbCol, Picture8Bit p) {
+    public void put(int mbRow, int mbCol, Picture p) {
         byte[] luma = p.getPlaneData(0);
         byte[] cb = p.getPlaneData(1);
         byte[] cr = p.getPlaneData(2);

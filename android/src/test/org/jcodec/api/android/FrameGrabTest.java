@@ -2,7 +2,7 @@ package org.jcodec.api.android;
 
 import org.junit.Test;
 
-public class FrameGrab8BitTest {
+public class FrameGrabTest {
     
     @Test
     public void testFrameGrab() {

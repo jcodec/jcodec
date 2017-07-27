@@ -31,7 +31,7 @@ import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.imgseq.ImageSequenceMuxer;
 import org.jcodec.containers.mkv.muxer.MKVMuxer;
@@ -152,11 +152,11 @@ public class SinkImpl implements Sink, PacketSink {
         }
     }
 
-    protected EncodedFrame encodeVideo(Picture8Bit frame, ByteBuffer _out) {
+    protected EncodedFrame encodeVideo(Picture frame, ByteBuffer _out) {
         if (!outputFormat.isVideo())
             return null;
 
-        return videoEncoder.encodeFrame8Bit(frame, _out);
+        return videoEncoder.encodeFrame(frame, _out);
     }
 
     private AudioEncoder createAudioEncoder(Codec codec, AudioFormat format) {
@@ -202,7 +202,7 @@ public class SinkImpl implements Sink, PacketSink {
             bufferStore.set(buffer);
         }
         buffer.clear();
-        Picture8Bit frame = videoFrame.getFrame().getPicture();
+        Picture frame = videoFrame.getFrame().getPicture();
         EncodedFrame enc = encodeVideo(frame, buffer);
         outputVideoPacket = Packet.createPacketWithData(videoFrame.getPacket(), NIOUtils.clone(enc.getData()));
         outputVideoPacket.setFrameType(enc.isKeyFrame() ? FrameType.KEY : FrameType.INTER);

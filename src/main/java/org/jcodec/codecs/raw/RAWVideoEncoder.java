@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 
 /**
@@ -17,7 +17,7 @@ import org.jcodec.common.model.Rect;
 public class RAWVideoEncoder extends VideoEncoder {
 
     @Override
-    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out) {
+    public EncodedFrame encodeFrame(Picture pic, ByteBuffer _out) {
         ByteBuffer dup = _out.duplicate();
 
         int width = pic.getWidth();
@@ -59,7 +59,7 @@ public class RAWVideoEncoder extends VideoEncoder {
     }
 
     @Override
-    public int estimateBufferSize(Picture8Bit frame) {
+    public int estimateBufferSize(Picture frame) {
         return (frame.getCroppedWidth() * frame.getCroppedHeight() * 3) / 2;
     }
 

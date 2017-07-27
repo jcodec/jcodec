@@ -16,7 +16,7 @@ import java.util.Arrays;
  * @author The JCodec project
  * 
  */
-public class Picture8Bit {
+public class Picture {
     private ColorSpace color;
 
     private int width;
@@ -26,11 +26,11 @@ public class Picture8Bit {
 
     private Rect crop;
 
-    public static Picture8Bit createPicture8Bit(int width, int height, byte[][] data, ColorSpace color) {
-        return new Picture8Bit(width, height, data, color, new Rect(0, 0, width, height));
+    public static Picture createPicture(int width, int height, byte[][] data, ColorSpace color) {
+        return new Picture(width, height, data, color, new Rect(0, 0, width, height));
     }
     
-    public Picture8Bit(int width, int height, byte[][] data, ColorSpace color, Rect crop) {
+    public Picture(int width, int height, byte[][] data, ColorSpace color, Rect crop) {
         this.width = width;
         this.height = height;
         this.data = data;
@@ -57,15 +57,15 @@ public class Picture8Bit {
         }
     }
 
-    public static Picture8Bit copyPicture8Bit(Picture8Bit other) {
-        return new Picture8Bit(other.width, other.height, other.data, other.color, other.crop);
+    public static Picture copyPicture(Picture other) {
+        return new Picture(other.width, other.height, other.data, other.color, other.crop);
     }
     
-    public static Picture8Bit create(int width, int height, ColorSpace colorSpace) {
+    public static Picture create(int width, int height, ColorSpace colorSpace) {
         return createCropped(width, height, colorSpace, null);
     }
 
-    public static Picture8Bit createCropped(int width, int height, ColorSpace colorSpace, Rect crop) {
+    public static Picture createCropped(int width, int height, ColorSpace colorSpace, Rect crop) {
         int[] planeSizes = new int[MAX_PLANES];
         for (int i = 0; i < colorSpace.nComp; i++) {
             planeSizes[colorSpace.compPlane[i]] += (width >> colorSpace.compWidth[i])
@@ -82,7 +82,7 @@ public class Picture8Bit {
             }
         }
 
-        return new Picture8Bit(width, height, data, colorSpace, crop);
+        return new Picture(width, height, data, colorSpace, crop);
     }
 
     public int getWidth() {
@@ -117,15 +117,15 @@ public class Picture8Bit {
         return height >> color.compHeight[plane];
     }
 
-    public boolean compatible(Picture8Bit src) {
+    public boolean compatible(Picture src) {
         return src.color == color && src.width == width && src.height == height;
     }
 
-    public Picture8Bit createCompatible() {
-        return Picture8Bit.create(width, height, color);
+    public Picture createCompatible() {
+        return Picture.create(width, height, color);
     }
 
-    public void copyFrom(Picture8Bit src) {
+    public void copyFrom(Picture src) {
         if (!compatible(src))
             throw new IllegalArgumentException("Can not copy to incompatible picture");
         for (int plane = 0; plane < color.nComp; plane++) {
@@ -141,20 +141,20 @@ public class Picture8Bit {
      * 
      * @return
      */
-    public Picture8Bit cloneCropped() {
+    public Picture cloneCropped() {
         if (cropNeeded()) {
             return cropped();
         } else {
-            Picture8Bit clone = createCompatible();
+            Picture clone = createCompatible();
             clone.copyFrom(this);
             return clone;
         }
     }
 
-    public Picture8Bit cropped() {
+    public Picture cropped() {
         if (!cropNeeded())
             return this;
-        Picture8Bit result = Picture8Bit.create(crop.getWidth(), crop.getHeight(), color);
+        Picture result = Picture.create(crop.getWidth(), crop.getHeight(), color);
 
         if(color.planar) {
             for (int plane = 0; plane < data.length; plane++) {
@@ -200,8 +200,8 @@ public class Picture8Bit {
         return crop == null ? height : crop.getHeight();
     }
 
-    public static Picture8Bit fromPictureHiBD(PictureHiBD pic) {
-        Picture8Bit create = Picture8Bit.createCropped(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
+    public static Picture fromPictureHiBD(PictureHiBD pic) {
+        Picture create = Picture.createCropped(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
 
         for (int i = 0; i < Math.min(pic.getData().length, create.getData().length); i++) {
             for (int j = 0; j < Math.min(pic.getData()[i].length, create.getData()[i].length); j++) {
@@ -243,9 +243,9 @@ public class Picture8Bit {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof Picture8Bit))
+        if (obj == null || !(obj instanceof Picture))
             return false;
-        Picture8Bit other = (Picture8Bit) obj;
+        Picture other = (Picture) obj;
 
         if (other.getCroppedWidth() != getCroppedWidth() || other.getCroppedHeight() != getCroppedHeight()
                 || other.getColor() != color)
@@ -257,7 +257,7 @@ public class Picture8Bit {
         return true;
     }
 
-    private boolean planeEquals(Picture8Bit other, int plane) {
+    private boolean planeEquals(Picture other, int plane) {
         int cw = color.compWidth[plane];
         int ch = color.compHeight[plane];
         int offA = other.getCrop() == null ? 0 : ((other.getCrop().getX() >> cw) + (other.getCrop().getY() >> ch)

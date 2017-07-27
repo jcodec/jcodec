@@ -2,7 +2,7 @@ package org.jcodec.codecs.h264.decode;
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -31,7 +31,7 @@ public class BlockInterpolator {
     /**
      * Get block of ( possibly interpolated ) luma pixels
      */
-    public void getBlockLuma(Picture8Bit pic, Picture8Bit out, int off, int x, int y, int w, int h) {
+    public void getBlockLuma(Picture pic, Picture out, int off, int x, int y, int w, int h) {
         int xInd = x & 0x3;
         int yInd = y & 0x3;
 

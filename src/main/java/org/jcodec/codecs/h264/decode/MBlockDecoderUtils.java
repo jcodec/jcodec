@@ -8,7 +8,7 @@ import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.codecs.h264.H264Utils.MvList;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 public class MBlockDecoderUtils {
     private static boolean debug;
@@ -26,7 +26,7 @@ public class MBlockDecoderUtils {
         }
     }
 
-    static void collectPredictors(DecoderState sharedState, Picture8Bit outMB, int mbX) {
+    static void collectPredictors(DecoderState sharedState, Picture outMB, int mbX) {
         sharedState.topLeft[0][0] = sharedState.topLine[0][(mbX << 4) + 15];
         sharedState.topLeft[0][1] = outMB.getPlaneData(0)[63];
         sharedState.topLeft[0][2] = outMB.getPlaneData(0)[127];
@@ -37,7 +37,7 @@ public class MBlockDecoderUtils {
         collectChromaPredictors(sharedState, outMB, mbX);
     }
 
-    static void collectChromaPredictors(DecoderState sharedState, Picture8Bit outMB, int mbX) {
+    static void collectChromaPredictors(DecoderState sharedState, Picture outMB, int mbX) {
         sharedState.topLeft[1][0] = sharedState.topLine[1][(mbX << 3) + 7];
         sharedState.topLeft[2][0] = sharedState.topLine[2][(mbX << 3) + 7];
 
@@ -63,7 +63,7 @@ public class MBlockDecoderUtils {
         }
     }
 
-    static void mergeResidual(Picture8Bit mb, int[][][] residual, int[][] blockLUT, int[][] posLUT) {
+    static void mergeResidual(Picture mb, int[][][] residual, int[][] blockLUT, int[][] posLUT) {
         for (int comp = 0; comp < 3; comp++) {
             byte[] to = mb.getPlaneData(comp);
             for (int i = 0; i < to.length; i++) {

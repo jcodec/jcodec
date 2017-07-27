@@ -3,7 +3,7 @@ package org.jcodec.scale;
 import java.awt.image.BufferedImage;
 
 import org.jcodec.Utils;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.junit.Assert;
 import org.junit.Test;
@@ -50,11 +50,11 @@ public class ResamplerTest {
         for (int i = 0; i < 20; i++) {
             int smooth = (int) (Math.random() * 20) + 5;
             double vector = Math.random();
-            Picture8Bit pic = Utils.buildSmoothRandomPic(320, 240, smooth, vector);
-            Picture8Bit out = Picture8Bit.create(w, h, pic.getColor());
+            Picture pic = Utils.buildSmoothRandomPic(320, 240, smooth, vector);
+            Picture out = Picture.create(w, h, pic.getColor());
             resampler.resample(pic, out);
-            BufferedImage scale = Utils.scale(AWTUtil.toBufferedImage8Bit(out), w, h);
-            Picture8Bit outRef = AWTUtil.fromBufferedImage8Bit(scale, out.getColor());
+            BufferedImage scale = Utils.scale(AWTUtil.toBufferedImage(out), w, h);
+            Picture outRef = AWTUtil.fromBufferedImage(scale, out.getColor());
             // System.out.println(smooth/2);
             Assert.assertTrue("Not equal for smooth=" + smooth + ", vector=" + vector,
                     Utils.picturesRoughlyEqual(outRef, out, smooth / 2));

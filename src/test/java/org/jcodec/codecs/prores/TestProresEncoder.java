@@ -8,7 +8,7 @@ import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -74,14 +74,14 @@ public class TestProresEncoder {
         byte[] Y = randomByteArray(4096, (byte)1, (byte)254);
         byte[] U = randomByteArray(2048, (byte)1, (byte)254);
         byte[] V = randomByteArray(2048, (byte)1, (byte)254);
-        Picture8Bit picture = Picture8Bit.createPicture8Bit(64, 64, new byte[][] { Y, U, V }, ColorSpace.YUV422);
+        Picture picture = Picture.createPicture(64, 64, new byte[][] { Y, U, V }, ColorSpace.YUV422);
 
         ByteBuffer buf = ByteBuffer.allocate(64 * 64 * 6);
-        new ProresEncoder(Profile.HQ, false).encodeFrame8Bit(picture, buf);
+        new ProresEncoder(Profile.HQ, false).encodeFrame(picture, buf);
 
         ProresDecoder decoder = new ProresDecoder();
 
-        Picture8Bit result = decoder.decodeFrame8Bit(buf, new byte[][] { new byte[4096], new byte[2048], new byte[2048] });
+        Picture result = decoder.decodeFrame(buf, new byte[][] { new byte[4096], new byte[2048], new byte[2048] });
 
         System.out.println("Y");
         assertByteArrayApproximatelyEquals(Y, result.getPlaneData(0), 20);

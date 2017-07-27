@@ -2,7 +2,7 @@ package org.jcodec.api.transcode;
 
 import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * Filters the decoded image before it gets to encoder.
@@ -10,7 +10,7 @@ import org.jcodec.common.model.Picture8Bit;
  * @author stan
  */
 public interface Filter {
-    LoanerPicture filter(Picture8Bit picture, PixelStore store);
+    LoanerPicture filter(Picture picture, PixelStore store);
     
     /**
      * The color space that this filter supports on the input. null indicates any color space is taken.

@@ -22,7 +22,7 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.SoundUtil;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Frame;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
@@ -72,7 +72,7 @@ public class Player {
     private BlockingQueue<ByteBuffer> audioDrain = new LinkedBlockingQueue<ByteBuffer>();
 
     private AudioFormat af;
-    private Picture8Bit dst;
+    private Picture dst;
     private Object seekLock = new Object();
     private Object pausedEvent = new Object();
     private MediaInfo.VideoInfo mi;
@@ -432,7 +432,7 @@ public class Player {
     }
 
     private void show(Frame frame) {
-        Picture8Bit src = frame.getPic();
+        Picture src = frame.getPic();
 
         notifyTime(frame);
 
@@ -440,9 +440,9 @@ public class Player {
 
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
-                dst = Picture8Bit.createCropped(src.getWidth(), src.getHeight(), vo.getColorSpace(), src.getCrop());
+                dst = Picture.createCropped(src.getWidth(), src.getHeight(), vo.getColorSpace(), src.getCrop());
 
-            ColorUtil.getTransform8Bit(src.getColor(), vo.getColorSpace()).transform(src, dst);
+            ColorUtil.getTransform(src.getColor(), vo.getColorSpace()).transform(src, dst);
 
             vo.show(dst, frame.getPixelAspect());
         } else {

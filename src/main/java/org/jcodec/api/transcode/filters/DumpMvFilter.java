@@ -11,7 +11,7 @@ import org.jcodec.codecs.h264.H264Utils.MvList2D;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 public class DumpMvFilter implements Filter {
     private boolean js;
@@ -21,7 +21,7 @@ public class DumpMvFilter implements Filter {
     }
 
     @Override
-    public LoanerPicture filter(Picture8Bit picture, PixelStore pixelStore) {
+    public LoanerPicture filter(Picture picture, PixelStore pixelStore) {
         Frame dec = (Frame) picture;
         if (!js)
             dumpMvTxt(dec);

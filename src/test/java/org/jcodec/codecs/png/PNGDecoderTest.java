@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,9 +24,9 @@ public class PNGDecoderTest {
                 break;
             ByteBuffer buf = NIOUtils.fetchFromFile(f);
             VideoCodecMeta codecMeta = pngDec.getCodecMeta(buf);
-            Picture8Bit pic = Picture8Bit.create(codecMeta.getSize().getWidth(), codecMeta.getSize().getHeight(),
+            Picture pic = Picture.create(codecMeta.getSize().getWidth(), codecMeta.getSize().getHeight(),
                     ColorSpace.RGB);
-            Picture8Bit dec = pngDec.decodeFrame8Bit(buf, pic.getData());
+            Picture dec = pngDec.decodeFrame(buf, pic.getData());
             ByteBuffer refB = NIOUtils.fetchFromFile(new File(String.format(raw, i)));
 
             byte[] array = NIOUtils.toArray(refB);

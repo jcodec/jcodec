@@ -7,20 +7,19 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.common.Codec;
 import org.jcodec.common.MuxerTrack;
-import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform8Bit;
+import org.jcodec.scale.Transform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,11 +27,11 @@ import org.jcodec.scale.Transform8Bit;
  * 
  * @author The JCodec project
  */
-public class SequenceEncoder8Bit {
+public class SequenceEncoder {
 
     private SeekableByteChannel ch;
-    private Picture8Bit toEncode;
-    private Transform8Bit transform;
+    private Picture toEncode;
+    private Transform transform;
     private H264Encoder encoder;
     private MuxerTrack outTrack;
     private ByteBuffer _out;
@@ -41,27 +40,27 @@ public class SequenceEncoder8Bit {
     private int timestamp;
     private Rational fps;
 
-    public static SequenceEncoder8Bit createSequenceEncoder8Bit(File out, int fps) throws IOException {
-        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(fps, 1));
+    public static SequenceEncoder createSequenceEncoder(File out, int fps) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(fps, 1));
     }
 
-    public static SequenceEncoder8Bit create25Fps(File out) throws IOException {
-        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(25, 1));
+    public static SequenceEncoder create25Fps(File out) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(25, 1));
     }
 
-    public static SequenceEncoder8Bit create30Fps(File out) throws IOException {
-        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(30, 1));
+    public static SequenceEncoder create30Fps(File out) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(30, 1));
     }
 
-    public static SequenceEncoder8Bit create2997Fps(File out) throws IOException {
-        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(30000, 1001));
+    public static SequenceEncoder create2997Fps(File out) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(30000, 1001));
     }
 
-    public static SequenceEncoder8Bit create24Fps(File out) throws IOException {
-        return new SequenceEncoder8Bit(NIOUtils.writableChannel(out), Rational.R(24, 1));
+    public static SequenceEncoder create24Fps(File out) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(24, 1));
     }
 
-    public SequenceEncoder8Bit(SeekableByteChannel ch, Rational fps) throws IOException {
+    public SequenceEncoder(SeekableByteChannel ch, Rational fps) throws IOException {
         this.ch = ch;
         this.fps = fps;
 
@@ -75,7 +74,7 @@ public class SequenceEncoder8Bit {
         encoder = H264Encoder.createH264Encoder();
 
         // Transform to convert between RGB and YUV
-        transform = ColorUtil.getTransform8Bit(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
+        transform = ColorUtil.getTransform(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
     }
 
     /**
@@ -84,9 +83,9 @@ public class SequenceEncoder8Bit {
      * @param pic
      * @throws IOException
      */
-    public void encodeNativeFrame(Picture8Bit pic) throws IOException {
+    public void encodeNativeFrame(Picture pic) throws IOException {
         if (toEncode == null) {
-            toEncode = Picture8Bit.create(pic.getWidth(), pic.getHeight(), encoder.getSupportedColorSpaces()[0]);
+            toEncode = Picture.create(pic.getWidth(), pic.getHeight(), encoder.getSupportedColorSpaces()[0]);
         }
         if (outTrack == null) {
             // Add video track to muxer
@@ -98,7 +97,7 @@ public class SequenceEncoder8Bit {
 
         // Encode image into H.264 frame, the result is stored in '_out' buffer
         _out.clear();
-        EncodedFrame ef = encoder.encodeFrame8Bit(toEncode, _out);
+        EncodedFrame ef = encoder.encodeFrame(toEncode, _out);
         ByteBuffer result = ef.getData();
 
         // Add packet to video track

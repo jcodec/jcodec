@@ -18,7 +18,7 @@ import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * A decoder for P skip macroblocks
@@ -36,7 +36,7 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
         this.bDirectDecoder = bDirectDecoder;
     }
 
-    public void decodeSkip(MBlock mBlock, Frame[][] refs, Picture8Bit mb, SliceType sliceType) {
+    public void decodeSkip(MBlock mBlock, Frame[][] refs, Picture mb, SliceType sliceType) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         int mbAddr = mapper.getAddress(mBlock.mbIdx);
@@ -64,7 +64,7 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
     }
     
     public void predictPSkip(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
-            boolean trAvb, MvList x, Picture8Bit mb) {
+            boolean trAvb, MvList x, Picture mb) {
         int mvX = 0, mvY = 0;
         if (lAvb && tAvb) {
             int b = s.mvTop.getMv(mbX << 2, 0);
@@ -94,7 +94,7 @@ public class MBlockSkipDecoder extends MBlockDecoderBase {
                 refs, poc);
     }
 
-    public void decodeChromaSkip(Frame[][] reference, MvList vectors, PartPred[] pp, int mbX, int mbY, Picture8Bit mb) {
+    public void decodeChromaSkip(Frame[][] reference, MvList vectors, PartPred[] pp, int mbX, int mbY, Picture mb) {
         predictChromaInter(reference, vectors, mbX << 3, mbY << 3, 1, mb, pp);
         predictChromaInter(reference, vectors, mbX << 3, mbY << 3, 2, mb, pp);
     }

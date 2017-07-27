@@ -3,7 +3,7 @@ package org.jcodec.common;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,7 +23,7 @@ abstract public class VideoDecoder {
      *            Compressed frame data
      * @throws IOException
      */
-    public abstract Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer);
+    public abstract Picture decodeFrame(ByteBuffer data, byte[][] buffer);
     public abstract VideoCodecMeta getCodecMeta(ByteBuffer data);
 
    

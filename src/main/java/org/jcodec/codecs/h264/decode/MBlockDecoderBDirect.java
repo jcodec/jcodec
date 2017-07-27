@@ -34,7 +34,7 @@ import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -50,7 +50,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
         this.mapper = mapper;
     }
 
-    public void decode(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+    public void decode(MBlock mBlock, Picture mb, Frame[][] references) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean lAvb = mapper.leftAvailable(mBlock.mbIdx);
@@ -92,7 +92,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
     }
 
     public void predictBDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
-            boolean trAvb, MvList x, PartPred[] pp, Picture8Bit mb, int[] blocks) {
+            boolean trAvb, MvList x, PartPred[] pp, Picture mb, int[] blocks) {
         if (sh.directSpatialMvPredFlag)
             predictBSpatialDirect(refs, mbX, mbY, lAvb, tAvb, tlAvb, trAvb, x, pp, mb, blocks);
         else
@@ -100,7 +100,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
     }
 
     private void predictBTemporalDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
-            boolean trAvb, MvList x, PartPred[] pp, Picture8Bit mb, int[] blocks8x8) {
+            boolean trAvb, MvList x, PartPred[] pp, Picture mb, int[] blocks8x8) {
 
         for (int i = 0; i < blocks8x8.length; i++) {
             int blk8x8 = blocks8x8[i];
@@ -200,7 +200,7 @@ public class MBlockDecoderBDirect extends MBlockDecoderBase {
     }
 
     private void predictBSpatialDirect(Frame[][] refs, int mbX, int mbY, boolean lAvb, boolean tAvb, boolean tlAvb,
-            boolean trAvb, MvList x, PartPred[] pp, Picture8Bit mb, int[] blocks8x8) {
+            boolean trAvb, MvList x, PartPred[] pp, Picture mb, int[] blocks8x8) {
 
         int a0 = s.mvLeft.getMv(0, 0), a1 = s.mvLeft.getMv(0, 1);
         int b0 = s.mvTop.getMv(mbX << 2, 0), b1 = s.mvTop.getMv(mbX << 2, 1);

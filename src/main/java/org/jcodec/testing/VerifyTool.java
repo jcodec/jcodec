@@ -12,7 +12,7 @@ import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.platform.Platform;
 
 /**
@@ -59,13 +59,13 @@ public class VerifyTool {
 
     private boolean test(File coded, File ref) throws IOException {
         BufferH264ES es = new BufferH264ES(NIOUtils.fetchFromFile(coded));
-        Picture8Bit buf = Picture8Bit.create(1920, 1088, ColorSpace.YUV420);
+        Picture buf = Picture.create(1920, 1088, ColorSpace.YUV420);
         H264Decoder dec = new H264Decoder();
         Packet nextFrame;
         ByteBuffer _yuv = NIOUtils.fetchFromFile(ref);
         while ((nextFrame = es.nextFrame()) != null) {
-            Picture8Bit out = dec.decodeFrame8Bit(nextFrame.getData(), buf.getData()).cropped();
-            Picture8Bit pic = out.createCompatible();
+            Picture out = dec.decodeFrame(nextFrame.getData(), buf.getData()).cropped();
+            Picture pic = out.createCompatible();
             pic.copyFrom(out);
             int lumaSize = pic.getWidth() * pic.getHeight();
             int crSize = lumaSize >> 2;

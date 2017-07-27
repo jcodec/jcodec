@@ -1,7 +1,7 @@
 package org.jcodec.api;
 
 import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -10,27 +10,27 @@ import org.jcodec.common.model.Picture8Bit;
  * @author The JCodec project
  * 
  */
-public class PictureWithMetadata8Bit {
-    private Picture8Bit picture;
+public class PictureWithMetadata {
+    private Picture picture;
     private double timestamp;
     private double duration;
     private DemuxerTrackMeta.Orientation orientation;
 
-    public PictureWithMetadata8Bit(Picture8Bit picture, double timestamp, double duration) {
+    public PictureWithMetadata(Picture picture, double timestamp, double duration) {
         this.picture = picture;
         this.timestamp = timestamp;
         this.duration = duration;
         this.orientation = DemuxerTrackMeta.Orientation.D_0;
     }
 
-    public PictureWithMetadata8Bit(Picture8Bit picture, double timestamp, double duration, DemuxerTrackMeta.Orientation orientation) {
+    public PictureWithMetadata(Picture picture, double timestamp, double duration, DemuxerTrackMeta.Orientation orientation) {
         this.picture = picture;
         this.timestamp = timestamp;
         this.duration = duration;
         this.orientation = orientation;
     }
 
-    public Picture8Bit getPicture() {
+    public Picture getPicture() {
         return picture;
     }
 

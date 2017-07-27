@@ -5,7 +5,7 @@ import org.jcodec.common.model.PictureHiBD;
 
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -20,7 +20,7 @@ import java.io.PrintStream;
 
 public class PGMIO {
 
-    public static Picture8Bit readPGM(InputStream is) throws IOException {
+    public static Picture readPGM(InputStream is) throws IOException {
         DataInputStream dis = new DataInputStream(is);
         String p5 = dis.readLine();
         if (!p5.equals("P5")) {
@@ -46,10 +46,10 @@ public class PGMIO {
             y[i] = (byte)((buf[i] & 0xff) - 128);
         }
 
-        return Picture8Bit.createPicture8Bit(width, height, new byte[][] { y }, ColorSpace.GREY);
+        return Picture.createPicture(width, height, new byte[][] { y }, ColorSpace.GREY);
     }
 
-    public static Picture8Bit readPGMFile(File name) throws IOException {
+    public static Picture readPGMFile(File name) throws IOException {
         InputStream is = null;
 
         try {
@@ -61,7 +61,7 @@ public class PGMIO {
 
     }
 
-    public static void savePGM(Picture8Bit ref, String string) throws IOException {
+    public static void savePGM(Picture ref, String string) throws IOException {
         OutputStream out = null;
         try {
             out = new FileOutputStream(string);

@@ -9,14 +9,14 @@ import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform8Bit;
+import org.jcodec.scale.Transform;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -117,9 +117,9 @@ public abstract class TranscodeTrack implements VirtualTrack {
     static class Transcoder {
         private VideoDecoder decoder;
         private VideoEncoder[] encoder;
-        private Picture8Bit pic0;
-        private Picture8Bit pic1;
-        private Transform8Bit transform;
+        private Picture pic0;
+        private Picture pic1;
+        private Transform transform;
         private TranscodeTrack track;
 
         public Transcoder(TranscodeTrack track) {
@@ -129,14 +129,14 @@ public abstract class TranscodeTrack implements VirtualTrack {
             this.encoder[0] = track.getEncoder(TARGET_RATE);
             this.encoder[1] = track.getEncoder((int) (TARGET_RATE * 0.9));
             this.encoder[2] = track.getEncoder((int) (TARGET_RATE * 0.8));
-            pic0 = Picture8Bit.create(track.mbW << 4, track.mbH << 4, ColorSpace.YUV444);
+            pic0 = Picture.create(track.mbW << 4, track.mbH << 4, ColorSpace.YUV444);
         }
 
         public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst) {
-            Picture8Bit decoded = decoder.decodeFrame8Bit(src, pic0.getData());
+            Picture decoded = decoder.decodeFrame(src, pic0.getData());
             if (pic1 == null) {
-                pic1 = Picture8Bit.create(decoded.getWidth(), decoded.getHeight(), ColorSpace.YUV420);
-                transform = ColorUtil.getTransform8Bit(decoded.getColor(), ColorSpace.YUV420);
+                pic1 = Picture.create(decoded.getWidth(), decoded.getHeight(), ColorSpace.YUV420);
+                transform = ColorUtil.getTransform(decoded.getColor(), ColorSpace.YUV420);
             }
             transform.transform(decoded, pic1);
             pic1.setCrop(new Rect(0, 0, track.thumbWidth, track.thumbHeight));
@@ -144,7 +144,7 @@ public abstract class TranscodeTrack implements VirtualTrack {
             for (int i = 0; i < encoder.length; i++) {
                 try {
                     dst.clear();
-                    EncodedFrame out = encoder[i].encodeFrame8Bit(pic1, dst);
+                    EncodedFrame out = encoder[i].encodeFrame(pic1, dst);
                     break;
                 } catch (BufferOverflowException ex) {
                     System.out.println("Abandon frame!!!");

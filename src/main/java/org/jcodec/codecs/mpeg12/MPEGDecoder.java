@@ -44,7 +44,7 @@ import org.jcodec.common.dct.SparseIDCT;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 
@@ -65,8 +65,8 @@ public class MPEGDecoder extends VideoDecoder {
 
     protected SequenceHeader sh;
     protected GOPHeader gh;
-    private Picture8Bit[] refFrames;
-    private Picture8Bit[] refFields;
+    private Picture[] refFrames;
+    private Picture[] refFields;
 
     public static MPEGDecoder createMpegDecoder(int downscale) {
         if (downscale == 2)
@@ -78,8 +78,8 @@ public class MPEGDecoder extends VideoDecoder {
     }
 
     public MPEGDecoder() {
-        this.refFrames = new Picture8Bit[2];
-        this.refFields = new Picture8Bit[2];
+        this.refFrames = new Picture[2];
+        this.refFields = new Picture[2];
     }
 
     public static class Context {
@@ -102,7 +102,7 @@ public class MPEGDecoder extends VideoDecoder {
     }
 
     @Override
-    public Picture8Bit decodeFrame8Bit(ByteBuffer buffer, byte[][] buf) {
+    public Picture decodeFrame(ByteBuffer buffer, byte[][] buf) {
 
         PictureHeader ph = readHeader(buffer);
         if (refFrames[0] == null && ph.picture_coding_type > 1 || refFrames[1] == null && ph.picture_coding_type > 2) {
@@ -110,7 +110,7 @@ public class MPEGDecoder extends VideoDecoder {
                     "Not enough references to decode " + (ph.picture_coding_type == 1 ? "P" : "B") + " frame");
         }
         Context context = initContext(sh, ph);
-        Picture8Bit pic = new Picture8Bit(context.codedWidth, context.codedHeight, buf, context.color,
+        Picture pic = new Picture(context.codedWidth, context.codedHeight, buf, context.color,
                 new Rect(0, 0, context.picWidth, context.picHeight));
         if (ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
             decodePicture(context, ph, buffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
@@ -122,7 +122,7 @@ public class MPEGDecoder extends VideoDecoder {
         }
 
         if (ph.picture_coding_type == MPEGConst.IntraCoded || ph.picture_coding_type == MPEGConst.PredictiveCoded) {
-            Picture8Bit unused = refFrames[1];
+            Picture unused = refFrames[1];
             refFrames[1] = refFrames[0];
             refFrames[0] = copyAndCreateIfNeeded(pic, unused);
         }
@@ -130,7 +130,7 @@ public class MPEGDecoder extends VideoDecoder {
         return pic;
     }
 
-    private Picture8Bit copyAndCreateIfNeeded(Picture8Bit src, Picture8Bit dst) {
+    private Picture copyAndCreateIfNeeded(Picture src, Picture dst) {
         if (dst == null || !dst.compatible(src)) {
             dst = src.createCompatible();
         }
@@ -222,7 +222,7 @@ public class MPEGDecoder extends VideoDecoder {
         return (((sh.vertical_size >> field) + 15) & ~0xf) << field;
     }
 
-    public Picture8Bit decodePicture(Context context, PictureHeader ph, ByteBuffer buffer, byte[][] buf, int vertOff,
+    public Picture decodePicture(Context context, PictureHeader ph, ByteBuffer buffer, byte[][] buf, int vertOff,
             int vertStep) {
 
         int planeSize = context.codedWidth * context.codedHeight;
@@ -245,7 +245,7 @@ public class MPEGDecoder extends VideoDecoder {
                 }
             }
 
-            Picture8Bit pic = Picture8Bit.createPicture8Bit(context.codedWidth, context.codedHeight, buf,
+            Picture pic = Picture.createPicture(context.codedWidth, context.codedHeight, buf,
                     context.color);
             if ((ph.picture_coding_type == MPEGConst.IntraCoded || ph.picture_coding_type == MPEGConst.PredictiveCoded)
                     && ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
@@ -412,7 +412,7 @@ public class MPEGDecoder extends VideoDecoder {
                     pred.predictInField(refFields, mbX << 4, mbY << 4, predFwd, bits, motion_type, 0,
                             ph.pictureCodingExtension.picture_structure - 1);
                 } else {
-                    pred.predictInField(new Picture8Bit[] { refFrames[refIdx], refFrames[refIdx] }, mbX << 4, mbY << 4,
+                    pred.predictInField(new Picture[] { refFrames[refIdx], refFrames[refIdx] }, mbX << 4, mbY << 4,
                             predFwd, bits, motion_type, 0, ph.pictureCodingExtension.picture_structure - 1);
                 }
             }
@@ -429,7 +429,7 @@ public class MPEGDecoder extends VideoDecoder {
                 pred.predictInFrame(refFrames[0], mbX << 4, mbY << 4, predBack, bits, motion_type, 1,
                         spatial_temporal_weight_code);
             } else {
-                pred.predictInField(new Picture8Bit[] { refFrames[0], refFrames[0] }, mbX << 4, mbY << 4, predBack,
+                pred.predictInField(new Picture[] { refFrames[0], refFrames[0] }, mbX << 4, mbY << 4, predBack,
                         bits, motion_type, 1, ph.pictureCodingExtension.picture_structure - 1);
             }
         }

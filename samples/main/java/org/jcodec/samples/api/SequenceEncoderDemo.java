@@ -1,6 +1,6 @@
 package org.jcodec.samples.api;
 
-import org.jcodec.api.awt.AWTSequenceEncoder8Bit;
+import org.jcodec.api.awt.AWTSequenceEncoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Rational;
@@ -41,7 +41,7 @@ public class SequenceEncoderDemo {
         FileChannelWrapper out = null;
         try {
             out = NIOUtils.writableChannel(MainUtils.tildeExpand(cmd.getArg(0)));
-            AWTSequenceEncoder8Bit encoder = new AWTSequenceEncoder8Bit(out, Rational.parse(fpsRaw));
+            AWTSequenceEncoder encoder = new AWTSequenceEncoder(out, Rational.parse(fpsRaw));
 
             for (int i = 0; i < maxFrames; i++) {
                 File file = new File(String.format(outDir, i));

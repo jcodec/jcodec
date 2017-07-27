@@ -1,6 +1,6 @@
 package org.jcodec.scale;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -9,13 +9,13 @@ import org.jcodec.common.model.Picture8Bit;
  * @author The JCodec project
  * 
  */
-public class Yuv420pToYuv422p8Bit implements Transform8Bit {
+public class Yuv420pToYuv422p implements Transform {
 
-    public Yuv420pToYuv422p8Bit() {
+    public Yuv420pToYuv422p() {
     }
 
     @Override
-    public void transform(Picture8Bit src, Picture8Bit dst) {
+    public void transform(Picture src, Picture dst) {
         copy(src.getPlaneData(0), dst.getPlaneData(0), src.getWidth(), dst.getWidth(), dst.getHeight());
 
         _copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,

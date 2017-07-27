@@ -3,7 +3,7 @@ package org.jcodec.codecs.h264.io.model;
 import org.jcodec.codecs.h264.H264Utils.MvList;
 import org.jcodec.codecs.h264.H264Utils.MvList2D;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 
 import java.util.Comparator;
@@ -17,7 +17,7 @@ import java.util.Comparator;
  * @author The JCodec project
  * 
  */
-public class Frame extends Picture8Bit {
+public class Frame extends Picture {
     private int frameNo;
     private SliceType frameType;
     private MvList2D mvs;
@@ -36,13 +36,13 @@ public class Frame extends Picture8Bit {
     }
 
     public static Frame createFrame(Frame pic) {
-        Picture8Bit comp = pic.createCompatible();
+        Picture comp = pic.createCompatible();
         return new Frame(comp.getWidth(), comp.getHeight(), comp.getData(), comp.getColor(), pic.getCrop(),
                 pic.frameNo, pic.frameType, pic.mvs, pic.refsUsed, pic.poc);
     }
 
     public Frame cropped() {
-        Picture8Bit cropped = super.cropped();
+        Picture cropped = super.cropped();
         return new Frame(cropped.getWidth(), cropped.getHeight(), cropped.getData(), cropped.getColor(), null, frameNo,
                 frameType, mvs, refsUsed, poc);
     }

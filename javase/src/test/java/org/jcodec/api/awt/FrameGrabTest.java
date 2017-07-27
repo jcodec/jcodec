@@ -21,14 +21,14 @@ import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.InOrder;
 
-public class FrameGrab8BitTest {
+public class FrameGrabTest {
 
     private static final Class<? extends byte[][]> BYTE_DOUBLE_ARRAY_CLASS = new byte[0][0].getClass();
 
@@ -38,21 +38,21 @@ public class FrameGrab8BitTest {
         ContainerAdaptor adaptor = mock(ContainerAdaptor.class);
         SeekableDemuxerTrack videoTrack = mock(SeekableDemuxerTrack.class);
 
-        AWTFrameGrab8Bit grab = new AWTFrameGrab8Bit(videoTrack, adaptor);
-        Picture8Bit pic = Picture8Bit.create(16, 16, ColorSpace.YUV420J);
+        AWTFrameGrab grab = new AWTFrameGrab(videoTrack, adaptor);
+        Picture pic = Picture.create(16, 16, ColorSpace.YUV420J);
 
         Arrays.fill(pic.getPlaneData(0), (byte) (169 - 128));
         Arrays.fill(pic.getPlaneData(1), (byte) (45 - 128));
         Arrays.fill(pic.getPlaneData(2), (byte) (103 - 128));
 
         MP4Packet packet = new MP4Packet(null, 0, 25, 1, 0, FrameType.KEY, null, 0, 0, 0, 0, 42, true);
-        when(adaptor.decodeFrame8Bit(any(Packet.class), any(BYTE_DOUBLE_ARRAY_CLASS))).thenReturn(pic);
+        when(adaptor.decodeFrame(any(Packet.class), any(BYTE_DOUBLE_ARRAY_CLASS))).thenReturn(pic);
         when(videoTrack.nextFrame()).thenReturn(packet);
 
         BufferedImage res = grab.getFrame();
 
         verify(videoTrack).nextFrame();
-        verify(adaptor).decodeFrame8Bit(eq(packet), any(BYTE_DOUBLE_ARRAY_CLASS));
+        verify(adaptor).decodeFrame(eq(packet), any(BYTE_DOUBLE_ARRAY_CLASS));
 
         for (int i = 0; i < 256; i++) {
             int rgb = res.getRGB(i % 16, i / 16);
@@ -67,7 +67,7 @@ public class FrameGrab8BitTest {
         ContainerAdaptor adaptor = mock(ContainerAdaptor.class);
         SeekableDemuxerTrack videoTrack = mock(SeekableDemuxerTrack.class);
 
-        AWTFrameGrab8Bit grab = new AWTFrameGrab8Bit(videoTrack, adaptor);
+        AWTFrameGrab grab = new AWTFrameGrab(videoTrack, adaptor);
 
         int[] keyFrames = new int[] { 0, 11, 25, 34, 48, 59, 100 };
         DemuxerTrackMeta meta = new DemuxerTrackMeta(TrackType.VIDEO, Codec.H264, 120, keyFrames, 120, null,
@@ -87,7 +87,7 @@ public class FrameGrab8BitTest {
         ContainerAdaptor adaptor = mock(ContainerAdaptor.class);
         SeekableDemuxerTrack videoTrack = mock(SeekableDemuxerTrack.class);
 
-        AWTFrameGrab8Bit grab = new AWTFrameGrab8Bit(videoTrack, adaptor);
+        AWTFrameGrab grab = new AWTFrameGrab(videoTrack, adaptor);
 
         int[] keyFrames = new int[] { 0, 11, 25, 40, 48, 59, 100 };
         DemuxerTrackMeta meta = new DemuxerTrackMeta(TrackType.VIDEO, Codec.H264, 120, keyFrames, 120, null,
@@ -104,7 +104,7 @@ public class FrameGrab8BitTest {
         grab.seekToFramePrecise(42);
 
         InOrder o = inOrder(adaptor, videoTrack);
-        o.verify(adaptor).decodeFrame8Bit(eq(frame40), any(BYTE_DOUBLE_ARRAY_CLASS));
-        o.verify(adaptor).decodeFrame8Bit(eq(frame41), any(BYTE_DOUBLE_ARRAY_CLASS));
+        o.verify(adaptor).decodeFrame(eq(frame40), any(BYTE_DOUBLE_ARRAY_CLASS));
+        o.verify(adaptor).decodeFrame(eq(frame41), any(BYTE_DOUBLE_ARRAY_CLASS));
     }
 }

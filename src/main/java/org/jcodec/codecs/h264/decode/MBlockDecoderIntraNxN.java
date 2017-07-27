@@ -3,7 +3,7 @@ package org.jcodec.codecs.h264.decode;
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * A decoder for I16x16 macroblocks
@@ -21,7 +21,7 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
         this.prediction8x8Builder = new Intra8x8PredictionBuilder();
     }
 
-    public void decode(MBlock mBlock, Picture8Bit mb) {
+    public void decode(MBlock mBlock, Picture mb) {
 
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);

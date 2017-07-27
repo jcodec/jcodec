@@ -29,7 +29,7 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
@@ -39,7 +39,7 @@ import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.webp.WebpDemuxer;
 import org.jcodec.containers.y4m.Y4MDemuxer;
 import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform8Bit;
+import org.jcodec.scale.Transform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -121,11 +121,11 @@ public class JCodecUtil {
             return null;
     }
 
-    public static void savePictureAsPPM(Picture8Bit pic, File file) throws IOException {
-        Transform8Bit transform = ColorUtil.getTransform8Bit(pic.getColor(), ColorSpace.RGB);
-        Picture8Bit rgb = Picture8Bit.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB);
+    public static void savePictureAsPPM(Picture pic, File file) throws IOException {
+        Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
+        Picture rgb = Picture.create(pic.getWidth(), pic.getHeight(), ColorSpace.RGB);
         transform.transform(pic, rgb);
-        NIOUtils.writeTo(new PPMEncoder().encodeFrame8Bit(rgb), file);
+        NIOUtils.writeTo(new PPMEncoder().encodeFrame(rgb), file);
     }
 
     public static byte[] asciiString(String fourcc) {

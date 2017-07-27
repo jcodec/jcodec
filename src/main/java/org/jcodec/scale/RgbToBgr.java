@@ -1,6 +1,6 @@
 package org.jcodec.scale;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 import java.lang.IllegalArgumentException;
 
@@ -11,10 +11,10 @@ import java.lang.IllegalArgumentException;
  * @author The JCodec project
  *
  */
-public class RgbToBgr8Bit implements Transform8Bit {
+public class RgbToBgr implements Transform {
 
     @Override
-    public void transform(Picture8Bit src, Picture8Bit dst) {
+    public void transform(Picture src, Picture dst) {
         if (src.getColor() != ColorSpace.RGB && src.getColor() != ColorSpace.BGR
                 || dst.getColor() != ColorSpace.RGB && dst.getColor() != ColorSpace.BGR) {
             throw new IllegalArgumentException(

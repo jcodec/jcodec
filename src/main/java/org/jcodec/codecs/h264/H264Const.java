@@ -7,7 +7,7 @@ import static org.jcodec.codecs.h264.H264Const.PartPred.L1;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 import java.util.Arrays;
 
@@ -473,7 +473,7 @@ public class H264Const {
             21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 34, 35, 35, 36, 36, 37, 37, 37, 38, 38, 38,
             39, 39, 39, 39 };
 
-    public static final Picture8Bit NO_PIC = Picture8Bit.createPicture8Bit(0, 0, null, null);
+    public static final Picture NO_PIC = Picture.createPicture(0, 0, null, null);
     public static final int[] BLK_8x8_MB_OFF_LUMA = {0, 8, 128, 136};
     public static final int[] BLK_8x8_MB_OFF_CHROMA = {0, 4, 32, 36};
     public static final int[] BLK_4x4_MB_OFF_LUMA = {0, 4, 8, 12, 64, 68, 72, 76, 128, 132, 136, 140, 192, 196, 200, 204};

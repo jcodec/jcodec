@@ -95,11 +95,11 @@ public class H264Decoder extends VideoDecoder {
     }
 
     @Override
-    public Frame decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
-        return decodeFrame8BitFromNals(H264Utils.splitFrame(data), buffer);
+    public Frame decodeFrame(ByteBuffer data, byte[][] buffer) {
+        return decodeFrameFromNals(H264Utils.splitFrame(data), buffer);
     }
 
-    public Frame decodeFrame8BitFromNals(List<ByteBuffer> nalUnits, byte[][] buffer) {
+    public Frame decodeFrameFromNals(List<ByteBuffer> nalUnits, byte[][] buffer) {
         return new FrameDecoder(this).decodeFrame(nalUnits, buffer);
     }
 

@@ -15,7 +15,7 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Frame;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
 import org.jcodec.player.Player.Listener;
@@ -44,7 +44,7 @@ public class Stepper {
     private AudioOut ao;
     private VideoInfo mi;
     private AudioInfo ai;
-    private Picture8Bit dst;
+    private Picture dst;
 
     private RationalLarge pts;
     // private int frameNo;
@@ -100,12 +100,12 @@ public class Stepper {
     private void show(Frame frame) {
         pts = frame.getPts();
         fireTimeEvent(frame);
-        Picture8Bit src = frame.getPic();
+        Picture src = frame.getPic();
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
-                dst = Picture8Bit.create(src.getWidth(), src.getHeight(), vo.getColorSpace());
+                dst = Picture.create(src.getWidth(), src.getHeight(), vo.getColorSpace());
 
-            ColorUtil.getTransform8Bit(src.getColor(), vo.getColorSpace()).transform(src, dst);
+            ColorUtil.getTransform(src.getColor(), vo.getColorSpace()).transform(src, dst);
 
             vo.show(dst, frame.getPixelAspect());
         } else {

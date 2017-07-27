@@ -11,7 +11,7 @@ import java.awt.image.DataBufferByte;
 import java.io.IOException;
 
 import org.jcodec.common.model.Frame;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
@@ -57,7 +57,7 @@ public class TestVideoSource implements VideoSource {
             data[i] = 0;
         }
 
-        return new Frame(Picture8Bit.createPicture8Bit(WIDTH, HEIGHT, buf, YUV420), new RationalLarge(pts, 24000),
+        return new Frame(Picture.createPicture(WIDTH, HEIGHT, buf, YUV420), new RationalLarge(pts, 24000),
                 new RationalLarge(1001, 24000), new Rational(1, 1), 0, null, null);
     }
 

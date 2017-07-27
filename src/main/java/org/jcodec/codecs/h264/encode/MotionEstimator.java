@@ -2,7 +2,7 @@ package org.jcodec.codecs.h264.encode;
 
 import static java.lang.Math.min;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -20,7 +20,7 @@ public class MotionEstimator {
         this.maxSearchRange = maxSearchRange;
     }
 
-    public int[] estimate(Picture8Bit ref, byte[] patch, int mbX, int mbY, int mvpx, int mvpy) {
+    public int[] estimate(Picture ref, byte[] patch, int mbX, int mbY, int mvpx, int mvpy) {
         byte[] searchPatch = new byte[(maxSearchRange * 2 + 16) * (maxSearchRange * 2 + 16)];
 
         int startX = (mbX << 4) /* + (mvpx >> 2)*/;

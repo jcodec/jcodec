@@ -6,7 +6,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.PictureHiBD;
 
 public class AWTUtil {
@@ -14,7 +14,7 @@ public class AWTUtil {
     private static final int alphaG = 0xff;
     private static final int alphaB = 0xff;
 
-    public static void toBufferedImage8Bit2(Picture8Bit src, BufferedImage dst) {
+    public static void toBufferedImage2(Picture src, BufferedImage dst) {
         byte[] data = ((DataBufferByte) dst.getRaster().getDataBuffer()).getData();
         byte[] srcData = src.getPlaneData(0);
         for (int i = 0; i < data.length; i++) {
@@ -22,29 +22,29 @@ public class AWTUtil {
         }
     }
 
-    public static BufferedImage toBufferedImage8Bit(Picture8Bit src) {
+    public static BufferedImage toBufferedImage(Picture src) {
         if (src.getColor() != ColorSpace.RGB) {
-            Transform8Bit transform = ColorUtil.getTransform8Bit(src.getColor(), ColorSpace.RGB);
+            Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
             if (transform == null) {
                 throw new IllegalArgumentException("Unsupported input colorspace: " + src.getColor());
             }
-            Picture8Bit out = Picture8Bit.create(src.getWidth(), src.getHeight(), ColorSpace.RGB);
+            Picture out = Picture.create(src.getWidth(), src.getHeight(), ColorSpace.RGB);
             transform.transform(src, out);
-            new RgbToBgr8Bit().transform(out, out);
+            new RgbToBgr().transform(out, out);
             src = out;
         }
         BufferedImage dst = new BufferedImage(src.getCroppedWidth(), src.getCroppedHeight(),
                 BufferedImage.TYPE_3BYTE_BGR);
 
         if (src.getCrop() == null)
-            toBufferedImage8Bit2(src, dst);
+            toBufferedImage2(src, dst);
         else
-            toBufferedImageCropped8Bit(src, dst);
+            toBufferedImageCropped(src, dst);
 
         return dst;
     }
 
-    private static void toBufferedImageCropped8Bit(Picture8Bit src, BufferedImage dst) {
+    private static void toBufferedImageCropped(Picture src, BufferedImage dst) {
         byte[] data = ((DataBufferByte) dst.getRaster().getDataBuffer()).getData();
         byte[] srcData = src.getPlaneData(0);
         int dstStride = dst.getWidth() * 3;
@@ -60,21 +60,21 @@ public class AWTUtil {
         }
     }
 
-    public static Picture8Bit fromBufferedImage8Bit(BufferedImage src, ColorSpace tgtColor) {
-        Picture8Bit rgb = fromBufferedImageRGB8Bit(src);
-        Transform8Bit tr = ColorUtil.getTransform8Bit(rgb.getColor(), tgtColor);
-        Picture8Bit res = Picture8Bit.create(rgb.getWidth(), rgb.getHeight(), tgtColor);
+    public static Picture fromBufferedImage(BufferedImage src, ColorSpace tgtColor) {
+        Picture rgb = fromBufferedImageRGB(src);
+        Transform tr = ColorUtil.getTransform(rgb.getColor(), tgtColor);
+        Picture res = Picture.create(rgb.getWidth(), rgb.getHeight(), tgtColor);
         tr.transform(rgb, res);
         return res;
     }
 
-    public static Picture8Bit fromBufferedImageRGB8Bit(BufferedImage src) {
-        Picture8Bit dst = Picture8Bit.create(src.getWidth(), src.getHeight(), RGB);
-        fromBufferedImage8Bit(src, dst);
+    public static Picture fromBufferedImageRGB(BufferedImage src) {
+        Picture dst = Picture.create(src.getWidth(), src.getHeight(), RGB);
+        fromBufferedImage(src, dst);
         return dst;
     }
 
-    public static void fromBufferedImage8Bit(BufferedImage src, Picture8Bit dst) {
+    public static void fromBufferedImage(BufferedImage src, Picture dst) {
         byte[] dstData = dst.getPlaneData(0);
 
         int off = 0;

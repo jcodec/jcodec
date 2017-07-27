@@ -1,6 +1,6 @@
 package org.jcodec.scale;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -9,10 +9,10 @@ import org.jcodec.common.model.Picture8Bit;
  * @author The JCodec project
  * 
  */
-public class RgbToYuv422p8Bit implements Transform8Bit {
+public class RgbToYuv422p implements Transform {
 
     @Override
-    public void transform(Picture8Bit img, Picture8Bit dst) {
+    public void transform(Picture img, Picture dst) {
 
         byte[] y = img.getData()[0];
         byte[] out1 = new byte[3];
@@ -24,10 +24,10 @@ public class RgbToYuv422p8Bit implements Transform8Bit {
             for (int j = 0; j < img.getWidth() >> 1; j++) {
                 int offY = off << 1;
 
-                RgbToYuv420p8Bit.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], out1);
+                RgbToYuv420p.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], out1);
                 dstData[0][offY] = out1[0];
 
-                RgbToYuv420p8Bit.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], out2);
+                RgbToYuv420p.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], out2);
                 dstData[0][offY + 1] = out2[0];
 
                 dstData[1][off] = (byte) ((out1[1] + out2[1] + 1) >> 1);

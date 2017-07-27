@@ -1,6 +1,6 @@
 package org.jcodec.scale;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 
 /**
@@ -10,9 +10,9 @@ import org.jcodec.common.model.Picture8Bit;
  * @author The JCodec project
  *
  */
-public interface Transform8Bit {
+public interface Transform {
     public static enum Levels {
         STUDIO, PC
     };
-    public void transform(Picture8Bit src, Picture8Bit dst);
+    public void transform(Picture src, Picture dst);
 }

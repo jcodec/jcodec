@@ -9,7 +9,7 @@ import static org.jcodec.common.tools.MathUtil.clip;
 import org.jcodec.codecs.h264.decode.DeblockerInput;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -59,7 +59,7 @@ public class DeblockingFilter {
         this.di = di;
     }
 
-    public void deblockFrame(Picture8Bit result) {
+    public void deblockFrame(Picture result) {
         ColorSpace color = result.getColor();
         // for (int i = 0; i < shs.length; i++)
         // printMB(result.getPlaneData(2), result.getPlaneWidth(2), i, shs[i],
@@ -119,11 +119,11 @@ public class DeblockingFilter {
             if (nA != nB)
                 return 1;
 
-            Picture8Bit ra0 = mvRef(mvA0) < 0 ? null : di.refsUsed[mbAddrA][0][mvRef(mvA0)];
-            Picture8Bit ra1 = mvRef(mvA1) < 0 ? null : di.refsUsed[mbAddrA][1][mvRef(mvA1)];
+            Picture ra0 = mvRef(mvA0) < 0 ? null : di.refsUsed[mbAddrA][0][mvRef(mvA0)];
+            Picture ra1 = mvRef(mvA1) < 0 ? null : di.refsUsed[mbAddrA][1][mvRef(mvA1)];
 
-            Picture8Bit rb0 = mvRef(mvB0) < 0 ? null : di.refsUsed[mbAddrB][0][mvRef(mvB0)];
-            Picture8Bit rb1 = mvRef(mvB1) < 0 ? null : di.refsUsed[mbAddrB][1][mvRef(mvB1)];
+            Picture rb0 = mvRef(mvB0) < 0 ? null : di.refsUsed[mbAddrB][0][mvRef(mvB0)];
+            Picture rb1 = mvRef(mvB1) < 0 ? null : di.refsUsed[mbAddrB][1][mvRef(mvB1)];
 
             if (ra0 != rb0 && ra0 != rb1 || ra1 != rb0 && ra1 != rb1 || rb0 != ra0 && rb0 != ra1 || rb1 != ra0
                     && rb1 != ra1)
@@ -155,7 +155,7 @@ public class DeblockingFilter {
         return MathUtil.clip(avgQp + sliceAlphaC0Offset, 0, 51);
     }
 
-    private void calcBsH(Picture8Bit pic, int mbAddr, int[][] bs) {
+    private void calcBsH(Picture pic, int mbAddr, int[][] bs) {
         SliceHeader sh = di.shs[mbAddr];
         int mbWidth = sh.sps.picWidthInMbsMinus1 + 1;
 
@@ -192,7 +192,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void fillHorizontalEdge(Picture8Bit pic, int comp, int mbAddr, int[][] bs) {
+    private void fillHorizontalEdge(Picture pic, int comp, int mbAddr, int[][] bs) {
         SliceHeader sh = di.shs[mbAddr];
         int mbWidth = sh.sps.picWidthInMbsMinus1 + 1;
 
@@ -235,7 +235,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void calcBsV(Picture8Bit pic, int mbAddr, int[][] bs) {
+    private void calcBsV(Picture pic, int mbAddr, int[][] bs) {
 
         SliceHeader sh = di.shs[mbAddr];
         int mbWidth = sh.sps.picWidthInMbsMinus1 + 1;
@@ -270,7 +270,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void fillVerticalEdge(Picture8Bit pic, int comp, int mbAddr, int[][] bs) {
+    private void fillVerticalEdge(Picture pic, int comp, int mbAddr, int[][] bs) {
 
         SliceHeader sh = di.shs[mbAddr];
         int mbWidth = sh.sps.picWidthInMbsMinus1 + 1;
@@ -310,7 +310,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void filterBlockEdgeHoris(Picture8Bit pic, int comp, int x, int y, int indexAlpha, int indexBeta, int bs,
+    private void filterBlockEdgeHoris(Picture pic, int comp, int x, int y, int indexAlpha, int indexBeta, int bs,
             int blkW) {
 
         int stride = pic.getPlaneWidth(comp);
@@ -338,7 +338,7 @@ public class DeblockingFilter {
         }
     }
 
-    private void filterBlockEdgeVert(Picture8Bit pic, int comp, int x, int y, int indexAlpha, int indexBeta, int bs,
+    private void filterBlockEdgeVert(Picture pic, int comp, int x, int y, int indexAlpha, int indexBeta, int bs,
             int blkH) {
 
         int stride = pic.getPlaneWidth(comp);

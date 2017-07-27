@@ -11,7 +11,7 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
@@ -62,10 +62,10 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     }
 
     @Override
-    public Picture8Bit decodeFrame8Bit(Packet packet, byte[][] data) {
+    public Picture decodeFrame(Packet packet, byte[][] data) {
         updateState(packet);
 
-        Picture8Bit pic = decoder.decodeFrame8Bit(packet.getData(), data);
+        Picture pic = decoder.decodeFrame(packet.getData(), data);
         Rational pasp = meta.getVideoCodecMeta().getPixelAspectRatio();
 
         if (pasp != null) {
@@ -96,8 +96,8 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     }
 
     @Override
-    public byte[][] allocatePicture8Bit() {
-        return Picture8Bit.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
+    public byte[][] allocatePicture() {
+        return Picture.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
     }
 
     @Override

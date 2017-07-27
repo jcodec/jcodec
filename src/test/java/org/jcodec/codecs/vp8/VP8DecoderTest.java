@@ -4,7 +4,7 @@ import org.jcodec.Utils;
 import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,18 +26,18 @@ public class VP8DecoderTest {
 	@Ignore
 	@Test
 	public void testKF() throws Exception {
-		Picture8Bit pic = Picture8Bit.create(640, 480, ColorSpace.YUV420);
-		Picture8Bit decoded = dec.decodeFrame8Bit(bb.duplicate(), pic.getData());
+		Picture pic = Picture.create(640, 480, ColorSpace.YUV420);
+		Picture decoded = dec.decodeFrame(bb.duplicate(), pic.getData());
 
-		ImageIO.write(AWTUtil.toBufferedImage8Bit(decoded), "png", Utils.tildeExpand("~/decoded.png"));
+		ImageIO.write(AWTUtil.toBufferedImage(decoded), "png", Utils.tildeExpand("~/decoded.png"));
 	}
 
 	@Ignore
 	@Test
 	public void testKFToPicture() throws Exception {
-		Picture8Bit pic = Picture8Bit.create(640, 480, ColorSpace.YUV420);
-		Picture8Bit decoded = dec.decodeFrame8Bit(bb.duplicate(), pic.getData());
-		ImageIO.write(AWTUtil.toBufferedImage8Bit(decoded), "png", Utils.tildeExpand("~/decoded.pic.png"));
+		Picture pic = Picture.create(640, 480, ColorSpace.YUV420);
+		Picture decoded = dec.decodeFrame(bb.duplicate(), pic.getData());
+		ImageIO.write(AWTUtil.toBufferedImage(decoded), "png", Utils.tildeExpand("~/decoded.pic.png"));
 	}
 
 	public void pysch() throws Exception {

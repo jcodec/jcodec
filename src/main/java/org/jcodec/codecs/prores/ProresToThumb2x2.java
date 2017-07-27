@@ -3,7 +3,7 @@ import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.common.dct.IDCT2x2;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 import java.nio.ByteBuffer;
 
@@ -36,7 +36,7 @@ public class ProresToThumb2x2 extends ProresDecoder {
     }
 
     @Override
-    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] target) {
+    public Picture decodeFrame(ByteBuffer data, byte[][] target) {
         FrameHeader fh = readFrameHeader(data);
 
         int codedWidth = ((fh.width + 15) & ~0xf) >> 2;
@@ -61,7 +61,7 @@ public class ProresToThumb2x2 extends ProresDecoder {
                     new int[] { 0, 2, 1, 3 }, fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
 
-        return Picture8Bit.createPicture8Bit(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
+        return Picture.createPicture(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
                 : ColorSpace.YUV444);
     }
 

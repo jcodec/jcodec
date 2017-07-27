@@ -11,7 +11,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MathUtil;
@@ -50,7 +50,7 @@ public class JpegDecoder extends VideoDecoder {
         this.topFieldFirst = topFieldFirst;
     }
 
-    private Picture8Bit decodeScan(ByteBuffer data, FrameHeader header, ScanHeader scan, VLC[] huffTables,
+    private Picture decodeScan(ByteBuffer data, FrameHeader header, ScanHeader scan, VLC[] huffTables,
             int[][] quant, byte[][] data2, int field, int step) {
         int blockW = header.getHmax();
         int blockH = header.getVmax();
@@ -64,7 +64,7 @@ public class JpegDecoder extends VideoDecoder {
         int yBlocks = (height + mcuH - 1) >> (blockH + 2);
 
         int nn = blockW + blockH;
-        Picture8Bit result = new Picture8Bit(xBlocks << (blockW + 2), yBlocks << (blockH + 2), data2,
+        Picture result = new Picture(xBlocks << (blockW + 2), yBlocks << (blockH + 2), data2,
                 nn == 4 ? ColorSpace.YUV420J : (nn == 3 ? ColorSpace.YUV422J : ColorSpace.YUV444J),
                 new Rect(0, 0, width, height));
 
@@ -87,7 +87,7 @@ public class JpegDecoder extends VideoDecoder {
         }
     }
 
-    void decodeMCU(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture8Bit result, int bx, int by,
+    void decodeMCU(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture result, int bx, int by,
             int blockH, int blockV, int field, int step) {
         int sx = bx << (blockH - 1);
         int sy = by << (blockV - 1);
@@ -102,7 +102,7 @@ public class JpegDecoder extends VideoDecoder {
         decodeBlock(bits, dcPredictor, quant, huff, result, buf, bx << 3, by << 3, 2, 1, field, step);
     }
 
-    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture8Bit result, int[] buf,
+    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture result, int[] buf,
             int blkX, int blkY, int plane, int chroma, int field, int step) {
         Arrays.fill(buf, 0);
         dcPredictor[plane] = buf[0] = readDCValue(bits, huff[chroma]) * quant[chroma][0] + dcPredictor[plane];
@@ -138,19 +138,19 @@ public class JpegDecoder extends VideoDecoder {
         return (length >= 1 && raw < (1 << length - 1)) ? -(1 << length) + 1 + raw : raw;
     }
 
-    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] data2) {
+    public Picture decodeFrame(ByteBuffer data, byte[][] data2) {
 
         if (interlace) {
-            Picture8Bit r1 = decodeField(data, data2, topFieldFirst ? 0 : 1, 2);
-            Picture8Bit r2 = decodeField(data, data2, topFieldFirst ? 1 : 0, 2);
-            return Picture8Bit.createPicture8Bit(r1.getWidth(), r1.getHeight() << 1, data2, r1.getColor());
+            Picture r1 = decodeField(data, data2, topFieldFirst ? 0 : 1, 2);
+            Picture r2 = decodeField(data, data2, topFieldFirst ? 1 : 0, 2);
+            return Picture.createPicture(r1.getWidth(), r1.getHeight() << 1, data2, r1.getColor());
         } else {
             return decodeField(data, data2, 0, 1);
         }
     }
 
-    public Picture8Bit decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
-        Picture8Bit result = null;
+    public Picture decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
+        Picture result = null;
 
         FrameHeader header = null;
         VLC[] huffTables = new VLC[] { JpegConst.YDC_DEFAULT, JpegConst.CDC_DEFAULT, JpegConst.YAC_DEFAULT,

@@ -2,7 +2,7 @@ package org.jcodec.codecs.mjpeg;
 import org.jcodec.common.dct.IDCT4x4;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.MathUtil;
 
@@ -25,7 +25,7 @@ public class JpegToThumb4x4 extends JpegDecoder {
             16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 };
 
     @Override
-    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture8Bit result, int[] buf, int blkX,
+    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture result, int[] buf, int blkX,
             int blkY, int plane, int chroma, int field, int step) {
         buf[1] = buf[2] = buf[3] = buf[4] = buf[5] = buf[6] = buf[7] = buf[8] = buf[9] = buf[10] = buf[11] = buf[12] = buf[13] = buf[14] = buf[15] = 0;
 
@@ -83,10 +83,10 @@ public class JpegToThumb4x4 extends JpegDecoder {
     }
 
     @Override
-    public Picture8Bit decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
-        Picture8Bit res = super.decodeField(data, data2, field, step);
+    public Picture decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
+        Picture res = super.decodeField(data, data2, field, step);
 
-        return new Picture8Bit(res.getWidth() >> 1, res.getHeight() >> 1, res.getData(), res.getColor(), new Rect(0, 0,
+        return new Picture(res.getWidth() >> 1, res.getHeight() >> 1, res.getData(), res.getColor(), new Rect(0, 0,
                 res.getCroppedWidth() >> 1, res.getCroppedHeight() >> 1));
     }
 }

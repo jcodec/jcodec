@@ -13,11 +13,11 @@ import org.jcodec.codecs.mpeg12.Mpeg2Thumb4x4;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform8Bit;
+import org.jcodec.scale.Transform;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -37,9 +37,9 @@ public class MPEGToAVCTranscoder {
     public static final int TARGET_RATE = 1024;
     private VideoDecoder decoder;
     private H264Encoder encoder;
-    private Picture8Bit pic0;
-    private Picture8Bit pic1;
-    private Transform8Bit transform;
+    private Picture pic0;
+    private Picture pic1;
+    private Transform transform;
     private H264FixedRateControl rc;
     private int scaleFactor;
     private int thumbWidth;
@@ -76,14 +76,14 @@ public class MPEGToAVCTranscoder {
             int mbW = (thumbWidth + 8) >> 4;
             int mbH = (thumbHeight + 8) >> 4;
 
-            pic0 = Picture8Bit.create(mbW << 4, (mbH + 1) << 4, ColorSpace.YUV444);
+            pic0 = Picture.create(mbW << 4, (mbH + 1) << 4, ColorSpace.YUV444);
         }
-        Picture8Bit decoded = decoder.decodeFrame8Bit(src, pic0.getData());
+        Picture decoded = decoder.decodeFrame(src, pic0.getData());
         if (pic1 == null) {
-            pic1 = Picture8Bit.create(decoded.getWidth(), decoded.getHeight(), encoder.getSupportedColorSpaces()[0]);
-            transform = ColorUtil.getTransform8Bit(decoded.getColor(), encoder.getSupportedColorSpaces()[0]);
+            pic1 = Picture.create(decoded.getWidth(), decoded.getHeight(), encoder.getSupportedColorSpaces()[0]);
+            transform = ColorUtil.getTransform(decoded.getColor(), encoder.getSupportedColorSpaces()[0]);
         }
-        Picture8Bit toEnc;
+        Picture toEnc;
         if (transform != null) {
             transform.transform(decoded, pic1);
             toEnc = pic1;
@@ -94,7 +94,7 @@ public class MPEGToAVCTranscoder {
         int rate = MPEGToAVCTranscoder.TARGET_RATE;
         do {
             try {
-                encoder.doEncodeFrame8Bit(toEnc, dst, iframe, poc, SliceType.I);
+                encoder.doEncodeFrame(toEnc, dst, iframe, poc, SliceType.I);
                 break;
             } catch (BufferOverflowException ex) {
                 Logger.warn("Abandon frame, buffer too small: " + dst.capacity());

@@ -1,19 +1,19 @@
 package org.jcodec.api.transcode;
 
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 public interface PixelStore {
     public static class LoanerPicture {
-        private Picture8Bit picture;
+        private Picture picture;
         private int refCnt;
 
-        public LoanerPicture(Picture8Bit picture, int refCnt) {
+        public LoanerPicture(Picture picture, int refCnt) {
             this.picture = picture;
             this.refCnt = refCnt;
         }
 
-        public Picture8Bit getPicture() {
+        public Picture getPicture() {
             return picture;
         }
 

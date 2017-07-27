@@ -21,7 +21,7 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.platform.Platform;
@@ -174,7 +174,7 @@ public class ProresDecoder extends VideoDecoder {
         }
     }
 
-    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] target) {
+    public Picture decodeFrame(ByteBuffer data, byte[][] target) {
         FrameHeader fh = readFrameHeader(data);
 
         int codedWidth = (fh.width + 15) & ~0xf;
@@ -199,11 +199,11 @@ public class ProresDecoder extends VideoDecoder {
                     fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
 
-        return new Picture8Bit(codedWidth, codedHeight, target,
+        return new Picture(codedWidth, codedHeight, target,
                 fh.chromaType == 2 ? ColorSpace.YUV422 : ColorSpace.YUV444, new Rect(0, 0, fh.width, fh.height));
     }
 
-    public Picture8Bit[] decodeFields8Bit(ByteBuffer data, byte[][][] target) {
+    public Picture[] decodeFields(ByteBuffer data, byte[][][] target) {
         FrameHeader fh = readFrameHeader(data);
 
         int codedWidth = (fh.width + 15) & ~0xf;
@@ -220,8 +220,8 @@ public class ProresDecoder extends VideoDecoder {
 
             decodePicture(data, target[0], fh.width, fh.height, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan, 0,
                     fh.chromaType);
-            return new Picture8Bit[] {
-                    Picture8Bit.createPicture8Bit(codedWidth, codedHeight, target[0], ColorSpace.YUV422) };
+            return new Picture[] {
+                    Picture.createPicture(codedWidth, codedHeight, target[0], ColorSpace.YUV422) };
         } else {
             lumaSize >>= 1;
             chromaSize >>= 1;
@@ -237,9 +237,9 @@ public class ProresDecoder extends VideoDecoder {
             decodePicture(data, target[fh.topFieldFirst ? 1 : 0], fh.width, fh.height >> 1, codedWidth >> 4,
                     fh.qMatLuma, fh.qMatChroma, fh.scan, 0, fh.chromaType);
 
-            return new Picture8Bit[] {
-                    Picture8Bit.createPicture8Bit(codedWidth, codedHeight >> 1, target[0], ColorSpace.YUV422),
-                    Picture8Bit.createPicture8Bit(codedWidth, codedHeight >> 1, target[1], ColorSpace.YUV422) };
+            return new Picture[] {
+                    Picture.createPicture(codedWidth, codedHeight >> 1, target[0], ColorSpace.YUV422),
+                    Picture.createPicture(codedWidth, codedHeight >> 1, target[1], ColorSpace.YUV422) };
         }
     }
 

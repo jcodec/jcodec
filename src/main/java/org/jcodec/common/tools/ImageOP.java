@@ -4,7 +4,7 @@ import static java.lang.System.arraycopy;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.PictureHiBD;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 
 /**
@@ -74,7 +74,7 @@ public class ImageOP {
         }
     }
     
-    public static void subImageWithFillPic8(Picture8Bit _in, Picture8Bit out, Rect rect) {
+    public static void subImageWithFillPic8(Picture _in, Picture out, Rect rect) {
         int width = _in.getWidth();
         int height = _in.getHeight();
         ColorSpace color = _in.getColor();

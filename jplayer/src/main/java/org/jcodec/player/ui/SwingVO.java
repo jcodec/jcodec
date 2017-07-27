@@ -8,7 +8,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Rect;
 import org.jcodec.player.filters.VideoOutput;
@@ -29,7 +29,7 @@ public class SwingVO extends JPanel implements VideoOutput {
     private Rational pasp;
     private Rect crop;
 
-    public void show(Picture8Bit pic, Rational pasp) {
+    public void show(Picture pic, Rational pasp) {
 
         if (img != null && img.getWidth() != pic.getWidth() && img.getHeight() != pic.getHeight())
             img = null;
@@ -37,7 +37,7 @@ public class SwingVO extends JPanel implements VideoOutput {
         if (img == null)
             img = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
 
-        AWTUtil.toBufferedImage8Bit(pic, img);
+        AWTUtil.toBufferedImage(pic, img);
         this.pasp = pasp;
         this.crop = pic.getCrop();
 
