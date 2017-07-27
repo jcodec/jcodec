@@ -1,6 +1,6 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
 
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -11,11 +11,11 @@ import org.jcodec.common.model.Picture;
  * @author The JCodec project
  * 
  */
-public class Yuv420jToYuv420 implements Transform {
+public class Yuv420jToYuv420HiBD implements TransformHiBD {
     public static int Y_COEFF = 7168;
 
     @Override
-    public void transform(Picture src, Picture dst) {
+    public void transform(PictureHiBD src, PictureHiBD dst) {
         int[] sy = src.getPlaneData(0);
         int[] dy = dst.getPlaneData(0);
         for (int i = 0; i < src.getPlaneWidth(0) * src.getPlaneHeight(0); i++)

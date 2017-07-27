@@ -1,6 +1,6 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
 
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -9,19 +9,19 @@ import org.jcodec.common.model.Picture;
  * @author The JCodec project
  * 
  */
-public class RgbToYuv422p implements Transform {
+public class RgbToYuv422pHiBD implements TransformHiBD {
 
     private int upShift;
     private int downShift;
     private int downShiftChr;
 
-    public RgbToYuv422p(int upShift, int downShift) {
+    public RgbToYuv422pHiBD(int upShift, int downShift) {
         this.upShift = upShift;
         this.downShift = downShift;
         this.downShiftChr = downShift + 1;
     }
 
-    public void transform(Picture img, Picture dst) {
+    public void transform(PictureHiBD img, PictureHiBD dst) {
 
         int[] y = img.getData()[0];
         int[][] dstData = dst.getData();
@@ -34,11 +34,11 @@ public class RgbToYuv422p implements Transform {
                 
                 int offY = off << 1;
 
-                RgbToYuv420p.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY, dstData[1], off,
+                RgbToYuv420pHiBD.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY, dstData[1], off,
                         dstData[2], off);
                 dstData[0][offY] = (dstData[0][offY] << upShift) >> downShift;
 
-                RgbToYuv420p.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY + 1, dstData[1], off,
+                RgbToYuv420pHiBD.rgb2yuv(y[offSrc++], y[offSrc++], y[offSrc++], dstData[0], offY + 1, dstData[1], off,
                         dstData[2], off);
                 dstData[0][offY + 1] = (dstData[0][offY + 1] << upShift) >> downShift;
 

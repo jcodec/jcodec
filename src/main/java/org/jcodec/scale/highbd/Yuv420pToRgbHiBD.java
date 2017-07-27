@@ -1,8 +1,8 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
 
-import static org.jcodec.scale.Yuv422pToRgb.YUV444toRGB888;
+import static org.jcodec.scale.highbd.Yuv422pToRgbHiBD.YUV444toRGB888;
 
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -11,17 +11,17 @@ import org.jcodec.common.model.Picture;
  * @author The JCodec project
  * 
  */
-public class Yuv420pToRgb implements Transform {
+public class Yuv420pToRgbHiBD implements TransformHiBD {
 
     private final int downShift;
     private final int upShift;
 
-    public Yuv420pToRgb(int upShift, int downShift) {
+    public Yuv420pToRgbHiBD(int upShift, int downShift) {
         this.upShift = upShift;
         this.downShift = downShift;
     }
 
-    public final void transform(Picture src, Picture dst) {
+    public final void transform(PictureHiBD src, PictureHiBD dst) {
         int[] y = src.getPlaneData(0);
         int[] u = src.getPlaneData(1);
         int[] v = src.getPlaneData(2);

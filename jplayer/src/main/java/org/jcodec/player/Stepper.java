@@ -15,7 +15,7 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Frame;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.common.model.Size;
 import org.jcodec.player.Player.Listener;
@@ -44,11 +44,11 @@ public class Stepper {
     private AudioOut ao;
     private VideoInfo mi;
     private AudioInfo ai;
-    private Picture dst;
+    private Picture8Bit dst;
 
     private RationalLarge pts;
     // private int frameNo;
-    private int[][] target;
+    private byte[][] target;
     private List<Player.Listener> listeners = new ArrayList<Player.Listener>();
     private Timer timer = new Timer();
 
@@ -67,10 +67,10 @@ public class Stepper {
         ao.open(toJavax(af), af.getFrameSize() * (int) af.getFrameRate());
     }
 
-    private int[][] createTarget() {
+    private byte[][] createTarget() {
         Size dim = mi.getDim();
         int sz = 2 * dim.getWidth() * dim.getHeight();
-        return new int[][] { new int[sz], new int[sz], new int[sz] };
+        return new byte[][] { new byte[sz], new byte[sz], new byte[sz] };
     }
 
     private void nextInt() throws IOException {
@@ -100,12 +100,12 @@ public class Stepper {
     private void show(Frame frame) {
         pts = frame.getPts();
         fireTimeEvent(frame);
-        Picture src = frame.getPic();
+        Picture8Bit src = frame.getPic();
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
-                dst = Picture.create(src.getWidth(), src.getHeight(), vo.getColorSpace());
+                dst = Picture8Bit.create(src.getWidth(), src.getHeight(), vo.getColorSpace());
 
-            ColorUtil.getTransform(src.getColor(), vo.getColorSpace()).transform(src, dst);
+            ColorUtil.getTransform8Bit(src.getColor(), vo.getColorSpace()).transform(src, dst);
 
             vo.show(dst, frame.getPixelAspect());
         } else {

@@ -1,6 +1,6 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
 
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -10,13 +10,12 @@ import org.jcodec.common.tools.MathUtil;
  * @author The JCodec project
  * 
  */
-@Deprecated
-public class Yuv420jToRgb implements Transform {
+public class Yuv420jToRgbHiBD implements TransformHiBD {
 
-    public Yuv420jToRgb() {
+    public Yuv420jToRgbHiBD() {
     }
 
-    public final void transform(Picture src, Picture dst) {
+    public final void transform(PictureHiBD src, PictureHiBD dst) {
         int[] y = src.getPlaneData(0);
         int[] u = src.getPlaneData(1);
         int[] v = src.getPlaneData(2);

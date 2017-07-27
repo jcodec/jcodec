@@ -1,7 +1,6 @@
 package org.jcodec.scale;
 
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Picture8Bit;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,39 +26,6 @@ public class AWTUtilTest {
         }
     }
 
-    @Test
-    @Deprecated
-    public void testToBufferedImage() {
-        Picture src = Picture.create(16, 16, ColorSpace.YUV420J);
-        Arrays.fill(src.getPlaneData(0), 169);
-        Arrays.fill(src.getPlaneData(1), 45);
-        Arrays.fill(src.getPlaneData(2), 103);
-
-        BufferedImage image = AWTUtil.toBufferedImage(src);
-        for (int i = 0; i < 256; i++) {
-            int rgb = image.getRGB(i % 16, i / 16);
-            Assert.assertEquals((rgb >> 16) & 0xff, 134);
-            Assert.assertEquals((rgb >> 8) & 0xff, 215);
-            Assert.assertEquals((rgb) & 0xff, 22);
-        }
-    }
-
-    @Test
-    @Deprecated
-    public void testFromBufferedImage() {
-        BufferedImage src = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
-        for(int i = 0; i < 256; i++) {
-            src.setRGB(i % 16, i / 16, (0xff << 24) | (134 << 16) | (215 << 8) | 22);
-        }
-        
-        Picture dst = AWTUtil.fromBufferedImage(src, ColorSpace.YUV420J);
-        for (int i = 0; i < 256; i += 3) {
-            Assert.assertEquals(168, dst.getPlaneData(0)[i]);
-            Assert.assertEquals(45, dst.getPlaneData(1)[i >> 2]);
-            Assert.assertEquals(103, dst.getPlaneData(2)[i >> 2]);
-        }
-    }
-    
     @Test
     public void testFromBufferedImage8Bit() {
         BufferedImage src = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);

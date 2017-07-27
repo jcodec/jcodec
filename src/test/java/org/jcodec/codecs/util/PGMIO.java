@@ -1,7 +1,7 @@
 package org.jcodec.codecs.util;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.model.ColorSpace;

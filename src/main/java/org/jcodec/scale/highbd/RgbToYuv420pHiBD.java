@@ -1,6 +1,6 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
 
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -10,17 +10,22 @@ import org.jcodec.common.model.Picture;
  * Yuv420 colorspace output picture ( 3 planes, luma - 0th plane, cb - 1th
  * plane, cr - 2nd plane; cb and cr planes are half width and half haight )
  * 
- * TODO: implement jpeg colorspace instead of NTSC
- * 
  * @author The JCodec project
  * 
  */
-public class RgbToYuv420j implements Transform {
+public class RgbToYuv420pHiBD implements TransformHiBD {
 
-    public RgbToYuv420j() {
+    private int upShift;
+    private int downShift;
+    private int downShiftChr;
+
+    public RgbToYuv420pHiBD(int upShift, int downShift) {
+        this.upShift = upShift;
+        this.downShift = downShift;
+        this.downShiftChr = downShift + 2;
     }
 
-    public void transform(Picture img, Picture dst) {
+    public void transform(PictureHiBD img, PictureHiBD dst) {
 
         int[] y = img.getData()[0];
         int[][] dstData = dst.getData();
@@ -33,25 +38,25 @@ public class RgbToYuv420j implements Transform {
 
                 rgb2yuv(y[offSrc], y[offSrc + 1], y[offSrc + 2], dstData[0], offLuma, dstData[1], offChr, dstData[2],
                         offChr);
-                dstData[0][offLuma] = dstData[0][offLuma];
+                dstData[0][offLuma] = (dstData[0][offLuma] << upShift) >> downShift;
 
                 rgb2yuv(y[offSrc + strideSrc], y[offSrc + strideSrc + 1], y[offSrc + strideSrc + 2], dstData[0],
                         offLuma + strideDst, dstData[1], offChr, dstData[2], offChr);
-                dstData[0][offLuma + strideDst] = dstData[0][offLuma + strideDst];
+                dstData[0][offLuma + strideDst] = (dstData[0][offLuma + strideDst] << upShift) >> downShift;
 
                 ++offLuma;
 
                 rgb2yuv(y[offSrc + 3], y[offSrc + 4], y[offSrc + 5], dstData[0], offLuma, dstData[1], offChr,
                         dstData[2], offChr);
-                dstData[0][offLuma] = dstData[0][offLuma];
+                dstData[0][offLuma] = (dstData[0][offLuma] << upShift) >> downShift;
 
                 rgb2yuv(y[offSrc + strideSrc + 3], y[offSrc + strideSrc + 4], y[offSrc + strideSrc + 5], dstData[0],
                         offLuma + strideDst, dstData[1], offChr, dstData[2], offChr);
-                dstData[0][offLuma + strideDst] = dstData[0][offLuma + strideDst];
+                dstData[0][offLuma + strideDst] = (dstData[0][offLuma + strideDst] << upShift) >> downShift;
                 ++offLuma;
 
-                dstData[1][offChr] = dstData[1][offChr] >> 2;
-                dstData[2][offChr] = dstData[2][offChr] >> 2;
+                dstData[1][offChr] = (dstData[1][offChr] << upShift) >> downShiftChr;
+                dstData[2][offChr] = (dstData[2][offChr] << upShift) >> downShiftChr;
 
                 ++offChr;
                 offSrc += 6;
@@ -62,14 +67,14 @@ public class RgbToYuv420j implements Transform {
     }
 
     public static final void rgb2yuv(int r, int g, int b, int[] Y, int offY, int[] U, int offU, int[] V, int offV) {
-        int y = 77 * r + 150 * g + 15 * b;
-        int u = -43 * r - 85 * g + 128 * b;
-        int v = 128 * r - 107 * g - 21 * b;
+        int y = 66 * r + 129 * g + 25 * b;
+        int u = -38 * r - 74 * g + 112 * b;
+        int v = 112 * r - 94 * g - 18 * b;
         y = (y + 128) >> 8;
         u = (u + 128) >> 8;
         v = (v + 128) >> 8;
 
-        Y[offY] = clip(y);
+        Y[offY] = clip(y + 16);
         U[offU] += clip(u + 128);
         V[offV] += clip(v + 128);
     }

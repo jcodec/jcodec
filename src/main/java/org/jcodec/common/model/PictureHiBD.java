@@ -11,10 +11,8 @@ import java.lang.IllegalArgumentException;
  * A YUV picture
  * 
  * @author The JCodec project
- * @deprecated Use org.jcodec.common.model.Picture8Bit and related APIs
- * 
  */
-public class Picture {
+public class PictureHiBD {
     private ColorSpace color;
 
     private int width;
@@ -26,19 +24,19 @@ public class Picture {
 
     private int bitDepth;
 
-    public static Picture createPicture(int width, int height, int[][] data, ColorSpace color) {
-        return new Picture(width, height, data, color, 8, new Rect(0, 0, width, height));
+    public static PictureHiBD createPicture(int width, int height, int[][] data, ColorSpace color) {
+        return new PictureHiBD(width, height, data, color, 8, new Rect(0, 0, width, height));
     }
 
-    public static Picture createPictureWithDepth(int width, int height, int[][] data, ColorSpace color, int bitDepth) {
-        return new Picture(width, height, data, color, bitDepth, new Rect(0, 0, width, height));
+    public static PictureHiBD createPictureWithDepth(int width, int height, int[][] data, ColorSpace color, int bitDepth) {
+        return new PictureHiBD(width, height, data, color, bitDepth, new Rect(0, 0, width, height));
     }
 
-    public static Picture createPictureCropped(int width, int height, int[][] data, ColorSpace color, Rect crop) {
-        return new Picture(width, height, data, color, 8, crop);
+    public static PictureHiBD createPictureCropped(int width, int height, int[][] data, ColorSpace color, Rect crop) {
+        return new PictureHiBD(width, height, data, color, 8, crop);
     }
 
-    public Picture(int width, int height, int[][] data, ColorSpace color, int bitDepth, Rect crop) {
+    public PictureHiBD(int width, int height, int[][] data, ColorSpace color, int bitDepth, Rect crop) {
         this.width = width;
         this.height = height;
         this.data = data;
@@ -47,23 +45,23 @@ public class Picture {
         this.bitDepth = bitDepth;
     }
 
-    public static Picture clonePicture(Picture other) {
-        return new Picture(other.width, other.height, other.data, other.color, other.bitDepth, other.crop);
+    public static PictureHiBD clonePicture(PictureHiBD other) {
+        return new PictureHiBD(other.width, other.height, other.data, other.color, other.bitDepth, other.crop);
     }
     
-    public static Picture create(int width, int height, ColorSpace colorSpace) {
+    public static PictureHiBD create(int width, int height, ColorSpace colorSpace) {
         return doCreate(width, height, colorSpace, 8, null);
     }
 
-    public static Picture createWithDepth(int width, int height, ColorSpace colorSpace, int bitDepth) {
+    public static PictureHiBD createWithDepth(int width, int height, ColorSpace colorSpace, int bitDepth) {
         return doCreate(width, height, colorSpace, bitDepth, null);
     }
 
-    public static Picture createCropped(int width, int height, ColorSpace colorSpace, Rect crop) {
+    public static PictureHiBD createCropped(int width, int height, ColorSpace colorSpace, Rect crop) {
         return doCreate(width, height, colorSpace, 8, crop);
     }
 
-    public static Picture doCreate(int width, int height, ColorSpace colorSpace, int bitDepth, Rect crop) {
+    public static PictureHiBD doCreate(int width, int height, ColorSpace colorSpace, int bitDepth, Rect crop) {
         int[] planeSizes = new int[MAX_PLANES];
         for (int i = 0; i < colorSpace.nComp; i++) {
             planeSizes[colorSpace.compPlane[i]] += (width >> colorSpace.compWidth[i])
@@ -80,7 +78,7 @@ public class Picture {
             }
         }
 
-        return new Picture(width, height, data, colorSpace, 8, crop);
+        return new PictureHiBD(width, height, data, colorSpace, 8, crop);
     }
 
 
@@ -120,15 +118,15 @@ public class Picture {
         return height >> color.compHeight[plane];
     }
 
-    public boolean compatible(Picture src) {
+    public boolean compatible(PictureHiBD src) {
         return src.color == color && src.width == width && src.height == height && src.bitDepth == bitDepth;
     }
 
-    public Picture createCompatible() {
-        return Picture.create(width, height, color);
+    public PictureHiBD createCompatible() {
+        return PictureHiBD.create(width, height, color);
     }
 
-    public void copyFrom(Picture src) {
+    public void copyFrom(PictureHiBD src) {
         if (!compatible(src))
             throw new IllegalArgumentException("Can not copy to incompatible picture");
         for (int plane = 0; plane < color.nComp; plane++) {
@@ -139,11 +137,11 @@ public class Picture {
         }
     }
 
-    public Picture cropped() {
+    public PictureHiBD cropped() {
         if (crop == null
                 || (crop.getX() == 0 && crop.getY() == 0 && crop.getWidth() == width && crop.getHeight() == height))
             return this;
-        Picture result = Picture.createWithDepth(crop.getWidth(), crop.getHeight(), color, bitDepth);
+        PictureHiBD result = PictureHiBD.createWithDepth(crop.getWidth(), crop.getHeight(), color, bitDepth);
 
         for (int plane = 0; plane < color.nComp; plane++) {
             if (data[plane] == null)
@@ -185,9 +183,9 @@ public class Picture {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof Picture))
+        if (obj == null || !(obj instanceof PictureHiBD))
             return false;
-        Picture other = (Picture) obj;
+        PictureHiBD other = (PictureHiBD) obj;
 
         if (other.getCroppedWidth() != getCroppedWidth() || other.getCroppedHeight() != getCroppedHeight()
                 || other.getColor() != color)
@@ -199,7 +197,7 @@ public class Picture {
         return true;
     }
 
-    private boolean planeEquals(Picture other, int plane) {
+    private boolean planeEquals(PictureHiBD other, int plane) {
         int cw = color.compWidth[plane];
         int ch = color.compHeight[plane];
         int offA = other.getCrop() == null ? 0

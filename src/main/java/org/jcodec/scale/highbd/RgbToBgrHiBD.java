@@ -1,7 +1,7 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 
 import java.lang.IllegalArgumentException;
 
@@ -13,10 +13,10 @@ import java.lang.IllegalArgumentException;
  *
  */
 @Deprecated
-public class RgbToBgr implements Transform {
+public class RgbToBgrHiBD implements TransformHiBD {
 
     @Override
-    public void transform(Picture src, Picture dst) {
+    public void transform(PictureHiBD src, PictureHiBD dst) {
         if (src.getColor() != ColorSpace.RGB && src.getColor() != ColorSpace.BGR
                 || dst.getColor() != ColorSpace.RGB && dst.getColor() != ColorSpace.BGR) {
             throw new IllegalArgumentException(

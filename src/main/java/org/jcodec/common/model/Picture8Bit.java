@@ -200,7 +200,7 @@ public class Picture8Bit {
         return crop == null ? height : crop.getHeight();
     }
 
-    public static Picture8Bit fromPicture(Picture pic) {
+    public static Picture8Bit fromPictureHiBD(PictureHiBD pic) {
         Picture8Bit create = Picture8Bit.createCropped(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
 
         for (int i = 0; i < Math.min(pic.getData().length, create.getData().length); i++) {
@@ -212,19 +212,19 @@ public class Picture8Bit {
         return create;
     }
 
-    public Picture toPicture(int bitDepth) {
-        Picture create = Picture.doCreate(width, height, color, bitDepth, crop);
+    public PictureHiBD toPictureHiBD(int bitDepth) {
+        PictureHiBD create = PictureHiBD.doCreate(width, height, color, bitDepth, crop);
 
-        return toPictureInternal(bitDepth, create);
+        return toPictureHiBDInternal(bitDepth, create);
     }
 
-    public Picture toPictureWithBuffer(int bitDepth, int[][] buffer) {
-        Picture create = new Picture(width, height, buffer, color, bitDepth, crop);
+    public PictureHiBD toPictureHiBDWithBuffer(int bitDepth, int[][] buffer) {
+        PictureHiBD create = new PictureHiBD(width, height, buffer, color, bitDepth, crop);
 
-        return toPictureInternal(bitDepth, create);
+        return toPictureHiBDInternal(bitDepth, create);
     }
 
-    private Picture toPictureInternal(int bitDepth, Picture create) {
+    private PictureHiBD toPictureHiBDInternal(int bitDepth, PictureHiBD create) {
         for (int i = 0; i < data.length; i++) {
             int planeSize = getPlaneWidth(i) * getPlaneHeight(i);
             for (int j = 0; j < planeSize; j++) {
