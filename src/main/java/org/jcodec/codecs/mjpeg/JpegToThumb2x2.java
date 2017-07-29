@@ -81,7 +81,7 @@ public class JpegToThumb2x2 extends JpegDecoder {
     public Picture decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
         Picture res = super.decodeField(data, data2, field, step);
 
-        return new Picture(res.getWidth() >> 2, res.getHeight() >> 2, res.getData(), res.getColor(), new Rect(0, 0,
-                res.getCroppedWidth() >> 2, res.getCroppedHeight() >> 2));
+        return new Picture(res.getWidth() >> 2, res.getHeight() >> 2, res.getData(), null, res.getColor(), 0, new Rect(
+                0, 0, res.getCroppedWidth() >> 2, res.getCroppedHeight() >> 2));
     }
 }

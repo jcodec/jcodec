@@ -65,7 +65,7 @@ public class ProresToThumb4x4 extends ProresDecoder {
         }
 
         ColorSpace color = fh.chromaType == 2 ? ColorSpace.YUV422 : ColorSpace.YUV444;
-        return new Picture(codedWidth, codedHeight, target, color, new Rect(0, 0, (fh.width >> 1)
+        return new Picture(codedWidth, codedHeight, target, null, color, 0, new Rect(0, 0, (fh.width >> 1)
                 & color.getWidthMask(), (fh.height >> 1) & color.getHeightMask()));
     }
 

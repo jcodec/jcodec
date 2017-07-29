@@ -56,7 +56,7 @@ public class AndroidUtil {
             return null;
 
         Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
-        Picture rgb = Picture.createCropped(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
+        Picture rgb = Picture.createCropped(pic.getWidth(), pic.getHeight(), 0, ColorSpace.RGB, pic.getCrop());
         transform.transform(pic, rgb);
         return bitmapUtil.toBitmapImpl(rgb);
     }
@@ -68,7 +68,7 @@ public class AndroidUtil {
             throw new IllegalArgumentException("Out bitmap is null");
 
         Transform transform = ColorUtil.getTransform(pic.getColor(), ColorSpace.RGB);
-        Picture rgb = Picture.createCropped(pic.getWidth(), pic.getHeight(), ColorSpace.RGB, pic.getCrop());
+        Picture rgb = Picture.createCropped(pic.getWidth(), pic.getHeight(), 0, ColorSpace.RGB, pic.getCrop());
         transform.transform(pic, rgb);
         bitmapUtil.toBitmapImpl(rgb, out);
     }

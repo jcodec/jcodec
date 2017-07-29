@@ -440,7 +440,7 @@ public class Player {
 
         if (src.getColor() != vo.getColorSpace()) {
             if (dst == null || dst.getWidth() != src.getWidth() || dst.getHeight() != src.getHeight())
-                dst = Picture.createCropped(src.getWidth(), src.getHeight(), vo.getColorSpace(), src.getCrop());
+                dst = Picture.createCropped(src.getWidth(), src.getHeight(), 0, vo.getColorSpace(), src.getCrop());
 
             ColorUtil.getTransform(src.getColor(), vo.getColorSpace()).transform(src, dst);
 
