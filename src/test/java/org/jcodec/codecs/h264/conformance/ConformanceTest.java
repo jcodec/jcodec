@@ -7,7 +7,7 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.junit.Test;
 
@@ -37,14 +37,14 @@ public class ConformanceTest {
         H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(meta.getCodecPrivate());
         int width = meta.getVideoCodecMeta().getSize().getWidth();
         int height = meta.getVideoCodecMeta().getSize().getHeight();
-        Picture8Bit tmp = Picture8Bit.create(width, height, ColorSpace.YUV420);
-        RawReader8Bit rawReader = new RawReader8Bit(new File(yuv), width, height);
+        Picture tmp = Picture.create(width, height, ColorSpace.YUV420);
+        RawReader rawReader = new RawReader(new File(yuv), width, height);
 
         for (int fn = 0; fn < meta.getTotalFrames(); fn++) {
             Packet pkt = videoTrack.nextFrame();
-            Picture8Bit pic = decoder.decodeFrame8Bit(pkt.getData(), tmp.getData());
+            Picture pic = decoder.decodeFrame(pkt.getData(), tmp.getData());
 
-            Picture8Bit ref = rawReader.readNextFrame();
+            Picture ref = rawReader.readNextFrame();
             if (ref == null)
                 break;
             assertTrue("frame=" + fn + " FAILED", compare(ref, pic));
@@ -53,7 +53,7 @@ public class ConformanceTest {
         mp4Demuxer.close();
     }
 
-    private static boolean compare(Picture8Bit expected, Picture8Bit actual) {
+    private static boolean compare(Picture expected, Picture actual) {
         int size = expected.getWidth() * expected.getHeight();
 
         byte[] expY = expected.getPlaneData(0);

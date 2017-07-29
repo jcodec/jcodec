@@ -11,7 +11,7 @@ import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.scale.AWTUtil;
 
@@ -23,10 +23,10 @@ import org.jcodec.scale.AWTUtil;
 public class PNGDecoder extends VideoDecoder {
 
     @Override
-    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
+    public Picture decodeFrame(ByteBuffer data, byte[][] buffer) {
         try {
             BufferedImage rgb = ImageIO.read(new ByteArrayInputStream(NIOUtils.toArray(data)));
-            return AWTUtil.fromBufferedImageRGB8Bit(rgb);
+            return AWTUtil.fromBufferedImageRGB(rgb);
         } catch (IOException e) {
             return null;
         }

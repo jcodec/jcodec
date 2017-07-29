@@ -12,7 +12,6 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
@@ -62,25 +61,11 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         size = new Size(w << 4, h << 4);
     }
 
-    @Deprecated
-    public Picture decodeFrame(Packet packet, int[][] data) {
-        updateState(packet);
-
-        Picture pic = decoder.decodeFrameFromNals(H264Utils.splitFrame(packet.getData()), data);
-        Rational pasp = meta.getVideoCodecMeta().getPixelAspectRatio();
-
-        if (pasp != null) {
-            // TODO: transform
-        }
-
-        return pic;
-    }
-
     @Override
-    public Picture8Bit decodeFrame8Bit(Packet packet, byte[][] data) {
+    public Picture decodeFrame(Packet packet, byte[][] data) {
         updateState(packet);
 
-        Picture8Bit pic = decoder.decodeFrame8Bit(packet.getData(), data);
+        Picture pic = decoder.decodeFrame(packet.getData(), data);
         Rational pasp = meta.getVideoCodecMeta().getPixelAspectRatio();
 
         if (pasp != null) {
@@ -111,14 +96,8 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     }
 
     @Override
-    @Deprecated
-    public int[][] allocatePicture() {
+    public byte[][] allocatePicture() {
         return Picture.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
-    }
-
-    @Override
-    public byte[][] allocatePicture8Bit() {
-        return Picture8Bit.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
     }
 
     @Override

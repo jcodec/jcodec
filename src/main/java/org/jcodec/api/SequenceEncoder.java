@@ -7,15 +7,15 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.common.Codec;
 import org.jcodec.common.MuxerTrack;
-import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Packet.FrameType;
+import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Rational;
+import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.scale.ColorUtil;
@@ -27,8 +27,8 @@ import org.jcodec.scale.Transform;
  * 
  * @author The JCodec project
  */
-@Deprecated
 public class SequenceEncoder {
+
     private SeekableByteChannel ch;
     private Picture toEncode;
     private Transform transform;
@@ -37,15 +37,32 @@ public class SequenceEncoder {
     private ByteBuffer _out;
     private int frameNo;
     private MP4Muxer muxer;
-    private ByteBuffer sps;
-    private ByteBuffer pps;
+    private int timestamp;
+    private Rational fps;
 
-    public static SequenceEncoder createSequenceEncoder(File out) throws IOException {
-        return new SequenceEncoder(NIOUtils.writableChannel(out));
+    public static SequenceEncoder createSequenceEncoder(File out, int fps) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(fps, 1));
     }
 
-    public SequenceEncoder(SeekableByteChannel ch) throws IOException {
+    public static SequenceEncoder create25Fps(File out) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(25, 1));
+    }
+
+    public static SequenceEncoder create30Fps(File out) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(30, 1));
+    }
+
+    public static SequenceEncoder create2997Fps(File out) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(30000, 1001));
+    }
+
+    public static SequenceEncoder create24Fps(File out) throws IOException {
+        return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(24, 1));
+    }
+
+    public SequenceEncoder(SeekableByteChannel ch, Rational fps) throws IOException {
         this.ch = ch;
+        this.fps = fps;
 
         // Muxer that will store the encoded frames
         muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
@@ -60,6 +77,12 @@ public class SequenceEncoder {
         transform = ColorUtil.getTransform(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
     }
 
+    /**
+     * Encodes a frame into a movie.
+     * 
+     * @param pic
+     * @throws IOException
+     */
     public void encodeNativeFrame(Picture pic) throws IOException {
         if (toEncode == null) {
             toEncode = Picture.create(pic.getWidth(), pic.getHeight(), encoder.getSupportedColorSpaces()[0]);
@@ -78,9 +101,10 @@ public class SequenceEncoder {
         ByteBuffer result = ef.getData();
 
         // Add packet to video track
-        outTrack.addFrame(Packet.createPacket(result, frameNo, 25, 1, frameNo,
+        outTrack.addFrame(Packet.createPacket(result, timestamp, fps.getNum(), fps.getDen(), frameNo,
                 ef.isKeyFrame() ? FrameType.KEY : FrameType.INTER, null));
 
+        timestamp += fps.getDen();
         frameNo++;
     }
 

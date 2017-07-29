@@ -72,7 +72,7 @@ public class JCodecVideoSource implements VideoSource {
     static int cnt = 0;
 
     @Override
-    public Frame decode(int[][] buf) throws IOException {
+    public Frame decode(byte[][] buf) throws IOException {
         seekLock.lock();
         Packet nextPacket;
         try {
@@ -152,9 +152,9 @@ public class JCodecVideoSource implements VideoSource {
 
     class FrameCallable implements Callable<Picture> {
         private Packet pkt;
-        private int[][] out;
+        private byte[][] out;
 
-        public FrameCallable(Packet pkt, int[][] out) {
+        public FrameCallable(Packet pkt, byte[][] out) {
             this.pkt = pkt;
             this.out = out;
         }

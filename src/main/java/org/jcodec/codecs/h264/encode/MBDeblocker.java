@@ -4,7 +4,7 @@ import static java.lang.Math.abs;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.codecs.h264.decode.deblock.DeblockingFilter;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -55,9 +55,9 @@ public class MBDeblocker {
      */
     public void deblockMBGeneric(EncodedMB curMB, EncodedMB leftMB, EncodedMB topMB, int[][] vertStrength,
             int horizStrength[][]) {
-        Picture8Bit curPix = curMB.getPixels();
+        Picture curPix = curMB.getPixels();
         if (leftMB != null) {
-            Picture8Bit leftPix = leftMB.getPixels();
+            Picture leftPix = leftMB.getPixels();
             int avgQp = MathUtil.clip((leftMB.getQp() + curMB.getQp() + 1) >> 1, 0, 51);
             deblockBorder(vertStrength[0], avgQp, leftPix.getPlaneData(0), 3, curPix.getPlaneData(0), 0, P_POS_V,
                     Q_POS_V, false);
@@ -76,7 +76,7 @@ public class MBDeblocker {
         }
 
         if (topMB != null) {
-            Picture8Bit topPix = topMB.getPixels();
+            Picture topPix = topMB.getPixels();
             int avgQp = MathUtil.clip((topMB.getQp() + curMB.getQp() + 1) >> 1, 0, 51);
             deblockBorder(horizStrength[0], avgQp, topPix.getPlaneData(0), 3, curPix.getPlaneData(0), 0, P_POS_H,
                     Q_POS_H, true);

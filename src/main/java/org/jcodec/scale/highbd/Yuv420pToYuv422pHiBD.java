@@ -1,6 +1,6 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.PictureHiBD;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -9,31 +9,36 @@ import org.jcodec.common.model.Picture8Bit;
  * @author The JCodec project
  * 
  */
-public class Yuv420pToYuv422p8Bit implements Transform8Bit {
+public class Yuv420pToYuv422pHiBD implements TransformHiBD {
 
-    public Yuv420pToYuv422p8Bit() {
+    private int shiftUp;
+    private int shiftDown;
+
+    public Yuv420pToYuv422pHiBD(int shiftUp, int shiftDown) {
+        this.shiftUp = shiftUp;
+        this.shiftDown = shiftDown;
     }
 
-    @Override
-    public void transform(Picture8Bit src, Picture8Bit dst) {
-        copy(src.getPlaneData(0), dst.getPlaneData(0), src.getWidth(), dst.getWidth(), dst.getHeight());
+    public void transform(PictureHiBD src, PictureHiBD dst) {
+        copy(src.getPlaneData(0), dst.getPlaneData(0), src.getWidth(), dst.getWidth(), dst.getHeight(), shiftUp,
+                shiftDown);
 
         _copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
-                src.getHeight() >> 1, dst.getHeight());
+                src.getHeight() >> 1, dst.getHeight(), shiftUp, shiftDown);
         _copy(src.getPlaneData(1), dst.getPlaneData(1), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
-                src.getHeight() >> 1, dst.getHeight());
+                src.getHeight() >> 1, dst.getHeight(), shiftUp, shiftDown);
         _copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 0, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
-                src.getHeight() >> 1, dst.getHeight());
+                src.getHeight() >> 1, dst.getHeight(), shiftUp, shiftDown);
         _copy(src.getPlaneData(2), dst.getPlaneData(2), 0, 1, 1, 2, src.getWidth() >> 1, dst.getWidth() >> 1,
-                src.getHeight() >> 1, dst.getHeight());
+                src.getHeight() >> 1, dst.getHeight(), shiftUp, shiftDown);
     }
 
-    private static final void _copy(byte[] src, byte[] dest, int offX, int offY, int stepX, int stepY, int strideSrc,
-            int strideDest, int heightSrc, int heightDst) {
+    private static final void _copy(int[] src, int[] dest, int offX, int offY, int stepX, int stepY, int strideSrc,
+            int strideDest, int heightSrc, int heightDst, int upShift, int downShift) {
         int offD = offX + offY * strideDest, srcOff = 0;
         for (int i = 0; i < heightSrc; i++) {
             for (int j = 0; j < strideSrc; j++) {
-                dest[offD] = src[srcOff++];
+                dest[offD] = (src[srcOff++] & 0xff) << 2;
                 offD += stepX;
             }
             int lastOff = offD - stepX;
@@ -53,12 +58,13 @@ public class Yuv420pToYuv422p8Bit implements Transform8Bit {
         }
     }
 
-    private static void copy(byte[] src, byte[] dest, int srcWidth, int dstWidth, int dstHeight) {
+    private static void copy(int[] src, int[] dest, int srcWidth, int dstWidth, int dstHeight, int shiftUp,
+            int shiftDown) {
         int height = src.length / srcWidth;
         int dstOff = 0, srcOff = 0;
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < srcWidth; j++) {
-                dest[dstOff++] = src[srcOff++];
+                dest[dstOff++] = (src[srcOff++] & 0xff) << 2;
             }
             for (int j = srcWidth; j < dstWidth; j++)
                 dest[dstOff++] = dest[srcWidth - 1];

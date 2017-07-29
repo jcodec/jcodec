@@ -23,7 +23,7 @@ import org.jcodec.codecs.h264.H264Utils.MvList;
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * A decoder for Inter 16x16, 16x8 and 8x16 macroblocks
@@ -38,7 +38,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         this.mapper = mapper;
     }
 
-    public void decode16x16(MBlock mBlock, Picture8Bit mb, Frame[][] refs, PartPred p0) {
+    public void decode16x16(MBlock mBlock, Picture mb, Frame[][] refs, PartPred p0) {
 
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
@@ -74,7 +74,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         di.mbTypes[address] = mBlock.curMbType;
     }
 
-    private void predictInter8x16(MBlock mBlock, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+    private void predictInter8x16(MBlock mBlock, Picture mb, Picture[][] references, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, MvList x,
             int list, PartPred p0, PartPred p1) {
         int xx = mbX << 2;
@@ -136,7 +136,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         }
     }
 
-    private void predictInter16x8(MBlock mBlock, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+    private void predictInter16x8(MBlock mBlock, Picture mb, Picture[][] references, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, int xx, MvList x,
             PartPred p0, PartPred p1, int list) {
 
@@ -193,7 +193,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         }
     }
 
-    public void decode16x8(MBlock mBlock, Picture8Bit mb, Frame[][] refs, PartPred p0, PartPred p1) {
+    public void decode16x8(MBlock mBlock, Picture mb, Frame[][] refs, PartPred p0, PartPred p1) {
 
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
@@ -231,7 +231,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         di.mbTypes[address] = mBlock.curMbType;
     }
 
-    public void decode8x16(MBlock mBlock, Picture8Bit mb, Frame[][] refs, PartPred p0, PartPred p1) {
+    public void decode8x16(MBlock mBlock, Picture mb, Frame[][] refs, PartPred p0, PartPred p1) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         boolean leftAvailable = mapper.leftAvailable(mBlock.mbIdx);
@@ -268,7 +268,7 @@ public class MBlockDecoderInter extends MBlockDecoderBase {
         di.mbTypes[address] = mBlock.curMbType;
     }
 
-    void predictInter16x16(MBlock mBlock, Picture8Bit mb, Picture8Bit[][] references, int mbX, int mbY,
+    void predictInter16x16(MBlock mBlock, Picture mb, Picture[][] references, int mbX, int mbY,
             boolean leftAvailable, boolean topAvailable, boolean tlAvailable, boolean trAvailable, MvList x, int xx,
             int list, PartPred curPred) {
 

@@ -2,7 +2,7 @@ package org.jcodec.api.android;
 
 import org.junit.Test;
 
-public class SequenceEncoder8BitTest {
+public class SequenceEncoderTest {
 
     @Test
     public void testEncoder() {

@@ -4,7 +4,7 @@ import static org.jcodec.codecs.mpeg12.bitstream.SequenceExtension.Chroma420;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceExtension.Chroma444;
 
 import org.jcodec.common.io.BitReader;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -208,7 +208,7 @@ public class MPEGPred {
         }
     }
 
-    public void predictInField(Picture8Bit[] reference, int x, int y, int[][] mbPix, BitReader bits, int motionType,
+    public void predictInField(Picture[] reference, int x, int y, int[][] mbPix, BitReader bits, int motionType,
             int backward, int fieldNo) {
         switch (motionType) {
         case 1:
@@ -223,9 +223,9 @@ public class MPEGPred {
         }
     }
 
-    public void predictInFrame(Picture8Bit reference, int x, int y, int[][] mbPix, BitReader _in, int motionType,
+    public void predictInFrame(Picture reference, int x, int y, int[][] mbPix, BitReader _in, int motionType,
             int backward, int spatial_temporal_weight_code) {
-        Picture8Bit[] refs = new Picture8Bit[] { reference, reference };
+        Picture[] refs = new Picture[] { reference, reference };
         switch (motionType) {
         case 1:
             predictFieldInFrame(reference, x, y, mbPix, _in, backward, spatial_temporal_weight_code);
@@ -239,7 +239,7 @@ public class MPEGPred {
         }
     }
 
-    private void predict16x16DualPrimeField(Picture8Bit[] reference, int x, int y, BitReader bits, int[][] mbPix,
+    private void predict16x16DualPrimeField(Picture[] reference, int x, int y, BitReader bits, int[][] mbPix,
             int fieldNo) {
         int vect1X = mvectDecode(bits, fCode[0][0], mvPred[0][0][0]);
         int dmX = MPEGConst.vlcDualPrime.readVLC(bits) - 1;
@@ -298,14 +298,14 @@ public class MPEGPred {
         return ((vect1x + (vect1x > 0 ? 1 : 0)) >> 1) + dmX;
     }
 
-    private void predict16x8MC(Picture8Bit[] reference, int x, int y, BitReader bits, int backward, int[][] mbPix,
+    private void predict16x8MC(Picture[] reference, int x, int y, BitReader bits, int backward, int[][] mbPix,
             int vertPos, int vectIdx) {
         int field = bits.read1Bit();
 
         predictGeneric(reference[field], x, y + vertPos, bits, backward, mbPix, vertPos, 16, 8, 1, field, 0, vectIdx, 0);
     }
 
-    protected void predict16x16Field(Picture8Bit[] reference, int x, int y, BitReader bits, int backward, int[][] mbPix) {
+    protected void predict16x16Field(Picture[] reference, int x, int y, BitReader bits, int backward, int[][] mbPix) {
         int field = bits.read1Bit();
 
         predictGeneric(reference[field], x, y, bits, backward, mbPix, 0, 16, 16, 1, field, 0, 0, 0);
@@ -314,7 +314,7 @@ public class MPEGPred {
         mvPred[1][backward][1] = mvPred[0][backward][1];
     }
 
-    private void predict16x16DualPrimeFrame(Picture8Bit[] reference, int x, int y, BitReader bits, int backward,
+    private void predict16x16DualPrimeFrame(Picture[] reference, int x, int y, BitReader bits, int backward,
             int[][] mbPix) {
         int vect1X = mvectDecode(bits, fCode[0][0], mvPred[0][0][0]);
         int dmX = MPEGConst.vlcDualPrime.readVLC(bits) - 1;
@@ -387,7 +387,7 @@ public class MPEGPred {
         mvPred[1][0][1] = mvPred[0][0][1] = vect1Y << 1;
     }
 
-    protected void predict16x16Frame(Picture8Bit reference, int x, int y, BitReader bits, int backward, int[][] mbPix) {
+    protected void predict16x16Frame(Picture reference, int x, int y, BitReader bits, int backward, int[][] mbPix) {
         predictGeneric(reference, x, y, bits, backward, mbPix, 0, 16, 16, 0, 0, 0, 0, 0);
 
         mvPred[1][backward][0] = mvPred[0][backward][0];
@@ -424,7 +424,7 @@ public class MPEGPred {
         return (val << shift) >> shift;
     }
 
-    protected void predictGeneric(Picture8Bit reference, int x, int y, BitReader bits, int backward, int[][] mbPix, int tgtY,
+    protected void predictGeneric(Picture reference, int x, int y, BitReader bits, int backward, int[][] mbPix, int tgtY,
             int blkW, int blkH, int isSrcField, int srcField, int isDstField, int vectIdx, int predScale) {
         int vectX = mvectDecode(bits, fCode[backward][0], mvPred[vectIdx][backward][0]);
         int vectY = mvectDecode(bits, fCode[backward][1], mvPred[vectIdx][backward][1] >> predScale);
@@ -436,7 +436,7 @@ public class MPEGPred {
         mvPred[vectIdx][backward][1] = vectY << predScale;
     }
 
-    private void predictFieldInFrame(Picture8Bit reference, int x, int y, int[][] mbPix, BitReader bits, int backward,
+    private void predictFieldInFrame(Picture reference, int x, int y, int[][] mbPix, BitReader bits, int backward,
             int spatial_temporal_weight_code) {
         y >>= 1;
         int field = bits.read1Bit();
@@ -451,7 +451,7 @@ public class MPEGPred {
         }
     }
 
-    public void predictMB(Picture8Bit ref, int refX, int vectX, int refY, int vectY, int blkW, int blkH, int refVertStep,
+    public void predictMB(Picture ref, int refX, int vectX, int refY, int vectY, int blkW, int blkH, int refVertStep,
             int refVertOff, int[][] tgt, int tgtY, int tgtVertStep) {
         int ch = chromaFormat == Chroma420 ? 1 : 0;
         int cw = chromaFormat == Chroma444 ? 0 : 1;
@@ -467,7 +467,7 @@ public class MPEGPred {
                 ref.getPlaneHeight(2), refVertStep, refVertOff, tgt[2], tgtY, blkW >> cw, blkH >> ch, tgtVertStep);
     }
 
-    public void predict16x16NoMV(Picture8Bit picture, int x, int y, int pictureStructure, int backward, int[][] mbPix) {
+    public void predict16x16NoMV(Picture picture, int x, int y, int pictureStructure, int backward, int[][] mbPix) {
         if (pictureStructure == 3) {
             predictMB(picture, (x << 1), mvPred[0][backward][0], (y << 1), mvPred[0][backward][1], 16, 16, 0, 0, mbPix,
                     0, 0);

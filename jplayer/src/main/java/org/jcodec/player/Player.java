@@ -64,7 +64,7 @@ public class Player {
     private long lastAudio;
 
     private List<Frame> video = Collections.synchronizedList(new ArrayList<Frame>());
-    private BlockingQueue<int[][]> videoDrain = new LinkedBlockingQueue<int[][]>();
+    private BlockingQueue<byte[][]> videoDrain = new LinkedBlockingQueue<byte[][]>();
 
     private volatile boolean stop;
 
@@ -273,10 +273,10 @@ public class Player {
         }
     }
 
-    private int[][] createTarget() {
+    private byte[][] createTarget() {
         Size dim = mi.getDim();
         int sz = 2 * dim.getWidth() * dim.getHeight();
-        return new int[][] { new int[sz], new int[sz], new int[sz] };
+        return new byte[][] { new byte[sz], new byte[sz], new byte[sz] };
     }
 
     private void startVideoDecode() {
@@ -357,7 +357,7 @@ public class Player {
     }
 
     private void decodeJustOneFrame() throws IOException {
-        int[][] buf = take(videoDrain, 20);
+        byte[][] buf = take(videoDrain, 20);
         if (buf == null)
             return;
         Frame frame = videoSource.decode(buf);

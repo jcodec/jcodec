@@ -1,5 +1,5 @@
-package org.jcodec.scale;
-import org.jcodec.common.model.Picture;
+package org.jcodec.scale.highbd;
+import org.jcodec.common.model.PictureHiBD;
 
 import java.lang.IllegalArgumentException;
 
@@ -10,13 +10,13 @@ import java.lang.IllegalArgumentException;
  * @author The JCodec project
  * 
  */
-public class Yuv422pToYuv420j implements Transform {
+public class Yuv422pToYuv420jHiBD implements TransformHiBD {
     public static int COEFF = 9362;
     private int shift;
     private int halfSrc;
     private int halfDst;
 
-    public Yuv422pToYuv420j(int upshift, int downshift) {
+    public Yuv422pToYuv420jHiBD(int upshift, int downshift) {
         this.shift = downshift + 13 - upshift;
         if(shift < 0) {
             throw new IllegalArgumentException("Maximum upshift allowed: " + (downshift + 13));
@@ -25,7 +25,7 @@ public class Yuv422pToYuv420j implements Transform {
         halfDst = 128 << Math.max(upshift - downshift, 0);
     }
 
-    public void transform(Picture src, Picture dst) {
+    public void transform(PictureHiBD src, PictureHiBD dst) {
         int[] sy = src.getPlaneData(0);
         int[] dy = dst.getPlaneData(0);
         for (int i = 0; i < src.getPlaneWidth(0) * src.getPlaneHeight(0); i++)

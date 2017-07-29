@@ -1,6 +1,7 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.PictureHiBD;
 
 import java.lang.IllegalArgumentException;
 
@@ -11,23 +12,27 @@ import java.lang.IllegalArgumentException;
  * @author The JCodec project
  *
  */
-public class RgbToBgr8Bit implements Transform8Bit {
+@Deprecated
+public class RgbToBgrHiBD implements TransformHiBD {
 
     @Override
-    public void transform(Picture8Bit src, Picture8Bit dst) {
+    public void transform(PictureHiBD src, PictureHiBD dst) {
         if (src.getColor() != ColorSpace.RGB && src.getColor() != ColorSpace.BGR
                 || dst.getColor() != ColorSpace.RGB && dst.getColor() != ColorSpace.BGR) {
             throw new IllegalArgumentException(
                     "Expected RGB or BGR inputs, was: " + src.getColor() + ", " + dst.getColor());
         }
+        if (src.getCrop() != null || dst.getCrop() != null)
+            throw new NotSupportedException("Cropped images not supported");
 
-        byte[] dataSrc = src.getPlaneData(0);
-        byte[] dataDst = dst.getPlaneData(0);
+        int[] dataSrc = src.getPlaneData(0);
+        int[] dataDst = dst.getPlaneData(0);
         for (int i = 0; i < dataSrc.length; i += 3) {
             // src and dst can actually be the same array
-            byte tmp = dataSrc[i + 2];
+            int tmp = dataSrc[i + 2];
             dataDst[i + 2] = dataSrc[i];
             dataDst[i] = tmp;
         }
     }
+
 }

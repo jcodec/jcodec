@@ -6,7 +6,7 @@ import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -102,17 +102,17 @@ public class ConformanceTestTool {
                 is = new BufferedInputStream(new FileInputStream(coded));
                 BufferH264ES demuxer = new BufferH264ES(NIOUtils.mapFile(coded));
                 H264Decoder decoder = new H264Decoder();
-                Picture8Bit buf = Picture8Bit.create(1920, 1088, ColorSpace.YUV420);
-                Picture8Bit pic;
+                Picture buf = Picture.create(1920, 1088, ColorSpace.YUV420);
+                Picture pic;
                 int i = 0;
-                while ((pic = decoder.decodeFrame8Bit(reorder(demuxer.nextFrame()), buf.getData())) != null) {
+                while ((pic = decoder.decodeFrame(reorder(demuxer.nextFrame()), buf.getData())) != null) {
                     if (rawReader == null || oldWidth != pic.getWidth() || oldHeight != pic.getHeight()) {
                         rawReader = new RawReader(decoded, pic.getWidth(), pic.getHeight());
                         oldWidth = pic.getWidth();
                         oldHeight = pic.getHeight();
                     }
 
-                    Picture8Bit ref = rawReader.readNextFrame8Bit();
+                    Picture ref = rawReader.readNextFrame();
                     if (!compare(ref, pic)) {
                         System.err.println(" - FAILED (" + i + ")");
                         sb.append("FAILED");
@@ -123,7 +123,7 @@ public class ConformanceTestTool {
                 if (rawReader == null) {
                     throw new IllegalStateException("rawReader == null");
                 }
-                Picture8Bit ref = rawReader.readNextFrame8Bit();
+                Picture ref = rawReader.readNextFrame();
                 if (ref != null) {
                     System.err.println(" - FAILED");
                     sb.append("FAILED");
@@ -145,7 +145,7 @@ public class ConformanceTestTool {
         throw new RuntimeException("Display order reordering!!!");
     }
 
-    private static boolean compare(Picture8Bit expected, Picture8Bit actual) {
+    private static boolean compare(Picture expected, Picture actual) {
 
         int size = expected.getWidth() * expected.getHeight();
 

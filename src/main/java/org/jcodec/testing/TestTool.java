@@ -21,7 +21,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.platform.Platform;
@@ -88,7 +88,7 @@ public class TestTool {
             }
             inTrack.gotoFrame(inFrame.getFrameNo());
 
-            List<Picture8Bit> decodedPics = new ArrayList<Picture8Bit>();
+            List<Picture> decodedPics = new ArrayList<Picture>();
             int totalFrames = (int) inTrack.getMeta().getTotalFrames(), seqNo = 0;
             for (int i = sf; (inFrame = inTrack.nextFrame()) != null; i++) {
                 ByteBuffer data = inFrame.getData();
@@ -101,7 +101,7 @@ public class TestTool {
                     if (raw != null) {
                         raw.close();
                         runJMCompareResults(decodedPics, seqNo);
-                        decodedPics = new ArrayList<Picture8Bit>();
+                        decodedPics = new ArrayList<Picture>();
                         seqNo = i;
                     }
                     raw = new FileChannelWrapper(new FileOutputStream(coded).getChannel());
@@ -114,7 +114,7 @@ public class TestTool {
 
                 Size size = inTrack.getMeta().getVideoCodecMeta().getSize();
 
-                decodedPics.add(decoder.decodeFrame8BitFromNals(nalUnits, Picture8Bit
+                decodedPics.add(decoder.decodeFrameFromNals(nalUnits, Picture
                         .create((size.getWidth() + 15) & ~0xf, (size.getHeight() + 15) & ~0xf, ColorSpace.YUV420)
                         .getData()));
                 if (i % 500 == 0)
@@ -130,14 +130,14 @@ public class TestTool {
         }
     }
 
-    private void runJMCompareResults(List<Picture8Bit> decodedPics, int seqNo) throws Exception {
+    private void runJMCompareResults(List<Picture> decodedPics, int seqNo) throws Exception {
 
         try {
             Process process = Runtime.getRuntime().exec(jm + " -d " + jmconf.getAbsolutePath());
             process.waitFor();
 
             ByteBuffer yuv = NIOUtils.fetchFromFile(decoded);
-            for (Picture8Bit pic : decodedPics) {
+            for (Picture pic : decodedPics) {
                 pic = pic.cropped();
                 boolean equals = Platform.arrayEqualsByte(
                         toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, pic.getPlaneWidth(0) * pic.getPlaneHeight(0))),

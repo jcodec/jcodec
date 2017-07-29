@@ -1,7 +1,5 @@
 package org.jcodec.scale;
 
-import static org.jcodec.scale.Yuv422pToRgb.YUV444toRGB888;
-
 import org.jcodec.common.model.Picture;
 
 /**
@@ -13,71 +11,70 @@ import org.jcodec.common.model.Picture;
  */
 public class Yuv420pToRgb implements Transform {
 
-    private final int downShift;
-    private final int upShift;
-
-    public Yuv420pToRgb(int upShift, int downShift) {
-        this.upShift = upShift;
-        this.downShift = downShift;
+    public Yuv420pToRgb() {
     }
 
+    @Override
     public final void transform(Picture src, Picture dst) {
-        int[] y = src.getPlaneData(0);
-        int[] u = src.getPlaneData(1);
-        int[] v = src.getPlaneData(2);
-        int[] data = dst.getPlaneData(0);
+        byte[] y = src.getPlaneData(0);
+        byte[] u = src.getPlaneData(1);
+        byte[] v = src.getPlaneData(2);
+        byte[] data = dst.getPlaneData(0);
 
         int offLuma = 0, offChroma = 0;
         int stride = dst.getWidth();
         for (int i = 0; i < (dst.getHeight() >> 1); i++) {
             for (int k = 0; k < (dst.getWidth() >> 1); k++) {
                 int j = k << 1;
-                YUV444toRGB888((y[offLuma + j] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
-                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j) * 3);
-                YUV444toRGB888((y[offLuma + j + 1] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
-                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j + 1) * 3);
+                YUV420pToRGB(y[offLuma + j], u[offChroma], v[offChroma], data, (offLuma + j) * 3);
+                YUV420pToRGB(y[offLuma + j + 1], u[offChroma], v[offChroma], data, (offLuma + j + 1) * 3);
 
-                YUV444toRGB888((y[offLuma + j + stride] << upShift) >> downShift,
-                        (u[offChroma] << upShift) >> downShift, (v[offChroma] << upShift) >> downShift, data, (offLuma
-                                + j + stride) * 3);
-                YUV444toRGB888((y[offLuma + j + stride + 1] << upShift) >> downShift,
-                        (u[offChroma] << upShift) >> downShift, (v[offChroma] << upShift) >> downShift, data, (offLuma
-                                + j + stride + 1) * 3);
+                YUV420pToRGB(y[offLuma + j + stride], u[offChroma], v[offChroma], data, (offLuma + j + stride) * 3);
+                YUV420pToRGB(y[offLuma + j + stride + 1], u[offChroma], v[offChroma], data,
+                        (offLuma + j + stride + 1) * 3);
 
                 ++offChroma;
             }
-            if((dst.getWidth() & 0x1) != 0) {
+            if ((dst.getWidth() & 0x1) != 0) {
                 int j = dst.getWidth() - 1;
 
-                YUV444toRGB888((y[offLuma + j] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
-                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j) * 3);
-                YUV444toRGB888((y[offLuma + j + stride] << upShift) >> downShift,
-                        (u[offChroma] << upShift) >> downShift, (v[offChroma] << upShift) >> downShift, data, (offLuma
-                                + j + stride) * 3);
-                
+                YUV420pToRGB(y[offLuma + j], u[offChroma], v[offChroma], data, (offLuma + j) * 3);
+                YUV420pToRGB(y[offLuma + j + stride], u[offChroma], v[offChroma], data, (offLuma + j + stride) * 3);
+
                 ++offChroma;
             }
 
             offLuma += 2 * stride;
         }
-        if((dst.getHeight() & 0x1) != 0) {
+        if ((dst.getHeight() & 0x1) != 0) {
             for (int k = 0; k < (dst.getWidth() >> 1); k++) {
                 int j = k << 1;
-                YUV444toRGB888((y[offLuma + j] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
-                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j) * 3);
-                YUV444toRGB888((y[offLuma + j + 1] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
-                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j + 1) * 3);
+                YUV420pToRGB(y[offLuma + j], u[offChroma], v[offChroma], data, (offLuma + j) * 3);
+                YUV420pToRGB(y[offLuma + j + 1], u[offChroma], v[offChroma], data, (offLuma + j + 1) * 3);
 
                 ++offChroma;
             }
-            if((dst.getWidth() & 0x1) != 0) {
+            if ((dst.getWidth() & 0x1) != 0) {
                 int j = dst.getWidth() - 1;
 
-                YUV444toRGB888((y[offLuma + j] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
-                        (v[offChroma] << upShift) >> downShift, data, (offLuma + j) * 3);
-                
+                YUV420pToRGB(y[offLuma + j], u[offChroma], v[offChroma], data, (offLuma + j) * 3);
+
                 ++offChroma;
             }
         }
+    }
+
+    public static final void YUV420pToRGB(final byte y, final byte u, final byte v, byte[] data, int off) {
+        final int c = y + 112;
+        final int r = (298 * c + 409 * v + 128) >> 8;
+        final int g = (298 * c - 100 * u - 208 * v + 128) >> 8;
+        final int b = (298 * c + 516 * u + 128) >> 8;
+        data[off] = (byte) (crop(r) - 128);
+        data[off + 1] = (byte) (crop(g) - 128);
+        data[off + 2] = (byte) (crop(b) - 128);
+    }
+
+    private static int crop(int val) {
+        return val < 0 ? 0 : (val > 255 ? 255 : val);
     }
 }

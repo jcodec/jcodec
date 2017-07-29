@@ -42,7 +42,7 @@ import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
@@ -314,8 +314,8 @@ public class SourceImpl implements Source, PacketSource {
         return null;
     }
 
-    public Picture8Bit decodeVideo(ByteBuffer data, Picture8Bit target1) {
-        return videoDecoder.decodeFrame8Bit(data, target1.getData());
+    public Picture decodeVideo(ByteBuffer data, Picture target1) {
+        return videoDecoder.decodeFrame(data, target1.getData());
     }
 
     protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
@@ -359,7 +359,7 @@ public class SourceImpl implements Source, PacketSource {
         Packet inVideoPacket;
         for (; skipFrames > 0 && (inVideoPacket = getNextVideoPacket()) != null;) {
             LoanerPicture loanerBuffer = getPixelBuffer(inVideoPacket.getData());
-            Picture8Bit decodedFrame = decodeVideo(inVideoPacket.getData(), loanerBuffer.getPicture());
+            Picture decodedFrame = decodeVideo(inVideoPacket.getData(), loanerBuffer.getPicture());
             if (decodedFrame == null) {
                 pixelStore.putBack(loanerBuffer);
                 continue;
@@ -414,7 +414,7 @@ public class SourceImpl implements Source, PacketSource {
             if (inVideoPacket.getFrameType() == FrameType.UNKNOWN) {
                 detectFrameType(inVideoPacket);
             }
-            Picture8Bit decodedFrame = null;
+            Picture decodedFrame = null;
             LoanerPicture pixelBuffer = getPixelBuffer(inVideoPacket.getData());
             decodedFrame = decodeVideo(inVideoPacket.getData(), pixelBuffer.getPicture());
             if (decodedFrame == null) {

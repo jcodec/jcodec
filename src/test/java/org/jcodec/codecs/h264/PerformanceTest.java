@@ -1,7 +1,7 @@
 package org.jcodec.codecs.h264;
 
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.platform.Platform;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -30,7 +30,7 @@ public class PerformanceTest {
         int height = parseInt(info.split(" ")[1]);
         int frameCount = parseInt(info.split(" ")[2]);
 
-        byte[][] picData = Picture8Bit.create(width, height, ColorSpace.YUV420J).getData();
+        byte[][] picData = Picture.create(width, height, ColorSpace.YUV420J).getData();
 
         H264Decoder decoder = new H264Decoder();
         decoder.addSps(singletonList(readFile(dir + "/sps")));
@@ -47,7 +47,7 @@ public class PerformanceTest {
             System.out.println("warming up " + i + "/" + warmUpIterations);
 
             for (int fn = 0; fn < frameCount; fn++)
-                decoder.decodeFrame8BitFromNals(duplicateBuffers(frames.get(fn)), picData);
+                decoder.decodeFrameFromNals(duplicateBuffers(frames.get(fn)), picData);
         }
 
         int fpss = 0;
@@ -58,7 +58,7 @@ public class PerformanceTest {
             long t = System.currentTimeMillis();
 
             for (int fn = 0; fn < frameCount; fn++)
-                decoder.decodeFrame8BitFromNals(duplicateBuffers(frames.get(fn)), picData);
+                decoder.decodeFrameFromNals(duplicateBuffers(frames.get(fn)), picData);
 
             t = System.currentTimeMillis() - t;
             long fps = frames.size() * 1000 / t;

@@ -1,8 +1,7 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
 
-import static org.jcodec.common.tools.MathUtil.clip;
-
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.PictureHiBD;
+import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -11,16 +10,16 @@ import org.jcodec.common.model.Picture8Bit;
  * @author The JCodec project
  * 
  */
-public class Yuv420jToRgb8Bit implements Transform8Bit {
+public class Yuv420jToRgbHiBD implements TransformHiBD {
 
-    public Yuv420jToRgb8Bit() {
+    public Yuv420jToRgbHiBD() {
     }
 
-    public final void transform(Picture8Bit src, Picture8Bit dst) {
-        byte[] y = src.getPlaneData(0);
-        byte[] u = src.getPlaneData(1);
-        byte[] v = src.getPlaneData(2);
-        byte[] data = dst.getPlaneData(0);
+    public final void transform(PictureHiBD src, PictureHiBD dst) {
+        int[] y = src.getPlaneData(0);
+        int[] u = src.getPlaneData(1);
+        int[] v = src.getPlaneData(2);
+        int[] data = dst.getPlaneData(0);
 
         int offLuma = 0, offChroma = 0;
         int stride = dst.getWidth();
@@ -31,8 +30,7 @@ public class Yuv420jToRgb8Bit implements Transform8Bit {
                 YUVJtoRGB(y[offLuma + j + 1], u[offChroma], v[offChroma], data, (offLuma + j + 1) * 3);
 
                 YUVJtoRGB(y[offLuma + j + stride], u[offChroma], v[offChroma], data, (offLuma + j + stride) * 3);
-                YUVJtoRGB(y[offLuma + j + stride + 1], u[offChroma], v[offChroma], data,
-                        (offLuma + j + stride + 1) * 3);
+                YUVJtoRGB(y[offLuma + j + stride + 1], u[offChroma], v[offChroma], data, (offLuma + j + stride + 1) * 3);
 
                 ++offChroma;
             }
@@ -77,17 +75,19 @@ public class Yuv420jToRgb8Bit implements Transform8Bit {
     private static final int _FIX_0_34414 = -FIX(0.34414);
     private static final int FIX_1_402 = FIX(1.40200);
 
-    public final static void YUVJtoRGB(byte y, byte cb, byte cr, byte[] data, int off) {
-        int y_ = (y + 128) << SCALEBITS;
+    public final static void YUVJtoRGB(int y, int cb, int cr, int[] data, int off) {
+        y = y << SCALEBITS;
+        cb = cb - 128;
+        cr = cr - 128;
         int add_r = FIX_1_402 * cr + ONE_HALF;
         int add_g = _FIX_0_34414 * cb - FIX_0_71414 * cr + ONE_HALF;
         int add_b = FIX_1_772 * cb + ONE_HALF;
 
-        int r = (y_ + add_r) >> SCALEBITS;
-        int g = (y_ + add_g) >> SCALEBITS;
-        int b = (y_ + add_b) >> SCALEBITS;
-        data[off] = (byte) clip(r - 128, -128, 127);
-        data[off + 1] = (byte) clip(g - 128, -128, 127);
-        data[off + 2] = (byte) clip(b - 128, -128, 127);
+        int r = (y + add_r) >> SCALEBITS;
+        int g = (y + add_g) >> SCALEBITS;
+        int b = (y + add_b) >> SCALEBITS;
+        data[off] = MathUtil.clip(r, 0, 255);
+        data[off + 1] = MathUtil.clip(g, 0, 255);
+        data[off + 2] = MathUtil.clip(b, 0, 255);
     }
 }

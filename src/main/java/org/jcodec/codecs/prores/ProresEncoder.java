@@ -23,7 +23,7 @@ import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.ImageOP;
 
@@ -216,10 +216,10 @@ public class ProresEncoder extends VideoEncoder {
     }
 
     protected int encodeSlice(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan, int sliceMbCount,
-            int mbX, int mbY, Picture8Bit result, int prevQp, int mbWidth, int mbHeight, boolean unsafe, int vStep,
+            int mbX, int mbY, Picture result, int prevQp, int mbWidth, int mbHeight, boolean unsafe, int vStep,
             int vOffset) {
 
-        Picture8Bit striped = splitSlice(result, mbX, mbY, sliceMbCount, unsafe, vStep, vOffset);
+        Picture striped = splitSlice(result, mbX, mbY, sliceMbCount, unsafe, vStep, vOffset);
         int[][] ac = new int[][] { new int[sliceMbCount << 8], new int[sliceMbCount << 7], new int[sliceMbCount << 7] };
         dctOnePlane(sliceMbCount << 2, striped.getPlaneData(0), ac[0]);
         dctOnePlane(sliceMbCount << 1, striped.getPlaneData(1), ac[1]);
@@ -279,7 +279,7 @@ public class ProresEncoder extends VideoEncoder {
     }
 
     protected void encodePicture(ByteBuffer out, int[][] scaledLuma, int[][] scaledChroma, int[] scan,
-            Picture8Bit picture, int vStep, int vOffset) {
+            Picture picture, int vStep, int vOffset) {
 
         int mbWidth = (picture.getWidth() + 15) >> 4;
         int shift = 4 + vStep;
@@ -330,12 +330,12 @@ public class ProresEncoder extends VideoEncoder {
         return nSlices * mbHeight;
     }
 
-    private Picture8Bit splitSlice(Picture8Bit result, int mbX, int mbY, int sliceMbCount, boolean unsafe, int vStep,
+    private Picture splitSlice(Picture result, int mbX, int mbY, int sliceMbCount, boolean unsafe, int vStep,
             int vOffset) {
-        Picture8Bit out = Picture8Bit.create(sliceMbCount << 4, 16, YUV422);
+        Picture out = Picture.create(sliceMbCount << 4, 16, YUV422);
         if (unsafe) {
             int mbHeightPix = 16 << vStep;
-            Picture8Bit filled = Picture8Bit.create(sliceMbCount << 4, mbHeightPix, YUV422);
+            Picture filled = Picture.create(sliceMbCount << 4, mbHeightPix, YUV422);
             ImageOP.subImageWithFillPic8(result, filled,
                     new Rect(mbX << 4, mbY << (4 + vStep), sliceMbCount << 4, mbHeightPix));
 
@@ -347,7 +347,7 @@ public class ProresEncoder extends VideoEncoder {
         return out;
     }
 
-    private void split(Picture8Bit _in, Picture8Bit out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
+    private void split(Picture _in, Picture out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
 
         doSplit(_in.getPlaneData(0), out.getPlaneData(0), _in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep,
                 vOffset);
@@ -387,7 +387,7 @@ public class ProresEncoder extends VideoEncoder {
     }
 
     @Override
-    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer buffer) {
+    public EncodedFrame encodeFrame(Picture pic, ByteBuffer buffer) {
         ByteBuffer out = buffer.duplicate();
         ByteBuffer fork = out.duplicate();
 
@@ -438,7 +438,7 @@ public class ProresEncoder extends VideoEncoder {
     }
 
     @Override
-    public int estimateBufferSize(Picture8Bit frame) {
+    public int estimateBufferSize(Picture frame) {
         return (3 * frame.getWidth() * frame.getHeight()) / 2;
     }
 }

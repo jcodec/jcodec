@@ -7,7 +7,7 @@ import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.platform.Platform;
 
 import java.util.Arrays;
@@ -137,7 +137,7 @@ public class RefListManager {
         return copyOf;
     }
 
-    private void reorder(Picture8Bit[] result, int list) {
+    private void reorder(Picture[] result, int list) {
         if (sh.refPicReordering[list] == null)
             return;
 

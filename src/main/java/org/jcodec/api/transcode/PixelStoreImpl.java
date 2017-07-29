@@ -3,46 +3,32 @@ package org.jcodec.api.transcode;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 public class PixelStoreImpl implements PixelStore {
-    private List<Picture8Bit> buffers = new ArrayList<Picture8Bit>();
+    private List<Picture> buffers = new ArrayList<Picture>();
 
     @Override
     public LoanerPicture getPicture(int width, int height, ColorSpace color) {
-        for (Picture8Bit picture8Bit : buffers) {
-//            Logger.debug("Trying");
-            if (picture8Bit.getWidth() == width && picture8Bit.getHeight() == height
-                    && picture8Bit.getColor() == color) {
-//                Logger.debug("Reusing");
-                buffers.remove(picture8Bit);
-                return new LoanerPicture(picture8Bit, 1);
-            } /*else {
-                if(picture8Bit.getWidth() != width)
-                    Logger.debug("width");
-                if(picture8Bit.getHeight() != height)
-                    Logger.debug("height");
-                if ( picture8Bit.getColor() != color)
-                    Logger.debug("color " + picture8Bit.getColor() + " " + color);
-            }*/
+        for (Picture picture : buffers) {
+            if (picture.getWidth() == width && picture.getHeight() == height
+                    && picture.getColor() == color) {
+                buffers.remove(picture);
+                return new LoanerPicture(picture, 1);
+            }
         }
-//        Logger.debug("Creating picture");
-        return new LoanerPicture(Picture8Bit.create(width, height, color), 1);
+        return new LoanerPicture(Picture.create(width, height, color), 1);
     }
 
     @Override
     public void putBack(LoanerPicture frame) {
         frame.decRefCnt();
         if (frame.unused()) {
-            Picture8Bit pixels = frame.getPicture();
+            Picture pixels = frame.getPicture();
             pixels.setCrop(null);
-//            Logger.debug("Returning picture");
             buffers.add(pixels);
-        } /*else {
-            Logger.debug("Picture is used");
-        }*/
+        }
     }
 
     @Override

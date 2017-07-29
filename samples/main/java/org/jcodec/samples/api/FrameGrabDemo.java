@@ -7,7 +7,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import org.jcodec.api.JCodecException;
-import org.jcodec.api.awt.AWTFrameGrab8Bit;
+import org.jcodec.api.awt.AWTFrameGrab;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
@@ -39,7 +39,7 @@ public class FrameGrabDemo {
         FileChannelWrapper in = null;
         try {
             in = NIOUtils.readableChannel(MainUtils.tildeExpand(cmd.getArg(0)));
-            AWTFrameGrab8Bit fg = AWTFrameGrab8Bit.createAWTFrameGrab8Bit(in);
+            AWTFrameGrab fg = AWTFrameGrab.createAWTFrameGrab(in);
             for (int i = 0; i < maxFrames; i++) {
                 BufferedImage frame = fg.getFrame();
                 ImageIO.write(frame, "jpeg", new File(String.format(outDir, i)));

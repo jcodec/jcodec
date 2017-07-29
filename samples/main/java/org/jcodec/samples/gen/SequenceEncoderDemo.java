@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.jcodec.api.awt.AWTSequenceEncoder8Bit;
+import org.jcodec.api.awt.AWTSequenceEncoder;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
@@ -34,7 +34,7 @@ public class SequenceEncoderDemo {
         final int speed = 4;
         final int ballSize = 40;
 
-        AWTSequenceEncoder8Bit enc = AWTSequenceEncoder8Bit.create25Fps(new File(cmd.getArg(0)));
+        AWTSequenceEncoder enc = AWTSequenceEncoder.create25Fps(new File(cmd.getArg(0)));
         enc.getEncoder().setKeyInterval(25);
         int framesToEncode = cmd.getIntegerFlagD(FLAG_FRAMES, 100);
 

@@ -2,7 +2,7 @@ package org.jcodec.scale;
 
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -47,10 +47,10 @@ public class TestRgbToYuv420 {
         int[] uu = downscale(u, 10, 10);
         int[] vv = downscale(v, 10, 10);
 
-        RgbToYuv420p8Bit transform = new RgbToYuv420p8Bit();
-        Picture8Bit _in = Picture8Bit.createPicture8Bit(10, 10,
+        RgbToYuv420p transform = new RgbToYuv420p();
+        Picture _in = Picture.createPicture(10, 10,
                 new byte[][] { ArrayUtil.toByteArrayShifted(rgb), null, null, null }, ColorSpace.RGB);
-        Picture8Bit out = Picture8Bit.create(10, 10, ColorSpace.YUV420);
+        Picture out = Picture.create(10, 10, ColorSpace.YUV420);
         transform.transform(_in, out);
 
         Assert.assertArrayEquals(ArrayUtil.toByteArrayShifted(y), out.getPlaneData(0));

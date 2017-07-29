@@ -12,13 +12,13 @@ import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform8Bit;
+import org.jcodec.scale.Transform;
 
 import java.io.IOException;
 import java.nio.BufferOverflowException;
@@ -126,9 +126,9 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
     static class Transcoder {
         private VideoDecoder decoder;
         private H264Encoder encoder;
-        private Picture8Bit pic0;
-        private Picture8Bit pic1;
-        private Transform8Bit transform;
+        private Picture pic0;
+        private Picture pic1;
+        private Transform transform;
         private H264FixedRateControl rc;
         private Transcode2AVCTrack track;
 
@@ -137,24 +137,24 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
             rc = new H264FixedRateControl(TARGET_RATE);
             this.decoder = track.getDecoder(track.scaleFactor);
             this.encoder = new H264Encoder(rc);
-            pic0 = Picture8Bit.create(track.mbW << 4, (track.mbH + 1) << 4, ColorSpace.YUV444);
+            pic0 = Picture.create(track.mbW << 4, (track.mbH + 1) << 4, ColorSpace.YUV444);
         }
 
         public ByteBuffer transcodeFrame(ByteBuffer src, ByteBuffer dst) throws IOException {
             if (src == null)
                 return null;
-            Picture8Bit decoded = decoder.decodeFrame8Bit(src, pic0.getData());
+            Picture decoded = decoder.decodeFrame(src, pic0.getData());
             if (pic1 == null) {
-                pic1 = Picture8Bit.create(decoded.getWidth(), decoded.getHeight(),
+                pic1 = Picture.create(decoded.getWidth(), decoded.getHeight(),
                         encoder.getSupportedColorSpaces()[0]);
-                transform = ColorUtil.getTransform8Bit(decoded.getColor(), encoder.getSupportedColorSpaces()[0]);
+                transform = ColorUtil.getTransform(decoded.getColor(), encoder.getSupportedColorSpaces()[0]);
             }
             transform.transform(decoded, pic1);
             pic1.setCrop(new Rect(0, 0, track.thumbWidth, track.thumbHeight));
             int rate = TARGET_RATE;
             do {
                 try {
-                    encoder.encodeFrame8Bit(pic1, dst);
+                    encoder.encodeFrame(pic1, dst);
                     break;
                 } catch (BufferOverflowException ex) {
                     Logger.warn("Abandon frame, buffer too small: " + dst.capacity());

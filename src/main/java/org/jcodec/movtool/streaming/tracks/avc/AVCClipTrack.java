@@ -18,7 +18,7 @@ import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoEncoder.EncodedFrame;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
 import org.jcodec.movtool.streaming.tracks.ClipTrack;
@@ -145,19 +145,19 @@ public class AVCClipTrack extends ClipTrack {
 
         public List<ByteBuffer> transcode() throws IOException {
             H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(track.codecPrivate);
-            Picture8Bit buf = Picture8Bit.create(track.mbW << 4, track.mbH << 4, ColorSpace.YUV420J);
-            Picture8Bit dec = null;
+            Picture buf = Picture.create(track.mbW << 4, track.mbH << 4, ColorSpace.YUV420J);
+            Picture dec = null;
             for (VirtualPacket virtualPacket : head) {
-                dec = decoder.decodeFrame8Bit(virtualPacket.getData(), buf.getData());
+                dec = decoder.decodeFrame(virtualPacket.getData(), buf.getData());
             }
             ByteBuffer tmp = ByteBuffer.allocate(track.frameSize);
 
             List<ByteBuffer> result = new ArrayList<ByteBuffer>();
             for (VirtualPacket pkt : tail) {
-                dec = decoder.decodeFrame8Bit(pkt.getData(), buf.getData());
+                dec = decoder.decodeFrame(pkt.getData(), buf.getData());
 
                 tmp.clear();
-                EncodedFrame res = encoder.encodeFrame8Bit(dec, tmp);
+                EncodedFrame res = encoder.encodeFrame(dec, tmp);
                 ByteBuffer out = ByteBuffer.allocate(track.frameSize);
                 processFrame(res.getData(), out);
 

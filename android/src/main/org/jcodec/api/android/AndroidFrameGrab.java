@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.jcodec.api.FrameGrab;
 import org.jcodec.api.JCodecException;
+import org.jcodec.api.PictureWithMetadata;
 import org.jcodec.api.UnsupportedFormatException;
 import org.jcodec.api.specific.ContainerAdaptor;
 import org.jcodec.common.AndroidUtil;
@@ -32,13 +33,12 @@ import android.graphics.Bitmap;
  * NOTE: Android specific routines
  * 
  * @author The JCodec project
- * @deprecated use {@link org.jcodec.api.android.AndroidFrameGrab8Bit} instead.
  * 
  */
-@Deprecated
 public class AndroidFrameGrab extends FrameGrab {
 
-    public static AndroidFrameGrab createAndroidFrameGrab(SeekableByteChannel in) throws IOException, JCodecException {
+    public static AndroidFrameGrab createAndroidFrameGrab(SeekableByteChannel in)
+            throws IOException, JCodecException {
         FrameGrab frameGrab = createFrameGrab(in);
         return new AndroidFrameGrab(frameGrab.getVideoTrack(), frameGrab.getDecoder());
     }
@@ -52,7 +52,7 @@ public class AndroidFrameGrab extends FrameGrab {
      * 
      * @param file
      * @param second
-     * @return
+     * @return A decoded frame from a given point in video.
      * @throws IOException
      * @throws JCodecException
      */
@@ -71,7 +71,7 @@ public class AndroidFrameGrab extends FrameGrab {
      * 
      * @param file
      * @param second
-     * @return
+     * @return A decoded frame from a given point in video.
      * @throws UnsupportedFormatException
      * @throws IOException
      */
@@ -82,7 +82,21 @@ public class AndroidFrameGrab extends FrameGrab {
     /**
      * Get frame at current position in AWT image
      * 
-     * @return
+     * @return A decoded frame with metadata.
+     * @throws IOException
+     */
+    public BitmapWithMetadata getFrameWithMetadata() throws IOException {
+        PictureWithMetadata pictureWithMeta = getNativeFrameWithMetadata();
+        if (pictureWithMeta == null)
+            return null;
+        Bitmap bitmap = AndroidUtil.toBitmap(pictureWithMeta.getPicture());
+        return new BitmapWithMetadata(bitmap, pictureWithMeta.getTimestamp(), pictureWithMeta.getDuration());
+    }
+
+    /**
+     * Get frame at current position in AWT image
+     * 
+     * @return A decoded frame.
      * @throws IOException
      */
     public Bitmap getFrame() throws IOException {
@@ -92,12 +106,26 @@ public class AndroidFrameGrab extends FrameGrab {
     /**
      * Get frame at current position in AWT image
      * 
-     * @return
      * @throws IOException
      */
     public void getFrame(Bitmap bmp) throws IOException {
         Picture picture = getNativeFrame();
         AndroidUtil.toBitmap(picture, bmp);
+    }
+
+    /**
+     * Get frame at current position in AWT image
+     * 
+     * @return A decoded picture with metadata. A bitmap provided is used.
+     * 
+     * @throws IOException
+     */
+    public BitmapWithMetadata getFrameWithMetadata(Bitmap bmp) throws IOException {
+        PictureWithMetadata pictureWithMetadata = getNativeFrameWithMetadata();
+        if (pictureWithMetadata == null)
+            return null;
+        AndroidUtil.toBitmap(pictureWithMetadata.getPicture(), bmp);
+        return new BitmapWithMetadata(bmp, pictureWithMetadata.getTimestamp(), pictureWithMetadata.getDuration());
     }
 
     /**

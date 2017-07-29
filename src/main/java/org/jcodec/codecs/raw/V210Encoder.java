@@ -1,7 +1,7 @@
 package org.jcodec.codecs.raw;
 import static java.lang.System.arraycopy;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.nio.ByteOrder;
  * 
  */
 public class V210Encoder {
-    public ByteBuffer encodeFrame8Bit(ByteBuffer _out, Picture8Bit frame) throws IOException {
+    public ByteBuffer encodeFrame(ByteBuffer _out, Picture frame) throws IOException {
         ByteBuffer out = _out.duplicate();
         out.order(ByteOrder.LITTLE_ENDIAN);
         int tgtStride = ((frame.getPlaneWidth(0) + 47) / 48) * 48;

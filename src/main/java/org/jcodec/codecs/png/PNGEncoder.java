@@ -7,7 +7,7 @@ import java.util.zip.Deflater;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MainUtils;
 
 /**
@@ -56,7 +56,7 @@ public class PNGEncoder extends VideoEncoder {
     private static final int PNG_COLOR_MASK_COLOR = 2;
 
     @Override
-    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer out) {
+    public EncodedFrame encodeFrame(Picture pic, ByteBuffer out) {
         ByteBuffer _out = out.duplicate();
         _out.putLong(PNGSIG);
         IHDR ihdr = new IHDR();
@@ -129,7 +129,7 @@ public class PNGEncoder extends VideoEncoder {
     }
 
     @Override
-    public int estimateBufferSize(Picture8Bit frame) {
+    public int estimateBufferSize(Picture frame) {
         return frame.getWidth() * frame.getHeight() * 4;
     }
 }

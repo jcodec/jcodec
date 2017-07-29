@@ -8,7 +8,6 @@ import org.jcodec.common.model.Picture;
  * This software is distributed under FreeBSD License
  * 
  * @author The JCodec project
- * @deprecated Use org.jcodec.scale.Transform8Bit and related APIs
  *
  */
 public interface Transform {

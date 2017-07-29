@@ -11,12 +11,12 @@ import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer.VideoTrack;
 import org.jcodec.scale.AWTUtil;
-import org.jcodec.scale.Transform8Bit;
-import org.jcodec.scale.Yuv420pToRgb8Bit;
+import org.jcodec.scale.Transform;
+import org.jcodec.scale.Yuv420pToRgb;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -68,11 +68,11 @@ public class MKVFrameReadingTest {
     public void test() throws Exception {
 
         H264Decoder decoder = new H264Decoder();
-        Transform8Bit transform = new Yuv420pToRgb8Bit();
+        Transform transform = new Yuv420pToRgb();
 
         DemuxerTrack inTrack = dem.getVideoTracks().get(0);
 
-        Picture8Bit rgb = Picture8Bit.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
+        Picture rgb = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
         BufferedImage bi = new BufferedImage(dem.getPictureWidth(), dem.getPictureHeight(), BufferedImage.TYPE_3BYTE_BGR);
         AvcCBox avcC = AvcCBox.parseAvcCBox(((VideoTrack) inTrack).getCodecState());
 
@@ -81,14 +81,14 @@ public class MKVFrameReadingTest {
 
         Packet inFrame;
         for (int i = 1; (inFrame = inTrack.nextFrame()) != null && i <= 200; i++) {
-            Picture8Bit buf = Picture8Bit.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.YUV422);
-            Picture8Bit pic = decoder.decodeFrame8BitFromNals(splitMOVPacket(inFrame.getData(), avcC), buf.getData());
+            Picture buf = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.YUV422);
+            Picture pic = decoder.decodeFrameFromNals(splitMOVPacket(inFrame.getData(), avcC), buf.getData());
             if (bi == null)
                 bi = new BufferedImage(pic.getWidth(), pic.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
             if (rgb == null)
-                rgb = Picture8Bit.create(pic.getWidth(), pic.getHeight(), RGB);
+                rgb = Picture.create(pic.getWidth(), pic.getHeight(), RGB);
             transform.transform(pic, rgb);
-            AWTUtil.toBufferedImage8Bit2(rgb, bi);
+            AWTUtil.toBufferedImage2(rgb, bi);
             ImageIO.write(bi, "png", new File(format(outPattern, i++)));
 
         }
@@ -98,7 +98,7 @@ public class MKVFrameReadingTest {
     @Ignore @Test
     public void testFirstFrame() throws Exception {
         
-        Transform8Bit transform = new Yuv420pToRgb8Bit();
+        Transform transform = new Yuv420pToRgb();
 
         H264Decoder decoder = new H264Decoder();
         DemuxerTrack inTrack = dem.getVideoTracks().get(0);
@@ -125,12 +125,12 @@ public class MKVFrameReadingTest {
         
         Assert.assertArrayEquals(rawFrame, MKVMuxerTest.bufferToArray(bb));
         
-        Picture8Bit buf = Picture8Bit.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.YUV422);
-        Picture8Bit pic = decoder.decodeFrame8BitFromNals(H264Utils.splitMOVPacket(inFrame.getData(), avcC), buf.getData());
-        Picture8Bit rgb = Picture8Bit.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
+        Picture buf = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.YUV422);
+        Picture pic = decoder.decodeFrameFromNals(H264Utils.splitMOVPacket(inFrame.getData(), avcC), buf.getData());
+        Picture rgb = Picture.create(dem.getPictureWidth(), dem.getPictureHeight(), ColorSpace.RGB);
         BufferedImage bi = new BufferedImage(dem.getPictureWidth(), dem.getPictureHeight(), BufferedImage.TYPE_3BYTE_BGR);
         transform.transform(pic, rgb);
-        AWTUtil.toBufferedImage8Bit2(rgb, bi);
+        AWTUtil.toBufferedImage2(rgb, bi);
         File f = new File(format(outPattern, 0));
         System.out.println("Writing to file: "+f.getAbsolutePath());
         ImageIO.write(bi, "png", f);

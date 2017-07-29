@@ -9,7 +9,7 @@ import java.util.Arrays;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -41,7 +41,7 @@ public class VP8Encoder extends VideoEncoder {
     }
 
     @Override
-    public EncodedFrame encodeFrame8Bit(Picture8Bit pic, ByteBuffer _buf) {
+    public EncodedFrame encodeFrame(Picture pic, ByteBuffer _buf) {
         ByteBuffer out = _buf.duplicate();
         int mbWidth = ((pic.getWidth() + 15) >> 4);
         int mbHeight = ((pic.getHeight() + 15) >> 4);
@@ -56,7 +56,7 @@ public class VP8Encoder extends VideoEncoder {
 
         quantizer = new VPXQuantizer();
 
-        Picture8Bit outMB = Picture8Bit.create(16, 16, ColorSpace.YUV420);
+        Picture outMB = Picture.create(16, 16, ColorSpace.YUV420);
 
         int[] segmentQps = rc.getSegmentQps();
 
@@ -242,7 +242,7 @@ public class VP8Encoder extends VideoEncoder {
         out.putShort((short) height);
     }
 
-    private void collectPredictors(Picture8Bit outMB, int mbX) {
+    private void collectPredictors(Picture outMB, int mbX) {
         arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
         arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
         arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
@@ -259,7 +259,7 @@ public class VP8Encoder extends VideoEncoder {
         }
     }
 
-    private void luma(Picture8Bit pic, int mbX, int mbY, VPXBooleanEncoder out, int qp, Picture8Bit outMB) {
+    private void luma(Picture pic, int mbX, int mbY, VPXBooleanEncoder out, int qp, Picture outMB) {
         int x = mbX << 4;
         int y = mbY << 4;
         int[][] ac = transform(pic, 0, qp, x, y);
@@ -297,7 +297,7 @@ public class VP8Encoder extends VideoEncoder {
         return tmp2;
     }
 
-    private void chroma(Picture8Bit pic, int mbX, int mbY, VPXBooleanEncoder boolEnc, int qp, Picture8Bit outMB) {
+    private void chroma(Picture pic, int mbX, int mbY, VPXBooleanEncoder boolEnc, int qp, Picture outMB) {
         int x = mbX << 3;
         int y = mbY << 3;
         int chromaPred1 = chromaPredBlk(1, x, y);
@@ -315,7 +315,7 @@ public class VP8Encoder extends VideoEncoder {
         putChroma(outMB.getData()[2], 2, x, y, ac2, chromaPred2);
     }
 
-    private int[][] transformChroma(Picture8Bit pic, int comp, int qp, int x, int y, Picture8Bit outMB, int chromaPred) {
+    private int[][] transformChroma(Picture pic, int comp, int qp, int x, int y, Picture outMB, int chromaPred) {
         int[][] ac = new int[4][16];
 
         for (int blk = 0; blk < ac.length; blk++) {
@@ -414,7 +414,7 @@ public class VP8Encoder extends VideoEncoder {
         return (byte)((ArrayUtil.sumByte(leftRow[0]) + ArrayUtil.sumByte3(topLine[0], x, 16) + 16) >> 5);
     }
 
-    private int[][] transform(Picture8Bit pic, int comp, int qp, int x, int y) {
+    private int[][] transform(Picture pic, int comp, int qp, int x, int y) {
         int dcc = lumaDCPred(x, y);
 
         int[][] ac = new int[16][16];
@@ -478,7 +478,7 @@ public class VP8Encoder extends VideoEncoder {
     }
 
     @Override
-    public int estimateBufferSize(Picture8Bit frame) {
+    public int estimateBufferSize(Picture frame) {
         return frame.getWidth() * frame.getHeight() / 2;
     }
 }

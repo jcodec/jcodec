@@ -1,10 +1,9 @@
 package org.jcodec.common;
 
-import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Picture8Bit;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
+
+import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,21 +23,7 @@ abstract public class VideoDecoder {
      *            Compressed frame data
      * @throws IOException
      */
-    @Deprecated
-    public Picture decodeFrame(ByteBuffer data, int[][] buffer) {
-        Picture8Bit frame = decodeFrame8Bit(data, getSameSizeBuffer(buffer));
-        return frame == null ? null : frame.toPictureWithBuffer(8, buffer);
-    }
-    
-    /**
-     * Decodes a video frame to an uncompressed picture in codec native
-     * colorspace
-     * 
-     * @param data
-     *            Compressed frame data
-     * @throws IOException
-     */
-    public abstract Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer);
+    public abstract Picture decodeFrame(ByteBuffer data, byte[][] buffer);
     public abstract VideoCodecMeta getCodecMeta(ByteBuffer data);
 
    

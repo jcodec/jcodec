@@ -15,7 +15,7 @@ import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 
 /**
@@ -65,7 +65,7 @@ public class PNGDecoder extends VideoDecoder {
     private byte[] ca = new byte[4];
 
     @Override
-    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
+    public Picture decodeFrame(ByteBuffer data, byte[][] buffer) {
         long sig = data.getLong();
         if (sig != PNGSIG && sig != MNGSIG)
             throw new RuntimeException("Not a PNG file.");
@@ -116,7 +116,7 @@ public class PNGDecoder extends VideoDecoder {
         if (ihdr == null) {
             throw new IllegalStateException("no IHDR tag");
         }
-        return Picture8Bit.createPicture8Bit(ihdr.width, ihdr.height, buffer, ihdr.colorSpace());
+        return Picture.createPicture(ihdr.width, ihdr.height, buffer, ihdr.colorSpace());
     }
 
     private void decodeData(IHDR ihdr, PLTE plte, TRNS trns, List<ByteBuffer> list, byte[][] buffer)

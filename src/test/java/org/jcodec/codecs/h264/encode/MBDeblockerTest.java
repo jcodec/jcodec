@@ -2,7 +2,7 @@ package org.jcodec.codecs.h264.encode;
 import org.jcodec.Utils;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.ArrayUtil;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -98,7 +98,7 @@ public class MBDeblockerTest {
             }
 
             private String label(byte[] pels, EncodedMB curMB, EncodedMB leftMB, EncodedMB topMB) {
-                Picture8Bit cur = curMB.getPixels(), top = topMB.getPixels(), left = leftMB.getPixels();
+                Picture cur = curMB.getPixels(), top = topMB.getPixels(), left = leftMB.getPixels();
                 if (cur.getPlaneData(0) == pels || cur.getPlaneData(1) == pels || cur.getPlaneData(2) == pels)
                     return "cur";
                 else if (left.getPlaneData(0) == pels || left.getPlaneData(1) == pels || left.getPlaneData(2) == pels)

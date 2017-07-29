@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 
 /**
@@ -25,8 +25,8 @@ public class RAWVideoDecoder extends VideoDecoder {
     }
 
     @Override
-    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
-        Picture8Bit create = Picture8Bit.createPicture8Bit(width, height, buffer, ColorSpace.YUV420);
+    public Picture decodeFrame(ByteBuffer data, byte[][] buffer) {
+        Picture create = Picture.createPicture(width, height, buffer, ColorSpace.YUV420);
 
         ByteBuffer pix = data.duplicate();
         copy(pix, create.getPlaneData(0), width * height);

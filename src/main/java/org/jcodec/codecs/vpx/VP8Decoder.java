@@ -20,7 +20,7 @@ import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MathUtil;
 
@@ -37,7 +37,7 @@ public class VP8Decoder extends VideoDecoder {
     private int[] modeLoopFilterDeltas = new int[MAX_MODE_LF_DELTAS];
 
     @Override
-    public Picture8Bit decodeFrame8Bit(ByteBuffer frame, byte[][] buffer) {
+    public Picture decodeFrame(ByteBuffer frame, byte[][] buffer) {
         byte[] firstThree = new byte[3];
         frame.get(firstThree);
 
@@ -251,7 +251,7 @@ public class VP8Decoder extends VideoDecoder {
             }
         }
 
-        Picture8Bit p = Picture8Bit.createPicture8Bit(width, height, buffer, ColorSpace.YUV420);
+        Picture p = Picture.createPicture(width, height, buffer, ColorSpace.YUV420);
 
         int mbWidth = getMacroblockCount(width);
         int mbHeight = getMacroblockCount(height);

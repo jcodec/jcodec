@@ -1,5 +1,7 @@
 package org.jcodec.scale;
 
+import static org.jcodec.common.tools.MathUtil.clip;
+
 import org.jcodec.common.model.Picture;
 
 /**
@@ -10,25 +12,22 @@ import org.jcodec.common.model.Picture;
  * Yuv420 colorspace output picture ( 3 planes, luma - 0th plane, cb - 1th
  * plane, cr - 2nd plane; cb and cr planes are half width and half haight )
  * 
+ * TODO: implement jpeg colorspace instead of NTSC
+ * 
  * @author The JCodec project
  * 
  */
 public class RgbToYuv420p implements Transform {
 
-    private int upShift;
-    private int downShift;
-    private int downShiftChr;
-
-    public RgbToYuv420p(int upShift, int downShift) {
-        this.upShift = upShift;
-        this.downShift = downShift;
-        this.downShiftChr = downShift + 2;
+    public RgbToYuv420p() {
     }
 
+    @Override
     public void transform(Picture img, Picture dst) {
 
-        int[] y = img.getData()[0];
-        int[][] dstData = dst.getData();
+        byte[] y = img.getData()[0];
+        byte[][] dstData = dst.getData();
+        byte[][] out = new byte[4][3];
 
         int offChr = 0, offLuma = 0, offSrc = 0, strideSrc = img.getWidth() * 3, strideDst = dst.getWidth();
         for (int i = 0; i < img.getHeight() >> 1; i++) {
@@ -36,27 +35,23 @@ public class RgbToYuv420p implements Transform {
                 dstData[1][offChr] = 0;
                 dstData[2][offChr] = 0;
 
-                rgb2yuv(y[offSrc], y[offSrc + 1], y[offSrc + 2], dstData[0], offLuma, dstData[1], offChr, dstData[2],
-                        offChr);
-                dstData[0][offLuma] = (dstData[0][offLuma] << upShift) >> downShift;
+                rgb2yuv(y[offSrc], y[offSrc + 1], y[offSrc + 2], out[0]);
+                dstData[0][offLuma] = out[0][0];
 
-                rgb2yuv(y[offSrc + strideSrc], y[offSrc + strideSrc + 1], y[offSrc + strideSrc + 2], dstData[0],
-                        offLuma + strideDst, dstData[1], offChr, dstData[2], offChr);
-                dstData[0][offLuma + strideDst] = (dstData[0][offLuma + strideDst] << upShift) >> downShift;
+                rgb2yuv(y[offSrc + strideSrc], y[offSrc + strideSrc + 1], y[offSrc + strideSrc + 2], out[1]);
+                dstData[0][offLuma + strideDst] = out[1][0];
 
                 ++offLuma;
 
-                rgb2yuv(y[offSrc + 3], y[offSrc + 4], y[offSrc + 5], dstData[0], offLuma, dstData[1], offChr,
-                        dstData[2], offChr);
-                dstData[0][offLuma] = (dstData[0][offLuma] << upShift) >> downShift;
+                rgb2yuv(y[offSrc + 3], y[offSrc + 4], y[offSrc + 5], out[2]);
+                dstData[0][offLuma] = out[2][0];
 
-                rgb2yuv(y[offSrc + strideSrc + 3], y[offSrc + strideSrc + 4], y[offSrc + strideSrc + 5], dstData[0],
-                        offLuma + strideDst, dstData[1], offChr, dstData[2], offChr);
-                dstData[0][offLuma + strideDst] = (dstData[0][offLuma + strideDst] << upShift) >> downShift;
+                rgb2yuv(y[offSrc + strideSrc + 3], y[offSrc + strideSrc + 4], y[offSrc + strideSrc + 5], out[3]);
+                dstData[0][offLuma + strideDst] = out[3][0];
                 ++offLuma;
 
-                dstData[1][offChr] = (dstData[1][offChr] << upShift) >> downShiftChr;
-                dstData[2][offChr] = (dstData[2][offChr] << upShift) >> downShiftChr;
+                dstData[1][offChr] = (byte) ((out[0][1] + out[1][1] + out[2][1] + out[3][1] + 2) >> 2);
+                dstData[2][offChr] = (byte) ((out[0][2] + out[1][2] + out[2][2] + out[3][2] + 2) >> 2);
 
                 ++offChr;
                 offSrc += 6;
@@ -66,20 +61,19 @@ public class RgbToYuv420p implements Transform {
         }
     }
 
-    public static final void rgb2yuv(int r, int g, int b, int[] Y, int offY, int[] U, int offU, int[] V, int offV) {
-        int y = 66 * r + 129 * g + 25 * b;
-        int u = -38 * r - 74 * g + 112 * b;
-        int v = 112 * r - 94 * g - 18 * b;
+    public static final void rgb2yuv(byte r, byte g, byte b, byte[] out) {
+        int rS = r + 128;
+        int gS = g + 128;
+        int bS = b + 128;
+        int y = 66 * rS + 129 * gS + 25 * bS;
+        int u = -38 * rS - 74 * gS + 112 * bS;
+        int v = 112 * rS - 94 * gS - 18 * bS;
         y = (y + 128) >> 8;
         u = (u + 128) >> 8;
         v = (v + 128) >> 8;
-
-        Y[offY] = clip(y + 16);
-        U[offU] += clip(u + 128);
-        V[offV] += clip(v + 128);
-    }
-
-    private static final int clip(int val) {
-        return val < 0 ? 0 : (val > 255 ? 255 : val);
+        
+        out[0] = (byte)clip(y - 112, -128, 127);
+        out[1] = (byte)clip(u, -128, 127);
+        out[2] = (byte)clip(v, -128, 127);
     }
 }

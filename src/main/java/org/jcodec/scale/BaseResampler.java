@@ -1,6 +1,6 @@
 package org.jcodec.scale;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MathUtil;
 
@@ -24,7 +24,7 @@ public abstract class BaseResampler {
         scaleFactorY = (double) from.getHeight() / to.getHeight();
     }
 
-    byte getPel(Picture8Bit pic, int plane, int x, int y) {
+    byte getPel(Picture pic, int plane, int x, int y) {
         if (x < 0)
             x = 0;
         if (y < 0)
@@ -91,7 +91,7 @@ public abstract class BaseResampler {
     /**
      * Interpolates points using a 2d convolution
      */
-    public void resample(Picture8Bit in, Picture8Bit out) {
+    public void resample(Picture in, Picture out) {
         int[] temp = tempBuffers.get();
         if (temp == null) {
             temp = new int[toSize.getWidth() * (fromSize.getHeight() + nTaps())];

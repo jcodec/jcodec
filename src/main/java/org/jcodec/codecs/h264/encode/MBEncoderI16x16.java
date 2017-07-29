@@ -15,7 +15,7 @@ import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.io.BitWriter;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,7 +37,7 @@ public class MBEncoderI16x16 {
         this.topLine = topLine;
     }
 
-    public void encodeMacroblock(Picture8Bit pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
+    public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
             EncodedMB leftOutMB, EncodedMB topOutMB, int qp, int qpDelta) {
         CAVLCWriter.writeUE(out, 0); // Chroma prediction mode -- DC
         CAVLCWriter.writeSE(out, qpDelta); // MB QP delta
@@ -53,7 +53,7 @@ public class MBEncoderI16x16 {
 
     private static int DUMMY[] = new int[16];
 
-    private void chroma(Picture8Bit pic, int mbX, int mbY, BitWriter out, int qp, Picture8Bit outMB) {
+    private void chroma(Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB) {
         int cw = pic.getColor().compWidth[1];
         int ch = pic.getColor().compHeight[1];
         int x = mbX << (4 - cw);
@@ -72,7 +72,7 @@ public class MBEncoderI16x16 {
         putChroma(outMB.getData()[2], 2, x, y, ac2, pred2);
     }
 
-    public static void chromaResidual(Picture8Bit pic, int mbX, int mbY, BitWriter out, int qp, int[][] ac1,
+    public static void chromaResidual(Picture pic, int mbX, int mbY, BitWriter out, int qp, int[][] ac1,
             int[][] ac2, CAVLC cavlc1, CAVLC cavlc2, MBType leftMBType, MBType topMBType) {
 
         transformChroma(ac1);
@@ -91,7 +91,7 @@ public class MBEncoderI16x16 {
         restorePlane(dc2, ac2, qp);
     }
 
-    private void luma(Picture8Bit pic, int mbX, int mbY, BitWriter out, int qp, Picture8Bit outMB, CAVLC cavlc) {
+    private void luma(Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB, CAVLC cavlc) {
         int x = mbX << 4;
         int y = mbY << 4;
         int[][] ac = new int[16][16];
@@ -193,7 +193,7 @@ public class MBEncoderI16x16 {
         }
     }
 
-    private void predictChroma(Picture8Bit pic, int[][] ac, byte[][] pred, int comp, int cw, int ch, int x, int y) {
+    private void predictChroma(Picture pic, int[][] ac, byte[][] pred, int comp, int cw, int ch, int x, int y) {
         chromaPredBlk0(comp, x, y, pred[0]);
         chromaPredBlk1(comp, x, y, pred[1]);
         chromaPredBlk2(comp, x, y, pred[2]);
@@ -288,7 +288,7 @@ public class MBEncoderI16x16 {
                 pred[i][j] += dc;
     }
 
-    private void transform(Picture8Bit pic, int comp, int[][] ac, byte[][] pred, int x, int y) {
+    private void transform(Picture pic, int comp, int[][] ac, byte[][] pred, int x, int y) {
         for (int i = 0; i < ac.length; i++) {
             int[] coeff = ac[i];
             MBEncoderHelper.takeSubtract(pic.getPlaneData(comp), pic.getPlaneWidth(comp), pic.getPlaneHeight(comp), x
@@ -304,15 +304,15 @@ public class MBEncoderI16x16 {
         }
     }
 
-    public int getPredMode(Picture8Bit pic, int mbX, int mbY) {
+    public int getPredMode(Picture pic, int mbX, int mbY) {
         return 2;
     }
 
-    public int getCbpChroma(Picture8Bit pic, int mbX, int mbY) {
+    public int getCbpChroma(Picture pic, int mbX, int mbY) {
         return 2;
     }
 
-    public int getCbpLuma(Picture8Bit pic, int mbX, int mbY) {
+    public int getCbpLuma(Picture pic, int mbX, int mbY) {
         return 15;
     }
 

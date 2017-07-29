@@ -1,6 +1,6 @@
-package org.jcodec.scale;
+package org.jcodec.scale.highbd;
 
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -9,28 +9,35 @@ import org.jcodec.common.model.Picture;
  * @author The JCodec project
  * 
  */
-public class Yuv444pToRgb implements Transform {
+public class Yuv422pToRgbHiBD implements TransformHiBD {
+
     private int downShift;
     private int upShift;
 
-    public Yuv444pToRgb(int downShift, int upShift) {
+    public Yuv422pToRgbHiBD(int downShift, int upShift) {
         this.downShift = downShift;
         this.upShift = upShift;
     }
 
-    public void transform(Picture src, Picture dst) {
+    public void transform(PictureHiBD src, PictureHiBD dst) {
         int[] y = src.getPlaneData(0);
         int[] u = src.getPlaneData(1);
         int[] v = src.getPlaneData(2);
 
         int[] data = dst.getPlaneData(0);
 
-        for (int i = 0, srcOff = 0, dstOff = 0; i < dst.getHeight(); i++) {
-            for (int j = 0; j < dst.getWidth(); j++, srcOff++, dstOff += 3) {
-                YUV444toRGB888((y[srcOff] << upShift) >> downShift, (u[srcOff] << upShift) >> downShift,
-                        (v[srcOff] << upShift) >> downShift, data, dstOff);
+        int offLuma = 0, offChroma = 0;
+        for (int i = 0; i < dst.getHeight(); i++) {
+            for (int j = 0; j < dst.getWidth(); j += 2) {
+                YUV444toRGB888((y[offLuma] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
+                        (v[offChroma] << upShift) >> downShift, data, offLuma * 3);
+                YUV444toRGB888((y[offLuma + 1] << upShift) >> downShift, (u[offChroma] << upShift) >> downShift,
+                        (v[offChroma] << upShift) >> downShift, data, (offLuma + 1) * 3);
+                offLuma += 2;
+                ++offChroma;
             }
         }
+
     }
 
     public static final void YUV444toRGB888(final int y, final int u, final int v, int[] data, int off) {
