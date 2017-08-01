@@ -348,9 +348,12 @@ public class Transcoder {
                                 finishedAudio[s] = true;
                         } else {
                             Packet packet = ((PacketSource) source).inputAudioPacket();
-                            if (packet == null)
+                            if (packet == null) {
                                 finishedAudio[s] = true;
-                            nextAudioFrame = new AudioFrameWithPacket(null, packet);
+                                nextAudioFrame = null;
+                            } else {
+                                nextAudioFrame = new AudioFrameWithPacket(null, packet);
+                            }
                         }
                         if (nextAudioFrame != null) {
                             for (Stream stream : audioStreams[s]) {
