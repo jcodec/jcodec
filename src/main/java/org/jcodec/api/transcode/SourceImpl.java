@@ -400,9 +400,11 @@ public class SourceImpl implements Source, PacketSource {
 
     @Override
     public VideoCodecMeta getVideoCodecMeta() {
+        if (videoCodecMeta != null)
+            return videoCodecMeta;
         DemuxerTrackMeta meta = getTrackVideoMeta();
         if (meta != null && meta.getVideoCodecMeta() != null) {
-            return meta.getVideoCodecMeta();
+            videoCodecMeta = meta.getVideoCodecMeta();
         }
         return videoCodecMeta;
     }
