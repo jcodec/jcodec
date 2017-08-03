@@ -53,7 +53,7 @@ public class MP4DemuxerTrackMeta {
         VideoCodecMeta videoCodecMeta = null;
         AudioCodecMeta audioCodecMeta = null;
         if (type == MP4TrackType.VIDEO) {
-            videoCodecMeta = createSimpleVideoCodecMeta(trak.getCodedSize(), ColorSpace.YUV420);
+            videoCodecMeta = createSimpleVideoCodecMeta(trak.getCodedSize(), null);
             PixelAspectExt pasp = NodeBox.findFirst(track.getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if (pasp != null)
                 videoCodecMeta.setPixelAspectRatio(pasp.getRational());
