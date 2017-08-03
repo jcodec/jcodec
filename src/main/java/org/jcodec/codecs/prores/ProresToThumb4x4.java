@@ -4,6 +4,7 @@ import org.jcodec.common.dct.IDCT4x4;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Rect;
 
 import java.nio.ByteBuffer;
 
@@ -63,8 +64,9 @@ public class ProresToThumb4x4 extends ProresDecoder {
                     interlaced_scan_4x4, fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
 
-        return Picture.createPicture(codedWidth, codedHeight, target, fh.chromaType == 2 ? ColorSpace.YUV422
-                : ColorSpace.YUV444);
+        ColorSpace color = fh.chromaType == 2 ? ColorSpace.YUV422 : ColorSpace.YUV444;
+        return new Picture(codedWidth, codedHeight, target, color, new Rect(0, 0, (fh.width >> 1)
+                & color.getWidthMask(), (fh.height >> 1) & color.getHeightMask()));
     }
 
     @Override
