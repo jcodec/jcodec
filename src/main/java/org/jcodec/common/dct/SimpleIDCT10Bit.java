@@ -152,7 +152,7 @@ public class SimpleIDCT10Bit {
     }
 
     // TODO: integer implementation of this
-    public static void fdct10(byte[] block, int off, int[] dctOut) {
+    public static void fdctProres10(int[] block, int off) {
         int i, j, k;
         double[] out = new double[8 * 8];
 
@@ -160,7 +160,8 @@ public class SimpleIDCT10Bit {
             for (j = 0; j < 8; ++j) {
                 double tmp = 0;
                 for (k = 0; k < 8; ++k) {
-                    tmp += coefficients[i + k] * ((block[k * 8 + j + off] + 128) << 2);
+                    int blockInd = k * 8 + j + off;
+                    tmp += coefficients[i + k] * block[blockInd];
                 }
                 out[i + j] = tmp * 4;
             }
@@ -172,7 +173,7 @@ public class SimpleIDCT10Bit {
                 for (k = 0; k < 8; ++k) {
                     tmp += out[i + k] * coefficients[j * 8 + k];
                 }
-                dctOut[i + j + off] = (int) (tmp + 0.499999999999);
+                block[i + j + off] = (int) (tmp + 0.499999999999);
             }
         }
     }
