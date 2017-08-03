@@ -222,7 +222,8 @@ public class SinkImpl implements Sink, PacketSink {
     public ColorSpace getInputColor() {
         if (videoEncoder == null)
             return null;
-        return videoEncoder.getSupportedColorSpaces()[0];
+        ColorSpace[] colorSpaces = videoEncoder.getSupportedColorSpaces();
+        return colorSpaces == null ? null : colorSpaces[0];
     }
 
     @Override

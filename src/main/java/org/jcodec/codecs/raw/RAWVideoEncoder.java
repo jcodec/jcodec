@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Rect;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,33 +19,19 @@ public class RAWVideoEncoder extends VideoEncoder {
     public EncodedFrame encodeFrame(Picture pic, ByteBuffer _out) {
         ByteBuffer dup = _out.duplicate();
 
-        int width = pic.getWidth();
-        int startY = 0;
-        int startX = 0;
-        int cropH = pic.getHeight();
-        int cropW = pic.getWidth();
+        ColorSpace color = pic.getColor();
+        for (int plane = 0; plane < color.nComp; plane++) {
+            int width = pic.getWidth() >> color.compWidth[plane];
+            int startX = pic.getStartX();
+            int startY = pic.getStartY();
+            int cropW = pic.getCroppedWidth() >> color.compWidth[plane];
+            int cropH = pic.getCroppedHeight() >> color.compHeight[plane];
 
-        Rect crop = pic.getCrop();
-        if (crop != null) {
-            width = pic.getWidth();
-            startY = crop.getY();
-            startX = crop.getX();
-            cropH = crop.getHeight();
-            cropW = crop.getWidth();
-        }
-        for (int plane = 0; plane < 3; plane++) {
             int pos = width * startY + startX;
             for (int y = 0; y < cropH; y++) {
                 for (int x = 0; x < cropW; x++)
                     dup.put((byte) (pic.getPlaneData(plane)[pos + x] + 128));
                 pos += width;
-            }
-            if (plane == 0) {
-                width /= 2;
-                startX /= 2;
-                startY /= 2;
-                cropH /= 2;
-                cropW /= 2;
             }
         }
         dup.flip();
@@ -55,12 +40,18 @@ public class RAWVideoEncoder extends VideoEncoder {
 
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
-        return new ColorSpace[] { ColorSpace.YUV420 };
+        return null;
     }
 
     @Override
     public int estimateBufferSize(Picture frame) {
-        return (frame.getCroppedWidth() * frame.getCroppedHeight() * 3) / 2;
+        int fullPlaneSize = frame.getWidth() * frame.getCroppedHeight();
+        ColorSpace color = frame.getColor();
+        int totalSize = 0;
+        for (int i = 0; i < color.nComp; i++) {
+            totalSize += (fullPlaneSize >> color.compWidth[i]) >> color.compHeight[i];
+        }
+        return totalSize;
     }
 
 }
