@@ -60,8 +60,8 @@ public class PNGEncoder extends VideoEncoder {
         ByteBuffer _out = out.duplicate();
         _out.putLong(PNGSIG);
         IHDR ihdr = new IHDR();
-        ihdr.width = pic.getWidth();
-        ihdr.height = pic.getHeight();
+        ihdr.width = pic.getCroppedWidth();
+        ihdr.height = pic.getCroppedHeight();
         ihdr.bitDepth = 8;
         ihdr.colorType = PNG_COLOR_MASK_COLOR;
         _out.putInt(13);
@@ -72,13 +72,14 @@ public class PNGEncoder extends VideoEncoder {
         _out.putInt(crc32(crcFrom, _out));
         
         Deflater deflater = new Deflater();
-        byte[] rowData = new byte[pic.getWidth() * 3 + 1];
+        byte[] rowData = new byte[pic.getCroppedWidth() * 3 + 1];
         byte[] pix = pic.getPlaneData(0);
         byte[] buffer = new byte[1 << 15];
         int ptr = 0, len = buffer.length;
 
         // We do one extra iteration here to flush the deflator
-        for (int row = 0, bptr = 0; row < pic.getHeight() + 1; row++) {
+        int lineStep = (pic.getWidth() - pic.getCroppedWidth()) * 3;
+        for (int row = 0, bptr = 0; row < pic.getCroppedHeight() + 1; row++) {
             int count;
             while ((count = deflater.deflate(buffer, ptr, len)) > 0) {
                 ptr += count;
@@ -95,17 +96,18 @@ public class PNGEncoder extends VideoEncoder {
                 }
             }
 
-            if (row >= pic.getHeight())
+            if (row >= pic.getCroppedHeight())
                 break;
 
             rowData[0] = 0; // no filter
-            for (int i = 1; i <= pic.getWidth() * 3; i += 3, bptr += 3) {
+            for (int i = 1; i <= pic.getCroppedWidth() * 3; i += 3, bptr += 3) {
                 rowData[i] = (byte) (pix[bptr] + 128);
                 rowData[i + 1] = (byte) (pix[bptr + 1] + 128);
                 rowData[i + 2] = (byte) (pix[bptr + 2] + 128);
             }
+            bptr += lineStep;
             deflater.setInput(rowData);
-            if (row >= pic.getHeight() - 1)
+            if (row >= pic.getCroppedHeight() - 1)
                 deflater.finish();
         }
         if (ptr > 0) {
@@ -130,6 +132,6 @@ public class PNGEncoder extends VideoEncoder {
 
     @Override
     public int estimateBufferSize(Picture frame) {
-        return frame.getWidth() * frame.getHeight() * 4;
+        return frame.getCroppedWidth() * frame.getCroppedHeight() * 4;
     }
 }
