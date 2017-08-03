@@ -110,8 +110,8 @@ public class MPEGDecoder extends VideoDecoder {
                     "Not enough references to decode " + (ph.picture_coding_type == 1 ? "P" : "B") + " frame");
         }
         Context context = initContext(sh, ph);
-        Picture pic = new Picture(context.codedWidth, context.codedHeight, buf, context.color,
-                new Rect(0, 0, context.picWidth, context.picHeight));
+        Picture pic = new Picture(context.codedWidth, context.codedHeight, buf, null, context.color, 0, new Rect(0, 0,
+                context.picWidth, context.picHeight));
         if (ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
             decodePicture(context, ph, buffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
             ph = readHeader(buffer);
