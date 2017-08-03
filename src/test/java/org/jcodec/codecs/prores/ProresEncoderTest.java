@@ -3,12 +3,12 @@ import static org.jcodec.common.ArrayUtil.randomByteArray;
 import static org.jcodec.common.ArrayUtil.randomIntArray;
 
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
-import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,7 +16,7 @@ import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class TestProresEncoder {
+public class ProresEncoderTest {
 
     public void testSlice1() throws Exception {
         int[] slice = new int[] { 4096, 0, 0, 0, 8, 0, 0, 0, 16, 16, 8, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 8, 16,
@@ -83,24 +83,47 @@ public class TestProresEncoder {
 
         Picture result = decoder.decodeFrame(buf, new byte[][] { new byte[4096], new byte[2048], new byte[2048] });
 
-        System.out.println("Y");
         assertByteArrayApproximatelyEquals(Y, result.getPlaneData(0), 20);
-        System.out.println("U");
         assertByteArrayApproximatelyEquals(U, result.getPlaneData(1), 20);
-        System.out.println("V");
         assertByteArrayApproximatelyEquals(V, result.getPlaneData(2), 20);
+    }
+    
+    @Test
+    public void testWholeThing10Bit() throws Exception {
+        int[] Y = randomIntArray(4096, 4, 1019);
+        int[] U = randomIntArray(2048, 4, 1019);
+        int[] V = randomIntArray(2048, 4, 1019);
+        PictureHiBD pictureHbd = PictureHiBD.createPictureWithDepth(64, 64, new int[][] { Y, U, V }, ColorSpace.YUV422, 10);
+        Picture picture = Picture.fromPictureHiBD(pictureHbd);
+
+        ByteBuffer buf = ByteBuffer.allocate(64 * 64 * 6);
+        new ProresEncoder(Profile.HQ, false).encodeFrame(picture, buf);
+
+        ProresDecoder decoder = new ProresDecoder();
+
+        byte[][] data = new byte[][] { new byte[4096], new byte[2048], new byte[2048] };
+        byte[][] lowBits = new byte[][] { new byte[4096], new byte[2048], new byte[2048] };
+        Picture result = decoder.decodeFrameHiBD(buf, data, lowBits);
+        
+        PictureHiBD resultHbd = result.toPictureHiBD();
+
+        assertIntArrayApproximatelyEquals(Y, resultHbd.getPlaneData(0), 20);
+        assertIntArrayApproximatelyEquals(U, resultHbd.getPlaneData(1), 20);
+        assertIntArrayApproximatelyEquals(V, resultHbd.getPlaneData(2), 20);
     }
 
     @Test
     public void testIdct() {
-        int[] rand = randomIntArray(64, 4, 255);
-        byte[] rand8Bit = ArrayUtil.toByteArrayShifted(rand);
+        int[] rand = randomIntArray(64, 4, 1019);
         
         int[] out = new int[64];
-        SimpleIDCT10Bit.fdct10(rand8Bit, 0, out);
+        for (int i = 0; i < 64; i++)
+            out[i] = rand[i];
+        
+        SimpleIDCT10Bit.fdctProres10(out, 0);
+        
         for (int i = 0; i < 64; i++) {
             out[i] >>= 2;
-            rand[i] <<= 2;
         }
         
         SimpleIDCT10Bit.idct10(out, 0);
