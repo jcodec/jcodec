@@ -273,4 +273,12 @@ public class Picture {
         }
         return true;
     }
+
+    public int getStartX() {
+        return crop == null ? 0 : crop.getX();
+    }
+
+    public int getStartY() {
+        return crop == null ? 0 : crop.getY();
+    }
 }
