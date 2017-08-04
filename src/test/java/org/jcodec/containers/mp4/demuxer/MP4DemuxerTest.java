@@ -43,9 +43,6 @@ public class MP4DemuxerTest {
         File source = new File(resource.getFile());
         SeekableByteChannel input = new AutoFileChannelWrapper(source);
         MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
-//        DemuxerTrack videoTrack = demuxer.getVideoTrack();
-//        DemuxerTrackMeta meta = videoTrack.getMeta();
-//        assertEquals(ColorSpace.YUV420, meta.getVideoCodecMeta().getColor());
         DemuxerTrack track = demuxer.getAudioTracks().get(0);
         Packet packet;
         while (null != (packet = track.nextFrame())) {
