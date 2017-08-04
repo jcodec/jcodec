@@ -105,13 +105,14 @@ public class SliceReader {
     }
 
     public boolean readMacroblock(MBlock mBlock) {
-        if (endOfData && mbSkipRun == 0)
+        int mbWidth = sh.sps.picWidthInMbsMinus1 + 1;
+        int mbHeight = sh.sps.picHeightInMapUnitsMinus1 + 1;
+        if (endOfData && mbSkipRun == 0 || mbIdx >= mbWidth * mbHeight)
             return false;
 
         mBlock.mbIdx = mbIdx;
         mBlock.prevMbType = prevMBType;
 
-        int mbWidth1 = sh.sps.picWidthInMbsMinus1 + 1;
         boolean mbaffFrameFlag = (sh.sps.mbAdaptiveFrameFieldFlag && !sh.fieldPicFlag);
 
         if (sh.sliceType.isInter() && !activePps.entropyCodingModeFlag) {
@@ -127,8 +128,8 @@ public class SliceReader {
                 int mbAddr = mapper.getAddress(mbIdx);
                 prevMbSkipped = true;
                 prevMBType = null;
-                debugPrint("---------------------- MB (%d,%d) ---------------------", (mbAddr % mbWidth1),
-                        (mbAddr / mbWidth1));
+                debugPrint("---------------------- MB (%d,%d) ---------------------", (mbAddr % mbWidth),
+                        (mbAddr / mbWidth));
                 mBlock.skipped = true;
                 int mbX = mapper.getMbX(mBlock.mbIdx);
                 topMBType[mbX] = leftMBType = null;
@@ -142,8 +143,8 @@ public class SliceReader {
         }
 
         int mbAddr = mapper.getAddress(mbIdx);
-        int mbX = mbAddr % mbWidth1;
-        int mbY = mbAddr / mbWidth1;
+        int mbX = mbAddr % mbWidth;
+        int mbY = mbAddr / mbWidth;
         debugPrint("---------------------- MB (%d,%d) ---------------------", mbX, mbY);
 
         if (sh.sliceType.isIntra()
@@ -316,6 +317,8 @@ public class SliceReader {
     int readResidualAC(boolean leftAvailable, boolean topAvailable, int mbX, MBType curMbType, int cbpLuma,
             int blkOffLeft, int blkOffTop, int blkX, int blkY, int[] ac) {
         if (!activePps.entropyCodingModeFlag) {
+            if (reader.remaining() <= 0)
+                return 0;
             return cavlc[0].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
                     blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0 || topAvailable,
                     blkOffTop == 0 ? topMBType[mbX] : curMbType, 0, 16, CoeffTransformer.zigzag4x4);
@@ -388,11 +391,13 @@ public class SliceReader {
 
     public void readChromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int comp, MBType curMbType,
             int[] ac, int blkOffLeft, int blkOffTop, int blkX) {
-        if (!activePps.entropyCodingModeFlag)
+        if (!activePps.entropyCodingModeFlag) {
+            if (reader.remaining() <= 0)
+                return;
             cavlc[comp].readACBlock(reader, ac, blkX, blkOffTop, blkOffLeft != 0 || leftAvailable,
                     blkOffLeft == 0 ? leftMBType : curMbType, blkOffTop != 0 || topAvailable,
                     blkOffTop == 0 ? topMBType[mbX] : curMbType, 1, 15, CoeffTransformer.zigzag4x4);
-        else {
+        } else {
             if (cabac.readCodedBlockFlagChromaAC(mDecoder, blkX, blkOffTop, comp, leftMBType, topMBType[mbX],
                     leftAvailable, topAvailable, leftCBPChroma, topCBPChroma[mbX], curMbType) == 1)
                 cabac.readCoeffs(mDecoder, BlockType.CHROMA_AC, ac, 1, 15, CoeffTransformer.zigzag4x4,
