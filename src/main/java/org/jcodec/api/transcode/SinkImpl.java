@@ -36,6 +36,7 @@ import org.jcodec.common.model.Size;
 import org.jcodec.containers.imgseq.ImageSequenceMuxer;
 import org.jcodec.containers.mkv.muxer.MKVMuxer;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.containers.raw.RawMuxer;
 
 /**
  * The sink that consumes the uncompressed frames and stores them into a
@@ -81,7 +82,7 @@ public class SinkImpl implements Sink, PacketSink {
         audioOutputTrack.addFrame(audioPkt);
         framesOutput = true;
     }
-
+    
     public void initMuxer() throws IOException {
         if (outputFormat != Format.IMG)
             destStream = writableFileChannel(destName);
@@ -104,6 +105,8 @@ public class SinkImpl implements Sink, PacketSink {
         case Y4M:
             muxer = new Y4MMuxer(destStream);
             break;
+        case RAW:
+            muxer = new RawMuxer(destStream);
         }
     }
 
@@ -192,7 +195,7 @@ public class SinkImpl implements Sink, PacketSink {
 
     @Override
     public void outputVideoFrame(VideoFrameWithPacket videoFrame) throws IOException {
-        if (!outputFormat.isVideo())
+        if (!outputFormat.isVideo() || outputVideoCodec == null)
             return;
         Packet outputVideoPacket;
         ByteBuffer buffer = bufferStore.get();
@@ -212,7 +215,7 @@ public class SinkImpl implements Sink, PacketSink {
 
     @Override
     public void outputAudioFrame(AudioFrameWithPacket audioFrame) throws IOException {
-        if (!outputFormat.isAudio())
+        if (!outputFormat.isAudio() || outputAudioCodec == null)
             return;
         outputAudioPacket(Packet.createPacketWithData(audioFrame.getPacket(), encodeAudio(audioFrame.getAudio())),
                 org.jcodec.common.AudioCodecMeta.fromAudioFormat(audioFrame.getAudio().getFormat()));
@@ -222,7 +225,8 @@ public class SinkImpl implements Sink, PacketSink {
     public ColorSpace getInputColor() {
         if (videoEncoder == null)
             return null;
-        return videoEncoder.getSupportedColorSpaces()[0];
+        ColorSpace[] colorSpaces = videoEncoder.getSupportedColorSpaces();
+        return colorSpaces == null ? null : colorSpaces[0];
     }
 
     @Override
