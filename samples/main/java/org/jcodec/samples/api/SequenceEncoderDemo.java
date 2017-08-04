@@ -24,7 +24,7 @@ import javax.imageio.ImageIO;
 public class SequenceEncoderDemo {
     private static final Flag FLAG_FPS = new Flag("fps", "fps", "Rational fps, i.e 25:1 (for 25fps), 30:1 (for 30fps), 30000:1001 (for 29.97fps), etc.");
     private static final Flag FLAG_FRAMES = new Flag("num-frames", "num-frames", "Maximum frames to decode.");
-    private static final Flag FLAG_PATTERN = new Flag("out-pattern", "out-pattern", "Input folder/frame%04.png pattern.");
+    private static final Flag FLAG_PATTERN = new Flag("input-pattern", "input-pattern", "Input folder/frame%04.png pattern.");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FPS, FLAG_FRAMES, FLAG_PATTERN};
 
     public static void main(String[] args) throws IOException {
@@ -37,20 +37,24 @@ public class SequenceEncoderDemo {
         int maxFrames = cmd.getIntegerFlagD(FLAG_FRAMES, Integer.MAX_VALUE);
         String fpsRaw = cmd.getStringFlagD(FLAG_FPS, "25:1");
         String outDir = cmd.getStringFlagD(FLAG_PATTERN,
-                new File(System.getProperty("user.home"), "frame%08d.jpg").getAbsolutePath());
+                new File(System.getProperty("user.home"), "frame%08d.png").getAbsolutePath());
         FileChannelWrapper out = null;
         try {
             out = NIOUtils.writableChannel(MainUtils.tildeExpand(cmd.getArg(0)));
             AWTSequenceEncoder encoder = new AWTSequenceEncoder(out, Rational.parse(fpsRaw));
-
-            for (int i = 0; i < maxFrames; i++) {
+            int i = 0;
+            for (; i < maxFrames; i++) {
                 File file = new File(String.format(outDir, i));
                 if (!file.exists())
                     break;
                 BufferedImage image = ImageIO.read(file);
                 encoder.encodeImage(image);
             }
-            encoder.finish();
+            if ( i > 0) { 
+                encoder.finish();
+            } else {
+                System.out.println("No frames output.");
+            }
         } finally {
             NIOUtils.closeQuietly(out);
         }
