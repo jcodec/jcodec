@@ -38,6 +38,8 @@ public final class ColorSpace {
     public boolean planar;
     
     private String _name;
+    
+    public int bitsPerPixel;
 
     private ColorSpace(String name, int nComp, int[] compPlane, int[] compWidth, int[] compHeight, boolean planar) {
         this._name = name;
@@ -46,10 +48,26 @@ public final class ColorSpace {
         this.compWidth = compWidth;
         this.compHeight = compHeight;
         this.planar = planar;
+        calcBitsPerPixel();
     }
 
     @Override
     public String toString() {
         return _name;
+    }
+
+    public void calcBitsPerPixel() {
+        bitsPerPixel = 0;
+        for (int i = 0; i < nComp; i++) {
+            bitsPerPixel += ((8 >> compWidth[i]) >> compHeight[i]);
+        }
+    }
+
+    public int getWidthMask() {
+        return ~(nComp > 1 ? compWidth[1] : 0);
+    }
+
+    public int getHeightMask() {
+        return ~(nComp > 1 ? compHeight[1] : 0);
     }
 }

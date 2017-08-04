@@ -189,18 +189,20 @@ public class ProresDecoder extends VideoDecoder {
         }
 
         if (fh.frameType == 0) {
-            decodePicture(data, target, fh.width, fh.height, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan, 0,
+            decodePicture(data, target, codedWidth, codedHeight, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan, 0,
                     fh.chromaType);
         } else {
-            decodePicture(data, target, fh.width, fh.height >> 1, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan,
+            decodePicture(data, target, codedWidth, codedHeight >> 1, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan,
                     fh.topFieldFirst ? 1 : 2, fh.chromaType);
 
-            decodePicture(data, target, fh.width, fh.height >> 1, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan,
+            decodePicture(data, target, codedWidth, codedHeight >> 1, codedWidth >> 4, fh.qMatLuma, fh.qMatChroma, fh.scan,
                     fh.topFieldFirst ? 2 : 1, fh.chromaType);
         }
-
-        return new Picture(codedWidth, codedHeight, target,
-                fh.chromaType == 2 ? ColorSpace.YUV422 : ColorSpace.YUV444, new Rect(0, 0, fh.width, fh.height));
+        
+        ColorSpace color = fh.chromaType == 2 ? ColorSpace.YUV422 : ColorSpace.YUV444;
+        
+        return new Picture(codedWidth, codedHeight, target, color, new Rect(0, 0, fh.width & color.getWidthMask(),
+                fh.height & color.getHeightMask()));
     }
 
     public Picture[] decodeFields(ByteBuffer data, byte[][][] target) {
@@ -464,6 +466,7 @@ public class ProresDecoder extends VideoDecoder {
     @Override
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
         FrameHeader fh = readFrameHeader(data);
-        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(fh.width, fh.height), ColorSpace.YUV420);
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(fh.width, fh.height),
+                fh.chromaType == 2 ? ColorSpace.YUV422 : ColorSpace.YUV444);
     }
 }
