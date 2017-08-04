@@ -2,7 +2,10 @@ package org.jcodec.containers.mp4.demuxer;
 
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.platform.Platform;
 import org.junit.Test;
@@ -13,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+
+import junit.framework.Assert;
 
 public class MP4DemuxerTest {
     
@@ -38,6 +43,9 @@ public class MP4DemuxerTest {
         File source = new File(resource.getFile());
         SeekableByteChannel input = new AutoFileChannelWrapper(source);
         MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
+//        DemuxerTrack videoTrack = demuxer.getVideoTrack();
+//        DemuxerTrackMeta meta = videoTrack.getMeta();
+//        assertEquals(ColorSpace.YUV420, meta.getVideoCodecMeta().getColor());
         DemuxerTrack track = demuxer.getAudioTracks().get(0);
         Packet packet;
         while (null != (packet = track.nextFrame())) {
@@ -55,5 +63,20 @@ public class MP4DemuxerTest {
         MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
         PCMMP4DemuxerTrack track = (PCMMP4DemuxerTrack) demuxer.getAudioTracks().get(0);
         assertEquals(6, track.getFrameSize());
+    }
+    
+    @Test
+    public void testVideoColor() throws Exception {
+        File source = new File("src/test/resources/AVCClipCatTest/cat_avc_clip.mp4");
+        SeekableByteChannel input = null;
+        try {
+            input = NIOUtils.readableChannel(source);
+            MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
+            DemuxerTrack videoTrack = demuxer.getVideoTrack();
+            DemuxerTrackMeta meta = videoTrack.getMeta();
+            assertEquals(ColorSpace.YUV420J, meta.getVideoCodecMeta().getColor());
+        } finally {
+            NIOUtils.closeQuietly(input);
+        }
     }
 }
