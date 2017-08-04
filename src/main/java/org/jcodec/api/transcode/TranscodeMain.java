@@ -214,6 +214,13 @@ public class TranscodeMain {
             }
 
             Source source = new SourceImpl(input, inputFormat, inputCodecVideo, inputCodecAudio);
+            Integer downscale = cmd.getIntegerFlagID(index, FLAG_DOWNSCALE, 1);
+            if (downscale != null && (1 << MathUtil.log2(downscale)) != downscale) {
+                Logger.error("Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE
+                        + ", the option will have no effect.");
+            } else {
+                source.setOption(Options.DOWNSCALE, downscale);
+            }
             source.setOption(Options.PROFILE, cmd.getStringFlagI(index, FLAG_PROFILE));
             source.setOption(Options.INTERLACED, cmd.getBooleanFlagID(index, FLAG_INTERLACED, false));
             sources.add(source);
@@ -295,13 +302,6 @@ public class TranscodeMain {
             }
 
             Sink sink = new SinkImpl(output, outputFormat, outputCodecVideo, outputCodecAudio);
-            Integer downscale = cmd.getIntegerFlagID(index, FLAG_DOWNSCALE, 1);
-            if (downscale != null && (1 << MathUtil.log2(downscale)) != downscale) {
-                Logger.error("Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE
-                        + ", the option will have no effect.");
-            } else {
-                sink.setOption(Options.DOWNSCALE, downscale);
-            }
             sinks.add(sink);
             builder.addSink(sink);
             builder.setAudioMapping(audioMap, sinks.size() - 1, audioCopy);
