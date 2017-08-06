@@ -33,8 +33,9 @@ public class Picture {
         return new Picture(width, height, data, null, color, 0, new Rect(0, 0, width, height));
     }
     
-    public static Picture createPictureHiBD(int width, int height, byte[][] data, byte[][] lowBits, ColorSpace color) {
-        return new Picture(width, height, data, lowBits, color, 0, new Rect(0, 0, width, height));
+    public static Picture createPictureHiBD(int width, int height, byte[][] data, byte[][] lowBits, ColorSpace color,
+            int lowBitsNum) {
+        return new Picture(width, height, data, lowBits, color, lowBitsNum, new Rect(0, 0, width, height));
     }
     
     public Picture(int width, int height, byte[][] data, byte[][] lowBits, ColorSpace color, int lowBitsNum, Rect crop) {
