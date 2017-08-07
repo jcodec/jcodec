@@ -94,7 +94,7 @@ public class MP4DemuxerTrackMeta {
             AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) track.getSampleEntries()[0]);
             List<ByteBuffer> spsList = avcC.getSpsList();
             if (spsList.size() > 0) {
-                SeqParameterSet sps = SeqParameterSet.read(spsList.get(0));
+                SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
                 return sps.getChromaFormatIdc();
             }
         }
