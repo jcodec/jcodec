@@ -86,7 +86,7 @@ public class JpegToThumb4x4 extends JpegDecoder {
     public Picture decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
         Picture res = super.decodeField(data, data2, field, step);
 
-        return new Picture(res.getWidth() >> 1, res.getHeight() >> 1, res.getData(), res.getColor(), new Rect(0, 0,
-                res.getCroppedWidth() >> 1, res.getCroppedHeight() >> 1));
+        return new Picture(res.getWidth() >> 1, res.getHeight() >> 1, res.getData(), null, res.getColor(), 0, new Rect(
+                0, 0, res.getCroppedWidth() >> 1, res.getCroppedHeight() >> 1));
     }
 }

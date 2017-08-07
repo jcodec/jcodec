@@ -64,7 +64,13 @@ public class ColorUtil {
             for (int i = 0; i < Math.min(src.getData().length, dst.getData().length); i++)
                 arraycopy(src.getPlaneData(i), 0, dst.getPlaneData(i), 0,
                         Math.min(src.getPlaneData(i).length, dst.getPlaneData(i).length));
-
+            byte[][] srcLowBits = src.getLowBits();
+            byte[][] dstLowBits = dst.getLowBits();
+            if (srcLowBits != null && dstLowBits != null) {
+                for (int i = 0; i < Math.min(src.getData().length, dst.getData().length); i++)
+                    arraycopy(srcLowBits[i], 0, dstLowBits[i], 0,
+                            Math.min(src.getPlaneData(i).length, dst.getPlaneData(i).length));
+            }
         }
     }
 }

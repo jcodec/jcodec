@@ -64,9 +64,9 @@ public class JpegDecoder extends VideoDecoder {
         int yBlocks = (height + mcuH - 1) >> (blockH + 2);
 
         int nn = blockW + blockH;
-        Picture result = new Picture(xBlocks << (blockW + 2), yBlocks << (blockH + 2), data2,
-                nn == 4 ? ColorSpace.YUV420J : (nn == 3 ? ColorSpace.YUV422J : ColorSpace.YUV444J),
-                new Rect(0, 0, width, height));
+        Picture result = new Picture(xBlocks << (blockW + 2), yBlocks << (blockH + 2), data2, null,
+                nn == 4 ? ColorSpace.YUV420J : (nn == 3 ? ColorSpace.YUV422J : ColorSpace.YUV444J), 0, new Rect(0, 0,
+                        width, height));
 
         BitReader bits = BitReader.createBitReader(data);
         int[] dcPredictor = new int[] { 1024, 1024, 1024 };

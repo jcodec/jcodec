@@ -14,7 +14,7 @@ import static org.jcodec.codecs.prores.ProresConsts.interlaced_scan;
 import static org.jcodec.codecs.prores.ProresConsts.levCodebooks;
 import static org.jcodec.codecs.prores.ProresConsts.progressive_scan;
 import static org.jcodec.codecs.prores.ProresConsts.runCodebooks;
-import static org.jcodec.common.dct.SimpleIDCT10Bit.fdct10;
+import static org.jcodec.common.dct.SimpleIDCT10Bit.fdctProres10;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.tools.MathUtil.log2;
 import static org.jcodec.common.tools.MathUtil.sign;
@@ -209,9 +209,18 @@ public class ProresEncoder extends VideoEncoder {
         writeACCoeffs(bits, qMat, _in, blocksPerSlice, scan, 64);
     }
 
-    private void dctOnePlane(int blocksPerSlice, byte[] _in, int[] out) {
+    private void dctOnePlane(int blocksPerSlice, byte[] in, byte[] hibd, int[] out) {
+        for (int i = 0; i < in.length; i++) {
+            out[i] = ((in[i] + 128) << 2);
+        }
+        if (hibd != null) {
+            for (int i = 0; i < in.length; i++) {
+                out[i] += hibd[i];
+            }
+        }
+
         for (int i = 0; i < blocksPerSlice; i++) {
-            fdct10(_in, i << 6, out);
+            fdctProres10(out, i << 6);
         }
     }
 
@@ -221,9 +230,11 @@ public class ProresEncoder extends VideoEncoder {
 
         Picture striped = splitSlice(result, mbX, mbY, sliceMbCount, unsafe, vStep, vOffset);
         int[][] ac = new int[][] { new int[sliceMbCount << 8], new int[sliceMbCount << 7], new int[sliceMbCount << 7] };
-        dctOnePlane(sliceMbCount << 2, striped.getPlaneData(0), ac[0]);
-        dctOnePlane(sliceMbCount << 1, striped.getPlaneData(1), ac[1]);
-        dctOnePlane(sliceMbCount << 1, striped.getPlaneData(2), ac[2]);
+        byte[][] data = striped.getData();
+        byte[][] lowBits = striped.getLowBits();
+        dctOnePlane(sliceMbCount << 2, data[0], lowBits == null ? null : lowBits[0], ac[0]);
+        dctOnePlane(sliceMbCount << 1, data[1], lowBits == null ? null : lowBits[1], ac[1]);
+        dctOnePlane(sliceMbCount << 1, data[2], lowBits == null ? null : lowBits[2], ac[2]);
 
         int est = (sliceMbCount >> 2) * profile.bitrate;
         int low = est - (est >> 3); // 12% bitrate fluctuation
@@ -332,7 +343,7 @@ public class ProresEncoder extends VideoEncoder {
 
     private Picture splitSlice(Picture result, int mbX, int mbY, int sliceMbCount, boolean unsafe, int vStep,
             int vOffset) {
-        Picture out = Picture.create(sliceMbCount << 4, 16, YUV422);
+        Picture out = Picture.createCropped(sliceMbCount << 4, 16, result.getLowBitsNum(), YUV422, null);
         if (unsafe) {
             int mbHeightPix = 16 << vStep;
             Picture filled = Picture.create(sliceMbCount << 4, mbHeightPix, YUV422);
@@ -347,15 +358,22 @@ public class ProresEncoder extends VideoEncoder {
         return out;
     }
 
-    private void split(Picture _in, Picture out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
+    private void split(Picture in, Picture out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
+        byte[][] inData = in.getData();
+        byte[][] inhbdData = in.getLowBits();
+        
+        byte[][] outData = out.getData();
+        byte[][] outhbdData = out.getLowBits();
 
-        doSplit(_in.getPlaneData(0), out.getPlaneData(0), _in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep,
-                vOffset);
-        doSplit(_in.getPlaneData(1), out.getPlaneData(1), _in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep,
-                vOffset);
-        doSplit(_in.getPlaneData(2), out.getPlaneData(2), _in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep,
-                vOffset);
-
+        doSplit(inData[0], outData[0], in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
+        doSplit(inData[1], outData[1], in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        doSplit(inData[2], outData[2], in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        
+        if (in.getLowBits() != null) {
+            doSplit(inhbdData[0], outhbdData[0], in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
+            doSplit(inhbdData[1], outhbdData[1], in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+            doSplit(inhbdData[2], outhbdData[2], in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        }
     }
 
     private void doSplit(byte[] _in, byte[] out, int stride, int mbX, int mbY, int sliceMbCount, int chroma, int vStep,
