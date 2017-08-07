@@ -54,17 +54,15 @@ public class MBEncoderI16x16 {
     private static int DUMMY[] = new int[16];
 
     private void chroma(Picture pic, int mbX, int mbY, BitWriter out, int qp, Picture outMB) {
-        int cw = pic.getColor().compWidth[1];
-        int ch = pic.getColor().compHeight[1];
-        int x = mbX << (4 - cw);
-        int y = mbY << (4 - ch);
-        int[][] ac1 = new int[16 >> (cw + ch)][16];
-        int[][] ac2 = new int[16 >> (cw + ch)][16];
-        byte[][] pred1 = new byte[16 >> (cw + ch)][16];
-        byte[][] pred2 = new byte[16 >> (cw + ch)][16];
+        int x = mbX << 3;
+        int y = mbY << 3;
+        int[][] ac1 = new int[4][16];
+        int[][] ac2 = new int[4][16];
+        byte[][] pred1 = new byte[4][16];
+        byte[][] pred2 = new byte[4][16];
 
-        predictChroma(pic, ac1, pred1, 1, cw, ch, x, y);
-        predictChroma(pic, ac2, pred2, 2, cw, ch, x, y);
+        predictChroma(pic, ac1, pred1, 1,  x, y);
+        predictChroma(pic, ac2, pred2, 2,  x, y);
 
         chromaResidual(pic, mbX, mbY, out, qp, ac1, ac2, cavlc[1], cavlc[2], I_16x16, I_16x16);
 
@@ -193,7 +191,7 @@ public class MBEncoderI16x16 {
         }
     }
 
-    private void predictChroma(Picture pic, int[][] ac, byte[][] pred, int comp, int cw, int ch, int x, int y) {
+    private void predictChroma(Picture pic, int[][] ac, byte[][] pred, int comp, int x, int y) {
         chromaPredBlk0(comp, x, y, pred[0]);
         chromaPredBlk1(comp, x, y, pred[1]);
         chromaPredBlk2(comp, x, y, pred[2]);

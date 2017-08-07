@@ -93,6 +93,9 @@ public class H264Encoder extends VideoEncoder {
      * encoder.
      */
     public EncodedFrame encodeFrame(Picture pic, ByteBuffer _out) {
+        if (pic.getColor() != ColorSpace.YUV420J)
+            throw new IllegalArgumentException("Input picture color is not supported: " + pic.getColor());
+        
         if (frameNumber >= keyInterval) {
             frameNumber = 0;
         }
@@ -157,7 +160,7 @@ public class H264Encoder extends VideoEncoder {
 
         leftRow = new byte[][] { new byte[16], new byte[8], new byte[8] };
         topLine = new byte[][] { new byte[mbWidth << 4], new byte[mbWidth << 3], new byte[mbWidth << 3] };
-        picOut = Picture.create(mbWidth << 4, mbHeight << 4, pic.getColor());
+        picOut = Picture.create(mbWidth << 4, mbHeight << 4, ColorSpace.YUV420J);
 
         outMB = new EncodedMB();
         topEncoded = new EncodedMB[mbWidth];

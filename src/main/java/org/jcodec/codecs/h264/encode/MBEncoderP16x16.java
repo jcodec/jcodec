@@ -51,9 +51,6 @@ public class MBEncoderP16x16 {
 
     public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
             EncodedMB leftOutMB, EncodedMB topOutMB, int qp, int qpDelta) {
-        int cw = pic.getColor().compWidth[1];
-        int ch = pic.getColor().compHeight[1];
-
         if (sps.numRefFrames > 1) {
             int refIdx = decideRef();
             CAVLCWriter.writeTE(out, refIdx, sps.numRefFrames - 1);
@@ -78,7 +75,7 @@ public class MBEncoderP16x16 {
         CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvdy
 
         Picture mbRef = Picture.create(16, 16, sps.chromaFormatIdc);
-        int[][] mb = new int[][] {new int[256], new int[256 >> (cw + ch)], new int[256 >> (cw + ch)]};
+        int[][] mb = new int[][] {new int[256], new int[64], new int[64]};
 
         interpolator.getBlockLuma(ref, mbRef, 0, (mbX << 6) + mv[0], (mbY << 6) + mv[1], 16, 16);
 
@@ -89,10 +86,10 @@ public class MBEncoderP16x16 {
 
         MBEncoderHelper.takeSubtract(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4,
                 mbY << 4, mb[0], mbRef.getPlaneData(0), 16, 16);
-        MBEncoderHelper.takeSubtract(pic.getPlaneData(1), pic.getPlaneWidth(1), pic.getPlaneHeight(1), mbX << (4 - cw),
-                mbY << (4 - ch), mb[1], mbRef.getPlaneData(1), 16 >> cw, 16 >> ch);
-        MBEncoderHelper.takeSubtract(pic.getPlaneData(2), pic.getPlaneWidth(2), pic.getPlaneHeight(2), mbX << (4 - cw),
-                mbY << (4 - ch), mb[2], mbRef.getPlaneData(2), 16 >> cw, 16 >> ch);
+        MBEncoderHelper.takeSubtract(pic.getPlaneData(1), pic.getPlaneWidth(1), pic.getPlaneHeight(1), mbX << 3,
+                mbY << 3, mb[1], mbRef.getPlaneData(1), 8, 8);
+        MBEncoderHelper.takeSubtract(pic.getPlaneData(2), pic.getPlaneWidth(2), pic.getPlaneHeight(2), mbX << 3,
+                mbY << 3, mb[2], mbRef.getPlaneData(2), 8, 8);
 
         int codedBlockPattern = getCodedBlockPattern();
         CAVLCWriter.writeUE(out, H264Const.CODED_BLOCK_PATTERN_INTER_COLOR_INV[codedBlockPattern]);
@@ -104,10 +101,10 @@ public class MBEncoderP16x16 {
 
         MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(0), mb[0], mbRef.getPlaneData(0), 4, 0, 0,
                 16, 16);
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb[1], mbRef.getPlaneData(1), 4 - cw, 0,
-                0, 16 >> cw, 16 >> ch);
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb[2], mbRef.getPlaneData(2), 4 - cw, 0,
-                0, 16 >> cw, 16 >> ch);
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb[1], mbRef.getPlaneData(1), 3, 0,
+                0, 8, 8);
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb[2], mbRef.getPlaneData(2), 3, 0,
+                0, 8, 8);
 
         Arrays.fill(outMB.getMx(), mv[0]);
         Arrays.fill(outMB.getMy(), mv[1]);
@@ -179,10 +176,8 @@ public class MBEncoderP16x16 {
     }
 
     private void chroma(Picture pic, int[] pix1, int[] pix2, int mbX, int mbY, BitWriter out, int qp) {
-        int cw = pic.getColor().compWidth[1];
-        int ch = pic.getColor().compHeight[1];
-        int[][] ac1 = new int[16 >> (cw + ch)][16];
-        int[][] ac2 = new int[16 >> (cw + ch)][16];
+        int[][] ac1 = new int[4][16];
+        int[][] ac2 = new int[4][16];
         for (int i = 0; i < ac1.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
                 ac1[i][j] = pix1[H264Const.PIX_MAP_SPLIT_2x2[i][j]];
