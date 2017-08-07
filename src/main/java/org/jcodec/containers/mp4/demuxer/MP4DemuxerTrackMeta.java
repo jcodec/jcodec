@@ -6,9 +6,11 @@ import static org.jcodec.common.TrackType.VIDEO;
 import static org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import org.jcodec.codecs.aac.AACUtils;
 import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.Codec;
@@ -53,7 +55,7 @@ public class MP4DemuxerTrackMeta {
         VideoCodecMeta videoCodecMeta = null;
         AudioCodecMeta audioCodecMeta = null;
         if (type == MP4TrackType.VIDEO) {
-            videoCodecMeta = createSimpleVideoCodecMeta(trak.getCodedSize(), ColorSpace.YUV420);
+            videoCodecMeta = createSimpleVideoCodecMeta(trak.getCodedSize(), getColorInfo(track));
             PixelAspectExt pasp = NodeBox.findFirst(track.getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if (pasp != null)
                 videoCodecMeta.setPixelAspectRatio(pasp.getRational());
@@ -84,6 +86,19 @@ public class MP4DemuxerTrackMeta {
         }
 
         return meta;
+    }
+
+    protected static ColorSpace getColorInfo(AbstractMP4DemuxerTrack track) {
+        Codec codec = Codec.codecByFourcc(track.getFourcc());
+        if (codec == Codec.H264) {
+            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) track.getSampleEntries()[0]);
+            List<ByteBuffer> spsList = avcC.getSpsList();
+            if (spsList.size() > 0) {
+                SeqParameterSet sps = SeqParameterSet.read(spsList.get(0));
+                return sps.getChromaFormatIdc();
+            }
+        }
+        return null;
     }
 
     public static ByteBuffer getCodecPrivate(AbstractMP4DemuxerTrack track) {
