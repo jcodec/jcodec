@@ -3,7 +3,6 @@ package org.jcodec.api;
 import static org.jcodec.common.Format.MOV;
 import static org.jcodec.common.Tuple._3;
 import static org.jcodec.common.model.ColorSpace.RGB;
-import static org.jcodec.common.model.ColorSpace.YUV420;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -22,22 +21,18 @@ import org.jcodec.common.Codec;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.scale.AWTUtil;
-import org.jcodec.scale.ColorUtil;
-import org.jcodec.scale.Transform;
 import org.junit.Test;
 
 public class TranscoderTest {
     final class CustomFilter implements Filter {
-        Transform rgb2yuv = ColorUtil.getTransform(RGB, YUV420);
-
         @Override
         public ColorSpace getOutputColor() {
-            return ColorSpace.YUV420;
+            return RGB;
         }
 
         @Override
         public ColorSpace getInputColor() {
-            return null;
+            return RGB;
         }
 
         @Override
@@ -49,10 +44,7 @@ public class TranscoderTest {
             LoanerPicture tmpRGB = store.getPicture(rgb.getWidth(), rgb.getHeight(), RGB);
             AWTUtil.fromBufferedImage(rgb, tmpRGB.getPicture());
 
-            LoanerPicture res = store.getPicture(picture.getWidth(), picture.getHeight(), YUV420);
-            rgb2yuv.transform(tmpRGB.getPicture(), res.getPicture());
-            store.putBack(tmpRGB);
-            return res;
+            return tmpRGB;
         }
     }
 
