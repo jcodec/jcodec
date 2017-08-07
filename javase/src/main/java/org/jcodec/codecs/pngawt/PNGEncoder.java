@@ -1,5 +1,8 @@
 package org.jcodec.codecs.pngawt;
 
+import static org.jcodec.common.model.ColorSpace.BGR;
+import static org.jcodec.common.model.ColorSpace.RGB;
+
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,7 +34,10 @@ public class PNGEncoder extends VideoEncoder {
         if (rgbToBgr == null) {
             rgbToBgr = new RgbToBgr();
         }
-        rgbToBgr.transform(pic, pic);
+        if (pic.getColor() == RGB)
+            rgbToBgr.transform(pic, pic);
+        else if (pic.getColor() != BGR)
+            throw new IllegalArgumentException("Unsupported input color space: " + pic.getColor());
 
         AWTUtil.toBufferedImage(pic, bi);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
