@@ -14,7 +14,19 @@ public class H264EncoderTest {
     @Test
     public void canEncodeYuv444() throws Exception {
         H264Encoder encoder = H264Encoder.createH264Encoder();
-        encode444(encoder);
+        encode(encoder, ColorSpace.YUV444);
+    }
+    
+    @Test
+    public void canEncodeYuv420() throws Exception {
+        H264Encoder encoder = H264Encoder.createH264Encoder();
+        encode(encoder, ColorSpace.YUV420);
+    }
+    
+    @Test
+    public void canEncodeYuv420J() throws Exception {
+        H264Encoder encoder = H264Encoder.createH264Encoder();
+        encode(encoder, ColorSpace.YUV420J);
     }
 
     /**
@@ -23,15 +35,15 @@ public class H264EncoderTest {
     @Test
     public void canEncodeYuv444WithRateControl() throws Exception {
         H264Encoder encoder = new H264Encoder(new H264FixedRateControl(4));
-        encode444(encoder);
+        encode(encoder, ColorSpace.YUV444);
     }
 
-    private void encode444(H264Encoder encoder) {
+    private void encode(H264Encoder encoder, ColorSpace colorSpace) {
         int displayWidth = 1920;
         int displayHeight = 1080;
         int uncompressedSize = displayWidth * displayHeight * 3;
 
-        Picture picture = Picture.create(displayWidth, displayHeight, ColorSpace.YUV444);
+        Picture picture = Picture.create(displayWidth, displayHeight, colorSpace);
 
         ByteBuffer buffer = ByteBuffer.allocate(uncompressedSize);
 
