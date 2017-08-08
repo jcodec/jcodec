@@ -23,7 +23,9 @@ public class AWTUtil {
     }
 
     public static BufferedImage toBufferedImage(Picture src) {
-        if (src.getColor() != ColorSpace.RGB) {
+        if (src.getColor() == ColorSpace.RGB) {
+            new RgbToBgr().transform(src, src);
+        } else if (src.getColor() != ColorSpace.BGR) {
             Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
             if (transform == null) {
                 throw new IllegalArgumentException("Unsupported input colorspace: " + src.getColor());

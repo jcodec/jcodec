@@ -21,7 +21,9 @@ import static org.jcodec.common.model.ColorSpace.RGB;
  */
 public class AWTUtil {
     public static BufferedImage toBufferedImage(Picture src) {
-        if (src.getColor() != ColorSpace.RGB) {
+        if (src.getColor() == ColorSpace.RGB) {
+            new RgbToBgr().transform(src, src);
+        } else if (src.getColor() != ColorSpace.BGR) {
             Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
             Picture rgb = Picture.createCropped(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
             transform.transform(src, rgb);
@@ -41,7 +43,9 @@ public class AWTUtil {
     }
 
     public static BufferedImage toBufferedImage(Picture src, DemuxerTrackMeta.Orientation orientation) {
-        if (src.getColor() != ColorSpace.RGB) {
+        if (src.getColor() == ColorSpace.RGB) {
+            new RgbToBgr().transform(src, src);
+        } else if (src.getColor() != ColorSpace.BGR) {
             Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
             Picture rgb = Picture.createCropped(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
             transform.transform(src, rgb);
