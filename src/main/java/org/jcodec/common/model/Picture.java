@@ -3,8 +3,9 @@ package org.jcodec.common.model;
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.model.ColorSpace.MAX_PLANES;
 
-import java.lang.IllegalArgumentException;
 import java.util.Arrays;
+
+import org.jcodec.common.tools.MathUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,18 +24,27 @@ public class Picture {
     private int height;
 
     private byte[][] data;
+    private byte[][] lowBits;
+    private int lowBitsNum;
 
     private Rect crop;
 
     public static Picture createPicture(int width, int height, byte[][] data, ColorSpace color) {
-        return new Picture(width, height, data, color, new Rect(0, 0, width, height));
+        return new Picture(width, height, data, null, color, 0, new Rect(0, 0, width, height));
     }
     
-    public Picture(int width, int height, byte[][] data, ColorSpace color, Rect crop) {
+    public static Picture createPictureHiBD(int width, int height, byte[][] data, byte[][] lowBits, ColorSpace color,
+            int lowBitsNum) {
+        return new Picture(width, height, data, lowBits, color, lowBitsNum, new Rect(0, 0, width, height));
+    }
+    
+    public Picture(int width, int height, byte[][] data, byte[][] lowBits, ColorSpace color, int lowBitsNum, Rect crop) {
         this.width = width;
         this.height = height;
         this.data = data;
+        this.lowBits = lowBits;
         this.color = color;
+        this.lowBitsNum = lowBitsNum;
         this.crop = crop;
 
         if (color != null) {
@@ -58,7 +68,7 @@ public class Picture {
     }
 
     public static Picture copyPicture(Picture other) {
-        return new Picture(other.width, other.height, other.data, other.color, other.crop);
+        return new Picture(other.width, other.height, other.data, other.lowBits, other.color, 0, other.crop);
     }
     
     public static Picture create(int width, int height, ColorSpace colorSpace) {
@@ -81,8 +91,32 @@ public class Picture {
                 data[plane++] = new byte[planeSizes[i]];
             }
         }
+        return new Picture(width, height, data, null, colorSpace, 0, crop);
+    }
+    
+    public static Picture createCroppedHiBD(int width, int height, int lowBitsNum, ColorSpace colorSpace, Rect crop) {
+        Picture result = createCropped(width, height, colorSpace, crop);
+        if (lowBitsNum <= 0)
+            return result;
+        byte[][] data = result.getData();
+        int nPlanes = data.length;
+        
+        byte[][] lowBits = new byte[nPlanes][];
+        for (int i = 0, plane = 0; i < nPlanes; i++) {
+            lowBits[plane++] = new byte[data[i].length];
+        }
+        result.setLowBits(lowBits);
+        result.setLowBitsNum(lowBitsNum);
 
-        return new Picture(width, height, data, colorSpace, crop);
+        return result;
+    }
+
+    private void setLowBitsNum(int lowBitsNum) {
+        this.lowBitsNum = lowBitsNum;
+    }
+
+    private void setLowBits(byte[][] lowBits) {
+        this.lowBits = lowBits;
     }
 
     public int getWidth() {
@@ -104,6 +138,11 @@ public class Picture {
     public byte[][] getData() {
         return data;
     }
+    
+    public byte[][] getLowBits() {
+        return lowBits;
+    }
+
 
     public Rect getCrop() {
         return crop;
@@ -200,39 +239,71 @@ public class Picture {
         return crop == null ? height : crop.getHeight();
     }
 
-    public static Picture fromPictureHiBD(PictureHiBD pic) {
-        Picture create = Picture.createCropped(pic.getWidth(), pic.getHeight(), pic.getColor(), pic.getCrop());
+    public int getLowBitsNum() {
+        return lowBitsNum;
+    }
 
-        for (int i = 0; i < Math.min(pic.getData().length, create.getData().length); i++) {
-            for (int j = 0; j < Math.min(pic.getData()[i].length, create.getData()[i].length); j++) {
-                create.getData()[i][j] = (byte) (((pic.getData()[i][j] << 8) >> pic.getBitDepth()) - 128);
+    public static Picture fromPictureHiBD(PictureHiBD pic) {
+        int lowBitsNum = pic.getBitDepth() - 8;
+        int lowBitsRound = (1 << lowBitsNum) >> 1;
+
+        Picture result = Picture.createCroppedHiBD(pic.getWidth(), pic.getHeight(), lowBitsNum, pic.getColor(),
+                pic.getCrop());
+
+        for (int i = 0; i < Math.min(pic.getData().length, result.getData().length); i++) {
+            for (int j = 0; j < Math.min(pic.getData()[i].length, result.getData()[i].length); j++) {
+                int val = pic.getData()[i][j];
+                int round = MathUtil.clip((val + lowBitsRound) >> lowBitsNum, 0, 255);
+                result.getData()[i][j] = (byte) (round - 128);
             }
         }
 
-        return create;
+        byte[][] lowBits = result.getLowBits();
+        if (lowBits != null) {
+            for (int i = 0; i < Math.min(pic.getData().length, result.getData().length); i++) {
+                for (int j = 0; j < Math.min(pic.getData()[i].length, result.getData()[i].length); j++) {
+                    int val = pic.getData()[i][j];
+                    int round = MathUtil.clip((val + lowBitsRound) >> lowBitsNum, 0, 255);
+                    lowBits[i][j] = (byte) (val - (round << 2));
+                }
+            }
+        }
+
+        return result;
+    }
+    
+    public PictureHiBD toPictureHiBD() {
+        PictureHiBD create = PictureHiBD.doCreate(width, height, color, lowBitsNum + 8, crop);
+
+        return toPictureHiBDInternal(create);
     }
 
-    public PictureHiBD toPictureHiBD(int bitDepth) {
-        PictureHiBD create = PictureHiBD.doCreate(width, height, color, bitDepth, crop);
+    public PictureHiBD toPictureHiBDWithBuffer(int[][] buffer) {
+        PictureHiBD create = new PictureHiBD(width, height, buffer, color, lowBitsNum + 8, crop);
 
-        return toPictureHiBDInternal(bitDepth, create);
+        return toPictureHiBDInternal(create);
     }
 
-    public PictureHiBD toPictureHiBDWithBuffer(int bitDepth, int[][] buffer) {
-        PictureHiBD create = new PictureHiBD(width, height, buffer, color, bitDepth, crop);
-
-        return toPictureHiBDInternal(bitDepth, create);
-    }
-
-    private PictureHiBD toPictureHiBDInternal(int bitDepth, PictureHiBD create) {
+    private PictureHiBD toPictureHiBDInternal(PictureHiBD pic) {
+        int[][] dstData = pic.getData();
+        
         for (int i = 0; i < data.length; i++) {
             int planeSize = getPlaneWidth(i) * getPlaneHeight(i);
             for (int j = 0; j < planeSize; j++) {
-                create.getData()[i][j] = ((data[i][j] + 128) << bitDepth) >> 8;
+                dstData[i][j] = (data[i][j] + 128) << lowBitsNum;
             }
         }
+        
+        if (lowBits != null) {
+            for (int i = 0; i < lowBits.length; i++) {
+                int planeSize = getPlaneWidth(i) * getPlaneHeight(i);
+                for (int j = 0; j < planeSize; j++) {
+                    dstData[i][j] += lowBits[i][j];
+                }
+            }   
+        }
 
-        return create;
+        return pic;
     }
 
     public void fill(int val) {
@@ -280,5 +351,9 @@ public class Picture {
 
     public int getStartY() {
         return crop == null ? 0 : crop.getY();
+    }
+    
+    public boolean isHiBD() {
+        return lowBits != null;
     }
 }

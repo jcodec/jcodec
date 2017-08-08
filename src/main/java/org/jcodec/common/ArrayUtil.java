@@ -160,7 +160,7 @@ public class ArrayUtil {
             result[i] = (byte) (arguments[i] - 128);
         return result;
     }
-
+    
     public static byte[][] toByteArrayShifted2(int[][] intArray) {
         byte[][] result = new byte[intArray.length][];
         for (int i = 0; i < intArray.length; i++) {

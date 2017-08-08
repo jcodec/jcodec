@@ -102,10 +102,6 @@ public class PictureHiBD {
         return data;
     }
 
-    public int getBitDepth() {
-        return bitDepth;
-    }
-
     public Rect getCrop() {
         return crop;
     }
@@ -119,7 +115,7 @@ public class PictureHiBD {
     }
 
     public boolean compatible(PictureHiBD src) {
-        return src.color == color && src.width == width && src.height == height && src.bitDepth == bitDepth;
+        return src.color == color && src.width == width && src.height == height;
     }
 
     public PictureHiBD createCompatible() {
@@ -141,7 +137,7 @@ public class PictureHiBD {
         if (crop == null
                 || (crop.getX() == 0 && crop.getY() == 0 && crop.getWidth() == width && crop.getHeight() == height))
             return this;
-        PictureHiBD result = PictureHiBD.createWithDepth(crop.getWidth(), crop.getHeight(), color, bitDepth);
+        PictureHiBD result = PictureHiBD.create(crop.getWidth(), crop.getHeight(), color);
 
         for (int plane = 0; plane < color.nComp; plane++) {
             if (data[plane] == null)
@@ -179,6 +175,10 @@ public class PictureHiBD {
 
     public void setBitDepth(int bitDepth) {
         this.bitDepth = bitDepth;
+    }
+
+    public int getBitDepth() {
+        return bitDepth;
     }
 
     @Override
