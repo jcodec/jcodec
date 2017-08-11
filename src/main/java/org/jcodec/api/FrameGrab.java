@@ -44,6 +44,9 @@ public class FrameGrab {
         _in.read(header);
         header.flip();
         Format detectFormat = JCodecUtil.detectFormatBuffer(header);
+		if (detectFormat == null) {
+			throw new UnsupportedFormatException("Could not detect the format of the input video.");
+		}
         SeekableDemuxerTrack videoTrack_;
 
         switch (detectFormat) {
