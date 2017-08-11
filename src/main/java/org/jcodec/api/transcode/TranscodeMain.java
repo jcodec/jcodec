@@ -5,6 +5,7 @@ import static org.jcodec.common.Tuple._3;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 import org.jcodec.api.transcode.Transcoder.TranscoderBuilder;
 import org.jcodec.api.transcode.filters.DumpMvFilter;
+import org.jcodec.api.transcode.filters.ScaleFilter;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
@@ -62,16 +64,20 @@ public class TranscodeMain {
 
     private static final Flag FLAG_DOWNSCALE = new Flag("downscale",
             "Decode frames in downscale (supported by MPEG, Prores and Jpeg decoders).");
+    
+    private static final Flag FLAG_VIDEO_FILTER = new Flag("videoFilter", "vf",
+            "Contains a comma separated list of video filters with arguments.");
 
     private static final Flag[] ALL_FLAGS = new Flag[] { FLAG_INPUT, FLAG_FORMAT, FLAG_VIDEO_CODEC, FLAG_AUDIO_CODEC,
             FLAG_SEEK_FRAMES, FLAG_MAX_FRAMES, FLAG_PROFILE, FLAG_INTERLACED, FLAG_DUMPMV, FLAG_DUMPMVJS,
-            FLAG_DOWNSCALE, FLAG_MAP_VIDEO, FLAG_MAP_AUDIO };
+            FLAG_DOWNSCALE, FLAG_MAP_VIDEO, FLAG_MAP_AUDIO, FLAG_VIDEO_FILTER };
 
     private static Map<String, Format> extensionToF = new HashMap<String, Format>();
     private static Map<String, Codec> extensionToC = new HashMap<String, Codec>();
     private static Map<Format, Codec> videoCodecsForF = new HashMap<Format, Codec>();
     private static Map<Format, Codec> audioCodecsForF = new HashMap<Format, Codec>();
     private static Set<Codec> supportedDecoders = new HashSet<Codec>();
+    private static Map<String, Class<? extends Filter>> knownFilters = new HashMap<String, Class<? extends Filter>>();
 
     static {
         extensionToF.put("mpg", Format.MPEG_PS);
@@ -158,6 +164,8 @@ public class TranscodeMain {
         supportedDecoders.add(Codec.PRORES);
         supportedDecoders.add(Codec.RAW);
         supportedDecoders.add(Codec.VP8);
+        
+        knownFilters.put("scale", ScaleFilter.class);
     }
 
     public static void main(String[] args) throws Exception {
@@ -312,6 +320,11 @@ public class TranscodeMain {
                 builder.addFilter(sinks.size() - 1, new DumpMvFilter(false));
             else if (cmd.getBooleanFlagI(index, FLAG_DUMPMVJS))
                 builder.addFilter(sinks.size() - 1, new DumpMvFilter(true));
+            
+            String vf = cmd.getStringFlagI(index, FLAG_VIDEO_FILTER);
+            if (vf != null) {
+                addVideoFilters(vf, builder, sinks.size() - 1);
+            }
         }
 
         if (sources.isEmpty() || sinks.isEmpty()) {
@@ -322,6 +335,39 @@ public class TranscodeMain {
         Transcoder transcoder = builder.create();
 
         transcoder.transcode();
+    }
+
+    private static void addVideoFilters(String vf, TranscoderBuilder builder, int sinkIndex) {
+        if (vf == null)
+            return;
+        for (String filter : vf.split(",")) {
+            String[] parts = filter.split("=");
+            String filterName = parts[0];
+            Class<? extends Filter> filterClass = knownFilters.get(filterName);
+            if (filterClass == null) {
+                Logger.error("Unknown filter: " + filterName);
+                throw new RuntimeException("Unknown filter: " + filterName);
+            }
+            if (parts.length > 1) {
+                String filterArgs = parts[1];
+                String[] split = filterArgs.split(":");
+                Integer[] params = new Integer[split.length];
+                Class[] types = new Class[split.length];
+                for (int i = 0; i < split.length; i++) {
+                    params[i] = Integer.parseInt(split[i]);
+                    types[i] = int.class;
+                }
+                try {
+                    Constructor<? extends Filter> constructor = filterClass.getConstructor(types);
+                    Filter f = constructor.newInstance(params);
+                    builder.addFilter(sinkIndex, f);
+                } catch (Exception e) {
+                    String message = "The filter " + filterName + " doesn't take " + split.length + " arguments.";
+                    Logger.error(message);
+                    throw new RuntimeException(message);
+                }
+            }
+        }
     }
 
     private static Codec getFirstAudioCodecForFormat(Format inputFormat) {
