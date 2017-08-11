@@ -75,6 +75,6 @@ public class MBlockDecoderIntraNxN extends MBlockDecoderBase {
         MBlockDecoderUtils.collectChromaPredictors(s, mb, mbX);
 
         MBlockDecoderUtils.saveMvsIntra(di, mbX, mbY);
-        MBlockDecoderUtils.saveVectIntra(s, mapper.getMbX(mbAddr));
+        MBlockDecoderUtils.saveVectIntra(s, mapper.getMbX(mBlock.mbIdx));
     }
 }
