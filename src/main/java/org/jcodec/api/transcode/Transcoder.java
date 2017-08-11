@@ -1,5 +1,7 @@
 package org.jcodec.api.transcode;
 
+import static org.jcodec.common.model.ColorSpace.ANY;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -96,11 +98,12 @@ public class Transcoder {
             ArrayList<Filter> filters = new ArrayList<Filter>();
             for (Filter filter : extraFilters) {
                 ColorSpace inputColor = filter.getInputColor();
-                if (inputColor != null && inputColor != sourceColor) {
+                if (!sourceColor.matches(inputColor)) {
                     filters.add(new ColorTransformFilter(inputColor));
                 }
                 filters.add(filter);
-                sourceColor = filter.getOutputColor();
+                if (filter.getOutputColor() != ColorSpace.SAME)
+                    sourceColor = filter.getOutputColor();
             }
             ColorSpace inputColor = sink.getInputColor();
             if (inputColor != null && inputColor != sourceColor)

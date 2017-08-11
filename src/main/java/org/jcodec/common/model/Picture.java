@@ -356,4 +356,8 @@ public class Picture {
     public boolean isHiBD() {
         return lowBits != null;
     }
+
+    public Size getSize() {
+        return new Size(width, height);
+    }
 }

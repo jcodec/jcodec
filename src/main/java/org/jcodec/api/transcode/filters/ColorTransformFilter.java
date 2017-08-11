@@ -10,25 +10,28 @@ import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
 
 /**
+ * This class is part of JCodec ( www.jcodec.org ) This software is distributed
+ * under FreeBSD License
+ * 
  * Color transform filter.
  * 
  * @author Stanislav Vitvitskyy
  */
 public class ColorTransformFilter implements Filter {
     private Transform transform;
-    private ColorSpace encoderColor;
+    private ColorSpace outputColor;
 
-    public ColorTransformFilter(ColorSpace encoderColor) {
-        this.encoderColor = encoderColor;
+    public ColorTransformFilter(ColorSpace outputColor) {
+        this.outputColor = outputColor;
     }
 
     @Override
     public LoanerPicture filter(Picture picture, PixelStore store) {
         if (transform == null) {
-            transform = ColorUtil.getTransform(picture.getColor(), encoderColor);
+            transform = ColorUtil.getTransform(picture.getColor(), outputColor);
             Logger.debug("Creating transform: " + transform);
         }
-        LoanerPicture outFrame = store.getPicture(picture.getWidth(), picture.getHeight(), encoderColor);
+        LoanerPicture outFrame = store.getPicture(picture.getWidth(), picture.getHeight(), outputColor);
         outFrame.getPicture().setCrop(picture.getCrop());
         transform.transform(picture, outFrame.getPicture());
         return outFrame;
@@ -36,12 +39,11 @@ public class ColorTransformFilter implements Filter {
 
     @Override
     public ColorSpace getInputColor() {
-        // Any color space
-        return null;
+        return ColorSpace.ANY_PLANAR;
     }
 
     @Override
     public ColorSpace getOutputColor() {
-        return encoderColor;
+        return outputColor;
     }
 }
