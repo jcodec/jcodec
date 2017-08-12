@@ -99,8 +99,9 @@ File file = new File("video.mp4");
 
 FrameGrab grab = FrameGrab.createFrameGrab(NIOUtils.readableChannel(file));
 grab.seekToSecondPrecise(startSec);
-Picture picture;
+
 for (int i=0;i<frameCount;i++) {
+    Picture picture = grab.getNativeFrame();
     System.out.println(picture.getWidth() + "x" + picture.getHeight() + " " + picture.getColor());
     //for JDK (jcodec-javase)
     BufferedImage bufferedImage = AWTUtil.toBufferedImage(picture);
