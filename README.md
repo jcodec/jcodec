@@ -42,16 +42,7 @@ JCodec is free software distributed under FreeBSD License.
 Build from the source and include both JARs (jcodec.jar and jcodec-javase.jar) in your projects. Alternatively, obsolete
 versions can be included automatically with maven. For this just add below snippet to your pom.xml-
 
-For JDK
-```xml
-<dependency>
-    <groupId>org.jcodec</groupId>
-    <artifactId>jcodec-javase</artifactId>
-    <version>0.2.0</version>
-</dependency>
-```
-
-For Android and JDK 
+Core Jcodec
 ```xml
 <dependency>
     <groupId>org.jcodec</groupId>
@@ -59,6 +50,35 @@ For Android and JDK
     <version>0.2.0</version>
 </dependency>
 ```
+
+For JDK
+```xml
+<dependency>
+    <groupId>org.jcodec</groupId>
+    <artifactId>jcodec</artifactId>
+    <version>0.2.0</version>
+</dependency>
+<dependency>
+    <groupId>org.jcodec</groupId>
+    <artifactId>jcodec-javase</artifactId>
+    <version>0.2.0</version>
+</dependency>
+```
+
+For Android
+```xml
+android {
+        configurations.all {
+        resolutionStrategy.force 'com.google.code.findbugs:jsr305:3.0.2'
+    }
+}
+
+dependencies {
+    compile 'org.jcodec:jcodec:0.2.0'
+    compile 'org.jcodec:jcodec-android:0.2.0'
+}
+```
+
 OR download it from here (you will need both jars):
 * [JCodec 0.2.0 JAR](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.0/jcodec-0.2.0.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.0/jcodec-0.2.0.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.0/jcodec-0.2.0.pom)
 * [JCodec JavaSE 0.2.0 JAR](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.0/jcodec-javase-0.2.0.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.0/jcodec-javase-0.2.0.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.0/jcodec-javase-0.2.0.pom)
@@ -79,6 +99,11 @@ Picture picture = FrameGrab.getFrameFromFile(new File("video.mp4"), frameNumber)
 //for JDK (jcodec-javase)
 BufferedImage bufferedImage = AWTUtil.toBufferedImage(picture);
 ImageIO.write(bufferedImage, "png", new File("frame42.png"));
+
+//for Android (jcodec-android)
+Bitmap bitmap = AndroidUtil.toBitmap(picture);
+bitmap.compress(Bitmap.CompressFormat.PNG, 100, new FileOutputStream("frame42.png")); 
+
 ```
 
 Get all frames from a video file
@@ -106,6 +131,10 @@ for (int i=0;i<frameCount;i++) {
     //for JDK (jcodec-javase)
     BufferedImage bufferedImage = AWTUtil.toBufferedImage(picture);
     ImageIO.write(bufferedImage, "png", new File("frame"+i+".png"));
+
+    //for Android (jcodec-android)
+    Bitmap bitmap = AndroidUtil.toBitmap(picture);
+    bitmap.compress(Bitmap.CompressFormat.PNG, 100, new FileOutputStream("frame"+i+".png")); 
 }
 ```
 
