@@ -90,7 +90,7 @@ public class BitmapUtil {
     }
 
     private int[] getBuffer(int width, int height) {
-        if (buffer == null || buffer.length < width * height) {
+        if (buffer == null || buffer.length != width * height) {
             buffer = new int[width * height];
         }
         return buffer;
