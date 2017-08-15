@@ -21,15 +21,17 @@ import static org.jcodec.common.model.ColorSpace.RGB;
  */
 public class AWTUtil {
     public static BufferedImage toBufferedImage(Picture src) {
-        if (src.getColor() == ColorSpace.RGB) {
-            new RgbToBgr().transform(src, src);
-        } else if (src.getColor() != ColorSpace.BGR) {
-            Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
-            Picture rgb = Picture.createCropped(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
-            transform.transform(src, rgb);
-            new RgbToBgr().transform(rgb, rgb);
-            src = rgb;
-        }
+		if (src.getColor() != ColorSpace.BGR) {
+			Picture bgr = Picture.createCropped(src.getWidth(), src.getHeight(), ColorSpace.BGR, src.getCrop());
+			if (src.getColor() == ColorSpace.RGB) {
+				new RgbToBgr().transform(src, bgr);
+			} else {
+				Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
+				transform.transform(src, bgr);
+				new RgbToBgr().transform(bgr, bgr);				
+			}
+			src = bgr;
+		}
 
         BufferedImage dst = new BufferedImage(src.getCroppedWidth(), src.getCroppedHeight(),
                 BufferedImage.TYPE_3BYTE_BGR);
@@ -43,15 +45,17 @@ public class AWTUtil {
     }
 
     public static BufferedImage toBufferedImage(Picture src, DemuxerTrackMeta.Orientation orientation) {
-        if (src.getColor() == ColorSpace.RGB) {
-            new RgbToBgr().transform(src, src);
-        } else if (src.getColor() != ColorSpace.BGR) {
-            Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
-            Picture rgb = Picture.createCropped(src.getWidth(), src.getHeight(), ColorSpace.RGB, src.getCrop());
-            transform.transform(src, rgb);
-            new RgbToBgr().transform(rgb, rgb);
-            src = rgb;
-        }
+    	if (src.getColor() != ColorSpace.BGR) {
+			Picture bgr = Picture.createCropped(src.getWidth(), src.getHeight(), ColorSpace.BGR, src.getCrop());
+			if (src.getColor() == ColorSpace.RGB) {
+				new RgbToBgr().transform(src, bgr);
+			} else {
+				Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
+				transform.transform(src, bgr);
+				new RgbToBgr().transform(bgr, bgr);				
+			}
+			src = bgr;
+		}
 
         BufferedImage dst = new BufferedImage(src.getCroppedWidth(), src.getCroppedHeight(),
                 BufferedImage.TYPE_3BYTE_BGR);

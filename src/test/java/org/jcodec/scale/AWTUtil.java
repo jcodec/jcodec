@@ -7,7 +7,6 @@ import java.awt.image.DataBufferByte;
 
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.PictureHiBD;
 
 public class AWTUtil {
     private static final int alphaR = 0xff;
@@ -23,18 +22,17 @@ public class AWTUtil {
     }
 
     public static BufferedImage toBufferedImage(Picture src) {
-        if (src.getColor() == ColorSpace.RGB) {
-            new RgbToBgr().transform(src, src);
-        } else if (src.getColor() != ColorSpace.BGR) {
-            Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
-            if (transform == null) {
-                throw new IllegalArgumentException("Unsupported input colorspace: " + src.getColor());
-            }
-            Picture out = Picture.create(src.getWidth(), src.getHeight(), ColorSpace.RGB);
-            transform.transform(src, out);
-            new RgbToBgr().transform(out, out);
-            src = out;
-        }
+    	if (src.getColor() != ColorSpace.BGR) {
+			Picture bgr = Picture.createCropped(src.getWidth(), src.getHeight(), ColorSpace.BGR, src.getCrop());
+			if (src.getColor() == ColorSpace.RGB) {
+				new RgbToBgr().transform(src, bgr);
+			} else {
+				Transform transform = ColorUtil.getTransform(src.getColor(), ColorSpace.RGB);
+				transform.transform(src, bgr);
+				new RgbToBgr().transform(bgr, bgr);				
+			}
+			src = bgr;
+		}
         BufferedImage dst = new BufferedImage(src.getCroppedWidth(), src.getCroppedHeight(),
                 BufferedImage.TYPE_3BYTE_BGR);
 
