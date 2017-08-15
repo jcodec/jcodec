@@ -95,7 +95,7 @@ public class Transcoder {
         }
 
         private List<Filter> initColorTransform(ColorSpace sourceColor, List<Filter> extraFilters, Sink sink) {
-            ArrayList<Filter> filters = new ArrayList<Filter>();
+            List<Filter> filters = new ArrayList<Filter>();
             for (Filter filter : extraFilters) {
                 ColorSpace inputColor = filter.getInputColor();
                 if (!sourceColor.matches(inputColor)) {

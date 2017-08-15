@@ -9,7 +9,7 @@ import org.jcodec.common.model.Packet;
  * 
  * @author The JCodec project
  */
-class VideoFrameWithPacket implements Comparable<VideoFrameWithPacket> {
+public class VideoFrameWithPacket implements Comparable<VideoFrameWithPacket> {
     private Packet packet;
     private LoanerPicture frame;
 

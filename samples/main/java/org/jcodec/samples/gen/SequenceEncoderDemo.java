@@ -5,7 +5,6 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 import org.jcodec.api.awt.AWTSequenceEncoder;
 import org.jcodec.common.tools.MainUtils;
@@ -35,7 +34,6 @@ public class SequenceEncoderDemo {
         final int ballSize = 40;
 
         AWTSequenceEncoder enc = AWTSequenceEncoder.create25Fps(new File(cmd.getArg(0)));
-        enc.getEncoder().setKeyInterval(25);
         int framesToEncode = cmd.getIntegerFlagD(FLAG_FRAMES, 100);
 
         long totalNano = 0;
