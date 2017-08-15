@@ -24,10 +24,10 @@ public class RgbToBgr implements Transform {
         byte[] dataSrc = src.getPlaneData(0);
         byte[] dataDst = dst.getPlaneData(0);
         for (int i = 0; i < dataSrc.length; i += 3) {
-            // src and dst can actually be the same array
             byte tmp = dataSrc[i + 2];
             dataDst[i + 2] = dataSrc[i];
             dataDst[i] = tmp;
+            dataDst[i + 1] = dataSrc[i + 1];
         }
     }
 }
