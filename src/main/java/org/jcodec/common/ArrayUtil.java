@@ -349,4 +349,129 @@ public class ArrayUtil {
         quickSort(a, p_large + 1, end, p);
     }
 
+	public static int[] flatten5D(int[][][][][] is) {
+		IntArrayList list = new IntArrayList(128);
+		flatten5DL(is, list);
+		return list.toArray();
+	}
+	
+	public static int[] flatten4D(int[][][][] is) {
+		IntArrayList list = new IntArrayList(128);
+		flatten4DL(is, list);
+		return list.toArray();
+	}
+	
+	public static int[] flatten3D(int[][][] is) {
+		IntArrayList list = new IntArrayList(128);
+		flatten3DL(is, list);
+		return list.toArray();
+	}
+	
+	public static int[] flatten2D(int[][] is) {
+		IntArrayList list = new IntArrayList(128);
+		flatten2DL(is, list);
+		return list.toArray();
+	}
+    
+	private static void flatten5DL(int[][][][][] is, IntArrayList list) {
+		for(int i = 0; i < is.length; i++) {
+			flatten4DL(is[i], list);
+		}
+	}
+	
+	private static void flatten4DL(int[][][][] is, IntArrayList list) {
+		for(int i = 0; i < is.length; i++) {
+			flatten3DL(is[i], list);
+		}
+	}
+	
+	private static void flatten3DL(int[][][] is, IntArrayList list) {
+		for(int i = 0; i < is.length; i++) {
+			flatten2DL(is[i], list);
+		}
+	}
+	
+	private static void flatten2DL(int[][] is, IntArrayList list) {
+		for(int i = 0; i < is.length; i++) {
+			flatten1DL(is[i], list);
+		}
+	}
+	
+	private static void flatten1DL(int[] is, IntArrayList list) {
+		for(int i = 0; i < is.length; i++) {
+			list.add(is[i]);
+		}
+	}
+	
+	public static void copy6D(int[][][][][][] to, int[][][][][][] from) {
+		for (int i = 0; i < Math.min(to.length, from.length); i++) {
+			copy5D(to[i], from[i]);
+		}
+	}
+	
+	public static void copy5D(int[][][][][] to, int[][][][][] from) {
+		for (int i = 0; i < Math.min(to.length, from.length); i++) {
+			copy4D(to[i], from[i]);
+		}
+	}
+
+	public static void copy4D(int[][][][] to, int[][][][] from) {
+		for (int i = 0; i < Math.min(to.length, from.length); i++) {
+			copy3D(to[i], from[i]);
+		}
+	}
+	
+	public static void copy3D(int[][][] to, int[][][] from) {
+		for (int i = 0; i < Math.min(to.length, from.length); i++) {
+			copy2D(to[i], from[i]);
+		}
+	}
+	
+	public static void copy2D(int[][] to, int[][] from) {
+		for (int i = 0; i < Math.min(to.length, from.length); i++) {
+			copy1D(to[i], from[i]);
+		}
+	}
+	
+	public static void copy1D(int[] to, int[] from) {
+		for (int i = 0; i < Math.min(to.length, from.length); i++) {
+			to[i] = from[i];
+		}
+	}
+
+	public static int fill5D(int[][][][][] to, int[] from, int index) {
+		for (int i = 0; i < to.length; i++) {
+			index = fill4D(to[i], from, index);
+		}
+		return index;
+	}
+	
+	public static int fill4D(int[][][][] to, int[] from, int index) {
+		for (int i = 0; i < to.length; i++) {
+			index = fill3D(to[i], from, index);
+		}
+		return index;
+	}
+	
+	public static int fill3D(int[][][] to, int[] from, int index) {
+		for (int i = 0; i < to.length; i++) {
+			index = fill2D(to[i], from, index);
+		}
+		return index;
+	}
+	
+	public static int fill2D(int[][] to, int[] from, int index) {
+		for (int i = 0; i < to.length; i++) {
+			index = fill1D(to[i], from, index);
+		}
+		return index;
+	}
+	
+	public static int fill1D(int[] to, int[] from, int index) {
+		for (int i = 0; i < to.length; i++) {
+			to[i] = from[index++];
+		}
+		return index;
+	}
+
 }

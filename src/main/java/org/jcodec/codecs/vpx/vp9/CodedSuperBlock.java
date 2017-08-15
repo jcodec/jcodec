@@ -26,79 +26,79 @@ public class CodedSuperBlock {
         return codedBlocks;
     }
 
-    public static CodedSuperBlock read(int miCol, int miRow, VPXBooleanDecoder decoder, Probabilities probStore,
+    public static CodedSuperBlock read(int miCol, int miRow, VPXBooleanDecoder decoder,
             DecodingContext c) {
 
         List<CodedBlock> blocks = new ArrayList<CodedBlock>();
 
-        readCodedBlocks(miCol, miRow, 3, decoder, probStore, c, blocks);
+        readCodedBlocks(miCol, miRow, 3, decoder, c, blocks);
 
         return new CodedSuperBlock(blocks.toArray(CodedBlock.EMPTY_ARR));
     }
 
     private static void readCodedBlocks(int miCol, int miRow, int logBlkSize, VPXBooleanDecoder decoder,
-            Probabilities probStore, DecodingContext c, List<CodedBlock> blocks) {
-        int part = readPartition(miCol, miRow, logBlkSize, decoder, probStore, c);
+            DecodingContext c, List<CodedBlock> blocks) {
+        int part = readPartition(miCol, miRow, logBlkSize, decoder, c);
         int nextBlkSize = (1 << logBlkSize) >> 1;
 
         if (part == PARTITION_NONE) {
-            CodedBlock blk = CodedBlock.read(miCol, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder, probStore, c);
+            CodedBlock blk = CodedBlock.read(miCol, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder, c);
             blocks.add(blk);
             saveAboveSizes(miCol, logBlkSize, c);
             saveLeftSizes(miRow, logBlkSize, c);
         } else if (part == PARTITION_HORZ) {
-            CodedBlock blk = CodedBlock.read(miCol, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder, probStore, c);
+            CodedBlock blk = CodedBlock.read(miCol, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder, c);
             blocks.add(blk);
             saveAboveSizes(miCol, nextBlkSize, c);
             if (miCol + nextBlkSize < c.getTileWidth()) {
                 blk = CodedBlock.read(miCol + nextBlkSize, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder,
-                        probStore, c);
+                         c);
                 blocks.add(blk);
                 saveAboveSizes(miCol + nextBlkSize, nextBlkSize, c);
             }
             saveLeftSizes(miRow, logBlkSize, c);
         } else if (part == PARTITION_VERT) {
-            CodedBlock blk = CodedBlock.read(miCol, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder, probStore, c);
+            CodedBlock blk = CodedBlock.read(miCol, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder, c);
             blocks.add(blk);
             saveLeftSizes(miRow, nextBlkSize, c);
             if (miRow + nextBlkSize < c.getTileHeight()) {
                 blk = CodedBlock.read(miCol, miRow + nextBlkSize, blSizeLookup[logBlkSize][logBlkSize], decoder,
-                        probStore, c);
+                        c);
                 blocks.add(blk);
                 saveAboveSizes(miCol, logBlkSize, c);
             }
             saveLeftSizes(miRow + nextBlkSize, nextBlkSize, c);
         } else {
             if (nextBlkSize > SZ_8x8) {
-                readCodedBlocks(miCol, miRow, logBlkSize - 1, decoder, probStore, c, blocks);
+                readCodedBlocks(miCol, miRow, logBlkSize - 1, decoder, c, blocks);
                 if (miCol + nextBlkSize < c.getTileWidth())
-                    readCodedBlocks(miCol + nextBlkSize, miRow, logBlkSize - 1, decoder, probStore, c, blocks);
+                    readCodedBlocks(miCol + nextBlkSize, miRow, logBlkSize - 1, decoder, c, blocks);
                 if (miRow + nextBlkSize < c.getTileHeight())
-                    readCodedBlocks(miCol, miRow + nextBlkSize, logBlkSize - 1, decoder, probStore, c, blocks);
+                    readCodedBlocks(miCol, miRow + nextBlkSize, logBlkSize - 1, decoder, c, blocks);
                 if (miCol + nextBlkSize < c.getTileWidth() && miRow + nextBlkSize < c.getTileHeight())
-                    readCodedBlocks(miCol + nextBlkSize, miRow + nextBlkSize, logBlkSize - 1, decoder, probStore, c,
+                    readCodedBlocks(miCol + nextBlkSize, miRow + nextBlkSize, logBlkSize - 1, decoder, c,
                             blocks);
             } else {
-                CodedBlock blk = CodedBlock.read(miCol, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder, probStore,
+                CodedBlock blk = CodedBlock.read(miCol, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder,
                         c);
                 blocks.add(blk);
                 saveAboveSizes(miCol, nextBlkSize, c);
                 saveLeftSizes(miRow, nextBlkSize, c);
                 if (miCol + nextBlkSize < c.getTileWidth()) {
                     blk = CodedBlock.read(miCol + nextBlkSize, miRow, blSizeLookup[logBlkSize][logBlkSize], decoder,
-                            probStore, c);
+                            c);
                     blocks.add(blk);
                     saveAboveSizes(miCol + nextBlkSize, nextBlkSize, c);
                 }
                 if (miRow + nextBlkSize < c.getTileHeight()) {
                     blk = CodedBlock.read(miCol, miRow + nextBlkSize, blSizeLookup[logBlkSize][logBlkSize], decoder,
-                            probStore, c);
+                            c);
                     blocks.add(blk);
                     saveLeftSizes(miRow + nextBlkSize, nextBlkSize, c);
                 }
                 if (miCol + nextBlkSize < c.getTileWidth() && miRow + nextBlkSize < c.getTileHeight()) {
                     blk = CodedBlock.read(miCol + nextBlkSize, miRow + nextBlkSize,
-                            blSizeLookup[logBlkSize][logBlkSize], decoder, probStore, c);
+                            blSizeLookup[logBlkSize][logBlkSize], decoder, c);
                     blocks.add(blk);
                 }
             }
@@ -122,9 +122,9 @@ public class CodedSuperBlock {
     }
 
     private static int readPartition(int miCol, int miRow, int blkSize, VPXBooleanDecoder decoder,
-            Probabilities probStore, DecodingContext c) {
+            DecodingContext c) {
         int ctx = calcPartitionContext(miCol, miRow, blkSize, c);
-        int[] probs = probStore.getPartitionProbs(ctx);
+        int[] probs = c.getPartitionProbs()[ctx];
         int halfBlk = (1 << blkSize) >> 1;
         boolean rightEdge = miCol + halfBlk < c.getTileWidth();
         boolean bottomEdge = miRow + halfBlk < c.getTileHeight();
