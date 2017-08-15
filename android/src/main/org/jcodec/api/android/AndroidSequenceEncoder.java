@@ -3,6 +3,8 @@ package org.jcodec.api.android;
 import android.graphics.Bitmap;
 
 import org.jcodec.api.SequenceEncoder;
+import org.jcodec.common.Codec;
+import org.jcodec.common.Format;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Rational;
@@ -41,7 +43,7 @@ public class AndroidSequenceEncoder extends SequenceEncoder {
     }
 
     public AndroidSequenceEncoder(SeekableByteChannel ch, Rational fps) throws IOException {
-        super(ch, fps);
+        super(ch, fps, Format.MOV, Codec.H264, null);
     }
 
     public void encodeImage(Bitmap bi) throws IOException {

@@ -13,7 +13,6 @@ public class Bitmap implements android.os.Parcelable {
     }
 
     public Bitmap() {
-        throw new RuntimeException("Stub!");
     }
 
     public int getDensity() {

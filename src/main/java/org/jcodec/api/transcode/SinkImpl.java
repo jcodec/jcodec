@@ -84,7 +84,7 @@ public class SinkImpl implements Sink, PacketSink {
     }
     
     public void initMuxer() throws IOException {
-        if (outputFormat != Format.IMG)
+        if (destStream == null && outputFormat != Format.IMG)
             destStream = writableFileChannel(destName);
         switch (outputFormat) {
         case MKV:
@@ -107,6 +107,9 @@ public class SinkImpl implements Sink, PacketSink {
             break;
         case RAW:
             muxer = new RawMuxer(destStream);
+            break;
+		default:
+			throw new RuntimeException("The output format " + outputFormat + " is not supported.");
         }
     }
 
@@ -122,11 +125,19 @@ public class SinkImpl implements Sink, PacketSink {
     }
 
     public SinkImpl(String destName, Format outputFormat, Codec outputVideoCodec, Codec outputAudioCodec) {
+    	if (destName == null && outputFormat == Format.IMG)
+    		throw new IllegalArgumentException("A destination file should be specified for the image muxer.");
         this.destName = destName;
         this.outputFormat = outputFormat;
         this.outputVideoCodec = outputVideoCodec;
         this.outputAudioCodec = outputAudioCodec;
         this.outputFormat = outputFormat;
+    }
+    
+    public static SinkImpl createWithStream(SeekableByteChannel destStream, Format outputFormat, Codec outputVideoCodec, Codec outputAudioCodec) {
+    	SinkImpl result = new SinkImpl(null, outputFormat, outputVideoCodec, outputAudioCodec);
+    	result.destStream = destStream;
+    	return result;
     }
 
     @Override
@@ -224,7 +235,7 @@ public class SinkImpl implements Sink, PacketSink {
     @Override
     public ColorSpace getInputColor() {
         if (videoEncoder == null)
-            return null;
+        	throw new IllegalStateException("Video encoder has not been initialized, init() must be called before using this class.");
         ColorSpace[] colorSpaces = videoEncoder.getSupportedColorSpaces();
         return colorSpaces == null ? null : colorSpaces[0];
     }

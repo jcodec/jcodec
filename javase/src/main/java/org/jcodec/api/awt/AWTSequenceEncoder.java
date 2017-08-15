@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 
 import org.jcodec.api.SequenceEncoder;
+import org.jcodec.common.Codec;
+import org.jcodec.common.Format;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Rational;
@@ -20,7 +22,7 @@ import org.jcodec.scale.AWTUtil;
 public class AWTSequenceEncoder extends SequenceEncoder {
 
     public AWTSequenceEncoder(SeekableByteChannel out, Rational fps) throws IOException {
-        super(out, fps);
+        super(out, fps, Format.MOV, Codec.H264, null);
     }
 
     public static AWTSequenceEncoder createSequenceEncoder(File out, int fps) throws IOException {
