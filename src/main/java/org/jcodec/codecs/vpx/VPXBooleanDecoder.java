@@ -22,6 +22,12 @@ public class VPXBooleanDecoder {
             this.offset = offset;
             initBoolDecoder();
         }
+        
+        /**
+         * Empty constructor just for testing
+         */
+        protected VPXBooleanDecoder() {
+        }
 
         void initBoolDecoder() {
 

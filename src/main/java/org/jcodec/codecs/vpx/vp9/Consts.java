@@ -257,15 +257,24 @@ public class Consts {
     public static final int SZ_32x32 = 2;
     public static final int SZ_64x64 = 3;
 
-    public static final int[][] blSizeLookup = new int[][] {
+    public static final int[][] blSizeLookup_ = new int[][] {
             { BLOCK_4X4, BLOCK_4X8, BLOCK_8X4, BLOCK_8X8, BLOCK_8X16, BLOCK_16X8, BLOCK_16X16, BLOCK_16X32,
                     BLOCK_32X16, BLOCK_32X32, BLOCK_32X64, BLOCK_64X32, BLOCK_64X64, },
             { -1, -1, -1, BLOCK_8X4, -1, -1, BLOCK_16X8, -1, -1, BLOCK_32X16, -1, -1, BLOCK_64X32, },
             { -1, -1, -1, BLOCK_4X8, -1, 1, BLOCK_8X16, -1, -1, BLOCK_16X32, -1, -1, BLOCK_32X64, },
             { -1, -1, -1, BLOCK_4X4, -1, -1, BLOCK_8X8, -1, -1, BLOCK_16X16, -1, -1, BLOCK_32X32, } };
+            
+            
+    public static final int[][] blSizeLookup = new int[][] {
+                { BLOCK_4X4,  BLOCK_4X8},
+                { BLOCK_8X4,  BLOCK_8X8, BLOCK_8X16},
+                { -1, BLOCK_16X8, BLOCK_16X16, BLOCK_16X32 },
+                { -1, -1, BLOCK_32X16, BLOCK_32X32 }
+                };
+    public static final int[] sub8x8PartitiontoBlockType = new int[] {BLOCK_8X8, BLOCK_8X4, BLOCK_4X8, BLOCK_4X4};
 
     public static final int[] TREE_PARTITION = new int[] { -PARTITION_NONE, 2, -PARTITION_HORZ, 4, -PARTITION_VERT,
-            PARTITION_SPLIT };
+            -PARTITION_SPLIT };
     public static final int[] TREE_PARTITION_RIGHT_E = new int[] { -PARTITION_NONE, -PARTITION_VERT };
     public static final int[] TREE_PARTITION_BOTTOM_E = new int[] { -PARTITION_NONE, -PARTITION_HORZ };
 

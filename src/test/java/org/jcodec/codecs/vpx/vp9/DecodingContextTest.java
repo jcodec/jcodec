@@ -379,13 +379,6 @@ public class DecodingContextTest {
 
 			Assert.assertArrayEquals(new int[] { 128, 128, 64, 96, 112, 64, 128, 128, 64, 96, 112, 64 },
 					ArrayUtil.flatten3D(dc.getMvClass0FrProbs()));
-
-			// Assert.assertArrayEquals(new int[] {64, 96, 64, 64, 96, 64},
-			// ArrayUtil.flatten2D(dc.getMvFrProbs()));
-			//
-			// Assert.assertArrayEquals(new int[] {}, dc.getMvClass0HpProb());
-			//
-			// Assert.assertArrayEquals(new int[] {}, dc.getMvHpProb());
 		} finally {
 			NIOUtils.closeQuietly(ch);
 		}

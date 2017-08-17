@@ -84,7 +84,7 @@ public class DecodingContext {
 	private int[] compRefProbs = new int[REF_CONTEXTS];
 
 	private int[][] yModeProbs = new int[BLOCK_SIZE_GROUPS][INTRA_MODES - 1];
-	private int[][] partitionProbs = new int[PARTITION_CONTEXTS][PARTITION_TYPES - 1];
+	int[][] partitionProbs = new int[PARTITION_CONTEXTS][PARTITION_TYPES - 1];
 	
 	private int[][] uvModeProbs = new int[INTRA_MODES ][ INTRA_MODES - 1 ];
 
@@ -99,6 +99,10 @@ public class DecodingContext {
 	private int[] mvHpProbs = new int[2];
 	private int filterLevel;
 	private int sharpnessLevel;
+	int[] leftPartitionSizes;
+	int[] abovePartitionSizes;
+	int tileHeight;
+	int tileWidth;
 
 	private static final int[] defaultSkipProb = new int[] { 192, 128, 64 };
 
@@ -817,12 +821,12 @@ public class DecodingContext {
 		return null;
 	}
 
-	public int getTileHeight() {
-		return 0;
+	public int getMiTileHeight() {
+		return tileHeight;
 	}
 
-	public int getTileWidth() {
-		return 0;
+	public int getMiTileWidth() {
+		return tileWidth;
 	}
 
 	public int getCompVarRef(int i) {
@@ -894,11 +898,11 @@ public class DecodingContext {
 	}
 
 	public int[] getLeftPartitionSizes() {
-		return null;
+		return leftPartitionSizes;
 	}
 
 	public int[] getAbovePartitionSizes() {
-		return null;
+		return abovePartitionSizes;
 	}
 
 	/**
