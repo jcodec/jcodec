@@ -138,6 +138,26 @@ for (int i=0;i<frameCount;i++) {
 }
 ```
 
+Making a video with a set of images from memory:
+```java
+SeekableByteChannel out = null;
+try {
+    out = NIOUtils.writableFileChannel("/tmp/output.mp4");
+    // for Android use: AndroidSequenceEncoder
+    AWTSequenceEncoder encoder = new AWTSequenceEncoder(out, Rational.R(25, 1));
+    for (...) {
+        // Generate the image, for Android use Bitmap
+        BufferedImage image = ...;
+        // Encode the image
+        encoder.encodeImage(image);
+    }
+    // Finalize the encoding, i.e. clear the buffers, write the header, etc.
+    encoder.finish();
+} finally {
+    NIOUtils.closeQuietly(out);
+}
+```
+
 # Contact
 
 Feel free to communicate any questions or concerns to us. Dev team email: jcodecproject@gmail.com
