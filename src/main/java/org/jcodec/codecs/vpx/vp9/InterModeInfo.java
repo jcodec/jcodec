@@ -682,16 +682,16 @@ public class InterModeInfo extends ModeInfo {
             return miRow > 0 ? aboveModes[miCol] : -1;
         // (-1,1)
         case 2:
-            return miCol >= c.getTileStart() && miRow < c.getTileHeight() - 1 ? leftModes[(miRow % 8) + 1] : -1;
+            return miCol >= c.getTileStart() && miRow < c.getMiTileHeight() - 1 ? leftModes[(miRow % 8) + 1] : -1;
         // (1,-1)
         case 3:
-            return miRow > 0 && miCol < c.getTileWidth() - 1 ? aboveModes[miCol + 1] : -1;
+            return miRow > 0 && miCol < c.getMiTileWidth() - 1 ? aboveModes[miCol + 1] : -1;
         // (-1, 3)
         case 4:
-            return miCol >= c.getTileStart() && miRow < c.getTileHeight() - 3 ? leftModes[(miRow % 8) + 3] : -1;
+            return miCol >= c.getTileStart() && miRow < c.getMiTileHeight() - 3 ? leftModes[(miRow % 8) + 3] : -1;
         // (3, -1)
         case 5:
-            return miRow > 0 && miCol < c.getTileWidth() - 3 ? aboveModes[miCol + 3] : -1;
+            return miRow > 0 && miCol < c.getMiTileWidth() - 3 ? aboveModes[miCol + 3] : -1;
         }
         return -1;
     }
@@ -699,8 +699,8 @@ public class InterModeInfo extends ModeInfo {
     private static long getMV(long[][] leftMV, long[][] aboveMV, long[][] aboveLeftMV, int ind0, int miRow, int miCol,
             DecodingContext c) {
         int ts = c.getTileStart();
-        int th = c.getTileHeight();
-        int tw = c.getTileWidth();
+        int th = c.getMiTileHeight();
+        int tw = c.getMiTileWidth();
         switch (ind0) {
         // (-1,0)
         case 0:
@@ -1127,8 +1127,8 @@ public class InterModeInfo extends ModeInfo {
     }
 
     private static int predicSegmentId(int miCol, int miRow, int blSz, DecodingContext c) {
-        int blWcl = Math.min(c.getTileWidth() - miCol, blW[blSz]);
-        int blHcl = Math.min(c.getTileHeight() - miRow, blH[blSz]);
+        int blWcl = Math.min(c.getMiTileWidth() - miCol, blW[blSz]);
+        int blHcl = Math.min(c.getMiTileHeight() - miRow, blH[blSz]);
         int[][] prevSegmentIds = c.getPrevSegmentIds();
         int seg = 7;
         for (int y = 0; y < blHcl; y++)
