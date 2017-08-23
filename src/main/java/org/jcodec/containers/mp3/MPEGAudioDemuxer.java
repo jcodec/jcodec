@@ -236,13 +236,14 @@ public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
             if (fork.remaining() < size)
                 break;
             ++total;
-            if (size >= MIN_FRAME_SIZE && size <= MAX_FRAME_SIZE) {
+            if (size > 0)
                 NIOUtils.skip(fork, size - 4);
-                if (fork.remaining() >= 4) {
-                    header = fork.getInt();
-                    if (validHeader(header))
-                        valid++;
-                }
+            else
+                header = skipJunkBB(header, fork);
+            if (fork.remaining() >= 4) {
+                header = fork.getInt();
+                if (size >= MIN_FRAME_SIZE && size <= MAX_FRAME_SIZE && validHeader(header))
+                    valid++;
             }
         } while (fork.remaining() >= 4);
 
