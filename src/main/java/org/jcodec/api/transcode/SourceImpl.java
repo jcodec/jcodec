@@ -46,6 +46,7 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
+import org.jcodec.containers.mp3.MPEGAudioDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
@@ -118,6 +119,9 @@ public class SourceImpl implements Source, PacketSource {
         case WAV:
             demuxAudio = new WavDemuxer(sourceStream);
             break;
+        case MPEG_AUDIO:
+            demuxAudio = new MPEGAudioDemuxer(sourceStream);
+            break;
         case MPEG_TS:
             MTSDemuxer mtsDemuxer = new MTSDemuxer(sourceStream);
             MPSDemuxer mpsDemuxer = null;
@@ -160,8 +164,8 @@ public class SourceImpl implements Source, PacketSource {
     }
 
     /**
-     * Seeks to a previous key frame prior or on the given frame, if the track
-     * is not seekable returns 0.
+     * Seeks to a previous key frame prior or on the given frame, if the track is
+     * not seekable returns 0.
      * 
      * @param frame
      *            A frame to seek
@@ -237,9 +241,10 @@ public class SourceImpl implements Source, PacketSource {
         if (audioInputTrack == null)
             return null;
         Packet audioPkt = audioInputTrack.nextFrame();
-        if (audioDecoder == null) {
+        if (audioDecoder == null && audioPkt != null) {
             audioDecoder = createAudioDecoder(audioPkt.getData());
-            audioCodecMeta = audioDecoder.getCodecMeta(audioPkt.getData());
+            if (audioDecoder != null)
+                audioCodecMeta = audioDecoder.getCodecMeta(audioPkt.getData());
         }
 
         return audioPkt;
@@ -384,9 +389,9 @@ public class SourceImpl implements Source, PacketSource {
     }
 
     /**
-     * Returns a pixel buffer of a suitable size to hold the given video frame.
-     * The video size is taken either from the video metadata or by analyzing
-     * the incoming video packet.
+     * Returns a pixel buffer of a suitable size to hold the given video frame. The
+     * video size is taken either from the video metadata or by analyzing the
+     * incoming video packet.
      * 
      * @param firstFrame
      * @return

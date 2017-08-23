@@ -33,6 +33,7 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
+import org.jcodec.containers.mp3.MPEGAudioDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
@@ -64,6 +65,7 @@ public class JCodecUtil {
         demuxers.put(Format.MPEG_PS, MPSDemuxer.class);
         demuxers.put(Format.MOV, MP4Demuxer.class);
         demuxers.put(Format.WEBP, WebpDemuxer.class);
+        demuxers.put(Format.MPEG_AUDIO, MPEGAudioDemuxer.class);
     };
 
     public static Format detectFormat(File f) throws IOException {
@@ -214,6 +216,8 @@ public class JCodecUtil {
             return new BufferH264ES(NIOUtils.fetchFromChannel(ch));
         case WAV:
             return new WavDemuxer(ch);
+        case MPEG_AUDIO:
+            return new MPEGAudioDemuxer(ch);
         default:
             Logger.error("Format " + format + " is not supported");
         }
