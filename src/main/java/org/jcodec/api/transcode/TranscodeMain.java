@@ -80,6 +80,9 @@ public class TranscodeMain {
     private static Map<String, Class<? extends Filter>> knownFilters = new HashMap<String, Class<? extends Filter>>();
 
     static {
+	extensionToF.put("mp3", Format.MPEG_AUDIO);
+	extensionToF.put("mp2", Format.MPEG_AUDIO);
+	extensionToF.put("mp1", Format.MPEG_AUDIO);
         extensionToF.put("mpg", Format.MPEG_PS);
         extensionToF.put("mpeg", Format.MPEG_PS);
         extensionToF.put("m2p", Format.MPEG_PS);
@@ -164,6 +167,9 @@ public class TranscodeMain {
         supportedDecoders.add(Codec.PRORES);
         supportedDecoders.add(Codec.RAW);
         supportedDecoders.add(Codec.VP8);
+        supportedDecoders.add(Codec.MP3);
+        supportedDecoders.add(Codec.MP2);
+        supportedDecoders.add(Codec.MP1);
         
         knownFilters.put("scale", ScaleFilter.class);
     }
