@@ -1,7 +1,5 @@
 package org.jcodec.api.transcode;
 
-import static org.jcodec.common.model.ColorSpace.ANY;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -274,18 +272,21 @@ public class Transcoder {
             Stream stream = new Stream(sinks[s], videoMappings[s].copy, audioMappings[s].copy, extraFilters[s],
                     pixelStore);
             allStreams[s] = stream;
-            if (sources[videoMappings[s].source].isVideo())
+            if (sources[videoMappings[s].source].isVideo()) {
                 videoStreams[videoMappings[s].source].add(stream);
-            else
+                if (!videoMappings[s].copy)
+                    decodeVideo[videoMappings[s].source] = true;
+            } else {
                 finishedVideo[videoMappings[s].source] = true;
-            if (sources[audioMappings[s].source].isAudio())
+            }
+            
+            if (sources[audioMappings[s].source].isAudio()) {
                 audioStreams[audioMappings[s].source].add(stream);
-            else
+                if (!audioMappings[s].copy)
+                    decodeAudio[audioMappings[s].source] = true;
+            } else {
                 finishedAudio[audioMappings[s].source] = true;
-            if (!videoMappings[s].copy)
-                decodeVideo[videoMappings[s].source] = true;
-            if (!audioMappings[s].copy)
-                decodeAudio[audioMappings[s].source] = true;
+            }
         }
 
         try {
