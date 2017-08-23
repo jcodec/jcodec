@@ -496,11 +496,17 @@ public class SourceImpl implements Source, PacketSource {
 
     @Override
     public boolean isVideo() {
-        return inputFormat.isVideo();
+        if (!inputFormat.isVideo())
+            return false;
+        List<? extends DemuxerTrack> tracks = demuxVideo.getVideoTracks();
+        return tracks != null && tracks.size() > 0;
     }
 
     @Override
     public boolean isAudio() {
-        return inputFormat.isAudio();
+        if (!inputFormat.isAudio())
+            return false;
+        List<? extends DemuxerTrack> tracks = demuxAudio.getAudioTracks();
+        return tracks != null && tracks.size() > 0;
     }
 }
