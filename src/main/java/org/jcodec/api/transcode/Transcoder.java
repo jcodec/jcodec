@@ -201,6 +201,14 @@ public class Transcoder {
                         }
                     }
                 }
+            } else {
+                for (AudioFrameWithPacket audioFrame : audioQueue) {
+                    if (audioCopy && (sink instanceof PacketSink)) {
+                        ((PacketSink) sink).outputAudioPacket(audioFrame.getPacket(), audioCodecMeta);
+                    } else {
+                        sink.outputAudioFrame(audioFrame);
+                    }
+                }
             }
         }
 
@@ -266,8 +274,14 @@ public class Transcoder {
             Stream stream = new Stream(sinks[s], videoMappings[s].copy, audioMappings[s].copy, extraFilters[s],
                     pixelStore);
             allStreams[s] = stream;
-            videoStreams[videoMappings[s].source].add(stream);
-            audioStreams[audioMappings[s].source].add(stream);
+            if (sources[videoMappings[s].source].isVideo())
+                videoStreams[videoMappings[s].source].add(stream);
+            else
+                finishedVideo[videoMappings[s].source] = true;
+            if (sources[audioMappings[s].source].isAudio())
+                audioStreams[audioMappings[s].source].add(stream);
+            else
+                finishedAudio[audioMappings[s].source] = true;
             if (!videoMappings[s].copy)
                 decodeVideo[videoMappings[s].source] = true;
             if (!audioMappings[s].copy)
@@ -341,9 +355,8 @@ public class Transcoder {
 
                     // If no streams in need for this audio don't bother reading
                     if (!audioStreams[s].isEmpty()) {
-                        // Read the next audio frame (or packet) and give it to
-                        // all
-                        // the streams that want it
+                        // Read the next audio frame (or packet) and give it to all the streams that
+                        // want it
                         AudioFrameWithPacket nextAudioFrame;
                         if (decodeAudio[s] || !(source instanceof PacketSource)) {
                             nextAudioFrame = source.getNextAudioFrame();
