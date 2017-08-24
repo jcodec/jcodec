@@ -24,7 +24,10 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.TrackType;
+import org.jcodec.common.logging.LogLevel;
 import org.jcodec.common.logging.Logger;
+import org.jcodec.common.logging.OutLogSink;
+import org.jcodec.common.logging.OutLogSink.SimpleFormat;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
@@ -80,6 +83,9 @@ public class TranscodeMain {
     private static Map<String, Class<? extends Filter>> knownFilters = new HashMap<String, Class<? extends Filter>>();
 
     static {
+	extensionToF.put("mp3", Format.MPEG_AUDIO);
+	extensionToF.put("mp2", Format.MPEG_AUDIO);
+	extensionToF.put("mp1", Format.MPEG_AUDIO);
         extensionToF.put("mpg", Format.MPEG_PS);
         extensionToF.put("mpeg", Format.MPEG_PS);
         extensionToF.put("m2p", Format.MPEG_PS);
@@ -164,11 +170,16 @@ public class TranscodeMain {
         supportedDecoders.add(Codec.PRORES);
         supportedDecoders.add(Codec.RAW);
         supportedDecoders.add(Codec.VP8);
+        supportedDecoders.add(Codec.MP3);
+        supportedDecoders.add(Codec.MP2);
+        supportedDecoders.add(Codec.MP1);
         
         knownFilters.put("scale", ScaleFilter.class);
     }
 
     public static void main(String[] args) throws Exception {
+        Logger.addSink(new OutLogSink(System.out, new SimpleFormat("#message"), LogLevel.INFO));
+        
         Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
 
         TranscoderBuilder builder = Transcoder.newTranscoder();
@@ -189,8 +200,9 @@ public class TranscodeMain {
                 inputFormat = getFormatFromExtension(input);
                 if (inputFormat != Format.IMG) {
                     Format detectFormat = JCodecUtil.detectFormat(new File(input));
-                    if (detectFormat != null)
+                    if (detectFormat != null) {
                         inputFormat = detectFormat;
+                    }
                 }
             } else {
                 inputFormat = Format.valueOf(inputFormatRaw.toUpperCase());
@@ -198,6 +210,8 @@ public class TranscodeMain {
             if (inputFormat == null) {
                 Logger.error("Input format could not be detected");
                 return;
+            } else {
+                Logger.info(String.format("Input stream %d: %s", index, String.valueOf(inputFormat)));
             }
 
             int videoTrackNo = -1;
@@ -211,6 +225,14 @@ public class TranscodeMain {
             } else {
                 inputCodecVideo = _3(0, 0, Codec.valueOf(inputCodecVideoRaw.toUpperCase()));
             }
+            
+            if(inputCodecVideo != null) {
+                if (inputFormat == Format.MPEG_TS) {
+                    Logger.info(String.format("Video codec: %s[pid=%d,stream=%d]", String.valueOf(inputCodecVideo.v2), inputCodecVideo.v0, inputCodecVideo.v1));
+                } else {
+                    Logger.info(String.format("Video codec: %s", String.valueOf(inputCodecVideo.v2)));
+                }
+            }
 
             String inputCodecAudioRaw = cmd.getStringFlagI(index, FLAG_AUDIO_CODEC);
             if (inputCodecAudioRaw == null) {
@@ -219,6 +241,15 @@ public class TranscodeMain {
                 }
             } else {
                 inputCodecAudio = _3(0, 0, Codec.valueOf(inputCodecAudioRaw.toUpperCase()));
+            }
+            
+            if (inputCodecAudio != null) {
+                if (inputFormat == Format.MPEG_TS) {
+                    Logger.info(String.format("Audio codec: %s[pid=%d,stream=%d]", String.valueOf(inputCodecAudio.v2),
+                            inputCodecAudio.v0, inputCodecAudio.v1));
+                } else {
+                    Logger.info(String.format("Audio codec: %s", String.valueOf(inputCodecAudio.v2)));
+                }
             }
 
             Source source = new SourceImpl(input, inputFormat, inputCodecVideo, inputCodecAudio);

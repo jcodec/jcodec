@@ -46,6 +46,9 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
     private static Map<Codec, String> codec2fourcc = new HashMap<Codec, String>();
 
     static {
+        codec2fourcc.put(Codec.MP1, ".mp1");
+        codec2fourcc.put(Codec.MP2, ".mp2");
+        codec2fourcc.put(Codec.MP3, ".mp3");
         codec2fourcc.put(Codec.H264, "avc1");
         codec2fourcc.put(Codec.AAC, "mp4a");
         codec2fourcc.put(Codec.PRORES, "apch");

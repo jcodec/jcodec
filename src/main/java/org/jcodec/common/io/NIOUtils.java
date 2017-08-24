@@ -453,4 +453,17 @@ public class NIOUtils {
     public static ByteBuffer asByteBufferInt(int ... arguments) {
         return asByteBuffer(ArrayUtil.toByteArray(arguments));
     }
+    
+    /**
+     * Relocates the data from the end of this buffer to the beginning
+     * @param bb
+     */
+    public static void relocateTail(ByteBuffer bb) {
+		int pos;
+		for(pos = 0; bb.hasRemaining(); pos++) {
+			bb.put(pos, bb.get());
+		}
+		bb.position(0);
+		bb.limit(pos);
+	}
 }

@@ -46,7 +46,7 @@ public class Residual {
         this.coefs = coefs;
     }
     
-    public static Residual read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probStore,
+    public static Residual read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
             DecodingContext c, ModeInfo mode) {
         int[][][] coefs = new int[3][][];
         for (int pl = 0; pl < 3; pl++) {
@@ -68,7 +68,7 @@ public class Residual {
                     int posX = blX + (x << 2);
                     int posY = blY + (y << 2);
                     if (!mode.isSkip() && posX < frameWPix && posY < frameHPix) {
-                        coefs[pl][blkIdx] = tokens(pl, posX, posY, txSize, blkIdx, mode.isInter(), decoder, probStore,
+                        coefs[pl][blkIdx] = tokens(pl, posX, posY, txSize, blkIdx, mode.isInter(), decoder,
                                 c);
                     }
                 }
@@ -106,7 +106,7 @@ public class Residual {
     }
 
     public static int[] tokens(int plane, int startX, int startY, int txSz, int blockIdx, boolean isInter,
-            VPXBooleanDecoder decoder, Probabilities probStore, DecodingContext c) {
+            VPXBooleanDecoder decoder, DecodingContext c) {
         int maxCoeff = 16 << (txSz << 1);
         boolean expectMoreCoefs = true;
         int[] scan = c.getScan(plane, txSz, blockIdx);
@@ -117,11 +117,11 @@ public class Residual {
             int pos = scan[cf];
             if (!expectMoreCoefs) {
                 boolean moreCoefs = readMoreCoefs(plane, pos, txSz, startX, startY, txType, band, isInter, decoder,
-                        probStore, c);
+                         c);
                 if (!moreCoefs)
                     break;
             }
-            int token = readToken(plane, pos, txSz, startX, startY, txType, band, isInter, decoder, probStore, c);
+            int token = readToken(plane, pos, txSz, startX, startY, txType, band, isInter, decoder, c);
             if (token == ZERO_TOKEN) {
                 expectMoreCoefs = true;
                 coefs[pos] = 0;
@@ -166,18 +166,18 @@ public class Residual {
     }
 
     private static int readToken(int plane, int coefi, int txSz, int posX, int posY, int txType, int band,
-            boolean isInter, VPXBooleanDecoder decoder, Probabilities probStore, DecodingContext c) {
+            boolean isInter, VPXBooleanDecoder decoder, DecodingContext c) {
         int ctx = calcTokenContext(plane, coefi, txSz, posX, posY, txType, c);
-        int[][][][][][] probs = probStore.getCoefProbs();
+        int[][][][][][] probs = c.getCoefProbs();
         int prob0 = pareto(0, probs[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx][1]);
         int prob1 = pareto(1, probs[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx][2]);
         return decoder.readTree(TOKEN_TREE, prob0, prob1);
     }
 
     private static boolean readMoreCoefs(int plane, int coefi, int txSz, int posX, int posY, int txType, int band,
-            boolean isInter, VPXBooleanDecoder decoder, Probabilities probStore, DecodingContext c) {
+            boolean isInter, VPXBooleanDecoder decoder, DecodingContext c) {
         int ctx = calcTokenContext(plane, coefi, txSz, posX, posY, txType, c);
-        int[][][][][][] probs = probStore.getCoefProbs();
+        int[][][][][][] probs = c.getCoefProbs();
 
         return decoder.readBit(probs[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx][0]) == 1;
     }

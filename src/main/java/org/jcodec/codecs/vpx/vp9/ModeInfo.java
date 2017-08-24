@@ -65,34 +65,34 @@ public class ModeInfo {
         return uvMode;
     }
 
-    public static ModeInfo read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probs,
+    public static ModeInfo read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
             DecodingContext c) {
         int segmentId = 0;
         if (c.isSegmentationEnabled() && c.isUpdateSegmentMap())
-            segmentId = readSegmentId(decoder, probs);
+            segmentId = readSegmentId(decoder, c);
 
         boolean skip = true;
         if (!c.isSegmentFeatureActive(segmentId, SEG_LVL_SKIP))
-            skip = readSkipFlag(miCol, miRow, blSz, decoder, probs, c);
+            skip = readSkipFlag(miCol, miRow, blSz, decoder, c);
 
-        int txSize = readTxSize(miCol, miRow, blSz, true, decoder, probs, c);
+        int txSize = readTxSize(miCol, miRow, blSz, true, decoder, c);
 
         int yMode;
         int subModes = 0;
         if (blSz >= BLOCK_8X8) {
-            yMode = readDefaultIntraMode(miCol, miRow, blSz, decoder, probs, c);
+            yMode = readDefaultIntraMode(miCol, miRow, blSz, decoder, c);
         } else {
-            subModes = readDefaultIntraModeSub(miCol, miRow, blSz, decoder, probs, c);
+            subModes = readDefaultIntraModeSub(miCol, miRow, blSz, decoder, c);
             // last submode is always the lowest byte
             yMode = subModes & 0xff;
         }
-        int uvMode = readDefaultUVMode(yMode, decoder, probs, c);
+        int uvMode = readDefaultUVMode(yMode, decoder, c);
 
         return new ModeInfo(segmentId, skip, txSize, yMode, subModes, uvMode);
     }
     
     private static int readDefaultIntraMode(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            Probabilities probStore, DecodingContext c) {
+            DecodingContext c) {
         boolean availAbove = miRow > 0; // Frame based
         boolean availLeft = miCol > c.getTileStart(); // Tile based
         int[] aboveIntraModes = c.getAboveIntraModes();
@@ -102,7 +102,7 @@ public class ModeInfo {
         aboveMode = availAbove ? aboveIntraModes[miCol] : DC_PRED;
         leftMode = availLeft ? leftIntraModes[miRow % 8] : DC_PRED;
 
-        int[][][] probs = probStore.getKfYModeProbs();
+        int[][][] probs = c.getKfYModeProbs();
 
         int intraMode = decoder.readTree(TREE_INTRA_MODE, probs[aboveMode][leftMode]);
 
@@ -112,14 +112,14 @@ public class ModeInfo {
     }
 
     private static int readDefaultIntraModeSub(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            Probabilities probStore, DecodingContext c) {
+            DecodingContext c) {
         boolean availAbove = miRow > 0; // Frame based
         boolean availLeft = miCol > c.getTileStart(); // Tile based
         int[] aboveIntraModes = c.getAboveIntraModes();
         int[] leftIntraModes = c.getLeftIntraModes();
         int aboveMode;
         int leftMode;
-        int[][][] probs = probStore.getKfYModeProbs();
+        int[][][] probs = c.getKfYModeProbs();
         aboveMode = availAbove ? aboveIntraModes[2 * miCol + 1] : DC_PRED;
         leftMode = availLeft ? leftIntraModes[2 * (miRow % 8) + 1] : DC_PRED;
         int mode0 = decoder.readTree(TREE_INTRA_MODE, probs[aboveMode][leftMode]);
@@ -147,13 +147,13 @@ public class ModeInfo {
         return 0;
     }
 
-    private static int readDefaultUVMode(int yMode, VPXBooleanDecoder decoder, Probabilities probStore, DecodingContext c) {
-        int[][] probs = probStore.getKfUVModeProbs();
+    private static int readDefaultUVMode(int yMode, VPXBooleanDecoder decoder, DecodingContext c) {
+        int[][] probs = c.getKfUVModeProbs();
         return decoder.readTree(TREE_INTRA_MODE, probs[yMode]);
     }
     
     public static int readTxSize(int miCol, int miRow, int blSz, boolean allowSelect, VPXBooleanDecoder decoder,
-            Probabilities probStore, DecodingContext c) {
+            DecodingContext c) {
         int maxTxSize = maxTxLookup[blSz]; // 4x4 being 0, 32x32 being 3
         int txSize = Math.min(maxTxSize, c.getTxMode());
         int[][] txSizes = c.getTxSizes();
@@ -172,8 +172,21 @@ public class ModeInfo {
             if (!availAbove)
                 above = left;
             int ctx = (above + left) > maxTxSize ? 1 : 0;
-            int[][][] probs = probStore.getTxProbs();
-            txSize = decoder.readTree(TREE_TX_SIZE[maxTxSize], probs[maxTxSize][ctx]);
+            
+			int[][] probs = null;
+			switch (maxTxSize) {
+			case 3:
+				probs = c.getTx32x32Probs();
+				break;
+			case 2:
+				probs = c.getTx16x16Probs();
+				break;
+			case 1:
+				probs = c.getTx8x8Probs();
+			default:
+				throw new RuntimeException("Shouldn't happen");
+			}
+			txSize = decoder.readTree(TREE_TX_SIZE[maxTxSize], probs[ctx]);
         }
 
         for (int i = 0; i < blH[blSz]; i++) {
@@ -185,12 +198,12 @@ public class ModeInfo {
         return 0;
     }
     
-    public static int readSegmentId(VPXBooleanDecoder decoder, Probabilities probStore) {
-        int[] probs = probStore.getSegmentationTreeProbs();
+    public static int readSegmentId(VPXBooleanDecoder decoder, DecodingContext c) {
+        int[] probs = c.getSegmentationTreeProbs();
         return decoder.readTree(TREE_SEGMENT_ID, probs);
     }
     
-    public static boolean readSkipFlag(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probStore,
+    public static boolean readSkipFlag(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
             DecodingContext c) {
         int ctx = 0;
         boolean availAbove = miRow > 0; // Frame based
@@ -201,7 +214,7 @@ public class ModeInfo {
         if (availLeft)
             ctx += skipped[miRow][miCol - 1] ? 1 : 0;
 
-        int[] probs = probStore.getSkipProbs();
+        int[] probs = c.getSkipProbs();
 
         boolean ret = decoder.readBit(probs[ctx]) == 1;
 

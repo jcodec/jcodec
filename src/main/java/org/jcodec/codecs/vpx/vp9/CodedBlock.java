@@ -28,14 +28,14 @@ public class CodedBlock {
         return residual;
     }
 
-    public static CodedBlock read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probs,
+    public static CodedBlock read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
             DecodingContext c) {
         ModeInfo mode;
         if (c.isKeyIntraFrame())
-            mode = ModeInfo.read(miCol, miRow, blSz, decoder, probs, c);
+            mode = ModeInfo.read(miCol, miRow, blSz, decoder, c);
         else
-            mode = InterModeInfo.read(miCol, miRow, blSz, decoder, probs, c);
-        Residual r = Residual.read(miCol, miRow, blSz, decoder, probs, c, mode);
+            mode = InterModeInfo.read(miCol, miRow, blSz, decoder, c);
+        Residual r = Residual.read(miCol, miRow, blSz, decoder, c, mode);
         return new CodedBlock(mode, r);
     }
 }
