@@ -89,7 +89,8 @@ public class SequenceEncoder {
         }
         if (outTrack == null) {
             // Add video track to muxer
-            outTrack = muxer.addVideoTrack(Codec.H264, org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(pic.getWidth(), pic.getHeight()), pic.getColor()));
+            outTrack = muxer.addVideoTrack(org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(Codec.H264, null,
+                    new Size(pic.getWidth(), pic.getHeight()), pic.getColor()));
         }
 
         // Perform conversion

@@ -16,6 +16,7 @@ import org.jcodec.codecs.vpx.Macroblock.Subblock;
 import org.jcodec.codecs.vpx.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vpx.VP8Util.SubblockConstants;
 import org.jcodec.common.Assert;
+import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
@@ -357,6 +358,7 @@ public class VP8Decoder extends VideoDecoder {
         int width = (twoBytesWidth & 0x3fff);
         int height = (twoBytesHeight & 0x3fff);
 
-        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(width, height), ColorSpace.YUV420);
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(Codec.VP8, null, new Size(width, height),
+                ColorSpace.YUV420);
     }
 }

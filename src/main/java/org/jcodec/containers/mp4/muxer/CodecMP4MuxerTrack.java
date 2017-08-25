@@ -17,6 +17,7 @@ import org.jcodec.codecs.aac.ADTSParser;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
+import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
@@ -42,17 +43,6 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
  * 
  */
 public class CodecMP4MuxerTrack extends MP4MuxerTrack {
-
-    private static Map<Codec, String> codec2fourcc = new HashMap<Codec, String>();
-
-    static {
-        codec2fourcc.put(Codec.H264, "avc1");
-        codec2fourcc.put(Codec.AAC, "mp4a");
-        codec2fourcc.put(Codec.PRORES, "apch");
-        codec2fourcc.put(Codec.JPEG, "mjpg");
-        codec2fourcc.put(Codec.PNG, "png ");
-        codec2fourcc.put(Codec.V210, "v210");
-    }
 
     private Codec codec;
 
@@ -122,7 +112,7 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
             if (codec == Codec.H264 && !spsList.isEmpty()) {
                 SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
                 Size size = H264Utils.getPicSize(sps);
-                VideoCodecMeta meta = createSimpleVideoCodecMeta(size, ColorSpace.YUV420);
+                VideoCodecMeta meta = createSimpleVideoCodecMeta(codec, null, size, ColorSpace.YUV420);
                 addVideoSampleEntry(meta);
             } else {
                 Logger.warn("CodecMP4MuxerTrack: Creating a track without sample entry");
@@ -134,7 +124,7 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
     }
 
     void addVideoSampleEntry(VideoCodecMeta meta) {
-        SampleEntry se = VideoSampleEntry.videoSampleEntry(codec2fourcc.get(codec), meta.getSize(), "JCodec");
+        SampleEntry se = VideoSampleEntry.videoSampleEntry(codec, meta.getSize(), "JCodec");
         if (meta.getPixelAspectRatio() != null)
             se.add(PixelAspectExt.createPixelAspectExt(meta.getPixelAspectRatio()));
         addSampleEntry(se);
@@ -195,8 +185,7 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
     }
 
     void addAudioSampleEntry(AudioFormat format) {
-        AudioSampleEntry ase = AudioSampleEntry.compressedAudioSampleEntry(codec2fourcc.get(codec), (short) 1, (short) 16,
-                format.getChannels(), format.getSampleRate(), 0, 0, 0);
+        AudioSampleEntry ase = AudioSampleEntry.audioSampleEntry(AudioCodecMeta.fromAudioFormat(codec, null, format));
 
         addSampleEntry(ase);
     }

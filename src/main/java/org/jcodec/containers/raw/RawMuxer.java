@@ -3,7 +3,6 @@ package org.jcodec.containers.raw;
 import java.io.IOException;
 
 import org.jcodec.common.AudioCodecMeta;
-import org.jcodec.common.Codec;
 import org.jcodec.common.Muxer;
 import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoCodecMeta;
@@ -21,7 +20,7 @@ public class RawMuxer implements Muxer, MuxerTrack {
     }
 
     @Override
-    public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
+    public MuxerTrack addVideoTrack(VideoCodecMeta meta) {
         if (hasAudio)
             throw new RuntimeException("Raw muxer supports either video or audio track but not both.");
         hasVideo = true;
@@ -29,7 +28,7 @@ public class RawMuxer implements Muxer, MuxerTrack {
     }
 
     @Override
-    public MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta) {
+    public MuxerTrack addAudioTrack(AudioCodecMeta meta) {
         if (hasVideo)
             throw new RuntimeException("Raw muxer supports either video or audio track but not both.");
         hasAudio = true;

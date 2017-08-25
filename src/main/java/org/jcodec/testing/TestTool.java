@@ -74,7 +74,7 @@ public class TestTool {
 
             ByteBuffer _rawData = ByteBuffer.allocate(1920 * 1088 * 6);
 
-            ByteBuffer codecPrivate = inTrack.getMeta().getCodecPrivate();
+            ByteBuffer codecPrivate = inTrack.getMeta().getCodecMeta().getCodecPrivate();
             H264Decoder decoder = H264Decoder.createH264DecoderFromCodecPrivate(codecPrivate);
 
             Packet inFrame;
@@ -112,7 +112,7 @@ public class TestTool {
                 }
                 raw.write(_rawData);
 
-                Size size = inTrack.getMeta().getVideoCodecMeta().getSize();
+                Size size = inTrack.getMeta().getCodecMeta().video().getSize();
 
                 decodedPics.add(decoder.decodeFrameFromNals(nalUnits, Picture
                         .create((size.getWidth() + 15) & ~0xf, (size.getHeight() + 15) & ~0xf, ColorSpace.YUV420)

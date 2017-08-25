@@ -58,7 +58,7 @@ public class ProresDecoderTest {
             refCh = NIOUtils.readableChannel(new File(yuvPath));
             MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(inCh);
             DemuxerTrack videoTrack = demuxer.getVideoTrack();
-            VideoCodecMeta meta = videoTrack.getMeta().getVideoCodecMeta();
+            VideoCodecMeta meta = videoTrack.getMeta().getCodecMeta().video();
             Size size = meta.getSize();
             Picture buffer = null;
             if (hibd) {

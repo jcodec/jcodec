@@ -2,6 +2,7 @@ package org.jcodec.containers.imgseq;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.TrackType;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
@@ -144,7 +146,14 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
     @Override
     public DemuxerTrackMeta getMeta() {
         int durationFrames = getMaxAvailableFrame();
-        return new DemuxerTrackMeta(TrackType.VIDEO, codec, (durationFrames + 1) * VIDEO_FPS, null, durationFrames + 1,
-                null, null, null);
+        return new DemuxerTrackMeta(TrackType.VIDEO, (durationFrames + 1) * VIDEO_FPS, null, durationFrames + 1,
+                new VideoCodecMeta(codec, null));
+    }
+    
+    /**
+     * Will probe the buffer to determine if it contains a supported image format.
+     */
+    public static int probe(final ByteBuffer b_) {
+        throw new RuntimeException("PROBE IMAGE");
     }
 }

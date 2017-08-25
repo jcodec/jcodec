@@ -76,4 +76,6 @@ public interface Source {
 
     boolean isVideo();
     boolean isAudio();
+
+    Format getFormat();
 }

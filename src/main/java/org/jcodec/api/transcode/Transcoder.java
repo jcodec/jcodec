@@ -1,7 +1,5 @@
 package org.jcodec.api.transcode;
 
-import static org.jcodec.common.model.ColorSpace.ANY;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -458,9 +456,24 @@ public class Transcoder {
                     videoMappings.toArray(new Mapping[] {}), audioMappings.toArray(new Mapping[] {}),
                     filters.toArray(new List[0]), seekFrames.toArray(), maxFrames.toArray());
         }
+
+        public void setAudioCopy() {
+            // TODO Auto-generated method stub
+            
+        }
+
+        public void addVideoFilter(Filter textFilter) {
+            // TODO Auto-generated method stub
+            
+        }
     }
 
     public static TranscoderBuilder newTranscoder() {
         return new TranscoderBuilder();
+    }
+
+    public static TranscoderBuilder newTranscoder(Source source, Sink sink) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

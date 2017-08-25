@@ -3,6 +3,7 @@ import java.lang.IllegalStateException;
 import java.lang.System;
 
 import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
@@ -128,7 +129,7 @@ public class MXFVirtualTrack implements VirtualTrack {
             GenericPictureEssenceDescriptor ped = (GenericPictureEssenceDescriptor) d;
 
             Rational ar = ped.getAspectRatio();
-            VideoCodecMeta se = VideoCodecMeta.createVideoCodecMeta(MP4Util.getFourcc(track.getCodec().getCodec()), null, new Size(
+            VideoCodecMeta se = VideoCodecMeta.createVideoCodecMeta(track.getCodec().getCodec(), null, new Size(
                     ped.getDisplayWidth(), ped.getDisplayHeight()), new Rational((int) ((1000 * ar.getNum() * ped.getDisplayHeight()) / (ar.getDen() * ped
                     .getDisplayWidth())), 1000));
             return se;
@@ -139,7 +140,7 @@ public class MXFVirtualTrack implements VirtualTrack {
             Label[] labels = new Label[sed.getChannelCount()];
             Arrays.fill(labels, Label.Mono);
 
-            return AudioCodecMeta.createAudioCodecMeta(sampleSize == 3 ? "in24" : "sowt", sampleSize, sed.getChannelCount(), (int) sed
+            return AudioCodecMeta.createAudioCodecMeta(Codec.PCM, sampleSize, sed.getChannelCount(), (int) sed
                     .getAudioSamplingRate().scalar(), codec == MXFCodecMapping.PCM_S16BE ? ByteOrder.BIG_ENDIAN
             : ByteOrder.LITTLE_ENDIAN, true, labels, null);
         }

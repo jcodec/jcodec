@@ -14,6 +14,7 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.Codec;
+import org.jcodec.common.CodecMeta;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Ints;
 import org.jcodec.common.TrackType;
@@ -52,22 +53,23 @@ public class MP4DemuxerTrackMeta {
 
         MP4TrackType type = track.getType();
         TrackType t = type == MP4TrackType.VIDEO ? VIDEO : (type == MP4TrackType.SOUND ? AUDIO : OTHER);
-        VideoCodecMeta videoCodecMeta = null;
-        AudioCodecMeta audioCodecMeta = null;
+        CodecMeta codecMeta = null;
+        Codec codec = Codec.codecByFourcc(track.getFourcc());
+        ByteBuffer codecPrivate = getCodecPrivate(track);
         if (type == MP4TrackType.VIDEO) {
-            videoCodecMeta = createSimpleVideoCodecMeta(trak.getCodedSize(), getColorInfo(track));
+            VideoCodecMeta videoCodecMeta = createSimpleVideoCodecMeta(codec, codecPrivate, trak.getCodedSize(), getColorInfo(track));
             PixelAspectExt pasp = NodeBox.findFirst(track.getSampleEntries()[0], PixelAspectExt.class, "pasp");
             if (pasp != null)
                 videoCodecMeta.setPixelAspectRatio(pasp.getRational());
+            codecMeta = videoCodecMeta;
         } else if (type == MP4TrackType.SOUND) {
             AudioSampleEntry ase = (AudioSampleEntry) track.getSampleEntries()[0];
-            audioCodecMeta = AudioCodecMeta.fromAudioFormat(ase.getFormat());
+            codecMeta = AudioCodecMeta.fromAudioFormat(codec, codecPrivate, ase.getFormat());
         }
         RationalLarge duration = track.getDuration();
         double sec = (double) duration.getNum() / duration.getDen();
         int frameCount = Ints.checkedCast(track.getFrameCount());
-        DemuxerTrackMeta meta = new DemuxerTrackMeta(t, Codec.codecByFourcc(track.getFourcc()), sec, seekFrames,
-                frameCount, getCodecPrivate(track), videoCodecMeta, audioCodecMeta);
+        DemuxerTrackMeta meta = new DemuxerTrackMeta(t, sec, seekFrames, frameCount, codecMeta);
 
         if (type == MP4TrackType.VIDEO) {
             TrackHeaderBox tkhd = NodeBox.findFirstPath(trak, TrackHeaderBox.class, Box.path("tkhd"));

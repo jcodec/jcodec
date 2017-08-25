@@ -53,8 +53,8 @@ public class H264EmbedMain {
             DemuxerTrack inTrack = demux.getVideoTrack();
 
             DemuxerTrackMeta meta = inTrack.getMeta();
-            VideoCodecMeta videoCodecMeta = meta.getVideoCodecMeta();
-            MuxerTrack outTrack = muxer.addVideoTrack(meta.getCodec(), videoCodecMeta);
+            VideoCodecMeta videoCodecMeta = meta.getCodecMeta().video();
+            MuxerTrack outTrack = muxer.addVideoTrack(videoCodecMeta);
 
             ByteBuffer _out = ByteBuffer
                     .allocate(videoCodecMeta.getSize().getWidth() * videoCodecMeta.getSize().getHeight() * 6);

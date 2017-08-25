@@ -17,26 +17,22 @@ public interface Muxer {
      * container. Note: some containers don't store all or any metadata fields
      * in which case some or all provided metadata will be ignored.
      * 
-     * @param codec
-     *            Codec type stored in this track.
      * @param meta
      *            Video metadata including the codec type.
      * @return A track used further to store media samples.
      */
-    MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta);
+    MuxerTrack addVideoTrack(VideoCodecMeta meta);
 
     /**
      * Adds an audio track and stores the provided metadata fields inside the
      * container. Note: some containers don't store all or any metadata fields
      * in which case some or all provided metadata will be ignored.
      * 
-     * @param codec
-     *            Codec type stored in this track.
      * @param meta
      *            Audio metadata including the codec type.
      * @return A track used further to store media samples.
      */
-    MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta);
+    MuxerTrack addAudioTrack(AudioCodecMeta meta);
 
     /**
      * Finalize writing this file. This function needs to be called at the end

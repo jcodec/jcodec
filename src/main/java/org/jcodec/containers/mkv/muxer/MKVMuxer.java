@@ -254,15 +254,15 @@ public class MKVMuxer implements Muxer {
     }
 
     @Override
-    public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
-        return createVideoTrack(meta, codec2mkv.get(codec));
+    public MuxerTrack addVideoTrack(VideoCodecMeta meta) {
+        return createVideoTrack(meta, codec2mkv.get(meta.getCodec()));
     }
 
     @Override
-    public MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta) {
+    public MuxerTrack addAudioTrack(AudioCodecMeta meta) {
         audioTrack = new MKVMuxerTrack();
         tracks.add(audioTrack);
-        audioTrack.codecId = codec2mkv.get(codec);
+        audioTrack.codecId = codec2mkv.get(meta.getCodec());
         audioTrack.trackNo = tracks.size();
         return audioTrack;
     }

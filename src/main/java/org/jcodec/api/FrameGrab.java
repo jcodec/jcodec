@@ -205,7 +205,7 @@ public class FrameGrab {
 
     private static ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack) throws JCodecException {
         DemuxerTrackMeta meta = videoTrack.getMeta();
-        switch (meta.getCodec()) {
+        switch (meta.getCodecMeta().getCodec()) {
         case H264:
             return new AVCMP4Adaptor(meta);
         default:

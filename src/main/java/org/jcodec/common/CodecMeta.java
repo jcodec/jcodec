@@ -13,19 +13,35 @@ import java.nio.ByteBuffer;
  * 
  */
 public class CodecMeta {
-    private String fourcc;
+    private Codec codec;
     private ByteBuffer codecPrivate;
 
-    public CodecMeta(String fourcc, ByteBuffer codecPrivate) {
-        this.fourcc = fourcc;
+    public CodecMeta(Codec codec, ByteBuffer codecPrivate) {
+        this.codec = codec;
         this.codecPrivate = codecPrivate;
     }
     
-    public String getFourcc() {
-        return fourcc;
+    public Codec getCodec() {
+        return codec;
     }
     
     public ByteBuffer getCodecPrivate() {
         return codecPrivate;
+    }
+
+    public VideoCodecMeta video() {
+        return this instanceof VideoCodecMeta ? (VideoCodecMeta)this : null;
+    }
+
+    public boolean isVideo() {
+        return this instanceof VideoCodecMeta;
+    }
+    
+    public AudioCodecMeta audio() {
+        return this instanceof AudioCodecMeta ? (AudioCodecMeta)this : null;
+    }
+
+    public boolean isAudio() {
+        return this instanceof AudioCodecMeta;
     }
 }

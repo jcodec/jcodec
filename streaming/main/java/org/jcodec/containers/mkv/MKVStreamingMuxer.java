@@ -45,6 +45,7 @@ import static org.jcodec.containers.mkv.muxer.MKVMuxer.createString;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
@@ -157,7 +158,7 @@ public class MKVStreamingMuxer {
 
             createLong(trackEntryElem, TrackUID, i + 1);
             CodecMeta codecMeta = track.getCodecMeta();
-            if (VP80_FOURCC.equalsIgnoreCase(track.getCodecMeta().getFourcc())) {
+            if (track.getCodecMeta().getCodec() == Codec.VP8) {
                 createLong(trackEntryElem, TrackType, (byte) 0x01);
                 createString(trackEntryElem, Name, "Track " + (i + 1) + " Video");
                 createString(trackEntryElem, CodecID, "V_VP8");
@@ -173,7 +174,7 @@ public class MKVStreamingMuxer {
                     trackEntryElem.add(trackVideoElem);
                 }
                 
-            } else if ("vrbs".equalsIgnoreCase(track.getCodecMeta().getFourcc())) {
+            } else if (track.getCodecMeta().getCodec() == Codec.VORBIS) {
                 createLong(trackEntryElem, TrackType, (byte) 0x02);
                 createString(trackEntryElem, Name, "Track " + (i + 1) + " Audio");
                 createString(trackEntryElem, CodecID, "A_VORBIS");
@@ -218,7 +219,7 @@ public class MKVStreamingMuxer {
     
     private static int findFirstVP8TrackIndex(VirtualTrack[] tracks){
         for (int i=0; i<tracks.length; i++)
-            if (VP80_FOURCC.equalsIgnoreCase(tracks[i].getCodecMeta().getFourcc()))
+            if (tracks[i].getCodecMeta().getCodec() == Codec.VP8)
                 return i;
         return -1;
     }

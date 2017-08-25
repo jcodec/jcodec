@@ -1,8 +1,10 @@
 package org.jcodec.movtool.streaming.tracks;
+
 import java.lang.IllegalStateException;
 import java.lang.System;
 
 import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -84,17 +86,19 @@ public class RealTrack implements VirtualTrack {
         if (se instanceof VideoSampleEntry) {
             VideoSampleEntry vse = (VideoSampleEntry) se;
             PixelAspectExt pasp = NodeBox.findFirst(se, PixelAspectExt.class, "pasp");
-            
+
             FielExtension fiel = NodeBox.findFirst(se, FielExtension.class, "fiel");
             boolean interlace = false, topField = false;
-            if(fiel != null) {
+            if (fiel != null) {
                 interlace = fiel.isInterlaced();
                 topField = fiel.topFieldFirst();
             }
 
-            ByteBuffer codecPrivate = demuxer.getMeta().getCodecPrivate();
+            ByteBuffer codecPrivate = demuxer.getMeta().getCodecMeta().getCodecPrivate();
             codecPrivate.reset();
-            return VideoCodecMeta.createVideoCodecMeta2(se.getFourcc(), codecPrivate, new Size(vse.getWidth(), vse.getHeight()), pasp != null ? pasp.getRational() : null, interlace, topField);
+            return VideoCodecMeta.createVideoCodecMeta2(Codec.codecByFourcc(se.getFourcc()), codecPrivate,
+                    new Size(vse.getWidth(), vse.getHeight()), pasp != null ? pasp.getRational() : null, interlace,
+                    topField);
         } else if (se instanceof AudioSampleEntry) {
             AudioSampleEntry ase = (AudioSampleEntry) se;
             ByteBuffer codecPrivate = null;
@@ -106,26 +110,27 @@ public class RealTrack implements VirtualTrack {
                 codecPrivate = lb.getData();
             }
 
-            return AudioCodecMeta
-                    .createAudioCodecMeta(se.getFourcc(), ase.calcSampleSize(), ase.getChannelCount(), (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(), AudioSampleEntry.getLabelsFromSampleEntry(ase), codecPrivate);
+            return AudioCodecMeta.createAudioCodecMeta(Codec.codecByFourcc(se.getFourcc()), ase.calcSampleSize(),
+                    ase.getChannelCount(), (int) ase.getSampleRate(), ase.getEndian(), ase.isPCM(),
+                    AudioSampleEntry.getLabelsFromSampleEntry(ase), codecPrivate);
         } else
             throw new RuntimeException("Sample entry '" + se.getFourcc() + "' is not supported.");
     }
 
     @Override
     public void close() {
-//        System.out.println("CLOSING FILE");
+        // System.out.println("CLOSING FILE");
         pool.close();
     }
 
     public static class RealPacket implements VirtualPacket {
 
         private MP4Packet packet;
-		private RealTrack track;
+        private RealTrack track;
 
         public RealPacket(RealTrack track, MP4Packet nextFrame) {
             this.track = track;
-			this.packet = nextFrame;
+            this.packet = nextFrame;
         }
 
         @Override
@@ -134,7 +139,7 @@ public class RealTrack implements VirtualTrack {
             SeekableByteChannel ch = null;
             try {
                 ch = track.pool.getChannel();
-                if(packet.getFileOff() >= ch.size())
+                if (packet.getFileOff() >= ch.size())
                     return null;
                 ch.setPosition(packet.getFileOff());
                 ch.read(bb);
@@ -180,8 +185,8 @@ public class RealTrack implements VirtualTrack {
         VirtualEdit[] result = new VirtualEdit[edits.size()];
         for (int i = 0; i < edits.size(); i++) {
             Edit ee = edits.get(i);
-            result[i] = new VirtualEdit((double) ee.getMediaTime() / trak.getTimescale(), (double) ee.getDuration()
-                    / movie.getTimescale());
+            result[i] = new VirtualEdit((double) ee.getMediaTime() / trak.getTimescale(),
+                    (double) ee.getDuration() / movie.getTimescale());
         }
         return result;
     }

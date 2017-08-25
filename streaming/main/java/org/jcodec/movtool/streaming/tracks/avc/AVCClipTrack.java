@@ -13,6 +13,7 @@ import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoEncoder.EncodedFrame;
@@ -54,7 +55,7 @@ public class AVCClipTrack extends ClipTrack {
         super(src, frameFrom, frameTo);
 
         VideoCodecMeta codecMeta = (VideoCodecMeta) src.getCodecMeta();
-        if (!"avc1".equals(codecMeta.getFourcc()))
+        if (codecMeta.getCodec() != Codec.H264)
             throw new RuntimeException("Not an AVC source track");
 
         rc = new H264FixedRateControl(1024);
@@ -86,7 +87,8 @@ public class AVCClipTrack extends ClipTrack {
         rawSPS.add(H264Utils.writeSPS(encSPS, 128));
         rawPPS.add(H264Utils.writePPS(encPPS, 20));
 
-        se = VideoCodecMeta.createVideoCodecMeta("avc1", H264Utils.saveCodecPrivate(rawSPS, rawPPS), codecMeta.getSize(), codecMeta.getPasp());
+        se = VideoCodecMeta.createVideoCodecMeta(Codec.H264, H264Utils.saveCodecPrivate(rawSPS, rawPPS),
+                codecMeta.getSize(), codecMeta.getPasp());
 
         int _frameSize = rc.calcFrameSize(mbW * mbH);
         _frameSize += _frameSize >> 4;

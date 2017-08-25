@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
@@ -36,7 +37,8 @@ public class PNGDecoder extends VideoDecoder {
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
         try {
             BufferedImage rgb = ImageIO.read(new ByteArrayInputStream(NIOUtils.toArray(data)));
-            return VideoCodecMeta.createSimpleVideoCodecMeta(new Size(rgb.getWidth(), rgb.getHeight()), ColorSpace.RGB);
+            return VideoCodecMeta.createSimpleVideoCodecMeta(Codec.PNG, null, new Size(rgb.getWidth(), rgb.getHeight()),
+                    ColorSpace.RGB);
         } catch (IOException e) {
             return null;
         }

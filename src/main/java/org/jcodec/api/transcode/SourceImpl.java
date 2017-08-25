@@ -1,15 +1,18 @@
 package org.jcodec.api.transcode;
 
+import static org.jcodec.common.Tuple._2;
+import static org.jcodec.common.Tuple._3;
 import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-
-import net.sourceforge.jaad.aac.AACException;
+import java.util.Set;
 
 import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 import org.jcodec.codecs.aac.AACDecoder;
@@ -31,8 +34,9 @@ import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
+import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.Tuple._3;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.IOUtils;
@@ -47,11 +51,13 @@ import org.jcodec.common.model.Size;
 import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
-import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.webp.WebpDemuxer;
 import org.jcodec.containers.y4m.Y4MDemuxer;
+
+import net.sourceforge.jaad.aac.AACException;
 
 /**
  * A source producing uncompressed video/audio streams out of a compressed file.
@@ -62,6 +68,20 @@ import org.jcodec.containers.y4m.Y4MDemuxer;
  * @author Stanislav Vitvitskiy
  */
 public class SourceImpl implements Source, PacketSource {
+    private static Set<Codec> supportedDecoders = new HashSet<Codec>();
+    
+    static {
+        supportedDecoders.add(Codec.AAC);
+        supportedDecoders.add(Codec.H264);
+        supportedDecoders.add(Codec.JPEG);
+        supportedDecoders.add(Codec.MPEG2);
+        supportedDecoders.add(Codec.PCM);
+        supportedDecoders.add(Codec.PNG);
+        supportedDecoders.add(Codec.PRORES);
+        supportedDecoders.add(Codec.RAW);
+        supportedDecoders.add(Codec.VP8);
+    }
+    
     private String sourceName;
     private SeekableByteChannel sourceStream;
 
@@ -86,6 +106,51 @@ public class SourceImpl implements Source, PacketSource {
     private VideoDecoder videoDecoder;
 
     private int downscale = 1;
+    
+    private static _3<Integer, Integer, Codec> selectSuitableTrack(String input, Format format, TrackType targetType)
+            throws IOException {
+        _2<Integer, Demuxer> demuxerPid;
+        if (format == Format.MPEG_TS) {
+            demuxerPid = JCodecUtil.createM2TSDemuxer(new File(input), targetType);
+        } else {
+            demuxerPid = _2(0, JCodecUtil.createDemuxer(format, new File(input)));
+        }
+        if (demuxerPid == null || demuxerPid.v1 == null)
+            return null;
+        int trackNo = 0;
+        List<? extends DemuxerTrack> tracks = targetType == TrackType.VIDEO ? demuxerPid.v1.getVideoTracks()
+                : demuxerPid.v1.getAudioTracks();
+        for (DemuxerTrack demuxerTrack : tracks) {
+            Codec codec = detectVideoDecoder(demuxerTrack);
+            if (supportedDecoders.contains(codec)) {
+                return _3(demuxerPid.v0, trackNo, codec);
+            }
+            trackNo++;
+        }
+        return null;
+    }
+    
+    private static Codec detectVideoDecoder(DemuxerTrack track) throws IOException {
+        DemuxerTrackMeta meta = track.getMeta();
+        if (meta != null) {
+            Codec codec = meta.getCodecMeta().getCodec();
+            if (codec != null)
+                return codec;
+        }
+        Packet packet = track.nextFrame();
+        if (packet == null)
+            return null;
+
+        return JCodecUtil.detectDecoder(packet.getData());
+    }
+    
+    public static SourceImpl create(String input) throws IOException {
+        File file = new File(input);
+        Format format = JCodecUtil.detectFormat(file);
+        return new SourceImpl(input, format, selectSuitableTrack(input, format, TrackType.VIDEO),
+                selectSuitableTrack(input, format, TrackType.AUDIO));
+    }
+    
 
     public void initDemuxer() throws FileNotFoundException, IOException {
         if (inputFormat != Format.IMG)
@@ -267,7 +332,7 @@ public class SourceImpl implements Source, PacketSource {
             IOUtils.closeQuietly(sourceStream);
     }
 
-    public SourceImpl(String sourceName, Format inputFormat, _3<Integer, Integer, Codec> inputVideoCodec,
+    protected SourceImpl(String sourceName, Format inputFormat, _3<Integer, Integer, Codec> inputVideoCodec,
             _3<Integer, Integer, Codec> inputAudioCodec) {
         this.sourceName = sourceName;
         this.inputFormat = inputFormat;
@@ -287,7 +352,7 @@ public class SourceImpl implements Source, PacketSource {
         case AAC:
             return new AACDecoder(codecPrivate);
         case PCM:
-            return new RawAudioDecoder(getAudioMeta().getAudioCodecMeta().getFormat());
+            return new RawAudioDecoder(getAudioMeta().getCodecMeta().audio().getFormat());
         }
         return null;
     }
@@ -341,7 +406,7 @@ public class SourceImpl implements Source, PacketSource {
 
         @Override
         public AudioCodecMeta getCodecMeta(ByteBuffer data) throws IOException {
-            return org.jcodec.common.AudioCodecMeta.fromAudioFormat(format);
+            return org.jcodec.common.AudioCodecMeta.fromAudioFormat(Codec.PCM, null, format);
         }
     }
 
@@ -403,8 +468,8 @@ public class SourceImpl implements Source, PacketSource {
         if (videoCodecMeta != null)
             return videoCodecMeta;
         DemuxerTrackMeta meta = getTrackVideoMeta();
-        if (meta != null && meta.getVideoCodecMeta() != null) {
-            videoCodecMeta = meta.getVideoCodecMeta();
+        if (meta != null && meta.getCodecMeta() != null) {
+            videoCodecMeta = meta.getCodecMeta().video();
         }
         return videoCodecMeta;
     }
@@ -458,7 +523,7 @@ public class SourceImpl implements Source, PacketSource {
         AudioBuffer audioBuffer;
         if (inputAudioCodec.v2 == Codec.PCM) {
             DemuxerTrackMeta audioMeta = getAudioMeta();
-            audioBuffer = new AudioBuffer(audioPkt.getData(), audioMeta.getAudioCodecMeta().getFormat(),
+            audioBuffer = new AudioBuffer(audioPkt.getData(), audioMeta.getCodecMeta().audio().getFormat(),
                     audioMeta.getTotalFrames());
         } else {
             audioBuffer = audioDecoder.decodeFrame(audioPkt.getData(), null);
@@ -483,8 +548,8 @@ public class SourceImpl implements Source, PacketSource {
     @Override
     public AudioCodecMeta getAudioCodecMeta() {
         if (audioInputTrack != null && audioInputTrack.getMeta() != null
-                && audioInputTrack.getMeta().getAudioCodecMeta() != null) {
-            return audioInputTrack.getMeta().getAudioCodecMeta();
+                && audioInputTrack.getMeta().getCodecMeta() != null) {
+            return audioInputTrack.getMeta().getCodecMeta().audio();
         }
         return audioCodecMeta;
     }
@@ -497,5 +562,10 @@ public class SourceImpl implements Source, PacketSource {
     @Override
     public boolean isAudio() {
         return inputFormat.isAudio();
+    }
+
+    @Override
+    public Format getFormat() {
+        return inputFormat;
     }
 }

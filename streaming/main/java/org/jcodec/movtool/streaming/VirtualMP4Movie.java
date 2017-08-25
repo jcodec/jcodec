@@ -6,6 +6,7 @@ import java.lang.System;
 import static org.jcodec.movtool.streaming.MovieHelper.produceHeader;
 
 import org.jcodec.codecs.h264.H264Utils;
+import org.jcodec.common.Codec;
 import org.jcodec.containers.mp4.Brand;
 
 import java.io.IOException;
@@ -61,7 +62,7 @@ public class VirtualMP4Movie extends VirtualMovie {
 
     @Override
     protected MovieSegment packetChunk(VirtualTrack track, VirtualPacket pkt, int chunkNo, int trackNo, long pos) {
-        return new PacketChunk(pkt, trackNo, chunkNo, pos, track.getCodecMeta().getFourcc());
+        return new PacketChunk(pkt, trackNo, chunkNo, pos, track.getCodecMeta().getCodec());
     }
 
     public static class PacketChunk implements MovieSegment {
@@ -69,14 +70,14 @@ public class VirtualMP4Movie extends VirtualMovie {
         private int track;
         private int no;
         private long pos;
-        private String fourcc;
+        private Codec codec;
 
-        public PacketChunk(VirtualPacket packet, int track, int no, long pos, String fourcc) {
+        public PacketChunk(VirtualPacket packet, int track, int no, long pos, Codec codec) {
             this.packet = packet;
             this.track = track;
             this.no = no;
             this.pos = pos;
-            this.fourcc = fourcc;
+            this.codec = codec;
         }
 
         @Override

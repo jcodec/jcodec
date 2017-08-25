@@ -17,17 +17,17 @@ import java.nio.ByteBuffer;
  */
 public class VideoCodecMeta extends CodecMeta {
 
-    public static VideoCodecMeta createVideoCodecMeta(String fourcc, ByteBuffer codecPrivate, Size size,
+    public static VideoCodecMeta createVideoCodecMeta(Codec codec, ByteBuffer codecPrivate, Size size,
             Rational pasp) {
-        VideoCodecMeta self = new VideoCodecMeta(fourcc, codecPrivate);
+        VideoCodecMeta self = new VideoCodecMeta(codec, codecPrivate);
         self.size = size;
         self.pasp = pasp;
         return self;
     }
 
-    public static VideoCodecMeta createVideoCodecMeta2(String fourcc, ByteBuffer codecPrivate, Size size, Rational pasp,
+    public static VideoCodecMeta createVideoCodecMeta2(Codec codec, ByteBuffer codecPrivate, Size size, Rational pasp,
             boolean interlaced, boolean topFieldFirst) {
-        VideoCodecMeta self = new VideoCodecMeta(fourcc, codecPrivate);
+        VideoCodecMeta self = new VideoCodecMeta(codec, codecPrivate);
         self.size = size;
         self.pasp = pasp;
         self.interlaced = interlaced;
@@ -35,8 +35,8 @@ public class VideoCodecMeta extends CodecMeta {
         return self;
     }
 
-    public VideoCodecMeta(String fourcc, ByteBuffer codecPrivate) {
-        super(fourcc, codecPrivate);
+    public VideoCodecMeta(Codec codec, ByteBuffer codecPrivate) {
+        super(codec, codecPrivate);
     }
 
     private Size size;
@@ -69,8 +69,9 @@ public class VideoCodecMeta extends CodecMeta {
         return color;
     }
 
-    public static VideoCodecMeta createSimpleVideoCodecMeta(Size size, ColorSpace color) {
-        VideoCodecMeta self = new VideoCodecMeta(null, null);
+    public static VideoCodecMeta createSimpleVideoCodecMeta(Codec codec, ByteBuffer codecPrivate, Size size,
+            ColorSpace color) {
+        VideoCodecMeta self = new VideoCodecMeta(codec, codecPrivate);
         self.size = size;
         self.color = color;
         return self;

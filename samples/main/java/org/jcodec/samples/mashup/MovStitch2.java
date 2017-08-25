@@ -26,6 +26,7 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
@@ -63,14 +64,14 @@ public class MovStitch2 {
 
         DemuxerTrackMeta meta1 = vt1.getMeta();
         DemuxerTrackMeta meta2 = vt2.getMeta();
-        MuxerTrack outTrack = muxer.addVideoTrack(Codec.H264, meta1.getVideoCodecMeta());
+        MuxerTrack outTrack = muxer.addVideoTrack(meta1.getCodecMeta().video());
         for (int i = 0; i < meta1.getTotalFrames(); i++) {
             outTrack.addFrame((MP4Packet) vt1.nextFrame());
         }
 
         List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
         List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
-        ByteBuffer codecPrivate2 = updateCodecPrivate(vt2.getMeta().getCodecPrivate(), spsList, ppsList);
+        ByteBuffer codecPrivate2 = updateCodecPrivate(vt2.getMeta().getCodecMeta().getCodecPrivate(), spsList, ppsList);
 
         SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
         PictureParameterSet pps = PictureParameterSet.read(ppsList.get(0).duplicate());
@@ -96,12 +97,12 @@ public class MovStitch2 {
         DemuxerTrackMeta meta1 = vt1.getMeta();
         DemuxerTrackMeta meta2 = vt2.getMeta();
 
-        Assert.assertTrue(meta1.getCodec() == Codec.H264);
-        Assert.assertTrue(meta2.getCodec() == Codec.H264);
-        Assert.assertEquals(meta1.getVideoCodecMeta().getSize().getWidth(),
-                meta2.getVideoCodecMeta().getSize().getWidth());
-        Assert.assertEquals(meta1.getVideoCodecMeta().getSize().getHeight(),
-                meta2.getVideoCodecMeta().getSize().getHeight());
+        Assert.assertTrue(meta1.getCodecMeta().getCodec() == Codec.H264);
+        Assert.assertTrue(meta2.getCodecMeta().getCodec() == Codec.H264);
+        Size size1 = meta1.getCodecMeta().video().getSize();
+        Size size2 = meta2.getCodecMeta().video().getSize();
+        Assert.assertEquals(size1.getWidth(), size2.getWidth());
+        Assert.assertEquals(size1.getHeight(), size2.getHeight());
     }
 
     public static void doFrame(ByteBuffer data, ByteBuffer dst, SeqParameterSet sps, PictureParameterSet pps)

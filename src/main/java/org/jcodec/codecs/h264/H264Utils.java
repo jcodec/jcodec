@@ -19,6 +19,7 @@ import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.Codec;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
@@ -460,7 +461,7 @@ public class H264Utils {
         int codedWidth = (sps.picWidthInMbsMinus1 + 1) << 4;
         int codedHeight = SeqParameterSet.getPicHeightInMbs(sps) << 4;
 
-        SampleEntry se = VideoSampleEntry.videoSampleEntry("avc1", getPicSize(sps), "JCodec");
+        SampleEntry se = VideoSampleEntry.videoSampleEntry(Codec.H264, getPicSize(sps), "JCodec");
         se.add(avcC);
         return se;
     }

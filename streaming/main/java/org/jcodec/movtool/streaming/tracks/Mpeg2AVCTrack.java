@@ -15,6 +15,7 @@ import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.mpeg12.MPEGConst;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Size;
@@ -52,8 +53,8 @@ public class Mpeg2AVCTrack implements VirtualTrack {
     private VirtualPacket _nextPacket;
 
     protected void checkFourCC(VirtualTrack srcTrack) {
-        String fourcc = srcTrack.getCodecMeta().getFourcc();
-        if (!"m2v1".equals(fourcc))
+        Codec codec = srcTrack.getCodecMeta().getCodec();
+        if (codec != Codec.MPEG2)
             throw new IllegalArgumentException("Input track is not ProRes");
     }
 

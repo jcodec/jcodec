@@ -7,6 +7,7 @@ import java.lang.IllegalArgumentException;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mjpeg.JpegToThumb2x2;
 import org.jcodec.codecs.mjpeg.JpegToThumb4x4;
+import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.Size;
@@ -29,8 +30,8 @@ public class Jpeg2AVCTrack extends Transcode2AVCTrack {
 
     @Override
     protected void checkFourCC(VirtualTrack jpegTrack) {
-        String fourcc = jpegTrack.getCodecMeta().getFourcc();
-        if ("jpeg".equals(fourcc) || "mjpa".equals(fourcc))
+        Codec codec = jpegTrack.getCodecMeta().getCodec();
+        if (codec == Codec.JPEG)
             return;
 
         throw new IllegalArgumentException("Input track is not Jpeg");

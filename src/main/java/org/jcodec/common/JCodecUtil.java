@@ -64,6 +64,7 @@ public class JCodecUtil {
         demuxers.put(Format.MPEG_PS, MPSDemuxer.class);
         demuxers.put(Format.MOV, MP4Demuxer.class);
         demuxers.put(Format.WEBP, WebpDemuxer.class);
+        demuxers.put(Format.IMG, ImageSequenceDemuxer.class);
     };
 
     public static Format detectFormat(File f) throws IOException {
