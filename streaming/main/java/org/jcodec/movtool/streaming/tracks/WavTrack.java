@@ -6,6 +6,7 @@ import java.lang.System;
 import org.jcodec.codecs.wav.WavHeader;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioFormat;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
@@ -58,8 +59,10 @@ public class WavTrack implements VirtualTrack {
             closeQuietly(ch);
         }
 
-        se = AudioCodecMeta.createAudioCodecMeta3("sowt", ByteBuffer.allocate(0), new AudioFormat(header.fmt.sampleRate,
-                header.fmt.bitsPerSample >> 3, header.fmt.numChannels, true, false), true, labels);
+        se = AudioCodecMeta.createAudioCodecMeta3(Codec.PCM, ByteBuffer.allocate(0),
+                new AudioFormat(header.fmt.sampleRate, header.fmt.bitsPerSample >> 3, header.fmt.numChannels, true,
+                        false),
+                true, labels);
 
         pktDataLen = FRAMES_PER_PKT * header.fmt.numChannels * (header.fmt.bitsPerSample >> 3);
         pktDuration = (double) FRAMES_PER_PKT / header.fmt.sampleRate;

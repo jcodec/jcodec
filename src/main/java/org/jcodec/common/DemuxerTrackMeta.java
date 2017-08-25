@@ -1,7 +1,5 @@
 package org.jcodec.common;
 
-import java.nio.ByteBuffer;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -13,38 +11,29 @@ import java.nio.ByteBuffer;
  */
 public class DemuxerTrackMeta {
     private TrackType type;
-    private Codec codec;
     private double totalDuration;
     private int[] seekFrames;
     private int totalFrames;
-    private ByteBuffer codecPrivate;
-    private VideoCodecMeta videoCodecMeta;
-    private AudioCodecMeta audioCodecMeta;
+    private CodecMeta codecMeta;
     private int index;
     private Orientation orientation;
 
-	public enum Orientation {
-		D_0, D_90, D_180, D_270
-	}
+    public enum Orientation {
+        D_0, D_90, D_180, D_270
+    }
 
-    public DemuxerTrackMeta(TrackType type, Codec codec, double totalDuration, int[] seekFrames, int totalFrames, ByteBuffer codecPrivate, VideoCodecMeta videoCodecMeta, AudioCodecMeta audioCodecMeta) {
+    public DemuxerTrackMeta(TrackType type, double totalDuration, int[] seekFrames, int totalFrames,
+            CodecMeta codecMeta) {
         this.type = type;
-        this.codec = codec;
         this.totalDuration = totalDuration;
         this.seekFrames = seekFrames;
         this.totalFrames = totalFrames;
-        this.codecPrivate = codecPrivate;
-        this.videoCodecMeta = videoCodecMeta;
-        this.audioCodecMeta = audioCodecMeta;
+        this.codecMeta = codecMeta;
         this.orientation = Orientation.D_0;
     }
 
     public TrackType getType() {
         return type;
-    }
-
-    public Codec getCodec() {
-        return codec;
     }
 
     /**
@@ -74,23 +63,15 @@ public class DemuxerTrackMeta {
         return index;
     }
 
-    public ByteBuffer getCodecPrivate() {
-        return codecPrivate;
-    }
-
-    public VideoCodecMeta getVideoCodecMeta() {
-        return videoCodecMeta;
-    }
-
-    public AudioCodecMeta getAudioCodecMeta() {
-        return audioCodecMeta;
-    }
-
     public void setOrientation(Orientation orientation) {
         this.orientation = orientation;
     }
 
     public Orientation getOrientation() {
         return orientation;
+    }
+
+    public CodecMeta getCodecMeta() {
+        return codecMeta;
     }
 }

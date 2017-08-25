@@ -25,7 +25,7 @@ public class MP4MuxerTest {
         ByteBuffer buf = ByteBuffer.allocate(1024);
         ByteBufferSeekableByteChannel output = new ByteBufferSeekableByteChannel(buf, 0);
         MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(output);
-        muxer.addVideoTrack(H264, createSimpleVideoCodecMeta(new Size(42, 43), YUV420));
+        muxer.addVideoTrack(createSimpleVideoCodecMeta(H264, null, new Size(42, 43), YUV420));
         muxer.finish();
 
         ByteBuffer contents = output.getContents();

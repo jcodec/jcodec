@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import org.jcodec.common.AudioCodecMeta;
-import org.jcodec.common.Codec;
 import org.jcodec.common.Muxer;
 import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoCodecMeta;
@@ -59,7 +58,7 @@ public class IVFMuxer implements Muxer, MuxerTrack {
     }
 
     @Override
-    public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
+    public MuxerTrack addVideoTrack(VideoCodecMeta meta) {
         if (dim != null)
             throw new RuntimeException("IVF can not have multiple video tracks.");
         this.dim = meta.getSize();
@@ -88,7 +87,7 @@ public class IVFMuxer implements Muxer, MuxerTrack {
     }
 
     @Override
-    public MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta) {
+    public MuxerTrack addAudioTrack(AudioCodecMeta meta) {
         throw new RuntimeException("Video-only container");
     }
 

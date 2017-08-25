@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
@@ -513,7 +514,8 @@ public class PNGDecoder extends VideoDecoder {
             case TAG_IHDR:
                 IHDR ihdr = new IHDR();
                 ihdr.parse(data);
-                return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(ihdr.width, ihdr.height), ColorSpace.RGB);
+                return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(Codec.PNG, null,
+                        new Size(ihdr.width, ihdr.height), ColorSpace.RGB);
             default:
                 data.position(data.position() + length + 4);
             }

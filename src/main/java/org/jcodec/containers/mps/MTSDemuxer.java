@@ -5,6 +5,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +25,7 @@ import org.jcodec.common.io.SeekableByteChannel;
  * 
  */
 public class MTSDemuxer {
+    private static final int MTS_PACKET_SIZE = 188;
     private SeekableByteChannel channel;
     private Map<Integer, ProgramChannel> programs = new HashMap<Integer, ProgramChannel>();
 
@@ -128,12 +130,79 @@ public class MTSDemuxer {
         }
     }
 
-    public static MTSPacket readPacket(ReadableByteChannel channel) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(188);
-        if (NIOUtils.readFromChannel(channel, buffer) != 188)
+    private List<MTSPacket> packets = new LinkedList<MTSPacket>();
+    private boolean eof;
+    
+    public MTSPacket readPacket(ReadableByteChannel channel) throws IOException {
+        if (eof)
             return null;
+        
+        if (!packets.isEmpty())
+            return packets.remove(0);
+        
+        ByteBuffer buffer = ByteBuffer.allocate(MTS_PACKET_SIZE * 100);
+        if (channel.read(buffer) == -1) {
+            eof = true;
+            return null;
+        }
         buffer.flip();
-        return parsePacket(buffer);
+
+        while (buffer.hasRemaining() && (buffer.get(buffer.position()) & 0xff) == 0x47) {
+            packets.add(parsePacket(NIOUtils.read(buffer, MTS_PACKET_SIZE)));
+        }
+        
+        if (buffer.hasRemaining()) {
+            // We are potentially out of sync, try to resync
+            findSync(channel, buffer);
+            
+            if (buffer.remaining() >= MTS_PACKET_SIZE) {
+                while (buffer.hasRemaining() && (buffer.get(buffer.position()) & 0xff) == 0x47) {
+                    packets.add(parsePacket(NIOUtils.read(buffer, MTS_PACKET_SIZE)));
+                }
+            }
+        }
+
+        return packets.isEmpty() ? null : packets.remove(0);
+    }
+    
+    private boolean refill(ReadableByteChannel channel, ByteBuffer buffer) throws IOException {
+        NIOUtils.relocateTail(buffer);
+        buffer.position(buffer.limit());
+        buffer.limit(buffer.capacity());
+        boolean refilled = channel.read(buffer) != -1;
+        buffer.flip();
+        return refilled;
+    }
+
+    private void findSync(ReadableByteChannel channel, ByteBuffer buffer) throws IOException {
+        boolean sync = false;
+        if (!refill(channel, buffer))
+            return;
+        while (!sync) {
+            sync = findSyncOffset(buffer);
+            if (!refill(channel, buffer))
+                break;
+        }
+    }
+
+    private static final int ITERATE_OVER = 10;
+    
+    private boolean findSyncOffset(ByteBuffer buffer) {
+        while(buffer.remaining() > ITERATE_OVER*MTS_PACKET_SIZE) {
+            int b = buffer.get() & 0xff;
+            if (b != 0x47)
+                continue;
+            int j = 0;
+            for (; j < ITERATE_OVER; j++) {
+                int b1 = buffer.get(buffer.position() + j * MTS_PACKET_SIZE);
+                if (b1 != 0x47) {
+                    break;
+                }
+            }
+            if (j == ITERATE_OVER)
+                return true;
+        }
+        return false;
     }
 
     public static MTSPacket parsePacket(ByteBuffer buffer) {

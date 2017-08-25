@@ -60,13 +60,23 @@ public class SinkImpl implements Sink, PacketSink {
     private VideoEncoder videoEncoder;
     private String profile;
     private boolean interlaced;
+    
+    public static Sink createMatchingToFile(String absolutePath, Source source) throws IOException {
+        return new SinkImpl(absolutePath, null, source.getFormat(), source.getVideoCodecMeta().getCodec(),
+                source.getAudioCodecMeta().getCodec());
+    }
+    
+    public static Sink createMatchingToStream(SeekableByteChannel destStream, Source source) throws IOException {
+        return new SinkImpl(null, destStream, source.getFormat(), source.getVideoCodecMeta().getCodec(),
+                source.getAudioCodecMeta().getCodec());
+    }
 
     @Override
     public void outputVideoPacket(Packet packet, VideoCodecMeta codecMeta) throws IOException {
         if (!outputFormat.isVideo())
             return;
         if (videoOutputTrack == null) {
-            videoOutputTrack = muxer.addVideoTrack(outputVideoCodec, codecMeta);
+            videoOutputTrack = muxer.addVideoTrack(codecMeta);
         }
         videoOutputTrack.addFrame(packet);
         framesOutput = true;
@@ -77,7 +87,7 @@ public class SinkImpl implements Sink, PacketSink {
         if (!outputFormat.isAudio())
             return;
         if (audioOutputTrack == null) {
-            audioOutputTrack = muxer.addAudioTrack(outputAudioCodec, audioCodecMeta);
+            audioOutputTrack = muxer.addAudioTrack(audioCodecMeta);
         }
         audioOutputTrack.addFrame(audioPkt);
         framesOutput = true;
@@ -124,24 +134,31 @@ public class SinkImpl implements Sink, PacketSink {
         }
     }
 
-    public SinkImpl(String destName, Format outputFormat, Codec outputVideoCodec, Codec outputAudioCodec) {
+    protected SinkImpl(String destName, SeekableByteChannel destStream, Format outputFormat, Codec outputVideoCodec,
+            Codec outputAudioCodec) throws IOException {
     	if (destName == null && outputFormat == Format.IMG)
     		throw new IllegalArgumentException("A destination file should be specified for the image muxer.");
         this.destName = destName;
+        this.destStream = destStream;
         this.outputFormat = outputFormat;
         this.outputVideoCodec = outputVideoCodec;
         this.outputAudioCodec = outputAudioCodec;
         this.outputFormat = outputFormat;
+
+        init();
     }
     
-    public static SinkImpl createWithStream(SeekableByteChannel destStream, Format outputFormat, Codec outputVideoCodec, Codec outputAudioCodec) {
-    	SinkImpl result = new SinkImpl(null, outputFormat, outputVideoCodec, outputAudioCodec);
-    	result.destStream = destStream;
-    	return result;
+    public static SinkImpl createWithStream(SeekableByteChannel destStream, Format outputFormat, Codec outputVideoCodec,
+            Codec outputAudioCodec) throws IOException {
+    	return new SinkImpl(null, destStream, outputFormat, outputVideoCodec, outputAudioCodec);
+    }
+    
+    public static SinkImpl createWithFile(String destName, Format outputFormat, Codec outputVideoCodec,
+            Codec outputAudioCodec) throws IOException {
+        return new SinkImpl(destName, null, outputFormat, outputVideoCodec, outputAudioCodec);
     }
 
-    @Override
-    public void init() throws IOException {
+    private void init() throws IOException {
         initMuxer();
         if (outputFormat.isVideo() && outputVideoCodec != null) {
             switch (outputVideoCodec) {
@@ -220,8 +237,8 @@ public class SinkImpl implements Sink, PacketSink {
         EncodedFrame enc = encodeVideo(frame, buffer);
         outputVideoPacket = Packet.createPacketWithData(videoFrame.getPacket(), NIOUtils.clone(enc.getData()));
         outputVideoPacket.setFrameType(enc.isKeyFrame() ? FrameType.KEY : FrameType.INTER);
-        outputVideoPacket(outputVideoPacket,
-                org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(frame.getWidth(), frame.getHeight()), frame.getColor()));
+        outputVideoPacket(outputVideoPacket, org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(
+                outputVideoCodec, null, new Size(frame.getWidth(), frame.getHeight()), frame.getColor()));
     }
 
     @Override
@@ -229,7 +246,8 @@ public class SinkImpl implements Sink, PacketSink {
         if (!outputFormat.isAudio() || outputAudioCodec == null)
             return;
         outputAudioPacket(Packet.createPacketWithData(audioFrame.getPacket(), encodeAudio(audioFrame.getAudio())),
-                org.jcodec.common.AudioCodecMeta.fromAudioFormat(audioFrame.getAudio().getFormat()));
+                org.jcodec.common.AudioCodecMeta.fromAudioFormat(outputAudioCodec, null,
+                        audioFrame.getAudio().getFormat()));
     }
 
     @Override

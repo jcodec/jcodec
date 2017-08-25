@@ -13,6 +13,7 @@ import org.jcodec.codecs.h264.io.model.NALUnitType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
@@ -65,7 +66,7 @@ public class AVCConcatTrack implements VirtualTrack {
             CodecMeta se = arguments[i].getCodecMeta();
             if (!(se instanceof VideoCodecMeta))
                 throw new RuntimeException("Not a video track.");
-            if (!"avc1".equals(se.getFourcc()))
+            if (se.getCodec() != Codec.H264)
                 throw new RuntimeException("Not an AVC track.");
 
             VideoCodecMeta vcm = (VideoCodecMeta) se;
@@ -96,7 +97,9 @@ public class AVCConcatTrack implements VirtualTrack {
 
         VideoCodecMeta codecMeta = (VideoCodecMeta) arguments[0].getCodecMeta();
 
-        se = VideoCodecMeta.createVideoCodecMeta("avc1", H264Utils.saveCodecPrivate(H264Utils.saveSPS(allSps), H264Utils.savePPS(allPps)), codecMeta.getSize(), codecMeta.getPasp());
+        se = VideoCodecMeta.createVideoCodecMeta(Codec.H264,
+                H264Utils.saveCodecPrivate(H264Utils.saveSPS(allSps), H264Utils.savePPS(allPps)), codecMeta.getSize(),
+                codecMeta.getPasp());
     }
 
     private void mergePS(List<SeqParameterSet> allSps, List<PictureParameterSet> allPps, Map<Integer, Integer> map) {

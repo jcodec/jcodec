@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.pcmdvd.PCMDVDDecoder;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioFormat;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.model.AudioBuffer;
 import org.jcodec.common.model.Label;
@@ -76,7 +77,7 @@ public class PCMDVDTrack implements VirtualTrack {
 
     @Override
     public CodecMeta getCodecMeta() {
-        return AudioCodecMeta.createAudioCodecMeta3(AudioSampleEntry.lookupFourcc(format), ByteBuffer.allocate(0),
+        return AudioCodecMeta.createAudioCodecMeta3(Codec.PCM, ByteBuffer.allocate(0),
                 format, true, new Label[] { Label.Left, Label.Right });
     }
 

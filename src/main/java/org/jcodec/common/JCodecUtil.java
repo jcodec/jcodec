@@ -64,6 +64,7 @@ public class JCodecUtil {
         demuxers.put(Format.MPEG_PS, MPSDemuxer.class);
         demuxers.put(Format.MOV, MP4Demuxer.class);
         demuxers.put(Format.WEBP, WebpDemuxer.class);
+        demuxers.put(Format.IMG, ImageSequenceDemuxer.class);
     };
 
     public static Format detectFormat(File f) throws IOException {
@@ -87,7 +88,7 @@ public class JCodecUtil {
         return selected;
     }
 
-    public static Codec detectDecoder(ByteBuffer b) {
+    public static _2<Codec, Integer> detectDecoderWithScore(ByteBuffer b) {
         int maxScore = 0;
         Codec selected = null;
         for (Map.Entry<Codec, Class<?>> vd : decoders.entrySet()) {
@@ -97,7 +98,12 @@ public class JCodecUtil {
                 maxScore = score;
             }
         }
-        return selected;
+        return _2(selected, maxScore);
+    }
+    
+    public static Codec detectDecoder(ByteBuffer b) {
+        _2<Codec, Integer> detected = detectDecoderWithScore(b);
+        return detected.v0;
     }
 
     private static int probe(ByteBuffer b, Class<?> vd) {

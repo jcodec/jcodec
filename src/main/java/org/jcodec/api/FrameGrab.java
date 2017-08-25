@@ -44,9 +44,9 @@ public class FrameGrab {
         _in.read(header);
         header.flip();
         Format detectFormat = JCodecUtil.detectFormatBuffer(header);
-		if (detectFormat == null) {
-			throw new UnsupportedFormatException("Could not detect the format of the input video.");
-		}
+        if (detectFormat == null) {
+            throw new UnsupportedFormatException("Could not detect the format of the input video.");
+        }
         SeekableDemuxerTrack videoTrack_;
 
         switch (detectFormat) {
@@ -205,7 +205,7 @@ public class FrameGrab {
 
     private static ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack) throws JCodecException {
         DemuxerTrackMeta meta = videoTrack.getMeta();
-        switch (meta.getCodec()) {
+        switch (meta.getCodecMeta().getCodec()) {
         case H264:
             return new AVCMP4Adaptor(meta);
         default:

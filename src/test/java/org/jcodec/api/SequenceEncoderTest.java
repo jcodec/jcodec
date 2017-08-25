@@ -16,70 +16,69 @@ import org.junit.Test;
 
 public class SequenceEncoderTest {
 
-	@Test
-	public void testSequenceEncoder() throws IOException {
-		int capacity = 3 * 32 * 32 * 10;
-		ByteBuffer ref = ByteBuffer.allocate(capacity);
-		ByteBuffer enc = ByteBuffer.allocate(capacity);
-		ByteBufferSeekableByteChannel ch = new ByteBufferSeekableByteChannel(enc, capacity);
+    @Test
+    public void testSequenceEncoder() throws IOException {
+        int capacity = 3 * 32 * 32 * 10;
+        ByteBuffer ref = ByteBuffer.allocate(capacity);
+        ByteBuffer enc = ByteBuffer.allocate(capacity);
+        ByteBufferSeekableByteChannel ch = new ByteBufferSeekableByteChannel(enc, capacity);
 
-		SequenceEncoder sequenceEncoder = new SequenceEncoder(ch, Rational.ONE, Format.RAW, Codec.RAW, null);
+        SequenceEncoder sequenceEncoder = new SequenceEncoder(ch, Rational.ONE, Format.RAW, Codec.RAW, null);
 
-		for (int i = 0; i < 10; i++) {
-			Picture picture = Picture.create(32, 32, ColorSpace.RGB);
-			fillRandom(picture, ref);
-			sequenceEncoder.encodeNativeFrame(picture);
-		}
-		sequenceEncoder.finish();
-		ref.flip();
-		enc.flip();
+        for (int i = 0; i < 10; i++) {
+            Picture picture = Picture.create(32, 32, ColorSpace.RGB);
+            fillRandom(picture, ref);
+            sequenceEncoder.encodeNativeFrame(picture);
+        }
+        sequenceEncoder.finish();
+        ref.flip();
+        enc.flip();
 
-		Assert.assertArrayEquals(NIOUtils.toArray(ref), NIOUtils.toArray(enc));
-	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testWrongColor() throws IOException {
-		File temp = File.createTempFile("temp-file-name", ".tmp");
-		SequenceEncoder sequenceEncoder = new SequenceEncoder(NIOUtils.writableChannel(temp), Rational.ONE, Format.MOV,
-				Codec.H264, null);
-		Picture picture = Picture.create(32, 32, ColorSpace.YUV420J);
-		sequenceEncoder.encodeNativeFrame(picture);
-	}
+        Assert.assertArrayEquals(NIOUtils.toArray(ref), NIOUtils.toArray(enc));
+    }
 
-	@Test
-	public void testRuns() throws IOException {
-		File temp = File.createTempFile("temp-file-name", ".tmp");
-		SequenceEncoder sequenceEncoder = new SequenceEncoder(NIOUtils.writableChannel(temp), Rational.ONE, Format.MOV,
-				Codec.H264, null);
+    @Test(expected = IllegalArgumentException.class)
+    public void testWrongColor() throws IOException {
+        File temp = File.createTempFile("temp-file-name", ".tmp");
+        SequenceEncoder sequenceEncoder = new SequenceEncoder(NIOUtils.writableChannel(temp), Rational.ONE, Format.MOV,
+                Codec.H264, null);
+        Picture picture = Picture.create(32, 32, ColorSpace.YUV420J);
+        sequenceEncoder.encodeNativeFrame(picture);
+    }
 
-		for (int i = 0; i < 10; i++) {
-			Picture picture = Picture.create(32, 32, ColorSpace.RGB);
-			fillGradient(picture, i);
-			sequenceEncoder.encodeNativeFrame(picture);
-		}
-		sequenceEncoder.finish();
+    @Test
+    public void testRuns() throws IOException {
+        File temp = File.createTempFile("temp-file-name", ".tmp");
+        SequenceEncoder sequenceEncoder = new SequenceEncoder(NIOUtils.writableChannel(temp), Rational.ONE, Format.MOV,
+                Codec.H264, null);
 
-		Assert.assertTrue("", temp.length() >= 128);
-	}
+        for (int i = 0; i < 10; i++) {
+            Picture picture = Picture.create(32, 32, ColorSpace.RGB);
+            fillGradient(picture, i);
+            sequenceEncoder.encodeNativeFrame(picture);
+        }
+        sequenceEncoder.finish();
 
-	
-	private void fillGradient(Picture picture, int ind) {
-		for (int comp = 0; comp < picture.getData().length; comp++) {
-			byte[] planeData = picture.getPlaneData(comp);
-			for (int i = 0; i < planeData.length; i++) {
-				planeData[i] = (byte) (i + ind * 2);
-			}
-		}
-	}
-	
-	private void fillRandom(Picture picture, ByteBuffer ref) {
-		for (int comp = 0; comp < picture.getData().length; comp++) {
-			byte[] planeData = picture.getPlaneData(comp);
-			for (int i = 0; i < planeData.length; i++) {
-				int rand = (int) (Math.random() * 255);
-				planeData[i] = (byte) (rand - 128);
-				ref.put((byte) rand);
-			}
-		}
-	}
+        Assert.assertTrue("", temp.length() >= 128);
+    }
+
+    private void fillGradient(Picture picture, int ind) {
+        for (int comp = 0; comp < picture.getData().length; comp++) {
+            byte[] planeData = picture.getPlaneData(comp);
+            for (int i = 0; i < planeData.length; i++) {
+                planeData[i] = (byte) (i + ind * 2);
+            }
+        }
+    }
+
+    private void fillRandom(Picture picture, ByteBuffer ref) {
+        for (int comp = 0; comp < picture.getData().length; comp++) {
+            byte[] planeData = picture.getPlaneData(comp);
+            for (int i = 0; i < planeData.length; i++) {
+                int rand = (int) (Math.random() * 255);
+                planeData[i] = (byte) (rand - 128);
+                ref.put((byte) rand);
+            }
+        }
+    }
 }

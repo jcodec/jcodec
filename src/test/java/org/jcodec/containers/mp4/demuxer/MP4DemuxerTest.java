@@ -71,7 +71,7 @@ public class MP4DemuxerTest {
             MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
             DemuxerTrack videoTrack = demuxer.getVideoTrack();
             DemuxerTrackMeta meta = videoTrack.getMeta();
-            assertEquals(ColorSpace.YUV420J, meta.getVideoCodecMeta().getColor());
+            assertEquals(ColorSpace.YUV420J, meta.getCodecMeta().video().getColor());
         } finally {
             NIOUtils.closeQuietly(input);
         }

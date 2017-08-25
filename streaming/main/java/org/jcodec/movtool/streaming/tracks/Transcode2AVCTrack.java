@@ -7,6 +7,7 @@ import org.jcodec.codecs.h264.H264Encoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.mp4.AvcCBox;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
@@ -80,8 +81,8 @@ public abstract class Transcode2AVCTrack implements VirtualTrack {
 
         AvcCBox createAvcC = H264Utils.createAvcC(encoder.initSPS(new Size(thumbWidth, thumbHeight)), encoder.initPPS(),
                 4);
-        return VideoCodecMeta.createVideoCodecMeta("avc1", H264Utils.getAvcCData(createAvcC), new Size(thumbWidth, thumbHeight),
-                codecMeta.getPasp());
+        return VideoCodecMeta.createVideoCodecMeta(Codec.H264, H264Utils.getAvcCData(createAvcC),
+                new Size(thumbWidth, thumbHeight), codecMeta.getPasp());
     }
 
     @Override

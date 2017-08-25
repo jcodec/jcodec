@@ -5,6 +5,7 @@ import java.lang.IllegalArgumentException;
 
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioFormat;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.model.Label;
 import org.jcodec.movtool.streaming.VirtualPacket;
@@ -117,7 +118,8 @@ public class StereoDownmixTrack implements VirtualTrack {
 
     @Override
     public CodecMeta getCodecMeta() {
-        return AudioCodecMeta.createAudioCodecMeta("sowt", 2, 2, rate, ByteOrder.LITTLE_ENDIAN, true, new Label[] {Label.Left, Label.Right}, null);
+        return AudioCodecMeta.createAudioCodecMeta(Codec.PCM, 2, 2, rate, ByteOrder.LITTLE_ENDIAN, true,
+                new Label[] { Label.Left, Label.Right }, null);
     }
 
     @Override

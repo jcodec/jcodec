@@ -28,6 +28,7 @@ import org.jcodec.codecs.h264.io.model.RefPicMarkingIDR;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
+import org.jcodec.common.Codec;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
@@ -430,6 +431,6 @@ public class H264Decoder extends VideoDecoder {
         SeqParameterSet sps = SeqParameterSet.read(rawSPS.get(0));
         Size size = H264Utils.getPicSize(sps);
 //, H264Utils.saveCodecPrivate(rawSPS, rawPPS)
-        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(size, ColorSpace.YUV420);
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(Codec.H264, null, size, ColorSpace.YUV420);
     }
 }

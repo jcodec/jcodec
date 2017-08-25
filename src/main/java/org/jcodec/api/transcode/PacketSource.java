@@ -15,5 +15,4 @@ public interface PacketSource {
     Packet inputVideoPacket() throws IOException;
 
     Packet inputAudioPacket() throws IOException;
-    
 }

@@ -2,6 +2,7 @@ package org.jcodec.containers.imgseq;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,10 +11,13 @@ import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.TrackType;
+import org.jcodec.common.Tuple._2;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
+import org.jcodec.common.JCodecUtil;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,13 +46,8 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
         this.maxFrames = maxFrames;
         this.maxAvailableFrame = -1;
         this.curFrame = loadFrame();
-        // codec = JCodecUtil.detectDecoder(curFrame.getData());
-        String lowerCase = namePattern.toLowerCase();
-        if (lowerCase.endsWith(".png")) {
-            codec = Codec.PNG;
-        } else if (lowerCase.endsWith(".jpg") || lowerCase.endsWith(".jpeg")) {
-            codec = Codec.JPEG;
-        }
+        if (curFrame != null)
+            this.codec = JCodecUtil.detectDecoder(curFrame.getData());
     }
 
     @Override
@@ -144,7 +143,12 @@ public class ImageSequenceDemuxer implements Demuxer, DemuxerTrack {
     @Override
     public DemuxerTrackMeta getMeta() {
         int durationFrames = getMaxAvailableFrame();
-        return new DemuxerTrackMeta(TrackType.VIDEO, codec, (durationFrames + 1) * VIDEO_FPS, null, durationFrames + 1,
-                null, null, null);
+        return new DemuxerTrackMeta(TrackType.VIDEO, (durationFrames + 1) * VIDEO_FPS, null, durationFrames + 1,
+                new VideoCodecMeta(codec, null));
+    }
+    
+    public static int probe(final ByteBuffer b_) {
+        _2<Codec, Integer> detected = JCodecUtil.detectDecoderWithScore(b_);
+        return detected.v0 == Codec.JPEG || detected.v0 == Codec.PNG ? detected.v1 : 0;
     }
 }

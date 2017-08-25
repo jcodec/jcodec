@@ -3,7 +3,6 @@ package org.jcodec.api.transcode;
 import java.io.IOException;
 
 import org.jcodec.common.AudioCodecMeta;
-import org.jcodec.common.Codec;
 import org.jcodec.common.Format;
 import org.jcodec.common.VideoCodecMeta;
 
@@ -16,40 +15,29 @@ import org.jcodec.common.VideoCodecMeta;
 public interface Source {
 
     /**
-     * Starts reading media data from the source.
-     * 
-     * @param pixelStore
-     *            The pixel store where the buffers for the returned pictures
-     *            will be borrowed from.
-     * 
-     * @throws IOException
-     */
-    void init(PixelStore pixelStore) throws IOException;
-
-    /**
      * Skips some number of frames in this source
      * 
      * @param skipFrames
      *            The number of frames to skip
      * @throws IOException
      */
-    void seekFrames(int seekFrames) throws IOException;
+    void seekFrames(int seekFrames, PixelStore pixelStore) throws IOException;
 
     /**
      * Gets the next video frame from this source
      * 
-     * @return A picture holding the decoded frame, when the picture is not used
-     *         it must be returned to the appropriate pixel store for the
-     *         maximum efficiency.
+     * @return A picture holding the decoded frame, when the picture is not used it
+     *         must be returned to the appropriate pixel store for the maximum
+     *         efficiency.
      * @throws IOException
      */
-    VideoFrameWithPacket getNextVideoFrame() throws IOException;
+    VideoFrameWithPacket getNextVideoFrame(PixelStore pixelStore) throws IOException;
 
     /**
      * Gets the next decoded audio frame from this source
      * 
-     * @return The audio buffer containing PCM samples of the decoded audio and
-     *         the audio format.
+     * @return The audio buffer containing PCM samples of the decoded audio and the
+     *         audio format.
      */
     AudioFrameWithPacket getNextAudioFrame() throws IOException;
 
@@ -63,17 +51,43 @@ public interface Source {
     void setOption(Options option, Object value);
 
     /**
-     * Gets the metadata about video
+     * Gets the metadata about video. In some cases full metadata may only be
+     * available after the first video frame is decoded. Of all the metadata at
+     * least the codec type will be available.
+     * 
      * @return
      */
     VideoCodecMeta getVideoCodecMeta();
     
     /**
-     * Gets the metadata about audio
+     * Same as above only returns an empty object if no video tracks exist in this
+     * movie.
+     * 
+     * @return
+     */
+    VideoCodecMeta getVideoCodecMetaSafe();
+
+    /**
+     * Gets the metadata about audio.  In some cases full metadata may only be
+     * available after the first audio frame is decoded. Of all the metadata at
+     * least the codec type will be available.
+     * 
      * @return
      */
     AudioCodecMeta getAudioCodecMeta();
+    
+    
+    /**
+     * Same as above only returns an empty object if no audio tracks exist in this
+     * movie.
+     * 
+     * @return
+     */
+    AudioCodecMeta getAudioCodecMetaSafe();
 
     boolean isVideo();
+
     boolean isAudio();
+
+    Format getFormat();
 }

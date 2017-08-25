@@ -6,6 +6,7 @@ import java.nio.ByteOrder;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioDecoder;
 import org.jcodec.common.AudioFormat;
+import org.jcodec.common.Codec;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.AudioBuffer;
 
@@ -112,6 +113,7 @@ public class PCMDVDDecoder implements AudioDecoder {
         int sampleRate = lpcm_freq_tab[freq];
         int channelCount = 1 + (b1 & 7);
         int sampleSizeInBits = 16 + ((b1 >> 6) & 3) * 4;
-        return org.jcodec.common.AudioCodecMeta.fromAudioFormat(new AudioFormat(sampleRate, sampleSizeInBits, channelCount, true, false));
+        return AudioCodecMeta.fromAudioFormat(Codec.PCM_DVD, null,
+                new AudioFormat(sampleRate, sampleSizeInBits, channelCount, true, false));
     }
 }

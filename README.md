@@ -158,6 +158,55 @@ try {
 }
 ```
 
+## Re-exporting video/audio without transcoding into a different format
+```java
+Source source = SourceImpl.create(input.getAbsolutePath());
+Sink sink = SinkImpl.createWithFile(output.getAbsolutePath(), Format.MOV,
+    null, null);
+TranscoderBuilder builder = Transcoder.newTranscoder(source, sink);
+builder.setAudioCopy();
+builder.setVideoCopy();
+builder.create().transcode();
+```
+
+## Transcoding video/audio into a different format
+```java
+Source source = SourceImpl.create(input.getAbsolutePath());
+Sink sink = SinkImpl.createWithFile(output.getAbsolutePath(), Format.MOV,
+    Codec.PRORES, Codec.PCM);
+TranscoderBuilder builder = Transcoder.newTranscoder(source, sink);
+builder.create().transcode();
+```
+
+## Adding a custom visual effect to the video
+```java
+Source source = SourceImpl.create(input.getAbsolutePath());
+Sink sink = SinkImpl.createMatchingToFile(output.getAbsolutePath(), source);
+
+TranscoderBuilder builder = Transcoder.newTranscoder(source, sink);
+builder.addVideoFilter(new Filter {
+    @Override
+    public ColorSpace getInputColor() {
+        return ColorSpace.ANY_PLANAR;
+    }
+    @Override
+    public ColorSpace getOutputColor() {
+        return ColorSpace.SAME;
+    }
+    @Override
+    public LoanerPicture filter(Picture picture, PixelStore store) {
+        LoanerPicture out = store.getPicture(picture.getWidth(), picture.getHeight(),
+            picture.getColor());
+        // Do something with the pixels from picture and store them into the out.picture
+        // output picture.
+        return out;
+    }
+});
+builder.setAudioCopy();
+
+builder.create().transcode();
+```
+
 # Contact
 
 Feel free to communicate any questions or concerns to us. Dev team email: jcodecproject@gmail.com

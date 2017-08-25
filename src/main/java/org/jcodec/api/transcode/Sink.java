@@ -13,13 +13,6 @@ import org.jcodec.common.model.ColorSpace;
 public interface Sink {
 
     /**
-     * Initializes output to this sink.
-     * 
-     * @throws IOException
-     */
-    void init() throws IOException;
-
-    /**
      * Outputs video frame to the sink
      * 
      * @param decodedFrame

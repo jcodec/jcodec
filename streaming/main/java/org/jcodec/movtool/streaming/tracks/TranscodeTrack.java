@@ -3,6 +3,7 @@ import java.lang.IllegalStateException;
 import java.lang.System;
 import java.lang.ThreadLocal;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
@@ -69,7 +70,7 @@ public abstract class TranscodeTrack implements VirtualTrack {
         ByteBuffer codecPrivate = ByteBuffer.allocate(1024);
         getCodecPrivate(codecPrivate, size);
 
-        se = VideoCodecMeta.createVideoCodecMeta("avc1", codecPrivate, size, pasp);
+        se = VideoCodecMeta.createVideoCodecMeta(Codec.H264, codecPrivate, size, pasp);
 
         frameSize = getFrameSize(mbW * mbH, TARGET_RATE);
         frameSize += frameSize >> 4;

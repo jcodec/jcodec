@@ -38,6 +38,7 @@ import org.jcodec.codecs.mpeg12.bitstream.SequenceExtension;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension;
 import org.jcodec.common.Assert;
+import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SparseIDCT;
@@ -771,6 +772,7 @@ public class MPEGDecoder extends VideoDecoder {
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
         ByteBuffer codecPrivate = getSequenceHeader(data.duplicate());
         SequenceHeader sh = SequenceHeader.read(codecPrivate.duplicate());
-        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(sh.horizontal_size, sh.vertical_size), ColorSpace.YUV420);
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(Codec.MPEG2, null,
+                new Size(sh.horizontal_size, sh.vertical_size), ColorSpace.YUV420);
     }
 }

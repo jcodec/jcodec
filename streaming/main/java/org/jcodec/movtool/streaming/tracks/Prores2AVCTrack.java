@@ -9,6 +9,7 @@ import org.jcodec.codecs.prores.ProresEncoder;
 import org.jcodec.codecs.prores.ProresEncoder.Profile;
 import org.jcodec.codecs.prores.ProresToThumb2x2;
 import org.jcodec.codecs.prores.ProresToThumb4x4;
+import org.jcodec.common.Codec;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.Size;
 import org.jcodec.movtool.streaming.VirtualTrack;
@@ -28,15 +29,9 @@ public class Prores2AVCTrack extends Transcode2AVCTrack {
 
     @Override
     protected void checkFourCC(VirtualTrack proresTrack) {
-        String fourcc = proresTrack.getCodecMeta().getFourcc();
-        if ("ap4h".equals(fourcc))
+        Codec codec = proresTrack.getCodecMeta().getCodec();
+        if (codec == Codec.PRORES)
             return;
-        Profile[] values = ProresEncoder.Profile.values();
-        for (int i = 0; i < values.length; i++) {
-            Profile profile = values[i];
-            if (profile.fourcc.equals(fourcc))
-                return;
-        }
         throw new IllegalArgumentException("Input track is not ProRes");
     }
 

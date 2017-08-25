@@ -1,10 +1,13 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Size;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -16,8 +19,20 @@ import java.nio.ByteBuffer;
  * 
  */
 public class VideoSampleEntry extends SampleEntry {
-    public static VideoSampleEntry videoSampleEntry(String fourcc, Size size, String encoderName) {
-        return createVideoSampleEntry(new Header(fourcc), (short) 0, (short) 0, "jcod", 0, 768,
+    private static Map<Codec, String> codec2fourcc = new HashMap<Codec, String>();
+
+    static {
+        codec2fourcc.put(Codec.H264, "avc1");
+        codec2fourcc.put(Codec.AAC, "mp4a");
+        codec2fourcc.put(Codec.PRORES, "apch");
+        codec2fourcc.put(Codec.JPEG, "mjpg");
+        codec2fourcc.put(Codec.PNG, "png ");
+        codec2fourcc.put(Codec.V210, "v210");
+        codec2fourcc.put(Codec.MPEG2, "m2v1");
+    }
+    
+    public static VideoSampleEntry videoSampleEntry(Codec codec, Size size, String encoderName) {
+        return createVideoSampleEntry(new Header(codec2fourcc.get(codec)), (short) 0, (short) 0, "jcod", 0, 768,
                 (short) size.getWidth(), (short) size.getHeight(), 72, 72, (short) 1,
                 encoderName != null ? encoderName : "jcodec", (short) 24, (short) 1, (short) -1);
     }

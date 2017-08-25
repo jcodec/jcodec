@@ -6,6 +6,7 @@ import java.lang.System;
 import static java.lang.System.arraycopy;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.RunLength;
 import org.jcodec.common.VideoCodecMeta;
@@ -270,7 +271,7 @@ public class MPSTrackFactory {
 
         @Override
         public CodecMeta getCodecMeta() {
-            return VideoCodecMeta.createVideoCodecMeta("m2v1", ByteBuffer.allocate(0), new Size(1920, 1080), new Rational(1, 1));
+            return VideoCodecMeta.createVideoCodecMeta(Codec.MPEG2, ByteBuffer.allocate(0), new Size(1920, 1080), new Rational(1, 1));
         }
 
         @Override

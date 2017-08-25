@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioFormat;
-import org.jcodec.common.Codec;
 import org.jcodec.common.Muxer;
 import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoCodecMeta;
@@ -43,12 +42,12 @@ public class WavMuxer implements Muxer, MuxerTrack {
     }
 
     @Override
-    public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
+    public MuxerTrack addVideoTrack(VideoCodecMeta meta) {
         return null;
     }
 
     @Override
-    public MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta) {
+    public MuxerTrack addAudioTrack(AudioCodecMeta meta) {
         header = WavHeader.createWavHeader(meta.getFormat(), 0);
         this.format = meta.getFormat();
         try {

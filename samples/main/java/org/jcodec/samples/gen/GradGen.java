@@ -45,7 +45,8 @@ public class GradGen {
         ByteBuffer out = ByteBuffer.allocate(width * height * 10);
         ByteBuffer frame = encoder.encodeFrame(out, pic);
 
-        MuxerTrack videoTrack = muxer.addVideoTrack(Codec.V210, VideoCodecMeta.createSimpleVideoCodecMeta(new Size(width, height), ColorSpace.YUV422_10));
+        MuxerTrack videoTrack = muxer.addVideoTrack(VideoCodecMeta.createSimpleVideoCodecMeta(Codec.V210, null,
+                new Size(width, height), ColorSpace.YUV422_10));
 
         for (int i = 0; i < Integer.parseInt(args[1]); i++) {
             videoTrack.addFrame(MP4Packet.createMP4Packet(frame, i * 1001, 24000, 1001, i, FrameType.KEY, null, 0, i * 1001, 0));

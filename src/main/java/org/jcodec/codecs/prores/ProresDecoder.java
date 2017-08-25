@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
+import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
@@ -487,7 +488,7 @@ public class ProresDecoder extends VideoDecoder {
     @Override
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
         FrameHeader fh = readFrameHeader(data);
-        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(fh.width, fh.height),
-                fh.chromaType == 2 ? ColorSpace.YUV422 : ColorSpace.YUV444);
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(Codec.PRORES, null,
+                new Size(fh.width, fh.height), fh.chromaType == 2 ? ColorSpace.YUV422 : ColorSpace.YUV444);
     }
 }

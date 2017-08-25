@@ -2,6 +2,7 @@ package org.jcodec.codecs.raw;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.model.ColorSpace;
@@ -44,6 +45,7 @@ public class RAWVideoDecoder extends VideoDecoder {
 
     @Override
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
-        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(width, height), ColorSpace.YUV420);
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(Codec.RAW, null, new Size(width, height),
+                ColorSpace.YUV420);
     }
 }

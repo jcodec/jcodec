@@ -47,8 +47,8 @@ public class SequenceMuxer {
             size = new Size(read.getWidth(), read.getHeight());
         }
         if (outTrack == null) {
-            outTrack = muxer.addVideoTrack(Codec.PNG, VideoCodecMeta.createSimpleVideoCodecMeta(size, ColorSpace.RGB));
-            
+            outTrack = muxer
+                    .addVideoTrack(VideoCodecMeta.createSimpleVideoCodecMeta(Codec.PNG, null, size, ColorSpace.RGB));
         }
         // Add packet to video track
         outTrack.addFrame(MP4Packet.createMP4Packet(NIOUtils.fetchFromFile(png), frameNo, 25, 1, frameNo, Packet.FrameType.KEY, null, 0, frameNo, 0));

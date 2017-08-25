@@ -118,7 +118,7 @@ public class MPSAdapter implements Adapter {
 
         public MediaInfo getMediaInfo() throws IOException {
             Packet frame = getFrame(0);
-            Size sz = track.getMeta().getVideoCodecMeta().getSize();
+            Size sz = track.getMeta().getCodecMeta().video().getSize();
 
             int frames = index.getNumFrames(track.getSid());
             FrameEntry e = index.frame(track.getSid(), frames - 1);

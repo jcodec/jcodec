@@ -13,6 +13,8 @@ import java.util.List;
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.Codec;
 import org.jcodec.common.CodecMeta;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.LongArrayList;
@@ -177,27 +179,22 @@ public class MovieHelper {
 
         Rational pasp = null;
         SampleEntry vse;
-        if ("avc1".equals(se.getFourcc())) {
+        if (se.getCodec() == Codec.H264) {
             vse = H264Utils.createMOVSampleEntryFromBytes(se.getCodecPrivate().duplicate());
             pasp = ((VideoCodecMeta) se).getPasp();
-        } else if (se instanceof VideoCodecMeta) {
-            VideoCodecMeta ss = (VideoCodecMeta) se;
-            pasp = ss.getPasp();
-            vse = VideoSampleEntry.videoSampleEntry(se.getFourcc(), ss.getSize(), "JCodec");
+        } else if (se.isVideo()) {
+            pasp = se.video().getPasp();
+            vse = VideoSampleEntry.videoSampleEntry(se.getCodec(), se.video().getSize(), "JCodec");
         } else {
-            AudioCodecMeta ss = (AudioCodecMeta) se;
-
-            if (ss.isPCM()) {
-                vse = AudioSampleEntry.audioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(), ss.getChannelCount(),
-                        ss.getSampleRate(), ss.getEndian());
+            AudioFormat format = se.audio().getFormat();
+            if (se.audio().isPCM()) {
+                vse = AudioSampleEntry.audioSampleEntryPCM(se.audio().getFormat());
             } else {
-                vse = AudioSampleEntry.compressedAudioSampleEntry(se.getFourcc(), 1, ss.getSampleSize(),
-                        ss.getChannelCount(), ss.getSampleRate(), ss.getSamplesPerPacket(), ss.getBytesPerPacket(),
-                        ss.getBytesPerFrame());
+                vse = AudioSampleEntry.audioSampleEntry(se.audio());
             }
 
             ChannelBox chan = ChannelBox.createChannelBox();
-            AudioSampleEntry.setLabels(ss.getChannelLabels(), chan);
+            AudioSampleEntry.setLabels(se.audio().getChannelLabels(), chan);
             vse.add(chan);
         }
 

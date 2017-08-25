@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
 import org.jcodec.common.AudioCodecMeta;
-import org.jcodec.common.Codec;
 import org.jcodec.common.Muxer;
 import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoCodecMeta;
@@ -47,13 +46,13 @@ public class Y4MMuxer implements Muxer, MuxerTrack {
     }
 
     @Override
-    public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
+    public MuxerTrack addVideoTrack(VideoCodecMeta meta) {
         this.meta = meta;
         return this;
     }
 
     @Override
-    public MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta) {
+    public MuxerTrack addAudioTrack(AudioCodecMeta meta) {
         throw new RuntimeException("Y4M doesn't support audio");
     }
 

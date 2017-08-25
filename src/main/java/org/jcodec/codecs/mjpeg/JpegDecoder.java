@@ -3,6 +3,7 @@ import static org.jcodec.codecs.mjpeg.JpegConst.naturalOrder;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.mjpeg.tools.Asserts;
+import org.jcodec.common.Codec;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
@@ -279,7 +280,8 @@ public class JpegDecoder extends VideoDecoder {
             }
         }
         if (header != null) {
-            return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(header.width, header.height), ColorSpace.YUV420J);
+            return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(Codec.JPEG, null,
+                    new Size(header.width, header.height), ColorSpace.YUV420J);
         }
         return null;
     }

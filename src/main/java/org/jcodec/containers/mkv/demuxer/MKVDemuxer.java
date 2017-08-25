@@ -72,6 +72,7 @@ public final class MKVDemuxer implements Demuxer {
         codecMapping.put("V_VP8", Codec.VP8);
         codecMapping.put("V_VP9", Codec.VP9);
         codecMapping.put("V_MPEG4/ISO/AVC", Codec.H264);
+        codecMapping.put("vrbs", Codec.VORBIS);
     }
 
     public MKVDemuxer(SeekableByteChannel fileChannelWrapper) throws IOException {
@@ -184,7 +185,7 @@ public final class MKVDemuxer implements Demuxer {
             false);
 
     public static class VideoTrack implements SeekableDemuxerTrack {
-        private ByteBuffer state;
+        private ByteBuffer videoCodecPrivate;
         public final int trackNo;
         private int frameIdx = 0;
         List<MkvBlock> blocks;
@@ -199,9 +200,9 @@ public final class MKVDemuxer implements Demuxer {
             this.codec = codec;
             if (codec == Codec.H264) {
                 avcC = H264Utils.parseAVCCFromBuffer(state);
-                this.state = H264Utils.avcCToAnnexB(avcC);
+                this.videoCodecPrivate = H264Utils.avcCToAnnexB(avcC);
             } else {
-                this.state = state;
+                this.videoCodecPrivate = state;
             }
         }
         
@@ -262,13 +263,14 @@ public final class MKVDemuxer implements Demuxer {
         }
 
         public ByteBuffer getCodecState() {
-            return state;
+            return videoCodecPrivate;
         }
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, codec, 0, null, 0, state,
-                    org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(demuxer.pictureWidth, demuxer.pictureHeight), ColorSpace.YUV420), null);
+            return new DemuxerTrackMeta(org.jcodec.common.TrackType.VIDEO, 0, null, 0,
+                    VideoCodecMeta.createSimpleVideoCodecMeta(codec, videoCodecPrivate,
+                            new Size(demuxer.pictureWidth, demuxer.pictureHeight), ColorSpace.YUV420));
         }
 
         @Override

@@ -192,21 +192,21 @@ public class MP4Muxer implements Muxer {
     }
 
     @Override
-    public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
-        CodecMP4MuxerTrack track = addTrack(MP4TrackType.VIDEO, codec);
-        checkArgument(meta != null || codec == Codec.H264,
+    public MuxerTrack addVideoTrack(VideoCodecMeta meta) {
+        CodecMP4MuxerTrack track = addTrack(MP4TrackType.VIDEO, meta.getCodec());
+        checkArgument(meta != null || meta.getCodec() == Codec.H264,
                 "VideoCodecMeta is required upfront for all codecs but H.264");
         track.addVideoSampleEntry(meta);
         return track;
     }
 
     @Override
-    public MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta) {
+    public MuxerTrack addAudioTrack(AudioCodecMeta meta) {
         AudioFormat format = meta.getFormat();
-        if (codec == Codec.PCM) {
+        if (meta.getCodec() == Codec.PCM) {
             return addPCMAudioTrack(format);
         } else {
-            return addCompressedAudioTrack(codec, format);
+            return addCompressedAudioTrack(meta.getCodec(), format);
         }
     }
 }

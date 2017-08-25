@@ -6,7 +6,6 @@ import static org.jcodec.common.tools.MainUtils.tildeExpand;
 import java.io.IOException;
 
 import org.jcodec.common.AudioCodecMeta;
-import org.jcodec.common.Codec;
 import org.jcodec.common.Muxer;
 import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.VideoCodecMeta;
@@ -32,12 +31,12 @@ public class ImageSequenceMuxer implements Muxer, MuxerTrack {
     }
 
     @Override
-    public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
+    public MuxerTrack addVideoTrack(VideoCodecMeta meta) {
         return this;
     }
 
     @Override
-    public MuxerTrack addAudioTrack(Codec codec, AudioCodecMeta meta) {
+    public MuxerTrack addAudioTrack(AudioCodecMeta meta) {
         Logger.warn("Audio is not supported for image sequence muxer.");
         return null;
     }

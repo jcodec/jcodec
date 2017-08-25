@@ -44,7 +44,7 @@ public class MTSRandomAccessDemuxerMain {
         video.gotoSyncFrame(175);
         Packet pkt = video.nextFrame();
         VideoCodecMeta meta = new MPEGDecoder().getCodecMeta(pkt.getData());
-        MuxerTrack videoTrack = mp4Muxer.addVideoTrack(Codec.MPEG2, meta);
+        MuxerTrack videoTrack = mp4Muxer.addVideoTrack(meta);
         long firstPts = pkt.getPts();
         for (int i = 0; pkt != null && i < 150; i++) {
             videoTrack.addFrame(MP4Packet.createMP4Packet(pkt.getData(), pkt.getPts() - firstPts, pkt.getTimescale(), pkt

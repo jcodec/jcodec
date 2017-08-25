@@ -42,7 +42,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     private void calcBufferSize() {
         int w = Integer.MIN_VALUE, h = Integer.MIN_VALUE;
         
-        ByteBuffer bb = meta.getCodecPrivate().duplicate();
+        ByteBuffer bb = meta.getCodecMeta().getCodecPrivate().duplicate();
         ByteBuffer b;
         while((b = H264Utils.nextNALUnit(bb)) != null) {
             NALUnit nu = NALUnit.read(b);
@@ -66,7 +66,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         updateState(packet);
 
         Picture pic = decoder.decodeFrame(packet.getData(), data);
-        Rational pasp = meta.getVideoCodecMeta().getPixelAspectRatio();
+        Rational pasp = meta.getCodecMeta().video().getPixelAspectRatio();
 
         if (pasp != null) {
             // TODO: transform
@@ -85,7 +85,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
 //            ((H264Decoder) decoder).addPps(avcCBox.getPpsList());
         }
         if(decoder == null) {
-            decoder = H264Decoder.createH264DecoderFromCodecPrivate(meta.getCodecPrivate());
+            decoder = H264Decoder.createH264DecoderFromCodecPrivate(meta.getCodecMeta().getCodecPrivate());
         }
     }
 

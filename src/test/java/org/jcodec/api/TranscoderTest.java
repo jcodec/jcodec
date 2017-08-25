@@ -55,8 +55,8 @@ public class TranscoderTest {
         File input = new File("src/test/resources/video/seq_h264_4_audio.mp4");
         File output = new File("tmp/canFilterVideoAndCopyAudio.mp4");
 
-        Source source = new SourceImpl(input.getAbsolutePath(), MOV, _3(0, 0, Codec.H264), _3(0, 0, Codec.AAC));
-        Sink sink = new SinkImpl(output.getAbsolutePath(), MOV, Codec.H264, Codec.AAC);
+        Source source = SourceImpl.create(input.getAbsolutePath());
+        Sink sink = SinkImpl.createWithFile(output.getAbsolutePath(), MOV, Codec.H264, Codec.AAC);
 
         TranscoderBuilder builder = Transcoder.newTranscoder();
         builder.addSource(source);

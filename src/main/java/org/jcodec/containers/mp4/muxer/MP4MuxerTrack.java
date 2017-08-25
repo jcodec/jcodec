@@ -88,6 +88,9 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
     public void addFrameInternal(Packet pkt, int entryNo) throws IOException {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
+        
+        // We don't do huge PTS, sorry
+        pkt.setPts(pkt.getPts() & 0xffffff);
 
         if (_timescale == NO_TIMESCALE_SET) {
             _timescale = pkt.getTimescale();

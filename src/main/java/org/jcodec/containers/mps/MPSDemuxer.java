@@ -132,7 +132,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         // PTS estimation machinery
         private LongArrayList ptsSeen = new LongArrayList(32);
         private long lastPts;
-        private int lastSeq = Integer.MIN_VALUE;
+        private int lastSeq = 0;
         private int lastSeqSeen = Integer.MAX_VALUE - 1000;
         private int seqWrap = Integer.MAX_VALUE - 1000;
         private IntIntHistogram durationHistogram = new IntIntHistogram();
@@ -200,17 +200,29 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                 seqWrap = lastSeqSeen + 1;
             lastSeqSeen = seq;
             if (ptsSeen.size() <= 0) {
-                pkt.setPts(Math.min(seq - lastSeq, seq - lastSeq + seqWrap) * durationHistogram.max() + lastPts);
+                int duration = durationHistogram.max();
+                if (duration != -1)
+                    pkt.setPts(Math.min(seq - lastSeq, seq - lastSeq + seqWrap) * duration + lastPts);
             } else {
                 pkt.setPts(ptsSeen.shift());
                 if (lastSeq >= 0 && seq > lastSeq) {
-                    durationHistogram.increment((int) (pkt.getPts() - lastPts)
-                            / Math.min(seq - lastSeq, seq - lastSeq + seqWrap));
+                    int duration = (int) (pkt.getPts() - lastPts);
+                    if (duration > 0) {
+                        int candidate = duration / Math.min(seq - lastSeq, seq - lastSeq + seqWrap);
+                        System.out.println("Candidate duration: " + candidate);
+                        if (candidate <= 18000) {
+                            durationHistogram.increment(candidate);
+                        }
+                    }
                 }
                 lastPts = pkt.getPts();
                 lastSeq = seq;
             }
-            pkt.setDuration(durationHistogram.max());
+            int duration = durationHistogram.max();
+            if(duration != -1)
+                pkt.setDuration(duration);
+            else
+                pkt.setDuration(1000); // DUMMY
             System.out.println(seq);
             return pkt;
         }

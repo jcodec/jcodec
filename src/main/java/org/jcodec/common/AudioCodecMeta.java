@@ -14,9 +14,9 @@ import java.nio.ByteOrder;
  */
 public class AudioCodecMeta extends CodecMeta {
 
-    public static AudioCodecMeta createAudioCodecMeta(String fourcc, int sampleSize, int channelCount, int sampleRate,
+    public static AudioCodecMeta createAudioCodecMeta(Codec codec, int sampleSize, int channelCount, int sampleRate,
             ByteOrder endian, boolean pcm, Label[] labels, ByteBuffer codecPrivate) {
-        AudioCodecMeta self = new AudioCodecMeta(fourcc, codecPrivate);
+        AudioCodecMeta self = new AudioCodecMeta(codec, codecPrivate);
         self.sampleSize = sampleSize;
         self.channelCount = channelCount;
         self.sampleRate = sampleRate;
@@ -26,10 +26,10 @@ public class AudioCodecMeta extends CodecMeta {
         return self;
     }
 
-    public static AudioCodecMeta createAudioCodecMeta2(String fourcc, int sampleSize, int channelCount, int sampleRate,
+    public static AudioCodecMeta createAudioCodecMeta2(Codec codec, int sampleSize, int channelCount, int sampleRate,
             ByteOrder endian, boolean pcm, Label[] labels, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame,
             ByteBuffer codecPrivate) {
-        AudioCodecMeta self = new AudioCodecMeta(fourcc, codecPrivate);
+        AudioCodecMeta self = new AudioCodecMeta(codec, codecPrivate);
         self.sampleSize = sampleSize;
         self.channelCount = channelCount;
         self.sampleRate = sampleRate;
@@ -42,9 +42,9 @@ public class AudioCodecMeta extends CodecMeta {
         return self;
     }
 
-    public static AudioCodecMeta createAudioCodecMeta3(String fourcc, ByteBuffer codecPrivate, AudioFormat format,
+    public static AudioCodecMeta createAudioCodecMeta3(Codec codec, ByteBuffer codecPrivate, AudioFormat format,
             boolean pcm, Label[] labels) {
-        AudioCodecMeta self = new AudioCodecMeta(fourcc, codecPrivate);
+        AudioCodecMeta self = new AudioCodecMeta(codec, codecPrivate);
         self.sampleSize = format.getSampleSizeInBits() >> 3;
         self.channelCount = format.getChannels();
         self.sampleRate = format.getSampleRate();
@@ -54,8 +54,8 @@ public class AudioCodecMeta extends CodecMeta {
         return self;
     }
 
-    public AudioCodecMeta(String fourcc, ByteBuffer codecPrivate) {
-        super(fourcc, codecPrivate);
+    public AudioCodecMeta(Codec codec, ByteBuffer codecPrivate) {
+        super(codec, codecPrivate);
     }
 
     private int sampleSize;
@@ -112,8 +112,8 @@ public class AudioCodecMeta extends CodecMeta {
         return labels;
     }
     
-    public static AudioCodecMeta fromAudioFormat(AudioFormat format) {
-        AudioCodecMeta self = new AudioCodecMeta(null, null);
+    public static AudioCodecMeta fromAudioFormat(Codec codec, ByteBuffer codecPrivate, AudioFormat format) {
+        AudioCodecMeta self = new AudioCodecMeta(codec, null);
         self.sampleSize = format.getSampleSizeInBits() >> 3;
         self.channelCount = format.getChannels();
         self.sampleRate = format.getSampleRate();

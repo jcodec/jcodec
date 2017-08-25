@@ -1,11 +1,11 @@
 package org.jcodec.api.transcode;
 
-import static org.jcodec.common.model.ColorSpace.ANY;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 import org.jcodec.api.transcode.filters.ColorTransformFilter;
@@ -209,7 +209,7 @@ public class Transcoder {
                 pixelStore.retake(videoFrame.getFrame());
             this.videoQueue.add(videoFrame);
             this.videoCodecMeta = meta;
-            if (this.filters == null)
+            if (this.filters == null && videoFrame.getFrame() != null)
                 this.filters = initColorTransform(videoCodecMeta.getColor(), extraFilters, sink);
         }
 
@@ -254,12 +254,8 @@ public class Transcoder {
             audioStreams[s] = new ArrayList<Stream>();
         }
 
-        for (int i = 0; i < sinks.length; i++)
-            sinks[i].init();
-
         for (int i = 0; i < sources.length; i++) {
-            sources[i].init(pixelStore);
-            sources[i].seekFrames(seekFrames[i]);
+            sources[i].seekFrames(seekFrames[i], pixelStore);
         }
 
         for (int s = 0; s < sinks.length; s++) {
@@ -297,7 +293,7 @@ public class Transcoder {
                             nextVideoFrame = null;
                             finishedVideo[s] = true;
                         } else if (decodeVideo[s] || !(source instanceof PacketSource)) {
-                            nextVideoFrame = source.getNextVideoFrame();
+                            nextVideoFrame = source.getNextVideoFrame(pixelStore);
                             if (nextVideoFrame == null) {
                                 finishedVideo[s] = true;
                             } else {
@@ -404,17 +400,25 @@ public class Transcoder {
 
         private List<Source> source = new ArrayList<Source>();
         private List<Sink> sink = new ArrayList<Sink>();
-        private List<List<Filter>> filters = new ArrayList<List<Filter>>();
+        private List<Filter> globalFilters = new ArrayList<Filter>();
         private IntArrayList seekFrames = new IntArrayList(20);
         private IntArrayList maxFrames = new IntArrayList(20);
-        private List<Mapping> videoMappings = new ArrayList<Mapping>();
-        private List<Mapping> audioMappings = new ArrayList<Mapping>();
+        private Map<Integer, List<Filter>> extraFilters = new HashMap<Integer, List<Filter>>();
+        private Map<Integer, Mapping> extraVideoMappings = new HashMap<Integer, Mapping>();
+        private Map<Integer, Mapping> extraAudioMappings = new HashMap<Integer, Mapping>();
+        private boolean videoCopyMode;
+        private boolean audioCopyMode;
 
         public TranscoderBuilder() {
         }
 
         public TranscoderBuilder addFilter(int sink, Filter filter) {
-            this.filters.get(sink).add(filter);
+            List<Filter> list = extraFilters.get(sink);
+            if (list == null) {
+                list = new ArrayList<Filter>();
+                extraFilters.put(sink, list);
+            }
+            list.add(filter);
             return this;
         }
 
@@ -437,30 +441,82 @@ public class Transcoder {
 
         public TranscoderBuilder addSink(Sink sink) {
             this.sink.add(sink);
-            videoMappings.add(new Mapping(0, false));
-            audioMappings.add(new Mapping(0, false));
-            filters.add(new ArrayList<Filter>());
             return this;
         }
 
         public TranscoderBuilder setVideoMapping(int src, int sink, boolean copy) {
-            videoMappings.set(sink, new Mapping(src, copy));
+            extraVideoMappings.put(sink, new Mapping(src, copy));
             return this;
         }
 
         public TranscoderBuilder setAudioMapping(int src, int sink, boolean copy) {
-            audioMappings.set(sink, new Mapping(src, copy));
+            extraAudioMappings.put(sink, new Mapping(src, copy));
+            return this;
+        }
+
+        public TranscoderBuilder setVideoMapping(int src, int sink) {
+            extraVideoMappings.put(sink, new Mapping(src, videoCopyMode));
+            return this;
+        }
+
+        public TranscoderBuilder setAudioMapping(int src, int sink) {
+            extraAudioMappings.put(sink, new Mapping(src, audioCopyMode));
             return this;
         }
 
         public Transcoder create() {
-            return new Transcoder(source.toArray(new Source[] {}), sink.toArray(new Sink[] {}),
-                    videoMappings.toArray(new Mapping[] {}), audioMappings.toArray(new Mapping[] {}),
-                    filters.toArray(new List[0]), seekFrames.toArray(), maxFrames.toArray());
+            Source[] sources = source.toArray(new Source[] {});
+            Sink[] sinks = sink.toArray(new Sink[] {});
+            Mapping[] videoMappings = new Mapping[sinks.length];
+            Mapping[] audioMappings = new Mapping[sinks.length];
+            List<Filter>[] filters = new List[sinks.length];
+            for (int sink = 0; sink < sinks.length; sink++) {
+                Mapping vm = extraVideoMappings.get(sink);
+                if (vm == null)
+                    videoMappings[sink] = new Mapping(Math.min(sink, sources.length - 1), videoCopyMode);
+                else
+                    videoMappings[sink] = vm;
+                Mapping am = extraAudioMappings.get(sink);
+                if (am == null)
+                    audioMappings[sink] = new Mapping(Math.min(sink, sources.length - 1), audioCopyMode);
+                else
+                    audioMappings[sink] = am;
+
+                List<Filter> f = extraFilters.get(sink);
+                if (f == null) {
+                    filters[sink] = globalFilters;
+                } else {
+                    List<Filter> combined = new ArrayList<Filter>();
+                    combined.addAll(globalFilters);
+                    combined.addAll(f);
+                    filters[sink] = combined;
+                }
+            }
+            return new Transcoder(sources, sinks, videoMappings, audioMappings, filters, seekFrames.toArray(),
+                    maxFrames.toArray());
+        }
+
+        public void setVideoCopy() {
+            videoCopyMode = true;
+        }
+
+        public void setAudioCopy() {
+            audioCopyMode = true;
+        }
+
+        public void addVideoFilter(Filter filter) {
+            globalFilters.add(filter);
         }
     }
 
     public static TranscoderBuilder newTranscoder() {
         return new TranscoderBuilder();
+    }
+
+    public static TranscoderBuilder newTranscoder(Source source, Sink sink) {
+        TranscoderBuilder builder = new TranscoderBuilder();
+        builder.addSource(source);
+        builder.addSink(sink);
+        return builder;
     }
 }

@@ -6,12 +6,15 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
+import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.Codec;
+import org.jcodec.common.CodecMeta;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.TrackType;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.containers.flv.FLVTag.Type;
@@ -79,8 +82,17 @@ public class FLVTrackDemuxer {
 
         @Override
         public DemuxerTrackMeta getMeta() {
-            TrackType t = type == Type.VIDEO ? TrackType.VIDEO : TrackType.AUDIO;
-            return new DemuxerTrackMeta(t, codec, 0, null, 0, ByteBuffer.wrap(codecPrivate), null, null);
+            TrackType t;
+            CodecMeta codecMeta;
+            if (type == Type.VIDEO) {
+                t = TrackType.VIDEO;
+                codecMeta = new VideoCodecMeta(codec, ByteBuffer.wrap(codecPrivate));
+            } else {
+                t = TrackType.AUDIO;
+                codecMeta = new AudioCodecMeta(codec, ByteBuffer.wrap(codecPrivate));
+            }
+            
+            return new DemuxerTrackMeta(t, 0, null, 0, codecMeta);
         }
 
         @Override

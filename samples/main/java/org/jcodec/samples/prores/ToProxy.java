@@ -40,9 +40,9 @@ public class ToProxy {
 
         DemuxerTrack inVideo = demuxer.getVideoTrack();
         DemuxerTrackMeta meta = inVideo.getMeta();
-        Size size = meta.getVideoCodecMeta().getSize();
+        Size size = meta.getCodecMeta().video().getSize();
         ProresToProxy toProxy = new ProresToProxy(size.getWidth(), size.getHeight(), 65536);
-        MuxerTrack outVideo = muxer.addVideoTrack(meta.getCodec(), meta.getVideoCodecMeta());
+        MuxerTrack outVideo = muxer.addVideoTrack(meta.getCodecMeta().video());
 
         System.out.println(toProxy.getFrameSize());
         int frame = 0;

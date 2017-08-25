@@ -4,7 +4,9 @@ import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelL
 import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions;
 
 import org.jcodec.api.NotSupportedException;
+import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioFormat;
+import org.jcodec.common.Codec;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Label;
 import org.jcodec.common.tools.ToJSON;
@@ -31,6 +33,18 @@ import java.util.Set;
  * 
  */
 public class AudioSampleEntry extends SampleEntry {
+    private static Map<Codec, String> codec2fourcc = new HashMap<Codec, String>();
+
+    static {
+        codec2fourcc.put(Codec.H264, "avc1");
+        codec2fourcc.put(Codec.AAC, "mp4a");
+        codec2fourcc.put(Codec.PRORES, "apch");
+        codec2fourcc.put(Codec.JPEG, "mjpg");
+        codec2fourcc.put(Codec.PNG, "png ");
+        codec2fourcc.put(Codec.V210, "v210");
+        codec2fourcc.put(Codec.MP2, ".mp2");
+        codec2fourcc.put(Codec.MP3, ".mp3");
+    }
 
     //@formatter:off
     public static int kAudioFormatFlagIsFloat = 0x1;
@@ -313,6 +327,13 @@ public class AudioSampleEntry extends SampleEntry {
         return audioSampleEntry(AudioSampleEntry.lookupFourcc(format), 1, format.getSampleSizeInBits() >> 3,
                 format.getChannels(), (int) format.getSampleRate(),
                 format.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+    }
+    
+    public static AudioSampleEntry audioSampleEntry(AudioCodecMeta meta) {
+        AudioFormat format = meta.getFormat();
+        AudioSampleEntry ase = AudioSampleEntry.compressedAudioSampleEntry(codec2fourcc.get(meta.getCodec()), (short) 1, (short) 16,
+                format.getChannels(), format.getSampleRate(), 0, 0, 0);
+        return ase;
     }
 
     private static Map<Label, ChannelLabel> translationStereo = new HashMap<Label, ChannelLabel>();

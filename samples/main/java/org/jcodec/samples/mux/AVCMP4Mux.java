@@ -58,7 +58,7 @@ public class AVCMP4Mux {
         Packet frame = null;
         while ((frame = es.nextFrame()) != null) {
             if (track == null) {
-                track = muxer.addVideoTrack(Codec.H264, new H264Decoder().getCodecMeta(frame.getData()));
+                track = muxer.addVideoTrack(new H264Decoder().getCodecMeta(frame.getData()));
             }
             track.addFrame(frame);
         }

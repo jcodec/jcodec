@@ -1,10 +1,5 @@
 package org.jcodec.api.transcode;
 
-import static org.jcodec.common.Tuple._2;
-import static org.jcodec.common.Tuple._3;
-
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,14 +13,8 @@ import org.jcodec.api.transcode.Transcoder.TranscoderBuilder;
 import org.jcodec.api.transcode.filters.DumpMvFilter;
 import org.jcodec.api.transcode.filters.ScaleFilter;
 import org.jcodec.common.Codec;
-import org.jcodec.common.Demuxer;
-import org.jcodec.common.DemuxerTrack;
-import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
-import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.TrackType;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.common.model.Packet;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
@@ -76,7 +65,6 @@ public class TranscodeMain {
     private static Map<String, Codec> extensionToC = new HashMap<String, Codec>();
     private static Map<Format, Codec> videoCodecsForF = new HashMap<Format, Codec>();
     private static Map<Format, Codec> audioCodecsForF = new HashMap<Format, Codec>();
-    private static Set<Codec> supportedDecoders = new HashSet<Codec>();
     private static Map<String, Class<? extends Filter>> knownFilters = new HashMap<String, Class<? extends Filter>>();
 
     static {
@@ -155,16 +143,6 @@ public class TranscodeMain {
         videoCodecsForF.put(Format.IVF, Codec.VP8);
         videoCodecsForF.put(Format.Y4M, Codec.RAW);
 
-        supportedDecoders.add(Codec.AAC);
-        supportedDecoders.add(Codec.H264);
-        supportedDecoders.add(Codec.JPEG);
-        supportedDecoders.add(Codec.MPEG2);
-        supportedDecoders.add(Codec.PCM);
-        supportedDecoders.add(Codec.PNG);
-        supportedDecoders.add(Codec.PRORES);
-        supportedDecoders.add(Codec.RAW);
-        supportedDecoders.add(Codec.VP8);
-        
         knownFilters.put("scale", ScaleFilter.class);
     }
 
@@ -174,54 +152,13 @@ public class TranscodeMain {
         TranscoderBuilder builder = Transcoder.newTranscoder();
 
         List<Source> sources = new ArrayList<Source>();
-        List<_3<Integer, Integer, Codec>> inputCodecsVideo = new ArrayList<_3<Integer, Integer, Codec>>();
-        List<_3<Integer, Integer, Codec>> inputCodecsAudio = new ArrayList<_3<Integer, Integer, Codec>>();
         // All the inputs and related flags
         for (int index = 0; index < cmd.argsLength(); index++) {
             if (!cmd.getBooleanFlagI(index, FLAG_INPUT))
                 continue;
-            _3<Integer, Integer, Codec> inputCodecVideo = null, inputCodecAudio = null;
             String input = cmd.getArg(index);
 
-            String inputFormatRaw = cmd.getStringFlagI(index, FLAG_FORMAT);
-            Format inputFormat;
-            if (inputFormatRaw == null) {
-                inputFormat = getFormatFromExtension(input);
-                if (inputFormat != Format.IMG) {
-                    Format detectFormat = JCodecUtil.detectFormat(new File(input));
-                    if (detectFormat != null)
-                        inputFormat = detectFormat;
-                }
-            } else {
-                inputFormat = Format.valueOf(inputFormatRaw.toUpperCase());
-            }
-            if (inputFormat == null) {
-                Logger.error("Input format could not be detected");
-                return;
-            }
-
-            int videoTrackNo = -1;
-            String inputCodecVideoRaw = cmd.getStringFlagI(index, FLAG_VIDEO_CODEC);
-            if (inputCodecVideoRaw == null) {
-                if (inputFormat == Format.IMG) {
-                    inputCodecVideo = _3(0, 0, getCodecFromExtension(input));
-                } else if (inputFormat.isVideo()) {
-                    inputCodecVideo = selectSuitableTrack(input, inputFormat, TrackType.VIDEO);
-                }
-            } else {
-                inputCodecVideo = _3(0, 0, Codec.valueOf(inputCodecVideoRaw.toUpperCase()));
-            }
-
-            String inputCodecAudioRaw = cmd.getStringFlagI(index, FLAG_AUDIO_CODEC);
-            if (inputCodecAudioRaw == null) {
-                if (inputFormat.isAudio()) {
-                    inputCodecAudio = selectSuitableTrack(input, inputFormat, TrackType.AUDIO);
-                }
-            } else {
-                inputCodecAudio = _3(0, 0, Codec.valueOf(inputCodecAudioRaw.toUpperCase()));
-            }
-
-            Source source = new SourceImpl(input, inputFormat, inputCodecVideo, inputCodecAudio);
+            Source source = SourceImpl.create(input);
             Integer downscale = cmd.getIntegerFlagID(index, FLAG_DOWNSCALE, 1);
             if (downscale != null && (1 << MathUtil.log2(downscale)) != downscale) {
                 Logger.error("Only values [2, 4, 8] are supported for " + FLAG_DOWNSCALE
@@ -232,8 +169,6 @@ public class TranscodeMain {
             source.setOption(Options.PROFILE, cmd.getStringFlagI(index, FLAG_PROFILE));
             source.setOption(Options.INTERLACED, cmd.getBooleanFlagID(index, FLAG_INTERLACED, false));
             sources.add(source);
-            inputCodecsVideo.add(inputCodecVideo);
-            inputCodecsAudio.add(inputCodecAudio);
             builder.addSource(source);
             builder.setSeekFrames(sources.size() - 1, cmd.getIntegerFlagID(index, FLAG_SEEK_FRAMES, 0))
                     .setMaxFrames(sources.size() - 1, cmd.getIntegerFlagID(index, FLAG_MAX_FRAMES, Integer.MAX_VALUE));
@@ -301,15 +236,15 @@ public class TranscodeMain {
                         "Can not map video from source " + videoMap + ", " + sources.size() + " sources specified.");
             }
             if (videoCopy) {
-                _3<Integer, Integer, Codec> inputCodecVideo = inputCodecsVideo.get(videoMap);
-                outputCodecVideo = inputCodecVideo != null ? inputCodecVideo.v2 : null;
+                Codec inputCodecVideo = sources.get(videoMap).getVideoCodecMeta().getCodec();
+                outputCodecVideo = inputCodecVideo != null ? inputCodecVideo : null;
             }
             if (audioCopy) {
-                _3<Integer, Integer, Codec> inputCodecAudio = inputCodecsAudio.get(audioMap);
-                outputCodecAudio = inputCodecAudio != null ? inputCodecAudio.v2 : null;
+                Codec inputCodecAudio = sources.get(audioMap).getAudioCodecMeta().getCodec();
+                outputCodecAudio = inputCodecAudio != null ? inputCodecAudio : null;
             }
 
-            Sink sink = new SinkImpl(output, outputFormat, outputCodecVideo, outputCodecAudio);
+            Sink sink = SinkImpl.createWithFile(output, outputFormat, outputCodecVideo, outputCodecAudio);
             sinks.add(sink);
             builder.addSink(sink);
             builder.setAudioMapping(audioMap, sinks.size() - 1, audioCopy);
@@ -376,43 +311,6 @@ public class TranscodeMain {
 
     private static Codec getFirstVideoCodecForFormat(Format inputFormat) {
         return videoCodecsForF.get(inputFormat);
-    }
-
-    private static Codec detectVideoDecoder(DemuxerTrack track) throws IOException {
-        DemuxerTrackMeta meta = track.getMeta();
-        if (meta != null) {
-            Codec codec = meta.getCodec();
-            if (codec != null)
-                return codec;
-        }
-        Packet packet = track.nextFrame();
-        if (packet == null)
-            return null;
-
-        return JCodecUtil.detectDecoder(packet.getData());
-    }
-
-    private static _3<Integer, Integer, Codec> selectSuitableTrack(String input, Format format, TrackType targetType)
-            throws IOException {
-        _2<Integer, Demuxer> demuxerPid;
-        if (format == Format.MPEG_TS) {
-            demuxerPid = JCodecUtil.createM2TSDemuxer(new File(input), targetType);
-        } else {
-            demuxerPid = _2(0, JCodecUtil.createDemuxer(format, new File(input)));
-        }
-        if (demuxerPid == null || demuxerPid.v1 == null)
-            return null;
-        int trackNo = 0;
-        List<? extends DemuxerTrack> tracks = targetType == TrackType.VIDEO ? demuxerPid.v1.getVideoTracks()
-                : demuxerPid.v1.getAudioTracks();
-        for (DemuxerTrack demuxerTrack : tracks) {
-            Codec codec = detectVideoDecoder(demuxerTrack);
-            if (supportedDecoders.contains(codec)) {
-                return _3(demuxerPid.v0, trackNo, codec);
-            }
-            trackNo++;
-        }
-        return null;
     }
 
     private static Format getFormatFromExtension(String output) {
