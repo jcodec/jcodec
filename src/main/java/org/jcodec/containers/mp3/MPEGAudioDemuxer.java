@@ -208,7 +208,7 @@ public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
             runningFour |= readBuffer.get() & 0xff;
             ++total;
         }
-        Logger.warn(String.format("[mp3demuxer] Skipped %d byts of junk", total));
+        Logger.warn(String.format("[mp3demuxer] Skipped %d bytes of junk", total));
         return eof;
     }
 
