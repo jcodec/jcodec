@@ -81,6 +81,11 @@ Additionally if you want to use JCodec with AWT images (BufferedImage) add this 
 OR if you want to use JCodec with Android images (Bitmap) add this gradle dependency:
 
 ```gradle
+android {
+    configurations.all {
+        resolutionStrategy.force 'com.google.code.findbugs:jsr305:3.0.2'
+    }
+}
 dependencies {
     ...
     compile 'org.jcodec:jcodec:0.2.0'
@@ -113,7 +118,7 @@ Because JCodec is a pure Java implementation please adjust your performance expe
 
 Expect the encoded quality/bitrate for h.264 (AVC) to be so much worse compared to the well known native encoders (such as x264). This is because very little work has been put so far into developing the encoder and also because encoders usually trade speed for quality, speed is something we don't have in Java, hence the quality. Again we may potentially fix that in the future by introducing OpenCL (RenderScript) code but at this point it's an unknown.
 
-That said the decode quality should at the industry level. This is because the decoding process is usually specified by the standard and the correct decoder implementations are expected to produce bit-exact outputs.
+That said the decode quality should be at the industry level. This is because the decoding process is usually specified by the standard and the correct decoder implementations are expected to produce bit-exact outputs.
 
 # Sample code
 
