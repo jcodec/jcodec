@@ -14,18 +14,17 @@
     mvn source:jar gpg:sign
 ```
 4. Go to https://oss.sonatype.org/
-4.1 Log in.
-4.2 Go to 'Staging Upload'.
-4.3  Under Upload Mode select 'Artifact(s) with a POM'.
-4.4  Select 'pom' from jcodec/target.
-4.5  In Select Artifacts to upload upload the artifacts ( press Add Artifact for each file).
-4.6 Fill in 'Description' field.
-4.7 Then press 'Upload artifacts'.
-4.8 Click on 'Staging Repositories' and find jcodec, it's normally the last one in the list.
-4.9 Verify that everything is fine and that the repository is closed ( no errors found ),  check the 'Activity' tab. If something is wrong, fix it ( jcodecproject@gmail.com ).
-4.10 Click on 'Release' on the top of the page.
-4.11 Fill in the drescription, press the button, it should say 'Repository is released'.
-4.12 These are the artifacts:
+    - Log in.
+    - Go to 'Staging Upload'.
+    - Under Upload Mode select 'Artifact(s) with a POM'.
+    - Select 'pom' from jcodec/target.
+    - In Select Artifacts to upload upload the artifacts ( press Add Artifact for each file).
+    - Fill in 'Description' field.
+    - Then press 'Upload artifacts'.
+    - Click on 'Staging Repositories' and find jcodec, it's normally the last one in the list.
+    - Verify that everything is fine and that the repository is closed ( no errors found ),  check the 'Activity' tab. If something is wrong, fix it ( jcodecproject@gmail.com ).
+    - Click on 'Release' on the top of the page.
+    - Fill in the drescription, press the button, it should say 'Repository is released'.
 
 ```
   jcodec-<version>.pom.asc
