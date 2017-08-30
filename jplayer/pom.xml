@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jplayer</groupId>
 	<artifactId>jplayer</artifactId>
-	<version>0.2.1-SNAPSHOT</version>
+	<version>0.2.1</version>
 	<repositories>
 		<repository>
 			<id>gson</id>
@@ -91,12 +91,12 @@
         <dependency>
             <groupId>org.jcodec</groupId>
             <artifactId>jcodec-javase</artifactId>
-            <version>0.2.1-SNAPSHOT</version>
+            <version>0.2.1</version>
         </dependency>
 		<dependency>
 			<groupId>org.jcodec</groupId>
 			<artifactId>jcodec</artifactId>
-			<version>0.2.1-SNAPSHOT</version>
+			<version>0.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>sun.plugin</groupId>
