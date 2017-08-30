@@ -1,5 +1,7 @@
 package org.jcodec.common.logging;
 
+import static org.jcodec.common.logging.LogLevel.DEBUG;
+
 import java.lang.IllegalStateException;
 import java.lang.StackTraceElement;
 import java.lang.Thread;
@@ -54,6 +56,9 @@ public class Logger {
     }
 
     private static void message(LogLevel level, String message, Object[] args) {
+        if (Logger.globalLogLevel.ordinal() >= level.ordinal()) {
+            return;
+        }
         if (sinks == null) {
             synchronized (Logger.class) {
                 if (sinks == null) {
@@ -64,13 +69,29 @@ public class Logger {
                 }
             }
         }
-        StackTraceElement tr = Thread.currentThread().getStackTrace()[3];
-        Message msg = new Message(level, tr.getFileName(), tr.getClassName(), tr.getMethodName(), tr.getLineNumber(),
-                message, args);
+        Message msg;
+        if (DEBUG.equals(globalLogLevel)) {
+            StackTraceElement tr = Thread.currentThread().getStackTrace()[3];
+            msg = new Message(level, tr.getFileName(), tr.getClassName(), tr.getMethodName(), tr.getLineNumber(),
+                    message, args);
+        } else {
+            msg = new Message(level, "", "", "", 0, message, args);
+        }
         for (LogSink logSink : sinks) {
             logSink.postMessage(msg);
         }
     }
+
+    private static LogLevel globalLogLevel = LogLevel.INFO;
+    
+    public synchronized static void setLevel(LogLevel level) {
+        globalLogLevel = level;
+    }
+    
+    public synchronized static LogLevel getLevel() {
+        return globalLogLevel;
+    }
+
 
     public static void addSink(LogSink sink) {
         if (stageSinks == null)
