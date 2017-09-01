@@ -24,7 +24,7 @@ public class InterModeInfoTest {
 		Assert.assertEquals(0, modeInfo.getSegmentId());
 		Assert.assertEquals(false, modeInfo.isSkip());
 		Assert.assertEquals(0, modeInfo.getTxSize());
-		Assert.assertEquals(0, modeInfo.getyMode());
+		Assert.assertEquals(0, modeInfo.getYMode());
 		Assert.assertEquals(0, modeInfo.getSubModes());
 		Assert.assertEquals(0, modeInfo.getUvMode());
 	}

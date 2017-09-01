@@ -17,456 +17,450 @@ import org.jcodec.common.io.NIOUtils;
  */
 public class DecodingContext {
 
-	private int profile;
-	private int showExistingFrame;
-	private int frameToShowMapIdx;
-	private int frameType;
-	private int showFrame;
-	private int errorResilientMode;
-	private int refreshFrameFlags;
-	private int frameIsIntra;
-	private int intraOnly;
-	private int resetFrameContext;
-	private int subsamplingX;
-	private int colorSpace;
-	private int subsamplingY;
-	private int bitDepth;
-	private int frameWidth;
-	private int frameHeight;
-	private int renderWidth;
-	private int renderHeight;
-	private int[] refFrameWidth = new int[MAX_REF_FRAMES];
-	private int[] refFrameHeight = new int[MAX_REF_FRAMES];
-	private int[] refFrameIdx = new int[3];
-	private int[] refFrameSignBias = new int[3];
-	private int allowHighPrecisionMv;
-	private int interpolationFilter;
-	private int frameParallelDecodingMode;
-	private int refreshFrameContext;
-	private int frameContextIdx;
-	private int[] loopFilterRefDeltas = new int[4];
-	private int[] loopFilterModeDeltas = new int[2];
-	private int baseQIdx;
-	private int deltaQYDc;
-	private int deltaQUvDc;
-	private int deltaQUvAc;
-	private boolean lossless;
-	private int segmentationEnabled;
-	private int[] segmentationTreeProbs = new int[7];
-	private int[] segmentationPredProbs = new int[3];
-	private int[][] featureEnabled = new int[MAX_SEGMENTS][SEG_LVL_MAX];
-	private int[][] featureData = new int[MAX_SEGMENTS][SEG_LVL_MAX];
-	private int miCols;
-	private int miRows;
-	private int sb64Cols;
-	private int sb64Rows;
-	private int tileRowsLog2;
-	private int tileColsLog2;
-	private int txMode;
-	private int compFixedRef;
-	private int compVarRef0;
-	private int compVarRef1;
+    private int profile;
+    private int showExistingFrame;
+    private int frameToShowMapIdx;
+    private int frameType;
+    private int showFrame;
+    private int errorResilientMode;
+    private int refreshFrameFlags;
+    private int frameIsIntra;
+    private int intraOnly;
+    private int resetFrameContext;
+    private int colorSpace;
+    int subsamplingX;
+    int subsamplingY;
+    int bitDepth;
+    int frameWidth;
+    int frameHeight;
+    private int renderWidth;
+    private int renderHeight;
+    private int[] refFrameWidth = new int[MAX_REF_FRAMES];
+    private int[] refFrameHeight = new int[MAX_REF_FRAMES];
+    private int[] refFrameIdx = new int[3];
+    private int[] refFrameSignBias = new int[3];
+    private int allowHighPrecisionMv;
+    private int interpolationFilter;
+    private int frameParallelDecodingMode;
+    private int refreshFrameContext;
+    private int frameContextIdx;
+    private int[] loopFilterRefDeltas = new int[4];
+    private int[] loopFilterModeDeltas = new int[2];
+    private int baseQIdx;
+    private int deltaQYDc;
+    private int deltaQUvDc;
+    private int deltaQUvAc;
+    private boolean lossless;
+    private int segmentationEnabled;
+    private int[] segmentationTreeProbs = new int[7];
+    private int[] segmentationPredProbs = new int[3];
+    private int[][] featureEnabled = new int[MAX_SEGMENTS][SEG_LVL_MAX];
+    private int[][] featureData = new int[MAX_SEGMENTS][SEG_LVL_MAX];
+    private int tileRowsLog2;
+    private int tileColsLog2;
+    private int txMode;
+    private int compFixedRef;
+    private int compVarRef0;
+    private int compVarRef1;
 
-	private int referenceMode;
+    private int referenceMode;
 
-	private int[][] tx8x8Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 3];
-	private int[][] tx6x16Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 2];
-	private int[][] tx32x32Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 1];
-	private int[][][][][][] coefProbs;
-	private int[] skipProbs = new int[SKIP_CONTEXTS];
-	private int[][] interModeProbs = new int[INTER_MODE_CONTEXTS][INTER_MODES - 1];
-	private int[][] interpFilterProbs = new int[INTERP_FILTER_CONTEXTS][SWITCHABLE_FILTERS - 1];
-	private int[] isInterProbs = new int[IS_INTER_CONTEXTS];
+    private int[][] tx8x8Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 3];
+    private int[][] tx6x16Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 2];
+    private int[][] tx32x32Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 1];
+    int[][][][][][] coefProbs;
+    private int[] skipProbs = new int[SKIP_CONTEXTS];
+    private int[][] interModeProbs = new int[INTER_MODE_CONTEXTS][INTER_MODES - 1];
+    private int[][] interpFilterProbs = new int[INTERP_FILTER_CONTEXTS][SWITCHABLE_FILTERS - 1];
+    private int[] isInterProbs = new int[IS_INTER_CONTEXTS];
 
-	private int[] compModeProbs = new int[COMP_MODE_CONTEXTS];
-	private int[][] singleRefProbs = new int[REF_CONTEXTS][2];
-	private int[] compRefProbs = new int[REF_CONTEXTS];
+    private int[] compModeProbs = new int[COMP_MODE_CONTEXTS];
+    private int[][] singleRefProbs = new int[REF_CONTEXTS][2];
+    private int[] compRefProbs = new int[REF_CONTEXTS];
 
-	private int[][] yModeProbs = new int[BLOCK_SIZE_GROUPS][INTRA_MODES - 1];
-	int[][] partitionProbs = new int[PARTITION_CONTEXTS][PARTITION_TYPES - 1];
-	
-	private int[][] uvModeProbs = new int[INTRA_MODES ][ INTRA_MODES - 1 ];
+    private int[][] yModeProbs = new int[BLOCK_SIZE_GROUPS][INTRA_MODES - 1];
+    int[][] partitionProbs = new int[PARTITION_CONTEXTS][PARTITION_TYPES - 1];
 
-	private int[] mvJointProbs = new int[MV_JOINTS - 1];
-	private int[] mvSignProbs = new int[2];
-	private int[][] mvClassProbs = new int[2][MV_CLASSES - 1];
-	private int[] mvClass0BitProbs = new int[2];
-	private int[][] mvBitsProbs = new int[2][MV_OFFSET_BITS];
-	private int[][][] mvClass0FrProbs = new int[2][CLASS0_SIZE][MV_FR_SIZE - 1];
-	private int[][] mvFrProbs = new int[2][MV_FR_SIZE - 1];
-	private int[] mvClass0HpProb = new int[2];
-	private int[] mvHpProbs = new int[2];
-	private int filterLevel;
-	private int sharpnessLevel;
-	int[] leftPartitionSizes;
-	int[] abovePartitionSizes;
-	int tileHeight;
-	int tileWidth;
+    private int[][] uvModeProbs = new int[INTRA_MODES][INTRA_MODES - 1];
 
-	private static final int[] defaultSkipProb = new int[] { 192, 128, 64 };
+    private int[] mvJointProbs = new int[MV_JOINTS - 1];
+    private int[] mvSignProbs = new int[2];
+    private int[][] mvClassProbs = new int[2][MV_CLASSES - 1];
+    private int[] mvClass0BitProbs = new int[2];
+    private int[][] mvBitsProbs = new int[2][MV_OFFSET_BITS];
+    private int[][][] mvClass0FrProbs = new int[2][CLASS0_SIZE][MV_FR_SIZE - 1];
+    private int[][] mvFrProbs = new int[2][MV_FR_SIZE - 1];
+    private int[] mvClass0HpProb = new int[2];
+    private int[] mvHpProbs = new int[2];
+    private int filterLevel;
+    private int sharpnessLevel;
+    int[] leftPartitionSizes;
+    int[] abovePartitionSizes;
+    int tileHeight;
+    int tileWidth;
 
-	private static final int[][] defaultTxProbs8x8 = { { 100 }, { 66 } };
-	private static final int[][] defaultTxProbs16x16 = { { 20, 152 }, { 15, 101 } };
-	private static final int[][] defaultTxProbs32x32 = { { 3, 136, 37 }, { 5, 52, 13 } };
-	public static final int[][][][][][] defaultCoefProbs = new int[][][][][][] { { { /* block Type 0 */
-			{ /* Intra */
-					{ /* Coeff Band 0 */
-							{ 195, 29, 183 }, { 84, 49, 136 }, { 8, 42, 71 }, { 0, 0, 0 }, // unused
-							{ 0, 0, 0 }, // unused
-							{ 0, 0, 0 } // unused
-					}, { /* Coeff Band 1 */
-							{ 31, 107, 169 }, { 35, 99, 159 }, { 17, 82, 140 }, { 8, 66, 114 }, { 2, 44, 76 },
-							{ 1, 19, 32 } },
-					{ /* Coeff Band 2 */
-							{ 40, 132, 201 }, { 29, 114, 187 }, { 13, 91, 157 }, { 7, 75, 127 }, { 3, 58, 95 },
-							{ 1, 28, 47 } },
-					{ /* Coeff Band 3 */
-							{ 69, 142, 221 }, { 42, 122, 201 }, { 15, 91, 159 }, { 6, 67, 121 }, { 1, 42, 77 },
-							{ 1, 17, 31 } },
-					{ /* Coeff Band 4 */
-							{ 102, 148, 228 }, { 67, 117, 204 }, { 17, 82, 154 }, { 6, 59, 114 }, { 2, 39, 75 },
-							{ 1, 15, 29 } },
-					{ /* Coeff Band 5 */
-							{ 156, 57, 233 }, { 119, 57, 212 }, { 58, 48, 163 }, { 29, 40, 124 }, { 12, 30, 81 },
-							{ 3, 12, 31 } } },
-			{ /* Inter */
-					{ /* Coeff Band 0 */
-							{ 191, 107, 226 }, { 124, 117, 204 }, { 25, 99, 155 }, { 0, 0, 0 }, // unused
-							{ 0, 0, 0 }, // unused
-							{ 0, 0, 0 } // unused
-					}, { /* Coeff Band 1 */
-							{ 29, 148, 210 }, { 37, 126, 194 }, { 8, 93, 157 }, { 2, 68, 118 }, { 1, 39, 69 },
-							{ 1, 17, 33 } },
-					{ /* Coeff Band 2 */
-							{ 41, 151, 213 }, { 27, 123, 193 }, { 3, 82, 144 }, { 1, 58, 105 }, { 1, 32, 60 },
-							{ 1, 13, 26 } },
-					{ /* Coeff Band 3 */
-							{ 59, 159, 220 }, { 23, 126, 198 }, { 4, 88, 151 }, { 1, 66, 114 }, { 1, 38, 71 },
-							{ 1, 18, 34 } },
-					{ /* Coeff Band 4 */
-							{ 114, 136, 232 }, { 51, 114, 207 }, { 11, 83, 155 }, { 3, 56, 105 }, { 1, 33, 65 },
-							{ 1, 17, 34 } },
-					{ /* Coeff Band 5 */
-							{ 149, 65, 234 }, { 121, 57, 215 }, { 61, 49, 166 }, { 28, 36, 114 }, { 12, 25, 76 },
-							{ 3, 16, 42 } } } },
-			{ /* block Type 1 */
-					{ /* Intra */
-							{ /* Coeff Band 0 */
-									{ 214, 49, 220 }, { 132, 63, 188 }, { 42, 65, 137 }, { 0, 0, 0 }, // unused
-									{ 0, 0, 0 }, // unused
-									{ 0, 0, 0 } // unused
-							}, { /* Coeff Band 1 */
-									{ 85, 137, 221 }, { 104, 131, 216 }, { 49, 111, 192 }, { 21, 87, 155 },
-									{ 2, 49, 87 }, { 1, 16, 28 } },
-							{ /* Coeff Band 2 */
-									{ 89, 163, 230 }, { 90, 137, 220 }, { 29, 100, 183 }, { 10, 70, 135 },
-									{ 2, 42, 81 }, { 1, 17, 33 } },
-							{ /* Coeff Band 3 */
-									{ 108, 167, 237 }, { 55, 133, 222 }, { 15, 97, 179 }, { 4, 72, 135 }, { 1, 45, 85 },
-									{ 1, 19, 38 } },
-							{ /* Coeff Band 4 */
-									{ 124, 146, 240 }, { 66, 124, 224 }, { 17, 88, 175 }, { 4, 58, 122 }, { 1, 36, 75 },
-									{ 1, 18, 37 } },
-							{ /* Coeff Band 5 */
-									{ 141, 79, 241 }, { 126, 70, 227 }, { 66, 58, 182 }, { 30, 44, 136 },
-									{ 12, 34, 96 }, { 2, 20, 47 } } },
-					{ /* Inter */
-							{ /* Coeff Band 0 */
-									{ 229, 99, 249 }, { 143, 111, 235 }, { 46, 109, 192 }, { 0, 0, 0 }, // unused
-									{ 0, 0, 0 }, // unused
-									{ 0, 0, 0 } // unused
-							}, { /* Coeff Band 1 */
-									{ 82, 158, 236 }, { 94, 146, 224 }, { 25, 117, 191 }, { 9, 87, 149 }, { 3, 56, 99 },
-									{ 1, 33, 57 } },
-							{ /* Coeff Band 2 */
-									{ 83, 167, 237 }, { 68, 145, 222 }, { 10, 103, 177 }, { 2, 72, 131 }, { 1, 41, 79 },
-									{ 1, 20, 39 } },
-							{ /* Coeff Band 3 */
-									{ 99, 167, 239 }, { 47, 141, 224 }, { 10, 104, 178 }, { 2, 73, 133 }, { 1, 44, 85 },
-									{ 1, 22, 47 } },
-							{ /* Coeff Band 4 */
-									{ 127, 145, 243 }, { 71, 129, 228 }, { 17, 93, 177 }, { 3, 61, 124 }, { 1, 41, 84 },
-									{ 1, 21, 52 } },
-							{ /* Coeff Band 5 */
-									{ 157, 78, 244 }, { 140, 72, 231 }, { 69, 58, 184 }, { 31, 44, 137 },
-									{ 14, 38, 105 }, { 8, 23, 61 } } } } },
-			{ { /* block Type 0 */
-					{ /* Intra */
-							{ /* Coeff Band 0 */
-									{ 125, 34, 187 }, { 52, 41, 133 }, { 6, 31, 56 }, { 0, 0, 0 }, // unused
-									{ 0, 0, 0 }, // unused
-									{ 0, 0, 0 } // unused
-							}, { /* Coeff Band 1 */
-									{ 37, 109, 153 }, { 51, 102, 147 }, { 23, 87, 128 }, { 8, 67, 101 }, { 1, 41, 63 },
-									{ 1, 19, 29 } },
-							{ /* Coeff Band 2 */
-									{ 31, 154, 185 }, { 17, 127, 175 }, { 6, 96, 145 }, { 2, 73, 114 }, { 1, 51, 82 },
-									{ 1, 28, 45 } },
-							{ /* Coeff Band 3 */
-									{ 23, 163, 200 }, { 10, 131, 185 }, { 2, 93, 148 }, { 1, 67, 111 }, { 1, 41, 69 },
-									{ 1, 14, 24 } },
-							{ /* Coeff Band 4 */
-									{ 29, 176, 217 }, { 12, 145, 201 }, { 3, 101, 156 }, { 1, 69, 111 }, { 1, 39, 63 },
-									{ 1, 14, 23 } },
-							{ /* Coeff Band 5 */
-									{ 57, 192, 233 }, { 25, 154, 215 }, { 6, 109, 167 }, { 3, 78, 118 }, { 1, 48, 69 },
-									{ 1, 21, 29 } } },
-					{ /* Inter */
-							{ /* Coeff Band 0 */
-									{ 202, 105, 245 }, { 108, 106, 216 }, { 18, 90, 144 }, { 0, 0, 0 }, // unused
-									{ 0, 0, 0 }, // unused
-									{ 0, 0, 0 } // unused
-							}, { /* Coeff Band 1 */
-									{ 33, 172, 219 }, { 64, 149, 206 }, { 14, 117, 177 }, { 5, 90, 141 }, { 2, 61, 95 },
-									{ 1, 37, 57 } },
-							{ /* Coeff Band 2 */
-									{ 33, 179, 220 }, { 11, 140, 198 }, { 1, 89, 148 }, { 1, 60, 104 }, { 1, 33, 57 },
-									{ 1, 12, 21 } },
-							{ /* Coeff Band 3 */
-									{ 30, 181, 221 }, { 8, 141, 198 }, { 1, 87, 145 }, { 1, 58, 100 }, { 1, 31, 55 },
-									{ 1, 12, 20 } },
-							{ /* Coeff Band 4 */
-									{ 32, 186, 224 }, { 7, 142, 198 }, { 1, 86, 143 }, { 1, 58, 100 }, { 1, 31, 55 },
-									{ 1, 12, 22 } },
-							{ /* Coeff Band 5 */
-									{ 57, 192, 227 }, { 20, 143, 204 }, { 3, 96, 154 }, { 1, 68, 112 }, { 1, 42, 69 },
-									{ 1, 19, 32 } } } },
-					{ /* block Type 1 */
-							{ /* Intra */
-									{ /* Coeff Band 0 */
-											{ 212, 35, 215 }, { 113, 47, 169 }, { 29, 48, 105 }, { 0, 0, 0 }, // unused
-											{ 0, 0, 0 }, // unused
-											{ 0, 0, 0 } // unused
-									}, { /* Coeff Band 1 */
-											{ 74, 129, 203 }, { 106, 120, 203 }, { 49, 107, 178 }, { 19, 84, 144 },
-											{ 4, 50, 84 }, { 1, 15, 25 } },
-									{ /* Coeff Band 2 */
-											{ 71, 172, 217 }, { 44, 141, 209 }, { 15, 102, 173 }, { 6, 76, 133 },
-											{ 2, 51, 89 }, { 1, 24, 42 } },
-									{ /* Coeff Band 3 */
-											{ 64, 185, 231 }, { 31, 148, 216 }, { 8, 103, 175 }, { 3, 74, 131 },
-											{ 1, 46, 81 }, { 1, 18, 30 } },
-									{ /* Coeff Band 4 */
-											{ 65, 196, 235 }, { 25, 157, 221 }, { 5, 105, 174 }, { 1, 67, 120 },
-											{ 1, 38, 69 }, { 1, 15, 30 } },
-									{ /* Coeff Band 5 */
-											{ 65, 204, 238 }, { 30, 156, 224 }, { 7, 107, 177 }, { 2, 70, 124 },
-											{ 1, 42, 73 }, { 1, 18, 34 } } },
-							{ /* Inter */
-									{ /* Coeff Band 0 */
-											{ 225, 86, 251 }, { 144, 104, 235 }, { 42, 99, 181 }, { 0, 0, 0 }, // unused
-											{ 0, 0, 0 }, // unused
-											{ 0, 0, 0 } // unused
-									}, { /* Coeff Band 1 */
-											{ 85, 175, 239 }, { 112, 165, 229 }, { 29, 136, 200 }, { 12, 103, 162 },
-											{ 6, 77, 123 }, { 2, 53, 84 } },
-									{ /* Coeff Band 2 */
-											{ 75, 183, 239 }, { 30, 155, 221 }, { 3, 106, 171 }, { 1, 74, 128 },
-											{ 1, 44, 76 }, { 1, 17, 28 } },
-									{ /* Coeff Band 3 */
-											{ 73, 185, 240 }, { 27, 159, 222 }, { 2, 107, 172 }, { 1, 75, 127 },
-											{ 1, 42, 73 }, { 1, 17, 29 } },
-									{ /* Coeff Band 4 */
-											{ 62, 190, 238 }, { 21, 159, 222 }, { 2, 107, 172 }, { 1, 72, 122 },
-											{ 1, 40, 71 }, { 1, 18, 32 } },
-									{ /* Coeff Band 5 */
-											{ 61, 199, 240 }, { 27, 161, 226 }, { 4, 113, 180 }, { 1, 76, 129 },
-											{ 1, 46, 80 }, { 1, 23, 41 } } } } },
-			{ { /* block Type 0 */
-					{ /* Intra */
-							{ /* Coeff Band 0 */
-									{ 7, 27, 153 }, { 5, 30, 95 }, { 1, 16, 30 }, { 0, 0, 0 }, // unused
-									{ 0, 0, 0 }, // unused
-									{ 0, 0, 0 } // unused
-							}, { /* Coeff Band 1 */
-									{ 50, 75, 127 }, { 57, 75, 124 }, { 27, 67, 108 }, { 10, 54, 86 }, { 1, 33, 52 },
-									{ 1, 12, 18 } },
-							{ /* Coeff Band 2 */
-									{ 43, 125, 151 }, { 26, 108, 148 }, { 7, 83, 122 }, { 2, 59, 89 }, { 1, 38, 60 },
-									{ 1, 17, 27 } },
-							{ /* Coeff Band 3 */
-									{ 23, 144, 163 }, { 13, 112, 154 }, { 2, 75, 117 }, { 1, 50, 81 }, { 1, 31, 51 },
-									{ 1, 14, 23 } },
-							{ /* Coeff Band 4 */
-									{ 18, 162, 185 }, { 6, 123, 171 }, { 1, 78, 125 }, { 1, 51, 86 }, { 1, 31, 54 },
-									{ 1, 14, 23 } },
-							{ /* Coeff Band 5 */
-									{ 15, 199, 227 }, { 3, 150, 204 }, { 1, 91, 146 }, { 1, 55, 95 }, { 1, 30, 53 },
-									{ 1, 11, 20 } } },
-					{ /* Inter */
-							{ /* Coeff Band 0 */
-									{ 19, 55, 240 }, { 19, 59, 196 }, { 3, 52, 105 }, { 0, 0, 0 }, // unused
-									{ 0, 0, 0 }, // unused
-									{ 0, 0, 0 } // unused
-							}, { /* Coeff Band 1 */
-									{ 41, 166, 207 }, { 104, 153, 199 }, { 31, 123, 181 }, { 14, 101, 152 },
-									{ 5, 72, 106 }, { 1, 36, 52 } },
-							{ /* Coeff Band 2 */
-									{ 35, 176, 211 }, { 12, 131, 190 }, { 2, 88, 144 }, { 1, 60, 101 }, { 1, 36, 60 },
-									{ 1, 16, 28 } },
-							{ /* Coeff Band 3 */
-									{ 28, 183, 213 }, { 8, 134, 191 }, { 1, 86, 142 }, { 1, 56, 96 }, { 1, 30, 53 },
-									{ 1, 12, 20 } },
-							{ /* Coeff Band 4 */
-									{ 20, 190, 215 }, { 4, 135, 192 }, { 1, 84, 139 }, { 1, 53, 91 }, { 1, 28, 49 },
-									{ 1, 11, 20 } },
-							{ /* Coeff Band 5 */
-									{ 13, 196, 216 }, { 2, 137, 192 }, { 1, 86, 143 }, { 1, 57, 99 }, { 1, 32, 56 },
-									{ 1, 13, 24 } } } },
-					{ /* block Type 1 */
-							{ /* Intra */
-									{ /* Coeff Band 0 */
-											{ 211, 29, 217 }, { 96, 47, 156 }, { 22, 43, 87 }, { 0, 0, 0 }, // unused
-											{ 0, 0, 0 }, // unused
-											{ 0, 0, 0 } // unused
-									}, { /* Coeff Band 1 */
-											{ 78, 120, 193 }, { 111, 116, 186 }, { 46, 102, 164 }, { 15, 80, 128 },
-											{ 2, 49, 76 }, { 1, 18, 28 } },
-									{ /* Coeff Band 2 */
-											{ 71, 161, 203 }, { 42, 132, 192 }, { 10, 98, 150 }, { 3, 69, 109 },
-											{ 1, 44, 70 }, { 1, 18, 29 } },
-									{ /* Coeff Band 3 */
-											{ 57, 186, 211 }, { 30, 140, 196 }, { 4, 93, 146 }, { 1, 62, 102 },
-											{ 1, 38, 65 }, { 1, 16, 27 } },
-									{ /* Coeff Band 4 */
-											{ 47, 199, 217 }, { 14, 145, 196 }, { 1, 88, 142 }, { 1, 57, 98 },
-											{ 1, 36, 62 }, { 1, 15, 26 } },
-									{ /* Coeff Band 5 */
-											{ 26, 219, 229 }, { 5, 155, 207 }, { 1, 94, 151 }, { 1, 60, 104 },
-											{ 1, 36, 62 }, { 1, 16, 28 } } },
-							{ /* Inter */
-									{ /* Coeff Band 0 */
-											{ 233, 29, 248 }, { 146, 47, 220 }, { 43, 52, 140 }, { 0, 0, 0 }, // unused
-											{ 0, 0, 0 }, // unused
-											{ 0, 0, 0 } // unused
-									}, { /* Coeff Band 1 */
-											{ 100, 163, 232 }, { 179, 161, 222 }, { 63, 142, 204 }, { 37, 113, 174 },
-											{ 26, 89, 137 }, { 18, 68, 97 } },
-									{ /* Coeff Band 2 */
-											{ 85, 181, 230 }, { 32, 146, 209 }, { 7, 100, 164 }, { 3, 71, 121 },
-											{ 1, 45, 77 }, { 1, 18, 30 } },
-									{ /* Coeff Band 3 */
-											{ 65, 187, 230 }, { 20, 148, 207 }, { 2, 97, 159 }, { 1, 68, 116 },
-											{ 1, 40, 70 }, { 1, 14, 29 } },
-									{ /* Coeff Band 4 */
-											{ 40, 194, 227 }, { 8, 147, 204 }, { 1, 94, 155 }, { 1, 65, 112 },
-											{ 1, 39, 66 }, { 1, 14, 26 } },
-									{ /* Coeff Band 5 */
-											{ 16, 208, 228 }, { 3, 151, 207 }, { 1, 98, 160 }, { 1, 67, 117 },
-											{ 1, 41, 74 }, { 1, 17, 31 } } } } },
-			{ { /* block Type 0 */
-					{ /* Intra */
-							{ /* Coeff Band 0 */
-									{ 17, 38, 140 }, { 7, 34, 80 }, { 1, 17, 29 }, { 0, 0, 0 }, // unused
-									{ 0, 0, 0 }, // unused
-									{ 0, 0, 0 } // unused
-							}, { /* Coeff Band 1 */
-									{ 37, 75, 128 }, { 41, 76, 128 }, { 26, 66, 116 }, { 12, 52, 94 }, { 2, 32, 55 },
-									{ 1, 10, 16 } },
-							{ /* Coeff Band 2 */
-									{ 50, 127, 154 }, { 37, 109, 152 }, { 16, 82, 121 }, { 5, 59, 85 }, { 1, 35, 54 },
-									{ 1, 13, 20 } },
-							{ /* Coeff Band 3 */
-									{ 40, 142, 167 }, { 17, 110, 157 }, { 2, 71, 112 }, { 1, 44, 72 }, { 1, 27, 45 },
-									{ 1, 11, 17 } },
-							{ /* Coeff Band 4 */
-									{ 30, 175, 188 }, { 9, 124, 169 }, { 1, 74, 116 }, { 1, 48, 78 }, { 1, 30, 49 },
-									{ 1, 11, 18 } },
-							{ /* Coeff Band 5 */
-									{ 10, 222, 223 }, { 2, 150, 194 }, { 1, 83, 128 }, { 1, 48, 79 }, { 1, 27, 45 },
-									{ 1, 11, 17 } } },
-					{ /* Inter */
-							{ /* Coeff Band 0 */
-									{ 36, 41, 235 }, { 29, 36, 193 }, { 10, 27, 111 }, { 0, 0, 0 }, // unused
-									{ 0, 0, 0 }, // unused
-									{ 0, 0, 0 } // unused
-							}, { /* Coeff Band 1 */
-									{ 85, 165, 222 }, { 177, 162, 215 }, { 110, 135, 195 }, { 57, 113, 168 },
-									{ 23, 83, 120 }, { 10, 49, 61 } },
-							{ /* Coeff Band 2 */
-									{ 85, 190, 223 }, { 36, 139, 200 }, { 5, 90, 146 }, { 1, 60, 103 }, { 1, 38, 65 },
-									{ 1, 18, 30 } },
-							{ /* Coeff Band 3 */
-									{ 72, 202, 223 }, { 23, 141, 199 }, { 2, 86, 140 }, { 1, 56, 97 }, { 1, 36, 61 },
-									{ 1, 16, 27 } },
-							{ /* Coeff Band 4 */
-									{ 55, 218, 225 }, { 13, 145, 200 }, { 1, 86, 141 }, { 1, 57, 99 }, { 1, 35, 61 },
-									{ 1, 13, 22 } },
-							{ /* Coeff Band 5 */
-									{ 15, 235, 212 }, { 1, 132, 184 }, { 1, 84, 139 }, { 1, 57, 97 }, { 1, 34, 56 },
-									{ 1, 14, 23 } } } },
-					{ /* block Type 1 */
-							{ /* Intra */
-									{ /* Coeff Band 0 */
-											{ 181, 21, 201 }, { 61, 37, 123 }, { 10, 38, 71 }, { 0, 0, 0 }, // unused
-											{ 0, 0, 0 }, // unused
-											{ 0, 0, 0 } // unused
-									}, { /* Coeff Band 1 */
-											{ 47, 106, 172 }, { 95, 104, 173 }, { 42, 93, 159 }, { 18, 77, 131 },
-											{ 4, 50, 81 }, { 1, 17, 23 } },
-									{ /* Coeff Band 2 */
-											{ 62, 147, 199 }, { 44, 130, 189 }, { 28, 102, 154 }, { 18, 75, 115 },
-											{ 2, 44, 65 }, { 1, 12, 19 } },
-									{ /* Coeff Band 3 */
-											{ 55, 153, 210 }, { 24, 130, 194 }, { 3, 93, 146 }, { 1, 61, 97 },
-											{ 1, 31, 50 }, { 1, 10, 16 } },
-									{ /* Coeff Band 4 */
-											{ 49, 186, 223 }, { 17, 148, 204 }, { 1, 96, 142 }, { 1, 53, 83 },
-											{ 1, 26, 44 }, { 1, 11, 17 } },
-									{ /* Coeff Band 5 */
-											{ 13, 217, 212 }, { 2, 136, 180 }, { 1, 78, 124 }, { 1, 50, 83 },
-											{ 1, 29, 49 }, { 1, 14, 23 } } },
-							{ /* Inter */
-									{ /* Coeff Band 0 */
-											{ 197, 13, 247 }, { 82, 17, 222 }, { 25, 17, 162 }, { 0, 0, 0 }, // unused
-											{ 0, 0, 0 }, // unused
-											{ 0, 0, 0 } // unused
-									}, { /* Coeff Band 1 */
-											{ 126, 186, 247 }, { 234, 191, 243 }, { 176, 177, 234 }, { 104, 158, 220 },
-											{ 66, 128, 186 }, { 55, 90, 137 } },
-									{ /* Coeff Band 2 */
-											{ 111, 197, 242 }, { 46, 158, 219 }, { 9, 104, 171 }, { 2, 65, 125 },
-											{ 1, 44, 80 }, { 1, 17, 91 } },
-									{ /* Coeff Band 3 */
-											{ 104, 208, 245 }, { 39, 168, 224 }, { 3, 109, 162 }, { 1, 79, 124 },
-											{ 1, 50, 102 }, { 1, 43, 102 } },
-									{ /* Coeff Band 4 */
-											{ 84, 220, 246 }, { 31, 177, 231 }, { 2, 115, 180 }, { 1, 79, 134 },
-											{ 1, 55, 77 }, { 1, 60, 79 } },
-									{ /* Coeff Band 5 */
-											{ 43, 243, 240 }, { 8, 180, 217 }, { 1, 115, 166 }, { 1, 84, 121 },
-											{ 1, 51, 67 }, { 1, 16, 6 } } } } }
+    private static final int[] defaultSkipProb = new int[] { 192, 128, 64 };
 
-	};
-	
-	public static final int[] defaultMvJointProbs = new int[] { 32, 64, 96 };
+    private static final int[][] defaultTxProbs8x8 = { { 100 }, { 66 } };
+    private static final int[][] defaultTxProbs16x16 = { { 20, 152 }, { 15, 101 } };
+    private static final int[][] defaultTxProbs32x32 = { { 3, 136, 37 }, { 5, 52, 13 } };
+    public static final int[][][][][][] defaultCoefProbs = new int[][][][][][] { { { /* block Type 0 */
+            { /* Intra */
+                    { /* Coeff Band 0 */
+                            { 195, 29, 183 }, { 84, 49, 136 }, { 8, 42, 71 }, { 0, 0, 0 }, // unused
+                            { 0, 0, 0 }, // unused
+                            { 0, 0, 0 } // unused
+                    }, { /* Coeff Band 1 */
+                            { 31, 107, 169 }, { 35, 99, 159 }, { 17, 82, 140 }, { 8, 66, 114 }, { 2, 44, 76 },
+                            { 1, 19, 32 } },
+                    { /* Coeff Band 2 */
+                            { 40, 132, 201 }, { 29, 114, 187 }, { 13, 91, 157 }, { 7, 75, 127 }, { 3, 58, 95 },
+                            { 1, 28, 47 } },
+                    { /* Coeff Band 3 */
+                            { 69, 142, 221 }, { 42, 122, 201 }, { 15, 91, 159 }, { 6, 67, 121 }, { 1, 42, 77 },
+                            { 1, 17, 31 } },
+                    { /* Coeff Band 4 */
+                            { 102, 148, 228 }, { 67, 117, 204 }, { 17, 82, 154 }, { 6, 59, 114 }, { 2, 39, 75 },
+                            { 1, 15, 29 } },
+                    { /* Coeff Band 5 */
+                            { 156, 57, 233 }, { 119, 57, 212 }, { 58, 48, 163 }, { 29, 40, 124 }, { 12, 30, 81 },
+                            { 3, 12, 31 } } },
+            { /* Inter */
+                    { /* Coeff Band 0 */
+                            { 191, 107, 226 }, { 124, 117, 204 }, { 25, 99, 155 }, { 0, 0, 0 }, // unused
+                            { 0, 0, 0 }, // unused
+                            { 0, 0, 0 } // unused
+                    }, { /* Coeff Band 1 */
+                            { 29, 148, 210 }, { 37, 126, 194 }, { 8, 93, 157 }, { 2, 68, 118 }, { 1, 39, 69 },
+                            { 1, 17, 33 } },
+                    { /* Coeff Band 2 */
+                            { 41, 151, 213 }, { 27, 123, 193 }, { 3, 82, 144 }, { 1, 58, 105 }, { 1, 32, 60 },
+                            { 1, 13, 26 } },
+                    { /* Coeff Band 3 */
+                            { 59, 159, 220 }, { 23, 126, 198 }, { 4, 88, 151 }, { 1, 66, 114 }, { 1, 38, 71 },
+                            { 1, 18, 34 } },
+                    { /* Coeff Band 4 */
+                            { 114, 136, 232 }, { 51, 114, 207 }, { 11, 83, 155 }, { 3, 56, 105 }, { 1, 33, 65 },
+                            { 1, 17, 34 } },
+                    { /* Coeff Band 5 */
+                            { 149, 65, 234 }, { 121, 57, 215 }, { 61, 49, 166 }, { 28, 36, 114 }, { 12, 25, 76 },
+                            { 3, 16, 42 } } } },
+            { /* block Type 1 */
+                    { /* Intra */
+                            { /* Coeff Band 0 */
+                                    { 214, 49, 220 }, { 132, 63, 188 }, { 42, 65, 137 }, { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 } // unused
+                            }, { /* Coeff Band 1 */
+                                    { 85, 137, 221 }, { 104, 131, 216 }, { 49, 111, 192 }, { 21, 87, 155 },
+                                    { 2, 49, 87 }, { 1, 16, 28 } },
+                            { /* Coeff Band 2 */
+                                    { 89, 163, 230 }, { 90, 137, 220 }, { 29, 100, 183 }, { 10, 70, 135 },
+                                    { 2, 42, 81 }, { 1, 17, 33 } },
+                            { /* Coeff Band 3 */
+                                    { 108, 167, 237 }, { 55, 133, 222 }, { 15, 97, 179 }, { 4, 72, 135 }, { 1, 45, 85 },
+                                    { 1, 19, 38 } },
+                            { /* Coeff Band 4 */
+                                    { 124, 146, 240 }, { 66, 124, 224 }, { 17, 88, 175 }, { 4, 58, 122 }, { 1, 36, 75 },
+                                    { 1, 18, 37 } },
+                            { /* Coeff Band 5 */
+                                    { 141, 79, 241 }, { 126, 70, 227 }, { 66, 58, 182 }, { 30, 44, 136 },
+                                    { 12, 34, 96 }, { 2, 20, 47 } } },
+                    { /* Inter */
+                            { /* Coeff Band 0 */
+                                    { 229, 99, 249 }, { 143, 111, 235 }, { 46, 109, 192 }, { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 } // unused
+                            }, { /* Coeff Band 1 */
+                                    { 82, 158, 236 }, { 94, 146, 224 }, { 25, 117, 191 }, { 9, 87, 149 }, { 3, 56, 99 },
+                                    { 1, 33, 57 } },
+                            { /* Coeff Band 2 */
+                                    { 83, 167, 237 }, { 68, 145, 222 }, { 10, 103, 177 }, { 2, 72, 131 }, { 1, 41, 79 },
+                                    { 1, 20, 39 } },
+                            { /* Coeff Band 3 */
+                                    { 99, 167, 239 }, { 47, 141, 224 }, { 10, 104, 178 }, { 2, 73, 133 }, { 1, 44, 85 },
+                                    { 1, 22, 47 } },
+                            { /* Coeff Band 4 */
+                                    { 127, 145, 243 }, { 71, 129, 228 }, { 17, 93, 177 }, { 3, 61, 124 }, { 1, 41, 84 },
+                                    { 1, 21, 52 } },
+                            { /* Coeff Band 5 */
+                                    { 157, 78, 244 }, { 140, 72, 231 }, { 69, 58, 184 }, { 31, 44, 137 },
+                                    { 14, 38, 105 }, { 8, 23, 61 } } } } },
+            { { /* block Type 0 */
+                    { /* Intra */
+                            { /* Coeff Band 0 */
+                                    { 125, 34, 187 }, { 52, 41, 133 }, { 6, 31, 56 }, { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 } // unused
+                            }, { /* Coeff Band 1 */
+                                    { 37, 109, 153 }, { 51, 102, 147 }, { 23, 87, 128 }, { 8, 67, 101 }, { 1, 41, 63 },
+                                    { 1, 19, 29 } },
+                            { /* Coeff Band 2 */
+                                    { 31, 154, 185 }, { 17, 127, 175 }, { 6, 96, 145 }, { 2, 73, 114 }, { 1, 51, 82 },
+                                    { 1, 28, 45 } },
+                            { /* Coeff Band 3 */
+                                    { 23, 163, 200 }, { 10, 131, 185 }, { 2, 93, 148 }, { 1, 67, 111 }, { 1, 41, 69 },
+                                    { 1, 14, 24 } },
+                            { /* Coeff Band 4 */
+                                    { 29, 176, 217 }, { 12, 145, 201 }, { 3, 101, 156 }, { 1, 69, 111 }, { 1, 39, 63 },
+                                    { 1, 14, 23 } },
+                            { /* Coeff Band 5 */
+                                    { 57, 192, 233 }, { 25, 154, 215 }, { 6, 109, 167 }, { 3, 78, 118 }, { 1, 48, 69 },
+                                    { 1, 21, 29 } } },
+                    { /* Inter */
+                            { /* Coeff Band 0 */
+                                    { 202, 105, 245 }, { 108, 106, 216 }, { 18, 90, 144 }, { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 } // unused
+                            }, { /* Coeff Band 1 */
+                                    { 33, 172, 219 }, { 64, 149, 206 }, { 14, 117, 177 }, { 5, 90, 141 }, { 2, 61, 95 },
+                                    { 1, 37, 57 } },
+                            { /* Coeff Band 2 */
+                                    { 33, 179, 220 }, { 11, 140, 198 }, { 1, 89, 148 }, { 1, 60, 104 }, { 1, 33, 57 },
+                                    { 1, 12, 21 } },
+                            { /* Coeff Band 3 */
+                                    { 30, 181, 221 }, { 8, 141, 198 }, { 1, 87, 145 }, { 1, 58, 100 }, { 1, 31, 55 },
+                                    { 1, 12, 20 } },
+                            { /* Coeff Band 4 */
+                                    { 32, 186, 224 }, { 7, 142, 198 }, { 1, 86, 143 }, { 1, 58, 100 }, { 1, 31, 55 },
+                                    { 1, 12, 22 } },
+                            { /* Coeff Band 5 */
+                                    { 57, 192, 227 }, { 20, 143, 204 }, { 3, 96, 154 }, { 1, 68, 112 }, { 1, 42, 69 },
+                                    { 1, 19, 32 } } } },
+                    { /* block Type 1 */
+                            { /* Intra */
+                                    { /* Coeff Band 0 */
+                                            { 212, 35, 215 }, { 113, 47, 169 }, { 29, 48, 105 }, { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 } // unused
+                                    }, { /* Coeff Band 1 */
+                                            { 74, 129, 203 }, { 106, 120, 203 }, { 49, 107, 178 }, { 19, 84, 144 },
+                                            { 4, 50, 84 }, { 1, 15, 25 } },
+                                    { /* Coeff Band 2 */
+                                            { 71, 172, 217 }, { 44, 141, 209 }, { 15, 102, 173 }, { 6, 76, 133 },
+                                            { 2, 51, 89 }, { 1, 24, 42 } },
+                                    { /* Coeff Band 3 */
+                                            { 64, 185, 231 }, { 31, 148, 216 }, { 8, 103, 175 }, { 3, 74, 131 },
+                                            { 1, 46, 81 }, { 1, 18, 30 } },
+                                    { /* Coeff Band 4 */
+                                            { 65, 196, 235 }, { 25, 157, 221 }, { 5, 105, 174 }, { 1, 67, 120 },
+                                            { 1, 38, 69 }, { 1, 15, 30 } },
+                                    { /* Coeff Band 5 */
+                                            { 65, 204, 238 }, { 30, 156, 224 }, { 7, 107, 177 }, { 2, 70, 124 },
+                                            { 1, 42, 73 }, { 1, 18, 34 } } },
+                            { /* Inter */
+                                    { /* Coeff Band 0 */
+                                            { 225, 86, 251 }, { 144, 104, 235 }, { 42, 99, 181 }, { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 } // unused
+                                    }, { /* Coeff Band 1 */
+                                            { 85, 175, 239 }, { 112, 165, 229 }, { 29, 136, 200 }, { 12, 103, 162 },
+                                            { 6, 77, 123 }, { 2, 53, 84 } },
+                                    { /* Coeff Band 2 */
+                                            { 75, 183, 239 }, { 30, 155, 221 }, { 3, 106, 171 }, { 1, 74, 128 },
+                                            { 1, 44, 76 }, { 1, 17, 28 } },
+                                    { /* Coeff Band 3 */
+                                            { 73, 185, 240 }, { 27, 159, 222 }, { 2, 107, 172 }, { 1, 75, 127 },
+                                            { 1, 42, 73 }, { 1, 17, 29 } },
+                                    { /* Coeff Band 4 */
+                                            { 62, 190, 238 }, { 21, 159, 222 }, { 2, 107, 172 }, { 1, 72, 122 },
+                                            { 1, 40, 71 }, { 1, 18, 32 } },
+                                    { /* Coeff Band 5 */
+                                            { 61, 199, 240 }, { 27, 161, 226 }, { 4, 113, 180 }, { 1, 76, 129 },
+                                            { 1, 46, 80 }, { 1, 23, 41 } } } } },
+            { { /* block Type 0 */
+                    { /* Intra */
+                            { /* Coeff Band 0 */
+                                    { 7, 27, 153 }, { 5, 30, 95 }, { 1, 16, 30 }, { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 } // unused
+                            }, { /* Coeff Band 1 */
+                                    { 50, 75, 127 }, { 57, 75, 124 }, { 27, 67, 108 }, { 10, 54, 86 }, { 1, 33, 52 },
+                                    { 1, 12, 18 } },
+                            { /* Coeff Band 2 */
+                                    { 43, 125, 151 }, { 26, 108, 148 }, { 7, 83, 122 }, { 2, 59, 89 }, { 1, 38, 60 },
+                                    { 1, 17, 27 } },
+                            { /* Coeff Band 3 */
+                                    { 23, 144, 163 }, { 13, 112, 154 }, { 2, 75, 117 }, { 1, 50, 81 }, { 1, 31, 51 },
+                                    { 1, 14, 23 } },
+                            { /* Coeff Band 4 */
+                                    { 18, 162, 185 }, { 6, 123, 171 }, { 1, 78, 125 }, { 1, 51, 86 }, { 1, 31, 54 },
+                                    { 1, 14, 23 } },
+                            { /* Coeff Band 5 */
+                                    { 15, 199, 227 }, { 3, 150, 204 }, { 1, 91, 146 }, { 1, 55, 95 }, { 1, 30, 53 },
+                                    { 1, 11, 20 } } },
+                    { /* Inter */
+                            { /* Coeff Band 0 */
+                                    { 19, 55, 240 }, { 19, 59, 196 }, { 3, 52, 105 }, { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 } // unused
+                            }, { /* Coeff Band 1 */
+                                    { 41, 166, 207 }, { 104, 153, 199 }, { 31, 123, 181 }, { 14, 101, 152 },
+                                    { 5, 72, 106 }, { 1, 36, 52 } },
+                            { /* Coeff Band 2 */
+                                    { 35, 176, 211 }, { 12, 131, 190 }, { 2, 88, 144 }, { 1, 60, 101 }, { 1, 36, 60 },
+                                    { 1, 16, 28 } },
+                            { /* Coeff Band 3 */
+                                    { 28, 183, 213 }, { 8, 134, 191 }, { 1, 86, 142 }, { 1, 56, 96 }, { 1, 30, 53 },
+                                    { 1, 12, 20 } },
+                            { /* Coeff Band 4 */
+                                    { 20, 190, 215 }, { 4, 135, 192 }, { 1, 84, 139 }, { 1, 53, 91 }, { 1, 28, 49 },
+                                    { 1, 11, 20 } },
+                            { /* Coeff Band 5 */
+                                    { 13, 196, 216 }, { 2, 137, 192 }, { 1, 86, 143 }, { 1, 57, 99 }, { 1, 32, 56 },
+                                    { 1, 13, 24 } } } },
+                    { /* block Type 1 */
+                            { /* Intra */
+                                    { /* Coeff Band 0 */
+                                            { 211, 29, 217 }, { 96, 47, 156 }, { 22, 43, 87 }, { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 } // unused
+                                    }, { /* Coeff Band 1 */
+                                            { 78, 120, 193 }, { 111, 116, 186 }, { 46, 102, 164 }, { 15, 80, 128 },
+                                            { 2, 49, 76 }, { 1, 18, 28 } },
+                                    { /* Coeff Band 2 */
+                                            { 71, 161, 203 }, { 42, 132, 192 }, { 10, 98, 150 }, { 3, 69, 109 },
+                                            { 1, 44, 70 }, { 1, 18, 29 } },
+                                    { /* Coeff Band 3 */
+                                            { 57, 186, 211 }, { 30, 140, 196 }, { 4, 93, 146 }, { 1, 62, 102 },
+                                            { 1, 38, 65 }, { 1, 16, 27 } },
+                                    { /* Coeff Band 4 */
+                                            { 47, 199, 217 }, { 14, 145, 196 }, { 1, 88, 142 }, { 1, 57, 98 },
+                                            { 1, 36, 62 }, { 1, 15, 26 } },
+                                    { /* Coeff Band 5 */
+                                            { 26, 219, 229 }, { 5, 155, 207 }, { 1, 94, 151 }, { 1, 60, 104 },
+                                            { 1, 36, 62 }, { 1, 16, 28 } } },
+                            { /* Inter */
+                                    { /* Coeff Band 0 */
+                                            { 233, 29, 248 }, { 146, 47, 220 }, { 43, 52, 140 }, { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 } // unused
+                                    }, { /* Coeff Band 1 */
+                                            { 100, 163, 232 }, { 179, 161, 222 }, { 63, 142, 204 }, { 37, 113, 174 },
+                                            { 26, 89, 137 }, { 18, 68, 97 } },
+                                    { /* Coeff Band 2 */
+                                            { 85, 181, 230 }, { 32, 146, 209 }, { 7, 100, 164 }, { 3, 71, 121 },
+                                            { 1, 45, 77 }, { 1, 18, 30 } },
+                                    { /* Coeff Band 3 */
+                                            { 65, 187, 230 }, { 20, 148, 207 }, { 2, 97, 159 }, { 1, 68, 116 },
+                                            { 1, 40, 70 }, { 1, 14, 29 } },
+                                    { /* Coeff Band 4 */
+                                            { 40, 194, 227 }, { 8, 147, 204 }, { 1, 94, 155 }, { 1, 65, 112 },
+                                            { 1, 39, 66 }, { 1, 14, 26 } },
+                                    { /* Coeff Band 5 */
+                                            { 16, 208, 228 }, { 3, 151, 207 }, { 1, 98, 160 }, { 1, 67, 117 },
+                                            { 1, 41, 74 }, { 1, 17, 31 } } } } },
+            { { /* block Type 0 */
+                    { /* Intra */
+                            { /* Coeff Band 0 */
+                                    { 17, 38, 140 }, { 7, 34, 80 }, { 1, 17, 29 }, { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 } // unused
+                            }, { /* Coeff Band 1 */
+                                    { 37, 75, 128 }, { 41, 76, 128 }, { 26, 66, 116 }, { 12, 52, 94 }, { 2, 32, 55 },
+                                    { 1, 10, 16 } },
+                            { /* Coeff Band 2 */
+                                    { 50, 127, 154 }, { 37, 109, 152 }, { 16, 82, 121 }, { 5, 59, 85 }, { 1, 35, 54 },
+                                    { 1, 13, 20 } },
+                            { /* Coeff Band 3 */
+                                    { 40, 142, 167 }, { 17, 110, 157 }, { 2, 71, 112 }, { 1, 44, 72 }, { 1, 27, 45 },
+                                    { 1, 11, 17 } },
+                            { /* Coeff Band 4 */
+                                    { 30, 175, 188 }, { 9, 124, 169 }, { 1, 74, 116 }, { 1, 48, 78 }, { 1, 30, 49 },
+                                    { 1, 11, 18 } },
+                            { /* Coeff Band 5 */
+                                    { 10, 222, 223 }, { 2, 150, 194 }, { 1, 83, 128 }, { 1, 48, 79 }, { 1, 27, 45 },
+                                    { 1, 11, 17 } } },
+                    { /* Inter */
+                            { /* Coeff Band 0 */
+                                    { 36, 41, 235 }, { 29, 36, 193 }, { 10, 27, 111 }, { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 }, // unused
+                                    { 0, 0, 0 } // unused
+                            }, { /* Coeff Band 1 */
+                                    { 85, 165, 222 }, { 177, 162, 215 }, { 110, 135, 195 }, { 57, 113, 168 },
+                                    { 23, 83, 120 }, { 10, 49, 61 } },
+                            { /* Coeff Band 2 */
+                                    { 85, 190, 223 }, { 36, 139, 200 }, { 5, 90, 146 }, { 1, 60, 103 }, { 1, 38, 65 },
+                                    { 1, 18, 30 } },
+                            { /* Coeff Band 3 */
+                                    { 72, 202, 223 }, { 23, 141, 199 }, { 2, 86, 140 }, { 1, 56, 97 }, { 1, 36, 61 },
+                                    { 1, 16, 27 } },
+                            { /* Coeff Band 4 */
+                                    { 55, 218, 225 }, { 13, 145, 200 }, { 1, 86, 141 }, { 1, 57, 99 }, { 1, 35, 61 },
+                                    { 1, 13, 22 } },
+                            { /* Coeff Band 5 */
+                                    { 15, 235, 212 }, { 1, 132, 184 }, { 1, 84, 139 }, { 1, 57, 97 }, { 1, 34, 56 },
+                                    { 1, 14, 23 } } } },
+                    { /* block Type 1 */
+                            { /* Intra */
+                                    { /* Coeff Band 0 */
+                                            { 181, 21, 201 }, { 61, 37, 123 }, { 10, 38, 71 }, { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 } // unused
+                                    }, { /* Coeff Band 1 */
+                                            { 47, 106, 172 }, { 95, 104, 173 }, { 42, 93, 159 }, { 18, 77, 131 },
+                                            { 4, 50, 81 }, { 1, 17, 23 } },
+                                    { /* Coeff Band 2 */
+                                            { 62, 147, 199 }, { 44, 130, 189 }, { 28, 102, 154 }, { 18, 75, 115 },
+                                            { 2, 44, 65 }, { 1, 12, 19 } },
+                                    { /* Coeff Band 3 */
+                                            { 55, 153, 210 }, { 24, 130, 194 }, { 3, 93, 146 }, { 1, 61, 97 },
+                                            { 1, 31, 50 }, { 1, 10, 16 } },
+                                    { /* Coeff Band 4 */
+                                            { 49, 186, 223 }, { 17, 148, 204 }, { 1, 96, 142 }, { 1, 53, 83 },
+                                            { 1, 26, 44 }, { 1, 11, 17 } },
+                                    { /* Coeff Band 5 */
+                                            { 13, 217, 212 }, { 2, 136, 180 }, { 1, 78, 124 }, { 1, 50, 83 },
+                                            { 1, 29, 49 }, { 1, 14, 23 } } },
+                            { /* Inter */
+                                    { /* Coeff Band 0 */
+                                            { 197, 13, 247 }, { 82, 17, 222 }, { 25, 17, 162 }, { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 }, // unused
+                                            { 0, 0, 0 } // unused
+                                    }, { /* Coeff Band 1 */
+                                            { 126, 186, 247 }, { 234, 191, 243 }, { 176, 177, 234 }, { 104, 158, 220 },
+                                            { 66, 128, 186 }, { 55, 90, 137 } },
+                                    { /* Coeff Band 2 */
+                                            { 111, 197, 242 }, { 46, 158, 219 }, { 9, 104, 171 }, { 2, 65, 125 },
+                                            { 1, 44, 80 }, { 1, 17, 91 } },
+                                    { /* Coeff Band 3 */
+                                            { 104, 208, 245 }, { 39, 168, 224 }, { 3, 109, 162 }, { 1, 79, 124 },
+                                            { 1, 50, 102 }, { 1, 43, 102 } },
+                                    { /* Coeff Band 4 */
+                                            { 84, 220, 246 }, { 31, 177, 231 }, { 2, 115, 180 }, { 1, 79, 134 },
+                                            { 1, 55, 77 }, { 1, 60, 79 } },
+                                    { /* Coeff Band 5 */
+                                            { 43, 243, 240 }, { 8, 180, 217 }, { 1, 115, 166 }, { 1, 84, 121 },
+                                            { 1, 51, 67 }, { 1, 16, 6 } } } } }
 
-    public static final int[][] defaultMvBitsProb = new int[][] {
-            { 136, 140, 148, 160, 176, 192, 224, 234, 234, 240 },
+    };
+
+    public static final int[] defaultMvJointProbs = new int[] { 32, 64, 96 };
+
+    public static final int[][] defaultMvBitsProb = new int[][] { { 136, 140, 148, 160, 176, 192, 224, 234, 234, 240 },
             { 136, 140, 148, 160, 176, 192, 224, 234, 234, 240 } };
 
     public static final int[] defaultMvClass0BitProb = new int[] { 216, 208 };
 
     public static final int[] defaultMvClass0HpProb = { 160, 160 };
-    
-	public static final int[] defaultMvSignProb = { 128, 128 };
 
-	public static final int[][] defaultMvClassProbs = { { 224, 144, 192, 168, 192, 176, 192, 198, 198, 245 },
-			{ 216, 128, 176, 160, 176, 176, 192, 198, 198, 208 } };
+    public static final int[] defaultMvSignProb = { 128, 128 };
 
-	public static final int[][][] defaultMvClass0FrProbs = { { { 128, 128, 64 }, { 96, 112, 64 } },
-			{ { 128, 128, 64 }, { 96, 112, 64 } } };
-	public static final int[][] defaultMvFrProbs = { { 64, 96, 64 }, { 64, 96, 64 } };
-	public static final int[] defaultMvHpProb = { 128, 128 };
-	
-	public static final int[][] defaultInterModeProbs = new int[][] { { 2, 173, 34 }, { 7, 145, 85 }, { 7, 166, 63 },
-        { 7, 94, 66 }, { 8, 64, 46 }, { 17, 81, 31 }, { 25, 29, 30 }, };
-        
-	public static final int[][] defaultInterpFilterProbs = new int[][] { { 235, 162 }, { 36, 255 }, { 34, 3 },
-			{ 149, 144 } };
-			
+    public static final int[][] defaultMvClassProbs = { { 224, 144, 192, 168, 192, 176, 192, 198, 198, 245 },
+            { 216, 128, 176, 160, 176, 176, 192, 198, 198, 208 } };
+
+    public static final int[][][] defaultMvClass0FrProbs = { { { 128, 128, 64 }, { 96, 112, 64 } },
+            { { 128, 128, 64 }, { 96, 112, 64 } } };
+    public static final int[][] defaultMvFrProbs = { { 64, 96, 64 }, { 64, 96, 64 } };
+    public static final int[] defaultMvHpProb = { 128, 128 };
+
+    public static final int[][] defaultInterModeProbs = new int[][] { { 2, 173, 34 }, { 7, 145, 85 }, { 7, 166, 63 },
+            { 7, 94, 66 }, { 8, 64, 46 }, { 17, 81, 31 }, { 25, 29, 30 }, };
+
+    public static final int[][] defaultInterpFilterProbs = new int[][] { { 235, 162 }, { 36, 255 }, { 34, 3 },
+            { 149, 144 } };
+
     public static final int[] defaultIsInterProbs = new int[] { 9, 102, 187, 225 };
-    
 
     private static final int[][] defaultPartitionProbs = new int[][] {
             // 8x8 -> 4x4
@@ -492,7 +486,7 @@ public class DecodingContext {
     };
 
     public static final int[][][] kfYmodeProbs = new int[][][] { { // above =
-                                                                      // dc
+                                                                   // dc
             { 137, 30, 42, 148, 151, 207, 70, 52, 91 }, // left = dc
             { 92, 45, 102, 136, 116, 180, 74, 90, 100 }, // left = v
             { 73, 32, 19, 187, 222, 215, 46, 34, 100 }, // left = h
@@ -503,8 +497,7 @@ public class DecodingContext {
             { 86, 27, 28, 128, 154, 212, 45, 43, 53 }, // left = d207
             { 74, 32, 27, 107, 86, 160, 63, 134, 102 }, // left = d63
             { 59, 67, 44, 140, 161, 202, 78, 67, 119 } // left = tm
-            },
-            { // above = v
+            }, { // above = v
                     { 63, 36, 126, 146, 123, 158, 60, 90, 96 }, // left = dc
                     { 43, 46, 168, 134, 107, 128, 69, 142, 92 }, // left = v
                     { 44, 29, 68, 159, 201, 177, 50, 57, 77 }, // left = h
@@ -606,8 +599,8 @@ public class DecodingContext {
             } };
 
     public static final int[][] kfUvModeProbs = new int[][] { { 144, 11, 54, 157, 195, 130, 46, 58, 108 }, // y
-                                                                                                              // =
-                                                                                                              // dc
+                                                                                                           // =
+                                                                                                           // dc
             { 118, 15, 123, 148, 131, 101, 44, 93, 131 }, // y = v
             { 113, 12, 23, 188, 226, 142, 26, 32, 125 }, // y = h
             { 120, 11, 50, 123, 163, 135, 64, 77, 103 }, // y = d45
@@ -619,16 +612,16 @@ public class DecodingContext {
             { 102, 19, 66, 162, 182, 122, 35, 59, 128 } // y = tm
     };
     public static final int[][] defaultYModeProbs = new int[][] { { 65, 32, 18, 144, 162, 194, 41, 51, 98 }, // block_size
-                                                                                                                // <
-                                                                                                                // 8x8
+                                                                                                             // <
+                                                                                                             // 8x8
             { 132, 68, 18, 165, 217, 196, 45, 40, 78 }, // block_size < 16x16
             { 173, 80, 19, 176, 240, 193, 64, 35, 46 }, // block_size < 32x32
             { 221, 135, 38, 194, 248, 121, 96, 85, 29 } // block_size >= 32x32
     };
 
     public static final int[][] defaultUvModeProbs = new int[][] { { 120, 7, 76, 176, 208, 126, 28, 54, 103 }, // y
-                                                                                                                  // =
-                                                                                                                  // dc
+                                                                                                               // =
+                                                                                                               // dc
             { 48, 12, 154, 155, 139, 90, 34, 117, 119 }, // y = v
             { 67, 6, 25, 204, 243, 158, 13, 21, 96 }, // y = h
             { 97, 5, 44, 131, 176, 139, 48, 68, 97 }, // y = d45
@@ -640,941 +633,928 @@ public class DecodingContext {
             { 101, 21, 107, 181, 192, 103, 19, 67, 125 } // y = tm
     };
 
-    public static final int[][] defaultSingleRefProb = new int[][] { { 33, 16 }, { 77, 74 }, { 142, 142 },
-            { 172, 170 }, { 238, 247 } };
+    public static final int[][] defaultSingleRefProb = new int[][] { { 33, 16 }, { 77, 74 }, { 142, 142 }, { 172, 170 },
+            { 238, 247 } };
 
     public static final int[] defaultCompRefProb = new int[] { 50, 126, 123, 221, 226 };
+    private int colorRange;
+    int[][] aboveNonzeroContext;
+    int[][] leftNonzeroContext;
 
-	/**
-	 * Reads VP9 frame headers and creates the decoding context
-	 * 
-	 * @param bb
-	 *            ByteBuffer with the encoded frame, after the call to this function
-	 *            the header portion of this buffer will be read and the byte buffer
-	 *            will be pointing at the first compressed frame byte after the
-	 *            headers.
-	 * @return Initialized DecodingContext object that can be used for decoding the
-	 *         compressed VP9 frame.
-	 */
-	public static DecodingContext createFromHeaders(ByteBuffer bb) {
-		DecodingContext dc = new DecodingContext();
-		int compressedHeaderSize = dc.readUncompressedHeader(bb);
-		dc.readCompressedHeader(NIOUtils.read(bb, compressedHeaderSize));
-		return dc;
-	}
+    /**
+     * Reads VP9 frame headers and creates the decoding context
+     * 
+     * @param bb
+     *            ByteBuffer with the encoded frame, after the call to this function
+     *            the header portion of this buffer will be read and the byte buffer
+     *            will be pointing at the first compressed frame byte after the
+     *            headers.
+     * @return Initialized DecodingContext object that can be used for decoding the
+     *         compressed VP9 frame.
+     */
+    public static DecodingContext createFromHeaders(ByteBuffer bb) {
+        DecodingContext dc = new DecodingContext();
+        int compressedHeaderSize = dc.readUncompressedHeader(bb);
+        dc.readCompressedHeader(NIOUtils.read(bb, compressedHeaderSize));
+        return dc;
+    }
 
-	protected DecodingContext() {
-		ArrayUtil.copy1D(skipProbs, defaultSkipProb);
-		ArrayUtil.copy2D(tx8x8Probs, defaultTxProbs8x8);
-		ArrayUtil.copy2D(tx6x16Probs, defaultTxProbs16x16);
-		ArrayUtil.copy2D(tx32x32Probs, defaultTxProbs32x32);
+    protected DecodingContext() {
+        ArrayUtil.copy1D(skipProbs, defaultSkipProb);
+        ArrayUtil.copy2D(tx8x8Probs, defaultTxProbs8x8);
+        ArrayUtil.copy2D(tx6x16Probs, defaultTxProbs16x16);
+        ArrayUtil.copy2D(tx32x32Probs, defaultTxProbs32x32);
 
-		coefProbs = new int[4][2][2][6][][];
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < 2; j++) {
-				for (int k = 0; k < 2; k++) {
-					coefProbs[i][j][k][0] = new int[3][3];
-					for (int l = 1; l < 6; l++) {
-						coefProbs[i][j][k][l] = new int[6][3];
-					}
-				}
-			}
-		}
+        coefProbs = new int[4][2][2][6][][];
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 2; j++) {
+                for (int k = 0; k < 2; k++) {
+                    coefProbs[i][j][k][0] = new int[3][3];
+                    for (int l = 1; l < 6; l++) {
+                        coefProbs[i][j][k][l] = new int[6][3];
+                    }
+                }
+            }
+        }
 
-		ArrayUtil.copy6D(coefProbs, defaultCoefProbs);
-		
-		ArrayUtil.copy1D(mvJointProbs, defaultMvJointProbs);
-		ArrayUtil.copy1D(mvSignProbs, defaultMvSignProb);
-		ArrayUtil.copy2D(mvClassProbs, defaultMvClassProbs);
-		ArrayUtil.copy1D(mvClass0BitProbs, defaultMvClass0BitProb);
-		ArrayUtil.copy2D(mvBitsProbs, defaultMvBitsProb);
-		ArrayUtil.copy3D(mvClass0FrProbs, defaultMvClass0FrProbs);
-		ArrayUtil.copy2D(mvFrProbs, defaultMvFrProbs);
-		ArrayUtil.copy1D(mvClass0HpProb, defaultMvClass0HpProb);
-		ArrayUtil.copy1D(mvHpProbs, defaultMvHpProb);
-		
-		ArrayUtil.copy2D(interModeProbs, defaultInterModeProbs);
-		ArrayUtil.copy2D(interpFilterProbs, defaultInterpFilterProbs);
-		
-		ArrayUtil.copy1D(isInterProbs, defaultIsInterProbs);
-		
-		ArrayUtil.copy2D(singleRefProbs, defaultSingleRefProb);
-		
-		ArrayUtil.copy2D(yModeProbs, defaultYModeProbs);
-		ArrayUtil.copy2D(uvModeProbs, defaultUvModeProbs);
-		
-		ArrayUtil.copy2D(partitionProbs, defaultPartitionProbs);
-		
-		ArrayUtil.copy1D(compRefProbs, defaultCompRefProb);
-	}
+        ArrayUtil.copy6D(coefProbs, defaultCoefProbs);
 
-	public boolean isKeyIntraFrame() {
-		return false;
-	}
+        ArrayUtil.copy1D(mvJointProbs, defaultMvJointProbs);
+        ArrayUtil.copy1D(mvSignProbs, defaultMvSignProb);
+        ArrayUtil.copy2D(mvClassProbs, defaultMvClassProbs);
+        ArrayUtil.copy1D(mvClass0BitProbs, defaultMvClass0BitProb);
+        ArrayUtil.copy2D(mvBitsProbs, defaultMvBitsProb);
+        ArrayUtil.copy3D(mvClass0FrProbs, defaultMvClass0FrProbs);
+        ArrayUtil.copy2D(mvFrProbs, defaultMvFrProbs);
+        ArrayUtil.copy1D(mvClass0HpProb, defaultMvClass0HpProb);
+        ArrayUtil.copy1D(mvHpProbs, defaultMvHpProb);
 
-	public boolean isSegmentationEnabled() {
-		return false;
-	}
+        ArrayUtil.copy2D(interModeProbs, defaultInterModeProbs);
+        ArrayUtil.copy2D(interpFilterProbs, defaultInterpFilterProbs);
 
-	public boolean isUpdateSegmentMap() {
-		return false;
-	}
+        ArrayUtil.copy1D(isInterProbs, defaultIsInterProbs);
 
-	public boolean isSegmentFeatureActive(int segmentId, int segLvlSkip) {
-		return false;
-	}
+        ArrayUtil.copy2D(singleRefProbs, defaultSingleRefProb);
 
-	public boolean isSegmentMapConditionalUpdate() {
-		return false;
-	}
+        ArrayUtil.copy2D(yModeProbs, defaultYModeProbs);
+        ArrayUtil.copy2D(uvModeProbs, defaultUvModeProbs);
 
-	public int getSegmentFeature(int segmentId, int segLvlRefFrame) {
-		return 0;
-	}
+        ArrayUtil.copy2D(partitionProbs, defaultPartitionProbs);
 
-	public int getCompFixedRef() {
-		return 0;
-	}
+        ArrayUtil.copy1D(compRefProbs, defaultCompRefProb);
+    }
 
-	public int refFrameSignBias(int fixedRef) {
-		return 0;
-	}
+    public boolean isKeyIntraFrame() {
+        return false;
+    }
 
-	public int getInterpFilter() {
-		return 0;
-	}
+    public boolean isSegmentationEnabled() {
+        return false;
+    }
 
-	public int getRefMode() {
-		return 0;
-	}
+    public boolean isUpdateSegmentMap() {
+        return false;
+    }
 
-	public long[][] getLeftMVs() {
-		return null;
-	}
+    public boolean isSegmentFeatureActive(int segmentId, int segLvlSkip) {
+        return false;
+    }
 
-	public long[][] getAboveMVs() {
-		return null;
-	}
+    public boolean isSegmentMapConditionalUpdate() {
+        return false;
+    }
 
-	public long[][] getAboveLeftMVs() {
-		return null;
-	}
+    public int getSegmentFeature(int segmentId, int segLvlRefFrame) {
+        return 0;
+    }
 
-	public long[] getLeft4x4MVs() {
-		return null;
-	}
+    public int getCompFixedRef() {
+        return 0;
+    }
 
-	public long[] getAbove4x4MVs() {
-		return null;
-	}
+    public int refFrameSignBias(int fixedRef) {
+        return 0;
+    }
 
-	public boolean[] getAboveCompound() {
-		return null;
-	}
+    public int getInterpFilter() {
+        return 0;
+    }
 
-	public boolean[] getLeftCompound() {
-		return null;
-	}
+    public int getRefMode() {
+        return 0;
+    }
 
-	public int[][][] getRefs() {
-		return null;
-	}
+    public long[][] getLeftMVs() {
+        return null;
+    }
 
-	public boolean isAllowHpMv() {
-		return false;
-	}
+    public long[][] getAboveMVs() {
+        return null;
+    }
 
-	public boolean isUsePrevFrameMvs() {
-		return false;
-	}
+    public long[][] getAboveLeftMVs() {
+        return null;
+    }
 
-	public long[][] getPrevFrameMv() {
-		return null;
-	}
+    public long[] getLeft4x4MVs() {
+        return null;
+    }
 
-	public int getMiFrameHeight() {
-		return 0;
-	}
+    public long[] getAbove4x4MVs() {
+        return null;
+    }
 
-	public int getMiFrameWidth() {
-		return 0;
-	}
+    public boolean[] getAboveCompound() {
+        return null;
+    }
 
-	public int getTileStart() {
-		return 0;
-	}
+    public boolean[] getLeftCompound() {
+        return null;
+    }
+
+    public int[][][] getRefs() {
+        return null;
+    }
+
+    public boolean isAllowHpMv() {
+        return false;
+    }
+
+    public boolean isUsePrevFrameMvs() {
+        return false;
+    }
+
+    public long[][] getPrevFrameMv() {
+        return null;
+    }
+
+    public int getMiFrameWidth() {
+        return (frameWidth + 7) >> 3;
+    }
+    
+    public int getMiFrameHeight() {
+        return (frameHeight + 7) >> 3;
+    }
+
+    public int getTileStart() {
+        return 0;
+    }
 
     public int[] getLeftInterpFilters() {
         return null;
     }
 
-	public int[] getAboveInterpFilters() {
-		return null;
-	}
-
-	public int[] getLeftLumaModes() {
-		return null;
-	}
-
-	public int[] getAboveLumaModes() {
-		return null;
-	}
-
-	public int getMiTileHeight() {
-		return tileHeight;
-	}
-
-	public int getMiTileWidth() {
-		return tileWidth;
-	}
-
-	public int getCompVarRef(int i) {
-		return 0;
-	}
-
-	public int[] getAboveIntraModes() {
-		return null;
-	}
-
-	public int[] getLeftIntraModes() {
-		return null;
-	}
-
-	public int getTxMode() {
-		return txMode;
-	}
-
-	public int[][] getTxSizes() {
-		return null;
-	}
-
-	public boolean[][] getSkippedBlockes() {
-		return null;
-	}
-
-	public boolean[] getAboveSegIdPredicted() {
-		return null;
-	}
-
-	public boolean[] getLeftSegIdPredicted() {
-		return null;
-	}
-
-	public int[][] getPrevSegmentIds() {
-		return null;
-	}
-
-	public int getSubX() {
-		return 0;
-	}
-
-	public int getSubY() {
-		return 0;
-	}
-
-	public int[] getScan(int plane, int txSz, int blockIdx) {
-		return null;
-	}
-
-	public int getTxType(int plane, int txSz, int blockIdx) {
-		return 0;
-	}
-
-	public int getBitDepth() {
-		return 0;
-	}
-
-	public int[][] getAboveNonzeroContext() {
-		return null;
-	}
-
-	public int[][] getLeftNonzeroContext() {
-		return null;
-	}
-
-	public int[] getTokenCache() {
-		return null;
-	}
-
-	public int[] getLeftPartitionSizes() {
-		return leftPartitionSizes;
-	}
-
-	public int[] getAbovePartitionSizes() {
-		return abovePartitionSizes;
-	}
-
-	/**
-	 * Reads the uncompressed header of the frame. Will consume only the portion of
-	 * the frame data that contains the uncompressed header. The ByteBuffer will be
-	 * pointing at the first byte after the uncompressed header.
-	 * 
-	 * @param bb
-	 *            The data for the frame.
-	 * 
-	 * @return Size in bytes of the compressed header following this uncompressed
-	 *         header.
-	 */
-	protected int readUncompressedHeader(ByteBuffer bb) {
-		BitReader br = BitReader.createBitReader(bb);
-
-		int frame_marker = br.readNBit(2);
-		profile = br.read1Bit() | (br.read1Bit() << 1);
-		if (profile == 3)
-			br.read1Bit();
-		showExistingFrame = br.read1Bit();
-		if (showExistingFrame == 1) {
-			frameToShowMapIdx = br.readNBit(3);
-		}
-		frameType = br.read1Bit();
-		showFrame = br.read1Bit();
-		errorResilientMode = br.read1Bit();
-		if (frameType == KEY_FRAME) {
-			frame_sync_code(br);
-			readColorConfig(br);
-			readFrameSize(br);
-			readRenderSize(br);
-			refreshFrameFlags = 0xFF;
-			frameIsIntra = 1;
-		} else {
-			intraOnly = 0;
-			if (showFrame == 0) {
-				intraOnly = br.read1Bit();
-			}
-			resetFrameContext = 0;
-			if (errorResilientMode == 0) {
-				resetFrameContext = br.readNBit(2);
-			}
-			if (intraOnly == 1) {
-				frame_sync_code(br);
-				if (profile > 0) {
-					readColorConfig(br);
-				} else {
-					colorSpace = CS_BT_601;
-					subsamplingX = 1;
-					subsamplingY = 1;
-					bitDepth = 8;
-				}
-				refreshFrameFlags = br.readNBit(8);
-				readFrameSize(br);
-				readRenderSize(br);
-			} else {
-				int refreshFrameFlags = br.readNBit(8);
-
-				for (int i = 0; i < 3; i++) {
-					refFrameIdx[i] = br.readNBit(3);
-					refFrameSignBias[LAST_FRAME + i] = br.read1Bit();
-				}
-				readFrameSizeWithRefs(br);
-				allowHighPrecisionMv = br.read1Bit();
-				readInterpolationFilter(br);
-			}
-		}
-		refreshFrameContext = 0;
-		if (errorResilientMode == 0) {
-			refreshFrameContext = br.read1Bit();
-			frameParallelDecodingMode = br.read1Bit();
-		}
-		frameContextIdx = br.readNBit(2);
-		readLoopFilterParams(br);
-		readQuantizationParams(br);
-		readSegmentationParams(br);
-		readTileInfo(br);
-		int headerSizeInBytes = br.readNBit(16);
-		br.terminate();
-
-		return headerSizeInBytes;
-	}
-
-	void computeImageSize() {
-		miCols = (frameWidth + 7) >> 3;
-		miRows = (frameHeight + 7) >> 3;
-		sb64Cols = (miCols + 7) >> 3;
-		sb64Rows = (miRows + 7) >> 3;
-	}
-
-	int calc_min_log2_tile_cols() {
-		int minLog2 = 0;
-		while ((MAX_TILE_WIDTH_B64 << minLog2) < sb64Cols)
-			minLog2++;
-		return minLog2;
-	}
-
-	int calc_max_log2_tile_cols() {
-		int maxLog2 = 1;
-		while ((sb64Cols >> maxLog2) >= MIN_TILE_WIDTH_B64)
-			maxLog2++;
-		return maxLog2 - 1;
-	}
-
-	private void readTileInfo(BitReader br) {
-		int minLog2TileCols = calc_min_log2_tile_cols();
-		int maxLog2TileCols = calc_max_log2_tile_cols();
-		tileColsLog2 = minLog2TileCols;
-		while (tileColsLog2 < maxLog2TileCols) {
-			int increment_tile_cols_log2 = br.read1Bit();
-			if (increment_tile_cols_log2 == 1)
-				tileColsLog2++;
-			else
-				break;
-		}
-		tileRowsLog2 = br.read1Bit();
-		if (tileRowsLog2 == 1) {
-			int increment_tile_rows_log2 = br.read1Bit();
-			tileRowsLog2 += increment_tile_rows_log2;
-		}
-	}
-
-	private static int readProb(BitReader br) {
-		if (br.read1Bit() == 1) {
-			return br.readNBit(8);
-		} else {
-			return 255;
-		}
-	}
-
-	private void readSegmentationParams(BitReader br) {
-		segmentationEnabled = br.read1Bit();
-		if (segmentationEnabled == 1) {
-			if (br.read1Bit() == 1) {
-				for (int i = 0; i < 7; i++)
-					segmentationTreeProbs[i] = readProb(br);
-				int segmentationTemporalUpdate = br.read1Bit();
-				for (int i = 0; i < 3; i++)
-					segmentationPredProbs[i] = segmentationTemporalUpdate == 1 ? readProb(br) : 255;
-			}
-			if (br.read1Bit() == 1) {
-				int segmentationAbsOrDeltaUpdate = br.read1Bit();
-				for (int i = 0; i < MAX_SEGMENTS; i++) {
-					for (int j = 0; j < SEG_LVL_MAX; j++) {
-						if (br.read1Bit() == 1) {
-							featureEnabled[i][j] = 1;
-							int bits_to_read = SEGMENTATION_FEATURE_BITS[j];
-							int value = br.readNBit(bits_to_read);
-							if (SEGMENTATION_FEATURE_SIGNED[j] == 1) {
-								if (br.read1Bit() == 1)
-									value *= -1;
-							}
-							featureData[i][j] = value;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private static int readDeltaQ(BitReader br) {
-		int delta_coded = br.read1Bit();
-		if (delta_coded == 1) {
-			return br.readNBitSigned(4);
-		} else {
-			return 0;
-		}
-	}
-
-	private void readQuantizationParams(BitReader br) {
-		baseQIdx = br.readNBit(8);
-		deltaQYDc = readDeltaQ(br);
-		deltaQUvDc = readDeltaQ(br);
-		deltaQUvAc = readDeltaQ(br);
-		lossless = baseQIdx == 0 && deltaQYDc == 0 && deltaQUvDc == 0 && deltaQUvAc == 0;
-	}
-
-	private void readLoopFilterParams(BitReader br) {
-		filterLevel = br.readNBit(6);
-		sharpnessLevel = br.readNBit(3);
-		int modeRefDeltaEnabled = br.read1Bit();
-		if (modeRefDeltaEnabled == 1) {
-			int modeRefDeltaUpdate = br.read1Bit();
-			if (modeRefDeltaUpdate == 1) {
-				for (int i = 0; i < 4; i++) {
-					if (br.read1Bit() == 1)
-						loopFilterRefDeltas[i] = br.readNBitSigned(6);
-				}
-				for (int i = 0; i < 2; i++) {
-					if (br.read1Bit() == 1)
-						loopFilterModeDeltas[i] = br.readNBitSigned(6);
-				}
-			}
-		}
-	}
-
-	private void readInterpolationFilter(BitReader br) {
-		interpolationFilter = SWITCHABLE;
-		if (br.read1Bit() == 0) {
-			interpolationFilter = LITERAL_TO_FILTER_TYPE[br.readNBit(2)];
-		}
-	}
-
-	private void readFrameSizeWithRefs(BitReader br) {
-		int i;
-		for (i = 0; i < 3; i++) {
-			if (br.read1Bit() == 1) {
-				frameWidth = refFrameWidth[refFrameIdx[i]];
-				frameHeight = refFrameHeight[refFrameIdx[i]];
-				break;
-			}
-		}
-		if (i == 3) {
-			readFrameSize(br);
-		} else {
-			computeImageSize();
-		}
-		readRenderSize(br);
-	}
-
-	private void readRenderSize(BitReader br) {
-		if (br.read1Bit() == 1) {
-			renderWidth = br.readNBit(16) + 1;
-			renderHeight = br.readNBit(16) + 1;
-		} else {
-			renderWidth = frameWidth;
-			renderHeight = frameHeight;
-		}
-	}
-
-	private void readFrameSize(BitReader br) {
-		frameWidth = br.readNBit(16) + 1;
-		frameHeight = br.readNBit(16) + 1;
-		computeImageSize();
-	}
-
-	private void readColorConfig(BitReader br) {
-		if (profile >= 2) {
-			int ten_or_twelve_bit = br.read1Bit();
-			bitDepth = ten_or_twelve_bit == 1 ? 12 : 10;
-		} else {
-			bitDepth = 8;
-		}
-		int colorSpace = br.readNBit(3);
-		if (colorSpace != CS_RGB) {
-			int color_range = br.read1Bit();
-			if (profile == 1 || profile == 3) {
-				subsamplingX = br.read1Bit();
-				subsamplingY = br.read1Bit();
-				int reserved_zero = br.read1Bit();
-			} else {
-				subsamplingX = 1;
-				subsamplingY = 1;
-			}
-		} else {
-			int colorRange = 1;
-			if (profile == 1 || profile == 3) {
-				subsamplingX = 0;
-				subsamplingY = 0;
-				int reserved_zero = br.read1Bit();
-			}
-		}
-	}
-
-	private static void frame_sync_code(BitReader br) {
-		int code = br.readNBit(24);
-	}
-
-	/**
-	 * Reads compressed header of the frame. This header mostly contains probability
-	 * updates.
-	 * 
-	 * @param boolDec
-	 */
-	protected void readCompressedHeader(ByteBuffer compressedHeader) {
-		VPXBooleanDecoder boolDec = new VPXBooleanDecoder(compressedHeader, 0);
-
-		if (boolDec.readBitEq() != 0)
-			throw new RuntimeException("Invalid marker bit");
-
-		readTxMode(boolDec);
-//		int maxTxSize = tx_mode_to_biggest_tx_size[txMode];
-
-		if (txMode == TX_MODE_SELECT) {
-			readTxModeProbs(boolDec);
-		}
-		readCoefProbs(boolDec);
-		readSkipProb(boolDec);
-		if (frameIsIntra == 0) {
-			readInterModeProbs(boolDec);
-			if (interpolationFilter == SWITCHABLE)
-				readInterpFilterProbs(boolDec);
-			readIsInterProbs(boolDec);
-			frameReferenceMode(boolDec);
-			frameReferenceModeProbs(boolDec);
-			readYModeProbs(boolDec);
-			readPartitionProbs(boolDec);
-			mvProbs(boolDec);
-		}
-	}
-
-	private void readTxMode(VPXBooleanDecoder boolDec) {
-		if (lossless) {
-			txMode = ONLY_4X4;
-		} else {
-			txMode = boolDec.decodeInt(2);
-			if (txMode == ALLOW_32X32) {
-				txMode += boolDec.decodeInt(1);
-			}
-		}
-	}
-
-	private void readTxModeProbs(VPXBooleanDecoder boolDec) {
-		for (int i = 0; i < TX_SIZE_CONTEXTS; i++)
-			for (int j = 0; j < TX_SIZES - 3; j++) {
-				tx8x8Probs[i][j] = diffUpdateProb(boolDec, tx8x8Probs[i][j]);
-			}
-		for (int i = 0; i < TX_SIZE_CONTEXTS; i++)
-			for (int j = 0; j < TX_SIZES - 2; j++) {
-				tx6x16Probs[i][j] = diffUpdateProb(boolDec, tx6x16Probs[i][j]);
-			}
-		for (int i = 0; i < TX_SIZE_CONTEXTS; i++)
-			for (int j = 0; j < TX_SIZES - 1; j++) {
-				tx32x32Probs[i][j] = diffUpdateProb(boolDec, tx32x32Probs[i][j]);
-			}
-	}
-
-	private int diffUpdateProb(VPXBooleanDecoder boolDec, int prob) {
-		int update_prob = boolDec.readBit(252);
-		if (update_prob == 1) {
-			int deltaProb = decodeTermSubexp(boolDec);
-			prob = invRemapProb(deltaProb, prob);
-		}
-		return prob;
-	}
-
-	private int decodeTermSubexp(VPXBooleanDecoder boolDec) {
-		int bit = boolDec.readBitEq();
-		if (bit == 0) {
-			return boolDec.decodeInt(4);
-		}
-		bit = boolDec.readBitEq();
-		if (bit == 0) {
-			return boolDec.decodeInt(4) + 16;
-		}
-		bit = boolDec.readBitEq();
-		if (bit == 0) {
-			return boolDec.decodeInt(5) + 32;
-		}
-		int v = boolDec.decodeInt(7);
-		if (v < 65)
-			return v + 64;
-		bit = boolDec.readBitEq();
-		return (v << 1) - 1 + bit;
-	}
-
-	private int invRemapProb(int deltaProb, int prob) {
-		int m = prob;
-		int v = deltaProb;
-		v = INV_REMAP_TABLE[v];
-		m--;
-		if ((m << 1) <= 255)
-			m = 1 + invRecenterNonneg(v, m);
-		else
-			m = 255 - invRecenterNonneg(v, 255 - 1 - m);
-		return m;
-	}
-
-	private int invRecenterNonneg(int v, int m) {
-		if (v > 2 * m)
-			return v;
-		if ((v & 1) != 0)
-			return m - ((v + 1) >> 1);
-		return m + (v >> 1);
-	}
-
-	private void readCoefProbs(VPXBooleanDecoder boolDec) {
-		int maxTxSize = tx_mode_to_biggest_tx_size[txMode];
-		for (int txSz = TX_4X4; txSz <= maxTxSize; txSz++) {
-			int update_probs = boolDec.readBitEq();
-			if (update_probs == 1) {
-				for (int i = 0; i < 2; i++) {
-					for (int j = 0; j < 2; j++) {
-						for (int k = 0; k < 6; k++) {
-							int maxL = (k == 0) ? 3 : 6;
-							for (int l = 0; l < maxL; l++) {
-								for (int m = 0; m < 3; m++) {
-									coefProbs[txSz][i][j][k][l][m] = diffUpdateProb(boolDec,
-											coefProbs[txSz][i][j][k][l][m]);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private void readSkipProb(VPXBooleanDecoder boolDec) {
-		for (int i = 0; i < SKIP_CONTEXTS; i++) {
-			skipProbs[i] = diffUpdateProb(boolDec, skipProbs[i]);
-		}
-	}
-
-	private void readInterModeProbs(VPXBooleanDecoder boolDec) {
-		for (int i = 0; i < INTER_MODE_CONTEXTS; i++)
-			for (int j = 0; j < INTER_MODES - 1; j++)
-				interModeProbs[i][j] = diffUpdateProb(boolDec, interModeProbs[i][j]);
-	}
-
-	private void readInterpFilterProbs(VPXBooleanDecoder boolDec) {
-		for (int j = 0; j < INTERP_FILTER_CONTEXTS; j++)
-			for (int i = 0; i < SWITCHABLE_FILTERS - 1; i++)
-				interpFilterProbs[j][i] = diffUpdateProb(boolDec, interpFilterProbs[j][i]);
-	}
-
-	private void readIsInterProbs(VPXBooleanDecoder boolDec) {
-		for (int i = 0; i < IS_INTER_CONTEXTS; i++)
-			isInterProbs[i] = diffUpdateProb(boolDec, isInterProbs[i]);
-	}
-
-	private void frameReferenceMode(VPXBooleanDecoder boolDec) {
-		int compoundReferenceAllowed = 0;
-		for (int i = 1; i < REFS_PER_FRAME; i++)
-			if (refFrameSignBias[i] != refFrameSignBias[0])
-				compoundReferenceAllowed = 1;
-		if (compoundReferenceAllowed == 1) {
-			int non_single_reference = boolDec.readBitEq();
-			if (non_single_reference == 0) {
-				referenceMode = SINGLE_REF;
-			} else {
-				int reference_select = boolDec.readBitEq();
-				if (reference_select == 0)
-					referenceMode = COMPOUND_REF;
-				else
-					referenceMode = REFERENCE_MODE_SELECT;
-				setupCompoundReferenceMode();
-			}
-		} else {
-			referenceMode = SINGLE_REF;
-		}
-	}
-
-	private void frameReferenceModeProbs(VPXBooleanDecoder boolDec) {
-		if (referenceMode == REFERENCE_MODE_SELECT) {
-			for (int i = 0; i < COMP_MODE_CONTEXTS; i++)
-				compModeProbs[i] = diffUpdateProb(boolDec, compModeProbs[i]);
-		}
-		if (referenceMode != COMPOUND_REF) {
-			for (int i = 0; i < REF_CONTEXTS; i++) {
-				singleRefProbs[i][0] = diffUpdateProb(boolDec, singleRefProbs[i][0]);
-				singleRefProbs[i][1] = diffUpdateProb(boolDec, singleRefProbs[i][1]);
-			}
-		}
-		if (referenceMode != SINGLE_REF) {
-			for (int i = 0; i < REF_CONTEXTS; i++)
-				compRefProbs[i] = diffUpdateProb(boolDec, compRefProbs[i]);
-		}
-	}
-
-	private void readYModeProbs(VPXBooleanDecoder boolDec) {
-		for (int i = 0; i < BLOCK_SIZE_GROUPS; i++)
-			for (int j = 0; j < INTRA_MODES - 1; j++)
-				yModeProbs[i][j] = diffUpdateProb(boolDec, yModeProbs[i][j]);
-	}
-
-	private void readPartitionProbs(VPXBooleanDecoder boolDec) {
-		for (int i = 0; i < PARTITION_CONTEXTS; i++)
-			for (int j = 0; j < PARTITION_TYPES - 1; j++)
-				partitionProbs[i][j] = diffUpdateProb(boolDec, partitionProbs[i][j]);
-	}
-
-	private void mvProbs(VPXBooleanDecoder boolDec) {
-		for (int j = 0; j < MV_JOINTS - 1; j++)
-			mvJointProbs[j] = updateMvProb(boolDec, mvJointProbs[j]);
-		for (int i = 0; i < 2; i++) {
-			mvSignProbs[i] = updateMvProb(boolDec, mvSignProbs[i]);
-			for (int j = 0; j < MV_CLASSES - 1; j++)
-				mvClassProbs[i][j] = updateMvProb(boolDec, mvClassProbs[i][j]);
-			mvClass0BitProbs[i] = updateMvProb(boolDec, mvClass0BitProbs[i]);
-			for (int j = 0; j < MV_OFFSET_BITS; j++)
-				mvBitsProbs[i][j] = updateMvProb(boolDec, mvBitsProbs[i][j]);
-		}
-		for (int i = 0; i < 2; i++) {
-			for (int j = 0; j < CLASS0_SIZE; j++)
-				for (int k = 0; k < MV_FR_SIZE - 1; k++)
-					mvClass0FrProbs[i][j][k] = updateMvProb(boolDec, mvClass0FrProbs[i][j][k]);
-			for (int k = 0; k < MV_FR_SIZE - 1; k++)
-				mvFrProbs[i][k] = updateMvProb(boolDec, mvFrProbs[i][k]);
-		}
-		if (allowHighPrecisionMv == 1) {
-			for (int i = 0; i < 2; i++) {
-				mvClass0HpProb[i] = updateMvProb(boolDec, mvClass0HpProb[i]);
-				mvHpProbs[i] = updateMvProb(boolDec, mvHpProbs[i]);
-			}
-		}
-	}
-
-	private int updateMvProb(VPXBooleanDecoder boolDec, int prob) {
-		int update_mv_prob = boolDec.readBit(252);
-		if (update_mv_prob == 1) {
-			int mv_prob = boolDec.decodeInt(7);
-			prob = (mv_prob << 1) | 1;
-		}
-		return prob;
-	}
-
-	private void setupCompoundReferenceMode() {
-		if (refFrameSignBias[LAST_FRAME] == refFrameSignBias[GOLDEN_FRAME]) {
-			compFixedRef = ALTREF_FRAME;
-			compVarRef0 = LAST_FRAME;
-			compVarRef1 = GOLDEN_FRAME;
-		} else if (refFrameSignBias[LAST_FRAME] == refFrameSignBias[ALTREF_FRAME]) {
-			compFixedRef = GOLDEN_FRAME;
-			compVarRef0 = LAST_FRAME;
-			compVarRef1 = ALTREF_FRAME;
-		} else {
-			compFixedRef = LAST_FRAME;
-			compVarRef0 = GOLDEN_FRAME;
-			compVarRef1 = ALTREF_FRAME;
-		}
-	}
-
-	public int getFrameContextIdx() {
-		return frameContextIdx;
-	}
-
-	public int getTileColsLog2() {
-		return tileColsLog2;
-	}
-
-	public int getTileRowsLog2() {
-		return tileRowsLog2;
-	}
-
-	public int getFrameWidth() {
-		return frameWidth;
-	}
-
-	public int getFrameHeight() {
-		return frameHeight;
-	}
-
-	public int getBaseQIdx() {
-		return baseQIdx;
-	}
-
-	public int getDeltaQYDc() {
-		return deltaQYDc;
-	}
-
-	public int getDeltaQUvDc() {
-		return deltaQUvDc;
-	}
-
-	public int getDeltaQUvAc() {
-		return deltaQUvAc;
-	}
-
-	public int getFilterLevel() {
-		return filterLevel;
-	}
-
-	public int getSharpnessLevel() {
-		return sharpnessLevel;
-	}
-
-	public int[] getSkipProbs() {
-		return skipProbs;
-	}
-
-	public int[][] getTx8x8Probs() {
-		return tx8x8Probs;
-	}
-
-	public int[][] getTx16x16Probs() {
-		return tx6x16Probs;
-	}
-
-	public int[][] getTx32x32Probs() {
-		return tx32x32Probs;
-	}
-
-	public int[][][][][][] getCoefProbs() {
-		return coefProbs;
-	}
-
-	public int[] getMvJointProbs() {
-		return mvJointProbs;
-	}
-
-	public int[] getMvSignProb() {
-		return mvSignProbs;
-	}
-
-	public int[][] getMvClassProbs() {
-		return mvClassProbs;
-	}
-
-	public int[] getMvClass0BitProbs() {
-		return mvClass0BitProbs;
-	}
-
-	public int[][] getMvBitsProb() {
-		return mvBitsProbs;
-	}
-
-	public int[][][] getMvClass0FrProbs() {
-		return mvClass0FrProbs;
-	}
-
-	public int[][] getMvFrProbs() {
-		return mvFrProbs;
-	}
-
-	public int[] getMvClass0HpProbs() {
-		return mvClass0HpProb;
-	}
-
-	public int[] getMvHpProbs() {
-		return mvHpProbs;
-	}
-
-	public int[][] getInterModeProbs() {
-		return interModeProbs;
-	}
-
-	public int[][] getInterpProbs() {
-		return interpFilterProbs;
-	}
-
-	public int[] getIsInterProbs() {
-		return isInterProbs;
-	}
-
-	public int[][] getSingleRefProbs() {
-		return singleRefProbs;
-	}
-
-	public int[][] getYModeProbs() {
-		return yModeProbs;
-	}
-
-	public int[][] getPartitionProbs() {
-		return partitionProbs;
-	}
-	
-	public int[][] getUvModeProbs() {
-		return uvModeProbs;
-	}
-	
-	public int[] getCompRefProbs() {
-		return compRefProbs;
-	}
-
-	public int[][][] getKfYModeProbs() {
-		return kfYmodeProbs;
-	}
-
-	public int[][] getKfUVModeProbs() {
-		return kfUvModeProbs;
-	}
-
-	public int[] getSegmentationTreeProbs() {
-		return segmentationTreeProbs;
-	}
-
-	public int[] getSegmentationPredProbs() {
-		return segmentationPredProbs;
-	}
-
-	public int[] getCompModeProb() {
-		return compModeProbs;
-	}
+    public int[] getAboveInterpFilters() {
+        return null;
+    }
+
+    public int[] getLeftLumaModes() {
+        return null;
+    }
+
+    public int[] getAboveLumaModes() {
+        return null;
+    }
+
+    public int getMiTileHeight() {
+        return tileHeight;
+    }
+
+    public int getMiTileWidth() {
+        return tileWidth;
+    }
+
+    public int getCompVarRef(int i) {
+        return 0;
+    }
+
+    public int[] getAboveIntraModes() {
+        return null;
+    }
+
+    public int[] getLeftIntraModes() {
+        return null;
+    }
+
+    public int getTxMode() {
+        return txMode;
+    }
+
+    public int[][] getTxSizes() {
+        return null;
+    }
+
+    public boolean[][] getSkippedBlockes() {
+        return null;
+    }
+
+    public boolean[] getAboveSegIdPredicted() {
+        return null;
+    }
+
+    public boolean[] getLeftSegIdPredicted() {
+        return null;
+    }
+
+    public int[][] getPrevSegmentIds() {
+        return null;
+    }
+
+    public int getSubsamplingX() {
+        return subsamplingX;
+    }
+
+    public int getSubsamplingY() {
+        return subsamplingY;
+    }
+
+    public int getBitDepth() {
+        return bitDepth;
+    }
+
+    public int[][] getAboveNonzeroContext() {
+        return aboveNonzeroContext;
+    }
+
+    public int[][] getLeftNonzeroContext() {
+        return leftNonzeroContext;
+    }
+
+    public int[] getLeftPartitionSizes() {
+        return leftPartitionSizes;
+    }
+
+    public int[] getAbovePartitionSizes() {
+        return abovePartitionSizes;
+    }
+
+    /**
+     * Reads the uncompressed header of the frame. Will consume only the portion of
+     * the frame data that contains the uncompressed header. The ByteBuffer will be
+     * pointing at the first byte after the uncompressed header.
+     * 
+     * @param bb
+     *            The data for the frame.
+     * 
+     * @return Size in bytes of the compressed header following this uncompressed
+     *         header.
+     */
+    protected int readUncompressedHeader(ByteBuffer bb) {
+        BitReader br = BitReader.createBitReader(bb);
+
+        int frame_marker = br.readNBit(2);
+        profile = br.read1Bit() | (br.read1Bit() << 1);
+        if (profile == 3)
+            br.read1Bit();
+        showExistingFrame = br.read1Bit();
+        if (showExistingFrame == 1) {
+            frameToShowMapIdx = br.readNBit(3);
+        }
+        frameType = br.read1Bit();
+        showFrame = br.read1Bit();
+        errorResilientMode = br.read1Bit();
+        if (frameType == KEY_FRAME) {
+            frame_sync_code(br);
+            readColorConfig(br);
+            readFrameSize(br);
+            readRenderSize(br);
+            refreshFrameFlags = 0xFF;
+            frameIsIntra = 1;
+        } else {
+            intraOnly = 0;
+            if (showFrame == 0) {
+                intraOnly = br.read1Bit();
+            }
+            resetFrameContext = 0;
+            if (errorResilientMode == 0) {
+                resetFrameContext = br.readNBit(2);
+            }
+            if (intraOnly == 1) {
+                frame_sync_code(br);
+                if (profile > 0) {
+                    readColorConfig(br);
+                } else {
+                    colorSpace = CS_BT_601;
+                    subsamplingX = 1;
+                    subsamplingY = 1;
+                    bitDepth = 8;
+                }
+                refreshFrameFlags = br.readNBit(8);
+                readFrameSize(br);
+                readRenderSize(br);
+            } else {
+                int refreshFrameFlags = br.readNBit(8);
+
+                for (int i = 0; i < 3; i++) {
+                    refFrameIdx[i] = br.readNBit(3);
+                    refFrameSignBias[LAST_FRAME + i] = br.read1Bit();
+                }
+                readFrameSizeWithRefs(br);
+                allowHighPrecisionMv = br.read1Bit();
+                readInterpolationFilter(br);
+            }
+        }
+        refreshFrameContext = 0;
+        if (errorResilientMode == 0) {
+            refreshFrameContext = br.read1Bit();
+            frameParallelDecodingMode = br.read1Bit();
+        }
+        frameContextIdx = br.readNBit(2);
+        readLoopFilterParams(br);
+        readQuantizationParams(br);
+        readSegmentationParams(br);
+        readTileInfo(br);
+        int headerSizeInBytes = br.readNBit(16);
+        br.terminate();
+
+        return headerSizeInBytes;
+    }
+
+    int calc_min_log2_tile_cols() {
+        int sb64Cols = (frameWidth + 63) >> 6;
+        int minLog2 = 0;
+        while ((MAX_TILE_WIDTH_B64 << minLog2) < sb64Cols)
+            minLog2++;
+        return minLog2;
+    }
+
+    int calc_max_log2_tile_cols() {
+        int sb64Cols = (frameWidth + 63) >> 6;
+        int maxLog2 = 1;
+        while ((sb64Cols >> maxLog2) >= MIN_TILE_WIDTH_B64)
+            maxLog2++;
+        return maxLog2 - 1;
+    }
+
+    private void readTileInfo(BitReader br) {
+        int minLog2TileCols = calc_min_log2_tile_cols();
+        int maxLog2TileCols = calc_max_log2_tile_cols();
+        tileColsLog2 = minLog2TileCols;
+        while (tileColsLog2 < maxLog2TileCols) {
+            int increment_tile_cols_log2 = br.read1Bit();
+            if (increment_tile_cols_log2 == 1)
+                tileColsLog2++;
+            else
+                break;
+        }
+        tileRowsLog2 = br.read1Bit();
+        if (tileRowsLog2 == 1) {
+            int increment_tile_rows_log2 = br.read1Bit();
+            tileRowsLog2 += increment_tile_rows_log2;
+        }
+    }
+
+    private static int readProb(BitReader br) {
+        if (br.read1Bit() == 1) {
+            return br.readNBit(8);
+        } else {
+            return 255;
+        }
+    }
+
+    private void readSegmentationParams(BitReader br) {
+        segmentationEnabled = br.read1Bit();
+        if (segmentationEnabled == 1) {
+            if (br.read1Bit() == 1) {
+                for (int i = 0; i < 7; i++)
+                    segmentationTreeProbs[i] = readProb(br);
+                int segmentationTemporalUpdate = br.read1Bit();
+                for (int i = 0; i < 3; i++)
+                    segmentationPredProbs[i] = segmentationTemporalUpdate == 1 ? readProb(br) : 255;
+            }
+            if (br.read1Bit() == 1) {
+                int segmentationAbsOrDeltaUpdate = br.read1Bit();
+                for (int i = 0; i < MAX_SEGMENTS; i++) {
+                    for (int j = 0; j < SEG_LVL_MAX; j++) {
+                        if (br.read1Bit() == 1) {
+                            featureEnabled[i][j] = 1;
+                            int bits_to_read = SEGMENTATION_FEATURE_BITS[j];
+                            int value = br.readNBit(bits_to_read);
+                            if (SEGMENTATION_FEATURE_SIGNED[j] == 1) {
+                                if (br.read1Bit() == 1)
+                                    value *= -1;
+                            }
+                            featureData[i][j] = value;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static int readDeltaQ(BitReader br) {
+        int delta_coded = br.read1Bit();
+        if (delta_coded == 1) {
+            return br.readNBitSigned(4);
+        } else {
+            return 0;
+        }
+    }
+
+    private void readQuantizationParams(BitReader br) {
+        baseQIdx = br.readNBit(8);
+        deltaQYDc = readDeltaQ(br);
+        deltaQUvDc = readDeltaQ(br);
+        deltaQUvAc = readDeltaQ(br);
+        lossless = baseQIdx == 0 && deltaQYDc == 0 && deltaQUvDc == 0 && deltaQUvAc == 0;
+    }
+
+    private void readLoopFilterParams(BitReader br) {
+        filterLevel = br.readNBit(6);
+        sharpnessLevel = br.readNBit(3);
+        int modeRefDeltaEnabled = br.read1Bit();
+        if (modeRefDeltaEnabled == 1) {
+            int modeRefDeltaUpdate = br.read1Bit();
+            if (modeRefDeltaUpdate == 1) {
+                for (int i = 0; i < 4; i++) {
+                    if (br.read1Bit() == 1)
+                        loopFilterRefDeltas[i] = br.readNBitSigned(6);
+                }
+                for (int i = 0; i < 2; i++) {
+                    if (br.read1Bit() == 1)
+                        loopFilterModeDeltas[i] = br.readNBitSigned(6);
+                }
+            }
+        }
+    }
+
+    private void readInterpolationFilter(BitReader br) {
+        interpolationFilter = SWITCHABLE;
+        if (br.read1Bit() == 0) {
+            interpolationFilter = LITERAL_TO_FILTER_TYPE[br.readNBit(2)];
+        }
+    }
+
+    private void readFrameSizeWithRefs(BitReader br) {
+        int i;
+        for (i = 0; i < 3; i++) {
+            if (br.read1Bit() == 1) {
+                frameWidth = refFrameWidth[refFrameIdx[i]];
+                frameHeight = refFrameHeight[refFrameIdx[i]];
+                break;
+            }
+        }
+        if (i == 3) {
+            readFrameSize(br);
+        }
+        readRenderSize(br);
+    }
+
+    private void readRenderSize(BitReader br) {
+        if (br.read1Bit() == 1) {
+            renderWidth = br.readNBit(16) + 1;
+            renderHeight = br.readNBit(16) + 1;
+        } else {
+            renderWidth = frameWidth;
+            renderHeight = frameHeight;
+        }
+    }
+
+    private void readFrameSize(BitReader br) {
+        frameWidth = br.readNBit(16) + 1;
+        frameHeight = br.readNBit(16) + 1;
+    }
+
+    private void readColorConfig(BitReader br) {
+        if (profile >= 2) {
+            int ten_or_twelve_bit = br.read1Bit();
+            bitDepth = ten_or_twelve_bit == 1 ? 12 : 10;
+        } else {
+            bitDepth = 8;
+        }
+        int colorSpace = br.readNBit(3);
+        if (colorSpace != CS_RGB) {
+            colorRange = br.read1Bit();
+            if (profile == 1 || profile == 3) {
+                subsamplingX = br.read1Bit();
+                subsamplingY = br.read1Bit();
+                int reserved_zero = br.read1Bit();
+            } else {
+                subsamplingX = 1;
+                subsamplingY = 1;
+            }
+        } else {
+            colorRange = 1;
+            if (profile == 1 || profile == 3) {
+                subsamplingX = 0;
+                subsamplingY = 0;
+                int reserved_zero = br.read1Bit();
+            }
+        }
+    }
+
+    private static void frame_sync_code(BitReader br) {
+        int code = br.readNBit(24);
+    }
+
+    /**
+     * Reads compressed header of the frame. This header mostly contains probability
+     * updates.
+     * 
+     * @param boolDec
+     */
+    protected void readCompressedHeader(ByteBuffer compressedHeader) {
+        VPXBooleanDecoder boolDec = new VPXBooleanDecoder(compressedHeader, 0);
+
+        if (boolDec.readBitEq() != 0)
+            throw new RuntimeException("Invalid marker bit");
+
+        readTxMode(boolDec);
+        // int maxTxSize = tx_mode_to_biggest_tx_size[txMode];
+
+        if (txMode == TX_MODE_SELECT) {
+            readTxModeProbs(boolDec);
+        }
+        readCoefProbs(boolDec);
+        readSkipProb(boolDec);
+        if (frameIsIntra == 0) {
+            readInterModeProbs(boolDec);
+            if (interpolationFilter == SWITCHABLE)
+                readInterpFilterProbs(boolDec);
+            readIsInterProbs(boolDec);
+            frameReferenceMode(boolDec);
+            frameReferenceModeProbs(boolDec);
+            readYModeProbs(boolDec);
+            readPartitionProbs(boolDec);
+            mvProbs(boolDec);
+        }
+    }
+
+    private void readTxMode(VPXBooleanDecoder boolDec) {
+        if (lossless) {
+            txMode = ONLY_4X4;
+        } else {
+            txMode = boolDec.decodeInt(2);
+            if (txMode == ALLOW_32X32) {
+                txMode += boolDec.decodeInt(1);
+            }
+        }
+    }
+
+    private void readTxModeProbs(VPXBooleanDecoder boolDec) {
+        for (int i = 0; i < TX_SIZE_CONTEXTS; i++)
+            for (int j = 0; j < TX_SIZES - 3; j++) {
+                tx8x8Probs[i][j] = diffUpdateProb(boolDec, tx8x8Probs[i][j]);
+            }
+        for (int i = 0; i < TX_SIZE_CONTEXTS; i++)
+            for (int j = 0; j < TX_SIZES - 2; j++) {
+                tx6x16Probs[i][j] = diffUpdateProb(boolDec, tx6x16Probs[i][j]);
+            }
+        for (int i = 0; i < TX_SIZE_CONTEXTS; i++)
+            for (int j = 0; j < TX_SIZES - 1; j++) {
+                tx32x32Probs[i][j] = diffUpdateProb(boolDec, tx32x32Probs[i][j]);
+            }
+    }
+
+    private int diffUpdateProb(VPXBooleanDecoder boolDec, int prob) {
+        int update_prob = boolDec.readBit(252);
+        if (update_prob == 1) {
+            int deltaProb = decodeTermSubexp(boolDec);
+            prob = invRemapProb(deltaProb, prob);
+        }
+        return prob;
+    }
+
+    private int decodeTermSubexp(VPXBooleanDecoder boolDec) {
+        int bit = boolDec.readBitEq();
+        if (bit == 0) {
+            return boolDec.decodeInt(4);
+        }
+        bit = boolDec.readBitEq();
+        if (bit == 0) {
+            return boolDec.decodeInt(4) + 16;
+        }
+        bit = boolDec.readBitEq();
+        if (bit == 0) {
+            return boolDec.decodeInt(5) + 32;
+        }
+        int v = boolDec.decodeInt(7);
+        if (v < 65)
+            return v + 64;
+        bit = boolDec.readBitEq();
+        return (v << 1) - 1 + bit;
+    }
+
+    private int invRemapProb(int deltaProb, int prob) {
+        int m = prob;
+        int v = deltaProb;
+        v = INV_REMAP_TABLE[v];
+        m--;
+        if ((m << 1) <= 255)
+            m = 1 + invRecenterNonneg(v, m);
+        else
+            m = 255 - invRecenterNonneg(v, 255 - 1 - m);
+        return m;
+    }
+
+    private int invRecenterNonneg(int v, int m) {
+        if (v > 2 * m)
+            return v;
+        if ((v & 1) != 0)
+            return m - ((v + 1) >> 1);
+        return m + (v >> 1);
+    }
+
+    private void readCoefProbs(VPXBooleanDecoder boolDec) {
+        int maxTxSize = tx_mode_to_biggest_tx_size[txMode];
+        for (int txSz = TX_4X4; txSz <= maxTxSize; txSz++) {
+            int update_probs = boolDec.readBitEq();
+            if (update_probs == 1) {
+                for (int i = 0; i < 2; i++) {
+                    for (int j = 0; j < 2; j++) {
+                        for (int k = 0; k < 6; k++) {
+                            int maxL = (k == 0) ? 3 : 6;
+                            for (int l = 0; l < maxL; l++) {
+                                for (int m = 0; m < 3; m++) {
+                                    coefProbs[txSz][i][j][k][l][m] = diffUpdateProb(boolDec,
+                                            coefProbs[txSz][i][j][k][l][m]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void readSkipProb(VPXBooleanDecoder boolDec) {
+        for (int i = 0; i < SKIP_CONTEXTS; i++) {
+            skipProbs[i] = diffUpdateProb(boolDec, skipProbs[i]);
+        }
+    }
+
+    private void readInterModeProbs(VPXBooleanDecoder boolDec) {
+        for (int i = 0; i < INTER_MODE_CONTEXTS; i++)
+            for (int j = 0; j < INTER_MODES - 1; j++)
+                interModeProbs[i][j] = diffUpdateProb(boolDec, interModeProbs[i][j]);
+    }
+
+    private void readInterpFilterProbs(VPXBooleanDecoder boolDec) {
+        for (int j = 0; j < INTERP_FILTER_CONTEXTS; j++)
+            for (int i = 0; i < SWITCHABLE_FILTERS - 1; i++)
+                interpFilterProbs[j][i] = diffUpdateProb(boolDec, interpFilterProbs[j][i]);
+    }
+
+    private void readIsInterProbs(VPXBooleanDecoder boolDec) {
+        for (int i = 0; i < IS_INTER_CONTEXTS; i++)
+            isInterProbs[i] = diffUpdateProb(boolDec, isInterProbs[i]);
+    }
+
+    private void frameReferenceMode(VPXBooleanDecoder boolDec) {
+        int compoundReferenceAllowed = 0;
+        for (int i = 1; i < REFS_PER_FRAME; i++)
+            if (refFrameSignBias[i] != refFrameSignBias[0])
+                compoundReferenceAllowed = 1;
+        if (compoundReferenceAllowed == 1) {
+            int non_single_reference = boolDec.readBitEq();
+            if (non_single_reference == 0) {
+                referenceMode = SINGLE_REF;
+            } else {
+                int reference_select = boolDec.readBitEq();
+                if (reference_select == 0)
+                    referenceMode = COMPOUND_REF;
+                else
+                    referenceMode = REFERENCE_MODE_SELECT;
+                setupCompoundReferenceMode();
+            }
+        } else {
+            referenceMode = SINGLE_REF;
+        }
+    }
+
+    private void frameReferenceModeProbs(VPXBooleanDecoder boolDec) {
+        if (referenceMode == REFERENCE_MODE_SELECT) {
+            for (int i = 0; i < COMP_MODE_CONTEXTS; i++)
+                compModeProbs[i] = diffUpdateProb(boolDec, compModeProbs[i]);
+        }
+        if (referenceMode != COMPOUND_REF) {
+            for (int i = 0; i < REF_CONTEXTS; i++) {
+                singleRefProbs[i][0] = diffUpdateProb(boolDec, singleRefProbs[i][0]);
+                singleRefProbs[i][1] = diffUpdateProb(boolDec, singleRefProbs[i][1]);
+            }
+        }
+        if (referenceMode != SINGLE_REF) {
+            for (int i = 0; i < REF_CONTEXTS; i++)
+                compRefProbs[i] = diffUpdateProb(boolDec, compRefProbs[i]);
+        }
+    }
+
+    private void readYModeProbs(VPXBooleanDecoder boolDec) {
+        for (int i = 0; i < BLOCK_SIZE_GROUPS; i++)
+            for (int j = 0; j < INTRA_MODES - 1; j++)
+                yModeProbs[i][j] = diffUpdateProb(boolDec, yModeProbs[i][j]);
+    }
+
+    private void readPartitionProbs(VPXBooleanDecoder boolDec) {
+        for (int i = 0; i < PARTITION_CONTEXTS; i++)
+            for (int j = 0; j < PARTITION_TYPES - 1; j++)
+                partitionProbs[i][j] = diffUpdateProb(boolDec, partitionProbs[i][j]);
+    }
+
+    private void mvProbs(VPXBooleanDecoder boolDec) {
+        for (int j = 0; j < MV_JOINTS - 1; j++)
+            mvJointProbs[j] = updateMvProb(boolDec, mvJointProbs[j]);
+        for (int i = 0; i < 2; i++) {
+            mvSignProbs[i] = updateMvProb(boolDec, mvSignProbs[i]);
+            for (int j = 0; j < MV_CLASSES - 1; j++)
+                mvClassProbs[i][j] = updateMvProb(boolDec, mvClassProbs[i][j]);
+            mvClass0BitProbs[i] = updateMvProb(boolDec, mvClass0BitProbs[i]);
+            for (int j = 0; j < MV_OFFSET_BITS; j++)
+                mvBitsProbs[i][j] = updateMvProb(boolDec, mvBitsProbs[i][j]);
+        }
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < CLASS0_SIZE; j++)
+                for (int k = 0; k < MV_FR_SIZE - 1; k++)
+                    mvClass0FrProbs[i][j][k] = updateMvProb(boolDec, mvClass0FrProbs[i][j][k]);
+            for (int k = 0; k < MV_FR_SIZE - 1; k++)
+                mvFrProbs[i][k] = updateMvProb(boolDec, mvFrProbs[i][k]);
+        }
+        if (allowHighPrecisionMv == 1) {
+            for (int i = 0; i < 2; i++) {
+                mvClass0HpProb[i] = updateMvProb(boolDec, mvClass0HpProb[i]);
+                mvHpProbs[i] = updateMvProb(boolDec, mvHpProbs[i]);
+            }
+        }
+    }
+
+    private int updateMvProb(VPXBooleanDecoder boolDec, int prob) {
+        int update_mv_prob = boolDec.readBit(252);
+        if (update_mv_prob == 1) {
+            int mv_prob = boolDec.decodeInt(7);
+            prob = (mv_prob << 1) | 1;
+        }
+        return prob;
+    }
+
+    private void setupCompoundReferenceMode() {
+        if (refFrameSignBias[LAST_FRAME] == refFrameSignBias[GOLDEN_FRAME]) {
+            compFixedRef = ALTREF_FRAME;
+            compVarRef0 = LAST_FRAME;
+            compVarRef1 = GOLDEN_FRAME;
+        } else if (refFrameSignBias[LAST_FRAME] == refFrameSignBias[ALTREF_FRAME]) {
+            compFixedRef = GOLDEN_FRAME;
+            compVarRef0 = LAST_FRAME;
+            compVarRef1 = ALTREF_FRAME;
+        } else {
+            compFixedRef = LAST_FRAME;
+            compVarRef0 = GOLDEN_FRAME;
+            compVarRef1 = ALTREF_FRAME;
+        }
+    }
+
+    public int getFrameContextIdx() {
+        return frameContextIdx;
+    }
+
+    public int getTileColsLog2() {
+        return tileColsLog2;
+    }
+
+    public int getTileRowsLog2() {
+        return tileRowsLog2;
+    }
+
+    public int getFrameWidth() {
+        return frameWidth;
+    }
+
+    public int getFrameHeight() {
+        return frameHeight;
+    }
+
+    public int getBaseQIdx() {
+        return baseQIdx;
+    }
+
+    public int getDeltaQYDc() {
+        return deltaQYDc;
+    }
+
+    public int getDeltaQUvDc() {
+        return deltaQUvDc;
+    }
+
+    public int getDeltaQUvAc() {
+        return deltaQUvAc;
+    }
+
+    public int getFilterLevel() {
+        return filterLevel;
+    }
+
+    public int getSharpnessLevel() {
+        return sharpnessLevel;
+    }
+
+    public int[] getSkipProbs() {
+        return skipProbs;
+    }
+
+    public int[][] getTx8x8Probs() {
+        return tx8x8Probs;
+    }
+
+    public int[][] getTx16x16Probs() {
+        return tx6x16Probs;
+    }
+
+    public int[][] getTx32x32Probs() {
+        return tx32x32Probs;
+    }
+
+    public int[][][][][][] getCoefProbs() {
+        return coefProbs;
+    }
+
+    public int[] getMvJointProbs() {
+        return mvJointProbs;
+    }
+
+    public int[] getMvSignProb() {
+        return mvSignProbs;
+    }
+
+    public int[][] getMvClassProbs() {
+        return mvClassProbs;
+    }
+
+    public int[] getMvClass0BitProbs() {
+        return mvClass0BitProbs;
+    }
+
+    public int[][] getMvBitsProb() {
+        return mvBitsProbs;
+    }
+
+    public int[][][] getMvClass0FrProbs() {
+        return mvClass0FrProbs;
+    }
+
+    public int[][] getMvFrProbs() {
+        return mvFrProbs;
+    }
+
+    public int[] getMvClass0HpProbs() {
+        return mvClass0HpProb;
+    }
+
+    public int[] getMvHpProbs() {
+        return mvHpProbs;
+    }
+
+    public int[][] getInterModeProbs() {
+        return interModeProbs;
+    }
+
+    public int[][] getInterpProbs() {
+        return interpFilterProbs;
+    }
+
+    public int[] getIsInterProbs() {
+        return isInterProbs;
+    }
+
+    public int[][] getSingleRefProbs() {
+        return singleRefProbs;
+    }
+
+    public int[][] getYModeProbs() {
+        return yModeProbs;
+    }
+
+    public int[][] getPartitionProbs() {
+        return partitionProbs;
+    }
+
+    public int[][] getUvModeProbs() {
+        return uvModeProbs;
+    }
+
+    public int[] getCompRefProbs() {
+        return compRefProbs;
+    }
+
+    public int[][][] getKfYModeProbs() {
+        return kfYmodeProbs;
+    }
+
+    public int[][] getKfUVModeProbs() {
+        return kfUvModeProbs;
+    }
+
+    public int[] getSegmentationTreeProbs() {
+        return segmentationTreeProbs;
+    }
+
+    public int[] getLeftInterpFilters() {
+        return null;
+    }
+
+    public int[] getSegmentationPredProbs() {
+        return segmentationPredProbs;
+    }
+
+    public int[] getCompModeProb() {
+        return compModeProbs;
+    }
 }

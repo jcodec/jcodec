@@ -1,6 +1,5 @@
 package org.jcodec.codecs.vpx.vp9;
 
-import static org.jcodec.codecs.vpx.vp9.Consts.ADST_DCT;
 import static org.jcodec.codecs.vpx.vp9.Consts.BLOCK_16X16;
 import static org.jcodec.codecs.vpx.vp9.Consts.BLOCK_16X32;
 import static org.jcodec.codecs.vpx.vp9.Consts.BLOCK_16X8;
@@ -15,12 +14,11 @@ import static org.jcodec.codecs.vpx.vp9.Consts.BLOCK_8X16;
 import static org.jcodec.codecs.vpx.vp9.Consts.BLOCK_8X4;
 import static org.jcodec.codecs.vpx.vp9.Consts.BLOCK_8X8;
 import static org.jcodec.codecs.vpx.vp9.Consts.BLOCK_INVALID;
-import static org.jcodec.codecs.vpx.vp9.Consts.DCT_ADST;
-import static org.jcodec.codecs.vpx.vp9.Consts.DCT_VAL_CAT6;
+import static org.jcodec.codecs.vpx.vp9.Consts.DCT_VAL_CAT1;
+import static org.jcodec.codecs.vpx.vp9.Consts.DCT_VAL_CAT3;
 import static org.jcodec.codecs.vpx.vp9.Consts.PARETO_TABLE;
 import static org.jcodec.codecs.vpx.vp9.Consts.TOKEN_TREE;
 import static org.jcodec.codecs.vpx.vp9.Consts.TX_4X4;
-import static org.jcodec.codecs.vpx.vp9.Consts.ZERO_TOKEN;
 import static org.jcodec.codecs.vpx.vp9.Consts.blH;
 import static org.jcodec.codecs.vpx.vp9.Consts.blW;
 import static org.jcodec.codecs.vpx.vp9.Consts.cat_probs;
@@ -45,22 +43,22 @@ public class Residual {
     public Residual(int[][][] coefs) {
         this.coefs = coefs;
     }
-    
-    public static Residual read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probStore,
-            DecodingContext c, ModeInfo mode) {
+
+    public static Residual read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c,
+            ModeInfo mode) {
         int[][][] coefs = new int[3][][];
         for (int pl = 0; pl < 3; pl++) {
-            int subW = msb(blW[blSz] / c.getSubX()) - 2;
-            int subH = msb(blH[blSz] / c.getSubY()) - 2;
+            int subW = msb(blW[blSz] / c.getSubsamplingX()) - 2;
+            int subH = msb(blH[blSz] / c.getSubsamplingY()) - 2;
             int uvBlSz = blk_size_lookup[subH][subW - subH + 1];
             int txSize = pl == 0 ? mode.getTxSize() : uvTxSize(c, mode.getTxSize(), blSz, uvBlSz);
             int step4x4 = 1 << txSize;
             int plBlSz = pl == 0 ? blSz : uvBlSz;
 
-            int frameWPix = (c.getMiFrameWidth() << 3) >> c.getSubX();
-            int frameHPix = (c.getMiFrameHeight() << 3) >> c.getSubY();
-            int blX = (miCol << 3) >> c.getSubX();
-            int blY = (miRow << 3) >> c.getSubY();
+            int frameWPix = (c.getMiFrameWidth() << 3) >> c.getSubsamplingX();
+            int frameHPix = (c.getMiFrameHeight() << 3) >> c.getSubsamplingY();
+            int blX = (miCol << 3) >> c.getSubsamplingX();
+            int blY = (miRow << 3) >> c.getSubsamplingY();
 
             coefs[pl] = new int[blH[plBlSz] * blW[plBlSz]][];
             for (int y = 0, blkIdx = 0; y < blH[plBlSz]; y += step4x4) {
@@ -68,7 +66,7 @@ public class Residual {
                     int posX = blX + (x << 2);
                     int posY = blY + (y << 2);
                     if (!mode.isSkip() && posX < frameWPix && posY < frameHPix) {
-                        coefs[pl][blkIdx] = tokens(pl, posX, posY, txSize, blkIdx, mode.isInter(), decoder, probStore,
+                        coefs[pl][blkIdx] = readOneTU(pl, posX, posY, txSize, mode.isInter(), mode.getYMode(), decoder,
                                 c);
                     }
                 }
@@ -105,32 +103,58 @@ public class Residual {
         return Math.min(txSize, maxTxLookup[uvBlSz]);
     }
 
-    public static int[] tokens(int plane, int startX, int startY, int txSz, int blockIdx, boolean isInter,
-            VPXBooleanDecoder decoder, Probabilities probStore, DecodingContext c) {
+    public static int[] readOneTU(int plane, int blkCol, int blkRow, int txSz, boolean isInter,
+            int intraMode, VPXBooleanDecoder decoder, DecodingContext c) {
+        int[] tokenCache = new int[16 << (txSz << 1)];
         int maxCoeff = 16 << (txSz << 1);
-        boolean expectMoreCoefs = true;
-        int[] scan = c.getScan(plane, txSz, blockIdx);
-        int txType = c.getTxType(plane, txSz, blockIdx);
+        boolean expectMoreCoefs = false;
+        int txType = plane == 0 && !isInter ? Consts.intra_mode_to_tx_type_lookup[intraMode] : Consts.DCT_DCT;
+        int[] scan = plane == 0 && !isInter ? Scan.vp9_scan_orders[txSz][txType][0]
+                : Scan.vp9_default_scan_orders[txSz][0];
+        int[] neighbors = plane == 0 && !isInter ? Scan.vp9_scan_orders[txSz][txType][2]
+                : Scan.vp9_default_scan_orders[txSz][2];
         int[] coefs = new int[maxCoeff];
+        int ctx = calcTokenContextCoef0(plane, txSz, blkCol, blkRow, c);
         for (int cf = 0; cf < maxCoeff; cf++) {
             int band = (txSz == TX_4X4) ? coefband_4x4[cf] : coefband_8x8plus[cf];
             int pos = scan[cf];
+            int[] probs = c.getCoefProbs()[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx];
+
             if (!expectMoreCoefs) {
-                boolean moreCoefs = readMoreCoefs(plane, pos, txSz, startX, startY, txType, band, isInter, decoder,
-                        probStore, c);
+                boolean moreCoefs = decoder.readBit(probs[0]) == 1;
                 if (!moreCoefs)
                     break;
             }
-            int token = readToken(plane, pos, txSz, startX, startY, txType, band, isInter, decoder, probStore, c);
-            if (token == ZERO_TOKEN) {
+            int coef;
+            if (decoder.readBit(probs[1]) == 0) {
+                tokenCache[pos] = 0;
                 expectMoreCoefs = true;
-                coefs[pos] = 0;
             } else {
-                int coef = readCoef(token, decoder, c);
+                expectMoreCoefs = false;
+                if (decoder.readBit(probs[2]) == 0) {
+                    tokenCache[pos] = 1;
+                    coef = 1;
+                } else {
+                    int token = decoder.readTree(TOKEN_TREE, PARETO_TABLE[probs[2] - 1]);
+                    if (token < DCT_VAL_CAT1) {
+                        coef = token;
+                        if (token == Consts.TWO_TOKEN)
+                            tokenCache[pos] = 2;
+                        else
+                            tokenCache[pos] = 3;
+                    } else {
+                        if (token < DCT_VAL_CAT3)
+                            tokenCache[pos] = 4;
+                        else
+                            tokenCache[pos] = 5;
+                        coef = readCoef(token, decoder, c);
+                    }
+                }
                 int sign = decoder.readBitEq();
                 coefs[pos] = sign == 1 ? -coef : coef;
-                expectMoreCoefs = false;
             }
+            ctx = (1 + tokenCache[neighbors[2 * cf + 2]] + tokenCache[neighbors[2 * cf + 3]]) >> 1;
+            System.out.println("CTX: " + ctx);
         }
         return coefs;
     }
@@ -139,13 +163,13 @@ public class Residual {
         int cat = extra_bits[token][0];
         int numExtra = extra_bits[token][1];
         int coef = extra_bits[token][2];
-        if (token == DCT_VAL_CAT6) {
-            for (int bit = 0; bit < c.getBitDepth() - 8; bit++) {
-                int high_bit = decoder.readBit(255);
-
-                coef += high_bit << (5 + c.getBitDepth() - bit);
-            }
-        }
+        // if (token == DCT_VAL_CAT6) {
+        // for (int bit = 0; bit < c.getBitDepth() - 8; bit++) {
+        // int high_bit = decoder.readBit(255);
+        //
+        // coef += high_bit << (5 + c.getBitDepth() - bit);
+        // }
+        // }
         for (int bit = 0; bit < numExtra; bit++) {
             int coef_bit = decoder.readBit(cat_probs[cat][bit]);
 
@@ -154,76 +178,26 @@ public class Residual {
         return coef;
     }
 
-    private static int pareto(int bin, int prob) {
-        if (bin < 2) {
-            return prob;
+    private static int calcTokenContextCoef0(int plane, int txSz, int blkCol, int blkRow, DecodingContext c) {
+        int[][] aboveNonzeroContext = c.getAboveNonzeroContext();
+        int[][] leftNonzeroContext = c.getLeftNonzeroContext();
+        int subX = plane > 0 ? c.getSubsamplingX() : 0;
+        int subY = plane > 0 ? c.getSubsamplingY() : 0;
+        int max4x = (c.getMiFrameWidth() << 1) >> subX;
+        int max4y = (c.getMiFrameHeight() << 1) >> subY;
+        int tx4 = 1 << txSz;
+        int aboveNz = 0;
+        int leftNz = 0;
+        for (int i = 0; i < tx4; i++) {
+            if (blkCol + i < max4x)
+                aboveNz |= aboveNonzeroContext[plane][blkCol + i];
+            if (blkRow + i < max4y)
+                leftNz |= leftNonzeroContext[plane][(blkRow + i) & 0xf];
         }
-        int x = (prob - 1) / 2;
-        if ((prob & 1) != 0)
-            return PARETO_TABLE[x][bin - 2];
-        else
-            return (PARETO_TABLE[x][bin - 2] + PARETO_TABLE[x + 1][bin - 2]) >> 1;
+        return aboveNz + leftNz;
     }
 
-    private static int readToken(int plane, int coefi, int txSz, int posX, int posY, int txType, int band,
-            boolean isInter, VPXBooleanDecoder decoder, Probabilities probStore, DecodingContext c) {
-        int ctx = calcTokenContext(plane, coefi, txSz, posX, posY, txType, c);
-        int[][][][][][] probs = probStore.getCoefProbs();
-        int prob0 = pareto(0, probs[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx][1]);
-        int prob1 = pareto(1, probs[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx][2]);
-        return decoder.readTree3(TOKEN_TREE, prob0, prob1);
+    public int[][][] getCoefs() {
+        return coefs;
     }
-
-    private static boolean readMoreCoefs(int plane, int coefi, int txSz, int posX, int posY, int txType, int band,
-            boolean isInter, VPXBooleanDecoder decoder, Probabilities probStore, DecodingContext c) {
-        int ctx = calcTokenContext(plane, coefi, txSz, posX, posY, txType, c);
-        int[][][][][][] probs = probStore.getCoefProbs();
-
-        return decoder.readBit(probs[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx][0]) == 1;
-    }
-
-    private static int calcTokenContext(int plane, int coefi, int txSz, int posX, int posY, int txType,
-            DecodingContext c) {
-        if (coefi == 0) {
-            int[][] aboveNonzeroContext = c.getAboveNonzeroContext();
-            int[][] leftNonzeroContext = c.getLeftNonzeroContext();
-            int subX = plane > 0 ? c.getSubX() : 0;
-            int subY = plane > 0 ? c.getSubY() : 0;
-            int max4x = (c.getMiFrameWidth() << 1) >> subX;
-            int max4y = (c.getMiFrameHeight() << 1) >> subY;
-            int tx4 = 1 << txSz;
-            int pos4x = posX >> 2;
-            int pos4y = posY >> 2;
-            int aboveNz = 0;
-            int leftNz = 0;
-            for (int i = 0; i < tx4; i++) {
-                if (pos4x + i < max4x)
-                    aboveNz |= aboveNonzeroContext[plane][pos4x + i];
-                if (pos4y + i < max4y)
-                    leftNz |= leftNonzeroContext[plane][pos4y + i];
-            }
-            return aboveNz + leftNz;
-        } else {
-            int abovePos = 0;
-            int leftPos = 0;
-            if (coefi != 0) {
-                txSz += 2;
-                int y = coefi >> txSz;
-                int x = coefi & (0x3f >> (6 - txSz));
-                abovePos = ((y - 1) << txSz) + x;
-                leftPos = (y << txSz) + x - 1;
-                if (txType == DCT_ADST || x == 0) {
-                    leftPos = abovePos;
-                }
-                if (txType == ADST_DCT || y == 0) {
-                    abovePos = leftPos;
-                }
-            }
-
-            int[] tokenCache = c.getTokenCache();
-
-            return (1 + tokenCache[abovePos] + tokenCache[leftPos]) >> 1;
-        }
-    }
-
 }

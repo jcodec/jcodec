@@ -53,7 +53,7 @@ public class ModeInfo {
         return txSize;
     }
 
-    public int getyMode() {
+    public int getYMode() {
         return yMode;
     }
 
