@@ -1,5 +1,6 @@
 package org.jcodec.codecs.vpx.vp9;
 
+import org.jcodec.codecs.vpx.VPXBooleanDecoder;
 import org.jcodec.common.ArrayUtil;
 import org.junit.Assert;
 import org.junit.Test;
@@ -158,7 +159,7 @@ public class ResidualTest {
         int intraMode = 0;
         boolean isInter = false;
 
-        int[] tokens = Residual.readOneTU(plane, startX, startY, txSz, isInter, intraMode, decoder, c);
+        int[] tokens = new Residual().readOneTU(plane, startX, startY, txSz, isInter, intraMode, decoder, c);
         int[] expected = { -37, -2, 0, 0, 9, 1, 0, 0, -4, 1, 0, 0, 0, 0, 0, 0 };
 
         Assert.assertArrayEquals(expected, tokens);
@@ -230,7 +231,7 @@ public class ResidualTest {
         int intraMode = 0;
         boolean isInter = false;
 
-        int[] tokens = Residual.readOneTU(plane, startX, startY, txSz, isInter, intraMode, decoder, c);
+        int[] tokens = new Residual().readOneTU(plane, startX, startY, txSz, isInter, intraMode, decoder, c);
         int[] expected = { -4, 11, -13, -3, -2, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 26, -35, -17, -2, -3, 0, 1, 0, 0,
                 1, 0, 0, 0, 0, 0, 0, -8, -22, -3, 4, 4, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, -5, -7, 5, 10, 5, 1, 1, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, -4, -3, 5, 6, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -2, -2, 3, 7, 0, -2, -2, -1, 0,
@@ -288,11 +289,109 @@ public class ResidualTest {
         int intraMode = 2;
         boolean isInter = false;
 
-        int[] tokens = Residual.readOneTU(plane, startX, startY, txSz, isInter, intraMode, decoder, c);
+        int[] tokens = new Residual().readOneTU(plane, startX, startY, txSz, isInter, intraMode, decoder, c);
         int[] expected = { -73, 11, -3, 1, -1, 0, 0, 0, 20, 7, 3, 1, 0, 1, 0, 0, -56, 1, 2, 0, 0, 0, 0, 0, -3, 9, 4, 0,
                 0, 1, 0, 0, -4, -15, 7, -2, 1, -1, 0, 0, -12, 2, 7, 0, 0, 0, 0, 0, 9, -9, 1, 1, -1, 0, 0, 0, -3, -2, 3,
                 0, 0, 0, 0, 0 };
 
         Assert.assertArrayEquals(expected, tokens);
+    }
+
+    private static class ReadOneTUArgs {
+        int plane;
+        int blkCol;
+        int blkRow;
+        int txSz;
+        boolean isInter;
+        int intraMode;
+        
+        public ReadOneTUArgs(int plane, int blkCol, int blkRow, int txSz, boolean isInter, int intraMode) {
+            this.plane = plane;
+            this.blkCol = blkCol;
+            this.blkRow = blkRow;
+            this.txSz = txSz;
+            this.isInter = isInter;
+            this.intraMode = intraMode;
+        }
+    }
+    
+    private static class MockResidual extends Residual {
+        private ReadOneTUArgs[] expected;
+        private int n;
+
+        public MockResidual(ReadOneTUArgs[] expected) {
+            this.expected = expected;
+        }
+
+        @Override
+        public int[] readOneTU(int plane, int blkCol, int blkRow, int txSz, boolean isInter, int intraMode,
+                VPXBooleanDecoder decoder, DecodingContext c) {
+            System.out.println(
+                    String.format("READ TU: plane=%d, blkCol=%d, blkRow=%d, txSz=%d, isInter=%d, intraMode=%d",
+                            plane, blkCol, blkRow, txSz, isInter ? 1 : 0, intraMode));
+            Assert.assertTrue(n < expected.length);
+            Assert.assertEquals(expected[n].plane, plane);
+            Assert.assertEquals(expected[n].blkCol, blkCol);
+            Assert.assertEquals(expected[n].blkRow, blkRow);
+            Assert.assertEquals(expected[n].txSz, txSz);
+            Assert.assertEquals(expected[n].isInter, isInter);
+            Assert.assertEquals(expected[n].intraMode, intraMode);
+            
+            ++n;
+            return null;
+        }   
+    }
+    
+    @Test
+    public void testReadResidualSub4x4() {
+        DecodingContext c = new DecodingContext();
+        c.tileHeight = 36;
+        c.tileWidth = 64;
+        c.frameHeight = 36;
+        c.frameWidth = 64;
+        c.subsamplingX = 1;
+        c.subsamplingY = 1;
+        c.bitDepth = 8;
+        int uvMode = 6;
+        int subModes = ModeInfo.vect4(2, 4, 1, 5);
+        ModeInfo modeInfo = new ModeInfo(0, false, 0, 5, subModes, uvMode);
+        ReadOneTUArgs[] expected = {
+          new ReadOneTUArgs(0, 2, 4, 0, false, 2),
+          new ReadOneTUArgs(0, 3, 4, 0, false, 4),
+          new ReadOneTUArgs(0, 2, 5, 0, false, 1),
+          new ReadOneTUArgs(0, 3, 5, 0, false, 5),
+          new ReadOneTUArgs(1, 1, 2, 0, false, 6),
+          new ReadOneTUArgs(1, 1, 2, 0, false, 6)
+        };
+        new MockResidual(expected).read(1, 2, 0, null, c, modeInfo);
+    }
+    
+    @Test
+    public void testReadResidualBottomRightBorder() {
+        DecodingContext c = new DecodingContext();
+        c.tileHeight = 36;
+        c.tileWidth = 64;
+        c.frameHeight = 36;
+        c.frameWidth = 64;
+        c.subsamplingX = 1;
+        c.subsamplingY = 1;
+        c.bitDepth = 8;
+        
+        int miCol = 20, miColUv = miCol / 2;
+        int miRow = 12, miRowUv = miRow / 2;
+        int blType = 8;
+        int txSize = 1;
+        ModeInfo modeInfo = new InterModeInfo(0, false, txSize, 5, 0, 0);
+        ReadOneTUArgs[] expected = {
+          new ReadOneTUArgs(0, miCol + 0, miRow + 0, 1, true, 0),
+          new ReadOneTUArgs(0, miCol + 2, miRow + 0, 1, true, 0),
+          new ReadOneTUArgs(0, miCol + 4, miRow + 0, 1, true, 0),
+          new ReadOneTUArgs(1, miColUv + 0, miRowUv + 0, 1, true, 0),
+          new ReadOneTUArgs(1, miColUv + 2, miRowUv + 0, 1, true, 0),
+          new ReadOneTUArgs(1, miColUv + 0, miRowUv + 0, 1, true, 6),
+          new ReadOneTUArgs(1, miColUv + 2, miRowUv + 0, 1, true, 6)
+        };
+        
+        new MockResidual(expected).read(miCol, miRow, blType, null, c, modeInfo);
     }
 }

@@ -35,7 +35,7 @@ public class CodedBlock {
             mode = ModeInfo.read(miCol, miRow, blSz, decoder, c);
         else
             mode = InterModeInfo.read(miCol, miRow, blSz, decoder, c);
-        Residual r = Residual.read(miCol, miRow, blSz, decoder, c, mode);
+        Residual r = Residual.readResidual(miCol, miRow, blSz, decoder, c, mode);
         return new CodedBlock(mode, r);
     }
 }

@@ -861,11 +861,11 @@ public class DecodingContext {
         return null;
     }
 
-    public int getSubsamplingX() {
+    public int getSubX() {
         return subsamplingX;
     }
 
-    public int getSubsamplingY() {
+    public int getSubY() {
         return subsamplingY;
     }
 

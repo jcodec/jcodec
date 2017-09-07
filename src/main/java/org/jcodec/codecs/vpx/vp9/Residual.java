@@ -44,67 +44,74 @@ public class Residual {
         this.coefs = coefs;
     }
 
-    public static Residual read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c,
+    protected Residual() {
+    }
+
+    public static Residual readResidual(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c,
             ModeInfo mode) {
+        Residual ret = new Residual();
+        ret.read(miCol, miRow, blSz, decoder, c, mode);
+        return ret;
+    }
+
+    public void read(int miCol, int miRow, int blType, VPXBooleanDecoder decoder, DecodingContext c,
+            ModeInfo modeInfo) {
+        if (modeInfo.isSkip())
+            return;
+        int subXRound = (1 << c.getSubX()) - 1;
+        int subYRound = (1 << c.getSubY()) - 1;
+
         int[][][] coefs = new int[3][][];
         for (int pl = 0; pl < 3; pl++) {
-            int subW = msb(blW[blSz] / c.getSubsamplingX()) - 2;
-            int subH = msb(blH[blSz] / c.getSubsamplingY()) - 2;
-            int uvBlSz = blk_size_lookup[subH][subW - subH + 1];
-            int txSize = pl == 0 ? mode.getTxSize() : uvTxSize(c, mode.getTxSize(), blSz, uvBlSz);
+            int txSize = pl == 0 ? modeInfo.getTxSize()
+                    : Consts.uv_txsize_lookup[blType][modeInfo.getTxSize()][c.getSubX()][c.getSubY()];
             int step4x4 = 1 << txSize;
-            int plBlSz = pl == 0 ? blSz : uvBlSz;
 
-            int frameWPix = (c.getMiFrameWidth() << 3) >> c.getSubsamplingX();
-            int frameHPix = (c.getMiFrameHeight() << 3) >> c.getSubsamplingY();
-            int blX = (miCol << 3) >> c.getSubsamplingX();
-            int blY = (miRow << 3) >> c.getSubsamplingY();
+            int n4w = 1 << blW[blType];
+            int n4h = 1 << blH[blType];
+            if (pl != 0) {
+                n4w >>= c.getSubX();
+                n4h >>= c.getSubY();
+            }
+            int extra4w = (miCol << 1) + n4w - ((c.getFrameWidth() + 3) >> 2);
+            int extra4h = (miRow << 1) + n4h - ((c.getFrameHeight() + 3) >> 2);
+            int startBlkX = miCol << 1;
+            int startBlkY = miRow << 1;
+            if (pl != 0) {
+                extra4w = (extra4w + subXRound) >> c.getSubX();
+                extra4h = (extra4h + subYRound) >> c.getSubY();
+                startBlkX >>= c.getSubX();
+                startBlkY >>= c.getSubY();
+            }
+            int max4w = n4w - (extra4w > 0 ? extra4w : 0);
+            int max4h = n4h - (extra4h > 0 ? extra4h : 0);
 
-            coefs[pl] = new int[blH[plBlSz] * blW[plBlSz]][];
-            for (int y = 0, blkIdx = 0; y < blH[plBlSz]; y += step4x4) {
-                for (int x = 0; x < blW[plBlSz]; x += step4x4, blkIdx++) {
-                    int posX = blX + (x << 2);
-                    int posY = blY + (y << 2);
-                    if (!mode.isSkip() && posX < frameWPix && posY < frameHPix) {
-                        coefs[pl][blkIdx] = readOneTU(pl, posX, posY, txSize, mode.isInter(), mode.getYMode(), decoder,
-                                c);
-                    }
+            coefs[pl] = new int[n4w * n4h][];
+            for (int y = 0; y < max4h; y += step4x4) {
+                for (int x = 0; x < max4w; x += step4x4) {
+                    int blkCol = startBlkX + x;
+                    int blkRow = startBlkY + y;
+                    int predMode;
+                    if (pl == 0) {
+                        predMode = modeInfo.getYMode();
+                        if (blType < BLOCK_8X8)
+                            predMode = ModeInfo.vect4get(modeInfo.getSubModes(), (y << 1) + x);
+                    } else
+                        predMode = modeInfo.getUvMode();
+                    coefs[pl][x + n4w * y] = readOneTU(pl == 0 ? 0 : 1, blkCol, blkRow, txSize, modeInfo.isInter(),
+                            predMode, decoder, c);
                 }
             }
         }
-        return new Residual(coefs);
-    }
-
-    private static int msb(int v) {
-        v &= 0xff;
-        if ((v & 0xf0) != 0) {
-            if ((v & 0xc0) != 0) {
-                return 6 | (v >> 7);
-            } else {
-                return 4 | (v >> 5);
-            }
-        } else {
-            if ((v & 0xc) != 0) {
-                return 2 | (v >> 3);
-            } else {
-                return v >> 1;
-            }
-        }
+        this.coefs = coefs;
     }
 
     public static int[][] blk_size_lookup = new int[][] { { BLOCK_INVALID, BLOCK_4X4, BLOCK_8X4 },
             { BLOCK_4X8, BLOCK_8X8, BLOCK_16X8 }, { BLOCK_8X16, BLOCK_16X16, BLOCK_32X16 },
             { BLOCK_16X32, BLOCK_32X32, BLOCK_64X32 }, { BLOCK_32X64, BLOCK_64X64, BLOCK_INVALID }, };
 
-    private static int uvTxSize(DecodingContext c, int txSize, int blSz, int uvBlSz) {
-        if (blSz < BLOCK_8X8)
-            return TX_4X4;
-
-        return Math.min(txSize, maxTxLookup[uvBlSz]);
-    }
-
-    public static int[] readOneTU(int plane, int blkCol, int blkRow, int txSz, boolean isInter,
-            int intraMode, VPXBooleanDecoder decoder, DecodingContext c) {
+    public int[] readOneTU(int plane, int blkCol, int blkRow, int txSz, boolean isInter, int intraMode,
+            VPXBooleanDecoder decoder, DecodingContext c) {
         int[] tokenCache = new int[16 << (txSz << 1)];
         int maxCoeff = 16 << (txSz << 1);
         boolean expectMoreCoefs = false;
@@ -181,8 +188,8 @@ public class Residual {
     private static int calcTokenContextCoef0(int plane, int txSz, int blkCol, int blkRow, DecodingContext c) {
         int[][] aboveNonzeroContext = c.getAboveNonzeroContext();
         int[][] leftNonzeroContext = c.getLeftNonzeroContext();
-        int subX = plane > 0 ? c.getSubsamplingX() : 0;
-        int subY = plane > 0 ? c.getSubsamplingY() : 0;
+        int subX = plane > 0 ? c.getSubX() : 0;
+        int subY = plane > 0 ? c.getSubY() : 0;
         int max4x = (c.getMiFrameWidth() << 1) >> subX;
         int max4y = (c.getMiFrameHeight() << 1) >> subY;
         int tx4 = 1 << txSz;

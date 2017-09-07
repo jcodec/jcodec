@@ -664,4 +664,98 @@ public class Consts {
     
     public static final int[] catMinVal = { CAT1_MIN_VAL, CAT2_MIN_VAL, CAT3_MIN_VAL, CAT4_MIN_VAL, CAT5_MIN_VAL,
             CAT6_MIN_VAL };
+    
+    public static final int[][][][] uv_txsize_lookup = {
+            {
+                // BLOCK_4X4
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+            },
+            {
+                // BLOCK_4X8
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+            },
+            {
+                // BLOCK_8X4
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+            },
+            {
+                // BLOCK_8X8
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_4X4 }, { TX_4X4, TX_4X4 } },
+            },
+            {
+                // BLOCK_8X16
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_4X4, TX_4X4 } },
+            },
+            {
+                // BLOCK_16X8
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_4X4 }, { TX_8X8, TX_4X4 } },
+                { { TX_8X8, TX_4X4 }, { TX_8X8, TX_8X8 } },
+                { { TX_8X8, TX_4X4 }, { TX_8X8, TX_8X8 } },
+            },
+            {
+                // BLOCK_16X16
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_8X8, TX_8X8 } },
+                { { TX_16X16, TX_8X8 }, { TX_8X8, TX_8X8 } },
+                { { TX_16X16, TX_8X8 }, { TX_8X8, TX_8X8 } },
+            },
+            {
+                // BLOCK_16X32
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_8X8, TX_8X8 } },
+                { { TX_16X16, TX_16X16 }, { TX_8X8, TX_8X8 } },
+                { { TX_16X16, TX_16X16 }, { TX_8X8, TX_8X8 } },
+            },
+            {
+                // BLOCK_32X16
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_8X8, TX_8X8 } },
+                { { TX_16X16, TX_8X8 }, { TX_16X16, TX_8X8 } },
+                { { TX_16X16, TX_8X8 }, { TX_16X16, TX_8X8 } },
+            },
+            {
+                // BLOCK_32X32
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_8X8, TX_8X8 } },
+                { { TX_16X16, TX_16X16 }, { TX_16X16, TX_16X16 } },
+                { { TX_32X32, TX_16X16 }, { TX_16X16, TX_16X16 } },
+            },
+            {
+                // BLOCK_32X64
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_8X8, TX_8X8 } },
+                { { TX_16X16, TX_16X16 }, { TX_16X16, TX_16X16 } },
+                { { TX_32X32, TX_32X32 }, { TX_16X16, TX_16X16 } },
+            },
+            {
+                // BLOCK_64X32
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_8X8, TX_8X8 } },
+                { { TX_16X16, TX_16X16 }, { TX_16X16, TX_16X16 } },
+                { { TX_32X32, TX_16X16 }, { TX_32X32, TX_16X16 } },
+            },
+            {
+                // BLOCK_64X64
+                { { TX_4X4, TX_4X4 }, { TX_4X4, TX_4X4 } },
+                { { TX_8X8, TX_8X8 }, { TX_8X8, TX_8X8 } },
+                { { TX_16X16, TX_16X16 }, { TX_16X16, TX_16X16 } },
+                { { TX_32X32, TX_32X32 }, { TX_32X32, TX_32X32 } },
+            },
+          };
 }
