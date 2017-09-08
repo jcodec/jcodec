@@ -110,7 +110,8 @@ public class CodedSuperBlockTest {
         }
 
         @Override
-        protected CodedBlock readBlock(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c) {
+        protected CodedBlock readBlock(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
+                DecodingContext c) {
             Assert.assertTrue(pos < expectedMiRow.length);
             Assert.assertEquals(expectedMiRow[pos], miRow);
             Assert.assertEquals(expectedMiCol[pos], miCol);
@@ -137,6 +138,7 @@ public class CodedSuperBlockTest {
         DecodingContext c = new DecodingContext();
         int miCol = 16;
         int miRow = 8;
+        c.miTileStartCol = 0;
         c.tileHeight = 13;
         c.tileWidth = 23;
 
@@ -175,6 +177,7 @@ public class CodedSuperBlockTest {
         DecodingContext c = new DecodingContext();
         int miCol = 32;
         int miRow = 8;
+        c.miTileStartCol = 0;
         c.tileHeight = 36;
         c.tileWidth = 64;
 

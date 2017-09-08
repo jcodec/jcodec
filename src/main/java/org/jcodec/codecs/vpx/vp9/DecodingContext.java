@@ -41,7 +41,7 @@ public class DecodingContext {
     private int[] refFrameIdx = new int[3];
     private int[] refFrameSignBias = new int[3];
     private int allowHighPrecisionMv;
-    private int interpolationFilter;
+    int interpFilter;
     private int frameParallelDecodingMode;
     private int refreshFrameContext;
     private int frameContextIdx;
@@ -52,37 +52,37 @@ public class DecodingContext {
     private int deltaQUvDc;
     private int deltaQUvAc;
     private boolean lossless;
-    private int segmentationEnabled;
+    private boolean segmentationEnabled;
     private int[] segmentationTreeProbs = new int[7];
     private int[] segmentationPredProbs = new int[3];
     private int[][] featureEnabled = new int[MAX_SEGMENTS][SEG_LVL_MAX];
     private int[][] featureData = new int[MAX_SEGMENTS][SEG_LVL_MAX];
     private int tileRowsLog2;
     private int tileColsLog2;
-    private int txMode;
+    int txMode;
     private int compFixedRef;
     private int compVarRef0;
     private int compVarRef1;
 
-    private int referenceMode;
+    int refMode;
 
-    private int[][] tx8x8Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 3];
-    private int[][] tx6x16Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 2];
-    private int[][] tx32x32Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 1];
+    int[][] tx8x8Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 3];
+    int[][] tx16x16Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 2];
+    int[][] tx32x32Probs = new int[TX_SIZE_CONTEXTS][TX_SIZES - 1];
     int[][][][][][] coefProbs;
     private int[] skipProbs = new int[SKIP_CONTEXTS];
-    private int[][] interModeProbs = new int[INTER_MODE_CONTEXTS][INTER_MODES - 1];
-    private int[][] interpFilterProbs = new int[INTERP_FILTER_CONTEXTS][SWITCHABLE_FILTERS - 1];
+    int[][] interModeProbs = new int[INTER_MODE_CONTEXTS][INTER_MODES - 1];
+    int[][] interpFilterProbs = new int[INTERP_FILTER_CONTEXTS][SWITCHABLE_FILTERS - 1];
     private int[] isInterProbs = new int[IS_INTER_CONTEXTS];
 
     private int[] compModeProbs = new int[COMP_MODE_CONTEXTS];
     private int[][] singleRefProbs = new int[REF_CONTEXTS][2];
     private int[] compRefProbs = new int[REF_CONTEXTS];
 
-    private int[][] yModeProbs = new int[BLOCK_SIZE_GROUPS][INTRA_MODES - 1];
+    int[][] yModeProbs = new int[BLOCK_SIZE_GROUPS][INTRA_MODES - 1];
     int[][] partitionProbs = new int[PARTITION_CONTEXTS][PARTITION_TYPES - 1];
 
-    private int[][] uvModeProbs = new int[INTRA_MODES][INTRA_MODES - 1];
+    public int[][] uvModeProbs = new int[INTRA_MODES][INTRA_MODES - 1];
 
     private int[] mvJointProbs = new int[MV_JOINTS - 1];
     private int[] mvSignProbs = new int[2];
@@ -99,13 +99,29 @@ public class DecodingContext {
     int[] abovePartitionSizes;
     int tileHeight;
     int tileWidth;
+    boolean[] leftSkipped;
+    boolean[] aboveSkipped;
+    int[][] aboveNonzeroContext;
+    int[][] leftNonzeroContext;
+    int[] aboveModes;
+    int[] leftModes;
+    private int colorRange;
+    int[] aboveRefs;
+    int[] leftRefs;
+    int[] leftInterpFilters;
+    int[] aboveInterpFilters;
+    int miTileStartCol;
+    int[] leftTxSizes;
+    int[] aboveTxSizes;
+    boolean[] leftCompound;
+    boolean[] aboveCompound;
 
-    private static final int[] defaultSkipProb = new int[] { 192, 128, 64 };
+    private static final int[] defaultSkipProb = { 192, 128, 64 };
 
     private static final int[][] defaultTxProbs8x8 = { { 100 }, { 66 } };
     private static final int[][] defaultTxProbs16x16 = { { 20, 152 }, { 15, 101 } };
     private static final int[][] defaultTxProbs32x32 = { { 3, 136, 37 }, { 5, 52, 13 } };
-    public static final int[][][][][][] defaultCoefProbs = new int[][][][][][] { { { /* block Type 0 */
+    public static final int[][][][][][] defaultCoefProbs = { { { /* block Type 0 */
             { /* Intra */
                     { /* Coeff Band 0 */
                             { 195, 29, 183 }, { 84, 49, 136 }, { 8, 42, 71 }, { 0, 0, 0 }, // unused
@@ -436,12 +452,12 @@ public class DecodingContext {
 
     };
 
-    public static final int[] defaultMvJointProbs = new int[] { 32, 64, 96 };
+    public static final int[] defaultMvJointProbs = { 32, 64, 96 };
 
-    public static final int[][] defaultMvBitsProb = new int[][] { { 136, 140, 148, 160, 176, 192, 224, 234, 234, 240 },
+    public static final int[][] defaultMvBitsProb = { { 136, 140, 148, 160, 176, 192, 224, 234, 234, 240 },
             { 136, 140, 148, 160, 176, 192, 224, 234, 234, 240 } };
 
-    public static final int[] defaultMvClass0BitProb = new int[] { 216, 208 };
+    public static final int[] defaultMvClass0BitProb = { 216, 208 };
 
     public static final int[] defaultMvClass0HpProb = { 160, 160 };
 
@@ -455,15 +471,15 @@ public class DecodingContext {
     public static final int[][] defaultMvFrProbs = { { 64, 96, 64 }, { 64, 96, 64 } };
     public static final int[] defaultMvHpProb = { 128, 128 };
 
-    public static final int[][] defaultInterModeProbs = new int[][] { { 2, 173, 34 }, { 7, 145, 85 }, { 7, 166, 63 },
+    public static final int[][] defaultInterModeProbs = { { 2, 173, 34 }, { 7, 145, 85 }, { 7, 166, 63 },
             { 7, 94, 66 }, { 8, 64, 46 }, { 17, 81, 31 }, { 25, 29, 30 }, };
 
-    public static final int[][] defaultInterpFilterProbs = new int[][] { { 235, 162 }, { 36, 255 }, { 34, 3 },
+    public static final int[][] defaultInterpFilterProbs = { { 235, 162 }, { 36, 255 }, { 34, 3 },
             { 149, 144 } };
 
-    public static final int[] defaultIsInterProbs = new int[] { 9, 102, 187, 225 };
+    public static final int[] defaultIsInterProbs = { 9, 102, 187, 225 };
 
-    private static final int[][] defaultPartitionProbs = new int[][] {
+    private static final int[][] defaultPartitionProbs = {
             // 8x8 -> 4x4
             { 199, 122, 141 }, // a/l both not split
             { 147, 63, 159 }, // a split, l not split
@@ -486,8 +502,8 @@ public class DecodingContext {
             { 10, 7, 6 } // a/l both split
     };
 
-    public static final int[][][] kfYmodeProbs = new int[][][] { { // above =
-                                                                   // dc
+    public static final int[][][] kfYmodeProbs = {
+            { // above = dc
             { 137, 30, 42, 148, 151, 207, 70, 52, 91 }, // left = dc
             { 92, 45, 102, 136, 116, 180, 74, 90, 100 }, // left = v
             { 73, 32, 19, 187, 222, 215, 46, 34, 100 }, // left = h
@@ -599,9 +615,8 @@ public class DecodingContext {
                     { 43, 81, 53, 140, 169, 204, 68, 84, 72 } // left = tm
             } };
 
-    public static final int[][] kfUvModeProbs = new int[][] { { 144, 11, 54, 157, 195, 130, 46, 58, 108 }, // y
-                                                                                                           // =
-                                                                                                           // dc
+    public static final int[][] kfUvModeProbs = {
+            { 144, 11, 54, 157, 195, 130, 46, 58, 108 },  // y = dc
             { 118, 15, 123, 148, 131, 101, 44, 93, 131 }, // y = v
             { 113, 12, 23, 188, 226, 142, 26, 32, 125 }, // y = h
             { 120, 11, 50, 123, 163, 135, 64, 77, 103 }, // y = d45
@@ -612,17 +627,15 @@ public class DecodingContext {
             { 116, 12, 64, 120, 140, 125, 49, 115, 121 }, // y = d63
             { 102, 19, 66, 162, 182, 122, 35, 59, 128 } // y = tm
     };
-    public static final int[][] defaultYModeProbs = new int[][] { { 65, 32, 18, 144, 162, 194, 41, 51, 98 }, // block_size
-                                                                                                             // <
-                                                                                                             // 8x8
+    public static final int[][] defaultYModeProbs = {
+            { 65, 32, 18, 144, 162, 194, 41, 51, 98 }, // block_size < 8x8
             { 132, 68, 18, 165, 217, 196, 45, 40, 78 }, // block_size < 16x16
             { 173, 80, 19, 176, 240, 193, 64, 35, 46 }, // block_size < 32x32
             { 221, 135, 38, 194, 248, 121, 96, 85, 29 } // block_size >= 32x32
     };
 
-    public static final int[][] defaultUvModeProbs = new int[][] { { 120, 7, 76, 176, 208, 126, 28, 54, 103 }, // y
-                                                                                                               // =
-                                                                                                               // dc
+    public static final int[][] defaultUvModeProbs = {
+        { 120, 7, 76, 176, 208, 126, 28, 54, 103 }, // y = dc
             { 48, 12, 154, 155, 139, 90, 34, 117, 119 }, // y = v
             { 67, 6, 25, 204, 243, 158, 13, 21, 96 }, // y = h
             { 97, 5, 44, 131, 176, 139, 48, 68, 97 }, // y = d45
@@ -634,13 +647,10 @@ public class DecodingContext {
             { 101, 21, 107, 181, 192, 103, 19, 67, 125 } // y = tm
     };
 
-    public static final int[][] defaultSingleRefProb = new int[][] { { 33, 16 }, { 77, 74 }, { 142, 142 }, { 172, 170 },
+    public static final int[][] defaultSingleRefProb = { { 33, 16 }, { 77, 74 }, { 142, 142 }, { 172, 170 },
             { 238, 247 } };
 
-    public static final int[] defaultCompRefProb = new int[] { 50, 126, 123, 221, 226 };
-    private int colorRange;
-    int[][] aboveNonzeroContext;
-    int[][] leftNonzeroContext;
+    public static final int[] defaultCompRefProb = { 50, 126, 123, 221, 226 };
 
     /**
      * Reads VP9 frame headers and creates the decoding context
@@ -663,7 +673,7 @@ public class DecodingContext {
     protected DecodingContext() {
         ArrayUtil.copy1D(skipProbs, defaultSkipProb);
         ArrayUtil.copy2D(tx8x8Probs, defaultTxProbs8x8);
-        ArrayUtil.copy2D(tx6x16Probs, defaultTxProbs16x16);
+        ArrayUtil.copy2D(tx16x16Probs, defaultTxProbs16x16);
         ArrayUtil.copy2D(tx32x32Probs, defaultTxProbs32x32);
 
         coefProbs = new int[4][2][2][6][][];
@@ -710,7 +720,7 @@ public class DecodingContext {
     }
 
     public boolean isSegmentationEnabled() {
-        return false;
+        return segmentationEnabled;
     }
 
     public boolean isUpdateSegmentMap() {
@@ -738,11 +748,11 @@ public class DecodingContext {
     }
 
     public int getInterpFilter() {
-        return 0;
+        return interpFilter;
     }
 
     public int getRefMode() {
-        return 0;
+        return refMode;
     }
 
     public long[][] getLeftMVs() {
@@ -766,15 +776,11 @@ public class DecodingContext {
     }
 
     public boolean[] getAboveCompound() {
-        return null;
+        return aboveCompound;
     }
 
     public boolean[] getLeftCompound() {
-        return null;
-    }
-
-    public int[][][] getRefs() {
-        return null;
+        return leftCompound;
     }
 
     public boolean isAllowHpMv() {
@@ -797,24 +803,12 @@ public class DecodingContext {
         return (frameHeight + 7) >> 3;
     }
 
-    public int getTileStart() {
-        return 0;
-    }
-
     public int[] getLeftInterpFilters() {
-        return null;
+        return leftInterpFilters;
     }
 
     public int[] getAboveInterpFilters() {
-        return null;
-    }
-
-    public int[] getLeftLumaModes() {
-        return null;
-    }
-
-    public int[] getAboveLumaModes() {
-        return null;
+        return aboveInterpFilters;
     }
 
     public int getMiTileHeight() {
@@ -829,24 +823,16 @@ public class DecodingContext {
         return 0;
     }
 
-    public int[] getAboveIntraModes() {
-        return null;
+    public int[] getAboveModes() {
+        return aboveModes;
     }
 
-    public int[] getLeftIntraModes() {
-        return null;
+    public int[] getLeftModes() {
+        return leftModes;
     }
 
     public int getTxMode() {
         return txMode;
-    }
-
-    public int[][] getTxSizes() {
-        return null;
-    }
-
-    public boolean[][] getSkippedBlockes() {
-        return null;
     }
 
     public boolean[] getAboveSegIdPredicted() {
@@ -887,6 +873,14 @@ public class DecodingContext {
 
     public int[] getAbovePartitionSizes() {
         return abovePartitionSizes;
+    }
+
+    public boolean[] getLeftSkipped() {
+        return leftSkipped;
+    }
+
+    public boolean[] getAboveSkipped() {
+        return aboveSkipped;
     }
 
     /**
@@ -1014,8 +1008,8 @@ public class DecodingContext {
     }
 
     private void readSegmentationParams(BitReader br) {
-        segmentationEnabled = br.read1Bit();
-        if (segmentationEnabled == 1) {
+        segmentationEnabled = br.read1Bit() == 1;
+        if (segmentationEnabled) {
             if (br.read1Bit() == 1) {
                 for (int i = 0; i < 7; i++)
                     segmentationTreeProbs[i] = readProb(br);
@@ -1080,9 +1074,9 @@ public class DecodingContext {
     }
 
     private void readInterpolationFilter(BitReader br) {
-        interpolationFilter = SWITCHABLE;
+        interpFilter = SWITCHABLE;
         if (br.read1Bit() == 0) {
-            interpolationFilter = LITERAL_TO_FILTER_TYPE[br.readNBit(2)];
+            interpFilter = LITERAL_TO_FILTER_TYPE[br.readNBit(2)];
         }
     }
 
@@ -1170,7 +1164,7 @@ public class DecodingContext {
         readSkipProb(boolDec);
         if (frameIsIntra == 0) {
             readInterModeProbs(boolDec);
-            if (interpolationFilter == SWITCHABLE)
+            if (interpFilter == SWITCHABLE)
                 readInterpFilterProbs(boolDec);
             readIsInterProbs(boolDec);
             frameReferenceMode(boolDec);
@@ -1199,7 +1193,7 @@ public class DecodingContext {
             }
         for (int i = 0; i < TX_SIZE_CONTEXTS; i++)
             for (int j = 0; j < TX_SIZES - 2; j++) {
-                tx6x16Probs[i][j] = diffUpdateProb(boolDec, tx6x16Probs[i][j]);
+                tx16x16Probs[i][j] = diffUpdateProb(boolDec, tx16x16Probs[i][j]);
             }
         for (int i = 0; i < TX_SIZE_CONTEXTS; i++)
             for (int j = 0; j < TX_SIZES - 1; j++) {
@@ -1309,32 +1303,32 @@ public class DecodingContext {
         if (compoundReferenceAllowed == 1) {
             int non_single_reference = boolDec.readBitEq();
             if (non_single_reference == 0) {
-                referenceMode = SINGLE_REF;
+                refMode = SINGLE_REF;
             } else {
                 int reference_select = boolDec.readBitEq();
                 if (reference_select == 0)
-                    referenceMode = COMPOUND_REF;
+                    refMode = COMPOUND_REF;
                 else
-                    referenceMode = REFERENCE_MODE_SELECT;
+                    refMode = REFERENCE_MODE_SELECT;
                 setupCompoundReferenceMode();
             }
         } else {
-            referenceMode = SINGLE_REF;
+            refMode = SINGLE_REF;
         }
     }
 
     private void frameReferenceModeProbs(VPXBooleanDecoder boolDec) {
-        if (referenceMode == REFERENCE_MODE_SELECT) {
+        if (refMode == REFERENCE_MODE_SELECT) {
             for (int i = 0; i < COMP_MODE_CONTEXTS; i++)
                 compModeProbs[i] = diffUpdateProb(boolDec, compModeProbs[i]);
         }
-        if (referenceMode != COMPOUND_REF) {
+        if (refMode != COMPOUND_REF) {
             for (int i = 0; i < REF_CONTEXTS; i++) {
                 singleRefProbs[i][0] = diffUpdateProb(boolDec, singleRefProbs[i][0]);
                 singleRefProbs[i][1] = diffUpdateProb(boolDec, singleRefProbs[i][1]);
             }
         }
-        if (referenceMode != SINGLE_REF) {
+        if (refMode != SINGLE_REF) {
             for (int i = 0; i < REF_CONTEXTS; i++)
                 compRefProbs[i] = diffUpdateProb(boolDec, compRefProbs[i]);
         }
@@ -1456,7 +1450,7 @@ public class DecodingContext {
     }
 
     public int[][] getTx16x16Probs() {
-        return tx6x16Probs;
+        return tx16x16Probs;
     }
 
     public int[][] getTx32x32Probs() {
@@ -1507,7 +1501,7 @@ public class DecodingContext {
         return interModeProbs;
     }
 
-    public int[][] getInterpProbs() {
+    public int[][] getInterpFilterProbs() {
         return interpFilterProbs;
     }
 
@@ -1553,5 +1547,25 @@ public class DecodingContext {
 
     public int[] getCompModeProb() {
         return compModeProbs;
+    }
+
+    public int[] getAboveRefs() {
+        return aboveRefs;
+    }
+    
+    public int[] getLeftRefs() {
+        return leftRefs;
+    }
+    
+    public int getMiTileStartCol() {
+        return miTileStartCol;
+    }
+
+    public int[] getAboveTxSizes() {
+        return aboveTxSizes;
+    }
+
+    public int[] getLeftTxSizes() {
+        return leftTxSizes;
     }
 }

@@ -269,7 +269,7 @@ public class DecodingContextTest {
 					new int[] { 2, 173, 34, 7, 145, 85, 7, 166, 125, 7, 94, 66, 8, 64, 46, 17, 177, 31, 25, 29, 30 },
 					ArrayUtil.flatten2D(dc.getInterModeProbs()));
 			Assert.assertArrayEquals(new int[] { 235, 162, 36, 255, 34, 3, 149, 252 },
-					ArrayUtil.flatten2D(dc.getInterpProbs()));
+					ArrayUtil.flatten2D(dc.getInterpFilterProbs()));
 
 			Assert.assertArrayEquals(new int[] { 9, 102, 187, 225 }, dc.getIsInterProbs());
 
