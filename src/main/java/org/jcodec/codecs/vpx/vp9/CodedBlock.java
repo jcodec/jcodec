@@ -32,9 +32,9 @@ public class CodedBlock {
             DecodingContext c) {
         ModeInfo mode;
         if (c.isKeyIntraFrame())
-            mode = ModeInfo.read(miCol, miRow, blSz, decoder, probs, c);
+            mode = new ModeInfo().read(miCol, miRow, blSz, decoder, c);
         else
-            mode = InterModeInfo.read(miCol, miRow, blSz, decoder, c);
+            mode = new InterModeInfo().read(miCol, miRow, blSz, decoder, c);
         Residual r = Residual.readResidual(miCol, miRow, blSz, decoder, c, mode);
         return new CodedBlock(mode, r);
     }
