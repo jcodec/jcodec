@@ -65,9 +65,9 @@ public class RgbToYuv420j implements Transform {
         int rS = r + 128;
         int gS = g + 128;
         int bS = b + 128;
-        int y = 77 * rS + 150 * gS + 15 * bS;
-        int u = -43 * rS - 85 * gS + 128 * bS;
-        int v = 128 * rS - 107 * gS - 21 * bS;
+        int y = 77 * rS + 150 * gS + 29 * bS;
+        int u = -43 * rS - 84 * gS + 127 * bS;
+        int v = 127 * rS - 107 * gS - 21 * bS;
         y = (y + 128) >> 8;
         u = (u + 128) >> 8;
         v = (v + 128) >> 8;
