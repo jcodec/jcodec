@@ -92,7 +92,7 @@ public class MetadataEditor {
         if (format != Format.MOV) {
             throw new IllegalArgumentException("Unsupported format: " + format);
         }
-        MovieBox movie = MP4Util.parseMovie(f);
+        MovieBox movie = MP4Util.parseMovie(f).getMoov();
         MetaBox meta = NodeBox.findFirst(movie, MetaBox.class, MetaBox.fourcc());
         if (meta != null)
             return meta.getMeta();

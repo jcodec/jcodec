@@ -4,6 +4,7 @@ import java.lang.System;
 
 
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 
 import java.io.File;
@@ -35,8 +36,8 @@ public class ReplaceMP4Editor {
     }
 
     public void copy(File src, File dst, MP4Edit edit) throws IOException {
-        final MovieBox movie = MP4Util.createRefMovieFromFile(src);
-        edit.apply(movie);
+        final Movie movie = MP4Util.createRefMovieFromFile(src);
+        edit.apply(movie.getMoov());
         Flattern fl = new Flattern();
 
         fl.flattern(movie, dst);

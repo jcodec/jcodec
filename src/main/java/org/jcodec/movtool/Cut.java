@@ -16,6 +16,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.BoxFactory;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
@@ -72,8 +73,8 @@ public class Cut {
         List<SeekableByteChannel> outs = new ArrayList<SeekableByteChannel>();
         try {
             input = readableChannel(source);
-            MovieBox movie = createRefMovie(input, "file://" + source.getCanonicalPath());
-            List<MovieBox> slicesMovs;
+            Movie movie = createRefMovie(input, "file://" + source.getCanonicalPath());
+            List<Movie> slicesMovs;
             if (!selfContained) {
                 out = writableChannel(new File(source.getParentFile(), JCodecUtil2.removeExtension(source.getName())
                         + ".ref.mov"));
@@ -83,7 +84,7 @@ public class Cut {
                 out = writableChannel(new File(source.getParentFile(), JCodecUtil2.removeExtension(source.getName())
                         + ".self.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
-                new Strip().strip(movie);
+                new Strip().strip(movie.getMoov());
                 new Flattern().flatternChannel(movie, out);
             }
             saveSlices(slicesMovs, sliceNames, source.getParentFile());
@@ -98,7 +99,7 @@ public class Cut {
         }
     }
 
-    private static void saveSlices(List<MovieBox> slices, List<String> names, File parentFile) throws IOException {
+    private static void saveSlices(List<Movie> slices, List<String> names, File parentFile) throws IOException {
         for (int i = 0; i < slices.size(); i++) {
             if (names.get(i) == null)
                 continue;
@@ -123,38 +124,39 @@ public class Cut {
         }
     }
 
-    public List<MovieBox> cut(MovieBox movie, List<Slice> commands) {
+    public List<Movie> cut(Movie movie, List<Slice> commands) {
+        MovieBox moov = movie.getMoov();
 
-        TrakBox videoTrack = movie.getVideoTrack();
-        if (videoTrack != null && videoTrack.getTimescale() != movie.getTimescale())
-            movie.fixTimescale(videoTrack.getTimescale());
+        TrakBox videoTrack = moov.getVideoTrack();
+        if (videoTrack != null && videoTrack.getTimescale() != moov.getTimescale())
+            moov.fixTimescale(videoTrack.getTimescale());
 
-        TrakBox[] tracks = movie.getTracks();
+        TrakBox[] tracks = moov.getTracks();
         for (int i = 0; i < tracks.length; i++) {
             TrakBox trakBox = tracks[i];
-            forceEditList(movie, trakBox);
+            forceEditList(moov, trakBox);
             List<Edit> edits = trakBox.getEdits();
             for (Slice cut : commands) {
-                split(edits, cut.inSec, movie, trakBox);
-                split(edits, cut.outSec, movie, trakBox);
+                split(edits, cut.inSec, moov, trakBox);
+                split(edits, cut.outSec, moov, trakBox);
             }
         }
-        ArrayList<MovieBox> result = new ArrayList<MovieBox>();
+        ArrayList<Movie> result = new ArrayList<Movie>();
         for (Slice cut : commands) {
-            MovieBox clone = (MovieBox) NodeBox.cloneBox(movie, 16 * 1024 * 1024, BoxFactory.getDefault());
+            MovieBox clone = (MovieBox) NodeBox.cloneBox(moov, 16 * 1024 * 1024, BoxFactory.getDefault());
             for (TrakBox trakBox : clone.getTracks()) {
-                selectInner(trakBox.getEdits(), cut, movie, trakBox);
+                selectInner(trakBox.getEdits(), cut, moov, trakBox);
             }
-            result.add(clone);
+            result.add(new Movie(movie.getFtyp(), clone));
         }
 
         long movDuration = 0;
-        for (TrakBox trakBox : movie.getTracks()) {
-            selectOuter(trakBox.getEdits(), commands, movie, trakBox);
+        for (TrakBox trakBox : moov.getTracks()) {
+            selectOuter(trakBox.getEdits(), commands, moov, trakBox);
             trakBox.setEdits(trakBox.getEdits());
             movDuration = max(movDuration, trakBox.getDuration());
         }
-        movie.setDuration(movDuration);
+        moov.setDuration(movDuration);
 
         return result;
     }
