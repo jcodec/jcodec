@@ -57,7 +57,7 @@ public class MetadataEditorMain {
         if (flagSetFourcc != null) {
             Map<Integer, MetaValue> map = toFourccMeta(parseMetaSpec(flagSetFourcc));
             save |= map.size() > 0;
-            mediaMeta.getFourccMeta().putAll(map);
+            mediaMeta.getItunesMeta().putAll(map);
         }
 
         if (save) {
@@ -78,7 +78,7 @@ public class MetadataEditorMain {
             }
         }
 
-        Map<Integer, MetaValue> itunesMeta = mediaMeta.getFourccMeta();
+        Map<Integer, MetaValue> itunesMeta = mediaMeta.getItunesMeta();
         if (itunesMeta != null) {
             String flagQuery = cmd.getStringFlag(FLAG_QUERY);
             if (flagQuery == null) {

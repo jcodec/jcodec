@@ -60,7 +60,7 @@ public class MetadataEditor {
             public void apply(MovieBox movie) {
                 MetaBox meta1 = NodeBox.findFirst(movie, MetaBox.class, MetaBox.fourcc());
                 MetaBox meta2 = NodeBox.findFirstPath(movie, MetaBox.class, new String[] { "udta", MetaBox.fourcc() });
-                if (keyedMeta != null) {
+                if (keyedMeta != null && keyedMeta.size() > 0) {
                     if (meta1 == null) {
                         meta1 = new MetaBox();
                         movie.add(meta1);
@@ -68,7 +68,7 @@ public class MetadataEditor {
                     meta1.setKeyedMeta(keyedMeta);
                 }
 
-                if (itunesMeta != null) {
+                if (itunesMeta != null && itunesMeta.size() > 0) {
                     if (meta2 == null) {
                         meta2 = new MetaBox();
                         NodeBox udta = NodeBox.findFirst(movie, NodeBox.class, "udta");
@@ -84,7 +84,7 @@ public class MetadataEditor {
         });
     }
 
-    public Map<Integer, MetaValue> getFourccMeta() {
+    public Map<Integer, MetaValue> getItunesMeta() {
         return itunesMeta;
     }
 
