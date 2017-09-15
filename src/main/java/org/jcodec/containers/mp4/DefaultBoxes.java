@@ -85,6 +85,7 @@ public class DefaultBoxes extends Boxes {
         mappings.put("traf", NodeBox.class);
         mappings.put("mfra", NodeBox.class);
         mappings.put("skip", NodeBox.class);
+        mappings.put("udta", NodeBox.class);
         mappings.put(MetaBox.fourcc(), MetaBox.class);
         mappings.put(DataRefBox.fourcc(), DataRefBox.class);
         mappings.put("ipro", NodeBox.class);

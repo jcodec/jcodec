@@ -18,26 +18,53 @@ public class MetaBox extends NodeBox {
     public MetaBox(Header atom) {
         super(atom);
     }
+    
+    public MetaBox() {
+        this(Header.createHeader(fourcc(), 0));
+    }
 
-    public Map<String, MetaValue> getMeta() {
+    public Map<String, MetaValue> getKeyedMeta() {
         Map<String, MetaValue> result = new HashMap<String, MetaValue>();
 
         IListBox ilst = NodeBox.findFirst(this, IListBox.class, IListBox.fourcc());
         MdtaBox[] keys = NodeBox.findAllPath(this, MdtaBox.class, new String[] { KeysBox.fourcc(), MdtaBox.fourcc() });
+        
+        if (ilst == null || keys.length == 0)
+            return result;
+        
         for (Entry<Integer, DataBox> entry : ilst.getValues().entrySet()) {
+            Integer index = entry.getKey();
+            if (index == null)
+                continue;
             DataBox db = entry.getValue();
             MetaValue value = MetaValue.createOtherWithLocale(db.getType(), db.getLocale(), db.getData());
-            Integer index = entry.getKey();
-            if (index != null && index > 0 && index <= keys.length) {
+            if (index > 0 && index <= keys.length) {
                 result.put(keys[index - 1].getKey(), value);
             }
         }
-
         return result;
     }
+    
+    public Map<Integer, MetaValue> getItunesMeta() {
+        Map<Integer, MetaValue> result = new HashMap<Integer, MetaValue>();
 
-    public void setMeta(Map<String, MetaValue> map) {
-
+        IListBox ilst = NodeBox.findFirst(this, IListBox.class, IListBox.fourcc());
+        
+        if (ilst == null)
+            return result;
+        
+        for (Entry<Integer, DataBox> entry : ilst.getValues().entrySet()) {
+            Integer index = entry.getKey();
+            if (index == null)
+                continue;
+            DataBox db = entry.getValue();
+            MetaValue value = MetaValue.createOtherWithLocale(db.getType(), db.getLocale(), db.getData());
+            result.put(index, value);
+        }
+        return result;
+    }
+    
+    public void setKeyedMeta(Map<String, MetaValue> map) {
         KeysBox keys = new KeysBox();
         Map<Integer, DataBox> data = new HashMap<Integer, DataBox>();
         int i = 1;
@@ -49,6 +76,16 @@ public class MetaBox extends NodeBox {
         }
         IListBox ilst = new IListBox(data);
         this.replaceBox(keys);
+        this.replaceBox(ilst);
+    }
+    
+    public void setFourccMeta(Map<Integer, MetaValue> map) {
+        Map<Integer, DataBox> data = new HashMap<Integer, DataBox>();
+        for (Entry<Integer, MetaValue> entry : map.entrySet()) {
+            MetaValue v = entry.getValue();
+            data.put(entry.getKey(), new DataBox(v.getType(), v.getLocale(), v.getData()));
+        }
+        IListBox ilst = new IListBox(data);
         this.replaceBox(ilst);
     }
 

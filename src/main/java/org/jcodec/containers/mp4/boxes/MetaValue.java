@@ -177,4 +177,8 @@ public class MetaValue {
         bb.order(ByteOrder.BIG_ENDIAN);
         return bb.getLong();
     }
+
+    public boolean isBlob() {
+        return !isFloat() && !isInt() && !isString();
+    }
 }
