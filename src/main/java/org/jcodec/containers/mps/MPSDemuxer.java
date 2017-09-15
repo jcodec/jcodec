@@ -475,7 +475,6 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
                     errors ++;
                 break;
             default:
-                System.out.println(marker);
                 if (state > 3 && sliceSize < 1) {
                     errors ++;
                 }
