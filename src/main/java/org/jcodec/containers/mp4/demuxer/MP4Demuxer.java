@@ -18,6 +18,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -75,9 +76,10 @@ public class MP4Demuxer implements Demuxer {
     }
 
     private void findMovieBox(SeekableByteChannel input) throws IOException {
-        movie = MP4Util.parseMovieChannel(input);
-        if (movie == null)
+        Movie mv = MP4Util.parseMovieChannel(input);
+        if (mv == null || mv.getMoov() == null)
             throw new IOException("Could not find movie meta information box");
+        movie = mv.getMoov();
 
         processHeader(movie);
     }

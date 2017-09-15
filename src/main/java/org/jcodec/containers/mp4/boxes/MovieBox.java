@@ -134,9 +134,9 @@ public class MovieBox extends NodeBox {
         boxes.add(newTrack);
     }
 
-    public boolean isPureRefMovie(MovieBox movie) {
+    public boolean isPureRefMovie() {
         boolean pureRef = true;
-        TrakBox[] tracks = movie.getTracks();
+        TrakBox[] tracks = getTracks();
         for (int i = 0; i < tracks.length; i++) {
             TrakBox trakBox = tracks[i];
             pureRef &= trakBox.isPureRef();

@@ -46,7 +46,7 @@ public class ConcatMain {
         for (int i = 0; i < tracks.length; i++) {
             File m1 = listFiles[i];
             FilePool ch1 = new FilePool(m1, 1);
-            MovieBox mov1 = MP4Util.parseMovie(m1);
+            MovieBox mov1 = MP4Util.parseMovie(m1).getMoov();
             TrakBox v1 = mov1.getVideoTrack();
 
             RealTrack rt = new RealTrack(mov1, v1, ch1);

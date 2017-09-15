@@ -49,7 +49,7 @@ public class RelocateMP4Editor {
             } else {
                 f.setPosition(moovAtom.getOffset());
             }
-            MP4Util.writeMovie(f, moovBox);
+            MP4Util.writeMovieBox(f, moovBox);
         } finally {
             NIOUtils.closeQuietly(f);
         }

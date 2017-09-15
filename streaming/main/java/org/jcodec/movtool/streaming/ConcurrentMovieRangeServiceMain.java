@@ -41,7 +41,7 @@ public class ConcurrentMovieRangeServiceMain {
         }
         File file = new File(args[0]);
         FilePool fp = new FilePool(file, 10);
-        MovieBox movie = MP4Util.parseMovie(file);
+        MovieBox movie = MP4Util.parseMovie(file).getMoov();
 
         RealTrack vt = new RealTrack(movie, movie.getVideoTrack(), fp);
         VirtualMovie vm = new VirtualMP4Movie(vt);

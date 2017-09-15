@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 
 /**
@@ -23,7 +24,7 @@ public class WebOptimize {
         tgt.renameTo(src);
 
         try {
-            MovieBox movie = MP4Util.createRefMovieFromFile(src);
+            Movie movie = MP4Util.createRefMovieFromFile(src);
 
             new Flattern().flattern(movie, tgt);
         } catch (Throwable t) {
