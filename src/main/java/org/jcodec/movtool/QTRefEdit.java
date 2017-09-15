@@ -4,6 +4,7 @@ import java.lang.System;
 
 
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.movtool.QTEdit.EditFactory;
 
@@ -74,8 +75,8 @@ public class QTRefEdit {
             System.err.println("WARNING: Output file '" + output.getAbsolutePath() + "' exist, overwritting");
         }
 
-        MovieBox ref = MP4Util.createRefMovieFromFile(input);
-        new CompoundMP4Edit(edits).apply(ref);
+        Movie ref = MP4Util.createRefMovieFromFile(input);
+        new CompoundMP4Edit(edits).apply(ref.getMoov());
         MP4Util.writeMovieToFile(output, ref);
         System.out.println("INFO: Created reference file: " + output.getAbsolutePath());
     }

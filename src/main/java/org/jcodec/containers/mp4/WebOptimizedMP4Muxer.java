@@ -83,7 +83,7 @@ public class WebOptimizedMP4Muxer extends MP4Muxer {
             Logger.warn("Could not web-optimize, header is bigger then allocated space.");
             Header.createHeader("free", header.remaining()).writeChannel(out);
             out.setPosition(mdatEnd);
-            MP4Util.writeMovie(out, movie);
+            MP4Util.writeMovieBox(out, movie);
         }
     }
 }

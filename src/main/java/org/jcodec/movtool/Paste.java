@@ -14,6 +14,7 @@ import static org.jcodec.movtool.Util.spread;
 
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ClipRegionBox;
 import org.jcodec.containers.mp4.boxes.LoadSettingsBox;
@@ -55,13 +56,13 @@ public class Paste {
             to = writableChannel(toFile);
             File fromFile = new File(args[1]);
             from = readableChannel(fromFile);
-            MovieBox toMov = createRefMovie(to, "file://" + toFile.getCanonicalPath());
-            MovieBox fromMov = createRefMovie(from, "file://" + fromFile.getCanonicalPath());
-            new Strip().strip(fromMov);
+            Movie toMov = createRefMovie(to, "file://" + toFile.getCanonicalPath());
+            Movie fromMov = createRefMovie(from, "file://" + fromFile.getCanonicalPath());
+            new Strip().strip(fromMov.getMoov());
             if (args.length > 2) {
-                new Paste().paste(toMov, fromMov, Double.parseDouble(args[2]));
+                new Paste().paste(toMov.getMoov(), fromMov.getMoov(), Double.parseDouble(args[2]));
             } else {
-                new Paste().addToMovie(toMov, fromMov);
+                new Paste().addToMovie(toMov.getMoov(), fromMov.getMoov());
             }
             MP4Util.writeMovie(out, toMov);
         } finally {
