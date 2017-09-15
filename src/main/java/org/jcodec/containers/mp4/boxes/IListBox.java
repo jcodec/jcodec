@@ -41,11 +41,17 @@ public class IListBox extends Box {
     public void parse(ByteBuffer input) {
         while (input.remaining() >= 4) {
             int size = input.getInt();
-            int index = input.getInt();
-            Header childAtom = Header.read(input);
-            if (childAtom != null && input.remaining() >= childAtom.getBodySize()) {
-                values.put(index, (DataBox) Box.parseBox(NIOUtils.read(input, (int) childAtom.getBodySize()), childAtom,
-                        factory));
+            ByteBuffer local = NIOUtils.read(input, size - 4);
+            int index = local.getInt();
+            while (local.hasRemaining()) {
+                Header childAtom = Header.read(local);
+                if (childAtom != null && local.remaining() >= childAtom.getBodySize()) {
+                    Box box = Box.parseBox(NIOUtils.read(local, (int) childAtom.getBodySize()), childAtom, factory);
+                    if (box instanceof DataBox) {
+                        values.put(index, (DataBox) box);
+                        break;
+                    }
+                }
             }
         }
     }
