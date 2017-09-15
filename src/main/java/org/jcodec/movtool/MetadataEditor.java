@@ -78,7 +78,7 @@ public class MetadataEditor {
                         }
                         udta.add(meta2);
                     }
-                    meta2.setFourccMeta(itunesMeta);
+                    meta2.setItunesMeta(itunesMeta);
                 }
             }
         });
