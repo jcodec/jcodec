@@ -47,6 +47,7 @@ import org.jcodec.containers.mp4.boxes.TrackFragmentHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.TrunBox;
+import org.jcodec.containers.mp4.boxes.UdtaBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 
 public class DefaultBoxes extends Boxes {
@@ -85,7 +86,6 @@ public class DefaultBoxes extends Boxes {
         mappings.put("traf", NodeBox.class);
         mappings.put("mfra", NodeBox.class);
         mappings.put("skip", NodeBox.class);
-        mappings.put("udta", NodeBox.class);
         mappings.put(MetaBox.fourcc(), MetaBox.class);
         mappings.put(DataRefBox.fourcc(), DataRefBox.class);
         mappings.put("ipro", NodeBox.class);
@@ -104,7 +104,7 @@ public class DefaultBoxes extends Boxes {
         mappings.put(EncodedPixelBox.ENOF, EncodedPixelBox.class);
         mappings.put(GenericMediaInfoBox.fourcc(), GenericMediaInfoBox.class);
         mappings.put(TimecodeMediaInfoBox.fourcc(), TimecodeMediaInfoBox.class);
-        mappings.put("udta", NodeBox.class);
+        mappings.put(UdtaBox.fourcc(), UdtaBox.class);
         mappings.put(CompositionOffsetsBox.fourcc(), CompositionOffsetsBox.class);
         mappings.put(NameBox.fourcc(), NameBox.class);
         mappings.put("mdta", LeafBox.class);

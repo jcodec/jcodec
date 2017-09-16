@@ -1,13 +1,11 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -27,7 +25,7 @@ public class MetaBox extends NodeBox {
     public MetaBox() {
         this(Header.createHeader(fourcc(), 0));
     }
-
+    
     public Map<String, MetaValue> getKeyedMeta() {
         Map<String, MetaValue> result = new LinkedHashMap<String, MetaValue>();
 

@@ -69,7 +69,3 @@ Map<String, MetaValue> keyedMeta = mediaMeta.getKeyedMeta();
 keyedMeta.put("com.google.foo", MetaValue.createInt(42));
 mediaMeta.save();
  ```
- 
-## Known issues
-     
-* After editing any piece of iTunes metadata it doesn't show up in QuickTime player anymore. The reason is being investigated right now.
