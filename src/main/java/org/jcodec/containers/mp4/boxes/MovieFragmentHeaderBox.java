@@ -35,6 +35,11 @@ public class MovieFragmentHeaderBox extends FullBox {
         super.doWrite(out);
         out.putInt(sequenceNumber);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 16;
+    }
 
     public int getSequenceNumber() {
         return sequenceNumber;

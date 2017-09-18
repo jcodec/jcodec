@@ -77,6 +77,10 @@ public class Header {
     public long headerSize() {
         return lng || (size > MAX_UNSIGNED_INT) ? 16 : 8;
     }
+    
+    public static int estimateHeaderSize(int size) {
+        return size + 8 > MAX_UNSIGNED_INT ? 16 : 8;
+    }
 
     public byte[] readContents(InputStream di) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

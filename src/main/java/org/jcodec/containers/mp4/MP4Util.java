@@ -15,8 +15,10 @@ import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.Header;
+import org.jcodec.containers.mp4.boxes.MetaBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
@@ -221,7 +223,7 @@ public class MP4Util {
         int sizeHint = estimateMoovBoxSize(movie) + additionalSize;
         Logger.debug("Using " + sizeHint + " bytes for MOOV box");
 
-        ByteBuffer buf = ByteBuffer.allocate(sizeHint);
+        ByteBuffer buf = ByteBuffer.allocate(sizeHint * 4);
         movie.write(buf);
         buf.flip();
         out.write(buf);
@@ -231,7 +233,7 @@ public class MP4Util {
         int sizeHint = estimateMoovBoxSize(movie.getMoov()) + additionalSize;
         Logger.debug("Using " + sizeHint + " bytes for MOOV box");
 
-        ByteBuffer buf = ByteBuffer.allocate(sizeHint + 128);
+        ByteBuffer buf = ByteBuffer.allocate(sizeHint * 4 + 128);
         movie.getFtyp().write(buf);
         movie.getMoov().write(buf);
         buf.flip();
@@ -246,30 +248,7 @@ public class MP4Util {
      * @return
      */
     public static int estimateMoovBoxSize(MovieBox movie) {
-        int sizeHint = 4 << 10; // 4K plus
-        TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox trak = tracks[i];
-            sizeHint += 4 << 10; // 4K per track
-            List<Edit> edits = trak.getEdits();
-            sizeHint += edits != null ? (edits.size() << 3) + (edits.size() << 2) : 0;
-            ChunkOffsetsBox stco = trak.getStco();
-            sizeHint += stco != null ? (stco.getChunkOffsets().length << 2) : 0;
-            ChunkOffsets64Box co64 = trak.getCo64();
-            sizeHint += co64 != null ? (co64.getChunkOffsets().length << 3) : 0;
-            SampleSizesBox stsz = trak.getStsz();
-            sizeHint += stsz != null ? (stsz.getDefaultSize() != 0 ? 0 : (stsz.getCount() << 2)) : 0;
-            TimeToSampleBox stts = trak.getStts();
-            sizeHint += stts != null ? (stts.getEntries().length << 3) : 0;
-            SyncSamplesBox stss = trak.getStss();
-            sizeHint += stss != null ? (stss.getSyncSamples().length << 2) : 0;
-            CompositionOffsetsBox ctts = trak.getCtts();
-            sizeHint += ctts != null ? (ctts.getEntries().length << 3) : 0;
-            SampleToChunkBox stsc = trak.getStsc();
-            sizeHint += stsc != null ? (stsc.getSampleToChunk().length << 3) + (stsc.getSampleToChunk().length << 2)
-                    : 0;
-        }
-        return sizeHint;
+        return movie.estimateSize() + (4 << 10);
     }
 
     public static String getFourcc(Codec codec) {

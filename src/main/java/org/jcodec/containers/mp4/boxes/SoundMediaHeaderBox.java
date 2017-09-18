@@ -37,6 +37,11 @@ public class SoundMediaHeaderBox extends FullBox {
         out.putShort(balance);
         out.putShort((short) 0);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 16;
+    }
 
     public short getBalance() {
         return balance;

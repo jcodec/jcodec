@@ -37,6 +37,11 @@ public class PixelAspectExt extends Box {
         out.putInt(hSpacing);
         out.putInt(vSpacing);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 16;
+    }
 
     public int gethSpacing() {
         return hSpacing;
@@ -53,5 +58,4 @@ public class PixelAspectExt extends Box {
     public static String fourcc() {
         return "pasp";
     }
-
 }

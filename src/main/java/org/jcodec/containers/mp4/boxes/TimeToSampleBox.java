@@ -82,6 +82,11 @@ public class TimeToSampleBox extends FullBox {
             out.putInt(timeToSampleEntry.getSampleDuration());
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 16 + entries.length * 8;
+    }
 
     public void setEntries(TimeToSampleEntry[] entries) {
         this.entries = entries;

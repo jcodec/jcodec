@@ -35,6 +35,10 @@ public class UdtaBox extends NodeBox {
     public UdtaBox(Header atom) {
         super(atom);
     }
+    
+    public MetaBox meta() {
+        return NodeBox.findFirst(this, MetaBox.class, MetaBox.fourcc());
+    }
 
     public static String fourcc() {
         return FOURCC;

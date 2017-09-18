@@ -46,6 +46,11 @@ public class ChunkOffsets64Box extends FullBox {
         }
     }
     
+    @Override
+    public int estimateSize() {
+        return 12 + 4 + chunkOffsets.length * 8;
+    }
+    
     public long[] getChunkOffsets() {
         return chunkOffsets;
     }

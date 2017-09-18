@@ -135,11 +135,15 @@ public class TrackHeaderBox extends FullBox {
         out.putInt((int) (width * 65536));
         out.putInt((int) (height * 65536));
     }
+    
+    @Override
+    public int estimateSize() {
+        return 92;
+    }
 
     private void writeMatrix(ByteBuffer out) {
         for (int i = 0; i < 9; i++)
             out.putInt(matrix[i]);
-
     }
 
     private void writeVolume(ByteBuffer out) {

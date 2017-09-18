@@ -45,4 +45,9 @@ public class KeysBox extends NodeBox {
     public static String fourcc() {
         return FOURCC;
     }
+    
+    @Override
+    public int estimateSize() {
+        return 8 + super.estimateSize();
+    }
 }

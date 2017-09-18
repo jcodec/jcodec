@@ -306,4 +306,8 @@ public class TrunBox extends FullBox {
         }
     }
 
+    @Override
+    public int estimateSize() {
+        return 24 + sampleCount * 16;
+    }
 }

@@ -65,4 +65,15 @@ public class FileTypeBox extends Box {
             out.put(JCodecUtil2.asciiString(string));
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        int size = 5 + 8;
+
+        for (String string : compBrands) {
+            size += JCodecUtil2.asciiString(string).length;
+        }
+
+        return size;
+    }
 }

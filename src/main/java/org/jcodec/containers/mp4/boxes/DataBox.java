@@ -53,6 +53,11 @@ public class DataBox extends Box {
         out.putInt(locale);
         out.put(data);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 16 + data.length;
+    }
 
     public static String fourcc() {
         return FOURCC;

@@ -200,4 +200,12 @@ public class MovieBox extends NodeBox {
 
         return new Size((int) vs.getWidth(), (int) vs.getHeight());
     }
+    
+    public MetaBox meta() {
+        return NodeBox.findFirst(this, MetaBox.class, MetaBox.fourcc());
+    }
+    
+    public UdtaBox udta() {
+        return NodeBox.findFirst(this, UdtaBox.class, UdtaBox.fourcc());
+    }
 }

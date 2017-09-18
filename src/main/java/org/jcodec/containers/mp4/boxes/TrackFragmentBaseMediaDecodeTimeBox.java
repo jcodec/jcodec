@@ -62,6 +62,11 @@ public class TrackFragmentBaseMediaDecodeTimeBox extends FullBox {
         } else
             throw new RuntimeException("Unsupported tfdt version");
     }
+    
+    @Override
+    public int estimateSize() {
+        return 20;
+    }
 
     public long getBaseMediaDecodeTime() {
         return baseMediaDecodeTime;

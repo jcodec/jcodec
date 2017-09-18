@@ -68,6 +68,12 @@ public class HandlerBox extends FullBox {
             out.put(asciiString(componentName));
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 12 + asciiString(componentType).length + asciiString(componentSubType).length
+                + asciiString(componentManufacturer).length + 9;
+    }
 
     public String getComponentType() {
         return componentType;

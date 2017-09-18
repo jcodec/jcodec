@@ -33,6 +33,11 @@ public class MovieExtendsHeaderBox extends FullBox {
         super.doWrite(out);
         out.putInt(fragmentDuration);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 16;
+    }
 
     public int getFragmentDuration() {
         return fragmentDuration;

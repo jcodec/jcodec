@@ -40,6 +40,11 @@ public class EndianBox extends Box {
     protected void doWrite(ByteBuffer out) {
         out.putShort((short) (endian == ByteOrder.LITTLE_ENDIAN ? 1 : 0));
     }
+    
+    @Override
+    public int estimateSize() {
+        return 2 + 8;
+    }
 
     public ByteOrder getEndian() {
         return endian;

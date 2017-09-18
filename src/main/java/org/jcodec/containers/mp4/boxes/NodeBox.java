@@ -78,6 +78,15 @@ public class NodeBox extends Box {
             box.write(out);
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        int total = 0;
+        for (Box box : boxes) {
+            total += box.estimateSize();
+        }
+        return total + Header.estimateHeaderSize(total);
+    }
 
     public void addFirst(MovieHeaderBox box) {
         boxes.add(0, box);

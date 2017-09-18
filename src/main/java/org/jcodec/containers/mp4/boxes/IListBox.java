@@ -63,8 +63,7 @@ public class IListBox extends Box {
     }
 
     protected void doWrite(ByteBuffer out) {
-        Set<Entry<Integer, List<Box>>> entrySet = values.entrySet();
-        for (Entry<Integer, List<Box>> entry : entrySet) {
+        for (Entry<Integer, List<Box>> entry : values.entrySet()) {
             ByteBuffer fork = out.duplicate();
             out.putInt(0);
             out.putInt(entry.getKey());
@@ -73,6 +72,17 @@ public class IListBox extends Box {
             }
             fork.putInt(out.position() - fork.position());
         }
+    }
+    
+    @Override
+    public int estimateSize() {
+        int sz = 8;
+        for (Entry<Integer, List<Box>> entry : values.entrySet()) {
+            for (Box box : entry.getValue()) {
+                sz += 8 + box.estimateSize();
+            }
+        }
+        return sz;
     }
 
     public static String fourcc() {

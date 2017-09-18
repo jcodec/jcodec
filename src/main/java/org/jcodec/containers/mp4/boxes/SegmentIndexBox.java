@@ -110,6 +110,11 @@ public class SegmentIndexBox extends FullBox {
             out.putInt(i2);
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 40 + reference_count * 12;
+    }
 
     @Override
     public String toString() {
@@ -119,5 +124,4 @@ public class SegmentIndexBox extends FullBox {
                 + Platform.arrayToString(references) + ", version=" + version + ", flags=" + flags + ", header="
                 + header + "]";
     }
-
 }

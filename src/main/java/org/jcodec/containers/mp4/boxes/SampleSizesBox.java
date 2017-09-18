@@ -80,6 +80,11 @@ public class SampleSizesBox extends FullBox {
             out.putInt((int)count);
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return (defaultSize == 0 ? sizes.length * 4 : 0) + 20;
+    }
 
     public void setSizes(int[] sizes) {
         this.sizes = sizes;
