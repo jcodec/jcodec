@@ -25,7 +25,7 @@ public class MetaBox extends NodeBox {
     public MetaBox() {
         this(Header.createHeader(fourcc(), 0));
     }
-    
+
     public Map<String, MetaValue> getKeyedMeta() {
         Map<String, MetaValue> result = new LinkedHashMap<String, MetaValue>();
 
@@ -102,6 +102,8 @@ public class MetaBox extends NodeBox {
     public void setItunesMeta(Map<Integer, MetaValue> map) {
         if (map.isEmpty())
             return;
+        Map<Integer, MetaValue> copy = new LinkedHashMap<Integer, MetaValue>();
+        copy.putAll(map);
         IListBox ilst = NodeBox.findFirst(this, IListBox.class, IListBox.fourcc());
         Map<Integer, List<Box>> data;
         if (ilst == null) {
@@ -111,17 +113,17 @@ public class MetaBox extends NodeBox {
 
             for (Entry<Integer, List<Box>> entry : data.entrySet()) {
                 int index = entry.getKey();
-                MetaValue v = map.get(index);
+                MetaValue v = copy.get(index);
                 if (v != null) {
                     DataBox dataBox = new DataBox(v.getType(), v.getLocale(), v.getData());
                     dropChildBox(entry.getValue(), DataBox.fourcc());
                     entry.getValue().add(dataBox);
-                    map.remove(index);
+                    copy.remove(index);
                 }
             }
         }
 
-        for (Entry<Integer, MetaValue> entry : map.entrySet()) {
+        for (Entry<Integer, MetaValue> entry : copy.entrySet()) {
             int index = entry.getKey();
             MetaValue v = entry.getValue();
             DataBox dataBox = new DataBox(v.getType(), v.getLocale(), v.getData());
