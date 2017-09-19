@@ -49,9 +49,8 @@ public class MetadataEditor {
                 itunesMeta == null ? new HashMap<Integer, MetaValue>() : itunesMeta.getItunesMeta());
     }
 
-    public void save() throws IOException {
-        ReplaceMP4Editor mp4Editor = new ReplaceMP4Editor();
-        mp4Editor.modifyOrReplace(source, new MP4Edit() {
+    public void save(boolean fast) throws IOException {
+        MP4Edit edit = new MP4Edit() {
             @Override
             public void applyToFragment(MovieBox mov, MovieFragmentBox[] fragmentBox) {
             }
@@ -81,7 +80,12 @@ public class MetadataEditor {
                     meta2.setItunesMeta(itunesMeta);
                 }
             }
-        });
+        };
+        if (fast) {
+            new RelocateMP4Editor().modifyOrRelocate(source, edit);
+        } else {
+            new ReplaceMP4Editor().modifyOrReplace(source, edit);
+        }
     }
 
     public Map<Integer, MetaValue> getItunesMeta() {

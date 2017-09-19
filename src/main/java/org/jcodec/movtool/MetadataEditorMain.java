@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
+import org.jcodec.common.tools.MainUtils.FlagType;
 import org.jcodec.containers.mp4.boxes.MetaValue;
 
 /**
@@ -32,7 +33,9 @@ public class MetadataEditorMain {
     private static final Flag FLAG_SET_ITUNES = new Flag("set-itunes", "si",
             "fourcc1=value1[(type1)]:fourcc2=value2[(type2)]. Sets the metadata piece into a file.");
     private static final Flag FLAG_QUERY = new Flag("query", "q", "Query the value of one key from the metadata set.");
-    private static final Flag[] flags = { FLAG_SET_KEYED, FLAG_SET_ITUNES, FLAG_QUERY };
+    private static final Flag FLAG_FAST = new Flag("fast", "f",
+            "Fast edit, will move the " + "header to the end of the file when ther's no room to fit it.", FlagType.VOID);
+    private static final Flag[] flags = { FLAG_SET_KEYED, FLAG_SET_ITUNES, FLAG_QUERY, FLAG_FAST };
 
     private static final Pattern valuePattern = Pattern.compile("(.+)=([^\\(]+)(\\(.*\\))?");
 
@@ -61,7 +64,7 @@ public class MetadataEditorMain {
         }
 
         if (save) {
-            mediaMeta.save();
+            mediaMeta.save(cmd.getBooleanFlag(FLAG_FAST));
             mediaMeta = MetadataEditor.createFrom(new File(cmd.getArg(0)));
         }
 
