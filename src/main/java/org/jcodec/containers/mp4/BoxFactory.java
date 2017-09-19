@@ -43,7 +43,6 @@ public class BoxFactory implements IBoxFactory {
     @Override
     public Box newBox(Header header) {
         Class<? extends Box> claz = boxes.toClass(header.getFourcc());
-        String fourcc = header.getFourcc();
         if (claz == null)
             return new Box.LeafBox(header);
         Box box = Platform.newInstance(claz, new Object[] { header });

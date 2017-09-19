@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4;
 
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.ClearApertureBox;
@@ -13,10 +14,13 @@ import org.jcodec.containers.mp4.boxes.EncodedPixelBox;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.GenericMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
+import org.jcodec.containers.mp4.boxes.IListBox;
+import org.jcodec.containers.mp4.boxes.KeysBox;
 import org.jcodec.containers.mp4.boxes.LoadSettingsBox;
 import org.jcodec.containers.mp4.boxes.MediaBox;
 import org.jcodec.containers.mp4.boxes.MediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
+import org.jcodec.containers.mp4.boxes.MetaBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieExtendsBox;
 import org.jcodec.containers.mp4.boxes.MovieExtendsHeaderBox;
@@ -43,6 +47,7 @@ import org.jcodec.containers.mp4.boxes.TrackFragmentHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.TrunBox;
+import org.jcodec.containers.mp4.boxes.UdtaBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 
 public class DefaultBoxes extends Boxes {
@@ -74,12 +79,14 @@ public class DefaultBoxes extends Boxes {
         mappings.put(SampleToChunkBox.fourcc(), SampleToChunkBox.class);
         mappings.put(SampleSizesBox.fourcc(), SampleSizesBox.class);
         mappings.put(ChunkOffsetsBox.fourcc(), ChunkOffsetsBox.class);
+        mappings.put("keys", KeysBox.class);
+        mappings.put(IListBox.fourcc(), IListBox.class);
         mappings.put("mvex", NodeBox.class);
         mappings.put("moof", NodeBox.class);
         mappings.put("traf", NodeBox.class);
         mappings.put("mfra", NodeBox.class);
         mappings.put("skip", NodeBox.class);
-        mappings.put("meta", Box.LeafBox.class);
+        mappings.put(MetaBox.fourcc(), MetaBox.class);
         mappings.put(DataRefBox.fourcc(), DataRefBox.class);
         mappings.put("ipro", NodeBox.class);
         mappings.put("sinf", NodeBox.class);
@@ -97,9 +104,10 @@ public class DefaultBoxes extends Boxes {
         mappings.put(EncodedPixelBox.ENOF, EncodedPixelBox.class);
         mappings.put(GenericMediaInfoBox.fourcc(), GenericMediaInfoBox.class);
         mappings.put(TimecodeMediaInfoBox.fourcc(), TimecodeMediaInfoBox.class);
-        mappings.put("udta", NodeBox.class);
+        mappings.put(UdtaBox.fourcc(), UdtaBox.class);
         mappings.put(CompositionOffsetsBox.fourcc(), CompositionOffsetsBox.class);
         mappings.put(NameBox.fourcc(), NameBox.class);
+        mappings.put("mdta", LeafBox.class);
 
         mappings.put(MovieFragmentHeaderBox.fourcc(), MovieFragmentHeaderBox.class);
         mappings.put(TrackFragmentHeaderBox.fourcc(), TrackFragmentHeaderBox.class);
