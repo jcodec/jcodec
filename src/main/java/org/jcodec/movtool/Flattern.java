@@ -77,21 +77,18 @@ public class Flattern {
     public void flatternChannel(MovieBox movie, SeekableByteChannel out) throws IOException {
         if (!movie.isPureRefMovie(movie))
             throw new IllegalArgumentException("movie should be reference");
-        ByteBuffer buf = ByteBuffer.allocate(16 * 1024 * 1024);
         FileTypeBox ftyp = FileTypeBox.createFileTypeBox("qt  ", 0x20050300, Arrays.asList(new String[] { "qt  " }));
-        ftyp.write(buf);
-        long movieOff = buf.position();
-        movie.write(buf);
-
+        out.setPosition(0);
+        out.write(MP4Util.writeBox(ftyp, 128));
+        MP4Util.writeMovie(out, movie);
+        
         int extraSpace = calcSpaceReq(movie);
-        Header.createHeader("free", 8 + extraSpace).write(buf);
-        NIOUtils.skip(buf, extraSpace);
-
-        long mdatOff = buf.position();
-        Header.createHeader("mdat", 0x100000001L).write(buf);
-        buf.flip();
+        ByteBuffer buf = ByteBuffer.allocate(extraSpace);
         out.write(buf);
 
+        long mdatOff = out.position();
+        writeHeader(Header.createHeader("mdat", 0x100000001L), out);
+        
         SeekableByteChannel[][] inputs = getInputs(movie);
 
         TrakBox[] tracks = movie.getTracks();
@@ -133,21 +130,30 @@ public class Flattern {
 
             lastProgress = calcProgress(totalChunks, writtenChunks, lastProgress);
         }
-        long mdatSize = out.position() - mdatOff;
 
         for (int i = 0; i < tracks.length; i++) {
             writers[i].apply();
         }
-        out.setPosition(movieOff);
+        long mdatSize = out.position() - mdatOff;
+        
+        out.setPosition(0);
+        out.write(MP4Util.writeBox(ftyp, 128));
         MP4Util.writeMovie(out, movie);
 
         long extra = mdatOff - out.position();
         if (extra < 0)
             throw new RuntimeException("Not enough space to write the header");
-        out.write((ByteBuffer) ByteBuffer.allocate(8).putInt((int) extra).put(new byte[] { 'f', 'r', 'e', 'e' }).flip());
+        writeHeader(Header.createHeader("free", extra), out);
 
-        out.setPosition(mdatOff + 8);
-        out.write(ByteBuffer.allocate(8).putLong(mdatSize));
+        out.setPosition(mdatOff);
+        writeHeader(Header.createHeader("mdat", mdatSize), out);
+    }
+
+    private void writeHeader(Header header, SeekableByteChannel out) throws IOException {
+        ByteBuffer bb = ByteBuffer.allocate(16);
+        header.write(bb);
+        bb.flip();
+        out.write(bb);
     }
 
     private int calcProgress(int totalChunks, int writtenChunks, int lastProgress) {
