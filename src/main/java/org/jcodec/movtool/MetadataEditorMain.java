@@ -57,7 +57,7 @@ public class MetadataEditorMain {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args, flags);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpVarArgs(flags, "file name");
+            MainUtils.printHelpCmdVa("metaedit", flags, "file name");
             System.exit(-1);
             return;
         }

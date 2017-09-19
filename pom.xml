@@ -49,6 +49,13 @@
 					<exclude>**/*.java</exclude>
 				</excludes>
 			</resource>
+		    	<resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
 		</resources>
 		<testResources>
 			<testResource>
@@ -111,6 +118,18 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.5.3</version>
             </plugin>
+			<plugin>
+				<groupId>pl.project13.maven</groupId>
+				<artifactId>git-commit-id-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
         <extensions>
             <extension>
