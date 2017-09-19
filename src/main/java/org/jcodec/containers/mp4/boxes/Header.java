@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
  */
 public class Header {
 
-    private static final byte[] FOURCC_FREE = new byte[] {'f', 'r', 'e', 'e'};
+    public static final byte[] FOURCC_FREE = new byte[] {'f', 'r', 'e', 'e'};
     private static final long MAX_UNSIGNED_INT = 0x100000000L;
     private String fourcc;
     private long size;
