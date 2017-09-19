@@ -1,15 +1,15 @@
 package org.jcodec.movtool;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.tools.MainUtils;
@@ -30,20 +30,17 @@ public class MetadataEditorMain {
     private static final String TYPENAME_INT2 = "integer";
     private static final String TYPENAME_INT = "int";
     private static final Flag FLAG_SET_KEYED = new Flag("set-keyed", "sk",
-            "key1=value1[(type1)]:key2=value2[(type2)]. Sets the metadata piece into a file.");
+            "key1[,type1]=value1:key2[,type2]=value2[,...] Sets the metadata piece into a file.");
     private static final Flag FLAG_SET_ITUNES = new Flag("set-itunes", "si",
-            "fourcc1=value1[(type1)]:fourcc2=value2[(type2)]. Sets the metadata piece into a file.");
+            "key1[,type1]=value1:key2[,type2]=value2[,...] Sets the metadata piece into a file.");
     private static final Flag FLAG_SET_ITUNES_BLOB = new Flag("set-itunes-blob", "sib",
-            "fourcc[(type)]. Sets the metadata piece into as a blob read from the stdin.");
+            "key[,type]=file Sets the data read from a file into the metadata field 'key'. If file is not present stdin is read.");
     private static final Flag FLAG_QUERY = new Flag("query", "q", "Query the value of one key from the metadata set.");
     private static final Flag FLAG_FAST = new Flag("fast", "f",
             "Fast edit, will move the " + "header to the end of the file when ther's no room to fit it.",
             FlagType.VOID);
     private static final Flag[] flags = { FLAG_SET_KEYED, FLAG_SET_ITUNES, FLAG_QUERY, FLAG_FAST,
             FLAG_SET_ITUNES_BLOB };
-
-    private static final Pattern valuePattern = Pattern.compile("(.+)=([^\\(]+)(\\(.*\\))?");
-    private static final Pattern blobPattern = Pattern.compile("(.+)(\\(.*\\))?");
 
     private static Map<String, Integer> strToType = new HashMap<String, Integer>();
 
@@ -83,21 +80,20 @@ public class MetadataEditorMain {
 
         String flagSetItunesBlob = cmd.getStringFlag(FLAG_SET_ITUNES_BLOB);
         if (flagSetItunesBlob != null) {
-            Matcher matcher = valuePattern.matcher(flagSetItunesBlob);
-            if (matcher.matches()) {
-                Integer type = 1;
-                String typeRaw = matcher.group(2);
-                if (typeRaw != null) {
-                    typeRaw = typeRaw.substring(1, typeRaw.length() - 1);
-                    type = strToType.get(typeRaw);
-                }
-                if (type != null) {
-                    String name = matcher.group(1);
-                    byte[] data = readStdin();
-                    mediaMeta.getItunesMeta().put(stringToFourcc(name), MetaValue.createOther(type, data));
-                } else {
-                    System.err.println("Unsupported metadata type: " + typeRaw);
-                }
+            String[] lr = flagSetItunesBlob.split("=");
+            String[] kt = lr[0].split(",");
+            String key = kt[0];
+
+            Integer type = 1;
+            if (kt.length > 1) {
+                type = strToType.get(kt[1]);
+            }
+            if (type != null) {
+                byte[] data = readStdin(lr.length > 1 ? lr[1] : null);
+                mediaMeta.getItunesMeta().put(stringToFourcc(key), MetaValue.createOther(type, data));
+                save = true;
+            } else {
+                System.err.println("Unsupported metadata type: " + kt[1]);
             }
         }
 
@@ -133,8 +129,18 @@ public class MetadataEditorMain {
         }
     }
 
-    private static byte[] readStdin() throws IOException {
-        return IOUtils.toByteArray(System.in);
+    private static byte[] readStdin(String fileName) throws IOException {
+        InputStream fis = null;
+        try {
+            if (fileName != null) {
+                fis = new FileInputStream(new File(fileName));
+                return IOUtils.toByteArray(fis);
+            } else {
+                return IOUtils.toByteArray(System.in);
+            }
+        } finally {
+            IOUtils.closeQuietly(fis);
+        }
     }
 
     private static void printValue(MetaValue value) throws IOException {
@@ -157,14 +163,9 @@ public class MetadataEditorMain {
     private static Map<String, MetaValue> parseMetaSpec(String flagSetKeyed) {
         Map<String, MetaValue> map = new HashMap<String, MetaValue>();
         for (String value : flagSetKeyed.split(":")) {
-            Matcher matcher = valuePattern.matcher(value);
-            if (!matcher.matches())
-                continue;
-            String type = matcher.group(3);
-            if (type != null) {
-                type = type.substring(1, type.length() - 1);
-            }
-            map.put(matcher.group(1), typedValue(matcher.group(2), type));
+            String[] lr = value.split("=");
+            String[] kt = lr[0].split(",");
+            map.put(kt[0], typedValue(lr.length > 1 ? lr[1] : null, kt.length > 1 ? kt[1] : null));
         }
         return map;
     }
