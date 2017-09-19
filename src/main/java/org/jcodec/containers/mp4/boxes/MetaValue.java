@@ -81,9 +81,9 @@ public class MetaValue {
 
     public double getFloat() {
         if (type == TYPE_FLOAT_32)
-            return (float) toInt32(data);
+            return toFloat(data);
         if (type == TYPE_FLOAT_64)
-            return (double) toInt64(data);
+            return toDouble(data);
         return 0;
     }
 
@@ -171,11 +171,17 @@ public class MetaValue {
         bb.order(ByteOrder.BIG_ENDIAN);
         return bb.getInt();
     }
-
-    private long toInt64(byte[] data) {
+    
+    private float toFloat(byte[] data) {
         ByteBuffer bb = ByteBuffer.wrap(data);
         bb.order(ByteOrder.BIG_ENDIAN);
-        return bb.getLong();
+        return bb.getFloat();
+    }
+
+    private double toDouble(byte[] data) {
+        ByteBuffer bb = ByteBuffer.wrap(data);
+        bb.order(ByteOrder.BIG_ENDIAN);
+        return bb.getDouble();
     }
 
     public boolean isBlob() {
