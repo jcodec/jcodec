@@ -57,11 +57,12 @@ public class NodeBox extends Box {
         if (input.remaining() < 4)
             return null;
 
+        Box ret = null;
         Header childAtom = Header.read(input);
-        if (childAtom != null && input.remaining() >= childAtom.getBodySize())
-            return Box.parseBox(NIOUtils.read(input, (int) childAtom.getBodySize()), childAtom, factory);
-        else
-            return null;
+        if (childAtom != null && input.remaining() >= childAtom.getBodySize()) {
+            ret = Box.parseBox(NIOUtils.read(input, (int) childAtom.getBodySize()), childAtom, factory);
+        }
+        return ret;
     }
 
     public List<Box> getBoxes() {
@@ -144,6 +145,27 @@ public class NodeBox extends Box {
         return NodeBox.doCloneBox(box, approxSize, bf);
     }
 
+    public static <T extends Box> T[] findDeep(Box box, Class<T> class1, String name) {
+        List<T> storage = new ArrayList<T>();
+        findDeepInner(box, class1, name, storage);
+        return storage.toArray((T[]) Array.newInstance(class1, 0));
+    }
+
+    public static <T extends Box> void findDeepInner(Box box, Class<T> class1, String name, List<T> storage) {
+        if (box == null)
+            return;
+        if (name.equals(box.getHeader().getFourcc())) {
+            storage.add((T) box);
+            return;
+        }
+        if (box instanceof NodeBox) {
+            NodeBox nb = (NodeBox) box;
+            for (Box candidate : nb.getBoxes()) {
+                findDeepInner(candidate, class1, name, storage);
+            }
+        }
+    }
+    
     public static <T extends Box> T[] findAll(Box box, Class<T> class1, String path) {
         return findAllPath(box, class1, new String[] { path });
     }
