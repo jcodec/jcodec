@@ -13,8 +13,8 @@ import java.nio.ByteOrder;
  */
 public class MetaValue {
     // All data types below are Big Endian
-    private static final int TYPE_STRING_UTF8 = 2;
-    private static final int TYPE_STRING_UTF16 = 1;
+    private static final int TYPE_STRING_UTF16 = 2;
+    private static final int TYPE_STRING_UTF8 = 1;
     private static final int TYPE_FLOAT_64 = 24;
     private static final int TYPE_FLOAT_32 = 23;
     private static final int TYPE_INT_32 = 67;
@@ -88,9 +88,9 @@ public class MetaValue {
     }
 
     public String getString() {
-        if (type == TYPE_STRING_UTF16)
-            return toString(data, "UTF-8");
         if (type == TYPE_STRING_UTF8)
+            return toString(data, "UTF-8");
+        if (type == TYPE_STRING_UTF16)
             return toString(data, "UTF-16BE");
         return null;
     }
@@ -100,7 +100,7 @@ public class MetaValue {
     }
 
     public boolean isString() {
-        return type == TYPE_STRING_UTF16 || type == TYPE_STRING_UTF8;
+        return type == TYPE_STRING_UTF8 || type == TYPE_STRING_UTF16;
     }
 
     public boolean isFloat() {

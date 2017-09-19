@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
@@ -32,12 +33,29 @@ public class MetadataEditorMain {
             "key1=value1[(type1)]:key2=value2[(type2)]. Sets the metadata piece into a file.");
     private static final Flag FLAG_SET_ITUNES = new Flag("set-itunes", "si",
             "fourcc1=value1[(type1)]:fourcc2=value2[(type2)]. Sets the metadata piece into a file.");
+    private static final Flag FLAG_SET_ITUNES_BLOB = new Flag("set-itunes-blob", "sib",
+            "fourcc[(type)]. Sets the metadata piece into as a blob read from the stdin.");
     private static final Flag FLAG_QUERY = new Flag("query", "q", "Query the value of one key from the metadata set.");
     private static final Flag FLAG_FAST = new Flag("fast", "f",
-            "Fast edit, will move the " + "header to the end of the file when ther's no room to fit it.", FlagType.VOID);
-    private static final Flag[] flags = { FLAG_SET_KEYED, FLAG_SET_ITUNES, FLAG_QUERY, FLAG_FAST };
+            "Fast edit, will move the " + "header to the end of the file when ther's no room to fit it.",
+            FlagType.VOID);
+    private static final Flag[] flags = { FLAG_SET_KEYED, FLAG_SET_ITUNES, FLAG_QUERY, FLAG_FAST,
+            FLAG_SET_ITUNES_BLOB };
 
     private static final Pattern valuePattern = Pattern.compile("(.+)=([^\\(]+)(\\(.*\\))?");
+    private static final Pattern blobPattern = Pattern.compile("(.+)(\\(.*\\))?");
+
+    private static Map<String, Integer> strToType = new HashMap<String, Integer>();
+
+    static {
+        strToType.put(TYPENAME_FLOAT, 23);
+        strToType.put(TYPENAME_INT, 21);
+        strToType.put(TYPENAME_INT2, 21);
+        strToType.put("jpeg", 13);
+        strToType.put("jpg", 13);
+        strToType.put("jpg", 14);
+        strToType.put("bmp", 27);
+    }
 
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args, flags);
@@ -61,6 +79,26 @@ public class MetadataEditorMain {
             Map<Integer, MetaValue> map = toFourccMeta(parseMetaSpec(flagSetFourcc));
             save |= map.size() > 0;
             mediaMeta.getItunesMeta().putAll(map);
+        }
+
+        String flagSetItunesBlob = cmd.getStringFlag(FLAG_SET_ITUNES_BLOB);
+        if (flagSetItunesBlob != null) {
+            Matcher matcher = valuePattern.matcher(flagSetItunesBlob);
+            if (matcher.matches()) {
+                Integer type = 1;
+                String typeRaw = matcher.group(2);
+                if (typeRaw != null) {
+                    typeRaw = typeRaw.substring(1, typeRaw.length() - 1);
+                    type = strToType.get(typeRaw);
+                }
+                if (type != null) {
+                    String name = matcher.group(1);
+                    byte[] data = readStdin();
+                    mediaMeta.getItunesMeta().put(stringToFourcc(name), MetaValue.createOther(type, data));
+                } else {
+                    System.err.println("Unsupported metadata type: " + typeRaw);
+                }
+            }
         }
 
         if (save) {
@@ -93,6 +131,10 @@ public class MetadataEditorMain {
                 printValue(itunesMeta.get(stringToFourcc(flagQuery)));
             }
         }
+    }
+
+    private static byte[] readStdin() throws IOException {
+        return IOUtils.toByteArray(System.in);
     }
 
     private static void printValue(MetaValue value) throws IOException {
