@@ -1,6 +1,8 @@
 package org.jcodec.common.tools;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -9,10 +11,12 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jcodec.common.StringUtils;
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.platform.Platform;
 
 /**
@@ -24,7 +28,9 @@ import org.jcodec.platform.Platform;
  */
 public class MainUtils {
 
+    private static final String KEY_GIT_REVISION = "git.commit.id.abbrev";
     private static final String JCODEC_LOG_SINK_COLOR = "jcodec.colorPrint";
+    private static final String GIT_PROPERTIES = "git.properties";
 
     public static boolean isColorSupported = System.console() != null
             || Boolean.parseBoolean(System.getProperty(JCODEC_LOG_SINK_COLOR));
@@ -349,11 +355,36 @@ public class MainUtils {
         printHelpOut(System.out, "", new Flag[] {}, Arrays.asList(arguments));
     }
 
+    public static void printHelpCmdVa(String command, Flag[] flags, String... arguments) {
+        printHelpOut(System.out, command, flags, Arrays.asList(arguments));
+    }
+    
     public static void printHelpCmd(String command, Flag[] flags, List<String> params) {
         printHelpOut(System.out, command, flags, params);
     }
+    
+    private static String getGitRevision() {
+        InputStream is = null;
+        try {
+            is = Thread.currentThread().getContextClassLoader().getResourceAsStream(GIT_PROPERTIES);
+            if (is == null)
+                return null;
+            Properties properties = new Properties();
+            properties.load(is);
+            return (String) properties.get(KEY_GIT_REVISION);
+        } catch (IOException e) {
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
+        return null;
+    }
 
     public static void printHelpOut(PrintStream out, String command, Flag[] flags, List<String> params) {
+        String gitRevision = getGitRevision();
+        if (gitRevision != null) {
+            out.println(bold(command + " rev. " + gitRevision));
+            out.println();
+        }
         out.print(bold("Syntax: " + command));
         StringBuilder sample = new StringBuilder();
         StringBuilder detail = new StringBuilder();
