@@ -39,6 +39,11 @@ public class MdtaBox extends Box {
         out.put(key.getBytes());
     }
 
+    @Override
+    public int estimateSize() {
+        return key.getBytes().length;
+    }
+    
     public static String fourcc() {
         return FOURCC;
     }
