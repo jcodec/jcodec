@@ -86,6 +86,11 @@ public class CompositionOffsetsBox extends FullBox {
             out.putInt(entries[i].offset);
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 12 + 4 + entries.length * 8;
+    }
 
     public Entry[] getEntries() {
         return entries;

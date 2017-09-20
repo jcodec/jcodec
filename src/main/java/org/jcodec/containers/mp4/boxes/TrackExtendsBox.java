@@ -47,6 +47,11 @@ public class TrackExtendsBox extends FullBox {
         out.putInt(defaultSampleBytes);
         out.putInt(defaultSampleFlags);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 32;
+    }
 
     public int getTrackId() {
         return trackId;
@@ -91,5 +96,4 @@ public class TrackExtendsBox extends FullBox {
     public static TrackExtendsBox createTrackExtendsBox() {
         return new TrackExtendsBox(new Header(fourcc()));
     }
-
 }

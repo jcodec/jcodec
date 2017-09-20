@@ -154,6 +154,17 @@ public class AliasBox extends FullBox {
         out.putShort((short) -1);
         out.putShort((short) 0);
     }
+    
+    @Override
+    public int estimateSize() {
+        int sz = 166;
+        if ((flags & 0x1) == 0) {
+            for (ExtraField extraField : extra) {
+                sz += 4 + extraField.data.length;
+            }
+        }
+        return 12 + sz;
+    }
 
     public int getRecordSize() {
         return recordSize;
