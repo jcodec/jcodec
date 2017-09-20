@@ -41,4 +41,9 @@ public class SampleDescriptionBox extends NodeBox {
         out.putInt(Math.max(1, boxes.size()));
         super.doWrite(out);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 8 + super.estimateSize();
+    }
 }

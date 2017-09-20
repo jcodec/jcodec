@@ -37,4 +37,9 @@ public class FormatBox extends Box {
     protected void doWrite(ByteBuffer out) {
         out.put(asciiString(fmt));
     }
+    
+    @Override
+    public int estimateSize() {
+        return asciiString(fmt).length + 8;
+    }
 }

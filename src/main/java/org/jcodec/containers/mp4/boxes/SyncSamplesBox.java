@@ -41,6 +41,11 @@ public class SyncSamplesBox extends FullBox {
             out.putInt((int) syncSamples[i]);
     }
 
+    @Override
+    public int estimateSize() {
+        return 16 + syncSamples.length * 4;
+    }
+    
     public int[] getSyncSamples() {
         return syncSamples;
     }

@@ -1,19 +1,16 @@
 package org.jcodec.containers.mp4.boxes;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jcodec.common.Assert;
 import org.jcodec.common.StringUtils;
 import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.IBoxFactory;
 import org.jcodec.platform.Platform;
-
-import java.lang.StringBuilder;
-import java.lang.reflect.Method;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -50,6 +47,8 @@ public abstract class Box {
     }
 
     protected abstract void doWrite(ByteBuffer out);
+    
+    public abstract int estimateSize();
 
     public String getFourcc() {
         return header.getFourcc();
@@ -125,6 +124,11 @@ public abstract class Box {
         @Override
         protected void doWrite(ByteBuffer out) {
             NIOUtils.write(out, data);
+        }
+
+        @Override
+        public int estimateSize() {
+            return data.remaining() + Header.estimateHeaderSize(data.remaining());
         }
     }
     

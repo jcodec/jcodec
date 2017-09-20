@@ -2,6 +2,7 @@ package org.jcodec.platform;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -129,11 +130,19 @@ public class Platform {
     }
 
     public static byte[] getBytes(String fourcc) {
-        return fourcc.getBytes();
+        try {
+            return fourcc.getBytes("iso8859-1");
+        } catch (UnsupportedEncodingException e) {
+            return null;
+        }
     }
 
     public static String stringFromBytes(byte[] bytes) {
-        return new String(bytes);
+        try {
+            return new String(bytes, "iso8859-1");
+        } catch (UnsupportedEncodingException e) {
+            return null;
+        }
     }
 
     public static boolean isAssignableFrom(Class class1, Class class2) {

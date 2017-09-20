@@ -98,7 +98,7 @@ public class MovDump {
     }
 
     public static String printAtom(File file, String atom) throws IOException {
-        MovieBox mov = MP4Util.parseMovie(file);
+        MovieBox mov = MP4Util.parseMovie(file).getMoov();
 
         Box found = findDeep(mov, atom);
         if (found == null) {

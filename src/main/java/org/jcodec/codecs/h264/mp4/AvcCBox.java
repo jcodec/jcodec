@@ -87,7 +87,6 @@ public class AvcCBox extends Box {
 
     @Override
     public void doWrite(ByteBuffer out) {
-
         out.put((byte) 0x1); // version
         out.put((byte) profile);
         out.put((byte) profileCompat);
@@ -107,6 +106,19 @@ public class AvcCBox extends Box {
             out.put((byte) 0x68);
             NIOUtils.write(out, pps);
         }
+    }
+    
+    @Override
+    public int estimateSize() {
+        int sz = 17;
+        for (ByteBuffer sps : spsList) {
+            sz += 3 + sps.remaining();
+        }
+
+        for (ByteBuffer pps : ppsList) {
+            sz += 3 + pps.remaining();
+        }
+        return sz;
     }
 
     public int getProfile() {

@@ -38,6 +38,11 @@ public class LoadSettingsBox extends Box {
         out.putInt(preloadFlags);
         out.putInt(defaultHints);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 24;
+    }
 
     public int getPreloadStartTime() {
         return preloadStartTime;

@@ -100,4 +100,9 @@ public class MediaHeaderBox extends FullBox {
         out.putShort((short) language);
         out.putShort((short) quality);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 32;
+    }
 }

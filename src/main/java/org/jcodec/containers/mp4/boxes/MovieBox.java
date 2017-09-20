@@ -134,9 +134,9 @@ public class MovieBox extends NodeBox {
         boxes.add(newTrack);
     }
 
-    public boolean isPureRefMovie(MovieBox movie) {
+    public boolean isPureRefMovie() {
         boolean pureRef = true;
-        TrakBox[] tracks = movie.getTracks();
+        TrakBox[] tracks = getTracks();
         for (int i = 0; i < tracks.length; i++) {
             TrakBox trakBox = tracks[i];
             pureRef &= trakBox.isPureRef();
@@ -199,5 +199,13 @@ public class MovieBox extends NodeBox {
         VideoSampleEntry vs = (VideoSampleEntry) box;
 
         return new Size((int) vs.getWidth(), (int) vs.getHeight());
+    }
+    
+    public MetaBox meta() {
+        return NodeBox.findFirst(this, MetaBox.class, MetaBox.fourcc());
+    }
+    
+    public UdtaBox udta() {
+        return NodeBox.findFirst(this, UdtaBox.class, UdtaBox.fourcc());
     }
 }

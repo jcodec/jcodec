@@ -88,6 +88,11 @@ public class ChannelBox extends FullBox {
             out.putFloat(channelDescription.getCoordinates()[2]);
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 12 + 12 + descriptions.length * 20;
+    }
 
     public int getChannelLayout() {
         return channelLayout;

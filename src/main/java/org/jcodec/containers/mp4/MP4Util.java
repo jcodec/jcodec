@@ -13,9 +13,12 @@ import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
 import org.jcodec.containers.mp4.boxes.Edit;
+import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.Header;
+import org.jcodec.containers.mp4.boxes.MetaBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
@@ -48,11 +51,29 @@ public class MP4Util {
         codecMapping.put(Codec.H264, "avc1");
         codecMapping.put(Codec.J2K, "mjp2");
     }
+    
+    public static class Movie {
+        private FileTypeBox ftyp;
+        private MovieBox moov;
+        
+        public Movie(FileTypeBox ftyp, MovieBox moov) {
+            this.ftyp = ftyp;
+            this.moov = moov;
+        }
 
-    public static MovieBox createRefMovie(SeekableByteChannel input, String url) throws IOException {
-        MovieBox movie = parseMovieChannel(input);
+        public FileTypeBox getFtyp() {
+            return ftyp;
+        }
 
-        TrakBox[] tracks = movie.getTracks();
+        public MovieBox getMoov() {
+            return moov;
+        }
+    }
+
+    public static Movie createRefMovie(SeekableByteChannel input, String url) throws IOException {
+        Movie movie = parseMovieChannel(input);
+
+        TrakBox[] tracks = movie.moov.getTracks();
         for (int i = 0; i < tracks.length; i++) {
             TrakBox trakBox = tracks[i];
             trakBox.setDataRef(url);
@@ -60,10 +81,13 @@ public class MP4Util {
         return movie;
     }
 
-    public static MovieBox parseMovieChannel(SeekableByteChannel input) throws IOException {
+    public static Movie parseMovieChannel(SeekableByteChannel input) throws IOException {
+        FileTypeBox ftyp = null;
         for (Atom atom : getRootAtoms(input)) {
-            if ("moov".equals(atom.getHeader().getFourcc())) {
-                return (MovieBox) atom.parseBox(input);
+            if ("ftyp".equals(atom.getHeader().getFourcc())) {
+                ftyp = (FileTypeBox) atom.parseBox(input);
+            } else if ("moov".equals(atom.getHeader().getFourcc())) {
+                return new Movie(ftyp, (MovieBox) atom.parseBox(input));
             }
         }
         return null;
@@ -155,7 +179,7 @@ public class MP4Util {
         }
     }
 
-    public static MovieBox parseMovie(File source) throws IOException {
+    public static Movie parseMovie(File source) throws IOException {
         SeekableByteChannel input = null;
         try {
             input = readableChannel(source);
@@ -166,7 +190,7 @@ public class MP4Util {
         }
     }
 
-    public static MovieBox createRefMovieFromFile(File source) throws IOException {
+    public static Movie createRefMovieFromFile(File source) throws IOException {
         SeekableByteChannel input = null;
         try {
             input = readableChannel(source);
@@ -177,7 +201,7 @@ public class MP4Util {
         }
     }
 
-    public static void writeMovieToFile(File f, MovieBox movie) throws IOException {
+    public static void writeMovieToFile(File f, Movie movie) throws IOException {
         SeekableByteChannel out = null;
         try {
             out = NIOUtils.writableChannel(f);
@@ -187,16 +211,31 @@ public class MP4Util {
         }
     }
 
-    public static void writeMovie(SeekableByteChannel out, MovieBox movie) throws IOException {
+    public static void writeMovieBox(SeekableByteChannel out, MovieBox movie) throws IOException {
+        doWriteMovieBoxToChannel(out, movie, 0);
+    }
+    
+    public static void writeMovie(SeekableByteChannel out, Movie movie) throws IOException {
         doWriteMovieToChannel(out, movie, 0);
     }
-
-    public static void doWriteMovieToChannel(SeekableByteChannel out, MovieBox movie, int additionalSize) throws IOException {
+    
+    public static void doWriteMovieBoxToChannel(SeekableByteChannel out, MovieBox movie, int additionalSize) throws IOException {
         int sizeHint = estimateMoovBoxSize(movie) + additionalSize;
         Logger.debug("Using " + sizeHint + " bytes for MOOV box");
 
-        ByteBuffer buf = ByteBuffer.allocate(sizeHint);
+        ByteBuffer buf = ByteBuffer.allocate(sizeHint * 4);
         movie.write(buf);
+        buf.flip();
+        out.write(buf);
+    }
+
+    public static void doWriteMovieToChannel(SeekableByteChannel out, Movie movie, int additionalSize) throws IOException {
+        int sizeHint = estimateMoovBoxSize(movie.getMoov()) + additionalSize;
+        Logger.debug("Using " + sizeHint + " bytes for MOOV box");
+
+        ByteBuffer buf = ByteBuffer.allocate(sizeHint * 4 + 128);
+        movie.getFtyp().write(buf);
+        movie.getMoov().write(buf);
         buf.flip();
         out.write(buf);
     }
@@ -209,30 +248,7 @@ public class MP4Util {
      * @return
      */
     public static int estimateMoovBoxSize(MovieBox movie) {
-        int sizeHint = 4 << 10; // 4K plus
-        TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox trak = tracks[i];
-            sizeHint += 4 << 10; // 4K per track
-            List<Edit> edits = trak.getEdits();
-            sizeHint += edits != null ? (edits.size() << 3) + (edits.size() << 2) : 0;
-            ChunkOffsetsBox stco = trak.getStco();
-            sizeHint += stco != null ? (stco.getChunkOffsets().length << 2) : 0;
-            ChunkOffsets64Box co64 = trak.getCo64();
-            sizeHint += co64 != null ? (co64.getChunkOffsets().length << 3) : 0;
-            SampleSizesBox stsz = trak.getStsz();
-            sizeHint += stsz != null ? (stsz.getDefaultSize() != 0 ? 0 : (stsz.getCount() << 2)) : 0;
-            TimeToSampleBox stts = trak.getStts();
-            sizeHint += stts != null ? (stts.getEntries().length << 3) : 0;
-            SyncSamplesBox stss = trak.getStss();
-            sizeHint += stss != null ? (stss.getSyncSamples().length << 2) : 0;
-            CompositionOffsetsBox ctts = trak.getCtts();
-            sizeHint += ctts != null ? (ctts.getEntries().length << 3) : 0;
-            SampleToChunkBox stsc = trak.getStsc();
-            sizeHint += stsc != null ? (stsc.getSampleToChunk().length << 3) + (stsc.getSampleToChunk().length << 2)
-                    : 0;
-        }
-        return sizeHint;
+        return movie.estimateSize() + (4 << 10);
     }
 
     public static String getFourcc(Codec codec) {

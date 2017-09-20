@@ -37,6 +37,11 @@ public class NameBox extends Box {
         out.put(JCodecUtil2.asciiString(name));
         out.putInt(0);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 12 + JCodecUtil2.asciiString(name).length;
+    }
 
     public String getName() {
         return name;

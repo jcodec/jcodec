@@ -1,10 +1,12 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
-import java.lang.IllegalArgumentException;
-
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -12,6 +14,7 @@ import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.ChunkWriter;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.AliasBox;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
@@ -23,13 +26,6 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.UrlBox;
 import org.jcodec.platform.Platform;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -52,7 +48,7 @@ public class Flattern {
         SeekableByteChannel input = null;
         try {
             input = readableChannel(new File(args[0]));
-            MovieBox movie = MP4Util.parseMovieChannel(input);
+            Movie movie = MP4Util.parseMovieChannel(input);
             new Flattern().flattern(movie, outFile);
         } finally {
             if (input != null)
@@ -74,27 +70,25 @@ public class Flattern {
         this.listeners.add(listener);
     }
 
-    public void flatternChannel(MovieBox movie, SeekableByteChannel out) throws IOException {
-        if (!movie.isPureRefMovie(movie))
+    public void flatternChannel(Movie movie, SeekableByteChannel out) throws IOException {
+        MovieBox moov = movie.getMoov();
+
+        if (!moov.isPureRefMovie())
             throw new IllegalArgumentException("movie should be reference");
-        ByteBuffer buf = ByteBuffer.allocate(16 * 1024 * 1024);
-        FileTypeBox ftyp = FileTypeBox.createFileTypeBox("qt  ", 0x20050300, Arrays.asList(new String[] { "qt  " }));
-        ftyp.write(buf);
-        long movieOff = buf.position();
-        movie.write(buf);
-
-        int extraSpace = calcSpaceReq(movie);
-        Header.createHeader("free", 8 + extraSpace).write(buf);
-        NIOUtils.skip(buf, extraSpace);
-
-        long mdatOff = buf.position();
-        Header.createHeader("mdat", 0x100000001L).write(buf);
-        buf.flip();
+        
+        out.setPosition(0);
+        MP4Util.writeMovie(out, movie);
+        
+        int extraSpace = calcSpaceReq(moov);
+        ByteBuffer buf = ByteBuffer.allocate(extraSpace);
         out.write(buf);
 
-        SeekableByteChannel[][] inputs = getInputs(movie);
+        long mdatOff = out.position();
+        writeHeader(Header.createHeader("mdat", 0x100000001L), out);
+        
+        SeekableByteChannel[][] inputs = getInputs(moov);
 
-        TrakBox[] tracks = movie.getTracks();
+        TrakBox[] tracks = moov.getTracks();
         ChunkReader[] readers = new ChunkReader[tracks.length];
         ChunkWriter[] writers = new ChunkWriter[tracks.length];
         Chunk[] head = new Chunk[tracks.length];
@@ -107,7 +101,7 @@ public class Flattern {
             writers[i] = new ChunkWriter(tracks[i], inputs[i], out);
             head[i] = readers[i].next();
             if (tracks[i].isVideo())
-                off[i] = 2 * movie.getTimescale();
+                off[i] = 2 * moov.getTimescale();
         }
 
         while (true) {
@@ -119,8 +113,8 @@ public class Flattern {
                 if (min == -1)
                     min = i;
                 else {
-                    long iTv = movie.rescale(head[i].getStartTv(), tracks[i].getTimescale()) + off[i];
-                    long minTv = movie.rescale(head[min].getStartTv(), tracks[min].getTimescale()) + off[min];
+                    long iTv = moov.rescale(head[i].getStartTv(), tracks[i].getTimescale()) + off[i];
+                    long minTv = moov.rescale(head[min].getStartTv(), tracks[min].getTimescale()) + off[min];
                     if (iTv < minTv)
                         min = i;
                 }
@@ -133,21 +127,30 @@ public class Flattern {
 
             lastProgress = calcProgress(totalChunks, writtenChunks, lastProgress);
         }
-        long mdatSize = out.position() - mdatOff;
 
         for (int i = 0; i < tracks.length; i++) {
             writers[i].apply();
         }
-        out.setPosition(movieOff);
+        
+        long mdatSize = out.position() - mdatOff;
+        
+        out.setPosition(0);
         MP4Util.writeMovie(out, movie);
 
         long extra = mdatOff - out.position();
         if (extra < 0)
             throw new RuntimeException("Not enough space to write the header");
-        out.write((ByteBuffer) ByteBuffer.allocate(8).putInt((int) extra).put(new byte[] { 'f', 'r', 'e', 'e' }).flip());
+        writeHeader(Header.createHeader("free", extra), out);
 
-        out.setPosition(mdatOff + 8);
-        out.write(ByteBuffer.allocate(8).putLong(mdatSize));
+        out.setPosition(mdatOff);
+        writeHeader(Header.createHeader("mdat", mdatSize), out);
+    }
+
+    private void writeHeader(Header header, SeekableByteChannel out) throws IOException {
+        ByteBuffer bb = ByteBuffer.allocate(16);
+        header.write(bb);
+        bb.flip();
+        out.write(bb);
     }
 
     private int calcProgress(int totalChunks, int writtenChunks, int lastProgress) {
@@ -207,7 +210,7 @@ public class Flattern {
         }
     }
 
-    public void flattern(MovieBox movie, File video) throws IOException {
+    public void flattern(Movie movie, File video) throws IOException {
         Platform.deleteFile(video);
         SeekableByteChannel out = null;
         try {

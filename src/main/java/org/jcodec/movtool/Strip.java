@@ -13,6 +13,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
@@ -55,8 +56,8 @@ public class Strip {
             File file = new File(args[1]);
             Platform.deleteFile(file);
             out = writableChannel(file);
-            MovieBox movie = MP4Util.createRefMovie(input, "file://" + new File(args[0]).getAbsolutePath());
-            new Strip().strip(movie);
+            Movie movie = MP4Util.createRefMovie(input, "file://" + new File(args[0]).getAbsolutePath());
+            new Strip().strip(movie.getMoov());
             MP4Util.writeMovie(out, movie);
         } finally {
             if (input != null)

@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
  */
 public class Header {
 
+    public static final byte[] FOURCC_FREE = new byte[] {'f', 'r', 'e', 'e'};
     private static final long MAX_UNSIGNED_INT = 0x100000000L;
     private String fourcc;
     private long size;
@@ -76,6 +77,10 @@ public class Header {
     public long headerSize() {
         return lng || (size > MAX_UNSIGNED_INT) ? 16 : 8;
     }
+    
+    public static int estimateHeaderSize(int size) {
+        return size + 8 > MAX_UNSIGNED_INT ? 16 : 8;
+    }
 
     public byte[] readContents(InputStream di) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -102,7 +107,11 @@ public class Header {
             out.putInt(1);
         else
             out.putInt((int) size);
-        out.put(JCodecUtil2.asciiString(fourcc));
+        byte[] bt = JCodecUtil2.asciiString(fourcc);
+        if(bt != null && bt.length == 4)
+            out.put(bt);
+        else
+            out.put(FOURCC_FREE);
         if (size > MAX_UNSIGNED_INT) {
             out.putLong(size);
         }
