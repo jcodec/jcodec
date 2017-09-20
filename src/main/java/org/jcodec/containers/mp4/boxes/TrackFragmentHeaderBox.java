@@ -143,6 +143,11 @@ public class TrackFragmentHeaderBox extends FullBox {
         if (isDefaultSampleFlagsAvailable())
             out.putInt(defaultSampleFlags);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 40;
+    }
 
     public int getTrackId() {
         return trackId;

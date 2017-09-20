@@ -65,4 +65,14 @@ public class SegmentTypeBox extends Box {
             out.put(JCodecUtil2.asciiString(string));
         }
     }
+
+    @Override
+    public int estimateSize() {
+        int sz = 13;
+
+        for (String string : compBrands) {
+            sz += JCodecUtil2.asciiString(string).length;
+        }
+        return sz;
+    }
 }

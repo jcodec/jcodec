@@ -41,4 +41,8 @@ public class GamaExtension extends Box {
         return "gama";
     }
 
+    @Override
+    public int estimateSize() {
+        return 12;
+    }
 }

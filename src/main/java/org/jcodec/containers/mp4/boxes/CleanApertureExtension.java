@@ -70,4 +70,9 @@ public class CleanApertureExtension extends Box {
         out.putInt((int) this.vertOffsetNumerator);
         out.putInt((int) this.vertOffsetDenominator);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 32 + 8;
+    }
 }

@@ -91,6 +91,11 @@ public class SampleToChunkBox extends FullBox {
             out.putInt((int) stc.getEntry());
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 16 + sampleToChunk.length * 12;
+    }
 
     public void setSampleToChunk(SampleToChunkEntry[] sampleToChunk) {
         this.sampleToChunk = sampleToChunk;

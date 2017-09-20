@@ -143,6 +143,11 @@ public class MovieHeaderBox extends FullBox {
         out.put(new byte[24]);
         out.putInt(nextTrackId);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 144;
+    }
 
     private void writeMatrix(ByteBuffer out) {
         for (int i = 0; i < Math.min(9, matrix.length); i++)

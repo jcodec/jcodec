@@ -60,6 +60,11 @@ public class EsdsBox extends FullBox {
             new ES(trackId, l).write(out);
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 64;
+    }
 
     public void parse(ByteBuffer input) {
         super.parse(input);

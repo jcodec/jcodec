@@ -36,4 +36,9 @@ public class DataRefBox extends NodeBox {
         out.putInt(boxes.size());
         super.doWrite(out);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 8 + super.estimateSize();
+    }
 }

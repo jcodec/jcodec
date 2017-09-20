@@ -50,6 +50,11 @@ public class VideoMediaHeaderBox extends FullBox {
         out.putShort((short) gOpColor);
         out.putShort((short) bOpColor);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 20;
+    }
 
     public int getGraphicsMode() {
         return graphicsMode;

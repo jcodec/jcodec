@@ -73,4 +73,9 @@ public class TimecodeMediaInfoBox extends FullBox {
         out.putShort(bgcolor[2]);
         NIOUtils.writePascalString(out, name);
     }
+
+    @Override
+    public int estimateSize() {
+        return 32 + 1 + NIOUtils.asciiString(name).length;
+    }
 }

@@ -52,6 +52,18 @@ public class UrlBox extends FullBox {
             out.put((byte) 0);
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        int sz = 13;
+
+        Charset utf8 = Charset.forName("utf-8");
+
+        if (url != null) {
+            sz += Platform.getBytesForCharset(url, utf8).length;
+        }
+        return sz;
+    }
 
     public String getUrl() {
         return url;

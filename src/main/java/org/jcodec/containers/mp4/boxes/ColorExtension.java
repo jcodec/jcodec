@@ -57,6 +57,11 @@ public class ColorExtension extends Box {
             out.put(colorRange);
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 8 + 8;
+    }
 
     public static String fourcc() {
         return "colr";
