@@ -73,13 +73,13 @@ public class Cut {
         List<SeekableByteChannel> outs = new ArrayList<SeekableByteChannel>();
         try {
             input = readableChannel(source);
-            Movie movie = createRefMovie(input, "file://" + source.getCanonicalPath());
+            Movie movie = MP4Util.createRefFullMovie(input, "file://" + source.getCanonicalPath());
             List<Movie> slicesMovs;
             if (!selfContained) {
                 out = writableChannel(new File(source.getParentFile(), JCodecUtil2.removeExtension(source.getName())
                         + ".ref.mov"));
                 slicesMovs = new Cut().cut(movie, slices);
-                MP4Util.writeMovie(out, movie);
+                MP4Util.writeFullMovie(out, movie);
             } else {
                 out = writableChannel(new File(source.getParentFile(), JCodecUtil2.removeExtension(source.getName())
                         + ".self.mov"));
@@ -106,7 +106,7 @@ public class Cut {
             SeekableByteChannel out = null;
             try {
                 out = writableChannel(new File(parentFile, names.get(i)));
-                MP4Util.writeMovie(out, slices.get(i));
+                MP4Util.writeFullMovie(out, slices.get(i));
             } finally {
                 NIOUtils.closeQuietly(out);
             }

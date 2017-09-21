@@ -75,9 +75,9 @@ public class QTRefEdit {
             System.err.println("WARNING: Output file '" + output.getAbsolutePath() + "' exist, overwritting");
         }
 
-        Movie ref = MP4Util.createRefMovieFromFile(input);
+        Movie ref = MP4Util.createRefFullMovieFromFile(input);
         new CompoundMP4Edit(edits).apply(ref.getMoov());
-        MP4Util.writeMovieToFile(output, ref);
+        MP4Util.writeFullMovieToFile(output, ref);
         System.out.println("INFO: Created reference file: " + output.getAbsolutePath());
     }
 

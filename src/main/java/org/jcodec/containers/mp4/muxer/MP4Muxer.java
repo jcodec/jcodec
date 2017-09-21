@@ -120,7 +120,7 @@ public class MP4Muxer implements Muxer {
 
     public void storeHeader(MovieBox movie) throws IOException {
         long mdatSize = out.position() - mdatOffset + 8;
-        MP4Util.writeMovieBox(out, movie);
+        MP4Util.writeMovie(out, movie);
 
         out.setPosition(mdatOffset);
         NIOUtils.writeLong(out, mdatSize);

@@ -56,15 +56,15 @@ public class Paste {
             to = writableChannel(toFile);
             File fromFile = new File(args[1]);
             from = readableChannel(fromFile);
-            Movie toMov = createRefMovie(to, "file://" + toFile.getCanonicalPath());
-            Movie fromMov = createRefMovie(from, "file://" + fromFile.getCanonicalPath());
+            Movie toMov = MP4Util.createRefFullMovie(to, "file://" + toFile.getCanonicalPath());
+            Movie fromMov = MP4Util.createRefFullMovie(from, "file://" + fromFile.getCanonicalPath());
             new Strip().strip(fromMov.getMoov());
             if (args.length > 2) {
                 new Paste().paste(toMov.getMoov(), fromMov.getMoov(), Double.parseDouble(args[2]));
             } else {
                 new Paste().addToMovie(toMov.getMoov(), fromMov.getMoov());
             }
-            MP4Util.writeMovie(out, toMov);
+            MP4Util.writeFullMovie(out, toMov);
         } finally {
             if (to != null)
                 to.close();

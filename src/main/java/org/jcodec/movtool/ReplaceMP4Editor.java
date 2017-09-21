@@ -36,7 +36,7 @@ public class ReplaceMP4Editor {
     }
 
     public void copy(File src, File dst, MP4Edit edit) throws IOException {
-        final Movie movie = MP4Util.createRefMovieFromFile(src);
+        final Movie movie = MP4Util.createRefFullMovieFromFile(src);
         edit.apply(movie.getMoov());
         Flattern fl = new Flattern();
 

@@ -46,7 +46,7 @@ public class MP4MuxerTest {
         muxer.finish();
 
         output.setPosition(0);
-        MovieBox movie = MP4Util.parseMovieChannel(output).getMoov();
+        MovieBox movie = MP4Util.parseMovieChannel(output);
         assertEquals(2, movie.getTracks().length);
         assertNotNull(movie.getVideoTrack());
         assertNotNull(movie.getAudioTracks().get(0));

@@ -56,9 +56,9 @@ public class Strip {
             File file = new File(args[1]);
             Platform.deleteFile(file);
             out = writableChannel(file);
-            Movie movie = MP4Util.createRefMovie(input, "file://" + new File(args[0]).getAbsolutePath());
+            Movie movie = MP4Util.createRefFullMovie(input, "file://" + new File(args[0]).getAbsolutePath());
             new Strip().strip(movie.getMoov());
-            MP4Util.writeMovie(out, movie);
+            MP4Util.writeFullMovie(out, movie);
         } finally {
             if (input != null)
                 input.close();
