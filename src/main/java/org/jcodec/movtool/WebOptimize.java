@@ -24,7 +24,7 @@ public class WebOptimize {
         tgt.renameTo(src);
 
         try {
-            Movie movie = MP4Util.createRefMovieFromFile(src);
+            Movie movie = MP4Util.createRefFullMovieFromFile(src);
 
             new Flattern().flattern(movie, tgt);
         } catch (Throwable t) {

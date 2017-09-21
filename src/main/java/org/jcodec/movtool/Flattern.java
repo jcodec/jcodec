@@ -47,7 +47,7 @@ public class Flattern {
         SeekableByteChannel input = null;
         try {
             input = readableChannel(new File(args[0]));
-            Movie movie = MP4Util.parseMovieChannel(input);
+            Movie movie = MP4Util.parseFullMovieChannel(input);
             new Flattern().flattern(movie, outFile);
         } finally {
             if (input != null)
@@ -76,7 +76,7 @@ public class Flattern {
         if (!moov.isPureRefMovie())
             throw new IllegalArgumentException("movie should be reference");
         out.setPosition(0);
-        MP4Util.writeMovie(out, movie);
+        MP4Util.writeFullMovie(out, movie);
         
         int extraSpace = calcSpaceReq(moov);
         ByteBuffer buf = ByteBuffer.allocate(extraSpace);
@@ -133,7 +133,7 @@ public class Flattern {
         long mdatSize = out.position() - mdatOff;
         
         out.setPosition(0);
-        MP4Util.writeMovie(out, movie);
+        MP4Util.writeFullMovie(out, movie);
 
         long extra = mdatOff - out.position();
         if (extra < 0)

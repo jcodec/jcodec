@@ -1,6 +1,5 @@
 package org.jcodec.containers.mp4;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
@@ -25,7 +24,7 @@ import java.nio.MappedByteBuffer;
 public class SampleOffsetUtils {
 
     public static ByteBuffer getSampleData(int sample, File file) throws IOException {
-        MovieBox moov = MP4Util.parseMovie(file).getMoov();
+        MovieBox moov = MP4Util.parseMovie(file);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
         ChunkOffsetsBox stco = NodeBox.findFirstPath(minf, ChunkOffsetsBox.class, Box.path("stbl.stco"));
         SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));

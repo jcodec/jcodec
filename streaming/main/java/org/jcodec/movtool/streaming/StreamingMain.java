@@ -36,7 +36,7 @@ public class StreamingMain {
         File m1 = new File(System.getProperty("user.home") + "/Desktop/supercool.mov");
 
         FilePool ch1 = new FilePool(m1, 10);
-        MovieBox mov1 = MP4Util.parseMovie(m1).getMoov();
+        MovieBox mov1 = MP4Util.parseMovie(m1);
         TrakBox v1 = mov1.getVideoTrack();
 
         RealTrack rt = new RealTrack(mov1, v1, ch1);

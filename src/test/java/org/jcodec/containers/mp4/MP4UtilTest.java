@@ -28,9 +28,7 @@ public class MP4UtilTest {
     @Test
     public void testSimple() throws Exception {
         File f = new File("./src/test/resources/video/seq_h264_1.mp4");
-        Movie movie = MP4Util.parseMovie(f);
-        assertNotNull(movie);
-        MovieBox moov = movie.getMoov();
+        MovieBox moov = MP4Util.parseMovie(f);
         assertNotNull(moov);
         assertNotNull(moov.getVideoTrack());
         assertNotNull(moov.getAudioTracks().get(0));
@@ -49,7 +47,7 @@ public class MP4UtilTest {
     @Ignore
     public void testName() throws Exception {
         File f = new File("src/test/resources/zhuker/1D158634-69DF-4C7F-AB6F-CCC83F04FEDB/1.mp4");
-        MovieBox moov = MP4Util.parseMovie(f).getMoov();
+        MovieBox moov = MP4Util.parseMovie(f);
         MediaInfoBox minf = moov.getVideoTrack().getMdia().getMinf();
         AvcCBox avcCBox = NodeBox.findFirstPath(minf, AvcCBox.class, Box.path("stbl.stsd.avc1.avcC"));
         long size = avcCBox.getHeader().getSize();
@@ -66,7 +64,7 @@ public class MP4UtilTest {
     public void testReadWriteIphoneMp4() throws Exception {
         File f = new File("src/test/resources/zhuker/1D158634-69DF-4C7F-AB6F-CCC83F04FEDB/1.mp4");
         ByteBuffer read = ByteBuffer.allocate(64 * 1024);
-        MP4Util.parseMovie(f).getMoov().write(read);
+        MP4Util.parseMovie(f).write(read);
         read.flip();
 
         Atom atom = MP4Util.findFirstAtom("moov", new AutoFileChannelWrapper(f));

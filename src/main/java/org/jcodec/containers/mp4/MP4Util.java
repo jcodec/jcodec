@@ -59,9 +59,29 @@ public class MP4Util {
             return moov;
         }
     }
+    
+    public static MovieBox createRefMovie(SeekableByteChannel input, String url) throws IOException {
+        MovieBox movie = parseMovieChannel(input);
 
-    public static Movie createRefMovie(SeekableByteChannel input, String url) throws IOException {
-        Movie movie = parseMovieChannel(input);
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
+            trakBox.setDataRef(url);
+        }
+        return movie;
+    }
+
+    public static MovieBox parseMovieChannel(SeekableByteChannel input) throws IOException {
+        for (Atom atom : getRootAtoms(input)) {
+            if ("moov".equals(atom.getHeader().getFourcc())) {
+                return (MovieBox) atom.parseBox(input);
+            }
+        }
+        return null;
+    }
+
+    public static Movie createRefFullMovie(SeekableByteChannel input, String url) throws IOException {
+        Movie movie = parseFullMovieChannel(input);
 
         TrakBox[] tracks = movie.moov.getTracks();
         for (int i = 0; i < tracks.length; i++) {
@@ -71,7 +91,7 @@ public class MP4Util {
         return movie;
     }
 
-    public static Movie parseMovieChannel(SeekableByteChannel input) throws IOException {
+    public static Movie parseFullMovieChannel(SeekableByteChannel input) throws IOException {
         FileTypeBox ftyp = null;
         for (Atom atom : getRootAtoms(input)) {
             if ("ftyp".equals(atom.getHeader().getFourcc())) {
@@ -168,8 +188,8 @@ public class MP4Util {
             NIOUtils.copy(input, out, header.getSize());
         }
     }
-
-    public static Movie parseMovie(File source) throws IOException {
+    
+    public static MovieBox parseMovie(File source) throws IOException {
         SeekableByteChannel input = null;
         try {
             input = readableChannel(source);
@@ -180,7 +200,7 @@ public class MP4Util {
         }
     }
 
-    public static Movie createRefMovieFromFile(File source) throws IOException {
+    public static MovieBox createRefMovieFromFile(File source) throws IOException {
         SeekableByteChannel input = null;
         try {
             input = readableChannel(source);
@@ -191,7 +211,7 @@ public class MP4Util {
         }
     }
 
-    public static void writeMovieToFile(File f, Movie movie) throws IOException {
+    public static void writeMovieToFile(File f, MovieBox movie) throws IOException {
         SeekableByteChannel out = null;
         try {
             out = NIOUtils.writableChannel(f);
@@ -201,15 +221,11 @@ public class MP4Util {
         }
     }
 
-    public static void writeMovieBox(SeekableByteChannel out, MovieBox movie) throws IOException {
-        doWriteMovieBoxToChannel(out, movie, 0);
-    }
-    
-    public static void writeMovie(SeekableByteChannel out, Movie movie) throws IOException {
+    public static void writeMovie(SeekableByteChannel out, MovieBox movie) throws IOException {
         doWriteMovieToChannel(out, movie, 0);
     }
-    
-    public static void doWriteMovieBoxToChannel(SeekableByteChannel out, MovieBox movie, int additionalSize) throws IOException {
+
+    public static void doWriteMovieToChannel(SeekableByteChannel out, MovieBox movie, int additionalSize) throws IOException {
         int sizeHint = estimateMoovBoxSize(movie) + additionalSize;
         Logger.debug("Using " + sizeHint + " bytes for MOOV box");
 
@@ -219,7 +235,43 @@ public class MP4Util {
         out.write(buf);
     }
 
-    public static void doWriteMovieToChannel(SeekableByteChannel out, Movie movie, int additionalSize) throws IOException {
+    public static Movie parseFullMovie(File source) throws IOException {
+        SeekableByteChannel input = null;
+        try {
+            input = readableChannel(source);
+            return parseFullMovieChannel(input);
+        } finally {
+            if (input != null)
+                input.close();
+        }
+    }
+
+    public static Movie createRefFullMovieFromFile(File source) throws IOException {
+        SeekableByteChannel input = null;
+        try {
+            input = readableChannel(source);
+            return createRefFullMovie(input, "file://" + source.getCanonicalPath());
+        } finally {
+            if (input != null)
+                input.close();
+        }
+    }
+
+    public static void writeFullMovieToFile(File f, Movie movie) throws IOException {
+        SeekableByteChannel out = null;
+        try {
+            out = NIOUtils.writableChannel(f);
+            writeFullMovie(out, movie);
+        } finally {
+            closeQuietly(out);
+        }
+    }
+
+    public static void writeFullMovie(SeekableByteChannel out, Movie movie) throws IOException {
+        doWriteFullMovieToChannel(out, movie, 0);
+    }
+    
+    public static void doWriteFullMovieToChannel(SeekableByteChannel out, Movie movie, int additionalSize) throws IOException {
         int sizeHint = estimateMoovBoxSize(movie.getMoov()) + additionalSize;
         Logger.debug("Using " + sizeHint + " bytes for MOOV box");
 

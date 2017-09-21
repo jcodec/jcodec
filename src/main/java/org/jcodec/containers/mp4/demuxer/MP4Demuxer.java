@@ -76,7 +76,7 @@ public class MP4Demuxer implements Demuxer {
     }
 
     private void findMovieBox(SeekableByteChannel input) throws IOException {
-        Movie mv = MP4Util.parseMovieChannel(input);
+        Movie mv = MP4Util.parseFullMovieChannel(input);
         if (mv == null || mv.getMoov() == null)
             throw new IOException("Could not find movie meta information box");
         movie = mv.getMoov();

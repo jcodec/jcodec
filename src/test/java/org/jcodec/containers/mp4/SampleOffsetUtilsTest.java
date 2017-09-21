@@ -19,7 +19,7 @@ public class SampleOffsetUtilsTest {
     static File f = new File("src/test/resources/petro_dae/95BCC757-7E23-445B-B7AB-6737208069FA/example1.mp4");
     @Test
     public void testGetFirstSampleAtChunk() throws Exception {
-        MovieBox moov = MP4Util.parseMovie(f).getMoov();
+        MovieBox moov = MP4Util.parseMovie(f);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
         ChunkOffsetsBox stco = NodeBox.findFirstPath(minf, ChunkOffsetsBox.class, Box.path("stbl.stco"));
         SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));
@@ -29,7 +29,7 @@ public class SampleOffsetUtilsTest {
     }
     @Test
     public void testGetChunkBySample() throws Exception {
-        MovieBox moov = MP4Util.parseMovie(f).getMoov();
+        MovieBox moov = MP4Util.parseMovie(f);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
         ChunkOffsetsBox stco = NodeBox.findFirstPath(minf, ChunkOffsetsBox.class, Box.path("stbl.stco"));
         SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));
@@ -41,7 +41,7 @@ public class SampleOffsetUtilsTest {
     
     @Test
     public void testGetSamplesInChunk() throws Exception {
-        MovieBox moov = MP4Util.parseMovie(f).getMoov();
+        MovieBox moov = MP4Util.parseMovie(f);
         MediaInfoBox minf = moov.getAudioTracks().get(0).getMdia().getMinf();
         SampleToChunkBox stsc = NodeBox.findFirstPath(minf, SampleToChunkBox.class, Box.path("stbl.stsc"));
         assertEquals(2, getSamplesInChunk(1, stsc));
