@@ -380,9 +380,13 @@ public class MainUtils {
     }
 
     public static void printHelpOut(PrintStream out, String command, Flag[] flags, List<String> params) {
+        String version = MainUtils.class.getPackage().getImplementationVersion();
         String gitRevision = getGitRevision();
-        if (gitRevision != null) {
-            out.println(bold(command + " rev. " + gitRevision));
+        if (command == null || command.isEmpty())
+            command = "jcodec";
+        if (gitRevision != null || version != null) {
+            out.println(command + bold((version != null ? " v." + version : "")
+                    + (gitRevision != null ? " rev. " + gitRevision : "")));
             out.println();
         }
         out.print(bold("Syntax: " + command));
