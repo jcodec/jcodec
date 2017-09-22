@@ -1,11 +1,13 @@
 package org.jcodec.containers.mp4.boxes;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -111,6 +113,7 @@ public class MetaBox extends NodeBox {
         } else {
             data = ilst.getValues();
 
+            // Updating values
             for (Entry<Integer, List<Box>> entry : data.entrySet()) {
                 int index = entry.getKey();
                 MetaValue v = copy.get(index);
@@ -123,6 +126,7 @@ public class MetaBox extends NodeBox {
             }
         }
 
+        // Adding values
         for (Entry<Integer, MetaValue> entry : copy.entrySet()) {
             int index = entry.getKey();
             MetaValue v = entry.getValue();
@@ -131,6 +135,14 @@ public class MetaBox extends NodeBox {
             data.put(index, children);
             children.add(dataBox);
         }
+        
+        // Dropping values
+        Set<Integer> keySet = new HashSet<Integer>(data.keySet());
+        keySet.removeAll(map.keySet());
+        for (Integer dropped : keySet) {
+            data.remove(dropped);
+        }
+        
         this.replaceBox(new IListBox(data));
     }
 
