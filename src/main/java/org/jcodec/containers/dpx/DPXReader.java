@@ -16,7 +16,6 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 
 public class DPXReader {
-    // Read buffer, 1M
     private static final int READ_BUFFER_SIZE = 2048 + 1024;
 
     static final int IMAGEINFO_OFFSET = 768;
