@@ -23,7 +23,7 @@ public class DPXReader {
     static final int FILM_OFFSET = 1664;
     static final int TVINFO_OFFSET = 1920;
 
-    public static final int SPDX = 0x53445058;
+    public static final int SDPX = 0x53445058;
     private final ByteBuffer readBuf;
     private final int magic;
     private boolean eof;
@@ -31,11 +31,18 @@ public class DPXReader {
 
     public DPXReader(SeekableByteChannel ch) throws IOException {
         this.readBuf = allocate(READ_BUFFER_SIZE);
-        readBuf.order(ByteOrder.BIG_ENDIAN);
-
         initialRead(ch);
         this.magic = readBuf.getInt();
-        if (magic != SPDX) {
+
+        /*
+        SMPTE 268M spec. Page 3. From Magic number definition:
+        Programs reading DPX files should use the first four bytes to determine the byte order of the file.
+        The first four bytes will be S, D, P, X if the byte order is most significant byte first,
+        or X, P, D, S if the byte order is least significant byte first.
+         */
+        if (magic == SDPX) {
+            readBuf.order(ByteOrder.BIG_ENDIAN);
+        } else {
             readBuf.order(ByteOrder.LITTLE_ENDIAN);
         }
     }
