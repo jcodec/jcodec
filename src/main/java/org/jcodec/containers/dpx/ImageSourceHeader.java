@@ -2,7 +2,7 @@ package org.jcodec.containers.dpx;
 
 import java.util.Date;
 
-public class ImageSourceInfoHeader {
+public class ImageSourceHeader {
     public int xOffset;
     public int yOffset;
     public float xCenter;

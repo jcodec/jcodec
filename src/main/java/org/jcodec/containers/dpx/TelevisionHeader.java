@@ -1,6 +1,6 @@
 package org.jcodec.containers.dpx;
 
-public class TelevisionInfoHeader {
+public class TelevisionHeader {
     public int timecode;
     public int userBits;
     public byte interlace; // Interlace (0 = noninterlaced; 1 = 2:1 interlace)

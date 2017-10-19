@@ -1,6 +1,6 @@
 package org.jcodec.containers.dpx;
 
-public class ImageInformationHeader {
+public class ImageHeader {
     public short orientation;
     public short numberOfImageElements;
     public int linesPerImageElement;

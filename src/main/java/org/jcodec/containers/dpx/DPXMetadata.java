@@ -3,14 +3,14 @@ package org.jcodec.containers.dpx;
 import static java.lang.String.format;
 
 public class DPXMetadata {
-    public FileInfoHeader fileInfo;
-    public ImageInformationHeader imageInfo;
-    public ImageSourceInfoHeader imageSource;
-    public FilmInformationHeader filmInfo;
-    public TelevisionInfoHeader tvInfo;
+    public FileHeader file;
+    public ImageHeader image;
+    public ImageSourceHeader imageSource;
+    public FilmHeader film;
+    public TelevisionHeader television;
     public String userId;
 
-    public static String smpte_tc(int tcsmpte, boolean prevent_dropframe) {
+    private static String smpteTC(int tcsmpte, boolean prevent_dropframe) {
         int ff = DPXReader.bcd2uint(tcsmpte & 0x3f);    // 6-bit hours
         int ss = DPXReader.bcd2uint(tcsmpte >> 8 & 0x7f);    // 7-bit minutes
         int mm = DPXReader.bcd2uint(tcsmpte >> 16 & 0x7f);    // 7-bit seconds
@@ -20,7 +20,7 @@ public class DPXMetadata {
     }
 
     public String getTimecodeString() {
-        return smpte_tc(tvInfo.timecode, false);
+        return smpteTC(television.timecode, false);
     }
 
 }
