@@ -1,6 +1,6 @@
 package org.jcodec.containers.dpx;
 
-public class FilmInformationHeader {
+public class FilmHeader {
     public String idCode;
     public String type;
     public String offset;

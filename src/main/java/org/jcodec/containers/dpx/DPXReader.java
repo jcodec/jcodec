@@ -50,12 +50,12 @@ public class DPXReader {
     public DPXMetadata parseMetadata() {
         // File information header
         DPXMetadata dpx = new DPXMetadata();
-        dpx.fileInfo = readFileInfo(readBuf);
-        dpx.fileInfo.magic = magic;
+        dpx.file = readFileInfo(readBuf);
+        dpx.file.magic = magic;
 
         // Image information header
         readBuf.position(IMAGEINFO_OFFSET);
-        dpx.imageInfo = readImageInfoHeader(readBuf);
+        dpx.image = readImageInfoHeader(readBuf);
 
         //  Image source information header
         readBuf.position(IMAGESOURCE_OFFSET);
@@ -63,11 +63,11 @@ public class DPXReader {
 
         // Motion-picture film information header
         readBuf.position(FILM_OFFSET);
-        dpx.filmInfo = readFilmInformationHeader(readBuf);
+        dpx.film = readFilmInformationHeader(readBuf);
 
         // Television information header
         readBuf.position(TVINFO_OFFSET);
-        dpx.tvInfo = readTelevisionInfoHeader(readBuf);
+        dpx.television = readTelevisionInfoHeader(readBuf);
 
         dpx.userId = readNullTermString(readBuf, 32);
         return dpx;
@@ -80,8 +80,8 @@ public class DPXReader {
         readBuf.flip();
     }
 
-    private static FileInfoHeader readFileInfo(ByteBuffer bb) {
-        FileInfoHeader h = new FileInfoHeader();
+    private static FileHeader readFileInfo(ByteBuffer bb) {
+        FileHeader h = new FileHeader();
         h.imageOffset = bb.getInt();
         h.version = readNullTermString(bb, 8);
         h.filesize = bb.getInt();
@@ -122,8 +122,8 @@ public class DPXReader {
         }
     }
 
-    private static TelevisionInfoHeader readTelevisionInfoHeader(ByteBuffer r) {
-        TelevisionInfoHeader h = new TelevisionInfoHeader();
+    private static TelevisionHeader readTelevisionInfoHeader(ByteBuffer r) {
+        TelevisionHeader h = new TelevisionHeader();
         h.timecode = r.getInt();
         h.userBits = r.getInt();
         h.interlace = r.get();
@@ -144,8 +144,8 @@ public class DPXReader {
         return h;
     }
 
-    private static FilmInformationHeader readFilmInformationHeader(ByteBuffer r) {
-        FilmInformationHeader h = new FilmInformationHeader();
+    private static FilmHeader readFilmInformationHeader(ByteBuffer r) {
+        FilmHeader h = new FilmHeader();
         h.idCode = readNullTermString(r, 2);
         h.type = readNullTermString(r, 2);
         h.offset = readNullTermString(r, 2);
@@ -156,8 +156,8 @@ public class DPXReader {
         return h;
     }
 
-    private static ImageSourceInfoHeader readImageSourceHeader(ByteBuffer r) {
-        ImageSourceInfoHeader h = new ImageSourceInfoHeader();
+    private static ImageSourceHeader readImageSourceHeader(ByteBuffer r) {
+        ImageSourceHeader h = new ImageSourceHeader();
         h.xOffset = r.getInt();
         h.yOffset = r.getInt();
         h.xCenter = r.getFloat();
@@ -194,8 +194,8 @@ public class DPXReader {
         return format.parse(text);
     }
 
-    private static ImageInformationHeader readImageInfoHeader(ByteBuffer r) {
-        ImageInformationHeader h = new ImageInformationHeader();
+    private static ImageHeader readImageInfoHeader(ByteBuffer r) {
+        ImageHeader h = new ImageHeader();
         // offset = 768
         h.orientation = r.getShort();
         h.numberOfImageElements = r.getShort();
