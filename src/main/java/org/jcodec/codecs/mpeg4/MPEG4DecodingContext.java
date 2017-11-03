@@ -162,7 +162,7 @@ public class MPEG4DecodingContext {
 
         while (bb.remaining() >= 4) {
             int startCode = bb.getInt();
-            while ((startCode & ~0xff) != 0x100) {
+            while ((startCode & ~0xff) != 0x100 && bb.hasRemaining()) {
                 startCode <<= 8;
                 startCode |= bb.get() & 0xff;
             }
@@ -201,6 +201,7 @@ public class MPEG4DecodingContext {
                         br.skip(8);
                     }
                 }
+                br.terminate();
             } else if ((startCode & ~VIDOBJ_START_CODE_MASK) == VIDOBJ_START_CODE) {
             } else if ((startCode & ~VIDOBJLAY_START_CODE_MASK) == VIDOBJLAY_START_CODE) {
                 BitReader br = BitReader.createBitReader(bb);
@@ -432,7 +433,7 @@ public class MPEG4DecodingContext {
 
                 br.skip(1);
                 br.skip(1);
-
+                br.terminate();
             } else if (startCode == VOP_START_CODE) {
                 return true;
             } else if (startCode == USERDATA_START_CODE) {
@@ -442,6 +443,7 @@ public class MPEG4DecodingContext {
                 tmp[i++] = bb.get();
                 for (; (tmp[i] = bb.get()) != 0; i++)
                     ;
+                bb.position(bb.position() - 1);
 
                 String userData = new String(tmp, 0, i);
 
