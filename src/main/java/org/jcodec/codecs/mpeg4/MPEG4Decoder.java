@@ -249,10 +249,18 @@ public class MPEG4Decoder extends VideoDecoder {
 
     @Override
     public VideoCodecMeta getCodecMeta(ByteBuffer data) {
-        return VideoCodecMeta.createSimpleVideoCodecMeta(new Size(320, 240), ColorSpace.YUV420J);
+        MPEG4DecodingContext ctx = MPEG4DecodingContext.readFromHeaders(data.duplicate());
+        if (ctx == null)
+            return null;
+        
+        return VideoCodecMeta.createSimpleVideoCodecMeta(new Size(ctx.width, ctx.height), ColorSpace.YUV420J);
     }
 
     public static int probe(ByteBuffer data) {
-        return 0;
+        MPEG4DecodingContext ctx = MPEG4DecodingContext.readFromHeaders(data.duplicate());
+        if (ctx == null)
+            return 0;
+        return Math.min(ctx.width > 320 ? (ctx.width < 1280 ? 100 : 50) : 50,
+                ctx.height > 240 ? (ctx.height < 720 ? 100 : 50) : 50);
     }
 }

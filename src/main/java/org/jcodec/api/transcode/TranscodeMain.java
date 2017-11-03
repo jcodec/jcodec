@@ -167,6 +167,7 @@ public class TranscodeMain {
         supportedDecoders.add(Codec.MPEG2);
         supportedDecoders.add(Codec.PCM);
         supportedDecoders.add(Codec.PNG);
+        supportedDecoders.add(Codec.MPEG4);
         supportedDecoders.add(Codec.PRORES);
         supportedDecoders.add(Codec.RAW);
         supportedDecoders.add(Codec.VP8);
