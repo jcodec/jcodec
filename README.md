@@ -13,6 +13,7 @@ JCodec is a library implementing a set of popular video and audio codecs. Curren
     * Apple ProRes decoder/encoder;
     * JPEG decoder;
     * PNG decoder/encoder.
+    * DivX/Xvid
 
 * Audio codecs
     * SMPTE 302M decoder;
