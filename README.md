@@ -194,6 +194,12 @@ try {
 }
 ```
 
+## Read Tape Timecode from MXF file
+
+```java
+TapeTimecode timecode = MXFDemuxer.readTapeTimecode(new File("myfile.mxf"));
+```
+
 # Contact
 
 Feel free to communicate any questions or concerns to us. Dev team email: jcodecproject@gmail.com
