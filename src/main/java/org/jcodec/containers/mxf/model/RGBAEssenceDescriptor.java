@@ -28,6 +28,7 @@ public class RGBAEssenceDescriptor extends GenericPictureEssenceDescriptor {
         super(ul);
     }
 
+    @Override
     protected void read(Map<Integer, ByteBuffer> tags) {
         super.read(tags);
 
