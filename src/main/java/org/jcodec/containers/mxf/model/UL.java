@@ -1,5 +1,6 @@
 package org.jcodec.containers.mxf.model;
-import java.lang.StringBuilder;
+import static org.jcodec.common.Preconditions.checkNotNull;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -9,13 +10,20 @@ import java.nio.ByteBuffer;
  * An UL class that wraps UL bytes, introduced to implement custom comparison
  * rules
  * 
+ * <p>
+ * SMPTE 298-2009
+ * </p>
+ * 4.2 SMPTE-Administered Universal Label A fixed-length (16-byte) universal
+ * label, defined by this standard and administered by SMPTE.
+ * 
  * @author The JCodec project
  * 
  */
 public class UL {
-    private byte[] bytes;
+    private final byte[] bytes;
 
     public UL(byte[] bytes) {
+        checkNotNull(bytes);
         this.bytes = bytes;
     }
 
@@ -26,6 +34,17 @@ public class UL {
         }
 
         return new UL(bytes);
+    }
+    
+    public static UL newUL(String ul) {
+        checkNotNull(ul);
+        String[] split = ul.split("\\.");
+        byte b[] = new byte[split.length];
+        for (int i = 0; i < split.length; i++) {
+            int parseInt = Integer.parseInt(split[i], 16);
+            b[i] = (byte) parseInt;
+        }
+        return new UL(b);
     }
 
     @Override
@@ -50,7 +69,7 @@ public class UL {
     public boolean maskEquals(UL o, int mask) {
         if(o == null)
             return false;
-        byte[] other = ((UL) o).bytes;
+        byte[] other = o.bytes;
         mask >>= 4;
         for (int i = 4; i < Math.min(bytes.length, other.length); i++, mask >>= 1)
             if ((mask & 0x1) == 1 && bytes[i] != other[i])
@@ -59,20 +78,22 @@ public class UL {
         return true;
     }
 
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("06:0E:2B:34:");
-        for (int i = 4; i < bytes.length; i++) {
-            sb.append(hex((bytes[i] >> 4) & 0xf));
-            sb.append(hex(bytes[i] & 0xf));
-            if (i < bytes.length - 1)
-                sb.append(":");
-        }
-        return sb.toString();
-    }
+    private final static char[] hex = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
-    private char hex(int i) {
-        return (char) (i < 10 ? '0' + i : 'A' + (i - 10));
+    @Override
+    public String toString() {
+        if (bytes.length == 0) return "";
+        char[] str = new char[bytes.length * 3 - 1];
+        int i = 0;
+        int j = 0;
+        for (i = 0; i < bytes.length - 1; i++) {
+            str[j++] = hex[(bytes[i] >> 4) & 0xf];
+            str[j++] = hex[bytes[i] & 0xf];
+            str[j++] = '.';
+        }
+        str[j++] = hex[(bytes[i] >> 4) & 0xf];
+        str[j++] = hex[bytes[i] & 0xf];
+        return new String(str);
     }
 
     public int get(int i) {
