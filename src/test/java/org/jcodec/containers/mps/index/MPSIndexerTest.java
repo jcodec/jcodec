@@ -48,7 +48,7 @@ public class MPSIndexerTest {
             toHex(SequenceHeader.createSequenceHeader(1920, 1080, 1, 1, 512 * 1024, 0, 0, null, null)), syncMarker,
             { (byte) 0xb5 }, toHex(SequenceExtension.createSequenceExtension(100, 1, 1, 0, 0, 0, 0, 0, 0, 0)),
             syncMarker, { (byte) 0xb8 },
-            toHex(new GOPHeader(new TapeTimecode((short) 1, (byte) 0, (byte) 0, (byte) 10, false), false, false))
+            toHex(new GOPHeader(new TapeTimecode((short) 1, (byte) 0, (byte) 0, (byte) 10, false, 0), false, false))
             //@formatter:on
     });
 

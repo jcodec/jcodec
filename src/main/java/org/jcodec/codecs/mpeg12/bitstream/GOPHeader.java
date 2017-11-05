@@ -37,7 +37,7 @@ public class GOPHeader implements MPEGHeader {
         boolean closedGop = _in.read1Bit() == 1;
         boolean brokenLink = _in.read1Bit() == 1;
 
-        return new GOPHeader(new TapeTimecode(hours, minutes, seconds, frames, dropFrame), closedGop, brokenLink);
+        return new GOPHeader(new TapeTimecode(hours, minutes, seconds, frames, dropFrame, 0), closedGop, brokenLink);
     }
 
     @Override
