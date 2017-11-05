@@ -1,5 +1,8 @@
 package org.jcodec.common;
 
+import static org.jcodec.common.TrackType.AUDIO;
+import static org.jcodec.common.TrackType.VIDEO;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -8,12 +11,12 @@ package org.jcodec.common;
  * 
  */
 public enum Codec {
-    MPEG2(TrackType.VIDEO), PRORES(TrackType.VIDEO), H264(TrackType.VIDEO), J2K(TrackType.VIDEO), MPEG4(TrackType.VIDEO), DV(TrackType.VIDEO), VC3(
-            TrackType.VIDEO), V210(TrackType.VIDEO), ALAW(TrackType.AUDIO), AC3(TrackType.AUDIO), MP3(TrackType.AUDIO), MP2(TrackType.AUDIO), MP1(TrackType.AUDIO), DTS(
-            TrackType.AUDIO), PCM_DVD(TrackType.AUDIO), TRUEHD(TrackType.AUDIO), PCM(TrackType.AUDIO), ADPCM(TrackType.AUDIO), NELLYMOSER(
-            TrackType.AUDIO), G711(TrackType.AUDIO), AAC(TrackType.AUDIO), SPEEX(TrackType.AUDIO), SORENSON(TrackType.VIDEO), FLASH_SCREEN_VIDEO(
-            TrackType.VIDEO), VP6(TrackType.VIDEO), FLASH_SCREEN_V2(TrackType.VIDEO), PNG(TrackType.VIDEO), VP8(TrackType.VIDEO), VP9(TrackType.VIDEO), JPEG(
-            TrackType.VIDEO), RAW(null), VORBIS(TrackType.VIDEO), TIMECODE(TrackType.OTHER);
+    MPEG2(VIDEO), PRORES(VIDEO), H264(VIDEO), J2K(VIDEO), MPEG4(VIDEO), DV(VIDEO), VC1(
+            VIDEO), VC3(VIDEO), V210(VIDEO), ALAW(AUDIO), AC3(AUDIO), MP3(AUDIO), MP2(AUDIO), MP1(AUDIO), DTS(
+            AUDIO), PCM_DVD(AUDIO), TRUEHD(AUDIO), PCM(AUDIO), ADPCM(AUDIO), NELLYMOSER(
+            AUDIO), G711(AUDIO), AAC(AUDIO), SPEEX(AUDIO), SORENSON(VIDEO), FLASH_SCREEN_VIDEO(
+            VIDEO), VP6(VIDEO), FLASH_SCREEN_V2(VIDEO), PNG(VIDEO), VP8(VIDEO), VP9(VIDEO), JPEG(
+            VIDEO), RAW(null), VORBIS(VIDEO), TIMECODE(TrackType.OTHER);
 
     private TrackType type;
 
