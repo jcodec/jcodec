@@ -29,6 +29,7 @@ public class GenericSoundEssenceDescriptor extends FileDescriptor {
         super(ul);
     }
 
+    @Override
     protected void read(Map<Integer, ByteBuffer> tags) {
         super.read(tags);
 

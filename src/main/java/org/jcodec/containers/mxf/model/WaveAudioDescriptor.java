@@ -33,6 +33,7 @@ public class WaveAudioDescriptor extends GenericSoundEssenceDescriptor {
         super(ul);
     }
 
+    @Override
     protected void read(Map<Integer, ByteBuffer> tags) {
         super.read(tags);
 
