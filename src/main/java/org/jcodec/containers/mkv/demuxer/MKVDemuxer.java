@@ -1,4 +1,5 @@
 package org.jcodec.containers.mkv.demuxer;
+import static org.jcodec.common.model.TapeTimecode.ZERO_TAPE_TIMECODE;
 import static org.jcodec.containers.mkv.MKVType.Audio;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
 import static org.jcodec.containers.mkv.MKVType.CodecPrivate;
@@ -34,12 +35,10 @@ import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
-import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
-import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mkv.MKVParser;
 import org.jcodec.containers.mkv.MKVType;
@@ -179,9 +178,6 @@ public final class MKVDemuxer implements Demuxer {
             }
         }
     }
-
-    private static final TapeTimecode ZERO_TAPE_TIMECODE = new TapeTimecode((short) 0, (byte) 0, (byte) 0, (byte) 0,
-            false);
 
     public static class VideoTrack implements SeekableDemuxerTrack {
         private ByteBuffer state;
