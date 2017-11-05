@@ -71,7 +71,13 @@ public abstract class MXFMetadata {
     }
     
     protected String readUtf16String(ByteBuffer _bb) {
-        return Platform.stringFromCharset(NIOUtils.toArray(_bb), Charset.forName("utf-16"));
+        byte[] array;
+        if (_bb.getShort(_bb.limit() - 2) != 0) {
+            array = NIOUtils.toArray(_bb);
+        } else {
+            array = NIOUtils.toArray((ByteBuffer) _bb.limit(_bb.limit() - 2));
+        }
+        return Platform.stringFromCharset(array, Charset.forName("utf-16"));
     }
     
     public UL getUl() {
