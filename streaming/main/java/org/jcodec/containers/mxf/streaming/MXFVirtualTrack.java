@@ -12,7 +12,7 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mp4.MP4Util;
-import org.jcodec.containers.mxf.MXFConst.MXFCodecMapping;
+import org.jcodec.containers.mxf.MXFCodec;
 import org.jcodec.containers.mxf.MXFDemuxer;
 import org.jcodec.containers.mxf.MXFDemuxer.MXFDemuxerTrack;
 import org.jcodec.containers.mxf.MXFDemuxer.MXFPacket;
@@ -135,12 +135,12 @@ public class MXFVirtualTrack implements VirtualTrack {
         } else if (track.isAudio()) {
             GenericSoundEssenceDescriptor sed = (GenericSoundEssenceDescriptor) d;
             int sampleSize = sed.getQuantizationBits() >> 3;
-            MXFCodecMapping codec = track.getCodec();
+            MXFCodec codec = track.getCodec();
             Label[] labels = new Label[sed.getChannelCount()];
             Arrays.fill(labels, Label.Mono);
 
             return AudioCodecMeta.createAudioCodecMeta(sampleSize == 3 ? "in24" : "sowt", sampleSize, sed.getChannelCount(), (int) sed
-                    .getAudioSamplingRate().scalar(), codec == MXFCodecMapping.PCM_S16BE ? ByteOrder.BIG_ENDIAN
+                    .getAudioSamplingRate().scalar(), codec == MXFCodec.PCM_S16BE ? ByteOrder.BIG_ENDIAN
             : ByteOrder.LITTLE_ENDIAN, true, labels, null);
         }
         throw new RuntimeException("Can't get sample entry");
