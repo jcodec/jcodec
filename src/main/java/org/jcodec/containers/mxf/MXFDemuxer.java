@@ -617,4 +617,8 @@ public class MXFDemuxer {
             read.close();
         }
     }
+    
+    public List<MXFMetadata> getMetadata() {
+        return metadata;
+    }
 }
