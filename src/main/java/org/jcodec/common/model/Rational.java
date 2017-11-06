@@ -43,6 +43,10 @@ public class Rational {
         return den;
     }
 
+    public static Rational parseRational(String string) {
+        return parse(string);
+    }
+
     public static Rational parse(String string) {
         int idx = string.indexOf(":");
         if (idx < 0) {
