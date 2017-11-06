@@ -1,5 +1,6 @@
 package org.jcodec.containers.mxf;
 
+import static java.util.Collections.unmodifiableList;
 import static org.jcodec.containers.mxf.MXFConst.klMetadata;
 import static org.jcodec.containers.mxf.model.MXFUtil.findAllMeta;
 
@@ -7,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -616,5 +618,9 @@ public class MXFDemuxer {
         } finally {
             read.close();
         }
+    }
+
+    public List<MXFMetadata> getMetadata() {
+        return unmodifiableList(metadata);
     }
 }
