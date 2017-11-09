@@ -18,6 +18,8 @@ import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
+import org.jcodec.codecs.mpeg4.MPEG4Consts;
+import org.jcodec.codecs.mpeg4.MPEG4Decoder;
 import org.jcodec.codecs.png.PNGDecoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.raw.RAWVideoDecoder;
@@ -312,6 +314,8 @@ public class SourceImpl implements Source, PacketSource {
             return new VP8Decoder();
         case JPEG:
             return JpegDecoder.createJpegDecoder(downscale);
+        case MPEG4:
+            return new MPEG4Decoder();
         case RAW:
             Size dim = videoCodecMeta.getSize();
             return new RAWVideoDecoder(dim.getWidth(), dim.getHeight());

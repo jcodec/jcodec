@@ -104,20 +104,8 @@ public class TimecodeMP4DemuxerTrack {
         }
     }
 
-    private TapeTimecode _getTimecode(int startCounter, int frameNo, TimecodeSampleEntry entry) {
-        int frame = dropFrameAdjust(frameNo + startCounter, entry);
-        int sec = frame / entry.getNumFrames();
-        return new TapeTimecode((short) (sec / 3600), (byte) ((sec / 60) % 60), (byte) (sec % 60),
-                (byte) (frame % entry.getNumFrames()), entry.isDropFrame());
-    }
-
-    private int dropFrameAdjust(int frame, TimecodeSampleEntry entry) {
-        if (entry.isDropFrame()) {
-            long D = frame / 17982;
-            long M = frame % 17982;
-            frame += 18 * D + 2 * ((M - 2) / 1798);
-        }
-        return frame;
+    private static TapeTimecode _getTimecode(int startCounter, int frameNo, TimecodeSampleEntry entry) {
+        return TapeTimecode.tapeTimecode(frameNo + startCounter, entry.isDropFrame(), entry.getNumFrames() & 0xff);
     }
 
     private void cacheSamples(SampleToChunkEntry[] sampleToChunks, long[] chunkOffsets) throws IOException {

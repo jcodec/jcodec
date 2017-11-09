@@ -1,17 +1,21 @@
 package org.jcodec.containers.mxf;
-import static org.jcodec.containers.mxf.MXFConst.klMetadataMapping;
+
+import static org.jcodec.containers.mxf.MXFConst.klMetadata;
 import static org.jcodec.containers.mxf.model.MXFUtil.findAllMeta;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.TrackType;
-import org.jcodec.common.VideoCodecMeta;
+import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
@@ -20,7 +24,7 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.common.model.Packet.FrameType;
-import org.jcodec.containers.mxf.MXFConst.MXFCodecMapping;
+import org.jcodec.common.model.Rational;
 import org.jcodec.containers.mxf.model.FileDescriptor;
 import org.jcodec.containers.mxf.model.GenericDescriptor;
 import org.jcodec.containers.mxf.model.GenericPictureEssenceDescriptor;
@@ -30,6 +34,7 @@ import org.jcodec.containers.mxf.model.KLV;
 import org.jcodec.containers.mxf.model.MXFMetadata;
 import org.jcodec.containers.mxf.model.MXFPartition;
 import org.jcodec.containers.mxf.model.MXFUtil;
+import org.jcodec.containers.mxf.model.SourceClip;
 import org.jcodec.containers.mxf.model.TimecodeComponent;
 import org.jcodec.containers.mxf.model.TimelineTrack;
 import org.jcodec.containers.mxf.model.UL;
@@ -103,34 +108,45 @@ public class MXFDemuxer {
         return OP.OPAtom;
     }
 
-    private MXFDemuxerTrack[] findTracks() throws IOException {
-        List<MXFDemuxerTrack> rt = new ArrayList<MXFDemuxerTrack>();
-        List<TimelineTrack> tracks = findAllMeta(metadata, TimelineTrack.class);
+    public MXFDemuxerTrack[] findTracks() throws IOException {
+        List<TimelineTrack> _tracks = findAllMeta(metadata, TimelineTrack.class);
         List<FileDescriptor> descriptors = findAllMeta(metadata, FileDescriptor.class);
-        for (TimelineTrack track : tracks) {
-            if (track.getTrackNumber() != 0) {
-                int trackNumber = track.getTrackNumber();
+        Map<Integer, MXFDemuxerTrack> tracks = new LinkedHashMap<Integer, MXFDemuxerTrack>();
+        for (TimelineTrack track : _tracks) {
+            //SMPTE S377-1-2009
+            //A Track ID value of zero (0) is deprecated, and shall not be used by MXF encoders conforming to this version of the MXF file format specification. 
+            if (track.getTrackId() == 0 || track.getTrackNumber() == 0) {
+                Logger.warn("trackId == 0 || trackNumber == 0");
+                continue;
+            }
+            int trackId = track.getTrackId();
+            if (tracks.containsKey(trackId)) {
+                Logger.warn("duplicate trackId " + trackId);
+                continue;
+            }
 
-                FileDescriptor descriptor = findDescriptor(descriptors, track.getTrackId());
-                if (descriptor == null) {
-                    Logger.warn("No generic descriptor for track: " + track.getTrackId());
-                    if (descriptors.size() == 1 && descriptors.get(0).getLinkedTrackId() == 0) {
-                        descriptor = descriptors.get(0);
-                    }
+            FileDescriptor descriptor = findDescriptor(descriptors, track.getTrackId());
+            if (descriptor == null) {
+                Logger.warn("No generic descriptor for track: " + track.getTrackId());
+                if (descriptors.size() == 1 && descriptors.get(0).getLinkedTrackId() == 0) {
+                    descriptor = descriptors.get(0);
                 }
-                if (descriptor == null) {
-                    Logger.warn("Track without descriptor: " + track.getTrackId());
-                    continue;
-                }
-                MXFDemuxerTrack dt = createTrack(UL.newUL(0x06, 0x0e, 0x2b, 0x34, 0x01, 0x02, 0x01, 0x01, 0x0d, 0x01,
-                        0x03, 0x01, (trackNumber >>> 24) & 0xff, (trackNumber >>> 16) & 0xff,
-                        (trackNumber >>> 8) & 0xff, trackNumber & 0xff), track, descriptor);
-                if (dt.getCodec() != null || (descriptor instanceof WaveAudioDescriptor))
-                    rt.add(dt);
+            }
+            if (descriptor == null) {
+                Logger.warn("Track without descriptor: " + track.getTrackId());
+                continue;
+            }
+            int trackNumber = track.getTrackNumber();
+            UL ul = UL.newUL(0x06, 0x0e, 0x2b, 0x34, 0x01, 0x02, 0x01, 0x01, 0x0d, 0x01, 0x03, 0x01,
+                    (trackNumber >>> 24) & 0xff, (trackNumber >>> 16) & 0xff, (trackNumber >>> 8) & 0xff,
+                    trackNumber & 0xff);
+            MXFDemuxerTrack dt = createTrack(ul, track, descriptor);
+            if (dt.getCodec() != null || (descriptor instanceof WaveAudioDescriptor)) {
+                tracks.put(trackId, dt);
             }
         }
 
-        return rt.toArray(new MXFDemuxerTrack[0]);
+        return tracks.values().toArray(new MXFDemuxerTrack[tracks.size()]);
     }
 
     public static FileDescriptor findDescriptor(List<FileDescriptor> descriptors, int trackId) {
@@ -189,9 +205,13 @@ public class MXFDemuxer {
         List<MXFMetadata> local = new ArrayList<MXFMetadata>();
         ByteBuffer metaBuffer = NIOUtils.fetchFromChannel(ff, (int) Math.max(0, header.getEssenceFilePos() - basePos));
         while (metaBuffer.hasRemaining() && (kl = KLV.readKLFromBuffer(metaBuffer, basePos)) != null) {
-            MXFMetadata meta = parseMeta(kl.key, NIOUtils.read(metaBuffer, (int) kl.len));
-            if (meta != null)
-                local.add(meta);
+            if (metaBuffer.remaining() >= kl.len) {
+                MXFMetadata meta = parseMeta(kl.key, NIOUtils.read(metaBuffer, (int) kl.len));
+                if (meta != null)
+                    local.add(meta);
+            } else {
+                break;
+            }
         }
         return local;
     }
@@ -212,7 +232,7 @@ public class MXFDemuxer {
     }
 
     private static MXFMetadata parseMeta(UL ul, ByteBuffer _bb) {
-        Class<? extends MXFMetadata> class1 = klMetadataMapping.get(ul);
+        Class<? extends MXFMetadata> class1 = klMetadata.get(ul);
         if (class1 == null) {
             Logger.warn("Unknown metadata piece: " + ul);
             return null;
@@ -274,7 +294,7 @@ public class MXFDemuxer {
         private TimelineTrack track;
         private boolean video;
         private boolean audio;
-        private MXFCodecMapping codec;
+        private MXFCodec codec;
         private int audioFrameDuration;
         private int audioTimescale;
         private MXFDemuxer demuxer;
@@ -455,11 +475,11 @@ public class MXFDemuxer {
             return descriptor;
         }
 
-        public MXFCodecMapping getCodec() {
+        public MXFCodec getCodec() {
             return codec;
         }
 
-        private MXFCodecMapping resolveCodec() {
+        private MXFCodec resolveCodec() {
             UL codecUL;
             if (video)
                 codecUL = ((GenericPictureEssenceDescriptor) descriptor).getPictureEssenceCoding();
@@ -468,10 +488,10 @@ public class MXFDemuxer {
             else
                 return null;
 
-            MXFCodecMapping[] values = MXFConst.MXFCodecMapping.values();
+            MXFCodec[] values = MXFCodec.values();
             for (int i = 0; i < values.length; i++) {
-                MXFCodecMapping codec = values[i];
-                if (codec.getUl().maskEquals(codecUL, 0xff7f))
+                MXFCodec codec = values[i];
+                if (codec.getUl().equals(codecUL))
                     return codec;
             }
             Logger.warn("Unknown codec: " + codecUL);
@@ -494,6 +514,10 @@ public class MXFDemuxer {
             TrackType t = video ? TrackType.VIDEO : (audio ? TrackType.AUDIO : TrackType.OTHER);
             return new DemuxerTrackMeta(t, getCodec().getCodec(), demuxer.duration, null, demuxer.totalFrames, null,
                     org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(size, ColorSpace.YUV420), null);
+        }
+
+        public Rational getEditRate() {
+            return this.track.getEditRate();
         }
     }
 
@@ -527,6 +551,7 @@ public class MXFDemuxer {
             super(ch);
         }
 
+        @Override
         public void parseHeader(SeekableByteChannel ff) throws IOException {
             partitions = new ArrayList<MXFPartition>();
             metadata = new ArrayList<MXFMetadata>();
@@ -537,10 +562,59 @@ public class MXFDemuxer {
 
             ff.setPosition(header.getPack().getFooterPartition());
             KLV kl = KLV.readKL(ff);
-            ByteBuffer fetchFrom = NIOUtils.fetchFromChannel(ff, (int) kl.len);
-            MXFPartition footer = MXFPartition.read(kl.key, fetchFrom, ff.position() - kl.offset, ff.size());
+            if (kl != null) {
+                ByteBuffer fetchFrom = NIOUtils.fetchFromChannel(ff, (int) kl.len);
+                MXFPartition footer = MXFPartition.read(kl.key, fetchFrom, ff.position() - kl.offset, ff.size());
 
-            metadata.addAll(readPartitionMeta(ff, footer));
+                metadata.addAll(readPartitionMeta(ff, footer));
+            }
+        }
+    }
+
+    public List<SourceClip> getSourceClips(int trackId) {
+        boolean trackFound = true;
+        List<SourceClip> clips = new ArrayList<SourceClip>();
+        for (MXFMetadata m : metadata) {
+            if (m instanceof TimelineTrack) {
+                TimelineTrack tt = (TimelineTrack) m;
+                int trackId2 = tt.getTrackId();
+                trackFound = (trackId2 == trackId);
+            }
+            if (trackFound && m instanceof SourceClip) {
+                SourceClip clip = (SourceClip) m;
+                if (clip.getSourceTrackId() == trackId) {
+                    clips.add(clip);
+                }
+            }
+        }
+        return clips;
+    }
+
+    public static TapeTimecode readTapeTimecode(File mxf) throws IOException {
+        FileChannelWrapper read = NIOUtils.readableChannel(mxf);
+        try {
+            Fast fast = new Fast(read);
+            MXFDemuxerTrack track = fast.getVideoTrack();
+            TimecodeComponent timecode = fast.getTimecode();
+            List<SourceClip> sourceClips = fast.getSourceClips(track.getTrackId());
+            long tc = 0;
+            boolean dropFrame = false;
+            Rational editRate = null;
+            if (timecode != null) {
+                editRate = track.getEditRate();
+                dropFrame = timecode.getDropFrame() != 0;
+                tc = timecode.getStart();
+            }
+            for (SourceClip sourceClip : sourceClips) {
+                tc += sourceClip.getStartPosition();
+            }
+    
+            if (editRate != null) {
+                return TapeTimecode.tapeTimecode(tc, dropFrame, (int) Math.ceil(editRate.toDouble()));
+            }
+            return null;
+        } finally {
+            read.close();
         }
     }
 }

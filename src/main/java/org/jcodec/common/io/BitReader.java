@@ -146,6 +146,10 @@ public class BitReader {
         return bits;
     }
 
+    public int bitsToAlign() {
+        return (deficit & 0x7) > 0 ? 8 - (deficit & 0x7) : 0;
+    }
+    
     public int align() {
         return (deficit & 0x7) > 0 ? skip(8 - (deficit & 0x7)) : 0;
     }
@@ -188,18 +192,19 @@ public class BitReader {
     }
 
     public int checkNBit(int n) {
-        if (n > 24)
+        if (n > 24) {
             throw new IllegalArgumentException("Can not check more then 24 bit");
+        }
 
+        return checkNBitDontCare(n);
+    }
+
+    public int checkNBitDontCare(int n) {
         while (deficit + n > 32) {
             deficit -= 8;
             curInt |= nextIgnore() << deficit;
         }
         int res = curInt >>> (32 - n);
-        // for (int i = n - 1; i >= 0; i--) {
-        // System.out.print((res >> i) & 0x1);
-        // }
-        // System.out.println();
         return res;
     }
 
@@ -238,5 +243,9 @@ public class BitReader {
 
     public int checkAllBits() {
         return curInt;
+    }
+
+    public boolean readBool() {
+        return read1Bit() == 1;
     }
 }

@@ -194,4 +194,13 @@ public class Rational {
     public static Rational reduceRational(Rational r) {
         return reduce(r.getNum(), r.getDen());
     }
+    
+    @Override
+    public String toString() {
+        return num + "/" + den;
+    }
+
+    public double toDouble() {
+        return (double) num / den;
+    }
 }

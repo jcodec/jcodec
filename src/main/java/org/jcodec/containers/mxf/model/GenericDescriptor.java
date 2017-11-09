@@ -32,6 +32,7 @@ public class GenericDescriptor extends MXFInterchangeObject {
             switch (entry.getKey()) {
             case 0x2f01:
                 locators = readULBatch(_bb);
+                break;
             case 0x3F01:
                 subDescriptors = readULBatch(_bb);
                 break;

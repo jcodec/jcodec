@@ -21,6 +21,7 @@ import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
+import org.jcodec.codecs.mpeg4.MPEG4Decoder;
 import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.vpx.VP8Decoder;
@@ -60,6 +61,7 @@ public class JCodecUtil {
         decoders.put(Codec.MPEG2, MPEGDecoder.class);
         decoders.put(Codec.H264, H264Decoder.class);
         decoders.put(Codec.AAC, AACDecoder.class);
+        decoders.put(Codec.MPEG4, MPEG4Decoder.class);
         
         demuxers.put(Format.MPEG_TS, MTSDemuxer.class);
         demuxers.put(Format.MPEG_PS, MPSDemuxer.class);
