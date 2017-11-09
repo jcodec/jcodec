@@ -6,10 +6,22 @@ import java.io.File;
 import java.io.IOException;
 
 import org.jcodec.TestData;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
+import org.jcodec.containers.mxf.MXFDemuxer.MXFDemuxerTrack;
 import org.junit.Test;
 
 public class MXFDemuxerTest {
+    
+    @Test
+    public void testOpenAvidMxf() throws Exception {
+        MXFDemuxer demuxer = new MXFDemuxer(NIOUtils.readableChannel(TestData.AVID_MXF));
+        MXFDemuxerTrack videoTrack = demuxer.getVideoTrack();
+        assertNotNull(videoTrack);
+        Packet nextFrame = videoTrack.nextFrame();
+        assertNotNull(nextFrame);
+    }
 
     @Test
     public void testMxfTimecode() throws Exception {
