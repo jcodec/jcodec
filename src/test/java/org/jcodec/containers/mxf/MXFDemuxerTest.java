@@ -1,6 +1,7 @@
 package org.jcodec.containers.mxf;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,13 +11,17 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.containers.mxf.MXFDemuxer.MXFDemuxerTrack;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class MXFDemuxerTest {
     
     @Test
+    @Ignore 
+    //at this point we do not support empty index mxf files
+    //https://github.com/jcodec/jcodec/issues/282
     public void testOpenAvidMxf() throws Exception {
-        MXFDemuxer demuxer = new MXFDemuxer(NIOUtils.readableChannel(TestData.AVID_MXF));
+        MXFDemuxer demuxer = new MXFDemuxer(NIOUtils.readableChannel(TestData.AVID_EMPTY_INDEX_MXF));
         MXFDemuxerTrack videoTrack = demuxer.getVideoTrack();
         assertNotNull(videoTrack);
         Packet nextFrame = videoTrack.nextFrame();
