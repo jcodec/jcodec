@@ -68,7 +68,7 @@ public class MTSIndex {
         public TapeTimecode getTapeTimecode() {
             return new TapeTimecode((short) ((timeCode >> 19) & 0x3f), (byte) ((timeCode >> 13) & 0x3f),
                     (byte) ((timeCode >> 7) & 0x3f), (byte) ((timeCode >> 1) & 0x3f), (timeCode & 0x1) == 1 ? true
-                            : false);
+                            : false, 30);
         }
 
         public void setTapeTimecode(int hours, int minutes, int seconds, int frames, boolean dropFrame) {
