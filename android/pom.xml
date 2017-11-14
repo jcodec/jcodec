@@ -4,7 +4,7 @@
 
   <groupId>org.jcodec</groupId>
   <artifactId>jcodec-android</artifactId>
-  <version>0.2.2-SNAPSHOT</version>
+  <version>0.2.2</version>
   <packaging>jar</packaging>
   <name>JCodec for Android</name>
   <url>http://jcodec.org</url>
@@ -56,7 +56,7 @@
     <dependency>
       <groupId>org.jcodec</groupId>
       <artifactId>jcodec</artifactId>
-      <version>0.2.2-SNAPSHOT</version>
+      <version>0.2.2</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
