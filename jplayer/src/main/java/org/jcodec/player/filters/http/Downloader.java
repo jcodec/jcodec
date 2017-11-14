@@ -124,12 +124,12 @@ public class Downloader {
         String[] split = StringUtils.splitS(timecodeRaw, ":");
         if (split.length == 4) {
             return new TapeTimecode(Short.parseShort(split[0]), Byte.parseByte(split[1]), Byte.parseByte(split[2]),
-                    Byte.parseByte(split[3]), false);
+                    Byte.parseByte(split[3]), false, 30);
         } else if (split.length == 3) {
             String[] split1 = StringUtils.splitS(split[2], ";");
             if (split1.length == 2)
                 return new TapeTimecode(Short.parseShort(split[0]), Byte.parseByte(split[1]),
-                        Byte.parseByte(split1[0]), Byte.parseByte(split1[1]), true);
+                        Byte.parseByte(split1[0]), Byte.parseByte(split1[1]), true, 30);
         }
         return null;
     }
