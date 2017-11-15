@@ -28,6 +28,7 @@ JCodec is a library implementing a set of popular video and audio codecs. Curren
     * WAV demuxer/muxer;
     * MPEG Audio (MP3) demuxer;
     * ADTS demuxer.
+    * DPX parser
 
 JCodec is free software distributed under FreeBSD License.
 
@@ -50,7 +51,7 @@ JCodec can be used in both standard Java and Android. It contains platform-agnos
 <dependency>
     <groupId>org.jcodec</groupId>
     <artifactId>jcodec</artifactId>
-    <version>0.2.1</version>
+    <version>0.2.2</version>
 </dependency>
 ```
 
@@ -59,7 +60,7 @@ OR gradle dependency as below:
 ```gradle
 dependencies {
     ...
-    compile 'org.jcodec:jcodec:0.2.1'
+    compile 'org.jcodec:jcodec:0.2.2'
     ...
 }
 ```
@@ -70,12 +71,12 @@ Additionally if you want to use JCodec with AWT images (BufferedImage) add this 
 <dependency>
     <groupId>org.jcodec</groupId>
     <artifactId>jcodec</artifactId>
-    <version>0.2.1</version>
+    <version>0.2.2</version>
 </dependency>
 <dependency>
     <groupId>org.jcodec</groupId>
     <artifactId>jcodec-javase</artifactId>
-    <version>0.2.1</version>
+    <version>0.2.2</version>
 </dependency>
 ```
 
@@ -89,13 +90,13 @@ android {
 }
 dependencies {
     ...
-    compile 'org.jcodec:jcodec:0.2.1'
-    compile 'org.jcodec:jcodec-android:0.2.1'
+    compile 'org.jcodec:jcodec:0.2.2'
+    compile 'org.jcodec:jcodec-android:0.2.2'
     ...
 }
 ```
 
-For the latest and greatest (the 0.2.2-SNAPSHOT) clone this Git project and build locally like so:
+For the latest and greatest (the 0.2.3-SNAPSHOT) clone this Git project and build locally like so:
 ```
 git clone https://github.com/jcodec/jcodec.git
 cd jcodec
@@ -105,8 +106,8 @@ mvn clean install
 ```
 
 If you JUST need the jars, download them from here:
-* [JCodec 0.2.1 JAR](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.1/jcodec-0.2.1.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.1/jcodec-0.2.1.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.1/jcodec-0.2.1.pom)
-* [JCodec JavaSE 0.2.1 JAR](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.1/jcodec-javase-0.2.1.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.1/jcodec-javase-0.2.1.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.1/jcodec-javase-0.2.1.pom)
+* [JCodec 0.2.2 JAR](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.2/jcodec-0.2.2.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.2/jcodec-0.2.2.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec/0.2.2/jcodec-0.2.2.pom)
+* [JCodec JavaSE 0.2.2 JAR](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.2/jcodec-javase-0.2.2.jar), [GPG Sign](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.2/jcodec-javase-0.2.2.jar.asc), [POM](http://central.maven.org/maven2/org/jcodec/jcodec-javase/0.2.2/jcodec-javase-0.2.2.pom)
 
 There is virtually no documentation right now but the plan is to catch up on this so stay tuned. stackoverflow.com contains quite a bit information at this point.
 
@@ -198,6 +199,13 @@ try {
 
 ```java
 TapeTimecode timecode = MXFDemuxer.readTapeTimecode(new File("myfile.mxf"));
+```
+
+## Parse DPX metadata
+
+```java
+DPXMetadata dpx = DPXReader.readFile(firstDpx).parseMetadata();
+System.out.println(dpx.getTimecodeString());
 ```
 
 # Contact
