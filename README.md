@@ -28,6 +28,7 @@ JCodec is a library implementing a set of popular video and audio codecs. Curren
     * WAV demuxer/muxer;
     * MPEG Audio (MP3) demuxer;
     * ADTS demuxer.
+    * DPX parser
 
 JCodec is free software distributed under FreeBSD License.
 
