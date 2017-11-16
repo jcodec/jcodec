@@ -2,6 +2,7 @@ package org.jcodec.containers.dpx;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +19,8 @@ public class DPXReaderTest {
 
     @Test
     public void tryParseISO8601Date() {
+        assertNull(DPXReader.tryParseISO8601Date(""));
+        assertNotNull(DPXReader.tryParseISO8601Date("2017:09:05:14:14:59"));
         assertNotNull(DPXReader.tryParseISO8601Date("2017:09:05:14:14:59:-08"));
         assertNotNull(DPXReader.tryParseISO8601Date("2017:09:05:14:14:59:-008"));
         assertNotNull(DPXReader.tryParseISO8601Date("2017:09:05:14:14:59:-0008"));
