@@ -110,7 +110,8 @@ public class DPXReader {
         Defined as yyyy:mm:dd:hh:mm:ssLTZ, formatted according to ISO 8601.
         “LTZ” means “Local Time Zone;” format is:
         LTZ = Z (time zone = UTC), or
-        LTZ = +/–hh, or LTZ = +/–hhmm (local time is offset from UTC)
+        LTZ = +/–hh, or
+        LTZ = +/–hhmm (local time is offset from UTC)
 
         Few people knew what "LTZ" meant, or how it was to be encoded.
         This has been corrected by citing ISO 8601 practice.
@@ -120,19 +121,24 @@ public class DPXReader {
             return null;
         }
 
+        String noTZ = "yyyy:MM:dd:HH:mm:ss";
+        if (dateString.length() == noTZ.length()) {
+            return date(dateString, noTZ);
+        } else if (dateString.length() == noTZ.length() + 4) {
+            // ':+/–hh'
+            dateString = dateString + "00";
+        }
+
+        // ':+/–hhmm'
+        return date(dateString, "yyyy:MM:dd:HH:mm:ss:Z");
+    }
+
+    private static Date date(String dateString, String dateFormat) {
+        SimpleDateFormat format = new SimpleDateFormat(dateFormat, US);
         try {
-            // WITH optional timestamp
-            SimpleDateFormat format = new SimpleDateFormat("yyyy:MM:dd:HH:mm:ss:X", US);
             return format.parse(dateString);
         } catch (ParseException e) {
-            try {
-                // WITHOUT optional timestamp
-                SimpleDateFormat format = new SimpleDateFormat("yyyy:MM:dd:HH:mm:ss", US);
-                return format.parse(dateString);
-            } catch (ParseException e1) {
-                e1.printStackTrace();
-                throw new RuntimeException(e);
-            }
+            return null;
         }
     }
 
