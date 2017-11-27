@@ -45,6 +45,7 @@ public class H264Encoder extends VideoEncoder {
 
     // private static final int QP = 20;
     private static final int KEY_INTERVAL_DEFAULT = 25;
+    private static final int MOTION_SEARCH_RANGE_DEFAULT = 16;
 
     public static H264Encoder createH264Encoder() {
         return new H264Encoder(new DumbRateControl());
@@ -56,6 +57,7 @@ public class H264Encoder extends VideoEncoder {
     private RateControl rc;
     private int frameNumber;
     private int keyInterval;
+    private int motionSearchRange;
 
     private int maxPOC;
 
@@ -78,6 +80,7 @@ public class H264Encoder extends VideoEncoder {
     public H264Encoder(RateControl rc) {
         this.rc = rc;
         this.keyInterval = KEY_INTERVAL_DEFAULT;
+        this.motionSearchRange = MOTION_SEARCH_RANGE_DEFAULT;
     }
 
     public int getKeyInterval() {
@@ -87,7 +90,15 @@ public class H264Encoder extends VideoEncoder {
     public void setKeyInterval(int keyInterval) {
         this.keyInterval = keyInterval;
     }
-    
+
+    public int getMotionSearchRange() {
+        return motionSearchRange;
+    }
+
+    public void setMotionSearchRange(int motionSearchRange) {
+        this.motionSearchRange = motionSearchRange;
+    }
+
     /**
      * Encode this picture into h.264 frame. Frame type will be selected by
      * encoder.
@@ -224,7 +235,7 @@ public class H264Encoder extends VideoEncoder {
         }
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
         mbEncoderI16x16 = new MBEncoderI16x16(cavlc, leftRow, topLine);
-        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc, new MotionEstimator(16));
+        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc, new MotionEstimator(motionSearchRange));
 
         rc.reset();
         int qp = rc.getInitQp(sliceType);
