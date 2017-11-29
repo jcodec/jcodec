@@ -1,6 +1,8 @@
 package org.jcodec.containers.dpx;
 
 import static java.nio.ByteBuffer.allocate;
+import static java.util.Locale.US;
+import static org.jcodec.common.StringUtils.isEmpty;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,18 +94,52 @@ public class DPXReader {
         h.userHeaderLength = bb.getInt();
 
         h.filename = readNullTermString(bb, 100);
-        try {
-            h.created = readDPXDate(bb, "yyyy:MM:dd:HH:mm:ss:zzz");
-        } catch (ParseException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-
+        h.created = tryParseISO8601Date(readNullTermString(bb, 24));
         h.creator = readNullTermString(bb, 100);
         h.projectName = readNullTermString(bb, 200);
         h.copyright = readNullTermString(bb, 200);
         h.encKey = bb.getInt();
         return h;
+    }
+
+    static Date tryParseISO8601Date(String dateString) {
+        /*
+        S268M
+
+        3.4 creation date/time:
+        Defined as yyyy:mm:dd:hh:mm:ssLTZ, formatted according to ISO 8601.
+        “LTZ” means “Local Time Zone;” format is:
+        LTZ = Z (time zone = UTC), or
+        LTZ = +/–hh, or
+        LTZ = +/–hhmm (local time is offset from UTC)
+
+        Few people knew what "LTZ" meant, or how it was to be encoded.
+        This has been corrected by citing ISO 8601 practice.
+         */
+
+        if (isEmpty(dateString)) {
+            return null;
+        }
+
+        String noTZ = "yyyy:MM:dd:HH:mm:ss";
+        if (dateString.length() == noTZ.length()) {
+            return date(dateString, noTZ);
+        } else if (dateString.length() == noTZ.length() + 4) {
+            // ':+/–hh'
+            dateString = dateString + "00";
+        }
+
+        // ':+/–hhmm'
+        return date(dateString, "yyyy:MM:dd:HH:mm:ss:Z");
+    }
+
+    private static Date date(String dateString, String dateFormat) {
+        SimpleDateFormat format = new SimpleDateFormat(dateFormat, US);
+        try {
+            return format.parse(dateString);
+        } catch (ParseException e) {
+            return null;
+        }
     }
 
     private static String readNullTermString(ByteBuffer bb, int length) {
@@ -165,13 +201,7 @@ public class DPXReader {
         h.xOriginal = r.getInt();
         h.yOriginal = r.getInt();
         h.sourceImageFilename = readNullTermString(r, 100);
-
-        try {
-            h.sourceImageDate = readDPXDate(r, "yyyy:MM:dd:HH:mm:ss:zzz");
-        } catch (ParseException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+        h.sourceImageDate = tryParseISO8601Date(readNullTermString(r, 24));
         h.deviceName = readNullTermString(r, 32);
         h.deviceSerial = readNullTermString(r, 32);
         h.borderValidity = new short[] { r.getShort(), r.getShort(), r.getShort(), r.getShort() };
@@ -186,12 +216,6 @@ public class DPXReader {
         if (low > 9 || high > 9)
             return 0;
         return low + 10 * high;
-    }
-
-    private static Date readDPXDate(ByteBuffer bb, String pattern) throws ParseException {
-        String text = readNullTermString(bb, pattern.length());
-        SimpleDateFormat format = new SimpleDateFormat(pattern);
-        return format.parse(text);
     }
 
     private static ImageHeader readImageInfoHeader(ByteBuffer r) {

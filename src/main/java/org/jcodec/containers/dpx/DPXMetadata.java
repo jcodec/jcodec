@@ -3,6 +3,9 @@ package org.jcodec.containers.dpx;
 import static java.lang.String.format;
 
 public class DPXMetadata {
+    public static final String V2 = "V2.0";
+    public static final String V1 = "V1.0";
+
     public FileHeader file;
     public ImageHeader image;
     public ImageSourceHeader imageSource;
