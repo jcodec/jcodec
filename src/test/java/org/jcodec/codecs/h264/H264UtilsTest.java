@@ -156,4 +156,26 @@ public class H264UtilsTest {
         Assert.assertEquals(0, pair.mv1Y(1, 1));
         Assert.assertEquals(-1, pair.mv1R(1, 1));
     }
+
+    @Test
+    public void testGotoNALUnit() {
+        ByteBuffer buf = ByteBuffer.wrap(new byte[]{0, 0, 0, 1,  5, 5, 5, 5,  0, 0, 1,  6, 6, 6});
+        ByteBuffer bufA = buf.duplicate();
+
+        buf.position(4);
+        bufA.position(4);
+        byte[] res1 = NIOUtils.toArray(H264Utils.gotoNALUnit(buf));
+        byte[] res1A = NIOUtils.toArray(H264Utils.gotoNALUnitWithArray(bufA));
+
+        buf.position(buf.position() + 3);
+        bufA.position(bufA.position() + 3);
+        byte[] res2 = NIOUtils.toArray(H264Utils.gotoNALUnit(buf));
+        byte[] res2A = NIOUtils.toArray(H264Utils.gotoNALUnitWithArray(bufA));
+
+        Assert.assertArrayEquals(new byte[]{5, 5, 5, 5}, res1);
+        Assert.assertArrayEquals(new byte[]{6, 6, 6}, res2);
+
+        Assert.assertArrayEquals(res1, res1A);
+        Assert.assertArrayEquals(res2, res2A);
+    }
 }
