@@ -46,7 +46,11 @@ public class H264Utils {
 
     public static ByteBuffer nextNALUnit(ByteBuffer buf) {
         skipToNALUnit(buf);
-        return gotoNALUnit(buf);
+
+        if (buf.hasArray())
+            return gotoNALUnitWithArray(buf);
+        else
+            return gotoNALUnit(buf);
     }
 
     public static final void skipToNALUnit(ByteBuffer buf) {
@@ -94,6 +98,56 @@ public class H264Utils {
                 break;
             }
         }
+        return result;
+    }
+
+    /**
+     * Finds next Nth H.264 bitstream NAL unit (0x00000001) and returns the data
+     * that preceeds it as a ByteBuffer slice
+     *
+     * Segment byte order is always little endian
+     *
+     * @param buf
+     * @return data
+     */
+    public static final ByteBuffer gotoNALUnitWithArray(ByteBuffer buf) {
+
+        if (!buf.hasRemaining())
+            return null;
+
+        int from = buf.position();
+        ByteBuffer result = buf.slice();
+        result.order(ByteOrder.BIG_ENDIAN);
+
+        byte[] arr = buf.array();
+        int pos = from + buf.arrayOffset();
+        int posFrom = pos;
+        int lim = buf.limit() + buf.arrayOffset();
+
+        while (pos < lim) {
+            byte b = arr[pos];
+
+            if ((b & 254) == 0) {
+                while (b == 0 && ++pos < lim)
+                    b = arr[pos];
+
+                if (b == 1) {
+                    if (pos - posFrom >= 2 && arr[pos - 1] == 0 && arr[pos - 2] == 0) {
+                        int lenSize = (pos - posFrom >= 3 && arr[pos - 3] == 0) ? 4 : 3;
+
+                        buf.position(pos + 1 - buf.arrayOffset() - lenSize);
+                        result.limit(buf.position() - from);
+
+                        return result;
+                    }
+                }
+            }
+
+            pos += 3;
+        }
+
+        buf.position(buf.limit());
+
         return result;
     }
 
