@@ -43,6 +43,11 @@ public class ColorUtil {
         Map<ColorSpace, Transform> yuv444 = new HashMap<ColorSpace, Transform>();
         yuv444.put(ColorSpace.YUV444, new Idential());
         map.put(ColorSpace.YUV444, yuv444);
+        
+        Map<ColorSpace, Transform> yuv444j = new HashMap<ColorSpace, Transform>();
+        yuv444j.put(ColorSpace.YUV444J, new Idential());
+        yuv444j.put(ColorSpace.YUV420J, new Yuv444jToYuv420j());
+        map.put(ColorSpace.YUV444J, yuv444j);
 
         Map<ColorSpace, Transform> yuv420j = new HashMap<ColorSpace, Transform>();
         yuv420j.put(ColorSpace.YUV420J, new Idential());
