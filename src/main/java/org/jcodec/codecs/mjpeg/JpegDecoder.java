@@ -10,6 +10,7 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
@@ -157,8 +158,16 @@ public class JpegDecoder extends VideoDecoder {
                 JpegConst.CAC_DEFAULT };
         int[][] quant = new int[][] { JpegConst.DEFAULT_QUANT_LUMA, JpegConst.DEFAULT_QUANT_CHROMA };
         ScanHeader scan = null;
+        boolean skipToNext = false;
         while (data.hasRemaining()) {
-            int marker = data.get() & 0xff;
+            int marker;
+            if (!skipToNext) {
+                marker = data.get() & 0xff;
+            } else {
+                while ((marker = (data.get() & 0xff)) != 0xff)
+                    ;
+            }
+            skipToNext = false;
             if (marker == 0)
                 continue;
             if (marker != 0xFF)
@@ -195,22 +204,20 @@ public class JpegDecoder extends VideoDecoder {
                 // Debug.trace(" %s", image.scan);
                 result = decodeScan(readToMarker(data), header, scan, huffTables, quant, data2, field, step);
             } else if (b == JpegConst.SOI || (b >= JpegConst.RST0 && b <= JpegConst.RST7)) {
-                // Nothing
+                Logger.warn("SOI not supported.");
+                skipToNext = true;
             } else if (b == JpegConst.EOI) {
                 break;
             } else if (b >= JpegConst.APP0 && b <= JpegConst.COM) {
                 int len3 = data.getShort() & 0xffff;
                 NIOUtils.read(data, len3 - 2);
             } else if (b == JpegConst.DRI) {
-
-                int lr = data.getShort() & 0xffff;
-
-                int ri = data.getShort() & 0xffff;
-                // Debug.trace("DRI Lr: %d Ri: %d", lr, ri);
-
-                Asserts.assertEquals(0, ri);
+                Logger.warn("DRI not supported.");
+                skipToNext = true;
             } else {
-                throw new UnhandledStateException("unhandled marker " + JpegConst.markerToString(b));
+                if (b != 0)
+                    Logger.warn("unhandled marker " + JpegConst.markerToString(b));
+                skipToNext = true;
             }
         }
 
