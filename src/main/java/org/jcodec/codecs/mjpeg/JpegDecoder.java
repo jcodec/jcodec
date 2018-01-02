@@ -279,7 +279,11 @@ public class JpegDecoder extends VideoDecoder {
             }
         }
         if (header != null) {
-            return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(header.width, header.height), ColorSpace.YUV420J);
+            int blockW = header.getHmax();
+            int blockH = header.getVmax();
+            int nn = blockW + blockH;
+            ColorSpace color = nn == 4 ? ColorSpace.YUV420J : (nn == 3 ? ColorSpace.YUV422J : ColorSpace.YUV444J);
+            return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(header.width, header.height), color);
         }
         return null;
     }
