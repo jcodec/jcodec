@@ -215,6 +215,7 @@ public class H264Encoder extends VideoEncoder {
         sps.chromaFormatIdc = ColorSpace.YUV420J;
         sps.profileIdc = 66;
         sps.levelIdc = 40;
+        sps.numRefFrames = 1;
         sps.frameMbsOnlyFlag = true;
         sps.log2MaxFrameNumMinus4 = Math.max(0, MathUtil.log2(keyInterval) - 3);
 
