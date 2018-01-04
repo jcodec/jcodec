@@ -159,16 +159,13 @@ public class MBEncoderP16x16 {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_4x4[i].length; j++) {
                 ac[i][j] = pix[H264Const.PIX_MAP_SPLIT_4x4[i][j]];
             }
-            // shift back up
-            // for (int j = 0; j < ac[i].length; j++)
-            // ac[i][j] += 128;
             CoeffTransformer.fdct4x4(ac[i]);
         }
 
         writeAC(0, mbX, mbY, out, mbX << 2, mbY << 2, ac, qp);
 
         for (int i = 0; i < ac.length; i++) {
-            CoeffTransformer.dequantizeAC(ac[i], qp);
+            CoeffTransformer.dequantizeAC(ac[i], qp, null);
             CoeffTransformer.idct4x4(ac[i]);
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_4x4[i].length; j++)
                 pix[H264Const.PIX_MAP_SPLIT_4x4[i][j]] = ac[i][j];

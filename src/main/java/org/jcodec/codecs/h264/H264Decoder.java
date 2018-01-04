@@ -190,7 +190,6 @@ public class H264Decoder extends VideoDecoder {
             validateSupportedFeatures(firstSliceHeader.sps, firstSliceHeader.pps);
 
             int picWidthInMbs = activeSps.picWidthInMbsMinus1 + 1;
-            int picHeightInMbs = SeqParameterSet.getPicHeightInMbs(activeSps);
 
             if (dec.sRefs == null) {
                 dec.sRefs = new Frame[1 << (firstSliceHeader.sps.log2MaxFrameNumMinus4 + 4)];
@@ -218,8 +217,8 @@ public class H264Decoder extends VideoDecoder {
                 throw new RuntimeException("Unsupported h264 feature: interlace.");
             if (pps.constrainedIntraPredFlag)
                 throw new RuntimeException("Unsupported h264 feature: constrained intra prediction.");
-            if (sps.getScalingMatrix() != null || pps.extended != null && pps.extended.getScalingMatrix() != null)
-                throw new RuntimeException("Unsupported h264 feature: scaling list.");
+//            if (sps.getScalingMatrix() != null || pps.extended != null && pps.extended.getScalingMatrix() != null)
+//                throw new RuntimeException("Unsupported h264 feature: scaling list.");
             if (sps.qpprimeYZeroTransformBypassFlag)
                 throw new RuntimeException("Unsupported h264 feature: qprime zero transform bypass.");
             if (sps.profileIdc != PROFILE_BASELINE && sps.profileIdc != PROFILE_MAIN && sps.profileIdc != PROFILE_HIGH)
