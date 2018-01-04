@@ -624,4 +624,15 @@ public class H264Const {
     public static final int PROFILE_HIGH_10 = 110;
     public static final int PROFILE_HIGH_422 = 122;
     public static final int PROFILE_HIGH_444 = 244;
+    
+    public static final int[] defaultScalingList4x4Intra = { 6, 13, 13, 20, 20, 20, 28, 28, 28, 28, 32, 32, 32, 37, 37,
+            42 };
+    public static final int[] defaultScalingList4x4Inter = { 10, 14, 14, 20, 20, 20, 24, 24, 24, 24, 27, 27, 27, 30, 30,
+            34 };
+    public static final int[] defaultScalingList8x8Intra = { 6, 10, 10, 13, 11, 13, 16, 16, 16, 16, 18, 18, 18, 18, 18,
+            23, 23, 23, 23, 23, 23, 25, 25, 25, 25, 25, 25, 25, 27, 27, 27, 27, 27, 27, 27, 27, 29, 29, 29, 29, 29, 29,
+            29, 31, 31, 31, 31, 31, 31, 33, 33, 33, 33, 33, 36, 36, 36, 36, 38, 38, 38, 40, 40, 42 };
+    public static final int[] defaultScalingList8x8Inter = { 9, 13, 13, 15, 13, 15, 17, 17, 17, 17, 19, 19, 19, 19, 19,
+            21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 24, 24, 24, 24, 24, 24, 24, 24, 25, 25, 25, 25, 25, 25,
+            25, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 30, 30, 30, 30, 32, 32, 32, 33, 33, 35 };
 }

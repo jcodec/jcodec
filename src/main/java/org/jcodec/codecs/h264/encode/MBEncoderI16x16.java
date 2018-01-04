@@ -121,17 +121,17 @@ public class MBEncoderI16x16 {
     private static void restorePlane(int[] dc, int[][] ac, int qp) {
         if (dc.length == 4) {
             CoeffTransformer.invDC2x2(dc);
-            CoeffTransformer.dequantizeDC2x2(dc, qp);
+            CoeffTransformer.dequantizeDC2x2(dc, qp, null);
         } else if (dc.length == 8) {
             CoeffTransformer.invDC4x2(dc);
             CoeffTransformer.dequantizeDC4x2(dc, qp);
         } else {
             CoeffTransformer.invDC4x4(dc);
-            CoeffTransformer.dequantizeDC4x4(dc, qp);
+            CoeffTransformer.dequantizeDC4x4(dc, qp, null);
             reorderDC4x4(dc);
         }
         for (int i = 0; i < ac.length; i++) {
-            CoeffTransformer.dequantizeAC(ac[i], qp);
+            CoeffTransformer.dequantizeAC(ac[i], qp, null);
             ac[i][0] = dc[i];
             CoeffTransformer.idct4x4(ac[i]);
 //            for(int j = 0; j < ac[i].length; j++)

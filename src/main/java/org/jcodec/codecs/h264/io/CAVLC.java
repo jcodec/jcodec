@@ -201,12 +201,6 @@ public class CAVLC {
         int coeffToken = coeffTokenTab.readVLC(_in);
         int totalCoeff = totalCoeff(coeffToken);
         int trailingOnes = trailingOnes(coeffToken);
-        // System.out.println("Coeff token. Total: " + totalCoeff +
-        // ", trailOne: " + trailingOnes);
-
-        // blockType.getMaxCoeffs();
-        // if (blockType == BlockType.BLOCK_CHROMA_DC)
-        // maxCoeff = 16 / (color.compWidth[1] * color.compHeight[1]);
 
         if (totalCoeff > 0) {
             int suffixLength = totalCoeff > 10 && trailingOnes < 3 ? 1 : 0;

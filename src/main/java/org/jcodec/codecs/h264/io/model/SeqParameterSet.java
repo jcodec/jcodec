@@ -13,11 +13,13 @@ import static org.jcodec.common.model.ColorSpace.YUV420J;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.model.ColorSpace.YUV444;
 
+import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -141,7 +143,7 @@ public class SeqParameterSet {
     
     public int[] offsetForRefFrame;
     public VUIParameters vuiParams;
-    public ScalingMatrix scalingMatrix;
+    public int[][] scalingMatrix;
     
     // num_ref_frames_in_pic_order_cnt_cycle
     public int numRefFramesInPicOrderCntCycle;
@@ -239,19 +241,75 @@ public class SeqParameterSet {
 
         return sps;
     }
+    
+    public static void writeScalingList(BitWriter out, int[][] scalingMatrix, int which)  {
+        // Want to find out if the default scaling list is actually used
+        boolean useDefaultScalingMatrixFlag = false;
+        switch(which) {
+        case 0: // 4x4 intra y
+            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], H264Const.defaultScalingList4x4Intra);
+            break;
+        case 1:
+        case 2:
+            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], scalingMatrix[0]);
+            break;
+        case 3:
+            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], H264Const.defaultScalingList4x4Inter);
+            break;
+        case 4:
+        case 5:
+            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], scalingMatrix[3]);
+            break;
+        case 6:
+            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], H264Const.defaultScalingList8x8Intra);
+            break;
+        case 7:
+            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], H264Const.defaultScalingList8x8Inter);
+            break;
+        }
+        int[] scalingList = scalingMatrix[which];
+        
+        if (useDefaultScalingMatrixFlag) {
+            writeSEtrace(out, -8, "SPS: ");
+            return;
+        }
 
-    private static void readScalingListMatrix(BitReader _in, SeqParameterSet sps) {
-        sps.scalingMatrix = new ScalingMatrix();
+        int lastScale = 8;
+        int nextScale = 8;
+        for (int j = 0; j < scalingList.length; j++) {
+            if (nextScale != 0) {
+                int deltaScale = scalingList[j] - lastScale - 256;
+                writeSEtrace(out, deltaScale, "SPS: ");
+            }
+            lastScale = scalingList[j];
+        }
+    }
+
+    public static int[] readScalingList(BitReader in, int sizeOfScalingList)  {
+
+        int[] scalingList = new int[sizeOfScalingList];
+        int lastScale = 8;
+        int nextScale = 8;
+        for (int j = 0; j < sizeOfScalingList; j++) {
+            if (nextScale != 0) {
+                int deltaScale = readSE(in, "deltaScale");
+                nextScale = (lastScale + deltaScale + 256) % 256;
+                if (j == 0 && nextScale == 0)
+                    return null;
+            }
+            scalingList[j] = nextScale == 0 ? lastScale : nextScale;
+            lastScale = scalingList[j];
+        }
+        return scalingList;
+    }
+
+    private static void readScalingListMatrix(BitReader in, SeqParameterSet sps) {
+        sps.scalingMatrix = new int[8][];
         for (int i = 0; i < 8; i++) {
-            boolean seqScalingListPresentFlag = readBool(_in, "SPS: seqScalingListPresentFlag");
+            boolean seqScalingListPresentFlag = readBool(in, "SPS: seqScalingListPresentFlag");
             if (seqScalingListPresentFlag) {
-                sps.scalingMatrix.scalingList4x4 = new ScalingList[8];
-                sps.scalingMatrix.scalingList8x8 = new ScalingList[8];
-                if (i < 6) {
-                    sps.scalingMatrix.scalingList4x4[i] = ScalingList.read(_in, 16);
-                } else {
-                    sps.scalingMatrix.scalingList8x8[i - 6] = ScalingList.read(_in, 64);
-                }
+                int scalingListSize = i < 6 ? 16 : 64;
+                sps.scalingMatrix[i] = readScalingList(in, scalingListSize);
             }
         }
     }
@@ -365,17 +423,9 @@ public class SeqParameterSet {
             writeBool(writer, scalingMatrix != null, "SPS: ");
             if (scalingMatrix != null) {
                 for (int i = 0; i < 8; i++) {
-                    if (i < 6) {
-                        writeBool(writer, scalingMatrix.scalingList4x4[i] != null, "SPS: ");
-                        if (scalingMatrix.scalingList4x4[i] != null) {
-                            scalingMatrix.scalingList4x4[i].write(writer);
-                        }
-                    } else {
-                        writeBool(writer, scalingMatrix.scalingList8x8[i - 6] != null, "SPS: ");
-                        if (scalingMatrix.scalingList8x8[i - 6] != null) {
-                            scalingMatrix.scalingList8x8[i - 6].write(writer);
-                        }
-                    }
+                    writeBool(writer, scalingMatrix[i] != null, "SPS: ");
+                    if (scalingMatrix[i] != null)
+                        writeScalingList(writer, scalingMatrix, i);
                 }
             }
         }
@@ -641,7 +691,7 @@ public class SeqParameterSet {
         return vuiParams;
     }
 
-    public ScalingMatrix getScalingMatrix() {
+    public int[][] getScalingMatrix() {
         return scalingMatrix;
     }
 
