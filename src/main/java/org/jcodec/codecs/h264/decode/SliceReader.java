@@ -980,16 +980,20 @@ public class SliceReader {
     }
 
     private void readIPCM(MBlock mBlock) {
-        reader.align();
-
-        for (int i = 0; i < 256; i++) {
-            mBlock.ipcm.samplesLuma[i] = reader.readNBit(8);
-        }
-        int MbWidthC = 16 >> chromaFormat.compWidth[1];
-        int MbHeightC = 16 >> chromaFormat.compHeight[1];
-
-        for (int i = 0; i < 2 * MbWidthC * MbHeightC; i++) {
-            mBlock.ipcm.samplesChroma[i] = reader.readNBit(8);
+        if (!sh.pps.entropyCodingModeFlag) {
+            reader.align();
+    
+            for (int i = 0; i < 256; i++) {
+                mBlock.ipcm.samplesLuma[i] = reader.readNBit(8);
+            }
+            int MbWidthC = 16 >> chromaFormat.compWidth[1];
+            int MbHeightC = 16 >> chromaFormat.compHeight[1];
+    
+            for (int i = 0; i < 2 * MbWidthC * MbHeightC; i++) {
+                mBlock.ipcm.samplesChroma[i] = reader.readNBit(8);
+            }
+        } else {
+            throw new RuntimeException("CABAC IPCM is not supported!");
         }
     }
 
@@ -1024,7 +1028,6 @@ public class SliceReader {
             mBlock.curMbType = MBType.I_16x16;
             readIntra16x16(mbType - 1, mBlock);
         } else {
-            Logger.warn("IPCM macroblock found. Not tested, may cause unpredictable behavior.");
             mBlock.curMbType = MBType.I_PCM;
             readIPCM(mBlock);
         }

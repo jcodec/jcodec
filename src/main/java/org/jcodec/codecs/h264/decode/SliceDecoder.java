@@ -143,7 +143,6 @@ public class SliceDecoder {
         } else if (mBlock.curMbType == MBType.I_16x16) {
             decoderIntra16x16.decode(mBlock, mb);
         } else {
-            Logger.warn("IPCM macroblock found. Not tested, may cause unpredictable behavior.");
             decoderIPCM.decode(mBlock, mb);
         }
     }
