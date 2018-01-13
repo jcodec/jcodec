@@ -147,6 +147,7 @@ public class H264Encoder extends VideoEncoder {
 
     public ByteBuffer doEncodeFrame(Picture pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
         ByteBuffer dup = _out.duplicate();
+        int qp = rc.startPicture(pic.getSize(), pic.getWidth() * pic.getHeight(), frameType);
 
         if (idr) {
             sps = initSPS(new Size(pic.getCroppedWidth(), pic.getCroppedHeight()));
@@ -178,7 +179,7 @@ public class H264Encoder extends VideoEncoder {
         for (int i = 0; i < mbWidth; i++)
             topEncoded[i] = new EncodedMB();
 
-        encodeSlice(sps, pps, pic, dup, idr, frameNumber, frameType);
+        encodeSlice(sps, pps, pic, dup, idr, frameNumber, frameType, qp);
 
         putLastMBLine();
 
@@ -204,7 +205,7 @@ public class H264Encoder extends VideoEncoder {
 
     public PictureParameterSet initPPS() {
         PictureParameterSet pps = new PictureParameterSet();
-        pps.picInitQpMinus26 = rc.getInitQp(SliceType.I) - 26;
+        pps.picInitQpMinus26 = 0; // start with qp = 26
         return pps;
     }
 
@@ -229,7 +230,7 @@ public class H264Encoder extends VideoEncoder {
     }
 
     private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture pic, ByteBuffer dup, boolean idr,
-            int frameNum, SliceType sliceType) {
+            int frameNum, SliceType sliceType, int qp) {
         if (idr && sliceType != SliceType.I) {
             idr = false;
             Logger.warn("Illegal value of idr = true when sliceType != I");
@@ -237,9 +238,6 @@ public class H264Encoder extends VideoEncoder {
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
         mbEncoderI16x16 = new MBEncoderI16x16(cavlc, leftRow, topLine);
         mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc, new MotionEstimator(motionSearchRange));
-
-        rc.reset();
-        int qp = rc.getInitQp(sliceType);
 
         dup.putInt(0x1);
         new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 3).write(dup);
@@ -284,14 +282,15 @@ public class H264Encoder extends VideoEncoder {
                 }
 
                 BitWriter candidate;
-                int qpDelta;
+                int totalQpDelta = 0;
+                int qpDelta = rc.initialQpDelta();
                 do {
                     candidate = sliceData.fork();
-                    qpDelta = rc.getQpDelta();
-                    encodeMacroblock(mbType, pic, mbX, mbY, candidate, qp, qpDelta);
-                } while (!rc.accept(candidate.position() - sliceData.position()));
+                    totalQpDelta += qpDelta;
+                    encodeMacroblock(mbType, pic, mbX, mbY, candidate, qp, totalQpDelta);
+                } while ((qpDelta = rc.accept(candidate.position() - sliceData.position())) != 0);
                 sliceData = candidate;
-                qp += qpDelta;
+                qp += totalQpDelta;
 
                 collectPredictors(outMB.getPixels(), mbX);
                 addToReference(mbX, mbY);

@@ -3,6 +3,7 @@ package org.jcodec.codecs.h264;
 import static org.junit.Assert.assertNotNull;
 
 import java.nio.ByteBuffer;
+import java.util.Random;
 
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
@@ -104,5 +105,19 @@ public class H264EncoderTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void testRandomImage() {
+        H264Encoder encoder = H264Encoder.createH264Encoder();
+        Picture pic = Picture.create(640, 360, ColorSpace.YUV420J);
+
+        for (int i = 0; i < 3; i++) {
+            byte[] planeData = pic.getPlaneData(i);
+            new Random().nextBytes(planeData);
+        }
+
+        ByteBuffer out = ByteBuffer.allocate((3 * 640 * 360) / 2);
+        encoder.encodeFrame(pic, out);
     }
 }
