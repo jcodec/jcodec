@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264.encode;
 
 import org.jcodec.codecs.h264.io.model.SliceType;
+import org.jcodec.common.model.Size;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -13,12 +14,9 @@ import org.jcodec.codecs.h264.io.model.SliceType;
  */
 public interface RateControl {
 
-    int getInitQp(SliceType sliceType);
+    int startPicture(Size sz, int maxSize, SliceType sliceType);
 
-    int getQpDelta();
-
-    boolean accept(int bits);
-
-    void reset();
-
+    int initialQpDelta(); 
+    
+    int accept(int bits);
 }

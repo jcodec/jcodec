@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264.encode;
 
 import org.jcodec.codecs.h264.io.model.SliceType;
+import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MathUtil;
 
 /**
@@ -24,14 +25,14 @@ public class H264FixedRateControl implements RateControl {
     }
 
     @Override
-    public int getInitQp(SliceType sliceType) {
+    public int startPicture(Size sz, int maxSize, SliceType sliceType) {
         return INIT_QP + (sliceType == SliceType.P ? 4 : 0);
     }
 
     @Override
-    public int getQpDelta() {
-        int qpDelta = balance < 0 ? (balance < -(perMb >> 1) ? 2 : 1) : (balance > perMb ? (balance > (perMb << 2) ? -2
-                : -1) : 0);
+    public int initialQpDelta() {
+        int qpDelta = balance < 0 ? (balance < -(perMb >> 1) ? 2 : 1)
+                : (balance > perMb ? (balance > (perMb << 2) ? -2 : -1) : 0);
         int prevQp = curQp;
         curQp = MathUtil.clip(curQp + qpDelta, 12, 30);
 
@@ -39,16 +40,13 @@ public class H264FixedRateControl implements RateControl {
     }
 
     @Override
-    public boolean accept(int bits) {
+    public int accept(int bits) {
 
         balance += perMb - bits;
 
-        // System.out.println(balance);
-
-        return true;
+        return 0;
     }
 
-    @Override
     public void reset() {
         balance = 0;
         curQp = INIT_QP;
