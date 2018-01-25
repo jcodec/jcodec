@@ -2,14 +2,20 @@ package org.jcodec.codecs.h264;
 
 import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Random;
+
+import javax.imageio.ImageIO;
 
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.common.VideoEncoder.EncodedFrame;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
+import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -119,5 +125,14 @@ public class H264EncoderTest {
 
         ByteBuffer out = ByteBuffer.allocate((3 * 640 * 360) / 2);
         encoder.encodeFrame(pic, out);
+    }
+    
+    @Test
+    public void testBufferOverflowImage() throws IOException {
+        H264Encoder encoder = H264Encoder.createH264Encoder();
+        Picture picture = AWTUtil.fromBufferedImage(
+                ImageIO.read(new File("src/test/resources/h264/buffer_overflow.png")), ColorSpace.YUV420J);
+        ByteBuffer buf = ByteBuffer.allocate(picture.getWidth() * picture.getHeight());
+        encoder.encodeFrame(picture, buf);
     }
 }

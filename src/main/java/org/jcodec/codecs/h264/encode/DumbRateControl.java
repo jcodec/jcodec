@@ -40,7 +40,7 @@ public class DumbRateControl implements RateControl {
     @Override
     public int startPicture(Size sz, int maxSize, SliceType sliceType) {
         int totalMb = ((sz.getWidth() + 15) >> 4) * ((sz.getHeight() + 15) >> 4);
-        bitsPerMb = (8 * maxSize) / totalMb;
+        bitsPerMb = (maxSize << 3) / totalMb;
         totalQpDelta = 0;
         justSwitched = false;
         return QP + (sliceType == SliceType.P ? 6 : 0);
