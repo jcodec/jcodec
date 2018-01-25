@@ -1,4 +1,5 @@
 package org.jcodec.codecs.h264.encode;
+
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_LEFT;
@@ -12,6 +13,7 @@ import org.jcodec.codecs.h264.io.CAVLC;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
+import org.jcodec.common.SaveRestore;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Picture;
 
@@ -25,7 +27,7 @@ import java.util.Arrays;
  * 
  * @author Stanislav Vitvitskyy
  */
-public class MBEncoderP16x16 {
+public class MBEncoderP16x16 implements SaveRestore {
 
     private CAVLC[] cavlc;
     private SeqParameterSet sps;
@@ -37,6 +39,14 @@ public class MBEncoderP16x16 {
     private int mvLeftY;
     private int mvTopLeftX;
     private int mvTopLeftY;
+
+    private int[] mvTopXSave;
+    private int[] mvTopYSave;
+    private int mvLeftXSave;
+    private int mvLeftYSave;
+    private int mvTopLeftXSave;
+    private int mvTopLeftYSave;
+
     private BlockInterpolator interpolator;
 
     public MBEncoderP16x16(SeqParameterSet sps, Picture ref, CAVLC[] cavlc, MotionEstimator me) {
@@ -44,13 +54,47 @@ public class MBEncoderP16x16 {
         this.cavlc = cavlc;
         this.ref = ref;
         this.me = me;
-        mvTopX = new int[sps.picWidthInMbsMinus1 + 1];
-        mvTopY = new int[sps.picWidthInMbsMinus1 + 1];
+        mvTopX     = new int[sps.picWidthInMbsMinus1 + 1];
+        mvTopY     = new int[sps.picWidthInMbsMinus1 + 1];
+        
+        mvTopXSave = new int[sps.picWidthInMbsMinus1 + 1];
+        mvTopYSave = new int[sps.picWidthInMbsMinus1 + 1];
         interpolator = new BlockInterpolator();
     }
 
-    public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
-            EncodedMB leftOutMB, EncodedMB topOutMB, int qp, int qpDelta) {
+    @Override
+    public void save() {
+        for (int i = 0; i < cavlc.length; i++)
+            cavlc[i].save();
+        System.arraycopy(mvTopX, 0, mvTopXSave, 0, mvTopX.length);
+        System.arraycopy(mvTopY, 0, mvTopYSave, 0, mvTopY.length);
+
+        mvLeftXSave    = mvLeftX;
+        mvLeftYSave    = mvLeftY;
+        mvTopLeftXSave = mvTopLeftX;
+        mvTopLeftYSave = mvTopLeftY;
+    }
+
+    @Override
+    public void restore() {
+        for (int i = 0; i < cavlc.length; i++)
+            cavlc[i].restore();
+        int[] tmp = mvTopX;
+        mvTopX = mvTopXSave;
+        mvTopXSave = tmp;
+        
+        tmp = mvTopY;
+        mvTopY = mvTopYSave;
+        mvTopYSave = tmp;
+
+        mvLeftX    = mvLeftXSave;
+        mvLeftY    = mvLeftYSave;
+        mvTopLeftX = mvTopLeftXSave;
+        mvTopLeftY = mvTopLeftYSave;
+    }
+
+    public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB, EncodedMB leftOutMB,
+            EncodedMB topOutMB, int qp, int qpDelta) {
         if (sps.numRefFrames > 1) {
             int refIdx = decideRef();
             CAVLCWriter.writeTE(out, refIdx, sps.numRefFrames - 1);
@@ -75,7 +119,7 @@ public class MBEncoderP16x16 {
         CAVLCWriter.writeSE(out, mv[1] - mvpy); // mvdy
 
         Picture mbRef = Picture.create(16, 16, sps.chromaFormatIdc);
-        int[][] mb = new int[][] {new int[256], new int[64], new int[64]};
+        int[][] mb = new int[][] { new int[256], new int[64], new int[64] };
 
         interpolator.getBlockLuma(ref, mbRef, 0, (mbX << 6) + mv[0], (mbY << 6) + mv[1], 16, 16);
 
@@ -99,12 +143,9 @@ public class MBEncoderP16x16 {
         luma(pic, mb[0], mbX, mbY, out, qp, outMB.getNc());
         chroma(pic, mb[1], mb[2], mbX, mbY, out, qp);
 
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(0), mb[0], mbRef.getPlaneData(0), 4, 0, 0,
-                16, 16);
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb[1], mbRef.getPlaneData(1), 3, 0,
-                0, 8, 8);
-        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb[2], mbRef.getPlaneData(2), 3, 0,
-                0, 8, 8);
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(0), mb[0], mbRef.getPlaneData(0), 4, 0, 0, 16, 16);
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(1), mb[1], mbRef.getPlaneData(1), 3, 0, 0, 8, 8);
+        MBEncoderHelper.putBlk(outMB.getPixels().getPlaneData(2), mb[2], mbRef.getPlaneData(2), 3, 0, 0, 8, 8);
 
         Arrays.fill(outMB.getMx(), mv[0]);
         Arrays.fill(outMB.getMy(), mv[1]);

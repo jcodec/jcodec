@@ -14,6 +14,7 @@ import org.jcodec.codecs.h264.io.CAVLC;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.write.CAVLCWriter;
 import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.SaveRestore;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Picture;
 
@@ -25,7 +26,7 @@ import org.jcodec.common.model.Picture;
  * 
  * @author Stanislav Vitvitskyy
  */
-public class MBEncoderI16x16 {
+public class MBEncoderI16x16 implements SaveRestore {
 
     private CAVLC[] cavlc;
     private byte[][] leftRow;
@@ -35,6 +36,18 @@ public class MBEncoderI16x16 {
         this.cavlc = cavlc;
         this.leftRow = leftRow;
         this.topLine = topLine;
+    }
+    
+    @Override
+    public void save() {
+        for (int i = 0; i < cavlc.length; i++)
+            cavlc[i].save();
+    }
+
+    @Override
+    public void restore() {
+        for (int i = 0; i < cavlc.length; i++)
+            cavlc[i].restore();        
     }
 
     public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB,
@@ -313,5 +326,4 @@ public class MBEncoderI16x16 {
     public int getCbpLuma(Picture pic, int mbX, int mbY) {
         return 15;
     }
-
 }
