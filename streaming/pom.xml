@@ -4,6 +4,28 @@
 	<groupId>org.jcodec</groupId>
 	<artifactId>jcodec-streaming</artifactId>
 	<version>0.2.3</version>
+	<name>JCodec</name>
+	<url>http://jcodec.org</url>
+	<packaging>jar</packaging>
+	<description>Pure Java implementation of video/audio codecs and formats</description>
+	<licenses>
+		<license>
+			<name>FreeBSD</name>
+			<url>http://jcodec.org/lic.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<connection>scm:git:git://github.com/jcodec/jcodec.git</connection>
+		<developerConnection>scm:https://github.com/jcodec/jcodec.git</developerConnection>
+		<url>http://git.jcodec.org</url>
+	</scm>
+	<developers>
+		<developer>
+			<name>Jay Codec</name>
+			<email>jcodecproject@gmail.com</email>
+		</developer>
+	</developers>
 	<repositories>
 		<repository>
 			<id>gson</id>
