@@ -127,8 +127,7 @@ public class ProresEncoderTest {
         }
         
         SimpleIDCT10Bit.idct10(out, 0);
-        assertIntArrayApproximatelyEquals(rand, out, 50);
-
+        assertIntArrayApproximatelyEquals(rand, out, 4);
     }
     
     private void assertByteArrayApproximatelyEquals(byte[] rand, byte[] newRand, int threash) {
