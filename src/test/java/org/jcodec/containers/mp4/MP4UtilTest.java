@@ -8,6 +8,7 @@ import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.MP4Util.Atom;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -18,10 +19,10 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import js.io.File;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.nio.MappedByteBuffer;
+import java.io.File;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 
 public class MP4UtilTest {
     @Test
@@ -68,8 +69,8 @@ public class MP4UtilTest {
 
         Atom atom = MP4Util.findFirstAtom("moov", new AutoFileChannelWrapper(f));
         MappedByteBuffer written = NIOUtils.mapFile(f);
-        written.setPosition((int) atom.getOffset());
-        written.setLimit((int) (written.position() + atom.getHeader().getSize()));
+        written.position((int) atom.getOffset());
+        written.limit((int) (written.position() + atom.getHeader().getSize()));
 
         boolean equals = read.equals(written);
         if (!equals) {

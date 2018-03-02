@@ -1,6 +1,6 @@
 package org.jcodec.common.model;
 
-import static org.jcodec.common.StringUtils.splitS;
+import static java.lang.Integer.parseInt;
 import static org.jcodec.common.model.RationalLarge.reduceLong;
 
 import org.jcodec.common.tools.MathUtil;
@@ -19,8 +19,8 @@ public class Rational {
     public static final Rational ONE = new Rational(1, 1);
     public static final Rational HALF = new Rational(1, 2);
     public static final Rational ZERO = new Rational(0, 1);
-    final int num;
-    final int den;
+    public final int num;
+    public final int den;
 
     public static Rational R(int num, int den) {
         return new Rational(num, den);
@@ -43,9 +43,21 @@ public class Rational {
         return den;
     }
 
+    public static Rational parseRational(String string) {
+        return parse(string);
+    }
+
     public static Rational parse(String string) {
-        String[] split = splitS(string, ":");
-        return new Rational(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+        int idx = string.indexOf(":");
+        if (idx < 0) {
+            idx = string.indexOf("/");
+        }
+        if (idx > 0) {
+            String num = string.substring(0, idx);
+            String den = string.substring(idx + 1);
+            return new Rational(parseInt(num), parseInt(den));
+        }
+        return R(parseInt(string), 1);
     }
 
     @Override
@@ -192,5 +204,14 @@ public class Rational {
 
     public static Rational reduceRational(Rational r) {
         return reduce(r.getNum(), r.getDen());
+    }
+    
+    @Override
+    public String toString() {
+        return num + "/" + den;
+    }
+
+    public double toDouble() {
+        return (double) num / den;
     }
 }

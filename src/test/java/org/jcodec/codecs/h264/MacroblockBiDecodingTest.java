@@ -6,14 +6,14 @@ import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import js.io.File;
-import js.io.IOException;
-import js.nio.ByteBuffer;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class MacroblockBiDecodingTest {
     @Test
@@ -339,12 +339,12 @@ public class MacroblockBiDecodingTest {
     }
 
     private void testOneFile(String encoded, String decoded, int nFrames, int[] reorderMap) throws IOException {
-        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFromFile(new File(encoded)));
+        BufferH264ES es = new BufferH264ES(NIOUtils.fetchFromFile(new File(encoded)));
         H264Decoder dec = new H264Decoder();
 
         Frame[] out = new Frame[nFrames];
         for (int i = 0; i < nFrames; i++) {
-            out[i] = dec.decodeFrame8Bit(es.nextFrame().getData(), Picture8Bit.create(32, 32, ColorSpace.YUV420)
+            out[i] = dec.decodeFrame(es.nextFrame().getData(), Picture.create(32, 32, ColorSpace.YUV420)
                     .getData());
         }
 

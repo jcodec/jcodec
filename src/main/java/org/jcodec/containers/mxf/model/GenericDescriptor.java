@@ -3,9 +3,9 @@ import java.util.Iterator;
 
 import org.jcodec.common.logging.Logger;
 
-import js.nio.ByteBuffer;
-import js.util.Map;
-import js.util.Map.Entry;
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -32,6 +32,7 @@ public class GenericDescriptor extends MXFInterchangeObject {
             switch (entry.getKey()) {
             case 0x2f01:
                 locators = readULBatch(_bb);
+                break;
             case 0x3F01:
                 subDescriptors = readULBatch(_bb);
                 break;

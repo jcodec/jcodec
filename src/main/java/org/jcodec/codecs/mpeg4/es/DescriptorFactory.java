@@ -1,6 +1,7 @@
 package org.jcodec.codecs.mpeg4.es;
-import js.util.HashMap;
-import js.util.Map;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,6 +24,7 @@ public class DescriptorFactory implements IDescriptorFactory {
     public Class<? extends Descriptor> byTag(int tag) {
         return map.get(tag);
     }
+
 
     public static IDescriptorFactory getInstance() {
         return factory;

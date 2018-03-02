@@ -2,7 +2,7 @@ package org.jcodec.containers.mp4.boxes;
 
 import org.jcodec.common.model.Rational;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -37,6 +37,11 @@ public class PixelAspectExt extends Box {
         out.putInt(hSpacing);
         out.putInt(vSpacing);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 16;
+    }
 
     public int gethSpacing() {
         return hSpacing;
@@ -53,5 +58,4 @@ public class PixelAspectExt extends Box {
     public static String fourcc() {
         return "pasp";
     }
-
 }

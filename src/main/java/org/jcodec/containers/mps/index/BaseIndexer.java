@@ -10,15 +10,15 @@ import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.PESPacket;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.Arrays;
-import js.util.Comparator;
-import js.util.HashMap;
-import js.util.List;
-import js.util.Map;
-import js.util.Map.Entry;
-import js.util.Set;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

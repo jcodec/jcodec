@@ -1,13 +1,12 @@
 package org.jcodec.containers.mp4.boxes;
 
+import java.util.List;
+import java.util.ListIterator;
+
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
-
-import js.lang.IllegalArgumentException;
-import js.util.List;
-import js.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -70,7 +69,7 @@ public class TrakBox extends NodeBox {
         return elst.getEdits();
     }
 
-    public TrakBox setEdits(List<Edit> edits) {
+    public void setEdits(List<Edit> edits) {
         NodeBox edts = NodeBox.findFirst(this, NodeBox.class, "edts");
         if (edts == null) {
             edts = new NodeBox(new Header("edts"));
@@ -80,7 +79,6 @@ public class TrakBox extends NodeBox {
 
         edts.add(EditListBox.createEditListBox(edits));
         getTrackHeader().setDuration(getEditedDuration(this));
-        return this;
     }
 
     public boolean isVideo() {
@@ -274,10 +272,6 @@ public class TrakBox extends NodeBox {
         return new Size(vse.getWidth(), vse.getHeight());
     }
 
-    protected void getModelFields(List<String> model) {
-
-    }
-
     public TimeToSampleBox getStts() {
         return NodeBox.findFirstPath(this, TimeToSampleBox.class, Box.path("mdia.minf.stbl.stts"));
     }
@@ -310,9 +304,9 @@ public class TrakBox extends NodeBox {
         return NodeBox.findFirstPath(this, CompositionOffsetsBox.class, Box.path("mdia.minf.stbl.ctts" ));
     }
     
-    public static TrackType getTrackType(TrakBox trak) {
+    public static MP4TrackType getTrackType(TrakBox trak) {
         HandlerBox handler = NodeBox.findFirstPath(trak, HandlerBox.class, Box.path("mdia.hdlr"));
-        return TrackType.fromHandler(handler.getComponentSubType());
+        return handler == null ? null : MP4TrackType.fromHandler(handler.getComponentSubType());
     }
 
     /**

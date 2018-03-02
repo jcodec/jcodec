@@ -13,14 +13,14 @@ import org.jcodec.common.model.Size;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.MPSUtils.PESReader;
 
-import js.io.File;
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.Collection;
-import js.util.HashMap;
-import js.util.List;
-import js.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -190,7 +190,7 @@ public class MPSMediaInfo extends PESReader {
     private int[] parseSystem(ByteBuffer pesBuffer) {
         NIOUtils.skip(pesBuffer, 12);
         IntArrayList result = IntArrayList.createIntArrayList();
-        while (pesBuffer.remaining() >= 3 && (pesBuffer.getAt(pesBuffer.position()) & 0x80) == 0x80) {
+        while (pesBuffer.remaining() >= 3 && (pesBuffer.get(pesBuffer.position()) & 0x80) == 0x80) {
             result.add(pesBuffer.get() & 0xff);
             pesBuffer.getShort();
         }

@@ -5,13 +5,14 @@ import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.containers.mps.MPSUtils;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
 import org.jcodec.platform.Platform;
 
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.util.Arrays;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -99,11 +100,11 @@ public class MPSRandomAccessDemuxer {
             int fs = fsizes[curFrame];
 
             ByteBuffer result = buf.duplicate();
-            result.setLimit(result.position() + fs);
+            result.limit(result.position() + fs);
 
             while (result.hasRemaining()) {
                 if (pesBuf.hasRemaining()) {
-                    result.putBuf(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
+                    result.put(NIOUtils.read(pesBuf, Math.min(pesBuf.remaining(), result.remaining())));
                 } else {
                     ++curPesIdx;
                     long posShift = 0;
@@ -120,7 +121,7 @@ public class MPSRandomAccessDemuxer {
             result.flip();
 
             Packet pkt = Packet.createPacket(result, fpts[curFrame], MPEG_TIMESCALE, fdur[curFrame], curFrame, sync.length == 0
-                    || Arrays.binarySearch(sync, curFrame) >= 0, null);
+                    || Arrays.binarySearch(sync, curFrame) >= 0 ? FrameType.KEY : FrameType.INTER, null);
 
             curFrame++;
 

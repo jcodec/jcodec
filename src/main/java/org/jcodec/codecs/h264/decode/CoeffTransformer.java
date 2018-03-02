@@ -1,8 +1,7 @@
 package org.jcodec.codecs.h264.decode;
 import org.jcodec.common.ArrayUtil;
 
-import js.lang.IllegalArgumentException;
-import js.util.Arrays;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -15,19 +14,17 @@ import js.util.Arrays;
  */
 public class CoeffTransformer {
 
-    private static int[] fieldScan4x4 = { 0, 4, 1, 8, 12, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15 };
-    private static int[] fieldScan8x8 = { 0, 8, 16, 1, 9, 24, 32, 17, 2, 25, 40, 48, 56, 33, 10, 3, 18, 41, 49, 57, 26, 11, 4,
-            19, 34, 42, 50, 58, 27, 12, 5, 20, 35, 43, 51, 58, 28, 13, 6, 21, 36, 44, 52, 60, 29, 14, 22, 37, 45, 53,
-            61, 30, 7, 15, 38, 46, 54, 62, 23, 31, 39, 47, 55, 63 };
-
     public static int[] zigzag4x4 = { 0, 1, 4, 8, 5, 2, 3, 6, 9, 12, 13, 10, 7, 11, 14, 15 };
+    public static int[] invZigzag4x4 = new int[16];
 
-    static int[][] dequantCoef = { { 10, 13, 10, 13, 13, 16, 13, 16, 10, 13, 10, 13, 13, 16, 13, 16 },
+    static int[][] dequantCoef = {
+            { 10, 13, 10, 13, 13, 16, 13, 16, 10, 13, 10, 13, 13, 16, 13, 16 },
             { 11, 14, 11, 14, 14, 18, 14, 18, 11, 14, 11, 14, 14, 18, 14, 18 },
             { 13, 16, 13, 16, 16, 20, 16, 20, 13, 16, 13, 16, 16, 20, 16, 20 },
             { 14, 18, 14, 18, 18, 23, 18, 23, 14, 18, 14, 18, 18, 23, 18, 23 },
             { 16, 20, 16, 20, 20, 25, 20, 25, 16, 20, 16, 20, 20, 25, 20, 25 },
-            { 18, 23, 18, 23, 23, 29, 23, 29, 18, 23, 18, 23, 23, 29, 23, 29 } };
+            { 18, 23, 18, 23, 23, 29, 23, 29, 18, 23, 18, 23, 23, 29, 23, 29 } 
+    };
 
     static int[][] dequantCoef8x8 = new int[6][64];
 
@@ -38,6 +35,14 @@ public class CoeffTransformer {
     public static int[] zigzag8x8 = new int[] { 0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26, 33,
             40, 48, 41, 34, 27, 20, 13, 6, 7, 14, 21, 28, 35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44,
             51, 58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63 };
+    public static int[] invZigzag8x8 = new int[64];
+    
+    static {
+        for (int i = 0; i < 16; i++)
+            invZigzag4x4[zigzag4x4[i]] = i;
+        for (int i = 0; i < 64; i++)
+            invZigzag8x8[zigzag8x8[i]] = i; 
+    }
 
     private static final int quantCoeff[][] = {
             { 13107, 8066, 13107, 8066, 8066, 5243, 8066, 5243, 13107, 8066, 13107, 8066, 8066, 5243, 8066, 5243 },
@@ -72,9 +77,6 @@ public class CoeffTransformer {
                 for (int j = 0; j < 8; j += 4)
                     dequantCoef8x8[g][(i << 3) + j] = initDequantCoeff8x8[g][4];
         }
-    }
-
-    public CoeffTransformer(int[][] scalingListMatrix) {
     }
 
     /**
@@ -212,18 +214,24 @@ public class CoeffTransformer {
         }
     }
 
-    public static void dequantizeAC(int[] coeffs, int qp) {
+    public static void dequantizeAC(int[] coeffs, int qp, int[] scalingList) {
         int group = qp % 6;
 
-        if (qp >= 24) {
+        if (scalingList == null) {
             int qbits = qp / 6;
             for (int i = 0; i < 16; i++)
                 coeffs[i] = (coeffs[i] * dequantCoef[group][i]) << qbits;
         } else {
-            int qbits = 4 - qp / 6;
-            int addition = 1 << (3 - qp / 6);
-            for (int i = 0; i < 16; i++)
-                coeffs[i] = (coeffs[i] * (dequantCoef[group][i] << 4) + addition) >> qbits;
+            if (qp >= 24) {
+                int qbits = qp / 6 - 4;
+                for (int i = 0; i < 16; i++)
+                    coeffs[i] = (coeffs[i] * dequantCoef[group][i] * scalingList[invZigzag4x4[i]]) << qbits;
+            } else {
+                int qbits = 4 - qp / 6;
+                int addition = 1 << (3 - qp / 6);
+                for (int i = 0; i < 16; i++)
+                    coeffs[i] = (coeffs[i] * scalingList[invZigzag4x4[i]] * dequantCoef[group][i] + addition) >> qbits;
+            }
         }
     }
 
@@ -248,35 +256,28 @@ public class CoeffTransformer {
         }
     }
 
-    public static int[] unzigzagAC(int[] coeffs) {
-        int[] tab;
-        if (coeffs.length == 16) {
-            tab = zigzag4x4;
-        } else if (coeffs.length == 64) {
-            tab = zigzag8x8;
-        } else
-            throw new IllegalArgumentException("Coefficients array should be of either 16 or 64 length.");
-
-        int[] result = new int[coeffs.length];
-        for (int i = 0; i < coeffs.length; i++) {
-            result[tab[i]] = coeffs[i];
-        }
-
-        return result;
-    }
-
-    public static void dequantizeDC4x4(int[] coeffs, int qp) {
+    public static void dequantizeDC4x4(int[] coeffs, int qp, int[] scalingList) {
         int group = qp % 6;
 
         if (qp >= 36) {
-            int qbits = qp / 6 - 2;
-            for (int i = 0; i < 16; i++)
-                coeffs[i] = (coeffs[i] * dequantCoef[group][0]) << qbits;
+            int qbits = qp / 6 - 6;
+            if (scalingList == null) {
+                for (int i = 0; i < 16; i++)
+                    coeffs[i] = (coeffs[i] * (dequantCoef[group][0] << 4)) << qbits;
+            } else {
+                for (int i = 0; i < 16; i++)
+                    coeffs[i] = (coeffs[i] * dequantCoef[group][0] * scalingList[0]) << qbits;
+            }
         } else {
             int qbits = 6 - qp / 6;
             int addition = 1 << (5 - qp / 6);
-            for (int i = 0; i < 16; i++)
-                coeffs[i] = (coeffs[i] * (dequantCoef[group][0] << 4) + addition) >> qbits;
+            if (scalingList == null) {
+                for (int i = 0; i < 16; i++)
+                    coeffs[i] = (coeffs[i] * (dequantCoef[group][0] << 4) + addition) >> qbits;
+            } else {
+                for (int i = 0; i < 16; i++)
+                    coeffs[i] = (coeffs[i] * dequantCoef[group][0] * scalingList[0] + addition) >> qbits;
+            }
         }
     }
 
@@ -330,13 +331,29 @@ public class CoeffTransformer {
         invDC2x2(block);
     }
 
-    public static void dequantizeDC2x2(int[] transformed, int qp) {
+    public static void dequantizeDC2x2(int[] transformed, int qp, int[] scalingList) {
 
         int group = qp % 6;
-        int shift = qp / 6;
-
-        for (int i = 0; i < 4; i++) {
-            transformed[i] = ((transformed[i] * dequantCoef[group][0]) << shift) >> 1;
+        
+        if (scalingList == null) {
+            int shift = qp / 6;
+    
+            for (int i = 0; i < 4; i++) {
+                transformed[i] = ((transformed[i] * dequantCoef[group][0]) << shift) >> 1;
+            }
+        } else {
+            if (qp >= 24) {
+                int qbits = qp / 6 - 4;
+                for (int i = 0; i < 4; i++) {
+                    transformed[i] = ((transformed[i] * dequantCoef[group][0] * scalingList[0]) << qbits) >> 1;
+                }
+            } else {
+                int qbits = 4 - qp / 6;
+                int addition = 1 << (3 - qp / 6);
+                for (int i = 0; i < 4; i++) {
+                    transformed[i] = ((transformed[i] * dequantCoef[group][0] * scalingList[0] + addition) >> qbits) >> 1;
+                }
+            }
         }
     }
 
@@ -393,18 +410,28 @@ public class CoeffTransformer {
      * @param coeffs
      * @param qp
      */
-    public static void dequantizeAC8x8(int[] coeffs, int qp) {
+    public static void dequantizeAC8x8(int[] coeffs, int qp, int[] scalingList) {
         int group = qp % 6;
 
         if (qp >= 36) {
-            int qbits = qp / 6 - 2;
-            for (int i = 0; i < 64; i++)
-                coeffs[i] = (coeffs[i] * dequantCoef8x8[group][i]) << qbits;
+            int qbits = qp / 6 - 6;
+            if (scalingList == null) {
+                for (int i = 0; i < 64; i++)
+                    coeffs[i] = (coeffs[i] * (dequantCoef8x8[group][i]) << 4) << qbits;
+            } else {
+                for (int i = 0; i < 64; i++)
+                    coeffs[i] = (coeffs[i] * dequantCoef8x8[group][i] * scalingList[invZigzag8x8[i]]) << qbits;
+            }
         } else {
             int qbits = 6 - qp / 6;
             int addition = 1 << (5 - qp / 6);
-            for (int i = 0; i < 64; i++)
-                coeffs[i] = (coeffs[i] * (dequantCoef8x8[group][i] << 4) + addition) >> qbits;
+            if (scalingList == null) {
+                for (int i = 0; i < 64; i++)
+                    coeffs[i] = (coeffs[i] * (dequantCoef8x8[group][i] << 4) + addition) >> qbits;
+            } else {
+                for (int i = 0; i < 64; i++)
+                    coeffs[i] = (coeffs[i] * dequantCoef8x8[group][i] * scalingList[invZigzag8x8[i]] + addition) >> qbits;
+            }
         }
     }
 

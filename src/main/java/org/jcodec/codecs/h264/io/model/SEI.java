@@ -3,9 +3,9 @@ import static org.jcodec.codecs.h264.io.write.CAVLCWriter.writeTrailingBits;
 
 import org.jcodec.common.io.BitWriter;
 
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.List;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -78,7 +78,7 @@ public class SEI {
 
     private static byte[] sei_payload(int payloadType, int payloadSize, ByteBuffer is) {
         byte[] res = new byte[payloadSize];
-        is.getBuf(res);
+        is.get(res);
         return res;
     }
 

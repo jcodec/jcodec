@@ -28,33 +28,24 @@ public class PredictionMerger {
             byte[] pred0, byte[] pred1, int off, int stride, int blkW, int blkH, byte[] out, Frame[][] refs, int thisPoc) {
 
         PictureParameterSet pps = sh.pps;
-        if (sh.slice_type == SliceType.P) {
-            if (pps.weighted_pred_flag && sh.pred_weight_table != null) {
-
-                PredictionWeightTable w = sh.pred_weight_table;
-                weight(pred0, stride, off, blkW, blkH, comp == 0 ? w.luma_log2_weight_denom
-                        : w.chroma_log2_weight_denom, comp == 0 ? w.luma_weight[0][refIdxL0]
-                        : w.chroma_weight[0][comp - 1][refIdxL0], comp == 0 ? w.luma_offset[0][refIdxL0]
-                        : w.chroma_offset[0][comp - 1][refIdxL0], out);
-            } else {
-                copyPrediction(pred0, stride, off, blkW, blkH, out);
-            }
+        if (sh.sliceType == SliceType.P) {
+            weightPrediction(sh, refIdxL0, comp, pred0, off, stride, blkW, blkH, out);
         } else {
-            if (!pps.weighted_pred_flag || sh.pps.weighted_bipred_idc == 0
-                    || (sh.pps.weighted_bipred_idc == 2 && predType != Bi)) {
+            if (!pps.weightedPredFlag || sh.pps.weightedBipredIdc == 0
+                    || (sh.pps.weightedBipredIdc == 2 && predType != Bi)) {
                 mergeAvg(pred0, pred1, stride, predType, off, blkW, blkH, out);
-            } else if (sh.pps.weighted_bipred_idc == 1) {
-                PredictionWeightTable w = sh.pred_weight_table;
-                int w0 = refIdxL0 == -1 ? 0 : (comp == 0 ? w.luma_weight[0][refIdxL0]
-                        : w.chroma_weight[0][comp - 1][refIdxL0]);
-                int w1 = refIdxL1 == -1 ? 0 : (comp == 0 ? w.luma_weight[1][refIdxL1]
-                        : w.chroma_weight[1][comp - 1][refIdxL1]);
-                int o0 = refIdxL0 == -1 ? 0 : (comp == 0 ? w.luma_offset[0][refIdxL0]
-                        : w.chroma_offset[0][comp - 1][refIdxL0]);
-                int o1 = refIdxL1 == -1 ? 0 : (comp == 0 ? w.luma_offset[1][refIdxL1]
-                        : w.chroma_offset[1][comp - 1][refIdxL1]);
-                mergeWeight(pred0, pred1, stride, predType, off, blkW, blkH, comp == 0 ? w.luma_log2_weight_denom
-                        : w.chroma_log2_weight_denom, w0, w1, o0, o1, out);
+            } else if (sh.pps.weightedBipredIdc == 1) {
+                PredictionWeightTable w = sh.predWeightTable;
+                int w0 = refIdxL0 == -1 ? 0 : (comp == 0 ? w.lumaWeight[0][refIdxL0]
+                        : w.chromaWeight[0][comp - 1][refIdxL0]);
+                int w1 = refIdxL1 == -1 ? 0 : (comp == 0 ? w.lumaWeight[1][refIdxL1]
+                        : w.chromaWeight[1][comp - 1][refIdxL1]);
+                int o0 = refIdxL0 == -1 ? 0 : (comp == 0 ? w.lumaOffset[0][refIdxL0]
+                        : w.chromaOffset[0][comp - 1][refIdxL0]);
+                int o1 = refIdxL1 == -1 ? 0 : (comp == 0 ? w.lumaOffset[1][refIdxL1]
+                        : w.chromaOffset[1][comp - 1][refIdxL1]);
+                mergeWeight(pred0, pred1, stride, predType, off, blkW, blkH, comp == 0 ? w.lumaLog2WeightDenom
+                        : w.chromaLog2WeightDenom, w0, w1, o0, o1, out);
             } else {
                 int tb = MathUtil.clip(thisPoc - refs[0][refIdxL0].getPOC(), -128, 127);
                 int td = MathUtil.clip(refs[1][refIdxL1].getPOC() - refs[0][refIdxL0].getPOC(), -128, 127);
@@ -71,6 +62,20 @@ public class PredictionMerger {
 
                 mergeWeight(pred0, pred1, stride, predType, off, blkW, blkH, 5, w0, w1, 0, 0, out);
             }
+        }
+    }
+
+    public static void weightPrediction(SliceHeader sh, int refIdxL0, int comp, byte[] pred0, int off, int stride,
+            int blkW, int blkH, byte[] out) {
+        PictureParameterSet pps = sh.pps;
+        if (pps.weightedPredFlag && sh.predWeightTable != null) {
+            PredictionWeightTable w = sh.predWeightTable;
+            weight(pred0, stride, off, blkW, blkH, comp == 0 ? w.lumaLog2WeightDenom
+                    : w.chromaLog2WeightDenom, comp == 0 ? w.lumaWeight[0][refIdxL0]
+                    : w.chromaWeight[0][comp - 1][refIdxL0], comp == 0 ? w.lumaOffset[0][refIdxL0]
+                    : w.chromaOffset[0][comp - 1][refIdxL0], out);
+        } else {
+            copyPrediction(pred0, stride, off, blkW, blkH, out);
         }
     }
 

@@ -3,7 +3,7 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.TapeTimecode;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,7 +37,7 @@ public class GOPHeader implements MPEGHeader {
         boolean closedGop = _in.read1Bit() == 1;
         boolean brokenLink = _in.read1Bit() == 1;
 
-        return new GOPHeader(new TapeTimecode(hours, minutes, seconds, frames, dropFrame), closedGop, brokenLink);
+        return new GOPHeader(new TapeTimecode(hours, minutes, seconds, frames, dropFrame, 0), closedGop, brokenLink);
     }
 
     @Override

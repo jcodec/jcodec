@@ -1,9 +1,9 @@
 package org.jcodec.movtool;
-import js.lang.IllegalStateException;
-import js.lang.System;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
 
-import static js.util.Arrays.fill;
+import static java.util.Arrays.fill;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 import static org.jcodec.containers.mp4.MP4Util.createRefMovie;
@@ -14,6 +14,7 @@ import static org.jcodec.movtool.Util.spread;
 
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ClipRegionBox;
 import org.jcodec.containers.mp4.boxes.LoadSettingsBox;
@@ -26,7 +27,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoMediaHeaderBox;
 import org.jcodec.platform.Platform;
 
-import js.io.File;
+import java.io.File;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -55,15 +56,15 @@ public class Paste {
             to = writableChannel(toFile);
             File fromFile = new File(args[1]);
             from = readableChannel(fromFile);
-            MovieBox toMov = createRefMovie(to, "file://" + toFile.getCanonicalPath());
-            MovieBox fromMov = createRefMovie(from, "file://" + fromFile.getCanonicalPath());
-            new Strip().strip(fromMov);
+            Movie toMov = MP4Util.createRefFullMovie(to, "file://" + toFile.getCanonicalPath());
+            Movie fromMov = MP4Util.createRefFullMovie(from, "file://" + fromFile.getCanonicalPath());
+            new Strip().strip(fromMov.getMoov());
             if (args.length > 2) {
-                new Paste().paste(toMov, fromMov, Double.parseDouble(args[2]));
+                new Paste().paste(toMov.getMoov(), fromMov.getMoov(), Double.parseDouble(args[2]));
             } else {
-                new Paste().addToMovie(toMov, fromMov);
+                new Paste().addToMovie(toMov.getMoov(), fromMov.getMoov());
             }
-            MP4Util.writeMovie(out, toMov);
+            MP4Util.writeFullMovie(out, toMov);
         } finally {
             if (to != null)
                 to.close();
@@ -193,26 +194,26 @@ public class Paste {
     private boolean matchLoad(TrakBox trakBox1, TrakBox trakBox2) {
         LoadSettingsBox load1 = NodeBox.findFirst(trakBox1, LoadSettingsBox.class, "load");
         LoadSettingsBox load2 = NodeBox.findFirst(trakBox2, LoadSettingsBox.class, "load");
+        if (load1 != null && load2 != null) { 
+            return load1.getPreloadStartTime() == load2.getPreloadStartTime()
+                    && load1.getPreloadDuration() == load2.getPreloadDuration()
+                    && load1.getPreloadFlags() == load2.getPreloadFlags()
+                    && load1.getDefaultHints() == load2.getDefaultHints();
+        }
         if (load1 == null && load2 == null)
             return true;
-        if ((load1 == null && load2 != null) || (load1 != null && load2 == null))
-            return false;
-
-        return load1.getPreloadStartTime() == load2.getPreloadStartTime()
-                && load1.getPreloadDuration() == load2.getPreloadDuration()
-                && load1.getPreloadFlags() == load2.getPreloadFlags()
-                && load1.getDefaultHints() == load2.getDefaultHints();
+        return false;
     }
 
     private boolean matchClip(TrakBox trakBox1, TrakBox trakBox2) {
         ClipRegionBox crgn1 = NodeBox.findFirstPath(trakBox1, ClipRegionBox.class, Box.path("clip.crgn"));
         ClipRegionBox crgn2 = NodeBox.findFirstPath(trakBox2, ClipRegionBox.class, Box.path("clip.crgn"));
-        if ((crgn1 == null && crgn2 != null) || (crgn1 != null && crgn2 == null))
-            return false;
+        if (crgn1 != null && crgn2 != null) {
+            return crgn1.getRgnSize() == crgn2.getRgnSize() && crgn1.getX() == crgn2.getX() && crgn1.getY() == crgn2.getY()
+                    && crgn1.getWidth() == crgn2.getWidth() && crgn1.getHeight() == crgn2.getHeight();
+        }
         if (crgn1 == null && crgn2 == null)
             return true;
-
-        return crgn1.getRgnSize() == crgn2.getRgnSize() && crgn1.getX() == crgn2.getX() && crgn1.getY() == crgn2.getY()
-                && crgn1.getWidth() == crgn2.getWidth() && crgn1.getHeight() == crgn2.getHeight();
+        return false;
     }
 }

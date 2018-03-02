@@ -12,7 +12,7 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.junit.Test;
 
-import js.io.File;
+import java.io.File;
 
 
 public class SampleOffsetUtilsTest {

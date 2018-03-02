@@ -9,10 +9,10 @@ import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 
-import js.io.File;
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.nio.MappedByteBuffer;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.MappedByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -31,8 +31,8 @@ public class SampleOffsetUtils {
         SampleSizesBox stsz = NodeBox.findFirstPath(minf, SampleSizesBox.class, Box.path("stbl.stsz"));
         long sampleOffset = getSampleOffset(sample, stsc, stco, stsz);
         MappedByteBuffer map = NIOUtils.mapFile(file);
-        map.setPosition((int) sampleOffset);
-        map.setLimit(map.position() + stsz.getSizes()[sample]);
+        map.position((int) sampleOffset);
+        map.limit(map.position() + stsz.getSizes()[sample]);
         return map;
     }
 

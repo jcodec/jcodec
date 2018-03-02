@@ -25,28 +25,28 @@ public class MapManager {
     }
 
     private MBToSliceGroupMap buildMap(SeqParameterSet sps, PictureParameterSet pps) {
-        int numGroups = pps.num_slice_groups_minus1 + 1;
+        int numGroups = pps.numSliceGroupsMinus1 + 1;
 
         if (numGroups > 1) {
             int[] map;
-            int picWidthInMbs = sps.pic_width_in_mbs_minus1 + 1;
+            int picWidthInMbs = sps.picWidthInMbsMinus1 + 1;
             int picHeightInMbs = SeqParameterSet.getPicHeightInMbs(sps);
 
-            if (pps.slice_group_map_type == 0) {
+            if (pps.sliceGroupMapType == 0) {
                 int[] runLength = new int[numGroups];
                 for (int i = 0; i < numGroups; i++) {
-                    runLength[i] = pps.run_length_minus1[i] + 1;
+                    runLength[i] = pps.runLengthMinus1[i] + 1;
                 }
                 map = SliceGroupMapBuilder.buildInterleavedMap(picWidthInMbs, picHeightInMbs, runLength);
-            } else if (pps.slice_group_map_type == 1) {
+            } else if (pps.sliceGroupMapType == 1) {
                 map = SliceGroupMapBuilder.buildDispersedMap(picWidthInMbs, picHeightInMbs, numGroups);
-            } else if (pps.slice_group_map_type == 2) {
-                map = SliceGroupMapBuilder.buildForegroundMap(picWidthInMbs, picHeightInMbs, numGroups, pps.top_left,
-                        pps.bottom_right);
-            } else if (pps.slice_group_map_type >= 3 && pps.slice_group_map_type <= 5) {
+            } else if (pps.sliceGroupMapType == 2) {
+                map = SliceGroupMapBuilder.buildForegroundMap(picWidthInMbs, picHeightInMbs, numGroups, pps.topLeft,
+                        pps.bottomRight);
+            } else if (pps.sliceGroupMapType >= 3 && pps.sliceGroupMapType <= 5) {
                 return null;
-            } else if (pps.slice_group_map_type == 6) {
-                map = pps.slice_group_id;
+            } else if (pps.sliceGroupMapType == 6) {
+                map = pps.sliceGroupId;
             } else {
                 throw new RuntimeException("Unsupported slice group map type");
             }
@@ -79,34 +79,34 @@ public class MapManager {
     }
 
     private void updateMap(SliceHeader sh) {
-        int mapType = pps.slice_group_map_type;
-        int numGroups = pps.num_slice_groups_minus1 + 1;
+        int mapType = pps.sliceGroupMapType;
+        int numGroups = pps.numSliceGroupsMinus1 + 1;
 
         if (numGroups > 1 && mapType >= 3 && mapType <= 5
-                && (sh.slice_group_change_cycle != prevSliceGroupChangeCycle || mbToSliceGroupMap == null)) {
+                && (sh.sliceGroupChangeCycle != prevSliceGroupChangeCycle || mbToSliceGroupMap == null)) {
 
-            prevSliceGroupChangeCycle = sh.slice_group_change_cycle;
+            prevSliceGroupChangeCycle = sh.sliceGroupChangeCycle;
 
-            int picWidthInMbs = sps.pic_width_in_mbs_minus1 + 1;
+            int picWidthInMbs = sps.picWidthInMbsMinus1 + 1;
             int picHeightInMbs = SeqParameterSet.getPicHeightInMbs(sps);
             int picSizeInMapUnits = picWidthInMbs * picHeightInMbs;
-            int mapUnitsInSliceGroup0 = sh.slice_group_change_cycle * (pps.slice_group_change_rate_minus1 + 1);
+            int mapUnitsInSliceGroup0 = sh.sliceGroupChangeCycle * (pps.sliceGroupChangeRateMinus1 + 1);
             mapUnitsInSliceGroup0 = mapUnitsInSliceGroup0 > picSizeInMapUnits ? picSizeInMapUnits
                     : mapUnitsInSliceGroup0;
 
-            int sizeOfUpperLeftGroup = (pps.slice_group_change_direction_flag ? (picSizeInMapUnits - mapUnitsInSliceGroup0)
+            int sizeOfUpperLeftGroup = (pps.sliceGroupChangeDirectionFlag ? (picSizeInMapUnits - mapUnitsInSliceGroup0)
                     : mapUnitsInSliceGroup0);
 
             int[] map;
             if (mapType == 3) {
                 map = SliceGroupMapBuilder.buildBoxOutMap(picWidthInMbs, picHeightInMbs,
-                        pps.slice_group_change_direction_flag, mapUnitsInSliceGroup0);
+                        pps.sliceGroupChangeDirectionFlag, mapUnitsInSliceGroup0);
             } else if (mapType == 4) {
                 map = SliceGroupMapBuilder.buildRasterScanMap(picWidthInMbs, picHeightInMbs, sizeOfUpperLeftGroup,
-                        pps.slice_group_change_direction_flag);
+                        pps.sliceGroupChangeDirectionFlag);
             } else {
                 map = SliceGroupMapBuilder.buildWipeMap(picWidthInMbs, picHeightInMbs, sizeOfUpperLeftGroup,
-                        pps.slice_group_change_direction_flag);
+                        pps.sliceGroupChangeDirectionFlag);
             }
 
             this.mbToSliceGroupMap = buildMapIndices(map, numGroups);
@@ -115,12 +115,12 @@ public class MapManager {
 
     public Mapper getMapper(SliceHeader sh) {
         updateMap(sh);
-        int firstMBInSlice = sh.first_mb_in_slice;
-        if (pps.num_slice_groups_minus1 > 0) {
+        int firstMBInSlice = sh.firstMbInSlice;
+        if (pps.numSliceGroupsMinus1 > 0) {
 
-            return new PrebuiltMBlockMapper(mbToSliceGroupMap, firstMBInSlice, sps.pic_width_in_mbs_minus1 + 1);
+            return new PrebuiltMBlockMapper(mbToSliceGroupMap, firstMBInSlice, sps.picWidthInMbsMinus1 + 1);
         } else {
-            return new FlatMBlockMapper(sps.pic_width_in_mbs_minus1 + 1, firstMBInSlice);
+            return new FlatMBlockMapper(sps.picWidthInMbsMinus1 + 1, firstMBInSlice);
         }
     }
 }

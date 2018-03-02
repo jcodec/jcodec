@@ -1,5 +1,5 @@
 package org.jcodec.audio;
-import js.nio.FloatBuffer;
+import java.nio.FloatBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

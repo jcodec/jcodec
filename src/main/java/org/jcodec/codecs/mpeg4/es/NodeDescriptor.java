@@ -1,9 +1,8 @@
 package org.jcodec.codecs.mpeg4.es;
-import static js.util.Arrays.asList;
 
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.Collection;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -14,11 +13,10 @@ import js.util.Collection;
  */
 public class NodeDescriptor extends Descriptor {
     private Collection<Descriptor> children;
-    
-    public NodeDescriptor(int tag, Descriptor[] children) {
+
+    public NodeDescriptor(int tag, Collection<Descriptor> children) {
         super(tag, 0);
-        this.children = new ArrayList<Descriptor>();
-        this.children.addAll(asList(children));
+        this.children = children;
     }
 
     protected void doWrite(ByteBuffer out) {
@@ -31,13 +29,15 @@ public class NodeDescriptor extends Descriptor {
         return children;
     }
 
-    protected void parse(ByteBuffer input) {
+    protected static NodeDescriptor parse(ByteBuffer input, IDescriptorFactory factory) {
+        Collection<Descriptor> children = new ArrayList<Descriptor>();
         Descriptor d;
         do {
             d = Descriptor.read(input, factory);
             if (d != null)
                 children.add(d);
         } while (d != null);
+        return new NodeDescriptor(0, children);
     }
 
     public static <T> T find(Descriptor es, Class<T> class1, int tag) {

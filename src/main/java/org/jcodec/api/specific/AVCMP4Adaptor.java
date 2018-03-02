@@ -1,4 +1,7 @@
 package org.jcodec.api.specific;
+
+import java.nio.ByteBuffer;
+
 import org.jcodec.api.MediaInfo;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
@@ -9,12 +12,9 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Picture8Bit;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4Packet;
-
-import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,7 +42,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     private void calcBufferSize() {
         int w = Integer.MIN_VALUE, h = Integer.MIN_VALUE;
         
-        ByteBuffer bb = ByteBuffer.wrap(meta.getCodecPrivate());
+        ByteBuffer bb = meta.getCodecPrivate().duplicate();
         ByteBuffer b;
         while((b = H264Utils.nextNALUnit(bb)) != null) {
             NALUnit nu = NALUnit.read(b);
@@ -50,7 +50,7 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
                 continue;
             SeqParameterSet sps = H264Utils.readSPS(b);
         
-            int ww = sps.pic_width_in_mbs_minus1 + 1;
+            int ww = sps.picWidthInMbsMinus1 + 1;
             if (ww > w)
                 w = ww;
             int hh = SeqParameterSet.getPicHeightInMbs(sps);
@@ -61,26 +61,12 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
         size = new Size(w << 4, h << 4);
     }
 
-    @Deprecated
-    public Picture decodeFrame(Packet packet, int[][] data) {
-        updateState(packet);
-
-        Picture pic = decoder.decodeFrameFromNals(H264Utils.splitFrame(packet.getData()), data);
-        Rational pasp = meta.getPixelAspectRatio();
-
-        if (pasp != null) {
-            // TODO: transform
-        }
-
-        return pic;
-    }
-
     @Override
-    public Picture8Bit decodeFrame8Bit(Packet packet, byte[][] data) {
+    public Picture decodeFrame(Packet packet, byte[][] data) {
         updateState(packet);
 
-        Picture8Bit pic = decoder.decodeFrame8Bit(packet.getData(), data);
-        Rational pasp = meta.getPixelAspectRatio();
+        Picture pic = decoder.decodeFrame(packet.getData(), data);
+        Rational pasp = meta.getVideoCodecMeta().getPixelAspectRatio();
 
         if (pasp != null) {
             // TODO: transform
@@ -110,14 +96,8 @@ public class AVCMP4Adaptor implements ContainerAdaptor {
     }
 
     @Override
-    @Deprecated
-    public int[][] allocatePicture() {
+    public byte[][] allocatePicture() {
         return Picture.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
-    }
-
-    @Override
-    public byte[][] allocatePicture8Bit() {
-        return Picture8Bit.create(size.getWidth(), size.getHeight(), ColorSpace.YUV444).getData();
     }
 
     @Override

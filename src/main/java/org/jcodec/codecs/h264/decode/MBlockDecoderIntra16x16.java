@@ -7,7 +7,7 @@ import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveVectIntra;
 
 import org.jcodec.codecs.h264.decode.aso.Mapper;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * A decoder for I16x16 macroblocks
@@ -24,7 +24,7 @@ public class MBlockDecoderIntra16x16 extends MBlockDecoderBase {
         this.mapper = mapper;
     }
 
-    public void decode(MBlock mBlock, Picture8Bit mb) {
+    public void decode(MBlock mBlock, Picture mb) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         int mbY = mapper.getMbY(mBlock.mbIdx);
         int address = mapper.getAddress(mBlock.mbIdx);
@@ -48,12 +48,13 @@ public class MBlockDecoderIntra16x16 extends MBlockDecoderBase {
 
     private void residualLumaI16x16(MBlock mBlock, boolean leftAvailable, boolean topAvailable, int mbX, int mbY) {
         CoeffTransformer.invDC4x4(mBlock.dc);
-        CoeffTransformer.dequantizeDC4x4(mBlock.dc, s.qp);
+        int[] scalingList = getScalingList(0);
+        CoeffTransformer.dequantizeDC4x4(mBlock.dc, s.qp, scalingList);
         reorderDC4x4(mBlock.dc);
 
         for (int i = 0; i < 16; i++) {
             if ((mBlock.cbpLuma() & (1 << (i >> 2))) != 0) {
-                CoeffTransformer.dequantizeAC(mBlock.ac[0][i], s.qp);
+                CoeffTransformer.dequantizeAC(mBlock.ac[0][i], s.qp, scalingList);
             }
             mBlock.ac[0][i][0] = mBlock.dc[i];
             CoeffTransformer.idct4x4(mBlock.ac[0][i]);

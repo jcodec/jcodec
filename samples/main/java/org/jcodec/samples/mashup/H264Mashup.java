@@ -78,13 +78,13 @@ public class H264Mashup {
             if (nu.type == NALUnitType.SPS) {
                 out.writeUnit(nu, nus.duplicate());
                 sps = SeqParameterSet.read(nus);
-                if (sps.seq_parameter_set_id > lastSPS)
-                    lastSPS = sps.seq_parameter_set_id;
+                if (sps.seqParameterSetId > lastSPS)
+                    lastSPS = sps.seqParameterSetId;
             } else if (nu.type == NALUnitType.PPS) {
                 out.writeUnit(nu, nus.duplicate());
                 pps = PictureParameterSet.read(nus);
-                if (pps.pic_parameter_set_id > lastPPS)
-                    lastPPS = pps.pic_parameter_set_id;
+                if (pps.picParameterSetId > lastPPS)
+                    lastPPS = pps.picParameterSetId;
             } else {
                 out.writeUnit(nu, nus);
             }
@@ -100,26 +100,29 @@ public class H264Mashup {
             if (nu.type == NALUnitType.SPS) {
                 out.writeUnit(nu, nus.duplicate());
                 sps = SeqParameterSet.read(nus);
-                sps.seq_parameter_set_id = ++lastSPS;
+                sps.seqParameterSetId = ++lastSPS;
                 System.out.println("SPS");
             } else if (nu.type == NALUnitType.PPS) {
                 out.writeUnit(nu, nus.duplicate());
                 pps = PictureParameterSet.read(nus);
-                pps.seq_parameter_set_id = lastSPS;
-                pps.pic_parameter_set_id = ++lastPPS;
+                pps.seqParameterSetId = lastSPS;
+                pps.picParameterSetId = ++lastPPS;
                 reader = new SliceHeaderReader();
                 writer = new SliceHeaderWriter();
                 System.out.println("PPS");
             } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
                 ByteBuffer res = ByteBuffer.allocate(nus.remaining() + 10);
                 BitReader r = BitReader.createBitReader(nus);
-                SliceHeader header = reader.readPart1(r);
-                reader.readPart2(header, nu, sps, pps, r);
-                header.pic_parameter_set_id = lastPPS;
+                SliceHeader header = SliceHeaderReader.readPart1(r);
+                SliceHeaderReader.readPart2(header, nu, sps, pps, r);
+                header.picParameterSetId = lastPPS;
                 BitWriter w = new BitWriter(res);
+                if (writer == null) {
+                    throw new NullPointerException("writer == null");
+                }
                 writer.write(header, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, w);
 
-                if (pps.entropy_coding_mode_flag) {
+                if (pps.entropyCodingModeFlag) {
                     copyCABAC(w, r);
                 } else {
                     copyCAVLC(w, r);

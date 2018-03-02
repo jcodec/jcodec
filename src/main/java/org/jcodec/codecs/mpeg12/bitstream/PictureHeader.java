@@ -10,7 +10,7 @@ import static org.jcodec.codecs.mpeg12.bitstream.QuantMatrixExtension.Quant_Matr
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

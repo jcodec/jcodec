@@ -1,20 +1,20 @@
 package org.jcodec.containers.avi;
-import static js.lang.System.currentTimeMillis;
+import static java.lang.System.currentTimeMillis;
 
 import org.jcodec.api.FormatException;
 import org.jcodec.common.io.DataReader;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 
-import js.io.IOException;
-import js.io.PrintStream;
-import js.lang.IllegalArgumentException;
-import js.lang.IllegalStateException;
-import js.lang.StringBuilder;
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
-import js.util.ArrayList;
-import js.util.List;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.IllegalArgumentException;
+import java.lang.IllegalStateException;
+import java.lang.StringBuilder;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -231,8 +231,8 @@ public class AVIReader {
 
                 case FOURCC_STRH: {
                     if (streamIndex >= numStreams) {
-                        throw new IllegalStateException("Read more stream headers than expected, expected ["
-                                + numStreams + "]");
+                        throw new IllegalStateException(
+                                "Read more stream headers than expected, expected [" + numStreams + "]");
                     }
 
                     streamIndex++;
@@ -388,7 +388,7 @@ public class AVIReader {
     /*
      * Generic AVI Chunk class
      */
-static class AVIChunk {
+    static class AVIChunk {
         protected int dwFourCC;
         protected String fwFourCCStr;
         protected int dwChunkSize;
@@ -396,8 +396,8 @@ static class AVIChunk {
 
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             startOfChunk = raf.position() - 4; // Add four as we've
-                                                     // already read the
-                                                     // dwFourCC DWORD flag
+                                               // already read the
+                                               // dwFourCC DWORD flag
 
             this.dwFourCC = dwFourCC;
             this.fwFourCCStr = AVIReader.toFourCC(dwFourCC);
@@ -451,7 +451,7 @@ static class AVIChunk {
     /*
      * Generic AVI List class
      */
-static class AVIList extends AVIChunk {
+    static class AVIList extends AVIChunk {
         protected int dwListTypeFourCC;
         protected String dwListTypeFourCCStr;
 
@@ -470,9 +470,9 @@ static class AVIList extends AVIChunk {
         }
 
         /*
-         * @Override public void skip(final DataReader raf) throws
-         * IOException { // Don't skip, each list contains N number of AviChunks
-         * // raf.skipBytes(0); }
+         * @Override public void skip(final DataReader raf) throws IOException {
+         * // Don't skip, each list contains N number of AviChunks //
+         * raf.skipBytes(0); }
          */
 
         @Override
@@ -484,7 +484,7 @@ static class AVIList extends AVIChunk {
         }
     }
 
-static class AVI_SEGM extends AVIChunk {
+    static class AVI_SEGM extends AVIChunk {
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -506,7 +506,7 @@ static class AVI_SEGM extends AVIChunk {
         }
     }
 
-static class AVITag_AVIH extends AVIChunk {
+    static class AVITag_AVIH extends AVIChunk {
         // public byte[] fcc = new byte[]{'a','v','i','h'};
 
         public String _getHeight;
@@ -529,12 +529,12 @@ static class AVITag_AVIH extends AVIChunk {
         private int dwWidth; // replace with correct value
         private int dwHeight; // replace with correct value
         private int[] dwReserved;
-        
+
         public AVITag_AVIH() {
             super();
             this.dwReserved = new int[4];
         }
-        
+
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -596,7 +596,7 @@ static class AVITag_AVIH extends AVIChunk {
         }
     }
 
-static class AVITag_STRH extends AVIChunk {
+    static class AVITag_STRH extends AVIChunk {
         final static int AVISF_DISABLED = 0x00000001;
         final static int AVISF_VIDEO_PALCHANGES = 0x00010000;
 
@@ -670,9 +670,8 @@ static class AVITag_STRH extends AVIChunk {
 
         @Override
         public String toString() {
-            return ("\tCHUNK [" + toFourCC(this.dwFourCC) + "], Type["
-                    + (fccType > 0 ? toFourCC(this.fccType) : "    ") + "], Handler ["
-                    + (fccCodecHandler > 0 ? toFourCC(this.fccCodecHandler) : "    ") + "]");
+            return ("\tCHUNK [" + toFourCC(this.dwFourCC) + "], Type[" + (fccType > 0 ? toFourCC(this.fccType) : "    ")
+                    + "], Handler [" + (fccCodecHandler > 0 ? toFourCC(this.fccCodecHandler) : "    ") + "]");
         }
     }
 
@@ -682,7 +681,7 @@ static class AVITag_STRH extends AVIChunk {
      * biSizeImage; LONG biXPelsPerMeter; LONG biYPelsPerMeter; DWORD biClrUsed;
      * DWORD biClrImportant; } BITMAPINFOHEADER;
      */
-static class AVITag_BitmapInfoHeader extends AVIChunk {
+    static class AVITag_BitmapInfoHeader extends AVIChunk {
         private int biSize;
         private int biWidth; // long
         private int biHeight; // long
@@ -768,7 +767,7 @@ static class AVITag_BitmapInfoHeader extends AVIChunk {
      * WAVEFORMATEXTENSIBLE, *PWAVEFORMATEXTENSIBLE;
      */
 
-static class AVITag_WaveFormatEx extends AVIChunk {
+    static class AVITag_WaveFormatEx extends AVIChunk {
         public final static int SPEAKER_FRONT_LEFT = 0x1;
         public final static int SPEAKER_FRONT_RIGHT = 0x2;
         public final static int SPEAKER_FRONT_CENTER = 0x4;
@@ -821,11 +820,11 @@ static class AVITag_WaveFormatEx extends AVIChunk {
         protected short nCodecDelay;
 
         private String audioFormat = "?";
-        
+
         public AVITag_WaveFormatEx() {
             this.guid_data4 = new byte[8];
         }
-        
+
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -931,11 +930,10 @@ static class AVITag_WaveFormatEx extends AVIChunk {
 
         @Override
         public String toString() {
-            return (String
-                    .format("\tCHUNK [%s], ChunkSize [%d], Format [%s], Channels [%d], Channel Mask [%s], MP3 [%b], SamplesPerSec [%d], nBlockAlign [%d]",
-                            toFourCC(dwFourCC), getChunkSize(), audioFormat, channels,
-                            Integer.toHexString(channelMask), mp3Flag, this.nSamplesPerSec, this.getStartOfChunk(),
-                            this.nBlockAlign));
+            return (String.format(
+                    "\tCHUNK [%s], ChunkSize [%d], Format [%s], Channels [%d], Channel Mask [%s], MP3 [%b], SamplesPerSec [%d], nBlockAlign [%d]",
+                    toFourCC(dwFourCC), getChunkSize(), audioFormat, channels, Integer.toHexString(channelMask),
+                    mp3Flag, this.nSamplesPerSec, this.getStartOfChunk(), this.nBlockAlign));
         }
     }
 
@@ -948,17 +946,17 @@ static class AVITag_WaveFormatEx extends AVIChunk {
      * of SRT/SSA text file char data[dwSize]; // entire SRT/SSA file
      */
 
-static class AVITag_VideoChunk extends AVIChunk {
+    static class AVITag_VideoChunk extends AVIChunk {
         protected int streamNo;
         protected boolean compressed = false;
         protected int frameNo = -1;
-		private DataReader raf;
+        private DataReader raf;
 
         public AVITag_VideoChunk(final boolean compressed, DataReader raf) {
             super();
 
             this.compressed = compressed;
-			this.raf = raf;
+            this.raf = raf;
         }
 
         public int getStreamNo() {
@@ -994,8 +992,8 @@ static class AVITag_VideoChunk extends AVIChunk {
 
             int bytesRead = raf.readFully(videoFrameData);
             if (bytesRead != dwChunkSize)
-                throw new IOException("Read mismatch expected chunksize [" + dwChunkSize + "], Actual read ["
-                        + bytesRead + "]");
+                throw new IOException(
+                        "Read mismatch expected chunksize [" + dwChunkSize + "], Actual read [" + bytesRead + "]");
 
             int alignment = getChunkSize() - dwChunkSize;
             if (alignment > 0)
@@ -1008,18 +1006,19 @@ static class AVITag_VideoChunk extends AVIChunk {
         @Override
         public String toString() {
             return ("\tVIDEO CHUNK - Stream " + streamNo + ",  chunkStart=" + this.getStartOfChunk() + ", "
-                    + (compressed ? "compressed" : "uncompressed") + ", ChunkSize=" + getChunkSize() + ", FrameNo=" + this.frameNo);
+                    + (compressed ? "compressed" : "uncompressed") + ", ChunkSize=" + getChunkSize() + ", FrameNo="
+                    + this.frameNo);
         }
     }
 
-static class AVITag_AudioChunk extends AVIChunk {
+    static class AVITag_AudioChunk extends AVIChunk {
         protected int streamNo;
-		private DataReader raf;
+        private DataReader raf;
 
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             this.raf = raf;
-			super.read(dwFourCC, raf);
+            super.read(dwFourCC, raf);
 
             String fourccStr = toFourCC(dwFourCC);
             streamNo = Integer.parseInt(fourccStr.substring(0, 2));
@@ -1042,8 +1041,8 @@ static class AVITag_AudioChunk extends AVIChunk {
 
             int bytesRead = raf.readFully(audioFrameData);
             if (bytesRead != dwChunkSize)
-                throw new IOException("Read mismatch expected chunksize [" + dwChunkSize + "], Actual read ["
-                        + bytesRead + "]");
+                throw new IOException(
+                        "Read mismatch expected chunksize [" + dwChunkSize + "], Actual read [" + bytesRead + "]");
 
             int alignment = getChunkSize() - dwChunkSize;
             if (alignment > 0)
@@ -1054,7 +1053,8 @@ static class AVITag_AudioChunk extends AVIChunk {
 
         @Override
         public String toString() {
-            return ("\tAUDIO CHUNK - Stream " + streamNo + ", StartOfChunk=" + this.getStartOfChunk() + ", ChunkSize=" + getChunkSize());
+            return ("\tAUDIO CHUNK - Stream " + streamNo + ", StartOfChunk=" + this.getStartOfChunk() + ", ChunkSize="
+                    + getChunkSize());
         }
     }
 
@@ -1068,7 +1068,7 @@ static class AVITag_AudioChunk extends AVIChunk {
      * 0x00000010 #define AVIIF_NO_TIME 0x00000100 #define AVIIF_COMPRESSOR
      * 0x0FFF0000 // unused?
      */
-static class AVITag_AviIndex extends AVIChunk {
+    static class AVITag_AviIndex extends AVIChunk {
         protected int numIndexes = 0;
         protected int[] ckid;
         protected int[] dwFlags;
@@ -1150,7 +1150,7 @@ static class AVITag_AviIndex extends AVIChunk {
 
     // Open DML style AVI Super Index. Extension index when the first is not
     // enough, mainly for files > 1gb
-static class AVITag_AviDmlSuperIndex extends AVIChunk {
+    static class AVITag_AviDmlSuperIndex extends AVIChunk {
         // Read
         protected short wLongsPerEntry;
         protected byte bIndexSubType;
@@ -1167,14 +1167,14 @@ static class AVITag_AviDmlSuperIndex extends AVIChunk {
         // Generated
         StringBuilder sb;
         private int streamNo = 0;
-        
+
         public AVITag_AviDmlSuperIndex() {
             super();
             this.dwReserved = new int[3];
             this.sb = new StringBuilder();
 
         }
-        
+
         @Override
         public void read(final int dwFourCC, final DataReader raf) throws IOException {
             super.read(dwFourCC, raf);
@@ -1194,10 +1194,10 @@ static class AVITag_AviDmlSuperIndex extends AVIChunk {
             dwDuration = new int[nEntriesInUse];
 
             String chunkIdStr = toFourCC(this.dwChunkId);
-            sb.append(String
-                    .format("\tAvi DML Super Index List - ChunkSize=%d, NumIndexes = %d, longsPerEntry = %d, Stream = %s, Type = %s",
-                            this.getChunkSize(), nEntriesInUse, wLongsPerEntry, chunkIdStr.substring(0, 2),
-                            chunkIdStr.substring(2)));
+            sb.append(String.format(
+                    "\tAvi DML Super Index List - ChunkSize=%d, NumIndexes = %d, longsPerEntry = %d, Stream = %s, Type = %s",
+                    this.getChunkSize(), nEntriesInUse, wLongsPerEntry, chunkIdStr.substring(0, 2),
+                    chunkIdStr.substring(2)));
 
             for (int i = 0; i < nEntriesInUse; i++) {
                 qwOffset[i] = raf.readLong();
@@ -1237,7 +1237,7 @@ static class AVITag_AviDmlSuperIndex extends AVIChunk {
 
     // Open DML style AVI Standard Index. Extension index when the first is not
     // enough, mainly for files > 1gb
-static class AVITag_AviDmlStandardIndex extends AVIChunk {
+    static class AVITag_AviDmlStandardIndex extends AVIChunk {
         protected short wLongsPerEntry;
         protected byte bIndexSubType;
         protected byte bIndexType;
@@ -1289,10 +1289,10 @@ static class AVITag_AviDmlStandardIndex extends AVIChunk {
 
         @Override
         public String toString() {
-            return (String
-                    .format("\tAvi DML Standard Index List Type=%d, SubType=%d, ChunkId=%s, StartOfChunk=%d, NumIndexes=%d, LongsPerEntry=%d, ChunkSize=%d, FirstOffset=%d, FirstDuration=%d,LastOffset=%d, LastDuration=%d",
-                            bIndexType, bIndexSubType, toFourCC(this.dwChunkId), this.getStartOfChunk(), nEntriesInUse,
-                            wLongsPerEntry, getChunkSize(), dwOffset[0], dwDuration[0], lastOffset, lastDuration));
+            return (String.format(
+                    "\tAvi DML Standard Index List Type=%d, SubType=%d, ChunkId=%s, StartOfChunk=%d, NumIndexes=%d, LongsPerEntry=%d, ChunkSize=%d, FirstOffset=%d, FirstDuration=%d,LastOffset=%d, LastDuration=%d",
+                    bIndexType, bIndexSubType, toFourCC(this.dwChunkId), this.getStartOfChunk(), nEntriesInUse,
+                    wLongsPerEntry, getChunkSize(), dwOffset[0], dwDuration[0], lastOffset, lastDuration));
         }
     }
 }

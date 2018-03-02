@@ -1,13 +1,16 @@
 package org.jcodec.containers.mp4.demuxer;
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
-import org.jcodec.common.Codec;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.List;
+
+import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.RationalLarge;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
@@ -20,14 +23,7 @@ import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
-import org.stjs.javascript.Global;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-
-import js.io.IOException;
-import js.lang.IllegalArgumentException;
-import js.nio.ByteBuffer;
-import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -40,7 +36,7 @@ import js.util.List;
  */
 public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     protected TrakBox box;
-    private TrackType type;
+    private MP4TrackType type;
     private int no;
     protected SampleEntry[] sampleEntries;
 
@@ -99,7 +95,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return sample + (int) (tv / timeToSamples[ttsInd].getSampleDuration());
     }
 
-    public TrackType getType() {
+    public MP4TrackType getType() {
         return type;
     }
 
@@ -125,7 +121,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         return pts >= 0 && pts < duration;
     }
 
-    public  boolean seekPts(long pts) {
+    public synchronized boolean seekPts(long pts) {
         if (pts < 0)
             throw new IllegalArgumentException("Seeking to negative pts");
         if (pts >= duration)
@@ -169,7 +165,8 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
         }
     }
     
-    public  boolean gotoFrame(long frameNo) {
+    @Override
+    public synchronized boolean gotoFrame(long frameNo) {
         if (frameNo < 0)
             throw new IllegalArgumentException("negative frame number");
         if (frameNo >= getFrameCount())
@@ -199,6 +196,7 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
 
     public abstract long getFrameCount();
 
+    @Override
     public long getCurFrame() {
         return curFrame;
     }
@@ -216,13 +214,16 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
     }
 
     public String getFourcc() {
-        return getSampleEntries()[0].getFourcc();
+        SampleEntry[] entries = getSampleEntries();
+        SampleEntry se = entries == null || entries.length == 0 ? null : entries[0];
+        String fourcc = se == null ? null : se.getHeader().getFourcc();
+        return fourcc;
     }
 
     protected ByteBuffer readPacketData(SeekableByteChannel input, ByteBuffer buffer, long offset, int size)
             throws IOException {
         ByteBuffer result = buffer.duplicate();
-         {
+        synchronized (input) {
             input.setPosition(offset);
             NIOUtils.readL(input, result, size);
         }
@@ -232,32 +233,12 @@ public abstract class AbstractMP4DemuxerTrack implements SeekableDemuxerTrack {
 
     public abstract MP4Packet getNextFrame(ByteBuffer storage) throws IOException;
     
-    public Codec getCodec() {
-        SampleEntry se = getSampleEntries()[0];
-        String fourcc = se.getHeader().getFourcc();
-        if (fourcc.equals("avc1")) {
-            return Codec.H264;
-        } else if (fourcc.equals("m1v1") || fourcc.equals("m2v1")) {
-            return Codec.MPEG2;
-        } else if (fourcc.equals("apco") || fourcc.equals("apcs") || fourcc.equals("apcn") || fourcc.equals("apch")
-                || fourcc.equals("ap4h")) {
-            return Codec.PRORES;
-        }
-        return null;        
-    }
-    
-    public byte[] getCodecPrivate() {
-        SampleEntry se = getSampleEntries()[0];
-        if ("avc1".equals(se.getFourcc())) {
-            AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
-            return H264Utils.avcCToAnnexB(avcC);
-
-        }
-        // This codec does not have private section
-        return null;
-    }
-    
     public ByteBuffer convertPacket(ByteBuffer _in) {
         return _in;
+    }
+    
+    @Override
+    public DemuxerTrackMeta getMeta() {
+        return MP4DemuxerTrackMeta.fromTrack(this);
     }
 }

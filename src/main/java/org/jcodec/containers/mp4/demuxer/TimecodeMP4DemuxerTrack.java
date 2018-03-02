@@ -17,10 +17,10 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.util.regex.Matcher;
-import js.util.regex.Pattern;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -88,7 +88,7 @@ public class TimecodeMP4DemuxerTrack {
         if (sampleCache != null)
             return sampleCache[sample];
         else {
-             {
+            synchronized (input) {
                 int stscInd, stscSubInd;
                 for (stscInd = 0, stscSubInd = sample; stscInd < sampleToChunks.length
                         && stscSubInd >= sampleToChunks[stscInd].getCount(); stscSubInd -= sampleToChunks[stscInd]
@@ -104,24 +104,12 @@ public class TimecodeMP4DemuxerTrack {
         }
     }
 
-    private TapeTimecode _getTimecode(int startCounter, int frameNo, TimecodeSampleEntry entry) {
-        int frame = dropFrameAdjust(frameNo + startCounter, entry);
-        int sec = frame / entry.getNumFrames();
-        return new TapeTimecode((short) (sec / 3600), (byte) ((sec / 60) % 60), (byte) (sec % 60),
-                (byte) (frame % entry.getNumFrames()), entry.isDropFrame());
-    }
-
-    private int dropFrameAdjust(int frame, TimecodeSampleEntry entry) {
-        if (entry.isDropFrame()) {
-            long D = frame / 17982;
-            long M = frame % 17982;
-            frame += 18 * D + 2 * ((M - 2) / 1798);
-        }
-        return frame;
+    private static TapeTimecode _getTimecode(int startCounter, int frameNo, TimecodeSampleEntry entry) {
+        return TapeTimecode.tapeTimecode(frameNo + startCounter, entry.isDropFrame(), entry.getNumFrames() & 0xff);
     }
 
     private void cacheSamples(SampleToChunkEntry[] sampleToChunks, long[] chunkOffsets) throws IOException {
-         {
+        synchronized (input) {
             int stscInd = 0;
             IntArrayList ss = IntArrayList.createIntArrayList();
             for (int chunkNo = 0; chunkNo < chunkOffsets.length; chunkNo++) {

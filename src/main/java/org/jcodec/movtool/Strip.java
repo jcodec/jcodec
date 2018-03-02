@@ -1,9 +1,9 @@
 package org.jcodec.movtool;
-import js.lang.IllegalStateException;
-import js.lang.System;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
 
-import static js.lang.System.arraycopy;
+import static java.lang.System.arraycopy;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
@@ -13,6 +13,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
@@ -28,10 +29,10 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.platform.Platform;
 
-import js.io.File;
-import js.io.IOException;
-import js.util.ArrayList;
-import js.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -55,9 +56,9 @@ public class Strip {
             File file = new File(args[1]);
             Platform.deleteFile(file);
             out = writableChannel(file);
-            MovieBox movie = MP4Util.createRefMovie(input, "file://" + new File(args[0]).getAbsolutePath());
-            new Strip().strip(movie);
-            MP4Util.writeMovie(out, movie);
+            Movie movie = MP4Util.createRefFullMovie(input, "file://" + new File(args[0]).getAbsolutePath());
+            new Strip().strip(movie.getMoov());
+            MP4Util.writeFullMovie(out, movie);
         } finally {
             if (input != null)
                 input.close();

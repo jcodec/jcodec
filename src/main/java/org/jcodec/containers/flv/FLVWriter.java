@@ -3,8 +3,8 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.flv.FLVTag.Type;
 
-import js.io.IOException;
-import js.nio.ByteBuffer;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

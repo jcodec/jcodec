@@ -5,7 +5,7 @@ import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 public class BoxUtil {
 

@@ -2,7 +2,12 @@ package org.jcodec.samples.mashup;
 
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
-import static org.jcodec.containers.mp4.TrackType.VIDEO;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.decode.SliceHeaderReader;
@@ -12,24 +17,19 @@ import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.write.SliceHeaderWriter;
-import org.jcodec.codecs.h264.mp4.AvcCBox;
 import org.jcodec.common.Assert;
+import org.jcodec.common.Codec;
+import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.MuxerTrack;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.Packet;
 import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.SampleEntry;
-import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -55,75 +55,74 @@ public class MovStitch2 {
     public static void changePPS(File in1, File in2, File out) throws IOException {
         MP4Muxer muxer = MP4Muxer.createMP4Muxer(writableChannel(out), Brand.MOV);
 
-        MP4Demuxer demuxer1 = new MP4Demuxer(readableChannel(in1));
-        AbstractMP4DemuxerTrack vt1 = demuxer1.getVideoTrack();
-        MP4Demuxer demuxer2 = new MP4Demuxer(readableChannel(in2));
-        AbstractMP4DemuxerTrack vt2 = demuxer2.getVideoTrack();
+        MP4Demuxer demuxer1 = MP4Demuxer.createMP4Demuxer(readableChannel(in1));
+        DemuxerTrack vt1 = demuxer1.getVideoTrack();
+        MP4Demuxer demuxer2 = MP4Demuxer.createMP4Demuxer(readableChannel(in2));
+        DemuxerTrack vt2 = demuxer2.getVideoTrack();
         checkCompatible(vt1, vt2);
 
-        FramesMP4MuxerTrack outTrack = muxer.addTrack(VIDEO, (int) vt1.getTimescale());
-        outTrack.addSampleEntry(vt1.getSampleEntries()[0]);
-        for (int i = 0; i < vt1.getFrameCount(); i++) {
+        DemuxerTrackMeta meta1 = vt1.getMeta();
+        DemuxerTrackMeta meta2 = vt2.getMeta();
+        MuxerTrack outTrack = muxer.addVideoTrack(Codec.H264, meta1.getVideoCodecMeta());
+        for (int i = 0; i < meta1.getTotalFrames(); i++) {
             outTrack.addFrame((MP4Packet) vt1.nextFrame());
         }
 
-        AvcCBox avcC = doSampleEntry(vt2, outTrack);
+        List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
+        List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+        ByteBuffer codecPrivate2 = updateCodecPrivate(vt2.getMeta().getCodecPrivate(), spsList, ppsList);
 
-        SliceHeaderReader shr = new SliceHeaderReader();
-        SeqParameterSet sps = SeqParameterSet.read(avcC.getSpsList().get(0).duplicate());
-        PictureParameterSet pps = PictureParameterSet.read(avcC.getPpsList().get(0).duplicate());
-        SliceHeaderWriter shw = new SliceHeaderWriter();
+        SeqParameterSet sps = SeqParameterSet.read(spsList.get(0).duplicate());
+        PictureParameterSet pps = PictureParameterSet.read(ppsList.get(0).duplicate());
 
-        for (int i = 0; i < vt2.getFrameCount(); i++) {
-            MP4Packet packet = (MP4Packet) vt2.nextFrame();
-            ByteBuffer frm = doFrame(packet.getData(), shr, shw, sps, pps);
-            outTrack.addFrame(MP4Packet.createMP4PacketWithData(packet, frm));
+        for (int i = 0; i < meta2.getTotalFrames(); i++) {
+            Packet packet = vt2.nextFrame();
+            ByteBuffer frm;
+            if(codecPrivate2 != null) {
+                frm = ByteBuffer.allocate(packet.getData().remaining() + 24 + codecPrivate2.remaining());
+                frm.put(codecPrivate2);
+                codecPrivate2 = null;
+            } else {
+                frm = ByteBuffer.allocate(packet.getData().remaining() + 24);
+            }
+            doFrame(packet.getData(), frm, sps, pps);
+            outTrack.addFrame(Packet.createPacketWithData(packet, frm));
         }
 
-        AvcCBox first = Box.findFirst(vt1.getSampleEntries()[0], AvcCBox.class, AvcCBox.fourcc());
-        AvcCBox second = Box.findFirst(vt2.getSampleEntries()[0], AvcCBox.class, AvcCBox.fourcc());
-        first.getSpsList().addAll(second.getSpsList());
-        first.getPpsList().addAll(second.getPpsList());
-
-        muxer.writeHeader();
+        muxer.finish();
     }
 
-    private static void checkCompatible(AbstractMP4DemuxerTrack vt1, AbstractMP4DemuxerTrack vt2) {
-        VideoSampleEntry se1 = (VideoSampleEntry) vt1.getSampleEntries()[0];
-        VideoSampleEntry se2 = (VideoSampleEntry) vt2.getSampleEntries()[0];
+    private static void checkCompatible(DemuxerTrack vt1, DemuxerTrack vt2) {
+        DemuxerTrackMeta meta1 = vt1.getMeta();
+        DemuxerTrackMeta meta2 = vt2.getMeta();
 
-        Assert.assertEquals(vt1.getSampleEntries().length, 1);
-        Assert.assertEquals(vt2.getSampleEntries().length, 1);
-        Assert.assertEquals(se1.getFourcc(), "avc1");
-        Assert.assertEquals(se2.getFourcc(), "avc1");
-        Assert.assertEquals(se1.getWidth(), se2.getWidth());
-        Assert.assertEquals(se1.getHeight(), se2.getHeight());
+        Assert.assertTrue(meta1.getCodec() == Codec.H264);
+        Assert.assertTrue(meta2.getCodec() == Codec.H264);
+        Assert.assertEquals(meta1.getVideoCodecMeta().getSize().getWidth(),
+                meta2.getVideoCodecMeta().getSize().getWidth());
+        Assert.assertEquals(meta1.getVideoCodecMeta().getSize().getHeight(),
+                meta2.getVideoCodecMeta().getSize().getHeight());
     }
 
-    public static ByteBuffer doFrame(ByteBuffer data, SliceHeaderReader shr, SliceHeaderWriter shw,
-            SeqParameterSet sps, PictureParameterSet pps) throws IOException {
-        ByteBuffer result = ByteBuffer.allocate(data.remaining() + 24);
+    public static void doFrame(ByteBuffer data, ByteBuffer dst, SeqParameterSet sps, PictureParameterSet pps)
+            throws IOException {
+        SliceHeaderWriter shw = new SliceHeaderWriter();
+        SliceHeaderReader shr = new SliceHeaderReader();
         while (data.remaining() > 0) {
-            int len = data.getInt();
+            ByteBuffer nalUnit = H264Utils.nextNALUnit(data);
 
-            NALUnit nu = NALUnit.read(data);
+            NALUnit nu = NALUnit.read(nalUnit);
             if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
-
-                ByteBuffer savePoint = result.duplicate();
-                result.getInt();
-                copyNU(shr, shw, nu, data, result, sps, pps);
-
-                savePoint.putInt(savePoint.remaining() - result.remaining() - 4);
+                dst.getInt(1);
+                copyNU(shr, shw, nu, nalUnit, dst, sps, pps);
             } else {
-                result.putInt(len);
-                nu.write(result);
-                NIOUtils.write(result, data);
+                dst.putInt(1);
+                nu.write(dst);
+                NIOUtils.write(dst, nalUnit);
             }
         }
 
-        result.flip();
-
-        return result;
+        dst.flip();
     }
 
     public static void copyNU(SliceHeaderReader shr, SliceHeaderWriter shw, NALUnit nu, ByteBuffer is, ByteBuffer os,
@@ -131,9 +130,9 @@ public class MovStitch2 {
         BitReader reader = BitReader.createBitReader(is);
         BitWriter writer = new BitWriter(os);
 
-        SliceHeader sh = shr.readPart1(reader);
-        shr.readPart2(sh, nu, sps, pps, reader);
-        sh.pic_parameter_set_id = 1;
+        SliceHeader sh = SliceHeaderReader.readPart1(reader);
+        SliceHeaderReader.readPart2(sh, nu, sps, pps, reader);
+        sh.picParameterSetId = 1;
 
         nu.write(os);
         shw.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
@@ -141,21 +140,18 @@ public class MovStitch2 {
         copyCABAC(writer, reader);
     }
 
-    private static AvcCBox doSampleEntry(AbstractMP4DemuxerTrack videoTrack, FramesMP4MuxerTrack outTrack) {
-        SampleEntry se = videoTrack.getSampleEntries()[0];
+    private static ByteBuffer updateCodecPrivate(ByteBuffer codecPrivate, List<ByteBuffer> sps, List<ByteBuffer> pps) {
+        H264Utils.wipePS(codecPrivate, null, sps, pps);
 
-        AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) se);
-        AvcCBox old = H264Utils.parseAVCC((VideoSampleEntry) se);
-        
-        for (int i = 0; i < avcC.getPpsList().size(); i++) {
-            avcC.getPpsList().set(i, updatePps(avcC.getPpsList().get(i)));
+        for (int i = 0; i < pps.size(); i++) {
+            pps.set(i, updatePps(pps.get(i)));
         }
 
-        for (int i = 0; i < avcC.getSpsList().size(); i++) {
-            avcC.getSpsList().set(i, updateSps(avcC.getSpsList().get(i)));
+        for (int i = 0; i < sps.size(); i++) {
+            sps.set(i, updateSps(sps.get(i)));
         }
 
-        return old;
+        return H264Utils.saveCodecPrivate(sps, pps);
     }
 
     private static void copyCABAC(BitWriter w, BitReader r) {
@@ -172,7 +168,7 @@ public class MovStitch2 {
 
     static ByteBuffer updateSps(ByteBuffer bb) {
         SeqParameterSet sps = SeqParameterSet.read(bb);
-        sps.seq_parameter_set_id = 1;
+        sps.seqParameterSetId = 1;
         ByteBuffer out = ByteBuffer.allocate(bb.capacity() + 10);
         sps.write(out);
         out.flip();
@@ -181,9 +177,9 @@ public class MovStitch2 {
 
     static ByteBuffer updatePps(ByteBuffer bb) {
         PictureParameterSet pps = PictureParameterSet.read(bb);
-        Assert.assertTrue(pps.entropy_coding_mode_flag);
-        pps.seq_parameter_set_id = 1;
-        pps.pic_parameter_set_id = 1;
+        Assert.assertTrue(pps.entropyCodingModeFlag);
+        pps.seqParameterSetId = 1;
+        pps.picParameterSetId = 1;
         ByteBuffer out = ByteBuffer.allocate(bb.capacity() + 10);
         pps.write(out);
         out.flip();

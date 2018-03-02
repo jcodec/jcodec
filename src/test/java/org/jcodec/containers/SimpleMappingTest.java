@@ -1,4 +1,5 @@
 package org.jcodec.containers;
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.containers.mkv.util.EbmlUtil.computeLength;
 
 import org.jcodec.containers.mkv.MKVTestSuite;
@@ -7,12 +8,12 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import js.io.FileInputStream;
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.nio.channels.FileChannel;
-import js.nio.channels.ReadableByteChannel;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 
 public class SimpleMappingTest {
 
@@ -26,7 +27,7 @@ public class SimpleMappingTest {
             fileInputStream = new FileInputStream(suite.test2);
             readEBMLElements(fileInputStream.getChannel());
         } finally {
-            fileInputStream.close();
+            closeQuietly(fileInputStream);
         }
 
     }

@@ -6,19 +6,19 @@ import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.Platform;
 
-import js.lang.IllegalArgumentException;
-import js.lang.NullPointerException;
-import js.lang.StringBuilder;
-import js.lang.System;
-import js.lang.reflect.Array;
-import js.lang.reflect.Method;
-import js.lang.reflect.Modifier;
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.HashSet;
-import js.util.List;
-import js.util.Map;
-import js.util.Set;
+import java.lang.IllegalArgumentException;
+import java.lang.NullPointerException;
+import java.lang.StringBuilder;
+import java.lang.System;
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -41,7 +41,7 @@ public class ToJSON {
         primitive.add(Long.class);
         primitive.add(Float.class);
         primitive.add(Double.class);
-//        primitive.add(Character.class);
+        primitive.add(Character.class);
     }
 
     static {
@@ -174,7 +174,7 @@ public class ToJSON {
                     builder.append(",");
             }
             builder.append("]");
-        /*} else if (obj instanceof Object[]) {
+        } else if (obj instanceof Object[]) {
             builder.append("[");
             int len = Array.getLength(obj);
             for (int i = 0; i < len; i++) {
@@ -245,7 +245,7 @@ public class ToJSON {
                 if (i < a.length - 1)
                     builder.append(",");
             }
-            builder.append("]");*/
+            builder.append("]");
         } else if(obj.getClass().isEnum()) {
             builder.append(String.valueOf(obj));
         } else {

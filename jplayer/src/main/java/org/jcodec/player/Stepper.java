@@ -1,5 +1,7 @@
 package org.jcodec.player;
 
+import static org.jcodec.common.SoundUtil.toJavax;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -9,9 +11,8 @@ import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.sound.sampled.AudioFormat;
-
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.AudioFormat;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.AudioFrame;
 import org.jcodec.common.model.Frame;
 import org.jcodec.common.model.Picture;
@@ -47,7 +48,7 @@ public class Stepper {
 
     private RationalLarge pts;
     // private int frameNo;
-    private int[][] target;
+    private byte[][] target;
     private List<Player.Listener> listeners = new ArrayList<Player.Listener>();
     private Timer timer = new Timer();
 
@@ -63,13 +64,13 @@ public class Stepper {
 
         ai = this.audioSource.getAudioInfo();
         af = ai.getFormat();
-        ao.open(af, af.getFrameSize() * (int) af.getFrameRate());
+        ao.open(toJavax(af), af.getFrameSize() * (int) af.getFrameRate());
     }
 
-    private int[][] createTarget() {
+    private byte[][] createTarget() {
         Size dim = mi.getDim();
         int sz = 2 * dim.getWidth() * dim.getHeight();
-        return new int[][] { new int[sz], new int[sz], new int[sz] };
+        return new byte[][] { new byte[sz], new byte[sz], new byte[sz] };
     }
 
     private void nextInt() throws IOException {

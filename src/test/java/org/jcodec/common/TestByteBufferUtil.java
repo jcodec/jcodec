@@ -1,13 +1,13 @@
 package org.jcodec.common;
-import static js.lang.System.currentTimeMillis;
+import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertArrayEquals;
 
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Test;
 
-import js.io.File;
-import js.lang.System;
-import js.nio.ByteBuffer;
+import java.io.File;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,7 +44,7 @@ public class TestByteBufferUtil {
         
         long start = currentTimeMillis();
         for (int i=0;i < 10E7; i++){
-            newFrame.putBuf(rawFrame);
+            newFrame.put(rawFrame);
             newFrame.flip();
         }
         System.out.println((currentTimeMillis()-start)+"ms for put");

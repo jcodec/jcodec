@@ -1,7 +1,7 @@
 package org.jcodec.codecs.mpeg4.es;
 import org.jcodec.common.io.NIOUtils;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -31,8 +31,8 @@ public class DecoderSpecific extends Descriptor {
         return data;
     }
 
-    @Override
-    protected void parse(ByteBuffer input) {
-        data = NIOUtils.readBuf(input);
+    protected static DecoderSpecific parse(ByteBuffer input, IDescriptorFactory factory) {
+        ByteBuffer data = NIOUtils.readBuf(input);
+        return new DecoderSpecific(data);
     }
 }

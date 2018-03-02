@@ -2,7 +2,7 @@ package org.jcodec.codecs.h264.encode;
 
 import static org.jcodec.common.tools.MathUtil.clip;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -135,7 +135,7 @@ public class MBEncoderHelper {
         }
     }
 
-    public static final void putBlkPic(Picture8Bit dest, Picture8Bit src, int x, int y) {
+    public static final void putBlkPic(Picture dest, Picture src, int x, int y) {
         if (dest.getColor() != src.getColor())
             throw new RuntimeException("Incompatible color");
         for (int c = 0; c < dest.getColor().nComp; c++) {

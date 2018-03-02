@@ -4,7 +4,7 @@ import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.collectPredictors
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.saveVectIntra;
 
 import org.jcodec.codecs.h264.decode.aso.Mapper;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
 /**
  * A decoder for Intra PCM macroblocks
@@ -20,7 +20,7 @@ public class MBlockDecoderIPCM {
         this.s = decoderState;
     }
 
-    public void decode(MBlock mBlock, Picture8Bit mb) {
+    public void decode(MBlock mBlock, Picture mb) {
         int mbX = mapper.getMbX(mBlock.mbIdx);
         collectPredictors(s, mb, mbX);
         saveVectIntra(s, mapper.getMbX(mBlock.mbIdx));

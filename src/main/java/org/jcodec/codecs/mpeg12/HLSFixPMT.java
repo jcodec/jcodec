@@ -3,13 +3,13 @@ import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mps.MTSUtils;
 
-import js.io.File;
-import js.io.FilenameFilter;
-import js.io.IOException;
-import js.io.RandomAccessFile;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.util.zip.CRC32;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.zip.CRC32;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -79,7 +79,7 @@ public class HLSFixPMT {
             section.putShort((short) ((sectionLen & 0xfff) | 0xB000));
             // Redo crc32
             CRC32 crc32 = new CRC32();
-            table.setLimit(newPmt.position());
+            table.limit(newPmt.position());
             crc32.update(NIOUtils.toArray(table));
             newPmt.putInt((int) crc32.getValue());
             // fill with 0xff

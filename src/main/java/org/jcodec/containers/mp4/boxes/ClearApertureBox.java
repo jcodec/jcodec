@@ -36,6 +36,11 @@ public class ClearApertureBox extends FullBox {
         out.putInt((int) (width * 65536f));
         out.putInt((int) (height * 65536f));
     }
+    
+    @Override
+    public int estimateSize() {
+        return 20;
+    }
 
     public float getWidth() {
         return width;

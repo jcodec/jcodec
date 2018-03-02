@@ -1,9 +1,11 @@
 package net.sourceforge.jaad.aac.syntax;
-import js.util.Arrays;
-import js.util.logging.Level;
+import java.util.Arrays;
+
+import org.jcodec.common.logging.Logger;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.ChannelConfiguration;
-import net.sourceforge.jaad.aac.AACDecoderConfig;
+import net.sourceforge.jaad.aac.DecoderConfig;
 import net.sourceforge.jaad.aac.error.RVLC;
 import net.sourceforge.jaad.aac.gain.GainControl;
 import net.sourceforge.jaad.aac.huffman.HCB;
@@ -53,7 +55,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 	}
 
 	/* ========= decoding ========== */
-	public void decode(IBitStream _in, boolean commonWindow, AACDecoderConfig conf) throws AACException {
+	public void decode(IBitStream _in, boolean commonWindow, DecoderConfig conf) throws AACException {
 		if(conf.isScalefactorResilienceUsed()&&rvlc==null) rvlc = new RVLC();
 		final boolean er = conf.getProfile().isErrorResilientProfile();
 
@@ -69,7 +71,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 		pulseDataPresent = _in.readBool();
 		if(pulseDataPresent) {
 			if(info.isEightShortFrame()) throw new AACException("pulse data not allowed for short frames");
-			LOGGER.log(Level.FINE, "PULSE");
+			Logger.debug("PULSE");
 			decodePulseData(_in);
 		}
 
@@ -82,7 +84,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 		gainControlPresent = _in.readBool();
 		if(gainControlPresent) {
 			if(gainControl==null) gainControl = new GainControl(frameLength);
-			LOGGER.log(Level.FINE, "GAIN");
+			Logger.debug("GAIN");
 			gainControl.decode(_in, info.getWindowSequence());
 		}
 

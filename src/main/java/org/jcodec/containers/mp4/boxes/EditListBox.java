@@ -51,6 +51,11 @@ public class EditListBox extends FullBox {
             out.putInt((int) (edit.getRate() * 65536));
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 12 + 4 + edits.size() * 12;
+    }
 
     public List<Edit> getEdits() {
         return edits;

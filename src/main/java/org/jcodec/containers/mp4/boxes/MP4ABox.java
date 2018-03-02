@@ -24,4 +24,9 @@ public class MP4ABox extends Box {
     public void parse(ByteBuffer input) {
         val = input.getInt();
     }
+
+    @Override
+    public int estimateSize() {
+        return 12;
+    }
 }

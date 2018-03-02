@@ -1,6 +1,6 @@
 package org.jcodec.audio;
-import js.io.IOException;
-import js.nio.FloatBuffer;
+import java.io.IOException;
+import java.nio.FloatBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -1,5 +1,16 @@
 package org.jcodec.containers.mp4;
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.Codec;
@@ -8,28 +19,11 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.containers.mp4.boxes.Box;
-import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
-import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
-import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
-import org.jcodec.containers.mp4.boxes.Edit;
+import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
-import org.jcodec.containers.mp4.boxes.SampleSizesBox;
-import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
-import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
-import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-
-import js.io.File;
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.nio.channels.WritableByteChannel;
-import js.util.ArrayList;
-import js.util.HashMap;
-import js.util.LinkedList;
-import js.util.List;
-import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -47,7 +41,25 @@ public class MP4Util {
         codecMapping.put(Codec.H264, "avc1");
         codecMapping.put(Codec.J2K, "mjp2");
     }
+    
+    public static class Movie {
+        private FileTypeBox ftyp;
+        private MovieBox moov;
+        
+        public Movie(FileTypeBox ftyp, MovieBox moov) {
+            this.ftyp = ftyp;
+            this.moov = moov;
+        }
 
+        public FileTypeBox getFtyp() {
+            return ftyp;
+        }
+
+        public MovieBox getMoov() {
+            return moov;
+        }
+    }
+    
     public static MovieBox createRefMovie(SeekableByteChannel input, String url) throws IOException {
         MovieBox movie = parseMovieChannel(input);
 
@@ -63,6 +75,29 @@ public class MP4Util {
         for (Atom atom : getRootAtoms(input)) {
             if ("moov".equals(atom.getHeader().getFourcc())) {
                 return (MovieBox) atom.parseBox(input);
+            }
+        }
+        return null;
+    }
+
+    public static Movie createRefFullMovie(SeekableByteChannel input, String url) throws IOException {
+        Movie movie = parseFullMovieChannel(input);
+
+        TrakBox[] tracks = movie.moov.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
+            trakBox.setDataRef(url);
+        }
+        return movie;
+    }
+
+    public static Movie parseFullMovieChannel(SeekableByteChannel input) throws IOException {
+        FileTypeBox ftyp = null;
+        for (Atom atom : getRootAtoms(input)) {
+            if ("ftyp".equals(atom.getHeader().getFourcc())) {
+                ftyp = (FileTypeBox) atom.parseBox(input);
+            } else if ("moov".equals(atom.getHeader().getFourcc())) {
+                return new Movie(ftyp, (MovieBox) atom.parseBox(input));
             }
         }
         return null;
@@ -153,7 +188,7 @@ public class MP4Util {
             NIOUtils.copy(input, out, header.getSize());
         }
     }
-
+    
     public static MovieBox parseMovie(File source) throws IOException {
         SeekableByteChannel input = null;
         try {
@@ -182,7 +217,7 @@ public class MP4Util {
             out = NIOUtils.writableChannel(f);
             writeMovie(out, movie);
         } finally {
-            out.close();
+            closeQuietly(out);
         }
     }
 
@@ -194,8 +229,55 @@ public class MP4Util {
         int sizeHint = estimateMoovBoxSize(movie) + additionalSize;
         Logger.debug("Using " + sizeHint + " bytes for MOOV box");
 
-        ByteBuffer buf = ByteBuffer.allocate(sizeHint);
+        ByteBuffer buf = ByteBuffer.allocate(sizeHint * 4);
         movie.write(buf);
+        buf.flip();
+        out.write(buf);
+    }
+
+    public static Movie parseFullMovie(File source) throws IOException {
+        SeekableByteChannel input = null;
+        try {
+            input = readableChannel(source);
+            return parseFullMovieChannel(input);
+        } finally {
+            if (input != null)
+                input.close();
+        }
+    }
+
+    public static Movie createRefFullMovieFromFile(File source) throws IOException {
+        SeekableByteChannel input = null;
+        try {
+            input = readableChannel(source);
+            return createRefFullMovie(input, "file://" + source.getCanonicalPath());
+        } finally {
+            if (input != null)
+                input.close();
+        }
+    }
+
+    public static void writeFullMovieToFile(File f, Movie movie) throws IOException {
+        SeekableByteChannel out = null;
+        try {
+            out = NIOUtils.writableChannel(f);
+            writeFullMovie(out, movie);
+        } finally {
+            closeQuietly(out);
+        }
+    }
+
+    public static void writeFullMovie(SeekableByteChannel out, Movie movie) throws IOException {
+        doWriteFullMovieToChannel(out, movie, 0);
+    }
+    
+    public static void doWriteFullMovieToChannel(SeekableByteChannel out, Movie movie, int additionalSize) throws IOException {
+        int sizeHint = estimateMoovBoxSize(movie.getMoov()) + additionalSize;
+        Logger.debug("Using " + sizeHint + " bytes for MOOV box");
+
+        ByteBuffer buf = ByteBuffer.allocate(sizeHint + 128);
+        movie.getFtyp().write(buf);
+        movie.getMoov().write(buf);
         buf.flip();
         out.write(buf);
     }
@@ -208,30 +290,7 @@ public class MP4Util {
      * @return
      */
     public static int estimateMoovBoxSize(MovieBox movie) {
-        int sizeHint = 4 << 10; // 4K plus
-        TrakBox[] tracks = movie.getTracks();
-        for (int i = 0; i < tracks.length; i++) {
-            TrakBox trak = tracks[i];
-            sizeHint += 4 << 10; // 4K per track
-            List<Edit> edits = trak.getEdits();
-            sizeHint += edits != null ? (edits.size() << 3) + (edits.size() << 2) : 0;
-            ChunkOffsetsBox stco = trak.getStco();
-            sizeHint += stco != null ? (stco.getChunkOffsets().length << 2) : 0;
-            ChunkOffsets64Box co64 = trak.getCo64();
-            sizeHint += co64 != null ? (co64.getChunkOffsets().length << 3) : 0;
-            SampleSizesBox stsz = trak.getStsz();
-            sizeHint += stsz != null ? (stsz.getDefaultSize() != 0 ? 0 : (stsz.getCount() << 2)) : 0;
-            TimeToSampleBox stts = trak.getStts();
-            sizeHint += stts != null ? (stts.getEntries().length << 3) : 0;
-            SyncSamplesBox stss = trak.getStss();
-            sizeHint += stss != null ? (stss.getSyncSamples().length << 2) : 0;
-            CompositionOffsetsBox ctts = trak.getCtts();
-            sizeHint += ctts != null ? (ctts.getEntries().length << 3) : 0;
-            SampleToChunkBox stsc = trak.getStsc();
-            sizeHint += stsc != null ? (stsc.getSampleToChunk().length << 3) + (stsc.getSampleToChunk().length << 2)
-                    : 0;
-        }
-        return sizeHint;
+        return movie.estimateSize() + (4 << 10);
     }
 
     public static String getFourcc(Codec codec) {

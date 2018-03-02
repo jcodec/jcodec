@@ -2,12 +2,12 @@ package org.jcodec.containers.mkv;
 import org.jcodec.Utils;
 import org.jcodec.common.io.IOUtils;
 
-import js.io.BufferedReader;
-import js.io.File;
-import js.io.FileReader;
-import js.io.IOException;
-import js.io.Reader;
-import js.util.Properties;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.Properties;
 
 public class MKVTestSuite {
     

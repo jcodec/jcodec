@@ -24,7 +24,7 @@ public interface VideoSource {
      * @return
      * @throws IOException
      */
-    Frame decode(int[][] buffer) throws IOException;
+    Frame decode(byte[][] buffer) throws IOException;
 
     /**
      * Determines if seek is possible

@@ -1,10 +1,11 @@
 package org.jcodec.codecs.vp8;
 import static org.jcodec.codecs.vp8.VP8EncoderTest.LinearAlgebraUtil.substractScalar;
 
+import org.jcodec.codecs.vpx.VP8DCT;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.lang.System;
+import java.lang.System;
 
 /**
  * @see http://multimedia.cx/eggs/category/vp8/

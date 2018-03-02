@@ -1,5 +1,5 @@
 package org.jcodec.codecs.h264.decode;
-import static js.lang.System.arraycopy;
+import static java.lang.System.arraycopy;
 import static org.jcodec.codecs.h264.H264Const.PartPred.L0;
 import static org.jcodec.codecs.h264.decode.MBlockDecoderUtils.debugPrint;
 import static org.jcodec.codecs.h264.io.model.MBType.B_Direct_16x16;
@@ -9,7 +9,6 @@ import static org.jcodec.codecs.h264.io.model.MBType.P_8x16;
 import static org.jcodec.codecs.h264.io.model.MBType.P_8x8;
 import static org.jcodec.codecs.h264.io.model.MBType.P_8x8ref0;
 import static org.jcodec.codecs.h264.io.model.SliceType.P;
-import static org.jcodec.platform.Platform.arraycopyByte;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.decode.aso.MapManager;
@@ -21,8 +20,7 @@ import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.logging.Logger;
-import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.platform.Platform;
+import org.jcodec.common.model.Picture;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -94,12 +92,12 @@ public class SliceDecoder {
     }
 
     private void decodeMacroblocks(Frame[][] refList) {
-        Picture8Bit mb = Picture8Bit.create(16, 16, activeSps.chroma_format_idc);
-        int mbWidth = activeSps.pic_width_in_mbs_minus1 + 1;
+        Picture mb = Picture.create(16, 16, activeSps.chromaFormatIdc);
+        int mbWidth = activeSps.picWidthInMbsMinus1 + 1;
 
-        MBlock mBlock = new MBlock(activeSps.chroma_format_idc);
+        MBlock mBlock = new MBlock(activeSps.chromaFormatIdc);
         while (parser.readMacroblock(mBlock)) {
-            decode(mBlock, parser.getSliceHeader().slice_type, mb, refList);
+            decode(mBlock, parser.getSliceHeader().sliceType, mb, refList);
             int mbAddr = mapper.getAddress(mBlock.mbIdx);
             int mbX = mbAddr % mbWidth;
             int mbY = mbAddr / mbWidth;
@@ -123,7 +121,7 @@ public class SliceDecoder {
         }
     }
 
-    public void decode(MBlock mBlock, SliceType sliceType, Picture8Bit mb, Frame[][] references) {
+    public void decode(MBlock mBlock, SliceType sliceType, Picture mb, Frame[][] references) {
         if (mBlock.skipped) {
             skipDecoder.decodeSkip(mBlock, references, mb, sliceType);
         } else if (sliceType == SliceType.I) {
@@ -135,11 +133,11 @@ public class SliceDecoder {
         }
     }
 
-    private void decodeMBlockI(MBlock mBlock, Picture8Bit mb) {
+    private void decodeMBlockI(MBlock mBlock, Picture mb) {
         decodeMBlockIInt(mBlock, mb);
     }
 
-    private void decodeMBlockIInt(MBlock mBlock, Picture8Bit mb) {
+    private void decodeMBlockIInt(MBlock mBlock, Picture mb) {
         if (mBlock.curMbType == MBType.I_NxN) {
             decoderIntraNxN.decode(mBlock, mb);
         } else if (mBlock.curMbType == MBType.I_16x16) {
@@ -150,7 +148,7 @@ public class SliceDecoder {
         }
     }
 
-    private void decodeMBlockP(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+    private void decodeMBlockP(MBlock mBlock, Picture mb, Frame[][] references) {
         if (P_16x16 == mBlock.curMbType) {
             decoderInter.decode16x16(mBlock, mb, references, L0);
         } else if (P_16x8 == mBlock.curMbType) {
@@ -166,7 +164,7 @@ public class SliceDecoder {
         }
     }
 
-    private void decodeMBlockB(MBlock mBlock, Picture8Bit mb, Frame[][] references) {
+    private void decodeMBlockB(MBlock mBlock, Picture mb, Frame[][] references) {
         if (mBlock.curMbType.isIntra()) {
             decodeMBlockIInt(mBlock, mb);
         } else {
@@ -186,7 +184,7 @@ public class SliceDecoder {
         }
     }
 
-    public void putMacroblock(Picture8Bit tgt, Picture8Bit decoded, int mbX, int mbY) {
+    public void putMacroblock(Picture tgt, Picture decoded, int mbX, int mbY) {
 
         byte[] luma = tgt.getPlaneData(0);
         int stride = tgt.getPlaneWidth(0);

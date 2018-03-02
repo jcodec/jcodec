@@ -4,7 +4,7 @@ import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.util.Arrays;
+import java.util.Arrays;
 
 public class MPEGPredOctTest {
 

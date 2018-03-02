@@ -3,8 +3,8 @@ import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.api.NotSupportedException;
 
-import js.nio.ByteBuffer;
-import js.nio.FloatBuffer;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

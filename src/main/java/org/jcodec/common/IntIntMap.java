@@ -1,9 +1,9 @@
 package org.jcodec.common;
 import static java.lang.Integer.MIN_VALUE;
-import static js.lang.System.arraycopy;
+import static java.lang.System.arraycopy;
 
-import js.lang.IllegalArgumentException;
-import js.util.Arrays;
+import java.lang.IllegalArgumentException;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

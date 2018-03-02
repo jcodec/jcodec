@@ -1,5 +1,13 @@
 package org.jcodec.containers.mps;
-import static js.util.Arrays.asList;
+
+import static java.util.Arrays.asList;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
@@ -7,20 +15,12 @@ import org.jcodec.common.IntIntMap;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.MainUtils.Flag;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
-
-import js.io.File;
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.nio.channels.ReadableByteChannel;
-import js.util.HashMap;
-import js.util.HashSet;
-import js.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,8 +29,9 @@ import js.util.Set;
  * @author The JCodec project
  */
 public class MTSDump extends MPSDump {
-    private static final String DUMP_FROM = "dump-from";
-    private static final String STOP_AT = "stop-at";
+    private static final Flag DUMP_FROM = new Flag("dump-from", "Stop reading at timestamp");
+    private static final Flag STOP_AT = new Flag("stop-at", "Start dumping from timestamp");
+    private static final Flag[] ALL_FLAGS = new Flag[] { DUMP_FROM, STOP_AT };
 
     private int guid;
     private ByteBuffer buf;
@@ -48,19 +49,16 @@ public class MTSDump extends MPSDump {
         this.tsBuf = ByteBuffer.allocate(188);
 
         this.guid = targetGuid;
-        this.buf.setPosition(buf.limit());
-        this.tsBuf.setPosition(tsBuf.limit());
+        this.buf.position(buf.limit());
+        this.tsBuf.position(tsBuf.limit());
     }
 
     public static void main2(String[] args) throws IOException {
         ReadableByteChannel ch = null;
         try {
-            Cmd cmd = MainUtils.parseArguments(args);
+            Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
             if (cmd.args.length < 1) {
-                HashMap<String, String> map = new HashMap<String, String>();
-                map.put(STOP_AT, "Stop reading at timestamp");
-                map.put(DUMP_FROM, "Start dumping from timestamp");
-                MainUtils.printHelp(map, asList("file name", "guid"));
+                MainUtils.printHelp(ALL_FLAGS, asList("file name", "guid"));
                 return;
             } else if (cmd.args.length == 1) {
                 System.out.println("MTS programs:");
@@ -83,7 +81,7 @@ public class MTSDump extends MPSDump {
         ByteBuffer buf = ByteBuffer.allocate(188 * 10240);
         readableFileChannel.read(buf);
         buf.flip();
-        buf.setLimit(buf.limit() - (buf.limit() % 188));
+        buf.limit(buf.limit() - (buf.limit() % 188));
         int pmtPid = -1;
         while (buf.hasRemaining()) {
             ByteBuffer tsBuf = NIOUtils.read(buf, 188);
@@ -145,9 +143,9 @@ public class MTSDump extends MPSDump {
     }
 
     protected void logPes(PESPacket pkt, int hdrSize, ByteBuffer payload) {
-        System.out.println(pkt.streamId + "(" + (pkt.streamId >= 0xe0 ? "video" : "audio") + ")" + " [ts#"
-                + mapPos(pkt.pos) + ", " + (payload.remaining() + hdrSize) + "b], pts: " + pkt.pts + ", dts: "
-                + pkt.dts);
+        System.out.println(
+                pkt.streamId + "(" + (pkt.streamId >= 0xe0 ? "video" : "audio") + ")" + " [ts#" + mapPos(pkt.pos) + ", "
+                        + (payload.remaining() + hdrSize) + "b], pts: " + pkt.pts + ", dts: " + pkt.dts);
     }
 
     private int mapPos(long pos) {
@@ -176,7 +174,7 @@ public class MTSDump extends MPSDump {
         int remaining = dst.remaining();
 
         try {
-            dst.putBuf(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
+            dst.put(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
             while (dst.hasRemaining()) {
                 if (!buf.hasRemaining()) {
                     ByteBuffer dub = buf.duplicate();
@@ -185,7 +183,7 @@ public class MTSDump extends MPSDump {
                     if (read == -1)
                         return dst.remaining() != remaining ? remaining - dst.remaining() : -1;
                     dub.flip();
-                    dub.setLimit(dub.limit() - (dub.limit() % 188));
+                    dub.limit(dub.limit() - (dub.limit() % 188));
                     buf = dub;
                 }
 
@@ -207,7 +205,7 @@ public class MTSDump extends MPSDump {
                 payloads.add(tsBuf.remaining());
                 nums.add(tsNo - 1);
 
-                dst.putBuf(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
+                dst.put(NIOUtils.read(tsBuf, Math.min(dst.remaining(), tsBuf.remaining())));
             }
         } finally {
             this.prevPayloads = this.payloads;

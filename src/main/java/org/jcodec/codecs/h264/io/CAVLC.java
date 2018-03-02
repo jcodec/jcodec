@@ -8,6 +8,7 @@ import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
+import org.jcodec.common.SaveRestore;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.io.VLC;
@@ -23,25 +24,51 @@ import org.jcodec.common.tools.MathUtil;
  * @author Jay Codec
  * 
  */
-public class CAVLC {
+public class CAVLC implements SaveRestore {
 
     private ColorSpace color;
     private VLC chromaDCVLC;
 
     private int[] tokensLeft;
     private int[] tokensTop;
+    
+    private int[] tokensLeftSaved;
+    private int[] tokensTopSaved;
+    
     private int mbWidth;
     private int mbMask;
 
     public CAVLC(SeqParameterSet sps, PictureParameterSet pps, int mbW, int mbH) {
-        this.color = sps.chroma_format_idc;
+        this.color = sps.chromaFormatIdc;
         this.chromaDCVLC = codeTableChromaDC();
-        this.mbWidth = sps.pic_width_in_mbs_minus1 + 1;
+        this.mbWidth = sps.picWidthInMbsMinus1 + 1;
 
         this.mbMask = (1 << mbH) - 1;
 
-        tokensLeft = new int[4];
-        tokensTop = new int[mbWidth << mbW];
+        tokensLeft      = new int[4];
+        tokensTop       = new int[mbWidth << mbW];
+        tokensLeftSaved = new int[4];
+        tokensTopSaved  = new int[mbWidth << mbW];
+    }
+    
+    @Override
+    public void save() {
+        System.arraycopy(tokensLeft, 0, tokensLeftSaved, 0, tokensLeft.length);
+        System.arraycopy(tokensTop, 0, tokensTopSaved, 0, tokensTop.length);
+    }
+    
+    @Override
+    public void restore() {
+        {
+            int[] tmp = tokensLeft;
+            tokensLeft = tokensLeftSaved;
+            tokensLeftSaved = tmp;
+        }
+        {
+            int[] tmp = tokensTop;
+            tokensTop = tokensTopSaved;
+            tokensTopSaved = tmp;
+        }
     }
 
     public int writeACBlock(BitWriter out, int blkIndX, int blkIndY, MBType leftMBType, MBType topMBType, int[] coeff,
@@ -201,12 +228,6 @@ public class CAVLC {
         int coeffToken = coeffTokenTab.readVLC(_in);
         int totalCoeff = totalCoeff(coeffToken);
         int trailingOnes = trailingOnes(coeffToken);
-        // System.out.println("Coeff token. Total: " + totalCoeff +
-        // ", trailOne: " + trailingOnes);
-
-        // blockType.getMaxCoeffs();
-        // if (blockType == BlockType.BLOCK_CHROMA_DC)
-        // maxCoeff = 16 / (color.compWidth[1] * color.compHeight[1]);
 
         if (totalCoeff > 0) {
             int suffixLength = totalCoeff > 10 && trailingOnes < 3 ? 1 : 0;

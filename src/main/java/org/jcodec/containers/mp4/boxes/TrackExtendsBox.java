@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -47,6 +47,11 @@ public class TrackExtendsBox extends FullBox {
         out.putInt(defaultSampleBytes);
         out.putInt(defaultSampleFlags);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 32;
+    }
 
     public int getTrackId() {
         return trackId;
@@ -88,12 +93,7 @@ public class TrackExtendsBox extends FullBox {
         this.defaultSampleFlags = defaultSampleFlags;
     }
 
-    public static TrackExtendsBox createTrackExtendsBox(int trackId, int sampleDescIndex, int sampleFlags) {
-        TrackExtendsBox trex = new TrackExtendsBox(new Header(fourcc()));
-        trex.setTrackId(sampleDescIndex);
-        trex.setDefaultSampleDescriptionIndex(sampleDescIndex);
-        trex.setDefaultSampleFlags(sampleFlags);
-        return trex;
+    public static TrackExtendsBox createTrackExtendsBox() {
+        return new TrackExtendsBox(new Header(fourcc()));
     }
-
 }

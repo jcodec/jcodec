@@ -34,7 +34,7 @@ public class TestVideoSource implements VideoSource {
         img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_BYTE_GRAY);
     }
 
-    public Frame decode(int[][] buf) throws IOException {
+    public Frame decode(byte[][] buf) throws IOException {
         if (pts > DURATION_TV)
             return null;
 
@@ -53,12 +53,12 @@ public class TestVideoSource implements VideoSource {
 
         byte[] data = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
         for (int i = 0; i < data.length; i++) {
-            buf[0][i] = data[i] & 0xff;
+            buf[0][i] = (byte)((data[i] & 0xff) - 128);
             data[i] = 0;
         }
 
-        return new Frame(new Picture(WIDTH, HEIGHT, buf, YUV420), new RationalLarge(pts, 24000), new RationalLarge(
-                1001, 24000), new Rational(1, 1), 0, null, null);
+        return new Frame(Picture.createPicture(WIDTH, HEIGHT, buf, YUV420), new RationalLarge(pts, 24000),
+                new RationalLarge(1001, 24000), new Rational(1, 1), 0, null, null);
     }
 
     public void seek(RationalLarge second) {

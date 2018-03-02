@@ -1,11 +1,11 @@
 package org.jcodec.codecs.raw;
-import static js.nio.ByteOrder.LITTLE_ENDIAN;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
-import js.nio.ByteBuffer;
-import js.nio.IntBuffer;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -31,7 +31,7 @@ public class V210Decoder {
         this.height = height;
     }
 
-    public Picture8Bit decode(byte[] data) {
+    public Picture decode(byte[] data) {
         ByteBuffer littleEndian = (ByteBuffer) ByteBuffer.wrap(data).order(LITTLE_ENDIAN);
         IntBuffer dat = littleEndian.asIntBuffer();
         ByteBuffer y = ByteBuffer.wrap(new byte[width * height]);
@@ -60,7 +60,7 @@ public class V210Decoder {
             cr.put(to8Bit((i >> 10) & 0x3ff));
         }
 
-        return Picture8Bit.createPicture8Bit(width, height, new byte[][] { y.array(), cb.array(), cr.array() }, YUV422);
+        return Picture.createPicture(width, height, new byte[][] { y.array(), cb.array(), cr.array() }, YUV422);
     }
 
     private byte to8Bit(int i) {

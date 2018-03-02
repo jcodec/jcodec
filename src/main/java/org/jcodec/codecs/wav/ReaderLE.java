@@ -1,6 +1,6 @@
 package org.jcodec.codecs.wav;
-import js.io.IOException;
-import js.io.InputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

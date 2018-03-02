@@ -1,118 +1,113 @@
 package org.jcodec.api;
-import org.jcodec.codecs.h264.H264Encoder;
-import org.jcodec.codecs.h264.H264Utils;
-import org.jcodec.codecs.h264.io.model.NALUnit;
-import org.jcodec.codecs.h264.io.model.NALUnitType;
+
+import static org.jcodec.common.Codec.H264;
+import static org.jcodec.common.Format.MOV;
+
+import java.io.File;
+import java.io.IOException;
+
+import org.jcodec.api.transcode.PixelStore;
+import org.jcodec.api.transcode.PixelStore.LoanerPicture;
+import org.jcodec.api.transcode.PixelStoreImpl;
+import org.jcodec.api.transcode.Sink;
+import org.jcodec.api.transcode.SinkImpl;
+import org.jcodec.api.transcode.VideoFrameWithPacket;
+import org.jcodec.common.Codec;
+import org.jcodec.common.Format;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.common.model.Picture;
-import org.jcodec.containers.mp4.Brand;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.TrackType;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
-import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.common.model.Rational;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
-
-import js.io.File;
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
+ * Encodes a sequence of images as a video.
+ * 
  * @author The JCodec project
  */
-@Deprecated
 public class SequenceEncoder {
-    private SeekableByteChannel ch;
-    private Picture toEncode;
-    private Transform transform;
-    private H264Encoder encoder;
-    private ArrayList<ByteBuffer> spsList;
-    private ArrayList<ByteBuffer> ppsList;
-    private FramesMP4MuxerTrack outTrack;
-    private ByteBuffer _out;
-    private int frameNo;
-    private MP4Muxer muxer;
-    private ByteBuffer sps;
-    private ByteBuffer pps;
 
-    public static SequenceEncoder createSequenceEncoder(File out) throws IOException {
-        return new SequenceEncoder(NIOUtils.writableChannel(out));
-    }
-    
-    public SequenceEncoder(SeekableByteChannel ch) throws IOException {
-        this.ch = ch;
+	private Transform transform;
+	private int frameNo;
+	private int timestamp;
+	private Rational fps;
+	private Sink sink;
+	private PixelStore pixelStore;
 
-        // Muxer that will store the encoded frames
-        muxer = MP4Muxer.createMP4Muxer(ch, Brand.MP4);
+	public static SequenceEncoder createSequenceEncoder(File out, int fps) throws IOException {
+		return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(fps, 1), MOV, H264, null);
+	}
 
-        // Add video track to muxer
-        outTrack = muxer.addTrack(TrackType.VIDEO, 25);
+	public static SequenceEncoder create25Fps(File out) throws IOException {
+		return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(25, 1), MOV, H264, null);
+	}
 
-        // Allocate a buffer big enough to hold output frames
-        _out = ByteBuffer.allocate(1920 * 1080 * 6);
+	public static SequenceEncoder create30Fps(File out) throws IOException {
+		return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(30, 1), MOV, H264, null);
+	}
 
-        // Create an instance of encoder
-        encoder = H264Encoder.createH264Encoder();
+	public static SequenceEncoder create2997Fps(File out) throws IOException {
+		return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(30000, 1001), MOV, H264, null);
+	}
 
-        // Transform to convert between RGB and YUV
-        transform = ColorUtil.getTransform(ColorSpace.RGB, encoder.getSupportedColorSpaces()[0]);
+	public static SequenceEncoder create24Fps(File out) throws IOException {
+		return new SequenceEncoder(NIOUtils.writableChannel(out), Rational.R(24, 1), MOV, H264, null);
+	}
 
-        // Encoder extra data ( SPS, PPS ) to be stored in a special place of
-        // MP4
-        spsList = new ArrayList<ByteBuffer>();
-        ppsList = new ArrayList<ByteBuffer>();
-    }
+	public static SequenceEncoder createWithFps(SeekableByteChannel out, Rational fps) throws IOException {
+		return new SequenceEncoder(out, fps, MOV, H264, null);
+	}
 
-    public void encodeNativeFrame(Picture pic) throws IOException {
-        if (toEncode == null) {
-            toEncode = Picture.create(pic.getWidth(), pic.getHeight(), encoder.getSupportedColorSpaces()[0]);
-        }
+	public SequenceEncoder(SeekableByteChannel out, Rational fps, Format outputFormat, Codec outputVideoCodec,
+			Codec outputAudioCodec) throws IOException {
+		this.fps = fps;
 
-        // Perform conversion
-        transform.transform(pic, toEncode);
+		sink = SinkImpl.createWithStream(out, outputFormat, outputVideoCodec, outputAudioCodec);
+		sink.init();
 
-        // Encode image into H.264 frame, the result is stored in '_out' buffer
-        _out.clear();
-        ByteBuffer result = encoder.encodeFrame(toEncode, _out);
+		if (sink.getInputColor() != null)
+			transform = ColorUtil.getTransform(ColorSpace.RGB, sink.getInputColor());
 
-        // Based on the frame above form correct MP4 packet
-        spsList.clear();
-        ppsList.clear();
-        H264Utils.wipePSinplace(result, spsList, ppsList);
-        NALUnit nu = NALUnit.read(NIOUtils.from(result.duplicate(), 4));
-        H264Utils.encodeMOVPacket(result);
+		pixelStore = new PixelStoreImpl();
+	}
 
-        // We presume there will be only one SPS/PPS pair for now
-        if (sps == null && spsList.size() != 0)
-            sps = spsList.get(0);
-        if (pps == null && ppsList.size() != 0)
-            pps = ppsList.get(0);
+	/**
+	 * Encodes a frame into a movie.
+	 * 
+	 * @param pic
+	 * @throws IOException
+	 */
+	public void encodeNativeFrame(Picture pic) throws IOException {
+		if (pic.getColor() != ColorSpace.RGB)
+			throw new IllegalArgumentException("The input images is expected in RGB color.");
 
-        // Add packet to video track
-        outTrack.addFrame(MP4Packet.createMP4Packet(result, frameNo, 25, 1, frameNo, nu.type == NALUnitType.IDR_SLICE, null, 0, frameNo, 0));
+		ColorSpace sinkColor = sink.getInputColor();
+		LoanerPicture toEncode;
+		if (sinkColor != null) {
+			toEncode = pixelStore.getPicture(pic.getWidth(), pic.getHeight(), sinkColor);
+			transform.transform(pic, toEncode.getPicture());
+		} else {
+			toEncode = new LoanerPicture(pic, 0);
+		}
 
-        frameNo++;
-    }
+		Packet pkt = Packet.createPacket(null, timestamp, fps.getNum(), fps.getDen(), frameNo, FrameType.KEY, null);
+		sink.outputVideoFrame(new VideoFrameWithPacket(pkt, toEncode));
 
-    public H264Encoder getEncoder() {
-        return encoder;
-    }
+		if (sinkColor != null)
+			pixelStore.putBack(toEncode);
 
-    public void finish() throws IOException {
-        if (sps == null || pps == null)
-            throw new RuntimeException(
-                    "Somehow the encoder didn't generate SPS/PPS pair, did you encode at least one frame?");
-        // Push saved SPS/PPS to a special storage in MP4
-        outTrack.addSampleEntry(H264Utils.createMOVSampleEntryFromBuffer(sps, pps, 4));
+		timestamp += fps.getDen();
+		frameNo++;
+	}
 
-        // Write MP4 header and finalize recording
-        muxer.writeHeader();
-        NIOUtils.closeQuietly(ch);
-    }
+	public void finish() throws IOException {
+		sink.finish();
+	}
 }

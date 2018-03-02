@@ -1,7 +1,7 @@
 package org.jcodec.filters.color;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -12,7 +12,7 @@ import js.nio.ByteBuffer;
  */
 public class CVTColorFilter {
 
-    public void yuv422BitTObgr24(Picture8Bit yuv, ByteBuffer rgb32) {
+    public void yuv422BitTObgr24(Picture yuv, ByteBuffer rgb32) {
         ByteBuffer y = ByteBuffer.wrap(yuv.getPlaneData(0));
         ByteBuffer cb = ByteBuffer.wrap(yuv.getPlaneData(1));
         ByteBuffer cr = ByteBuffer.wrap(yuv.getPlaneData(2));

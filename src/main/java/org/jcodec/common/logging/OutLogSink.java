@@ -5,10 +5,10 @@ import static org.jcodec.common.tools.MainUtils.colorString;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.ANSIColor;
 
-import js.io.PrintStream;
-import js.lang.System;
-import js.util.HashMap;
-import js.util.Map;
+import java.io.PrintStream;
+import java.lang.System;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -19,6 +19,8 @@ import js.util.Map;
  * @author The JCodec project
  */
 public class OutLogSink implements LogSink {
+
+    private static String empty = "                                                                                                                                                                                                                                                ";
 
     public static class SimpleFormat implements MessageFormat {
         private String fmt;
@@ -36,14 +38,12 @@ public class OutLogSink implements LogSink {
 
         @Override
         public String formatMessage(Message msg) {
-            return fmt
-                    .replace("#level", String.valueOf(msg.getLevel()))
+            String str = fmt.replace("#level", String.valueOf(msg.getLevel()))
                     .replace("#color_code", String.valueOf(30 + colorMap.get(msg.getLevel()).ordinal()))
-                    .replace("#class", msg.getClassName())
-                    .replace("#method", msg.getMethodName())
-                    .replace("#file", msg.getFileName())
-                    .replace("#line", String.valueOf(msg.getLineNumber()))
+                    .replace("#class", msg.getClassName()).replace("#method", msg.getMethodName())
+                    .replace("#file", msg.getFileName()).replace("#line", String.valueOf(msg.getLineNumber()))
                     .replace("#message", msg.getMessage());
+            return str;
         }
     };
 
@@ -51,20 +51,25 @@ public class OutLogSink implements LogSink {
             colorString("[#level]", "#color_code") + MainUtils.bold("\t#class.#method (#file:#line):") + "\t#message");
 
     public static OutLogSink createOutLogSink() {
-        return new OutLogSink(System.out, DEFAULT_FORMAT);
+        return new OutLogSink(System.out, DEFAULT_FORMAT, LogLevel.INFO);
     }
 
     private PrintStream out;
     private MessageFormat fmt;
+    private LogLevel minLevel;
 
-    public OutLogSink(PrintStream out, MessageFormat fmt) {
+    public OutLogSink(PrintStream out, MessageFormat fmt, LogLevel minLevel) {
         this.out = out;
         this.fmt = fmt;
+        this.minLevel = minLevel;
     }
 
     @Override
     public void postMessage(Message msg) {
-        out.println(fmt.formatMessage(msg));
+        if (msg.getLevel().ordinal() < minLevel.ordinal())
+            return;
+        String str = fmt.formatMessage(msg);
+        out.println(str);
     }
 
     public static interface MessageFormat {

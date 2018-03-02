@@ -7,11 +7,11 @@ import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.platform.Platform;
 
-import js.util.Arrays;
-import js.util.Comparator;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Contains reference picture list management logic
@@ -29,18 +29,18 @@ public class RefListManager {
         this.sh = sh;
         this.sRefs = sRefs;
         this.lRefs = lRefs;
-        if (sh.num_ref_idx_active_override_flag)
-            numRef = new int[] { sh.num_ref_idx_active_minus1[0] + 1, sh.num_ref_idx_active_minus1[1] + 1 };
+        if (sh.numRefIdxActiveOverrideFlag)
+            numRef = new int[] { sh.numRefIdxActiveMinus1[0] + 1, sh.numRefIdxActiveMinus1[1] + 1 };
         else
-            numRef = new int[] { sh.pps.num_ref_idx_active_minus1[0] + 1, sh.pps.num_ref_idx_active_minus1[1] + 1 };
+            numRef = new int[] { sh.pps.numRefIdxActiveMinus1[0] + 1, sh.pps.numRefIdxActiveMinus1[1] + 1 };
         this.frameOut = frameOut;
     }
 
     public Frame[][] getRefList() {
         Frame[][] refList = null;
-        if (sh.slice_type == SliceType.P) {
+        if (sh.sliceType == SliceType.P) {
             refList = new Frame[][] { buildRefListP(), null };
-        } else if (sh.slice_type == SliceType.B) {
+        } else if (sh.sliceType == SliceType.B) {
             refList = buildRefListB();
         }
 
@@ -57,8 +57,8 @@ public class RefListManager {
     }
 
     private Frame[] buildRefListP() {
-        int frame_num = sh.frame_num;
-        int maxFrames = 1 << (sh.sps.log2_max_frame_num_minus4 + 4);
+        int frame_num = sh.frameNum;
+        int maxFrames = 1 << (sh.sps.log2MaxFrameNumMinus4 + 4);
         // int nLongTerm = Math.min(lRefs.size(), numRef[0] - 1);
         Frame[] result = new Frame[numRef[0]];
 
@@ -137,12 +137,12 @@ public class RefListManager {
         return copyOf;
     }
 
-    private void reorder(Picture8Bit[] result, int list) {
+    private void reorder(Picture[] result, int list) {
         if (sh.refPicReordering[list] == null)
             return;
 
-        int predict = sh.frame_num;
-        int maxFrames = 1 << (sh.sps.log2_max_frame_num_minus4 + 4);
+        int predict = sh.frameNum;
+        int maxFrames = 1 << (sh.sps.log2MaxFrameNumMinus4 + 4);
 
         for (int ind = 0; ind < sh.refPicReordering[list][0].length; ind++) {
             switch (sh.refPicReordering[list][0][ind]) {

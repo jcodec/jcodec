@@ -1,7 +1,7 @@
 package org.jcodec.containers.mps.index;
 import org.jcodec.common.RunLength;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

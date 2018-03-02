@@ -4,7 +4,7 @@ import static org.jcodec.common.JCodecUtil2.asciiString;
 
 import org.jcodec.common.io.NIOUtils;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -35,6 +35,11 @@ public class FormatBox extends Box {
     }
 
     protected void doWrite(ByteBuffer out) {
-        out.putArr(asciiString(fmt));
+        out.put(asciiString(fmt));
+    }
+    
+    @Override
+    public int estimateSize() {
+        return asciiString(fmt).length + 8;
     }
 }

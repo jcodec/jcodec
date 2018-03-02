@@ -1,6 +1,6 @@
 package org.jcodec.containers.mkv.boxes;
-import js.nio.ByteBuffer;
-import js.util.Date;
+import java.nio.ByteBuffer;
+import java.util.Date;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License

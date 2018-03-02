@@ -2,8 +2,8 @@ package org.jcodec.containers.mp4.boxes;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.lang.System;
-import js.nio.ByteBuffer;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class TrunBoxTest {
 

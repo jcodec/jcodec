@@ -6,7 +6,7 @@
 	<name>JCodec</name>
 	<url>http://jcodec.org</url>
 	<packaging>jar</packaging>
-	<version>0.2.0-stjs</version>
+	<version>0.2.4-SNAPSHOT</version>
 	<description>Pure Java implementation of video/audio codecs and formats</description>
 	<licenses>
 		<license>
@@ -18,18 +18,25 @@
 	<scm>
 		<connection>scm:git:git://github.com/jcodec/jcodec.git</connection>
 		<developerConnection>scm:https://github.com/jcodec/jcodec.git</developerConnection>
-		<url>http://git.jcodec.org</url>
+		<url>https://github.com/jcodec/jcodec</url>
+        <tag>HEAD</tag>
 	</scm>
 	<developers>
 		<developer>
-			<name>Jay Codec</name>
-			<email>jcodecproject@gmail.com</email>
+			<name>Stanislav Vitvitskyy</name>
+			<email>stanislav.vitvitskiy@gmail.com</email>
 		</developer>
+        <developer>
+            <name>Alex Zhukov</name>
+            <email>zhukov.alex@gmail.com</email>
+        </developer>
+        <developer>
+            <name>Oleksandr Chugai</name>
+            <email>chugai@gmail.com</email>
+        </developer>
 	</developers>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<stjs.version>3.3.3-SNAPSHOT</stjs.version>
-		<stjs.plugin.version>3.3.3-SNAPSHOT</stjs.plugin.version>
 	</properties>
 
 	<build>
@@ -42,6 +49,13 @@
 					<exclude>**/*.java</exclude>
 				</excludes>
 			</resource>
+		    	<resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
 		</resources>
 		<testResources>
 			<testResource>
@@ -57,68 +71,10 @@
 					<artifactId>maven-site-plugin</artifactId>
 					<version>2.0</version>
 				</plugin>
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>org.st-js</groupId>
-										<artifactId>
-											stjs-maven-plugin
-										</artifactId>
-										<versionRange>
-											[${stjs.plugin.version},)
-										</versionRange>
-										<goals>
-											<goal>generate</goal>
-											<goal>generate-test</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<execute>
-											<runOnIncremental>true</runOnIncremental>
-										</execute>
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
 
 			</plugins>
 		</pluginManagement>
 		<plugins>
-			<plugin>
-				<groupId>org.st-js</groupId>
-				<artifactId>stjs-maven-plugin</artifactId>
-				<version>${stjs.plugin.version}</version>
-				<executions>
-					<execution>
-						<id>main</id>
-						<goals>
-							<goal>generate</goal>
-							<goal>generate-test</goal>
-							<goal>copy-js</goal>
-						</goals>
-						<configuration>
-							<pack>true</pack>
-							<generateSourceMap>true</generateSourceMap>
-						</configuration>
-					</execution>
-					<execution>
-						<id>test</id>
-						<goals>
-							<goal>generate-test</goal>
-						</goals>
-					</execution>
-				</executions>
-
-			</plugin>
-		
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -133,8 +89,8 @@
 				<version>3.3</version>
 				<configuration>
 					<encoding>UTF-8</encoding>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>1.6</source>
+					<target>1.6</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -157,25 +113,55 @@
 					<template>site.vm</template>
 				</configuration>
 			</plugin>
-			<!-- plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>findbugs-maven-plugin</artifactId> 
-				<version>2.5.2</version> <configuration> <effort>Max</effort> <threshold>Max</threshold> 
-				<failOnError>false</failOnError> <xmlOutput>false</xmlOutput> <findbugsXmlOutputDirectory>${project.build.directory}/findbugs</findbugsXmlOutputDirectory> 
-				</configuration> <executions> <execution> <id>analyze-compile</id> <phase>compile</phase> 
-				<goals> <goal>check</goal> </goals> </execution> </executions> </plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+            </plugin>
+            <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                				<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>pl.project13.maven</groupId>
+				<artifactId>git-commit-id-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>1.0-beta-6</version>
+            </extension>
+        </extensions>
 	</build>
 	<dependencies>
 		<dependency>
-			<groupId>com.vg</groupId>
-			<artifactId>jslang</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-	
-		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
+			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+        </dependency>
 	</dependencies>
 </project>

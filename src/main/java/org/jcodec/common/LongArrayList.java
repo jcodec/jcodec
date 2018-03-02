@@ -1,8 +1,8 @@
 package org.jcodec.common;
 
-import static js.lang.System.arraycopy;
+import static java.lang.System.arraycopy;
 
-import js.util.Arrays;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -16,7 +16,8 @@ public class LongArrayList {
     private static final int DEFAULT_GROW_AMOUNT = 128;
 
     private long[] storage;
-    private int _size;
+    private int limit;
+    private int start;
     private int growAmount;
 
     public static LongArrayList createLongArrayList() {
@@ -29,68 +30,77 @@ public class LongArrayList {
     }
 
     public long[] toArray() {
-        long[] result = new long[_size];
-        arraycopy(storage, 0, result, 0, _size);
+        long[] result = new long[limit - start];
+        arraycopy(storage, start, result, 0, limit - start);
         return result;
     }
 
     public void add(long val) {
-        if (_size >= storage.length) {
-            long[] ns = new long[storage.length + growAmount];
-            arraycopy(storage, 0, ns, 0, storage.length);
+        if (limit > storage.length - 1) {
+            long[] ns = new long[storage.length + growAmount - start];
+            arraycopy(storage, start, ns, 0, storage.length - start);
             storage = ns;
+            limit -= start;
+            start = 0;
         }
-        storage[_size++] = val;
+        storage[limit++] = val;
     }
     
     public void push(long id) {
         this.add(id);
     }
     
-    public void pop() {
-        if (_size == 0)
-            return;
-        _size--;
+    public long pop() {
+        if (limit <= start)
+            throw new IllegalStateException();
+        return storage[limit--];
     }
 
     public void set(int index, int value) {
-        storage[index] = value;
+        storage[index + start] = value;
     }
 
     public long get(int index) {
-        return storage[index];
+        return storage[index + start];
+    }
+    
+    public long shift() {
+        if(start >= limit)
+            throw new IllegalStateException();
+        return storage[start++];
     }
 
-    public void fill(int start, int end, int val) {
-        if (end > storage.length) {
-            long[] ns = new long[end + growAmount];
-            arraycopy(storage, 0, ns, 0, storage.length);
+    public void fill(int from, int to, int val) {
+        if (to > storage.length) {
+            long[] ns = new long[to + growAmount - start];
+            arraycopy(storage, start, ns, 0, storage.length - start);
             storage = ns;
         }
-        Arrays.fill(storage, start, end, val);
-        _size = Math.max(_size, end);
+        Arrays.fill(storage, from, to, val);
+        limit = Math.max(limit, to);
     }
 
     public int size() {
-        return _size;
+        return limit - start;
     }
 
     public void addAll(long[] other) {
-        if (_size + other.length >= storage.length) {
-            long[] ns = new long[_size + growAmount + other.length];
-            arraycopy(storage, 0, ns, 0, _size);
+        if (limit + other.length >= storage.length) {
+            long[] ns = new long[limit + growAmount + other.length - start];
+            arraycopy(storage, start, ns, 0, limit);
             storage = ns;
         }
-        arraycopy(other, 0, storage, _size, other.length);
-        _size += other.length;
+        arraycopy(other, 0, storage, limit, other.length);
+        limit += other.length;
     }
 
     public void clear() {
-        _size = 0;
+        limit = 0;
+        start = 0;
     }
     
     public boolean contains(long needle) {
-        for (int i = 0; i < _size; i++)
+        for (int i = start; i < limit; i++)
             if (storage[i] == needle)
                 return true;
         return false;

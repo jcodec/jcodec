@@ -3,8 +3,8 @@ package org.jcodec.containers.mp4.boxes;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.Platform;
 
-import js.nio.ByteBuffer;
-import js.nio.charset.Charset;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -51,6 +51,18 @@ public class UrlBox extends FullBox {
             NIOUtils.write(out, ByteBuffer.wrap(Platform.getBytesForCharset(url, utf8)));
             out.put((byte) 0);
         }
+    }
+    
+    @Override
+    public int estimateSize() {
+        int sz = 13;
+
+        Charset utf8 = Charset.forName("utf-8");
+
+        if (url != null) {
+            sz += Platform.getBytesForCharset(url, utf8).length;
+        }
+        return sz;
     }
 
     public String getUrl() {

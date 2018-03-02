@@ -1,13 +1,13 @@
 package org.jcodec.codecs.util;
 import org.jcodec.common.io.IOUtils;
-import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.PictureHiBD;
 
 import org.jcodec.common.io.IOUtils;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
-import js.io.FileInputStream;
-import js.io.IOException;
-import js.lang.System;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.System;
 
 public class FrameUtil {
 
@@ -57,7 +57,7 @@ public class FrameUtil {
         FileInputStream is = null;
         try {
             is = new FileInputStream(args[0]);
-            Picture8Bit pgm = PGMIO.readPGM(is);
+            Picture pgm = PGMIO.readPGM(is);
             displayComponent(pgm.getPlaneData(0), pgm.getWidth(), pgm.getHeight(), false);
         } catch (IOException e) {
             e.printStackTrace();

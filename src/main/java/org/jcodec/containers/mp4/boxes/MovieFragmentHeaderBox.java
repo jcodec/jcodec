@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -35,6 +35,11 @@ public class MovieFragmentHeaderBox extends FullBox {
         super.doWrite(out);
         out.putInt(sequenceNumber);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 16;
+    }
 
     public int getSequenceNumber() {
         return sequenceNumber;
@@ -44,9 +49,7 @@ public class MovieFragmentHeaderBox extends FullBox {
         this.sequenceNumber = sequenceNumber;
     }
 
-    public static MovieFragmentHeaderBox createMovieFragmentHeaderBox(int sequenceNumber) {
-        MovieFragmentHeaderBox mfhd = new MovieFragmentHeaderBox(new Header(fourcc()));
-        mfhd.setSequenceNumber(sequenceNumber);
-        return mfhd;
+    public static MovieFragmentHeaderBox createMovieFragmentHeaderBox() {
+        return new MovieFragmentHeaderBox(new Header(fourcc()));
     }
 }

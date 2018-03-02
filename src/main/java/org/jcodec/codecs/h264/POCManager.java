@@ -31,7 +31,7 @@ public class POCManager {
     private int prevPOCLsb;
 
     public int calcPOC(SliceHeader firstSliceHeader, NALUnit firstNu) {
-        switch (firstSliceHeader.sps.pic_order_cnt_type) {
+        switch (firstSliceHeader.sps.picOrderCntType) {
         case 0:
             return calcPOC0(firstSliceHeader, firstNu);
         case 1:
@@ -45,19 +45,19 @@ public class POCManager {
     }
 
     private int calcPOC2(SliceHeader firstSliceHeader, NALUnit firstNu) {
-        return firstSliceHeader.frame_num << 1;
+        return firstSliceHeader.frameNum << 1;
     }
 
     private int calcPOC1(SliceHeader firstSliceHeader, NALUnit firstNu) {
-        return firstSliceHeader.frame_num << 1;
+        return firstSliceHeader.frameNum << 1;
     }
 
     private int calcPOC0(SliceHeader firstSliceHeader, NALUnit firstNu) {
         if (firstNu.type == IDR_SLICE) {
             prevPOCMsb = prevPOCLsb = 0;
         }
-        int maxPOCLsbDiv2 = 1 << (firstSliceHeader.sps.log2_max_pic_order_cnt_lsb_minus4 + 3), maxPOCLsb = maxPOCLsbDiv2 << 1;
-        int POCLsb = firstSliceHeader.pic_order_cnt_lsb;
+        int maxPOCLsbDiv2 = 1 << (firstSliceHeader.sps.log2MaxPicOrderCntLsbMinus4 + 3), maxPOCLsb = maxPOCLsbDiv2 << 1;
+        int POCLsb = firstSliceHeader.picOrderCntLsb;
         
         int POCMsb, POC;
         if ((POCLsb < prevPOCLsb) && ((prevPOCLsb - POCLsb) >= maxPOCLsbDiv2))

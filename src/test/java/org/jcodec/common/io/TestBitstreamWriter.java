@@ -2,8 +2,8 @@ package org.jcodec.common.io;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.lang.System;
-import js.nio.ByteBuffer;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class TestBitstreamWriter {
 
@@ -34,7 +34,7 @@ public class TestBitstreamWriter {
         bw.flush();
         // bw.writeNBit(Integer.MAX_VALUE, 32);
         byte[] dst = new byte[4];
-        buf.getBuf(dst);
+        buf.get(dst);
         for (int i = 0; i < dst.length; i++) {
             System.out.println(String.format("%02x", dst[i] & 0xff));
         }

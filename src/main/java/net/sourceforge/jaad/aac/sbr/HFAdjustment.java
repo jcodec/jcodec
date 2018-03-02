@@ -1,5 +1,5 @@
 package net.sourceforge.jaad.aac.sbr;
-import static js.lang.System.arraycopy;
+import static java.lang.System.arraycopy;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

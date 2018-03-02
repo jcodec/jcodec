@@ -1,10 +1,9 @@
 package org.jcodec.api;
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.api.specific.ContainerAdaptor;
-import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.Format;
 import org.jcodec.common.JCodecUtil;
-import org.jcodec.common.JCodecUtil.Format;
 import org.jcodec.common.SeekableDemuxerTrack;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
@@ -35,57 +34,26 @@ import js.nio.ByteBuffer;
  * @author The JCodec project
  * 
  */
-@Deprecated
 public class FrameGrab {
 
     private SeekableDemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
-    private ThreadLocal<int[][]> buffers;
-
-    private static int _detectKeyFrame(DemuxerTrack videoTrack, int start) throws IOException {
-        int[] seekFrames = videoTrack.getMeta().getSeekFrames();
-        if (seekFrames == null)
-            return start;
-        int prev = seekFrames[0];
-        for (int i = 1; i < seekFrames.length; i++) {
-            if (seekFrames[i] > start)
-                break;
-            prev = seekFrames[i];
-        }
-        return prev;
-    }
-
-    private static ContainerAdaptor _detectDecoder(SeekableDemuxerTrack sdt, Packet frame) throws JCodecException {
-        DemuxerTrackMeta meta = sdt.getMeta();
-        switch (meta.getCodec()) {
-        case H264:
-            return new AVCMP4Adaptor(meta);
-        default:
-            throw new UnsupportedFormatException("Codec is not supported");
-        }
-    }
-
-    static ContainerAdaptor detectDecoder(SeekableDemuxerTrack sdt) throws IOException, JCodecException {
-        int curFrame = (int) sdt.getCurFrame();
-        int keyFrame = _detectKeyFrame(sdt, curFrame);
-        sdt.gotoFrame(keyFrame);
-
-        Packet frame = sdt.nextFrame();
-        ContainerAdaptor decoder = _detectDecoder(sdt, frame);
-        return decoder;
-    }
+    private ThreadLocal<byte[][]> buffers;
 
     public static FrameGrab createFrameGrab(SeekableByteChannel _in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
         _in.read(header);
         header.flip();
         Format detectFormat = JCodecUtil.detectFormatBuffer(header);
-        SeekableDemuxerTrack videoTrack = null;
+		if (detectFormat == null) {
+			throw new UnsupportedFormatException("Could not detect the format of the input video.");
+		}
+        SeekableDemuxerTrack videoTrack_;
 
         switch (detectFormat) {
         case MOV:
-            MP4Demuxer d1 = new MP4Demuxer(_in);
-            videoTrack = d1.getVideoTrack();
+            MP4Demuxer d1 = MP4Demuxer.createMP4Demuxer(_in);
+            videoTrack_ = (SeekableDemuxerTrack)d1.getVideoTrack();
             break;
         case MPEG_PS:
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");
@@ -94,16 +62,15 @@ public class FrameGrab {
         default:
             throw new UnsupportedFormatException("Container format is not supported by JCodec");
         }
-        return new FrameGrab(videoTrack, detectDecoder(videoTrack));
+        FrameGrab fg = new FrameGrab(videoTrack_, detectDecoder(videoTrack_));
+        fg.decodeLeadingFrames();
+        return fg;
     }
 
     public FrameGrab(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
-        if (decoder == null || videoTrack == null) {
-            throw new NullPointerException();
-        }
-        this.buffers = new ThreadLocal<int[][]>();
         this.videoTrack = videoTrack;
         this.decoder = decoder;
+        this.buffers = new ThreadLocal<byte[][]>();
     }
 
     private SeekableDemuxerTrack sdt() throws JCodecException {
@@ -205,6 +172,8 @@ public class FrameGrab {
         sdt.gotoFrame(keyFrame);
 
         Packet frame = sdt.nextFrame();
+        if (decoder == null)
+            decoder = detectDecoder(sdt);
 
         while (frame.getFrameNo() < curFrame) {
             decoder.decodeFrame(frame, getBuffer());
@@ -213,8 +182,8 @@ public class FrameGrab {
         sdt.gotoFrame(curFrame);
     }
 
-    private int[][] getBuffer() {
-        int[][] buf = buffers.get();
+    private byte[][] getBuffer() {
+        byte[][] buf = buffers.get();
         if (buf == null) {
             buf = decoder.allocatePicture();
             buffers.set(buf);
@@ -235,6 +204,31 @@ public class FrameGrab {
         return prev;
     }
 
+    private static ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack) throws JCodecException {
+        DemuxerTrackMeta meta = videoTrack.getMeta();
+        switch (meta.getCodec()) {
+        case H264:
+            return new AVCMP4Adaptor(meta);
+        default:
+            throw new UnsupportedFormatException("Codec is not supported");
+        }
+    }
+
+    /**
+     * Get frame at current position in JCodec native image
+     * 
+     * @return A decoded picture with metadata.
+     * @throws IOException
+     */
+    public PictureWithMetadata getNativeFrameWithMetadata() throws IOException {
+        Packet frame = videoTrack.nextFrame();
+        if (frame == null)
+            return null;
+
+        Picture picture = decoder.decodeFrame(frame, getBuffer());
+        return new PictureWithMetadata(picture, frame.getPtsD(), frame.getDurationD(), videoTrack.getMeta().getOrientation());
+    }
+
     /**
      * Get frame at current position in JCodec native image
      * 
@@ -250,16 +244,7 @@ public class FrameGrab {
     }
 
     /**
-     * Gets info about the media
-     * 
-     * @return
-     */
-    public MediaInfo getMediaInfo() {
-        return decoder.getMediaInfo();
-    }
-
-    /**
-     * Get frame at a specified frame number as JCodec image
+     * Get frame at a specified second as JCodec image
      * 
      * @param file
      * @param second
@@ -267,9 +252,28 @@ public class FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture getFrameFromChannel(SeekableByteChannel file, int frameNumber)
+    public static Picture getFrameAtSec(File file, double second) throws IOException, JCodecException {
+        FileChannelWrapper ch = null;
+        try {
+            ch = NIOUtils.readableChannel(file);
+            return createFrameGrab(ch).seekToSecondPrecise(second).getNativeFrame();
+        } finally {
+            NIOUtils.closeQuietly(ch);
+        }
+    }
+
+    /**
+     * Get frame at a specified second as JCodec image
+     * 
+     * @param file
+     * @param second
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static Picture getFrameFromChannelAtSec(SeekableByteChannel file, double second)
             throws JCodecException, IOException {
-        return createFrameGrab(file).seekToFramePrecise(frameNumber).getNativeFrame();
+        return createFrameGrab(file).seekToSecondPrecise(second).getNativeFrame();
     }
 
     /**
@@ -292,7 +296,7 @@ public class FrameGrab {
     }
 
     /**
-     * Get frame at a specified second as JCodec image
+     * Get frame at a specified frame number as JCodec image
      * 
      * @param file
      * @param second
@@ -300,34 +304,92 @@ public class FrameGrab {
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture getFrameAtSecFromChannel(SeekableByteChannel file, double second)
+    public static Picture getFrameFromChannel(SeekableByteChannel file, int frameNumber)
             throws JCodecException, IOException {
-        return createFrameGrab(file).seekToSecondPrecise(second).getNativeFrame();
+        return createFrameGrab(file).seekToFramePrecise(frameNumber).getNativeFrame();
     }
 
     /**
-     * Get frame at a specified second as JCodec image
+     * Get a specified frame by number from an already open demuxer track
      * 
-     * @param file
-     * @param second
+     * @param vt
+     * @param decoder
+     * @param frameNumber
      * @return
      * @throws IOException
      * @throws JCodecException
      */
-    public static Picture getFrameAtSec(File file, double second) throws IOException, JCodecException {
-        FileChannelWrapper ch = null;
-        try {
-            ch = NIOUtils.readableChannel(file);
-            return createFrameGrab(ch).seekToSecondPrecise(second).getNativeFrame();
-        } finally {
-            NIOUtils.closeQuietly(ch);
-        }
+    public static Picture getNativeFrameAtFrame(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToFramePrecise(frameNumber).getNativeFrame();
     }
 
+    /**
+     * Get a specified frame by second from an already open demuxer track
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static Picture getNativeFrameAtSec(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToSecondPrecise(second).getNativeFrame();
+    }
+
+    /**
+     * Get a specified frame by number from an already open demuxer track (
+     * sloppy mode, i.e. nearest keyframe )
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static Picture getNativeFrameSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, int frameNumber)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToFrameSloppy(frameNumber).getNativeFrame();
+    }
+
+    /**
+     * Get a specified frame by second from an already open demuxer track (
+     * sloppy mode, i.e. nearest keyframe )
+     * 
+     * @param vt
+     * @param decoder
+     * @param frameNumber
+     * @return
+     * @throws IOException
+     * @throws JCodecException
+     */
+    public static Picture getNativeFrameAtSecSloppy(SeekableDemuxerTrack vt, ContainerAdaptor decoder, double second)
+            throws IOException, JCodecException {
+        return new FrameGrab(vt, decoder).seekToSecondSloppy(second).getNativeFrame();
+    }
+
+    /**
+     * Gets info about the media
+     * 
+     * @return
+     */
+    public MediaInfo getMediaInfo() {
+        return decoder.getMediaInfo();
+    }
+
+    /**
+     * @return the videoTrack
+     */
     public SeekableDemuxerTrack getVideoTrack() {
         return videoTrack;
     }
 
+    /**
+     * @return the decoder
+     */
     public ContainerAdaptor getDecoder() {
         return decoder;
     }

@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -35,5 +35,10 @@ public class DataRefBox extends NodeBox {
         out.putInt(0);
         out.putInt(boxes.size());
         super.doWrite(out);
+    }
+    
+    @Override
+    public int estimateSize() {
+        return 8 + super.estimateSize();
     }
 }

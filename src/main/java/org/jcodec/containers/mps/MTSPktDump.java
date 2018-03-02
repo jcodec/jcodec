@@ -8,11 +8,11 @@ import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 
-import js.io.File;
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.nio.channels.ReadableByteChannel;
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -24,7 +24,7 @@ public class MTSPktDump {
 
     public static void main1(String[] args) throws IOException {
 
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, new MainUtils.Flag[] {});
         if (cmd.args.length < 1) {
             MainUtils.printHelpNoFlags("file name");
             return;
@@ -44,7 +44,7 @@ public class MTSPktDump {
 
         while (_in.read(buf) != -1) {
             buf.flip();
-            buf.setLimit((buf.limit() / 188) * 188);
+            buf.limit((buf.limit() / 188) * 188);
             int pmtPid = -1;
             for (int pkt = 0; buf.hasRemaining(); ++pkt) {
                 ByteBuffer tsBuf = NIOUtils.read(buf, 188);

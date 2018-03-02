@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import android.graphics.Bitmap;
 
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -22,8 +22,8 @@ public class BitmapUtilTest {
     public static final Class<? extends int[]> CLASS_INT_ARRAY = new int[0].getClass();
 
     @Test
-    public void testToBitmap8Bit() {
-        Picture8Bit src = Picture8Bit.create(16, 16, ColorSpace.RGB);
+    public void testToBitmap() {
+        Picture src = Picture.create(16, 16, ColorSpace.RGB);
         for (int i = 0; i < 256; i++) {
             src.getPlaneData(0)[i
                     * 3] = src.getPlaneData(0)[i * 3 + 1] = src.getPlaneData(0)[i * 3 + 2] = (byte) (i - 128);
@@ -33,13 +33,13 @@ public class BitmapUtilTest {
         for (int i = 0; i < 256; i++)
             pix[i] = (255 << 24) | (i << 16) | (i << 8) | i;
         Bitmap dst = mock(Bitmap.class);
-        BitmapUtil.toBitmap8Bit(src, dst);
+        BitmapUtil.toBitmap(src, dst);
 
         verify(dst).copyPixelsFromBuffer(eq(IntBuffer.wrap(pix)));
     }
 
     @Test
-    public void testFromBitmap8Bit() {
+    public void testFromBitmap() {
         Bitmap src = mock(Bitmap.class);
         when(src.getWidth()).thenReturn(16);
         when(src.getHeight()).thenReturn(16);
@@ -53,8 +53,8 @@ public class BitmapUtilTest {
             }
         }).when(src).getPixels(any(CLASS_INT_ARRAY), eq(0), eq(16), eq(0), eq(0), eq(16), eq(16));
 
-        Picture8Bit dst = Picture8Bit.create(16, 16, ColorSpace.RGB);
-        BitmapUtil.fromBitmap8Bit(src, dst);
+        Picture dst = Picture.create(16, 16, ColorSpace.RGB);
+        BitmapUtil.fromBitmap(src, dst);
         for (int i = 0; i < 256; i++) {
             Assert.assertEquals(dst.getPlaneData(0)[i * 3], i - 128);
             Assert.assertEquals(dst.getPlaneData(0)[i * 3 + 1], i - 128);

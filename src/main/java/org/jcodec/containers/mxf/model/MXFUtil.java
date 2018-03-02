@@ -1,9 +1,9 @@
 package org.jcodec.containers.mxf.model;
 import java.util.Iterator;
 
-import js.util.ArrayList;
-import js.util.Collection;
-import js.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

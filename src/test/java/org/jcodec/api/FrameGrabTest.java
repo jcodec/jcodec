@@ -6,18 +6,18 @@ import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.io.File;
-import js.io.FileNotFoundException;
-import js.io.IOException;
-import js.lang.System;
-import js.util.ArrayList;
-import js.util.Collections;
-import js.util.Comparator;
-import js.util.List;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.System;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class FrameGrabTest {
     private static final String SEQ_1_MP4 = "src/test/resources/video/seq_h264_1.mp4";
@@ -43,30 +43,30 @@ public class FrameGrabTest {
         try {
             ch1 = NIOUtils.readableChannel(new File(compressed));
             ch2 = NIOUtils.readableChannel(new File(uncompressed));
-            FrameGrab8Bit frameGrab1 = FrameGrab8Bit.createFrameGrab8Bit(ch1);
+            FrameGrab frameGrab1 = FrameGrab.createFrameGrab(ch1);
 
-            PictureWithMetadata8Bit fr1;
-            List<PictureWithMetadata8Bit> decoded = new ArrayList<PictureWithMetadata8Bit>();
+            PictureWithMetadata fr1;
+            List<PictureWithMetadata> decoded = new ArrayList<PictureWithMetadata>();
             do {
                 fr1 = frameGrab1.getNativeFrameWithMetadata();
                 if (fr1 == null)
                     break;
-                fr1 = new PictureWithMetadata8Bit(fr1.getPicture().cloneCropped(), fr1.getTimestamp(),
+                fr1 = new PictureWithMetadata(fr1.getPicture().cloneCropped(), fr1.getTimestamp(),
                         fr1.getDuration());
                 decoded.add(fr1);
             } while (fr1 != null);
 
-            Collections.sort(decoded, new Comparator<PictureWithMetadata8Bit>() {
+            Collections.sort(decoded, new Comparator<PictureWithMetadata>() {
                 @Override
-                public int compare(PictureWithMetadata8Bit o1, PictureWithMetadata8Bit o2) {
+                public int compare(PictureWithMetadata o1, PictureWithMetadata o2) {
                     return o1.getTimestamp() < o2.getTimestamp() ? -1
                             : (o1.getTimestamp() == o2.getTimestamp() ? 0 : 1);
                 }
             });
 
-            for (PictureWithMetadata8Bit pic : decoded) {
+            for (PictureWithMetadata pic : decoded) {
                 Frame frame = (Frame) pic.getPicture();
-                Picture8Bit fr2 = Utils.readYuvFrame(ch2, frame.getWidth(), frame.getHeight());
+                Picture fr2 = Utils.readYuvFrame(ch2, frame.getWidth(), frame.getHeight());
 
                 if (saveImages && Utils.maxDiff(frame, fr2) > 0) {
                     System.out.println(String.format("POC: %d, pts: %f", frame.getPOC(), pic.getTimestamp()));

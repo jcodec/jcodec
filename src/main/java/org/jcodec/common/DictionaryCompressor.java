@@ -4,8 +4,8 @@ import org.jcodec.common.io.VLC;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.platform.Platform;
 
-import js.nio.ByteBuffer;
-import js.util.Arrays;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

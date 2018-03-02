@@ -1,16 +1,16 @@
 package org.jcodec.common;
-import org.jcodec.codecs.vp8.BooleanArithmeticDecoder;
+import org.jcodec.codecs.vpx.VPXBooleanDecoder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.io.ByteArrayOutputStream;
-import js.io.IOException;
-import js.lang.IllegalArgumentException;
-import js.lang.StringBuilder;
-import js.lang.System;
-import js.util.ArrayList;
-import js.util.Arrays;
-import js.util.List;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.StringBuilder;
+import java.lang.System;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * See for theoretical details: http://www.youtube.com/playlist?list=PLE125425EC837021F
@@ -244,7 +244,7 @@ public class ArithmeticCoderTest {
             long z = 0;
             long i = 0;
             while (i < precission && i < bs.length * 8) {
-                if (BooleanArithmeticDecoder.getBitInBytes(bs, (int)i) != 0x00) {
+                if (VPXBooleanDecoder.getBitInBytes(bs, (int)i) != 0x00) {
                     z += (1L << (precission - i - 1));
                 }
                 i++;
@@ -275,7 +275,7 @@ public class ArithmeticCoderTest {
                         z = 2*(z - half);
                     }
                     if (i < (bs.length * 8)){
-                        if (BooleanArithmeticDecoder.getBitInBytes(bs, (int)i) == 0x01)
+                        if (VPXBooleanDecoder.getBitInBytes(bs, (int)i) == 0x01)
                             z++;
                         i++;
                     }
@@ -286,7 +286,7 @@ public class ArithmeticCoderTest {
                     b = (b - quater) << 1;
                     z = (z - quater) << 1;
                     if (i < (bs.length * 8) ){
-                        if (BooleanArithmeticDecoder.getBitInBytes(bs, (int)i) == 0x01)
+                        if (VPXBooleanDecoder.getBitInBytes(bs, (int)i) == 0x01)
                             z++;
                         i++;
                     }

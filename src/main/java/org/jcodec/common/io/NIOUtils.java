@@ -6,25 +6,25 @@ import static org.jcodec.platform.Platform.stringFromBytes;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.platform.Platform;
-import org.stjs.javascript.Global;
 
-import js.io.Closeable;
-import js.io.File;
-import js.io.FileInputStream;
-import js.io.FileNotFoundException;
-import js.io.FileOutputStream;
-import js.io.IOException;
-import js.io.RandomAccessFile;
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
-import js.nio.MappedByteBuffer;
-import js.nio.channels.FileChannel;
-import js.nio.channels.FileChannel.MapMode;
-import js.nio.channels.ReadableByteChannel;
-import js.nio.channels.WritableByteChannel;
-import js.nio.charset.Charset;
-import js.util.Arrays;
-import js.util.List;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,8 +44,8 @@ public class NIOUtils {
                 ++step;
                 if (step == param.length) {
                     if (n == 0) {
-                        buffer.setPosition(rem);
-                        result.setLimit(buffer.position());
+                        buffer.position(rem);
+                        result.limit(buffer.position());
                         break;
                     }
                     n--;
@@ -55,7 +55,7 @@ public class NIOUtils {
                 if (step != 0) {
                     step = 0;
                     ++rem;
-                    buffer.setPosition(rem);
+                    buffer.position(rem);
                 } else
                     rem = buffer.position();
             }
@@ -66,8 +66,8 @@ public class NIOUtils {
     public static final ByteBuffer read(ByteBuffer buffer, int count) {
         ByteBuffer slice = buffer.duplicate();
         int limit = buffer.position() + count;
-        slice.setLimit(limit);
-        buffer.setPosition(limit);
+        slice.limit(limit);
+        buffer.position(limit);
         return slice;
     }
 
@@ -80,6 +80,17 @@ public class NIOUtils {
         NIOUtils.readFromChannel(ch, buf);
         buf.flip();
         return buf;
+    }
+    
+    public static ByteBuffer fetchFromChannel(SeekableByteChannel ch) throws IOException {
+        List<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
+        ByteBuffer buf;
+        do {
+            buf = fetchFromChannel(ch, 1 << 20);
+            buffers.add(buf);
+        } while(buf.hasRemaining());
+        
+        return combineBuffers(buffers);
     }
 
     /**
@@ -94,7 +105,7 @@ public class NIOUtils {
      */
     public static ByteBuffer fetchFrom(ByteBuffer buf, ReadableByteChannel ch, int size) throws IOException {
         ByteBuffer result = buf.duplicate();
-        result.setLimit(size);
+        result.limit(size);
         NIOUtils.readFromChannel(ch, result);
         result.flip();
         return result;
@@ -122,27 +133,23 @@ public class NIOUtils {
 
     public static byte[] toArray(ByteBuffer buffer) {
         byte[] result = new byte[buffer.remaining()];
-        buffer.duplicate().getBuf(result);
+        buffer.duplicate().get(result);
         return result;
     }
 
     public static byte[] toArrayL(ByteBuffer buffer, int count) {
         byte[] result = new byte[Math.min(buffer.remaining(), count)];
-        buffer.duplicate().getBuf(result);
+        buffer.duplicate().get(result);
         return result;
     }
 
     public static int readL(ReadableByteChannel channel, ByteBuffer buffer, int length) throws IOException {
         ByteBuffer fork = buffer.duplicate();
-        fork.setLimit(min(fork.position() + length, fork.limit()));
-        int read;
-        while ((read = channel.read(fork)) != -1 && fork.hasRemaining())
+        fork.limit(min(fork.position() + length, fork.limit()));
+        while (channel.read(fork) != -1 && fork.hasRemaining())
             ;
-        if (read == -1)
-            return -1;
-
-        buffer.setPosition(fork.position());
-        return read;
+        buffer.position(fork.position());
+        return buffer.position() == 0 ? -1 : buffer.position();
     }
 
     public static int readFromChannel(ReadableByteChannel channel, ByteBuffer buffer) throws IOException {
@@ -154,17 +161,17 @@ public class NIOUtils {
 
     public static void write(ByteBuffer to, ByteBuffer from) {
         if (from.hasArray()) {
-            to.put3(from.array(), from.arrayOffset() + from.position(), Math.min(to.remaining(), from.remaining()));
+            to.put(from.array(), from.arrayOffset() + from.position(), Math.min(to.remaining(), from.remaining()));
         } else {
-            to.putArr(toArrayL(from, to.remaining()));
+            to.put(toArrayL(from, to.remaining()));
         }
     }
 
     public static void writeL(ByteBuffer to, ByteBuffer from, int count) {
         if (from.hasArray()) {
-            to.put3(from.array(), from.arrayOffset() + from.position(), Math.min(from.remaining(), count));
+            to.put(from.array(), from.arrayOffset() + from.position(), Math.min(from.remaining(), count));
         } else {
-            to.putArr(toArrayL(from, count));
+            to.put(toArrayL(from, count));
         }
     }
 
@@ -186,13 +193,13 @@ public class NIOUtils {
 
     public static int skip(ByteBuffer buffer, int count) {
         int toSkip = Math.min(buffer.remaining(), count);
-        buffer.setPosition(buffer.position() + toSkip);
+        buffer.position(buffer.position() + toSkip);
         return toSkip;
     }
 
     public static ByteBuffer from(ByteBuffer buffer, int offset) {
         ByteBuffer dup = buffer.duplicate();
-        dup.setPosition(dup.position() + offset);
+        dup.position(dup.position() + offset);
         return dup;
     }
 
@@ -207,6 +214,10 @@ public class NIOUtils {
         }
         result.flip();
         return result;
+    }
+    
+    public static boolean combineBuffersInto(ByteBuffer dup, List<ByteBuffer> buffers) {
+        throw new RuntimeException("Stan");
     }
 
     public static ByteBuffer combine(ByteBuffer... arguments) {
@@ -224,7 +235,7 @@ public class NIOUtils {
 
     public static void writePascalStringL(ByteBuffer buffer, String string, int maxLen) {
         buffer.put((byte) string.length());
-        buffer.putArr(asciiString(string));
+        buffer.put(asciiString(string));
         skip(buffer, maxLen - string.length());
     }
 
@@ -234,7 +245,7 @@ public class NIOUtils {
     
     public static void writePascalString(ByteBuffer buffer, String name) {
         buffer.put((byte) name.length());
-        buffer.putArr(asciiString(name));
+        buffer.put(asciiString(name));
     }
 
     public static String readPascalString(ByteBuffer buffer) {
@@ -250,13 +261,13 @@ public class NIOUtils {
         while (buffer.hasRemaining() && buffer.get() != 0)
             ;
         if (buffer.hasRemaining())
-            fork.setLimit(buffer.position() - 1);
+            fork.limit(buffer.position() - 1);
         return Platform.stringFromCharset(toArray(fork), charset);
     }
 
     public static ByteBuffer readBuf(ByteBuffer buffer) {
         ByteBuffer result = buffer.duplicate();
-        buffer.setPosition(buffer.limit());
+        buffer.position(buffer.limit());
         return result;
     }
 
@@ -264,8 +275,8 @@ public class NIOUtils {
         ByteBuffer buf = ByteBuffer.allocate(0x10000);
         int read;
         do {
-            buf.setPosition(0);
-            buf.setLimit((int) Math.min(amount, buf.capacity()));
+            buf.position(0);
+            buf.limit((int) Math.min(amount, buf.capacity()));
             read = _in.read(buf);
             if (read != -1) {
                 buf.flip();
@@ -364,7 +375,7 @@ public class NIOUtils {
 
     public static ByteBuffer duplicate(ByteBuffer bb) {
         ByteBuffer out = ByteBuffer.allocate(bb.remaining());
-        out.putBuf(bb.duplicate());
+        out.put(bb.duplicate());
         out.flip();
         return out;
     }
@@ -418,19 +429,19 @@ public class NIOUtils {
     }
 
     public static byte getRel(ByteBuffer bb, int rel) {
-        return bb.getAt(bb.position() + rel);
+        return bb.get(bb.position() + rel);
     }
 
     public static ByteBuffer cloneBuffer(ByteBuffer pesBuffer) {
         ByteBuffer res = ByteBuffer.allocate(pesBuffer.remaining());
-        res.putBuf(pesBuffer.duplicate());
+        res.put(pesBuffer.duplicate());
         res.clear();
         return res;
     }
 
     public static ByteBuffer clone(ByteBuffer byteBuffer) {
         ByteBuffer result = ByteBuffer.allocate(byteBuffer.remaining());
-        result.putBuf(byteBuffer.duplicate());
+        result.put(byteBuffer.duplicate());
         result.flip();
         return result;
     }
@@ -441,5 +452,14 @@ public class NIOUtils {
     
     public static ByteBuffer asByteBufferInt(int ... arguments) {
         return asByteBuffer(ArrayUtil.toByteArray(arguments));
+    }
+    
+    public static void relocateLeftover(ByteBuffer bb) {
+        int pos;
+        for (pos = 0; bb.hasRemaining(); pos++) {
+            bb.put(pos, bb.get());
+        }
+        bb.position(pos);
+        bb.limit(bb.capacity());
     }
 }

@@ -48,6 +48,11 @@ public class ChunkOffsetsBox extends FullBox {
             out.putInt((int) offset);
         }
     }
+    
+    @Override
+    public int estimateSize() {
+        return 12 + 4 + chunkOffsets.length * 4;
+    }
 
     public long[] getChunkOffsets() {
         return chunkOffsets;

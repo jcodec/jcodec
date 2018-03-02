@@ -5,7 +5,7 @@ import org.jcodec.codecs.h264.io.model.SliceType;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 public class MDecoderTest {
 

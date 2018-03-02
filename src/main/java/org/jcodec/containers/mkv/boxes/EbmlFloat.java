@@ -1,5 +1,5 @@
 package org.jcodec.containers.mkv.boxes;
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 
 /**

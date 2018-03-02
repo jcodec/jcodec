@@ -3,10 +3,10 @@ package org.jcodec.player.filters.audio;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.Arrays;
 
-import javax.sound.sampled.AudioFormat;
-
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.AudioUtil;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.model.AudioBuffer;
@@ -112,7 +112,9 @@ public class AudioMixer implements AudioSource {
             AudioFrame frame = src.getFrame(byteBuf);
             if (frame == null)
                 return null;
-            int samples = AudioUtil.toFloat(audioInfo.getFormat(), frame.getData(), floatBuf);
+            FloatBuffer wrap = FloatBuffer.wrap(floatBuf);
+            int samples = wrap.remaining();
+            AudioUtil.toFloat(audioInfo.getFormat(), frame.getData(), wrap);
             return new FloatFrame((frame.getPts() * sampleRate) / frame.getTimescale(), samples / channels, pattern,
                     audioInfo.getLabels(), floatBuf);
         }
@@ -130,7 +132,7 @@ public class AudioMixer implements AudioSource {
         }
 
         public int[] getSoloChannels() {
-            IntArrayList result = new IntArrayList();
+            IntArrayList result = IntArrayList.createIntArrayList();
             for (int i = 0; i < 32; i++)
                 if (((pattern >> i) & 0x1) == 1)
                     result.add(i);
@@ -213,8 +215,16 @@ public class AudioMixer implements AudioSource {
         }
         out.flip();
 
-        return new AudioFrame(new AudioBuffer(out, dstFormat, NUM_FRAMES), startFrame, NUM_FRAMES, sampleRate,
-                (int) (startFrame / NUM_FRAMES));
+        AudioBuffer audioBuffer = new AudioBuffer(out, dstFormat, NUM_FRAMES);
+
+        ByteBuffer data = audioBuffer.getData();
+        AudioFormat format = audioBuffer.getFormat();
+        int nFrames = NUM_FRAMES;
+        long pts = curFrame * NUM_FRAMES;
+        long duration = NUM_FRAMES;
+        long timescale = sampleRate;
+        int frameNo = (int) (startFrame / NUM_FRAMES);
+        return new AudioFrame(data, format, nFrames, pts, duration, timescale, frameNo);
     }
 
     static float[][] contributions = new float[][] { new float[] { 1, .7f, .7f, .7f, .7f, 1, 0, .7f, .7f },

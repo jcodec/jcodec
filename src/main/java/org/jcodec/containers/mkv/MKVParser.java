@@ -18,12 +18,12 @@ import org.jcodec.containers.mkv.boxes.EbmlMaster;
 import org.jcodec.containers.mkv.boxes.EbmlVoid;
 import org.jcodec.containers.mkv.util.EbmlUtil;
 
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.LinkedList;
-import js.util.List;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -153,7 +153,7 @@ public class MKVParser {
             return null;
     
         ByteBuffer buffer = ByteBuffer.allocate(8);
-        buffer.setLimit(1);
+        buffer.limit(1);
         source.read(buffer);
         buffer.flip();
     
@@ -164,20 +164,20 @@ public class MKVParser {
             return null;
     
         if (numBytes > 1) {
-            buffer.setLimit(numBytes);
+            buffer.limit(numBytes);
             source.read(buffer);
         }
         
         buffer.flip();
         ByteBuffer val = ByteBuffer.allocate(buffer.remaining());
-        val.putBuf(buffer);
+        val.put(buffer);
         return val.array();
     }
 
     static public long readEbmlInt(SeekableByteChannel source) throws IOException {
     
         ByteBuffer buffer = ByteBuffer.allocate(8);
-        buffer.setLimit(1);
+        buffer.limit(1);
         
         source.read(buffer);
         buffer.flip();
@@ -190,9 +190,9 @@ public class MKVParser {
             throw new RuntimeException("Invalid ebml integer size.");
     
         // read the reset
-        buffer.setLimit(length);
+        buffer.limit(length);
         source.read(buffer);
-        buffer.setPosition(1);
+        buffer.position(1);
         
         // use the first byte
         long value = firstByte & (0xFF >>> length); 

@@ -2,7 +2,7 @@ package org.jcodec.containers.mp4.boxes;
 
 import org.jcodec.common.model.Label;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -87,6 +87,11 @@ public class ChannelBox extends FullBox {
             out.putFloat(channelDescription.getCoordinates()[1]);
             out.putFloat(channelDescription.getCoordinates()[2]);
         }
+    }
+    
+    @Override
+    public int estimateSize() {
+        return 12 + 12 + descriptions.length * 20;
     }
 
     public int getChannelLayout() {

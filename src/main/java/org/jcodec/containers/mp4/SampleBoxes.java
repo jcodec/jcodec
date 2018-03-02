@@ -102,5 +102,8 @@ public class SampleBoxes extends Boxes {
         override("c608", SampleEntry.class);
         override("c708", SampleEntry.class);
         override("text", SampleEntry.class);
+        
+        //found in gopro video files
+        override("fdsc", SampleEntry.class);
     }
 }

@@ -6,7 +6,7 @@ import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.lang.System;
+import java.lang.System;
 
 public class SparseIDCTTest {
 

@@ -37,7 +37,7 @@ public class CoeffTransformerTest {
         int[] coeffs = { 41, 75, 79, 69, 15, 89, 97, 95, 23, 97, 85, 83, 13, 47, 23, 45 };
         int[] expected = { 2624, 4800, 5056, 4416, 960, 5696, 6208, 6080, 1472, 6208, 5440, 5312, 832, 3008, 1472, 2880 };
 
-        CoeffTransformer.dequantizeDC4x4(coeffs, 28);
+        CoeffTransformer.dequantizeDC4x4(coeffs, 28, null);
 
         assertArrayEquals(expected, coeffs);
     }
@@ -47,19 +47,9 @@ public class CoeffTransformerTest {
         int[] coeffs = { 10, -13, -11, -6, 3, -3, 1, 0, 3, -2, -2, 1, 0, 0, 0, 0 };
         int[] expected = { 2560, -4160, -2816, -1920, 960, -1200, 320, 0, 768, -640, -512, 320, 0, 0, 0, 0 };
 
-        CoeffTransformer.dequantizeAC(coeffs, 28);
+        CoeffTransformer.dequantizeAC(coeffs, 28, null);
 
         assertArrayEquals(expected, coeffs);
-    }
-
-    @Test
-    public void testReorder() {
-        int[] coeffs = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-        int[] expected = { 0, 1, 5, 6, 2, 4, 7, 12, 3, 8, 11, 13, 9, 10, 14, 15 };
-
-        int[] reordered = CoeffTransformer.unzigzagAC(coeffs);
-
-        assertArrayEquals(expected, reordered);
     }
 
     @Test

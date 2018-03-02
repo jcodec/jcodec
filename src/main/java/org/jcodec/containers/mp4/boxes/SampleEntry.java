@@ -52,4 +52,9 @@ public class SampleEntry extends NodeBox {
     public void setMediaType(String mediaType) {
         header = new Header(mediaType);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 8 + super.estimateSize();
+    }
 }

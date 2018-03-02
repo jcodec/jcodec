@@ -3,7 +3,7 @@ package org.jcodec.containers.mp4.boxes;
 import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -25,7 +25,7 @@ public class NameBox extends Box {
         return box;
     }
 
-    private NameBox(Header header) {
+    public NameBox(Header header) {
         super(header);
     }
 
@@ -34,8 +34,13 @@ public class NameBox extends Box {
     }
 
     protected void doWrite(ByteBuffer out) {
-        out.putArr(JCodecUtil2.asciiString(name));
+        out.put(JCodecUtil2.asciiString(name));
         out.putInt(0);
+    }
+    
+    @Override
+    public int estimateSize() {
+        return 12 + JCodecUtil2.asciiString(name).length;
     }
 
     public String getName() {

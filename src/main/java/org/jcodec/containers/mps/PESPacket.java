@@ -1,6 +1,6 @@
 package org.jcodec.containers.mps;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 public class PESPacket {
     public ByteBuffer data;

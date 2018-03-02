@@ -1,20 +1,16 @@
 package org.jcodec.containers.mp4.boxes;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jcodec.common.Assert;
 import org.jcodec.common.StringUtils;
 import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.IBoxFactory;
 import org.jcodec.platform.Platform;
-import org.stjs.javascript.Global;
-
-import js.lang.StringBuilder;
-import js.lang.reflect.Method;
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -26,7 +22,6 @@ import js.util.List;
  * 
  */
 public abstract class Box {
-    private static final String GET_MODEL_FIELDS = "getModelFields";
     public Header header;
     public static final int MAX_BOX_SIZE = 128 * 1024 * 1024;
     
@@ -52,6 +47,8 @@ public abstract class Box {
     }
 
     protected abstract void doWrite(ByteBuffer out);
+    
+    public abstract int estimateSize();
 
     public String getFourcc() {
         return header.getFourcc();
@@ -67,35 +64,12 @@ public abstract class Box {
     protected void dump(StringBuilder sb) {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
         List<String> fields = new ArrayList<String>(0);
-        collectModel(this.getClass(), fields);
         ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[0]));
         sb.append("}");
     }
 
-    protected void collectModel(Class claz, List<String> model) {
-        if (Box.class == claz || !Box.class.isAssignableFrom(claz))
-            return;
-
-        collectModel(claz.getSuperclass(), model);
-
-        try {
-            Platform.invokeMethod(this, GET_MODEL_FIELDS, new Object[]{model});
-        } catch (Exception e) {
-            checkWrongSignature(claz);
-            model.addAll(ToJSON.allFields(claz));
-        }
-    }
-
-    private void checkWrongSignature(Class claz) {
-        Method[] declaredMethods = Platform.getDeclaredMethods(claz);
-        for (int i = 0; i < declaredMethods.length; i++) {
-            Method method = declaredMethods[i];
-            if (method.getName().equals(GET_MODEL_FIELDS)) {
-                Logger.warn("Class " + claz.getCanonicalName() + " contains 'getModelFields' of wrong signature.\n"
-                        + "Did you mean to define 'protected void " + GET_MODEL_FIELDS + "(List<String> model) ?");
-                break;
-            }
-        }
+    public static Box terminatorAtom() {
+        return createLeafBox(new Header(Platform.stringFromBytes(new byte[4])), ByteBuffer.allocate(0));
     }
 
     public static String[] path(String path) {
@@ -120,7 +94,6 @@ public abstract class Box {
     }
 
     public static <T extends Box> T asBox(Class<T> class1, Box box) {
-        Global.console.log("asBox",box.header);
         try {
             T res = Platform.newInstance(class1, new Object[]{box.getHeader()});
             ByteBuffer buffer = ByteBuffer.allocate((int)box.getHeader().getBodySize());
@@ -151,6 +124,11 @@ public abstract class Box {
         @Override
         protected void doWrite(ByteBuffer out) {
             NIOUtils.write(out, data);
+        }
+
+        @Override
+        public int estimateSize() {
+            return data.remaining() + Header.estimateHeaderSize(data.remaining());
         }
     }
     

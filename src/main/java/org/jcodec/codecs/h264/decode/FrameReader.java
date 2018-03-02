@@ -16,11 +16,12 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.List;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -51,10 +52,10 @@ public class FrameReader {
             unescapeNAL(nalData);
             if (SPS == nalUnit.type) {
                 SeqParameterSet _sps = SeqParameterSet.read(nalData);
-                sps.put(_sps.seq_parameter_set_id, _sps);
+                sps.put(_sps.seqParameterSetId, _sps);
             } else if (PPS == nalUnit.type) {
                 PictureParameterSet _pps = PictureParameterSet.read(nalData);
-                pps.put(_pps.pic_parameter_set_id, _pps);
+                pps.put(_pps.picParameterSetId, _pps);
             } else if (IDR_SLICE == nalUnit.type || NON_IDR_SLICE == nalUnit.type) {
                 if (sps.size() == 0 || pps.size() == 0) {
                     Logger.warn("Skipping frame as no SPS/PPS have been seen so far...");
@@ -69,26 +70,25 @@ public class FrameReader {
 
     private SliceReader createSliceReader(ByteBuffer segment, NALUnit nalUnit) {
         BitReader _in = BitReader.createBitReader(segment);
-        SliceHeaderReader shr = new SliceHeaderReader();
-        SliceHeader sh = shr.readPart1(_in);
-        sh.pps = pps.get(sh.pic_parameter_set_id);
-        sh.sps = sps.get(sh.pps.seq_parameter_set_id);
-        shr.readPart2(sh, nalUnit, sh.sps, sh.pps, _in);
+        SliceHeader sh = SliceHeaderReader.readPart1(_in);
+        sh.pps = pps.get(sh.picParameterSetId);
+        sh.sps = sps.get(sh.pps.seqParameterSetId);
+        SliceHeaderReader.readPart2(sh, nalUnit, sh.sps, sh.pps, _in);
 
         Mapper mapper = new MapManager(sh.sps, sh.pps).getMapper(sh);
 
         CAVLC[] cavlc = new CAVLC[] { new CAVLC(sh.sps, sh.pps, 2, 2), new CAVLC(sh.sps, sh.pps, 1, 1),
                 new CAVLC(sh.sps, sh.pps, 1, 1) };
 
-        int mbWidth = sh.sps.pic_width_in_mbs_minus1 + 1;
+        int mbWidth = sh.sps.picWidthInMbsMinus1 + 1;
         CABAC cabac = new CABAC(mbWidth);
 
         MDecoder mDecoder = null;
-        if (sh.pps.entropy_coding_mode_flag) {
+        if (sh.pps.entropyCodingModeFlag) {
             _in.terminate();
             int[][] cm = new int[2][1024];
-            int qp = sh.pps.pic_init_qp_minus26 + 26 + sh.slice_qp_delta;
-            cabac.initModels(cm, sh.slice_type, sh.cabac_init_idc, qp);
+            int qp = sh.pps.picInitQpMinus26 + 26 + sh.sliceQpDelta;
+            cabac.initModels(cm, sh.sliceType, sh.cabacInitIdc, qp);
             mDecoder = new MDecoder(segment, cm);
         }
 
@@ -102,10 +102,10 @@ public class FrameReader {
     }
 
     public void addSps(ByteBuffer byteBuffer) {
-        ByteBuffer dup = byteBuffer.duplicate();
-        unescapeNAL(dup);
-        SeqParameterSet s = SeqParameterSet.read(dup);
-        sps.put(s.seq_parameter_set_id, s);
+        ByteBuffer clone = NIOUtils.clone(byteBuffer);
+        unescapeNAL(clone);
+        SeqParameterSet s = SeqParameterSet.read(clone);
+        sps.put(s.seqParameterSetId, s);
     }
 
     public void addPpsList(List<ByteBuffer> ppsList) {
@@ -115,9 +115,9 @@ public class FrameReader {
     }
 
     public void addPps(ByteBuffer byteBuffer) {
-        ByteBuffer dup = byteBuffer.duplicate();
-        unescapeNAL(dup);
-        PictureParameterSet p = PictureParameterSet.read(dup);
-        pps.put(p.pic_parameter_set_id, p);
+        ByteBuffer clone = NIOUtils.clone(byteBuffer);
+        unescapeNAL(clone);
+        PictureParameterSet p = PictureParameterSet.read(clone);
+        pps.put(p.picParameterSetId, p);
     }
 }

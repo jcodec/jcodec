@@ -1,8 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
-import js.lang.IllegalArgumentException;
-import js.lang.IllegalStateException;
-import js.nio.ByteBuffer;
-import js.util.List;
+import java.lang.IllegalArgumentException;
+import java.lang.IllegalStateException;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 //@formatter:off
 /**
@@ -306,24 +306,8 @@ public class TrunBox extends FullBox {
         }
     }
 
-    protected void getModelFields(List<String> model) {
-        model.add("sampleCount");
-        if (isDataOffsetAvailable())
-            model.add("dataOffset");
-
-        if (isFirstSampleFlagsAvailable())
-            model.add("firstSampleFlags");
-
-        if (isSampleDurationAvailable())
-            model.add("sampleDuration");
-
-        if (isSampleSizeAvailable())
-            model.add("sampleSize");
-
-        if (isSampleFlagsAvailable())
-            model.add("sampleFlags");
-
-        if (isSampleCompositionOffsetAvailable())
-            model.add("sampleCompositionOffset");
+    @Override
+    public int estimateSize() {
+        return 24 + sampleCount * 16;
     }
 }

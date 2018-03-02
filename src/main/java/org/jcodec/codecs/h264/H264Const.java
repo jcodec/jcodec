@@ -7,9 +7,9 @@ import static org.jcodec.codecs.h264.H264Const.PartPred.L1;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 
-import js.util.Arrays;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -473,7 +473,7 @@ public class H264Const {
             21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 34, 35, 35, 36, 36, 37, 37, 37, 38, 38, 38,
             39, 39, 39, 39 };
 
-    public static final Picture8Bit NO_PIC = Picture8Bit.createPicture8Bit(0, 0, null, null);
+    public static final Picture NO_PIC = Picture.createPicture(0, 0, null, null);
     public static final int[] BLK_8x8_MB_OFF_LUMA = {0, 8, 128, 136};
     public static final int[] BLK_8x8_MB_OFF_CHROMA = {0, 4, 32, 36};
     public static final int[] BLK_4x4_MB_OFF_LUMA = {0, 4, 8, 12, 64, 68, 72, 76, 128, 132, 136, 140, 192, 196, 200, 204};
@@ -616,4 +616,23 @@ public class H264Const {
     public static final int[][] PIX_MAP_SPLIT_4x4 = buildPixSplitMap4x4();
     public static final int[][] PIX_MAP_SPLIT_2x2 = buildPixSplitMap2x2();
 
+    public static final int PROFILE_CAVLC_INTRA = 44;
+    public static final int PROFILE_BASELINE = 66;
+    public static final int PROFILE_MAIN = 77;
+    public static final int PROFILE_EXTENDED = 88;
+    public static final int PROFILE_HIGH = 100;
+    public static final int PROFILE_HIGH_10 = 110;
+    public static final int PROFILE_HIGH_422 = 122;
+    public static final int PROFILE_HIGH_444 = 244;
+    
+    public static final int[] defaultScalingList4x4Intra = { 6, 13, 13, 20, 20, 20, 28, 28, 28, 28, 32, 32, 32, 37, 37,
+            42 };
+    public static final int[] defaultScalingList4x4Inter = { 10, 14, 14, 20, 20, 20, 24, 24, 24, 24, 27, 27, 27, 30, 30,
+            34 };
+    public static final int[] defaultScalingList8x8Intra = { 6, 10, 10, 13, 11, 13, 16, 16, 16, 16, 18, 18, 18, 18, 18,
+            23, 23, 23, 23, 23, 23, 25, 25, 25, 25, 25, 25, 25, 27, 27, 27, 27, 27, 27, 27, 27, 29, 29, 29, 29, 29, 29,
+            29, 31, 31, 31, 31, 31, 31, 33, 33, 33, 33, 33, 36, 36, 36, 36, 38, 38, 38, 40, 40, 42 };
+    public static final int[] defaultScalingList8x8Inter = { 9, 13, 13, 15, 13, 15, 17, 17, 17, 17, 19, 19, 19, 19, 19,
+            21, 21, 21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 24, 24, 24, 24, 24, 24, 24, 24, 25, 25, 25, 25, 25, 25,
+            25, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 30, 30, 30, 30, 32, 32, 32, 33, 33, 35 };
 }

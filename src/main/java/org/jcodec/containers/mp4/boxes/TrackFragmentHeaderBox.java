@@ -143,6 +143,11 @@ public class TrackFragmentHeaderBox extends FullBox {
         if (isDefaultSampleFlagsAvailable())
             out.putInt(defaultSampleFlags);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 40;
+    }
 
     public int getTrackId() {
         return trackId;
@@ -194,5 +199,9 @@ public class TrackFragmentHeaderBox extends FullBox {
 
     public void setDefaultSampleFlags(int defaultSampleFlags) {
         this.defaultSampleFlags = defaultSampleFlags;
+    }
+
+    public static TrackFragmentHeaderBox createTrackFragmentHeaderBox() {
+        return new TrackFragmentHeaderBox(new Header(fourcc()));
     }
 }

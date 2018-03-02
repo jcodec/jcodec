@@ -1,5 +1,4 @@
 package org.jcodec.containers.mps.index;
-
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.MPEGHeader;
 import org.jcodec.codecs.mpeg12.bitstream.PictureCodingExtension;
@@ -15,9 +14,9 @@ import org.jcodec.platform.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class MPSIndexerTest {
     private static <T extends MPEGHeader> byte[] toHex(T struct) {
@@ -49,7 +48,7 @@ public class MPSIndexerTest {
             toHex(SequenceHeader.createSequenceHeader(1920, 1080, 1, 1, 512 * 1024, 0, 0, null, null)), syncMarker,
             { (byte) 0xb5 }, toHex(SequenceExtension.createSequenceExtension(100, 1, 1, 0, 0, 0, 0, 0, 0, 0)),
             syncMarker, { (byte) 0xb8 },
-            toHex(new GOPHeader(new TapeTimecode((short) 1, (byte) 0, (byte) 0, (byte) 10, false), false, false))
+            toHex(new GOPHeader(new TapeTimecode((short) 1, (byte) 0, (byte) 0, (byte) 10, false, 0), false, false))
             //@formatter:on
     });
 
@@ -149,7 +148,7 @@ public class MPSIndexerTest {
         printHex(mpegPS);
 
         MPSIndexer mpsIndexer = new MPSIndexer();
-        mpsIndexer.indexChannel(new ByteBufferSeekableByteChannel(ByteBuffer.wrap(mpegPS)), null);
+        mpsIndexer.indexChannel(ByteBufferSeekableByteChannel.readFromByteBuffer(ByteBuffer.wrap(mpegPS)), null);
         MPSIndex index = mpsIndexer.serialize();
         long[] pesTokens = index.getPesTokens();
         Assert.assertEquals(peses.length, pesTokens.length);
@@ -206,7 +205,7 @@ public class MPSIndexerTest {
         printHex(mpegPS);
 
         MPSIndexer mpsIndexer = new MPSIndexer();
-        mpsIndexer.indexChannel(new ByteBufferSeekableByteChannel(ByteBuffer.wrap(mpegPS)), null);
+        mpsIndexer.indexChannel(ByteBufferSeekableByteChannel.readFromByteBuffer(ByteBuffer.wrap(mpegPS)), null);
         MPSIndex index = mpsIndexer.serialize();
         long[] pesTokens = index.getPesTokens();
         Assert.assertEquals(peses.length, pesTokens.length);
@@ -261,7 +260,7 @@ public class MPSIndexerTest {
         printHex(mpegPS);
 
         MPSIndexer mpsIndexer = new MPSIndexer();
-        mpsIndexer.indexChannel(new ByteBufferSeekableByteChannel(ByteBuffer.wrap(mpegPS)), null);
+        mpsIndexer.indexChannel(ByteBufferSeekableByteChannel.readFromByteBuffer(ByteBuffer.wrap(mpegPS)), null);
         MPSIndex index = mpsIndexer.serialize();
         long[] pesTokens = index.getPesTokens();
         Assert.assertEquals(peses.length, pesTokens.length);
@@ -338,7 +337,7 @@ public class MPSIndexerTest {
         printHex(mpegPS);
 
         MPSIndexer mpsIndexer = new MPSIndexer();
-        mpsIndexer.indexChannel(new ByteBufferSeekableByteChannel(ByteBuffer.wrap(mpegPS)), null);
+        mpsIndexer.indexChannel(ByteBufferSeekableByteChannel.readFromByteBuffer(ByteBuffer.wrap(mpegPS)), null);
         MPSIndex index = mpsIndexer.serialize();
         long[] pesTokens = index.getPesTokens();
         Assert.assertEquals(peses.length, pesTokens.length);

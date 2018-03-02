@@ -1,6 +1,8 @@
 package org.jcodec.containers.mp4.boxes;
 
-import js.nio.ByteBuffer;
+import static org.jcodec.common.JCodecUtil2.asciiString;
+
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -9,7 +11,7 @@ import js.nio.ByteBuffer;
  * @author The JCodec project
  * 
  */
-public class FullBox extends Box {
+public abstract class FullBox extends Box {
 
     public FullBox(Header atom) {
         super(atom);
@@ -27,7 +29,7 @@ public class FullBox extends Box {
     protected void doWrite(ByteBuffer out) {
         out.putInt((version << 24) | (flags & 0xffffff));
     }
-
+    
     public byte getVersion() {
         return version;
     }

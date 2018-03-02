@@ -3,9 +3,9 @@ package org.jcodec.containers.mp4.boxes;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 
-import js.util.ArrayList;
-import js.util.List;
-import js.util.ListIterator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -134,9 +134,9 @@ public class MovieBox extends NodeBox {
         boxes.add(newTrack);
     }
 
-    public boolean isPureRefMovie(MovieBox movie) {
+    public boolean isPureRefMovie() {
         boolean pureRef = true;
-        TrakBox[] tracks = movie.getTracks();
+        TrakBox[] tracks = getTracks();
         for (int i = 0; i < tracks.length; i++) {
             TrakBox trakBox = tracks[i];
             pureRef &= trakBox.isPureRef();
@@ -199,9 +199,5 @@ public class MovieBox extends NodeBox {
         VideoSampleEntry vs = (VideoSampleEntry) box;
 
         return new Size((int) vs.getWidth(), (int) vs.getHeight());
-    }
-    
-    protected void getModelFields(List<String> model) {
-
     }
 }

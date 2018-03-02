@@ -1,11 +1,13 @@
 package org.jcodec.containers.mp4.muxer;
 import org.jcodec.common.Assert;
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.LongArrayList;
-import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
-import org.jcodec.containers.mp4.TrackType;
+import org.jcodec.containers.mp4.MP4TrackType;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
@@ -25,10 +27,10 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
-import js.io.IOException;
-import js.lang.IllegalStateException;
-import js.nio.ByteBuffer;
-import js.util.Date;
+import java.io.IOException;
+import java.lang.IllegalStateException;
+import java.nio.ByteBuffer;
+import java.util.Date;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,18 +47,20 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     private LongArrayList chunkOffsets;
     private int totalFrames;
-    private SeekableByteChannel out;
-
-    public PCMMP4MuxerTrack(SeekableByteChannel out, int trackId, TrackType type, int timescale, int frameDuration, int frameSize,
-            SampleEntry se) {
-        super(trackId, type, timescale);
+    public PCMMP4MuxerTrack(int trackId, AudioFormat format) {
+        super(trackId, MP4TrackType.SOUND);
         this.chunkOffsets = LongArrayList.createLongArrayList();
-        this.out = out;
-        this.frameDuration = frameDuration;
-        this.frameSize = frameSize;
-        addSampleEntry(se);
+        this.frameDuration = 1;
+        this.frameSize = (format.getSampleSizeInBits() >> 3) * format.getChannels();
+        addSampleEntry(AudioSampleEntry.audioSampleEntryPCM(format));
+        this._timescale = format.getSampleRate();
 
         setTgtChunkDuration(new Rational(1, 2), Unit.SEC);
+    }
+    
+    @Override
+    public void addFrame(Packet outPacket) throws IOException {
+        addSamples(outPacket.getData().duplicate());
     }
 
     public void addSamples(ByteBuffer buffer) throws IOException {
@@ -78,7 +82,7 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
                 && framesInCurChunk * tgtChunkDuration.getDen() == tgtChunkDuration.getNum()) {
             outChunk();
         } else if (tgtChunkDurationUnit == Unit.SEC && chunkDuration > 0
-                && chunkDuration * tgtChunkDuration.getDen() >= tgtChunkDuration.getNum() * timescale) {
+                && chunkDuration * tgtChunkDuration.getDen() >= tgtChunkDuration.getNum() * _timescale) {
             outChunk();
         }
     }
@@ -105,6 +109,7 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
         chunkDuration = 0;
     }
 
+    @Override
     protected Box finish(MovieHeaderBox mvhd) throws IOException {
         if (finished)
             throw new IllegalStateException("The muxer track has finished muxing");
@@ -115,8 +120,10 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
         TrakBox trak = TrakBox.createTrakBox();
         Size dd = getDisplayDimensions();
-        TrackHeaderBox tkhd = TrackHeaderBox.createTrackHeaderBox(trackId, ((long) mvhd.getTimescale() * totalFrames * frameDuration) / timescale, dd.getWidth(), dd.getHeight(), new Date().getTime(), new Date().getTime(), 1.0f, (short) 0, 0, new int[] {
-                        0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 });
+        TrackHeaderBox tkhd = TrackHeaderBox.createTrackHeaderBox(trackId,
+                ((long) mvhd.getTimescale() * totalFrames * frameDuration) / _timescale, dd.getWidth(), dd.getHeight(),
+                new Date().getTime(), new Date().getTime(), 1.0f, (short) 0, 0,
+                new int[] { 0x10000, 0, 0, 0, 0x10000, 0, 0, 0, 0x40000000 });
         tkhd.setFlags(0xf);
         trak.add(tkhd);
 
@@ -124,8 +131,8 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
 
         MediaBox media = MediaBox.createMediaBox();
         trak.add(media);
-        media.add(MediaHeaderBox.createMediaHeaderBox(timescale, totalFrames * frameDuration, 0, new Date().getTime(), new Date()
-                .getTime(), 0));
+        media.add(MediaHeaderBox.createMediaHeaderBox(_timescale, totalFrames * frameDuration, 0, new Date().getTime(),
+                new Date().getTime(), 0));
 
         HandlerBox hdlr = HandlerBox.createHandlerBox("mhlr", type.getHandler(), "appl", 0, 0);
         media.add(hdlr);
@@ -144,12 +151,14 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
         stbl.add(SampleDescriptionBox.createSampleDescriptionBox(sampleEntries.toArray(new SampleEntry[0])));
         stbl.add(SampleToChunkBox.createSampleToChunkBox(samplesInChunks.toArray(new SampleToChunkEntry[0])));
         stbl.add(SampleSizesBox.createSampleSizesBox(frameSize, totalFrames));
-        stbl.add(TimeToSampleBox.createTimeToSampleBox(new TimeToSampleEntry[] { new TimeToSampleEntry(totalFrames, frameDuration) }));
+        stbl.add(TimeToSampleBox
+                .createTimeToSampleBox(new TimeToSampleEntry[] { new TimeToSampleEntry(totalFrames, frameDuration) }));
         stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(chunkOffsets.toArray()));
 
         return trak;
     }
 
+    @Override
     public long getTrackTotalDuration() {
         return totalFrames * frameDuration;
     }

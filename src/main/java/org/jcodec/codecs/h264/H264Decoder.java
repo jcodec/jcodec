@@ -1,7 +1,18 @@
 package org.jcodec.codecs.h264;
-import static org.jcodec.codecs.h264.io.model.SeqParameterSet.getPicHeightInMbs;
+import static org.jcodec.codecs.h264.H264Const.PROFILE_BASELINE;
+import static org.jcodec.codecs.h264.H264Const.PROFILE_HIGH;
+import static org.jcodec.codecs.h264.H264Const.PROFILE_MAIN;
 import static org.jcodec.common.tools.MathUtil.wrap;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+
+import org.jcodec.codecs.h264.H264Utils.MvList2D;
 import org.jcodec.codecs.h264.decode.DeblockerInput;
 import org.jcodec.codecs.h264.decode.FrameReader;
 import org.jcodec.codecs.h264.decode.SliceDecoder;
@@ -18,24 +29,13 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
-
-import js.lang.InterruptedException;
-import js.lang.Runnable;
-import js.lang.Runtime;
-import js.lang.Thread;
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.List;
-import js.util.concurrent.ExecutionException;
-import js.util.concurrent.ExecutorService;
-import js.util.concurrent.Executors;
-import js.util.concurrent.Future;
-import js.util.concurrent.ThreadFactory;
+import org.jcodec.common.model.Size;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -81,9 +81,9 @@ public class H264Decoder extends VideoDecoder {
      * 
      * @param codecPrivate
      */
-    public static H264Decoder createH264DecoderFromCodecPrivate(byte[] codecPrivate) {
+    public static H264Decoder createH264DecoderFromCodecPrivate(ByteBuffer codecPrivate) {
         H264Decoder d = new H264Decoder();
-        for (ByteBuffer bb : H264Utils.splitFrame(ByteBuffer.wrap(codecPrivate))) {
+        for (ByteBuffer bb : H264Utils.splitFrame(codecPrivate.duplicate())) {
             NALUnit nu = NALUnit.read(bb);
             if (nu.type == NALUnitType.SPS) {
                 d.reader.addSps(bb);
@@ -95,18 +95,12 @@ public class H264Decoder extends VideoDecoder {
     }
 
     @Override
-    public Frame decodeFrame8Bit(ByteBuffer data, byte[][] buffer) {
-        return decodeFrame8BitFromNals(H264Utils.splitFrame(data), buffer);
+    public Frame decodeFrame(ByteBuffer data, byte[][] buffer) {
+        return decodeFrameFromNals(H264Utils.splitFrame(data), buffer);
     }
 
-    public Frame decodeFrame8BitFromNals(List<ByteBuffer> nalUnits, byte[][] buffer) {
+    public Frame decodeFrameFromNals(List<ByteBuffer> nalUnits, byte[][] buffer) {
         return new FrameDecoder(this).decodeFrame(nalUnits, buffer);
-    }
-
-    @Deprecated
-    public Picture decodeFrameFromNals(List<ByteBuffer> nalUnits, int[][] buffer) {
-        Frame frame = new FrameDecoder(this).decodeFrame(nalUnits, getSameSizeBuffer(buffer));
-        return frame == null ? null : frame.toPictureWithBuffer(8, buffer);
     }
 
     private static final class SliceDecoderRunnable implements Runnable {
@@ -192,22 +186,43 @@ public class H264Decoder extends VideoDecoder {
 
             firstSliceHeader = sliceReader.getSliceHeader();
             activeSps = firstSliceHeader.sps;
-            int picWidthInMbs = activeSps.pic_width_in_mbs_minus1 + 1;
-            int picHeightInMbs = SeqParameterSet.getPicHeightInMbs(activeSps);
+
+            validateSupportedFeatures(firstSliceHeader.sps, firstSliceHeader.pps);
+
+            int picWidthInMbs = activeSps.picWidthInMbsMinus1 + 1;
 
             if (dec.sRefs == null) {
-                dec.sRefs = new Frame[1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4)];
+                dec.sRefs = new Frame[1 << (firstSliceHeader.sps.log2MaxFrameNumMinus4 + 4)];
                 dec.lRefs = new IntObjectMap<Frame>();
             }
 
             di = new DeblockerInput(activeSps);
 
-            Frame result = createFrame(activeSps, buffer, firstSliceHeader.frame_num, firstSliceHeader.slice_type,
+            Frame result = createFrame(activeSps, buffer, firstSliceHeader.frameNum, firstSliceHeader.sliceType,
                     di.mvs, di.refsUsed, dec.poc.calcPOC(firstSliceHeader, firstNu));
 
-            filter = new DeblockingFilter(picWidthInMbs, activeSps.bit_depth_chroma_minus8 + 8, di);
+            filter = new DeblockingFilter(picWidthInMbs, activeSps.bitDepthChromaMinus8 + 8, di);
 
             return result;
+        }
+
+        private void validateSupportedFeatures(SeqParameterSet sps, PictureParameterSet pps) {
+            if (sps.mbAdaptiveFrameFieldFlag)
+                throw new RuntimeException("Unsupported h264 feature: MBAFF.");
+            if (sps.bitDepthLumaMinus8 != 0 || sps.bitDepthChromaMinus8 != 0)
+                throw new RuntimeException("Unsupported h264 feature: High bit depth.");
+            if (sps.chromaFormatIdc != ColorSpace.YUV420J)
+                throw new RuntimeException("Unsupported h264 feature: " + sps.chromaFormatIdc + " color.");
+            if (!sps.frameMbsOnlyFlag || sps.fieldPicFlag)
+                throw new RuntimeException("Unsupported h264 feature: interlace.");
+            if (pps.constrainedIntraPredFlag)
+                throw new RuntimeException("Unsupported h264 feature: constrained intra prediction.");
+//            if (sps.getScalingMatrix() != null || pps.extended != null && pps.extended.getScalingMatrix() != null)
+//                throw new RuntimeException("Unsupported h264 feature: scaling list.");
+            if (sps.qpprimeYZeroTransformBypassFlag)
+                throw new RuntimeException("Unsupported h264 feature: qprime zero transform bypass.");
+            if (sps.profileIdc != PROFILE_BASELINE && sps.profileIdc != PROFILE_MAIN && sps.profileIdc != PROFILE_HIGH)
+                throw new RuntimeException("Unsupported h264 feature: " + sps.profileIdc + " profile.");
         }
 
         public void performIDRMarking(RefPicMarkingIDR refPicMarkingIDR, Frame picture) {
@@ -219,7 +234,7 @@ public class H264Decoder extends VideoDecoder {
                 dec.lRefs.put(0, saved);
                 saved.setShortTerm(false);
             } else
-                dec.sRefs[firstSliceHeader.frame_num] = saved;
+                dec.sRefs[firstSliceHeader.frameNum] = saved;
         }
 
         private Frame saveRef(Frame decoded) {
@@ -278,13 +293,13 @@ public class H264Decoder extends VideoDecoder {
             if (saved != null)
                 saveShort(saved);
 
-            int maxFrames = 1 << (activeSps.log2_max_frame_num_minus4 + 4);
+            int maxFrames = 1 << (activeSps.log2MaxFrameNumMinus4 + 4);
             if (refPicMarking == null) {
-                int maxShort = Math.max(1, activeSps.num_ref_frames - dec.lRefs.size());
+                int maxShort = Math.max(1, activeSps.numRefFrames - dec.lRefs.size());
                 int min = Integer.MAX_VALUE, num = 0, minFn = 0;
                 for (int i = 0; i < dec.sRefs.length; i++) {
                     if (dec.sRefs[i] != null) {
-                        int fnWrap = unwrap(firstSliceHeader.frame_num, dec.sRefs[i].getFrameNo(), maxFrames);
+                        int fnWrap = unwrap(firstSliceHeader.frameNum, dec.sRefs[i].getFrameNo(), maxFrames);
                         if (fnWrap < min) {
                             min = fnWrap;
                             minFn = dec.sRefs[i].getFrameNo();
@@ -304,7 +319,7 @@ public class H264Decoder extends VideoDecoder {
         }
 
         private void saveShort(Frame saved) {
-            dec.sRefs[firstSliceHeader.frame_num] = saved;
+            dec.sRefs[firstSliceHeader.frameNum] = saved;
         }
 
         private void saveLong(Frame saved, int longNo) {
@@ -327,8 +342,8 @@ public class H264Decoder extends VideoDecoder {
         }
 
         private void convert(int shortNo, int longNo) {
-            int ind = wrap(firstSliceHeader.frame_num
-                    - shortNo, 1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4));
+            int ind = wrap(firstSliceHeader.frameNum - shortNo,
+                    1 << (firstSliceHeader.sps.log2MaxFrameNumMinus4 + 4));
             releaseRef(dec.lRefs.get(longNo));
             dec.lRefs.put(longNo, dec.sRefs[ind]);
             dec.sRefs[ind] = null;
@@ -341,27 +356,27 @@ public class H264Decoder extends VideoDecoder {
         }
 
         private void unrefShortTerm(int shortNo) {
-            int ind = wrap(firstSliceHeader.frame_num
-                    - shortNo, 1 << (firstSliceHeader.sps.log2_max_frame_num_minus4 + 4));
+            int ind = wrap(firstSliceHeader.frameNum - shortNo,
+                    1 << (firstSliceHeader.sps.log2MaxFrameNumMinus4 + 4));
             releaseRef(dec.sRefs[ind]);
             dec.sRefs[ind] = null;
         }
     }
 
     public static Frame createFrame(SeqParameterSet sps, byte[][] buffer, int frameNum, SliceType frameType,
-            int[][][][] mvs, Frame[][][] refsUsed, int POC) {
-        int width = sps.pic_width_in_mbs_minus1 + 1 << 4;
+            MvList2D mvs, Frame[][][] refsUsed, int POC) {
+        int width = sps.picWidthInMbsMinus1 + 1 << 4;
         int height = SeqParameterSet.getPicHeightInMbs(sps) << 4;
 
         Rect crop = null;
-        if (sps.frame_cropping_flag) {
-            int sX = sps.frame_crop_left_offset << 1;
-            int sY = sps.frame_crop_top_offset << 1;
-            int w = width - (sps.frame_crop_right_offset << 1) - sX;
-            int h = height - (sps.frame_crop_bottom_offset << 1) - sY;
+        if (sps.frameCroppingFlag) {
+            int sX = sps.frameCropLeftOffset << 1;
+            int sY = sps.frameCropTopOffset << 1;
+            int w = width - (sps.frameCropRightOffset << 1) - sX;
+            int h = height - (sps.frameCropBottomOffset << 1) - sY;
             crop = new Rect(sX, sY, w, h);
         }
-        return new Frame(width, height, buffer, ColorSpace.YUV420J, crop, frameNum, frameType, mvs, refsUsed, POC);
+        return new Frame(width, height, buffer, ColorSpace.YUV420, crop, frameNum, frameType, mvs, refsUsed, POC);
     }
 
     public void addSps(List<ByteBuffer> spsList) {
@@ -372,8 +387,7 @@ public class H264Decoder extends VideoDecoder {
         reader.addPpsList(ppsList);
     }
 
-    @Override
-    public int probe(ByteBuffer data) {
+    public static int probe(ByteBuffer data) {
         boolean validSps = false, validPps = false, validSh = false;
         for (ByteBuffer nalUnit : H264Utils.splitFrame(data.duplicate())) {
             NALUnit marker = NALUnit.read(nalUnit);
@@ -391,16 +405,30 @@ public class H264Decoder extends VideoDecoder {
         return (validSh ? 60 : 0) + (validSps ? 20 : 0) + (validPps ? 20 : 0);
     }
 
-    private boolean validSh(SliceHeader sh) {
-        return sh.first_mb_in_slice == 0 && sh.slice_type != null && sh.pic_parameter_set_id < 2;
+    private static boolean validSh(SliceHeader sh) {
+        return sh.firstMbInSlice == 0 && sh.sliceType != null && sh.picParameterSetId < 2;
     }
 
-    private boolean validSps(SeqParameterSet sps) {
-        return sps.bit_depth_chroma_minus8 < 4 && sps.bit_depth_luma_minus8 < 4 && sps.chroma_format_idc != null
-                && sps.seq_parameter_set_id < 2 && sps.pic_order_cnt_type <= 2;
+    private static boolean validSps(SeqParameterSet sps) {
+        return sps.bitDepthChromaMinus8 < 4 && sps.bitDepthLumaMinus8 < 4 && sps.chromaFormatIdc != null
+                && sps.seqParameterSetId < 2 && sps.picOrderCntType <= 2;
     }
 
-    private boolean validPps(PictureParameterSet pps) {
-        return pps.pic_init_qp_minus26 <= 26 && pps.seq_parameter_set_id <= 2 && pps.pic_parameter_set_id <= 2;
+    private static boolean validPps(PictureParameterSet pps) {
+        return pps.picInitQpMinus26 <= 26 && pps.seqParameterSetId <= 2 && pps.picParameterSetId <= 2;
+    }
+
+    @Override
+    public VideoCodecMeta getCodecMeta(ByteBuffer data) {
+        List<ByteBuffer> rawSPS = H264Utils.getRawSPS(data.duplicate());
+        List<ByteBuffer> rawPPS = H264Utils.getRawPPS(data.duplicate());
+        if (rawSPS.size() == 0) {
+            Logger.warn("Can not extract metadata from the packet not containing an SPS.");
+            return null;
+        }
+        SeqParameterSet sps = SeqParameterSet.read(rawSPS.get(0));
+        Size size = H264Utils.getPicSize(sps);
+//, H264Utils.saveCodecPrivate(rawSPS, rawPPS)
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(size, ColorSpace.YUV420);
     }
 }

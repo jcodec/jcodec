@@ -8,9 +8,9 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.io.FileInputStream;
-import js.lang.System;
-import js.nio.ByteBuffer;
+import java.io.FileInputStream;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class EbmlUtilTest {
 
@@ -20,11 +20,11 @@ public class EbmlUtilTest {
         try {
             FileChannelWrapper source = new FileChannelWrapper(fis.getChannel());
             ByteBuffer buffer = ByteBuffer.allocate(8);
-            buffer.setLimit(1);
+            buffer.limit(1);
             source.read(buffer);
             System.out.println(toHexString(buffer.array()));
 
-            buffer.setLimit(2);
+            buffer.limit(2);
             source.read(buffer);
             System.out.println(toHexString(buffer.array()));
         } finally {

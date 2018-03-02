@@ -5,11 +5,11 @@ import static net.sourceforge.jaad.aac.Profile.*;
 import org.jcodec.platform.Platform;
 
 import net.sourceforge.jaad.aac.AACException;
-import net.sourceforge.jaad.aac.AACDecoderConfig;
+import net.sourceforge.jaad.aac.DecoderConfig;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.tools.ICPrediction;
-import static js.lang.System.arraycopy;
+import static java.lang.System.arraycopy;
 
 import org.jcodec.platform.Platform;
 
@@ -173,7 +173,7 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 
 	public static WindowSequence windowSequenceFromInt(int i) throws AACException {
         WindowSequence[] values = WindowSequence.values();
-        if (values.length >= i) {
+        if (i >= values.length) {
             throw new AACException("unknown window sequence type");
         }
         return values[i];
@@ -205,7 +205,7 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
 	}
 
 	/* ========== decoding ========== */
-	public void decode(IBitStream _in, AACDecoderConfig conf, boolean commonWindow) throws AACException {
+	public void decode(IBitStream _in, DecoderConfig conf, boolean commonWindow) throws AACException {
 		final SampleFrequency sf = conf.getSampleFrequency();
 		if(sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE)) throw new AACException("invalid sample frequency");
 

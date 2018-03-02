@@ -10,9 +10,9 @@ import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
 import org.jcodec.containers.mps.psi.PSISection;
 
-import js.io.File;
-import js.io.IOException;
-import js.nio.ByteBuffer;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

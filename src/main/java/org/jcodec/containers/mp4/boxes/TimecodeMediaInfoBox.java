@@ -2,7 +2,7 @@ package org.jcodec.containers.mp4.boxes;
 
 import org.jcodec.common.io.NIOUtils;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -72,5 +72,10 @@ public class TimecodeMediaInfoBox extends FullBox {
         out.putShort(bgcolor[1]);
         out.putShort(bgcolor[2]);
         NIOUtils.writePascalString(out, name);
+    }
+
+    @Override
+    public int estimateSize() {
+        return 32 + 1 + NIOUtils.asciiString(name).length;
     }
 }

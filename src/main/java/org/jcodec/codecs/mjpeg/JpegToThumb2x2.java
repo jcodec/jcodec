@@ -2,11 +2,11 @@ package org.jcodec.codecs.mjpeg;
 import org.jcodec.common.dct.IDCT2x2;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.tools.MathUtil;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,19 +20,11 @@ import js.nio.ByteBuffer;
  */
 public class JpegToThumb2x2 extends JpegDecoder {
 
-    public static JpegToThumb2x2 createJpegToThumb2x2() {
-        return new JpegToThumb2x2(false, false);
-    }
-
-    public JpegToThumb2x2(boolean interlace, boolean topFieldFirst) {
-        super(interlace, topFieldFirst);
-    }
-
     private static final int mapping2x2[] = new int[] { 0, 1, 2, 4, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
             4, 4, 4, 4, 4, 4, 4 };
 
     @Override
-    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture8Bit result, int[] buf,
+    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture result, int[] buf,
             int blkX, int blkY, int plane, int chroma, int field, int step) {
         buf[1] = buf[2] = buf[3] = 0;
         dcPredictor[plane] = buf[0] = readDCValue(bits, huff[chroma]) * quant[chroma][0] + dcPredictor[plane];
@@ -86,10 +78,10 @@ public class JpegToThumb2x2 extends JpegDecoder {
     }
 
     @Override
-    public Picture8Bit decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
-        Picture8Bit res = super.decodeField(data, data2, field, step);
+    public Picture decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
+        Picture res = super.decodeField(data, data2, field, step);
 
-        return new Picture8Bit(res.getWidth() >> 2, res.getHeight() >> 2, res.getData(), res.getColor(), new Rect(0, 0,
-                res.getCroppedWidth() >> 2, res.getCroppedHeight() >> 2));
+        return new Picture(res.getWidth() >> 2, res.getHeight() >> 2, res.getData(), null, res.getColor(), 0, new Rect(
+                0, 0, res.getCroppedWidth() >> 2, res.getCroppedHeight() >> 2));
     }
 }

@@ -1,7 +1,7 @@
 package org.jcodec.common.io;
-import js.io.IOException;
-import js.io.InputStream;
-import js.lang.IllegalArgumentException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.IllegalArgumentException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

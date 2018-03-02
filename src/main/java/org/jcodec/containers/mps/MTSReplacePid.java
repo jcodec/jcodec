@@ -7,12 +7,12 @@ import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PSISection;
 
-import js.io.File;
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.util.HashSet;
-import js.util.Set;
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,7 +42,7 @@ public class MTSReplacePid extends MTSUtils.TSReader {
         } else {
             System.out.print("TS ");
             ByteBuffer buf = fullPkt.duplicate();
-            short tsFlags = buf.getShortAt(buf.position() + 1);
+            short tsFlags = buf.getShort(buf.position() + 1);
             buf.putShort(buf.position() + 1, (short) (replacePid(replaceSpec, tsFlags & 0x1fff) | (tsFlags & ~0x1fff)));
         }
         return true;
@@ -97,7 +97,7 @@ public class MTSReplacePid extends MTSUtils.TSReader {
     }
 
     public static void main1(String[] args) throws IOException {
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, new MainUtils.Flag[] {});
         if (cmd.args.length < 2) {
             MainUtils.printHelpNoFlags("pid_from:pid_to,[pid_from:pid_to...]", "file");
             return;

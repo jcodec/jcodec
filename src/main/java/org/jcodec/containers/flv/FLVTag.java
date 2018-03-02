@@ -2,7 +2,7 @@ package org.jcodec.containers.flv;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.Codec;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -1,8 +1,10 @@
 package org.jcodec.codecs.h264.decode;
+import java.util.Arrays;
+
+import org.jcodec.codecs.h264.H264Const.PartPred;
+import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.MBType;
 import org.jcodec.common.model.ColorSpace;
-
-import js.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -34,6 +36,8 @@ public class MBlock {
     public boolean fieldDecoding;
     public MBType prevMbType;
     public int luma16x16Mode;
+    public H264Utils.MvList x = new H264Utils.MvList(16);
+    public PartPred[] partPreds = new PartPred[4];
 
     public boolean skipped;
     // Number of coefficients in AC blocks, stored in 8x8 encoding order: 0 1 4 5 2 3 6 7 8 9 12 13 10 11 14 15
@@ -208,5 +212,7 @@ public class MBlock {
         luma16x16Mode = 0;
         skipped = false;
         curMbType = null;
+        x.clear();
+        partPreds[0] = partPreds[1] = partPreds[2] = partPreds[3] = null; 
     }
 }

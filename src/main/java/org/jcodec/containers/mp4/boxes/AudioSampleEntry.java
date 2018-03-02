@@ -3,6 +3,7 @@ package org.jcodec.containers.mp4.boxes;
 import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelLayoutTag_UseChannelBitmap;
 import static org.jcodec.containers.mp4.boxes.channel.ChannelLayout.kCAFChannelLayoutTag_UseChannelDescriptions;
 
+import org.jcodec.api.NotSupportedException;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.model.ChannelLabel;
 import org.jcodec.common.model.Label;
@@ -10,15 +11,15 @@ import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.boxes.ChannelBox.ChannelDescription;
 import org.jcodec.containers.mp4.boxes.channel.ChannelLayout;
 
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
-import js.util.ArrayList;
-import js.util.Arrays;
-import js.util.HashMap;
-import js.util.HashSet;
-import js.util.List;
-import js.util.Map;
-import js.util.Set;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -274,6 +275,46 @@ public class AudioSampleEntry extends SampleEntry {
         return result;
     }
 
+    public static AudioSampleEntry compressedAudioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
+            int sampleRate, int samplesPerPacket, int bytesPerPacket, int bytesPerFrame) {
+        AudioSampleEntry ase = createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId,
+                (short) channels, (short) 16, sampleRate, (short) 0, 0, 65534, 0, samplesPerPacket, bytesPerPacket,
+                bytesPerFrame, 16 / 8, (short) 0);
+        return ase;
+    }
+
+    public static AudioSampleEntry audioSampleEntry(String fourcc, int drefId, int sampleSize, int channels,
+            int sampleRate, ByteOrder endian) {
+        AudioSampleEntry ase = createAudioSampleEntry(Header.createHeader(fourcc, 0), (short) drefId,
+                (short) channels, (short) 16, sampleRate, (short) 0, 0, 65535, 0, 1, sampleSize, channels * sampleSize,
+                sampleSize, (short) 1);
+    
+        NodeBox wave = new NodeBox(new Header("wave"));
+        ase.add(wave);
+    
+        wave.add(FormatBox.createFormatBox(fourcc));
+        wave.add(EndianBox.createEndianBox(endian));
+        wave.add(Box.terminatorAtom());
+        // ase.add(new ChannelBox(atom));
+    
+        return ase;
+    }
+
+    public static String lookupFourcc(AudioFormat format) {
+        if (format.getSampleSizeInBits() == 16 && !format.isBigEndian())
+            return "sowt";
+        else if (format.getSampleSizeInBits() == 24)
+            return "in24";
+        else
+            throw new NotSupportedException("Audio format " + format + " is not supported.");
+    }
+
+    public static AudioSampleEntry audioSampleEntryPCM(AudioFormat format) {
+        return audioSampleEntry(AudioSampleEntry.lookupFourcc(format), 1, format.getSampleSizeInBits() >> 3,
+                format.getChannels(), (int) format.getSampleRate(),
+                format.isBigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+    }
+
     private static Map<Label, ChannelLabel> translationStereo = new HashMap<Label, ChannelLabel>();
     private static Map<Label, ChannelLabel> translationSurround = new HashMap<Label, ChannelLabel>();
 
@@ -306,10 +347,6 @@ public class AudioSampleEntry extends SampleEntry {
         translationSurround.put(Label.RightTotal, ChannelLabel.STEREO_RIGHT);
         translationSurround.put(Label.LeftWide, ChannelLabel.STEREO_LEFT);
         translationSurround.put(Label.RightWide, ChannelLabel.STEREO_RIGHT);
-    }
-
-    protected void getModelFields(List<String> list) {
-        ToJSON.allFieldsExcept(this.getClass(), new String[]{"endian", "float", "format", "labels"});
     }
 
     public static Label[] getLabelsFromSampleEntry(AudioSampleEntry se) {

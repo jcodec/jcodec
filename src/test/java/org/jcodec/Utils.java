@@ -1,9 +1,23 @@
 package org.jcodec;
+
 import static org.jcodec.common.tools.MathUtil.abs;
 import static org.jcodec.common.tools.MathUtil.clipMax;
 import static org.junit.Assert.assertTrue;
 
-import org.jcodec.api.FrameGrab8Bit;
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
+
+import javax.imageio.ImageIO;
+
+import org.jcodec.api.FrameGrab;
 import org.jcodec.api.JCodecException;
 import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -11,21 +25,10 @@ import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 import org.jcodec.scale.AWTUtil;
 import org.junit.Assert;
-
-import js.io.EOFException;
-import js.io.File;
-import js.io.IOException;
-import js.lang.IllegalArgumentException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.nio.channels.ReadableByteChannel;
-import js.util.Arrays;
-
-import jsx.imageio.ImageIO;
 
 public class Utils {
 
@@ -89,10 +92,10 @@ public class Utils {
         try {
             ch1 = NIOUtils.readableChannel(file);
             ch2 = NIOUtils.readableChannel(refFile);
-            FrameGrab8Bit frameGrab1 = FrameGrab8Bit.createFrameGrab8Bit(ch1);
-            FrameGrab8Bit frameGrab2 = FrameGrab8Bit.createFrameGrab8Bit(ch2);
+            FrameGrab frameGrab1 = FrameGrab.createFrameGrab(ch1);
+            FrameGrab frameGrab2 = FrameGrab.createFrameGrab(ch2);
 
-            Picture8Bit fr1, fr2;
+            Picture fr1, fr2;
             do {
                 fr1 = frameGrab1.getNativeFrame();
                 fr2 = frameGrab2.getNativeFrame();
@@ -113,7 +116,7 @@ public class Utils {
         }
     }
 
-    public static int maxDiff(Picture8Bit fr1, Picture8Bit fr2) {
+    public static int maxDiff(Picture fr1, Picture fr2) {
         if (fr2.getWidth() != fr1.getWidth() || fr2.getHeight() != fr1.getHeight())
             throw new IllegalArgumentException("Diffing pictures of different sizes.");
 
@@ -127,16 +130,16 @@ public class Utils {
         return maxDiff;
     }
 
-    public static boolean picturesRoughlyEqual(Picture8Bit fr1, Picture8Bit fr2, int threshold) {
+    public static boolean picturesRoughlyEqual(Picture fr1, Picture fr2, int threshold) {
         if (fr2.getWidth() != fr1.getWidth() || fr2.getHeight() != fr1.getHeight())
             return false;
 
         for (int i = 0; i < fr2.getData().length; i++) {
-            int maxDiff = findMaxDiff(fr2.getPlaneData(i), fr1.getPlaneData(i));
-            if (maxDiff > 0) {
-                Logger.warn("Max diff: " + maxDiff);
+            int avgDiff = findAvgDiff(fr2.getPlaneData(i), fr1.getPlaneData(i));
+            if (avgDiff > 0) {
+                Logger.warn("Avg diff: " + avgDiff);
             }
-            if (maxDiff > threshold) {
+            if (avgDiff > threshold) {
                 return false;
             }
         }
@@ -152,9 +155,17 @@ public class Utils {
         }
         return maxDiff;
     }
+    
+    public static int findAvgDiff(byte[] one, byte[] two) {
+        int totalDiff = 0;
+        for (int i = 0; i < one.length; i++) {
+            totalDiff += Math.abs(one[i] - two[i]);
+        }
+        return totalDiff / one.length;
+    }
 
-    public static Picture8Bit readYuvFrame(ReadableByteChannel ch, int width, int height) throws IOException {
-        Picture8Bit result = Picture8Bit.create(width, height, ColorSpace.YUV420J);
+    public static Picture readYuvFrame(ReadableByteChannel ch, int width, int height) throws IOException {
+        Picture result = Picture.create(width, height, ColorSpace.YUV420J);
 
         for (int i = 0; i < result.getData().length; i++) {
             byte[] planeData = result.getPlaneData(i);
@@ -169,20 +180,63 @@ public class Utils {
         return result;
     }
 
-    public static void saveImage(Picture8Bit fr2, String formatName, String name) throws IOException {
-        ImageIO.write(AWTUtil.toBufferedImage8Bit(fr2), formatName, new File(name));
+    public static void saveImage(Picture fr2, String formatName, String name) throws IOException {
+        ImageIO.write(AWTUtil.toBufferedImage(fr2), formatName, new File(name));
     }
 
-    public static Picture8Bit diff(Picture8Bit one, Picture8Bit two, int mul) {
-        Picture8Bit result = Picture8Bit.create(one.getWidth(), one.getHeight(), one.getColor());
+    public static Picture diff(Picture one, Picture two, int mul) {
+        Picture result = Picture.create(one.getWidth(), one.getHeight(), one.getColor());
         byte[][] dataO = one.getData();
         byte[][] dataT = two.getData();
         byte[][] dataR = result.getData();
-        Arrays.fill(dataR[1], (byte)64);
+        Arrays.fill(dataR[1], (byte) 64);
         for (int i = 0; i < dataO[0].length; i++) {
             dataR[0][i] = (byte) (clipMax(abs(dataO[0][i] - dataT[0][i]) * mul, 255) - 128);
         }
 
         return result;
+    }
+
+    public static BufferedImage scale(BufferedImage source, int width, int height) {
+        AffineTransform at = AffineTransform.getScaleInstance(((double) width) / source.getWidth(), ((double) height)
+                / source.getHeight());
+        AffineTransformOp bilinearScaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BICUBIC);
+
+        return bilinearScaleOp.filter(
+            source,
+            new BufferedImage(width, height, source.getType()));
+    }
+    
+    private static double clampVector(double d) {
+        return d < 0 ? 0 : (d > 1 ? 1 : d);
+    }
+    
+    public static Picture buildSmoothRandomPic(int width, int height, int smooth, double vectorSmooth) {
+        Picture pic = Picture.create(width, height, ColorSpace.YUV420);
+        int[] prevRow = new int[width];
+        double vector = Math.random();
+        for (int p = 0; p < pic.getColor().nComp; p++) {
+            int val = (int) (Math.random() * 255);
+            pic.getPlaneData(p)[0] = (byte) (val - 128);
+            prevRow[0] = val;
+
+            for (int i = 1; i < pic.getPlaneData(p).length; i++) {
+                int predInd = i % pic.getPlaneWidth(p);
+                int pred;
+                if (i < pic.getPlaneWidth(p)) {
+                    pred = prevRow[predInd - 1];
+                } else if (predInd == 0) {
+                    pred = prevRow[predInd];
+                } else {
+                    vector = clampVector(vector + Math.random() * vectorSmooth - vectorSmooth / 2);
+                    pred = (int) (prevRow[predInd] * vector + prevRow[predInd - 1] * (1 - vector));
+                }
+                int delta = (int) (Math.random() * smooth) - (pred * smooth) / 256;
+                val = MathUtil.clip(pred + delta, 0, 255);
+                pic.getPlaneData(p)[i] = (byte) (val - 128);
+                prevRow[predInd] = val;
+            }
+        }
+        return pic;
     }
 }

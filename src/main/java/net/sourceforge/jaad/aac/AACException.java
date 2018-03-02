@@ -1,5 +1,5 @@
 package net.sourceforge.jaad.aac;
-import js.io.IOException;
+import java.io.IOException;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

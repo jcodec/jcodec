@@ -2,9 +2,10 @@ package org.jcodec.codecs.vp8;
 import static org.jcodec.codecs.vp8.VP8EncoderTest.LinearAlgebraUtil.substractVector;
 
 import org.jcodec.codecs.vp8.VP8EncoderTest.LinearAlgebraUtil;
+import org.jcodec.codecs.vpx.VP8DCT;
 import org.junit.Test;
 
-import js.lang.System;
+import java.lang.System;
 
 public class DCTTest {
 

@@ -17,7 +17,7 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.tools.MathUtil;
 
-import js.lang.System;
+import java.lang.System;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

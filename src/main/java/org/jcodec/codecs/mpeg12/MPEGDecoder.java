@@ -1,4 +1,5 @@
 package org.jcodec.codecs.mpeg12;
+
 import static org.jcodec.codecs.mpeg12.MPEGConst.BLOCK_TO_CC;
 import static org.jcodec.codecs.mpeg12.MPEGConst.EXTENSION_START_CODE;
 import static org.jcodec.codecs.mpeg12.MPEGConst.GROUP_START_CODE;
@@ -25,6 +26,10 @@ import static org.jcodec.common.model.ColorSpace.YUV420;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.model.ColorSpace.YUV444;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import org.jcodec.codecs.mpeg12.MPEGConst.MBType;
 import org.jcodec.codecs.mpeg12.bitstream.GOPHeader;
 import org.jcodec.codecs.mpeg12.bitstream.PictureHeader;
@@ -33,18 +38,15 @@ import org.jcodec.codecs.mpeg12.bitstream.SequenceExtension;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension;
 import org.jcodec.common.Assert;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SparseIDCT;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
 import org.jcodec.common.model.Size;
-
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -63,12 +65,21 @@ public class MPEGDecoder extends VideoDecoder {
 
     protected SequenceHeader sh;
     protected GOPHeader gh;
-    private Picture8Bit[] refFrames;
-    private Picture8Bit[] refFields;
+    private Picture[] refFrames;
+    private Picture[] refFields;
+
+    public static MPEGDecoder createMpegDecoder(int downscale) {
+        if (downscale == 2)
+            return new Mpeg2Thumb4x4();
+        else if (downscale == 4)
+            return new Mpeg2Thumb2x2();
+        else
+            return new MPEGDecoder();
+    }
 
     public MPEGDecoder() {
-        this.refFrames = new Picture8Bit[2];
-        this.refFields = new Picture8Bit[2];
+        this.refFrames = new Picture[2];
+        this.refFields = new Picture[2];
     }
 
     public static class Context {
@@ -84,35 +95,34 @@ public class MPEGDecoder extends VideoDecoder {
         public int[] scan;
         public int picWidth;
         public int picHeight;
-        
+
         public Context() {
             this.intra_dc_predictor = new int[3];
         }
     }
 
     @Override
-    public Picture8Bit decodeFrame8Bit(ByteBuffer ByteBuffer, byte[][] buf) {
+    public Picture decodeFrame(ByteBuffer buffer, byte[][] buf) {
 
-        PictureHeader ph = readHeader(ByteBuffer);
+        PictureHeader ph = readHeader(buffer);
         if (refFrames[0] == null && ph.picture_coding_type > 1 || refFrames[1] == null && ph.picture_coding_type > 2) {
-            throw new RuntimeException("Not enough references to decode " + (ph.picture_coding_type == 1 ? "P" : "B")
-                    + " frame");
+            throw new RuntimeException(
+                    "Not enough references to decode " + (ph.picture_coding_type == 1 ? "P" : "B") + " frame");
         }
         Context context = initContext(sh, ph);
-        Picture8Bit pic = new Picture8Bit(context.codedWidth, context.codedHeight, buf, context.color, new Rect(0, 0,
+        Picture pic = new Picture(context.codedWidth, context.codedHeight, buf, null, context.color, 0, new Rect(0, 0,
                 context.picWidth, context.picHeight));
         if (ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
-            decodePicture(context, ph, ByteBuffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
-            ph = readHeader(ByteBuffer);
+            decodePicture(context, ph, buffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
+            ph = readHeader(buffer);
             context = initContext(sh, ph);
-            decodePicture(context, ph, ByteBuffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
+            decodePicture(context, ph, buffer, buf, ph.pictureCodingExtension.picture_structure - 1, 1);
         } else {
-            decodePicture(context, ph, ByteBuffer, buf, 0, 0);
+            decodePicture(context, ph, buffer, buf, 0, 0);
         }
 
-        if (ph.picture_coding_type == MPEGConst.IntraCoded
-                || ph.picture_coding_type == MPEGConst.PredictiveCoded) {
-            Picture8Bit unused = refFrames[1];
+        if (ph.picture_coding_type == MPEGConst.IntraCoded || ph.picture_coding_type == MPEGConst.PredictiveCoded) {
+            Picture unused = refFrames[1];
             refFrames[1] = refFrames[0];
             refFrames[0] = copyAndCreateIfNeeded(pic, unused);
         }
@@ -120,7 +130,7 @@ public class MPEGDecoder extends VideoDecoder {
         return pic;
     }
 
-    private Picture8Bit copyAndCreateIfNeeded(Picture8Bit src, Picture8Bit dst) {
+    private Picture copyAndCreateIfNeeded(Picture src, Picture dst) {
         if (dst == null || !dst.compatible(src)) {
             dst = src.createCompatible();
         }
@@ -146,8 +156,9 @@ public class MPEGDecoder extends VideoDecoder {
             } else if (code == PICTURE_START_CODE) {
                 ph = PictureHeader.read(segment);
             } else if (code == EXTENSION_START_CODE) {
-                int extType = segment.getAt(4) >> 4;
-                if (extType == SequenceExtension.Sequence_Extension || extType == SequenceScalableExtension.Sequence_Scalable_Extension
+                int extType = segment.get(4) >> 4;
+                if (extType == SequenceExtension.Sequence_Extension
+                        || extType == SequenceScalableExtension.Sequence_Scalable_Extension
                         || extType == SequenceDisplayExtension.Sequence_Display_Extension)
                     SequenceHeader.readExtension(segment, sh);
                 else
@@ -157,7 +168,7 @@ public class MPEGDecoder extends VideoDecoder {
             } else {
                 break;
             }
-            buffer.setPosition(fork.position());
+            buffer.position(fork.position());
         }
         return ph;
     }
@@ -211,7 +222,7 @@ public class MPEGDecoder extends VideoDecoder {
         return (((sh.vertical_size >> field) + 15) & ~0xf) << field;
     }
 
-    public Picture8Bit decodePicture(Context context, PictureHeader ph, ByteBuffer buffer, byte[][] buf, int vertOff,
+    public Picture decodePicture(Context context, PictureHeader ph, ByteBuffer buffer, byte[][] buf, int vertOff,
             int vertStep) {
 
         int planeSize = context.codedWidth * context.codedHeight;
@@ -223,7 +234,7 @@ public class MPEGDecoder extends VideoDecoder {
         try {
             ByteBuffer segment;
             while ((segment = nextSegment(buffer)) != null) {
-                int startCode = segment.getAt(3) & 0xff;
+                int startCode = segment.get(3) & 0xff;
                 if (startCode >= SLICE_START_CODE_FIRST && startCode <= SLICE_START_CODE_LAST) {
                     doDecodeSlice(context, ph, buf, vertOff, vertStep, segment);
                 } else if (startCode >= 0xB3 && startCode != 0xB6 && startCode != 0xB7) {
@@ -234,7 +245,8 @@ public class MPEGDecoder extends VideoDecoder {
                 }
             }
 
-            Picture8Bit pic = Picture8Bit.createPicture8Bit(context.codedWidth, context.codedHeight, buf, context.color);
+            Picture pic = Picture.createPicture(context.codedWidth, context.codedHeight, buf,
+                    context.color);
             if ((ph.picture_coding_type == MPEGConst.IntraCoded || ph.picture_coding_type == MPEGConst.PredictiveCoded)
                     && ph.pictureCodingExtension != null && ph.pictureCodingExtension.picture_structure != Frame) {
                 refFields[ph.pictureCodingExtension.picture_structure - 1] = copyAndCreateIfNeeded(pic,
@@ -249,9 +261,9 @@ public class MPEGDecoder extends VideoDecoder {
 
     private void doDecodeSlice(Context context, PictureHeader ph, byte[][] buf, int vertOff, int vertStep,
             ByteBuffer segment) throws IOException {
-        int startCode = segment.getAt(3) & 0xff;
+        int startCode = segment.get(3) & 0xff;
         ByteBuffer dup = segment.duplicate();
-        dup.setPosition(4);
+        dup.position(4);
         try {
             decodeSlice(ph, startCode, context, buf, BitReader.createBitReader(dup), vertOff, vertStep);
         } catch (RuntimeException e) {
@@ -272,8 +284,8 @@ public class MPEGDecoder extends VideoDecoder {
         return null;
     }
 
-    public void decodeSlice(PictureHeader ph, int verticalPos, Context context, byte[][] buf, BitReader _in, int vertOff,
-            int vertStep) throws IOException {
+    public void decodeSlice(PictureHeader ph, int verticalPos, Context context, byte[][] buf, BitReader _in,
+            int vertOff, int vertStep) throws IOException {
 
         int stride = context.codedWidth;
 
@@ -295,9 +307,10 @@ public class MPEGDecoder extends VideoDecoder {
                 _in.readNBit(8);
         }
 
-        MPEGPred pred = new MPEGPred(ph.pictureCodingExtension != null ? ph.pictureCodingExtension.f_code
-                : new int[][] { new int[] { ph.forward_f_code, ph.forward_f_code },
-                        new int[] { ph.backward_f_code, ph.backward_f_code } },
+        MPEGPred pred = new MPEGPred(
+                ph.pictureCodingExtension != null ? ph.pictureCodingExtension.f_code
+                        : new int[][] { new int[] { ph.forward_f_code, ph.forward_f_code },
+                                new int[] { ph.backward_f_code, ph.backward_f_code } },
                 sh.sequenceExtension != null ? sh.sequenceExtension.chroma_format : Chroma420,
                 ph.pictureCodingExtension != null && ph.pictureCodingExtension.top_field_first == 0 ? false : true);
 
@@ -399,7 +412,7 @@ public class MPEGDecoder extends VideoDecoder {
                     pred.predictInField(refFields, mbX << 4, mbY << 4, predFwd, bits, motion_type, 0,
                             ph.pictureCodingExtension.picture_structure - 1);
                 } else {
-                    pred.predictInField(new Picture8Bit[] { refFrames[refIdx], refFrames[refIdx] }, mbX << 4, mbY << 4,
+                    pred.predictInField(new Picture[] { refFrames[refIdx], refFrames[refIdx] }, mbX << 4, mbY << 4,
                             predFwd, bits, motion_type, 0, ph.pictureCodingExtension.picture_structure - 1);
                 }
             }
@@ -416,13 +429,14 @@ public class MPEGDecoder extends VideoDecoder {
                 pred.predictInFrame(refFrames[0], mbX << 4, mbY << 4, predBack, bits, motion_type, 1,
                         spatial_temporal_weight_code);
             } else {
-                pred.predictInField(new Picture8Bit[] { refFrames[0], refFrames[0] }, mbX << 4, mbY << 4, predBack, bits,
-                        motion_type, 1, ph.pictureCodingExtension.picture_structure - 1);
+                pred.predictInField(new Picture[] { refFrames[0], refFrames[0] }, mbX << 4, mbY << 4, predBack,
+                        bits, motion_type, 1, ph.pictureCodingExtension.picture_structure - 1);
             }
         }
         context.lastPredB = mbType;
-        int[][] pp = mbType.macroblock_intra == 1 ? new int[][] { new int[256], new int[1 << (chromaFormat + 5)],
-                new int[1 << (chromaFormat + 5)] } : buildPred(predFwd, predBack);
+        int[][] pp = mbType.macroblock_intra == 1
+                ? new int[][] { new int[256], new int[1 << (chromaFormat + 5)], new int[1 << (chromaFormat + 5)] }
+                : buildPred(predFwd, predBack);
 
         if (mbType.macroblock_intra != 0 && concealmentMv)
             Assert.assertEquals(1, bits.read1Bit()); // Marker
@@ -437,8 +451,8 @@ public class MPEGDecoder extends VideoDecoder {
                 && ph.pictureCodingExtension.intra_vlc_format == 1)
             vlcCoeff = vlcCoeff1;
 
-        int[] qScaleTab = ph.pictureCodingExtension != null && ph.pictureCodingExtension.q_scale_type == 1 ? MPEGConst.qScaleTab2
-                : MPEGConst.qScaleTab1;
+        int[] qScaleTab = ph.pictureCodingExtension != null && ph.pictureCodingExtension.q_scale_type == 1
+                ? MPEGConst.qScaleTab2 : MPEGConst.qScaleTab1;
         int qScale = qScaleTab[qScaleCode[0]];
 
         int intra_dc_mult = 8;
@@ -447,7 +461,7 @@ public class MPEGDecoder extends VideoDecoder {
 
         int blkCount = 6 + (chromaFormat == Chroma420 ? 0 : (chromaFormat == Chroma422 ? 2 : 6));
         int[] block = new int[64];
-//        System.out.print(mbAddr + ": ");
+        // System.out.print(mbAddr + ": ");
         for (int i = 0, cbpMask = 1 << (blkCount - 1); i < blkCount; i++, cbpMask >>= 1) {
             if ((cbp & cbpMask) == 0)
                 continue;
@@ -457,8 +471,8 @@ public class MPEGDecoder extends VideoDecoder {
                 blockIntra(bits, vlcCoeff, block, context.intra_dc_predictor, i, context.scan,
                         sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, intra_dc_mult, qScale, qmat);
             else
-                blockInter(bits, vlcCoeff, block, context.scan,
-                        sh.hasExtensions() || ph.hasExtensions() ? 12 : 8, qScale, qmat);
+                blockInter(bits, vlcCoeff, block, context.scan, sh.hasExtensions() || ph.hasExtensions() ? 12 : 8,
+                        qScale, qmat);
 
             mapBlock(block, pp[BLOCK_TO_CC[i]], i, dctType, chromaFormat);
         }
@@ -516,18 +530,18 @@ public class MPEGDecoder extends VideoDecoder {
 
     private void mvZero(Context context, PictureHeader ph, MPEGPred pred, int mbX, int mbY, int[][] mbPix) {
         if (ph.picture_coding_type == MPEGConst.PredictiveCoded) {
-            pred.predict16x16NoMV(refFrames[0], mbX << 4, mbY << 4, ph.pictureCodingExtension == null ? Frame
-                    : ph.pictureCodingExtension.picture_structure, 0, mbPix);
+            pred.predict16x16NoMV(refFrames[0], mbX << 4, mbY << 4,
+                    ph.pictureCodingExtension == null ? Frame : ph.pictureCodingExtension.picture_structure, 0, mbPix);
         } else {
             int[][] pp = mbPix;
             if (context.lastPredB.macroblock_motion_backward == 1) {
-                pred.predict16x16NoMV(refFrames[0], mbX << 4, mbY << 4, ph.pictureCodingExtension == null ? Frame
-                        : ph.pictureCodingExtension.picture_structure, 1, pp);
+                pred.predict16x16NoMV(refFrames[0], mbX << 4, mbY << 4,
+                        ph.pictureCodingExtension == null ? Frame : ph.pictureCodingExtension.picture_structure, 1, pp);
                 pp = new int[][] { new int[mbPix[0].length], new int[mbPix[1].length], new int[mbPix[2].length] };
             }
             if (context.lastPredB.macroblock_motion_forward == 1) {
-                pred.predict16x16NoMV(refFrames[1], mbX << 4, mbY << 4, ph.pictureCodingExtension == null ? Frame
-                        : ph.pictureCodingExtension.picture_structure, 0, pp);
+                pred.predict16x16NoMV(refFrames[1], mbX << 4, mbY << 4,
+                        ph.pictureCodingExtension == null ? Frame : ph.pictureCodingExtension.picture_structure, 0, pp);
                 if (mbPix != pp)
                     avgPred(mbPix, pp);
             }
@@ -592,9 +606,9 @@ public class MPEGDecoder extends VideoDecoder {
     }
 
     protected static final byte clipTo8Bit(int val) {
-        return (byte)((val < 0 ? 0 : (val > 255 ? 255 : val)) - 128);
+        return (byte) ((val < 0 ? 0 : (val > 255 ? 255 : val)) - 128);
     }
-    
+
     protected static final int clip(int val) {
         return val < 0 ? 0 : (val > 255 ? 255 : val);
     }
@@ -637,8 +651,8 @@ public class MPEGDecoder extends VideoDecoder {
 
     protected void blockInter(BitReader bits, VLC vlcCoeff, int[] block, int[] scan, int escSize, int qScale,
             int[] qmat) {
-        
-//        System.out.println();
+
+        // System.out.println();
 
         int idx = -1;
         if (vlcCoeff == vlcCoeff0 && bits.checkNBit(1) == 1) {
@@ -663,7 +677,7 @@ public class MPEGDecoder extends VideoDecoder {
                 ac = toSigned(quantInter(readVLC & 0x3f, qScale * qmat[idx]), bits.read1Bit());
             }
             SparseIDCT.coeff(block, scan[idx], ac);
-//            System.out.print(ac + ",");
+            // System.out.print(ac + ",");
         }
         SparseIDCT.finish(block);
     }
@@ -695,8 +709,7 @@ public class MPEGDecoder extends VideoDecoder {
         throw new RuntimeException("Unsupported chroma format: " + sh.sequenceExtension.chroma_format);
     }
 
-    @Override
-    public int probe(ByteBuffer data) {
+    public static int probe(ByteBuffer data) {
         data = data.duplicate();
         data.order(ByteOrder.BIG_ENDIAN);
 
@@ -715,27 +728,49 @@ public class MPEGDecoder extends VideoDecoder {
         return 0;
     }
 
-    public static Size getSize(ByteBuffer data) {
-        SequenceHeader sh = getSequenceHeader(data.duplicate());
-        return new Size(sh.horizontal_size, sh.vertical_size);
-    }
-
-    private static SequenceHeader getSequenceHeader(ByteBuffer data) {
+    private static ByteBuffer getSequenceHeader(ByteBuffer data) {
         ByteBuffer segment = nextSegment(data);
         while (segment != null) {
             int marker = segment.getInt();
             if (marker == (0x100 | SEQUENCE_HEADER_CODE)) {
-                return SequenceHeader.read(segment);
+                return segment;
             }
             segment = nextSegment(data);
         }
         return null;
     }
+    
+    private static ByteBuffer getRawPictureHeader(ByteBuffer data) {
+        ByteBuffer segment = nextSegment(data);
+        while (segment != null) {
+            int marker = segment.getInt();
+            if (marker == (0x100 | PICTURE_START_CODE)) {
+                return segment;
+            }
+            segment = nextSegment(data);
+        }
+        return null;
+    }
+    
+    public static int getSequenceNumber(ByteBuffer data) {
+        PictureHeader ph = getPictureHeader(data);
+        if(ph == null)
+            return -1;
+        return ph.temporal_reference;
+    }
+
+    public static PictureHeader getPictureHeader(ByteBuffer data) {
+        ByteBuffer bb = getRawPictureHeader(data);
+        if(bb == null)
+            return null;
+        PictureHeader ph = PictureHeader.read(bb);
+        return ph;
+    }
 
     @Override
-    public VideoDecoder downscaled(int ratio) {
-        if(ratio == 1)
-            return this;
-        return null;
+    public VideoCodecMeta getCodecMeta(ByteBuffer data) {
+        ByteBuffer codecPrivate = getSequenceHeader(data.duplicate());
+        SequenceHeader sh = SequenceHeader.read(codecPrivate.duplicate());
+        return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(sh.horizontal_size, sh.vertical_size), ColorSpace.YUV420);
     }
 }

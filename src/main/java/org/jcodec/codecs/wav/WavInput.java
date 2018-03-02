@@ -4,12 +4,12 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.AudioUtil;
 import org.jcodec.common.io.NIOUtils;
 
-import js.io.Closeable;
-import js.io.File;
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.nio.FloatBuffer;
-import js.nio.channels.ReadableByteChannel;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.channels.ReadableByteChannel;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

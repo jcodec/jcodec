@@ -2,7 +2,7 @@ package org.jcodec.common;
 
 import org.jcodec.common.model.Packet;
 
-import js.io.IOException;
+import java.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -13,6 +13,6 @@ import js.io.IOException;
  */
 public interface DemuxerTrack {
     Packet nextFrame() throws IOException;
-
+    
     DemuxerTrackMeta getMeta();
 }

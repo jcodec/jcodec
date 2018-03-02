@@ -1,7 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -39,6 +39,11 @@ public class EndianBox extends Box {
 
     protected void doWrite(ByteBuffer out) {
         out.putShort((short) (endian == ByteOrder.LITTLE_ENDIAN ? 1 : 0));
+    }
+    
+    @Override
+    public int estimateSize() {
+        return 2 + 8;
     }
 
     public ByteOrder getEndian() {

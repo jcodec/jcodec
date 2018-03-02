@@ -1,7 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
-import js.util.Arrays;
+import java.util.Arrays;
 import net.sourceforge.jaad.aac.AACException;
-import net.sourceforge.jaad.aac.AACDecoderConfig;
+import net.sourceforge.jaad.aac.DecoderConfig;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.tools.MSMask;
@@ -27,7 +27,7 @@ public class CPE extends Element implements SyntaxConstants {
 		icsR = new ICStream(frameLength);
 	}
 
-	void decode(IBitStream _in, AACDecoderConfig conf) throws AACException {
+	void decode(IBitStream _in, DecoderConfig conf) throws AACException {
 		final Profile profile = conf.getProfile();
 		final SampleFrequency sf = conf.getSampleFrequency();
 		if(sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE)) throw new AACException("invalid sample frequency");
@@ -92,7 +92,7 @@ public class CPE extends Element implements SyntaxConstants {
 
     public static MSMask msMaskFromInt(int i) throws AACException {
         MSMask[] values = MSMask.values();
-        if (values.length >= i) {
+        if (i >= values.length) {
             throw new AACException("unknown MS mask type");
         }
         return values[i];

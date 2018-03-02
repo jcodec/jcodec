@@ -13,9 +13,9 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import js.io.FileInputStream;
-import js.lang.System;
-import js.nio.ByteBuffer;
+import java.io.FileInputStream;
+import java.lang.System;
+import java.nio.ByteBuffer;
 
 public class MkvBlockTest {
     
@@ -65,12 +65,12 @@ public class MkvBlockTest {
     public void testReadingEbml() throws Exception {
         ByteBuffer bb = ByteBuffer.wrap(new byte[]{(byte)0x82, 0x00, 0x00, (byte)0x86, 0x07, 0x41, (byte)0xE0, 0x60, 0x5F, 0x60, 0x5F, (byte)0xBF, (byte)0xBF, (byte)0xBF, 0x5F, (byte)0x9F});
         int startPosition = 5;
-        bb.setPosition(startPosition);
+        bb.position(startPosition);
         MkvBlock be = new MkvBlock(SimpleBlock.id);
         be.offset = 0x112;
         be.dataOffset = 0x115;
         be.dataLen = 0x1390;
-        int[] sizes = new int[bb.getAt(4)+1];
+        int[] sizes = new int[bb.get(4)+1];
         be.headerSize = MkvBlock.readEBMLLaceSizes(bb, sizes, (int) be.dataLen, startPosition);
         Assert.assertNotNull(sizes);
         Assert.assertEquals(bb.capacity(), be.headerSize);
@@ -88,30 +88,30 @@ public class MkvBlockTest {
     public void testReadingXiph() throws Exception {
         ByteBuffer bb = ByteBuffer.wrap(new byte[]{(byte)0x82, 0x00, (byte)0xAE, 0x02, 0x07, 0x51, (byte)0x92, (byte)0x92, 0x50, 0x4F, 0x4B, 0x54, (byte)0xD4, (byte)0xFD});
         int startPosition = 5;
-        bb.setPosition(startPosition);
+        bb.position(startPosition);
         MkvBlock be = new MkvBlock(Block.id);
         be.offset = 0x149B0;
         be.dataOffset = 0x149B3;
         be.dataLen = 0x353;
-        int[] sizes = new int[bb.getAt(4)+1];
+        int[] sizes = new int[bb.get(4)+1];
         be.headerSize = MkvBlock.readXiphLaceSizes(bb, sizes, (int)be.dataLen, startPosition);
         Assert.assertEquals(12, be.headerSize);
-        int third = bb.getAt(7) & 0xFF;
-        int second = bb.getAt(6) & 0xFF;
-        int eightth = (int)(be.dataLen) - (bb.getAt(5) + second + third + bb.getAt(8) + bb.getAt(9) + bb.getAt(10) + bb.getAt(11) + be.headerSize);
-        Assert.assertArrayEquals(new int[]{bb.getAt(5), second, third, bb.getAt(8), bb.getAt(9), bb.getAt(10), bb.getAt(11), eightth }, sizes);
+        int third = bb.get(7) & 0xFF;
+        int second = bb.get(6) & 0xFF;
+        int eightth = (int)(be.dataLen) - (bb.get(5) + second + third + bb.get(8) + bb.get(9) + bb.get(10) + bb.get(11) + be.headerSize);
+        Assert.assertArrayEquals(new int[]{bb.get(5), second, third, bb.get(8), bb.get(9), bb.get(10), bb.get(11), eightth }, sizes);
     }
 
     @Test
     public void testReadingXiphV2() throws Exception {
         ByteBuffer bb = ByteBuffer.wrap(new byte[]{(byte)0x82, 0x00, (byte)0xAE, 0x02, 0x04, (byte)187, (byte)255, (byte)255, 120, (byte)255, 0, 60});
         int startPosition = 5;
-        bb.setPosition(startPosition);
+        bb.position(startPosition);
         MkvBlock be = new MkvBlock(Block.id);
         be.offset = 0x149B0;
         be.dataOffset = 0x149B3;
         be.dataLen = 0x353;
-        int[] sizes = new int[bb.getAt(4)+1];
+        int[] sizes = new int[bb.get(4)+1];
         be.headerSize = MkvBlock.readXiphLaceSizes(bb, sizes, (int)be.dataLen, startPosition);
         Assert.assertEquals(12, be.headerSize);
         Assert.assertArrayEquals(new int[]{187, 630, 255, 60, (int)(be.dataLen) - (187 + 630 + 255 + 60 + be.headerSize) }, sizes);

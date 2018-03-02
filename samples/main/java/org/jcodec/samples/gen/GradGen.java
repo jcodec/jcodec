@@ -2,23 +2,26 @@ package org.jcodec.samples.gen;
 
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
-import org.jcodec.codecs.raw.V210Encoder;
-import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
-import org.jcodec.common.model.Size;
-import org.jcodec.common.tools.MathUtil;
-import org.jcodec.containers.mp4.MP4Packet;
-import org.jcodec.containers.mp4.muxer.FramesMP4MuxerTrack;
-import org.jcodec.containers.mp4.muxer.MP4Muxer;
-
 import java.io.File;
 import java.nio.ByteBuffer;
+
+import org.jcodec.codecs.raw.V210Encoder;
+import org.jcodec.common.Codec;
+import org.jcodec.common.MuxerTrack;
+import org.jcodec.common.VideoCodecMeta;
+import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Packet.FrameType;
+import org.jcodec.common.tools.MathUtil;
+import org.jcodec.containers.mp4.MP4Packet;
+import org.jcodec.containers.mp4.muxer.MP4Muxer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
  * 
- * This code generates two dark gradients 8bit and 10 bit quantization and saves
+ * This code generates two dark gradients and 10 bit quantization and saves
  * it into v210 mov
  * 
  * @author The JCodec project
@@ -32,7 +35,7 @@ public class GradGen {
         }
         int width = 640;
         int height = 480;
-        Picture8Bit pic = Picture8Bit.create(width, height, ColorSpace.YUV422);
+        Picture pic = Picture.create(width, height, ColorSpace.YUV422);
 
         drawGrad(pic.getPlaneData(0), new Size(pic.getWidth(), pic.getHeight()));
 
@@ -40,14 +43,14 @@ public class GradGen {
         MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(writableChannel(new File(args[0])));
 
         ByteBuffer out = ByteBuffer.allocate(width * height * 10);
-        ByteBuffer frame = encoder.encodeFrame8Bit(out, pic);
+        ByteBuffer frame = encoder.encodeFrame(out, pic);
 
-        FramesMP4MuxerTrack videoTrack = muxer.addVideoTrack("v210", new Size(width, height), "jcodec", 24000);
+        MuxerTrack videoTrack = muxer.addVideoTrack(Codec.V210, VideoCodecMeta.createSimpleVideoCodecMeta(new Size(width, height), ColorSpace.YUV422_10));
 
         for (int i = 0; i < Integer.parseInt(args[1]); i++) {
-            videoTrack.addFrame(MP4Packet.createMP4Packet(frame, i * 1001, 24000, 1001, i, true, null, 0, i * 1001, 0));
+            videoTrack.addFrame(MP4Packet.createMP4Packet(frame, i * 1001, 24000, 1001, i, FrameType.KEY, null, 0, i * 1001, 0));
         }
-        muxer.writeHeader();
+        muxer.finish();
     }
 
     private static void drawGrad(byte[] y, Size ySize) {

@@ -50,6 +50,11 @@ public class ClipRegionBox extends Box {
         out.putShort(height);
         out.putShort(width);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 10 + 8;
+    }
 
     public short getRgnSize() {
         return rgnSize;

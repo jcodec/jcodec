@@ -3,19 +3,22 @@ import static org.jcodec.codecs.mjpeg.JpegConst.naturalOrder;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.codecs.mjpeg.tools.Asserts;
+import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.VLC;
 import org.jcodec.common.io.VLCBuilder;
+import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rect;
+import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MathUtil;
 
-import js.nio.ByteBuffer;
-import js.util.Arrays;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,14 +32,27 @@ public class JpegDecoder extends VideoDecoder {
     private boolean topFieldFirst;
     int[] buf;
 
-    public JpegDecoder(boolean interlace, boolean topFieldFirst) {
+    public JpegDecoder() {
         this.buf = new int[64];
+    }
+    
+    public static JpegDecoder createJpegDecoder(int downscale) {
+        if (downscale == 2) {
+            return new JpegToThumb4x4();
+        } else if (downscale == 4) {
+            return new JpegToThumb2x2();
+        } else {
+            return new JpegDecoder();
+        }
+    }
+
+    public void setInterlace(boolean interlace, boolean topFieldFirst) {
         this.interlace = interlace;
         this.topFieldFirst = topFieldFirst;
     }
 
-    private Picture8Bit decodeScan(ByteBuffer data, FrameHeader header, ScanHeader scan, VLC[] huffTables, int[][] quant,
-            byte[][] data2, int field, int step) {
+    private Picture decodeScan(ByteBuffer data, FrameHeader header, ScanHeader scan, VLC[] huffTables,
+            int[][] quant, byte[][] data2, int field, int step) {
         int blockW = header.getHmax();
         int blockH = header.getVmax();
         int mcuW = blockW << 3;
@@ -49,8 +65,8 @@ public class JpegDecoder extends VideoDecoder {
         int yBlocks = (height + mcuH - 1) >> (blockH + 2);
 
         int nn = blockW + blockH;
-        Picture8Bit result = new Picture8Bit(xBlocks << (blockW + 2), yBlocks << (blockH + 2), data2,
-                nn == 4 ? ColorSpace.YUV420J : (nn == 3 ? ColorSpace.YUV422J : ColorSpace.YUV444J), new Rect(0, 0,
+        Picture result = new Picture(xBlocks << (blockW + 2), yBlocks << (blockH + 2), data2, null,
+                nn == 4 ? ColorSpace.YUV420J : (nn == 3 ? ColorSpace.YUV422J : ColorSpace.YUV444J), 0, new Rect(0, 0,
                         width, height));
 
         BitReader bits = BitReader.createBitReader(data);
@@ -66,14 +82,13 @@ public class JpegDecoder extends VideoDecoder {
         int dstride = step * stride;
         for (int i = 0, off = field * stride + y * dstride + x, poff = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++)
-                plane[j + off] = (byte)(MathUtil.clip(patch[j + poff], 0, 255) - 128);
+                plane[j + off] = (byte) (MathUtil.clip(patch[j + poff], 0, 255) - 128);
             off += dstride;
             poff += 8;
         }
     }
 
-
-    void decodeMCU(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture8Bit result, int bx, int by,
+    void decodeMCU(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture result, int bx, int by,
             int blockH, int blockV, int field, int step) {
         int sx = bx << (blockH - 1);
         int sy = by << (blockV - 1);
@@ -88,8 +103,8 @@ public class JpegDecoder extends VideoDecoder {
         decodeBlock(bits, dcPredictor, quant, huff, result, buf, bx << 3, by << 3, 2, 1, field, step);
     }
 
-    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture8Bit result, int[] buf, int blkX,
-            int blkY, int plane, int chroma, int field, int step) {
+    void decodeBlock(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture result, int[] buf,
+            int blkX, int blkY, int plane, int chroma, int field, int step) {
         Arrays.fill(buf, 0);
         dcPredictor[plane] = buf[0] = readDCValue(bits, huff[chroma]) * quant[chroma][0] + dcPredictor[plane];
         readACValues(bits, buf, huff[chroma + 2], quant[chroma]);
@@ -124,32 +139,40 @@ public class JpegDecoder extends VideoDecoder {
         return (length >= 1 && raw < (1 << length - 1)) ? -(1 << length) + 1 + raw : raw;
     }
 
-    public Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] data2) {
+    public Picture decodeFrame(ByteBuffer data, byte[][] data2) {
 
         if (interlace) {
-            Picture8Bit r1 = decodeField(data, data2, topFieldFirst ? 0 : 1, 2);
-            Picture8Bit r2 = decodeField(data, data2, topFieldFirst ? 1 : 0, 2);
-            return Picture8Bit.createPicture8Bit(r1.getWidth(), r1.getHeight() << 1, data2, r1.getColor());
+            Picture r1 = decodeField(data, data2, topFieldFirst ? 0 : 1, 2);
+            Picture r2 = decodeField(data, data2, topFieldFirst ? 1 : 0, 2);
+            return Picture.createPicture(r1.getWidth(), r1.getHeight() << 1, data2, r1.getColor());
         } else {
             return decodeField(data, data2, 0, 1);
         }
     }
 
-    public Picture8Bit decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
-        Picture8Bit result = null;
+    public Picture decodeField(ByteBuffer data, byte[][] data2, int field, int step) {
+        Picture result = null;
 
         FrameHeader header = null;
         VLC[] huffTables = new VLC[] { JpegConst.YDC_DEFAULT, JpegConst.CDC_DEFAULT, JpegConst.YAC_DEFAULT,
                 JpegConst.CAC_DEFAULT };
-        int[][] quant = new int[][] {JpegConst.DEFAULT_QUANT_LUMA, JpegConst.DEFAULT_QUANT_CHROMA}; 
+        int[][] quant = new int[][] { JpegConst.DEFAULT_QUANT_LUMA, JpegConst.DEFAULT_QUANT_CHROMA };
         ScanHeader scan = null;
+        boolean skipToNext = false;
         while (data.hasRemaining()) {
-            int marker = data.get() & 0xff;
+            int marker;
+            if (!skipToNext) {
+                marker = data.get() & 0xff;
+            } else {
+                while ((marker = (data.get() & 0xff)) != 0xff)
+                    ;
+            }
+            skipToNext = false;
             if (marker == 0)
                 continue;
             if (marker != 0xFF)
-                throw new RuntimeException("@" + Long.toHexString(data.position()) + " Marker expected: 0x"
-                        + Integer.toHexString(marker));
+                throw new RuntimeException(
+                        "@" + Long.toHexString(data.position()) + " Marker expected: 0x" + Integer.toHexString(marker));
 
             int b;
             while ((b = data.get() & 0xff) == 0xff)
@@ -157,7 +180,7 @@ public class JpegDecoder extends VideoDecoder {
             // Debug.trace("%s", JpegConst.toString(b));
             if (b == JpegConst.SOF0) {
                 header = FrameHeader.read(data);
-                // Debug.trace("    %s", image.frame);
+                // Debug.trace(" %s", image.frame);
             } else if (b == JpegConst.DHT) {
                 int len1 = data.getShort() & 0xffff;
                 ByteBuffer buf = NIOUtils.read(data, len1 - 2);
@@ -178,25 +201,23 @@ public class JpegDecoder extends VideoDecoder {
                     throw new UnhandledStateException("unhandled - more than one scan header");
                 }
                 scan = ScanHeader.read(data);
-                // Debug.trace("    %s", image.scan);
+                // Debug.trace(" %s", image.scan);
                 result = decodeScan(readToMarker(data), header, scan, huffTables, quant, data2, field, step);
             } else if (b == JpegConst.SOI || (b >= JpegConst.RST0 && b <= JpegConst.RST7)) {
-                // Nothing
+                Logger.warn("SOI not supported.");
+                skipToNext = true;
             } else if (b == JpegConst.EOI) {
                 break;
             } else if (b >= JpegConst.APP0 && b <= JpegConst.COM) {
                 int len3 = data.getShort() & 0xffff;
                 NIOUtils.read(data, len3 - 2);
             } else if (b == JpegConst.DRI) {
-
-                int lr = data.getShort() & 0xffff;
-
-                int ri = data.getShort() & 0xffff;
-                // Debug.trace("DRI Lr: %d Ri: %d", lr, ri);
-
-                Asserts.assertEquals(0, ri);
+                Logger.warn("DRI not supported.");
+                skipToNext = true;
             } else {
-                throw new UnhandledStateException("unhandled marker " + JpegConst.markerToString(b));
+                if (b != 0)
+                    Logger.warn("unhandled marker " + JpegConst.markerToString(b));
+                skipToNext = true;
             }
         }
 
@@ -212,7 +233,7 @@ public class JpegDecoder extends VideoDecoder {
                 if (b1 == 0)
                     out.put((byte) -1);
                 else {
-                    data.setPosition(data.position() - 2);
+                    data.position(data.position() - 2);
                     break;
                 }
             } else
@@ -250,7 +271,27 @@ public class JpegDecoder extends VideoDecoder {
     }
 
     @Override
-    public int probe(ByteBuffer data) {
-        return 0;
+    public VideoCodecMeta getCodecMeta(ByteBuffer data) {
+        FrameHeader header = null;
+        while (data.hasRemaining()) {
+            while (data.hasRemaining() && (data.get() & 0xff) != 0xff)
+                continue;
+
+            int type;
+            while ((type = data.get() & 0xff) == 0xff)
+                ;
+            if (type == JpegConst.SOF0) {
+                header = FrameHeader.read(data);
+                break;
+            }
+        }
+        if (header != null) {
+            int blockW = header.getHmax();
+            int blockH = header.getVmax();
+            int nn = blockW + blockH;
+            ColorSpace color = nn == 4 ? ColorSpace.YUV420J : (nn == 3 ? ColorSpace.YUV422J : ColorSpace.YUV444J);
+            return org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(header.width, header.height), color);
+        }
+        return null;
     }
 }

@@ -13,15 +13,15 @@ import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
 import org.jcodec.platform.Platform;
 
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
-import js.nio.channels.ReadableByteChannel;
-import js.nio.charset.Charset;
-import js.util.Date;
-import js.util.HashMap;
-import js.util.Map;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -43,7 +43,7 @@ public class FLVReader {
     private SeekableByteChannel ch;
     private boolean eof;
 
-    private static boolean platformBigEndian = ByteBuffer.allocate(0).getOrder() == ByteOrder.BIG_ENDIAN;
+    private static boolean platformBigEndian = ByteBuffer.allocate(0).order() == ByteOrder.BIG_ENDIAN;
 
     public static Codec[] audioCodecMapping = new Codec[] { Codec.PCM, Codec.ADPCM, Codec.MP3, Codec.PCM,
             Codec.NELLYMOSER, Codec.NELLYMOSER, Codec.NELLYMOSER, Codec.G711, Codec.G711, null, Codec.AAC, Codec.SPEEX,
@@ -63,7 +63,7 @@ public class FLVReader {
         if (!readHeader(readBuf)) {
             // This file doesn't have an FLV header, maybe it's a portion of an
             // FLV file and we can position at the tag start?
-            readBuf.setPosition(0);
+            readBuf.position(0);
             if (!repositionFile())
                 throw new RuntimeException("Invalid FLV file");
             else {
@@ -100,7 +100,7 @@ public class FLVReader {
                     break;
                 // The buffer is too small, getting a bigger one
                 ByteBuffer newBuf = ByteBuffer.allocate(readBuf.capacity() << 2);
-                newBuf.putBuf(readBuf);
+                newBuf.put(readBuf);
                 readBuf = newBuf;
                 if (ch.read(readBuf) == -1) {
                     eof = true;
@@ -114,10 +114,10 @@ public class FLVReader {
 
     public FLVTag readPrevPacket() throws IOException {
         int startOfLastPacket = readBuf.getInt();
-        readBuf.setPosition(readBuf.position() - 4);
+        readBuf.position(readBuf.position() - 4);
         if (readBuf.position() > startOfLastPacket) {
             // The previous frame is still in the buffer, so no need to fetch
-            readBuf.setPosition(readBuf.position() - startOfLastPacket);
+            readBuf.position(readBuf.position() - startOfLastPacket);
             return parsePacket(readBuf);
         } else {
             // Now we need to fetch the new buffer, because we are unsure of the
@@ -135,7 +135,7 @@ public class FLVReader {
             readBuf.clear();
             ch.read(readBuf);
             readBuf.flip();
-            readBuf.setPosition((int) (oldPos - newPos));
+            readBuf.position((int) (oldPos - newPos));
             return readPrevPacket();
         }
     }
@@ -143,10 +143,10 @@ public class FLVReader {
     private static void moveRemainderToTheStart(ByteBuffer readBuf) {
         int rem = readBuf.remaining();
         for (int i = 0; i < rem; i++) {
-            readBuf.putAt(i, readBuf.get());
+            readBuf.put(i, readBuf.get());
         }
         readBuf.clear();
-        readBuf.setPosition(rem);
+        readBuf.position(rem);
     }
 
     public FLVTag parsePacket(ByteBuffer readBuf) throws IOException {
@@ -166,9 +166,9 @@ public class FLVReader {
 
             // Sanity check and reposition
             if (readBuf.remaining() >= payloadSize + 4) {
-                int thisPacketSize = readBuf.getIntAt(readBuf.position() + payloadSize);
+                int thisPacketSize = readBuf.getInt(readBuf.position() + payloadSize);
                 if (thisPacketSize != payloadSize + 11) {
-                    readBuf.setPosition(readBuf.position() - TAG_HEADER_SIZE);
+                    readBuf.position(readBuf.position() - TAG_HEADER_SIZE);
                     if (!repositionFile()) {
                         Logger.error(String.format("Corrupt FLV stream at %d, failed to reposition!", packetPos));
                         ch.setPosition(ch.size());
@@ -182,7 +182,7 @@ public class FLVReader {
             }
 
             if (readBuf.remaining() < payloadSize) {
-                readBuf.setPosition(pos);
+                readBuf.position(pos);
                 return null;
             }
 
@@ -208,7 +208,12 @@ public class FLVReader {
                 System.out.println("NON AV packet");
                 continue;
             }
-            boolean keyFrame = packetType == 0x8 || packetType == 9 && ((VideoTagHeader) tagHeader).getFrameType() == 1;
+            boolean keyFrame = false;
+            if (tagHeader != null && tagHeader instanceof VideoTagHeader) {
+                VideoTagHeader vth = (VideoTagHeader) tagHeader;
+                keyFrame &= vth.getFrameType() == 1;
+            }
+            keyFrame &= packetType == 0x8 || packetType == 9;
 
             return new FLVTag(type, packetPos, tagHeader, timestamp, payload, keyFrame, frameNo++, streamId,
                     prevPacketSize);
@@ -367,8 +372,8 @@ public class FLVReader {
         while (dup.hasRemaining()) {
             payloadSize = ((payloadSize & 0xffff) << 8) | (dup.get() & 0xff);
             int pointerPos = dup.position() + 7 + payloadSize;
-            if (dup.position() >= 8 && pointerPos < dup.limit() - 4 && dup.getIntAt(pointerPos) - payloadSize == 11) {
-                readBuf.setPosition(dup.position() - 8);
+            if (dup.position() >= 8 && pointerPos < dup.limit() - 4 && dup.getInt(pointerPos) - payloadSize == 11) {
+                readBuf.position(dup.position() - 8);
                 return true;
             }
         }
@@ -388,8 +393,8 @@ public class FLVReader {
                 payloadSize = ((payloadSize & 0xffff) << 8) | (readBuf.get() & 0xff);
                 int pointerPos = readBuf.position() + 7 + payloadSize;
                 if (readBuf.position() >= 8 && pointerPos < readBuf.limit() - 4
-                        && readBuf.getIntAt(pointerPos) - payloadSize == 11) {
-                    readBuf.setPosition(readBuf.position() - 8);
+                        && readBuf.getInt(pointerPos) - payloadSize == 11) {
+                    readBuf.position(readBuf.position() - 8);
                     return true;
                 }
             }

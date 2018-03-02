@@ -10,14 +10,16 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import js.io.File;
-import js.io.FileInputStream;
-import js.io.IOException;
-import js.io.OutputStream;
-import js.lang.StringBuilder;
-import js.lang.System;
-import js.nio.channels.FileChannel;
-import js.util.List;
+import static org.jcodec.common.io.IOUtils.closeQuietly;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.StringBuilder;
+import java.lang.System;
+import java.nio.channels.FileChannel;
+import java.util.List;
 
 public class MKVParserTest {
     
@@ -59,7 +61,8 @@ public class MKVParserTest {
                 if (simpleBlocks == null || simpleBlocks.length == 0)
                     System.err.println("No simple blocks / block groups found. Looks suspicious");
             }
-            System.out.println(" simple blocks found: "+simpleBlocks.length);
+            int len = simpleBlocks == null ? 0 : simpleBlocks.length;
+            System.out.println(" simple blocks found: "+len);
         }
     }
 
@@ -83,7 +86,7 @@ public class MKVParserTest {
             Assert.assertNotNull(allClusters);
             Assert.assertEquals(25, allClusters.length);
         } finally {
-            stream.close();
+            closeQuietly(stream);
         }
     }
 

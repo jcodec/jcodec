@@ -1,8 +1,8 @@
 package org.jcodec.containers.mxf.model;
 import org.jcodec.common.io.NIOUtils;
 
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

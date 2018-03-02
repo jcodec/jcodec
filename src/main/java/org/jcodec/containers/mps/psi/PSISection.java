@@ -1,5 +1,5 @@
 package org.jcodec.containers.mps.psi;
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -37,7 +37,7 @@ public class PSISection {
 
         int sectionLength = w0 & 0xfff;
 
-        data.setLimit(data.position() + sectionLength);
+        data.limit(data.position() + sectionLength);
 
         int specificId = data.getShort() & 0xffff;
         int b0 = data.get() & 0xff;

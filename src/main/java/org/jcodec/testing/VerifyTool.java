@@ -1,22 +1,19 @@
 package org.jcodec.testing;
 
-import static org.jcodec.common.ArrayUtil.toByteArrayShifted;
-import static org.jcodec.common.JCodecUtil2.getAsIntArray;
-import static org.jcodec.platform.Platform.arrayEqualsByte;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
+import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.codecs.h264.H264Decoder;
-import org.jcodec.codecs.h264.MappedH264ES;
+import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.JCodecUtil2;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.platform.Platform;
-
-import js.io.File;
-import js.io.FilenameFilter;
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -61,14 +58,14 @@ public class VerifyTool {
     }
 
     private boolean test(File coded, File ref) throws IOException {
-        MappedH264ES es = new MappedH264ES(NIOUtils.fetchFromFile(coded));
-        Picture8Bit buf = Picture8Bit.create(1920, 1088, ColorSpace.YUV420);
+        BufferH264ES es = new BufferH264ES(NIOUtils.fetchFromFile(coded));
+        Picture buf = Picture.create(1920, 1088, ColorSpace.YUV420);
         H264Decoder dec = new H264Decoder();
         Packet nextFrame;
         ByteBuffer _yuv = NIOUtils.fetchFromFile(ref);
         while ((nextFrame = es.nextFrame()) != null) {
-            Picture8Bit out = dec.decodeFrame8Bit(nextFrame.getData(), buf.getData()).cropped();
-            Picture8Bit pic = out.createCompatible();
+            Picture out = dec.decodeFrame(nextFrame.getData(), buf.getData()).cropped();
+            Picture pic = out.createCompatible();
             pic.copyFrom(out);
             int lumaSize = pic.getWidth() * pic.getHeight();
             int crSize = lumaSize >> 2;
@@ -76,11 +73,11 @@ public class VerifyTool {
 
             ByteBuffer yuv = NIOUtils.read(_yuv, lumaSize + crSize + cbSize);
 
-            if (!arrayEqualsByte(toByteArrayShifted(getAsIntArray(yuv, lumaSize)), pic.getPlaneData(0)))
+            if (!Platform.arrayEqualsByte(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, lumaSize)), pic.getPlaneData(0)))
                 return false;
-            if (!arrayEqualsByte(toByteArrayShifted(getAsIntArray(yuv, crSize)), pic.getPlaneData(1)))
+            if (!Platform.arrayEqualsByte(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, crSize)), pic.getPlaneData(1)))
                 return false;
-            if (!arrayEqualsByte(toByteArrayShifted(getAsIntArray(yuv, cbSize)), pic.getPlaneData(2)))
+            if (!Platform.arrayEqualsByte(ArrayUtil.toByteArrayShifted(JCodecUtil2.getAsIntArray(yuv, cbSize)), pic.getPlaneData(2)))
                 return false;
         }
         return true;

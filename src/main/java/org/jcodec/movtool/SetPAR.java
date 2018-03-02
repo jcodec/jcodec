@@ -1,6 +1,6 @@
 package org.jcodec.movtool;
-import js.lang.IllegalStateException;
-import js.lang.System;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
 
 import org.jcodec.common.model.Rational;
@@ -14,7 +14,7 @@ import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 
-import js.io.File;
+import java.io.File;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

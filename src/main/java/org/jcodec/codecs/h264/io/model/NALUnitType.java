@@ -10,20 +10,20 @@ package org.jcodec.codecs.h264.io.model;
  * 
  */
 public final class NALUnitType {
-    public final static NALUnitType NON_IDR_SLICE = new NALUnitType(1, "non IDR slice");
-    public final static NALUnitType SLICE_PART_A = new NALUnitType(2, "slice part a");
-    public final static NALUnitType SLICE_PART_B = new NALUnitType(3, "slice part b");
-    public final static NALUnitType SLICE_PART_C = new NALUnitType(4, "slice part c");
-    public final static NALUnitType IDR_SLICE = new NALUnitType(5, "idr slice");
-    public final static NALUnitType SEI = new NALUnitType(6, "sei");
-    public final static NALUnitType SPS = new NALUnitType(7, "sequence parameter set");
-    public final static NALUnitType PPS = new NALUnitType(8, "picture parameter set");
-    public final static NALUnitType ACC_UNIT_DELIM = new NALUnitType(9, "access unit delimiter");
-    public final static NALUnitType END_OF_SEQ = new NALUnitType(10, "end of sequence");
-    public final static NALUnitType END_OF_STREAM = new NALUnitType(11, "end of stream");
-    public final static NALUnitType FILLER_DATA = new NALUnitType(12, "filler data");
-    public final static NALUnitType SEQ_PAR_SET_EXT = new NALUnitType(13, "sequence parameter set extension");
-    public final static NALUnitType AUX_SLICE = new NALUnitType(19, "auxilary slice");
+    public final static NALUnitType NON_IDR_SLICE = new NALUnitType(1, "NON_IDR_SLICE", "non IDR slice");
+    public final static NALUnitType SLICE_PART_A = new NALUnitType(2, "SLICE_PART_A", "slice part a");
+    public final static NALUnitType SLICE_PART_B = new NALUnitType(3, "SLICE_PART_B", "slice part b");
+    public final static NALUnitType SLICE_PART_C = new NALUnitType(4, "SLICE_PART_C", "slice part c");
+    public final static NALUnitType IDR_SLICE = new NALUnitType(5, "IDR_SLICE", "idr slice");
+    public final static NALUnitType SEI = new NALUnitType(6, "SEI", "sei");
+    public final static NALUnitType SPS = new NALUnitType(7, "SPS", "sequence parameter set");
+    public final static NALUnitType PPS = new NALUnitType(8, "PPS", "picture parameter set");
+    public final static NALUnitType ACC_UNIT_DELIM = new NALUnitType(9, "ACC_UNIT_DELIM", "access unit delimiter");
+    public final static NALUnitType END_OF_SEQ = new NALUnitType(10, "END_OF_SEQ", "end of sequence");
+    public final static NALUnitType END_OF_STREAM = new NALUnitType(11, "END_OF_STREAM", "end of stream");
+    public final static NALUnitType FILLER_DATA = new NALUnitType(12, "FILLER_DATA", "filler data");
+    public final static NALUnitType SEQ_PAR_SET_EXT = new NALUnitType(13, "SEQ_PAR_SET_EXT", "sequence parameter set extension");
+    public final static NALUnitType AUX_SLICE = new NALUnitType(19, "AUX_SLICE", "auxilary slice");
 
     private final static NALUnitType[] lut;
     private final static NALUnitType[] _values;
@@ -40,9 +40,11 @@ public final class NALUnitType {
 
     private final int value;
     private final String displayName;
+    private String _name;
 
-    private NALUnitType(int value, String displayName) {
+    private NALUnitType(int value, String name, String displayName) {
         this.value = value;
+        this._name = name;
         this.displayName = displayName;
     }
 
@@ -56,5 +58,10 @@ public final class NALUnitType {
 
     public static NALUnitType fromValue(int value) {
         return value < lut.length ? lut[value] : null;
+    }
+    
+    @Override
+    public String toString() {
+        return _name;
     }
 }

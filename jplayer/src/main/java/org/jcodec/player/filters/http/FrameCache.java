@@ -13,7 +13,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.NIOUtils;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 import org.jcodec.player.filters.MediaInfo;
@@ -95,7 +95,7 @@ public class FrameCache {
                 dataSegments.add(f.position());
                 f.position(f.position() + segmentSize);
             } else if (segmentType == INDEX_SEGMENT) {
-                ByteBuffer buffer = NIOUtils.fetchFrom(f, segmentSize);
+                ByteBuffer buffer = NIOUtils.fetchFromChannel(f, segmentSize);
                 while (buffer.remaining() >= 29) {
                     int frameNo = buffer.getInt();
                     IndexRecord rec = new IndexRecord(frameNo, buffer.getLong(), buffer.getInt(), buffer.getLong(),
@@ -131,7 +131,7 @@ public class FrameCache {
             int dsOff = (int) (record.pos - getDataSegmentOff(record));
             while (out.remaining() > 0) {
                 int toRead = Math.min(out.remaining(), DATASEG_SIZE - dsOff);
-                NIOUtils.read(fd, out, toRead);
+                NIOUtils.readL(fd, out, toRead);
                 if (out.remaining() > 0) {
                     skipToDataseg();
                     dsOff = 0;
@@ -140,7 +140,7 @@ public class FrameCache {
 
             out.flip();
 
-            return new Packet(out, record.pts, 0, record.duration, frameNo, record.key, record.tapeTimecode);
+            return new Packet(out, record.pts, 0, record.duration, frameNo, record.key ? Packet.FrameType.KEY : Packet.FrameType.UNKNOWN, record.tapeTimecode, 0);
         }
     }
 

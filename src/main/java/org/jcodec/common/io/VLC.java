@@ -1,8 +1,8 @@
 package org.jcodec.common.io;
 import org.jcodec.common.IntArrayList;
 
-import js.io.PrintStream;
-import js.lang.StringBuilder;
+import java.io.PrintStream;
+import java.lang.StringBuilder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

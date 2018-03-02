@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )
@@ -15,10 +15,10 @@ public class SampleDescriptionBox extends NodeBox {
         return "stsd";
     }
 
-    public static SampleDescriptionBox createSampleDescriptionBox(SampleEntry[] sampleEntries) {
+    public static SampleDescriptionBox createSampleDescriptionBox(SampleEntry... arguments) {
         SampleDescriptionBox box = new SampleDescriptionBox(new Header(fourcc()));
-        for (int i = 0; i < sampleEntries.length; i++) {
-            SampleEntry e = sampleEntries[i];
+        for (int i = 0; i < arguments.length; i++) {
+            SampleEntry e = arguments[i];
             box.boxes.add(e);
         }
         return box;
@@ -37,7 +37,13 @@ public class SampleDescriptionBox extends NodeBox {
     @Override
     public void doWrite(ByteBuffer out) {
         out.putInt(0);
-        out.putInt(boxes.size());
+        //even if there is no sample descriptors entry count can not be less than 1
+        out.putInt(Math.max(1, boxes.size()));
         super.doWrite(out);
+    }
+    
+    @Override
+    public int estimateSize() {
+        return 8 + super.estimateSize();
     }
 }

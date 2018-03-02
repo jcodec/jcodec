@@ -1,8 +1,18 @@
 package org.jcodec.containers.flv;
+
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static js.util.Arrays.asList;
+import static java.util.Arrays.asList;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.h264.io.model.PictureParameterSet;
@@ -17,6 +27,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.MainUtils.Flag;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.flv.FLVTag.AacAudioTagHeader;
 import org.jcodec.containers.flv.FLVTag.AudioTagHeader;
@@ -24,16 +35,6 @@ import org.jcodec.containers.flv.FLVTag.AvcVideoTagHeader;
 import org.jcodec.containers.flv.FLVTag.Type;
 import org.jcodec.containers.flv.FLVTag.VideoTagHeader;
 import org.jcodec.platform.Platform;
-
-import js.io.File;
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.HashMap;
-import js.util.LinkedList;
-import js.util.List;
-import js.util.Map;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -53,26 +54,28 @@ public class FLVTool {
         processors.put("shift_pts", new ShiftPtsProcessor.Factory());
     }
 
+    private static final Flag FLAG_MAX_PACKETS = new Flag("max-packets", "m", "Maximum number of packets to process");
+
     public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
             printGenericHelp();
             return;
         }
         String command = args[0];
-
-        Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length));
-        if (cmd.args.length < 1) {
-            MainUtils.printHelpCmd(command, processors.get(command).getFlags(), asList("file _in", "?file out"));
-            return;
-        }
-        int maxPackets = cmd.getIntegerFlagD("max-packets", Integer.MAX_VALUE);
-
-        PacketProcessor processor = getProcessor(command, cmd);
-        if (processor == null) {
+        PacketProcessorFactory processorFactory = processors.get(command);
+        if (processorFactory == null) {
             System.err.println("Unknown command: " + command);
             printGenericHelp();
             return;
         }
+
+        Cmd cmd = MainUtils.parseArguments(Platform.copyOfRangeO(args, 1, args.length), processorFactory.getFlags());
+        if (cmd.args.length < 1) {
+            MainUtils.printHelpCmd(command, processorFactory.getFlags(), asList("file in", "?file out"));
+            return;
+        }
+        PacketProcessor processor = processorFactory.newPacketProcessor(cmd);
+        int maxPackets = cmd.getIntegerFlagD(FLAG_MAX_PACKETS, Integer.MAX_VALUE);
 
         SeekableByteChannel _in = null;
         SeekableByteChannel out = null;
@@ -119,7 +122,7 @@ public class FLVTool {
     public static interface PacketProcessorFactory {
         PacketProcessor newPacketProcessor(Cmd flags);
 
-        Map<String, String> getFlags();
+        Flag[] getFlags();
     }
 
     /**
@@ -132,19 +135,18 @@ public class FLVTool {
         private Double from;
         private Double to;
 
+        private static final Flag FLAG_FROM = new Flag("from", "From timestamp (in seconds, i.e 67.49)");
+        private static final Flag FLAG_TO = new Flag("to", "To timestamp");
+
         public static class Factory implements PacketProcessorFactory {
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new ClipPacketProcessor(flags.getDoubleFlag("from"), flags.getDoubleFlag("to"));
+                return new ClipPacketProcessor(flags.getDoubleFlag(FLAG_FROM), flags.getDoubleFlag(FLAG_TO));
             }
 
             @Override
-            public Map<String, String> getFlags() {
-                HashMap<String, String> map = new HashMap<String, String>();
-                map.put("from", "From timestamp (in seconds, i.e 67.49)");
-                map.put("from", "From timestamp (_in seconds, i.e 67.49)");
-                map.put("to", "To timestamp");
-                return map;
+            public Flag[] getFlags() {
+                return new Flag[] { FLAG_FROM, FLAG_TO };
             }
         }
 
@@ -207,8 +209,8 @@ public class FLVTool {
             }
 
             @Override
-            public Map<String, String> getFlags() {
-                return new HashMap<String, String>();
+            public Flag[] getFlags() {
+                return new Flag[] {};
             }
         }
 
@@ -241,10 +243,8 @@ public class FLVTool {
             } else if (tag.getType() == Type.VIDEO) {
                 double duration = (((double) 1024 * audioTagsInQueue) / (48000 * videoTagsInQueue));
                 tag.setPts((int) Math.round(lastPtsVideo * 1000));
-                lastPtsVideo += min(
-                        (1 + CORRECTION_PACE) * duration,
-                        max((1 - CORRECTION_PACE) * duration, duration + min(1, abs(lastPtsAudio - lastPtsVideo))
-                                * (lastPtsAudio - lastPtsVideo)));
+                lastPtsVideo += min((1 + CORRECTION_PACE) * duration, max((1 - CORRECTION_PACE) * duration,
+                        duration + min(1, abs(lastPtsAudio - lastPtsVideo)) * (lastPtsAudio - lastPtsVideo)));
                 --videoTagsInQueue;
                 System.out.println(lastPtsVideo + " - " + lastPtsAudio);
             } else {
@@ -287,21 +287,20 @@ public class FLVTool {
         private FLVTag prevAudioTag;
 
         public static class Factory implements PacketProcessorFactory {
-            private static final String FLAG_CHECK = "check";
-            private static final String FLAG_STREAM = "stream";
+            private static final Flag FLAG_CHECK = new Flag("check",
+                    "Check sanity and report errors only, no packet dump will be generated.");
+            private static final Flag FLAG_STREAM = new Flag("stream",
+                    "Stream selector, can be one of: ['video', 'audio', 'script'].");
 
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new InfoPacketProcessor(flags.getBooleanFlagD(FLAG_CHECK, false), flags.getEnumFlagD(FLAG_STREAM,
-                        null, Type.class));
+                return new InfoPacketProcessor(flags.getBooleanFlagD(FLAG_CHECK, false),
+                        flags.getEnumFlagD(FLAG_STREAM, null, Type.class));
             }
 
             @Override
-            public Map<String, String> getFlags() {
-                HashMap<String, String> map = new HashMap<String, String>() ;
-                map.put(FLAG_CHECK, "Check sanity and report errors only, no packet dump will be generated.");
-                map.put(FLAG_STREAM, "Stream selector, can be one of: ['video', 'audio', 'script'].");
-                return map;
+            public Flag[] getFlags() {
+                return new Flag[] { FLAG_CHECK, FLAG_STREAM };
             }
         }
 
@@ -351,11 +350,11 @@ public class FLVTool {
                         AvcCBox avcc = H264Utils.parseAVCCFromBuffer(frameData);
                         for (SeqParameterSet sps : H264Utils.readSPSFromBufferList(avcc.getSpsList())) {
                             System.out.println();
-                            System.out.print("  SPS[" + sps.getSeq_parameter_set_id() + "]:" + ToJSON.toJSON(sps));
+                            System.out.print("  SPS[" + sps.getSeqParameterSetId() + "]:" + ToJSON.toJSON(sps));
                         }
                         for (PictureParameterSet pps : H264Utils.readPPSFromBufferList(avcc.getPpsList())) {
                             System.out.println();
-                            System.out.print("  PPS[" + pps.getPic_parameter_set_id() + "]:" + ToJSON.toJSON(pps));
+                            System.out.print("  PPS[" + pps.getPicParameterSetId() + "]:" + ToJSON.toJSON(pps));
                         }
                     }
                 }
@@ -401,20 +400,21 @@ public class FLVTool {
         private static final long WRAP_AROUND_VALUE = 0x80000000L;
         private static final int HALF_WRAP_AROUND_VALUE = 0x40000000;
 
+        private static final Flag FLAG_TO = new Flag("to",
+                "Shift first pts to this value, and all subsequent pts accordingly.");
+        private static final Flag FLAG_BY = new Flag("by", "Shift all pts by this value.");
+        private static final Flag FLAG_WRAP_AROUND = new Flag("wrap-around", "Expect wrap around of timestamps.");
+
         public static class Factory implements PacketProcessorFactory {
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
-                return new ShiftPtsProcessor(flags.getIntegerFlagD("to", 0), flags.getIntegerFlag("by"),
-                        flags.getBooleanFlagD("wrap-around", false));
+                return new ShiftPtsProcessor(flags.getIntegerFlagD(FLAG_TO, 0), flags.getIntegerFlag(FLAG_BY),
+                        flags.getBooleanFlagD(FLAG_WRAP_AROUND, false));
             }
 
             @Override
-            public Map<String, String> getFlags() {
-                HashMap<String, String> map = new HashMap<String, String>();
-                map.put("to", "Shift first pts to this value, and all subsequent pts accordingly.");
-                map.put("by", "Shift all pts by this value.");
-                map.put("wrap-around", "Expect wrap around of timestamps.");
-                return map;
+            public Flag[] getFlags() {
+                return new Flag[] { FLAG_TO, FLAG_BY, FLAG_WRAP_AROUND };
             }
         }
 

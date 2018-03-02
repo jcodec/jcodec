@@ -1,7 +1,7 @@
 package org.jcodec.common.tools;
 import org.junit.Test;
 
-import js.lang.System;
+import java.lang.System;
 
 public class MathUtilTest {
 

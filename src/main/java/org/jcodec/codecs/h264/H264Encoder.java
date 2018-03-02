@@ -1,5 +1,5 @@
 package org.jcodec.codecs.h264;
-import static js.lang.System.arraycopy;
+import static java.lang.System.arraycopy;
 import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
 
 import org.jcodec.codecs.h264.encode.DumbRateControl;
@@ -24,11 +24,11 @@ import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.ColorSpace;
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.tools.MathUtil;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,6 +45,7 @@ public class H264Encoder extends VideoEncoder {
 
     // private static final int QP = 20;
     private static final int KEY_INTERVAL_DEFAULT = 25;
+    private static final int MOTION_SEARCH_RANGE_DEFAULT = 16;
 
     public static H264Encoder createH264Encoder() {
         return new H264Encoder(new DumbRateControl());
@@ -56,6 +57,7 @@ public class H264Encoder extends VideoEncoder {
     private RateControl rc;
     private int frameNumber;
     private int keyInterval;
+    private int motionSearchRange;
 
     private int maxPOC;
 
@@ -69,8 +71,8 @@ public class H264Encoder extends VideoEncoder {
 
     private MBEncoderP16x16 mbEncoderP16x16;
 
-    private Picture8Bit ref;
-    private Picture8Bit picOut;
+    private Picture ref;
+    private Picture picOut;
     private EncodedMB[] topEncoded;
 
     private EncodedMB outMB;
@@ -78,6 +80,7 @@ public class H264Encoder extends VideoEncoder {
     public H264Encoder(RateControl rc) {
         this.rc = rc;
         this.keyInterval = KEY_INTERVAL_DEFAULT;
+        this.motionSearchRange = MOTION_SEARCH_RANGE_DEFAULT;
     }
 
     public int getKeyInterval() {
@@ -87,12 +90,23 @@ public class H264Encoder extends VideoEncoder {
     public void setKeyInterval(int keyInterval) {
         this.keyInterval = keyInterval;
     }
-    
+
+    public int getMotionSearchRange() {
+        return motionSearchRange;
+    }
+
+    public void setMotionSearchRange(int motionSearchRange) {
+        this.motionSearchRange = motionSearchRange;
+    }
+
     /**
      * Encode this picture into h.264 frame. Frame type will be selected by
      * encoder.
      */
-    public ByteBuffer encodeFrame8Bit(Picture8Bit pic, ByteBuffer _out) {
+    public EncodedFrame encodeFrame(Picture pic, ByteBuffer _out) {
+        if (pic.getColor() != ColorSpace.YUV420J)
+            throw new IllegalArgumentException("Input picture color is not supported: " + pic.getColor());
+        
         if (frameNumber >= keyInterval) {
             frameNumber = 0;
         }
@@ -100,7 +114,8 @@ public class H264Encoder extends VideoEncoder {
         SliceType sliceType = frameNumber == 0 ? SliceType.I : SliceType.P;
         boolean idr = frameNumber == 0;
 
-        return doEncodeFrame8Bit(pic, _out, idr, frameNumber++, sliceType);
+        ByteBuffer data = doEncodeFrame(pic, _out, idr, frameNumber++, sliceType);
+        return new EncodedFrame(data, idr);
     }
 
     /**
@@ -111,9 +126,9 @@ public class H264Encoder extends VideoEncoder {
      * @param _out
      * @return
      */
-    public ByteBuffer encodeIDRFrame(Picture8Bit pic, ByteBuffer _out) {
+    public ByteBuffer encodeIDRFrame(Picture pic, ByteBuffer _out) {
         frameNumber = 0;
-        return doEncodeFrame8Bit(pic, _out, true, frameNumber, SliceType.I);
+        return doEncodeFrame(pic, _out, true, frameNumber, SliceType.I);
     }
 
     /**
@@ -125,20 +140,23 @@ public class H264Encoder extends VideoEncoder {
      * @param _out
      * @return
      */
-    public ByteBuffer encodePFrame(Picture8Bit pic, ByteBuffer _out) {
+    public ByteBuffer encodePFrame(Picture pic, ByteBuffer _out) {
         frameNumber++;
-        return doEncodeFrame8Bit(pic, _out, true, frameNumber, SliceType.P);
+        return doEncodeFrame(pic, _out, true, frameNumber, SliceType.P);
     }
 
-    public ByteBuffer doEncodeFrame8Bit(Picture8Bit pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
+    public ByteBuffer doEncodeFrame(Picture pic, ByteBuffer _out, boolean idr, int frameNumber, SliceType frameType) {
         ByteBuffer dup = _out.duplicate();
+        int maxSize = Math.min(dup.remaining(), pic.getWidth() * pic.getHeight());
+        maxSize -= (maxSize >>> 6); // 1.5% to account for escaping
+        int qp = rc.startPicture(pic.getSize(), maxSize, frameType);
 
         if (idr) {
             sps = initSPS(new Size(pic.getCroppedWidth(), pic.getCroppedHeight()));
             pps = initPPS();
 
-            maxPOC = 1 << (sps.log2_max_pic_order_cnt_lsb_minus4 + 4);
-            maxFrameNumber = 1 << (sps.log2_max_frame_num_minus4 + 4);
+            maxPOC = 1 << (sps.log2MaxPicOrderCntLsbMinus4 + 4);
+            maxFrameNumber = 1 << (sps.log2MaxFrameNumMinus4 + 4);
         }
 
         if (idr) {
@@ -151,19 +169,19 @@ public class H264Encoder extends VideoEncoder {
             writePPS(dup, pps);
         }
 
-        int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
-        int mbHeight = sps.pic_height_in_map_units_minus1 + 1;
+        int mbWidth = sps.picWidthInMbsMinus1 + 1;
+        int mbHeight = sps.picHeightInMapUnitsMinus1 + 1;
 
         leftRow = new byte[][] { new byte[16], new byte[8], new byte[8] };
         topLine = new byte[][] { new byte[mbWidth << 4], new byte[mbWidth << 3], new byte[mbWidth << 3] };
-        picOut = Picture8Bit.create(mbWidth << 4, mbHeight << 4, pic.getColor());
+        picOut = Picture.create(mbWidth << 4, mbHeight << 4, ColorSpace.YUV420J);
 
         outMB = new EncodedMB();
         topEncoded = new EncodedMB[mbWidth];
         for (int i = 0; i < mbWidth; i++)
             topEncoded[i] = new EncodedMB();
 
-        encodeSlice(sps, pps, pic, dup, idr, frameNumber, frameType);
+        encodeSlice(sps, pps, pic, dup, idr, frameNumber, frameType, qp);
 
         putLastMBLine();
 
@@ -189,64 +207,62 @@ public class H264Encoder extends VideoEncoder {
 
     public PictureParameterSet initPPS() {
         PictureParameterSet pps = new PictureParameterSet();
-        pps.pic_init_qp_minus26 = rc.getInitQp(SliceType.I) - 26;
+        pps.picInitQpMinus26 = 0; // start with qp = 26
         return pps;
     }
 
     public SeqParameterSet initSPS(Size sz) {
         SeqParameterSet sps = new SeqParameterSet();
-        sps.pic_width_in_mbs_minus1 = ((sz.getWidth() + 15) >> 4) - 1;
-        sps.pic_height_in_map_units_minus1 = ((sz.getHeight() + 15) >> 4) - 1;
-        sps.chroma_format_idc = ColorSpace.YUV420J;
-        sps.profile_idc = 66;
-        sps.level_idc = 40;
-        sps.frame_mbs_only_flag = true;
-        sps.log2_max_frame_num_minus4 = Math.max(0, MathUtil.log2(keyInterval) - 3);
+        sps.picWidthInMbsMinus1 = ((sz.getWidth() + 15) >> 4) - 1;
+        sps.picHeightInMapUnitsMinus1 = ((sz.getHeight() + 15) >> 4) - 1;
+        sps.chromaFormatIdc = ColorSpace.YUV420J;
+        sps.profileIdc = 66;
+        sps.levelIdc = 40;
+        sps.numRefFrames = 1;
+        sps.frameMbsOnlyFlag = true;
+        sps.log2MaxFrameNumMinus4 = Math.max(0, MathUtil.log2(keyInterval) - 3);
 
-        int codedWidth = (sps.pic_width_in_mbs_minus1 + 1) << 4;
-        int codedHeight = (sps.pic_height_in_map_units_minus1 + 1) << 4;
-        sps.frame_cropping_flag = codedWidth != sz.getWidth() || codedHeight != sz.getHeight();
-        sps.frame_crop_right_offset = (codedWidth - sz.getWidth() + 1) >> 1;
-        sps.frame_crop_bottom_offset = (codedHeight - sz.getHeight() + 1) >> 1;
+        int codedWidth = (sps.picWidthInMbsMinus1 + 1) << 4;
+        int codedHeight = (sps.picHeightInMapUnitsMinus1 + 1) << 4;
+        sps.frameCroppingFlag = codedWidth != sz.getWidth() || codedHeight != sz.getHeight();
+        sps.frameCropRightOffset = (codedWidth - sz.getWidth() + 1) >> 1;
+        sps.frameCropBottomOffset = (codedHeight - sz.getHeight() + 1) >> 1;
 
         return sps;
     }
 
-    private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture8Bit pic, ByteBuffer dup, boolean idr,
-            int frameNum, SliceType sliceType) {
+    private void encodeSlice(SeqParameterSet sps, PictureParameterSet pps, Picture pic, ByteBuffer dup, boolean idr,
+            int frameNum, SliceType sliceType, int qp) {
         if (idr && sliceType != SliceType.I) {
             idr = false;
             Logger.warn("Illegal value of idr = true when sliceType != I");
         }
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
         mbEncoderI16x16 = new MBEncoderI16x16(cavlc, leftRow, topLine);
-        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc, new MotionEstimator(16));
-
-        rc.reset();
-        int qp = rc.getInitQp(sliceType);
+        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc, new MotionEstimator(motionSearchRange));
 
         dup.putInt(0x1);
         new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 3).write(dup);
         SliceHeader sh = new SliceHeader();
-        sh.slice_type = sliceType;
+        sh.sliceType = sliceType;
         if (idr)
             sh.refPicMarkingIDR = new RefPicMarkingIDR(false, false);
         sh.pps = pps;
         sh.sps = sps;
-        sh.pic_order_cnt_lsb = (frameNum << 1) % maxPOC;
-        sh.frame_num = frameNum % maxFrameNumber;
-        sh.slice_qp_delta = qp - (pps.pic_init_qp_minus26 + 26);
+        sh.picOrderCntLsb = (frameNum << 1) % maxPOC;
+        sh.frameNum = frameNum % maxFrameNumber;
+        sh.sliceQpDelta = qp - (pps.picInitQpMinus26 + 26);
 
         ByteBuffer buf = ByteBuffer.allocate(pic.getWidth() * pic.getHeight());
         BitWriter sliceData = new BitWriter(buf);
         new SliceHeaderWriter().write(sh, idr, 2, sliceData);
 
-        for (int mbY = 0; mbY < sps.pic_height_in_map_units_minus1 + 1; mbY++) {
-            for (int mbX = 0; mbX < sps.pic_width_in_mbs_minus1 + 1; mbX++) {
+        for (int mbY = 0, mbAddr = 0; mbY < sps.picHeightInMapUnitsMinus1 + 1; mbY++) {
+            for (int mbX = 0; mbX < sps.picWidthInMbsMinus1 + 1; mbX++, mbAddr++) {
                 if (sliceType == SliceType.P) {
                     CAVLCWriter.writeUE(sliceData, 0); // number of skipped mbs
                 }
-
+                
                 MBType mbType = selectMBType(sliceType);
 
                 if (mbType == MBType.I_16x16) {
@@ -268,14 +284,18 @@ public class H264Encoder extends VideoEncoder {
                 }
 
                 BitWriter candidate;
-                int qpDelta;
+                int totalQpDelta = 0;
+                int qpDelta = rc.initialQpDelta();
                 do {
                     candidate = sliceData.fork();
-                    qpDelta = rc.getQpDelta();
-                    encodeMacroblock(mbType, pic, mbX, mbY, candidate, qp, qpDelta);
-                } while (!rc.accept(candidate.position() - sliceData.position()));
+                    totalQpDelta += qpDelta;
+                    encodeMacroblock(mbType, pic, mbX, mbY, candidate, qp, totalQpDelta);
+                    qpDelta = rc.accept(candidate.position() - sliceData.position());
+                    if (qpDelta != 0)
+                        restoreMacroblock(mbType);
+                } while (qpDelta != 0);
                 sliceData = candidate;
-                qp += qpDelta;
+                qp += totalQpDelta;
 
                 collectPredictors(outMB.getPixels(), mbX);
                 addToReference(mbX, mbY);
@@ -289,17 +309,28 @@ public class H264Encoder extends VideoEncoder {
         escapeNAL(buf, dup);
     }
 
-    private void encodeMacroblock(MBType mbType, Picture8Bit pic, int mbX, int mbY, BitWriter candidate, int qp, int qpDelta) {
-        if (mbType == MBType.I_16x16)
+    private void encodeMacroblock(MBType mbType, Picture pic, int mbX, int mbY, BitWriter candidate, int qp, int qpDelta) {
+        if (mbType == MBType.I_16x16) {
+            mbEncoderI16x16.save();
             mbEncoderI16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, mbX > 0 ? topEncoded[mbX - 1] : null,
                     mbY > 0 ? topEncoded[mbX] : null, qp + qpDelta, qpDelta);
-        else if (mbType == MBType.P_16x16)
+        } else if (mbType == MBType.P_16x16) {
+            mbEncoderP16x16.save();
             mbEncoderP16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, mbX > 0 ? topEncoded[mbX - 1] : null,
                     mbY > 0 ? topEncoded[mbX] : null, qp + qpDelta, qpDelta);
-        else
+        } else
             throw new RuntimeException("Macroblock of type " + mbType + " is not supported.");
     }
-
+    
+    private void restoreMacroblock(MBType mbType) {
+        if (mbType == MBType.I_16x16) {
+            mbEncoderI16x16.restore();
+        } else if (mbType == MBType.P_16x16) {
+            mbEncoderP16x16.restore();
+        } else
+            throw new RuntimeException("Macroblock of type " + mbType + " is not supported.");
+    }
+    
     private MBType selectMBType(SliceType sliceType) {
         if (sliceType == SliceType.I)
             return MBType.I_16x16;
@@ -318,13 +349,13 @@ public class H264Encoder extends VideoEncoder {
     }
 
     private void putLastMBLine() {
-        int mbWidth = sps.pic_width_in_mbs_minus1 + 1;
-        int mbHeight = sps.pic_height_in_map_units_minus1 + 1;
+        int mbWidth = sps.picWidthInMbsMinus1 + 1;
+        int mbHeight = sps.picHeightInMapUnitsMinus1 + 1;
         for (int mbX = 0; mbX < mbWidth; mbX++)
             MBEncoderHelper.putBlkPic(picOut, topEncoded[mbX].getPixels(), mbX << 4, (mbHeight - 1) << 4);
     }
 
-    private void collectPredictors(Picture8Bit outMB, int mbX) {
+    private void collectPredictors(Picture outMB, int mbX) {
         arraycopy(outMB.getPlaneData(0), 240, topLine[0], mbX << 4, 16);
         arraycopy(outMB.getPlaneData(1), 56, topLine[1], mbX << 3, 8);
         arraycopy(outMB.getPlaneData(2), 56, topLine[2], mbX << 3, 8);
@@ -344,5 +375,10 @@ public class H264Encoder extends VideoEncoder {
     @Override
     public ColorSpace[] getSupportedColorSpaces() {
         return new ColorSpace[] { ColorSpace.YUV420J };
+    }
+
+    @Override
+    public int estimateBufferSize(Picture frame) {
+        return Math.max(1 << 16, frame.getWidth() * frame.getHeight() / 2);
     }
 }

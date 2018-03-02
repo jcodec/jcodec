@@ -1,14 +1,13 @@
 package org.jcodec.common.io;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import org.jcodec.platform.Platform;
-
-import js.io.ByteArrayOutputStream;
-import js.io.Closeable;
-import js.io.File;
-import js.io.IOException;
-import js.io.InputStream;
-import js.io.OutputStream;
-import js.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

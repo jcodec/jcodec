@@ -22,54 +22,79 @@ public class SliceHeader {
 
     public int[][][] refPicReordering;
 
-    public PredictionWeightTable pred_weight_table;
-    public int first_mb_in_slice;
+    // pred_weight_table
+    public PredictionWeightTable predWeightTable;
+    // first_mb_in_slice
+    public int firstMbInSlice;
 
-    public boolean field_pic_flag;
+    // field_pic_flag
+    public boolean fieldPicFlag;
 
-    public SliceType slice_type;
-    public boolean slice_type_restr;
+    //  slice_type
+    public SliceType sliceType;
+    
+    // slice_type_restr
+    public boolean sliceTypeRestr;
 
-    public int pic_parameter_set_id;
+    // pic_parameter_set_id
+    public int picParameterSetId;
 
-    public int frame_num;
+    // frame_num
+    public int frameNum;
 
-    public boolean bottom_field_flag;
+    // bottom_field_flag
+    public boolean bottomFieldFlag;
 
-    public int idr_pic_id;
+    // idr_pic_id
+    public int idrPicId;
 
-    public int pic_order_cnt_lsb;
+    // pic_order_cnt_lsb
+    public int picOrderCntLsb;
 
-    public int delta_pic_order_cnt_bottom;
+    // delta_pic_order_cnt_bottom
+    public int deltaPicOrderCntBottom;
 
-    public int[] delta_pic_order_cnt;
+    // delta_pic_order_cnt
+    public int[] deltaPicOrderCnt;
 
-    public int redundant_pic_cnt;
+    // redundant_pic_cnt
+    public int redundantPicCnt;
 
-    public boolean direct_spatial_mv_pred_flag;
+    // direct_spatial_mv_pred_flag
+    public boolean directSpatialMvPredFlag;
 
-    public boolean num_ref_idx_active_override_flag;
+    // num_ref_idx_active_override_flag
+    public boolean numRefIdxActiveOverrideFlag;
 
-    public int[] num_ref_idx_active_minus1;
+    // num_ref_idx_active_minus1
+    public int[] numRefIdxActiveMinus1;
 
-    public int cabac_init_idc;
+    // cabac_init_idc
+    public int cabacInitIdc;
 
-    public int slice_qp_delta;
+    // slice_qp_delta
+    public int sliceQpDelta;
 
-    public boolean sp_for_switch_flag;
+    // sp_for_switch_flag
+    public boolean spForSwitchFlag;
 
-    public int slice_qs_delta;
+    // slice_qs_delta
+    public int sliceQsDelta;
 
-    public int disable_deblocking_filter_idc;
+    // disable_deblocking_filter_idc
+    public int disableDeblockingFilterIdc;
 
-    public int slice_alpha_c0_offset_div2;
+    // slice_alpha_c0_offset_div2
+    public int sliceAlphaC0OffsetDiv2;
 
-    public int slice_beta_offset_div2;
+    // slice_beta_offset_div2
+    public int sliceBetaOffsetDiv2;
 
-    public int slice_group_change_cycle;
+    // slice_group_change_cycle
+    public int sliceGroupChangeCycle;
     
     public SliceHeader() {
-        this.num_ref_idx_active_minus1 = new int[2];
+        this.numRefIdxActiveMinus1 = new int[2];
     }
     
     @Override

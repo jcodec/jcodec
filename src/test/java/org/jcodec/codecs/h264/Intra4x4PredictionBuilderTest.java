@@ -7,7 +7,7 @@ import org.jcodec.codecs.h264.decode.Intra4x4PredictionBuilder;
 import org.jcodec.common.tools.MathUtil;
 import org.junit.Test;
 
-import js.util.Arrays;
+import java.util.Arrays;
 
 public class Intra4x4PredictionBuilderTest {
     private static int[] emptyResidual = new int[16];

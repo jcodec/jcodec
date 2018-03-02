@@ -1,5 +1,5 @@
 package org.jcodec.common.dct;
-import js.nio.IntBuffer;
+import java.nio.IntBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org )

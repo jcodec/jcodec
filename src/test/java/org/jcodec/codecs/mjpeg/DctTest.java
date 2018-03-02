@@ -9,7 +9,7 @@ import org.jcodec.common.tools.Debug;
 import org.jcodec.platform.Platform;
 import org.junit.Test;
 
-import js.lang.System;
+import java.lang.System;
 
 public class DctTest {
     static int[] input = new int[] { -416, -33, -60, 32, 48, -40, 0, 0, 0, -24,

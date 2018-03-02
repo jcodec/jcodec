@@ -5,12 +5,11 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.io.StringReader;
 import org.jcodec.common.logging.Logger;
-import org.stjs.javascript.Global;
 
-import js.io.ByteArrayOutputStream;
-import js.io.IOException;
-import js.io.InputStream;
-import js.nio.ByteBuffer;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -23,6 +22,7 @@ import js.nio.ByteBuffer;
  */
 public class Header {
 
+    public static final byte[] FOURCC_FREE = new byte[] {'f', 'r', 'e', 'e'};
     private static final long MAX_UNSIGNED_INT = 0x100000000L;
     private String fourcc;
     private long size;
@@ -77,6 +77,10 @@ public class Header {
     public long headerSize() {
         return lng || (size > MAX_UNSIGNED_INT) ? 16 : 8;
     }
+    
+    public static int estimateHeaderSize(int size) {
+        return size + 8 > MAX_UNSIGNED_INT ? 16 : 8;
+    }
 
     public byte[] readContents(InputStream di) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -103,7 +107,11 @@ public class Header {
             out.putInt(1);
         else
             out.putInt((int) size);
-        out.putArr(JCodecUtil2.asciiString(fourcc));
+        byte[] bt = JCodecUtil2.asciiString(fourcc);
+        if(bt != null && bt.length == 4)
+            out.put(bt);
+        else
+            out.put(FOURCC_FREE);
         if (size > MAX_UNSIGNED_INT) {
             out.putLong(size);
         }

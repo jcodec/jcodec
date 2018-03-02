@@ -1,7 +1,6 @@
 package org.jcodec.common;
 
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.model.Picture8Bit;
 
 import js.io.IOException;
 import js.nio.ByteBuffer;
@@ -24,31 +23,10 @@ abstract public class VideoDecoder {
      *            Compressed frame data
      * @throws IOException
      */
-    @Deprecated
-    public Picture decodeFrame(ByteBuffer data, int[][] buffer) {
-        Picture8Bit frame = decodeFrame8Bit(data, getSameSizeBuffer(buffer));
-        return frame == null ? null : frame.toPictureWithBuffer(8, buffer);
-    }
-    
-    /**
-     * Decodes a video frame to an uncompressed picture in codec native
-     * colorspace
-     * 
-     * @param data
-     *            Compressed frame data
-     * @throws IOException
-     */
-    public abstract Picture8Bit decodeFrame8Bit(ByteBuffer data, byte[][] buffer);
+    public abstract Picture decodeFrame(ByteBuffer data, byte[][] buffer);
+    public abstract VideoCodecMeta getCodecMeta(ByteBuffer data);
 
-    /**
-     * Tests if compressed frame can be decoded with this decoder
-     * 
-     * @param data
-     *            Compressed frame data
-     * @return
-     */
-    public abstract int probe(ByteBuffer data);
-    
+   
     protected byte[][] getSameSizeBuffer(int[][] buffer) {
         if (byteBuffer == null || byteBuffer.length != buffer.length || byteBuffer[0].length != buffer[0].length)
             byteBuffer = ArrayUtil.create2D(buffer[0].length, buffer.length);

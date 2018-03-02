@@ -4,9 +4,9 @@ import java.util.Iterator;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Rational;
 
-import js.nio.ByteBuffer;
-import js.util.Map;
-import js.util.Map.Entry;
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,6 +29,7 @@ public class GenericSoundEssenceDescriptor extends FileDescriptor {
         super(ul);
     }
 
+    @Override
     protected void read(Map<Integer, ByteBuffer> tags) {
         super.read(tags);
 

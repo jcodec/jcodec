@@ -1,10 +1,11 @@
 package org.jcodec.movtool;
-import js.lang.IllegalStateException;
-import js.lang.System;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.BoxFactory;
@@ -16,11 +17,11 @@ import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 
-import js.io.File;
-import js.io.IOException;
-import js.io.RandomAccessFile;
-import js.util.ArrayList;
-import js.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -61,7 +62,7 @@ public class Undo {
             raf.seek(versions.get(versions.size() - 1).getOffset() + 4);
             raf.write(new byte[] { 'f', 'r', 'e', 'e' });
         } finally {
-            raf.close();
+            closeQuietly(raf);
         }
     }
 
@@ -81,7 +82,7 @@ public class Undo {
                 }
             }
         } finally {
-            is.close();
+            closeQuietly(is);
         }
         return result;
     }

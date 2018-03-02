@@ -1,11 +1,12 @@
 package org.jcodec.movtool;
-import js.lang.IllegalStateException;
-import js.lang.System;
+import java.lang.IllegalStateException;
+import java.lang.System;
 
-
+import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
+import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
@@ -13,9 +14,9 @@ import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 
-import js.io.File;
-import js.io.FileNotFoundException;
-import js.io.IOException;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -74,8 +75,8 @@ public class MovDump {
                 }
             }
         } finally {
-            raf.close();
-            daos.close();
+            closeQuietly(raf);
+            closeQuietly(daos);
         }
     }
 

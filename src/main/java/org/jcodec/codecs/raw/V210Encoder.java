@@ -1,12 +1,12 @@
 package org.jcodec.codecs.raw;
-import static js.lang.System.arraycopy;
+import static java.lang.System.arraycopy;
 
-import org.jcodec.common.model.Picture8Bit;
+import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -22,7 +22,7 @@ import js.nio.ByteOrder;
  * 
  */
 public class V210Encoder {
-    public ByteBuffer encodeFrame8Bit(ByteBuffer _out, Picture8Bit frame) throws IOException {
+    public ByteBuffer encodeFrame(ByteBuffer _out, Picture frame) throws IOException {
         ByteBuffer out = _out.duplicate();
         out.order(ByteOrder.LITTLE_ENDIAN);
         int tgtStride = ((frame.getPlaneWidth(0) + 47) / 48) * 48;

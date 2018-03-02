@@ -12,7 +12,7 @@ import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.findAllTree;
 import static org.jcodec.containers.mkv.MKVType.findFirst;
 
-import org.jcodec.codecs.vp8.VP8Decoder;
+import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
@@ -24,13 +24,13 @@ import org.jcodec.containers.mkv.util.EbmlUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.io.File;
-import js.io.FileInputStream;
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.nio.channels.FileChannel;
-import js.util.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.List;
 public class BlockOrderingTest {
     
     @Test

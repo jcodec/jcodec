@@ -3,7 +3,7 @@ package org.jcodec.containers.mps;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 public class MPEGPacket extends Packet {
     private long offset;
@@ -11,7 +11,7 @@ public class MPEGPacket extends Packet {
     private int gop;
     private int timecode;
 
-    public MPEGPacket(ByteBuffer data, long pts, long timescale, long duration, long frameNo, boolean keyFrame,
+    public MPEGPacket(ByteBuffer data, long pts, int timescale, long duration, long frameNo, FrameType keyFrame,
             TapeTimecode tapeTimecode) {
         super(data, pts, timescale, duration, frameNo, keyFrame, tapeTimecode, 0);
     }

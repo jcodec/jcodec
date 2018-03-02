@@ -1,8 +1,8 @@
 package org.jcodec.containers.mkv.boxes;
 import org.jcodec.common.io.SeekableByteChannel;
 
-import js.io.IOException;
-import js.nio.ByteBuffer;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

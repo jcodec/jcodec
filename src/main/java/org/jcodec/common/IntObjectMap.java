@@ -1,7 +1,7 @@
 package org.jcodec.common;
-import static js.lang.System.arraycopy;
+import static java.lang.System.arraycopy;
 
-import js.lang.reflect.Array;
+import java.lang.reflect.Array;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

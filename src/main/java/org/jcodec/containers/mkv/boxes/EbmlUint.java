@@ -1,5 +1,5 @@
 package org.jcodec.containers.mkv.boxes;
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed under FreeBSD License
@@ -30,7 +30,7 @@ public class EbmlUint extends EbmlBin {
         long l = 0;
         long tmp = 0;
         for (int i = 0; i < data.limit(); i++) {
-            tmp = ((long) data.getAt(data.limit() - 1 - i)) << 56;
+            tmp = ((long) data.get(data.limit() - 1 - i)) << 56;
             tmp >>>= (56 - (i * 8));
             l |= tmp;
         }

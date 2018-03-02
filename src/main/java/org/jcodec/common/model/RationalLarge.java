@@ -34,7 +34,8 @@ public class RationalLarge {
 
     public static RationalLarge parse(String string) {
         String[] split = splitS(string, ":");
-        return new RationalLarge(Long.parseLong(split[0]), Long.parseLong(split[1]));
+        return split.length > 1 ? RationalLarge.R(Long.parseLong(split[0]), Long.parseLong(split[1])) : RationalLarge
+                .R(Long.parseLong(string), 1);
     }
 
     @Override

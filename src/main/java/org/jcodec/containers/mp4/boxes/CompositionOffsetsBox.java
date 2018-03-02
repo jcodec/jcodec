@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,6 +29,24 @@ public class CompositionOffsetsBox extends FullBox {
         }
 
         public int getOffset() {
+            return offset;
+        }
+    }
+    
+    public static class LongEntry {
+        public long count;
+        public long offset;
+
+        public LongEntry(long count, long offset) {
+            this.count = count;
+            this.offset = offset;
+        }
+
+        public long getCount() {
+            return count;
+        }
+
+        public long getOffset() {
             return offset;
         }
     }
@@ -67,6 +85,11 @@ public class CompositionOffsetsBox extends FullBox {
             out.putInt(entries[i].count);
             out.putInt(entries[i].offset);
         }
+    }
+    
+    @Override
+    public int estimateSize() {
+        return 12 + 4 + entries.length * 8;
     }
 
     public Entry[] getEntries() {

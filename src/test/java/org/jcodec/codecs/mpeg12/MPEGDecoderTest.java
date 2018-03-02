@@ -2,7 +2,7 @@ package org.jcodec.codecs.mpeg12;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 public class MPEGDecoderTest {
 

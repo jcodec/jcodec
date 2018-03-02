@@ -6,10 +6,10 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.util.Calendar;
-import js.util.Date;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.Calendar;
+import java.util.Date;
 
 public class EbmlDateTest {
 

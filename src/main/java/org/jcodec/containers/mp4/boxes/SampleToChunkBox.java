@@ -1,6 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -90,6 +90,11 @@ public class SampleToChunkBox extends FullBox {
             out.putInt((int) stc.getCount());
             out.putInt((int) stc.getEntry());
         }
+    }
+    
+    @Override
+    public int estimateSize() {
+        return 16 + sampleToChunk.length * 12;
     }
 
     public void setSampleToChunk(SampleToChunkEntry[] sampleToChunk) {

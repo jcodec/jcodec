@@ -1,8 +1,8 @@
 package org.jcodec.common.io;
-import js.io.Closeable;
-import js.io.IOException;
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -27,7 +27,7 @@ public class DataReader implements Closeable {
     public DataReader(SeekableByteChannel channel, ByteOrder order, int bufferSize) {
         this.channel = channel;
         this.buffer = ByteBuffer.allocate(bufferSize);
-        this.buffer.setLimit(0);
+        this.buffer.limit(0);
         this.buffer.order(order);
     }
 
@@ -40,7 +40,7 @@ public class DataReader implements Closeable {
                 break;
 
             int toRead = Math.min(buffer.remaining(), len);
-            buffer.getBuf3(b, off, toRead);
+            buffer.get(b, off, toRead);
             off += toRead;
             len -= toRead;
         }
@@ -50,7 +50,7 @@ public class DataReader implements Closeable {
     public int skipBytes(int n) throws IOException {
         long oldPosition = position();
         if (n < buffer.remaining()) {
-            buffer.setPosition(buffer.position() + n);
+            buffer.position(buffer.position() + n);
         } else {
             setPosition(oldPosition + n);
         }
@@ -99,9 +99,9 @@ public class DataReader implements Closeable {
     public long setPosition(long newPos) throws IOException {
         int relative = (int) (newPos - (channel.position() - buffer.limit()));
         if (relative >= 0 && relative < buffer.limit()) {
-            buffer.setPosition(relative);
+            buffer.position(relative);
         } else {
-            buffer.setLimit(0);
+            buffer.limit(0);
             channel.setPosition(newPos);
         }
         return position();
@@ -116,16 +116,17 @@ public class DataReader implements Closeable {
         if (buffer.remaining() < length) {
             moveRemainderToTheStart(buffer);
             channel.read(buffer);
+            buffer.flip();
         }
     }
 
     private static void moveRemainderToTheStart(ByteBuffer readBuf) {
         int rem = readBuf.remaining();
         for (int i = 0; i < rem; i++) {
-            readBuf.putAt(i, readBuf.get());
+            readBuf.put(i, readBuf.get());
         }
         readBuf.clear();
-        readBuf.setPosition(rem);
+        readBuf.position(rem);
     }
 
     public long size() throws IOException {

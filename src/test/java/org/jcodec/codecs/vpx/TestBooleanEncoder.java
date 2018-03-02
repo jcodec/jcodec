@@ -1,10 +1,9 @@
 package org.jcodec.codecs.vpx;
-import org.jcodec.codecs.common.biari.VPxBooleanEncoder;
 import org.jcodec.common.io.NIOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 public class TestBooleanEncoder {
 
@@ -35,7 +34,7 @@ public class TestBooleanEncoder {
                 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1 };
         
         ByteBuffer out = ByteBuffer.allocate(512);
-        VPxBooleanEncoder encoder = new VPxBooleanEncoder(out);
+        VPXBooleanEncoder encoder = new VPXBooleanEncoder(out);
         for(int i = 0; i < probs.length; i++)
             encoder.writeBit(probs[i], bits[i]);
         encoder.stop();

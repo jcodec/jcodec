@@ -14,7 +14,7 @@ import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -95,7 +95,7 @@ public class ProresToProxy {
         PictureHeader ph = ProresDecoder.readPictureHeader(inBuf);
         ProresEncoder.writePictureHeader(ph.log2SliceMbWidth, ph.sliceSizes.length, outBuf);
         ByteBuffer sliceSizes = outBuf.duplicate();
-        outBuf.setPosition(outBuf.position() + (ph.sliceSizes.length << 1));
+        outBuf.position(outBuf.position() + (ph.sliceSizes.length << 1));
 
         int mbX = 0, mbY = 0;
         int mbWidth = (fh.width + 15) >> 4;

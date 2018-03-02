@@ -66,4 +66,9 @@ public class FielExtension extends Box {
         out.put((byte) type);
         out.put((byte) order);
     }
+    
+    @Override
+    public int estimateSize() {
+        return 2 + 8;
+    }
 }

@@ -7,7 +7,7 @@ import org.jcodec.codecs.h264.decode.Intra8x8PredictionBuilder;
 import org.jcodec.common.tools.MathUtil;
 import org.junit.Test;
 
-import js.util.Arrays;
+import java.util.Arrays;
 
 public class Intra8x8PredictionBuilderTest {
 

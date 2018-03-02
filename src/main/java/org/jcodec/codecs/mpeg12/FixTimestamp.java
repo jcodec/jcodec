@@ -3,10 +3,10 @@ import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.MTSUtils;
 
-import js.io.File;
-import js.io.IOException;
-import js.io.RandomAccessFile;
-import js.nio.ByteBuffer;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -45,7 +45,7 @@ public abstract class FixTimestamp {
             int len = bb.getShort();
             int b0 = bb.get() & 0xff;
 
-            bb.setPosition(bb.position() - 1);
+            bb.position(bb.position() - 1);
             if ((b0 & 0xc0) == 0x80)
                 fixMpeg2(streamId & 0xff, bb);
             else
@@ -66,10 +66,10 @@ public abstract class FixTimestamp {
             c = is.get() & 0xff;
         }
         if ((c & 0xf0) == 0x20) {
-            is.setPosition(is.position() - 1);
+            is.position(is.position() - 1);
             fixTs(streamId, is, true);
         } else if ((c & 0xf0) == 0x30) {
-            is.setPosition(is.position() - 1);
+            is.position(is.position() - 1);
             fixTs(streamId, is, true);
             fixTs(streamId, is, false);
         } else {
@@ -90,7 +90,7 @@ public abstract class FixTimestamp {
 
         pts = doWithTimestamp(streamId, pts, isPts);
 
-        is.setPosition(is.position() - 5);
+        is.position(is.position() - 5);
 
         is.put((byte) ((b0 & 0xf0) | (pts >>> 29) | 1));
         is.put((byte) (pts >>> 22));

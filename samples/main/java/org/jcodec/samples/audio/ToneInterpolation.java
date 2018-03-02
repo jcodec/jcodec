@@ -15,6 +15,7 @@ import org.jcodec.codecs.wav.WavOutput.WavOutFile;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
+import org.jcodec.common.tools.MainUtils.Flag;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -26,24 +27,22 @@ import org.jcodec.common.tools.MainUtils.Cmd;
  * 
  */
 public class ToneInterpolation {
-
+    private static final Flag FLAG_FREQ = new Flag("tone_freq", "freq", "Frequency of the tone to generate");
+    private static final Flag FLAG_TRATE = new Flag("tone_rate", "trate", "Sampling rate of the tone");
+    private static final Flag FLAG_ORATE = new Flag("out_rate", "orate", "Output sample rate");
+    private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FREQ, FLAG_TRATE, FLAG_ORATE};
+    
     public static void main(String[] args) throws IOException {
 
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpVarArgs(new HashMap<String, String>() {
-                {
-                    put("tone_freq", "Frequency of the tone to generate");
-                    put("tone_rate", "Sampling rate of the tone");
-                    put("out_rate", "Output sample rate");
-                }
-            }, "output file");
+            MainUtils.printHelpVarArgs(FLAGS, "output file");
             System.exit(-1);
         }
 
-        int toneFreq = cmd.getIntegerFlagD("tone_freq", 500);
-        int toneRate = cmd.getIntegerFlagD("tone_rate", 48000);
-        int outRate = cmd.getIntegerFlagD("out_rate", 44100);
+        int toneFreq = cmd.getIntegerFlagD(FLAG_FREQ, 500);
+        int toneRate = cmd.getIntegerFlagD(FLAG_TRATE, 48000);
+        int outRate = cmd.getIntegerFlagD(FLAG_ORATE, 44100);
 
         Tone source = new Tone(toneRate, toneFreq);
         WavOutFile wavOutFile = new WavOutput.WavOutFile(new File(cmd.getArg(0)), AudioFormat.MONO_S16_LE(outRate));

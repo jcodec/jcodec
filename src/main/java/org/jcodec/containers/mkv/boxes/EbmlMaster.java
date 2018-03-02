@@ -3,9 +3,9 @@ import static org.jcodec.containers.mkv.util.EbmlUtil.ebmlLength;
 
 import org.jcodec.containers.mkv.util.EbmlUtil;
 
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 
 /**
@@ -46,11 +46,11 @@ public class EbmlMaster extends EbmlBase {
             System.out.println("EbmlMaster.getData: id.length "+id.length+"  EbmlUtil.ebmlLength("+size+"): "+ebmlLength(size)+" size: "+size);
         ByteBuffer bb = ByteBuffer.allocate((int)(id.length + ebmlLength(size)+size));
 
-        bb.putArr(id);
-        bb.putArr(EbmlUtil.ebmlEncode(size));
+        bb.put(id);
+        bb.put(EbmlUtil.ebmlEncode(size));
 
         for (int i = 0; i < children.size(); i++) 
-            bb.putBuf(children.get(i).getData());
+            bb.put(children.get(i).getData());
         
         
         bb.flip();

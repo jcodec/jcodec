@@ -1,26 +1,21 @@
 package org.jcodec.containers.mp4.boxes;
 
-import static org.stjs.javascript.Global.console;
-
 import java.util.Iterator;
 
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.IBoxFactory;
-import org.jcodec.platform.Platform;
-import org.stjs.javascript.Global;
-import org.stjs.javascript.JSCollections;
-import org.stjs.javascript.JSObjectAdapter;
 
-import js.lang.StringBuilder;
-import js.lang.reflect.Array;
-import js.nio.ByteBuffer;
-import js.util.ArrayList;
-import js.util.Collection;
-import js.util.LinkedList;
-import js.util.List;
-import js.util.ListIterator;
+import java.lang.StringBuilder;
+import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -51,7 +46,7 @@ public class NodeBox extends Box {
         while (input.remaining() >= 8) {
             Box child = parseChildBox(input, factory);
             if (child != null)
-                add(child);
+                boxes.add(child);
         }
     }
     
@@ -62,26 +57,35 @@ public class NodeBox extends Box {
         if (input.remaining() < 4)
             return null;
 
+        Box ret = null;
         Header childAtom = Header.read(input);
-        if (childAtom != null && input.remaining() >= childAtom.getBodySize())
-            return Box.parseBox(NIOUtils.read(input, (int) childAtom.getBodySize()), childAtom, factory);
-        else
-            return null;
+        if (childAtom != null && input.remaining() >= childAtom.getBodySize()) {
+            ret = Box.parseBox(NIOUtils.read(input, (int) childAtom.getBodySize()), childAtom, factory);
+        }
+        return ret;
     }
 
     public List<Box> getBoxes() {
         return boxes;
     }
 
-    public NodeBox add(Box box) {
+    public void add(Box box) {
         boxes.add(box);
-        return this;
     }
 
     protected void doWrite(ByteBuffer out) {
         for (Box box : boxes) {
             box.write(out);
         }
+    }
+    
+    @Override
+    public int estimateSize() {
+        int total = 0;
+        for (Box box : boxes) {
+            total += box.estimateSize();
+        }
+        return total + Header.estimateHeaderSize(total);
     }
 
     public void addFirst(MovieHeaderBox box) {
@@ -94,7 +98,6 @@ public class NodeBox extends Box {
     }
     
     public void replaceBox(Box box) {
-        console.log("replaceBox", box.header.getFourcc());
         removeChildren(box.getFourcc());
         add(box);
     }
@@ -102,16 +105,11 @@ public class NodeBox extends Box {
     protected void dump(StringBuilder sb) {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
         List<String> fields = new ArrayList<String>(0);
-        collectModel(this.getClass(), fields);
         ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[0]));
         sb.append("\"boxes\": [");
         dumpBoxes(sb);
         sb.append("]");
         sb.append("}");
-    }
-
-    protected void getModelFields(List<String> model) {
-
     }
 
     protected void dumpBoxes(StringBuilder sb) {
@@ -147,6 +145,27 @@ public class NodeBox extends Box {
         return NodeBox.doCloneBox(box, approxSize, bf);
     }
 
+    public static <T extends Box> T[] findDeep(Box box, Class<T> class1, String name) {
+        List<T> storage = new ArrayList<T>();
+        findDeepInner(box, class1, name, storage);
+        return storage.toArray((T[]) Array.newInstance(class1, 0));
+    }
+
+    public static <T extends Box> void findDeepInner(Box box, Class<T> class1, String name, List<T> storage) {
+        if (box == null)
+            return;
+        if (name.equals(box.getHeader().getFourcc())) {
+            storage.add((T) box);
+            return;
+        }
+        if (box instanceof NodeBox) {
+            NodeBox nb = (NodeBox) box;
+            for (Box candidate : nb.getBoxes()) {
+                findDeepInner(candidate, class1, name, storage);
+            }
+        }
+    }
+    
     public static <T extends Box> T[] findAll(Box box, Class<T> class1, String path) {
         return findAllPath(box, class1, new String[] { path });
     }

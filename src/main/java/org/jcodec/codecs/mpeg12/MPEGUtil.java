@@ -1,6 +1,6 @@
 package org.jcodec.codecs.mpeg12;
-import js.nio.ByteBuffer;
-import js.nio.ByteOrder;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -46,8 +46,8 @@ public class MPEGUtil {
             val = (val << 8) | (buf.get() & 0xff);
             if (val >= mmin && val <= mmax) {
                 if (n == 0) {
-                    buf.setPosition(buf.position() - 4);
-                    result.setLimit(buf.position() - from);
+                    buf.position(buf.position() - 4);
+                    result.limit(buf.position() - from);
                     break;
                 }
                 --n;

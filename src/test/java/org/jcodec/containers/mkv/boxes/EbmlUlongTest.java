@@ -4,7 +4,7 @@ import static org.jcodec.containers.mkv.MKVType.CueClusterPosition;
 import org.junit.Assert;
 import org.junit.Test;
 
-import js.nio.ByteBuffer;
+import java.nio.ByteBuffer;
 
 public class EbmlUlongTest {
 

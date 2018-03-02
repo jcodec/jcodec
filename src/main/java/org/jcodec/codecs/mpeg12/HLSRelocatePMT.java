@@ -5,16 +5,16 @@ import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.containers.mps.psi.PATSection;
 
-import js.io.File;
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.nio.channels.ReadableByteChannel;
-import js.nio.channels.WritableByteChannel;
-import js.util.ArrayList;
-import js.util.HashSet;
-import js.util.List;
-import js.util.Set;
+import java.io.File;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -30,10 +30,10 @@ public class HLSRelocatePMT {
     private static final int TS_START_CODE = 0x47;
     private static final int CHUNK_SIZE_PKT = 1024;
     private static final int TS_PKT_SIZE = 188;
-
+    
     public static void main1(String[] args) throws IOException {
 
-        Cmd cmd = MainUtils.parseArguments(args);
+        Cmd cmd = MainUtils.parseArguments(args, new MainUtils.Flag[] {});
         if (cmd.args.length < 2) {
             MainUtils.printHelpNoFlags("file _in", "file out");
             return;
@@ -61,7 +61,7 @@ public class HLSRelocatePMT {
         int totalPkt = 0;
         while (_in.read(buf) != -1) {
             buf.flip();
-            buf.setLimit((buf.limit() / TS_PKT_SIZE) * TS_PKT_SIZE);
+            buf.limit((buf.limit() / TS_PKT_SIZE) * TS_PKT_SIZE);
 
             while (buf.hasRemaining()) {
                 ByteBuffer pkt = NIOUtils.read(buf, TS_PKT_SIZE);

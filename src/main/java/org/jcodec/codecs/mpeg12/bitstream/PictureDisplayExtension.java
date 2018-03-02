@@ -3,8 +3,8 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.Point;
 
-import js.lang.IllegalArgumentException;
-import js.nio.ByteBuffer;
+import java.lang.IllegalArgumentException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed

@@ -24,16 +24,16 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import js.io.File;
-import js.io.FileInputStream;
-import js.io.FileOutputStream;
-import js.io.IOException;
-import js.lang.System;
-import js.nio.ByteBuffer;
-import js.nio.channels.FileChannel;
-import js.util.ArrayList;
-import js.util.LinkedList;
-import js.util.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class MKVMuxerTest {
 
@@ -352,7 +352,7 @@ public class MKVMuxerTest {
 
     public static byte[] bufferToArray(ByteBuffer bb) {
         byte[] ar = new byte[bb.remaining()];
-        bb.getBuf(ar);
+        bb.get(ar);
         return ar;
     }
 
