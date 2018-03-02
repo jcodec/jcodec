@@ -28,8 +28,8 @@
 	</developers>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<stjs.version>3.3.1-SNAPSHOT</stjs.version>
-		<stjs.plugin.version>3.3.1-SNAPSHOT</stjs.plugin.version>
+		<stjs.version>3.3.3-SNAPSHOT</stjs.version>
+		<stjs.plugin.version>3.3.3-SNAPSHOT</stjs.plugin.version>
 	</properties>
 
 	<build>
