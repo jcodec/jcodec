@@ -25,13 +25,13 @@ public class Assert {
 
     public static void assertTrue(Object... arguments) {
         if (arguments.length == 1) {
-            boolean expected = (boolean) arguments[0];
+            boolean expected = (Boolean) arguments[0];
             if (!expected) {
                 throw new AssertionError();
             }
         } else if (arguments.length == 2) {
             String msg = (String) arguments[0];
-            boolean expected = (boolean) arguments[1];
+            boolean expected = (Boolean) arguments[1];
             if (!expected) {
                 throw new AssertionError(msg);
             }
