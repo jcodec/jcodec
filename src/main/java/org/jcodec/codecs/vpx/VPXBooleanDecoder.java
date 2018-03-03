@@ -152,8 +152,9 @@ public class VPXBooleanDecoder {
             return -i; /* negate the return value */
 
         }
-        
-        public int readTree(int[] tree, int prob0, int prob1) {
+
+        //There is a method in the class (or one of its parents) having the same name with the method named [readTree] but is less generic
+        public int readTree3(int[] tree, int prob0, int prob1) {
             int i = 0; 
             if ((i = tree[i + readBit(prob0)]) > 0) {
                 while ((i = tree[i + readBit(prob1)]) > 0) ;

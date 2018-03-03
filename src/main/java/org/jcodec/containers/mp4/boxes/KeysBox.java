@@ -16,7 +16,9 @@ public class KeysBox extends NodeBox {
     private static final String FOURCC = "keys";
 
     private static class LocalBoxes extends Boxes {
-        {
+        //Initializing blocks are not supported by Javascript.
+        LocalBoxes() {
+            super();
             mappings.put(MdtaBox.fourcc(), MdtaBox.class);
         }
     }

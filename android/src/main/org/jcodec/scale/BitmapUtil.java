@@ -15,7 +15,7 @@ import java.nio.IntBuffer;
  * 
  */
 public class BitmapUtil {
-    private static ThreadLocal<BitmapUtil> inst = new ThreadLocal<BitmapUtil>();
+    private final static ThreadLocal<BitmapUtil> inst = new ThreadLocal<BitmapUtil>();
     private int[] buffer;
 
     private static BitmapUtil inst() {

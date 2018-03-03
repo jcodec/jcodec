@@ -51,6 +51,8 @@ public class MetadataEditor {
     }
 
     public void save(boolean fast) throws IOException {
+        //In Javascript you cannot access a field from the outer type.
+        final MetadataEditor self = this;
         MP4Edit edit = new MP4Edit() {
             @Override
             public void applyToFragment(MovieBox mov, MovieFragmentBox[] fragmentBox) {
@@ -60,15 +62,15 @@ public class MetadataEditor {
             public void apply(MovieBox movie) {
                 MetaBox meta1 = NodeBox.findFirst(movie, MetaBox.class, MetaBox.fourcc());
                 MetaBox meta2 = NodeBox.findFirstPath(movie, MetaBox.class, new String[] { "udta", MetaBox.fourcc() });
-                if (keyedMeta != null && keyedMeta.size() > 0) {
+                if (self.keyedMeta != null && self.keyedMeta.size() > 0) {
                     if (meta1 == null) {
                         meta1 = new MetaBox();
                         movie.add(meta1);
                     }
-                    meta1.setKeyedMeta(keyedMeta);
+                    meta1.setKeyedMeta(self.keyedMeta);
                 }
 
-                if (itunesMeta != null && itunesMeta.size() > 0) {
+                if (self.itunesMeta != null && self.itunesMeta.size() > 0) {
                     if (meta2 == null) {
                         meta2 = new UdtaMetaBox();
                         NodeBox udta = NodeBox.findFirst(movie, NodeBox.class, "udta");
@@ -78,7 +80,7 @@ public class MetadataEditor {
                         }
                         udta.add(meta2);
                     }
-                    meta2.setItunesMeta(itunesMeta);
+                    meta2.setItunesMeta(self.itunesMeta);
                 }
             }
         };

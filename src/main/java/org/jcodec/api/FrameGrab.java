@@ -37,7 +37,8 @@ public class FrameGrab {
 
     private SeekableDemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
-    private ThreadLocal<byte[][]> buffers;
+    //ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread
+    private final static ThreadLocal<byte[][]> buffers = new ThreadLocal<byte[][]>();;
 
     public static FrameGrab createFrameGrab(SeekableByteChannel _in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
@@ -69,7 +70,6 @@ public class FrameGrab {
     public FrameGrab(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
         this.videoTrack = videoTrack;
         this.decoder = decoder;
-        this.buffers = new ThreadLocal<byte[][]>();
     }
 
     private SeekableDemuxerTrack sdt() throws JCodecException {

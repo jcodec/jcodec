@@ -83,7 +83,7 @@ public class MP4Muxer implements Muxer {
         return nextTrackId;
     }
 
-    private CodecMP4MuxerTrack addTrack(MP4TrackType type, Codec codec) {
+    private CodecMP4MuxerTrack doAddTrack(MP4TrackType type, Codec codec) {
         return addTrack(new CodecMP4MuxerTrack(nextTrackId++, type, codec));
     }
     
@@ -185,7 +185,7 @@ public class MP4Muxer implements Muxer {
     }
 
     public CodecMP4MuxerTrack addCompressedAudioTrack(Codec codec, AudioFormat format) {
-        CodecMP4MuxerTrack track = addTrack(SOUND, codec);
+        CodecMP4MuxerTrack track = doAddTrack(SOUND, codec);
         track.addAudioSampleEntry(format);
 
         return track;
@@ -193,7 +193,7 @@ public class MP4Muxer implements Muxer {
 
     @Override
     public MuxerTrack addVideoTrack(Codec codec, VideoCodecMeta meta) {
-        CodecMP4MuxerTrack track = addTrack(MP4TrackType.VIDEO, codec);
+        CodecMP4MuxerTrack track = doAddTrack(MP4TrackType.VIDEO, codec);
         checkArgument(meta != null || codec == Codec.H264,
                 "VideoCodecMeta is required upfront for all codecs but H.264");
         track.addVideoSampleEntry(meta);

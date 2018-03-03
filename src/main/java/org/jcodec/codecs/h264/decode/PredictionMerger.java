@@ -97,7 +97,7 @@ public class PredictionMerger {
         } else if (partPred == L1) {
             weight(blk1, stride, off, blkW, blkH, logWD, w1, o1, out);
         } else if (partPred == Bi) {
-            weightPrediction(blk0, blk1, stride, off, blkW, blkH, logWD, w0, w1, o0, o1, out);
+            _weightPrediction(blk0, blk1, stride, off, blkW, blkH, logWD, w0, w1, o0, o1, out);
         }
     }
 
@@ -116,7 +116,7 @@ public class PredictionMerger {
                 out[off] = (byte) ((blk0[off] + blk1[off] + 1) >> 1);
     }
 
-    private static void weightPrediction(byte[] blk0, byte[] blk1, int stride, int off, int blkW, int blkH, int logWD,
+    private static void _weightPrediction(byte[] blk0, byte[] blk1, int stride, int off, int blkW, int blkH, int logWD,
             int w0, int w1, int o0, int o1, byte[] out) {
         // Necessary to correctly scale in [-128, 127] range
         int round = (1 << logWD) + ((w0 + w1) << 7);

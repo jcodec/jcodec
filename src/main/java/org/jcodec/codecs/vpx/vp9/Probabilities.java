@@ -540,10 +540,6 @@ public class Probabilities {
 
     };
 
-    public int[][] getPartitionProbs() {
-        return null;
-    }
-
     public int[] getSegmentationPredProb() {
         return null;
     }

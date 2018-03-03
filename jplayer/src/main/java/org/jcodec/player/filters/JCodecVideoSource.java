@@ -34,7 +34,8 @@ import org.jcodec.common.tools.Debug;
  */
 public class JCodecVideoSource implements VideoSource {
 
-    private ThreadLocal<VideoDecoder> decoders = new ThreadLocal<VideoDecoder>();
+    //ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread
+    private final static ThreadLocal<VideoDecoder> decoders = new ThreadLocal<VideoDecoder>();
     private ExecutorService tp;
 
     private List<ByteBuffer> drain = new ArrayList<ByteBuffer>();

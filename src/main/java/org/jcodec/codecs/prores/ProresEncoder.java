@@ -209,18 +209,19 @@ public class ProresEncoder extends VideoEncoder {
         writeACCoeffs(bits, qMat, _in, blocksPerSlice, scan, 64);
     }
 
-    private void dctOnePlane(int blocksPerSlice, byte[] in, byte[] hibd, int[] out) {
-        for (int i = 0; i < in.length; i++) {
-            out[i] = ((in[i] + 128) << 2);
+    //Wrong usage of Javascript keyword:in
+    private void dctOnePlane(int blocksPerSlice, byte[] src, byte[] hibd, int[] dst) {
+        for (int i = 0; i < src.length; i++) {
+            dst[i] = ((src[i] + 128) << 2);
         }
         if (hibd != null) {
-            for (int i = 0; i < in.length; i++) {
-                out[i] += hibd[i];
+            for (int i = 0; i < src.length; i++) {
+                dst[i] += hibd[i];
             }
         }
 
         for (int i = 0; i < blocksPerSlice; i++) {
-            fdctProres10(out, i << 6);
+            fdctProres10(dst, i << 6);
         }
     }
 
@@ -358,21 +359,22 @@ public class ProresEncoder extends VideoEncoder {
         return out;
     }
 
-    private void split(Picture in, Picture out, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
-        byte[][] inData = in.getData();
-        byte[][] inhbdData = in.getLowBits();
+    //Wrong usage of Javascript keyword:in
+    private void split(Picture src, Picture dst, int mbX, int mbY, int sliceMbCount, int vStep, int vOffset) {
+        byte[][] inData = src.getData();
+        byte[][] inhbdData = src.getLowBits();
         
-        byte[][] outData = out.getData();
-        byte[][] outhbdData = out.getLowBits();
+        byte[][] outData = dst.getData();
+        byte[][] outhbdData = dst.getLowBits();
 
-        doSplit(inData[0], outData[0], in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
-        doSplit(inData[1], outData[1], in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
-        doSplit(inData[2], outData[2], in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        doSplit(inData[0], outData[0], src.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
+        doSplit(inData[1], outData[1], src.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        doSplit(inData[2], outData[2], src.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
         
-        if (in.getLowBits() != null) {
-            doSplit(inhbdData[0], outhbdData[0], in.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
-            doSplit(inhbdData[1], outhbdData[1], in.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
-            doSplit(inhbdData[2], outhbdData[2], in.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+        if (src.getLowBits() != null) {
+            doSplit(inhbdData[0], outhbdData[0], src.getPlaneWidth(0), mbX, mbY, sliceMbCount, 0, vStep, vOffset);
+            doSplit(inhbdData[1], outhbdData[1], src.getPlaneWidth(1), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
+            doSplit(inhbdData[2], outhbdData[2], src.getPlaneWidth(2), mbX, mbY, sliceMbCount, 1, vStep, vOffset);
         }
     }
 
