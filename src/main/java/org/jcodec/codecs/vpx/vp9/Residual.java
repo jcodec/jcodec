@@ -171,7 +171,7 @@ public class Residual {
         int[][][][][][] probs = probStore.getCoefProbs();
         int prob0 = pareto(0, probs[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx][1]);
         int prob1 = pareto(1, probs[txSz][plane > 0 ? 1 : 0][isInter ? 1 : 0][band][ctx][2]);
-        return decoder.readTree(TOKEN_TREE, prob0, prob1);
+        return decoder.readTree3(TOKEN_TREE, prob0, prob1);
     }
 
     private static boolean readMoreCoefs(int plane, int coefi, int txSz, int posX, int posY, int txType, int band,

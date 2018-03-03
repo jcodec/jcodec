@@ -54,7 +54,8 @@ public class SinkImpl implements Sink, PacketSink {
     private Codec outputVideoCodec;
     private Codec outputAudioCodec;
     private Format outputFormat;
-    private ThreadLocal<ByteBuffer> bufferStore = new ThreadLocal<ByteBuffer>();
+    //ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread
+    private final static ThreadLocal<ByteBuffer> bufferStore = new ThreadLocal<ByteBuffer>();
 
     private AudioEncoder audioEncoder;
     private VideoEncoder videoEncoder;

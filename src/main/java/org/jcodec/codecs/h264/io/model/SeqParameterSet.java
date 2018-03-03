@@ -285,14 +285,15 @@ public class SeqParameterSet {
         }
     }
 
-    public static int[] readScalingList(BitReader in, int sizeOfScalingList)  {
+    //Wrong usage of Javascript keyword:in
+    public static int[] readScalingList(BitReader src, int sizeOfScalingList)  {
 
         int[] scalingList = new int[sizeOfScalingList];
         int lastScale = 8;
         int nextScale = 8;
         for (int j = 0; j < sizeOfScalingList; j++) {
             if (nextScale != 0) {
-                int deltaScale = readSE(in, "deltaScale");
+                int deltaScale = readSE(src, "deltaScale");
                 nextScale = (lastScale + deltaScale + 256) % 256;
                 if (j == 0 && nextScale == 0)
                     return null;
@@ -303,13 +304,14 @@ public class SeqParameterSet {
         return scalingList;
     }
 
-    private static void readScalingListMatrix(BitReader in, SeqParameterSet sps) {
+    //Wrong usage of Javascript keyword:in
+    private static void readScalingListMatrix(BitReader src, SeqParameterSet sps) {
         sps.scalingMatrix = new int[8][];
         for (int i = 0; i < 8; i++) {
-            boolean seqScalingListPresentFlag = readBool(in, "SPS: seqScalingListPresentFlag");
+            boolean seqScalingListPresentFlag = readBool(src, "SPS: seqScalingListPresentFlag");
             if (seqScalingListPresentFlag) {
                 int scalingListSize = i < 6 ? 16 : 64;
-                sps.scalingMatrix[i] = readScalingList(in, scalingListSize);
+                sps.scalingMatrix[i] = readScalingList(src, scalingListSize);
             }
         }
     }

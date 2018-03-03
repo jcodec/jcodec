@@ -92,9 +92,9 @@ public class MetaValue {
 
     public String getString() {
         if (type == TYPE_STRING_UTF8)
-            return toString(data, "UTF-8");
+            return stringFromBytes(data, "UTF-8");
         if (type == TYPE_STRING_UTF16)
-            return toString(data, "UTF-16BE");
+            return stringFromBytes(data, "UTF-16BE");
         return null;
     }
     
@@ -133,7 +133,8 @@ public class MetaValue {
         return data;
     }
 
-    private static String toString(byte[] bytes, String encoding) {
+    //There is a method in the class (or one of its parents) having the same name with the method named [toString] but is less generic
+    private static String stringFromBytes(byte[] bytes, String encoding) {
         try {
             return new String(bytes, encoding);
         } catch (UnsupportedEncodingException e) {

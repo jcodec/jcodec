@@ -10,12 +10,12 @@ import java.io.IOException;
  */
 public class VP8Util {
     
-    public static int BLOCK_TYPES = 4;
-    public static int COEF_BANDS = 8;
-    public static int PREV_COEF_CONTEXTS = 3;
-    public static int MAX_ENTROPY_TOKENS = 12;
-    public static int MAX_MODE_LF_DELTAS = 4;
-    public static int MAX_REF_LF_DELTAS = 4;
+    public static final int BLOCK_TYPES = 4;
+    public static final int COEF_BANDS = 8;
+    public static final int PREV_COEF_CONTEXTS = 3;
+    public static final int MAX_ENTROPY_TOKENS = 12;
+    public static final int MAX_MODE_LF_DELTAS = 4;
+    public static final int MAX_REF_LF_DELTAS = 4;
     public static final int MB_FEATURE_TREE_PROBS = 3;
     
     /**

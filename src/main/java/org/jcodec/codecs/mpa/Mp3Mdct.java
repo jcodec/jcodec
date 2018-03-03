@@ -38,27 +38,28 @@ public class Mp3Mdct {
 
     private static float[] tmp = new float[16];
 
-    static void oneLong(float[] in, float[] out) {
+    //Wrong usage of Javascript keyword:in
+    static void oneLong(float[] src, float[] dst) {
         for (int i = 17; i > 0; i--)
-            in[i] += in[i - 1];
+            src[i] += src[i - 1];
 
         for (int i = 17; i > 2; i -= 2)
-            in[i] += in[i - 2];
+            src[i] += src[i - 2];
 
         for (int i = 0, k = 0; i < 2; i++, k += 8) {
-            float tmp0 = in[i] + in[i];
-            float tmp1 = tmp0 + in[12 + i];
-            float tmp2 = in[6 + i] * factor36pt3;
+            float tmp0 = src[i] + src[i];
+            float tmp1 = tmp0 + src[12 + i];
+            float tmp2 = src[6 + i] * factor36pt3;
 
-            tmp[k + 0] = tmp1 + in[4 + i] * factor36pt2 + in[8 + i] * factor36pt1 + in[16 + i] * factor36pt0;
-            tmp[k + 1] = tmp0 + in[4 + i] - in[8 + i] - in[12 + i] - in[12 + i] - in[16 + i];
-            tmp[k + 2] = tmp1 - in[4 + i] * factor36pt0 - in[8 + i] * factor36pt2 + in[16 + i] * factor36pt1;
-            tmp[k + 3] = tmp1 - in[4 + i] * factor36pt1 + in[8 + i] * factor36pt0 - in[16 + i] * factor36pt2;
+            tmp[k + 0] = tmp1 + src[4 + i] * factor36pt2 + src[8 + i] * factor36pt1 + src[16 + i] * factor36pt0;
+            tmp[k + 1] = tmp0 + src[4 + i] - src[8 + i] - src[12 + i] - src[12 + i] - src[16 + i];
+            tmp[k + 2] = tmp1 - src[4 + i] * factor36pt0 - src[8 + i] * factor36pt2 + src[16 + i] * factor36pt1;
+            tmp[k + 3] = tmp1 - src[4 + i] * factor36pt1 + src[8 + i] * factor36pt0 - src[16 + i] * factor36pt2;
 
-            tmp[k + 4] = in[2 + i] * factor36pt4 + tmp2 + in[10 + i] * factor36pt5 + in[14 + i] * factor36pt6;
-            tmp[k + 5] = (in[2 + i] - in[10 + i] - in[14 + i]) * factor36pt3;
-            tmp[k + 6] = in[2 + i] * factor36pt5 - tmp2 - in[10 + i] * factor36pt6 + in[14 + i] * factor36pt4;
-            tmp[k + 7] = in[2 + i] * factor36pt6 - tmp2 + in[10 + i] * factor36pt4 - in[14 + i] * factor36pt5;
+            tmp[k + 4] = src[2 + i] * factor36pt4 + tmp2 + src[10 + i] * factor36pt5 + src[14 + i] * factor36pt6;
+            tmp[k + 5] = (src[2 + i] - src[10 + i] - src[14 + i]) * factor36pt3;
+            tmp[k + 6] = src[2 + i] * factor36pt5 - tmp2 - src[10 + i] * factor36pt6 + src[14 + i] * factor36pt4;
+            tmp[k + 7] = src[2 + i] * factor36pt6 - tmp2 + src[10 + i] * factor36pt4 - src[14 + i] * factor36pt5;
         }
 
         for (int i = 0, j = 4, k = 8, l = 12; i < 4; i++, j++, k++, l++) {
@@ -71,53 +72,55 @@ public class Mp3Mdct {
         }
 
         for (int i = 0; i < 4; i++) {
-            out[26 - i] = tmp[i] + tmp[8 + i];
-            out[8 - i] = tmp[8 + i] - tmp[i];
-            out[27 + i] = out[26 - i];
-            out[9 + i] = -out[8 - i];
+            dst[26 - i] = tmp[i] + tmp[8 + i];
+            dst[8 - i] = tmp[8 + i] - tmp[i];
+            dst[27 + i] = dst[26 - i];
+            dst[9 + i] = -dst[8 - i];
         }
 
         for (int i = 0; i < 4; i++) {
-            out[21 - i] = tmp[7 - i] + tmp[15 - i];
-            out[3 - i] = tmp[15 - i] - tmp[7 - i];
-            out[32 + i] = out[21 - i];
-            out[14 + i] = -out[3 - i];
+            dst[21 - i] = tmp[7 - i] + tmp[15 - i];
+            dst[3 - i] = tmp[15 - i] - tmp[7 - i];
+            dst[32 + i] = dst[21 - i];
+            dst[14 + i] = -dst[3 - i];
         }
 
-        float tmp0 = in[0] - in[4] + in[8] - in[12] + in[16];
-        float tmp1 = (in[1] - in[5] + in[9] - in[13] + in[17]) * cos450;
-        out[4] = tmp1 - tmp0;
-        out[13] = -out[4];
-        out[31] = out[22] = tmp0 + tmp1;
+        float tmp0 = src[0] - src[4] + src[8] - src[12] + src[16];
+        float tmp1 = (src[1] - src[5] + src[9] - src[13] + src[17]) * cos450;
+        dst[4] = tmp1 - tmp0;
+        dst[13] = -dst[4];
+        dst[31] = dst[22] = tmp0 + tmp1;
     }
 
-    static void threeShort(float[] in, float[] out) {
-        Arrays.fill(out, 0.0f);
+    //Wrong usage of Javascript keyword:in
+    static void threeShort(float[] src, float[] dst) {
+        Arrays.fill(dst, 0.0f);
 
         for (int i = 0, outOff = 0; i < 3; i++, outOff += 6) {
-            imdct12(in, out, outOff, i);
+            imdct12(src, dst, outOff, i);
         }
     }
 
-    private static void imdct12(float[] in, float[] out, int outOff, int wndIdx) {
+    //Wrong usage of Javascript keyword:in
+    private static void imdct12(float[] src, float[] dst, int outOff, int wndIdx) {
 
         for (int j = 15 + wndIdx, k = 12 + wndIdx; j >= 3 + wndIdx; j -= 3, k -= 3)
-            in[j] += in[k];
+            src[j] += src[k];
 
-        in[15 + wndIdx] += in[9 + wndIdx];
-        in[9 + wndIdx] += in[3 + wndIdx];
+        src[15 + wndIdx] += src[9 + wndIdx];
+        src[9 + wndIdx] += src[3 + wndIdx];
 
-        float pp2 = in[12 + wndIdx] * cos600;
-        float pp1 = in[6 + wndIdx] * cos300;
-        float sum = in[0 + wndIdx] + pp2;
-        tmp[1] = in[wndIdx] - in[12 + wndIdx];
+        float pp2 = src[12 + wndIdx] * cos600;
+        float pp1 = src[6 + wndIdx] * cos300;
+        float sum = src[0 + wndIdx] + pp2;
+        tmp[1] = src[wndIdx] - src[12 + wndIdx];
         tmp[0] = sum + pp1;
         tmp[2] = sum - pp1;
 
-        pp2 = in[15 + wndIdx] * cos600;
-        pp1 = in[9 + wndIdx] * cos300;
-        sum = in[3 + wndIdx] + pp2;
-        tmp[4] = in[3 + wndIdx] - in[15 + wndIdx];
+        pp2 = src[15 + wndIdx] * cos600;
+        pp1 = src[9 + wndIdx] * cos300;
+        sum = src[3 + wndIdx] + pp2;
+        tmp[4] = src[3 + wndIdx] - src[15 + wndIdx];
         tmp[5] = sum + pp1;
         tmp[3] = sum - pp1;
 
@@ -158,7 +161,7 @@ public class Mp3Mdct {
         tmp[0] *= cos825;
 
         for (int i = 0, j = outOff + 6; i < 12; i++, j++) {
-            out[j] += tmp[i];
+            dst[j] += tmp[i];
         }
     }
 }

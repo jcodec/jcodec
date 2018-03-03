@@ -50,7 +50,7 @@ public class Mp3Decoder implements AudioDecoder {
     private ChannelSynthesizer filter[] = {null, null};
     private boolean initialized;
 
-    final double fourByThree = (4.0 / 3.0);
+    private final static double fourByThree = (4.0 / 3.0);
 
     private float[][] prevBlk;
     private ByteBuffer frameData = ByteBuffer.allocate(4096);

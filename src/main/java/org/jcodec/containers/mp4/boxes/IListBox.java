@@ -26,7 +26,9 @@ public class IListBox extends Box {
     private BoxFactory factory;
 
     private static class LocalBoxes extends Boxes {
-        {
+        //Initializing blocks are not supported by Javascript.
+        LocalBoxes() {
+            super();
             mappings.put(DataBox.fourcc(), DataBox.class);
         }
     }

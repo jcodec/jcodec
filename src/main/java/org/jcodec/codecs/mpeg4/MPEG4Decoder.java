@@ -182,20 +182,21 @@ public class MPEG4Decoder extends VideoDecoder {
         return p;
     }
 
-    private Picture decodeBFrame(BitReader br, MPEG4DecodingContext ctx, byte[][] buffers, int quant, int fcodeForward,
-            int fcodeBackward) {
+    private Picture decodeBFrame(BitReader br, MPEG4DecodingContext ctx, byte[][] buffers, int quant, final int fcodeForward,
+            final int fcodeBackward) {
 
         Picture p = new Picture(ctx.mbWidth << 4, ctx.mbHeight << 4, buffers, null, ColorSpace.YUV420, 0,
                 new Rect(0, 0, ctx.width, ctx.height));
 
         Vector pFMV = new Vector(), pBMV = new Vector();
+        //To prevent unexpected behaviour in Javascript, final variables must be declared at method level and not inside loops
+        final int fcodeMax = (fcodeForward > fcodeBackward) ? fcodeForward : fcodeBackward;
         for (int y = 0; y < ctx.mbHeight; y++) {
             pBMV.x = pBMV.y = pFMV.x = pFMV.y = 0;
 
             for (int x = 0; x < ctx.mbWidth; x++) {
                 Macroblock mb = mbs[y * ctx.mbWidth + x];
                 Macroblock lastMB = prevMBs[y * ctx.mbWidth + x];
-                final int fcodeMax = (fcodeForward > fcodeBackward) ? fcodeForward : fcodeBackward;
 
                 if (checkResyncMarker(br, fcodeMax - 1)) {
                     int bound = readVideoPacketHeader(br, ctx, fcodeMax - 1, fcodeForward != 0, fcodeBackward != 0,

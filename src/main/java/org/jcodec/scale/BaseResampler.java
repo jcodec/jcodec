@@ -11,7 +11,7 @@ import org.jcodec.common.tools.MathUtil;
  * @author Stanislav Vitvitskiy
  */
 public abstract class BaseResampler {
-    private ThreadLocal<int[]> tempBuffers = new ThreadLocal<int[]>();
+    private final static ThreadLocal<int[]> tempBuffers = new ThreadLocal<int[]>();
     private Size toSize;
     private Size fromSize;
     private double scaleFactorX;
@@ -91,30 +91,31 @@ public abstract class BaseResampler {
     /**
      * Interpolates points using a 2d convolution
      */
-    public void resample(Picture in, Picture out) {
+    //Wrong usage of Javascript keyword:in
+    public void resample(Picture src, Picture dst) {
         int[] temp = tempBuffers.get();
         if (temp == null) {
             temp = new int[toSize.getWidth() * (fromSize.getHeight() + nTaps())];
             tempBuffers.set(temp);
         }
-        for (int p = 0; p < in.getColor().nComp; p++) {
+        for (int p = 0; p < src.getColor().nComp; p++) {
             // Horizontal pass
-            for (int y = 0; y < in.getPlaneHeight(p) + nTaps(); y++) {
-                for (int x = 0; x < out.getPlaneWidth(p); x++) {
+            for (int y = 0; y < src.getPlaneHeight(p) + nTaps(); y++) {
+                for (int x = 0; x < dst.getPlaneWidth(p); x++) {
                     short[] tapsXs = getTapsX(x);
                     int srcX = (int) (scaleFactorX * x) - nTaps() / 2 + 1;
 
                     int sum = 0;
                     for (int i = 0; i < nTaps(); i++) {
-                        sum += (getPel(in, p, srcX + i, y - nTaps() / 2 + 1) + 128) * tapsXs[i];
+                        sum += (getPel(src, p, srcX + i, y - nTaps() / 2 + 1) + 128) * tapsXs[i];
                     }
                     temp[y * toSize.getWidth() + x] = sum;
                 }
             }
 
             // Vertical pass
-            for (int y = 0; y < out.getPlaneHeight(p); y++) {
-                for (int x = 0; x < out.getPlaneWidth(p); x++) {
+            for (int y = 0; y < dst.getPlaneHeight(p); y++) {
+                for (int x = 0; x < dst.getPlaneWidth(p); x++) {
                     short[] tapsYs = getTapsY(y);
                     int srcY = (int) (scaleFactorY * y);
 
@@ -122,7 +123,7 @@ public abstract class BaseResampler {
                     for (int i = 0; i < nTaps(); i++) {
                         sum += temp[x + (srcY + i) * toSize.getWidth()] * tapsYs[i];
                     }
-                    out.getPlaneData(p)[y * out.getPlaneWidth(p) + x] = (byte) (MathUtil.clip((sum + 8192) >> 14, 0,
+                    dst.getPlaneData(p)[y * dst.getPlaneWidth(p) + x] = (byte) (MathUtil.clip((sum + 8192) >> 14, 0,
                             255) - 128);
                 }
             }

@@ -55,10 +55,11 @@ public class Mp3Bitstream {
         int[] large = new int[23];
         int[][] small = new int[3][13];
     }
-    
-    static MP3SideInfo readSideInfo(MpaHeader header, ByteBuffer in, int channels) {
+
+    //Wrong usage of Javascript keyword:in
+    static MP3SideInfo readSideInfo(MpaHeader header, ByteBuffer src, int channels) {
         MP3SideInfo si = new MP3SideInfo();
-        BitReader stream = BitReader.createBitReader(in);
+        BitReader stream = BitReader.createBitReader(src);
         if (header.version == MPEG1) {
 
             si.mainDataBegin = stream.readNBit(9);
