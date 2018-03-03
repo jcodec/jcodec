@@ -18,7 +18,7 @@ import net.sourceforge.jaad.aac.syntax.PCE;
  *
  * @author in-somnia
  */
-public class AACDecoderConfig implements SyntaxConstants {
+public class DecoderConfig implements SyntaxConstants {
 
 	private Profile profile, extProfile;
 	private SampleFrequency sampleFrequency;
@@ -32,7 +32,7 @@ public class AACDecoderConfig implements SyntaxConstants {
 	//extension: error resilience
 	private boolean sectionDataResilience, scalefactorResilience, spectralDataResilience;
 
-	private AACDecoderConfig() {
+	private DecoderConfig() {
 		profile = Profile.AAC_MAIN;
 		extProfile = Profile.UNKNOWN;
 		sampleFrequency = SampleFrequency.SAMPLE_FREQUENCY_NONE;
@@ -144,9 +144,9 @@ public class AACDecoderConfig implements SyntaxConstants {
 	 * 
 	 * @return a DecoderConfig
 	 */
-	public static AACDecoderConfig parseMP4DecoderSpecificInfo(byte[] data) throws AACException {
+	public static DecoderConfig parseMP4DecoderSpecificInfo(byte[] data) throws AACException {
 		final IBitStream _in = BitStream.createBitStream(data);
-		final AACDecoderConfig config = new AACDecoderConfig();
+		final DecoderConfig config = new DecoderConfig();
 
 		try {
 			config.profile = readProfile(_in);
@@ -213,7 +213,7 @@ public class AACDecoderConfig implements SyntaxConstants {
 		return Profile.forInt(i);
 	}
 
-	private static void readSyncExtension(IBitStream _in, AACDecoderConfig config) throws AACException {
+	private static void readSyncExtension(IBitStream _in, DecoderConfig config) throws AACException {
 		final int type = _in.readBits(11);
 		switch(type) {
 			case 0x2B7:

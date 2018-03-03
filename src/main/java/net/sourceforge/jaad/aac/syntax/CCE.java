@@ -1,7 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
 
 import net.sourceforge.jaad.aac.AACException;
-import net.sourceforge.jaad.aac.AACDecoderConfig;
+import net.sourceforge.jaad.aac.DecoderConfig;
 import net.sourceforge.jaad.aac.huffman.HCB;
 import net.sourceforge.jaad.aac.huffman.Huffman;
 
@@ -63,7 +63,7 @@ class CCE extends Element implements SyntaxConstants {
 		return chSelect[index];
 	}
 
-	void decode(IBitStream _in, AACDecoderConfig conf) throws AACException {
+	void decode(IBitStream _in, DecoderConfig conf) throws AACException {
 		couplingPoint = 2*_in.readBit();
 		coupledCount = _in.readBits(3);
 		int gainCount = 0;
