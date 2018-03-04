@@ -9,7 +9,6 @@ import java.util.List;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
-import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.io.DataReader;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
@@ -79,7 +78,7 @@ public class WebpDemuxer implements Demuxer, DemuxerTrack {
         case FOURCC_VP8L:
         case FOURCC_VP8X:
         default:
-            Logger.warn("Skipping unsupported chunk: " + JCodecUtil.dwToFourCC(fourCC) + ".");
+            Logger.warn("Skipping unsupported chunk: " + dwToFourCC(fourCC) + ".");
             byte[] b1 = new byte[size];
             raf.readFully(b1);
         }
@@ -126,5 +125,14 @@ public class WebpDemuxer implements Demuxer, DemuxerTrack {
         if (b.getInt() != FOURCC_WEBP)
             return 0;
         return 100;
+    }
+
+    public static String dwToFourCC(int fourCC) {
+        char[] ch = new char[4];
+        ch[0] = (char)((fourCC >> 24) & 0xff);
+        ch[1] = (char)((fourCC >> 16) & 0xff);
+        ch[2] = (char)((fourCC >> 8) & 0xff);
+        ch[3] = (char)((fourCC >> 0) & 0xff);
+        return new String(ch);
     }
 }
