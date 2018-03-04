@@ -17,8 +17,9 @@ import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
+import org.jcodec.codecs.mjpeg.JpegToThumb2x2;
+import org.jcodec.codecs.mjpeg.JpegToThumb4x4;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
-import org.jcodec.codecs.mpeg4.MPEG4Consts;
 import org.jcodec.codecs.mpeg4.MPEG4Decoder;
 import org.jcodec.codecs.png.PNGDecoder;
 import org.jcodec.codecs.prores.ProresDecoder;
@@ -313,7 +314,7 @@ public class SourceImpl implements Source, PacketSource {
         case VP8:
             return new VP8Decoder();
         case JPEG:
-            return JpegDecoder.createJpegDecoder(downscale);
+            return createJpegDecoder(downscale);
         case MPEG4:
             return new MPEG4Decoder();
         case RAW:
@@ -512,5 +513,15 @@ public class SourceImpl implements Source, PacketSource {
             return false;
         List<? extends DemuxerTrack> tracks = demuxAudio.getAudioTracks();
         return tracks != null && tracks.size() > 0;
+    }
+
+    public static JpegDecoder createJpegDecoder(int downscale) {
+        if (downscale == 2) {
+            return new JpegToThumb4x4();
+        } else if (downscale == 4) {
+            return new JpegToThumb2x2();
+        } else {
+            return new JpegDecoder();
+        }
     }
 }
