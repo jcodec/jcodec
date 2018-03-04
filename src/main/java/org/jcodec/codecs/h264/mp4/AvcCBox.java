@@ -1,6 +1,5 @@
 package org.jcodec.codecs.h264.mp4;
 
-import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;
@@ -8,6 +7,8 @@ import org.jcodec.containers.mp4.boxes.Header;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -73,14 +74,14 @@ public class AvcCBox extends Box {
                                        // sps
         for (int i = 0; i < nSPS; i++) {
             int spsSize = input.getShort();
-            Assert.assertEquals(0x27, input.get() & 0x3f);
+            checkState(0x27 == (input.get() & 0x3f));
             spsList.add(NIOUtils.read(input, spsSize - 1));
         }
 
         int nPPS = input.get() & 0xff;
         for (int i = 0; i < nPPS; i++) {
             int ppsSize = input.getShort();
-            Assert.assertEquals(0x28, input.get() & 0x3f);
+            checkState(0x28 == (input.get() & 0x3f));
             ppsList.add(NIOUtils.read(input, ppsSize - 1));
         }
     }

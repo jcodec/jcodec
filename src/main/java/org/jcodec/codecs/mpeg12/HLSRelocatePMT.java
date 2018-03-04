@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg12;
-import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
@@ -15,6 +14,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -66,7 +67,7 @@ public class HLSRelocatePMT {
             while (buf.hasRemaining()) {
                 ByteBuffer pkt = NIOUtils.read(buf, TS_PKT_SIZE);
                 ByteBuffer pktRead = pkt.duplicate();
-                Assert.assertEquals(TS_START_CODE, pktRead.get() & 0xff);
+                checkState(TS_START_CODE == (pktRead.get() & 0xff));
                 ++totalPkt;
                 int guidFlags = ((pktRead.get() & 0xff) << 8) | (pktRead.get() & 0xff);
                 int guid = (int) guidFlags & 0x1fff;

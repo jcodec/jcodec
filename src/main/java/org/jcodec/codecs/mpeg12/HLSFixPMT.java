@@ -1,5 +1,4 @@
 package org.jcodec.codecs.mpeg12;
-import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mps.MTSUtils;
 
@@ -10,6 +9,8 @@ import java.io.RandomAccessFile;
 import java.lang.System;
 import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,7 +30,7 @@ public class HLSFixPMT {
 
             while (ra.read(tsPkt) == 188) {
 
-                Assert.assertEquals(0x47, tsPkt[0] & 0xff);
+                checkState(0x47 == (tsPkt[0] & 0xff));
                 int guidFlags = ((tsPkt[1] & 0xff) << 8) | (tsPkt[2] & 0xff);
                 int guid = (int) guidFlags & 0x1fff;
                 int payloadStart = (guidFlags >> 14) & 0x1;

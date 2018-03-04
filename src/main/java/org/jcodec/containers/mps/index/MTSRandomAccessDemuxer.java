@@ -1,5 +1,4 @@
 package org.jcodec.containers.mps.index;
-import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mps.index.MPSIndex.MPSStreamIndex;
@@ -7,6 +6,8 @@ import org.jcodec.containers.mps.index.MTSIndex.MTSProgram;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -44,7 +45,7 @@ public class MTSRandomAccessDemuxer {
                         
                         for(int i = 0; i < pesLen; i++) {
                             ByteBuffer tsBuf = NIOUtils.fetchFromChannel(source, 188);
-                            Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+                            checkState(0x47 == (tsBuf.get() & 0xff));
                             int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                             int guid = (int) guidFlags & 0x1fff;
                             if(guid != tgtGuid)

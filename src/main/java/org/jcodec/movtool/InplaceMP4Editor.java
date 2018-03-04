@@ -1,9 +1,5 @@
 package org.jcodec.movtool;
-import java.lang.IllegalStateException;
-import java.lang.System;
 
-
-import org.jcodec.common.Assert;
 import org.jcodec.common.Tuple;
 import org.jcodec.common.Tuple._2;
 import org.jcodec.common.io.NIOUtils;
@@ -24,6 +20,8 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import static org.jcodec.common.Preconditions.checkNotNull;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -162,7 +160,7 @@ public class InplaceMP4Editor {
 
     private List<Tuple._2<Atom, ByteBuffer>> doTheFix(SeekableByteChannel fi, MP4Edit edit) throws IOException {
         Atom moovAtom = getMoov(fi);
-        Assert.assertNotNull(moovAtom);
+        checkNotNull(moovAtom);
 
         ByteBuffer moovBuffer = fetchBox(fi, moovAtom);
         MovieBox moovBox = (MovieBox) parseBox(moovBuffer);
