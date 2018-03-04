@@ -35,16 +35,6 @@ public class JpegDecoder extends VideoDecoder {
     public JpegDecoder() {
         this.buf = new int[64];
     }
-    
-    public static JpegDecoder createJpegDecoder(int downscale) {
-        if (downscale == 2) {
-            return new JpegToThumb4x4();
-        } else if (downscale == 4) {
-            return new JpegToThumb2x2();
-        } else {
-            return new JpegDecoder();
-        }
-    }
 
     public void setInterlace(boolean interlace, boolean topFieldFirst) {
         this.interlace = interlace;
