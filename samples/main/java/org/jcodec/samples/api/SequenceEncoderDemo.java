@@ -22,9 +22,9 @@ import javax.imageio.ImageIO;
  * 
  */
 public class SequenceEncoderDemo {
-    private static final Flag FLAG_FPS = Flag.createFlag("fps", "fps", "Rational fps, i.e 25:1 (for 25fps), 30:1 (for 30fps), 30000:1001 (for 29.97fps), etc.");
-    private static final Flag FLAG_FRAMES = Flag.createFlag("num-frames", "num-frames", "Maximum frames to decode.");
-    private static final Flag FLAG_PATTERN = Flag.createFlag("input-pattern", "input-pattern", "Input folder/frame%04.png pattern.");
+    private static final Flag FLAG_FPS = Flag.flag("fps", "fps", "Rational fps, i.e 25:1 (for 25fps), 30:1 (for 30fps), 30000:1001 (for 29.97fps), etc.");
+    private static final Flag FLAG_FRAMES = Flag.flag("num-frames", "num-frames", "Maximum frames to decode.");
+    private static final Flag FLAG_PATTERN = Flag.flag("input-pattern", "input-pattern", "Input folder/frame%04.png pattern.");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FPS, FLAG_FRAMES, FLAG_PATTERN};
 
     public static void main(String[] args) throws IOException {

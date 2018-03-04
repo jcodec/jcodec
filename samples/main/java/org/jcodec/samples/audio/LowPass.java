@@ -25,8 +25,8 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class LowPass {
-    private static final Flag FLAG_FREQ = Flag.createFlag("cut-off-frequency", "freq", "Cut-off frequency");
-    private static final Flag FLAG_SIZE = Flag.createFlag("kernel-size", "size", "Kernel size of this filter");
+    private static final Flag FLAG_FREQ = Flag.flag("cut-off-frequency", "freq", "Cut-off frequency");
+    private static final Flag FLAG_SIZE = Flag.flag("kernel-size", "size", "Kernel size of this filter");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FREQ, FLAG_SIZE};
     
     public static void main(String[] args) throws IOException {

@@ -52,11 +52,7 @@ public class MainUtils {
             this.type = type;
         }
 
-        public static Flag createFlag(String longName, String description) {
-            return new Flag(longName, null, description, FlagType.ANY);
-        }
-
-        public static Flag createFlag(String longName, String shortName, String description) {
+        public static Flag flag(String longName, String shortName, String description) {
             return new Flag(longName, shortName, description, FlagType.ANY);
         }
 

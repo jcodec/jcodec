@@ -35,7 +35,7 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class VideoFilter {
-    private static final Flag FLAG_TEXT = Flag.createFlag("text", "Text to display");
+    private static final Flag FLAG_TEXT = Flag.flag("text", null, "Text to display");
     private static final Flag[] FLAGS = new Flag[] {
         FLAG_TEXT
     };

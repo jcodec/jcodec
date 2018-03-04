@@ -54,7 +54,7 @@ public class FLVTool {
         processors.put("shift_pts", new ShiftPtsProcessor.Factory());
     }
 
-    private static final Flag FLAG_MAX_PACKETS = Flag.createFlag("max-packets", "m", "Maximum number of packets to process");
+    private static final Flag FLAG_MAX_PACKETS = Flag.flag("max-packets", "m", "Maximum number of packets to process");
 
     public static void main1(String[] args) throws IOException {
         if (args.length < 1) {
@@ -135,8 +135,8 @@ public class FLVTool {
         private Double from;
         private Double to;
 
-        private static final Flag FLAG_FROM = Flag.createFlag("from", "From timestamp (in seconds, i.e 67.49)");
-        private static final Flag FLAG_TO = Flag.createFlag("to", "To timestamp");
+        private static final Flag FLAG_FROM = Flag.flag("from", null, "From timestamp (in seconds, i.e 67.49)");
+        private static final Flag FLAG_TO = Flag.flag("to", null, "To timestamp");
 
         public static class Factory implements PacketProcessorFactory {
             @Override
@@ -287,10 +287,8 @@ public class FLVTool {
         private FLVTag prevAudioTag;
 
         public static class Factory implements PacketProcessorFactory {
-            private static final Flag FLAG_CHECK = Flag.createFlag("check",
-                    "Check sanity and report errors only, no packet dump will be generated.");
-            private static final Flag FLAG_STREAM = Flag.createFlag("stream",
-                    "Stream selector, can be one of: ['video', 'audio', 'script'].");
+            private static final Flag FLAG_CHECK = Flag.flag("check", null, "Check sanity and report errors only, no packet dump will be generated.");
+            private static final Flag FLAG_STREAM = Flag.flag("stream", null, "Stream selector, can be one of: ['video', 'audio', 'script'].");
 
             @Override
             public PacketProcessor newPacketProcessor(Cmd flags) {
@@ -400,10 +398,9 @@ public class FLVTool {
         private static final long WRAP_AROUND_VALUE = 0x80000000L;
         private static final int HALF_WRAP_AROUND_VALUE = 0x40000000;
 
-        private static final Flag FLAG_TO = Flag.createFlag("to",
-                "Shift first pts to this value, and all subsequent pts accordingly.");
-        private static final Flag FLAG_BY = Flag.createFlag("by", "Shift all pts by this value.");
-        private static final Flag FLAG_WRAP_AROUND = Flag.createFlag("wrap-around", "Expect wrap around of timestamps.");
+        private static final Flag FLAG_TO = Flag.flag("to", null, "Shift first pts to this value, and all subsequent pts accordingly.");
+        private static final Flag FLAG_BY = Flag.flag("by", null, "Shift all pts by this value.");
+        private static final Flag FLAG_WRAP_AROUND = Flag.flag("wrap-around", null, "Expect wrap around of timestamps.");
 
         public static class Factory implements PacketProcessorFactory {
             @Override
