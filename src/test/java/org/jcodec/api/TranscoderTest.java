@@ -42,7 +42,7 @@ public class TranscoderTest {
             g.drawString("hello", 42, 43);
 
             LoanerPicture tmpRGB = store.getPicture(rgb.getWidth(), rgb.getHeight(), RGB);
-            AWTUtil.fromBufferedImage(rgb, tmpRGB.getPicture());
+            AWTUtil.bufImgToPicture(rgb, tmpRGB.getPicture());
 
             return tmpRGB;
         }
