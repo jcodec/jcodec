@@ -28,8 +28,8 @@ public class KeysBox extends NodeBox {
         factory = new BoxFactory(new LocalBoxes());
     }
 
-    public KeysBox() {
-        this(Header.createHeader(FOURCC, 0));
+    public static KeysBox createKeysBox() {
+        return new KeysBox(Header.createHeader(FOURCC, 0));
     }
 
     public void parse(ByteBuffer input) {

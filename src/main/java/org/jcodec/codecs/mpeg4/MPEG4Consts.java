@@ -10,7 +10,7 @@ import org.jcodec.codecs.mpeg4.Macroblock.Vector;
  * 
  */
 public class MPEG4Consts {
-    static final Vector ZERO_MV = new Vector();
+    static final Vector ZERO_MV = Macroblock.vec();
     
     static final int BS_VERSION_BUGGY_DC_CLIP = 34;
     static final int MODE_INTER = 0;

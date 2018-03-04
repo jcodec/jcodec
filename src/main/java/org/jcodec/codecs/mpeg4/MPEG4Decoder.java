@@ -188,7 +188,7 @@ public class MPEG4Decoder extends VideoDecoder {
         Picture p = new Picture(ctx.mbWidth << 4, ctx.mbHeight << 4, buffers, null, ColorSpace.YUV420, 0,
                 new Rect(0, 0, ctx.width, ctx.height));
 
-        Vector pFMV = new Vector(), pBMV = new Vector();
+        Vector pFMV = Macroblock.vec(), pBMV = Macroblock.vec();
         //To prevent unexpected behaviour in Javascript, final variables must be declared at method level and not inside loops
         final int fcodeMax = (fcodeForward > fcodeBackward) ? fcodeForward : fcodeBackward;
         for (int y = 0; y < ctx.mbHeight; y++) {

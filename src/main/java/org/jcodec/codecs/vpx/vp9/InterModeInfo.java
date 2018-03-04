@@ -56,10 +56,6 @@ public class InterModeInfo extends ModeInfo {
     private long mvl2;
     private long mvl3;
 
-    public InterModeInfo(int segmentId, boolean skip, int txSize, int yMode, int subModes, int uvMode) {
-        super(segmentId, skip, txSize, yMode, subModes, uvMode);
-    }
-
     public InterModeInfo(int segmentId, boolean skip, int txSize, int yMode, int subModes, int uvMode, long mvl0,
             long mvl1, long mvl2, long mvl3) {
         super(segmentId, skip, txSize, yMode, subModes, uvMode);
@@ -1074,7 +1070,7 @@ public class InterModeInfo extends ModeInfo {
         }
         int uvMode = readUVMode(yMode, decoder, probs, c);
 
-        return new InterModeInfo(segmentId, skip, txSize, yMode, subModes, uvMode);
+        return new InterModeInfo(segmentId, skip, txSize, yMode, subModes, uvMode,0,0,0,0);
     }
 
     private static int readIntraMode(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probStore,

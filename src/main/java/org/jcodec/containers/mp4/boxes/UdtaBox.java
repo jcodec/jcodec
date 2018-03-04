@@ -12,8 +12,8 @@ import org.jcodec.containers.mp4.IBoxFactory;
 public class UdtaBox extends NodeBox {
     private static final String FOURCC = "udta";
 
-    public UdtaBox() {
-        this(Header.createHeader(fourcc(), 0));
+    public static UdtaBox createUdtaBox() {
+        return new UdtaBox(Header.createHeader(fourcc(), 0));
     }
     
     @Override

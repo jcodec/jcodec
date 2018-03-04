@@ -10,17 +10,15 @@ package org.jcodec.codecs.mpeg4;
 public class Macroblock {
     public final static int MBPRED_SIZE = 15;
 
+    public static Vector vec() {
+        return new Vector(0,0);
+    }
+
     public static class Vector {
         public Vector(int x, int y) {
             this.x = x;
             this.y = y;
         }
-
-        public Vector() {
-            x = 0;
-            y = 0;
-        }
-
         public int x;
         public int y;
     }
@@ -46,7 +44,7 @@ public class Macroblock {
     public Vector[] bmvs;
     public Vector[] bqmvs;
 
-    public Vector amv = new Vector();
+    public Vector amv = vec();
 
     public Vector mvsAvg;
 
@@ -75,11 +73,11 @@ public class Macroblock {
         bqmvs = new Vector[4];
 
         for (int i = 0; i < 4; i++) {
-            mvs[i] = new Vector();
-            pmvs[i] = new Vector();
-            qmvs[i] = new Vector();
-            bmvs[i] = new Vector();
-            bqmvs[i] = new Vector();
+            mvs[i] = vec();
+            pmvs[i] = vec();
+            qmvs[i] = vec();
+            bmvs[i] = vec();
+            bqmvs[i] = vec();
         }
         pred = new byte[][] { new byte[256], new byte[64], new byte[64], new byte[256], new byte[64], new byte[64] };
     }

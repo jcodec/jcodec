@@ -27,7 +27,7 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class Noise {
-    private static final Flag FLAG_LEVEL = new Flag("level", "level", "Desired noise level, between -90 and -15.");
+    private static final Flag FLAG_LEVEL = Flag.createFlag("level", "level", "Desired noise level, between -90 and -15.");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_LEVEL};
     
 

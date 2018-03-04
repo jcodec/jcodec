@@ -775,7 +775,7 @@ class MPEG4Bitstream {
         final int range = (64 * scaleFac);
 
         final Vector pmv = getPMV2(ctx, bound, x, y, k, mb, aboveMb, leftMb, aboveRightMb);
-        Vector mv = new Vector();
+        Vector mv = Macroblock.vec();
 
         mv.x = readMVComponent(br, fcode);
         mv.y = readMVComponent(br, fcode);
@@ -807,9 +807,9 @@ class MPEG4Bitstream {
         final int range = (64 * scaleFac);
 
         final Vector pmv = getPMV2Interlaced(ctx, bound, mb, aboveMb, leftMb, aboveRightMb);
-        Vector mv = new Vector();
-        Vector mvf1 = new Vector();
-        Vector mvf2 = new Vector();
+        Vector mv = Macroblock.vec();
+        Vector mvf1 = Macroblock.vec();
+        Vector mvf2 = Macroblock.vec();
 
         if (!pMB.fieldPred) {
             mv.x = readMVComponent(br, fcode);
@@ -886,7 +886,7 @@ class MPEG4Bitstream {
 
         Vector[] pmv = new Vector[4];
         for (int i = 0; i < 4; i++) {
-            pmv[i] = new Vector();
+            pmv[i] = Macroblock.vec();
         }
 
         int lz = 1;
@@ -1088,7 +1088,7 @@ class MPEG4Bitstream {
 
         Vector[] pmv = new Vector[4];
         for (int i = 0; i < 4; i++) {
-            pmv[i] = new Vector();
+            pmv[i] = Macroblock.vec();
         }
         int lz, tz, rz;
         switch (block) {
@@ -1205,7 +1205,7 @@ class MPEG4Bitstream {
             mb.cbp = 0;
         }
 
-        Vector mv = new Vector();
+        Vector mv = Macroblock.vec();
         switch (mb.mode) {
         case MODE_DIRECT:
             getBMotionVector(br, mv, 1, ZERO_MV, mb.x, mb.y);

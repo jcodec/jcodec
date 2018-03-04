@@ -20,12 +20,13 @@ public class DataBox extends Box {
     public DataBox(Header header) {
         super(header);
     }
-    
-    public DataBox(int type, int locale, byte[] data) {
-        this(Header.createHeader(FOURCC, 0));
-        this.type = type;
-        this.locale = locale;
-        this.data = data;
+
+    public static DataBox createDataBox(int type, int locale, byte[] data) {
+        DataBox box = new DataBox(Header.createHeader(FOURCC, 0));
+        box.type = type;
+        box.locale = locale;
+        box.data = data;
+        return box;
     }
 
     @Override

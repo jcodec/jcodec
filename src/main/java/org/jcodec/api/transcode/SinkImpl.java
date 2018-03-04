@@ -147,7 +147,7 @@ public class SinkImpl implements Sink, PacketSink {
         if (outputFormat.isVideo() && outputVideoCodec != null) {
             switch (outputVideoCodec) {
             case PRORES:
-                videoEncoder = new ProresEncoder(profile, interlaced);
+                videoEncoder = ProresEncoder.createProresEncoder(profile, interlaced);
                 break;
             case H264:
                 videoEncoder = H264Encoder.createH264Encoder();

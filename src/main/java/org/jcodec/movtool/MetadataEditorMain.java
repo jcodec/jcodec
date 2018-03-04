@@ -29,19 +29,19 @@ public class MetadataEditorMain {
     private static final String TYPENAME_FLOAT = "float";
     private static final String TYPENAME_INT2 = "integer";
     private static final String TYPENAME_INT = "int";
-    private static final Flag FLAG_SET_KEYED = new Flag("set-keyed", "sk",
+    private static final Flag FLAG_SET_KEYED = Flag.createFlag("set-keyed", "sk",
             "key1[,type1]=value1:key2[,type2]=value2[,...] Sets the metadata piece into a file.");
-    private static final Flag FLAG_SET_ITUNES = new Flag("set-itunes", "si",
+    private static final Flag FLAG_SET_ITUNES = Flag.createFlag("set-itunes", "si",
             "key1[,type1]=value1:key2[,type2]=value2[,...] Sets the metadata piece into a file.");
-    private static final Flag FLAG_SET_ITUNES_BLOB = new Flag("set-itunes-blob", "sib",
+    private static final Flag FLAG_SET_ITUNES_BLOB = Flag.createFlag("set-itunes-blob", "sib",
             "key[,type]=file Sets the data read from a file into the metadata field 'key'. If file is not present stdin is read.");
-    private static final Flag FLAG_QUERY = new Flag("query", "q", "Query the value of one key from the metadata set.");
+    private static final Flag FLAG_QUERY = Flag.createFlag("query", "q", "Query the value of one key from the metadata set.");
     private static final Flag FLAG_FAST = new Flag("fast", "f",
             "Fast edit, will move the " + "header to the end of the file when ther's no room to fit it.",
             FlagType.VOID);
-    private static final Flag FLAG_DROP_KEYED = new Flag("drop-keyed", "dk", "Drop the field(s) from keyed metadata,"
+    private static final Flag FLAG_DROP_KEYED = Flag.createFlag("drop-keyed", "dk", "Drop the field(s) from keyed metadata,"
             + " format: key1,key2,key3,...");
-    private static final Flag FLAG_DROP_ITUNES = new Flag("drop-itunes", "di",
+    private static final Flag FLAG_DROP_ITUNES = Flag.createFlag("drop-itunes", "di",
             "Drop the field(s) from iTunes metadata," + " format: key1,key2,key3,...");
     private static final Flag[] flags = { FLAG_SET_KEYED, FLAG_SET_ITUNES, FLAG_QUERY, FLAG_FAST, FLAG_SET_ITUNES_BLOB,
             FLAG_DROP_KEYED, FLAG_DROP_ITUNES };
