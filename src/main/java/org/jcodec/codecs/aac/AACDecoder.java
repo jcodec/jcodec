@@ -31,7 +31,7 @@ public class AACDecoder implements AudioDecoder {
         if (decoderSpecific.remaining() >= 7) {
             Header header = ADTSParser.read(decoderSpecific);
             if (header != null) {
-                decoderSpecific = AACUtils.adtsToStreamInfo(header);
+                decoderSpecific = ADTSParser.adtsToStreamInfo(header);
             }
             Logger.info("Creating AAC decoder from ADTS header.");
         }
