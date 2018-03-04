@@ -20,6 +20,8 @@ import org.jcodec.codecs.mjpeg.JpegDecoder;
 import org.jcodec.codecs.mjpeg.JpegToThumb2x2;
 import org.jcodec.codecs.mjpeg.JpegToThumb4x4;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
+import org.jcodec.codecs.mpeg12.Mpeg2Thumb2x2;
+import org.jcodec.codecs.mpeg12.Mpeg2Thumb4x4;
 import org.jcodec.codecs.mpeg4.MPEG4Decoder;
 import org.jcodec.codecs.png.PNGDecoder;
 import org.jcodec.codecs.prores.ProresDecoder;
@@ -90,6 +92,15 @@ public class SourceImpl implements Source, PacketSource {
     private VideoDecoder videoDecoder;
 
     private int downscale = 1;
+
+    public static MPEGDecoder createMpegDecoder(int downscale) {
+        if (downscale == 2)
+            return new Mpeg2Thumb4x4();
+        else if (downscale == 4)
+            return new Mpeg2Thumb2x2();
+        else
+            return new MPEGDecoder();
+    }
 
     public void initDemuxer() throws FileNotFoundException, IOException {
         if (inputFormat != Format.IMG)
@@ -308,7 +319,7 @@ public class SourceImpl implements Source, PacketSource {
         case PNG:
             return new PNGDecoder();
         case MPEG2:
-            return MPEGDecoder.createMpegDecoder(downscale);
+            return createMpegDecoder(downscale);
         case PRORES:
             return ProresDecoder.createProresDecoder(downscale);
         case VP8:

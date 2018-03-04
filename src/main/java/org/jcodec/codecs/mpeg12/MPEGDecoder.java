@@ -68,15 +68,6 @@ public class MPEGDecoder extends VideoDecoder {
     private Picture[] refFrames;
     private Picture[] refFields;
 
-    public static MPEGDecoder createMpegDecoder(int downscale) {
-        if (downscale == 2)
-            return new Mpeg2Thumb4x4();
-        else if (downscale == 4)
-            return new Mpeg2Thumb2x2();
-        else
-            return new MPEGDecoder();
-    }
-
     public MPEGDecoder() {
         this.refFrames = new Picture[2];
         this.refFields = new Picture[2];
