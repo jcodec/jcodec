@@ -210,14 +210,6 @@ public class DPXReader {
     }
 
 
-    static int bcd2uint(int bcd) {
-        int low = bcd & 0xf;
-        int high = bcd >> 4;
-        if (low > 9 || high > 9)
-            return 0;
-        return low + 10 * high;
-    }
-
     private static ImageHeader readImageInfoHeader(ByteBuffer r) {
         ImageHeader h = new ImageHeader();
         // offset = 768
