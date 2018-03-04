@@ -19,6 +19,7 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.platform.Platform;
 import org.jcodec.scale.AWTUtil;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.LanczosResampler;
@@ -116,6 +117,6 @@ public class SequenceEncoderTest {
             transform.transform(yuv, rgb);
             Assert.assertTrue(Utils.picturesRoughlyEqual(encoded[i], rgb, 5));
         }
-        output.delete();
+        Platform.deleteFile(output);
     }
 }
