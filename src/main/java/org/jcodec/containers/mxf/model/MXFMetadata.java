@@ -3,7 +3,6 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.Platform;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -69,7 +68,7 @@ public abstract class MXFMetadata {
         return calendar.getTime();
 
     }
-    
+
     protected String readUtf16String(ByteBuffer _bb) {
         byte[] array;
         if (_bb.getShort(_bb.limit() - 2) != 0) {
@@ -77,7 +76,7 @@ public abstract class MXFMetadata {
         } else {
             array = NIOUtils.toArray((ByteBuffer) _bb.limit(_bb.limit() - 2));
         }
-        return Platform.stringFromCharset(array, Charset.forName("utf-16"));
+        return Platform.stringFromCharset(array, Platform.UTF_16);
     }
     
     public UL getUl() {

@@ -9,9 +9,10 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-import org.jcodec.containers.mp4.boxes.Box;
-
 public class Platform {
+
+    public final static String UTF_8 = "UTF-8";
+    public final static String UTF_16 = "UTF-16";
 
     public static <T> T newInstance(Class<T> clazz, Object[] params) {
         Class[] classes = new Class[params.length];
@@ -53,20 +54,20 @@ public class Platform {
         return class1.getFields();
     }
 
-    public static String stringFromCharset(byte[] data, Charset charset) {
-        return new String(data, charset);
+    public static String stringFromCharset(byte[] data, String charset) {
+        return new String(data, Charset.forName(charset));
     }
 
-    public static byte[] getBytesForCharset(String url, Charset utf8) {
-        return url.getBytes(utf8);
+    public static byte[] getBytesForCharset(String url, String charset) {
+        return url.getBytes(Charset.forName(charset));
     }
 
     public static InputStream getResourceAsStream(Class<?> class1, String string) {
         return class1.getClassLoader().getResourceAsStream(string);
     }
 
-    public static String stringFromCharset4(byte[] data, int offset, int len, Charset charset) {
-        return new String(data, offset, len, charset);
+    public static String stringFromCharset4(byte[] data, int offset, int len, String charset) {
+        return new String(data, offset, len, Charset.forName(charset));
     }
 
     public static URL getResource(Class<?> class1, String string) {
