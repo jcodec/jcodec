@@ -25,7 +25,7 @@ public class KeysBox extends NodeBox {
 
     public KeysBox(Header atom) {
         super(atom);
-        factory = new BoxFactory(new LocalBoxes());
+        factory = new SimpleBoxFactory(new LocalBoxes());
     }
 
     public static KeysBox createKeysBox() {
