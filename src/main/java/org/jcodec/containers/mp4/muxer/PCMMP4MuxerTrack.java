@@ -76,7 +76,7 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
     }
 
     private void outChunkIfNeeded() throws IOException {
-        Assert.assertTrue(tgtChunkDurationUnit == Unit.FRAME || tgtChunkDurationUnit == Unit.SEC);
+        Assert.assertTrue("", tgtChunkDurationUnit == Unit.FRAME || tgtChunkDurationUnit == Unit.SEC);
 
         if (tgtChunkDurationUnit == Unit.FRAME
                 && framesInCurChunk * tgtChunkDuration.getDen() == tgtChunkDuration.getNum()) {
