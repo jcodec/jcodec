@@ -9,7 +9,8 @@ import org.jcodec.common.model.Size;
  * @author Stanislav Vitvitskiy
  */
 public class LanczosResampler extends BaseResampler {
-    private int nTaps = 6;
+    //The type (or one of its parents) contains already a method called [nTaps]
+    private final int _nTaps = 6;
     private int precision = 256;
     private short[][] tapsXs;
     private short[][] tapsYs;
@@ -20,10 +21,10 @@ public class LanczosResampler extends BaseResampler {
         super(from, to);
         scaleFactorX = (double) to.getWidth() / from.getWidth();
         scaleFactorY = (double) to.getHeight() / from.getHeight();
-        tapsXs = new short[precision][nTaps];
-        tapsYs = new short[precision][nTaps];
-        buildTaps(nTaps, precision, scaleFactorX, tapsXs);
-        buildTaps(nTaps, precision, scaleFactorY, tapsYs);
+        tapsXs = new short[precision][_nTaps];
+        tapsYs = new short[precision][_nTaps];
+        buildTaps(_nTaps, precision, scaleFactorX, tapsXs);
+        buildTaps(_nTaps, precision, scaleFactorY, tapsYs);
     }
 
     private static double sinc(double x) {
@@ -61,6 +62,6 @@ public class LanczosResampler extends BaseResampler {
 
     @Override
     protected int nTaps() {
-        return nTaps;
+        return _nTaps;
     }
 }

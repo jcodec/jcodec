@@ -38,7 +38,8 @@ public class DecodingContext {
     private int[] refFrameWidth = new int[MAX_REF_FRAMES];
     private int[] refFrameHeight = new int[MAX_REF_FRAMES];
     private int[] refFrameIdx = new int[3];
-    private int[] refFrameSignBias = new int[3];
+    //The type (or one of its parents) contains already a method called [refFrameSignBias]. Javascript cannot distinguish methods/fields with the same name
+    private int[] _refFrameSignBias = new int[3];
     private int allowHighPrecisionMv;
     private int interpolationFilter;
     private int frameParallelDecodingMode;
@@ -355,7 +356,7 @@ public class DecodingContext {
 
                 for (int i = 0; i < 3; i++) {
                     refFrameIdx[i] = br.readNBit(3);
-                    refFrameSignBias[LAST_FRAME + i] = br.read1Bit();
+                    _refFrameSignBias[LAST_FRAME + i] = br.read1Bit();
                 }
                 readFrameSizeWithRefs(br);
                 allowHighPrecisionMv = br.read1Bit();
@@ -700,7 +701,7 @@ public class DecodingContext {
     private void frameReferenceMode(VPXBooleanDecoder boolDec) {
         int compoundReferenceAllowed = 0;
         for (int i = 1; i < REFS_PER_FRAME; i++)
-            if (refFrameSignBias[i + 1] != refFrameSignBias[1])
+            if (_refFrameSignBias[i + 1] != _refFrameSignBias[1])
                 compoundReferenceAllowed = 1;
         if (compoundReferenceAllowed == 1) {
             int non_single_reference = boolDec.readBitEq();
@@ -784,11 +785,11 @@ public class DecodingContext {
     }
 
     private void setupCompoundReferenceMode() {
-        if (refFrameSignBias[LAST_FRAME] == refFrameSignBias[GOLDEN_FRAME]) {
+        if (_refFrameSignBias[LAST_FRAME] == _refFrameSignBias[GOLDEN_FRAME]) {
             compFixedRef = ALTREF_FRAME;
             compVarRef0 = LAST_FRAME;
             compVarRef1 = GOLDEN_FRAME;
-        } else if (refFrameSignBias[LAST_FRAME] == refFrameSignBias[ALTREF_FRAME]) {
+        } else if (_refFrameSignBias[LAST_FRAME] == _refFrameSignBias[ALTREF_FRAME]) {
             compFixedRef = GOLDEN_FRAME;
             compVarRef0 = LAST_FRAME;
             compVarRef1 = ALTREF_FRAME;
