@@ -70,11 +70,11 @@ public class AWTUtil {
 
     public static Picture fromBufferedImageRGB(BufferedImage src) {
         Picture dst = Picture.create(src.getWidth(), src.getHeight(), RGB);
-        fromBufferedImage(src, dst);
+        bufImgToPicture(src, dst);
         return dst;
     }
 
-    public static void fromBufferedImage(BufferedImage src, Picture dst) {
+    public static void bufImgToPicture(BufferedImage src, Picture dst) {
         byte[] dstData = dst.getPlaneData(0);
 
         int off = 0;
