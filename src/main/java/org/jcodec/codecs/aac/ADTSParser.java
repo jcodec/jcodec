@@ -13,6 +13,17 @@ import java.nio.ByteBuffer;
  */
 public class ADTSParser {
 
+    public static ByteBuffer adtsToStreamInfo(Header hdr) {
+        ByteBuffer si = ByteBuffer.allocate(2);
+        BitWriter wr = new BitWriter(si);
+        wr.writeNBit(hdr.getObjectType(), 5);
+        wr.writeNBit(hdr.getSamplingIndex(), 4);
+        wr.writeNBit(hdr.getChanConfig(), 4);
+        wr.flush();
+        si.clear();
+        return si;
+    }
+
     public static class Header {
         private int objectType;
         private int chanConfig;

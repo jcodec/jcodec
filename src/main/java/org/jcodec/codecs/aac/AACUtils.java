@@ -97,18 +97,7 @@ public class AACUtils {
         esds.parse(b.getData());
         return esds.getStreamInfo();
     }
-    
-    public static ByteBuffer adtsToStreamInfo(org.jcodec.codecs.aac.ADTSParser.Header hdr) {
-        ByteBuffer si = ByteBuffer.allocate(2);
-        BitWriter wr = new BitWriter(si);
-        wr.writeNBit(hdr.getObjectType(), 5);
-        wr.writeNBit(hdr.getSamplingIndex(), 4);
-        wr.writeNBit(hdr.getChanConfig(), 4);
-        wr.flush();
-        si.clear();
-        return si;
-    }
-    
+
     public static org.jcodec.codecs.aac.ADTSParser.Header streamInfoToADTS(ByteBuffer si, boolean crcAbsent,
             int numAACFrames, int frameSize) {
         BitReader rd = BitReader.createBitReader(si.duplicate());
