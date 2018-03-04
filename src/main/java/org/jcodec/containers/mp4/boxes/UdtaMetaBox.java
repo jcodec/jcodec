@@ -16,8 +16,8 @@ public class UdtaMetaBox extends MetaBox {
         super(atom);
     }
 
-    public UdtaMetaBox() {
-        this(Header.createHeader(fourcc(), 0));
+    public static UdtaMetaBox createUdtaMetaBox() {
+        return new UdtaMetaBox(Header.createHeader(fourcc(), 0));
     }
     
     @Override

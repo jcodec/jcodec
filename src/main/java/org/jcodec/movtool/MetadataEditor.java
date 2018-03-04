@@ -64,7 +64,7 @@ public class MetadataEditor {
                 MetaBox meta2 = NodeBox.findFirstPath(movie, MetaBox.class, new String[] { "udta", MetaBox.fourcc() });
                 if (self.keyedMeta != null && self.keyedMeta.size() > 0) {
                     if (meta1 == null) {
-                        meta1 = new MetaBox();
+                        meta1 = MetaBox.createMetaBox();
                         movie.add(meta1);
                     }
                     meta1.setKeyedMeta(self.keyedMeta);
@@ -72,7 +72,7 @@ public class MetadataEditor {
 
                 if (self.itunesMeta != null && self.itunesMeta.size() > 0) {
                     if (meta2 == null) {
-                        meta2 = new UdtaMetaBox();
+                        meta2 = UdtaMetaBox.createUdtaMetaBox();
                         NodeBox udta = NodeBox.findFirst(movie, NodeBox.class, "udta");
                         if (udta == null) {
                             udta = new NodeBox(Header.createHeader("udta", 0));

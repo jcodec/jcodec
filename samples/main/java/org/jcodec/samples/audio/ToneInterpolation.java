@@ -3,7 +3,6 @@ package org.jcodec.samples.audio;
 import java.io.File;
 import java.io.IOException;
 import java.nio.FloatBuffer;
-import java.util.HashMap;
 
 import org.jcodec.audio.Audio;
 import org.jcodec.audio.AudioFilter;
@@ -27,9 +26,9 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class ToneInterpolation {
-    private static final Flag FLAG_FREQ = new Flag("tone_freq", "freq", "Frequency of the tone to generate");
-    private static final Flag FLAG_TRATE = new Flag("tone_rate", "trate", "Sampling rate of the tone");
-    private static final Flag FLAG_ORATE = new Flag("out_rate", "orate", "Output sample rate");
+    private static final Flag FLAG_FREQ = Flag.createFlag("tone_freq", "freq", "Frequency of the tone to generate");
+    private static final Flag FLAG_TRATE = Flag.createFlag("tone_rate", "trate", "Sampling rate of the tone");
+    private static final Flag FLAG_ORATE = Flag.createFlag("out_rate", "orate", "Output sample rate");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FREQ, FLAG_TRATE, FLAG_ORATE};
     
     public static void main(String[] args) throws IOException {

@@ -24,8 +24,8 @@ public class MetaBox extends NodeBox {
         super(atom);
     }
 
-    public MetaBox() {
-        this(Header.createHeader(fourcc(), 0));
+    public static MetaBox createMetaBox() {
+        return new MetaBox(Header.createHeader(fourcc(), 0));
     }
 
     public Map<String, MetaValue> getKeyedMeta() {
@@ -85,18 +85,18 @@ public class MetaBox extends NodeBox {
     public void setKeyedMeta(Map<String, MetaValue> map) {
         if (map.isEmpty())
             return;
-        KeysBox keys = new KeysBox();
+        KeysBox keys = KeysBox.createKeysBox();
         Map<Integer, List<Box>> data = new LinkedHashMap<Integer, List<Box>>();
         int i = 1;
         for (Entry<String, MetaValue> entry : map.entrySet()) {
-            keys.add(new MdtaBox(entry.getKey()));
+            keys.add(MdtaBox.createMdtaBox(entry.getKey()));
             MetaValue v = entry.getValue();
             List<Box> children = new ArrayList<Box>();
-            children.add(new DataBox(v.getType(), v.getLocale(), v.getData()));
+            children.add(DataBox.createDataBox(v.getType(), v.getLocale(), v.getData()));
             data.put(i, children);
             ++i;
         }
-        IListBox ilst = new IListBox(data);
+        IListBox ilst = IListBox.createIListBox(data);
         this.replaceBox(keys);
         this.replaceBox(ilst);
     }
@@ -118,7 +118,7 @@ public class MetaBox extends NodeBox {
                 int index = entry.getKey();
                 MetaValue v = copy.get(index);
                 if (v != null) {
-                    DataBox dataBox = new DataBox(v.getType(), v.getLocale(), v.getData());
+                    DataBox dataBox = DataBox.createDataBox(v.getType(), v.getLocale(), v.getData());
                     dropChildBox(entry.getValue(), DataBox.fourcc());
                     entry.getValue().add(dataBox);
                     copy.remove(index);
@@ -130,7 +130,7 @@ public class MetaBox extends NodeBox {
         for (Entry<Integer, MetaValue> entry : copy.entrySet()) {
             int index = entry.getKey();
             MetaValue v = entry.getValue();
-            DataBox dataBox = new DataBox(v.getType(), v.getLocale(), v.getData());
+            DataBox dataBox = DataBox.createDataBox(v.getType(), v.getLocale(), v.getData());
             List<Box> children = new ArrayList<Box>();
             data.put(index, children);
             children.add(dataBox);
@@ -143,7 +143,7 @@ public class MetaBox extends NodeBox {
             data.remove(dropped);
         }
         
-        this.replaceBox(new IListBox(data));
+        this.replaceBox(IListBox.createIListBox(data));
     }
 
     private void dropChildBox(List<Box> children, String fourcc2) {

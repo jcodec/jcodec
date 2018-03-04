@@ -29,8 +29,8 @@ import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
  * @author The JCodec project
  */
 public class MTSDump extends MPSDump {
-    private static final Flag DUMP_FROM = new Flag("dump-from", "Stop reading at timestamp");
-    private static final Flag STOP_AT = new Flag("stop-at", "Start dumping from timestamp");
+    private static final Flag DUMP_FROM = Flag.createFlag("dump-from", "Stop reading at timestamp");
+    private static final Flag STOP_AT = Flag.createFlag("stop-at", "Start dumping from timestamp");
     private static final Flag[] ALL_FLAGS = new Flag[] { DUMP_FROM, STOP_AT };
 
     private int guid;

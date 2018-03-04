@@ -45,19 +45,19 @@ public class MainUtils {
         private String description;
         private FlagType type;
 
-        public Flag(String longName, String description) {
-            this(longName, null, description);
-        }
-
-        public Flag(String longName, String shortName, String description) {
-            this(longName, shortName, description, FlagType.ANY);
-        }
-
         public Flag(String longName, String shortName, String description, FlagType type) {
             this.longName = longName;
             this.shortName = shortName;
             this.description = description;
             this.type = type;
+        }
+
+        public static Flag createFlag(String longName, String description) {
+            return new Flag(longName, null, description, FlagType.ANY);
+        }
+
+        public static Flag createFlag(String longName, String shortName, String description) {
+            return new Flag(longName, shortName, description, FlagType.ANY);
         }
 
         public String getLongName() {

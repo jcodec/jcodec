@@ -24,8 +24,8 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class ToneGen {
-    private static final Flag FLAG_FREQ = new Flag("tone-frequency", "freq", "Frequency of tone");
-    private static final Flag FLAG_CHANNELS = new Flag("channels", "channels", "Number of channels");
+    private static final Flag FLAG_FREQ = Flag.createFlag("tone-frequency", "freq", "Frequency of tone");
+    private static final Flag FLAG_CHANNELS = Flag.createFlag("channels", "channels", "Number of channels");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FREQ, FLAG_CHANNELS};
     
 

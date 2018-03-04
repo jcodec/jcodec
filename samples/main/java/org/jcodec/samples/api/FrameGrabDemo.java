@@ -22,8 +22,8 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class FrameGrabDemo {
-    private static final Flag FLAG_FRAMES = new Flag("num-frames", "num-frames", "Maximum frames to decode.");
-    private static final Flag FLAG_PATTERN = new Flag("out-pattern", "out-pattern", "Output folder/frame%04.png pattern.");
+    private static final Flag FLAG_FRAMES = Flag.createFlag("num-frames", "num-frames", "Maximum frames to decode.");
+    private static final Flag FLAG_PATTERN = Flag.createFlag("out-pattern", "out-pattern", "Output folder/frame%04.png pattern.");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FRAMES, FLAG_PATTERN};
 
     public static void main(String[] args) throws IOException, JCodecException {

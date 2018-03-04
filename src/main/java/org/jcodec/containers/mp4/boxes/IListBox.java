@@ -38,9 +38,10 @@ public class IListBox extends Box {
         factory = new BoxFactory(new LocalBoxes());
     }
 
-    public IListBox(Map<Integer, List<Box>> values) {
-        this(Header.createHeader(FOURCC, 0));
-        this.values = values;
+    public static IListBox createIListBox(Map<Integer, List<Box>> values) {
+        IListBox box = new IListBox(Header.createHeader(FOURCC, 0));
+        box.values = values;
+        return box;
     }
 
     public void parse(ByteBuffer input) {

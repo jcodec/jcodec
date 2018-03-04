@@ -93,8 +93,8 @@ public class ProresEncoder extends VideoEncoder {
     private int[][] scaledChroma;
     private boolean interlaced;
 
-    public ProresEncoder(String profile, boolean interlaced) {
-        this(profile == null ? ProresEncoder.Profile.HQ : ProresEncoder.Profile.valueOf(profile), interlaced);
+    public static ProresEncoder createProresEncoder(String profile, boolean interlaced) {
+        return new ProresEncoder(profile == null ? ProresEncoder.Profile.HQ : ProresEncoder.Profile.valueOf(profile), interlaced);
     }
 
     public ProresEncoder(Profile profile, boolean interlaced) {
