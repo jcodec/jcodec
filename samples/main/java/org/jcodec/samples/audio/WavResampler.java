@@ -30,7 +30,7 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class WavResampler {
-    private static final Flag FLAG_ORATE = Flag.createFlag("out_rate", "orate", "Output sample rate");
+    private static final Flag FLAG_ORATE = Flag.flag("out_rate", "orate", "Output sample rate");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_ORATE};
 
     public static void main(String[] args) throws IOException {

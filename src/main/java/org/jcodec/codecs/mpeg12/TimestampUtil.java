@@ -23,7 +23,7 @@ public class TimestampUtil {
     private static final String STREAM_AUDIO = "audio";
     private static final String STRAM_VIDEO = "video";
 
-    private static final Flag FLAG_STREAM = Flag.createFlag("stream", "s", "A stream to shift, i.e. '" + STRAM_VIDEO + "' or '" + STREAM_AUDIO + "' or '"
+    private static final Flag FLAG_STREAM = Flag.flag("stream", "s", "A stream to shift, i.e. '" + STRAM_VIDEO + "' or '" + STREAM_AUDIO + "' or '"
             + STREAM_ALL + "' [default]");
     
     private static final Flag[] ALL_FLAGS = new Flag[] {FLAG_STREAM};

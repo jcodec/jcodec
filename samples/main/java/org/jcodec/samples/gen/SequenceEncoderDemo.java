@@ -21,7 +21,7 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class SequenceEncoderDemo {
-    private static final Flag FLAG_FRAMES = Flag.createFlag("n-frames", "frames", "Total frames to encode");
+    private static final Flag FLAG_FRAMES = Flag.flag("n-frames", "frames", "Total frames to encode");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FRAMES};
 
     public static void main(String[] args) throws IOException {

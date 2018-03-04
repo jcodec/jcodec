@@ -26,7 +26,7 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class WavSplit {
-    public static final Flag FLAG_PATTERN = Flag.createFlag("pattern", "p", "Output file name pattern, i.e. out%02d.wav");
+    public static final Flag FLAG_PATTERN = Flag.flag("pattern", "p", "Output file name pattern, i.e. out%02d.wav");
     private static final Flag[] ALL_FLAGS = new Flag[] {FLAG_PATTERN};
     public static void main1(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);

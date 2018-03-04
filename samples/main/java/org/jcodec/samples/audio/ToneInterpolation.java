@@ -26,9 +26,9 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class ToneInterpolation {
-    private static final Flag FLAG_FREQ = Flag.createFlag("tone_freq", "freq", "Frequency of the tone to generate");
-    private static final Flag FLAG_TRATE = Flag.createFlag("tone_rate", "trate", "Sampling rate of the tone");
-    private static final Flag FLAG_ORATE = Flag.createFlag("out_rate", "orate", "Output sample rate");
+    private static final Flag FLAG_FREQ = Flag.flag("tone_freq", "freq", "Frequency of the tone to generate");
+    private static final Flag FLAG_TRATE = Flag.flag("tone_rate", "trate", "Sampling rate of the tone");
+    private static final Flag FLAG_ORATE = Flag.flag("out_rate", "orate", "Output sample rate");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FREQ, FLAG_TRATE, FLAG_ORATE};
     
     public static void main(String[] args) throws IOException {

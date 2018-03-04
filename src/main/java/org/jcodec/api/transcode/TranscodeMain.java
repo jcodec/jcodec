@@ -46,29 +46,26 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class TranscodeMain {
     private static final Flag FLAG_INPUT = new Flag("input", "i", "Designates an input argument", FlagType.VOID);
-    private static final Flag FLAG_MAP_VIDEO = Flag.createFlag("map:v", "mv",
+    private static final Flag FLAG_MAP_VIDEO = Flag.flag("map:v", "mv",
             "Map a video from a specified input into this output");
-    private static final Flag FLAG_MAP_AUDIO = Flag.createFlag("map:a", "ma",
+    private static final Flag FLAG_MAP_AUDIO = Flag.flag("map:a", "ma",
             "Map a audio from a specified input into this output");
-    private static final Flag FLAG_SEEK_FRAMES = Flag.createFlag("seek-frames", "Seek frames");
-    private static final Flag FLAG_MAX_FRAMES = Flag.createFlag("max-frames", "limit", "Max frames");
+    private static final Flag FLAG_SEEK_FRAMES = Flag.flag("seek-frames", null, "Seek frames");
+    private static final Flag FLAG_MAX_FRAMES = Flag.flag("max-frames", "limit", "Max frames");
 
-    private static final Flag FLAG_AUDIO_CODEC = Flag.createFlag("codec:audio", "acodec", "Audio codec [default=auto].");
-    private static final Flag FLAG_VIDEO_CODEC = Flag.createFlag("codec:video", "vcodec", "Video codec [default=auto].");
-    private static final Flag FLAG_FORMAT = Flag.createFlag("format", "f", "Format [default=auto].");
+    private static final Flag FLAG_AUDIO_CODEC = Flag.flag("codec:audio", "acodec", "Audio codec [default=auto].");
+    private static final Flag FLAG_VIDEO_CODEC = Flag.flag("codec:video", "vcodec", "Video codec [default=auto].");
+    private static final Flag FLAG_FORMAT = Flag.flag("format", "f", "Format [default=auto].");
 
-    private static final Flag FLAG_PROFILE = Flag.createFlag("profile", "Profile to use (supported by some encoders).");
-    private static final Flag FLAG_INTERLACED = Flag.createFlag("interlaced",
-            "Encode output as interlaced (supported by Prores encoder).");
+    private static final Flag FLAG_PROFILE = Flag.flag("profile", null, "Profile to use (supported by some encoders).");
+    private static final Flag FLAG_INTERLACED = Flag.flag("interlaced", null, "Encode output as interlaced (supported by Prores encoder).");
 
-    private static final Flag FLAG_DUMPMV = Flag.createFlag("dumpMv", "Dump motion vectors (supported by h.264 decoder).");
-    private static final Flag FLAG_DUMPMVJS = Flag.createFlag("dumpMvJs",
-            "Dump motion vectors in form of JASON file (supported by h.264 decoder).");
+    private static final Flag FLAG_DUMPMV = Flag.flag("dumpMv", null, "Dump motion vectors (supported by h.264 decoder).");
+    private static final Flag FLAG_DUMPMVJS = Flag.flag("dumpMvJs", null, "Dump motion vectors in form of JASON file (supported by h.264 decoder).");
 
-    private static final Flag FLAG_DOWNSCALE = Flag.createFlag("downscale",
-            "Decode frames in downscale (supported by MPEG, Prores and Jpeg decoders).");
-    
-    private static final Flag FLAG_VIDEO_FILTER = Flag.createFlag("videoFilter", "vf",
+    private static final Flag FLAG_DOWNSCALE = Flag.flag("downscale", null, "Decode frames in downscale (supported by MPEG, Prores and Jpeg decoders).");
+
+    private static final Flag FLAG_VIDEO_FILTER = Flag.flag("videoFilter", "vf",
             "Contains a comma separated list of video filters with arguments.");
 
     private static final Flag[] ALL_FLAGS = new Flag[] { FLAG_INPUT, FLAG_FORMAT, FLAG_VIDEO_CODEC, FLAG_AUDIO_CODEC,
