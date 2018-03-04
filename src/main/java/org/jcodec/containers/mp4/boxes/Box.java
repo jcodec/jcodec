@@ -42,7 +42,7 @@ public abstract class Box {
         doWrite(buf);
 
         header.setBodySize(buf.position() - dup.position() - 8);
-        Assert.assertEquals(header.headerSize(), 8);
+        Assert.assertEqualsLong(header.headerSize(), 8);
         header.write(dup);
     }
 

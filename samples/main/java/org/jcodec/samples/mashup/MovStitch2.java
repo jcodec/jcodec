@@ -96,8 +96,8 @@ public class MovStitch2 {
         DemuxerTrackMeta meta1 = vt1.getMeta();
         DemuxerTrackMeta meta2 = vt2.getMeta();
 
-        Assert.assertTrue(meta1.getCodec() == Codec.H264);
-        Assert.assertTrue(meta2.getCodec() == Codec.H264);
+        Assert.assertTrue("", meta1.getCodec() == Codec.H264);
+        Assert.assertTrue("", meta2.getCodec() == Codec.H264);
         Assert.assertEquals(meta1.getVideoCodecMeta().getSize().getWidth(),
                 meta2.getVideoCodecMeta().getSize().getWidth());
         Assert.assertEquals(meta1.getVideoCodecMeta().getSize().getHeight(),
@@ -157,7 +157,7 @@ public class MovStitch2 {
     private static void copyCABAC(BitWriter w, BitReader r) {
         long bp = r.curBit();
         long rem = r.readNBit(8 - (int) bp);
-        Assert.assertEquals((1 << (8 - bp)) - 1, rem);
+        Assert.assertEqualsLong((1 << (8 - bp)) - 1, rem);
 
         if (w.curBit() != 0)
             w.writeNBit(0xff, 8 - w.curBit());
@@ -177,7 +177,7 @@ public class MovStitch2 {
 
     static ByteBuffer updatePps(ByteBuffer bb) {
         PictureParameterSet pps = PictureParameterSet.read(bb);
-        Assert.assertTrue(pps.entropyCodingModeFlag);
+        Assert.assertTrue("", pps.entropyCodingModeFlag);
         pps.seqParameterSetId = 1;
         pps.picParameterSetId = 1;
         ByteBuffer out = ByteBuffer.allocate(bb.capacity() + 10);
