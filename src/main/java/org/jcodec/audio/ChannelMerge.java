@@ -1,9 +1,10 @@
 package org.jcodec.audio;
-import org.jcodec.common.Assert;
 import org.jcodec.common.AudioFormat;
 
 import java.lang.IllegalArgumentException;
 import java.nio.FloatBuffer;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -40,7 +41,7 @@ public class ChannelMerge implements AudioFilter {
                 min = _in[i].remaining();
         }
         for (int i = 0; i < _in.length; i++) {
-            Assert.assertEquals(_in[i].remaining(), min);
+            checkState(_in[i].remaining() == min);
         }
 
         if (out0.remaining() < min * _in.length)

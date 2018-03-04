@@ -9,10 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jcodec.common.Assert;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -143,7 +144,7 @@ public class MTSDemuxer {
     public static MTSPacket parsePacket(ByteBuffer buffer) {
 
         int marker = buffer.get() & 0xff;
-        Assert.assertEquals(0x47, marker);
+        checkState(0x47 == marker);
         int guidFlags = buffer.getShort();
         int guid = (int) guidFlags & 0x1fff;
         int payloadStart = (guidFlags >> 14) & 0x1;

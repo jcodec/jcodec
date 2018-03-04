@@ -14,7 +14,7 @@ import java.io.File;
 import java.io.IOException;
 
 import static java.lang.Integer.parseInt;
-import static org.jcodec.common.Assert.assertTrue;
+import static org.jcodec.common.Preconditions.checkState;
 
 public class ConformanceTest {
 
@@ -39,7 +39,7 @@ public class ConformanceTest {
             Picture ref = rawReader.readNextFrame();
             if (ref == null)
                 break;
-            assertTrue("frame=" + fn + " FAILED", compare(ref, pic));
+            checkState(compare(ref, pic), "frame=" + fn + " FAILED");
         }
 
         mp4Demuxer.close();

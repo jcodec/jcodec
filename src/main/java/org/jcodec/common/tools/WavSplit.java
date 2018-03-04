@@ -1,5 +1,6 @@
 package org.jcodec.common.tools;
 import static java.util.Arrays.asList;
+import static org.jcodec.common.Preconditions.checkState;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
 import org.jcodec.codecs.wav.WavHeader;
-import org.jcodec.common.Assert;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.AudioUtil;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -42,7 +42,7 @@ public class WavSplit {
 
         System.out.println("WAV: " + wavHeader.getFormat());
 
-        Assert.assertEquals(2, wavHeader.fmt.numChannels);
+        checkState(2 == (int) wavHeader.fmt.numChannels);
         int dataOffset = wavHeader.dataOffset;
         FileChannelWrapper is = NIOUtils.readableChannel(s);
         is.setPosition(dataOffset);

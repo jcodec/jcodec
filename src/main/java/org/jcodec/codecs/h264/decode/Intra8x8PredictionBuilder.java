@@ -1,8 +1,7 @@
 package org.jcodec.codecs.h264.decode;
 
+import static org.jcodec.common.Preconditions.checkState;
 import static org.jcodec.common.tools.MathUtil.clip;
-
-import org.jcodec.common.Assert;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -30,11 +29,11 @@ public class Intra8x8PredictionBuilder {
             int mbOffX, int blkX, int blkY, byte[] pixOut) {
         switch (mode) {
         case 0:
-            Assert.assertTrue("", topAvailable);
+            checkState(topAvailable, "");
             predictVertical(residual, topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 1:
-            Assert.assertTrue("", leftAvailable);
+            checkState(leftAvailable, "");
             predictHorizontal(residual, topLeftAvailable, topLeft, leftRow, mbOffX, blkX, blkY, pixOut);
             break;
         case 2:
@@ -42,29 +41,29 @@ public class Intra8x8PredictionBuilder {
                     topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 3:
-            Assert.assertTrue("", topAvailable);
+            checkState(topAvailable, "");
             predictDiagonalDownLeft(residual, topLeftAvailable, topAvailable, topRightAvailable, topLeft, topLine,
                     mbOffX, blkX, blkY, pixOut);
             break;
         case 4:
-            Assert.assertTrue("", topAvailable && leftAvailable && topLeftAvailable);
+            checkState(topAvailable && leftAvailable && topLeftAvailable, "");
             predictDiagonalDownRight(residual, topRightAvailable, topLeft, leftRow, topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 5:
-            Assert.assertTrue("", topAvailable && leftAvailable && topLeftAvailable);
+            checkState(topAvailable && leftAvailable && topLeftAvailable, "");
             predictVerticalRight(residual, topRightAvailable, topLeft, leftRow, topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 6:
-            Assert.assertTrue("", topAvailable && leftAvailable && topLeftAvailable);
+            checkState(topAvailable && leftAvailable && topLeftAvailable, "");
             predictHorizontalDown(residual, topRightAvailable, topLeft, leftRow, topLine, mbOffX, blkX, blkY, pixOut);
             break;
         case 7:
-            Assert.assertTrue("", topAvailable);
+            checkState(topAvailable, "");
             predictVerticalLeft(residual, topLeftAvailable, topRightAvailable, topLeft, topLine, mbOffX, blkX, blkY,
                     pixOut);
             break;
         case 8:
-            Assert.assertTrue("", leftAvailable);
+            checkState(leftAvailable, "");
             predictHorizontalUp(residual, topLeftAvailable, topLeft, leftRow, mbOffX, blkX, blkY, pixOut);
             break;
         }

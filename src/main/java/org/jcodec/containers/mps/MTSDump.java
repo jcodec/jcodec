@@ -1,6 +1,7 @@
 package org.jcodec.containers.mps;
 
 import static java.util.Arrays.asList;
+import static org.jcodec.common.Preconditions.checkState;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,7 +10,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.IntIntMap;
 import org.jcodec.common.io.NIOUtils;
@@ -85,7 +85,7 @@ public class MTSDump extends MPSDump {
         int pmtPid = -1;
         while (buf.hasRemaining()) {
             ByteBuffer tsBuf = NIOUtils.read(buf, 188);
-            Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+            checkState(0x47 == (tsBuf.get() & 0xff));
             int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
             int guid = guidFlags & 0x1fff;
             System.out.println(guid);
@@ -188,7 +188,7 @@ public class MTSDump extends MPSDump {
                 }
 
                 tsBuf = NIOUtils.read(buf, 188);
-                Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+                checkState(0x47 == (tsBuf.get() & 0xff));
                 ++tsNo;
                 int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                 int guid = (int) guidFlags & 0x1fff;

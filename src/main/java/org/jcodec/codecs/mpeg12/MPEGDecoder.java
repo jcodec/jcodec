@@ -22,6 +22,7 @@ import static org.jcodec.codecs.mpeg12.bitstream.PictureCodingExtension.Frame;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceExtension.Chroma420;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceExtension.Chroma422;
 import static org.jcodec.codecs.mpeg12.bitstream.SequenceExtension.Chroma444;
+import static org.jcodec.common.Preconditions.checkState;
 import static org.jcodec.common.model.ColorSpace.YUV420;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.model.ColorSpace.YUV444;
@@ -37,7 +38,6 @@ import org.jcodec.codecs.mpeg12.bitstream.SequenceDisplayExtension;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceExtension;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension;
-import org.jcodec.common.Assert;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SparseIDCT;
@@ -439,7 +439,7 @@ public class MPEGDecoder extends VideoDecoder {
                 : buildPred(predFwd, predBack);
 
         if (mbType.macroblock_intra != 0 && concealmentMv)
-            Assert.assertEquals(1, bits.read1Bit()); // Marker
+            checkState(1 == bits.read1Bit());
 
         int cbp = mbType.macroblock_intra == 1 ? 0xfff : 0;
         if (mbType.macroblock_pattern != 0) {

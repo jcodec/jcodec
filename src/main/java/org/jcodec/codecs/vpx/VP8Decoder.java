@@ -8,14 +8,13 @@ import static org.jcodec.codecs.vpx.VP8Util.getMacroblockCount;
 import static org.jcodec.codecs.vpx.VP8Util.keyFrameYModeProb;
 import static org.jcodec.codecs.vpx.VP8Util.keyFrameYModeTree;
 import static org.jcodec.codecs.vpx.VP8Util.vp8CoefUpdateProbs;
+import static org.jcodec.common.Preconditions.checkState;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.api.NotSupportedException;
 import org.jcodec.codecs.vpx.Macroblock.Subblock;
 import org.jcodec.codecs.vpx.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vpx.VP8Util.SubblockConstants;
-import org.jcodec.common.Assert;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
@@ -112,7 +111,7 @@ public class VP8Decoder extends VideoDecoder {
         }
         int log2OfPartCnt = headerDecoder.decodeInt(2);
 
-        Assert.assertEquals(0, log2OfPartCnt);
+        checkState(0 == log2OfPartCnt);
         int partitionsCount = 1;
         long runningSize = 0;
         long zSize = frame.limit() - (partitionSize + headerOffset);
@@ -143,7 +142,7 @@ public class VP8Decoder extends VideoDecoder {
                     }
 
         int macroBlockNoCoeffSkip = (int) headerDecoder.readBitEq();
-        Assert.assertEquals(1, macroBlockNoCoeffSkip);
+        checkState(1 == macroBlockNoCoeffSkip);
         int probSkipFalse = headerDecoder.decodeInt(8);
         for (int mbRow = 0; mbRow < numberOfMBRows; mbRow++) {
             for (int mbCol = 0; mbCol < numberOfMBCols; mbCol++) {
