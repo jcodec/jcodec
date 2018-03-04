@@ -6,11 +6,8 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.platform.Platform;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -60,12 +57,6 @@ public class AliasBox extends FullBox {
         return "alis";
     }
 
-    private static Set<Integer> utf16 = new HashSet<Integer>();
-    static {
-        utf16.add(14);
-        utf16.add(15);
-    }
-
     public static class ExtraField {
         short type;
         int len;
@@ -78,7 +69,7 @@ public class AliasBox extends FullBox {
         }
 
         public String toString() {
-            return Platform.stringFromCharset4(data, 0, len, utf16.contains(type) ? Charset.forName("UTF-16") : Charset.forName("UTF-8"));
+            return Platform.stringFromCharset4(data, 0, len, (type == 14 || type == 15) ? Platform.UTF_16 : Platform.UTF_8);
         }
     }
 

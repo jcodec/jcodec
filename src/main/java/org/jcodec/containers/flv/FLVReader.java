@@ -18,7 +18,6 @@ import java.lang.System;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -273,7 +272,7 @@ public class FLVReader {
 
     private static String readAMFString(ByteBuffer input) {
         int size = input.getShort() & 0xffff;
-        return Platform.stringFromCharset(NIOUtils.toArray(NIOUtils.read(input, size)), Charset.forName("UTF-8"));
+        return Platform.stringFromCharset(NIOUtils.toArray(NIOUtils.read(input, size)), Platform.UTF_8);
     }
 
     private static Object readAMFObject(ByteBuffer input) {

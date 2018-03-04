@@ -21,7 +21,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -253,10 +252,10 @@ public class NIOUtils {
     }
 
     public static String readNullTermString(ByteBuffer buffer) {
-        return readNullTermStringCharset(buffer, Charset.defaultCharset());
+        return readNullTermStringCharset(buffer, Platform.UTF_8);
     }
 
-    public static String readNullTermStringCharset(ByteBuffer buffer, Charset charset) {
+    public static String readNullTermStringCharset(ByteBuffer buffer, String charset) {
         ByteBuffer fork = buffer.duplicate();
         while (buffer.hasRemaining() && buffer.get() != 0)
             ;
