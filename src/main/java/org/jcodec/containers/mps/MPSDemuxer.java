@@ -187,7 +187,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         @Override
         public Packet nextFrameWithBuffer(ByteBuffer buf) throws IOException {
-            return es.getFrame(buf);
+            return es.frame(buf);
         }
 
         @Override
