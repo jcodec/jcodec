@@ -35,12 +35,6 @@ public class MPEG4Decoder extends VideoDecoder {
     private Macroblock[] prevMBs;
     private Macroblock[] mbs;
 
-    public final static int I_VOP = 0;
-    public final static int P_VOP = 1;
-    public final static int B_VOP = 2;
-    public final static int S_VOP = 3;
-    public final static int N_VOP = 4;
-    
     private MPEG4DecodingContext ctx;
 
     public MPEG4Decoder() {
@@ -67,17 +61,17 @@ public class MPEG4Decoder extends VideoDecoder {
         }
 
         Picture decoded = null;
-        if (ctx.codingType != B_VOP) {
+        if (ctx.codingType != MPEG4Bitstream.B_VOP) {
             switch (ctx.codingType) {
-            case I_VOP:
+            case MPEG4Bitstream.I_VOP:
                 decoded = decodeIFrame(br, ctx, buffer);
                 break;
-            case P_VOP:
+            case MPEG4Bitstream.P_VOP:
                 decoded = decodePFrame(br, ctx, buffer, ctx.fcodeForward);
                 break;
-            case S_VOP:
+            case MPEG4Bitstream.S_VOP:
                 throw new RuntimeException("GMC not supported.");
-            case N_VOP:
+            case MPEG4Bitstream.N_VOP:
                 return null;
             }
 

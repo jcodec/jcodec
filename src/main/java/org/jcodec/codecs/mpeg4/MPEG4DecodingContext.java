@@ -135,12 +135,6 @@ public class MPEG4DecodingContext {
     private final static int VLC_CODE = 0;
     private final static int VLC_LEN = 1;
 
-    public final static int I_VOP = 0;
-    public final static int P_VOP = 1;
-    public final static int B_VOP = 2;
-    public final static int S_VOP = 3;
-    public final static int N_VOP = 4;
-
     private int timeIncrementResolution;
     private boolean packedMode;
     public int codingType;
@@ -580,18 +574,18 @@ public class MPEG4DecodingContext {
         }
 
         if ((shape != VIDOBJLAY_SHAPE_BINARY_ONLY)
-                && ((codingType == P_VOP) || (codingType == S_VOP && spriteEnable == SPRITE_GMC))) {
+                && ((codingType == MPEG4Bitstream.P_VOP) || (codingType == MPEG4Bitstream.S_VOP && spriteEnable == SPRITE_GMC))) {
             rounding = br.readBool();
         }
 
         if (reducedResolutionEnable && shape == VIDOBJLAY_SHAPE_RECTANGULAR
-                && (codingType == P_VOP || codingType == I_VOP)) {
+                && (codingType == MPEG4Bitstream.P_VOP || codingType == MPEG4Bitstream.I_VOP)) {
             if (br.readBool()) {
             }
         }
 
         if (shape != VIDOBJLAY_SHAPE_RECTANGULAR) {
-            if (!(spriteEnable == SPRITE_STATIC && codingType == I_VOP)) {
+            if (!(spriteEnable == SPRITE_STATIC && codingType == MPEG4Bitstream.I_VOP)) {
                 width = br.readNBit(13);
                 br.skip(1);
                 height = br.readNBit(13);
@@ -624,7 +618,7 @@ public class MPEG4DecodingContext {
             }
         }
 
-        if ((spriteEnable == SPRITE_STATIC || spriteEnable == SPRITE_GMC) && codingType == S_VOP) {
+        if ((spriteEnable == SPRITE_STATIC || spriteEnable == SPRITE_GMC) && codingType == MPEG4Bitstream.S_VOP) {
             for (int i = 0; i < spriteWarpingPoints; i++) {
                 int length;
                 int x = 0, y = 0;
@@ -668,21 +662,21 @@ public class MPEG4DecodingContext {
             quant = 1;
         }
 
-        if (codingType != I_VOP) {
+        if (codingType != MPEG4Bitstream.I_VOP) {
             fcodeForward = br.readNBit(3);
         }
 
-        if (codingType == B_VOP) {
+        if (codingType == MPEG4Bitstream.B_VOP) {
             fcodeBackward = br.readNBit(3);
         }
 
         if (!scalability) {
-            if ((shape != VIDOBJLAY_SHAPE_RECTANGULAR) && (codingType != I_VOP)) {
+            if ((shape != VIDOBJLAY_SHAPE_RECTANGULAR) && (codingType != MPEG4Bitstream.I_VOP)) {
                 br.skip(1);
             }
         }
 
-        if (codingType != B_VOP) {
+        if (codingType != MPEG4Bitstream.B_VOP) {
             lastTimeBase = timeBase;
             timeBase += timestampMSB;
             time = timeBase * getTimeIncrementResolution() + timestampLSB;
@@ -709,7 +703,7 @@ public class MPEG4DecodingContext {
     private void readVopComplexityEstimationHeader(BitReader br, Estimation estimation, int spriteEnable,
             int codingType) {
         if (estimation.method == 0 || estimation.method == 1) {
-            if (codingType == MPEG4Decoder.I_VOP) {
+            if (codingType == MPEG4Bitstream.I_VOP) {
                 if (estimation.opaque)
                     br.skip(8);
                 if (estimation.transparent)
@@ -738,7 +732,7 @@ public class MPEG4DecodingContext {
                     br.skip(8);
             }
 
-            if (codingType == MPEG4Decoder.P_VOP) {
+            if (codingType == MPEG4Bitstream.P_VOP) {
                 if (estimation.opaque)
                     br.skip(8);
                 if (estimation.transparent)
@@ -783,7 +777,7 @@ public class MPEG4DecodingContext {
                     br.skip(8);
             }
 
-            if (codingType == MPEG4Decoder.B_VOP) {
+            if (codingType == MPEG4Bitstream.B_VOP) {
                 if (estimation.opaque)
                     br.skip(8);
                 if (estimation.transparent)
@@ -830,7 +824,7 @@ public class MPEG4DecodingContext {
                     br.skip(8);
             }
 
-            if (codingType == MPEG4Decoder.S_VOP && spriteEnable == SPRITE_STATIC) {
+            if (codingType == MPEG4Bitstream.S_VOP && spriteEnable == SPRITE_STATIC) {
                 if (estimation.intraBlocks)
                     br.skip(8);
                 if (estimation.notCodedBlocks)
