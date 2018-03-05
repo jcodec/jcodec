@@ -32,7 +32,7 @@ public class ToneGen {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args, new MainUtils.Flag[] {});
         if (cmd.args.length < 1) {
-            MainUtils.printHelpVarArgs(FLAGS, "filename");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"filename"});
             System.exit(-1);
         }
 

@@ -269,7 +269,7 @@ public class TranscodeMain {
         }
 
         if (sources.isEmpty()) {
-            MainUtils.printHelpVarArgs(ALL_FLAGS, "input", "output");
+            MainUtils.printHelpArgs(ALL_FLAGS, new String[]{"input", "output"});
             return;
         }
 
@@ -357,7 +357,7 @@ public class TranscodeMain {
         }
 
         if (sources.isEmpty() || sinks.isEmpty()) {
-            MainUtils.printHelpVarArgs(ALL_FLAGS, "input", "output");
+            MainUtils.printHelpArgs(ALL_FLAGS, new String[]{"input", "output"});
             return;
         }
 

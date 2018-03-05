@@ -30,7 +30,7 @@ public class SequenceEncoderDemo {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpVarArgs(FLAGS, "output file name");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"output file name"});
             return;
         }
 

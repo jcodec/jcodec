@@ -27,7 +27,7 @@ public class SequenceEncoderDemo {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpVarArgs(FLAGS, "output file");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"output file"});
             return;
         }
         final int speed = 4;

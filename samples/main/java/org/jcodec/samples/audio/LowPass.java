@@ -33,7 +33,7 @@ public class LowPass {
 
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelpVarArgs(FLAGS, "input file", "output file");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"input file", "output file"});
             System.exit(-1);
         }
 

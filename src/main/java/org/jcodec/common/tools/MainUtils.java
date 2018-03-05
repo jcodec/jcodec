@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -335,10 +336,6 @@ public class MainUtils {
                 argShortFlags.toArray((Map<String, String>[]) Array.newInstance(shortFlags.getClass(), 0)));
     }
 
-    public static void printHelpVarArgs(Flag[] flags, String... arguments) {
-        printHelpOut(System.out, "", flags, Arrays.asList(arguments));
-    }
-
     public static void printHelpArgs(Flag[] flags, String[] arguments) {
         printHelpOut(System.out, "", flags, Arrays.asList(arguments));
     }
@@ -351,8 +348,8 @@ public class MainUtils {
         printHelpOut(System.out, "", new Flag[] {}, Arrays.asList(arguments));
     }
 
-    public static void printHelpCmdVa(String command, Flag[] flags, String... arguments) {
-        printHelpOut(System.out, command, flags, Arrays.asList(arguments));
+    public static void printHelpCmdVa(String command, Flag[] flags, String arguments) {
+        printHelpOut(System.out, command, flags, Collections.singletonList(arguments));
     }
     
     public static void printHelpCmd(String command, Flag[] flags, List<String> params) {
