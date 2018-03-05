@@ -26,13 +26,6 @@ public class ES extends NodeDescriptor {
         out.put((byte)0);
         super.doWrite(out);
     }
-    
-    protected static ES parse(ByteBuffer input, IDescriptorFactory factory) {
-        int trackId = input.getShort();
-        input.get();
-        NodeDescriptor node = NodeDescriptor.parse(input, factory);
-        return new ES(trackId, node.getChildren());
-    }
 
     public int getTrackId() {
         return trackId;

@@ -21,11 +21,6 @@ public class SL extends Descriptor {
         out.put((byte)0x2);
     }
 
-    protected static SL parse(ByteBuffer input, IDescriptorFactory factory) {
-        checkState(0x2 == (input.get() & 0xff));
-        return new SL();
-    }
-
     public static int tag() {
         return 0x06;
     }
