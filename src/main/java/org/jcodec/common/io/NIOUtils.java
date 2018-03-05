@@ -81,7 +81,7 @@ public class NIOUtils {
         return buf;
     }
     
-    public static ByteBuffer fetchFromChannel(SeekableByteChannel ch) throws IOException {
+    public static ByteBuffer fetchAllFromChannel(SeekableByteChannel ch) throws IOException {
         List<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
         ByteBuffer buf;
         do {
