@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -162,15 +161,22 @@ public class TestTool {
     }
 
     private void prepareJMConf() throws IOException {
-        InputStream cool = null;
-        try {
-            cool = Platform.getResourceAsStream(getClass(), "org/jcodec/testing/jm.conf");
-            String str = IOUtils.readToString(cool);
-            str = str.replace("%input_file%", coded.getAbsolutePath());
-            str = str.replace("%output_file%", decoded.getAbsolutePath());
-            IOUtils.writeStringToFile(jmconf, str);
-        } finally {
-            IOUtils.closeQuietly(cool);
-        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("InputFile              = \"").append(coded.getAbsolutePath()).append("\"\n");
+        sb.append("OutputFile             = \"").append(decoded.getAbsolutePath()).append("\"\n");
+        sb.append("RefFile                = \"/dev/null\"\n");
+        sb.append("WriteUV                = 1\n");
+        sb.append("FileFormat             = 0\n");
+        sb.append("RefOffset              = 0\n");
+        sb.append("POCScale               = 2\n");
+        sb.append("DisplayDecParams       = 0\n");
+        sb.append("ConcealMode            = 0\n");
+        sb.append("RefPOCGap              = 2\n");
+        sb.append("POCGap                 = 2\n");
+        sb.append("Silent                 = 1\n");
+        sb.append("IntraProfileDeblocking = 1\n");
+        sb.append("DecFrmNum              = 0\n");
+        sb.append("DecodeAllLayers        = 0\n");
+        IOUtils.writeStringToFile(jmconf, sb.toString());
     }
 }

@@ -63,10 +63,7 @@ public abstract class Box {
     }
 
     protected void dump(StringBuilder sb) {
-        sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
-        List<String> fields = new ArrayList<String>(0);
-        ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[0]));
-        sb.append("}");
+        sb.append("{\"tag\":\"" + header.getFourcc() + "\"}");
     }
 
     public static Box terminatorAtom() {
