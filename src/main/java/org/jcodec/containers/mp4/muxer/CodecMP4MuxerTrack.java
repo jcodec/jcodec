@@ -33,6 +33,7 @@ import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -188,7 +189,7 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
         public boolean equals(Object obj) {
             if (!(obj instanceof ByteArrayWrapper))
                 return false;
-            return Arrays.equals(bytes, ((ByteArrayWrapper) obj).bytes);
+            return Platform.arrayEqualsByte(bytes, ((ByteArrayWrapper) obj).bytes);
         }
 
         @Override
