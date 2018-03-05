@@ -138,7 +138,7 @@ public class SourceImpl implements Source, PacketSource {
             demuxVideo = demuxAudio = y4mDemuxer;
             videoInputTrack = y4mDemuxer;
         } else if (Format.H264 == inputFormat) {
-            demuxVideo = new BufferH264ES(NIOUtils.fetchFromChannel(sourceStream));
+            demuxVideo = new BufferH264ES(NIOUtils.fetchAllFromChannel(sourceStream));
         } else if (WAV == inputFormat) {
             demuxAudio = new WavDemuxer(sourceStream);
         } else if (MPEG_AUDIO == inputFormat) {

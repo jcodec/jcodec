@@ -216,7 +216,7 @@ public class JCodecUtil {
         } else if (WEBP == format) {
             return new WebpDemuxer(ch);
         } else if (Format.H264 == format) {
-            return new BufferH264ES(NIOUtils.fetchFromChannel(ch));
+            return new BufferH264ES(NIOUtils.fetchAllFromChannel(ch));
         } else if (WAV == format) {
             return new WavDemuxer(ch);
         } else if (MPEG_AUDIO == format) {
