@@ -1,5 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.jcodec.common.io.NIOUtils;
@@ -104,8 +105,6 @@ public class NodeBox extends Box {
 
     protected void dump(StringBuilder sb) {
         sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
-        List<String> fields = new ArrayList<String>(0);
-        ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[0]));
         sb.append("\"boxes\": [");
         dumpBoxes(sb);
         sb.append("]");
@@ -181,13 +180,7 @@ public class NodeBox extends Box {
 
     public static <T extends Box> T[] findAllPath(Box box, Class<T> class1, String[] path) {
         List<Box> result = new LinkedList<Box>();
-        List<String> tlist = new LinkedList<String>();
-        for (int i = 0; i < path.length; i++) {
-            String type = path[i];
-            tlist.add(type);
-        }
-    
-        findBox(box, tlist, result);
+        findBox(box, Arrays.asList(path), result);
     
         for (ListIterator<Box> it = result.listIterator(); it.hasNext();) {
             Box next = it.next();

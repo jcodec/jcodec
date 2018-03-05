@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -26,26 +25,6 @@ public class Platform {
         }
     }
 
-    public static void invokeMethod(Object target, String methodName, Object[] params) throws NoSuchMethodException {
-        Class[] parameterTypes = new Class[params.length];
-        for (int i = 0; i < params.length; i++) {
-            parameterTypes[i] = params[i].getClass();
-        }
-        try {
-            target.getClass().getDeclaredMethod(methodName, parameterTypes).invoke(target, params);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static Method[] getDeclaredMethods(Class<?> claz) {
-        return claz.getDeclaredMethods();
-    }
-
-    public static Method[] getMethods(Class<?> class1) {
-        return class1.getMethods();
-    }
-
     public static Field[] getDeclaredFields(Class<?> class1) {
         return class1.getDeclaredFields();
     }
@@ -60,10 +39,6 @@ public class Platform {
 
     public static byte[] getBytesForCharset(String url, String charset) {
         return url.getBytes(Charset.forName(charset));
-    }
-
-    public static InputStream getResourceAsStream(Class<?> class1, String string) {
-        return class1.getClassLoader().getResourceAsStream(string);
     }
 
     public static String stringFromCharset4(byte[] data, int offset, int len, String charset) {
