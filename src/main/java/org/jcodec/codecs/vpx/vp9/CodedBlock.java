@@ -34,7 +34,7 @@ public class CodedBlock {
         if (c.isKeyIntraFrame())
             mode = ModeInfo.read(miCol, miRow, blSz, decoder, probs, c);
         else
-            mode = InterModeInfo.read(miCol, miRow, blSz, decoder, probs, c);
+            mode = InterModeInfo.readInter(miCol, miRow, blSz, decoder, probs, c);
         Residual r = Residual.read(miCol, miRow, blSz, decoder, probs, c, mode);
         return new CodedBlock(mode, r);
     }
