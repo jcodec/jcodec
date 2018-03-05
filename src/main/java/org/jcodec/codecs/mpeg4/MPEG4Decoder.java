@@ -30,7 +30,7 @@ import org.jcodec.common.model.Size;
  * 
  */
 public class MPEG4Decoder extends VideoDecoder {
-    private Picture[] refs = new Picture[2];
+    private Picture[] refs;
 
     private Macroblock[] prevMBs;
     private Macroblock[] mbs;
@@ -42,6 +42,10 @@ public class MPEG4Decoder extends VideoDecoder {
     public final static int N_VOP = 4;
     
     private MPEG4DecodingContext ctx;
+
+    public MPEG4Decoder() {
+        refs = new Picture[2];
+    }
 
     @Override
     public Picture decodeFrame(ByteBuffer data, byte[][] buffer) {

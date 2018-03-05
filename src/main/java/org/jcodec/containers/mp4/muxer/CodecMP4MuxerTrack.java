@@ -61,8 +61,8 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
     private Codec codec;
 
     // SPS/PPS lists when h.264 is stored, otherwise these lists are not used.
-    private List<ByteBuffer> spsList = new ArrayList<ByteBuffer>();
-    private List<ByteBuffer> ppsList = new ArrayList<ByteBuffer>();
+    private List<ByteBuffer> spsList;
+    private List<ByteBuffer> ppsList;
 
     // ADTS header used to construct audio sample entry for AAC
     private ADTSParser.Header adtsHeader;
@@ -70,6 +70,8 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
     public CodecMP4MuxerTrack(int trackId, MP4TrackType type, Codec codec) {
         super(trackId, type);
         this.codec = codec;
+        this.spsList = new ArrayList<ByteBuffer>();
+        this.ppsList = new ArrayList<ByteBuffer>();
     }
 
     @Override

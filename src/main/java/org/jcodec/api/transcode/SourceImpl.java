@@ -87,8 +87,8 @@ public class SourceImpl implements Source, PacketSource {
     private _3<Integer, Integer, Codec> inputVideoCodec;
     private _3<Integer, Integer, Codec> inputAudioCodec;
 
-    private List<VideoFrameWithPacket> frameReorderBuffer = new ArrayList<VideoFrameWithPacket>();
-    private List<Packet> videoPacketReorderBuffer = new ArrayList<Packet>();
+    private List<VideoFrameWithPacket> frameReorderBuffer;
+    private List<Packet> videoPacketReorderBuffer;
     private PixelStore pixelStore;
     private VideoCodecMeta videoCodecMeta;
     private AudioCodecMeta audioCodecMeta;
@@ -298,6 +298,8 @@ public class SourceImpl implements Source, PacketSource {
         this.inputFormat = inputFormat;
         this.inputVideoCodec = inputVideoCodec;
         this.inputAudioCodec = inputAudioCodec;
+        frameReorderBuffer = new ArrayList<VideoFrameWithPacket>();
+        videoPacketReorderBuffer = new ArrayList<Packet>();
     }
 
     @Override

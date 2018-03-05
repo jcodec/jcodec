@@ -7,7 +7,11 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 
 public class PixelStoreImpl implements PixelStore {
-    private List<Picture> buffers = new ArrayList<Picture>();
+    private List<Picture> buffers;
+
+    public PixelStoreImpl() {
+        buffers = new ArrayList<Picture>();
+    }
 
     @Override
     public LoanerPicture getPicture(int width, int height, ColorSpace color) {
