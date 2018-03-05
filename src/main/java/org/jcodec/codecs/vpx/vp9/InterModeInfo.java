@@ -86,8 +86,7 @@ public class InterModeInfo extends ModeInfo {
         return mvl3;
     }
 
-    public static InterModeInfo read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probs,
-            DecodingContext c) {
+    public static InterModeInfo readInter(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probs, DecodingContext c) {
         int segmentId = 0;
         if (c.isSegmentationEnabled()) {
             segmentId = predicSegmentId(miCol, miRow, blSz, c);
