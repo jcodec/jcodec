@@ -150,4 +150,7 @@ public class Platform {
         return class1.isAssignableFrom(class2);
     }
 
+    public static InputStream stdin() {
+        return System.in;
+    }
 }

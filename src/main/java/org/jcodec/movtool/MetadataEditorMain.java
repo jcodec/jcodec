@@ -17,6 +17,7 @@ import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
 import org.jcodec.common.tools.MainUtils.FlagType;
 import org.jcodec.containers.mp4.boxes.MetaValue;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -163,7 +164,7 @@ public class MetadataEditorMain {
                 fis = new FileInputStream(new File(fileName));
                 return IOUtils.toByteArray(fis);
             } else {
-                return IOUtils.toByteArray(System.in);
+                return IOUtils.toByteArray(Platform.stdin());
             }
         } finally {
             IOUtils.closeQuietly(fis);
