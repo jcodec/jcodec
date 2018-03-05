@@ -68,7 +68,7 @@ public class MKVParser {
                     try {
                         bin.readChannel(channel);
                     } catch (OutOfMemoryError oome) {
-                        throw new RuntimeException(e.type + " 0x" + toHexString(bin.id) + " size: " + toHexString(bin.dataLen) + " offset: 0x" + toHexString(e.offset), oome);
+                        throw new RuntimeException(e.type + " 0x" + toHexString(bin.id) + " size: " + Long.toHexString(bin.dataLen) + " offset: 0x" + Long.toHexString(e.offset), oome);
                     }
                 trace.peekFirst().add(e);
             } else if (e instanceof EbmlVoid) {

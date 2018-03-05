@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-import static java.lang.Long.toHexString;
 import static org.jcodec.containers.mkv.util.EbmlUtil.toHexString;
 
 import java.util.Iterator;
@@ -386,7 +385,7 @@ public final static MKVType                   TagBinary = new MKVType("TagBinary
                 return createByType(t);
         }
         System.err.println("WARNING: unspecified ebml ID (" + toHexString(id) + ") encountered at position 0x"
-                + toHexString(offset).toUpperCase());
+                + Long.toHexString(offset).toUpperCase());
         T t = (T) new EbmlVoid(id);
         t.type = Void;
         return t;
