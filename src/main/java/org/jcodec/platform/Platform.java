@@ -15,6 +15,8 @@ public class Platform {
 
     public final static String UTF_8 = "UTF-8";
     public final static String UTF_16 = "UTF-16";
+    public final static String UTF_16BE = "UTF-16BE";
+    public final static String ISO8859_1 = "iso8859-1";
 
     public static <T> T newInstance(Class<T> clazz, Object[] params) {
         Class[] classes = new Class[params.length];

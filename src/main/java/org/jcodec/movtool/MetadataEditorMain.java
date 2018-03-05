@@ -199,24 +199,16 @@ public class MetadataEditorMain {
     }
 
     private static String fourccToString(int key) {
-        try {
-            byte[] bytes = new byte[4];
-            ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).putInt(key);
-            return new String(bytes, "iso8859-1");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        byte[] bytes = new byte[4];
+        ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).putInt(key);
+        return Platform.stringFromCharset(bytes, Platform.ISO8859_1);
     }
 
     private static int stringToFourcc(String fourcc) {
         if (fourcc.length() != 4)
             return 0;
-        try {
-            byte[] bytes = fourcc.getBytes("iso8859-1");
-            return ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).getInt();
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        byte[] bytes = Platform.getBytesForCharset(fourcc, Platform.ISO8859_1);
+        return ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).getInt();
     }
 
     private static MetaValue typedValue(String value, String type) {
