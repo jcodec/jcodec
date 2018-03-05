@@ -453,12 +453,4 @@ public class TranscodeMain {
         String extension = output.replaceFirst(".*\\.([^\\.]+$)", "$1");
         return extensionToC.get(extension);
     }
-
-    public static Set<Format> formats(Format... formats) {
-        return new HashSet<Format>(Arrays.asList(formats));
-    }
-
-    public static Set<Codec> codecs(Codec... codecs) {
-        return new HashSet<Codec>(Arrays.asList(codecs));
-    }
 }
