@@ -52,7 +52,7 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
     
     protected int trackId;
     protected MP4TrackType type;
-    protected int _timescale = NO_TIMESCALE_SET;
+    protected int _timescale;
 
     protected Rational tgtChunkDuration;
     protected Unit tgtChunkDurationUnit;
@@ -79,6 +79,7 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
 
         this.trackId = trackId;
         this.type = type;
+        _timescale = NO_TIMESCALE_SET;
     }
     
     AbstractMP4MuxerTrack setOut(SeekableByteChannel out) {

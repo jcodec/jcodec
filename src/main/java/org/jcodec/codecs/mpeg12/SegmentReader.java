@@ -26,7 +26,7 @@ public class SegmentReader {
     protected boolean done;
     private long pos;
     private int bytesInMarker;
-    private int bufferIncrement = 1 << 15; // 32k
+    private int bufferIncrement = 32768; //1<<15
 
     public SegmentReader(ReadableByteChannel channel, int fetchSize) throws IOException {
         this.channel = channel;
