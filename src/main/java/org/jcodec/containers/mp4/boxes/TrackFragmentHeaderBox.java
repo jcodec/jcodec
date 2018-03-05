@@ -35,8 +35,7 @@ public class TrackFragmentHeaderBox extends FullBox {
         return "tfhd";
     }
 
-    public static TrackFragmentHeaderBox createTrackFragmentHeaderBox(int trackId, long baseDataOffset,
-            int sampleDescriptionIndex, int defaultSampleDuration, int defaultSampleSize, int defaultSampleFlags) {
+    public static TrackFragmentHeaderBox tfhd(int trackId, long baseDataOffset, int sampleDescriptionIndex, int defaultSampleDuration, int defaultSampleSize, int defaultSampleFlags) {
         TrackFragmentHeaderBox box = new TrackFragmentHeaderBox(new Header(fourcc()));
         box.trackId = trackId;
         box.baseDataOffset = baseDataOffset;
@@ -52,8 +51,7 @@ public class TrackFragmentHeaderBox extends FullBox {
     }
 
     public static Factory copy(TrackFragmentHeaderBox other) {
-        TrackFragmentHeaderBox box = TrackFragmentHeaderBox
-                .createTrackFragmentHeaderBox(other.trackId, other.baseDataOffset, other.sampleDescriptionIndex, other.defaultSampleDuration, other.defaultSampleSize, other.defaultSampleFlags);
+        TrackFragmentHeaderBox box = tfhd(other.trackId, other.baseDataOffset, other.sampleDescriptionIndex, other.defaultSampleDuration, other.defaultSampleSize, other.defaultSampleFlags);
         box.setFlags(other.getFlags());
         box.setVersion(other.getVersion());
         return new Factory(box);
