@@ -1,5 +1,7 @@
 package org.jcodec.api.transcode;
 
+import static org.jcodec.common.Codec.*;
+import static org.jcodec.common.Format.*;
 import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 
 import java.io.FileNotFoundException;
@@ -17,11 +19,17 @@ import org.jcodec.codecs.h264.BufferH264ES;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.codecs.h264.H264Utils;
 import org.jcodec.codecs.mjpeg.JpegDecoder;
+import org.jcodec.codecs.mjpeg.JpegToThumb2x2;
+import org.jcodec.codecs.mjpeg.JpegToThumb4x4;
 import org.jcodec.codecs.mpeg12.MPEGDecoder;
-import org.jcodec.codecs.mpeg4.MPEG4Consts;
+import org.jcodec.codecs.mpeg12.Mpeg2Thumb2x2;
+import org.jcodec.codecs.mpeg12.Mpeg2Thumb4x4;
 import org.jcodec.codecs.mpeg4.MPEG4Decoder;
 import org.jcodec.codecs.png.PNGDecoder;
 import org.jcodec.codecs.prores.ProresDecoder;
+import org.jcodec.codecs.prores.ProresToThumb;
+import org.jcodec.codecs.prores.ProresToThumb2x2;
+import org.jcodec.codecs.prores.ProresToThumb4x4;
 import org.jcodec.codecs.raw.RAWVideoDecoder;
 import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.codecs.wav.WavDemuxer;
@@ -79,8 +87,8 @@ public class SourceImpl implements Source, PacketSource {
     private _3<Integer, Integer, Codec> inputVideoCodec;
     private _3<Integer, Integer, Codec> inputAudioCodec;
 
-    private List<VideoFrameWithPacket> frameReorderBuffer = new ArrayList<VideoFrameWithPacket>();
-    private List<Packet> videoPacketReorderBuffer = new ArrayList<Packet>();
+    private List<VideoFrameWithPacket> frameReorderBuffer;
+    private List<Packet> videoPacketReorderBuffer;
     private PixelStore pixelStore;
     private VideoCodecMeta videoCodecMeta;
     private AudioCodecMeta audioCodecMeta;
@@ -90,41 +98,52 @@ public class SourceImpl implements Source, PacketSource {
 
     private int downscale = 1;
 
+    public static MPEGDecoder createMpegDecoder(int downscale) {
+        if (downscale == 2)
+            return new Mpeg2Thumb4x4();
+        else if (downscale == 4)
+            return new Mpeg2Thumb2x2();
+        else
+            return new MPEGDecoder();
+    }
+
+    public static ProresDecoder createProresDecoder(int downscale) {
+        if (2 == downscale) {
+            return new ProresToThumb4x4();
+        } else if (4 == downscale) {
+            return new ProresToThumb2x2();
+        } else if (8 == downscale) {
+            return new ProresToThumb();
+        } else {
+            return new ProresDecoder();
+        }
+    }
+
     public void initDemuxer() throws FileNotFoundException, IOException {
-        if (inputFormat != Format.IMG)
+        if (inputFormat != IMG)
             sourceStream = readableFileChannel(sourceName);
 
-        switch (inputFormat) {
-        case MOV:
+        if (MOV == inputFormat) {
             demuxVideo = demuxAudio = MP4Demuxer.createMP4Demuxer(sourceStream);
-            break;
-        case MKV:
+        } else if (MKV == inputFormat) {
             demuxVideo = demuxAudio = new MKVDemuxer(sourceStream);
-            break;
-        case IMG:
+        } else if (IMG == inputFormat) {
             demuxVideo = new ImageSequenceDemuxer(sourceName, Integer.MAX_VALUE);
-            break;
-        case WEBP:
+        } else if (WEBP == inputFormat) {
             demuxVideo = new WebpDemuxer(sourceStream);
-            break;
-        case MPEG_PS:
+        } else if (MPEG_PS == inputFormat) {
             demuxVideo = demuxAudio = new MPSDemuxer(sourceStream);
-            break;
-        case Y4M:
+        } else if (Y4M == inputFormat) {
             Y4MDemuxer y4mDemuxer = new Y4MDemuxer(sourceStream);
             demuxVideo = demuxAudio = y4mDemuxer;
             videoInputTrack = y4mDemuxer;
-            break;
-        case H264:
-            demuxVideo = new BufferH264ES(NIOUtils.fetchFromChannel(sourceStream));
-            break;
-        case WAV:
+        } else if (Format.H264 == inputFormat) {
+            demuxVideo = new BufferH264ES(NIOUtils.fetchAllFromChannel(sourceStream));
+        } else if (WAV == inputFormat) {
             demuxAudio = new WavDemuxer(sourceStream);
-            break;
-        case MPEG_AUDIO:
+        } else if (MPEG_AUDIO == inputFormat) {
             demuxAudio = new MPEGAudioDemuxer(sourceStream);
-            break;
-        case MPEG_TS:
+        } else if (MPEG_TS == inputFormat) {
             MTSDemuxer mtsDemuxer = new MTSDemuxer(sourceStream);
             MPSDemuxer mpsDemuxer = null;
             if (inputVideoCodec != null) {
@@ -146,8 +165,7 @@ public class SourceImpl implements Source, PacketSource {
                     mtsDemuxer.getProgram(pid).close();
                 }
             }
-            break;
-        default:
+        } else {
             throw new RuntimeException("Input format: " + inputFormat + " is not supported.");
         }
 
@@ -280,6 +298,8 @@ public class SourceImpl implements Source, PacketSource {
         this.inputFormat = inputFormat;
         this.inputVideoCodec = inputVideoCodec;
         this.inputAudioCodec = inputAudioCodec;
+        frameReorderBuffer = new ArrayList<VideoFrameWithPacket>();
+        videoPacketReorderBuffer = new ArrayList<Packet>();
     }
 
     @Override
@@ -290,10 +310,9 @@ public class SourceImpl implements Source, PacketSource {
     }
 
     private AudioDecoder createAudioDecoder(ByteBuffer codecPrivate) throws AACException {
-        switch (inputAudioCodec.v2) {
-        case AAC:
+        if (AAC == inputAudioCodec.v2) {
             return new AACDecoder(codecPrivate);
-        case PCM:
+        } else if (PCM == inputAudioCodec.v2) {
             return new RawAudioDecoder(getAudioMeta().getAudioCodecMeta().getFormat());
         }
         return null;
@@ -301,22 +320,21 @@ public class SourceImpl implements Source, PacketSource {
 
     private VideoDecoder createVideoDecoder(Codec codec, int downscale, ByteBuffer codecPrivate,
             VideoCodecMeta videoCodecMeta) {
-        switch (codec) {
-        case H264:
+        if (Codec.H264 == codec) {
             return H264Decoder.createH264DecoderFromCodecPrivate(codecPrivate);
-        case PNG:
+        } else if (PNG == codec) {
             return new PNGDecoder();
-        case MPEG2:
-            return MPEGDecoder.createMpegDecoder(downscale);
-        case PRORES:
-            return ProresDecoder.createProresDecoder(downscale);
-        case VP8:
+        } else if (MPEG2 == codec) {
+            return createMpegDecoder(downscale);
+        } else if (PRORES == codec) {
+            return createProresDecoder(downscale);
+        } else if (VP8 == codec) {
             return new VP8Decoder();
-        case JPEG:
-            return JpegDecoder.createJpegDecoder(downscale);
-        case MPEG4:
+        } else if (JPEG == codec) {
+            return createJpegDecoder(downscale);
+        } else if (MPEG4 == codec) {
             return new MPEG4Decoder();
-        case RAW:
+        } else if (Codec.RAW == codec) {
             Size dim = videoCodecMeta.getSize();
             return new RAWVideoDecoder(dim.getWidth(), dim.getHeight());
         }
@@ -328,7 +346,7 @@ public class SourceImpl implements Source, PacketSource {
     }
 
     protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
-        if (inputAudioCodec.v2 == Codec.PCM) {
+        if (inputAudioCodec.v2 == PCM) {
             return audioPkt;
         } else {
             AudioBuffer decodeFrame = audioDecoder.decodeFrame(audioPkt, null);
@@ -465,7 +483,7 @@ public class SourceImpl implements Source, PacketSource {
         if (audioPkt == null)
             return null;
         AudioBuffer audioBuffer;
-        if (inputAudioCodec.v2 == Codec.PCM) {
+        if (inputAudioCodec.v2 == PCM) {
             DemuxerTrackMeta audioMeta = getAudioMeta();
             audioBuffer = new AudioBuffer(audioPkt.getData(), audioMeta.getAudioCodecMeta().getFormat(),
                     audioMeta.getTotalFrames());
@@ -512,5 +530,15 @@ public class SourceImpl implements Source, PacketSource {
             return false;
         List<? extends DemuxerTrack> tracks = demuxAudio.getAudioTracks();
         return tracks != null && tracks.size() > 0;
+    }
+
+    public static JpegDecoder createJpegDecoder(int downscale) {
+        if (downscale == 2) {
+            return new JpegToThumb4x4();
+        } else if (downscale == 4) {
+            return new JpegToThumb2x2();
+        } else {
+            return new JpegDecoder();
+        }
     }
 }

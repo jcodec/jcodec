@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
-import java.io.UnsupportedEncodingException;
+import org.jcodec.platform.Platform;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -45,11 +46,7 @@ public class MetaValue {
     }
 
     public static MetaValue createString(String value) {
-        try {
-            return new MetaValue(1, 0, value.getBytes("utf-8"));
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return new MetaValue(1, 0, Platform.getBytesForCharset(value, Platform.UTF_8));
     }
 
     public static MetaValue createOther(int type, byte[] data) {
@@ -92,9 +89,10 @@ public class MetaValue {
 
     public String getString() {
         if (type == TYPE_STRING_UTF8)
-            return toString(data, "UTF-8");
-        if (type == TYPE_STRING_UTF16)
-            return toString(data, "UTF-16BE");
+            return Platform.stringFromCharset(data, Platform.UTF_8);
+        if (type == TYPE_STRING_UTF16) {
+            return Platform.stringFromCharset(data, Platform.UTF_16BE);
+        }
         return null;
     }
     
@@ -131,14 +129,6 @@ public class MetaValue {
 
     public byte[] getData() {
         return data;
-    }
-
-    private static String toString(byte[] bytes, String encoding) {
-        try {
-            return new String(bytes, encoding);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private static byte[] fromFloat(float floatValue) {

@@ -27,9 +27,6 @@ import static org.jcodec.codecs.mpeg4.MPEG4Consts.TMNMV_TAB_0;
 import static org.jcodec.codecs.mpeg4.MPEG4Consts.TMNMV_TAB_1;
 import static org.jcodec.codecs.mpeg4.MPEG4Consts.TMNMV_TAB_2;
 import static org.jcodec.codecs.mpeg4.MPEG4Consts.ZERO_MV;
-import static org.jcodec.codecs.mpeg4.MPEG4Decoder.I_VOP;
-import static org.jcodec.codecs.mpeg4.MPEG4Decoder.P_VOP;
-import static org.jcodec.codecs.mpeg4.MPEG4Decoder.S_VOP;
 import static org.jcodec.common.tools.MathUtil.abs;
 import static org.jcodec.common.tools.MathUtil.log2;
 
@@ -47,6 +44,11 @@ import org.jcodec.common.tools.MathUtil;
  * @author The JCodec project
  */
 class MPEG4Bitstream {
+    public final static int I_VOP = 0;
+    public final static int P_VOP = 1;
+    public final static int B_VOP = 2;
+    public final static int S_VOP = 3;
+    public final static int N_VOP = 4;
     private final static int REVERSE_EVENT_LEN = 0;
     private final static int REVERSE_EVENT_LAST = 1;
     private final static int REVERSE_EVENT_RUN = 2;
@@ -487,7 +489,7 @@ class MPEG4Bitstream {
                     ctx.fcodeForward = br.readNBit(3);
                 }
 
-                if (codingType == MPEG4Decoder.B_VOP && fcodeBackwardEnabled) {
+                if (codingType == B_VOP && fcodeBackwardEnabled) {
                     ctx.fcodeBackward = br.readNBit(3);
                 }
             }
@@ -775,7 +777,7 @@ class MPEG4Bitstream {
         final int range = (64 * scaleFac);
 
         final Vector pmv = getPMV2(ctx, bound, x, y, k, mb, aboveMb, leftMb, aboveRightMb);
-        Vector mv = new Vector();
+        Vector mv = Macroblock.vec();
 
         mv.x = readMVComponent(br, fcode);
         mv.y = readMVComponent(br, fcode);
@@ -807,9 +809,9 @@ class MPEG4Bitstream {
         final int range = (64 * scaleFac);
 
         final Vector pmv = getPMV2Interlaced(ctx, bound, mb, aboveMb, leftMb, aboveRightMb);
-        Vector mv = new Vector();
-        Vector mvf1 = new Vector();
-        Vector mvf2 = new Vector();
+        Vector mv = Macroblock.vec();
+        Vector mvf1 = Macroblock.vec();
+        Vector mvf2 = Macroblock.vec();
 
         if (!pMB.fieldPred) {
             mv.x = readMVComponent(br, fcode);
@@ -886,7 +888,7 @@ class MPEG4Bitstream {
 
         Vector[] pmv = new Vector[4];
         for (int i = 0; i < 4; i++) {
-            pmv[i] = new Vector();
+            pmv[i] = Macroblock.vec();
         }
 
         int lz = 1;
@@ -1088,7 +1090,7 @@ class MPEG4Bitstream {
 
         Vector[] pmv = new Vector[4];
         for (int i = 0; i < 4; i++) {
-            pmv[i] = new Vector();
+            pmv[i] = Macroblock.vec();
         }
         int lz, tz, rz;
         switch (block) {
@@ -1205,7 +1207,7 @@ class MPEG4Bitstream {
             mb.cbp = 0;
         }
 
-        Vector mv = new Vector();
+        Vector mv = Macroblock.vec();
         switch (mb.mode) {
         case MODE_DIRECT:
             getBMotionVector(br, mv, 1, ZERO_MV, mb.x, mb.y);

@@ -51,7 +51,7 @@ public class PriorityFuture<T> implements RunnableFuture<T> {
         src.run();
     }
 
-    public static Comparator<Runnable> COMP = new Comparator<Runnable>() {
+    public final static Comparator<Runnable> COMP = new Comparator<Runnable>() {
         public int compare(Runnable o1, Runnable o2) {
             if (o1 == null && o2 == null)
                 return 0;

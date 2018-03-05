@@ -1,9 +1,9 @@
 package org.jcodec.containers.mps.index;
+import static org.jcodec.common.Preconditions.checkState;
 import static org.jcodec.containers.mps.MPSUtils.mediaStream;
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 import static org.jcodec.containers.mps.index.MTSIndex.createMTSProgram;
 
-import org.jcodec.common.Assert;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.NIOUtils.FileReader;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -68,7 +68,7 @@ public class MTSIndexer {
             while (buf.hasRemaining()) {
                 ByteBuffer tsBuf = NIOUtils.read(buf, 188);
                 pos += 188;
-                Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+                checkState(0x47 == (tsBuf.get() & 0xff));
                 int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                 int guid = (int) guidFlags & 0x1fff;
 

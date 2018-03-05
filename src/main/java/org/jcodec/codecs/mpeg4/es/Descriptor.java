@@ -15,8 +15,7 @@ import java.nio.ByteBuffer;
 public abstract class Descriptor {
     private int _tag;
     private int size;
-    protected IDescriptorFactory factory;
-    
+
     public Descriptor(int tag, int size) {
         this._tag = tag;
         this.size = size;
@@ -36,27 +35,5 @@ public abstract class Descriptor {
 
     int getTag() {
         return _tag;
-    }
-    
-    public static Descriptor read(ByteBuffer input, IDescriptorFactory factory) {
-        if(input.remaining() < 2)
-            return null;
-        int tag = input.get() & 0xff;
-        int size = JCodecUtil2.readBER32(input);
-        
-        Class<? extends Descriptor> cls = factory.byTag(tag);
-        Descriptor descriptor;
-        try {
-            Method method = cls.getDeclaredMethod("parse", ByteBuffer.class, IDescriptorFactory.class);
-            descriptor = (Descriptor)method.invoke(null, NIOUtils.read(input, size), factory);
-            descriptor.setFactory(factory);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return descriptor;
-    }
-
-    private void setFactory(IDescriptorFactory factory) {
-        this.factory = factory;
     }
 }

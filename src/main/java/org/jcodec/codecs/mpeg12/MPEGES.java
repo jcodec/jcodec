@@ -39,7 +39,7 @@ public class MPEGES extends SegmentReader {
      *         provided as an argument.
      * @throws IOException
      */
-    public MPEGPacket getFrame(ByteBuffer buffer) throws IOException {
+    public MPEGPacket frame(ByteBuffer buffer) throws IOException {
 
         ByteBuffer dup = buffer.duplicate();
 

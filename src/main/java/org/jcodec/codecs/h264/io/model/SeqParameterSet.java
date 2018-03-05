@@ -12,6 +12,7 @@ import static org.jcodec.common.model.ColorSpace.MONO;
 import static org.jcodec.common.model.ColorSpace.YUV420J;
 import static org.jcodec.common.model.ColorSpace.YUV422;
 import static org.jcodec.common.model.ColorSpace.YUV444;
+import static org.jcodec.platform.Platform.arrayEqualsInt;
 
 import org.jcodec.codecs.h264.H264Const;
 import org.jcodec.common.io.BitReader;
@@ -19,7 +20,6 @@ import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ColorSpace;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -247,24 +247,24 @@ public class SeqParameterSet {
         boolean useDefaultScalingMatrixFlag = false;
         switch(which) {
         case 0: // 4x4 intra y
-            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], H264Const.defaultScalingList4x4Intra);
+            useDefaultScalingMatrixFlag = arrayEqualsInt(scalingMatrix[which], H264Const.defaultScalingList4x4Intra);
             break;
         case 1:
         case 2:
-            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], scalingMatrix[0]);
+            useDefaultScalingMatrixFlag = arrayEqualsInt(scalingMatrix[which], scalingMatrix[0]);
             break;
         case 3:
-            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], H264Const.defaultScalingList4x4Inter);
+            useDefaultScalingMatrixFlag = arrayEqualsInt(scalingMatrix[which], H264Const.defaultScalingList4x4Inter);
             break;
         case 4:
         case 5:
-            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], scalingMatrix[3]);
+            useDefaultScalingMatrixFlag = arrayEqualsInt(scalingMatrix[which], scalingMatrix[3]);
             break;
         case 6:
-            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], H264Const.defaultScalingList8x8Intra);
+            useDefaultScalingMatrixFlag = arrayEqualsInt(scalingMatrix[which], H264Const.defaultScalingList8x8Intra);
             break;
         case 7:
-            useDefaultScalingMatrixFlag = Arrays.equals(scalingMatrix[which], H264Const.defaultScalingList8x8Inter);
+            useDefaultScalingMatrixFlag = arrayEqualsInt(scalingMatrix[which], H264Const.defaultScalingList8x8Inter);
             break;
         }
         int[] scalingList = scalingMatrix[which];
@@ -285,14 +285,15 @@ public class SeqParameterSet {
         }
     }
 
-    public static int[] readScalingList(BitReader in, int sizeOfScalingList)  {
+    //Wrong usage of Javascript keyword:in
+    public static int[] readScalingList(BitReader src, int sizeOfScalingList)  {
 
         int[] scalingList = new int[sizeOfScalingList];
         int lastScale = 8;
         int nextScale = 8;
         for (int j = 0; j < sizeOfScalingList; j++) {
             if (nextScale != 0) {
-                int deltaScale = readSE(in, "deltaScale");
+                int deltaScale = readSE(src, "deltaScale");
                 nextScale = (lastScale + deltaScale + 256) % 256;
                 if (j == 0 && nextScale == 0)
                     return null;
@@ -303,13 +304,14 @@ public class SeqParameterSet {
         return scalingList;
     }
 
-    private static void readScalingListMatrix(BitReader in, SeqParameterSet sps) {
+    //Wrong usage of Javascript keyword:in
+    private static void readScalingListMatrix(BitReader src, SeqParameterSet sps) {
         sps.scalingMatrix = new int[8][];
         for (int i = 0; i < 8; i++) {
-            boolean seqScalingListPresentFlag = readBool(in, "SPS: seqScalingListPresentFlag");
+            boolean seqScalingListPresentFlag = readBool(src, "SPS: seqScalingListPresentFlag");
             if (seqScalingListPresentFlag) {
                 int scalingListSize = i < 6 ? 16 : 64;
-                sps.scalingMatrix[i] = readScalingList(in, scalingListSize);
+                sps.scalingMatrix[i] = readScalingList(src, scalingListSize);
             }
         }
     }

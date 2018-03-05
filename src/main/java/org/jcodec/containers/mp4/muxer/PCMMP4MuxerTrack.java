@@ -1,5 +1,4 @@
 package org.jcodec.containers.mp4.muxer;
-import org.jcodec.common.Assert;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.model.Packet;
@@ -31,6 +30,8 @@ import java.io.IOException;
 import java.lang.IllegalStateException;
 import java.nio.ByteBuffer;
 import java.util.Date;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -76,7 +77,7 @@ public class PCMMP4MuxerTrack extends AbstractMP4MuxerTrack {
     }
 
     private void outChunkIfNeeded() throws IOException {
-        Assert.assertTrue(tgtChunkDurationUnit == Unit.FRAME || tgtChunkDurationUnit == Unit.SEC);
+        checkState(tgtChunkDurationUnit == Unit.FRAME || tgtChunkDurationUnit == Unit.SEC, "");
 
         if (tgtChunkDurationUnit == Unit.FRAME
                 && framesInCurChunk * tgtChunkDuration.getDen() == tgtChunkDuration.getNum()) {

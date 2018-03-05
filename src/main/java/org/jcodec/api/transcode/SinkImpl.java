@@ -1,5 +1,7 @@
 package org.jcodec.api.transcode;
 
+import static org.jcodec.common.Codec.*;
+import static org.jcodec.common.Format.*;
 import static org.jcodec.common.io.NIOUtils.writableFileChannel;
 
 import java.io.IOException;
@@ -54,7 +56,8 @@ public class SinkImpl implements Sink, PacketSink {
     private Codec outputVideoCodec;
     private Codec outputAudioCodec;
     private Format outputFormat;
-    private ThreadLocal<ByteBuffer> bufferStore = new ThreadLocal<ByteBuffer>();
+    //ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread
+    private final static ThreadLocal<ByteBuffer> bufferStore = new ThreadLocal<ByteBuffer>();
 
     private AudioEncoder audioEncoder;
     private VideoEncoder videoEncoder;
@@ -84,31 +87,23 @@ public class SinkImpl implements Sink, PacketSink {
     }
     
     public void initMuxer() throws IOException {
-        if (destStream == null && outputFormat != Format.IMG)
+        if (destStream == null && outputFormat != IMG)
             destStream = writableFileChannel(destName);
-        switch (outputFormat) {
-        case MKV:
+        if (MKV == outputFormat) {
             muxer = new MKVMuxer(destStream);
-            break;
-        case MOV:
+        } else if (MOV == outputFormat) {
             muxer = MP4Muxer.createMP4MuxerToChannel(destStream);
-            break;
-        case IVF:
+        } else if (IVF == outputFormat) {
             muxer = new IVFMuxer(destStream);
-            break;
-        case IMG:
+        } else if (IMG == outputFormat) {
             muxer = new ImageSequenceMuxer(destName);
-            break;
-        case WAV:
+        } else if (WAV == outputFormat) {
             muxer = new WavMuxer(destStream);
-            break;
-        case Y4M:
+        } else if (Y4M == outputFormat) {
             muxer = new Y4MMuxer(destStream);
-            break;
-        case RAW:
+        } else if (Format.RAW == outputFormat) {
             muxer = new RawMuxer(destStream);
-            break;
-		default:
+        } else {
 			throw new RuntimeException("The output format " + outputFormat + " is not supported.");
         }
     }
@@ -125,7 +120,7 @@ public class SinkImpl implements Sink, PacketSink {
     }
 
     public SinkImpl(String destName, Format outputFormat, Codec outputVideoCodec, Codec outputAudioCodec) {
-    	if (destName == null && outputFormat == Format.IMG)
+    	if (destName == null && outputFormat == IMG)
     		throw new IllegalArgumentException("A destination file should be specified for the image muxer.");
         this.destName = destName;
         this.outputFormat = outputFormat;
@@ -144,23 +139,17 @@ public class SinkImpl implements Sink, PacketSink {
     public void init() throws IOException {
         initMuxer();
         if (outputFormat.isVideo() && outputVideoCodec != null) {
-            switch (outputVideoCodec) {
-            case PRORES:
-                videoEncoder = new ProresEncoder(profile, interlaced);
-                break;
-            case H264:
+            if (PRORES == outputVideoCodec) {
+                videoEncoder = ProresEncoder.createProresEncoder(profile, interlaced);
+            } else if (Codec.H264 == outputVideoCodec) {
                 videoEncoder = H264Encoder.createH264Encoder();
-                break;
-            case VP8:
+            } else if (VP8 == outputVideoCodec) {
                 videoEncoder = VP8Encoder.createVP8Encoder(10);
-                break;
-            case PNG:
+            } else if (PNG == outputVideoCodec) {
                 videoEncoder = new PNGEncoder();
-                break;
-            case RAW:
+            } else if (Codec.RAW == outputVideoCodec) {
                 videoEncoder = new RAWVideoEncoder();
-                break;
-            default:
+            } else {
                 throw new RuntimeException("Could not find encoder for the codec: " + outputVideoCodec);
             }
         }

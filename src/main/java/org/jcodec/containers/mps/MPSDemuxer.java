@@ -130,16 +130,21 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         private MPEGES es;
         // PTS estimation machinery
-        private LongArrayList ptsSeen = new LongArrayList(32);
+        private LongArrayList ptsSeen;
         private long lastPts;
-        private int lastSeq = Integer.MIN_VALUE;
-        private int lastSeqSeen = Integer.MAX_VALUE - 1000;
-        private int seqWrap = Integer.MAX_VALUE - 1000;
-        private IntIntHistogram durationHistogram = new IntIntHistogram();
+        private int lastSeq;
+        private int lastSeqSeen;
+        private int seqWrap;
+        private IntIntHistogram durationHistogram;
 
         public MPEGTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
             super(demuxer, streamId, pkt);
             this.es = new MPEGES(this, 4096);
+            ptsSeen = new LongArrayList(32);
+            lastSeq = Integer.MIN_VALUE;
+            lastSeqSeen = Integer.MAX_VALUE - 1000;
+            seqWrap = Integer.MAX_VALUE - 1000;
+            durationHistogram = new IntIntHistogram();
         }
 
         public boolean isOpen() {
@@ -187,7 +192,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
 
         @Override
         public Packet nextFrameWithBuffer(ByteBuffer buf) throws IOException {
-            return es.getFrame(buf);
+            return es.frame(buf);
         }
 
         @Override
@@ -273,10 +278,11 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
     }
 
     public static class AACTrack extends PlainTrack {
-        private List<Packet> audioStash = new ArrayList<Packet>();
+        private List<Packet> audioStash;
 
         public AACTrack(MPSDemuxer demuxer, int streamId, PESPacket pkt) throws IOException {
             super(demuxer, streamId, pkt);
+            audioStash = new ArrayList<Packet>();
         }
 
         @Override

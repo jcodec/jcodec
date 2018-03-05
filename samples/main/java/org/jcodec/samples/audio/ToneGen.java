@@ -24,15 +24,15 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class ToneGen {
-    private static final Flag FLAG_FREQ = new Flag("tone-frequency", "freq", "Frequency of tone");
-    private static final Flag FLAG_CHANNELS = new Flag("channels", "channels", "Number of channels");
+    private static final Flag FLAG_FREQ = Flag.flag("tone-frequency", "freq", "Frequency of tone");
+    private static final Flag FLAG_CHANNELS = Flag.flag("channels", "channels", "Number of channels");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FREQ, FLAG_CHANNELS};
     
 
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args, new MainUtils.Flag[] {});
         if (cmd.args.length < 1) {
-            MainUtils.printHelpVarArgs(FLAGS, "filename");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"filename"});
             System.exit(-1);
         }
 

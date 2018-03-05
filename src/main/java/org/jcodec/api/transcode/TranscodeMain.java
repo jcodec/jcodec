@@ -5,9 +5,7 @@ import static org.jcodec.common.Tuple._3;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +32,7 @@ import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
 import org.jcodec.common.tools.MainUtils.FlagType;
 import org.jcodec.common.tools.MathUtil;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -46,29 +45,26 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class TranscodeMain {
     private static final Flag FLAG_INPUT = new Flag("input", "i", "Designates an input argument", FlagType.VOID);
-    private static final Flag FLAG_MAP_VIDEO = new Flag("map:v", "mv",
+    private static final Flag FLAG_MAP_VIDEO = Flag.flag("map:v", "mv",
             "Map a video from a specified input into this output");
-    private static final Flag FLAG_MAP_AUDIO = new Flag("map:a", "ma",
+    private static final Flag FLAG_MAP_AUDIO = Flag.flag("map:a", "ma",
             "Map a audio from a specified input into this output");
-    private static final Flag FLAG_SEEK_FRAMES = new Flag("seek-frames", "Seek frames");
-    private static final Flag FLAG_MAX_FRAMES = new Flag("max-frames", "limit", "Max frames");
+    private static final Flag FLAG_SEEK_FRAMES = Flag.flag("seek-frames", null, "Seek frames");
+    private static final Flag FLAG_MAX_FRAMES = Flag.flag("max-frames", "limit", "Max frames");
 
-    private static final Flag FLAG_AUDIO_CODEC = new Flag("codec:audio", "acodec", "Audio codec [default=auto].");
-    private static final Flag FLAG_VIDEO_CODEC = new Flag("codec:video", "vcodec", "Video codec [default=auto].");
-    private static final Flag FLAG_FORMAT = new Flag("format", "f", "Format [default=auto].");
+    private static final Flag FLAG_AUDIO_CODEC = Flag.flag("codec:audio", "acodec", "Audio codec [default=auto].");
+    private static final Flag FLAG_VIDEO_CODEC = Flag.flag("codec:video", "vcodec", "Video codec [default=auto].");
+    private static final Flag FLAG_FORMAT = Flag.flag("format", "f", "Format [default=auto].");
 
-    private static final Flag FLAG_PROFILE = new Flag("profile", "Profile to use (supported by some encoders).");
-    private static final Flag FLAG_INTERLACED = new Flag("interlaced",
-            "Encode output as interlaced (supported by Prores encoder).");
+    private static final Flag FLAG_PROFILE = Flag.flag("profile", null, "Profile to use (supported by some encoders).");
+    private static final Flag FLAG_INTERLACED = Flag.flag("interlaced", null, "Encode output as interlaced (supported by Prores encoder).");
 
-    private static final Flag FLAG_DUMPMV = new Flag("dumpMv", "Dump motion vectors (supported by h.264 decoder).");
-    private static final Flag FLAG_DUMPMVJS = new Flag("dumpMvJs",
-            "Dump motion vectors in form of JASON file (supported by h.264 decoder).");
+    private static final Flag FLAG_DUMPMV = Flag.flag("dumpMv", null, "Dump motion vectors (supported by h.264 decoder).");
+    private static final Flag FLAG_DUMPMVJS = Flag.flag("dumpMvJs", null, "Dump motion vectors in form of JASON file (supported by h.264 decoder).");
 
-    private static final Flag FLAG_DOWNSCALE = new Flag("downscale",
-            "Decode frames in downscale (supported by MPEG, Prores and Jpeg decoders).");
-    
-    private static final Flag FLAG_VIDEO_FILTER = new Flag("videoFilter", "vf",
+    private static final Flag FLAG_DOWNSCALE = Flag.flag("downscale", null, "Decode frames in downscale (supported by MPEG, Prores and Jpeg decoders).");
+
+    private static final Flag FLAG_VIDEO_FILTER = Flag.flag("videoFilter", "vf",
             "Contains a comma separated list of video filters with arguments.");
 
     private static final Flag[] ALL_FLAGS = new Flag[] { FLAG_INPUT, FLAG_FORMAT, FLAG_VIDEO_CODEC, FLAG_AUDIO_CODEC,
@@ -272,7 +268,7 @@ public class TranscodeMain {
         }
 
         if (sources.isEmpty()) {
-            MainUtils.printHelpVarArgs(ALL_FLAGS, "input", "output");
+            MainUtils.printHelpArgs(ALL_FLAGS, new String[]{"input", "output"});
             return;
         }
 
@@ -360,7 +356,7 @@ public class TranscodeMain {
         }
 
         if (sources.isEmpty() || sinks.isEmpty()) {
-            MainUtils.printHelpVarArgs(ALL_FLAGS, "input", "output");
+            MainUtils.printHelpArgs(ALL_FLAGS, new String[]{"input", "output"});
             return;
         }
 
@@ -384,14 +380,11 @@ public class TranscodeMain {
                 String filterArgs = parts[1];
                 String[] split = filterArgs.split(":");
                 Integer[] params = new Integer[split.length];
-                Class[] types = new Class[split.length];
                 for (int i = 0; i < split.length; i++) {
                     params[i] = Integer.parseInt(split[i]);
-                    types[i] = int.class;
                 }
                 try {
-                    Constructor<? extends Filter> constructor = filterClass.getConstructor(types);
-                    Filter f = constructor.newInstance(params);
+                    Filter f = Platform.newInstance(filterClass, params);
                     builder.addFilter(sinkIndex, f);
                 } catch (Exception e) {
                     String message = "The filter " + filterName + " doesn't take " + split.length + " arguments.";
@@ -455,13 +448,5 @@ public class TranscodeMain {
     private static Codec getCodecFromExtension(String output) {
         String extension = output.replaceFirst(".*\\.([^\\.]+$)", "$1");
         return extensionToC.get(extension);
-    }
-
-    public static Set<Format> formats(Format... formats) {
-        return new HashSet<Format>(Arrays.asList(formats));
-    }
-
-    public static Set<Codec> codecs(Codec... codecs) {
-        return new HashSet<Codec>(Arrays.asList(codecs));
     }
 }

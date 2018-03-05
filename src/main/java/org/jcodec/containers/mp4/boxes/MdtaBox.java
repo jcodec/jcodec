@@ -20,9 +20,10 @@ public class MdtaBox extends Box {
         super(header);
     }
 
-    public MdtaBox(String key) {
-        this(Header.createHeader(FOURCC, 0));
-        this.key = key;
+    public static MdtaBox createMdtaBox(String key) {
+        MdtaBox box = new MdtaBox(Header.createHeader(FOURCC, 0));
+        box.key = key;
+        return box;
     }
 
     @Override

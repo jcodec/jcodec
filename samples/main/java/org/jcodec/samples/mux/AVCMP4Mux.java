@@ -29,13 +29,13 @@ import org.jcodec.containers.mp4.muxer.MP4Muxer;
  * 
  */
 public class AVCMP4Mux {
-    private static final Flag FLAG_Q = new Flag("q", "q", "Look for stream parameters only in the beginning of stream");
+    private static final Flag FLAG_Q = Flag.flag("q", "q", "Look for stream parameters only in the beginning of stream");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_Q};
     
     public static void main(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelpVarArgs(FLAGS, "in.264", "out.mp4");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"in.264", "out.mp4"});
             System.exit(-1);
         }
 

@@ -23,18 +23,6 @@ public class DecoderConfig extends NodeDescriptor {
         this.avgBitrate = avgBitrate;
     }
 
-    protected static DecoderConfig parse(ByteBuffer input, IDescriptorFactory factory) {
-
-        int objectType = input.get() & 0xff;
-        input.get();
-        int bufSize = ((input.get() & 0xff) << 16) | (input.getShort() & 0xffff);
-        int maxBitrate = input.getInt();
-        int avgBitrate = input.getInt();
-
-        NodeDescriptor node = NodeDescriptor.parse(input, factory);
-        return new DecoderConfig(objectType, bufSize, maxBitrate, avgBitrate, node.getChildren());
-    }
-
     protected void doWrite(ByteBuffer out) {
         out.put((byte) objectType);
         // flags (= Audiostream)

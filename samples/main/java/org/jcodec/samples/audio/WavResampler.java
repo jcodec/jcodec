@@ -30,14 +30,14 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class WavResampler {
-    private static final Flag FLAG_ORATE = new Flag("out_rate", "orate", "Output sample rate");
+    private static final Flag FLAG_ORATE = Flag.flag("out_rate", "orate", "Output sample rate");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_ORATE};
 
     public static void main(String[] args) throws IOException {
 
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelpVarArgs(FLAGS, "input file", "output file");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"input file", "output file"});
             System.exit(-1);
         }
 

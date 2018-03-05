@@ -17,6 +17,11 @@ import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
+import static org.jcodec.common.Codec.H264;
+import static org.jcodec.common.Format.MOV;
+import static org.jcodec.common.Format.MPEG_PS;
+import static org.jcodec.common.Format.MPEG_TS;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -37,7 +42,8 @@ public class FrameGrab {
 
     private SeekableDemuxerTrack videoTrack;
     private ContainerAdaptor decoder;
-    private ThreadLocal<byte[][]> buffers;
+    //ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread
+    private final static ThreadLocal<byte[][]> buffers = new ThreadLocal<byte[][]>();;
 
     public static FrameGrab createFrameGrab(SeekableByteChannel _in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
@@ -49,16 +55,14 @@ public class FrameGrab {
 		}
         SeekableDemuxerTrack videoTrack_;
 
-        switch (detectFormat) {
-        case MOV:
+		if (MOV == detectFormat) {
             MP4Demuxer d1 = MP4Demuxer.createMP4Demuxer(_in);
             videoTrack_ = (SeekableDemuxerTrack)d1.getVideoTrack();
-            break;
-        case MPEG_PS:
+        } else if (MPEG_PS == detectFormat) {
             throw new UnsupportedFormatException("MPEG PS is temporarily unsupported.");
-        case MPEG_TS:
+        } else if (MPEG_TS == detectFormat) {
             throw new UnsupportedFormatException("MPEG TS is temporarily unsupported.");
-        default:
+        } else {
             throw new UnsupportedFormatException("Container format is not supported by JCodec");
         }
         FrameGrab fg = new FrameGrab(videoTrack_, detectDecoder(videoTrack_));
@@ -69,7 +73,6 @@ public class FrameGrab {
     public FrameGrab(SeekableDemuxerTrack videoTrack, ContainerAdaptor decoder) {
         this.videoTrack = videoTrack;
         this.decoder = decoder;
-        this.buffers = new ThreadLocal<byte[][]>();
     }
 
     private SeekableDemuxerTrack sdt() throws JCodecException {
@@ -205,10 +208,9 @@ public class FrameGrab {
 
     private static ContainerAdaptor detectDecoder(SeekableDemuxerTrack videoTrack) throws JCodecException {
         DemuxerTrackMeta meta = videoTrack.getMeta();
-        switch (meta.getCodec()) {
-        case H264:
+        if (H264 == meta.getCodec()) {
             return new AVCMP4Adaptor(meta);
-        default:
+        } else {
             throw new UnsupportedFormatException("Codec is not supported");
         }
     }

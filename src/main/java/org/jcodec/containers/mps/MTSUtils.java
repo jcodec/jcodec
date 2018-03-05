@@ -1,7 +1,7 @@
 package org.jcodec.containers.mps;
+import static org.jcodec.common.Preconditions.checkState;
 import static org.jcodec.common.io.NIOUtils.getRel;
 
-import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -118,7 +118,7 @@ public class MTSUtils {
                     ByteBuffer tsBuf = NIOUtils.read(buf, TS_PKT_SIZE);
                     ByteBuffer fullPkt = tsBuf.duplicate();
                     pos += TS_PKT_SIZE;
-                    Assert.assertEquals(TS_SYNC_MARKER, tsBuf.get() & 0xff);
+                    checkState(TS_SYNC_MARKER == (tsBuf.get() & 0xff));
                     int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                     int guid = (int) guidFlags & 0x1fff;
 

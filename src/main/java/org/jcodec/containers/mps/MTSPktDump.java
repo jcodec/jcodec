@@ -1,5 +1,4 @@
 package org.jcodec.containers.mps;
-import org.jcodec.common.Assert;
 import org.jcodec.common.IntIntMap;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
@@ -13,6 +12,8 @@ import java.io.IOException;
 import java.lang.System;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -48,7 +49,7 @@ public class MTSPktDump {
             int pmtPid = -1;
             for (int pkt = 0; buf.hasRemaining(); ++pkt) {
                 ByteBuffer tsBuf = NIOUtils.read(buf, 188);
-                Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+                checkState(0x47 == (tsBuf.get() & 0xff));
                 int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                 int guid = (int) guidFlags & 0x1fff;
                 int payloadStart = (guidFlags >> 14) & 0x1;

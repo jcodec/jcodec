@@ -27,7 +27,7 @@ public class UL {
         this.bytes = bytes;
     }
 
-    public static UL newUL(int... arguments) {
+    public static UL newULFromInts(int... arguments) {
         byte[] bytes = new byte[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
             bytes[i] = (byte) arguments[i];

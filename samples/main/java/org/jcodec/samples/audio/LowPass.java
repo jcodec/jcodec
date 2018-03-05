@@ -25,15 +25,15 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class LowPass {
-    private static final Flag FLAG_FREQ = new Flag("cut-off-frequency", "freq", "Cut-off frequency");
-    private static final Flag FLAG_SIZE = new Flag("kernel-size", "size", "Kernel size of this filter");
+    private static final Flag FLAG_FREQ = Flag.flag("cut-off-frequency", "freq", "Cut-off frequency");
+    private static final Flag FLAG_SIZE = Flag.flag("kernel-size", "size", "Kernel size of this filter");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FREQ, FLAG_SIZE};
     
     public static void main(String[] args) throws IOException {
 
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelpVarArgs(FLAGS, "input file", "output file");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"input file", "output file"});
             System.exit(-1);
         }
 

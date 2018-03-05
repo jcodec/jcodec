@@ -3,16 +3,14 @@ package org.jcodec.codecs.mpeg4.mp4;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-import org.jcodec.codecs.aac.AACUtils;
+import org.jcodec.codecs.aac.ADTSParser;
 import org.jcodec.codecs.mpeg4.es.DecoderConfig;
 import org.jcodec.codecs.mpeg4.es.DecoderSpecific;
 import org.jcodec.codecs.mpeg4.es.Descriptor;
-import org.jcodec.codecs.mpeg4.es.DescriptorFactory;
+import org.jcodec.codecs.mpeg4.es.DescriptorParser;
 import org.jcodec.codecs.mpeg4.es.ES;
 import org.jcodec.codecs.mpeg4.es.NodeDescriptor;
 import org.jcodec.codecs.mpeg4.es.SL;
-import org.jcodec.common.io.BitWriter;
-import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.FullBox;
 import org.jcodec.containers.mp4.boxes.Header;
 
@@ -68,15 +66,15 @@ public class EsdsBox extends FullBox {
 
     public void parse(ByteBuffer input) {
         super.parse(input);
-        ES es = (ES) Descriptor.read(input, DescriptorFactory.getInstance());
+        ES es = (ES) DescriptorParser.read(input);
 
         trackId = es.getTrackId();
-        DecoderConfig decoderConfig = NodeDescriptor.find(es, DecoderConfig.class, DecoderConfig.tag());
+        DecoderConfig decoderConfig = NodeDescriptor.findByTag(es, DecoderConfig.tag());
         objectType = decoderConfig.getObjectType();
         bufSize = decoderConfig.getBufSize();
         maxBitrate = decoderConfig.getMaxBitrate();
         avgBitrate = decoderConfig.getAvgBitrate();
-        DecoderSpecific decoderSpecific = NodeDescriptor.find(decoderConfig, DecoderSpecific.class, DecoderSpecific.tag());
+        DecoderSpecific decoderSpecific = NodeDescriptor.findByTag(decoderConfig, DecoderSpecific.tag());
         streamInfo = decoderSpecific.getData();
     }
 
@@ -105,7 +103,7 @@ public class EsdsBox extends FullBox {
     }
 
     public static EsdsBox fromADTS(org.jcodec.codecs.aac.ADTSParser.Header hdr) {
-        return createEsdsBox(AACUtils.adtsToStreamInfo(hdr), hdr.getObjectType() << 5, 0, 210750, 133350, 2);
+        return createEsdsBox(ADTSParser.adtsToStreamInfo(hdr), hdr.getObjectType() << 5, 0, 210750, 133350, 2);
     }
 
     public static EsdsBox createEsdsBox(ByteBuffer streamInfo, int objectType, int bufSize, int maxBitrate,

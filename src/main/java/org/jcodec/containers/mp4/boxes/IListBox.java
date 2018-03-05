@@ -2,16 +2,14 @@ package org.jcodec.containers.mp4.boxes;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.containers.mp4.BoxFactory;
 import org.jcodec.containers.mp4.Boxes;
+import org.jcodec.containers.mp4.IBoxFactory;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -22,23 +20,27 @@ import org.jcodec.containers.mp4.Boxes;
  */
 public class IListBox extends Box {
     private static final String FOURCC = "ilst";
-    private Map<Integer, List<Box>> values = new LinkedHashMap<Integer, List<Box>>();
-    private BoxFactory factory;
+    private Map<Integer, List<Box>> values;
+    private IBoxFactory factory;
 
     private static class LocalBoxes extends Boxes {
-        {
+        //Initializing blocks are not supported by Javascript.
+        LocalBoxes() {
+            super();
             mappings.put(DataBox.fourcc(), DataBox.class);
         }
     }
 
     public IListBox(Header atom) {
         super(atom);
-        factory = new BoxFactory(new LocalBoxes());
+        factory = new SimpleBoxFactory(new LocalBoxes());
+        values = new LinkedHashMap<Integer, List<Box>>();
     }
 
-    public IListBox(Map<Integer, List<Box>> values) {
-        this(Header.createHeader(FOURCC, 0));
-        this.values = values;
+    public static IListBox createIListBox(Map<Integer, List<Box>> values) {
+        IListBox box = new IListBox(Header.createHeader(FOURCC, 0));
+        box.values = values;
+        return box;
     }
 
     public void parse(ByteBuffer input) {

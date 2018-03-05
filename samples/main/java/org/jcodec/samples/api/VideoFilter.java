@@ -35,7 +35,7 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class VideoFilter {
-    private static final Flag FLAG_TEXT = new Flag("text", "Text to display");
+    private static final Flag FLAG_TEXT = Flag.flag("text", null, "Text to display");
     private static final Flag[] FLAGS = new Flag[] {
         FLAG_TEXT
     };
@@ -82,7 +82,7 @@ public class VideoFilter {
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelpVarArgs(FLAGS, "input file", "output file");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"input file", "output file"});
             System.exit(-1);
         }
 

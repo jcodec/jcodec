@@ -4,13 +4,14 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jcodec.common.Assert;
 import org.jcodec.common.StringUtils;
 import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.IBoxFactory;
 import org.jcodec.platform.Platform;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -42,7 +43,7 @@ public abstract class Box {
         doWrite(buf);
 
         header.setBodySize(buf.position() - dup.position() - 8);
-        Assert.assertEquals(header.headerSize(), 8);
+        checkState(header.headerSize() == (long) 8);
         header.write(dup);
     }
 
@@ -62,10 +63,7 @@ public abstract class Box {
     }
 
     protected void dump(StringBuilder sb) {
-        sb.append("{\"tag\":\"" + header.getFourcc() + "\",");
-        List<String> fields = new ArrayList<String>(0);
-        ToJSON.fieldsToJSON(this, sb, fields.toArray(new String[0]));
-        sb.append("}");
+        sb.append("{\"tag\":\"" + header.getFourcc() + "\"}");
     }
 
     public static Box terminatorAtom() {

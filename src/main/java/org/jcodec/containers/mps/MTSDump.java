@@ -1,6 +1,7 @@
 package org.jcodec.containers.mps;
 
 import static java.util.Arrays.asList;
+import static org.jcodec.common.Preconditions.checkState;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,7 +10,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.jcodec.common.Assert;
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.IntIntMap;
 import org.jcodec.common.io.NIOUtils;
@@ -21,6 +21,7 @@ import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -29,8 +30,8 @@ import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
  * @author The JCodec project
  */
 public class MTSDump extends MPSDump {
-    private static final Flag DUMP_FROM = new Flag("dump-from", "Stop reading at timestamp");
-    private static final Flag STOP_AT = new Flag("stop-at", "Start dumping from timestamp");
+    private static final Flag DUMP_FROM = Flag.flag("dump-from", null, "Stop reading at timestamp");
+    private static final Flag STOP_AT = Flag.flag("stop-at", null, "Start dumping from timestamp");
     private static final Flag[] ALL_FLAGS = new Flag[] { DUMP_FROM, STOP_AT };
 
     private int guid;
@@ -85,7 +86,7 @@ public class MTSDump extends MPSDump {
         int pmtPid = -1;
         while (buf.hasRemaining()) {
             ByteBuffer tsBuf = NIOUtils.read(buf, 188);
-            Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+            checkState(0x47 == (tsBuf.get() & 0xff));
             int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
             int guid = guidFlags & 0x1fff;
             System.out.println(guid);
@@ -136,7 +137,7 @@ public class MTSDump extends MPSDump {
         for (PMTStream pmtStream : pmt.getStreams()) {
             System.out.print(pmtStream.getPid() + ":" + pmtStream.getStreamTypeTag() + ", ");
             for (MPEGMediaDescriptor descriptor : pmtStream.getDesctiptors()) {
-                System.out.println(ToJSON.toJSON(descriptor));
+                System.out.println(Platform.toJSON(descriptor));
             }
         }
         System.out.println();
@@ -188,7 +189,7 @@ public class MTSDump extends MPSDump {
                 }
 
                 tsBuf = NIOUtils.read(buf, 188);
-                Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+                checkState(0x47 == (tsBuf.get() & 0xff));
                 ++tsNo;
                 int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                 int guid = (int) guidFlags & 0x1fff;

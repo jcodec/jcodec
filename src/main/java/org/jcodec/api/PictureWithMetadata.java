@@ -16,11 +16,8 @@ public class PictureWithMetadata {
     private double duration;
     private DemuxerTrackMeta.Orientation orientation;
 
-    public PictureWithMetadata(Picture picture, double timestamp, double duration) {
-        this.picture = picture;
-        this.timestamp = timestamp;
-        this.duration = duration;
-        this.orientation = DemuxerTrackMeta.Orientation.D_0;
+    public static PictureWithMetadata createPictureWithMetadata(Picture picture, double timestamp, double duration) {
+        return new PictureWithMetadata(picture, timestamp, duration, DemuxerTrackMeta.Orientation.D_0);
     }
 
     public PictureWithMetadata(Picture picture, double timestamp, double duration, DemuxerTrackMeta.Orientation orientation) {

@@ -1,6 +1,5 @@
 package org.jcodec.codecs.h264.conformance;
 
-import org.jcodec.Utils;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
@@ -11,18 +10,11 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.junit.Test;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 import static java.lang.Integer.parseInt;
-import static java.util.Collections.singletonList;
-import static org.jcodec.common.Assert.assertTrue;
+import static org.jcodec.common.Preconditions.checkState;
 
 public class ConformanceTest {
 
@@ -47,7 +39,7 @@ public class ConformanceTest {
             Picture ref = rawReader.readNextFrame();
             if (ref == null)
                 break;
-            assertTrue("frame=" + fn + " FAILED", compare(ref, pic));
+            checkState(compare(ref, pic), "frame=" + fn + " FAILED");
         }
 
         mp4Demuxer.close();

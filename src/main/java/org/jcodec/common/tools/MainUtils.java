@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -45,19 +46,15 @@ public class MainUtils {
         private String description;
         private FlagType type;
 
-        public Flag(String longName, String description) {
-            this(longName, null, description);
-        }
-
-        public Flag(String longName, String shortName, String description) {
-            this(longName, shortName, description, FlagType.ANY);
-        }
-
         public Flag(String longName, String shortName, String description, FlagType type) {
             this.longName = longName;
             this.shortName = shortName;
             this.description = description;
             this.type = type;
+        }
+
+        public static Flag flag(String longName, String shortName, String description) {
+            return new Flag(longName, shortName, description, FlagType.ANY);
         }
 
         public String getLongName() {
@@ -339,10 +336,6 @@ public class MainUtils {
                 argShortFlags.toArray((Map<String, String>[]) Array.newInstance(shortFlags.getClass(), 0)));
     }
 
-    public static void printHelpVarArgs(Flag[] flags, String... arguments) {
-        printHelpOut(System.out, "", flags, Arrays.asList(arguments));
-    }
-
     public static void printHelpArgs(Flag[] flags, String[] arguments) {
         printHelpOut(System.out, "", flags, Arrays.asList(arguments));
     }
@@ -355,8 +348,8 @@ public class MainUtils {
         printHelpOut(System.out, "", new Flag[] {}, Arrays.asList(arguments));
     }
 
-    public static void printHelpCmdVa(String command, Flag[] flags, String... arguments) {
-        printHelpOut(System.out, command, flags, Arrays.asList(arguments));
+    public static void printHelpCmdVa(String command, Flag[] flags, String arguments) {
+        printHelpOut(System.out, command, flags, Collections.singletonList(arguments));
     }
     
     public static void printHelpCmd(String command, Flag[] flags, List<String> params) {

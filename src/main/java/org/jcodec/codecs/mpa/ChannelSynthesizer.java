@@ -10,12 +10,13 @@ import static org.jcodec.codecs.mpa.MpaPqmf.computeFilter;
  * @author The JCodec project
  */
 class ChannelSynthesizer {
-    private float[][] v = new float[2][512];
+    private float[][] v;
     private int pos;
     private float scalefactor;
     private int current;
 
     public ChannelSynthesizer(int channelnumber, float factor) {
+        this.v = new float[2][512];
         scalefactor = factor;
         pos = 15;
     }

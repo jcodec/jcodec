@@ -235,7 +235,7 @@ public class ArrayUtil {
         return result;
     }
 
-    public static void printMatrix(byte[] array, String format, int width) {
+    public static void printMatrixBytes(byte[] array, String format, int width) {
         String[] strings = new String[array.length];
         int maxLen = 0;
         for (int i = 0; i < array.length; i++) {

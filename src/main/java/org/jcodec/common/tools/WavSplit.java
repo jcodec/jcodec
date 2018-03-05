@@ -1,5 +1,6 @@
 package org.jcodec.common.tools;
 import static java.util.Arrays.asList;
+import static org.jcodec.common.Preconditions.checkState;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
 import org.jcodec.codecs.wav.WavHeader;
-import org.jcodec.common.Assert;
 import org.jcodec.common.AudioFormat;
 import org.jcodec.common.AudioUtil;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -26,7 +26,7 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class WavSplit {
-    public static final Flag FLAG_PATTERN = new Flag("pattern", "p", "Output file name pattern, i.e. out%02d.wav");
+    public static final Flag FLAG_PATTERN = Flag.flag("pattern", "p", "Output file name pattern, i.e. out%02d.wav");
     private static final Flag[] ALL_FLAGS = new Flag[] {FLAG_PATTERN};
     public static void main1(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
@@ -42,7 +42,7 @@ public class WavSplit {
 
         System.out.println("WAV: " + wavHeader.getFormat());
 
-        Assert.assertEquals(2, wavHeader.fmt.numChannels);
+        checkState(2 == (int) wavHeader.fmt.numChannels);
         int dataOffset = wavHeader.dataOffset;
         FileChannelWrapper is = NIOUtils.readableChannel(s);
         is.setPosition(dataOffset);

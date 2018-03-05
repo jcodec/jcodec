@@ -27,14 +27,14 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class Noise {
-    private static final Flag FLAG_LEVEL = new Flag("level", "level", "Desired noise level, between -90 and -15.");
+    private static final Flag FLAG_LEVEL = Flag.flag("level", "level", "Desired noise level, between -90 and -15.");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_LEVEL};
     
 
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelpVarArgs(FLAGS, "input.wav", "output.wav");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"input.wav", "output.wav"});
             System.exit(-1);
         }
         WavFile wavFile = new WavInput.WavFile(new File(cmd.getArg(0)));

@@ -16,18 +16,20 @@ public class KeysBox extends NodeBox {
     private static final String FOURCC = "keys";
 
     private static class LocalBoxes extends Boxes {
-        {
+        //Initializing blocks are not supported by Javascript.
+        LocalBoxes() {
+            super();
             mappings.put(MdtaBox.fourcc(), MdtaBox.class);
         }
     }
 
     public KeysBox(Header atom) {
         super(atom);
-        factory = new BoxFactory(new LocalBoxes());
+        factory = new SimpleBoxFactory(new LocalBoxes());
     }
 
-    public KeysBox() {
-        this(Header.createHeader(FOURCC, 0));
+    public static KeysBox createKeysBox() {
+        return new KeysBox(Header.createHeader(FOURCC, 0));
     }
 
     public void parse(ByteBuffer input) {

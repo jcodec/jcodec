@@ -1,5 +1,7 @@
 package org.jcodec.common;
 
+import static org.jcodec.common.Codec.*;
+import static org.jcodec.common.Format.*;
 import static org.jcodec.common.Tuple._2;
 
 import java.io.File;
@@ -56,18 +58,18 @@ public class JCodecUtil {
     private static final Map<Format, Class<?>> demuxers = new HashMap<Format, Class<?>>();
 
     static {
-        decoders.put(Codec.VP8, VP8Decoder.class);
+        decoders.put(VP8, VP8Decoder.class);
         decoders.put(Codec.PRORES, ProresDecoder.class);
-        decoders.put(Codec.MPEG2, MPEGDecoder.class);
+        decoders.put(MPEG2, MPEGDecoder.class);
         decoders.put(Codec.H264, H264Decoder.class);
-        decoders.put(Codec.AAC, AACDecoder.class);
+        decoders.put(AAC, AACDecoder.class);
         decoders.put(Codec.MPEG4, MPEG4Decoder.class);
         
         demuxers.put(Format.MPEG_TS, MTSDemuxer.class);
-        demuxers.put(Format.MPEG_PS, MPSDemuxer.class);
-        demuxers.put(Format.MOV, MP4Demuxer.class);
-        demuxers.put(Format.WEBP, WebpDemuxer.class);
-        demuxers.put(Format.MPEG_AUDIO, MPEGAudioDemuxer.class);
+        demuxers.put(MPEG_PS, MPSDemuxer.class);
+        demuxers.put(MOV, MP4Demuxer.class);
+        demuxers.put(WEBP, WebpDemuxer.class);
+        demuxers.put(MPEG_AUDIO, MPEGAudioDemuxer.class);
     };
 
     public static Format detectFormat(File f) throws IOException {
@@ -198,29 +200,28 @@ public class JCodecUtil {
 
     public static Demuxer createDemuxer(Format format, File input) throws IOException {
         FileChannelWrapper ch = null;
-        if (format != Format.IMG) {
+        if (format != IMG) {
             ch = NIOUtils.readableChannel(input);
         }
-        switch (format) {
-        case MOV:
+        if (MOV == format) {
             return MP4Demuxer.createMP4Demuxer(ch);
-        case MPEG_PS:
+        } else if (MPEG_PS == format) {
             return new MPSDemuxer(ch);
-        case MKV:
+        } else if (MKV == format) {
             return new MKVDemuxer(ch);
-        case IMG:
+        } else if (IMG == format) {
             return new ImageSequenceDemuxer(input.getAbsolutePath(), Integer.MAX_VALUE);
-        case Y4M:
+        } else if (Y4M == format) {
             return new Y4MDemuxer(ch);
-        case WEBP:
+        } else if (WEBP == format) {
             return new WebpDemuxer(ch);
-        case H264:
-            return new BufferH264ES(NIOUtils.fetchFromChannel(ch));
-        case WAV:
+        } else if (Format.H264 == format) {
+            return new BufferH264ES(NIOUtils.fetchAllFromChannel(ch));
+        } else if (WAV == format) {
             return new WavDemuxer(ch);
-        case MPEG_AUDIO:
+        } else if (MPEG_AUDIO == format) {
             return new MPEGAudioDemuxer(ch);
-        default:
+        } else {
             Logger.error("Format " + format + " is not supported");
         }
         return null;
@@ -254,38 +255,28 @@ public class JCodecUtil {
     }
 
     public static AudioDecoder createAudioDecoder(Codec codec, ByteBuffer decoderSpecific) throws IOException {
-        switch (codec) {
-        case AAC:
+        if (AAC == codec) {
             return new AACDecoder(decoderSpecific);
-        default:
+        } else {
             Logger.error("Codec " + codec + " is not supported");
         }
         return null;
     }
 
     public static VideoDecoder createVideoDecoder(Codec codec, ByteBuffer decoderSpecific) {
-        switch (codec) {
-        case H264:
+        if (Codec.H264 == codec) {
             return decoderSpecific != null ? H264Decoder.createH264DecoderFromCodecPrivate(decoderSpecific)
                     : new H264Decoder();
-        case MPEG2:
+        } else if (MPEG2 == codec) {
             return new MPEGDecoder();
-        case VP8:
+        } else if (VP8 == codec) {
             return new VP8Decoder();
-        case JPEG:
+        } else if (JPEG == codec) {
             return new JpegDecoder();
-        default:
+        } else {
             Logger.error("Codec " + codec + " is not supported");
         }
         return null;
     }
 
-    public static String dwToFourCC(int fourCC) {
-        char[] ch = new char[4];
-        ch[0] = (char)((fourCC >> 24) & 0xff);
-        ch[1] = (char)((fourCC >> 16) & 0xff);
-        ch[2] = (char)((fourCC >> 8) & 0xff);
-        ch[3] = (char)((fourCC >> 0) & 0xff);
-        return new String(ch);
-    }
 }

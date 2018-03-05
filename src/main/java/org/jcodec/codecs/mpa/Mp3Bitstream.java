@@ -30,8 +30,13 @@ public class Mp3Bitstream {
     static class MP3SideInfo {
         int mainDataBegin;
         int privateBits;
-        boolean[][] scfsi = new boolean[2][4];
-        Granule[][] granule = new Granule[][] {{new Granule(), new Granule()}, {new Granule(), new Granule()}};
+        boolean[][] scfsi;
+        Granule[][] granule;
+
+        MP3SideInfo() {
+            scfsi = new boolean[2][4];
+            granule = new Granule[][] {{new Granule(), new Granule()}, {new Granule(), new Granule()}};
+        }
     }
     
     static class Granule {
@@ -42,23 +47,34 @@ public class Mp3Bitstream {
         boolean windowSwitchingFlag;
         int blockType;
         boolean mixedBlockFlag;
-        int[] tableSelect = new int[3];
-        int[] subblockGain = new int[3];
+        int[] tableSelect;
+        int[] subblockGain;
         int region0Count;
         int region1Count;
         boolean preflag;
         int scalefacScale;
         int count1tableSelect;
+
+        Granule() {
+            tableSelect = new int[3];
+            subblockGain = new int[3];
+        }
     }
     
     static class ScaleFactors {
-        int[] large = new int[23];
-        int[][] small = new int[3][13];
+        int[] large;
+        int[][] small;
+
+        ScaleFactors() {
+            large = new int[23];
+            small = new int[3][13];
+        }
     }
-    
-    static MP3SideInfo readSideInfo(MpaHeader header, ByteBuffer in, int channels) {
+
+    //Wrong usage of Javascript keyword:in
+    static MP3SideInfo readSideInfo(MpaHeader header, ByteBuffer src, int channels) {
         MP3SideInfo si = new MP3SideInfo();
-        BitReader stream = BitReader.createBitReader(in);
+        BitReader stream = BitReader.createBitReader(src);
         if (header.version == MPEG1) {
 
             si.mainDataBegin = stream.readNBit(9);

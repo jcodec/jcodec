@@ -35,27 +35,28 @@ public class DecodingContext {
     private int frameHeight;
     private int renderWidth;
     private int renderHeight;
-    private int[] refFrameWidth = new int[MAX_REF_FRAMES];
-    private int[] refFrameHeight = new int[MAX_REF_FRAMES];
-    private int[] refFrameIdx = new int[3];
-    private int[] refFrameSignBias = new int[3];
+    private int[] refFrameWidth;
+    private int[] refFrameHeight;
+    private int[] refFrameIdx;
+    //The type (or one of its parents) contains already a method called [refFrameSignBias]. Javascript cannot distinguish methods/fields with the same name
+    private int[] _refFrameSignBias;
     private int allowHighPrecisionMv;
     private int interpolationFilter;
     private int frameParallelDecodingMode;
     private int refreshFrameContext;
     private int frameContextIdx;
-    private int[] loopFilterRefDeltas = new int[4];
-    private int[] loopFilterModeDeltas = new int[2];
+    private int[] loopFilterRefDeltas;
+    private int[] loopFilterModeDeltas;
     private int baseQIdx;
     private int deltaQYDc;
     private int deltaQUvDc;
     private int deltaQUvAc;
     private boolean lossless;
     private int segmentationEnabled;
-    private int[] segmentationTreeProbs = new int[7];
-    private int[] segmentationPredProb = new int[3];
-    private int[][] featureEnabled = new int[MAX_SEGMENTS][SEG_LVL_MAX];
-    private int[][] featureData = new int[MAX_SEGMENTS][SEG_LVL_MAX];
+    private int[] segmentationTreeProbs;
+    private int[] segmentationPredProb;
+    private int[][] featureEnabled;
+    private int[][] featureData;
     private int miCols;
     private int miRows;
     private int sb64Cols;
@@ -67,32 +68,66 @@ public class DecodingContext {
     private int compVarRef0;
     private int compVarRef1;
 
-    private int[][] txProbs8x8 = new int[TX_SIZE_CONTEXTS][TX_SIZES - 3];
-    private int[][] txProbs16x16 = new int[TX_SIZE_CONTEXTS][TX_SIZES - 2];
-    private int[][] txProbs32x32 = new int[TX_SIZE_CONTEXTS][TX_SIZES - 1];
+    private int[][] txProbs8x8;
+    private int[][] txProbs16x16;
+    private int[][] txProbs32x32;
     private int referenceMode;
     private int[][][][][][] coefProbs;
-    private int[] skipProb = new int[SKIP_CONTEXTS];
-    private int[][] interModeProbs = new int[INTER_MODE_CONTEXTS][INTER_MODES - 1];
-    private int[][] interpFilterProbs = new int[INTERP_FILTER_CONTEXTS][SWITCHABLE_FILTERS - 1];
-    private int[] isInterProb = new int[IS_INTER_CONTEXTS];
+    private int[] skipProb;
+    private int[][] interModeProbs;
+    private int[][] interpFilterProbs;
+    private int[] isInterProb;
 
-    private int[] compModeProb = new int[COMP_MODE_CONTEXTS];
-    private int[][] singleRefProb = new int[REF_CONTEXTS][2];
-    private int[] compRefProb = new int[REF_CONTEXTS];
+    private int[] compModeProb;
+    private int[][] singleRefProb;
+    private int[] compRefProb;
 
-    private int[][] yModeProbs = new int[BLOCK_SIZE_GROUPS][INTRA_MODES - 1];
-    private int[][] partitionProbs = new int[PARTITION_CONTEXTS][PARTITION_TYPES - 1];
+    private int[][] yModeProbs;
+    private int[][] partitionProbs;
 
-    private int[] mvJointProbs = new int[MV_JOINTS - 1];
-    private int[] mvSignProb = new int[2];
-    private int[][] mvClassProbs = new int[2][MV_CLASSES - 1];
-    private int[] mvClass0BitProb = new int[2];
-    private int[][] mvBitsProb = new int[2][MV_OFFSET_BITS];
-    private int[][][] mvClass0FrProbs = new int[2][CLASS0_SIZE][MV_FR_SIZE - 1];
-    private int[][] mvFrProbs = new int[2][MV_FR_SIZE - 1];
-    private int[] mvClass0HpProb = new int[2];
-    private int[] mvHpProb = new int[2];
+    private int[] mvJointProbs;
+    private int[] mvSignProb;
+    private int[][] mvClassProbs;
+    private int[] mvClass0BitProb;
+    private int[][] mvBitsProb;
+    private int[][][] mvClass0FrProbs;
+    private int[][] mvFrProbs;
+    private int[] mvClass0HpProb;
+    private int[] mvHpProb;
+
+    public DecodingContext() {
+        refFrameWidth = new int[MAX_REF_FRAMES];
+        refFrameHeight = new int[MAX_REF_FRAMES];
+        refFrameIdx = new int[3];
+        _refFrameSignBias = new int[3];
+        loopFilterRefDeltas = new int[4];
+        loopFilterModeDeltas = new int[2];
+        segmentationTreeProbs = new int[7];
+        segmentationPredProb = new int[3];
+        featureEnabled = new int[MAX_SEGMENTS][SEG_LVL_MAX];
+        featureData = new int[MAX_SEGMENTS][SEG_LVL_MAX];
+        txProbs8x8 = new int[TX_SIZE_CONTEXTS][TX_SIZES - 3];
+        txProbs16x16 = new int[TX_SIZE_CONTEXTS][TX_SIZES - 2];
+        txProbs32x32 = new int[TX_SIZE_CONTEXTS][TX_SIZES - 1];
+        skipProb = new int[SKIP_CONTEXTS];
+        interModeProbs = new int[INTER_MODE_CONTEXTS][INTER_MODES - 1];
+        interpFilterProbs = new int[INTERP_FILTER_CONTEXTS][SWITCHABLE_FILTERS - 1];
+        isInterProb = new int[IS_INTER_CONTEXTS];
+        compModeProb = new int[COMP_MODE_CONTEXTS];
+        singleRefProb = new int[REF_CONTEXTS][2];
+        compRefProb = new int[REF_CONTEXTS];
+        yModeProbs = new int[BLOCK_SIZE_GROUPS][INTRA_MODES - 1];
+        partitionProbs = new int[PARTITION_CONTEXTS][PARTITION_TYPES - 1];
+        mvJointProbs = new int[MV_JOINTS - 1];
+        mvSignProb = new int[2];
+        mvClassProbs = new int[2][MV_CLASSES - 1];
+        mvClass0BitProb = new int[2];
+        mvBitsProb = new int[2][MV_OFFSET_BITS];
+        mvClass0FrProbs = new int[2][CLASS0_SIZE][MV_FR_SIZE - 1];
+        mvFrProbs = new int[2][MV_FR_SIZE - 1];
+        mvClass0HpProb = new int[2];
+        mvHpProb = new int[2];
+    }
 
     /**
      * Reads VP9 frame headers and creates the decoding context
@@ -355,7 +390,7 @@ public class DecodingContext {
 
                 for (int i = 0; i < 3; i++) {
                     refFrameIdx[i] = br.readNBit(3);
-                    refFrameSignBias[LAST_FRAME + i] = br.read1Bit();
+                    _refFrameSignBias[LAST_FRAME + i] = br.read1Bit();
                 }
                 readFrameSizeWithRefs(br);
                 allowHighPrecisionMv = br.read1Bit();
@@ -700,7 +735,7 @@ public class DecodingContext {
     private void frameReferenceMode(VPXBooleanDecoder boolDec) {
         int compoundReferenceAllowed = 0;
         for (int i = 1; i < REFS_PER_FRAME; i++)
-            if (refFrameSignBias[i + 1] != refFrameSignBias[1])
+            if (_refFrameSignBias[i + 1] != _refFrameSignBias[1])
                 compoundReferenceAllowed = 1;
         if (compoundReferenceAllowed == 1) {
             int non_single_reference = boolDec.readBitEq();
@@ -784,11 +819,11 @@ public class DecodingContext {
     }
 
     private void setupCompoundReferenceMode() {
-        if (refFrameSignBias[LAST_FRAME] == refFrameSignBias[GOLDEN_FRAME]) {
+        if (_refFrameSignBias[LAST_FRAME] == _refFrameSignBias[GOLDEN_FRAME]) {
             compFixedRef = ALTREF_FRAME;
             compVarRef0 = LAST_FRAME;
             compVarRef1 = GOLDEN_FRAME;
-        } else if (refFrameSignBias[LAST_FRAME] == refFrameSignBias[ALTREF_FRAME]) {
+        } else if (_refFrameSignBias[LAST_FRAME] == _refFrameSignBias[ALTREF_FRAME]) {
             compFixedRef = GOLDEN_FRAME;
             compVarRef0 = LAST_FRAME;
             compVarRef1 = ALTREF_FRAME;

@@ -10,25 +10,23 @@ package org.jcodec.codecs.mpeg4;
 public class Macroblock {
     public final static int MBPRED_SIZE = 15;
 
+    public static Vector vec() {
+        return new Vector(0,0);
+    }
+
     public static class Vector {
         public Vector(int x, int y) {
             this.x = x;
             this.y = y;
         }
-
-        public Vector() {
-            x = 0;
-            y = 0;
-        }
-
         public int x;
         public int y;
     }
 
     public Vector[] mvs;
 
-    public short[][] predValues = new short[6][MBPRED_SIZE];
-    public int[] acpredDirections = new int[6];
+    public short[][] predValues;
+    public int[] acpredDirections;
 
     public int mode;
     public int quant;
@@ -46,7 +44,7 @@ public class Macroblock {
     public Vector[] bmvs;
     public Vector[] bqmvs;
 
-    public Vector amv = new Vector();
+    public Vector amv;
 
     public Vector mvsAvg;
 
@@ -58,8 +56,8 @@ public class Macroblock {
 
     public boolean acpredFlag;
 
-    public short[] predictors = new short[8];
-    public short[][] block = new short[6][64];
+    public short[] predictors;
+    public short[][] block;
 
     public boolean coded;
 
@@ -75,13 +73,18 @@ public class Macroblock {
         bqmvs = new Vector[4];
 
         for (int i = 0; i < 4; i++) {
-            mvs[i] = new Vector();
-            pmvs[i] = new Vector();
-            qmvs[i] = new Vector();
-            bmvs[i] = new Vector();
-            bqmvs[i] = new Vector();
+            mvs[i] = vec();
+            pmvs[i] = vec();
+            qmvs[i] = vec();
+            bmvs[i] = vec();
+            bqmvs[i] = vec();
         }
         pred = new byte[][] { new byte[256], new byte[64], new byte[64], new byte[256], new byte[64], new byte[64] };
+        predValues = new short[6][MBPRED_SIZE];
+        acpredDirections = new int[6];
+        amv = vec();
+        predictors = new short[8];
+        block = new short[6][64];
     }
 
     public void reset(int x2, int y2, int bound2) {

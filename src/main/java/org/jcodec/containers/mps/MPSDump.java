@@ -41,8 +41,8 @@ import org.jcodec.platform.Platform;
  * 
  */
 public class MPSDump {
-    private static final Flag DUMP_FROM = new Flag("dump-from", "Stop reading at timestamp");
-    private static final Flag STOP_AT = new Flag("stop-at", "Start dumping from timestamp");
+    private static final Flag DUMP_FROM = Flag.flag("dump-from", null, "Stop reading at timestamp");
+    private static final Flag STOP_AT = Flag.flag("stop-at", null, "Start dumping from timestamp");
     private static final Flag[] ALL_FLAGS = new Flag[] {DUMP_FROM, STOP_AT};
     
     protected ReadableByteChannel ch;

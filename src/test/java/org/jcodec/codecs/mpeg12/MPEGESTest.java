@@ -21,13 +21,13 @@ public class MPEGESTest {
         byte[] frame2 = MPEGTestConst.toBB(MPEGTestConst._mpegFrame);
         MPEGES mpeges = new MPEGES(Channels.newChannel(new ByteArrayInputStream(mpeg)), 32);
         ByteBuffer buf = ByteBuffer.allocate(1024);
-        Packet f1 = mpeges.getFrame(buf);
+        Packet f1 = mpeges.frame(buf);
         assertArrayEquals(frame1, NIOUtils.toArray(f1.getData()));
 
-        Packet f2 = mpeges.getFrame(buf);
+        Packet f2 = mpeges.frame(buf);
         assertArrayEquals(frame1, NIOUtils.toArray(f2.getData()));
 
-        Packet f3 = mpeges.getFrame(buf);
+        Packet f3 = mpeges.frame(buf);
         assertArrayEquals(frame2, NIOUtils.toArray(f3.getData()));
     }
     

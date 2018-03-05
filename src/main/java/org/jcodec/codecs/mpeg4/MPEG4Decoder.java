@@ -30,18 +30,16 @@ import org.jcodec.common.model.Size;
  * 
  */
 public class MPEG4Decoder extends VideoDecoder {
-    private Picture[] refs = new Picture[2];
+    private Picture[] refs;
 
     private Macroblock[] prevMBs;
     private Macroblock[] mbs;
 
-    public final static int I_VOP = 0;
-    public final static int P_VOP = 1;
-    public final static int B_VOP = 2;
-    public final static int S_VOP = 3;
-    public final static int N_VOP = 4;
-    
     private MPEG4DecodingContext ctx;
+
+    public MPEG4Decoder() {
+        refs = new Picture[2];
+    }
 
     @Override
     public Picture decodeFrame(ByteBuffer data, byte[][] buffer) {
@@ -63,17 +61,17 @@ public class MPEG4Decoder extends VideoDecoder {
         }
 
         Picture decoded = null;
-        if (ctx.codingType != B_VOP) {
+        if (ctx.codingType != MPEG4Bitstream.B_VOP) {
             switch (ctx.codingType) {
-            case I_VOP:
+            case MPEG4Bitstream.I_VOP:
                 decoded = decodeIFrame(br, ctx, buffer);
                 break;
-            case P_VOP:
+            case MPEG4Bitstream.P_VOP:
                 decoded = decodePFrame(br, ctx, buffer, ctx.fcodeForward);
                 break;
-            case S_VOP:
+            case MPEG4Bitstream.S_VOP:
                 throw new RuntimeException("GMC not supported.");
-            case N_VOP:
+            case MPEG4Bitstream.N_VOP:
                 return null;
             }
 
@@ -182,20 +180,21 @@ public class MPEG4Decoder extends VideoDecoder {
         return p;
     }
 
-    private Picture decodeBFrame(BitReader br, MPEG4DecodingContext ctx, byte[][] buffers, int quant, int fcodeForward,
-            int fcodeBackward) {
+    private Picture decodeBFrame(BitReader br, MPEG4DecodingContext ctx, byte[][] buffers, int quant, final int fcodeForward,
+            final int fcodeBackward) {
 
         Picture p = new Picture(ctx.mbWidth << 4, ctx.mbHeight << 4, buffers, null, ColorSpace.YUV420, 0,
                 new Rect(0, 0, ctx.width, ctx.height));
 
-        Vector pFMV = new Vector(), pBMV = new Vector();
+        Vector pFMV = Macroblock.vec(), pBMV = Macroblock.vec();
+        //To prevent unexpected behaviour in Javascript, final variables must be declared at method level and not inside loops
+        final int fcodeMax = (fcodeForward > fcodeBackward) ? fcodeForward : fcodeBackward;
         for (int y = 0; y < ctx.mbHeight; y++) {
             pBMV.x = pBMV.y = pFMV.x = pFMV.y = 0;
 
             for (int x = 0; x < ctx.mbWidth; x++) {
                 Macroblock mb = mbs[y * ctx.mbWidth + x];
                 Macroblock lastMB = prevMBs[y * ctx.mbWidth + x];
-                final int fcodeMax = (fcodeForward > fcodeBackward) ? fcodeForward : fcodeBackward;
 
                 if (checkResyncMarker(br, fcodeMax - 1)) {
                     int bound = readVideoPacketHeader(br, ctx, fcodeMax - 1, fcodeForward != 0, fcodeBackward != 0,

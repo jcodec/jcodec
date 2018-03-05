@@ -21,13 +21,13 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class SequenceEncoderDemo {
-    private static final Flag FLAG_FRAMES = new Flag("n-frames", "frames", "Total frames to encode");
+    private static final Flag FLAG_FRAMES = Flag.flag("n-frames", "frames", "Total frames to encode");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FRAMES};
 
     public static void main(String[] args) throws IOException {
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpVarArgs(FLAGS, "output file");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"output file"});
             return;
         }
         final int speed = 4;

@@ -51,7 +51,7 @@ public class FrameGrabTest {
                 fr1 = frameGrab1.getNativeFrameWithMetadata();
                 if (fr1 == null)
                     break;
-                fr1 = new PictureWithMetadata(fr1.getPicture().cloneCropped(), fr1.getTimestamp(),
+                fr1 = PictureWithMetadata.createPictureWithMetadata(fr1.getPicture().cloneCropped(), fr1.getTimestamp(),
                         fr1.getDuration());
                 decoded.add(fr1);
             } while (fr1 != null);

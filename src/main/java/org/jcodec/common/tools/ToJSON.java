@@ -4,7 +4,6 @@ import java.util.Iterator;
 
 import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.NIOUtils;
-import org.jcodec.platform.Platform;
 
 import java.lang.IllegalArgumentException;
 import java.lang.NullPointerException;
@@ -14,9 +13,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,24 +46,6 @@ public class ToJSON {
         omitMethods.add("get");
     }
 
-    public static List<String> allFields(Class claz) {
-        return allFieldsExcept(claz, new String[]{});
-    }
-
-    public static List<String> allFieldsExcept(Class claz, String[] except) {
-        List<String> result = new ArrayList<String>();
-        for (Method method : Platform.getDeclaredMethods(claz)) {
-            if (!isGetter(method))
-                continue;
-            try {
-                String name = toName(method);
-                result.add(name);
-            } catch (Exception e) {
-            }
-        }
-        return result;
-    }
-
     /**
      * Converts an object to JSON
      * 
@@ -78,50 +57,6 @@ public class ToJSON {
         IntArrayList stack = IntArrayList.createIntArrayList();
         toJSONSub(obj, stack, builder);
         return builder.toString();
-    }
-
-    /**
-     * Converts specified fields of an object to JSON
-     * 
-     * Useful because it doesn't enclose the field list into JSON object
-     * brackets "{}" leaving flexibility to append any other information. Makes
-     * it possible to specify only selected fields.
-     * 
-     * @param obj
-     * @param builder
-     * @param fields
-     */
-    public static void fieldsToJSON(Object obj, StringBuilder builder, String[] fields) {
-        Method[] methods = Platform.getMethods(obj.getClass());
-        for (String field : fields) {
-            Method m = findGetter(methods, field);
-            if (m == null)
-                continue;
-            invoke(obj, IntArrayList.createIntArrayList(), builder, m, field);
-        }
-    }
-
-    private static Method findGetter(Method[] methods, String field) {
-        String isGetter = getterName("is", field);
-        String getGetter = getterName("get", field);
-        for (Method method : methods) {
-            if ((isGetter.equals(method.getName()) || getGetter.equals(method.getName())) && isGetter(method))
-                return method;
-        }
-        return null;
-    }
-
-    private static String getterName(String pref, String field) {
-        if (field == null)
-            throw new NullPointerException("Passed null string as field name");
-        char[] ch = field.toCharArray();
-        if (ch.length == 0)
-            return pref;
-        if (ch.length > 1 && Character.isUpperCase(ch[1]))
-            ch[0] = Character.toLowerCase(ch[0]);
-        else
-            ch[0] = Character.toUpperCase(ch[0]);
-        return pref + new String(ch);
     }
 
     private static void toJSONSub(Object obj, IntArrayList stack, StringBuilder builder) {
@@ -250,7 +185,7 @@ public class ToJSON {
             builder.append(String.valueOf(obj));
         } else {
             builder.append("{");
-            for (Method method : Platform.getMethods(obj.getClass())) {
+            for (Method method : obj.getClass().getMethods()) {
                 if (omitMethods.contains(method.getName()) || !isGetter(method))
                     continue;
 
@@ -299,7 +234,7 @@ public class ToJSON {
         return new String(name, ind, name.length - ind);
     }
 
-    public static boolean isGetter(Method method) {
+    private static boolean isGetter(Method method) {
         if (!Modifier.isPublic(method.getModifiers()))
             return false;
         if (!method.getName().startsWith("get")

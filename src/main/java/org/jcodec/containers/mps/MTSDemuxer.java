@@ -9,10 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jcodec.common.Assert;
 import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+
+import static org.jcodec.common.Preconditions.checkState;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -25,7 +26,7 @@ import org.jcodec.common.io.SeekableByteChannel;
  */
 public class MTSDemuxer {
     private SeekableByteChannel channel;
-    private Map<Integer, ProgramChannel> programs = new HashMap<Integer, ProgramChannel>();
+    private Map<Integer, ProgramChannel> programs;
 
     public Set<Integer> getPrograms() {
         return programs.keySet();
@@ -51,8 +52,9 @@ public class MTSDemuxer {
 
     public MTSDemuxer(SeekableByteChannel src) throws IOException {
         this.channel = src;
+        programs = new HashMap<Integer, ProgramChannel>();
         for (int pid : findPrograms(src)) {
-            programs.put(pid, new ProgramChannel());
+            programs.put(pid, new ProgramChannel(this));
         }
         src.setPosition(0);
     }
@@ -61,17 +63,21 @@ public class MTSDemuxer {
         return programs.get(pid);
     }
 
-    private class ProgramChannel implements ReadableByteChannel {
+    //In Javascript you cannot access a field from the outer type. You should define a variable var that=this outside your function definition and use the property of this object.
+    //In Javascript you cannot call methods or fields from the outer type. You should define a variable var that=this outside your function definition and call the methods on this object
+    private static class ProgramChannel implements ReadableByteChannel {
+        private final MTSDemuxer demuxer;
         private List<ByteBuffer> data;
         private boolean closed;
 
-        public ProgramChannel() {
+        public ProgramChannel(MTSDemuxer demuxer) {
+            this.demuxer = demuxer;
             this.data = new ArrayList<ByteBuffer>();
         }
 
         @Override
         public boolean isOpen() {
-            return !closed && channel.isOpen();
+            return !closed && demuxer.channel.isOpen();
         }
 
         @Override
@@ -85,7 +91,7 @@ public class MTSDemuxer {
             int bytesRead = 0;
             while (dst.hasRemaining()) {
                 while (data.size() == 0) {
-                    if (!readAndDispatchNextTSPacket())
+                    if (!demuxer.readAndDispatchNextTSPacket())
                         return bytesRead > 0 ? bytesRead : -1;
                 }
                 ByteBuffer first = data.get(0);
@@ -139,7 +145,7 @@ public class MTSDemuxer {
     public static MTSPacket parsePacket(ByteBuffer buffer) {
 
         int marker = buffer.get() & 0xff;
-        Assert.assertEquals(0x47, marker);
+        checkState(0x47 == marker);
         int guidFlags = buffer.getShort();
         int guid = (int) guidFlags & 0x1fff;
         int payloadStart = (guidFlags >> 14) & 0x1;

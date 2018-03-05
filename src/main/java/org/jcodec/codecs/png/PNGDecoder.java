@@ -62,7 +62,11 @@ public class PNGDecoder extends VideoDecoder {
     public static final int[] passOff = { 0, 4, 0, 2, 0, 1, 0 };
     public static final int[] passRowOff = { 0, 0, 4, 0, 2, 0, 1 };
     
-    private byte[] ca = new byte[4];
+    private byte[] ca;
+
+    public PNGDecoder() {
+        ca = new byte[4];
+    }
 
     @Override
     public Picture decodeFrame(ByteBuffer data, byte[][] buffer) {

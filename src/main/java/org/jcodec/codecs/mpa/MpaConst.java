@@ -177,11 +177,6 @@ class MpaConst {
         int[] l;
         int[] s;
 
-        Sftable() {
-            l = new int[5];
-            s = new int[3];
-        }
-
         Sftable(int[] thel, int[] thes) {
             l = thel;
             s = thes;

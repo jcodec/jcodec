@@ -22,14 +22,14 @@ import org.jcodec.common.tools.MainUtils.Flag;
  * 
  */
 public class FrameGrabDemo {
-    private static final Flag FLAG_FRAMES = new Flag("num-frames", "num-frames", "Maximum frames to decode.");
-    private static final Flag FLAG_PATTERN = new Flag("out-pattern", "out-pattern", "Output folder/frame%04.png pattern.");
+    private static final Flag FLAG_FRAMES = Flag.flag("num-frames", "num-frames", "Maximum frames to decode.");
+    private static final Flag FLAG_PATTERN = Flag.flag("out-pattern", "out-pattern", "Output folder/frame%04.png pattern.");
     private static final Flag[] FLAGS = new MainUtils.Flag[] {FLAG_FRAMES, FLAG_PATTERN};
 
     public static void main(String[] args) throws IOException, JCodecException {
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpVarArgs(FLAGS, "input file name");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"input file name"});
             return;
         }
 
