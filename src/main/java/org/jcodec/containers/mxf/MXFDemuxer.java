@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +138,7 @@ public class MXFDemuxer {
                 continue;
             }
             int trackNumber = track.getTrackNumber();
-            UL ul = UL.newUL(0x06, 0x0e, 0x2b, 0x34, 0x01, 0x02, 0x01, 0x01, 0x0d, 0x01, 0x03, 0x01,
+            UL ul = UL.newULFromInts(0x06, 0x0e, 0x2b, 0x34, 0x01, 0x02, 0x01, 0x01, 0x0d, 0x01, 0x03, 0x01,
                     (trackNumber >>> 24) & 0xff, (trackNumber >>> 16) & 0xff, (trackNumber >>> 8) & 0xff,
                     trackNumber & 0xff);
             MXFDemuxerTrack dt = createTrack(ul, track, descriptor);
