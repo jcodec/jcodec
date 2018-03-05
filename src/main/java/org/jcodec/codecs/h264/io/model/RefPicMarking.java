@@ -1,6 +1,7 @@
 package org.jcodec.codecs.h264.io.model;
 
 import org.jcodec.common.tools.ToJSON;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -53,6 +54,6 @@ public class RefPicMarking {
     
     @Override
     public String toString() {
-        return ToJSON.toJSON(this);
+        return Platform.toJSON(this);
     }
 }
