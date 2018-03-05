@@ -22,7 +22,7 @@ import org.jcodec.containers.mp4.Boxes;
  */
 public class IListBox extends Box {
     private static final String FOURCC = "ilst";
-    private Map<Integer, List<Box>> values = new LinkedHashMap<Integer, List<Box>>();
+    private Map<Integer, List<Box>> values;
     private BoxFactory factory;
 
     private static class LocalBoxes extends Boxes {
@@ -36,6 +36,7 @@ public class IListBox extends Box {
     public IListBox(Header atom) {
         super(atom);
         factory = new BoxFactory(new LocalBoxes());
+        values = new LinkedHashMap<Integer, List<Box>>();
     }
 
     public static IListBox createIListBox(Map<Integer, List<Box>> values) {

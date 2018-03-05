@@ -71,8 +71,8 @@ public class Transcoder {
 
     private static class Stream {
         private static final double AUDIO_LEADING_TIME = .2;
-        private LinkedList<VideoFrameWithPacket> videoQueue = new LinkedList<VideoFrameWithPacket>();
-        private LinkedList<AudioFrameWithPacket> audioQueue = new LinkedList<AudioFrameWithPacket>();
+        private LinkedList<VideoFrameWithPacket> videoQueue;
+        private LinkedList<AudioFrameWithPacket> audioQueue;
         private List<Filter> filters;
         private List<Filter> extraFilters;
         private Sink sink;
@@ -90,6 +90,8 @@ public class Transcoder {
             this.audioCopy = audioCopy;
             this.extraFilters = extraFilters;
             this.pixelStore = pixelStore;
+            videoQueue = new LinkedList<VideoFrameWithPacket>();
+            audioQueue = new LinkedList<AudioFrameWithPacket>();
         }
 
         private List<Filter> initColorTransform(ColorSpace sourceColor, List<Filter> extraFilters, Sink sink) {
@@ -416,15 +418,22 @@ public class Transcoder {
 
     public static class TranscoderBuilder {
 
-        private List<Source> source = new ArrayList<Source>();
-        private List<Sink> sink = new ArrayList<Sink>();
-        private List<List<Filter>> filters = new ArrayList<List<Filter>>();
-        private IntArrayList seekFrames = new IntArrayList(20);
-        private IntArrayList maxFrames = new IntArrayList(20);
-        private List<Mapping> videoMappings = new ArrayList<Mapping>();
-        private List<Mapping> audioMappings = new ArrayList<Mapping>();
+        private List<Source> source;
+        private List<Sink> sink;
+        private List<List<Filter>> filters;
+        private IntArrayList seekFrames;
+        private IntArrayList maxFrames;
+        private List<Mapping> videoMappings;
+        private List<Mapping> audioMappings;
 
         public TranscoderBuilder() {
+            source = new ArrayList<Source>();
+            sink = new ArrayList<Sink>();
+            filters = new ArrayList<List<Filter>>();
+            seekFrames = new IntArrayList(20);
+            maxFrames = new IntArrayList(20);
+            videoMappings = new ArrayList<Mapping>();
+            audioMappings = new ArrayList<Mapping>();
         }
 
         public TranscoderBuilder addFilter(int sink, Filter filter) {

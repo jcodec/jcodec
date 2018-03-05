@@ -22,10 +22,10 @@ public class MPEG4DecodingContext {
     public int horiz_mc_ref;
     public int vert_mc_ref;
 
-    public short[] intraMpegQuantMatrix = new short[64];
-    public short[] interMpegQuantMatrix = new short[64];
+    public short[] intraMpegQuantMatrix;
+    public short[] interMpegQuantMatrix;
 
-    public int[][] gmcWarps = new int[3][2];
+    public int[][] gmcWarps;
     public int mbWidth;
     public int mbHeight;
     public int spriteEnable;
@@ -59,8 +59,15 @@ public class MPEG4DecodingContext {
     boolean interlacing;
     boolean spriteBrightnessChange;
     boolean scalability;
-    Estimation estimation = new Estimation();
-    
+    Estimation estimation;
+
+    public MPEG4DecodingContext() {
+        intraMpegQuantMatrix = new short[64];
+        interMpegQuantMatrix = new short[64];
+        gmcWarps = new int[3][2];
+        estimation = new Estimation();
+    }
+
     private static class Estimation {
 
         public int method;

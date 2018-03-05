@@ -36,8 +36,8 @@ public class MBlock {
     public boolean fieldDecoding;
     public MBType prevMbType;
     public int luma16x16Mode;
-    public H264Utils.MvList x = new H264Utils.MvList(16);
-    public PartPred[] partPreds = new PartPred[4];
+    public H264Utils.MvList x;
+    public PartPred[] partPreds;
 
     public boolean skipped;
     // Number of coefficients in AC blocks, stored in 8x8 encoding order: 0 1 4 5 2 3 6 7 8 9 12 13 10 11 14 15
@@ -55,6 +55,8 @@ public class MBlock {
         dc1 = new int[(16 >> chromaFormat.compWidth[1]) >> chromaFormat.compHeight[1]];
         dc2 = new int[(16 >> chromaFormat.compWidth[2]) >> chromaFormat.compHeight[2]];
         ipcm = new IPCM(chromaFormat);
+        x = new H264Utils.MvList(16);
+        partPreds = new PartPred[4];
     }
 
     public int cbpLuma() {

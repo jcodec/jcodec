@@ -32,8 +32,13 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class VP8Decoder extends VideoDecoder {
     private byte[][] segmentationMap;
-    private int[] refLoopFilterDeltas = new int[MAX_REF_LF_DELTAS];
-    private int[] modeLoopFilterDeltas = new int[MAX_MODE_LF_DELTAS];
+    private int[] refLoopFilterDeltas;
+    private int[] modeLoopFilterDeltas;
+
+    public VP8Decoder() {
+        refLoopFilterDeltas = new int[MAX_REF_LF_DELTAS];
+        modeLoopFilterDeltas = new int[MAX_MODE_LF_DELTAS];
+    }
 
     @Override
     public Picture decodeFrame(ByteBuffer frame, byte[][] buffer) {

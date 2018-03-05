@@ -42,27 +42,37 @@ import org.jcodec.common.tools.MathUtil;
  * @author The JCodec project
  */
 public class Mp3Decoder implements AudioDecoder {
-    private static boolean[] ALL_TRUE = new boolean[] { true, true, true, true };
+    private final static boolean[] ALL_TRUE = new boolean[] { true, true, true, true };
 
     private static final int SAMPLES_PER_BAND = 18;
     private static final int NUM_BANDS = 32;
 
-    private ChannelSynthesizer filter[] = {null, null};
+    private ChannelSynthesizer filter[];
     private boolean initialized;
 
     private final static double fourByThree = (4.0 / 3.0);
 
     private float[][] prevBlk;
-    private ByteBuffer frameData = ByteBuffer.allocate(4096);
+    private ByteBuffer frameData;
 
     private int channels;
     private int sfreq;
 
-    private float[] samples = new float[32];
-    private float[] mdctIn = new float[18];
-    private float[] mdctOut = new float[36];
-    private float[][] dequant = new float[2][576];
-    private short[][] tmpOut = new short[2][576];
+    private float[] samples;
+    private float[] mdctIn;
+    private float[] mdctOut;
+    private float[][] dequant;
+    private short[][] tmpOut;
+
+    public Mp3Decoder() {
+        filter = new ChannelSynthesizer[]{null, null};
+        frameData = ByteBuffer.allocate(4096);
+        samples = new float[32];
+        mdctIn = new float[18];
+        mdctOut = new float[36];
+        dequant = new float[2][576];
+        tmpOut = new short[2][576];
+    }
 
     private void init(MpaHeader header) {
         float scalefactor = 32700.0f;

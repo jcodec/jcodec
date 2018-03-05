@@ -26,7 +26,7 @@ import static org.jcodec.common.Preconditions.checkState;
  */
 public class MTSDemuxer {
     private SeekableByteChannel channel;
-    private Map<Integer, ProgramChannel> programs = new HashMap<Integer, ProgramChannel>();
+    private Map<Integer, ProgramChannel> programs;
 
     public Set<Integer> getPrograms() {
         return programs.keySet();
@@ -52,6 +52,7 @@ public class MTSDemuxer {
 
     public MTSDemuxer(SeekableByteChannel src) throws IOException {
         this.channel = src;
+        programs = new HashMap<Integer, ProgramChannel>();
         for (int pid : findPrograms(src)) {
             programs.put(pid, new ProgramChannel(this));
         }
