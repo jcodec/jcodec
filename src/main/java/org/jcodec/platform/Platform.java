@@ -34,12 +34,7 @@ public class Platform {
     public static <T> T newInstance(Class<T> clazz, Object[] params) {
         Class[] classes = new Class[params.length];
         for (int i = 0; i < params.length; i++) {
-            Class<?> aClass = params[i].getClass();
-            if (boxed2primitive.containsKey(aClass)) {
-                classes[i] = boxed2primitive.get(aClass);
-            } else {
-                classes[i] = aClass;
-            }
+            classes[i] = params[i].getClass();
         }
         try {
             return clazz.getConstructor(classes).newInstance(params);
