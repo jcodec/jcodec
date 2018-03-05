@@ -1,5 +1,7 @@
 package org.jcodec.api.transcode;
 
+import static org.jcodec.common.Codec.*;
+import static org.jcodec.common.Format.*;
 import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 
 import java.io.FileNotFoundException;
@@ -118,40 +120,30 @@ public class SourceImpl implements Source, PacketSource {
     }
 
     public void initDemuxer() throws FileNotFoundException, IOException {
-        if (inputFormat != Format.IMG)
+        if (inputFormat != IMG)
             sourceStream = readableFileChannel(sourceName);
 
-        switch (inputFormat) {
-        case MOV:
+        if (MOV == inputFormat) {
             demuxVideo = demuxAudio = MP4Demuxer.createMP4Demuxer(sourceStream);
-            break;
-        case MKV:
+        } else if (MKV == inputFormat) {
             demuxVideo = demuxAudio = new MKVDemuxer(sourceStream);
-            break;
-        case IMG:
+        } else if (IMG == inputFormat) {
             demuxVideo = new ImageSequenceDemuxer(sourceName, Integer.MAX_VALUE);
-            break;
-        case WEBP:
+        } else if (WEBP == inputFormat) {
             demuxVideo = new WebpDemuxer(sourceStream);
-            break;
-        case MPEG_PS:
+        } else if (MPEG_PS == inputFormat) {
             demuxVideo = demuxAudio = new MPSDemuxer(sourceStream);
-            break;
-        case Y4M:
+        } else if (Y4M == inputFormat) {
             Y4MDemuxer y4mDemuxer = new Y4MDemuxer(sourceStream);
             demuxVideo = demuxAudio = y4mDemuxer;
             videoInputTrack = y4mDemuxer;
-            break;
-        case H264:
+        } else if (Format.H264 == inputFormat) {
             demuxVideo = new BufferH264ES(NIOUtils.fetchFromChannel(sourceStream));
-            break;
-        case WAV:
+        } else if (WAV == inputFormat) {
             demuxAudio = new WavDemuxer(sourceStream);
-            break;
-        case MPEG_AUDIO:
+        } else if (MPEG_AUDIO == inputFormat) {
             demuxAudio = new MPEGAudioDemuxer(sourceStream);
-            break;
-        case MPEG_TS:
+        } else if (MPEG_TS == inputFormat) {
             MTSDemuxer mtsDemuxer = new MTSDemuxer(sourceStream);
             MPSDemuxer mpsDemuxer = null;
             if (inputVideoCodec != null) {
@@ -173,8 +165,7 @@ public class SourceImpl implements Source, PacketSource {
                     mtsDemuxer.getProgram(pid).close();
                 }
             }
-            break;
-        default:
+        } else {
             throw new RuntimeException("Input format: " + inputFormat + " is not supported.");
         }
 
@@ -317,10 +308,9 @@ public class SourceImpl implements Source, PacketSource {
     }
 
     private AudioDecoder createAudioDecoder(ByteBuffer codecPrivate) throws AACException {
-        switch (inputAudioCodec.v2) {
-        case AAC:
+        if (AAC == inputAudioCodec.v2) {
             return new AACDecoder(codecPrivate);
-        case PCM:
+        } else if (PCM == inputAudioCodec.v2) {
             return new RawAudioDecoder(getAudioMeta().getAudioCodecMeta().getFormat());
         }
         return null;
@@ -328,22 +318,21 @@ public class SourceImpl implements Source, PacketSource {
 
     private VideoDecoder createVideoDecoder(Codec codec, int downscale, ByteBuffer codecPrivate,
             VideoCodecMeta videoCodecMeta) {
-        switch (codec) {
-        case H264:
+        if (Codec.H264 == codec) {
             return H264Decoder.createH264DecoderFromCodecPrivate(codecPrivate);
-        case PNG:
+        } else if (PNG == codec) {
             return new PNGDecoder();
-        case MPEG2:
+        } else if (MPEG2 == codec) {
             return createMpegDecoder(downscale);
-        case PRORES:
+        } else if (PRORES == codec) {
             return createProresDecoder(downscale);
-        case VP8:
+        } else if (VP8 == codec) {
             return new VP8Decoder();
-        case JPEG:
+        } else if (JPEG == codec) {
             return createJpegDecoder(downscale);
-        case MPEG4:
+        } else if (MPEG4 == codec) {
             return new MPEG4Decoder();
-        case RAW:
+        } else if (Codec.RAW == codec) {
             Size dim = videoCodecMeta.getSize();
             return new RAWVideoDecoder(dim.getWidth(), dim.getHeight());
         }
@@ -355,7 +344,7 @@ public class SourceImpl implements Source, PacketSource {
     }
 
     protected ByteBuffer decodeAudio(ByteBuffer audioPkt) throws IOException {
-        if (inputAudioCodec.v2 == Codec.PCM) {
+        if (inputAudioCodec.v2 == PCM) {
             return audioPkt;
         } else {
             AudioBuffer decodeFrame = audioDecoder.decodeFrame(audioPkt, null);
@@ -492,7 +481,7 @@ public class SourceImpl implements Source, PacketSource {
         if (audioPkt == null)
             return null;
         AudioBuffer audioBuffer;
-        if (inputAudioCodec.v2 == Codec.PCM) {
+        if (inputAudioCodec.v2 == PCM) {
             DemuxerTrackMeta audioMeta = getAudioMeta();
             audioBuffer = new AudioBuffer(audioPkt.getData(), audioMeta.getAudioCodecMeta().getFormat(),
                     audioMeta.getTotalFrames());
