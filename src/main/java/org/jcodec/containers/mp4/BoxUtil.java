@@ -4,6 +4,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.platform.Platform;
 
 import java.nio.ByteBuffer;
 
@@ -37,7 +38,7 @@ public class BoxUtil {
 
     public static <T extends Box> T as(Class<T> class1, Box.LeafBox box) {
         try {
-            T res = class1.getConstructor(Header.class).newInstance(box.getHeader());
+            T res = Platform.newInstance(class1, new Object[]{box.getHeader()});
             res.parse(box.getData().duplicate());
             return res;
         } catch (Exception e) {

@@ -180,7 +180,7 @@ public class NodeBox extends Box {
 
     public static <T extends Box> T[] findAllPath(Box box, Class<T> class1, String[] path) {
         List<Box> result = new LinkedList<Box>();
-        findBox(box, Arrays.asList(path), result);
+        findBox(box, new ArrayList<String>(Arrays.asList(path)), result);
     
         for (ListIterator<Box> it = result.listIterator(); it.hasNext();) {
             Box next = it.next();

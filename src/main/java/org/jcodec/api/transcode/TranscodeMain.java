@@ -5,9 +5,7 @@ import static org.jcodec.common.Tuple._3;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +32,7 @@ import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
 import org.jcodec.common.tools.MainUtils.FlagType;
 import org.jcodec.common.tools.MathUtil;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -381,14 +380,11 @@ public class TranscodeMain {
                 String filterArgs = parts[1];
                 String[] split = filterArgs.split(":");
                 Integer[] params = new Integer[split.length];
-                Class[] types = new Class[split.length];
                 for (int i = 0; i < split.length; i++) {
                     params[i] = Integer.parseInt(split[i]);
-                    types[i] = int.class;
                 }
                 try {
-                    Constructor<? extends Filter> constructor = filterClass.getConstructor(types);
-                    Filter f = constructor.newInstance(params);
+                    Filter f = Platform.newInstance(filterClass, params);
                     builder.addFilter(sinkIndex, f);
                 } catch (Exception e) {
                     String message = "The filter " + filterName + " doesn't take " + split.length + " arguments.";

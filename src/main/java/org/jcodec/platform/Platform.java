@@ -1,6 +1,5 @@
 package org.jcodec.platform;
 
-import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.common.tools.ToJSON;
 
 import java.io.File;
@@ -10,6 +9,8 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Platform {
 
@@ -18,10 +19,27 @@ public class Platform {
     public final static String UTF_16BE = "UTF-16BE";
     public final static String ISO8859_1 = "iso8859-1";
 
+    private final static Map<Class, Class> boxed2primitive = new HashMap<Class, Class>();
+    static {
+        boxed2primitive.put(Void.class, void.class);
+        boxed2primitive.put(Byte.class, byte.class);
+        boxed2primitive.put(Short.class, short.class);
+        boxed2primitive.put(Character.class, char.class);
+        boxed2primitive.put(Integer.class, int.class);
+        boxed2primitive.put(Long.class, long.class);
+        boxed2primitive.put(Float.class, float.class);
+        boxed2primitive.put(Double.class, double.class);
+    }
+
     public static <T> T newInstance(Class<T> clazz, Object[] params) {
         Class[] classes = new Class[params.length];
         for (int i = 0; i < params.length; i++) {
-            classes[i] = params[i].getClass();
+            Class<?> aClass = params[i].getClass();
+            if (boxed2primitive.containsKey(aClass)) {
+                classes[i] = boxed2primitive.get(aClass);
+            } else {
+                classes[i] = aClass;
+            }
         }
         try {
             return clazz.getConstructor(classes).newInstance(params);

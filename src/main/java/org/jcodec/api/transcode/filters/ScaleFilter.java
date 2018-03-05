@@ -31,6 +31,10 @@ public class ScaleFilter implements Filter {
         this.height = height;
     }
 
+    public Size getTarget() {
+        return new Size(width, height);
+    }
+
     @Override
     public LoanerPicture filter(Picture picture, PixelStore store) {
         Size pictureSize = picture.getSize();
