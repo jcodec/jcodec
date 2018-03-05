@@ -1,5 +1,8 @@
 package org.jcodec.platform;
 
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
+import org.jcodec.common.tools.ToJSON;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -127,5 +130,9 @@ public class Platform {
 
     public static InputStream stdin() {
         return System.in;
+    }
+
+    public static String toJSON(Object o) {
+        return ToJSON.toJSON(o);
     }
 }

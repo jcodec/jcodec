@@ -167,14 +167,14 @@ public class FLVTool {
 
             if (!copying && (from == null || pkt.getPtsD() > from) && pkt.getType() == Type.VIDEO && pkt.isKeyFrame()
                     && h264Config != null) {
-                System.out.println("Starting at packet: " + ToJSON.toJSON(pkt));
+                System.out.println("Starting at packet: " + Platform.toJSON(pkt));
                 copying = true;
                 h264Config.setPts(pkt.getPts());
                 writer.addPacket(h264Config);
             }
 
             if ((to != null && pkt.getPtsD() >= to)) {
-                System.out.println("Stopping at packet: " + ToJSON.toJSON(pkt));
+                System.out.println("Stopping at packet: " + Platform.toJSON(pkt));
                 return false;
             }
             if (copying)
@@ -348,11 +348,11 @@ public class FLVTool {
                         AvcCBox avcc = H264Utils.parseAVCCFromBuffer(frameData);
                         for (SeqParameterSet sps : H264Utils.readSPSFromBufferList(avcc.getSpsList())) {
                             System.out.println();
-                            System.out.print("  SPS[" + sps.getSeqParameterSetId() + "]:" + ToJSON.toJSON(sps));
+                            System.out.print("  SPS[" + sps.getSeqParameterSetId() + "]:" + Platform.toJSON(sps));
                         }
                         for (PictureParameterSet pps : H264Utils.readPPSFromBufferList(avcc.getPpsList())) {
                             System.out.println();
-                            System.out.print("  PPS[" + pps.getPicParameterSetId() + "]:" + ToJSON.toJSON(pps));
+                            System.out.print("  PPS[" + pps.getPicParameterSetId() + "]:" + Platform.toJSON(pps));
                         }
                     }
                 }
@@ -365,7 +365,7 @@ public class FLVTool {
                 FLVMetadata metadata = FLVReader.parseMetadata(pkt.getData().duplicate());
                 if (metadata != null) {
                     System.out.println();
-                    System.out.print("  Metadata:" + ToJSON.toJSON(metadata));
+                    System.out.print("  Metadata:" + Platform.toJSON(metadata));
                 }
             }
             System.out.println();

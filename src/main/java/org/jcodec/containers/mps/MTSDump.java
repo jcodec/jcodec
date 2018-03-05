@@ -21,6 +21,7 @@ import org.jcodec.containers.mps.MPSUtils.MPEGMediaDescriptor;
 import org.jcodec.containers.mps.psi.PATSection;
 import org.jcodec.containers.mps.psi.PMTSection;
 import org.jcodec.containers.mps.psi.PMTSection.PMTStream;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -136,7 +137,7 @@ public class MTSDump extends MPSDump {
         for (PMTStream pmtStream : pmt.getStreams()) {
             System.out.print(pmtStream.getPid() + ":" + pmtStream.getStreamTypeTag() + ", ");
             for (MPEGMediaDescriptor descriptor : pmtStream.getDesctiptors()) {
-                System.out.println(ToJSON.toJSON(descriptor));
+                System.out.println(Platform.toJSON(descriptor));
             }
         }
         System.out.println();
