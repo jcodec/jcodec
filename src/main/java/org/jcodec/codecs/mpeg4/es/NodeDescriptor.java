@@ -1,7 +1,6 @@
 package org.jcodec.codecs.mpeg4.es;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -29,24 +28,13 @@ public class NodeDescriptor extends Descriptor {
         return children;
     }
 
-    protected static NodeDescriptor parse(ByteBuffer input, IDescriptorFactory factory) {
-        Collection<Descriptor> children = new ArrayList<Descriptor>();
-        Descriptor d;
-        do {
-            d = Descriptor.read(input, factory);
-            if (d != null)
-                children.add(d);
-        } while (d != null);
-        return new NodeDescriptor(0, children);
-    }
-
-    public static <T> T find(Descriptor es, Class<T> class1, int tag) {
+    public static <T> T findByTag(Descriptor es, int tag) {
         if (es.getTag() == tag)
             return (T) es;
         else {
             if (es instanceof NodeDescriptor) {
                 for (Descriptor descriptor : ((NodeDescriptor) es).getChildren()) {
-                    T res = find(descriptor, class1, tag);
+                    T res = findByTag(descriptor, tag);
                     if (res != null)
                         return res;
                 }

@@ -1,5 +1,7 @@
 package org.jcodec.containers.mp4.demuxer;
 
+import org.jcodec.codecs.aac.AACUtils;
+import org.jcodec.codecs.mpeg4.mp4.EsdsBox;
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
@@ -7,6 +9,14 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
+import org.jcodec.containers.mp4.MP4Util;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
+import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.MediaInfoBox;
+import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
+import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.platform.Platform;
 import org.junit.Test;
 
@@ -61,7 +71,7 @@ public class MP4DemuxerTest {
         PCMMP4DemuxerTrack track = (PCMMP4DemuxerTrack) demuxer.getAudioTracks().get(0);
         assertEquals(6, track.getFrameSize());
     }
-    
+
     @Test
     public void testVideoColor() throws Exception {
         File source = new File("src/test/resources/AVCClipCatTest/cat_avc_clip.mp4");
