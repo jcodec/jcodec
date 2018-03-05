@@ -4,6 +4,8 @@ import static java.lang.Math.abs;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.Arrays.asList;
+import static org.jcodec.common.Codec.AAC;
+import static org.jcodec.common.Codec.MP3;
 
 import java.io.File;
 import java.io.IOException;
@@ -255,14 +257,12 @@ public class FLVTool {
         }
 
         private double audioFrameDuration(AudioTagHeader audioTagHeader) {
-            switch (audioTagHeader.getCodec()) {
-            case AAC:
+            if (AAC == audioTagHeader.getCodec()) {
                 return ((double) 1024) / audioTagHeader.getAudioFormat().getSampleRate();
-            case MP3:
+            } else if (MP3 == audioTagHeader.getCodec()) {
                 return ((double) 1152) / audioTagHeader.getAudioFormat().getSampleRate();
-            default:
-                throw new RuntimeException("Audio codec:" + audioTagHeader.getCodec() + " is not supported.");
             }
+            throw new RuntimeException("Audio codec:" + audioTagHeader.getCodec() + " is not supported.");
         }
 
         @Override
@@ -435,7 +435,7 @@ public class FLVTool {
                     && ((VideoTagHeader) pkt.getTagHeader()).getCodec() == Codec.H264
                     && ((AvcVideoTagHeader) pkt.getTagHeader()).getAvcPacketType() == 0;
             boolean aacPrivatePacket = pkt.getType() == Type.AUDIO
-                    && ((AudioTagHeader) pkt.getTagHeader()).getCodec() == Codec.AAC
+                    && ((AudioTagHeader) pkt.getTagHeader()).getCodec() == AAC
                     && ((AacAudioTagHeader) pkt.getTagHeader()).getPacketType() == 0;
 
             boolean validPkt = pkt.getType() != Type.SCRIPT && !avcPrivatePacket && !aacPrivatePacket;
