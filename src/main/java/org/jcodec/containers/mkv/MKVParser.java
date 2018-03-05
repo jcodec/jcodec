@@ -1,5 +1,4 @@
 package org.jcodec.containers.mkv;
-import static java.lang.Long.toHexString;
 import static org.jcodec.containers.mkv.MKVType.Attachments;
 import static org.jcodec.containers.mkv.MKVType.Chapters;
 import static org.jcodec.containers.mkv.MKVType.Cluster;
