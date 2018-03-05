@@ -35,7 +35,7 @@ public class AVCMP4Mux {
     public static void main(String[] args) throws Exception {
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 2) {
-            MainUtils.printHelpVarArgs(FLAGS, "in.264", "out.mp4");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"in.264", "out.mp4"});
             System.exit(-1);
         }
 

@@ -35,7 +35,7 @@ public class ToneInterpolation {
 
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpVarArgs(FLAGS, "output file");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"output file"});
             System.exit(-1);
         }
 

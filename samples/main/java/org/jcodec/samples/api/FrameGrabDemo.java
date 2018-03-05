@@ -29,7 +29,7 @@ public class FrameGrabDemo {
     public static void main(String[] args) throws IOException, JCodecException {
         Cmd cmd = MainUtils.parseArguments(args, FLAGS);
         if (cmd.argsLength() < 1) {
-            MainUtils.printHelpVarArgs(FLAGS, "input file name");
+            MainUtils.printHelpArgs(FLAGS, new String[]{"input file name"});
             return;
         }
 
