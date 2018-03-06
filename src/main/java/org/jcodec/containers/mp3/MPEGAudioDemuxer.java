@@ -12,6 +12,7 @@ import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.TrackType;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
@@ -224,6 +225,7 @@ public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
      *            Buffer containing a snippet of data
      * @return Score from 0 to 100
      */
+    @UsedViaReflection
     public static int probe(final ByteBuffer b) {
         ByteBuffer fork = b.duplicate();
 

@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 import org.jcodec.codecs.vpx.Macroblock.Subblock;
 import org.jcodec.codecs.vpx.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vpx.VP8Util.SubblockConstants;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
@@ -342,6 +343,7 @@ public class VP8Decoder extends VideoDecoder {
         return new SegmentBasedAdjustments(segmentProbs, qp, lf, abs);
     }
 
+    @UsedViaReflection
     public static int probe(ByteBuffer data) {
         if ((data.get(3) & 0xff) == 0x9d && (data.get(4) & 0xff) == 0x1 && (data.get(5) & 0xff) == 0x2a)
             return 100;

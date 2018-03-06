@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4TrackType;
@@ -156,7 +157,8 @@ public class MP4Demuxer implements Demuxer {
     public TimecodeMP4DemuxerTrack getTimecodeTrack() {
         return timecodeTrack;
     }
-    
+
+    @UsedViaReflection
     public static int probe(final ByteBuffer b) {
         ByteBuffer fork = b.duplicate();
         int success = 0;

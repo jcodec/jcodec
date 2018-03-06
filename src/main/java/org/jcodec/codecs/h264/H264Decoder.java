@@ -29,6 +29,7 @@ import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.codecs.h264.io.model.SliceHeader;
 import org.jcodec.codecs.h264.io.model.SliceType;
 import org.jcodec.common.IntObjectMap;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
@@ -387,6 +388,7 @@ public class H264Decoder extends VideoDecoder {
         reader.addPpsList(ppsList);
     }
 
+    @UsedViaReflection
     public static int probe(ByteBuffer data) {
         boolean validSps = false, validPps = false, validSh = false;
         for (ByteBuffer nalUnit : H264Utils.splitFrame(data.duplicate())) {
