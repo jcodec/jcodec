@@ -29,6 +29,9 @@ import org.jcodec.common.model.Packet.FrameType;
  * @author Stanislav Vitvitskiy
  */
 public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
+    private static int field(int off, int size) {
+        return (((1 << size) - 1) << 16) | off;
+    }
 
     private static final int MAX_FRAME_SIZE = 1728;
     private static final int MIN_FRAME_SIZE = 52;
@@ -53,10 +56,6 @@ public class MPEGAudioDemuxer implements Demuxer, DemuxerTrack {
                     { 0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160 } } };
     private static int freqTab[] = { 44100, 48000, 32000 };
     private static int rateReductTab[] = { 2, 0, 1, 0 };
-
-    private static int field(int off, int size) {
-        return (((1 << size) - 1) << 16) | off;
-    }
 
     private static int getField(int header, int field) {
         return (header >> (field & 0xffff)) & (field >> 16);

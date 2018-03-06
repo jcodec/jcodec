@@ -1,7 +1,5 @@
 package org.jcodec.common.model;
 
-import static org.jcodec.common.model.ColorSpace.ANY;
-
 /**
  * 
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -11,42 +9,6 @@ import static org.jcodec.common.model.ColorSpace.ANY;
  * 
  */
 public final class ColorSpace {
-    private static final int[] _000 = new int[] { 0, 0, 0 };
-    private static final int[] _011 = new int[] { 0, 1, 1 };
-    private static final int[] _012 = new int[] { 0, 1, 2 };
-    public final static ColorSpace BGR = new ColorSpace("BGR", 3, _000, _000, _000, false);
-    public final static ColorSpace RGB = new ColorSpace("RGB", 3, _000, _000, _000, false);
-    public final static ColorSpace YUV420 = new ColorSpace("YUV420", 3, _012, _011, _011, true);
-    public final static ColorSpace YUV420J = new ColorSpace("YUV420J", 3, _012, _011, _011, true);
-    public final static ColorSpace YUV422 = new ColorSpace("YUV422", 3, _012, _011, _000, true);
-    public final static ColorSpace YUV422J = new ColorSpace("YUV422J", 3, _012, _011, _000, true);
-    public final static ColorSpace YUV444 = new ColorSpace("YUV444", 3, _012, _000, _000, true);
-    public final static ColorSpace YUV444J = new ColorSpace("YUV444J", 3, _012, _000, _000, true);
-    public final static ColorSpace YUV422_10 = new ColorSpace("YUV422_10", 3, _012, _011, _000, true);
-    public final static ColorSpace GREY = new ColorSpace("GREY", 1, new int[] { 0 }, new int[] { 0 }, new int[] { 0 }, true);
-    public final static ColorSpace MONO = new ColorSpace("MONO", 1, _000, _000, _000, true);
-    public final static ColorSpace YUV444_10 = new ColorSpace("YUV444_10", 3, _012, _000, _000, true);
-
-    /**
-     * Any color space, used in the cases where any color space will do.
-     */
-    public final static ColorSpace ANY = new ColorSpace("ANY", 0, null, null, null, true);
-    
-    /**
-     * Any planar color space, used in the cases where any planar color space will do.
-     */
-    public final static ColorSpace ANY_PLANAR = new ColorSpace("ANY_PLANAR", 0, null, null, null, true);
-    
-    /**
-     * Any interleaved color space, used in the cases where any interleaved color space will do.
-     */
-    public final static ColorSpace ANY_INTERLEAVED = new ColorSpace("ANY_INTERLEAVED", 0, null, null, null, false);
-    
-    /**
-     * Same color, used in filters to declare that the color stays unchanged.
-     */
-    public final static ColorSpace SAME = new ColorSpace("SAME", 0, null, null, null, false);
-
     public static final int MAX_PLANES = 4;
 
     public int nComp;
@@ -70,7 +32,7 @@ public final class ColorSpace {
         this.compWidth = compWidth;
         this.compHeight = compHeight;
         this.planar = planar;
-        calcBitsPerPixel();
+        this.bitsPerPixel = calcBitsPerPixel(nComp, compWidth, compHeight);
     }
 
     @Override
@@ -78,11 +40,12 @@ public final class ColorSpace {
         return _name;
     }
 
-    public void calcBitsPerPixel() {
-        bitsPerPixel = 0;
+    private static int calcBitsPerPixel(int nComp, int[] compWidth, int[] compHeight) {
+        int bitsPerPixel = 0;
         for (int i = 0; i < nComp; i++) {
             bitsPerPixel += ((8 >> compWidth[i]) >> compHeight[i]);
         }
+        return bitsPerPixel;
     }
 
     public int getWidthMask() {
@@ -122,4 +85,41 @@ public final class ColorSpace {
             return size;
         return new Size(size.getWidth() >> compWidth[comp], size.getHeight() >> compHeight[comp]);
     }
+
+    private static final int[] _000 = new int[] { 0, 0, 0 };
+    private static final int[] _011 = new int[] { 0, 1, 1 };
+    private static final int[] _012 = new int[] { 0, 1, 2 };
+    public final static ColorSpace BGR = new ColorSpace("BGR", 3, _000, _000, _000, false);
+    public final static ColorSpace RGB = new ColorSpace("RGB", 3, _000, _000, _000, false);
+    public final static ColorSpace YUV420 = new ColorSpace("YUV420", 3, _012, _011, _011, true);
+    public final static ColorSpace YUV420J = new ColorSpace("YUV420J", 3, _012, _011, _011, true);
+    public final static ColorSpace YUV422 = new ColorSpace("YUV422", 3, _012, _011, _000, true);
+    public final static ColorSpace YUV422J = new ColorSpace("YUV422J", 3, _012, _011, _000, true);
+    public final static ColorSpace YUV444 = new ColorSpace("YUV444", 3, _012, _000, _000, true);
+    public final static ColorSpace YUV444J = new ColorSpace("YUV444J", 3, _012, _000, _000, true);
+    public final static ColorSpace YUV422_10 = new ColorSpace("YUV422_10", 3, _012, _011, _000, true);
+    public final static ColorSpace GREY = new ColorSpace("GREY", 1, new int[] { 0 }, new int[] { 0 }, new int[] { 0 }, true);
+    public final static ColorSpace MONO = new ColorSpace("MONO", 1, _000, _000, _000, true);
+    public final static ColorSpace YUV444_10 = new ColorSpace("YUV444_10", 3, _012, _000, _000, true);
+
+    /**
+     * Any color space, used in the cases where any color space will do.
+     */
+    public final static ColorSpace ANY = new ColorSpace("ANY", 0, null, null, null, true);
+
+    /**
+     * Any planar color space, used in the cases where any planar color space will do.
+     */
+    public final static ColorSpace ANY_PLANAR = new ColorSpace("ANY_PLANAR", 0, null, null, null, true);
+
+    /**
+     * Any interleaved color space, used in the cases where any interleaved color space will do.
+     */
+    public final static ColorSpace ANY_INTERLEAVED = new ColorSpace("ANY_INTERLEAVED", 0, null, null, null, false);
+
+    /**
+     * Same color, used in filters to declare that the color stays unchanged.
+     */
+    public final static ColorSpace SAME = new ColorSpace("SAME", 0, null, null, null, false);
+
 }
