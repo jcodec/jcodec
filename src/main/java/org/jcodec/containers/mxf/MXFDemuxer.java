@@ -40,6 +40,7 @@ import org.jcodec.containers.mxf.model.TimecodeComponent;
 import org.jcodec.containers.mxf.model.TimelineTrack;
 import org.jcodec.containers.mxf.model.UL;
 import org.jcodec.containers.mxf.model.WaveAudioDescriptor;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -239,7 +240,7 @@ public class MXFDemuxer {
             return null;
         }
         try {
-            MXFMetadata meta = class1.getConstructor(UL.class).newInstance(ul);
+            MXFMetadata meta = Platform.newInstance(class1, new Object[]{ul});
             meta.readBuf(_bb);
             return meta;
         } catch (Exception e) {

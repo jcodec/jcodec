@@ -12,9 +12,10 @@ import static org.jcodec.common.Preconditions.checkState;
 
 import java.nio.ByteBuffer;
 
-import org.jcodec.codecs.vpx.Macroblock.Subblock;
+import org.jcodec.codecs.vpx.VPXMacroblock.Subblock;
 import org.jcodec.codecs.vpx.VP8Util.QuantizationParams;
 import org.jcodec.codecs.vpx.VP8Util.SubblockConstants;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.NIOUtils;
@@ -64,10 +65,10 @@ public class VP8Decoder extends VideoDecoder {
         /** Init macroblocks and subblocks */
         if(segmentationMap == null)
             segmentationMap = new byte[numberOfMBRows][numberOfMBCols];
-        Macroblock[][] mbs = new Macroblock[numberOfMBRows + 2][numberOfMBCols + 2];
+        VPXMacroblock[][] mbs = new VPXMacroblock[numberOfMBRows + 2][numberOfMBCols + 2];
         for (int row = 0; row < numberOfMBRows + 2; row++) {
             for (int col = 0; col < numberOfMBCols + 2; col++) {
-                mbs[row][col] = new Macroblock(row, col);
+                mbs[row][col] = new VPXMacroblock(row, col);
             }
         }
 
@@ -151,7 +152,7 @@ public class VP8Decoder extends VideoDecoder {
         int probSkipFalse = headerDecoder.decodeInt(8);
         for (int mbRow = 0; mbRow < numberOfMBRows; mbRow++) {
             for (int mbCol = 0; mbCol < numberOfMBCols; mbCol++) {
-                Macroblock mb = mbs[mbRow + 1][mbCol + 1];
+                VPXMacroblock mb = mbs[mbRow + 1][mbCol + 1];
                 if (segmentation != 0 && segmentBased != null && segmentBased.segmentProbs != null) {
                     // if segmentation is on and if segment map is updated
                     mb.segment = headerDecoder.readTree(VP8Util.segmentTree, segmentBased.segmentProbs);
@@ -240,7 +241,7 @@ public class VP8Decoder extends VideoDecoder {
 
         for (int mbRow = 0; mbRow < numberOfMBRows; mbRow++) {
             for (int mbCol = 0; mbCol < numberOfMBCols; mbCol++) {
-                Macroblock mb = mbs[mbRow + 1][mbCol + 1];
+                VPXMacroblock mb = mbs[mbRow + 1][mbCol + 1];
                 mb.decodeMacroBlock(mbs, decoder, coefProbs);
                 mb.dequantMacroBlock(mbs);
             }
@@ -262,7 +263,7 @@ public class VP8Decoder extends VideoDecoder {
 
         for (int mbRow = 0; mbRow < mbHeight; mbRow++) {
             for (int mbCol = 0; mbCol < mbWidth; mbCol++) {
-                Macroblock mb = mbs[mbRow + 1][mbCol + 1];
+                VPXMacroblock mb = mbs[mbRow + 1][mbCol + 1];
                 mb.put(mbRow, mbCol, p);
             }
         }
@@ -342,6 +343,7 @@ public class VP8Decoder extends VideoDecoder {
         return new SegmentBasedAdjustments(segmentProbs, qp, lf, abs);
     }
 
+    @UsedViaReflection
     public static int probe(ByteBuffer data) {
         if ((data.get(3) & 0xff) == 0x9d && (data.get(4) & 0xff) == 0x1 && (data.get(5) & 0xff) == 0x2a)
             return 100;

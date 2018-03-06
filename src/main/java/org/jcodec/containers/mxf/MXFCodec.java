@@ -11,11 +11,24 @@ import org.jcodec.containers.mxf.model.UL;
 
 public class MXFCodec {
 
-    public static MXFCodec[] values() {
-        return new MXFCodec[]{MPEG2_XDCAM, MPEG2_ML, MPEG2_D10_PAL, MPEG2_HL, MPEG2_HL_422_I, MPEG4_XDCAM_PROXY,
-                DV_25_PAL, JPEG2000, VC1, RAW, RAW_422, VC3_DNXHD, VC3_DNXHD_2, VC3_DNXHD_AVID, AVC_INTRA, AVC_SPSPPS,
-                V210, PRORES_AVID, PRORES, PCM_S16LE_1, PCM_S16LE_3, PCM_S16LE_2, PCM_S16BE, PCM_ALAW, AC3, MP2
-        };
+    private final UL ul;
+    private final Codec codec;
+
+    static MXFCodec mxfCodec(String ul, Codec codec) {
+        return new MXFCodec(newUL(ul), codec);
+    }
+
+    MXFCodec(UL ul, Codec codec) {
+        this.ul = ul;
+        this.codec = codec;
+    }
+
+    public UL getUl() {
+        return ul;
+    }
+
+    public Codec getCodec() {
+        return codec;
     }
 
     public final static MXFCodec MPEG2_XDCAM = mxfCodec("06.0E.2B.34.04.01.01.03.04.01.02.02.01.04.03", MPEG2);
@@ -54,24 +67,10 @@ public class MXFCodec {
     public final static MXFCodec MP2 = mxfCodec("06.0E.2B.34.04.01.01.01.04.02.02.02.03.02.05", Codec.MP3);
     public final static MXFCodec UNKNOWN = new MXFCodec(new UL(new byte[0]), null);
 
-    private final UL ul;
-    private final Codec codec;
-
-    static MXFCodec mxfCodec(String ul, Codec codec) {
-        return new MXFCodec(newUL(ul), codec);
+    public static MXFCodec[] values() {
+        return new MXFCodec[]{MPEG2_XDCAM, MPEG2_ML, MPEG2_D10_PAL, MPEG2_HL, MPEG2_HL_422_I, MPEG4_XDCAM_PROXY,
+                DV_25_PAL, JPEG2000, VC1, RAW, RAW_422, VC3_DNXHD, VC3_DNXHD_2, VC3_DNXHD_AVID, AVC_INTRA, AVC_SPSPPS,
+                V210, PRORES_AVID, PRORES, PCM_S16LE_1, PCM_S16LE_3, PCM_S16LE_2, PCM_S16BE, PCM_ALAW, AC3, MP2
+        };
     }
-
-    MXFCodec(UL ul, Codec codec) {
-        this.ul = ul;
-        this.codec = codec;
-    }
-
-    public UL getUl() {
-        return ul;
-    }
-
-    public Codec getCodec() {
-        return codec;
-    }
-
 }

@@ -9,6 +9,7 @@ import java.util.List;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.DataReader;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
@@ -114,6 +115,7 @@ public class WebpDemuxer implements Demuxer, DemuxerTrack {
         return new ArrayList<DemuxerTrack>();
     }
 
+    @UsedViaReflection
     public static int probe(final ByteBuffer b_) {
         ByteBuffer b = b_.duplicate();
         if (b.remaining() < 12)

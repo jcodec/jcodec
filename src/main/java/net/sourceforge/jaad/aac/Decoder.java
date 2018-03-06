@@ -116,9 +116,6 @@ public class Decoder implements SyntaxConstants {
             syntacticElements.process(filterBank);
             //3: send to output buffer
             syntacticElements.sendToOutput(buffer);
-        } catch (AACException e) {
-            buffer.setData(new byte[0], 0, 0, 0, 0);
-            throw e;
         } catch (Exception e) {
             buffer.setData(new byte[0], 0, 0, 0, 0);
             throw AACException.wrap(e);

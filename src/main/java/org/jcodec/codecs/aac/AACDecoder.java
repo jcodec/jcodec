@@ -7,6 +7,7 @@ import org.jcodec.codecs.aac.ADTSParser.Header;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioDecoder;
 import org.jcodec.common.AudioFormat;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.AudioBuffer;
@@ -66,6 +67,7 @@ public class AACDecoder implements AudioDecoder {
         return org.jcodec.common.AudioCodecMeta.fromAudioFormat(toAudioFormat(sampleBuffer));
     }
 
+    @UsedViaReflection
     public static int probe(ByteBuffer data) {
         if (data.remaining() < 7)
             return 0;

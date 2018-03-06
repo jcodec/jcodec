@@ -38,6 +38,7 @@ import org.jcodec.codecs.mpeg12.bitstream.SequenceDisplayExtension;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceExtension;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceHeader;
 import org.jcodec.codecs.mpeg12.bitstream.SequenceScalableExtension;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SparseIDCT;
@@ -700,6 +701,7 @@ public class MPEGDecoder extends VideoDecoder {
         throw new RuntimeException("Unsupported chroma format: " + sh.sequenceExtension.chroma_format);
     }
 
+    @UsedViaReflection
     public static int probe(ByteBuffer data) {
         data = data.duplicate();
         data.order(ByteOrder.BIG_ENDIAN);

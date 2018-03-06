@@ -6,6 +6,7 @@ import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.BitWriter;
 import org.jcodec.common.model.ChannelLabel;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -93,8 +94,7 @@ public class AACUtils {
         }
         if (b == null)
             return null;
-        EsdsBox esds = EsdsBox.newEsdsBox();
-        esds.parse(b.getData());
+        EsdsBox esds = BoxUtil.as(EsdsBox.class, b);
         return esds.getStreamInfo();
     }
 

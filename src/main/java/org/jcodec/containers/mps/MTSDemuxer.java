@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jcodec.common.IntObjectMap;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 
@@ -159,6 +160,7 @@ public class MTSDemuxer {
         return new MTSPacket(guid, payloadStart == 1, ((b0 & 0x10) != 0) ? buffer : null);
     }
 
+    @UsedViaReflection
     public static int probe(final ByteBuffer b_) {
         ByteBuffer b = b_.duplicate();
         IntObjectMap<List<ByteBuffer>> streams = new IntObjectMap<List<ByteBuffer>>();

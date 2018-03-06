@@ -14,6 +14,7 @@ import static org.jcodec.codecs.mpeg4.MPEG4Renderer.renderIntra;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.mpeg4.Macroblock.Vector;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
@@ -255,6 +256,7 @@ public class MPEG4Decoder extends VideoDecoder {
         return VideoCodecMeta.createSimpleVideoCodecMeta(new Size(ctx.width, ctx.height), ColorSpace.YUV420J);
     }
 
+    @UsedViaReflection
     public static int probe(ByteBuffer data) {
         MPEG4DecodingContext ctx = MPEG4DecodingContext.readFromHeaders(data.duplicate());
         if (ctx == null)
