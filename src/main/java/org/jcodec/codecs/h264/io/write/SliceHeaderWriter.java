@@ -27,7 +27,10 @@ import java.lang.IllegalArgumentException;
  * 
  */
 public class SliceHeaderWriter {
-    public void write(SliceHeader sliceHeader, boolean idrSlice, int nalRefIdc, BitWriter writer) {
+    private SliceHeaderWriter() {
+    }
+
+    public static void write(SliceHeader sliceHeader, boolean idrSlice, int nalRefIdc, BitWriter writer) {
         SeqParameterSet sps = sliceHeader.sps;
         PictureParameterSet pps = sliceHeader.pps;
         writeUEtrace(writer, sliceHeader.firstMbInSlice, "SH: first_mb_in_slice");
@@ -123,7 +126,7 @@ public class SliceHeaderWriter {
         return uiRet;
     }
 
-    private void writeDecRefPicMarking(SliceHeader sliceHeader, boolean idrSlice, BitWriter writer) {
+    private static void writeDecRefPicMarking(SliceHeader sliceHeader, boolean idrSlice, BitWriter writer) {
         if (idrSlice) {
             RefPicMarkingIDR drpmidr = sliceHeader.refPicMarkingIDR;
             writeBool(writer, drpmidr.isDiscardDecodedPics(), "SH: no_output_of_prior_pics_flag");
@@ -167,7 +170,7 @@ public class SliceHeaderWriter {
         }
     }
 
-    private void writePredWeightTable(SliceHeader sliceHeader, BitWriter writer) {
+    private static void writePredWeightTable(SliceHeader sliceHeader, BitWriter writer) {
         SeqParameterSet sps = sliceHeader.sps;
         writeUEtrace(writer, sliceHeader.predWeightTable.lumaLog2WeightDenom, "SH: luma_log2_weight_denom");
         if (sps.chromaFormatIdc != MONO) {
@@ -180,7 +183,7 @@ public class SliceHeaderWriter {
         }
     }
 
-    private void writeOffsetWeight(SliceHeader sliceHeader, BitWriter writer, int list) {
+    private static void writeOffsetWeight(SliceHeader sliceHeader, BitWriter writer, int list) {
         SeqParameterSet sps = sliceHeader.sps;
         int defaultLW = 1 << sliceHeader.predWeightTable.lumaLog2WeightDenom;
         int defaultCW = 1 << sliceHeader.predWeightTable.chromaLog2WeightDenom;
@@ -208,7 +211,7 @@ public class SliceHeaderWriter {
         }
     }
 
-    private void writeRefPicListReordering(SliceHeader sliceHeader, BitWriter writer) {
+    private static void writeRefPicListReordering(SliceHeader sliceHeader, BitWriter writer) {
         if (sliceHeader.sliceType.isInter()) {
             boolean l0ReorderingPresent = sliceHeader.refPicReordering != null
                     && sliceHeader.refPicReordering[0] != null;
@@ -225,7 +228,7 @@ public class SliceHeaderWriter {
         }
     }
 
-    private void writeReorderingList(int[][] reordering, BitWriter writer) {
+    private static void writeReorderingList(int[][] reordering, BitWriter writer) {
         if (reordering == null)
             return;
 

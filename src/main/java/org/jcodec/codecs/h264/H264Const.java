@@ -20,10 +20,10 @@ import java.util.Arrays;
  */
 public class H264Const {
 
-    public static VLC[] CoeffToken = new VLC[10];
-    public static VLC coeffTokenChromaDCY420;
-    public static VLC coeffTokenChromaDCY422;
-    public static VLC[] run;
+    public final static VLC[] CoeffToken = new VLC[10];
+    public final static VLC coeffTokenChromaDCY420;
+    public final static VLC coeffTokenChromaDCY422;
+    public final static VLC[] run;
 
     static {
         VLCBuilder vbl = new VLCBuilder();
@@ -365,7 +365,7 @@ public class H264Const {
                         .set(11, "00000001").set(12, "000000001").set(13, "0000000001").set(14, "00000000001").getVLC() };
     }
 
-    public static VLC[] totalZeros16 = {
+    public final static VLC[] totalZeros16 = {
 
             new VLCBuilder().set(0, "1").set(1, "011").set(2, "010").set(3, "0011").set(4, "0010").set(5, "00011")
                     .set(6, "00010").set(7, "000011").set(8, "000010").set(9, "0000011").set(10, "0000010")
@@ -414,13 +414,13 @@ public class H264Const {
 
             new VLCBuilder().set(0, "0").set(1, "1").getVLC() };
 
-    public static VLC[] totalZeros4 = { new VLCBuilder().set(0, "1").set(1, "01").set(2, "001").set(3, "000").getVLC(),
+    public final static VLC[] totalZeros4 = { new VLCBuilder().set(0, "1").set(1, "01").set(2, "001").set(3, "000").getVLC(),
 
     new VLCBuilder().set(0, "1").set(1, "01").set(2, "00").getVLC(),
 
     new VLCBuilder().set(0, "1").set(1, "0").getVLC() };
 
-    public static VLC[] totalZeros8 = {
+    public final static VLC[] totalZeros8 = {
             new VLCBuilder().set(0, "1").set(1, "010").set(2, "011").set(3, "0010").set(4, "0011").set(5, "0001")
                     .set(6, "00001").set(7, "00000").getVLC(),
 
@@ -437,11 +437,11 @@ public class H264Const {
 
             new VLCBuilder().set(0, "0").set(1, "1").getVLC() };
 
-    public static enum PartPred {
+    public enum PartPred {
         L0, L1, Bi, Direct;
     }
 
-    public static PartPred[][] bPredModes = { null, { PartPred.L0 }, { PartPred.L1 }, { PartPred.Bi },
+    public final static PartPred[][] bPredModes = { null, { PartPred.L0 }, { PartPred.L1 }, { PartPred.Bi },
             { PartPred.L0, PartPred.L0 }, { PartPred.L0, PartPred.L0 }, { PartPred.L1, PartPred.L1 },
             { PartPred.L1, PartPred.L1 }, { PartPred.L0, PartPred.L1 }, { PartPred.L0, PartPred.L1 },
             { PartPred.L1, PartPred.L0 }, { PartPred.L1, PartPred.L0 }, { PartPred.L0, PartPred.Bi },
@@ -449,27 +449,27 @@ public class H264Const {
             { PartPred.Bi, PartPred.L0 }, { PartPred.Bi, PartPred.L0 }, { PartPred.Bi, PartPred.L1 },
             { PartPred.Bi, PartPred.L1 }, { PartPred.Bi, PartPred.Bi }, { PartPred.Bi, PartPred.Bi } };
 
-    public static MBType[] bMbTypes = { MBType.B_Direct_16x16, MBType.B_L0_16x16, MBType.B_L1_16x16, MBType.B_Bi_16x16,
+    public final static MBType[] bMbTypes = { MBType.B_Direct_16x16, MBType.B_L0_16x16, MBType.B_L1_16x16, MBType.B_Bi_16x16,
             MBType.B_L0_L0_16x8, MBType.B_L0_L0_8x16, MBType.B_L1_L1_16x8, MBType.B_L1_L1_8x16, MBType.B_L0_L1_16x8,
             MBType.B_L0_L1_8x16, MBType.B_L1_L0_16x8, MBType.B_L1_L0_8x16, MBType.B_L0_Bi_16x8, MBType.B_L0_Bi_8x16,
             MBType.B_L1_Bi_16x8, MBType.B_L1_Bi_8x16, MBType.B_Bi_L0_16x8, MBType.B_Bi_L0_8x16, MBType.B_Bi_L1_16x8,
             MBType.B_Bi_L1_8x16, MBType.B_Bi_Bi_16x8, MBType.B_Bi_Bi_8x16, MBType.B_8x8 };
 
-    public static int[] bPartW = { 0, 16, 16, 16, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8 };
-    public static int[] bPartH = { 0, 16, 16, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16 };
+    public final static int[] bPartW = { 0, 16, 16, 16, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8 };
+    public final static int[] bPartH = { 0, 16, 16, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16, 8, 16 };
 
-    public static int[] BLK_X = new int[] { 0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12 };
-    public static int[] BLK_Y = new int[] { 0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12 };
+    public final static int[] BLK_X = new int[] { 0, 4, 0, 4, 8, 12, 8, 12, 0, 4, 0, 4, 8, 12, 8, 12 };
+    public final static int[] BLK_Y = new int[] { 0, 0, 4, 4, 0, 0, 4, 4, 8, 8, 12, 12, 8, 8, 12, 12 };
     
-    public static int[] BLK_8x8_X = new int[] { 0, 8, 0, 8 };
-    public static int[] BLK_8x8_Y = new int[] { 0, 0, 8, 8 };
+    public final static int[] BLK_8x8_X = new int[] { 0, 8, 0, 8 };
+    public final static int[] BLK_8x8_Y = new int[] { 0, 0, 8, 8 };
 
-    public static int[] BLK_INV_MAP = { 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15 };
+    public final static int[] BLK_INV_MAP = { 0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15 };
 
-    public static int[] MB_BLK_OFF_LEFT = new int[] { 0, 1, 0, 1, 2, 3, 2, 3, 0, 1, 0, 1, 2, 3, 2, 3 };
-    public static int[] MB_BLK_OFF_TOP = new int[] { 0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3 };
+    public final static int[] MB_BLK_OFF_LEFT = new int[] { 0, 1, 0, 1, 2, 3, 2, 3, 0, 1, 0, 1, 2, 3, 2, 3 };
+    public final static int[] MB_BLK_OFF_TOP = new int[] { 0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3 };
 
-    public static final int[] QP_SCALE_CR = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    public final static int[] QP_SCALE_CR = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
             21, 22, 23, 24, 25, 26, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 34, 35, 35, 36, 36, 37, 37, 37, 38, 38, 38,
             39, 39, 39, 39 };
 
@@ -486,14 +486,14 @@ public class H264Const {
     };
     public static final int[][] ARRAY = {{0}, {1}, {2}, {3}};
 
-    public static int[] CODED_BLOCK_PATTERN_INTRA_COLOR = new int[] { 47, 31, 15, 0, 23, 27, 29, 30, 7, 11, 13, 14, 39,
+    public static final int[] CODED_BLOCK_PATTERN_INTRA_COLOR = new int[] { 47, 31, 15, 0, 23, 27, 29, 30, 7, 11, 13, 14, 39,
             43, 45, 46, 16, 3, 5, 10, 12, 19, 21, 26, 28, 35, 37, 42, 44, 1, 2, 4, 8, 17, 18, 20, 24, 6, 9, 22, 25, 32,
             33, 34, 36, 40, 38, 41 };
 
-    public static int[] coded_block_pattern_intra_monochrome = new int[] { 15, 0, 7, 11, 13, 14, 3, 5, 10, 12, 1, 2, 4,
+    public static final int[] coded_block_pattern_intra_monochrome = new int[] { 15, 0, 7, 11, 13, 14, 3, 5, 10, 12, 1, 2, 4,
             8, 6, 9 };
 
-    public static int[] CODED_BLOCK_PATTERN_INTER_COLOR = new int[] { 0, 16, 1, 2, 4, 8, 32, 3, 5, 10, 12, 15, 47, 7,
+    public static final int[] CODED_BLOCK_PATTERN_INTER_COLOR = new int[] { 0, 16, 1, 2, 4, 8, 32, 3, 5, 10, 12, 15, 47, 7,
             11, 13, 14, 6, 9, 31, 35, 37, 42, 44, 33, 34, 36, 40, 39, 43, 45, 46, 17, 18, 20, 24, 19, 21, 26, 28, 23,
             27, 29, 30, 22, 25, 38, 41 };
     
@@ -505,40 +505,40 @@ public class H264Const {
         return inv;
     }
 
-    public static int[] CODED_BLOCK_PATTERN_INTER_COLOR_INV = inverse(CODED_BLOCK_PATTERN_INTER_COLOR);
+    public static final int[] CODED_BLOCK_PATTERN_INTER_COLOR_INV = inverse(CODED_BLOCK_PATTERN_INTER_COLOR);
 
-    public static int[] coded_block_pattern_inter_monochrome = new int[] { 0, 1, 2, 4, 8, 3, 5, 10, 12, 15, 7, 11, 13,
+    public static final int[] coded_block_pattern_inter_monochrome = new int[] { 0, 1, 2, 4, 8, 3, 5, 10, 12, 15, 7, 11, 13,
             14, 6, 9 };
 
-    public static int[] sig_coeff_map_8x8 = { 0, 1, 2, 3, 4, 5, 5, 4, 4, 3, 3, 4, 4, 4, 5, 5, 4, 4, 4, 4, 3, 3, 6, 7,
+    public static final int[] sig_coeff_map_8x8 = { 0, 1, 2, 3, 4, 5, 5, 4, 4, 3, 3, 4, 4, 4, 5, 5, 4, 4, 4, 4, 3, 3, 6, 7,
             7, 7, 8, 9, 10, 9, 8, 7, 7, 6, 11, 12, 13, 11, 6, 7, 8, 9, 14, 10, 9, 8, 6, 11, 12, 13, 11, 6, 9, 14, 10,
             9, 11, 12, 13, 11, 14, 10, 12 };
 
-    public static int[] sig_coeff_map_8x8_mbaff = { 0, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 7, 7, 8, 4, 5, 6, 9, 10, 10, 8,
+    public static final int[] sig_coeff_map_8x8_mbaff = { 0, 1, 1, 2, 2, 3, 3, 4, 5, 6, 7, 7, 7, 8, 4, 5, 6, 9, 10, 10, 8,
             11, 12, 11, 9, 9, 10, 10, 8, 11, 12, 11, 9, 9, 10, 10, 8, 11, 12, 11, 9, 9, 10, 10, 8, 13, 13, 9, 9, 10,
             10, 8, 13, 13, 9, 9, 10, 10, 14, 14, 14, 14, 14 };
 
-    public static int[] last_sig_coeff_map_8x8 = { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
+    public static final int[] last_sig_coeff_map_8x8 = { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2,
             2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7,
             7, 8, 8, 8 };
 
-    public static int[] identityMapping16 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-    public static int[] identityMapping4 = { 0, 1, 2, 3 };
-    public static PartPred[] bPartPredModes = { Direct, L0, L1, Bi, L0, L0, L1, L1, Bi, Bi, L0, L1, Bi };
-    public static int[] bSubMbTypes = { 0, 0, 0, 0, 1, 2, 1, 2, 1, 2, 3, 3, 3 };
+    public static final int[] identityMapping16 = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+    public static final int[] identityMapping4 = { 0, 1, 2, 3 };
+    public static final PartPred[] bPartPredModes = { Direct, L0, L1, Bi, L0, L0, L1, L1, Bi, Bi, L0, L1, Bi };
+    public static final int[] bSubMbTypes = { 0, 0, 0, 0, 1, 2, 1, 2, 1, 2, 3, 3, 3 };
     
-    public static int[] LUMA_4x4_BLOCK_LUT = new int[256];
-    public static int[] LUMA_4x4_POS_LUT = new int[256];
-    public static int[] LUMA_8x8_BLOCK_LUT = new int[256];
-    public static int[] LUMA_8x8_POS_LUT = new int[256];
-    public static int[] CHROMA_BLOCK_LUT = new int[64];
-    public static int[] CHROMA_POS_LUT = new int[64];
+    public static final int[] LUMA_4x4_BLOCK_LUT = new int[256];
+    public static final int[] LUMA_4x4_POS_LUT = new int[256];
+    public static final int[] LUMA_8x8_BLOCK_LUT = new int[256];
+    public static final int[] LUMA_8x8_POS_LUT = new int[256];
+    public static final int[] CHROMA_BLOCK_LUT = new int[64];
+    public static final int[] CHROMA_POS_LUT = new int[64];
     
-    public static int[][] COMP_BLOCK_4x4_LUT = {LUMA_4x4_BLOCK_LUT, CHROMA_BLOCK_LUT, CHROMA_BLOCK_LUT};
-    public static int[][] COMP_POS_4x4_LUT = {LUMA_4x4_POS_LUT, CHROMA_POS_LUT, CHROMA_POS_LUT};
+    public static final int[][] COMP_BLOCK_4x4_LUT = {LUMA_4x4_BLOCK_LUT, CHROMA_BLOCK_LUT, CHROMA_BLOCK_LUT};
+    public static final int[][] COMP_POS_4x4_LUT = {LUMA_4x4_POS_LUT, CHROMA_POS_LUT, CHROMA_POS_LUT};
     
-    public static int[][] COMP_BLOCK_8x8_LUT = {LUMA_8x8_BLOCK_LUT, CHROMA_BLOCK_LUT, CHROMA_BLOCK_LUT};
-    public static int[][] COMP_POS_8x8_LUT = {LUMA_8x8_POS_LUT, CHROMA_POS_LUT, CHROMA_POS_LUT};
+    public static final int[][] COMP_BLOCK_8x8_LUT = {LUMA_8x8_BLOCK_LUT, CHROMA_BLOCK_LUT, CHROMA_BLOCK_LUT};
+    public static final int[][] COMP_POS_8x8_LUT = {LUMA_8x8_POS_LUT, CHROMA_POS_LUT, CHROMA_POS_LUT};
     static {
         int[] tmp = new int[16];
 

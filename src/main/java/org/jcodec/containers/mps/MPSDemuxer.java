@@ -32,6 +32,7 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.IntIntHistogram;
 import org.jcodec.common.LongArrayList;
 import org.jcodec.common.TrackType;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
@@ -415,6 +416,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         return score > 50;
     }
 
+    @UsedViaReflection
     public static int probe(ByteBuffer b_) {
         ByteBuffer b = b_.duplicate();
         int marker = 0xffffffff;

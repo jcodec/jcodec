@@ -6,7 +6,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,15 +34,19 @@ public class Platform {
     }
 
     public static <T> T newInstance(Class<T> clazz, Object[] params) {
+        try {
+            return clazz.getConstructor(classes(params)).newInstance(params);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static Class[] classes(Object[] params) {
         Class[] classes = new Class[params.length];
         for (int i = 0; i < params.length; i++) {
             classes[i] = params[i].getClass();
         }
-        try {
-            return clazz.getConstructor(classes).newInstance(params);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return classes;
     }
 
     public static Field[] getDeclaredFields(Class<?> class1) {
@@ -149,5 +155,15 @@ public class Platform {
 
     public static String toJSON(Object o) {
         return ToJSON.toJSON(o);
+    }
+
+    public static <T> T invokeStaticMethod(Class<?> cls, String methodName, Object[] params) {
+        try {
+            Method method = cls.getDeclaredMethod(methodName, classes(params));
+            return (T) method.invoke(null, params);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 }

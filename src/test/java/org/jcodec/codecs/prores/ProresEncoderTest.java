@@ -52,8 +52,8 @@ public class ProresEncoderTest {
         BitWriter writer = new BitWriter(out);
         ProresEncoder encoder = new ProresEncoder(Profile.HQ, false);
 
-        encoder.writeDCCoeffs(writer, qMat, slice, blocksPerSlice);
-        encoder.writeACCoeffs(writer, qMat, slice, blocksPerSlice, ProresConsts.progressive_scan, 64);
+        ProresEncoder.writeDCCoeffs(writer, qMat, slice, blocksPerSlice);
+        ProresEncoder.writeACCoeffs(writer, qMat, slice, blocksPerSlice, ProresConsts.progressive_scan, 64);
         writer.flush();
 
         System.out.println("result");
@@ -63,8 +63,8 @@ public class ProresEncoderTest {
         ProresDecoder decoder = new ProresDecoder();
         BitReader bits = BitReader.createBitReader(out);
         int[] result = new int[blocksPerSlice << 6];
-        decoder.readDCCoeffs(bits, qMat, result, blocksPerSlice, 64);
-        decoder.readACCoeffs(bits, qMat, result, blocksPerSlice, ProresConsts.progressive_scan, 64, 6);
+        ProresDecoder.readDCCoeffs(bits, qMat, result, blocksPerSlice, 64);
+        ProresDecoder.readACCoeffs(bits, qMat, result, blocksPerSlice, ProresConsts.progressive_scan, 64, 6);
 
         Assert.assertArrayEquals(slice, result);
     }

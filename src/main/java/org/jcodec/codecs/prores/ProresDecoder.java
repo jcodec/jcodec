@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.prores.ProresConsts.FrameHeader;
 import org.jcodec.codecs.prores.ProresConsts.PictureHeader;
+import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.io.BitReader;
@@ -466,6 +467,7 @@ public class ProresDecoder extends VideoDecoder {
         return (((data.get(20) & 0xff) >> 2) & 3) == 0;
     }
 
+    @UsedViaReflection
     public static int probe(ByteBuffer data) {
         if (data.get(4) == 'i' && data.get(5) == 'c' && data.get(6) == 'p' && data.get(7) == 'f')
             return 100;

@@ -92,8 +92,6 @@ public class H264Mashup {
     }
 
     private void copyModify(NALUnitWriter out, ByteBuffer buf) throws IOException {
-        SliceHeaderReader reader = null;
-        SliceHeaderWriter writer = null;
         ByteBuffer nus;
         while ((nus = H264Utils.nextNALUnit(buf)) != null) {
             NALUnit nu = NALUnit.read(nus);
@@ -107,8 +105,6 @@ public class H264Mashup {
                 pps = PictureParameterSet.read(nus);
                 pps.seqParameterSetId = lastSPS;
                 pps.picParameterSetId = ++lastPPS;
-                reader = new SliceHeaderReader();
-                writer = new SliceHeaderWriter();
                 System.out.println("PPS");
             } else if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
                 ByteBuffer res = ByteBuffer.allocate(nus.remaining() + 10);
@@ -117,10 +113,7 @@ public class H264Mashup {
                 SliceHeaderReader.readPart2(header, nu, sps, pps, r);
                 header.picParameterSetId = lastPPS;
                 BitWriter w = new BitWriter(res);
-                if (writer == null) {
-                    throw new NullPointerException("writer == null");
-                }
-                writer.write(header, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, w);
+                SliceHeaderWriter.write(header, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, w);
 
                 if (pps.entropyCodingModeFlag) {
                     copyCABAC(w, r);
@@ -135,7 +128,7 @@ public class H264Mashup {
         }
     }
 
-    private void copyCAVLC(BitWriter w, BitReader r) {
+    private static void copyCAVLC(BitWriter w, BitReader r) {
         int rem = 8 - r.curBit();
         int l = r.readNBit(rem);
         w.writeNBit(l, rem);
@@ -154,7 +147,7 @@ public class H264Mashup {
         w.flush();
     }
 
-    private void copyCABAC(BitWriter w, BitReader r) {
+    private static void copyCABAC(BitWriter w, BitReader r) {
         long bp = r.curBit();
         long rem = r.readNBit(8 - (int) bp);
         Assert.assertEquals(rem, (1 << (8 - bp)) - 1);

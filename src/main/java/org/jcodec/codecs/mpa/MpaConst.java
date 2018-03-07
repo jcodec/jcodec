@@ -95,8 +95,6 @@ class MpaConst {
             1.8626451492E-09f, 1.3170890160E-09f, 9.3132257462E-10f, 6.5854450798E-10f, 4.6566128731E-10f,
             3.2927225399E-10f };
 
-    static final float power43Tab[] = create_t_43();
-
     static private float[] create_t_43() {
         float[] t43 = new float[8192];
         final double d43 = (4.0 / 3.0);
@@ -106,6 +104,8 @@ class MpaConst {
         }
         return t43;
     }
+
+    static final float power43Tab[] = create_t_43();
 
     static final float intensityOffset[][] = {
             { 1.0000000000E+00f, 8.4089641526E-01f, 7.0710678119E-01f, 5.9460355751E-01f, 5.0000000001E-01f,
@@ -128,6 +128,15 @@ class MpaConst {
 
     static int[] ll0 = { 0, 6, 11, 16, 21 };
     static int[] ss0 = { 0, 6, 12 };
+    static class Sftable {
+        int[] l;
+        int[] s;
+
+        Sftable(int[] thel, int[] thes) {
+            l = thel;
+            s = thes;
+        }
+    }
     static Sftable sftable = new Sftable(ll0, ss0);
 
     static final float cs[] = { 0.857492925712f, 0.881741997318f, 0.949628649103f, 0.983314592492f, 0.995517816065f,
@@ -172,16 +181,6 @@ class MpaConst {
                     -2.0004979098E-01f, -1.8449493497E-01f, -1.6905846094E-01f, -1.5350360518E-01f, -1.3758624925E-01f,
                     -1.2103922149E-01f, -2.0710679058E-01f, -8.4752577594E-02f, -6.4157525656E-02f, -4.1131172614E-02f,
                     -1.4790705759E-02f } };
-
-    static class Sftable {
-        int[] l;
-        int[] s;
-
-        Sftable(int[] thel, int[] thes) {
-            l = thel;
-            s = thes;
-        }
-    }
 
     static final int numberOfScaleFactors[][][] = {
             { {  6,  5, 5, 5 }, {  9,  9,  9, 9 }, {  6,  9,  9, 9 } },

@@ -14,4 +14,15 @@ public class PlatformTest {
         assertEquals(42, target.getWidth());
         assertEquals(43, target.getHeight());
     }
+
+    static int parse(String str) {
+        return Integer.parseInt(str);
+    }
+
+    @Test
+    public void testInvokeStatic() {
+        int parse = Platform.invokeStaticMethod(PlatformTest.class, "parse", new Object[]{"42"});
+        assertEquals(42, parse);
+    }
+
 }

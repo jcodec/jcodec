@@ -42,6 +42,7 @@ import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.webp.WebpDemuxer;
 import org.jcodec.containers.y4m.Y4MDemuxer;
+import org.jcodec.platform.Platform;
 import org.jcodec.scale.ColorUtil;
 import org.jcodec.scale.Transform;
 
@@ -108,10 +109,7 @@ public class JCodecUtil {
 
     private static int probe(ByteBuffer b, Class<?> vd) {
         try {
-            Method method = vd.getDeclaredMethod("probe", ByteBuffer.class);
-            if (method != null) {
-                return (Integer) method.invoke(null, b);
-            }
+            Platform.invokeStaticMethod(vd, "probe", new Object[]{b});
         } catch (Exception e) {
         }
         return 0;

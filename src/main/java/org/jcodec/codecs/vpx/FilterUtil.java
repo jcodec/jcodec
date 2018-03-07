@@ -4,7 +4,7 @@ import static org.jcodec.codecs.vpx.FilterUtil.Segment.horizontal;
 import static org.jcodec.codecs.vpx.FilterUtil.Segment.vertical;
 
 import org.jcodec.api.NotImplementedException;
-import org.jcodec.codecs.vpx.Macroblock.Subblock;
+import org.jcodec.codecs.vpx.VPXMacroblock.Subblock;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -250,11 +250,11 @@ public class FilterUtil {
         return (int) (v - 128);
     }
 
-    public static void loopFilterUV(Macroblock[][] mbs, int sharpnessLevel, boolean keyFrame) {
+    public static void loopFilterUV(VPXMacroblock[][] mbs, int sharpnessLevel, boolean keyFrame) {
                 for (int y = 0; y < (mbs.length-2); y++) {
                     for (int x = 0; x < (mbs[0].length-2); x++) {
-                        Macroblock rmb = mbs[y+1][x+1];
-                        Macroblock bmb = mbs[y+1][x+1];
+                        VPXMacroblock rmb = mbs[y+1][x+1];
+                        VPXMacroblock bmb = mbs[y+1][x+1];
                         int loop_filter_level = rmb.filterLevel;
                         if (loop_filter_level != 0) {
                             int interior_limit = rmb.filterLevel;
@@ -288,7 +288,7 @@ public class FilterUtil {
                             int sub_bedge_limit = (loop_filter_level * 2) + interior_limit;
     
                             if (x > 0) {
-                                Macroblock lmb = mbs[y+1][x+1-1];
+                                VPXMacroblock lmb = mbs[y+1][x+1-1];
                                 for (int b = 0; b < 2; b++) {
                                     Subblock rsbU = rmb.uSubblocks[b][0];
                                     Subblock lsbU = lmb.uSubblocks[b][1];
@@ -327,7 +327,7 @@ public class FilterUtil {
                             }
                             // top
                             if (y > 0) {
-                                Macroblock tmb = mbs[y+1-1][x+1];
+                                VPXMacroblock tmb = mbs[y+1-1][x+1];
                                 for (int b = 0; b < 2; b++) {
                                     Subblock tsbU = tmb.uSubblocks[1][b];
                                     Subblock bsbU = bmb.uSubblocks[0][b];
@@ -369,11 +369,11 @@ public class FilterUtil {
                 }
             }
 
-    public static void loopFilterY(Macroblock[][] mbs, int sharpnessLevel, boolean keyFrame) {
+    public static void loopFilterY(VPXMacroblock[][] mbs, int sharpnessLevel, boolean keyFrame) {
                 for (int y = 0; y < (mbs.length-2); y++) {
                     for (int x = 0; x < (mbs[0].length-2); x++) {
-                        Macroblock rmb = mbs[y+1][x+1];
-                        Macroblock bmb = mbs[y+1][x+1];
+                        VPXMacroblock rmb = mbs[y+1][x+1];
+                        VPXMacroblock bmb = mbs[y+1][x+1];
                         int loopFilterLevel = rmb.filterLevel;
     
                         if (loopFilterLevel != 0) {
@@ -414,7 +414,7 @@ public class FilterUtil {
     
                             // left
                             if (x > 0) {
-                                Macroblock lmb = mbs[y+1][x-1+1];
+                                VPXMacroblock lmb = mbs[y+1][x-1+1];
                                 for (int b = 0; b < 4; b++) {
                                     Subblock rsb = rmb.ySubblocks[b][0];
                                     Subblock lsb = lmb.ySubblocks[b][3];
@@ -441,7 +441,7 @@ public class FilterUtil {
                             }
                             // top
                             if (y > 0) {
-                                Macroblock tmb = mbs[y-1+1][x+1];
+                                VPXMacroblock tmb = mbs[y-1+1][x+1];
                                 for (int b = 0; b < 4; b++) {
                                     Subblock tsb = tmb.ySubblocks[3][b];
                                     Subblock bsb = bmb.ySubblocks[0][b];

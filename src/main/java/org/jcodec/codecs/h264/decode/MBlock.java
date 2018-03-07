@@ -192,10 +192,12 @@ public class MBlock {
         chromaPredictionMode = 0;
         mbQPDelta = 0;
         Arrays.fill(dc, 0);
-        for (int i = 0; i < ac.length; i++)
-            for (int j = 0; j < ac[i].length; j++)
-                for (int k = 0; k < ac[i][j].length; k++)
-                    ac[i][j][k] = 0;
+        for (int i = 0; i < ac.length; i++) {
+            int[][] aci = ac[i];
+            for (int j = 0; j < aci.length; j++) {
+                Arrays.fill(aci[j], 0);
+            }
+        }
         transform8x8Used = false;
         Arrays.fill(lumaModes, 0);
         Arrays.fill(dc1, 0);

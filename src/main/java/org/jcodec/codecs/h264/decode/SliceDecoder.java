@@ -184,8 +184,7 @@ public class SliceDecoder {
         }
     }
 
-    public void putMacroblock(Picture tgt, Picture decoded, int mbX, int mbY) {
-
+    private static void putMacroblock(Picture tgt, Picture decoded, final int mbX, final int mbY) {
         byte[] luma = tgt.getPlaneData(0);
         int stride = tgt.getPlaneWidth(0);
 
@@ -194,15 +193,23 @@ public class SliceDecoder {
         int strideChroma = tgt.getPlaneWidth(1);
 
         int dOff = 0;
+        final int mbx16 = mbX * 16;
+        final int mby16 = mbY * 16;
+        final byte[] decodedY = decoded.getPlaneData(0);
         for (int i = 0; i < 16; i++) {
-            arraycopy(decoded.getPlaneData(0), dOff, luma, (mbY * 16 + i) * stride + mbX * 16, 16);
+            arraycopy(decodedY, dOff, luma, (mby16 + i) * stride + mbx16, 16);
             dOff += 16;
         }
+
+        final int mbx8 = mbX * 8;
+        final int mby8 = mbY * 8;
+        final byte[] decodedCb = decoded.getPlaneData(1);
+        final byte[] decodedCr = decoded.getPlaneData(2);
         for (int i = 0; i < 8; i++) {
-            arraycopy(decoded.getPlaneData(1), i * 8, cb, (mbY * 8 + i) * strideChroma + mbX * 8, 8);
-        }
-        for (int i = 0; i < 8; i++) {
-            arraycopy(decoded.getPlaneData(2), i * 8, cr, (mbY * 8 + i) * strideChroma + mbX * 8, 8);
+            int decodePos = i << 3;
+            int chromaPos = (mby8 + i) * strideChroma + mbx8;
+            arraycopy(decodedCb, decodePos, cb, chromaPos, 8);
+            arraycopy(decodedCr, decodePos, cr, chromaPos, 8);
         }
     }
 }

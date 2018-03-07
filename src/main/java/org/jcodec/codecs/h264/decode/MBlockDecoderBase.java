@@ -76,7 +76,7 @@ public class MBlockDecoderBase {
         return scalingMatrix[which];
     }
 
-    protected int[][] initScalingMatrix(SliceHeader sh2) {
+    protected static int[][] initScalingMatrix(SliceHeader sh2) {
         if (sh2.sps.scalingMatrix == null && (sh2.pps.extended == null || sh2.pps.extended.scalingMatrix == null))
             return null;
         int[][] merged = new int[][] { H264Const.defaultScalingList4x4Intra, null, null,
@@ -178,7 +178,6 @@ public class MBlockDecoderBase {
     }
 
     private void chromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int mbY, int[] dc, int comp, int crQp,
-            MBType curMbType, boolean codedAC, int[][] residualOut) {
         for (int i = 0; i < dc.length; i++) {
             int[] ac = residualOut[i];
 
@@ -190,7 +189,7 @@ public class MBlockDecoderBase {
         }
     }
 
-    int calcQpChroma(int qp, int crQpOffset) {
+    static int calcQpChroma(int qp, int crQpOffset) {
         return QP_SCALE_CR[MathUtil.clip(qp + crQpOffset, 0, 51)];
     }
 
@@ -212,7 +211,7 @@ public class MBlockDecoderBase {
                     int xx = ((x + blkPox) << 3) + mvX(mv);
                     int yy = ((y + blkPoy) << 3) + mvY(mv);
 
-                    interpolator.getBlockChroma(ref.getPlaneData(comp), ref.getPlaneWidth(comp),
+                    BlockInterpolator.getBlockChroma(ref.getPlaneData(comp), ref.getPlaneWidth(comp),
                             ref.getPlaneHeight(comp), mbb[list].getPlaneData(comp), blkPoy * mb.getPlaneWidth(comp)
                                     + blkPox, mb.getPlaneWidth(comp), xx, yy, 2, 2);
                 }

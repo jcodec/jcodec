@@ -18,7 +18,7 @@ import java.util.Arrays;
  * @author The JCodec project
  * 
  */
-public class Macroblock {
+public class VPXMacroblock {
 
     public int filterLevel;
     public int chromaMode;
@@ -35,7 +35,7 @@ public class Macroblock {
     public boolean debug = true;
     public QuantizationParams quants;
 
-    public Macroblock(int y, int x) {
+    public VPXMacroblock(int y, int x) {
         this.ySubblocks = new Subblock[4][4];
         this.y2 = new Subblock(this, 0, 0, VP8Util.PLANE.Y2);
         this.uSubblocks = new Subblock[2][2];
@@ -53,7 +53,7 @@ public class Macroblock {
             }
     }
 
-    public void dequantMacroBlock(Macroblock[][] mbs) {
+    public void dequantMacroBlock(VPXMacroblock[][] mbs) {
         QuantizationParams p = this.quants;
         if (this.lumaMode != SubblockConstants.B_PRED) {
             int acQValue = p.y2AC;
@@ -128,9 +128,9 @@ public class Macroblock {
 
     }
 
-    public void predictUV(Macroblock[][] mbs) {
-        Macroblock aboveMb = mbs[Rrow - 1][column];
-        Macroblock leftMb = mbs[Rrow][column - 1];
+    public void predictUV(VPXMacroblock[][] mbs) {
+        VPXMacroblock aboveMb = mbs[Rrow - 1][column];
+        VPXMacroblock leftMb = mbs[Rrow][column - 1];
 
         switch (this.chromaMode) {
         case SubblockConstants.DC_PRED:
@@ -256,7 +256,7 @@ public class Macroblock {
         case SubblockConstants.TM_PRED:
             // TODO:
             // System.out.println("UV TM_PRED MB");
-            Macroblock ALMb = mbs[Rrow - 1][column - 1];
+            VPXMacroblock ALMb = mbs[Rrow - 1][column - 1];
             Subblock ALUSb = ALMb.uSubblocks[1][1];
             int alu = ALUSb.val[3 * 4 + 3];
             Subblock ALVSb = ALMb.vSubblocks[1][1];
@@ -303,9 +303,9 @@ public class Macroblock {
         }
     }
     
-    private void predictY(Macroblock[][] mbs) {
-        Macroblock aboveMb = mbs[Rrow - 1][column];
-        Macroblock leftMb = mbs[Rrow][column - 1];
+    private void predictY(VPXMacroblock[][] mbs) {
+        VPXMacroblock aboveMb = mbs[Rrow - 1][column];
+        VPXMacroblock leftMb = mbs[Rrow][column - 1];
 
         switch (this.lumaMode) {
         case SubblockConstants.DC_PRED:
@@ -321,7 +321,7 @@ public class Macroblock {
             break;
             
         case SubblockConstants.TM_PRED:
-            Macroblock upperLeft = mbs[Rrow - 1][column - 1];
+            VPXMacroblock upperLeft = mbs[Rrow - 1][column - 1];
             Subblock ALSb = upperLeft.ySubblocks[3][3];
             int aboveLeft = ALSb.val[3 * 4 + 3];
             predictLumaTM(aboveMb, leftMb, aboveLeft);
@@ -333,7 +333,7 @@ public class Macroblock {
         }
     }
 
-    private void predictLumaDC(Macroblock above, Macroblock left) {
+    private void predictLumaDC(VPXMacroblock above, VPXMacroblock left) {
         boolean hasAbove = Rrow > 1;
         boolean hasLeft = column > 1;
 
@@ -377,7 +377,7 @@ public class Macroblock {
                 ySubblocks[y][x]._predict = fill;
     }
 
-    private void predictLumaH(Macroblock leftMb) {
+    private void predictLumaH(VPXMacroblock leftMb) {
         Subblock[] leftYSb = new Subblock[4];
         for (int row = 0; row < 4; row++)
             leftYSb[row] = leftMb.ySubblocks[row][3];
@@ -394,7 +394,7 @@ public class Macroblock {
             }
     }
 
-    private void predictLumaTM(Macroblock above, Macroblock left, int aboveLeft) {
+    private void predictLumaTM(VPXMacroblock above, VPXMacroblock left, int aboveLeft) {
         Subblock[] leftYSb;
         Subblock[] aboveYSb = new Subblock[4];
         leftYSb = new Subblock[4];
@@ -419,7 +419,7 @@ public class Macroblock {
                 }
     }
 
-    private void predictLumaV(Macroblock above) {
+    private void predictLumaV(VPXMacroblock above) {
         Subblock[] aboveYSb = new Subblock[4];
         for (int col = 0; col < 4; col++)
             aboveYSb[col] = above.ySubblocks[3][col];
@@ -465,7 +465,7 @@ public class Macroblock {
         return null;
     }
 
-    public void decodeMacroBlock(Macroblock[][] mbs, VPXBooleanDecoder tockenDecoder, int[][][][] coefProbs) {
+    public void decodeMacroBlock(VPXMacroblock[][] mbs, VPXBooleanDecoder tockenDecoder, int[][][][] coefProbs) {
         if (this.skipCoeff > 0) {
             this.skipFilter = this.lumaMode != SubblockConstants.B_PRED;
         } else if (this.lumaMode != SubblockConstants.B_PRED)
@@ -474,7 +474,7 @@ public class Macroblock {
             decodeMacroBlockTokens(false, mbs, tockenDecoder, coefProbs);
     }
 
-    private void decodeMacroBlockTokens(boolean withY2, Macroblock[][] mbs, VPXBooleanDecoder decoder, int[][][][] coefProbs) {
+    private void decodeMacroBlockTokens(boolean withY2, VPXMacroblock[][] mbs, VPXBooleanDecoder decoder, int[][][][] coefProbs) {
         skipFilter = false;
         if (withY2) {
             skipFilter = skipFilter | decodePlaneTokens(1, VP8Util.PLANE.Y2, false, mbs, decoder, coefProbs);
@@ -485,7 +485,7 @@ public class Macroblock {
         skipFilter = !skipFilter;
     }
 
-    private boolean decodePlaneTokens(int dimentions, VP8Util.PLANE plane, boolean withY2, Macroblock[][] mbs, VPXBooleanDecoder decoder, int[][][][] coefProbs) {
+    private boolean decodePlaneTokens(int dimentions, VP8Util.PLANE plane, boolean withY2, VPXMacroblock[][] mbs, VPXBooleanDecoder decoder, int[][][][] coefProbs) {
         boolean r = false;
         for (int row = 0; row < dimentions; row++) {
             for (int col = 0; col < dimentions; col++) {
@@ -530,9 +530,9 @@ public class Macroblock {
         public int mode;
         public boolean someValuePresent;
         private int[] tokens;
-		private Macroblock self;
+		private VPXMacroblock self;
 
-        public Subblock(Macroblock self, int row, int col, VP8Util.PLANE plane) {
+        public Subblock(VPXMacroblock self, int row, int col, VP8Util.PLANE plane) {
             this.self = self;
 			this.row = row;
             this.col = col;
@@ -540,7 +540,7 @@ public class Macroblock {
             this.tokens = new int[16];
         }
 
-        public void predict(Macroblock[][] mbs) {
+        public void predict(VPXMacroblock[][] mbs) {
             Subblock aboveSb = getAbove(plane, mbs);
             Subblock leftSb = getLeft(plane, mbs);
 
@@ -634,7 +634,7 @@ public class Macroblock {
             this.val = dest;
         }
 
-        public Subblock getAbove(VP8Util.PLANE plane, Macroblock[][] mbs) {
+        public Subblock getAbove(VP8Util.PLANE plane, VPXMacroblock[][] mbs) {
             if (this.row > 0)
                 if (VP8Util.PLANE.Y1.equals(this.plane))
                     return self.ySubblocks[this.row - 1][this.col];
@@ -645,7 +645,7 @@ public class Macroblock {
 
             int x = this.col;
 
-            Macroblock mb2 = mbs[self.Rrow - 1][self.column];
+            VPXMacroblock mb2 = mbs[self.Rrow - 1][self.column];
             if (plane == VP8Util.PLANE.Y2) {
                 while (mb2.lumaMode == SubblockConstants.B_PRED)
                     mb2 = mbs[mb2.Rrow - 1][mb2.column];
@@ -654,7 +654,7 @@ public class Macroblock {
 
         }
 
-        public Subblock getLeft(VP8Util.PLANE p, Macroblock[][] mbs) {
+        public Subblock getLeft(VP8Util.PLANE p, VPXMacroblock[][] mbs) {
             if (this.col > 0)
                 if (VP8Util.PLANE.Y1.equals(this.plane))
                     return self.ySubblocks[this.row][this.col - 1];
@@ -664,7 +664,7 @@ public class Macroblock {
                     return self.vSubblocks[this.row][this.col - 1];
 
             int y = this.row;
-            Macroblock mb2 = mbs[self.Rrow][self.column - 1];
+            VPXMacroblock mb2 = mbs[self.Rrow][self.column - 1];
 
             if (p == VP8Util.PLANE.Y2)
                 while (mb2.lumaMode == SubblockConstants.B_PRED)
@@ -674,7 +674,7 @@ public class Macroblock {
 
         }
         
-        private int[] getAboveRightLowestRow(Macroblock[][] mbs) {
+        private int[] getAboveRightLowestRow(VPXMacroblock[][] mbs) {
             // this might break at right edge
             if( ! VP8Util.PLANE.Y1.equals(this.plane)) 
                 throw new NotImplementedException("Decoder.getAboveRight: not implemented for Y2 and chroma planes");
@@ -683,7 +683,7 @@ public class Macroblock {
             
             if(row==0 && col<3) {
                 // top row
-                Macroblock mb2=mbs[self.Rrow-1][self.column];
+                VPXMacroblock mb2=mbs[self.Rrow-1][self.column];
                 Subblock aboveRight = mb2.ySubblocks[3][col+1];
                 aboveRightDistValues = aboveRight.val;
                 
@@ -694,7 +694,7 @@ public class Macroblock {
                 
             } else if(row==0 && col==3) {
                 //top right
-                Macroblock aboveRightMb = mbs[self.Rrow-1][self.column+1];
+                VPXMacroblock aboveRightMb = mbs[self.Rrow-1][self.column+1];
                 if(aboveRightMb.column < (mbs[0].length-1)){
                     Subblock aboveRightSb = aboveRightMb.ySubblocks[3][0];
                     aboveRightDistValues = aboveRightSb.val;
