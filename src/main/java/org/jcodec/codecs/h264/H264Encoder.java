@@ -255,7 +255,7 @@ public class H264Encoder extends VideoEncoder {
 
         ByteBuffer buf = ByteBuffer.allocate(pic.getWidth() * pic.getHeight());
         BitWriter sliceData = new BitWriter(buf);
-        new SliceHeaderWriter().write(sh, idr, 2, sliceData);
+        SliceHeaderWriter.write(sh, idr, 2, sliceData);
 
         for (int mbY = 0, mbAddr = 0; mbY < sps.picHeightInMapUnitsMinus1 + 1; mbY++) {
             for (int mbX = 0; mbX < sps.picWidthInMbsMinus1 + 1; mbX++, mbAddr++) {

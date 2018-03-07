@@ -32,6 +32,8 @@ import java.util.ArrayList;
  * 
  */
 public class SliceHeaderReader {
+    private SliceHeaderReader() {
+    }
 
     public static SliceHeader readPart1(BitReader _in) {
 

@@ -8,10 +8,7 @@ public class MPEGDecoderTest {
 
     @Test
     public void testProbe() {
-        MPEGDecoder decoder = new MPEGDecoder();
-
-        Assert.assertEquals(50, decoder.probe(ByteBuffer.wrap(MPEGTestConst.mpeg())));
-        Assert.assertEquals(0, decoder.probe(ByteBuffer.wrap(MPEGTestConst.prores())));
-
+        Assert.assertEquals(50, MPEGDecoder.probe(ByteBuffer.wrap(MPEGTestConst.mpeg())));
+        Assert.assertEquals(0, MPEGDecoder.probe(ByteBuffer.wrap(MPEGTestConst.prores())));
     }
 }

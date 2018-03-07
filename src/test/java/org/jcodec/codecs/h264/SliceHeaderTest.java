@@ -24,8 +24,6 @@ public class SliceHeaderTest {
                 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x64, 0x1e, 0x2c, 0x5c, 0x90 };
         short[] pps = new short[] { 0xeb, 0xc2, 0xcb, 0x22, 0xc0 };
 
-        SliceHeaderWriter shw = new SliceHeaderWriter();
-
         BitReader reader = BitReader.createBitReader(ByteBuffer.wrap(data));
         ByteBuffer out = ByteBuffer.allocate(data.length);
         BitWriter writer = new BitWriter(out);
@@ -35,7 +33,7 @@ public class SliceHeaderTest {
         SliceHeader sh = SliceHeaderReader.readPart1(reader);
         SliceHeaderReader.readPart2(sh, new NALUnit(NALUnitType.NON_IDR_SLICE, 1), sps1, pps1, reader);
 
-        shw.write(sh, false, 1, writer);
+        SliceHeaderWriter.write(sh, false, 1, writer);
 
         writer.flush();
         out.flip();
