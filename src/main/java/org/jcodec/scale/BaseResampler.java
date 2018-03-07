@@ -11,7 +11,7 @@ import org.jcodec.common.tools.MathUtil;
  * @author Stanislav Vitvitskiy
  */
 public abstract class BaseResampler {
-    private final static ThreadLocal<int[]> tempBuffers = new ThreadLocal<int[]>();
+    private final ThreadLocal<int[]> tempBuffers;
     private Size toSize;
     private Size fromSize;
     private double scaleFactorX;
@@ -22,6 +22,7 @@ public abstract class BaseResampler {
         this.fromSize = from;
         scaleFactorX = (double) from.getWidth() / to.getWidth();
         scaleFactorY = (double) from.getHeight() / to.getHeight();
+        tempBuffers = new ThreadLocal<int[]>();
     }
 
     byte getPel(Picture pic, int plane, int x, int y) {
