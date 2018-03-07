@@ -179,17 +179,6 @@ public class JCodecUtil {
         return result;
     }
 
-    public static ThreadPoolExecutor getPriorityExecutor(int nThreads) {
-        return new ThreadPoolExecutor(nThreads, nThreads, 0L, TimeUnit.MILLISECONDS,
-                new PriorityBlockingQueue<Runnable>(10, PriorityFuture.COMP)) {
-
-            protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-                RunnableFuture<T> newTaskFor = super.newTaskFor(callable);
-                return new PriorityFuture<T>(newTaskFor, ((PriorityCallable<T>) callable).getPriority());
-            }
-        };
-    }
-
     public static String removeExtension(String name) {
         if (name == null)
             return null;
