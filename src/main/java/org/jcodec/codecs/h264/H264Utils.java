@@ -41,9 +41,6 @@ import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
  */
 public class H264Utils {
 
-    private static SliceHeaderReader shr = new SliceHeaderReader();
-    private static SliceHeaderWriter shw = new SliceHeaderWriter();
-
     public static ByteBuffer nextNALUnit(ByteBuffer buf) {
         skipToNALUnit(buf);
 
@@ -536,14 +533,13 @@ public class H264Utils {
     
     public static boolean iFrame(ByteBuffer _data) {
         ByteBuffer data = _data.duplicate();
-        SliceHeaderReader shr = new SliceHeaderReader();
         ByteBuffer segment;
         while ((segment = H264Utils.nextNALUnit(data)) != null) {
             NALUnitType type = NALUnit.read(segment).type;
             if (type == NALUnitType.IDR_SLICE || type == NALUnitType.NON_IDR_SLICE) {
                 unescapeNAL(segment);
                 BitReader reader = BitReader.createBitReader(segment);
-                SliceHeader part1 = shr.readPart1(reader);
+                SliceHeader part1 = SliceHeaderReader.readPart1(reader);
                 return part1.sliceType == SliceType.I;
             }
         }
@@ -745,7 +741,7 @@ public class H264Utils {
             H264Utils.unescapeNAL(is);
 
             BitReader reader = BitReader.createBitReader(is);
-            SliceHeader sh = shr.readPart1(reader);
+            SliceHeader sh = SliceHeaderReader.readPart1(reader);
 
             PictureParameterSet pp = findPPS(pps, sh.picParameterSetId);
 
@@ -759,7 +755,7 @@ public class H264Utils {
             H264Utils.unescapeNAL(is);
 
             BitReader reader = BitReader.createBitReader(is);
-            SliceHeader sh = shr.readPart1(reader);
+            SliceHeader sh = SliceHeaderReader.readPart1(reader);
 
             return part2(is, os, nu, sps, pps, nal, reader, sh);
         }
@@ -771,7 +767,7 @@ public class H264Utils {
 
             tweak(sh);
 
-            shw.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
+            SliceHeaderWriter.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
 
             if (pps.entropyCodingModeFlag)
                 copyDataCABAC(is, os, reader, writer);

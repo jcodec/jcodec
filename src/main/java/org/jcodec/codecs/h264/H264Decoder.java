@@ -395,7 +395,7 @@ public class H264Decoder extends VideoDecoder {
             NALUnit marker = NALUnit.read(nalUnit);
             if (marker.type == NALUnitType.IDR_SLICE || marker.type == NALUnitType.NON_IDR_SLICE) {
                 BitReader reader = BitReader.createBitReader(nalUnit);
-                validSh = validSh(new SliceHeaderReader().readPart1(reader));
+                validSh = validSh(SliceHeaderReader.readPart1(reader));
                 break;
             } else if (marker.type == NALUnitType.SPS) {
                 validSps = validSps(SeqParameterSet.read(nalUnit));

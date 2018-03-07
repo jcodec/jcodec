@@ -104,15 +104,13 @@ public class MovStitch2 {
 
     public static void doFrame(ByteBuffer data, ByteBuffer dst, SeqParameterSet sps, PictureParameterSet pps)
             throws IOException {
-        SliceHeaderWriter shw = new SliceHeaderWriter();
-        SliceHeaderReader shr = new SliceHeaderReader();
         while (data.remaining() > 0) {
             ByteBuffer nalUnit = H264Utils.nextNALUnit(data);
 
             NALUnit nu = NALUnit.read(nalUnit);
             if (nu.type == NALUnitType.IDR_SLICE || nu.type == NALUnitType.NON_IDR_SLICE) {
                 dst.getInt(1);
-                copyNU(shr, shw, nu, nalUnit, dst, sps, pps);
+                copyNU(nu, nalUnit, dst, sps, pps);
             } else {
                 dst.putInt(1);
                 nu.write(dst);
@@ -123,8 +121,8 @@ public class MovStitch2 {
         dst.flip();
     }
 
-    public static void copyNU(SliceHeaderReader shr, SliceHeaderWriter shw, NALUnit nu, ByteBuffer is, ByteBuffer os,
             SeqParameterSet sps, PictureParameterSet pps) {
+    public static void copyNU(NALUnit nu, ByteBuffer is, ByteBuffer os,
         BitReader reader = BitReader.createBitReader(is);
         BitWriter writer = new BitWriter(os);
 
@@ -133,7 +131,7 @@ public class MovStitch2 {
         sh.picParameterSetId = 1;
 
         nu.write(os);
-        shw.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
+        SliceHeaderWriter.write(sh, nu.type == NALUnitType.IDR_SLICE, nu.nal_ref_idc, writer);
 
         copyCABAC(writer, reader);
     }
