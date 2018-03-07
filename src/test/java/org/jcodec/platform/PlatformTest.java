@@ -4,6 +4,8 @@ import org.jcodec.api.transcode.filters.ScaleFilter;
 import org.jcodec.common.model.Size;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+
 import static org.junit.Assert.assertEquals;
 
 public class PlatformTest {
@@ -19,10 +21,22 @@ public class PlatformTest {
         return Integer.parseInt(str);
     }
 
+    static int parseBuf(ByteBuffer str) {
+        byte[] dst = new byte[str.remaining()];
+        str.get(dst);
+        return Integer.parseInt(new String(dst));
+    }
+
+
     @Test
     public void testInvokeStatic() {
         int parse = Platform.invokeStaticMethod(PlatformTest.class, "parse", new Object[]{"42"});
         assertEquals(42, parse);
     }
 
+    @Test
+    public void testInvokeStatic2() {
+        int parseBuf = Platform.invokeStaticMethod(PlatformTest.class, "parseBuf", new Object[]{ByteBuffer.wrap("42".getBytes())});
+        assertEquals(42, parseBuf);
+    }
 }

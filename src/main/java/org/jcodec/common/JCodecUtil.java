@@ -109,7 +109,7 @@ public class JCodecUtil {
 
     private static int probe(ByteBuffer b, Class<?> vd) {
         try {
-            Platform.invokeStaticMethod(vd, "probe", new Object[]{b});
+            return Platform.invokeStaticMethod(vd, "probe", new Object[]{b});
         } catch (Exception e) {
         }
         return 0;
@@ -177,17 +177,6 @@ public class JCodecUtil {
             result[i] = b[i] & 0xff;
         }
         return result;
-    }
-
-    public static ThreadPoolExecutor getPriorityExecutor(int nThreads) {
-        return new ThreadPoolExecutor(nThreads, nThreads, 0L, TimeUnit.MILLISECONDS,
-                new PriorityBlockingQueue<Runnable>(10, PriorityFuture.COMP)) {
-
-            protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-                RunnableFuture<T> newTaskFor = super.newTaskFor(callable);
-                return new PriorityFuture<T>(newTaskFor, ((PriorityCallable<T>) callable).getPriority());
-            }
-        };
     }
 
     public static String removeExtension(String name) {

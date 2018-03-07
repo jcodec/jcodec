@@ -178,6 +178,7 @@ public class MBlockDecoderBase {
     }
 
     private void chromaAC(boolean leftAvailable, boolean topAvailable, int mbX, int mbY, int[] dc, int comp, int crQp,
+                          MBType curMbType, boolean codedAC, int[][] residualOut) {
         for (int i = 0; i < dc.length; i++) {
             int[] ac = residualOut[i];
 
