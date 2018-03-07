@@ -121,8 +121,8 @@ public class MovStitch2 {
         dst.flip();
     }
 
-            SeqParameterSet sps, PictureParameterSet pps) {
     public static void copyNU(NALUnit nu, ByteBuffer is, ByteBuffer os,
+                              SeqParameterSet sps, PictureParameterSet pps) {
         BitReader reader = BitReader.createBitReader(is);
         BitWriter writer = new BitWriter(os);
 
