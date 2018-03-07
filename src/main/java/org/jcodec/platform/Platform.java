@@ -44,7 +44,12 @@ public class Platform {
     private static Class[] classes(Object[] params) {
         Class[] classes = new Class[params.length];
         for (int i = 0; i < params.length; i++) {
-            classes[i] = params[i].getClass();
+            Class<?> cls = params[i].getClass();
+            if (boxed2primitive.containsKey(cls)) {
+                classes[i] = boxed2primitive.get(cls);
+            } else {
+                classes[i] = cls;
+            }
         }
         return classes;
     }
@@ -159,8 +164,12 @@ public class Platform {
 
     public static <T> T invokeStaticMethod(Class<?> cls, String methodName, Object[] params) {
         try {
-            Method method = cls.getDeclaredMethod(methodName, classes(params));
-            return (T) method.invoke(null, params);
+            for (Method method : cls.getDeclaredMethods()) {
+                if (method.getName().equals(methodName)) {
+                    return (T) method.invoke(null, params);
+                }
+            }
+            throw new NoSuchMethodException(cls + "." + methodName);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

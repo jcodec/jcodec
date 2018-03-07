@@ -57,7 +57,8 @@ public class SinkImpl implements Sink, PacketSink {
     private Codec outputAudioCodec;
     private Format outputFormat;
     //ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread
-    private final static ThreadLocal<ByteBuffer> bufferStore = new ThreadLocal<ByteBuffer>();
+    //FIXME: potential memory leak: non-static ThreadLocal
+    private final ThreadLocal<ByteBuffer> bufferStore;
 
     private AudioEncoder audioEncoder;
     private VideoEncoder videoEncoder;
@@ -127,6 +128,7 @@ public class SinkImpl implements Sink, PacketSink {
         this.outputVideoCodec = outputVideoCodec;
         this.outputAudioCodec = outputAudioCodec;
         this.outputFormat = outputFormat;
+        bufferStore = new ThreadLocal<ByteBuffer>();
     }
     
     public static SinkImpl createWithStream(SeekableByteChannel destStream, Format outputFormat, Codec outputVideoCodec, Codec outputAudioCodec) {

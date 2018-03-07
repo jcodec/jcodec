@@ -109,7 +109,7 @@ public class JCodecUtil {
 
     private static int probe(ByteBuffer b, Class<?> vd) {
         try {
-            Platform.invokeStaticMethod(vd, "probe", new Object[]{b});
+            return Platform.invokeStaticMethod(vd, "probe", new Object[]{b});
         } catch (Exception e) {
         }
         return 0;
