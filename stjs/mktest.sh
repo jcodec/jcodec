@@ -1,3 +1,5 @@
+set -xue
+
 cat <<EOF
 var fs = require('fs');
 
@@ -8,7 +10,7 @@ jslang.reflect = {};
 
 EOF
 
-cat /Users/zhukov/git/st-js/client-runtime/src/main/resources/META-INF/resources/webjars/stjs-client-runtime/stjs.js
+cat target/classes/stjs.js
 
 echo
 
@@ -29,7 +31,7 @@ String.format = function(_args) {
 }
 EOF2
 
-cat /Users/zhukov/workspaces/jcodecjs/jslang/target/classes/jslang.js
+cat ../jslang/target/classes/jslang.js
 cat target/classes/jcodec.js
 cat target/generated-test-js/jcodec.js
 
