@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4.demuxer;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import org.jcodec.codecs.aac.AACUtils;
 import org.jcodec.codecs.aac.ADTSParser;
@@ -43,7 +44,7 @@ public class CodecMP4DemuxerTrack extends MP4DemuxerTrack {
             if (Codec.codecByFourcc(getFourcc()) == Codec.H264) {
                 ByteBuffer annexbCoded = H264Utils.decodeMOVPacket(result, avcC);
                 if (H264Utils.isByteBufferIDRSlice(annexbCoded)) {
-                    return NIOUtils.combine(codecPrivate, annexbCoded);
+                    return NIOUtils.combineBuffers(Arrays.asList(codecPrivate, annexbCoded));
                 }
                 return annexbCoded;
             } else if (Codec.codecByFourcc(getFourcc()) == Codec.AAC) {
@@ -51,7 +52,7 @@ public class CodecMP4DemuxerTrack extends MP4DemuxerTrack {
                 Header adts = AACUtils.streamInfoToADTS(codecPrivate, true, 1, result.remaining());
                 ByteBuffer adtsRaw = ByteBuffer.allocate(7);
                 ADTSParser.write(adts, adtsRaw);
-                return NIOUtils.combine(adtsRaw, result);
+                return NIOUtils.combineBuffers(Arrays.asList(adtsRaw, result));
             }
         }
         return result;
