@@ -17,7 +17,7 @@ import org.junit.Test;
 public class ResamplerTest {
 
     @Test
-    public void randomLanczosTest() {
+    public void testRandomLanczos() {
         Size sz = new Size(320, 240);
 
         for (int i = 0; i < 10; i++) {
@@ -32,7 +32,7 @@ public class ResamplerTest {
     }
 
     @Test
-    public void randomBicubicTest() {
+    public void testRandomBicubic() {
         Size sz = new Size(320, 240);
 
         for (int i = 0; i < 10; i++) {

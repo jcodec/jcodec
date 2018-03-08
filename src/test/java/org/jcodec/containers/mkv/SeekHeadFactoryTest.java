@@ -25,11 +25,13 @@ import static org.jcodec.containers.mkv.MKVType.TrackType;
 import static org.jcodec.containers.mkv.MKVType.TrackUID;
 import static org.jcodec.containers.mkv.MKVType.Tracks;
 import static org.jcodec.containers.mkv.MKVType.WritingApp;
+import static org.jcodec.containers.mkv.SeekHeadFactory.estimeteSeekSize;
 import static org.jcodec.containers.mkv.boxes.EbmlUint.longToBytes;
 import static org.jcodec.containers.mkv.muxer.MKVMuxer.createBuffer;
 import static org.jcodec.containers.mkv.muxer.MKVMuxer.createDouble;
 import static org.jcodec.containers.mkv.muxer.MKVMuxer.createLong;
 import static org.jcodec.containers.mkv.muxer.MKVMuxer.createString;
+import static org.junit.Assert.assertEquals;
 
 import org.jcodec.api.UnhandledStateException;
 import org.jcodec.common.io.FileChannelWrapper;
@@ -153,21 +155,21 @@ public class SeekHeadFactoryTest {
     }
 
     @Test
-    public void printSizeOptions() throws Exception {
-        long s = SeekHeadFactory.estimeteSeekSize(4, 1); // seek to info
-        s += SeekHeadFactory.estimeteSeekSize(4, 1);
-        s += SeekHeadFactory.estimeteSeekSize(4, 2);
-        s += SeekHeadFactory.estimeteSeekSize(4, 3);
+    public void testPrintSizeOptions() throws Exception {
+        long s = estimeteSeekSize(4, 1); // seek to info
+        s += estimeteSeekSize(4, 1);
+        s += estimeteSeekSize(4, 2);
+        s += estimeteSeekSize(4, 3);
         int z = EbmlUtil.ebmlLength(s);
         s += 4 + z;
         System.out.println("size:" + s + " can be encoded in " + z + " byte(s) using ebml, with seekhead size eq to:" + z);
     }
     
     @Test
-    public void printVariousSeekSizes() throws Exception {
-        System.out.println("seekSize(1): "+SeekHeadFactory.estimeteSeekSize(4, 1));
-        System.out.println("seekSize(2): "+SeekHeadFactory.estimeteSeekSize(4, 2));
-        System.out.println("seekSize(3): "+SeekHeadFactory.estimeteSeekSize(4, 3));
+    public void testEstimeteSeekSize() throws Exception {
+        assertEquals(14, estimeteSeekSize(4, 1));
+        assertEquals(15, estimeteSeekSize(4, 2));
+        assertEquals(16, estimeteSeekSize(4, 3));
     }
 
     public static int fakeZOffset = 0;
@@ -191,7 +193,7 @@ public class SeekHeadFactoryTest {
         a.a.add(createFakeZ(Cues.id,   0xFF));
         int computeSize = a.computeSeekHeadSize();
         System.out.println("SeekHeadSize: "+computeSize);
-        Assert.assertEquals(a.estimateSize(), computeSize);
+        assertEquals(a.estimateSize(), computeSize);
         
     }
     
@@ -209,7 +211,7 @@ public class SeekHeadFactoryTest {
         a.add(createFakeElement(Cues.id,   0xFEFFFF-4-3));
         int computeSize = a.computeSeekHeadSize();
         System.out.println("SeekHeadSize: "+computeSize);
-        Assert.assertEquals(a.estimateSize(), computeSize);
+        assertEquals(a.estimateSize(), computeSize);
         
     }
     
@@ -222,9 +224,9 @@ public class SeekHeadFactoryTest {
         a.add(createFakeElement(Tags.id,   0xFF-4-4));
         int computeSize = a.computeSeekHeadSize();
         System.out.println("SeekHeadSize: "+computeSize);
-        Assert.assertEquals(a.estimateSize(), computeSize);
+        assertEquals(a.estimateSize(), computeSize);
         ByteBuffer mux = a.indexSeekHead().getData();
-        Assert.assertEquals(a.estimateSize(), mux.limit());
+        assertEquals(a.estimateSize(), mux.limit());
         FileOutputStream fos = new FileOutputStream("src/test/resources/mkv/seek_head.ebml");
         try {
             fos.getChannel().write(mux);

@@ -25,7 +25,7 @@ public class VP8DecoderTest {
 
 	@Ignore
 	@Test
-	public void testKF() throws Exception {
+	public void _testKF() throws Exception {
 		Picture pic = Picture.create(640, 480, ColorSpace.YUV420);
 		Picture decoded = dec.decodeFrame(bb.duplicate(), pic.getData());
 
@@ -34,7 +34,7 @@ public class VP8DecoderTest {
 
 	@Ignore
 	@Test
-	public void testKFToPicture() throws Exception {
+	public void _testKFToPicture() throws Exception {
 		Picture pic = Picture.create(640, 480, ColorSpace.YUV420);
 		Picture decoded = dec.decodeFrame(bb.duplicate(), pic.getData());
 		ImageIO.write(AWTUtil.toBufferedImage(decoded), "png", Utils.tildeExpand("~/decoded.pic.png"));

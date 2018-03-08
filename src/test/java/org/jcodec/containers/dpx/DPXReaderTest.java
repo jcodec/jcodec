@@ -18,7 +18,7 @@ public class DPXReaderTest {
     private final String DPX_V1 = "src/test/resources/dpx/3k-MACG_S02_Ep040_ING_5893876_00000.dpx";
 
     @Test
-    public void tryParseISO8601Date() {
+    public void testTryParseISO8601Date() {
         assertNull(DPXReader.tryParseISO8601Date(""));
         assertNotNull(DPXReader.tryParseISO8601Date("2017:09:05:14:14:59"));
         assertNotNull(DPXReader.tryParseISO8601Date("2017:09:05:14:14:58:-08"));
@@ -26,7 +26,7 @@ public class DPXReaderTest {
     }
 
     @Test
-    public void parseMetadata_DPXV1() throws IOException {
+    public void testParseMetadata_DPXV1() throws IOException {
         SeekableByteChannel _in = NIOUtils.readableChannel(new File(DPX_V1));
 
         try {
@@ -42,7 +42,7 @@ public class DPXReaderTest {
     }
 
     @Test
-    public void parseMetadata_DPXV2() throws Exception {
+    public void testParseMetadata_DPXV2() throws Exception {
         SeekableByteChannel _in = NIOUtils.readableChannel(new File(DPX_V2));
 
         try {

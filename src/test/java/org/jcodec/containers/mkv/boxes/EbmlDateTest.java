@@ -22,7 +22,7 @@ public class EbmlDateTest {
     }
     
     @Ignore @Test
-    public void testSet() throws Exception {
+    public void _testSet() throws Exception {
         EbmlDate d = MKVType.createByType(MKVType.DateUTC);
         d.setLong(0);
         Assert.assertEquals(getDate(1970, 1, 1), d.getDate());

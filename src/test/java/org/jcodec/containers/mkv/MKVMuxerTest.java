@@ -41,7 +41,7 @@ public class MKVMuxerTest {
 
     
     @Ignore @Test
-    public void testRead10Frames() throws Exception {
+    public void _testRead10Frames() throws Exception {
         byte[][] rawFrames = new byte[10][];
         rawFrames[0] = readFileToByteArray(new File("src/test/resources/mkv/10frames01.vp8"));
         rawFrames[1] = readFileToByteArray(new File("src/test/resources/mkv/10frames02.vp8"));
@@ -147,12 +147,7 @@ public class MKVMuxerTest {
     }
 
     @Ignore @Test
-    public void testMatroskaBytes() throws Exception {
-        Assert.assertArrayEquals(new byte[] { 0x6d, 0x61, 0x74, 0x72, 0x6f, 0x73, 0x6b, 0x61 }, "matroska".getBytes());
-    }
-
-    @Ignore @Test
-    public void testEBMLHeaderMuxin() throws Exception {
+    public void _testEBMLHeaderMuxin() throws Exception {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
         EbmlString docTypeElem = (EbmlString) MKVType.createByType(DocType);
@@ -173,7 +168,7 @@ public class MKVMuxerTest {
     }
 
     @Ignore @Test
-    public void testEbmlMasterMuxig() throws Exception {
+    public void _testEbmlMasterMuxig() throws Exception {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
         EbmlString docTypeElem = (EbmlString) MKVType.createByType(DocType);
@@ -186,7 +181,7 @@ public class MKVMuxerTest {
     }
 
     @Ignore @Test
-    public void testEmptyEbmlMasterMuxig() throws Exception {
+    public void _testEmptyEbmlMasterMuxig() throws Exception {
         EbmlMaster ebmlHeaderElem = (EbmlMaster) MKVType.createByType(EBML);
 
         ByteBuffer bb = ebmlHeaderElem.getData();
@@ -202,7 +197,7 @@ public class MKVMuxerTest {
     }
 
     @Ignore @Test
-    public void copyMuxing() throws Exception {
+    public void _copyMuxing() throws Exception {
         FileInputStream inputStream = new FileInputStream(suite.test3);
         MKVParser parser = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
         List<EbmlMaster> tree = null;
@@ -326,28 +321,6 @@ public class MKVMuxerTest {
                 blocks.add(block);
         }
         return blocks;
-    }
-
-    @Ignore @Test
-    public void testBasicMathDivision() throws Exception {
-        int framesPerCluster = 25;
-        int i = 0;
-        Assert.assertEquals(0, i%framesPerCluster);
-        i=25;
-        Assert.assertEquals(0, i%framesPerCluster);
-        i=50;
-        Assert.assertEquals(0, i%framesPerCluster);
-    }
-    
-    @Ignore @Test
-    public void testBasicLinkedList() throws Exception {
-        LinkedList<Integer> ll = new LinkedList<Integer>();
-        ll.add(1);
-        Assert.assertEquals(Integer.valueOf(1), ll.getLast());
-        ll.add(2);
-        Assert.assertEquals(Integer.valueOf(2), ll.getLast());
-        ll.add(3);
-        Assert.assertEquals(Integer.valueOf(3), ll.getLast());
     }
 
     public static byte[] bufferToArray(ByteBuffer bb) {

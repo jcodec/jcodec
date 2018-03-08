@@ -49,7 +49,7 @@ public class TranscoderTest {
     }
 
     @Test
-    public void canFilterVideoAndCopyAudio() throws Exception {
+    public void testCanFilterVideoAndCopyAudio() throws Exception {
         new File("tmp").mkdirs();
 
         File input = new File("src/test/resources/video/seq_h264_4_audio.mp4");

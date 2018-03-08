@@ -20,7 +20,7 @@ import net.sourceforge.jaad.aac.syntax.BitStream;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.NIOBitStream;
 
-public class TestBitReader {
+public class BitStreamTest {
     @Test
     public void testEOF() throws Exception {
         byte[] src = new byte[] { b("10011000") };
