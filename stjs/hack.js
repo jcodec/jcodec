@@ -3,7 +3,7 @@ const fs = require('fs');
 const javasrc = "src";
 const stjssrc = "stjs";
 
-String.prototype.equals = function (s) { return s === this; };
+String.prototype.equals = function (s) { return s == this; };
 String.prototype.contains = function (it) { return this.indexOf(it) >= 0; };
 String.prototype.matches = function (regexp) { return this.match("^" + regexp + "$") != null; }
 String.prototype.replaceAll = function (regexp, replace) { return this.replace(new RegExp(regexp, "g"), replace); }
