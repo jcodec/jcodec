@@ -3,6 +3,7 @@ import static java.lang.System.arraycopy;
 import static org.jcodec.common.tools.MathUtil.clip;
 
 import org.jcodec.common.model.Picture;
+import org.stjs.javascript.annotation.JavascriptFunction;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -909,6 +910,7 @@ public class BlockInterpolator {
         }
     }
 
+    @JavascriptFunction
     private interface LumaInterpolator {
         void getLuma(byte[] pels, int picW, int imgH, byte[] blk, int blkOff, int blkStride, int x, int y, int blkW,
                 int blkH);
