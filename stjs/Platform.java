@@ -40,7 +40,7 @@ public class Platform {
     public final static String ISO8859_1 = "iso8859-1";
 
     public static <T> T newInstance(Class<T> clazz, Object[] params) {
-        return JSFunctionAdapter.apply(clazz, null, JSCollections.$castArray(params));
+        return JSObjectAdapter.$js("new (Function.prototype.bind.apply(clazz, [null].concat(params)))");
     }
 
     public static Field[] getDeclaredFields(Class<?> class1) {
