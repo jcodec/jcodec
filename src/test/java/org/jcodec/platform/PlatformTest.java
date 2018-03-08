@@ -43,11 +43,9 @@ public class PlatformTest {
         int parseBuf = Platform.invokeStaticMethod(PlatformTest.class, "parseBuf", new Object[]{ByteBuffer.wrap("42".getBytes())});
         assertEquals(42, parseBuf);
     }
-
     @Test
     public void testAssignable() {
         assertTrue(Platform.isAssignableFrom(SampleEntry.class, VideoSampleEntry.class));
         assertFalse(Platform.isAssignableFrom(VideoSampleEntry.class, SampleEntry.class));
     }
-
 }
