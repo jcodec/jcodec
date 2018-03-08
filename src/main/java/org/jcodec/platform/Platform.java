@@ -151,6 +151,10 @@ public class Platform {
     }
 
     public static boolean isAssignableFrom(Class class1, Class class2) {
+        if (class1 == class2 || class1.equals(class2)) {
+            return true;
+        }
+        System.out.println("isAssignableFrom "+class1+" "+class2);
         return class1.isAssignableFrom(class2);
     }
 
