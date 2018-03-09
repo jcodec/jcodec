@@ -2,11 +2,15 @@ package org.jcodec.platform;
 
 import org.jcodec.api.transcode.filters.ScaleFilter;
 import org.jcodec.common.model.Size;
+import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class PlatformTest {
     @Test
@@ -38,5 +42,10 @@ public class PlatformTest {
     public void testInvokeStatic2() {
         int parseBuf = Platform.invokeStaticMethod(PlatformTest.class, "parseBuf", new Object[]{ByteBuffer.wrap("42".getBytes())});
         assertEquals(42, parseBuf);
+    }
+    @Test
+    public void testAssignable() {
+        assertTrue(Platform.isAssignableFrom(SampleEntry.class, VideoSampleEntry.class));
+        assertFalse(Platform.isAssignableFrom(VideoSampleEntry.class, SampleEntry.class));
     }
 }

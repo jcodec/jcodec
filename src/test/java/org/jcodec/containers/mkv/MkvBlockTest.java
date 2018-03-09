@@ -118,7 +118,7 @@ public class MkvBlockTest {
     }
     
     @Ignore @Test
-    public void testGetSize() throws Exception {
+    public void _testGetSize() throws Exception {
         MKVTestSuite suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())
             Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");

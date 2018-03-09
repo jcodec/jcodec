@@ -4,7 +4,7 @@ import org.jcodec.codecs.vpx.VP8Util;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestSubblockPrediction {
+public class SubblockPredictionTest {
 
     @Test
     public void testVR() {

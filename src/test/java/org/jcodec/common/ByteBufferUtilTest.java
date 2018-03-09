@@ -16,7 +16,7 @@ import java.nio.ByteBuffer;
  * @author The JCodec project
  * 
  */
-public class TestByteBufferUtil {
+public class ByteBufferUtilTest {
 
     @Test
     public void testSearch() {

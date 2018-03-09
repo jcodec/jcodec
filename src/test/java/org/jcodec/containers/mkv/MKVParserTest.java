@@ -42,7 +42,7 @@ public class MKVParserTest {
     }
     
     @Ignore @Test
-    public void testFindAll() throws IOException {
+    public void _testFindAll() throws IOException {
         for (File aFile : suite.allTests()) {
             System.out.println("Scanning file: " + aFile.getAbsolutePath());
             FileInputStream stream = new FileInputStream(aFile);
@@ -67,7 +67,7 @@ public class MKVParserTest {
     }
 
     @Ignore @Test
-    public void testFind() throws IOException {
+    public void _testFind() throws IOException {
         System.out.println("Scanning file: " + suite.test5.getAbsolutePath());
         FileInputStream stream = null;
         try {
@@ -91,7 +91,7 @@ public class MKVParserTest {
     }
 
     @Ignore @Test
-    public void testFirstElementAndSizeAsBytes() throws Exception {
+    public void _testFirstElementAndSizeAsBytes() throws Exception {
         FileInputStream fis = new FileInputStream("./src/test/resources/mkv/10frames.webm");
         try {
             SeekableByteChannel channel = new FileChannelWrapper(fis.getChannel());
@@ -104,7 +104,7 @@ public class MKVParserTest {
     }
     
     @Ignore @Test
-    public void testFirstElement() throws Exception {
+    public void _testFirstElement() throws Exception {
         FileInputStream fis = new FileInputStream("./src/test/resources/mkv/10frames.webm");
         try {
             FileChannelWrapper source = new FileChannelWrapper(fis.getChannel());

@@ -50,7 +50,7 @@ public class FixTimestampTest {
     // #ffmpeg -i 2.mp4 -acodec copy -vcodec copy -bsf h264_mp4toannexb 02.ts
     // ffmpeg version 2.3.3
     @Ignore @Test
-    public void testSetPts() throws Exception {
+    public void _testSetPts() throws Exception {
         File largeTs = new File("02.ts");
         File noSoundTs = new File("02nosound.ts");
         doCopyFile(largeTs, noSoundTs, true);

@@ -12,7 +12,7 @@ public class FfmpegIntDctTest {
     
     @Test
     @Ignore
-    public void testPerformance() throws Exception {
+    public void _testPerformance() throws Exception {
         short[] input = new short[] { -416, -33, -60, 32, 48, -40, 0, 0, 0,
                 -24, -56, 19, 26, 0, 0, 0, -42, 13, 80, -24, -40, 0, 0, 0, -56,
                 17, 44, -29, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
