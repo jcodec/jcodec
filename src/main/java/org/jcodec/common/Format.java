@@ -13,21 +13,21 @@ import java.util.Map;
  * 
  */
 public final class Format {
-    public final static Format MOV = new Format(true, true);
-    public final static Format MPEG_PS = new Format(true, true);
-    public final static Format MPEG_TS = new Format(true, true);
-    public final static Format MKV = new Format(true, true);
-    public final static Format H264 = new Format(true, false);
-    public final static Format RAW = new Format(true, true);
-    public final static Format FLV = new Format(true, true);
-    public final static Format AVI = new Format(true, true);
-    public final static Format IMG = new Format(true, false);
-    public final static Format IVF = new Format(true, false);
-    public final static Format MJPEG = new Format(true, false);
-    public final static Format Y4M = new Format(true, false);
-    public final static Format WAV = new Format(false, true);
-    public final static Format WEBP = new Format(true, false);
-    public final static Format MPEG_AUDIO = new Format(false, true);
+    public final static Format MOV = new Format("MOV", true, true);
+    public final static Format MPEG_PS = new Format("MPEG_PS", true, true);
+    public final static Format MPEG_TS = new Format("MPEG_TS", true, true);
+    public final static Format MKV = new Format("MKV", true, true);
+    public final static Format H264 = new Format("H264", true, false);
+    public final static Format RAW = new Format("RAW", true, true);
+    public final static Format FLV = new Format("FLV", true, true);
+    public final static Format AVI = new Format("AVI", true, true);
+    public final static Format IMG = new Format("IMG", true, false);
+    public final static Format IVF = new Format("IVF", true, false);
+    public final static Format MJPEG = new Format("MJPEG", true, false);
+    public final static Format Y4M = new Format("Y4M", true, false);
+    public final static Format WAV = new Format("WAV", false, true);
+    public final static Format WEBP = new Format("WEBP", true, false);
+    public final static Format MPEG_AUDIO = new Format("MPEG_AUDIO", false, true);
 
     private final static Map<String, Format> _values = new LinkedHashMap<String, Format>();
     static {
@@ -48,10 +48,12 @@ public final class Format {
         _values.put("MPEG_AUDIO", MPEG_AUDIO);
     }
 
-    private boolean video;
-    private boolean audio;
+    private final boolean video;
+    private final boolean audio;
+    private final String name;
 
-    private Format(boolean video, boolean audio) {
+    private Format(String name, boolean video, boolean audio) {
+        this.name = name;
         this.video = video;
         this.audio = audio;
     }

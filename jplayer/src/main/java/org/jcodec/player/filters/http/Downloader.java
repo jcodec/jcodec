@@ -28,6 +28,7 @@ import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.StringUtils;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.TapeTimecode;
+import org.jcodec.platform.Platform;
 import org.jcodec.player.filters.MediaInfo;
 
 /**
@@ -156,7 +157,7 @@ public class Downloader {
     }
 
     private static String[] getLines(ByteBuffer read) {
-        return StringUtils.splitS(new String(NIOUtils.toArray(read)), "\r\n");
+        return StringUtils.splitS(Platform.stringFromBytes(NIOUtils.toArray(read)), "\r\n");
     }
 
     private ByteBuffer toBuffer(ByteBuffer bfr, HttpEntity entity) throws IOException {

@@ -3,6 +3,7 @@ package org.jcodec.containers.mp4.boxes;
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.NIOUtils;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -28,7 +29,7 @@ public class MdtaBox extends Box {
 
     @Override
     public void parse(ByteBuffer buf) {
-        key = new String(NIOUtils.toArray(NIOUtils.readBuf(buf)));
+        key = Platform.stringFromBytes(NIOUtils.toArray(NIOUtils.readBuf(buf)));
     }
 
     public String getKey() {

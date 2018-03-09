@@ -28,7 +28,7 @@ public class PlatformTest {
     static int parseBuf(ByteBuffer str) {
         byte[] dst = new byte[str.remaining()];
         str.get(dst);
-        return Integer.parseInt(new String(dst));
+        return Integer.parseInt(Platform.stringFromBytes(dst));
     }
 
 
