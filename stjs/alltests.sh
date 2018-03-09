@@ -35,19 +35,17 @@ cat ../jslang/target/classes/jslang.js | sed 's/charAt/charCodeAt/g'
 cat target/classes/jcodec.js | sed 's/charAt/charCodeAt/g'
 cat target/generated-test-js/jcodec.js | sed 's/charAt/charCodeAt/g'
 
+tests=`find src/test/ -name '*Test.java' | sed -e 's}.*/}}' -e 's/.java$//' | tr '\n' ',' | sed 's/,$//'`
 cat <<EOF3
-var f = new File("hello.txt")
 
-console.log(f);
-console.log(System.currentTimeMillis());
-
-var start = System.currentTimeMillis();
-new ConformanceTest().testMp4Container();
-var conf = new PerformanceTest();
-console.log(conf);
-conf.testNoContainer();
-var time = System.currentTimeMillis() - start;
-console.log("ConformanceTest.testNoContainer ok "+time+" msec");
-
-process.exit(0)
+var testclasses=[$tests];
+testclasses.forEach(cls => {
+    var t = new cls();
+    for(var m in t) {
+        if (m.startsWith("test")) {
+            console.log(t, m);
+        }
+    }
+});
+process.exit(0);
 EOF3
