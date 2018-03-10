@@ -1,7 +1,7 @@
 package org.jcodec.samples.api;
 
 import static org.jcodec.common.Format.MOV;
-import static org.jcodec.common.Tuple._3;
+import static org.jcodec.common.Tuple.triple;
 
 import java.awt.Font;
 import java.awt.Graphics;
@@ -92,7 +92,7 @@ public class VideoFilter {
         Format format = JCodecUtil.detectFormat(input);
         Codec videoCodec = getVideoCodec(format, input);
         Codec audioCodec = getAudioCodec(format, input);
-        Source source = new SourceImpl(input.getAbsolutePath(), format, _3(0, 0, videoCodec), _3(0, 0, audioCodec));
+        Source source = new SourceImpl(input.getAbsolutePath(), format, triple(0, 0, videoCodec), triple(0, 0, audioCodec));
         Sink sink = new SinkImpl(output.getAbsolutePath(), MOV, videoCodec, audioCodec);
 
         TranscoderBuilder builder = Transcoder.newTranscoder();

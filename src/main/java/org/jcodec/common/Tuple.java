@@ -60,19 +60,19 @@ public class Tuple {
         }
     }
 
-    public static <T0> _1<T0> _1(T0 v0) {
+    public static <T0> _1<T0> single(T0 v0) {
         return new _1<T0>(v0);
     }
 
-    public static <T0, T1> _2<T0, T1> _2(T0 v0, T1 v1) {
+    public static <T0, T1> _2<T0, T1> pair(T0 v0, T1 v1) {
         return new _2<T0, T1>(v0, v1);
     }
 
-    public static <T0, T1, T2> _3<T0, T1, T2> _3(T0 v0, T1 v1, T2 v2) {
+    public static <T0, T1, T2> _3<T0, T1, T2> triple(T0 v0, T1 v1, T2 v2) {
         return new _3<T0, T1, T2>(v0, v1, v2);
     }
 
-    public static <T0, T1, T2, T3> _4<T0, T1, T2, T3> _4(T0 v0, T1 v1, T2 v2, T3 v3) {
+    public static <T0, T1, T2, T3> _4<T0, T1, T2, T3> quad(T0 v0, T1 v1, T2 v2, T3 v3) {
         return new _4<T0, T1, T2, T3>(v0, v1, v2, v3);
     }
 
@@ -97,7 +97,7 @@ public class Tuple {
         LinkedList<_2<T0, T1>> result = new LinkedList<_2<T0, T1>>();
         Set<Entry<T0, T1>> entrySet = m.entrySet();
         for (Entry<T0, T1> entry : entrySet) {
-            result.add(_2(entry.getKey(), entry.getValue()));
+            result.add(pair(entry.getKey(), entry.getValue()));
         }
         return result;
     }
@@ -189,7 +189,7 @@ public class Tuple {
     public static <T0, U> List<_1<U>> _1map0(List<_1<T0>> l, Mapper<T0, U> mapper) {
         LinkedList<_1<U>> result = new LinkedList<_1<U>>();
         for (_1<T0> _1 : l) {
-            result.add(_1(mapper.map(_1.v0)));
+            result.add(single(mapper.map(_1.v0)));
         }
         return result;
     }
@@ -197,7 +197,7 @@ public class Tuple {
     public static <T0, T1, U> List<_2<U, T1>> _2map0(List<_2<T0, T1>> l, Mapper<T0, U> mapper) {
         LinkedList<_2<U, T1>> result = new LinkedList<_2<U, T1>>();
         for (_2<T0, T1> _2 : l) {
-            result.add(_2(mapper.map(_2.v0), _2.v1));
+            result.add(pair(mapper.map(_2.v0), _2.v1));
         }
         return result;
     }
@@ -205,7 +205,7 @@ public class Tuple {
     public static <T0, T1, U> List<_2<T0, U>> _2map1(List<_2<T0, T1>> l, Mapper<T1, U> mapper) {
         LinkedList<_2<T0, U>> result = new LinkedList<_2<T0, U>>();
         for (_2<T0, T1> _2 : l) {
-            result.add(_2(_2.v0, mapper.map(_2.v1)));
+            result.add(pair(_2.v0, mapper.map(_2.v1)));
         }
         return result;
     }
@@ -213,7 +213,7 @@ public class Tuple {
     public static <T0, T1, T2, U> List<_3<U, T1, T2>> _3map0(List<_3<T0, T1, T2>> l, Mapper<T0, U> mapper) {
         LinkedList<_3<U, T1, T2>> result = new LinkedList<_3<U, T1, T2>>();
         for (_3<T0, T1, T2> _3 : l) {
-            result.add(_3(mapper.map(_3.v0), _3.v1, _3.v2));
+            result.add(triple(mapper.map(_3.v0), _3.v1, _3.v2));
         }
         return result;
     }
@@ -221,7 +221,7 @@ public class Tuple {
     public static <T0, T1, T2, U> List<_3<T0, U, T2>> _3map1(List<_3<T0, T1, T2>> l, Mapper<T1, U> mapper) {
         LinkedList<_3<T0, U, T2>> result = new LinkedList<_3<T0, U, T2>>();
         for (_3<T0, T1, T2> _3 : l) {
-            result.add(_3(_3.v0, mapper.map(_3.v1), _3.v2));
+            result.add(triple(_3.v0, mapper.map(_3.v1), _3.v2));
         }
         return result;
     }
@@ -229,7 +229,7 @@ public class Tuple {
     public static <T0, T1, T2, U> List<_3<T0, T1, U>> _3map3(List<_3<T0, T1, T2>> l, Mapper<T2, U> mapper) {
         LinkedList<_3<T0, T1, U>> result = new LinkedList<_3<T0, T1, U>>();
         for (_3<T0, T1, T2> _3 : l) {
-            result.add(_3(_3.v0, _3.v1, mapper.map(_3.v2)));
+            result.add(triple(_3.v0, _3.v1, mapper.map(_3.v2)));
         }
         return result;
     }
@@ -237,7 +237,7 @@ public class Tuple {
     public static <T0, T1, T2, T3, U> List<_4<U, T1, T2, T3>> _4map0(List<_4<T0, T1, T2, T3>> l, Mapper<T0, U> mapper) {
         LinkedList<_4<U, T1, T2, T3>> result = new LinkedList<_4<U, T1, T2, T3>>();
         for (_4<T0, T1, T2, T3> _4 : l) {
-            result.add(_4(mapper.map(_4.v0), _4.v1, _4.v2, _4.v3));
+            result.add(quad(mapper.map(_4.v0), _4.v1, _4.v2, _4.v3));
         }
         return result;
     }
@@ -245,7 +245,7 @@ public class Tuple {
     public static <T0, T1, T2, T3, U> List<_4<T0, U, T2, T3>> _4map1(List<_4<T0, T1, T2, T3>> l, Mapper<T1, U> mapper) {
         LinkedList<_4<T0, U, T2, T3>> result = new LinkedList<_4<T0, U, T2, T3>>();
         for (_4<T0, T1, T2, T3> _4 : l) {
-            result.add(_4(_4.v0, mapper.map(_4.v1), _4.v2, _4.v3));
+            result.add(quad(_4.v0, mapper.map(_4.v1), _4.v2, _4.v3));
         }
         return result;
     }
@@ -253,7 +253,7 @@ public class Tuple {
     public static <T0, T1, T2, T3, U> List<_4<T0, T1, U, T3>> _4map3(List<_4<T0, T1, T2, T3>> l, Mapper<T2, U> mapper) {
         LinkedList<_4<T0, T1, U, T3>> result = new LinkedList<_4<T0, T1, U, T3>>();
         for (_4<T0, T1, T2, T3> _4 : l) {
-            result.add(_4(_4.v0, _4.v1, mapper.map(_4.v2), _4.v3));
+            result.add(quad(_4.v0, _4.v1, mapper.map(_4.v2), _4.v3));
         }
         return result;
     }
@@ -261,7 +261,7 @@ public class Tuple {
     public static <T0, T1, T2, T3, U> List<_4<T0, T1, T2, U>> _4map4(List<_4<T0, T1, T2, T3>> l, Mapper<T3, U> mapper) {
         LinkedList<_4<T0, T1, T2, U>> result = new LinkedList<_4<T0, T1, T2, U>>();
         for (_4<T0, T1, T2, T3> _4 : l) {
-            result.add(_4(_4.v0, _4.v1, _4.v2, mapper.map(_4.v3)));
+            result.add(quad(_4.v0, _4.v1, _4.v2, mapper.map(_4.v3)));
         }
         return result;
     }

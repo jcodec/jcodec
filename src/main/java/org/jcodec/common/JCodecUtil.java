@@ -6,17 +6,11 @@ import static org.jcodec.common.Tuple._2;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.jcodec.codecs.aac.AACDecoder;
 import org.jcodec.codecs.h264.BufferH264ES;
@@ -232,7 +226,7 @@ public class JCodecUtil {
             MPSDemuxer demuxer = new MPSDemuxer(program);
             if (targetTrack == TrackType.AUDIO && demuxer.getAudioTracks().size() > 0
                     || targetTrack == TrackType.VIDEO && demuxer.getVideoTracks().size() > 0) {
-                found = _2(pid, (Demuxer) demuxer);
+                found = Tuple.pair(pid, (Demuxer) demuxer);
                 Logger.info("Using M2TS program: " + pid + " for " + targetTrack + " track.");
             } else {
                 program.close();
