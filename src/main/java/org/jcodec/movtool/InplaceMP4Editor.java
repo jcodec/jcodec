@@ -170,10 +170,10 @@ public class InplaceMP4Editor {
             List<Tuple._2<ByteBuffer, MovieFragmentBox>> temp = new LinkedList<Tuple._2<ByteBuffer, MovieFragmentBox>>();
             for (Atom fragAtom : getFragments(fi)) {
                 ByteBuffer fragBuffer = fetchBox(fi, fragAtom);
-                fragments.add(Tuple._2(fragAtom, fragBuffer));
+                fragments.add(Tuple.pair(fragAtom, fragBuffer));
                 MovieFragmentBox fragBox = (MovieFragmentBox) parseBox(fragBuffer);
                 fragBox.setMovie(moovBox);
-                temp.add(Tuple._2(fragBuffer, fragBox));
+                temp.add(Tuple.pair(fragBuffer, fragBox));
             }
 
             edit.applyToFragment(moovBox, Tuple._2_project1(temp).toArray(new MovieFragmentBox[0]));
@@ -187,7 +187,7 @@ public class InplaceMP4Editor {
 
         if (!rewriteBox(moovBuffer, moovBox))
             return null;
-        fragments.add(Tuple._2(moovAtom, moovBuffer));
+        fragments.add(Tuple.pair(moovAtom, moovBuffer));
         return fragments;
     }
 
