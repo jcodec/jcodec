@@ -73,10 +73,6 @@ public class Platform {
         return new String(data, offset, len, Charset.forName(charset));
     }
 
-    public static URL getResource(Class<?> class1, String string) {
-        return class1.getResource(string);
-    }
-
     public static boolean arrayEqualsInt(int[] a, int[] a2) {
         return Arrays.equals(a, a2);
     }

@@ -16,8 +16,7 @@ import static org.junit.Assert.assertEquals;
 public class AACUtilsTest {
     @Test
     public void testParseEsds() throws IOException {
-        URL resource = Platform.getResource(MP4DemuxerTest.class, "a01_0023.mp4");
-        File source = new File(resource.getFile());
+        File source = new File("src/test/java/org/jcodec/containers/mp4/demuxer/a01_0023.mp4");
         AudioSampleEntry sampleEntry = (AudioSampleEntry) MP4Util.parseMovie(source).getAudioTracks().get(0).getSampleEntries()[0];
         AudioFormat format = AACUtils.getMetadata(sampleEntry).getFormat();
         assertEquals(16, format.getSampleSizeInBits());

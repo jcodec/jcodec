@@ -33,9 +33,7 @@ public class MP4DemuxerTest {
     
     @Test
     public void testRawDemuxer() throws Exception {
-        URL resource = Platform.getResource(this.getClass(), "37.mp4");
-        System.out.println(resource);
-        File source = new File(resource.getFile());
+        File source = new File("src/test/java/org/jcodec/containers/mp4/demuxer/37.mp4");
         SeekableByteChannel input = new AutoFileChannelWrapper(source);
         MP4Demuxer rawMP4Demuxer = MP4Demuxer.createRawMP4Demuxer(input);
         int dataSize = rawMP4Demuxer.getAudioTracks().get(0).nextFrame().getData().remaining();
@@ -48,9 +46,7 @@ public class MP4DemuxerTest {
     // but 171 actual samples
     @Test
     public void testAudioTrack() throws Exception {
-        URL resource = Platform.getResource(this.getClass(), "37.mp4");
-        System.out.println(resource);
-        File source = new File(resource.getFile());
+        File source = new File("src/test/java/org/jcodec/containers/mp4/demuxer/37.mp4");
         SeekableByteChannel input = new AutoFileChannelWrapper(source);
         MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
         DemuxerTrack track = demuxer.getAudioTracks().get(0);
@@ -64,8 +60,7 @@ public class MP4DemuxerTest {
     // ffmpeg 3.2.2 loves to do it
     @Test
     public void testDefaultSampleSize() throws IOException {
-        URL resource = Platform.getResource(this.getClass(), "a01_0023.mp4");
-        File source = new File(resource.getFile());
+        File source = new File("src/test/java/org/jcodec/containers/mp4/demuxer/a01_0023.mp4");
         SeekableByteChannel input = new AutoFileChannelWrapper(source);
         MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
         PCMMP4DemuxerTrack track = (PCMMP4DemuxerTrack) demuxer.getAudioTracks().get(0);
