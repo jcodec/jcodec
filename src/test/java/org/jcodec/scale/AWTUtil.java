@@ -4,7 +4,13 @@ import static org.jcodec.common.model.ColorSpace.RGB;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
+import org.jcodec.codecs.png.PNGDecoder;
+import org.jcodec.common.VideoCodecMeta;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 
@@ -60,12 +66,28 @@ public class AWTUtil {
         }
     }
 
-    public static Picture fromBufferedImage(BufferedImage src, ColorSpace tgtColor) {
-        Picture rgb = fromBufferedImageRGB(src);
-        Transform tr = ColorUtil.getTransform(rgb.getColor(), tgtColor);
-        Picture res = Picture.create(rgb.getWidth(), rgb.getHeight(), tgtColor);
-        tr.transform(rgb, res);
+    public static Picture decodePNG(File f, ColorSpace tgtColor) throws IOException {
+        Picture picture = decodePNG0(f);
+        return convertColorSpace(picture, tgtColor);
+    }
+
+    public static Picture decodePNG0(File f) throws IOException {
+        PNGDecoder pngDec = new PNGDecoder();
+        ByteBuffer buf = NIOUtils.fetchFromFile(f);
+        VideoCodecMeta codecMeta = pngDec.getCodecMeta(buf);
+        return Picture.create(codecMeta.getSize().getWidth(), codecMeta.getSize().getHeight(),
+                ColorSpace.RGB);
+    }
+
+    public static Picture convertColorSpace(Picture pic, ColorSpace tgtColor) {
+        Transform tr = ColorUtil.getTransform(pic.getColor(), tgtColor);
+        Picture res = Picture.create(pic.getWidth(), pic.getHeight(), tgtColor);
+        tr.transform(pic, res);
         return res;
+    }
+
+    public static Picture fromBufferedImage(BufferedImage src, ColorSpace tgtColor) {
+        return convertColorSpace(fromBufferedImageRGB(src), tgtColor);
     }
 
     public static Picture fromBufferedImageRGB(BufferedImage src) {

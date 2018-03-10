@@ -129,8 +129,7 @@ public class H264EncoderTest {
     @Test
     public void testBufferOverflowImage() throws IOException {
         H264Encoder encoder = H264Encoder.createH264Encoder();
-        Picture picture = AWTUtil.fromBufferedImage(
-                ImageIO.read(new File("src/test/resources/h264/buffer_overflow.png")), ColorSpace.YUV420J);
+        Picture picture = AWTUtil.decodePNG((new File("src/test/resources/h264/buffer_overflow.png")), ColorSpace.YUV420J);
         ByteBuffer buf = ByteBuffer.allocate(picture.getWidth() * picture.getHeight());
         encoder.encodeFrame(picture, buf);
     }
