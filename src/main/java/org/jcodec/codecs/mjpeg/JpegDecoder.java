@@ -2,7 +2,6 @@ package org.jcodec.codecs.mjpeg;
 import static org.jcodec.codecs.mjpeg.JpegConst.naturalOrder;
 
 import org.jcodec.api.UnhandledStateException;
-import org.jcodec.codecs.mjpeg.tools.Asserts;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.VideoDecoder;
 import org.jcodec.common.dct.SimpleIDCT10Bit;
@@ -68,7 +67,7 @@ public class JpegDecoder extends VideoDecoder {
         return result;
     }
 
-    void putBlock(byte[] plane, int stride, int[] patch, int x, int y, int field, int step) {
+    private static void putBlock(byte[] plane, int stride, int[] patch, int x, int y, int field, int step) {
         int dstride = step * stride;
         for (int i = 0, off = field * stride + y * dstride + x, poff = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++)
@@ -78,8 +77,8 @@ public class JpegDecoder extends VideoDecoder {
         }
     }
 
-    void decodeMCU(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture result, int bx, int by,
-            int blockH, int blockV, int field, int step) {
+    private void decodeMCU(BitReader bits, int[] dcPredictor, int[][] quant, VLC[] huff, Picture result, int bx, int by,
+                           int blockH, int blockV, int field, int step) {
         int sx = bx << (blockH - 1);
         int sy = by << (blockV - 1);
 
@@ -103,7 +102,7 @@ public class JpegDecoder extends VideoDecoder {
         putBlock(result.getPlaneData(plane), result.getPlaneWidth(plane), buf, blkX, blkY, field, step);
     }
 
-    int readDCValue(BitReader _in, VLC table) {
+    static int readDCValue(BitReader _in, VLC table) {
         int code = table.readVLC16(_in);
         return code != 0 ? toValue(_in.readNBit(code), code) : 0;
     }
@@ -125,7 +124,7 @@ public class JpegDecoder extends VideoDecoder {
         } while (code != 0 && curOff < 64);
     }
 
-    public static final int toValue(int raw, int length) {
+    static int toValue(int raw, int length) {
         return (length >= 1 && raw < (1 << length - 1)) ? -(1 << length) + 1 + raw : raw;
     }
 

@@ -34,7 +34,7 @@ public class JpegToThumb2x2 extends JpegDecoder {
         putBlock2x2(result.getPlaneData(plane), result.getPlaneWidth(plane), buf, blkX, blkY, field, step);
     }
 
-    private void putBlock2x2(byte[] plane, int stride, int[] patch, int x, int y, int field, int step) {
+    private static void putBlock2x2(byte[] plane, int stride, int[] patch, int x, int y, int field, int step) {
         stride >>= 2;
         int dstride = stride * step;
         int off = field * stride + (y >> 2) * dstride + (x >> 2);
