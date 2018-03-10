@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 public class MPEGPredOctTest {
 
-    static byte[] padded = toByteArrayShifted(new int[] {
+    private final static byte[] padded = toByteArrayShifted(new int[] {
 
     10, 10, 10, 20, 30, 40, 40, 40, 40,
 
@@ -30,7 +30,7 @@ public class MPEGPredOctTest {
 
     });
 
-    static byte[] unpadded = toByteArrayShifted(new int[] {
+    private final static byte[] unpadded = toByteArrayShifted(new int[] {
 
     10, 20, 30, 40,
 
@@ -42,7 +42,7 @@ public class MPEGPredOctTest {
 
     });
 
-    static int[][] interp = new int[][] {
+    private final static int[][] interp = new int[][] {
     /* 0-7,0 */
     { 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160 },
             { 11, 21, 31, 40, 51, 61, 71, 80, 91, 101, 111, 120, 131, 141, 151, 160 },
