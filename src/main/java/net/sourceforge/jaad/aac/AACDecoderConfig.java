@@ -12,13 +12,13 @@ import net.sourceforge.jaad.aac.syntax.PCE;
  * under the Public Domain license. Code changes provided by the JCodec project
  * are distributed under FreeBSD license.
  * 
- * DecoderConfig that must be passed to the
+ * AACDecoderConfig that must be passed to the
  * <code>Decoder</code> constructor. Typically it is created via one of the
  * static parsing methods.
  *
  * @author in-somnia
  */
-public class DecoderConfig implements SyntaxConstants {
+public class AACDecoderConfig implements SyntaxConstants {
 
 	private Profile profile, extProfile;
 	private SampleFrequency sampleFrequency;
@@ -32,7 +32,7 @@ public class DecoderConfig implements SyntaxConstants {
 	//extension: error resilience
 	private boolean sectionDataResilience, scalefactorResilience, spectralDataResilience;
 
-	private DecoderConfig() {
+	private AACDecoderConfig() {
 		profile = Profile.AAC_MAIN;
 		extProfile = Profile.UNKNOWN;
 		sampleFrequency = SampleFrequency.SAMPLE_FREQUENCY_NONE;
@@ -142,11 +142,11 @@ public class DecoderConfig implements SyntaxConstants {
 	 * Parses the input arrays as a DecoderSpecificInfo, as used in MP4
 	 * containers.
 	 * 
-	 * @return a DecoderConfig
+	 * @return a AACDecoderConfig
 	 */
-	public static DecoderConfig parseMP4DecoderSpecificInfo(byte[] data) throws AACException {
+	public static AACDecoderConfig parseMP4DecoderSpecificInfo(byte[] data) throws AACException {
 		final IBitStream _in = BitStream.createBitStream(data);
-		final DecoderConfig config = new DecoderConfig();
+		final AACDecoderConfig config = new AACDecoderConfig();
 
 		try {
 			config.profile = readProfile(_in);
@@ -213,7 +213,7 @@ public class DecoderConfig implements SyntaxConstants {
 		return Profile.forInt(i);
 	}
 
-	private static void readSyncExtension(IBitStream _in, DecoderConfig config) throws AACException {
+	private static void readSyncExtension(IBitStream _in, AACDecoderConfig config) throws AACException {
 		final int type = _in.readBits(11);
 		switch(type) {
 			case 0x2B7:

@@ -7,13 +7,11 @@ import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STERE
 import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER;
 import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO;
 
-import java.util.logging.Level;
-
+import net.sourceforge.jaad.aac.AACDecoderConfig;
 import org.jcodec.common.logging.Logger;
 
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.ChannelConfiguration;
-import net.sourceforge.jaad.aac.DecoderConfig;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleBuffer;
 import net.sourceforge.jaad.aac.SampleFrequency;
@@ -33,7 +31,7 @@ import net.sourceforge.jaad.aac.tools.MS;
 public class SyntacticElements implements SyntaxConstants {
 
 	//global properties
-	private DecoderConfig config;
+	private AACDecoderConfig config;
 	private boolean sbrPresent, psPresent;
 	private int bitsRead;
 	//elements
@@ -45,7 +43,7 @@ public class SyntacticElements implements SyntaxConstants {
 	private int curElem, curCCE, curDSE, curFIL;
 	private float[][] data;
 
-	public SyntacticElements(DecoderConfig config) {
+	public SyntacticElements(AACDecoderConfig config) {
 		this.config = config;
 
 		pce = new PCE();
