@@ -1,4 +1,5 @@
 package org.jcodec.platform;
+
 import js.lang.IllegalArgumentException;
 import js.lang.IllegalStateException;
 import js.lang.Comparable;
@@ -17,6 +18,7 @@ import static org.stjs.javascript.JSObjectAdapter.$get;
 
 import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.common.tools.ToJSON;
+import org.stjs.javascript.Array;
 import org.stjs.javascript.Global;
 import org.stjs.javascript.JSCollections;
 import org.stjs.javascript.JSFunctionAdapter;
@@ -52,19 +54,22 @@ public class Platform {
     }
 
     public static String stringFromCharset(byte[] data, String charset) {
-        return null;
+        if (charset.equals(UTF_8)) {
+            return stringFromBytes(data);
+        }
+        throw new RuntimeException("charset not supported " + charset);
     }
 
-    public static byte[] getBytesForCharset(String url, String charset) {
-        return null;
+    public static byte[] getBytesForCharset(String str, String charset) {
+        return str.getBytes();
     }
 
     public static String stringFromCharset4(byte[] data, int offset, int len, String charset) {
-        return null;
+        throw new RuntimeException("TODO stringFromCharset4");
     }
 
     public static URL getResource(Class<?> class1, String string) {
-        return null;
+        throw new RuntimeException("TODO getResource");
     }
 
     public static boolean arrayEqualsInt(int[] a, int[] a2) {
@@ -120,27 +125,24 @@ public class Platform {
     }
 
     public static void deleteFile(File file) {
-        throw new RuntimeException("deleteFile not implemented");
+        file.$delete();
     }
 
     public static byte[] getBytes(String fourcc) {
-        try {
-            return fourcc.getBytes("iso8859-1");
-        } catch (Exception e) {
-            return null;
-        }
+        return getBytesForCharset(fourcc, ISO8859_1);
     }
 
     public static String stringFromBytes(byte[] bytes) {
-        try {
-            return JSObjectAdapter.$js("String.fromCharCode.apply(null, bytes)");
-        } catch (Exception e) {
-            return null;
-        }
+        return JSObjectAdapter.$js("String.fromCharCode.apply(null, bytes)");
     }
 
     public static boolean isAssignableFrom(Class class1, Class class2) {
-        return class1.isAssignableFrom(class2);
+        if (class1 == class2) {
+            return true;
+        }
+        Array<Class> parents = (Array<Class>) JSGlobal.$or(JSObjectAdapter.$get(class2, "$inherit"),
+                JSCollections.$array());
+        return parents.indexOf(class1) >= 0;
     }
 
     public static InputStream stdin() {
@@ -153,6 +155,10 @@ public class Platform {
 
     public static <T> T invokeStaticMethod(Class<?> cls, String methodName, Object[] params) {
         Object method = $get(cls, methodName);
-        return (T) call(method, cls, params);
+        return JSFunctionAdapter.apply(method, cls, JSCollections.$castArray(params));
+    }
+
+    public static long unsignedInt(int signed) {
+        return (signed & 0x7fffffff) + ((signed >>> 31) * 0x80000000);
     }
 }

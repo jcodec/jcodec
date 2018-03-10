@@ -44,6 +44,7 @@ testclasses.forEach(cls => {
     for(var m in t) {
         if (m.startsWith("test")) {
             console.log(t, m);
+            t[m]();
         }
     }
 });
