@@ -5,6 +5,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.io.StringReader;
 import org.jcodec.common.logging.Logger;
+import org.jcodec.platform.Platform;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class Header {
     
     public static Header read(ByteBuffer input) {
         long size = 0;
-        while (input.remaining() >= 4 && (size = (((long) input.getInt()) & 0xffffffffL)) == 0)
+        while (input.remaining() >= 4 && (size = Platform.unsignedInt(input.getInt())) == 0)
             ;
         if (input.remaining() < 4 || size < 8 && size != 1) {
             Logger.error("Broken atom of size " + size);

@@ -1,4 +1,6 @@
 package org.jcodec.containers.mp4.boxes;
+import org.jcodec.platform.Platform;
+
 import java.lang.IllegalArgumentException;
 import java.lang.IllegalStateException;
 import java.nio.ByteBuffer;
@@ -157,7 +159,7 @@ public class TrunBox extends FullBox {
     }
 
     public long getSampleCount() {
-        return sampleCount & 0xffffffffL;
+        return Platform.unsignedInt(sampleCount);
     }
 
     public int getDataOffset() {
@@ -185,11 +187,11 @@ public class TrunBox extends FullBox {
     }
 
     public long getSampleDuration(int i) {
-        return sampleDuration[i] & 0xffffffffL;
+        return Platform.unsignedInt(sampleDuration[i]);
     }
 
     public long getSampleSize(int i) {
-        return sampleSize[i] & 0xffffffffL;
+        return Platform.unsignedInt(sampleSize[i]);
     }
 
     public int getSampleFlags(int i) {
@@ -197,7 +199,7 @@ public class TrunBox extends FullBox {
     }
 
     public long getSampleCompositionOffset(int i) {
-        return sampleCompositionOffset[i] & 0xffffffffL;
+        return Platform.unsignedInt(sampleCompositionOffset[i]);
     }
 
     public boolean isDataOffsetAvailable() {

@@ -177,4 +177,8 @@ public class Platform {
             throw new RuntimeException(e);
         }
     }
+
+    public static long unsignedInt(int signed) {
+        return (long) signed & 0xffffffffL;
+    }
 }
