@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
-public class TestBooleanEncoder {
+public class BooleanEncoderTest {
 
     @Test
     public void testOne() {

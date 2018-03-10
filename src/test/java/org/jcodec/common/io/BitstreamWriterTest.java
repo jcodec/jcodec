@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.lang.System;
 import java.nio.ByteBuffer;
 
-public class TestBitstreamWriter {
+public class BitstreamWriterTest {
 
     @Test
     public void testWrite() throws Exception {

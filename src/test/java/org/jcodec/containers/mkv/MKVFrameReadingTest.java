@@ -65,7 +65,7 @@ public class MKVFrameReadingTest {
     */
 
     @Ignore @Test
-    public void test() throws Exception {
+    public void _test() throws Exception {
 
         H264Decoder decoder = new H264Decoder();
         Transform transform = new Yuv420pToRgb();
@@ -96,7 +96,7 @@ public class MKVFrameReadingTest {
     }
     
     @Ignore @Test
-    public void testFirstFrame() throws Exception {
+    public void _testFirstFrame() throws Exception {
         
         Transform transform = new Yuv420pToRgb();
 

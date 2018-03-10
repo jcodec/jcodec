@@ -219,10 +219,6 @@ public class NIOUtils {
         throw new RuntimeException("Stan");
     }
 
-    public static ByteBuffer combine(ByteBuffer... arguments) {
-        return combineBuffers(Arrays.asList(arguments));
-    }
-
     public static String readString(ByteBuffer buffer, int len) {
         return stringFromBytes(toArray(read(buffer, len)));
     }

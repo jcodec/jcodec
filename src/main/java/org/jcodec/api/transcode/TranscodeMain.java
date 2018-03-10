@@ -2,6 +2,7 @@ package org.jcodec.api.transcode;
 
 import static org.jcodec.common.Tuple._2;
 import static org.jcodec.common.Tuple._3;
+import static org.jcodec.common.Tuple.triple;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
 import org.jcodec.common.JCodecUtil;
 import org.jcodec.common.TrackType;
+import org.jcodec.common.Tuple;
 import org.jcodec.common.logging.LogLevel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.logging.OutLogSink;
@@ -215,12 +217,12 @@ public class TranscodeMain {
             String inputCodecVideoRaw = cmd.getStringFlagI(index, FLAG_VIDEO_CODEC);
             if (inputCodecVideoRaw == null) {
                 if (inputFormat == Format.IMG) {
-                    inputCodecVideo = _3(0, 0, getCodecFromExtension(input));
+                    inputCodecVideo = triple(0, 0, getCodecFromExtension(input));
                 } else if (inputFormat.isVideo()) {
                     inputCodecVideo = selectSuitableTrack(input, inputFormat, TrackType.VIDEO);
                 }
             } else {
-                inputCodecVideo = _3(0, 0, Codec.valueOf(inputCodecVideoRaw.toUpperCase()));
+                inputCodecVideo = triple(0, 0, Codec.valueOf(inputCodecVideoRaw.toUpperCase()));
             }
             
             if(inputCodecVideo != null) {
@@ -237,7 +239,7 @@ public class TranscodeMain {
                     inputCodecAudio = selectSuitableTrack(input, inputFormat, TrackType.AUDIO);
                 }
             } else {
-                inputCodecAudio = _3(0, 0, Codec.valueOf(inputCodecAudioRaw.toUpperCase()));
+                inputCodecAudio = triple(0, 0, Codec.valueOf(inputCodecAudioRaw.toUpperCase()));
             }
             
             if (inputCodecAudio != null) {
@@ -423,7 +425,7 @@ public class TranscodeMain {
         if (format == Format.MPEG_TS) {
             demuxerPid = JCodecUtil.createM2TSDemuxer(new File(input), targetType);
         } else {
-            demuxerPid = _2(0, JCodecUtil.createDemuxer(format, new File(input)));
+            demuxerPid = Tuple.pair(0, JCodecUtil.createDemuxer(format, new File(input)));
         }
         if (demuxerPid == null || demuxerPid.v1 == null)
             return null;
@@ -433,7 +435,7 @@ public class TranscodeMain {
         for (DemuxerTrack demuxerTrack : tracks) {
             Codec codec = detectVideoDecoder(demuxerTrack);
             if (supportedDecoders.contains(codec)) {
-                return _3(demuxerPid.v0, trackNo, codec);
+                return triple(demuxerPid.v0, trackNo, codec);
             }
             trackNo++;
         }

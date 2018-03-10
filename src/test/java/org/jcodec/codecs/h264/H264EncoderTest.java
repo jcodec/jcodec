@@ -12,7 +12,6 @@ import javax.imageio.ImageIO;
 import org.jcodec.codecs.h264.encode.H264FixedRateControl;
 import org.jcodec.codecs.h264.io.model.Frame;
 import org.jcodec.common.VideoEncoder.EncodedFrame;
-import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.scale.AWTUtil;
@@ -33,7 +32,7 @@ public class H264EncoderTest {
     }
 
     @Test
-    public void canEncodeYuv420J() throws Exception {
+    public void testEncodeYuv420J() throws Exception {
         H264Encoder encoder = H264Encoder.createH264Encoder();
         encode(encoder, ColorSpace.YUV420J);
     }
@@ -61,7 +60,7 @@ public class H264EncoderTest {
     }
 
     @Test
-    public void encodeDecode() {
+    public void testEncodeDecode() {
         int w = 320;
         int h = 240;
         int uncompressedSize = w * h * 3;
@@ -86,7 +85,7 @@ public class H264EncoderTest {
         }
     }
 
-    private void assertByteArrayApproximatelyEquals(byte[] ref, byte[] dec, int threash) {
+    private static void assertByteArrayApproximatelyEquals(byte[] ref, byte[] dec, int threash) {
         int maxDiff = 0;
         for (int i = 0; i < ref.length; i++) {
             int diff = Math.abs(ref[i] - dec[i]);
@@ -96,7 +95,7 @@ public class H264EncoderTest {
         Assert.assertTrue("Maxdiff: " + maxDiff, maxDiff < threash);
     }
 
-    private void fillImage(int w, int h, int n, Picture picture) {
+    private static void fillImage(int w, int h, int n, Picture picture) {
         byte[][] data = picture.getData();
 
         for (int i = 0; i < h; i++) {

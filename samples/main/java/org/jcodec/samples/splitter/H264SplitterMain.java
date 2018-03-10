@@ -18,6 +18,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.jcodec.common.io.IOUtils;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -168,11 +169,11 @@ public class H264SplitterMain extends H264SplitterBase {
             int exit = pw.execute();
 
             if (verbose)
-                System.out.println(new String(pw.getOut()));
+                System.out.println(Platform.stringFromBytes(pw.getOut()));
 
             byte[] err = pw.getErr();
             if (err.length > 0) {
-                System.err.println(new String(err));
+                System.err.println(Platform.stringFromBytes(err));
             }
 
             if (exit != 0) {

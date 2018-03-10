@@ -31,21 +31,6 @@ public class VP8EncoderTest {
 
     private static final int MBSIZE = 16;
 
-    @Test
-    public void testBOr() throws Exception {
-        boolean skipInnerLoopFilter = false;
-        skipInnerLoopFilter = skipInnerLoopFilter | d(false);
-        System.out.println(skipInnerLoopFilter);
-        skipInnerLoopFilter = skipInnerLoopFilter | d(true);
-        skipInnerLoopFilter = skipInnerLoopFilter | d(false);
-        System.out.println(skipInnerLoopFilter);
-    }
-    
-    public static boolean d(boolean b){
-        System.out.println("executed d");
-        return b;
-    }
-    
 //    public void testName() throws Exception {
 //        BufferedImage _in = ImageIO.read(MKVMuxerTest.tildeExpand("src/test/resources/olezha422.jpg"));
 //        Transform t = ColorUtil.getTransform(ColorSpace.RGB, ColorSpace.YUV420);

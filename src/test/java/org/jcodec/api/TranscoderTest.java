@@ -1,7 +1,7 @@
 package org.jcodec.api;
 
 import static org.jcodec.common.Format.MOV;
-import static org.jcodec.common.Tuple._3;
+import static org.jcodec.common.Tuple.triple;
 import static org.jcodec.common.model.ColorSpace.RGB;
 
 import java.awt.Graphics;
@@ -49,13 +49,13 @@ public class TranscoderTest {
     }
 
     @Test
-    public void canFilterVideoAndCopyAudio() throws Exception {
+    public void testCanFilterVideoAndCopyAudio() throws Exception {
         new File("tmp").mkdirs();
 
         File input = new File("src/test/resources/video/seq_h264_4_audio.mp4");
         File output = new File("tmp/canFilterVideoAndCopyAudio.mp4");
 
-        Source source = new SourceImpl(input.getAbsolutePath(), MOV, _3(0, 0, Codec.H264), _3(0, 0, Codec.AAC));
+        Source source = new SourceImpl(input.getAbsolutePath(), MOV, triple(0, 0, Codec.H264), triple(0, 0, Codec.AAC));
         Sink sink = new SinkImpl(output.getAbsolutePath(), MOV, Codec.H264, Codec.AAC);
 
         TranscoderBuilder builder = Transcoder.newTranscoder();

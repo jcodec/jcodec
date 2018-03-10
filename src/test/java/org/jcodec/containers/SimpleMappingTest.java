@@ -18,7 +18,7 @@ import java.nio.channels.ReadableByteChannel;
 public class SimpleMappingTest {
 
     @Ignore @Test
-    public void test() throws IOException {
+    public void _test() throws IOException {
         MKVTestSuite suite = MKVTestSuite.read();
         System.out.println("Scanning file: " + suite.test2.getAbsolutePath());
 

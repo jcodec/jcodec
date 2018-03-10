@@ -80,7 +80,7 @@ public class MacroblockBiDecodingTest {
     }
     
     @Ignore @Test
-    public void testBSkipABAC() throws IOException {
+    public void _testBSkipABAC() throws IOException {
         // BAD
         String encoded = "src/test/resources/h264/cabac/test_b_skip.264";
         String decoded = "src/test/resources/h264/cabac/test_b_skip.yuv";
@@ -90,7 +90,7 @@ public class MacroblockBiDecodingTest {
     }
     
     @Ignore @Test
-    public void testBi16x16CABAC() throws IOException {
+    public void _testBi16x16CABAC() throws IOException {
         // BAD: skip
         String encoded = "src/test/resources/h264/cabac/test_bi_16x16.264";
         String decoded = "src/test/resources/h264/cabac/test_bi_16x16.yuv";
@@ -100,7 +100,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBi16x8CABAC() throws IOException {
+    public void _testBi16x8CABAC() throws IOException {
         // BAD: skip
         String encoded = "src/test/resources/h264/cabac/test_bi_16x8.264";
         String decoded = "src/test/resources/h264/cabac/test_bi_16x8.yuv";
@@ -110,7 +110,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBi8x16CABAC() throws IOException {
+    public void _testBi8x16CABAC() throws IOException {
         // BAD: skip
         String encoded = "src/test/resources/h264/cabac/test_bi_8x16.264";
         String decoded = "src/test/resources/h264/cabac/test_bi_8x16.yuv";
@@ -120,7 +120,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBi8x8CABAC() throws IOException {
+    public void _testBi8x8CABAC() throws IOException {
         // BAD: skip
         String encoded = "src/test/resources/h264/cabac/test_bi_8x8.264";
         String decoded = "src/test/resources/h264/cabac/test_bi_8x8.yuv";
@@ -166,7 +166,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBiDirectTemporalNoInference() throws IOException {
+    public void _testBiDirectTemporalNoInference() throws IOException {
         // BAD: intra
         String encoded = "src/test/resources/h264/cabac/test_temp_direct_noinf.264";
         String decoded = "src/test/resources/h264/cabac/test_temp_direct_noinf.yuv";
@@ -176,7 +176,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBiDirectTemporal() throws IOException {
+    public void _testBiDirectTemporal() throws IOException {
         // BAD: intra
         String encoded = "src/test/resources/h264/cabac/test_temp_direct.264";
         String decoded = "src/test/resources/h264/cabac/test_temp_direct.yuv";
@@ -249,7 +249,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBi16x16CAVLC() throws IOException {
+    public void _testBi16x16CAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_16x16_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_16x16_cavlc.yuv";
         int nFrames = 3;
@@ -258,7 +258,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBi16x8CAVLC() throws IOException {
+    public void _testBi16x8CAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_16x8_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_16x8_cavlc.yuv";
         int nFrames = 3;
@@ -267,7 +267,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBi8x16CAVLC() throws IOException {
+    public void _testBi8x16CAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_8x16_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_8x16_cavlc.yuv";
         int nFrames = 3;
@@ -276,7 +276,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBi8x8CAVLC() throws IOException {
+    public void _testBi8x8CAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_8x8_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_8x8_cavlc.yuv";
         int nFrames = 3;
@@ -312,7 +312,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBiDirectTemporalCAVLC() throws IOException {
+    public void _testBiDirectTemporalCAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_temp_direct_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_temp_direct_cavlc.yuv";
         int nFrames = 3;
@@ -321,7 +321,7 @@ public class MacroblockBiDecodingTest {
     }
 
     @Ignore @Test
-    public void testBiDirectTemporalNoInferenceCAVLC() throws IOException {
+    public void _testBiDirectTemporalNoInferenceCAVLC() throws IOException {
         String encoded = "src/test/resources/h264/cavlc/test_bi_temp_direct_noinf_cavlc.264";
         String decoded = "src/test/resources/h264/cavlc/test_bi_temp_direct_noinf_cavlc.yuv";
         int nFrames = 3;

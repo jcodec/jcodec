@@ -116,7 +116,7 @@ public class MPSTrackFactory {
                 sync[i] = index.getInt();
 
             for (int i = 0; i < fCnt; i++) {
-                fpts[i] = index.getInt() & 0xffffffffL;
+                fpts[i] = Platform.unsignedInt(index.getInt());
             }
 
             long[] seg0 = Platform.copyOfLong(fpts, 10);

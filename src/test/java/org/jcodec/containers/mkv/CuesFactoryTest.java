@@ -20,7 +20,7 @@ import java.util.List;
 public class CuesFactoryTest {
 
     @Ignore @Test
-    public void testWithValidCues() throws IOException {
+    public void _testWithValidCues() throws IOException {
         FileInputStream inputStream = new FileInputStream(Utils.tildeExpand("~/References/mkv.test/test2.webm"));
         FileChannel iFS = inputStream.getChannel();
         MKVParser p = new MKVParser(new FileChannelWrapper(iFS));

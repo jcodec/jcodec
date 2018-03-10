@@ -145,7 +145,7 @@ public class ConformanceTestTool {
         throw new RuntimeException("Display order reordering!!!");
     }
 
-    private static boolean compare(Picture expected, Picture actual) {
+    public static boolean compare(Picture expected, Picture actual) {
 
         int size = expected.getWidth() * expected.getHeight();
 

@@ -36,7 +36,7 @@ public class AudioTrackTest {
     private boolean showInterlacedBlocks = false;
 
     @Ignore @Test
-    public void testSoundSamples() throws Exception {
+    public void _testSoundSamples() throws Exception {
         AudioTrack audio = (AudioTrack) demuxer.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
         audio.gotoFrame(9);
@@ -48,7 +48,7 @@ public class AudioTrackTest {
     }
 
     @Ignore @Test
-    public void testTwoSoundSamples() throws Exception {
+    public void _testTwoSoundSamples() throws Exception {
         AudioTrack audio = (AudioTrack) demuxer.getAudioTracks().get(0);
         Assert.assertNotNull(audio);
         audio.gotoFrame(8);

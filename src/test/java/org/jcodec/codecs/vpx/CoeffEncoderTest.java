@@ -2,7 +2,7 @@ package org.jcodec.codecs.vpx;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestCoeffEncoder {
+public class CoeffEncoderTest {
 
     public static int[][][][] cloneProb() {
         int[][][][] ref = VPXConst.tokenDefaultBinProbs;

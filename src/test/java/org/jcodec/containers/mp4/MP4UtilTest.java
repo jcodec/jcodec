@@ -45,7 +45,7 @@ public class MP4UtilTest {
     }
     @Test
     @Ignore
-    public void testName() throws Exception {
+    public void _testName() throws Exception {
         File f = new File("src/test/resources/zhuker/1D158634-69DF-4C7F-AB6F-CCC83F04FEDB/1.mp4");
         MovieBox moov = MP4Util.parseMovie(f);
         MediaInfoBox minf = moov.getVideoTrack().getMdia().getMinf();
@@ -61,7 +61,7 @@ public class MP4UtilTest {
     @Test
     @Ignore
     //this test fails if avcc box is parsed and then written
-    public void testReadWriteIphoneMp4() throws Exception {
+    public void _testReadWriteIphoneMp4() throws Exception {
         File f = new File("src/test/resources/zhuker/1D158634-69DF-4C7F-AB6F-CCC83F04FEDB/1.mp4");
         ByteBuffer read = ByteBuffer.allocate(64 * 1024);
         MP4Util.parseMovie(f).write(read);
