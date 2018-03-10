@@ -1,5 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
 
+import org.jcodec.platform.Platform;
+
 import java.nio.ByteBuffer;
 
 /**
@@ -35,7 +37,7 @@ public class ChunkOffsetsBox extends FullBox {
         int length = input.getInt();
         chunkOffsets = new long[length];
         for (int i = 0; i < length; i++) {
-            chunkOffsets[i] = input.getInt() & 0xffffffffL;
+            chunkOffsets[i] = Platform.unsignedInt(input.getInt());
         }
     }
 

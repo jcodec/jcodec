@@ -10,6 +10,7 @@ import org.jcodec.common.model.Label;
 import org.jcodec.common.tools.ToJSON;
 import org.jcodec.containers.mp4.boxes.ChannelBox.ChannelDescription;
 import org.jcodec.containers.mp4.boxes.channel.ChannelLayout;
+import org.jcodec.platform.Platform;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -98,7 +99,7 @@ public class AudioSampleEntry extends SampleEntry {
         compressionId = input.getShort();
         pktSize = input.getShort();
 
-        long sr = input.getInt() & 0xffffffffL;
+        long sr = Platform.unsignedInt(input.getInt());
         sampleRate = (float) sr / 65536f;
 
         if (version == 1) {

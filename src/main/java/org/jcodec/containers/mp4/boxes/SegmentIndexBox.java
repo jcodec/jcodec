@@ -51,11 +51,11 @@ public class SegmentIndexBox extends FullBox {
     @Override
     public void parse(ByteBuffer input) {
         super.parse(input);
-        this.reference_ID = input.getInt() & 0xffffffffL;
-        this.timescale = input.getInt() & 0xffffffffL;
+        this.reference_ID = Platform.unsignedInt(input.getInt());
+        this.timescale = Platform.unsignedInt(input.getInt());
         if (version == 0) {
-            this.earliest_presentation_time = input.getInt() & 0xffffffffL;
-            this.first_offset = input.getInt() & 0xffffffffL;
+            this.earliest_presentation_time = Platform.unsignedInt(input.getInt());
+            this.first_offset = Platform.unsignedInt(input.getInt());
         } else {
             this.earliest_presentation_time = input.getLong();
             this.first_offset = input.getLong();
@@ -64,9 +64,9 @@ public class SegmentIndexBox extends FullBox {
         this.reference_count = input.getShort() & 0xffff;
         this.references = new Reference[this.reference_count];
         for (int i = 0; i < this.reference_count; i++) {
-            long i0 = input.getInt() & 0xffffffffL;
-            long i1 = input.getInt() & 0xffffffffL;
-            long i2 = input.getInt() & 0xffffffffL;
+            long i0 = Platform.unsignedInt(input.getInt());
+            long i1 = Platform.unsignedInt(input.getInt());
+            long i2 = Platform.unsignedInt(input.getInt());
 
             Reference ref = new Reference();
             ref.reference_type = (i0 >> 31) == 1;

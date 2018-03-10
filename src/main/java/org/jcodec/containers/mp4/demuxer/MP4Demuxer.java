@@ -27,6 +27,7 @@ import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -164,7 +165,7 @@ public class MP4Demuxer implements Demuxer {
         int success = 0;
         int total = 0;
         while (fork.remaining() >= 8) {
-            long len = fork.getInt() & 0xffffffffL;
+            long len = Platform.unsignedInt(fork.getInt());
             int fcc = fork.getInt();
             int hdrLen = 8;
             if (len == 1) {
