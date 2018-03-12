@@ -1,6 +1,9 @@
 package org.jcodec.scale;
 
+import org.jcodec.codecs.png.PNGEncoder;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.VideoEncoder;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 
@@ -9,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import static org.jcodec.common.model.ColorSpace.RGB;
 

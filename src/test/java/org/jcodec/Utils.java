@@ -4,7 +4,6 @@ import static org.jcodec.common.tools.MathUtil.abs;
 import static org.jcodec.common.tools.MathUtil.clipMax;
 import static org.junit.Assert.assertTrue;
 
-import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -14,8 +13,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
-
-import javax.imageio.ImageIO;
 
 import org.jcodec.api.FrameGrab;
 import org.jcodec.api.JCodecException;
@@ -180,8 +177,8 @@ public class Utils {
         return result;
     }
 
-    public static void saveImage(Picture fr2, String formatName, String name) throws IOException {
-        ImageIO.write(AWTUtil.toBufferedImage(fr2), formatName, new File(name));
+    public static void saveImage(Picture fr2, String name) throws IOException {
+        AWTUtil.writePNG(fr2, new File(name));
     }
 
     public static Picture diff(Picture one, Picture two, int mul) {

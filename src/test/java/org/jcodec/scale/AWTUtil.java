@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.png.PNGDecoder;
+import org.jcodec.codecs.png.PNGEncoder;
 import org.jcodec.common.Preconditions;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
@@ -65,6 +66,14 @@ public class AWTUtil {
             srcOff += srcStride;
             dstOff += dstStride;
         }
+    }
+
+    public static void writePNG(Picture picture, File pngFile) throws IOException {
+        Picture rgb = picture.getColor().equals(RGB) ? picture : convertColorSpace(picture, RGB);
+        PNGEncoder encoder = new PNGEncoder();
+        ByteBuffer tmpBuf = ByteBuffer.allocate(encoder.estimateBufferSize(rgb));
+        ByteBuffer encoded = encoder.encodeFrame(rgb, tmpBuf).getData();
+        NIOUtils.writeTo(encoded, pngFile);
     }
 
     public static Picture decodePNG(File f, ColorSpace tgtColor) throws IOException {
