@@ -29,7 +29,7 @@ public class Asserts {
             int a = actual[i];
             if (Math.abs(e - a) > eps) {
                 throw new AssertionException(
-                        "array element out of expected diff range");
+                        "array element " + i + " " + e + " != " + a + " out of expected diff range " + eps);
             }
         }
     }
