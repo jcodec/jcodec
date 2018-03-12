@@ -187,14 +187,14 @@ public class H264Utils {
     private static int[] searchEscapeLocations(ByteBuffer src) {
         IntArrayList points = IntArrayList.createIntArrayList();
         ByteBuffer search = src.duplicate();
-        short p = search.getShort();
+        int p = search.getShort();
         while (search.hasRemaining()) {
             byte b = search.get();
             if (p == 0 && (b & ~3) == 0) {
                 points.add(search.position() - 1);
                 p = 3;
             }
-            p <<= 8;
+            p = (p << 8) & 0xffff;
             p |= b & 0xff;
         }
         int[] array = points.toArray();
