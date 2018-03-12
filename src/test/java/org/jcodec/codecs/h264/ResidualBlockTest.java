@@ -25,7 +25,7 @@ public class ResidualBlockTest {
         String code = "0000100 01110010111101101";
         int[] coeffs = { 0, 3, 0, 1, -1, -1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        testResidualCAVLC(code, H264Const.CoeffToken[0], coeffs);
+        residualCAVLC(code, H264Const.CoeffToken[0], coeffs);
     }
 
     @Test
@@ -34,7 +34,7 @@ public class ResidualBlockTest {
         String code = "0000000110 10001001000010111001100";
         int[] coeffs = { -2, 4, 3, -3, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        testResidualCAVLC(code, H264Const.CoeffToken[0], coeffs);
+        residualCAVLC(code, H264Const.CoeffToken[0], coeffs);
     }
 
     @Test
@@ -43,7 +43,7 @@ public class ResidualBlockTest {
         String code = "00011 10001110010";
         int[] coeffs = { 0, 0, 0, 1, 0, 1, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0 };
 
-        testResidualCAVLC(code, H264Const.CoeffToken[0], coeffs);
+        residualCAVLC(code, H264Const.CoeffToken[0], coeffs);
     }
 
     @Test
@@ -53,7 +53,7 @@ public class ResidualBlockTest {
 
         int[] coeffs = { 1, -3, 2, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0 };
 
-        testResidualCAVLC(code, H264Const.CoeffToken[0], coeffs);
+        residualCAVLC(code, H264Const.CoeffToken[0], coeffs);
     }
 
     private int[] zigzag(int[] src, int[] tab) {
@@ -63,7 +63,7 @@ public class ResidualBlockTest {
         return result;
     }
 
-    private void testResidualCAVLC(String code, VLC coeffTokenTab, int[] expected) throws IOException {
+    private void residualCAVLC(String code, VLC coeffTokenTab, int[] expected) throws IOException {
         BitReader reader = BitReader.createBitReader(ByteBuffer.wrap(BinUtil.binaryStringToBytes(code)));
 
         CAVLC cavlc = new CAVLC(new SeqParameterSet(), new PictureParameterSet(), 4, 4);

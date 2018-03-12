@@ -3,6 +3,7 @@ package org.jcodec.scale;
 import java.awt.image.BufferedImage;
 
 import org.jcodec.Utils;
+import org.jcodec.codecs.png.PNGEncoder;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Size;
 import org.junit.Assert;
@@ -27,7 +28,7 @@ public class ResamplerTest {
             h = h * 2 + 100;
             System.out.println("Size: " + w + ", " + h);
             LanczosResampler resampler = new LanczosResampler(sz, new Size(w, h));
-            testResampler(resampler, w, h);
+            _testResampler(resampler, w, h);
         }
     }
 
@@ -42,11 +43,11 @@ public class ResamplerTest {
             h = h * 2 + 100;
             System.out.println("Size: " + w + ", " + h);
             BicubicResampler resampler = new BicubicResampler(sz, new Size(w, h));
-            testResampler(resampler, w, h);
+            _testResampler(resampler, w, h);
         }
     }
 
-    private void testResampler(BaseResampler resampler, int w, int h) {
+    private static void _testResampler(BaseResampler resampler, int w, int h) {
         for (int i = 0; i < 20; i++) {
             int smooth = (int) (Math.random() * 20) + 5;
             double vector = Math.random();
