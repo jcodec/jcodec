@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.png.PNGDecoder;
+import org.jcodec.common.Preconditions;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
@@ -68,6 +69,7 @@ public class AWTUtil {
 
     public static Picture decodePNG(File f, ColorSpace tgtColor) throws IOException {
         Picture picture = decodePNG0(f);
+        Preconditions.checkNotNull(picture, "cant decode " + f.getPath());
         return convertColorSpace(picture, tgtColor);
     }
 
@@ -75,8 +77,9 @@ public class AWTUtil {
         PNGDecoder pngDec = new PNGDecoder();
         ByteBuffer buf = NIOUtils.fetchFromFile(f);
         VideoCodecMeta codecMeta = pngDec.getCodecMeta(buf);
-        return Picture.create(codecMeta.getSize().getWidth(), codecMeta.getSize().getHeight(),
+        Picture pic = Picture.create(codecMeta.getSize().getWidth(), codecMeta.getSize().getHeight(),
                 ColorSpace.RGB);
+        return pngDec.decodeFrame(buf, pic.getData());
     }
 
     public static Picture convertColorSpace(Picture pic, ColorSpace tgtColor) {
