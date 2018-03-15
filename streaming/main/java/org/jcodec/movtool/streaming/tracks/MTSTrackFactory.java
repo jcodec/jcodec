@@ -5,7 +5,7 @@ import java.lang.System;
 
 import static org.jcodec.containers.mps.MPSUtils.readPESHeader;
 
-import org.jcodec.common.Assert;
+import org.jcodec.common.Preconditions;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -76,7 +76,7 @@ public class MTSTrackFactory {
                 ByteBuffer dst = buf.duplicate();
                 while (buf.hasRemaining()) {
                     ByteBuffer tsBuf = NIOUtils.read(buf, 188);
-                    Assert.assertEquals(0x47, tsBuf.get() & 0xff);
+                    Preconditions.checkState(0x47 == (tsBuf.get() & 0xff));
                     int guidFlags = ((tsBuf.get() & 0xff) << 8) | (tsBuf.get() & 0xff);
                     int guid = (int) guidFlags & 0x1fff;
                     if (guid == program.targetGuid) {
