@@ -4,23 +4,26 @@ import org.jcodec.codecs.h264.conformance.ConformanceTest;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.platform.Platform;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.Integer.parseInt;
 import static java.util.Collections.singletonList;
-import static org.jcodec.codecs.h264.conformance.ConformanceTest.duplicateBuffers;
-import static org.jcodec.codecs.h264.conformance.ConformanceTest.extractNALUnits;
-import static org.jcodec.codecs.h264.conformance.ConformanceTest.readFile;
 import static org.jcodec.common.StringUtils.zeroPad3;
 
 public class PerformanceTest {
 
     @Test
+    @Ignore
     public void testNoContainer() throws IOException {
         new ConformanceTest().testNoContainer();
         String dir = "src/test/resources/video/seq_h264_4";
@@ -69,4 +72,38 @@ public class PerformanceTest {
         System.out.println("\naverage: " + (fpss / iterations) + " fps");
     }
 
+    private ByteBuffer readFile(String path) throws IOException {
+        File file = new File(path);
+        InputStream _in = new BufferedInputStream(new FileInputStream(file));
+        byte[] buf = new byte[(int) file.length()];
+        _in.read(buf);
+        _in.close();
+        return ByteBuffer.wrap(buf);
+    }
+
+    private List<ByteBuffer> extractNALUnits(ByteBuffer buf) {
+        buf = buf.duplicate();
+        List<ByteBuffer> nalUnits = new ArrayList<ByteBuffer>();
+
+        while (buf.remaining() > 4) {
+            int length = buf.getInt();
+            ByteBuffer nalUnit = ByteBuffer.allocate(length);
+            for (int i = 0; i < length; i++) {
+                nalUnit.put(buf.get());
+            }
+            nalUnit.flip();
+            nalUnits.add(nalUnit);
+        }
+
+        return nalUnits;
+    }
+
+    private List<ByteBuffer> duplicateBuffers(List<ByteBuffer> bufs) {
+        List<ByteBuffer> result = new ArrayList<ByteBuffer>();
+
+        for (ByteBuffer buf : bufs)
+            result.add(buf.duplicate());
+
+        return result;
+    }
 }
