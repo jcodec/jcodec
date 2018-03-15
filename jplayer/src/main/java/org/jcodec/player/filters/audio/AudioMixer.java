@@ -144,7 +144,7 @@ public class AudioMixer implements AudioSource {
         }
     }
 
-    public AudioMixer(int channels, AudioSource... src) throws IOException {
+    public AudioMixer(int channels, AudioSource[] src) throws IOException {
         if (src.length < 1)
             throw new IllegalArgumentException("Must be at least one audio source");
         pins = new Pin[src.length];

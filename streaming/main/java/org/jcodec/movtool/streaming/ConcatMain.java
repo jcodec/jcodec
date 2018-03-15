@@ -53,7 +53,7 @@ public class ConcatMain {
             tracks[i] = rt;
         }
         ConcatTrack concat = new ConcatTrack(tracks);
-        VirtualMovie vm = new VirtualMP4Movie(concat);
+        VirtualMovie vm = new VirtualMP4Movie(new ConcatTrack[]{concat});
 
         BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(new File(
                 System.getProperty("user.home"), "concat.mov")));

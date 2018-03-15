@@ -94,12 +94,12 @@ public class NodeBox extends Box {
     }
 
     public void replace(String fourcc, Box box) {
-        removeChildren(fourcc);
+        removeChildren(new String[]{fourcc});
         add(box);
     }
     
     public void replaceBox(Box box) {
-        removeChildren(box.getFourcc());
+        removeChildren(new String[]{box.getFourcc()});
         add(box);
     }
 
@@ -119,12 +119,12 @@ public class NodeBox extends Box {
         }
     }
 
-    public void removeChildren(String... arguments) {
+    public void removeChildren(String[] fourcc) {
         for (Iterator<Box> it = boxes.iterator(); it.hasNext();) {
             Box box = it.next();
             String fcc = box.getFourcc();
-            for (int i = 0; i < arguments.length; i++) {
-                String cand = arguments[i];
+            for (int i = 0; i < fourcc.length; i++) {
+                String cand = fourcc[i];
                 if (cand.equals(fcc)) {
                     it.remove();
                     break;

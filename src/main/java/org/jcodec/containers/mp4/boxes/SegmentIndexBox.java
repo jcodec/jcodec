@@ -69,11 +69,11 @@ public class SegmentIndexBox extends FullBox {
             long i2 = Platform.unsignedInt(input.getInt());
 
             Reference ref = new Reference();
-            ref.reference_type = (i0 >> 31) == 1;
+            ref.reference_type = ((i0 >>> 31) & 1) == 1;
             ref.referenced_size = i0 & 0x7fffffffL;
             ref.subsegment_duration = i1;
-            ref.starts_with_SAP = (i2 >> 31) == 1;
-            ref.SAP_type = (int) ((i2 >> 28) & 7);
+            ref.starts_with_SAP = ((i2 >>> 31) & 1) == 1;
+            ref.SAP_type = (int) ((i2 >>> 28) & 7);
             ref.SAP_delta_time = i2 & 0xFFFFFFFL;
 
             references[i] = ref;

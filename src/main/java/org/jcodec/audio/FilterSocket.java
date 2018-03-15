@@ -19,25 +19,25 @@ public class FilterSocket {
     private int totalInputs;
     private int totalOutputs;
 
-    public static FilterSocket createFilterSocket(AudioFilter... arguments) {
+    public static FilterSocket createFilterSocket(AudioFilter[] filters) {
         FilterSocket fs = new FilterSocket();
         fs.totalInputs = 0;
         fs.totalOutputs = 0;
 
-        for (int i = 0; i < arguments.length; i++) {
-            fs.totalInputs += arguments[i].getNInputs();
-            fs.totalOutputs += arguments[i].getNOutputs();
+        for (int i = 0; i < filters.length; i++) {
+            fs.totalInputs += filters[i].getNInputs();
+            fs.totalOutputs += filters[i].getNOutputs();
         }
 
         fs.buffers = new FloatBuffer[fs.totalInputs];
         fs.positions = new long[fs.totalInputs];
         fs.delays = new int[fs.totalInputs];
-        for (int i = 0, b = 0; i < arguments.length; i++) {
-            for (int j = 0; j < arguments[i].getNInputs(); j++, b++) {
-                fs.delays[b] = arguments[i].getDelay();
+        for (int i = 0, b = 0; i < filters.length; i++) {
+            for (int j = 0; j < filters[i].getNInputs(); j++, b++) {
+                fs.delays[b] = filters[i].getDelay();
             }
         }
-        fs.filters = arguments;
+        fs.filters = filters;
         return fs;
     }
 

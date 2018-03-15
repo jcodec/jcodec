@@ -52,7 +52,7 @@ public class MpaPqmf {
     
     private static final float bf8[] = { cos1_16, cos3_16, cos5_16, cos7_16 };
     
-    public static void computeFilter(int sampleOff, float[] samples, short[] out, int outOff, float scalefactor) {
+    static void computeFilter(int sampleOff, float[] samples, short[] out, int outOff, float scalefactor) {
         int dvp = 0;
         for (int i = 0; i < 32; i++) {
             float pcm_sample;

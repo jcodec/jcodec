@@ -3,6 +3,7 @@ package org.jcodec.codecs.h264.conformance;
 import org.jcodec.codecs.h264.H264Decoder;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.StringUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
@@ -46,7 +47,7 @@ public class ConformanceTest {
         List<List<ByteBuffer>> frames = new ArrayList<List<ByteBuffer>>();
 
         for (int fn = 0; fn < frameCount; fn++) {
-            ByteBuffer buf = readFile(dir + "/" + zeroPad3(fn));
+            ByteBuffer buf = readFile(dir + "/" + StringUtils.zeroPad3(fn));
             frames.add(extractNALUnits(buf));
         }
 
@@ -98,13 +99,6 @@ public class ConformanceTest {
         return ByteBuffer.wrap(buf);
     }
 
-
-    public static String zeroPad3(int n) {
-        String s = n + "";
-        while (s.length() < 3)
-            s = "0" + s;
-        return s;
-    }
 
     public static List<ByteBuffer> extractNALUnits(ByteBuffer buf) {
         buf = buf.duplicate();

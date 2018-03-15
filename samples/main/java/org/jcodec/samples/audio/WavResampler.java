@@ -64,7 +64,7 @@ public class WavResampler {
 
             // @formatter:off
             FilterGraph cf = FilterGraph.addLevel(split).addLevelSpan(lowPass).addLevelSpan(r0).addLevelSpan(r1)
-                    .addLevel(merge).create();
+                    .addLevel(new ChannelMerge[]{merge}).create();
             // @formatter:on
             Audio.filterTransfer(wavIn, cf, wavOut);
         } finally {

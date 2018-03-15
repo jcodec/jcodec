@@ -25,8 +25,8 @@ public class IntDCT extends DCT {
         return outptr.array();
     }
 
-    protected IntBuffer doDecode(IntBuffer inptr, IntBuffer workspace,
-            IntBuffer outptr) {
+    protected static IntBuffer doDecode(IntBuffer inptr, IntBuffer workspace,
+                                        IntBuffer outptr) {
         pass1(inptr, workspace.duplicate());
         pass2(outptr, workspace.duplicate());
         return outptr;
@@ -273,11 +273,13 @@ public class IntDCT extends DCT {
         return x >> shft;
     }
 
-    private static final int MULTIPLY(int i, int j) {
+    private static int MULTIPLY(int i, int j) {
         return i * j;
     }
+    private static final int CONST_BITS = 13;
+    private static final int ONE_HALF = (1 << (CONST_BITS - 1));
 
-    private final static int FIX(double x) {
+    private static int FIX(double x) {
         return ((int) ((x) * (1 << CONST_BITS) + 0.5));
     }
 
@@ -293,7 +295,4 @@ public class IntDCT extends DCT {
     private final static int FIX_2_053119869 = FIX(2.053119869);
     private final static int FIX_2_562915447 = FIX(2.562915447);
     private final static int FIX_3_072711026 = FIX(3.072711026);
-
-    private static final int CONST_BITS = 13;
-    private static final int ONE_HALF = (1 << (CONST_BITS - 1));
 }

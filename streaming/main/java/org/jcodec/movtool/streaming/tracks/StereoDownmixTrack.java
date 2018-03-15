@@ -36,13 +36,13 @@ public class StereoDownmixTrack implements VirtualTrack {
     private boolean[][] solo;
     private DownmixHelper downmix;
 
-    public StereoDownmixTrack(VirtualTrack... arguments) {
+    public StereoDownmixTrack(VirtualTrack[] virtualTracks) {
         this.rate = -1;
-        sources = new VirtualTrack[arguments.length];
+        sources = new VirtualTrack[virtualTracks.length];
         sampleEntries = new AudioCodecMeta[sources.length];
-        solo = new boolean[arguments.length][];
-        for (int i = 0; i < arguments.length; i++) {
-            CodecMeta se = arguments[i].getCodecMeta();
+        solo = new boolean[virtualTracks.length][];
+        for (int i = 0; i < virtualTracks.length; i++) {
+            CodecMeta se = virtualTracks[i].getCodecMeta();
             if (!(se instanceof AudioCodecMeta))
                 throw new IllegalArgumentException("Non audio track");
             AudioCodecMeta ase = (AudioCodecMeta) se;
@@ -53,7 +53,7 @@ public class StereoDownmixTrack implements VirtualTrack {
                 throw new IllegalArgumentException("Can not downmix tracks of different rate.");
             rate = (int) format.getFrameRate();
             sampleEntries[i] = ase;
-            sources[i] = new PCMFlatternTrack(arguments[i], FRAMES_IN_OUT_PACKET);
+            sources[i] = new PCMFlatternTrack(virtualTracks[i], FRAMES_IN_OUT_PACKET);
             solo[i] = new boolean[format.getChannels()];
         }
         

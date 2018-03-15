@@ -338,7 +338,7 @@ public class MacroblockBiDecodingTest {
         testOneFile(encoded, decoded, nFrames, new int[] {0, 1, 2});
     }
 
-    private void testOneFile(String encoded, String decoded, int nFrames, int[] reorderMap) throws IOException {
+    private static void testOneFile(String encoded, String decoded, int nFrames, int[] reorderMap) throws IOException {
         BufferH264ES es = new BufferH264ES(NIOUtils.fetchFromFile(new File(encoded)));
         H264Decoder dec = new H264Decoder();
 

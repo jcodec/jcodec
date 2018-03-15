@@ -6,7 +6,7 @@ import org.junit.Test;
 
 public class RationalTest {
     @Test
-    public void testParse() throws Exception {
+    public void testParse() {
         Rational parse = Rational.parse("42:43");
         assertEquals(42, parse.num);
         assertEquals(43, parse.den);
@@ -20,19 +20,33 @@ public class RationalTest {
         assertEquals(1, parse3.den);
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void testParseError() throws Exception {
-        Rational.parse("42.43");
-    }
-    
-    @Test(expected = NumberFormatException.class)
-    public void testParseError2() throws Exception {
-        Rational.parse("42/a");
+    @Test
+    public void testParseError() {
+        try {
+            Rational.parse("42.43");
+            fail("NumberFormatException expected");
+        } catch (NumberFormatException e) {
+            //expected
+        }
     }
 
-    @Test(expected = NumberFormatException.class)
-    public void testParseError3() throws Exception {
-        Rational.parse("42:a");
+    @Test
+    public void testParseError2() {
+        try {
+            Rational.parse("42/a");
+            fail("NumberFormatException expected");
+        } catch (NumberFormatException e) {
+            //expected
+        }
+    }
+
+    @Test
+    public void testParseError3() {
+        try {
+            Rational.parse("42:a");
+        } catch (NumberFormatException e) {
+            //expected
+        }
     }
 
 }

@@ -14,40 +14,40 @@ import static org.jcodec.common.TrackType.VIDEO;
  *
  */
 public final class Codec {
-    public final static Codec H264 = new Codec(VIDEO);
-    public final static Codec MPEG2 = new Codec(VIDEO);
-    public final static Codec MPEG4 = new Codec(VIDEO);
-    public final static Codec PRORES = new Codec(VIDEO);
-    public final static Codec DV = new Codec(VIDEO);
-    public final static Codec VC1 = new Codec(VIDEO);
-    public final static Codec VC3 = new Codec(VIDEO);
-    public final static Codec V210 = new Codec(VIDEO);
-    public final static Codec SORENSON = new Codec(VIDEO);
-    public final static Codec FLASH_SCREEN_VIDEO = new Codec(VIDEO);
-    public final static Codec FLASH_SCREEN_V2 = new Codec(VIDEO);
-    public final static Codec PNG = new Codec(VIDEO);
-    public final static Codec JPEG = new Codec(VIDEO);
-    public final static Codec J2K = new Codec(VIDEO);
-    public final static Codec VP6 = new Codec(VIDEO);
-    public final static Codec VP8 = new Codec(VIDEO);
-    public final static Codec VP9 = new Codec(VIDEO);
-    public final static Codec VORBIS = new Codec(VIDEO);
-    public final static Codec AAC = new Codec(AUDIO);
-    public final static Codec MP3 = new Codec(AUDIO);
-    public final static Codec MP2 = new Codec(AUDIO);
-    public final static Codec MP1 = new Codec(AUDIO);
-    public final static Codec AC3 = new Codec(AUDIO);
-    public final static Codec DTS = new Codec(AUDIO);
-    public final static Codec TRUEHD = new Codec(AUDIO);
-    public final static Codec PCM_DVD = new Codec(AUDIO);
-    public final static Codec PCM = new Codec(AUDIO);
-    public final static Codec ADPCM = new Codec(AUDIO);
-    public final static Codec ALAW = new Codec(AUDIO);
-    public final static Codec NELLYMOSER = new Codec(AUDIO);
-    public final static Codec G711 = new Codec(AUDIO);
-    public final static Codec SPEEX = new Codec(AUDIO);
-    public final static Codec RAW = new Codec(null);
-    public final static Codec TIMECODE = new Codec(TrackType.OTHER);
+    public final static Codec H264 = new Codec("H264", VIDEO);
+    public final static Codec MPEG2 = new Codec("MPEG2", VIDEO);
+    public final static Codec MPEG4 = new Codec("MPEG4", VIDEO);
+    public final static Codec PRORES = new Codec("PRORES", VIDEO);
+    public final static Codec DV = new Codec("DV", VIDEO);
+    public final static Codec VC1 = new Codec("VC1", VIDEO);
+    public final static Codec VC3 = new Codec("VC3", VIDEO);
+    public final static Codec V210 = new Codec("V210", VIDEO);
+    public final static Codec SORENSON = new Codec("SORENSON", VIDEO);
+    public final static Codec FLASH_SCREEN_VIDEO = new Codec("FLASH_SCREEN_VIDEO", VIDEO);
+    public final static Codec FLASH_SCREEN_V2 = new Codec("FLASH_SCREEN_V2", VIDEO);
+    public final static Codec PNG = new Codec("PNG", VIDEO);
+    public final static Codec JPEG = new Codec("JPEG", VIDEO);
+    public final static Codec J2K = new Codec("J2K", VIDEO);
+    public final static Codec VP6 = new Codec("VP6", VIDEO);
+    public final static Codec VP8 = new Codec("VP8", VIDEO);
+    public final static Codec VP9 = new Codec("VP9", VIDEO);
+    public final static Codec VORBIS = new Codec("VORBIS", VIDEO);
+    public final static Codec AAC = new Codec("AAC", AUDIO);
+    public final static Codec MP3 = new Codec("MP3", AUDIO);
+    public final static Codec MP2 = new Codec("MP2", AUDIO);
+    public final static Codec MP1 = new Codec("MP1", AUDIO);
+    public final static Codec AC3 = new Codec("AC3", AUDIO);
+    public final static Codec DTS = new Codec("DTS", AUDIO);
+    public final static Codec TRUEHD = new Codec("TRUEHD", AUDIO);
+    public final static Codec PCM_DVD = new Codec("PCM_DVD", AUDIO);
+    public final static Codec PCM = new Codec("PCM", AUDIO);
+    public final static Codec ADPCM = new Codec("ADPCM", AUDIO);
+    public final static Codec ALAW = new Codec("ALAW", AUDIO);
+    public final static Codec NELLYMOSER = new Codec("NELLYMOSER", AUDIO);
+    public final static Codec G711 = new Codec("G711", AUDIO);
+    public final static Codec SPEEX = new Codec("SPEEX", AUDIO);
+    public final static Codec RAW = new Codec("RAW", null);
+    public final static Codec TIMECODE = new Codec("TIMECODE", TrackType.OTHER);
 
     private final static Map<String, Codec> _values = new LinkedHashMap<String, Codec>();
     static {
@@ -87,9 +87,11 @@ public final class Codec {
         _values.put("TIMECODE", TIMECODE);
     }
 
-    private TrackType type;
+    private final String _name;
+    private final TrackType type;
 
-    private Codec(TrackType type) {
+    public Codec(String name, TrackType type) {
+        this._name = name;
         this.type = type;
     }
 
@@ -115,5 +117,14 @@ public final class Codec {
 
     public static Codec valueOf(String s) {
         return _values.get(s);
+    }
+
+    @Override
+    public String toString() {
+        return _name;
+    }
+
+    public String name() {
+        return _name;
     }
 }

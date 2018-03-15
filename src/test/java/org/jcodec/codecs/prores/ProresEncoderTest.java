@@ -18,7 +18,7 @@ import java.util.Arrays;
 
 public class ProresEncoderTest {
 
-    public void testSlice1() throws Exception {
+    public void _testSlice1() throws Exception {
         int[] slice = new int[] { 4096, 0, 0, 0, 8, 0, 0, 0, 16, 16, 8, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 8, 16,
                 8, 8, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0,
                 0, 0, 0, 0, 4048, -48, -24, -8, 0, 8, 0, -8, 8, 8, 8, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -30,7 +30,7 @@ public class ProresEncoderTest {
         onePlaneTest(ByteBuffer.allocate(1024), slice, 2, qMat);
     }
 
-    public void testSlice2() throws Exception {
+    public void _testSlice2() throws Exception {
         int[] slice = new int[] { 2088, 1248, -208, -328, 144, 80, -88, 16, 232, 184, -48, -56, 48, 48, -8, -8, -64,
                 -48, 16, 32, 16, -8, -16, -16, 16, 32, 16, 8, 0, -8, -8, 0, 56, 56, 0, -16, -24, -16, -10, 0, -8, -8,
                 -24, -32, -16, 0, 10, 12, 0, -8, -8, 8, 20, 10, 0, 0, 24, 16, 8, 24, 30, 12, -14, -28, 512, 0, 0, 0, 0,

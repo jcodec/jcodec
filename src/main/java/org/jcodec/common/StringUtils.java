@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class StringUtils {
 
+    public final static String[] zeroPad00 = { "00", "01", "02", "03", "04", "05", "06", "07", "08", "09" };
+
     private static String[] splitWorker4(String str, String separatorChars, int max, boolean preserveAllTokens) {
         // Performance tuned for 2.0 (JDK1.4)
         // Direct code is quicker than StringTokenizer.
@@ -275,5 +277,17 @@ public class StringUtils {
             }
         }
         return buf.toString();
+    }
+
+    public static String zeroPad2(int x) {
+        if (x >= 0 && x < 10) {
+            return zeroPad00[x];
+        }
+        return "" + x;
+    }
+
+    public static String zeroPad3(int n) {
+        String s1 = zeroPad2(n);
+        return s1.length() == 2 ? "0" + s1 : s1;
     }
 }

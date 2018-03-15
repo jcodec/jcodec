@@ -21,7 +21,7 @@ class ChannelSynthesizer {
         pos = 15;
     }
     
-    private void distributeSamples(int pos, float[] dest, float[] next, float[] s) {
+    private static void distributeSamples(int pos, float[] dest, float[] next, float[] s) {
         for (int i = 0; i < 16; i++)
             dest[(i << 4) + pos] = s[i];
         

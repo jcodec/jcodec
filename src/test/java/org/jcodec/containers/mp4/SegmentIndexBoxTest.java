@@ -1,6 +1,7 @@
 package org.jcodec.containers.mp4;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.jcodec.containers.mp4.boxes.SegmentIndexBox;
 import org.junit.Test;
@@ -29,6 +30,7 @@ public class SegmentIndexBoxTest {
         sidx.parse(input);
         assertEquals(90000L, sidx.timescale);
         assertEquals(1, sidx.reference_count);
+        assertTrue(sidx.references[0].starts_with_SAP);
 
         ByteBuffer actual = ByteBuffer.allocate(expected.length);
         sidx.write(actual);

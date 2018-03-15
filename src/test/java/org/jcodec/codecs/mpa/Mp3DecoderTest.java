@@ -3,6 +3,7 @@ package org.jcodec.codecs.mpa;
 import java.io.File;
 import java.nio.ByteBuffer;
 
+import org.jcodec.codecs.mjpeg.tools.Asserts;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.AudioBuffer;
@@ -29,8 +30,7 @@ public class Mp3DecoderTest {
 
             ByteBuffer frame = NIOUtils.read(bb, audioBuffer.getData().remaining());
 
-            Assert.assertArrayEquals(String.format("frame %d", i), NIOUtils.toArray(frame),
-                    NIOUtils.toArray(audioBuffer.getData()));
+            Asserts.assertEpsilonEquals(NIOUtils.toArray(frame), NIOUtils.toArray(audioBuffer.getData()), 1);
         }
 
         ch.close();

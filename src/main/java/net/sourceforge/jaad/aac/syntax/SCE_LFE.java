@@ -1,7 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
 
+import net.sourceforge.jaad.aac.AACDecoderConfig;
 import net.sourceforge.jaad.aac.AACException;
-import net.sourceforge.jaad.aac.DecoderConfig;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -19,7 +19,7 @@ class SCE_LFE extends Element {
 		ics = new ICStream(frameLength);
 	}
 
-	void decode(IBitStream _in, DecoderConfig conf) throws AACException {
+	void decode(IBitStream _in, AACDecoderConfig conf) throws AACException {
 		readElementInstanceTag(_in);
 		ics.decode(_in, false, conf);
 	}

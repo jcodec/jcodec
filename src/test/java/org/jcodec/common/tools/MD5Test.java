@@ -1,8 +1,11 @@
 package org.jcodec.common.tools;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.System;
 import java.nio.ByteBuffer;
+
+import static org.junit.Assert.assertEquals;
 
 public class MD5Test {
     @Test
@@ -34,8 +37,8 @@ public class MD5Test {
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        System.out.println(MD5.md5sum(ByteBuffer.wrap(b1)));
-        System.out.println(MD5.md5sum(ByteBuffer.wrap(b2)));
-
+        assertEquals("5289df737df57326fcdd22597afb1fac", MD5.md5sum(ByteBuffer.wrap(new byte[] { 0, 1, 2, 3, 4 }, 1, 3)));
+        assertEquals("37044ba160689650f9eb408db317f89e", MD5.md5sum(ByteBuffer.wrap(b1)));
+        assertEquals("740420592dfc040d0f49da01fdd01580", MD5.md5sum(ByteBuffer.wrap(b2)));
     }
 }

@@ -1,5 +1,4 @@
 package org.jcodec.common;
-import static java.lang.Integer.MIN_VALUE;
 import static java.lang.System.arraycopy;
 
 import java.lang.IllegalArgumentException;
@@ -15,6 +14,7 @@ import java.util.Arrays;
 public class IntIntMap {
 
     private static final int GROW_BY = 128;
+    private static final int MIN_VALUE = 0x80000000;
     private int[] storage;
     private int _size;
 
@@ -39,7 +39,7 @@ public class IntIntMap {
     }
 
     public int get(int key) {
-        return key >= storage.length ? Integer.MIN_VALUE : storage[key];
+        return key >= storage.length ? MIN_VALUE : storage[key];
     }
     
     public boolean contains(int key) {
@@ -66,7 +66,7 @@ public class IntIntMap {
     }
 
     public void remove(int key) {
-        if (storage[key] != Integer.MIN_VALUE)
+        if (storage[key] != MIN_VALUE)
             _size--;
         storage[key] = MIN_VALUE;
     }
@@ -80,7 +80,7 @@ public class IntIntMap {
         return result;
     }
 
-    private int[] createArray(int size) {
+    private static int[] createArray(int size) {
         return new int[size];
     }
 }

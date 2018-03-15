@@ -36,7 +36,7 @@ public class JpegToThumb4x4 extends JpegDecoder {
         putBlock4x4(result.getPlaneData(plane), result.getPlaneWidth(plane), buf, blkX, blkY, field, step);
     }
 
-    private void putBlock4x4(byte[] plane, int stride, int[] patch, int x, int y, int field, int step) {
+    private static void putBlock4x4(byte[] plane, int stride, int[] patch, int x, int y, int field, int step) {
         stride >>= 1;
         int dstride = step * stride;
         int off = field * stride + (y >> 1) * dstride + (x >> 1);

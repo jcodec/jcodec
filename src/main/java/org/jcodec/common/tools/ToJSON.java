@@ -1,5 +1,7 @@
 package org.jcodec.common.tools;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.jcodec.common.IntArrayList;
@@ -14,6 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,8 +30,8 @@ import java.util.Set;
  * @author The JCodec project
  */
 public class ToJSON {
-    static Set<Class> primitive = new HashSet<Class>();
-    static Set<String> omitMethods = new HashSet<String>();
+    private final static Set<Class> primitive = new HashSet<Class>();
+    private final static Set<String> omitMethods = new HashSet<String>();
 
     static {
         primitive.add(Boolean.class);
@@ -185,12 +188,20 @@ public class ToJSON {
             builder.append(String.valueOf(obj));
         } else {
             builder.append("{");
-            for (Method method : obj.getClass().getMethods()) {
+            Method[] methods = obj.getClass().getMethods();
+            List<Method> filteredMethods = new ArrayList<Method>();
+            for (Method method : methods) {
                 if (omitMethods.contains(method.getName()) || !isGetter(method))
                     continue;
-
+                filteredMethods.add(method);
+            }
+            Iterator<Method> iterator = filteredMethods.iterator();
+            while (iterator.hasNext()) {
+                Method method = iterator.next();
                 String name = toName(method);
                 invoke(obj, stack, builder, method, name);
+                if (iterator.hasNext())
+                    builder.append(",");
             }
             builder.append("}");
         }
@@ -208,8 +219,6 @@ public class ToJSON {
                 builder.append(invoke);
             else
                 toJSONSub(invoke, stack, builder);
-            builder.append(",");
-            // }
         } catch (Exception e) {
         }
     }

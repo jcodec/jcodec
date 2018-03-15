@@ -16,7 +16,6 @@ import java.io.IOException;
 
 import java.lang.System;
 import java.nio.ByteBuffer;
-import javax.imageio.ImageIO;
 
 public class VP8DecoderTest {
 
@@ -29,7 +28,7 @@ public class VP8DecoderTest {
 		Picture pic = Picture.create(640, 480, ColorSpace.YUV420);
 		Picture decoded = dec.decodeFrame(bb.duplicate(), pic.getData());
 
-		ImageIO.write(AWTUtil.toBufferedImage(decoded), "png", Utils.tildeExpand("~/decoded.png"));
+		AWTUtil.writePNG(decoded, Utils.tildeExpand("~/decoded.png"));
 	}
 
 	@Ignore
@@ -37,7 +36,7 @@ public class VP8DecoderTest {
 	public void _testKFToPicture() throws Exception {
 		Picture pic = Picture.create(640, 480, ColorSpace.YUV420);
 		Picture decoded = dec.decodeFrame(bb.duplicate(), pic.getData());
-		ImageIO.write(AWTUtil.toBufferedImage(decoded), "png", Utils.tildeExpand("~/decoded.pic.png"));
+		AWTUtil.writePNG(decoded, Utils.tildeExpand("~/decoded.pic.png"));
 	}
 
 	public void pysch() throws Exception {

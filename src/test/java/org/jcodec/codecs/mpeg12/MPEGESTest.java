@@ -17,8 +17,8 @@ public class MPEGESTest {
 
         byte[] mpeg = MPEGTestConst.mpeg();
 
-        byte[] frame1 = MPEGTestConst.toBB(MPEGTestConst._mpegHeader, MPEGTestConst._mpegFrame);
-        byte[] frame2 = MPEGTestConst.toBB(MPEGTestConst._mpegFrame);
+        byte[] frame1 = MPEGTestConst.toBB(new int[][]{MPEGTestConst._mpegHeader, MPEGTestConst._mpegFrame});
+        byte[] frame2 = MPEGTestConst.toBB(new int[][]{MPEGTestConst._mpegFrame});
         MPEGES mpeges = new MPEGES(Channels.newChannel(new ByteArrayInputStream(mpeg)), 32);
         ByteBuffer buf = ByteBuffer.allocate(1024);
         Packet f1 = mpeges.frame(buf);
@@ -36,8 +36,8 @@ public class MPEGESTest {
 
         byte[] mpeg = MPEGTestConst.mpeg();
 
-        byte[] frame1 = MPEGTestConst.toBB(MPEGTestConst._mpegHeader, MPEGTestConst._mpegFrame);
-        byte[] frame2 = MPEGTestConst.toBB(MPEGTestConst._mpegFrame);
+        byte[] frame1 = MPEGTestConst.toBB(new int[][]{MPEGTestConst._mpegHeader, MPEGTestConst._mpegFrame});
+        byte[] frame2 = MPEGTestConst.toBB(new int[][]{MPEGTestConst._mpegFrame});
         MPEGES mpeges = new MPEGES(Channels.newChannel(new ByteArrayInputStream(mpeg)), 32);
         Packet f1 = mpeges.getFrame();
         assertArrayEquals(frame1, NIOUtils.toArray(f1.getData()));

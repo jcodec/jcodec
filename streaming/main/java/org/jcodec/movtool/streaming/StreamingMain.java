@@ -40,15 +40,15 @@ public class StreamingMain {
         TrakBox v1 = mov1.getVideoTrack();
 
         RealTrack rt = new RealTrack(mov1, v1, ch1);
-        VirtualTrack rt1 = new StereoDownmixTrack(new RealTrack(mov1, mov1.getAudioTracks().get(0), ch1),
+        VirtualTrack rt1 = new StereoDownmixTrack(new RealTrack[]{new RealTrack(mov1, mov1.getAudioTracks().get(0), ch1),
                 new RealTrack(mov1, mov1.getAudioTracks().get(1), ch1), new RealTrack(mov1, mov1.getAudioTracks()
-                        .get(2), ch1), new RealTrack(mov1, mov1.getAudioTracks().get(3), ch1));
+                        .get(2), ch1), new RealTrack(mov1, mov1.getAudioTracks().get(3), ch1)});
 
         long start = currentTimeMillis();
         ScheduledExecutorService cachePolicyExec = Executors.newSingleThreadScheduledExecutor();
 
-        VirtualMovie vm = new VirtualMP4Movie(new CachingTrack(new Prores2AVCTrack(rt, v1.getCodedSize()), 10,
-                cachePolicyExec), new CachingTrack(rt1, 10, cachePolicyExec));
+        VirtualMovie vm = new VirtualMP4Movie(new CachingTrack[]{new CachingTrack(new Prores2AVCTrack(rt, v1.getCodedSize()), 10,
+                cachePolicyExec), new CachingTrack(rt1, 10, cachePolicyExec)});
         System.out.println(currentTimeMillis() - start);
 
         BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home")

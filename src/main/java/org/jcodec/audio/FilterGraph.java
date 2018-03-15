@@ -33,10 +33,10 @@ public class FilterGraph implements AudioFilter {
             if (firstFilter.getDelay() != 0) {
                 // Removing first filter delay using filter socket zero stuffing
                 // features
-                sockets.add(FilterSocket.createFilterSocket(new DummyFilter(firstFilter.getNInputs())));
-                addLevel(firstFilter);
+                sockets.add(FilterSocket.createFilterSocket(new DummyFilter[]{new DummyFilter(firstFilter.getNInputs())}));
+                addLevel(new AudioFilter[]{firstFilter});
             } else
-                sockets.add(FilterSocket.createFilterSocket(firstFilter));
+                sockets.add(FilterSocket.createFilterSocket(new AudioFilter[]{firstFilter}));
         }
 
 //@formatter:off
@@ -57,8 +57,8 @@ public class FilterGraph implements AudioFilter {
          * @return
          */
 //@formatter:on
-        public Factory addLevel(AudioFilter... arguments) {
-            FilterSocket socket = FilterSocket.createFilterSocket(arguments);
+        public Factory addLevel(AudioFilter[] filters) {
+            FilterSocket socket = FilterSocket.createFilterSocket(filters);
             socket.allocateBuffers(4096);
             sockets.add(socket);
             return this;

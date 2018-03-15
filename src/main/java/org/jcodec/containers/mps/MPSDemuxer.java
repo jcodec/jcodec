@@ -435,7 +435,7 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
             marker = (marker << 8) | code;
 
             if (inNALUnit) {
-                NALUnit nu = NALUnit.read(asByteBufferInt(code));
+                NALUnit nu = NALUnit.read(asByteBufferInt(new int[]{code}));
                 if (nu.type != null)
                     nuSeq.add(nu);
                 inNALUnit = false;

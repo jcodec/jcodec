@@ -52,7 +52,7 @@ public class Noise {
         AudioFilter filter = FilterGraph
                 .addLevel(new ChannelSplit(source.getFormat()))
                 .addLevelSpan(new NoiseFilter(dB))
-                .addLevel(new ChannelMerge(source.getFormat()))
+                .addLevel(new ChannelMerge[]{new ChannelMerge(source.getFormat())})
                 .create();
 //@formatter:on
         Audio.filterTransfer(source, filter, sink);

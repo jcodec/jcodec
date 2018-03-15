@@ -336,8 +336,8 @@ public class MainUtils {
                 argShortFlags.toArray((Map<String, String>[]) Array.newInstance(shortFlags.getClass(), 0)));
     }
 
-    public static void printHelpArgs(Flag[] flags, String[] arguments) {
-        printHelpOut(System.out, "", flags, Arrays.asList(arguments));
+    public static void printHelpArgs(Flag[] flags, String[] args) {
+        printHelpOut(System.out, "", flags, Arrays.asList(args));
     }
 
     public static void printHelp(Flag[] flags, List<String> params) {
@@ -348,8 +348,8 @@ public class MainUtils {
         printHelpOut(System.out, "", new Flag[] {}, Arrays.asList(arguments));
     }
 
-    public static void printHelpCmdVa(String command, Flag[] flags, String arguments) {
-        printHelpOut(System.out, command, flags, Collections.singletonList(arguments));
+    public static void printHelpCmdVa(String command, Flag[] flags, String args) {
+        printHelpOut(System.out, command, flags, Collections.singletonList(args));
     }
     
     public static void printHelpCmd(String command, Flag[] flags, List<String> params) {

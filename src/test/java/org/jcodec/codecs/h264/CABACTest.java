@@ -61,7 +61,7 @@ public class CABACTest {
         new CABAC(1).writeIntraChromaPredMode(e, 0, null, null, false, false, 3);
     }
 
-    public void testMBQpDelta() {
+    public void _testMBQpDelta() {
         MockMDecoder m = new MockMDecoder(new int[] { 0 }, new int[] { 60 });
         Assert.assertEquals(0, new CABAC(1).readMBQpDelta(m, null));
 

@@ -15,10 +15,10 @@ public class SampleDescriptionBox extends NodeBox {
         return "stsd";
     }
 
-    public static SampleDescriptionBox createSampleDescriptionBox(SampleEntry... arguments) {
+    public static SampleDescriptionBox createSampleDescriptionBox(SampleEntry[] entries) {
         SampleDescriptionBox box = new SampleDescriptionBox(new Header(fourcc()));
-        for (int i = 0; i < arguments.length; i++) {
-            SampleEntry e = arguments[i];
+        for (int i = 0; i < entries.length; i++) {
+            SampleEntry e = entries[i];
             box.boxes.add(e);
         }
         return box;
@@ -27,7 +27,8 @@ public class SampleDescriptionBox extends NodeBox {
     public SampleDescriptionBox(Header header) {
         super(header);
     }
-    
+
+    @Override
     public void parse(ByteBuffer input) {
         input.getInt();
         input.getInt();

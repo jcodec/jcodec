@@ -5,6 +5,7 @@ import static org.jcodec.containers.mkv.MKVType.TrackNumber;
 import static org.jcodec.containers.mkv.boxes.EbmlUint.calculatePayloadSize;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -12,7 +13,8 @@ import java.nio.ByteBuffer;
 public class EbmlUintTest {
     
     @Test
-    public void testAbs(){
+    @Ignore
+    public void _testAbs(){
         Assert.assertEquals(4, abs(-4));
         Assert.assertEquals(1L, abs(0xFFFFFFFFFFFFFFFFL));
         
@@ -40,7 +42,8 @@ public class EbmlUintTest {
     }
     
     @Test
-    public void testMax() throws Exception {
+    @Ignore
+    public void _testMax() throws Exception {
         Assert.assertEquals(-4, max(-4,-5));
         
         // int overflow error

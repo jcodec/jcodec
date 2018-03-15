@@ -8,7 +8,11 @@ import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.common.tools.MainUtils;
+
+import static org.jcodec.codecs.png.IHDR.PNG_COLOR_MASK_COLOR;
+import static org.jcodec.codecs.png.PNGConsts.TAG_IDAT;
+import static org.jcodec.codecs.png.PNGConsts.TAG_IEND;
+import static org.jcodec.codecs.png.PNGConsts.TAG_IHDR;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -20,31 +24,6 @@ import org.jcodec.common.tools.MainUtils;
  * 
  */
 public class PNGEncoder extends VideoEncoder {
-    private static final long PNGSIG = 0x89504e470d0a1a0aL;
-    private static final int TAG_IHDR = 0x49484452;
-    private static final int TAG_IDAT = 0x49444154;
-    private static final int TAG_IEND = 0x49454e44;
-
-    private static class IHDR {
-        private int width;
-        private int height;
-        private byte bitDepth;
-        private byte colorType;
-        private byte compressionType;
-        private byte filterType;
-        private byte interlaceType;
-
-        public void write(ByteBuffer data) {
-            data.putInt(width);
-            data.putInt(height);
-            data.put(bitDepth);
-            data.put(colorType);
-            data.put(compressionType);
-            data.put(filterType);
-            data.put(interlaceType);
-        }
-    }
-
     private static int crc32(ByteBuffer from, ByteBuffer to) {
         from.limit(to.position());
         
@@ -53,12 +32,11 @@ public class PNGEncoder extends VideoEncoder {
         return (int) crc32.getValue();
     }
 
-    private static final int PNG_COLOR_MASK_COLOR = 2;
-
     @Override
     public EncodedFrame encodeFrame(Picture pic, ByteBuffer out) {
         ByteBuffer _out = out.duplicate();
-        _out.putLong(PNGSIG);
+        _out.putInt(PNGConsts.PNGSIGhi);
+        _out.putInt(PNGConsts.PNGSIGlo);
         IHDR ihdr = new IHDR();
         ihdr.width = pic.getCroppedWidth();
         ihdr.height = pic.getCroppedHeight();

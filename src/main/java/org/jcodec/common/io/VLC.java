@@ -1,5 +1,6 @@
 package org.jcodec.common.io;
 import org.jcodec.common.IntArrayList;
+import org.jcodec.platform.Platform;
 
 import java.io.PrintStream;
 import java.lang.StringBuilder;
@@ -16,15 +17,15 @@ import java.lang.StringBuilder;
 public class VLC {
 
     /**
-     * @param arguments
+     * @param codes
      *            vlc codes
      * @return
      */
-    public static VLC createVLC(String... arguments) {
+    public static VLC createVLC(String[] codes) {
         IntArrayList _codes = IntArrayList.createIntArrayList();
         IntArrayList _codeSizes = IntArrayList.createIntArrayList();
-        for (int i = 0; i < arguments.length; i++) {
-            String string = arguments[i];
+        for (int i = 0; i < codes.length; i++) {
+            String string = codes[i];
             _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
             _codeSizes.add(string.length());
         }
@@ -123,12 +124,12 @@ public class VLC {
         return code;
     }
 
-    private String binary(int string, int len) {
+    private static String binary(int string, int len) {
         char[] symb = new char[len];
         for (int i = 0; i < len; i++) {
             symb[i] = (string & (1 << (len - i - 1))) != 0 ? '1' : '0';
         }
-        return new String(symb);
+        return Platform.stringFromChars(symb);
     }
 
     public void writeVLC(BitWriter out, int code) {
@@ -142,12 +143,12 @@ public class VLC {
         }
     }
 
-    private String extracted(int num) {
+    private static String extracted(int num) {
 
         String str = Integer.toString(num & 0xff, 2);
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < 8 - str.length(); i++)
-            builder.append('0');
+            builder.append("0");
         builder.append(str);
         return builder.toString();
     }

@@ -70,12 +70,12 @@ public class FrameGrabTest {
 
                 if (saveImages && Utils.maxDiff(frame, fr2) > 0) {
                     System.out.println(String.format("POC: %d, pts: %f", frame.getPOC(), pic.getTimestamp()));
-                    Utils.saveImage(fr2, "png", String.format("/tmp/orig_%s_%f.%s", new File(compressed).getName(),
+                    Utils.saveImage(fr2, String.format("/tmp/orig_%s_%f.%s", new File(compressed).getName(),
                             pic.getTimestamp(), "png"));
-                    Utils.saveImage(frame, "png", String.format("/tmp/dec_%s_%f.%s", new File(compressed).getName(),
+                    Utils.saveImage(frame, String.format("/tmp/dec_%s_%f.%s", new File(compressed).getName(),
                             pic.getTimestamp(), "png"));
 
-                    Utils.saveImage(Utils.diff(frame, fr2, 10), "png", String.format("/tmp/diff_%s_%f.%s", new File(
+                    Utils.saveImage(Utils.diff(frame, fr2, 10), String.format("/tmp/diff_%s_%f.%s", new File(
                             compressed).getName(), pic.getTimestamp(), "png"));
                 }
 

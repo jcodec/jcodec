@@ -199,7 +199,7 @@ public class MPSRandomAccessDemuxer {
 
         @Override
         public void seek(double second) {
-            throw new NotSupportedException();
+            throw new NotSupportedException("");
         }
     }
 }

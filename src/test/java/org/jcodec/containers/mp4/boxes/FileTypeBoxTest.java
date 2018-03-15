@@ -33,7 +33,7 @@ public class FileTypeBoxTest {
         Atom atom = rootAtoms.get(0);
         assertEquals("ftyp", atom.getHeader().getFourcc());
         Box box = atom.parseBox(input);
-        assertTrue(FileTypeBox.class.isInstance(box));
+        assertTrue(box instanceof FileTypeBox);
 
         FileTypeBox ftyp = (FileTypeBox) box;
         assertEquals("mp42", ftyp.getMajorBrand());

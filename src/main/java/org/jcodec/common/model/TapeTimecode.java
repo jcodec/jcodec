@@ -1,6 +1,7 @@
 package org.jcodec.common.model;
 
 import static java.lang.String.format;
+import static org.jcodec.common.StringUtils.zeroPad2;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -56,8 +57,10 @@ public class TapeTimecode {
 
     @Override
     public String toString() {
-        String tcfmt = dropFrame ? "%02d:%02d:%02d;%02d" : "%02d:%02d:%02d:%02d";
-        return format(tcfmt, hour, minute, second, frame);
+        return zeroPad2(hour) + ":" +
+                zeroPad2(minute) + ":" +
+                zeroPad2(second) + (dropFrame ? ";" : ":") +
+                zeroPad2(frame);
     }
 
     public static TapeTimecode tapeTimecode(long frame, boolean dropFrame, int tapeFps) {

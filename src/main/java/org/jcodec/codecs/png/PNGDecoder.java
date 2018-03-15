@@ -1,5 +1,13 @@
 package org.jcodec.codecs.png;
 
+import static org.jcodec.codecs.png.IHDR.PNG_COLOR_MASK_ALPHA;
+import static org.jcodec.codecs.png.IHDR.PNG_COLOR_MASK_COLOR;
+import static org.jcodec.codecs.png.IHDR.PNG_COLOR_MASK_PALETTE;
+import static org.jcodec.codecs.png.PNGConsts.TAG_IDAT;
+import static org.jcodec.codecs.png.PNGConsts.TAG_IEND;
+import static org.jcodec.codecs.png.PNGConsts.TAG_IHDR;
+import static org.jcodec.codecs.png.PNGConsts.TAG_PLTE;
+import static org.jcodec.codecs.png.PNGConsts.TAG_tRNS;
 import static org.jcodec.common.tools.MathUtil.abs;
 
 import java.io.ByteArrayOutputStream;
@@ -30,13 +38,6 @@ import org.jcodec.common.model.Size;
  * 
  */
 public class PNGDecoder extends VideoDecoder {
-    private static final long PNGSIG = 0x89504e470d0a1a0aL;
-    private static final long MNGSIG = 0x8a4d4e470d0a1a0aL;
-    private static final int TAG_IHDR = 0x49484452;
-    private static final int TAG_IDAT = 0x49444154;
-    private static final int TAG_PLTE = 0x504c5445;
-    private static final int TAG_tRNS = 0x74524e53;
-    private static final int TAG_IEND = 0x49454e44;
 
     private static final int FILTER_TYPE_LOCO = 64;
     private static final int FILTER_VALUE_NONE = 0;
@@ -44,10 +45,6 @@ public class PNGDecoder extends VideoDecoder {
     private static final int FILTER_VALUE_UP = 2;
     private static final int FILTER_VALUE_AVG = 3;
     private static final int FILTER_VALUE_PAETH = 4;
-
-    private static final int PNG_COLOR_MASK_PALETTE = 1;
-    private static final int PNG_COLOR_MASK_COLOR = 2;
-    private static final int PNG_COLOR_MASK_ALPHA = 4;
 
     private static final int PNG_COLOR_TYPE_GRAY = 0;
     private static final int PNG_COLOR_TYPE_PALETTE = (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_PALETTE);
@@ -57,11 +54,11 @@ public class PNGDecoder extends VideoDecoder {
     private static final int alphaG = 0x7f;
     private static final int alphaB = 0x7f;
 
-    public static final int[] logPassStep = { 3, 3, 2, 2, 1, 1, 0 };
-    public static final int[] logPassRowStep = { 3, 3, 3, 2, 2, 1, 1 };
-    public static final int[] passOff = { 0, 4, 0, 2, 0, 1, 0 };
-    public static final int[] passRowOff = { 0, 0, 4, 0, 2, 0, 1 };
-    
+    private static final int[] logPassStep = { 3, 3, 2, 2, 1, 1, 0 };
+    private static final int[] logPassRowStep = { 3, 3, 3, 2, 2, 1, 1 };
+    private static final int[] passOff = { 0, 4, 0, 2, 0, 1, 0 };
+    private static final int[] passRowOff = { 0, 0, 4, 0, 2, 0, 1 };
+
     private byte[] ca;
 
     public PNGDecoder() {
@@ -70,8 +67,7 @@ public class PNGDecoder extends VideoDecoder {
 
     @Override
     public Picture decodeFrame(ByteBuffer data, byte[][] buffer) {
-        long sig = data.getLong();
-        if (sig != PNGSIG && sig != MNGSIG)
+        if (!ispng(data))
             throw new RuntimeException("Not a PNG file.");
 
         IHDR ihdr = null;
@@ -112,15 +108,15 @@ public class PNGDecoder extends VideoDecoder {
                 data.position(data.position() + length + 4);
             }
         }
-        try {
-            decodeData(ihdr, plte, trns, list, buffer);
-        } catch (DataFormatException e) {
-            return null;
+        if (ihdr != null) {
+            try {
+                decodeData(ihdr, plte, trns, list, buffer);
+            } catch (DataFormatException e) {
+                return null;
+            }
+            return Picture.createPicture(ihdr.width, ihdr.height, buffer, ihdr.colorSpace());
         }
-        if (ihdr == null) {
-            throw new IllegalStateException("no IHDR tag");
-        }
-        return Picture.createPicture(ihdr.width, ihdr.height, buffer, ihdr.colorSpace());
+        throw new IllegalStateException("no IHDR tag");
     }
 
     private void decodeData(IHDR ihdr, PLTE plte, TRNS trns, List<ByteBuffer> list, byte[][] buffer)
@@ -167,9 +163,7 @@ public class PNGDecoder extends VideoDecoder {
                 int filter = uncompressed[0];
                 switch (filter) {
                 case FILTER_VALUE_NONE:
-                    for (int i = 0; i < rowSize - 1; i++) {
-                        lastRow[i] = uncompressed[i + 1];
-                    }
+                    System.arraycopy(uncompressed, 1, lastRow, 0, rowSize - 1);
                     break;
                 case FILTER_VALUE_SUB:
                     filterSub(uncompressed, rowSize - 1, lastRow, bpp);
@@ -275,7 +269,7 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
-    private void filterSub(byte[] uncompressed, int rowSize, byte[] lastRow, int bpp) {
+    private static void filterSub(byte[] uncompressed, int rowSize, byte[] lastRow, int bpp) {
         switch (bpp) {
         case 1:
             filterSub1(uncompressed, lastRow, rowSize);
@@ -291,7 +285,7 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
-    private void filterAvg(byte[] uncompressed, int rowSize, byte[] lastRow, int bpp) {
+    private static void filterAvg(byte[] uncompressed, int rowSize, byte[] lastRow, int bpp) {
         switch (bpp) {
         case 1:
             filterAvg1(uncompressed, lastRow, rowSize);
@@ -308,27 +302,27 @@ public class PNGDecoder extends VideoDecoder {
 
     }
 
-    private void filterSub1(byte[] uncompressed, byte[] lastRow, int rowSize) {
+    private static void filterSub1(byte[] uncompressed, byte[] lastRow, int rowSize) {
         byte p = lastRow[0] = uncompressed[1];
         for (int i = 1; i < rowSize; i++) {
             p = lastRow[i] = (byte) ((p & 0xff) + (uncompressed[i + 1] & 0xff));
         }
     }
 
-    private void filterUp(byte[] uncompressed, int rowSize, byte[] lastRow) {
+    private static void filterUp(byte[] uncompressed, int rowSize, byte[] lastRow) {
         for (int i = 0; i < rowSize; i++) {
             lastRow[i] = (byte) ((lastRow[i] & 0xff) + (uncompressed[i + 1] & 0xff));
         }
     }
 
-    private void filterAvg1(byte[] uncompressed, byte[] lastRow, int rowSize) {
+    private static void filterAvg1(byte[] uncompressed, byte[] lastRow, int rowSize) {
         byte p = lastRow[0] = (byte) ((uncompressed[1] & 0xff) + ((lastRow[0] & 0xff) >> 1));
         for (int i = 1; i < rowSize; i++) {
             p = lastRow[i] = (byte) ((((lastRow[i] & 0xff) + (p & 0xff)) >> 1) + (uncompressed[i + 1] & 0xff));
         }
     }
 
-    private void filterSub2(byte[] uncompressed, byte[] lastRow, int rowSize) {
+    private static void filterSub2(byte[] uncompressed, byte[] lastRow, int rowSize) {
         byte p0 = lastRow[0] = uncompressed[1];
         byte p1 = lastRow[1] = uncompressed[2];
         for (int i = 2; i < rowSize; i += 2) {
@@ -337,7 +331,7 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
-    private void filterAvg2(byte[] uncompressed, byte[] lastRow, int rowSize) {
+    private static void filterAvg2(byte[] uncompressed, byte[] lastRow, int rowSize) {
         byte p0 = lastRow[0] = (byte) ((uncompressed[1] & 0xff) + ((lastRow[0] & 0xff) >> 1));
         byte p1 = lastRow[1] = (byte) ((uncompressed[2] & 0xff) + ((lastRow[1] & 0xff) >> 1));
         for (int i = 2; i < rowSize; i += 2) {
@@ -347,7 +341,7 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
-    private void filterSub3(byte[] uncompressed, byte[] lastRow, int rowSize) {
+    private static void filterSub3(byte[] uncompressed, byte[] lastRow, int rowSize) {
         byte p0 = lastRow[0] = uncompressed[1];
         byte p1 = lastRow[1] = uncompressed[2];
         byte p2 = lastRow[2] = uncompressed[3];
@@ -358,7 +352,7 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
-    private void filterAvg3(byte[] uncompressed, byte[] lastRow, int rowSize) {
+    private static void filterAvg3(byte[] uncompressed, byte[] lastRow, int rowSize) {
         byte p0 = lastRow[0] = (byte) ((uncompressed[1] & 0xff) + ((lastRow[0] & 0xff) >> 1));
         byte p1 = lastRow[1] = (byte) ((uncompressed[2] & 0xff) + ((lastRow[1] & 0xff) >> 1));
         byte p2 = lastRow[2] = (byte) ((uncompressed[3] & 0xff) + ((lastRow[2] & 0xff) >> 1));
@@ -371,7 +365,7 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
-    private void filterSub4(byte[] uncompressed, byte[] lastRow, int rowSize) {
+    private static void filterSub4(byte[] uncompressed, byte[] lastRow, int rowSize) {
         byte p0 = lastRow[0] = uncompressed[1];
         byte p1 = lastRow[1] = uncompressed[2];
         byte p2 = lastRow[2] = uncompressed[3];
@@ -384,7 +378,7 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
-    private void filterAvg4(byte[] uncompressed, byte[] lastRow, int rowSize) {
+    private static void filterAvg4(byte[] uncompressed, byte[] lastRow, int rowSize) {
         byte p0 = lastRow[0] = (byte) ((uncompressed[1] & 0xff) + ((lastRow[0] & 0xff) >> 1));
         byte p1 = lastRow[1] = (byte) ((uncompressed[2] & 0xff) + ((lastRow[1] & 0xff) >> 1));
         byte p2 = lastRow[2] = (byte) ((uncompressed[3] & 0xff) + ((lastRow[2] & 0xff) >> 1));
@@ -400,62 +394,19 @@ public class PNGDecoder extends VideoDecoder {
         }
     }
 
-    private static class IHDR {
-        private int width;
-        private int height;
-        private byte bitDepth;
-        private byte colorType;
-        private byte compressionType;
-        private byte filterType;
-        private byte interlaceType;
-
-        public void parse(ByteBuffer data) {
-            width = data.getInt();
-            height = data.getInt();
-            bitDepth = data.get();
-            colorType = data.get();
-            compressionType = data.get();
-            filterType = data.get();
-            interlaceType = data.get();
-            data.getInt();
-        }
-
-        public int rowSize() {
-            return (width * getBitsPerPixel() + 7) >> 3;
-        }
-
-        public int getNBChannels() {
-            int channels;
-            channels = 1;
-            if ((colorType & (PNG_COLOR_MASK_COLOR | PNG_COLOR_MASK_PALETTE)) == PNG_COLOR_MASK_COLOR)
-                channels = 3;
-            if ((colorType & PNG_COLOR_MASK_ALPHA) != 0)
-                channels++;
-            return channels;
-        }
-
-        public int getBitsPerPixel() {
-            return bitDepth * getNBChannels();
-        }
-
-        public ColorSpace colorSpace() {
-            return ColorSpace.RGB;
-        }
-    }
-
     /**
      * Palette descriptor.
      */
     private static class PLTE {
 
-        private int[] palette;
+        int[] palette;
 
         public void parse(ByteBuffer data, int length) {
             if ((length % 3) != 0 || length > 256 * 3)
                 throw new RuntimeException("Invalid data");
             int n = length / 3;
             palette = new int[n];
-            int i = 0;
+            int i;
             for (i = 0; i < n; i++) {
                 palette[i] = (0xff << 24) | ((data.get() & 0xff) << 16) | ((data.get() & 0xff) << 8)
                         | (data.get() & 0xff);
@@ -471,13 +422,13 @@ public class PNGDecoder extends VideoDecoder {
      */
     public static class TRNS {
         private int colorType;
-        private byte[] alphaPal;
-        private byte alphaGrey;
-        private byte alphaR;
-        private byte alphaG;
-        private byte alphaB;
+        byte[] alphaPal;
+        byte alphaGrey;
+        byte alphaR;
+        byte alphaG;
+        byte alphaB;
 
-        public TRNS(byte colorType) {
+        TRNS(byte colorType) {
             this.colorType = colorType;
         }
 
@@ -502,8 +453,7 @@ public class PNGDecoder extends VideoDecoder {
     @Override
     public VideoCodecMeta getCodecMeta(ByteBuffer _data) {
         ByteBuffer data = _data.duplicate();
-        long sig = data.getLong();
-        if (sig != PNGSIG && sig != MNGSIG)
+        if (!ispng(data))
             throw new RuntimeException("Not a PNG file.");
 
         while (data.remaining() >= 8) {
@@ -525,9 +475,15 @@ public class PNGDecoder extends VideoDecoder {
         return null;
     }
 
+    private static boolean ispng(ByteBuffer data) {
+        int sighi = data.getInt();
+        int siglo = data.getInt();
+        boolean ispng = (sighi == PNGConsts.PNGSIGhi || sighi == PNGConsts.MNGSIGhi) && (siglo == PNGConsts.PNGSIGlo || siglo == PNGConsts.MNGSIGlo);
+        return ispng;
+    }
+
     public static int probe(ByteBuffer data) {
-        long sig = data.getLong();
-        if (sig == PNGSIG && sig == MNGSIG)
+        if (!ispng(data))
             return 100;
         return 0;
     }

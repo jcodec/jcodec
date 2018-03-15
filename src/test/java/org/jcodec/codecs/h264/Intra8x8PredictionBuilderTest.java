@@ -43,10 +43,10 @@ public class Intra8x8PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 64, 65, 66, 67, 68, 69, 70,
-                71);
-        byte[] left = toByteArrayShifted(16, 17, 18, 19, 20, 21, 22, 23);
-        byte[] topLeft = toByteArrayShifted(24);
+        byte[] top = toByteArrayShifted(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 64, 65, 66, 67, 68, 69, 70,
+                71});
+        byte[] left = toByteArrayShifted(new int[]{16, 17, 18, 19, 20, 21, 22, 23});
+        byte[] topLeft = toByteArrayShifted(new int[]{24});
 
         byte[] expected = new byte[64];
         Arrays.fill(expected, (byte) (13 - 128));
@@ -70,13 +70,13 @@ public class Intra8x8PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 64, 65, 66, 67, 68, 69, 70,
-                71);
-        byte[] topLeft = toByteArrayShifted(24, 0, 0, 0);
+        byte[] top = toByteArrayShifted(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 64, 65, 66, 67, 68, 69, 70,
+                71});
+        byte[] topLeft = toByteArrayShifted(new int[]{24, 0, 0, 0});
 
-        byte[] expected = toByteArrayShifted(7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7,
+        byte[] expected = toByteArrayShifted(new int[]{7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7,
                 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3, 4, 5, 6, 7, 8, 7, 2, 3,
-                4, 5, 6, 7, 8);
+                4, 5, 6, 7, 8});
 
         new Intra8x8PredictionBuilder().predictVertical(emptyResidual, true, true, topLeft, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
@@ -96,12 +96,12 @@ public class Intra8x8PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] left = toByteArrayShifted(16, 17, 18, 19, 20, 21, 22, 23);
-        byte[] topLeft = toByteArrayShifted(24, 0, 0, 0);
+        byte[] left = toByteArrayShifted(new int[]{16, 17, 18, 19, 20, 21, 22, 23});
+        byte[] topLeft = toByteArrayShifted(new int[]{24, 0, 0, 0});
 
-        byte[] expected = toByteArrayShifted(18, 18, 18, 18, 18, 18, 18, 18, 17, 17, 17, 17, 17, 17, 17, 17, 18, 18,
+        byte[] expected = toByteArrayShifted(new int[]{18, 18, 18, 18, 18, 18, 18, 18, 17, 17, 17, 17, 17, 17, 17, 17, 18, 18,
                 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 19, 20, 20, 20, 20, 20, 20, 20, 20, 21, 21, 21, 21,
-                21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 23, 23, 23, 23, 23, 23);
+                21, 21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 23, 23, 23, 23, 23, 23});
 
         new Intra8x8PredictionBuilder().predictHorizontal(emptyResidual, true, topLeft, left, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
@@ -121,13 +121,13 @@ public class Intra8x8PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160);
-        byte[] topLeft = toByteArrayShifted(170, 180, 190, 200);
+        byte[] top = toByteArrayShifted(new int[]{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160});
+        byte[] topLeft = toByteArrayShifted(new int[]{170, 180, 190, 200});
 
-        byte[] expected = toByteArrayShifted(31, 30, 40, 50, 60, 70, 80, 90, 30, 40, 50, 60, 70, 80, 90, 100, 40, 50,
+        byte[] expected = toByteArrayShifted(new int[]{31, 30, 40, 50, 60, 70, 80, 90, 30, 40, 50, 60, 70, 80, 90, 100, 40, 50,
                 60, 70, 80, 90, 100, 110, 50, 60, 70, 80, 90, 100, 110, 120, 60, 70, 80, 90, 100, 110, 120, 130, 70,
                 80, 90, 100, 110, 120, 130, 140, 80, 90, 100, 110, 120, 130, 140, 150, 90, 100, 110, 120, 130, 140,
-                150, 156);
+                150, 156});
 
         new Intra8x8PredictionBuilder().predictDiagonalDownLeft(emptyResidual, true, true, true, topLeft, top, 0, 0, 0,
                 pred);
@@ -148,14 +148,14 @@ public class Intra8x8PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160);
-        byte[] left = toByteArrayShifted(210, 215, 220, 225, 230, 235, 240, 245);
-        byte[] tl = toByteArrayShifted(170, 180, 190, 200);
+        byte[] top = toByteArrayShifted(new int[]{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160});
+        byte[] left = toByteArrayShifted(new int[]{210, 215, 220, 225, 230, 235, 240, 245});
+        byte[] tl = toByteArrayShifted(new int[]{170, 180, 190, 200});
 
-        byte[] expected = toByteArrayShifted(134, 67, 31, 30, 40, 50, 60, 70, 189, 134, 67, 31, 30, 40, 50, 60, 213,
+        byte[] expected = toByteArrayShifted(new int[]{134, 67, 31, 30, 40, 50, 60, 70, 189, 134, 67, 31, 30, 40, 50, 60, 213,
                 189, 134, 67, 31, 30, 40, 50, 220, 213, 189, 134, 67, 31, 30, 40, 225, 220, 213, 189, 134, 67, 31, 30,
                 230, 225, 220, 213, 189, 134, 67, 31, 235, 230, 225, 220, 213, 189, 134, 67, 240, 235, 230, 225, 220,
-                213, 189, 134);
+                213, 189, 134});
 
         new Intra8x8PredictionBuilder().predictDiagonalDownRight(emptyResidual, true, tl, left, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
@@ -175,13 +175,13 @@ public class Intra8x8PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160);
-        byte[] left = toByteArrayShifted(210, 215, 220, 225, 230, 235, 240, 245);
-        byte[] tl = toByteArrayShifted(170, 180, 190, 200);
+        byte[] top = toByteArrayShifted(new int[]{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160});
+        byte[] left = toByteArrayShifted(new int[]{210, 215, 220, 225, 230, 235, 240, 245});
+        byte[] tl = toByteArrayShifted(new int[]{170, 180, 190, 200});
 
-        byte[] expected = toByteArrayShifted(97, 37, 25, 35, 45, 55, 65, 75, 134, 67, 31, 30, 40, 50, 60, 70, 189, 97,
+        byte[] expected = toByteArrayShifted(new int[]{97, 37, 25, 35, 45, 55, 65, 75, 134, 67, 31, 30, 40, 50, 60, 70, 189, 97,
                 37, 25, 35, 45, 55, 65, 213, 134, 67, 31, 30, 40, 50, 60, 220, 189, 97, 37, 25, 35, 45, 55, 225, 213,
-                134, 67, 31, 30, 40, 50, 230, 220, 189, 97, 37, 25, 35, 45, 235, 225, 213, 134, 67, 31, 30, 40);
+                134, 67, 31, 30, 40, 50, 230, 220, 189, 97, 37, 25, 35, 45, 235, 225, 213, 134, 67, 31, 30, 40});
 
         new Intra8x8PredictionBuilder().predictVerticalRight(emptyResidual, true, tl, left, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
@@ -201,14 +201,14 @@ public class Intra8x8PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160);
-        byte[] left = toByteArrayShifted(210, 215, 220, 225, 230, 235, 240, 245);
-        byte[] tl = toByteArrayShifted(170, 180, 190, 200);
+        byte[] top = toByteArrayShifted(new int[]{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160});
+        byte[] left = toByteArrayShifted(new int[]{210, 215, 220, 225, 230, 235, 240, 245});
+        byte[] tl = toByteArrayShifted(new int[]{170, 180, 190, 200});
 
-        byte[] expected = toByteArrayShifted(171, 134, 67, 31, 30, 40, 50, 60, 208, 189, 171, 134, 67, 31, 30, 40, 218,
+        byte[] expected = toByteArrayShifted(new int[]{171, 134, 67, 31, 30, 40, 50, 60, 208, 189, 171, 134, 67, 31, 30, 40, 218,
                 213, 208, 189, 171, 134, 67, 31, 223, 220, 218, 213, 208, 189, 171, 134, 228, 225, 223, 220, 218, 213,
                 208, 189, 233, 230, 228, 225, 223, 220, 218, 213, 238, 235, 233, 230, 228, 225, 223, 220, 242, 240,
-                238, 235, 233, 230, 228, 225);
+                238, 235, 233, 230, 228, 225});
 
         new Intra8x8PredictionBuilder().predictHorizontalDown(emptyResidual, true, tl, left, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
@@ -228,12 +228,12 @@ public class Intra8x8PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160);
-        byte[] tl = toByteArrayShifted(170, 180, 190, 200);
+        byte[] top = toByteArrayShifted(new int[]{10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160});
+        byte[] tl = toByteArrayShifted(new int[]{170, 180, 190, 200});
 
-        byte[] expected = toByteArrayShifted(37, 25, 35, 45, 55, 65, 75, 85, 31, 30, 40, 50, 60, 70, 80, 90, 25, 35,
+        byte[] expected = toByteArrayShifted(new int[]{37, 25, 35, 45, 55, 65, 75, 85, 31, 30, 40, 50, 60, 70, 80, 90, 25, 35,
                 45, 55, 65, 75, 85, 95, 30, 40, 50, 60, 70, 80, 90, 100, 35, 45, 55, 65, 75, 85, 95, 105, 40, 50, 60,
-                70, 80, 90, 100, 110, 45, 55, 65, 75, 85, 95, 105, 115, 50, 60, 70, 80, 90, 100, 110, 120);
+                70, 80, 90, 100, 110, 45, 55, 65, 75, 85, 95, 105, 115, 50, 60, 70, 80, 90, 100, 110, 120});
 
         new Intra8x8PredictionBuilder().predictVerticalLeft(emptyResidual, true, true, tl, top, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);
@@ -253,13 +253,13 @@ public class Intra8x8PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] left = toByteArrayShifted(210, 215, 220, 225, 230, 235, 240, 245);
-        byte[] tl = toByteArrayShifted(170, 180, 190, 200);
+        byte[] left = toByteArrayShifted(new int[]{210, 215, 220, 225, 230, 235, 240, 245});
+        byte[] tl = toByteArrayShifted(new int[]{170, 180, 190, 200});
 
-        byte[] expected = toByteArrayShifted(208, 213, 218, 220, 223, 225, 228, 230, 218, 220, 223, 225, 228, 230, 233,
+        byte[] expected = toByteArrayShifted(new int[]{208, 213, 218, 220, 223, 225, 228, 230, 218, 220, 223, 225, 228, 230, 233,
                 235, 223, 225, 228, 230, 233, 235, 238, 240, 228, 230, 233, 235, 238, 240, 242, 243, 233, 235, 238,
                 240, 242, 243, 244, 244, 238, 240, 242, 243, 244, 244, 244, 244, 242, 243, 244, 244, 244, 244, 244,
-                244, 244, 244, 244, 244, 244, 244, 244, 244);
+                244, 244, 244, 244, 244, 244, 244, 244, 244});
 
         new Intra8x8PredictionBuilder().predictHorizontalUp(emptyResidual, true, tl, left, 0, 0, 0, pred);
         assertArrayEquals(inMB(expected, 0, 0), pred);

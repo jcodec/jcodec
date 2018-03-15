@@ -43,9 +43,10 @@ import static org.jcodec.containers.mkv.muxer.MKVMuxer.createDouble;
 import static org.jcodec.containers.mkv.muxer.MKVMuxer.createLong;
 import static org.jcodec.containers.mkv.muxer.MKVMuxer.createString;
 
-import org.jcodec.common.Assert;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.CodecMeta;
+import org.jcodec.common.Ints;
+import org.jcodec.common.Preconditions;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.containers.mkv.boxes.EbmlBase;
 import org.jcodec.containers.mkv.boxes.EbmlMaster;
@@ -264,7 +265,7 @@ public class MKVStreamingMuxer {
             be.frames = new ByteBuffer[1];
             be.frames[0] = pkt.getData().duplicate();
             ByteBuffer data = c.getData();
-            Assert.assertEquals("computed and actuall cluster sizes MUST match", (int) c.size(), data.remaining());
+            Preconditions.checkState(Ints.checkedCast(c.size()) == data.remaining(), "computed and actuall cluster sizes MUST match");
             return data;
         }
 

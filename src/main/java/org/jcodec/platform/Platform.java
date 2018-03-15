@@ -7,8 +7,6 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -74,10 +72,6 @@ public class Platform {
         return new String(data, offset, len, Charset.forName(charset));
     }
 
-    public static URL getResource(Class<?> class1, String string) {
-        return class1.getResource(string);
-    }
-
     public static boolean arrayEqualsInt(int[] a, int[] a2) {
         return Arrays.equals(a, a2);
     }
@@ -130,8 +124,8 @@ public class Platform {
         return Arrays.toString(a);
     }
 
-    public static void deleteFile(File file) {
-        file.delete();
+    public static boolean deleteFile(File file) {
+        return file.delete();
     }
 
     public static byte[] getBytes(String fourcc) {
@@ -180,5 +174,13 @@ public class Platform {
 
     public static long unsignedInt(int signed) {
         return (long) signed & 0xffffffffL;
+    }
+
+    public static String stringFromChars(char[] symb) {
+        return new String(symb);
+    }
+
+    public static Class<?> arrayComponentType(Object[] array) {
+        return array.getClass().getComponentType();
     }
 }

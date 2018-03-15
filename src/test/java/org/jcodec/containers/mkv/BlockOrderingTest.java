@@ -13,6 +13,7 @@ import static org.jcodec.containers.mkv.MKVType.findAllTree;
 import static org.jcodec.containers.mkv.MKVType.findFirst;
 
 import org.jcodec.codecs.vpx.VP8Decoder;
+import org.jcodec.common.Ints;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
@@ -32,7 +33,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.List;
 public class BlockOrderingTest {
-    
+
     @Test
     public void testFixedLacing() throws IOException {
         File file = new File("src/test/resources/mkv/fixed_lacing_simple_block.ebml");
@@ -41,22 +42,20 @@ public class BlockOrderingTest {
         be.offset = 0x00;
         be.dataLen = 0xC05;
         be.dataOffset = 0x03;
-        FileInputStream fileInputStream = new FileInputStream(file);
-        ByteBuffer source = ByteBuffer.allocate(fileInputStream.available());
-        try {
-            FileChannel channel = fileInputStream.getChannel();
-            channel.position(be.dataOffset);
-            channel.read(source);
-            source.flip();
-        } finally {
-            IOUtils.closeQuietly(fileInputStream);
-        }
+        ByteBuffer source = readFileFromOffset(file, be.dataOffset);
         be.read(source);
         be.readFrames(source);
         Assert.assertEquals(rawFrame.length, be.size());
         byte[] data = be.getData().array();
         System.out.println(EbmlUtil.toHexString(data));
         Assert.assertArrayEquals(rawFrame, data);
+    }
+
+    private static ByteBuffer readFileFromOffset(File file, long dataOffset) throws IOException {
+        ByteBuffer source = NIOUtils.fetchFromFile(file);
+        source.position(Ints.checkedCast(dataOffset));
+        source = source.slice();
+        return source;
     }
 
     @Test
@@ -67,16 +66,7 @@ public class BlockOrderingTest {
         be.offset = 0x00;
         be.dataLen = 0xF22;
         be.dataOffset = 0x03;
-        FileInputStream fileInputStream = new FileInputStream(file);
-        ByteBuffer source = ByteBuffer.allocate(fileInputStream.available());
-        try {
-            FileChannel channel = fileInputStream.getChannel();
-            channel.position(be.dataOffset);
-            channel.read(source);
-            source.flip();
-        } finally {
-            IOUtils.closeQuietly(fileInputStream);
-        }
+        ByteBuffer source = readFileFromOffset(file, be.dataOffset);
         be.read(source);
         be.readFrames(source);
         Assert.assertEquals(rawFrame.capacity(), be.size());
@@ -97,16 +87,7 @@ public class BlockOrderingTest {
         be.offset = 0x00;
         be.dataLen = 0x353;
         be.dataOffset = 0x03;
-        FileInputStream fileInputStream = new FileInputStream(file);
-        ByteBuffer source = ByteBuffer.allocate(fileInputStream.available());
-        try {
-            FileChannel channel = fileInputStream.getChannel();
-            channel.position(be.dataOffset);
-            channel.read(source);
-            source.flip();
-        } finally {
-            IOUtils.closeQuietly(fileInputStream);
-        }
+        ByteBuffer source = readFileFromOffset(file, be.dataOffset);
         be.read(source);
         be.readFrames(source);
         Assert.assertEquals(rawFrame.length, be.size());
@@ -121,16 +102,7 @@ public class BlockOrderingTest {
         be.offset = 0x00;
         be.dataLen = 0x304;
         be.dataOffset = 0x03;
-        FileInputStream fileInputStream = new FileInputStream(file);
-        ByteBuffer source = ByteBuffer.allocate(fileInputStream.available());
-        try {
-            FileChannel channel = fileInputStream.getChannel();
-            channel.position(be.dataOffset);
-            channel.read(source);
-            source.flip();
-        } finally {
-            IOUtils.closeQuietly(fileInputStream);
-        }
+        ByteBuffer source = readFileFromOffset(file, be.dataOffset);
         be.read(source);
         be.readFrames(source);
         Assert.assertEquals(be.dataLen, be.getDataSize());
@@ -138,7 +110,7 @@ public class BlockOrderingTest {
         Assert.assertArrayEquals(rawFrame, be.getData().array());
     }
     
-    public void test() throws IOException {
+    public void _test() throws IOException {
         MKVTestSuite suite = MKVTestSuite.read();
         if (!suite.isSuitePresent())
             Assert.fail("MKV test suite is missing, please download from http://www.matroska.org/downloads/test_w1.html, and save to the path recorded in src/test/resources/mkv/suite.properties");

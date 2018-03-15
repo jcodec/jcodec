@@ -30,7 +30,7 @@ public class SegmentTypeBoxTest {
         Atom atom = rootAtoms.get(0);
         assertEquals("styp", atom.getHeader().getFourcc());
         Box box = atom.parseBox(input);
-        assertTrue(SegmentTypeBox.class.isInstance(box));
+        assertTrue(box instanceof SegmentTypeBox);
 
         SegmentTypeBox ftyp = (SegmentTypeBox) box;
         assertEquals("msdh", ftyp.getMajorBrand());

@@ -1,4 +1,7 @@
 package org.jcodec.containers.mxf.model;
+import org.jcodec.common.StringUtils;
+import org.jcodec.platform.Platform;
+
 import static org.jcodec.common.Preconditions.checkNotNull;
 
 import java.nio.ByteBuffer;
@@ -27,10 +30,10 @@ public class UL {
         this.bytes = bytes;
     }
 
-    public static UL newULFromInts(int... arguments) {
-        byte[] bytes = new byte[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            bytes[i] = (byte) arguments[i];
+    public static UL newULFromInts(int[] args) {
+        byte[] bytes = new byte[args.length];
+        for (int i = 0; i < args.length; i++) {
+            bytes[i] = (byte) args[i];
         }
 
         return new UL(bytes);
@@ -38,7 +41,7 @@ public class UL {
     
     public static UL newUL(String ul) {
         checkNotNull(ul);
-        String[] split = ul.split("\\.");
+        String[] split = StringUtils.splitS(ul, ".");
         byte b[] = new byte[split.length];
         for (int i = 0; i < split.length; i++) {
             int parseInt = Integer.parseInt(split[i], 16);
@@ -93,7 +96,7 @@ public class UL {
         }
         str[j++] = hex[(bytes[i] >> 4) & 0xf];
         str[j++] = hex[bytes[i] & 0xf];
-        return new String(str);
+        return Platform.stringFromChars(str);
     }
 
     public int get(int i) {

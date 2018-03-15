@@ -1,4 +1,6 @@
 package org.jcodec.containers.mxf.model;
+import org.jcodec.platform.Platform;
+
 import java.util.Iterator;
 
 import java.util.ArrayList;
@@ -24,7 +26,7 @@ public class MXFUtil {
         List<MXFMetadata> copy = new ArrayList<MXFMetadata>(metadata);
         for (Iterator<MXFMetadata> iterator = copy.iterator(); iterator.hasNext();) {
             MXFMetadata next = iterator.next();
-            if (next.getUid() == null || !class1.isAssignableFrom(next.getClass()))
+            if (next.getUid() == null || !Platform.isAssignableFrom(class1, next.getClass()))
                 iterator.remove();
         }
 
@@ -41,7 +43,7 @@ public class MXFUtil {
 
     public static <T> T findMeta(Collection<MXFMetadata> metadata, Class<T> class1) {
         for (MXFMetadata mxfMetadata : metadata) {
-            if (mxfMetadata.getClass().isAssignableFrom(class1))
+            if (Platform.isAssignableFrom(mxfMetadata.getClass(), class1))
                 return (T) mxfMetadata;
         }
         return null;
@@ -50,7 +52,7 @@ public class MXFUtil {
     public static <T> List<T> findAllMeta(Collection<MXFMetadata> metadata, Class<T> class1) {
         List result = new ArrayList();
         for (MXFMetadata mxfMetadata : metadata) {
-            if (class1.isAssignableFrom(mxfMetadata.getClass()))
+            if (Platform.isAssignableFrom(class1, mxfMetadata.getClass()))
                 result.add((T) mxfMetadata);
         }
         return result;
