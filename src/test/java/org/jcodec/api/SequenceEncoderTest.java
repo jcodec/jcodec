@@ -27,6 +27,8 @@ import org.jcodec.scale.Transform;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.junit.Assert.fail;
+
 public class SequenceEncoderTest {
 
     @Test
@@ -50,13 +52,18 @@ public class SequenceEncoderTest {
         Assert.assertArrayEquals(NIOUtils.toArray(ref), NIOUtils.toArray(enc));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testWrongColor() throws IOException {
+        try {
         File temp = File.createTempFile("temp-file-name", ".tmp");
         SequenceEncoder sequenceEncoder = new SequenceEncoder(NIOUtils.writableChannel(temp), Rational.ONE, Format.MOV,
                 Codec.H264, null);
         Picture picture = Picture.create(32, 32, ColorSpace.YUV420J);
         sequenceEncoder.encodeNativeFrame(picture);
+        fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
     }
 
     @Test

@@ -52,12 +52,17 @@ public class MP4MuxerTest {
         assertNotNull(movie.getAudioTracks().get(0));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testAddTrackWithSameId() throws Exception {
-        SeekableByteChannel output = ByteBufferSeekableByteChannel.readFromByteBuffer(ByteBuffer.allocate(64 * 1024));
-        MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(output);
-        muxer.addTrackWithId(MP4TrackType.SOUND, Codec.AAC, 1);
-        muxer.addTrackWithId(MP4TrackType.VIDEO, Codec.H264, 1);
+        try {
+            SeekableByteChannel output = ByteBufferSeekableByteChannel.readFromByteBuffer(ByteBuffer.allocate(64 * 1024));
+            MP4Muxer muxer = MP4Muxer.createMP4MuxerToChannel(output);
+            muxer.addTrackWithId(MP4TrackType.SOUND, Codec.AAC, 1);
+            muxer.addTrackWithId(MP4TrackType.VIDEO, Codec.H264, 1);
+            fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException e) {
+            //expected
+        }
     }
 
 }
