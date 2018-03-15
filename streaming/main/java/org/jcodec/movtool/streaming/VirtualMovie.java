@@ -24,8 +24,8 @@ public abstract class VirtualMovie {
     protected long _size;
     protected VirtualTrack[] tracks;
 
-    public VirtualMovie(VirtualTrack... arguments) throws IOException {
-        this.tracks = arguments;
+    public VirtualMovie(VirtualTrack[] virtualTracks) throws IOException {
+        this.tracks = virtualTracks;
     }
 
     protected void muxTracks() throws IOException {

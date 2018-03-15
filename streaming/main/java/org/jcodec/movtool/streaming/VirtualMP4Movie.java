@@ -24,8 +24,8 @@ import java.util.List;
 public class VirtualMP4Movie extends VirtualMovie {
     private Brand brand;
 
-    public VirtualMP4Movie(VirtualTrack... arguments) throws IOException {
-        super(arguments);
+    public VirtualMP4Movie(VirtualTrack[] virtualTracks) throws IOException {
+        super(virtualTracks);
         this.brand = Brand.MP4;
         muxTracks();
     }

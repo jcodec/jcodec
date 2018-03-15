@@ -21,30 +21,30 @@ public class MPEGConst {
     public static final int SEQUENCE_END_CODE = 0xB7;
     public static final int GROUP_START_CODE = 0xB8;
 
-    public static VLC vlcAddressIncrement;
-    public static VLC vlcMBTypeI;
-    public static MBType[] mbTypeValI;
-    public static VLC vlcMBTypeP;
-    public static MBType[] mbTypeValP;
-    public static VLC vlcMBTypeB;
-    public static MBType[] mbTypeValB;
+    public final static VLC vlcAddressIncrement;
+    public final static VLC vlcMBTypeI;
+    public final static MBType[] mbTypeValI;
+    public final static VLC vlcMBTypeP;
+    public final static MBType[] mbTypeValP;
+    public final static VLC vlcMBTypeB;
+    public final static MBType[] mbTypeValB;
 
-    public static VLC vlcMBTypeISpat;
-    public static MBType[] mbTypeValISpat;
-    public static VLC vlcMBTypePSpat;
-    public static MBType[] mbTypeValPSpat;
-    public static VLC vlcMBTypeBSpat;
-    public static MBType[] mbTypeValBSpat;
+    public final static VLC vlcMBTypeISpat;
+    public final static MBType[] mbTypeValISpat;
+    public final static VLC vlcMBTypePSpat;
+    public final static MBType[] mbTypeValPSpat;
+    public final static VLC vlcMBTypeBSpat;
+    public final static MBType[] mbTypeValBSpat;
 
-    public static VLC vlcMBTypeSNR;
-    public static MBType[] mbTypeValSNR;
-    public static VLC vlcCBP;
-    public static VLC vlcMotionCode;
-    public static VLC vlcDualPrime;
-    public static VLC vlcDCSizeLuma;
-    public static VLC vlcDCSizeChroma;
-    public static VLC vlcCoeff0;
-    public static VLC vlcCoeff1;
+    public final static VLC vlcMBTypeSNR;
+    public final static MBType[] mbTypeValSNR;
+    public final static VLC vlcCBP;
+    public final static VLC vlcMotionCode;
+    public final static VLC vlcDualPrime;
+    public final static VLC vlcDCSizeLuma;
+    public final static VLC vlcDCSizeChroma;
+    public final static VLC vlcCoeff0;
+    public final static VLC vlcCoeff1;
 
     public static class MBType {
         public int macroblock_quant;
@@ -55,9 +55,9 @@ public class MPEGConst {
         public int spatial_temporal_weight_code_flag;
         public int permitted_spatial_temporal_weight_classes;
 
-        private MBType(int macroblock_quant, int macroblock_motion_forward, int macroblock_motion_backward,
-                int macroblock_pattern, int macroblock_intra, int spatial_temporal_weight_code_flag,
-                int permitted_spatial_temporal_weight_classes) {
+        MBType(int macroblock_quant, int macroblock_motion_forward, int macroblock_motion_backward,
+               int macroblock_pattern, int macroblock_intra, int spatial_temporal_weight_code_flag,
+               int permitted_spatial_temporal_weight_classes) {
             this.macroblock_quant = macroblock_quant;
             this.macroblock_motion_forward = macroblock_motion_forward;
             this.macroblock_motion_backward = macroblock_motion_backward;
@@ -73,27 +73,27 @@ public class MPEGConst {
 
     static {
         vlcAddressIncrement = VLC
-                .createVLC("1", "011", "010", "0011", "0010", "00011", "00010", "0000111", "0000110", "00001011", "00001010", "00001001", "00001000", "00000111", "00000110", "0000010111", "0000010110", "0000010101", "0000010100", "0000010011", "0000010010", "00000100011", "00000100010", "00000100001", "00000100000", "00000011111", "00000011110", "00000011101", "00000011100", "00000011011", "00000011010", "00000011001", "00000011000");
+                .createVLC(new String[]{"1", "011", "010", "0011", "0010", "00011", "00010", "0000111", "0000110", "00001011", "00001010", "00001001", "00001000", "00000111", "00000110", "0000010111", "0000010110", "0000010101", "0000010100", "0000010011", "0000010010", "00000100011", "00000100010", "00000100001", "00000100000", "00000011111", "00000011110", "00000011101", "00000011100", "00000011011", "00000011010", "00000011001", "00000011000"});
 
-        vlcMBTypeI = VLC.createVLC("1", "01");
+        vlcMBTypeI = VLC.createVLC(new String[]{"1", "01"});
         mbTypeValI = new MBType[] { new MBType(0, 0, 0, 0, 1, 0, 0), new MBType(1, 0, 0, 0, 1, 0, 0) };
 
-        vlcMBTypeP = VLC.createVLC("1", "01", "001", "00011", "00010", "00001", "000001");
+        vlcMBTypeP = VLC.createVLC(new String[]{"1", "01", "001", "00011", "00010", "00001", "000001"});
         mbTypeValP = new MBType[] { new MBType(0, 1, 0, 1, 0, 0, 0), new MBType(0, 0, 0, 1, 0, 0, 0),
                 new MBType(0, 1, 0, 0, 0, 0, 0), new MBType(0, 0, 0, 0, 1, 0, 0), new MBType(1, 1, 0, 1, 0, 0, 0),
                 new MBType(1, 0, 0, 1, 0, 0, 0), new MBType(1, 0, 0, 0, 1, 0, 0) };
 
-        vlcMBTypeB = VLC.createVLC("10", "11", "010", "011", "0010", "0011", "00011", "00010", "000011", "000010", "000001");
+        vlcMBTypeB = VLC.createVLC(new String[]{"10", "11", "010", "011", "0010", "0011", "00011", "00010", "000011", "000010", "000001"});
         mbTypeValB = new MBType[] { new MBType(0, 1, 1, 0, 0, 0, 0), new MBType(0, 1, 1, 1, 0, 0, 0),
                 new MBType(0, 0, 1, 0, 0, 0, 0), new MBType(0, 0, 1, 1, 0, 0, 0), new MBType(0, 1, 0, 0, 0, 0, 0),
                 new MBType(0, 1, 0, 1, 0, 0, 0), new MBType(0, 0, 0, 0, 1, 0, 0), new MBType(1, 1, 1, 1, 0, 0, 0),
                 new MBType(1, 1, 0, 1, 0, 0, 0), new MBType(1, 0, 1, 1, 0, 0, 0), new MBType(1, 0, 0, 0, 1, 0, 0) };
 
-        vlcMBTypeISpat = VLC.createVLC("1", "01", "0011", "0010", "0001");
+        vlcMBTypeISpat = VLC.createVLC(new String[]{"1", "01", "0011", "0010", "0001"});
         mbTypeValISpat = new MBType[] { new MBType(0, 0, 0, 0, 1, 0, 0), new MBType(1, 0, 0, 0, 1, 0, 0),
                 new MBType(0, 0, 0, 0, 1, 0, 0), new MBType(1, 0, 0, 0, 1, 0, 0), new MBType(0, 0, 0, 0, 0, 0, 0) };
 
-        vlcMBTypePSpat = VLC.createVLC("10", "011", "0000100", "000111", "0010", "0000111", "0011", "010", "000100", "0000110", "11", "000101", "000110", "0000101", "0000010", "0000011");
+        vlcMBTypePSpat = VLC.createVLC(new String[]{"10", "011", "0000100", "000111", "0010", "0000111", "0011", "010", "000100", "0000110", "11", "000101", "000110", "0000101", "0000010", "0000011"});
         mbTypeValPSpat = new MBType[] { new MBType(0, 1, 0, 1, 0, 0, 0), new MBType(0, 1, 0, 1, 0, 1, 0),
                 new MBType(0, 0, 0, 1, 0, 0, 0), new MBType(0, 0, 0, 1, 0, 1, 0), new MBType(0, 1, 0, 0, 0, 0, 0),
                 new MBType(0, 0, 0, 0, 1, 0, 0), new MBType(0, 1, 0, 0, 0, 1, 0), new MBType(1, 1, 0, 1, 0, 0, 0),
@@ -101,7 +101,7 @@ public class MPEGConst {
                 new MBType(1, 0, 0, 1, 0, 1, 0), new MBType(0, 0, 0, 0, 0, 1, 0), new MBType(0, 0, 0, 1, 0, 0, 0),
                 new MBType(1, 0, 0, 1, 0, 0, 0), new MBType(0, 0, 0, 0, 0, 0, 0) };
 
-        vlcMBTypeBSpat = VLC.createVLC("10", "11", "010", "011", "0010", "0011", "000110", "000111", "000100", "000101", "0000110", "0000111", "0000100", "0000101", "00000100", "00000101", "000001100", "000001110", "000001101", "000001111");
+        vlcMBTypeBSpat = VLC.createVLC(new String[]{"10", "11", "010", "011", "0010", "0011", "000110", "000111", "000100", "000101", "0000110", "0000111", "0000100", "0000101", "00000100", "00000101", "000001100", "000001110", "000001101", "000001111"});
         mbTypeValBSpat = new MBType[] { new MBType(0, 1, 1, 0, 0, 0, 0), new MBType(0, 1, 1, 1, 0, 0, 0),
                 new MBType(0, 0, 1, 0, 0, 0, 0), new MBType(0, 0, 1, 1, 0, 0, 0), new MBType(0, 1, 0, 0, 0, 0, 0),
                 new MBType(0, 1, 0, 1, 0, 0, 0), new MBType(0, 0, 1, 0, 0, 1, 0), new MBType(0, 0, 1, 1, 0, 1, 0),
@@ -110,19 +110,19 @@ public class MPEGConst {
                 new MBType(1, 0, 0, 0, 1, 0, 0), new MBType(1, 1, 0, 1, 0, 1, 0), new MBType(1, 0, 1, 1, 0, 1, 0),
                 new MBType(0, 0, 0, 0, 0, 0, 0), new MBType(1, 0, 0, 1, 0, 0, 0), new MBType(0, 0, 0, 1, 0, 0, 0) };
 
-        vlcMBTypeSNR = VLC.createVLC("1", "01", "001");
+        vlcMBTypeSNR = VLC.createVLC(new String[]{"1", "01", "001"});
         mbTypeValSNR = new MBType[] { new MBType(0, 0, 0, 1, 0, 0, 0), new MBType(1, 0, 0, 1, 0, 0, 0),
                 new MBType(0, 0, 0, 0, 0, 0, 0) };
 
         vlcCBP = VLC
-                .createVLC("000000001", "01011", "01001", "001101", "1101", "0010111", "0010011", "00011111", "1100", "0010110", "0010010", "00011110", "10011", "00011011", "00010111", "00010011", "1011", "0010101", "0010001", "00011101", "10001", "00011001", "00010101", "00010001", "001111", "00001111", "00001101", "000000011", "01111", "00001011", "00000111", "000000111", "1010", "0010100", "0010000", "00011100", "001110", "00001110", "00001100", "000000010", "10000", "00011000", "00010100", "00010000", "01110", "00001010", "00000110", "000000110", "10010", "00011010", "00010110", "00010010", "01101", "00001001", "00000101", "000000101", "01100", "00001000", "00000100", "000000100", "111", "01010", "01000", "001100");
+                .createVLC(new String[]{"000000001", "01011", "01001", "001101", "1101", "0010111", "0010011", "00011111", "1100", "0010110", "0010010", "00011110", "10011", "00011011", "00010111", "00010011", "1011", "0010101", "0010001", "00011101", "10001", "00011001", "00010101", "00010001", "001111", "00001111", "00001101", "000000011", "01111", "00001011", "00000111", "000000111", "1010", "0010100", "0010000", "00011100", "001110", "00001110", "00001100", "000000010", "10000", "00011000", "00010100", "00010000", "01110", "00001010", "00000110", "000000110", "10010", "00011010", "00010110", "00010010", "01101", "00001001", "00000101", "000000101", "01100", "00001000", "00000100", "000000100", "111", "01010", "01000", "001100"});
 
-        vlcMotionCode = VLC.createVLC("1", "01", "001", "0001", "000011", "0000101", "0000100", "0000011", "000001011", "000001010", "000001001", "0000010001", "0000010000", "0000001111", "0000001110", "0000001101", "0000001100");
+        vlcMotionCode = VLC.createVLC(new String[]{"1", "01", "001", "0001", "000011", "0000101", "0000100", "0000011", "000001011", "000001010", "000001001", "0000010001", "0000010000", "0000001111", "0000001110", "0000001101", "0000001100"});
 
-        vlcDualPrime = VLC.createVLC("11", "0", "10");
+        vlcDualPrime = VLC.createVLC(new String[]{"11", "0", "10"});
 
-        vlcDCSizeLuma = VLC.createVLC("100", "00", "01", "101", "110", "1110", "11110", "111110", "1111110", "11111110", "111111110", "111111111");
-        vlcDCSizeChroma = VLC.createVLC("00", "01", "10", "110", "1110", "11110", "111110", "1111110", "11111110", "111111110", "1111111110", "1111111111");
+        vlcDCSizeLuma = VLC.createVLC(new String[]{"100", "00", "01", "101", "110", "1110", "11110", "111110", "1111110", "11111110", "111111110", "111111111"});
+        vlcDCSizeChroma = VLC.createVLC(new String[]{"00", "01", "10", "110", "1110", "11110", "111110", "1111110", "11111110", "111111110", "1111111110", "1111111111"});
 
         VLCBuilder vlcCoeffBldr = new VLCBuilder();
         vlcCoeffBldr.set(CODE_ESCAPE, "000001");
@@ -357,20 +357,20 @@ public class MPEGConst {
         vlcCoeff1 = vlcCoeffBldr.getVLC();
     }
 
-    public static int[] qScaleTab1 = new int[] { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36,
+    public final static int[] qScaleTab1 = new int[] { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36,
             38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62 };
-    public static int[] qScaleTab2 = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36,
+    public final static int[] qScaleTab2 = new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36,
             40, 44, 48, 52, 56, 64, 72, 80, 88, 96, 104, 112 };
 
-    public static int[] defaultQMatIntra = new int[] { 8, 16, 19, 22, 26, 27, 29, 34, 16, 16, 22, 24, 27, 29, 34, 37,
+    public final static int[] defaultQMatIntra = new int[] { 8, 16, 19, 22, 26, 27, 29, 34, 16, 16, 22, 24, 27, 29, 34, 37,
             19, 22, 26, 27, 29, 34, 34, 38, 22, 22, 26, 27, 29, 34, 37, 40, 22, 26, 27, 29, 32, 35, 40, 48, 26, 27, 29,
             32, 35, 40, 48, 58, 26, 27, 29, 34, 38, 46, 56, 69, 27, 29, 35, 38, 46, 56, 69, 83 };
 
-    public static int[] defaultQMatInter = new int[] { 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+    public final static int[] defaultQMatInter = new int[] { 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
             16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
             16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 };
     
-    public static int[][] scan = new int[][] {
+    public final static int[][] scan = new int[][] {
             new int[] { 0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26, 33, 40, 48, 41, 34, 27, 20,
                     13, 6, 7, 14, 21, 28, 35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51, 58, 59, 52,
                     45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63 },
@@ -379,15 +379,15 @@ public class MPEGConst {
                     27, 34, 42, 50, 58, 35, 43, 51, 59, 20, 28, 5, 13, 6, 14, 21, 29, 36, 44, 52, 60, 37, 45, 53, 61,
                     22, 30, 7, 15, 23, 31, 38, 46, 54, 62, 39, 47, 55, 63 } };
 
-    public static int[] BLOCK_TO_CC = new int[] { 0, 0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2 };
-    public static int[] BLOCK_POS_X = new int[] { 0, 8, 0, 8, 0, 0, 0, 0, 8, 8, 8, 8, 0, 0, 0, 0, 0, 8, 0, 8, 0, 0, 0,
+    public final static int[] BLOCK_TO_CC = new int[] { 0, 0, 0, 0, 1, 2, 1, 2, 1, 2, 1, 2 };
+    public final static int[] BLOCK_POS_X = new int[] { 0, 8, 0, 8, 0, 0, 0, 0, 8, 8, 8, 8, 0, 0, 0, 0, 0, 8, 0, 8, 0, 0, 0,
             0, 8, 8, 8, 8 };
-    public static int[] BLOCK_POS_Y = new int[] { 0, 0, 8, 8, 0, 0, 8, 8, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
+    public final static int[] BLOCK_POS_Y = new int[] { 0, 0, 8, 8, 0, 0, 8, 8, 0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1,
             1, 0, 0, 1, 1 };
-    public static int[] STEP_Y = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    public final static int[] STEP_Y = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 1 };
-    public static int[] SQUEEZE_X = new int[] { 0, 1, 1, 0 };
-    public static int[] SQUEEZE_Y = new int[] { 0, 1, 0, 0 };
+    public final static int[] SQUEEZE_X = new int[] { 0, 1, 1, 0 };
+    public final static int[] SQUEEZE_Y = new int[] { 0, 1, 0, 0 };
 
     public static final int IntraCoded = 0x1;
     public static final int PredictiveCoded = 0x2;

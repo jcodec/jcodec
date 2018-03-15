@@ -75,7 +75,7 @@ public class TrakBox extends NodeBox {
             edts = new NodeBox(new Header("edts"));
             this.add(edts);
         }
-        edts.removeChildren("elst");
+        edts.removeChildren(new String[]{"elst"});
 
         edts.add(EditListBox.createEditListBox(edits));
         getTrackHeader().setDuration(getEditedDuration(this));
@@ -180,7 +180,7 @@ public class TrakBox extends NodeBox {
         SampleEntry[] sampleEntries = getSampleEntries();
         for (int i = 0; i < sampleEntries.length; i++) {
             SampleEntry sampleEntry = sampleEntries[i];
-            sampleEntry.removeChildren("pasp");
+            sampleEntry.removeChildren(new String[]{"pasp"});
             sampleEntry.add(PixelAspectExt.createPixelAspectExt(par));
         }
     }
@@ -203,7 +203,7 @@ public class TrakBox extends NodeBox {
     }
 
     public void setAperture(Size sar, Size dar) {
-        removeChildren("tapt");
+        removeChildren(new String[]{"tapt"});
         NodeBox tapt = new NodeBox(new Header("tapt"));
         tapt.add(ClearApertureBox.createClearApertureBox(dar.getWidth(), dar.getHeight()));
         tapt.add(ProductionApertureBox.createProductionApertureBox(dar.getWidth(), dar.getHeight()));
@@ -252,7 +252,7 @@ public class TrakBox extends NodeBox {
             udta = new NodeBox(new Header("udta"));
             this.add(udta);
         }
-        udta.removeChildren("name");
+        udta.removeChildren(new String[]{"name"});
         udta.add(NameBox.createNameBox(string));
     }
 

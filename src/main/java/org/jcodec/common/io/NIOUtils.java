@@ -441,12 +441,12 @@ public class NIOUtils {
         return result;
     }
     
-    public static ByteBuffer asByteBuffer(byte ... arguments) {
-        return ByteBuffer.wrap(arguments);
+    public static ByteBuffer asByteBuffer(byte[] bytes) {
+        return ByteBuffer.wrap(bytes);
     }
     
-    public static ByteBuffer asByteBufferInt(int ... arguments) {
-        return asByteBuffer(ArrayUtil.toByteArray(arguments));
+    public static ByteBuffer asByteBufferInt(int[] ints) {
+        return asByteBuffer(ArrayUtil.toByteArray(ints));
     }
     
     public static void relocateLeftover(ByteBuffer bb) {

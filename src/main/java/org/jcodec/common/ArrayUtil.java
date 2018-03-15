@@ -154,10 +154,10 @@ public class ArrayUtil {
         return (Object[]) array.clone();
     }
 
-    public static byte[] toByteArrayShifted(int... arguments) {
-        byte[] result = new byte[arguments.length];
-        for (int i = 0; i < arguments.length; i++)
-            result[i] = (byte) (arguments[i] - 128);
+    public static byte[] toByteArrayShifted(int[] array) {
+        byte[] result = new byte[array.length];
+        for (int i = 0; i < array.length; i++)
+            result[i] = (byte) (array[i] - 128);
         return result;
     }
     
@@ -169,33 +169,33 @@ public class ArrayUtil {
         return result;
     }
 
-    public static int[] toIntArrayUnshifted(byte... arguments) {
-        int[] result = new int[arguments.length];
+    public static int[] toIntArrayUnshifted(byte[] bytes) {
+        int[] result = new int[bytes.length];
         for (int i = 0; i < result.length; i++)
-            result[i] = (byte) (arguments[i] + 128);
+            result[i] = (byte) (bytes[i] + 128);
 
         return result;
     }
 
-    public static byte[] toByteArray(int... arguments) {
-        byte[] result = new byte[arguments.length];
-        for (int i = 0; i < arguments.length; i++)
-            result[i] = (byte) arguments[i];
+    public static byte[] toByteArray(int[] ints) {
+        byte[] result = new byte[ints.length];
+        for (int i = 0; i < ints.length; i++)
+            result[i] = (byte) ints[i];
         return result;
     }
 
-    public static int[] toIntArray(byte... arguments) {
-        int[] result = new int[arguments.length];
+    public static int[] toIntArray(byte[] bytes) {
+        int[] result = new int[bytes.length];
         for (int i = 0; i < result.length; i++)
-            result[i] = arguments[i];
+            result[i] = bytes[i];
 
         return result;
     }
 
-    public static int[] toUnsignedIntArray(byte[] val) {
-        int[] result = new int[val.length];
-        for (int i = 0; i < val.length; i++)
-            result[i] = val[i] & 0xff;
+    public static int[] toUnsignedIntArray(byte[] bytes) {
+        int[] result = new int[bytes.length];
+        for (int i = 0; i < bytes.length; i++)
+            result[i] = bytes[i] & 0xff;
         return result;
     }
 

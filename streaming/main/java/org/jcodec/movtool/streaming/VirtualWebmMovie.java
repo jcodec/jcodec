@@ -21,8 +21,8 @@ public class VirtualWebmMovie extends VirtualMovie {
     
     private MKVStreamingMuxer muxer = null;
 
-    public VirtualWebmMovie(VirtualTrack... arguments) throws IOException {
-        super(arguments);
+    public VirtualWebmMovie(VirtualTrack[] virtualTracks) throws IOException {
+        super(virtualTracks);
         muxer = new MKVStreamingMuxer();
         muxTracks();
     }

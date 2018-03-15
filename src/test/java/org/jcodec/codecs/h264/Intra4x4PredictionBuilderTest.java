@@ -42,11 +42,11 @@ public class Intra4x4PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(1, 2, 3, 4, 5, 6, 7, 8);
-        byte[] left = toByteArrayShifted(9, 10, 11, 12);
+        byte[] top = toByteArrayShifted(new int[]{1, 2, 3, 4, 5, 6, 7, 8});
+        byte[] left = toByteArrayShifted(new int[]{9, 10, 11, 12});
 
         Intra4x4PredictionBuilder.predictDC(emptyResidual, true, true, left, top, 0, 0, 0, pred);
-        assertArrayEquals(inMB(toByteArrayShifted(7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7), 0, 0), pred);
+        assertArrayEquals(inMB(toByteArrayShifted(new int[]{7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7}), 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -55,7 +55,7 @@ public class Intra4x4PredictionBuilderTest {
                         0, blkX, blkY, pred);
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
-                        inMB(addResidual(toByteArrayShifted(7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7),
+                        inMB(addResidual(toByteArrayShifted(new int[]{7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7}),
                                 testResidual), blkX, blkY), pred);
             }
         }
@@ -66,10 +66,10 @@ public class Intra4x4PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(1, 2, 3, 4, 5, 6, 7, 8);
+        byte[] top = toByteArrayShifted(new int[]{1, 2, 3, 4, 5, 6, 7, 8});
 
         Intra4x4PredictionBuilder.predictVertical(emptyResidual, true, top, 0, 0, 0, pred);
-        assertArrayEquals(inMB(toByteArrayShifted(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4), 0, 0), pred);
+        assertArrayEquals(inMB(toByteArrayShifted(new int[]{1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4}), 0, 0), pred);
 
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -77,7 +77,7 @@ public class Intra4x4PredictionBuilderTest {
                 Intra4x4PredictionBuilder.predictVertical(testResidual, true, padLeft(top, blkX), 0, blkX, blkY, pred);
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
-                        inMB(addResidual(toByteArrayShifted(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4),
+                        inMB(addResidual(toByteArrayShifted(new int[]{1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4}),
                                 testResidual), blkX, blkY), pred);
             }
         }
@@ -89,10 +89,10 @@ public class Intra4x4PredictionBuilderTest {
         byte[] pred = new byte[256];
 
         // byte[] top = toByteArrayShifted( 1, 2, 3, 4, 5, 6, 7, 8 };
-        byte[] left = toByteArrayShifted(9, 10, 11, 12);
+        byte[] left = toByteArrayShifted(new int[]{9, 10, 11, 12});
 
         Intra4x4PredictionBuilder.predictHorizontal(emptyResidual, true, left, 0, 0, 0, pred);
-        assertArrayEquals(inMB(toByteArrayShifted(9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12), 0, 0),
+        assertArrayEquals(inMB(toByteArrayShifted(new int[]{9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12}), 0, 0),
                 pred);
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -102,7 +102,7 @@ public class Intra4x4PredictionBuilderTest {
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
                         inMB(addResidual(
-                                toByteArrayShifted(9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12),
+                                toByteArrayShifted(new int[]{9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12}),
                                 testResidual), blkX, blkY), pred);
             }
         }
@@ -113,11 +113,11 @@ public class Intra4x4PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(209, 212, 218, 222, 216, 219, 225, 229);
+        byte[] top = toByteArrayShifted(new int[]{209, 212, 218, 222, 216, 219, 225, 229});
 
         Intra4x4PredictionBuilder.predictDiagonalDownLeft(emptyResidual, true, true, top, 0, 0, 0, pred);
         assertArrayEquals(
-                inMB(toByteArrayShifted(213, 218, 220, 218, 218, 220, 218, 220, 220, 218, 220, 225, 218, 220, 225, 228),
+                inMB(toByteArrayShifted(new int[]{213, 218, 220, 218, 218, 220, 218, 220, 220, 218, 220, 225, 218, 220, 225, 228}),
                         0, 0), pred);
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -127,8 +127,8 @@ public class Intra4x4PredictionBuilderTest {
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
                         inMB(addResidual(
-                                toByteArrayShifted(213, 218, 220, 218, 218, 220, 218, 220, 220, 218, 220, 225, 218,
-                                        220, 225, 228), testResidual), blkX, blkY), pred);
+                                toByteArrayShifted(new int[]{213, 218, 220, 218, 218, 220, 218, 220, 220, 218, 220, 225, 218,
+                                        220, 225, 228}), testResidual), blkX, blkY), pred);
             }
         }
     }
@@ -138,13 +138,13 @@ public class Intra4x4PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(183, 196, 170, 131, 0, 0, 0, 0);
-        byte[] left = toByteArrayShifted(207, 207, 207, 207);
-        byte[] tl = toByteArrayShifted(196, 0, 0, 0);
+        byte[] top = toByteArrayShifted(new int[]{183, 196, 170, 131, 0, 0, 0, 0});
+        byte[] left = toByteArrayShifted(new int[]{207, 207, 207, 207});
+        byte[] tl = toByteArrayShifted(new int[]{196, 0, 0, 0});
 
         Intra4x4PredictionBuilder.predictDiagonalDownRight(emptyResidual, true, true, left, top, tl, 0, 0, 0, pred);
         assertArrayEquals(
-                inMB(toByteArrayShifted(196, 190, 186, 167, 204, 196, 190, 186, 207, 204, 196, 190, 207, 207, 204, 196),
+                inMB(toByteArrayShifted(new int[]{196, 190, 186, 167, 204, 196, 190, 186, 207, 204, 196, 190, 207, 207, 204, 196}),
                         0, 0), pred);
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -154,8 +154,8 @@ public class Intra4x4PredictionBuilderTest {
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
                         inMB(addResidual(
-                                toByteArrayShifted(196, 190, 186, 167, 204, 196, 190, 186, 207, 204, 196, 190, 207,
-                                        207, 204, 196), testResidual), blkX, blkY), pred);
+                                toByteArrayShifted(new int[]{196, 190, 186, 167, 204, 196, 190, 186, 207, 204, 196, 190, 207,
+                                        207, 204, 196}), testResidual), blkX, blkY), pred);
             }
         }
     }
@@ -165,13 +165,13 @@ public class Intra4x4PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(236, 236, 236, 236, 0, 0, 0, 0);
-        byte[] left = toByteArrayShifted(233, 233, 233, 233);
-        byte[] tl = toByteArrayShifted(226, 0, 0, 0);
+        byte[] top = toByteArrayShifted(new int[]{236, 236, 236, 236, 0, 0, 0, 0});
+        byte[] left = toByteArrayShifted(new int[]{233, 233, 233, 233});
+        byte[] tl = toByteArrayShifted(new int[]{226, 0, 0, 0});
 
         Intra4x4PredictionBuilder.predictDiagonalDownRight(emptyResidual, true, true, left, top, tl, 0, 0, 0, pred);
         assertArrayEquals(
-                inMB(toByteArrayShifted(230, 234, 236, 236, 231, 230, 234, 236, 233, 231, 230, 234, 233, 233, 231, 230),
+                inMB(toByteArrayShifted(new int[]{230, 234, 236, 236, 231, 230, 234, 236, 233, 231, 230, 234, 233, 233, 231, 230}),
                         0, 0), pred);
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -181,8 +181,8 @@ public class Intra4x4PredictionBuilderTest {
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
                         inMB(addResidual(
-                                toByteArrayShifted(230, 234, 236, 236, 231, 230, 234, 236, 233, 231, 230, 234, 233,
-                                        233, 231, 230), testResidual), blkX, blkY), pred);
+                                toByteArrayShifted(new int[]{230, 234, 236, 236, 231, 230, 234, 236, 233, 231, 230, 234, 233,
+                                        233, 231, 230}), testResidual), blkX, blkY), pred);
             }
         }
     }
@@ -192,13 +192,13 @@ public class Intra4x4PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(207, 201, 197, 175, 0, 0, 0, 0);
-        byte[] left = toByteArrayShifted(208, 176, 129, 122);
-        byte[] tl = toByteArrayShifted(206, 0, 0, 0);
+        byte[] top = toByteArrayShifted(new int[]{207, 201, 197, 175, 0, 0, 0, 0});
+        byte[] left = toByteArrayShifted(new int[]{208, 176, 129, 122});
+        byte[] tl = toByteArrayShifted(new int[]{206, 0, 0, 0});
 
         Intra4x4PredictionBuilder.predictVerticalRight(emptyResidual, true, true, left, top, tl, 0, 0, 0, pred);
         assertArrayEquals(
-                inMB(toByteArrayShifted(207, 204, 199, 186, 207, 205, 202, 193, 200, 207, 204, 199, 172, 207, 205, 202),
+                inMB(toByteArrayShifted(new int[]{207, 204, 199, 186, 207, 205, 202, 193, 200, 207, 204, 199, 172, 207, 205, 202}),
                         0, 0), pred);
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -208,8 +208,8 @@ public class Intra4x4PredictionBuilderTest {
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
                         inMB(addResidual(
-                                toByteArrayShifted(207, 204, 199, 186, 207, 205, 202, 193, 200, 207, 204, 199, 172,
-                                        207, 205, 202), testResidual), blkX, blkY), pred);
+                                toByteArrayShifted(new int[]{207, 204, 199, 186, 207, 205, 202, 193, 200, 207, 204, 199, 172,
+                                        207, 205, 202}), testResidual), blkX, blkY), pred);
             }
         }
     }
@@ -219,13 +219,13 @@ public class Intra4x4PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(209, 157, 114, 118);
-        byte[] left = toByteArrayShifted(197, 198, 202, 205);
-        byte[] tl = toByteArrayShifted(204, 0, 0, 0);
+        byte[] top = toByteArrayShifted(new int[]{209, 157, 114, 118});
+        byte[] left = toByteArrayShifted(new int[]{197, 198, 202, 205});
+        byte[] tl = toByteArrayShifted(new int[]{204, 0, 0, 0});
 
         Intra4x4PredictionBuilder.predictHorizontalDown(emptyResidual, true, true, left, top, tl, 0, 0, 0, pred);
         assertArrayEquals(
-                inMB(toByteArrayShifted(201, 204, 195, 159, 198, 199, 201, 204, 200, 199, 198, 199, 204, 202, 200, 199),
+                inMB(toByteArrayShifted(new int[]{201, 204, 195, 159, 198, 199, 201, 204, 200, 199, 198, 199, 204, 202, 200, 199}),
                         0, 0), pred);
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -235,8 +235,8 @@ public class Intra4x4PredictionBuilderTest {
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
                         inMB(addResidual(
-                                toByteArrayShifted(201, 204, 195, 159, 198, 199, 201, 204, 200, 199, 198, 199, 204,
-                                        202, 200, 199), testResidual), blkX, blkY), pred);
+                                toByteArrayShifted(new int[]{201, 204, 195, 159, 198, 199, 201, 204, 200, 199, 198, 199, 204,
+                                        202, 200, 199}), testResidual), blkX, blkY), pred);
             }
         }
     }
@@ -246,11 +246,11 @@ public class Intra4x4PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] top = toByteArrayShifted(215, 201, 173, 159, 137, 141, 150, 155);
+        byte[] top = toByteArrayShifted(new int[]{215, 201, 173, 159, 137, 141, 150, 155});
 
         Intra4x4PredictionBuilder.predictVerticalLeft(emptyResidual, true, true, top, 0, 0, 0, pred);
         assertArrayEquals(
-                inMB(toByteArrayShifted(208, 187, 166, 148, 198, 177, 157, 144, 187, 166, 148, 139, 177, 157, 144, 142),
+                inMB(toByteArrayShifted(new int[]{208, 187, 166, 148, 198, 177, 157, 144, 187, 166, 148, 139, 177, 157, 144, 142}),
                         0, 0), pred);
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -260,8 +260,8 @@ public class Intra4x4PredictionBuilderTest {
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
                         inMB(addResidual(
-                                toByteArrayShifted(208, 187, 166, 148, 198, 177, 157, 144, 187, 166, 148, 139, 177,
-                                        157, 144, 142), testResidual), blkX, blkY), pred);
+                                toByteArrayShifted(new int[]{208, 187, 166, 148, 198, 177, 157, 144, 187, 166, 148, 139, 177,
+                                        157, 144, 142}), testResidual), blkX, blkY), pred);
             }
         }
     }
@@ -271,11 +271,11 @@ public class Intra4x4PredictionBuilderTest {
 
         byte[] pred = new byte[256];
 
-        byte[] left = toByteArrayShifted(175, 180, 216, 221);
+        byte[] left = toByteArrayShifted(new int[]{175, 180, 216, 221});
 
         Intra4x4PredictionBuilder.predictHorizontalUp(emptyResidual, true, left, 0, 0, 0, pred);
         assertArrayEquals(
-                inMB(toByteArrayShifted(178, 188, 198, 208, 198, 208, 219, 220, 219, 220, 221, 221, 221, 221, 221, 221),
+                inMB(toByteArrayShifted(new int[]{178, 188, 198, 208, 198, 208, 219, 220, 219, 220, 221, 221, 221, 221, 221, 221}),
                         0, 0), pred);
         for (int blkY = 0; blkY < 16; blkY += 4) {
             for (int blkX = 0; blkX < 16; blkX += 4) {
@@ -285,8 +285,8 @@ public class Intra4x4PredictionBuilderTest {
                 assertArrayEquals(
                         "@[" + blkX + ", " + blkY + "]",
                         inMB(addResidual(
-                                toByteArrayShifted(178, 188, 198, 208, 198, 208, 219, 220, 219, 220, 221, 221, 221,
-                                        221, 221, 221), testResidual), blkX, blkY), pred);
+                                toByteArrayShifted(new int[]{178, 188, 198, 208, 198, 208, 219, 220, 219, 220, 221, 221, 221,
+                                        221, 221, 221}), testResidual), blkX, blkY), pred);
             }
         }
     }

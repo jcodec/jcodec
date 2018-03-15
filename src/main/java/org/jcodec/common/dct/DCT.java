@@ -10,7 +10,7 @@ import org.jcodec.api.NotSupportedException;
  */
 public abstract class DCT {
     public short[] encode(byte[] orig) {
-        throw new NotSupportedException();
+        throw new NotSupportedException("");
     }
 
     public abstract int[] decode(int[] orig);

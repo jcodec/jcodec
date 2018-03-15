@@ -16,15 +16,15 @@ import java.lang.StringBuilder;
 public class VLC {
 
     /**
-     * @param arguments
+     * @param codes
      *            vlc codes
      * @return
      */
-    public static VLC createVLC(String... arguments) {
+    public static VLC createVLC(String[] codes) {
         IntArrayList _codes = IntArrayList.createIntArrayList();
         IntArrayList _codeSizes = IntArrayList.createIntArrayList();
-        for (int i = 0; i < arguments.length; i++) {
-            String string = arguments[i];
+        for (int i = 0; i < codes.length; i++) {
+            String string = codes[i];
             _codes.add(Integer.parseInt(string, 2) << (32 - string.length()));
             _codeSizes.add(string.length());
         }

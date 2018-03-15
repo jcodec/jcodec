@@ -47,8 +47,8 @@ public class StreamingMain {
         long start = currentTimeMillis();
         ScheduledExecutorService cachePolicyExec = Executors.newSingleThreadScheduledExecutor();
 
-        VirtualMovie vm = new VirtualMP4Movie(new CachingTrack(new Prores2AVCTrack(rt, v1.getCodedSize()), 10,
-                cachePolicyExec), new CachingTrack(rt1, 10, cachePolicyExec));
+        VirtualMovie vm = new VirtualMP4Movie(new CachingTrack[]{new CachingTrack(new Prores2AVCTrack(rt, v1.getCodedSize()), 10,
+                cachePolicyExec), new CachingTrack(rt1, 10, cachePolicyExec)});
         System.out.println(currentTimeMillis() - start);
 
         BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home")
