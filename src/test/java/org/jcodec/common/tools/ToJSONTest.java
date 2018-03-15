@@ -46,9 +46,9 @@ public class ToJSONTest {
         cl1.addCl2(new Cl2(cl1));
         cl1.addCl2(new Cl2(cl1));
 
-        Assert.assertEquals("{\"arr\":[" + "{\"owner\":null,},"
-                + "{\"owner\":null,}," + "{\"owner\":null,},"
-                + "{\"owner\":null,}," + "{\"owner\":null,}" + "],}",
+        Assert.assertEquals("{\"arr\":[" + "{\"owner\":null},"
+                + "{\"owner\":null}," + "{\"owner\":null},"
+                + "{\"owner\":null}," + "{\"owner\":null}" + "]}",
                 ToJSON.toJSON(cl1));
     }
 
