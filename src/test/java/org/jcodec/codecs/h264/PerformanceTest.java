@@ -4,7 +4,6 @@ import org.jcodec.codecs.h264.conformance.ConformanceTest;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.platform.Platform;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -17,7 +16,7 @@ import static java.util.Collections.singletonList;
 import static org.jcodec.codecs.h264.conformance.ConformanceTest.duplicateBuffers;
 import static org.jcodec.codecs.h264.conformance.ConformanceTest.extractNALUnits;
 import static org.jcodec.codecs.h264.conformance.ConformanceTest.readFile;
-import static org.jcodec.codecs.h264.conformance.ConformanceTest.zeroPad3;
+import static org.jcodec.common.StringUtils.zeroPad3;
 
 public class PerformanceTest {
 
