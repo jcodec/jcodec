@@ -176,4 +176,8 @@ public class Platform {
     public static long unsignedInt(int signed) {
         return (long) signed & 0xffffffffL;
     }
+
+    public static String stringFromChars(char[] symb) {
+        return new String(symb);
+    }
 }

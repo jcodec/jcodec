@@ -1,5 +1,6 @@
 package org.jcodec.common.io;
 import org.jcodec.common.IntArrayList;
+import org.jcodec.platform.Platform;
 
 import java.io.PrintStream;
 import java.lang.StringBuilder;
@@ -123,12 +124,12 @@ public class VLC {
         return code;
     }
 
-    private String binary(int string, int len) {
+    private static String binary(int string, int len) {
         char[] symb = new char[len];
         for (int i = 0; i < len; i++) {
             symb[i] = (string & (1 << (len - i - 1))) != 0 ? '1' : '0';
         }
-        return new String(symb);
+        return Platform.stringFromChars(symb);
     }
 
     public void writeVLC(BitWriter out, int code) {

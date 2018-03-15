@@ -15,6 +15,7 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
+import org.jcodec.platform.Platform;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -135,6 +136,6 @@ public class WebpDemuxer implements Demuxer, DemuxerTrack {
         ch[1] = (char)((fourCC >> 16) & 0xff);
         ch[2] = (char)((fourCC >> 8) & 0xff);
         ch[3] = (char)((fourCC >> 0) & 0xff);
-        return new String(ch);
+        return Platform.stringFromChars(ch);
     }
 }
