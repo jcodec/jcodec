@@ -1,4 +1,6 @@
 package org.jcodec.common;
+import org.jcodec.platform.Platform;
+
 import static java.lang.System.arraycopy;
 
 import java.lang.reflect.Array;
@@ -62,7 +64,7 @@ public class IntObjectMap<T> {
 
     @SuppressWarnings("unchecked")
     public T[] values(T[] runtime) {
-        T[] result = (T[]) Array.newInstance(runtime.getClass().getComponentType(), _size);
+        T[] result = (T[]) Array.newInstance(Platform.arrayComponentType(runtime), _size);
         for (int i = 0, r = 0; i < storage.length; i++) {
             if (storage[i] != null)
                 result[r++] = (T) storage[i];

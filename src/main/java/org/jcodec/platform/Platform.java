@@ -180,4 +180,8 @@ public class Platform {
     public static String stringFromChars(char[] symb) {
         return new String(symb);
     }
+
+    public static Class<?> arrayComponentType(Object[] array) {
+        return array.getClass().getComponentType();
+    }
 }
