@@ -40,9 +40,9 @@ public class StreamingMain {
         TrakBox v1 = mov1.getVideoTrack();
 
         RealTrack rt = new RealTrack(mov1, v1, ch1);
-        VirtualTrack rt1 = new StereoDownmixTrack(new RealTrack(mov1, mov1.getAudioTracks().get(0), ch1),
+        VirtualTrack rt1 = new StereoDownmixTrack(new RealTrack[]{new RealTrack(mov1, mov1.getAudioTracks().get(0), ch1),
                 new RealTrack(mov1, mov1.getAudioTracks().get(1), ch1), new RealTrack(mov1, mov1.getAudioTracks()
-                        .get(2), ch1), new RealTrack(mov1, mov1.getAudioTracks().get(3), ch1));
+                        .get(2), ch1), new RealTrack(mov1, mov1.getAudioTracks().get(3), ch1)});
 
         long start = currentTimeMillis();
         ScheduledExecutorService cachePolicyExec = Executors.newSingleThreadScheduledExecutor();
