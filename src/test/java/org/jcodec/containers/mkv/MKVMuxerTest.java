@@ -248,7 +248,7 @@ public class MKVMuxerTest {
 
     }
 
-    public void testName() throws Exception {
+    public void _testName() throws Exception {
         FileInputStream inputStream = new FileInputStream(suite.test3);
         MKVParser parser = new MKVParser(new FileChannelWrapper(inputStream.getChannel()));
         List<EbmlMaster> tree = null;

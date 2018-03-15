@@ -236,7 +236,7 @@ public class BitStreamTest {
 
     }
 
-    public void testReader5() throws Exception {
+    public void _testReader5() throws Exception {
         BitReader _in = BitReader.createBitReader(NIOUtils.fetchFromFile(new File(
                 "src/test/resources/h264/bitstream/data.dat")));
         DummyBitstreamReader in1 = new DummyBitstreamReader(new BufferedInputStream(new FileInputStream(
@@ -272,7 +272,7 @@ public class BitStreamTest {
         }
     }
 
-    public void testReader6() throws IOException {
+    public void _testReader6() throws IOException {
 
         BitReader _in = reader(new byte[] { b("01010100"), b("00011001"), b("10000100"), b("10001111"), b("11101011"),
                 b("10010100"), b("01101010"), b("01011111"), b("01110101") });
@@ -386,7 +386,7 @@ public class BitStreamTest {
         }
     }
 
-    private byte[] randomData(int n) {
+    private static byte[] randomData(int n) {
         byte[] data = new byte[n];
         for (int i = 0; i < n; i++) {
             int ni = 0;
@@ -400,11 +400,11 @@ public class BitStreamTest {
         return data;
     }
 
-    private byte b(String str) {
+    private static byte b(String str) {
         return (byte) Short.parseShort(str, 2);
     }
 
-    private int i(String str) {
+    private static int i(String str) {
         return (int) Long.parseLong(str, 2);
     }
 }
