@@ -33,18 +33,20 @@ public class MPSIndexer extends BaseIndexer {
     }
 
     private FileReader newReader() {
+        final MPSIndexer self = this;
         return new NIOUtils.FileReader() {
             @Override
             protected void data(ByteBuffer data, long filePos) {
-                analyseBuffer(data, filePos);
+                self.analyseBuffer(data, filePos);
             }
             @Override
             protected void done() {
-                finishAnalyse();
+                self.finishAnalyse();
             }
         };
     }
 
+    @Override
     protected void pes(ByteBuffer pesBuffer, long start, int pesLen, int stream) {
         if (!mediaStream(stream))
             return;
