@@ -10,21 +10,21 @@ import org.jcodec.common.model.Size;
  */
 public class LanczosResampler extends BaseResampler {
     //The type (or one of its parents) contains already a method called [nTaps]
-    private final int _nTaps = 6;
+    private static final int _nTaps = 6;
     private int precision = 256;
     private short[][] tapsXs;
     private short[][] tapsYs;
-    private double scaleFactorX;
-    private double scaleFactorY;
+    private double _scaleFactorX;
+    private double _scaleFactorY;
 
     public LanczosResampler(Size from, Size to) {
         super(from, to);
-        scaleFactorX = (double) to.getWidth() / from.getWidth();
-        scaleFactorY = (double) to.getHeight() / from.getHeight();
+        _scaleFactorX = (double) to.getWidth() / from.getWidth();
+        _scaleFactorY = (double) to.getHeight() / from.getHeight();
         tapsXs = new short[precision][_nTaps];
         tapsYs = new short[precision][_nTaps];
-        buildTaps(_nTaps, precision, scaleFactorX, tapsXs);
-        buildTaps(_nTaps, precision, scaleFactorY, tapsYs);
+        buildTaps(_nTaps, precision, _scaleFactorX, tapsXs);
+        buildTaps(_nTaps, precision, _scaleFactorY, tapsYs);
     }
 
     private static double sinc(double x) {
@@ -47,14 +47,14 @@ public class LanczosResampler extends BaseResampler {
 
     @Override
     protected short[] getTapsX(int dstX) {
-        int oi = (int) ((float) (dstX * precision) / scaleFactorX);
+        int oi = (int) ((float) (dstX * precision) / _scaleFactorX);
         int sub_pel = oi % precision;
         return tapsXs[sub_pel];
     }
 
     @Override
     protected short[] getTapsY(int dstY) {
-        int oy = (int) ((float) (dstY * precision) / scaleFactorY);
+        int oy = (int) ((float) (dstY * precision) / _scaleFactorY);
         int sub_pel = oy % precision;
 
         return tapsYs[sub_pel];
