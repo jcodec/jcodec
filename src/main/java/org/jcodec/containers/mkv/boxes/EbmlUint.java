@@ -48,13 +48,9 @@ public class EbmlUint extends EbmlBin {
     public static int calculatePayloadSize(long value) {
         if (value == 0)
             return 1;
-        
-        long mask = 0xFF00000000000000L;
-        int i = 0;
-        while ((value & (mask>>>8*i)) == 0 && i < 8)
-            i++;
-        
-        return 8 - i;
+        if (value <= 0x7fffffffL) {
+            return 4 - (Integer.numberOfLeadingZeros((int) value) >> 3);
+        }
+        return 8 - (Long.numberOfLeadingZeros(value) >> 3);
     }
-
 }
