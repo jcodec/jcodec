@@ -24,7 +24,7 @@ public class MD5 {
             byte item = digest[i];
             int b = item & 0xFF;
             if (b < 0x10)
-                sb.append('0');
+                sb.append("0");
             sb.append(Integer.toHexString(b));
         }
 

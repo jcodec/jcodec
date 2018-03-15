@@ -246,7 +246,7 @@ public class ArrayUtil {
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < width && ind < strings.length; i++, ind++) {
                 for (int j = 0; j < maxLen - strings[ind].length() + 1; j++)
-                    builder.append(' ');
+                    builder.append(" ");
                 builder.append(strings[ind]);
             }
             System.out.println(builder);
@@ -264,7 +264,7 @@ public class ArrayUtil {
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < width && ind < strings.length; i++, ind++) {
                 for (int j = 0; j < maxLen - strings[ind].length() + 1; j++)
-                    builder.append(' ');
+                    builder.append(" ");
                 builder.append(strings[ind]);
             }
             System.out.println(builder);

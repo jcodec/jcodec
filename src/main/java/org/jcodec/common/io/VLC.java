@@ -142,12 +142,12 @@ public class VLC {
         }
     }
 
-    private String extracted(int num) {
+    private static String extracted(int num) {
 
         String str = Integer.toString(num & 0xff, 2);
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < 8 - str.length(); i++)
-            builder.append('0');
+            builder.append("0");
         builder.append(str);
         return builder.toString();
     }
