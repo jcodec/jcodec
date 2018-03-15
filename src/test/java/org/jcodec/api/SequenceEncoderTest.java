@@ -106,19 +106,18 @@ public class SequenceEncoderTest {
     public void testBufferOverflow() throws IOException, JCodecException {
         File output = new File("/tmp/test.mp4");
         SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(output), new Rational(1, 1));
-        BufferedImage image = ImageIO.read(new File("src/test/resources/h264/buffer_overflow.png"));
-        Picture[] encoded = new Picture[3];
+        Picture p0 = AWTUtil.decodePNG(new File("src/test/resources/h264/buffer_overflow.png"), ColorSpace.RGB);
+        Picture p1 = AWTUtil.decodePNG(new File("src/test/resources/h264/buffer_overflow1.png"), ColorSpace.RGB);
+        Picture p2 = AWTUtil.decodePNG(new File("src/test/resources/h264/buffer_overflow2.png"), ColorSpace.RGB);
+
+        Picture[] encoded = new Picture[]{p0, p1, p2};
         for (int i = 0; i < 3; i++) {
-            Picture nimg = AWTUtil.fromBufferedImage(image, ColorSpace.RGB);
-            encoded[i] = nimg;
-            enc.encodeNativeFrame(nimg);
-            Graphics graphics = image.getGraphics();
-            graphics.copyArea(0, 0, image.getWidth() - 10, image.getHeight() - 10, 10, 10);
+            enc.encodeNativeFrame(encoded[i]);
         }
         enc.finish();
         FrameGrab grab = FrameGrab.createFrameGrab(NIOUtils.readableChannel(output));
         Transform transform = ColorUtil.getTransform(ColorSpace.YUV420, encoded[0].getColor());
-        Picture rgb = Picture.create(image.getWidth(), image.getHeight(), ColorSpace.RGB);
+        Picture rgb = Picture.create(p0.getWidth(), p0.getHeight(), ColorSpace.RGB);
         for (int i = 0; i < 3; i++) {
             Picture yuv = grab.getNativeFrame();
             transform.transform(yuv, rgb);
