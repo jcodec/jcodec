@@ -5,6 +5,7 @@ import static org.jcodec.codecs.vpx.vp9.Consts.*;
 import java.nio.ByteBuffer;
 
 import org.jcodec.codecs.vpx.VPXBooleanDecoder;
+import org.jcodec.common.ArrayUtil;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.NIOUtils;
 
@@ -470,11 +471,10 @@ public class DecodingContext {
     public static final int[][] defaultMvFrProbs = { { 64, 96, 64 }, { 64, 96, 64 } };
     public static final int[] defaultMvHpProb = { 128, 128 };
 
-    public static final int[][] defaultInterModeProbs = { { 2, 173, 34 }, { 7, 145, 85 }, { 7, 166, 63 },
-            { 7, 94, 66 }, { 8, 64, 46 }, { 17, 81, 31 }, { 25, 29, 30 }, };
+    public static final int[][] defaultInterModeProbs = { { 2, 173, 34 }, { 7, 145, 85 }, { 7, 166, 63 }, { 7, 94, 66 },
+            { 8, 64, 46 }, { 17, 81, 31 }, { 25, 29, 30 }, };
 
-    public static final int[][] defaultInterpFilterProbs = { { 235, 162 }, { 36, 255 }, { 34, 3 },
-            { 149, 144 } };
+    public static final int[][] defaultInterpFilterProbs = { { 235, 162 }, { 36, 255 }, { 34, 3 }, { 149, 144 } };
 
     public static final int[] defaultIsInterProbs = { 9, 102, 187, 225 };
 
@@ -501,8 +501,7 @@ public class DecodingContext {
             { 10, 7, 6 } // a/l both split
     };
 
-    public static final int[][][] kfYmodeProbs = {
-            { // above = dc
+    public static final int[][][] kfYmodeProbs = { { // above = dc
             { 137, 30, 42, 148, 151, 207, 70, 52, 91 }, // left = dc
             { 92, 45, 102, 136, 116, 180, 74, 90, 100 }, // left = v
             { 73, 32, 19, 187, 222, 215, 46, 34, 100 }, // left = h
@@ -614,8 +613,7 @@ public class DecodingContext {
                     { 43, 81, 53, 140, 169, 204, 68, 84, 72 } // left = tm
             } };
 
-    public static final int[][] kfUvModeProbs = {
-            { 144, 11, 54, 157, 195, 130, 46, 58, 108 },  // y = dc
+    public static final int[][] kfUvModeProbs = { { 144, 11, 54, 157, 195, 130, 46, 58, 108 }, // y = dc
             { 118, 15, 123, 148, 131, 101, 44, 93, 131 }, // y = v
             { 113, 12, 23, 188, 226, 142, 26, 32, 125 }, // y = h
             { 120, 11, 50, 123, 163, 135, 64, 77, 103 }, // y = d45
@@ -626,15 +624,13 @@ public class DecodingContext {
             { 116, 12, 64, 120, 140, 125, 49, 115, 121 }, // y = d63
             { 102, 19, 66, 162, 182, 122, 35, 59, 128 } // y = tm
     };
-    public static final int[][] defaultYModeProbs = {
-            { 65, 32, 18, 144, 162, 194, 41, 51, 98 }, // block_size < 8x8
+    public static final int[][] defaultYModeProbs = { { 65, 32, 18, 144, 162, 194, 41, 51, 98 }, // block_size < 8x8
             { 132, 68, 18, 165, 217, 196, 45, 40, 78 }, // block_size < 16x16
             { 173, 80, 19, 176, 240, 193, 64, 35, 46 }, // block_size < 32x32
             { 221, 135, 38, 194, 248, 121, 96, 85, 29 } // block_size >= 32x32
     };
 
-    public static final int[][] defaultUvModeProbs = {
-        { 120, 7, 76, 176, 208, 126, 28, 54, 103 }, // y = dc
+    public static final int[][] defaultUvModeProbs = { { 120, 7, 76, 176, 208, 126, 28, 54, 103 }, // y = dc
             { 48, 12, 154, 155, 139, 90, 34, 117, 119 }, // y = v
             { 67, 6, 25, 204, 243, 158, 13, 21, 96 }, // y = h
             { 97, 5, 44, 131, 176, 139, 48, 68, 97 }, // y = d45
@@ -654,11 +650,10 @@ public class DecodingContext {
     /**
      * Reads VP9 frame headers and creates the decoding context
      * 
-     * @param bb
-     *            ByteBuffer with the encoded frame, after the call to this function
-     *            the header portion of this buffer will be read and the byte buffer
-     *            will be pointing at the first compressed frame byte after the
-     *            headers.
+     * @param bb ByteBuffer with the encoded frame, after the call to this function
+     *           the header portion of this buffer will be read and the byte buffer
+     *           will be pointing at the first compressed frame byte after the
+     *           headers.
      * @return Initialized DecodingContext object that can be used for decoding the
      *         compressed VP9 frame.
      */
@@ -797,7 +792,7 @@ public class DecodingContext {
     public int getMiFrameWidth() {
         return (frameWidth + 7) >> 3;
     }
-    
+
     public int getMiFrameHeight() {
         return (frameHeight + 7) >> 3;
     }
@@ -887,8 +882,7 @@ public class DecodingContext {
      * the frame data that contains the uncompressed header. The ByteBuffer will be
      * pointing at the first byte after the uncompressed header.
      * 
-     * @param bb
-     *            The data for the frame.
+     * @param bb The data for the frame.
      * 
      * @return Size in bytes of the compressed header following this uncompressed
      *         header.
@@ -1540,10 +1534,6 @@ public class DecodingContext {
         return segmentationTreeProbs;
     }
 
-    public int[] getLeftInterpFilters() {
-        return null;
-    }
-
     public int[] getSegmentationPredProbs() {
         return segmentationPredProbs;
     }
@@ -1555,11 +1545,11 @@ public class DecodingContext {
     public int[] getAboveRefs() {
         return aboveRefs;
     }
-    
+
     public int[] getLeftRefs() {
         return leftRefs;
     }
-    
+
     public int getMiTileStartCol() {
         return miTileStartCol;
     }

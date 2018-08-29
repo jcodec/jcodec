@@ -34,9 +34,9 @@ public class ModeInfo {
     private int uvMode;
 
     ModeInfo() {
-        
+
     }
-    
+
     public ModeInfo(int segmentId, boolean skip, int txSize, int yMode, int subModes, int uvMode) {
         this.segmentId = segmentId;
         this.skip = skip;
@@ -73,13 +73,13 @@ public class ModeInfo {
     public ModeInfo read(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c) {
         int segmentId = 0;
         if (c.isSegmentationEnabled() && c.isUpdateSegmentMap())
-            segmentId = readSegmentId(decoder, probs);
+            segmentId = readSegmentId(decoder, c);
 
         boolean skip = true;
         if (!c.isSegmentFeatureActive(segmentId, SEG_LVL_SKIP))
-            skip = readSkipFlag(miCol, miRow, blSz, decoder, probs, c);
+            skip = readSkipFlag(miCol, miRow, blSz, decoder, c);
 
-        int txSize = readTxSize(miCol, miRow, blSz, true, decoder, probs, c);
+        int txSize = readTxSize(miCol, miRow, blSz, true, decoder, c);
 
         int yMode;
         int subModes = 0;
@@ -95,8 +95,7 @@ public class ModeInfo {
         return new ModeInfo(segmentId, skip, txSize, yMode, subModes, uvMode);
     }
 
-    public int readKfIntraMode(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            DecodingContext c) {
+    public int readKfIntraMode(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c) {
         boolean availAbove = miRow > 0; // Frame based
         boolean availLeft = miCol > c.getMiTileStartCol(); // Tile based
         int[] aboveIntraModes = c.getAboveModes();
@@ -106,7 +105,7 @@ public class ModeInfo {
         aboveMode = availAbove ? aboveIntraModes[miCol] : DC_PRED;
         leftMode = availLeft ? leftIntraModes[miRow % 8] : DC_PRED;
 
-        int[][][] probs = probStore.getKfYModeProbs();
+        int[][][] probs = c.getKfYModeProbs();
 
         int intraMode = decoder.readTree(TREE_INTRA_MODE, probs[aboveMode][leftMode]);
 
@@ -115,8 +114,7 @@ public class ModeInfo {
         return intraMode;
     }
 
-    public int readKfIntraModeSub(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            DecodingContext c) {
+    public int readKfIntraModeSub(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c) {
         boolean availAbove = miRow > 0; // Frame based
         boolean availLeft = miCol > c.getMiTileStartCol(); // Tile based
         int[] aboveIntraModes = c.getAboveModes();
@@ -154,7 +152,7 @@ public class ModeInfo {
     public static int vect4(int val0, int val1, int val2, int val3) {
         return (val0) | (val1 << 8) | (val2 << 16) | (val3 << 24);
     }
-    
+
     public static int vect4get(int vect, int ind) {
         return (vect >> (ind << 3)) & 0xff;
     }
@@ -163,7 +161,7 @@ public class ModeInfo {
             DecodingContext c) {
         if (blSz < BLOCK_8X8)
             return TX_4X4;
-        
+
         int maxTxSize = maxTxLookup[blSz]; // 4x4 being 0, 32x32 being 3
         int txSize = Math.min(maxTxSize, c.getTxMode());
         if (allowSelect && c.getTxMode() == TX_MODE_SELECT) {
@@ -219,7 +217,7 @@ public class ModeInfo {
         int ctx = 0;
         boolean availAbove = miRow > 0; // Frame based
         boolean availLeft = miCol > c.getMiTileStartCol(); // Tile based
-        
+
         boolean[] aboveSkipped = c.getAboveSkipped();
         boolean[] leftSkipped = c.getLeftSkipped();
 
@@ -227,10 +225,10 @@ public class ModeInfo {
             ctx += aboveSkipped[miCol] ? 1 : 0;
         if (availLeft)
             ctx += leftSkipped[miRow & 0x7] ? 1 : 0;
-        
+
         System.out.println("SKIP CTX: " + ctx);
 
-        int[] probs = probStore.getSkipProbs();
+        int[] probs = c.getSkipProbs();
 
         boolean ret = decoder.readBit(probs[ctx]) == 1;
 

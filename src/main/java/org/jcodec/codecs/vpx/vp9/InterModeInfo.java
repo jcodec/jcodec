@@ -57,9 +57,9 @@ public class InterModeInfo extends ModeInfo {
     private long mvl3;
 
     InterModeInfo() {
-        
+
     }
-            
+
     public InterModeInfo(int segmentId, boolean skip, int txSize, int yMode, int subModes, int uvMode) {
         super(segmentId, skip, txSize, yMode, subModes, uvMode);
     }
@@ -99,20 +99,20 @@ public class InterModeInfo extends ModeInfo {
         if (c.isSegmentationEnabled()) {
             segmentId = predicSegmentId(miCol, miRow, blSz, c);
             if (c.isUpdateSegmentMap()) {
-                if (!c.isSegmentMapConditionalUpdate() || !readSegIdPredicted(miCol, miRow, blSz, decoder, probs, c)) {
-                    segmentId = readSegmentId(decoder, probs);
+                if (!c.isSegmentMapConditionalUpdate() || !readSegIdPredicted(miCol, miRow, blSz, decoder, c)) {
+                    segmentId = readSegmentId(decoder, c);
                 }
             }
         }
         boolean skip = true;
         if (!c.isSegmentFeatureActive(segmentId, SEG_LVL_SKIP))
-            skip = readSkipFlag(miCol, miRow, blSz, decoder, probs, c);
+            skip = readSkipFlag(miCol, miRow, blSz, decoder, c);
 
         boolean isInter = c.getSegmentFeature(segmentId, SEG_LVL_REF_FRAME) != INTRA_FRAME;
         if (!c.isSegmentFeatureActive(segmentId, SEG_LVL_REF_FRAME))
-            isInter = readIsInter(miCol, miRow, blSz, decoder, probs, c);
+            isInter = readIsInter(miCol, miRow, blSz, decoder, c);
 
-        int txSize = readTxSize(miCol, miRow, blSz, !skip || !isInter, decoder, probs, c);
+        int txSize = readTxSize(miCol, miRow, blSz, !skip || !isInter, decoder, c);
 
         if (!isInter)
             return readInterIntraMode(miCol, miRow, blSz, decoder, c, segmentId, skip, txSize);
@@ -123,7 +123,7 @@ public class InterModeInfo extends ModeInfo {
     private InterModeInfo readInterInterMode(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
             DecodingContext c, int segmentId, boolean skip, int txSize) {
 
-        int packedRefFrames = readRefFrames(miCol, miRow, blSz, segmentId, decoder, probStore, c);
+        int packedRefFrames = readRefFrames(miCol, miRow, blSz, segmentId, decoder, c);
 
         int lumaMode = ZEROMV;
         if (!c.isSegmentFeatureActive(segmentId, SEG_LVL_SKIP)) {
@@ -133,16 +133,17 @@ public class InterModeInfo extends ModeInfo {
         }
         int interpFilter = c.getInterpFilter();
         if (interpFilter == SWITCHABLE) {
-            interpFilter = readInterpFilter(miCol, miRow, blSz, decoder, probStore, c);
+            interpFilter = readInterpFilter(miCol, miRow, blSz, decoder, c);
         }
 
         if (blSz < BLOCK_8X8) {
             if (blSz == BLOCK_4X4) {
                 long[] mv4x4 = readMV4x4(miCol, miRow, blSz, decoder, c, packedRefFrames);
-                return new InterModeInfo(segmentId, skip, txSize, -1, 0/*subModes*/, -1, mv4x4[0], mv4x4[1], mv4x4[2], mv4x4[3]);
+                return new InterModeInfo(segmentId, skip, txSize, -1, 0/* subModes */, -1, mv4x4[0], mv4x4[1], mv4x4[2],
+                        mv4x4[3]);
             } else {
                 long[] mv12 = readMvSub8x8(miCol, miRow, blSz, decoder, c, packedRefFrames);
-                return new InterModeInfo(segmentId, skip, txSize, 0, 0/*subModes*/, 0, mv12[0], mv12[1], 0, 0);
+                return new InterModeInfo(segmentId, skip, txSize, 0, 0/* subModes */, 0, mv12[0], mv12[1], 0, 0);
             }
         } else {
             long mvl = readMV8x8AndAbove(miCol, miRow, blSz, decoder, c, packedRefFrames, lumaMode);
@@ -150,25 +151,25 @@ public class InterModeInfo extends ModeInfo {
         }
     }
 
-    protected long readMV8x8AndAbove(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            DecodingContext c, int packedRefFrames, int lumaMode) {
+    protected long readMV8x8AndAbove(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c,
+            int packedRefFrames, int lumaMode) {
 
-        long mvl = readSub0(miCol, miRow, blSz, decoder, probStore, c, lumaMode, packedRefFrames);
+        long mvl = readSub0(miCol, miRow, blSz, decoder, c, lumaMode, packedRefFrames);
 
         updateMVLineBuffers(miCol, miRow, blSz, c, mvl);
         updateMVLineBuffers4x4(miCol, miRow, blSz, c, mvl, mvl);
         return mvl;
     }
 
-    protected long[] readMvSub8x8(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            DecodingContext c, int packedRefFrames) {
+    protected long[] readMvSub8x8(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c,
+            int packedRefFrames) {
 
         int subMode0 = readInterMode(miCol, miRow, blSz, decoder, c);
         long mvl0 = readSub0(miCol, miRow, blSz, decoder, c, subMode0, packedRefFrames);
 
         int subMode1 = readInterMode(miCol, miRow, blSz, decoder, c);
         int blk = blSz == BLOCK_4X8 ? 1 : 2;
-        long mvl1 = readSub12(miCol, miRow, blSz, decoder, probStore, c, mvl0, subMode1, blk, packedRefFrames);
+        long mvl1 = readSub12(miCol, miRow, blSz, decoder, c, mvl0, subMode1, blk, packedRefFrames);
 
         if (blSz == BLOCK_4X8) {
             updateMVLineBuffers4x4(miCol, miRow, blSz, c, mvl1, mvl0);
@@ -177,11 +178,11 @@ public class InterModeInfo extends ModeInfo {
         }
         updateMVLineBuffers(miCol, miRow, blSz, c, mvl1);
 //        int subModes = (subMode0 << 8) | subMode1;
-        return new long[] {mvl0, mvl1};
+        return new long[] { mvl0, mvl1 };
     }
 
-    protected long[] readMV4x4(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            DecodingContext c, int packedRefFrames) {
+    protected long[] readMV4x4(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c,
+            int packedRefFrames) {
 
         int subMode0 = readInterMode(miCol, miRow, blSz, decoder, c);
         long mvl0 = readSub0(miCol, miRow, blSz, decoder, c, subMode0, packedRefFrames);
@@ -199,7 +200,7 @@ public class InterModeInfo extends ModeInfo {
         updateMVLineBuffers4x4(miCol, miRow, blSz, c, mvl1, mvl2);
 
 //        int subModes = (subMode0 << 24) | (subMode1 << 16) | (subMode2 << 8) | subMode3;
-        return new long[] {mvl0, mvl1, mvl2, mvl3};
+        return new long[] { mvl0, mvl1, mvl2, mvl3 };
     }
 
     private static long readSub0(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c,
@@ -214,9 +215,9 @@ public class InterModeInfo extends ModeInfo {
             nearestNearMv01 = findBestMv(miCol, miRow, blSz, ref1, 0, c, true);
         int mv0 = 0, mv1 = 0;
         if (lumaMode == NEWMV) {
-            mv0 = readDiffMv(decoder, probStore, c, nearestNearMv00);
+            mv0 = readDiffMv(decoder, c, nearestNearMv00);
             if (compoundPred)
-                mv1 = readDiffMv(decoder, probStore, c, nearestNearMv01);
+                mv1 = readDiffMv(decoder, c, nearestNearMv01);
         } else if (lumaMode != ZEROMV) {
             mv0 = MVList.get(nearestNearMv00, lumaMode - NEARESTMV);
             mv1 = MVList.get(nearestNearMv01, lumaMode - NEARESTMV);
@@ -225,7 +226,7 @@ public class InterModeInfo extends ModeInfo {
         return MVList.create(mv0, mv1);
     }
 
-    private static long readSub12(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probStore,
+    private static long readSub12(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
             DecodingContext c, long mvl0, int subMode1, int blk, int packedRefFrames) {
         int ref0 = Packed4BitList.get(packedRefFrames, 0);
         int ref1 = Packed4BitList.get(packedRefFrames, 1);
@@ -236,9 +237,9 @@ public class InterModeInfo extends ModeInfo {
         if (compoundPred)
             nearestNearMv01 = findBestMv(miCol, miRow, blSz, ref1, 0, c, true);
         if (subMode1 == NEWMV) {
-            mv10 = readDiffMv(decoder, probStore, c, nearestNearMv00);
+            mv10 = readDiffMv(decoder, c, nearestNearMv00);
             if (compoundPred)
-                mv11 = readDiffMv(decoder, probStore, c, nearestNearMv01);
+                mv11 = readDiffMv(decoder, c, nearestNearMv01);
         } else if (subMode1 != ZEROMV) {
             long nearestNearMv10 = prepandSubMvBlk12(findBestMv(miCol, miRow, blSz, ref0, blk, c, false),
                     MVList.get(mvl0, 0));
@@ -253,7 +254,7 @@ public class InterModeInfo extends ModeInfo {
         return MVList.create(mv10, mv11);
     }
 
-    private static long readMvSub3(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, Probabilities probStore,
+    private static long readMvSub3(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
             DecodingContext c, long mvl0, long mvl1, long mvl2, int subMode3, int packedRefFrames) {
         int ref0 = Packed4BitList.get(packedRefFrames, 0);
         int ref1 = Packed4BitList.get(packedRefFrames, 1);
@@ -265,9 +266,9 @@ public class InterModeInfo extends ModeInfo {
             nearestNearMv01 = findBestMv(miCol, miRow, blSz, ref1, 0, c, true);
         int mv30 = 0, mv31 = 0;
         if (subMode3 == NEWMV) {
-            mv30 = readDiffMv(decoder, probStore, c, nearestNearMv00);
+            mv30 = readDiffMv(decoder, c, nearestNearMv00);
             if (compoundPred)
-                mv31 = readDiffMv(decoder, probStore, c, nearestNearMv01);
+                mv31 = readDiffMv(decoder, c, nearestNearMv01);
         } else if (subMode3 != ZEROMV) {
             long nearestNearMv30 = prepandSubMvBlk3(findBestMv(miCol, miRow, blSz, ref0, 3, c, false),
                     MVList.get(mvl0, 0), MVList.get(mvl1, 0), MVList.get(mvl2, 0));
@@ -292,7 +293,7 @@ public class InterModeInfo extends ModeInfo {
             if (refMode == REFERENCE_MODE_SELECT)
                 compoundPred = readRefMode(miCol, miRow, decoder, c);
             if (compoundPred) {
-                int compRef = readCompRef(miCol, miRow, blSz, decoder, probStore, c);
+                int compRef = readCompRef(miCol, miRow, blSz, decoder, c);
                 int fixedRef = c.getCompFixedRef();
                 if (c.refFrameSignBias(fixedRef) == 0) {
                     ref0 = fixedRef;
@@ -302,7 +303,7 @@ public class InterModeInfo extends ModeInfo {
                     ref1 = fixedRef;
                 }
             } else {
-                ref0 = readSingleRef(miCol, miRow, decoder, probStore, c);
+                ref0 = readSingleRef(miCol, miRow, decoder, c);
             }
         }
         updateRefFrameLineBuffers(miCol, miRow, blSz, c, ref0, ref1, compoundPred);
@@ -387,35 +388,35 @@ public class InterModeInfo extends ModeInfo {
     private static int readDiffMv(VPXBooleanDecoder decoder, DecodingContext c, long nearNearest) {
         int bestMv = MVList.get(nearNearest, 0);
         boolean useHp = c.isAllowHpMv() && !largeMv(bestMv);
-        int joint = decoder.readTree(TREE_MV_JOINT, probStore.getMvJointProbs());
+        int joint = decoder.readTree(TREE_MV_JOINT, c.getMvJointProbs());
 
         int diffMv0 = 0, diffMv1 = 0;
         if (joint == MV_JOINT_HZVNZ || joint == MV_JOINT_HNZVNZ)
-            diffMv0 = readMvComponent(decoder, probStore, 0, useHp);
+            diffMv0 = readMvComponent(decoder, c, 0, useHp);
         if (joint == MV_JOINT_HNZVZ || joint == MV_JOINT_HNZVNZ)
-            diffMv1 = readMvComponent(decoder, probStore, 1, useHp);
+            diffMv1 = readMvComponent(decoder, c, 1, useHp);
 
         return MV.create(MV.x(bestMv) + diffMv0, MV.y(bestMv) + diffMv1, MV.ref(bestMv));
     }
 
     private static int readMvComponent(VPXBooleanDecoder decoder, DecodingContext c, int comp, boolean useHp) {
         boolean sign = decoder.readBitEq() == 1;
-        int mvClass = decoder.readTree(MV_CLASS_TREE, probStore.getMvClassProbs()[comp]);
+        int mvClass = decoder.readTree(MV_CLASS_TREE, c.getMvClassProbs()[comp]);
         int mag;
         if (mvClass == 0) {
-            int mvClass0Bit = decoder.readBit(probStore.getMvClass0bitProbs()[comp]);
-            int mvClass0Fr = decoder.readTree(MV_FR_TREE, probStore.getMvClassFrProbs()[comp][mvClass0Bit]);
-            int mvClass0Hp = useHp ? decoder.readBit(probStore.getMvClass0HpProbs()[comp]) : 1;
+            int mvClass0Bit = decoder.readBit(c.getMvClass0BitProbs()[comp]);
+            int mvClass0Fr = decoder.readTree(MV_FR_TREE, c.getMvClass0FrProbs()[comp][mvClass0Bit]);
+            int mvClass0Hp = useHp ? decoder.readBit(c.getMvClass0HpProbs()[comp]) : 1;
             mag = ((mvClass0Bit << 3) | (mvClass0Fr << 1) | mvClass0Hp) + 1;
         } else {
             int d = 0;
             for (int i = 0; i < mvClass; i++) {
-                int mvBit = decoder.readBit(probStore.getMvBitsProb()[comp][i]);
+                int mvBit = decoder.readBit(c.getMvBitsProb()[comp][i]);
                 d |= mvBit << i;
             }
             mag = CLASS0_SIZE << (mvClass + 2);
-            int mvFr = decoder.readTree(MV_FR_TREE, probStore.getMvFrProbs()[comp]);
-            int mvHp = useHp ? decoder.readBit(probStore.getMvHpProbs()[comp]) : 1;
+            int mvFr = decoder.readTree(MV_FR_TREE, c.getMvFrProbs()[comp]);
+            int mvHp = useHp ? decoder.readBit(c.getMvHpProbs()[comp]) : 1;
             mag += ((d << 3) | (mvFr << 1) | mvHp) + 1;
         }
         return sign ? -mag : mag;
@@ -602,8 +603,7 @@ public class InterModeInfo extends ModeInfo {
         return clip3(mbToLeftEdge - 128, mbToRightEdge + 128, mv);
     }
 
-    protected int readInterpFilter(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            DecodingContext c) {
+    protected int readInterpFilter(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c) {
         boolean availAbove = miRow > 0; // Frame based
         boolean availLeft = miCol > c.getMiTileStartCol(); // Tile based
         int[] aboveRefs = c.getAboveRefs();
@@ -876,7 +876,7 @@ public class InterModeInfo extends ModeInfo {
             ctx = 2;
         }
 
-        int[] probs = probStore.getCompRefProbs();
+        int[] probs = c.getCompRefProbs();
 
         return decoder.readBit(probs[ctx]);
     }
@@ -1023,7 +1023,7 @@ public class InterModeInfo extends ModeInfo {
         } else {
             ctx = 2;
         }
-        int[][] probs = probStore.getSingleRefProbs();
+        int[][] probs = c.getSingleRefProbs();
 
         return decoder.readBit(probs[ctx][bin]) == 1;
     }
@@ -1064,7 +1064,7 @@ public class InterModeInfo extends ModeInfo {
         } else {
             ctx = 1;
         }
-        int[] probs = probStore.getCompModeProbs();
+        int[] probs = c.getCompModeProb();
 
         return decoder.readBit(probs[ctx]) == 1;
     }
@@ -1082,17 +1082,15 @@ public class InterModeInfo extends ModeInfo {
         }
         int uvMode = readKfUvMode(yMode, decoder, c);
 
-        return new InterModeInfo(segmentId, skip, txSize, yMode, subModes, uvMode,0,0,0,0);
+        return new InterModeInfo(segmentId, skip, txSize, yMode, subModes, uvMode, 0, 0, 0, 0);
     }
 
-    protected int readInterIntraMode(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            DecodingContext c) {
-        int[][] probs = probStore.getYModeProbs();
+    protected int readInterIntraMode(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c) {
+        int[][] probs = c.getYModeProbs();
         return decoder.readTree(TREE_INTRA_MODE, probs[size_group_lookup[blSz]]);
     }
 
-    protected int readInterIntraModeSub(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder,
-            DecodingContext c) {
+    protected int readInterIntraModeSub(int miCol, int miRow, int blSz, VPXBooleanDecoder decoder, DecodingContext c) {
         int[][] probs = c.getYModeProbs();
         int mode0 = decoder.readTree(TREE_INTRA_MODE, probs[0]);
         int mode1 = decoder.readTree(TREE_INTRA_MODE, probs[0]);
@@ -1122,7 +1120,7 @@ public class InterModeInfo extends ModeInfo {
         else if (availAbove || availLeft)
             ctx = 2 * (availAbove ? (aboveIntra ? 1 : 0) : (leftIntra ? 1 : 0));
 
-        int[] probs = probStore.getIsInterProbs();
+        int[] probs = c.getIsInterProbs();
         return decoder.readBit(probs[ctx]) == 1;
     }
 
@@ -1132,7 +1130,7 @@ public class InterModeInfo extends ModeInfo {
         boolean[] leftSegIdPredicted = c.getLeftSegIdPredicted();
 
         int ctx = (aboveSegIdPredicted[miRow] ? 1 : 0) + (leftSegIdPredicted[miCol] ? 1 : 0);
-        int[] prob = probs.getSegmentationPredProb();
+        int[] prob = c.getSegmentationPredProbs();
 
         boolean ret = decoder.readBit(prob[ctx]) == 1;
 
