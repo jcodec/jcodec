@@ -121,17 +121,4 @@
       <scope>test</scope>
     </dependency>
 	</dependencies>
-	
-		<distributionManagement>
-		<snapshotRepository>
-			<id>snapshots</id>
-			<name>rpgframeworkde-snapshots</name>
-			<url>http://repository.rpgframework.de:8081/artifactory/libs-snapshot-local</url>
-		</snapshotRepository>
-		<repository>
-			<id>central</id>
-			<name>rpgframeworkde-releases</name>
-			<url>http://repository.rpgframework.de:8081/artifactory/libs-release-local</url>
-		</repository>
-	</distributionManagement>
 </project>
