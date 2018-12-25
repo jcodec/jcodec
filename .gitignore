@@ -7,3 +7,4 @@ tmp/*
 .idea/
 *.iml
 .DS_Store
+/tmp/

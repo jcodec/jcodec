@@ -1,4 +1,6 @@
-package org.jcodec.common;
+package org.jcodec.javase.common;
+
+import org.jcodec.common.AudioFormat;
 
 public class SoundUtil {
     public static AudioFormat fromJavaX(javax.sound.sampled.AudioFormat af) {

@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.jcodec</groupId>
-	<artifactId>jcodec-javase</artifactId>
+	<artifactId>jcodec-javase-java11</artifactId>
 	<name>JCodec</name>
 	<url>http://jcodec.org</url>
 	<packaging>jar</packaging>
@@ -26,6 +26,9 @@
 			<email>jcodecproject@gmail.com</email>
 		</developer>
 	</developers>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<testSourceDirectory>src/test/java</testSourceDirectory>
@@ -58,11 +61,10 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
+				<version>3.8.0</version>
 				<configuration>
 					<encoding>UTF-8</encoding>
-					<source>1.6</source>
-					<target>1.6</target>
+					<release>11</release>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -103,8 +105,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.jcodec</groupId>
-			<artifactId>jcodec</artifactId>
-			<version>0.2.4-SNAPSHOT</version>
+			<artifactId>jcodec-java11</artifactId>
+			<version>0.2.3</version>
 		</dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -119,4 +121,17 @@
       <scope>test</scope>
     </dependency>
 	</dependencies>
+	
+		<distributionManagement>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>rpgframeworkde-snapshots</name>
+			<url>http://repository.rpgframework.de:8081/artifactory/libs-snapshot-local</url>
+		</snapshotRepository>
+		<repository>
+			<id>central</id>
+			<name>rpgframeworkde-releases</name>
+			<url>http://repository.rpgframework.de:8081/artifactory/libs-release-local</url>
+		</repository>
+	</distributionManagement>
 </project>
