@@ -13,7 +13,7 @@ import javax.imageio.ImageIO;
 import org.jcodec.common.VideoEncoder;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
-import org.jcodec.scale.AWTUtil;
+import org.jcodec.javase.scale.AWTUtil;
 import org.jcodec.scale.RgbToBgr;
 
 /**

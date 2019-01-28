@@ -7,7 +7,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
-import org.jcodec.scale.AWTUtil;
+import org.jcodec.javase.scale.AWTUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
