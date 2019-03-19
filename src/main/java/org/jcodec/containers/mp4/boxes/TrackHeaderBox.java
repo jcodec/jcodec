@@ -86,7 +86,7 @@ public class TrackHeaderBox extends FullBox {
     private void readMatrix(ByteBuffer input) {
         matrix = new int[9];
         for (int i = 0; i < 9; i++)
-            matrix[i] = input.getInt() / 65536;
+            matrix[i] = input.getInt();
     }
 
     private float readVolume(ByteBuffer input) {
@@ -142,8 +142,10 @@ public class TrackHeaderBox extends FullBox {
     }
 
     private void writeMatrix(ByteBuffer out) {
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < Math.min(9, matrix.length); i++)
             out.putInt(matrix[i]);
+        for (int i = Math.min(9, matrix.length); i < 9; i++)
+            out.putInt(0);
     }
 
     private void writeVolume(ByteBuffer out) {
