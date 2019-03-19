@@ -9,7 +9,7 @@ In MP4 metadata is an infinite set of key,value pairs where both keys and values
 JCodec provides a way to read and modify the key,value pairs inside the MP4 files without actually understanding what they mean. This functionality is implemented in the class [org.jcodec.movtool.MetadataEditor](https://github.com/jcodec/jcodec/blob/master/src/main/java/org/jcodec/movtool/MetadataEditor.java). There's also a command line interface to this functionality in the class [org.jcodec.movtool.MetadataEditorMain](https://github.com/jcodec/jcodec/blob/master/src/main/java/org/jcodec/movtool/MetadataEditorMain.java).
 
 ## MetadataEditor CLI
-[DOWNLOAD](http://jcodec.org/downloads/metaedit_b685657.zip)
+[DOWNLOAD](http://jcodec.org/downloads/metaedit_93c2936.zip)
 
 The most basic syntax is:
 
