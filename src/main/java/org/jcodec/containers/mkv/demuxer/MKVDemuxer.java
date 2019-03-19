@@ -155,7 +155,7 @@ public final class MKVDemuxer implements Demuxer {
                     EbmlMaster group = (EbmlMaster) child;
                     for (EbmlBase grandChild : group.children) {
                         if (grandChild.type == MKVType.Block) {
-                            MkvBlock b = (MkvBlock) child;
+                            MkvBlock b = (MkvBlock) grandChild;
                             b.absoluteTimecode = b.timecode + baseTimecode;
                             putIntoRightBasket(b);
                         }
