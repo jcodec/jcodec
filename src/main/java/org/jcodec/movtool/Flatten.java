@@ -35,7 +35,7 @@ import org.jcodec.platform.Platform;
  * @author The JCodec project
  * 
  */
-public class Flattern {
+public class Flatten {
 
     public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
@@ -48,7 +48,7 @@ public class Flattern {
         try {
             input = readableChannel(new File(args[0]));
             Movie movie = MP4Util.parseFullMovieChannel(input);
-            new Flattern().flattern(movie, outFile);
+            new Flatten().flatten(movie, outFile);
         } finally {
             if (input != null)
                 input.close();
@@ -57,8 +57,8 @@ public class Flattern {
 
     public List<ProgressListener> listeners;
     
-    public Flattern() {
-        this.listeners = new ArrayList<Flattern.ProgressListener>();
+    public Flatten() {
+        this.listeners = new ArrayList<Flatten.ProgressListener>();
     }
 
     public interface ProgressListener {
@@ -69,7 +69,7 @@ public class Flattern {
         this.listeners.add(listener);
     }
 
-    public void flatternChannel(Movie movie, SeekableByteChannel out) throws IOException {
+    public void flattenChannel(Movie movie, SeekableByteChannel out) throws IOException {
         FileTypeBox ftyp = movie.getFtyp();
         MovieBox moov = movie.getMoov();
 
@@ -208,12 +208,12 @@ public class Flattern {
         }
     }
 
-    public void flattern(Movie movie, File video) throws IOException {
+    public void flatten(Movie movie, File video) throws IOException {
         Platform.deleteFile(video);
         SeekableByteChannel out = null;
         try {
             out = writableChannel(video);
-            flatternChannel(movie, out);
+            flattenChannel(movie, out);
         } finally {
             if (out != null)
                 out.close();

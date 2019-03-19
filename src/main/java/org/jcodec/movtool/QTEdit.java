@@ -4,7 +4,7 @@ import java.lang.System;
 
 
 import org.jcodec.containers.mp4.boxes.MovieBox;
-import org.jcodec.movtool.Flattern.ProgressListener;
+import org.jcodec.movtool.Flatten.ProgressListener;
 
 import java.io.File;
 import java.nio.channels.FileChannel;
