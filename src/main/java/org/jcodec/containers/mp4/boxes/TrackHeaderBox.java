@@ -196,8 +196,8 @@ public class TrackHeaderBox extends FullBox {
         this.trackId = no;
     }
 
-    public boolean isOrientation0() { return matrix != null && matrix[0] == 1 && matrix[4] == 1;}
-    public boolean isOrientation90() { return matrix != null && matrix[1] == 1 && matrix[3] == -1;}
-    public boolean isOrientation180() { return matrix != null && matrix[0] == -1 && matrix[4] == -1;}
-    public boolean isOrientation270() { return matrix != null && matrix[1] == -1 && matrix[3] == 1;}
+    public boolean isOrientation0() { return matrix != null && matrix[0] == 65536 && matrix[4] == 65536;}
+    public boolean isOrientation90() { return matrix != null && matrix[1] == 65536 && matrix[3] == -65536;}
+    public boolean isOrientation180() { return matrix != null && matrix[0] == -65536 && matrix[4] == -65536;}
+    public boolean isOrientation270() { return matrix != null && matrix[1] == -65536 && matrix[3] == 65536;}
 }
