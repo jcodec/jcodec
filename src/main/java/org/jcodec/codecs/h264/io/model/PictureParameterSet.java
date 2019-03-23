@@ -178,17 +178,14 @@ public class PictureParameterSet {
         writeUEtrace(writer, numSliceGroupsMinus1, "PPS: num_slice_groups_minus1");
         if (numSliceGroupsMinus1 > 0) {
             writeUEtrace(writer, sliceGroupMapType, "PPS: slice_group_map_type");
-            int[] top_left = new int[1];
-            int[] bottom_right = new int[1];
-            int[] run_length_minus1 = new int[1];
             if (sliceGroupMapType == 0) {
                 for (int iGroup = 0; iGroup <= numSliceGroupsMinus1; iGroup++) {
-                    writeUEtrace(writer, run_length_minus1[iGroup], "PPS: ");
+                    writeUEtrace(writer, runLengthMinus1[iGroup], "PPS: ");
                 }
             } else if (sliceGroupMapType == 2) {
                 for (int iGroup = 0; iGroup < numSliceGroupsMinus1; iGroup++) {
-                    writeUEtrace(writer, top_left[iGroup], "PPS: ");
-                    writeUEtrace(writer, bottom_right[iGroup], "PPS: ");
+                    writeUEtrace(writer, topLeft[iGroup], "PPS: ");
+                    writeUEtrace(writer, bottomRight[iGroup], "PPS: ");
                 }
             } else if (sliceGroupMapType == 3 || sliceGroupMapType == 4 || sliceGroupMapType == 5) {
                 writeBool(writer, sliceGroupChangeDirectionFlag, "PPS: slice_group_change_direction_flag");
