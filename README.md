@@ -208,6 +208,26 @@ DPXMetadata dpx = DPXReader.readFile(firstDpx).parseMetadata();
 System.out.println(dpx.getTimecodeString());
 ```
 
+## Parse Apple GPS metadata from MOV or MP4 file
+```java
+MovieBox moov = MP4Util.parseMovie(new File("gps1.mp4"));
+UdtaBox udta = NodeBox.findFirst(moov, UdtaBox.class, "udta");
+String latlng = udta.latlng();
+assertEquals("-35.2840+149.1215/", latlng);
+```
+
+OR
+
+```java
+MovieBox moov = MP4Util.parseMovie(new File("gps2.MOV"));
+MetaBox meta = NodeBox.findFirst(moov, MetaBox.class, "meta");
+String latlng1 = meta.getKeyedMeta().get("com.apple.quicktime.location.ISO6709").getString();
+assertEquals("-35.2844+149.1214+573.764/", latlng1);
+String latlng2 = meta.getItunesMeta().get(1).getString();
+assertEquals("-35.2844+149.1214+573.764/", latlng2);
+
+```
+
 # Contact
 
 Feel free to communicate any questions or concerns to us. Dev team email: jcodecproject@gmail.com
