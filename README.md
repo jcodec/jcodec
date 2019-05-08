@@ -228,6 +228,17 @@ assertEquals("-35.2844+149.1214+573.764/", latlng2);
 
 ```
 
+## Extract subtitles from MKV file
+```java
+MKVDemuxer demuxer = new MKVDemuxer(new AutoFileChannelWrapper(new File("subs.mkv")));
+DemuxerTrack track = demuxer.getSubtitleTracks().get(0);
+Packet packet;
+while (null != (packet = track.nextFrame())) {
+    String text = takeString(packet.getData());
+    System.out.println("time: " + packet.pts + " text: " + text);
+}
+```
+
 # Contact
 
 Feel free to communicate any questions or concerns to us. Dev team email: jcodecproject@gmail.com

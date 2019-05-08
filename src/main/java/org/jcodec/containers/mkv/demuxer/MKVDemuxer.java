@@ -59,7 +59,8 @@ import org.jcodec.containers.mkv.boxes.MkvBlock;
  */
 public final class MKVDemuxer implements Demuxer {
     private VideoTrack vTrack = null;
-    private List<DemuxerTrack> aTracks;
+    private List<AudioTrack> aTracks;
+    private List<SubtitlesTrack> subsTracks;
     private List<EbmlMaster> t;
     private SeekableByteChannel channel;
     int timescale = 1;
@@ -75,7 +76,8 @@ public final class MKVDemuxer implements Demuxer {
 
     public MKVDemuxer(SeekableByteChannel fileChannelWrapper) throws IOException {
         this.channel = fileChannelWrapper;
-        this.aTracks = new ArrayList<DemuxerTrack>();
+        this.aTracks = new ArrayList<AudioTrack>();
+        this.subsTracks = new ArrayList<SubtitlesTrack>();
         MKVParser parser = new MKVParser(channel);
         this.t = parser.parse();
         demux();
@@ -140,6 +142,9 @@ public final class MKVDemuxer implements Demuxer {
                     audioTrack.samplingFrequency = sf.getDouble();
 
                 aTracks.add(audioTrack);
+            } else if (type == 17) {
+                SubtitlesTrack subsTrack = new SubtitlesTrack((int) id, this);
+                subsTracks.add(subsTrack);
             }
         }
         MKVType[] path2 = { Segment, Cluster };
@@ -174,6 +179,13 @@ public final class MKVDemuxer implements Demuxer {
                 if (b.trackNumber == audio.trackNo) {
                     audio.blocks.add(IndexedBlock.make(audio.framesCount, b));
                     audio.framesCount += b.frameSizes.length;
+                }
+            }
+            for (int i = 0; i < subsTracks.size(); i++) {
+                SubtitlesTrack subs = subsTracks.get(i);
+                if (b.trackNumber == subs.trackNo) {
+                    subs.blocks.add(IndexedBlock.make(subs.framesCount, b));
+                    subs.framesCount += b.frameSizes.length;
                 }
             }
         }
@@ -285,17 +297,34 @@ public final class MKVDemuxer implements Demuxer {
         }
     }
 
-    public static class AudioTrack implements SeekableDemuxerTrack {
-        public double samplingFrequency;
+    public static class SubtitlesTrack extends MkvTrack {
+        SubtitlesTrack(int trackNo, MKVDemuxer demuxer) {
+            super(trackNo, demuxer);
+        }
+    }
+
+    private static class MkvBlockData {
+        final MkvBlock block;
+        final ByteBuffer data;
+        final int count;
+
+        MkvBlockData(MkvBlock block, ByteBuffer data, int count) {
+            this.block = block;
+            this.data = data;
+            this.count = count;
+        }
+    }
+
+    public static class MkvTrack implements SeekableDemuxerTrack {
         public final int trackNo;
         List<IndexedBlock> blocks;
-        private int framesCount = 0;
+        int framesCount = 0;
         private int frameIdx = 0;
         private int blockIdx = 0;
         private int frameInBlockIdx = 0;
         private MKVDemuxer demuxer;
 
-        public AudioTrack(int trackNo, MKVDemuxer demuxer) {
+        public MkvTrack(int trackNo, MKVDemuxer demuxer) {
             this.blocks = new ArrayList<IndexedBlock>();
 
             this.trackNo = trackNo;
@@ -304,7 +333,14 @@ public final class MKVDemuxer implements Demuxer {
 
         @Override
         public Packet nextFrame() throws IOException {
-            if (frameIdx > blocks.size())
+            MkvBlockData bd = nextBlock();
+            if (bd == null) return null;
+            return Packet.createPacket(bd.data, bd.block.absoluteTimecode, demuxer.timescale, 1, frameIdx - 1, FrameType.KEY,
+                    ZERO_TAPE_TIMECODE);
+        }
+
+        protected MkvBlockData nextBlock() throws IOException {
+            if (frameIdx >= blocks.size() || blockIdx >= blocks.size())
                 return null;
 
             MkvBlock b = blocks.get(blockIdx).block;
@@ -330,8 +366,8 @@ public final class MKVDemuxer implements Demuxer {
                 frameInBlockIdx = 0;
             }
 
-            return Packet.createPacket(data, b.absoluteTimecode, (int) Math.round(samplingFrequency), 1, 0, FrameType.KEY,
-                    ZERO_TAPE_TIMECODE);
+            return new MkvBlockData(b, data, 1);
+
         }
 
         @Override
@@ -380,6 +416,16 @@ public final class MKVDemuxer implements Demuxer {
          * @return
          */
         public Packet getFrames(int count) {
+
+            MkvBlockData frameBlock = getFrameBlock(count);
+            if (frameBlock == null) return null;
+
+
+            return Packet.createPacket(frameBlock.data, frameBlock.block.absoluteTimecode, demuxer.timescale,
+                    frameBlock.count, 0, FrameType.KEY, ZERO_TAPE_TIMECODE);
+        }
+
+        MkvBlockData getFrameBlock(int count) {
             if (count + frameIdx >= framesCount)
                 return null;
             List<ByteBuffer> packetFrames = new ArrayList<ByteBuffer>();
@@ -420,8 +466,49 @@ public final class MKVDemuxer implements Demuxer {
             for (ByteBuffer aFrame : packetFrames)
                 data.put(aFrame);
 
-            return Packet.createPacket(data, firstBlockInAPacket.absoluteTimecode, (int) Math.round(samplingFrequency),
-                    packetFrames.size(), 0, FrameType.KEY, ZERO_TAPE_TIMECODE);
+            return new MkvBlockData(firstBlockInAPacket, data, packetFrames.size());
+
+        }
+
+        @Override
+        public DemuxerTrackMeta getMeta() {
+            return null;
+        }
+
+        @Override
+        public boolean gotoSyncFrame(long frame) {
+            return gotoFrame(frame);
+        }
+    }
+
+    public static class AudioTrack extends MkvTrack {
+        public double samplingFrequency;
+
+        public AudioTrack(int trackNo, MKVDemuxer demuxer) {
+            super(trackNo, demuxer);
+        }
+
+        @Override
+        public Packet nextFrame() throws IOException {
+            MkvBlockData b = nextBlock();
+            if (b == null) return null;
+
+            return Packet.createPacket(b.data, b.block.absoluteTimecode, (int) Math.round(samplingFrequency), 1, 0, FrameType.KEY,
+                    ZERO_TAPE_TIMECODE);
+        }
+
+        /**
+         * Get multiple frames
+         *
+         * @param count
+         * @return
+         */
+        public Packet getFrames(int count) {
+            MkvBlockData frameBlock = getFrameBlock(count);
+            if (frameBlock == null) return null;
+
+            return Packet.createPacket(frameBlock.data, frameBlock.block.absoluteTimecode, (int) Math.round(samplingFrequency),
+                    frameBlock.count, 0, FrameType.KEY, ZERO_TAPE_TIMECODE);
         }
 
         @Override
@@ -445,13 +532,14 @@ public final class MKVDemuxer implements Demuxer {
 
     @Override
     public List<DemuxerTrack> getAudioTracks() {
-        return aTracks;
+        return (List<DemuxerTrack>) (List) aTracks;
     }
 
     @Override
     public List<DemuxerTrack> getTracks() {
         ArrayList<DemuxerTrack> tracks = new ArrayList<DemuxerTrack>(aTracks);
         tracks.add(vTrack);
+        tracks.addAll(subsTracks);
         return tracks;
     }
 
@@ -460,6 +548,10 @@ public final class MKVDemuxer implements Demuxer {
         ArrayList<DemuxerTrack> tracks = new ArrayList<DemuxerTrack>();
         tracks.add(vTrack);
         return tracks;
+    }
+
+    public List<DemuxerTrack> getSubtitleTracks() {
+        return (List<DemuxerTrack>) (List) subsTracks;
     }
 
     public List<? extends EbmlBase> getTree() {
