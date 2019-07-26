@@ -239,7 +239,7 @@ public class H264Encoder extends VideoEncoder {
         }
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
         mbEncoderI16x16 = new MBEncoderI16x16(cavlc, leftRow, topLine);
-        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc, new MotionEstimator(motionSearchRange));
+        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc);
 
         dup.putInt(0x1);
         new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 3).write(dup);
@@ -256,6 +256,7 @@ public class H264Encoder extends VideoEncoder {
         ByteBuffer buf = ByteBuffer.allocate(pic.getWidth() * pic.getHeight());
         BitWriter sliceData = new BitWriter(buf);
         SliceHeaderWriter.write(sh, idr, 2, sliceData);
+        MotionEstimator estimator = new MotionEstimator(ref, sps, motionSearchRange);
 
         for (int mbY = 0, mbAddr = 0; mbY < sps.picHeightInMapUnitsMinus1 + 1; mbY++) {
             for (int mbX = 0; mbX < sps.picWidthInMbsMinus1 + 1; mbX++, mbAddr++) {
@@ -283,13 +284,17 @@ public class H264Encoder extends VideoEncoder {
                     CAVLCWriter.writeUE(sliceData, mbType.code());
                 }
 
+                int[] mv = null;
+                if (ref != null)
+                    mv = estimator.mvEstimate(pic, mbX, mbY);
+                
                 BitWriter candidate;
                 int totalQpDelta = 0;
                 int qpDelta = rc.initialQpDelta();
                 do {
                     candidate = sliceData.fork();
                     totalQpDelta += qpDelta;
-                    encodeMacroblock(mbType, pic, mbX, mbY, candidate, qp, totalQpDelta);
+                    encodeMacroblock(mbType, pic, mbX, mbY, candidate, qp, totalQpDelta, mv);
                     qpDelta = rc.accept(candidate.position() - sliceData.position());
                     if (qpDelta != 0)
                         restoreMacroblock(mbType);
@@ -309,7 +314,7 @@ public class H264Encoder extends VideoEncoder {
         escapeNAL(buf, dup);
     }
 
-    private void encodeMacroblock(MBType mbType, Picture pic, int mbX, int mbY, BitWriter candidate, int qp, int qpDelta) {
+    private void encodeMacroblock(MBType mbType, Picture pic, int mbX, int mbY, BitWriter candidate, int qp, int qpDelta, int[] mv) {
         if (mbType == MBType.I_16x16) {
             mbEncoderI16x16.save();
             mbEncoderI16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, mbX > 0 ? topEncoded[mbX - 1] : null,
@@ -317,7 +322,7 @@ public class H264Encoder extends VideoEncoder {
         } else if (mbType == MBType.P_16x16) {
             mbEncoderP16x16.save();
             mbEncoderP16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, mbX > 0 ? topEncoded[mbX - 1] : null,
-                    mbY > 0 ? topEncoded[mbX] : null, qp + qpDelta, qpDelta);
+                    mbY > 0 ? topEncoded[mbX] : null, qp + qpDelta, qpDelta, mv);
         } else
             throw new RuntimeException("Macroblock of type " + mbType + " is not supported.");
     }

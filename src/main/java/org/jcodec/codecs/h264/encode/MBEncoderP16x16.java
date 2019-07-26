@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_LEFT;
 import static org.jcodec.codecs.h264.H264Const.MB_BLK_OFF_TOP;
+import static org.jcodec.codecs.h264.encode.H264EncoderUtils.median;
 import static org.jcodec.codecs.h264.io.model.MBType.P_16x16;
 
 import org.jcodec.codecs.h264.H264Const;
@@ -32,7 +33,6 @@ public class MBEncoderP16x16 implements SaveRestore {
     private CAVLC[] cavlc;
     private SeqParameterSet sps;
     private Picture ref;
-    private MotionEstimator me;
     private int[] mvTopX;
     private int[] mvTopY;
     private int mvLeftX;
@@ -49,11 +49,10 @@ public class MBEncoderP16x16 implements SaveRestore {
 
     private BlockInterpolator interpolator;
 
-    public MBEncoderP16x16(SeqParameterSet sps, Picture ref, CAVLC[] cavlc, MotionEstimator me) {
+    public MBEncoderP16x16(SeqParameterSet sps, Picture ref, CAVLC[] cavlc) {
         this.sps = sps;
         this.cavlc = cavlc;
         this.ref = ref;
-        this.me = me;
         mvTopX     = new int[sps.picWidthInMbsMinus1 + 1];
         mvTopY     = new int[sps.picWidthInMbsMinus1 + 1];
         
@@ -94,7 +93,7 @@ public class MBEncoderP16x16 implements SaveRestore {
     }
 
     public void encodeMacroblock(Picture pic, int mbX, int mbY, BitWriter out, EncodedMB outMB, EncodedMB leftOutMB,
-            EncodedMB topOutMB, int qp, int qpDelta) {
+            EncodedMB topOutMB, int qp, int qpDelta, int[] mv) {
         if (sps.numRefFrames > 1) {
             int refIdx = decideRef();
             CAVLCWriter.writeTE(out, refIdx, sps.numRefFrames - 1);
@@ -108,7 +107,6 @@ public class MBEncoderP16x16 implements SaveRestore {
                 trAvb, tlAvb);
 
         // Motion estimation for the current macroblock
-        int[] mv = mvEstimate(pic, mbX, mbY, mvpx, mvpy);
         mvTopLeftX = mvTopX[mbX];
         mvTopLeftY = mvTopY[mbX];
         mvTopX[mbX] = mv[0];
@@ -155,34 +153,8 @@ public class MBEncoderP16x16 implements SaveRestore {
         new MBDeblocker().deblockMBP(outMB, leftOutMB, topOutMB);
     }
 
-    public int median(int a, int b, int c, int d, boolean aAvb, boolean bAvb, boolean cAvb, boolean dAvb) {
-
-        if (!cAvb) {
-            c = d;
-            cAvb = dAvb;
-        }
-
-        if (aAvb && !bAvb && !cAvb) {
-            b = c = a;
-            bAvb = cAvb = aAvb;
-        }
-
-        a = aAvb ? a : 0;
-        b = bAvb ? b : 0;
-        c = cAvb ? c : 0;
-
-        return a + b + c - min(min(a, b), c) - max(max(a, b), c);
-    }
-
     private int getCodedBlockPattern() {
         return 47;
-    }
-
-    private int[] mvEstimate(Picture pic, int mbX, int mbY, int mvpx, int mvpy) {
-        byte[] patch = new byte[256];
-        MBEncoderHelper.take(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4, mbY << 4,
-                patch, 16, 16);
-        return me.estimate(ref, patch, mbX, mbY, mvpx, mvpy);
     }
 
     /**

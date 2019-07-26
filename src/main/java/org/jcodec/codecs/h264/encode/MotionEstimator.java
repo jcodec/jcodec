@@ -1,7 +1,9 @@
 package org.jcodec.codecs.h264.encode;
 
 import static java.lang.Math.min;
+import static org.jcodec.codecs.h264.encode.H264EncoderUtils.median;
 
+import org.jcodec.codecs.h264.io.model.SeqParameterSet;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.tools.MathUtil;
 
@@ -15,12 +17,46 @@ import org.jcodec.common.tools.MathUtil;
  */
 public class MotionEstimator {
     private int maxSearchRange;
+    private int[] mvTopX;
+    private int[] mvTopY;
+    private int mvLeftX;
+    private int mvLeftY;
+    private int mvTopLeftX;
+    private int mvTopLeftY;
+    private SeqParameterSet sps;
+    private Picture ref;
 
-    public MotionEstimator(int maxSearchRange) {
+    public MotionEstimator(Picture ref, SeqParameterSet sps, int maxSearchRange) {
+        this.sps = sps;
+        this.ref = ref;
+        mvTopX     = new int[sps.picWidthInMbsMinus1 + 1];
+        mvTopY     = new int[sps.picWidthInMbsMinus1 + 1];
         this.maxSearchRange = maxSearchRange;
     }
+    
+    public int[] mvEstimate(Picture pic, int mbX, int mbY) {
+        byte[] patch = new byte[256];
+        boolean trAvb = mbY > 0 && mbX < sps.picWidthInMbsMinus1;
+        boolean tlAvb = mbX > 0 && mbY > 0;
+        int mvpx = median(mvLeftX, mvTopX[mbX], trAvb ? mvTopX[mbX + 1] : 0, tlAvb ? mvTopLeftX : 0, mbX > 0, mbY > 0,
+                trAvb, tlAvb);
+        int mvpy = median(mvLeftY, mvTopY[mbX], trAvb ? mvTopY[mbX + 1] : 0, tlAvb ? mvTopLeftY : 0, mbX > 0, mbY > 0,
+                trAvb, tlAvb);
+        MBEncoderHelper.take(pic.getPlaneData(0), pic.getPlaneWidth(0), pic.getPlaneHeight(0), mbX << 4, mbY << 4,
+                patch, 16, 16);
+        return estimateFullPix(ref, patch, mbX, mbY, mvpx, mvpy);
+    }
+    
+    public void mvSave(int mbX, int mbY, int[] mv) {
+        mvTopLeftX = mvTopX[mbX];
+        mvTopLeftY = mvTopY[mbX];
+        mvTopX[mbX] = mv[0];
+        mvTopY[mbX] = mv[1];
+        mvLeftX = mv[0];
+        mvLeftY = mv[1];
+    }
 
-    public int[] estimate(Picture ref, byte[] patch, int mbX, int mbY, int mvpx, int mvpy) {
+    private int[] estimateFullPix(Picture ref, byte[] patch, int mbX, int mbY, int mvpx, int mvpy) {
         byte[] searchPatch = new byte[(maxSearchRange * 2 + 16) * (maxSearchRange * 2 + 16)];
 
         int startX = (mbX << 4) /* + (mvpx >> 2)*/;
