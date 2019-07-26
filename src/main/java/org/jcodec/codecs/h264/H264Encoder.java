@@ -5,8 +5,8 @@ import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
 import org.jcodec.codecs.h264.encode.DumbRateControl;
 import org.jcodec.codecs.h264.encode.EncodedMB;
 import org.jcodec.codecs.h264.encode.MBEncoderHelper;
-import org.jcodec.codecs.h264.encode.MBEncoderI16x16;
-import org.jcodec.codecs.h264.encode.MBEncoderP16x16;
+import org.jcodec.codecs.h264.encode.MBWriterI16x16;
+import org.jcodec.codecs.h264.encode.MBWriterP16x16;
 import org.jcodec.codecs.h264.encode.MotionEstimator;
 import org.jcodec.codecs.h264.encode.RateControl;
 import org.jcodec.codecs.h264.io.CAVLC;
@@ -67,9 +67,9 @@ public class H264Encoder extends VideoEncoder {
 
     private PictureParameterSet pps;
 
-    private MBEncoderI16x16 mbEncoderI16x16;
+    private MBWriterI16x16 mbEncoderI16x16;
 
-    private MBEncoderP16x16 mbEncoderP16x16;
+    private MBWriterP16x16 mbEncoderP16x16;
 
     private Picture ref;
     private Picture picOut;
@@ -238,8 +238,8 @@ public class H264Encoder extends VideoEncoder {
             Logger.warn("Illegal value of idr = true when sliceType != I");
         }
         cavlc = new CAVLC[] { new CAVLC(sps, pps, 2, 2), new CAVLC(sps, pps, 1, 1), new CAVLC(sps, pps, 1, 1) };
-        mbEncoderI16x16 = new MBEncoderI16x16(cavlc, leftRow, topLine);
-        mbEncoderP16x16 = new MBEncoderP16x16(sps, ref, cavlc);
+        mbEncoderI16x16 = new MBWriterI16x16(cavlc, leftRow, topLine);
+        mbEncoderP16x16 = new MBWriterP16x16(sps, ref, cavlc);
 
         dup.putInt(0x1);
         new NALUnit(idr ? NALUnitType.IDR_SLICE : NALUnitType.NON_IDR_SLICE, 3).write(dup);

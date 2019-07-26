@@ -26,13 +26,13 @@ import org.jcodec.common.model.Picture;
  * 
  * @author Stanislav Vitvitskyy
  */
-public class MBEncoderI16x16 implements SaveRestore {
+public class MBWriterI16x16 implements SaveRestore {
 
     private CAVLC[] cavlc;
     private byte[][] leftRow;
     private byte[][] topLine;
 
-    public MBEncoderI16x16(CAVLC[] cavlc, byte[][] leftRow, byte[][] topLine) {
+    public MBWriterI16x16(CAVLC[] cavlc, byte[][] leftRow, byte[][] topLine) {
         this.cavlc = cavlc;
         this.leftRow = leftRow;
         this.topLine = topLine;
@@ -77,13 +77,13 @@ public class MBEncoderI16x16 implements SaveRestore {
         predictChroma(pic, ac1, pred1, 1,  x, y);
         predictChroma(pic, ac2, pred2, 2,  x, y);
 
-        chromaResidual(pic, mbX, mbY, out, qp, ac1, ac2, cavlc[1], cavlc[2], I_16x16, I_16x16);
+        chromaResidual(mbX, mbY, out, qp, ac1, ac2, cavlc[1], cavlc[2], I_16x16, I_16x16);
 
         putChroma(outMB.getData()[1], 1, x, y, ac1, pred1);
         putChroma(outMB.getData()[2], 2, x, y, ac2, pred2);
     }
 
-    public static void chromaResidual(Picture pic, int mbX, int mbY, BitWriter out, int qp, int[][] ac1,
+    public static void chromaResidual(int mbX, int mbY, BitWriter out, int qp, int[][] ac1,
             int[][] ac2, CAVLC cavlc1, CAVLC cavlc2, MBType leftMBType, MBType topMBType) {
 
         transformChroma(ac1);

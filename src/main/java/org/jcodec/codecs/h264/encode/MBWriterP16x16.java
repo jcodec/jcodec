@@ -28,7 +28,7 @@ import java.util.Arrays;
  * 
  * @author Stanislav Vitvitskyy
  */
-public class MBEncoderP16x16 implements SaveRestore {
+public class MBWriterP16x16 implements SaveRestore {
 
     private CAVLC[] cavlc;
     private SeqParameterSet sps;
@@ -49,7 +49,7 @@ public class MBEncoderP16x16 implements SaveRestore {
 
     private BlockInterpolator interpolator;
 
-    public MBEncoderP16x16(SeqParameterSet sps, Picture ref, CAVLC[] cavlc) {
+    public MBWriterP16x16(SeqParameterSet sps, Picture ref, CAVLC[] cavlc) {
         this.sps = sps;
         this.cavlc = cavlc;
         this.ref = ref;
@@ -196,7 +196,7 @@ public class MBEncoderP16x16 implements SaveRestore {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
                 ac2[i][j] = pix2[H264Const.PIX_MAP_SPLIT_2x2[i][j]];
         }
-        MBEncoderI16x16.chromaResidual(pic, mbX, mbY, out, qp, ac1, ac2, cavlc[1], cavlc[2], P_16x16, P_16x16);
+        MBWriterI16x16.chromaResidual(mbX, mbY, out, qp, ac1, ac2, cavlc[1], cavlc[2], P_16x16, P_16x16);
 
         for (int i = 0; i < ac1.length; i++) {
             for (int j = 0; j < H264Const.PIX_MAP_SPLIT_2x2[i].length; j++)
