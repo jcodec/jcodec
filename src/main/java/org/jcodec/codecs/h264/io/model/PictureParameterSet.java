@@ -99,9 +99,13 @@ public class PictureParameterSet {
     public PictureParameterSet() {
         this.numRefIdxActiveMinus1 = new int[2];
     }
-    
+
     public static PictureParameterSet read(ByteBuffer is) {
         BitReader _in = BitReader.createBitReader(is);
+        return read(_in);
+    }
+
+    public static PictureParameterSet read(BitReader _in) {
         PictureParameterSet pps = new PictureParameterSet();
 
         pps.picParameterSetId = readUEtrace(_in, "PPS: pic_parameter_set_id");

@@ -10,8 +10,13 @@ import java.nio.ByteBuffer;
  * 
  */
 public class BitReader {
+
     public static BitReader createBitReader(ByteBuffer bb) {
-        BitReader r = new BitReader(bb);
+        return createBitReader(bb, false);
+    }
+
+    public static BitReader createBitReader(ByteBuffer bb, boolean throwOnEof) {
+        BitReader r = new BitReader(bb, throwOnEof);
         r.curInt = r.readInt();
         r.deficit = 0;
         return r;
@@ -21,14 +26,20 @@ public class BitReader {
     private int curInt = -1;
     private ByteBuffer bb;
     private int initPos;
+    private final boolean throwOnEof;
 
     private BitReader(ByteBuffer bb) {
+        this(bb, false);
+    }
+
+    private BitReader(ByteBuffer bb, boolean throwOnEof) {
         this.bb = bb;
         this.initPos = bb.position();
+        this.throwOnEof = throwOnEof;
     }
 
     public BitReader fork() {
-        BitReader fork = new BitReader(this.bb.duplicate());
+        BitReader fork = new BitReader(this.bb.duplicate(), this.throwOnEof);
         fork.initPos = 0;
         fork.curInt = this.curInt;
         fork.deficit = this.deficit;
@@ -44,6 +55,9 @@ public class BitReader {
     }
 
     private int readIntSafe() {
+        if (throwOnEof && bb.remaining() == 0) {
+            throw new IllegalStateException("Input exhausted");
+        }
         deficit -= (bb.remaining() << 3);
         int res = 0;
         if (bb.hasRemaining())
