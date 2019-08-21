@@ -75,7 +75,7 @@ public class EsdsBox extends FullBox {
         maxBitrate = decoderConfig.getMaxBitrate();
         avgBitrate = decoderConfig.getAvgBitrate();
         DecoderSpecific decoderSpecific = NodeDescriptor.findByTag(decoderConfig, DecoderSpecific.tag());
-        streamInfo = decoderSpecific.getData();
+        streamInfo = decoderSpecific == null ? null : decoderSpecific.getData();
     }
 
     public ByteBuffer getStreamInfo() {
