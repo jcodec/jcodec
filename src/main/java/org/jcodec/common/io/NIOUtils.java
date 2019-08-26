@@ -110,6 +110,17 @@ public class NIOUtils {
         return result;
     }
 
+    public static ByteBuffer fetchFromFileOL(File file, int off, int length) throws IOException {
+        FileChannel is = null;
+        try {
+            is = new FileInputStream(file).getChannel();
+            is.position(off);
+            return fetchFromChannel(is, length);
+        } finally {
+            closeQuietly(is);
+        }
+    }
+    
     public static ByteBuffer fetchFromFileL(File file, int length) throws IOException {
         FileChannel is = null;
         try {

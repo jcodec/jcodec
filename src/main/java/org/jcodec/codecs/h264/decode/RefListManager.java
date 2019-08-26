@@ -145,19 +145,17 @@ public class RefListManager {
         int maxFrames = 1 << (sh.sps.log2MaxFrameNumMinus4 + 4);
 
         for (int ind = 0; ind < sh.refPicReordering[list][0].length; ind++) {
-            switch (sh.refPicReordering[list][0][ind]) {
-            case 0:
-                predict = wrap(predict - sh.refPicReordering[list][1][ind] - 1, maxFrames);
-                break;
-            case 1:
-                predict = wrap(predict + sh.refPicReordering[list][1][ind] + 1, maxFrames);
-                break;
-            case 2:
-                throw new RuntimeException("long term");
-            }
+            int refType = sh.refPicReordering[list][0][ind];
+            int refIdx = sh.refPicReordering[list][1][ind];
+
             for (int i = numRef[list] - 1; i > ind; i--)
                 result[i] = result[i - 1];
-            result[ind] = sRefs[predict];
+            if (refType == 2) {
+                result[ind] = lRefs.get(refIdx);
+            } else {
+                predict = refType == 0 ? wrap(predict - refIdx - 1, maxFrames) : wrap(predict + refIdx + 1, maxFrames);
+                result[ind] = sRefs[predict];
+            }
             for (int i = ind + 1, j = i; i < numRef[list] && result[i] != null; i++) {
                 if (result[i] != sRefs[predict])
                     result[j++] = result[i];
