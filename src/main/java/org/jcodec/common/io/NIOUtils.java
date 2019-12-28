@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -269,6 +270,20 @@ public class NIOUtils {
         if (buffer.hasRemaining())
             fork.limit(buffer.position() - 1);
         return Platform.stringFromCharset(toArray(fork), charset);
+    }
+    
+    public static void writeNullTermString(ByteBuffer buffer, String str) {
+        writeNullTermStringCharset(buffer, str, Platform.UTF_8);
+    }
+
+    public static void writeNullTermStringCharset(ByteBuffer buffer, String str, String charset) {
+        try {
+            byte[] bytes = str.getBytes(charset);
+            buffer.put(bytes);
+            buffer.put((byte)0);
+        } catch (UnsupportedEncodingException e) {
+           throw new RuntimeException(e);
+        }
     }
 
     public static ByteBuffer readBuf(ByteBuffer buffer) {

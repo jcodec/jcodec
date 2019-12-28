@@ -145,7 +145,7 @@ public class Strip {
         ArrayList<TimeToSampleEntry> tts = new ArrayList<TimeToSampleEntry>();
         int curTts = -1, cnt = 0;
         for (Chunk chunk : chunks) {
-            if (chunk.getSampleDur() > 0) {
+            if (chunk.getSampleDur() != Chunk.UNEQUAL_DUR) {
                 if (curTts == -1 || curTts != chunk.getSampleDur()) {
                     if (curTts != -1)
                         tts.add(new TimeToSampleEntry(cnt, curTts));

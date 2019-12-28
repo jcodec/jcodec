@@ -61,7 +61,7 @@ public class ChunkReader {
         int sampleCount = sampleToChunk[s2cIndex].getCount();
 
         int[] samplesDur = null;
-        int sampleDur = 0;
+        int sampleDur = Chunk.UNEQUAL_DUR;
         if (ttsSubInd + sampleCount <= tts[ttsInd].getSampleCount()) {
             sampleDur = tts[ttsInd].getSampleDuration();
             ttsSubInd += sampleCount;
@@ -77,7 +77,7 @@ public class ChunkReader {
             }
         }
 
-        int size = 0;
+        int size = Chunk.UNEQUAL_SIZES;
         int[] sizes = null;
         if (stsz.getDefaultSize() > 0) {
             size = getFrameSize();

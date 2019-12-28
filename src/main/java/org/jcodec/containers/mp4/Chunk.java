@@ -8,6 +8,8 @@ package org.jcodec.containers.mp4;
  *
  */
 public class Chunk {
+    public static final int UNEQUAL_DUR = -1;
+    public static final int UNEQUAL_SIZES = -1;
     private long offset;
     private long startTv;
     private int sampleCount;
@@ -62,7 +64,7 @@ public class Chunk {
     }
 
     public int getDuration() {
-        if (sampleDur > 0)
+        if (sampleDur != UNEQUAL_DUR)
             return sampleDur * sampleCount;
         int sum = 0;
         for (int j = 0; j < sampleDurs.length; j++) {
@@ -73,7 +75,7 @@ public class Chunk {
     }
 
     public long getSize() {
-        if (sampleSize > 0)
+        if (sampleSize != UNEQUAL_SIZES)
             return sampleSize * sampleCount;
         long sum = 0;
         for (int j = 0; j < sampleSizes.length; j++) {

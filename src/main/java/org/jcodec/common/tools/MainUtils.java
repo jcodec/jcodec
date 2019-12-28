@@ -56,6 +56,10 @@ public class MainUtils {
         public static Flag flag(String longName, String shortName, String description) {
             return new Flag(longName, shortName, description, FlagType.ANY);
         }
+        
+        public static Flag flagVoid(String longName, String shortName, String description) {
+            return new Flag(longName, shortName, description, FlagType.VOID);
+        }
 
         public String getLongName() {
             return longName;
@@ -125,7 +129,7 @@ public class MainUtils {
                     : (shortFlags.containsKey(flag.getShortName()) ? shortFlags.get(flag.getShortName())
                             : defaultValue);
         }
-
+        
         private int[] getMultiIntegerFlagInternal(Map<String, String> longFlags, Map<String, String> shortFlags,
                 Flag flag, int[] defaultValue) {
             String flagValue;
@@ -159,6 +163,10 @@ public class MainUtils {
                     return val;
             }
             return null;
+        }
+        
+        public boolean hasVoidFlag(Flag flag) {
+            return longFlags.containsKey(flag.getLongName()) || shortFlags.containsKey(flag.getShortName());
         }
 
         public Long getLongFlagD(Flag flagName, Long defaultValue) {
@@ -272,7 +280,7 @@ public class MainUtils {
         public <T extends Enum<T>> T getEnumFlagI(int arg, Flag flagName, Class<T> class1) {
             return getEnumFlagInternal(longArgFlags[arg], shortArgFlags[arg], flagName, null, class1);
         }
-
+        
         public String getArg(int i) {
             return i < args.length ? args[i] : null;
         }
@@ -389,7 +397,7 @@ public class MainUtils {
             sample.append(" [");
             detail.append("\t");
             if (flag.getLongName() != null) {
-                sample.append(bold(color("--" + flag.getLongName() + "=<value>", ANSIColor.MAGENTA)));
+                sample.append(bold(color("--" + flag.getLongName() + (flag.type != FlagType.VOID ? "=<value>" : ""), ANSIColor.MAGENTA)));
                 detail.append(bold(color("--" + flag.getLongName(), ANSIColor.MAGENTA)));
             }
             if (flag.getShortName() != null) {
@@ -397,7 +405,7 @@ public class MainUtils {
                     sample.append(" (");
                     detail.append(" (");
                 }
-                sample.append(bold(color("-" + flag.getShortName() + " <value>", ANSIColor.MAGENTA)));
+                sample.append(bold(color("-" + flag.getShortName() + (flag.type != FlagType.VOID ? " <value>" : ""), ANSIColor.MAGENTA)));
                 detail.append(bold(color("-" + flag.getShortName(), ANSIColor.MAGENTA)));
                 if (flag.getLongName() != null) {
                     sample.append(")");

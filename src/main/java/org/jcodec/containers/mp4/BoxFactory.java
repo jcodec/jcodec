@@ -4,6 +4,7 @@ import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.DataRefBox;
 import org.jcodec.containers.mp4.boxes.Header;
+import org.jcodec.containers.mp4.boxes.MetaDataSampleEntry;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
 import org.jcodec.containers.mp4.boxes.TimecodeSampleEntry;
@@ -29,6 +30,7 @@ public class BoxFactory implements IBoxFactory {
     private static IBoxFactory timecode = new BoxFactory(new TimecodeBoxes());
     private static IBoxFactory video = new BoxFactory(new VideoBoxes());
     private static IBoxFactory waveext = new BoxFactory(new WaveExtBoxes());
+    private static IBoxFactory metadata = new BoxFactory(new MetaDataBoxes());
 
     private Boxes boxes;
 
@@ -56,6 +58,8 @@ public class BoxFactory implements IBoxFactory {
                 nodebox.setFactory(audio);
             } else if (nodebox instanceof TimecodeSampleEntry) {
                 nodebox.setFactory(timecode);
+            } else if (nodebox instanceof MetaDataSampleEntry) {
+                nodebox.setFactory(metadata);
             } else if (nodebox instanceof DataRefBox) {
                 nodebox.setFactory(data);
             } else if (nodebox instanceof WaveExtension) {

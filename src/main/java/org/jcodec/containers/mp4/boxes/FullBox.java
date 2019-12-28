@@ -1,7 +1,5 @@
 package org.jcodec.containers.mp4.boxes;
 
-import static org.jcodec.common.JCodecUtil2.asciiString;
-
 import java.nio.ByteBuffer;
 
 /**
