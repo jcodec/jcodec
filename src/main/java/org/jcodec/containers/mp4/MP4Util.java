@@ -1,4 +1,5 @@
 package org.jcodec.containers.mp4;
+
 import static org.jcodec.common.io.IOUtils.closeQuietly;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 
 import org.jcodec.common.AutoFileChannelWrapper;
 import org.jcodec.common.Codec;
+import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
@@ -41,11 +43,11 @@ public class MP4Util {
         codecMapping.put(Codec.H264, "avc1");
         codecMapping.put(Codec.J2K, "mjp2");
     }
-    
+
     public static class Movie {
         private FileTypeBox ftyp;
         private MovieBox moov;
-        
+
         public Movie(FileTypeBox ftyp, MovieBox moov) {
             this.ftyp = ftyp;
             this.moov = moov;
@@ -59,7 +61,7 @@ public class MP4Util {
             return moov;
         }
     }
-    
+
     public static MovieBox createRefMovie(SeekableByteChannel input, String url) throws IOException {
         MovieBox movie = parseMovieChannel(input);
 
@@ -180,7 +182,13 @@ public class MP4Util {
 
         public Box parseBox(SeekableByteChannel input) throws IOException {
             input.setPosition(offset + header.headerSize());
-            return BoxUtil.parseBox(NIOUtils.fetchFromChannel(input, (int) header.getBodySize()), header, BoxFactory.getDefault());
+            return BoxUtil.parseBox(NIOUtils.fetchFromChannel(input, (int) header.getBodySize()), header,
+                    BoxFactory.getDefault());
+        }
+
+        public void copyContents(SeekableByteChannel input, WritableByteChannel out) throws IOException {
+            input.setPosition(offset + header.headerSize());
+            NIOUtils.copy(input, out, header.getBodySize());
         }
 
         public void copy(SeekableByteChannel input, WritableByteChannel out) throws IOException {
@@ -188,7 +196,7 @@ public class MP4Util {
             NIOUtils.copy(input, out, header.getSize());
         }
     }
-    
+
     public static MovieBox parseMovie(File source) throws IOException {
         SeekableByteChannel input = null;
         try {
@@ -225,7 +233,8 @@ public class MP4Util {
         doWriteMovieToChannel(out, movie, 0);
     }
 
-    public static void doWriteMovieToChannel(SeekableByteChannel out, MovieBox movie, int additionalSize) throws IOException {
+    public static void doWriteMovieToChannel(SeekableByteChannel out, MovieBox movie, int additionalSize)
+            throws IOException {
         int sizeHint = estimateMoovBoxSize(movie) + additionalSize;
         Logger.debug("Using " + sizeHint + " bytes for MOOV box");
 
@@ -270,8 +279,9 @@ public class MP4Util {
     public static void writeFullMovie(SeekableByteChannel out, Movie movie) throws IOException {
         doWriteFullMovieToChannel(out, movie, 0);
     }
-    
-    public static void doWriteFullMovieToChannel(SeekableByteChannel out, Movie movie, int additionalSize) throws IOException {
+
+    public static void doWriteFullMovieToChannel(SeekableByteChannel out, Movie movie, int additionalSize)
+            throws IOException {
         int sizeHint = estimateMoovBoxSize(movie.getMoov()) + additionalSize;
         Logger.debug("Using " + sizeHint + " bytes for MOOV box");
 
@@ -283,8 +293,8 @@ public class MP4Util {
     }
 
     /**
-     * Estimate buffer size needed to write MOOV box based on the amount of
-     * stuff in there
+     * Estimate buffer size needed to write MOOV box based on the amount of stuff in
+     * there
      * 
      * @param movie
      * @return
@@ -303,5 +313,21 @@ public class MP4Util {
         buf.flip();
 
         return buf;
+    }
+
+    public static void writeMdat(FileChannelWrapper out, long mdatPos, long mdatSize) throws IOException {
+        out.setPosition(mdatPos);
+        Header mdat = Header.createHeader("mdat", mdatSize + 16);
+        if (mdat.headerSize() != 16) {
+            mdat = Header.createHeader("mdat", mdatSize + 8);
+            Header.createHeader("free", 8).writeChannel(out);
+        }
+        mdat.writeChannel(out);
+    }
+
+    public static long mdatPlaceholder(FileChannelWrapper out) throws IOException {
+        long mdatPos = out.position();
+        out.write(ByteBuffer.wrap(new byte[16]));
+        return mdatPos;
     }
 }
