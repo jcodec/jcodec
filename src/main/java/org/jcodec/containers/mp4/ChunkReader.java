@@ -1,9 +1,14 @@
 package org.jcodec.containers.mp4;
+import java.io.IOException;
+
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsetsBox;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
+import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
@@ -31,8 +36,10 @@ public class ChunkReader {
     private SampleSizesBox stsz;
     private TimeToSampleEntry[] tts;
     private SampleDescriptionBox stsd;
+	private SeekableByteChannel[] inputs;
+	private SampleEntry[] entries;
 
-    public ChunkReader(TrakBox trakBox) {
+    public ChunkReader(TrakBox trakBox, SeekableByteChannel[] inputs) {
         TimeToSampleBox stts = trakBox.getStts();
         tts = stts.getEntries();
         ChunkOffsetsBox stco = trakBox.getStco();
@@ -46,13 +53,15 @@ public class ChunkReader {
             chunkOffsets = co64.getChunkOffsets();
         sampleToChunk = stsc.getSampleToChunk();
         stsd = trakBox.getStsd();
+        entries = trakBox.getSampleEntries();
+        this.inputs = inputs;
     }
 
     public boolean hasNext() {
         return curChunk < chunkOffsets.length;
     }
 
-    public Chunk next() {
+    public Chunk next() throws IOException {
         if (curChunk >= chunkOffsets.length)
             return null;
 
@@ -91,7 +100,18 @@ public class ChunkReader {
         chunkTv += chunk.getDuration();
         sampleNo += sampleCount;
         ++curChunk;
+        
+        if (inputs != null) {
+        	SeekableByteChannel input = getInput(chunk);
+        	input.setPosition(chunk.getOffset());
+        	chunk.setData(NIOUtils.fetchFromChannel(input, (int) chunk.getSize()));
+        }
         return chunk;
+    }
+    
+    private SeekableByteChannel getInput(Chunk chunk) {
+        SampleEntry se = entries[chunk.getEntry() - 1];
+        return inputs[se.getDrefInd() - 1];
     }
 
     private int getFrameSize() {

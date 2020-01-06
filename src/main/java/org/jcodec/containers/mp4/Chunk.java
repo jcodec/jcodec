@@ -1,5 +1,7 @@
 package org.jcodec.containers.mp4;
 
+import java.nio.ByteBuffer;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -18,6 +20,7 @@ public class Chunk {
     private int sampleDur;
     private int sampleDurs[];
     private int entry;
+    private ByteBuffer data;
 
     public Chunk(long offset, long startTv, int sampleCount, int sampleSize, int[] sampleSizes, int sampleDur,
             int[] sampleDurs, int entry) {
@@ -85,4 +88,11 @@ public class Chunk {
         return sum;
     }
 
+	public ByteBuffer getData() {
+		return data;
+	}
+
+	public void setData(ByteBuffer data) {
+		this.data = data;
+	}
 }

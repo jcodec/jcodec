@@ -1,4 +1,7 @@
 package org.jcodec.containers.mp4;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.boxes.AliasBox;
@@ -11,8 +14,6 @@ import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
-
-import java.io.IOException;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -85,11 +86,16 @@ public class ChunkWriter {
     }
 
     public void write(Chunk chunk) throws IOException {
-        SeekableByteChannel input = getInput(chunk);
-        input.setPosition(chunk.getOffset());
         long pos = out.position();
 
-        out.write(NIOUtils.fetchFromChannel(input, (int) chunk.getSize()));
+        ByteBuffer chunkData = chunk.getData();
+        if (chunkData == null) {
+        	SeekableByteChannel input = getInput(chunk);
+            input.setPosition(chunk.getOffset());
+        	chunkData = NIOUtils.fetchFromChannel(input, (int) chunk.getSize());
+        }
+        
+		out.write(chunkData);
         offsets[curChunk++] = pos;
     }
 }

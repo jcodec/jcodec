@@ -80,8 +80,8 @@ public class Strip {
         movie.setDuration(movie.rescale(maxDuration.getNum(), maxDuration.getDen()));
     }
 
-    public RationalLarge stripTrack(MovieBox movie, TrakBox track) {
-        ChunkReader chunks = new ChunkReader(track);
+    public RationalLarge stripTrack(MovieBox movie, TrakBox track) throws IOException {
+        ChunkReader chunks = new ChunkReader(track, null);
         List<Edit> edits = track.getEdits();
         List<Edit> oldEdits = deepCopy(edits);
         List<Chunk> result = new ArrayList<Chunk>();
