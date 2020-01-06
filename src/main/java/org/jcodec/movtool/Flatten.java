@@ -135,11 +135,16 @@ public class Flatten {
             if (min == -1)
                 break;
             if (chunkHandler != null) {
-            	head[min] = chunkHandler.processChunk(tracks[min], head[min]);
+            	Chunk modded = chunkHandler.processChunk(tracks[min], head[min]);
+            	if (modded != null) {
+            		writers[min].write(modded);
+            		writtenChunks++;
+            	}
+            } else {
+            	writers[min].write(head[min]);
+            	writtenChunks++;
             }
-            writers[min].write(head[min]);
             head[min] = readers[min].next();
-            writtenChunks++;
 
             lastProgress = calcProgress(totalChunks, writtenChunks, lastProgress);
         }

@@ -45,4 +45,8 @@ public class Edit {
     public void setDuration(long duration) {
         this.duration = duration;
     }
+
+	public void stretch(long l) {
+		this.duration += l;
+	}
 }
