@@ -135,7 +135,7 @@ public class Platform {
             return null;
         }
     }
-
+    
     public static String stringFromBytes(byte[] bytes) {
         try {
             return new String(bytes, "iso8859-1");

@@ -142,7 +142,7 @@ public class MetaBox extends NodeBox {
         for (Integer dropped : keySet) {
             data.remove(dropped);
         }
-        
+        this.replaceBox(HandlerBox.createHandlerBox(null, "mdir", "appl", 0, 0));
         this.replaceBox(IListBox.createIListBox(data));
     }
 
