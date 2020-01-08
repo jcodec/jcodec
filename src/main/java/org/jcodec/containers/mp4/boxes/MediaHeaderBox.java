@@ -89,14 +89,23 @@ public class MediaHeaderBox extends FullBox {
         } else {
             throw new RuntimeException("Unsupported version");
         }
+        language = input.getShort();
+        quality  = input.getShort();
     }
 
     public void doWrite(ByteBuffer out) {
         super.doWrite(out);
-        out.putInt(toMovTime(created));
-        out.putInt(toMovTime(modified));
-        out.putInt(timescale);
-        out.putInt((int) duration);
+        if (version == 0) {
+            out.putInt(toMovTime(created));
+            out.putInt(toMovTime(modified));
+            out.putInt(timescale);
+            out.putInt((int) duration);
+        } else if (version == 1) {
+            out.putLong(toMovTime(created));
+            out.putLong(toMovTime(modified));
+            out.putInt(timescale);
+            out.putLong((int) duration);
+        }
         out.putShort((short) language);
         out.putShort((short) quality);
     }
