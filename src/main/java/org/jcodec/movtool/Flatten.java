@@ -24,6 +24,7 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.UrlBox;
+import org.jcodec.movtool.Flatten.ChunkHandler;
 import org.jcodec.platform.Platform;
 
 /**
@@ -37,7 +38,11 @@ import org.jcodec.platform.Platform;
  */
 public class Flatten {
 
-    public static void main1(String[] args) throws Exception {
+    public static interface ChunkHandler {
+    	Chunk processChunk(TrakBox trak, Chunk src) throws IOException;
+	}
+
+	public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: self <ref movie> <out movie>");
             System.exit(-1);
@@ -56,6 +61,7 @@ public class Flatten {
     }
 
     public List<ProgressListener> listeners;
+    private ChunkHandler chunkHandler;
     
     public Flatten() {
         this.listeners = new ArrayList<Flatten.ProgressListener>();
@@ -69,7 +75,15 @@ public class Flatten {
         this.listeners.add(listener);
     }
 
-    public void flattenChannel(Movie movie, SeekableByteChannel out) throws IOException {
+    public ChunkHandler getChunkHandler() {
+		return chunkHandler;
+	}
+
+	public void setChunkHandler(ChunkHandler chunkHandler) {
+		this.chunkHandler = chunkHandler;
+	}
+
+	public void flattenChannel(Movie movie, SeekableByteChannel out) throws IOException {
         FileTypeBox ftyp = movie.getFtyp();
         MovieBox moov = movie.getMoov();
 
@@ -94,7 +108,7 @@ public class Flatten {
         int totalChunks = 0, writtenChunks = 0, lastProgress = 0;
         long[] off = new long[tracks.length];
         for (int i = 0; i < tracks.length; i++) {
-            readers[i] = new ChunkReader(tracks[i]);
+            readers[i] = new ChunkReader(tracks[i], inputs[i]);
             totalChunks += readers[i].size();
 
             writers[i] = new ChunkWriter(tracks[i], inputs[i], out);
@@ -120,9 +134,17 @@ public class Flatten {
             }
             if (min == -1)
                 break;
-            writers[min].write(head[min]);
+            if (chunkHandler != null) {
+            	Chunk modded = chunkHandler.processChunk(tracks[min], head[min]);
+            	if (modded != null) {
+            		writers[min].write(modded);
+            		writtenChunks++;
+            	}
+            } else {
+            	writers[min].write(head[min]);
+            	writtenChunks++;
+            }
             head[min] = readers[min].next();
-            writtenChunks++;
 
             lastProgress = calcProgress(totalChunks, writtenChunks, lastProgress);
         }

@@ -1,7 +1,7 @@
 package org.jcodec.movtool;
+
 import java.lang.IllegalStateException;
 import java.lang.System;
-
 
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
@@ -10,6 +10,7 @@ import static org.jcodec.common.io.NIOUtils.writableChannel;
 import java.util.Iterator;
 
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.RationalLarge;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
 import org.jcodec.containers.mp4.MP4Util;
@@ -68,15 +69,36 @@ public class Strip {
     }
 
     public void strip(MovieBox movie) throws IOException {
+        RationalLarge maxDuration = RationalLarge.ZERO;
         TrakBox[] tracks = movie.getTracks();
         for (int i = 0; i < tracks.length; i++) {
             TrakBox track = tracks[i];
-            stripTrack(movie, track);
+            RationalLarge duration = stripTrack(movie, track);
+            if (duration.greaterThen(maxDuration))
+                maxDuration = duration;
         }
+        movie.setDuration(movie.rescale(maxDuration.getNum(), maxDuration.getDen()));
     }
 
-    public void stripTrack(MovieBox movie, TrakBox track) {
-        ChunkReader chunks = new ChunkReader(track);
+    public void trim(MovieBox movie, String type) throws IOException {
+        RationalLarge maxDuration = RationalLarge.ZERO;
+        TrakBox[] tracks = movie.getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox track = tracks[i];
+            RationalLarge duration;
+            if (type == null || type.equals(track.getHandlerType())) {
+                duration = trimEdits(movie, track);
+            } else {
+                duration = RationalLarge.R(track.getDuration(), movie.getTimescale());
+            }
+            if (duration.greaterThen(maxDuration))
+                maxDuration = duration;
+        }
+        movie.setDuration(movie.rescale(maxDuration.getNum(), maxDuration.getDen()));
+    }
+
+    public RationalLarge stripTrack(MovieBox movie, TrakBox track) throws IOException {
+        ChunkReader chunks = new ChunkReader(track, null);
         List<Edit> edits = track.getEdits();
         List<Edit> oldEdits = deepCopy(edits);
         List<Chunk> result = new ArrayList<Chunk>();
@@ -108,9 +130,56 @@ public class Strip {
         stbl.replace("stts", getTimeToSamples(result));
         stbl.replace("stsz", getSampleSizes(result));
         stbl.replace("stsc", getSamplesToChunk(result));
-        stbl.removeChildren(new String[]{"stco", "co64"});
+        stbl.removeChildren(new String[] { "stco", "co64" });
         stbl.add(getChunkOffsets(result));
-        NodeBox.findFirstPath(track, MediaHeaderBox.class, Box.path("mdia.mdhd")).setDuration(totalDuration(result));
+        long duration = totalDuration(result);
+        MediaHeaderBox mdhd = NodeBox.findFirstPath(track, MediaHeaderBox.class, Box.path("mdia.mdhd"));
+        mdhd.setDuration(duration);
+        track.setDuration(movie.rescale(duration, mdhd.getTimescale()));
+        return new RationalLarge(duration, mdhd.getTimescale());
+    }
+
+    public RationalLarge trimEdits(MovieBox movie, TrakBox track) throws IOException {
+        ChunkReader chunks = new ChunkReader(track, null);
+        List<Edit> edits = track.getEdits();
+        List<Chunk> result = new ArrayList<Chunk>();
+
+        for (Edit edit : edits) {
+            long editS = edit.getMediaTime();
+            long editE = edit.getMediaTime() + track.rescale(edit.getDuration(), movie.getTimescale());
+            
+            Chunk chunk = null;
+            while ((chunk = chunks.next()) != null) {
+                result.add(chunk);
+                long chunkS = chunk.getStartTv();
+                long chunkE = chunk.getStartTv() + chunk.getDuration();
+
+                if (editS > chunkS) {
+                    long cutDur = editS - chunkS;
+                    edit.shift(-cutDur);
+                    chunk.trimFront(cutDur);
+                }
+                if (editE < chunkE) {
+                    long cutDur = chunkE - editE;
+                    edit.stretch(-movie.rescale(cutDur, track.getTimescale()));
+                    chunk.trimTail(cutDur);
+                }
+                if (editE <= chunkE)
+                    break;
+            }
+        }
+
+        NodeBox stbl = NodeBox.findFirstPath(track, NodeBox.class, Box.path("mdia.minf.stbl"));
+        stbl.replace("stts", getTimeToSamples(result));
+        stbl.replace("stsz", getSampleSizes(result));
+        stbl.replace("stsc", getSamplesToChunk(result));
+        stbl.removeChildren(new String[] { "stco", "co64" });
+        stbl.add(getChunkOffsets(result));
+        long duration = totalDuration(result);
+        MediaHeaderBox mdhd = NodeBox.findFirstPath(track, MediaHeaderBox.class, Box.path("mdia.mdhd"));
+        mdhd.setDuration(duration);
+        track.setDuration(movie.rescale(duration, mdhd.getTimescale()));
+        return new RationalLarge(duration, mdhd.getTimescale());
     }
 
     private long totalDuration(List<Chunk> result) {
@@ -138,7 +207,8 @@ public class Strip {
                 longBox = true;
             result[i++] = chunk.getOffset();
         }
-        return longBox ? ChunkOffsets64Box.createChunkOffsets64Box(result) : ChunkOffsetsBox.createChunkOffsetsBox(result);
+        return longBox ? ChunkOffsets64Box.createChunkOffsets64Box(result)
+                : ChunkOffsetsBox.createChunkOffsetsBox(result);
     }
 
     public TimeToSampleBox getTimeToSamples(List<Chunk> chunks) {

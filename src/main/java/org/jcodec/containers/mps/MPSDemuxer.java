@@ -503,17 +503,21 @@ public class MPSDemuxer extends SegmentReader implements MPEGDemuxer {
         boolean hasSps = false, hasPps = false, hasSlice = false;
         for (NALUnit nalUnit : nuSeq) {
             if (SPS == nalUnit.type) {
-                if (hasSps && !hasSlice)
+                if (!hasSps) {
+                    hasSps = true;
+                    if (!hasSlice)
+                        score += 30;
+                } else if (!hasSlice) {
                     score -= 30;
-                else
-                    score += 30;
-                hasSps = true;
+                }
             } else if (PPS == nalUnit.type) {
-                if (hasPps && !hasSlice)
+                if (!hasPps) {
+                    hasPps = true;
+                    if (hasSps && !hasSlice)
+                        score += 20;
+                } else if (!hasSlice) {
                     score -= 30;
-                if (hasSps)
-                    score += 20;
-                hasPps = true;
+                }
             } else if (IDR_SLICE == nalUnit.type || NON_IDR_SLICE == nalUnit.type) {
                 if (!hasSlice)
                     score += 20;

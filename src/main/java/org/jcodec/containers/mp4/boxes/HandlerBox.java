@@ -58,21 +58,30 @@ public class HandlerBox extends FullBox {
     public void doWrite(ByteBuffer out) {
         super.doWrite(out);
 
-        out.put(asciiString(componentType));
-        out.put(asciiString(componentSubType));
-        out.put(asciiString(componentManufacturer));
+        out.put(fourcc(componentType));
+        out.put(fourcc(componentSubType));
+        out.put(fourcc(componentManufacturer));
 
         out.putInt(componentFlags);
         out.putInt(componentFlagsMask);
         if (componentName != null) {
-            out.put(asciiString(componentName));
+            out.put(fourcc(componentName));
         }
+    }
+    
+    public byte[] fourcc(String fourcc) {
+        byte[] dst = new byte[4];
+        if (fourcc != null) {
+            byte[] tmp = asciiString(fourcc);
+            for (int i = 0; i < Math.min(tmp.length, 4); i++)
+                dst[i] = tmp[i];
+        }
+        return dst;
     }
     
     @Override
     public int estimateSize() {
-        return 12 + asciiString(componentType).length + asciiString(componentSubType).length
-                + asciiString(componentManufacturer).length + 9;
+        return 32 + (componentName != null ? 4 : 0);
     }
 
     public String getComponentType() {

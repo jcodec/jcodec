@@ -1,5 +1,10 @@
 package org.jcodec.containers.mp4;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
+import org.jcodec.common.io.NIOUtils;
+
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -18,6 +23,7 @@ public class Chunk {
     private int sampleDur;
     private int sampleDurs[];
     private int entry;
+    private ByteBuffer data;
 
     public Chunk(long offset, long startTv, int sampleCount, int sampleSize, int[] sampleSizes, int sampleDur,
             int[] sampleDurs, int entry) {
@@ -85,4 +91,82 @@ public class Chunk {
         return sum;
     }
 
+    public ByteBuffer getData() {
+        return data;
+    }
+
+    public void setData(ByteBuffer data) {
+        this.data = data;
+    }
+
+    public void setStartTv(long startTv) {
+        this.startTv = startTv;
+    }
+
+    public void dropFrontSamples(int drop) {
+        if (sampleSize == UNEQUAL_SIZES) {
+            for (int i = 0; i < drop; i++) {
+                offset += sampleSizes[i];
+                if (data != null)
+                    NIOUtils.skip(data, sampleSizes[i]);
+            }
+            sampleSizes = Arrays.copyOfRange(sampleSizes, drop, sampleSizes.length);
+        } else {
+            offset += sampleSize * drop;
+            NIOUtils.skip(data, sampleSize * drop);
+        }
+
+        if (sampleDur == UNEQUAL_DUR) {
+            sampleDurs = Arrays.copyOfRange(sampleDurs, drop, sampleDurs.length);
+        }
+        sampleCount -= drop;
+    }
+
+    public void dropTailSamples(int drop) {
+        if (sampleSize == UNEQUAL_SIZES) {
+            sampleSizes = Arrays.copyOf(sampleSizes, sampleSizes.length - drop);
+        }
+
+        if (sampleDur == UNEQUAL_DUR) {
+            sampleDurs = Arrays.copyOf(sampleDurs, sampleDurs.length - drop);
+        }
+        sampleCount -= drop;
+    }
+
+    public void trimFront(long cutDur) {
+        startTv += cutDur;
+        if (sampleCount > 1) {
+            int drop = 0;
+            for (int s = 0; s < sampleCount; s++) {
+                long dur = sampleDur == Chunk.UNEQUAL_DUR ? sampleDurs[s] : sampleDur;
+                if (dur > cutDur)
+                    break;
+                drop++;
+                cutDur -= dur;
+            }
+            dropFrontSamples(drop);
+        }
+        if (sampleDur == Chunk.UNEQUAL_DUR)
+            sampleDurs[0] -= cutDur;
+        else if (sampleCount == 1)
+            sampleDur -= cutDur;
+    }
+
+    public void trimTail(long cutDur) {
+        if (sampleCount > 1) {
+            int drop = 0;
+            for (int s = 0; s < sampleCount; s++) {
+                long dur = sampleDur == Chunk.UNEQUAL_DUR ? sampleDurs[sampleCount - s - 1] : sampleDur;
+                if (dur > cutDur)
+                    break;
+                drop++;
+                cutDur -= dur;
+            }
+            dropTailSamples(drop);
+        }
+        if (sampleDur == Chunk.UNEQUAL_DUR)
+            sampleDurs[sampleDurs.length - 1] -= cutDur;
+        else if (sampleCount == 1)
+            sampleDur -= cutDur;
+    }
 }
