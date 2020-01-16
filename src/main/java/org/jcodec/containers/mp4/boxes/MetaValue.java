@@ -49,6 +49,10 @@ public class MetaValue {
         return new MetaValue(1, 0, Platform.getBytesForCharset(value, Platform.UTF_8));
     }
 
+    public static MetaValue createStringWithLocale(String value, int locale) {
+        return new MetaValue(1, locale, Platform.getBytesForCharset(value, Platform.UTF_8));
+    }
+
     public static MetaValue createOther(int type, byte[] data) {
         return new MetaValue(type, 0, data);
     }
