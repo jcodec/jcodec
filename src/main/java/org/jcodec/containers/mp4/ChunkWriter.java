@@ -2,6 +2,7 @@ package org.jcodec.containers.mp4;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.jcodec.common.IntArrayList;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.boxes.AliasBox;
@@ -13,6 +14,7 @@ import org.jcodec.containers.mp4.boxes.DataRefBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
+import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
 /**
@@ -30,6 +32,9 @@ public class ChunkWriter {
     private SeekableByteChannel out;
     byte[] buf;
     private TrakBox trak;
+    private IntArrayList sampleSizes;
+    private int sampleSize;
+    private int sampleCount;
 
     public ChunkWriter(TrakBox trak, SeekableByteChannel[] inputs, SeekableByteChannel out) {
         this.buf = new byte[8092];
@@ -46,6 +51,7 @@ public class ChunkWriter {
         offsets = new long[size];
         this.out = out;
         this.trak = trak;
+        this.sampleSizes = IntArrayList.createIntArrayList();
     }
 
     public void apply() {
@@ -54,6 +60,10 @@ public class ChunkWriter {
 
         stbl.add(ChunkOffsets64Box.createChunkOffsets64Box(offsets));
         cleanDrefs(trak);
+
+        SampleSizesBox stsz = sampleCount != 0 ? SampleSizesBox.createSampleSizesBox(sampleSize, sampleCount)
+                : SampleSizesBox.createSampleSizesBox2(sampleSizes.toArray());
+        stbl.replaceBox(stsz);
     }
 
     private void cleanDrefs(TrakBox trak) {
@@ -90,12 +100,27 @@ public class ChunkWriter {
 
         ByteBuffer chunkData = chunk.getData();
         if (chunkData == null) {
-        	SeekableByteChannel input = getInput(chunk);
+            SeekableByteChannel input = getInput(chunk);
             input.setPosition(chunk.getOffset());
-        	chunkData = NIOUtils.fetchFromChannel(input, (int) chunk.getSize());
+            chunkData = NIOUtils.fetchFromChannel(input, (int) chunk.getSize());
         }
-        
-		out.write(chunkData);
+
+        out.write(chunkData);
         offsets[curChunk++] = pos;
+
+        if (chunk.getSampleSize() == Chunk.UNEQUAL_SIZES) {
+            if (sampleCount != 0)
+                throw new RuntimeException("Mixed chunks unsupported 1.");
+            sampleSizes.addAll(chunk.getSampleSizes());
+        } else {
+            if (sampleSizes.size() != 0)
+                throw new RuntimeException("Mixed chunks unsupported 2.");
+            if (sampleCount == 0) {
+                sampleSize = chunk.getSampleSize();
+            } else if (sampleSize != chunk.getSampleSize()) {
+                throw new RuntimeException("Mismatching default sizes");
+            }
+            sampleCount += chunk.getSampleCount();
+        }
     }
 }

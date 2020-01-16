@@ -1,4 +1,5 @@
 package org.jcodec.movtool;
+
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
@@ -6,8 +7,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.ChunkReader;
@@ -24,7 +29,6 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.UrlBox;
-import org.jcodec.movtool.Flatten.ChunkHandler;
 import org.jcodec.platform.Platform;
 
 /**
@@ -37,12 +41,11 @@ import org.jcodec.platform.Platform;
  * 
  */
 public class Flatten {
+    public static interface SampleProcessor {
+        ByteBuffer processSample(ByteBuffer src) throws IOException;
+    }
 
-    public static interface ChunkHandler {
-    	Chunk processChunk(TrakBox trak, Chunk src) throws IOException;
-	}
-
-	public static void main1(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         if (args.length < 2) {
             System.out.println("Syntax: self <ref movie> <out movie>");
             System.exit(-1);
@@ -61,8 +64,8 @@ public class Flatten {
     }
 
     public List<ProgressListener> listeners;
-    private ChunkHandler chunkHandler;
-    
+    private Map<TrakBox, SampleProcessor> sampleProcessors = new HashMap<TrakBox, SampleProcessor>();
+
     public Flatten() {
         this.listeners = new ArrayList<Flatten.ProgressListener>();
     }
@@ -75,15 +78,15 @@ public class Flatten {
         this.listeners.add(listener);
     }
 
-    public ChunkHandler getChunkHandler() {
-		return chunkHandler;
-	}
+    public boolean setSampleProcessor(TrakBox trak, SampleProcessor processor) {
+        // Will not modify individual samples of tracks with equal sample sizes
+        if (trak.getStsz().getDefaultSize() != 0)
+            return false;
+        this.sampleProcessors.put(trak, processor);
+        return true;
+    }
 
-	public void setChunkHandler(ChunkHandler chunkHandler) {
-		this.chunkHandler = chunkHandler;
-	}
-
-	public void flattenChannel(Movie movie, SeekableByteChannel out) throws IOException {
+    public void flattenChannel(Movie movie, SeekableByteChannel out) throws IOException {
         FileTypeBox ftyp = movie.getFtyp();
         MovieBox moov = movie.getMoov();
 
@@ -91,14 +94,14 @@ public class Flatten {
             throw new IllegalArgumentException("movie should be reference");
         out.setPosition(0);
         MP4Util.writeFullMovie(out, movie);
-        
+
         int extraSpace = calcSpaceReq(moov);
         ByteBuffer buf = ByteBuffer.allocate(extraSpace);
         out.write(buf);
 
         long mdatOff = out.position();
         writeHeader(Header.createHeader("mdat", 0x100000001L), out);
-        
+
         SeekableByteChannel[][] inputs = getInputs(moov);
 
         TrakBox[] tracks = moov.getTracks();
@@ -134,15 +137,16 @@ public class Flatten {
             }
             if (min == -1)
                 break;
-            if (chunkHandler != null) {
-            	Chunk modded = chunkHandler.processChunk(tracks[min], head[min]);
-            	if (modded != null) {
-            		writers[min].write(modded);
-            		writtenChunks++;
-            	}
+            SampleProcessor processor = sampleProcessors.get(tracks[min]);
+            if (processor != null) {
+                Chunk orig = head[min];
+                if (orig.getSampleSize() == Chunk.UNEQUAL_SIZES) {
+                    writers[min].write(processChunk(processor, orig));
+                    writtenChunks++;
+                }
             } else {
-            	writers[min].write(head[min]);
-            	writtenChunks++;
+                writers[min].write(head[min]);
+                writtenChunks++;
             }
             head[min] = readers[min].next();
 
@@ -153,7 +157,7 @@ public class Flatten {
             writers[i].apply();
         }
         long mdatSize = out.position() - mdatOff;
-        
+
         out.setPosition(0);
         MP4Util.writeFullMovie(out, movie);
 
@@ -164,6 +168,34 @@ public class Flatten {
 
         out.setPosition(mdatOff);
         writeHeader(Header.createHeader("mdat", mdatSize), out);
+    }
+
+    private Chunk processChunk(SampleProcessor processor, Chunk orig) throws IOException {
+        ByteBuffer src = NIOUtils.duplicate(orig.getData());
+        int[] sampleSizes = orig.getSampleSizes();
+        List<ByteBuffer> modSamples = new LinkedList<ByteBuffer>();
+        int totalSize = 0;
+        for (int ss = 0; ss < sampleSizes.length; ss++) {
+            ByteBuffer sample = NIOUtils.read(src, sampleSizes[ss]);
+            ByteBuffer modSample = processor.processSample(sample);
+            if (modSample != null) {
+                modSamples.add(modSample);
+                totalSize += modSample.remaining();
+            }
+        }
+        byte[] result = new byte[totalSize];
+        int[] modSizes = new int[modSamples.size()];
+        int ss = 0;
+        ByteBuffer tmp = ByteBuffer.wrap(result);
+        for (ByteBuffer byteBuffer : modSamples) {
+            modSizes[ss++] = byteBuffer.remaining();
+            tmp.put(byteBuffer);
+        }
+
+        Chunk mod = Chunk.createFrom(orig);
+        mod.setSampleSizes(modSizes);
+        mod.setData(ByteBuffer.wrap(result));
+        return mod;
     }
 
     private void writeHeader(Header header, SeekableByteChannel out) throws IOException {

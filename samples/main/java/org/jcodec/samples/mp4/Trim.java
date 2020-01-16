@@ -62,12 +62,14 @@ public class Trim {
                     (int) (movie.getMoov().getDuration() / movie.getMoov().getTimescale()) - inS);
             modifyMovie(inS, durS, movie.getMoov());
             Flatten flatten = new Flatten();
-            flatten.setChunkHandler(new Flatten.ChunkHandler() {
-                @Override
-                public Chunk processChunk(TrakBox trak, Chunk src) throws IOException {
-                    return editMetadata(trak, src, inS, durS);
+            TrakBox[] tracks = movie.getMoov().getTracks();
+            for (TrakBox trak : tracks) {
+                if (trak.getTrackHeader().getNo() == 1) {
+                    flatten.setSampleProcessor(trak, new WordProcessor(inS, durS));
+                } else if (trak.getTrackHeader().getNo() == 2) {
+                    flatten.setSampleProcessor(trak, new TagProcessor(inS, durS));
                 }
-            });
+            }
             flatten.flattenChannel(movie, out);
         } finally {
             if (input != null)
@@ -77,57 +79,78 @@ public class Trim {
         }
     }
 
-    private static Chunk editMetadata(TrakBox trak, Chunk src, int inS, int durS) throws IOException {
-        long masterOnset = inS * 1000;
-        long masterOffset = masterOnset + durS * 1000;
-        if (trak.getTrackHeader().getNo() == 1) {
-            ProtoReader<Words> reader = new ProtoReader<Words>(src.getData(), Words.class);
-            ProtoWriter<Words> writer = new ProtoWriter<Words>(Words.class);
-            int totalWords = 0;
-            do {
-                Words words = reader.nextProto();
-                if (words == null)
-                    break;
-                Words.Builder builder = words.toBuilder();
-                int w = 0;
-                while (builder.getWordsCount() > w) {
-                    Word word = builder.getWords(w);
-                    long onset = word.getOnsetMilli();
-                    long offset = word.getOffsetMilli();
-                    if (onset > masterOnset && offset < masterOffset) {
-                        word = word.toBuilder().setOnsetMilli(onset - masterOnset).setOffsetMilli(offset - masterOnset)
-                                .build();
-                        builder.setWords(w++, word);
-                    } else {
-                        builder.removeWords(w);
-                    }
-                }
-                words = builder.build();
-                if (words.getWordsCount() > 0) {
-                    writer.writeProto(words);
-                    System.out.println(words);
-                }
-                totalWords += words.getWordsCount();
-            } while (true);
-            if (totalWords == 0)
-                return null;
-            src.setData(writer.getBytes());
-        } else if (trak.getTrackHeader().getNo() == 2) {
-            ProtoReader<Tag> reader = new ProtoReader<Tag>(src.getData(), Tag.class);
-            ProtoWriter<Tag> writer = new ProtoWriter<Tag>(Tag.class);
-            do {
-                Tag audioTag = reader.nextProto();
-                if (audioTag == null)
-                    break;
-                long onset = audioTag.getOnsetMilli() - masterOnset;
-                onset = onset < 0 ? 0 : onset;
-                audioTag = audioTag.toBuilder().setOnsetMilli(onset).build();
-                writer.writeProto(audioTag);
-                System.out.println(audioTag);
-            } while (true);
-            src.setData(writer.getBytes());
+    private static class WordProcessor implements Flatten.SampleProcessor {
+        private int inS;
+        private int durS;
+
+        public WordProcessor(int inS, int durS) {
+            this.inS = inS;
+            this.durS = durS;
         }
-        return src;
+
+        @Override
+        public ByteBuffer processSample(ByteBuffer src) throws IOException {
+            int size = src.getInt();
+            if (size != src.remaining())
+                throw new IOException("Error");
+            long masterOnset = inS * 1000;
+            long masterOffset = masterOnset + durS * 1000;
+            Words words = Words.parseFrom(src);
+
+            Words.Builder builder = words.toBuilder();
+            int w = 0;
+            while (builder.getWordsCount() > w) {
+                Word word = builder.getWords(w);
+                long onset = word.getOnsetMilli();
+                long offset = word.getOffsetMilli();
+                if (onset > masterOnset && offset < masterOffset) {
+                    word = word.toBuilder().setOnsetMilli(onset - masterOnset).setOffsetMilli(offset - masterOnset)
+                            .build();
+                    builder.setWords(w++, word);
+                } else {
+                    builder.removeWords(w);
+                }
+            }
+            words = builder.build();
+            if (words.getWordsCount() > 0) {
+                System.out.println(words);
+                return withLen(words.toByteArray());
+
+            }
+            return null;
+        }
+    }
+
+    private static ByteBuffer withLen(byte[] byteArray) {
+        ByteBuffer out = ByteBuffer.allocate(byteArray.length + 4);
+        out.putInt(byteArray.length);
+        out.put(byteArray);
+        out.flip();
+        return out;
+    }
+
+    private static class TagProcessor implements Flatten.SampleProcessor {
+        private int inS;
+        private int durS;
+
+        public TagProcessor(int inS, int durS) {
+            this.inS = inS;
+            this.durS = durS;
+        }
+
+        @Override
+        public ByteBuffer processSample(ByteBuffer src) throws IOException {
+            int size = src.getInt();
+            if (size != src.remaining())
+                throw new IOException("Error");
+            long masterOnset = inS * 1000;
+            Tag audioTag = Tag.parseFrom(src);
+            long onset = audioTag.getOnsetMilli() - masterOnset;
+            onset = onset < 0 ? 0 : onset;
+            audioTag = audioTag.toBuilder().setOnsetMilli(onset).build();
+            System.out.println(audioTag);
+            return withLen(audioTag.toByteArray());
+        }
     }
 
     private static void modifyMovie(int inS, int durS, MovieBox movie) throws IOException {
@@ -141,60 +164,5 @@ public class Trim {
         Strip strip = new Strip();
         strip.strip(movie);
         strip.trim(movie, null);
-    }
-
-    private static class ProtoReader<T extends com.google.protobuf.GeneratedMessageV3> {
-        private ByteBuffer src;
-        private Class<T> clz;
-
-        public ProtoReader(ByteBuffer src, Class<T> clz) {
-            this.src = src;
-            this.clz = clz;
-        }
-
-        public T nextProto() throws IOException {
-            try {
-                if (src.remaining() < 4)
-                    return null;
-                int size = src.getInt();
-                byte[] bytes = new byte[size];
-                src.get(bytes);
-                Method method = clz.getMethod("parseFrom", byte[].class);
-                return (T) method.invoke(null, bytes);
-            } catch (Exception e) {
-                throw new IOException(e);
-            }
-        }
-    }
-
-    private static class ProtoWriter<T extends com.google.protobuf.GeneratedMessageV3> {
-        private List<byte[]> processed = new ArrayList<byte[]>();
-        private int outSize = 0;
-        private Class<T> clz;
-
-        public ProtoWriter(Class<T> clz) {
-            this.clz = clz;
-        }
-
-        public void writeProto(T proto) throws IOException {
-            try {
-                Method method = clz.getMethod("toByteArray");
-                byte[] byteArray = (byte[]) method.invoke(proto);
-                processed.add(byteArray);
-                outSize += 4 + byteArray.length;
-            } catch (Exception e) {
-                throw new IOException(e);
-            }
-        }
-
-        public ByteBuffer getBytes() {
-            byte[] outbs = new byte[outSize];
-            ByteBuffer out = ByteBuffer.wrap(outbs);
-            for (byte[] bs : processed) {
-                out.putInt(bs.length);
-                out.put(bs);
-            }
-            return ByteBuffer.wrap(outbs);
-        }
     }
 }

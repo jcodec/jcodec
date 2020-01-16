@@ -37,6 +37,11 @@ public class Chunk {
         this.entry = entry;
     }
 
+    public static Chunk createFrom(Chunk other) {
+        return new Chunk(other.getOffset(), other.getStartTv(), other.getSampleCount(), other.getSampleSize(),
+                other.getSampleSizes(), other.getSampleDur(), other.getSampleDurs(), other.getEntry());
+    }
+
     public long getOffset() {
         return offset;
     }
@@ -168,5 +173,9 @@ public class Chunk {
             sampleDurs[sampleDurs.length - 1] -= cutDur;
         else if (sampleCount == 1)
             sampleDur -= cutDur;
+    }
+
+    public void setSampleSizes(int[] sampleSizes) {
+        this.sampleSizes = sampleSizes;
     }
 }
