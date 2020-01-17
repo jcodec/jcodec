@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.tools.MainUtils;
@@ -19,9 +20,11 @@ import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Edit;
+import org.jcodec.containers.mp4.boxes.MetaValue;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.movtool.Flatten;
+import org.jcodec.movtool.MetadataEditor;
 import org.jcodec.movtool.Strip;
 import org.jcodec.samples.mp4.Test1Proto.Words;
 import org.jcodec.samples.mp4.Test1Proto.Words.Word;
@@ -40,7 +43,10 @@ import org.jcodec.samples.mp4.Test2Proto.Tag;
 public class Trim {
     private static final Flag FLAG_FROM_SEC = Flag.flag("from", "f", "From second");
     private static final Flag FLAG_TO_SEC = Flag.flag("duration", "d", "Duration of the audio");
-    private static final Flag[] flags = { FLAG_FROM_SEC, FLAG_TO_SEC };
+    private static final Flag FLAG_TITLE = Flag.flag("title", "t", "Metadata title to set");
+    private static final Flag FLAG_AUTHOR = Flag.flag("author", "a", "Metadata author to set");
+    private static final Flag FLAG_GPS = Flag.flag("gps", "g", "Metadata GPS to set");
+    private static final Flag[] flags = { FLAG_FROM_SEC, FLAG_TO_SEC, FLAG_TITLE, FLAG_AUTHOR, FLAG_GPS };
 
     public static void main(String[] args) throws Exception {
         final Cmd cmd = MainUtils.parseArguments(args, flags);
@@ -57,6 +63,8 @@ public class Trim {
             File file = new File(cmd.getArg(1));
             out = writableChannel(file);
             Movie movie = MP4Util.createRefFullMovie(input, "file://" + new File(cmd.getArg(0)).getAbsolutePath());
+            addMetadata(movie, cmd.getStringFlagD(FLAG_TITLE, "A title"), cmd.getStringFlagD(FLAG_AUTHOR, "An author"),
+                    cmd.getStringFlagD(FLAG_GPS, "+81.1000-015.5999/"));
             final int inS = cmd.getIntegerFlagD(FLAG_FROM_SEC, 0);
             final int durS = cmd.getIntegerFlagD(FLAG_TO_SEC,
                     (int) (movie.getMoov().getDuration() / movie.getMoov().getTimescale()) - inS);
@@ -77,6 +85,16 @@ public class Trim {
             if (out != null)
                 out.close();
         }
+    }
+
+    private static void addMetadata(Movie movie, String title, String author, String gps) {
+        MetadataEditor.MovieEditor mediaMeta = MetadataEditor.MovieEditor.createFromMovie(movie.getMoov());
+        Map<Integer, MetaValue> meta = mediaMeta.getItunesMeta();
+        meta.put(0xa9616c62, MetaValue.createString(title));
+        meta.put(0xa96e616d, MetaValue.createString(author));
+        Map<Integer, MetaValue> udata = mediaMeta.getUdata();
+        udata.put(0xa978797a, MetaValue.createStringWithLocale(gps, 0x15c7));
+        mediaMeta.apply(movie.getMoov());
     }
 
     private static class WordProcessor implements Flatten.SampleProcessor {
