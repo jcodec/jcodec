@@ -5,6 +5,7 @@ import static java.lang.System.arraycopy;
 import java.lang.StringBuilder;
 import java.lang.System;
 import java.lang.reflect.Array;
+import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -479,5 +480,20 @@ public class ArrayUtil {
             to[i] = from[index++];
         }
         return index;
+    }
+
+    public static int[] flatten2DL(List<int[]> sampleSizes) {
+        int size = 0;
+        for (int[] is : sampleSizes) {
+            size += is.length;
+        }
+        int idx = 0;
+        int[] ret = new int[size];
+        for (int[] is : sampleSizes) {
+            for (int i = 0; i < is.length; i++, idx ++) {
+                ret[idx] = is[i];
+            }
+        }
+        return ret;
     }
 }

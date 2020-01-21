@@ -92,7 +92,7 @@ public class MovieBox extends NodeBox {
         getMovieHeader().setDuration(movDuration);
     }
 
-    private MovieHeaderBox getMovieHeader() {
+    public MovieHeaderBox getMovieHeader() {
         return NodeBox.findFirst(this, MovieHeaderBox.class, "mvhd");
     }
 

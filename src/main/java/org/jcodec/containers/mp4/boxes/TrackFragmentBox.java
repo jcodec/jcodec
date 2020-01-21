@@ -24,8 +24,8 @@ public class TrackFragmentBox extends NodeBox {
     }
 
     public int getTrackId() {
-        TrackFragmentHeaderBox tfhd = NodeBox
-                .findFirst(this, TrackFragmentHeaderBox.class, TrackFragmentHeaderBox.fourcc());
+        TrackFragmentHeaderBox tfhd = NodeBox.findFirst(this, TrackFragmentHeaderBox.class,
+                TrackFragmentHeaderBox.fourcc());
         if (tfhd == null)
             throw new RuntimeException("Corrupt track fragment, no header atom found");
         return tfhd.getTrackId();
@@ -33,5 +33,18 @@ public class TrackFragmentBox extends NodeBox {
 
     public static TrackFragmentBox createTrackFragmentBox() {
         return new TrackFragmentBox(new Header(fourcc()));
+    }
+
+    public TrunBox getTrun() {
+        return NodeBox.findFirst(this, TrunBox.class, TrunBox.fourcc());
+    }
+
+    public TrackFragmentHeaderBox getTfhd() {
+        return NodeBox.findFirst(this, TrackFragmentHeaderBox.class, TrackFragmentHeaderBox.fourcc());
+    }
+
+    public TrackFragmentBaseMediaDecodeTimeBox getTfdt() {
+        return NodeBox.findFirst(this, TrackFragmentBaseMediaDecodeTimeBox.class,
+                TrackFragmentBaseMediaDecodeTimeBox.fourcc());
     }
 }

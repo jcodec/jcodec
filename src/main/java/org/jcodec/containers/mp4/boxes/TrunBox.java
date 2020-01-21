@@ -1,10 +1,7 @@
 package org.jcodec.containers.mp4.boxes;
-import org.jcodec.platform.Platform;
-
-import java.lang.IllegalArgumentException;
-import java.lang.IllegalStateException;
 import java.nio.ByteBuffer;
-import java.util.List;
+
+import org.jcodec.platform.Platform;
 
 //@formatter:off
 /**
@@ -43,7 +40,7 @@ public class TrunBox extends FullBox {
     // @formatter:on
 
     private int sampleCount;
-    private int dataOffset;
+    private long dataOffset;
     private int firstSampleFlags;
     private int[] sampleDuration;
     private int[] sampleSize;
@@ -54,7 +51,7 @@ public class TrunBox extends FullBox {
         return "trun";
     }
 
-    public void setDataOffset(int dataOffset) {
+    public void setDataOffset(long dataOffset) {
         this.dataOffset = dataOffset;
     }
 
@@ -80,7 +77,7 @@ public class TrunBox extends FullBox {
         return trun;
     }
 
-    public static TrunBox createTrunBox2(int sampleCount, int dataOffset, int firstSampleFlags, int[] sampleDuration,
+    public static TrunBox createTrunBox2(int sampleCount, long dataOffset, int firstSampleFlags, int[] sampleDuration,
             int[] sampleSize, int[] sampleFlags, int[] sampleCompositionOffset) {
         TrunBox trun = new TrunBox(new Header(fourcc()));
         trun.sampleCount = sampleCount;
@@ -162,7 +159,7 @@ public class TrunBox extends FullBox {
         return Platform.unsignedInt(sampleCount);
     }
 
-    public int getDataOffset() {
+    public long getDataOffset() {
         return dataOffset;
     }
 
@@ -263,7 +260,7 @@ public class TrunBox extends FullBox {
 
         sampleCount = input.getInt();
         if (isDataOffsetAvailable())
-            dataOffset = input.getInt();
+            dataOffset = input.getInt() & 0xffffffffL;
         if (isFirstSampleFlagsAvailable())
             firstSampleFlags = input.getInt();
         if (isSampleDurationAvailable())
@@ -292,7 +289,7 @@ public class TrunBox extends FullBox {
         super.doWrite(out);
         out.putInt(sampleCount);
         if (isDataOffsetAvailable())
-            out.putInt(dataOffset);
+            out.putInt((int)dataOffset);
         if (isFirstSampleFlagsAvailable())
             out.putInt(firstSampleFlags);
 

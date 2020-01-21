@@ -25,6 +25,7 @@ import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 
 /**
@@ -329,5 +330,23 @@ public class MP4Util {
         long mdatPos = out.position();
         out.write(ByteBuffer.wrap(new byte[16]));
         return mdatPos;
+    }
+
+    public static void traceBox(Box box) {
+        traceBoxR(box, 0);
+    }
+
+    public static void traceBoxR(Box b, int level) {
+        if (b instanceof NodeBox) {
+            NodeBox box = (NodeBox) b;
+            for (Box box2 : box.getBoxes()) {
+                traceBoxR(box2, level + 1);
+            }
+        } else {
+            StringBuilder bld = new StringBuilder();
+            for (int i = 0; i < level; i++)
+                bld.append(' ');
+            System.out.println(bld.toString() + b.getHeader().getFourcc());
+        }
     }
 }

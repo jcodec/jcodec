@@ -287,6 +287,9 @@ public class TrakBox extends NodeBox {
     public SampleSizesBox getStsz() {
         return NodeBox.findFirstPath(this, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz" ));
     }
+    public NodeBox getStbl() {
+        return NodeBox.findFirstPath(this, NodeBox.class, Box.path("mdia.minf.stbl" ));
+    }
 
     public SampleToChunkBox getStsc() {
         return NodeBox.findFirstPath(this, SampleToChunkBox.class, Box.path("mdia.minf.stbl.stsc" ));
