@@ -34,10 +34,13 @@ import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Packet.FrameType;
 import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
+import org.jcodec.common.model.Unit;
 import org.jcodec.containers.imgseq.ImageSequenceMuxer;
 import org.jcodec.containers.mkv.muxer.MKVMuxer;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
+import org.jcodec.containers.mp4.muxer.MP4MuxerTrack;
 import org.jcodec.containers.raw.RawMuxer;
 
 /**
@@ -71,6 +74,9 @@ public class SinkImpl implements Sink, PacketSink {
             return;
         if (videoOutputTrack == null) {
             videoOutputTrack = muxer.addVideoTrack(outputVideoCodec, codecMeta);
+            if (videoOutputTrack instanceof MP4MuxerTrack) {
+                ((MP4MuxerTrack)videoOutputTrack).setTgtChunkDuration(Rational.R(3, 1), Unit.SEC);
+            }
         }
         videoOutputTrack.addFrame(packet);
         framesOutput = true;
@@ -82,6 +88,9 @@ public class SinkImpl implements Sink, PacketSink {
             return;
         if (audioOutputTrack == null) {
             audioOutputTrack = muxer.addAudioTrack(outputAudioCodec, audioCodecMeta);
+            if (audioOutputTrack instanceof MP4MuxerTrack) {
+                ((MP4MuxerTrack)audioOutputTrack).setTgtChunkDuration(Rational.R(3, 1), Unit.SEC);
+            }
         }
         audioOutputTrack.addFrame(audioPkt);
         framesOutput = true;

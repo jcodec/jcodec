@@ -137,9 +137,14 @@ public class PCMMP4DemuxerTrack extends AbstractMP4DemuxerTrack {
 
     @Override
     public DemuxerTrackMeta getMeta() {
-        AudioSampleEntry ase = (AudioSampleEntry) getSampleEntries()[0];
-        AudioCodecMeta audioCodecMeta = org.jcodec.common.AudioCodecMeta.fromAudioFormat(ase.getFormat());
-        return new DemuxerTrackMeta(TrackType.AUDIO, Codec.codecByFourcc(getFourcc()), (double) duration / timescale, null, totalFrames,
+        if (getSampleEntries()[0] instanceof AudioSampleEntry) {
+            AudioSampleEntry ase = (AudioSampleEntry) getSampleEntries()[0];
+            AudioCodecMeta audioCodecMeta = org.jcodec.common.AudioCodecMeta.fromAudioFormat(ase.getFormat());
+            return new DemuxerTrackMeta(TrackType.AUDIO, Codec.codecByFourcc(getFourcc()), (double) duration / timescale, null, totalFrames,
                 null, null, audioCodecMeta);
+        } else {
+            System.out.println("stan");
+            return null;
+        }
     }
 }

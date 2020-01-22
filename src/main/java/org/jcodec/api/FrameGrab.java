@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.api.specific.AVCMP4Adaptor;
 import org.jcodec.api.specific.ContainerAdaptor;
+import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
 import org.jcodec.common.Format;
 import org.jcodec.common.JCodecUtil;
@@ -15,6 +16,7 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
 import org.jcodec.common.model.Picture;
+import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 
 import static org.jcodec.common.Codec.H264;
@@ -44,8 +46,19 @@ public class FrameGrab {
     private ContainerAdaptor decoder;
     //ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread
     //FIXME: potential memory leak: non-static ThreadLocal
-    private final ThreadLocal<byte[][]> buffers;;
+    private final ThreadLocal<byte[][]> buffers;
 
+    public static FrameGrab createForDash(String pattern) throws IOException, JCodecException {
+        DashMP4Demuxer demuxer = DashMP4Demuxer.builder().addTrack().addPattern(pattern).done().build();
+        if (demuxer == null)
+            throw new UnsupportedFormatException("Not a DASH stream.");
+
+        SeekableDemuxerTrack videoTrack = (SeekableDemuxerTrack) demuxer.getVideoTrack();
+        FrameGrab fg = new FrameGrab(videoTrack, detectDecoder(videoTrack));
+        fg.decodeLeadingFrames();
+        return fg;
+    }
+    
     public static FrameGrab createFrameGrab(SeekableByteChannel _in) throws IOException, JCodecException {
         ByteBuffer header = ByteBuffer.allocate(65536);
         _in.read(header);

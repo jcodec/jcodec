@@ -314,6 +314,10 @@ public class H264Utils {
             decodeMOVPacketInplace(result, avcC);
             return result;
         }
+        return decodeMOVPacketNewBuf(result, avcC);
+    }
+
+    public static ByteBuffer decodeMOVPacketNewBuf(ByteBuffer result, AvcCBox avcC) {
         return joinNALUnits(splitMOVPacket(result, avcC));
     }
 
@@ -616,6 +620,7 @@ public class H264Utils {
         }
         ByteBuffer allocate = ByteBuffer.allocate(size);
         joinNALUnitsToBuffer(nalUnits, allocate);
+        allocate.flip();
         return allocate;
     }
 
@@ -645,9 +650,10 @@ public class H264Utils {
         Box lb = NodeBox.findFirst(vse, Box.class, "avcC");
         if (lb instanceof AvcCBox)
             return (AvcCBox) lb;
-        else {
+        else if (lb != null) {
             return parseAVCCFromBuffer(((LeafBox) lb).getData().duplicate());
         }
+        return null;
     }
 
     public static ByteBuffer saveCodecPrivate(List<ByteBuffer> spsList, List<ByteBuffer> ppsList) {

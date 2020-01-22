@@ -200,4 +200,13 @@ public class MovieBox extends NodeBox {
 
         return new Size((int) vs.getWidth(), (int) vs.getHeight());
     }
+
+    public TrakBox getTrackById(int id) {
+        TrakBox[] tracks = getTracks();
+        for (TrakBox trakBox : tracks) {
+            if (trakBox.getTrackHeader().getTrackId() == id)
+                return trakBox;
+        }
+        return null;
+    }
 }

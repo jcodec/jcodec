@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.jcodec.common.ArrayUtil;
+import org.jcodec.common.IntArrayList;
+import org.jcodec.common.IntObjectMap;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.tools.MainUtils;
@@ -17,10 +19,15 @@ import org.jcodec.containers.mp4.Brand;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
+import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
+import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox.Entry;
+import org.jcodec.containers.mp4.boxes.MediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.MovieFragmentBox;
+import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
+import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
@@ -167,7 +174,7 @@ public class FragToMov {
             return null;
 
         MovieBox movieBox = MovieBox.createMovieBox();
-        List<List<TrackFragmentBox>> tr = new ArrayList<List<TrackFragmentBox>>();
+        IntObjectMap<List<TrackFragmentBox>> tracks = new IntObjectMap<List<TrackFragmentBox>>();
         // Applying offset to fragments
         for (Fragment frag : fragments) {
             for (BoxOffset bo : frag.boxes) {
@@ -182,16 +189,20 @@ public class FragToMov {
                             break;
                         }
                     }
-                    if (tr.size() <= no)
-                        tr.add(no, new ArrayList<TrackFragmentBox>());
-                    tr.get(no++).add(traf);
+                    int trackId = traf.getTfhd().getTrackId();
+                    List<TrackFragmentBox> list = tracks.get(trackId);
+                    if (list == null) {
+                        list = new ArrayList<TrackFragmentBox>();
+                        tracks.put(trackId, list);
+                    }
+                    list.add(traf);
                 }
             }
         }
         movieBox.addFirst(init.getMovieHeader());
-        int i = 0;
-        for (List<TrackFragmentBox> list : tr) {
-            TrakBox trak = createTrack(movieBox, init.getTracks()[i++], list);
+        int[] keys = tracks.keys();
+        for (int i = 0; i < keys.length; i++) {
+            TrakBox trak = createTrack(movieBox, init.getTrackById(keys[i]), tracks.get(keys[i]));
             movieBox.add(trak);
             if (trak.getDuration() > movieBox.getDuration())
                 movieBox.setDuration(trak.getDuration());
@@ -204,7 +215,9 @@ public class FragToMov {
         int defaultSampleSize = -1;
         int defaultSampleDuration = -1;
         List<int[]> sampleSizes = new LinkedList<int[]>();
+        List<int[]> compOffsets = new LinkedList<int[]>();
         List<int[]> sampleDurations = new LinkedList<int[]>();
+        IntArrayList sync = new IntArrayList(list.size());
         long[] co = new long[list.size()];
         SampleToChunkEntry[] sampleToCh = new SampleToChunkEntry[list.size()];
         int nSamples = 0;
@@ -223,7 +236,8 @@ public class FragToMov {
                 prevDecodeTime = tfdt.getBaseMediaDecodeTime();
             }
             co[i] = trun.getDataOffset();
-            sampleToCh[i] = new SampleToChunkEntry(nSamples + 1, (int) trun.getSampleCount(), 1);
+            sampleToCh[i] = new SampleToChunkEntry(i + 1, (int) trun.getSampleCount(), 1);
+            sync.add(nSamples + 1);
             nSamples += trun.getSampleCount();
             i++;
             TrackFragmentHeaderBox tfhd = traf.getTfhd();
@@ -250,6 +264,9 @@ public class FragToMov {
                 if (trun.isSampleDurationAvailable())
                     sampleDurations.add(trun.getSampleDurations());
             }
+            if (trun.isSampleCompositionOffsetAvailable()) {
+                compOffsets.add(trun.getSampleCompositionOffsets());
+            }
         }
         if (avgSampleDur.length > 1)
             avgSampleDur[avgSampleDur.length - 1] = avgSampleDur[avgSampleDur.length - 2];
@@ -266,9 +283,31 @@ public class FragToMov {
         trakBox.getStbl().replaceBox(stts);
         trakBox.getStbl().replaceBox(co64);
         trakBox.getStbl().replaceBox(stsc);
+        trakBox.getStbl()
+                .replaceBox(CompositionOffsetsBox.createCompositionOffsetsBox(compactCompOffsets(compOffsets)));
         trakBox.getStbl().removeChildren(new String[] { "stco" });
+        trakBox.getStbl().replaceBox(SyncSamplesBox.createSyncSamplesBox(sync.toArray()));
 
         return trakBox;
+    }
+
+    private static Entry[] compactCompOffsets(List<int[]> compOffsets) {
+        List<Entry> res = new LinkedList<Entry>();
+        int prev = 0;
+        int count = 0;
+        for (int[] is : compOffsets) {
+            for (int i = 0; i < is.length; i++) {
+                if (count == 0 || is[i] == prev) {
+                    count++;
+                } else {
+                    res.add(new Entry(count, prev));
+                    count = 1;
+                }
+            }
+        }
+        if (count != 0)
+            res.add(new Entry(count, prev));
+        return res.toArray(new Entry[0]);
     }
 
     private static void setTrackDuration(MovieBox movie, TrakBox trakBox, TimeToSampleEntry[] tts) {
@@ -277,7 +316,8 @@ public class FragToMov {
             totalDur += tt.getSegmentDuration();
         }
         trakBox.setDuration(movie.rescale(totalDur, trakBox.getTimescale()));
-
+        MediaHeaderBox mdhd = NodeBox.findFirstPath(trakBox, MediaHeaderBox.class, new String[] { "mdia", "mdhd" });
+        mdhd.setDuration(totalDur);
     }
 
     private static TimeToSampleEntry[] getStts(int defaultSampleDuration, int nSamples, List<int[]> sampleDurations) {

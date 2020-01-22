@@ -57,7 +57,9 @@ import org.jcodec.common.model.Size;
 import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mp3.MPEGAudioDemuxer;
+import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer.Builder;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
 import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
@@ -120,7 +122,7 @@ public class SourceImpl implements Source, PacketSource {
     }
 
     public void initDemuxer() throws FileNotFoundException, IOException {
-        if (inputFormat != IMG)
+        if (inputFormat != IMG && inputFormat != DASH)
             sourceStream = readableFileChannel(sourceName);
 
         if (MOV == inputFormat) {
@@ -165,6 +167,13 @@ public class SourceImpl implements Source, PacketSource {
                     mtsDemuxer.getProgram(pid).close();
                 }
             }
+        } else if (Format.DASH == inputFormat) { 
+            Builder builder = DashMP4Demuxer.builder();
+            String[] split = sourceName.split(":");
+            for (String string : split) {
+                builder.addTrack().addPattern(string).done();
+            }
+            demuxVideo = demuxAudio = builder.build();
         } else {
             throw new RuntimeException("Input format: " + inputFormat + " is not supported.");
         }
@@ -225,14 +234,16 @@ public class SourceImpl implements Source, PacketSource {
                 if (videoPacketReorderBuffer.size() == 0)
                     return null;
                 Packet out = videoPacketReorderBuffer.remove(0);
-                int duration = Integer.MAX_VALUE;
-                for (Packet packet2 : videoPacketReorderBuffer) {
-                    int cand = (int) (packet2.getPts() - out.getPts());
-                    if (cand > 0 && cand < duration)
-                        duration = cand;
+                if (out.getDuration() <= 0) {
+                    int duration = Integer.MAX_VALUE;
+                    for (Packet packet2 : videoPacketReorderBuffer) {
+                        int cand = (int) (packet2.getPts() - out.getPts());
+                        if (cand > 0 && cand < duration)
+                            duration = cand;
+                    }
+                    if (duration != Integer.MAX_VALUE)
+                        out.setDuration(duration);
                 }
-                if (duration != Integer.MAX_VALUE)
-                    out.setDuration(duration);
                 return out;
             }
         }

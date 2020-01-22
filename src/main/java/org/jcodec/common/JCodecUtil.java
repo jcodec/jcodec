@@ -31,6 +31,8 @@ import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mp3.MPEGAudioDemuxer;
+import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer.Builder;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
@@ -181,7 +183,7 @@ public class JCodecUtil {
 
     public static Demuxer createDemuxer(Format format, File input) throws IOException {
         FileChannelWrapper ch = null;
-        if (format != IMG) {
+        if (format != IMG && format != DASH) {
             ch = NIOUtils.readableChannel(input);
         }
         if (MOV == format) {
@@ -202,6 +204,13 @@ public class JCodecUtil {
             return new WavDemuxer(ch);
         } else if (MPEG_AUDIO == format) {
             return new MPEGAudioDemuxer(ch);
+        } else if (DASH == format) {
+            Builder builder = DashMP4Demuxer.builder();
+            String[] split = input.getAbsolutePath().split(":");
+            for (String string : split) {
+                builder.addTrack().addPattern(string).done();
+            }
+            return builder.build();
         } else {
             Logger.error("Format " + format + " is not supported");
         }

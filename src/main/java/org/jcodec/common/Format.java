@@ -28,6 +28,7 @@ public final class Format {
     public final static Format WAV = new Format("WAV", false, true);
     public final static Format WEBP = new Format("WEBP", true, false);
     public final static Format MPEG_AUDIO = new Format("MPEG_AUDIO", false, true);
+    public final static Format DASH = new Format("DASH", true, true);
 
     private final static Map<String, Format> _values = new LinkedHashMap<String, Format>();
     static {
@@ -46,6 +47,7 @@ public final class Format {
         _values.put("WAV", WAV);
         _values.put("WEBP", WEBP);
         _values.put("MPEG_AUDIO", MPEG_AUDIO);
+        _values.put("DASH", DASH);
     }
 
     private final boolean video;

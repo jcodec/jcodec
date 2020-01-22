@@ -63,7 +63,11 @@ public class MP4DemuxerTrack extends AbstractMP4DemuxerTrack {
             partialSync = stps.getSyncSamples();
         }
 
-        sizes = stsz.getSizes();
+        if (stsz.getDefaultSize() != 0) {
+            sizes = new int[1];
+            sizes[0] = stsz.getDefaultSize();
+        } else
+            sizes = stsz.getSizes();
     }
 
     @Override

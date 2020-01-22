@@ -12,14 +12,20 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.jcodec.common.AudioCodecMeta;
+import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.UsedViaReflection;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Movie;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.HandlerBox;
 import org.jcodec.containers.mp4.boxes.MovieBox;
@@ -40,40 +46,50 @@ import org.jcodec.platform.Platform;
  */
 public class MP4Demuxer implements Demuxer {
 
-    private List<AbstractMP4DemuxerTrack> tracks;
+    private List<SeekableDemuxerTrack> tracks;
     private TimecodeMP4DemuxerTrack timecodeTrack;
     MovieBox movie;
     protected SeekableByteChannel input;
-    
-    //modifies h264 to conform to annexb and aac to contain adts header
+
+    // modifies h264 to conform to annexb and aac to contain adts header
     public static MP4Demuxer createMP4Demuxer(SeekableByteChannel input) throws IOException {
         return new MP4Demuxer(input);
     }
 
-    //does not modify packets
+    // does not modify packets
     public static MP4Demuxer createRawMP4Demuxer(SeekableByteChannel input) throws IOException {
         return new MP4Demuxer(input) {
             @Override
-            protected AbstractMP4DemuxerTrack newTrack(TrakBox trak) {
+            protected SeekableDemuxerTrack newTrack(TrakBox trak) {
                 return new MP4DemuxerTrack(movie, trak, this.input);
             }
         };
     }
 
-    private AbstractMP4DemuxerTrack fromTrakBox(TrakBox trak) {
+    private SeekableDemuxerTrack fromTrakBox(TrakBox trak) {
         SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
-        if (stsz.getDefaultSize() == 0)
-            return newTrack(trak);
-        return new PCMMP4DemuxerTrack(movie, trak, input);
+
+        SampleEntry[] sampleEntries = NodeBox.findAllPath(trak, SampleEntry.class,
+                new String[] { "mdia", "minf", "stbl", "stsd", null });
+        boolean isPCM = (sampleEntries[0] instanceof AudioSampleEntry)
+                && isPCMCodec(Codec.codecByFourcc(sampleEntries[0].getFourcc()));
+
+        if (stsz.getDefaultSize() != 0 && isPCM)
+            return new PCMMP4DemuxerTrack(movie, trak, input);
+        return newTrack(trak);
     }
 
-    protected AbstractMP4DemuxerTrack newTrack(TrakBox trak) {
-        return new CodecMP4DemuxerTrack(movie, trak, input);
+    private boolean isPCMCodec(Codec codec) {
+        return codec != null && codec.isPcm();
+    }
+
+    protected SeekableDemuxerTrack newTrack(TrakBox trak) {
+        return new CodecMP4DemuxerTrack(new MP4DemuxerTrack(movie, trak, input));
     }
 
     MP4Demuxer(SeekableByteChannel input) throws IOException {
         this.input = input;
-        tracks = new LinkedList<AbstractMP4DemuxerTrack>();
+        tracks = new LinkedList<SeekableDemuxerTrack>();
         findMovieBox(input);
     }
 
@@ -91,7 +107,8 @@ public class MP4Demuxer implements Demuxer {
         TrakBox[] trakBoxs = NodeBox.findAll(moov, TrakBox.class, "trak");
         for (int i = 0; i < trakBoxs.length; i++) {
             TrakBox trak = trakBoxs[i];
-            SampleEntry se = NodeBox.findFirstPath(trak, SampleEntry.class, new String[] { "mdia", "minf", "stbl", "stsd", null });
+            SampleEntry se = NodeBox.findFirstPath(trak, SampleEntry.class,
+                    new String[] { "mdia", "minf", "stbl", "stsd", null });
             if (se != null && "tmcd".equals(se.getFourcc())) {
                 tt = trak;
             } else {
@@ -111,8 +128,9 @@ public class MP4Demuxer implements Demuxer {
     }
 
     public DemuxerTrack getVideoTrack() {
-        for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
-            if (demuxerTrack.box.isVideo())
+        for (SeekableDemuxerTrack demuxerTrack : tracks) {
+            DemuxerTrackMeta meta = demuxerTrack.getMeta();
+            if (meta.getType() == TrackType.VIDEO)
                 return demuxerTrack;
         }
         return null;
@@ -122,24 +140,17 @@ public class MP4Demuxer implements Demuxer {
         return movie;
     }
 
-    public AbstractMP4DemuxerTrack getTrack(int no) {
-        for (AbstractMP4DemuxerTrack track : tracks) {
-            if (track.getNo() == no)
-                return track;
-        }
-        return null;
-    }
-
     @Override
-    public List<AbstractMP4DemuxerTrack> getTracks() {
-        return new ArrayList<AbstractMP4DemuxerTrack>(tracks);
+    public List<SeekableDemuxerTrack> getTracks() {
+        return new ArrayList<SeekableDemuxerTrack>(tracks);
     }
 
     @Override
     public List<DemuxerTrack> getVideoTracks() {
         ArrayList<DemuxerTrack> result = new ArrayList<DemuxerTrack>();
-        for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
-            if (demuxerTrack.box.isVideo())
+        for (SeekableDemuxerTrack demuxerTrack : tracks) {
+            DemuxerTrackMeta meta = demuxerTrack.getMeta();
+            if (meta.getType() == TrackType.VIDEO)
                 result.add(demuxerTrack);
         }
         return result;
@@ -148,8 +159,9 @@ public class MP4Demuxer implements Demuxer {
     @Override
     public List<DemuxerTrack> getAudioTracks() {
         ArrayList<DemuxerTrack> result = new ArrayList<DemuxerTrack>();
-        for (AbstractMP4DemuxerTrack demuxerTrack : tracks) {
-            if (demuxerTrack.box.isAudio())
+        for (SeekableDemuxerTrack demuxerTrack : tracks) {
+            DemuxerTrackMeta meta = demuxerTrack.getMeta();
+            if (meta.getType() == TrackType.AUDIO)
                 result.add(demuxerTrack);
         }
         return result;

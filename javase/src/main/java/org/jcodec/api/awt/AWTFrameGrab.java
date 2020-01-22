@@ -35,6 +35,11 @@ import java.io.IOException;
  * 
  */
 public class AWTFrameGrab extends FrameGrab {
+    public static AWTFrameGrab createAWTFromDash(String pattern) throws IOException, JCodecException {
+        FrameGrab fg = FrameGrab.createForDash(pattern);
+        return new AWTFrameGrab(fg.getVideoTrack(), fg.getDecoder());
+    }
+    
     public static AWTFrameGrab createAWTFrameGrab(SeekableByteChannel _in) throws IOException, JCodecException {
         FrameGrab fg = FrameGrab.createFrameGrab(_in);
         return new AWTFrameGrab(fg.getVideoTrack(), fg.getDecoder());

@@ -63,8 +63,8 @@ public class MP4DemuxerTest {
         File source = new File("src/test/java/org/jcodec/containers/mp4/demuxer/a01_0023.mp4");
         SeekableByteChannel input = new AutoFileChannelWrapper(source);
         MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(input);
-        PCMMP4DemuxerTrack track = (PCMMP4DemuxerTrack) demuxer.getAudioTracks().get(0);
-        assertEquals(6, track.getFrameSize());
+        DemuxerTrack track = demuxer.getAudioTracks().get(0);
+        assertEquals(13, track.nextFrame().getData().remaining());
     }
 
     @Test
