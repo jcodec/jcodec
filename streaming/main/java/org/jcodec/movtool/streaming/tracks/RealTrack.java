@@ -22,6 +22,7 @@ import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.CodecMP4DemuxerTrack;
+import org.jcodec.containers.mp4.demuxer.MP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.PCMMP4DemuxerTrack;
 import org.jcodec.movtool.streaming.VirtualPacket;
 import org.jcodec.movtool.streaming.VirtualTrack;
@@ -45,12 +46,13 @@ public class RealTrack implements VirtualTrack {
     private ByteChannelPool pool;
     private AbstractMP4DemuxerTrack demuxer;
     private MovieBox movie;
+    private CodecMP4DemuxerTrack codedTrack;
 
     public RealTrack(MovieBox movie, TrakBox trak, ByteChannelPool pool) {
         this.movie = movie;
         SampleSizesBox stsz = NodeBox.findFirstPath(trak, SampleSizesBox.class, Box.path("mdia.minf.stbl.stsz"));
         if (stsz.getDefaultSize() == 0) {
-            this.demuxer = new CodecMP4DemuxerTrack(movie, trak, null) {
+            this.demuxer = new MP4DemuxerTrack(movie, trak, null) {
                 @Override
                 protected ByteBuffer readPacketData(SeekableByteChannel ch, ByteBuffer buffer, long position, int size)
                         throws IOException {
@@ -66,13 +68,14 @@ public class RealTrack implements VirtualTrack {
                 }
             };
         }
+        this.codedTrack = new CodecMP4DemuxerTrack(this.demuxer);
         this.trak = trak;
         this.pool = pool;
     }
 
     @Override
     public VirtualPacket nextPacket() throws IOException {
-        MP4Packet pkt = demuxer.getNextFrame(null);
+        MP4Packet pkt = (MP4Packet)codedTrack.nextFrame();
         if (pkt == null)
             return null;
         return new RealPacket(this, pkt);
@@ -139,7 +142,7 @@ public class RealTrack implements VirtualTrack {
                 ch.setPosition(packet.getFileOff());
                 ch.read(bb);
                 bb.flip();
-                return track.demuxer.convertPacket(bb);
+                return track.codedTrack.convertPacket(bb);
             } finally {
                 if (ch != null)
                     ch.close();

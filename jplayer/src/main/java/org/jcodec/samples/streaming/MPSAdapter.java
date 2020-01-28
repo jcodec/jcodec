@@ -62,8 +62,8 @@ public class MPSAdapter implements Adapter {
         }
 
         @Override
-        public int search(long pts) throws IOException {
-            FrameEntry e = index.search(track.getSid(), pts);
+        public int search(double sec) throws IOException {
+            FrameEntry e = index.search(track.getSid(), (long)(sec * 90000));
             return e == null ? -1 : e.frameNo;
         }
     }

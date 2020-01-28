@@ -1,17 +1,31 @@
 package org.jcodec.api.transcode;
 
-import static org.jcodec.common.Codec.*;
-import static org.jcodec.common.Format.*;
+import static org.jcodec.common.Codec.AAC;
+import static org.jcodec.common.Codec.JPEG;
+import static org.jcodec.common.Codec.MPEG2;
+import static org.jcodec.common.Codec.MPEG4;
+import static org.jcodec.common.Codec.PCM;
+import static org.jcodec.common.Codec.PNG;
+import static org.jcodec.common.Codec.PRORES;
+import static org.jcodec.common.Codec.VP8;
+import static org.jcodec.common.Format.DASHURL;
+import static org.jcodec.common.Format.IMG;
+import static org.jcodec.common.Format.MKV;
+import static org.jcodec.common.Format.MOV;
+import static org.jcodec.common.Format.MPEG_AUDIO;
+import static org.jcodec.common.Format.MPEG_PS;
+import static org.jcodec.common.Format.MPEG_TS;
+import static org.jcodec.common.Format.WAV;
+import static org.jcodec.common.Format.WEBP;
+import static org.jcodec.common.Format.Y4M;
 import static org.jcodec.common.io.NIOUtils.readableFileChannel;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import net.sourceforge.jaad.aac.AACException;
 
 import org.jcodec.api.transcode.PixelStore.LoanerPicture;
 import org.jcodec.codecs.aac.AACDecoder;
@@ -58,13 +72,16 @@ import org.jcodec.containers.imgseq.ImageSequenceDemuxer;
 import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mp3.MPEGAudioDemuxer;
 import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer;
-import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer.Builder;
+import org.jcodec.containers.mp4.demuxer.DashStreamDemuxer;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
-import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.webp.WebpDemuxer;
 import org.jcodec.containers.y4m.Y4MDemuxer;
+
+import net.sourceforge.jaad.aac.AACException;
 
 /**
  * A source producing uncompressed video/audio streams out of a compressed file.
@@ -121,8 +138,8 @@ public class SourceImpl implements Source, PacketSource {
         }
     }
 
-    public void initDemuxer() throws FileNotFoundException, IOException {
-        if (inputFormat != IMG && inputFormat != DASH)
+    public void initDemuxer() throws IOException {
+        if (inputFormat.isContained())
             sourceStream = readableFileChannel(sourceName);
 
         if (MOV == inputFormat) {
@@ -174,6 +191,8 @@ public class SourceImpl implements Source, PacketSource {
                 builder.addTrack().addPattern(string).done();
             }
             demuxVideo = demuxAudio = builder.build();
+        } else if (DASHURL == inputFormat) {
+            demuxVideo = demuxAudio = new DashStreamDemuxer(new URL(sourceName));
         } else {
             throw new RuntimeException("Input format: " + inputFormat + " is not supported.");
         }

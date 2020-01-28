@@ -8,6 +8,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.TrackType;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.Packet;
@@ -17,6 +20,7 @@ import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
 import org.jcodec.containers.mp4.demuxer.AbstractMP4DemuxerTrack;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.MP4DemuxerTrackMeta;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -36,8 +40,9 @@ public class JCodecPacketSource {
         demuxer = MP4Demuxer.createMP4Demuxer(is);
 
         tracks = new ArrayList<Track>();
-        for (AbstractMP4DemuxerTrack demuxerTrack : demuxer.getTracks()) {
-            if (demuxerTrack.getBox().isVideo() || demuxerTrack.getBox().isAudio())
+        for (SeekableDemuxerTrack demuxerTrack : demuxer.getTracks()) {
+            DemuxerTrackMeta meta = demuxerTrack.getMeta();
+            if (meta.getType() == TrackType.VIDEO || meta.getType() == TrackType.AUDIO)
                 tracks.add(new Track(demuxerTrack));
         }
     }
@@ -48,7 +53,8 @@ public class JCodecPacketSource {
 
     public PacketSource getVideo() {
         for (Track track : tracks) {
-            if (track.track.getBox().isVideo())
+            DemuxerTrackMeta meta = track.track.getMeta();
+            if (meta.getType() == TrackType.VIDEO)
                 return track;
         }
         return null;
@@ -57,17 +63,18 @@ public class JCodecPacketSource {
     public List<? extends PacketSource> getAudio() {
         List<Track> result = new ArrayList<Track>();
         for (Track track : tracks) {
-            if (track.track.getBox().isAudio())
+            DemuxerTrackMeta meta = track.track.getMeta();
+            if (meta.getType() == TrackType.AUDIO)
                 result.add(track);
         }
         return result;
     }
 
     public class Track implements PacketSource {
-        private AbstractMP4DemuxerTrack track;
+        private SeekableDemuxerTrack track;
         private boolean closed;
 
-        public Track(AbstractMP4DemuxerTrack track) {
+        public Track(SeekableDemuxerTrack track) {
             this.track = track;
         }
 
@@ -80,26 +87,29 @@ public class JCodecPacketSource {
         }
 
         public MediaInfo getMediaInfo() {
-            RationalLarge duration = track.getDuration();
-            if (track.getBox().isVideo()) {
-                VideoSampleEntry se = (VideoSampleEntry) track.getSampleEntries()[0];
+            MP4DemuxerTrackMeta meta = (MP4DemuxerTrackMeta) track.getMeta();
+            RationalLarge duration = RationalLarge.R((long) (meta.getTotalDuration() * 1000), 1000);
+            if (meta.getType() == TrackType.VIDEO) {
+                VideoSampleEntry se = (VideoSampleEntry) meta.getSampleEntries()[0];
                 return new MediaInfo.VideoInfo(se.getFourcc(), (int) duration.getDen(), duration.getNum(),
-                        track.getFrameCount(), track.getName(), null, track.getBox().getPAR(), new Size(
-                                (int) se.getWidth(), (int) se.getHeight()));
-            } else if (track.getBox().isAudio()) {
-                AudioSampleEntry se = (AudioSampleEntry) track.getSampleEntries()[0];
+                        meta.getTotalFrames(), meta.getVideoCodecMeta().getFourcc(), null,
+                        meta.getVideoCodecMeta().getPasp(), new Size((int) se.getWidth(), (int) se.getHeight()));
+            } else if (meta.getType() == TrackType.AUDIO) {
+                AudioSampleEntry se = (AudioSampleEntry) meta.getSampleEntries()[0];
                 return new MediaInfo.AudioInfo(se.getFourcc(), (int) duration.getDen(), duration.getNum(),
-                        track.getFrameCount(), track.getName(), null, se.getFormat(), se.getLabels());
+                        meta.getTotalFrames(), meta.getAudioCodecMeta().getFourcc(), null, se.getFormat(),
+                        se.getLabels());
             }
             throw new RuntimeException("This shouldn't happen");
         }
 
-        public boolean drySeek(RationalLarge second) {
-            return track.canSeek(second.multiplyS(track.getTimescale()));
+        public boolean drySeek(RationalLarge second) throws IOException {
+            track.seek(second.scalar());
+            return true;
         }
 
-        public void seek(RationalLarge second) {
-            track.seek(second.multiplyS(track.getTimescale()));
+        public void seek(RationalLarge second) throws IOException {
+            track.seek(second.scalar());
         }
 
         public void close() throws IOException {
@@ -108,7 +118,7 @@ public class JCodecPacketSource {
         }
 
         @Override
-        public void gotoFrame(int frameNo) {
+        public void gotoFrame(int frameNo) throws IOException {
             track.gotoFrame(frameNo);
         }
     }

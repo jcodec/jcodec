@@ -15,9 +15,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.channels.ReadableByteChannel;
@@ -306,6 +308,19 @@ public class NIOUtils {
             }
         } while (read != -1 && amount > 0);
     }
+    
+    public static void copyAll(ReadableByteChannel in, WritableByteChannel out) throws IOException {
+        ByteBuffer buf = ByteBuffer.allocate(0x10000);
+        int read;
+        do {
+            buf.position(0);
+            read = in.read(buf);
+            if (read != -1) {
+                buf.flip();
+                out.write(buf);
+            }
+        } while (read != -1);
+    }
 
     public static void closeQuietly(Closeable channel) {
         if (channel == null)
@@ -482,5 +497,21 @@ public class NIOUtils {
         }
         bb.position(pos);
         bb.limit(bb.capacity());
+    }
+    
+    public static boolean fetchUrl(URL urlInit, File fm) throws IOException {
+        ReadableByteChannel in = null;
+        SeekableByteChannel out = null;
+        try {
+            in = Channels.newChannel(urlInit.openConnection().getInputStream());
+            out = NIOUtils.writableChannel(fm);
+            NIOUtils.copyAll(in, out);
+        } catch(FileNotFoundException e) {
+            return false;
+        } finally {
+            NIOUtils.closeQuietly(in);
+            NIOUtils.closeQuietly(out);
+        }
+        return true;
     }
 }

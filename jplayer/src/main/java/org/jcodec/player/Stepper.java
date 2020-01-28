@@ -174,7 +174,7 @@ public class Stepper {
         return pts;
     }
 
-    public void gotoFrame(int frame) {
+    public void gotoFrame(int frame) throws IOException {
         videoSource.gotoFrame(frame);
         // frameNo = frame;
     }

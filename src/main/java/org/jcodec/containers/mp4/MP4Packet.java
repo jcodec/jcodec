@@ -68,4 +68,12 @@ public class MP4Packet extends Packet {
     public boolean isPsync() {
         return psync;
     }
+
+    public void setMediaPts(long arg) {
+        this.mediaPts = arg;
+    }
+
+    public void setFrameNo(int arg) {
+        this.frameNo = arg;
+    }
 }

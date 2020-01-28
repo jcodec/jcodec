@@ -1,11 +1,23 @@
 package org.jcodec.common;
 
-import static org.jcodec.common.Codec.*;
-import static org.jcodec.common.Format.*;
-import static org.jcodec.common.Tuple._2;
+import static org.jcodec.common.Codec.AAC;
+import static org.jcodec.common.Codec.JPEG;
+import static org.jcodec.common.Codec.MPEG2;
+import static org.jcodec.common.Codec.VP8;
+import static org.jcodec.common.Format.DASH;
+import static org.jcodec.common.Format.DASHURL;
+import static org.jcodec.common.Format.IMG;
+import static org.jcodec.common.Format.MKV;
+import static org.jcodec.common.Format.MOV;
+import static org.jcodec.common.Format.MPEG_AUDIO;
+import static org.jcodec.common.Format.MPEG_PS;
+import static org.jcodec.common.Format.WAV;
+import static org.jcodec.common.Format.WEBP;
+import static org.jcodec.common.Format.Y4M;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.HashMap;
@@ -22,6 +34,7 @@ import org.jcodec.codecs.ppm.PPMEncoder;
 import org.jcodec.codecs.prores.ProresDecoder;
 import org.jcodec.codecs.vpx.VP8Decoder;
 import org.jcodec.codecs.wav.WavDemuxer;
+import org.jcodec.common.Tuple._2;
 import org.jcodec.common.io.FileChannelWrapper;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
@@ -33,6 +46,7 @@ import org.jcodec.containers.mkv.demuxer.MKVDemuxer;
 import org.jcodec.containers.mp3.MPEGAudioDemuxer;
 import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer.Builder;
+import org.jcodec.containers.mp4.demuxer.DashStreamDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
@@ -181,10 +195,10 @@ public class JCodecUtil {
         return name.replaceAll("\\.[^\\.]+$", "");
     }
 
-    public static Demuxer createDemuxer(Format format, File input) throws IOException {
+    public static Demuxer createDemuxer(Format format, String input) throws IOException {
         FileChannelWrapper ch = null;
-        if (format != IMG && format != DASH) {
-            ch = NIOUtils.readableChannel(input);
+        if (format.isContained()) {
+            ch = NIOUtils.readableFileChannel(input);
         }
         if (MOV == format) {
             return MP4Demuxer.createMP4Demuxer(ch);
@@ -193,7 +207,7 @@ public class JCodecUtil {
         } else if (MKV == format) {
             return new MKVDemuxer(ch);
         } else if (IMG == format) {
-            return new ImageSequenceDemuxer(input.getAbsolutePath(), Integer.MAX_VALUE);
+            return new ImageSequenceDemuxer(input, Integer.MAX_VALUE);
         } else if (Y4M == format) {
             return new Y4MDemuxer(ch);
         } else if (WEBP == format) {
@@ -206,11 +220,13 @@ public class JCodecUtil {
             return new MPEGAudioDemuxer(ch);
         } else if (DASH == format) {
             Builder builder = DashMP4Demuxer.builder();
-            String[] split = input.getAbsolutePath().split(":");
+            String[] split = input.split(":");
             for (String string : split) {
                 builder.addTrack().addPattern(string).done();
             }
             return builder.build();
+        } else if (DASHURL == format) {
+            return new DashStreamDemuxer(new URL(input));
         } else {
             Logger.error("Format " + format + " is not supported");
         }

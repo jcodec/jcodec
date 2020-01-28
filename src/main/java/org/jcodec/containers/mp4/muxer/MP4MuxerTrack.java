@@ -95,7 +95,8 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
         
         if (_timescale != pkt.getTimescale()) {
             pkt.setPts((pkt.getPts() * _timescale) / pkt.getTimescale());
-            pkt.setDuration((pkt.getPts() * _timescale) / pkt.getDuration());
+            pkt.setDuration((pkt.getDuration() * _timescale) / pkt.getTimescale());
+            pkt.setTimescale(_timescale);
         }
         
         if(type == MP4TrackType.VIDEO) {

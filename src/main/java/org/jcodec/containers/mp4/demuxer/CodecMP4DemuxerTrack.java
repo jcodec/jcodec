@@ -49,24 +49,29 @@ public class CodecMP4DemuxerTrack implements SeekableDemuxerTrack {
         Packet nextFrame = other.nextFrame();
         if (nextFrame == null)
             return null;
+        ByteBuffer newData = convertPacket(nextFrame.getData());
+        return MP4Packet.createMP4PacketWithData((MP4Packet) nextFrame, newData);
+    }
+
+    public ByteBuffer convertPacket(ByteBuffer data) {
         if (codecPrivate != null) {
             if (codec == Codec.H264) {
-                ByteBuffer annexbCoded = H264Utils.decodeMOVPacket(nextFrame.getData(), avcC);
+                ByteBuffer annexbCoded = H264Utils.decodeMOVPacket(data, avcC);
                 if (H264Utils.isByteBufferIDRSlice(annexbCoded)) {
                     ByteBuffer newData = NIOUtils.combineBuffers(Arrays.asList(codecPrivate, annexbCoded));
-                    return MP4Packet.createMP4PacketWithData((MP4Packet) nextFrame, newData);
+                    return newData;
                 } else {
-                    return MP4Packet.createMP4PacketWithData((MP4Packet) nextFrame, annexbCoded);
+                    return annexbCoded;
                 }
             } else if (codec == Codec.AAC) {
-                Header adts = AACUtils.streamInfoToADTS(codecPrivate, true, 1, nextFrame.getData().remaining());
+                Header adts = AACUtils.streamInfoToADTS(codecPrivate, true, 1, data.remaining());
                 ByteBuffer adtsRaw = ByteBuffer.allocate(7);
                 ADTSParser.write(adts, adtsRaw);
-                ByteBuffer newData = NIOUtils.combineBuffers(Arrays.asList(adtsRaw, nextFrame.getData()));
-                return MP4Packet.createMP4PacketWithData((MP4Packet) nextFrame, newData);
+                ByteBuffer newData = NIOUtils.combineBuffers(Arrays.asList(adtsRaw, data));
+                return newData;
             }
         }
-        return nextFrame;
+        return data;
     }
 
     @Override

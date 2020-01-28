@@ -162,8 +162,8 @@ public class MTSAdapter implements Adapter {
         }
 
         @Override
-        public int search(long pts) throws IOException {
-            FrameEntry e = index.search(sid, pts);
+        public int search(double sec) throws IOException {
+            FrameEntry e = index.search(sid, (long)(sec * 90000));
             return e == null ? -1 : e.frameNo;
         }
 
@@ -189,8 +189,8 @@ public class MTSAdapter implements Adapter {
         }
 
         @Override
-        public int search(long pts) throws IOException {
-            FrameEntry e = index.search(sid, pts);
+        public int search(double sec) throws IOException {
+            FrameEntry e = index.search(sid, (long)(sec * 90000));
 
             return e == null ? -1 : e.frameNo;
         }

@@ -109,13 +109,14 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
             }
         }
         
-        if (_timescale != pkt.getTimescale()) {
-            pkt.setPts((pkt.getPts() * _timescale) / pkt.getTimescale());
-            pkt.setDuration((pkt.getPts() * _timescale) / pkt.getDuration());
-        }
-        
         if (adtsHeader != null) {
             pkt.setDuration(1024);
+        }
+        
+        if (_timescale != pkt.getTimescale()) {
+            pkt.setPts((pkt.getPts() * _timescale) / pkt.getTimescale());
+            pkt.setDuration((pkt.getDuration() * _timescale) / pkt.getTimescale());
+            pkt.setTimescale(_timescale);
         }
 
         super.addFrameInternal(pkt, entryNo);

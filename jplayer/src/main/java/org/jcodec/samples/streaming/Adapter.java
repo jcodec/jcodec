@@ -30,12 +30,12 @@ public interface Adapter {
          * The pts doesn't necessarily need to fall on a frame, it can be
          * somewhere betrween the adjacent frames
          * 
-         * @param pts
+         * @param sec
          * @return Frame number of a frame with a given pts or -1 if none is
          *         found
          * @throws IOException
          */
-        int search(long pts) throws IOException;
+        int search(double sec) throws IOException;
     }
 
     public interface VideoAdapterTrack extends AdapterTrack {

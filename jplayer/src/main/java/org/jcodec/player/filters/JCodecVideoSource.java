@@ -221,7 +221,7 @@ public class JCodecVideoSource implements VideoSource {
     }
 
     @Override
-    public void gotoFrame(int frame) {
+    public void gotoFrame(int frame) throws IOException {
         clearReordering();
         src.gotoFrame(frame);
     }

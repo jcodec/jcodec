@@ -425,7 +425,7 @@ public class TranscodeMain {
         if (format == Format.MPEG_TS) {
             demuxerPid = JCodecUtil.createM2TSDemuxer(new File(input), targetType);
         } else {
-            demuxerPid = Tuple.pair(0, JCodecUtil.createDemuxer(format, new File(input)));
+            demuxerPid = Tuple.pair(0, JCodecUtil.createDemuxer(format, input));
         }
         if (demuxerPid == null || demuxerPid.v1 == null)
             return null;

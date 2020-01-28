@@ -13,22 +13,23 @@ import java.util.Map;
  * 
  */
 public final class Format {
-    public final static Format MOV = new Format("MOV", true, true);
-    public final static Format MPEG_PS = new Format("MPEG_PS", true, true);
-    public final static Format MPEG_TS = new Format("MPEG_TS", true, true);
-    public final static Format MKV = new Format("MKV", true, true);
-    public final static Format H264 = new Format("H264", true, false);
-    public final static Format RAW = new Format("RAW", true, true);
-    public final static Format FLV = new Format("FLV", true, true);
-    public final static Format AVI = new Format("AVI", true, true);
-    public final static Format IMG = new Format("IMG", true, false);
-    public final static Format IVF = new Format("IVF", true, false);
-    public final static Format MJPEG = new Format("MJPEG", true, false);
-    public final static Format Y4M = new Format("Y4M", true, false);
-    public final static Format WAV = new Format("WAV", false, true);
-    public final static Format WEBP = new Format("WEBP", true, false);
-    public final static Format MPEG_AUDIO = new Format("MPEG_AUDIO", false, true);
-    public final static Format DASH = new Format("DASH", true, true);
+    public final static Format MOV = new Format("MOV", true, true, true);
+    public final static Format MPEG_PS = new Format("MPEG_PS", true, true, true);
+    public final static Format MPEG_TS = new Format("MPEG_TS", true, true, true);
+    public final static Format MKV = new Format("MKV", true, true, true);
+    public final static Format H264 = new Format("H264", true, false, true);
+    public final static Format RAW = new Format("RAW", true, true, true);
+    public final static Format FLV = new Format("FLV", true, true, true);
+    public final static Format AVI = new Format("AVI", true, true, true);
+    public final static Format IMG = new Format("IMG", true, false, false);
+    public final static Format IVF = new Format("IVF", true, false, true);
+    public final static Format MJPEG = new Format("MJPEG", true, false, true);
+    public final static Format Y4M = new Format("Y4M", true, false, true);
+    public final static Format WAV = new Format("WAV", false, true, true);
+    public final static Format WEBP = new Format("WEBP", true, false, true);
+    public final static Format MPEG_AUDIO = new Format("MPEG_AUDIO", false, true, true);
+    public final static Format DASH = new Format("DASH", true, true, false);
+    public final static Format DASHURL = new Format("DASHURL", true, true, false);
 
     private final static Map<String, Format> _values = new LinkedHashMap<String, Format>();
     static {
@@ -48,16 +49,19 @@ public final class Format {
         _values.put("WEBP", WEBP);
         _values.put("MPEG_AUDIO", MPEG_AUDIO);
         _values.put("DASH", DASH);
+        _values.put("DASHURL", DASHURL);
     }
 
     private final boolean video;
     private final boolean audio;
     private final String name;
+    private boolean contained;
 
-    private Format(String name, boolean video, boolean audio) {
+    private Format(String name, boolean video, boolean audio, boolean contained) {
         this.name = name;
         this.video = video;
         this.audio = audio;
+        this.contained = contained;
     }
 
     public boolean isAudio() {
@@ -70,5 +74,9 @@ public final class Format {
 
     public static Format valueOf(String s) {
         return _values.get(s);
+    }
+
+    public boolean isContained() {
+        return contained;
     }
 }

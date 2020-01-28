@@ -86,13 +86,13 @@ public class VideoFilter {
             System.exit(-1);
         }
 
-        File input = new File(cmd.getArg(0));
+        String input = cmd.getArg(0);
         File output = new File(cmd.getArg(1));
 
-        Format format = JCodecUtil.detectFormat(input);
+        Format format = JCodecUtil.detectFormat(new File(input));
         Codec videoCodec = getVideoCodec(format, input);
         Codec audioCodec = getAudioCodec(format, input);
-        Source source = new SourceImpl(input.getAbsolutePath(), format, triple(0, 0, videoCodec), triple(0, 0, audioCodec));
+        Source source = new SourceImpl(input, format, triple(0, 0, videoCodec), triple(0, 0, audioCodec));
         Sink sink = new SinkImpl(output.getAbsolutePath(), MOV, videoCodec, audioCodec);
 
         TranscoderBuilder builder = Transcoder.newTranscoder();
@@ -106,12 +106,12 @@ public class VideoFilter {
         transcoder.transcode();
     }
 
-    private static Codec getAudioCodec(Format format, File input) throws IOException {
+    private static Codec getAudioCodec(Format format, String input) throws IOException {
         Demuxer demuxer = JCodecUtil.createDemuxer(format, input);
         return detectCodecInternal(demuxer.getAudioTracks());
     }
 
-    private static Codec getVideoCodec(Format format, File input) throws IOException {
+    private static Codec getVideoCodec(Format format, String input) throws IOException {
         Demuxer demuxer = JCodecUtil.createDemuxer(format, input);
         return detectCodecInternal(demuxer.getVideoTracks());
     }

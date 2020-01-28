@@ -50,7 +50,7 @@ public interface PacketSource {
      * 
      * @param frameNo
      */
-    void gotoFrame(int frameNo);
+    void gotoFrame(int frameNo) throws IOException;
 
     /**
      * Verifies if seek will be successful if performed

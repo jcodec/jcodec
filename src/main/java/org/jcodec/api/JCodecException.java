@@ -12,4 +12,8 @@ public class JCodecException extends Exception {
     public JCodecException(String arg0) {
         super(arg0);
     }
+
+    public JCodecException(Throwable e) {
+        super(e);
+    }
 }

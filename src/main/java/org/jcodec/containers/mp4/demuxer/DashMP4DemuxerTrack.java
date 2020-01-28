@@ -71,6 +71,7 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
     private long totalDuration;
     private TrakBox trak;
     private SampleEntry[] sampleEntries;
+    private double durationHint;
 
     public static class Fragment {
         TrackFragmentBox frag;
@@ -169,13 +170,15 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
 
     @Override
     public synchronized MP4Packet nextFrame() throws IOException {
-        if (curFrag >= sizes.length - 1)
+        if (curFrag >= sizes.length)
             return null;
         if (curFrame >= sizes[curFrag].length) {
             curFrag++;
             curFrame = 0;
             offInChunk = 0;
         }
+        if (curFrag >= sizes.length)
+            return null;
         int size = sizes[curFrag][(int) curFrame];
 
         return getNextFrame(ByteBuffer.allocate(size));
@@ -210,7 +213,9 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
         if (result != null && result.remaining() < size)
             return null;
 
-        int duration = sampleDurations[curFrag] == null ? avgDur[curFrag] : sampleDurations[curFrag][curFrame];
+        int duration = sampleDurations[curFrag] == null
+                ? (avgDur[curFrag] == 0 ? (int) (durationHint * trak.getTimescale()) : avgDur[curFrag])
+                : sampleDurations[curFrag][curFrame];
 
         boolean sync = curFrame == 0;
 
@@ -218,7 +223,7 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
         if (compOffsets[curFrag] != null) {
             realPts = pts + compOffsets[curFrag][curFrame];
         }
-        
+
         FrameType ftype = sync ? FrameType.KEY : FrameType.INTER;
         MP4Packet pkt = new MP4Packet(result, realPts, trak.getTimescale(), duration, globalFrame, ftype, null, 0,
                 realPts, 1, pktPos, size, false);
@@ -311,7 +316,7 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
                 globalFrame += is.length;
             } else {
                 pts += sampleDurations[curFrag] == null ? avgDur[curFrag] * frameNo
-                        : ArrayUtil.sumInt3(sampleDurations[curFrag], 0, (int)frameNo);
+                        : ArrayUtil.sumInt3(sampleDurations[curFrag], 0, (int) frameNo);
                 this.curFrag = curFrag;
                 this.curFrame = (int) frameNo;
                 this.globalFrame = globalFrame + frameNo;
@@ -412,5 +417,9 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
 
     public int getNo() {
         return trak.getTrackHeader().getTrackId();
+    }
+
+    public void setDurationHint(double arg) {
+        this.durationHint = arg;
     }
 }

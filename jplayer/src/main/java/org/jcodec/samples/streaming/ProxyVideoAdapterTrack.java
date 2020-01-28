@@ -29,8 +29,8 @@ public class ProxyVideoAdapterTrack implements VideoAdapterTrack {
     }
 
     @Override
-    public int search(long pts) throws IOException {
-        return src.search(pts);
+    public int search(double sec) throws IOException {
+        return src.search(sec);
     }
 
     @Override

@@ -51,7 +51,7 @@ public interface VideoSource {
      * 
      * @param frame
      */
-    void gotoFrame(int frame);
+    void gotoFrame(int frame) throws IOException;
 
     /**
      * Returns meta information about this stream
