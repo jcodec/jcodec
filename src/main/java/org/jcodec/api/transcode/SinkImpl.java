@@ -39,6 +39,7 @@ import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
 import org.jcodec.containers.imgseq.ImageSequenceMuxer;
 import org.jcodec.containers.mkv.muxer.MKVMuxer;
+import org.jcodec.containers.mp4.muxer.CodecMP4MuxerTrack;
 import org.jcodec.containers.mp4.muxer.MP4Muxer;
 import org.jcodec.containers.mp4.muxer.MP4MuxerTrack;
 import org.jcodec.containers.raw.RawMuxer;
@@ -59,14 +60,17 @@ public class SinkImpl implements Sink, PacketSink {
     private Codec outputVideoCodec;
     private Codec outputAudioCodec;
     private Format outputFormat;
-    //ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread
-    //FIXME: potential memory leak: non-static ThreadLocal
+    // ThreadLocal instances are typically private static fields in classes that
+    // wish to associate state with a thread
+    // FIXME: potential memory leak: non-static ThreadLocal
     private final ThreadLocal<ByteBuffer> bufferStore;
 
     private AudioEncoder audioEncoder;
     private VideoEncoder videoEncoder;
     private String profile;
     private boolean interlaced;
+    private ByteBuffer videoCodecPrivate;
+    private ByteBuffer audioCodecPrivate;
 
     @Override
     public void outputVideoPacket(Packet packet, VideoCodecMeta codecMeta) throws IOException {
@@ -75,8 +79,10 @@ public class SinkImpl implements Sink, PacketSink {
         if (videoOutputTrack == null) {
             videoOutputTrack = muxer.addVideoTrack(outputVideoCodec, codecMeta);
             if (videoOutputTrack instanceof MP4MuxerTrack) {
-                ((MP4MuxerTrack)videoOutputTrack).setTgtChunkDuration(Rational.R(3, 1), Unit.SEC);
+                ((MP4MuxerTrack) videoOutputTrack).setTgtChunkDuration(Rational.R(3, 1), Unit.SEC);
             }
+            if (videoOutputTrack instanceof CodecMP4MuxerTrack)
+                ((CodecMP4MuxerTrack) videoOutputTrack).setCodecPrivateOpaque(videoCodecPrivate);
         }
         videoOutputTrack.addFrame(packet);
         framesOutput = true;
@@ -89,13 +95,15 @@ public class SinkImpl implements Sink, PacketSink {
         if (audioOutputTrack == null) {
             audioOutputTrack = muxer.addAudioTrack(outputAudioCodec, audioCodecMeta);
             if (audioOutputTrack instanceof MP4MuxerTrack) {
-                ((MP4MuxerTrack)audioOutputTrack).setTgtChunkDuration(Rational.R(3, 1), Unit.SEC);
+                ((MP4MuxerTrack) audioOutputTrack).setTgtChunkDuration(Rational.R(3, 1), Unit.SEC);
             }
+            if (audioOutputTrack instanceof CodecMP4MuxerTrack)
+                ((CodecMP4MuxerTrack) audioOutputTrack).setCodecPrivateOpaque(audioCodecPrivate);
         }
         audioOutputTrack.addFrame(audioPkt);
         framesOutput = true;
     }
-    
+
     public void initMuxer() throws IOException {
         if (destStream == null && outputFormat != IMG)
             destStream = writableFileChannel(destName);
@@ -114,7 +122,7 @@ public class SinkImpl implements Sink, PacketSink {
         } else if (Format.RAW == outputFormat) {
             muxer = new RawMuxer(destStream);
         } else {
-			throw new RuntimeException("The output format " + outputFormat + " is not supported.");
+            throw new RuntimeException("The output format " + outputFormat + " is not supported.");
         }
     }
 
@@ -130,8 +138,8 @@ public class SinkImpl implements Sink, PacketSink {
     }
 
     public SinkImpl(String destName, Format outputFormat, Codec outputVideoCodec, Codec outputAudioCodec) {
-    	if (destName == null && outputFormat == IMG)
-    		throw new IllegalArgumentException("A destination file should be specified for the image muxer.");
+        if (destName == null && outputFormat == IMG)
+            throw new IllegalArgumentException("A destination file should be specified for the image muxer.");
         this.destName = destName;
         this.outputFormat = outputFormat;
         this.outputVideoCodec = outputVideoCodec;
@@ -140,10 +148,25 @@ public class SinkImpl implements Sink, PacketSink {
         bufferStore = new ThreadLocal<ByteBuffer>();
     }
     
-    public static SinkImpl createWithStream(SeekableByteChannel destStream, Format outputFormat, Codec outputVideoCodec, Codec outputAudioCodec) {
-    	SinkImpl result = new SinkImpl(null, outputFormat, outputVideoCodec, outputAudioCodec);
-    	result.destStream = destStream;
-    	return result;
+    @Override
+    public void setVideoCodecPrivate(ByteBuffer videoCodecPrivate) {
+        this.videoCodecPrivate = videoCodecPrivate;
+        if (videoOutputTrack instanceof CodecMP4MuxerTrack)
+            ((CodecMP4MuxerTrack) videoOutputTrack).setCodecPrivateOpaque(videoCodecPrivate);
+    }
+    
+    @Override
+    public void setAudioCodecPrivate(ByteBuffer audioCodecPrivate) {
+        this.audioCodecPrivate = audioCodecPrivate;
+        if (audioOutputTrack instanceof CodecMP4MuxerTrack)
+            ((CodecMP4MuxerTrack) audioOutputTrack).setCodecPrivateOpaque(audioCodecPrivate);
+    }
+
+    public static SinkImpl createWithStream(SeekableByteChannel destStream, Format outputFormat, Codec outputVideoCodec,
+            Codec outputAudioCodec) {
+        SinkImpl result = new SinkImpl(null, outputFormat, outputVideoCodec, outputAudioCodec);
+        result.destStream = destStream;
+        return result;
     }
 
     @Override
@@ -220,8 +243,8 @@ public class SinkImpl implements Sink, PacketSink {
         EncodedFrame enc = encodeVideo(frame, buffer);
         outputVideoPacket = Packet.createPacketWithData(videoFrame.getPacket(), NIOUtils.clone(enc.getData()));
         outputVideoPacket.setFrameType(enc.isKeyFrame() ? FrameType.KEY : FrameType.INTER);
-        outputVideoPacket(outputVideoPacket,
-                org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta(new Size(frame.getWidth(), frame.getHeight()), frame.getColor()));
+        outputVideoPacket(outputVideoPacket, org.jcodec.common.VideoCodecMeta
+                .createSimpleVideoCodecMeta(new Size(frame.getWidth(), frame.getHeight()), frame.getColor()));
     }
 
     @Override
@@ -235,7 +258,8 @@ public class SinkImpl implements Sink, PacketSink {
     @Override
     public ColorSpace getInputColor() {
         if (videoEncoder == null)
-        	throw new IllegalStateException("Video encoder has not been initialized, init() must be called before using this class.");
+            throw new IllegalStateException(
+                    "Video encoder has not been initialized, init() must be called before using this class.");
         ColorSpace[] colorSpaces = videoEncoder.getSupportedColorSpaces();
         return colorSpaces == null ? null : colorSpaces[0];
     }

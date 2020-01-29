@@ -75,6 +75,7 @@ import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer;
 import org.jcodec.containers.mp4.demuxer.DashMP4Demuxer.Builder;
 import org.jcodec.containers.mp4.demuxer.DashStreamDemuxer;
 import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.MP4DemuxerTrackMeta;
 import org.jcodec.containers.mps.MPEGDemuxer.MPEGDemuxerTrack;
 import org.jcodec.containers.mps.MPSDemuxer;
 import org.jcodec.containers.mps.MTSDemuxer;
@@ -272,16 +273,6 @@ public class SourceImpl implements Source, PacketSource {
         if (videoInputTrack == null)
             return null;
         Packet nextFrame = videoInputTrack.nextFrame();
-        // if (nextFrame != null)
-        // Logger.debug(String.format("Input frame: pts=%d, duration=%d",
-        // nextFrame.getPts(), nextFrame.getDuration()));
-
-        if (videoDecoder == null) {
-            videoDecoder = createVideoDecoder(inputVideoCodec.v2, downscale, nextFrame.getData(), null);
-            if (videoDecoder != null) {
-                videoCodecMeta = videoDecoder.getCodecMeta(nextFrame.getData());
-            }
-        }
 
         return nextFrame;
     }
@@ -291,11 +282,6 @@ public class SourceImpl implements Source, PacketSource {
         if (audioInputTrack == null)
             return null;
         Packet audioPkt = audioInputTrack.nextFrame();
-        if (audioDecoder == null && audioPkt != null) {
-            audioDecoder = createAudioDecoder(audioPkt.getData());
-            if (audioDecoder != null)
-                audioCodecMeta = audioDecoder.getCodecMeta(audioPkt.getData());
-        }
 
         return audioPkt;
     }
@@ -470,6 +456,13 @@ public class SourceImpl implements Source, PacketSource {
     public VideoFrameWithPacket getNextVideoFrame() throws IOException {
         Packet inVideoPacket;
         while ((inVideoPacket = getNextVideoPacket()) != null) {
+            if (videoDecoder == null) {
+                videoDecoder = createVideoDecoder(inputVideoCodec.v2, downscale, inVideoPacket.getData(), null);
+                if (videoDecoder != null) {
+                    videoCodecMeta = videoDecoder.getCodecMeta(inVideoPacket.getData());
+                }
+            }
+
             if (inVideoPacket.getFrameType() == FrameType.UNKNOWN) {
                 detectFrameType(inVideoPacket);
             }
@@ -512,6 +505,11 @@ public class SourceImpl implements Source, PacketSource {
         Packet audioPkt = inputAudioPacket();
         if (audioPkt == null)
             return null;
+        if (audioDecoder == null && audioPkt != null) {
+            audioDecoder = createAudioDecoder(audioPkt.getData());
+            if (audioDecoder != null)
+                audioCodecMeta = audioDecoder.getCodecMeta(audioPkt.getData());
+        }
         AudioBuffer audioBuffer;
         if (inputAudioCodec.v2 == PCM) {
             DemuxerTrackMeta audioMeta = getAudioMeta();
@@ -570,5 +568,21 @@ public class SourceImpl implements Source, PacketSource {
         } else {
             return new JpegDecoder();
         }
+    }
+
+    @Override
+    public ByteBuffer getVideoCodecPrivate() {
+        DemuxerTrackMeta meta = videoInputTrack.getMeta();
+        if (meta instanceof MP4DemuxerTrackMeta)
+            return ((MP4DemuxerTrackMeta) meta).getCodecPrivateOpaque();
+        return null;
+    }
+    
+    @Override
+    public ByteBuffer getAudioCodecPrivate() {
+        DemuxerTrackMeta meta = audioInputTrack.getMeta();
+        if (meta instanceof MP4DemuxerTrackMeta)
+            return ((MP4DemuxerTrackMeta) meta).getCodecPrivateOpaque();
+        return null;
     }
 }

@@ -29,6 +29,8 @@ import org.jcodec.common.model.Size;
 import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
+import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.PixelAspectExt;
 import org.jcodec.containers.mp4.boxes.SampleEntry;
@@ -67,11 +69,17 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
     // ADTS header used to construct audio sample entry for AAC
     private ADTSParser.Header adtsHeader;
 
+    private ByteBuffer codecPrivateOpaque;
+
     public CodecMP4MuxerTrack(int trackId, MP4TrackType type, Codec codec) {
         super(trackId, type);
         this.codec = codec;
         this.spsList = new ArrayList<ByteBuffer>();
         this.ppsList = new ArrayList<ByteBuffer>();
+    }
+    
+    public void setCodecPrivateOpaque(ByteBuffer codecPrivate) {
+        this.codecPrivateOpaque = codecPrivate;
     }
 
     @Override
@@ -160,19 +168,26 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
     }
 
     public void setCodecPrivateIfNeeded() {
-        if (codec == Codec.H264) {
-            List<ByteBuffer> sps = selectUnique(spsList);
-            List<ByteBuffer> pps = selectUnique(ppsList);
-            if (!sps.isEmpty() && !pps.isEmpty()) {
-                getEntries().get(0).add(H264Utils.createAvcCFromPS(sps, pps, 4));
-            } else {
-                Logger.warn("CodecMP4MuxerTrack: Not adding a sample entry for h.264 track, missing any SPS/PPS NAL units");
-            }
-        } else if (codec == Codec.AAC) {
-            if (adtsHeader != null) {
-                getEntries().get(0).add(EsdsBox.fromADTS(adtsHeader));
-            } else {
-                Logger.warn("CodecMP4MuxerTrack: Not adding a sample entry for AAC track, missing any ADTS headers.");
+        if (codecPrivateOpaque != null) {
+            ByteBuffer dup = codecPrivateOpaque.duplicate();
+            Header childAtom = Header.read(dup);
+            LeafBox lb = LeafBox.createLeafBox(childAtom, dup);
+            getEntries().get(0).add(lb);
+        } else {
+            if (codec == Codec.H264) {
+                List<ByteBuffer> sps = selectUnique(spsList);
+                List<ByteBuffer> pps = selectUnique(ppsList);
+                if (!sps.isEmpty() && !pps.isEmpty()) {
+                    getEntries().get(0).add(H264Utils.createAvcCFromPS(sps, pps, 4));
+                } else {
+                    Logger.warn("CodecMP4MuxerTrack: Not adding a sample entry for h.264 track, missing any SPS/PPS NAL units");
+                }
+            } else if (codec == Codec.AAC) {
+                if (adtsHeader != null) {
+                    getEntries().get(0).add(EsdsBox.fromADTS(adtsHeader));
+                } else {
+                    Logger.warn("CodecMP4MuxerTrack: Not adding a sample entry for AAC track, missing any ADTS headers.");
+                }
             }
         }
     }

@@ -55,5 +55,12 @@ public class BoxUtil {
         Box b = NodeBox.findFirstPath(box, Box.class, new String[] { path1, path2 });
         return b != null;
     }
-
+    
+    public static ByteBuffer writeBox(Box b) {
+        int estimateSize = b.estimateSize();
+        ByteBuffer buf = ByteBuffer.allocate(estimateSize);
+        b.write(buf);
+        buf.flip();
+        return buf;
+    }
 }

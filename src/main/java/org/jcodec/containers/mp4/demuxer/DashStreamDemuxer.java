@@ -46,7 +46,6 @@ public class DashStreamDemuxer implements Demuxer {
     private List<SeekableDemuxerTrack> coded;
     private URL url;
     private MPDModel.MPD mpd;
-    
 
     public static int INIT_SIZE = 3;
 
@@ -87,7 +86,8 @@ public class DashStreamDemuxer implements Demuxer {
         static int next_id = 0;
         int id;
 
-        public DashStreamDemuxerTrack(URL url, MPDModel.AdaptationSet adaptationSet, MPDModel.Period period) throws IOException {
+        public DashStreamDemuxerTrack(URL url, MPDModel.AdaptationSet adaptationSet, MPDModel.Period period)
+                throws IOException {
             this.url = url;
             this.period = period;
             this.adaptationSet = adaptationSet;
@@ -150,7 +150,7 @@ public class DashStreamDemuxer implements Demuxer {
                         vals.put("RepresentationID", selectedRprz);
                         vals.put("Number", stpl.startNumber + no);
                         String tmp = fillTemplate(stpl.media, vals);
-                        
+
                         urlInit = new URL(url, tmp);
                     } else if (rprz.segmentList != null && rprz.segmentList.segmentUrls.size() > no) {
                         MPDModel.SegmentURL segmentURL = rprz.segmentList.segmentUrls.get(no);
@@ -170,7 +170,7 @@ public class DashStreamDemuxer implements Demuxer {
                         return demuxer;
                     } else if (rprz.baseURL != null) {
                         DashMP4DemuxerTrack demuxer = DashMP4DemuxerTrack
-                                .createFromFiles(Arrays.asList(new File[] { initFile, initFile}));
+                                .createFromFiles(Arrays.asList(new File[] { initFile, initFile }));
                         return demuxer;
                     }
                     break;
@@ -296,7 +296,8 @@ public class DashStreamDemuxer implements Demuxer {
             frame.setPts((long) (frame.getPts() + off * frame.getTimescale()));
             frame.setMediaPts((long) (frame.getMediaPts() + off * frame.getTimescale()));
             frame.setFrameNo(globalFrame - 1);
-            System.out.println(String.format("[%d] PTS: %f DUR: %s", id, (float) frame.getPtsD(), (float)frame.getDurationD()));
+            System.out.println(
+                    String.format("[%d] PTS: %f DUR: %s", id, (float) frame.getPtsD(), (float) frame.getDurationD()));
             return frame;
         }
 
@@ -325,7 +326,7 @@ public class DashStreamDemuxer implements Demuxer {
                 int totalFrames = (int) period.duration.sec * frameRate;
                 return new MP4DemuxerTrackMeta(fragMeta.getType(), fragMeta.getCodec(), totalDuration, seekFrames,
                         totalFrames, fragMeta.getCodecPrivate(), fragMeta.getVideoCodecMeta(),
-                        fragMeta.getAudioCodecMeta(), fragMeta.getSampleEntries());
+                        fragMeta.getAudioCodecMeta(), fragMeta.getSampleEntries(), fragMeta.getCodecPrivateOpaque());
             } catch (ExecutionException e) {
                 throw new RuntimeException("Execution problem", e);
             }

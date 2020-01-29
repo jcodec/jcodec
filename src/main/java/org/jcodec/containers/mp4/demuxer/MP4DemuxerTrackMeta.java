@@ -20,6 +20,7 @@ import org.jcodec.common.TrackType;
 import org.jcodec.common.VideoCodecMeta;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.RationalLarge;
+import org.jcodec.containers.mp4.BoxUtil;
 import org.jcodec.containers.mp4.MP4TrackType;
 import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
@@ -30,16 +31,19 @@ import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
+import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.platform.Platform;
 
 public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
     private SampleEntry[] sampleEntries;
+    private ByteBuffer codecPrivateOpaque;
 
     public MP4DemuxerTrackMeta(TrackType type, Codec codec, double totalDuration, int[] seekFrames, int totalFrames,
             ByteBuffer codecPrivate, VideoCodecMeta videoCodecMeta, AudioCodecMeta audioCodecMeta,
-            SampleEntry[] sampleEntries) {
+            SampleEntry[] sampleEntries, ByteBuffer codecMetaOpaque) {
         super(type, codec, totalDuration, seekFrames, totalFrames, codecPrivate, videoCodecMeta, audioCodecMeta);
         this.sampleEntries = sampleEntries;
+        this.codecPrivateOpaque = codecMetaOpaque;
     }
 
     public SampleEntry[] getSampleEntries() {
@@ -71,8 +75,10 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
         RationalLarge duration = track.getDuration();
         double sec = (double) duration.getNum() / duration.getDen();
         int frameCount = Ints.checkedCast(track.getFrameCount());
+        ByteBuffer opaque = getCodecPrivateOpaque(Codec.codecByFourcc(track.getFourcc()),
+                track.getSampleEntries()[0]);
         MP4DemuxerTrackMeta meta = new MP4DemuxerTrackMeta(t, Codec.codecByFourcc(track.getFourcc()), sec, seekFrames,
-                frameCount, getCodecPrivate(track), videoCodecMeta, audioCodecMeta, track.getSampleEntries());
+                frameCount, getCodecPrivate(track), videoCodecMeta, audioCodecMeta, track.getSampleEntries(), opaque);
 
         if (type == MP4TrackType.VIDEO) {
             TrackHeaderBox tkhd = NodeBox.findFirstPath(trak, TrackHeaderBox.class, Box.path("tkhd"));
@@ -91,6 +97,20 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
         }
 
         return meta;
+    }
+
+    public static ByteBuffer getCodecPrivateOpaque(Codec codec, SampleEntry se) {
+        if (codec == Codec.H264) {
+            Box b = NodeBox.findFirst(se, Box.class, "avcC");
+            return BoxUtil.writeBox(b);
+        } else if (codec == Codec.AAC) {
+            Box b = NodeBox.findFirst(se, Box.class, "esds");
+            if (b == null) {
+                b = NodeBox.findFirstPath(se, Box.class, new String[] { null, "esds" });
+            }
+            return BoxUtil.writeBox(b);
+        }
+        return null;
     }
 
     private static AudioCodecMeta getAudioCodecMeta(AbstractMP4DemuxerTrack track, MP4TrackType type) {
@@ -133,11 +153,14 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
         if (codec == Codec.H264) {
             AvcCBox avcC = H264Utils.parseAVCC((VideoSampleEntry) track.getSampleEntries()[0]);
             return avcC != null ? H264Utils.avcCToAnnexB(avcC) : null;
-
         } else if (codec == Codec.AAC) {
             return AACUtils.getCodecPrivate(track.getSampleEntries()[0]);
         }
         // This codec does not have private section
         return null;
+    }
+
+    public ByteBuffer getCodecPrivateOpaque() {
+        return codecPrivateOpaque;
     }
 }

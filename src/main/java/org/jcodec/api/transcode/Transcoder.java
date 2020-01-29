@@ -1,6 +1,7 @@
 package org.jcodec.api.transcode;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -278,6 +279,11 @@ public class Transcoder {
                 videoStreams[videoMappings[s].source].add(stream);
                 if (!videoMappings[s].copy)
                     decodeVideo[videoMappings[s].source] = true;
+                else {
+                    int source = videoMappings[s].source;
+                    ByteBuffer codecPrivate = sources[source].getVideoCodecPrivate();
+                    sinks[s].setVideoCodecPrivate(codecPrivate);
+                }
             } else {
                 finishedVideo[videoMappings[s].source] = true;
             }
@@ -286,6 +292,11 @@ public class Transcoder {
                 audioStreams[audioMappings[s].source].add(stream);
                 if (!audioMappings[s].copy)
                     decodeAudio[audioMappings[s].source] = true;
+                else {
+                    int source = audioMappings[s].source;
+                    ByteBuffer codecPrivate = sources[source].getAudioCodecPrivate();
+                    sinks[s].setAudioCodecPrivate(codecPrivate);
+                }
             } else {
                 finishedAudio[audioMappings[s].source] = true;
             }

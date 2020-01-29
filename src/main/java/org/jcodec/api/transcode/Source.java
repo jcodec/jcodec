@@ -1,6 +1,7 @@
 package org.jcodec.api.transcode;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.Codec;
@@ -76,4 +77,8 @@ public interface Source {
 
     boolean isVideo();
     boolean isAudio();
+
+    ByteBuffer getVideoCodecPrivate();
+
+    ByteBuffer getAudioCodecPrivate();
 }
