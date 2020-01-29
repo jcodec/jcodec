@@ -162,11 +162,7 @@ public class DashStreamDemuxer implements Demuxer {
                         NIOUtils.fetchUrl(urlInit, tempFile);
                         DashMP4DemuxerTrack demuxer = DashMP4DemuxerTrack
                                 .createFromFiles(Arrays.asList(new File[] { initFile, tempFile }));
-                        if (frameRate != 0) {
-                            demuxer.setDurationHint(1.0 / frameRate);
-                        } else if (demuxer.getMeta().getCodec() == Codec.AAC) {
-                            demuxer.setDurationHint(((double) 1024) / rprz.audioSamplingRate);
-                        }
+                        demuxer.setDurationHint(segmentDuration);
                         return demuxer;
                     } else if (rprz.baseURL != null) {
                         DashMP4DemuxerTrack demuxer = DashMP4DemuxerTrack
@@ -296,6 +292,7 @@ public class DashStreamDemuxer implements Demuxer {
             frame.setPts((long) (frame.getPts() + off * frame.getTimescale()));
             frame.setMediaPts((long) (frame.getMediaPts() + off * frame.getTimescale()));
             frame.setFrameNo(globalFrame - 1);
+            if (id == 5)
             System.out.println(
                     String.format("[%d] PTS: %f DUR: %s", id, (float) frame.getPtsD(), (float) frame.getDurationD()));
             return frame;

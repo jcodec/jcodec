@@ -104,6 +104,9 @@ public class AACUtils {
         int objectType = rd.readNBit(5);
         int samplingIndex = rd.readNBit(4);
         int chanConfig = rd.readNBit(4);
+        int frameLengthFlag = rd.read1Bit();
+        rd.read1Bit();
+        int extensionFlag = rd.read1Bit();
         return new ADTSParser.Header(objectType, chanConfig, crcAbsent ? 1 : 0, numAACFrames, samplingIndex, 7 + frameSize);
     }
 }

@@ -213,8 +213,9 @@ public class DashMP4DemuxerTrack implements SeekableDemuxerTrack, Closeable {
         if (result != null && result.remaining() < size)
             return null;
 
+        int hintedDuration = (int)((durationHint * trak.getTimescale()) / frameCount);
         int duration = sampleDurations[curFrag] == null
-                ? (avgDur[curFrag] == 0 ? (int) (durationHint * trak.getTimescale()) : avgDur[curFrag])
+                ? (avgDur[curFrag] == 0 ? hintedDuration : avgDur[curFrag])
                 : sampleDurations[curFrag][curFrame];
 
         boolean sync = curFrame == 0;

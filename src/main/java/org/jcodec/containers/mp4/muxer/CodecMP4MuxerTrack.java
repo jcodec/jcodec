@@ -117,7 +117,7 @@ public class CodecMP4MuxerTrack extends MP4MuxerTrack {
             }
         }
         
-        if (adtsHeader != null) {
+        if (adtsHeader != null && pkt.getDuration() == 0) {
             pkt.setDuration(1024);
         }
         
