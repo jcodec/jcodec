@@ -102,13 +102,13 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
     public static ByteBuffer getCodecPrivateOpaque(Codec codec, SampleEntry se) {
         if (codec == Codec.H264) {
             Box b = NodeBox.findFirst(se, Box.class, "avcC");
-            return BoxUtil.writeBox(b);
+            return b != null ? BoxUtil.writeBox(b) : null;
         } else if (codec == Codec.AAC) {
             Box b = NodeBox.findFirst(se, Box.class, "esds");
             if (b == null) {
                 b = NodeBox.findFirstPath(se, Box.class, new String[] { null, "esds" });
             }
-            return BoxUtil.writeBox(b);
+            return b != null ? BoxUtil.writeBox(b) : null;
         }
         return null;
     }
