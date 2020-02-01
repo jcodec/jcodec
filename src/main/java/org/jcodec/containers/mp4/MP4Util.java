@@ -42,6 +42,7 @@ public class MP4Util {
     static {
         codecMapping.put(Codec.MPEG2, "m2v1");
         codecMapping.put(Codec.H264, "avc1");
+        codecMapping.put(Codec.H265, "hev1");
         codecMapping.put(Codec.J2K, "mjp2");
     }
 

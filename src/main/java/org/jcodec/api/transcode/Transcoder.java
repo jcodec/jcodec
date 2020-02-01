@@ -218,7 +218,7 @@ public class Transcoder {
                 pixelStore.retake(videoFrame.getFrame());
             this.videoQueue.add(videoFrame);
             this.videoCodecMeta = meta;
-            if (this.filters == null)
+            if (this.filters == null && videoFrame.getFrame() != null)
                 this.filters = initColorTransform(videoCodecMeta.getColor(), extraFilters, sink);
         }
 
@@ -264,7 +264,7 @@ public class Transcoder {
         }
 
         for (int i = 0; i < sinks.length; i++)
-            sinks[i].init();
+            sinks[i].init(videoMappings[i].copy, audioMappings[i].copy);
 
         for (int i = 0; i < sources.length; i++) {
             sources[i].init(pixelStore);

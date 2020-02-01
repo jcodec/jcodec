@@ -21,7 +21,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
 import org.jcodec.api.JCodecException;
-import org.jcodec.common.Codec;
 import org.jcodec.common.Demuxer;
 import org.jcodec.common.DemuxerTrack;
 import org.jcodec.common.DemuxerTrackMeta;
@@ -80,7 +79,7 @@ public class DashStreamDemuxer implements Demuxer {
         private ExecutorService threadPool;
         private int globalFrame;
         private MPDModel.Period period;
-        private int frameRate;
+        private float frameRate;
         private double segmentDuration;
         private int[] seekFrames;
         static int next_id = 0;
@@ -101,7 +100,7 @@ public class DashStreamDemuxer implements Demuxer {
             if (adaptationSet.representations.size() > 0) {
                 MPDModel.Representation rprz = adaptationSet.representations.get(0);
                 selectedRprz = rprz.id;
-                frameRate = rprz.frameRate;
+                frameRate = rprz.frameRate == null ? 0 : rprz.frameRate.scalar();
                 MPDModel.SegmentTemplate stpl = getSegmentTemplate();
                 segmentDuration = stpl != null ? ((double) stpl.duration) / stpl.timescale : period.duration.sec;
 
@@ -320,7 +319,7 @@ public class DashStreamDemuxer implements Demuxer {
 
                 MP4DemuxerTrackMeta fragMeta = (MP4DemuxerTrackMeta) frag.getMeta();
                 double totalDuration = period.duration.sec;
-                int totalFrames = (int) period.duration.sec * frameRate;
+                int totalFrames = (int) (period.duration.sec * frameRate);
                 return new MP4DemuxerTrackMeta(fragMeta.getType(), fragMeta.getCodec(), totalDuration, seekFrames,
                         totalFrames, fragMeta.getCodecPrivate(), fragMeta.getVideoCodecMeta(),
                         fragMeta.getAudioCodecMeta(), fragMeta.getSampleEntries(), fragMeta.getCodecPrivateOpaque());

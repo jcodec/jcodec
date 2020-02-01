@@ -160,6 +160,7 @@ public class TranscodeMain {
         videoCodecsForF.put(Format.Y4M, Codec.RAW);
 
         supportedDecoders.add(Codec.AAC);
+        supportedDecoders.add(Codec.H265);
         supportedDecoders.add(Codec.H264);
         supportedDecoders.add(Codec.JPEG);
         supportedDecoders.add(Codec.MPEG2);

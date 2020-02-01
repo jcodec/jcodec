@@ -170,9 +170,9 @@ public class SinkImpl implements Sink, PacketSink {
     }
 
     @Override
-    public void init() throws IOException {
+    public void init(boolean videoCopy, boolean audioCopy) throws IOException {
         initMuxer();
-        if (outputFormat.isVideo() && outputVideoCodec != null) {
+        if (outputFormat.isVideo() && outputVideoCodec != null && !videoCopy) {
             if (PRORES == outputVideoCodec) {
                 videoEncoder = ProresEncoder.createProresEncoder(profile, interlaced);
             } else if (Codec.H264 == outputVideoCodec) {

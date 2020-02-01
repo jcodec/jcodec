@@ -92,7 +92,7 @@ public class MPDModel {
         public boolean segmentAlignment;
         public int maxWidth;
         public int maxHeight;
-        public int maxFrameRate;
+        public Rational maxFrameRate;
         public Rational par;
 
         public SegmentTemplate segmentTemplate;
@@ -117,7 +117,7 @@ public class MPDModel {
         public String codecs;
         public int width;
         public int height;
-        public int frameRate;
+        public Rational frameRate;
         public Rational sar;
         public int startWithSAP;
         public int bandwidth;

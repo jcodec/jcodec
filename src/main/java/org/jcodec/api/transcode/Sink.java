@@ -18,7 +18,7 @@ public interface Sink {
      * 
      * @throws IOException
      */
-    void init() throws IOException;
+    void init(boolean videoCopy, boolean audioCopy) throws IOException;
 
     /**
      * Outputs video frame to the sink

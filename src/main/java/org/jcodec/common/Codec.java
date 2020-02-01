@@ -14,6 +14,7 @@ import static org.jcodec.common.TrackType.VIDEO;
  *
  */
 public final class Codec {
+    public final static Codec H265 = new Codec("H265", VIDEO, false);
     public final static Codec H264 = new Codec("H264", VIDEO, false);
     public final static Codec MPEG2 = new Codec("MPEG2", VIDEO, false);
     public final static Codec MPEG4 = new Codec("MPEG4", VIDEO, false);
@@ -102,7 +103,9 @@ public final class Codec {
     }
 
     public static Codec codecByFourcc(String fourcc) {
-        if (fourcc.equals("avc1")) {
+        if (fourcc.equals("hev1")) {
+            return H265;
+        } else if (fourcc.equals("avc1")) {
             return H264;
         } else if (fourcc.equals("m1v1") || fourcc.equals("m2v1")) {
             return MPEG2;

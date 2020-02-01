@@ -21,6 +21,7 @@ public class SampleBoxes extends Boxes {
         override("apcn", VideoSampleEntry.class);
         override("apcs", VideoSampleEntry.class);
         override("apco", VideoSampleEntry.class);
+        override("hev1", VideoSampleEntry.class);
         override("avc1", VideoSampleEntry.class);
         override("cvid", VideoSampleEntry.class);
         override("jpeg", VideoSampleEntry.class);
