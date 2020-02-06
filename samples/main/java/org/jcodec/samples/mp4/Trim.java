@@ -49,6 +49,7 @@ public class Trim {
     private static final Flag[] flags = { FLAG_FROM_SEC, FLAG_TO_SEC, FLAG_TITLE, FLAG_AUTHOR, FLAG_GPS };
 
     public static void main(String[] args) throws Exception {
+        long startTime = System.currentTimeMillis();
         final Cmd cmd = MainUtils.parseArguments(args, flags);
         if (cmd.argsLength() < 2) {
             MainUtils.printHelpCmd("strip", flags, Arrays.asList(new String[] { "in movie", "?out movie" }));
@@ -78,6 +79,8 @@ public class Trim {
                     flatten.setSampleProcessor(trak, new TagProcessor(inS, durS));
                 }
             }
+            long finishTime = System.currentTimeMillis();
+            System.out.println("Checkpoint: " + (finishTime - startTime) + "ms");
             flatten.flattenChannel(movie, out);
         } finally {
             if (input != null)
@@ -85,6 +88,8 @@ public class Trim {
             if (out != null)
                 out.close();
         }
+        long finishTime = System.currentTimeMillis();
+        System.out.println("Processing time: " + (finishTime - startTime) + "ms");
     }
 
     private static void addMetadata(Movie movie, String title, String author, String gps) {
@@ -131,7 +136,7 @@ public class Trim {
             }
             words = builder.build();
             if (words.getWordsCount() > 0) {
-                System.out.println(words);
+                //System.out.println(words);
                 return withLen(words.toByteArray());
 
             }
@@ -166,7 +171,7 @@ public class Trim {
             long onset = audioTag.getOnsetMilli() - masterOnset;
             onset = onset < 0 ? 0 : onset;
             audioTag = audioTag.toBuilder().setOnsetMilli(onset).build();
-            System.out.println(audioTag);
+            //System.out.println(audioTag);
             return withLen(audioTag.toByteArray());
         }
     }
