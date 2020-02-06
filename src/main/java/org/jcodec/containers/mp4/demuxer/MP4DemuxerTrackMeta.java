@@ -1,8 +1,5 @@
 package org.jcodec.containers.mp4.demuxer;
 
-import static org.jcodec.common.TrackType.AUDIO;
-import static org.jcodec.common.TrackType.OTHER;
-import static org.jcodec.common.TrackType.VIDEO;
 import static org.jcodec.common.VideoCodecMeta.createSimpleVideoCodecMeta;
 
 import java.nio.ByteBuffer;
@@ -31,7 +28,6 @@ import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.containers.mp4.boxes.VideoSampleEntry;
-import org.jcodec.containers.mp4.boxes.Box.LeafBox;
 import org.jcodec.platform.Platform;
 
 public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
@@ -69,7 +65,7 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
         }
 
         MP4TrackType type = track.getType();
-        TrackType t = type == MP4TrackType.VIDEO ? VIDEO : (type == MP4TrackType.SOUND ? AUDIO : OTHER);
+        TrackType t = type == null ? TrackType.OTHER : type.getTrackType();
         VideoCodecMeta videoCodecMeta = getVideoCodecMeta(track, trak, type);
         AudioCodecMeta audioCodecMeta = getAudioCodecMeta(track, type);
         RationalLarge duration = track.getDuration();
@@ -80,6 +76,7 @@ public class MP4DemuxerTrackMeta extends DemuxerTrackMeta {
         MP4DemuxerTrackMeta meta = new MP4DemuxerTrackMeta(t, Codec.codecByFourcc(track.getFourcc()), sec, seekFrames,
                 frameCount, getCodecPrivate(track), videoCodecMeta, audioCodecMeta, track.getSampleEntries(), opaque);
 
+        meta.setIndex(track.getBox().getTrackHeader().getNo());
         if (type == MP4TrackType.VIDEO) {
             TrackHeaderBox tkhd = NodeBox.findFirstPath(trak, TrackHeaderBox.class, Box.path("tkhd"));
 

@@ -4,10 +4,26 @@ import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.NIOUtils;
 
+/**
+* This class is part of JCodec ( www.jcodec.org ) This software is distributed
+* under FreeBSD License
+* 
+* Describes video payload sample
+* 
+* @author The JCodec project
+* 
+*/
 public class TextMetaDataSampleEntry extends MetaDataSampleEntry {
     private String contentEncoding; // optional
     private String mimeFormat;
     
+    
+    public TextMetaDataSampleEntry(String contentEncoding, String mimeFormat) {
+        super(Header.createHeader("mett", 0));
+        this.contentEncoding = contentEncoding;
+        this.mimeFormat = mimeFormat;
+    }
+
     public TextMetaDataSampleEntry(Header atom) {
         super(atom);
     }
@@ -33,5 +49,13 @@ public class TextMetaDataSampleEntry extends MetaDataSampleEntry {
        NIOUtils.writeNullTermString(out, mimeFormat);
        
        writeExtensions(out);
+    }
+
+    public String getContentEncoding() {
+        return contentEncoding;
+    }
+
+    public String getMimeFormat() {
+        return mimeFormat;
     }
 }

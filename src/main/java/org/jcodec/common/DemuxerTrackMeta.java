@@ -73,6 +73,10 @@ public class DemuxerTrackMeta {
     public int getIndex() {
         return index;
     }
+    
+    public void setIndex(int index) {
+        this.index = index;
+    }
 
     public ByteBuffer getCodecPrivate() {
         return codecPrivate;

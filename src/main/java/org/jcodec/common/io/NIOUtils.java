@@ -267,10 +267,8 @@ public class NIOUtils {
 
     public static String readNullTermStringCharset(ByteBuffer buffer, String charset) {
         ByteBuffer fork = buffer.duplicate();
-        while (buffer.hasRemaining() && buffer.get() != 0)
-            ;
-        if (buffer.hasRemaining())
-            fork.limit(buffer.position() - 1);
+        while (buffer.hasRemaining() && buffer.get() != 0) {}
+        fork.limit(buffer.position() - 1);
         return Platform.stringFromCharset(toArray(fork), charset);
     }
     

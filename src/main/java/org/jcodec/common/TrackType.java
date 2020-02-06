@@ -8,5 +8,5 @@ package org.jcodec.common;
  * 
  */
 public enum TrackType {
-    VIDEO, AUDIO, TEXT, OTHER
+    VIDEO, AUDIO, TEXT, META, OTHER
 }
