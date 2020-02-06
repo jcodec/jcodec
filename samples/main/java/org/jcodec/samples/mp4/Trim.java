@@ -5,7 +5,6 @@ import static org.jcodec.common.io.NIOUtils.writableChannel;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +15,6 @@ import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
-import org.jcodec.containers.mp4.Chunk;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Edit;
@@ -66,9 +64,9 @@ public class Trim {
             Movie movie = MP4Util.createRefFullMovie(input, "file://" + new File(cmd.getArg(0)).getAbsolutePath());
             addMetadata(movie, cmd.getStringFlagD(FLAG_TITLE, "A title"), cmd.getStringFlagD(FLAG_AUTHOR, "An author"),
                     cmd.getStringFlagD(FLAG_GPS, "+81.1000-015.5999/"));
-            final int inS = cmd.getIntegerFlagD(FLAG_FROM_SEC, 0);
-            final int durS = cmd.getIntegerFlagD(FLAG_TO_SEC,
-                    (int) (movie.getMoov().getDuration() / movie.getMoov().getTimescale()) - inS);
+            final double inS = cmd.getDoubleFlagD(FLAG_FROM_SEC, 0d);
+            final double durS = cmd.getDoubleFlagD(FLAG_TO_SEC,
+                    ((double) movie.getMoov().getDuration() / movie.getMoov().getTimescale()) - inS);
             modifyMovie(inS, durS, movie.getMoov());
             Flatten flatten = new Flatten();
             TrakBox[] tracks = movie.getMoov().getTracks();
@@ -103,10 +101,10 @@ public class Trim {
     }
 
     private static class WordProcessor implements Flatten.SampleProcessor {
-        private int inS;
-        private int durS;
+        private double inS;
+        private double durS;
 
-        public WordProcessor(int inS, int durS) {
+        public WordProcessor(double inS, double durS) {
             this.inS = inS;
             this.durS = durS;
         }
@@ -116,8 +114,8 @@ public class Trim {
             int size = src.getInt();
             if (size != src.remaining())
                 throw new IOException("Error");
-            long masterOnset = inS * 1000;
-            long masterOffset = masterOnset + durS * 1000;
+            long masterOnset = (long)(inS * 1000);
+            long masterOffset = masterOnset + (long)(durS * 1000);
             Words words = Words.parseFrom(src);
 
             Words.Builder builder = words.toBuilder();
@@ -153,10 +151,10 @@ public class Trim {
     }
 
     private static class TagProcessor implements Flatten.SampleProcessor {
-        private int inS;
-        private int durS;
+        private double inS;
+        private double durS;
 
-        public TagProcessor(int inS, int durS) {
+        public TagProcessor(double inS, double durS) {
             this.inS = inS;
             this.durS = durS;
         }
@@ -166,20 +164,20 @@ public class Trim {
             int size = src.getInt();
             if (size != src.remaining())
                 throw new IOException("Error");
-            long masterOnset = inS * 1000;
+            long masterOnset = (long)(inS * 1000);
             Tag audioTag = Tag.parseFrom(src);
             long onset = audioTag.getOnsetMilli() - masterOnset;
             onset = onset < 0 ? 0 : onset;
             audioTag = audioTag.toBuilder().setOnsetMilli(onset).build();
-            //System.out.println(audioTag);
+            System.out.println(audioTag);
             return withLen(audioTag.toByteArray());
         }
     }
 
-    private static void modifyMovie(int inS, int durS, MovieBox movie) throws IOException {
+    private static void modifyMovie(double inS, double durS, MovieBox movie) throws IOException {
         for (TrakBox track : movie.getTracks()) {
             List<Edit> edits = new ArrayList<Edit>();
-            Edit edit = new Edit(movie.getTimescale() * durS, track.getTimescale() * inS, 1f);
+            Edit edit = new Edit((long)(movie.getTimescale() * durS), (long)(track.getTimescale() * inS), 1f);
             edits.add(edit);
             track.setEdits(edits);
         }
