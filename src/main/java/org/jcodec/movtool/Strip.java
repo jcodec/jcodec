@@ -1,13 +1,14 @@
 package org.jcodec.movtool;
 
-import java.lang.IllegalStateException;
-import java.lang.System;
-
 import static java.lang.System.arraycopy;
 import static org.jcodec.common.io.NIOUtils.readableChannel;
 import static org.jcodec.common.io.NIOUtils.writableChannel;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.model.RationalLarge;
@@ -29,11 +30,6 @@ import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
 import org.jcodec.platform.Platform;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -241,7 +237,8 @@ public class Strip {
     }
 
     public SampleSizesBox getSampleSizes(List<Chunk> chunks) {
-        int nSamples = 0, prevSize = chunks.get(0).getSampleSize();
+        int nSamples = 0;
+        int prevSize = chunks.size() != 0 ? chunks.get(0).getSampleSize() : 0;
         for (Chunk chunk : chunks) {
             nSamples += chunk.getSampleCount();
             if (prevSize == 0 && chunk.getSampleSize() != 0)
@@ -263,25 +260,27 @@ public class Strip {
     public SampleToChunkBox getSamplesToChunk(List<Chunk> chunks) {
         ArrayList<SampleToChunkEntry> result = new ArrayList<SampleToChunkEntry>();
         Iterator<Chunk> it = chunks.iterator();
-        Chunk chunk = it.next();
-        int curSz = chunk.getSampleCount();
-        int curEntry = chunk.getEntry();
-        int first = 1, cnt = 1;
-        while (it.hasNext()) {
-            chunk = it.next();
-            int newSz = chunk.getSampleCount();
-            int newEntry = chunk.getEntry();
-            if (curSz != newSz || curEntry != newEntry) {
-                result.add(new SampleToChunkEntry(first, curSz, curEntry));
-                curSz = newSz;
-                curEntry = newEntry;
-                first += cnt;
-                cnt = 0;
+        if (it.hasNext()) {
+            Chunk chunk = it.next();
+            int curSz = chunk.getSampleCount();
+            int curEntry = chunk.getEntry();
+            int first = 1, cnt = 1;
+            while (it.hasNext()) {
+                chunk = it.next();
+                int newSz = chunk.getSampleCount();
+                int newEntry = chunk.getEntry();
+                if (curSz != newSz || curEntry != newEntry) {
+                    result.add(new SampleToChunkEntry(first, curSz, curEntry));
+                    curSz = newSz;
+                    curEntry = newEntry;
+                    first += cnt;
+                    cnt = 0;
+                }
+                ++cnt;
             }
-            ++cnt;
-        }
-        if (cnt > 0)
             result.add(new SampleToChunkEntry(first, curSz, curEntry));
+        }
+
         return SampleToChunkBox.createSampleToChunkBox(result.toArray(new SampleToChunkEntry[0]));
     }
 
