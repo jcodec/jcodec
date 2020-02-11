@@ -1,4 +1,5 @@
 package net.sourceforge.jaad.aac;
+
 import org.jcodec.common.logging.Logger;
 
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
@@ -28,8 +29,7 @@ public class Decoder implements SyntaxConstants {
     /**
      * The methods returns true, if a profile is supported by the decoder.
      * 
-     * @param profile
-     *            an AAC profile
+     * @param profile an AAC profile
      * @return true if the specified profile can be decoded
      * @see Profile#isDecodingSupported()
      */
@@ -43,11 +43,9 @@ public class Decoder implements SyntaxConstants {
      * After this the MP4 frames can be passed to the
      * <code>decodeFrame(byte[], SampleBuffer)</code> method to decode them.
      * 
-     * @param decoderSpecificInfo
-     *            a byte array containing the decoder specific info from an MP4
-     *            container
-     * @throws AACException
-     *             if the specified profile is not supported
+     * @param decoderSpecificInfo a byte array containing the decoder specific info
+     *                            from an MP4 container
+     * @throws AACException if the specified profile is not supported
      */
     public Decoder(byte[] decoderSpecificInfo) throws AACException {
         config = AACDecoderConfig.parseMP4DecoderSpecificInfo(decoderSpecificInfo);
@@ -74,12 +72,9 @@ public class Decoder implements SyntaxConstants {
     /**
      * Decodes one frame of AAC data in frame mode and returns the raw PCM data.
      * 
-     * @param frame
-     *            the AAC frame
-     * @param buffer
-     *            a buffer to hold the decoded PCM data
-     * @throws AACException
-     *             if decoding fails
+     * @param frame  the AAC frame
+     * @param buffer a buffer to hold the decoded PCM data
+     * @throws AACException if decoding fails
      */
     public void decodeFrame(byte[] frame, SampleBuffer buffer) throws AACException {
         if (frame != null)
@@ -110,11 +105,11 @@ public class Decoder implements SyntaxConstants {
         syntacticElements.startNewFrame();
 
         try {
-            //1: bitstream parsing and noiseless coding
+            // 1: bitstream parsing and noiseless coding
             syntacticElements.decode(_in);
-            //2: spectral processing
+            // 2: spectral processing
             syntacticElements.process(filterBank);
-            //3: send to output buffer
+            // 3: send to output buffer
             syntacticElements.sendToOutput(buffer);
         } catch (Exception e) {
             buffer.setData(new byte[0], 0, 0, 0, 0);

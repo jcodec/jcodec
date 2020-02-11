@@ -85,8 +85,8 @@ public final class ChannelConfiguration {
     }
 
     /**
-     * Returns a string representation of this channel configuration. The method
-     * is identical to <code>getDescription()</code>.
+     * Returns a string representation of this channel configuration. The method is
+     * identical to <code>getDescription()</code>.
      * 
      * @return the channel configuration's description
      */

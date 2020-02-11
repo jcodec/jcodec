@@ -49,8 +49,8 @@ public final class SampleFrequency {
     }
 
     /**
-     * Returns a sample frequency instance for the given index. If the index is
-     * not between 0 and 11 inclusive, SAMPLE_FREQUENCY_NONE is returned.
+     * Returns a sample frequency instance for the given index. If the index is not
+     * between 0 and 11 inclusive, SAMPLE_FREQUENCY_NONE is returned.
      * 
      * @return a sample frequency with the given index
      */
@@ -88,8 +88,8 @@ public final class SampleFrequency {
     }
 
     /**
-     * Returns this sample frequency's index between 0 (96000) and 11 (8000) or
-     * -1 if this is SAMPLE_FREQUENCY_NONE.
+     * Returns this sample frequency's index between 0 (96000) and 11 (8000) or -1
+     * if this is SAMPLE_FREQUENCY_NONE.
      * 
      * @return the sample frequency's index
      */
@@ -98,8 +98,8 @@ public final class SampleFrequency {
     }
 
     /**
-     * Returns the sample frequency as integer value. This may be a value
-     * between 96000 and 8000, or 0 if this is SAMPLE_FREQUENCY_NONE.
+     * Returns the sample frequency as integer value. This may be a value between
+     * 96000 and 8000, or 0 if this is SAMPLE_FREQUENCY_NONE.
      * 
      * @return the sample frequency
      */
@@ -108,8 +108,8 @@ public final class SampleFrequency {
     }
 
     /**
-     * Returns the highest scale factor band allowed for ICPrediction at this
-     * sample frequency. This method is mainly used internally.
+     * Returns the highest scale factor band allowed for ICPrediction at this sample
+     * frequency. This method is mainly used internally.
      * 
      * @return the highest prediction SFB
      */

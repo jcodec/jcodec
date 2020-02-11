@@ -6,157 +6,163 @@ import net.sourceforge.jaad.aac.SampleFrequency;
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
  * under the Public Domain license. Code changes provided by the JCodec project
- * are distributed under FreeBSD license. 
+ * are distributed under FreeBSD license.
  *
  * @author in-somnia
  */
 class FIL extends Element implements SyntaxConstants {
 
-	public static class DynamicRangeInfo {
+    public static class DynamicRangeInfo {
 
-		private static final int MAX_NBR_BANDS = 7;
-		private final boolean[] excludeMask;
-		private final boolean[] additionalExcludedChannels;
-		private boolean pceTagPresent;
-		private int pceInstanceTag;
-		private int tagReservedBits;
-		private boolean excludedChannelsPresent;
-		private boolean bandsPresent;
-		private int bandsIncrement, interpolationScheme;
-		private int[] bandTop;
-		private boolean progRefLevelPresent;
-		private int progRefLevel, progRefLevelReservedBits;
-		private boolean[] dynRngSgn;
-		private int[] dynRngCtl;
+        private static final int MAX_NBR_BANDS = 7;
+        private final boolean[] excludeMask;
+        private final boolean[] additionalExcludedChannels;
+        private boolean pceTagPresent;
+        private int pceInstanceTag;
+        private int tagReservedBits;
+        private boolean excludedChannelsPresent;
+        private boolean bandsPresent;
+        private int bandsIncrement, interpolationScheme;
+        private int[] bandTop;
+        private boolean progRefLevelPresent;
+        private int progRefLevel, progRefLevelReservedBits;
+        private boolean[] dynRngSgn;
+        private int[] dynRngCtl;
 
-		public DynamicRangeInfo() {
-			excludeMask = new boolean[MAX_NBR_BANDS];
-			additionalExcludedChannels = new boolean[MAX_NBR_BANDS];
-		}
-	}
-	private static final int TYPE_FILL = 0;
-	private static final int TYPE_FILL_DATA = 1;
-	private static final int TYPE_EXT_DATA_ELEMENT = 2;
-	private static final int TYPE_DYNAMIC_RANGE = 11;
-	private static final int TYPE_SBR_DATA = 13;
-	private static final int TYPE_SBR_DATA_CRC = 14;
-	private final boolean downSampledSBR;
-	private DynamicRangeInfo dri;
+        public DynamicRangeInfo() {
+            excludeMask = new boolean[MAX_NBR_BANDS];
+            additionalExcludedChannels = new boolean[MAX_NBR_BANDS];
+        }
+    }
 
-	FIL(boolean downSampledSBR) {
-		super();
-		this.downSampledSBR = downSampledSBR;
-	}
+    private static final int TYPE_FILL = 0;
+    private static final int TYPE_FILL_DATA = 1;
+    private static final int TYPE_EXT_DATA_ELEMENT = 2;
+    private static final int TYPE_DYNAMIC_RANGE = 11;
+    private static final int TYPE_SBR_DATA = 13;
+    private static final int TYPE_SBR_DATA_CRC = 14;
+    private final boolean downSampledSBR;
+    private DynamicRangeInfo dri;
 
-	void decode(IBitStream _in, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames) throws AACException {
-		int count = _in.readBits(4);
-		if(count==15) count += _in.readBits(8)-1;
-		count *= 8; //convert to bits
+    FIL(boolean downSampledSBR) {
+        super();
+        this.downSampledSBR = downSampledSBR;
+    }
 
-		final int cpy = count;
-		final int pos = _in.getPosition();
+    void decode(IBitStream _in, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames)
+            throws AACException {
+        int count = _in.readBits(4);
+        if (count == 15)
+            count += _in.readBits(8) - 1;
+        count *= 8; // convert to bits
 
-		while(count>0) {
-			count = decodeExtensionPayload(_in, count, prev, sf, sbrEnabled, smallFrames);
-		}
+        final int cpy = count;
+        final int pos = _in.getPosition();
 
-		final int pos2 = _in.getPosition()-pos;
-		final int bitsLeft = cpy-pos2;
-		if(bitsLeft>0) _in.skipBits(pos2);
-		else if(bitsLeft<0) throw new AACException("FIL element overread: "+bitsLeft);
-	}
+        while (count > 0) {
+            count = decodeExtensionPayload(_in, count, prev, sf, sbrEnabled, smallFrames);
+        }
 
-	private int decodeExtensionPayload(IBitStream _in, int count, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames) throws AACException {
-		final int type = _in.readBits(4);
-		int ret = count-4;
-		switch(type) {
-			case TYPE_DYNAMIC_RANGE:
-				ret = decodeDynamicRangeInfo(_in, ret);
-				break;
-			case TYPE_SBR_DATA:
-			case TYPE_SBR_DATA_CRC:
-				if(sbrEnabled) {
-					if(prev instanceof SCE_LFE||prev instanceof CPE||prev instanceof CCE) {
-						prev.decodeSBR(_in, sf, ret, (prev instanceof CPE), (type==TYPE_SBR_DATA_CRC), downSampledSBR, smallFrames);
-						ret = 0;
-						break;
-					}
-					else throw new AACException("SBR applied on unexpected element: "+prev);
-				}
-				else {
-					_in.skipBits(ret);
-					ret = 0;
-				}
-			case TYPE_FILL:
-			case TYPE_FILL_DATA:
-			case TYPE_EXT_DATA_ELEMENT:
-			default:
-				_in.skipBits(ret);
-				ret = 0;
-				break;
-		}
-		return ret;
-	}
+        final int pos2 = _in.getPosition() - pos;
+        final int bitsLeft = cpy - pos2;
+        if (bitsLeft > 0)
+            _in.skipBits(pos2);
+        else if (bitsLeft < 0)
+            throw new AACException("FIL element overread: " + bitsLeft);
+    }
 
-	private int decodeDynamicRangeInfo(IBitStream _in, int count) throws AACException {
-		if(dri==null) dri = new DynamicRangeInfo();
-		int ret = count;
+    private int decodeExtensionPayload(IBitStream _in, int count, Element prev, SampleFrequency sf, boolean sbrEnabled,
+            boolean smallFrames) throws AACException {
+        final int type = _in.readBits(4);
+        int ret = count - 4;
+        switch (type) {
+        case TYPE_DYNAMIC_RANGE:
+            ret = decodeDynamicRangeInfo(_in, ret);
+            break;
+        case TYPE_SBR_DATA:
+        case TYPE_SBR_DATA_CRC:
+            if (sbrEnabled) {
+                if (prev instanceof SCE_LFE || prev instanceof CPE || prev instanceof CCE) {
+                    prev.decodeSBR(_in, sf, ret, (prev instanceof CPE), (type == TYPE_SBR_DATA_CRC), downSampledSBR,
+                            smallFrames);
+                    ret = 0;
+                    break;
+                } else
+                    throw new AACException("SBR applied on unexpected element: " + prev);
+            } else {
+                _in.skipBits(ret);
+                ret = 0;
+            }
+        case TYPE_FILL:
+        case TYPE_FILL_DATA:
+        case TYPE_EXT_DATA_ELEMENT:
+        default:
+            _in.skipBits(ret);
+            ret = 0;
+            break;
+        }
+        return ret;
+    }
 
-		int bandCount = 1;
+    private int decodeDynamicRangeInfo(IBitStream _in, int count) throws AACException {
+        if (dri == null)
+            dri = new DynamicRangeInfo();
+        int ret = count;
 
-		//pce tag
-		if(dri.pceTagPresent = _in.readBool()) {
-			dri.pceInstanceTag = _in.readBits(4);
-			dri.tagReservedBits = _in.readBits(4);
-		}
+        int bandCount = 1;
 
-		//excluded channels
-		if(dri.excludedChannelsPresent = _in.readBool()) {
-			ret -= decodeExcludedChannels(_in);
-		}
+        // pce tag
+        if (dri.pceTagPresent = _in.readBool()) {
+            dri.pceInstanceTag = _in.readBits(4);
+            dri.tagReservedBits = _in.readBits(4);
+        }
 
-		//bands
-		if(dri.bandsPresent = _in.readBool()) {
-			dri.bandsIncrement = _in.readBits(4);
-			dri.interpolationScheme = _in.readBits(4);
-			ret -= 8;
-			bandCount += dri.bandsIncrement;
-			dri.bandTop = new int[bandCount];
-			for(int i = 0; i<bandCount; i++) {
-				dri.bandTop[i] = _in.readBits(8);
-				ret -= 8;
-			}
-		}
+        // excluded channels
+        if (dri.excludedChannelsPresent = _in.readBool()) {
+            ret -= decodeExcludedChannels(_in);
+        }
 
-		//prog ref level
-		if(dri.progRefLevelPresent = _in.readBool()) {
-			dri.progRefLevel = _in.readBits(7);
-			dri.progRefLevelReservedBits = _in.readBits(1);
-			ret -= 8;
-		}
+        // bands
+        if (dri.bandsPresent = _in.readBool()) {
+            dri.bandsIncrement = _in.readBits(4);
+            dri.interpolationScheme = _in.readBits(4);
+            ret -= 8;
+            bandCount += dri.bandsIncrement;
+            dri.bandTop = new int[bandCount];
+            for (int i = 0; i < bandCount; i++) {
+                dri.bandTop[i] = _in.readBits(8);
+                ret -= 8;
+            }
+        }
 
-		dri.dynRngSgn = new boolean[bandCount];
-		dri.dynRngCtl = new int[bandCount];
-		for(int i = 0; i<bandCount; i++) {
-			dri.dynRngSgn[i] = _in.readBool();
-			dri.dynRngCtl[i] = _in.readBits(7);
-			ret -= 8;
-		}
-		return ret;
-	}
+        // prog ref level
+        if (dri.progRefLevelPresent = _in.readBool()) {
+            dri.progRefLevel = _in.readBits(7);
+            dri.progRefLevelReservedBits = _in.readBits(1);
+            ret -= 8;
+        }
 
-	private int decodeExcludedChannels(IBitStream _in) throws AACException {
-		int i;
-		int exclChs = 0;
+        dri.dynRngSgn = new boolean[bandCount];
+        dri.dynRngCtl = new int[bandCount];
+        for (int i = 0; i < bandCount; i++) {
+            dri.dynRngSgn[i] = _in.readBool();
+            dri.dynRngCtl[i] = _in.readBits(7);
+            ret -= 8;
+        }
+        return ret;
+    }
 
-		do {
-			for(i = 0; i<7; i++) {
-				dri.excludeMask[exclChs] = _in.readBool();
-				exclChs++;
-			}
-		}
-		while(exclChs<57&&_in.readBool());
+    private int decodeExcludedChannels(IBitStream _in) throws AACException {
+        int i;
+        int exclChs = 0;
 
-		return (exclChs/7)*8;
-	}
+        do {
+            for (i = 0; i < 7; i++) {
+                dri.excludeMask[exclChs] = _in.readBool();
+                exclChs++;
+            }
+        } while (exclChs < 57 && _in.readBool());
+
+        return (exclChs / 7) * 8;
+    }
 }

@@ -12,19 +12,19 @@ import net.sourceforge.jaad.aac.AACException;
  */
 class SCE_LFE extends Element {
 
-	private final ICStream ics;
+    private final ICStream ics;
 
-	SCE_LFE(int frameLength) {
-		super();
-		ics = new ICStream(frameLength);
-	}
+    SCE_LFE(int frameLength) {
+        super();
+        ics = new ICStream(frameLength);
+    }
 
-	void decode(IBitStream _in, AACDecoderConfig conf) throws AACException {
-		readElementInstanceTag(_in);
-		ics.decode(_in, false, conf);
-	}
+    void decode(IBitStream _in, AACDecoderConfig conf) throws AACException {
+        readElementInstanceTag(_in);
+        ics.decode(_in, false, conf);
+    }
 
-	public ICStream getICStream() {
-		return ics;
-	}
+    public ICStream getICStream() {
+        return ics;
+    }
 }
