@@ -511,12 +511,13 @@ public class SourceImpl implements Source, PacketSource {
                 audioCodecMeta = audioDecoder.getCodecMeta(audioPkt.getData());
         }
         AudioBuffer audioBuffer;
+        DemuxerTrackMeta audioMeta = getAudioMeta();
+        AudioFormat format = audioMeta.getAudioCodecMeta().getFormat();
         if (inputAudioCodec.v2 == PCM) {
-            DemuxerTrackMeta audioMeta = getAudioMeta();
-            audioBuffer = new AudioBuffer(audioPkt.getData(), audioMeta.getAudioCodecMeta().getFormat(),
+            audioBuffer = new AudioBuffer(audioPkt.getData(), format,
                     audioMeta.getTotalFrames());
         } else {
-            audioBuffer = audioDecoder.decodeFrame(audioPkt.getData(), null);
+            audioBuffer = audioDecoder.decodeFrame(audioPkt.getData(), ByteBuffer.allocate(2 * format.getChannels() * 1024));
         }
         return new AudioFrameWithPacket(audioBuffer, audioPkt);
     }

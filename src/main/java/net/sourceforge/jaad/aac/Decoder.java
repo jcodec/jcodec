@@ -2,6 +2,7 @@ package net.sourceforge.jaad.aac;
 
 import java.nio.ByteBuffer;
 
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 
@@ -76,18 +77,19 @@ public class Decoder implements SyntaxConstants {
      * @param buffer a buffer to hold the decoded PCM data
      * @throws AACException if decoding fails
      */
-    public void decodeFrame(ByteBuffer frame, SampleBuffer buffer) throws AACException {
+    public ByteBuffer decodeFrame(ByteBuffer frame, ByteBuffer buffer) throws AACException {
         try {
-            decode(frame, buffer);
+            return decode(frame, buffer);
         } catch (AACException e) {
             if (!e.isEndOfStream())
                 throw e;
             else
                 Logger.warn("unexpected end of frame");
         }
+        return null;
     }
 
-    private void decode(ByteBuffer frame, SampleBuffer buffer) throws AACException {
+    private ByteBuffer decode(ByteBuffer frame, ByteBuffer buffer) throws AACException {
         BitReader _in;
         if (ADIFHeader.isPresent(frame)) {
             int id = frame.getInt();
@@ -112,10 +114,13 @@ public class Decoder implements SyntaxConstants {
             // 2: spectral processing
             syntacticElements.process(filterBank);
             // 3: send to output buffer
-            syntacticElements.sendToOutput(buffer);
+            return syntacticElements.sendToOutput(buffer);
         } catch (Exception e) {
-            buffer.setData(new byte[0], 0, 0, 0, 0);
             throw AACException.wrap(e);
         }
+    }
+
+    public AudioFormat getMeta() {
+        return syntacticElements.getMeta();
     }
 }

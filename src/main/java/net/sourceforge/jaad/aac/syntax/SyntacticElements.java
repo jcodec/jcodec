@@ -8,20 +8,21 @@ import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STERE
 import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER;
 import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO;
 
-import net.sourceforge.jaad.aac.AACDecoderConfig;
+import java.nio.ByteBuffer;
 
+import org.jcodec.common.AudioFormat;
 import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 
+import net.sourceforge.jaad.aac.AACDecoderConfig;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.ChannelConfiguration;
 import net.sourceforge.jaad.aac.Profile;
-import net.sourceforge.jaad.aac.SampleBuffer;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
 import net.sourceforge.jaad.aac.sbr.SBR;
-import net.sourceforge.jaad.aac.tools.IS;
 import net.sourceforge.jaad.aac.syntax.ICSInfo.LTPrediction;
+import net.sourceforge.jaad.aac.tools.IS;
 import net.sourceforge.jaad.aac.tools.MS;
 
 /**
@@ -429,17 +430,13 @@ public class SyntacticElements implements SyntaxConstants {
         }
     }
 
-    public void sendToOutput(SampleBuffer buffer) {
-        final boolean be = buffer.isBigEndian();
+    public ByteBuffer sendToOutput(ByteBuffer buffer) {
+        ByteBuffer out = buffer.duplicate();
+        out.order(buffer.order());
 
         final int chs = data.length;
         final int mult = (sbrPresent && config.isSBREnabled()) ? 2 : 1;
         final int length = mult * config.getFrameLength();
-        final int freq = mult * config.getSampleFrequency().getFrequency();
-
-        byte[] b = buffer.getData();
-        if (b.length != chs * length * 2)
-            b = new byte[chs * length * 2];
 
         float[] cur;
         int i, j, off;
@@ -449,16 +446,18 @@ public class SyntacticElements implements SyntaxConstants {
             for (j = 0; j < length; j++) {
                 s = (short) Math.max(Math.min(Math.round(cur[j]), Short.MAX_VALUE), Short.MIN_VALUE);
                 off = (j * chs + i) * 2;
-                if (be) {
-                    b[off] = (byte) ((s >> 8) & BYTE_MASK);
-                    b[off + 1] = (byte) (s & BYTE_MASK);
-                } else {
-                    b[off + 1] = (byte) ((s >> 8) & BYTE_MASK);
-                    b[off] = (byte) (s & BYTE_MASK);
-                }
+                out.putShort(s);
             }
         }
+        out.flip();
+        return out;
+    }
 
-        buffer.setData(b, freq, chs, 16, bitsRead);
+    public AudioFormat getMeta() {
+        final int mult = (sbrPresent && config.isSBREnabled()) ? 2 : 1;
+        final int freq = mult * config.getSampleFrequency().getFrequency();
+        final int chs = data.length;
+
+        return new AudioFormat(freq, 16, chs, true, false);
     }
 }

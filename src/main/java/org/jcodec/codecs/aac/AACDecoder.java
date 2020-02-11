@@ -2,19 +2,17 @@ package org.jcodec.codecs.aac;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import org.jcodec.codecs.aac.ADTSParser.Header;
 import org.jcodec.common.AudioCodecMeta;
 import org.jcodec.common.AudioDecoder;
-import org.jcodec.common.AudioFormat;
 import org.jcodec.common.UsedViaReflection;
-import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.logging.Logger;
 import org.jcodec.common.model.AudioBuffer;
 
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.Decoder;
-import net.sourceforge.jaad.aac.SampleBuffer;
 
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
@@ -43,28 +41,17 @@ public class AACDecoder implements AudioDecoder {
     public AudioBuffer decodeFrame(ByteBuffer frame, ByteBuffer dst) throws IOException {
         // Internally all AAC streams are ADTS wrapped
         ADTSParser.read(frame);
-        SampleBuffer sampleBuffer = new SampleBuffer();
-        decoder.decodeFrame(frame, sampleBuffer);
-        if (sampleBuffer.isBigEndian()) {
-            // Not a simple setter! This will also swap the order of bytes inside the buffer.
-            sampleBuffer.setBigEndian(false);
-        }
+        dst.order(ByteOrder.LITTLE_ENDIAN);
+        decoder.decodeFrame(frame, dst);
 
-        return new AudioBuffer(ByteBuffer.wrap(sampleBuffer.getData()), toAudioFormat(sampleBuffer), 0);
+        return new AudioBuffer(dst, decoder.getMeta(), 0);
     }
     
-    private AudioFormat toAudioFormat(SampleBuffer sampleBuffer) {
-        return new AudioFormat(sampleBuffer.getSampleRate(), sampleBuffer.getBitsPerSample(),
-                sampleBuffer.getChannels(), true, sampleBuffer.isBigEndian());
-    }
 
     @Override
     public AudioCodecMeta getCodecMeta(ByteBuffer data) throws IOException {
-        SampleBuffer sampleBuffer = new SampleBuffer();
-        decoder.decodeFrame(data, sampleBuffer);
-        sampleBuffer.setBigEndian(false);
-
-        return org.jcodec.common.AudioCodecMeta.fromAudioFormat(toAudioFormat(sampleBuffer));
+        decoder.decodeFrame(data, ByteBuffer.allocate(1 << 16));
+        return org.jcodec.common.AudioCodecMeta.fromAudioFormat(decoder.getMeta());
     }
 
     @UsedViaReflection
