@@ -1,6 +1,9 @@
 package net.sourceforge.jaad.aac.syntax;
 
 import net.sourceforge.jaad.aac.AACException;
+
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACDecoderConfig;
 import net.sourceforge.jaad.aac.huffman.HCB;
 import net.sourceforge.jaad.aac.huffman.Huffman;
@@ -61,27 +64,27 @@ class CCE extends Element implements SyntaxConstants {
         return chSelect[index];
     }
 
-    void decode(IBitStream _in, AACDecoderConfig conf) throws AACException {
-        couplingPoint = 2 * _in.readBit();
-        coupledCount = _in.readBits(3);
+    void decode(BitReader _in, AACDecoderConfig conf) throws AACException {
+        couplingPoint = 2 * _in.read1Bit();
+        coupledCount = _in.readNBit(3);
         int gainCount = 0;
         int i;
         for (i = 0; i <= coupledCount; i++) {
             gainCount++;
             channelPair[i] = _in.readBool();
-            idSelect[i] = _in.readBits(4);
+            idSelect[i] = _in.readNBit(4);
             if (channelPair[i]) {
-                chSelect[i] = _in.readBits(2);
+                chSelect[i] = _in.readNBit(2);
                 if (chSelect[i] == 3)
                     gainCount++;
             } else
                 chSelect[i] = 2;
         }
-        couplingPoint += _in.readBit();
+        couplingPoint += _in.read1Bit();
         couplingPoint |= (couplingPoint >> 1);
 
         final boolean sign = _in.readBool();
-        final double scale = CCE_SCALE[_in.readBits(2)];
+        final double scale = CCE_SCALE[_in.readNBit(2)];
 
         ics.decode(_in, false, conf);
         final ICSInfo info = ics.getInfo();
@@ -96,7 +99,7 @@ class CCE extends Element implements SyntaxConstants {
             int xg = 0;
             float gainCache = 1.0f;
             if (i > 0) {
-                cge = couplingPoint == 2 ? 1 : _in.readBit();
+                cge = couplingPoint == 2 ? 1 : _in.read1Bit();
                 xg = cge == 0 ? 0 : Huffman.decodeScaleFactor(_in) - 60;
                 gainCache = (float) Math.pow(scale, -xg);
             }

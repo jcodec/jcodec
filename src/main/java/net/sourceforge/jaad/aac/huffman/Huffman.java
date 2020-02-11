@@ -1,5 +1,7 @@
 package net.sourceforge.jaad.aac.huffman;
 
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
 
@@ -19,22 +21,22 @@ public class Huffman implements Codebooks {
     private Huffman() {
     }
 
-    private static int findOffset(IBitStream _in, int[][] table) throws AACException {
+    private static int findOffset(BitReader _in, int[][] table) throws AACException {
         int off = 0;
         int len = table[off][0];
-        int cw = _in.readBits(len);
+        int cw = _in.readNBit(len);
         int j;
         while (cw != table[off][1]) {
             off++;
             j = table[off][0] - len;
             len = table[off][0];
             cw <<= j;
-            cw |= _in.readBits(j);
+            cw |= _in.readNBit(j);
         }
         return off;
     }
 
-    private static void signValues(IBitStream _in, int[] data, int off, int len) throws AACException {
+    private static void signValues(BitReader _in, int[] data, int off, int len) throws AACException {
         for (int i = off; i < off + len; i++) {
             if (data[i] != 0) {
                 if (_in.readBool())
@@ -43,24 +45,24 @@ public class Huffman implements Codebooks {
         }
     }
 
-    private static int getEscape(IBitStream _in, int s) throws AACException {
+    private static int getEscape(BitReader _in, int s) throws AACException {
         final boolean neg = s < 0;
 
         int i = 4;
         while (_in.readBool()) {
             i++;
         }
-        final int j = _in.readBits(i) | (1 << i);
+        final int j = _in.readNBit(i) | (1 << i);
 
         return (neg ? -j : j);
     }
 
-    public static int decodeScaleFactor(IBitStream _in) throws AACException {
+    public static int decodeScaleFactor(BitReader _in) throws AACException {
         final int offset = findOffset(_in, HCB_SF);
         return HCB_SF[offset][2];
     }
 
-    public static void decodeSpectralData(IBitStream _in, int cb, int[] data, int off) throws AACException {
+    public static void decodeSpectralData(BitReader _in, int cb, int[] data, int off) throws AACException {
         final int[][] HCB = CODEBOOKS[cb - 1];
 
         // find index

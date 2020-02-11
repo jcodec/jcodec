@@ -2,12 +2,14 @@ package net.sourceforge.jaad.aac.syntax;
 
 import java.util.Arrays;
 
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACDecoderConfig;
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.Profile;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.tools.MSMask;
-
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.*;
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
  * under the Public Domain license. Code changes provided by the JCodec project
@@ -15,7 +17,7 @@ import net.sourceforge.jaad.aac.tools.MSMask;
  *
  * @author in-somnia
  */
-public class CPE extends Element implements SyntaxConstants {
+public class CPE extends Element {
 
     private MSMask msMask;
     private boolean[] msUsed;
@@ -29,7 +31,7 @@ public class CPE extends Element implements SyntaxConstants {
         icsR = new ICStream(frameLength);
     }
 
-    void decode(IBitStream _in, AACDecoderConfig conf) throws AACException {
+    void decode(BitReader _in, AACDecoderConfig conf) throws AACException {
         final Profile profile = conf.getProfile();
         final SampleFrequency sf = conf.getSampleFrequency();
         if (sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE))
@@ -43,7 +45,7 @@ public class CPE extends Element implements SyntaxConstants {
             info.decode(_in, conf, commonWindow);
             icsR.getInfo().setData(info);
 
-            msMask = CPE.msMaskFromInt(_in.readBits(2));
+            msMask = CPE.msMaskFromInt(_in.readNBit(2));
             if (msMask.equals(MSMask.TYPE_USED)) {
                 final int maxSFB = info.getMaxSFB();
                 final int windowGroupCount = info.getWindowGroupCount();

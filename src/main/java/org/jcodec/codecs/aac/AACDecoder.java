@@ -36,7 +36,7 @@ public class AACDecoder implements AudioDecoder {
             }
             Logger.info("Creating AAC decoder from ADTS header.");
         }
-        decoder = new Decoder(NIOUtils.toArray(decoderSpecific));
+        decoder = new Decoder(decoderSpecific);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class AACDecoder implements AudioDecoder {
         // Internally all AAC streams are ADTS wrapped
         ADTSParser.read(frame);
         SampleBuffer sampleBuffer = new SampleBuffer();
-        decoder.decodeFrame(NIOUtils.toArray(frame), sampleBuffer);
+        decoder.decodeFrame(frame, sampleBuffer);
         if (sampleBuffer.isBigEndian()) {
             // Not a simple setter! This will also swap the order of bytes inside the buffer.
             sampleBuffer.setBigEndian(false);
@@ -61,7 +61,7 @@ public class AACDecoder implements AudioDecoder {
     @Override
     public AudioCodecMeta getCodecMeta(ByteBuffer data) throws IOException {
         SampleBuffer sampleBuffer = new SampleBuffer();
-        decoder.decodeFrame(NIOUtils.toArray(data), sampleBuffer);
+        decoder.decodeFrame(data, sampleBuffer);
         sampleBuffer.setBigEndian(false);
 
         return org.jcodec.common.AudioCodecMeta.fromAudioFormat(toAudioFormat(sampleBuffer));

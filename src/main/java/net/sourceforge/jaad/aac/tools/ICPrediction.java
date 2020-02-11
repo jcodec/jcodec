@@ -1,5 +1,6 @@
 package net.sourceforge.jaad.aac.tools;
 
+import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 
 import net.sourceforge.jaad.aac.AACException;
@@ -44,11 +45,11 @@ public class ICPrediction {
         resetAllPredictors();
     }
 
-    public void decode(IBitStream _in, int maxSFB, SampleFrequency sf) throws AACException {
+    public void decode(BitReader _in, int maxSFB, SampleFrequency sf) throws AACException {
         final int predictorCount = sf.getPredictorCount();
 
         if (predictorReset = _in.readBool())
-            predictorResetGroup = _in.readBits(5);
+            predictorResetGroup = _in.readNBit(5);
 
         final int maxPredSFB = sf.getMaximalPredictionSFB();
         final int length = Math.min(maxSFB, maxPredSFB);

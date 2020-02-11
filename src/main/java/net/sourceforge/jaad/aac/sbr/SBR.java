@@ -2,6 +2,8 @@ package net.sourceforge.jaad.aac.sbr;
 
 import java.util.Arrays;
 
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.ps.PS;
@@ -400,10 +402,10 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
     }
 
     /* table 2 */
-    public int decode(IBitStream ld, int cnt) throws AACException {
+    public int decode(BitReader ld, int cnt) throws AACException {
         int result = 0;
         int num_align_bits = 0;
-        long num_sbr_bits1 = ld.getPosition();
+        long num_sbr_bits1 = ld.position();
         int num_sbr_bits2;
 
         int saved_start_freq, saved_samplerate_mode;
@@ -411,10 +413,10 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
         int saved_xover_band;
         boolean saved_alter_scale;
 
-        int bs_extension_type = ld.readBits(4);
+        int bs_extension_type = ld.readNBit(4);
 
         if (bs_extension_type == EXT_SBR_DATA_CRC) {
-            this.bs_sbr_crc_bits = ld.readBits(10);
+            this.bs_sbr_crc_bits = ld.readNBit(10);
         }
 
         /* save old header values, in case the new ones are corrupted */
@@ -468,7 +470,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
             result = 1;
         }
 
-        num_sbr_bits2 = (int) (ld.getPosition() - num_sbr_bits1);
+        num_sbr_bits2 = (int) (ld.position() - num_sbr_bits1);
 
         /* check if we read more bits then were available for sbr */
         if (8 * cnt < num_sbr_bits2) {
@@ -491,17 +493,17 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
             num_align_bits = 8 * cnt /*- 4*/ - num_sbr_bits2;
 
             while (num_align_bits > 7) {
-                ld.readBits(8);
+                ld.readNBit(8);
                 num_align_bits -= 8;
             }
-            ld.readBits(num_align_bits);
+            ld.readNBit(num_align_bits);
         }
 
         return result;
     }
 
     /* table 3 */
-    private void sbr_header(IBitStream ld) throws AACException {
+    private void sbr_header(BitReader ld) throws AACException {
         boolean bs_header_extra_1, bs_header_extra_2;
 
         this.header_count++;
@@ -512,17 +514,17 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
          * bs_start_freq and bs_stop_freq must define a fequency band that does not
          * exceed 48 channels
          */
-        this.bs_start_freq = ld.readBits(4);
-        this.bs_stop_freq = ld.readBits(4);
-        this.bs_xover_band = ld.readBits(3);
-        ld.readBits(2); // reserved
+        this.bs_start_freq = ld.readNBit(4);
+        this.bs_stop_freq = ld.readNBit(4);
+        this.bs_xover_band = ld.readNBit(3);
+        ld.readNBit(2); // reserved
         bs_header_extra_1 = ld.readBool();
         bs_header_extra_2 = ld.readBool();
 
         if (bs_header_extra_1) {
-            this.bs_freq_scale = ld.readBits(2);
+            this.bs_freq_scale = ld.readNBit(2);
             this.bs_alter_scale = ld.readBool();
-            this.bs_noise_bands = ld.readBits(2);
+            this.bs_noise_bands = ld.readNBit(2);
         } else {
             /* Default values */
             this.bs_freq_scale = 2;
@@ -531,8 +533,8 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
         }
 
         if (bs_header_extra_2) {
-            this.bs_limiter_bands = ld.readBits(2);
-            this.bs_limiter_gains = ld.readBits(2);
+            this.bs_limiter_bands = ld.readNBit(2);
+            this.bs_limiter_gains = ld.readNBit(2);
             this.bs_interpol_freq = ld.readBool();
             this.bs_smoothing_mode = ld.readBool();
         } else {
@@ -546,7 +548,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
     }
 
     /* table 4 */
-    private int sbr_data(IBitStream ld) throws AACException {
+    private int sbr_data(BitReader ld) throws AACException {
         int result;
 
         this.rate = (this.bs_samplerate_mode != 0) ? 2 : 1;
@@ -563,11 +565,11 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
     }
 
     /* table 5 */
-    private int sbr_single_channel_element(IBitStream ld) throws AACException {
+    private int sbr_single_channel_element(BitReader ld) throws AACException {
         int result;
 
         if (ld.readBool()) {
-            ld.readBits(4); // reserved
+            ld.readNBit(4); // reserved
         }
 
         if ((result = sbr_grid(ld, 0)) > 0)
@@ -592,16 +594,16 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
         if (this.bs_extended_data) {
             int nr_bits_left;
             int ps_ext_read = 0;
-            int cnt = ld.readBits(4);
+            int cnt = ld.readNBit(4);
             if (cnt == 15) {
-                cnt += ld.readBits(8);
+                cnt += ld.readNBit(8);
             }
 
             nr_bits_left = 8 * cnt;
             while (nr_bits_left > 7) {
                 int tmp_nr_bits = 0;
 
-                this.bs_extension_id = ld.readBits(2);
+                this.bs_extension_id = ld.readNBit(2);
                 tmp_nr_bits += 2;
 
                 /* allow only 1 PS extension element per extension data */
@@ -627,7 +629,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 
             /* Corrigendum */
             if (nr_bits_left > 0) {
-                ld.readBits(nr_bits_left);
+                ld.readNBit(nr_bits_left);
             }
         }
 
@@ -635,13 +637,13 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
     }
 
     /* table 6 */
-    private int sbr_channel_pair_element(IBitStream ld) throws AACException {
+    private int sbr_channel_pair_element(BitReader ld) throws AACException {
         int n, result;
 
         if (ld.readBool()) {
             // reserved
-            ld.readBits(4);
-            ld.readBits(4);
+            ld.readNBit(4);
+            ld.readNBit(4);
         }
 
         this.bs_coupling = ld.readBool();
@@ -746,16 +748,16 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
         this.bs_extended_data = ld.readBool();
         if (this.bs_extended_data) {
             int nr_bits_left;
-            int cnt = ld.readBits(4);
+            int cnt = ld.readNBit(4);
             if (cnt == 15) {
-                cnt += ld.readBits(8);
+                cnt += ld.readNBit(8);
             }
 
             nr_bits_left = 8 * cnt;
             while (nr_bits_left > 7) {
                 int tmp_nr_bits = 0;
 
-                this.bs_extension_id = ld.readBits(2);
+                this.bs_extension_id = ld.readNBit(2);
                 tmp_nr_bits += 2;
                 tmp_nr_bits += sbr_extension(ld, this.bs_extension_id, nr_bits_left);
 
@@ -768,7 +770,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 
             /* Corrigendum */
             if (nr_bits_left > 0) {
-                ld.readBits(nr_bits_left);
+                ld.readNBit(nr_bits_left);
             }
         }
 
@@ -785,7 +787,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
     }
 
     /* table 7 */
-    private int sbr_grid(IBitStream ld, int ch) throws AACException {
+    private int sbr_grid(BitReader ld, int ch) throws AACException {
         int i, env, rel, result;
         int bs_abs_bord, bs_abs_bord_1;
         int bs_num_env = 0;
@@ -793,15 +795,15 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
         int saved_L_Q = this.L_Q[ch];
         int saved_frame_class = this.bs_frame_class[ch];
 
-        this.bs_frame_class[ch] = ld.readBits(2);
+        this.bs_frame_class[ch] = ld.readNBit(2);
 
         switch (this.bs_frame_class[ch]) {
         case FIXFIX:
-            i = ld.readBits(2);
+            i = ld.readNBit(2);
 
             bs_num_env = Math.min(1 << i, 5);
 
-            i = ld.readBit();
+            i = ld.read1Bit();
             for (env = 0; env < bs_num_env; env++) {
                 this.f[ch][env] = i;
             }
@@ -813,17 +815,17 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
             break;
 
         case FIXVAR:
-            bs_abs_bord = ld.readBits(2) + this.numTimeSlots;
-            bs_num_env = ld.readBits(2) + 1;
+            bs_abs_bord = ld.readNBit(2) + this.numTimeSlots;
+            bs_num_env = ld.readNBit(2) + 1;
 
             for (rel = 0; rel < bs_num_env - 1; rel++) {
-                this.bs_rel_bord[ch][rel] = 2 * ld.readBits(2) + 2;
+                this.bs_rel_bord[ch][rel] = 2 * ld.readNBit(2) + 2;
             }
             i = sbr_log2(bs_num_env + 1);
-            this.bs_pointer[ch] = ld.readBits(i);
+            this.bs_pointer[ch] = ld.readNBit(i);
 
             for (env = 0; env < bs_num_env; env++) {
-                this.f[ch][bs_num_env - env - 1] = ld.readBit();
+                this.f[ch][bs_num_env - env - 1] = ld.read1Bit();
             }
 
             this.abs_bord_lead[ch] = 0;
@@ -833,17 +835,17 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
             break;
 
         case VARFIX:
-            bs_abs_bord = ld.readBits(2);
-            bs_num_env = ld.readBits(2) + 1;
+            bs_abs_bord = ld.readNBit(2);
+            bs_num_env = ld.readNBit(2) + 1;
 
             for (rel = 0; rel < bs_num_env - 1; rel++) {
-                this.bs_rel_bord[ch][rel] = 2 * ld.readBits(2) + 2;
+                this.bs_rel_bord[ch][rel] = 2 * ld.readNBit(2) + 2;
             }
             i = sbr_log2(bs_num_env + 1);
-            this.bs_pointer[ch] = ld.readBits(i);
+            this.bs_pointer[ch] = ld.readNBit(i);
 
             for (env = 0; env < bs_num_env; env++) {
-                this.f[ch][env] = ld.readBit();
+                this.f[ch][env] = ld.read1Bit();
             }
 
             this.abs_bord_lead[ch] = bs_abs_bord;
@@ -853,24 +855,24 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
             break;
 
         case VARVAR:
-            bs_abs_bord = ld.readBits(2);
-            bs_abs_bord_1 = ld.readBits(2) + this.numTimeSlots;
-            this.bs_num_rel_0[ch] = ld.readBits(2);
-            this.bs_num_rel_1[ch] = ld.readBits(2);
+            bs_abs_bord = ld.readNBit(2);
+            bs_abs_bord_1 = ld.readNBit(2) + this.numTimeSlots;
+            this.bs_num_rel_0[ch] = ld.readNBit(2);
+            this.bs_num_rel_1[ch] = ld.readNBit(2);
 
             bs_num_env = Math.min(5, this.bs_num_rel_0[ch] + this.bs_num_rel_1[ch] + 1);
 
             for (rel = 0; rel < this.bs_num_rel_0[ch]; rel++) {
-                this.bs_rel_bord_0[ch][rel] = 2 * ld.readBits(2) + 2;
+                this.bs_rel_bord_0[ch][rel] = 2 * ld.readNBit(2) + 2;
             }
             for (rel = 0; rel < this.bs_num_rel_1[ch]; rel++) {
-                this.bs_rel_bord_1[ch][rel] = 2 * ld.readBits(2) + 2;
+                this.bs_rel_bord_1[ch][rel] = 2 * ld.readNBit(2) + 2;
             }
             i = sbr_log2(this.bs_num_rel_0[ch] + this.bs_num_rel_1[ch] + 2);
-            this.bs_pointer[ch] = ld.readBits(i);
+            this.bs_pointer[ch] = ld.readNBit(i);
 
             for (env = 0; env < bs_num_env; env++) {
-                this.f[ch][env] = ld.readBit();
+                this.f[ch][env] = ld.read1Bit();
             }
 
             this.abs_bord_lead[ch] = bs_abs_bord;
@@ -906,28 +908,28 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
     }
 
     /* table 8 */
-    private void sbr_dtdf(IBitStream ld, int ch) throws AACException {
+    private void sbr_dtdf(BitReader ld, int ch) throws AACException {
         int i;
 
         for (i = 0; i < this.L_E[ch]; i++) {
-            this.bs_df_env[ch][i] = ld.readBit();
+            this.bs_df_env[ch][i] = ld.read1Bit();
         }
 
         for (i = 0; i < this.L_Q[ch]; i++) {
-            this.bs_df_noise[ch][i] = ld.readBit();
+            this.bs_df_noise[ch][i] = ld.read1Bit();
         }
     }
 
     /* table 9 */
-    private void invf_mode(IBitStream ld, int ch) throws AACException {
+    private void invf_mode(BitReader ld, int ch) throws AACException {
         int n;
 
         for (n = 0; n < this.N_Q; n++) {
-            this.bs_invf_mode[ch][n] = ld.readBits(2);
+            this.bs_invf_mode[ch][n] = ld.readNBit(2);
         }
     }
 
-    private int sbr_extension(IBitStream ld, int bs_extension_id, int num_bits_left) throws AACException {
+    private int sbr_extension(BitReader ld, int bs_extension_id, int num_bits_left) throws AACException {
         int ret;
 
         switch (bs_extension_id) {
@@ -951,22 +953,22 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
 
             return ret;
         default:
-            this.bs_extension_data = ld.readBits(6);
+            this.bs_extension_data = ld.readNBit(6);
             return 6;
         }
     }
 
     /* table 12 */
-    private void sinusoidal_coding(IBitStream ld, int ch) throws AACException {
+    private void sinusoidal_coding(BitReader ld, int ch) throws AACException {
         int n;
 
         for (n = 0; n < this.N_high; n++) {
-            this.bs_add_harmonic[ch][n] = ld.readBit();
+            this.bs_add_harmonic[ch][n] = ld.read1Bit();
         }
     }
     /* table 10 */
 
-    private void sbr_envelope(IBitStream ld, int ch) throws AACException {
+    private void sbr_envelope(BitReader ld, int ch) throws AACException {
         int env, band;
         int delta = 0;
         int[][] t_huff, f_huff;
@@ -1000,15 +1002,15 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
             if (this.bs_df_env[ch][env] == 0) {
                 if (this.bs_coupling && (ch == 1)) {
                     if (this.amp_res[ch]) {
-                        this.E[ch][0][env] = ld.readBits(5) << delta;
+                        this.E[ch][0][env] = ld.readNBit(5) << delta;
                     } else {
-                        this.E[ch][0][env] = ld.readBits(6) << delta;
+                        this.E[ch][0][env] = ld.readNBit(6) << delta;
                     }
                 } else {
                     if (this.amp_res[ch]) {
-                        this.E[ch][0][env] = ld.readBits(6) << delta;
+                        this.E[ch][0][env] = ld.readNBit(6) << delta;
                     } else {
-                        this.E[ch][0][env] = ld.readBits(7) << delta;
+                        this.E[ch][0][env] = ld.readNBit(7) << delta;
                     }
                 }
 
@@ -1027,7 +1029,7 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
     }
 
     /* table 11 */
-    private void sbr_noise(IBitStream ld, int ch) throws AACException {
+    private void sbr_noise(BitReader ld, int ch) throws AACException {
         int noise, band;
         int delta = 0;
         int[][] t_huff, f_huff;
@@ -1045,9 +1047,9 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
         for (noise = 0; noise < this.L_Q[ch]; noise++) {
             if (this.bs_df_noise[ch][noise] == 0) {
                 if (this.bs_coupling && (ch == 1)) {
-                    this.Q[ch][0][noise] = ld.readBits(5) << delta;
+                    this.Q[ch][0][noise] = ld.readNBit(5) << delta;
                 } else {
-                    this.Q[ch][0][noise] = ld.readBits(5) << delta;
+                    this.Q[ch][0][noise] = ld.readNBit(5) << delta;
                 }
                 for (band = 1; band < this.N_Q; band++) {
                     this.Q[ch][band][noise] = (decodeHuffman(ld, f_huff) << delta);
@@ -1062,12 +1064,12 @@ public class SBR implements SBRConstants, net.sourceforge.jaad.aac.syntax.Syntax
         NoiseEnvelope.extract_noise_floor_data(this, ch);
     }
 
-    private int decodeHuffman(IBitStream ld, int[][] t_huff) throws AACException {
+    private int decodeHuffman(BitReader ld, int[][] t_huff) throws AACException {
         int bit;
         int index = 0;
 
         while (index >= 0) {
-            bit = ld.readBit();
+            bit = ld.read1Bit();
             index = t_huff[index][bit];
         }
 

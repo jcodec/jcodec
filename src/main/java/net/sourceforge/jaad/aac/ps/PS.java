@@ -1,5 +1,7 @@
 package net.sourceforge.jaad.aac.ps;
 
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.syntax.IBitStream;
@@ -183,9 +185,9 @@ public class PS implements PSConstants, PSTables, PSHuffmanTables {
         }
     }
 
-    public int decode(IBitStream ld) throws AACException {
+    public int decode(BitReader ld) throws AACException {
         int tmp, n;
-        long bits = ld.getPosition();
+        long bits = ld.position();
 
         /* check for new PS header */
         if (ld.readBool()) {
@@ -197,7 +199,7 @@ public class PS implements PSConstants, PSTables, PSHuffmanTables {
             this.enable_iid = ld.readBool();
 
             if (this.enable_iid) {
-                this.iid_mode = ld.readBits(3);
+                this.iid_mode = ld.readNBit(3);
 
                 this.nr_iid_par = nr_iid_par_tab[this.iid_mode];
                 this.nr_ipdopd_par = nr_ipdopd_par_tab[this.iid_mode];
@@ -213,7 +215,7 @@ public class PS implements PSConstants, PSTables, PSHuffmanTables {
             this.enable_icc = ld.readBool();
 
             if (this.enable_icc) {
-                this.icc_mode = ld.readBits(3);
+                this.icc_mode = ld.readNBit(3);
 
                 this.nr_icc_par = nr_icc_par_tab[this.icc_mode];
 
@@ -231,14 +233,14 @@ public class PS implements PSConstants, PSTables, PSHuffmanTables {
             return 1;
         }
 
-        this.frame_class = ld.readBit();
-        tmp = ld.readBits(2);
+        this.frame_class = ld.read1Bit();
+        tmp = ld.readNBit(2);
 
         this.num_env = num_env_tab[this.frame_class][tmp];
 
         if (this.frame_class != 0) {
             for (n = 1; n < this.num_env + 1; n++) {
-                this.border_position[n] = ld.readBits(5) + 1;
+                this.border_position[n] = ld.readNBit(5) + 1;
             }
         }
 
@@ -266,32 +268,32 @@ public class PS implements PSConstants, PSTables, PSHuffmanTables {
 
         if (this.enable_ext) {
             int num_bits_left;
-            int cnt = ld.readBits(4);
+            int cnt = ld.readNBit(4);
             if (cnt == 15) {
-                cnt += ld.readBits(8);
+                cnt += ld.readNBit(8);
             }
 
             num_bits_left = 8 * cnt;
             while (num_bits_left > 7) {
-                int ps_extension_id = ld.readBits(2);
+                int ps_extension_id = ld.readNBit(2);
 
                 num_bits_left -= 2;
                 num_bits_left -= ps_extension(ld, ps_extension_id, num_bits_left);
             }
 
-            ld.skipBits(num_bits_left);
+            ld.skip(num_bits_left);
         }
 
-        int bits2 = (int) (ld.getPosition() - bits);
+        int bits2 = (int) (ld.position() - bits);
 
         this.ps_data_available = 1;
 
         return bits2;
     }
 
-    private int ps_extension(IBitStream ld, int ps_extension_id, int num_bits_left) throws AACException {
+    private int ps_extension(BitReader ld, int ps_extension_id, int num_bits_left) throws AACException {
         int n;
-        long bits = ld.getPosition();
+        long bits = ld.position();
 
         if (ps_extension_id == 0) {
             this.enable_ipdopd = ld.readBool();
@@ -309,17 +311,17 @@ public class PS implements PSConstants, PSTables, PSHuffmanTables {
                     huff_data(ld, this.opd_dt[n], this.nr_ipdopd_par, t_huff_opd, f_huff_opd, this.opd_index[n]);
                 }
             }
-            ld.readBit(); // reserved
+            ld.read1Bit(); // reserved
         }
 
         /* return number of bits read */
-        int bits2 = (int) (ld.getPosition() - bits);
+        int bits2 = (int) (ld.position() - bits);
 
         return bits2;
     }
 
     /* read huffman data coded in either the frequency or the time direction */
-    private void huff_data(IBitStream ld, boolean dt, int nr_par, int[][] t_huff, int[][] f_huff, int[] par)
+    private void huff_data(BitReader ld, boolean dt, int nr_par, int[][] t_huff, int[][] f_huff, int[] par)
             throws AACException {
         int n;
 
@@ -339,12 +341,12 @@ public class PS implements PSConstants, PSTables, PSHuffmanTables {
     }
 
     /* binary search huffman decoding */
-    private int ps_huff_dec(IBitStream ld, int[][] t_huff) throws AACException {
+    private int ps_huff_dec(BitReader ld, int[][] t_huff) throws AACException {
         int bit;
         int index = 0;
 
         while (index >= 0) {
-            bit = ld.readBit();
+            bit = ld.read1Bit();
             index = t_huff[index][bit];
         }
 

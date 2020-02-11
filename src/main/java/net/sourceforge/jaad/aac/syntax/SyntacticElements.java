@@ -9,6 +9,8 @@ import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STERE
 import static net.sourceforge.jaad.aac.ChannelConfiguration.CHANNEL_CONFIG_STEREO_PLUS_CENTER_PLUS_REAR_MONO;
 
 import net.sourceforge.jaad.aac.AACDecoderConfig;
+
+import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 
 import net.sourceforge.jaad.aac.AACException;
@@ -66,14 +68,14 @@ public class SyntacticElements implements SyntaxConstants {
         bitsRead = 0;
     }
 
-    public void decode(IBitStream _in) throws AACException {
-        final int start = _in.getPosition(); // should be 0
+    public void decode(BitReader _in) throws AACException {
+        final int start = _in.position(); // should be 0
 
         int type;
         Element prev = null;
         boolean content = true;
         if (!config.getProfile().isErrorResilientProfile()) {
-            while (content && (type = _in.readBits(3)) != ELEMENT_END) {
+            while (content && (type = _in.readNBit(3)) != ELEMENT_END) {
                 switch (type) {
                 case ELEMENT_SCE:
                 case ELEMENT_LFE:
@@ -142,12 +144,12 @@ public class SyntacticElements implements SyntaxConstants {
                 throw new AACException("unsupported channel configuration for error resilience: " + cc);
             }
         }
-        _in.byteAlign();
+        _in.align();
 
-        bitsRead = _in.getPosition() - start;
+        bitsRead = _in.position() - start;
     }
 
-    private Element decodeSCE_LFE(IBitStream _in) throws AACException {
+    private Element decodeSCE_LFE(BitReader _in) throws AACException {
         if (elements[curElem] == null)
             elements[curElem] = new SCE_LFE(config.getFrameLength());
         ((SCE_LFE) elements[curElem]).decode(_in, config);
@@ -155,7 +157,7 @@ public class SyntacticElements implements SyntaxConstants {
         return elements[curElem - 1];
     }
 
-    private Element decodeCPE(IBitStream _in) throws AACException {
+    private Element decodeCPE(BitReader _in) throws AACException {
         if (elements[curElem] == null)
             elements[curElem] = new CPE(config.getFrameLength());
         ((CPE) elements[curElem]).decode(_in, config);
@@ -163,7 +165,7 @@ public class SyntacticElements implements SyntaxConstants {
         return elements[curElem - 1];
     }
 
-    private void decodeCCE(IBitStream _in) throws AACException {
+    private void decodeCCE(BitReader _in) throws AACException {
         if (curCCE == MAX_ELEMENTS)
             throw new AACException("too much CCE elements");
         if (cces[curCCE] == null)
@@ -172,7 +174,7 @@ public class SyntacticElements implements SyntaxConstants {
         curCCE++;
     }
 
-    private void decodeDSE(IBitStream _in) throws AACException {
+    private void decodeDSE(BitReader _in) throws AACException {
         if (curDSE == MAX_ELEMENTS)
             throw new AACException("too much CCE elements");
         if (dses[curDSE] == null)
@@ -181,14 +183,14 @@ public class SyntacticElements implements SyntaxConstants {
         curDSE++;
     }
 
-    private void decodePCE(IBitStream _in) throws AACException {
+    private void decodePCE(BitReader _in) throws AACException {
         pce.decode(_in);
         config.setProfile(pce.getProfile());
         config.setSampleFrequency(pce.getSampleFrequency());
         config.setChannelConfiguration(ChannelConfiguration.forInt(pce.getChannelCount()));
     }
 
-    private void decodeFIL(IBitStream _in, Element prev) throws AACException {
+    private void decodeFIL(BitReader _in, Element prev) throws AACException {
         if (curFIL == MAX_ELEMENTS)
             throw new AACException("too much FIL elements");
         if (fils[curFIL] == null)

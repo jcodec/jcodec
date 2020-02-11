@@ -1,5 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
 
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACException;
 
 /**
@@ -17,18 +19,18 @@ class DSE extends Element {
         super();
     }
 
-    void decode(IBitStream _in) throws AACException {
+    void decode(BitReader _in) throws AACException {
         final boolean byteAlign = _in.readBool();
-        int count = _in.readBits(8);
+        int count = _in.readNBit(8);
         if (count == 255)
-            count += _in.readBits(8);
+            count += _in.readNBit(8);
 
         if (byteAlign)
-            _in.byteAlign();
+            _in.align();
 
         dataStreamBytes = new byte[count];
         for (int i = 0; i < count; i++) {
-            dataStreamBytes[i] = (byte) _in.readBits(8);
+            dataStreamBytes[i] = (byte) _in.readNBit(8);
         }
     }
 }

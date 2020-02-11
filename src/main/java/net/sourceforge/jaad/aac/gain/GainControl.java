@@ -2,6 +2,7 @@ package net.sourceforge.jaad.aac.gain;
 
 import static java.lang.System.arraycopy;
 
+import org.jcodec.common.io.BitReader;
 import org.jcodec.platform.Platform;
 
 import net.sourceforge.jaad.aac.AACException;
@@ -40,8 +41,8 @@ public class GainControl implements GCConstants {
         overlap = new float[BANDS][lbLong * 2];
     }
 
-    public void decode(IBitStream _in, WindowSequence winSeq) throws AACException {
-        maxBand = _in.readBits(2) + 1;
+    public void decode(BitReader _in, WindowSequence winSeq) throws AACException {
+        maxBand = _in.readNBit(2) + 1;
 
         int wdLen, locBits, locBits2 = 0;
         switch (winSeq) {
@@ -74,13 +75,13 @@ public class GainControl implements GCConstants {
         int wd, k, len, bits;
         for (int bd = 1; bd < maxBand; bd++) {
             for (wd = 0; wd < wdLen; wd++) {
-                len = _in.readBits(3);
+                len = _in.readNBit(3);
                 level[bd][wd] = new int[len];
                 location[bd][wd] = new int[len];
                 for (k = 0; k < len; k++) {
-                    level[bd][wd][k] = _in.readBits(4);
+                    level[bd][wd][k] = _in.readNBit(4);
                     bits = (wd == 0) ? locBits : locBits2;
-                    location[bd][wd][k] = _in.readBits(bits);
+                    location[bd][wd][k] = _in.readNBit(bits);
                 }
             }
         }

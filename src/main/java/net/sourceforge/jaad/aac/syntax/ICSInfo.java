@@ -2,6 +2,7 @@ package net.sourceforge.jaad.aac.syntax;
 
 import static net.sourceforge.jaad.aac.Profile.*;
 
+import org.jcodec.common.io.BitReader;
 import org.jcodec.platform.Platform;
 
 import net.sourceforge.jaad.aac.AACException;
@@ -12,6 +13,8 @@ import net.sourceforge.jaad.aac.tools.ICPrediction;
 import static java.lang.System.arraycopy;
 
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.*;
+import static net.sourceforge.jaad.aac.syntax.ScaleFactorBands.*;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -20,7 +23,7 @@ import net.sourceforge.jaad.aac.filterbank.FilterBank;
  *
  * @author in-somnia
  */
-public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
+public class ICSInfo {
     public static class LTPrediction implements SyntaxConstants {
 
         private static final float[] CODEBOOK = { 0.570829f, 0.696616f, 0.813004f, 0.911304f, 0.984900f, 1.067894f,
@@ -37,17 +40,17 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
             states = new int[4 * frameLength];
         }
 
-        public void decode(IBitStream _in, ICSInfo info, Profile profile) throws AACException {
+        public void decode(BitReader _in, ICSInfo info, Profile profile) throws AACException {
             lag = 0;
             if (profile.equals(Profile.AAC_LD)) {
                 lagUpdate = _in.readBool();
                 if (lagUpdate)
-                    lag = _in.readBits(10);
+                    lag = _in.readNBit(10);
             } else
-                lag = _in.readBits(11);
+                lag = _in.readNBit(11);
             if (lag > (frameLength << 1))
                 throw new AACException("LTP lag too large: " + lag);
-            coef = _in.readBits(3);
+            coef = _in.readNBit(3);
 
             final int windowCount = info.getWindowCount();
 
@@ -59,7 +62,7 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
                     if ((shortUsed[w] = _in.readBool())) {
                         shortLagPresent[w] = _in.readBool();
                         if (shortLagPresent[w])
-                            shortLag[w] = _in.readBits(4);
+                            shortLag[w] = _in.readNBit(4);
                     }
                 }
             } else {
@@ -189,20 +192,20 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
     }
 
     /* ========== decoding ========== */
-    public void decode(IBitStream _in, AACDecoderConfig conf, boolean commonWindow) throws AACException {
+    public void decode(BitReader _in, AACDecoderConfig conf, boolean commonWindow) throws AACException {
         final SampleFrequency sf = conf.getSampleFrequency();
         if (sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE))
             throw new AACException("invalid sample frequency");
 
-        _in.skipBit(); // reserved
-        windowSequence = windowSequenceFromInt(_in.readBits(2));
+        _in.skip(1); // reserved
+        windowSequence = windowSequenceFromInt(_in.readNBit(2));
         windowShape[PREVIOUS] = windowShape[CURRENT];
-        windowShape[CURRENT] = _in.readBit();
+        windowShape[CURRENT] = _in.read1Bit();
 
         windowGroupCount = 1;
         windowGroupLength[0] = 1;
         if (windowSequence.equals(WindowSequence.EIGHT_SHORT_SEQUENCE)) {
-            maxSFB = _in.readBits(4);
+            maxSFB = _in.readNBit(4);
             int i;
             for (i = 0; i < 7; i++) {
                 if (_in.readBool())
@@ -217,7 +220,7 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
             swbCount = SWB_SHORT_WINDOW_COUNT[sf.getIndex()];
             predictionDataPresent = false;
         } else {
-            maxSFB = _in.readBits(6);
+            maxSFB = _in.readNBit(6);
             windowCount = 1;
             swbOffsets = SWB_OFFSET_LONG_WINDOW[sf.getIndex()];
             swbCount = SWB_LONG_WINDOW_COUNT[sf.getIndex()];
@@ -227,7 +230,7 @@ public class ICSInfo implements SyntaxConstants, ScaleFactorBands {
         }
     }
 
-    private void readPredictionData(IBitStream _in, Profile profile, SampleFrequency sf, boolean commonWindow)
+    private void readPredictionData(BitReader _in, Profile profile, SampleFrequency sf, boolean commonWindow)
             throws AACException {
         if (AAC_MAIN == profile) {
             if (icPredict == null)

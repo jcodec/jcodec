@@ -3,6 +3,8 @@ package net.sourceforge.jaad.aac.syntax;
 import java.util.Arrays;
 
 import net.sourceforge.jaad.aac.AACDecoderConfig;
+
+import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 
 import net.sourceforge.jaad.aac.AACException;
@@ -12,6 +14,10 @@ import net.sourceforge.jaad.aac.gain.GainControl;
 import net.sourceforge.jaad.aac.huffman.HCB;
 import net.sourceforge.jaad.aac.huffman.Huffman;
 import net.sourceforge.jaad.aac.tools.TNS;
+import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.*;
+import static net.sourceforge.jaad.aac.huffman.HCB.*;
+import static net.sourceforge.jaad.aac.syntax.ScaleFactorTable.*;
+import static net.sourceforge.jaad.aac.syntax.IQTable.*;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -21,7 +27,8 @@ import net.sourceforge.jaad.aac.tools.TNS;
  * @author in-somnia
  */
 //TODO: apply pulse data
-public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable {
+// implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
+public class ICStream {
 
     private static final int SF_DELTA = 60;
     private static final int SF_OFFSET = 200;
@@ -56,12 +63,12 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
     }
 
     /* ========= decoding ========== */
-    public void decode(IBitStream _in, boolean commonWindow, AACDecoderConfig conf) throws AACException {
+    public void decode(BitReader _in, boolean commonWindow, AACDecoderConfig conf) throws AACException {
         if (conf.isScalefactorResilienceUsed() && rvlc == null)
             rvlc = new RVLC();
         final boolean er = conf.getProfile().isErrorResilientProfile();
 
-        globalGain = _in.readBits(8);
+        globalGain = _in.readNBit(8);
 
         if (!commonWindow)
             info.decode(_in, conf, commonWindow);
@@ -100,15 +107,15 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
 
         if (conf.isSpectralDataResilienceUsed()) {
             int max = (conf.getChannelConfiguration() == ChannelConfiguration.CHANNEL_CONFIG_STEREO) ? 6144 : 12288;
-            reorderedSpectralDataLen = Math.max(_in.readBits(14), max);
-            longestCodewordLen = Math.max(_in.readBits(6), 49);
+            reorderedSpectralDataLen = Math.max(_in.readNBit(14), max);
+            longestCodewordLen = Math.max(_in.readNBit(6), 49);
             // HCR.decodeReorderedSpectralData(this, _in, data,
             // conf.isSectionDataResilienceUsed());
         } else
             decodeSpectralData(_in);
     }
 
-    public void decodeSectionData(IBitStream _in, boolean sectionDataResilienceUsed) throws AACException {
+    public void decodeSectionData(BitReader _in, boolean sectionDataResilienceUsed) throws AACException {
         Arrays.fill(sfbCB, 0);
         Arrays.fill(sectEnd, 0);
         final int bits = info.isEightShortFrame() ? 3 : 5;
@@ -124,10 +131,10 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
             int k = 0;
             while (k < maxSFB) {
                 end = k;
-                cb = _in.readBits(4);
+                cb = _in.readNBit(4);
                 if (cb == 12)
                     throw new AACException("invalid huffman codebook: 12");
-                while ((incr = _in.readBits(bits)) == escVal) {
+                while ((incr = _in.readNBit(bits)) == escVal) {
                     end += incr;
                 }
                 end += incr;
@@ -141,9 +148,9 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
         }
     }
 
-    private void decodePulseData(IBitStream _in) throws AACException {
-        pulseCount = _in.readBits(2) + 1;
-        pulseStartSWB = _in.readBits(6);
+    private void decodePulseData(BitReader _in) throws AACException {
+        pulseCount = _in.readNBit(2) + 1;
+        pulseStartSWB = _in.readNBit(6);
         if (pulseStartSWB >= info.getSWBCount())
             throw new AACException("pulse SWB out of range: " + pulseStartSWB + " > " + info.getSWBCount());
 
@@ -154,17 +161,17 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
         }
 
         pulseOffset[0] = info.getSWBOffsets()[pulseStartSWB];
-        pulseOffset[0] += _in.readBits(5);
-        pulseAmp[0] = _in.readBits(4);
+        pulseOffset[0] += _in.readNBit(5);
+        pulseAmp[0] = _in.readNBit(4);
         for (int i = 1; i < pulseCount; i++) {
-            pulseOffset[i] = _in.readBits(5) + pulseOffset[i - 1];
+            pulseOffset[i] = _in.readNBit(5) + pulseOffset[i - 1];
             if (pulseOffset[i] > 1023)
                 throw new AACException("pulse offset out of range: " + pulseOffset[0]);
-            pulseAmp[i] = _in.readBits(4);
+            pulseAmp[i] = _in.readNBit(4);
         }
     }
 
-    public void decodeScaleFactors(IBitStream _in) throws AACException {
+    public void decodeScaleFactors(BitReader _in) throws AACException {
         final int windowGroups = info.getWindowGroupCount();
         final int maxSFB = info.getMaxSFB();
         // 0: spectrum, 1: noise, 2: intensity
@@ -194,7 +201,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
                 case NOISE_HCB:
                     for (; sfb < end; sfb++, idx++) {
                         if (noiseFlag) {
-                            offset[1] += _in.readBits(9) - 256;
+                            offset[1] += _in.readNBit(9) - 256;
                             noiseFlag = false;
                         } else
                             offset[1] += Huffman.decodeScaleFactor(_in) - SF_DELTA;
@@ -215,7 +222,7 @@ public class ICStream implements SyntaxConstants, HCB, ScaleFactorTable, IQTable
         }
     }
 
-    private void decodeSpectralData(IBitStream _in) throws AACException {
+    private void decodeSpectralData(BitReader _in) throws AACException {
         Arrays.fill(data, 0);
         final int maxSFB = info.getMaxSFB();
         final int windowGroups = info.getWindowGroupCount();

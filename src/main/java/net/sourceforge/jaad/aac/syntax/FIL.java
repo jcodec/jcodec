@@ -1,5 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
 
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
 
@@ -49,31 +51,31 @@ class FIL extends Element implements SyntaxConstants {
         this.downSampledSBR = downSampledSBR;
     }
 
-    void decode(IBitStream _in, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames)
+    void decode(BitReader _in, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames)
             throws AACException {
-        int count = _in.readBits(4);
+        int count = _in.readNBit(4);
         if (count == 15)
-            count += _in.readBits(8) - 1;
+            count += _in.readNBit(8) - 1;
         count *= 8; // convert to bits
 
         final int cpy = count;
-        final int pos = _in.getPosition();
+        final int pos = _in.position();
 
         while (count > 0) {
             count = decodeExtensionPayload(_in, count, prev, sf, sbrEnabled, smallFrames);
         }
 
-        final int pos2 = _in.getPosition() - pos;
+        final int pos2 = _in.position() - pos;
         final int bitsLeft = cpy - pos2;
         if (bitsLeft > 0)
-            _in.skipBits(pos2);
+            _in.skip(pos2);
         else if (bitsLeft < 0)
             throw new AACException("FIL element overread: " + bitsLeft);
     }
 
-    private int decodeExtensionPayload(IBitStream _in, int count, Element prev, SampleFrequency sf, boolean sbrEnabled,
+    private int decodeExtensionPayload(BitReader _in, int count, Element prev, SampleFrequency sf, boolean sbrEnabled,
             boolean smallFrames) throws AACException {
-        final int type = _in.readBits(4);
+        final int type = _in.readNBit(4);
         int ret = count - 4;
         switch (type) {
         case TYPE_DYNAMIC_RANGE:
@@ -90,21 +92,21 @@ class FIL extends Element implements SyntaxConstants {
                 } else
                     throw new AACException("SBR applied on unexpected element: " + prev);
             } else {
-                _in.skipBits(ret);
+                _in.skip(ret);
                 ret = 0;
             }
         case TYPE_FILL:
         case TYPE_FILL_DATA:
         case TYPE_EXT_DATA_ELEMENT:
         default:
-            _in.skipBits(ret);
+            _in.skip(ret);
             ret = 0;
             break;
         }
         return ret;
     }
 
-    private int decodeDynamicRangeInfo(IBitStream _in, int count) throws AACException {
+    private int decodeDynamicRangeInfo(BitReader _in, int count) throws AACException {
         if (dri == null)
             dri = new DynamicRangeInfo();
         int ret = count;
@@ -113,8 +115,8 @@ class FIL extends Element implements SyntaxConstants {
 
         // pce tag
         if (dri.pceTagPresent = _in.readBool()) {
-            dri.pceInstanceTag = _in.readBits(4);
-            dri.tagReservedBits = _in.readBits(4);
+            dri.pceInstanceTag = _in.readNBit(4);
+            dri.tagReservedBits = _in.readNBit(4);
         }
 
         // excluded channels
@@ -124,21 +126,21 @@ class FIL extends Element implements SyntaxConstants {
 
         // bands
         if (dri.bandsPresent = _in.readBool()) {
-            dri.bandsIncrement = _in.readBits(4);
-            dri.interpolationScheme = _in.readBits(4);
+            dri.bandsIncrement = _in.readNBit(4);
+            dri.interpolationScheme = _in.readNBit(4);
             ret -= 8;
             bandCount += dri.bandsIncrement;
             dri.bandTop = new int[bandCount];
             for (int i = 0; i < bandCount; i++) {
-                dri.bandTop[i] = _in.readBits(8);
+                dri.bandTop[i] = _in.readNBit(8);
                 ret -= 8;
             }
         }
 
         // prog ref level
         if (dri.progRefLevelPresent = _in.readBool()) {
-            dri.progRefLevel = _in.readBits(7);
-            dri.progRefLevelReservedBits = _in.readBits(1);
+            dri.progRefLevel = _in.readNBit(7);
+            dri.progRefLevelReservedBits = _in.readNBit(1);
             ret -= 8;
         }
 
@@ -146,13 +148,13 @@ class FIL extends Element implements SyntaxConstants {
         dri.dynRngCtl = new int[bandCount];
         for (int i = 0; i < bandCount; i++) {
             dri.dynRngSgn[i] = _in.readBool();
-            dri.dynRngCtl[i] = _in.readBits(7);
+            dri.dynRngCtl[i] = _in.readNBit(7);
             ret -= 8;
         }
         return ret;
     }
 
-    private int decodeExcludedChannels(IBitStream _in) throws AACException {
+    private int decodeExcludedChannels(BitReader _in) throws AACException {
         int i;
         int exclChs = 0;
 

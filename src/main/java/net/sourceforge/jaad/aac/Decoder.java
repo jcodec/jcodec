@@ -1,5 +1,8 @@
 package net.sourceforge.jaad.aac;
 
+import java.nio.ByteBuffer;
+
+import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
@@ -23,7 +26,6 @@ public class Decoder implements SyntaxConstants {
     private final AACDecoderConfig config;
     private final SyntacticElements syntacticElements;
     private final FilterBank filterBank;
-    private IBitStream _in;
     private ADIFHeader adifHeader;
 
     /**
@@ -47,7 +49,7 @@ public class Decoder implements SyntaxConstants {
      *                            from an MP4 container
      * @throws AACException if the specified profile is not supported
      */
-    public Decoder(byte[] decoderSpecificInfo) throws AACException {
+    public Decoder(ByteBuffer decoderSpecificInfo) throws AACException {
         config = AACDecoderConfig.parseMP4DecoderSpecificInfo(decoderSpecificInfo);
         if (config == null)
             throw new IllegalArgumentException("illegal MP4 decoder specific info");
@@ -57,8 +59,6 @@ public class Decoder implements SyntaxConstants {
 
         syntacticElements = new SyntacticElements(config);
         filterBank = new FilterBank(config.isSmallFrameUsed(), config.getChannelConfiguration().getChannelCount());
-
-        _in = new BitStream();
 
         Logger.debug("profile: {0}", config.getProfile());
         Logger.debug("sf: {0}", config.getSampleFrequency().getFrequency());
@@ -76,12 +76,9 @@ public class Decoder implements SyntaxConstants {
      * @param buffer a buffer to hold the decoded PCM data
      * @throws AACException if decoding fails
      */
-    public void decodeFrame(byte[] frame, SampleBuffer buffer) throws AACException {
-        if (frame != null)
-            _in.setData(frame);
-        Logger.debug("bits left " + _in.getBitsLeft());
+    public void decodeFrame(ByteBuffer frame, SampleBuffer buffer) throws AACException {
         try {
-            decode(buffer);
+            decode(frame, buffer);
         } catch (AACException e) {
             if (!e.isEndOfStream())
                 throw e;
@@ -90,13 +87,18 @@ public class Decoder implements SyntaxConstants {
         }
     }
 
-    private void decode(SampleBuffer buffer) throws AACException {
-        if (ADIFHeader.isPresent(_in)) {
+    private void decode(ByteBuffer frame, SampleBuffer buffer) throws AACException {
+        BitReader _in;
+        if (ADIFHeader.isPresent(frame)) {
+            int id = frame.getInt();
+            _in = BitReader.createBitReader(frame);
             adifHeader = ADIFHeader.readHeader(_in);
             final PCE pce = adifHeader.getFirstPCE();
             config.setProfile(pce.getProfile());
             config.setSampleFrequency(pce.getSampleFrequency());
             config.setChannelConfiguration(ChannelConfiguration.forInt(pce.getChannelCount()));
+        } else {
+            _in = BitReader.createBitReader(frame);
         }
 
         if (!canDecode(config.getProfile()))

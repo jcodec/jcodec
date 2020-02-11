@@ -1,5 +1,7 @@
 package net.sourceforge.jaad.aac.syntax;
 
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
 import net.sourceforge.jaad.aac.sbr.SBR;
@@ -16,15 +18,15 @@ public abstract class Element implements SyntaxConstants {
     private int elementInstanceTag;
     private SBR sbr;
 
-    protected void readElementInstanceTag(IBitStream _in) throws AACException {
-        elementInstanceTag = _in.readBits(4);
+    protected void readElementInstanceTag(BitReader _in) throws AACException {
+        elementInstanceTag = _in.readNBit(4);
     }
 
     public int getElementInstanceTag() {
         return elementInstanceTag;
     }
 
-    void decodeSBR(IBitStream _in, SampleFrequency sf, int count, boolean stereo, boolean crc, boolean downSampled,
+    void decodeSBR(BitReader _in, SampleFrequency sf, int count, boolean stereo, boolean crc, boolean downSampled,
             boolean smallFrames) throws AACException {
         if (sbr == null)
             sbr = new SBR(smallFrames, elementInstanceTag == ELEMENT_CPE, sf, downSampled);
