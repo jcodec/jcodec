@@ -1,11 +1,12 @@
 package net.sourceforge.jaad.aac.error;
 
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.huffman.HCB;
-import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
-import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
+import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -56,7 +57,7 @@ public class HCR implements SyntaxConstants {
     }
 
     // sectionDataResilience = hDecoder->aacSectionDataResilienceFlag
-    public static void decodeReorderedSpectralData(ICStream ics, IBitStream _in, short[] spectralData,
+    public static void decodeReorderedSpectralData(ICStream ics, BitReader _in, short[] spectralData,
             boolean sectionDataResilience) throws AACException {
         final ICSInfo info = ics.getInfo();
         final int windowGroupCount = info.getWindowGroupCount();

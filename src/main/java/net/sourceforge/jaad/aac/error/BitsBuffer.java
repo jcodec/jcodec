@@ -1,7 +1,8 @@
 package net.sourceforge.jaad.aac.error;
 
+import org.jcodec.common.io.BitReader;
+
 import net.sourceforge.jaad.aac.AACException;
-import net.sourceforge.jaad.aac.syntax.IBitStream;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed
@@ -106,14 +107,14 @@ public class BitsBuffer {
         len += a.len;
     }
 
-    public void readSegment(int segwidth, IBitStream _in) throws AACException {
+    public void readSegment(int segwidth, BitReader _in) throws AACException {
         len = segwidth;
 
         if (segwidth > 32) {
-            bufb = _in.readBits(segwidth - 32);
-            bufa = _in.readBits(32);
+            bufb = _in.readNBit(segwidth - 32);
+            bufa = _in.readNBit(32);
         } else {
-            bufa = _in.readBits(segwidth);
+            bufa = _in.readNBit(segwidth);
             bufb = 0;
         }
     }

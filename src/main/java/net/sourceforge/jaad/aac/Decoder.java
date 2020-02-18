@@ -7,8 +7,6 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.logging.Logger;
 
 import net.sourceforge.jaad.aac.filterbank.FilterBank;
-import net.sourceforge.jaad.aac.syntax.BitStream;
-import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.PCE;
 import net.sourceforge.jaad.aac.syntax.SyntacticElements;
 import net.sourceforge.jaad.aac.syntax.SyntaxConstants;

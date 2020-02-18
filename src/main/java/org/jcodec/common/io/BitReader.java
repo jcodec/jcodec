@@ -82,8 +82,6 @@ public class BitReader {
         if (n > 32)
             throw new IllegalArgumentException("Can not read more then 32 bit");
 
-        int nn = n;
-
         int ret = 0;
         if (n + deficit > 31) {
             ret |= (curInt >>> deficit);
@@ -98,10 +96,6 @@ public class BitReader {
             curInt <<= n;
             deficit += n;
         }
-
-        // for(--nn; nn >=0; nn--)
-        // System.out.print((ret >> nn) & 1);
-        // System.out.println();
 
         return ret;
     }

@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import org.jcodec.common.io.BitReader;
 
 import net.sourceforge.jaad.aac.AACException;
-import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.PCE;
 
 /**

@@ -4,7 +4,6 @@ import org.jcodec.common.io.BitReader;
 
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
-import net.sourceforge.jaad.aac.syntax.IBitStream;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

@@ -1,15 +1,13 @@
 package net.sourceforge.jaad.aac.tools;
 
+import static net.sourceforge.jaad.aac.tools.TNSTables.TNS_TABLES;
+
 import org.jcodec.common.io.BitReader;
 
 import net.sourceforge.jaad.aac.AACException;
 import net.sourceforge.jaad.aac.SampleFrequency;
-import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
-import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo;
 import net.sourceforge.jaad.aac.syntax.ICStream;
-import static net.sourceforge.jaad.aac.syntax.SyntaxConstants.*;
-import static net.sourceforge.jaad.aac.tools.TNSTables.*;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

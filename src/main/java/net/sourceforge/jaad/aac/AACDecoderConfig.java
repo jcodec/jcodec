@@ -1,15 +1,20 @@
 package net.sourceforge.jaad.aac;
 
-import static net.sourceforge.jaad.aac.Profile.*;
+import static net.sourceforge.jaad.aac.Profile.AAC_LC;
+import static net.sourceforge.jaad.aac.Profile.AAC_LTP;
+import static net.sourceforge.jaad.aac.Profile.AAC_MAIN;
+import static net.sourceforge.jaad.aac.Profile.AAC_SBR;
+import static net.sourceforge.jaad.aac.Profile.AAC_SSR;
+import static net.sourceforge.jaad.aac.Profile.ER_AAC_LC;
+import static net.sourceforge.jaad.aac.Profile.ER_AAC_LD;
+import static net.sourceforge.jaad.aac.Profile.ER_AAC_LTP;
 
 import java.nio.ByteBuffer;
 
 import org.jcodec.common.io.BitReader;
 
-import net.sourceforge.jaad.aac.syntax.BitStream;
-import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
-import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.PCE;
+import net.sourceforge.jaad.aac.syntax.SyntaxConstants;
 
 /**
  * This class is part of JAAD ( jaadec.sourceforge.net ) that is distributed

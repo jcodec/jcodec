@@ -6,7 +6,6 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.platform.Platform;
 
 import net.sourceforge.jaad.aac.AACException;
-import net.sourceforge.jaad.aac.syntax.IBitStream;
 import net.sourceforge.jaad.aac.syntax.ICSInfo.WindowSequence;
 
 /**
