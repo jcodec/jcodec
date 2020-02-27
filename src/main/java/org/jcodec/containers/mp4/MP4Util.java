@@ -20,6 +20,7 @@ import org.jcodec.common.io.IOUtils;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
+import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.FileTypeBox;
 import org.jcodec.containers.mp4.boxes.Header;
@@ -349,5 +350,23 @@ public class MP4Util {
                 bld.append(' ');
             System.out.println(bld.toString() + b.getHeader().getFourcc());
         }
+    }
+    
+    public static Atom getMdat(List<Atom> rootAtoms) {
+        for (Atom atom : rootAtoms) {
+            if ("mdat".equals(atom.getHeader().getFourcc())) {
+                return atom;
+            }
+        }
+        return null;
+    }
+
+    public static Atom getMoov(List<Atom> rootAtoms) {
+        for (Atom atom : rootAtoms) {
+            if ("moov".equals(atom.getHeader().getFourcc())) {
+                return atom;
+            }
+        }
+        return null;
     }
 }

@@ -83,15 +83,15 @@ public class NIOUtils {
         buf.flip();
         return buf;
     }
-    
+
     public static ByteBuffer fetchAllFromChannel(SeekableByteChannel ch) throws IOException {
         List<ByteBuffer> buffers = new ArrayList<ByteBuffer>();
         ByteBuffer buf;
         do {
             buf = fetchFromChannel(ch, 1 << 20);
             buffers.add(buf);
-        } while(buf.hasRemaining());
-        
+        } while (buf.hasRemaining());
+
         return combineBuffers(buffers);
     }
 
@@ -123,7 +123,7 @@ public class NIOUtils {
             closeQuietly(is);
         }
     }
-    
+
     public static ByteBuffer fetchFromFileL(File file, int length) throws IOException {
         FileChannel is = null;
         try {
@@ -228,7 +228,7 @@ public class NIOUtils {
         result.flip();
         return result;
     }
-    
+
     public static boolean combineBuffersInto(ByteBuffer dup, List<ByteBuffer> buffers) {
         throw new RuntimeException("Stan");
     }
@@ -251,7 +251,7 @@ public class NIOUtils {
     public static byte[] asciiString(String fourcc) {
         return Platform.getBytes(fourcc);
     }
-    
+
     public static void writePascalString(ByteBuffer buffer, String name) {
         buffer.put((byte) name.length());
         buffer.put(asciiString(name));
@@ -267,11 +267,12 @@ public class NIOUtils {
 
     public static String readNullTermStringCharset(ByteBuffer buffer, String charset) {
         ByteBuffer fork = buffer.duplicate();
-        while (buffer.hasRemaining() && buffer.get() != 0) {}
+        while (buffer.hasRemaining() && buffer.get() != 0) {
+        }
         fork.limit(buffer.position() - 1);
         return Platform.stringFromCharset(toArray(fork), charset);
     }
-    
+
     public static void writeNullTermString(ByteBuffer buffer, String str) {
         writeNullTermStringCharset(buffer, str, Platform.UTF_8);
     }
@@ -280,9 +281,9 @@ public class NIOUtils {
         try {
             byte[] bytes = str.getBytes(charset);
             buffer.put(bytes);
-            buffer.put((byte)0);
+            buffer.put((byte) 0);
         } catch (UnsupportedEncodingException e) {
-           throw new RuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -306,7 +307,7 @@ public class NIOUtils {
             }
         } while (read != -1 && amount > 0);
     }
-    
+
     public static void copyAll(ReadableByteChannel in, WritableByteChannel out) throws IOException {
         ByteBuffer buf = ByteBuffer.allocate(0x10000);
         int read;
@@ -434,7 +435,8 @@ public class NIOUtils {
 
         protected abstract void done();
 
-        public void readChannel(SeekableByteChannel ch, int bufferSize, FileReaderListener listener) throws IOException {
+        public void readChannel(SeekableByteChannel ch, int bufferSize, FileReaderListener listener)
+                throws IOException {
             ByteBuffer buf = ByteBuffer.allocate(bufferSize);
             long size = ch.size();
             for (long pos = ch.position(); ch.read(buf) != -1; pos = ch.position()) {
@@ -479,15 +481,15 @@ public class NIOUtils {
         result.flip();
         return result;
     }
-    
+
     public static ByteBuffer asByteBuffer(byte[] bytes) {
         return ByteBuffer.wrap(bytes);
     }
-    
+
     public static ByteBuffer asByteBufferInt(int[] ints) {
         return asByteBuffer(ArrayUtil.toByteArray(ints));
     }
-    
+
     public static void relocateLeftover(ByteBuffer bb) {
         int pos;
         for (pos = 0; bb.hasRemaining(); pos++) {
@@ -496,7 +498,7 @@ public class NIOUtils {
         bb.position(pos);
         bb.limit(bb.capacity());
     }
-    
+
     public static boolean fetchUrl(URL urlInit, File fm) throws IOException {
         ReadableByteChannel in = null;
         SeekableByteChannel out = null;
@@ -504,12 +506,25 @@ public class NIOUtils {
             in = Channels.newChannel(urlInit.openConnection().getInputStream());
             out = NIOUtils.writableChannel(fm);
             NIOUtils.copyAll(in, out);
-        } catch(FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             return false;
         } finally {
             NIOUtils.closeQuietly(in);
             NIOUtils.closeQuietly(out);
         }
         return true;
+    }
+
+    public static void copyFile(File file, File file1) throws IOException {
+        FileChannelWrapper in = null;
+        FileChannelWrapper out = null;
+        try {
+            in = readableChannel(file);
+            out = writableChannel(file1);
+            copyAll(in, out);
+        } finally {
+            closeQuietly(in);
+            closeQuietly(out);
+        }
     }
 }

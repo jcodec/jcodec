@@ -11,15 +11,15 @@ import net.sourceforge.jaad.aac.AACException;
  *
  * @author in-somnia
  */
-class DSE extends Element {
+public class DSE extends Element {
 
     private byte[] dataStreamBytes;
 
-    DSE() {
+    public DSE() {
         super();
     }
 
-    void decode(BitReader _in) throws AACException {
+    public void decode(BitReader _in) throws AACException {
         final boolean byteAlign = _in.readBool();
         int count = _in.readNBit(8);
         if (count == 255)

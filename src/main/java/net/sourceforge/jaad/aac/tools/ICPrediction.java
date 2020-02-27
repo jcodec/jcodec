@@ -57,10 +57,6 @@ public class ICPrediction {
             predictionUsed[sfb] = _in.readBool();
         }
         Logger.warn("ICPrediction: maxSFB={0}, maxPredSFB={1}", new int[] { maxSFB, maxPredSFB });
-        /*
-         * //if maxSFB<maxPredSFB set remaining to false for(int sfb = length;
-         * sfb<maxPredSFB; sfb++) { predictionUsed[sfb] = false; }
-         */
     }
 
     public void setPredictionUnused(int sfb) {

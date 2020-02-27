@@ -24,14 +24,14 @@ public class CPE extends Element {
     private boolean commonWindow;
     ICStream icsL, icsR;
 
-    CPE(int frameLength) {
+    public CPE(int frameLength) {
         super();
         msUsed = new boolean[MAX_MS_MASK];
         icsL = new ICStream(frameLength);
         icsR = new ICStream(frameLength);
     }
 
-    void decode(BitReader _in, AACDecoderConfig conf) throws AACException {
+    public void decode(BitReader _in, AACDecoderConfig conf) throws AACException {
         final Profile profile = conf.getProfile();
         final SampleFrequency sf = conf.getSampleFrequency();
         if (sf.equals(SampleFrequency.SAMPLE_FREQUENCY_NONE))

@@ -15,7 +15,7 @@ import net.sourceforge.jaad.aac.huffman.Huffman;
  *
  * @author in-somnia
  */
-class CCE extends Element implements SyntaxConstants {
+public class CCE extends Element implements SyntaxConstants {
 
     public static final int BEFORE_TNS = 0;
     public static final int AFTER_TNS = 1;
@@ -35,7 +35,7 @@ class CCE extends Element implements SyntaxConstants {
      */
     private final float[][] gain;
 
-    CCE(int frameLength) {
+    public CCE(int frameLength) {
         super();
         ics = new ICStream(frameLength);
         channelPair = new boolean[8];
@@ -64,7 +64,7 @@ class CCE extends Element implements SyntaxConstants {
         return chSelect[index];
     }
 
-    void decode(BitReader _in, AACDecoderConfig conf) throws AACException {
+    public void decode(BitReader _in, AACDecoderConfig conf) throws AACException {
         couplingPoint = 2 * _in.read1Bit();
         coupledCount = _in.readNBit(3);
         int gainCount = 0;

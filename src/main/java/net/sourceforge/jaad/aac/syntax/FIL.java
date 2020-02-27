@@ -12,7 +12,7 @@ import net.sourceforge.jaad.aac.SampleFrequency;
  *
  * @author in-somnia
  */
-class FIL extends Element implements SyntaxConstants {
+public class FIL extends Element implements SyntaxConstants {
 
     public static class DynamicRangeInfo {
 
@@ -46,12 +46,12 @@ class FIL extends Element implements SyntaxConstants {
     private final boolean downSampledSBR;
     private DynamicRangeInfo dri;
 
-    FIL(boolean downSampledSBR) {
+    public FIL(boolean downSampledSBR) {
         super();
         this.downSampledSBR = downSampledSBR;
     }
 
-    void decode(BitReader _in, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames)
+    public void decode(BitReader _in, Element prev, SampleFrequency sf, boolean sbrEnabled, boolean smallFrames)
             throws AACException {
         int count = _in.readNBit(4);
         if (count == 15)

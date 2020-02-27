@@ -137,6 +137,10 @@ public class TrakBox extends NodeBox {
     public long getMediaDuration() {
         return NodeBox.findFirstPath(this, MediaHeaderBox.class, Box.path("mdia.mdhd")).getDuration();
     }
+    
+    public void setMediaDuration(long duration) {
+        NodeBox.findFirstPath(this, MediaHeaderBox.class, Box.path("mdia.mdhd")).setDuration(duration);
+    }
 
     public boolean isPureRef() {
         MediaInfoBox minf = getMdia().getMinf();

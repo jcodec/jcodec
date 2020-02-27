@@ -109,7 +109,7 @@ public class SyntacticElements implements SyntaxConstants {
                     break;
                 }
             }
-            Logger.debug("END");
+            Logger.debug("END: " + _in.bitsToAlign());
             content = false;
             prev = null;
         } else {

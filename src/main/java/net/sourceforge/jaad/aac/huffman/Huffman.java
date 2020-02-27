@@ -1,6 +1,7 @@
 package net.sourceforge.jaad.aac.huffman;
 
 import org.jcodec.common.io.BitReader;
+import org.jcodec.common.io.VLC;
 
 import net.sourceforge.jaad.aac.AACException;
 
@@ -18,21 +19,6 @@ public class Huffman implements Codebooks {
     private static final int QUAD_LEN = 4, PAIR_LEN = 2;
 
     private Huffman() {
-    }
-
-    private static int findOffset(BitReader _in, int[][] table) throws AACException {
-        int off = 0;
-        int len = table[off][0];
-        int cw = _in.readNBit(len);
-        int j;
-        while (cw != table[off][1]) {
-            off++;
-            j = table[off][0] - len;
-            len = table[off][0];
-            cw <<= j;
-            cw |= _in.readNBit(j);
-        }
-        return off;
     }
 
     private static void signValues(BitReader _in, int[] data, int off, int len) throws AACException {
@@ -57,22 +43,23 @@ public class Huffman implements Codebooks {
     }
 
     public static int decodeScaleFactor(BitReader _in) throws AACException {
-        final int offset = findOffset(_in, HCB_SF);
-        return HCB_SF[offset][2];
+        final int offset = HCB_SF.readVLC(_in);
+        return _HCB_SF[offset][2];
     }
 
     public static void decodeSpectralData(BitReader _in, int cb, int[] data, int off) throws AACException {
-        final int[][] HCB = CODEBOOKS[cb - 1];
+        final VLC HCB = CODEBOOKS[cb - 1];
+        final int[][] _HCB = _CODEBOOKS[cb - 1];
 
         // find index
-        final int offset = findOffset(_in, HCB);
+        final int offset = HCB.readVLC(_in);
 
         // copy data
-        data[off] = HCB[offset][2];
-        data[off + 1] = HCB[offset][3];
+        data[off] = _HCB[offset][2];
+        data[off + 1] = _HCB[offset][3];
         if (cb < 5) {
-            data[off + 2] = HCB[offset][4];
-            data[off + 3] = HCB[offset][5];
+            data[off + 2] = _HCB[offset][4];
+            data[off + 3] = _HCB[offset][5];
         }
 
         // sign & escape

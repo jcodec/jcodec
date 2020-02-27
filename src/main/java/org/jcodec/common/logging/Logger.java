@@ -56,7 +56,7 @@ public class Logger {
     }
 
     private static void message(LogLevel level, String message, Object[] args) {
-        if (Logger.globalLogLevel.ordinal() >= level.ordinal()) {
+        if (Logger.globalLogLevel.ordinal() > level.ordinal()) {
             return;
         }
         if (sinks == null) {

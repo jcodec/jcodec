@@ -12,16 +12,16 @@ import net.sourceforge.jaad.aac.AACException;
  * 
  * @author in-somnia
  */
-class SCE_LFE extends Element {
+public class SCE_LFE extends Element {
 
     private final ICStream ics;
 
-    SCE_LFE(int frameLength) {
+    public SCE_LFE(int frameLength) {
         super();
         ics = new ICStream(frameLength);
     }
 
-    void decode(BitReader _in, AACDecoderConfig conf) throws AACException {
+    public void decode(BitReader _in, AACDecoderConfig conf) throws AACException {
         readElementInstanceTag(_in);
         ics.decode(_in, false, conf);
     }

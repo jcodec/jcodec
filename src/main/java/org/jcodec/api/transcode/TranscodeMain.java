@@ -179,6 +179,7 @@ public class TranscodeMain {
 
     public static void main(String[] args) throws Exception {
         Logger.addSink(new OutLogSink(System.out, new SimpleFormat("#message"), LogLevel.INFO));
+        Logger.setLevel(LogLevel.INFO);
         
         Cmd cmd = MainUtils.parseArguments(args, ALL_FLAGS);
 

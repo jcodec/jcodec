@@ -40,7 +40,7 @@ public class AACDecoderConfig implements SyntaxConstants {
     // extension: error resilience
     private boolean sectionDataResilience, scalefactorResilience, spectralDataResilience;
 
-    private AACDecoderConfig() {
+    public AACDecoderConfig() {
         profile = Profile.AAC_MAIN;
         extProfile = Profile.UNKNOWN;
         sampleFrequency = SampleFrequency.SAMPLE_FREQUENCY_NONE;

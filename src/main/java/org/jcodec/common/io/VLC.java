@@ -45,6 +45,16 @@ public class VLC {
 
         _invert();
     }
+    
+    public static VLC fromMixed(int[][] codesAndSizes) {
+        int[] codes = new int[codesAndSizes.length];
+        int[] sizes = new int[codesAndSizes.length];
+        for (int i = 0; i < codesAndSizes.length; i++) {
+            sizes[i] = codesAndSizes[i][0];
+            codes[i] = codesAndSizes[i][1] << (32 - sizes[i]);
+        }
+        return new VLC(codes, sizes);
+    }
 
     private void _invert() {
         IntArrayList values = IntArrayList.createIntArrayList();
