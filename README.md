@@ -239,6 +239,43 @@ while (null != (packet = track.nextFrame())) {
 }
 ```
 
+## MP4/M4A/MOV metadata versions
+
+Some editors (e.g. Final Cut Pro 7) employ a clever hack to support multiple versions of metadata for mp4 files.
+The trick is to append a new version of `moov` atom to end of file and set previous version atom name to `free`.
+Jcodec supports this hack via `org.jcodec.movtool.MoovVersions` 
+
+See `MoovVersionsTest.java` for complete usage example.
+
+To list available versions use
+
+```java
+MoovVersions.listMoovVersionAtoms(new File("my.mp4"))
+```
+
+To add a version
+
+```java
+moov = MP4Util.parseMovie(new File("my.mp4"))
+//add your modifications to moov here
+MoovVersions.addVersion(new File("my.mp4"), moov)
+```
+
+To rollback (undo) to previous version
+
+```java
+MoovVersions.undo(new File("my.mp4"))
+```
+
+To rollback to specific  version
+
+```java
+versions = MoovVersions.listMoovVersionAtoms(new File("my.mp4"))
+//pick your version
+version = versions.get(Math.random()*versions.size())
+MoovVersions.rollback(new File("my.mp4"), version)
+```
+
 # Contact
 
 Feel free to communicate any questions or concerns to us. Dev team email: jcodecproject@gmail.com
