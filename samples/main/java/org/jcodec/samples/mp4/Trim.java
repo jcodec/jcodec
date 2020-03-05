@@ -11,7 +11,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.jcodec.common.DemuxerTrackMeta;
+import org.jcodec.common.SeekableDemuxerTrack;
+import org.jcodec.common.TrackType;
+import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
+import org.jcodec.common.model.Packet;
+import org.jcodec.common.model.Rational;
 import org.jcodec.common.tools.MainUtils;
 import org.jcodec.common.tools.MainUtils.Cmd;
 import org.jcodec.common.tools.MainUtils.Flag;
@@ -20,10 +26,14 @@ import org.jcodec.containers.mp4.MP4Util.Movie;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.MetaValue;
 import org.jcodec.containers.mp4.boxes.MovieBox;
+import org.jcodec.containers.mp4.boxes.TextMetaDataSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
+import org.jcodec.containers.mp4.demuxer.MP4Demuxer;
+import org.jcodec.containers.mp4.demuxer.MP4DemuxerTrackMeta;
 import org.jcodec.movtool.Flatten;
 import org.jcodec.movtool.MetadataEditor;
 import org.jcodec.movtool.Strip;
+import org.jcodec.movtool.Util;
 import org.jcodec.samples.mp4.Test1Proto.Words;
 import org.jcodec.samples.mp4.Test1Proto.Words.Word;
 import org.jcodec.samples.mp4.Test2Proto.Tag;
@@ -59,6 +69,7 @@ public class Trim {
 
         try {
             input = readableChannel(new File(cmd.getArg(0)));
+            long firstTagTs = getFirstTagTs(input);
             File file = new File(cmd.getArg(1));
             out = writableChannel(file);
             Movie movie = MP4Util.createRefFullMovie(input, "file://" + new File(cmd.getArg(0)).getAbsolutePath());
@@ -74,7 +85,7 @@ public class Trim {
                 if (trak.getTrackHeader().getNo() == 1) {
                     flatten.setSampleProcessor(trak, new WordProcessor(inS, durS));
                 } else if (trak.getTrackHeader().getNo() == 2) {
-                    flatten.setSampleProcessor(trak, new TagProcessor(inS, durS));
+                    flatten.setSampleProcessor(trak, new TagProcessor(inS, durS, firstTagTs));
                 }
             }
             long finishTime = System.currentTimeMillis();
@@ -110,7 +121,7 @@ public class Trim {
         }
 
         @Override
-        public ByteBuffer processSample(ByteBuffer src) throws IOException {
+        public ByteBuffer processSample(ByteBuffer src, double pts, double mediaPts) throws IOException {
             int size = src.getInt();
             if (size != src.remaining())
                 throw new IOException("Error");
@@ -133,12 +144,8 @@ public class Trim {
                 }
             }
             words = builder.build();
-            if (words.getWordsCount() > 0) {
-                //System.out.println(words);
-                return withLen(words.toByteArray());
-
-            }
-            return null;
+            //System.out.println(words);
+            return withLen(words.toByteArray());
         }
     }
 
@@ -153,23 +160,25 @@ public class Trim {
     private static class TagProcessor implements Flatten.SampleProcessor {
         private double inS;
         private double durS;
+        private long startTs;
 
-        public TagProcessor(double inS, double durS) {
+        public TagProcessor(double inS, double durS, long startTs) {
             this.inS = inS;
             this.durS = durS;
+            this.startTs = startTs;
         }
 
         @Override
-        public ByteBuffer processSample(ByteBuffer src) throws IOException {
+        public ByteBuffer processSample(ByteBuffer src, double pts, double mediaPts) throws IOException {
             int size = src.getInt();
             if (size != src.remaining())
                 throw new IOException("Error");
-            long masterOnset = (long)(inS * 1000);
+            long masterOnset = (long) (inS * 1000);
             Tag audioTag = Tag.parseFrom(src);
-            long onset = audioTag.getOnsetMilli() - masterOnset;
-            onset = onset < 0 ? 0 : onset;
-            audioTag = audioTag.toBuilder().setOnsetMilli(onset).build();
-            System.out.println(audioTag);
+            long ptsMilli = (long) (pts * 1000);
+            audioTag = audioTag.toBuilder()
+                    .setOnsetMilli(masterOnset > startTs ? ptsMilli : audioTag.getOnsetMilli() - masterOnset).build();
+//            System.out.println(audioTag);
             return withLen(audioTag.toByteArray());
         }
     }
@@ -177,13 +186,45 @@ public class Trim {
     private static void modifyMovie(double inS, double durS, MovieBox movie) throws IOException {
         for (TrakBox track : movie.getTracks()) {
             List<Edit> edits = new ArrayList<Edit>();
-            Edit edit = new Edit((long)(movie.getTimescale() * durS), (long)(track.getTimescale() * inS), 1f);
+            Edit edit = new Edit((long) (movie.getTimescale() * durS), (long) (track.getTimescale() * inS), 1f);
             edits.add(edit);
+            List<Edit> oldEdits = track.getEdits();
+            if (oldEdits != null) {
+                edits = Util.editsOnEdits(Rational.R(movie.getTimescale(), track.getTimescale()), oldEdits, edits);
+            }
             track.setEdits(edits);
         }
 
         Strip strip = new Strip();
         strip.strip(movie);
         strip.trim(movie, null);
+    }
+
+    private static ByteBuffer nextFrame(SeekableDemuxerTrack track) throws IOException {
+        Packet pkt = track.nextFrame();
+        ByteBuffer buffer = pkt.getData();
+        int size = buffer.getInt();
+        buffer = NIOUtils.read(buffer, size);
+        return buffer;
+    }
+
+    public static long getFirstTagTs(SeekableByteChannel ch) throws IOException {
+        MP4Demuxer demuxer = MP4Demuxer.createMP4Demuxer(ch);
+        List<SeekableDemuxerTrack> tracks = demuxer.getTracks();
+        long firstTag = 0;
+        for (SeekableDemuxerTrack track : tracks) {
+            DemuxerTrackMeta meta = track.getMeta();
+            if (meta.getType() != TrackType.META)
+                continue;
+
+            TextMetaDataSampleEntry sampleEntry = (TextMetaDataSampleEntry) ((MP4DemuxerTrackMeta) meta)
+                    .getSampleEntries()[0];
+            if ("application/audio_tags_1".equals(sampleEntry.getContentEncoding())) {
+                Tag audioTag = Tag.parseFrom(nextFrame(track));
+                firstTag = audioTag.getOnsetMilli();
+            }
+        }
+        ch.setPosition(0);
+        return firstTag;
     }
 }

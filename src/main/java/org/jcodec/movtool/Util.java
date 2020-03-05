@@ -258,6 +258,14 @@ public class Util {
         }
     }
 
+    /**
+     * Applies edits on top of existing edits. This function will split existing edits
+     * as necessary to reflect the current set of edits.
+     * @param mvByTrack Movie and track timescale in one quantity (movie / track).
+     * @param lower Original edits
+     * @param higher New edits
+     * @return Resulting edits
+     */
     public static List<Edit> editsOnEdits(Rational mvByTrack, List<Edit> lower, List<Edit> higher) {
         List<Edit> result = new ArrayList<Edit>();
         List<Edit> next = new ArrayList<Edit>(lower);
