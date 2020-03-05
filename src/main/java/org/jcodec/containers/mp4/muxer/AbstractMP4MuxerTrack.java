@@ -24,6 +24,7 @@ import org.jcodec.containers.mp4.boxes.DataRefBox;
 import org.jcodec.containers.mp4.boxes.Edit;
 import org.jcodec.containers.mp4.boxes.EditListBox;
 import org.jcodec.containers.mp4.boxes.EncodedPixelBox;
+import org.jcodec.containers.mp4.boxes.FullBox;
 import org.jcodec.containers.mp4.boxes.GenericMediaInfoBox;
 import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
@@ -182,6 +183,9 @@ public abstract class AbstractMP4MuxerTrack implements MuxerTrack {
             SoundMediaHeaderBox smhd = SoundMediaHeaderBox.createSoundMediaHeaderBox();
             smhd.setFlags(1);
             minf.add(smhd);
+        } else if(MP4TrackType.META == type) {
+            LeafBox nmhd = LeafBox.createLeafBox(Header.createHeader("nmhd", 0), ByteBuffer.allocate(4));
+            minf.add(nmhd);
         } else if(TIMECODE == type) {
             NodeBox gmhd = new NodeBox(new Header("gmhd"));
             gmhd.add(GenericMediaInfoBox.createGenericMediaInfoBox());

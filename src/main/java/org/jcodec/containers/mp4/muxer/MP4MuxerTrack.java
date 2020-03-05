@@ -16,6 +16,7 @@ import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 import org.jcodec.common.model.Unit;
 import org.jcodec.containers.mp4.MP4TrackType;
+import org.jcodec.containers.mp4.boxes.AudioSampleEntry;
 import org.jcodec.containers.mp4.boxes.Box;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
 import org.jcodec.containers.mp4.boxes.CompositionOffsetsBox;
@@ -27,6 +28,7 @@ import org.jcodec.containers.mp4.boxes.Header;
 import org.jcodec.containers.mp4.boxes.MediaBox;
 import org.jcodec.containers.mp4.boxes.MediaHeaderBox;
 import org.jcodec.containers.mp4.boxes.MediaInfoBox;
+import org.jcodec.containers.mp4.boxes.MetaDataSampleEntry;
 import org.jcodec.containers.mp4.boxes.MovieHeaderBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleDescriptionBox;
@@ -35,6 +37,7 @@ import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox.SampleToChunkEntry;
 import org.jcodec.containers.mp4.boxes.SyncSamplesBox;
+import org.jcodec.containers.mp4.boxes.TextMetaDataSampleEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrackHeaderBox;
@@ -290,5 +293,10 @@ public class MP4MuxerTrack extends AbstractMP4MuxerTrack {
 
     public void setTimecode(TimecodeMP4MuxerTrack timecodeTrack) {
         this.timecodeTrack = timecodeTrack;
+    }
+
+    public void addMetaSampleEntry(String contentEncoding, String contentType) {
+        TextMetaDataSampleEntry se = new TextMetaDataSampleEntry(contentEncoding, contentType);
+        addSampleEntry(se);
     }
 }

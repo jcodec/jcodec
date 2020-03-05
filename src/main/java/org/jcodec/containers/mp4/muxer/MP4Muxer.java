@@ -209,4 +209,10 @@ public class MP4Muxer implements Muxer {
             return addCompressedAudioTrack(codec, format);
         }
     }
+
+    public MP4MuxerTrack addMetaTrack(String contentEncoding, String contentType) {
+        MP4MuxerTrack track = addTrack(new MP4MuxerTrack(nextTrackId++, MP4TrackType.META));
+        track.addMetaSampleEntry(contentEncoding, contentType);
+        return track;
+    }
 }
