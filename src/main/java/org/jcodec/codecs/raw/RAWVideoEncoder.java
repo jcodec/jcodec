@@ -77,4 +77,10 @@ public class RAWVideoEncoder extends VideoEncoder {
 		return totalSize;
 	}
 
+    @Override
+    public void finish() {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

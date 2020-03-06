@@ -457,7 +457,8 @@ public class SourceImpl implements Source, PacketSource {
         Packet inVideoPacket;
         while ((inVideoPacket = getNextVideoPacket()) != null) {
             if (videoDecoder == null) {
-                videoDecoder = createVideoDecoder(inputVideoCodec.v2, downscale, inVideoPacket.getData(), null);
+                DemuxerTrackMeta meta = videoInputTrack.getMeta();
+                videoDecoder = createVideoDecoder(inputVideoCodec.v2, downscale, inVideoPacket.getData(), meta != null ? meta.getVideoCodecMeta() : null);
                 if (videoDecoder != null) {
                     videoCodecMeta = videoDecoder.getCodecMeta(inVideoPacket.getData());
                 }

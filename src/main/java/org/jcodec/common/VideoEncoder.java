@@ -80,4 +80,6 @@ public abstract class VideoEncoder {
      * @return The number of bytes the encoded frame will likely take.
      */
     public abstract int estimateBufferSize(Picture frame);
+    
+    public abstract void finish();
 }

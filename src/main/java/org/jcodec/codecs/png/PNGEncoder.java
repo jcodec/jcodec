@@ -112,4 +112,10 @@ public class PNGEncoder extends VideoEncoder {
     public int estimateBufferSize(Picture frame) {
         return frame.getCroppedWidth() * frame.getCroppedHeight() * 4;
     }
+
+    @Override
+    public void finish() {
+        // TODO Auto-generated method stub
+        
+    }
 }

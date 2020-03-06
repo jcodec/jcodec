@@ -60,4 +60,10 @@ public class PNGEncoder extends VideoEncoder {
         return frame.getWidth() * frame.getHeight() * 3;
     }
 
+    @Override
+    public void finish() {
+        // TODO Auto-generated method stub
+        
+    }
+
 }

@@ -1,4 +1,5 @@
 package org.jcodec.codecs.h264;
+
 import static java.lang.System.arraycopy;
 import static org.jcodec.codecs.h264.H264Utils.escapeNAL;
 
@@ -76,6 +77,11 @@ public class H264Encoder extends VideoEncoder {
     private EncodedMB[] topEncoded;
 
     private EncodedMB outMB;
+    private boolean psnrEn;
+    private long[] sum_se = new long[3];
+    private long[] g_sum_se = new long[3];
+    private int frameCount;
+    private long totalSize;
 
     public H264Encoder(RateControl rc) {
         this.rc = rc;
@@ -99,14 +105,21 @@ public class H264Encoder extends VideoEncoder {
         this.motionSearchRange = motionSearchRange;
     }
 
+    public boolean isPsnrEn() {
+        return psnrEn;
+    }
+
+    public void setPsnrEn(boolean psnrEn) {
+        this.psnrEn = psnrEn;
+    }
+    
     /**
-     * Encode this picture into h.264 frame. Frame type will be selected by
-     * encoder.
+     * Encode this picture into h.264 frame. Frame type will be selected by encoder.
      */
     public EncodedFrame encodeFrame(Picture pic, ByteBuffer _out) {
         if (pic.getColor() != ColorSpace.YUV420J)
             throw new IllegalArgumentException("Input picture color is not supported: " + pic.getColor());
-        
+
         if (frameNumber >= keyInterval) {
             frameNumber = 0;
         }
@@ -115,7 +128,29 @@ public class H264Encoder extends VideoEncoder {
         boolean idr = frameNumber == 0;
 
         ByteBuffer data = doEncodeFrame(pic, _out, idr, frameNumber++, sliceType);
+        if (psnrEn) {
+//            System.out.println(String.format("PSNR %.3f %.3f %.3f", calcPsnr(sum_se[0], 0), calcPsnr(sum_se[1], 1),
+//                    calcPsnr(sum_se[2], 2)));
+            savePsnrStats(data.remaining());
+        }
+
         return new EncodedFrame(data, idr);
+    }
+
+    private void savePsnrStats(int size) {
+        for (int p = 0; p < 3; p++) {
+            g_sum_se[p] += sum_se[p];
+            sum_se[p] = 0;
+        }
+        frameCount++;
+        totalSize += size;
+    }
+
+    private double calcPsnr(long sum, int p) {
+        int luma = p == 0 ? 1 : 0;
+        int pixCnt = (sps.picHeightInMapUnitsMinus1 + 1) * (sps.picWidthInMbsMinus1 + 1) << (6 + (luma * 2));
+        double mse = (double) sum / pixCnt;
+        return 10 * Math.log10((10 << 16) / mse);
     }
 
     /**
@@ -132,9 +167,9 @@ public class H264Encoder extends VideoEncoder {
     }
 
     /**
-     * Encode this picture as a P-frame. P-frame is an frame predicted from one
-     * or more of the previosly decoded frame and is usually 10x less in size
-     * then the IDR frame.
+     * Encode this picture as a P-frame. P-frame is an frame predicted from one or
+     * more of the previosly decoded frame and is usually 10x less in size then the
+     * IDR frame.
      * 
      * @param pic
      * @param _out
@@ -263,7 +298,7 @@ public class H264Encoder extends VideoEncoder {
                 if (sliceType == SliceType.P) {
                     CAVLCWriter.writeUE(sliceData, 0); // number of skipped mbs
                 }
-                
+
                 MBType mbType = selectMBType(sliceType);
 
                 if (mbType == MBType.I_16x16) {
@@ -287,7 +322,7 @@ public class H264Encoder extends VideoEncoder {
                 int[] mv = null;
                 if (ref != null)
                     mv = estimator.mvEstimate(pic, mbX, mbY);
-                
+
                 BitWriter candidate;
                 int totalQpDelta = 0;
                 int qpDelta = rc.initialQpDelta();
@@ -303,6 +338,8 @@ public class H264Encoder extends VideoEncoder {
                 qp += totalQpDelta;
 
                 collectPredictors(outMB.getPixels(), mbX);
+                if (psnrEn)
+                    calcMse(pic, outMB, mbX, mbY);
                 addToReference(mbX, mbY);
             }
         }
@@ -314,7 +351,22 @@ public class H264Encoder extends VideoEncoder {
         escapeNAL(buf, dup);
     }
 
-    private void encodeMacroblock(MBType mbType, Picture pic, int mbX, int mbY, BitWriter candidate, int qp, int qpDelta, int[] mv) {
+    private void calcMse(Picture pic, EncodedMB out, int mbX, int mbY) {
+        byte[] patch = new byte[256];
+        for (int p = 0; p < 3; p++) {
+            byte[] outPix = out.getPixels().getData()[p];
+            int luma = p == 0 ? 1 : 0;
+            MBEncoderHelper.take(pic.getPlaneData(p), pic.getPlaneWidth(p), pic.getPlaneHeight(p), mbX << (3 + luma),
+                    mbY << (3 + luma), patch, 8 << luma, 8 << luma);
+            for (int i = 0; i < (64 << (luma * 2)); i++) {
+                int q = outPix[i] - patch[i];
+                sum_se[p] += q * q;
+            }
+        }
+    }
+
+    private void encodeMacroblock(MBType mbType, Picture pic, int mbX, int mbY, BitWriter candidate, int qp,
+            int qpDelta, int[] mv) {
         if (mbType == MBType.I_16x16) {
             mbEncoderI16x16.save();
             mbEncoderI16x16.encodeMacroblock(pic, mbX, mbY, candidate, outMB, mbX > 0 ? topEncoded[mbX - 1] : null,
@@ -326,7 +378,7 @@ public class H264Encoder extends VideoEncoder {
         } else
             throw new RuntimeException("Macroblock of type " + mbType + " is not supported.");
     }
-    
+
     private void restoreMacroblock(MBType mbType) {
         if (mbType == MBType.I_16x16) {
             mbEncoderI16x16.restore();
@@ -335,7 +387,7 @@ public class H264Encoder extends VideoEncoder {
         } else
             throw new RuntimeException("Macroblock of type " + mbType + " is not supported.");
     }
-    
+
     private MBType selectMBType(SliceType sliceType) {
         if (sliceType == SliceType.I)
             return MBType.I_16x16;
@@ -385,5 +437,18 @@ public class H264Encoder extends VideoEncoder {
     @Override
     public int estimateBufferSize(Picture frame) {
         return Math.max(1 << 16, frame.getWidth() * frame.getHeight() / 2);
+    }
+
+    @Override
+    public void finish() {
+        if (psnrEn) {
+            long avgSum = (g_sum_se[0] + g_sum_se[1]*4 + g_sum_se[2]*4) / 3;
+            Logger.info(String.format("PSNR AVG:%.3f Y:%.3f U:%.3f V:%.3f kbps:%.3f",
+                    calcPsnr(avgSum / frameCount, 0),
+                    calcPsnr(g_sum_se[0] / frameCount, 0),
+                    calcPsnr(g_sum_se[1] / frameCount, 1), 
+                    calcPsnr(g_sum_se[2] / frameCount, 2),
+                    (double)(25 * (totalSize / frameCount)) / 1000));
+        }
     }
 }

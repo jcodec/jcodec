@@ -342,6 +342,7 @@ public class TranscodeMain {
             }
 
             Sink sink = new SinkImpl(output, outputFormat, outputCodecVideo, outputCodecAudio);
+            configureSink(sink, cmd);
             sinks.add(sink);
             builder.addSink(sink);
             builder.setAudioMapping(audioMap, sinks.size() - 1, audioCopy);
@@ -367,6 +368,17 @@ public class TranscodeMain {
         Transcoder transcoder = builder.create();
 
         transcoder.transcode();
+    }
+
+    private static void configureSink(Sink sink, Cmd cmd) {
+        Map<String, String> codecOpts = new HashMap<String,String>();
+        for (String key : cmd.longFlags.keySet()) {
+            if (key.endsWith("Opts")) {
+                String codec = key.substring(0, key.length() - "Opts".length());
+                codecOpts.put(codec, cmd.longFlags.get(key));
+            }
+        }
+        sink.setCodecOpts(codecOpts);
     }
 
     private static void addVideoFilters(String vf, TranscoderBuilder builder, int sinkIndex) {

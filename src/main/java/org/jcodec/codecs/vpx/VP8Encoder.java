@@ -481,4 +481,10 @@ public class VP8Encoder extends VideoEncoder {
     public int estimateBufferSize(Picture frame) {
         return frame.getWidth() * frame.getHeight() / 2;
     }
+
+    @Override
+    public void finish() {
+        // TODO Auto-generated method stub
+        
+    }
 }

@@ -2,6 +2,7 @@ package org.jcodec.api.transcode;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import org.jcodec.common.model.ColorSpace;
 
@@ -58,4 +59,6 @@ public interface Sink {
     void setVideoCodecPrivate(ByteBuffer videoCodecPrivate);
 
     void setAudioCodecPrivate(ByteBuffer audioCodecPrivate);
+
+    void setCodecOpts(Map<String, String> codecOpts);
 }

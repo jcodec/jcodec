@@ -461,4 +461,10 @@ public class ProresEncoder extends VideoEncoder {
     public int estimateBufferSize(Picture frame) {
         return (3 * frame.getWidth() * frame.getHeight()) / 2;
     }
+
+    @Override
+    public void finish() {
+        // TODO Auto-generated method stub
+        
+    }
 }
