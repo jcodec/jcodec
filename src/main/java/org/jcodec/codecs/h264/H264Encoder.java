@@ -150,7 +150,7 @@ public class H264Encoder extends VideoEncoder {
         int luma = p == 0 ? 1 : 0;
         int pixCnt = (sps.picHeightInMapUnitsMinus1 + 1) * (sps.picWidthInMbsMinus1 + 1) << (6 + (luma * 2));
         double mse = (double) sum / pixCnt;
-        return 10 * Math.log10((10 << 16) / mse);
+        return 10 * Math.log10((255*255) / mse);
     }
 
     /**
@@ -436,7 +436,7 @@ public class H264Encoder extends VideoEncoder {
 
     @Override
     public int estimateBufferSize(Picture frame) {
-        return Math.max(1 << 16, frame.getWidth() * frame.getHeight() / 2);
+        return Math.max(1 << 16, frame.getWidth() * frame.getHeight());
     }
 
     @Override
@@ -444,11 +444,11 @@ public class H264Encoder extends VideoEncoder {
         if (psnrEn) {
             long avgSum = (g_sum_se[0] + g_sum_se[1]*4 + g_sum_se[2]*4) / 3;
             Logger.info(String.format("PSNR AVG:%.3f Y:%.3f U:%.3f V:%.3f kbps:%.3f",
-                    calcPsnr(avgSum / frameCount, 0),
-                    calcPsnr(g_sum_se[0] / frameCount, 0),
-                    calcPsnr(g_sum_se[1] / frameCount, 1), 
-                    calcPsnr(g_sum_se[2] / frameCount, 2),
-                    (double)(25 * (totalSize / frameCount)) / 1000));
+                    frameCount != 0 ? calcPsnr(avgSum / frameCount, 0) : 0,
+                    frameCount != 0 ? calcPsnr(g_sum_se[0] / frameCount, 0) : 0,
+                    frameCount != 0 ? calcPsnr(g_sum_se[1] / frameCount, 1) : 0,
+                    frameCount != 0 ? calcPsnr(g_sum_se[2] / frameCount, 2) : 0,
+                    frameCount != 0 ? (double) (8 * 25 * (totalSize / frameCount)) / 1000 : 0));
         }
     }
 }
