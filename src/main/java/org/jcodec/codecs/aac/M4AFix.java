@@ -12,6 +12,7 @@ import org.jcodec.common.io.BitReader;
 import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.io.SeekableByteChannel;
 import org.jcodec.common.logging.Logger;
+import org.jcodec.common.tools.MathUtil;
 import org.jcodec.containers.mp4.MP4Util;
 import org.jcodec.containers.mp4.MP4Util.Atom;
 import org.jcodec.containers.mp4.boxes.ChunkOffsets64Box;
@@ -19,6 +20,7 @@ import org.jcodec.containers.mp4.boxes.MovieBox;
 import org.jcodec.containers.mp4.boxes.NodeBox;
 import org.jcodec.containers.mp4.boxes.SampleSizesBox;
 import org.jcodec.containers.mp4.boxes.SampleToChunkBox;
+import org.jcodec.containers.mp4.boxes.TextMetaDataSampleEntry;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox;
 import org.jcodec.containers.mp4.boxes.TimeToSampleBox.TimeToSampleEntry;
 import org.jcodec.containers.mp4.boxes.TrakBox;
@@ -75,25 +77,17 @@ public class M4AFix {
         ch.write((ByteBuffer) ByteBuffer.allocate(4).putInt(size + 8).flip());
     }
 
-    private static int processMdat(SeekableByteChannel ch, Atom atom, MovieBox moov) throws IOException {
-        ByteBuffer buf = null;
+    public static class Track {
         LongArrayList offsets = LongArrayList.createLongArrayList();
         IntArrayList sizes = IntArrayList.createIntArrayList();
         List<SampleToChunkBox.SampleToChunkEntry> chunkSizes = new ArrayList<SampleToChunkBox.SampleToChunkEntry>();
-        ch.setPosition(atom.getOffset() + atom.getHeader().headerSize());
-        long offset = ch.position();
-
-        buf = NIOUtils.fetchFromChannel(ch, (int) atom.getHeader().getBodySize());
-        int size = buf.remaining();
-        long start = System.currentTimeMillis();
-
-        boolean newChunk = true;
-        long newChunkOff = offset;
+        long newChunkOff;
         int chunkSize = 0, prevChunkSize = 0, chunkNo = 0, firstChunk = 0;
         int frameCount = 0;
-        while (buf.hasRemaining()) {
-            int sz = parseFrame(buf);
-            if (newChunk && sz > 0) {
+
+        void addFrame(int sz, long offset, boolean newChunk) {
+            if (newChunk) {
+                newChunkOff = offset;
                 offsets.add(newChunkOff);
                 newChunk = false;
                 if (chunkSize != prevChunkSize) {
@@ -105,42 +99,84 @@ public class M4AFix {
                 chunkNo++;
             }
 
+            ++frameCount;
+            sizes.add(sz);
+            chunkSize++;
+        }
+
+        TrakBox finish(TrakBox trak, MovieBox moov) {
+            if (chunkSize != prevChunkSize)
+                chunkSizes.add(new SampleToChunkBox.SampleToChunkEntry(firstChunk + 1, chunkSize, 1));
+
+            ChunkOffsets64Box co64 = ChunkOffsets64Box.createChunkOffsets64Box(offsets.toArray());
+            SampleSizesBox stsz = SampleSizesBox.createSampleSizesBox2(sizes.toArray());
+            SampleToChunkBox stsc = SampleToChunkBox
+                    .createSampleToChunkBox(chunkSizes.toArray(new SampleToChunkBox.SampleToChunkEntry[0]));
+            TimeToSampleEntry[] tts = new TimeToSampleEntry[] { new TimeToSampleEntry(frameCount, 1024) };
+            TimeToSampleBox stts = TimeToSampleBox.createTimeToSampleBox(tts);
+            NodeBox stbl = trak.getStbl();
+            stbl.replaceBox(co64);
+            stbl.replaceBox(stsz);
+            stbl.replaceBox(stts);
+            stbl.replaceBox(stsc);
+            stbl.removeChildren(new String[] { "stco" });
+            int duration = (moov.getTimescale() * frameCount * 1024) / 48000;
+            int mediaDuration = (trak.getTimescale() * frameCount * 1024) / 48000;
+            trak.setDuration(duration);
+            trak.setMediaDuration(mediaDuration);
+            return trak;
+        }
+    }
+
+    private static int processMdat(SeekableByteChannel ch, Atom atom, MovieBox moov) throws IOException {
+        ByteBuffer buf = null;
+        ch.setPosition(atom.getOffset() + atom.getHeader().headerSize());
+        long offset = ch.position();
+
+        buf = NIOUtils.fetchFromChannel(ch, (int) atom.getHeader().getBodySize());
+        int size = buf.remaining();
+        long start = System.currentTimeMillis();
+        Track audio = new Track();
+        Track tags = new Track();
+        Track words = new Track();
+
+        boolean newChunk = true;
+        while (buf.hasRemaining()) {
+            int sz = parseFrame(buf);
+
+            if (sz > 0)
+                audio.addFrame(sz, offset, newChunk);
+            else if (sz == -18 || sz == -19)
+                tags.addFrame(-sz, offset, true);
+            else
+                words.addFrame(-sz, offset, true);
+
             if (sz > 0) {
-                ++frameCount;
-                sizes.add(sz);
                 offset += sz;
-                chunkSize++;
             } else {
                 // Inverted to indicate non-aac frame
                 offset += -sz;
-                newChunkOff = offset;
                 newChunk = true;
             }
 
         }
-        if (chunkSize != prevChunkSize)
-            chunkSizes.add(new SampleToChunkBox.SampleToChunkEntry(firstChunk + 1, chunkSize, 1));
-
-        ChunkOffsets64Box co64 = ChunkOffsets64Box.createChunkOffsets64Box(offsets.toArray());
-        SampleSizesBox stsz = SampleSizesBox.createSampleSizesBox2(sizes.toArray());
-        SampleToChunkBox stsc = SampleToChunkBox
-                .createSampleToChunkBox(chunkSizes.toArray(new SampleToChunkBox.SampleToChunkEntry[0]));
-        TimeToSampleEntry[] tts = new TimeToSampleEntry[] { new TimeToSampleEntry(frameCount, 1024) };
-        TimeToSampleBox stts = TimeToSampleBox.createTimeToSampleBox(tts);
-        TrakBox trak = moov.getAudioTracks().get(0);
-        NodeBox stbl = trak.getStbl();
-        stbl.replaceBox(co64);
-        stbl.replaceBox(stsz);
-        stbl.replaceBox(stts);
-        stbl.replaceBox(stsc);
-        stbl.removeChildren(new String[] { "stco" });
+        TrakBox audioTrack = moov.getAudioTracks().get(0);
+        List<TrakBox> metaTracks = moov.getMetaTracks();
+        TrakBox tagsTrack = null;
+        TrakBox wordsTrack = null;
+        for (TrakBox trakBox : metaTracks) {
+            String mime = ((TextMetaDataSampleEntry) trakBox.getSampleEntries()[0]).getMimeFormat();
+            if ("application/transcription_1".equals(mime))
+                wordsTrack = trakBox;
+            else if ("application/audio_tags_1".equals(mime))
+                tagsTrack = trakBox;
+        }
         moov.removeChildren(new String[] { "trak" });
-        moov.add(trak);
-        int duration = (moov.getTimescale() * frameCount * 1024) / 48000;
-        int mediaDuration = (trak.getTimescale() * frameCount * 1024) / 48000;
-        trak.setDuration(duration);
-        moov.setDuration(duration);
-        trak.setMediaDuration(mediaDuration);
+        moov.add(audio.finish(audioTrack, moov));
+        moov.add(tags.finish(tagsTrack, moov));
+        moov.add(words.finish(wordsTrack, moov));
+
+        moov.setDuration(MathUtil.max3L(audioTrack.getDuration(), tagsTrack.getDuration(), wordsTrack.getDuration()));
 
         Logger.info("Time: " + (System.currentTimeMillis() - start));
         return size;

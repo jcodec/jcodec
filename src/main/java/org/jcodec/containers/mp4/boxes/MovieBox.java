@@ -3,6 +3,7 @@ package org.jcodec.containers.mp4.boxes;
 import org.jcodec.common.model.Rational;
 import org.jcodec.common.model.Size;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -102,6 +103,17 @@ public class MovieBox extends NodeBox {
         for (int i = 0; i < tracks.length; i++) {
             TrakBox trakBox = tracks[i];
             if (trakBox.isAudio())
+                result.add(trakBox);
+        }
+        return result;
+    }
+    
+    public List<TrakBox> getMetaTracks() {
+        ArrayList<TrakBox> result = new ArrayList<TrakBox>();
+        TrakBox[] tracks = getTracks();
+        for (int i = 0; i < tracks.length; i++) {
+            TrakBox trakBox = tracks[i];
+            if (trakBox.isMeta())
                 result.add(trakBox);
         }
         return result;

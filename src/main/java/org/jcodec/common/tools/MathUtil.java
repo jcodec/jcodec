@@ -1,7 +1,5 @@
 package org.jcodec.common.tools;
 
-import static java.lang.Math.max;
-
 /**
  * This class is part of JCodec ( www.jcodec.org ) This software is distributed
  * under FreeBSD License
@@ -145,6 +143,10 @@ public class MathUtil {
     }
 
     public static int max3(int a, int b, int c) {
-        return max(max(a, b), c);
+        return Math.max(Math.max(a, b), c);
+    }
+    
+    public static long max3L(long a, long b, long c) {
+        return Math.max(Math.max(a, b), c);
     }
 }

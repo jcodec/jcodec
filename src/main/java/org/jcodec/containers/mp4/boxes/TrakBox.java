@@ -100,6 +100,10 @@ public class TrakBox extends NodeBox {
     public boolean isAudio() {
         return "soun".equals(getHandlerType());
     }
+    
+    public boolean isMeta() {
+       return "meta".equals(getHandlerType());
+    }
 
     /**
      * Gets 'media timescale' of this track. This is the timescale used to
